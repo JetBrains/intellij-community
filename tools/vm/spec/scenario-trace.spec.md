@@ -513,6 +513,21 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   [@test] ../crates/air-trace/src/publish/tests.rs (`the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests`)
   [@test] ../crates/avl-trace-tools/src/pack/tests.rs (`an_archive_keeps_its_order_and_stores_its_zips`)
 
+- Once `air-traces.zip` is written and published, the step removes from the testlogs each bundle directory that the
+  archive holds. TeamCity packs the testlogs into `bazel.logs.zip` at the end of the build, which would hold the bundles
+  a second time. A directory goes only when it is a directory and no link. Its real path must be inside
+  `test.outputs/air-traces` of its test, inside its testlogs. A directory stays when its zip lacks a part of it, such as
+  a link to a directory or a broken link. Only a temporary `.partial` file of a recorder may go without a copy. A run or
+  class directory that the removal empties goes too. The other outputs stay: `outputs.zip`, the evidence of the lane,
+  and the Allure results. A test of an earlier build is not published, so its bundles stay. One stderr line says the
+  count and the bytes of the removed files. A file with another hard link frees no disk space, but it leaves the
+  testlogs. A directory that does not go is a warning. On TeamCity the step always removes. Elsewhere it removes only
+  with `--remove-packed`, so the local Bazel outputs stay.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`the_packed_bundles_leave_the_testlogs_once_the_archive_is_published`)
+  [@test] ../crates/air-trace/src/publish/tests.rs (`a_packed_directory_outside_the_traces_or_behind_a_link_stays`)
+  [@test] ../crates/air-trace/src/publish/tests.rs (`a_bundle_that_its_zip_does_not_hold_whole_stays_in_the_testlogs`)
+  [@test] ../crates/air-trace/tests/cli.rs (`teamcity_publish_removes_the_packed_bundles_on_team_city_or_when_asked`)
+
 - For a failed scenario only, the step also publishes two loose files, so the Tests tab of TeamCity shows them. They
   are `air-traces-failed/<lane>/<runId>/<TestClass>/<scenario>/failure.webp`, the last picture, and `…/video.mp4`,
   when the bundle has a video. The `image` named `failure` and the `video` named `video` of the test name them. A file

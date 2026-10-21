@@ -32,6 +32,7 @@ fn run(root: &Path, out: &Path, viewer: Option<&Path>, build: Option<&Build>) ->
         build,
         since: None,
         out_owned: true,
+        remove_packed: false,
     })
 }
 
@@ -309,6 +310,7 @@ fn testlogs_without_bundles_print_nothing() {
         build: None,
         since: None,
         out_owned: true,
+        remove_packed: false,
     });
     let problem = format!("no testlogs: {}: not a directory", missing.display());
     assert!(
@@ -453,6 +455,7 @@ fn the_tests_of_an_earlier_build_are_skipped() {
         build: None,
         since: Some(SystemTime::now() - Duration::from_hours(1)),
         out_owned: true,
+        remove_packed: false,
     });
     assert_eq!(
         stdout.matches(TRACE_METADATA).count(),
@@ -477,6 +480,7 @@ fn the_tests_of_an_earlier_build_are_skipped() {
         build: None,
         since: Some(SystemTime::now() + Duration::from_hours(1)),
         out_owned: true,
+        remove_packed: false,
     });
     assert!(
         stdout.starts_with("##teamcity[message text='air-trace teamcity-publish: 3 test(s) skipped, because their test.xml")
@@ -504,6 +508,7 @@ fn the_output_holds_the_files_of_this_run_only() {
         build: None,
         since: None,
         out_owned,
+        remove_packed: false,
     };
     let (stdout, _) = run_job(&job(true));
     assert!(
@@ -561,4 +566,174 @@ fn a_relative_path_is_taken_from_the_directory_where_bazel_run_ran() {
         given_path(Path::new("viewer"), None).unwrap(),
         std::env::current_dir().unwrap().join("viewer")
     );
+}
+
+/// The bytes of the files under a directory, links not followed.
+fn bytes_of(dir: &Path) -> u64 {
+    walkdir::WalkDir::new(dir)
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|entry| entry.file_type().is_file())
+        .map(|entry| entry.metadata().unwrap().len())
+        .sum()
+}
+
+/// Once the archive is published, the step removes the bundle directories that it holds from the testlogs. It also
+/// removes a read-only one, and says the bytes it removes. The other outputs of the test stay: its `outputs.zip`, the
+/// evidence of the lane, and the Allure results. Without the removal, the testlogs keep every bundle.
+#[test]
+fn the_packed_bundles_leave_the_testlogs_once_the_archive_is_published() {
+    let root = testlogs();
+    let outputs = root.path().join("plugins/air/tests/integration/ui/ui_lane_test").join(TEST_OUTPUTS);
+    let traces = outputs.join(ROOT_DIR_NAME);
+    let manifest = decode_manifest(&example_file(MANIFEST_FILE)).unwrap();
+    let allure = traces.join(&manifest.run_id).join("allure-results/result.json");
+    fs::create_dir_all(allure.parent().unwrap()).unwrap();
+    fs::write(&allure, "{}").unwrap();
+    let evidence = outputs.join("lane/idea.log");
+    fs::create_dir_all(evidence.parent().unwrap()).unwrap();
+    fs::write(&evidence, "log").unwrap();
+    let bundles = [
+        bundle_file(&traces, &bundle_path(&manifest.run_id, &manifest.test_class, &manifest.scenario)),
+        bundle_file(&traces, "copies/0"),
+        bundle_file(&traces, "copies/1"),
+    ];
+    let bytes: u64 = bundles.iter().map(|bundle| bytes_of(bundle)).sum();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&bundles[1], fs::Permissions::from_mode(0o555)).unwrap();
+    }
+    let sharded = root
+        .path()
+        .join("plugins/air/tests/integration/ui-real/ui-real_lane_test/shard_1_of_2");
+    let job = |remove_packed, out: &Path| {
+        let testlogs = [root.path().to_path_buf()];
+        let no_viewer = ViewerSource::Missing(NO_CHECKOUT.to_owned());
+        run_job(&Publish {
+            testlogs: &testlogs,
+            out,
+            viewer: &no_viewer,
+            build: None,
+            since: None,
+            out_owned: true,
+            remove_packed,
+        })
+    };
+
+    let kept = tempfile::tempdir().unwrap();
+    let (_, stderr) = job(false, kept.path());
+    assert!(bundles.iter().all(|bundle| bundle.join(MANIFEST_FILE).is_file()), "{stderr}");
+    assert!(!stderr.contains("removed "), "{stderr}");
+
+    let out = tempfile::tempdir().unwrap();
+    let (stdout, stderr) = job(true, out.path());
+    assert!(
+        stderr.contains(&format!(
+            "air-trace teamcity-publish: removed 3 packed bundle(s) with {bytes} bytes from the testlogs\n"
+        )),
+        "{stderr}"
+    );
+    assert!(!stdout.contains("status='WARNING']\n##teamcity[message"), "{stdout}");
+    for bundle in &bundles {
+        assert!(!bundle.exists(), "{} is removed", bundle.display());
+    }
+    assert!(!traces.join("copies").exists(), "an emptied directory goes too");
+    assert_eq!(fs::read_to_string(&allure).unwrap(), "{}");
+    assert_eq!(fs::read_to_string(&evidence).unwrap(), "log");
+    assert!(sharded.join(TEST_OUTPUTS).join(OUTPUTS_ZIP).is_file(), "a zip of the outputs stays");
+    let names: Vec<String> = listing_of(&out.path().join(ARCHIVE)).lines().map(str::to_owned).collect();
+    assert_eq!(names.len(), 5, "the archive holds every bundle: {names:?}");
+}
+
+/// A directory that is a link, or that lies outside the traces of its test, stays, and the removal says why.
+#[cfg(unix)]
+#[test]
+fn a_packed_directory_outside_the_traces_or_behind_a_link_stays() {
+    let root = tempfile::tempdir().unwrap();
+    let traces = root.path().join("ui_lane_test").join(TEST_OUTPUTS).join(ROOT_DIR_NAME);
+    let outside = root.path().join("elsewhere/bundle");
+    fs::create_dir_all(&outside).unwrap();
+    fs::write(outside.join(MANIFEST_FILE), "{}").unwrap();
+    fs::create_dir_all(&traces).unwrap();
+    let link = traces.join("linked");
+    std::os::unix::fs::symlink(&outside, &link).unwrap();
+    let packed = |dir: &Path| PackedDir {
+        dir: dir.to_path_buf(),
+        traces: traces.clone(),
+        root: root.path().to_path_buf(),
+        left_out: Vec::new(),
+    };
+    let removal = remove_packed(&[packed(&outside), packed(&link)]);
+    assert_eq!(removal.removed, 0);
+    assert!(
+        removal.problems[0].ends_with(&format!(
+            "is not inside {} of the testlogs {}",
+            real(&traces).display(),
+            real(root.path()).display()
+        )),
+        "{:?}",
+        removal.problems
+    );
+    assert!(
+        removal.problems[1].ends_with("stays in the testlogs: it is not a directory"),
+        "{:?}",
+        removal.problems
+    );
+    assert!(outside.join(MANIFEST_FILE).is_file() && link.exists());
+}
+
+/// A bundle directory stays, with a warning, when its zip does not hold all of it. Examples are a link to a directory
+/// and a link that does not resolve. That content has no other copy. A temporary file of a recorder keeps no bundle.
+#[cfg(unix)]
+#[test]
+fn a_bundle_that_its_zip_does_not_hold_whole_stays_in_the_testlogs() {
+    let root = testlogs();
+    let traces = root
+        .path()
+        .join("plugins/air/tests/integration/ui/ui_lane_test")
+        .join(TEST_OUTPUTS)
+        .join(ROOT_DIR_NAME);
+    let manifest = decode_manifest(&example_file(MANIFEST_FILE)).unwrap();
+    let partial = bundle_file(&traces, &bundle_path(&manifest.run_id, &manifest.test_class, &manifest.scenario))
+        .join(format!("{}/0099.webp{PARTIAL_SUFFIX}", avl_trace::bundle::SNAP_DIR));
+    fs::create_dir_all(partial.parent().unwrap()).unwrap();
+    fs::write(&partial, "half").unwrap();
+    let elsewhere = tempfile::tempdir().unwrap();
+    let linked = bundle_file(&traces, "copies/0");
+    std::os::unix::fs::symlink(elsewhere.path(), linked.join("tree")).unwrap();
+    let broken = bundle_file(&traces, "copies/1");
+    std::os::unix::fs::symlink(elsewhere.path().join("gone"), broken.join("gone")).unwrap();
+    let out = tempfile::tempdir().unwrap();
+    let testlogs = [root.path().to_path_buf()];
+    let no_viewer = ViewerSource::Missing(NO_CHECKOUT.to_owned());
+    let (stdout, stderr) = run_job(&Publish {
+        testlogs: &testlogs,
+        out: out.path(),
+        viewer: &no_viewer,
+        build: None,
+        since: None,
+        out_owned: true,
+        remove_packed: true,
+    });
+
+    assert!(stderr.contains("removed 1 packed bundle(s) with "), "{stderr}");
+    assert!(!partial.exists(), "a temporary file of a recorder keeps no bundle");
+    assert!(
+        stderr.contains(&format!(
+            "{} stays in the testlogs: its zip does not hold tree (a symbolic link to something other than a file)",
+            real(&linked).display()
+        )),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains(&format!(
+            "{} stays in the testlogs: its zip does not hold gone (a symbolic link that does not resolve",
+            real(&broken).display()
+        )),
+        "{stderr}"
+    );
+    assert_eq!(stdout.matches("stays in the testlogs").count(), 2, "one warning each: {stdout}");
+    assert!(linked.join(MANIFEST_FILE).is_file() && linked.join("tree").is_symlink());
+    assert!(broken.join(MANIFEST_FILE).is_file() && broken.join("gone").is_symlink());
 }

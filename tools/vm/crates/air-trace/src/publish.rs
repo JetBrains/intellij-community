@@ -39,11 +39,11 @@ use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
 use avl_report::teamcity::{Messages, PublishedTrace, TRACES_ARTIFACT_DIR, is_build_step, warning};
-use avl_trace::bundle::{ROOT_DIR_NAME, VIDEO_FILE, bundle_path};
+use avl_trace::bundle::{PARTIAL_SUFFIX, ROOT_DIR_NAME, VIDEO_FILE, bundle_path};
 use avl_trace_tools::discover::{
     Bundle, Location, Options, Origin, Root, RootKind, RootState, Scanner, Source, SourceKind, Status, Summary, bundle_id,
 };
-use avl_trace_tools::pack::{PackOptions, archive, pack, pack_zip_bundle};
+use avl_trace_tools::pack::{PackOptions, Skipped, archive, pack, pack_zip_bundle};
 
 use crate::serve::{Runs, Scenario, group_runs, listed};
 use crate::{Exit, Refusal, report, usage};
@@ -79,6 +79,10 @@ pub(crate) struct PublishArgs {
     /// The pnpm that builds the viewer, with --node; `none` builds no viewer.
     #[arg(long, value_name = "FILE", env = "AIR_TRACE_PNPM")]
     pub pnpm: Option<PathBuf>,
+    /// Once air-traces.zip is published, remove the bundle directories that it holds from the testlogs. On TeamCity
+    /// the step does so always, so the artifact bazel.logs.zip does not hold them a second time.
+    #[arg(long)]
+    pub remove_packed: bool,
 }
 
 /// Reads `--since`: a time of RFC 3339, such as `2026-10-21T08:00:00Z`.
@@ -118,6 +122,8 @@ pub(crate) struct Publish<'a> {
     pub since: Option<SystemTime>,
     /// Whether the output is the default one, which the step owns even without its marker.
     pub out_owned: bool,
+    /// Whether the step removes the bundle directories that the published archive holds from the testlogs.
+    pub remove_packed: bool,
 }
 
 /// Runs `air-trace teamcity-publish`: the service messages on stdout, a summary line and each problem on stderr. It
@@ -187,10 +193,11 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
         },
         (None, None) => None,
     };
+    let on_team_city = is_build_step(variable);
     let tools = Tools {
         node: args.node.clone().filter(|node| !node.as_os_str().is_empty()),
         pnpm: args.pnpm.clone().filter(|pnpm| !pnpm.as_os_str().is_empty()),
-        on_team_city: is_build_step(variable),
+        on_team_city,
     };
     let viewer = viewer_source(viewer_dir, workspace, tools);
     let job = Publish {
@@ -200,6 +207,7 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
         build: build.as_ref(),
         since,
         out_owned: args.out.is_none(),
+        remove_packed: args.remove_packed || on_team_city,
     };
     if let Err(refused) = publish(&job, stdout, stderr) {
         report(stderr, "teamcity-publish", &refused);
@@ -366,6 +374,7 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
     let mut written = BTreeSet::new();
     let mut scenarios = Vec::new();
     let mut zips = Vec::new();
+    let mut packed_dirs = Vec::new();
     let mut problems = 0;
     for test in tests {
         let state = &mut roots[test.root];
@@ -423,12 +432,15 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
                 Location::Zip { path, prefix } => pack_zip_bundle(path, prefix, &zip),
                 Location::File => continue,
             };
-            if let Err(error) = packed {
-                let problem = format!("{}: {error}", bundle.source.path);
-                warn(stdout, stderr, &problem).map_err(write_failed)?;
-                state.problems.push(problem);
-                continue;
-            }
+            let left_out = match packed {
+                Ok(packed) => packed.skipped,
+                Err(error) => {
+                    let problem = format!("{}: {error}", bundle.source.path);
+                    warn(stdout, stderr, &problem).map_err(write_failed)?;
+                    state.problems.push(problem);
+                    continue;
+                }
+            };
             let relative = format!("{lane}/{class_dir}/{stem}.zip");
             let mut lines = Vec::new();
             let failure = if matches!(bundle.status, Status::Failed | Status::Aborted) {
@@ -477,6 +489,15 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
                 writeln!(stdout, "{line}").map_err(write_failed)?;
             }
             zips.push((relative.clone(), zip));
+            if let Location::Dir(bundle_dir) = &bundle.location {
+                packed_dirs.push(PackedDir {
+                    dir: bundle_dir.clone(),
+                    traces: test.xml.parent().unwrap_or(Path::new("")).join(TEST_OUTPUTS).join(ROOT_DIR_NAME),
+                    root: job.testlogs[test.root].clone(),
+                    // The zip has no copy of what the packer left out. Only a temporary file of a recorder may go.
+                    left_out: left_out.into_iter().filter(|item| !item.path.ends_with(PARTIAL_SUFFIX)).collect(),
+                });
+            }
             scenarios.push(published_scenario(bundle, relative, origin.as_ref()));
             state.bundles += 1;
         }
@@ -510,6 +531,20 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
                 writeln!(stdout, "{line}").map_err(write_failed)?;
             }
             say(stderr, &format!("{ARCHIVE} holds {} entries in {bytes} bytes", entries.len())).map_err(write_failed)?;
+            if job.remove_packed {
+                let removal = remove_packed(&packed_dirs);
+                for problem in &removal.problems {
+                    warn(stdout, stderr, problem).map_err(write_failed)?;
+                }
+                say(
+                    stderr,
+                    &format!(
+                        "removed {} packed bundle(s) with {} bytes from the testlogs",
+                        removal.removed, removal.bytes
+                    ),
+                )
+                .map_err(write_failed)?;
+            }
         }
         Err(error) => {
             problems += 1;
@@ -517,6 +552,119 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
         }
     }
     summarize(stderr, published, xmls, out, problems).map_err(write_failed)
+}
+
+/// A bundle directory of the testlogs that the archive holds.
+struct PackedDir {
+    /// The real directory of the bundle.
+    dir: PathBuf,
+    /// The `test.outputs/air-traces` directory of its test.
+    traces: PathBuf,
+    /// The testlogs directory of its test.
+    root: PathBuf,
+    /// What the zip of the bundle does not hold, other than a temporary file of a recorder.
+    left_out: Vec<Skipped>,
+}
+
+/// What [remove_packed] did.
+#[derive(Debug, Default, PartialEq, Eq)]
+struct Removal {
+    removed: usize,
+    /// The bytes of the removed files. A file with another hard link frees no disk space, but it leaves the testlogs.
+    bytes: u64,
+    problems: Vec<String>,
+}
+
+/// Removes the bundle directories that the published archive holds from the testlogs. TeamCity packs the testlogs
+/// into bazel.logs.zip at the end of the build, which would hold the bundles a second time. A directory is removed
+/// only when it is a directory and no link. Its real path must be inside the `test.outputs/air-traces` of its test,
+/// inside its testlogs. A directory stays when the zip does not hold all of it, such as a link to a directory. The
+/// other outputs of the test stay, such as `outputs.zip` and the Allure results. A directory of a run or of a class
+/// that the removal empties goes too. A directory that is not removed is a problem.
+fn remove_packed(packed: &[PackedDir]) -> Removal {
+    let mut removal = Removal::default();
+    for item in packed {
+        match remove_bundle_dir(item) {
+            Ok(bytes) => {
+                removal.removed += 1;
+                removal.bytes += bytes;
+            }
+            Err(reason) => removal
+                .problems
+                .push(format!("{} stays in the testlogs: {reason}", item.dir.display())),
+        }
+    }
+    removal
+}
+
+/// Removes one packed bundle directory, after the checks of [remove_packed]. Answers the bytes of its files.
+fn remove_bundle_dir(item: &PackedDir) -> Result<u64, String> {
+    if let Some(first) = item.left_out.first() {
+        let more = match item.left_out.len() - 1 {
+            0 => String::new(),
+            more => format!(" and {more} more"),
+        };
+        return Err(format!("its zip does not hold {} ({}){more}", first.path, first.reason));
+    }
+    let kind = fs::symlink_metadata(&item.dir).map_err(|error| error.to_string())?.file_type();
+    if !kind.is_dir() {
+        return Err("it is not a directory".to_owned());
+    }
+    let real = |path: &Path| fscopy::real_path(path).map_err(|error| format!("{}: {error}", path.display()));
+    let (dir, traces, root) = (real(&item.dir)?, real(&item.traces)?, real(&item.root)?);
+    if dir == traces || !dir.starts_with(&traces) || !traces.starts_with(&root) {
+        return Err(format!("it is not inside {} of the testlogs {}", traces.display(), root.display()));
+    }
+    // A Bazel output is read-only. A directory must be writable for its entries to go, from the traces directory down.
+    let writable = |path: &Path| make_writable(path).map_err(|error| format!("{}: {error}", path.display()));
+    for ancestor in dir.ancestors().skip(1).take_while(|ancestor| ancestor.starts_with(&traces)) {
+        writable(ancestor)?;
+    }
+    let mut bytes = 0;
+    for entry in walkdir::WalkDir::new(&dir) {
+        let entry = entry.map_err(|error| error.to_string())?;
+        let kind = entry.file_type();
+        // A link is removed as a link; its target is neither read nor changed.
+        if kind.is_file() {
+            bytes += entry.metadata().map_err(|error| error.to_string())?.len();
+        }
+        if kind.is_dir() || kind.is_file() {
+            writable(entry.path())?;
+        }
+    }
+    fs::remove_dir_all(&dir).map_err(|error| format!("cannot remove it: {error}"))?;
+    let mut parent = dir.parent();
+    while let Some(empty) = parent.filter(|parent| *parent != traces && parent.starts_with(&traces)) {
+        if fs::remove_dir(empty).is_err() {
+            break;
+        }
+        parent = empty.parent();
+    }
+    Ok(bytes)
+}
+
+/// Gives the owner of `path` the right to write it, when the owner has none. Only a file or a directory, never a link.
+fn make_writable(path: &Path) -> io::Result<()> {
+    let permissions = fs::symlink_metadata(path)?.permissions();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mode = permissions.mode();
+        if mode & 0o200 == 0 {
+            fs::set_permissions(path, fs::Permissions::from_mode(mode | 0o200))?;
+        }
+    }
+    #[cfg(not(unix))]
+    if permissions.readonly() {
+        let mut permissions = permissions;
+        #[expect(
+            clippy::permissions_set_readonly_false,
+            reason = "Windows has only the read-only attribute, and the entry is about to be removed"
+        )]
+        permissions.set_readonly(false);
+        fs::set_permissions(path, permissions)?;
+    }
+    Ok(())
 }
 
 /// Where the loose files of one failed scenario go: a directory of the output, and its artifact directory.

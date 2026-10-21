@@ -173,14 +173,6 @@ fn teamcity_publish_takes_its_tools_from_the_variables_and_starts_no_bazel_on_te
     );
     assert!(!calls.exists(), "no Bazel runs: {stderr}");
 
-    let (exit, stderr) = publish_with(fixture.path(), &[("TEAMCITY_VERSION", "2026.3 EAP (build 265562)")]);
-    assert_eq!(exit, Some(0), "{stderr}");
-    assert!(
-        stderr.contains("no viewer: on TeamCity the step starts no Bazel to find node and pnpm"),
-        "{stderr}"
-    );
-    assert!(!calls.exists(), "no Bazel runs on TeamCity: {stderr}");
-
     let (exit, stderr) = publish_with(fixture.path(), &[]);
     assert_eq!(exit, Some(0), "{stderr}");
     assert!(
@@ -192,4 +184,59 @@ fn teamcity_publish_takes_its_tools_from_the_variables_and_starts_no_bazel_on_te
         asked.starts_with("cquery "),
         "a local step asks the Bazel of the checkout: {asked:?} {stderr}"
     );
+    std::fs::remove_file(&calls).unwrap();
+
+    let (exit, stderr) = publish_with(fixture.path(), &[("TEAMCITY_VERSION", "2026.3 EAP (build 265562)")]);
+    assert_eq!(exit, Some(0), "{stderr}");
+    assert!(
+        stderr.contains("no viewer: on TeamCity the step starts no Bazel to find node and pnpm"),
+        "{stderr}"
+    );
+    assert!(!calls.exists(), "no Bazel runs on TeamCity: {stderr}");
+}
+
+/// Off TeamCity the testlogs keep their bundles, unless `--remove-packed` asks. On TeamCity the step removes the
+/// bundles that it published from the testlogs.
+#[cfg(unix)]
+#[test]
+fn teamcity_publish_removes_the_packed_bundles_on_team_city_or_when_asked() {
+    let bundle = |fixture: &tempfile::TempDir| {
+        avl_trace::bundle::bundle_file(
+            &fixture.path().join("testlogs/ui/ui_lane_test/test.outputs/air-traces"),
+            &avl_trace::bundle::bundle_path("iter-1", "AirComposerUiTest", "sends a prompt"),
+        )
+    };
+    let none = [("AIR_TRACE_NODE", "none"), ("AIR_TRACE_PNPM", "none")];
+
+    let local = publish_fixture();
+    let (exit, stderr) = publish_with(local.path(), &none);
+    assert_eq!(exit, Some(0), "{stderr}");
+    assert!(
+        bundle(&local).join(avl_trace::bundle::MANIFEST_FILE).is_file(),
+        "a local step keeps the testlogs: {stderr}"
+    );
+    assert!(!stderr.contains("removed "), "{stderr}");
+
+    let asked = publish_fixture();
+    let output = Command::new(air_trace())
+        .args(["teamcity-publish", "--remove-packed", "--testlogs"])
+        .arg(asked.path().join("testlogs"))
+        .arg("--out")
+        .arg(asked.path().join("out"))
+        .envs(none)
+        .env_remove("TEAMCITY_VERSION")
+        .env_remove("BUILD_WORKSPACE_DIRECTORY")
+        .stdin(Stdio::null())
+        .output()
+        .unwrap();
+    let stderr = String::from_utf8(output.stderr).unwrap();
+    assert_eq!(output.status.code(), Some(0), "{stderr}");
+    assert!(stderr.contains("removed 1 packed bundle(s) with "), "{stderr}");
+    assert!(!bundle(&asked).exists(), "{stderr}");
+
+    let on_team_city = publish_fixture();
+    let (exit, stderr) = publish_with(on_team_city.path(), &[none[0], none[1], ("TEAMCITY_VERSION", "2026.3")]);
+    assert_eq!(exit, Some(0), "{stderr}");
+    assert!(stderr.contains("removed 1 packed bundle(s) with "), "{stderr}");
+    assert!(!bundle(&on_team_city).exists(), "{stderr}");
 }
