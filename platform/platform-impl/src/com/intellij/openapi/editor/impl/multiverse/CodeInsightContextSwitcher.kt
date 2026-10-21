@@ -307,7 +307,8 @@ internal class CodeInsightContextSwitcher(
      * applies new active context to the switcher
      */
     fun applyNewActiveContext(presentation: CodeInsightContextPresentation) {
-      processUpdate {
+      // Deliberately not processUpdate: a later recompute, such as the sampled echo of an earlier change, cancels a queued or running click.
+      scope.launch {
         setContext(presentation)
       }
     }
