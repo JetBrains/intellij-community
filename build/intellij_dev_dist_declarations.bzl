@@ -15,7 +15,7 @@ load("//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plat
 load("//platform/build-scripts/bazel-rules:dev_dist_product_files.bzl", "dev_dist_product_files", "home_prefix", "product_info_destination")
 load("//platform/build-scripts/bazel-rules:dev_dist_runtime_module_repository.bzl", "dev_dist_runtime_layout_parts", "dev_dist_runtime_module_repository")
 load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "intellij_dev_fragments_dist", "intellij_dev_packed_jars_component")
-load(":dev_launch_dependencies.bzl", "HOST_PLATFORMS", "jbr_runtime_repository_label", "platform_parts")
+load(":dev_launch_dependencies.bzl", "HOST_PLATFORMS", "jbr_runtime_executable_list_label", "jbr_runtime_repository_label", "platform_parts")
 load(":intellij_dev.bzl", "export_vm_options", "intellij_dev_java_launcher_binary")
 
 def _plugin_component_entries(platform_prefix, tier, entries):
@@ -284,6 +284,14 @@ def _runtime_executables(platform):
         # Production omits `jspawnhelper` on macOS. The archive gives it the executable bit, and `posix_spawn` needs it.
         return [_RUNTIME_DIRECTORY + "/Contents/Home/bin/", _RUNTIME_DIRECTORY + "/Contents/Home/lib/jspawnhelper"]
     return [_RUNTIME_DIRECTORY + "/bin/", _RUNTIME_DIRECTORY + "/lib/jexec", _RUNTIME_DIRECTORY + "/lib/jspawnhelper"]
+
+def _runtime_executable_lists(platform):
+    """The `unpacked_archive_executable_lists` value of the bundled runtime of one host platform.
+
+    A Windows runtime has no executable list, so the collector does not check its files.
+    """
+    executable_list = jbr_runtime_executable_list_label(platform)
+    return {_RUNTIME_DIRECTORY: executable_list} if executable_list else {}
 
 # The component of `bin/idea.properties`, the vmoptions files, `product-info.json` and `build.txt`, which the product
 # files action renders from the launch model of the product.
@@ -636,6 +644,7 @@ def _platform_set(tables, product, name, target_platform, visibility):
             executable_files = selected(True),
             unpacked_archives = per_platform(lambda platform: {jbr_runtime_repository_label(platform): _RUNTIME_DIRECTORY}),
             unpacked_archive_executables = per_platform(_runtime_executables),
+            unpacked_archive_executable_lists = per_platform(_runtime_executable_lists),
         )
 
     # Declared in the layout's order, which is the composition order the returned lists state.

@@ -111,8 +111,12 @@ fn invalid_platform_jars() {
             "states coreClassPath for a native tree",
         ),
         (
-            r#"[{"source":"in","relativePath":"a.jar","checkSourceMode":true}]"#,
-            "states checkSourceMode, which only a file record can",
+            r#"[{"source":"in","relativePath":"a.jar","executableList":"list.json","archivePath":"a.jar"}]"#,
+            "states executableList or archivePath, which only a file record can",
+        ),
+        (
+            r#"[{"source":"in","relativePath":"a.jar","archivePath":"a.jar"}]"#,
+            "states executableList or archivePath, which only a file record can",
         ),
     ] {
         write_file("jars.json", text);
@@ -172,25 +176,81 @@ fn explicit_files_keep_their_destination() {
     assert_eq!(explicit_files("files.json", "linux").unwrap(), []);
 }
 
-/// A file of an unpacked archive states `checkSourceMode`. The inventory checks the mode of its source for every target
-/// OS except Windows.
-#[test]
-fn explicit_files_check_the_source_mode_of_an_unpacked_archive() {
-    let _directory = WorkingDirectory::enter();
+/// Writes the records of two files of an unpacked archive and one explicit file. `release` states `release_executable`.
+fn write_archive_records(release_executable: bool) {
     write_file(
         "files.json",
-        r#"[
-  {"source":"jbr/bin/java", "relativePath":"jbr/bin/java", "executable":true, "checkSourceMode":true},
-  {"source":"jbr/release", "relativePath":"jbr/release", "executable":false, "checkSourceMode":true},
-  {"source":"build.txt", "relativePath":"build.txt", "executable":false}
-]"#,
+        format!(
+            r#"[
+  {{"source":"external/jbr/bin/java", "relativePath":"jbr/bin/java", "executable":true, "executableList":"external/jbr/list.json", "archivePath":"bin/java"}},
+  {{"source":"external/jbr/release", "relativePath":"jbr/release", "executable":{release_executable}, "executableList":"external/jbr/list.json", "archivePath":"release"}},
+  {{"source":"build.txt", "relativePath":"build.txt", "executable":false}}
+]"#
+        ),
     );
-    for (os, checked) in [("linux", true), ("mac", true), ("windows", false)] {
-        let files = explicit_files("files.json", os).unwrap();
-        assert_eq!(
-            files.iter().map(|file| file.check_source_mode).collect::<Vec<_>>(),
-            [checked, checked, false],
-            "{os}"
+}
+
+/// A file of an unpacked archive takes the executable bit that its record states. The sources do not exist: the
+/// collector reads the executable list and never the mode of a source.
+#[test]
+fn explicit_files_accept_the_executable_list_of_an_unpacked_archive() {
+    let _directory = WorkingDirectory::enter();
+    write_archive_records(false);
+    write_file("external/jbr/list.json", r#"{"executables":["bin/java"]}"#);
+    let files = explicit_files("files.json", "linux").unwrap();
+    assert_eq!(
+        files
+            .iter()
+            .map(|file| (file.relative_path.as_str(), file.executable))
+            .collect::<Vec<_>>(),
+        [("jbr/bin/java", true), ("jbr/release", false), ("build.txt", false)]
+    );
+    // The record can mark a file that the list does not name: production gives the bit by its own patterns.
+    write_archive_records(true);
+    explicit_files("files.json", "linux").unwrap();
+}
+
+/// A runtime bump cannot lose the executable bit of a program: the collector refuses a file that the executable list
+/// names when its record states no executable bit. The check skips the target OS Windows and an unknown list.
+#[test]
+fn explicit_files_refuse_an_executable_archive_file_that_the_record_does_not_mark() {
+    let _directory = WorkingDirectory::enter();
+    write_archive_records(false);
+    write_file("external/jbr/list.json", r#"{"executables":["bin/java","release"]}"#);
+    for os in ["linux", "mac"] {
+        require_error(
+            explicit_files("files.json", os),
+            "'jbr/release' has an executable mode bit in its archive, as external/jbr/list.json states, but the record \
+             states no executable bit. unpacked_archive_executables must name 'jbr/release'",
+        );
+    }
+    explicit_files("files.json", "windows").unwrap();
+    write_file("external/jbr/list.json", r#"{"executables":null}"#);
+    explicit_files("files.json", "linux").unwrap();
+}
+
+#[test]
+fn invalid_executable_lists() {
+    let _directory = WorkingDirectory::enter();
+    write_archive_records(false);
+    require_error(explicit_files("files.json", "linux"), "external/jbr/list.json");
+    for (text, message) in [
+        ("null", "invalid type: null"),
+        (r#"{"executables":["bin/java"],"extra":1}"#, "unknown field"),
+        (r#"{"executables":"bin/java"}"#, "invalid type"),
+    ] {
+        write_file("external/jbr/list.json", text);
+        require_error(explicit_files("files.json", "windows"), message);
+    }
+    for text in [
+        r#"[{"source":"in","relativePath":"out","executable":false,"executableList":"list.json"}]"#,
+        r#"[{"source":"in","relativePath":"out","executable":false,"archivePath":"out"}]"#,
+        r#"[{"source":"in","relativePath":"out","executable":false,"executableList":" ","archivePath":"out"}]"#,
+    ] {
+        write_file("files.json", text);
+        require_error(
+            explicit_files("files.json", "linux"),
+            "record 1 requires both executableList and archivePath, or neither",
         );
     }
 }

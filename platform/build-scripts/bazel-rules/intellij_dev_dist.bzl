@@ -649,14 +649,27 @@ def _place_unpacked_archives(ctx, files, records, destinations, executables):
     """Places every file of each `unpacked_archives` target at `<directory>/<path in the archive>`.
 
     The path in the archive is the label name of the file. The BUILD file of a `dev_launch_extracted_repo` exports each
-    file by its path in the root package, so the name is the path below the archive root. A record also states
-    `checkSourceMode`: the collector then refuses a source with an executable bit that the record does not state.
+    file by its path in the root package, so the name is the path below the archive root. When the archive has an
+    executable list, a record also states `executableList` and `archivePath`. The collector then refuses an archive file
+    that the executable list names and the record does not mark. An archive without a list gets no such check, as a
+    Windows runtime. Returns the executable lists, which are inputs of the collector.
     """
     patterns = ctx.attr.unpacked_archive_executables
     used_patterns = {}
+    lists = {}
+    for directory, target in ctx.attr.unpacked_archive_executable_lists.items():
+        outputs = target.files.to_list()
+        if len(outputs) != 1 or outputs[0].is_directory:
+            fail("%s: %s must provide exactly one ordinary file" % (ctx.label, target.label))
+        lists[directory] = outputs[0]
+    archive_directories = {}
     for target, directory in ctx.attr.unpacked_archives.items():
         if not directory or directory.startswith("/") or directory.endswith("/"):
             fail("%s: %s needs a relative directory without a final '/', not '%s'" % (ctx.label, target.label, directory))
+        if directory in archive_directories:
+            fail("%s: two unpacked_archives go to '%s'" % (ctx.label, directory))
+        archive_directories[directory] = True
+        executable_list = lists.get(directory)
         for file in target[DefaultInfo].files.to_list():
             if file.is_directory:
                 fail("%s: %s provides the directory %s; an unpacked archive provides ordinary files" % (ctx.label, target.label, file.path))
@@ -673,21 +686,28 @@ def _place_unpacked_archives(ctx, files, records, destinations, executables):
             if executable:
                 executables.append(relative_path)
             files.append(file)
-            records.append({
+            record = {
                 "source": file.path,
                 "relativePath": relative_path,
                 "executable": executable,
-                "checkSourceMode": True,
-            })
+            }
+            if executable_list:
+                record["executableList"] = executable_list.path
+                record["archivePath"] = file.owner.name
+            records.append(record)
     for pattern in patterns:
         if pattern not in used_patterns:
             fail("%s: unpacked_archive_executables names '%s', which matches no file of unpacked_archives" % (ctx.label, pattern))
+    for directory in lists:
+        if directory not in archive_directories:
+            fail("%s: unpacked_archive_executable_lists names '%s', which is no directory of unpacked_archives" % (ctx.label, directory))
+    return lists.values()
 
 def _packed_jars_component_impl(ctx):
     if ctx.attr.plugin_classpath_prefix and not ctx.attr.platform_payload:
         fail("%s: plugin_classpath_prefix needs platform_payload" % ctx.label)
     if ctx.attr.platform_payload:
-        if ctx.attr.files or ctx.attr.executable_files or ctx.attr.unpacked_archives:
+        if ctx.attr.files or ctx.attr.executable_files or ctx.attr.unpacked_archives or ctx.attr.unpacked_archive_executable_lists:
             fail("%s: files, executable_files and unpacked_archives cannot be combined with platform_payload" % ctx.label)
         jars = ctx.attr.platform_payload[DevDistPlatformPayloadInfo].packed_jars.to_list()
         records = ctx.attr.platform_payload[DevDistPlatformPayloadInfo].packed_metadata.to_list()
@@ -743,7 +763,7 @@ def _packed_jars_component_impl(ctx):
                 "relativePath": relative_path,
                 "executable": executable,
             })
-    _place_unpacked_archives(ctx, files, records, destinations, executables)
+    executable_lists = _place_unpacked_archives(ctx, files, records, destinations, executables)
     metadata = ctx.actions.declare_file(ctx.label.name + ".files.json")
     ctx.actions.write(metadata, json.encode(records))
     args = ctx.actions.args()
@@ -752,7 +772,7 @@ def _packed_jars_component_impl(ctx):
         ctx,
         files = files,
         collection_args = [args],
-        inputs = [metadata] + files,
+        inputs = [metadata] + executable_lists + files,
         mnemonic = "IntellijDevFiles",
         progress_message = "Naming distribution files for %{label}",
         placement = DevDistPlacementInfo(files = destinations, trees = {}, executables = executables),
@@ -769,7 +789,8 @@ intellij_dev_packed_jars_component = rule(
 
     The file mode also takes unpacked_archives: each file of an extracted repository goes below one directory, at its
     path in the archive. unpacked_archive_executables names the destinations that get the executable bit. The collector
-    refuses an archive file with an executable bit that this list does not name, on macOS and Linux.
+    refuses an archive file with an executable bit that this list does not name, on macOS and Linux. It reads the bit
+    from the executable list of the archive in unpacked_archive_executable_lists, never from the file on disk.
     """,
     implementation = _packed_jars_component_impl,
     attrs = _COLLECTOR_ATTRS | {
@@ -787,6 +808,12 @@ intellij_dev_packed_jars_component = rule(
         "unpacked_archive_executables": attr.string_list(
             doc = "The destinations of `unpacked_archives` that get the executable bit. A value with a final `/` names " +
                   "a directory, and the files directly in it are executable. Each value must name a file.",
+        ),
+        "unpacked_archive_executable_lists": attr.string_keyed_label_dict(
+            allow_files = True,
+            doc = "Maps a directory of `unpacked_archives` to the executable list of its archive, " +
+                  "`dev_launch_executables.json` of a `dev_launch_extracted_repo` with `executable_list`. " +
+                  "A directory without a list gets no check of the executable bits.",
         ),
         "plugin_classpath_prefix": attr.label(
             allow_single_file = True,

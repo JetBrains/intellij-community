@@ -1,13 +1,16 @@
 # The fixture of an unpacked archive. It mirrors the BUILD file of a `dev_launch_extracted_repo`: each file is exported
-# by its path below the package, and `files` groups them.
+# by its path below the package, and `files` groups them. The executable list stays out of `files`.
 package(default_visibility = ["//platform/build-scripts/bazel-rules:__pkg__"])
 
 files = glob(
     ["**"],
-    exclude = ["BUILD.bazel"],
+    exclude = [
+        "BUILD.bazel",
+        "dev_launch_executables.json",
+    ],
 )
 
-exports_files(files)
+exports_files(files + ["dev_launch_executables.json"])
 
 filegroup(
     name = "files",

@@ -26,6 +26,7 @@ load(
 
 # The fixture of an unpacked archive, with the files `bin/tool`, `lib/helper` and `lib/sub/data.txt`.
 _UNPACKED_ARCHIVE = Label("//platform/build-scripts/bazel-rules/testdata/unpacked_archive:files")
+_UNPACKED_ARCHIVE_EXECUTABLE_LIST = Label("//platform/build-scripts/bazel-rules/testdata/unpacked_archive:dev_launch_executables.json")
 
 # The application info of the fixture product, an EAP product without a release date.
 _FIXTURE_APPLICATION_INFO = Label("//platform/build-scripts/bazel-rules:testdata/ApplicationInfo.xml")
@@ -564,7 +565,12 @@ def _unpacked_archive_component_test_impl(ctx):
     asserts.equals(env, {}, placement.trees)
     asserts.equals(env, ["runtime/bin/tool", "runtime/lib/helper"], sorted(placement.executables))
 
-    # The collector reads the same destinations, and checks the source mode of an archive file only.
+    # The collector reads the same destinations. With an executable list, an archive file names the list and its path in
+    # the archive, and the list is an input of the collector. Without a list, the record states neither.
+    collector = [action for action in analysistest.target_actions(env) if action.mnemonic == "IntellijDevFiles"]
+    asserts.equals(env, 1, len(collector))
+    executable_list = [file for file in collector[0].inputs.to_list() if file.basename == "dev_launch_executables.json"] if collector else []
+    asserts.equals(env, 1 if ctx.attr.executable_list else 0, len(executable_list))
     written = [
         json.decode(action.content)
         for action in analysistest.target_actions(env)
@@ -578,11 +584,13 @@ def _unpacked_archive_component_test_impl(ctx):
         record = records.get(destination, {})
         asserts.equals(env, placement.files[destination].path, record.get("source"))
         asserts.equals(env, destination in placement.executables, record.get("executable"))
-        asserts.equals(env, True, record.get("checkSourceMode"))
+        asserts.equals(env, executable_list[0].path if executable_list else None, record.get("executableList"))
+        asserts.equals(env, destination.removeprefix("runtime/") if ctx.attr.executable_list else None, record.get("archivePath"))
     return analysistest.end(env)
 
 _unpacked_archive_component_test = analysistest.make(
     _unpacked_archive_component_test_impl,
+    attrs = {"executable_list": attr.bool(mandatory = True)},
     config_settings = {_TRACE_SPANS: False},
 )
 
@@ -1061,26 +1069,37 @@ def dev_dist_content_test_suite(name):
         tests.append(files_component + "_test")
         _files_component_test(name = tests[-1], target_under_test = ":" + files_component, main_class = main_class)
 
-    # An unpacked archive below one directory, beside an explicit file. Then the inputs that the rule refuses: a
-    # destination that both an explicit file and the archive place, and an executable value that names no archive file.
-    archive_component = name + "_unpacked_archive_component"
-    intellij_dev_packed_jars_component(
-        name = archive_component,
-        collector = ":" + fixture,
-        component_name = "platform_assets",
-        platform_prefix = "idea",
-        target_platform = "linux_x64",
-        files = {"build.txt": ":" + build_txt},
-        unpacked_archives = {_UNPACKED_ARCHIVE: "runtime"},
-        unpacked_archive_executables = ["runtime/bin/tool", "runtime/lib/"],
-        tags = ["manual"],
-    )
-    tests.append(archive_component + "_test")
-    _unpacked_archive_component_test(name = tests[-1], target_under_test = ":" + archive_component)
-    for case, files, executables, message in [
-        ("duplicate", {"runtime/bin/tool": ":" + build_txt}, [], "duplicate destination: runtime/bin/tool"),
-        ("unknown_executable", {}, ["runtime/lib/sub"], "unpacked_archive_executables names 'runtime/lib/sub', which matches no file of unpacked_archives"),
-        ("unknown_executable_directory", {}, ["runtime/bin/sub/"], "unpacked_archive_executables names 'runtime/bin/sub/', which matches no file of unpacked_archives"),
+    # An unpacked archive below one directory, beside an explicit file, with and without an executable list. Then the
+    # inputs that the rule refuses: a destination that both an explicit file and the archive place, an executable value
+    # that names no archive file, and an executable list that names no directory of an archive.
+    runtime_list = {"runtime": _UNPACKED_ARCHIVE_EXECUTABLE_LIST}
+    for suffix, lists in [("", runtime_list), ("_without_executable_list", {})]:
+        archive_component = name + "_unpacked_archive_component" + suffix
+        intellij_dev_packed_jars_component(
+            name = archive_component,
+            collector = ":" + fixture,
+            component_name = "platform_assets",
+            platform_prefix = "idea",
+            target_platform = "linux_x64",
+            files = {"build.txt": ":" + build_txt},
+            unpacked_archives = {_UNPACKED_ARCHIVE: "runtime"},
+            unpacked_archive_executables = ["runtime/bin/tool", "runtime/lib/"],
+            unpacked_archive_executable_lists = lists,
+            tags = ["manual"],
+        )
+        tests.append(archive_component + "_test")
+        _unpacked_archive_component_test(name = tests[-1], target_under_test = ":" + archive_component, executable_list = bool(lists))
+    for case, files, executables, lists, message in [
+        ("duplicate", {"runtime/bin/tool": ":" + build_txt}, [], runtime_list, "duplicate destination: runtime/bin/tool"),
+        ("unknown_executable", {}, ["runtime/lib/sub"], runtime_list, "unpacked_archive_executables names 'runtime/lib/sub', which matches no file of unpacked_archives"),
+        ("unknown_executable_directory", {}, ["runtime/bin/sub/"], runtime_list, "unpacked_archive_executables names 'runtime/bin/sub/', which matches no file of unpacked_archives"),
+        (
+            "unknown_executable_list",
+            {},
+            [],
+            runtime_list | {"other": _UNPACKED_ARCHIVE_EXECUTABLE_LIST},
+            "unpacked_archive_executable_lists names 'other', which is no directory of unpacked_archives",
+        ),
     ]:
         refused = "%s_unpacked_archive_%s" % (name, case)
         intellij_dev_packed_jars_component(
@@ -1092,6 +1111,7 @@ def dev_dist_content_test_suite(name):
             files = files,
             unpacked_archives = {_UNPACKED_ARCHIVE: "runtime"},
             unpacked_archive_executables = executables,
+            unpacked_archive_executable_lists = lists,
             tags = ["manual"],
         )
         tests.append(refused + "_test")

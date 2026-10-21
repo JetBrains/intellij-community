@@ -52,6 +52,9 @@ _COMMUNITY_DEPENDENCIES = Label("//build:dependencies/dependencies.properties")
 
 MANIFEST_NAME = "preloaded-downloads-v1.tsv"
 
+# The executable list of a `dev_launch_extracted_repo`. See `_executable_files`.
+EXECUTABLE_LIST_NAME = "dev_launch_executables.json"
+
 # BuildDependenciesConstants.PRELOADED_DOWNLOADS_MANIFEST_PROPERTY
 _MANIFEST_PROPERTY = "intellij.build.download.preloaded.manifest"
 
@@ -200,6 +203,21 @@ dev_launch_deps_repo = repository_rule(
     },
 )
 
+def _executable_files(repository_ctx):
+    """The sorted paths of the extracted files with an executable mode bit, or `None` on a Windows host.
+
+    Only the fetch sees the modes of the archive. Bazel can restore the repository from the remote repo contents cache,
+    and then it writes each file that an action reads with the mode `0555`. The list is part of the repository
+    contents, so it keeps the modes of the archive. A Windows file system has no executable bit, so the list is unknown
+    there. `-L` follows a link, as the collector does.
+    """
+    if repository_ctx.os.name.startswith("windows"):
+        return None
+    result = repository_ctx.execute(["find", "-L", ".", "-type", "f", "(", "-perm", "-100", "-o", "-perm", "-010", "-o", "-perm", "-001", ")"])
+    if result.return_code != 0:
+        fail("cannot list the executable files of %s: %s" % (repository_ctx.attr.url, result.stderr))
+    return sorted([line.removeprefix("./") for line in result.stdout.splitlines() if line])
+
 def _extracted_repo_impl(repository_ctx):
     urls = [repository_ctx.attr.url]
     result = repository_ctx.download_and_extract(
@@ -209,19 +227,30 @@ def _extracted_repo_impl(repository_ctx):
         canonical_id = get_default_canonical_id(repository_ctx, urls),
         auth = get_auth(repository_ctx, urls),
     )
+    exported = []
+    executables = None
+    if repository_ctx.attr.executable_list:
+        executables = _executable_files(repository_ctx)
+        repository_ctx.file(EXECUTABLE_LIST_NAME, json.encode({"executables": executables}) + "\n", executable = False)
+        exported.append(EXECUTABLE_LIST_NAME)
     repository_ctx.file(
         "BUILD",
         """
 package(default_visibility = ["//visibility:public"])
 files = glob(["**"], exclude = %s, allow_empty = False)
-exports_files(files)
+exports_files(files + %s)
 filegroup(
     name = "files",
     srcs = files,
 )
-""" % repr(["BUILD", "BUILD.bazel", "REPO.bazel"] + repository_ctx.attr.excludes),
+""" % (repr(["BUILD", "BUILD.bazel", "REPO.bazel"] + exported + repository_ctx.attr.excludes), repr(exported)),
     )
-    return repository_ctx.repo_metadata(reproducible = bool(repository_ctx.attr.sha256) or bool(result.sha256))
+
+    # A repository with an unknown executable list stays out of the repo contents cache, so a Windows fetch cannot
+    # hand it to a macOS or Linux host. A repository without a list stays reproducible on every host.
+    pinned = bool(repository_ctx.attr.sha256) or bool(result.sha256)
+    known_list = not repository_ctx.attr.executable_list or executables != None
+    return repository_ctx.repo_metadata(reproducible = pinned and known_list)
 
 dev_launch_extracted_repo = repository_rule(
     doc = """An archive a dev assembly needs *unpacked*, extracted once by Bazel instead of by the build.
@@ -232,6 +261,10 @@ dev_launch_extracted_repo = repository_rule(
     archive whose *contents* the assembly reads is extracted here, the same way `bun` is (see the ultimate MODULE.bazel),
     and the consumer is handed files rather than a directory it has to populate. The `excludes` globs drop the junk
     entries an archive carries, such as `.DS_Store`.
+
+    With `executable_list`, the repository also exports its executable list, `dev_launch_executables.json`, apart from
+    `files`. The list names each file that the archive gives an executable mode bit, as `{"executables": [<path>, ...]}`.
+    On a Windows host the value is `null`, and the repository is not reproducible.
     """,
     implementation = _extracted_repo_impl,
     environ = [DEFAULT_CANONICAL_ID_ENV],
@@ -239,6 +272,9 @@ dev_launch_extracted_repo = repository_rule(
         # globs of the extracted files that the `files` filegroup leaves out, beside the BUILD files and the `REPO.bazel`
         # boundary file that Bazel writes into the repository
         "excludes": attr.string_list(),
+        # writes and exports `dev_launch_executables.json`. Only a repository whose list the collector reads sets it,
+        # because a fetch on a Windows host then keeps the repository out of the repo contents cache.
+        "executable_list": attr.bool(default = False),
         # optional, exactly as in dev_launch_deps_repo: these URLs carry their version, so the same URL is the same
         # artifact and an unpinned fetch costs a re-download only when the version moves
         "sha256": attr.string(),
@@ -399,6 +435,15 @@ def jbr_runtime_repository_label(platform):
     platform_parts(platform)
     return Label("@dev_launch_%s_jbr_runtime_extracted//:files" % platform)
 
+def jbr_runtime_executable_list_label(platform):
+    """The executable list of the repository of [jbr_runtime_repository_label], or `None` for a Windows platform.
+
+    A Windows target gives a file no executable bit, so the collector does not read the list of a Windows runtime.
+    """
+    if platform_parts(platform).os == "windows":
+        return None
+    return Label("@dev_launch_%s_jbr_runtime_extracted//:%s" % (platform, EXECUTABLE_LIST_NAME))
+
 def _dev_launch_deps_community_impl(module_ctx):
     community = read_properties(module_ctx, _COMMUNITY_DEPENDENCIES)
 
@@ -522,6 +567,7 @@ def _dev_launch_deps_community_impl(module_ctx):
             url = jbr_runtime_url(platform, runtime_build),
             strip_prefix = jbr_runtime_archive_root(platform, runtime_build),
             excludes = ["**/.DS_Store"],
+            executable_list = jbr_runtime_executable_list_label(platform) != None,
         )
 
     # the same watched inputs always produce the same repositories, so this stays out of MODULE.bazel.lock
