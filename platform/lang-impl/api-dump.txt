@@ -2690,8 +2690,6 @@ c:com.intellij.ide.fileTemplates.actions.CreateFromTemplateAction
 a:com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase
 - com.intellij.openapi.actionSystem.AnAction
 - s:startLiveTemplate(com.intellij.psi.PsiFile):V
-f:com.intellij.ide.fileTemplates.actions.FileTemplateSeparator
-- com.intellij.openapi.actionSystem.ActionGroup
 f:com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable
 - com.intellij.openapi.options.Configurable$NoMargin
 - com.intellij.openapi.options.Configurable$NoScroll

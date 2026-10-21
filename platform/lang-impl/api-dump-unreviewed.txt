@@ -3929,10 +3929,6 @@ f:com.intellij.ide.fileTemplates.actions.CreateFromTemplateManager
 - <init>():V
 - s:startLiveTemplate(com.intellij.psi.PsiFile):V
 - s:startLiveTemplate(com.intellij.psi.PsiFile,java.util.Map):V
-f:com.intellij.ide.fileTemplates.actions.FileTemplateSeparator
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
 f:com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable
 - <init>(com.intellij.openapi.project.Project):V
 - apply():V
