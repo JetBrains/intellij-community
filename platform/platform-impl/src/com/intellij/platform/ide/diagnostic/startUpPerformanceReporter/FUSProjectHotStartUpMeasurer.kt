@@ -196,6 +196,7 @@ object FUSProjectHotStartUpMeasurer {
       return null
     }
     sendEvent(Event.IdeStarterStartedEvent)
+    WelcomeScreenCollector.reportingBegan()
     return MyMarker
   }
 

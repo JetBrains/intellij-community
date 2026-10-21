@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.diagnostic.startUpPerformanceReporter
 
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.createDurationField
@@ -61,6 +62,12 @@ internal object WelcomeScreenCollector {
   fun shouldNotStart() {
     channel.close()
     statsIsWritten = true
+  }
+
+  fun reportingBegan() {
+    if (!AppMode.isMonolith()) {
+      shouldNotStart()
+    }
   }
 
   fun modalWelcomeScreenBecameVisible() {
