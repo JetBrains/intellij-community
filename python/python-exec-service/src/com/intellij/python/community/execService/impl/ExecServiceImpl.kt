@@ -15,6 +15,7 @@ import com.intellij.python.community.execService.ExecOptionsBase
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.ExecuteGetProcessError
 import com.intellij.python.community.execService.ProcessInteractiveHandler
+import com.intellij.python.community.execService.ProcessWithForwardedPorts
 import com.intellij.python.community.execService.impl.processLaunchers.LaunchRequest
 import com.intellij.python.community.execService.impl.processLaunchers.ProcessLauncher
 import com.intellij.python.community.execService.impl.processLaunchers.createProcessLauncherOnEel
@@ -27,6 +28,7 @@ import com.jetbrains.python.errorProcessing.ExecErrorReason
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.failure
+import com.jetbrains.python.onFailure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.coroutineScope
@@ -49,13 +51,22 @@ internal class ExecServiceImpl private constructor(private val defaultScope: Cor
     args: Args,
     scopeToBind: CoroutineScope?,
     options: ExecGetProcessOptions,
-  ): Result<Process, ExecuteGetProcessError<*>> {
-    val launcher = create(binary, args, options, scopeToBind).getOr { return it }
+  ): Result<Process, ExecuteGetProcessError<*>> =
+    executeGetProcessForwardingPorts(binary, emptySet(), args, scopeToBind, options).mapSuccess { it.process }
+
+  override suspend fun executeGetProcessForwardingPorts(
+    binary: BinaryToExec,
+    portsToForward: Set<UShort>,
+    args: Args,
+    scopeToBind: CoroutineScope?,
+    options: ExecGetProcessOptions,
+  ): Result<ProcessWithForwardedPorts, ExecuteGetProcessError<*>> {
+    val launcher = create(binary, args, options, scopeToBind, portsToForward).getOr { return it }
     val process = launcher.start().getOr {
       val createExecError = launcher.createExecError(options.processDescription ?: "", it.error).error
       return Result.failure(ExecuteGetProcessError.CanStart(createExecError))
     }
-    return Result.success(process)
+    return Result.success(ProcessWithForwardedPorts(process, launcher.forwardedPorts))
   }
 
   private suspend fun create(
@@ -63,20 +74,20 @@ internal class ExecServiceImpl private constructor(private val defaultScope: Cor
     args: Args,
     options: ExecOptionsBase,
     scopeToBind: CoroutineScope? = null,
+    portsToForward: Set<UShort> = emptySet(),
   ): Result<ProcessLauncher, ExecuteGetProcessError.EnvironmentError> {
     val scope = scopeToBind ?: defaultScope
-    val request = LaunchRequest(scope, args, options.env, options.tty, options.uploadBeforeExecution, options.downloadAfterExecution)
-    return Result.success(
-      when (binary) {
-        is BinOnEel -> createProcessLauncherOnEel(binary, request)
-        is BinOnTarget -> createProcessLauncherOnTarget(binary, request).getOr {
-          options.processDescription?.let { message ->
-            it.error.pyError.addMessage(message) // TODO: 18n
-          }
-          return it
-        }
+    val request = LaunchRequest(scope, args, options.env, options.tty, options.uploadBeforeExecution, options.downloadAfterExecution,
+                                portsToForward)
+    val launcher = when (binary) {
+      is BinOnEel -> createProcessLauncherOnEel(binary, request)
+      is BinOnTarget -> createProcessLauncherOnTarget(binary, request)
+    }
+    return launcher.onFailure {
+      options.processDescription?.let { message ->
+        it.pyError.addMessage(message) // TODO: 18n
       }
-    )
+    }
   }
 
   override suspend fun <T> executeAdvanced(

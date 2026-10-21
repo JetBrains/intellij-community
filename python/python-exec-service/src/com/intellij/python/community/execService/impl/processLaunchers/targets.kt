@@ -7,6 +7,7 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.Platform
 import com.intellij.execution.process.LocalPtyOptions
 import com.intellij.execution.target.FullPathOnTarget
+import com.intellij.execution.target.HostPort
 import com.intellij.execution.target.PathMapping
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.TargetEnvironmentRequest
@@ -107,6 +108,10 @@ internal suspend fun createProcessLauncherOnTarget(
     request.downloadVolumes.addAll(downloadRoots)
   }
 
+  for (port in launchRequest.portsToForward) {
+    request.targetPortBindings += TargetEnvironment.TargetPortBinding(null, port.toInt())
+  }
+
   val targetEnv = try {
     request.prepareEnvironment(TargetProgressIndicator.EMPTY)
   }
@@ -119,6 +124,11 @@ internal suspend fun createProcessLauncherOnTarget(
     return@withContext Result.failure(ExecuteGetProcessError.EnvironmentError(MessageError("Failed to start environment due to ${e.localizedMessage}")))
   }
   val workingDirOnTarget = workingDir?.let { targetEnv.getTargetPaths(it.pathString).firstOrNull() ?: it.pathString }
+  val forwardedPorts = launchRequest.portsToForward.associateWith { port ->
+    // A target that shares the network of the IDE, such as the local one, does not bind the port. Then the port stays as it is.
+    targetEnv.targetPortBindings[TargetEnvironment.TargetPortBinding(null, port.toInt())]?.localEndpoint
+    ?: HostPort(LOOPBACK_ADDRESS, port.toInt())
+  }
   val uploadConfig = launchRequest.uploadConfig
   if (uploadConfig?.ensureWorkingDirectoryExists == true && workingDirOnTarget != null) {
     ensureTargetDirectoryExists(targetEnv, request, workingDirOnTarget).getOr { failure ->
@@ -190,7 +200,8 @@ internal suspend fun createProcessLauncherOnTarget(
                                                                                             targetEnv,
                                                                                             cmdLine,
                                                                                             downloadConfig,
-                                                                                            dirsToDownload)))
+                                                                                            dirsToDownload),
+                                                    forwardedPorts = forwardedPorts))
 }
 
 private fun uploadVolume(

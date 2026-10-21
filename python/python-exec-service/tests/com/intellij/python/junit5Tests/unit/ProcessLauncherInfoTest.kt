@@ -8,6 +8,7 @@ import com.intellij.python.community.execService.impl.processLaunchers.LaunchReq
 import com.intellij.python.community.execService.impl.processLaunchers.createProcessLauncherOnEel
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.jetbrains.python.getOrThrow
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -30,7 +31,7 @@ internal class ProcessLauncherInfoTest {
     val launcher = createProcessLauncherOnEel(
       BinOnEel(path = tempDir / "tool", workDir = workDir.asEelPath()),
       LaunchRequest(scopeToBind = this, args = Args(), env = emptyMap(), usePty = null),
-    )
+    ).getOrThrow()
     workDir.deleteExisting()
     assertEquals(workDir.pathString, launcher.processCommands.info.cwd)
   }

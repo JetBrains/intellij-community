@@ -3,6 +3,7 @@ package com.intellij.python.community.execService.impl.processLaunchers
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.execution.target.FullPathOnTarget
+import com.intellij.execution.target.HostPort
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.debug
@@ -10,23 +11,31 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.EelConnectionError
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.eel.EelProxy
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.convertToJVMProcess
+import com.intellij.platform.eel.eelProxy
 import com.intellij.platform.eel.impl.base.ProcessFunctions
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.EelFileTransferAttributesStrategy
 import com.intellij.platform.eel.provider.utils.EelPathTransfer
 import com.intellij.platform.eel.provider.utils.EelPathUtils
+import com.intellij.platform.eel.provider.utils.acceptOnTcpPort
+import com.intellij.platform.eel.provider.utils.connectToTcpPort
 import com.intellij.platform.eel.spawnProcess
 import com.intellij.project.stateStore
 import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.ExecuteGetProcessError
 import com.intellij.python.community.execService.TtySize
 import com.intellij.python.community.execService.impl.Arg
 import com.intellij.python.community.execService.impl.PathMapper
@@ -37,10 +46,12 @@ import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.Exe
 import com.jetbrains.python.errorProcessing.ExecErrorReason
+import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.sdk.getModuleRoots
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -59,7 +70,10 @@ import kotlin.time.toJavaDuration
 
 private val log = fileLogger()
 
-internal suspend fun createProcessLauncherOnEel(binOnEel: BinOnEel, launchRequest: LaunchRequest): ProcessLauncher {
+internal suspend fun createProcessLauncherOnEel(
+  binOnEel: BinOnEel,
+  launchRequest: LaunchRequest,
+): Result<ProcessLauncher, ExecuteGetProcessError.EnvironmentError> {
   val exePath: EelPath = with(binOnEel) {
     if (path.isAbsolute) {
       path.asEelPath()
@@ -106,7 +120,11 @@ internal suspend fun createProcessLauncherOnEel(binOnEel: BinOnEel, launchReques
       is Arg.DirArg -> localArg.root.takeIf { localArg.download }
     }
   }
-  return ProcessLauncher(
+  val portProxies = createPortProxies(eel, launchRequest.portsToForward).getOr { return it }
+  val forwardedPorts = launchRequest.portsToForward.associateWith { port ->
+    HostPort(LOOPBACK_ADDRESS, (portProxies[port]?.acceptor?.boundAddress?.port ?: port).toInt())
+  }
+  return Result.success(ProcessLauncher(
     exeForError = Exe.OnEel(exePath),
     args = args,
     processCommands = EelProcessCommands(launchRequest.scopeToBind,
@@ -115,8 +133,37 @@ internal suspend fun createProcessLauncherOnEel(binOnEel: BinOnEel, launchReques
                                          args,
                                          env = launchRequest.getEnvMergingWithPathVars(env, binOnEel.path.getEelDescriptor().osFamily),
                                          tty = launchRequest.usePty,
-                                         downloads = dirsToDownload.mapNotNull { localDir -> remoteCopies[localDir]?.let { it to localDir } })
-  )
+                                         downloads = dirsToDownload.mapNotNull { localDir -> remoteCopies[localDir]?.let { it to localDir } },
+                                         portProxies = portProxies.values.toList()),
+    forwardedPorts = forwardedPorts,
+  ))
+}
+
+/**
+ * For each port of [ports] on [eel], a proxy that accepts connections on a free local port and forwards them to the port.
+ * The proxies do not run yet, see [EelProxy.runForever]. A local [eel] needs no proxy: the IDE connects to the port itself.
+ */
+private suspend fun createPortProxies(
+  eel: EelApi,
+  ports: Set<UShort>,
+): Result<Map<UShort, EelProxy>, ExecuteGetProcessError.EnvironmentError> {
+  if (eel.descriptor == LocalEelDescriptor) return Result.success(emptyMap())
+  val proxies = mutableMapOf<UShort, EelProxy>()
+  for (port in ports) {
+    proxies[port] = try {
+      eelProxy()
+        .acceptOnTcpPort(localEel.tunnels, host = LOOPBACK_ADDRESS, port = 0u)
+        .connectToTcpPort(eel.tunnels, host = LOOPBACK_ADDRESS, port = port)
+        .debugLabel("execService: port $port on ${eel.descriptor.name}")
+        .eelIt()
+    }
+    catch (e: EelConnectionError) {
+      proxies.values.forEach { it.acceptor.close() }
+      val message = PyExecBundle.message("py.exec.port.forwarding.error", port, eel.descriptor.name, e.message ?: e.toString())
+      return Result.failure(ExecuteGetProcessError.EnvironmentError(MessageError(message)))
+    }
+  }
+  return Result.success(proxies)
 }
 
 private class EelProcessCommands(
@@ -130,6 +177,10 @@ private class EelProcessCommands(
    * Pairs of a remote directory and a local directory. After the process exits, we copy each remote directory to its local directory.
    */
   private val downloads: List<Pair<Path, Directory>>,
+  /**
+   * They run while the process runs.
+   */
+  private val portProxies: List<EelProxy>,
 ) : ProcessCommands {
   private var eelProcess: EelProcess? = null
 
@@ -183,6 +234,7 @@ private class EelProcessCommands(
     }
     if (pathIsProhibited) {
       log.trace { "Prohibited exec $nioPathToExec" }
+      closePortProxies()
       return Result.failure(ExecErrorReason.CantStart(null, PyExecBundle.message("py.exec.error.not.trusted", nioPathToExec)))
     }
 
@@ -204,11 +256,28 @@ private class EelProcessCommands(
           downloadAfterExecution()
         }
       }
+      if (portProxies.isNotEmpty()) {
+        scopeToBind.launch {
+          for (proxy in portProxies) {
+            launch { proxy.runForever() }
+          }
+          eelProcess.exitCode.await()
+          cancel()
+        }
+      }
       return Result.success(eelProcess.convertToJVMProcess())
     }
     catch (e: ExecuteProcessException) {
+      closePortProxies()
       return Result.failure(ExecErrorReason.CantStart(e.errno, e.message))
     }
+  }
+
+  /**
+   * Frees the local ports of [portProxies] when the process does not start. [EelProxy.runForever] does it otherwise.
+   */
+  private suspend fun closePortProxies() {
+    portProxies.forEach { it.acceptor.close() }
   }
 }
 
