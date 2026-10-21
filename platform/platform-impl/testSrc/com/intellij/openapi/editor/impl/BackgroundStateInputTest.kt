@@ -99,30 +99,6 @@ internal class BackgroundStateInputTest {
   }
 
   /**
-   * Only the first read starts a computation. A later recompute runs again.
-   */
-  @Test
-  fun testOnlyTheFirstReadStartsAComputation(@TestDisposable disposable: Disposable): Unit = runWithScope { scope ->
-    BackgroundStateInput.computeInBackgroundInTests(disposable)
-    val calls = AtomicInteger()
-    val input = BackgroundStateInput(
-      scope = scope,
-      compute = { "value ${calls.incrementAndGet()}" },
-      update = { updates.add(it) },
-    )
-
-    input.requestOnce()
-    input.awaitForTests()
-    input.requestOnce()
-    input.awaitForTests()
-    assertEquals(listOf("value 1"), updates)
-
-    input.recalculate()
-    input.awaitForTests()
-    assertEquals(listOf("value 1", "value 2"), updates)
-  }
-
-  /**
    * Unit-test mode computes the value before [BackgroundStateInput.recalculate] returns.
    */
   @Test

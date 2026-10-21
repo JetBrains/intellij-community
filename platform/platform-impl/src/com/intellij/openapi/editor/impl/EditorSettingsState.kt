@@ -395,11 +395,12 @@ class EditorSettingsState(
   /**
    * The tab size that the editor uses.
    *
-   * The first call starts the computation of [fileIndent], and every call returns [tabSize].
+   * When the inputs compute in the background, a call returns [tabSize]. [SettingsImpl] starts the first computation of
+   * [fileIndent] when it is built, so a call starts nothing.
    *
-   * When the inputs compute synchronously, as in unit-test mode, the state keeps no cached value, and a call starts no
-   * computation. A call returns the override, or it computes the value on the calling thread. A test can change the code
-   * style without an event, and the editor must see the new value at once.
+   * When the inputs compute synchronously, as in unit-test mode, the state keeps no cached value. A call returns the
+   * override, or it computes the value on the calling thread. A test can change the code style without an event, and the
+   * editor must see the new value at once.
    */
   internal fun currentTabSize(): Int {
     if (!BackgroundStateInput.computesInBackground()) {
@@ -408,7 +409,6 @@ class EditorSettingsState(
       }
       return computeFileIndentForTest().tabSize
     }
-    fileIndentInput.requestOnce()
     return tabSize
   }
 
@@ -422,16 +422,15 @@ class EditorSettingsState(
       }
       return computeFileIndentForTest().useTabCharacter
     }
-    fileIndentInput.requestOnce()
     return myUseTabCharacter
   }
 
   /**
    * Computes [fileIndent] again, and then refreshes [tabSize] and [myUseTabCharacter].
    *
-   * [SettingsImpl.reinitSettings] calls this after each event that can change the value. These events are a code style
-   * change, a new file, and a new highlighter. `EditorHighlighterUpdater` sets a new highlighter when the file type
-   * changes or the file gets a new name.
+   * [SettingsImpl] calls this when it is built, and [SettingsImpl.reinitSettings] calls this after each event that can
+   * change the value. These events are a code style change, a new file, and a new highlighter. `EditorHighlighterUpdater`
+   * sets a new highlighter when the file type changes or the file gets a new name.
    */
   internal fun recalculateFileIndent() {
     fileIndentInput.recalculate()

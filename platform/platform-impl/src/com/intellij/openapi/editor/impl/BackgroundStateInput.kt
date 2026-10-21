@@ -21,7 +21,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 private val LOG: Logger = logger<BackgroundStateInput<*>>()
@@ -44,14 +43,12 @@ internal class BackgroundStateInput<T>(
   private val compute: () -> T,
   private val update: (T) -> Unit,
 ) {
-  private val requested: AtomicBoolean = AtomicBoolean()
   private val jobRef: AtomicReference<Job?> = AtomicReference()
 
   /**
    * Computes the value again, and then gives it to [update].
    */
   fun recalculate() {
-    requested.set(true)
     if (!computesInBackground()) {
       val result = try {
         ApplicationManager.getApplication().runReadAction(Computable { compute() })
@@ -81,17 +78,6 @@ internal class BackgroundStateInput<T>(
     }
     jobRef.getAndSet(job)?.cancel()
     job.start()
-  }
-
-  /**
-   * Starts the first computation, unless a computation was requested before. A read of the value calls this, so that
-   * the first read starts the computation.
-   */
-  fun requestOnce() {
-    // Almost every call finds the flag set, and a plain read is cheaper than a compare-and-set.
-    if (!requested.get() && requested.compareAndSet(false, true)) {
-      recalculate()
-    }
   }
 
   /**

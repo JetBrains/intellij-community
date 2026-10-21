@@ -108,6 +108,13 @@ class SettingsImpl internal constructor(
         }
       }
     })
+
+    // The first computation of the indent values starts here, so that a read of them starts nothing. It comes after the
+    // listener above, which refreshes the editor when the result changes the tab size. Settings without an editor have
+    // no file, so their seed is the computed value already. In unit-test mode, a read computes the value itself.
+    if (editor != null && BackgroundStateInput.computesInBackground()) {
+      state.recalculateFileIndent()
+    }
   }
 
   override fun isRightMarginShown(): Boolean {
