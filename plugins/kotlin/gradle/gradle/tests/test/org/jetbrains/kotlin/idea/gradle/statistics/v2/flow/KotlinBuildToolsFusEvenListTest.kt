@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.gradle.statistics.v2.flow
 
 import com.intellij.openapi.application.PathManager
 import org.jetbrains.kotlin.idea.gradle.statistics.GradleStatisticsEventGroups
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.security.MessageDigest
 import kotlin.test.assertEquals
