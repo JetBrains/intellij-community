@@ -128,12 +128,18 @@ class TestFixtureImpl<T>(
       finally {
         withContext(NonCancellable) {
           fixtureScope.coroutineContext.job.join()
-          tearDown()
-          // Return state to the initializer value so it can be reused.
-          // This is relevant for the class-level fixtures in abstract classes that can be tear down if one of the implementations has
-          // finished running. If we don't reset the state, then the following implementors of the abstract class will use the fixture in
-          // the disposed state.
-          _state = initializer
+          try {
+            tearDown()
+          }
+          finally {
+            // Return state to the initializer value so it can be reused.
+            // This is relevant for the class-level fixtures in abstract classes that can be tear down if one of the implementations has
+            // finished running. If we don't reset the state, then the following implementors of the abstract class will use the fixture in
+            // the disposed state.
+            // Reset the state also when the teardown fails. Otherwise, a static fixture field keeps the disposed value reachable,
+            // and the application teardown reports a second leak.
+            _state = initializer
+          }
         }
       }
     }
