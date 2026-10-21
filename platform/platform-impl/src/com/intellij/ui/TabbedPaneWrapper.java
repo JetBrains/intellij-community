@@ -366,6 +366,7 @@ public class TabbedPaneWrapper {
   public static final class TabWrapper extends JPanel implements UiCompatibleDataProvider {
     boolean myCustomFocus = true;
     private JComponent myComponent;
+    private boolean myRequestingDefaultFocus;
 
     TabWrapper(final @NotNull JComponent component) {
       super(new BorderLayout());
@@ -396,6 +397,7 @@ public class TabbedPaneWrapper {
     public boolean requestDefaultFocus() {
       if (!myCustomFocus) return super.requestDefaultFocus();
       if (myComponent == null) return false; // Just in case someone requests the focus when we're already removed from the Swing tree.
+      if (myRequestingDefaultFocus) return false;
       final JComponent preferredFocusedComponent = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myComponent);
       if (preferredFocusedComponent != null) {
         if (!preferredFocusedComponent.requestFocusInWindow()) {
@@ -405,7 +407,13 @@ public class TabbedPaneWrapper {
         }
         return true;
       }
-      return myComponent.requestDefaultFocus();
+      myRequestingDefaultFocus = true;
+      try {
+        return myComponent.requestDefaultFocus();
+      }
+      finally {
+        myRequestingDefaultFocus = false;
+      }
     }
 
     @Override
