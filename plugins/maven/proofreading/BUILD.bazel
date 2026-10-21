@@ -5,6 +5,7 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 jps_test(
     name = "proofreading-tests_test",
     timeout = "moderate",
+    data = ["@community//plugins/grazie/src/test:testData"],
     tags = ["community-aggregator"],
     runtime_deps = [":proofreading-tests_test_lib"],
 )

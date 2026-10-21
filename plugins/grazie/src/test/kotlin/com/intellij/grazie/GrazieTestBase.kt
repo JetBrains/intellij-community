@@ -22,10 +22,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.NioFiles
+import com.intellij.platform.bazel.runfiles.BazelLabel
 import com.intellij.spellchecker.ProjectDictionaryLayer
 import com.intellij.spellchecker.SpellCheckerManager.Companion.getInstance
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.common.BazelTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.io.ZipUtil
 import java.nio.file.Files
@@ -90,7 +92,13 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
 
   protected open val additionalEnabledContextLanguages: Set<Language> = emptySet()
 
-  override fun getBasePath() = "community/plugins/grazie/src/test/testData"
+  override fun getTestDataPath(): String {
+    if (BazelTestUtil.isUnderBazelTest) {
+      val label = BazelLabel.fromString("@community//plugins/grazie/src/test:testData")
+      return BazelTestUtil.getFileFromBazelRuntime(label).toString()
+    }
+    return Path(PlatformTestUtil.getCommunityPath(), "plugins/grazie/src/test/testData").toString()
+  }
 
   override fun setUp() {
     super.setUp()

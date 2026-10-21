@@ -1,6 +1,12 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `dev intellij.spellchecker` start
 content_module_jar(module = ":spellchecker")
 ### auto-generated section `dev intellij.spellchecker` end

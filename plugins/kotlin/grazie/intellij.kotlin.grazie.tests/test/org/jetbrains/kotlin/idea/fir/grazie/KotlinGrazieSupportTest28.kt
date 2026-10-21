@@ -8,7 +8,9 @@ import com.intellij.grazie.text.TextContentTest
 import com.intellij.grazie.text.TextExtractionTest
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import kotlin.io.path.Path
 
 class KotlinGrazieSupportTest28 : GrazieTestBase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
@@ -20,7 +22,7 @@ class KotlinGrazieSupportTest28 : GrazieTestBase() {
         myFixture.checkHighlighting(true, false, false, false)
     }
 
-    override fun getBasePath(): String = "community/plugins/kotlin/idea/tests/testData"
+    override fun getTestDataPath(): String = Path(PlatformTestUtil.getCommunityPath(), "plugins/kotlin/idea/tests/testData").toString()
 
     fun `test spellcheck in constructs`() {
         runHighlightTestForFile("grazie/Constructs.kt")

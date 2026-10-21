@@ -9,13 +9,14 @@ import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.idea.TestFor
+import com.jetbrains.python.PythonTestUtil
+import kotlin.io.path.Path
 
 @Subsystems.Inspections
 @Components.Grazie
 @Layers.Functional
 class PythonGrazieSupportTest : GrazieTestBase() {
-  override fun getBasePath() = "python/testData/grazie/"
-  override fun isCommunity() = true
+  override fun getTestDataPath() = Path(PythonTestUtil.getTestDataPath(), "grazie").toString()
 
   fun `test f-strings`() {
     runHighlightTestForFile("FStrings.py")

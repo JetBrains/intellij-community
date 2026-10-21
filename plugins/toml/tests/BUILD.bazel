@@ -1,9 +1,15 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+filegroup(
+    name = "testData",
+    srcs = glob(["testData/**"]),
+)
+
 jps_test(
     name = "tests_test",
     timeout = "moderate",
+    data = ["@community//plugins/toml/tests:testData"],
     tags = ["community-aggregator"],
     runtime_deps = [":tests_test_lib"],
 )
@@ -92,6 +98,8 @@ jvm_library(
         "//libraries/junit6:junit6_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//platform/bazel-runfiles",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
     ],
 )
 ### auto-generated section `build intellij.toml.tests` end

@@ -429,5 +429,6 @@
     <orderEntry type="module" module-name="intellij.libraries.ai.grazie.semantic.engine" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.gson" scope="TEST" />
     <orderEntry type="module" module-name="intellij.relaxng" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.bazel.runfiles" scope="TEST" />
   </component>
 </module>

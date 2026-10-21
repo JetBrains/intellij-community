@@ -2,11 +2,20 @@ package org.toml.grazie
 
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.platform.bazel.runfiles.BazelLabel
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.common.BazelTestUtil
+import java.nio.file.Path
 
 class TomlGrazieSupportTest : GrazieTestBase() {
 
-    override fun getBasePath(): String = "plugins/toml/tests/testData/grazie"
-    override fun isCommunity(): Boolean = true
+    override fun getTestDataPath(): String {
+        if (BazelTestUtil.isUnderBazelTest) {
+            val label = BazelLabel.fromString("@community//plugins/toml/tests:testData")
+            return BazelTestUtil.getFileFromBazelRuntime(label).resolve("grazie").toString()
+        }
+        return Path.of(PlatformTestUtil.getCommunityPath(), "plugins/toml/tests/testData/grazie").toString()
+    }
 
     fun `test comments`() = runHighlightTestForFile("comments.toml")
     fun `test literals`()  {

@@ -57,12 +57,13 @@ abstract class BundleInfoTestCase: BasePlatformTestCase() {
   }
 
   private fun downloadLanguages(descriptor: RemoteLangDescriptor): Path {
+    val outputDir = temporaryDirectory.createDir()
     val downloaderService = DownloadableFileService.getInstance()
     val descriptors = listOf(descriptor)
       .map { downloaderService.createFileDescription(it.url, it.storageDescriptor) }
     downloaderService
       .createDownloader(descriptors, "Downloading ${descriptor.iso}")
-      .download(GrazieDynamic.dynamicFolder.toFile())
-    return GrazieDynamic.dynamicFolder.resolve(descriptor.storageDescriptor)
+      .download(outputDir.toFile())
+    return outputDir.resolve(descriptor.storageDescriptor)
   }
 }

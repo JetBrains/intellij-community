@@ -34,6 +34,7 @@ intellij.gradle.backend.tests
 intellij.gradle.completion.tests
 intellij.gradle.java.maven.tests
 intellij.gradle.toolingExtension.tests
+intellij.grazie.tests
 intellij.groovy.propertyBased.tests
 intellij.groovy.structuralSearch.tests
 intellij.groovy.tests
