@@ -34,6 +34,7 @@ public interface FileBasedIndexLayoutProvider extends Closeable {
    *                                 is not met.
    *                                 The list could be empty.
    * @return storage layout to use for creating & managing extension's index
+   * @throws IllegalStateException if the provider is closed
    */
   @NotNull <K, V> VfsAwareIndexStorageLayout<K, V> getLayout(
     @NotNull FileBasedIndexExtension<K, V> extension,
@@ -50,15 +51,22 @@ public interface FileBasedIndexLayoutProvider extends Closeable {
     return true;
   }
 
-  /** Closes shared provider's resources;
-   * All the storage layouts returned by this provider must be closed before this method is called. */
+  /**
+   * Closes shared resources and preserves stored data.
+   * All layouts from this provider must be closed before this call.
+   * The provider cannot create layouts after this call, even if closing fails -- se a new provider to open the data again.
+   * Repeated calls are safe. {@link #closeAndClearData()} can still delete the data after this call.
+   */
   @Override
   default void close() throws IOException { }
 
   /**
-   * Closes shared storage and clears the data owned by this provider.
-   * All the storage layouts returned by {@link #getLayout(FileBasedIndexExtension, Iterable)} must be closed _before_ invoking
-   * this method.
+   * Closes shared resources and deletes the data owned by this provider.
+   * All layouts from this provider must be closed before this call.
+   * The provider cannot create layouts after this call, even if closing or deletion fails.
+   * Repeated calls are safe. This method can also delete data after {@link #close()}.
    */
-  default void closeAndClearData() throws IOException { }
+  default void closeAndClearData() throws IOException {
+    close();
+  }
 }

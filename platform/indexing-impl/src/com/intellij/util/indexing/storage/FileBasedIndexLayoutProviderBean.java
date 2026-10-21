@@ -85,6 +85,19 @@ public final class FileBasedIndexLayoutProviderBean implements PluginAware {
     }
   }
 
+  /**
+   * Closes the provider and deletes its data, then discards it even if deletion fails.
+   * Creates the provider if needed to delete data from a previous session.
+   */
+  public synchronized void closeAndClearLayoutProvider() throws IOException {
+    try {
+      getLayoutProvider().closeAndClearData();
+    }
+    finally {
+      myLayoutProvider = null;
+    }
+  }
+
   private volatile PluginDescriptor myPluginDescriptor;
   @Override
   public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {

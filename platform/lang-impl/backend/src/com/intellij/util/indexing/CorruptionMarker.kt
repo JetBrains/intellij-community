@@ -85,7 +85,7 @@ object CorruptionMarker {
     MMappedFileStorage.DEBUG_INDEXES_WAS_DROPPED = true
 
     for (providerBean in IndexStorageLayoutLocator.supportedLayoutProviders) {
-      providerBean.layoutProvider.closeAndClearData()
+      providerBean.closeAndClearLayoutProvider()
     }
 
     if (Files.exists(indexRoot)) {
