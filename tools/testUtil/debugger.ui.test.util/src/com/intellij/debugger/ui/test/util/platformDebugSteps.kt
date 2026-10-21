@@ -1,20 +1,26 @@
 package com.intellij.debugger.ui.test.util
 
 import com.intellij.driver.sdk.invokeAction
+import com.intellij.driver.sdk.singleProject
 import com.intellij.driver.sdk.step
+import com.intellij.driver.sdk.tryToKillAllStartedProcesses
 import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.UiComponent.Companion.waitFound
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
 import com.intellij.driver.sdk.ui.components.common.codeEditor
+import com.intellij.driver.sdk.ui.components.common.codeEditorForFile
 import com.intellij.driver.sdk.ui.components.common.editor
+import com.intellij.driver.sdk.ui.components.common.gutter
 import com.intellij.driver.sdk.ui.components.common.mainToolbar
 import com.intellij.driver.sdk.ui.components.common.restartDebugButton
 import com.intellij.driver.sdk.ui.components.common.toolwindows.debugToolWindow
 import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
 import com.intellij.driver.sdk.ui.components.elements.accessibleTree
 import com.intellij.driver.sdk.ui.components.elements.list
+import com.intellij.driver.sdk.ui.components.elements.popup
+import com.intellij.driver.sdk.ui.requestFocusFromIde
 import com.intellij.driver.sdk.ui.components.elements.tree
 import com.intellij.driver.sdk.ui.should
 import com.intellij.driver.sdk.ui.shouldBe
@@ -22,6 +28,7 @@ import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForIndicators
 import com.intellij.driver.sdk.waitNotNull
+import com.intellij.driver.sdk.withRetries
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfo.isMac
 import java.awt.event.KeyEvent
@@ -149,6 +156,48 @@ class PlatformDebugSteps(private val ideFrame: IdeaFrameUI) {
       }
     }
     return this
+  }
+
+  /**
+   * Sets a breakpoint at [lineNumber] of the editor of [fileName], and waits for the breakpoint icon in the file editor gutter.
+   * Tries [times] times. The icon lookup excludes the gutter of a debug console, which a previous session can leave in the frame.
+   */
+  fun setBreakpointAtLineWithRetries(lineNumber: Int, fileName: String, times: Int = 3): PlatformDebugSteps {
+    ideFrame.run {
+      withRetries(message = "The breakpoint at line $lineNumber of $fileName is set", times = times) {
+        driver.requestFocusFromIde(driver.singleProject())
+        setBreakpointAtLine(lineNumber, codeEditorForFile(fileName))
+        // GutterIcon.line is 0-based.
+        gutter("//div[@class='EditorTabs']//div[@class='EditorGutterComponentImpl']")
+          .icon(timeout = 10.seconds, errorMessage = "No breakpoint icon at line $lineNumber") { it.line == lineNumber - 1 }
+      }
+    }
+    return this
+  }
+
+  /**
+   * Ends every session that a previous test left: waits up to [timeout] until the main toolbar has no Stop button and shows
+   * the Debug button, and kills all started processes every [interval] until then.
+   */
+  fun stopDebugSessionIfRunning(timeout: Duration = 1.minutes, interval: Duration = 5.seconds) {
+    ideFrame.run {
+      // A failed test can leave a suspended session that ignores Stop, or a session in another tab.
+      waitFor(message = "The sessions of the previous test end", timeout = timeout, interval = interval) {
+        val ended = runCatching { !mainToolbar.stopButton.present() && mainToolbar.debugButton.present() }.getOrDefault(false)
+        if (!ended) driver.tryToKillAllStartedProcesses()
+        ended
+      }
+    }
+  }
+
+  /** Copies the value of [variable] with the "Copy Value" item of the variables tree context menu. */
+  fun copyValue(variable: String) {
+    step("Copy the value of '$variable'") {
+      ideFrame.run {
+        debugToolWindow().variableTree.rightClickRow { it.contains("$variable = ") }
+        popup().waitOneText(timeout = 10.seconds) { it.text == "Copy Value" }.click()
+      }
+    }
   }
 
   fun setBreakpointAtLineByShortcut(lineNumber: Int) {
