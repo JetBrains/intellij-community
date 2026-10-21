@@ -18,6 +18,7 @@ use avl_trace_tools::pack::{PackOptions, pack};
 use axum::body::Body;
 use clap::Parser;
 use futures::StreamExt;
+use notify::event::{CreateKind, EventKind};
 use pretty_assertions::assert_eq;
 use serde_json::{Value, json};
 use tempfile::TempDir;
@@ -793,39 +794,71 @@ async fn traversal_is_refused() {
 // --- events --------------------------------------------------------------------------------------------------
 
 /// A bundle appearing under a root is announced by the watcher alone: the periodic rescan is an hour away. It is
-/// created the way a recorder creates one, a directory at a time and then its files, so the watch has to follow it
-/// down levels that did not exist when the scan before it ran.
+/// created the way a recorder creates one, a directory at a time and then its files. Only the first directory raises
+/// an event, and its file is written while the watch of the new directories is still in progress. So the scan that
+/// follows the new watch must find the bundle.
 #[tokio::test(flavor = "multi_thread")]
 async fn runs_changed_is_sent_when_a_bundle_appears() {
     let fixture = new_fixture();
+    let driven = DrivenWatch::default();
     let mut settings = test_settings(&fixture.scratch, fixture_roots(&fixture));
-    settings.watch = native_watch();
+    settings.watch = driven.watch();
     let served = start_server(settings).await;
     let before = served.list_runs().await["generation"].as_u64().expect("a generation");
     let mut events = served.subscribe().await;
 
-    let fresh = fixture.dir_root.join("run-new").join("AirNewTest").join("new-scenario");
+    // The scan watches the real paths of a root, as the platform's watcher reports them.
+    let run_dir = real(&fixture.dir_root).join("run-new");
+    let fresh = run_dir.join("AirNewTest").join("new-scenario");
+    driven.hold();
     fs::create_dir_all(&fresh).expect("create the bundle's directories");
-    tokio::time::sleep(Duration::from_millis(100)).await;
+    assert!(
+        driven.send(notify::Event::new(EventKind::Create(CreateKind::Folder)).add_path(run_dir.clone())),
+        "the root is watched"
+    );
+    driven.held_change().await;
     write_file(&fresh.join(SPANS_FILE), b"");
+    driven.release();
     let id = bundle_id(SourceKind::Dir, &real(&fresh).to_string_lossy(), "");
 
-    let deadline = tokio::time::Instant::now() + Duration::from_secs(15);
     loop {
         let event = events.wait_for(&["runs-changed"]).await;
         let payload: Value = serde_json::from_str(&event.data).expect("runs-changed carries JSON");
-        let found = served.server.current().is_some_and(|current| current.found.by_id.contains_key(&id));
-        if found {
+        if served.server.current().is_some_and(|current| current.found.by_id.contains_key(&id)) {
             assert!(
                 payload["generation"].as_u64() > Some(before),
                 "runs-changed carried {payload}, not past {before}"
             );
+            break;
+        }
+    }
+    served.settle().await;
+    for dir in [&run_dir, &run_dir.join("AirNewTest")] {
+        assert!(driven.watches(dir), "{} is watched", dir.display());
+    }
+}
+
+/// The platform's file watcher reports a directory created in a watched root, and the server announces the bundle in
+/// it. FSEvents can deliver an event a minute late, or not at all, when much else changes files on the machine, so the
+/// test is left out of the gate. Run it with `cargo test -p air-trace --lib serve:: -- --ignored`.
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "it waits for the platform's file watcher, which falls behind under file churn"]
+async fn the_platform_watcher_announces_a_new_bundle() {
+    let fixture = new_fixture();
+    let mut settings = test_settings(&fixture.scratch, fixture_roots(&fixture));
+    settings.watch = native_watch();
+    let served = start_server(settings).await;
+    let mut events = served.subscribe().await;
+
+    let fresh = fixture.dir_root.join("run-new").join("AirNewTest").join("new-scenario");
+    fs::create_dir_all(&fresh).expect("create the bundle's directories");
+    write_file(&fresh.join(SPANS_FILE), b"");
+    let id = bundle_id(SourceKind::Dir, &real(&fresh).to_string_lossy(), "");
+    loop {
+        events.wait_for(&["runs-changed"]).await;
+        if served.server.current().is_some_and(|current| current.found.by_id.contains_key(&id)) {
             return;
         }
-        assert!(
-            tokio::time::Instant::now() < deadline,
-            "runs-changed never announced the new bundle"
-        );
     }
 }
 

@@ -11,7 +11,7 @@ use avl_trace_tools::viewer::RUNS_ROUTE;
 use avl_wire::progress::{
     Event as Progress, IterationReported, Phase, PhaseChange, PhaseState, Record, RunFinished, RunStarted, TraceReady,
 };
-use notify::event::{CreateKind, EventKind, Flag};
+use notify::event::{DataChange, Flag, ModifyKind};
 
 use super::super::journals::STOPPED_AFTER;
 use super::super::service::{
@@ -248,20 +248,17 @@ async fn the_run_route_answers_the_journal_from_an_offset() {
     }
 }
 
-/// The platform's watcher alone announces a record appended to a running run's journal, and a run that appears under
-/// the runs directory. The poll is off, so a lost event fails the test. The new run arrives as one directory entry,
-/// its directory moved in with its journal: [a_run_directory_seen_before_its_journal_is_watched] covers the order of
-/// a directory and its journal.
+/// The watcher alone announces a record appended to a running run's journal, and a run that appears under the runs
+/// directory. The poll is off, so a lost event fails the test. The new run arrives as one directory entry, its
+/// directory moved in with its journal: [a_run_directory_seen_before_its_journal_is_watched] covers the order of a
+/// directory and its journal.
 #[tokio::test(flavor = "multi_thread")]
 async fn run_appended_is_sent_when_a_journal_grows() {
     let scratch = Scratch::default();
     let runs_dir = scratch.dir();
     let journal = write_journal(&runs_dir, "run-1", &[run_started("run-1", "run", &[])]);
-    let mut settings = test_settings(&scratch, vec![Root::new(RootKind::Flag, scratch.dir())]);
-    settings.runs_dir = Some(runs_dir.clone());
-    settings.watch = native_watch();
-    settings.tail_interval = Duration::from_hours(1);
-    let served = start_server(settings).await;
+    let driven = DrivenWatch::default();
+    let served = start_server(driven_settings(&scratch, &runs_dir, &driven)).await;
     served.list_runs().await;
     let mut events = served.subscribe().await;
 
@@ -269,17 +266,14 @@ async fn run_appended_is_sent_when_a_journal_grows() {
         &journal,
         journal_line(&trace_ready("iter-1", "one"), jiff::Timestamp::now()).as_bytes(),
     );
-    // The two come in either order: a scan that an earlier event asked for can read the record before the event of
-    // the append arrives.
-    let mut seen = BTreeSet::new();
-    while seen.len() < 2 {
-        let event = events.wait_for(&["run-appended", "runs-changed"]).await;
-        if event.name == "run-appended" {
-            assert_eq!(event.data, r#"{"runId":"run-1"}"#);
-        }
-        seen.insert(event.name);
-    }
-    // Only the record changes the listing, so `runs-changed` came from the scan that counted the trace.
+    assert!(
+        driven.send(notify::Event::new(EventKind::Modify(ModifyKind::Data(DataChange::Content))).add_path(journal)),
+        "the directory of a running run is watched"
+    );
+    let first = events.wait_for(&["run-appended"]).await;
+    assert_eq!(first.data, r#"{"runId":"run-1"}"#);
+    // Only the record changes the listing, so `runs-changed` comes from the scan that counted the trace.
+    events.wait_for(&["runs-changed"]).await;
     let runs = served.list_runs().await;
     assert_eq!(
         (
@@ -293,6 +287,10 @@ async fn run_appended_is_sent_when_a_journal_grows() {
     let staged = scratch.dir();
     write_journal(&staged, "run-2", &[run_started("run-2", "run", &[])]);
     fs::rename(staged.join("run-2"), runs_dir.join("run-2")).expect("move the run into the runs directory");
+    assert!(
+        driven.send(notify::Event::new(EventKind::Create(CreateKind::Folder)).add_path(runs_dir.join("run-2"))),
+        "the runs directory is watched"
+    );
     events.wait_for_run("run-2").await;
 }
 
@@ -415,7 +413,9 @@ async fn a_refused_directory_is_not_tried_at_every_scan() {
 }
 
 /// A scenario's zip under `runs/<runId>/traces/<iterationId>/` is found under the id the controller computes for
-/// it, and a zip that arrives while the server runs is announced.
+/// it, and a zip that arrives while the server runs is announced. Only the iteration's directory raises an event, and
+/// the zip is written while the watch of that directory is still in progress, so the scan that follows the new watch
+/// must find the zip.
 #[tokio::test(flavor = "multi_thread")]
 async fn the_vm_runs_root_finds_per_scenario_zips() {
     let fixture = new_fixture();
@@ -426,29 +426,30 @@ async fn the_vm_runs_root_finds_per_scenario_zips() {
     write_file(&first, &zipped);
     let roots = default_roots(None, Ok(&runtime_root));
     let mut settings = test_settings(&fixture.scratch, roots);
-    // The zip that arrives has only the platform's watcher to announce it.
-    settings.watch = native_watch();
+    let driven = DrivenWatch::default();
+    settings.watch = driven.watch();
     let served = start_server(settings).await;
     let found = scenario_by(&served.list_runs().await, |_| true);
     let want = bundle_id(SourceKind::Zip, &real(&first).to_string_lossy(), str_of(&found["source"]["entry"]));
     assert_eq!(found["id"], json!(want), "the id of its real zip and entry");
     let mut events = served.subscribe().await;
 
-    let second = traces.join("iter-2").join("001.zip");
-    fs::create_dir_all(second.parent().expect("a directory")).expect("create the iteration's directory");
-    tokio::time::sleep(Duration::from_millis(100)).await;
-    write_file(&second, &zipped);
-    let deadline = tokio::time::Instant::now() + Duration::from_secs(15);
+    // The scan watches the real paths of a root, as the platform's watcher reports them.
+    let iteration = real(&traces).join("iter-2");
+    driven.hold();
+    fs::create_dir_all(&iteration).expect("create the iteration's directory");
+    assert!(
+        driven.send(notify::Event::new(EventKind::Create(CreateKind::Folder)).add_path(iteration.clone())),
+        "the traces directory of a run is watched"
+    );
+    driven.held_change().await;
+    write_file(&iteration.join("001.zip"), &zipped);
+    driven.release();
     loop {
         events.wait_for(&["runs-changed"]).await;
-        let count = served.server.current().map_or(0, |current| current.found.bundles.len());
-        if count == 2 {
+        if served.server.current().map_or(0, |current| current.found.bundles.len()) == 2 {
             return;
         }
-        assert!(
-            tokio::time::Instant::now() < deadline,
-            "runs-changed never announced the second zip"
-        );
     }
 }
 
