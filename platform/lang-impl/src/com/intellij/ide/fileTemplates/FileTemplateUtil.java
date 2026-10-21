@@ -36,6 +36,7 @@ import org.apache.velocity.runtime.parser.node.ASTStringLiteral;
 import org.apache.velocity.runtime.parser.node.Node;
 import org.apache.velocity.runtime.parser.node.SimpleNode;
 import org.apache.velocity.util.StringUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -290,9 +291,34 @@ public final class FileTemplateUtil {
                                                        @Nullable Map<String, Object> propsMap,
                                                        final @NotNull PsiDirectory directory,
                                                        @Nullable ClassLoader classLoader) throws Exception {
-    Project project = directory.getProject();
-    FileTemplateManager.getInstance(project).addRecentName(template.getName());
+    return createFromPreparedTemplate(prepareFromTemplate(template, fileName, propsMap, directory, classLoader));
+  }
 
+  /**
+   * Merges the template with its properties without creating the file.
+   *
+   * <p>Runs the {@link DefaultTemplatePropertiesProvider} extensions and {@link CreateFromTemplateHandler#prepareProperties}.
+   * Requires a read action and may run on a background thread.
+   *
+   * @param props not modified
+   * @throws Exception when the handler requires a file name and none is given, or when the template cannot be parsed
+   */
+  @ApiStatus.Experimental
+  public static @NotNull PreparedFileTemplate prepareFromTemplate(@NotNull FileTemplate template,
+                                                                  @Nullable String fileName,
+                                                                  @NotNull Properties props,
+                                                                  @NotNull PsiDirectory directory) throws Exception {
+    Map<String, Object> map = new HashMap<>();
+    putAll(map, props);
+    return prepareFromTemplate(template, fileName, map, directory, null);
+  }
+
+  private static @NotNull PreparedFileTemplate prepareFromTemplate(@NotNull FileTemplate template,
+                                                                   @Nullable String fileName,
+                                                                   @Nullable Map<String, Object> propsMap,
+                                                                   @NotNull PsiDirectory directory,
+                                                                   @Nullable ClassLoader classLoader) throws Exception {
+    Project project = directory.getProject();
     if (propsMap == null) {
       Properties p = FileTemplateManager.getInstance(project).getDefaultProperties();
       propsMap = new HashMap<>();
@@ -331,20 +357,38 @@ public final class FileTemplateUtil {
     handler.prepareProperties(propsMap);
 
     Map<String, Object> props_ = propsMap;
-    String fileName_ = fileName;
     String mergedText = ClassLoaderUtil.computeWithClassLoader(
       classLoader != null ? classLoader : FileTemplateUtil.class.getClassLoader(),
       () -> template.getText(props_));
     String templateText = StringUtil.convertLineSeparators(mergedText);
+    return new PreparedFileTemplate(template, handler, directory, fileName, templateText, propsMap);
+  }
+
+  /**
+   * Creates the file of a template merged by {@link #prepareFromTemplate}.
+   *
+   * <p>Runs the handler in a write command unless the directory skips the event system. Records the template as recently used.
+   * Call it on the EDT.
+   *
+   * @return usually a {@link com.intellij.psi.PsiFile}
+   */
+  @ApiStatus.Experimental
+  public static @NotNull PsiElement createFromPreparedTemplate(@NotNull PreparedFileTemplate prepared) {
+    PsiDirectory directory = prepared.getDirectory();
+    FileTemplate template = prepared.getTemplate();
+    CreateFromTemplateHandler handler = prepared.getHandler();
+    Project project = directory.getProject();
+    FileTemplateManager.getInstance(project).addRecentName(template.getName());
 
     if (LightVirtualFile.shouldSkipEventSystem(directory.getVirtualFile())) {
-      return handler.createFromTemplate(project, directory, fileName_, template, templateText, props_);
+      return handler.createFromTemplate(project, directory, prepared.getFileName(), template, prepared.getText(), prepared.getProperties());
     }
 
     return WriteCommandAction
       .writeCommandAction(project)
       .withName(handler.commandName(template))
-      .compute(() -> handler.createFromTemplate(project, directory, fileName_, template, templateText, props_));
+      .compute(() -> handler.createFromTemplate(project, directory, prepared.getFileName(), template, prepared.getText(),
+                                                prepared.getProperties()));
   }
 
   public static @Nullable String getDirPathRelativeToProjectBaseDir(@NotNull PsiDirectory directory) {

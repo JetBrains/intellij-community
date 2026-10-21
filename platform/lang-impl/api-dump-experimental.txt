@@ -681,6 +681,16 @@ f:com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 - com.intellij.ide.util.gotoByName.QuickSearchComponent
 - com.intellij.openapi.actionSystem.UiDataProvider
 - *:selectFirstItem():V
+f:com.intellij.ide.fileTemplates.FileTemplateUtil
+- *s:createFromPreparedTemplate(com.intellij.ide.fileTemplates.PreparedFileTemplate):com.intellij.psi.PsiElement
+- *s:prepareFromTemplate(com.intellij.ide.fileTemplates.FileTemplate,java.lang.String,java.util.Properties,com.intellij.psi.PsiDirectory):com.intellij.ide.fileTemplates.PreparedFileTemplate
+*f:com.intellij.ide.fileTemplates.PreparedFileTemplate
+- f:getDirectory():com.intellij.psi.PsiDirectory
+- f:getFileName():java.lang.String
+- f:getHandler():com.intellij.ide.fileTemplates.CreateFromTemplateHandler
+- f:getProperties():java.util.Map
+- f:getTemplate():com.intellij.ide.fileTemplates.FileTemplate
+- f:getText():java.lang.String
 *a:com.intellij.ide.fileTemplates.actions.CustomCreateFromTemplateAction
 - com.intellij.ide.actions.CreateFileFromTemplateAction
 - p:<init>(java.lang.String):V
