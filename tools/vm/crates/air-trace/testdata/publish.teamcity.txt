@@ -1,3 +1,4 @@
+##teamcity[message text='air-trace teamcity-publish: no viewer: no --viewer DIR, and no checkout to build one in; so air-traces/ holds the bundles and runs.json only' status='WARNING']
 ##teamcity[publishArtifacts '<out>/ui_lane_test/iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3/AirRenameSessionGeneratedFlowUiTest/a_b.zip => air-traces/ui_lane_test/iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3/AirRenameSessionGeneratedFlowUiTest']
 ##teamcity[testMetadata testName='AirRenameSessionGeneratedFlowUiTest.a b' name='trace' type='artifact' value='air-traces/ui_lane_test/iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3/AirRenameSessionGeneratedFlowUiTest/a_b.zip']
 ##teamcity[publishArtifacts '<out>/ui_lane_test/iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3/AirRenameSessionGeneratedFlowUiTest/a_b.2.zip => air-traces/ui_lane_test/iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3/AirRenameSessionGeneratedFlowUiTest']

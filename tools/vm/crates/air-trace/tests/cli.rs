@@ -73,3 +73,24 @@ fn a_refusal_is_one_line_and_its_exit() {
     assert_eq!(exit, Some(2), "{stderr}");
     assert!(stderr.contains("air-trace serve: --teamcity build-1: not a build id"), "{stderr}");
 }
+
+/// `teamcity-publish` never fails a build: testlogs that are not there are a warning of the build log and exit 0.
+/// Only a usage error of the command line exits 2.
+#[test]
+fn teamcity_publish_answers_0_without_testlogs_and_2_for_a_usage_error() {
+    let scratch = std::env::temp_dir().join(format!("air-trace-cli-publish-{}", std::process::id()));
+    let missing = scratch.join("missing");
+    let (out, missing) = (scratch.join("out"), missing.to_str().unwrap());
+    let (exit, stdout, stderr) = answer(&["teamcity-publish", "--testlogs", missing, "--out", out.to_str().unwrap()]);
+    assert_eq!(exit, Some(0), "{stderr}");
+    assert!(
+        stdout.contains(&format!(
+            "##teamcity[message text='air-trace teamcity-publish: no testlogs: {missing}: not a directory' status='WARNING']"
+        )),
+        "{stdout}"
+    );
+    assert!(stderr.contains("0 bundle zip(s) from 0 test.xml file(s)"), "{stderr}");
+
+    let (exit, _, stderr) = answer(&["teamcity-publish", "--no-such-flag"]);
+    assert_eq!(exit, Some(2), "{stderr}");
+}

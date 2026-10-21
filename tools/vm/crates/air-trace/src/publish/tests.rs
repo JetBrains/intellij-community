@@ -196,8 +196,8 @@ fn a_bundle_in_both_the_directory_and_the_zip_is_published_once() {
     assert!(stderr.contains(": 1 bundle zip(s) from 1 test.xml"), "{stderr}");
 }
 
-/// A testlogs tree without bundles prints no message and writes nothing, not even the viewer, and a missing directory
-/// is refused.
+/// A testlogs tree without bundles prints no message and writes nothing, not even the viewer. A missing testlogs
+/// directory is a warning, and the other directories still publish.
 #[test]
 fn testlogs_without_bundles_print_nothing() {
     let root = tempfile::tempdir().unwrap();
@@ -208,15 +208,67 @@ fn testlogs_without_bundles_print_nothing() {
     assert_eq!(stdout, "");
     assert_eq!(fs::read_dir(out.path()).unwrap().count(), 0);
 
-    let missing = [root.path().join("missing")];
+    let missing = root.path().join("missing");
+    let bundles = testlogs();
+    let testlogs = [missing.clone(), bundles.path().to_path_buf()];
     let job = Publish {
-        testlogs: &missing,
+        testlogs: &testlogs,
         out: out.path(),
         viewer: &ViewerSource::Missing,
         build: None,
     };
-    let refused = publish(&job, &mut Vec::new(), &mut Vec::new()).unwrap_err();
-    assert_eq!(refused.exit, Exit::Usage);
+    let (mut stdout, mut stderr) = (Vec::new(), Vec::new());
+    publish(&job, &mut stdout, &mut stderr).unwrap();
+    let (stdout, stderr) = (String::from_utf8(stdout).unwrap(), String::from_utf8(stderr).unwrap());
+    let problem = format!("no testlogs: {}: not a directory", missing.display());
+    assert!(
+        stdout.starts_with(&format!(
+            "##teamcity[message text='air-trace teamcity-publish: {problem}' status='WARNING']\n"
+        )),
+        "{stdout}"
+    );
+    assert!(stderr.starts_with(&format!("air-trace teamcity-publish: {problem}\n")), "{stderr}");
+    assert_eq!(stdout.matches(".zip => ").count(), 4, "the other testlogs still publish: {stdout}");
+    assert!(stderr.ends_with("; 1 problem(s) above\n"), "{stderr}");
+}
+
+/// `bazel run` starts the binary through a link into the `-opt` configuration of `bazel-out`, as the TeamCity step
+/// and both roots of the checkout lay it out. The testlogs are those of the other configurations. A program outside
+/// a `bazel-out` finds none.
+#[cfg(unix)]
+#[test]
+fn the_testlogs_are_found_beside_the_binary_that_bazel_run_starts() {
+    let base = tempfile::tempdir().unwrap();
+    let bazel_out = base.path().join("execroot/_main/bazel-out");
+    let real = bazel_out.join("local_linux-opt/bin/external/community+/tools/vm/crates/air-trace/air-trace");
+    fs::create_dir_all(real.parent().unwrap()).unwrap();
+    fs::write(&real, "").unwrap();
+    let link = bazel_out.join("local_linux-fastbuild/bin/external/community+/tools/vm/air-trace");
+    fs::create_dir_all(link.parent().unwrap()).unwrap();
+    std::os::unix::fs::symlink(&real, &link).unwrap();
+    let convenience = base.path().join("out/bazel-bin");
+    fs::create_dir_all(convenience.parent().unwrap()).unwrap();
+    std::os::unix::fs::symlink(bazel_out.join("local_linux-fastbuild/bin"), &convenience).unwrap();
+    for configuration in ["local_linux-fastbuild", "jvm-fastbuild"] {
+        fs::create_dir_all(bazel_out.join(configuration).join("testlogs")).unwrap();
+    }
+    let expected: Vec<PathBuf> = ["jvm-fastbuild", "local_linux-fastbuild"]
+        .iter()
+        .map(|configuration| real_path(&bazel_out).join(configuration).join("testlogs"))
+        .collect();
+    for exe in [&real, &link, &convenience.join("external/community+/tools/vm/air-trace")] {
+        assert_eq!(testlogs_beside(exe), expected, "{}", exe.display());
+    }
+    let outside = base.path().join("bin/air-trace");
+    fs::create_dir_all(outside.parent().unwrap()).unwrap();
+    fs::write(&outside, "").unwrap();
+    assert_eq!(testlogs_beside(&outside), Vec::<PathBuf>::new());
+}
+
+/// The real path of a directory, as the discovery resolves the binary: `/private/var` for `/var` on macOS.
+#[cfg(unix)]
+fn real_path(path: &Path) -> PathBuf {
+    real(path)
 }
 
 /// On TeamCity with a viewer, the listing names the build as the origin of each run, the viewer is copied over the
@@ -248,6 +300,13 @@ fn on_team_city_the_listing_names_the_build_and_each_test_links_its_trace() {
         for scenario in run["scenarios"].as_array().unwrap() {
             let zip = scenario["zip"].as_str().unwrap();
             assert!(files.contains(&zip.to_owned()), "{zip} is a published zip");
+            assert!(
+                !zip.starts_with('/')
+                    && zip
+                        .split('/')
+                        .all(|segment| !segment.is_empty() && segment != ".." && segment != "."),
+                "{zip} stays inside the directory of runs.json, as the viewer requires"
+            );
             assert_eq!(scenario["source"]["path"], zip);
         }
     }

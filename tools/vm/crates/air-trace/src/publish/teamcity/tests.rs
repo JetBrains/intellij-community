@@ -163,3 +163,23 @@ fn the_build_page_may_end_in_a_slash() {
         "https://buildserver.labs.intellij.net"
     );
 }
+
+/// A server that is not the root of `BUILD_URL` says so, with the server that the links use.
+#[test]
+fn a_server_that_is_not_the_root_of_the_build_page_says_so() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = agent_files(dir.path(), BUILD_PROPERTIES);
+    let on_team_city = [("TEAMCITY_VERSION", "2026.3"), (BUILD_PROPERTIES_FILE, file.as_str())];
+    let build = of_step(&on_team_city).unwrap().unwrap();
+    let variables: BTreeMap<String, String> = BTreeMap::new();
+    assert_eq!(
+        build.server_fallback(&|name: &str| variables.get(name).cloned()),
+        Some(
+            "BUILD_URL does not name the page of build 1100310296, so the links and the origin use teamcity.serverUrl \
+             https://bs-proxy-eu-north-1.services.buildfarm.intellij.net"
+                .to_owned()
+        )
+    );
+    let page = |name: &str| (name == BUILD_URL).then(|| "https://buildserver.labs.intellij.net/build/1100310296".to_owned());
+    assert_eq!(build.server_fallback(&page), None);
+}

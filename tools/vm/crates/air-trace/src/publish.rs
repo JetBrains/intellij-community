@@ -19,16 +19,17 @@
 //! checkout ([viewer]). So `air-traces/index.html` opens the listing, and each test links to
 //! `index.html#/trace?zip=<zip>`. The link needs both the viewer and the build.
 //!
-//! A testlogs tree without bundles prints nothing and writes nothing. A bundle that cannot be packed, a viewer that is
-//! missing and build properties that do not read are each a line on the standard error. The rest still publishes, so
-//! a failure of this step never hides the test results.
+//! A testlogs tree without bundles prints nothing and writes nothing. Each problem is a line on the standard error and
+//! a warning `message` on the standard output: no testlogs, a testlogs directory that is missing, an output that does
+//! not read, a bundle that cannot be packed, a missing viewer, and build properties that do not read. The rest still
+//! publishes, and the step answers 0, so it never turns a build red. Only a usage error of the command line answers 2.
 
 use std::collections::{BTreeSet, HashSet};
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 
-use avl_report::teamcity::{Messages, PublishedTrace, TRACES_ARTIFACT_DIR};
+use avl_report::teamcity::{Messages, PublishedTrace, TRACES_ARTIFACT_DIR, warning};
 use avl_trace::bundle::{ROOT_DIR_NAME, VIDEO_FILE, bundle_path};
 use avl_trace_tools::discover::{
     Bundle, Location, Options, Origin, Root, RootKind, RootState, Scanner, Source, SourceKind, Status, Summary, bundle_id,
@@ -81,7 +82,7 @@ pub(crate) struct Publish<'a> {
 }
 
 /// Runs `air-trace teamcity-publish`: the service messages on stdout, a summary line and each problem on stderr. It
-/// answers 0 once the testlogs are read, whatever a bundle did.
+/// answers 0 whatever it found, and 2 only for a usage error of the command line.
 pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &mut dyn Write) -> u8 {
     let workspace = std::env::var_os("BUILD_WORKSPACE_DIRECTORY")
         .filter(|value| !value.is_empty())
@@ -92,11 +93,12 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
         args.testlogs.clone()
     };
     if testlogs.is_empty() {
-        return report(
+        let _ = warn(
+            stdout,
             stderr,
-            "teamcity-publish",
-            &usage("no testlogs: this program is not in a bazel-out tree; pass --testlogs DIR"),
+            "no testlogs: no --testlogs DIR, and no bazel-out/*/testlogs beside this program; nothing to publish",
         );
+        return Exit::Ok.code();
     }
     let out = match args.out.clone().map_or_else(
         || {
@@ -108,13 +110,18 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
         Ok(out) => out,
         Err(error) => return report(stderr, "teamcity-publish", &usage(format!("--out: {error}"))),
     };
-    let build = Build::of_step(&|name: &str| std::env::var(name).ok()).unwrap_or_else(|reason| {
-        let _ = writeln!(
+    let variable = |name: &str| std::env::var(name).ok();
+    let build = Build::of_step(&variable).unwrap_or_else(|reason| {
+        let _ = warn(
+            stdout,
             stderr,
-            "air-trace teamcity-publish: {reason}; so the runs name no build and the tests get no viewer link"
+            &format!("{reason}; so the runs name no build and the tests get no viewer link"),
         );
         None
     });
+    if let Some(fallback) = build.as_ref().and_then(|build| build.server_fallback(&variable)) {
+        let _ = warn(stdout, stderr, &fallback);
+    }
     let viewer = match (&args.viewer, workspace) {
         (Some(dir), _) => ViewerSource::Built(dir.clone()),
         (None, Some(checkout)) => ViewerSource::Build {
@@ -130,18 +137,22 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
         viewer: &viewer,
         build: build.as_ref(),
     };
-    match publish(&job, stdout, stderr) {
-        Ok(()) => Exit::Ok.code(),
-        Err(refused) => report(stderr, "teamcity-publish", &refused),
+    if let Err(refused) = publish(&job, stdout, stderr) {
+        report(stderr, "teamcity-publish", &refused);
     }
+    Exit::Ok.code()
 }
 
 /// Every `<bazel-out>/<configuration>/testlogs` of the `bazel-out` this program was built in.
 fn own_testlogs() -> Vec<PathBuf> {
-    let Ok(exe) = std::env::current_exe() else {
-        return Vec::new();
-    };
-    let exe = fscopy::resolve_links(&exe).unwrap_or(exe);
+    std::env::current_exe().map_or_else(|_| Vec::new(), |exe| testlogs_beside(&exe))
+}
+
+/// Every `<bazel-out>/<configuration>/testlogs` of the `bazel-out` that holds the real file of `exe`, in path order.
+/// `bazel run` starts the binary through links into `bazel-out/<configuration>-opt/bin`, while the tests leave their
+/// logs in the testlogs of another configuration.
+fn testlogs_beside(exe: &Path) -> Vec<PathBuf> {
+    let exe = fscopy::resolve_links(exe).unwrap_or_else(|_| exe.to_path_buf());
     let Some(bazel_out) = exe
         .ancestors()
         .find(|ancestor| ancestor.file_name().is_some_and(|name| name == "bazel-out"))
@@ -180,24 +191,28 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
     let mut tests = Vec::new();
     let mut xmls = 0;
     for (index, root) in job.testlogs.iter().enumerate() {
-        if !root.is_dir() {
-            return Err(usage(format!("--testlogs {}: not a directory", root.display())));
-        }
         let mut state = RootState {
             kind: RootKind::BazelTestlogs,
             path: root.clone(),
             origin: origin.clone(),
-            exists: true,
+            exists: root.is_dir(),
             bundles: 0,
             error: None,
             problems: Vec::new(),
         };
+        if !state.exists {
+            let error = format!("{}: not a directory", root.display());
+            warn(stdout, stderr, &format!("no testlogs: {error}")).map_err(write_failed)?;
+            state.error = Some(error);
+            roots.push(state);
+            continue;
+        }
         for xml in test_xmls(root) {
             xmls += 1;
             let dir = xml.parent().unwrap_or(root);
             let (bundles, unread) = bundles_beside(&scanner, dir);
             for problem in unread {
-                say(stderr, &problem).map_err(write_failed)?;
+                warn(stdout, stderr, &problem).map_err(write_failed)?;
                 state.problems.push(problem);
             }
             if !bundles.is_empty() {
@@ -213,7 +228,10 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
         roots.push(state);
     }
     if tests.is_empty() {
-        let problems: usize = roots.iter().map(|root| root.problems.len()).sum();
+        let problems = roots
+            .iter()
+            .map(|root| root.problems.len() + usize::from(root.error.is_some()))
+            .sum();
         return summarize(stderr, 0, xmls, out, problems).map_err(write_failed);
     }
 
@@ -223,7 +241,8 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
     let page = match copied {
         Ok(entries) => Some(entries),
         Err(reason) => {
-            say(
+            warn(
+                stdout,
                 stderr,
                 &format!("no viewer: {reason}; so air-traces/ holds the bundles and {RUNS_FILE} only"),
             )
@@ -247,7 +266,7 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
                 .collect(),
             Err(error) => {
                 let problem = format!("{}: {error}", test.xml.display());
-                say(stderr, &problem).map_err(write_failed)?;
+                warn(stdout, stderr, &problem).map_err(write_failed)?;
                 state.problems.push(problem);
                 Vec::new()
             }
@@ -295,7 +314,7 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
             };
             if let Err(error) = packed {
                 let problem = format!("{}: {error}", bundle.source.path);
-                say(stderr, &problem).map_err(write_failed)?;
+                warn(stdout, stderr, &problem).map_err(write_failed)?;
                 state.problems.push(problem);
                 continue;
             }
@@ -329,12 +348,15 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
         roots: &roots,
     };
     let mut lines = Vec::new();
-    let mut problems: usize = roots.iter().map(|root| root.problems.len()).sum();
+    let mut problems: usize = roots
+        .iter()
+        .map(|root| root.problems.len() + usize::from(root.error.is_some()))
+        .sum();
     match write_listing(&listing, out) {
         Ok(file) => lines.extend(messages.artifact(&file.to_string_lossy(), TRACES_ARTIFACT_DIR)),
         Err(reason) => {
             problems += 1;
-            say(stderr, &reason).map_err(write_failed)?;
+            warn(stdout, stderr, &reason).map_err(write_failed)?;
         }
     }
     for (name, is_dir) in page.iter().flatten() {
@@ -354,6 +376,12 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
 /// One line of the step on stderr.
 fn say(stderr: &mut dyn Write, line: &str) -> io::Result<()> {
     writeln!(stderr, "air-trace teamcity-publish: {line}")
+}
+
+/// One problem of the step: its line on stderr, and the same text as a warning of the build log on stdout.
+fn warn(stdout: &mut dyn Write, stderr: &mut dyn Write, line: &str) -> io::Result<()> {
+    say(stderr, line)?;
+    writeln!(stdout, "{}", warning(&format!("air-trace teamcity-publish: {line}")))
 }
 
 /// The last line of the step on stderr: what it published, and how many problems it said above.

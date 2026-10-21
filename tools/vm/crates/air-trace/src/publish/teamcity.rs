@@ -68,6 +68,17 @@ impl Build {
         }))
     }
 
+    /// Why the server of the build is not the root of `BUILD_URL`, when it is not. Then it is `teamcity.serverUrl`, which
+    /// can be a proxy of the agent that a person cannot open.
+    pub(crate) fn server_fallback(&self, variable: &dyn Fn(&str) -> Option<String>) -> Option<String> {
+        build_url_root(variable, &self.id).is_none().then(|| {
+            format!(
+                "{BUILD_URL} does not name the page of build {}, so the links and the origin use teamcity.serverUrl {}",
+                self.id, self.server
+            )
+        })
+    }
+
     /// The build as the origin of its bundles, with the page of the build, as `serve --teamcity` names a build.
     pub(crate) fn origin(&self) -> Origin {
         Origin {
