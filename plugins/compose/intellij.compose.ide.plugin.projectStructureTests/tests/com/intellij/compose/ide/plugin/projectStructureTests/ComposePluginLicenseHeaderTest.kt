@@ -4,7 +4,7 @@ package com.intellij.compose.ide.plugin.projectStructureTests
 import com.intellij.openapi.application.PathManager
 import com.intellij.project.loadIntelliJProject
 import org.jetbrains.jps.model.JpsProject
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.extension
@@ -15,13 +15,13 @@ import kotlin.test.assertTrue
 class ComposePluginLicenseHeaderTest {
 
   @Test
-  fun `collects some Kotlin source files`() = withComposeIdePluginKotlinFiles { srcFiles ->
+  fun `collects some Kotlin source files`(): Unit = withComposeIdePluginKotlinFiles { srcFiles ->
     assertTrue(srcFiles.isNotEmpty())
     assertTrue(srcFiles.all { it.extension == "kt" })
   }
 
   @Test
-  fun `all files reference Apache license header`() = withComposeIdePluginKotlinFiles { srcFiles ->
+  fun `all files reference Apache license header`(): Unit = withComposeIdePluginKotlinFiles { srcFiles ->
     val filesWithMissingHeaderPart = srcFiles.filter { file ->
       val hasApacheMentionLine = file.useLines { lines ->
         lines.any { it.contains(FULL_APACHE_REFERENCE) || it.contains(SHORT_APACHE_REFERENCE) }
@@ -33,7 +33,7 @@ class ComposePluginLicenseHeaderTest {
   }
 
   @Test
-  fun `all files reference JetBrains as contributor`() = withComposeIdePluginKotlinFiles { srcFiles ->
+  fun `all files reference JetBrains as contributor`(): Unit = withComposeIdePluginKotlinFiles { srcFiles ->
     val filesWithMissingHeaderPart = srcFiles.filter { file ->
       val referenceJetBrainsAsContributor = file.useLines { lines ->
         lines.any { it.contains(JETBRAINS_COPYRIGHT_REGEX) }
@@ -45,7 +45,7 @@ class ComposePluginLicenseHeaderTest {
   }
 
   @Test
-  fun `all files that reference AOSP as source also reference JetBrains as modifier and second contributor of the file`() = withComposeIdePluginKotlinFiles { srcFiles ->
+  fun `all files that reference AOSP as source also reference JetBrains as modifier and second contributor of the file`(): Unit = withComposeIdePluginKotlinFiles { srcFiles ->
     val filesMentioningAOSPUsingInconsistentYears = srcFiles.filter { file ->
       val aospCopyright = file.useLines { lines ->
         lines.firstNotNullOfOrNull { AOSP_COPYRIGHT_REGEX.find(it) }
