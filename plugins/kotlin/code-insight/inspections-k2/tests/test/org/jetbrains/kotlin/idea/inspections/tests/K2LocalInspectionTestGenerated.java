@@ -10681,6 +10681,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceSetterUsedInProperty.kt");
             }
 
+            @TestMetadata("dontReplaceSetterWhenSyntheticPropertyHasMistypedSetter.kt")
+            public void testDontReplaceSetterWhenSyntheticPropertyHasMistypedSetter() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceSetterWhenSyntheticPropertyHasMistypedSetter.kt");
+            }
+
             @TestMetadata("dontReplaceSetterWithAnonymousFunctionArgument.kt")
             public void testDontReplaceSetterWithAnonymousFunctionArgument() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceSetterWithAnonymousFunctionArgument.kt");
