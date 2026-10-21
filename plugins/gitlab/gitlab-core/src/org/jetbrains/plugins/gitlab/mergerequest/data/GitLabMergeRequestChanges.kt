@@ -31,6 +31,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabServerMetadata
 import org.jetbrains.plugins.gitlab.api.GitLabVersion
@@ -200,82 +201,55 @@ internal class GitLabMergeRequestChangesImpl(
         api.rest.loadMergeRequestDiffs(projectId, mergeRequestDetails.iid)
       }
     }
-    val headPatches = processDiffs(headDiffs, mergeBaseSha, headSha, "MR ${mergeRequestDetails.iid}")
+    val location = "MR ${mergeRequestDetails.iid}"
+    // repair the repairable (not too large) unexpected empty diffs with the local ones
+    val localPatches = loadLocalPatches(mergeBaseSha, headSha, headDiffs.filter { it.needsLocalPatch }, location)
+    val headPatches = processDiffs(headDiffs, localPatches, location)
     val comparisonResult = GitBranchComparisonResult.create(project, gitRemoteUrlCoordinates.repository.root, baseSha, mergeBaseSha,
                                                             commitsWithPatches, headPatches.map { it.patch })
     return GitLabMergeRequestParsedChangesImpl(comparisonResult, headPatches)
   }
 
-  private suspend fun processDiffs(
-    diffs: List<GitLabDiffDTO>,
-    beforeSha: String,
-    afterSha: String,
-    location: String,
-  ): List<PatchWithEmptyReason> {
-    // repair the repairable (not too large) unexpected empty diffs with the local ones
-    val collapsedPaths = diffs
-      .filter { it.diff.isEmpty() && !it.isRenameOrModeChange && it.tooLarge != true }
-      .map { it.filePath }
-      .distinct()
-    val localPatchesByPath =
-      if (collapsedPaths.isEmpty()) {
-        emptyMap()
-      }
-      else {
-        loadLocalPatches(beforeSha, afterSha, collapsedPaths, location).associateBy { patch -> patch.filePath }
-      }
-
-    return diffs.map { diffDto ->
-      // either the diff is not empty, or the empty diff is expected
-      if (diffDto.diff.isNotEmpty() || diffDto.isRenameOrModeChange) {
-        return@map PatchWithEmptyReason(diffDto.toPatch())
-      }
-
-      val path = diffDto.filePath
-      val localPatch = localPatchesByPath[path]
-      if (localPatch != null) {
-        return@map PatchWithEmptyReason(localPatch.setNamesAndStatusFrom(diffDto))
-      }
-
-      val emptyPatchReason = when {
-        diffDto.tooLarge == true -> GitLabMergeRequestParsedChanges.EmptyPatchReason.TOO_LARGE
-        diffDto.collapsed == true -> GitLabMergeRequestParsedChanges.EmptyPatchReason.COLLAPSED_NO_LOCAL
-        else -> GitLabMergeRequestParsedChanges.EmptyPatchReason.UNKNOWN
-      }
-      LOG.warn("The GitLab server sent no diff body for [${diffDto.oldPath} -> ${diffDto.newPath}] in $location. The reason is $emptyPatchReason.")
-      PatchWithEmptyReason(diffDto.toPatch(), emptyPatchReason)
-    }
-  }
-
   /**
-   * Reads the diff of the collapsed files from the local repository, keyed by the after-path.
+   * Reads the patches of the [apiDiffs] from the local repository.
+   * Each local patch gets the names and the status that the server reported.
    * A failure keeps the change list, so the caller degrades to a patch with no hunk.
+   *
+   * @return the local patch per server diff. A diff with no local patch has no entry.
    */
   private suspend fun loadLocalPatches(
     baseRev: String,
     headRev: String,
-    paths: Collection<String>,
+    apiDiffs: Collection<GitLabDiffDTO>,
     location: String,
-  ): List<TextFilePatch> {
+  ): Map<GitLabDiffDTO, TextFilePatch> {
+    if (apiDiffs.isEmpty() || baseRev == headRev) return emptyMap()
+
     val repository = gitRemoteUrlCoordinates.repository
-    return try {
+    val pathspec = apiDiffs.flatMap { it.localDiffPaths }.distinct()
+    val localPatches = try {
       ensureAllRevisionsFetched()
-      GitCodeReviewUtils.loadPatches(repository, baseRev, headRev, paths)
+      GitCodeReviewUtils.loadPatches(repository, baseRev, headRev, pathspec)
     }
     catch (e: VcsException) {
       LOG.warn("Failed to read the diff of $baseRev..$headRev in ${repository.root.name}", e)
-      emptyList()
+      return emptyMap()
     }
     catch (e: PatchSyntaxException) {
       LOG.warn("Failed to parse the diff of $baseRev..$headRev in ${repository.root.name}", e)
-      emptyList()
+      return emptyMap()
     }
     catch (e: Throwable) {
       rethrowControlFlowException(e)
       LOG.warn("Failed to rebuild the collapsed diff of $baseRev..$headRev in ${repository.root.name} in $location from the local repository",
                e)
-      emptyList()
+      return emptyMap()
     }
+
+    val localPatchesByPath = localPatches.associateBy { patch -> patch.filePath }
+    return apiDiffs.mapNotNull { diffDto ->
+      localPatchesByPath[diffDto.filePath]?.let { localPatch -> diffDto to localPatch.setNamesAndStatusFrom(diffDto) }
+    }.toMap()
   }
 
   override suspend fun ensureAllRevisionsFetched() {
@@ -292,6 +266,41 @@ internal class GitLabMergeRequestChangesImpl(
 
     check(GitCodeReviewUtils.testRevisionsExist(gitRemoteUrlCoordinates.repository, revsToCheck)) {
       "Failed to fetch some revisions"
+    }
+  }
+
+  companion object {
+    /**
+     * Parses the server [diffs]. An empty diff takes its patch from [localPatches] when it has one there.
+     * A file that still has no diff body gets the reason for it.
+     *
+     * @param localPatches the local patch per server diff, with the names and the status of the server
+     * @param location names the diff in the log
+     */
+    @VisibleForTesting
+    internal fun processDiffs(
+      diffs: List<GitLabDiffDTO>,
+      localPatches: Map<GitLabDiffDTO, TextFilePatch>,
+      location: String,
+    ): List<PatchWithEmptyReason> {
+      return diffs.map { diffDto ->
+        if (diffDto.diff.isNotEmpty()) {
+          return@map PatchWithEmptyReason(diffDto.toPatch())
+        }
+
+        val localPatch = localPatches[diffDto]
+        if (localPatch != null) {
+          return@map PatchWithEmptyReason(localPatch)
+        }
+
+        val emptyPatchReason = when {
+          diffDto.tooLarge == true -> GitLabMergeRequestParsedChanges.EmptyPatchReason.TOO_LARGE
+          diffDto.collapsed == true -> GitLabMergeRequestParsedChanges.EmptyPatchReason.COLLAPSED_NO_LOCAL
+          else -> GitLabMergeRequestParsedChanges.EmptyPatchReason.UNKNOWN
+        }
+        LOG.warn("The GitLab server sent no diff body for [${diffDto.oldPath} -> ${diffDto.newPath}] in $location. The reason is $emptyPatchReason.")
+        PatchWithEmptyReason(diffDto.toPatch(), emptyPatchReason)
+      }
     }
   }
 }
@@ -322,10 +331,26 @@ private fun TextFilePatch.setNamesAndStatusFrom(dto: GitLabDiffDTO): TextFilePat
                 })
 }
 
+/**
+ * The pathspec that makes `git diff -M` report the same file as the server.
+ * Git pairs the two sides of a rename only when the pathspec holds both paths.
+ * With the new path only, git reports an added file, and the patch adds every line.
+ */
+@get:VisibleForTesting
+internal val GitLabDiffDTO.localDiffPaths: List<String>
+  get() = listOfNotNull(oldPath.takeIf { !newFile }, newPath.takeIf { !deletedFile }).distinct()
+
+/**
+ * True when the server sent no diff body for a file that is not too large.
+ * The server keeps the diff of such a file, so the local repository can build the same diff.
+ * A server older than 18.4 sends no [GitLabDiffDTO.tooLarge] flag, so its empty diff gets no local patch.
+ */
+@get:VisibleForTesting
+internal val GitLabDiffDTO.needsLocalPatch: Boolean
+  get() = diff.isEmpty() && tooLarge == false
+
 internal data class PatchWithEmptyReason(
   val patch: TextFilePatch,
   val emptyReason: GitLabMergeRequestParsedChanges.EmptyPatchReason? = null,
 )
 
-private val GitLabDiffDTO.isRenameOrModeChange: Boolean
-  get() = renamedFile || aMode != bMode
