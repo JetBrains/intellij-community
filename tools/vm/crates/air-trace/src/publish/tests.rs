@@ -18,6 +18,60 @@ fn testdata(name: &str) -> PathBuf {
     std::path::absolute(&path).unwrap_or_else(|error| panic!("{}: {error}", path.display()))
 }
 
+/// Publishes the testlogs `root` into `out`, with the stdout and the stderr of the step.
+fn run(root: &Path, out: &Path, viewer: Option<&Path>, build: Option<&Build>) -> (String, String) {
+    let (mut stdout, mut stderr) = (Vec::new(), Vec::new());
+    let job = Publish {
+        testlogs: &[root.to_path_buf()],
+        out,
+        viewer,
+        build,
+    };
+    publish(&job, &mut stdout, &mut stderr).unwrap();
+    (String::from_utf8(stdout).unwrap(), String::from_utf8(stderr).unwrap())
+}
+
+/// The output with the temporary directories named `<out>`, `<testlogs>` and `<viewer>`, and `/` for a separator.
+fn placeholders(text: &str, pairs: &[(&Path, &str)]) -> String {
+    let mut text = text.to_owned();
+    for (path, name) in pairs {
+        text = text
+            .replace(&*real(path).to_string_lossy(), name)
+            .replace(&*path.to_string_lossy(), name);
+    }
+    text.replace('\\', "/")
+}
+
+/// A build of a TeamCity server.
+fn build() -> Build {
+    Build {
+        server: "https://teamcity.example".to_owned(),
+        build_type_id: "Air_UiTests_1".to_owned(),
+        id: "1100310296".to_owned(),
+        name: "Air Plugin UI Tests / 1".to_owned(),
+    }
+}
+
+/// The files under a directory, relative and `/`-separated, in path order.
+fn files_of(dir: &Path) -> Vec<String> {
+    walkdir::WalkDir::new(dir)
+        .sort_by_file_name()
+        .into_iter()
+        .filter_map(Result::ok)
+        .filter(|entry| entry.file_type().is_file())
+        .map(|entry| entry.path().strip_prefix(dir).unwrap().to_string_lossy().replace('\\', "/"))
+        .collect()
+}
+
+/// A built viewer: its page and one asset.
+fn viewer() -> tempfile::TempDir {
+    let viewer = tempfile::tempdir().unwrap();
+    fs::write(viewer.path().join(VIEWER_PAGE), "<!doctype html>").unwrap();
+    fs::create_dir_all(viewer.path().join("assets")).unwrap();
+    fs::write(viewer.path().join("assets/index.js"), "export {}").unwrap();
+    viewer
+}
+
 /// A `test.xml` with one case for each `(class, name)`.
 fn write_xml(dir: &Path, cases: &[(&str, &str)]) {
     let mut xml = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<testsuites>\n");
@@ -81,13 +135,13 @@ fn testlogs() -> tempfile::TempDir {
 
 /// Each bundle is one zip under its lane, run and class, published once, and named by the case of its own XML, so two
 /// lanes of one test class name two tests. A failed bundle links its video and its last picture. Two scenarios of one
-/// sanitized name get two zips, and the second is reported. A lane without outputs prints nothing.
+/// sanitized name get two zips, and the second is reported. A lane without outputs prints nothing. Off TeamCity and
+/// without a viewer, runs.json is published with the zips, and no test gets a viewer link.
 #[test]
 fn the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests() {
     let root = testlogs();
     let out = tempfile::tempdir().unwrap();
-    let (mut stdout, mut stderr) = (Vec::new(), Vec::new());
-    publish(&[root.path().to_path_buf()], out.path(), &mut stdout, &mut stderr).unwrap();
+    let (stdout, stderr) = run(root.path(), out.path(), None, None);
     let scanned = Scanner::new(Options::default()).scan(&[Root::new(RootKind::Flag, root.path())]);
     let statuses: BTreeSet<Status> = scanned.bundles.iter().map(|bundle| bundle.status).collect();
     assert_eq!(
@@ -95,33 +149,26 @@ fn the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests() 
         BTreeSet::from([Status::Passed, Status::Failed]),
         "the fixture manifests decode"
     );
-    let stdout = String::from_utf8(stdout).unwrap().replace(&*out.path().to_string_lossy(), "<out>");
-    let stderr = String::from_utf8(stderr)
-        .unwrap()
-        .replace(&*out.path().to_string_lossy(), "<out>")
-        .replace(&*real(root.path()).to_string_lossy(), "<testlogs>")
-        .replace('\\', "/");
+    let names = [(out.path(), "<out>"), (root.path(), "<testlogs>")];
+    let (stdout, stderr) = (placeholders(&stdout, &names), placeholders(&stderr, &names));
     expect_test::expect_file![testdata("publish.teamcity.txt")].assert_eq(&stdout);
-    let run = decode_manifest(&example_file(MANIFEST_FILE)).unwrap();
-    let class_dir = format!("{}/{}", run.run_id, run.test_class);
+    let manifest = decode_manifest(&example_file(MANIFEST_FILE)).unwrap();
+    let class_dir = format!("{}/{}", manifest.run_id, manifest.test_class);
     assert_eq!(
         stderr,
         format!(
-            "air-trace teamcity-publish: <testlogs>/plugins/air/tests/integration/ui/ui_lane_test/test.outputs/air-traces/copies/1: \
+            "air-trace teamcity-publish: no viewer: no --viewer DIR; so air-traces/ holds the bundles and runs.json only\n\
+             air-trace teamcity-publish: <testlogs>/plugins/air/tests/integration/ui/ui_lane_test/test.outputs/air-traces/copies/1: \
              another bundle has the name a_b.zip, so this one is <out>/ui_lane_test/{class_dir}/a_b.2.zip\n\
              air-trace teamcity-publish: 4 bundle zip(s) from 3 test.xml file(s) into <out>\n"
         )
     );
 
-    let zips: Vec<String> = walkdir::WalkDir::new(out.path())
-        .sort_by_file_name()
-        .into_iter()
-        .filter_map(Result::ok)
-        .filter(|entry| entry.file_type().is_file())
-        .map(|entry| entry.path().strip_prefix(out.path()).unwrap().to_string_lossy().replace('\\', "/"))
-        .collect();
-    assert_eq!(zips.len(), 4, "{zips:?}");
-    for zip in &zips {
+    let files = files_of(out.path());
+    let zips: Vec<&String> = files.iter().filter(|file| file.ends_with(".zip")).collect();
+    assert_eq!(zips.len(), 4, "{files:?}");
+    assert_eq!(files.len(), 5, "the zips and {RUNS_FILE}: {files:?}");
+    for zip in zips {
         let mut archive = zip::ZipArchive::new(fs::File::open(out.path().join(zip)).unwrap()).unwrap();
         assert!(archive.by_name(MANIFEST_FILE).is_ok(), "{zip} holds the bundle at its top");
     }
@@ -141,28 +188,112 @@ fn a_bundle_in_both_the_directory_and_the_zip_is_published_once() {
     copy_tree(&example_bundle(), &bundle_file(&outputs.path().join(ROOT_DIR_NAME), &placed));
     pack(outputs.path(), &lane.join(TEST_OUTPUTS).join(OUTPUTS_ZIP), &PackOptions::default()).unwrap();
     let out = tempfile::tempdir().unwrap();
-    let (mut stdout, mut stderr) = (Vec::new(), Vec::new());
-    publish(&[root.path().to_path_buf()], out.path(), &mut stdout, &mut stderr).unwrap();
-    let stdout = String::from_utf8(stdout).unwrap();
-    assert_eq!(stdout.matches("##teamcity[publishArtifacts").count(), 1, "{stdout}");
-    let stderr = String::from_utf8(stderr).unwrap();
+    let (stdout, stderr) = run(root.path(), out.path(), None, None);
+    assert_eq!(stdout.matches(".zip => ").count(), 1, "{stdout}");
     assert!(stderr.contains(": 1 bundle zip(s) from 1 test.xml"), "{stderr}");
 }
 
-/// A testlogs tree without bundles prints no message, and a missing directory is refused.
+/// A testlogs tree without bundles prints no message and writes nothing, not even the viewer, and a missing directory
+/// is refused.
 #[test]
 fn testlogs_without_bundles_print_nothing() {
     let root = tempfile::tempdir().unwrap();
     write_xml(&root.path().join("plugins/other/plain_test"), &[("com.example.PlainTest", "works")]);
     let out = tempfile::tempdir().unwrap();
-    let (mut stdout, mut stderr) = (Vec::new(), Vec::new());
-    publish(&[root.path().to_path_buf()], out.path(), &mut stdout, &mut stderr).unwrap();
-    assert_eq!(String::from_utf8(stdout).unwrap(), "");
+    let viewer = viewer();
+    let (stdout, _) = run(root.path(), out.path(), Some(viewer.path()), Some(&build()));
+    assert_eq!(stdout, "");
     assert_eq!(fs::read_dir(out.path()).unwrap().count(), 0);
 
-    let missing = root.path().join("missing");
-    let refused = publish(&[missing], out.path(), &mut Vec::new(), &mut Vec::new()).unwrap_err();
+    let missing = [root.path().join("missing")];
+    let job = Publish {
+        testlogs: &missing,
+        out: out.path(),
+        viewer: None,
+        build: None,
+    };
+    let refused = publish(&job, &mut Vec::new(), &mut Vec::new()).unwrap_err();
     assert_eq!(refused.exit, Exit::Usage);
+}
+
+/// On TeamCity with a viewer, the listing names the build as the origin of each run, the viewer is copied over the
+/// one of an earlier run, and each test links to the viewer page of its trace.
+#[test]
+fn on_team_city_the_listing_names_the_build_and_each_test_links_its_trace() {
+    let root = testlogs();
+    let out = tempfile::tempdir().unwrap();
+    let viewer = viewer();
+    fs::create_dir_all(out.path().join("assets")).unwrap();
+    fs::write(out.path().join("assets/stale.js"), "").unwrap();
+    let (stdout, stderr) = run(root.path(), out.path(), Some(viewer.path()), Some(&build()));
+    let names = [(out.path(), "<out>"), (root.path(), "<testlogs>")];
+    expect_test::expect_file![testdata("publish-on-team-city.teamcity.txt")].assert_eq(&placeholders(&stdout, &names));
+    assert!(!stderr.contains("no viewer"), "{stderr}");
+
+    let files = files_of(out.path());
+    assert!(!files.contains(&"assets/stale.js".to_owned()), "{files:?}");
+    for file in [VIEWER_PAGE, "assets/index.js", RUNS_FILE] {
+        assert!(files.contains(&file.to_owned()), "{file}: {files:?}");
+    }
+    // The path of the testlogs as JSON spells it, without its quotes.
+    let json_path = serde_json::to_string(&root.path()).unwrap();
+    let listing = String::from_utf8(fs::read(out.path().join(RUNS_FILE)).unwrap())
+        .unwrap()
+        .replace(&json_path[1..json_path.len() - 1], "<testlogs>");
+    expect_test::expect_file![testdata("publish.runs.json")].assert_eq(&listing);
+    for run in serde_json::from_str::<Value>(&listing).unwrap()["runs"].as_array().unwrap() {
+        for scenario in run["scenarios"].as_array().unwrap() {
+            let zip = scenario["zip"].as_str().unwrap();
+            assert!(files.contains(&zip.to_owned()), "{zip} is a published zip");
+            assert_eq!(scenario["source"]["path"], zip);
+        }
+    }
+}
+
+/// A viewer that is the output, or holds it, is refused before the copy removes anything.
+#[test]
+fn a_viewer_that_overlaps_the_output_is_refused() {
+    let viewer = viewer();
+    for out in [viewer.path().to_path_buf(), viewer.path().join("assets/out")] {
+        let refused = copy_viewer(viewer.path(), &out).unwrap_err();
+        assert!(refused.ends_with(&format!("and the output {} overlap", out.display())), "{refused}");
+    }
+    assert_eq!(files_of(viewer.path()), ["assets/index.js", VIEWER_PAGE]);
+}
+
+/// A viewer that is missing, or a directory without its page, is a line on stderr. The bundles and the listing still
+/// publish, and no test gets a link to a page that is not there.
+#[test]
+fn without_a_viewer_the_bundles_and_the_listing_publish_alone() {
+    let root = testlogs();
+    for given in [false, true] {
+        let out = tempfile::tempdir().unwrap();
+        let empty = tempfile::tempdir().unwrap();
+        let viewer = given.then_some(empty.path());
+        let (stdout, stderr) = run(root.path(), out.path(), viewer, Some(&build()));
+        let names = [(out.path(), "<out>"), (empty.path(), "<viewer>")];
+        let (stdout, stderr) = (placeholders(&stdout, &names), placeholders(&stderr, &names));
+        let reason = if given { "<viewer> holds no index.html" } else { "no --viewer DIR" };
+        assert!(
+            stderr.starts_with(&format!(
+                "air-trace teamcity-publish: no viewer: {reason}; so air-traces/ holds the bundles and runs.json only\n"
+            )),
+            "{stderr}"
+        );
+        assert!(!stdout.contains("type='link'"), "{stdout}");
+        assert!(
+            stdout.contains("##teamcity[publishArtifacts '<out>/runs.json => air-traces']"),
+            "{stdout}"
+        );
+        assert_eq!(stdout.matches(".zip => ").count(), 4, "{stdout}");
+        assert_eq!(
+            files_of(out.path())
+                .iter()
+                .filter(|file| !file.ends_with(".zip"))
+                .collect::<Vec<_>>(),
+            [RUNS_FILE]
+        );
+    }
 }
 
 #[test]

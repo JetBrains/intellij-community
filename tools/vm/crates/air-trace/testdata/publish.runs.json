@@ -1,0 +1,143 @@
+{
+  "generation": 1,
+  "controllerRuns": [],
+  "runs": [
+    {
+      "runId": "iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3",
+      "startedAt": "2026-09-23T10:15:00.120Z",
+      "status": "failed",
+      "origin": {
+        "name": "Air Plugin UI Tests / 1",
+        "id": "1100310296",
+        "url": "https://teamcity.example/buildConfiguration/Air_UiTests_1/1100310296"
+      },
+      "scenarios": [
+        {
+          "id": "ce172297b743ed27030e",
+          "runId": "iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3",
+          "testClass": "AirRenameSessionGeneratedFlowUiTest",
+          "scenario": "a b",
+          "flow": "flow-rename-session",
+          "lane": "UI",
+          "launcher": "daemon",
+          "status": "passed",
+          "startedAt": "2026-09-23T10:15:00.120Z",
+          "durationMs": 10840,
+          "hasVideo": false,
+          "capture": {
+            "source": "x11"
+          },
+          "thumbnail": "snap/0012.webp",
+          "source": {
+            "kind": "zip",
+            "path": "ui_lane_test/iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3/AirRenameSessionGeneratedFlowUiTest/a_b.zip"
+          },
+          "origin": {
+            "name": "Air Plugin UI Tests / 1",
+            "id": "1100310296",
+            "url": "https://teamcity.example/buildConfiguration/Air_UiTests_1/1100310296"
+          },
+          "url": "/__air/bundle/ce172297b743ed27030e/",
+          "zip": "ui_lane_test/iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3/AirRenameSessionGeneratedFlowUiTest/a_b.zip"
+        },
+        {
+          "id": "cd9862f95158602f810e",
+          "runId": "iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3",
+          "testClass": "AirRenameSessionGeneratedFlowUiTest",
+          "scenario": "a_b",
+          "flow": "flow-rename-session",
+          "lane": "UI",
+          "launcher": "daemon",
+          "status": "passed",
+          "startedAt": "2026-09-23T10:15:00.120Z",
+          "durationMs": 10840,
+          "hasVideo": false,
+          "capture": {
+            "source": "x11"
+          },
+          "thumbnail": "snap/0012.webp",
+          "source": {
+            "kind": "zip",
+            "path": "ui_lane_test/iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3/AirRenameSessionGeneratedFlowUiTest/a_b.2.zip"
+          },
+          "origin": {
+            "name": "Air Plugin UI Tests / 1",
+            "id": "1100310296",
+            "url": "https://teamcity.example/buildConfiguration/Air_UiTests_1/1100310296"
+          },
+          "url": "/__air/bundle/cd9862f95158602f810e/",
+          "zip": "ui_lane_test/iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3/AirRenameSessionGeneratedFlowUiTest/a_b.2.zip"
+        },
+        {
+          "id": "7986bf32073b851663d8",
+          "runId": "iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3",
+          "testClass": "AirRenameSessionGeneratedFlowUiTest",
+          "scenario": "rename-closed-project-session",
+          "flow": "flow-rename-session",
+          "lane": "UI",
+          "launcher": "daemon",
+          "status": "failed",
+          "startedAt": "2026-09-23T10:15:00.120Z",
+          "durationMs": 10840,
+          "hasVideo": true,
+          "capture": {
+            "source": "x11"
+          },
+          "thumbnail": "snap/0012.webp",
+          "source": {
+            "kind": "zip",
+            "path": "ui_lane_test/iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3/AirRenameSessionGeneratedFlowUiTest/rename-closed-project-session.zip"
+          },
+          "origin": {
+            "name": "Air Plugin UI Tests / 1",
+            "id": "1100310296",
+            "url": "https://teamcity.example/buildConfiguration/Air_UiTests_1/1100310296"
+          },
+          "url": "/__air/bundle/7986bf32073b851663d8/",
+          "zip": "ui_lane_test/iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3/AirRenameSessionGeneratedFlowUiTest/rename-closed-project-session.zip"
+        },
+        {
+          "id": "71c638e83dc037c36d0e",
+          "runId": "iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3",
+          "testClass": "AirRenameSessionGeneratedFlowUiTest",
+          "scenario": "rename-closed-project-session",
+          "flow": "flow-rename-session",
+          "lane": "UI",
+          "launcher": "daemon",
+          "status": "passed",
+          "startedAt": "2026-09-23T10:15:00.120Z",
+          "durationMs": 10840,
+          "hasVideo": false,
+          "capture": {
+            "source": "x11"
+          },
+          "thumbnail": "snap/0012.webp",
+          "source": {
+            "kind": "zip",
+            "path": "ui-real_lane_test/shard_1_of_2/iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3/AirRenameSessionGeneratedFlowUiTest/rename-closed-project-session.zip"
+          },
+          "origin": {
+            "name": "Air Plugin UI Tests / 1",
+            "id": "1100310296",
+            "url": "https://teamcity.example/buildConfiguration/Air_UiTests_1/1100310296"
+          },
+          "url": "/__air/bundle/71c638e83dc037c36d0e/",
+          "zip": "ui-real_lane_test/shard_1_of_2/iter-6f1c2a9e-3b4d-4f7a-9c1e-2d8b5a7e0c41-3/AirRenameSessionGeneratedFlowUiTest/rename-closed-project-session.zip"
+        }
+      ]
+    }
+  ],
+  "roots": [
+    {
+      "kind": "bazel-testlogs",
+      "path": "<testlogs>",
+      "origin": {
+        "name": "Air Plugin UI Tests / 1",
+        "id": "1100310296",
+        "url": "https://teamcity.example/buildConfiguration/Air_UiTests_1/1100310296"
+      },
+      "exists": true,
+      "bundles": 4
+    }
+  ]
+}
