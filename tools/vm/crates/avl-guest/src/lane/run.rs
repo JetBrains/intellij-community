@@ -6,7 +6,9 @@
 //! the runfiles in the jar store by digest, and runs the iteration of [`super::iteration`] as a `/run` would. It writes
 //! the run stream on standard output and into the run directory, and the JUnit XML of the stream into the run
 //! directory and to the XML file of a Bazel test. It quits the IDE, and exits 0 when the run is green. Under a Bazel test,
-//! a run that is not green keeps its evidence in the outputs directory of the test, as [`super::evidence`] states.
+//! a run that is not green keeps its evidence in the outputs directory of the test, as [`super::evidence`] states. On a
+//! TeamCity build that names a build log file, the run shows in the build log while it goes on, as
+//! [`super::build_log`] states.
 //!
 //! With `--plan-only` it stops before the IDE: it stages the inputs and selects the documents as a run does, and it
 //! writes the [`RunPlan`] on standard output. So a host proves a lane rule and its runfiles without a lane IDE.
@@ -25,6 +27,7 @@ use avl_wire::runtime::{self, RuntimeFile};
 use avl_wire::session_log;
 use serde::Serialize;
 
+use super::build_log::BuildLog;
 use super::channel::{self, BOOT_CODE, log};
 use super::evidence::{self, Evidence, Limits, Moment};
 use super::inputs::{self, LaunchInputs, guest_platform};
@@ -307,7 +310,12 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
                 "cannot start the monitor, so the run has no hang report and no hard stop: {error}"
             ));
         }
-        let xml = iteration::run_split(&daemon, &request, flags.split, &notes, &mut Tee(stream, io::stdout()));
+        let mut tee = Tee {
+            file: stream,
+            out: io::stdout(),
+            build_log: BuildLog::open(variable, &args.lane, bazel_outputs(variable).as_deref()),
+        };
+        let xml = iteration::run_split(&daemon, &request, flags.split, &notes, &mut tee);
         monitor.run_returned();
         let written = write_xml(&root, &xml, variable);
         let finished = daemon.finish();
@@ -598,18 +606,26 @@ pub(crate) fn is_green(stream: &[u8]) -> bool {
     summary.is_some_and(|summary| !summary.has_failures)
 }
 
-/// Writes each record to the run file and to standard output. A failed write to standard output is not a failed run.
-struct Tee<F, O>(F, O);
+/// Writes each record to the run file and to standard output, and shows it in the build log channel of TeamCity. A
+/// failed write to standard output or to the channel is not a failed run.
+struct Tee<F, O> {
+    file: F,
+    out: O,
+    build_log: Option<BuildLog>,
+}
 
 impl<F: Write, O: Write> Write for Tee<F, O> {
     fn write(&mut self, bytes: &[u8]) -> io::Result<usize> {
-        self.0.write_all(bytes)?;
-        let _ = self.1.write_all(bytes);
+        self.file.write_all(bytes)?;
+        let _ = self.out.write_all(bytes);
+        if let Some(build_log) = &mut self.build_log {
+            build_log.observe(bytes);
+        }
         Ok(bytes.len())
     }
 
     fn flush(&mut self) -> io::Result<()> {
-        let _ = self.1.flush();
-        self.0.flush()
+        let _ = self.out.flush();
+        self.file.flush()
     }
 }

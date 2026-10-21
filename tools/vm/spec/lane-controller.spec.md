@@ -36,6 +36,7 @@ targets:
   - ../crates/avl-guest/src/lane/recycle.rs
   - ../crates/avl-guest/src/lane/watchdog.rs
   - ../crates/avl-guest/src/lane/stream.rs
+  - ../crates/avl-guest/src/lane/build_log.rs
   - ../crates/avl-guest/src/lane/ide/restart.rs
   - ../crates/avl-guest/src/lane/context/options/*.xml
   - ../crates/avl-guest/src/supervisor/thread_dump.rs
@@ -1715,6 +1716,34 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   locks standard output for each write, not for the whole run. So no thread of the run waits for a lock of the main
   thread.
   [@test] ../crates/avl-guest/tests/cli.rs (`lane_run_writes_the_record_of_its_watchdog_thread_on_standard_output`)
+
+- On a TeamCity build, `lane-run` appends service messages to the file that `AIR_LANE_LIVE_LOG` names. The build
+  streams that file into its build log, so the messages show while the test runs. At the start of each scenario
+  `lane-run` writes `progressMessage '<lane> <n>/<total>: <scenario>'`. At its end the message also names the
+  status and the duration. Each message is one line in one write, and its values are escaped as TeamCity reads them.
+  The file carries no test event, because the results come from the JUnit XML.
+  [@test] ../crates/avl-guest/src/lane/build_log/tests.rs (`a_run_with_a_passed_and_a_failed_scenario_writes_the_golden_lines`)
+
+- For a failed or aborted scenario, `lane-run` publishes the video and the last picture of the bundle with
+  `publishArtifacts`. A scan of the trace root after each scenario and at the summary of the run finds the bundle.
+  The paths are the ones of `air-trace teamcity-publish`: `video.mp4` and `failure.<ext>` in
+  `air-traces-failed/<lane>/<runId>/<TestClass>/<stem>/`. The lane is the directory of the `test.xml`. A later bundle
+  of the same path takes the stem `<scenario>.<n>`. So the publish after the test replaces the same files. Both files
+  are staged under their artifact names beside the file of the variable, because Bazel can remove `test.outputs`
+  after the test.
+  [@test] ../crates/avl-guest/src/lane/build_log/tests.rs (`a_run_with_a_passed_and_a_failed_scenario_writes_the_golden_lines`)
+  [@test] ../crates/avl-guest/src/lane/build_log/tests.rs (`a_second_failed_attempt_publishes_under_the_next_stem`)
+  [@test] ../crates/avl-guest/src/lane/build_log/tests.rs (`the_summary_publishes_a_bundle_that_the_recorder_finished_late`)
+  [@test] ../crates/avl-trace-tools/src/artifacts/tests.rs
+
+- The channel is off without `TEAMCITY_VERSION`, without the variable, and when the file does not open. Inside a
+  Bazel test the channel is on, although Bazel sets `XML_OUTPUT_FILE` there. A failed write is one line of the log,
+  and the channel stays off for the rest of the run. A write that takes a part of a line ends that line first. The
+  run keeps its verdict and its run file. The lane daemon of a worker opens no channel.
+  [@test] ../crates/avl-guest/src/lane/build_log/tests.rs (`the_channel_is_on_only_on_teamcity_with_the_variable`)
+  [@test] ../crates/avl-guest/src/lane/build_log/tests.rs (`the_channel_is_on_in_a_bazel_test_of_a_teamcity_build`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`a_failed_write_to_the_build_log_keeps_the_run_file_whole_and_green`)
+  [@test] ../crates/avl-guest/src/lane/build_log/tests.rs (`a_short_write_ends_its_line_and_turns_the_channel_off`)
 
 - `lane-run --plan-only` stages the inputs and selects the documents as a run does. It then writes the plan on
   standard output: the key of the lane IDE, the digests of the inputs, and the suites in run order. It launches no IDE,

@@ -940,6 +940,13 @@ build opens its traces with no server. A loose artifact would not work: TeamCity
 its siblings are refused. Each test of the Tests tab gets its trace and a `trace viewer` link into that page. A failed
 scenario also gets its last picture and its video as loose files in `air-traces-failed/`, which the Tests tab shows.
 
+**While the test runs.** TeamCity takes the results of a Bazel test from its JUnit XML at the end of the test. So a
+step before the Bazel step streams one file into the build log and gives its path to the test as `AIR_LANE_LIVE_LOG`.
+`lane-run` appends a `progressMessage` at the start and at the end of each scenario, such as
+`ui 12/46: <scenario> failed (3.2 s)`. For a failed or aborted scenario it also publishes the video and the last
+picture into `air-traces-failed/` as soon as the bundle is there. The paths are the ones of `teamcity-publish`, which
+publishes the same files again after the test. Off TeamCity, or without the variable, `lane-run` writes no such file.
+
 `--viewer DIR` names a built viewer, a directory with `index.html`. Without it, the step builds the viewer in the
 checkout: `pnpm install --frozen-lockfile` in the kernel and in `plugins/air/docs`, then `pnpm run build:viewer` there,
 which writes `out/air-trace-viewer/index.html`. The node and the pnpm are `--node` and `--pnpm`, or `AIR_TRACE_NODE` and

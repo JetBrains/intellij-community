@@ -5,6 +5,7 @@
 //! against the lane IDE, with its values, its host ids, the recycle of the IDE, the watchdog, the trace and the run
 //! stream.
 
+pub(crate) mod build_log;
 pub(crate) mod channel;
 pub(crate) mod context;
 pub(crate) mod evidence;

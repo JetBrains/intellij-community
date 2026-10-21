@@ -1,5 +1,7 @@
 use std::collections::BTreeMap;
 use std::path::PathBuf;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use std::ffi::OsString;
 
@@ -7,6 +9,8 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::cli::{Verb, parse};
+use crate::lane::build_log::tests::{finished, line, plan, started, summary as summary_of};
+use crate::lane::stream::CaseStatus;
 
 /// The arguments of `lane-run --lane ui --descriptor /r/d.json` and `extra`.
 fn args(extra: &[&str]) -> LaneRunArgs {
@@ -401,4 +405,53 @@ fn the_outputs_directory_of_a_bazel_test_is_its_variable() {
     assert_eq!(outputs(Some("/testlogs/outputs")), Some(PathBuf::from("/testlogs/outputs")));
     assert_eq!(outputs(Some("")), None);
     assert_eq!(outputs(None), None);
+}
+
+/// A build log file that refuses each write, and counts the writes.
+struct Refusing(Arc<AtomicUsize>);
+
+impl Write for Refusing {
+    fn write(&mut self, _: &[u8]) -> io::Result<usize> {
+        self.0.fetch_add(1, Ordering::SeqCst);
+        Err(io::Error::other("no space left on the device"))
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
+    }
+}
+
+// A failed write to the build log channel turns the channel off after one line of the log. The run file still gets each
+// record, so a green run stays green.
+#[test]
+fn a_failed_write_to_the_build_log_keeps_the_run_file_whole_and_green() {
+    let writes = Arc::new(AtomicUsize::new(0));
+    let channel = BuildLog::to(
+        Box::new(Refusing(writes.clone())),
+        PathBuf::from("/agent/temp/air-lane-live/live.log"),
+        "ui",
+        None,
+        PathBuf::new(),
+    );
+    let mut tee = Tee {
+        file: Vec::new(),
+        out: io::sink(),
+        build_log: Some(channel),
+    };
+    let records = [
+        line(&plan(2)),
+        line(&started("passes")),
+        line(&finished("passes", CaseStatus::Successful, 1000)),
+        line(&started("again")),
+        line(&finished("again", CaseStatus::Successful, 1000)),
+        line(&summary_of(2, 0)),
+    ];
+
+    for record in &records {
+        tee.write_all(record).unwrap();
+    }
+
+    assert_eq!(tee.file, records.concat());
+    assert!(is_green(&tee.file), "the run file gives the verdict of the run");
+    assert_eq!(writes.load(Ordering::SeqCst), 1, "the channel is off after its first failed write");
 }

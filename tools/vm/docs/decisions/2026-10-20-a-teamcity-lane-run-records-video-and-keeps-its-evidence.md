@@ -14,6 +14,11 @@ recorder read the screen. A TeamCity build on Linux now records the screen too. 
 as [The lane daemon is the only runner of the Air UI lanes](2026-10-19-the-lane-daemon-is-the-only-runner-of-the-air-ui-lanes.md)
 states.
 
+Since 2026-10-21 a TeamCity lane run also shows while it goes on. The personal build 1101267129 proved that a file
+which a step streams into the build log reaches it during the Bazel step. `lane-run` appends a progress message for
+each scenario to the file of `AIR_LANE_LIVE_LOG`. It also publishes the video and the last picture of a failed scenario
+at the paths of `air-trace teamcity-publish`. The results still come from the JUnit XML only.
+
 The behavior is stated in [the scenario trace spec](../../spec/scenario-trace.spec.md) under **Capture and video**, and
 in [the controller spec](../../spec/lane-controller.spec.md) under `lane-run`. How to find the files is
 [the VM guide](../vm-ui-tests.md#artifacts-and-diagnostics).

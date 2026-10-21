@@ -1,0 +1,6 @@
+##teamcity[progressMessage 'ui 1/2: passes']
+##teamcity[progressMessage 'ui 1/2: passes passed (12.3 s)']
+##teamcity[progressMessage 'ui 2/2: it|'s |[odd|] || named|nnext']
+##teamcity[progressMessage 'ui 2/2: it|'s |[odd|] || named|nnext failed (3.2 s)']
+##teamcity[publishArtifacts '$ROOT/live/air-traces-failed/ui_lane_test/iter-1/AirComposerUiTest/it_s__odd____named_next/video.mp4 => air-traces-failed/ui_lane_test/iter-1/AirComposerUiTest/it_s__odd____named_next']
+##teamcity[publishArtifacts '$ROOT/live/air-traces-failed/ui_lane_test/iter-1/AirComposerUiTest/it_s__odd____named_next/failure.webp => air-traces-failed/ui_lane_test/iter-1/AirComposerUiTest/it_s__odd____named_next']
