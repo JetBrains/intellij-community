@@ -832,11 +832,15 @@ internal interface CompensatablePool {
  * This reuses the existing health check coroutine managed by [CoroutineDispatcherWatcher] instead of submitting
  * a separate probe coroutine.
  * @param unresponsiveIntervalMs the interval, in milliseconds, after which the pool is considered unresponsive
+ * @param nanoTime the clock used to measure the wait; tests replace it to simulate a stall
+ * @param sleep blocks the current thread for the given number of milliseconds; tests replace it to avoid real waits
  */
 internal class DefaultCompensatablePool(
   private val dispatcher: CoroutineDispatcher,
   private val getLastSampleNs: () -> Long,
   private val unresponsiveIntervalMs: Long,
+  private val nanoTime: () -> Long = { System.nanoTime() },
+  private val sleep: (Long) -> Unit = { Thread.sleep(it) },
 ) : CompensatablePool {
   override fun waitForStatus(timeMs: Long): Boolean {
     // This function checks the pool's health using `getLastSampleNs`. The health check coroutine is managed by
@@ -846,9 +850,12 @@ internal class DefaultCompensatablePool(
     // Cancelling a coroutine before it starts does not remove it from the queue; it is removed only when a worker dequeues it.
     // When the pool is starved, no worker is available to drain these canceled probes.
 
-    Thread.sleep(timeMs)
-    val now = System.nanoTime()
-    return TimeUnit.NANOSECONDS.toMillis(now - getLastSampleNs()) < unresponsiveIntervalMs
+    val beforeSleep = nanoTime()
+    sleep(timeMs)
+    val now = nanoTime()
+    val overslept = TimeUnit.NANOSECONDS.toMillis(now - beforeSleep) - timeMs
+    // Overslept time is not counted to detect unresponsiveness to mitigate problem with stalled process
+    return TimeUnit.NANOSECONDS.toMillis(now - getLastSampleNs()) < unresponsiveIntervalMs + overslept
   }
 
   override fun withGrantedParallelism(block: () -> Unit) {
