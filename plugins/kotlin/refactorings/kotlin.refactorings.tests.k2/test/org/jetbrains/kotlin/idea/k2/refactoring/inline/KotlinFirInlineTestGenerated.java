@@ -194,6 +194,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("testData/inline/inlineTypeAlias/innerClassConstructorReceiver.kt");
         }
 
+        @TestMetadata("innerClassConstructorUnusedTypeParameter.kt")
+        public void testInnerClassConstructorUnusedTypeParameter() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/innerClassConstructorUnusedTypeParameter.kt");
+        }
+
         @TestMetadata("keepImports.kt")
         public void testKeepImports() throws Exception {
             runTest("testData/inline/inlineTypeAlias/keepImports.kt");
@@ -317,6 +322,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
         @TestMetadata("typeAnnotationProjected.kt")
         public void testTypeAnnotationProjected() throws Exception {
             runTest("testData/inline/inlineTypeAlias/typeAnnotationProjected.kt");
+        }
+
+        @TestMetadata("unusedTypeParameter.kt")
+        public void testUnusedTypeParameter() throws Exception {
+            runTest("testData/inline/inlineTypeAlias/unusedTypeParameter.kt");
         }
 
         @TestMetadata("useSiteVariance.kt")

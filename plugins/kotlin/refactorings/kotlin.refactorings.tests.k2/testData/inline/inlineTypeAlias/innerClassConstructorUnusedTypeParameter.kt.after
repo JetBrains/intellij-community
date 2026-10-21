@@ -1,0 +1,8 @@
+class Outer {
+    inner class Inner(val value: String)
+}
+
+fun use(outer: Outer) {
+    outer.Inner("one")
+    outer.Inner("two")
+}

@@ -1,0 +1,7 @@
+class Box(val value: String)
+
+fun use() {
+    val explicit = Box("one")
+    val inferred = Box("two")
+    println(listOf(explicit, inferred))
+}

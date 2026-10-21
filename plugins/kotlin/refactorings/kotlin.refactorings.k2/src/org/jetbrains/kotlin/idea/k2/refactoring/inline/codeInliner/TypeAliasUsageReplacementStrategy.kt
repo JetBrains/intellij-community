@@ -188,14 +188,18 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
         psiFactory: KtPsiFactory,
         expandedTypeArgumentsText: String?
     ) {
-        if (callElement is KtCallExpression && expandedTypeArgumentsText != null) {
-            val expandedTypeArgumentList = psiFactory.createTypeArguments(expandedTypeArgumentsText)
-            val originalTypeArgumentList = callElement.typeArgumentList
-            if (originalTypeArgumentList != null) {
-                shortenReferences(originalTypeArgumentList.replaced(expandedTypeArgumentList))
-            } else {
-                shortenReferences(callElement.addAfter(expandedTypeArgumentList, callElement.calleeExpression) as KtElement)
-            }
+        if (callElement !is KtCallExpression) return
+        val originalTypeArgumentList = callElement.typeArgumentList
+        if (expandedTypeArgumentsText == null) {
+            //the expanded type has no type arguments, e.g. when the alias declares an unused type parameter
+            originalTypeArgumentList?.delete()
+            return
+        }
+        val expandedTypeArgumentList = psiFactory.createTypeArguments(expandedTypeArgumentsText)
+        if (originalTypeArgumentList != null) {
+            shortenReferences(originalTypeArgumentList.replaced(expandedTypeArgumentList))
+        } else {
+            shortenReferences(callElement.addAfter(expandedTypeArgumentList, callElement.calleeExpression) as KtElement)
         }
     }
 
