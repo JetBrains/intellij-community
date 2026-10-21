@@ -265,18 +265,28 @@ pub(crate) fn site_needs_build(project: Option<&Path>, kernel: Option<&Path>, si
     if !project.join("package.json").exists() {
         return None;
     }
-    let Ok(index) = fs::metadata(site.join("index.html")).and_then(|info| info.modified()) else {
+    let index = site.join("index.html");
+    if fs::metadata(&index).and_then(|info| info.modified()).is_err() {
         return Some("the site is not built");
+    }
+    newer_sources(&index, &site_source_dirs(project, kernel)).then_some("the site is older than its sources")
+}
+
+/// Whether a file under `sources`, each a directory or a file, is newer than the built `index`. An `index` that does
+/// not read counts as older than every source.
+pub(crate) fn newer_sources(index: &Path, sources: &[PathBuf]) -> bool {
+    let Ok(built) = fs::metadata(index).and_then(|info| info.modified()) else {
+        return true;
     };
-    let newest = site_source_dirs(project, kernel)
-        .into_iter()
+    let newest = sources
+        .iter()
         .flat_map(walkdir::WalkDir::new)
         .filter_map(Result::ok)
         .filter(|entry| !entry.file_type().is_dir())
         .filter_map(|entry| entry.metadata().ok()?.modified().ok())
         .max()
         .unwrap_or(SystemTime::UNIX_EPOCH);
-    (newest > index).then_some("the site is older than its sources")
+    newest > built
 }
 
 impl Server {

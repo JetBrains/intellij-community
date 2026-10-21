@@ -2,9 +2,9 @@
 //! checkout.
 //!
 //! The build is the docs project's `pnpm run build:viewer`, with the node and the pnpm of `air-trace serve`'s site
-//! build ([site_tools]), after `pnpm install --frozen-lockfile` in each directory without `node_modules`. It writes
-//! `<checkout>/out/air-trace-viewer`. A viewer there that is newer than its sources is not built again. The build has
-//! a time limit, and its output goes to stderr as it comes.
+//! build ([site_tools]), after `pnpm install --frozen-lockfile` in the kernel and in the docs project. It writes
+//! `<checkout>/out/air-trace-viewer`. A viewer there that is newer than its sources ([viewer_sources]) is not built
+//! again. The build has a time limit, and its output goes to stderr as it comes.
 
 use std::fs;
 use std::io::{self, Write};
@@ -15,7 +15,7 @@ use std::time::{Duration, Instant};
 use avl_host_sys::viewer::format_duration;
 use tokio_util::sync::CancellationToken;
 
-use crate::serve::{BuildOutput, SiteTools, build_site_with, site_installs, site_needs_build, site_tools, tools_text};
+use crate::serve::{BuildOutput, SiteTools, build_site_with, newer_sources, site_source_dirs, site_tools, tools_text};
 
 /// The page of the viewer, at the top of its build.
 pub(super) const VIEWER_PAGE: &str = "index.html";
@@ -57,7 +57,7 @@ pub(super) fn viewer_dir(source: &ViewerSource, stderr: &mut dyn Write) -> io::R
             checkout.display()
         )));
     }
-    if site_needs_build(Some(&project), Some(&kernel), Some(&built)).is_none() {
+    if !newer_sources(&built.join(VIEWER_PAGE), &viewer_sources(&project, &kernel)) {
         writeln!(
             stderr,
             "air-trace teamcity-publish: the viewer in {} is newer than its sources; no build",
@@ -91,6 +91,27 @@ pub(super) fn viewer_dir(source: &ViewerSource, stderr: &mut dyn Write) -> io::R
     })
 }
 
+/// The files that the viewer build reads: the sources of the site, the configuration files and the lockfile of the docs
+/// project, the lockfile of the kernel, and the UI primitives of the genui catalog, which the build takes through an
+/// alias and which Tailwind scans.
+fn viewer_sources(project: &Path, kernel: &Path) -> Vec<PathBuf> {
+    let mut sources = site_source_dirs(project, Some(kernel));
+    let project_files = [
+        "site.config.ts",
+        "vite.config.ts",
+        "vite.viewer.config.ts",
+        "scripts/paths.ts",
+        "package.json",
+        "pnpm-lock.yaml",
+    ];
+    sources.extend(project_files.map(|file| project.join(file)));
+    sources.extend(["package.json", "pnpm-lock.yaml"].map(|file| kernel.join(file)));
+    if let Some(air) = project.parent() {
+        sources.push(air.join("frontend/genui/jcef/web-bundle/src/catalog/ui"));
+    }
+    sources
+}
+
 /// Runs the viewer build on a runtime of its own thread, and writes each line of its output to stderr as it comes.
 /// Answers the tools it built with, or why it failed. At the timeout the build is dropped, which kills the step that
 /// runs.
@@ -119,7 +140,12 @@ fn run_build(
                     Some(tools) => tools,
                     None => site_tools(&output, &cancel).await?,
                 };
-                let installs = site_installs(project, Some(kernel));
+                // Also over an existing `node_modules`: after a change of a lockfile it holds the old dependencies, and a
+                // frozen install of an unchanged lockfile does nothing.
+                let installs: Vec<&Path> = [kernel, project]
+                    .into_iter()
+                    .filter(|dir| dir.join("package.json").is_file())
+                    .collect();
                 build_site_with(&tools, &installs, project, &VIEWER_BUILD, &output, &cancel).await?;
                 Ok(tools)
             };

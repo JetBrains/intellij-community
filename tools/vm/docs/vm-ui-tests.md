@@ -932,9 +932,11 @@ traces with no server. Each test of the Tests tab gets its trace, a `trace viewe
 and, for a failed scenario, its last picture.
 
 `--viewer DIR` names a built viewer. Without it, the step builds the viewer in the checkout, as `serve` builds the
-site: with the pinned node and pnpm, `pnpm install --frozen-lockfile` where `node_modules` is missing, then
-`pnpm run build:viewer` in `plugins/air/docs`, which writes `out/air-trace-viewer`. A viewer there that is newer than
-its sources is not built again. The build has 10 minutes, and stderr says how long it took.
+site: with the pinned node and pnpm, `pnpm install --frozen-lockfile` in the kernel and in `plugins/air/docs`, then
+`pnpm run build:viewer` there, which writes `out/air-trace-viewer`. A viewer there that is newer than
+its sources is not built again: the site's sources, the Vite and site configuration, the lockfiles, and the UI
+primitives of the genui catalog. The build has 10 minutes, and stderr says how long it took. A build that does not
+end in time is stopped with every process that it started.
 
 The step reads the build from the agent's property files, `TEAMCITY_BUILD_PROPERTIES_FILE` and the configuration
 file that it names. `bazel run` passes the environment of the step to the program. The listing then names the build

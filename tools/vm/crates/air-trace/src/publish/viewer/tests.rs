@@ -5,22 +5,34 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 
-/// A checkout with the docs project and the kernel, whose sources are an hour old.
+/// Sets the time a file was last changed.
+#[cfg(unix)]
+fn set_modified(path: &Path, time: SystemTime) {
+    fs::File::options().write(true).open(path).unwrap().set_modified(time).unwrap();
+}
+
+/// The UI primitive of the genui catalog in the fixture checkout.
+#[cfg(unix)]
+const CATALOG_UI_FILE: &str = "plugins/air/frontend/genui/jcef/web-bundle/src/catalog/ui/button.tsx";
+
+/// A checkout with the docs project, the kernel and the genui catalog, whose files are an hour old.
 #[cfg(unix)]
 fn checkout() -> tempfile::TempDir {
     let checkout = tempfile::tempdir().unwrap();
-    for project in ["plugins/air/docs", "community/tools/docs-site"] {
-        let dir = checkout.path().join(project);
-        fs::create_dir_all(dir.join("src")).unwrap();
-        fs::write(dir.join("package.json"), "{}").unwrap();
-        let source = dir.join("src/main.ts");
-        fs::write(&source, "export {}").unwrap();
-        fs::File::options()
-            .write(true)
-            .open(&source)
-            .unwrap()
-            .set_modified(SystemTime::now() - Duration::from_hours(1))
-            .unwrap();
+    let files = [
+        "plugins/air/docs/package.json",
+        "plugins/air/docs/vite.viewer.config.ts",
+        "plugins/air/docs/src/main.ts",
+        "community/tools/docs-site/package.json",
+        "community/tools/docs-site/pnpm-lock.yaml",
+        "community/tools/docs-site/src/main.ts",
+        CATALOG_UI_FILE,
+    ];
+    for file in files {
+        let path = checkout.path().join(file);
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
+        fs::write(&path, "{}").unwrap();
+        set_modified(&path, SystemTime::now() - Duration::from_hours(1));
     }
     checkout
 }
@@ -68,7 +80,8 @@ fn build(checkout: &Path, tools: SiteTools, timeout: Duration) -> (Result<PathBu
 }
 
 /// Without `--viewer`, the step installs the kernel and the docs project, builds the viewer, and says the time it took.
-/// A viewer newer than its sources is not built again.
+/// A viewer newer than its sources is not built again. A source outside `src`, such as a UI primitive of the genui
+/// catalog or the Vite configuration, builds it again, and both installs run again over their `node_modules`.
 #[cfg(unix)]
 #[test]
 fn a_missing_viewer_is_built_in_the_checkout_and_kept_while_it_is_current() {
@@ -107,7 +120,7 @@ fn a_missing_viewer_is_built_in_the_checkout_and_kept_while_it_is_current() {
     );
     assert!(built.join(VIEWER_PAGE).is_file());
 
-    let (again, stderr) = build(checkout.path(), tools, Duration::from_mins(1));
+    let (again, stderr) = build(checkout.path(), tools.clone(), Duration::from_mins(1));
     assert_eq!(again, Ok(built.clone()));
     assert_eq!(
         stderr,
@@ -117,6 +130,30 @@ fn a_missing_viewer_is_built_in_the_checkout_and_kept_while_it_is_current() {
         )
     );
     assert_eq!(fs::read_to_string(fakes.path().join("calls")).unwrap().lines().count(), 3);
+
+    for dir in [&project, &kernel] {
+        fs::create_dir_all(dir.join("node_modules")).unwrap();
+    }
+    let changed = [
+        (CATALOG_UI_FILE, 6),
+        ("plugins/air/docs/vite.viewer.config.ts", 9),
+        ("community/tools/docs-site/pnpm-lock.yaml", 12),
+    ];
+    for (source, calls) in changed {
+        set_modified(&checkout.path().join(source), SystemTime::now() + Duration::from_mins(1));
+        let (rebuilt, stderr) = build(checkout.path(), tools.clone(), Duration::from_mins(1));
+        assert_eq!(rebuilt, Ok(built.clone()));
+        assert!(
+            stderr.starts_with("air-trace teamcity-publish: the viewer is older than its sources; building it"),
+            "{source}: {stderr}"
+        );
+        assert_eq!(
+            fs::read_to_string(fakes.path().join("calls")).unwrap().lines().count(),
+            calls,
+            "{source}"
+        );
+        set_modified(&checkout.path().join(source), SystemTime::now() - Duration::from_hours(1));
+    }
 }
 
 /// A build that fails, or that does not end within its time, is the reason there is no viewer, with the time it took.
