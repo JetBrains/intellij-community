@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.util.SystemInfo;
+import com.jetbrains.Extensions;
 import com.jetbrains.FontMetricsAccessor;
 import com.jetbrains.JBR;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -47,6 +48,12 @@ public final class FontInfo {
   public static boolean canDisplay(@NotNull Font font, int codePoint, boolean disableFontFallback) {
     if (!Character.isValidCodePoint(codePoint)) {
       return false;
+    }
+    if (disableFontFallback) {
+      var ext = JBR.getFontExtensions(Extensions.CAN_DISPLAY_WITHOUT_FALLBACK);
+      if (ext != null) {
+        return ext.canDisplayWithoutFallback(font, codePoint);
+      }
     }
     if (disableFontFallback && SystemInfo.isMac) {
       String codePointStr = Character.toString(codePoint);

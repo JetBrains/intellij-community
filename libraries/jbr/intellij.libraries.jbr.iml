@@ -9,21 +9,21 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jbr-api" type="repository">
-        <properties maven-id="org.jetbrains.runtime:jbr-api:1.11.0">
+        <properties maven-id="org.jetbrains.runtime:jbr-api:1.12.0">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/runtime/jbr-api/1.11.0/jbr-api-1.11.0.jar">
-              <sha256sum>da9238c62bb38da2482109bf761863b52c65245cf85b02b20001fcd7f378c506</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/runtime/jbr-api/1.12.0/jbr-api-1.12.0.jar">
+              <sha256sum>7820798e5325dbd515dd2eea035a897e63db3871e1aaaa515c361bde52851425</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/runtime/jbr-api/1.11.0/jbr-api-1.11.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/runtime/jbr-api/1.12.0/jbr-api-1.12.0.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/runtime/jbr-api/1.11.0/jbr-api-1.11.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/runtime/jbr-api/1.12.0/jbr-api-1.12.0-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/runtime/jbr-api/1.11.0/jbr-api-1.11.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/runtime/jbr-api/1.12.0/jbr-api-1.12.0-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
