@@ -110,6 +110,8 @@ struct Fake {
     killed: Arc<AtomicBool>,
     /// A relaunch keeps the pid, as a launch that left the old IDE on the bridge port would.
     relaunch_keeps_pid: AtomicBool,
+    /// The part of a relaunch that a refusal ends, as an IDE that does not get ready ends its readiness part.
+    refused_part: Mutex<Option<RelaunchPart>>,
     /// The launches and the ends of a bare IDE, in order.
     bare: Mutex<Vec<&'static str>>,
     /// A bare launch fails, as an IDE that never gets ready does.
@@ -169,6 +171,7 @@ impl Fake {
             services: FakeServices::default(),
             killed,
             relaunch_keeps_pid: AtomicBool::new(false),
+            refused_part: Mutex::new(None),
             bare: Mutex::new(Vec::new()),
             bare_launch_fails: AtomicBool::new(false),
             air_reloads: Mutex::new(Vec::new()),
@@ -272,11 +275,51 @@ impl Lane for Fake {
             .post_json("/api/air/ui-test", &request.to_string(), Instant::now() + within)
     }
 
-    fn relaunch(&self, cause: Relaunch, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String> {
+    /// Runs the parts of a restart in the order of the owner: the launch counts the pid up, a refused part ends the
+    /// relaunch, and a failure of `while_down` fails its part and is the failure of the relaunch after its last part.
+    fn relaunch(
+        &self,
+        cause: Relaunch,
+        while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
+        parts: &mut dyn RelaunchParts,
+    ) -> Result<(), String> {
         self.relaunches.lock().unwrap().push(cause);
-        let down = while_down(self.context.path());
-        if !self.relaunch_keeps_pid.load(Ordering::SeqCst) {
-            self.pid.fetch_add(1, Ordering::SeqCst);
+        let refused_part = *self.refused_part.lock().unwrap();
+        let mut down = Ok(());
+        for part in [
+            RelaunchPart::Quit,
+            RelaunchPart::Down,
+            RelaunchPart::Launch,
+            RelaunchPart::Ready,
+            RelaunchPart::Ping,
+        ] {
+            parts.begin(part);
+            if part == RelaunchPart::Quit {
+                for inner in [RelaunchPart::QuitRequest, RelaunchPart::QuitExit] {
+                    parts.begin(inner);
+                    parts.end(inner, None);
+                }
+            }
+            match part {
+                RelaunchPart::Down => down = while_down(self.context.path()),
+                RelaunchPart::Launch if !self.relaunch_keeps_pid.load(Ordering::SeqCst) => {
+                    self.pid.fetch_add(1, Ordering::SeqCst);
+                }
+                _ => {}
+            }
+            let refuse = |code: &'static str, message: &str| {
+                <crate::reply::AgentRefusal as crate::reply::AgentRefusalExt>::refused(code, message.to_owned())
+            };
+            if refused_part == Some(part) {
+                let refusal = refuse(crate::lane::readiness::NOT_READY_CODE, "the IDE did not get ready");
+                parts.end(part, Some(&refusal));
+                return Err(format!("{}: {}", refusal.code, refusal.message));
+            }
+            let down_failure = match (part, &down) {
+                (RelaunchPart::Down, Err(error)) => Some(refuse(crate::lane::ide::CODE, error)),
+                _ => None,
+            };
+            parts.end(part, down_failure.as_ref());
         }
         down
     }
@@ -806,6 +849,56 @@ fn a_failed_story_instruction_files_the_session_logs_that_the_ide_queued() {
     assert_eq!(attached, [("events.jsonl of acp:s-1".to_owned(), "txt".to_owned())]);
 }
 
+/// The `relaunch` spans of the trace under the `restart` span of `key`: each key, and the status and the error type of
+/// its end.
+fn relaunch_parts(trace: &[String], key: &str) -> Vec<(String, String, Option<String>)> {
+    let lines: Vec<Value> = trace.iter().map(|line| serde_json::from_str::<Value>(line).unwrap()).collect();
+    let restart = lines
+        .iter()
+        .find(|line| line["op"] == "span" && line["key"] == key)
+        .unwrap_or_else(|| panic!("no span {key}: {trace:?}"));
+    lines
+        .iter()
+        .filter(|line| line["op"] == "span" && line["parent"] == restart["id"])
+        .map(|span| {
+            let end = lines.iter().find(|line| line["op"] == "end" && line["id"] == span["id"]).unwrap();
+            (
+                span["key"].as_str().unwrap().to_owned(),
+                end["status"].as_str().unwrap().to_owned(),
+                end["error"]["type"].as_str().map(str::to_owned),
+            )
+        })
+        .collect()
+}
+
+// A recycle whose IDE does not get ready ends its readiness part with the code of the refusal, and runs no part after it.
+#[test]
+fn a_recycle_that_does_not_get_ready_fails_its_ready_part_with_the_refusal_code() {
+    let fake = Fake::new(Script {
+        resets: VecDeque::from([json!("2 editor tabs remain open")]),
+        ..Script::default()
+    });
+    *fake.refused_part.lock().unwrap() = Some(RelaunchPart::Ready);
+    let vocabulary = json!({"runnerAnswers": [], "actions": {"rename-session-select": ide(&[], &[], &[])}, "assertions": {}});
+    let instructions = json!([{"action": "rename-session-select"}]);
+    let ran = run(&fake, &[story(&vocabulary, &json!([scenario("renames", &instructions)]))], None);
+    assert_eq!(ran.events("testFinished")[0]["status"], "FAILED");
+    let passed = |key: &str| (key.to_owned(), "passed".to_owned(), None);
+    assert_eq!(
+        relaunch_parts(&ran.trace, "restart:recycle"),
+        [
+            passed("relaunch:quit"),
+            passed("relaunch:down"),
+            passed("relaunch:launch"),
+            (
+                "relaunch:ready".to_owned(),
+                "failed".to_owned(),
+                Some(crate::lane::readiness::NOT_READY_CODE.to_owned())
+            ),
+        ]
+    );
+}
+
 // A reset that does not hold recycles the IDE once, and the scenario runs and passes on the new pid.
 #[test]
 fn a_dirty_reset_recycles_once_and_the_scenario_passes_on_a_new_pid() {
@@ -920,6 +1013,37 @@ fn a_restart_performs_while_down_and_states_the_fixture_again() {
     assert_eq!(
         fake.bodies("assertion/rename-session-title")[0]["whileDownReads"],
         json!({"config/options/workspace.xml": "<before/><after/>"})
+    );
+    let spans: Vec<Value> = ran
+        .trace
+        .iter()
+        .map(|line| serde_json::from_str::<Value>(line).unwrap())
+        .filter(|line| line["op"] == "span")
+        .collect();
+    let under = |parent: &str| -> Vec<(&str, &str)> {
+        let parent = spans.iter().find(|span| span["key"] == parent).unwrap();
+        spans
+            .iter()
+            .filter(|span| span["parent"] == parent["id"])
+            .map(|span| (span["key"].as_str().unwrap(), span["title"].as_str().unwrap()))
+            .collect()
+    };
+    assert_eq!(
+        under("restart:ide"),
+        [
+            ("relaunch:quit", "[relaunch] quit"),
+            ("relaunch:down", "[relaunch] while down"),
+            ("relaunch:launch", "[relaunch] launch"),
+            ("relaunch:ready", "[relaunch] ready"),
+            ("relaunch:ping", "[relaunch] robot and ping"),
+        ]
+    );
+    assert_eq!(
+        under("relaunch:quit"),
+        [
+            ("relaunch:quit/request", "[relaunch] quit request"),
+            ("relaunch:quit/exit", "[relaunch] process exit")
+        ]
     );
 }
 

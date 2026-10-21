@@ -49,7 +49,7 @@ use serde_json::value::RawValue;
 use serde_json::{Map, Value, json};
 
 use super::host_ids::{self, HostId, HostSide, ServiceControl};
-use super::ide::Relaunch;
+use super::ide::{Relaunch, RelaunchPart, RelaunchParts};
 use super::readiness::{READY_TIMEOUT, request};
 use super::recycle::{Isolation, RecycleBudget, ResetPhase, never_ran};
 use super::session_logs::{self, StagedLog};
@@ -150,8 +150,13 @@ pub(crate) trait Lane: Probes {
     fn call(&self, request: &Value, within: Duration) -> Result<Value, avl_bridge::Error>;
 
     /// Quits the IDE, performs `while_down` on its context directory, launches it again on the same context, and waits
-    /// for readiness.
-    fn relaunch(&self, cause: Relaunch, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String>;
+    /// for readiness. `parts` gets the begin and the end of each part.
+    fn relaunch(
+        &self,
+        cause: Relaunch,
+        while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
+        parts: &mut dyn RelaunchParts,
+    ) -> Result<(), String>;
 
     fn services(&self) -> &dyn ServiceControl;
 
@@ -870,7 +875,7 @@ impl<'r, 's> Runner<'r, 's> {
     }
 
     /// A relaunch of the IDE as a `restart` span with the key `restart:ide` for `restart-ide` and `restart:recycle` for a
-    /// recycle, as the recorder keys them.
+    /// recycle, as the recorder keys them. Each part of the relaunch is a `relaunch` span inside it, see [`TracedParts`].
     fn relaunch_span(&self, cause: Relaunch, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String> {
         let id = match cause {
             Relaunch::Restart => "ide",
@@ -878,8 +883,12 @@ impl<'r, 's> Runner<'r, 's> {
         };
         let span = self.trace().open_span(SpanKind::Restart, id, &format!("[restart] {id}"), None);
         self.trace().restart();
+        let mut parts = TracedParts {
+            trace: &self.trace,
+            open: Vec::new(),
+        };
         let outcome = self.watch.step(&format!("relaunch for {id}"), || {
-            self.watch.relaunching(|| self.lane.relaunch(cause, while_down))
+            self.watch.relaunching(|| self.lane.relaunch(cause, while_down, &mut parts))
         });
         let failure = outcome
             .as_ref()
@@ -1538,6 +1547,28 @@ impl<'r, 's> Runner<'r, 's> {
         let error = answer.as_ref().err().map(ToString::to_string);
         self.trace().call(name, start, duration, error.as_deref());
         answer.map_err(|error| Failure::of_bridge(&error))
+    }
+}
+
+/// The parts of one relaunch as the `relaunch` spans of the trace, each under the innermost open span: the `restart`
+/// span, or the part it runs inside. A part that a refusal ended fails with the code of the refusal as its type.
+struct TracedParts<'t> {
+    trace: &'t RefCell<Trace>,
+    /// The spans of the parts that run now, the innermost last.
+    open: Vec<u32>,
+}
+
+impl RelaunchParts for TracedParts<'_> {
+    fn begin(&mut self, part: RelaunchPart) {
+        let title = format!("[relaunch] {}", part.title());
+        self.open
+            .push(self.trace.borrow_mut().open_span(SpanKind::Relaunch, part.as_str(), &title, None));
+    }
+
+    fn end(&mut self, _part: RelaunchPart, failure: Option<&crate::reply::AgentRefusal>) {
+        let Some(span) = self.open.pop() else { return };
+        let failure = failure.map(|refusal| Failure::runner(&refusal.code, refusal.message.clone()).trace());
+        self.trace.borrow_mut().end_span(span, failure.as_ref());
     }
 }
 

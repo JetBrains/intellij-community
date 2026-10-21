@@ -25,7 +25,7 @@ use serde_json::{Value, json};
 use super::channel::{Daemon, log};
 use super::context::option_files_digest;
 use super::evidence;
-use super::ide::{ContextPlugin, KillTarget, LaneLaunch, Records, Relaunch};
+use super::ide::{ContextPlugin, KillTarget, LaneLaunch, Records, Relaunch, RelaunchParts};
 use super::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE, KeyInputs, LaneIdentity};
 use super::inputs::TraceInputs;
 use super::live::LiveRun;
@@ -686,13 +686,19 @@ impl Lane for DaemonLane<'_, '_> {
         self.bridge.post(request, within)
     }
 
-    fn relaunch(&self, cause: Relaunch, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String> {
+    fn relaunch(
+        &self,
+        cause: Relaunch,
+        while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
+        parts: &mut dyn RelaunchParts,
+    ) -> Result<(), String> {
         let restarted = self.daemon.with_ide(|owner| {
             owner.restart(
                 self.launch,
                 cause,
                 while_down,
                 &mut Records(&mut |record| self.stream.emit(&record)),
+                parts,
             )
         });
         restarted.map_err(|refusal| format!("{}: {}", refusal.code, refusal.message))

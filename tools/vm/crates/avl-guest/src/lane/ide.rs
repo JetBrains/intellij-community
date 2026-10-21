@@ -57,7 +57,8 @@ use crate::supervisor::{self, Launcher, LiveSystem};
 
 mod restart;
 
-pub(crate) use restart::{KillTarget, Relaunch};
+pub(crate) use restart::{KillTarget, Relaunch, RelaunchPart, RelaunchParts};
+use restart::{NoParts, timed};
 #[cfg(test)]
 mod tests;
 
@@ -665,14 +666,26 @@ impl IdeOwner {
         Ok(())
     }
 
-    /// Quits the held IDE and launches it again on its context as `<cause>-<n>-<millis>`. The count `n` counts every
-    /// relaunch of the context. Between the two, [`before_relaunch`] removes the restored editor tabs of a recycle.
+    /// Quits the held IDE and launches it again on its context. Between the two, [`before_relaunch`] removes the restored
+    /// editor tabs of a recycle.
     fn relaunch(&mut self, launch: &LaneLaunch<'_>, cause: Relaunch, records: &mut Records<'_>) -> Result<(), AgentRefusal> {
         let Some(previous) = self.held.clone() else {
             return Err(AgentRefusal::internal("a relaunch was decided without an IDE"));
         };
         self.quit(records)?;
         before_relaunch(cause, Path::new(&previous.paths.config_dir), records)?;
+        self.launch_again(previous, launch, cause, records)
+    }
+
+    /// Launches the IDE of the run `previous`, which ended, again on its context as `<cause>-<n>-<millis>`. The count `n`
+    /// counts every relaunch of the context.
+    fn launch_again(
+        &mut self,
+        previous: HeldIde,
+        launch: &LaneLaunch<'_>,
+        cause: Relaunch,
+        records: &mut Records<'_>,
+    ) -> Result<(), AgentRefusal> {
         let relaunches = previous.relaunches + 1;
         let held = HeldIde {
             launch_name: launch_name(&format!("{}-{relaunches}", cause.as_str())),
@@ -852,11 +865,16 @@ impl IdeOwner {
     ///
     /// `/ide/stop` asks for it, so the next run makes a fresh context.
     pub(crate) fn quit(&mut self, records: &mut Records<'_>) -> Result<(), AgentRefusal> {
+        self.quit_in_parts(records, &mut NoParts)
+    }
+
+    /// [`IdeOwner::quit`], and `parts` gets the begin and the end of the quit request, the wait for the exit, and a kill.
+    fn quit_in_parts(&mut self, records: &mut Records<'_>, parts: &mut dyn RelaunchParts) -> Result<(), AgentRefusal> {
         let Some(mut held) = self.held.take() else {
             self.publish_target();
             return Ok(());
         };
-        let result = self.end_run(&mut held, records);
+        let result = self.end_run(&mut held, records, parts);
         if result.is_err() {
             self.held = Some(held);
         }
@@ -864,39 +882,49 @@ impl IdeOwner {
         result
     }
 
-    fn end_run(&self, held: &mut HeldIde, records: &mut Records<'_>) -> Result<(), AgentRefusal> {
+    /// Ends the run of `held`. A refused quit request and a run that does not end after it fail no part, because the
+    /// kill comes next. A run that survives the kill fails the kill.
+    fn end_run(&self, held: &mut HeldIde, records: &mut Records<'_>, parts: &mut dyn RelaunchParts) -> Result<(), AgentRefusal> {
         if live_state(held).is_some() {
             let pid = held.pid.map_or_else(|| "unknown".to_owned(), |pid| pid.to_string());
             records.note(format!("quitting the IDE pid {pid} of '{}'", held.key));
-            match Bridge::new(BRIDGE_PORT, &held.token).and_then(|bridge| readiness::quit(&bridge)) {
-                Ok(()) => {}
-                Err(refusal) => records.note(format!("the IDE pid {pid} did not quit through its bridge: {}", refusal.message)),
+            parts.begin(RelaunchPart::QuitRequest);
+            let asked = Bridge::new(BRIDGE_PORT, &held.token).and_then(|bridge| readiness::quit(&bridge));
+            parts.end(RelaunchPart::QuitRequest, None);
+            if let Err(refusal) = asked {
+                records.note(format!("the IDE pid {pid} did not quit through its bridge: {}", refusal.message));
             }
-            if await_end(held, QUIT_EXIT_WAIT).is_none() {
+            parts.begin(RelaunchPart::QuitExit);
+            let ended = await_end(held, QUIT_EXIT_WAIT);
+            parts.end(RelaunchPart::QuitExit, None);
+            if ended.is_none() {
                 records.note(format!(
                     "the IDE pid {pid} is still alive {}s after the quit; killing it",
                     QUIT_EXIT_WAIT.as_secs()
                 ));
-                supervisor::cancel(
-                    &LiveSystem,
-                    &CancelArgs {
-                        run: RunArgs {
-                            root: RootArgs {
-                                root: held.context().to_path_buf(),
+                timed(parts, RelaunchPart::QuitKill, || {
+                    supervisor::cancel(
+                        &LiveSystem,
+                        &CancelArgs {
+                            run: RunArgs {
+                                root: RootArgs {
+                                    root: held.context().to_path_buf(),
+                                },
+                                run_id: held.run_id(),
                             },
-                            run_id: held.run_id(),
+                            grace_ms: 0,
+                            thread_dump: self.inputs.jcmd(),
                         },
-                        grace_ms: 0,
-                        thread_dump: self.inputs.jcmd(),
-                    },
-                )?;
-                if await_end(held, KILL_EXIT_WAIT).is_none() {
-                    return Err(refused(format!(
-                        "the IDE pid {pid} of '{}' survived a quit and a kill; a launch beside it would contend for the \
-                         fixed bridge port",
-                        held.key
-                    )));
-                }
+                    )?;
+                    match await_end(held, KILL_EXIT_WAIT) {
+                        Some(_) => Ok(()),
+                        None => Err(refused(format!(
+                            "the IDE pid {pid} of '{}' survived a quit and a kill; a launch beside it would contend for \
+                             the fixed bridge port",
+                            held.key
+                        ))),
+                    }
+                })?;
             }
         }
         if !held.exit_reported {

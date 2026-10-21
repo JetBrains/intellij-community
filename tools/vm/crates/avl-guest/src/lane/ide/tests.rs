@@ -262,6 +262,69 @@ fn held_ide(context: &Path, launch_name: &str) -> HeldIde {
     }
 }
 
+/// A [`RelaunchParts`] that keeps each begin and end, an end with the code of the refusal that ended its part.
+#[derive(Default)]
+struct RecordedParts(Vec<String>);
+
+impl RelaunchParts for RecordedParts {
+    fn begin(&mut self, part: RelaunchPart) {
+        self.0.push(format!("begin {}", part.as_str()));
+    }
+
+    fn end(&mut self, part: RelaunchPart, failure: Option<&AgentRefusal>) {
+        self.0.push(match failure {
+            None => format!("end {}", part.as_str()),
+            Some(refusal) => format!("end {} failed {}", part.as_str(), refusal.code),
+        });
+    }
+}
+
+// A restart reports each part that it ran. The quit of a run that ended already has no part inside it. A failed
+// `whileDown` fails the down part, and the launch still runs. A refused launch ends the restart before ready and ping.
+#[test]
+fn a_restart_reports_each_part_that_it_ran_and_the_refusal_that_ended_one() {
+    let root = TempDir::new().unwrap();
+    let mut owner = IdeOwner::new(owner_inputs(root.path()));
+    owner.held = Some(held_ide(&root.path().join("ide/air-ui-lane"), "start-mve37si6"));
+    let bytes = fs::read(avl_testkit::crate_path!("testdata/lane-context/ui.json")).unwrap();
+    let document = avl_wire::program::lane::parse_lane_document(&bytes).unwrap();
+    let identity = LaneIdentity::new("air-ui-lane", 0);
+    let fake_agent_jar = root.path().join("fake-agent.jar");
+    let launch = LaneLaunch {
+        document: &document,
+        vocabulary_digest: "digest",
+        identity: &identity,
+        product_stamp: "stamp",
+        fake_agent_jar: &fake_agent_jar,
+        // No context plugin, so the install refuses the launch.
+        plugins: &[],
+        live: None,
+    };
+    let mut parts = RecordedParts::default();
+    let refusal = owner
+        .restart(
+            &launch,
+            Relaunch::Restart,
+            &mut |_| Err("disk full".to_owned()),
+            &mut Records(&mut |_| {}),
+            &mut parts,
+        )
+        .unwrap_err();
+    assert_eq!(refusal.code, CODE);
+    assert!(refusal.message.contains("hold no plugin directory"), "{}", refusal.message);
+    assert_eq!(
+        parts.0,
+        [
+            "begin quit",
+            "end quit",
+            "begin down",
+            "end down failed lane_ide",
+            "begin launch",
+            "end launch failed lane_ide"
+        ]
+    );
+}
+
 // The watchdog kills the run that the owner published last, through a handle that it reads without the lock of the
 // owner. A launch publishes its run, and a quit clears it. So a kill during a relaunch reaches the run that the
 // relaunch launched, and a kill between the quit and the launch kills no run.
