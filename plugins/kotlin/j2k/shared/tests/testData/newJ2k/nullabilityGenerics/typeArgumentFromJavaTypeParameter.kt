@@ -1,4 +1,3 @@
-// ERROR: Inapplicable candidate(s): static fun <T : Any> notNullTypeParameter(value: T): T
 // ERROR: Null cannot be a value of a non-null type 'Any?'.
 // ERROR: Type argument is not within its bounds: type parameter 'T (of fun <T : Any> notNullTypeParameter)' must be subtype of 'Any', but actual: 'Any?'.
 // ERROR: Type argument is not within its bounds: type parameter 'T (of fun <T : Any> notNullTypeParameter)' must be subtype of 'Any', but actual: 'String?'.
