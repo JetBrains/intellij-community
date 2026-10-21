@@ -19,6 +19,7 @@ import com.intellij.testFramework.PerformanceUnitTest;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.junit5.RegistryKey;
+import com.intellij.testFramework.junit5.StressTestApplication;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.TestDisposable;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
@@ -43,6 +44,7 @@ import static com.jetbrains.jsonSchema.JsonSchemaHeavyTestFixtureKt.jsonSchemaHe
 import static com.jetbrains.jsonSchema.JsonSchemaHighlightingTestFixture.registerJsonSchema;
 
 @PerformanceUnitTest
+@StressTestApplication
 @TestApplication
 @TestDataPath("$PROJECT_ROOT/community/json/backend/tests/testData/jsonSchema/performance")
 @RegistryKey(key = "json.schema.use.networknt.validation", value = "false")
