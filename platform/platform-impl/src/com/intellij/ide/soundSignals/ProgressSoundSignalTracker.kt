@@ -41,6 +41,7 @@ class ProgressSoundSignalTracker(private val scope: CoroutineScope) {
   private var timerJob: Job? = null
 
   internal fun track(project: Project?, model: ProgressModel, info: TaskInfo) {
+    if (!model.visibleInStatusBar) return
     val progress = TrackedProgress(project, model, info)
     update { add(progress) }
     model.addOnFinishAction { if (it == info) update { remove(progress) } }
