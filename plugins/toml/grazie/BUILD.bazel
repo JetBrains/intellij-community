@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.toml.grazie` start
+content_module_jar(module = ":grazie")
+### auto-generated section `dev intellij.toml.grazie` end
 
 ### auto-generated section `build intellij.toml.grazie` start
 jvm_library(

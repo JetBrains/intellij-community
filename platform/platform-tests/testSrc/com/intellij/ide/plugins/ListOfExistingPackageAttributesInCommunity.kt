@@ -115,7 +115,6 @@ val existingPackageAttributesInCommunity: Map<String, Set<String>> = mapOf(
   "intellij.restructuredtext" to setOf("plugins/restructuredtext/resources/META-INF/plugin.xml"),
   "intellij.settingsSync.core" to setOf("platform/settings-sync-core/resources/intellij.settingsSync.core.xml"),
   "intellij.smart.update" to setOf("platform/smart-update/resources/META-INF/plugin.xml"),
-  "intellij.toml.grazie" to setOf("plugins/toml/grazie/src/main/resources/intellij.toml.grazie.xml"),
   "intellij.tools.ide.starter.bus" to setOf("plugins/performanceTesting/event-bus/resources/intellij.tools.ide.starter.bus.xml"),
   "intellij.vcs.git.backend" to setOf("plugins/git4idea/backend/resources/intellij.vcs.git.backend.xml"),
   "intellij.vcs.git.featuresTrainer" to setOf("plugins/git-features-trainer/resources/intellij.vcs.git.featuresTrainer.xml"),
