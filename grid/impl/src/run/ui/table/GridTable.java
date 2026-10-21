@@ -326,12 +326,10 @@ class GridTable extends JBTableWithResizableCells
   }
 
   /**
-   * Installs selection, navigation, status helpers, and column dragging for the primary table.
+   * Installs selection, scroll position tracking, and column dragging for the primary table.
    */
   final void installGridIntegration() {
     TableSelectionModel.install(this, myResultPanel);
-    TableGoToRowHelper.install(this, myResultPanel);
-    TablePositionWidgetHelper.install(this, myResultPanel);
     TableScrollPositionManager.install(this, myResultPanel);
 
     var moveColumnListener = new MoveColumnListener(myResultPanel, this);
@@ -383,11 +381,6 @@ class GridTable extends JBTableWithResizableCells
 
   /** Unscaled width of the divider the pinned strip paints on its trailing edge. */
   static final int PIN_DIVIDER_WIDTH = 1;
-
-  @Override
-  public boolean isEditingAnywhere() {
-    return isEditing();
-  }
 
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {

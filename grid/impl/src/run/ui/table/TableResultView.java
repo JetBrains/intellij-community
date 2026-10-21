@@ -107,6 +107,8 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     TableResultViewFactory.configureTable(myPrimary, grid);
     myScrollPane = TableResultViewFactory.createScrollPane(grid, myPrimary, this);
     TableAggregatorWidgetHelper.install(this, grid);
+    TableGoToRowHelper.install(this, grid);
+    TablePositionWidgetHelper.install(this, grid);
     myFrozenColumnsController.installColumnResizeHandle();
     grid.addDataGridListener(new DataGridListener() {
       @Override

@@ -8,7 +8,6 @@ import com.intellij.database.datagrid.SelectionModel;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.EditMaximizedView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.Editor;
@@ -64,10 +63,6 @@ public final class DataGridUIUtil {
   public static void updateAllToolbarsUnder(Component component) {
     UIUtil.uiTraverser(component).filter(ActionToolbarImpl.class)
       .forEach(ActionToolbarImpl::updateActionsImmediately);
-  }
-
-  public static boolean inCell(@NotNull DataGrid grid, @NotNull AnActionEvent e) {
-    return grid.getResultView().isCellComponent(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
   }
 
   public static @Nullable Object getLeadSelectionCellValue(@NotNull DataGrid grid, @NotNull AnActionEvent e, boolean single) {

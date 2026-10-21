@@ -6,6 +6,7 @@ import com.intellij.database.datagrid.GridModel;
 import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.GridUtil;
 import com.intellij.database.datagrid.ModelIndex;
+import com.intellij.database.datagrid.ResultView;
 import com.intellij.database.editor.GotoRowAction;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.openapi.util.Couple;
@@ -18,34 +19,34 @@ import java.util.List;
 import static com.intellij.database.editor.GotoRowAction.GO_TO_ROW_EXECUTOR_KEY;
 
 class TableGoToRowHelper implements GotoRowAction.GoToRowHelper {
-  private final GridTable myTable;
+  private final TableResultView myView;
   private final DataGrid myDataGrid;
 
-  TableGoToRowHelper(@NotNull GridTable table, @NotNull DataGrid grid) {
-    myTable = table;
+  TableGoToRowHelper(@NotNull TableResultView view, @NotNull DataGrid grid) {
+    myView = view;
     myDataGrid = grid;
   }
 
-  public static void install(@NotNull GridTable table, @NotNull DataGrid grid) {
-    TableGoToRowHelper tableGoToRowHelper = new TableGoToRowHelper(table, grid);
-    table.putClientProperty(GO_TO_ROW_EXECUTOR_KEY, tableGoToRowHelper);
+  public static void install(@NotNull TableResultView view, @NotNull DataGrid grid) {
+    TableGoToRowHelper tableGoToRowHelper = new TableGoToRowHelper(view, grid);
+    view.getComponent().putClientProperty(GO_TO_ROW_EXECUTOR_KEY, tableGoToRowHelper);
   }
 
   @Override
   public void goToRow(@NotNull String rowStr, @NotNull String columnStr) {
     Couple<Integer> coordinates = coordinates(rowStr, columnStr);
-    Counter counter = Counter.get(myTable);
+    Counter counter = Counter.get(myView);
     int column = counter.horizontalUnit(coordinates);
     int row = counter.verticalUnit(coordinates);
-    ModelIndex<GridColumn> columnIdx = myTable.uiColumn(column);
-    int absoluteRowIdx = myTable.fromRealRowIdx(row);
+    ModelIndex<GridColumn> columnIdx = myView.uiColumn(column);
+    int absoluteRowIdx = myView.fromRealRowIdx(row);
     if (columnIdx.isValid(myDataGrid) && absoluteRowIdx != -1) { // do not use ModelIndex#isValid for row as it can be not loaded yet
       myDataGrid.showCell(absoluteRowIdx, columnIdx);
     }
   }
 
   private @NotNull Couple<Integer> coordinates(String row, String column) {
-    Counter counter = Counter.get(myTable);
+    Counter counter = Counter.get(myView);
     int rowIdx = counter.rowIndex(myDataGrid, row);
     int columnIdx = counter.columnIndex(myDataGrid, column);
     return Couple.of(rowIdx, columnIdx);
@@ -147,8 +148,8 @@ class TableGoToRowHelper implements GotoRowAction.GoToRowHelper {
       return result == -1 ? -1 : result + 1;
     }
 
-    static @NotNull Counter get(@NotNull GridTable table) {
-      return table.isTransposed() ? TRANSPOSED : REGULAR;
+    static @NotNull Counter get(@NotNull ResultView view) {
+      return view.isTransposed() ? TRANSPOSED : REGULAR;
     }
   }
 }

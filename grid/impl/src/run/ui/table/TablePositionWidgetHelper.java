@@ -5,6 +5,7 @@ import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.GridColumn;
 import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.GridWidget;
+import com.intellij.database.datagrid.ResultView;
 import com.intellij.database.datagrid.SelectionModel;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -16,17 +17,17 @@ import java.util.concurrent.CompletableFuture;
 import static com.intellij.database.datagrid.GridPositionWidget.POSITION_WIDGET_HELPER_KEY;
 
 class TablePositionWidgetHelper implements GridWidget.GridWidgetHelper {
-  private final GridTable myTable;
+  private final ResultView myView;
   private final DataGrid myGrid;
 
-  TablePositionWidgetHelper(@NotNull GridTable table, @NotNull DataGrid grid) {
-    myTable = table;
+  TablePositionWidgetHelper(@NotNull ResultView view, @NotNull DataGrid grid) {
+    myView = view;
     myGrid = grid;
   }
 
-  public static void install(@NotNull GridTable table, @NotNull DataGrid grid) {
-    TablePositionWidgetHelper tablePositionWidgetHelper = new TablePositionWidgetHelper(table, grid);
-    table.putClientProperty(POSITION_WIDGET_HELPER_KEY, tablePositionWidgetHelper);
+  public static void install(@NotNull ResultView view, @NotNull DataGrid grid) {
+    TablePositionWidgetHelper tablePositionWidgetHelper = new TablePositionWidgetHelper(view, grid);
+    view.getComponent().putClientProperty(POSITION_WIDGET_HELPER_KEY, tablePositionWidgetHelper);
   }
 
   @Override
@@ -52,7 +53,7 @@ class TablePositionWidgetHelper implements GridWidget.GridWidgetHelper {
     }
     if (editing) CompletableFuture.completedFuture("");
 
-    TableGoToRowHelper.Counter counter = TableGoToRowHelper.Counter.get(myTable);
+    TableGoToRowHelper.Counter counter = TableGoToRowHelper.Counter.get(myView);
     int minRow = counter.verticalUnit(myGrid);
     int minColumn = counter.horizontalUnit(myGrid);
     if (minColumn == -1 || minRow == -1) return CompletableFuture.completedFuture(sb.toString());

@@ -1217,7 +1217,7 @@ public class TableResultPanel extends UserDataHolderBase
 
   @Override
   public boolean isEditing() {
-    return myResultView.isEditingAnywhere();
+    return myResultView.isEditing();
   }
 
   @Override

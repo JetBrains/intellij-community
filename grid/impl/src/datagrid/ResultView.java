@@ -60,24 +60,14 @@ public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, 
 
   void restoreColumnsOrder(Map<Integer, ModelIndex<GridColumn>> expectedToModel);
 
-  boolean isEditing();
-
   /** Whether the view has an active editor in any component that renders its cells. */
-  default boolean isEditingAnywhere() {
-    return isEditing();
-  }
+  boolean isEditing();
 
   /** Captures a component identity check for background action updates. */
   @RequiresEdt
   default @NotNull Predicate<Component> captureCellComponentMatcher() {
     Component cellComponent = getComponent();
     return component -> component != null && component == cellComponent;
-  }
-
-  /** Checks whether the view renders cells in this component. */
-  @RequiresEdt
-  default boolean isCellComponent(@Nullable Component component) {
-    return captureCellComponentMatcher().test(component);
   }
 
   boolean isMultiEditingAllowed();
