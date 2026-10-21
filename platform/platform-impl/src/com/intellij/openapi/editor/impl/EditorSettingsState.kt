@@ -2,14 +2,7 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.codeWithMe.ClientId
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -31,7 +24,6 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectLocator
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentListener
 import com.intellij.psi.codeStyle.CodeStyleConstraints
@@ -40,16 +32,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsListener
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions
 import com.intellij.util.PatternUtil
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
 
 /**
@@ -240,12 +226,19 @@ class EditorSettingsState(
   internal var languageSupplier: (() -> Language?)? = null
     set(value) {
       field = value
-      recalculateLanguage()
+      languageInput.recalculate()
     }
-  private val calcLangReadActionRef: AtomicReference<Job?> = AtomicReference()
   private var language: Language? = null
-  private val fileIndentRequested: AtomicBoolean = AtomicBoolean()
-  private val fileIndentJobRef: AtomicReference<Job?> = AtomicReference()
+  private val languageInput: BackgroundStateInput<Language?> = BackgroundStateInput(
+    scope = EditorCoroutineScopes.settingsScope(editor, project),
+    compute = { languageSupplier?.invoke() },
+    update = ::updateLanguage,
+  )
+  private val fileIndentInput: BackgroundStateInput<FileIndent> = BackgroundStateInput(
+    scope = EditorCoroutineScopes.settingsScope(editor, project),
+    compute = { computeFileIndent(ignoreDocOptions = true) },
+    update = ::updateFileIndent,
+  )
 
   init {
     if (editor != null) {
@@ -320,7 +313,7 @@ class EditorSettingsState(
           PsiDocumentListener.TOPIC,
           PsiDocumentListener { document, _, _ ->
             if (document == editor.document) {
-              recalculateLanguage()
+              languageInput.recalculate()
             }
           },
         )
@@ -361,33 +354,6 @@ class EditorSettingsState(
     }
   }
 
-  private fun recalculateLanguage() {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
-      runCatching {
-        updateLanguage(languageSupplier?.invoke())
-      }.getOrLogException(LOG)
-      return
-    }
-    if (calcLangReadActionRef.get() == null) {
-      val readJob = EditorCoroutineScopes.settingsScope(editor, project)
-        .launch(start = CoroutineStart.LAZY, context = ClientId.coroutineContext()) {
-          val result = readAction {
-            languageSupplier?.invoke()
-          }
-          withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + ClientId.coroutineContext()) {
-            calcLangReadActionRef.set(null)
-            updateLanguage(result)
-          }
-        }
-      if (calcLangReadActionRef.compareAndSet(null, readJob)) {
-        readJob.start()
-      } else {
-        // A lazy job that never starts also never completes, and its parent keeps it until the parent is cancelled.
-        readJob.cancel()
-      }
-    }
-  }
-
   private fun updateLanguage(newLanguage: Language?) {
     if (language != newLanguage) {
       language = newLanguage
@@ -407,18 +373,18 @@ class EditorSettingsState(
    *
    * The first call starts the computation of [fileIndent], and every call returns [tabSize].
    *
-   * Unit-test mode keeps no cached value, and a call starts no computation. A call returns the override, or it computes
-   * the value on the calling thread. A test can change the code style without an event, and the editor must see the new
-   * value at once.
+   * When the inputs compute synchronously, as in unit-test mode, the state keeps no cached value, and a call starts no
+   * computation. A call returns the override, or it computes the value on the calling thread. A test can change the code
+   * style without an event, and the editor must see the new value at once.
    */
   internal fun currentTabSize(): Int {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    if (!BackgroundStateInput.computesInBackground()) {
       if (isOverridden(::tabSize)) {
         return tabSize
       }
       return computeFileIndentForTest().tabSize
     }
-    requestFileIndent()
+    fileIndentInput.requestOnce()
     return tabSize
   }
 
@@ -426,13 +392,13 @@ class EditorSettingsState(
    * The tab character setting that the editor uses. The rules of [currentTabSize] apply.
    */
   internal fun currentUseTabCharacter(): Boolean {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    if (!BackgroundStateInput.computesInBackground()) {
       if (isOverridden(::myUseTabCharacter)) {
         return myUseTabCharacter
       }
       return computeFileIndentForTest().useTabCharacter
     }
-    requestFileIndent()
+    fileIndentInput.requestOnce()
     return myUseTabCharacter
   }
 
@@ -442,42 +408,18 @@ class EditorSettingsState(
    * [SettingsImpl.reinitSettings] calls this after each event that can change the value. These events are a code style
    * change, a new file, and a new highlighter. `EditorHighlighterUpdater` sets a new highlighter when the file type
    * changes or the file gets a new name.
-   *
-   * A new computation cancels the previous one, because the previous one can have read the inputs before they changed.
-   * Unit-test mode computes the value at once, on the calling thread.
    */
   internal fun recalculateFileIndent() {
-    fileIndentRequested.set(true)
-    val application = ApplicationManager.getApplication()
-    if (application.isUnitTestMode) {
-      val result = runCatching {
-        application.runReadAction(Computable { computeFileIndent(ignoreDocOptions = true) })
-      }.getOrLogException(LOG)
-      if (result != null) {
-        updateFileIndent(result)
-      }
-      return
-    }
-    val job = EditorCoroutineScopes.settingsScope(editor, project)
-      .launch(start = CoroutineStart.LAZY, context = ClientId.coroutineContext()) {
-        val result = readAction {
-          computeFileIndent(ignoreDocOptions = true)
-        }
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement() + ClientId.coroutineContext()) {
-          writeIntentReadAction {
-            updateFileIndent(result)
-          }
-        }
-      }
-    fileIndentJobRef.getAndSet(job)?.cancel()
-    job.start()
+    fileIndentInput.recalculate()
   }
 
-  private fun requestFileIndent() {
-    // Almost every call finds the flag set, and a plain read is cheaper than a compare-and-set.
-    if (!fileIndentRequested.get() && fileIndentRequested.compareAndSet(false, true)) {
-      recalculateFileIndent()
-    }
+  /**
+   * Waits until the background computations of the inputs end.
+   */
+  @TestOnly
+  internal suspend fun awaitInputsForTests() {
+    languageInput.awaitForTests()
+    fileIndentInput.awaitForTests()
   }
 
   /**
