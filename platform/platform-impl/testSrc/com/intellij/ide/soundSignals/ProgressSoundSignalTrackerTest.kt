@@ -222,6 +222,16 @@ class ProgressSoundSignalTrackerTest {
   }
 
   @Test
+  fun `a progress hidden from the status bar is silent`() = trackerTest { tracker, player ->
+    tracker.track(TestProgress(visibleInStatusBar = false))
+
+    delay(INITIAL_DELAY + REPEAT_DELAY * 3)
+
+    assertThat(player.recorded).isEmpty()
+    assertThat(tracker.isTimerRunning).isFalse()
+  }
+
+  @Test
   fun `a muted Progress signal plays nothing`() = trackerTest(muteProgress = true) { tracker, player ->
     tracker.track(TestProgress())
 
@@ -324,8 +334,9 @@ class ProgressSoundSignalTrackerTest {
     val project: Project? = null,
     fraction: Double? = null,
     dropsFinishActions: Boolean = false,
+    visibleInStatusBar: Boolean = true,
   ) {
-    private val indicatorModel = ProgressIndicatorModel(TITLE, TaskCancellation.nonCancellable()) {}
+    private val indicatorModel = ProgressIndicatorModel(TITLE, TaskCancellation.nonCancellable(), visibleInStatusBar) {}
 
     val model: ProgressModel =
       if (dropsFinishActions) object : ProgressModel by indicatorModel {
