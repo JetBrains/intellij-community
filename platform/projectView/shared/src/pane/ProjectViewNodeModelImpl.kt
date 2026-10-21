@@ -210,4 +210,7 @@ val SuperRootPresentation: TreeNodePresentationImpl = TreeNodePresentationBuilde
 val SuperRootModel: ProjectViewNodeModel = ProjectViewNodeModelImpl(SuperRootUserObject, SUPER_ROOT_ID, SuperRootPresentation, "", "")
 
 @ApiStatus.Internal
-object SuperRootUserObject : ProjectViewNodeUserObject
+object SuperRootUserObject : ProjectViewNodeUserObject {
+  override val name: String
+    get() = "SUPER_ROOT"
+}

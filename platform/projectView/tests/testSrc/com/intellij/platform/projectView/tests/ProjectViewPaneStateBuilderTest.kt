@@ -47,4 +47,7 @@ internal class ProjectViewPaneStateBuilderTest {
   }
 }
 
-private data class ProjectViewTestUserObject(val value: String) : ProjectViewNodeUserObject
+private data class ProjectViewTestUserObject(val value: String) : ProjectViewNodeUserObject {
+  override val name: String
+    get() = value
+}

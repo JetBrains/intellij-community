@@ -984,6 +984,8 @@ private data class LegacyProjectViewNode(
 private data class LegacyProjectViewNodeUserObject(
   val modelNode: Any,
 ) : ProjectViewNodeUserObject, PathElementIdProvider {
+  override val name: String = (modelNode as? PresentableNodeDescriptor<*>)?.name ?: ""
+
   override fun getVirtualFile(): VirtualFile? {
     return (modelNode as? AbstractTreeNode<*>)?.getVirtualFileForNodeOrItsPSI()
   }

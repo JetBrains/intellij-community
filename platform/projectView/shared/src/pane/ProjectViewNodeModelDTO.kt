@@ -20,6 +20,7 @@ internal data class ProjectViewNodeModelDTO(
 
 @Serializable
 internal data class ProjectViewNodeUserObjectDTO(
+  override val name: String, // not used on the frontend currently, but is useful for debugging
   val virtualFileId: VirtualFileId?,
 ) : ProjectViewNodeUserObject {
   override fun getVirtualFile(): VirtualFile? = virtualFileId?.virtualFile()
@@ -36,7 +37,8 @@ internal fun ProjectViewNodeModelImpl<*>.toDTO(): ProjectViewNodeModelDTO = Proj
 
 private fun ProjectViewNodeUserObject.toDTO(): ProjectViewNodeUserObjectDTO {
   return ProjectViewNodeUserObjectDTO(
-    getVirtualFile()?.rpcId(),
+    name = name,
+    virtualFileId = getVirtualFile()?.rpcId(),
   )
 }
 

@@ -57,6 +57,7 @@ import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.projectView.pane.BackendProjectViewNodeModel
 import com.intellij.platform.projectView.pane.BackendProjectViewPaneStateAccessor
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
+import com.intellij.platform.projectView.pane.ProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewNodeModelImpl
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewNodeUserObject
@@ -98,6 +99,7 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.ui.treeStructure.TreeNodePresentationImpl
+import com.intellij.util.SmartList
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.nullize
 import kotlinx.coroutines.CancellationException
@@ -486,7 +488,7 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
         val node = state.getNodeById(nodeId)
         if (node != null) {
           append(" [")
-          append((node.presentation as TreeNodePresentationImpl).mainText)
+          append(node.presentationImpl.mainText)
           append("]")
         }
       }
@@ -1137,43 +1139,87 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
       LOG.trace { "The children list changes, computing the delta" }
 
       // Compute a map of all previously existing children.
-      val oldModelsByUserObject = HashMap<T, BackendProjectViewNodeModel<T>>(oldModels.size)
+      val removedChildren = OldChildrenCollection<T>(oldModels.size)
       for (oldModel in oldModels) {
-        oldModelsByUserObject[oldModel.userObject] = oldModel
+        removedChildren.addOldChildModel(oldModel)
       }
 
-      // Now remove from the map all children that still exist.
-      // At the same time, build the list of all new models and their added/updated flags.
-      val newModels = mutableListOf<BackendProjectViewNodeModel<T>>()
-      val newModelIsUpdatedModel = BooleanArray(newChildren.size)
-      for (newChild in newChildren) {
-        val oldModel = oldModelsByUserObject.remove(newChild)
-        val updated: Boolean
-        val newModel = if (oldModel == null) {
-          updated = false
-          createNewModel(newChild)
-        }
-        else {
-          updated = true
-          createUpdatedModel(oldModel.id, newChild)
-        }
-        if (newModel == null) { // null means it was invalidated before we even managed to build its model
-          if (oldModel != null) { // we thought it was just updated, but since it's invalid now, it's effectively removed
-            oldModelsByUserObject[oldModel.userObject] = oldModel
-          } // else if both are null, it means it just appeared and went away immediately (e.g. a short-lived temp file)
-        }
-        else {
-          newModels.add(newModel)
-          newModelIsUpdatedModel[newModels.lastIndex] = updated
+      // Now we need to do several things at once:
+      // 1. identify the old children that still exist;
+      // 2. remove them from removedChildren, so we know which ones are truly gone;
+      // 3. create updated models for those children and map them to the new user objects
+      // (by their indices in newChildren, as it's the most convenient and reliable way to map them).
+
+      val updatedModelsByNewChildIndex = arrayOfNulls<BackendProjectViewNodeModel<T>>(newChildren.size)
+      val invalidNewChildren = BooleanArray(newChildren.size)
+
+      suspend fun doPass(
+        predicate: (Int, T) -> Boolean,
+        oldModelGetter: (T) -> BackendProjectViewNodeModel<T>?,
+      ) {
+        for ((index, newChild) in newChildren.withIndex()) {
+          if (!predicate(index, newChild)) continue
+          val oldModel = oldModelGetter(newChild)
+          if (oldModel != null) {
+            val updatedModel = createUpdatedModel(oldModel.id, newChild)
+            if (updatedModel != null) {
+              updatedModelsByNewChildIndex[index] = updatedModel
+              removedChildren.removeOldChildModel(oldModel)
+            }
+            else { // null means invalid => the new child is gone before we processed it
+              invalidNewChildren[index] = true
+            }
+          }
         }
       }
 
-      LOG.trace { "Removed children: ${oldModels.filter { oldModelsByUserObject.containsKey(it.userObject) }}" }
+      // Pass 1: match by user objects (the right way, but doesn't always work).
+      // We do it in a separate pass because a correct match should take priority over guesses.
+      doPass(
+        predicate = { _, _ -> true },
+        oldModelGetter = { newChild -> removedChildren.findByUserObject(newChild) },
+      )
 
-      // Now oldModelsByUserObject contains only removed children. Remove them in descending index
+      // Pass 2: match by names.
+      // It's a wild guess, but nobody prohibits reusing IDs of old nodes if those are removed.
+      // And it'll reduce UI flickering, as the node will be updated, not removed and re-added.
+      // The only possible side effect is that the children will be reused.
+      // But except for the initial load, children updates are recursive, so that's not a long-term side effect.
+      doPass(
+        predicate = { index, newChild ->
+          updatedModelsByNewChildIndex[index] == null && // do not map the already mapped children
+          newChild.name.isNotEmpty() && // can't map an empty name
+          !invalidNewChildren[index] // can't map a child already proven invalid
+        },
+        oldModelGetter = { newChild -> removedChildren.findByName(newChild.name) },
+      )
+
+      // Now build the list of all actual children, updated or not.
+      data class NewChild(
+        val model: BackendProjectViewNodeModel<T>,
+        val isUpdated: Boolean,
+      )
+      val newModels = mutableListOf<NewChild>()
+      for ((index, newChild) in newChildren.withIndex()) {
+        if (invalidNewChildren[index]) continue // already proven invalid
+        val updatedModel = updatedModelsByNewChildIndex[index]
+        if (updatedModel == null) {
+          val newModel = createNewModel(newChild)
+          if (newModel != null) { // check that it's not yet another freshly invalid child
+            newModels.add(NewChild(newModel, isUpdated = false))
+          }
+        }
+        else {
+          newModels.add(NewChild(updatedModel, isUpdated = true))
+        }
+      }
+
+      LOG.trace { "Removed children: ${oldModels.filter { removedChildren.containsUserObject(it.userObject) }}" }
+
+      // Now removedChildren contains only the children that were in fact removed. Remove them in descending index
       // order, so that the remaining (lower) indices stay valid as the list shrinks.
       for (index in oldModels.indices.reversed()) {
-        if (oldModelsByUserObject.containsKey(oldModels[index].userObject)) {
+        if (removedChildren.containsUserObject(oldModels[index].userObject)) {
           builder.removeNodeChild(parentModel.id, index)
         }
       }
@@ -1184,18 +1230,18 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
       // surviving children are moved to their target index (which also refreshes their model, and is a
       // no-op reposition if they're already there). Processing ascending indices guarantees the wanted
       // node currently sits at a position >= index, so placing it at index yields the correct final order.
-      for ((index, newModel) in newModels.withIndex()) {
-        if (newModelIsUpdatedModel[index]) {
-          builder.moveNodeChild(parentModel.id, newModel, index)
+      for ((index, newChild) in newModels.withIndex()) {
+        if (newChild.isUpdated) {
+          builder.moveNodeChild(parentModel.id, newChild.model, index)
         }
         else {
-          builder.addNode(parentModel.id, index, newModel)
+          builder.addNode(parentModel.id, index, newChild.model)
         }
       }
 
       if (deep) {
         for (newChild in newModels) { // update recursively, but don't load unless already loaded
-          updateChildrenWithRetry(newChild.id, allowLoading = false, deep = true)
+          updateChildrenWithRetry(newChild.model.id, allowLoading = false, deep = true)
         }
       }
     }
@@ -1418,3 +1464,44 @@ private fun contextPsiFile(project: Project, context: SelectInContext): PsiFileS
   }
   return null
 }
+
+private class OldChildrenCollection<T : ProjectViewNodeUserObject>(initialCapacity: Int) {
+  private val oldModelsByUserObject = HashMap<T, BackendProjectViewNodeModel<T>>(initialCapacity)
+  private val oldModelsByName = HashMap<String, SmartList<BackendProjectViewNodeModel<T>>>(initialCapacity)
+  
+  fun addOldChildModel(oldModel: BackendProjectViewNodeModel<T>) {
+    oldModelsByUserObject[oldModel.userObject] = oldModel
+    oldModelsByName.getOrPut(oldModel.name) {
+      SmartList()
+    }.add(oldModel)
+  }
+  
+  fun removeOldChildModel(oldModel: BackendProjectViewNodeModel<T>) {
+    oldModelsByUserObject.remove(oldModel.userObject)
+    oldModelsByName.getValue(oldModel.name).removeIf { it.id == oldModel.id }
+  }
+
+  fun containsUserObject(userObject: T): Boolean = userObject in oldModelsByUserObject
+  
+  fun findByUserObject(newUserObject: T): BackendProjectViewNodeModel<T>? {
+    val match = oldModelsByUserObject[newUserObject]
+    if (match != null) {
+      LOG.trace { "Found a matching old child by the user object for $newUserObject => $match" }
+    }
+    return match
+  }
+
+  fun findByName(name: String): BackendProjectViewNodeModel<T>? {
+    val match = oldModelsByName[name]?.firstOrNull()
+    if (match != null) {
+      LOG.trace { "Found a matching old child by the node name for $name => $match" }
+    }
+    return match
+  }
+}
+
+private val ProjectViewNodeModel.presentationImpl: TreeNodePresentationImpl
+  get() = presentation as TreeNodePresentationImpl
+
+private val BackendProjectViewNodeModel<*>.name: String
+  get() = userObject.name

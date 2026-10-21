@@ -51,6 +51,7 @@ interface TreeStructureProjectViewNode : ProjectViewNodeUserObject {
 }
 
 private data class TreeStructureProjectViewNodeImpl(
+  override val name: String,
   val element: Any,
   override val elementDescriptor: NodeDescriptor<*>,
   val isRoot: Boolean,
@@ -118,7 +119,6 @@ class TreeStructureProjectViewNodeProvider(
       if (parent == null) {
         LOG.debug { "Retrieving the root" }
         val root = structure.getRoot()
-        root.elementDescriptor.update()
         LOG.debug { "The root is $root" }
         listOf(root)
       }
@@ -129,9 +129,6 @@ class TreeStructureProjectViewNodeProvider(
           return@read null
         }
         val children = structure.getChildren(parent)
-        for (child in children) {
-          child.elementDescriptor.update() // sadly, needed for the comparator
-        }
         LOG.debug { "Retrieved ${children.size} children" }
         LOG.trace { "The children are $children" }
         children.sortedWith { node1, node2 -> comparator.compare(node1.elementDescriptor, node2.elementDescriptor) }
@@ -244,9 +241,12 @@ private class TypesafeTreeStructure(
   fun getRoot(): TreeStructureProjectViewNodeImpl {
     ThreadingAssertions.assertReadAccess()
     val rootElement = structure.rootElement
+    val elementDescriptor = structure.createDescriptor(rootElement, null)
+    elementDescriptor.update()
     return TreeStructureProjectViewNodeImpl(
+      name = "",
       element = rootElement,
-      elementDescriptor = structure.createDescriptor(rootElement, null),
+      elementDescriptor = elementDescriptor,
       isRoot = true,
     )
   }
@@ -256,9 +256,15 @@ private class TypesafeTreeStructure(
     val validParent = parent.takeIf { isValid(it) } ?: return emptyList()
     val parentDescriptor = validParent.elementDescriptor
     return structure.getChildElements(validParent.element).map {
+      val elementDescriptor = structure.createDescriptor(it, parentDescriptor)
+      // It can be slow, but unavoidable at the moment:
+      // 1. the comparator needs it;
+      // 2. we need it to get the node name before the full model is created.
+      elementDescriptor.update()
       TreeStructureProjectViewNodeImpl(
+        name = (elementDescriptor as? PresentableNodeDescriptor<*>)?.name ?: "",
         element = it,
-        elementDescriptor = structure.createDescriptor(it, parentDescriptor),
+        elementDescriptor = elementDescriptor,
         isRoot = false,
       )
     }
