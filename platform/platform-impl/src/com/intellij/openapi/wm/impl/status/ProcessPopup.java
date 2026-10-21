@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -37,7 +38,10 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import sun.awt.AWTAccessor;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -50,24 +54,28 @@ import javax.swing.KeyStroke;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
-import sun.awt.AWTAccessor;
+import java.util.function.Supplier;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
-final class ProcessPopup {
+@ApiStatus.Internal
+public final class ProcessPopup {
   public static final Key<ProgressPanel> KEY = new Key<>("ProgressPanel");
   static final JBDimension POPUP_MIN_SIZE = new JBDimension(300, 100);
   static final JBDimension POPUP_MIN_SIZE_WITH_BANNER = new JBDimension(464, 100);
   private static final String DIMENSION_SERVICE_KEY = "ProcessPopupWindow";
 
-  private final InfoAndProgressPanel myProgressPanel;
+  /** The component the popup takes its frame, its root pane and its project from. */
+  private final Supplier<? extends JComponent> myAnchor;
+  private final Runnable myOnHide;
+  private final String myDimensionServiceKey;
+  private final @NlsContexts.PopupTitle String myTitle;
   private final JBPanelWithEmptyText myIndicatorPanel;
   private final JScrollPane myContentPanel;
   private JBPopup myPopup;
@@ -77,7 +85,35 @@ final class ProcessPopup {
   private final SeparatorDecorator mySeparatorDecorator;
 
   ProcessPopup(@NotNull InfoAndProgressPanel progressPanel) {
-    myProgressPanel = progressPanel;
+    this(progressPanel::getComponent, progressPanel::hideProcessPopup);
+  }
+
+  /**
+   * Opens the same window beside another component than the status bar, for example a welcome screen row.
+   *
+   * @param anchor supplies the component the popup takes its frame, its root pane and its project from
+   * @param onHide runs when the user closes the popup, so the caller forgets it
+   */
+  public ProcessPopup(@NotNull Supplier<? extends JComponent> anchor, @NotNull Runnable onHide) {
+    this(anchor, onHide, DIMENSION_SERVICE_KEY, IdeBundle.message("progress.window.title"));
+  }
+
+  /**
+   * Opens the same window with a title and a remembered size of its own.
+   *
+   * @param dimensionServiceKey where this popup remembers its size, which is its own key when it must not resize the status bar's popup
+   * @param title               the window title
+   */
+  public ProcessPopup(
+    @NotNull Supplier<? extends JComponent> anchor,
+    @NotNull Runnable onHide,
+    @NotNull String dimensionServiceKey,
+    @NotNull @NlsContexts.PopupTitle String title
+  ) {
+    myAnchor = anchor;
+    myOnHide = onHide;
+    myDimensionServiceKey = dimensionServiceKey;
+    myTitle = title;
 
     myIndicatorPanel = new MyJBPanelWithEmptyText().withEmptyText(IdeBundle.message("progress.window.empty.text")).andTransparent();
     myIndicatorPanel.setBorder(JBUI.Borders.empty(10, 0, 18, 0));
@@ -159,7 +195,7 @@ final class ProcessPopup {
   }
 
   private @NotNull Rectangle calculateBounds() {
-    JFrame frame = (JFrame)ComponentUtil.findUltimateParent(myProgressPanel.getComponent());
+    JFrame frame = (JFrame)ComponentUtil.findUltimateParent(myAnchor.get());
 
     Dimension contentSize = myContentPanel.getPreferredSize();
     int contentHeight = Math.max(contentSize.height, JBUI.scale(100));
@@ -200,6 +236,16 @@ final class ProcessPopup {
   }
 
   public void show(boolean requestFocus) {
+    show(requestFocus, null);
+  }
+
+  /**
+   * Opens the popup, at {@code screenLocation} when one is given.
+   * <p>
+   * Without a location it goes where the status bar wants it, which is the bottom right of the frame. A caller that owns a place of its
+   * own, for example a welcome screen row, passes that place instead.
+   */
+  public void show(boolean requestFocus, @Nullable Point screenLocation) {
     updateContentUI();
 
     createPopup(myContentPanel, myIndicatorPanel, requestFocus);
@@ -209,7 +255,8 @@ final class ProcessPopup {
     Rectangle popupBounds = calculateBounds();
     myContentPanel.setPreferredSize(popupBounds.getSize());
     myPopupVisible = true;
-    myPopup.showInScreenCoordinates(myProgressPanel.getComponent().getRootPane(), popupBounds.getLocation());
+    myPopup.showInScreenCoordinates(myAnchor.get().getRootPane(),
+                                    screenLocation != null ? screenLocation : popupBounds.getLocation());
     ensureSufficientSize();
   }
 
@@ -265,20 +312,20 @@ final class ProcessPopup {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
         clearNativeAccessibleResourcesIfNeeded();
-        myProgressPanel.hideProcessPopup();
+        myOnHide.run();
       }
     });
 
     builder.setNormalWindowLevel(true);
     builder.setMovable(true);
     builder.setResizable(true);
-    builder.setTitle(IdeBundle.message("progress.window.title"));
+    builder.setTitle(myTitle);
     builder.setCancelOnClickOutside(false);
     builder.setRequestFocus(requestFocus);
     builder.setBelongsToGlobalPopupStack(false);
     builder.setMinSize(POPUP_MIN_SIZE);
-    Project project = ProjectUtil.getProjectForComponent(myProgressPanel.getComponent());
-    builder.setDimensionServiceKey(project, DIMENSION_SERVICE_KEY, true);
+    Project project = ProjectUtil.getProjectForComponent(myAnchor.get());
+    builder.setDimensionServiceKey(project, myDimensionServiceKey, true);
     builder.setLocateWithinScreenBounds(false);
     
     if (StartupUiUtil.isWaylandToolkit()) {
@@ -288,7 +335,7 @@ final class ProcessPopup {
     builder.setCancelButton(new MinimizeButton(IdeBundle.message("tooltip.hide")));
 
     builder.setKeyboardActions(List.of(
-      Pair.create(_ -> myProgressPanel.hideProcessPopup(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0))
+      Pair.create(_ -> myOnHide.run(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0))
     ));
 
     myPopup = builder.createPopup();
