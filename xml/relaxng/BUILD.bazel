@@ -202,6 +202,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//xml/relaxng/lib:relaxng-tests-rngom-20051226-patched",
         "//xml/relaxng/lib:relaxng-tests-trang-core",
+        "//libraries/jing",
+        "//libraries/jing:jing_test_lib",
         "//libraries/fastutil",
         "//libraries/fastutil:fastutil_test_lib",
         "//xml/xml-parser:parser",
