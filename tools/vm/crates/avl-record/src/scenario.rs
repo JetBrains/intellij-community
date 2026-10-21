@@ -69,6 +69,8 @@ pub(crate) struct Scenario {
     launcher: Launcher,
     /// The machine's name, the `host` label of the Allure result.
     host_name: String,
+    /// Whether the hello asked for the Allure result of the scenario.
+    allure: bool,
     pub(crate) started_ms: i64,
 
     pub(crate) open: HashMap<u32, OpenSpan>,
@@ -161,6 +163,7 @@ impl<W: Write> Session<W> {
             run_id: hello.run_id.clone(),
             launcher: hello.launcher,
             host_name: self.options.host_name.clone(),
+            allure: hello.allure,
             started_ms: at_ms,
             open: HashMap::new(),
             stack: Vec::new(),
@@ -621,9 +624,10 @@ impl Scenario {
     // --- the end -----------------------------------------------------------------------------------------------
 
     /// Closes the bundle: open spans, the IDE's spans, the video, the stills, the log slice, the root span, the Allure
-    /// result and, last, the manifest. A truncated bundle names the innermost span that was still running. `latest`
-    /// reads the facts at the end, after the video and the stills are done, so a log that rotated meanwhile is still
-    /// found. `details` are the `done` command's message and trace, which only the Allure result holds.
+    /// result when the hello asked for it and, last, the manifest. A truncated bundle names the innermost span that was
+    /// still running. `latest` reads the facts at the end, after the video and the stills are done, so a log that
+    /// rotated meanwhile is still found. `details` are the `done` command's message and trace, which only the Allure
+    /// result holds.
     pub(crate) fn finish(
         mut self,
         status: BundleStatus,
@@ -717,7 +721,9 @@ impl Scenario {
             capture: Capture { source, reason },
             video: self.video.clone(),
         };
-        self.write_allure_result(&manifest, details);
+        if self.allure {
+            self.write_allure_result(&manifest, details);
+        }
         if let Err(error) = write_manifest(&self.dir, &manifest) {
             say!(self.diagnostics, "{}: {error:#}", self.dir.display());
         }

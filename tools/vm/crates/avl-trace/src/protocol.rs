@@ -205,6 +205,12 @@ pub struct HelloCommand {
     /// scenario. Evidence must not decide a verdict, so neither happens unasked.
     #[serde(default, skip_serializing_if = "is_false")]
     pub screen: bool,
+    /// Lets the recorder write the Allure result of each scenario into `<root>/<runId>/allure-results/`. Without it
+    /// the recorder writes no Allure result. A zip has no hard links, so the results carry each video and picture of
+    /// the bundles a second time, and no CI step uploads them to Allure TestOps yet. The lane sets it only when a
+    /// person asks for it with `-Dair.flow.trace.allure=on`.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub allure: bool,
     /// Absent when the lane has no published endpoint yet. The recorder then captures pixels only, and says so in
     /// the hello ack's reason. Every scenario names the endpoint again; see [ScenarioCommand::bridge].
     #[serde(default, skip_serializing_if = "Option::is_none")]

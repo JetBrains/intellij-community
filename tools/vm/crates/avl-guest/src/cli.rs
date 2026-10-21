@@ -61,7 +61,8 @@ lane IDE. It writes its log on standard error.
 lane-run runs one iteration of --lane from the runfiles of --descriptor, with no control channel. It writes the run \
 stream on standard output and into RUNTIME_ROOT/run.ndjson, quits the IDE, and exits 0 when the run is green. With \
 --plan-only it stages the inputs, writes the plan of the run as one JSON document on standard output, and launches no \
-IDE. --jvm_flag takes the -D flags of a TeamCity UI job: its runner index and count split the lane between the runners.
+IDE. --jvm_flag takes the -D flags of a TeamCity UI job: its runner index and count split the lane between the runners, \
+and -Dair.flow.trace.allure=on asks the recorder for the Allure results.
 
 cancel --thread-dump JCMD runs JCMD PID Thread.print before the TERM, and writes the dump into the log directory of an \
 IDE launch or into the run directory.
@@ -279,9 +280,10 @@ pub(crate) struct LaneRunArgs {
     pub plan_only: bool,
     /// A JVM flag of the JUnit runner, -D<name>=<value>, as the UI job of TeamCity passes it with
     /// --test_arg=--jvm_flag=<flag>. Repeat it to name more. The values of idea.test.runner.index and
-    /// idea.test.runners.count split the selected suites of the lane between the runners of the job. java.awt.headless,
-    /// idea.bucketing.season and idea.tests.duration.bucketing.enabled are ignored, each with a note in the run stream.
-    /// Another flag is refused by name.
+    /// idea.test.runners.count split the selected suites of the lane between the runners of the job.
+    /// -Dair.flow.trace.allure=on asks the recorder for the Allure results. java.awt.headless, idea.bucketing.season
+    /// and idea.tests.duration.bucketing.enabled are ignored, each with a note in the run stream. Another flag is refused
+    /// by name.
     #[arg(long = "jvm_flag", value_name = "FLAG", allow_hyphen_values = true)]
     pub jvm_flags: Vec<String>,
 }

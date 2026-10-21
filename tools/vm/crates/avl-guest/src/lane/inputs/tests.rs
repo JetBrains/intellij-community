@@ -122,6 +122,26 @@ fn a_runtime_whose_entry_cannot_run_is_refused() {
     assert!(refusal.message.contains("has no 'package' input"), "{}", refusal.message);
 }
 
+// The lane flags name the recorder, and they let it read the screen and write the Allure results only when they say so.
+// `-Dair.flow.trace=off` turns the trace off whatever else they name.
+#[test]
+fn the_trace_flags_name_the_recorder_the_screen_and_the_allure_results() {
+    let runfiles = Path::new("/runfiles");
+    let recorder = "-Dair.trace.recorder=${RUNFILES_ROOT}/community+/tools/vm/air-trace-record".to_owned();
+    let plain = trace_inputs(std::slice::from_ref(&recorder), runfiles);
+    assert_eq!(
+        plain,
+        TraceInputs {
+            recorder: Some(runfiles.join("community+/tools/vm/air-trace-record")),
+            ..TraceInputs::default()
+        }
+    );
+    let asked = trace_inputs(&[recorder.clone(), SCREEN_FLAG.to_owned(), ALLURE_FLAG.to_owned()], runfiles);
+    assert_eq!((asked.screen, asked.allure), (true, true));
+    let off = trace_inputs(&[recorder, TRACE_OFF_FLAG.to_owned()], runfiles);
+    assert_eq!(off.recorder, None);
+}
+
 // The descriptor of a Linux guest names the platform of the guest that reads it.
 #[test]
 fn the_guest_platform_is_a_platform_of_the_lane_descriptors() {

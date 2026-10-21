@@ -337,11 +337,21 @@ impl Harness {
     }
 
     pub(crate) fn hello(&self, bridge: bool) -> String {
+        self.hello_line(bridge, false)
+    }
+
+    /// The hello without a bridge that asks for the Allure results.
+    pub(crate) fn allure_hello(&self) -> String {
+        self.hello_line(false, true)
+    }
+
+    fn hello_line(&self, bridge: bool, allure: bool) -> String {
         let hello = HelloCommand {
             root: self.root.to_string_lossy().into_owned(),
             run_id: "run-1".to_owned(),
             launcher: Launcher::Bazel,
             screen: false,
+            allure,
             bridge: bridge.then(|| Bridge {
                 port: 1,
                 token: GOLDEN_TOKEN.to_owned(),
@@ -362,6 +372,17 @@ impl Harness {
         };
         hello.root = self.root.to_string_lossy().into_owned();
         encode_command(&Command::Hello(hello)).unwrap()
+    }
+
+    /// A transcript whose hello asks for the Allure results, which the golden hello does not.
+    pub(crate) fn with_allure(lines: &[Vec<u8>]) -> Vec<Vec<u8>> {
+        let mut lines = lines.to_vec();
+        let Command::Hello(mut hello) = decode_command(&lines[0]).unwrap() else {
+            panic!("the first line is not a hello");
+        };
+        hello.allure = true;
+        lines[0] = encode_command(&Command::Hello(hello)).unwrap();
+        lines
     }
 
     /// Feeds a golden transcript to a session line by line at the golden receipt times, playing the IDE's part in

@@ -37,7 +37,7 @@ impl Transport for Recording {
 }
 
 fn hello() -> HelloCommand {
-    Trace::hello(Path::new("/vm/iterations/iter-1"), None, "iter-1", false, None)
+    Trace::hello(Path::new("/vm/iterations/iter-1"), "iter-1", &TraceInputs::default(), None)
 }
 
 fn scenario(name: &str) -> ScenarioCommand {
@@ -187,7 +187,10 @@ fn only_a_recorder_that_did_not_start_is_a_failure_of_a_quiet_session() {
 fn an_attachment_is_a_file_under_the_attach_directory_of_the_run() {
     let root = tempfile::TempDir::new().unwrap();
     let recording = Recording::default();
-    let mut trace = Trace::open(Box::new(recording.clone()), Trace::hello(root.path(), None, "iter-1", false, None));
+    let mut trace = Trace::open(
+        Box::new(recording.clone()),
+        Trace::hello(root.path(), "iter-1", &TraceInputs::default(), None),
+    );
     trace.open_scenario(scenario("attaches"));
     let span = trace.open_span(SpanKind::Action, "dump", "[action] dump", Some((None, Side::Host, 1_000)));
     assert!(trace.attach("IDE dump", "text/plain", b"threads", "txt"));
@@ -210,8 +213,11 @@ fn an_attachment_outside_a_recorded_scenario_goes_to_the_loose_directory() {
     let root = tempfile::TempDir::new().unwrap();
     let loose = root.path().join("outputs/lane/attachments");
     let recording = Recording::default();
-    let mut trace = Trace::open(Box::new(recording.clone()), Trace::hello(root.path(), None, "iter-1", false, None))
-        .keep_loose_attachments_in(Some(loose.clone()), MAX_LOOSE_BYTES);
+    let mut trace = Trace::open(
+        Box::new(recording.clone()),
+        Trace::hello(root.path(), "iter-1", &TraceInputs::default(), None),
+    )
+    .keep_loose_attachments_in(Some(loose.clone()), MAX_LOOSE_BYTES);
 
     assert!(!trace.attach("IDE dump of the slow step lane launch", "text/plain", b"threads", "txt"));
     trace.open_scenario(scenario("attaches"));
@@ -277,14 +283,37 @@ fn the_loose_attachments_stop_at_their_cap() {
 #[test]
 fn a_bazel_test_roots_the_bundles_in_its_outputs_directory() {
     let iteration = Path::new("/state/iterations/iter-1");
-    let daemon = Trace::hello(iteration, None, "iter-1", false, None);
+    let daemon = Trace::hello(iteration, "iter-1", &TraceInputs::default(), None);
     assert_eq!(
         (daemon.root.as_str(), daemon.launcher),
         ("/state/iterations/iter-1/air-traces", Launcher::Daemon)
     );
-    let bazel = Trace::hello(iteration, Some(Path::new("/testlogs/outputs")), "iter-1", false, None);
+    let outputs = TraceInputs {
+        bazel_outputs: Some("/testlogs/outputs".into()),
+        ..TraceInputs::default()
+    };
+    let bazel = Trace::hello(iteration, "iter-1", &outputs, None);
     assert_eq!(
         (bazel.root.as_str(), bazel.launcher),
         ("/testlogs/outputs/air-traces", Launcher::Bazel)
     );
+}
+
+// The hello asks for the screen and the Allure results only when the trace inputs do. The line of a hello without them
+// names neither, so the golden transcript of the lane daemon keeps its hello.
+#[test]
+fn the_hello_asks_for_the_allure_results_only_when_the_inputs_do() {
+    let iteration = Path::new("/state/iterations/iter-1");
+    let plain = Trace::hello(iteration, "iter-1", &TraceInputs::default(), None);
+    assert_eq!((plain.screen, plain.allure), (false, false));
+    let line = String::from_utf8(protocol::encode_command(&protocol::Command::Hello(plain)).unwrap()).unwrap();
+    assert!(!line.contains("allure") && !line.contains("screen"), "{line}");
+    let asked = TraceInputs {
+        allure: true,
+        ..TraceInputs::default()
+    };
+    let hello = Trace::hello(iteration, "iter-1", &asked, None);
+    assert_eq!((hello.screen, hello.allure), (false, true));
+    let line = String::from_utf8(protocol::encode_command(&protocol::Command::Hello(hello)).unwrap()).unwrap();
+    assert!(line.contains(r#""allure":true"#), "{line}");
 }

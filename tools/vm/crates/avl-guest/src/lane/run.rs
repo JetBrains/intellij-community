@@ -76,6 +76,8 @@ pub(crate) const JVM_FLAG_CODE: &str = "lane_run_jvm_flag";
 const RUNNER_INDEX_PROPERTY: &str = "idea.test.runner.index";
 /// The JVM property of the count of the runners of a TeamCity UI job.
 const RUNNERS_COUNT_PROPERTY: &str = "idea.test.runners.count";
+/// The JVM property that asks the recorder for the Allure results, with the value `on`: [`inputs::ALLURE_FLAG`].
+const ALLURE_PROPERTY: &str = "air.flow.trace.allure";
 /// Why lane-run ignores a bucketing property of the JUnit runner.
 const BUCKETING_IGNORED: &str = "lane-run splits the lane by the order of its suites, not by duration buckets";
 /// The JVM properties that lane-run ignores, each with the reason that its note gives.
@@ -85,22 +87,25 @@ const IGNORED_PROPERTIES: [(&str, &str); 3] = [
     ("idea.tests.duration.bucketing.enabled", BUCKETING_IGNORED),
 ];
 
-/// What the `--jvm_flag` arguments of a run ask for: the share of this runner of the lane, and one note for each flag
-/// that lane-run ignores.
+/// What the `--jvm_flag` arguments of a run ask for: the share of this runner of the lane, one note for each flag that
+/// lane-run ignores, and whether the recorder writes the Allure results.
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct JvmFlags {
     pub split: RunnerSplit,
     pub notes: Vec<String>,
+    pub allure: bool,
 }
 
 /// Reads the `--jvm_flag` arguments that the UI job of TeamCity passes to the JUnit runner. The runner index and count
-/// give the split. Each ignored property gives a note. A flag that is no `-D` property, another property, a property
-/// with two values, and an index and a count that do not make a split are refused. The refusal of another flag names
-/// it and never its value.
+/// give the split. `-Dair.flow.trace.allure=on` asks for the Allure results, and another value of that property is
+/// refused. Each ignored property gives a note. A flag that is no `-D` property, another property, a property with two
+/// values, and an index and a count that do not make a split are refused. The refusal of another flag names it and
+/// never its value.
 pub(crate) fn jvm_flags(flags: &[String]) -> Result<JvmFlags, AgentRefusal> {
     let refused = |message: String| AgentRefusal::refused(JVM_FLAG_CODE, message);
     let mut properties: BTreeMap<&str, &str> = BTreeMap::new();
     let mut notes = Vec::new();
+    let mut allure = false;
     for flag in flags {
         let Some(property) = flag.strip_prefix("-D").filter(|property| !property.is_empty()) else {
             let name = flag.split('=').next().unwrap_or_default();
@@ -113,10 +118,17 @@ pub(crate) fn jvm_flags(flags: &[String]) -> Result<JvmFlags, AgentRefusal> {
             notes.push(format!("lane-run ignores the JVM flag {flag}: {reason}"));
             continue;
         }
+        if name == ALLURE_PROPERTY {
+            if value != "on" {
+                return Err(refused(format!("the JVM property {ALLURE_PROPERTY} takes only the value on")));
+            }
+            allure = true;
+            continue;
+        }
         if name != RUNNER_INDEX_PROPERTY && name != RUNNERS_COUNT_PROPERTY {
             return Err(refused(format!(
-                "lane-run does not take the JVM property {name}: it takes {RUNNER_INDEX_PROPERTY} and \
-                 {RUNNERS_COUNT_PROPERTY}, and it ignores {}",
+                "lane-run does not take the JVM property {name}: it takes {RUNNER_INDEX_PROPERTY}, \
+                 {RUNNERS_COUNT_PROPERTY} and {ALLURE_PROPERTY}, and it ignores {}",
                 IGNORED_PROPERTIES.map(|(ignored, _)| ignored).join(", ")
             )));
         }
@@ -150,7 +162,7 @@ pub(crate) fn jvm_flags(flags: &[String]) -> Result<JvmFlags, AgentRefusal> {
             )));
         }
     };
-    Ok(JvmFlags { split, notes })
+    Ok(JvmFlags { split, notes, allure })
 }
 
 /// Packs each recorded session that [`session_log::VARIABLE`] names into the jar store, as the controller pushes them
@@ -215,6 +227,7 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
     let mut launch_inputs = inputs::from_descriptor(&descriptor, &daemon_args)?;
     launch_inputs.trace.bazel_outputs = bazel_outputs(variable);
     launch_inputs.trace.screen |= build_owns_screen(variable, cfg!(target_os = "linux"));
+    launch_inputs.trace.allure |= flags.allure;
     let jcmd = launch_inputs.jcmd();
     let mut notes = flags.notes;
     if host_probe_applies(args, variable, cfg!(target_os = "linux")) {

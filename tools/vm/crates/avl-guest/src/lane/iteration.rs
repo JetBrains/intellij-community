@@ -646,10 +646,7 @@ fn start_trace(inputs: &TraceInputs, iteration_dir: &Path, iteration_id: &str, b
         return Trace::off().keep_loose_attachments_in(loose, MAX_LOOSE_BYTES);
     };
     let trace = match RecorderProcess::start(recorder) {
-        Ok(process) => Trace::open(
-            Box::new(process),
-            Trace::hello(iteration_dir, inputs.bazel_outputs.as_deref(), iteration_id, inputs.screen, bridge),
-        ),
+        Ok(process) => Trace::open(Box::new(process), Trace::hello(iteration_dir, iteration_id, inputs, bridge)),
         Err(error) => {
             let reason = format!("{error}; the iteration records no trace");
             log(&reason);

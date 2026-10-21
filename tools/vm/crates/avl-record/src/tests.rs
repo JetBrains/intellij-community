@@ -92,12 +92,13 @@ fn the_golden_transcript_replays_into_the_golden_bundle() {
     expect_file![absolute(&record_testdata(GOLDEN_ACKS))].assert_eq(&h.acks.text());
 }
 
-/// The golden transcript's Allure result is `example.allure-result.json` of the recorder's testdata, and every file
-/// it names is in the results directory, a picture with the bytes of the bundle's still.
+/// With the Allure results asked for, the golden transcript's Allure result is `example.allure-result.json` of the
+/// recorder's testdata, and every file it names is in the results directory, a picture with the bytes of the bundle's
+/// still.
 #[test]
 fn the_golden_transcript_writes_the_golden_allure_result() {
     let h = Harness::new();
-    h.replay(&traces::file_lines(TRANSCRIPT));
+    h.replay(&Harness::with_allure(&traces::file_lines(TRANSCRIPT)));
     let manifest = manifest_of(&h.bundle());
     let results = allure_results_dir(&h.root, &manifest.run_id);
     let names: Vec<String> = fs::read_dir(&results)
@@ -123,6 +124,16 @@ fn the_golden_transcript_writes_the_golden_allure_result() {
         (0, "Before")
     );
     assert_eq!(fs::read(results.join(&setup.attachments[0].source)).unwrap(), still(1));
+}
+
+/// The golden hello does not ask for the Allure results, so the replay writes the bundle and no results directory.
+#[test]
+fn the_golden_transcript_writes_no_allure_result_unasked() {
+    let h = Harness::new();
+    h.replay(&traces::file_lines(TRANSCRIPT));
+    let manifest = manifest_of(&h.bundle());
+    let results = allure_results_dir(&h.root, &manifest.run_id);
+    assert!(!results.exists(), "{} exists", results.display());
 }
 
 /// Every acked line of the golden transcript is answered, positively and in order, with the line it answers.

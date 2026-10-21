@@ -111,8 +111,16 @@ pin the viewer to it.
   `air.trace.error` of the failure names the file that is missing.
   [@test] ../crates/avl-record/src/stills/tests.rs
 
-- At the end of a scenario, the recorder writes one Allure result into `<root>/<runId>/allure-results/`. It writes
-  the result before `bundle.json`, so a finished bundle has its result.
+- The recorder writes the Allure results only when the hello says `allure`. The lane says it when a person asks
+  with `-Dair.flow.trace.allure=on`. That flag is a lane flag of the runtime descriptor, or a `--jvm_flag` of
+  `lane-run` for one Bazel run. Without it, the run has no `allure-results` directory.
+  [@test] ../crates/avl-record/src/tests.rs (`the_golden_transcript_writes_no_allure_result_unasked`)
+  [@test] ../crates/avl-guest/src/lane/trace/tests.rs (`the_hello_asks_for_the_allure_results_only_when_the_inputs_do`)
+  [@test] ../crates/avl-guest/src/lane/inputs/tests.rs (`the_trace_flags_name_the_recorder_the_screen_and_the_allure_results`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_allure_flag_asks_for_the_allure_results_of_one_run`)
+
+- When the hello says `allure`, the recorder writes one Allure result into `<root>/<runId>/allure-results/` at the
+  end of each scenario. It writes the result before `bundle.json`, so a finished bundle has its result.
   [@test] ../crates/avl-record/src/tests.rs (`the_golden_transcript_writes_the_golden_allure_result`)
 
 - The result is `<uuid>-result.json`. Its `fullName` is `<testClass>.<scenario>`, and its `historyId` is the SHA-256
@@ -434,8 +442,9 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   server answers a byte range straight out of the zip.
   [@test] ../crates/avl-trace-tools/src/pack/tests.rs
 
-- A pack keeps the `allure-results` directory of each run. A pack that selects bundles keeps the result of each
-  bundle it packs and the files that the result names. A result that it cannot read is skipped, and the report names it.
+- A pack keeps the `allure-results` directory of each run that has one. A pack that selects bundles keeps the
+  result of each bundle it packs and the files that the result names. A result that it cannot read is skipped, and
+  the report names it.
   [@test] ../crates/avl-trace-tools/src/pack/tests.rs (`a_pack_keeps_the_allure_results_of_its_bundles`)
 
 - A pack lists each `allure-results` directory after it walks the tree. So a finished bundle leaves with its result,
@@ -444,8 +453,8 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 
 - The guest agent's `trace-pack-ready <sourceDir> <destinationZip> <ledger> [--all]` verb runs the code of
   `air-trace pack` on the guest. It packs only the bundles that the ledger does not name. Without `--all` it
-  packs only the finished bundles, the ones with a manifest. It packs the Allure result of each bundle with the
-  bundle. It adds each packed bundle to the ledger, and it writes no zip when nothing is new.
+  packs only the finished bundles, the ones with a manifest. It packs the Allure result of each bundle that has one
+  with the bundle. It adds each packed bundle to the ledger, and it writes no zip when nothing is new.
   [@test] ../crates/avl-guest/src/tracepack/tests.rs (`trace_pack_ready_packs_each_finished_bundle_once`)
   [@test] ../crates/avl-guest/src/tracepack/tests.rs (`trace_pack_ready_packs_the_allure_result_with_its_bundle`)
 

@@ -45,8 +45,10 @@ the other server, and its paint stills are 1920x1200.
 2. **Every scenario keeps its video.** The shard build 1100310296 ran 56 scenarios in 15.1 scenario minutes, with
    stills only. Its `bazel.logs.zip` is 181 MiB: 89 MiB of bundles, 71 MiB of `allure-results` and 18 MiB of other
    files. On the guest display of 1920x1080, 1952 bundles hold 3.07 MB of video per scenario minute. At the 1920x1200
-   of the CI frame, a shard then gets about 49 MiB of video. The Allure result keeps a copy, so the shard grows by
-   about 98 MiB, to about 280 MiB.
+   of the CI frame, a shard then gets about 49 MiB of video. Since 2026-10-21 the recorder writes no Allure results
+   by default, as the amended [ADR 0231](../../../../plugins/air/docs/decisions/0231-the-recorder-writes-the-allure-results.md)
+   states. So a shard holds each video once, and it goes from 181 MiB to about 159 MiB. With the Allure results
+   asked for, it grows to about 280 MiB.
 3. **A run that is not green keeps its evidence in `lane/` of the outputs directory.** The end of the run and the hard
    stop copy the log directory and the process output of each affected IDE launch, the slow steps and the authored
    artifacts. The caps are 32 MiB per file and 256 MiB in all, and `evidence.txt` names what the caps cut. A green run
@@ -61,15 +63,15 @@ the other server, and its paint stills are 1920x1200.
 - The recorder reads whatever X server answers on the `DISPLAY` of the build, which is not always the `Xvfb` of the
   build. When its pixels are not BGRX, the recorder says why in the manifest and keeps the paint stills.
 - The trace tools of IJAI-4382 add the step `air-trace teamcity-publish`, which packs each bundle into an artifact zip
-  of its own. A build that runs that step stores each video a third time.
+  of its own. A build that runs that step stores each video a second time.
 - A trace attachment outside a recorded scenario goes to `lane/attachments/` under `lane-run`. The lane daemon of a
   worker still drops it.
 
 ## Alternatives rejected
 
-- **Keep the video of a failed scenario only.** It saves about 98 MiB per shard. A passed scenario is the baseline
-  that a failed one is compared with. The copy of each attachment in `allure-results` costs more: 71 MiB of the
-  181 MiB today.
+- **Keep the video of a failed scenario only.** It saves about 49 MiB per shard. A passed scenario is the baseline
+  that a failed one is compared with. The copy of each attachment in `allure-results` cost more, 71 MiB of the
+  181 MiB, and it is off by default now.
 - **Let a person pass the screen flag to a direct lane.** It brings back the risk that the rule exists for.
 - **Copy every launch of every run.** A green run needs no `idea.log`, and the copy would add the full logs of every
   launch to every shard.

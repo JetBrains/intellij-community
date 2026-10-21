@@ -14,6 +14,7 @@ use serde_json::{Value, json};
 use tempfile::TempDir;
 
 use super::*;
+use crate::lane::inputs::TraceInputs;
 use crate::lane::stream::Counts;
 use crate::lane::trace::tests::Recording;
 use crate::lane::watchdog::Policy;
@@ -478,7 +479,7 @@ fn run_set(fake: &Fake, suites: &[Suite], setup: &Setup) -> Ran {
     let iteration = TempDir::new().unwrap();
     let trace = Trace::open(
         Box::new(recording.clone()),
-        Trace::hello(iteration.path(), None, "iter-golden", false, fake.recorder_bridge()),
+        Trace::hello(iteration.path(), "iter-golden", &TraceInputs::default(), fake.recorder_bridge()),
     );
     let mut out = Vec::new();
     let counts = {

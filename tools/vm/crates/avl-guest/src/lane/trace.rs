@@ -28,6 +28,7 @@ use avl_trace::protocol::{
 };
 
 use super::channel::log;
+use super::inputs::TraceInputs;
 use super::watchdog::slug;
 
 #[cfg(test)]
@@ -428,21 +429,20 @@ impl Trace {
     }
 
     /// The `hello` of the iteration directory `iteration_dir`, whose run id is `run_id`. The root is the `air-traces` of
-    /// `bazel_outputs` with the launcher `bazel` when a Bazel test names its outputs directory, else the `air-traces` of
-    /// the iteration directory with the launcher `daemon`.
-    pub(crate) fn hello(
-        iteration_dir: &Path,
-        bazel_outputs: Option<&Path>,
-        run_id: &str,
-        screen: bool,
-        bridge: Option<Bridge>,
-    ) -> HelloCommand {
-        let (parent, launcher) = bazel_outputs.map_or((iteration_dir, Launcher::Daemon), |outputs| (outputs, Launcher::Bazel));
+    /// the Bazel outputs of `inputs` with the launcher `bazel` when a Bazel test names its outputs directory, else the
+    /// `air-traces` of the iteration directory with the launcher `daemon`. The screen and the Allure results are the
+    /// ones of `inputs`.
+    pub(crate) fn hello(iteration_dir: &Path, run_id: &str, inputs: &TraceInputs, bridge: Option<Bridge>) -> HelloCommand {
+        let (parent, launcher) = inputs
+            .bazel_outputs
+            .as_deref()
+            .map_or((iteration_dir, Launcher::Daemon), |outputs| (outputs, Launcher::Bazel));
         HelloCommand {
             root: parent.join(ROOT_DIR_NAME).display().to_string(),
             run_id: run_id.to_owned(),
             launcher,
-            screen,
+            screen: inputs.screen,
+            allure: inputs.allure,
             bridge,
         }
     }

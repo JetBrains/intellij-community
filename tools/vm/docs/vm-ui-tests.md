@@ -870,20 +870,30 @@ journal. `run`'s text verdict ends with a traces block, one line for each scenar
 or with `traces: not pulled: <reason>`. The JSON report names each zip and its bundles in `traceArchives`, and
 a failed pull in `tracesError`.
 
-**Allure results.** At the end of each scenario, the recorder also writes one Allure result into
-`<root>/<runId>/allure-results/`, beside the bundles of the run. The result has a step for each lane span, with the
-Before and After pictures of the step and the files that the lane attached to it. It also attaches the video, the
-`idea.log` slice and the path of the bundle. The attachment files sit in the same directory. The lane runs no Allure
-code. A pulled zip holds the results of the bundles it holds. Open the results of a run with the Allure command line:
+**Allure results.** The recorder writes Allure results only when you ask for them with
+`-Dair.flow.trace.allure=on`. A zip has no hard links, so the results carry each video and picture of the bundles a
+second time, and nothing uploads them to Allure TestOps yet. For one Bazel run, give the flag to `lane-run`:
+
+```bash
+./bazel.cmd test //plugins/air/tests/integration/ui:ui_lane_test --test_arg=--jvm_flag=-Dair.flow.trace.allure=on
+```
+
+On TeamCity, the build parameter `system.pass.air.flow.trace.allure=on` gives the same flag. For a `vm.cmd` run on a
+worker, add the flag to the lane flags of `_flags` in `plugins/air/tests/integration/ui_lane_ide.bzl`.
+
+With the flag, the recorder writes one Allure result into `<root>/<runId>/allure-results/` at the end of each
+scenario, beside the bundles of the run. The result has a step for each lane span, with the Before and After pictures
+of the step and the files that the lane attached to it. It also attaches the video, the `idea.log` slice and the path
+of the bundle. The attachment files sit in the same directory. The lane runs no Allure code. A pulled zip holds the
+results of the bundles it holds. Open the results of a run with the Allure command line:
 
 ```bash
 allure serve <root>/<runId>/allure-results
 ```
 
 Unzip a Bazel `outputs.zip` or a pulled zip first, and pass the `allure-results` directory inside it. `allure serve`
-takes more than one directory, so the zips of one run open as one report. On TeamCity, the Air UI lane builds already
-publish `bazel.logs.zip`, which holds every Bazel test output. So the results reach TeamCity inside it. Nothing
-uploads them to Allure TestOps yet.
+takes more than one directory, so the zips of one run open as one report. On TeamCity, the results of a build with the
+flag reach TeamCity inside `bazel.logs.zip`, which holds every Bazel test output.
 
 **Opening them.** One server shows every bundle and every `vm.cmd` run on this machine, live, in the Air docs
 site:
