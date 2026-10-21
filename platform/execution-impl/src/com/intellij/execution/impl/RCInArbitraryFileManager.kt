@@ -93,6 +93,7 @@ internal class RCInArbitraryFileManager(
     val rootElementForLoadedDigest = createRootElement()
     for (configElement in element.getChildren("configuration")) {
       try {
+        convertRunConfigurationOnDemand(configElement)
         val runConfig = RunnerAndConfigurationSettingsImpl(runManager)
         runConfig.readExternal(configElement, true, filePath)
         runConfig.storeInArbitraryFileInProject(filePath)
