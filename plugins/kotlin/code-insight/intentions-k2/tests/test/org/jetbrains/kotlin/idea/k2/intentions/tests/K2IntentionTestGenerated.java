@@ -7636,6 +7636,21 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/string.kt");
         }
 
+        @TestMetadata("unsignedInt.kt")
+        public void testUnsignedInt() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/unsignedInt.kt");
+        }
+
+        @TestMetadata("unsignedIntLarge.kt")
+        public void testUnsignedIntLarge() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/unsignedIntLarge.kt");
+        }
+
+        @TestMetadata("unsignedLong.kt")
+        public void testUnsignedLong() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/unsignedLong.kt");
+        }
+
         @TestMetadata("variable.kt")
         public void testVariable() throws Exception {
             runTest("../../../idea/tests/testData/intentions/evaluateCompileTimeExpression/variable.kt");

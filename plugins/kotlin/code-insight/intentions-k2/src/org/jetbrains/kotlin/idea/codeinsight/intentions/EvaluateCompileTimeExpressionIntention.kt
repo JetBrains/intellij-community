@@ -48,6 +48,8 @@ class EvaluateCompileTimeExpressionIntention : KotlinApplicableModCommandAction<
         return when (value) {
             is Char -> "'${StringUtil.escapeStringCharacters(value.toString())}'"
             is Long -> "${value}L"
+            is UInt -> "${value}u"
+            is ULong -> "${value}uL"
             is Float -> when {
                 value.isNaN() -> "Float.NaN"
                 value.isInfinite() -> if (value > 0.0f) "Float.POSITIVE_INFINITY" else "Float.NEGATIVE_INFINITY"
