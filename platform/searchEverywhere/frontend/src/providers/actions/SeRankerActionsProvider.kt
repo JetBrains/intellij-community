@@ -40,12 +40,14 @@ private val RANKER_TIMEOUT: Duration = 3.seconds
  *
  * The provider uses [actionsProvider] for the item selection, the extended action and the item data.
  * It takes the actions and their presentations from [actionModel], the model of the [actionsProvider] contributor.
+ * The [candidatesStrategy] decides which candidates each ranker call gets.
  */
 @Internal
-class SeRankerActionsProvider(
+class SeRankerActionsProvider internal constructor(
   private val actionsProvider: SeActionsAdaptedProvider,
   private val actionModel: GotoActionModel,
   private val ranker: SeActionsRanker,
+  private val candidatesStrategy: SeActionsCandidatesStrategy,
 ) : SeItemsProvider by actionsProvider, SeExtendedInfoProvider {
   private val allCandidatesMutex = Mutex()
   private var allCandidates: List<Candidate>? = null
@@ -62,7 +64,7 @@ class SeRankerActionsProvider(
 
     // Do not use withTimeout: SeLocalItemDataProvider retries a search that throws CancellationException.
     val rankedIds = withTimeoutOrNull(RANKER_TIMEOUT) {
-      ranker.rank(query, candidates.map { it.rankerCandidate })
+      candidatesStrategy.rank(ranker, query, candidates.map { it.rankerCandidate })
     } ?: return
 
     val candidatesById = candidates.associateBy { it.rankerCandidate.id }

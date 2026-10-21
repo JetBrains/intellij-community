@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 
 private const val RANKER_REGISTRY_KEY: String = "search.everywhere.actions.ranker"
+private const val DEFAULT_MAX_CANDIDATES: Int = 256
 
 /**
  * A remote model that orders IDE actions by how well they match a natural-language query.
@@ -22,7 +23,15 @@ interface SeActionsRanker {
   val id: String
 
   /**
+   * The maximum number of candidates that one [rank] call accepts. The value must be at least 2.
+   *
+   * When there are more candidates, [SeActionsCandidatesStrategy] decides which candidates each call gets.
+   */
+  val maxCandidates: Int get() = DEFAULT_MAX_CANDIDATES
+
+  /**
    * Orders [candidates] by how well they match [query].
+   * The list contains no more than [maxCandidates] candidates, except with [SeActionsCandidatesStrategy.UNLIMITED].
    *
    * The call must be cancellable. Search Everywhere cancels it when the query changes.
    *

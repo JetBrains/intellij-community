@@ -30,6 +30,9 @@ internal class SeMockActionsRanker : SeActionsRanker {
 
   override suspend fun rank(query: String, candidates: List<SeActionsRankerCandidate>): List<String> {
     LOG.info("Rank ${candidates.size} candidates for the query '$query'")
+    if (candidates.size > maxCandidates) {
+      LOG.warn("Got ${candidates.size} candidates, but the limit is $maxCandidates")
+    }
     val start = TimeSource.Monotonic.markNow()
     try {
       delay(SIMULATED_LATENCY)

@@ -40,7 +40,10 @@ class SeRankerActionsProviderFactory : SeItemsProviderFactory, SeFrontendOnlyIte
                                  actionDataContext)
     }
 
-    return SeRankerActionsProvider(SeActionsAdaptedProvider(SeAsyncContributorWrapper(contributor)), contributor.actionModel, ranker)
+    return SeRankerActionsProvider(SeActionsAdaptedProvider(SeAsyncContributorWrapper(contributor)),
+                                   contributor.actionModel,
+                                   ranker,
+                                   SeActionsCandidatesStrategy.findSelected())
   }
 }
 
