@@ -36,8 +36,6 @@ sealed class IdeaPluginDescriptorImpl(
 
   abstract val moduleDependencies: ModuleDependencies
 
-  val packagePrefix: String? = raw.`package`
-
   val appContainerDescriptor: ContainerDescriptor = raw.appElementsContainer.convert()
   val projectContainerDescriptor: ContainerDescriptor = raw.projectElementsContainer.convert()
   val moduleContainerDescriptor: ContainerDescriptor = raw.moduleElementsContainer.convert()
@@ -136,7 +134,9 @@ internal fun reportSubDescriptorUnexpectedElements(raw: RawPluginDescriptor, rep
  * Both of them can be referenced either by plugin id or a module name (while [DependsSubDescriptor] can't be referenced).
  */
 @Internal
-sealed class PluginModuleDescriptor(raw: RawPluginDescriptor) : IdeaPluginDescriptorImpl(raw)
+sealed class PluginModuleDescriptor(raw: RawPluginDescriptor) : IdeaPluginDescriptorImpl(raw) {
+  val packagePrefix: String? = raw.`package`
+}
 
 @Internal
 class DependsSubDescriptor(
@@ -168,7 +168,6 @@ class DependsSubDescriptor(
     "DependsSubDescriptor(" +
     "target=$dependsTargetId, " +
     "descriptorPath=$descriptorPath" +
-    (if (packagePrefix == null) "" else ", package=$packagePrefix") +
     ") <- $parent"
 
   init {

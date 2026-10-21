@@ -2,15 +2,6 @@
 package com.intellij.dev.pluginLoading
 
 import com.intellij.CommonBundle
-import com.intellij.icons.AllIcons
-import com.intellij.ide.plugins.ContentModuleDescriptor
-import com.intellij.ide.plugins.DependsSubDescriptor
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
-import com.intellij.ide.plugins.ModuleLoadingRule
-import com.intellij.ide.plugins.PluginMainDescriptor
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginsSourceContext
-import com.intellij.ide.plugins.shortLogDescription
 import com.intellij.dev.pluginLoading.PluginLoadingNode.DependencyNode
 import com.intellij.dev.pluginLoading.PluginLoadingNode.DescriptorNode
 import com.intellij.dev.pluginLoading.PluginLoadingNode.DescriptorReadErrorNode
@@ -18,6 +9,16 @@ import com.intellij.dev.pluginLoading.PluginLoadingNode.ExclusionChainNode
 import com.intellij.dev.pluginLoading.PluginLoadingNode.GroupNode
 import com.intellij.dev.pluginLoading.PluginLoadingStateTreeBuilder.buildPluginLoadingStateTree
 import com.intellij.dev.pluginLoading.PluginLoadingStateTreeBuilder.loadingStateNodeId
+import com.intellij.icons.AllIcons
+import com.intellij.ide.plugins.ContentModuleDescriptor
+import com.intellij.ide.plugins.DependsSubDescriptor
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.ModuleLoadingRule
+import com.intellij.ide.plugins.PluginMainDescriptor
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginModuleDescriptor
+import com.intellij.ide.plugins.PluginsSourceContext
+import com.intellij.ide.plugins.shortLogDescription
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -198,7 +199,7 @@ internal class PluginLoadingStateDialog(
         is DependsSubDescriptor -> appendLine("depends target: ${descriptor.dependsTargetId}")
       }
       appendLine("descriptor path: ${descriptor.descriptorPath}")
-      appendLine("package prefix: ${descriptor.packagePrefix ?: "<none>"}")
+      if (descriptor is PluginModuleDescriptor) appendLine("package prefix: ${descriptor.packagePrefix ?: "<none>"}")
       appendLine("class loader: ${descriptor.pluginClassLoader ?: "<none>"}")
 
       val dependencies = view.resolvedDependencies(descriptor)
