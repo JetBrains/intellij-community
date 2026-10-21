@@ -4,7 +4,7 @@ package com.intellij.diagnostic
 import java.util.concurrent.TimeUnit
 
 /**
- * A fake [ProcessClock] where `sleep(ms)` advances the time by `ms` plus the next scripted lateness.
+ * A fake [ProcessClock] where `sleep(ms)` and `delay(ms)` advance the time by `ms` plus the next scripted lateness.
  * A lateness above zero models a thread that did not get CPU time on schedule and therefore overslept.
  */
 internal class FakeClock(vararg lateMsPerSleep: Long) : ProcessClock {
@@ -25,6 +25,10 @@ internal class FakeClock(vararg lateMsPerSleep: Long) : ProcessClock {
   override fun sleep(ms: Long) {
     val lateMs = if (lateness.isEmpty()) 0 else lateness.removeFirst()
     advanceMs(ms + lateMs)
+  }
+
+  override suspend fun delay(ms: Long) {
+    sleep(ms)
   }
 
   override fun gcTimeMs(): Long = gcTime

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -29,7 +30,7 @@ internal class ProcessStallWatcherTest {
     val warnings = mutableListOf<String>()
     val watcher = newWatcher(clock, warnings)
 
-    watcher.tick()
+    runBlocking { watcher.tick() }
 
     assertTrue(warnings.isEmpty(), "expected no warning, got $warnings")
   }
@@ -41,7 +42,7 @@ internal class ProcessStallWatcherTest {
     val watcher = newWatcher(clock, warnings)
 
     clock.gcTime = 350
-    watcher.tick()
+    runBlocking { watcher.tick() }
 
     assertEquals(1, warnings.size, "expected exactly one warning, got $warnings")
     assertTrue("1200 ms" in warnings.single(), "expected the warning to report the lateness: ${warnings.single()}")
@@ -55,7 +56,7 @@ internal class ProcessStallWatcherTest {
     val warnings = mutableListOf<String>()
     val watcher = newWatcher(clock, warnings)
 
-    watcher.tick()
+    runBlocking { watcher.tick() }
 
     assertEquals(1, warnings.size, "expected exactly one warning per tick, got $warnings")
     assertTrue("1200 ms" in warnings.single(), "expected the warning to report the summed lateness: ${warnings.single()}")
@@ -67,7 +68,7 @@ internal class ProcessStallWatcherTest {
     val warnings = mutableListOf<String>()
     val watcher = newWatcher(clock, warnings)
 
-    watcher.tick()
+    runBlocking { watcher.tick() }
 
     assertTrue(warnings.isEmpty(), "expected lateness below the threshold to write no warning, got $warnings")
   }
@@ -78,7 +79,7 @@ internal class ProcessStallWatcherTest {
     val warnings = mutableListOf<String>()
     val watcher = newWatcher(clock, warnings, thresholdMs = 400)
 
-    watcher.tick()
+    runBlocking { watcher.tick() }
 
     assertEquals(1, warnings.size, "expected the 400 ms threshold to report a 400 ms stall, got $warnings")
     assertTrue("400 ms" in warnings.single(), "expected the warning to report the lateness: ${warnings.single()}")

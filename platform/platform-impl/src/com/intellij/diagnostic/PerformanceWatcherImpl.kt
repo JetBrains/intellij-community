@@ -60,7 +60,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -218,8 +217,10 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
       slicesPerTick = Registry.intValue("performance.watcher.stall.slices.per.tick", 4).coerceAtLeast(1),
       reportThresholdMs = Registry.intValue("performance.watcher.stall.report.threshold.ms", 1000).toLong().coerceAtLeast(1),
     )
-    watcher.start()
-    coroutineScope.coroutineContext.job.invokeOnCompletion { watcher.shutdown() }
+    @OptIn(DelicateCoroutinesApi::class)
+    coroutineScope.launchWithSafeContext(CoroutineName("Process stall watcher") + blockingDispatcher) {
+      watcher.run()
+    }
   }
 
   private suspend fun asyncInit() {
@@ -721,15 +722,15 @@ private class CoroutineDispatcherWatcher(
       }
     }
   }
+}
 
-  private fun CoroutineScope.launchWithSafeContext(context: CoroutineContext, block: suspend () -> Unit): Job {
-    // See IJPL-234553
-    // We keep the Job from application scope to get cancellation, but strip everything else that might influence the coroutine execution
-    val effectiveContext = context + coroutineContext[Job]!!
-    @Suppress("OPT_IN_USAGE")
-    return GlobalScope.launch(effectiveContext) {
-      block()
-    }
+private fun CoroutineScope.launchWithSafeContext(context: CoroutineContext, block: suspend () -> Unit): Job {
+  // See IJPL-234553
+  // We keep the Job from application scope to get cancellation, but strip everything else that might influence the coroutine execution
+  val effectiveContext = context + coroutineContext[Job]!!
+  @Suppress("OPT_IN_USAGE")
+  return GlobalScope.launch(effectiveContext) {
+    block()
   }
 }
 
