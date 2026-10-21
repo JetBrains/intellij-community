@@ -363,63 +363,55 @@ async fn a_new_run_is_announced_without_a_file_event() {
     events.wait_for_run("run-3").await;
 }
 
-/// A file watcher that the test drives. It keeps the directories that the server watches, and it delivers an event
-/// the way a platform watcher that is not recursive does: only for a path in a watched directory.
-#[derive(Clone, Default)]
-struct DrivenWatch {
-    events: Arc<Mutex<Option<state::WatchEvents>>>,
-    watched: Arc<Mutex<BTreeSet<PathBuf>>>,
+/// On macOS every change of the watched directories restarts the stream, a removal too, and a change made during the
+/// restart raises no event. So a removal is followed by a scan, which announces a run whose journal came in that
+/// window.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_scan_follows_the_removal_of_a_watch() {
+    let scratch = Scratch::default();
+    let runs_dir = scratch.dir();
+    let waiting = runs_dir.join("run-3");
+    fs::create_dir_all(&waiting).expect("create a run's directory");
+    let driven = DrivenWatch::default();
+    let served = start_server(driven_settings(&scratch, &runs_dir, &driven)).await;
+    assert!(driven.watches(&waiting), "a run directory without a journal is watched");
+    let mut events = served.subscribe().await;
+
+    driven.hold();
+    fs::remove_dir(&waiting).expect("remove the run's directory");
+    served.scan().await;
+    driven.held_change().await;
+    write_journal(&runs_dir, "run-2", &[run_started("run-2", "run", &[])]);
+    driven.release();
+    events.wait_for_run("run-2").await;
+    assert!(!driven.watches(&waiting), "the removed directory is no longer watched");
 }
 
-impl DrivenWatch {
-    fn watch(&self) -> state::Watch {
-        let driven = self.clone();
-        Arc::new(move |events| {
-            *driven.events.lock().expect("the events lock") = Some(events);
-            Ok(Box::new(DrivenWatcher(Arc::clone(&driven.watched))))
-        })
+/// A directory that the watcher refuses is not tried again while the scans want it, so it does not restart the stream
+/// at every scan. Once a scan no longer wants it, a later scan tries it again.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_refused_directory_is_not_tried_at_every_scan() {
+    let scratch = Scratch::default();
+    let runs_dir = scratch.dir();
+    let refused = runs_dir.join("run-3");
+    fs::create_dir_all(&refused).expect("create a run's directory");
+    let driven = DrivenWatch::default();
+    driven.refuse(&refused);
+    let served = start_server(driven_settings(&scratch, &runs_dir, &driven)).await;
+    for _ in 0..3 {
+        served.scan().await;
+        served.settle().await;
     }
+    assert_eq!(driven.asked(&refused), 1, "the refused directory is tried once");
+    assert!(!driven.watches(&refused));
 
-    /// Delivers an event and answers true, or answers false when a path of the event is in no watched directory. A
-    /// rescan notice names no path, so it is always delivered.
-    fn send(&self, event: notify::Event) -> bool {
-        let covered = {
-            let watched = self.watched.lock().expect("the watched lock");
-            event
-                .paths
-                .iter()
-                .all(|path| path.parent().is_some_and(|parent| watched.contains(parent)))
-        };
-        if covered {
-            let events = self.events.lock().expect("the events lock");
-            let events = events.as_ref().expect("the server started its watcher");
-            events.send(Ok(event)).expect("the watch loop receives");
-        }
-        covered
-    }
-}
-
-/// The watcher that [DrivenWatch] hands to the server.
-struct DrivenWatcher(Arc<Mutex<BTreeSet<PathBuf>>>);
-
-impl notify::Watcher for DrivenWatcher {
-    fn new<F: notify::EventHandler>(_: F, _: notify::Config) -> notify::Result<Self> {
-        Err(notify::Error::generic("a driven watcher is made by its test"))
-    }
-
-    fn watch(&mut self, path: &Path, _: notify::RecursiveMode) -> notify::Result<()> {
-        self.0.lock().expect("the watched lock").insert(path.to_path_buf());
-        Ok(())
-    }
-
-    fn unwatch(&mut self, path: &Path) -> notify::Result<()> {
-        self.0.lock().expect("the watched lock").remove(path);
-        Ok(())
-    }
-
-    fn kind() -> notify::WatcherKind {
-        notify::WatcherKind::NullWatcher
-    }
+    fs::remove_dir(&refused).expect("remove the run's directory");
+    served.scan().await;
+    served.settle().await;
+    fs::create_dir_all(&refused).expect("create the run's directory again");
+    served.scan().await;
+    served.settle().await;
+    assert_eq!(driven.asked(&refused), 2, "a directory that comes back is tried again");
 }
 
 /// A scenario's zip under `runs/<runId>/traces/<iterationId>/` is found under the id the controller computes for

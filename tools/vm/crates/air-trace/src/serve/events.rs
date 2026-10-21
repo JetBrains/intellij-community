@@ -62,7 +62,7 @@ type WatchRequest = (u64, Vec<PathBuf>);
 pub(crate) struct Watches {
     sender: Mutex<Option<std::sync::mpsc::Sender<WatchRequest>>>,
     requested: AtomicU64,
-    /// The number of the last request that the watcher thread applied without a new directory. A new directory asks
+    /// The number of the last request that the watcher thread applied without a change of the watcher. A change asks
     /// for one more scan, so after this request the watcher owes no scan.
     settled: AtomicU64,
 }
@@ -323,20 +323,22 @@ fn keep_watching(
     requests: &std::sync::mpsc::Receiver<WatchRequest>,
     max_watches: usize,
 ) {
-    let mut watched = HashSet::new();
+    let mut watched = WatchedSet::default();
     while let Ok(mut request) = requests.recv() {
         // Lists queued behind a slow commit are stale; only the newest counts.
         while let Ok(newer) = requests.try_recv() {
             request = newer;
         }
         let (number, wanted) = request;
-        let added = apply_watches(watcher, &mut watched, &wanted, max_watches);
+        let changed = watched.apply(watcher, &wanted, max_watches);
         let Some(server) = server.upgrade() else {
             return;
         };
-        // A directory is watched only after the scan that found it, so whatever was created in it between the two
-        // raised no event. One more scan sees it; that scan adds no watch unless something new appeared again.
-        if added {
+        // A new directory is watched only after the scan that found it, so whatever was created in it between the two
+        // raised no event. On macOS every change of the set also restarts the stream, and a change in any watched
+        // directory during the restart raises no event. One more scan sees both; that scan changes nothing unless the
+        // directories changed again.
+        if changed {
             server.rescan_soon.notify_one();
         } else {
             server.watches.settled.store(number, Ordering::SeqCst);
@@ -344,36 +346,52 @@ fn keep_watching(
     }
 }
 
-/// Makes the watched directories the first `max_watches` of `wanted`, in one commit, and answers whether it added
-/// one.
-fn apply_watches(watcher: &mut dyn notify::Watcher, watched: &mut HashSet<PathBuf>, wanted: &[PathBuf], max_watches: usize) -> bool {
-    let mut next = HashSet::new();
-    for dir in wanted {
-        if next.len() >= max_watches {
-            break;
+/// The directories the watcher watches, and the ones it refused.
+#[derive(Default)]
+struct WatchedSet {
+    watched: HashSet<PathBuf>,
+    /// The directories the watcher refused while the scans still want them. A refused directory is not tried again
+    /// until a scan no longer wants it, so a refusal does not restart the stream at every scan.
+    refused: HashSet<PathBuf>,
+}
+
+impl WatchedSet {
+    /// Makes the watched directories the first `max_watches` of `wanted`, in one commit, and answers whether it changed
+    /// the watcher.
+    fn apply(&mut self, watcher: &mut dyn notify::Watcher, wanted: &[PathBuf], max_watches: usize) -> bool {
+        let mut next = HashSet::new();
+        for dir in wanted {
+            if next.len() >= max_watches {
+                break;
+            }
+            next.insert(dir.clone());
         }
-        next.insert(dir.clone());
-    }
-    let removed: Vec<PathBuf> = watched.difference(&next).cloned().collect();
-    let added: Vec<PathBuf> = next.difference(watched).cloned().collect();
-    if removed.is_empty() && added.is_empty() {
-        return false;
-    }
-    // One batch: the FSEvents watcher restarts its stream once for the batch rather than once per path.
-    let mut paths = watcher.paths_mut();
-    for dir in &removed {
-        let _ = paths.remove(dir);
-        watched.remove(dir);
-    }
-    let mut any_added = false;
-    for dir in added {
-        if paths.add(&dir, RecursiveMode::NonRecursive).is_ok() {
-            watched.insert(dir);
-            any_added = true;
+        self.refused.retain(|dir| next.contains(dir));
+        let removed: Vec<PathBuf> = self.watched.difference(&next).cloned().collect();
+        let added: Vec<PathBuf> = next
+            .iter()
+            .filter(|dir| !self.watched.contains(*dir) && !self.refused.contains(*dir))
+            .cloned()
+            .collect();
+        if removed.is_empty() && added.is_empty() {
+            return false;
         }
+        // One batch: the FSEvents watcher restarts its stream once for the batch rather than once per path.
+        let mut paths = watcher.paths_mut();
+        for dir in &removed {
+            let _ = paths.remove(dir);
+            self.watched.remove(dir);
+        }
+        for dir in added {
+            if paths.add(&dir, RecursiveMode::NonRecursive).is_ok() {
+                self.watched.insert(dir);
+            } else {
+                self.refused.insert(dir);
+            }
+        }
+        let _ = paths.commit();
+        true
     }
-    let _ = paths.commit();
-    any_added
 }
 
 /// What a file event may have changed.

@@ -1,7 +1,8 @@
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, Condvar, Mutex};
 use std::time::{Duration, SystemTime};
 
 use ::http::{HeaderMap, Method, Request, StatusCode, header};
@@ -163,6 +164,141 @@ fn fixture_roots(fixture: &Fixture) -> Vec<Root> {
 /// wait for a file event take the platform's watcher back.
 fn no_watch() -> state::Watch {
     Arc::new(|_| Ok(Box::new(notify::NullWatcher)))
+}
+
+/// A file watcher that the test drives. It keeps the directories that the server watches, and it delivers an event
+/// the way a platform watcher that is not recursive does: only for a path in a watched directory. The test can hold
+/// each change of the watched directories, the way a slow restart of an FSEvents stream holds it, and it can make the
+/// watcher refuse a directory.
+#[derive(Clone, Default)]
+struct DrivenWatch {
+    events: Arc<Mutex<Option<state::WatchEvents>>>,
+    state: Arc<DrivenState>,
+}
+
+#[derive(Default)]
+struct DrivenState {
+    watched: Mutex<BTreeSet<PathBuf>>,
+    refused: Mutex<BTreeSet<PathBuf>>,
+    /// Each directory the server asked to watch, once for each time it asked.
+    asked: Mutex<Vec<PathBuf>>,
+    held: Mutex<bool>,
+    released: Condvar,
+    /// The changes that wait for the release.
+    waiting: AtomicUsize,
+}
+
+impl DrivenWatch {
+    fn watch(&self) -> state::Watch {
+        let driven = self.clone();
+        Arc::new(move |events| {
+            *driven.events.lock().expect("the events lock") = Some(events);
+            Ok(Box::new(DrivenWatcher(Arc::clone(&driven.state))))
+        })
+    }
+
+    /// Delivers an event and answers true, or answers false when a path of the event is in no watched directory. A
+    /// rescan notice names no path, so it is always delivered.
+    fn send(&self, event: notify::Event) -> bool {
+        let covered = {
+            let watched = self.state.watched.lock().expect("the watched lock");
+            event
+                .paths
+                .iter()
+                .all(|path| path.parent().is_some_and(|parent| watched.contains(parent)))
+        };
+        if covered {
+            let events = self.events.lock().expect("the events lock");
+            let events = events.as_ref().expect("the server started its watcher");
+            events.send(Ok(event)).expect("the watch loop receives");
+        }
+        covered
+    }
+
+    fn watches(&self, dir: &Path) -> bool {
+        self.state.watched.lock().expect("the watched lock").contains(dir)
+    }
+
+    /// Makes the watcher refuse the directory from now on.
+    fn refuse(&self, dir: &Path) {
+        self.state.refused.lock().expect("the refused lock").insert(dir.to_path_buf());
+    }
+
+    /// How many times the server asked to watch the directory.
+    fn asked(&self, dir: &Path) -> usize {
+        self.state
+            .asked
+            .lock()
+            .expect("the asked lock")
+            .iter()
+            .filter(|asked| *asked == dir)
+            .count()
+    }
+
+    /// Holds each later change of the watched directories until [DrivenWatch::release].
+    fn hold(&self) {
+        *self.state.held.lock().expect("the held lock") = true;
+    }
+
+    fn release(&self) {
+        *self.state.held.lock().expect("the held lock") = false;
+        self.state.released.notify_all();
+    }
+
+    /// Returns once a change of the watched directories waits for the release.
+    async fn held_change(&self) {
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(15);
+        while self.state.waiting.load(Ordering::SeqCst) == 0 {
+            assert!(
+                tokio::time::Instant::now() < deadline,
+                "no change of the watched directories within 15 s"
+            );
+            tokio::time::sleep(Duration::from_millis(5)).await;
+        }
+    }
+}
+
+impl DrivenState {
+    fn wait_while_held(&self) {
+        let mut held = self.held.lock().expect("the held lock");
+        if !*held {
+            return;
+        }
+        self.waiting.fetch_add(1, Ordering::SeqCst);
+        while *held {
+            held = self.released.wait(held).expect("the held lock");
+        }
+        self.waiting.fetch_sub(1, Ordering::SeqCst);
+    }
+}
+
+/// The watcher that [DrivenWatch] hands to the server.
+struct DrivenWatcher(Arc<DrivenState>);
+
+impl notify::Watcher for DrivenWatcher {
+    fn new<F: notify::EventHandler>(_: F, _: notify::Config) -> notify::Result<Self> {
+        Err(notify::Error::generic("a driven watcher is made by its test"))
+    }
+
+    fn watch(&mut self, path: &Path, _: notify::RecursiveMode) -> notify::Result<()> {
+        self.0.wait_while_held();
+        self.0.asked.lock().expect("the asked lock").push(path.to_path_buf());
+        if self.0.refused.lock().expect("the refused lock").contains(path) {
+            return Err(notify::Error::generic("the test refuses this directory"));
+        }
+        self.0.watched.lock().expect("the watched lock").insert(path.to_path_buf());
+        Ok(())
+    }
+
+    fn unwatch(&mut self, path: &Path) -> notify::Result<()> {
+        self.0.wait_while_held();
+        self.0.watched.lock().expect("the watched lock").remove(path);
+        Ok(())
+    }
+
+    fn kind() -> notify::WatcherKind {
+        notify::WatcherKind::NullWatcher
+    }
 }
 
 fn test_settings(scratch: &Scratch, roots: Vec<Root>) -> Settings {
