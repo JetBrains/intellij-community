@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.ControlFlowExceptionKt;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -156,16 +157,18 @@ public final class VcsUtil {
 
   private static @Nullable <T> T computeValue(@NotNull Project project,
                                               @NotNull java.util.function.Function<? super ProjectLevelVcsManager, ? extends T> provider) {
-    return ReadAction.computeBlocking(() -> {
-      //  IDEADEV-17916, when e.g., ContentRevision.getContent is called in
-      //  a future task after the component has been disposed.
-      T result = null;
-      if (!project.isDisposed()) {
-        ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
-        result = provider.apply(manager);
+    //  IDEADEV-17916, when e.g., ContentRevision.getContent is called in
+    //  a future task after the component has been disposed.
+    try {
+      ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
+      return provider.apply(manager);
+    }
+    catch (Exception e) {
+      if (ControlFlowExceptionKt.isControlFlowException(e)) {
+        return null;
       }
-      return result;
-    });
+      throw e;
+    }
   }
 
   public static @Nullable VirtualFile getVirtualFile(@NotNull @NonNls String path) {
