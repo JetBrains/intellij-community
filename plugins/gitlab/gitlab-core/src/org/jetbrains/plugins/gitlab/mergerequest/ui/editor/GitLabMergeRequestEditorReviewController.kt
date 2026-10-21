@@ -5,6 +5,7 @@ import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewActiveRangesTracker
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentNavigator
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
@@ -25,8 +26,6 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.cancelOnDispose
@@ -45,6 +44,7 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
@@ -57,6 +57,7 @@ import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 @OptIn(ExperimentalCoroutinesApi::class)
 @Service(Service.Level.PROJECT)
 internal class GitLabMergeRequestEditorReviewController(private val project: Project, private val cs: CoroutineScope) {
+  private val commentNavigator = CodeReviewCommentNavigator(project)
 
   internal class InstallerListener : EditorFactoryListener {
     override fun editorCreated(event: EditorFactoryEvent) {
@@ -141,11 +142,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
       val preferences = project.serviceAsync<GitLabMergeRequestsPreferences>()
       val reviewHeadContent = fileVm.headContent.mapNotNull { it?.result?.getOrThrow() }.first()
 
-      val model = GitLabMergeRequestEditorReviewUIModel(this, project, preferences, fileVm) showEditor@{ changeToShow, lineIdx ->
-        val file = changeToShow.filePathAfter?.virtualFile ?: return@showEditor
-        val fileOpenDescriptor = OpenFileDescriptor(project, file, lineIdx, 0)
-        FileEditorManager.getInstance(project).openFileEditor(fileOpenDescriptor, true)
-      }
+      val model = createReviewModel(this, preferences, fileVm, editor)
 
       launchNow {
         ReviewInEditorUtil.trackDocumentDiffSync(reviewHeadContent, editor.document, model::setPostReviewChanges)
@@ -181,6 +178,15 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
       }
     }
   }
+
+  @VisibleForTesting
+  internal fun createReviewModel(
+    cs: CoroutineScope,
+    preferences: GitLabMergeRequestsPreferences,
+    fileVm: GitLabMergeRequestEditorReviewFileViewModel,
+    editor: Editor,
+  ): GitLabMergeRequestEditorReviewUIModel =
+    GitLabMergeRequestEditorReviewUIModel(cs, project, preferences, fileVm, commentNavigator.forEditor(editor))
 
   private fun CoroutineScope.createRenderer(
     editor: Editor,

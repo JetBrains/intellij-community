@@ -184,6 +184,7 @@ jvm_library(
         ":collaborationTools-tests",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
     ],
     deps = [
@@ -212,6 +213,7 @@ jvm_library(
         "//platform/util/diff:diff_test_lib",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core-impl",
+        "//platform/ide-core",
         "//platform/vcs-api:vcs",
         "//platform/vcs-api:vcs_test_lib",
         "//platform/core-api:core",
