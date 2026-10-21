@@ -271,6 +271,14 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     LOG.debug { "[$requestId] Breakpoint removed: $breakpointId" }
   }
 
+  override suspend fun removeBreakpointUndoable(breakpointId: XBreakpointId) {
+    val requestId = requestCounter.getAndIncrement()
+    LOG.debug { "[$requestId] Removing breakpoint (undoable): $breakpointId" }
+    val breakpoint = breakpointId.findValue() ?: return
+    getBreakpointManager(breakpoint.project).removeBreakpointUndoable(breakpoint)
+    LOG.debug { "[$requestId] Breakpoint removed (undoable): $breakpointId" }
+  }
+
   override suspend fun rememberRemovedBreakpoint(breakpointId: XBreakpointId) {
     val requestId = requestCounter.getAndIncrement()
     LOG.debug { "[$requestId] Remembering removed breakpoint: $breakpointId" }
@@ -285,6 +293,15 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     val project = projectId.findProjectOrNull() ?: return
     val restored = getBreakpointManager(project).restoreLastRemovedBreakpoint()
     LOG.debug { "[$requestId] Restored removed breakpoint: ${(restored as? XBreakpointBase<*, *, *>)?.breakpointId}" }
+  }
+
+  override suspend fun restoreRemovedBreakpointById(projectId: ProjectId, breakpointId: XBreakpointId, line: Int?): XBreakpointId? {
+    val requestId = requestCounter.getAndIncrement()
+    LOG.debug { "[$requestId] Restoring removed breakpoint $breakpointId at line $line in $projectId" }
+    val project = projectId.findProjectOrNull() ?: return null
+    val restored = getBreakpointManager(project).restoreRemovedBreakpoint(breakpointId, line) as? XBreakpointBase<*, *, *>
+    LOG.debug { "[$requestId] Restored removed breakpoint $breakpointId as ${restored?.breakpointId}" }
+    return restored?.breakpointId
   }
 
   override suspend fun computeInlineBreakpointVariants(projectId: ProjectId, fileId: VirtualFileId, lines: Set<Int>, documentPatchVersion: DocumentPatchVersion?): List<InlineBreakpointVariantsOnLine>? {

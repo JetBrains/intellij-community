@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileUrlChangeAdapter;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.platform.debugger.impl.rpc.XBreakpointId;
 import com.intellij.platform.debugger.impl.shared.BreakpointRequestCounter;
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy;
 import com.intellij.util.EventDispatcher;
@@ -97,7 +98,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
   private final BreakpointRequestCounter myRequestCounter = new BreakpointRequestCounter();
   private long myTime;
   private volatile @Nullable String myDefaultGroup;
-  private RemovedBreakpointData myLastRemovedBreakpoint = null;
+  private final RemovedBreakpointsHistory myRemovalHistory = new RemovedBreakpointsHistory(myLock);
   private volatile boolean myFirstLoadDone = false;
 
   public XBreakpointManagerImpl(@NotNull Project project,
@@ -141,6 +142,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
             XBreakpoint<?> breakpoint = (XBreakpoint<?>)b;
             doRemoveBreakpointImpl(breakpoint, isDefaultBreakpoint(breakpoint));
           }
+          myRemovalHistory.forget(type);
           myBreakpointsDefaults.remove(type);
           myDefaultBreakpoints.remove(type);
         });
@@ -323,6 +325,20 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
 
   void removeBreakpoints(@NotNull Collection<? extends XBreakpoint> toRemove) {
     withLockMaybeCancellable(myLock, () -> toRemove.forEach(this::doRemoveBreakpoint));
+  }
+
+  /**
+   * Removes the breakpoint and keeps it in the undo history, so {@link #restoreRemovedBreakpoint} can re-create it.
+   * Use it for a breakpoint that a document change removes.
+   */
+  public void removeBreakpointUndoable(@NotNull XBreakpoint<?> breakpoint) {
+    withLockMaybeCancellable(myLock, () -> {
+      if (!isDefaultBreakpoint(breakpoint)) {
+        // The data must be taken before the removal clears the dependencies.
+        myRemovalHistory.add(new RemovedBreakpointData((XBreakpointBase<?, ?, ?>)breakpoint));
+      }
+      doRemoveBreakpoint(breakpoint);
+    });
   }
 
   public void removeAllBreakpoints() {
@@ -883,28 +899,110 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
 
   public void rememberRemovedBreakpoint(@NotNull XBreakpointBase breakpoint) {
     withLockMaybeCancellable(myLock, () -> {
-      myLastRemovedBreakpoint = new RemovedBreakpointData(breakpoint);
+      myRemovalHistory.setLast(new RemovedBreakpointData(breakpoint));
     });
   }
 
   public @Nullable XBreakpointBase getLastRemovedBreakpoint() {
-    return withLockMaybeCancellable(myLock, () -> myLastRemovedBreakpoint != null ? myLastRemovedBreakpoint.myBreakpoint : null);
+    return withLockMaybeCancellable(myLock, () -> {
+      RemovedBreakpointData last = myRemovalHistory.getLast();
+      return last != null ? last.myBreakpoint : null;
+    });
   }
 
   public @Nullable XBreakpoint restoreLastRemovedBreakpoint() {
     // FIXME[inline-bp]: support multiple breakpoints restore
-    RemovedBreakpointData data = withLockMaybeCancellable(myLock, () -> {
-      RemovedBreakpointData d = myLastRemovedBreakpoint;
-      myLastRemovedBreakpoint = null;
-      return d;
-    });
-    return data != null ? data.restore() : null;
+    RemovedBreakpointData data = withLockMaybeCancellable(myLock, () -> myRemovalHistory.takeLast());
+    return data != null ? data.restore(true) : null;
   }
 
   public boolean canRestoreLastRemovedBreakpoint() {
     return withLockMaybeCancellable(myLock, () -> {
-      return myLastRemovedBreakpoint != null && myLastRemovedBreakpoint.isRestorable();
+      RemovedBreakpointData last = myRemovalHistory.getLast();
+      return last != null && last.isRestorable();
     });
+  }
+
+  /**
+   * Re-creates the breakpoint with the given id that {@link #removeBreakpointUndoable} removed.
+   * The restored breakpoint gets a new id. An existing breakpoint at the same position stays.
+   *
+   * @param line the line for a line breakpoint, or {@code null} to keep the line at the removal time
+   * @return the restored breakpoint, or {@code null} when the history has no entry for the id
+   */
+  public @Nullable XBreakpoint<?> restoreRemovedBreakpoint(@NotNull XBreakpointId id, @Nullable Integer line) {
+    assert !myLock.isHeldByCurrentThread();
+    RemovedBreakpointData data = withLockMaybeCancellable(myLock, () -> myRemovalHistory.take(id));
+    if (data == null) return null;
+    if (line != null && data.myBreakpoint instanceof XLineBreakpointImpl<?> lineBreakpoint) {
+      lineBreakpoint.getState().setLine(line);
+    }
+    return data.restore(false);
+  }
+
+  /**
+   * The removed breakpoints that the user can restore. It has two separate stores.
+   * The last slot serves the "Restore Breakpoint" action after a manual removal.
+   * The entries serve the undo of a document change. Each reader reads only its own store.
+   * The caller holds the manager lock for every call.
+   */
+  private static final class RemovedBreakpointsHistory {
+    private static final int HISTORY_SIZE = 100;
+
+    private final ReentrantLock myLock;
+    /** The breakpoints that a document change removed, oldest first. */
+    private final Map<XBreakpointId, RemovedBreakpointData> myEntries = new LinkedHashMap<>() {
+      @Override
+      protected boolean removeEldestEntry(Map.Entry<XBreakpointId, RemovedBreakpointData> eldest) {
+        return size() > HISTORY_SIZE;
+      }
+    };
+    /** The breakpoint of the "Restore Breakpoint" action. Only a manual removal sets it. */
+    private @Nullable RemovedBreakpointData myLast;
+
+    private RemovedBreakpointsHistory(@NotNull ReentrantLock lock) {
+      myLock = lock;
+    }
+
+    /** Adds the breakpoint that a document change removes. */
+    void add(@NotNull RemovedBreakpointData data) {
+      assert myLock.isHeldByCurrentThread();
+      myEntries.put(data.myBreakpoint.getBreakpointId(), data);
+    }
+
+    /** Sets the breakpoint of the "Restore Breakpoint" action. */
+    void setLast(@NotNull RemovedBreakpointData data) {
+      assert myLock.isHeldByCurrentThread();
+      myLast = data;
+    }
+
+    @Nullable RemovedBreakpointData getLast() {
+      assert myLock.isHeldByCurrentThread();
+      return myLast;
+    }
+
+    /** Clears the last slot and returns its breakpoint. */
+    @Nullable RemovedBreakpointData takeLast() {
+      assert myLock.isHeldByCurrentThread();
+      RemovedBreakpointData last = myLast;
+      myLast = null;
+      return last;
+    }
+
+    /** Drops the breakpoint with {@code id} from the entries and returns it. */
+    @Nullable RemovedBreakpointData take(@NotNull XBreakpointId id) {
+      assert myLock.isHeldByCurrentThread();
+      return myEntries.remove(id);
+    }
+
+    /** Drops every breakpoint of {@code type}, so the history does not keep the classes of an unloaded plugin alive. */
+    void forget(@NotNull XBreakpointType<?, ?> type) {
+      assert myLock.isHeldByCurrentThread();
+      myEntries.values().removeIf(data -> data.myBreakpoint.getType() == type);
+      if (myLast != null && myLast.myBreakpoint.getType() == type) {
+        myLast = null;
+      }
+    }
   }
 
   private final class RemovedBreakpointData {
@@ -921,18 +1019,23 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
       return !(myBreakpoint instanceof XLineBreakpointImpl<?> breakpoint) || breakpoint.getFile() != null;
     }
 
+    /**
+     * @param replaceExisting whether to remove an existing line breakpoint of the same type at the same position first
+     */
     @Nullable
-    XBreakpoint<?> restore() {
+    XBreakpoint<?> restore(boolean replaceExisting) {
       assert !myLock.isHeldByCurrentThread();
       if (myBreakpoint instanceof XLineBreakpointImpl<?> lineBreakpoint) {
         VirtualFile file = lineBreakpoint.getFile();
         if (file == null) { // file was deleted
           return null;
         }
-        XLineBreakpoint<?> existingBreakpoint = findBreakpointAtLine(lineBreakpoint.getType(), file,
-                                                                     lineBreakpoint.getLine(), lineBreakpoint.getPlacement());
-        if (existingBreakpoint != null) {
-          removeBreakpoint(existingBreakpoint);
+        if (replaceExisting) {
+          XLineBreakpoint<?> existingBreakpoint = findBreakpointAtLine(lineBreakpoint.getType(), file,
+                                                                       lineBreakpoint.getLine(), lineBreakpoint.getPlacement());
+          if (existingBreakpoint != null) {
+            removeBreakpoint(existingBreakpoint);
+          }
         }
       }
 

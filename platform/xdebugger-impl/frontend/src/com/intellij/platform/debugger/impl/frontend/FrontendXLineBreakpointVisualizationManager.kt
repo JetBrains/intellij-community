@@ -71,6 +71,7 @@ internal class FrontendXLineBreakpointVisualizationManager(
   private val project: Project,
   coroutineScope: CoroutineScope,
   private val manager: XLineBreakpointManager<FrontendXLineBreakpointProxy>,
+  private val breakpointManager: FrontendXBreakpointManager,
 ) {
   private val cs = coroutineScope.childScope("XLineBreakpointVisualizationManager")
   private val breakpointUpdateQueue: MergingUpdateQueue = MergingUpdateQueue.mergingUpdateQueue(
@@ -256,7 +257,8 @@ internal class FrontendXLineBreakpointVisualizationManager(
     }
 
     private fun processDocumentChange(document: Document): Boolean {
-      val breakpoints = manager.getDocumentBreakpointProxies(document)
+      // A copy, because the removal below unregisters from the live collection.
+      val breakpoints = manager.getDocumentBreakpointProxies(document).toList()
       if (breakpoints.isEmpty()) return false
 
       // updatePosition leads to the breakpointChanged call,
@@ -267,8 +269,20 @@ internal class FrontendXLineBreakpointVisualizationManager(
         breakpoints.forEach { it.updatePosition() }
       }
 
+      removeInvalidatedBreakpointsWithUndo(document, breakpoints)
       scheduleDocumentUpdate(document)
       return true
+    }
+
+    /**
+     * Removes the breakpoints whose highlighter the change has invalidated, inside the edit command.
+     * Undo of the command restores them. The async [cleanUpBreakpoints] stays as the fallback.
+     */
+    private fun removeInvalidatedBreakpointsWithUndo(document: Document, breakpoints: List<FrontendXLineBreakpointProxy>) {
+      if (ApplicationManager.getApplication().isUnitTestMode) return
+      val invalid = breakpoints.filter { it.getHighlighter()?.isValid == false }
+      if (invalid.isEmpty()) return
+      XLineBreakpointRemovalUndoableAction.removeWithUndo(project, breakpointManager, cs, document, invalid)
     }
   }
 

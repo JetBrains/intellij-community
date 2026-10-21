@@ -33,9 +33,11 @@ interface XBreakpointTypeApi : RemoteApi<Unit> {
   suspend fun toggleLineBreakpoint(projectId: ProjectId, request: XLineBreakpointInstallationRequest): XToggleLineBreakpointResponse?
 
   suspend fun removeBreakpoint(breakpointId: XBreakpointId)
+  suspend fun removeBreakpointUndoable(breakpointId: XBreakpointId)
 
   suspend fun rememberRemovedBreakpoint(breakpointId: XBreakpointId)
   suspend fun restoreRemovedBreakpoint(projectId: ProjectId)
+  suspend fun restoreRemovedBreakpointById(projectId: ProjectId, breakpointId: XBreakpointId, line: Int?): XBreakpointId?
 
   suspend fun copyLineBreakpoint(breakpointId: XBreakpointId, fileId: VirtualFileId, line: Int)
   suspend fun onBreakpointRemoval(breakpointId: XBreakpointId, sessionId: XDebugSessionId)

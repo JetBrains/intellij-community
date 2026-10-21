@@ -37,6 +37,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointUIUtil
 import com.intellij.xdebugger.impl.rpc.sourcePosition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -165,6 +166,10 @@ internal open class FrontendXBreakpointProxy(
     updateStateIfNeeded(newValue, getter, copy, {}, false) { requestId ->
       sequentialExecutor.execute { sendRequest(requestId) }
     }
+  }
+
+  fun drainRequests(): Deferred<Unit> {
+    return sequentialExecutor.submit {}
   }
 
   init {

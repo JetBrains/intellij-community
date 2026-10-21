@@ -52,6 +52,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -85,7 +86,7 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
 
   private val lineBreakpointManager = XLineBreakpointManager<FrontendXLineBreakpointProxy>(project, this)
 
-  private val lineBreakpointVisualizationManager = FrontendXLineBreakpointVisualizationManager(project, cs, lineBreakpointManager)
+  private val lineBreakpointVisualizationManager = FrontendXLineBreakpointVisualizationManager(project, cs, lineBreakpointManager, this)
 
   private val lightBreakpoints: ConcurrentMap<LightBreakpointPosition, FrontendXLightLineBreakpoint> = ConcurrentCollectionFactory.createConcurrentMap()
 
@@ -383,6 +384,15 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
   }
 
   override fun removeBreakpoint(breakpoint: XBreakpointProxy): CompletableFuture<Void?> {
+    return removeBreakpoint(breakpoint) { XBreakpointTypeApi.getInstance().removeBreakpoint(it) }
+  }
+
+  /** Removes the breakpoint that a document change removes. The backend keeps it for [restoreRemovedBreakpoint]. */
+  internal fun removeBreakpointUndoable(breakpoint: XBreakpointProxy): CompletableFuture<Void?> {
+    return removeBreakpoint(breakpoint) { XBreakpointTypeApi.getInstance().removeBreakpointUndoable(it) }
+  }
+
+  private fun removeBreakpoint(breakpoint: XBreakpointProxy, rpcRequest: suspend (XBreakpointId) -> Unit): CompletableFuture<Void?> {
     if (breakpoint.isDefaultBreakpoint()) {
       // removing default breakpoint should just disable it
       breakpoint.setEnabled(false)
@@ -392,9 +402,23 @@ class FrontendXBreakpointManager(private val project: Project, private val cs: C
     removeBreakpointLocally(breakpoint.id, BreakpointRemovalTrigger.BREAKPOINT_ACTUALLY_REMOVED)
     breakpointsChanged.tryEmit(Unit)
     return cs.future {
-      XBreakpointTypeApi.getInstance().removeBreakpoint(breakpoint.id)
+      rpcRequest(breakpoint.id)
       null
     }
+  }
+
+  internal suspend fun removeBreakpointUndoable(breakpointId: XBreakpointId) {
+    val proxy = breakpoints[breakpointId]
+    if (proxy == null) {
+      XBreakpointTypeApi.getInstance().removeBreakpointUndoable(breakpointId)
+      return
+    }
+    // The local removal runs on EDT, like every other caller of removeBreakpoint.
+    withContext(Dispatchers.EDT) { removeBreakpointUndoable(proxy) }.await()
+  }
+
+  internal suspend fun restoreRemovedBreakpoint(breakpointId: XBreakpointId, line: Int): XBreakpointId? {
+    return XBreakpointTypeApi.getInstance().restoreRemovedBreakpointById(project.projectId(), breakpointId, line)
   }
 
   override fun rememberRemovedBreakpoint(breakpoint: XBreakpointProxy) {
