@@ -63,6 +63,8 @@ import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.common.runAllSuspend
 import com.intellij.testFramework.common.testWorkspaceModelLeak
 import com.intellij.testFramework.replaceService
+import com.intellij.ui.EditorNotifications
+import com.intellij.ui.EditorNotificationsImpl
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.application
 import com.intellij.util.io.createDirectories
@@ -239,11 +241,23 @@ fun projectFixture(
   RunManager.getInstanceAsync(project)
   initialized(project) {
     runAllSuspend(
+      { awaitEditorNotificationJobs(project) },
       { testWorkspaceModelLeak(project) },
       { ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = false) },
       { application.checkEditorsReleased(project) },
     )
   }
+}
+
+/**
+ * Waits for the editor notification jobs of [project].
+ * A job keeps its file editors alive. An editor of a disposed module holds the old workspace model snapshot through its inlays.
+ * [testWorkspaceModelLeak] blocks the EDT, so a job that waits for the EDT cannot finish during the check.
+ */
+@TestOnly
+private suspend fun awaitEditorNotificationJobs(project: Project) {
+  val editorNotifications = project.serviceIfCreated<EditorNotifications>() as? EditorNotificationsImpl ?: return
+  editorNotifications.awaitUpdateJobs()
 }
 
 @TestOnly
