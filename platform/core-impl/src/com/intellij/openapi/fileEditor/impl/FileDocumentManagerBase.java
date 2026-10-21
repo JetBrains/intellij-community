@@ -121,7 +121,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
               "To fix this error, ensure that you are not interacting with a document before it is fully loaded.");
   }
 
-  private static void fireFileBindingChanged(Document document, @Nullable VirtualFile oldFile, @Nullable VirtualFile newFile) {
+  private static void fireFileBindingChanged(@NotNull Document document, @Nullable VirtualFile oldFile, @Nullable VirtualFile newFile) {
     ApplicationManager.getApplication().getMessageBus().syncPublisher(FileDocumentBindingListener.TOPIC)
       .fileDocumentBindingChanged(document, oldFile, newFile);
   }
