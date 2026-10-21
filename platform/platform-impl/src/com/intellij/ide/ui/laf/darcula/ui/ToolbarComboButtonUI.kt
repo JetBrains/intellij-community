@@ -18,10 +18,12 @@ import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Graphics
+import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.awt.RenderingHints
 import java.awt.event.FocusAdapter
@@ -35,7 +37,8 @@ import kotlin.math.max
 
 private const val BEFORE_CHEVRON_GAP = 2
 
-internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
+@ApiStatus.Internal
+open class ToolbarComboButtonUI: AbstractToolbarComboUI() {
   private val clickListener = MyClickListener()
   private val hoverListener = MyHoverListener()
   private val focusListener = MyFocusAdapter()
@@ -217,12 +220,16 @@ internal class ToolbarComboButtonUI: AbstractToolbarComboUI() {
       if (combo.isEnabled && combo.showChevron && combo.model.isSelected()) {
         val hoverBackground = if (ProjectWindowCustomizerService.getInstance().isActive()) combo.transparentHoverBackground else combo.hoverBackground
         hoverBackground?.let(innerRectPainter)
+        paintHoverBorder(g2, innerRect)
       }
       if (combo.isFocusOwner) {
         DarculaNewUIUtil.drawRoundedRectangle(g2, innerRect, JBUI.CurrentTheme.Focus.focusColor(),
                                               JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().float, DarculaUIUtil.BW.float)
       }
     }
+  }
+
+  protected open fun paintHoverBorder(g: Graphics2D, innerRect: Rectangle) {
   }
 
   private class MyClickListener: ClickListener() {
