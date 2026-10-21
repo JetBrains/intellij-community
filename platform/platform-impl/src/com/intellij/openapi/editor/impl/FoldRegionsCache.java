@@ -56,7 +56,6 @@ abstract class FoldRegionsCache {
   protected abstract int getFoldedBlockInlaysHeight(int foldStartOffset, int foldEndOffset);
 
   protected abstract int getLineHeight();
-
   @NotNull CachedData rebuild() {
     List<FoldRegion> visible = new ArrayList<>(myRegionStorage.size());
 
@@ -71,10 +70,9 @@ abstract class FoldRegionsCache {
                              boolean atStart,
                              @NotNull Collection<? extends FoldRegionMarker> overlapping) {
         if (atStart) {
-          if (lastCollapsedRegion == null || region.getEndOffset() > lastCollapsedRegion.getEndOffset() ||
-              region instanceof CustomFoldRegion &&
-              region.getStartOffset() == lastCollapsedRegion.getStartOffset() &&
-              region.getEndOffset() == lastCollapsedRegion.getEndOffset()) {
+          if (lastCollapsedRegion == null ||
+              region.getEndOffset() > lastCollapsedRegion.getEndOffset() ||
+              region instanceof CustomFoldRegion && TextRange.areSegmentsEqual(region, lastCollapsedRegion)) {
             if (!region.isExpanded()) {
               hideContainedRegions(region);
               lastCollapsedRegion = region;
@@ -85,13 +83,16 @@ abstract class FoldRegionsCache {
         return true;
       }
 
-      private void hideContainedRegions(FoldRegion region) {
-        for (int i = visible.size() - 1; i >= 0; i--) {
-          if (region.getStartOffset() == visible.get(i).getStartOffset()) {
-            visible.remove(i);
-          }
-          else {
-            break;
+      private void hideContainedRegions(@NotNull FoldRegion region) {
+        if (!visible.isEmpty()) {
+          int regionStartOffset = region.getStartOffset();
+          for (int i = visible.size() - 1; i >= 0; i--) {
+            if (regionStartOffset == visible.get(i).getStartOffset()) {
+              visible.remove(i);
+            }
+            else {
+              break;
+            }
           }
         }
       }
@@ -104,8 +105,8 @@ abstract class FoldRegionsCache {
     return updateCachedAndSortOffsets(visibleRegions, true);
   }
 
-  private static @NotNull FoldRegion @NotNull [] toFoldArray(@NotNull List<FoldRegion> topLevels) {
-    return topLevels.isEmpty() ? FoldRegion.EMPTY_ARRAY : topLevels.toArray(FoldRegion.EMPTY_ARRAY);
+  private static @NotNull FoldRegion @NotNull [] toFoldArray(@NotNull List<FoldRegion> regions) {
+    return regions.isEmpty() ? FoldRegion.EMPTY_ARRAY : regions.toArray(FoldRegion.EMPTY_ARRAY);
   }
 
   void updateCachedOffsets() {
@@ -135,20 +136,20 @@ abstract class FoldRegionsCache {
         topLevel.add(region);
       }
     }
-    FoldRegion[] topLevelRegions = topLevel.toArray(FoldRegion.EMPTY_ARRAY);
-    Arrays.sort(topLevelRegions, BY_END_OFFSET);
+    FoldRegion[] topLevelSorted = topLevel.toArray(FoldRegion.EMPTY_ARRAY);
+    Arrays.sort(topLevelSorted, BY_END_OFFSET);
 
-    int[] startOffsets = ArrayUtil.newIntArray(topLevelRegions.length);
-    int[] endOffsets = ArrayUtil.newIntArray(topLevelRegions.length);
-    int[] foldedLines = ArrayUtil.newIntArray(topLevelRegions.length);
-    int[] startVisualLines = ArrayUtil.newIntArray(topLevelRegions.length);
-    int[] customYAdjustment = ArrayUtil.newIntArray(topLevelRegions.length);
+    int[] startOffsets = ArrayUtil.newIntArray(topLevelSorted.length);
+    int[] endOffsets = ArrayUtil.newIntArray(topLevelSorted.length);
+    int[] foldedLines = ArrayUtil.newIntArray(topLevelSorted.length);
+    int[] startVisualLines = ArrayUtil.newIntArray(topLevelSorted.length);
+    int[] customYAdjustment = ArrayUtil.newIntArray(topLevelSorted.length);
 
     int foldedLinesSum = 0;
     int currentCustomYAdjustment = 0;
     int lineHeight = getLineHeight();
-    for (int i = 0; i < topLevelRegions.length; i++) {
-      FoldRegion region = topLevelRegions[i];
+    for (int i = 0; i < topLevelSorted.length; i++) {
+      FoldRegion region = topLevelSorted[i];
       TextRange range = region.getTextRange();
       startOffsets[i] = range.getStartOffset();
       endOffsets[i] = range.getEndOffset() - 1;
@@ -163,8 +164,8 @@ abstract class FoldRegionsCache {
       customYAdjustment[i] = currentCustomYAdjustment;
     }
 
-    CachedData data = new CachedData(visibleRegions, topLevelRegions, startOffsets, endOffsets, foldedLines, startVisualLines,
-                                     customYAdjustment, computeTopFoldedInlaysHeight(topLevelRegions, startOffsets, endOffsets));
+    CachedData data = new CachedData(visibleRegions, topLevelSorted, startOffsets, endOffsets, foldedLines, startVisualLines,
+                                     customYAdjustment, computeTopFoldedInlaysHeight(topLevelSorted, startOffsets, endOffsets));
     myCachedData = data;
     return data;
   }

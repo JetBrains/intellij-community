@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.DocumentEventUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IntPair;
@@ -1136,7 +1137,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
     @Override
     public boolean equals(@Nullable FoldRegion o1, @Nullable FoldRegion o2) {
-      return o1 == o2 || (o1 != null && o2 != null && o1.getStartOffset() == o2.getStartOffset() && o1.getEndOffset() == o2.getEndOffset());
+      return o1 == o2 || (o1 != null && o2 != null && TextRange.areSegmentsEqual(o1, o2));
     }
   }
 }
