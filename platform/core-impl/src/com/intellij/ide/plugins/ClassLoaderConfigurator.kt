@@ -447,7 +447,7 @@ private fun configureUsingIdeaClassloader(classPath: List<Path>, descriptor: Ide
 
 @VisibleForTesting
 @ApiStatus.Internal
-fun sortDependenciesInPlace(dependencies: Array<out IdeaPluginDescriptorImpl>) {
+fun sortDependenciesInPlace(dependencies: Array<out PluginModuleDescriptor>) {
   if (dependencies.size <= 1) {
     return
   }
