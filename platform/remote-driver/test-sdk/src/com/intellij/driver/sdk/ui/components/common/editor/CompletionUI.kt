@@ -12,11 +12,11 @@ fun IdeaFrameUI.completionList(@Language("xpath") xpath: String? = null, action:
   return list(xpath ?: "//div[@class='HeavyWeightWindow']//div[@class='LookupList']").apply(action)
 }
 
-/** Waits until each of [fragments] is a part of at least one item of the list. On a timeout, the message lists the items. */
-fun JListUiComponent.waitItemsContain(fragments: List<String>, timeout: Duration = 30.seconds) {
-  waitFor("The list has items with $fragments", timeout = timeout,
-          errorMessage = { "The list items: ${runCatching { items }.getOrDefault(emptyList())}" }) {
-    val items = runCatching { items }.getOrDefault(emptyList())
-    fragments.all { fragment -> items.any { it.contains(fragment) } }
-  }
+/** Waits until each of [fragments] is a part of at least one item of the list, and returns the items. On a timeout, the message names the missing fragments. */
+fun JListUiComponent.waitItemsContain(fragments: List<String>, timeout: Duration = 30.seconds): List<String> {
+  fun missing(items: List<String>) = fragments.filter { fragment -> items.none { it.contains(fragment) } }
+  return waitFor("The list has items with $fragments", timeout = timeout,
+                 errorMessage = { items -> "Not found: ${missing(items)}. The list items: $items" },
+                 getter = { runCatching { items }.getOrDefault(emptyList()) },
+                 checker = { items -> missing(items).isEmpty() })
 }
