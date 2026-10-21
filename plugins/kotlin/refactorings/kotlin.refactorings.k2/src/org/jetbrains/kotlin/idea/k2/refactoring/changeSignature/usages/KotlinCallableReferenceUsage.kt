@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
+import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.CallableReferenceFix.Conflict
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.CallableReferenceFix.None
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.CallableReferenceFix.SetQualifier
@@ -113,12 +114,19 @@ private enum class ParamConversion {
     RETURN_TYPE_CHANGED,
 }
 
+private fun KotlinParameterInfo?.isSameOriginalParameterAs(other: KotlinParameterInfo?): Boolean =
+    this != null && other != null && !isNewParameter && !other.isNewParameter && oldIndex == other.oldIndex
+
 private fun paramConversions(changeInfo: KotlinChangeInfoBase): List<ParamConversion> {
     val receiverInfo = changeInfo.receiverParameterInfo
     val oldReceiverInfo = changeInfo.oldReceiverInfo
-    val receiverAppeared = receiverInfo != null && oldReceiverInfo != receiverInfo
-    // A moved receiver keeps the same parameter-info instance.
-    val oldReceiverAsParam = oldReceiverInfo?.let { old -> changeInfo.newParameters.firstOrNull { it == old && it != receiverInfo } }
+    val receiverKept = receiverInfo.isSameOriginalParameterAs(oldReceiverInfo)
+    val receiverAppeared = receiverInfo != null && !receiverKept
+    val oldReceiverAsParam = oldReceiverInfo?.let { old ->
+        changeInfo.newParameters.firstOrNull {
+            it.isSameOriginalParameterAs(old) && !it.isSameOriginalParameterAs(receiverInfo)
+        }
+    }
 
     val contextToReceiver = receiverAppeared && receiverInfo.wasContextParameter
     val valueToReceiver =
@@ -126,11 +134,11 @@ private fun paramConversions(changeInfo: KotlinChangeInfoBase): List<ParamConver
     val receiverAdded = receiverAppeared && receiverInfo.isNewParameter
     val receiverToContext = oldReceiverAsParam?.isContextParameter == true
     val receiverToValue = oldReceiverAsParam?.isContextParameter == false
-    val receiverRemoved = oldReceiverInfo != null && oldReceiverInfo != receiverInfo && oldReceiverAsParam == null
-    val receiverRetyped = oldReceiverInfo != null && receiverInfo == oldReceiverInfo && changeInfo.isReceiverTypeChanged()
+    val receiverRemoved = oldReceiverInfo != null && !receiverKept && oldReceiverAsParam == null
+    val receiverRetyped = receiverKept && changeInfo.isReceiverTypeChanged()
 
     val valueToContext = changeInfo.newParameters.any {
-        !it.isNewParameter && !it.wasContextParameter && it.isContextParameter && it != oldReceiverInfo
+        !it.isNewParameter && !it.wasContextParameter && it.isContextParameter && !it.isSameOriginalParameterAs(oldReceiverInfo)
     }
     val contextToValue = changeInfo.newParameters.any {
         !it.isNewParameter && it.wasContextParameter && !it.isContextParameter && it != receiverInfo
@@ -138,7 +146,10 @@ private fun paramConversions(changeInfo: KotlinChangeInfoBase): List<ParamConver
     val parametersAdded = changeInfo.newParameters.any { it.isNewParameter && it != receiverInfo }
     // Compare only unchanged value parameters. Other movements are classified separately.
     val parametersReordered = changeInfo.newParameters
-        .filter { !it.isNewParameter && !it.isContextParameter && !it.wasContextParameter && it != receiverInfo && it != oldReceiverInfo }
+        .filter {
+            !it.isNewParameter && !it.isContextParameter && !it.wasContextParameter &&
+                    it != receiverInfo && !it.isSameOriginalParameterAs(oldReceiverInfo)
+        }
         .map { it.oldIndex }
         .let { indexes -> indexes != indexes.sorted() }
     val parametersRemoved = changeInfo.isValueParameterRemoved()
@@ -199,7 +210,8 @@ private fun classifyConversion(
             conflictFix(expression, RECEIVER_TO_CONTEXT_CONFLICT)
 
         ParamConversion.RECEIVER_TO_VALUE -> when {
-            changeInfo.newParameters.firstOrNull { !it.isContextParameter } != changeInfo.oldReceiverInfo ->
+            !changeInfo.newParameters.firstOrNull { !it.isContextParameter }
+                .isSameOriginalParameterAs(changeInfo.oldReceiverInfo) ->
                 conflictFix(expression, TYPE_CHANGE_CONFLICT)
 
             isUnboundTypeQualifier(expression) -> SetQualifier("")
@@ -294,7 +306,8 @@ private fun isResolvable(expression: KtCallableReferenceExpression): Boolean =
 
 private fun convertedToContextParameterName(changeInfo: KotlinChangeInfoBase): String =
     changeInfo.newParameters.first {
-        !it.isNewParameter && !it.wasContextParameter && it.isContextParameter && it != changeInfo.oldReceiverInfo
+        !it.isNewParameter && !it.wasContextParameter && it.isContextParameter &&
+                !it.isSameOriginalParameterAs(changeInfo.oldReceiverInfo)
     }.name
 
 private fun isMemberCallable(changeInfo: KotlinChangeInfoBase): Boolean =
