@@ -71,7 +71,12 @@ internal class KotlinCallableReferenceUsage(expression: KtCallableReferenceExpre
         val newName = if (changeInfo.isNameChanged) changeInfo.newName else expression.callableReference.text
         val newText = when (val fix = fix) {
             is SetQualifier -> "${fix.prefix}::${newName}"
-            is Conflict, None -> return null
+            None -> {
+                if (!changeInfo.isNameChanged) return null
+                val qualifier = expression.receiverExpression?.text.orEmpty()
+                "${qualifier}::${newName}"
+            }
+            is Conflict -> return null
         }
         return expression.replace(KtPsiFactory(element.project).createExpression(newText)) as KtElement
     }
