@@ -1,8 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
+import com.intellij.openapi.fileTypes.PlainTextLanguage
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
+import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -72,6 +77,37 @@ class SettingsImplTest {
   }
 
   /**
+   * A reinit follows a rename and a file type change, so it must compute the language again.
+   */
+  @Test
+  fun testReinitComputesTheLanguageAgain(): Unit = fixture.runTest {
+    initText("abc")
+    val language = switchableLanguage(editor.settings as SettingsImpl)
+    withStickyLinesHiddenFor(Language.ANY) {
+      language.current = Language.ANY
+      (editor as EditorImpl).reinitSettings()
+      assertFalse((editor.settings as SettingsImpl).getState().myStickyLinesShownForLanguage)
+    }
+  }
+
+  /**
+   * An editor without `EditorHighlighterUpdater` gets a file type change only from the state, so the state must
+   * compute the language again.
+   */
+  @Test
+  fun testFileTypeChangeComputesTheLanguageAgain(): Unit = fixture.runTest {
+    initText("abc")
+    val language = switchableLanguage(editor.settings as SettingsImpl)
+    withStickyLinesHiddenFor(Language.ANY) {
+      language.current = Language.ANY
+      ApplicationManager.getApplication().runWriteAction {
+        FileTypeManagerEx.getInstanceEx().makeFileTypesChange("test", EmptyRunnable.getInstance())
+      }
+      assertFalse((editor.settings as SettingsImpl).getState().myStickyLinesShownForLanguage)
+    }
+  }
+
+  /**
    * A main editor uses soft wraps only for a file whose name matches a mask. A change of the masks reaches an open
    * editor without a reinit of all editors.
    */
@@ -91,6 +127,31 @@ class SettingsImplTest {
     } finally {
       global.softWrapFileMasks = originalMasks
       global.setUseSoftWraps(originalUse, SoftWrapAppliancePlaces.MAIN_EDITOR)
+    }
+  }
+
+  /**
+   * A language that the test can switch. The state reads it only when it computes the language.
+   */
+  private class SwitchableLanguage(var current: Language)
+
+  private fun switchableLanguage(settings: SettingsImpl): SwitchableLanguage {
+    val language = SwitchableLanguage(PlainTextLanguage.INSTANCE)
+    settings.setLanguageSupplier { language.current }
+    return language
+  }
+
+  /**
+   * Runs [test] while sticky lines are hidden for [language], and checks that they are shown before that.
+   */
+  private fun EditorModelFixture.withStickyLinesHiddenFor(language: Language, test: () -> Unit) {
+    val global = EditorSettingsExternalizable.getInstance()
+    global.setStickyLinesShownFor(language.id, false)
+    try {
+      assertTrue((editor.settings as SettingsImpl).getState().myStickyLinesShownForLanguage)
+      test()
+    } finally {
+      global.setStickyLinesShownFor(language.id, true)
     }
   }
 }

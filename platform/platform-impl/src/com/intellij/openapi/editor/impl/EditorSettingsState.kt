@@ -28,7 +28,6 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.psi.PsiDocumentListener
 import com.intellij.psi.codeStyle.CodeStyleConstraints
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener
@@ -167,7 +166,7 @@ class EditorSettingsState(
   var showingSpecialCharacters: Boolean by property { AdvancedSettings.getBoolean(EDITOR_SHOW_SPECIAL_CHARS) }
 
   /**
-   * Gives the language of the editor file. Each new supplier computes the language again.
+   * Gives the language of the editor file. A new supplier and [recalculateInputs] compute the language again.
    */
   internal var languageSupplier: (() -> Language?)? = null
     set(value) {
@@ -209,13 +208,16 @@ class EditorSettingsState(
   }
 
   /**
-   * Computes [fileIndent] again, and then refreshes [tabSize] and [myUseTabCharacter].
+   * Computes the language and [fileIndent] again, and then refreshes the properties that read them.
    *
    * [SettingsImpl] calls this when it is built, and [SettingsImpl.reinitSettings] calls this after each event that can
-   * change the value. These events are a code style change, a new file, and a new highlighter. `EditorHighlighterUpdater`
+   * change the inputs. These events are a code style change, a new file, and a new highlighter. `EditorHighlighterUpdater`
    * sets a new highlighter when the file type changes or the file gets a new name.
    */
-  internal fun recalculateFileIndent() {
+  internal fun recalculateInputs() {
+    if (languageSupplier != null) {
+      languageInput.recalculate()
+    }
     fileIndentInput.recalculate()
   }
 
@@ -282,7 +284,7 @@ class EditorSettingsState(
       },
       disposable,
     )
-    subscribeToMessageBus(editor, disposable)
+    subscribeToFileTypes(disposable)
     subscribeToEditorState(editor, disposable)
     addPropertyChangeListener(
       object : ObservableStateListener {
@@ -309,23 +311,16 @@ class EditorSettingsState(
     )
   }
 
-  private fun subscribeToMessageBus(editor: EditorImpl, disposable: Disposable) {
-    val connection = project?.messageBus?.connect(disposable)
-    connection?.subscribe(
-      PsiDocumentListener.TOPIC,
-      PsiDocumentListener { document, _, _ ->
-        if (document == editor.document) {
-          languageInput.recalculate()
-        }
-      },
-    )
-    // An editor in a text editor also gets this change through `EditorHighlighterUpdater` and a new highlighter.
-    // Other editors get it only here.
-    connection?.subscribe(
+  /**
+   * An editor in a text editor also gets a file type change through `EditorHighlighterUpdater` and a new highlighter.
+   * Other editors get it only here.
+   */
+  private fun subscribeToFileTypes(disposable: Disposable) {
+    project?.messageBus?.connect(disposable)?.subscribe(
       FileTypeManager.TOPIC,
       object : FileTypeListener {
         override fun fileTypesChanged(event: FileTypeEvent) {
-          fileIndentInput.recalculate()
+          recalculateInputs()
         }
       },
     )

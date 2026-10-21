@@ -55,7 +55,7 @@ class SettingsImpl internal constructor(
     // listener above, which refreshes the editor when the result changes the tab size. Settings without an editor have
     // no file, so their seed is the computed value already. In unit-test mode, a read computes the value itself.
     if (editor != null && BackgroundStateInput.computesInBackground()) {
-      state.recalculateFileIndent()
+      state.recalculateInputs()
     }
   }
 
@@ -67,16 +67,16 @@ class SettingsImpl internal constructor(
   }
 
   /**
-   * Recalculates the defaults of all state properties, and the indent values of the editor file.
+   * Recalculates the defaults of all state properties, and the inputs of the state: the language and the indent values.
    */
   fun reinitSettings() {
     state.refreshAll()
-    // Recompute the indent values at once, instead of waiting for the next reader.
+    // Recompute the inputs at once, instead of waiting for the next reader.
     //
     // Nothing reads the tab character until the user indents, and the Remote Development frontend never reads it at
     // all: it takes the value the backend pushed. A backend that waited for a local reader would leave that
     // frontend indenting with the previous code style. The same computation refreshes the indent options of the document.
-    state.recalculateFileIndent()
+    state.recalculateInputs()
   }
 
   /**
