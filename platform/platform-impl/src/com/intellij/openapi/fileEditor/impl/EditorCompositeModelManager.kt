@@ -4,8 +4,8 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.TrustedFiles
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -28,6 +28,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.ide.ideFingerprint
+import com.intellij.platform.util.progress.ProgressPipe
+import com.intellij.platform.util.progress.createProgressPipe
+import com.intellij.platform.util.progress.reportRawProgress
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -35,17 +40,104 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.beans.PropertyChangeListener
 import java.lang.ref.Reference
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
 
 private val LOG: Logger
   get() = logger<EditorCompositeModelManager>()
+
+/**
+ * Starts preparation before collection and delivers one model after [publicationReady] completes.
+ * The source must emit one model with a [CreatedFileEditorSink], without buffering.
+ * The single collector must claim the editors before it returns normally.
+ */
+internal fun prepareStartupEditorModel(
+  source: Flow<EditorCompositeModel>,
+  coroutineScope: CoroutineScope,
+  publicationReady: Deferred<Unit>,
+): Flow<EditorCompositeModel> {
+  val prepared = CompletableDeferred<EditorCompositeModel>()
+  val delivery = Mutex()
+  val collected = AtomicBoolean()
+  var deliveryClosed = false
+  val progress = coroutineScope.createProgressPipe()
+
+  suspend fun awaitModelClaimed(model: EditorCompositeModel) {
+    try {
+      val createdEditors = checkNotNull(model.createdEditors) { "Startup preparation requires a created editor sink" }
+      check(prepared.complete(model)) { "Startup preparation must produce one editor model" }
+      createdEditors.awaitClaimed()
+    }
+    finally {
+      withContext(NonCancellable) {
+        delivery.withLock {
+          deliveryClosed = true
+        }
+      }
+    }
+  }
+
+  val preparation = coroutineScope.async(CoroutineName("startup editor preparation")) {
+    progress.collectProgressUpdates {
+      source.collect { model -> awaitModelClaimed(model) }
+    }
+  }
+  preparation.invokeOnCompletion { cause ->
+    prepared.completeExceptionally(cause ?: IllegalStateException("Startup preparation produced no editor model"))
+  }
+
+  return flow {
+    check(collected.compareAndSet(false, true)) { "A startup editor model can only be collected once" }
+    try {
+      progress.doUnderPreparationProgress {
+        publicationReady.await()
+        val model = prepared.await()
+        delivery.withLock {
+          currentCoroutineContext().ensureActive()
+          preparation.ensureActive()
+          check(!deliveryClosed) { "Startup editor delivery is closed" }
+          emit(model)
+        }
+      }
+      preparation.await()
+    }
+    finally {
+      preparation.cancel()
+    }
+  }
+}
+
+private suspend inline fun ProgressPipe.doUnderPreparationProgress(crossinline action: suspend () -> Unit) {
+  coroutineScope {
+    reportRawProgress { reporter ->
+      val updates = launch {
+        progressUpdates().collect {
+          reporter.text(it.text)
+          reporter.details(it.details)
+          reporter.fraction(it.fraction)
+        }
+      }
+      try {
+        action()
+      }
+      finally {
+        updates.cancel()
+      }
+    }
+  }
+}
 
 @ApiStatus.Internal
 fun createEditorCompositeModel(

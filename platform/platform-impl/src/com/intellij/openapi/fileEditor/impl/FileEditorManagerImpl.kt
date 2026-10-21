@@ -1654,16 +1654,19 @@ open class FileEditorManagerImpl(
     compositeCoroutineScope: CoroutineScope,
     fileProvider: suspend () -> VirtualFile,
     fileEntry: FileEntry?,
+    startEagerly: Boolean,
+    publicationReady: Deferred<Unit>,
   ): Flow<EditorCompositeModel> {
     // we don't check canOpenFile (we don't have providers yet) -
     // empty windows will be removed later if needed, it should be quite a rare case
-    return createEditorCompositeModel(
+    val model = createEditorCompositeModel(
       coroutineScope = compositeCoroutineScope,
       editorPropertyChangeListener = editorPropertyChangeListener,
       fileProvider = fileProvider,
       project = project,
       fileEntry = fileEntry,
     )
+    return if (startEagerly) prepareStartupEditorModel(model, compositeCoroutineScope, publicationReady) else model
   }
 
   /**

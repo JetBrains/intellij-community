@@ -1707,7 +1707,6 @@ private fun computeFileEntry(
     }
     else -> {
       val prepareFile: suspend () -> VirtualFile = {
-        windowAdded.await()
         if (notFullyPreparedFile !is VirtualFileWithoutContent && !notFullyPreparedFile.isCharsetSet) {
           withContext(Dispatchers.IO) {
             withProgressReport {
@@ -1728,16 +1727,22 @@ private fun computeFileEntry(
         fileProviderDeferred.complete(notFullyPreparedFile)
         notFullyPreparedFile
       }
-      val doBackgroundPreload = if (fileEntry.currentInTab || !isLazyComposite) { // for eager init
+      val startEagerly = fileEntry.currentInTab || !isLazyComposite
+      val doBackgroundPreload = if (startEagerly) {
         null
       } else {
-        compositeCoroutineScope.async(CoroutineName("editor file content preload"), start = CoroutineStart.LAZY) { prepareFile() }
+        compositeCoroutineScope.async(CoroutineName("editor file content preload"), start = CoroutineStart.LAZY) {
+          windowAdded.await()
+          prepareFile()
+        }
       }
 
       val model = fileEditorManager.createEditorCompositeModelOnStartup(
         compositeCoroutineScope = compositeCoroutineScope,
         fileProvider = { doBackgroundPreload?.await() ?: prepareFile() },
         fileEntry = fileEntry,
+        startEagerly = startEagerly,
+        publicationReady = windowAdded,
       )
       (doBackgroundPreload ?: fileProviderDeferred) to StartupFileEditorOpenOptionsHint(compositeCoroutineScope, model)
     }
