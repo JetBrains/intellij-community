@@ -147,6 +147,7 @@ fn publish_with(fixture: &std::path::Path, variables: &[(&str, &str)]) -> (Optio
         "BUILD_WORKING_DIRECTORY",
         "AIR_TRACE_NODE",
         "AIR_TRACE_PNPM",
+        "AIR_TRACE_SINCE",
         "XML_OUTPUT_FILE",
     ] {
         command.env_remove(name);
@@ -225,6 +226,7 @@ fn teamcity_publish_removes_the_packed_bundles_on_team_city_or_when_asked() {
         .arg(asked.path().join("out"))
         .envs(none)
         .env_remove("TEAMCITY_VERSION")
+        .env_remove("AIR_TRACE_SINCE")
         .env_remove("BUILD_WORKSPACE_DIRECTORY")
         .stdin(Stdio::null())
         .output()
@@ -239,4 +241,41 @@ fn teamcity_publish_removes_the_packed_bundles_on_team_city_or_when_asked() {
     assert_eq!(exit, Some(0), "{stderr}");
     assert!(stderr.contains("removed 1 packed bundle(s) with "), "{stderr}");
     assert!(!bundle(&on_team_city).exists(), "{stderr}");
+}
+
+/// On TeamCity the start of the build comes from `AIR_TRACE_SINCE`, and the step asks no server for it. A test.xml
+/// before that start is skipped. Without the variable, one warning says so and the test publishes.
+#[cfg(unix)]
+#[test]
+fn teamcity_publish_takes_the_start_of_the_build_from_air_trace_since() {
+    let none = [("AIR_TRACE_NODE", "none"), ("AIR_TRACE_PNPM", "none")];
+    let on_team_city = ("TEAMCITY_VERSION", "2026.3");
+
+    let later = publish_fixture();
+    let (exit, stderr) = publish_with(
+        later.path(),
+        &[none[0], none[1], on_team_city, ("AIR_TRACE_SINCE", "2999-01-01T00:00:00Z")],
+    );
+    assert_eq!(exit, Some(0), "{stderr}");
+    assert!(
+        stderr.contains("a test.xml from 2999-01-01T00:00:00Z on counts, as AIR_TRACE_SINCE says"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("1 test(s) skipped, because their test.xml is older than "),
+        "{stderr}"
+    );
+    assert!(stderr.contains("0 bundle zip(s) from 1 test.xml file(s)"), "{stderr}");
+
+    let unset = publish_fixture();
+    let (exit, stderr) = publish_with(unset.path(), &[none[0], none[1], on_team_city]);
+    assert_eq!(exit, Some(0), "{stderr}");
+    assert_eq!(
+        stderr
+            .matches("neither --since nor AIR_TRACE_SINCE names the start of the build")
+            .count(),
+        1,
+        "{stderr}"
+    );
+    assert!(stderr.contains("1 bundle zip(s) from 1 test.xml file(s)"), "{stderr}");
 }

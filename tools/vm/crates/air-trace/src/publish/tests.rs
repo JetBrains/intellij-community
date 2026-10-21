@@ -484,7 +484,7 @@ fn the_tests_of_an_earlier_build_are_skipped() {
     });
     assert!(
         stdout.starts_with("##teamcity[message text='air-trace teamcity-publish: 3 test(s) skipped, because their test.xml")
-            && stdout.contains("and no other test has a trace, so nothing is published; check the clock of the agent"),
+            && stdout.contains("and no other test has a trace, so nothing is published; check AIR_TRACE_SINCE or --since"),
         "a warning says that nothing is left: {stdout}"
     );
     assert!(!stdout.contains("name='trace' type='artifact'"), "{stdout}");
@@ -569,6 +569,39 @@ fn a_relative_path_is_taken_from_the_directory_where_bazel_run_ran() {
 }
 
 /// The bytes of the files under a directory, links not followed.
+/// The start of the build is `--since`, else `AIR_TRACE_SINCE`, which the first step of the build sets with the clock
+/// of the agent. A value that does not read is a warning. On TeamCity without either, a warning says that every test
+/// publishes, and off TeamCity no start is no problem.
+#[test]
+fn the_start_of_the_build_is_the_flag_or_the_variable_of_the_first_step() {
+    let time = |text: &str| text.parse::<jiff::Timestamp>().unwrap();
+    let set = |value: &'static str| move |name: &str| (name == SINCE_VARIABLE).then(|| value.to_owned());
+    let unset = |_: &str| None;
+    assert_eq!(
+        since_of(Some(time("2026-10-21T08:00:00Z")), &set("2026-10-21T09:00:00Z"), true),
+        Ok(Some((SystemTime::from(time("2026-10-21T08:00:00Z")), "--since")))
+    );
+    assert_eq!(
+        since_of(None, &set(" 2026-10-21T09:00:00Z\n"), true),
+        Ok(Some((SystemTime::from(time("2026-10-21T09:00:00Z")), SINCE_VARIABLE)))
+    );
+    let refused = since_of(None, &set("yesterday"), true).unwrap_err();
+    assert!(
+        refused.starts_with("AIR_TRACE_SINCE: yesterday is not a time such as 2026-10-21T08:00:00Z: ")
+            && refused.ends_with("; so the tests of earlier builds publish too"),
+        "{refused}"
+    );
+    assert_eq!(
+        since_of(None, &set(" "), true),
+        Err(
+            "neither --since nor AIR_TRACE_SINCE names the start of the build, so the tests of earlier builds publish \
+             too"
+            .to_owned()
+        )
+    );
+    assert_eq!(since_of(None, &unset, false), Ok(None));
+}
+
 fn bytes_of(dir: &Path) -> u64 {
     walkdir::WalkDir::new(dir)
         .into_iter()

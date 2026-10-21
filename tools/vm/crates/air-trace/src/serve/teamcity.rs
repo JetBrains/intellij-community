@@ -147,8 +147,7 @@ pub(crate) fn client(server: &str, token_server: &str, variable: &dyn Fn(&str) -
         Some(token) => Box::new(Curl {
             program: PathBuf::from("curl"),
             server: server.to_owned(),
-            config: curl_config(&token),
-            max_time: None,
+            token,
         }),
         None => Box::new(TeamCityCli { server: server.to_owned() }),
     }
@@ -161,42 +160,18 @@ fn token(variable: &dyn Fn(&str) -> Option<String>) -> Option<String> {
         .filter(|token| !token.is_empty())
 }
 
-/// The client of a build step for the server that its agent talks to. It is `curl` with the build's own credentials,
-/// `teamcity.auth.userId` and `teamcity.auth.password`. TeamCity gives them to each build for its REST API. A request
-/// has 60 seconds.
-pub(crate) fn agent_client(server: &str, user: &str, password: &str) -> Box<dyn Rest> {
-    Box::new(agent_curl(PathBuf::from("curl"), server, user, password))
-}
-
-/// The `curl` of [agent_client], with the program to run.
-fn agent_curl(program: PathBuf, server: &str, user: &str, password: &str) -> Curl {
-    Curl {
-        program,
-        server: server.trim_end_matches('/').to_owned(),
-        config: format!("user = \"{}:{}\"\n", config_escape(user), config_escape(password)),
-        max_time: Some(60),
-    }
-}
-
 struct Curl {
     /// `curl`, or a fake of it in a test.
     program: PathBuf,
     server: String,
-    /// The configuration that carries the credentials, which `curl` reads on its standard input.
-    config: String,
-    /// The longest time of one request in seconds, or `None` for no limit.
-    max_time: Option<u32>,
+    token: String,
 }
 
 /// The `curl` configuration that carries the token: one header line, with the quote and the backslash escaped as a
 /// configuration file spells them, and no line break.
 fn curl_config(token: &str) -> String {
-    format!("header = \"Authorization: Bearer {}\"\n", config_escape(token))
-}
-
-/// A value of a `curl` configuration line: the quote and the backslash escaped, and no line break.
-fn config_escape(value: &str) -> String {
-    value.replace(['\r', '\n'], "").replace('\\', "\\\\").replace('"', "\\\"")
+    let escaped = token.replace(['\r', '\n'], "").replace('\\', "\\\\").replace('"', "\\\"");
+    format!("header = \"Authorization: Bearer {escaped}\"\n")
 }
 
 impl Curl {
@@ -218,12 +193,9 @@ impl Curl {
         if let Some(output) = output {
             command.arg("--output").arg(output);
         }
-        if let Some(seconds) = self.max_time {
-            command.args(["--max-time", &seconds.to_string()]);
-        }
         command.arg(&url);
-        // The credentials go through the standard input, so no process listing shows them.
-        run_program(command, Some(self.config.as_bytes()), true, &format!("curl {url}"))
+        // The token goes through the standard input, so no process listing shows it.
+        run_program(command, Some(curl_config(&self.token).as_bytes()), true, &format!("curl {url}"))
     }
 }
 

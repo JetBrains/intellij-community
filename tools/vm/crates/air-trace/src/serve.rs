@@ -73,7 +73,6 @@ use service::{PidFile, detach};
 pub(crate) use service::{SiteTools, build_site_with, newer_sources, site_source_dirs, site_tools, tools_text};
 pub(crate) use state::{BuildOutput, Runs, Scenario, group_runs, listed};
 use state::{Log, Server, Settings};
-pub(crate) use teamcity::{Rest, agent_client};
 
 pub(crate) const RUN_ROUTE: &str = "/__air/run/";
 pub(crate) const BUNDLE_ROUTE: &str = "/__air/bundle/";

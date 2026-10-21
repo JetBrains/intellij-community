@@ -68,8 +68,8 @@ pub(crate) struct PublishArgs {
     /// archive holds the bundles and runs.json alone, and the tests get no viewer link.
     #[arg(long, value_name = "DIR")]
     pub viewer: Option<PathBuf>,
-    /// Publish only the tests whose test.xml was written at this time or later, such as 2026-10-21T08:00:00Z. On
-    /// TeamCity the default is the start of the build.
+    /// Publish only the tests whose test.xml was written at this time or later, such as 2026-10-21T08:00:00Z. The
+    /// default is the variable AIR_TRACE_SINCE, which the first step of a TeamCity build sets.
     #[arg(long, value_name = "TIME", value_parser = parse_since)]
     pub since: Option<jiff::Timestamp>,
     /// The node that builds the viewer, with --pnpm; `none` builds no viewer. Without the two, the step asks Bazel for
@@ -90,6 +90,37 @@ fn parse_since(value: &str) -> Result<jiff::Timestamp, String> {
     value
         .parse()
         .map_err(|error| format!("{value} is not a time such as 2026-10-21T08:00:00Z: {error}"))
+}
+
+/// The variable that names the start of the build when `--since` does not. The first step of a TeamCity build sets it
+/// to the time of the agent, such as with `date -u +%Y-%m-%dT%H:%M:%SZ`. The test.xml files have the times of the
+/// same clock.
+const SINCE_VARIABLE: &str = "AIR_TRACE_SINCE";
+
+/// The time from which a `test.xml` counts, and what names it: `--since`, else [SINCE_VARIABLE]. A value of the
+/// variable that does not read is a warning, and so is a step on TeamCity with neither. Then every test publishes.
+fn since_of(
+    given: Option<jiff::Timestamp>,
+    variable: &dyn Fn(&str) -> Option<String>,
+    on_team_city: bool,
+) -> Result<Option<(SystemTime, &'static str)>, String> {
+    if let Some(since) = given {
+        return Ok(Some((SystemTime::from(since), "--since")));
+    }
+    let Some(value) = variable(SINCE_VARIABLE).filter(|value| !value.trim().is_empty()) else {
+        return if on_team_city {
+            Err(format!(
+                "neither --since nor {SINCE_VARIABLE} names the start of the build, so the tests of earlier builds \
+                 publish too"
+            ))
+        } else {
+            Ok(None)
+        };
+    };
+    match parse_since(value.trim()) {
+        Ok(since) => Ok(Some((SystemTime::from(since), SINCE_VARIABLE))),
+        Err(reason) => Err(format!("{SINCE_VARIABLE}: {reason}; so the tests of earlier builds publish too")),
+    }
 }
 
 /// The name of a test's JUnit XML in the testlogs.
@@ -175,25 +206,18 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
     if let Some(fallback) = build.as_ref().and_then(|build| build.server_fallback(&variable)) {
         let _ = warn(stdout, stderr, &fallback);
     }
-    let since = match (args.since, &build) {
-        (Some(since), _) => Some(SystemTime::from(since)),
-        (None, Some(build)) => match build.start(&variable) {
-            Ok(start) => {
-                let _ = say(stderr, &start.note);
-                Some(start.since)
-            }
-            Err(reason) => {
-                let _ = warn(
-                    stdout,
-                    stderr,
-                    &format!("the start of the build does not read: {reason}; so the tests of earlier builds publish too"),
-                );
-                None
-            }
-        },
-        (None, None) => None,
-    };
     let on_team_city = is_build_step(variable);
+    let since = match since_of(args.since, &variable, on_team_city) {
+        Ok(Some((since, source))) => {
+            let _ = say(stderr, &format!("a test.xml from {} on counts, as {source} says", instant(since)));
+            Some(since)
+        }
+        Ok(None) => None,
+        Err(warning) => {
+            let _ = warn(stdout, stderr, &warning);
+            None
+        }
+    };
     let tools = Tools {
         node: args.node.clone().filter(|node| !node.as_os_str().is_empty()),
         pnpm: args.pnpm.clone().filter(|pnpm| !pnpm.as_os_str().is_empty()),
@@ -332,7 +356,7 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
         let warning = if tests.is_empty() {
             format!(
                 "{skipped} test(s) skipped, because their test.xml is older than {}, and no other test has a trace, so \
-                 nothing is published; check the clock of the agent, or pass --since",
+                 nothing is published; check {SINCE_VARIABLE} or --since",
                 instant(since)
             )
         } else {
