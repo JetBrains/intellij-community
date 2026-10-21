@@ -13,9 +13,11 @@ use std::fs;
 use std::path::Path;
 use std::time::{Duration, SystemTime};
 
+use super::ARCHIVE;
+use super::viewer::VIEWER_PAGE;
 use crate::serve::{Rest, agent_client};
 
-use avl_report::teamcity::{TRACES_ARTIFACT_DIR, is_build_step};
+use avl_report::teamcity::is_build_step;
 use avl_trace_tools::discover::Origin;
 use avl_trace_tools::viewer::static_trace_hash;
 
@@ -96,7 +98,7 @@ impl Build {
     /// The zip is a path relative to the artifact directory of the traces.
     pub(crate) fn viewer_link(&self, zip: &str) -> String {
         format!(
-            "{}/repository/download/{}/{}:id/{TRACES_ARTIFACT_DIR}/index.html{}",
+            "{}/repository/download/{}/{}:id/{ARCHIVE}!/{VIEWER_PAGE}{}",
             self.server,
             self.build_type_id,
             self.id,

@@ -1,5 +1,5 @@
-//! The trace viewer that `teamcity-publish` puts beside the bundles: a built one, or one that the step builds in the
-//! checkout.
+//! The trace viewer that `teamcity-publish` puts into its archive: a built one, or one that the step builds in the
+//! checkout. The viewer is one file, `index.html`.
 //!
 //! The build is the docs project's `pnpm run build:viewer`, with the node and the pnpm of `air-trace serve`'s site build
 //! ([site_tools]). Before it, `pnpm install --frozen-lockfile` runs in the kernel and in the docs project. The build
@@ -162,67 +162,18 @@ fn run_build(
     })
 }
 
-/// Copies the built viewer into out. Each entry at the top of the viewer, a file or a directory, replaces the entry of
-/// that name in out. Answers the entries, each with whether it is a directory, or why the viewer is not published. A
-/// viewer inside out, or out inside the viewer, is refused, because the copy would remove or copy itself.
-pub(super) fn copy_viewer(viewer: &Path, out: &Path) -> Result<Vec<(String, bool)>, String> {
-    if !viewer.join(VIEWER_PAGE).is_file() {
+/// Copies the page of the built viewer into `staging` as its `index.html`. The viewer is one file, with its scripts,
+/// styles and fonts inside. Answers the copy, or why there is no page.
+pub(super) fn copy_page(viewer: &Path, staging: &Path) -> Result<PathBuf, String> {
+    let page = viewer.join(VIEWER_PAGE);
+    if !page.is_file() {
         return Err(format!("{} holds no {VIEWER_PAGE}", viewer.display()));
     }
-    let failed = |path: &Path, error: &dyn std::fmt::Display| format!("cannot copy {}: {error}", path.display());
-    if let (Some(real_viewer), Some(real_out)) = (real_path_of(viewer), real_path_of(out))
-        && (real_viewer.starts_with(&real_out) || real_out.starts_with(&real_viewer))
-    {
-        return Err(format!("{} and the output {} overlap", viewer.display(), out.display()));
-    }
-    fs::create_dir_all(out).map_err(|error| failed(out, &error))?;
-    let mut entries = Vec::new();
-    for entry in fs::read_dir(viewer).map_err(|error| failed(viewer, &error))? {
-        let entry = entry.map_err(|error| failed(viewer, &error))?;
-        let is_dir = fs::metadata(entry.path()).map_err(|error| failed(&entry.path(), &error))?.is_dir();
-        entries.push((entry.file_name().to_string_lossy().into_owned(), is_dir));
-    }
-    entries.sort();
-    for (name, is_dir) in &entries {
-        let source = viewer.join(name);
-        let target = out.join(name);
-        let removed = match fs::symlink_metadata(&target) {
-            Ok(existing) if existing.is_dir() => fs::remove_dir_all(&target),
-            Ok(_) => fs::remove_file(&target),
-            Err(_) => Ok(()),
-        };
-        removed.map_err(|error| failed(&target, &error))?;
-        if *is_dir {
-            copy_tree(&source, &target)?;
-        } else {
-            copy_file(&source, &target).map_err(|error| failed(&source, &error))?;
-        }
-    }
-    Ok(entries)
-}
-
-/// The real path of `path`, which may not exist yet. It is the real path of its nearest ancestor that exists, with the
-/// rest of `path` after it.
-fn real_path_of(path: &Path) -> Option<PathBuf> {
-    let path = std::path::absolute(path).ok()?;
-    let existing = path.ancestors().find(|ancestor| ancestor.exists())?;
-    let rest = path.strip_prefix(existing).ok()?;
-    Some(fscopy::real_path(existing).ok()?.join(rest))
-}
-
-/// Copies a directory tree, following symbolic links, as a Bazel output tree has them.
-fn copy_tree(source: &Path, destination: &Path) -> Result<(), String> {
-    for entry in walkdir::WalkDir::new(source).follow_links(true).sort_by_file_name() {
-        let entry = entry.map_err(|error| format!("cannot copy {}: {error}", source.display()))?;
-        let target = destination.join(entry.path().strip_prefix(source).unwrap_or(entry.path()));
-        let copied = if entry.file_type().is_dir() {
-            fs::create_dir_all(&target)
-        } else {
-            copy_file(entry.path(), &target)
-        };
-        copied.map_err(|error| format!("cannot copy {}: {error}", entry.path().display()))?;
-    }
-    Ok(())
+    let copy = staging.join(VIEWER_PAGE);
+    fs::create_dir_all(staging)
+        .and_then(|()| copy_file(&page, &copy))
+        .map_err(|error| format!("cannot copy {}: {error}", page.display()))?;
+    Ok(copy)
 }
 
 /// Copies the content of a file into a new file. The copy is writable, though a Bazel output is not, so the next run

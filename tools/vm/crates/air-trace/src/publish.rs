@@ -1,23 +1,27 @@
-//! `air-trace teamcity-publish`: the trace bundles of a Bazel test run as TeamCity artifacts. Each bundle is one zip.
-//! A listing and the trace viewer go beside the zips, and each test links to its trace.
+//! `air-trace teamcity-publish`: the trace bundles of a Bazel test run as one TeamCity archive artifact,
+//! `air-traces.zip`. It holds the trace viewer, a listing and one zip for each bundle, and each test links to its
+//! trace.
 //!
 //! It runs as a build step after `bazel test`. A Bazel test reports through its JUnit XML, and a service message of a
 //! test does not reach TeamCity. The step reads every `test.xml` under the testlogs, and the bundles of the
 //! `test.outputs` beside it. These are the directory `air-traces/` and the zip `outputs.zip`, an inner zip included.
-//! Each bundle becomes `<out>/<lane>/<runId>/<TestClass>/<scenario>.zip`, with the media stored. The step prints
-//! `publishArtifacts` for it into `air-traces/<lane>/<runId>/<TestClass>`, and the `testMetadata` of its test. The
-//! metadata are the trace, the viewer page of the trace, the video, and the failure picture of a failed scenario. The
-//! test name is the one TeamCity took from the XML, `<classname>.<name>`.
+//! Each bundle becomes the zip `<lane>/<runId>/<TestClass>/<scenario>.zip` of the archive, with the media stored. The
+//! step prints the `testMetadata` of its test: the trace and the viewer page of the trace. For a failed scenario they
+//! also name the video and the failure picture. The test name is the one TeamCity took from the XML, `<classname>.<name>`.
+//!
+//! TeamCity redirects a loose artifact to a signed address where a sibling file is refused. An entry of an archive
+//! artifact is served by TeamCity itself, with byte ranges and beside its siblings. So the archive holds the viewer
+//! page `index.html`, the listing `runs.json` and the zips, and the step publishes it as one file. Only the video and
+//! the failure picture of a failed scenario are loose files in `air-traces-failed/`, so the Tests tab shows them.
 //!
 //! The lane is the directory of the `test.xml`: the Bazel target's name, such as `ui_lane_test`. A shard or run
 //! directory below it keeps its target's name in front, such as `ui_lane_test/shard_1_of_2`.
 //!
-//! Beside the zips, `<out>/runs.json` lists the published bundles as `GET /__air/runs` of `air-trace serve` lists
-//! bundles, with the server's own types. Each scenario carries its `zip`, relative to the listing, and is a zip at that
-//! path in its `source` and its id. On TeamCity, each run names the build as its `origin`, from the agent's property
-//! files ([teamcity]). The viewer goes into `<out>` too: the one of `--viewer`, or one that the step builds in the
-//! checkout ([viewer]). So `air-traces/index.html` opens the listing, and each test links to
-//! `index.html#/trace?zip=<zip>`. The link needs both the viewer and the build.
+//! The listing `runs.json` lists the published bundles as `GET /__air/runs` of `air-trace serve` lists bundles, with
+//! the server's own types. Each scenario carries its `zip`, relative to the listing, and is a zip at that path in its
+//! `source` and its id. On TeamCity, each run names the build as its `origin`, from the agent's property files
+//! ([teamcity]). The viewer page is the one of `--viewer`, or one that the step builds in the checkout ([viewer]).
+//! Each test links to `air-traces.zip!/index.html#/trace?zip=<zip>`. The link needs both the viewer and the build.
 //!
 //! A testlogs tree without bundles prints nothing and writes nothing. Each problem is a line on the standard error and
 //! a warning `message` on the standard output. A problem is no testlogs, a missing testlogs directory, or an output
@@ -39,12 +43,12 @@ use avl_trace::bundle::{ROOT_DIR_NAME, VIDEO_FILE, bundle_path};
 use avl_trace_tools::discover::{
     Bundle, Location, Options, Origin, Root, RootKind, RootState, Scanner, Source, SourceKind, Status, Summary, bundle_id,
 };
-use avl_trace_tools::pack::{PackOptions, pack, pack_zip_bundle};
+use avl_trace_tools::pack::{PackOptions, archive, pack, pack_zip_bundle};
 
 use crate::serve::{Runs, Scenario, group_runs, listed};
 use crate::{Exit, Refusal, report, usage};
 use teamcity::Build;
-use viewer::{VIEWER_BUILD_TIMEOUT, ViewerSource, copy_viewer, viewer_dir};
+use viewer::{VIEWER_BUILD_TIMEOUT, VIEWER_PAGE, ViewerSource, copy_page, viewer_dir};
 
 mod teamcity;
 mod viewer;
@@ -56,12 +60,12 @@ pub(crate) struct PublishArgs {
     /// own output, which is where `bazel run` finds it.
     #[arg(long = "testlogs", value_name = "DIR")]
     pub testlogs: Vec<PathBuf>,
-    /// Where the bundle zips, runs.json and the viewer are written (default <workspace>/out/air-traces-publish).
+    /// Where air-traces.zip, its parts and the loose files are written (default <workspace>/out/air-traces-publish).
     #[arg(long, value_name = "DIR")]
     pub out: Option<PathBuf>,
-    /// The built trace viewer, a directory with index.html, which is published beside the bundles. Without it, the step
-    /// builds the viewer in the checkout with `pnpm run build:viewer`, within 10 minutes. Without a viewer, the bundles
-    /// and runs.json publish alone and the tests get no viewer link.
+    /// The built trace viewer, a directory with the one file index.html, which goes into air-traces.zip. Without it, the
+    /// step builds the viewer in the checkout with `pnpm run build:viewer`, within 10 minutes. Without a viewer, the
+    /// archive holds the bundles and runs.json alone, and the tests get no viewer link.
     #[arg(long, value_name = "DIR")]
     pub viewer: Option<PathBuf>,
     /// Publish only the tests whose test.xml was written at this time or later, such as 2026-10-21T08:00:00Z. On
@@ -89,6 +93,12 @@ const RUNS_FILE: &str = "runs.json";
 const LISTING_GENERATION: u64 = 1;
 /// The file in the output that says that this step wrote it, so a later run may empty it.
 const OUT_MARKER: &str = ".air-traces-publish";
+/// The one archive artifact of the traces, at the top of the artifacts and of the output.
+pub(crate) const ARCHIVE: &str = "air-traces.zip";
+/// The artifact directory of the loose files of the failed scenarios, which the Tests tab of TeamCity shows inline.
+const FAILED_DIR: &str = "air-traces-failed";
+/// The name of the failure picture of a failed scenario in [FAILED_DIR], before its extension.
+const FAILURE_STEM: &str = "failure";
 
 /// What one publish reads and where it writes.
 pub(crate) struct Publish<'a> {
@@ -330,16 +340,18 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
         return summarize(stderr, 0, xmls, out, 1).map_err(write_failed);
     }
 
-    let copied = viewer_dir(job.viewer, stderr)
+    // The archive is assembled in `<out>/air-traces/`, which holds its entries as they lie in it.
+    let staging = out.join(TRACES_ARTIFACT_DIR);
+    let page = match viewer_dir(job.viewer, stderr)
         .map_err(write_failed)?
-        .and_then(|dir| copy_viewer(&dir, out));
-    let page = match copied {
-        Ok(entries) => Some(entries),
+        .and_then(|dir| copy_page(&dir, &staging))
+    {
+        Ok(page) => Some(page),
         Err(reason) => {
             warn(
                 stdout,
                 stderr,
-                &format!("no viewer: {reason}; so air-traces/ holds the bundles and {RUNS_FILE} only"),
+                &format!("no viewer: {reason}; so {ARCHIVE} holds the bundles and {RUNS_FILE} only"),
             )
             .map_err(write_failed)?;
             None
@@ -349,6 +361,8 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
     let mut messages = Messages::default();
     let mut written = BTreeSet::new();
     let mut scenarios = Vec::new();
+    let mut zips = Vec::new();
+    let mut problems = 0;
     for test in tests {
         let state = &mut roots[test.root];
         // The cases of this XML only: a bundle beside it never names the test of another target.
@@ -377,26 +391,24 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
             }
             let placed = bundle_path(&bundle.run_id, &bundle.test_class, &bundle.scenario);
             let (class_dir, scenario) = placed.rsplit_once('/').unwrap_or(("", &placed));
-            let target = format!("{TRACES_ARTIFACT_DIR}/{lane}/{class_dir}");
             let dir = lane
                 .split('/')
                 .chain(class_dir.split('/'))
-                .fold(out.to_path_buf(), |path, segment| path.join(segment));
+                .fold(staging.clone(), |path, segment| path.join(segment));
             // Two names can sanitize to one file name; the later bundle takes the next free `<scenario>.<n>.zip`.
-            let mut file_name = format!("{scenario}.zip");
+            let mut stem = scenario.to_owned();
             let mut attempt = 1;
-            while written.contains(&dir.join(&file_name)) {
+            while written.contains(&dir.join(format!("{stem}.zip"))) {
                 attempt += 1;
-                file_name = format!("{scenario}.{attempt}.zip");
+                stem = format!("{scenario}.{attempt}");
             }
-            let zip = dir.join(&file_name);
+            let zip = dir.join(format!("{stem}.zip"));
             if attempt > 1 {
                 say(
                     stderr,
                     &format!(
-                        "{}: another bundle has the name {scenario}.zip, so this one is {}",
-                        bundle.source.path,
-                        zip.display()
+                        "{}: another bundle has the name {scenario}.zip, so this one is {stem}.zip",
+                        bundle.source.path
                     ),
                 )
                 .map_err(write_failed)?;
@@ -413,23 +425,54 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
                 state.problems.push(problem);
                 continue;
             }
-            let relative = format!("{lane}/{class_dir}/{file_name}");
+            let relative = format!("{lane}/{class_dir}/{stem}.zip");
+            let mut lines = Vec::new();
+            let failure = if matches!(bundle.status, Status::Failed | Status::Aborted) {
+                let loose = Loose {
+                    dir: out.join(FAILED_DIR).join(format!("{lane}/{class_dir}/{stem}")),
+                    target: format!("{FAILED_DIR}/{lane}/{class_dir}/{stem}"),
+                };
+                let video = bundle.has_video.then_some((VIDEO_FILE, VIDEO_FILE.to_owned()));
+                let still = bundle.thumbnail.as_deref().map(|still| {
+                    let extension = still.rsplit_once('.').map_or("webp", |(_, extension)| extension);
+                    (still, format!("{FAILURE_STEM}.{extension}"))
+                });
+                let mut published = |entry: Option<(&str, String)>| -> io::Result<Option<String>> {
+                    let Some((entry, name)) = entry else {
+                        return Ok(None);
+                    };
+                    match loose.extract(&zip, entry, &name) {
+                        Ok(file) => {
+                            lines.extend(messages.artifact(&file.to_string_lossy(), &loose.target));
+                            Ok(Some(format!("{}/{name}", loose.target)))
+                        }
+                        Err(reason) => {
+                            problems += 1;
+                            warn(stdout, stderr, &reason).map(|()| None)
+                        }
+                    }
+                };
+                let video = published(video).map_err(write_failed)?;
+                let still = published(still).map_err(write_failed)?;
+                (video, still)
+            } else {
+                (None, None)
+            };
+            let trace = format!("{ARCHIVE}!/{relative}");
             let link = job.build.filter(|_| page.is_some()).map(|build| build.viewer_link(&relative));
-            let failed = matches!(bundle.status, Status::Failed | Status::Aborted);
-            let zip_text = zip.to_string_lossy();
-            let lines = messages.published(&PublishedTrace {
-                zip: &zip_text,
-                target: &target,
+            lines.extend(messages.published(&PublishedTrace {
+                trace: &trace,
                 test_class: &bundle.test_class,
                 scenario: &bundle.scenario,
-                video: bundle.has_video.then_some(VIDEO_FILE),
-                still: bundle.thumbnail.as_deref().filter(|_| failed),
+                video: failure.0.as_deref(),
+                still: failure.1.as_deref(),
                 link: link.as_deref(),
                 cases: &cases,
-            });
+            }));
             for line in lines {
                 writeln!(stdout, "{line}").map_err(write_failed)?;
             }
+            zips.push((relative.clone(), zip));
             scenarios.push(published_scenario(bundle, relative, origin.as_ref()));
             state.bundles += 1;
         }
@@ -442,30 +485,57 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
         runs: group_runs(scenarios),
         roots: &roots,
     };
-    let mut lines = Vec::new();
-    let mut problems: usize = roots
+    problems += roots
         .iter()
         .map(|root| root.problems.len() + usize::from(root.error.is_some()))
-        .sum();
-    match write_listing(&listing, out) {
-        Ok(file) => lines.extend(messages.artifact(&file.to_string_lossy(), TRACES_ARTIFACT_DIR)),
+        .sum::<usize>();
+    // The page first, then the listing, then each bundle zip in the order it was published.
+    let mut entries: Vec<(String, PathBuf)> = page.into_iter().map(|page| (VIEWER_PAGE.to_owned(), page)).collect();
+    match write_listing(&listing, &staging) {
+        Ok(file) => entries.push((RUNS_FILE.to_owned(), file)),
         Err(reason) => {
             problems += 1;
             warn(stdout, stderr, &reason).map_err(write_failed)?;
         }
     }
-    for (name, is_dir) in page.iter().flatten() {
-        let target = if *is_dir {
-            format!("{TRACES_ARTIFACT_DIR}/{name}")
-        } else {
-            TRACES_ARTIFACT_DIR.to_owned()
-        };
-        lines.extend(messages.artifact(&out.join(name).to_string_lossy(), &target));
-    }
-    for line in lines {
-        writeln!(stdout, "{line}").map_err(write_failed)?;
+    entries.extend(zips);
+    let archived = out.join(ARCHIVE);
+    match archive(&archived, &entries) {
+        Ok(bytes) => {
+            for line in messages.artifact_file(&archived.to_string_lossy()) {
+                writeln!(stdout, "{line}").map_err(write_failed)?;
+            }
+            say(stderr, &format!("{ARCHIVE} holds {} entries in {bytes} bytes", entries.len())).map_err(write_failed)?;
+        }
+        Err(error) => {
+            problems += 1;
+            warn(stdout, stderr, &format!("cannot write {}: {error}", archived.display())).map_err(write_failed)?;
+        }
     }
     summarize(stderr, published, xmls, out, problems).map_err(write_failed)
+}
+
+/// Where the loose files of one failed scenario go: a directory of the output, and its artifact directory.
+struct Loose {
+    dir: PathBuf,
+    target: String,
+}
+
+impl Loose {
+    /// Copies the entry `entry` of the bundle zip `zip` into the directory as `name`. Answers the file, or why it
+    /// could not be copied.
+    fn extract(&self, zip: &Path, entry: &str, name: &str) -> Result<PathBuf, String> {
+        let file = self.dir.join(name);
+        let failed = |error: &dyn std::fmt::Display| format!("{}!/{entry}: {error}", zip.display());
+        let mut archive = fs::File::open(zip)
+            .map_err(|error| failed(&error))
+            .and_then(|opened| zip::ZipArchive::new(opened).map_err(|error| failed(&error)))?;
+        let mut source = archive.by_name(entry).map_err(|error| failed(&error))?;
+        fs::create_dir_all(&self.dir).map_err(|error| failed(&error))?;
+        let mut target = fs::File::create(&file).map_err(|error| failed(&error))?;
+        io::copy(&mut source, &mut target).map_err(|error| failed(&error))?;
+        Ok(file)
+    }
 }
 
 /// Empties the output and marks it as this step's, so it holds the files of this run only. The step empties a directory

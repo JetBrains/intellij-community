@@ -100,7 +100,7 @@ fn the_build_of_a_step_comes_from_the_agent_files() {
         }
     );
     let page = "https://buildserver.labs.intellij.net/repository/download/ijplatform_master_AirPluginUiTests_1/1100310296:id/\
-                air-traces/index.html";
+                air-traces.zip!/index.html";
     assert_eq!(
         build.viewer_link("ui_lane_test/iter-1/T/s.zip"),
         format!("{page}#/trace?zip=ui_lane_test/iter-1/T/s.zip")

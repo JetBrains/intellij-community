@@ -547,11 +547,10 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   its bundle at its top.
   [@test] ../crates/air-trace/src/publish/tests.rs (`on_team_city_the_listing_names_the_build_and_each_test_links_its_trace`)
 
-- The step copies the viewer into `air-traces/`, and each entry at its top replaces the entry of that name. A
-  viewer that is missing, that holds no `index.html`, or that holds the output or lies inside it, is a line on
-  stderr. The zips and `runs.json` still publish.
+- The viewer is one file, `index.html`, with its scripts, styles and fonts inside. The step puts only that file into
+  the archive. A viewer that is missing, or that holds no `index.html`, is a warning. The archive then holds
+  `runs.json` and the zips.
   [@test] ../crates/air-trace/src/publish/tests.rs (`without_a_viewer_the_bundles_and_the_listing_publish_alone`)
-  [@test] ../crates/air-trace/src/publish/tests.rs (`a_viewer_that_overlaps_the_output_is_refused`)
 
 - The viewer is the directory of `--viewer`. Without it, the step builds the viewer in the checkout that
   `BUILD_WORKSPACE_DIRECTORY` names, with the node and the pnpm of the site build. It runs `pnpm install

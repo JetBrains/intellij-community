@@ -48,18 +48,16 @@ pub fn warning(text: &str) -> String {
 /// The flow of the messages of [`Messages::published`]: none, so a message names no `flowId`.
 const NO_FLOW: &str = "";
 
-/// One trace that a step after the tests publishes.
+/// One trace that a step after the tests publishes, by the artifact paths of its files.
 #[derive(Clone, Copy, Debug)]
 pub struct PublishedTrace<'a> {
-    /// The zip on this machine, which holds the bundle at its top.
-    pub zip: &'a str,
-    /// The artifact directory that the zip goes into.
-    pub target: &'a str,
+    /// The zip of the bundle as an artifact path, such as `air-traces.zip!/<lane>/<runId>/<TestClass>/<scenario>.zip`.
+    pub trace: &'a str,
     pub test_class: &'a str,
     pub scenario: &'a str,
-    /// The video inside the bundle, when it has one.
+    /// The artifact path of the video, when the step publishes one.
     pub video: Option<&'a str>,
-    /// The picture of the failure inside the bundle, when the scenario failed.
+    /// The artifact path of the picture of the failure, when the step publishes one.
     pub still: Option<&'a str>,
     /// The page of the published viewer that opens the trace, when the step publishes the viewer.
     pub link: Option<&'a str>,
@@ -171,26 +169,33 @@ impl Messages {
         out
     }
 
-    /// The messages of a trace that a step after the tests publishes. The zip is published once. The bundle, the viewer
-    /// page of the trace, its video and its failure picture are the metadata of its test. The zip holds the bundle at
-    /// its top.
+    /// The metadata of the test of a trace that a step after the tests publishes. They are the zip of the bundle, the
+    /// viewer page of the trace, its video and its failure picture. The step publishes the files itself.
     pub fn published(&mut self, trace: &PublishedTrace<'_>) -> Vec<String> {
-        let mut out = self.artifact(trace.zip, trace.target);
-        let zip_name = trace.zip.rsplit(['/', '\\']).next().unwrap_or(trace.zip);
-        let bundle = format!("{}/{zip_name}", trace.target);
+        let mut out = Vec::new();
         let flow = self.flow(NO_FLOW);
         let name = test_name(trace.cases, trace.test_class, trace.scenario);
-        flow.trace_metadata(&mut out, &name, "trace", "artifact", &bundle);
+        flow.trace_metadata(&mut out, &name, "trace", "artifact", trace.trace);
         if let Some(link) = trace.link {
             flow.trace_metadata(&mut out, &name, "trace viewer", "link", link);
         }
         if let Some(video) = trace.video {
-            flow.trace_metadata(&mut out, &name, "video", "video", &format!("{bundle}!/{video}"));
+            flow.trace_metadata(&mut out, &name, "video", "video", video);
         }
         if let Some(still) = trace.still {
-            flow.trace_metadata(&mut out, &name, "failure", "image", &format!("{bundle}!/{still}"));
+            flow.trace_metadata(&mut out, &name, "failure", "image", still);
         }
         out
+    }
+
+    /// Publishes the host file `file` at the top of the artifacts under its own name, once for each file. An archive
+    /// stays as it is, because no target asks TeamCity to pack it.
+    pub fn artifact_file(&mut self, file: &str) -> Vec<String> {
+        if self.published.insert(file.to_owned()) {
+            vec![message("publishArtifacts", &[], Some(file))]
+        } else {
+            Vec::new()
+        }
     }
 
     /// Publishes the host file `file` into the artifact directory `target`, once for each file.
