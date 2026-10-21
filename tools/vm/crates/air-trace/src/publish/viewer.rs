@@ -36,8 +36,53 @@ pub(crate) enum ViewerSource {
         tools: Option<SiteTools>,
         timeout: Duration,
     },
-    /// No `--viewer` and no checkout.
-    Missing,
+    /// No viewer, and why.
+    Missing(String),
+}
+
+/// Why there is no viewer when there is neither `--viewer` nor a checkout.
+pub(super) const NO_CHECKOUT: &str = "no --viewer DIR, and no checkout to build one in";
+/// The value of `--node` or `--pnpm` that names no tool, as the step before the publish sets it when it finds none.
+const NO_TOOL: &str = "none";
+
+/// The node and the pnpm of the viewer build, from `--node` and `--pnpm` or from `AIR_TRACE_NODE` and
+/// `AIR_TRACE_PNPM`, and whether the step runs on TeamCity.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub(crate) struct Tools {
+    pub node: Option<PathBuf>,
+    pub pnpm: Option<PathBuf>,
+    pub on_team_city: bool,
+}
+
+/// Where the viewer of a publish comes from. The directory of `--viewer` is a built viewer. Else the step builds the
+/// viewer in the checkout, with the node and the pnpm of `tools`. A tool `none` builds no viewer. Without the two
+/// tools, the step asks Bazel for them as `serve` does, except on TeamCity. There the step starts no Bazel, so it
+/// builds no viewer.
+pub(crate) fn viewer_source(viewer: Option<PathBuf>, checkout: Option<PathBuf>, tools: Tools) -> ViewerSource {
+    if let Some(viewer) = viewer {
+        return ViewerSource::Built(viewer);
+    }
+    let Some(checkout) = checkout else {
+        return ViewerSource::Missing(NO_CHECKOUT.to_owned());
+    };
+    let build = |tools| ViewerSource::Build {
+        checkout,
+        tools,
+        timeout: VIEWER_BUILD_TIMEOUT,
+    };
+    match (tools.node, tools.pnpm) {
+        (Some(node), Some(pnpm)) if node.as_os_str() == NO_TOOL || pnpm.as_os_str() == NO_TOOL => {
+            ViewerSource::Missing("AIR_TRACE_NODE or AIR_TRACE_PNPM is none, so no node and no pnpm build the viewer".to_owned())
+        }
+        (Some(node), Some(pnpm)) => build(Some(SiteTools::Pinned { node, pnpm })),
+        (None, None) if tools.on_team_city => ViewerSource::Missing(
+            "on TeamCity the step starts no Bazel to find node and pnpm; set AIR_TRACE_NODE and AIR_TRACE_PNPM, or pass \
+             --viewer DIR"
+                .to_owned(),
+        ),
+        (None, None) => build(None),
+        _ => ViewerSource::Missing("only one of AIR_TRACE_NODE and AIR_TRACE_PNPM is set; the two name the tools together".to_owned()),
+    }
 }
 
 /// The directory of the built viewer, or why there is none. A build says on stderr what it runs, its output, and the
@@ -45,7 +90,7 @@ pub(crate) enum ViewerSource {
 pub(super) fn viewer_dir(source: &ViewerSource, stderr: &mut dyn Write) -> io::Result<Result<PathBuf, String>> {
     let (checkout, tools, timeout) = match source {
         ViewerSource::Built(dir) => return Ok(Ok(dir.clone())),
-        ViewerSource::Missing => return Ok(Err("no --viewer DIR, and no checkout to build one in".to_owned())),
+        ViewerSource::Missing(reason) => return Ok(Err(reason.clone())),
         ViewerSource::Build { checkout, tools, timeout } => (checkout, tools, *timeout),
     };
     let project = checkout.join("plugins").join("air").join("docs");

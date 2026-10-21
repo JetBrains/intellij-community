@@ -38,7 +38,7 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use avl_report::teamcity::{Messages, PublishedTrace, TRACES_ARTIFACT_DIR, warning};
+use avl_report::teamcity::{Messages, PublishedTrace, TRACES_ARTIFACT_DIR, is_build_step, warning};
 use avl_trace::bundle::{ROOT_DIR_NAME, VIDEO_FILE, bundle_path};
 use avl_trace_tools::discover::{
     Bundle, Location, Options, Origin, Root, RootKind, RootState, Scanner, Source, SourceKind, Status, Summary, bundle_id,
@@ -48,7 +48,7 @@ use avl_trace_tools::pack::{PackOptions, archive, pack, pack_zip_bundle};
 use crate::serve::{Runs, Scenario, group_runs, listed};
 use crate::{Exit, Refusal, report, usage};
 use teamcity::Build;
-use viewer::{VIEWER_BUILD_TIMEOUT, VIEWER_PAGE, ViewerSource, copy_page, viewer_dir};
+use viewer::{Tools, VIEWER_PAGE, ViewerSource, copy_page, viewer_dir, viewer_source};
 
 mod teamcity;
 mod viewer;
@@ -72,6 +72,13 @@ pub(crate) struct PublishArgs {
     /// TeamCity the default is the start of the build.
     #[arg(long, value_name = "TIME", value_parser = parse_since)]
     pub since: Option<jiff::Timestamp>,
+    /// The node that builds the viewer, with --pnpm; `none` builds no viewer. Without the two, the step asks Bazel for
+    /// them, except on TeamCity, where it starts no Bazel and builds no viewer.
+    #[arg(long, value_name = "FILE", env = "AIR_TRACE_NODE")]
+    pub node: Option<PathBuf>,
+    /// The pnpm that builds the viewer, with --node; `none` builds no viewer.
+    #[arg(long, value_name = "FILE", env = "AIR_TRACE_PNPM")]
+    pub pnpm: Option<PathBuf>,
 }
 
 /// Reads `--since`: a time of RFC 3339, such as `2026-10-21T08:00:00Z`.
@@ -180,15 +187,12 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
         },
         (None, None) => None,
     };
-    let viewer = match (viewer_dir, workspace) {
-        (Some(dir), _) => ViewerSource::Built(dir),
-        (None, Some(checkout)) => ViewerSource::Build {
-            checkout,
-            tools: None,
-            timeout: VIEWER_BUILD_TIMEOUT,
-        },
-        (None, None) => ViewerSource::Missing,
+    let tools = Tools {
+        node: args.node.clone().filter(|node| !node.as_os_str().is_empty()),
+        pnpm: args.pnpm.clone().filter(|pnpm| !pnpm.as_os_str().is_empty()),
+        on_team_city: is_build_step(variable),
     };
+    let viewer = viewer_source(viewer_dir, workspace, tools);
     let job = Publish {
         testlogs: &testlogs,
         out: &out,

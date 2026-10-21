@@ -193,7 +193,7 @@ fn a_viewer_build_that_fails_or_does_not_end_is_the_reason_for_no_viewer() {
 fn without_a_checkout_or_its_docs_project_there_is_no_viewer() {
     let mut stderr = Vec::new();
     assert_eq!(
-        viewer_dir(&ViewerSource::Missing, &mut stderr).unwrap(),
+        viewer_dir(&ViewerSource::Missing(NO_CHECKOUT.to_owned()), &mut stderr).unwrap(),
         Err("no --viewer DIR, and no checkout to build one in".to_owned())
     );
     let empty = tempfile::tempdir().unwrap();
@@ -210,4 +210,59 @@ fn without_a_checkout_or_its_docs_project_there_is_no_viewer() {
         ))
     );
     assert_eq!(stderr, b"");
+}
+
+/// `--viewer` wins. Else the tools that the flags or the variables name build the viewer in the checkout, and `none`
+/// builds none. Without them, a local step asks Bazel, as `serve` does, and a step on TeamCity builds no viewer,
+/// because there it starts no Bazel. One tool alone, or no checkout, builds no viewer either.
+#[test]
+fn the_viewer_comes_from_the_flag_the_named_tools_or_bazel_but_never_bazel_on_team_city() {
+    let checkout = || Some(PathBuf::from("/checkout"));
+    let tools = |node: Option<&str>, pnpm: Option<&str>, on_team_city| Tools {
+        node: node.map(PathBuf::from),
+        pnpm: pnpm.map(PathBuf::from),
+        on_team_city,
+    };
+    let build = |tools| ViewerSource::Build {
+        checkout: PathBuf::from("/checkout"),
+        tools,
+        timeout: VIEWER_BUILD_TIMEOUT,
+    };
+    let named = SiteTools::Pinned {
+        node: PathBuf::from("/tools/node"),
+        pnpm: PathBuf::from("/tools/pnpm"),
+    };
+    let missing = |source: ViewerSource| match source {
+        ViewerSource::Missing(reason) => reason,
+        other => panic!("a viewer: {other:?}"),
+    };
+
+    assert_eq!(
+        viewer_source(Some(PathBuf::from("/viewer")), checkout(), tools(Some("none"), Some("none"), true)),
+        ViewerSource::Built(PathBuf::from("/viewer"))
+    );
+    for on_team_city in [false, true] {
+        assert_eq!(
+            viewer_source(None, checkout(), tools(Some("/tools/node"), Some("/tools/pnpm"), on_team_city)),
+            build(Some(named.clone()))
+        );
+        let none = missing(viewer_source(None, checkout(), tools(Some("none"), Some("none"), on_team_city)));
+        assert_eq!(
+            none,
+            "AIR_TRACE_NODE or AIR_TRACE_PNPM is none, so no node and no pnpm build the viewer"
+        );
+        let half = missing(viewer_source(None, checkout(), tools(Some("/tools/node"), None, on_team_city)));
+        assert!(half.starts_with("only one of AIR_TRACE_NODE and AIR_TRACE_PNPM is set"), "{half}");
+    }
+    assert_eq!(
+        viewer_source(None, checkout(), tools(None, None, false)),
+        build(None),
+        "a local step asks Bazel"
+    );
+    let on_team_city = missing(viewer_source(None, checkout(), tools(None, None, true)));
+    assert!(
+        on_team_city.starts_with("on TeamCity the step starts no Bazel to find node and pnpm"),
+        "{on_team_city}"
+    );
+    assert_eq!(missing(viewer_source(None, None, tools(None, None, false))), NO_CHECKOUT);
 }

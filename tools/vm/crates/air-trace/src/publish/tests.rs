@@ -8,7 +8,7 @@ use avl_trace_tools::pack::{PackOptions, pack};
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 
-use super::viewer::VIEWER_PAGE;
+use super::viewer::{NO_CHECKOUT, VIEWER_PAGE};
 use super::*;
 
 fn real(path: &Path) -> PathBuf {
@@ -22,7 +22,9 @@ fn testdata(name: &str) -> PathBuf {
 
 /// Publishes the testlogs `root` into `out`, with the stdout and the stderr of the step.
 fn run(root: &Path, out: &Path, viewer: Option<&Path>, build: Option<&Build>) -> (String, String) {
-    let viewer = viewer.map_or(ViewerSource::Missing, |dir| ViewerSource::Built(dir.to_path_buf()));
+    let viewer = viewer.map_or(ViewerSource::Missing(NO_CHECKOUT.to_owned()), |dir| {
+        ViewerSource::Built(dir.to_path_buf())
+    });
     run_job(&Publish {
         testlogs: &[root.to_path_buf()],
         out,
@@ -303,7 +305,7 @@ fn testlogs_without_bundles_print_nothing() {
     let (stdout, stderr) = run_job(&Publish {
         testlogs: &testlogs,
         out: out.path(),
-        viewer: &ViewerSource::Missing,
+        viewer: &ViewerSource::Missing(NO_CHECKOUT.to_owned()),
         build: None,
         since: None,
         out_owned: true,
@@ -447,7 +449,7 @@ fn the_tests_of_an_earlier_build_are_skipped() {
     let (stdout, stderr) = run_job(&Publish {
         testlogs: &[root.path().to_path_buf()],
         out: out.path(),
-        viewer: &ViewerSource::Missing,
+        viewer: &ViewerSource::Missing(NO_CHECKOUT.to_owned()),
         build: None,
         since: Some(SystemTime::now() - Duration::from_hours(1)),
         out_owned: true,
@@ -471,7 +473,7 @@ fn the_tests_of_an_earlier_build_are_skipped() {
     let (stdout, _) = run_job(&Publish {
         testlogs: &[root.path().to_path_buf()],
         out: out.path(),
-        viewer: &ViewerSource::Missing,
+        viewer: &ViewerSource::Missing(NO_CHECKOUT.to_owned()),
         build: None,
         since: Some(SystemTime::now() + Duration::from_hours(1)),
         out_owned: true,
@@ -494,10 +496,11 @@ fn the_output_holds_the_files_of_this_run_only() {
     fs::create_dir_all(old.parent().unwrap()).unwrap();
     fs::write(&old, "").unwrap();
     let testlogs = [root.path().to_path_buf()];
+    let no_viewer = ViewerSource::Missing(NO_CHECKOUT.to_owned());
     let job = |out_owned| Publish {
         testlogs: &testlogs,
         out: out.path(),
-        viewer: &ViewerSource::Missing,
+        viewer: &no_viewer,
         build: None,
         since: None,
         out_owned,

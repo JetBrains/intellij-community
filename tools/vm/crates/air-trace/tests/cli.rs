@@ -99,3 +99,97 @@ fn teamcity_publish_answers_0_without_testlogs_and_2_for_a_usage_error() {
         assert_eq!(exit, Some(2), "{usage:?}: {stderr}");
     }
 }
+
+/// A testlogs tree with one bundle, a checkout whose `bazel.cmd` writes its arguments into `bazel-calls`, and an
+/// output directory, under one temporary directory.
+#[cfg(unix)]
+fn publish_fixture() -> tempfile::TempDir {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let lane = dir.path().join("testlogs/ui/ui_lane_test");
+    // A bundle of its manifest and an empty span file: the test has no test data of the trace crate under Bazel.
+    let placed = avl_trace::bundle::bundle_path("iter-1", "AirComposerUiTest", "sends a prompt");
+    let bundle = avl_trace::bundle::bundle_file(&lane.join("test.outputs/air-traces"), &placed);
+    std::fs::create_dir_all(&bundle).unwrap();
+    let manifest = r#"{"schema": "air-trace/1", "runId": "iter-1", "testClass": "AirComposerUiTest",
+        "scenario": "sends a prompt", "lane": "UI", "launcher": "daemon", "status": "passed",
+        "startedAt": "2026-10-21T10:00:00.000Z", "durationMs": 1000, "capture": {"source": "x11"},
+        "video": {"codec": "none", "reason": "fixture"}}"#;
+    std::fs::write(bundle.join(avl_trace::bundle::MANIFEST_FILE), manifest).unwrap();
+    std::fs::write(bundle.join(avl_trace::bundle::SPANS_FILE), "").unwrap();
+    std::fs::write(lane.join("test.xml"), "<testsuites/>").unwrap();
+    let docs = dir.path().join("checkout/plugins/air/docs");
+    std::fs::create_dir_all(&docs).unwrap();
+    std::fs::write(docs.join("package.json"), "{}").unwrap();
+    let bazel = dir.path().join("checkout/bazel.cmd");
+    let calls = dir.path().join("bazel-calls");
+    std::fs::write(&bazel, format!("#!/bin/sh\necho \"$*\" >> '{}'\n", calls.display())).unwrap();
+    std::fs::set_permissions(&bazel, std::fs::Permissions::from_mode(0o755)).unwrap();
+    dir
+}
+
+/// Runs `teamcity-publish` over the fixture with the variables given, and no other variable of TeamCity, Bazel or the
+/// viewer tools. Answers the exit and the standard error.
+#[cfg(unix)]
+fn publish_with(fixture: &std::path::Path, variables: &[(&str, &str)]) -> (Option<i32>, String) {
+    let mut command = Command::new(air_trace());
+    command
+        .args(["teamcity-publish", "--testlogs"])
+        .arg(fixture.join("testlogs"))
+        .arg("--out")
+        .arg(fixture.join("out"))
+        .env("BUILD_WORKSPACE_DIRECTORY", fixture.join("checkout"))
+        .stdin(Stdio::null());
+    for name in [
+        "TEAMCITY_VERSION",
+        "TEAMCITY_BUILD_PROPERTIES_FILE",
+        "BUILD_URL",
+        "BUILD_WORKING_DIRECTORY",
+        "AIR_TRACE_NODE",
+        "AIR_TRACE_PNPM",
+        "XML_OUTPUT_FILE",
+    ] {
+        command.env_remove(name);
+    }
+    command.envs(variables.iter().copied());
+    let output = command.output().unwrap();
+    (output.status.code(), String::from_utf8(output.stderr).unwrap())
+}
+
+/// The variables of the step before the publish name the tools of the viewer build, and `none` builds no viewer with
+/// one warning. On TeamCity without them, the step starts no Bazel and builds no viewer. A local step without them
+/// asks the Bazel of the checkout, as `serve` does.
+#[cfg(unix)]
+#[test]
+fn teamcity_publish_takes_its_tools_from_the_variables_and_starts_no_bazel_on_team_city() {
+    let fixture = publish_fixture();
+    let calls = fixture.path().join("bazel-calls");
+
+    let (exit, stderr) = publish_with(fixture.path(), &[("AIR_TRACE_NODE", "none"), ("AIR_TRACE_PNPM", "none")]);
+    assert_eq!(exit, Some(0), "{stderr}");
+    assert!(
+        stderr.contains("no viewer: AIR_TRACE_NODE or AIR_TRACE_PNPM is none, so no node and no pnpm build the viewer"),
+        "{stderr}"
+    );
+    assert!(!calls.exists(), "no Bazel runs: {stderr}");
+
+    let (exit, stderr) = publish_with(fixture.path(), &[("TEAMCITY_VERSION", "2026.3 EAP (build 265562)")]);
+    assert_eq!(exit, Some(0), "{stderr}");
+    assert!(
+        stderr.contains("no viewer: on TeamCity the step starts no Bazel to find node and pnpm"),
+        "{stderr}"
+    );
+    assert!(!calls.exists(), "no Bazel runs on TeamCity: {stderr}");
+
+    let (exit, stderr) = publish_with(fixture.path(), &[]);
+    assert_eq!(exit, Some(0), "{stderr}");
+    assert!(
+        stderr.contains("1 bundle zip(s) from 1 test.xml"),
+        "the fixture has a bundle: {stderr}"
+    );
+    let asked = std::fs::read_to_string(&calls).unwrap_or_default();
+    assert!(
+        asked.starts_with("cquery "),
+        "a local step asks the Bazel of the checkout: {asked:?} {stderr}"
+    );
+}
