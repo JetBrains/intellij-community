@@ -1,10 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.stickyLines.ui
 
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.editor.ScrollType
@@ -14,9 +16,10 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUIUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 import com.intellij.ui.paint.use
 import com.intellij.ui.paint.useCopy
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.MouseEventAdapter
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -31,7 +34,6 @@ import java.awt.image.BufferedImage
 import javax.swing.JComponent
 import javax.swing.JPopupMenu
 import javax.swing.SwingUtilities
-
 
 /**
  * Represents one editor's line (gutter + line text)
@@ -359,9 +361,11 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
               "",
               DocCommandGroupId.noneGroupId(editor.document),
               UndoConfirmationPolicy.DEFAULT,
-              editor.document
+              editor.document,
             )
-            UIEventLogger.StickyLineNavigate.log(editor.project, editor.getUserData(EDITOR_LANGUAGE))
+            UIEventLogger.StickyLineNavigate.log(editor.project) {
+              add(EventFields.Language.with(editorLanguage()))
+            }
           }
         }
         else -> throwUnhandledEvent(event)
@@ -383,12 +387,19 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
       return MyMouseEvent(event, editor.gutterComponentEx, y)
     }
 
+    @RequiresBackgroundThread
+    private fun editorLanguage(): Language? {
+      return runReadActionBlocking {
+        if (editor.isDisposed) {
+          null
+        } else {
+          TextEditorImpl.getDocumentLanguage(editor)
+        }
+      }
+    }
+
     private fun throwUnhandledEvent(event: MouseEvent) {
       throw IllegalArgumentException("unhandled event $event")
     }
-  }
-
-  internal companion object {
-    val EDITOR_LANGUAGE: Key<Language> = Key("editor.settings.language")
   }
 }

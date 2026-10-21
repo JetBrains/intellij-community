@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file: JvmName("UIEventLogger")
 
 package com.intellij.internal.statistic.service.fus.collectors
@@ -176,7 +176,7 @@ object UIEventLogger : CounterUsagesCollector() {
                                                                               IdeZoomEventFields.presentationMode)
 
   @JvmField
-  val StickyLineNavigate: EventId1<Language?> = uiEventGroup.registerEvent(
+  val StickyLineNavigate: VarargEventId = uiEventGroup.registerVarargEvent(
     "StickyLineNavigate",
     EventFields.Language,
   )

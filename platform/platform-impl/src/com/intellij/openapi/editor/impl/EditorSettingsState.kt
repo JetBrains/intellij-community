@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl.CODE_STYLE_SETTINGS
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesLanguageSupport
-import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineComponent.Companion.EDITOR_LANGUAGE
 import com.intellij.openapi.editor.state.CustomOutValueModifier
 import com.intellij.openapi.editor.state.ObservableState
 import com.intellij.openapi.editor.state.ObservableStateListener
@@ -391,7 +390,6 @@ class EditorSettingsState(
     refresh(::rightMargin)
     refresh(::myStickyLinesShownForLanguage)
     refresh(::myWrapWhenTypingReachesRightMargin)
-    editor?.putUserData(EDITOR_LANGUAGE, language)
   }
 
   private fun fileNameMatches(fileName: String, globPatterns: String): Boolean {
