@@ -1,24 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.state
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Ref
 import com.intellij.util.EventDispatcher
 import kotlinx.serialization.serializer
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.reflect.Modifier
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
-
-/**
- * `kotlin.collections.List` has no runtime class of its own: it is a mapped type erased to [java.util.List],
- * so the raw Java interface is referenced here explicitly.
- */
-@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
-private val JAVA_LIST_CLASS: Class<*> = java.util.List::class.java
 
 fun <T : ObservableState> T.init(): T {
   refreshAll()
@@ -31,8 +23,6 @@ fun <T : ObservableState> T.init(): T {
  * You can use [init] extension method for convenience.
  */
 // inspired by com.intellij.openapi.components.BaseState
-@Experimental
-@Internal
 abstract class ObservableState {
 
   // do not use SmartList because most objects have more than 1 property
@@ -96,7 +86,7 @@ abstract class ObservableState {
     else try {
       serializer(clazz)
     }
-    catch (e: Exception) {
+    catch (_: Exception) {
       null
     }
 
@@ -160,3 +150,10 @@ abstract class ObservableState {
   @Internal
   fun __getProperties(): MutableList<StateProperty<Any>> = properties
 }
+
+/**
+ * `kotlin.collections.List` has no runtime class of its own: it is a mapped type erased to [java.util.List],
+ * so the raw Java interface is referenced here explicitly.
+ */
+@Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN")
+private val JAVA_LIST_CLASS: Class<*> = java.util.List::class.java

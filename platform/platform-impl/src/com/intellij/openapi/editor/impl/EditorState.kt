@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.actionSystem.IdeActions
@@ -21,14 +21,11 @@ class EditorState internal constructor() : ObservableState() {
     const val isEmbeddedIntoDialogWrapperPropertyName: String = "isEmbeddedIntoDialogWrapper"
     const val verticalScrollBarOrientationPropertyName: String = "verticalScrollBarOrientation"
     const val isStickySelectionPropertyName: String = "isStickySelection"
-    const val myForcedBackgroundPropertyName: String = "myForcedBackground"
     const val myBorderPropertyName: String = "myBorder"
     const val myPlaceholderTextPropertyName: String = "myPlaceholderText"
     const val myPlaceholderAttributesPropertyName: String = "myPlaceholderAttributes"
     const val myShowPlaceholderWhenFocusedPropertyName: String = "myShowPlaceholderWhenFocused"
-    const val disableDefaultSoftWrapsCalculationPropertyName: String = "disableDefaultSoftWrapsCalculation"
   }
-
 
   // modes
   var isViewer: Boolean by property(false)
