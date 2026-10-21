@@ -12,6 +12,10 @@
 //! - `performance`: each IJ Perf file and part file of the run, as `file` and `artifactPath`.
 //!
 //! A text holds at most [`TEXT_CAP`] bytes, cut at a character boundary.
+//!
+//! [`RunEnd`] writes the IJ Perf files of the run and then its result. The end of the run calls it, and so does the hard
+//! stop of the monitor, which ends a run whose thread did not return. So a run that its budget or a hang ended still
+//! names its failed and unfinished tests, and it keeps the metrics measured before the end.
 
 use std::collections::BTreeMap;
 use std::fs;
@@ -19,11 +23,14 @@ use std::io;
 use std::path::{Path, PathBuf};
 
 use avl_junit::failed_cases;
-use avl_wire::daemon::RunEvent;
+use avl_junit::performance::Plan;
+use avl_wire::daemon::{RunEvent, RunEventKind};
+use avl_wire::program::SuiteProgram;
 use serde::Serialize;
 
 use super::evidence;
-use super::performance::{Published, SUMMARY_FILE, write_replacing};
+use super::performance::{self, Published, SUMMARY_FILE, write_replacing};
+use super::program::ITERATION_ARTIFACTS_DIR;
 
 #[cfg(test)]
 mod tests;
@@ -82,6 +89,79 @@ pub(crate) fn write(path: &Path, result: &RunResult) -> io::Result<()> {
     let mut text = serde_json::to_string_pretty(result)?;
     text.push('\n');
     write_replacing(path, text.as_bytes())
+}
+
+/// What the end of a run writes beside its JUnit XML: the IJ Perf files of its plan and the result of the run.
+#[derive(Clone, Debug)]
+pub(crate) struct RunEnd {
+    pub lane: String,
+    /// The plan of the IJ Perf files, or `None` for a run that writes none.
+    pub plan: Option<Plan>,
+    /// The suite documents of the selection, which map a case to the artifact directories of its parts.
+    pub suites: Vec<SuiteProgram>,
+    /// The directory of the IJ Perf files, [`performance::directory`].
+    pub performance_dir: PathBuf,
+    /// The file of the run result, [`path`].
+    pub result_file: PathBuf,
+    /// Whether the run is a TeamCity build, so the IJ Perf files get a `publishArtifacts` line each.
+    pub team_city: bool,
+}
+
+/// What [`RunEnd::write`] did: the result, the lines for standard output, and the lines for the log.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct Ended {
+    pub result: RunResult,
+    /// The `publishArtifacts` line of each written file, on a TeamCity build.
+    pub messages: Vec<String>,
+    /// What was written where, and each problem.
+    pub lines: Vec<String>,
+}
+
+impl RunEnd {
+    /// Writes the IJ Perf files and the result of the run that streamed `events`, at `generated`, an RFC 1123 time.
+    /// `iteration_dir` names the directory of an iteration by its id. It writes nothing on standard output or the log,
+    /// so the hard stop decides how long it waits for them.
+    pub(crate) fn write(&self, events: &[RunEvent], green: bool, iteration_dir: &dyn Fn(&str) -> PathBuf, generated: &str) -> Ended {
+        let artifacts = iteration_id(events).map(|id| iteration_dir(&id).join(ITERATION_ARTIFACTS_DIR));
+        let mut lines = Vec::new();
+        let mut messages = Vec::new();
+        let published = if let Some(plan) = &self.plan {
+            let scenarios = artifacts
+                .as_deref()
+                .map(|artifacts| performance::scenario_parts(&self.suites, artifacts))
+                .unwrap_or_default();
+            let (written, problems) = performance::write(plan, events, &scenarios, &self.performance_dir, generated);
+            lines.extend(problems);
+            if !written.is_empty() {
+                if self.team_city {
+                    messages = performance::publish_lines(&written);
+                } else {
+                    lines.push(format!(
+                        "{} IJ Perf file(s) and part file(s) in {}",
+                        written.len(),
+                        self.performance_dir.display()
+                    ));
+                }
+            }
+            written
+        } else {
+            Vec::new()
+        };
+        let result = run_result(&self.lane, green, events, artifacts.as_deref(), published);
+        lines.push(match write(&self.result_file, &result) {
+            Ok(()) => format!("the result of the run: {}", self.result_file.display()),
+            Err(error) => format!("cannot write the result of the run {}: {error}", self.result_file.display()),
+        });
+        Ended { result, messages, lines }
+    }
+}
+
+/// The id of the iteration of `events`, from its `runStarted`.
+pub(crate) fn iteration_id(events: &[RunEvent]) -> Option<String> {
+    events.iter().find_map(|event| match &event.kind {
+        RunEventKind::RunStarted(started) => Some(started.iteration_id.clone()),
+        _ => None,
+    })
 }
 
 /// The text of each `<suite>/<scenario>/<part>/summary.txt` below `artifacts`, by `<scenario>/<part>`, capped.

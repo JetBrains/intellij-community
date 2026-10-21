@@ -5,7 +5,9 @@ use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use avl_wire::daemon::{ExecutionIdentity, IdeExited, IdeLaunched, PlanStarted, TestFinished, TestStarted, TypedFailure};
+use avl_junit::performance::Plan;
+use avl_wire::daemon::{ExecutionIdentity, IdeExited, IdeLaunched, PlanStarted, RunStarted, TestFinished, TestStarted, TypedFailure};
+use avl_wire::program::lane::PerformanceSeries;
 use avl_wire::report::ScenarioReport;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
@@ -282,6 +284,7 @@ fn the_hard_stop_writes_the_partial_xml_cancels_the_live_ide_run_and_kills_the_r
         Some(Duration::from_secs(2520)),
         None,
         true,
+        None,
     );
     let effects = Recorded::default();
     let stop = watch.step("relaunch for ide", || monitor.hard_stop(&effects));
@@ -327,6 +330,90 @@ fn the_hard_stop_writes_the_partial_xml_cancels_the_live_ide_run_and_kills_the_r
     assert!(stop.line.contains("the run thread writes the JUnit XML"), "{}", stop.line);
 }
 
+// The hard stop writes the IJ Perf files and the result of the run from the records so far, as the end of the run does.
+// The run is not green, the open scenario is a failed test, and the metrics of the scenario that passed keep their file.
+#[test]
+fn the_hard_stop_writes_the_ij_perf_files_and_the_result_of_the_run() {
+    let root = TempDir::new().unwrap();
+    let daemon = daemon(root.path());
+    let class = "com.intellij.air.AcpDynamicFakeAgentRestoreUiTest";
+    let mut records = vec![RunEventKind::RunStarted(RunStarted {
+        iteration_id: "it-1".to_owned(),
+        daemon_boot_stamp: "boot".to_owned(),
+        started_at: "t0".to_owned(),
+    })];
+    records.extend(cut_off_run().into_iter().map(|record| match record {
+        RunEventKind::TestFinished(finished) => RunEventKind::TestFinished(TestFinished {
+            report: ScenarioReport {
+                metrics: [("loadMs".to_owned(), serde_json::Number::from(420))].into(),
+                ..ScenarioReport::default()
+            },
+            ..finished
+        }),
+        other => other,
+    }));
+    let summary = daemon
+        .iteration_dir("it-1")
+        .join("authored-artifacts/restore/restore-loaded/measure/summary.txt");
+    fs::create_dir_all(summary.parent().unwrap()).unwrap();
+    fs::write(&summary, "load 420 ms\n").unwrap();
+    let outputs = root.path().join("outputs");
+    let end = RunEnd {
+        lane: "ui-perf".to_owned(),
+        plan: Some(Plan {
+            ide_build: "271.SNAPSHOT".to_owned(),
+            series: vec![PerformanceSeries {
+                test_class_name: "AcpDynamicFakeAgentRestoreUiTest".to_owned(),
+                scenario: "restore-loaded".to_owned(),
+                project: "air/restore".to_owned(),
+                method: format!("{class}#restore"),
+                artifact_path: "air-restore".to_owned(),
+            }],
+        }),
+        suites: Vec::new(),
+        performance_dir: outputs.join("performance"),
+        result_file: outputs.join("lane/run-result.json"),
+        team_city: true,
+    };
+    let monitor = Monitor::new(
+        &daemon,
+        MonitorPaths {
+            stream: stream_file(root.path(), &records),
+            xml: vec![root.path().join("test.xml")],
+            ide_root: root.path().join("ide"),
+            report: None,
+            evidence: None,
+        },
+        Some(Duration::from_secs(2520)),
+        None,
+        true,
+        Some(&end),
+    );
+    let ended = monitor
+        .hard_stop(&Recorded::default())
+        .ended
+        .expect("the hard stop writes the end of the run");
+    let file = outputs.join("performance/air-restore/metrics.performance.json");
+    let document: serde_json::Value = serde_json::from_str(&fs::read_to_string(&file).unwrap()).unwrap();
+    assert_eq!(document["metrics"], serde_json::json!([{"n": "loadMs", "d": 420, "v": 420}]));
+    assert_eq!(
+        ended.messages,
+        [format!("##teamcity[publishArtifacts '{} => air-restore']", file.display())]
+    );
+    let result: serde_json::Value = serde_json::from_str(&fs::read_to_string(&end.result_file).unwrap()).unwrap();
+    assert_eq!(result["green"], false);
+    assert_eq!(
+        result["failedTests"],
+        serde_json::json!([{"test": format!("{class} restore-fresh-session"), "failure": avl_junit::cases::UNFINISHED_MESSAGE}])
+    );
+    assert_eq!(result["summaries"], serde_json::json!({"restore-loaded/measure": "load 420 ms\n"}));
+    assert_eq!(result["performance"][0]["artifactPath"], "air-restore");
+    assert_eq!(
+        ended.lines.last().map(String::as_str),
+        Some(format!("the result of the run: {}", end.result_file.display()).as_str())
+    );
+}
+
 // Under a Bazel test the hard stop keeps the evidence of the run after its cancels, so the thread dump that the cancel
 // of the hung IDE run wrote is among the files. Its line says what it kept.
 #[test]
@@ -366,6 +453,7 @@ fn the_hard_stop_keeps_the_evidence_of_the_ide_run_that_it_canceled() {
         Some(Duration::from_secs(2520)),
         None,
         false,
+        None,
     );
 
     let stop = monitor.hard_stop(&Recorded::default());
@@ -403,6 +491,7 @@ fn the_hang_report_starts_with_the_run_as_the_watch_knows_it() {
         None,
         None,
         false,
+        None,
     );
     assert!(
         monitor.hard_stop(&Recorded::default()).build_problem.is_none(),

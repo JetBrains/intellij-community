@@ -36,9 +36,8 @@ use super::inputs::{self, LaunchInputs, guest_platform};
 use super::iteration::{self, RunnerSplit};
 use super::monitor::{self, BUDGET_PROBLEM, LiveStop, MONITOR_THREAD, Monitor, MonitorPaths};
 use super::package::sha256_hex;
-use super::performance::{self, Published};
-use super::program::ITERATION_ARTIFACTS_DIR;
-use super::run_result;
+use super::performance;
+use super::run_result::{self, RunEnd};
 use super::watchdog::{ExpiryReason, KILL_GRACE};
 use crate::cli::{LaneDaemonArgs, LaneRunArgs, ValidateGuestArgs};
 use crate::ide::launch::CODE_DISPLAY_MISSING;
@@ -294,6 +293,7 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
         &args.lane,
         &mut notes,
     );
+    let end = run_end(&daemon, &request, flags.split, performance_plan, &root, variable);
     let evidence = bazel_outputs(variable).map(|outputs| Evidence::new(&daemon_args.state_dir, &daemon_args.ide_root, &outputs));
     let stream_path = root.join(STREAM_FILE);
     let stream = File::create(&stream_path)
@@ -310,6 +310,7 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
         budget,
         budget.map(|budget| started + budget + KILL_GRACE),
         teamcity::is_team_city(variable),
+        Some(&end),
     );
     let (written, finished) = std::thread::scope(|scope| {
         // Named, so a hang report tells the monitor from the run thread.
@@ -343,15 +344,15 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
         println!("{problem}");
     }
     let green = is_green(&stream) && finished.is_ok();
-    let artifacts = iteration_id(&events).map(|id| daemon.iteration_dir(&id).join(ITERATION_ARTIFACTS_DIR));
-    let published = performance_plan.as_ref().map_or_else(Vec::new, |plan| {
-        write_performance(&daemon, &request, flags.split, plan, &events, artifacts.as_deref(), &root, variable)
-    });
-    let result = run_result::run_result(&args.lane, green, &events, artifacts.as_deref(), published);
-    let result_path = run_result::path(bazel_outputs(variable).as_deref(), &root);
-    match run_result::write(&result_path, &result) {
-        Ok(()) => log(&format!("the result of the run: {}", result_path.display())),
-        Err(error) => log(&format!("cannot write the result of the run {}: {error}", result_path.display())),
+    let ended = end.write(&events, green, &|id| daemon.iteration_dir(id), &rfc_1123(&jiff::Zoned::now()));
+    if !ended.messages.is_empty() {
+        let mut out = io::stdout().lock();
+        if let Err(error) = writeln!(out, "{}", ended.messages.join("\n")).and_then(|()| out.flush()) {
+            log(&format!("cannot write the publishArtifacts lines of the IJ Perf files: {error}"));
+        }
+    }
+    for line in &ended.lines {
+        log(line);
     }
     if !green && let Some(evidence) = &evidence {
         let kept = evidence::keep(evidence, &events, Moment::RunEnd, Limits::LANE);
@@ -361,23 +362,20 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
     Ok(u8::from(!green))
 }
 
-/// Writes the IJ Perf files of `plan` for the run that streamed `events`, with the part files of each case, and
-/// announces them. `artifacts` is the directory of the authored artifacts of the iteration. Answers the written files.
-/// A problem is a log line, because a metric never decides a verdict.
-#[expect(clippy::too_many_arguments, reason = "the parts of one finished run, which the caller holds")]
-fn write_performance(
+/// What the end of the run of `request` writes: the IJ Perf files of `plan` and the result of the run. A plan gets the
+/// suite documents of the selection, which map a case to its parts. A selection that cannot be made is a log line, and
+/// the IJ Perf files then get no part files.
+pub(crate) fn run_end(
     daemon: &channel::Daemon,
     request: &RunRequest,
     split: RunnerSplit,
-    plan: &Plan,
-    events: &[RunEvent],
-    artifacts: Option<&Path>,
+    plan: Option<Plan>,
     root: &Path,
     variable: &dyn Fn(&str) -> Option<String>,
-) -> Vec<Published> {
-    let scenarios = match (&request.lane, &request.lane_inputs, artifacts) {
-        (Some(lane), Some(lane_inputs), Some(artifacts)) => match iteration::selection_of(daemon, lane, lane_inputs, request, split) {
-            Ok(selection) => performance::scenario_parts(selection.suites.iter().map(|suite| &suite.program), artifacts),
+) -> RunEnd {
+    let suites = match (&plan, &request.lane, &request.lane_inputs) {
+        (Some(_), Some(lane), Some(lane_inputs)) => match iteration::selection_of(daemon, lane, lane_inputs, request, split) {
+            Ok(selection) => selection.suites.into_iter().map(|suite| suite.program).collect(),
             Err(reason) => {
                 log(&format!(
                     "the IJ Perf files get no part files, because the suites cannot be read: {reason}"
@@ -387,22 +385,15 @@ fn write_performance(
         },
         _ => Vec::new(),
     };
-    let directory = performance::directory(bazel_outputs(variable).as_deref(), root);
-    let generated = rfc_1123(&jiff::Zoned::now());
-    let (published, problems) = performance::write(plan, events, &scenarios, &directory, &generated);
-    for problem in &problems {
-        log(problem);
+    let outputs = bazel_outputs(variable);
+    RunEnd {
+        lane: request.lane.clone().unwrap_or_default(),
+        plan,
+        suites,
+        performance_dir: performance::directory(outputs.as_deref(), root),
+        result_file: run_result::path(outputs.as_deref(), root),
+        team_city: teamcity::is_team_city(variable),
     }
-    performance::announce(&published, &directory, teamcity::is_team_city(variable), &mut io::stdout().lock());
-    published
-}
-
-/// The id of the iteration of `events`, from its `runStarted`.
-pub(crate) fn iteration_id(events: &[RunEvent]) -> Option<String> {
-    events.iter().find_map(|event| match &event.kind {
-        RunEventKind::RunStarted(started) => Some(started.iteration_id.clone()),
-        _ => None,
-    })
 }
 
 /// The TeamCity build problem of a run that its budget ended, on a TeamCity agent: the case that ran and the budget. A

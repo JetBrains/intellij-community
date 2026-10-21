@@ -1725,6 +1725,11 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   [@test] ../crates/avl-guest/src/lane/run_result/tests.rs (`the_run_result_goes_to_the_lane_outputs_or_to_the_run_directory`)
   [@test] ../crates/avl-junit/src/tests.rs (`the_failed_cases_are_those_that_fail_the_xml_with_its_failure`)
 
+- The hard stop of the monitor writes the IJ Perf files and the result of the run too, from the records so far. Then
+  `green` is false, and the open scenario is a failed test. A metric of a scenario that ended before the hard stop
+  keeps its IJ Perf file.
+  [@test] ../crates/avl-guest/src/lane/monitor/tests.rs (`the_hard_stop_writes_the_ij_perf_files_and_the_result_of_the_run`)
+
 - A launch is affected when it ran during a scenario that did not pass. A launch that runs at a watchdog expiry, a
   failed class, a failed run or the hard stop is affected too. A failure when no launch runs affects the newest
   launch. A run that is not green and has no affected launch keeps every launch.

@@ -15,10 +15,10 @@
 //!
 //! On TeamCity, `lane-run` writes one `publishArtifacts` line on standard output for each written file, into the
 //! artifact path of its series. Off TeamCity, it writes one log line with the directory. A write that fails is a log
-//! line, never a verdict.
+//! line, never a verdict. [`super::run_result::RunEnd`] does all of this at the end of a run and at the hard stop.
 
 use std::fs;
-use std::io::{self, Write};
+use std::io;
 use std::path::{Path, PathBuf};
 
 use avl_junit::cases::{cases, simple_class_name};
@@ -28,8 +28,6 @@ use avl_wire::daemon::RunEvent;
 use avl_wire::program::{SuiteProgram, read_lane_documents};
 use serde::Serialize;
 use serde_json::Value;
-
-use super::channel::log;
 
 #[cfg(test)]
 mod tests;
@@ -192,28 +190,12 @@ pub(crate) fn write(
     (published, problems)
 }
 
-/// Announces the written files of `directory`. On TeamCity, it writes one `publishArtifacts` line for each file on
-/// `out`. Off TeamCity, it writes one log line.
-pub(crate) fn announce(published: &[Published], directory: &Path, team_city: bool, out: &mut dyn Write) {
-    if published.is_empty() {
-        return;
-    }
-    if !team_city {
-        log(&format!(
-            "{} IJ Perf file(s) and part file(s) in {}",
-            published.len(),
-            directory.display()
-        ));
-        return;
-    }
-    let mut lines = String::new();
-    for file in published {
-        lines.push_str(&teamcity::publish_artifacts(&file.file, &file.artifact_path));
-        lines.push('\n');
-    }
-    if let Err(error) = out.write_all(lines.as_bytes()).and_then(|()| out.flush()) {
-        log(&format!("cannot write the publishArtifacts lines of the IJ Perf files: {error}"));
-    }
+/// The `publishArtifacts` line of each written file, which publishes it into the artifact path of its series.
+pub(crate) fn publish_lines(published: &[Published]) -> Vec<String> {
+    published
+        .iter()
+        .map(|file| teamcity::publish_artifacts(&file.file, &file.artifact_path))
+        .collect()
 }
 
 /// Writes `bytes` to `path` through a temporary beside it and a rename, so a reader never sees half a file. Creates

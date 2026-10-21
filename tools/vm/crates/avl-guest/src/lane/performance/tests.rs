@@ -8,6 +8,7 @@ use pretty_assertions::assert_eq;
 use serde_json::{Value, json};
 
 use super::*;
+use crate::lane::run_result::RunEnd;
 
 const GENERATED: &str = "Wed, 21 Oct 2026 03:00:00 GMT";
 const CLASS: &str = "AirLongSessionPerformanceUiTest";
@@ -95,11 +96,9 @@ fn the_files_are_written_and_published_on_teamcity() {
     let document: Value = serde_json::from_str(&read(&file)).unwrap();
     assert_eq!(document["build"], "271.SNAPSHOT");
     assert_eq!(document["metrics"], json!([{"n": "openMs", "d": 1234, "v": 1234}]));
-    let mut lines = Vec::new();
-    announce(&published, &directory, true, &mut lines);
     assert_eq!(
-        String::from_utf8(lines).unwrap(),
-        format!("##teamcity[publishArtifacts '{} => {ARTIFACT_PATH}']\n", file.display())
+        publish_lines(&published),
+        [format!("##teamcity[publishArtifacts '{} => {ARTIFACT_PATH}']", file.display())]
     );
 }
 
@@ -107,12 +106,21 @@ fn the_files_are_written_and_published_on_teamcity() {
 #[test]
 fn off_teamcity_the_files_are_written_and_not_published() {
     let out = tempfile::tempdir().unwrap();
-    let directory = out.path().join(DIR);
-    let (published, _) = write(&plan(), &stream("SUCCESSFUL"), &[], &directory, GENERATED);
-    assert!(directory.join(ARTIFACT_PATH).join("metrics.performance.json").is_file());
-    let mut lines = Vec::new();
-    announce(&published, &directory, false, &mut lines);
-    assert!(lines.is_empty(), "{}", String::from_utf8_lossy(&lines));
+    let end = RunEnd {
+        lane: "ui-perf".to_owned(),
+        plan: Some(plan()),
+        suites: Vec::new(),
+        performance_dir: out.path().join(DIR),
+        result_file: out.path().join("run-result.json"),
+        team_city: false,
+    };
+    let ended = end.write(&stream("SUCCESSFUL"), true, &|id| out.path().join(id), GENERATED);
+    assert!(end.performance_dir.join(ARTIFACT_PATH).join("metrics.performance.json").is_file());
+    assert_eq!(ended.messages, Vec::<String>::new());
+    assert_eq!(
+        ended.lines[0],
+        format!("1 IJ Perf file(s) and part file(s) in {}", end.performance_dir.display())
+    );
 }
 
 // Without the outputs directory of a Bazel test, the files go below the run directory.
