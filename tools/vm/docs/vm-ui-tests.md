@@ -924,16 +924,21 @@ shard that failed to download is a root with its error. For the server of `--tea
 uses the login of `teamcity auth login`. A server is `https`, or `http` on a loopback host. `--teamcity` does not go
 with `--detach`, so pick a free `--port` when a detached server runs.
 
-**On TeamCity.** `bazel run @community//tools/vm:air-trace -- teamcity-publish --viewer <dir>` is the step after
-`bazel test`. It zips each bundle under the testlogs into `air-traces/<lane>/<runId>/<TestClass>/<scenario>.zip` and
-publishes the zips as artifacts. Beside them it publishes `air-traces/runs.json` and the built viewer of `--viewer`.
-The listing has the form of `/__air/runs`, and each scenario names its zip. So `air-traces/index.html` in the
-artifacts of the build opens its traces with no server. Each test of the Tests tab gets its trace, a `trace viewer`
-link into that page, its video and, for a failed scenario, its last picture.
+**On TeamCity.** `bazel run @community//tools/vm:air-trace -- teamcity-publish` is the step after `bazel test`. It
+zips each bundle under the testlogs into `air-traces/<lane>/<runId>/<TestClass>/<scenario>.zip` and publishes the
+zips as artifacts. Beside them it publishes `air-traces/runs.json` and the trace viewer. The listing has the form of
+`/__air/runs`, and each scenario names its zip. So `air-traces/index.html` in the artifacts of the build opens its
+traces with no server. Each test of the Tests tab gets its trace, a `trace viewer` link into that page, its video
+and, for a failed scenario, its last picture.
+
+`--viewer DIR` names a built viewer. Without it, the step builds the viewer in the checkout, as `serve` builds the
+site: with the pinned node and pnpm, `pnpm install --frozen-lockfile` where `node_modules` is missing, then
+`pnpm run build:viewer` in `plugins/air/docs`, which writes `out/air-trace-viewer`. A viewer there that is newer than
+its sources is not built again. The build has 10 minutes, and stderr says how long it took.
 
 The step reads the build from the agent's property files, `TEAMCITY_BUILD_PROPERTIES_FILE` and the configuration
 file that it names. `bazel run` passes the environment of the step to the program. The listing then names the build
-of each run, and the server of the link is the root of `BUILD_URL`. Without the files or without `--viewer`, the zips
+of each run, and the server of the link is the root of `BUILD_URL`. Without the files or without a viewer, the zips
 and the listing still publish with no link, and stderr says why. No Air build configuration runs this step yet; it is
 one more step in `ultimate-teamcity-config`.
 
