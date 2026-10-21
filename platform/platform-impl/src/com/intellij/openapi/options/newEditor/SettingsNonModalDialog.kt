@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.UIBundle
 import com.intellij.ui.border.CustomLineBorder
@@ -173,19 +174,10 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
 
     /**
      * Returns `true` if [window] is the Settings window itself or is owned (directly or
-     * transitively) by the Settings window. Used by [SettingsPasteAction] to enable the
-     * `Settings.Paste` action in sub-dialogs opened from within Settings.
+     * transitively) by the Settings window.
      */
     @JvmStatic
-    fun isSettingsWindow(window: Window?): Boolean {
-      val settingsWindow = ourInstance?.takeIf { !it.isDisposed }?.activeWindow ?: return false
-      var w = window
-      while (w != null) {
-        if (w === settingsWindow) return true
-        w = w.owner
-      }
-      return false
-    }
+    fun isSettingsWindow(window: Window?): Boolean = isInSettingsWindow(window)
   }
 
   private val editor: SettingsEditor
@@ -249,6 +241,8 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
   }
 
   override fun installAdditionalShortcuts(rootPane: JRootPane) {
+    // Cmd/Ctrl+V: enable Settings.Paste in this window and in its sub-dialogs.
+    ClientProperty.put(rootPane, SETTINGS_WINDOW_KEY, true)
     // Cmd/Ctrl+F: open the settings search field.
     EventHandler.getShortcuts(IdeActions.ACTION_FIND)?.let { shortcut ->
       SearchTextField.FindAction().registerCustomShortcutSet(shortcut, rootPane, frameDisposable)
