@@ -668,6 +668,7 @@ class EventGraphTest {
     val foreign = object : DocumentOp.Insert {
       override fun offset(): Int = 0
       override fun length(): Int = 1
+      override fun moveOffset(): Int = 0
       override fun fragment(): CharSequence = "x"
     }
     assertThrows(IllegalArgumentException::class.java) { Event.create(agent("u"), 0, foreign) }
@@ -730,6 +731,7 @@ class EventGraphTest {
     val foreign = object : DocumentOp.Delete {
       override fun offset(): Int = 3
       override fun length(): Int = 1
+      override fun moveOffset(): Int = 3
     }
     assertEquals(3, foreign.moveOffset())
   }

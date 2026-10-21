@@ -30,9 +30,7 @@ sealed interface DocumentOp {
      * source in the text after the insert. A delete names its copy in the text before the delete. An op
      * that moves nothing returns [offset].
      */
-    fun moveOffset(): Int {
-      return offset()
-    }
+    fun moveOffset(): Int
   }
 
   interface Insert : Text {
