@@ -33,7 +33,8 @@ public final class PropertyNamePattern {
 
   public boolean checkByPattern(final @NotNull String name) {
     if (myPatternError != null) return true;
-    if (Boolean.TRUE.equals(myValuePatternCache.get(name))) return true;
+    Boolean cached = myValuePatternCache.get(name);
+    if (cached != null) return cached;
     assert myCompiledPattern != null;
     boolean matches = matchPattern(myCompiledPattern, name);
     myValuePatternCache.put(name, matches);

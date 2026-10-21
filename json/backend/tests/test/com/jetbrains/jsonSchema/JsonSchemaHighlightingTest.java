@@ -1546,4 +1546,20 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     // IJ reports 2-type oneOf error (broken branch not counted)
     doTest(schema, "{\"value\": <warning descr=\"Incompatible types.\n Required one of: number, string. Actual: boolean.\">true</warning>}");
   }
+
+  public void testPatternWithAlternationAndPrefixAnchor() {
+    @Language("JSON") String schema = """
+      {
+        "properties": {
+          "version": {
+            "type": "string",
+            "pattern": "^v?\\\\d+(((\\\\.\\\\d+)?\\\\.\\\\d+)?\\\\.\\\\d+)?|^dev-"
+          }
+        }
+      }""";
+    doTest(schema, "{\"version\": \"1.0.0-dev\"}");
+    doTest(schema, "{\"version\": \"v2.0.4-p1\"}");
+    doTest(schema, "{\"version\": \"dev-main\"}");
+    doTest(schema, "{\"version\": <warning descr=\"String violates the pattern: '^v?\\d+(((\\.\\d+)?\\.\\d+)?\\.\\d+)?|^dev-'\">\"invalid-version\"</warning>}");
+  }
 }

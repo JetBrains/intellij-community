@@ -404,4 +404,22 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
 }"""
     testImpl(schema, """{"prop": <caret>}""", "\"\"")
   }
+
+  fun testPatternPropertiesWithAlternation() {
+    val schema = """{
+  "patternProperties": {
+    "^v?\\d+(\\.\\d+){0,3}|^dev-": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        }
+      }
+    }
+  }
+}"""
+    testImpl(schema, """{"1.0.0-dev": {<caret>}}""", "\"enabled\"")
+    testImpl(schema, """{"dev-main": {<caret>}}""", "\"enabled\"")
+    testImpl(schema, """{"invalid-version": {<caret>}}""")
+  }
 }
