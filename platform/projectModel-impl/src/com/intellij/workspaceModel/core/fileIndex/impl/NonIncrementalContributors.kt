@@ -2,6 +2,8 @@
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
@@ -34,6 +36,7 @@ import com.intellij.workspaceModel.ide.impl.workspaceModelMetrics
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntMaps
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.system.measureTimeMillis
 
@@ -50,6 +53,9 @@ internal class NonIncrementalContributors(private val project: Project) {
   private var upToDate = false
   private val lock = Any()
 
+  /**
+   * When the caller runs on a background thread and holds no read action, a write action interrupts the rebuild, which then restarts.
+   */
   fun updateIfNeeded(
     fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
     fileSetsByPackagePrefix: PackagePrefixStorage,
@@ -57,9 +63,9 @@ internal class NonIncrementalContributors(private val project: Project) {
   ) {
     if (upToDate) return
 
-    runReadActionBlocking {
+    val rebuild: () -> Unit = rebuild@{
       synchronized(lock) {
-        if (upToDate) return@runReadActionBlocking
+        if (upToDate) return@rebuild
 
         val excludeRootsComputationTime: Long
         val fileSetsComputationTime: Long
@@ -119,6 +125,13 @@ internal class NonIncrementalContributors(private val project: Project) {
         excludeRootsComputationTimeMs.duration.addAndGet(excludeRootsComputationTime)
         fileSetsComputationTimeMs.duration.addAndGet(fileSetsComputationTime)
       }
+    }
+    // A non-blocking read action requires a background thread, so EDT keeps the blocking one.
+    if (ApplicationManager.getApplication().isDispatchThread) {
+      runReadActionBlocking(rebuild)
+    }
+    else {
+      ReadAction.nonBlocking(Callable(rebuild)).executeSynchronously()
     }
   }
 
