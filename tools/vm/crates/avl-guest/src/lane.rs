@@ -17,6 +17,7 @@ pub(crate) mod iteration;
 pub(crate) mod live;
 pub(crate) mod monitor;
 pub(crate) mod package;
+pub(crate) mod performance;
 pub(crate) mod program;
 pub(crate) mod readiness;
 pub(crate) mod recycle;

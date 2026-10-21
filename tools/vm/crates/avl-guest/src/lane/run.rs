@@ -5,10 +5,10 @@
 //! `bt --lane` and a TeamCity agent. It reads the runtime descriptor, stores the lane inputs and the context plugins of
 //! the runfiles in the jar store by digest, and runs the iteration of [`super::iteration`] as a `/run` would. It writes
 //! the run stream on standard output and into the run directory, and the JUnit XML of the stream into the run
-//! directory and to the XML file of a Bazel test. It quits the IDE, and exits 0 when the run is green. Under a Bazel test,
-//! a run that is not green keeps its evidence in the outputs directory of the test, as [`super::evidence`] states. On a
-//! TeamCity build that names a build log file, the run shows in the build log while it goes on, as
-//! [`super::build_log`] states.
+//! directory and to the XML file of a Bazel test. It writes the IJ Perf files of the run, as [`super::performance`]
+//! states. It quits the IDE, and exits 0 when the run is green. Under a Bazel test, a run that is not green keeps its
+//! evidence in the outputs directory of the test, as [`super::evidence`] states. On a TeamCity build that names a build
+//! log file, the run shows in the build log while it goes on, as [`super::build_log`] states.
 //!
 //! With `--plan-only` it stops before the IDE: it stages the inputs and selects the documents as a run does, and it
 //! writes the [`RunPlan`] on standard output. So a host proves a lane rule and its runfiles without a lane IDE.
@@ -21,6 +21,7 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 use avl_junit::cases::simple_class_name;
+use avl_junit::performance::{Plan, rfc_1123};
 use avl_junit::teamcity;
 use avl_wire::daemon::{IdePlugin, LaneInputs, RUN_SECRETS_VARIABLE, RunEvent, RunEventKind, RunRequest, SessionLog, decode_run_event};
 use avl_wire::runtime::{self, RuntimeFile};
@@ -34,6 +35,8 @@ use super::inputs::{self, LaunchInputs, guest_platform};
 use super::iteration::{self, RunnerSplit};
 use super::monitor::{self, BUDGET_PROBLEM, LiveStop, MONITOR_THREAD, Monitor, MonitorPaths};
 use super::package::sha256_hex;
+use super::performance::{self, Published};
+use super::program::ITERATION_ARTIFACTS_DIR;
 use super::watchdog::{ExpiryReason, KILL_GRACE};
 use crate::cli::{LaneDaemonArgs, LaneRunArgs, ValidateGuestArgs};
 use crate::ide::launch::CODE_DISPLAY_MISSING;
@@ -283,6 +286,12 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
             .map_err(|error| AgentRefusal::failure(BOOT_CODE, format!("cannot write the plan: {error}")))?;
         return Ok(0);
     }
+    let performance_plan = performance::plan_or_note(
+        &runfile(&descriptor.ide.lane_documents),
+        &runfile(&descriptor.dev_dist.home),
+        &args.lane,
+        &mut notes,
+    );
     let evidence = bazel_outputs(variable).map(|outputs| Evidence::new(&daemon_args.state_dir, &daemon_args.ide_root, &outputs));
     let stream_path = root.join(STREAM_FILE);
     let stream = File::create(&stream_path)
@@ -332,12 +341,59 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
         println!("{problem}");
     }
     let green = is_green(&stream) && finished.is_ok();
+    if let Some(plan) = &performance_plan {
+        write_performance(&daemon, &request, flags.split, plan, &events, &root, variable);
+    }
     if !green && let Some(evidence) = &evidence {
         let kept = evidence::keep(evidence, &events, Moment::RunEnd, Limits::LANE);
         log(&kept.describe(&evidence.destination));
     }
     written?;
     Ok(u8::from(!green))
+}
+
+/// Writes the IJ Perf files of `plan` for the run that streamed `events`, with the part files of each case, and
+/// announces them. Answers the written files. A problem is a log line, because a metric never decides a verdict.
+fn write_performance(
+    daemon: &channel::Daemon,
+    request: &RunRequest,
+    split: RunnerSplit,
+    plan: &Plan,
+    events: &[RunEvent],
+    root: &Path,
+    variable: &dyn Fn(&str) -> Option<String>,
+) -> Vec<Published> {
+    let scenarios = match (&request.lane, &request.lane_inputs, iteration_id(events)) {
+        (Some(lane), Some(lane_inputs), Some(id)) => match iteration::selection_of(daemon, lane, lane_inputs, request, split) {
+            Ok(selection) => performance::scenario_parts(
+                selection.suites.iter().map(|suite| &suite.program),
+                &daemon.iteration_dir(&id).join(ITERATION_ARTIFACTS_DIR),
+            ),
+            Err(reason) => {
+                log(&format!(
+                    "the IJ Perf files get no part files, because the suites cannot be read: {reason}"
+                ));
+                Vec::new()
+            }
+        },
+        _ => Vec::new(),
+    };
+    let directory = performance::directory(bazel_outputs(variable).as_deref(), root);
+    let generated = rfc_1123(&jiff::Zoned::now());
+    let (published, problems) = performance::write(plan, events, &scenarios, &directory, &generated);
+    for problem in &problems {
+        log(problem);
+    }
+    performance::announce(&published, &directory, teamcity::is_team_city(variable), &mut io::stdout().lock());
+    published
+}
+
+/// The id of the iteration of `events`, from its `runStarted`.
+pub(crate) fn iteration_id(events: &[RunEvent]) -> Option<String> {
+    events.iter().find_map(|event| match &event.kind {
+        RunEventKind::RunStarted(started) => Some(started.iteration_id.clone()),
+        _ => None,
+    })
 }
 
 /// The TeamCity build problem of a run that its budget ended, on a TeamCity agent: the case that ran and the budget. A

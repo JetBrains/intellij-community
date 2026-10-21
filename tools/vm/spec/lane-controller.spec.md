@@ -73,6 +73,7 @@ targets:
   - ../crates/avl-junit/src/cases.rs
   - ../crates/avl-report/src/teamcity.rs
   - ../crates/avl-junit/src/performance.rs
+  - ../crates/avl-guest/src/lane/performance.rs
   - ../crates/avl-vm/src/daemon/performance.rs
   - ../crates/avl-vm/src/daemon/results.rs
   - ../crates/avl-vm/src/report.rs
@@ -894,14 +895,17 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_zip_is_published_once_for_its_bundles`)
 
 - For a run on the lane daemon, the controller writes the IJ Perf file `metrics.performance.json` of each scenario
-  that reported metrics. The lane document names the series of each such scenario. A series holds the test class, the
-  scenario, the dashboard project and method, and an artifact path. The file goes to
-  `<iterationId>.performance/<artifactPath>` beside the report of the iteration. Its build is the `build.txt` of the
-  IDE distribution without the product code. A TeamCity build step publishes the file once under its artifact path.
+  that reported metrics. `lane-run` writes the same file after its run. The lane document names the series of each
+  such scenario. A series holds the test class, the scenario, the dashboard project and method, and an artifact path.
+  The controller writes the file to `<iterationId>.performance/<artifactPath>` beside the report of the iteration. Its
+  build is the `build.txt` of the IDE distribution without the product code. A TeamCity build step publishes the file
+  once under its artifact path.
   [@test] ../crates/avl-junit/src/performance/tests.rs (`the_recorded_stream_renders_its_golden`)
   [@test] ../crates/avl-junit/src/performance/tests.rs (`the_build_drops_the_product_code_and_keeps_every_other_form`)
   [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_file_is_published_once_into_its_directory`)
   [@test] ../crates/avl-junit/src/performance/tests.rs (`a_lane_that_names_series_plans_them_with_the_build_and_another_lane_plans_nothing`)
+  [@test] ../crates/avl-junit/src/performance/tests.rs (`the_ide_build_of_a_build_file_drops_the_product_code_and_names_a_read_failure_and_an_empty_file`)
+  [@test] ../crates/avl-junit/src/teamcity/tests.rs (`a_file_is_published_into_its_directory_with_its_path_escaped`)
   [@test] ../crates/avl-vm/src/daemon/results/tests.rs (`a_teamcity_build_step_writes_and_publishes_the_ij_perf_file_of_each_planned_scenario`)
 
 - A metric whose name ends with `Ms` is a duration. A metric whose name starts with `growth.` is the counter
@@ -911,11 +915,12 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-junit/src/performance/tests.rs (`a_value_out_of_the_range_of_an_int_is_held_to_it`)
 
 - A scenario that reported metrics and has no series, such as a warm-up, gets no file and no note. Its metrics still
-  reach TeamCity as `testMetadata`. A plan that the controller cannot read is a note. A lane document whose series
-  collide or leave their directory is refused.
+  reach TeamCity as `testMetadata`. A plan that the controller or `lane-run` cannot read is a note. A lane document
+  whose series collide or leave their directory is refused.
   [@test] ../crates/avl-vm/src/daemon/results/tests.rs (`a_scenario_with_metrics_and_no_series_gets_no_file_and_no_note`)
   [@test] ../crates/avl-junit/src/performance/tests.rs (`a_case_with_metrics_and_no_series_writes_no_file`)
   [@test] ../crates/avl-junit/src/performance/tests.rs (`a_plan_that_cannot_be_made_says_why`)
+  [@test] ../crates/avl-guest/src/lane/performance/tests.rs (`a_plan_that_cannot_be_made_is_a_note`)
   [@test] ../crates/avl-wire/src/program/lane/tests.rs (`a_performance_series_that_would_collide_or_leave_its_directory_is_refused`)
 
 - The run report is of schema 3. It holds one case for each scenario, each failed container and each skipped
@@ -1687,6 +1692,25 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   [@test] ../crates/avl-guest/src/lane/evidence/tests.rs (`the_copy_keeps_the_logs_of_the_affected_launches_and_the_files_of_the_iterations`)
   [@test] ../crates/avl-guest/src/lane/evidence/tests.rs (`the_process_output_is_kept_when_the_log_directory_is_gone`)
   [@test] ../crates/avl-guest/src/lane/monitor/tests.rs (`the_hard_stop_keeps_the_evidence_of_the_ide_run_that_it_canceled`)
+
+- After each run, green or not, `lane-run` writes the IJ Perf file of each case that reported a metric and has a
+  series. The file goes to `$TEST_UNDECLARED_OUTPUTS_DIR/performance/<artifactPath>`, or to
+  `<runDirectory>/performance/<artifactPath>` outside a Bazel test. A failed case keeps its metrics in the file.
+  [@test] ../crates/avl-guest/src/lane/performance/tests.rs (`off_teamcity_the_files_are_written_and_not_published`)
+  [@test] ../crates/avl-guest/src/lane/performance/tests.rs (`without_bazel_outputs_the_files_go_to_the_run_directory`)
+  [@test] ../crates/avl-guest/src/lane/performance/tests.rs (`a_failed_part_keeps_its_metrics_in_the_file`)
+
+- Beside the IJ Perf file, `lane-run` copies the result files of the authored parts of the case. These are
+  `summary.txt`, `air-performance.json`, `watchdog.ndjson`, `trace.ndjson` and `report.json`, each when a part wrote
+  it. The parts are copied in the order of the program. When two parts wrote the same file, the later part wins, and
+  a log line names the file.
+  [@test] ../crates/avl-guest/src/lane/performance/tests.rs (`the_part_files_are_copied_beside_the_file_and_the_later_part_wins`)
+
+- On a TeamCity agent, `lane-run` writes one `publishArtifacts` line on standard output for each file that it wrote.
+  The line publishes the file into the artifact path of its series. Off TeamCity, it writes one log line with the
+  directory. A file that cannot be written is a log line, and it never changes the verdict.
+  [@test] ../crates/avl-guest/src/lane/performance/tests.rs (`the_files_are_written_and_published_on_teamcity`)
+  [@test] ../crates/avl-guest/src/lane/performance/tests.rs (`off_teamcity_the_files_are_written_and_not_published`)
 
 - A launch is affected when it ran during a scenario that did not pass. A launch that runs at a watchdog expiry, a
   failed class, a failed run or the hard stop is affected too. A failure when no launch runs affects the newest
