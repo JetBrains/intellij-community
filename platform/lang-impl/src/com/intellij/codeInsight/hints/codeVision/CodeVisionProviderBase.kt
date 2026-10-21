@@ -77,25 +77,14 @@ abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
       if (!InlayHintsUtils.isFirstInLine(element)) continue
       val hint = getHint(element, file)
       if (hint == null) continue
-      val handler = ClickHandler(element, hint)
+      val handler = PsiElementClickHandler(element) { clicked, event, editor ->
+        logClickToFUS(clicked, hint)
+        handleClick(editor, clicked, event)
+      }
       val range = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
       lenses.add(range to ClickableTextCodeVisionEntry(hint, id, handler))
     }
     return lenses
-  }
-
-  private inner class ClickHandler(
-    element: PsiElement,
-    private val hint: String,
-  ) : (MouseEvent?, Editor) -> Unit {
-    private val elementPointer = SmartPointerManager.createPointer(element)
-
-    override fun invoke(event: MouseEvent?, editor: Editor) {
-      if (isInlaySettingsEditor(editor)) return
-      val element = elementPointer.element ?: return
-      logClickToFUS(element, hint)
-      handleClick(editor, element, event)
-    }
   }
 
   abstract fun handleClick(editor: Editor, element: PsiElement, event: MouseEvent?)
@@ -127,4 +116,22 @@ abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
     val count: Int? = null,
     val countIsExact: Boolean = true
   )
+}
+
+/**
+ * The click handler of a lens.
+ * It keeps a smart pointer to [element] and calls [onClick] with the restored element.
+ * It does nothing in the inlay settings editor or when the pointer cannot restore the element.
+ */
+internal class PsiElementClickHandler(
+  element: PsiElement,
+  private val onClick: (element: PsiElement, event: MouseEvent?, editor: Editor) -> Unit,
+) : (MouseEvent?, Editor) -> Unit {
+  private val elementPointer = SmartPointerManager.createPointer(element)
+
+  override fun invoke(event: MouseEvent?, editor: Editor) {
+    if (isInlaySettingsEditor(editor)) return
+    val element = elementPointer.element ?: return
+    onClick(element, event, editor)
+  }
 }
