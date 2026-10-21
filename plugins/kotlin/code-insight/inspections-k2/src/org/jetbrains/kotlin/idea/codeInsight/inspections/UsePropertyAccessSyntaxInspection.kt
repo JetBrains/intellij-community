@@ -246,6 +246,9 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
             var convertExpressionToBlockBodyData: ConvertExpressionToBlockBodyData? = null
 
             if (propertyAccessorKind is PropertyAccessorKind.Setter) {
+                if (!syntheticProperty.hasSetter) {
+                    return
+                }
                 val setterIsExpressionForFunction = methodIsExpressionForFunction(qualifiedOrCall)
                 val setterIsExpressionForPropertyAccessor = methodIsExpressionForPropertyAccessor(qualifiedOrCall)
                 if (setterIsExpressionForFunction || setterIsExpressionForPropertyAccessor) {
