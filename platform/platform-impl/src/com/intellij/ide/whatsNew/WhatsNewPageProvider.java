@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.actions;
+package com.intellij.ide.whatsNew;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
@@ -14,8 +14,10 @@ public interface WhatsNewPageProvider {
 
   boolean isAvailable();
 
-  void openWhatsNewPage(@NotNull Project project,
-                        @NotNull String url,
-                        boolean includePlatformData,
-                        @Nullable HTMLEditorProvider.JsQueryHandler queryHandler);
+  void openWhatsNewPage(
+    @NotNull Project project,
+    @NotNull String url,
+    boolean includePlatformData,
+    @Nullable HTMLEditorProvider.JsQueryHandler queryHandler
+  );
 }

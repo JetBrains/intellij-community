@@ -1,8 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.whatsNew
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.whatsNew.DefaultWhatsNewQueryHandler
+import com.intellij.ide.whatsNew.WhatsNewUtil
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -28,7 +30,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
-import com.intellij.platform.whatsNew.WhatsNewAction.Companion.PLACE
 import com.intellij.platform.whatsNew.collectors.WhatsNewCounterUsageCollector
 import com.intellij.platform.whatsNew.reaction.FUSReactionChecker
 import com.intellij.platform.whatsNew.reaction.ReactionsPanel
@@ -168,10 +169,10 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
     private const val DARK_THEME = "dark"
     private const val LIGHT_THEME = "light"
 
-    private const val LANG_KEY = "\$__VISION_PAGE_SETTINGS_LANGUAGE_CODE__$"
-    private const val ZOOM_KEY = "\$__VISION_PAGE_SETTINGS_ZOOM_IN_ACTION__$"
-    private const val GIF_KEY = "\$__VISION_PAGE_SETTINGS_GIF_PLAYER_ACTION__$"
-    private const val MEDIA_BASE_PATH_KEY = "\$__VISION_PAGE_SETTINGS_MEDIA_BASE_PATH__$"
+    private const val LANG_KEY = $$"$__VISION_PAGE_SETTINGS_LANGUAGE_CODE__$"
+    private const val ZOOM_KEY = $$"$__VISION_PAGE_SETTINGS_ZOOM_IN_ACTION__$"
+    private const val GIF_KEY = $$"$__VISION_PAGE_SETTINGS_GIF_PLAYER_ACTION__$"
+    private const val MEDIA_BASE_PATH_KEY = $$"$__VISION_PAGE_SETTINGS_MEDIA_BASE_PATH__$"
 
     private const val ZOOM_VALUE = "whatsnew.vision.zoom"
     private const val GIF_VALUE = "whatsnew.vision.gif"
@@ -226,14 +227,14 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
     )
   }
 
-  override suspend fun isAvailable(): Boolean {
-    return true
-  }
+  override suspend fun isAvailable(): Boolean = true
 
-  private fun getHandler(dataContext: DataContext?): JsQueryHandler? {
+  private fun getQueryHandler(dataContext: DataContext?, project: Project): JsQueryHandler? {
     dataContext ?: return null
 
     return object : JsQueryHandler {
+      private val delegate = DefaultWhatsNewQueryHandler(project)
+
       override suspend fun query(id: Long, request: String): String {
         val contains = myActionWhiteList.contains(request)
         if (!contains) {
@@ -248,27 +249,26 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
         }
 
         if (request.isNotEmpty()) {
-          service<ActionManager>().getAction(request)?.let {
+          val action = service<ActionManager>().getAction(request)
+          if (action != null) {
             withContext(Dispatchers.EDT) {
-              it.actionPerformed(
-                AnActionEvent.createEvent(
-                  it,
-                  dataContext,
-                  /*presentation =*/ null,
-                  PLACE,
-                  ActionUiKind.NONE,
-                  /*event =*/ null
-                )
+              action.actionPerformed(
+                AnActionEvent.createEvent(action, dataContext, /*presentation =*/ null, WhatsNewUtil.PLACE, ActionUiKind.NONE, /*event =*/ null)
               )
               logger.trace { "EapWhatsNew action $request performed" }
               WhatsNewCounterUsageCollector.actionPerformed(dataContext.project, request)
             }
             return "true"
-          } ?: run {
+          }
+
+          val result = delegate.query(id, request)
+          if (result != "true") {
             logger.trace { "EapWhatsNew action $request not found" }
             WhatsNewCounterUsageCollector.actionNotFound(dataContext.project, request)
           }
+          return result
         }
+
         return "false"
       }
     }
@@ -284,11 +284,11 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
       logger.info("Opening What's New in editor.")
       val disposable = Disposer.newDisposable(project)
       val startPageId = WhatsNewMultipageStartIdProvider.getInstance(project).getId()
-      val request = getRequest(startPageId, dataContext)
+      val request = getRequest(startPageId, dataContext, project)
       val editor = openEditorAsync(project, title, request)
 
       editor?.let {
-        project.serviceAsync<FileEditorManager>().addTopComponent(it, ReactionsPanel.createPanel(PLACE, reactionChecker))
+        project.serviceAsync<FileEditorManager>().addTopComponent(it, ReactionsPanel.createPanel(WhatsNewUtil.PLACE, reactionChecker))
         val startTime = System.currentTimeMillis()
         WhatsNewCounterUsageCollector.openedPerformed(project, startPageId, triggeredByUser)
 
@@ -310,10 +310,7 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
     }
   }
 
-  private fun getRequest(
-    startPageId: String,
-    dataContext: DataContext?,
-  ): HTMLEditorProvider.Request {
+  private fun getRequest(startPageId: String, dataContext: DataContext?, project: Project): HTMLEditorProvider.Request {
     // One-page case
     val request = if (startPageId == WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID || multipageIds.size == 1) {
       html(content)
@@ -325,7 +322,7 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
       }
     }
     return request
-      .withQueryHandler(getHandler(dataContext))
+      .withQueryHandler(getQueryHandler(dataContext, project))
       .withResourceHandler(getRequestHandler(dataContext))
   }
 }

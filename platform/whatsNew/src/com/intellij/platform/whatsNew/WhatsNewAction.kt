@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.whatsNew
 
 import com.intellij.ide.DataManager
@@ -17,10 +17,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.concurrency.await
 
 internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAware {
-  companion object {
-    internal const val PLACE = "WhatsNew"
-  }
-
   private val REACTIONS_STATE = "whatsnew.reactions.state"
   private val reactionChecker = FUSReactionChecker(REACTIONS_STATE)
 
@@ -40,9 +36,7 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
     }
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = service<WhatsNewStatus>().isContentAvailable

@@ -1,10 +1,10 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.WhatsNewUtil
+import com.intellij.ide.whatsNew.WhatsNewUtil
 import com.intellij.ide.nls.NlsMessages
 import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.newui.reloadPluginIcon
@@ -137,7 +137,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
       }.topGap(TopGap.SMALL)
         .bottomGap(BottomGap.SMALL)
 
-      if (WhatsNewUtil.isWhatsNewAvailable()) {
+      if (WhatsNewUtil.isWhatsNewEnabled()) {
         row {
           checkBox(IdeBundle.message("updates.settings.show.editor"))
             .bindSelected(settings.state::isShowWhatsNewEditor)
