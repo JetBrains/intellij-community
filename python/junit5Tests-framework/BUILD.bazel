@@ -165,6 +165,8 @@ jvm_library(
         "//platform/external-system-api:externalSystem_test_lib",
         "//python/testFramework",
         "//python/testFramework:testFramework_test_lib",
+        "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests",
+        "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.junit5Tests.framework` end
