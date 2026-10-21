@@ -55,8 +55,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.TeamCityLogger
 import com.intellij.testFramework.TestApplicationManager
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.common.ThreadLeakTracker
 import com.intellij.testFramework.junit5.fixture.TestFixtures
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -280,7 +280,7 @@ class BuildersGeneratorTest {
         val newContent = VfsUtil.findFile(path, true)?.run { readAction { readText() } }
         DynamicTest.dynamicTest(thisProject.relativize(path).toString()) {
           val errorMsg =
-            if (UsefulTestCase.IS_UNDER_TEAMCITY)
+            if (TeamCityLogger.isUnderTC)
               "${path.toUri()} : " +
               "The generated file was manually modified," +
               " or it was not regenerated after changing interfaces," +

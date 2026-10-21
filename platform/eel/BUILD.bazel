@@ -187,8 +187,6 @@ jvm_library(
         "//platform/ide-core",
         "//jps/model-impl",
         "//jps/model-impl:model-impl_test_lib",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
         "//platform/scratch/plugin",

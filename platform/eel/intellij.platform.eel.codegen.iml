@@ -49,7 +49,6 @@
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver.plugin" scope="RUNTIME" />
