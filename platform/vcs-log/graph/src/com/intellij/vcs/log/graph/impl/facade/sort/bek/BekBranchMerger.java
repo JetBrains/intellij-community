@@ -65,9 +65,8 @@ class BekBranchMerger {
       }
     }
 
-    long[] queuedTimestamps = new long[bekBranches.size()];
-    myQueuedTimestamps = queuedTimestamps;
-    myQueue = new PriorityQueue<>(Comparator.<Integer>comparingLong(branch -> queuedTimestamps[branch]).thenComparing(Comparator.naturalOrder()));
+    myQueuedTimestamps = new long[bekBranches.size()];
+    myQueue = new PriorityQueue<>(new BranchOrderComparator());
 
     myResult = new int[nodesCount];
     myResultStart = nodesCount;
@@ -125,5 +124,14 @@ class BekBranchMerger {
     }
     LOG.assertTrue(myResultStart == 0, "Unplaced nodes: " + myResultStart);
     return myResult;
+  }
+
+  private class BranchOrderComparator implements Comparator<Integer> {
+    @Override
+    public int compare(@NotNull Integer branch1, @NotNull Integer branch2) {
+      int byTimestamp = Long.compare(myQueuedTimestamps[branch1], myQueuedTimestamps[branch2]);
+      if (byTimestamp != 0) return byTimestamp;
+      return Integer.compare(branch1, branch2);
+    }
   }
 }
