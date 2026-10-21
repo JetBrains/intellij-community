@@ -3,8 +3,8 @@ package org.jetbrains.jps.incremental.groovy
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.directoryContent
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 import java.io.File
 
 class GroovyRtPathsTest {
@@ -76,6 +76,6 @@ class GroovyRtPathsTest {
   private fun assertSameFiles(paths: List<String>, vararg file: File) {
     val actualPaths = paths.mapTo(HashSet()) { FileUtil.toSystemIndependentName(it) }
     val expectedPaths = file.mapTo(HashSet()) { FileUtil.toSystemIndependentName(it.absolutePath) }
-    Assert.assertEquals(expectedPaths, actualPaths)
+    Assertions.assertEquals(expectedPaths, actualPaths)
   }
 }
