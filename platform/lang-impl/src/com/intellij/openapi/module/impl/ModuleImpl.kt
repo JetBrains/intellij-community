@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.serviceContainer.getComponentManagerEx
 import com.intellij.serviceContainer.precomputeModuleLevelExtensionModel
 import com.intellij.util.messages.MessageBus
@@ -53,9 +54,28 @@ open class ModuleImpl(
   override fun initNewlyAddedModule() {
     // do not measure (activityNamePrefix method not overridden by this class)
     // because there are a lot of modules and no need to measure each one
-    val moduleComponentManager = getModuleComponentManager()
-    moduleComponentManager.initModuleContainer(precomputeModuleLevelExtensionModel())
-    moduleComponentManager.markContainerAsCreated()
+    initModuleContainer(precomputeModuleLevelExtensionModel())
+    markModuleContainerAsCreated()
+  }
+
+  internal fun initModuleContainer(precomputedExtensionModel: PrecomputedExtensionModel) {
+    val componentManager = componentManager
+    if (componentManager is LazyModuleComponentManager) {
+      componentManager.initContainer(precomputedExtensionModel)
+    }
+    else {
+      getModuleComponentManager().initModuleContainer(precomputedExtensionModel)
+    }
+  }
+
+  internal fun markModuleContainerAsCreated() {
+    val componentManager = componentManager
+    if (componentManager is LazyModuleComponentManager) {
+      componentManager.markContainerAsCreated()
+    }
+    else {
+      getModuleComponentManager().markContainerAsCreated()
+    }
   }
 
   override val delegateComponentManager: ComponentManagerEx

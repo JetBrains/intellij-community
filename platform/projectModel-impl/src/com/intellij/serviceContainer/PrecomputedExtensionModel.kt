@@ -23,6 +23,11 @@ private val EMPTY = PrecomputedExtensionModel(
   services = java.util.List.of(),
 )
 
+/** `true` if no plugin declares a module-level service or extension point. */
+@get:ApiStatus.Internal
+val PrecomputedExtensionModel.isEmpty: Boolean
+  get() = this === EMPTY
+
 // checkModuleLevelServiceAndExtensionRegistration validates that no services or extensions for `executeRegisterTaskForOldContent`
 @ApiStatus.Internal
 fun precomputeModuleLevelExtensionModel(): PrecomputedExtensionModel {

@@ -28,6 +28,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -41,6 +42,7 @@ import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -824,7 +826,8 @@ internal class DynamicPluginsSupportImpl(
           .unregisterExtensions(epName, pluginDescriptor, priorityUnloadListeners, unloadListeners)
         if (!isProjectLevelEp) {
           for (module in ModuleManager.getInstance(project).modules) {
-            (module.extensionArea as ExtensionsAreaImpl)
+            val container = module.getMutableComponentContainerIfCreated() ?: continue
+            (container.extensionArea as ExtensionsAreaImpl)
               .unregisterExtensions(epName, pluginDescriptor, priorityUnloadListeners, unloadListeners)
           }
         }
@@ -848,7 +851,8 @@ internal class DynamicPluginsSupportImpl(
     pluginDescriptor.moduleContainerDescriptor.extensionPoints.takeIf { it.isNotEmpty() }?.let { extensionPoints ->
       for (project in projects) {
         for (module in ModuleManager.getInstance(project).modules) {
-          processor(extensionPoints, module.extensionArea as ExtensionsAreaImpl)
+          val container = module.getMutableComponentContainerIfCreated() ?: continue
+          processor(extensionPoints, container.extensionArea as ExtensionsAreaImpl)
         }
       }
     }
@@ -867,10 +871,17 @@ internal class DynamicPluginsSupportImpl(
       openedProjects.add(ProjectManagerEx.getInstanceEx().defaultProject)
     }
 
+    // a module creates its container on demand, so create it only if the descriptors declare module-level elements
+    val hasModuleLevelElements = descriptors.any { !it.moduleContainerDescriptor.isEmpty }
     for (openProject in openedProjects) {
       openProject.getComponentManagerImpl().registerComponents(descriptors = descriptors, app = app, listenerCallbacks = listenerCallbacks)
 
       for (module in ModuleManager.getInstance(openProject).modules) {
+        // A created container can own a module-level extension point, and the descriptors can have an extension for it.
+        // After IJPL-179174 removes module-level extension points, skip this loop when hasModuleLevelElements is false.
+        if (!hasModuleLevelElements && module.getMutableComponentContainerIfCreated() == null) {
+          continue
+        }
         module.getComponentManagerImpl().registerComponents(descriptors = descriptors, app = app, listenerCallbacks = listenerCallbacks)
       }
     }
@@ -925,4 +936,8 @@ internal class DynamicPluginsSupportImpl(
       }
     }
   }
+}
+
+private fun Module.getMutableComponentContainerIfCreated(): ComponentManager? {
+  return (this as ComponentManagerEx).getMutableComponentContainerIfCreated()
 }

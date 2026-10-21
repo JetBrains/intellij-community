@@ -23,6 +23,7 @@ import com.intellij.ide.plugins.testPluginSrc.foo.bar.FooBarService
 import com.intellij.ide.plugins.testPluginSrc.foo.ep.FooExtension
 import com.intellij.ide.plugins.testPluginSrc.foo.ep.FooExtensionService
 import com.intellij.ide.plugins.testPluginSrc.foo.epImpl.FooExtensionImpl
+import com.intellij.ide.plugins.testPluginSrc.moduleService.MyModuleService
 import com.intellij.ide.plugins.testPluginSrc.projectService.MyProjectService
 import com.intellij.ide.plugins.testPluginSrc.projectService.MyStartupActivity
 import com.intellij.ide.plugins.testPluginSrc.registryAccess.MyRegistryAccessor
@@ -45,6 +46,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.useBackgroundWriteAction
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.diagnostic.logger
@@ -55,6 +57,7 @@ import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.ModuleConfigurationEditor
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -837,6 +840,27 @@ class DynamicPluginsTest {
     val plugin = pluginSet.getEnabledPlugin("plugin")
     loadPluginInTest(plugin) {
       assertThat(project.getTestHandleService<MyProjectService, _, _>(plugin)).isNotNull()
+    }
+  }
+
+  @Test
+  fun `module service loads into existing module`() {
+    val moduleManager = ModuleManager.getInstance(projectRule.project)
+    val module = runWriteAction { moduleManager.newNonPersistentModule("moduleServiceTest", "") }
+    try {
+      val pluginSet = buildPluginSet(pluginsDir) {
+        plugin("plugin") {
+          extensions("""<moduleService serviceImplementation="${MyModuleService::class.java.name}"/>""")
+          includePackageClassFiles<MyModuleService>()
+        }
+      }
+      val plugin = pluginSet.getEnabledPlugin("plugin")
+      loadPluginInTest(plugin) {
+        assertThat(module.getTestHandleService<MyModuleService, _, _>(plugin)?.test(Unit)).isEqualTo(module.name)
+      }
+    }
+    finally {
+      runWriteAction { moduleManager.disposeModule(module) }
     }
   }
 

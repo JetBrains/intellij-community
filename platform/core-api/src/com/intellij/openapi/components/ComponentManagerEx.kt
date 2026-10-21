@@ -28,6 +28,13 @@ interface ComponentManagerEx : ComponentManager, ReferenceDelegatingDisposableIn
   @ApiStatus.Internal
   fun getMutableComponentContainer(): ComponentManager = this as ComponentManager
 
+  /**
+   * Returns the same container as [getMutableComponentContainer], or `null` if the container is not created yet.
+   * A module creates its container only on demand.
+   */
+  @ApiStatus.Internal
+  fun getMutableComponentContainerIfCreated(): ComponentManager? = getMutableComponentContainer()
+
   @ApiStatus.Internal
   override fun getDisposableDelegate(): Disposable = this
 

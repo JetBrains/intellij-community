@@ -7,7 +7,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.impl.ModuleComponentManager
+import com.intellij.openapi.module.impl.LazyModuleComponentManager
 import com.intellij.openapi.project.ModuleListener.TOPIC
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
@@ -189,7 +189,7 @@ open class ModuleManagerComponentBridge(private val project: Project, coroutineS
     diff: MutableEntityStorage?,
     init: (ModuleBridge) -> Unit,
   ): ModuleBridge {
-    val componentManager = ModuleComponentManager(project.getComponentManagerImpl())
+    val componentManager = LazyModuleComponentManager(project.getComponentManagerImpl())
     val moduleBridge = ModuleBridgeImpl(
       moduleEntityId = symbolicId,
       name = name,

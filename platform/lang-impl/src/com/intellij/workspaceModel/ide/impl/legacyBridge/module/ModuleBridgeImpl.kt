@@ -98,12 +98,11 @@ open class ModuleBridgeImpl(
   }
 
   override fun markContainerAsCreated() {
-    @Suppress("DEPRECATION")
-    getModuleComponentManager().markContainerAsCreated()
+    markModuleContainerAsCreated()
   }
 
   override fun initServiceContainer(precomputedExtensionModel: PrecomputedExtensionModel) {
-    getModuleComponentManager().initModuleContainer(precomputedExtensionModel)
+    initModuleContainer(precomputedExtensionModel)
   }
 
   override fun getOptionValue(key: String): String? {

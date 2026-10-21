@@ -18,8 +18,11 @@ class ContainerDescriptor(
   @JvmField
   val extensionPoints: List<ExtensionPointDescriptor>,
 ) {
+  val isEmpty: Boolean
+    get() = services.isEmpty() && components.isEmpty() && extensionPoints.isEmpty() && listeners.isEmpty()
+
   override fun toString(): String {
-    if (services.isEmpty() && components.isEmpty() && extensionPoints.isEmpty() && listeners.isEmpty()) {
+    if (isEmpty) {
       return "ContainerDescriptor(empty)"
     }
     else {

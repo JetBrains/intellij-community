@@ -33,6 +33,9 @@ interface DelegatingComponentManagerEx: ComponentManagerEx {
   override fun getMutableComponentContainer(): ComponentManager = delegateComponentManager.getMutableComponentContainer()
 
   @ApiStatus.Internal
+  override fun getMutableComponentContainerIfCreated(): ComponentManager? = delegateComponentManager.getMutableComponentContainerIfCreated()
+
+  @ApiStatus.Internal
   override fun getDisposableDelegate(): Disposable = delegateComponentManager.getDisposableDelegate()
 
   @ApiStatus.Internal
