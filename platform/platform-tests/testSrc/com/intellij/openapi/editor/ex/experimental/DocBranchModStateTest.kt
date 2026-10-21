@@ -55,9 +55,9 @@ class DocBranchModStateTest {
   }
 
   @Test
-  fun `an unmodified lines op clears the marks and keeps the text`() {
+  fun `a clean lines op clears the marks and keeps the text`() {
     val edited = DocumentBranch.createBranch(TEXT, agent("a")).applyOp(insertOp(0, "1"))
-    val clearAll = unmodifiedLinesOp(0, Int.MAX_VALUE, IntArray(0))
+    val clearAll = cleanLinesOp(0, Int.MAX_VALUE, IntArray(0))
     val cleared = edited.applyOp(clearAll)
     assertFalse(cleared.modState().isLineModified(0))
     assertEquals(edited.modState().sequence(), cleared.modState().sequence())

@@ -42,7 +42,7 @@ internal abstract class DocumentMutatorImpl(
   }
 
   override fun clearLineFlags(startLine: Int, endLine: Int, exceptLines: IntArray) {
-    val op = DocumentOp.unmodifiedLinesOp(startLine, endLine, exceptLines)
+    val op = DocumentOp.cleanLinesOp(startLine, endLine, exceptLines)
     updateAndGet { it.applyOp(op) }
   }
 

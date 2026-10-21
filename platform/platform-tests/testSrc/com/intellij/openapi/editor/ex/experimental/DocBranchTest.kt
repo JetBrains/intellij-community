@@ -147,7 +147,7 @@ class DocBranchTest {
     val base = DocumentBranch.createBranch("abc", agent("a"))
     val sameStamp = modStampOp(base.modState().stamp(), false)
     // A new branch has no modified lines to clear.
-    val noModifiedLines = unmodifiedLinesOp(0, 1, IntArray(0))
+    val noModifiedLines = cleanLinesOp(0, 1, IntArray(0))
     assertSame(base, base.applyOp(sameStamp))
     assertSame(base, base.applyOp(noModifiedLines))
   }
@@ -778,12 +778,12 @@ internal fun modStampOp(stamp: Long, incSequence: Boolean): DocumentOp.ModStamp 
   return DocumentOp.modStampOp(stamp, incSequence)
 }
 
-internal fun unmodifiedLinesOp(
+internal fun cleanLinesOp(
   startLine: Int,
   endLine: Int,
   exceptLines: IntArray,
-): DocumentOp.UnmodifiedLines {
-  return DocumentOp.unmodifiedLinesOp(startLine, endLine, exceptLines)
+): DocumentOp.CleanLines {
+  return DocumentOp.cleanLinesOp(startLine, endLine, exceptLines)
 }
 
 /**

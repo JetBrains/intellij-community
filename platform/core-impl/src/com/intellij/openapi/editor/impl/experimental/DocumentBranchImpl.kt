@@ -63,7 +63,7 @@ internal class DocumentBranchImpl private constructor(
       is DocumentOp.Insert -> applyInsert(op)
       is DocumentOp.Delete -> applyDelete(op)
       is DocumentOp.ModStamp -> applyMetadata(op)
-      is DocumentOp.UnmodifiedLines -> applyMetadata(op)
+      is DocumentOp.CleanLines -> applyMetadata(op)
     }
   }
 

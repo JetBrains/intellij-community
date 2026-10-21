@@ -3,10 +3,10 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.ex.DocumentModState
 import com.intellij.openapi.editor.ex.DocumentOp
+import com.intellij.openapi.editor.ex.DocumentOp.Companion.cleanLinesOp
 import com.intellij.openapi.editor.ex.DocumentOp.Companion.deleteOp
 import com.intellij.openapi.editor.ex.DocumentOp.Companion.insertOp
 import com.intellij.openapi.editor.ex.DocumentOp.Companion.modStampOp
-import com.intellij.openapi.editor.ex.DocumentOp.Companion.unmodifiedLinesOp
 import com.intellij.openapi.editor.ex.DocumentText
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -35,7 +35,7 @@ internal class RangeModStateTest {
     val text = DocumentText.createText("abc")
     val modState = RangeModState.create(text)
     val sameStamp = modStampOp(modState.stamp(), false)
-    val noModifiedLines = unmodifiedLinesOp(0, 1, IntArray(0))
+    val noModifiedLines = cleanLinesOp(0, 1, IntArray(0))
     assertSame(modState, modState.applyOp(text, text, insertOp(1, "")))
     assertSame(modState, modState.applyOp(text, text, deleteOp(1, 0)))
     assertSame(modState, modState.applyOp(text, text, sameStamp))
@@ -60,8 +60,8 @@ internal class RangeModStateTest {
   @Test
   fun `a clear of a wrong line range fails`() {
     val edited = editedFirstLine()
-    val reversed = unmodifiedLinesOp(1, 0, IntArray(0))
-    val pastEnd = unmodifiedLinesOp(0, 3, IntArray(0))
+    val reversed = cleanLinesOp(1, 0, IntArray(0))
+    val pastEnd = cleanLinesOp(0, 3, IntArray(0))
     assertThrows(IllegalArgumentException::class.java) { edited.apply(reversed) }
     assertThrows(IndexOutOfBoundsException::class.java) { edited.apply(pastEnd) }
   }
@@ -108,7 +108,7 @@ internal class RangeModStateTest {
     val edited = assertSameAsLineSet(
       "a\nb\nc",
       insertOp(4, "x"),
-      unmodifiedLinesOp(0, Int.MAX_VALUE, intArrayOf(1, 2)),
+      cleanLinesOp(0, Int.MAX_VALUE, intArrayOf(1, 2)),
     )
     assertFalse(edited.modState.isLineModified(1))
     assertTrue(edited.modState.isLineModified(2))
@@ -119,18 +119,18 @@ internal class RangeModStateTest {
     // The line 1 of "a\nxb\nc" is modified.
     val edited = assertSameAsLineSet("a\nb\nc", insertOp(2, "x"))
     val clears = listOf(
-      unmodifiedLinesOp(2, 3, IntArray(0)),
-      unmodifiedLinesOp(0, Int.MAX_VALUE, intArrayOf(1)),
-      unmodifiedLinesOp(0, Int.MAX_VALUE, intArrayOf(1, 0, 1)),
-      unmodifiedLinesOp(1, 1, IntArray(0)),
+      cleanLinesOp(2, 3, IntArray(0)),
+      cleanLinesOp(0, Int.MAX_VALUE, intArrayOf(1)),
+      cleanLinesOp(0, Int.MAX_VALUE, intArrayOf(1, 0, 1)),
+      cleanLinesOp(1, 1, IntArray(0)),
       // The except lines lie outside the range or the text, next to the modified line.
-      unmodifiedLinesOp(2, 3, intArrayOf(-1, 0, 3)),
+      cleanLinesOp(2, 3, intArrayOf(-1, 0, 3)),
     )
     for (clear in clears) {
       assertSame(edited.modState, edited.apply(clear)) { "$clear" }
     }
-    val cleared = Edited(edited.text, edited.apply(unmodifiedLinesOp(0, Int.MAX_VALUE, IntArray(0))))
-    assertSame(cleared.modState, cleared.apply(unmodifiedLinesOp(0, Int.MAX_VALUE, IntArray(0))))
+    val cleared = Edited(edited.text, edited.apply(cleanLinesOp(0, Int.MAX_VALUE, IntArray(0))))
+    assertSame(cleared.modState, cleared.apply(cleanLinesOp(0, Int.MAX_VALUE, IntArray(0))))
   }
 
   @Test
@@ -141,10 +141,10 @@ internal class RangeModStateTest {
     val lastLine = ModifiedLine(insertOp(5, "y"), 2)
     val firstLine = ModifiedLine(insertOp(0, "z"), 0)
     val cases = listOf(
-      lastLine to unmodifiedLinesOp(1, 3, IntArray(0)),
-      lastLine to unmodifiedLinesOp(0, Int.MAX_VALUE, intArrayOf(1)),
-      lastLine to unmodifiedLinesOp(0, Int.MAX_VALUE, intArrayOf(0, 1)),
-      firstLine to unmodifiedLinesOp(0, Int.MAX_VALUE, intArrayOf(1)),
+      lastLine to cleanLinesOp(1, 3, IntArray(0)),
+      lastLine to cleanLinesOp(0, Int.MAX_VALUE, intArrayOf(1)),
+      lastLine to cleanLinesOp(0, Int.MAX_VALUE, intArrayOf(0, 1)),
+      firstLine to cleanLinesOp(0, Int.MAX_VALUE, intArrayOf(1)),
     )
     for ((case, clear) in cases) {
       val edited = assertSameAsLineSet(start, case.edit)
@@ -157,7 +157,7 @@ internal class RangeModStateTest {
   @Test
   fun `a clear of every line matches the line set`() {
     val insert = insertOp(0, "x\n")
-    val clearAll = unmodifiedLinesOp(0, Int.MAX_VALUE, IntArray(0))
+    val clearAll = cleanLinesOp(0, Int.MAX_VALUE, IntArray(0))
     for (start in listOf("", "a", "a\n", "a\r\nb\r\n", "\n\n")) {
       val cleared = assertSameAsLineSet(start, insert, clearAll)
       assertFalse(cleared.modState.isLineModified(0)) { start }

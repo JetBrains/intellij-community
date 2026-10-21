@@ -3,10 +3,10 @@ package com.intellij.openapi.editor.impl.experimental
 
 import com.intellij.openapi.editor.ex.DocumentModState
 import com.intellij.openapi.editor.ex.DocumentOp
+import com.intellij.openapi.editor.ex.DocumentOp.Companion.cleanLinesOp
 import com.intellij.openapi.editor.ex.DocumentOp.Companion.deleteOp
 import com.intellij.openapi.editor.ex.DocumentOp.Companion.insertOp
 import com.intellij.openapi.editor.ex.DocumentOp.Companion.modStampOp
-import com.intellij.openapi.editor.ex.DocumentOp.Companion.unmodifiedLinesOp
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.experimental.Agent
@@ -48,7 +48,7 @@ internal class DocBranchSnapshotRulesTest {
   @Test
   fun `a clear of an untouched text keeps the instance`() {
     for (value in values("a\nb\nc")) {
-      val clear = unmodifiedLinesOp(0, Int.MAX_VALUE, IntArray(0))
+      val clear = cleanLinesOp(0, Int.MAX_VALUE, IntArray(0))
       assertTrue(value.isSameAs(value.applyOp(clear)), value.kind)
     }
   }

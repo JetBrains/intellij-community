@@ -42,7 +42,7 @@ interface DocumentModState {
    * For [DocumentOp.Insert] and [DocumentOp.Delete], [before] must be the text this instance's
    * line-modification tracking was built against, and [after] must be [before] with [op] applied.
    * Each of these ops increments [sequence] by one when it changes the text.
-   * For [DocumentOp.UnmodifiedLines], [before] must be the current text paired with this instance.
+   * For [DocumentOp.CleanLines], [before] must be the current text paired with this instance.
    */
   @Contract(pure = true)
   fun applyOp(before: DocumentText, after: DocumentText, op: DocumentOp): DocumentModState

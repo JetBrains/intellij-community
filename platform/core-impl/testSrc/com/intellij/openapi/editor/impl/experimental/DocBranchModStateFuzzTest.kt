@@ -2,10 +2,10 @@
 package com.intellij.openapi.editor.impl.experimental
 
 import com.intellij.openapi.editor.ex.DocumentOp
+import com.intellij.openapi.editor.ex.DocumentOp.Companion.cleanLinesOp
 import com.intellij.openapi.editor.ex.DocumentOp.Companion.deleteOp
 import com.intellij.openapi.editor.ex.DocumentOp.Companion.insertOp
 import com.intellij.openapi.editor.ex.DocumentOp.Companion.modStampOp
-import com.intellij.openapi.editor.ex.DocumentOp.Companion.unmodifiedLinesOp
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.experimental.Agent
@@ -52,7 +52,7 @@ internal class DocBranchModStateFuzzTest {
    * Whether [op] is a clear with an except line in its range that is modified in [snapshot].
    */
   private fun keepsModifiedExceptLine(snapshot: DocumentSnapshot, op: DocumentOp): Boolean {
-    if (op !is DocumentOp.UnmodifiedLines) {
+    if (op !is DocumentOp.CleanLines) {
       return false
     }
     val lineCount = snapshot.text().lineCount()
@@ -75,7 +75,7 @@ internal class DocBranchModStateFuzzTest {
   private fun randomOp(text: DocumentText, random: Random): DocumentOp {
     return when (random.nextInt(6)) {
       0 -> modStampOp(random.nextLong(), random.nextBoolean())
-      1 -> randomUnmodifiedLines(text, random)
+      1 -> randomCleanLines(text, random)
       2, 3 -> randomInsert(text, random)
       else -> randomDelete(text, random)
     }
@@ -109,11 +109,11 @@ internal class DocBranchModStateFuzzTest {
   /**
    * A clear of a random line range. An except line can lie outside the text, and the clear ignores it.
    */
-  private fun randomUnmodifiedLines(text: DocumentText, random: Random): DocumentOp {
+  private fun randomCleanLines(text: DocumentText, random: Random): DocumentOp {
     val lineCount = text.lineCount()
     if (lineCount == 0) {
       val endLine = if (random.nextBoolean()) 0 else Int.MAX_VALUE
-      return unmodifiedLinesOp(0, endLine, IntArray(0))
+      return cleanLinesOp(0, endLine, IntArray(0))
     }
     val startLine = random.nextInt(lineCount)
     val endLine = if (random.nextBoolean()) {
@@ -124,7 +124,7 @@ internal class DocBranchModStateFuzzTest {
     val exceptLines = IntArray(random.nextInt(3)) {
       random.nextInt(lineCount + 2) - 1
     }
-    return unmodifiedLinesOp(startLine, endLine, exceptLines)
+    return cleanLinesOp(startLine, endLine, exceptLines)
   }
 
   private companion object {

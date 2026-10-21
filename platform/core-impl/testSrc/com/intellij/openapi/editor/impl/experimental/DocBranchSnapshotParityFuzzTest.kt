@@ -2,10 +2,10 @@
 package com.intellij.openapi.editor.impl.experimental
 
 import com.intellij.openapi.editor.ex.DocumentOp
+import com.intellij.openapi.editor.ex.DocumentOp.Companion.cleanLinesOp
 import com.intellij.openapi.editor.ex.DocumentOp.Companion.deleteOp
 import com.intellij.openapi.editor.ex.DocumentOp.Companion.insertOp
 import com.intellij.openapi.editor.ex.DocumentOp.Companion.modStampOp
-import com.intellij.openapi.editor.ex.DocumentOp.Companion.unmodifiedLinesOp
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
@@ -193,7 +193,7 @@ internal class DocBranchSnapshotParityFuzzTest {
       val exceptLines = IntArray(random.nextInt(4)) {
         random.nextInt(lineCount + 2) - 1
       }
-      return unmodifiedLinesOp(startLine, endLine, exceptLines)
+      return cleanLinesOp(startLine, endLine, exceptLines)
     }
 
     /**
@@ -201,9 +201,9 @@ internal class DocBranchSnapshotParityFuzzTest {
      */
     private fun wrongClear(lineCount: Int, random: Random): DocumentOp {
       return when (random.nextInt(3)) {
-        0 -> unmodifiedLinesOp(1, 0, IntArray(0))
-        1 -> unmodifiedLinesOp(0, lineCount + 1, IntArray(0))
-        else -> unmodifiedLinesOp(lineCount, lineCount + 1, IntArray(0))
+        0 -> cleanLinesOp(1, 0, IntArray(0))
+        1 -> cleanLinesOp(0, lineCount + 1, IntArray(0))
+        else -> cleanLinesOp(lineCount, lineCount + 1, IntArray(0))
       }
     }
 

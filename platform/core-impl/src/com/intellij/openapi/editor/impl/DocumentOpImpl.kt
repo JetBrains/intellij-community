@@ -101,11 +101,11 @@ internal class ModStampOpImpl(
   }
 }
 
-internal class UnmodifiedLinesOpImpl(
+internal class CleanLinesOpImpl(
   private val startLine: Int,
   private val endLine: Int,
   private val exceptLines: IntArray,
-) : DocumentOp.UnmodifiedLines {
+) : DocumentOp.CleanLines {
   init {
     require(startLine >= 0)
     require(endLine >= 0)
@@ -116,6 +116,6 @@ internal class UnmodifiedLinesOpImpl(
   override fun exceptLines(): IntArray = exceptLines
 
   override fun toString(): String {
-    return "unmodifiedLines($startLine, $endLine, exceptLines=${exceptLines.contentToString()})"
+    return "cleanLines($startLine, $endLine, exceptLines=${exceptLines.contentToString()})"
   }
 }

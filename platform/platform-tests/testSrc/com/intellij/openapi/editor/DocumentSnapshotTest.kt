@@ -36,7 +36,7 @@ internal class DocumentSnapshotTest {
   @Test
   fun `withClearedLineFlags of an untouched text returns the same snapshot`() {
     val snapshot = snapshot("a\nb\nc")
-    val op = DocumentOp.unmodifiedLinesOp(0, Int.MAX_VALUE, IntArray(0))
+    val op = DocumentOp.cleanLinesOp(0, Int.MAX_VALUE, IntArray(0))
     assertSame(snapshot, snapshot.applyOp(op))
   }
 

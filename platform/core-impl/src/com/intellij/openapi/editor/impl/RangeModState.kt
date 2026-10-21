@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.ex.DocumentText
  *
  * A text of length `n` has `n + 1` positions. A line is modified when a position from the line start
  * to its separator is modified. These are the lines that [ModifiedLineSet] marks for the same ops.
- * Only [isLineModified] and [DocumentOp.UnmodifiedLines] read line numbers, and they read them from
+ * Only [isLineModified] and [DocumentOp.CleanLines] read line numbers, and they read them from
  * [text]. So [text] builds line data only when a caller asks about a line.
  *
  * [positions] is `null` before the first text op, as [ModifiedLineSet] does not exist then.
@@ -46,7 +46,7 @@ internal class RangeModState private constructor(
       is DocumentOp.Insert -> applyTextChange(before, after, op.offset(), 0, op.fragment())
       is DocumentOp.Delete -> applyTextChange(before, after, op.offset(), op.length(), "")
       is DocumentOp.ModStamp -> applyModStamp(op)
-      is DocumentOp.UnmodifiedLines -> applyUnmodifiedLines(op)
+      is DocumentOp.CleanLines -> applyCleanLines(op)
     }
   }
 
@@ -141,7 +141,7 @@ internal class RangeModState private constructor(
    * The state with the lines of [op] cleared, as [ModifiedLineSet.clearModificationFlags] checks and
    * clears them. An except line keeps its flag. A clear that changes no flag returns this state.
    */
-  private fun applyUnmodifiedLines(op: DocumentOp.UnmodifiedLines): DocumentModState {
+  private fun applyCleanLines(op: DocumentOp.CleanLines): DocumentModState {
     val positions = positions ?: return this
     val clearedLines = clearedLines(op.startLine(), op.endLine())
     val exceptLines = op.exceptLines()
