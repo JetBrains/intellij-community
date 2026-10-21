@@ -336,6 +336,9 @@ pub(crate) struct Scenario {
     pub summary: Summary,
     /// The bundle's base, `/__air/bundle/<id>/`; a file of the bundle is the URL plus its path.
     pub url: String,
+    /// The bundle's zip, relative to the listing, in the listing that `teamcity-publish` writes beside its zips.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub zip: Option<String>,
 }
 
 /// A found bundle as the listing names it.
@@ -343,6 +346,7 @@ pub(crate) fn listed(found: &Summary) -> Scenario {
     Scenario {
         summary: found.clone(),
         url: format!("{BUNDLE_ROUTE}{}/", found.id),
+        zip: None,
     }
 }
 
@@ -362,10 +366,19 @@ fn rank_of(status: Status) -> usize {
 
 /// A snapshot's bundles, grouped by run, newest run first.
 pub(crate) fn runs_of(current: &Snap) -> Runs<'_> {
+    Runs {
+        generation: current.generation,
+        controller_runs: &current.controller_runs,
+        runs: group_runs(current.found.bundles.iter().map(|found| listed(&found.summary))),
+        roots: &current.found.roots,
+    }
+}
+
+/// The scenarios grouped by run, newest run first. A run keeps its scenarios in the given order.
+pub(crate) fn group_runs(scenarios: impl IntoIterator<Item = Scenario>) -> Vec<Run> {
     let mut runs: Vec<Run> = Vec::new();
     let mut by_run: HashMap<String, usize> = HashMap::new();
-    for found in &current.found.bundles {
-        let scenario = listed(&found.summary);
+    for scenario in scenarios {
         let index = *by_run.entry(scenario.summary.run_id.clone()).or_insert_with(|| {
             runs.push(Run {
                 run_id: scenario.summary.run_id.clone(),
@@ -391,10 +404,5 @@ pub(crate) fn runs_of(current: &Snap) -> Runs<'_> {
         run.scenarios.push(scenario);
     }
     runs.sort_by(|left, right| right.started_at.cmp(&left.started_at).then_with(|| left.run_id.cmp(&right.run_id)));
-    Runs {
-        generation: current.generation,
-        controller_runs: &current.controller_runs,
-        runs,
-        roots: &current.found.roots,
-    }
+    runs
 }

@@ -194,6 +194,7 @@ pub(crate) fn publish(testlogs: &[PathBuf], out: &Path, stdout: &mut dyn Write, 
                     scenario: &bundle.scenario,
                     video: bundle.has_video.then_some(VIDEO_FILE),
                     still: bundle.thumbnail.as_deref().filter(|_| failed),
+                    link: None,
                     cases: &cases,
                 });
                 for line in lines {

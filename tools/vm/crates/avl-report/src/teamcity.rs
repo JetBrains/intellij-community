@@ -56,6 +56,8 @@ pub struct PublishedTrace<'a> {
     pub video: Option<&'a str>,
     /// The picture of the failure inside the bundle, when the scenario failed.
     pub still: Option<&'a str>,
+    /// The page of the published viewer that opens the trace, when the step publishes the viewer.
+    pub link: Option<&'a str>,
     /// The cases of the JUnit XML of the trace's own test target, as `(class, case)`, which TeamCity imported. Only
     /// they name the trace's test, so a trace of one lane never names the test of another lane.
     pub cases: &'a [(String, String)],
@@ -164,8 +166,8 @@ impl Messages {
         out
     }
 
-    /// The messages of a trace that a step after the tests publishes: the zip once, then the bundle, its video and its
-    /// failure picture as the metadata of its test. The zip holds the bundle at its top.
+    /// The messages of a trace that a step after the tests publishes: the zip once, then the bundle, the viewer page
+    /// of the trace, its video and its failure picture as the metadata of its test. The zip holds the bundle at its top.
     pub fn published(&mut self, trace: &PublishedTrace<'_>) -> Vec<String> {
         let mut out = self.artifact(trace.zip, trace.target);
         let zip_name = trace.zip.rsplit(['/', '\\']).next().unwrap_or(trace.zip);
@@ -173,6 +175,9 @@ impl Messages {
         let flow = self.flow(NO_FLOW);
         let name = test_name(trace.cases, trace.test_class, trace.scenario);
         flow.trace_metadata(&mut out, &name, "trace", "artifact", &bundle);
+        if let Some(link) = trace.link {
+            flow.trace_metadata(&mut out, &name, "trace viewer", "link", link);
+        }
         if let Some(video) = trace.video {
             flow.trace_metadata(&mut out, &name, "video", "video", &format!("{bundle}!/{video}"));
         }
@@ -182,7 +187,6 @@ impl Messages {
         out
     }
 
-    /// The messages that end the run: every open case fails as unfinished, and every open suite finishes.
     /// Publishes the host file `file` into the artifact directory `target`, once for each file.
     pub fn artifact(&mut self, file: &str, target: &str) -> Vec<String> {
         if self.published.insert(file.to_owned()) {
@@ -192,6 +196,7 @@ impl Messages {
         }
     }
 
+    /// The messages that end the run: every open case fails as unfinished, and every open suite finishes.
     pub fn finish(&mut self) -> Vec<String> {
         let mut out = Vec::new();
         for flow in &mut self.flows {

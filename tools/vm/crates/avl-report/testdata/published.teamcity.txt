@@ -1,5 +1,6 @@
 ##teamcity[publishArtifacts '/out/ui_lane_test/iter-1/AirComposerUiTest/attaches_a_file.zip => air-traces/ui_lane_test/iter-1/AirComposerUiTest']
 ##teamcity[testMetadata testName='com.example.ui.AirComposerUiTest.attaches a file' name='trace' type='artifact' value='air-traces/ui_lane_test/iter-1/AirComposerUiTest/attaches_a_file.zip']
+##teamcity[testMetadata testName='com.example.ui.AirComposerUiTest.attaches a file' name='trace viewer' type='link' value='https://teamcity.example/repository/download/Air_Ui/7:id/air-traces/index.html#/trace?zip=a%2Fb.zip']
 ##teamcity[testMetadata testName='com.example.ui.AirComposerUiTest.attaches a file' name='video' type='video' value='air-traces/ui_lane_test/iter-1/AirComposerUiTest/attaches_a_file.zip!/video.mp4']
 ##teamcity[testMetadata testName='com.example.ui.AirComposerUiTest.attaches a file' name='failure' type='image' value='air-traces/ui_lane_test/iter-1/AirComposerUiTest/attaches_a_file.zip!/snap/0012.webp']
 ##teamcity[publishArtifacts '/out/ui-real_lane_test/iter-2/AirComposerUiTest/attaches_a_file.zip => air-traces/ui-real_lane_test/iter-2/AirComposerUiTest']

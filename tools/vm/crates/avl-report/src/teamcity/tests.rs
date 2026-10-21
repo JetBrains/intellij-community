@@ -128,7 +128,7 @@ fn a_file_is_published_once_into_its_directory() {
 }
 
 /// A step after the tests names each trace by the case of its own XML, with the class's package, and adds the zip
-/// once, the bundle, its video and its failure picture, with no flow. Two lanes whose XMLs hold one test name in two
+/// once, the bundle, the viewer page, its video and its failure picture, with no flow. Two lanes whose XMLs hold one test name in two
 /// packages name each trace by its own lane's case. A trace whose case its XML lacks keeps its own names.
 fn published_trace<'a>(scenario: &'a str, zip: &'a str, cases: &'a [(String, String)]) -> PublishedTrace<'a> {
     PublishedTrace {
@@ -138,6 +138,7 @@ fn published_trace<'a>(scenario: &'a str, zip: &'a str, cases: &'a [(String, Str
         scenario,
         video: None,
         still: None,
+        link: None,
         cases,
     }
 }
@@ -156,6 +157,7 @@ fn a_published_trace_names_the_case_of_its_own_xml() {
     let mut lines = messages.published(&PublishedTrace {
         video: Some("video.mp4"),
         still: Some("snap/0012.webp"),
+        link: Some("https://teamcity.example/repository/download/Air_Ui/7:id/air-traces/index.html#/trace?zip=a%2Fb.zip"),
         ..published(
             "attaches a file",
             "/out/ui_lane_test/iter-1/AirComposerUiTest/attaches_a_file.zip",
