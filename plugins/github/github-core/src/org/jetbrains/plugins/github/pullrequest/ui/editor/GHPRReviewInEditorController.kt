@@ -6,6 +6,7 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewActiveRangesTracker
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentNavigator
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesRenderer
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
@@ -25,8 +26,6 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorUtil
-import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.cancelOnDispose
@@ -45,12 +44,15 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.ui.GHPRProjectViewModel
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @Service(Service.Level.PROJECT)
 internal class GHPRReviewInEditorController(private val project: Project, private val cs: CoroutineScope) {
+  private val commentNavigator = CodeReviewCommentNavigator(project)
+
   internal class InstallerListener : EditorFactoryListener {
     override fun editorCreated(event: EditorFactoryEvent) {
       val editor = event.editor
@@ -102,7 +104,7 @@ internal class GHPRReviewInEditorController(private val project: Project, privat
               val syncedFlow = reviewVm.updateRequired.map { !it }
 
               combine(enabledFlow, syncedFlow) { enabled, synced -> enabled && synced }.distinctUntilChanged().collectLatest { enabled ->
-                if (enabled) showReview(project, settings, fileVm, editor)
+                if (enabled) showReview(project, settings, fileVm, editor, commentNavigator)
               }
             }
           }
@@ -115,15 +117,17 @@ internal class GHPRReviewInEditorController(private val project: Project, privat
   }
 }
 
-private suspend fun showReview(project: Project, settings: GithubPullRequestsProjectUISettings, fileVm: GHPRReviewFileEditorViewModel, editor: EditorEx): Nothing {
+private suspend fun showReview(
+  project: Project,
+  settings: GithubPullRequestsProjectUISettings,
+  fileVm: GHPRReviewFileEditorViewModel,
+  editor: EditorEx,
+  commentNavigator: CodeReviewCommentNavigator,
+): Nothing {
   withContext(Dispatchers.Main.immediate) {
     val reviewHeadContent = fileVm.originalContent.mapNotNull { it?.result?.getOrThrow() }.first()
     val cs = this
-    val model = GHPRReviewFileEditorModel(cs, project, settings, fileVm) showEditor@{ changeToShow, lineIdx ->
-      val file = changeToShow.filePathAfter?.virtualFile ?: return@showEditor
-      val fileOpenDescriptor = OpenFileDescriptor(project, file, lineIdx, 0)
-      FileEditorManager.getInstance(project).openFileEditor(fileOpenDescriptor, true)
-    }
+    val model = createReviewModel(cs, commentNavigator, project, settings, fileVm, editor)
 
     launchNow {
       ReviewInEditorUtil.trackDocumentDiffSync(reviewHeadContent, editor.document, model::setPostReviewChanges)
@@ -158,3 +162,14 @@ private suspend fun showReview(project: Project, settings: GithubPullRequestsPro
     }
   }
 }
+
+@VisibleForTesting
+internal fun createReviewModel(
+  cs: CoroutineScope,
+  commentNavigator: CodeReviewCommentNavigator,
+  project: Project,
+  settings: GithubPullRequestsProjectUISettings,
+  fileVm: GHPRReviewFileEditorViewModel,
+  editor: Editor,
+): GHPRReviewFileEditorModel =
+  GHPRReviewFileEditorModel(cs, project, settings, fileVm, commentNavigator.forEditor(editor))
