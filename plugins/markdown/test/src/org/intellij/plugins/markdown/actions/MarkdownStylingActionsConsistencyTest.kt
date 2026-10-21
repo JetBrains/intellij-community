@@ -157,12 +157,12 @@ class MarkdownStylingActionsConsistencyTest {
     //}
   }
 
-  class BoldActionConsistency: BaseTest("org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction", "**")
+  class BoldActionConsistency: BaseTest(MarkdownStylingActionIds.TOGGLE_BOLD, "**")
 
-  class ItalicActionConsistency: BaseTest("org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction", "*")
+  class ItalicActionConsistency: BaseTest(MarkdownStylingActionIds.TOGGLE_ITALIC, "*")
 
   class StrikethroughActionConsistency: BaseTest(
-    "org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction",
+    MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH,
     "~~"
   )
 }

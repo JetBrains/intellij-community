@@ -35,14 +35,14 @@ public class MarkdownToggleItalicTest extends LightPlatformCodeInsightTestCase {
   public void testSimpleWithUnderscore() {
     MarkdownTestSettingsUtilsKt.withEmphasisStyle(EmphasisStyle.UNDERSCORES, () -> {
       configureFromFileText("some.md", "Simple <selection>test</selection> text");
-      executeAction("org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction");
+      executeAction(MarkdownStylingActionIds.TOGGLE_ITALIC);
       checkResultByText("Simple _<selection>test</selection>_ text");
     });
   }
 
   private void doTest() {
     configureByFile(getTestName(true) + "_before.md");
-    executeAction("org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction");
+    executeAction(MarkdownStylingActionIds.TOGGLE_ITALIC);
     checkResultByFile(getTestName(true) + "_after.md");
   }
 

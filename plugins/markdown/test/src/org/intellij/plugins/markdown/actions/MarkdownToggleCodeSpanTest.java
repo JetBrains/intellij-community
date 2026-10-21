@@ -8,8 +8,6 @@ import org.intellij.plugins.markdown.MarkdownTestingUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class MarkdownToggleCodeSpanTest extends LightPlatformCodeInsightTestCase {
-  private static final String ACTION_ID = "org.intellij.plugins.markdown.ui.actions.styling.ToggleCodeSpanAction";
-
   public void testSimple() {
     doTest();
   }
@@ -26,16 +24,33 @@ public class MarkdownToggleCodeSpanTest extends LightPlatformCodeInsightTestCase
     doTest(false);
   }
 
+  public void testTableRowSelectionDoesNotIncludePadding() {
+    configureFromFileText("some.md", """
+      | Feature | Markdown | MDX |
+      |---------|----------|-----|
+      | <caret>Headings | yes | yes |
+      | React | no | yes |
+      """.trim());
+    executeAction("Markdown.Table.SelectRow");
+    executeAction(MarkdownStylingActionIds.TOGGLE_CODE_SPAN);
+    checkResultByText("""
+      | Feature | Markdown | MDX |
+      |---------|----------|-----|
+      | `Headings` | `yes` | `yes` |
+      | React | no | yes |
+      """.trim());
+  }
+
   private void doTest() {
     doTest(true);
   }
 
   private void doTest(boolean actionIsEnabled) {
     configureByFile(getTestName(true) + "_before.md");
-    AnAction action = ActionManager.getInstance().getAction(ACTION_ID);
+    AnAction action = ActionManager.getInstance().getAction(MarkdownStylingActionIds.TOGGLE_CODE_SPAN);
     assertEquals(actionIsEnabled, EditorTestUtil.checkActionIsEnabled(getEditor(), action));
     if (actionIsEnabled) {
-      executeAction(ACTION_ID);
+      executeAction(MarkdownStylingActionIds.TOGGLE_CODE_SPAN);
     }
     checkResultByFile(getTestName(true) + "_after.md");
   }

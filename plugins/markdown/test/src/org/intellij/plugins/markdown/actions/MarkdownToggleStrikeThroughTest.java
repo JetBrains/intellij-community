@@ -31,9 +31,95 @@ public class MarkdownToggleStrikeThroughTest extends LightPlatformCodeInsightTes
     doTest();
   }
 
+  public void testTableRowSelection() {
+    configureFromFileText("some.md", """
+      | Feature | Markdown | MDX |
+      |---------|----------|-----|
+      | <caret>Headings | yes | yes |
+      | React | no | yes |
+      """.trim());
+    executeAction("Markdown.Table.SelectRow");
+    executeAction(MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
+    checkResultByText("""
+      | Feature | Markdown | MDX |
+      |---------|----------|-----|
+      | ~~Headings~~ | ~~yes~~ | ~~yes~~ |
+      | React | no | yes |
+      """.trim());
+  }
+
+  public void testTableColumnSelection() {
+    configureFromFileText("some.md", """
+      | Feature | Markdown | MDX |
+      |---------|----------|-----|
+      | <caret>Headings | yes | yes |
+      | React | no | yes |
+      """.trim());
+    executeAction("Markdown.Table.SelectCurrentColumn.SelectContentCells");
+    executeAction(MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
+    checkResultByText("""
+      | ~~Feature~~ | Markdown | MDX |
+      |---------|----------|-----|
+      | ~~Headings~~ | yes | yes |
+      | ~~React~~ | no | yes |
+      """.trim());
+  }
+
+  public void testTableRowSelectionCanToggleOff() {
+    configureFromFileText("some.md", """
+      | Feature | Markdown | MDX |
+      |---------|----------|-----|
+      | <caret>Headings | yes | yes |
+      | React | no | yes |
+      """.trim());
+    executeAction("Markdown.Table.SelectRow");
+    executeAction(MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
+    executeAction(MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
+    checkResultByText("""
+      | Feature | Markdown | MDX |
+      |---------|----------|-----|
+      | Headings | yes | yes |
+      | React | no | yes |
+      """.trim());
+  }
+
+  public void testTableRowSelectionKeepsExistingFormatting() {
+    configureFromFileText("some.md", """
+      | Feature | Markdown | MDX |
+      |---------|----------|-----|
+      | <caret>Headings | ~~yes~~ | no |
+      | React | no | yes |
+      """.trim());
+    executeAction("Markdown.Table.SelectRow");
+    executeAction(MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
+    checkResultByText("""
+      | Feature | Markdown | MDX |
+      |---------|----------|-----|
+      | ~~Headings~~ | ~~yes~~ | ~~no~~ |
+      | React | no | yes |
+      """.trim());
+  }
+
+  public void testTableRowSelectionSkipsEmptyCells() {
+    configureFromFileText("some.md", """
+      | Feature | Markdown | MDX |
+      |---------|----------|-----|
+      | <caret>Headings |   | no |
+      | React | no | yes |
+      """.trim());
+    executeAction("Markdown.Table.SelectRow");
+    executeAction(MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
+    checkResultByText("""
+      | Feature | Markdown | MDX |
+      |---------|----------|-----|
+      | ~~Headings~~ |   | ~~no~~ |
+      | React | no | yes |
+      """.trim());
+  }
+
   private void doTest() {
     configureByFile(getTestName(true) + "_before.md");
-    executeAction("org.intellij.plugins.markdown.ui.actions.styling.ToggleStrikethroughAction");
+    executeAction(MarkdownStylingActionIds.TOGGLE_STRIKETHROUGH);
     checkResultByFile(getTestName(true) + "_after.md");
   }
 

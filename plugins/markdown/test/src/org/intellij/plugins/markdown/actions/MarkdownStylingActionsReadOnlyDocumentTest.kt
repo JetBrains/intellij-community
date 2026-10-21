@@ -33,10 +33,9 @@ class MarkdownStylingActionsReadOnlyDocumentTest : LightPlatformCodeInsightTestC
   // User declines the "make writable" prompt — file stays read-only, action must no-op.
 
   fun `test unordered list is a no-op when user declines`() = doNoOpTest(CreateOrChangeListActionGroup.UnorderedList())
-  fun `test bold is a no-op when user declines`() = doNoOpTestById("org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction")
   fun `test header title is a no-op when user declines`() = doNoOpTest(SetHeaderLevelImpl.Title())
-
-  private fun doNoOpTestById(actionId: String) {
+  fun `test bold is a no-op when user declines`() {
+    val actionId = MarkdownStylingActionIds.TOGGLE_BOLD
     val action = ActionManager.getInstance().getAction(actionId)
     assertNotNull("action $actionId is not registered", action)
     doNoOpTest(action)
