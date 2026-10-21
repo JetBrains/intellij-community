@@ -92,6 +92,8 @@ import com.jetbrains.python.project.project
 import com.jetbrains.python.psi.types.PyTypeEngineSettingsModificationTracker
 import com.jetbrains.python.sdk.ModuleOrProject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -347,7 +349,7 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
    * after [fileOpened] returns. A serve-key refresh that lands in between finds no client, so it restarts nothing.
    */
   internal fun checkGroupsOfNewClient(project: Project) {
-    if (!servesEveryModule) return
+    if (!servesEveryModule || project.isDisposed) return
     project.service<PyLspService>().cs.launch { restartStaleClients(project) }
   }
 
@@ -367,6 +369,11 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
       val keyOf = { pyProject: PyProject -> keys.getByModule(pyProject) ?: pyLspServeKeyWithoutVersion(pyProject) }
       pyLspFolderSetIsStale(descriptors, served, keyOf) to descriptors.any { pyLspServesNothing(it, served) }
     }
+
+    // The platform stops a server in a blocking call that ignores cancellation. It waits for a server that still
+    // starts, so a stop that begins while the project closes outlives the project.
+    currentCoroutineContext().ensureActive()
+    if (project.isDisposed) return false
 
     // A server that answers for no served module keeps folders the project dropped, and its
     // descriptor holds every module it was built with, so a disposed module stays reachable while it
