@@ -1,11 +1,13 @@
 //! The IJ Perf file of a scenario, `metrics.performance.json`: the metrics of its `testFinished` in the format that the
 //! IJ Perf dashboard collects from the artifacts of a TeamCity build.
 //!
-//! The lane document names the dashboard series of each scenario that reports metrics. Before an iteration of the lane
-//! daemon, the controller publishes a [`Plan`]: the build of the IDE and the series of the lane. When the report of the
-//! iteration is published, the results write one file for each case that reported a metric and has a series, under the
-//! artifact path of the series, and a TeamCity build step publishes the file there. A case with metrics and no series,
-//! such as a warm-up, gets no file. Its metrics still reach TeamCity as `testMetadata`.
+//! The lane document names the dashboard series of each scenario that reports metrics. A [`Plan`] holds the build of
+//! the IDE and the series of the lane. The controller and `lane-run` both make the plan before a run, and both write
+//! one file for each case that reported a metric and has a series, under the artifact path of the series
+//! ([`File::path_below`]). The controller publishes the plan before an iteration of the lane daemon, and its results
+//! write the files when the report of the iteration is published. `lane-run` writes the files after its run. On
+//! TeamCity each of them publishes the file there. A case with metrics and no series, such as a warm-up, gets no file.
+//! Its metrics still reach TeamCity as `testMetadata`.
 //!
 //! The format is `PerformanceMetricsDto` of `intellij.tools.ide.metrics.collector`, version 1, as the JVM host wrote it.
 //! A metric whose name ends with `Ms` is a duration. A metric whose name starts with `growth.` is a ratio, and it is the
@@ -13,11 +15,14 @@
 //! value is rounded, and a half goes up.
 
 use std::collections::BTreeMap;
+use std::io;
+use std::path::{Path, PathBuf};
 
-use avl_junit::cases::{StreamCase, simple_class_name};
 use avl_wire::daemon::RunEvent;
-use avl_wire::program::lane::PerformanceSeries;
+use avl_wire::program::lane::{PerformanceSeries, parse_lane_document};
 use serde::{Deserialize, Serialize};
+
+use crate::cases::{StreamCase, simple_class_name};
 
 #[cfg(test)]
 mod tests;
@@ -27,6 +32,9 @@ pub const FILE_NAME: &str = "metrics.performance.json";
 
 /// The `event` of the journal record of a [`Plan`].
 pub const PLAN_EVENT: &str = "performancePlan";
+
+/// The file of an IDE distribution that names its build, such as `IU-271.1234`.
+pub const BUILD_TXT: &str = "build.txt";
 
 /// What the files of one iteration need beside its run stream: the build of the IDE, without the product code, and
 /// the series that the lane document names.
@@ -66,6 +74,33 @@ impl Plan {
     }
 }
 
+/// The plan of `lane` from `lane_documents`, the lane documents by their file name, and the IDE build `ide_build`. It is
+/// `None` for a lane whose document names no series. An error says why the plan cannot be made.
+pub fn plan(lane_documents: &BTreeMap<String, Vec<u8>>, lane: &str, ide_build: Result<String, String>) -> Result<Option<Plan>, String> {
+    let name = format!("{lane}.json");
+    let content = lane_documents
+        .get(&name)
+        .ok_or_else(|| format!("the lane documents hold no {name}"))?;
+    let document = parse_lane_document(content).map_err(|problem| format!("the lane document {name} {problem}"))?;
+    if document.performance_series.is_empty() {
+        return Ok(None);
+    }
+    Ok(Some(Plan {
+        ide_build: ide_build?,
+        series: document.performance_series,
+    }))
+}
+
+/// The build of the IDE from `text`, the read of the [`BUILD_TXT`] at `path`: the build without the product code, or
+/// why it cannot be read. An empty build is refused.
+pub fn ide_build(path: &Path, text: io::Result<String>) -> Result<String, String> {
+    let text = text.map_err(|error| format!("cannot read {}: {error}", path.display()))?;
+    match build_without_product_code(&text) {
+        build if build.is_empty() => Err(format!("{} is empty", path.display())),
+        build => Ok(build),
+    }
+}
+
 /// One file to write: its directory below the artifacts of the build, and its text.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct File {
@@ -73,10 +108,17 @@ pub struct File {
     pub text: String,
 }
 
+impl File {
+    /// The path of the file below `directory`: `<directory>/<artifactPath>/metrics.performance.json`.
+    pub fn path_below(&self, directory: &Path) -> PathBuf {
+        directory.join(&self.artifact_path).join(FILE_NAME)
+    }
+}
+
 /// The files of the iteration that streamed `events`, written at `generated`, an RFC 1123 time ([`rfc_1123`]): one for
 /// each case that reported a metric and has a series in `plan`.
 pub fn files(plan: &Plan, events: &[RunEvent], generated: &str) -> Vec<File> {
-    avl_junit::cases::cases(events)
+    crate::cases::cases(events)
         .into_iter()
         .filter(|case| !case.report.metrics.is_empty())
         .filter_map(|case| {

@@ -1,7 +1,8 @@
 //! The JUnit XML of a run, written from the run stream of its iterations: the file that Bazel and `bt` count.
 //!
-//! The controller and the guest agent both write it, so it is a crate of its own. It stands on `avl-wire` alone and
-//! does no file I/O, so it adds one crate to the closure of the guest agent.
+//! The controller and the guest agent both write it, so it is a crate of its own. It stands on `avl-wire`, `serde`,
+//! `serde_json` and `jiff`, which the guest agent links already, and it does no file I/O. So it adds one crate to the
+//! closure of the guest agent.
 //!
 //! The shape follows `community/build/rust-tools/libtest-junit-wrapper/src/junit.rs`. The document holds one
 //! `testsuite` for each test class, in the order the stream first names it. A case is
@@ -12,7 +13,8 @@
 //! Two cases have no record of their own and still fail the document, so a cut-off run cannot count as green: a
 //! scenario that started and never finished, and a class of the plan that the run never reached.
 //!
-//! [`teamcity`] writes one TeamCity service message, which the controller and `lane-run` both write.
+//! [`teamcity`] writes one TeamCity service message, which the controller and `lane-run` both write. [`performance`] is
+//! the third shared piece: the IJ Perf file of a scenario, which the controller and `lane-run` both write too.
 
 use std::fmt::Write as _;
 
@@ -21,6 +23,7 @@ use avl_wire::daemon::RunEvent;
 use crate::cases::{CaseFailure, CaseOutcome, FailureOrigin, StreamCase, UNFINISHED_MESSAGE};
 
 pub mod cases;
+pub mod performance;
 pub mod teamcity;
 #[cfg(test)]
 mod testing;

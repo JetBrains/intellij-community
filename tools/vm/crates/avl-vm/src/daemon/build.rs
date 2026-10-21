@@ -11,6 +11,7 @@ use avl_base::fs::create_private_dir;
 use avl_base::{Config, Exit, OrRefuse, PhaseRun, Refusal};
 use avl_host_sys::Ctx;
 use avl_host_sys::runfiles::{GuestRunfilesTree, GuestTreeInputs, HostRunfiles};
+use avl_junit::performance;
 use avl_report::digest::{self, FileDigestCache, PathDigest, ProductIdentityInput};
 use avl_wire::daemon::{LABEL, LINUX_GUEST_LABEL, LINUX_GUEST_LIVE_LABEL};
 use avl_wire::progress::{Event, Phase};
@@ -312,16 +313,9 @@ fn ide_build(runfiles: &HostRunfiles, descriptor: &RuntimeDescriptor) -> Result<
     let path = runfiles
         .host_path(home)
         .ok_or_else(|| format!("the runfiles hold no distribution {home}"))?
-        .join(BUILD_TXT);
-    let text = fs::read_to_string(&path).map_err(|error| format!("cannot read {}: {error}", path.display()))?;
-    match avl_report::performance::build_without_product_code(&text) {
-        build if build.is_empty() => Err(format!("{} is empty", path.display())),
-        build => Ok(build),
-    }
+        .join(performance::BUILD_TXT);
+    performance::ide_build(&path, fs::read_to_string(&path))
 }
-
-/// The file of an IDE distribution that names its build, such as `IU-271.1234`.
-const BUILD_TXT: &str = "build.txt";
 
 /// The digests of one descriptor's inputs, which is all the stamp reads from disk.
 struct Stamped {

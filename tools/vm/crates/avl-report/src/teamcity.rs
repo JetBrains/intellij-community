@@ -25,7 +25,7 @@ use avl_junit::cases::{
     simple_class_name,
 };
 pub use avl_junit::teamcity::TEAMCITY_VERSION;
-use avl_junit::teamcity::{is_team_city, message};
+use avl_junit::teamcity::{is_team_city, message, publish_artifacts};
 use avl_junit::{TYPE_UNFINISHED, XML_OUTPUT_FILE};
 
 #[cfg(test)]
@@ -201,7 +201,7 @@ impl Messages {
     /// Publishes the host file `file` into the artifact directory `target`, once for each file.
     pub fn artifact(&mut self, file: &str, target: &str) -> Vec<String> {
         if self.published.insert(file.to_owned()) {
-            vec![message("publishArtifacts", &[], Some(&format!("{file} => {target}")))]
+            vec![publish_artifacts(file, target)]
         } else {
             Vec::new()
         }

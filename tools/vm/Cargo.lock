@@ -266,7 +266,10 @@ dependencies = [
  "avl-wire",
  "bt-junit",
  "expect-test",
+ "jiff",
  "pretty_assertions",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
