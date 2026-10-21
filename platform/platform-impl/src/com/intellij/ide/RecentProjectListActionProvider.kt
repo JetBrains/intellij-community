@@ -417,7 +417,7 @@ internal class RemoteRecentProjectActionGroup(val projectId: String, val project
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isPerformGroup = project.additionalActions.isEmpty() || e.place == ActionPlaces.DOCK_MENU
+    e.presentation.isPerformGroup = true
     e.presentation.isPopupGroup = true
   }
 
