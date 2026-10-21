@@ -424,6 +424,14 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   and acks. The bound is 1.8 s, below the lane's 2 s.
   [@test] ../crates/avl-record/src/session/tests.rs
 
+- The snapshot record holds the time of each part in milliseconds, on the clock of the recorder. They are
+  `air.snapshot.grab_ms`, `air.snapshot.tree_ms`, `air.snapshot.spans_ms` and `air.snapshot.still_ms`, the change check
+  and the queue of the picture. When the encoders are behind, `still_ms` holds the wait for a free place in their queue.
+  A part that did not run has no time. `air.snapshot.duration_ms` is the time from the
+  arrival of the `snap` line to the record. So it holds a wait behind an earlier line too, and the ack follows it.
+  [@test] ../crates/avl-record/src/session/tests.rs (`a_snapshot_names_the_time_of_each_of_its_parts`)
+  [@test] ../crates/avl-record/src/session/tests.rs (`a_session_without_a_bridge_still_takes_pictures`)
+
 - The WebP encoding runs after the ack, on a bounded writer. `done` waits for every still before it writes
   the manifest.
   [@test] ../crates/avl-record/src/stills/tests.rs

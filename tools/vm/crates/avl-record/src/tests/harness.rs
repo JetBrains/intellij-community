@@ -85,7 +85,12 @@ struct IdeState {
     dropped: u64,
     /// Makes both spans routes answer 404, as the bridge of an older checkout does.
     no_spans: bool,
+    /// How many milliseconds of the scripted clock each route, or the grab of [GRAB], takes.
+    takes: HashMap<String, i64>,
 }
+
+/// The key of [FakeIde::takes] for the grab of the fake screen.
+pub(crate) const GRAB: &str = "grab";
 
 /// The IDE under test as the recorder sees it: a screen to grab, and a bridge that answers facts, trees, paints and
 /// spans. It keeps an input log that the tree route drains, and a span log that the spans routes drain.
@@ -126,7 +131,7 @@ impl FakeIde {
                 if request.header(TOKEN_HEADER) != Some(state.token.as_str()) {
                     return Response::error(401, "wrong token");
                 }
-                match request.path.as_str() {
+                let response = match request.path.as_str() {
                     FACTS_ROUTE => {
                         let facts = Facts {
                             pid: 4242,
@@ -162,7 +167,12 @@ impl FakeIde {
                         Response::ok("application/json", avl_trace::encode(&answer).unwrap())
                     }
                     _ => Response::error(404, "not found"),
+                };
+                // The answer is built at the start of the route's time, so a tree keeps the moment it was taken.
+                if let Some(ms) = state.takes.get(&request.path) {
+                    clock.set_ms(clock.ms() + ms);
                 }
+                response
             })
         };
         Arc::new(Self {
@@ -209,6 +219,11 @@ impl FakeIde {
         lock(&self.state).no_spans = true;
     }
 
+    /// Makes `route`, or the grab of the screen for [GRAB], move the scripted clock on by `ms` each time.
+    pub(crate) fn takes(&self, route: &str, ms: i64) {
+        lock(&self.state).takes.insert(route.to_owned(), ms);
+    }
+
     fn current_frame(&self) -> Frame {
         self.frames[lock(&self.state).screen].clone()
     }
@@ -234,6 +249,9 @@ impl Source for FakeScreen {
     fn grab(&self, _deadline: Instant, frame: &mut Frame) -> anyhow::Result<()> {
         *frame = self.ide.current_frame();
         frame.at = self.clock.now();
+        if let Some(ms) = lock(&self.ide.state).takes.get(GRAB) {
+            self.clock.set_ms(self.clock.ms() + ms);
+        }
         Ok(())
     }
 }
@@ -387,8 +405,11 @@ impl Harness {
 
     /// Feeds a golden transcript to a session line by line at the golden receipt times, playing the IDE's part in
     /// between, and closes the session a second after the last line. The IDE's part is fixed by the ordinal of each
-    /// snapshot, so the replay is the same every time.
+    /// snapshot, so the replay is the same every time. A snapshot takes 4 ms: the tree 3 ms and the spans read 1 ms. The
+    /// shortest wait of the golden lane for a snapshot ack is 7 ms.
     pub(crate) fn replay(&self, lines: &[Vec<u8>]) {
+        self.ide.takes(TREE_ROUTE, 3);
+        self.ide.takes(SPANS_ROUTE, 1);
         let mut session = self.session(self.options());
         let idea_log = fs::read(record_testdata(&format!("ide/{IDEA_LOG_FILE}"))).unwrap();
         let mut snaps = 0;
@@ -412,7 +433,7 @@ impl Harness {
                 self.ide.append_log(&idea_log);
             }
         }
-        self.clock.advance_ms(1000);
+        self.clock.set_ms(T0_MS + RECEIPT_MS[lines.len() - 1] + 1000);
         session.close("the transcript ended");
     }
 

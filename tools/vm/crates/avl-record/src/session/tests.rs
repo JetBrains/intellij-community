@@ -6,10 +6,11 @@ use std::time::{Duration, Instant};
 
 use anyhow::bail;
 use avl_trace::bridge::IdeSpan;
+use avl_trace::bridge::{SPANS_ROUTE, TREE_ROUTE};
 use avl_trace::bundle::{BundleStatus, IDEA_LOG_FILE, SPANS_FILE, Video, bundle_dir, snap_image_path, snap_tree_path};
 use avl_trace::otlp::{
     AnyValue, I64String, IDE_SERVICE_NAME, IDE_SPAN_KIND, LogRecord, SCOPE_NAME, StatusCode, UnixNano, attr, decode_traces_line, event,
-    lookup, lookup_str, span_id,
+    lookup, lookup_int, lookup_str, span_id,
 };
 use avl_trace::protocol::{ScenarioCommand, Status, decode_hello_ack, encode_command};
 use crossbeam_channel::{Receiver, Sender};
@@ -131,10 +132,36 @@ fn a_session_without_a_bridge_still_takes_pictures() {
     assert_eq!(lookup_str(&snapshot.attributes, attr::SNAPSHOT_TREE), None);
     let error = lookup_str(&snapshot.attributes, attr::SNAPSHOT_ERROR).unwrap_or_default();
     assert!(error.contains("no tree: the lane named no bridge"), "{error}");
+    let times = [attr::SNAPSHOT_GRAB_MS, attr::SNAPSHOT_TREE_MS, attr::SNAPSHOT_SPANS_MS].map(|key| lookup_int(&snapshot.attributes, key));
+    assert_eq!(times, [Some(0), None, None], "a part that did not run has no time");
     assert!(avl_trace::bundle::bundle_file(&h.example_bundle(), &image).is_file());
     assert!(
         !h.example_bundle().join(IDEA_LOG_FILE).exists(),
         "a session without a bridge wrote a log slice"
+    );
+}
+
+/// A snapshot names the time of each part on the recorder's clock, and the time from the arrival of its line to its
+/// record, which the ack follows.
+#[test]
+fn a_snapshot_names_the_time_of_each_of_its_parts() {
+    let h = Harness::new();
+    h.ide.takes(GRAB, 7);
+    h.ide.takes(TREE_ROUTE, 30);
+    h.ide.takes(SPANS_ROUTE, 5);
+    let mut session = h.session(h.options());
+    h.feed(&mut session, &[&h.hello(true), MINIMAL_SCENARIO, SNAP, DONE]);
+    let snapshot = snapshot_of(&h.example_bundle());
+    let keys = [
+        attr::SNAPSHOT_DURATION_MS,
+        attr::SNAPSHOT_GRAB_MS,
+        attr::SNAPSHOT_TREE_MS,
+        attr::SNAPSHOT_SPANS_MS,
+        attr::SNAPSHOT_STILL_MS,
+    ];
+    assert_eq!(
+        keys.map(|key| lookup_int(&snapshot.attributes, key)),
+        [Some(42), Some(7), Some(30), Some(5), Some(0)]
     );
 }
 
