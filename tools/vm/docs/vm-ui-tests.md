@@ -910,6 +910,14 @@ when a run appears or a run's journal grows. It listens on 127.0.0.1 only. `--ro
 A root can be a zip that holds zips: discovery extracts an inner zip once into `out/air-traces-cache`. So
 `--root bazel.logs.zip` works for a TeamCity artifact, and so does a local `outputs.zip`.
 
+**Where the time went.** Each relaunch of the IDE in a scenario is a `restart` span, and the flame chart shows its
+parts below it: the quit, the work while the IDE is down, the launch, the wait for `READY`, and the robot and ping
+chain. `vm.cmd report time` sums those parts over a run. The header of a picture names the time that the recorder spent
+on its snapshot, part by part. A step that no bundle holds is a `timing` record of the run stream. Examples are the
+launch of a bare IDE and the end of `lane-run`. The Notes of the run page list these records, and the launch, the
+readiness and the exit of the lane IDE. The steps that each scenario runs are one sum there, and the notes after the
+first 20 fold under one line.
+
 **A CI run.** `--teamcity` opens the traces of a TeamCity build:
 
 ```bash
