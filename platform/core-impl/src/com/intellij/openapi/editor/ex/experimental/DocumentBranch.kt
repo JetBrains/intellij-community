@@ -116,7 +116,7 @@ interface DocumentBranch : DocumentSnapshot {
   /**
    * A list of the line ranges of [text], for diagnostics only.
    */
-  override fun dumpState(): String
+  fun dumpState(): String
 
   companion object {
     /**

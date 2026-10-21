@@ -54,13 +54,6 @@ internal class DocBranchSnapshotRulesTest {
   }
 
   @Test
-  fun `dumpState lists the line intervals`() {
-    for (value in values("ab\ncd")) {
-      assertEquals("intervals:\n0: 0-2, 1: 3-5", value.dumpState(), value.kind)
-    }
-  }
-
-  @Test
   fun `an insert after a line query keeps the line count right`() {
     for (value in values("a\nb")) {
       // The query builds the line data before the insert.
@@ -103,8 +96,6 @@ internal class DocBranchSnapshotRulesTest {
 
     fun modState(): DocumentModState
 
-    fun dumpState(): String
-
     fun isSameAs(other: Value): Boolean
   }
 
@@ -121,10 +112,6 @@ internal class DocBranchSnapshotRulesTest {
 
     override fun modState(): DocumentModState {
       return snapshot.modState()
-    }
-
-    override fun dumpState(): String {
-      return snapshot.dumpState()
     }
 
     override fun isSameAs(other: Value): Boolean {
@@ -145,10 +132,6 @@ internal class DocBranchSnapshotRulesTest {
 
     override fun modState(): DocumentModState {
       return branch.modState()
-    }
-
-    override fun dumpState(): String {
-      return branch.dumpState()
     }
 
     override fun isSameAs(other: Value): Boolean {

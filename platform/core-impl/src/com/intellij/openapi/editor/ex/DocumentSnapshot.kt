@@ -37,10 +37,4 @@ interface DocumentSnapshot {
 
   @Contract(pure = true)
   fun newInstance(): DocumentSnapshot
-
-  /**
-   * Returns a human-readable dump of the snapshot state, used for diagnostics only
-   */
-  @Contract(pure = true)
-  fun dumpState(): String
 }
