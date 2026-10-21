@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -7,31 +7,22 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.getValue
 import com.intellij.util.setValue
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.assertThrows
-import java.util.concurrent.Callable
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 import kotlin.reflect.KClass
-import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
 private const val TEST_TIMEOUT_MS: Long = 1000
 
@@ -143,35 +134,8 @@ fun indicatorTest(test: (ProgressIndicator) -> Unit) {
   assertFalse(indicator.isCanceled)
 }
 
-internal fun withIndicator(indicator: ProgressIndicator, action: () -> Unit) {
+fun withIndicator(indicator: ProgressIndicator, action: () -> Unit) {
   ProgressManager.getInstance().runProcess(action, indicator)
-}
-
-internal suspend fun <X> childCallable(cs: CoroutineScope, action: () -> X): Callable<X> {
-  val lock = KSemaphore(permits = 1, acquiredPermits = 1)
-  var callable by AtomicReference<Callable<X>>()
-  cs.launch(Dispatchers.IO) {
-    suspendCancellableCoroutine { continuation: Continuation<Unit> ->
-      callable = Callable<X> {
-        try {
-          action().also {
-            continuation.resume(Unit)
-          }
-        }
-        catch (e: CeProcessCanceledException) {
-          continuation.resume(Unit)
-          throw e
-        }
-        catch (e: Throwable) {
-          continuation.resumeWithException(e) // fail parent scope
-          throw e
-        }
-      }
-      lock.release()
-    }
-  }
-  lock.acquire()
-  return callable
 }
 
 inline fun <reified T : Any> assertInstanceOf(instance: Any?): T {

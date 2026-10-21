@@ -972,6 +972,7 @@ platform/platform-resources-en-file-templates
 platform/platform-resources-file-types
 platform/platform-tests
 platform/platform-tests/benchmarks
+platform/platform-tests/concurrency
 platform/platform-tests/durability
 platform/platform-tests/eel-helper
 platform/platform-util-io

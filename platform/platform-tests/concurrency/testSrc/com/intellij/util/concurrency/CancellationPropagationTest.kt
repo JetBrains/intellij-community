@@ -29,7 +29,6 @@ import com.intellij.openapi.progress.assertCurrentJobIsChildOf
 import com.intellij.openapi.progress.assertInstanceOf
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.blockingContextScope
-import com.intellij.openapi.progress.childCallable
 import com.intellij.openapi.progress.impl.ProgressResult
 import com.intellij.openapi.progress.impl.ProgressRunner
 import com.intellij.openapi.progress.jobToIndicator
@@ -58,6 +57,7 @@ import com.intellij.util.application
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -74,6 +74,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.concurrency.AsyncPromise
@@ -101,9 +102,12 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
 /**
  * Rough cancellation equivalents with respect to structured concurrency are provided in comments.
@@ -409,6 +413,33 @@ class CancellationPropagationTest {
     started.timeoutWaitUp()
     callable1CanFinish.up()
     assertEquals(42, deferred.await())
+  }
+
+  private suspend fun <X> childCallable(cs: CoroutineScope, action: () -> X): Callable<X> {
+    val lock = KSemaphore(permits = 1, acquiredPermits = 1)
+    var callable by AtomicReference<Callable<X>>()
+    cs.launch(Dispatchers.IO) {
+      suspendCancellableCoroutine { continuation: Continuation<Unit> ->
+        callable = Callable<X> {
+          try {
+            action().also {
+              continuation.resume(Unit)
+            }
+          }
+          catch (e: CeProcessCanceledException) {
+            continuation.resume(Unit)
+            throw e
+          }
+          catch (e: Throwable) {
+            continuation.resumeWithException(e) // fail parent scope
+            throw e
+          }
+        }
+        lock.release()
+      }
+    }
+    lock.acquire()
+    return callable
   }
 
   private suspend fun doTestScheduleWithFixedDelay(service: ScheduledExecutorService) {

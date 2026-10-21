@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.concurrency.ContextAwareRunnable
@@ -13,13 +13,13 @@ import com.intellij.util.ui.EDT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.function.ThrowingConsumer
 import java.nio.file.Path
 import java.util.function.Supplier
 import javax.swing.SwingUtilities
 import kotlin.coroutines.resume
 import kotlin.io.path.createTempDirectory
-import kotlin.test.assertFalse
 
 fun Application.withModality(action: () -> Unit) {
   val modalEntity = Any()
@@ -65,11 +65,11 @@ suspend fun pumpEDT() {
   }
 }
 
-internal suspend fun processApplicationQueue() {
+suspend fun processApplicationQueue() {
   withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {}
 }
 
-internal fun withTempDirectory(block: ThrowingConsumer<Path>) {
+fun withTempDirectory(block: ThrowingConsumer<Path>) {
   val tempDirectory = createTempDirectory()
   try {
     block.accept(tempDirectory)
@@ -79,7 +79,7 @@ internal fun withTempDirectory(block: ThrowingConsumer<Path>) {
   }
 }
 
-internal fun withTempConfigDirectory(block: ThrowingConsumer<Path>) {
+fun withTempConfigDirectory(block: ThrowingConsumer<Path>) {
   withTempDirectory { tempDirectory ->
     val oldConfigDir = PathManager.getConfigDir()
     try {
