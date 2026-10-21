@@ -3,9 +3,9 @@ package com.intellij.platform.debugger.impl.frontend.tests
 
 import com.intellij.platform.debugger.impl.frontend.FrontendViewportDataCache
 import kotlinx.coroutines.runBlocking
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 
 private class CountingCache {
   var invocationsCount = 0
@@ -27,7 +27,7 @@ private fun createSimpleDataIdentityCache(): FrontendViewportDataCache<Int> {
 
 internal class FrontendViewportDataCacheTest {
   @Test
-  fun `test viewport covers all content`() = runBlocking {
+  fun `test viewport covers all content`(): Unit = runBlocking {
     val cache = createSimpleDataIdentityCache()
     val stamp = 0L
     cache.update(FrontendViewportDataCache.ViewportInfo(0, 10), 10, stamp)
@@ -37,7 +37,7 @@ internal class FrontendViewportDataCacheTest {
   }
 
   @Test
-  fun `test viewport smaller than content, all viewport info should be loaded`() = runBlocking {
+  fun `test viewport smaller than content, all viewport info should be loaded`(): Unit = runBlocking {
     val cache = createSimpleDataIdentityCache()
     val stamp = 0L
     val viewport = FrontendViewportDataCache.ViewportInfo(250, 552)
@@ -48,7 +48,7 @@ internal class FrontendViewportDataCacheTest {
   }
 
   @Test
-  fun `test stamp changed, so no data should be returned from cache`() = runBlocking {
+  fun `test stamp changed, so no data should be returned from cache`(): Unit = runBlocking {
     val cache = createSimpleDataIdentityCache()
     val stamp = 0L
     val viewport = FrontendViewportDataCache.ViewportInfo(250, 552)
@@ -60,7 +60,7 @@ internal class FrontendViewportDataCacheTest {
   }
 
   @Test
-  fun `test viewport changed significantly, new viewport is available, old viewport is not available`() = runBlocking {
+  fun `test viewport changed significantly, new viewport is available, old viewport is not available`(): Unit = runBlocking {
     val cache = createSimpleDataIdentityCache()
     val stamp = 0L
     val viewportOld = FrontendViewportDataCache.ViewportInfo(250, 552)
@@ -82,7 +82,7 @@ internal class FrontendViewportDataCacheTest {
 
 
   @Test
-  fun `test small change in viewport doesn't change cache`() = runBlocking {
+  fun `test small change in viewport doesn't change cache`(): Unit = runBlocking {
     val countingCache = createCountingCache()
     val cache = countingCache.cache
     val stamp = 0L
@@ -108,7 +108,7 @@ internal class FrontendViewportDataCacheTest {
   }
 
   @Test
-  fun `test first and last indices in huge list, huge viewport`() = runBlocking {
+  fun `test first and last indices in huge list, huge viewport`(): Unit = runBlocking {
     val cache = createSimpleDataIdentityCache()
     val stamp = 0L
     val viewportStartList = FrontendViewportDataCache.ViewportInfo(0, 20_000)
@@ -125,7 +125,7 @@ internal class FrontendViewportDataCacheTest {
   }
 
   @Test
-  fun `test cache is empty for negative last possible index`() = runBlocking {
+  fun `test cache is empty for negative last possible index`(): Unit = runBlocking {
     val cache = createSimpleDataIdentityCache()
     val stamp = 0L
     val viewportStartList = FrontendViewportDataCache.ViewportInfo(0, 0)
@@ -136,7 +136,7 @@ internal class FrontendViewportDataCacheTest {
   }
 
   @Test
-  fun `test line out of viewport cache request`() = runBlocking {
+  fun `test line out of viewport cache request`(): Unit = runBlocking {
     val cache = createSimpleDataIdentityCache()
     val stamp = 0L
     val viewportStartList = FrontendViewportDataCache.ViewportInfo(0, 100)
@@ -150,7 +150,7 @@ internal class FrontendViewportDataCacheTest {
   }
 
   @Test
-  fun `test line out getData after getDataWithCaching is not null`() = runBlocking {
+  fun `test line out getData after getDataWithCaching is not null`(): Unit = runBlocking {
     val cache = createSimpleDataIdentityCache()
     val stamp = 0L
     val viewportStartList = FrontendViewportDataCache.ViewportInfo(0, 100)
@@ -163,7 +163,7 @@ internal class FrontendViewportDataCacheTest {
   }
 
   @Test
-  fun `test line out getData after getDataWithCaching is not null without update`() = runBlocking {
+  fun `test line out getData after getDataWithCaching is not null without update`(): Unit = runBlocking {
     val cache = createSimpleDataIdentityCache()
     val stamp = 0L
 
@@ -175,7 +175,7 @@ internal class FrontendViewportDataCacheTest {
   }
 
   @Test
-  fun `test line out getData after getData after line cache return null if timestamp is updated`() = runBlocking {
+  fun `test line out getData after getData after line cache return null if timestamp is updated`(): Unit = runBlocking {
     val cache = createSimpleDataIdentityCache()
     val stamp = 0L
 
