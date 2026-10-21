@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JTree;
 import javax.swing.event.TreeExpansionEvent;
@@ -9,6 +10,7 @@ import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeWillExpandListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
+import java.util.function.BooleanSupplier;
 
 /**
  * author: lesya
@@ -22,6 +24,14 @@ public final class SmartExpander {
   }
 
   public static void installOn(final JTree tree){
+    installOn(tree, () -> true);
+  }
+
+  /**
+   * @param isAutoExpandEnabled tells if the only child of an expanded node is expanded too
+   */
+  @ApiStatus.Internal
+  public static void installOn(@NotNull JTree tree, @NotNull BooleanSupplier isAutoExpandEnabled) {
     tree.addTreeWillExpandListener(new TreeWillExpandListener() {
       @Override
       public void treeWillCollapse(TreeExpansionEvent event) {
@@ -51,6 +61,7 @@ public final class SmartExpander {
 
       @Override
       public void treeExpanded(TreeExpansionEvent event) {
+        if (!isAutoExpandEnabled.getAsBoolean()) return;
         TreePath path = event.getPath();
         TreeModel model = tree.getModel();
         Object lastPathComponent = path.getLastPathComponent();

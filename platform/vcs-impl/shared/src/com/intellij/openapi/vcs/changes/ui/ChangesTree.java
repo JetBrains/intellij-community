@@ -176,6 +176,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
   private @NotNull TreeExpander myTreeExpander = new MyTreeExpander();
 
   private boolean myModelUpdateInProgress;
+  private boolean myTreeStateRestoreInProgress;
   private AWTEvent myEventProcessingInProgress;
 
   private final UpdateScaleHelper scaleHelper = new UpdateScaleHelper();
@@ -215,7 +216,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
     installCheckBoxClickHandler();
 
     installTreeLinkHandler(nodeRenderer);
-    SmartExpander.installOn(this);
+    SmartExpander.installOn(this, () -> !myTreeStateRestoreInProgress);
 
     myGroupingSupport = installGroupingSupport();
 
@@ -541,6 +542,21 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
 
   public boolean isModelUpdateInProgress() {
     return myModelUpdateInProgress;
+  }
+
+  /**
+   * The saved state already holds the paths that {@link SmartExpander} expanded.
+   * Without the guard, it expands the only child of a restored path, even if the user collapsed that child.
+   */
+  private void applyTreeState(@NotNull TreeState state, boolean scrollToSelection) {
+    myTreeStateRestoreInProgress = true;
+    try {
+      state.setScrollToSelection(scrollToSelection);
+      state.applyTo(this);
+    }
+    finally {
+      myTreeStateRestoreInProgress = false;
+    }
   }
 
   public void resetTreeState() {
@@ -1010,8 +1026,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
     @Override
     public void restoreState(@NotNull ChangesTree tree, TreeState state, boolean scrollToSelection) {
       if (state != null) {
-        state.setScrollToSelection(scrollToSelection);
-        state.applyTo(tree);
+        tree.applyTreeState(state, scrollToSelection);
       }
     }
   }
@@ -1025,8 +1040,7 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
     @Override
     public void restoreState(@NotNull ChangesTree tree, TreeState state, boolean scrollToSelection) {
       if (state != null && !state.isEmpty()) {
-        state.setScrollToSelection(scrollToSelection);
-        state.applyTo(tree);
+        tree.applyTreeState(state, scrollToSelection);
       }
       else {
         tree.resetTreeState();
