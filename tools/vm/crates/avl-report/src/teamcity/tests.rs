@@ -184,3 +184,12 @@ fn a_published_trace_names_the_case_of_its_own_xml() {
     )));
     expect_test::expect_file![testdata("published.teamcity.txt")].assert_eq(&(lines.join("\n") + "\n"));
 }
+
+/// A warning is a `message` with the status `WARNING`, with its text escaped.
+#[test]
+fn a_warning_is_a_message_with_the_warning_status() {
+    assert_eq!(
+        warning("no viewer: 'x' [y] | z"),
+        "##teamcity[message text='no viewer: |'x|' |[y|] || z' status='WARNING']"
+    );
+}

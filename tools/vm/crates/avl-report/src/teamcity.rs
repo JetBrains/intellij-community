@@ -40,6 +40,11 @@ pub fn is_build_step(variable: impl Fn(&str) -> Option<String>) -> bool {
     variable(XML_OUTPUT_FILE).is_none() && is_team_city(variable)
 }
 
+/// A `message` of the build log with the status `WARNING`. TeamCity shows it as a warning, and the build stays green.
+pub fn warning(text: &str) -> String {
+    message("message", &[("text", text), ("status", "WARNING")], None)
+}
+
 /// The flow of the messages of [`Messages::published`]: none, so a message names no `flowId`.
 const NO_FLOW: &str = "";
 
