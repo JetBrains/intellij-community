@@ -39,6 +39,8 @@ class OpenFeaturesInScratchFileAction : AnAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = shouldActionBeEnabled(e)
+    // the features open in a scratch file
+    e.presentation.isVisible = ScratchUtil.findScratchesRootType() != null
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
