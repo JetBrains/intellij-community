@@ -15,6 +15,13 @@ crypto_common
 digest
 fdeflate
 flate2
+gamut_bitstream
+gamut_codec_abi
+gamut_color
+gamut_core
+gamut_dsp
+gamut_riff
+gamut_webp
 gethostname
 hex
 hybrid_array
@@ -39,6 +46,7 @@ sha2
 signal_hook
 signal_hook_registry
 simd_adler32
+thiserror
 typenum
 wide
 x11rb

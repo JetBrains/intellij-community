@@ -279,6 +279,8 @@ dependencies = [
  "avl-trace",
  "crossbeam-channel",
  "expect-test",
+ "gamut-core 2.0.1",
+ "gamut-webp",
  "image-webp",
  "jiff",
  "libc",
@@ -959,6 +961,77 @@ dependencies = [
  "memchr",
  "pin-project-lite",
  "slab",
+]
+
+[[package]]
+name = "gamut-bitstream"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2f630fb25f1d4292631fa1bf15f2d4fcdb016941d223556972be54e9043155b"
+dependencies = [
+ "gamut-core 3.0.0",
+]
+
+[[package]]
+name = "gamut-codec-abi"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "efd2f0f074ab730775866cc333fe8cac97962db0c6b6b19f491f8b58c39d77ee"
+
+[[package]]
+name = "gamut-color"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fde55ae76aee646990fd4f353574fbcfaf9f37a5f3e54ba0907c7d384936e56a"
+dependencies = [
+ "gamut-core 2.0.1",
+]
+
+[[package]]
+name = "gamut-core"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b17c79c8672b675d538dceffda1dd5d00ba279cbcca4f75c7b4fa847741d5d31"
+dependencies = [
+ "thiserror",
+]
+
+[[package]]
+name = "gamut-core"
+version = "3.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0c77286f49dd3b255466f13fc8aba931e0116288270ec7ba777012dc8a3c8a6"
+dependencies = [
+ "thiserror",
+]
+
+[[package]]
+name = "gamut-dsp"
+version = "2.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8292008df9a7007fd330a410a98feae1706bd7c45b44f2f5b5aa3a6725f19772"
+
+[[package]]
+name = "gamut-riff"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "14bd0da4d6d163461120b8b71bd01195dd85750cfe341d0a12a43cc155ee8627"
+dependencies = [
+ "gamut-bitstream",
+ "gamut-core 2.0.1",
+]
+
+[[package]]
+name = "gamut-webp"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2a3f801c048a65edfb6282bdadd8221faf148a08cc1d88513066fb926f91090"
+dependencies = [
+ "gamut-codec-abi",
+ "gamut-color",
+ "gamut-core 2.0.1",
+ "gamut-dsp",
+ "gamut-riff",
 ]
 
 [[package]]

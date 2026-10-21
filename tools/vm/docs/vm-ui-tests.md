@@ -845,7 +845,7 @@ never test control. The skill's `references/macos-pool.md` says which to open an
 ## Traces
 
 Every UI scenario leaves a **trace bundle**, whichever launcher ran it, in the manner of the Playwright
-trace viewer. A bundle holds a video and a lossless picture at every instruction boundary and held check.
+trace viewer. A bundle holds a video and a picture at every instruction boundary and held check.
 It also holds the Swing tree at each of those moments, the gestures, the bridge calls, the scenario's slice
 of `idea.log`, and the generated program, so the instructions a failure never reached are visible. The
 contract is [`community/tools/vm/spec/scenario-trace.spec.md`](../spec/scenario-trace.spec.md). The lane's side is
@@ -1034,7 +1034,10 @@ evidence only: a check that counts them reads the IDE through the bridge, not th
 decoder:
 
 - Spans and events are OTLP JSON Lines, so generic OpenTelemetry tools read a bundle as it is.
-- Stills are lossless WebP, pixel-exact UI evidence with crisp text, from the WebP encoder that the recorder carries.
+- Stills are WebP, from the WebP encoders that the recorder carries. A scenario with a video takes lossy stills at
+  quality 90, because a lossless still of the CI desktop is about 900 KB. A scenario without a video takes lossless
+  stills, pixel-exact UI evidence with crisp text. The manifest names lossy stills
+  ([A scenario with a video takes lossy stills](decisions/2026-10-21-a-scenario-with-a-video-takes-lossy-stills.md)).
 - Video is H.264 in fragmented MP4, the one codec with hardware decode in both browsers on every Mac. The
   fragmented container survives a killed encoder, and `video.index.json` makes every seek exact.
 - A zip stores its media uncompressed, so a server answers byte ranges straight out of it.

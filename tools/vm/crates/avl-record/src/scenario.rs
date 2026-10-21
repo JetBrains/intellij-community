@@ -9,7 +9,7 @@ use std::time::{Duration, Instant, SystemTime};
 use avl_bridge::Client;
 use avl_trace::bridge::{Facts, IdeSpan};
 use avl_trace::bundle::{
-    AllureStatusDetails, BundleStatus, Capture, IDEA_LOG_FILE, MANIFEST_SCHEMA, Manifest, Stills, Video, allure_results_dir,
+    AllureStatusDetails, BundleStatus, Capture, IDEA_LOG_FILE, MANIFEST_SCHEMA, Manifest, StillEncoding, Stills, Video, allure_results_dir,
     format_manifest_time, sanitize_name,
 };
 use avl_trace::otlp::{
@@ -84,6 +84,9 @@ pub(crate) struct Scenario {
     /// The ordinal of the last attachment, 0 before the first.
     pub(crate) attachments: u32,
     pub(crate) stills: Option<stills::Writer>,
+    /// How the stills are encoded: lossy when the scenario started a video. The manifest names it, also when the video
+    /// failed later.
+    still_encoding: StillEncoding,
     /// Maps a queued still's bundle path to its snapshot's span, for a failure the still writer reports from its own
     /// thread.
     pub(crate) still_spans: Arc<Mutex<HashMap<String, u32>>>,
@@ -172,6 +175,7 @@ impl<W: Write> Session<W> {
             ordinal: 0,
             attachments: 0,
             stills: None,
+            still_encoding: StillEncoding::Lossless,
             still_spans: Arc::default(),
             slicer: LogSlicer::default(),
             sliced: false,
@@ -228,9 +232,13 @@ impl<W: Write> Session<W> {
         }
         scenario.source = source;
         scenario.capture_reason = reason;
-        scenario.stills = Some(stills::Writer::new(&scenario.dir, scenario.still_failed()));
         let screen = hello.screen;
         scenario.start_video(&*self.options.video, screen, self.options.frame_interval, at_ms);
+        scenario.still_encoding = match scenario.video.codec() {
+            VideoCodec::H264 => StillEncoding::Lossy,
+            VideoCodec::None => StillEncoding::Lossless,
+        };
+        scenario.stills = Some(stills::Writer::new(&scenario.dir, scenario.still_encoding, scenario.still_failed()));
         self.ack(true, None);
     }
 }
@@ -514,8 +522,8 @@ impl Scenario {
         Ok(())
     }
 
-    /// The still writer's failure report: a still that is not on disk. The error names the file as the snapshot
-    /// records do, since a later snapshot of the same screen may name it too.
+    /// The still writer's report of a problem: a still that is not on disk, or a lossy still that was written lossless.
+    /// The error names the file as the snapshot records do, since a later snapshot of the same screen may name it too.
     fn still_failed(&self) -> stills::Failed {
         let (writer, clock, spans) = (self.writer.clone(), self.clock.clone(), self.still_spans.clone());
         Box::new(move |name, error| {
@@ -653,13 +661,23 @@ impl Scenario {
 
         self.stop_video();
         if let Some(stills) = self.stills.take() {
-            let (files, repeats) = stills.close();
-            if files + repeats > 0 {
+            let closed = stills.close();
+            if closed.panicked > 0 {
+                self.trace_error(
+                    ERROR_SOURCE_WEBP,
+                    &format!("{} of the still encoders ended with a panic", closed.panicked),
+                    at_ms,
+                );
+            }
+            if closed.files + closed.repeats > 0 {
                 say!(
                     self.diagnostics,
-                    "{}: {} stills in {files} files, {repeats} of them a repeat of the previous one",
+                    "{}: {} {} stills in {} files, {} of them a repeat of the previous one",
                     self.command.name,
-                    files + repeats
+                    closed.files + closed.repeats,
+                    self.still_encoding,
+                    closed.files,
+                    closed.repeats
                 );
             }
         }
@@ -720,7 +738,9 @@ impl Scenario {
             duration_ms: u64::try_from(at_ms - self.started_ms).unwrap_or(0),
             capture: Capture { source, reason },
             video: self.video.clone(),
-            stills: Stills::default(),
+            stills: Stills {
+                encoding: self.still_encoding,
+            },
         };
         if self.allure {
             self.write_allure_result(&manifest, details);

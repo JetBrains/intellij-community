@@ -183,6 +183,10 @@ terminal-colorsaurus = "1.0.3"
 base64 = "0.23.1"
 form_urlencoded = "1.2.2"
 hex = "0.4.3"
+# The recorder's still encoders, both pure Rust: `image-webp` writes a lossless still, `gamut-webp` a lossy one. A lossy
+# still needs `gamut-core` for the type of its pixels.
+gamut-core = "2.0.1"
+gamut-webp = "0.3.1"
 image-webp = "0.2.4"
 jiff = "0.2.37"
 # The recorder's H.264 encoder, Cisco's sources built by `cc` (the default `source` feature).

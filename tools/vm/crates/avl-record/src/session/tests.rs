@@ -7,7 +7,7 @@ use std::time::{Duration, Instant};
 use anyhow::bail;
 use avl_trace::bridge::IdeSpan;
 use avl_trace::bridge::{SPANS_ROUTE, TREE_ROUTE};
-use avl_trace::bundle::{BundleStatus, IDEA_LOG_FILE, SPANS_FILE, Video, bundle_dir, snap_image_path, snap_tree_path};
+use avl_trace::bundle::{BundleStatus, IDEA_LOG_FILE, SPANS_FILE, StillEncoding, Video, bundle_dir, snap_image_path, snap_tree_path};
 use avl_trace::otlp::{
     AnyValue, I64String, IDE_SERVICE_NAME, IDE_SPAN_KIND, LogRecord, SCOPE_NAME, StatusCode, UnixNano, attr, decode_traces_line, event,
     lookup, lookup_int, lookup_str, span_id,
@@ -304,6 +304,53 @@ fn the_video_is_fed_from_the_screen_while_the_scenario_is_open() {
     assert_eq!(recording.frames().len(), frames.len(), "the frame loop outlived the scenario");
 }
 
+/// A scenario that starts a video takes lossy pictures, and its manifest says so. A scenario without a video keeps
+/// lossless pictures, as the golden bundle shows.
+#[test]
+fn a_scenario_with_a_video_takes_lossy_pictures() {
+    let h = Harness::new();
+    let recording = FakeRecording::default();
+    let mut options = h.options();
+    options.clock = system_clock();
+    options.frame_interval = Duration::from_millis(10);
+    options.video = Box::new(FakeVideographer {
+        recording: recording.clone(),
+        dir: Arc::default(),
+    });
+    let mut session = h.session(options);
+    h.feed(&mut session, &[&h.hello(true), MINIMAL_SCENARIO, SNAP]);
+    let deadline = Instant::now() + Duration::from_secs(10);
+    while recording.frames().is_empty() && Instant::now() < deadline {
+        thread::sleep(Duration::from_millis(5));
+    }
+    h.feed(&mut session, &[DONE]);
+    let bundle = h.example_bundle();
+    let manifest = manifest_of(&bundle);
+    assert_eq!((manifest.video, manifest.stills.encoding), (Video::H264, StillEncoding::Lossy));
+    let picture = fs::read(bundle.join(snap_image_path(1))).unwrap();
+    assert_eq!(
+        &picture[8..16],
+        b"WEBPVP8 ",
+        "the picture of a scenario with a video is not lossy WebP"
+    );
+}
+
+/// A still encoder that ends with a panic is evidence loss, and the end of the scenario records it on the root.
+#[test]
+fn a_still_encoder_that_ended_with_a_panic_is_recorded_at_the_end() {
+    let h = Harness::new();
+    let mut session = h.session(h.options());
+    h.feed(&mut session, &[&h.hello(true), MINIMAL_SCENARIO]);
+    let scenario = session.scenario.as_mut().expect("the scenario is open");
+    scenario.stills = Some(crate::stills::Writer::panicking(&scenario.dir));
+    h.feed(&mut session, &[SNAP, DONE]);
+    let errors = error_records(&h.example_bundle());
+    assert!(
+        errors.contains(&"webp: 1 of the still encoders ended with a panic".to_owned()),
+        "the trace errors: {errors:?}"
+    );
+}
+
 /// An encoder that started and never takes its input: every write blocks until the stop ends the input, and the stop
 /// then finds no frame.
 struct StuckRecording {
@@ -380,10 +427,13 @@ fn an_encoder_that_never_reads_does_not_hold_the_scenario_ack() {
     h.feed(&mut session, &[DONE]);
     let answered: Vec<(bool, u64)> = h.ack_lines().iter().map(ok_and_line).collect();
     assert_eq!(answered, [(true, 1), (true, 2), (true, 3)]);
-    match manifest_of(&h.example_bundle()).video {
+    let manifest = manifest_of(&h.example_bundle());
+    match manifest.video {
         Video::None { reason } => assert!(reason.contains("no frame"), "{reason}"),
         video @ Video::H264 => panic!("the manifest's video is {video:?}"),
     }
+    // The scenario started the video, so its pictures are lossy, and the manifest says so without the video.
+    assert_eq!(manifest.stills.encoding, StillEncoding::Lossy);
 }
 
 /// A screen video run by a shell standing in for ffmpeg, which reports its progress on its output like the real one.

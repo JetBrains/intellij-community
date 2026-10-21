@@ -28,7 +28,7 @@ Date: 2026-10-07
 ## Summary
 
 Every Air UI scenario leaves a trace bundle, in the manner of the Playwright trace viewer. A bundle holds a
-video, a lossless picture and a Swing tree at every instruction boundary and held check, and the gestures. It
+video, a picture and a Swing tree at every instruction boundary and held check, and the gestures. It
 also holds the bridge calls, the scenario's slice of `idea.log`, and the generated program the scenario ran. The
 OpenTelemetry spans that the IDE ended in the scenario are in it too, under the lane step that caused them.
 
@@ -90,6 +90,10 @@ pin the viewer to it.
   bundle without a manifest is still being written, or its recorder was killed outright.
   [@test] ../crates/avl-trace/src/bundle/tests.rs
 
+- The manifest names lossy pictures as `"stills":{"encoding":"lossy"}`. A manifest without `stills` has lossless
+  pictures, and so has every bundle of an earlier recorder.
+  [@test] ../crates/avl-trace/src/bundle/tests.rs (`the_manifest_names_lossy_stills_only`)
+
 - The status is `passed`, `failed`, `aborted` or `truncated`. A truncated manifest names the running span by
   its OTLP id, and only a truncated one does.
   [@test] ../crates/avl-trace/src/bundle/tests.rs
@@ -101,15 +105,31 @@ pin the viewer to it.
   [@test] ../crates/avl-record/src/video/mp4/tests.rs
   [@test] ../crates/avl-record/src/frames/tests.rs
 
-- A snapshot's picture is lossless WebP, and its tree is the bridge's tree document. A snapshot of an
+- A snapshot's picture is WebP, and its tree is the bridge's tree document. A snapshot of an
   unchanged screen gets no picture file. Its `air.snapshot.image` names the previous picture's file. So the
   last picture file by name is the last snapshot's picture.
   [@test] ../crates/avl-record/src/stills/tests.rs
   [@test] ../crates/avl-trace/src/bundle/tests.rs
 
+- The pictures of a scenario that starts a video are lossy WebP at quality 90, because the video also shows each
+  moment. The pictures of a scenario without a video are lossless. The scenario picks the encoding after it starts
+  the video, so a video that fails later leaves the pictures lossy. The comparison with the previous picture reads the
+  grabbed frames, so it is the same for both encodings.
+  [@test] ../crates/avl-record/src/session/tests.rs (`a_scenario_with_a_video_takes_lossy_pictures`)
+  [@test] ../crates/avl-record/src/session/tests.rs (`an_encoder_that_never_reads_does_not_hold_the_scenario_ack`)
+  [@test] ../crates/avl-record/src/stills/tests.rs (`a_lossy_still_is_a_close_picture_of_the_frame`)
+  [@test] ../crates/avl-record/src/stills/tests.rs (`a_still_of_an_unchanged_screen_names_the_previous_file`)
+
 - When the recorder cannot write a picture, the next snapshot of the same screen writes its own file. The
   `air.trace.error` of the failure names the file that is missing.
   [@test] ../crates/avl-record/src/stills/tests.rs
+
+- When the lossy encoder fails or panics on a picture, the recorder writes that picture lossless. An
+  `air.trace.error` from `webp` names the file. When the lossless picture cannot be written either, one record names
+  the file and both causes. A panic of an encoder costs one picture, and the pictures queued after it are still
+  written.
+  [@test] ../crates/avl-record/src/stills/tests.rs (`a_still_whose_lossy_encoder_panics_is_written_lossless`)
+  [@test] ../crates/avl-record/src/stills/tests.rs (`a_still_that_every_encoder_panics_on_is_reported_and_not_named_again`)
 
 - The recorder writes the Allure results only when the hello says `allure`. The lane says it when a person asks
   with `-Dair.flow.trace.allure=on`. That flag is a lane flag of the runtime descriptor, or a `--jvm_flag` of
@@ -435,6 +455,13 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 - The WebP encoding runs after the ack, on a bounded writer. `done` waits for every still before it writes
   the manifest.
   [@test] ../crates/avl-record/src/stills/tests.rs
+
+- The writer runs one encoder per two cores, at least 1 and at most 4, over one queue. The encoders take the queued
+  pictures at once. A picture's file name is fixed when the snapshot is taken, so the order of the writes does not
+  matter. An encoder that ends with a panic is an `air.trace.error` from `webp` at the end of the scenario.
+  [@test] ../crates/avl-record/src/stills/tests.rs (`the_encoders_run_at_once_and_close_waits_for_every_still`)
+  [@test] ../crates/avl-record/src/stills/tests.rs (`close_counts_an_encoder_that_ended_with_a_panic`)
+  [@test] ../crates/avl-record/src/session/tests.rs (`a_still_encoder_that_ended_with_a_panic_is_recorded_at_the_end`)
 
 - The `idea.log` slice is the bytes written between the scenario's start and its end. A rotated or replaced
   log adds the new file. A slice is capped at 32 MiB.
