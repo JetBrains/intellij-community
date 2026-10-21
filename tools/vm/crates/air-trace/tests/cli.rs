@@ -91,6 +91,11 @@ fn teamcity_publish_answers_0_without_testlogs_and_2_for_a_usage_error() {
     );
     assert!(stderr.contains("0 bundle zip(s) from 0 test.xml file(s)"), "{stderr}");
 
-    let (exit, _, stderr) = answer(&["teamcity-publish", "--no-such-flag"]);
-    assert_eq!(exit, Some(2), "{stderr}");
+    for usage in [
+        &["teamcity-publish", "--no-such-flag"][..],
+        &["teamcity-publish", "--since", "yesterday"],
+    ] {
+        let (exit, _, stderr) = answer(usage);
+        assert_eq!(exit, Some(2), "{usage:?}: {stderr}");
+    }
 }

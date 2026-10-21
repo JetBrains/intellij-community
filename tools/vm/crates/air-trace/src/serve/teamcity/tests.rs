@@ -147,6 +147,28 @@ fn the_curl_configuration_carries_the_token_as_one_header() {
     assert_eq!(curl_config("a\"b\\c\nd"), "header = \"Authorization: Bearer a\\\"b\\\\cd\"\n");
 }
 
+/// The client of a build step gives `curl` the build's credentials as one `user` line on its standard input, escaped as
+/// the token is, and a time limit for each request.
+#[cfg(unix)]
+#[test]
+fn the_agent_client_gives_curl_the_build_credentials_on_its_standard_input() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().unwrap();
+    let fake = dir.path().join("curl");
+    fs::write(&fake, "#!/bin/sh\nprintf 'args:'; printf ' %s' \"$@\"; printf '\\nstdin:'; cat\n").unwrap();
+    fs::set_permissions(&fake, fs::Permissions::from_mode(0o755)).unwrap();
+    let curl = agent_curl(fake, "https://proxy.example/", "TeamCityBuildId=1", "p\"w");
+    let answer = String::from_utf8(curl.get("/app/rest/builds/id:1?fields=startDate").unwrap()).unwrap();
+    let (args, stdin) = answer.split_once("\nstdin:").unwrap();
+    assert!(!args.contains("p\"w") && !args.contains("TeamCityBuildId"), "{args}");
+    assert!(args.contains(" --max-time 60 "), "{args}");
+    assert!(
+        args.ends_with(" https://proxy.example/app/rest/builds/id:1?fields=startDate"),
+        "{args}"
+    );
+    assert_eq!(stdin, "user = \"TeamCityBuildId=1:p\\\"w\"\n");
+}
+
 /// `curl` gets the URL with `--globoff`, and the token on its standard input, never on its command line.
 #[cfg(unix)]
 #[test]
@@ -159,7 +181,8 @@ fn curl_gets_the_token_on_its_standard_input() {
     let curl = Curl {
         program: fake,
         server: SERVER.to_owned(),
-        token: "secret".to_owned(),
+        config: curl_config("secret"),
+        max_time: None,
     };
     let answer = String::from_utf8(curl.get("/app/rest/builds/id:1?fields=a(b)").unwrap()).unwrap();
     let (args, stdin) = answer.split_once("\nstdin:").unwrap();

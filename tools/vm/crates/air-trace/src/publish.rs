@@ -28,6 +28,7 @@ use std::collections::{BTreeSet, HashSet};
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
+use std::time::SystemTime;
 
 use avl_report::teamcity::{Messages, PublishedTrace, TRACES_ARTIFACT_DIR, warning};
 use avl_trace::bundle::{ROOT_DIR_NAME, VIDEO_FILE, bundle_path};
@@ -59,6 +60,17 @@ pub(crate) struct PublishArgs {
     /// and runs.json publish alone and the tests get no viewer link.
     #[arg(long, value_name = "DIR")]
     pub viewer: Option<PathBuf>,
+    /// Publish only the tests whose test.xml was written at this time or later, such as 2026-10-21T08:00:00Z. On
+    /// TeamCity the default is the start of the build.
+    #[arg(long, value_name = "TIME", value_parser = parse_since)]
+    pub since: Option<jiff::Timestamp>,
+}
+
+/// Reads `--since`: a time of RFC 3339, such as `2026-10-21T08:00:00Z`.
+fn parse_since(value: &str) -> Result<jiff::Timestamp, String> {
+    value
+        .parse()
+        .map_err(|error| format!("{value} is not a time such as 2026-10-21T08:00:00Z: {error}"))
 }
 
 /// The name of a test's JUnit XML in the testlogs.
@@ -71,6 +83,8 @@ const OUTPUTS_ZIP: &str = "outputs.zip";
 const RUNS_FILE: &str = "runs.json";
 /// The generation of the listing: the step writes one listing, as a server's first scan answers generation 1.
 const LISTING_GENERATION: u64 = 1;
+/// The file in the output that says that this step wrote it, so a later run may empty it.
+const OUT_MARKER: &str = ".air-traces-publish";
 
 /// What one publish reads and where it writes.
 pub(crate) struct Publish<'a> {
@@ -79,6 +93,10 @@ pub(crate) struct Publish<'a> {
     pub viewer: &'a ViewerSource,
     /// The TeamCity build that the step runs in, or `None` off TeamCity.
     pub build: Option<&'a Build>,
+    /// The time from which a `test.xml` counts, or `None` for all. An older one is a test of an earlier build.
+    pub since: Option<SystemTime>,
+    /// Whether the output is the default one, which the step owns even without its marker.
+    pub out_owned: bool,
 }
 
 /// Runs `air-trace teamcity-publish`: the service messages on stdout, a summary line and each problem on stderr. It
@@ -130,6 +148,24 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
     if let Some(fallback) = build.as_ref().and_then(|build| build.server_fallback(&variable)) {
         let _ = warn(stdout, stderr, &fallback);
     }
+    let since = match (args.since, &build) {
+        (Some(since), _) => Some(SystemTime::from(since)),
+        (None, Some(build)) => match build.start(&variable) {
+            Ok(start) => {
+                let _ = say(stderr, &start.note);
+                Some(start.since)
+            }
+            Err(reason) => {
+                let _ = warn(
+                    stdout,
+                    stderr,
+                    &format!("the start of the build does not read: {reason}; so the tests of earlier builds publish too"),
+                );
+                None
+            }
+        },
+        (None, None) => None,
+    };
     let viewer = match (viewer_dir, workspace) {
         (Some(dir), _) => ViewerSource::Built(dir),
         (None, Some(checkout)) => ViewerSource::Build {
@@ -144,6 +180,8 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
         out: &out,
         viewer: &viewer,
         build: build.as_ref(),
+        since,
+        out_owned: args.out.is_none(),
     };
     if let Err(refused) = publish(&job, stdout, stderr) {
         report(stderr, "teamcity-publish", &refused);
@@ -207,6 +245,7 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
     let mut roots = Vec::new();
     let mut tests = Vec::new();
     let mut xmls = 0;
+    let mut skipped = 0;
     for (index, root) in job.testlogs.iter().enumerate() {
         let mut state = RootState {
             kind: RootKind::BazelTestlogs,
@@ -227,6 +266,25 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
         for xml in test_xmls(root) {
             xmls += 1;
             let dir = xml.parent().unwrap_or(root);
+            if let Some(since) = job.since
+                && let Some(written) = fs::metadata(&xml)
+                    .and_then(|info| info.modified())
+                    .ok()
+                    .filter(|written| *written < since)
+            {
+                say(
+                    stderr,
+                    &format!(
+                        "skipped {}: its test.xml is from {}, before {}, so an earlier build ran it",
+                        dir.display(),
+                        instant(written),
+                        instant(since)
+                    ),
+                )
+                .map_err(write_failed)?;
+                skipped += 1;
+                continue;
+            }
             let (bundles, unread) = bundles_beside(&scanner, dir);
             for problem in unread {
                 warn(stdout, stderr, &problem).map_err(write_failed)?;
@@ -244,12 +302,28 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
         }
         roots.push(state);
     }
+    if let Some(since) = job.since.filter(|_| skipped > 0) {
+        let warning = if tests.is_empty() {
+            format!(
+                "{skipped} test(s) skipped, because their test.xml is older than {}, and no other test has a trace, so \
+                 nothing is published; check the clock of the agent, or pass --since",
+                instant(since)
+            )
+        } else {
+            format!("{skipped} test(s) skipped, because their test.xml is older than {}", instant(since))
+        };
+        warn(stdout, stderr, &warning).map_err(write_failed)?;
+    }
     if tests.is_empty() {
         let problems = roots
             .iter()
             .map(|root| root.problems.len() + usize::from(root.error.is_some()))
             .sum();
         return summarize(stderr, 0, xmls, out, problems).map_err(write_failed);
+    }
+    if let Err(reason) = empty_out(out, job.out_owned) {
+        warn(stdout, stderr, &format!("{reason}; nothing is published")).map_err(write_failed)?;
+        return summarize(stderr, 0, xmls, out, 1).map_err(write_failed);
     }
 
     let copied = viewer_dir(job.viewer, stderr)
@@ -388,6 +462,45 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
         writeln!(stdout, "{line}").map_err(write_failed)?;
     }
     summarize(stderr, published, xmls, out, problems).map_err(write_failed)
+}
+
+/// Empties the output and marks it as this step's, so it holds the files of this run only. The step empties a directory
+/// that it owns or that holds its marker. It refuses another directory that is not empty, because its files are not
+/// the step's.
+fn empty_out(out: &Path, owned: bool) -> Result<(), String> {
+    let failed = |path: &Path, error: io::Error| format!("cannot empty {}: {error}", path.display());
+    match fs::read_dir(out) {
+        Ok(entries) => {
+            let entries: Vec<PathBuf> = entries
+                .map(|entry| entry.map(|entry| entry.path()))
+                .collect::<io::Result<_>>()
+                .map_err(|error| failed(out, error))?;
+            if !entries.is_empty() && !owned && !out.join(OUT_MARKER).is_file() {
+                return Err(format!(
+                    "--out {} holds files that this step did not write; pass an empty directory",
+                    out.display()
+                ));
+            }
+            for entry in entries {
+                let removed = if entry.is_dir() && !entry.is_symlink() {
+                    fs::remove_dir_all(&entry)
+                } else {
+                    fs::remove_file(&entry)
+                };
+                removed.map_err(|error| failed(&entry, error))?;
+            }
+        }
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+        Err(error) => return Err(failed(out, error)),
+    }
+    fs::create_dir_all(out)
+        .and_then(|()| fs::write(out.join(OUT_MARKER), b""))
+        .map_err(|error| failed(out, error))
+}
+
+/// A time as RFC 3339 writes it, in UTC.
+fn instant(time: SystemTime) -> String {
+    jiff::Timestamp::try_from(time).map_or_else(|_| format!("{time:?}"), |time| time.to_string())
 }
 
 /// One line of the step on stderr.

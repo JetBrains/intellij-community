@@ -931,18 +931,23 @@ zips as artifacts. Beside them it publishes `air-traces/runs.json` and the trace
 traces with no server. Each test of the Tests tab gets its trace, a `trace viewer` link into that page, its video
 and, for a failed scenario, its last picture.
 
-`--viewer DIR` names a built viewer. Without it, the step builds the viewer in the checkout, as `serve` builds the
-site: with the pinned node and pnpm, `pnpm install --frozen-lockfile` in the kernel and in `plugins/air/docs`, then
-`pnpm run build:viewer` there, which writes `out/air-trace-viewer`. A viewer there that is newer than
-its sources is not built again: the site's sources, the Vite and site configuration, the lockfiles, and the UI
-primitives of the genui catalog. The build has 10 minutes, and stderr says how long it took. A build that does not
-end in time is stopped with every process that it started.
+`--viewer DIR` names a built viewer. Without it, the step builds the viewer in the checkout, as `serve` builds the site:
+with the pinned node and pnpm, `pnpm install --frozen-lockfile` in the kernel and in `plugins/air/docs`, then `pnpm run
+build:viewer` there, which writes `out/air-trace-viewer`. A viewer there that is newer than its sources is not built
+again: the site's sources, the Vite and site configuration, the lockfiles, and the UI primitives of the genui catalog.
+The build has 10 minutes, and stderr says how long it took. A build that does not end in time is stopped with every
+process that it started.
 
-The step reads the build from the agent's property files, `TEAMCITY_BUILD_PROPERTIES_FILE` and the configuration
-file that it names. `bazel run` passes the environment of the step to the program. The listing then names the build
-of each run, and the server of the link is the root of `BUILD_URL`. Without the files or without a viewer, the zips
-and the listing still publish with no link, and stderr says why. The step never turns a build red: each problem is
-a warning in the build log, and the exit is 0. Only a usage error of the command line exits 2. No Air build
+The step reads the build from the agent's property files, `TEAMCITY_BUILD_PROPERTIES_FILE` and the configuration file
+that it names. `bazel run` passes the environment of the step to the program. The listing then names the build of each
+run, and the server of the link is the root of `BUILD_URL`. Without the files or without a viewer, the zips and the
+listing still publish with no link, and stderr says why.
+
+An agent keeps its checkout and its Bazel output base across builds, so the testlogs can hold the tests of an earlier
+build. The step publishes only a test whose `test.xml` is from the start of the build or later. The REST API of the
+build gives the start and the time of the server, so the step corrects for the skew of the clocks and allows two minutes
+more. `--since` sets the start. A warning counts the skipped tests. The step also empties its output first. It never turns a build red: each
+problem is a warning in the build log, and the exit is 0. Only a usage error of the command line exits 2. No Air build
 configuration runs this step yet; it is one more step in `ultimate-teamcity-config`.
 
 When the site in `out/air-site` is missing, or older than `plugins/air/docs/src` or the `src`, `scripts` and

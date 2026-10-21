@@ -1,5 +1,6 @@
 use std::fs;
 use std::path::Path;
+use std::time::{Duration, SystemTime};
 
 use avl_testkit::traces::{copy_tree, example_bundle, example_file};
 use avl_trace::bundle::{MANIFEST_FILE, VIDEO_INDEX_FILE, bundle_file, decode_manifest};
@@ -21,16 +22,27 @@ fn testdata(name: &str) -> PathBuf {
 
 /// Publishes the testlogs `root` into `out`, with the stdout and the stderr of the step.
 fn run(root: &Path, out: &Path, viewer: Option<&Path>, build: Option<&Build>) -> (String, String) {
-    let (mut stdout, mut stderr) = (Vec::new(), Vec::new());
     let viewer = viewer.map_or(ViewerSource::Missing, |dir| ViewerSource::Built(dir.to_path_buf()));
-    let job = Publish {
+    run_job(&Publish {
         testlogs: &[root.to_path_buf()],
         out,
         viewer: &viewer,
         build,
-    };
-    publish(&job, &mut stdout, &mut stderr).unwrap();
+        since: None,
+        out_owned: true,
+    })
+}
+
+/// Runs one publish, with the stdout and the stderr of the step.
+fn run_job(job: &Publish<'_>) -> (String, String) {
+    let (mut stdout, mut stderr) = (Vec::new(), Vec::new());
+    publish(job, &mut stdout, &mut stderr).unwrap();
     (String::from_utf8(stdout).unwrap(), String::from_utf8(stderr).unwrap())
+}
+
+/// Sets the time a file was last changed.
+fn set_modified(path: &Path, time: SystemTime) {
+    fs::File::options().write(true).open(path).unwrap().set_modified(time).unwrap();
 }
 
 /// The output with the temporary directories named `<out>`, `<testlogs>` and `<viewer>`, and `/` for a separator.
@@ -170,7 +182,7 @@ fn the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests() 
     let files = files_of(out.path());
     let zips: Vec<&String> = files.iter().filter(|file| file.ends_with(".zip")).collect();
     assert_eq!(zips.len(), 4, "{files:?}");
-    assert_eq!(files.len(), 5, "the zips and {RUNS_FILE}: {files:?}");
+    assert_eq!(files.len(), 6, "the zips, {RUNS_FILE} and {OUT_MARKER}: {files:?}");
     for zip in zips {
         let mut archive = zip::ZipArchive::new(fs::File::open(out.path().join(zip)).unwrap()).unwrap();
         assert!(archive.by_name(MANIFEST_FILE).is_ok(), "{zip} holds the bundle at its top");
@@ -211,15 +223,14 @@ fn testlogs_without_bundles_print_nothing() {
     let missing = root.path().join("missing");
     let bundles = testlogs();
     let testlogs = [missing.clone(), bundles.path().to_path_buf()];
-    let job = Publish {
+    let (stdout, stderr) = run_job(&Publish {
         testlogs: &testlogs,
         out: out.path(),
         viewer: &ViewerSource::Missing,
         build: None,
-    };
-    let (mut stdout, mut stderr) = (Vec::new(), Vec::new());
-    publish(&job, &mut stdout, &mut stderr).unwrap();
-    let (stdout, stderr) = (String::from_utf8(stdout).unwrap(), String::from_utf8(stderr).unwrap());
+        since: None,
+        out_owned: true,
+    });
     let problem = format!("no testlogs: {}: not a directory", missing.display());
     assert!(
         stdout.starts_with(&format!(
@@ -358,9 +369,107 @@ fn without_a_viewer_the_bundles_and_the_listing_publish_alone() {
                 .iter()
                 .filter(|file| !file.ends_with(".zip"))
                 .collect::<Vec<_>>(),
-            [RUNS_FILE]
+            [OUT_MARKER, RUNS_FILE]
         );
     }
+}
+
+/// With a start, a test whose `test.xml` is older is the test of an earlier build: one line on stderr, and nothing of
+/// it is published. The other tests publish.
+#[test]
+fn the_tests_of_an_earlier_build_are_skipped() {
+    let root = testlogs();
+    let stale = root.path().join("plugins/air/tests/integration/ui/ui_lane_test");
+    set_modified(&stale.join(TEST_XML), SystemTime::now() - Duration::from_hours(2));
+    let out = tempfile::tempdir().unwrap();
+    let (stdout, stderr) = run_job(&Publish {
+        testlogs: &[root.path().to_path_buf()],
+        out: out.path(),
+        viewer: &ViewerSource::Missing,
+        build: None,
+        since: Some(SystemTime::now() - Duration::from_hours(1)),
+        out_owned: true,
+    });
+    assert_eq!(
+        stdout.matches(".zip => ").count(),
+        1,
+        "only the shard of ui-real publishes: {stdout}"
+    );
+    assert!(!stdout.contains("ui_lane_test/"), "{stdout}");
+    let skipped = format!("air-trace teamcity-publish: skipped {}: its test.xml is from ", stale.display());
+    assert!(
+        stderr
+            .lines()
+            .any(|line| line.starts_with(&skipped) && line.ends_with(", so an earlier build ran it")),
+        "{stderr}"
+    );
+    let warning = "##teamcity[message text='air-trace teamcity-publish: 1 test(s) skipped, because their test.xml is older than ";
+    assert!(stdout.starts_with(warning), "a warning counts the skipped tests: {stdout}");
+
+    let (stdout, _) = run_job(&Publish {
+        testlogs: &[root.path().to_path_buf()],
+        out: out.path(),
+        viewer: &ViewerSource::Missing,
+        build: None,
+        since: Some(SystemTime::now() + Duration::from_hours(1)),
+        out_owned: true,
+    });
+    assert!(
+        stdout.starts_with("##teamcity[message text='air-trace teamcity-publish: 3 test(s) skipped, because their test.xml")
+            && stdout.contains("and no other test has a trace, so nothing is published; check the clock of the agent"),
+        "a warning says that nothing is left: {stdout}"
+    );
+    assert!(!stdout.contains("name='trace' type='artifact'"), "{stdout}");
+}
+
+/// Each run empties its output first, so the output holds the files of this run only. The step empties its own
+/// output, and an output with its marker. It refuses another output that holds files, and then publishes nothing.
+#[test]
+fn the_output_holds_the_files_of_this_run_only() {
+    let root = testlogs();
+    let out = tempfile::tempdir().unwrap();
+    let old = out.path().join("ui_lane_test/iter-0/OldTest/old.zip");
+    fs::create_dir_all(old.parent().unwrap()).unwrap();
+    fs::write(&old, "").unwrap();
+    let testlogs = [root.path().to_path_buf()];
+    let job = |out_owned| Publish {
+        testlogs: &testlogs,
+        out: out.path(),
+        viewer: &ViewerSource::Missing,
+        build: None,
+        since: None,
+        out_owned,
+    };
+    let (stdout, _) = run_job(&job(true));
+    assert!(
+        !old.exists() && !out.path().join("ui_lane_test/iter-0").exists(),
+        "the zip of an earlier run is gone"
+    );
+    assert!(out.path().join(OUT_MARKER).is_file());
+    assert_eq!(stdout.matches(".zip => ").count(), 4, "{stdout}");
+
+    let (stdout, _) = run_job(&job(false));
+    assert_eq!(
+        stdout.matches(".zip => ").count(),
+        4,
+        "an output with the marker is emptied and published: {stdout}"
+    );
+
+    let foreign = tempfile::tempdir().unwrap();
+    let kept = foreign.path().join("notes.txt");
+    fs::write(&kept, "mine").unwrap();
+    let (stdout, stderr) = run_job(&Publish {
+        out: foreign.path(),
+        ..job(false)
+    });
+    let refused = format!(
+        "--out {} holds files that this step did not write; pass an empty directory; nothing is published",
+        foreign.path().display()
+    );
+    assert!(stdout.contains(&refused) && !stdout.contains(".zip => "), "{stdout}");
+    assert!(stderr.contains(&refused), "{stderr}");
+    assert_eq!(fs::read_to_string(&kept).unwrap(), "mine");
+    assert_eq!(fs::read_dir(foreign.path()).unwrap().count(), 1);
 }
 
 #[test]

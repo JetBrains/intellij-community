@@ -517,6 +517,23 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   write their logs into another configuration.
   [@test] ../crates/air-trace/src/publish/tests.rs (`the_testlogs_are_found_beside_the_binary_that_bazel_run_starts`)
 
+- A TeamCity agent keeps its checkout and its Bazel output base across builds. So the testlogs can hold the tests of
+  an earlier build, which this build did not run. The step publishes only a test whose `test.xml` is from the start
+  of the build or later. The start is `--since`, or on TeamCity the `startDate` of the REST API of the build. The step
+  asks `teamcity.serverUrl` with `teamcity.auth.userId` and `teamcity.auth.password` of the build. The `currentTime` of
+  the server gives the skew between its clock and the clock of the agent, and the start moves by it. A test then counts
+  from two minutes before the start. Each skipped test is one line on stderr, and one warning counts them. A stronger
+  warning says when no test is left to publish. A start that does not read is a warning, and then every test
+  publishes. Off TeamCity without `--since`, every test publishes.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`the_tests_of_an_earlier_build_are_skipped`)
+  [@test] ../crates/air-trace/src/publish/teamcity/tests.rs (`the_start_of_a_build_is_its_start_date_in_the_clock_of_this_machine`)
+  [@test] ../crates/air-trace/src/serve/teamcity/tests.rs (`the_agent_client_gives_curl_the_build_credentials_on_its_standard_input`)
+
+- Before it writes, the step empties its output, so the output holds the files of this run only. It empties the
+  default output, and an output that holds its marker file `.air-traces-publish`. It refuses another `--out` that
+  holds files, and then publishes nothing.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`the_output_holds_the_files_of_this_run_only`)
+
 - A relative path of `--testlogs`, `--out` or `--viewer` is taken from `BUILD_WORKING_DIRECTORY`, the directory where
   `bazel run` ran. It is not taken from the runfiles tree that the program starts in.
   [@test] ../crates/air-trace/src/publish/tests.rs (`a_relative_path_is_taken_from_the_directory_where_bazel_run_ran`)
