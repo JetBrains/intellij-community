@@ -38,6 +38,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -143,6 +144,25 @@ fun tempPathFixture(root: Path? = null, prefix: String = "IJ", subdirName: Strin
         }
       }
       realTempDir.delete(recursively = true)
+    }
+  }
+}
+
+/**
+ * Creates a temporary directory that is deleted through the VFS, so that no [VirtualFile] of the test stays valid.
+ * [tempPathFixture] deletes the directory only on disk.
+ */
+@TestOnly
+fun vfsDeletedTempPathFixture(): TestFixture<Path> = testFixture("vfsDeletedTempPathFixture") {
+  val path = tempPathFixture().init()
+  initialized(path) {
+    val directory = LocalFileSystem.getInstance().findFileByNioFile(path)
+    if (directory != null) {
+      writeAction {
+        if (directory.isValid) {
+          directory.delete(directory.fileSystem)
+        }
+      }
     }
   }
 }
