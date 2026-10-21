@@ -13,6 +13,7 @@ import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.multiverse.ProjectModelContextBridge
 import com.intellij.codeInsight.multiverse.SingleEditorContext
+import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
@@ -40,6 +41,7 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.psiFileFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
+import com.intellij.usageView.UsageViewUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -345,9 +347,54 @@ internal class JavaMultiverseCodeVisionProviderTest {
   }
 
   @Test
+  fun testHostLensesAfterSharedRootUnlinked() = timeoutRunBlocking {
+    val codeVision = codeVisionFixture.get()
+    val editor = editorFixture.get()
+
+    addFileToSourceRoot(sourceRootFixtureA.get(), "A.java", """
+        import com.company.Shared;
+        public class A extends Shared {}
+        public class A1 extends Shared {}
+      """.trimIndent())
+
+    addFileToSourceRoot(sourceRootFixtureB.get(), "B.java", """
+        import com.company.Shared;
+        public class B extends Shared {}
+      """.trimIndent())
+
+    val moduleBContext = setContext(editor, moduleBFixture.get())
+    codeVision.testProviders(moduleBContext, """
+        package com.company;
+        public class Shared{}/*<# [2 usages   1 inheritor] #>*/
+      """.trimIndent(), JavaReferencesCodeVisionProvider().groupId, JavaInheritorsCodeVisionProvider().groupId)
+
+    unlinkSharedRootFromModuleB()
+    try {
+      val moduleAContext = requireNotNull(ProjectModelContextBridge.getInstance(projectFixture.get()).getContext(moduleAFixture.get()))
+      codeVision.testProviders(moduleAContext, """
+          package com.company;
+          public class Shared{}/*<# [3 usages   2 inheritors] #>*/
+        """.trimIndent(), JavaReferencesCodeVisionProvider().groupId, JavaInheritorsCodeVisionProvider().groupId)
+    }
+    finally {
+      linkSharedRootToModuleB()
+    }
+  }
+
+  @Test
   fun testStaleUsagesLensClickAfterSharedRootUnlinked() = timeoutRunBlocking {
     withSharedRootUnlinkedAfterLenses { provider, editor, lensesBeforeUnlink ->
       assertNull(click(provider, editor, lensesBeforeUnlink.last()), "the click on a stale lens must not give a PSI element of moduleB")
+    }
+  }
+
+  @Test
+  fun testUsagesLensesAfterSharedRootUnlinked() = timeoutRunBlocking {
+    withSharedRootUnlinkedAfterLenses { provider, editor, _ ->
+      val clicked = requireNotNull(click(provider, editor, computeLenses(provider, editor, null).last()))
+      assertEquals("doShared()", readAction { UsageViewUtil.getLongName(clicked) })
+      val moduleAContext = requireNotNull(ProjectModelContextBridge.getInstance(projectFixture.get()).getContext(moduleAFixture.get()))
+      assertEquals(moduleAContext, readAction { clicked.containingFile.codeInsightContext })
     }
   }
 

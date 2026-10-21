@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.hints.codeVision
 
 import com.intellij.codeInsight.codeVision.CodeVisionEntry
+import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
@@ -31,5 +32,12 @@ internal class CodeVisionCacheService {
     fileCache[providerId] = data
   }
 
-  data class CodeVisionWithStamp(val codeVisionEntries: List<Pair<TextRange, CodeVisionEntry>>, val modificationStamp: Long)
+  /**
+   * @param context the code insight context of the file of the entries.
+   */
+  data class CodeVisionWithStamp(
+    val codeVisionEntries: List<Pair<TextRange, CodeVisionEntry>>,
+    val modificationStamp: Long,
+    val context: CodeInsightContext,
+  )
 }
