@@ -60,6 +60,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -180,6 +181,7 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
     }
 
     startEdtSampling()
+    startProcessStallWatcher()
 
     if (Registry.`is`("performance.watcher.pooled.enabled", true)) {
       CoroutineDispatcherWatcher(Dispatchers.Default, coroutineScope, ::calculatePooledUnresponsiveInterval, pooledCompensationInterval)
@@ -208,6 +210,16 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
         LOG.debug("EDT sampling stopped")
       }
     }
+  }
+
+  private fun startProcessStallWatcher() {
+    val watcher = ProcessStallWatcher(
+      sliceMs = Registry.intValue("performance.watcher.stall.slice.ms", 250).toLong().coerceAtLeast(10),
+      slicesPerTick = Registry.intValue("performance.watcher.stall.slices.per.tick", 4).coerceAtLeast(1),
+      reportThresholdMs = Registry.intValue("performance.watcher.stall.report.threshold.ms", 1000).toLong().coerceAtLeast(1),
+    )
+    watcher.start()
+    coroutineScope.coroutineContext.job.invokeOnCompletion { watcher.shutdown() }
   }
 
   private suspend fun asyncInit() {

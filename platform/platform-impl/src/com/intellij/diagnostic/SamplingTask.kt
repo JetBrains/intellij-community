@@ -87,4 +87,4 @@ internal abstract class SamplingTask(@JvmField internal val dumpInterval: Int, p
 private val THREAD_MX_BEAN = ManagementFactory.getThreadMXBean()
 private val GC_MX_BEANS = ManagementFactory.getGarbageCollectorMXBeans()
 
-private fun currentGcTime(): Long = GC_MX_BEANS.sumOf { it.collectionTime }
+internal fun currentGcTime(): Long = GC_MX_BEANS.sumOf { it.collectionTime }
