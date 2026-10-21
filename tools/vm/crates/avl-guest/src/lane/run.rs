@@ -6,9 +6,10 @@
 //! the runfiles in the jar store by digest, and runs the iteration of [`super::iteration`] as a `/run` would. It writes
 //! the run stream on standard output and into the run directory, and the JUnit XML of the stream into the run
 //! directory and to the XML file of a Bazel test. It writes the IJ Perf files of the run, as [`super::performance`]
-//! states. It quits the IDE, and exits 0 when the run is green. Under a Bazel test, a run that is not green keeps its
-//! evidence in the outputs directory of the test, as [`super::evidence`] states. On a TeamCity build that names a build
-//! log file, the run shows in the build log while it goes on, as [`super::build_log`] states.
+//! states, and the result of the run, as [`super::run_result`] states. It quits the IDE, and exits 0 when the run is
+//! green. Under a Bazel test, a run that is not green keeps its evidence in the outputs directory of the test, as
+//! [`super::evidence`] states. On a TeamCity build that names a build log file, the run shows in the build log while it
+//! goes on, as [`super::build_log`] states.
 //!
 //! With `--plan-only` it stops before the IDE: it stages the inputs and selects the documents as a run does, and it
 //! writes the [`RunPlan`] on standard output. So a host proves a lane rule and its runfiles without a lane IDE.
@@ -37,6 +38,7 @@ use super::monitor::{self, BUDGET_PROBLEM, LiveStop, MONITOR_THREAD, Monitor, Mo
 use super::package::sha256_hex;
 use super::performance::{self, Published};
 use super::program::ITERATION_ARTIFACTS_DIR;
+use super::run_result;
 use super::watchdog::{ExpiryReason, KILL_GRACE};
 use crate::cli::{LaneDaemonArgs, LaneRunArgs, ValidateGuestArgs};
 use crate::ide::launch::CODE_DISPLAY_MISSING;
@@ -341,8 +343,15 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
         println!("{problem}");
     }
     let green = is_green(&stream) && finished.is_ok();
-    if let Some(plan) = &performance_plan {
-        write_performance(&daemon, &request, flags.split, plan, &events, &root, variable);
+    let artifacts = iteration_id(&events).map(|id| daemon.iteration_dir(&id).join(ITERATION_ARTIFACTS_DIR));
+    let published = performance_plan.as_ref().map_or_else(Vec::new, |plan| {
+        write_performance(&daemon, &request, flags.split, plan, &events, artifacts.as_deref(), &root, variable)
+    });
+    let result = run_result::run_result(&args.lane, green, &events, artifacts.as_deref(), published);
+    let result_path = run_result::path(bazel_outputs(variable).as_deref(), &root);
+    match run_result::write(&result_path, &result) {
+        Ok(()) => log(&format!("the result of the run: {}", result_path.display())),
+        Err(error) => log(&format!("cannot write the result of the run {}: {error}", result_path.display())),
     }
     if !green && let Some(evidence) = &evidence {
         let kept = evidence::keep(evidence, &events, Moment::RunEnd, Limits::LANE);
@@ -353,22 +362,22 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
 }
 
 /// Writes the IJ Perf files of `plan` for the run that streamed `events`, with the part files of each case, and
-/// announces them. Answers the written files. A problem is a log line, because a metric never decides a verdict.
+/// announces them. `artifacts` is the directory of the authored artifacts of the iteration. Answers the written files.
+/// A problem is a log line, because a metric never decides a verdict.
+#[expect(clippy::too_many_arguments, reason = "the parts of one finished run, which the caller holds")]
 fn write_performance(
     daemon: &channel::Daemon,
     request: &RunRequest,
     split: RunnerSplit,
     plan: &Plan,
     events: &[RunEvent],
+    artifacts: Option<&Path>,
     root: &Path,
     variable: &dyn Fn(&str) -> Option<String>,
 ) -> Vec<Published> {
-    let scenarios = match (&request.lane, &request.lane_inputs, iteration_id(events)) {
-        (Some(lane), Some(lane_inputs), Some(id)) => match iteration::selection_of(daemon, lane, lane_inputs, request, split) {
-            Ok(selection) => performance::scenario_parts(
-                selection.suites.iter().map(|suite| &suite.program),
-                &daemon.iteration_dir(&id).join(ITERATION_ARTIFACTS_DIR),
-            ),
+    let scenarios = match (&request.lane, &request.lane_inputs, artifacts) {
+        (Some(lane), Some(lane_inputs), Some(artifacts)) => match iteration::selection_of(daemon, lane, lane_inputs, request, split) {
+            Ok(selection) => performance::scenario_parts(selection.suites.iter().map(|suite| &suite.program), artifacts),
             Err(reason) => {
                 log(&format!(
                     "the IJ Perf files get no part files, because the suites cannot be read: {reason}"

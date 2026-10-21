@@ -36,9 +36,11 @@ mod tests;
 
 /// The directory of the IJ Perf files, below the outputs directory of a Bazel test or below the run directory.
 pub(crate) const DIR: &str = "performance";
+/// The summary of an authored part, which the run result carries too.
+pub(crate) const SUMMARY_FILE: &str = "summary.txt";
 /// The result files of an authored part that go beside the IJ Perf file of its case, in the order of their copy.
 pub(crate) const PART_FILES: [&str; 5] = [
-    "summary.txt",
+    SUMMARY_FILE,
     "air-performance.json",
     "watchdog.ndjson",
     "trace.ndjson",

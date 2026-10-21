@@ -47,6 +47,37 @@ pub fn destination(variable: impl Fn(&str) -> Option<String>) -> Option<String> 
         .find_map(|name| variable(name).filter(|value| !value.trim().is_empty()))
 }
 
+/// A case that fails the XML, with the failure that the XML writes for it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct FailedCase {
+    pub class_name: String,
+    pub name: String,
+    pub failure: CaseFailure,
+}
+
+/// Every case of the iteration that streamed `events` that fails its XML, in the order of the stream: a failed case,
+/// a case that never finished, and then a class of the plan that the run never reached. `lane-run` names them in the
+/// result of its run.
+pub fn failed_cases(events: &[RunEvent]) -> Vec<FailedCase> {
+    let mut found = cases::cases(events);
+    found.extend(cases::unreported_classes(events).into_iter().map(unreported));
+    found
+        .into_iter()
+        .filter_map(|case| {
+            let failure = match case.outcome {
+                CaseOutcome::Failed(failure) => failure,
+                CaseOutcome::Unfinished => unfinished(),
+                CaseOutcome::Passed | CaseOutcome::Skipped(_) => return None,
+            };
+            Some(FailedCase {
+                class_name: case.class_name,
+                name: case.name,
+                failure,
+            })
+        })
+        .collect()
+}
+
 /// The XML of the run whose iterations streamed `iterations`, each the records of one `/run`.
 pub fn render<'a>(iterations: impl IntoIterator<Item = &'a [RunEvent]>) -> String {
     let mut suites: Vec<Suite> = Vec::new();
@@ -165,16 +196,17 @@ fn write_case(out: &mut String, case: &StreamCase) {
             let _ = writeln!(out, "{head}>\n      <skipped message=\"{}\"/>\n    </testcase>", escape(reason));
         }
         CaseOutcome::Failed(failure) => write_failure(out, &head, failure),
-        CaseOutcome::Unfinished => write_failure(
-            out,
-            &head,
-            &CaseFailure {
-                kind: FailureOrigin::Test,
-                r#type: Some(TYPE_UNFINISHED.to_owned()),
-                message: UNFINISHED_MESSAGE.to_owned(),
-                detail: String::new(),
-            },
-        ),
+        CaseOutcome::Unfinished => write_failure(out, &head, &unfinished()),
+    }
+}
+
+/// The failure of a case that started and never finished.
+fn unfinished() -> CaseFailure {
+    CaseFailure {
+        kind: FailureOrigin::Test,
+        r#type: Some(TYPE_UNFINISHED.to_owned()),
+        message: UNFINISHED_MESSAGE.to_owned(),
+        detail: String::new(),
     }
 }
 

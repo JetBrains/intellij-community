@@ -79,6 +79,38 @@ fn a_cut_off_run_fails_its_unfinished_scenario_and_the_suite_it_never_reached() 
             ("Dropped".to_owned(), "Dropped".to_owned(), Some(TYPE_UNREPORTED.to_owned())),
         ]
     );
+    let messages: Vec<String> = failed_cases(&events).into_iter().map(|case| case.failure.message).collect();
+    assert_eq!(
+        messages,
+        [
+            UNFINISHED_MESSAGE,
+            "the run never reached the suite Dropped: the run stream ended before its first record"
+        ]
+    );
+}
+
+#[test]
+fn the_failed_cases_are_those_that_fail_the_xml_with_its_failure() {
+    let failed = failed_cases(&run_stream());
+    let named: Vec<(&str, &str, Option<&str>)> = failed
+        .iter()
+        .map(|case| (case.class_name.as_str(), case.name.as_str(), case.failure.r#type.as_deref()))
+        .collect();
+    assert_eq!(
+        named,
+        [
+            (
+                "AirComposerGeneratedFlowUiTest",
+                "attach-file",
+                Some("com.intellij.air.integration.AirFlowAssertionError")
+            ),
+            ("AirRegistryGeneratedFlowUiTest", "registry", Some("prologue_failed")),
+        ]
+    );
+    assert_eq!(
+        failed[0].failure.headline(),
+        "instruction 4 assert-chip-visible: the chip <a.txt> is not visible"
+    );
 }
 
 #[test]

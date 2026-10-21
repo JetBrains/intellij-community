@@ -74,6 +74,7 @@ targets:
   - ../crates/avl-report/src/teamcity.rs
   - ../crates/avl-junit/src/performance.rs
   - ../crates/avl-guest/src/lane/performance.rs
+  - ../crates/avl-guest/src/lane/run_result.rs
   - ../crates/avl-vm/src/daemon/performance.rs
   - ../crates/avl-vm/src/daemon/results.rs
   - ../crates/avl-vm/src/report.rs
@@ -1711,6 +1712,18 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   directory. A file that cannot be written is a log line, and it never changes the verdict.
   [@test] ../crates/avl-guest/src/lane/performance/tests.rs (`the_files_are_written_and_published_on_teamcity`)
   [@test] ../crates/avl-guest/src/lane/performance/tests.rs (`off_teamcity_the_files_are_written_and_not_published`)
+
+- After each run that is not `--plan-only`, green or not, `lane-run` writes the result of the run. The file is
+  `$TEST_UNDECLARED_OUTPUTS_DIR/lane/run-result.json`, or `<runDirectory>/run-result.json` outside a Bazel test. A
+  TeamCity step reads it and posts it as the failure event of the build, so its field names are a contract. The
+  result holds `lane`, `green`, `failedTests`, `summaries` and `performance`. Each failed test is `test`, the class
+  and the case name, and `failure`, the text of the failure in the JUnit XML. A summary is the `summary.txt` of a part,
+  by `<scenario>/<part>`. A failure and a summary keep at most 4000 bytes, cut at a character boundary. `performance`
+  names each file of the IJ Perf bullets above with its artifact path.
+  [@test] ../crates/avl-guest/src/lane/run_result/tests.rs (`the_run_result_names_the_failed_tests_and_the_summaries`)
+  [@test] ../crates/avl-guest/src/lane/run_result/tests.rs (`a_green_run_has_no_failed_test`)
+  [@test] ../crates/avl-guest/src/lane/run_result/tests.rs (`the_run_result_goes_to_the_lane_outputs_or_to_the_run_directory`)
+  [@test] ../crates/avl-junit/src/tests.rs (`the_failed_cases_are_those_that_fail_the_xml_with_its_failure`)
 
 - A launch is affected when it ran during a scenario that did not pass. A launch that runs at a watchdog expiry, a
   failed class, a failed run or the hard stop is affected too. A failure when no launch runs affects the newest
