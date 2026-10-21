@@ -1340,6 +1340,36 @@ com.intellij.util.containers.ConcurrentLongIntMap$LongIntConsumer
 - a:accept(J,I):V
 com.intellij.util.containers.ConcurrentLongIntMap$LongIntToIntFunction
 - a:apply(J,I):I
+com.intellij.util.containers.ConcurrentLongLongMap
+- a:clear():V
+- a:compute(J,com.intellij.util.containers.ConcurrentLongLongMap$LongLongToLongFunction):J
+- a:computeIfAbsent(J,java.util.function.LongUnaryOperator):J
+- a:computeIfPresent(J,com.intellij.util.containers.ConcurrentLongLongMap$LongLongToLongFunction):J
+- a:containsKey(J):Z
+- a:containsValue(J):Z
+- a:entrySet():java.util.Set
+- a:forEach(com.intellij.util.containers.ConcurrentLongLongMap$LongLongConsumer):V
+- a:get(J):J
+- a:getOrDefault(J,J):J
+- a:isEmpty():Z
+- a:keys():J[]
+- a:mappingCount():J
+- a:merge(J,J,com.intellij.util.containers.ConcurrentLongLongMap$LongLongToLongFunction):J
+- a:put(J,J):J
+- a:putIfAbsent(J,J):J
+- a:remove(J):J
+- a:remove(J,J):Z
+- a:replace(J,J):J
+- a:replace(J,J,J):Z
+- a:replaceAll(com.intellij.util.containers.ConcurrentLongLongMap$LongLongToLongFunction):V
+- a:size():I
+com.intellij.util.containers.ConcurrentLongLongMap$Entry
+- a:getKey():J
+- a:getValue():J
+com.intellij.util.containers.ConcurrentLongLongMap$LongLongConsumer
+- a:accept(J,J):V
+com.intellij.util.containers.ConcurrentLongLongMap$LongLongToLongFunction
+- a:apply(J,J):J
 com.intellij.util.containers.ConcurrentLongObjectMap
 - a:cacheOrGet(J,java.lang.Object):java.lang.Object
 - a:clear():V

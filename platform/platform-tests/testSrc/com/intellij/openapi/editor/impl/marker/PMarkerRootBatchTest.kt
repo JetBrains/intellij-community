@@ -19,6 +19,43 @@ import kotlin.random.Random
 @TestApplication
 class PMarkerRootBatchTest {
   @Test
+  fun `cached absolute offsets preserve shifted roots and removals`() {
+    val initial = PMarkerRootImpl.empty().insertMany(entries() + entry(100, 0, 0))
+    val shifted = applyPatch(initial, TEXT, 0, 0, "abcd")
+    val edited = applyPatch(shifted, "abcd$TEXT", 10, 12, "")
+    edited.resolve(12, TextRange.EMPTY_RANGE)
+    val spec = MarkerSpec(isGreedyToLeft = false, isGreedyToRight = false, isStickingToRight = false, policy = DefaultMarkerPolicy)
+    val roots = listOf(initial, shifted, edited, edited.updateSpec(12, spec))
+
+    for (root in roots) {
+      val expected = resolvedEntries(root).associateBy { it.markerId }
+      repeat(2) { pass ->
+        for (id in expected.keys.shuffled(Random(pass))) {
+          val entry = expected.getValue(id)
+          val resolution = root.resolve(id, TextRange.EMPTY_RANGE)
+          assertTrue(resolution.isValid)
+          assertEquals(TextRange(entry.nodeStart, entry.nodeEnd), resolution)
+        }
+      }
+      val entry = expected.getValue(12)
+      val removed = root.remove(12)
+      assertTrue(removed.resolve(12, TextRange.EMPTY_RANGE).isAbsent)
+      assertEquals(TextRange(entry.nodeStart, entry.nodeEnd), removed.resolve(12, TextRange.EMPTY_RANGE))
+      assertEquals(PMarkerResolution.Valid(entry.nodeStart, entry.nodeEnd), root.resolve(12, TextRange.EMPTY_RANGE))
+    }
+  }
+
+  @Test
+  fun `cached absolute offsets support empty and maximum ranges`() {
+    val root = PMarkerRootImpl.empty().insertMany(listOf(entry(1, 0, 0), entry(2, Int.MAX_VALUE - 1, Int.MAX_VALUE)))
+
+    repeat(2) {
+      assertEquals(TextRange.EMPTY_RANGE, root.resolve(1, TextRange.EMPTY_RANGE))
+      assertEquals(TextRange(Int.MAX_VALUE - 1, Int.MAX_VALUE), root.resolve(2, TextRange.EMPTY_RANGE))
+    }
+  }
+
+  @Test
   fun `insert batch preserves shifted markers and entry metadata`() {
     val initial = insertIndividually(PMarkerRootImpl.empty(), entries())
     val shifted = applyPatch(initial, TEXT, 0, 0, "xx").remove(7)

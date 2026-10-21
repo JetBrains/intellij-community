@@ -17,6 +17,9 @@ abstract class Java11Shim {
     fun <V> createConcurrentLongObjectMap(): ConcurrentLongObjectMap<V> = ConcurrentLongObjectHashMap()
     @JvmOverloads
     fun createConcurrentLongIntMap(defaultValue: Int, initialSize: Int = 16): ConcurrentLongIntMap = ConcurrentLongIntHashMap(defaultValue, initialSize)
+    @JvmOverloads
+    fun createConcurrentLongLongMap(defaultValue: Long, initialSize: Int = 16): ConcurrentLongLongMap =
+      ConcurrentLongLongHashMap(defaultValue, initialSize)
     fun <V> createConcurrentIntObjectMap(): ConcurrentIntObjectMap<V> = ConcurrentIntObjectHashMap()
     fun <V> createConcurrentIntObjectMap(initialCapacity:Int, loadFactor:Float, concurrencyLevel:Int): ConcurrentIntObjectMap<V> = ConcurrentIntObjectHashMap(initialCapacity, loadFactor, concurrencyLevel)
     fun <V> createConcurrentIntObjectSoftValueMap(): ConcurrentIntObjectMap<V> = ConcurrentIntKeySoftValueHashMap()

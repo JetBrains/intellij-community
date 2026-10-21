@@ -7,8 +7,11 @@ import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerDeltaProcessor
 import com.intellij.openapi.editor.impl.marker.PMarkerRootImpl.Companion.NULL_NODE
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.TextRangeScalarUtil.endOffset
+import com.intellij.openapi.util.TextRangeScalarUtil.startOffset
+import com.intellij.openapi.util.TextRangeScalarUtil.toScalarRange
 import com.intellij.util.Processor
-import com.intellij.util.containers.ConcurrentLongIntMap
+import com.intellij.util.containers.ConcurrentLongLongMap
 import com.intellij.util.containers.Java11Shim
 import it.unimi.dsi.fastutil.longs.LongList
 import org.jetbrains.annotations.ApiStatus
@@ -33,7 +36,7 @@ open class PMarkerRootImpl private constructor(
   /** Number of valid markers that use a persistent policy in the entire tree represented by this root. */
   private val persistentMarkerCount: Int,
   @Volatile
-  private var cachedDelta: ConcurrentLongIntMap? = null,
+  private var cachedOffsets: ConcurrentLongLongMap? = null,
   /**
    * Identifies roots with identical marker validity and offsets. [updateSpec] preserves this token.
    * The token does not retain the root or its offset cache.
@@ -86,6 +89,10 @@ open class PMarkerRootImpl private constructor(
   override fun isEmpty(): Boolean = rootId == NULL_NODE
 
   override fun resolve(markerId: Long, absentRange: TextRange): PMarkerResolution {
+    val cached = cachedOffsets?.get(markerId) ?: UNCACHED_OFFSETS
+    if (cached != UNCACHED_OFFSETS) {
+      return PMarkerResolution.Valid(startOffset(cached), endOffset(cached))
+    }
     return when (val state = states.getUnchecked(markerId)) {
       null -> PMarkerResolution.Absent(absentRange.startOffset, absentRange.endOffset)
       is AbsentNode -> PMarkerResolution.Absent(state.startOffset, state.endOffset)
@@ -95,8 +102,8 @@ open class PMarkerRootImpl private constructor(
         state.endOffset,
       )
       is ValidNode -> {
-        val ancestorDelta = ancestorDelta(state, markerId)
-        PMarkerResolution.Valid(state.entry.nodeStart + ancestorDelta, state.entry.nodeEnd + ancestorDelta)
+        val offsets = absoluteOffsets(state, markerId)
+        PMarkerResolution.Valid(startOffset(offsets), endOffset(offsets))
       }
     }
   }
@@ -154,7 +161,7 @@ open class PMarkerRootImpl private constructor(
         decrementPersistentMarkerCount(persistentMarkerCount, state.entry.spec.policy),
         spec.policy,
       ),
-      cachedDelta,
+      cachedOffsets,
       resolutionCacheIdentity,
       resolutionUpdate,
     )
@@ -188,9 +195,9 @@ open class PMarkerRootImpl private constructor(
         persistentMarkerCount,
       )
       is ValidNode -> {
-        val offsetDelta = ancestorDelta(state, markerId)
-        val startOffset = state.entry.nodeStart + offsetDelta
-        val endOffset = state.entry.nodeEnd + offsetDelta
+        val offsets = absoluteOffsets(state, markerId)
+        val startOffset = startOffset(offsets)
+        val endOffset = endOffset(offsets)
         val key = PositionKey(startOffset, markerId)
         val editor = MapBatchEditor(states, persistentMarkerCount)
         val newRoot = removeByKey(editor, rootId, key)
@@ -516,16 +523,16 @@ open class PMarkerRootImpl private constructor(
   }
 
   private val maximumHeight: Int = guessMaximumHeight()
-  private fun ancestorDelta(state: ValidNode, markerId: Long): Int {
-    var cachedDelta = cachedDelta
-    if (cachedDelta == null) {
-      cachedDelta = Java11Shim.createConcurrentLongIntMap(UNCACHED_DELTA)//, states.size())
-      if (!CACHED_DELTA_UPDATER.compareAndSet(this, null, cachedDelta)) {
-        cachedDelta = this.cachedDelta
+  private fun absoluteOffsets(state: ValidNode, markerId: Long): Long {
+    var cachedOffsets = cachedOffsets
+    if (cachedOffsets == null) {
+      cachedOffsets = Java11Shim.createConcurrentLongLongMap(UNCACHED_OFFSETS)
+      if (!CACHED_OFFSETS_UPDATER.compareAndSet(this, null, cachedOffsets)) {
+        cachedOffsets = this.cachedOffsets
       }
     }
-    val cached = cachedDelta!!.get(markerId)
-    if (cached != UNCACHED_DELTA) {
+    val cached = cachedOffsets!![markerId]
+    if (cached != UNCACHED_OFFSETS) {
       return cached
     }
 
@@ -538,9 +545,7 @@ open class PMarkerRootImpl private constructor(
       val parentId = node.parentId
       if (parentId == NULL_NODE) {
         result = 0
-        if (nodeId != markerId) {
-          cachedDelta.putIfAbsent(nodeId, result)
-        }
+        cachedOffsets.putIfAbsent(nodeId, toScalarRange(node.entry.nodeStart, node.entry.nodeEnd))
         break
       }
 
@@ -549,9 +554,9 @@ open class PMarkerRootImpl private constructor(
       node = states.getUnchecked(parentId) as? ValidNode
              ?: throw IllegalStateException("Parent $parentId is not a valid marker node")
       nodeId = parentId
-      val cached = cachedDelta.get(nodeId)
-      if (cached != UNCACHED_DELTA) {
-        result = cached
+      val cached = cachedOffsets[nodeId]
+      if (cached != UNCACHED_OFFSETS) {
+        result = startOffset(cached) - node.entry.nodeStart
         break
       }
     }
@@ -560,11 +565,9 @@ open class PMarkerRootImpl private constructor(
       result += node.lazyOffsetDelta
       i--
       node = path[i]!!
-      if (node.entry.markerId != markerId) {
-        cachedDelta.putIfAbsent(node.entry.markerId, result)
-      }
+      cachedOffsets.putIfAbsent(node.entry.markerId, toScalarRange(node.entry.nodeStart + result, node.entry.nodeEnd + result))
     }
-    return result
+    return toScalarRange(state.entry.nodeStart + result, state.entry.nodeEnd + result)
   }
 
   private fun guessMaximumHeight(): Int {
@@ -810,9 +813,9 @@ open class PMarkerRootImpl private constructor(
 
   companion object {
     private const val ALL_FLAVOR_FLAGS: Int = 0xFF
-    private const val UNCACHED_DELTA: Int = Int.MIN_VALUE
-    private val CACHED_DELTA_UPDATER: AtomicReferenceFieldUpdater<PMarkerRootImpl, ConcurrentLongIntMap> = AtomicReferenceFieldUpdater.newUpdater(
-      PMarkerRootImpl::class.java, ConcurrentLongIntMap::class.java, "cachedDelta")
+    private const val UNCACHED_OFFSETS: Long = -1L
+    private val CACHED_OFFSETS_UPDATER: AtomicReferenceFieldUpdater<PMarkerRootImpl, ConcurrentLongLongMap> = AtomicReferenceFieldUpdater.newUpdater(
+      PMarkerRootImpl::class.java, ConcurrentLongLongMap::class.java, "cachedOffsets")
     private val ENTRY_COMPARATOR: Comparator<MarkerEntry> = Comparator { first, second -> PositionKey(first).compareTo(PositionKey(second)) }
     private const val NULL_NODE: Long = 0
     private object EMPTY : PMarkerRootImpl(

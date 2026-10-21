@@ -4,6 +4,7 @@ package com.intellij.concurrency;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ConcurrentLongIntMap;
+import com.intellij.util.containers.ConcurrentLongLongMap;
 import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.Java11Shim;
@@ -287,6 +288,11 @@ public final class ConcurrentCollectionFactory {
   @Contract(value = "_ -> new", pure = true)
   public static @NotNull ConcurrentLongIntMap createConcurrentLongIntMap(int defaultValue) {
     return Java11Shim.Companion.createConcurrentLongIntMap(defaultValue);
+  }
+
+  @Contract(value = "_ -> new", pure = true)
+  public static @NotNull ConcurrentLongLongMap createConcurrentLongLongMap(long defaultValue) {
+    return Java11Shim.Companion.createConcurrentLongLongMap(defaultValue);
   }
 
   @Contract(value = " -> new", pure = true)
