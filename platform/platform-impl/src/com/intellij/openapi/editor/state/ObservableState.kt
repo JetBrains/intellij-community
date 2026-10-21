@@ -28,6 +28,11 @@ abstract class ObservableState {
   // do not use SmartList because most objects have more than 1 property
   private val properties: MutableList<StateProperty<Any>> = ArrayList()
 
+  /**
+   * The properties by name. [StateProperty.provideDelegate] fills it, because a property gets its name only there.
+   */
+  private val propertiesByName: HashMap<String, StateProperty<Any>> = HashMap()
+
   private var myDispatcher: EventDispatcher<ObservableStateListener>? = null
 
   private fun <T> addProperty(p: StateProperty<T>): StateProperty<T> {
@@ -136,19 +141,25 @@ abstract class ObservableState {
   }
 
   fun clearOverriding(property: KProperty<*>) {
-    // fixme O(n)
-    properties.find { it.name == property.name }?.clearOverriding(this)
+    propertiesByName[property.name]?.clearOverriding(this)
   }
 
   fun isOverridden(property: KProperty<*>): Boolean {
-    // fixme O(n)
-    val stateProperty = properties.find { it.name == property.name }
+    val stateProperty = propertiesByName[property.name]
     return stateProperty is ObjectStateProperty<*> && stateProperty.isValueOverridden
   }
 
   fun refresh(property: KProperty<*>) {
-    // fixme O(n)
-    properties.find { it.name == property.name }?.recalculate(this)
+    propertiesByName[property.name]?.recalculate(this)
+  }
+
+  /**
+   * Adds [property] to the lookup by name. The first property with a name keeps it, as a search of the list in the
+   * declaration order does.
+   */
+  internal fun registerName(property: StateProperty<*>, name: String) {
+    @Suppress("UNCHECKED_CAST")
+    propertiesByName.putIfAbsent(name, property as StateProperty<Any>)
   }
 
   // internal usage only

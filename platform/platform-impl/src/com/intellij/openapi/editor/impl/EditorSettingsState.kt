@@ -95,9 +95,19 @@ class EditorSettingsState(
   private var fileIndent: FileIndent = projectFileIndent()
 
   // These come from CodeStyleSettings.
-  // [SettingsImpl] reads the next two through [currentUseTabCharacter] and [currentTabSize].
+
+  /**
+   * Read this value through [currentUseTabCharacter]. That function starts the computation of [fileIndent], and a
+   * direct read does not.
+   */
   var myUseTabCharacter: Boolean by codeStyleProperty { fileIndent.useTabCharacter }
+
+  /**
+   * Read this value through [currentTabSize]. That function starts the computation of [fileIndent], and a direct read
+   * does not.
+   */
   var tabSize: Int by codeStyleProperty { fileIndent.tabSize }
+
   var myWrapWhenTypingReachesRightMargin: Boolean by codeStyleProperty {
     val settings = if (editor == null) {
       CodeStyle.getDefaultSettings()
@@ -307,28 +317,25 @@ class EditorSettingsState(
         },
         disposable,
       )
-      project?.getMessageBus()
-        ?.connect(disposable)
-        ?.subscribe(
-          PsiDocumentListener.TOPIC,
-          PsiDocumentListener { document, _, _ ->
-            if (document == editor.document) {
-              languageInput.recalculate()
+      val connection = project?.messageBus?.connect(disposable)
+      connection?.subscribe(
+        PsiDocumentListener.TOPIC,
+        PsiDocumentListener { document, _, _ ->
+          if (document == editor.document) {
+            languageInput.recalculate()
+          }
+        },
+      )
+      connection?.subscribe(
+        AdvancedSettingsChangeListener.TOPIC,
+        object : AdvancedSettingsChangeListener {
+          override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
+            if (id == EDITOR_SHOW_SPECIAL_CHARS) {
+              refresh(::showingSpecialCharacters)
             }
-          },
-        )
-      project?.getMessageBus()
-        ?.connect(disposable)
-        ?.subscribe(
-          AdvancedSettingsChangeListener.TOPIC,
-          object : AdvancedSettingsChangeListener {
-            override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
-              if (id == EDITOR_SHOW_SPECIAL_CHARS) {
-                refresh(::showingSpecialCharacters)
-              }
-            }
-          },
-        )
+          }
+        },
+      )
       (editor.state as? ObservableState)?.addPropertyChangeListener(
         object : ObservableStateListener {
           override fun propertyChanged(event: ObservableStateListener.PropertyChangeEvent) {

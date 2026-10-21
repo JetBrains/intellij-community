@@ -5510,7 +5510,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (eventFile != null && !eventFile.equals(file)) {
         return;
       }
-      int oldTabSize = EditorUtil.getTabSize(this);
       final var eventSettings = event.getSettings();
       final var cachedSettings = this.getUserData(CODE_STYLE_SETTINGS);
       if (cachedSettings != null && eventSettings == null) {
@@ -5525,14 +5524,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         this.putUserData(CODE_STYLE_SETTINGS, eventSettings);
       }
       mySettings.reinitSettings();
-      int newTabSize = EditorUtil.getTabSize(this);
-      if (oldTabSize != newTabSize) {
-        reinitSettings(false, true);
-      }
-      else {
-        // cover the case of right margin update
-        myEditorComponent.repaint();
-      }
+      // A new tab size refreshes the editor through the settings state, when the state gets the value.
+      // The repaint covers the values that need no relayout, such as the right margin.
+      myEditorComponent.repaint();
     }
   }
 
