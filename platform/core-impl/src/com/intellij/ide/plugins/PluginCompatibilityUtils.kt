@@ -12,20 +12,20 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 object PluginCompatibilityUtils {
   // skip our plugins as expected to be up to date whether bundled or not
-  fun isLegacyPluginWithoutPlatformAliasDependencies(descriptor: IdeaPluginDescriptorImpl): Boolean {
-    return !descriptor.isBundled &&
-           descriptor.packagePrefix == null &&
-           !descriptor.isImplementationDetail &&
-           descriptor.contentModules.isEmpty() &&
-           descriptor.moduleDependencies.modules.isEmpty() &&
-           descriptor.moduleDependencies.plugins.isEmpty() &&
-           descriptor.pluginId != PluginManagerCore.CORE_ID &&
-           descriptor.pluginId != PluginManagerCore.JAVA_PLUGIN_ID &&
-           !hasJavaOrPlatformAliasDependency(descriptor)
+  fun isLegacyPluginWithoutPlatformAliasDependencies(plugin: PluginMainDescriptor): Boolean {
+    return !plugin.isBundled &&
+           plugin.packagePrefix == null &&
+           !plugin.isImplementationDetail &&
+           plugin.contentModules.isEmpty() &&
+           plugin.moduleDependencies.modules.isEmpty() &&
+           plugin.moduleDependencies.plugins.isEmpty() &&
+           plugin.pluginId != PluginManagerCore.CORE_ID &&
+           plugin.pluginId != PluginManagerCore.JAVA_PLUGIN_ID &&
+           !hasJavaOrPlatformAliasDependency(plugin)
   }
 
-  private fun hasJavaOrPlatformAliasDependency(descriptor: IdeaPluginDescriptorImpl): Boolean {
-    for (dependency in descriptor.dependencies) {
+  private fun hasJavaOrPlatformAliasDependency(plugin: PluginMainDescriptor): Boolean {
+    for (dependency in plugin.dependencies) {
       val dependencyPluginId = dependency.pluginId
       if (PluginManagerCore.JAVA_PLUGIN_ID == dependencyPluginId ||
           PluginManagerCore.JAVA_PLUGIN_ALIAS_ID == dependencyPluginId ||
