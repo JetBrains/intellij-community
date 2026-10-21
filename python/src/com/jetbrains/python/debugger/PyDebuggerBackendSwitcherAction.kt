@@ -259,8 +259,9 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
 
 }
 
-private fun getAvailableBackends(e: AnActionEvent): Set<PyDebuggerBackend>? =
-  PyDebuggerBackendSwitchHandler.EP_NAME.computeSafeIfAny { it.getAvailableBackends(e) }
+/** Only the handler that owns the context of [e] answers. Without an owner, the result is null. */
+internal fun getAvailableBackends(e: AnActionEvent): Set<PyDebuggerBackend>? =
+  PyDebuggerBackendSwitchHandler.EP_NAME.extensionList.firstOrNull { it.ownsRunProfile(e) }?.getAvailableBackends(e)
 
 private fun resolveEffectiveBackend(storedBackend: PyDebuggerBackend, availableBackends: Set<PyDebuggerBackend>): PyDebuggerBackend =
   storedBackend.takeIf { it in availableBackends } ?: availableBackends.first()

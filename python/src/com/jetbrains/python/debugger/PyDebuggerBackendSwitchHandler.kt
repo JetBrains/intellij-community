@@ -43,7 +43,10 @@ interface PyDebuggerBackendSwitchHandler {
    */
   fun isDebugpyAvailableForSdk(project: Project, sdk: Sdk): Boolean
 
-  /** Returns a non-empty set of available backends, or null to use the SDK defaults. */
+  /**
+   * Returns a non-empty set of available backends, or null to use the SDK defaults.
+   * The switcher calls only the handler whose [ownsRunProfile] returns true for the same event.
+   */
   fun getAvailableBackends(e: AnActionEvent): Set<PyDebuggerBackend>? = null
 
   /**
