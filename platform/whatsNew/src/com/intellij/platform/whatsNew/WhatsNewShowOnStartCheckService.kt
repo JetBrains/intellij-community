@@ -1,9 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.whatsNew
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
-import com.intellij.ide.actions.WhatsNewUtil
+import com.intellij.ide.whatsNew.WhatsNewUtil
 import com.intellij.idea.AppMode
 import com.intellij.internal.performanceTests.ProjectInitializationDiagnostic
 import com.intellij.openapi.actionSystem.ActionManager
@@ -55,7 +55,7 @@ private class WhatsNewEnvironmentAccessorImpl : WhatsNewEnvironmentAccessor {
       val problem = "This could lead to issues with the Vision-based What's New. Mixing of web-based and Vision-based What's New is not supported."
       logger.error("${updateStrategyCustomization.javaClass}'s showWhatIsNewPageAfterUpdate is overridden to true. $problem")
 
-      if (WhatsNewUtil.isWhatsNewAvailable()) { // if we are really able to show old What's New here, then terminate.
+      if (WhatsNewUtil.isWhatsNewEnabled()) { // if we are really able to show old What's New here, then terminate.
         return true
       }
     }

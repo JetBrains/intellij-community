@@ -4,6 +4,8 @@ package com.intellij.ide.actions;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.whatsNew.DefaultWhatsNewQueryHandler;
+import com.intellij.ide.whatsNew.WhatsNewPageProvider;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -13,7 +15,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
-import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -22,7 +23,6 @@ import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.ActionEvent;
 
@@ -57,23 +57,20 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
     }
 
     var project = e.getProject();
-    if (project != null && openEmbeddedWhatsNewPage(project, url, false, null)) {
-      return;
+    if (project == null || !openEmbeddedWhatsNewPage(project, url, /*includePlatformData:*/ false)) {
+      BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url));
     }
-
-    BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url));
   }
 
   @ApiStatus.Internal
   public static void openWhatsNewPage(@NotNull Project project, @NotNull String url, boolean onUpgrade) {
-    if (!ScreenReader.isActive() && openEmbeddedWhatsNewPage(project, url, onUpgrade, null)) {
+    if (openEmbeddedWhatsNewPage(project, url, /*includePlatformData:*/ onUpgrade)) {
       return;
     }
 
     var name = ApplicationNamesInfo.getInstance().getFullProductName();
     var version = ApplicationInfo.getInstance().getShortVersion();
-    String notificationText =
-      IdeBundle.message(ScreenReader.isActive() ? "whats.new.notification.text.regular.language" : "whats.new.notification.text", name, version);
+    var notificationText = IdeBundle.message("whats.new.notification.text", name, version);
     UpdateCheckerFacade.getInstance().getNotificationGroupForIdeUpdateResults()
       .createNotification(notificationText, NotificationType.INFORMATION)
       .setIcon(AllIcons.Nodes.PpWeb)
@@ -82,24 +79,11 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
       .notify(project);
   }
 
-  @ApiStatus.Internal
-  @SuppressWarnings("unused")
-  public static void openWhatsNewPage(@NotNull Project project,
-                                      @NotNull String url,
-                                      boolean includePlatformData,
-                                      @Nullable HTMLEditorProvider.JsQueryHandler queryHandler) {
-    if (!openEmbeddedWhatsNewPage(project, url, includePlatformData, queryHandler)) {
-      throw new IllegalStateException("Embedded What's New page is not available");
-    }
-  }
-
-  private static boolean openEmbeddedWhatsNewPage(@NotNull Project project,
-                                                  @NotNull String url,
-                                                  boolean includePlatformData,
-                                                  @Nullable HTMLEditorProvider.JsQueryHandler queryHandler) {
+  private static boolean openEmbeddedWhatsNewPage(Project project, String url, boolean includePlatformData) {
+    if (ScreenReader.isActive()) return false;
     var provider = WhatsNewPageProvider.EP_NAME.findFirstSafe(WhatsNewPageProvider::isAvailable);
     if (provider == null) return false;
-    provider.openWhatsNewPage(project, url, includePlatformData, queryHandler);
+    provider.openWhatsNewPage(project, url, includePlatformData, new DefaultWhatsNewQueryHandler(project));
     return true;
   }
 }
