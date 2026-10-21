@@ -50,6 +50,19 @@ internal class ReusedIdeSession(
     beforeEachDelivered = true
   }
 
+  /**
+   * Restarts [currentRun] in the middle of a test, and runs the IDE-side `beforeAll` and `beforeEach` on the new IDE.
+   *
+   * @param context the context of the running test
+   * @param close closes the current IDE before the new one starts
+   * @return the new IDE, which is now [currentRun]
+   */
+  fun restartInTest(context: ExtensionContext, close: BackgroundRun.() -> Unit): BackgroundRun {
+    currentRun = currentRun.restart(close = close)
+    beforeTestOnIde(context)
+    return currentRun
+  }
+
   /** Runs the IDE-side `afterEach` on [currentRun] when the IDE-side `beforeEach` of the test succeeded. */
   fun afterTestOnIde(context: ExtensionContext) {
     if (!beforeEachDelivered) {
@@ -140,4 +153,19 @@ private fun Throwable?.addOrSuppress(failure: Throwable): Throwable =
 @ApiStatus.Internal
 fun ExtensionContext.stopReusedIde() {
   ReusedIdeSession.remove(this)?.close()
+}
+
+/**
+ * Restarts the reused IDE of this context's test class in the middle of a test. The new IDE gets the IDE-side
+ * `beforeAll` and `beforeEach` of the test, and the session runs on it until the class ends.
+ *
+ * A test framework built on this one calls it, and a test never does.
+ *
+ * @param close closes the current IDE before the new one starts. It can also change the files that the new IDE reads.
+ * @return the new IDE
+ */
+@ApiStatus.Internal
+fun ExtensionContext.restartReusedIde(close: BackgroundRun.() -> Unit = { closeIdeAndWait() }): BackgroundRun {
+  val session = ReusedIdeSession.of(this) ?: error("No reused IDE session is started for ${requiredTestClass.name}")
+  return session.restartInTest(this, close)
 }

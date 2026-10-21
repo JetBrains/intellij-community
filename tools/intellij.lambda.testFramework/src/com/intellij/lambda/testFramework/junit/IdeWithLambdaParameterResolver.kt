@@ -11,6 +11,6 @@ class IdeWithLambdaParameterResolver : ParameterResolver {
     parameterContext.parameter.type == IdeWithLambda::class.java
 
   override fun resolveParameter(parameterContext: ParameterContext, extensionContext: ExtensionContext): Any {
-    return LambdaIdeSession.current(extensionContext)
+    return LambdaIdeSession.current(extensionContext).also { it.testContext = extensionContext }
   }
 }

@@ -3,6 +3,8 @@ package com.intellij.lambda.testFramework.utils
 import com.intellij.driver.client.Driver
 import com.intellij.ide.starter.driver.driver.remoteDev.RemoteDevBackgroundRun
 import com.intellij.ide.starter.driver.engine.BackgroundRun
+import com.intellij.ide.starter.driver.reused.restartReusedIde
+import com.intellij.lambda.testFramework.starter.LambdaIdeSession
 import com.intellij.remoteDev.tests.LambdaBackendContext
 import com.intellij.remoteDev.tests.LambdaFrontendContext
 import com.intellij.remoteDev.tests.LambdaIdeContext
@@ -11,6 +13,7 @@ import com.intellij.remoteDev.tests.impl.utils.runLogged
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdIdeType
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdSerialized
 import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
+import org.junit.jupiter.api.extension.ExtensionContext
 import java.io.Serializable
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -29,6 +32,26 @@ class IdeWithLambda(internal val backgroundRun: BackgroundRun, val rdSession: La
   val driver: Driver = backgroundRun.driver
   val isRemoteDev: Boolean = backgroundRun is RemoteDevBackgroundRun
   val defaultTimeout: Duration = 1.minutes
+
+  /** The context of the test that got this IDE as a parameter. [restart] restarts the session of that test. */
+  internal var testContext: ExtensionContext? = null
+
+  /**
+   * Restarts this IDE in the middle of a test. The new IDE keeps the config and the system directories, and gets the
+   * IDE-side `beforeAll` and `beforeEach` of the test again. The test goes on with the returned IDE, because this one
+   * is closed.
+   *
+   * @param betweenRuns runs while no IDE is running, for example to change a file that the new IDE reads at its start
+   * @return the new IDE
+   */
+  fun restart(betweenRuns: () -> Unit = {}): IdeWithLambda {
+    val context = checkNotNull(testContext) { "Only an IDE that a test got as a parameter can restart" }
+    context.restartReusedIde {
+      closeIdeAndWait()
+      betweenRuns()
+    }
+    return LambdaIdeSession.current(context).also { it.testContext = context }
+  }
 
   fun LambdaRdTestSession.getRdIdeTypePrefix(): String = if (rdIdeType != LambdaRdIdeType.MONOLITH) "${rdIdeType}: " else ""
 
