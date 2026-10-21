@@ -9,7 +9,6 @@ import ai.grazie.utils.mpp.FromResourcesDataLoader
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.detection.BatchLangDetector
 import com.intellij.grazie.detection.LangDetector
-import com.intellij.grazie.rule.SentenceTokenizer.toTokens
 import com.intellij.grazie.spellcheck.SpellingTextChecker
 import com.intellij.grazie.text.CheckerRunner
 import com.intellij.grazie.text.ProblemFilter
@@ -19,7 +18,7 @@ import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContent.TextDomain
 import com.intellij.grazie.text.TextContentImpl
 import com.intellij.grazie.text.TextProblem
-import com.intellij.grazie.text.TextProblemAggregator
+import com.intellij.grazie.text.TreeRuleChecker
 import com.intellij.grazie.utils.HighlightingUtil.findInstalledLang
 import com.intellij.grazie.utils.HighlightingUtil.isTooLargeFile
 import com.intellij.openapi.components.service
@@ -52,9 +51,24 @@ internal fun getAllProblems(file: PsiFile, checkedDomains: Set<TextDomain>, allC
 
 private fun getAllProblems(texts: List<TextContent>, checkedDomains: Set<TextDomain>, allCheckers: List<TextChecker>): List<TextProblem> =
   buildProblemMap(allCheckers, texts, checkedDomains)
-    .flatMap { (text, problems) ->
-      TextProblemAggregator.aggregate(problems, text.toString(), toTokens(text).map { it.range }, false)
+    .flatMap { (_, problems) -> removeIntersecting(problems) }
+
+private fun removeIntersecting(problems: List<TextProblem>): List<TextProblem> {
+  val result = ArrayList<TextProblem>()
+  for (problem in problems.sortedByDescending(::problemPriority)) {
+    if (result.none { prev -> prev.highlightRanges.any { range -> problem.highlightRanges.any(range::intersects) } }) {
+      result.add(problem)
     }
+  }
+  return result
+}
+
+private fun problemPriority(problem: TextProblem): Int = when {
+  problem.isStyleLike -> 0
+  problem !is TreeRuleChecker.TreeProblem -> 30
+  problem.match.concedeToOtherGrammarCheckers() -> 10
+  else -> 40
+}
 
 private fun buildProblemMap(
   allCheckers: List<TextChecker>,
