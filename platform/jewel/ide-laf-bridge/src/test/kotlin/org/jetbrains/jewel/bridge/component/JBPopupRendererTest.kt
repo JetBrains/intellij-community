@@ -21,8 +21,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.IntSize
@@ -39,6 +41,7 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.replaceService
 import com.intellij.ui.ScreenUtil
+import com.intellij.ui.scale.JBUIScale
 import io.mockk.every
 import io.mockk.mockk
 import java.awt.Component
@@ -56,12 +59,15 @@ import java.lang.reflect.Proxy
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.JWindow
 import javax.swing.SwingUtilities
 import org.jetbrains.jewel.bridge.JewelComposePanelWrapper
 import org.jetbrains.jewel.bridge.compose
 import org.jetbrains.jewel.foundation.LocalComponent
 import org.jetbrains.jewel.ui.component.PopupRenderer
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeFalse
@@ -131,7 +137,10 @@ public class JBPopupRendererTest {
         var showPopup by mutableStateOf(true)
 
         rule.setContent {
-            CompositionLocalProvider(LocalComponent provides owner) {
+            CompositionLocalProvider(
+                LocalComponent provides owner,
+                LocalDensity provides Density(JBUIScale.sysScale(owner)),
+            ) {
                 Box(modifier = Modifier.size(400.dp, 300.dp)) {
                     Box(modifier = Modifier.offset(50.dp, 60.dp).size(100.dp, 40.dp)) {
                         if (showPopup) {
@@ -187,7 +196,10 @@ public class JBPopupRendererTest {
         val noOpDismiss: ((InputMode) -> Unit)? = null
 
         rule.setContent {
-            CompositionLocalProvider(LocalComponent provides owner) {
+            CompositionLocalProvider(
+                LocalComponent provides owner,
+                LocalDensity provides Density(JBUIScale.sysScale(owner)),
+            ) {
                 Column(modifier = Modifier.width(IntrinsicSize.Max)) {
                     Box(modifier = Modifier.size(120.dp, 32.dp)) {
                         JBPopupRenderer.Popup(
@@ -219,9 +231,8 @@ public class JBPopupRendererTest {
     }
 
     @Test
-    public fun `preMeasureComposePanel succeeds on unattached ComposePanel`() {
+    public fun `ComposePanel attached to displayable invisible window measures content on preferredSize`() {
         assumeFalse("ComposePanel requires a non-headless AWT environment", GraphicsEnvironment.isHeadless())
-        val owner = FakeShowingOwnerComponent(screenLocation = Point(300, 200))
         SwingUtilities.invokeAndWait {
             var measuredSize: Dimension? = null
             val wrapper =
@@ -233,21 +244,20 @@ public class JBPopupRendererTest {
                     }
                 }
                     as JewelComposePanelWrapper
+            val window = JWindow()
             try {
                 assertNull(
-                    "Unattached ComposePanel must have null graphicsConfiguration before pre-measurement",
+                    "Unattached ComposePanel must have null graphicsConfiguration before attachment",
                     wrapper.composePanel.graphicsConfiguration,
                 )
-                assertTrue(
-                    "preMeasureComposePanel must succeed on an unattached ComposePanel",
-                    preMeasureComposePanel(wrapper.composePanel, owner),
-                )
-                assertNull(
-                    "preMeasureComposePanel must leave the root component unparented after measurement",
-                    wrapper.parent,
-                )
-                assertEquals(Dimension(140, 75), measuredSize)
+                window.contentPane.add(wrapper)
+                window.addNotify()
+                assertFalse("Popup window must remain invisible during pre-measurement", window.isVisible)
+                val preferredSize = wrapper.preferredSize
+                assertNotNull("ComposePanel must measure its content on getPreferredSize()", measuredSize)
+                assertEquals(Dimension(140, 75), preferredSize)
             } finally {
+                window.dispose()
                 wrapper.composePanel.dispose()
             }
         }
@@ -279,6 +289,8 @@ public class JBPopupRendererTest {
         val showEvents = mutableListOf<Pair<Point, Dimension>>()
         val setSizeEvents = mutableListOf<Pair<Point, Dimension>>()
         var capturedContentComponent: JComponent? = null
+        var attachContentBeforeMeasuring = false
+        var preMeasureWindow: JWindow? = null
 
         val jbPopupInterface = Class.forName("com.intellij.openapi.ui.popup.JBPopup")
 
@@ -295,10 +307,28 @@ public class JBPopupRendererTest {
                     }
                     "showInScreenCoordinates" -> {
                         val point = args?.get(1) as Point
-                        val currentPreferredSize =
-                            capturedContentComponent?.preferredSize ?: error("Popup content component was not captured")
+                        val content = capturedContentComponent ?: error("Popup content component was not captured")
+                        val shouldAttachBeforeMeasuring =
+                            attachContentBeforeMeasuring ||
+                                content.getClientProperty("AttachContentBeforeMeasuring") == true
+                        if (shouldAttachBeforeMeasuring && !GraphicsEnvironment.isHeadless()) {
+                            val window =
+                                JWindow().apply {
+                                    contentPane.add(content)
+                                    addNotify()
+                                }
+                            preMeasureWindow = window
+                            Disposer.register(disposableRule.disposable) { window.dispose() }
+                        }
+                        val currentPreferredSize = content.preferredSize
+                        val effectivePoint = setSizeEvents.lastOrNull()?.first ?: point
                         val effectiveSize = setSizeEvents.lastOrNull()?.second ?: currentPreferredSize
-                        showEvents += Point(point) to Dimension(effectiveSize)
+                        showEvents += Point(effectivePoint) to Dimension(effectiveSize)
+                        null
+                    }
+                    "cancel" -> {
+                        preMeasureWindow?.dispose()
+                        preMeasureWindow = null
                         null
                     }
                     "isDisposed",
@@ -317,6 +347,10 @@ public class JBPopupRendererTest {
                 arrayOf(ComponentPopupBuilder::class.java),
             ) { proxy, method, args ->
                 when (method.name) {
+                    "setAttachContentBeforeMeasuring" -> {
+                        attachContentBeforeMeasuring = args?.firstOrNull() as? Boolean ?: false
+                        builderProxy
+                    }
                     "createPopup" -> popupProxy
                     "hashCode" -> System.identityHashCode(proxy)
                     "equals" -> proxy === args?.firstOrNull()
@@ -401,7 +435,12 @@ private class FakeGraphicsConfiguration : GraphicsConfiguration() {
 
     override fun getColorModel(transparency: Int): ColorModel = ColorModel.getRGBdefault()
 
-    override fun getDefaultTransform(): AffineTransform = AffineTransform()
+    override fun getDefaultTransform(): AffineTransform =
+        if (GraphicsEnvironment.isHeadless()) {
+            AffineTransform()
+        } else {
+            GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.defaultConfiguration.defaultTransform
+        }
 
     override fun getNormalizingTransform(): AffineTransform = AffineTransform()
 

@@ -225,6 +225,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
   // Zero or negative values (with/height or both) would be ignored (actual values would be obtained from the preferred size).
   public static final @NonNls String FIRST_TIME_SIZE = "FirstTimeSize";
 
+  @ApiStatus.Internal
+  public static final @NonNls String ATTACH_CONTENT_BEFORE_MEASURING = "AttachContentBeforeMeasuring";
+
   private static final Logger LOG = Logger.getInstance(AbstractPopup.class);
 
   private PopupComponent myPopup;
@@ -369,6 +372,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
   private JComponent myAdComponent;
   private boolean myDisposed;
   private boolean myNormalWindowLevel;
+  private boolean myAttachContentBeforeMeasuring;
 
   private UiActivity myActivityKey;
   private Disposable myProjectDisposable;
@@ -380,6 +384,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
 
   void setNormalWindowLevel(boolean normalWindowLevel) {
     myNormalWindowLevel = normalWindowLevel;
+  }
+
+  @ApiStatus.Internal
+  public void setAttachContentBeforeMeasuring(boolean attach) {
+    myAttachContentBeforeMeasuring = attach;
   }
 
   private enum State {NEW, INIT, SHOWING, SHOWN, CANCEL, DISPOSE}
@@ -1307,6 +1316,43 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
       }
     }
 
+    PopupComponent preCreatedPopup = null;
+    Component preCreatedPopupOwner = null;
+    boolean attachContentBeforeMeasuring =
+      myAttachContentBeforeMeasuring ||
+      (myComponent != null && Boolean.TRUE.equals(myComponent.getClientProperty(ATTACH_CONTENT_BEFORE_MEASURING)));
+    if (attachContentBeforeMeasuring) {
+      myOwner = getFrameOrDialog(owner);
+      if (myOwner == null) {
+        myOwner = owner;
+      }
+      myRequestorComponent = owner;
+      myPopupType = getMostSuitablePopupType();
+      myNativePopup = myPopupType != PopupComponentFactory.PopupType.DIALOG;
+      preCreatedPopupOwner = getPopupOwner(myOwner);
+      PopupComponentFactory factory = PopupComponentFactory.getCurrentInstance();
+      preCreatedPopup = factory.createPopupComponent(myPopupType, preCreatedPopupOwner, myContent, aScreenX, aScreenY, this);
+      boolean preMeasured = false;
+      try {
+        Window preCreatedWindow = getContentWindow(myContent);
+        if (preCreatedWindow != null && !preCreatedWindow.isDisplayable()) {
+          configureWindowType(preCreatedWindow);
+          preCreatedWindow.addNotify();
+        }
+        myContent.getPreferredSize();
+        preMeasured = true;
+      }
+      finally {
+        if (!preMeasured) {
+          preCreatedPopup.hide(true);
+        }
+      }
+      if (myForcedLocation != null) {
+        aScreenX = myForcedLocation.x;
+        aScreenY = myForcedLocation.y;
+      }
+    }
+
     if (LOG.isDebugEnabled()) {
       LOG.debug("START calculating bounds for a popup with options = " + options);
     }
@@ -1428,31 +1474,39 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
       AutoPopupSupportingListener.installOn(this);
     }
 
-    myOwner = getFrameOrDialog(owner); // use the correct popup owner for non-modal dialogs too
-    if (myOwner == null) {
-      myOwner = owner;
+    Component popupOwner;
+    if (preCreatedPopup != null) {
+      popupOwner = preCreatedPopupOwner;
     }
+    else {
+      myOwner = getFrameOrDialog(owner); // use the correct popup owner for non-modal dialogs too
+      if (myOwner == null) {
+        myOwner = owner;
+      }
 
-    myRequestorComponent = owner;
+      myRequestorComponent = owner;
 
-    myPopupType = getMostSuitablePopupType();
-    myNativePopup = myPopupType != PopupComponentFactory.PopupType.DIALOG;
-    Component popupOwner = myOwner;
-    if (popupOwner instanceof RootPaneContainer root && !(popupOwner instanceof IdeFrame && !Registry.is("popup.fix.ide.frame.owner"))) {
-      // JDK uses cached heavyweight popup for a window ancestor
-      popupOwner = root.getRootPane();
-      LOG.debug("popup owner fixed for JDK cache");
+      myPopupType = getMostSuitablePopupType();
+      myNativePopup = myPopupType != PopupComponentFactory.PopupType.DIALOG;
+      popupOwner = getPopupOwner(myOwner);
     }
     if (ClientSystemInfo.isWaylandToolkit()) {
-      // In Wayland, popup's owner must be a toplevel, i.e., a window or another popup that is also a window:
-      popupOwner = SwingUtilities.getRoot(popupOwner);
       targetBounds.setLocation(fitIntoParentBounds(targetBounds, (Window) popupOwner));
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("expected preferred size: " + myContent.getPreferredSize());
     }
-    PopupComponentFactory factory = PopupComponentFactory.getCurrentInstance();
-    myPopup = factory.createPopupComponent(myPopupType, popupOwner, myContent, targetBounds.x, targetBounds.y, this);
+    if (preCreatedPopup != null) {
+      myPopup = preCreatedPopup;
+      Window popupWindow = myPopup.getWindow();
+      if (popupWindow != null) {
+        popupWindow.setBounds(targetBounds);
+      }
+    }
+    else {
+      PopupComponentFactory factory = PopupComponentFactory.getCurrentInstance();
+      myPopup = factory.createPopupComponent(myPopupType, popupOwner, myContent, targetBounds.x, targetBounds.y, this);
+    }
     if (LOG.isDebugEnabled()) {
       LOG.debug("START adjusting popup bounds after creation");
       LOG.debug("  actual preferred size: " + myContent.getPreferredSize());
@@ -1558,12 +1612,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
       WindowRoundedCornersManager.setRoundedCorners(window, roundedCornerParams);
     }
 
-    if (shouldUseTrueWaylandPopups()) {
-      window.setType(Window.Type.POPUP);
-    }
-    else if (myNormalWindowLevel && !window.isDisplayable()) {
-      window.setType(Window.Type.NORMAL);
-    }
+    configureWindowType(window);
     myWindow = window;
     if (LOG.isDebugEnabled()) {
       LOG.debug("Setting minimum size to " + myMinSize);
@@ -3221,6 +3270,30 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup,
       mySpeedSearch.update();
     }
     return event.isConsumed();
+  }
+
+  private static @NotNull Component getPopupOwner(@NotNull Component owner) {
+    Component popupOwner = owner;
+    if (popupOwner instanceof RootPaneContainer root && !(popupOwner instanceof IdeFrame && !Registry.is("popup.fix.ide.frame.owner"))) {
+      // JDK uses cached heavyweight popup for a window ancestor
+      popupOwner = root.getRootPane();
+      LOG.debug("popup owner fixed for JDK cache");
+    }
+    if (ClientSystemInfo.isWaylandToolkit()) {
+      // In Wayland, popup's owner must be a toplevel, i.e., a window or another popup that is also a window:
+      popupOwner = SwingUtilities.getRoot(popupOwner);
+    }
+    return popupOwner;
+  }
+
+  private void configureWindowType(@NotNull Window window) {
+    if (window.isDisplayable()) return;
+    if (shouldUseTrueWaylandPopups()) {
+      window.setType(Window.Type.POPUP);
+    }
+    else if (myNormalWindowLevel) {
+      window.setType(Window.Type.NORMAL);
+    }
   }
 
   private static boolean shouldUseTrueWaylandPopups() {

@@ -375,4 +375,14 @@ public interface ComponentPopupBuilder {
    */
   @NotNull
   ComponentPopupBuilder setOkHandler(@Nullable Runnable okHandler);
+
+  /**
+   * Attaches the content to the popup window and makes the window displayable before the popup calculates its bounds.
+   * Use this for a component such as {@code ComposePanel} that needs a displayable window to measure its content.
+   * The default is {@code false}.
+   */
+  @ApiStatus.Internal
+  default @NotNull ComponentPopupBuilder setAttachContentBeforeMeasuring(boolean attach) {
+    return this;
+  }
 }
