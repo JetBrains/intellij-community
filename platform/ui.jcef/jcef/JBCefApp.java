@@ -222,8 +222,9 @@ public final class JBCefApp {
 
   private static void checkCEFVersionUpdate(CefSettings settings) {
     JCefVersionDetails version = getVersionDetails();
-    if (version == null) // NOTE: should always be FALSE (otherwise isSupported will return false and we won't execute JBCefApp ctor).
+    if (version == null) { // NOTE: should always be FALSE (otherwise isSupported will return false and we won't execute JBCefApp ctor).
       return;
+    }
 
     final PropertiesComponent props = PropertiesComponent.getInstance();
     final int cefVersionLast = props.getInt(SETTINGS_CEF_VERSION_KEY, SETTINGS_CEF_VERSION_DEFAULT_VAL);
@@ -280,13 +281,15 @@ public final class JBCefApp {
     private boolean myInternalJcefTestFailed = false;
 
     void onHealthCheckOk() {
-      if (!myIsRemoteEnabled)
+      if (!myIsRemoteEnabled) {
         doCefStartup();
+      }
     }
 
     void onInternalJcefTestOk() {
-      if (!myInternalJcefTestFailed) // Don't save default working CEF settings and args.
+      if (!myInternalJcefTestFailed) { // Don't save default working CEF settings and args.
         return;
+      }
 
       SettingsHelper.saveChromiumArgs(myCefArgs);
       // TODO: remember CefSettings (that allows JCEF to be working)
@@ -294,8 +297,9 @@ public final class JBCefApp {
 
     void onInternalJcefTestFailed() {
       myInternalJcefTestFailed = true;
-      if (myCefApp != null)
+      if (myCefApp != null) {
         myCefApp.dispose();
+      }
     }
 
     private void doCefStartup() {
@@ -329,8 +333,9 @@ public final class JBCefApp {
 
     boolean initInProcessCefApp(boolean withVerboseLogging) {
       // We shouldn't start JCEF If in-process jcef was already started.
-      if (myIsInProcessJCEFStarted)
+      if (myIsInProcessJCEFStarted) {
         return false;
+      }
 
       myIsRemoteEnabled = false;
       CefApp.setIsRemoteEnabled(false);
@@ -353,15 +358,18 @@ public final class JBCefApp {
         return false;
       }
       // We shouldn't start JCEF If in-process jcef was already started.
-      if (myIsInProcessJCEFStarted)
+      if (myIsInProcessJCEFStarted) {
         return false;
+      }
 
       // Tune CefSettings and chromium args.
-      if (withTempCachePath)
+      if (withTempCachePath) {
         myCefSettings.cache_path = System.getProperty("java.io.tmpdir") + Platform.current().fileSeparator + "jcef_cache_" + ProcessHandle.current().pid() + "_i" + CEFAPP_INSTANCE_COUNT.get();
+      }
 
-      if (myCefArgs == null)
+      if (myCefArgs == null) {
         myCefArgs = ArrayUtil.EMPTY_STRING_ARRAY;
+      }
 
       if (chromiumArgs != null && chromiumArgs.length > 0) {
         // Merge additional chromiumArgs with myCefArgs
@@ -372,7 +380,7 @@ public final class JBCefApp {
       // CefLog [re]initialization.
       //
       final int instanceNum = CEFAPP_INSTANCE_COUNT.get();
-      final String defLogPathPrefix = PathManager.getLogPath() + Platform.current().fileSeparator + "jcef_";
+      final String defLogPathPrefix = PathManager.getLogDir().resolve("jcef").resolve("jcef_").toString();
       final String defLogPathSuffix = ProcessHandle.current().pid() + (instanceNum == 0 ? "" : "_i" + instanceNum) + ".log";
 
       // Set chromium log path
@@ -414,8 +422,17 @@ public final class JBCefApp {
         }
       }
 
-      if (logLevelJcef != CefSettings.LogSeverity.LOGSEVERITY_DISABLE || myCefSettings.log_file != null || logPathJcef != null)
+      // Chromium and CefLog do not create a missing log directory
+      if (myCefSettings.log_severity != CefSettings.LogSeverity.LOGSEVERITY_DISABLE) {
+        createParentDirectory(myCefSettings.log_file);
+      }
+      if (logLevelJcef != CefSettings.LogSeverity.LOGSEVERITY_DISABLE) {
+        createParentDirectory(logPathJcef);
+      }
+
+      if (logLevelJcef != CefSettings.LogSeverity.LOGSEVERITY_DISABLE || myCefSettings.log_file != null || logPathJcef != null) {
         LOG.info(String.format("JCEF logging: level=%s, file=%s, chromium_log=%s", logLevelJcef, logPathJcef, myCefSettings.log_file));
+      }
 
       CefLog.init(logPathJcef, logLevelJcef, true);
 
@@ -432,8 +449,9 @@ public final class JBCefApp {
       final CefApp cefApp = CefApp.getInstance(myCefArgs, myCefSettings, myServerExe);
 
       if (cefApp != null) {
-        if (myCefApp != cefApp)
+        if (myCefApp != cefApp) {
           CEFAPP_INSTANCE_COUNT.incrementAndGet();
+        }
 
         if (myCefSettings.remote_debugging_port > 0) {
           myDebuggingPort.complete(myCefSettings.remote_debugging_port);
@@ -447,10 +465,11 @@ public final class JBCefApp {
           });
         }
 
-        if (myIsRemoteEnabled)
+        if (myIsRemoteEnabled) {
           JBCefHealthMonitor.getInstance().setupDisconnectionNotification(cefApp);
-        else
+        } else {
           myIsInProcessJCEFStarted = true;
+        }
       } else {
         LOG.warn("JCEF wasn't [re]started: CefApp.getInstance returns null.");
         return false;
@@ -463,8 +482,9 @@ public final class JBCefApp {
 
       // Dispose old and set default new.
       CefApp.setDefaultInstance(cefApp);
-      if (myCefApp != null)
+      if (myCefApp != null) {
         myCefApp.dispose();
+      }
       myCefApp = cefApp;
 
       // Write summary to log.
@@ -652,8 +672,9 @@ public final class JBCefApp {
 
     if (!SKIP_VERSION_CHECK) {
       JCefVersionDetails version = getVersionDetails();
-      if (version == null)
+      if (version == null) {
         return unsupported.apply("JCEF runtime version is not supported");
+      }
 
       if (MIN_SUPPORTED_CEF_MAJOR_VERSION > version.cefVersion.major) {
         return unsupported.apply("JCEF: minimum supported CEF major version is " + MIN_SUPPORTED_CEF_MAJOR_VERSION +
@@ -700,14 +721,18 @@ public final class JBCefApp {
    */
   public static boolean isStarted() {
     boolean initialised = ourInitialized.get();
-    if (!initialised) return false;
+    if (!initialised) {
+      return false;
+    }
     //noinspection ConstantConditions
     return getInstance() != null;
   }
 
   @Contract(pure = true)
   @NotNull String getCachePath() {
-    if (myCefSettings == null) throw new UnsupportedOperationException();
+    if (myCefSettings == null) {
+      throw new UnsupportedOperationException();
+    }
     return myCefSettings.cache_path;
   }
 
@@ -862,13 +887,15 @@ public final class JBCefApp {
 
     @Override
     public void onBeforeChildProcessLaunch(String command_line) {
-      if (command_line == null || !command_line.contains("--type=gpu-process"))
+      if (command_line == null || !command_line.contains("--type=gpu-process")) {
         return;
+      }
 
       ++myGPULaunchCounter;
       // NOTE: skip first gpu-process launch
-      if (myGPULaunchCounter > 1)
+      if (myGPULaunchCounter > 1) {
         JBCefHealthMonitor.getInstance().onGpuProcessFailed();
+      }
     }
   }
 
@@ -966,15 +993,31 @@ public final class JBCefApp {
   }
 
   private static String[] mergeArgs(String[] args0, String[] args1) {
-    if (args0 == null || args0.length == 0)
+    if (args0 == null || args0.length == 0) {
       return args1;
-    if (args1 == null || args1.length == 0)
+    }
+    if (args1 == null || args1.length == 0) {
       return args0;
+    }
 
     Set<String> argsSet = new HashSet<>();
     argsSet.addAll(Arrays.asList(args0));
     argsSet.addAll(Arrays.asList(args1));
     return ArrayUtil.toStringArray(argsSet);
+  }
+
+  private static void createParentDirectory(@Nullable String filePath) {
+    if (filePath == null) {
+      return;
+    }
+    try {
+      Path parent = Path.of(filePath).toAbsolutePath().getParent();
+      if (parent != null) {
+        Files.createDirectories(parent);
+      }
+    } catch (IOException | InvalidPathException e) {
+      LOG.warn("JCEF: cannot create the directory for the log file '" + filePath + "'", e);
+    }
   }
 
   /**
