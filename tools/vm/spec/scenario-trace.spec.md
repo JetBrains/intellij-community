@@ -496,12 +496,40 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   testlogs, and the bundles of `test.outputs/air-traces/` and `test.outputs/outputs.zip` beside it. Each bundle
   becomes `<lane>/<runId>/<TestClass>/<scenario>.zip`, where the lane is the Bazel target with its shard directory.
   The step prints `publishArtifacts` into `air-traces/<lane>/<runId>/<TestClass>` and the `testMetadata` of the
-  test: the trace, the video, and the last picture of a failed scenario. The test name is `<classname>.<name>` of
-  the XML beside the bundle, and the messages carry no flow. Two bundles whose names sanitize to one file get
-  `<scenario>.zip` and `<scenario>.2.zip`, and stderr says so. A bundle that cannot be packed is a line on stderr,
-  and the exit stays 0.
+  test. The metadata are the trace, the viewer link, the video, and the last picture of a failed scenario. The test
+  name is `<classname>.<name>` of the XML beside the bundle, and the messages carry no flow. Two bundles whose names sanitize
+  to one file get `<scenario>.zip` and `<scenario>.2.zip`, and stderr says so. A bundle that cannot be packed, and
+  an output that cannot be read, are each a line on stderr, and the exit stays 0. Testlogs without bundles print
+  nothing and write nothing.
   [@test] ../crates/air-trace/src/publish/tests.rs (`the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests`)
+  [@test] ../crates/air-trace/src/publish/tests.rs (`testlogs_without_bundles_print_nothing`)
   [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_published_trace_names_the_case_of_its_own_xml`)
+
+- Beside the zips, the step publishes `air-traces/runs.json`. It is the listing of `GET /__air/runs`, written with
+  the server's own types. Each scenario carries `zip`, the path of its zip relative to `runs.json`. Its `source` is
+  that zip, and its id is the id of that zip. `controllerRuns` is empty. Each testlogs directory is one
+  `bazel-testlogs` root. The root counts its published bundles, and its problems name each output that did not
+  read and each bundle that did not pack.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`on_team_city_the_listing_names_the_build_and_each_test_links_its_trace`)
+
+- The step copies the built viewer of `--viewer` into `air-traces/`, and each entry at its top replaces the entry
+  of that name. A viewer that is missing, that holds no `index.html`, or that holds the output or lies inside it, is
+  a line on stderr. The zips and `runs.json` still publish.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`without_a_viewer_the_bundles_and_the_listing_publish_alone`)
+  [@test] ../crates/air-trace/src/publish/tests.rs (`a_viewer_that_overlaps_the_output_is_refused`)
+
+- On TeamCity, the step reads the build from the agent's property files: `TEAMCITY_BUILD_PROPERTIES_FILE`, and
+  the file of the configuration parameters that `teamcity.configuration.properties.file` names. The build gives each
+  run and root of `runs.json` its `origin`: the name of the build configuration, the build id and the build page. The
+  server is the root of `BUILD_URL` when that is `<root>/build/<build id>`, else `teamcity.serverUrl`. Files that
+  do not name the build are a line on stderr, and the listing then names no build.
+  [@test] ../crates/air-trace/src/publish/teamcity/tests.rs
+
+- With the build and the viewer, each test gets a `link` named `trace viewer`:
+  `<server>/repository/download/<buildTypeId>/<buildId>:id/air-traces/index.html#/trace?zip=<zip>`. The zip path is
+  percent-encoded. Without the build or the viewer, no test gets a link.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`on_team_city_the_listing_names_the_build_and_each_test_links_its_trace`)
+  [@test] ../crates/air-trace/src/publish/tests.rs (`without_a_viewer_the_bundles_and_the_listing_publish_alone`)
 
 ### The server
 

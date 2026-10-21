@@ -924,10 +924,18 @@ shard that failed to download is a root with its error. For the server of `--tea
 uses the login of `teamcity auth login`. A server is `https`, or `http` on a loopback host. `--teamcity` does not go
 with `--detach`, so pick a free `--port` when a detached server runs.
 
-**On TeamCity.** `bazel run @community//tools/vm:air-trace -- teamcity-publish` is the step after `bazel test`. It
-zips each bundle under the testlogs into `air-traces/<lane>/<runId>/<TestClass>/<scenario>.zip`, publishes the zips
-as artifacts, and gives each test of the Tests tab its trace, its video and, for a failed scenario, its last picture.
-No Air build configuration runs this step yet; it is one more step in `ultimate-teamcity-config`.
+**On TeamCity.** `bazel run @community//tools/vm:air-trace -- teamcity-publish --viewer <dir>` is the step after
+`bazel test`. It zips each bundle under the testlogs into `air-traces/<lane>/<runId>/<TestClass>/<scenario>.zip` and
+publishes the zips as artifacts. Beside them it publishes `air-traces/runs.json` and the built viewer of `--viewer`.
+The listing has the form of `/__air/runs`, and each scenario names its zip. So `air-traces/index.html` in the
+artifacts of the build opens its traces with no server. Each test of the Tests tab gets its trace, a `trace viewer`
+link into that page, its video and, for a failed scenario, its last picture.
+
+The step reads the build from the agent's property files, `TEAMCITY_BUILD_PROPERTIES_FILE` and the configuration
+file that it names. `bazel run` passes the environment of the step to the program. The listing then names the build
+of each run, and the server of the link is the root of `BUILD_URL`. Without the files or without `--viewer`, the zips
+and the listing still publish with no link, and stderr says why. No Air build configuration runs this step yet; it is
+one more step in `ultimate-teamcity-config`.
 
 When the site in `out/air-site` is missing, or older than `plugins/air/docs/src` or the `src`, `scripts` and
 `styles` of the kernel `community/tools/docs-site`, the server builds it once in the background:
