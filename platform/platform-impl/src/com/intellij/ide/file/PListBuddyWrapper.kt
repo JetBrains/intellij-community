@@ -94,7 +94,8 @@ class PListBuddyWrapper(private val pListPath: String) {
   @Throws(PListProcessingException::class)
   private fun parseXml(xmlString: String): Document {
     try {
-      val builder = createDocumentBuilder()
+      // PlistBuddy -x output starts with a DOCTYPE declaration, so the parser must accept it.
+      val builder = createDocumentBuilder(allowDoctype = true)
       val stringReader = StringReader(xmlString)
       val source = InputSource(stringReader)
       return builder.parse(source)

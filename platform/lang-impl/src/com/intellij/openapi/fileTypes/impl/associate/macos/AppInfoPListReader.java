@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
@@ -18,7 +19,8 @@ import java.io.IOException;
 
 import static com.intellij.util.JavaXmlDocumentKt.createDocumentBuilder;
 
-class AppInfoPListReader {
+@ApiStatus.Internal
+public final class AppInfoPListReader {
   private static final String BUNDLE_IDENTIFIER = "CFBundleIdentifier";
 
   private static final String DEBUG_HOME_PATH = System.getProperty("file.association.debug.home.path");
@@ -65,9 +67,14 @@ class AppInfoPListReader {
     return infoFile;
   }
 
-  void loadPList() throws OSFileAssociationException {
+  public void loadPList() throws OSFileAssociationException {
+    loadPList(getInfoPListFile());
+  }
+
+  public void loadPList(@NotNull File infoPListFile) throws OSFileAssociationException {
     try {
-      myDocument = createDocumentBuilder().parse(getInfoPListFile());
+      // Info.plist starts with a DOCTYPE declaration, so the parser must accept it.
+      myDocument = createDocumentBuilder(false, true).parse(infoPListFile);
     }
     catch (SAXException | IOException e) {
       throw new OSFileAssociationException("Error reading Info.plist: " + e.getMessage());
