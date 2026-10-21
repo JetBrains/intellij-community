@@ -29,6 +29,15 @@ pub fn viewer_url(port: u16, bundle_id: &str, scenario: &str) -> String {
     )
 }
 
+/// The hash route of the trace page of the static viewer that `teamcity-publish` puts beside the bundle zips:
+/// `#/trace?zip=<zip>`, with `zip` relative to the page. The value is written as `URLSearchParams` writes it, with each
+/// `/` kept, which is how `traceHash` of the viewer writes it. `src/viewer/hashRoutes.test.ts` of the site pins the
+/// same literal.
+pub fn static_trace_hash(zip: &str) -> String {
+    format!("#/trace?zip={}", query_escape(zip).replace("%2F", "/"))
+}
+
+/// A query value as `URLSearchParams` writes it.
 fn query_escape(value: &str) -> String {
     form_urlencoded::byte_serialize(value.as_bytes()).collect()
 }

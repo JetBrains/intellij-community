@@ -99,10 +99,16 @@ fn the_build_of_a_step_comes_from_the_agent_files() {
             ),
         }
     );
+    let page = "https://buildserver.labs.intellij.net/repository/download/ijplatform_master_AirPluginUiTests_1/1100310296:id/\
+                air-traces/index.html";
     assert_eq!(
-        build.viewer_link("ui_lane_test/shard_1_of_2/iter-1/AirComposerUiTest/a b~.zip"),
-        "https://buildserver.labs.intellij.net/repository/download/ijplatform_master_AirPluginUiTests_1/1100310296:id/air-traces/\
-         index.html#/trace?zip=ui_lane_test%2Fshard_1_of_2%2Fiter-1%2FAirComposerUiTest%2Fa%20b~.zip"
+        build.viewer_link("ui_lane_test/iter-1/T/s.zip"),
+        format!("{page}#/trace?zip=ui_lane_test/iter-1/T/s.zip")
+    );
+    // As `traceHash` of the viewer writes it: `URLSearchParams`, with each slash kept.
+    assert_eq!(
+        build.viewer_link("ui_lane_test/shard_1_of_2/iter-1/T/a b+c~d&e=é.zip"),
+        format!("{page}#/trace?zip=ui_lane_test/shard_1_of_2/iter-1/T/a+b%2Bc%7Ed%26e%3D%C3%A9.zip")
     );
 
     let other_build_url = of_step(&[

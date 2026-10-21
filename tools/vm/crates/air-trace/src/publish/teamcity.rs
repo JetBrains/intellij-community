@@ -11,6 +11,7 @@ use std::path::Path;
 
 use avl_report::teamcity::{TRACES_ARTIFACT_DIR, is_build_step};
 use avl_trace_tools::discover::Origin;
+use avl_trace_tools::viewer::static_trace_hash;
 
 /// The variable of the agent that names the file of the build's properties.
 const BUILD_PROPERTIES_FILE: &str = "TEAMCITY_BUILD_PROPERTIES_FILE";
@@ -77,30 +78,16 @@ impl Build {
     }
 
     /// The page of the published viewer that opens the zip `zip`, a path relative to the artifact directory of the
-    /// traces.
+    /// traces: `index.html` with the [static_trace_hash] of the zip.
     pub(crate) fn viewer_link(&self, zip: &str) -> String {
         format!(
-            "{}/repository/download/{}/{}:id/{TRACES_ARTIFACT_DIR}/index.html#/trace?zip={}",
+            "{}/repository/download/{}/{}:id/{TRACES_ARTIFACT_DIR}/index.html{}",
             self.server,
             self.build_type_id,
             self.id,
-            encode_component(zip)
+            static_trace_hash(zip)
         )
     }
-}
-
-/// Encodes text for a part of a URL: each byte other than an ASCII letter, a digit, `-`, `.`, `_` and `~` becomes
-/// `%XX`. `decodeURIComponent` reads it back.
-fn encode_component(text: &str) -> String {
-    let mut encoded = String::with_capacity(text.len());
-    for byte in text.bytes() {
-        if byte.is_ascii_alphanumeric() || matches!(byte, b'-' | b'.' | b'_' | b'~') {
-            encoded.push(char::from(byte));
-        } else {
-            encoded.push_str(&format!("%{byte:02X}"));
-        }
-    }
-    encoded
 }
 
 /// The entries of a properties file, or why it does not read.
