@@ -11,14 +11,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.EelApi
 import com.intellij.psi.PsiFile
 import com.intellij.python.community.execService.Args
-import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
-import com.intellij.python.community.execService.execGetStdout
-import com.intellij.python.community.helpersLocator.PythonHelpersLocator.Companion.findPathInHelpers
+import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.pyproject.PyDependencyGroup
 import com.intellij.python.requirements.parser.PyRequirementParser
 import com.intellij.python.venv.MINIMUM_SUPPORTED_VENV_PYTHON_VERSION
-import com.jetbrains.python.PYTHONPATH
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageUtil
@@ -33,15 +30,15 @@ import com.jetbrains.python.packaging.management.PythonPackageInstallRequest
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.management.hasInstalledPackage
+import com.jetbrains.python.packaging.pip.PipPackageManagerEngine.Companion.PACKAGING_TOOL_NAME
 import com.jetbrains.python.packaging.requirementsTxt.addRequirement
 import com.jetbrains.python.packaging.requirementsTxt.readDeclaredPackages
 import com.jetbrains.python.packaging.syncWithImports
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.executeHelper
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.statistics.version
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -136,19 +133,24 @@ class PipManagementInstaller(private val sdk: Sdk, private val manager: PythonPa
     languageLevel < LanguageLevel.PYTHON27 || (hasPip() && hasSetuptools())
 
   private suspend fun installManagement(): PyResult<Unit> {
-    if (!hasPip()) installWheel(WheelFiles.PIP_WHEEL_NAME).getOr { return it }
-    if (!hasSetuptools()) installWheel(WheelFiles.SETUPTOOLS_WHEEL_NAME).getOr { return it }
-    return PyResult.success(Unit)
+    val wheelNames = buildList {
+      if (!hasPip()) add(WheelFiles.PIP_WHEEL_NAME)
+      if (!hasSetuptools()) add(WheelFiles.SETUPTOOLS_WHEEL_NAME)
+    }
+    if (wheelNames.isEmpty()) return PyResult.success(Unit)
+    return installWheels(wheelNames)
   }
 
-  private suspend fun installWheel(wheelName: String): PyResult<Unit> = withContext(Dispatchers.IO) {
-    val pipWheelPath = findPathInHelpers(WheelFiles.PIP_WHEEL_NAME).toString()
-    val wheelPath = findPathInHelpers(wheelName).toString()
-    val pythonPath = requireNotNull(sdk.homePath).let { Path.of(it) }
-    // Run the bundled pip as a module imported from its wheel: on Windows pip refuses to install itself
-    // when it is started as `<wheel>/pip` and asks to use `python -m pip` instead (PY-93045).
-    val args = Args("-m", PyPackageUtil.PIP, "install", "--no-index", wheelPath)
-    ExecService().execGetStdout(pythonPath, args, ExecOptions(env = mapOf(PYTHONPATH to pipWheelPath))).mapSuccess { }
+  /**
+   * Installs the bundled wheels [wheelNames] with the bundled pip, in one process.
+   *
+   * `packaging_tool.py` finds the wheels in its own helpers directory, so the helper also works on a copy of the helpers
+   * on another machine. It runs pip with `runpy`, as `python -m pip` does: on Windows pip refuses to install itself
+   * when it is started as `<wheel>/pip` (PY-93045).
+   */
+  private suspend fun installWheels(wheelNames: List<String>): PyResult<Unit> {
+    val args = Args("install_bundled_wheels", WheelFiles.PIP_WHEEL_NAME, *wheelNames.toTypedArray())
+    return ExecService().executeHelper(manager.interpreter, PyHelper(PACKAGING_TOOL_NAME), args).mapSuccess { }
   }
 
   private suspend fun hasPip(): Boolean = manager.hasInstalledPackage(PyPackageUtil.PIP)
