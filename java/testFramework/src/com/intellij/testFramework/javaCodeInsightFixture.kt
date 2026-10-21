@@ -10,12 +10,25 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
+
+// JUnit 5 checks the virtual file pointers in TestApplicationLeakTrackerExtension after every fixture is torn down.
+// The check of the code insight fixture itself runs too early when a module fixture outlives it,
+// because the pointers of the module, for example the pointers of a facet, are still alive.
+@TestOnly
+private class NonTrackingJavaCodeInsightTestFixture(
+  project: IdeaProjectTestFixture,
+  tempDir: TempDirTestFixture,
+) : JavaCodeInsightTestFixtureImpl(project, tempDir) {
+  override fun shouldTrackVirtualFilePointers(): Boolean = false
+}
 
 /**
  * Creates [JavaCodeInsightTestFixture] fixture that can be used when running JUnit5 tests.
@@ -24,7 +37,7 @@ import java.nio.file.Path
 fun javaCodeInsightFixture(
   projectFixture: TestFixture<Project>,
   tempDirFixture: TestFixture<Path>,
-): TestFixture<JavaCodeInsightTestFixture> = codeInsightFixture(projectFixture, tempDirFixture, ::JavaCodeInsightTestFixtureImpl)
+): TestFixture<JavaCodeInsightTestFixture> = codeInsightFixture(projectFixture, tempDirFixture, ::NonTrackingJavaCodeInsightTestFixture)
 
 
 /**
