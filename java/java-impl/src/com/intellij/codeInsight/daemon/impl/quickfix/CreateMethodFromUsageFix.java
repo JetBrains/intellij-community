@@ -49,7 +49,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.shouldCreateStaticMember;
+import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.shouldCreateStaticMember;
 import static com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.startTemplate;
 
 public final class CreateMethodFromUsageFix {

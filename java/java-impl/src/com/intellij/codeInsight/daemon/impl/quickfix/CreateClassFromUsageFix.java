@@ -55,7 +55,7 @@ public final class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
         (myKind != CreateClassKind.RECORD || !superClassName.equals(CommonClassNames.JAVA_LANG_RECORD))) {
       CreateFromUsageUtils.setupSuperClassReference(aClass, superClassName);
     }
-    CreateFromUsageBaseFix.setupGenericParameters(aClass, element);
+    CreateFromUsageUtils.setupGenericParameters(aClass, element);
     PsiDeconstructionPattern pattern = getDeconstructionPattern(element);
     if (pattern != null) {
       setupRecordFromDeconstructionPattern(aClass, pattern, getText());

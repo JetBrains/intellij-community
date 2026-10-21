@@ -10,6 +10,7 @@ import com.intellij.codeInsight.completion.proc.VariablesProcessor;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -28,6 +29,7 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.scratch.ScratchUtil;
+import com.intellij.java.syntax.parser.JavaKeywords;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -58,6 +60,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.LambdaUtil;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiCapturedWildcardType;
@@ -81,11 +84,17 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.PsiParenthesizedExpression;
 import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiRecordHeader;
@@ -94,7 +103,12 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiReferenceParameterList;
 import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiSwitchLabelStatement;
+import com.intellij.psi.PsiSwitchStatement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeElement;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.PsiTypeVisitor;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.PsiVariable;
@@ -123,14 +137,17 @@ import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -138,6 +155,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public final class CreateFromUsageUtils {
   private static final Logger LOG = Logger.getInstance(CreateFromUsageUtils.class);
@@ -501,7 +519,7 @@ public final class CreateFromUsageUtils {
                       classKind == CreateClassKind.ANNOTATION ? elementFactory.createAnnotationType(name) :
                       classKind == CreateClassKind.RECORD ? elementFactory.createRecord(name) :
                       elementFactory.createEnum(name);
-    CreateFromUsageBaseFix.setupGenericParameters(result, referenceElement);
+    setupGenericParameters(result, referenceElement);
     result = (PsiClass)CodeStyleManager.getInstance(manager.getProject()).reformat(result);
     if (!StringUtil.isEmpty(superClassName)) {
       setupSuperClassReference(result, superClassName);
@@ -571,7 +589,7 @@ public final class CreateFromUsageUtils {
       setupSuperClassReference(targetClass, superClassName);
     }
     if (contextElement instanceof PsiJavaCodeReferenceElement ref) {
-      CreateFromUsageBaseFix.setupGenericParameters(targetClass, ref);
+      setupGenericParameters(targetClass, ref);
     }
     return targetClass;
   }
@@ -1136,6 +1154,273 @@ public final class CreateFromUsageUtils {
                                               name -> UniqueNameGenerator.generateUniqueNameOneBased(name, usedNames));
     usedNames.add(result[0]);
     return result;
+  }
+
+  /**
+   * @param classes the target classes
+   * @param project the project of the classes
+   * @return the classes in a language which can get a new member
+   */
+  static @Unmodifiable List<PsiClass> filterTargetClasses(@NotNull List<PsiClass> classes, @NotNull Project project) {
+    return ContainerUtil.filter(classes, psiClass -> JVMElementFactories.getFactory(psiClass.getLanguage(), project) != null);
+  }
+
+  static void setupVisibility(PsiClass parentClass, @NotNull PsiClass targetClass, PsiModifierList list) throws IncorrectOperationException {
+    if (targetClass.isInterface() && list.getFirstChild() != null) {
+      list.deleteChildRange(list.getFirstChild(), list.getLastChild());
+      return;
+    }
+    if (targetClass.isInterface()) {
+      return;
+    }
+    final String visibility = getVisibility(parentClass, targetClass);
+    if (VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)) {
+      list.setModifierProperty(PsiModifier.PRIVATE, true);
+      VisibilityUtil.escalateVisibility(list, parentClass);
+    } else {
+      VisibilityUtil.setVisibility(list, visibility);
+    }
+  }
+
+  @PsiModifier.ModifierConstant
+  private static String getVisibility(PsiClass parentClass, @NotNull PsiClass targetClass) {
+    if (parentClass != null && (parentClass.equals(targetClass) || PsiTreeUtil.isAncestor(targetClass, parentClass, true))) {
+      return PsiModifier.PRIVATE;
+    } else {
+      return JavaCodeStyleSettings.getInstance(targetClass.getContainingFile()).VISIBILITY;
+    }
+  }
+
+  /**
+   * @return true if a new member for unresolved reference should be static (as empirically defined by the reference surroundings)
+   */
+  static boolean shouldCreateStaticMember(@NotNull PsiReferenceExpression ref, PsiClass targetClass) {
+    PsiExpression qualifierExpression = ref.getQualifierExpression();
+    while (qualifierExpression instanceof PsiParenthesizedExpression expression) {
+      qualifierExpression = expression.getExpression();
+    }
+
+    if (qualifierExpression instanceof PsiReferenceExpression referenceExpression) {
+      return referenceExpression.resolve() instanceof PsiClass;
+    } else if (qualifierExpression != null) {
+      return false;
+    } else if (ref instanceof PsiMethodReferenceExpression) {
+      return true;
+    }
+    else {
+      assert PsiTreeUtil.isAncestor(targetClass, ref, true);
+      PsiModifierListOwner owner = PsiTreeUtil.getParentOfType(ref, PsiModifierListOwner.class);
+      if (owner instanceof PsiMethod method && method.isConstructor()) {
+        //usages inside delegating constructor call
+        PsiExpression run = ref;
+        while (run.getParent() instanceof PsiExpression) {
+          run = (PsiExpression)run.getParent();
+        }
+        if (run.getParent() instanceof PsiExpressionList &&
+          run.getParent().getParent() instanceof PsiMethodCallExpression) {
+          @NonNls String calleeText = ((PsiMethodCallExpression)run.getParent().getParent()).getMethodExpression().getText();
+          if (calleeText.equals(JavaKeywords.THIS) || calleeText.equals(JavaKeywords.SUPER)) return true;
+        }
+      }
+
+      while (owner != null && owner != targetClass) {
+        if (owner.hasModifierProperty(PsiModifier.STATIC)) return true;
+        owner = PsiTreeUtil.getParentOfType(owner, PsiModifierListOwner.class);
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * @param element reference or a call expression (possibly unresolved)
+   * @return context substitutor for a reference
+   */
+  public static @NotNull PsiSubstitutor getTargetSubstitutor(@Nullable PsiElement element) {
+    if (element instanceof PsiNewExpression expression) {
+      PsiJavaCodeReferenceElement reference = expression.getClassOrAnonymousClassReference();
+      JavaResolveResult result = reference == null ? JavaResolveResult.EMPTY : reference.advancedResolve(false);
+      return result.getSubstitutor();
+    }
+
+    PsiExpression qualifier = null;
+    if (element instanceof PsiReferenceExpression referenceExpression) {
+      qualifier = referenceExpression.getQualifierExpression();
+    } else if (element instanceof PsiMethodCallExpression expression) {
+      qualifier = expression.getMethodExpression().getQualifierExpression();
+    }
+
+    if (qualifier != null) {
+      PsiType type = qualifier.getType();
+      if (type instanceof PsiClassType classType) {
+        return classType.resolveGenerics().getSubstitutor();
+      }
+    }
+
+    return PsiSubstitutor.EMPTY;
+  }
+
+  /**
+   * @param element               the element which needs a new member
+   * @param allowOuterTargetClass whether the outer classes of the class around the element can get the member
+   * @param canBeTargetClass      whether a super class of the target class can get the member
+   * @return the valid project classes which can get the member
+   */
+  static @NotNull List<PsiClass> getTargetClasses(PsiElement element,
+                                                  boolean allowOuterTargetClass,
+                                                  @NotNull Predicate<? super PsiClass> canBeTargetClass) {
+    PsiClass psiClass = null;
+    PsiExpression qualifier = null;
+
+    if (element instanceof PsiNameValuePair) {
+      final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(element, PsiAnnotation.class);
+      if (annotation != null) {
+        PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
+        if (nameRef == null) {
+          return Collections.emptyList();
+        }
+        else {
+          final PsiElement resolve = nameRef.resolve();
+          if (resolve instanceof PsiClass aClass) {
+            return Collections.singletonList(aClass);
+          }
+          else {
+            return Collections.emptyList();
+          }
+        }
+      }
+    }
+    if (element instanceof PsiNewExpression newExpression) {
+      PsiJavaCodeReferenceElement ref = newExpression.getClassOrAnonymousClassReference();
+      if (ref != null) {
+        PsiElement refElement = ref.resolve();
+        if (refElement instanceof PsiClass cls) {
+          psiClass = cls;
+        } else if (ref.getQualifier() instanceof PsiJavaCodeReferenceElement refQualifier) {
+          refElement = refQualifier.resolve();
+          if (refElement instanceof PsiClass cls) {
+            psiClass = cls;
+          }
+        }
+      }
+      qualifier = newExpression.getQualifier();
+    }
+    else if (element instanceof PsiReferenceExpression psiReferenceExpression) {
+      qualifier = psiReferenceExpression.getQualifierExpression();
+      if (qualifier == null && element instanceof PsiMethodReferenceExpression referenceExpression) {
+        final PsiTypeElement qualifierTypeElement = referenceExpression.getQualifierType();
+        if (qualifierTypeElement != null) {
+          psiClass = PsiUtil.resolveClassInType(qualifierTypeElement.getType());
+        }
+      } else if (qualifier == null) {
+        final PsiElement parent = element.getParent();
+        if (parent instanceof PsiSwitchLabelStatement) {
+          final PsiSwitchStatement switchStatement = PsiTreeUtil.getParentOfType(parent, PsiSwitchStatement.class);
+          if (switchStatement != null) {
+            final PsiExpression expression = switchStatement.getExpression();
+            if (expression != null) {
+              psiClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
+            }
+          }
+        }
+      }
+    }
+    else if (element instanceof PsiMethodCallExpression call) {
+      final PsiReferenceExpression methodExpression = call.getMethodExpression();
+      qualifier = methodExpression.getQualifierExpression();
+      final @NonNls String referenceName = methodExpression.getReferenceName();
+      if (referenceName == null) return Collections.emptyList();
+    }
+    boolean allowOuterClasses = false;
+    if (qualifier != null) {
+      PsiType type = qualifier.getType();
+      if (type instanceof PsiClassType classType) {
+        psiClass = classType.resolve();
+      }
+
+      if (qualifier instanceof PsiJavaCodeReferenceElement referenceElement) {
+        final PsiElement resolved = referenceElement.resolve();
+        if (resolved instanceof PsiClass aClass) {
+          if (psiClass == null) psiClass = aClass;
+        }
+      }
+    } else if (psiClass == null) {
+      psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      allowOuterClasses = true;
+    }
+
+    if (psiClass instanceof PsiTypeParameter) {
+      PsiClass[] supers = psiClass.getSupers();
+      List<PsiClass> filtered = new ArrayList<>();
+      for (PsiClass aSuper : supers) {
+        if (!BaseIntentionAction.canModify(aSuper)) continue;
+        if (!(aSuper instanceof PsiTypeParameter)) filtered.add(aSuper);
+      }
+      return filtered;
+    }
+    else {
+      if (psiClass == null || !BaseIntentionAction.canModify(psiClass)) {
+        return Collections.emptyList();
+      }
+
+      if (!allowOuterClasses || !allowOuterTargetClass) {
+        final ArrayList<PsiClass> classes = new ArrayList<>();
+        collectSupers(psiClass, classes, canBeTargetClass);
+        return classes;
+      }
+
+      List<PsiClass> result = new ArrayList<>();
+
+      while (psiClass != null) {
+        result.add(psiClass);
+        if (psiClass.hasModifierProperty(PsiModifier.STATIC)) break;
+        psiClass = PsiTreeUtil.getParentOfType(psiClass, PsiClass.class);
+      }
+      return result;
+    }
+  }
+
+  private static void collectSupers(PsiClass psiClass, ArrayList<? super PsiClass> classes,
+                                    @NotNull Predicate<? super PsiClass> canBeTargetClass) {
+    classes.add(psiClass);
+
+    final PsiClass[] supers = psiClass.getSupers();
+    for (PsiClass aSuper : supers) {
+      if (classes.contains(aSuper)) continue;
+      if (canBeTargetClass.test(aSuper)) {
+        collectSupers(aSuper, classes, canBeTargetClass);
+      }
+    }
+  }
+
+  static void setupGenericParameters(PsiClass targetClass, PsiJavaCodeReferenceElement ref) {
+    int numParams = ref.getTypeParameters().length;
+    if (numParams == 0) return;
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(ref.getProject());
+    final Set<String> typeParamNames = new HashSet<>();
+    for (PsiType type : ref.getTypeParameters()) {
+      final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+      if (psiClass instanceof PsiTypeParameter) {
+        typeParamNames.add(psiClass.getName());
+      }
+    }
+    int idx = 0;
+    PsiTypeParameterList typeParameterList = Objects.requireNonNull(targetClass.getTypeParameterList());
+    for (PsiType type : ref.getTypeParameters()) {
+      final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+      if (psiClass instanceof PsiTypeParameter) {
+        typeParameterList.add(factory.createTypeParameterFromText(psiClass.getName(), null));
+      } else {
+        while (true) {
+          final @NonNls String paramName = idx > 0 ? "T" + idx : "T";
+          if (typeParamNames.add(paramName)) {
+            typeParameterList.add(factory.createTypeParameterFromText(paramName, null));
+            break;
+          }
+          idx++;
+        }
+      }
+    }
   }
 
   /**

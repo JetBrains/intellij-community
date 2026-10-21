@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.request
 
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.getTargetSubstitutor
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.guessExpectedTypes
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.JvmValue
@@ -37,7 +37,9 @@ public class CreateFieldFromJavaUsageRequest(
 
   override fun getFieldType(): List<ExpectedType> = reference?.let { guessExpectedTypes(it, false).map(::ExpectedJavaType) } ?: listOf()
 
-  override fun getTargetSubstitutor(): PsiJvmSubstitutor = PsiJvmSubstitutor(myReferencePointer.project, getTargetSubstitutor(reference))
+  override fun getTargetSubstitutor(): PsiJvmSubstitutor = PsiJvmSubstitutor(myReferencePointer.project,
+      CreateFromUsageUtils.getTargetSubstitutor(reference)
+  )
 
   override fun isConstant(): Boolean = isConstant
 

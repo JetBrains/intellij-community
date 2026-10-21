@@ -51,7 +51,7 @@ public abstract class CreateFieldFromUsageHelper {
     CreateFieldFromUsageHelper helper = EP_NAME.forLanguage(field.getLanguage());
     if (helper == null) return null;
     return helper.setupTemplateImpl(field, expectedTypes, targetClass, editor, context, createConstantField, isScrollToTemplate,
-                                    CreateFromUsageBaseFix.getTargetSubstitutor(context));
+                                    CreateFromUsageUtils.getTargetSubstitutor(context));
   }
 
   public static PsiField insertField(@NotNull PsiClass targetClass, @NotNull PsiField field, @NotNull PsiElement place) {

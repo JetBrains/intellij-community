@@ -87,7 +87,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix implements Int
     if (classReference == null) return IntentionPreviewInfo.EMPTY;
     PsiClass aClass = (PsiClass)psiFile.add(getKind().create(JavaPsiFacade.getElementFactory(project), classReference.getReferenceName()));
     setupClassFromNewExpression(aClass, element);
-    setupGenericParameters(aClass, classReference);
+    CreateFromUsageUtils.setupGenericParameters(aClass, classReference);
     CodeStyleManager.getInstance(project).reformat(aClass);
     return new IntentionPreviewInfo.CustomDiff(JavaFileType.INSTANCE, "", aClass.getText());
   }
@@ -160,7 +160,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix implements Int
     PsiMethod constructor = elementFactory.createConstructor();
     constructor = (PsiMethod)aClass.add(constructor);
 
-    CreateFromUsageUtils.setupMethodParameters(constructor, builder, argList, getTargetSubstitutor(newExpression));
+    CreateFromUsageUtils.setupMethodParameters(constructor, builder, argList, CreateFromUsageUtils.getTargetSubstitutor(newExpression));
 
     return createSuperCall(aClass, constructor).endAfter();
   }

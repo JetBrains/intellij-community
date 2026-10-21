@@ -120,7 +120,7 @@ public final class CreateInnerClassFromUsageFix extends PsiBasedModCommandAction
     if (superClassName != null) {
       CreateFromUsageUtils.setupSuperClassReference(created, superClassName);
     }
-    CreateFromUsageBaseFix.setupGenericParameters(created, ref);
+    CreateFromUsageUtils.setupGenericParameters(created, ref);
     return (PsiClass)aClass.add(created);
   }
 

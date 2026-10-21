@@ -59,7 +59,7 @@ public class CreateRecordFromNewFix extends CreateClassFromNewFix {
                                         @NotNull PsiExpressionList argList,
                                         @NotNull TemplateBuilder builder) {
     PsiRecordHeader header = aClass.getRecordHeader();
-    setupRecordComponents(header, builder, argList, getTargetSubstitutor(newExpression));
+    setupRecordComponents(header, builder, argList, CreateFromUsageUtils.getTargetSubstitutor(newExpression));
     return null;
   }
 

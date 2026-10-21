@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.request
 
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix.getTargetSubstitutor
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils.getTargetSubstitutor
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.actions.AnnotationRequest

@@ -74,11 +74,11 @@ public final class CreateFieldFromUsageFix extends PsiBasedModCommandAction<PsiR
   private static @NotNull List<PsiClass> getTargetClasses(@NotNull PsiReferenceExpression ref, @NotNull Project project) {
     PsiElement target = ref.resolve();
     List<PsiClass> classes = ContainerUtil.filter(
-      CreateFromUsageBaseFix.getTargetClasses(ref, true, psiClass -> BaseIntentionAction.canModify(psiClass) && canHaveInstanceField(psiClass)),
+      CreateFromUsageUtils.getTargetClasses(ref, true, psiClass -> BaseIntentionAction.canModify(psiClass) && canHaveInstanceField(psiClass)),
       psiClass -> BaseIntentionAction.canModify(psiClass) &&
-                  (canHaveInstanceField(psiClass) || CreateFromUsageBaseFix.shouldCreateStaticMember(ref, psiClass)) &&
+                  (canHaveInstanceField(psiClass) || CreateFromUsageUtils.shouldCreateStaticMember(ref, psiClass)) &&
                   !(target instanceof PsiField field && field.getContainingClass() == psiClass));
-    return CreateFromUsageBaseFix.filterTargetClasses(classes, project);
+    return CreateFromUsageUtils.filterTargetClasses(classes, project);
   }
 
   private static boolean canHaveInstanceField(@NotNull PsiClass psiClass) {
@@ -131,7 +131,7 @@ public final class CreateFieldFromUsageFix extends PsiBasedModCommandAction<PsiR
       ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(ref, false);
 
       PsiField field = factory.createField(fieldName, PsiTypes.intType());
-      if (!targetClass.isInterface() && CreateFromUsageBaseFix.shouldCreateStaticMember(ref, targetClass)) {
+      if (!targetClass.isInterface() && CreateFromUsageUtils.shouldCreateStaticMember(ref, targetClass)) {
         PsiUtil.setModifierProperty(field, PsiModifier.STATIC, true);
       }
       if (shouldCreateFinalMember(ref, targetClass)) {
@@ -139,12 +139,12 @@ public final class CreateFieldFromUsageFix extends PsiBasedModCommandAction<PsiR
       }
       field = CreateFieldFromUsageHelper.insertField(targetClass, field, ref);
       if (field == null) return;
-      CreateFromUsageBaseFix.setupVisibility(parentClass, targetClass, field.getModifierList());
+      CreateFromUsageUtils.setupVisibility(parentClass, targetClass, field.getModifierList());
 
       RecordingTemplateBuilder fields = new RecordingTemplateBuilder();
       PsiTypeElement typeElement = field.getTypeElement();
       if (typeElement != null) {
-        new GuessTypeParameters(project, factory, fields, CreateFromUsageBaseFix.getTargetSubstitutor(ref))
+        new GuessTypeParameters(project, factory, fields, CreateFromUsageUtils.getTargetSubstitutor(ref))
           .setupTypeElement(typeElement, expectedTypes, ref, targetClass);
       }
 

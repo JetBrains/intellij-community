@@ -120,8 +120,8 @@ public final class CreateAnnotationMethodFromUsageFix extends PsiUpdateModComman
    * @return the annotation type which can get the new method, as a list with one element, or an empty list
    */
   private static @NotNull List<PsiClass> getTargetClasses(@NotNull PsiNameValuePair pair, @NotNull Project project) {
-    return CreateFromUsageBaseFix.filterTargetClasses(
-      CreateFromUsageBaseFix.getTargetClasses(pair, true, BaseIntentionAction::canModify), project);
+    return CreateFromUsageUtils.filterTargetClasses(
+      CreateFromUsageUtils.getTargetClasses(pair, true, BaseIntentionAction::canModify), project);
   }
 
   public static @Nullable PsiType getAnnotationValueType(PsiAnnotationMemberValue value) {

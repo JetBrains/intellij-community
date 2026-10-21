@@ -85,8 +85,8 @@ public final class CreateInnerClassFromNewFix extends PsiBasedModCommandAction<P
   }
 
   private @NotNull List<PsiClass> getTargetClasses(@NotNull PsiNewExpression newExpression, @NotNull Project project) {
-    List<PsiClass> classes = CreateFromUsageBaseFix.filterTargetClasses(
-      CreateFromUsageBaseFix.getTargetClasses(newExpression, true, psiClass -> false), project);
+    List<PsiClass> classes = CreateFromUsageUtils.filterTargetClasses(
+      CreateFromUsageUtils.getTargetClasses(newExpression, true, psiClass -> false), project);
     if (myKind != CreateClassKind.RECORD) return classes;
     return ContainerUtil.filter(classes, cls -> cls.getContainingClass() == null || cls.hasModifierProperty(PsiModifier.STATIC));
   }
@@ -122,7 +122,7 @@ public final class CreateInnerClassFromNewFix extends PsiBasedModCommandAction<P
       modifierList.setModifierProperty(PsiModifier.STATIC, true);
     }
 
-    CreateFromUsageBaseFix.setupGenericParameters(created, ref);
+    CreateFromUsageUtils.setupGenericParameters(created, ref);
     return created;
   }
 
@@ -144,7 +144,7 @@ public final class CreateInnerClassFromNewFix extends PsiBasedModCommandAction<P
     if (argList == null || argList.isEmpty()) return null;
     if (myKind == CreateClassKind.RECORD) {
       CreateRecordFromNewFix.setupRecordComponents(created.getRecordHeader(), builder, argList,
-                                                   CreateFromUsageBaseFix.getTargetSubstitutor(newExpression));
+                                                   CreateFromUsageUtils.getTargetSubstitutor(newExpression));
       return null;
     }
     return CreateClassFromNewFix.createConstructor(created, newExpression, argList, builder);

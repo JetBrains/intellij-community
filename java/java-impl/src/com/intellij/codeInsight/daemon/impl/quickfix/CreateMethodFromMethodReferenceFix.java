@@ -89,8 +89,8 @@ public final class CreateMethodFromMethodReferenceFix extends PsiBasedModCommand
 
   private static @NotNull List<PsiClass> getTargetClasses(@NotNull PsiMethodReferenceExpression ref, @NotNull Project project) {
     boolean constructor = ref.isConstructor();
-    return CreateFromUsageBaseFix.filterTargetClasses(
-      CreateFromUsageBaseFix.getTargetClasses(ref, true, psiClass -> !constructor && BaseIntentionAction.canModify(psiClass)),
+    return CreateFromUsageUtils.filterTargetClasses(
+      CreateFromUsageUtils.getTargetClasses(ref, true, psiClass -> !constructor && BaseIntentionAction.canModify(psiClass)),
       project);
   }
 
@@ -179,11 +179,11 @@ public final class CreateMethodFromMethodReferenceFix extends PsiBasedModCommand
             }
           }
         }
-        CreateFromUsageBaseFix.setupVisibility(parentClass, targetClass, method.getModifierList());
+        CreateFromUsageUtils.setupVisibility(parentClass, targetClass, method.getModifierList());
         for (PsiTypeParameter parameter : method.getTypeParameters()) {
           parameter.delete();
         }
-        if (!secondSearchPossible && CreateFromUsageBaseFix.shouldCreateStaticMember(expression, targetClass)) {
+        if (!secondSearchPossible && CreateFromUsageUtils.shouldCreateStaticMember(expression, targetClass)) {
           PsiUtil.setModifierProperty(method, PsiModifier.STATIC, true);
         }
         else if (targetClass.isInterface()) {
