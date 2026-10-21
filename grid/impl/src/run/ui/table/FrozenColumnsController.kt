@@ -65,7 +65,7 @@ internal class FrozenColumnsController(
   private val columnHeaderPopupActions: ActionGroup,
   private val rowHeaderPopupActions: ActionGroup,
   private val hostFactory: (GridTable) -> GridTableHost,
-  private val floatingToolbar: TableFloatingToolbar,
+  private val floatingToolbar: TableFloatingToolbarController,
 ) : Disposable {
   private var region: FrozenRegion? = null
   private var originalCorner: Component? = null

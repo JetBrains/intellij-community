@@ -87,7 +87,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   private final DataGrid myResultPanel;
   private final GridTable myPrimary;
   private final FrozenColumnsController myFrozenColumnsController;
-  private final TableFloatingToolbar myFloatingToolbar;
+  private final TableFloatingToolbarController myFloatingToolbar;
   private final TableScrollPane myScrollPane;
   private GridColumnLayout<GridRow, GridColumn> myColumnLayout = new DummyGridColumnLayout();
   private StatisticsTableHeader myStatisticsHeader;
@@ -99,7 +99,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     myResultPanel = grid;
     myContextColumn = ModelIndex.forColumn(grid, -1);
     myPrimary = new GridTable(grid, columnActions, rowActions);
-    myFloatingToolbar = new TableFloatingToolbar(myPrimary, grid, grid.getCoroutineScope());
+    myFloatingToolbar = new TableFloatingToolbarController(myPrimary, grid, grid.getCoroutineScope());
     myFrozenColumnsController = new FrozenColumnsController(myPrimary, grid, columnActions, rowActions,
                                                             this::createHost, myFloatingToolbar);
     myPrimary.installHost(createHost(myPrimary));
@@ -197,6 +197,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   public void dispose() {
     setStatisticsHeader(null);
     Disposer.dispose(myFrozenColumnsController);
+    Disposer.dispose(myFloatingToolbar);
     Disposer.dispose(myPrimary);
     myCommonValue = null;
   }
@@ -995,9 +996,10 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   public void revalidate() { myScrollPane.revalidate(); }
 
+  /** The component and the point the floating toolbar is requested at, or null while none is requested. */
   @TestOnly
-  Pair<GridTable, TableFloatingToolbar.ToolbarPosition> getOfferedToolbarCell() {
-    return myFloatingToolbar.getOfferedCell();
+  @Nullable Pair<JComponent, Point> getRequestedToolbarDisplay() {
+    return myFloatingToolbar.getRequestedDisplay();
   }
 
   public void setStatisticsHeaderPosition(AdditionalTableHeader.Position position) {

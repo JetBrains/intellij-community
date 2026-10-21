@@ -70,6 +70,8 @@ The owner uses a `GridTable` instance to render the scrollable columns.
 [FrozenStripTable](src/run/ui/table/FrozenStripTable.kt) renders the pinned columns.
 [FrozenColumnsController](src/run/ui/table/FrozenColumnsController.kt) coordinates selection, dimensions, and model updates.
 Both tables send requests to the owner through [GridTableHost](src/run/ui/table/GridTableHost.kt).
+[TableFloatingToolbarController](src/run/ui/table/TableFloatingToolbarController.kt) offers the floating toolbar for a clicked cell in either table.
+[TableFloatingToolbar](src/run/ui/table/TableFloatingToolbar.kt) shows its actions at the point the controller gives it.
 [ColumnLayoutContext](src/run/ui/grid/ColumnLayoutContext.kt) gives layout extensions measurements and column widths.
 [TextResultView](src/run/ui/text/TextResultView.java) formats rows into an editor document.
 [TreeTableResultView](src/run/ui/treetable/TreeTableResultView.java) presents rows as trees of fields.

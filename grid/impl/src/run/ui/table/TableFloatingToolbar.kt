@@ -15,14 +15,12 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.observable.util.whenDisposed
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.HintHint
 import com.intellij.ui.JBColor
 import com.intellij.ui.LightweightHint
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.preferredHeight
 import com.intellij.ui.util.preferredWidth
 import com.intellij.util.io.await
@@ -35,19 +33,19 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import java.awt.Point
 import java.awt.Rectangle
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
-import java.awt.event.FocusAdapter
-import java.awt.event.FocusEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.BorderFactory
-import javax.swing.SwingUtilities
+import javax.swing.JComponent
 
-class TableFloatingToolbar internal constructor(private val gridTable: GridTable, private val grid: DataGrid, private val cs: CoroutineScope) {
-
-  data class ToolbarPosition(val rightBottomCorner: Point, val rowNum: Int, val columnNum: Int)
+/**
+ * Shows the floating actions of a grid in a popup at a point it is given.
+ * [TableFloatingToolbarController] decides when and where, from the input the tables receive.
+ */
+class TableFloatingToolbar internal constructor(
+  private val actionTarget: JComponent,
+  private val grid: DataGrid,
+  private val cs: CoroutineScope,
+) {
 
   class CustomizableGroupProvider : CustomizableActionGroupProvider() {
     override fun registerGroups(registrar: CustomizableActionGroupRegistrar) {
@@ -72,7 +70,7 @@ class TableFloatingToolbar internal constructor(private val gridTable: GridTable
   }.apply {
     layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
     component.border = JBUI.Borders.empty()
-    targetComponent = gridTable
+    targetComponent = actionTarget
     isReservePlaceAutoPopupIcon = false
     ClientProperty.put(this, ActionToolbarImpl.SUPPRESS_FAST_TRACK, true)
   }
@@ -88,11 +86,20 @@ class TableFloatingToolbar internal constructor(private val gridTable: GridTable
     .setTextBg(JBColor.background())
     .setBorderColor(getHintBorderColor())
     .setTextFg(JBColor.foreground())
-  private var position = ToolbarPosition(Point(0, 0), 0, 0)
 
-  /** The table the hint is shown in and whose coordinates [position] is expressed in. */
-  private var anchorView: GridTable = gridTable
-  private var showingJob: AtomicReference<Job?> = AtomicReference(null)
+  /** The component the popup is requested in, or null while no popup is requested. */
+  private var shownIn: JComponent? = null
+
+  /** Where the bottom-right corner of the popup goes, in [shownIn] coordinates. */
+  private var shownAt = Point(0, 0)
+  private val showingJob: AtomicReference<Job?> = AtomicReference(null)
+
+  internal val isShowing: Boolean
+    get() = hint.isVisible && hint.size.height != 0 && hint.size.width != 0
+
+  /** The bounds of the popup, in the coordinates of the component it is shown in. */
+  internal val bounds: Rectangle
+    get() = Rectangle(Point(shownAt.x - hint.size.width, shownAt.y - hint.size.height), hint.size)
 
   private fun hintUpdate() {
     if (!hint.isVisible) {
@@ -104,111 +111,20 @@ class TableFloatingToolbar internal constructor(private val gridTable: GridTable
     }
 
     hint.pack()
-    hint.updateLocation(position.rightBottomCorner.x - hint.component.width, position.rightBottomCorner.y - hint.component.height)
-  }
-
-  private fun cornerPositionForCell(cell: Rectangle): Point = Point(
-    cell.x + cell.width,
-    cell.y,
-  )
-
-  private val mouseListener: MouseAdapter = object : MouseAdapter() {
-    override fun mousePressed(e: MouseEvent) {
-      hide()
-    }
-
-    override fun mouseClicked(e: MouseEvent) {
-      val view = e.component as? GridTable ?: return
-      if (e.button != MouseEvent.BUTTON1 || view.selectedRowCount != 1) {
-        return
-      }
-
-      val columnNum = view.columnAtPoint(e.point)
-      val rowNum = view.rowAtPoint(e.point)
-      if (rowNum < 0 || rowNum >= view.rowCount || columnNum < 0 || columnNum >= view.columnCount) {
-        return
-      }
-
-      val cellRect = view.getCellRect(rowNum, columnNum, true)
-      val newCornerPosition = cornerPositionForCell(cellRect)
-      anchorView = view
-      position = ToolbarPosition(newCornerPosition, rowNum, columnNum)
-      show()
-    }
-
-    override fun mouseMoved(e: MouseEvent) {
-      if (!isHintVisible()) {
-        return
-      }
-      // The pointer may already have crossed into the other table, while the hint stays where it was shown.
-      val point = if (e.component === anchorView) e.point else SwingUtilities.convertPoint(e.component, e.point, anchorView)
-      val cellRectArea = anchorView.getCellRect(position.rowNum, position.columnNum, true)
-      cellRectArea.grow(0, cellRectArea.height * 2)
-      if (cellRectArea.contains(point)) {
-        return
-      }
-
-      val distSq = distanceSq(point,
-                              Rectangle(Point(position.rightBottomCorner.x - hint.size.width, position.rightBottomCorner.y - hint.size.height), hint.size))
-      if (distSq > hidingDistanceSq) {
-        hide()
-      }
-      super.mouseMoved(e)
-    }
-  }
-
-  private val focusListener: FocusAdapter = object : FocusAdapter() {
-    override fun focusLost(e: FocusEvent?) {
-      hide()
-    }
-  }
-
-  private val componentListener: ComponentAdapter = object : ComponentAdapter() {
-    override fun componentMoved(e: ComponentEvent?) {
-      hide()
-    }
-  }
-
-  init {
-    gridTable.whenDisposed { hide() }
-    attach(gridTable)
-  }
-
-  /**
-   * Shares the main table's toolbar with [view], including cells rendered in the pinned strip.
-   */
-  @JvmName("attach")
-  internal fun attach(view: GridTable) {
-    view.addMouseListener(mouseListener)
-    view.addMouseMotionListener(mouseListener)
-    view.addFocusListener(focusListener)
-    view.addComponentListener(componentListener)
-  }
-
-  /** Stops offering the toolbar in [view], which is about to be discarded, and takes the hint down if it is anchored there. */
-  @JvmName("detach")
-  internal fun detach(view: GridTable) {
-    view.removeMouseListener(mouseListener)
-    view.removeMouseMotionListener(mouseListener)
-    view.removeFocusListener(focusListener)
-    view.removeComponentListener(componentListener)
-    if (anchorView !== view) return
-    hide()
-    anchorView = gridTable
-  }
-
-  private fun isHintVisible(): Boolean {
-    return hint.isVisible && hint.size.height != 0 && hint.size.width != 0
+    hint.updateLocation(shownAt.x - hint.component.width, shownAt.y - hint.component.height)
   }
 
   private fun isDisabled(): Boolean = GridUtil.getSettings(grid)?.isDisableGridFloatingToolbar ?: true
 
-  fun show() {
+  /** Shows the popup in [anchor], with its bottom-right corner at [corner], once the actions are updated. */
+  internal fun show(anchor: JComponent, corner: Point) {
     if (isDisabled()) {
       return
     }
 
-    showingJob.set(cs.launch(Dispatchers.EDT) {
+    shownIn = anchor
+    shownAt = corner
+    val job = cs.launch(Dispatchers.EDT) {
       ComponentUtil.markAsShowing(actionToolbar.component, true)
       val future = actionToolbar.updateActionsAsync()
       try {
@@ -226,45 +142,30 @@ class TableFloatingToolbar internal constructor(private val gridTable: GridTable
       }
 
       checkCanceled()
-      hint.show(anchorView,
-                position.rightBottomCorner.x - hint.component.preferredWidth,
-                position.rightBottomCorner.y - hint.component.preferredHeight,
-                anchorView,
+      val target = shownIn ?: return@launch
+      hint.show(target,
+                shownAt.x - hint.component.preferredWidth,
+                shownAt.y - hint.component.preferredHeight,
+                target,
                 hintOptions)
-    })
+    }
+    // A newer request replaces an update that is still pending, so the older one cannot show the popup later.
+    showingJob.getAndSet(job)?.cancel()
   }
 
-  fun hide() {
-    showingJob.get()?.cancel()
+  internal fun hide() {
+    showingJob.getAndSet(null)?.cancel()
+    shownIn = null
     hint.hide()
   }
 
-  /** The table and the cell the toolbar was last offered for. */
+  /** The component and the point the popup is requested at, or null while none is requested. */
   @TestOnly
-  @JvmName("getOfferedCell")
-  internal fun getOfferedCell(): Pair<GridTable, ToolbarPosition> = anchorView to position
+  internal fun getRequestedDisplay(): Pair<JComponent, Point>? = shownIn?.let { it to Point(shownAt) }
 
   companion object {
     const val ACTION_PLACE = "TableFloatingToolbar"
     const val ACTION_GROUP_ID = "Console.TableResult.FloatingToolbarGroup"
     val actionGroupTitle = DataGridBundle.message("Console.TableResult.FloatingToolbarGroup.title")
-
-    val hidingDistanceSq by lazy { JBUIScale.scale(100) * JBUIScale.scale(100) }
-
-    private fun distanceSq(p: Point, r: Rectangle): Double {
-      if (r.contains(p)) {
-        return 0.0
-      }
-
-      val dMinX = p.x - r.minX
-      val dMaxX = p.x - r.maxX
-      val dx = if (dMaxX > 0) dMaxX else (if (dMinX > 0) 0.0 else -dMinX)
-
-      val dMinY = p.y - r.minY
-      val dMaxY = p.y - r.maxY
-      val dy = if (dMaxY > 0) dMaxY else (if (dMinY > 0) 0.0 else -dMinY)
-
-      return dx * dx + dy * dy
-    }
   }
 }
