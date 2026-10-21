@@ -7,6 +7,7 @@ import com.intellij.ide.HelpTooltipManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.soundSignals.ProgressSoundSignalTracker
+import com.intellij.ide.welcomeScreen.WelcomeUtils
 import com.intellij.internal.statistic.eventLog.events.FusInputEvent
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.StatusBarPopupShown
@@ -712,7 +713,11 @@ open class IdeStatusBarImpl @Internal constructor(
   internal fun initialize() {
     LOG.info("Initializing status bar")
 
-    registerCloneTasks()
+    // The welcome screen shows a clone on the row of the project it clones, so its own status bar must not show it a second time. Any
+    // other frame still does, because the welcome screen closes when a project opens and its row goes with it.
+    if (project?.let(WelcomeUtils::isWelcomeProject) != true) {
+      registerCloneTasks()
+    }
     project?.service<PerProjectTaskInfoEntityCollector>()?.startCollectingActiveTasks()
   }
 
