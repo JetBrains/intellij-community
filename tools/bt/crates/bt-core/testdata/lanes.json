@@ -170,12 +170,9 @@
     },
     {
       "name": "jcp",
-      "description": "the JCP cloud-task e2e on a real preprod account, explicit-only (the target is manual, and no --changed, suites, shard or flake picks it; the test launches its own IDE through IDE Starter, so run it on the host: BT --lane jcp)",
+      "description": "the JCP cloud-task e2e on the local Docker stack with the AIP mock; IDE Starter launches its own IDE on the host: BT --lane jcp",
       "target": "//plugins/air/tests/integration/jcp:jcp_test",
-      "extra": [
-        "--test_env=AIR_CLOUD_TASK_ACCOUNT_PASSWORD",
-        "--test_env=AIR_CLOUD_TASK_ACCOUNT_USERNAME"
-      ],
+      "extra": [],
       "shards": 1,
       "integrationTag": "air-integration-jcp",
       "testLabel": "//plugins/air/tests/integration/jcp:jcp_test"
