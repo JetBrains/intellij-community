@@ -120,26 +120,35 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       return
     }
 
+    val effectiveBrowser = browser ?: getDefaultBrowser()
+    if (effectiveBrowser === SystemDefaultBrowser) {
+      openWithSystemDefaultBrowser(uri, project)
+      return
+    }
+    if (effectiveBrowser != null) {
+      openWithBrowser(uri.toString(), effectiveBrowser, project)
+      return
+    }
+
+    // before the components load, the launcher knows only the settings of GeneralLocalSettings
     val settings = generalSettings
     if (settings.useDefaultBrowser) {
-      if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
-        openWithDesktopApi(uri, project)
-      }
-      else {
-        openWithDefaultBrowserCommand(uri.toString(), project)
-      }
+      openWithSystemDefaultBrowser(uri, project)
     }
     else {
       val browserPath = settings.browserPath
-      val substitutedBrowser = substituteBrowser(browserPath)
-      if (substitutedBrowser != null) {
-        openWithBrowser(uri.toString(), substitutedBrowser, project)
-      }
-      else {
-        spawn(GeneralCommandLine(BrowserUtil.getOpenBrowserCommand(browserPath, uri.toString(), emptyList(), false)), project, retry = {
-          browse(uri, browser = null, project)
-        })
-      }
+      spawn(GeneralCommandLine(BrowserUtil.getOpenBrowserCommand(browserPath, uri.toString(), emptyList(), false)), project, retry = {
+        browse(uri, browser = null, project)
+      })
+    }
+  }
+
+  private fun openWithSystemDefaultBrowser(uri: URI, project: Project?) {
+    if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
+      openWithDesktopApi(uri, project)
+    }
+    else {
+      openWithDefaultBrowserCommand(uri.toString(), project)
     }
   }
 
@@ -164,7 +173,8 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     if (browser != null || url.startsWith(URLUtil.HTTP_PROTOCOL)) {
       // if a browser is not specified, `UrlOpener` should not be used for non-HTTP(S) URLs
       val effectiveBrowser = browser ?: getDefaultBrowser()
-      if (effectiveBrowser != null) {
+      // `UrlOpener` does not get the system default browser
+      if (effectiveBrowser != null && effectiveBrowser !== SystemDefaultBrowser) {
         val handled = UrlOpener.EP_NAME.extensionList.any {
           LOG.debug { "trying ${it.javaClass}" }
           it.openUrl(effectiveBrowser, url, project)
@@ -245,8 +255,6 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   protected open fun getDefaultBrowser(): WebBrowser? = null
 
   protected open fun canBrowse(project: Project?, uri: String): Boolean = true
-
-  protected open fun substituteBrowser(browserPath: String): WebBrowser? = null
 
   protected open fun showError(message: @NotificationContent String?, project: Project?, browser: WebBrowser? = null, retry: (() -> Unit)? = null) {
     // the app is not started yet; unable to show a message

@@ -12,7 +12,6 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsContexts.NotificationContent
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -51,10 +50,7 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
     }
   }
 
-  override fun getDefaultBrowser(): WebBrowser? {
-    val browserManager = WebBrowserManager.getInstance()
-    return if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST) browserManager.firstActiveBrowser else null
-  }
+  override fun getDefaultBrowser(): WebBrowser = WebBrowserManager.getInstance().defaultBrowser
 
   override fun canBrowse(project: Project?, uri: String): Boolean {
     if (project == null) {
@@ -118,16 +114,6 @@ open class BrowserLauncherImpl : BrowserLauncherAppless() {
       }
     }
     return url
-  }
-
-  override fun substituteBrowser(browserPath: String): WebBrowser? {
-    val browserManager = WebBrowserManager.getInstance()
-    if (browserManager.getDefaultBrowserPolicy() == DefaultBrowserPolicy.FIRST || SystemInfo.isMac && "open" == browserPath) {
-      val firstActiveBrowser = browserManager.firstActiveBrowser
-      if (firstActiveBrowser != null) return firstActiveBrowser
-    }
-
-    return null
   }
 
   override fun showError(message: @NotificationContent String?, project: Project?, browser: WebBrowser?, retry: (() -> Unit)?) {

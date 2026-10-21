@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
-import com.intellij.ide.GeneralLocalSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.BrowserLauncherAppless.Companion.canUseSystemDefaultBrowserPolicy
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -9,14 +8,12 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.Align
-import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
@@ -27,56 +24,84 @@ import com.intellij.util.ui.LocalPathCellEditor
 import com.intellij.util.ui.table.TableModelEditor
 import com.intellij.util.ui.table.TableModelEditor.DialogItemEditor
 import com.intellij.util.ui.table.TableModelEditor.EditableColumnInfo
-import java.awt.event.ItemEvent
 import java.util.UUID
 import javax.swing.DefaultCellEditor
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JTable
+import javax.swing.ListCellRenderer
 import javax.swing.event.TableModelEvent
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
 
+/**
+ * An item of the "Default Browser" dropdown: [SystemDefaultBrowser] or a browser of the list.
+ * For a browser of the list, [id] is the id of the original row, see [BrowserSettingsConfigurable.originalOf].
+ */
+internal data class BrowserChoice(val id: UUID, @NlsSafe val name: String, val icon: Icon) {
+  companion object {
+    fun systemDefault(): BrowserChoice = BrowserChoice(SystemDefaultBrowser.id, SystemDefaultBrowser.name, SystemDefaultBrowser.icon)
+  }
+}
+
 internal class BrowserSettingsConfigurable : UnnamedConfigurable {
   private lateinit var browsersTable: JComponent
   private lateinit var browsersEditor: TableModelEditor<ConfigurableWebBrowser>
-  private lateinit var alternativeBrowserPathField: TextFieldWithBrowseButton
-  private lateinit var defaultBrowserPolicyComboBox: ComboBox<DefaultBrowserPolicy>
+  private val defaultBrowserModel = CollectionComboBoxModel<BrowserChoice>()
   private lateinit var serverReloadModeComboBox: ComboBox<ReloadMode>
   private lateinit var previewReloadModeComboBox: ComboBox<ReloadMode>
   private lateinit var showBrowserHover: JBCheckBox
   private lateinit var showBrowserHoverXml: JBCheckBox
-  private var customPathValue: String? = null
 
   private var root: DialogPanel? = null
 
-  private fun updateCustomPathTextFieldValue(browser: DefaultBrowserPolicy) {
-    when (browser) {
-      DefaultBrowserPolicy.ALTERNATIVE -> {
-        alternativeBrowserPathField.setText(customPathValue)
+  /**
+   * Returns the original row of [item]. The table edits a copy of the row with a new id, so a check of the id must look at the original.
+   */
+  private fun originalOf(item: ConfigurableWebBrowser): ConfigurableWebBrowser {
+    var original = item
+    browsersEditor.processModifiedItems { modified, initial ->
+      if (modified === item) {
+        original = initial
+        false
       }
-      DefaultBrowserPolicy.FIRST -> {
-        setCustomPathToFirstListed()
-      }
-      else -> {
-        alternativeBrowserPathField.text = ""
+      else {
+        true
       }
     }
+    return original
   }
 
-  private fun setCustomPathToFirstListed() {
-    val model = browsersEditor.model
-    var i = 0
-    val n = model.rowCount
-    while (i < n) {
-      val browser = model.getRowValue(i)
-      if (browser.isActive && browser.path != null) {
-        alternativeBrowserPathField.setText(browser.path)
-        return
-      }
-      i++
+  /** The active browsers of the table that have a path. */
+  private fun listedBrowsers(): List<BrowserChoice> =
+    browsersEditor.model.items
+      .filter { it.isActive && it.path != null }
+      .map { BrowserChoice(originalOf(it).id, it.name, it.icon) }
+
+  /** Fills the dropdown from the table and keeps the selected item. */
+  private fun updateBrowserChoices() {
+    val choice = defaultBrowserModel.selected
+    val listed = listedBrowsers()
+    val choices = buildList {
+      if (canUseSystemDefaultBrowserPolicy()) add(BrowserChoice.systemDefault())
+      addAll(listed)
     }
-    alternativeBrowserPathField.text = ""
+    defaultBrowserModel.replaceAll(choices)
+    defaultBrowserModel.selectedItem = choices.find { it.id == choice?.id } ?: fallbackChoice()
   }
+
+  /** Returns `null` when the system default is not available and the list has no active browser. */
+  private fun fallbackChoice(): BrowserChoice? =
+    if (canUseSystemDefaultBrowserPolicy()) BrowserChoice.systemDefault() else listedBrowsers().firstOrNull()
+
+  /** The default browser that [WebBrowserManager] stores, as an item of the current dropdown. */
+  private fun storedChoice(manager: WebBrowserManager): BrowserChoice? {
+    val id = manager.defaultBrowser.id
+    return listedBrowsers().find { it.id == id } ?: fallbackChoice()
+  }
+
+  private val defaultBrowserChoice: BrowserChoice?
+    get() = defaultBrowserModel.selected ?: fallbackChoice()
 
   override fun createComponent(): JComponent? {
     root = panel {
@@ -135,9 +160,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
           }
 
           private fun update() {
-            if (defaultBrowser == DefaultBrowserPolicy.FIRST) {
-              setCustomPathToFirstListed()
-            }
+            updateBrowserChoices()
           }
         })
 
@@ -148,37 +171,7 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
       }.resizableRow()
 
       row(IdeBundle.message("settings.browsers.default.browser")) {
-        val defaultBrowserPolicies = ArrayList<DefaultBrowserPolicy>()
-        if (canUseSystemDefaultBrowserPolicy()) {
-          defaultBrowserPolicies.add(DefaultBrowserPolicy.SYSTEM)
-        }
-        defaultBrowserPolicies.add(DefaultBrowserPolicy.FIRST)
-        defaultBrowserPolicies.add(DefaultBrowserPolicy.ALTERNATIVE)
-
-        defaultBrowserPolicyComboBox = comboBox(defaultBrowserPolicies, textListCellRenderer("") { value: DefaultBrowserPolicy ->
-          when (value) {
-            DefaultBrowserPolicy.SYSTEM -> IdeBundle.message("settings.browsers.system.default")
-            DefaultBrowserPolicy.FIRST -> IdeBundle.message("settings.browsers.first.listed")
-            DefaultBrowserPolicy.ALTERNATIVE -> IdeBundle.message("settings.browsers.custom.path")
-          }
-        }).applyToComponent {
-          addItemListener { e ->
-            val customPathEnabled = e.item === DefaultBrowserPolicy.ALTERNATIVE
-            if (e.stateChange == ItemEvent.DESELECTED) {
-              if (customPathEnabled) {
-                customPathValue = alternativeBrowserPathField.text
-              }
-            }
-            else if (e.stateChange == ItemEvent.SELECTED) {
-              alternativeBrowserPathField.isEnabled = customPathEnabled
-              updateCustomPathTextFieldValue(e.item as DefaultBrowserPolicy)
-            }
-          }
-        }.component
-        alternativeBrowserPathField = cell(TextFieldWithBrowseButton()).applyToComponent {
-          addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor().withTitle(IdeBundle.message("title.select.path.to.browser")))
-        }.align(AlignX.FILL)
-          .component
+        comboBox(defaultBrowserModel, browserChoiceRenderer())
       }
 
       group(IdeBundle.message("settings.browsers.show.browser.popup.in.the.editor")) {
@@ -206,51 +199,37 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
 
   override fun isModified(): Boolean {
     val browserManager = WebBrowserManager.getInstance()
-    val defaultBrowserPolicy = defaultBrowser
-    if (getDefaultBrowserPolicy(browserManager) != defaultBrowserPolicy ||
+    if (defaultBrowserChoice != storedChoice(browserManager) ||
         browserManager.isShowBrowserHover != showBrowserHover.isSelected ||
         browserManager.isShowBrowserHoverXml != showBrowserHoverXml.isSelected ||
         browserManager.getWebPreviewReloadMode() !== previewReloadModeComboBox.item ||
         browserManager.getWebServerReloadMode() !== serverReloadModeComboBox.item) {
       return true
     }
-    return if (defaultBrowserPolicy == DefaultBrowserPolicy.ALTERNATIVE &&
-               !Comparing.strEqual(GeneralLocalSettings.getInstance().browserPath, alternativeBrowserPathField.text)) {
-      true
-    }
-    else browsersEditor.isModified
+    return browsersEditor.isModified
   }
 
   override fun apply() {
-    val settings = GeneralLocalSettings.getInstance()
-    settings.useDefaultBrowser = defaultBrowser == DefaultBrowserPolicy.SYSTEM
-    if (alternativeBrowserPathField.isEnabled) {
-      settings.browserPath = alternativeBrowserPathField.text
-    }
     val browserManager = WebBrowserManager.getInstance()
+    val choice = defaultBrowserChoice
     browserManager.isShowBrowserHover = showBrowserHover.isSelected
     browserManager.isShowBrowserHoverXml = showBrowserHoverXml.isSelected
-    browserManager.defaultBrowserPolicy = defaultBrowser
     browserManager.webPreviewReloadMode = previewReloadModeComboBox.item
     browserManager.webServerReloadMode = serverReloadModeComboBox.item
     browserManager.list = browsersEditor.apply()
+    // the manager resolves the default browser in the new list
+    browserManager.setDefaultBrowserId(choice?.id)
   }
-
-  private val defaultBrowser: DefaultBrowserPolicy
-    get() = defaultBrowserPolicyComboBox.selectedItem as DefaultBrowserPolicy
 
   override fun reset() {
     val browserManager = WebBrowserManager.getInstance()
-    val effectiveDefaultBrowserPolicy = getDefaultBrowserPolicy(browserManager)
-    defaultBrowserPolicyComboBox.selectedItem = effectiveDefaultBrowserPolicy
     previewReloadModeComboBox.item = browserManager.getWebPreviewReloadMode()
     serverReloadModeComboBox.item = browserManager.getWebServerReloadMode()
     showBrowserHover.isSelected = browserManager.isShowBrowserHover
     showBrowserHoverXml.isSelected = browserManager.isShowBrowserHoverXml
     browsersEditor.reset(browserManager.list)
-    customPathValue = GeneralLocalSettings.getInstance().browserPath
-    alternativeBrowserPathField.isEnabled = effectiveDefaultBrowserPolicy == DefaultBrowserPolicy.ALTERNATIVE
-    updateCustomPathTextFieldValue(effectiveDefaultBrowserPolicy)
+    updateBrowserChoices()
+    defaultBrowserModel.selectedItem = storedChoice(browserManager)
   }
 
   fun selectBrowser(browser: WebBrowser) {
@@ -343,13 +322,9 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
       PATH_COLUMN_INFO
     )
 
-    private fun getDefaultBrowserPolicy(manager: WebBrowserManager): DefaultBrowserPolicy {
-      val policy = manager.getDefaultBrowserPolicy()
-      return if (policy != DefaultBrowserPolicy.SYSTEM || canUseSystemDefaultBrowserPolicy()) {
-        policy
-      }
-      else DefaultBrowserPolicy.ALTERNATIVE
-      // if system default browser policy cannot be used
+    private fun browserChoiceRenderer(): ListCellRenderer<BrowserChoice?> = listCellRenderer("") {
+      icon(value.icon)
+      text(value.name)
     }
   }
 }

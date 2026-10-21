@@ -1020,6 +1020,7 @@ f:com.intellij.ide.browsers.WebBrowserManager
 - getWebPreviewReloadMode():com.intellij.ide.browsers.ReloadMode
 - isActive(com.intellij.ide.browsers.WebBrowser):Z
 - loadState(org.jdom.Element):V
+- noStateLoaded():V
 f:com.intellij.ide.browsers.actions.BaseOpenInBrowserAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>(com.intellij.ide.browsers.WebBrowser):V
