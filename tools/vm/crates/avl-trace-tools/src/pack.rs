@@ -233,7 +233,30 @@ pub fn pack_zip_bundle(zip: &Path, prefix: &str, destination: &Path) -> Result<R
     })
 }
 
-/// The zip writer of [pack] and [pack_zip_bundle].
+/// Zips files at the names given, in the order given, as [pack] writes a zip. Each entry is stored or deflated by its
+/// extension, so a zip or a picture is stored and JSON or HTML is deflated. Every entry has one time and one mode, so
+/// the same files give the same bytes. The zip is written atomically. Each entry is `(name, file)`, and a name that is
+/// not a clean relative path, such as one with `..`, refuses the zip. Answers the size of the zip.
+pub fn archive(destination: &Path, entries: &[(String, PathBuf)]) -> Result<u64, Error> {
+    if let Some((unclean, _)) = entries.iter().find(|(name, _)| clean_bundle_path(name).is_none()) {
+        refuse!("{unclean:?} is not a clean relative path for an entry of {}", destination.display());
+    }
+    let destination = absolute(destination)?;
+    write_zip(&destination, &mut |writer| {
+        for (name, file) in entries {
+            let failed = |error: &dyn std::fmt::Display| Error::new(format!("{name}: {}: {error}", file.display()));
+            let mut source = File::open(file).map_err(|error| failed(&error))?;
+            let size = source.metadata().map_err(|error| failed(&error))?.len();
+            writer
+                .start_file(name.as_str(), entry_options(method_of(name), size))
+                .map_err(|error| failed(&error))?;
+            io::copy(&mut source, writer).map_err(|error| failed(&error))?;
+        }
+        Ok(())
+    })
+}
+
+/// The zip writer of [pack], [pack_zip_bundle] and [archive].
 type Writer<'a> = ZipWriter<BufWriter<&'a mut File>>;
 
 /// Writes a zip beside destination under a temporary name, with `fill` adding the entries, and renames it onto

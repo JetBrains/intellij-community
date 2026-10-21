@@ -456,3 +456,53 @@ fn one_bundle_of_a_zip_is_packed_with_its_media_stored() {
     );
     assert!(!out.path().join("hostile-out.zip").exists());
 }
+
+/// An archive keeps the names and the order it is given. It stores a zip and deflates JSON and HTML, and two archives
+/// of the same files are one zip. A name with `..` refuses the archive.
+#[test]
+fn an_archive_keeps_its_order_and_stores_its_zips() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = |name: &str, content: &str| {
+        let path = dir.path().join(name);
+        fs::write(&path, content).unwrap();
+        path
+    };
+    let entries = vec![
+        ("index.html".to_owned(), file("page.html", "<!doctype html>")),
+        ("runs.json".to_owned(), file("runs.json", "{\"runs\": []}")),
+        ("lane/iter-1/T/b.zip".to_owned(), file("b.zip", "PK")),
+        ("lane/iter-1/T/a.zip".to_owned(), file("a.zip", "PK")),
+    ];
+    let first = dir.path().join("first.zip");
+    let bytes = archive(&first, &entries).unwrap();
+    assert_eq!(bytes, fs::metadata(&first).unwrap().len());
+    let second = dir.path().join("second.zip");
+    archive(&second, &entries).unwrap();
+    assert!(
+        fs::read(&first).unwrap() == fs::read(&second).unwrap(),
+        "two archives of one set differ"
+    );
+
+    let mut zip = ZipArchive::new(File::open(&first).unwrap()).unwrap();
+    let listing: Vec<(String, CompressionMethod)> = (0..zip.len())
+        .map(|index| {
+            let entry = zip.by_index(index).unwrap();
+            (entry.name().to_owned(), entry.compression())
+        })
+        .collect();
+    assert_eq!(
+        listing,
+        [
+            ("index.html".to_owned(), CompressionMethod::Deflated),
+            ("runs.json".to_owned(), CompressionMethod::Deflated),
+            ("lane/iter-1/T/b.zip".to_owned(), CompressionMethod::Stored),
+            ("lane/iter-1/T/a.zip".to_owned(), CompressionMethod::Stored),
+        ]
+    );
+
+    let refused = archive(&dir.path().join("hostile.zip"), &[("../x.json".to_owned(), entries[1].1.clone())]).unwrap_err();
+    assert!(
+        refused.to_string().contains("\"../x.json\" is not a clean relative path"),
+        "{refused}"
+    );
+}
