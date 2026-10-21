@@ -23,6 +23,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.testFramework.junit5.RunInEdt;
+import com.intellij.testFramework.junit5.StressTestApplication;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
@@ -38,7 +40,9 @@ import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.Cod
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 
+@RunInEdt
 @PerformanceUnitTest
+@StressTestApplication
 @TestApplication
 public class EditorPaintingPerformanceTest {
   private static final Logger LOG = Logger.getInstance(EditorPaintingPerformanceTest.class);
@@ -60,23 +64,19 @@ public class EditorPaintingPerformanceTest {
 
   @Test
   public void testScrollingThroughLongTextFile() {
-    myFixture.runTest(() -> {
-      myFixture.initText(StringUtil.repeat(LOREM_IPSUM + '\n', 15000));
+    myFixture.initText(StringUtil.repeat(LOREM_IPSUM + '\n', 15000));
 
-      doTestScrollingPerformance("scrolling through text file with many lines");
-      // attempt.min.ms varies ~5% (from experiments)
-    });
+    doTestScrollingPerformance("scrolling through text file with many lines");
+    // attempt.min.ms varies ~5% (from experiments)
   }
 
   @Test
   public void testScrollingThroughLongSoftWrappedLine() {
-    myFixture.runTest(() -> {
-      myFixture.initText(StringUtil.repeat(LOREM_IPSUM + ' ', 15000));
-      EditorTestUtil.configureSoftWraps(myFixture.getEditor(), EDITOR_WIDTH_PX, TEST_CHAR_WIDTH);
+    myFixture.initText(StringUtil.repeat(LOREM_IPSUM + ' ', 15000));
+    EditorTestUtil.configureSoftWraps(myFixture.getEditor(), EDITOR_WIDTH_PX, TEST_CHAR_WIDTH);
     
-      doTestScrollingPerformance("scrolling through long soft wrapped line");
-      // attempt.min.ms varies ~4% (from experiments)
-    });
+    doTestScrollingPerformance("scrolling through long soft wrapped line");
+    // attempt.min.ms varies ~4% (from experiments)
   }
 
   private void doTestScrollingPerformance(String message) {

@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.testFramework.junit5.RunInEdt;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
@@ -29,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * them asks the error stripe to repaint. Guards the throttling in {@code EditorImpl.queueErrorStipeRepaintRequest} - re-arming the
  * repaint alarm once per highlighter used to dominate such a burst.
  */
+@RunInEdt
 @PerformanceUnitTest
 @TestApplication
 public class ErrorStripeRepaintPerformanceTest {
@@ -50,38 +52,36 @@ public class ErrorStripeRepaintPerformanceTest {
 
   @Test
   public void testAddingManyErrorStripeHighlightersAtOnce() {
-    myFixture.runTest(() -> {
-      String line = StringUtil.repeat(NEEDLE + ' ', MATCHES_PER_LINE).trim() + '\n';
-      String text = StringUtil.repeat(line, MATCH_COUNT / MATCHES_PER_LINE);
-      myFixture.initText(text);
+    String line = StringUtil.repeat(NEEDLE + ' ', MATCHES_PER_LINE).trim() + '\n';
+    String text = StringUtil.repeat(line, MATCH_COUNT / MATCHES_PER_LINE);
+    myFixture.initText(text);
 
-      int[] offsets = new int[MATCH_COUNT];
-      int found = 0;
-      for (int i = text.indexOf(NEEDLE); i >= 0; i = text.indexOf(NEEDLE, i + NEEDLE.length())) {
-        offsets[found++] = i;
+    int[] offsets = new int[MATCH_COUNT];
+    int found = 0;
+    for (int i = text.indexOf(NEEDLE); i >= 0; i = text.indexOf(NEEDLE, i + NEEDLE.length())) {
+      offsets[found++] = i;
+    }
+    assertEquals(MATCH_COUNT, found);
+
+    // an error stripe color is what makes a highlighter reach queueErrorStipeRepaintRequest at all, the way a search result does
+    TextAttributes attributes = new TextAttributes(null, Color.yellow, null, null, Font.PLAIN);
+    attributes.setErrorStripeColor(Color.yellow);
+
+    EditorImpl editor = (EditorImpl)myFixture.getEditor();
+    MarkupModel markupModel = editor.getMarkupModel();
+    Benchmark.newBenchmark("Adding a lot of error stripe highlighters at once", () -> {
+      for (int offset : offsets) {
+        markupModel.addRangeHighlighter(offset, offset + NEEDLE.length(), 0, attributes, HighlighterTargetArea.EXACT_RANGE);
       }
-      assertEquals(MATCH_COUNT, found);
-
-      // an error stripe color is what makes a highlighter reach queueErrorStipeRepaintRequest at all, the way a search result does
-      TextAttributes attributes = new TextAttributes(null, Color.yellow, null, null, Font.PLAIN);
-      attributes.setErrorStripeColor(Color.yellow);
-
-      EditorImpl editor = (EditorImpl)myFixture.getEditor();
-      MarkupModel markupModel = editor.getMarkupModel();
-      Benchmark.newBenchmark("Adding a lot of error stripe highlighters at once", () -> {
-        for (int offset : offsets) {
-          markupModel.addRangeHighlighter(offset, offset + NEEDLE.length(), 0, attributes, HighlighterTargetArea.EXACT_RANGE);
-        }
-        // the coalesced editor repaint is part of the burst, the stripe repaint is not: the alarm runs it once, after the burst
-        UIUtil.dispatchAllInvocationEvents();
-      }).setup(() -> {
-        markupModel.removeAllHighlighters();
-        editor.invokeDelayedErrorStripeRepaint(); // so that no stripe repaint left over from the previous attempt lands inside the next
-        UIUtil.dispatchAllInvocationEvents();
-      }).warmupIterations(2)
-        .attempts(10)
-        .runAsStressTest()
-        .start();
-    });
+      // the coalesced editor repaint is part of the burst, the stripe repaint is not: the alarm runs it once, after the burst
+      UIUtil.dispatchAllInvocationEvents();
+    }).setup(() -> {
+      markupModel.removeAllHighlighters();
+      editor.invokeDelayedErrorStripeRepaint(); // so that no stripe repaint left over from the previous attempt lands inside the next
+      UIUtil.dispatchAllInvocationEvents();
+    }).warmupIterations(2)
+      .attempts(10)
+      .runAsStressTest()
+      .start();
   }
 }

@@ -360,7 +360,9 @@ public class PlainTextEditingTest extends EditingTestBase {
           int col = myFixture.getEditor().offsetToLogicalPosition(longLine.length() - 1).column;
           assertEquals(longLine.length() - 1, col);
         }
-      }).start();
+      }).runAsStressTest()
+        // the body runs in a lambda on the EDT, where start() can't find the test method on the stack
+        .start(PlainTextEditingTest.class.getName() + ".testCalculatingLongLinesPositionPerformanceInEditorWithNoTabs - calcOffset");
     });
   }
 }
