@@ -84,7 +84,7 @@ fn manifest_validation_refuses_what_a_recorder_would_not_write() {
     decode(&truncated).expect("a truncated manifest naming its running span decodes");
 
     type Mutation = fn(&mut Value);
-    let refused: [(&str, Mutation); 17] = [
+    let refused: [(&str, Mutation); 19] = [
         ("another schema", |manifest| {
             manifest["schema"] = json!("air-trace/2");
         }),
@@ -132,6 +132,12 @@ fn manifest_validation_refuses_what_a_recorder_would_not_write() {
         ("an unknown codec", |manifest| {
             manifest["video"]["codec"] = json!("av1");
         }),
+        ("an unknown still encoding", |manifest| {
+            manifest["stills"] = json!({"encoding": "jpeg"});
+        }),
+        ("stills without an encoding", |manifest| {
+            manifest["stills"] = json!({});
+        }),
         ("an unknown field", |manifest| {
             manifest["snapshots"] = json!(17);
         }),
@@ -141,6 +147,28 @@ fn manifest_validation_refuses_what_a_recorder_would_not_write() {
         mutate(&mut manifest);
         assert!(decode(&manifest).is_err(), "a manifest with {label} was accepted");
     }
+}
+
+/// A manifest names lossy pictures and leaves lossless ones unnamed, so the manifest of a bundle without a video reads
+/// as it did before the recorder wrote lossy pictures.
+#[test]
+fn the_manifest_names_lossy_stills_only() {
+    let lossless = decode(&valid_manifest()).unwrap();
+    assert_eq!(lossless.stills.encoding, StillEncoding::Lossless, "a manifest without stills");
+    let mut explicit = valid_manifest();
+    explicit["stills"] = json!({"encoding": "lossless"});
+    assert_eq!(decode(&explicit).unwrap(), lossless);
+
+    let mut lossy = valid_manifest();
+    lossy["stills"] = json!({"encoding": "lossy"});
+    let decoded = decode(&lossy).unwrap();
+    assert_eq!(decoded.stills.encoding, StillEncoding::Lossy);
+    assert_eq!(serde_json::to_value(&decoded).unwrap(), lossy, "the lossy manifest round-trips");
+    assert_eq!(
+        serde_json::to_value(&lossless).unwrap(),
+        valid_manifest(),
+        "a lossless manifest names no stills"
+    );
 }
 
 #[test]

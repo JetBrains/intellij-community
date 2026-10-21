@@ -9,8 +9,8 @@ use std::time::{Duration, Instant, SystemTime};
 use avl_bridge::Client;
 use avl_trace::bridge::{Facts, IdeSpan};
 use avl_trace::bundle::{
-    AllureStatusDetails, BundleStatus, Capture, IDEA_LOG_FILE, MANIFEST_SCHEMA, Manifest, Video, allure_results_dir, format_manifest_time,
-    sanitize_name,
+    AllureStatusDetails, BundleStatus, Capture, IDEA_LOG_FILE, MANIFEST_SCHEMA, Manifest, Stills, Video, allure_results_dir,
+    format_manifest_time, sanitize_name,
 };
 use avl_trace::otlp::{
     IDE_SERVICE_NAME, IDE_SPAN_KIND, KeyValue, LogRecord, Resource, SERVICE_NAME, SeverityNumber, Span, SpanStatus, attr, event, span_id,
@@ -720,6 +720,7 @@ impl Scenario {
             duration_ms: u64::try_from(at_ms - self.started_ms).unwrap_or(0),
             capture: Capture { source, reason },
             video: self.video.clone(),
+            stills: Stills::default(),
         };
         if self.allure {
             self.write_allure_result(&manifest, details);

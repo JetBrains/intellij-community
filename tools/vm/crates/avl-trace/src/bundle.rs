@@ -51,8 +51,8 @@ pub fn bundle_file(dir: &Path, name: &str) -> PathBuf {
     name.split('/').fold(dir.to_owned(), |path, segment| path.join(segment))
 }
 
-/// Where the snapshot with this ordinal keeps its lossless WebP picture. Ordinals count from 1 in the order the
-/// snapshots were taken.
+/// Where the snapshot with this ordinal keeps its WebP picture, which the [Stills] of the manifest describe. Ordinals
+/// count from 1 in the order the snapshots were taken.
 ///
 /// The file exists only when the screen changed since the previous picture. A snapshot of an unchanged screen
 /// writes no file, and its [crate::otlp::attr::SNAPSHOT_IMAGE] names the previous picture's file. So a reader
@@ -250,6 +250,41 @@ impl Video {
     }
 }
 
+vocabulary! {
+    /// How the recorder encodes the pictures of a bundle, the files of [snap_image_path].
+    pub enum StillEncoding {
+        /// A picture decodes to the pixels of the screen. The recorder picks it for a scenario that starts no video.
+        Lossless = "lossless",
+        /// WebP at quality 90. The recorder picks it for a scenario that starts a video. A video that fails later
+        /// leaves the pictures lossy.
+        Lossy = "lossy",
+    }
+}
+
+/// How the bundle's pictures are encoded.
+///
+/// On the wire it is `{"encoding":"lossy"}`. The manifest leaves it out when the pictures are lossless, so a reader
+/// reads an absent field as lossless. That also holds for every bundle of a recorder that wrote no lossy picture.
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Debug)]
+#[serde(deny_unknown_fields)]
+pub struct Stills {
+    pub encoding: StillEncoding,
+}
+
+impl Default for Stills {
+    fn default() -> Self {
+        Self {
+            encoding: StillEncoding::Lossless,
+        }
+    }
+}
+
+impl Stills {
+    fn is_lossless(&self) -> bool {
+        self.encoding == StillEncoding::Lossless
+    }
+}
+
 /// `bundle.json`: what the bundle is, how it ended, and what it could capture.
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -273,6 +308,8 @@ pub struct Manifest {
     pub duration_ms: u64,
     pub capture: Capture,
     pub video: Video,
+    #[serde(default, skip_serializing_if = "Stills::is_lossless")]
+    pub stills: Stills,
 }
 
 /// Writes an instant the way the manifest holds it: RFC 3339 in UTC, with milliseconds.
