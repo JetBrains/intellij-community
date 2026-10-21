@@ -517,6 +517,10 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   write their logs into another configuration.
   [@test] ../crates/air-trace/src/publish/tests.rs (`the_testlogs_are_found_beside_the_binary_that_bazel_run_starts`)
 
+- A relative path of `--testlogs`, `--out` or `--viewer` is taken from `BUILD_WORKING_DIRECTORY`, the directory where
+  `bazel run` ran. It is not taken from the runfiles tree that the program starts in.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`a_relative_path_is_taken_from_the_directory_where_bazel_run_ran`)
+
 - Beside the zips, the step publishes `air-traces/runs.json`. It is the listing of `GET /__air/runs`, written with
   the server's own types. Each scenario carries `zip`, the path of its zip relative to `runs.json`. Its `source` is
   that zip, and its id is the id of that zip. `controllerRuns` is empty. Each testlogs directory is one

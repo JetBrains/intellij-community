@@ -370,3 +370,21 @@ fn a_lane_is_the_target_and_its_shard() {
     assert_eq!(lane_of(Path::new("a/ui_lane_test/run_1_of_3")), "ui_lane_test/run_1_of_3");
     assert_eq!(lane_of(Path::new("")), "tests");
 }
+
+/// Under `bazel run`, a relative path of the command line is taken from the directory where the command ran, and not
+/// from the runfiles tree that the program starts in. An absolute path stays as it is.
+#[test]
+fn a_relative_path_is_taken_from_the_directory_where_bazel_run_ran() {
+    let checkout = tempfile::tempdir().unwrap();
+    let working = checkout.path().join("plugins/air");
+    assert_eq!(
+        given_path(Path::new("out/air-trace-viewer"), Some(&working)).unwrap(),
+        working.join("out/air-trace-viewer")
+    );
+    let absolute = checkout.path().join("viewer");
+    assert_eq!(given_path(&absolute, Some(&working)).unwrap(), absolute);
+    assert_eq!(
+        given_path(Path::new("viewer"), None).unwrap(),
+        std::env::current_dir().unwrap().join("viewer")
+    );
+}

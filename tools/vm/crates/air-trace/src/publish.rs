@@ -84,13 +84,17 @@ pub(crate) struct Publish<'a> {
 /// Runs `air-trace teamcity-publish`: the service messages on stdout, a summary line and each problem on stderr. It
 /// answers 0 whatever it found, and 2 only for a usage error of the command line.
 pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &mut dyn Write) -> u8 {
-    let workspace = std::env::var_os("BUILD_WORKSPACE_DIRECTORY")
-        .filter(|value| !value.is_empty())
-        .map(PathBuf::from);
+    let directory = |name: &str| std::env::var_os(name).filter(|value| !value.is_empty()).map(PathBuf::from);
+    let workspace = directory("BUILD_WORKSPACE_DIRECTORY");
+    let working = directory("BUILD_WORKING_DIRECTORY");
+    let given = |path: &Path| given_path(path, working.as_deref());
     let testlogs = if args.testlogs.is_empty() {
         own_testlogs()
     } else {
-        args.testlogs.clone()
+        match args.testlogs.iter().map(|dir| given(dir)).collect::<io::Result<Vec<_>>>() {
+            Ok(testlogs) => testlogs,
+            Err(error) => return report(stderr, "teamcity-publish", &usage(format!("--testlogs: {error}"))),
+        }
     };
     if testlogs.is_empty() {
         let _ = warn(
@@ -105,10 +109,14 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
             let base = workspace.clone().map_or_else(std::env::current_dir, Ok)?;
             Ok(base.join("out").join("air-traces-publish"))
         },
-        |out| std::path::absolute(&out),
+        |out| given(&out),
     ) {
         Ok(out) => out,
         Err(error) => return report(stderr, "teamcity-publish", &usage(format!("--out: {error}"))),
+    };
+    let viewer_dir = match args.viewer.as_deref().map(given).transpose() {
+        Ok(viewer) => viewer,
+        Err(error) => return report(stderr, "teamcity-publish", &usage(format!("--viewer: {error}"))),
     };
     let variable = |name: &str| std::env::var(name).ok();
     let build = Build::of_step(&variable).unwrap_or_else(|reason| {
@@ -122,8 +130,8 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
     if let Some(fallback) = build.as_ref().and_then(|build| build.server_fallback(&variable)) {
         let _ = warn(stdout, stderr, &fallback);
     }
-    let viewer = match (&args.viewer, workspace) {
-        (Some(dir), _) => ViewerSource::Built(dir.clone()),
+    let viewer = match (viewer_dir, workspace) {
+        (Some(dir), _) => ViewerSource::Built(dir),
         (None, Some(checkout)) => ViewerSource::Build {
             checkout,
             tools: None,
@@ -141,6 +149,15 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
         report(stderr, "teamcity-publish", &refused);
     }
     Exit::Ok.code()
+}
+
+/// A path of the command line, made absolute. `bazel run` starts the program in its runfiles tree, so a relative path is
+/// taken from `working`, the directory of `BUILD_WORKING_DIRECTORY`, where the command ran.
+fn given_path(path: &Path, working: Option<&Path>) -> io::Result<PathBuf> {
+    match working {
+        Some(working) if path.is_relative() => std::path::absolute(working.join(path)),
+        _ => std::path::absolute(path),
+    }
 }
 
 /// Every `<bazel-out>/<configuration>/testlogs` of the `bazel-out` this program was built in.
