@@ -161,6 +161,7 @@
 - a:getNodeIds():java.util.List
 - a:getPaneId():com.intellij.platform.projectView.pane.ProjectViewPaneId
 *:com.intellij.platform.projectView.pane.ProjectViewNodeUserObject
+- a:getName():java.lang.String
 - getVirtualFile():com.intellij.openapi.vfs.VirtualFile
 *:com.intellij.platform.projectView.pane.ProjectViewPaneCutCopyPasteDeleteHandler
 - a:performCopy(java.util.List,kotlin.coroutines.Continuation):java.lang.Object
