@@ -11,6 +11,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.JCheckBox
@@ -61,7 +62,8 @@ abstract class BeanConfigurable<T : Any> protected constructor(protected val ins
 
   private class CheckboxField(
     private val myAccessor: BeanPropertyAccessor,
-    val title: @NlsContexts.Checkbox String) {
+    val title: @NlsContexts.Checkbox String,
+  ) {
 
     fun setValue(settingsInstance: Any, value: Boolean) {
       myAccessor.setBeanValue(settingsInstance, value)
@@ -115,7 +117,7 @@ abstract class BeanConfigurable<T : Any> protected constructor(protected val ins
 
   override fun getOptionDescriptors(
     configurableId: String,
-    nameConverter: Function<in String?, String?>,
+    nameConverter: Function<in @Nls String, @Nls String>,
   ): List<OptionDescription> {
     return myFields.map {
       object : BooleanOptionDescription(nameConverter.apply(it.title), configurableId) {
@@ -135,10 +137,7 @@ abstract class BeanConfigurable<T : Any> protected constructor(protected val ins
    * for full UI customization instead. When converting [BeanConfigurable] to [UiDslUnnamedConfigurable], remember to implement
    * [ConfigurableWithOptionDescriptors] (if applicable).
    */
-  @Deprecated("Content customization is not allowed. Use [UiDslUnnamedConfigurable.Simple] or similar classes for full UI customization instead",
-              level = DeprecationLevel.WARNING)
-  @ApiStatus.ScheduledForRemoval
-  override fun createComponent(): JComponent {
+  final override fun createComponent(): JComponent {
     return panel {
       appendBeanConfigurableContent(this@BeanConfigurable, components)
     }

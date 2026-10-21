@@ -3420,7 +3420,7 @@ a:com.intellij.openapi.options.BeanConfigurable
 - com.intellij.openapi.options.UnnamedConfigurable
 - p:<init>(java.lang.Object):V
 - apply():V
-- createComponent():javax.swing.JComponent
+- f:createComponent():javax.swing.JComponent
 - pf:getInstance():java.lang.Object
 - pf:setTitle(java.lang.String):V
 a:com.intellij.openapi.options.BoundCompositeConfigurable

@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Setter
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.JCheckBox
@@ -72,7 +73,7 @@ protected constructor() : UiDslUnnamedConfigurable.Simple(), UiDslUnnamedConfigu
 
   override fun getOptionDescriptors(
     configurableId: String,
-    nameConverter: Function<in String?, String?>,
+    nameConverter: Function<in @Nls String, @Nls String>,
   ): List<OptionDescription> {
     return myFields.map { box ->
       object : BooleanOptionDescription(nameConverter.apply(box.title), configurableId) {
