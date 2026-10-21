@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorModificationUtilEx
 import com.intellij.openapi.project.DumbAwareAction
@@ -14,6 +15,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.startOffset
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
@@ -25,6 +27,8 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
 import org.intellij.plugins.markdown.editor.tables.buildEmptyTable
+import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
+import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
@@ -58,7 +62,7 @@ import kotlin.math.floor
  * ```
  */
 @ApiStatus.Internal
-class InsertEmptyTableAction: DumbAwareAction() {
+class InsertEmptyTableAction : DumbAwareAction() {
   init {
     addTextOverride(MarkdownActionPlaces.INSERT_POPUP) {
       MarkdownBundle.message("action.Markdown.InsertEmptyTable.insert.popup.text")
@@ -89,26 +93,49 @@ class InsertEmptyTableAction: DumbAwareAction() {
   }
 
   private fun actuallyInsertTable(project: Project, editor: Editor, file: PsiFile, rows: Int, columns: Int) {
-      runWriteAction {
-          executeCommand(project) {
-              val caret = editor.caretModel.currentCaret
-              val document = editor.document
-              val caretOffset = caret.offset
-              val currentLine = document.getLineNumber(caret.offset)
-              val text = buildEmptyTable(rows, columns, cellWidth = 3, getTableStyle(file))
-              val content = when {
-                  currentLine != 0 && !DocumentUtil.isLineEmpty(document, currentLine - 1) -> "\n$text"
-                  else -> text
-              }
-              EditorModificationUtilEx.insertStringAtCaret(editor, content)
-              PsiDocumentManager.getInstance(project).commitDocument(document)
-              val table = TableUtils.findTable(file, caretOffset)
-              val offsetToMove = table?.let { PsiTreeUtil.findChildOfType(it, MarkdownTableCell::class.java) }?.startOffset
-              if (offsetToMove != null) {
-                  caret.moveToOffset(offsetToMove)
-              }
-          }
+    runWriteAction {
+      executeCommand(project) {
+        val caret = editor.caretModel.currentCaret
+        val document = editor.document
+        val caretOffset = caret.offset
+        val currentLine = document.getLineNumber(caret.offset)
+        val insertNewLine = currentLine != 0 && !DocumentUtil.isLineEmpty(document, currentLine - 1)
+        val lineStart = document.getLineStartOffset(currentLine)
+        val blockQuotePrefix = findBlockQuotePrefix(file, document, lineStart)
+        val tableText = if (blockQuotePrefix.isEmpty()) {
+          buildEmptyTable(rows, columns, cellWidth = 3, getTableStyle(file))
+        } else {
+          buildEmptyTable(rows, columns, cellWidth = 3, getTableStyle(file))
+            .replace("\n", "\n$blockQuotePrefix")
+            .removeSuffix(blockQuotePrefix)
+        }
+        val content = if (insertNewLine) "\n$blockQuotePrefix$tableText" else tableText
+        EditorModificationUtilEx.insertStringAtCaret(editor, content)
+        PsiDocumentManager.getInstance(project).commitDocument(document)
+        val table = TableUtils.findTable(file, caretOffset)
+        val offsetToMove = table?.let { PsiTreeUtil.findChildOfType(it, MarkdownTableCell::class.java) }?.startOffset
+        if (offsetToMove != null) {
+          caret.moveToOffset(offsetToMove)
+        }
       }
+    }
+  }
+
+  private fun findBlockQuotePrefix(file: PsiFile, document: Document, lineStart: Int): String {
+    val lineEnd = document.getLineEndOffset(document.getLineNumber(lineStart))
+    var leaf = PsiUtilCore.getElementAtOffset(file, lineStart)
+    var prefixEnd = lineStart
+    var hasBlockQuote = false
+    while (leaf.textRange.startOffset < lineEnd) {
+      when (leaf.node.elementType) {
+        MarkdownTokenTypes.BLOCK_QUOTE -> hasBlockQuote = true
+        in MarkdownTokenTypeSets.WHITE_SPACES -> Unit
+        else -> break
+      }
+      prefixEnd = minOf(leaf.textRange.endOffset, lineEnd)
+      leaf = PsiTreeUtil.nextLeaf(leaf) ?: break
+    }
+    return if (hasBlockQuote) document.charsSequence.subSequence(lineStart, prefixEnd).toString() else ""
   }
 
   @ApiStatus.Internal
