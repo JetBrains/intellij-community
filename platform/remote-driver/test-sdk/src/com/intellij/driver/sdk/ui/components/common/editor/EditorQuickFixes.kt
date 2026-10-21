@@ -10,9 +10,9 @@ import java.awt.event.KeyEvent
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-/** The descriptions of the highlights of this editor's document. An empty list when the highlights cannot be read. */
-fun JEditorUiComponent.highlightDescriptions(): List<String> =
-  runCatching { driver.getHighlights(document).mapNotNull { it.getDescription() } }.getOrDefault(emptyList())
+/** The descriptions of the highlights of this editor's document, or `null` when the highlights cannot be read. */
+fun JEditorUiComponent.highlightDescriptions(): List<String>? =
+  runCatching { driver.getHighlights(document).mapNotNull { it.getDescription() } }.getOrNull()
 
 /**
  * Presses Alt+Enter at the 1-based [line] and [column] and returns the text of the intention popup item whose text starts with [itemPrefix].
