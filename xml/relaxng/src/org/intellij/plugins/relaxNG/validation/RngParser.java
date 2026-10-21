@@ -34,13 +34,13 @@ import com.thaiopensource.relaxng.impl.SchemaReaderImpl;
 import com.thaiopensource.util.PropertyMap;
 import com.thaiopensource.util.PropertyMapBuilder;
 import com.thaiopensource.validate.Schema;
-import com.thaiopensource.xml.sax.Sax2XMLReaderCreator;
 import com.thaiopensource.xml.sax.XMLReaderCreator;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.intellij.plugins.relaxNG.model.resolve.RelaxIncludeIndex;
 import org.kohsuke.rngom.ast.builder.BuildException;
 import org.kohsuke.rngom.ast.builder.IncludedGrammar;
 import org.kohsuke.rngom.ast.builder.SchemaBuilder;
+import org.kohsuke.rngom.ast.builder.Scope;
 import org.kohsuke.rngom.ast.om.ParsedPattern;
 import org.kohsuke.rngom.binary.SchemaBuilderImpl;
 import org.kohsuke.rngom.binary.SchemaPatternBuilder;
@@ -155,17 +155,33 @@ public final class RngParser {
                 throws BuildException, IllegalSchemaException
         {
           ProgressManager.checkCanceled();
-          return super.parseInclude(resolveURI(virtualFile, uri), schemaBuilder, g, inheritedNs);
+          return super.parseInclude(requireLocalURI(resolveURI(virtualFile, uri)), schemaBuilder, g, inheritedNs);
+        }
+
+        @Override
+        public ParsedPattern parseExternal(String uri, SchemaBuilder schemaBuilder, Scope s, String inheritedNs)
+                throws BuildException, IllegalSchemaException
+        {
+          ProgressManager.checkCanceled();
+          return super.parseExternal(requireLocalURI(resolveURI(virtualFile, uri)), schemaBuilder, s, inheritedNs);
         }
       };
     } else {
-      return new SAXParseable(source, eh) {
+      return new SAXParseable(source, eh, LocalOnlyXmlReaderCreator.INSTANCE) {
         @Override
         public ParsedPattern parseInclude(String uri, SchemaBuilder schemaBuilder, IncludedGrammar g, String inheritedNs)
                 throws BuildException, IllegalSchemaException
         {
           ProgressManager.checkCanceled();
           return super.parseInclude(resolveURI(virtualFile, uri), schemaBuilder, g, inheritedNs);
+        }
+
+        @Override
+        public ParsedPattern parseExternal(String uri, SchemaBuilder schemaBuilder, Scope s, String inheritedNs)
+                throws BuildException, IllegalSchemaException
+        {
+          ProgressManager.checkCanceled();
+          return super.parseExternal(resolveURI(virtualFile, uri), schemaBuilder, s, inheritedNs);
         }
       };
     }
@@ -177,6 +193,13 @@ public final class RngParser {
       s = VfsUtilCore.fixIDEAUrl(file.getUrl());
     }
     return s;
+  }
+
+  private static String requireLocalURI(String uri) {
+    if (!LocalOnlyXmlReaderCreator.isLocalUri(uri)) {
+      throw new BuildException(LocalOnlyXmlReaderCreator.notLocalError(uri));
+    }
+    return uri;
   }
 
   public static Schema getCachedSchema(final XmlFile descriptorFile) {
@@ -242,10 +265,33 @@ public final class RngParser {
     @Override
     protected com.thaiopensource.relaxng.parse.Parseable createParseable(XMLReaderCreator xmlReaderCreator, InputSource inputSource, ErrorHandler errorHandler) {
       if (myDescriptorFile.getFileType() == RncFileType.getInstance()) {
-        return new com.thaiopensource.relaxng.parse.compact.CompactParseable(inputSource, errorHandler);
+        return new com.thaiopensource.relaxng.parse.compact.CompactParseable(inputSource, errorHandler) {
+          @Override
+          public com.thaiopensource.relaxng.parse.ParsedPattern parseInclude(String uri,
+                                                                             com.thaiopensource.relaxng.parse.SchemaBuilder sb,
+                                                                             com.thaiopensource.relaxng.parse.IncludedGrammar g)
+            throws com.thaiopensource.relaxng.parse.BuildException, com.thaiopensource.relaxng.parse.IllegalSchemaException {
+            return super.parseInclude(requireLocalJingURI(uri), sb, g);
+          }
+
+          @Override
+          public com.thaiopensource.relaxng.parse.ParsedPattern parseExternal(String uri,
+                                                                              com.thaiopensource.relaxng.parse.SchemaBuilder sb,
+                                                                              com.thaiopensource.relaxng.parse.Scope scope)
+            throws com.thaiopensource.relaxng.parse.BuildException, com.thaiopensource.relaxng.parse.IllegalSchemaException {
+            return super.parseExternal(requireLocalJingURI(uri), sb, scope);
+          }
+        };
       } else {
-        return new com.thaiopensource.relaxng.parse.sax.SAXParseable(new Sax2XMLReaderCreator(), inputSource, errorHandler);
+        return new com.thaiopensource.relaxng.parse.sax.SAXParseable(LocalOnlyXmlReaderCreator.INSTANCE, inputSource, errorHandler);
       }
+    }
+
+    private static String requireLocalJingURI(String uri) {
+      if (!LocalOnlyXmlReaderCreator.isLocalUri(uri)) {
+        throw new com.thaiopensource.relaxng.parse.BuildException(LocalOnlyXmlReaderCreator.notLocalError(uri));
+      }
+      return uri;
     }
   }
 }
