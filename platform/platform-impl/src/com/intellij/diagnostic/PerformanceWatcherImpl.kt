@@ -698,8 +698,10 @@ private class CoroutineDispatcherWatcher(
     return coroutineScope.launchWithSafeContext(CoroutineName("$dispatcher watcher") + blockingDispatcher) {
       try {
         while (true) {
+          val beforeSleep = System.nanoTime()
           delay(pooledSamplingInterval.milliseconds)
-          threadDumper.dumpThreadsIfNeeded(lastSampleNs)
+          val oversleptMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - beforeSleep) - pooledSamplingInterval
+          threadDumper.dumpThreadsIfNeeded(lastSampleNs, oversleptMs)
         }
       }
       finally {
@@ -719,31 +721,43 @@ private class CoroutineDispatcherWatcher(
   }
 }
 
-private class PooledThreadDumper(
+/**
+ * @param nanoTime the clock used to measure unresponsiveness; tests replace it to simulate a stall
+ * @param maxDumps reads the dump limit; tests replace it to avoid the registry
+ * @param dumpThreads saves a thread dump and returns its path; tests replace it to record the call
+ * @param warn writes the exhaustion warning; tests replace it to capture the message
+ */
+internal class PooledThreadDumper(
   private val dispatcher: CoroutineDispatcher,
   private val getUnresponsiveIntervalMs: (dumpCount: Int) -> Int,
+  private val nanoTime: () -> Long = { System.nanoTime() },
+  private val maxDumps: () -> Int = { Registry.intValue("performance.watcher.pooled.maximum.dumps", 10) },
+  private val dumpThreads: () -> Path? = { PerformanceWatcher.getInstance().dumpThreads("$dispatcher", true, true) },
+  private val warn: (String) -> Unit = { LOG.warn(it) },
 ) {
   private var reportedDumpsCount = 0
-  private var lastReportedNs = System.nanoTime()
+  private var lastReportedNs = nanoTime()
 
-  fun dumpThreadsIfNeeded(lastSampleNs: Long) {
-    val unresponsiveIntervalMs = getUnresponsiveIntervalMs(reportedDumpsCount)
-
-    if (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastSampleNs) <= unresponsiveIntervalMs ||
-        TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastReportedNs) <= unresponsiveIntervalMs) {
+  fun dumpThreadsIfNeeded(lastSampleNs: Long, oversleptMs: Long) {
+    // Overslept time is not counted to detect unresponsiveness to mitigate problem with stalled process
+    val unresponsiveIntervalMs = getUnresponsiveIntervalMs(reportedDumpsCount) + oversleptMs
+    val unresponsiveMs = TimeUnit.NANOSECONDS.toMillis(nanoTime() - lastSampleNs)
+    if (unresponsiveMs <= unresponsiveIntervalMs ||
+        TimeUnit.NANOSECONDS.toMillis(nanoTime() - lastReportedNs) <= unresponsiveIntervalMs) {
       return
     }
 
-    val maxDumps = Registry.intValue("performance.watcher.pooled.maximum.dumps", 10)
+    val message = "Thread pool exhaustion: $dispatcher is not responding for $unresponsiveMs ms (threshold: $unresponsiveIntervalMs ms)."
+    val maxDumps = maxDumps()
     if (reportedDumpsCount < maxDumps || maxDumps == -1) {
-      val file = PerformanceWatcher.getInstance().dumpThreads("$dispatcher", true, true)
-      LOG.warn("Thread pool exhaustion: $dispatcher is not responding for $unresponsiveIntervalMs ms." + if (file == null) "" else "; thread dump is saved to '$file'")
+      val file = dumpThreads()
+      warn(message + if (file == null) "" else " Thread dump is saved to '$file'")
     }
     else {
-      LOG.warn("Thread pool exhaustion: $dispatcher is not responding for $unresponsiveIntervalMs ms.")
+      warn(message)
     }
 
-    lastReportedNs = System.nanoTime()
+    lastReportedNs = nanoTime()
     reportedDumpsCount++
   }
 }
