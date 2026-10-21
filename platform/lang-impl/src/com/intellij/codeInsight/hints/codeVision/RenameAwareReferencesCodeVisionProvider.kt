@@ -100,10 +100,11 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Noth
       val hint = getHint(element, file)
       if (hint == null) continue
       val range = InlayHintsUtils.getTextRangeWithoutLeadingCommentsAndWhitespaces(element)
-      lenses.add(range to ClickableTextCodeVisionEntry(hint, id, { event, sourceEditor ->
-        handleClick(sourceEditor, element, event)
-        logClickToFUS(element, hint)
-      }))
+      val handler = PsiElementClickHandler(element) { clicked, event, sourceEditor ->
+        handleClick(sourceEditor, clicked, event)
+        logClickToFUS(clicked, hint)
+      }
+      lenses.add(range to ClickableTextCodeVisionEntry(hint, id, handler))
     }
 
     if (stamp != null) {
