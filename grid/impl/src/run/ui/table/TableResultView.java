@@ -13,7 +13,6 @@ import com.intellij.database.datagrid.ModelIndexSet;
 import com.intellij.database.datagrid.RawIndexConverter;
 import com.intellij.database.datagrid.ResultView;
 import com.intellij.database.datagrid.ResultViewColumn;
-import com.intellij.database.datagrid.SelectionModelUtil;
 import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.extractors.DisplayType;
 import com.intellij.database.run.ui.ColumnMove;
@@ -768,7 +767,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   private void selectHeaderColumn(GridTable source, int column, MouseEvent event) {
     boolean interval = GridUtil.isIntervalModifierSet(event);
     boolean exclusive = GridUtil.isExclusiveModifierSet(event);
-    TableSelectionModel selection = ObjectUtils.tryCast(SelectionModelUtil.get(myResultPanel, myPrimary), TableSelectionModel.class);
+    TableSelectionModel selection = ObjectUtils.tryCast(myPrimary.gridSelectionModel(), TableSelectionModel.class);
     if (selection == null) return;
     if (interval && myFrozenColumnsController.selectDisplayedColumnRange(source, column, exclusive)) {
       if (exclusive) {

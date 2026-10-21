@@ -2,18 +2,30 @@ package com.intellij.database.datagrid;
 
 import com.intellij.database.run.ui.grid.selection.GridSelectionTracker;
 import com.intellij.database.run.ui.grid.selection.GridSelectionTrackerImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.JComponent;
 
 public final class SelectionModelUtil {
   public static final String SELECTION_MODEL_KEY = "SelectionModel";
 
   public static @NotNull <Row, Column> SelectionModel<Row, Column> get(@NotNull DataGrid grid, @NotNull ResultView resultView) {
-    SelectionModel<?, ?> manager =
-      ObjectUtils.tryCast(resultView.getComponent().getClientProperty(SELECTION_MODEL_KEY), SelectionModel.class);
+    return get(grid, resultView.getComponent(), resultView);
+  }
+
+  /**
+   * The selection model installed on {@code component}, such as one table of a view, or one that selects nothing.
+   * {@code parent} bounds the grid listener of the one that selects nothing.
+   */
+  public static @NotNull <Row, Column> SelectionModel<Row, Column> get(@NotNull DataGrid grid,
+                                                                       @NotNull JComponent component,
+                                                                       @NotNull Disposable parent) {
+    SelectionModel<?, ?> manager = ObjectUtils.tryCast(component.getClientProperty(SELECTION_MODEL_KEY), SelectionModel.class);
     if (manager == null) {
-      manager = new DummySelectionModel(grid, resultView);
-      resultView.getComponent().putClientProperty(SELECTION_MODEL_KEY, manager);
+      manager = new DummySelectionModel(grid, parent);
+      component.putClientProperty(SELECTION_MODEL_KEY, manager);
     }
     //noinspection unchecked
     return (SelectionModel<Row, Column>)manager;
@@ -24,9 +36,9 @@ public final class SelectionModelUtil {
     private final GridSelectionTracker myTracker;
 
 
-    DummySelectionModel(@NotNull DataGrid grid, @NotNull ResultView view) {
+    DummySelectionModel(@NotNull DataGrid grid, @NotNull Disposable parent) {
       myGrid = grid;
-      myTracker = new GridSelectionTrackerImpl(grid, view);
+      myTracker = new GridSelectionTrackerImpl(grid, parent);
     }
 
     @Override

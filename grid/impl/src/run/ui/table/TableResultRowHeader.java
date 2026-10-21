@@ -7,7 +7,6 @@ import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.GridUtil;
 import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.datagrid.ModelIndexSet;
-import com.intellij.database.datagrid.SelectionModelUtil;
 import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.grid.CellAttributes;
@@ -296,7 +295,7 @@ public class TableResultRowHeader extends GridRowHeader {
     private boolean processSelectionEventInternal(MouseEvent e, boolean isDragEvent, int currentRow) {
       boolean interval = GridUtil.isIntervalModifierSet(e);
       boolean exclusive = GridUtil.isExclusiveModifierSet(e);
-      TableSelectionModel selectionModel = ObjectUtils.tryCast(SelectionModelUtil.get(myResultPanel, myTable), TableSelectionModel.class);
+      TableSelectionModel selectionModel = ObjectUtils.tryCast(myTable.gridSelectionModel(), TableSelectionModel.class);
       if (selectionModel == null) return false;
       if (interval) {
         int lead = myTable.getSelectionModel().getLeadSelectionIndex();

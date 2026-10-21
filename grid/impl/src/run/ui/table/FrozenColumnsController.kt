@@ -3,11 +3,9 @@ package com.intellij.database.run.ui.table
 import com.intellij.database.DataGridBundle
 import com.intellij.database.datagrid.DataGrid
 import com.intellij.database.datagrid.GridColumn
-import com.intellij.database.datagrid.GridRow
 import com.intellij.database.datagrid.GridUtil
 import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.datagrid.ModelIndexSet
-import com.intellij.database.datagrid.SelectionModelUtil
 import com.intellij.database.run.ui.grid.GridRowHeader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -1004,7 +1002,7 @@ internal class FrozenColumnsController(
     val targetRow = clampedRowAt(view, event)
     if (targetColumn < 0 || targetRow < 0) return
     // BasicTableUI cannot extend a drag into another JTable, so continue it through the unified primary selection.
-    val selection = SelectionModelUtil.get<GridRow, GridColumn>(resultPanel, primaryView) as? TableSelectionModel ?: return
+    val selection = primaryView.gridSelectionModel() as? TableSelectionModel ?: return
     if (view !== primaryView) primaryView.columnModel.selectionModel.valueIsAdjusting = true
     selection.setRowSelectionInterval(dragAnchorRow, targetRow)
     // Pinned placeholders retain their main-table indices, so select the range in displayed order.

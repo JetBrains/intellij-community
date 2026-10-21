@@ -7,7 +7,6 @@ import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.ModelIndexSet;
 import com.intellij.database.datagrid.ResultView;
 import com.intellij.database.datagrid.SelectionModel;
-import com.intellij.database.datagrid.SelectionModelUtil;
 import com.intellij.database.run.ui.ResultViewFactory;
 import com.intellij.database.util.DataGridUIUtil;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -177,7 +176,7 @@ public class TableResultViewFactory implements ResultViewFactory {
       }
       else {
         getGrid().getAutoscrollLocker().runWithLock(() -> {
-          TableSelectionModel model = ObjectUtils.tryCast(SelectionModelUtil.get(getGrid(), getTable()), TableSelectionModel.class);
+          TableSelectionModel model = ObjectUtils.tryCast(getTable().gridSelectionModel(), TableSelectionModel.class);
           if (model != null) {
             model.setRowSelectionInterval(0, getTable().getRowCount());
             model.setColumnSelectionInterval(0, getTable().getColumnCount());

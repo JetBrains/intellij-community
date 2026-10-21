@@ -19,9 +19,10 @@ flowchart TD
   Factory -->|table| Table["TableResultView"]
   Factory -->|text| Text["TextResultView"]
   Factory -->|tree table| Tree["TreeTableResultView"]
-  Table -->|owns| Primary["GridTable"]
+  Table -->|owns| Primary["GridTable (main table)"]
   Table -->|owns| Frozen["FrozenColumnsController"]
-  Frozen -->|creates| Strip["FrozenStripTable"]
+  Table -->|owns| Toolbar["TableFloatingToolbarController"]
+  Frozen -->|creates| Strip["FrozenStripTable (pinned table)"]
 ```
 
 | Interface or class                                               | Role                                                                                                |
@@ -60,19 +61,22 @@ After the source replaces or renumbers columns, an old index can be invalid or p
 Resolve the column again by its unique name with `GridUtil.findColumn(grid, name)`.
 
 [SelectionModel](../core-impl/src/datagrid/SelectionModel.java) exposes selection in model coordinates.
-[TableSelectionModel](src/run/ui/table/TableSelectionModel.java) maps it to Swing selection.
+[TableSelectionModel](src/run/ui/table/TableSelectionModel.java) maps it to the Swing selection of one table.
+The main and pinned tables each have one, and they share the row selection.
 
 ## View and column ownership
 
-[TableResultView](src/run/ui/table/TableResultView.java) owns the complete view and its internal tables.
-[GridTable](src/run/ui/table/GridTable.java) provides the common table behavior.
-The owner uses a `GridTable` instance to render the scrollable columns.
-[FrozenStripTable](src/run/ui/table/FrozenStripTable.kt) renders the pinned columns.
-[FrozenColumnsController](src/run/ui/table/FrozenColumnsController.kt) coordinates selection, dimensions, and model updates.
-Both tables send requests to the owner through [GridTableHost](src/run/ui/table/GridTableHost.kt).
+[TableResultView](src/run/ui/table/TableResultView.java) owns the complete table view and is its only `ResultView`.
+It renders the scrollable columns in a [GridTable](src/run/ui/table/GridTable.java), the main table.
+While columns are pinned, [FrozenStripTable](src/run/ui/table/FrozenStripTable.kt), a `GridTable` subclass, renders them as the pinned table.
+[FrozenColumnsController](src/run/ui/table/FrozenColumnsController.kt) creates and removes the pinned table and keeps selection, dimensions, and model updates in step.
+Both tables send requests to the view through [GridTableHost](src/run/ui/table/GridTableHost.kt).
+`GridTable` is package-private, so code outside the table package works with `TableResultView` or `DataGrid`.
+
 [TableFloatingToolbarController](src/run/ui/table/TableFloatingToolbarController.kt) offers the floating toolbar for a clicked cell in either table.
-[TableFloatingToolbar](src/run/ui/table/TableFloatingToolbar.kt) shows its actions at the point the controller gives it.
+[TableFloatingToolbar](src/run/ui/table/TableFloatingToolbar.kt) shows the toolbar actions at the point the controller gives it.
 [ColumnLayoutContext](src/run/ui/grid/ColumnLayoutContext.kt) gives layout extensions measurements and column widths.
+
 [TextResultView](src/run/ui/text/TextResultView.java) formats rows into an editor document.
 [TreeTableResultView](src/run/ui/treetable/TreeTableResultView.java) presents rows as trees of fields.
 
@@ -94,7 +98,7 @@ The table and popup derive their displayed order from it.
 
 - The stored column order includes hidden columns.
 - Pin state is separate from column order; pin grouping changes only the presentation.
-- The frozen strip uses its own index converter because it contains a subset of columns.
+- The pinned table uses its own index converter and selection model because it holds a subset of the columns.
 - Transpose swaps the table axes: table columns then represent data rows.
 
 ## Embedding and editing

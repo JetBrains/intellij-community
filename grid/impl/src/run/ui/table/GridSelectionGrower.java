@@ -4,8 +4,6 @@ import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.GridColumn;
 import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.GridSelection;
-import com.intellij.database.datagrid.ResultView;
-import com.intellij.ui.table.JBTable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -13,19 +11,17 @@ import java.util.List;
 
 class GridSelectionGrower {
   private final DataGrid myPanel;
-  private final ResultView myResultView;
-  private final JBTable myTable;
+  private final GridTable myTable;
 
   private boolean myAdjusting;
   private GridSelection<GridRow, GridColumn> myPrevious;
   private final List<GridSelection<GridRow, GridColumn>> myGrowthHistory = new ArrayList<>();
 
-  GridSelectionGrower(@NotNull DataGrid panel, @NotNull ResultView resultView, @NotNull JBTable table) {
+  GridSelectionGrower(@NotNull DataGrid panel, @NotNull GridTable table) {
     myPanel = panel;
-    myResultView = resultView;
     myTable = table;
 
-    myResultView.addSelectionChangedListener(isAdjusting -> {
+    myTable.addSelectionChangedListener(isAdjusting -> {
       if (!myAdjusting && !isAdjusting) myGrowthHistory.clear();
     });
   }
@@ -58,12 +54,12 @@ class GridSelectionGrower {
   }
 
   private void growSelectionInternal() {
-    GridSelectionGrowerStrategy grower = GridSelectionGrowerStrategy.of(myPanel, myResultView);
+    GridSelectionGrowerStrategy grower = GridSelectionGrowerStrategy.of(myPanel, myTable);
     if (grower == null) return;
     myGrowthHistory.add(myPanel.getSelectionModel().store());
     if (grower.isNeedRestore() && myPrevious != null) restore();
     myPrevious = grower.isNeedStore() ? myPanel.getSelectionModel().store() : myPrevious;
-    grower.changeSelection(myPanel, myResultView, myTable);
+    grower.changeSelection(myPanel, myTable);
   }
 
   private void shrinkSelectionInternal() {

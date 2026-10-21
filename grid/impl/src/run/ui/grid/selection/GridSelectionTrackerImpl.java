@@ -7,11 +7,11 @@ import com.intellij.database.datagrid.GridModel;
 import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.datagrid.ModelIndexSet;
-import com.intellij.database.datagrid.ResultView;
 import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.datagrid.ViewIndexSet;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.grid.editors.GridCellEditorHelper;
+import com.intellij.openapi.Disposable;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +24,7 @@ public class GridSelectionTrackerImpl implements GridSelectionTracker {
 
   private boolean myAdjusting;
 
-  public GridSelectionTrackerImpl(@NotNull DataGrid grid, @NotNull ResultView view) {
+  public GridSelectionTrackerImpl(@NotNull DataGrid grid, @NotNull Disposable parent) {
     myGrid = grid;
     myRows = new Stack<>();
     myGrid.addDataGridListener(new DataGridListener() {
@@ -33,7 +33,7 @@ public class GridSelectionTrackerImpl implements GridSelectionTracker {
         if (myAdjusting) return;
         myRows.clear();
       }
-    }, view);
+    }, parent);
   }
 
   @Override
