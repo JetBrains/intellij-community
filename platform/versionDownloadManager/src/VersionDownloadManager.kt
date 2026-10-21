@@ -36,7 +36,7 @@ private const val EXTERNAL_DOWNLOADS_DIR_NAME: String = "external-downloads"
  *
  * External resources can be CLIs, runtimes or language services.
  *
- * All resources are saved to `external-downloads` in the IDE's config folder. A
+ * All resources are saved to `external-downloads` in the IDE's system folder. A
  * particular resource has one root folder which name is the [id]. Under that one
  * the different versions of the resource are stored e.g.
  *
@@ -45,7 +45,7 @@ private const val EXTERNAL_DOWNLOADS_DIR_NAME: String = "external-downloads"
  *    - chrome-devtools-cli/
  *        - chrome-devtools-cli-1.12.3/...
  *        - chrome-devtools-cli-1.11.0/...
- *    - prettier/...
+ *    - nodejs/...
  * ```
  *
  * Installed versions are marked as fully installed as long as a [ATOMIC_ENSURER_FILE_NAME]
@@ -59,7 +59,7 @@ abstract class VersionDownloadManager(
   val id: String,
 ) {
   protected open val resourceKeepDir: Path
-    get() = PathManager.getConfigDir()
+    get() = PathManager.getSystemDir()
       .resolve(EXTERNAL_DOWNLOADS_DIR_NAME)
       .resolve(validatePathSegment(id))
 
