@@ -67,10 +67,11 @@ import static com.intellij.openapi.ui.playback.commands.AlphaNumericTypeCommand.
 
 /**
  * Command simulate calling search everywhere action with a given text and specified tab.
- * Syntax: %searchEverywhere [-tab tab] [-close true][-selectFirst][-type text_to_type]|[text]
+ * Syntax: %searchEverywhere [-tab tab] [-close true][-selectFirst][-type text_to_type][WARMUP]|[text]
  * Example: %searchEverywhere -tab symbol -close|EditorIm
  * Example: %searchEverywhere -tab symbol -type pl -close|EditorIm
  * Example: %searchEverywhere -tab symbol -selectFirst|EditorIm
+ * Example: %searchEverywhere -tab symbol -close WARMUP|EditorIm
  */
 public class SearchEverywhereCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "searchEverywhere";
@@ -83,7 +84,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
     getArgs();
   }
 
-  private Boolean isWarmupMode() {
+  protected boolean isWarmupMode() {
     return extractCommandArgument(CMD_PREFIX).contains("WARMUP");
   }
 
