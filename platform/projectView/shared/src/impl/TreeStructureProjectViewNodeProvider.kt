@@ -50,7 +50,7 @@ interface TreeStructureProjectViewNode : ProjectViewNodeUserObject {
   }
 }
 
-private data class TreeStructureProjectViewNodeImpl(
+private class TreeStructureProjectViewNodeImpl(
   override val name: String,
   val element: Any,
   override val elementDescriptor: NodeDescriptor<*>,
@@ -93,6 +93,25 @@ private data class TreeStructureProjectViewNodeImpl(
   override fun getPathElementType(): String = TreeState.calcType(elementDescriptor)
 
   override fun getPathElementId(): String = TreeState.calcId(elementDescriptor)
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as TreeStructureProjectViewNodeImpl
+
+    if (elementDescriptor != other.elementDescriptor) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return elementDescriptor.hashCode()
+  }
+
+  override fun toString(): String {
+    return "TreeStructureProjectViewNodeImpl(name='$name', element=$element, elementDescriptor=$elementDescriptor, isRoot=$isRoot)"
+  }
 }
 
 @ApiStatus.Experimental
