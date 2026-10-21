@@ -279,8 +279,11 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       private ThreeState evaluateCondition(@Nullable PsiElement condition) {
         if (condition != null && !DebuggerUtils.hasSideEffects(condition)) {
           try {
-            ExpressionEvaluator evaluator = EvaluatorBuilderImpl.getInstance().build(condition, position);
-            return ThreeState.fromBoolean(DebuggerUtilsEx.evaluateBoolean(evaluator, debuggerContext.createEvaluationContext()));
+            var evaluationContext = debuggerContext.createEvaluationContext();
+            if (evaluationContext != null) {
+              ExpressionEvaluator evaluator = EvaluatorBuilderImpl.getInstance().build(condition, position);
+              return ThreeState.fromBoolean(DebuggerUtilsEx.evaluateBoolean(evaluator, evaluationContext.withAutoLoadClasses(false)));
+            }
           }
           catch (EvaluateException e) {
             LOG.info(e);

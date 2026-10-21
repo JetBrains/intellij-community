@@ -156,6 +156,9 @@ public class FieldEvaluator implements ModifiableEvaluator {
     if (refType.isInitialized()) {
       return;
     }
+    if (!context.isAutoLoadClasses()) {
+      throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("error.class.loading.disabled", refType.name()));
+    }
     try {
       context.getDebugProcess().loadClass(context, refType.name(), refType.classLoader());
     }
