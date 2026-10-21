@@ -5,7 +5,10 @@ import com.intellij.codeInsight.inline.completion.InlineCompletion
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
+import com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
@@ -14,13 +17,28 @@ import com.intellij.openapi.util.await
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper
 import io.opentelemetry.api.trace.Span
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.NonNls
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
+
+private val LOG = logger<CallInlineCompletionCommand>()
 
 /**
  * CallInlineCompletionCommand is responsible for invoking inline completion
  * within a text editor. It measures `callInlineCompletionShow` or `callInlineCompletionHide` metrics.
+ *
+ * Syntax: `%callInlineCompletionCommand [warmup <timeoutMs>] [requireSuggestion]`.
+ * - `warmup <timeoutMs>`: before the measured call, the command calls inline completion again and again without spans.
+ *   It stops when a suggestion shows. It fails when no suggestion shows before the timeout.
+ *   Use it when the provider needs time to get ready, for example, to load a local model.
+ * - `requireSuggestion`: the command fails when the measured call completes without a shown suggestion.
  */
 class CallInlineCompletionCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
@@ -29,13 +47,30 @@ class CallInlineCompletionCommand(text: String, line: Int) : PlaybackCommandCoro
     const val ON_SHOW_SPAN_NAME: @NonNls String = SPAN_NAME + "OnShow"
     const val ON_COMPLETION_SPAN_NAME: @NonNls String = SPAN_NAME + "OnCompletion"
     const val ON_HIDE_SPAN_NAME: @NonNls String = SPAN_NAME + "OnHide"
+
+    const val WARMUP_ARG: @NonNls String = "warmup"
+    const val REQUIRE_SUGGESTION_ARG: @NonNls String = "requireSuggestion"
+
+    private val WARMUP_ATTEMPT_TIMEOUT: Duration = 30.seconds
+    private val WARMUP_RETRY_DELAY: Duration = 1.seconds
   }
 
   override suspend fun doExecute(context: PlaybackContext) {
-    val actionCallback: ActionCallback = ActionCallbackProfilerStopper()
+    val args = extractCommandArgument(PREFIX).split(" ").filter { it.isNotBlank() }
+    val warmupTimeout = args.indexOf(WARMUP_ARG).takeIf { it >= 0 }?.let { index ->
+      args.getOrNull(index + 1)?.toLongOrNull()?.milliseconds ?: error("Missing timeout in ms after '$WARMUP_ARG'")
+    }
+    val requireSuggestion = REQUIRE_SUGGESTION_ARG in args
 
     val editor = FileEditorManager.getInstance(context.project).selectedTextEditor ?: error("No editor")
     val handler = InlineCompletion.getHandlerOrNull(editor) ?: error("No inline completion handler")
+
+    if (warmupTimeout != null) {
+      warmUp(editor, handler, warmupTimeout)
+    }
+
+    val actionCallback: ActionCallback = ActionCallbackProfilerStopper()
+    var isShown = false
     val listener = object : InlineCompletionEventAdapter {
       private var spanShow: Span? = null
       private var spanHide: Span? = null
@@ -47,6 +82,7 @@ class CallInlineCompletionCommand(text: String, line: Int) : PlaybackCommandCoro
       }
 
       override fun onShow(event: InlineCompletionEventType.Show) {
+        isShown = true
         spanShow?.end()
         spanHide = null
         spanShow = null
@@ -74,5 +110,50 @@ class CallInlineCompletionCommand(text: String, line: Int) : PlaybackCommandCoro
     finally {
       handler.removeEventListener(listener)
     }
+
+    if (!isShown) {
+      val message = "Inline completion completed without a shown suggestion. The '$ON_COMPLETION_SPAN_NAME' span measures an empty result."
+      if (requireSuggestion) error(message) else LOG.warn(message)
+    }
+  }
+
+  private suspend fun warmUp(editor: Editor, handler: InlineCompletionHandler, timeout: Duration) {
+    val start = TimeSource.Monotonic.markNow()
+    var attempt = 0
+    while (start.elapsedNow() < timeout) {
+      attempt++
+      if (tryShowSuggestion(editor, handler)) {
+        LOG.info("Inline completion warm-up finished after $attempt attempt(s) in ${start.elapsedNow()}")
+        handler.cancel()
+        return
+      }
+      delay(WARMUP_RETRY_DELAY)
+    }
+    error("Inline completion warm-up failed: no suggestion is shown after $attempt attempt(s) in $timeout")
+  }
+
+  private suspend fun tryShowSuggestion(editor: Editor, handler: InlineCompletionHandler): Boolean {
+    val completed = CompletableDeferred<Unit>()
+    var isShown = false
+    val listener = object : InlineCompletionEventAdapter {
+      override fun onShow(event: InlineCompletionEventType.Show) {
+        isShown = true
+      }
+
+      override fun onCompletion(event: InlineCompletionEventType.Completion) {
+        completed.complete(Unit)
+      }
+    }
+    try {
+      handler.addEventListener(listener)
+      withContext(Dispatchers.EDT) {
+        handler.invokeEvent(InlineCompletionEvent.DirectCall(editor, editor.caretModel.currentCaret))
+      }
+      withTimeoutOrNull(WARMUP_ATTEMPT_TIMEOUT) { completed.await() }
+    }
+    finally {
+      handler.removeEventListener(listener)
+    }
+    return isShown
   }
 }
