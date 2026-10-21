@@ -338,7 +338,8 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
     protected open fun getTargetProperty(ktProperty: KtProperty, containingFile: PsiFile): KtProperty = ktProperty
 
     private tailrec fun injectWithCall(host: KtElement, configuration: Configuration): InjectionInfo? {
-        val argument = getArgument(host) ?: return null
+        val deparenthesized = (host.deparenthesized() as? KtParenthesizedExpression)?.parent as? KtElement ?: host
+        val argument = getArgument(deparenthesized) ?: return null
         val callExpression = PsiTreeUtil.getParentOfType(argument, KtCallElement::class.java) ?: return null
 
         if (getCallableShortName(callExpression) == "arrayOf") {
