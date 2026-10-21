@@ -717,6 +717,7 @@
     <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkUpdateProjectActivity"/>
     <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.PythonSdkAdditionalDataMigrationActivity"/>
     <backgroundPostStartupActivity implementation="com.jetbrains.python.sdk.uv.UvModeMigrationActivity"/>
+    <backgroundPostStartupActivity implementation="com.jetbrains.python.testing.PyTestConfigurationPropertiesPreloader"/>
 
     <directoryProjectConfigurator implementation="com.jetbrains.python.configuration.PyDefaultProjectAwareServiceConfigurator"
                                   id="integratedTools" order="after sdk"/>

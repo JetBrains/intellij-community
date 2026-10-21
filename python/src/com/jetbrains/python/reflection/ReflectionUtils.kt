@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.reflection
 
+import org.jetbrains.annotations.ApiStatus
 import java.beans.Introspector
 import java.beans.PropertyDescriptor
 import kotlin.reflect.KClass
@@ -87,6 +88,18 @@ private val membersCache = object : ClassValue<Collection<KProperty<*>>>() {
 }
 
 private fun KClass<*>.memberPropertiesCached(): Collection<KProperty<*>> = membersCache.get(this.java)
+
+/**
+ * Computes the Kotlin properties of [type], their annotations and their types, so that later [getProperties] calls are fast.
+ * The first computation for a class runs Kotlin reflection over the whole class hierarchy and can take seconds.
+ */
+@ApiStatus.Internal
+fun preloadProperties(type: Class<*>) {
+  for (property in membersCache.get(type)) {
+    property.annotations
+    property.returnType.javaType
+  }
+}
 
 
 /**
