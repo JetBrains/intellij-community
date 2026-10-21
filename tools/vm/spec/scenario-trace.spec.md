@@ -498,18 +498,32 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   The step prints `publishArtifacts` into `air-traces/<lane>/<runId>/<TestClass>` and the `testMetadata` of the
   test. The metadata are the trace, the viewer link, the video, and the last picture of a failed scenario. The test
   name is `<classname>.<name>` of the XML beside the bundle, and the messages carry no flow. Two bundles whose names sanitize
-  to one file get `<scenario>.zip` and `<scenario>.2.zip`, and stderr says so. A bundle that cannot be packed, and
-  an output that cannot be read, are each a line on stderr, and the exit stays 0. Testlogs without bundles print
+  to one file get `<scenario>.zip` and `<scenario>.2.zip`, and stderr says so. Testlogs without bundles print
   nothing and write nothing.
   [@test] ../crates/air-trace/src/publish/tests.rs (`the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests`)
   [@test] ../crates/air-trace/src/publish/tests.rs (`testlogs_without_bundles_print_nothing`)
   [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_published_trace_names_the_case_of_its_own_xml`)
+
+- The step never turns a build red. Each problem is a line on stderr and a `message` with the status `WARNING` on
+  stdout. A problem is no testlogs, a missing testlogs directory, or an output that does not read. A bundle that does
+  not pack, no viewer, and build properties that do not read are problems too. The rest still publishes, and the exit
+  is 0. Only a usage error of the command line exits 2.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`testlogs_without_bundles_print_nothing`)
+  [@test] ../crates/air-trace/tests/cli.rs (`teamcity_publish_answers_0_without_testlogs_and_2_for_a_usage_error`)
+  [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_warning_is_a_message_with_the_warning_status`)
+
+- Without `--testlogs`, the step reads every `bazel-out/<configuration>/testlogs` of the `bazel-out` that holds the
+  real file of its binary. `bazel run` starts the binary through links into the `-opt` configuration, and the tests
+  write their logs into another configuration.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`the_testlogs_are_found_beside_the_binary_that_bazel_run_starts`)
 
 - Beside the zips, the step publishes `air-traces/runs.json`. It is the listing of `GET /__air/runs`, written with
   the server's own types. Each scenario carries `zip`, the path of its zip relative to `runs.json`. Its `source` is
   that zip, and its id is the id of that zip. `controllerRuns` is empty. Each testlogs directory is one
   `bazel-testlogs` root. The root counts its published bundles, and its problems name each output that did not
   read and each bundle that did not pack.
+  A `zip` is a relative path with no `.` or `..` segment, so it stays in the directory of `runs.json`. Each zip holds
+  its bundle at its top.
   [@test] ../crates/air-trace/src/publish/tests.rs (`on_team_city_the_listing_names_the_build_and_each_test_links_its_trace`)
 
 - The step copies the viewer into `air-traces/`, and each entry at its top replaces the entry of that name. A
@@ -537,7 +551,9 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 
 - With the build and the viewer, each test gets a `link` named `trace viewer`:
   `<server>/repository/download/<buildTypeId>/<buildId>:id/air-traces/index.html#/trace?zip=<zip>`. The zip path is
-  percent-encoded. Without the build or the viewer, no test gets a link.
+  encoded as the viewer's `traceHash` writes it: as `URLSearchParams` writes a value, with each `/` kept. Without the
+  build or the viewer, no test gets a link.
+  [@test] ../crates/air-trace/src/publish/teamcity/tests.rs (`the_build_of_a_step_comes_from_the_agent_files`)
   [@test] ../crates/air-trace/src/publish/tests.rs (`on_team_city_the_listing_names_the_build_and_each_test_links_its_trace`)
   [@test] ../crates/air-trace/src/publish/tests.rs (`without_a_viewer_the_bundles_and_the_listing_publish_alone`)
 

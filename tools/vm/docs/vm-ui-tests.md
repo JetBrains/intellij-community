@@ -939,8 +939,9 @@ its sources is not built again. The build has 10 minutes, and stderr says how lo
 The step reads the build from the agent's property files, `TEAMCITY_BUILD_PROPERTIES_FILE` and the configuration
 file that it names. `bazel run` passes the environment of the step to the program. The listing then names the build
 of each run, and the server of the link is the root of `BUILD_URL`. Without the files or without a viewer, the zips
-and the listing still publish with no link, and stderr says why. No Air build configuration runs this step yet; it is
-one more step in `ultimate-teamcity-config`.
+and the listing still publish with no link, and stderr says why. The step never turns a build red: each problem is
+a warning in the build log, and the exit is 0. Only a usage error of the command line exits 2. No Air build
+configuration runs this step yet; it is one more step in `ultimate-teamcity-config`.
 
 When the site in `out/air-site` is missing, or older than `plugins/air/docs/src` or the `src`, `scripts` and
 `styles` of the kernel `community/tools/docs-site`, the server builds it once in the background:
