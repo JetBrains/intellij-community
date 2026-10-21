@@ -3,6 +3,7 @@ package com.intellij.platform.util.io.storages.database.storages.appenablerecord
 
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
+import com.intellij.util.io.CorruptedException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -162,6 +163,40 @@ public class AppendableRecordsOverBlockTest {
       assertEquals(BlocksStore.Block.LifecycleState.ACTIVE, block.state(), "The block owner must decide its lifecycle state");
       assertThrows(IllegalStateException.class, () -> log.append(1, _ -> { }));
     }
+  }
+
+  @Test
+  public void openRejectsUncommittedRecordBeforeCommittedTail() throws Exception {
+    var block = new TestBlock(BLOCK_CONTENT_LENGTH);
+    var log = AppendableRecordsOverBlock.create(block);
+    var recordOffset = log.append(4, _ -> { });
+    log.append(4, _ -> { });
+    RecordHeaderLayout.RecordHeader.allocated(4).writeAllocatedTo(block.content(), recordOffset);
+
+    var failure = assertThrows(CorruptedException.class, () -> AppendableRecordsOverBlock.open(block));
+    assertTrue(failure.getMessage().contains("is not committed"), "Opening must validate earlier records, not only the tail");
+  }
+
+  @Test
+  public void openRejectsRecordBeyondCommittedTail() throws Exception {
+    var block = new TestBlock(BLOCK_CONTENT_LENGTH);
+    var log = AppendableRecordsOverBlock.create(block);
+    var recordOffset = log.append(0, _ -> { });
+    RecordHeaderLayout.RecordHeader.allocated(4).publishCommittedTo(block.content(), recordOffset);
+
+    var failure = assertThrows(CorruptedException.class, () -> AppendableRecordsOverBlock.open(block));
+    assertTrue(failure.getMessage().contains("exceeds the committed tail"), "A record must fit within the committed prefix");
+  }
+
+  @Test
+  public void openRejectsMissingRecordLink() throws Exception {
+    var block = new TestBlock(BLOCK_CONTENT_LENGTH);
+    var log = AppendableRecordsOverBlock.create(block);
+    var recordOffset = log.append(0, 123L, _ -> { });
+    block.content().set(ValueLayout.JAVA_LONG_UNALIGNED, recordOffset + RecordHeaderLayout.HEADER_SIZE, 0L);
+
+    var failure = assertThrows(CorruptedException.class, () -> AppendableRecordsOverBlock.open(block));
+    assertTrue(failure.getMessage().contains("Missing record link"), "Opening must validate links without creating record views");
   }
 
   private static final class TestBlock implements BlocksStore.Block {

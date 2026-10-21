@@ -331,10 +331,10 @@ public final class BlocksDatabaseImpl implements BlocksDatabase {
         return false;
       }
 
-      var catalogChunkInfo = databaseCatalog.chunks().stream()
-        .filter(info -> info.chunkId() == chunk.chunkId())
-        .findFirst()
-        .orElseThrow(() -> new IllegalStateException("Unknown chunkId(=" + chunk.chunkId() + ")"));
+      var catalogChunkInfo = databaseCatalog.findChunk(chunk.chunkId());
+      if (catalogChunkInfo == null) {
+        throw new IllegalStateException("Unknown chunkId(=" + chunk.chunkId() + ")");
+      }
       var retirementPublished = false;
       try {
         var catalogState = catalogChunkInfo.state();

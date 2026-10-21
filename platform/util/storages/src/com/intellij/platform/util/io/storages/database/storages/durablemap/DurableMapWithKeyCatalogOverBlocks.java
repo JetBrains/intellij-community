@@ -557,7 +557,7 @@ public class DurableMapWithKeyCatalogOverBlocks<K, V> implements DurableMap<K, V
   private void restoreActiveEntryCount() throws IOException {
     synchronized (lock) {
       var count = new int[]{0};
-      keyCatalog.processKeyRecords((keyRecordRef, _, valueRecordRef) -> {
+      keyCatalog.processValueRecordRefs((keyRecordRef, valueRecordRef) -> {
         if (isActiveValue(keyRecordRef, valueRecordRef)) {
           count[0]++;
         }

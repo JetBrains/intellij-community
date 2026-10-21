@@ -75,10 +75,10 @@ public final class AppendableRecordsOverBlock {
   public static @NotNull AppendableRecordsOverBlock open(@NotNull BlocksStore.Block block) throws IOException {
     var content = block.content();
     var committedTail = AppendableRecordsOverBlockHeaderLayout.readValidatedCommittedTail(block.id(), content);
-    var log = new AppendableRecordsOverBlock(block, content);
+    var records = new AppendableRecordsOverBlock(block, content);
     //TODO RC: why to do that? it is costly
-    log.scanCommittedRecords(committedTail, (_, _) -> true);
-    return log;
+    records.validateCommittedRecords(committedTail);
+    return records;
   }
 
   public @NotNull BlocksStore.Block block() {
@@ -187,6 +187,22 @@ public final class AppendableRecordsOverBlock {
     return scanCommittedRecords(AppendableRecordsOverBlockHeaderLayout.committedTail(content), reader);
   }
 
+  /// Checks the committed prefix without creating records or payload views
+  private void validateCommittedRecords(int committedTail) throws CorruptedException {
+    //Streamlined scanCommittedRecords(): without allocating a Record and a callback
+    var recordOffset = AppendableRecordsOverBlockHeaderLayout.HEADER_SIZE;
+    while (recordOffset < committedTail) {
+      var header = RecordHeader.readIfCommitted(block.id(), recordOffset, content, committedTail);
+      readPreviousRef(recordOffset, header);
+      recordOffset += header.totalLength();
+    }
+    if (recordOffset != committedTail) {
+      throw new CorruptedException(
+        "Invalid append-only log block " + block.id() + ": the committed tail does not end at a record boundary"
+      );
+    }
+  }
+
   private boolean scanCommittedRecords(int committedTail, @NotNull LinkedRecordReader reader) throws IOException {
     var recordOffset = AppendableRecordsOverBlockHeaderLayout.HEADER_SIZE;
     while (recordOffset < committedTail) {
@@ -211,6 +227,12 @@ public final class AppendableRecordsOverBlock {
   }
 
   private @NotNull Record record(int recordOffset, @NotNull RecordHeader header) throws CorruptedException {
+    var previousRef = readPreviousRef(recordOffset, header);
+    MemorySegment payload = payload(recordOffset, header).asReadOnly();
+    return new Record(previousRef, payload);
+  }
+
+  private long readPreviousRef(int recordOffset, @NotNull RecordHeader header) throws CorruptedException {
     long previousRef = 0;
     if (header.hasLink()) {
       previousRef = content.get(ValueLayout.JAVA_LONG_UNALIGNED, recordOffset + RecordHeaderLayout.HEADER_SIZE);
@@ -218,8 +240,7 @@ public final class AppendableRecordsOverBlock {
         throw new CorruptedException("Missing record link at offset " + recordOffset + " in block " + block.id());
       }
     }
-    MemorySegment payload = payload(recordOffset, header).asReadOnly();
-    return new Record(previousRef, payload);
+    return previousRef;
   }
 
   /// The [payload] excludes the (optional) [previousRef].

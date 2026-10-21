@@ -83,6 +83,7 @@ public final class DurableMapBlockCatalog {
     public @NotNull List<BlocksStore.Block> blocksInAllocationOrder() {
       //TODO RC: could be done with less allocation by directly accessing and filtering blocksByRole, without
       //         intermediate copy
+      //         Also, blocksByRole could keep already sorted blocks
       return blocks(role).stream()
         .filter(block -> block.state() != LifecycleState.RETIRED)
         .sorted(Comparator.comparingInt(BlocksStore.Block::id))
