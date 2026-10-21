@@ -1,0 +1,3 @@
+com/intellij/codeInsight/multiverse/package-info.java
+  intellij.platform.core
+  intellij.platform.core.impl

@@ -11,6 +11,7 @@ import org.jetbrains.intellij.build.impl.maven.MavenArtifactsBuilder
 import org.jetbrains.intellij.build.impl.maven.MavenCoordinates
 import org.jetbrains.intellij.build.impl.maven.MavenPackaging
 import org.jetbrains.intellij.build.impl.maven.renderPom
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.module.JpsModule
@@ -19,7 +20,12 @@ import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.After
 import org.junit.Assert
 import org.junit.Test
+import java.nio.file.Files
 import java.nio.file.Path
+import java.util.TreeSet
+import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.isRegularFile
 
 /**
  * Checks the IntelliJ Standalone Analysis artifacts.
@@ -109,6 +115,29 @@ class StandaloneMavenArtifactsTest {
     }
   }
 
+  /**
+   * Compares the module source files that more than one module in the closure of each layer has with the `expected-duplicate-sources.txt`
+   * file. The Kotlin compiler and the Analysis API pack the sources of the closure into one JAR, which keeps only one copy of such a file.
+   * A layer reports only the duplicates that it adds to its lower layers.
+   * `community/standalone-analysis/classpath-test` checks the class jars. No test checks the library sources.
+   * Run the test with `-Didea.tests.overwrite.data=true` to update the expected files.
+   */
+  @Test
+  fun `duplicate module sources of each layer match the expected file`() {
+    for (layer in layers) {
+      val lowerOwners = StandaloneMavenArtifacts.lowerLayers(layer).map { moduleSourceOwners(it) }
+      val duplicates = buildString {
+        for ((path, modules) in moduleSourceOwners(layer).toSortedMap()) {
+          if (modules.size > 1 && lowerOwners.none { it[path] == modules }) {
+            appendLine(path)
+            modules.forEach { appendLine("  $it") }
+          }
+        }
+      }
+      UsefulTestCase.assertSameLinesWithFile(moduleDir(layer).resolve(EXPECTED_DUPLICATE_SOURCES_FILE_NAME).toString(), duplicates)
+    }
+  }
+
   @Test
   fun `every module is compatible with Java 8`() {
     val javaExtensionService = JpsJavaExtensionService.getInstance()
@@ -143,11 +172,38 @@ class StandaloneMavenArtifactsTest {
       .mapTo(LinkedHashSet()) { "${it.groupId}:${it.artifactId}" }
   }
 
+  /**
+   * Maps each `.java` and `.kt` file in the `-sources.jar` files of the closure of [layer] to the names of the modules with the file.
+   * The path of a file is the path in the `-sources.jar`: the package prefix of the source root and the path in the root,
+   * as `MavenArtifactsBuilder` packs it.
+   */
+  private fun moduleSourceOwners(layer: JpsModule): Map<String, Set<String>> {
+    val owners = HashMap<String, MutableSet<String>>()
+    val modules = (listOf(layer) + StandaloneMavenArtifacts.lowerLayers(layer))
+      .flatMap { StandaloneMavenArtifacts.ownModules(it) }
+      .distinct()
+
+    for (module in modules.filter { context.productProperties.mavenArtifacts.publishSourcesFilter(it, context) }) {
+      for (root in module.getSourceRoots(JavaSourceRootType.SOURCE).filter { it.path.exists() }) {
+        val prefix = root.properties.packagePrefix.replace('.', '/')
+        val files = Files.walk(root.path).use { stream ->
+          stream.filter { it.isRegularFile() && (it.toString().endsWith(".java") || it.toString().endsWith(".kt")) }.toList()
+        }
+        for (file in files) {
+          val relativePath = root.path.relativize(file).invariantSeparatorsPathString
+          owners.getOrPut(if (prefix.isEmpty()) relativePath else "$prefix/$relativePath") { TreeSet() }.add(module.name)
+        }
+      }
+    }
+    return owners
+  }
+
   private fun moduleDir(module: JpsModule): Path = Path.of(JpsPathUtil.urlToPath(module.contentRootsList.urls.single()))
 
   private companion object {
     const val EXPECTED_POM_FILE_NAME = "expected-pom.xml"
     const val EXPECTED_CLASSPATH_FILE_NAME = "expected-classpath.txt"
+    const val EXPECTED_DUPLICATE_SOURCES_FILE_NAME = "expected-duplicate-sources.txt"
     const val VERSION_PLACEHOLDER = "BUILD_NUMBER"
   }
 }
