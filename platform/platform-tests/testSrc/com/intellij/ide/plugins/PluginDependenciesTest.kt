@@ -786,7 +786,6 @@ internal class PluginDependenciesTest {
     `baz with an optional module which has a package prefix`()
     plugin("bar") {
       depends("foo", configFile = "foo.xml") {
-        packagePrefix = "foo.baz"
         dependencies {
           module("baz.module")
         }

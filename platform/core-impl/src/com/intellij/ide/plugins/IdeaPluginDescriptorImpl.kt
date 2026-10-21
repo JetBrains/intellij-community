@@ -249,6 +249,7 @@ class DependsSubDescriptor(
     @VisibleForTesting
     fun reportDependsSubDescriptorUnexpectedElements(raw: RawPluginDescriptor, reporter: (elementName: String) -> Unit) {
       reportSubDescriptorUnexpectedElements(raw, reporter)
+      if (raw.`package` != null) reporter(PluginXmlConst.PLUGIN_PACKAGE_ATTR)
       if (raw.isUseIdeaClassLoader) reporter(PluginXmlConst.PLUGIN_USE_IDEA_CLASSLOADER_ATTR)
       if (raw.dependencies.any { it is DependenciesElement.ModuleDependency }) reporter("<dependencies><module>")
       if (raw.dependencies.any { it is DependenciesElement.PluginDependency }) reporter("<dependencies><plugin>")
