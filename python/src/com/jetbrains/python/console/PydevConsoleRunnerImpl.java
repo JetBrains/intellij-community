@@ -101,7 +101,6 @@ import com.jetbrains.python.debugger.PyVariableViewSettings;
 import com.jetbrains.python.debugger.ValuesPolicy;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
-import com.jetbrains.python.remote.PyRemotePathMapper;
 import com.jetbrains.python.run.PyCustomProcessHandlerProvider;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonExecution;
@@ -1220,10 +1219,6 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   @Override
   public PythonConsoleView getConsoleView() {
     return myConsoleView;
-  }
-
-  public static PythonConsoleRunnerFactory factory() {
-    return new PydevConsoleRunnerFactory();
   }
 
   public static class PythonConsoleRunParams implements PythonRunParams {

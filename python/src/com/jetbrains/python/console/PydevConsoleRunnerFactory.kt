@@ -11,7 +11,6 @@ import com.intellij.execution.target.value.joinToStringFunction
 import com.intellij.execution.target.value.targetPath
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -19,7 +18,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.util.PathMapper
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.SystemProperties
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.targetEnvironmentRequest
@@ -87,18 +85,6 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
                 setupScript: TargetEnvironmentFunction<String>)
       : this(project, interpreter.getSdkAPI(), null, workingDirFunction, envs, consoleType, settingsProvider, setupScript)
   }
-
-  /**
-   * @deprecated override [createConsoleParametersAsync]. This one blocks, and choosing the interpreter waits for the
-   * project model.
-   *
-   * Nothing inside this repository calls it, so an override here no longer decides what a console runs on.
-   */
-  @Deprecated("Blocks. Override createConsoleParametersAsync.",
-              ReplaceWith("createConsoleParametersAsync(toModuleOrProject(project, contextModule))"))
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  protected open fun createConsoleParameters(project: Project, contextModule: Module?): ConsoleParameters =
-    runBlockingMaybeCancellable { createConsoleParametersAsync(toModuleOrProject(project, contextModule)) }
 
   protected open suspend fun createConsoleParametersAsync(moduleOrProject: ModuleOrProject): ConsoleParameters {
     val (interpreter, target) = findPythonSdkAndModule(moduleOrProject)
