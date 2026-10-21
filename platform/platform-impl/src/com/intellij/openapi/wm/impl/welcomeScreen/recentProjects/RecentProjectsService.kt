@@ -57,7 +57,7 @@ private val FRAMELESS_RECENT_PROJECT: Key<Boolean> = Key.create("welcome.screen.
 @Service(Service.Level.APP)
 internal class RecentProjectsService(private val coroutineScope: CoroutineScope) {
   private val projectManager = ProjectManagerEx.getInstanceEx()
-  private val taskTracker = RecentProjectTaskTracker.getInstance()
+  private val taskTracker = RecentProjectProgressTracker.getInstance()
   private val loadMutex = Mutex()
 
   @GuardedBy("loadMutex")
