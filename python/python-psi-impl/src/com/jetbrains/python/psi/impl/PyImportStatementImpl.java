@@ -6,7 +6,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiListLikeElement;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
@@ -41,7 +41,7 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
     this(stub, PyStubElementTypes.IMPORT_STATEMENT);
   }
 
-  public PyImportStatementImpl(PyImportStatementStub stub, IStubElementType nodeType) {
+  public PyImportStatementImpl(PyImportStatementStub stub, IElementType nodeType) {
     super(stub, nodeType);
   }
 

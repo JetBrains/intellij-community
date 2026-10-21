@@ -11,7 +11,7 @@
        `intellij.python.parser` (`PyLanguageFacade`, `LanguageLevel`) and `intellij.platform.projectModel`
        (`FilePropertyPusher`) are listed because they are used directly, by class reference, inside this suite's
        lambdas, and both are safe to list because both load on *both* sides of a split run — `PyLanguageFacade`
-       is implemented on the frontend by `PyFrontendLanguageFacade` and on the backend by `PyLanguageFacadeImpl`,
+       is the default facade of `intellij.python.parser` on the frontend and `PyLanguageFacadeImpl` on the backend,
        and `intellij.platform.projectModel` is depended on directly by frontend modules
        (e.g. `community/python/python-sdk/frontend/intellij.python.sdk.frontend.iml`).
 

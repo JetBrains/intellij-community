@@ -13,7 +13,7 @@ import com.intellij.psi.PsiListLikeElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
@@ -59,7 +59,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     this(stub, PyStubElementTypes.FROM_IMPORT_STATEMENT);
   }
 
-  public PyFromImportStatementImpl(PyFromImportStatementStub stub, IStubElementType nodeType) {
+  public PyFromImportStatementImpl(PyFromImportStatementStub stub, IElementType nodeType) {
     super(stub, nodeType);
   }
 
@@ -220,7 +220,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
 
   @Override
   public @Nullable PyStarImportElement getStarImportElement() {
-    return getStubOrPsiChild(PyStubElementTypes.STAR_IMPORT_ELEMENT);
+    return getStubOrPsiChild(PyStubElementTypes.STAR_IMPORT_ELEMENT, PyStarImportElement.class);
   }
 
   @Override

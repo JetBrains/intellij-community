@@ -14,7 +14,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.jetbrains.python.PythonFileType;
@@ -37,12 +37,20 @@ import java.util.Collection;
 import java.util.List;
 
 public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElementBase<T> implements PyElement {
-  public PyBaseElementImpl(final T stub, IStubElementType nodeType) {
+  public PyBaseElementImpl(final T stub, IElementType nodeType) {
     super(stub, nodeType);
   }
 
   public PyBaseElementImpl(final ASTNode node) {
     super(node);
+  }
+
+  /**
+   * Implements {@link StubBasedPsiElement#getIElementType()} for the subclasses that implement the interface.
+   * The default of the interface calls the deprecated {@code getElementType()}, which throws for a plain element type.
+   */
+  public @NotNull IElementType getIElementType() {
+    return getElementTypeImpl();
   }
 
   @Override

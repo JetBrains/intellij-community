@@ -2,11 +2,9 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.google.common.collect.RangeSet;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
@@ -14,7 +12,6 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyFunctionImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -22,25 +19,11 @@ import com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex;
 import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyFunction> {
-  public PyFunctionElementType() {
-    this("FUNCTION_DECLARATION");
-  }
-
-  public PyFunctionElementType(@NotNull @NonNls String debugName) {
-    super(debugName);
-  }
-
-  @Override
-  public @NotNull PsiElement createElement(final @NotNull ASTNode node) {
-    return new PyFunctionImpl(node);
-  }
-
+public class PyFunctionElementType extends PyStubElementFactory<PyFunctionStub, PyFunction> {
   @Override
   public PyFunction createPsi(final @NotNull PyFunctionStub stub) {
     return new PyFunctionImpl(stub);
@@ -115,7 +98,8 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     }
   }
 
-  protected IStubElementType getStubElementType() {
+  @Override
+  protected @NotNull IElementType getStubElementType() {
     return PyStubElementTypes.FUNCTION_DECLARATION;
   }
 }

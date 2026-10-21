@@ -5,7 +5,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiListLikeElement;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
@@ -36,7 +36,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     this(stub, PyStubElementTypes.PARAMETER_LIST);
   }
 
-  public PyParameterListImpl(final PyParameterListStub stub, IStubElementType nodeType) {
+  public PyParameterListImpl(final PyParameterListStub stub, IElementType nodeType) {
     super(stub, nodeType);
   }
 

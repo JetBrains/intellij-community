@@ -23,10 +23,21 @@
               fieldName="INSTANCE"/>
     <registryKey key="python.ast.leaves.incremental.reparse" defaultValue="false"
                  description="Enables incremental reparse for Python leaf elements (string literals, identifiers, comments)"/>
+    <registryKey key="python.statement.lists.incremental.reparse" defaultValue="true"
+                 description="Enables incremental reparse for statement lists"/>
+    <registryKey key="python.statement.lists.incremental.reparse.min.file.chars" defaultValue="20000"
+                 description="Minimum file size (chars) below which incremental reparse of Python statement lists is skipped."/>
+    <registryKey key="python.statement.lists.incremental.reparse.max.list.chars" defaultValue="10000"
+                 description="Hard cap on the statement list size (chars) for incremental reparse."/>
+    <registryKey key="python.statement.lists.incremental.reparse.max.ratio.percent" defaultValue="10"
+                 description="Maximum statement list size as a percentage of the containing file for incremental reparse."/>
   </extensions>
   <extensionPoints>
     <extensionPoint qualifiedName="Pythonid.dialectsTokenSetContributor"
                     interface="com.jetbrains.python.PythonDialectsTokenSetContributor"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.psiElementFactory"
+                    interface="com.jetbrains.python.PyPsiElementFactory"
                     dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="Pythonid">

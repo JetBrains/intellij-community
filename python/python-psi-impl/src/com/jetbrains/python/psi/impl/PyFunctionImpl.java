@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -118,7 +118,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     this(stub, PyStubElementTypes.FUNCTION_DECLARATION);
   }
 
-  public PyFunctionImpl(PyFunctionStub stub, IStubElementType nodeType) {
+  public PyFunctionImpl(PyFunctionStub stub, IElementType nodeType) {
     super(stub, nodeType);
   }
 
@@ -720,22 +720,22 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public @NotNull PyParameterList getParameterList() {
-    return getRequiredStubOrPsiChild(PyStubElementTypes.PARAMETER_LIST);
+    return getRequiredStubOrPsiChild(PyStubElementTypes.PARAMETER_LIST, PyParameterList.class);
   }
 
   @Override
   public @Nullable PyTypeParameterList getTypeParameterList() {
-    return getStubOrPsiChild(PyStubElementTypes.TYPE_PARAMETER_LIST);
+    return getStubOrPsiChild(PyStubElementTypes.TYPE_PARAMETER_LIST, PyTypeParameterList.class);
   }
 
   @Override
   public @Nullable PyDecoratorList getDecoratorList() {
-    return getStubOrPsiChild(PyStubElementTypes.DECORATOR_LIST);
+    return getStubOrPsiChild(PyStubElementTypes.DECORATOR_LIST, PyDecoratorList.class);
   }
 
   @Override
   public @Nullable PyAnnotation getAnnotation() {
-    return getStubOrPsiChild(PyStubElementTypes.ANNOTATION);
+    return getStubOrPsiChild(PyStubElementTypes.ANNOTATION, PyAnnotation.class);
   }
 
   /**

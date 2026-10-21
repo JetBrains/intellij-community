@@ -6,35 +6,24 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyNamedParameter;
-import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyNamedParameterImpl;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 @ApiStatus.Internal
-public class PyNamedParameterElementType extends PyStubElementType<PyNamedParameterStub, PyNamedParameter> {
+public class PyNamedParameterElementType extends PyStubElementFactory<PyNamedParameterStub, PyNamedParameter> {
   private static final int POSITIONAL_CONTAINER = 1;
   private static final int KEYWORD_CONTAINER = 2;
-
-  public PyNamedParameterElementType() {
-    this("NAMED_PARAMETER");
-  }
-
-  public PyNamedParameterElementType(@NotNull @NonNls String debugName) {
-    super(debugName);
-  }
 
   @Override
   public @NotNull PyNamedParameter createPsi(final @NotNull PyNamedParameterStub stub) {
@@ -45,11 +34,6 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
   public @NotNull PyNamedParameterStub createStub(final @NotNull PyNamedParameter psi, final StubElement parentStub) {
     return new PyNamedParameterStubImpl(psi.getName(), psi.isPositionalContainer(), psi.isKeywordContainer(), psi.getDefaultValueText(),
                                         psi.getTypeCommentAnnotation(), psi.getAnnotationValue(), parentStub, getStubElementType());
-  }
-
-  @Override
-  public @NotNull PsiElement createElement(final @NotNull ASTNode node) {
-    return new PyNamedParameterImpl(node);
   }
 
   @Override
@@ -95,7 +79,8 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
     return super.shouldCreateStub(node);
   }
 
-  protected @NotNull IStubElementType getStubElementType() {
+  @Override
+  protected @NotNull IElementType getStubElementType() {
     return PyStubElementTypes.NAMED_PARAMETER;
   }
 }

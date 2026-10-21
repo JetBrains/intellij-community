@@ -4,7 +4,7 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.google.common.collect.RangeSet;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
@@ -47,7 +47,7 @@ public class PyClassStubImpl extends PyVersionSpecificStubBase<PyClass> implemen
                          @Nullable List<String> matchArgs,
                          @Nullable String docString,
                          @Nullable String deprecationMessage,
-                         @NotNull IStubElementType stubElementType,
+                         @NotNull IElementType stubElementType,
                          @NotNull RangeSet<Version> versions,
                          @Nullable PyCustomClassStub customStub) {
     super(parentStub, stubElementType, versions);

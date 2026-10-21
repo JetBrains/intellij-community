@@ -12,7 +12,7 @@ import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
@@ -91,7 +91,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     this(stub, PyStubElementTypes.NAMED_PARAMETER);
   }
 
-  public PyNamedParameterImpl(final PyNamedParameterStub stub, IStubElementType nodeType) {
+  public PyNamedParameterImpl(final PyNamedParameterStub stub, IElementType nodeType) {
     super(stub, nodeType);
   }
 
@@ -187,7 +187,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
   @Override
   public @Nullable PyAnnotation getAnnotation() {
-    return getStubOrPsiChild(PyStubElementTypes.ANNOTATION);
+    return getStubOrPsiChild(PyStubElementTypes.ANNOTATION, PyAnnotation.class);
   }
 
   @Override

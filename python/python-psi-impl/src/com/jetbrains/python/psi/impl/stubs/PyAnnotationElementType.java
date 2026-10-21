@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
@@ -10,25 +9,15 @@ import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyAnnotation;
-import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyAnnotationImpl;
 import com.jetbrains.python.psi.stubs.PyAnnotationStub;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 @ApiStatus.Internal
-public class PyAnnotationElementType extends PyStubElementType<PyAnnotationStub, PyAnnotation> {
-  public PyAnnotationElementType() {
-    this("ANNOTATION");
-  }
-
-  public PyAnnotationElementType(@NotNull @NonNls String debugName) {
-    super(debugName);
-  }
-
+public class PyAnnotationElementType extends PyStubElementFactory<PyAnnotationStub, PyAnnotation> {
   @Override
   public PyAnnotation createPsi(final @NotNull PyAnnotationStub stub) {
     return new PyAnnotationImpl(stub);
@@ -37,11 +26,6 @@ public class PyAnnotationElementType extends PyStubElementType<PyAnnotationStub,
   @Override
   public @NotNull PyAnnotationStub createStub(final @NotNull PyAnnotation psi, final StubElement parentStub) {
     return new PyAnnotationStubImpl(parentStub, PyStubElementTypes.ANNOTATION);
-  }
-
-  @Override
-  public @NotNull PsiElement createElement(final @NotNull ASTNode node) {
-    return new PyAnnotationImpl(node);
   }
 
   @Override
@@ -60,5 +44,10 @@ public class PyAnnotationElementType extends PyStubElementType<PyAnnotationStub,
     final IElementType parentType = node.getTreeParent().getElementType();
     return PythonDialectsTokenSetProvider.getInstance().getFunctionDeclarationTokens().contains(parentType)
            || PythonDialectsTokenSetProvider.getInstance().getParameterTokens().contains(parentType);
+  }
+
+  @Override
+  protected @NotNull IElementType getStubElementType() {
+    return PyStubElementTypes.ANNOTATION;
   }
 }

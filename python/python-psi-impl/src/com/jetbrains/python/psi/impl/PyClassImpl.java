@@ -15,7 +15,7 @@ import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.CachedValueProvider.Result;
@@ -167,7 +167,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     this(stub, PyStubElementTypes.CLASS_DECLARATION);
   }
 
-  public PyClassImpl(final @NotNull PyClassStub stub, @NotNull IStubElementType nodeType) {
+  public PyClassImpl(final @NotNull PyClassStub stub, @NotNull IElementType nodeType) {
     super(stub, nodeType);
   }
 
@@ -675,7 +675,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     processClassLevelDeclarations(new PsiScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
-        if (childrenClass.isInstance(element) && elementTypes.contains(((StubBasedPsiElement<?>)element).getElementType())) {
+        if (childrenClass.isInstance(element) && elementTypes.contains(((StubBasedPsiElement<?>)element).getIElementType())) {
           result.add(childrenClass.cast(element));
         }
         return true;
@@ -919,7 +919,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     final PyClassStub stub = getStub();
     if (stub != null) {
       for (StubElement<?> subStub : getVersionSpecificChildrenStubs(stub)) {
-        if (subStub.getStubType() == PyElementTypes.TARGET_EXPRESSION) {
+        if (subStub.getElementType() == PyElementTypes.TARGET_EXPRESSION) {
           final PyTargetExpressionStub targetStub = (PyTargetExpressionStub)subStub;
           final PropertyStubStorage prop = targetStub.getCustomStub(PropertyStubStorage.class);
           if (prop != null) {
@@ -1204,7 +1204,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     PyClassStub stub = getStub();
     if (stub != null) {
       for (StubElement<?> element : getVersionSpecificChildrenStubs(stub)) {
-        if (element.getStubType() == PyElementTypes.TARGET_EXPRESSION) {
+        if (element.getElementType() == PyElementTypes.TARGET_EXPRESSION) {
           result.add((PyTargetExpression)element.getPsi());
         }
       }
@@ -1954,12 +1954,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Override
   public @Nullable PyTypeParameterList getTypeParameterList() {
-    return getStubOrPsiChild(PyStubElementTypes.TYPE_PARAMETER_LIST);
+    return getStubOrPsiChild(PyStubElementTypes.TYPE_PARAMETER_LIST, PyTypeParameterList.class);
   }
 
   @Override
   public @Nullable PyDecoratorList getDecoratorList() {
-    return getStubOrPsiChild(PyStubElementTypes.DECORATOR_LIST);
+    return getStubOrPsiChild(PyStubElementTypes.DECORATOR_LIST, PyDecoratorList.class);
   }
 
   @ApiStatus.Experimental

@@ -1,41 +1,24 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.impl.stubs;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyImportElementImpl;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 
 @ApiStatus.Internal
-public class PyImportElementElementType extends PyStubElementType<PyImportElementStub, PyImportElement> {
-  public PyImportElementElementType() {
-    this("IMPORT_ELEMENT");
-  }
-
-  public PyImportElementElementType(@NotNull @NonNls String debugName) {
-    super(debugName);
-  }
-
-  @Override
-  public @NotNull PsiElement createElement(@NotNull ASTNode node) {
-    return new PyImportElementImpl(node);
-  }
-
+public class PyImportElementElementType extends PyStubElementFactory<PyImportElementStub, PyImportElement> {
   @Override
   public PyImportElement createPsi(@NotNull PyImportElementStub stub) {
     return new PyImportElementImpl(stub);
@@ -60,7 +43,8 @@ public class PyImportElementElementType extends PyStubElementType<PyImportElemen
     return new PyImportElementStubImpl(qName, asName, parentStub, getStubElementType());
   }
 
-  protected IStubElementType getStubElementType() {
+  @Override
+  protected @NotNull IElementType getStubElementType() {
     return PyStubElementTypes.IMPORT_ELEMENT;
   }
 }

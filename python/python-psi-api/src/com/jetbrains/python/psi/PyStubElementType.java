@@ -10,6 +10,10 @@ import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * The legacy base of a stub element type of a Python dialect. The Python PSI itself binds its stubs to the plain element types of
+ * {@code PyElementTypes} through {@code com.jetbrains.python.psi.impl.stubs.PyStubElementFactory} and the stub registry extension.
+ */
 public abstract class PyStubElementType<StubT extends StubElement<?>, PsiT extends PyElement> extends IStubElementType<StubT, PsiT> {
   public PyStubElementType(@NotNull @NonNls String debugName) {
     super(debugName, PythonFileType.INSTANCE.getLanguage());

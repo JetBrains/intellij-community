@@ -6,7 +6,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyStubElementTypes;
@@ -47,7 +47,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     this(stub, PyStubElementTypes.IMPORT_ELEMENT);
   }
 
-  public PyImportElementImpl(PyImportElementStub stub, IStubElementType nodeType) {
+  public PyImportElementImpl(PyImportElementStub stub, IElementType nodeType) {
     super(stub, nodeType);
   }
 

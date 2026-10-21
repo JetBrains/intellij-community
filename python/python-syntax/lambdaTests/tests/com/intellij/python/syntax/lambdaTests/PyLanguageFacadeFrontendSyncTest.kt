@@ -31,14 +31,14 @@ import kotlin.time.Duration.Companion.seconds
  * frontend process has no SDK/roots model of its own to compute it from, and before the fix nothing pushed the
  * backend's computed value across. The fix (commit 0d792e6b33b13cc3bec47a7133c3b34cbfd5b58e, "PY-81981 Sync
  * pushed language level") made `PythonLanguageLevelPusher.persistAttribute` on the backend publish the level so
- * the frontend's own `PyLanguageFacade` implementation (`PyFrontendLanguageFacade`) observes it. The revert that
+ * the frontend's own `PyLanguageFacade` implementation (the default facade in `PyLanguageFacade.kt` of
+ * `intellij.python.parser`, which keeps the level in the user data of the file) observes it. The revert that
  * makes this test red: drop that publish step from `persistAttribute` (or the frontend-side consumer wiring it
  * feeds), so `getEffectiveLanguageLevel` on the frontend falls back to whatever default it uses locally instead
  * of the value the backend actually pushed.
  *
- * Split only. `PyFrontendLanguageFacade` is declared in `python/plugin/resources/META-INF/plugin.xml` with
- * `required-if-available="intellij.platform.frontend.split.base"` — that module, and the class under test,
- * never load in a monolith process, so a monolith invocation would exercise `PyLanguageFacadeImpl` instead and
+ * Split only. The frontend process has no `PyLanguageFacade` service, so `PyLanguageFacade.INSTANCE` is the default
+ * facade there. A monolith invocation would exercise `PyLanguageFacadeImpl` of `intellij.python.psi.impl` instead and
  * prove nothing about the bug this ticket fixed.
  *
  * `PYTHON_LEVEL` is deliberately `PYTHON39`: both `LanguageLevel.getDefault()` and `LanguageLevel.getLatest()`

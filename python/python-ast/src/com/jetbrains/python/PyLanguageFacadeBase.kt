@@ -1,7 +1,5 @@
 package com.jetbrains.python
 
-import com.intellij.injected.editor.VirtualFileWindow
-import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
@@ -26,12 +24,7 @@ abstract class PyLanguageFacadeBase : PyLanguageFacade() {
   }
 
   final override fun getEffectiveLanguageLevel(project: Project, virtualFile: VirtualFile): LanguageLevel {
-    var file = virtualFile
-    if (file is VirtualFileWindow) {
-      file = file.getDelegate()
-    }
-    file = BackedVirtualFile.getOriginFileIfBacked(file)
-    return doGetEffectiveLanguageLevel(project, file)
+    return doGetEffectiveLanguageLevel(project, originVirtualFile(virtualFile))
   }
 
   protected abstract fun doGetEffectiveLanguageLevel(project: Project, virtualFile: VirtualFile): LanguageLevel

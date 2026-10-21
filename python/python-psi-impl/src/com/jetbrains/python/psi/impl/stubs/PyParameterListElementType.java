@@ -2,33 +2,22 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyParameterList;
-import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyParameterListImpl;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
 @ApiStatus.Internal
-public class PyParameterListElementType extends PyStubElementType<PyParameterListStub, PyParameterList> {
-  public PyParameterListElementType() {
-    this("PARAMETER_LIST");
-  }
-
-  public PyParameterListElementType(@NotNull @NonNls String debugName) {
-    super(debugName);
-  }
-
+public class PyParameterListElementType extends PyStubElementFactory<PyParameterListStub, PyParameterList> {
   @Override
   public PyParameterList createPsi(final @NotNull PyParameterListStub stub) {
     return new PyParameterListImpl(stub);
@@ -37,11 +26,6 @@ public class PyParameterListElementType extends PyStubElementType<PyParameterLis
   @Override
   public @NotNull PyParameterListStub createStub(final @NotNull PyParameterList psi, final StubElement parentStub) {
     return new PyParameterListStubImpl(parentStub, getStubElementType());
-  }
-
-  @Override
-  public @NotNull PsiElement createElement(final @NotNull ASTNode node) {
-    return new PyParameterListImpl(node);
   }
 
   @Override
@@ -55,7 +39,8 @@ public class PyParameterListElementType extends PyStubElementType<PyParameterLis
     return new PyParameterListStubImpl(parentStub, getStubElementType());
   }
 
-  protected IStubElementType getStubElementType() {
+  @Override
+  protected @NotNull IElementType getStubElementType() {
     return PyStubElementTypes.PARAMETER_LIST;
   }
 

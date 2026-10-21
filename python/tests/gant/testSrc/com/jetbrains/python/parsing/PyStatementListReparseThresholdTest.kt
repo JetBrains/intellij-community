@@ -2,7 +2,7 @@ package com.jetbrains.python.parsing
 
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.allure.Layers
-import com.jetbrains.python.psi.impl.PyStatementListElementType
+import com.jetbrains.python.psi.PyStatementListElementType
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 

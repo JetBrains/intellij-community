@@ -2,28 +2,31 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.ast.PyAstClass;
+import com.jetbrains.python.ast.PyAstDecorator;
+import com.jetbrains.python.ast.PyAstElementVisitor;
+import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.ast.impl.PyUtilCore;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtilCore;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyDecorator;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
 /**
- * Highlights class definitions, function definitions, and decorators.
+ * Highlights class definitions, function definitions, and decorators from the AST. It runs in dumb mode, so a process
+ * without indexes, such as JetBrains Light before the smart mode, gets the colors too.
+ * <p>
+ * A {@code __new__} method needs the class hierarchy to tell a new-style class from an old-style one.
+ * {@code PyNewMethodHighlightingAnnotator} in {@code intellij.python.psi.impl} colors it with the stub-based PSI.
  */
 @ApiStatus.Internal
-public final class PyDefinitionsHighlightingAnnotator extends PyAnnotatorBase {
-
+public final class PyDefinitionsHighlightingAnnotator extends PyAnnotatorBase implements DumbAware {
   @Override
   public boolean runInBatchMode() {
     return false;
@@ -35,13 +38,13 @@ public final class PyDefinitionsHighlightingAnnotator extends PyAnnotatorBase {
     element.accept(new MyVisitor(holder));
   }
 
-  private static class MyVisitor extends PyElementVisitor {
+  private static class MyVisitor extends PyAstElementVisitor {
     private final @NotNull PyAnnotationHolder myHolder;
 
     private MyVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
 
     @Override
-    public void visitPyClass(@NotNull PyClass node) {
+    public void visitPyClass(@NotNull PyAstClass node) {
       final ASTNode name_node = node.getNameNode();
       if (name_node != null) {
         myHolder.addHighlightingAnnotation(name_node, PyHighlighter.PY_CLASS_DEFINITION);
@@ -49,30 +52,18 @@ public final class PyDefinitionsHighlightingAnnotator extends PyAnnotatorBase {
     }
 
     @Override
-    public void visitPyFunction(@NotNull PyFunction node) {
+    public void visitPyFunction(@NotNull PyAstFunction node) {
       ASTNode nameNode = node.getNameNode();
       if (nameNode != null) {
         final String name = node.getName();
         LanguageLevel languageLevel = LanguageLevel.forElement(node);
         if (PyNames.UNDERSCORED_ATTRIBUTES.contains(name) || PyNames.getBuiltinMethods(languageLevel).containsKey(name)) {
-          PyClass cls = node.getContainingClass();
-          if (PyUtil.isNewMethod(node)) {
-            boolean new_style_class = false;
-            try {
-              if (cls != null) new_style_class = cls.isNewStyleClass(null);
-            }
-            catch (IndexNotReadyException ignored) {
-            }
-            if (new_style_class) {
-              myHolder.addHighlightingAnnotation(nameNode, PyHighlighter.PY_PREDEFINED_DEFINITION);
-            }
-          }
-          else {
+          if (!PyUtilCore.isNewMethod(node)) {
             myHolder.addHighlightingAnnotation(nameNode, PyHighlighter.PY_PREDEFINED_DEFINITION);
           }
         }
         else {
-          if (ScopeUtil.getScopeOwner(node) instanceof PyFunction) {
+          if (ScopeUtilCore.getScopeOwner(node) instanceof PyAstFunction) {
             myHolder.addHighlightingAnnotation(nameNode, PyHighlighter.PY_NESTED_FUNC_DEFINITION);
           }
           else {
@@ -83,7 +74,7 @@ public final class PyDefinitionsHighlightingAnnotator extends PyAnnotatorBase {
     }
 
     @Override
-    public void visitPyDecorator(@NotNull PyDecorator node) {
+    public void visitPyDecorator(@NotNull PyAstDecorator node) {
       final PsiElement atSign = node.getFirstChild();
       if (atSign != null) {
         myHolder.addHighlightingAnnotation(atSign, PyHighlighter.PY_DECORATOR);

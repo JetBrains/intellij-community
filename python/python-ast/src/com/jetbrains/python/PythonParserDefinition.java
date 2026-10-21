@@ -13,15 +13,18 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.jetbrains.python.ast.impl.PyAstFileElementType;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
 import com.jetbrains.python.parsing.PyParser;
 import com.jetbrains.python.psi.PyElementType;
-import com.jetbrains.python.psi.PyFileElementType;
-import com.jetbrains.python.psi.PyStubElementType;
-import com.jetbrains.python.psi.impl.PyFileImpl;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * The parser definition of Python in every product mode. The PSI classes come from {@link PyPsiElementFactory}.
+ */
 public class PythonParserDefinition implements ParserDefinition {
+  /** The file node type of a {@code .py} file. */
+  public static final IFileElementType PYTHON_FILE = new PyAstFileElementType(PythonLanguage.INSTANCE);
 
   @Override
   public @NotNull Lexer createLexer(Project project) {
@@ -30,7 +33,7 @@ public class PythonParserDefinition implements ParserDefinition {
 
   @Override
   public @NotNull IFileElementType getFileNodeType() {
-    return PyFileElementType.INSTANCE;
+    return PYTHON_FILE;
   }
 
   @Override
@@ -59,15 +62,12 @@ public class PythonParserDefinition implements ParserDefinition {
     if (type instanceof PyElementType pyElType) {
       return pyElType.createElement(node);
     }
-    else if (type instanceof PyStubElementType) {
-      return ((PyStubElementType<?, ?>)type).createElement(node);
-    }
     return new ASTWrapperPsiElement(node);
   }
 
   @Override
   public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
-    return new PyFileImpl(viewProvider);
+    return PyPsiElementFactory.current().createPythonFile(viewProvider);
   }
 
   @Override

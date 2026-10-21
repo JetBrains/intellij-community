@@ -3,7 +3,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -33,7 +33,7 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
     this(stub, PyStubElementTypes.TYPE_PARAMETER);
   }
 
-  public PyTypeParameterImpl(PyTypeParameterStub stub, IStubElementType nodeType) {
+  public PyTypeParameterImpl(PyTypeParameterStub stub, IElementType nodeType) {
     super(stub, nodeType);
   }
 

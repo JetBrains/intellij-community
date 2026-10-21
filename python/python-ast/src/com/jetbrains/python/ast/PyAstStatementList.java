@@ -2,13 +2,16 @@
 package com.jetbrains.python.ast;
 
 
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Experimental
 public interface PyAstStatementList extends PyAstElement {
   PyAstStatementList[] EMPTY_ARRAY = new PyAstStatementList[0];
 
-  PyAstStatement[] getStatements();
+  default PyAstStatement[] getStatements() {
+    return childrenToPsi(PythonDialectsTokenSetProvider.getInstance().getStatementTokens(), PyAstStatement.EMPTY_ARRAY);
+  }
 
   @Override
   default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {

@@ -1,11 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.PyStubElementTypes;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import com.google.common.collect.RangeSet;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Version;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
@@ -22,7 +25,6 @@ import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.PyComprehensionElement;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
@@ -31,33 +33,17 @@ import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.List;
 
 
 @ApiStatus.Internal
-public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExpressionStub, PyTargetExpression>
+public class PyTargetExpressionElementType extends PyStubElementFactory<PyTargetExpressionStub, PyTargetExpression>
   implements
   PyCustomizableStubElementType<PyTargetExpression, CustomTargetExpressionStub, CustomTargetExpressionStubType<? extends CustomTargetExpressionStub>> {
   private static final byte QUALIFIED = 1;
   private static final byte TYPE_ALIAS_LIKE_REFERENCE = 2;
-
-  public PyTargetExpressionElementType() {
-    super("TARGET_EXPRESSION");
-  }
-
-  public PyTargetExpressionElementType(@NotNull @NonNls String debugName) {
-    super(debugName);
-  }
-
-  @Override
-  public @NotNull PsiElement createElement(final @NotNull ASTNode node) {
-    return new PyTargetExpressionImpl(node);
-  }
 
   @Override
   public PyTargetExpression createPsi(final @NotNull PyTargetExpressionStub stub) {
@@ -199,5 +185,10 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
   @Override
   public @NotNull List<CustomTargetExpressionStubType<? extends CustomTargetExpressionStub>> getExtensions() {
     return CustomTargetExpressionStubType.EP_NAME.getExtensionList();
+  }
+
+  @Override
+  protected @NotNull IElementType getStubElementType() {
+    return PyStubElementTypes.TARGET_EXPRESSION;
   }
 }

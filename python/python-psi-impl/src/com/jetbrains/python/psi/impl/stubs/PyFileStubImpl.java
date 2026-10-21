@@ -2,10 +2,11 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.ParserDefinition;
 import com.intellij.psi.stubs.PsiFileStubImpl;
-import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.util.io.StringRef;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.FutureFeature;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyFileImpl;
@@ -22,6 +23,7 @@ public class PyFileStubImpl extends PsiFileStubImpl<PyFile> implements PyFileStu
   private final List<String> myDunderAll;
   private final BitSet myFutureFeatures; // stores IDs of features
   private final StringRef myDeprecationMessage;
+  private final @NotNull IFileElementType myFileElementType;
 
   private static final int FUTURE_FEATURE_SET_SIZE = 32; // 32 features is ought to be enough for everybody! all bits fit into an int.
 
@@ -35,13 +37,18 @@ public class PyFileStubImpl extends PsiFileStubImpl<PyFile> implements PyFileStu
     }
     String message = fileImpl.extractDeprecationMessage();
     myDeprecationMessage = message == null ? null : StringRef.fromString(message);
+    myFileElementType = fileElementTypeOf(file);
   }
 
-  public PyFileStubImpl(List<String> dunderAll, final BitSet future_features, final StringRef deprecationMessage) {
+  public PyFileStubImpl(List<String> dunderAll,
+                        final BitSet future_features,
+                        final StringRef deprecationMessage,
+                        @NotNull IFileElementType fileElementType) {
     super(null);
     myDunderAll = dunderAll;
     myFutureFeatures = future_features;
     myDeprecationMessage = deprecationMessage;
+    myFileElementType = fileElementType;
   }
 
   @Override
@@ -59,8 +66,17 @@ public class PyFileStubImpl extends PsiFileStubImpl<PyFile> implements PyFileStu
     return myDeprecationMessage == null ? null : myDeprecationMessage.getString();
   }
 
+  /** The file node type of the language of the file. The stub serializer of the file is registered for it. */
   @Override
-  public @NotNull IStubFileElementType<?> getType() {
-    return (IStubFileElementType<?>)LanguageParserDefinitions.INSTANCE.forLanguage(PythonLanguage.getInstance()).getFileNodeType();
+  public @NotNull IElementType getFileElementType() {
+    return myFileElementType;
+  }
+
+  private static @NotNull IFileElementType fileElementTypeOf(@NotNull PyFile file) {
+    ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(file.getLanguage());
+    if (parserDefinition == null) {
+      throw new IllegalStateException("No parser definition for " + file.getLanguage());
+    }
+    return parserDefinition.getFileNodeType();
   }
 }

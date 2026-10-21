@@ -8,4 +8,14 @@
     <module name="intellij.python.parser"/>
     <!-- endregion -->
   </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.parserDefinition language="Python" implementationClass="com.jetbrains.python.PythonParserDefinition"/>
+    <lang.parserDefinition language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiParserDefinition"/>
+    <lang.ast.factory language="Python" implementationClass="com.jetbrains.python.ast.impl.PythonASTFactory"/>
+    <projectService serviceImplementation="com.jetbrains.python.psi.PyAstElementGenerator"/>
+  </extensions>
+  <extensions defaultExtensionNs="Pythonid">
+    <!-- The AST-only PSI. intellij.python.psi.impl registers the stub-based PSI with order="first". -->
+    <psiElementFactory implementation="com.jetbrains.python.ast.impl.PyAstPsiElementFactory" order="last"/>
+  </extensions>
 </idea-plugin>

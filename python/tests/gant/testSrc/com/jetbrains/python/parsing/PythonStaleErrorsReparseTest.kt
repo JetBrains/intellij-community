@@ -17,7 +17,7 @@ import com.jetbrains.python.fixtures.PyTestCase
  * when a cascading error (e.g., a broken string literal) reshuffles statement list
  * boundaries and is then fixed.
  *
- * @see com.jetbrains.python.psi.impl.PyStatementListElementType.isReparseable
+ * @see com.jetbrains.python.psi.PyStatementListElementType.isReparseable
  */
 @Subsystems.Parsing
 @Layers.Functional

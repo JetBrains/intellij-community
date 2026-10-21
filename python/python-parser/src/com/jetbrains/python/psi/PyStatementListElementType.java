@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.psi.impl;
+package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
@@ -18,18 +18,19 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IReparseableElementType;
+import com.jetbrains.python.PyPsiElementFactory;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.lexer.PythonIndentingLexerForLazyElements;
 import com.jetbrains.python.lexer.PythonIndentingProcessor;
 import com.jetbrains.python.parsing.PyLazyParser;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyIndentUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
+/**
+ * The lazy-parseable element type of a statement list. The node and the PSI element come from {@link PyPsiElementFactory}.
+ */
 @ApiStatus.Internal
 public class PyStatementListElementType extends IReparseableElementType implements ICompositeElementType {
 
@@ -93,10 +94,8 @@ public class PyStatementListElementType extends IReparseableElementType implemen
       return false;
     }
 
-    boolean isAfterColonOnSameLine = isAfterColonOnSameLine((PyStatementListImpl)currentNode);
-    int baseIndent = isAfterColonOnSameLine
-                     ? 0
-                     : PythonIndentingProcessor.getIndentWidth(PyIndentUtil.getElementIndent(currentNode.getPsi()));
+    boolean isAfterColonOnSameLine = isAfterColonOnSameLine(currentNode);
+    int baseIndent = isAfterColonOnSameLine ? 0 : PythonIndentingProcessor.getIndentWidth(getLineIndent(currentNode));
 
     currentNode.putUserData(BASE_INDENT_KEY, baseIndent);
 
@@ -104,9 +103,27 @@ public class PyStatementListElementType extends IReparseableElementType implemen
     return checkIndentDedentBalanceWithLexer(newText, lexer, isAfterColonOnSameLine);
   }
 
-  private static boolean isAfterColonOnSameLine(PsiElement currentNode) {
-    PsiElement prevSibling = PyPsiUtils.getPrevNonWhitespaceSiblingOnSameLine(currentNode);
-    return prevSibling != null && prevSibling.getNode().getElementType() == PyTokenTypes.COLON;
+  /** Whether the node follows a colon on the same line, as in `if x: pass`. */
+  private static boolean isAfterColonOnSameLine(@NotNull ASTNode node) {
+    ASTNode prev = node.getTreePrev();
+    while (prev != null && prev.getElementType() == TokenType.WHITE_SPACE) {
+      if (prev.textContains('\n')) {
+        return false;
+      }
+      prev = prev.getTreePrev();
+    }
+    return prev != null && prev.getElementType() == PyTokenTypes.COLON;
+  }
+
+  /** The whitespace that starts the line of the first statement of the list, or an empty string when the list starts its line elsewhere. */
+  private static @NotNull String getLineIndent(@NotNull ASTNode node) {
+    ASTNode prev = node.getTreePrev();
+    if (prev == null || prev.getElementType() != TokenType.WHITE_SPACE) {
+      return "";
+    }
+    String whitespace = prev.getText();
+    int lineBreak = whitespace.lastIndexOf('\n');
+    return lineBreak >= 0 ? whitespace.substring(lineBreak + 1) : "";
   }
 
   /**
@@ -145,7 +162,7 @@ public class PyStatementListElementType extends IReparseableElementType implemen
   @Override
   public boolean isValidReparse(@NotNull ASTNode oldNode, @NotNull ASTNode newNode) {
     PsiFile file = oldNode.getPsi().getContainingFile();
-    if (!(file instanceof PyFile)) return false;
+    if (file == null || !file.getLanguage().isKindOf(PythonLanguage.INSTANCE)) return false;
 
     LanguageLevel languageLevel = LanguageLevel.forElement(file);
     // Reuse base indent cached by isReparseable on the same node
@@ -203,12 +220,12 @@ public class PyStatementListElementType extends IReparseableElementType implemen
 
   @Override
   public ASTNode createNode(CharSequence text) {
-    return new PyStatementListImpl(text);
+    return PyPsiElementFactory.current().createStatementListNode(this, text);
   }
 
   @Override
   public @NotNull ASTNode createCompositeNode() {
-    return new PyStatementListImpl(this, null);
+    return PyPsiElementFactory.current().createStatementListNode(this, null);
   }
 
   /**

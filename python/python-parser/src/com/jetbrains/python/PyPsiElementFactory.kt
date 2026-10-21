@@ -1,43 +1,50 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
 import com.intellij.lang.ASTNode
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
-import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.tree.IElementType
+import com.jetbrains.python.psi.LanguageLevel
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
+/**
+ * Creates the PSI for the Python element types of [PyElementTypes].
+ *
+ * The element types are shared constants. The PSI classes behind them come from the first extension of
+ * `Pythonid.psiElementFactory` at call time. `intellij.python.ast` registers the AST-only default with `order="last"`,
+ * and `intellij.python.psi.impl` registers the stub-based PSI with `order="first"`. JetBrains Light starts with the default
+ * and switches to the stub-based PSI when PythonCore loads at the move to the smart mode.
+ */
 @ApiStatus.Internal
-abstract class PyElementTypesFacade {
+abstract class PyPsiElementFactory {
 
-  // stubs on backend side
-  abstract val functionDeclaration: IElementType
-  abstract val classDeclaration: IElementType
-  abstract val parameterList: IElementType
-  abstract val decoratorList: IElementType
-  abstract val namedParameter: IElementType
-  abstract val tupleParameter: IElementType
-  abstract val slashParameter: IElementType
-  abstract val singleStarParameter: IElementType
-  abstract val decoratorCall: IElementType
-  abstract val importElement: IElementType
-  abstract val annotation: IElementType
-  abstract val starImportElement: IElementType
-  abstract val exceptPart: IElementType
-  abstract val fromImportStatement: IElementType
-  abstract val importStatement: IElementType
-  abstract val targetExpression: IElementType
-  abstract val typeParameter: IElementType
-  abstract val typeParameterList: IElementType
-  abstract val typeAliasStatement: IElementType
+  // Elements with a stub in the stub-based PSI
+  abstract val functionDeclarationConstructor: Function<in ASTNode, out PsiElement>
+  abstract val classDeclarationConstructor: Function<in ASTNode, out PsiElement>
+  abstract val parameterListConstructor: Function<in ASTNode, out PsiElement>
+  abstract val decoratorListConstructor: Function<in ASTNode, out PsiElement>
+  abstract val namedParameterConstructor: Function<in ASTNode, out PsiElement>
+  abstract val tupleParameterConstructor: Function<in ASTNode, out PsiElement>
+  abstract val slashParameterConstructor: Function<in ASTNode, out PsiElement>
+  abstract val singleStarParameterConstructor: Function<in ASTNode, out PsiElement>
+  abstract val decoratorCallConstructor: Function<in ASTNode, out PsiElement>
+  abstract val importElementConstructor: Function<in ASTNode, out PsiElement>
+  abstract val annotationConstructor: Function<in ASTNode, out PsiElement>
+  abstract val starImportElementConstructor: Function<in ASTNode, out PsiElement>
+  abstract val exceptPartConstructor: Function<in ASTNode, out PsiElement>
+  abstract val fromImportStatementConstructor: Function<in ASTNode, out PsiElement>
+  abstract val importStatementConstructor: Function<in ASTNode, out PsiElement>
+  abstract val targetExpressionConstructor: Function<in ASTNode, out PsiElement>
+  abstract val typeParameterConstructor: Function<in ASTNode, out PsiElement>
+  abstract val typeParameterListConstructor: Function<in ASTNode, out PsiElement>
+  abstract val typeAliasStatementConstructor: Function<in ASTNode, out PsiElement>
 
-  // reparseable elements
-  abstract val statementList: IElementType
-
-  // constructors for non-stub elements
+  // Elements without a stub
   abstract val argumentListConstructor: Function<in ASTNode, out PsiElement>
   abstract val printTargetConstructor: Function<in ASTNode, out PsiElement>
   abstract val decoratorConstructor: Function<in ASTNode, out PsiElement>
@@ -73,7 +80,6 @@ abstract class PyElementTypesFacade {
   abstract val boolLiteralExpressionConstructor: Function<in ASTNode, out PsiElement>
   abstract val parenthesizedExpressionConstructor: Function<in ASTNode, out PsiElement>
   abstract val subscriptionExpressionConstructor: Function<in ASTNode, out PsiElement>
-
   abstract val sliceItemConstructor: Function<in ASTNode, out PsiElement>
   abstract val binaryExpressionConstructor: Function<in ASTNode, out PsiElement>
   abstract val prefixExpressionConstructor: Function<in ASTNode, out PsiElement>
@@ -124,11 +130,36 @@ abstract class PyElementTypesFacade {
   abstract val orPatternConstructor: Function<in ASTNode, out PsiElement>
   abstract val asPatternConstructor: Function<in ASTNode, out PsiElement>
 
+  /** The PSI file of a `.py` file. */
+  abstract fun createPythonFile(viewProvider: FileViewProvider): PsiFile
+
+  /** The PSI file of a `.pyi` file. */
+  abstract fun createPyiFile(viewProvider: FileViewProvider): PsiFile
+
+  /**
+   * The node of a statement list of [type]. With [text] the node is lazy-parseable. Without it the parser fills the node.
+   * The node is also the PSI element.
+   */
+  abstract fun createStatementListNode(type: IElementType, text: CharSequence?): ASTNode
+
+  /** The leaf of a string token of [type]. */
+  abstract fun createStringLeaf(type: IElementType, text: CharSequence): LeafElement
+
+  /**
+   * Parses the contents of a file node in a way that the default parse does not cover, for example a console file.
+   * Returns `null` when the default parse applies.
+   */
+  open fun parseFileContents(node: ASTNode, languageLevel: LanguageLevel): ASTNode? = null
+
   companion object {
-    val INSTANCE: PyElementTypesFacade by lazy {
-      Cancellation.forceNonCancellableSectionInClassInitializer {
-        ApplicationManager.getApplication().service<PyElementTypesFacade>()
-      }
+    @JvmField
+    val EP_NAME: ExtensionPointName<PyPsiElementFactory> = ExtensionPointName("Pythonid.psiElementFactory")
+
+    /** The factory of the process: the first registered extension. */
+    @JvmStatic
+    fun current(): PyPsiElementFactory {
+      return EP_NAME.extensionList.firstOrNull()
+             ?: throw IllegalStateException("No ${EP_NAME.name} extension is registered; intellij.python.ast registers the default")
     }
   }
 }

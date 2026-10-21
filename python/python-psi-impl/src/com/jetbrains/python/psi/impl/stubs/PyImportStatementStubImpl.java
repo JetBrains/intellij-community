@@ -3,7 +3,7 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.google.common.collect.RangeSet;
 import com.intellij.openapi.util.Version;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyImportStatement;
 import com.jetbrains.python.psi.stubs.PyImportStatementStub;
@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public class PyImportStatementStubImpl extends PyVersionSpecificStubBase<PyImportStatement> implements PyImportStatementStub {
-  public PyImportStatementStubImpl(StubElement parentStub, IStubElementType elementType, @NotNull RangeSet<Version> versions) {
+  public PyImportStatementStubImpl(StubElement parentStub, IElementType elementType, @NotNull RangeSet<Version> versions) {
     super(parentStub, elementType, versions);
   }
 

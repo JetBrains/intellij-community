@@ -3,7 +3,7 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.google.common.collect.RangeSet;
 import com.intellij.openapi.util.Version;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyTypeAliasStatement;
 import com.jetbrains.python.psi.stubs.PyTypeAliasStatementStub;
@@ -20,7 +20,7 @@ public class PyTypeAliasStatementStubImpl extends PyVersionSpecificStubBase<PyTy
   public PyTypeAliasStatementStubImpl(@Nullable String name,
                                       @Nullable String typeExpressionText,
                                       @Nullable StubElement parent,
-                                      @NotNull IStubElementType stubElementType,
+                                      @NotNull IElementType stubElementType,
                                       @NotNull RangeSet<Version> versions) {
     super(parent, stubElementType, versions);
     myName = name;

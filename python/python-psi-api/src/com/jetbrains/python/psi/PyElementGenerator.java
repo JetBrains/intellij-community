@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class PyElementGenerator extends PyAstElementGenerator {
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static PyElementGenerator getInstance(Project project) {
-    return (PyElementGenerator)PyAstElementGenerator.getInstance(project);
+    return project.getService(PyElementGenerator.class);
   }
 
   public PyElementGenerator(Project project) {

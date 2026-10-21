@@ -3,7 +3,7 @@ package com.jetbrains.python.psi.impl.stubs;
 
 import com.google.common.collect.RangeSet;
 import com.intellij.openapi.util.Version;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyFromImportStatement;
@@ -19,7 +19,7 @@ public class PyFromImportStatementStubImpl extends PyVersionSpecificStubBase<PyF
   private final int myRelativeLevel;
 
   public PyFromImportStatementStubImpl(QualifiedName importSourceQName, boolean isStarImport, int relativeLevel,
-                                       final StubElement parent, IStubElementType elementType, @NotNull RangeSet<Version> versions) {
+                                       final StubElement parent, IElementType elementType, @NotNull RangeSet<Version> versions) {
     super(parent, elementType, versions);
     myImportSourceQName = importSourceQName;
     myStarImport = isStarImport;

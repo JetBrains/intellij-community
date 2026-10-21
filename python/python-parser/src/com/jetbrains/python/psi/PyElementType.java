@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.PyPsiElementFactory;
 import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +33,17 @@ public class PyElementType extends IElementType {
     super(debugName, PythonFileType.INSTANCE.getLanguage());
     myPsiCreator = node -> { throw new IllegalStateException("Cannot create an element for " + node.getElementType() + " without element class");};
     mySpecialMethodName = specialMethodName;
+  }
+
+  /**
+   * An element type whose PSI class comes from the {@link PyPsiElementFactory} of the process at call time.
+   * {@code constructor} picks the creator from the factory, for example {@code PyPsiElementFactory::getArgumentListConstructor}.
+   */
+  public static @NotNull PyElementType viaFactory(
+    @NotNull @NonNls String debugName,
+    @NotNull Function<? super PyPsiElementFactory, ? extends Function<? super ASTNode, ? extends PsiElement>> constructor
+  ) {
+    return new PyElementType(debugName, node -> constructor.apply(PyPsiElementFactory.current()).apply(node));
   }
 
   public @NotNull PsiElement createElement(@NotNull ASTNode node) {

@@ -39,6 +39,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.PythonParserDefinition
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.imports.AddImportHelper
@@ -50,7 +51,6 @@ import com.jetbrains.python.psi.PyDecorator
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyExpressionStatement
 import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.psi.PyFileElementType
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyImportStatementBase
 import com.jetbrains.python.psi.PyPattern
@@ -278,7 +278,7 @@ class PyClassNameCompletionContributor : CompletionContributor(), DumbAware {
       val cachedAllNames = manager.getCachedValue(project, CachedValueProvider {
         val index = StubIndex.getInstance()
         val keys = index.getAllKeys(PyExportedModuleAttributeIndex.KEY, project)
-        val modificationTracker = index.getPerFileElementTypeModificationTracker(PyFileElementType.INSTANCE)
+        val modificationTracker = index.getPerFileElementTypeModificationTracker(PythonParserDefinition.PYTHON_FILE)
         CachedValueProvider.Result.create<Collection<String>>(keys, modificationTracker)
       })
 

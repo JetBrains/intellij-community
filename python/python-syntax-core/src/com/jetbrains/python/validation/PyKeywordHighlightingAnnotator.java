@@ -18,6 +18,7 @@ package com.jetbrains.python.validation;
 import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.TokenSet;
@@ -43,7 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-public final class PyKeywordHighlightingAnnotator extends PyAnnotatorBase implements HighlightRangeExtension {
+public final class PyKeywordHighlightingAnnotator extends PyAnnotatorBase implements HighlightRangeExtension, DumbAware {
 
   @Override
   public boolean runInBatchMode() {

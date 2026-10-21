@@ -4,7 +4,7 @@ package com.jetbrains.python.psi.impl.stubs;
 import com.google.common.collect.RangeSet;
 import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -32,7 +32,7 @@ public class PyFunctionStubImpl extends PyVersionSpecificStubBase<PyFunction> im
                             @Nullable String typeCommentContent,
                             @Nullable String annotation,
                             final StubElement parent,
-                            @NotNull IStubElementType stubElementType,
+                            @NotNull IElementType stubElementType,
                             @NotNull RangeSet<Version> versions) {
     super(parent, stubElementType, versions);
     myName = name;
