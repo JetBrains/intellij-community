@@ -10,6 +10,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressModel
 import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.RegistryManager
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +32,8 @@ class ProgressSoundSignalTracker(private val scope: CoroutineScope) {
 
   private class TrackedProgress(val project: Project?, val model: ProgressModel, val info: TaskInfo) {
     fun isOver(): Boolean = model.isFinished(info) || project?.isDisposed == true
+
+    fun isPaused(): Boolean = ProgressSuspender.getSuspender(model.getProgressIndicator())?.isSuspended == true
   }
 
   private val lock = Any()
@@ -78,7 +81,8 @@ class ProgressSoundSignalTracker(private val scope: CoroutineScope) {
       val (over, running) = synchronized(lock) { progresses.toList() }.partition { it.isOver() }
       if (over.isNotEmpty()) update { removeAll(over) }
       val active = ProjectUtil.getActiveProject()
-      val progress = running.firstOrNull { it.project != null && it.project === active } ?: running.firstOrNull()
+      val audible = running.filterNot { it.isPaused() }
+      val progress = audible.firstOrNull { it.project != null && it.project === active } ?: audible.firstOrNull()
       progress?.model?.let { progressSound(it.isIndeterminate(), it.getFraction()) }
     }
   }

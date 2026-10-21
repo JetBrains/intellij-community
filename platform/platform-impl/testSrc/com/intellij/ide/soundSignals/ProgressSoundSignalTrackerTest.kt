@@ -7,9 +7,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicatorModel
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.ProgressModel
 import com.intellij.openapi.progress.TaskInfo
+import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.progress.impl.taskInfo
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.progress.TaskCancellation
@@ -222,6 +225,34 @@ class ProgressSoundSignalTrackerTest {
   }
 
   @Test
+  fun `a paused progress is silent and keeps the timer`() = trackerTest { tracker, player ->
+    val progress = TestProgress()
+    tracker.track(progress)
+    player.awaitPlay()
+
+    progress.pause(disposable)
+
+    player.assertStopped()
+    assertThat(tracker.isTimerRunning).isTrue()
+
+    progress.resume()
+
+    assertThat(player.awaitPlay()).containsExactly(INDETERMINATE)
+  }
+
+  @Test
+  fun `a paused progress yields to a running one`() = trackerTest { tracker, player ->
+    val paused = TestProgress(fraction = 0.1)
+    tracker.track(paused)
+    tracker.track(TestProgress(fraction = 0.9))
+
+    paused.pause(disposable)
+
+    player.awaitPlayOf(STAGE_4)
+    repeat(2) { assertThat(player.awaitPlay()).containsExactly(STAGE_4) }
+  }
+
+  @Test
   fun `a muted Progress signal plays nothing`() = trackerTest(muteProgress = true) { tracker, player ->
     tracker.track(TestProgress())
 
@@ -347,6 +378,26 @@ class ProgressSoundSignalTrackerTest {
 
     fun finish() {
       indicatorModel.finish(info)
+    }
+
+    private var suspender: ProgressSuspender? = null
+
+    /** Attaches a suspender the way `TaskInfoEntityCollector` does, since `markSuspendable` needs a running indicator. */
+    fun pause(parentDisposable: Disposable) {
+      val suspender = suspender ?: run {
+        val temp = ProgressIndicatorBase()
+        ProgressManager.getInstance().runProcess<ProgressSuspender>({ ProgressSuspender.markSuspendable(temp, TITLE) }, temp)
+          .also {
+            Disposer.register(parentDisposable) { it.close() }
+            it.attachToProgress(model.getProgressIndicator())
+            suspender = it
+          }
+      }
+      suspender.suspendProcess(null)
+    }
+
+    fun resume() {
+      suspender!!.resumeProcess()
     }
   }
 
