@@ -7,6 +7,7 @@ import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.mapStateInNow
 import com.intellij.collaboration.async.mapStatefulToStateful
 import com.intellij.collaboration.async.stateInNow
+import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentNavigation
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesModel
@@ -19,7 +20,6 @@ import com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
 import com.intellij.collaboration.ui.codereview.editor.asLst
 import com.intellij.collaboration.util.ExcludingApproximateChangedRangesShifter
 import com.intellij.collaboration.util.Hideable
-import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.syncOrToggleAll
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Range
@@ -47,8 +47,8 @@ internal class GHPRReviewFileEditorModel internal constructor(
   private val project: Project,
   private val settings: GithubPullRequestsProjectUISettings,
   private val fileVm: GHPRReviewFileEditorViewModel,
+  private val commentNavigation: CodeReviewCommentNavigation,
   private val changesModel: MutableCodeReviewEditorGutterChangesModel = MutableCodeReviewEditorGutterChangesModel(),
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */) private val showEditor: (RefComparisonChange, Int) -> Unit,
 ) : CodeReviewEditorGutterChangesModel by changesModel,
     CodeReviewEditorGutterActionableChangesModel,
     CodeReviewEditorModel<GHPREditorMappedComponentModel>,
@@ -171,7 +171,7 @@ internal class GHPRReviewFileEditorModel internal constructor(
     }
     else unmappedLine
 
-    showEditor(change, line)
+    commentNavigation.navigate(change, line)
     fileVm.requestThreadFocus(threadId)
   }
 
