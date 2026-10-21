@@ -154,6 +154,10 @@ open class IDETestContext(
     return this
   }
 
+  fun disableNonModalWelcomeScreen(): IDETestContext = applyVMOptionsPatch {
+    addSystemProperty("idea.welcome.screen.non.modal.enabled", false)
+  }
+
   fun disableLinuxNativeMenuForce(): IDETestContext =
     applyVMOptionsPatch {
       addSystemProperty("linux.native.menu.force.disable", true)

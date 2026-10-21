@@ -361,10 +361,6 @@ data class IDERunContext(
     addSystemProperty("idea.log.path", lastIdeReportingData.logsDir)
   }
 
-  fun disableNonModalWelcomeScreen(): IDERunContext = addVMOptionsPatch {
-    addSystemProperty("idea.welcome.screen.non.modal.enabled", false)
-  }
-
   @Deprecated("to remove, use com.intellij.ide.starter.junit5.WithScreenRecording")
   fun withScreenRecording() {
     if (testContext.isRemDevContext() && testContext != testContext.asRemDevContext().frontendIDEContext && !calculateVmOptions().hasHeadlessMode()) {

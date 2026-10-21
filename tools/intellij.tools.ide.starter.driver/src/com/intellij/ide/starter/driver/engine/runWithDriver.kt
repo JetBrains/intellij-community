@@ -22,24 +22,17 @@ fun IDETestContext.runIdeWithDriver(commandLine: (IDERunContext) -> IDECommandLi
                                     expectedKill: Boolean = false,
                                     expectedExitCode: Int = 0,
                                     collectNativeThreads: Boolean = false,
-                                    disableNonModalWelcomeScreen: Boolean = false,
                                     pauseOnIndicators: Duration? = null,
                                     configure: IDERunContext.() -> Unit = {}): BackgroundRun {
-  val run = selectedDriverRunner().runIdeWithDriver(this, commandLine, commands, runTimeout, useStartupScript, launchName, expectedKill, expectedExitCode, collectNativeThreads, pauseOnIndicators) {
-    if (disableNonModalWelcomeScreen) {
-      disableNonModalWelcomeScreen()
-    }
-    configure()
-  }
+  val run = selectedDriverRunner().runIdeWithDriver(
+    this, commandLine, commands, runTimeout, useStartupScript, launchName, expectedKill, expectedExitCode,
+    collectNativeThreads, pauseOnIndicators, configure
+  )
   run.restarter = { restartLaunchName ->
     runIdeWithDriver(commandLine, commands, runTimeout, useStartupScript, restartLaunchName, expectedKill, expectedExitCode,
-                     collectNativeThreads, disableNonModalWelcomeScreen, pauseOnIndicators, configure)
+                     collectNativeThreads, pauseOnIndicators, configure)
   }
   return run
-}
-
-fun IDETestContext.runIdeWithDriverDisableNewWelcome(): BackgroundRun {
-  return runIdeWithDriver(disableNonModalWelcomeScreen = true)
 }
 
 /**
