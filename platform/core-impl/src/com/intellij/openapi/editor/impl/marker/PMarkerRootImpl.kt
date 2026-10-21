@@ -14,6 +14,7 @@ import it.unimi.dsi.fastutil.longs.LongList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.ArrayDeque
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import java.util.function.LongConsumer
 
 /**
@@ -31,7 +32,8 @@ open class PMarkerRootImpl private constructor(
   private val states: PersistentLongMap<StoredNode>,
   /** Number of valid markers that use a persistent policy in the entire tree represented by this root. */
   private val persistentMarkerCount: Int,
-  private val cachedDelta: ConcurrentLongIntMap = Java11Shim.createConcurrentLongIntMap(UNCACHED_DELTA),
+  @Volatile
+  private var cachedDelta: ConcurrentLongIntMap? = null,
   /**
    * Identifies roots with identical marker validity and offsets. [updateSpec] preserves this token.
    * The token does not retain the root or its offset cache.
@@ -513,13 +515,22 @@ open class PMarkerRootImpl private constructor(
            processAllRangeMarkers(node.rightId, childDelta, processor)
   }
 
+  private val maximumHeight: Int = guessMaximumHeight()
   private fun ancestorDelta(state: ValidNode, markerId: Long): Int {
-    val cached = cachedDelta.get(markerId)
+    var cachedDelta = cachedDelta
+    if (cachedDelta == null) {
+      cachedDelta = Java11Shim.createConcurrentLongIntMap(UNCACHED_DELTA)//, states.size())
+      if (!CACHED_DELTA_UPDATER.compareAndSet(this, null, cachedDelta)) {
+        cachedDelta = this.cachedDelta
+      }
+    }
+    val cached = cachedDelta!!.get(markerId)
     if (cached != UNCACHED_DELTA) {
       return cached
     }
 
-    val path = ArrayDeque<ValidNode>()
+    val path = arrayOfNulls<ValidNode>(maximumHeight)
+    var i = 0
     var node = state
     var nodeId = markerId
     var result: Int
@@ -533,7 +544,8 @@ open class PMarkerRootImpl private constructor(
         break
       }
 
-      path.addLast(node)
+      path[i] = node
+      i++
       node = states.getUnchecked(parentId) as? ValidNode
              ?: throw IllegalStateException("Parent $parentId is not a valid marker node")
       nodeId = parentId
@@ -544,14 +556,21 @@ open class PMarkerRootImpl private constructor(
       }
     }
 
-    while (path.isNotEmpty()) {
+    while (i > 0) {
       result += node.lazyOffsetDelta
-      node = path.removeLast()
+      i--
+      node = path[i]!!
       if (node.entry.markerId != markerId) {
         cachedDelta.putIfAbsent(node.entry.markerId, result)
       }
     }
     return result
+  }
+
+  private fun guessMaximumHeight(): Int {
+    // maximum AVL tree height is 1.44*log2(size)+1
+    val size = states.size()
+    return if (size == 0) 1 else ((23 * (31 - Integer.numberOfLeadingZeros(size))) shr 4) + 3
   }
 
   private fun subtreeAggregate(markerId: Long): Int =
@@ -792,7 +811,8 @@ open class PMarkerRootImpl private constructor(
   companion object {
     private const val ALL_FLAVOR_FLAGS: Int = 0xFF
     private const val UNCACHED_DELTA: Int = Int.MIN_VALUE
-
+    private val CACHED_DELTA_UPDATER: AtomicReferenceFieldUpdater<PMarkerRootImpl, ConcurrentLongIntMap> = AtomicReferenceFieldUpdater.newUpdater(
+      PMarkerRootImpl::class.java, ConcurrentLongIntMap::class.java, "cachedDelta")
     private val ENTRY_COMPARATOR: Comparator<MarkerEntry> = Comparator { first, second -> PositionKey(first).compareTo(PositionKey(second)) }
     private const val NULL_NODE: Long = 0
     private object EMPTY : PMarkerRootImpl(
