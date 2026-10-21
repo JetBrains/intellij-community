@@ -120,7 +120,11 @@ fn the_jcp_routes_answer_the_organization_and_the_record_counts_the_discoveries(
     );
     assert_eq!(options.json()["aiAccessOptions"][0]["workspaceId"], "air-lane-workspace");
     let flags = testing::get(address, "/jcp/user-management/api/org-feature-flags?flags=ai-seats");
-    assert_eq!(flags.text(), r#"{"flags":{"agentic-core/cloud-tasks":true,"ai-seats":true}}"#);
+    let expected_flags = concat!(
+        r#"{"flags":{"agentic-core/cloud-tasks":true,"agentic-core/cloud-tasks-personal":true,"#,
+        r#""ai-seats":true,"ai-seats-personal":true}}"#
+    );
+    assert_eq!(flags.text(), expected_flags);
     for (path, body) in [
         (
             "tools",

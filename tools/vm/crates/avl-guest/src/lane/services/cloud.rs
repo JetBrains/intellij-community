@@ -57,7 +57,10 @@ const CLOUD_WORKSPACE_BODY: &str = concat!(
     r#"{"aiAccessOptions":[{"type":"workspace","workspaceId":"air-lane-workspace","workspaceName":"Air Lane Workspace","#,
     r#""orgId":"air-lane-org","orgName":"Air Lane Organization","aiAccessEnabled":true}]}"#
 );
-const ORG_FEATURE_FLAGS_BODY: &str = r#"{"flags":{"agentic-core/cloud-tasks":true,"ai-seats":true}}"#;
+const ORG_FEATURE_FLAGS_BODY: &str = concat!(
+    r#"{"flags":{"agentic-core/cloud-tasks":true,"agentic-core/cloud-tasks-personal":true,"#,
+    r#""ai-seats":true,"ai-seats-personal":true}}"#
+);
 const TOOLS_PROVISIONING_BODY: &str = r#"{"air":{"status":"allowed","allowCloudAgentsRun":true},"aiAssistant":{"status":"disallowed"}}"#;
 const GATEWAYS_PROVISIONING_BODY: &str = r#"{"gateways":[]}"#;
 const AGENTS_PROVISIONING_BODY: &str = r#"{"items":[]}"#;
