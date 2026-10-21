@@ -1,14 +1,15 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.jshell.protocol;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.List;
 import java.util.UUID;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Eugene Zhuravlev
@@ -17,7 +18,8 @@ public class JShellMessageMarshallingTest {
   private static final int PIPE_SIZE = 32 << 10;
   private static final Event[] EMPTY_EVENT_ARRAY = new Event[0];
 
-  @Test(timeout = 10000)
+  @Test
+  @Timeout(value = 10, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
   public void testSendReceive() throws Exception {
     final PipedInputStream clientIn = new PipedInputStream(PIPE_SIZE);
     final PipedOutputStream serverOut = new PipedOutputStream(clientIn);
