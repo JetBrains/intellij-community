@@ -80,8 +80,8 @@ fn build(checkout: &Path, tools: SiteTools, timeout: Duration) -> (Result<PathBu
 }
 
 /// Without `--viewer`, the step installs the kernel and the docs project, builds the viewer, and says the time it took.
-/// A viewer newer than its sources is not built again. A source outside `src`, such as a UI primitive of the genui
-/// catalog or the Vite configuration, builds it again, and both installs run again over their `node_modules`.
+/// A viewer newer than its sources is not built again. A source outside `src` builds it again, such as a UI primitive
+/// of the genui catalog or the Vite configuration. Both installs then run again over their `node_modules`.
 #[cfg(unix)]
 #[test]
 fn a_missing_viewer_is_built_in_the_checkout_and_kept_while_it_is_current() {

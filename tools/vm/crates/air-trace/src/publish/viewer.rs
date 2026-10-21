@@ -1,9 +1,9 @@
 //! The trace viewer that `teamcity-publish` puts beside the bundles: a built one, or one that the step builds in the
 //! checkout.
 //!
-//! The build is the docs project's `pnpm run build:viewer`, with the node and the pnpm of `air-trace serve`'s site
-//! build ([site_tools]), after `pnpm install --frozen-lockfile` in the kernel and in the docs project. It writes
-//! `<checkout>/out/air-trace-viewer`. A viewer there that is newer than its sources ([viewer_sources]) is not built
+//! The build is the docs project's `pnpm run build:viewer`, with the node and the pnpm of `air-trace serve`'s site build
+//! ([site_tools]). Before it, `pnpm install --frozen-lockfile` runs in the kernel and in the docs project. The build
+//! writes `<checkout>/out/air-trace-viewer`. A viewer there that is newer than its sources ([viewer_sources]) is not built
 //! again. The build has a time limit, and its output goes to stderr as it comes.
 
 use std::fs;
@@ -91,9 +91,9 @@ pub(super) fn viewer_dir(source: &ViewerSource, stderr: &mut dyn Write) -> io::R
     })
 }
 
-/// The files that the viewer build reads: the sources of the site, the configuration files and the lockfile of the docs
-/// project, the lockfile of the kernel, and the UI primitives of the genui catalog, which the build takes through an
-/// alias and which Tailwind scans.
+/// The files that the viewer build reads. These are the sources of the site, the configuration files and the lockfile of
+/// the docs project, and the lockfile of the kernel. The UI primitives of the genui catalog count too, because the
+/// build takes them through an alias and Tailwind scans them.
 fn viewer_sources(project: &Path, kernel: &Path) -> Vec<PathBuf> {
     let mut sources = site_source_dirs(project, Some(kernel));
     let project_files = [
@@ -140,7 +140,7 @@ fn run_build(
                     Some(tools) => tools,
                     None => site_tools(&output, &cancel).await?,
                 };
-                // Also over an existing `node_modules`: after a change of a lockfile it holds the old dependencies, and a
+                // Also over an existing `node_modules`, which holds the old dependencies after a change of a lockfile. A
                 // frozen install of an unchanged lockfile does nothing.
                 let installs: Vec<&Path> = [kernel, project]
                     .into_iter()
@@ -201,8 +201,8 @@ pub(super) fn copy_viewer(viewer: &Path, out: &Path) -> Result<Vec<(String, bool
     Ok(entries)
 }
 
-/// The real path of `path`, which may not exist yet: the real path of its nearest ancestor that exists, with the rest
-/// of `path` after it.
+/// The real path of `path`, which may not exist yet. It is the real path of its nearest ancestor that exists, with the
+/// rest of `path` after it.
 fn real_path_of(path: &Path) -> Option<PathBuf> {
     let path = std::path::absolute(path).ok()?;
     let existing = path.ancestors().find(|ancestor| ancestor.exists())?;

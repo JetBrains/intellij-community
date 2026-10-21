@@ -378,8 +378,8 @@ pub(crate) const PATH_PNPM: &str = if cfg!(windows) { "pnpm.cmd" } else { "pnpm"
 /// The last step of the site build: `pnpm build`, which harvests the model and runs Vite.
 pub(crate) const SITE_BUILD: [&str; 1] = ["build"];
 
-/// The steps that build a docs project: `pnpm install --frozen-lockfile` in each directory of `installs`, in order,
-/// then `pnpm <build>` in the project, such as [SITE_BUILD].
+/// The steps that build a docs project. First `pnpm install --frozen-lockfile` runs in each directory of `installs`, in
+/// order. Then `pnpm <build>` runs in the project, such as [SITE_BUILD].
 pub(crate) fn site_steps(tools: &SiteTools, installs: &[&Path], project: &Path, build: &[&str]) -> Vec<SiteStep> {
     let (program, path_prefix) = match tools {
         SiteTools::Pinned { node, pnpm } => (pnpm.clone(), node.parent().map(Path::to_path_buf)),
@@ -558,8 +558,8 @@ async fn bazel(checkout: &Path, args: &[&str], output: &BuildOutput, cancel: &Ca
 }
 
 /// Runs one step with its output forwarded, and fails with the step's label and its exit status. The step runs in a
-/// process group of its own. So a build that is dropped, at a timeout or when the server stops, ends every process
-/// that the step started, and what a step leaves running when it ends is stopped too.
+/// process group of its own. A build can be dropped at a timeout or when the server stops. Then every process that the
+/// step started ends. What a step leaves running when it ends is stopped too.
 async fn run_step(step: &SiteStep, output: &BuildOutput, cancel: &CancellationToken) -> Result<(), Refusal> {
     let mut command = tokio::process::Command::new(&step.program);
     command

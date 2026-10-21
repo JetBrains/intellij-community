@@ -1,9 +1,9 @@
 //! The TeamCity build that `teamcity-publish` runs in, as the agent's property files name it.
 //!
-//! The agent sets `TEAMCITY_BUILD_PROPERTIES_FILE` for each build step. That file holds the build's own properties,
-//! such as `teamcity.buildType.id` and `teamcity.buildConfName`, and `teamcity.configuration.properties.file` names a
-//! second file with the configuration parameters, such as `teamcity.build.id` and `teamcity.serverUrl`. Both files are
-//! Java properties files.
+//! The agent sets `TEAMCITY_BUILD_PROPERTIES_FILE` for each build step. That file holds the build's own properties, such
+//! as `teamcity.buildType.id` and `teamcity.buildConfName`. Its `teamcity.configuration.properties.file` names a second
+//! file with the configuration parameters, such as `teamcity.build.id` and `teamcity.serverUrl`. Both files are Java
+//! properties files.
 //!
 //! No parameter names the start of a build. So [Build::start] asks the REST API of the server, with the credentials
 //! that TeamCity gives each build.
@@ -38,9 +38,9 @@ pub(crate) struct Build {
 }
 
 impl Build {
-    /// The build of a step that runs on TeamCity: `Ok(None)` when the step is not a build step of TeamCity
-    /// ([is_build_step]), else the build that the two property files name, or why they do not name one. The server is
-    /// the root of `BUILD_URL` when that is `<root>/build/<build id>`, else `teamcity.serverUrl`.
+    /// The build of a step that runs on TeamCity. It is `Ok(None)` when the step is not a build step of TeamCity
+    /// ([is_build_step]). Else it is the build that the two property files name, or why they do not name one. The
+    /// server is the root of `BUILD_URL` when that is `<root>/build/<build id>`, else `teamcity.serverUrl`.
     pub(crate) fn of_step(variable: &dyn Fn(&str) -> Option<String>) -> Result<Option<Self>, String> {
         if !is_build_step(variable) {
             return Ok(None);
@@ -92,8 +92,8 @@ impl Build {
         }
     }
 
-    /// The page of the published viewer that opens the zip `zip`, a path relative to the artifact directory of the
-    /// traces: `index.html` with the [static_trace_hash] of the zip.
+    /// The page of the published viewer that opens the zip `zip`: `index.html` with the [static_trace_hash] of the zip.
+    /// The zip is a path relative to the artifact directory of the traces.
     pub(crate) fn viewer_link(&self, zip: &str) -> String {
         format!(
             "{}/repository/download/{}/{}:id/{TRACES_ARTIFACT_DIR}/index.html{}",
@@ -194,8 +194,8 @@ fn read_properties(path: &Path) -> Result<BTreeMap<String, String>, String> {
     Ok(parse_properties(&String::from_utf8_lossy(&content)))
 }
 
-/// The entries of a Java properties file. A line that starts with `#` or `!` is a comment, and a line that ends in an
-/// odd number of `\` goes on in the next line. The key ends at the first `=`, `:` or white space that no `\` escapes.
+/// The entries of a Java properties file. A line that starts with `#` or `!` is a comment. A line that ends in an odd
+/// number of `\` goes on in the next line. The key ends at the first `=`, `:` or white space that no `\` escapes.
 /// The escapes are `\t`, `\n`, `\r`, `\f`, `\uXXXX`, and `\` before any other character for the character itself. A
 /// later entry of one key replaces the earlier one.
 pub(super) fn parse_properties(text: &str) -> BTreeMap<String, String> {

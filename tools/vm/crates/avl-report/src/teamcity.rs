@@ -171,8 +171,9 @@ impl Messages {
         out
     }
 
-    /// The messages of a trace that a step after the tests publishes: the zip once, then the bundle, the viewer page
-    /// of the trace, its video and its failure picture as the metadata of its test. The zip holds the bundle at its top.
+    /// The messages of a trace that a step after the tests publishes. The zip is published once. The bundle, the viewer
+    /// page of the trace, its video and its failure picture are the metadata of its test. The zip holds the bundle at
+    /// its top.
     pub fn published(&mut self, trace: &PublishedTrace<'_>) -> Vec<String> {
         let mut out = self.artifact(trace.zip, trace.target);
         let zip_name = trace.zip.rsplit(['/', '\\']).next().unwrap_or(trace.zip);

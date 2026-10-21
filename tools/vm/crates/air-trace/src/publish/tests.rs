@@ -147,8 +147,8 @@ fn testlogs() -> tempfile::TempDir {
     root
 }
 
-/// Each bundle is one zip under its lane, run and class, published once, and named by the case of its own XML, so two
-/// lanes of one test class name two tests. A failed bundle links its video and its last picture. Two scenarios of one
+/// Each bundle is one zip under its lane, run and class, and it is published once. It is named by the case of its own
+/// XML, so two lanes of one test class name two tests. A failed bundle links its video and its last picture. Two scenarios of one
 /// sanitized name get two zips, and the second is reported. A lane without outputs prints nothing. Off TeamCity and
 /// without a viewer, runs.json is published with the zips, and no test gets a viewer link.
 #[test]
@@ -243,8 +243,8 @@ fn testlogs_without_bundles_print_nothing() {
     assert!(stderr.ends_with("; 1 problem(s) above\n"), "{stderr}");
 }
 
-/// `bazel run` starts the binary through a link into the `-opt` configuration of `bazel-out`, as the TeamCity step
-/// and both roots of the checkout lay it out. The testlogs are those of the other configurations. A program outside
+/// `bazel run` starts the binary through a link into the `-opt` configuration of `bazel-out`. The TeamCity step and
+/// both roots of the checkout lay it out so. The testlogs are those of the other configurations. A program outside
 /// a `bazel-out` finds none.
 #[cfg(unix)]
 #[test]
@@ -282,8 +282,8 @@ fn real_path(path: &Path) -> PathBuf {
     real(path)
 }
 
-/// On TeamCity with a viewer, the listing names the build as the origin of each run, the viewer is copied over the
-/// one of an earlier run, and each test links to the viewer page of its trace.
+/// On TeamCity with a viewer, the listing names the build as the origin of each run. The viewer is copied over the one
+/// of an earlier run, and each test links to the viewer page of its trace.
 #[test]
 fn on_team_city_the_listing_names_the_build_and_each_test_links_its_trace() {
     let root = testlogs();
@@ -374,8 +374,8 @@ fn without_a_viewer_the_bundles_and_the_listing_publish_alone() {
     }
 }
 
-/// With a start, a test whose `test.xml` is older is the test of an earlier build: one line on stderr, and nothing of
-/// it is published. The other tests publish.
+/// With a start, a test whose `test.xml` is older is the test of an earlier build. It is one line on stderr, and nothing
+/// of it is published. The other tests publish.
 #[test]
 fn the_tests_of_an_earlier_build_are_skipped() {
     let root = testlogs();
@@ -480,8 +480,8 @@ fn a_lane_is_the_target_and_its_shard() {
     assert_eq!(lane_of(Path::new("")), "tests");
 }
 
-/// Under `bazel run`, a relative path of the command line is taken from the directory where the command ran, and not
-/// from the runfiles tree that the program starts in. An absolute path stays as it is.
+/// Under `bazel run`, a relative path of the command line is taken from the directory where the command ran. It is not
+/// taken from the runfiles tree that the program starts in. An absolute path stays as it is.
 #[test]
 fn a_relative_path_is_taken_from_the_directory_where_bazel_run_ran() {
     let checkout = tempfile::tempdir().unwrap();

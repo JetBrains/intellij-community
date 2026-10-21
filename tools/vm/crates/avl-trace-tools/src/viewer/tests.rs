@@ -27,7 +27,7 @@ fn the_viewer_urls_are_the_site_routes() {
     }
 }
 
-/// The trace link of the static viewer keeps each slash of its zip path and writes the rest as `URLSearchParams` does,
+/// The trace link of the static viewer keeps each slash of its zip path. It writes the rest as `URLSearchParams` does,
 /// as `traceHash` of the site writes it.
 #[test]
 fn the_static_trace_hash_is_the_one_the_viewer_writes() {

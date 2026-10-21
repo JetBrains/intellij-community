@@ -5,8 +5,8 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 
-/// The escapes of `Properties.store`, a comment, a key with an escaped `=`, the three separators, an empty value, a
-/// line that goes on, and a character outside the basic plane as a surrogate pair.
+/// The escapes of `Properties.store`, a comment, a key with an escaped `=`, the three separators and an empty value
+/// read. So do a line that goes on, and a character outside the basic plane as a surrogate pair.
 #[test]
 fn a_properties_file_reads_as_java_writes_it() {
     let text = "#Build properties of Air Plugin UI Tests / 1\n\

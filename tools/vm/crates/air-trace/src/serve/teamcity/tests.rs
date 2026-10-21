@@ -147,8 +147,8 @@ fn the_curl_configuration_carries_the_token_as_one_header() {
     assert_eq!(curl_config("a\"b\\c\nd"), "header = \"Authorization: Bearer a\\\"b\\\\cd\"\n");
 }
 
-/// The client of a build step gives `curl` the build's credentials as one `user` line on its standard input, escaped as
-/// the token is, and a time limit for each request.
+/// The client of a build step gives `curl` the build's credentials as one `user` line on its standard input. The line
+/// is escaped as the token is, and each request has a time limit.
 #[cfg(unix)]
 #[test]
 fn the_agent_client_gives_curl_the_build_credentials_on_its_standard_input() {

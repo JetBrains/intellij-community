@@ -1,15 +1,15 @@
-//! `air-trace teamcity-publish`: the trace bundles of a Bazel test run as TeamCity artifacts, one zip for each bundle,
-//! with a listing and the trace viewer beside them, and a link from each test to its trace.
+//! `air-trace teamcity-publish`: the trace bundles of a Bazel test run as TeamCity artifacts. Each bundle is one zip.
+//! A listing and the trace viewer go beside the zips, and each test links to its trace.
 //!
-//! It runs as a build step after `bazel test`, because a Bazel test reports through its JUnit XML and a service
-//! message of a test does not reach TeamCity. The step reads every `test.xml` under the testlogs, and the bundles of
-//! the `test.outputs` beside it: the directory `air-traces/` and the zip `outputs.zip`, an inner zip included. Each
-//! bundle becomes `<out>/<lane>/<runId>/<TestClass>/<scenario>.zip`, with the media stored. The step prints
-//! `publishArtifacts` for it into `air-traces/<lane>/<runId>/<TestClass>`, and the `testMetadata` of its test: the
-//! trace, the viewer page of the trace, the video, and the failure picture of a failed scenario. The test name is the
-//! one TeamCity took from the XML, `<classname>.<name>`.
+//! It runs as a build step after `bazel test`. A Bazel test reports through its JUnit XML, and a service message of a
+//! test does not reach TeamCity. The step reads every `test.xml` under the testlogs, and the bundles of the
+//! `test.outputs` beside it. These are the directory `air-traces/` and the zip `outputs.zip`, an inner zip included.
+//! Each bundle becomes `<out>/<lane>/<runId>/<TestClass>/<scenario>.zip`, with the media stored. The step prints
+//! `publishArtifacts` for it into `air-traces/<lane>/<runId>/<TestClass>`, and the `testMetadata` of its test. The
+//! metadata are the trace, the viewer page of the trace, the video, and the failure picture of a failed scenario. The
+//! test name is the one TeamCity took from the XML, `<classname>.<name>`.
 //!
-//! The lane is the directory of the `test.xml`, the Bazel target's name, such as `ui_lane_test`, and a shard or run
+//! The lane is the directory of the `test.xml`: the Bazel target's name, such as `ui_lane_test`. A shard or run
 //! directory below it keeps its target's name in front, such as `ui_lane_test/shard_1_of_2`.
 //!
 //! Beside the zips, `<out>/runs.json` lists the published bundles as `GET /__air/runs` of `air-trace serve` lists
@@ -20,9 +20,13 @@
 //! `index.html#/trace?zip=<zip>`. The link needs both the viewer and the build.
 //!
 //! A testlogs tree without bundles prints nothing and writes nothing. Each problem is a line on the standard error and
-//! a warning `message` on the standard output: no testlogs, a testlogs directory that is missing, an output that does
-//! not read, a bundle that cannot be packed, a missing viewer, and build properties that do not read. The rest still
-//! publishes, and the step answers 0, so it never turns a build red. Only a usage error of the command line answers 2.
+//! a warning `message` on the standard output. A problem is no testlogs, a missing testlogs directory, or an output
+//! that does not read. A bundle that cannot be packed, a missing viewer, and build properties that do not read are
+//! problems too. The rest still publishes, and the step answers 0, so it never turns a build red. Only a usage error
+//! of the command line answers 2.
+//!
+//! On TeamCity the step publishes only the tests of this build ([teamcity::Build::start]). It also empties its output
+//! first. So a test or a zip of an earlier build on the agent does not publish again.
 
 use std::collections::{BTreeSet, HashSet};
 use std::fs;
@@ -365,7 +369,7 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
         let lane = &test.lane;
         let mut seen = HashSet::new();
         for bundle in &test.bundles {
-            // One bundle in both `air-traces/` and `outputs.zip` of one test has two ids, so it is known by what its
+            // One bundle in both `air-traces/` and `outputs.zip` of one test has two ids. So it is known by what its
             // manifest says: its run, its class, its scenario and its start. Another test's bundle is its own.
             let identity = (&bundle.run_id, &bundle.test_class, &bundle.scenario, &bundle.started_at);
             if !seen.insert(identity) {
@@ -530,8 +534,8 @@ fn summarize(stderr: &mut dyn Write, published: usize, xmls: usize, out: &Path, 
     )
 }
 
-/// The listing's scenario of a bundle published as the zip `relative`: what its files say, the zip as its source and
-/// its id, and the build as its origin.
+/// The listing's scenario of a bundle published as the zip `relative`. It says what the files of the bundle say, with
+/// the zip as its source and its id, and the build as its origin.
 fn published_scenario(bundle: &Bundle, relative: String, origin: Option<&Origin>) -> Scenario {
     let summary = Summary {
         id: bundle_id(SourceKind::Zip, &relative, ""),

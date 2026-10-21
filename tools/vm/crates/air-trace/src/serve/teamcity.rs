@@ -161,8 +161,8 @@ fn token(variable: &dyn Fn(&str) -> Option<String>) -> Option<String> {
         .filter(|token| !token.is_empty())
 }
 
-/// The client of a build step for the server that its agent talks to: `curl` with the build's own credentials,
-/// `teamcity.auth.userId` and `teamcity.auth.password`, which TeamCity gives each build for its REST API. A request
+/// The client of a build step for the server that its agent talks to. It is `curl` with the build's own credentials,
+/// `teamcity.auth.userId` and `teamcity.auth.password`. TeamCity gives them to each build for its REST API. A request
 /// has 60 seconds.
 pub(crate) fn agent_client(server: &str, user: &str, password: &str) -> Box<dyn Rest> {
     Box::new(agent_curl(PathBuf::from("curl"), server, user, password))

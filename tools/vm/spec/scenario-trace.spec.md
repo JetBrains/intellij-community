@@ -495,11 +495,11 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 - `air-trace teamcity-publish` is the step after `bazel test` on TeamCity. It reads each `test.xml` under the
   testlogs, and the bundles of `test.outputs/air-traces/` and `test.outputs/outputs.zip` beside it. Each bundle
   becomes `<lane>/<runId>/<TestClass>/<scenario>.zip`, where the lane is the Bazel target with its shard directory.
-  The step prints `publishArtifacts` into `air-traces/<lane>/<runId>/<TestClass>` and the `testMetadata` of the
-  test. The metadata are the trace, the viewer link, the video, and the last picture of a failed scenario. The test
-  name is `<classname>.<name>` of the XML beside the bundle, and the messages carry no flow. Two bundles whose names sanitize
-  to one file get `<scenario>.zip` and `<scenario>.2.zip`, and stderr says so. Testlogs without bundles print
-  nothing and write nothing.
+  The step prints `publishArtifacts` into `air-traces/<lane>/<runId>/<TestClass>` and the `testMetadata` of the test.
+  The metadata are the trace, the viewer link, the video, and the last picture of a failed scenario. The test name is
+  `<classname>.<name>` of the XML beside the bundle, and the messages carry no flow. Two bundles whose names sanitize
+  to one file get `<scenario>.zip` and `<scenario>.2.zip`, and stderr says so. Testlogs without bundles print nothing
+  and write nothing.
   [@test] ../crates/air-trace/src/publish/tests.rs (`the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests`)
   [@test] ../crates/air-trace/src/publish/tests.rs (`testlogs_without_bundles_print_nothing`)
   [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_published_trace_names_the_case_of_its_own_xml`)

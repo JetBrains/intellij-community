@@ -127,9 +127,9 @@ fn a_file_is_published_once_into_its_directory() {
     assert_eq!(messages.artifact(file, "air-long-session/SMALL"), Vec::<String>::new());
 }
 
-/// A step after the tests names each trace by the case of its own XML, with the class's package, and adds the zip
-/// once, the bundle, the viewer page, its video and its failure picture, with no flow. Two lanes whose XMLs hold one test name in two
-/// packages name each trace by its own lane's case. A trace whose case its XML lacks keeps its own names.
+/// A step after the tests names each trace by the case of its own XML, with the class's package. It adds the zip once,
+/// and the bundle, the viewer page, its video and its failure picture with no flow. Two lanes whose XMLs hold one test
+/// name in two packages name each trace by its own lane's case. A trace whose case its XML lacks keeps its own names.
 fn published_trace<'a>(scenario: &'a str, zip: &'a str, cases: &'a [(String, String)]) -> PublishedTrace<'a> {
     PublishedTrace {
         zip,
