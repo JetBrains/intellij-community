@@ -84,10 +84,12 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:terminal-completion-tests-terminal-completion-spec",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
-        "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.terminal.completion.tests` end
