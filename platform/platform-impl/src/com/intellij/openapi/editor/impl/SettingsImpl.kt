@@ -144,10 +144,14 @@ class SettingsImpl internal constructor(
   override fun getSoftMargins(): List<Int> = state.softMargins
 
   override fun setSoftMargins(softMargins: List<Int>?) {
-    state.softMargins = softMargins ?: emptyList()
+    if (softMargins == null) {
+      state.clearOverriding(state::softMargins)
+    } else {
+      state.softMargins = softMargins
+    }
   }
 
-  override fun isWrapWhenTypingReachesRightMargin(project: Project): Boolean = state.myWrapWhenTypingReachesRightMargin
+  override fun isWrapWhenTypingReachesRightMargin(project: Project?): Boolean = state.myWrapWhenTypingReachesRightMargin
 
   override fun setWrapWhenTypingReachesRightMargin(value: Boolean) {
     state.myWrapWhenTypingReachesRightMargin = value
@@ -201,8 +205,9 @@ class SettingsImpl internal constructor(
     state.myAutoCodeFoldingEnabled = value
   }
 
-  override fun isUseTabCharacter(project: Project): Boolean {
-    if (project != state.project) {
+  override fun isUseTabCharacter(project: Project?): Boolean {
+    // A project-less editor gives `null` here, and the value of the editor is the answer then.
+    if (project != null && project != state.project) {
       // getting here when `state.project` is `null` is expected case (e.g. in fleet)
       if (state.project != null) {
         LOG.error("called isUseTabCharacter with foreign project")  // investigating such cases

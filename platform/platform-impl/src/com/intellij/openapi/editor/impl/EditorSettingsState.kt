@@ -25,7 +25,6 @@ import com.intellij.openapi.fileTypes.FileTypeEvent
 import com.intellij.openapi.fileTypes.FileTypeListener
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.util.registry.Registry
@@ -164,7 +163,7 @@ class EditorSettingsState(
   var myStickyLinesLimit: Int by property { externalizable().stickyLineLimit }
   var characterGridWidth: Float? by property(null)
 
-  // Settings from AdvancedSettings.
+  // Settings from AdvancedSettings. `EditorFactoryImpl` refreshes all editors when this setting changes.
   var showingSpecialCharacters: Boolean by property { AdvancedSettings.getBoolean(EDITOR_SHOW_SPECIAL_CHARS) }
 
   /**
@@ -320,16 +319,6 @@ class EditorSettingsState(
         }
       },
     )
-    connection?.subscribe(
-      AdvancedSettingsChangeListener.TOPIC,
-      object : AdvancedSettingsChangeListener {
-        override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
-          if (id == EDITOR_SHOW_SPECIAL_CHARS) {
-            refresh(::showingSpecialCharacters)
-          }
-        }
-      },
-    )
     // An editor in a text editor also gets this change through `EditorHighlighterUpdater` and a new highlighter.
     // Other editors get it only here.
     connection?.subscribe(
@@ -373,6 +362,7 @@ class EditorSettingsState(
       EditorSettingsExternalizable.PropNames.PROP_CARET_BLINKING_PERIOD -> refresh(::myCaretBlinkingPeriod)
       EditorSettingsExternalizable.PropNames.PROP_IS_SMOOTH_CARET_BLINKING -> refresh(::myIsSmoothCaretBlinking)
       EditorSettingsExternalizable.PropNames.PROP_IS_RIGHT_MARGIN_SHOWN -> refresh(::myIsRightMarginShown)
+      EditorSettingsExternalizable.PropNames.PROP_IS_HIGHLIGHT_SELECTION_OCCURRENCES -> refresh(::myIsHighlightSelectionOccurrences)
 
       EditorSettingsExternalizable.PropNames.PROP_VERTICAL_SCROLL_OFFSET -> refresh(::myVerticalScrollOffset)
       EditorSettingsExternalizable.PropNames.PROP_VERTICAL_SCROLL_JUMP -> refresh(::myVerticalScrollJump)
@@ -399,7 +389,8 @@ class EditorSettingsState(
       EditorSettingsExternalizable.PropNames.PROP_IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS -> refresh(::myIsMouseClickSelectionHonorsCamelWords)
       EditorSettingsExternalizable.PropNames.PROP_RENAME_VARIABLES_INPLACE -> refresh(::myIsRenameVariablesInplace)
       EditorSettingsExternalizable.PropNames.PROP_REFRAIN_FROM_SCROLLING -> refresh(::myIsRefrainFromScrolling)
-      EditorSettingsExternalizable.PropNames.PROP_USE_SOFT_WRAPS -> refresh(::myUseSoftWraps)
+      EditorSettingsExternalizable.PropNames.PROP_USE_SOFT_WRAPS,
+      EditorSettingsExternalizable.PropNames.PROP_SOFT_WRAP_FILE_MASKS -> refresh(::myUseSoftWraps)
       EditorSettingsExternalizable.PropNames.PROP_USE_CUSTOM_SOFT_WRAP_INDENT -> refresh(::myUseCustomSoftWrapIndent)
       EditorSettingsExternalizable.PropNames.PROP_CUSTOM_SOFT_WRAP_INDENT -> refresh(::myCustomSoftWrapIndent)
       EditorSettingsExternalizable.PropNames.PROP_PRESELECT_RENAME -> refresh(::myRenamePreselect)
