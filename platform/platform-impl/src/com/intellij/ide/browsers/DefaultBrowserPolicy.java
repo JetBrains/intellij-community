@@ -15,6 +15,22 @@
  */
 package com.intellij.ide.browsers;
 
+/**
+ * @deprecated The default browser is a browser now, see {@link WebBrowserManager#getDefaultBrowser()}.
+ * Only old state holds a policy. {@link WebBrowserManager} turns it into a browser on load.
+ */
+@Deprecated
 public enum DefaultBrowserPolicy {
-  SYSTEM, FIRST, ALTERNATIVE
+  /**
+   * {@link SystemDefaultBrowser}.
+   */
+  SYSTEM,
+  /**
+   * The first active browser of the list.
+   */
+  FIRST,
+  /**
+   * The custom command of {@link com.intellij.ide.GeneralLocalSettings#getBrowserPath()}.
+   */
+  ALTERNATIVE
 }

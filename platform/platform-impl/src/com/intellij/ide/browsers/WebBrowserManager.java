@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers;
 
+import com.intellij.ide.GeneralLocalSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
@@ -46,7 +47,8 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   private static final Logger LOG = Logger.getInstance(WebBrowserManager.class);
 
   // default standard browser ID must be constant across all IDE versions on all machines for all users
-  private static final UUID PREDEFINED_CHROME_ID = UUID.fromString("98CA6316-2F89-46D9-A9E5-FA9E2B0625B3");
+  @ApiStatus.Internal
+  public static final UUID PREDEFINED_CHROME_ID = UUID.fromString("98CA6316-2F89-46D9-A9E5-FA9E2B0625B3");
   @ApiStatus.Internal
   public static final UUID PREDEFINED_FIREFOX_ID = UUID.fromString("A7BB68E0-33C0-4D6F-A81A-AAC1FDB870C8");
   private static final UUID PREDEFINED_SAFARI_ID = UUID.fromString("E5120D43-2C3F-47EF-9F26-65E539E05186");
@@ -112,7 +114,8 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   private List<ConfigurableWebBrowser> browsers;
   private boolean showBrowserHover = true;
   private boolean showBrowserHoverXml = false;
-  DefaultBrowserPolicy defaultBrowserPolicy = DefaultBrowserPolicy.SYSTEM;
+  /** The id of the default browser of the list, or {@code null} for {@link SystemDefaultBrowser}. */
+  private @Nullable UUID defaultBrowserId;
   ReloadMode webServerReloadMode = BROWSER_RELOAD_MODE_DEFAULT;
   ReloadMode webPreviewReloadMode = PREVIEW_RELOAD_MODE_DEFAULT;
 
@@ -163,8 +166,65 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     return ArrayUtil.contains(id, PREDEFINED_BROWSER_IDS);
   }
 
+  /**
+   * @deprecated The default browser is a browser now, see {@link #getDefaultBrowser()}.
+   * This method returns {@link DefaultBrowserPolicy#SYSTEM} for {@link SystemDefaultBrowser}.
+   * For a browser of the list, it returns {@link DefaultBrowserPolicy#FIRST}, but the browser is not always the first one.
+   */
+  @Deprecated
   public @NotNull DefaultBrowserPolicy getDefaultBrowserPolicy() {
-    return defaultBrowserPolicy;
+    return getDefaultBrowser() == SystemDefaultBrowser.INSTANCE ? DefaultBrowserPolicy.SYSTEM : DefaultBrowserPolicy.FIRST;
+  }
+
+  /**
+   * Returns the browser that opens a URL when the caller names no browser.
+   * It is the browser of the list that the developer picked, when that browser is active and has a path.
+   * Otherwise, it is {@link SystemDefaultBrowser}.
+   */
+  @ApiStatus.Internal
+  public @NotNull WebBrowser getDefaultBrowser() {
+    if (defaultBrowserId != null) {
+      for (ConfigurableWebBrowser browser : browsers) {
+        if (browser.getId().equals(defaultBrowserId)) {
+          return browser.isActive() && browser.getPath() != null ? browser : SystemDefaultBrowser.INSTANCE;
+        }
+      }
+    }
+    return SystemDefaultBrowser.INSTANCE;
+  }
+
+  /**
+   * Returns the id of the default browser that the developer picked, or {@code null} for {@link SystemDefaultBrowser}.
+   * {@link #getDefaultBrowser()} resolves it.
+   */
+  @ApiStatus.Internal
+  public @Nullable UUID getDefaultBrowserId() {
+    return defaultBrowserId;
+  }
+
+  /**
+   * Stores the default browser. {@code null} and the id of {@link SystemDefaultBrowser} store the system default browser.
+   */
+  @ApiStatus.Internal
+  public void setDefaultBrowserId(@Nullable UUID id) {
+    defaultBrowserId = SystemDefaultBrowser.INSTANCE.getId().equals(id) ? null : id;
+    syncGeneralLocalSettings();
+    incModificationCount();
+  }
+
+  /**
+   * Copies the default browser to {@link GeneralLocalSettings}.
+   * The launcher reads these settings before the components load, and an older IDE version reads them too.
+   * The copy also stops a second migration of the custom command, see {@link #migrateDefaultBrowser(String)}.
+   */
+  private void syncGeneralLocalSettings() {
+    GeneralLocalSettings settings = GeneralLocalSettings.getInstance();
+    WebBrowser defaultBrowser = getDefaultBrowser();
+    settings.setUseDefaultBrowser(defaultBrowser == SystemDefaultBrowser.INSTANCE);
+    String path = defaultBrowser.getPath();
+    if (path != null) {
+      settings.setBrowserPath(path);
+    }
   }
 
   public @NotNull ReloadMode getWebServerReloadMode() {
@@ -178,8 +238,8 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   @Override
   public @NotNull Element getState() {
     Element state = new Element("state");
-    if (defaultBrowserPolicy != DefaultBrowserPolicy.SYSTEM) {
-      state.setAttribute("default", StringUtil.toLowerCase(defaultBrowserPolicy.name()));
+    if (defaultBrowserId != null) {
+      state.setAttribute("defaultBrowser", defaultBrowserId.toString());
     }
     if (webServerReloadMode != BROWSER_RELOAD_MODE_DEFAULT) {
       state.setAttribute("serverReloadMode", StringUtil.toLowerCase(webServerReloadMode.name()));
@@ -356,10 +416,6 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   @Override
   public void loadState(@NotNull Element element) {
     try {
-      String defaultValue = element.getAttributeValue("default");
-      if (!StringUtil.isEmpty(defaultValue)) {
-          defaultBrowserPolicy = DefaultBrowserPolicy.valueOf(StringUtil.toUpperCase(defaultValue));
-      }
       String serverReload = element.getAttributeValue("serverReloadMode");
       if (!StringUtil.isEmpty(serverReload)) {
         webServerReloadMode = ReloadMode.valueOf(StringUtil.toUpperCase(serverReload));
@@ -373,10 +429,24 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
       LOG.warn(e);
     }
 
+    String defaultBrowser = element.getAttributeValue("defaultBrowser");
+    defaultBrowserId = defaultBrowser == null ? null : parseUuid(defaultBrowser);
+    if (SystemDefaultBrowser.INSTANCE.getId().equals(defaultBrowserId)) {
+      defaultBrowserId = null;
+    }
+
     showBrowserHover = !"false".equals(element.getAttributeValue("showHover"));
     showBrowserHoverXml = "true".equals(element.getAttributeValue("showHoverXml"));
 
     setList(element.getChildren(BROWSER_TAG).isEmpty() ? readBrowsers(element) : readLegacyBrowsers(element));
+    if (defaultBrowser == null) {
+      migrateDefaultBrowser(element.getAttributeValue("default"));
+    }
+  }
+
+  @Override
+  public void noStateLoaded() {
+    migrateDefaultBrowser(null);
   }
 
   private static @NotNull List<ConfigurableWebBrowser> readBrowsers(@NotNull Element element) {
@@ -555,6 +625,73 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     return list;
   }
 
+  /**
+   * Picks the default browser that the old settings open, when the state names no default browser.
+   * The old settings are the {@code default} policy of the state and the flag of {@link GeneralLocalSettings#getUseDefaultBrowser()}.
+   * <p>
+   * The old launcher opened the first active browser for the {@code FIRST} policy.
+   * For another policy, it followed the flag: the system default browser, or the custom command without the flag.
+   * The policy and the flag can disagree after an import of the settings, so the flag decides here, as in the old launcher.
+   */
+  private void migrateDefaultBrowser(@Nullable String legacyPolicy) {
+    if ("first".equalsIgnoreCase(legacyPolicy)) {
+      useFirstActiveBrowser();
+    }
+    else if (!GeneralLocalSettings.getInstance().getUseDefaultBrowser()) {
+      migrateCustomCommand();
+    }
+    else {
+      return;
+    }
+    syncGeneralLocalSettings();
+  }
+
+  private void useFirstActiveBrowser() {
+    WebBrowser firstActiveBrowser = getFirstActiveBrowser();
+    defaultBrowserId = firstActiveBrowser == null ? null : firstActiveBrowser.getId();
+  }
+
+  /**
+   * Makes the custom command of {@link GeneralLocalSettings#getBrowserPath()} a browser of the list, and makes it the default.
+   * It reuses a browser that the command names by id or by family, or an active browser with the same path.
+   * Without a command, or with an Internet Explorer command, the default becomes {@link SystemDefaultBrowser}.
+   * The macOS {@code open} command gives the first active browser, because the old launcher opened that browser for it.
+   */
+  private void migrateCustomCommand() {
+    String path = StringUtil.nullize(GeneralLocalSettings.getInstance().getBrowserPath(), true);
+    if (path == null || StringUtil.containsIgnoreCase(PathUtil.getFileName(path), "iexplore")) {
+      defaultBrowserId = null;
+      return;
+    }
+    if (SystemInfo.isMac && "open".equals(path)) {
+      useFirstActiveBrowser();
+      return;
+    }
+    WebBrowser browser = findBrowserById(path);
+    if (browser == null) {
+      browser = ContainerUtil.find(getActiveBrowsers(), it -> path.equals(it.getPath()));
+    }
+    if (browser == null) {
+      BrowserFamily family = guessFamily(path);
+      browser = addBrowser(UUID.randomUUID(), family, PathUtil.getFileName(path), path, true,
+                           family == null ? null : family.createBrowserSpecificSettings());
+    }
+    defaultBrowserId = browser == SystemDefaultBrowser.INSTANCE ? null : browser.getId();
+  }
+
+  /**
+   * @return the family that the file name of the command names, or {@code null} for an unknown program
+   */
+  private static @Nullable BrowserFamily guessFamily(@NotNull String path) {
+    String fileName = StringUtil.toLowerCase(PathUtil.getFileName(path));
+    if (fileName.contains("firefox")) return BrowserFamily.FIREFOX;
+    if (fileName.contains("safari")) return BrowserFamily.SAFARI;
+    for (String chromium : List.of("chrome", "chromium", "edge", "opera", "brave", "vivaldi", "yandex")) {
+      if (fileName.contains(chromium)) return BrowserFamily.CHROME;
+    }
+    return null;
+  }
+
   public @NotNull List<WebBrowser> getBrowsers() {
     return Collections.unmodifiableList(browsers);
   }
@@ -641,6 +778,9 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     }
 
     UUID id = parseUuid(idOrFamilyName);
+    if (SystemDefaultBrowser.INSTANCE.getId().equals(id)) {
+      return SystemDefaultBrowser.INSTANCE;
+    }
     if (id == null) {
       for (ConfigurableWebBrowser browser : browsers) {
         BrowserFamily family = browser.getFamily();

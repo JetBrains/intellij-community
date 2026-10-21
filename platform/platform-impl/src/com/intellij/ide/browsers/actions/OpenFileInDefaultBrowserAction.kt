@@ -1,10 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers.actions
 
-import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.BrowserLauncherAppless
-import com.intellij.ide.browsers.DefaultBrowserPolicy
+import com.intellij.ide.browsers.SystemDefaultBrowser
 import com.intellij.ide.browsers.WebBrowser
 import com.intellij.ide.browsers.WebBrowserManager
 import com.intellij.ide.browsers.WebBrowserXmlService
@@ -47,25 +46,10 @@ class OpenFileInDefaultBrowserAction : DumbAwareAction() {
 
 fun findUsingBrowser(): WebBrowser? {
   val browserManager = WebBrowserManager.getInstance()
-  val defaultBrowserPolicy = browserManager.defaultBrowserPolicy
-  if (defaultBrowserPolicy == DefaultBrowserPolicy.FIRST || defaultBrowserPolicy == DefaultBrowserPolicy.SYSTEM && !BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy()) {
-    return browserManager.firstActiveBrowser
+  val defaultBrowser = browserManager.defaultBrowser
+  if (defaultBrowser !== SystemDefaultBrowser) {
+    return defaultBrowser
   }
-  else if (defaultBrowserPolicy == DefaultBrowserPolicy.ALTERNATIVE) {
-    val path = GeneralSettings.getInstance().browserPath
-    if (!path.isNullOrBlank()) {
-      val browser = browserManager.findBrowserById(path)
-      if (browser == null) {
-        for (item in browserManager.activeBrowsers) {
-          if (path == item.path) {
-            return item
-          }
-        }
-      }
-      else {
-        return browser
-      }
-    }
-  }
-  return null
+  return if (BrowserLauncherAppless.canUseSystemDefaultBrowserPolicy()) null else browserManager.firstActiveBrowser
 }
+

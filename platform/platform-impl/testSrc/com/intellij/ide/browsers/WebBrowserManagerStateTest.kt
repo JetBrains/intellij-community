@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
+import com.intellij.ide.GeneralLocalSettings
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.junit5.TestApplication
 import org.jdom.Element
@@ -8,6 +9,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.util.UUID
 
@@ -15,6 +18,26 @@ import java.util.UUID
 class WebBrowserManagerStateTest {
   private val chromeId = UUID.fromString("98CA6316-2F89-46D9-A9E5-FA9E2B0625B3")
   private val firefoxId = WebBrowserManager.PREDEFINED_FIREFOX_ID
+  private val safariId = UUID.fromString("E5120D43-2C3F-47EF-9F26-65E539E05186")
+  private val operaId = UUID.fromString("53E2F627-B1A7-4DFA-BFA7-5B83CC034776")
+  private val edgeId = UUID.fromString("37cae5b9-e8b2-4949-9172-aafa37fbc09c")
+
+  private var useDefaultBrowser = true
+  private var browserPath = ""
+
+  @BeforeEach
+  fun saveGeneralLocalSettings() {
+    val settings = GeneralLocalSettings.getInstance()
+    useDefaultBrowser = settings.useDefaultBrowser
+    browserPath = settings.browserPath
+  }
+
+  @AfterEach
+  fun restoreGeneralLocalSettings() {
+    val settings = GeneralLocalSettings.getInstance()
+    settings.useDefaultBrowser = useDefaultBrowser
+    settings.browserPath = browserPath
+  }
 
   @Test
   fun `default state writes nothing`() {
@@ -135,6 +158,194 @@ class WebBrowserManagerStateTest {
     val activeIds = manager.activeBrowsers.map { it.id }
     assertEquals(chromeId, activeIds.first())
     assertTrue(firefoxId in activeIds)
+  }
+
+  @Test
+  fun `system default browser is not in the list`() {
+    val manager = WebBrowserManager()
+
+    assertTrue(manager.defaultBrowser === SystemDefaultBrowser)
+    assertTrue(manager.browsers.none { it === SystemDefaultBrowser })
+    assertTrue(manager.findBrowserById(SystemDefaultBrowser.id.toString()) === SystemDefaultBrowser)
+  }
+
+  @Test
+  fun `picked default browser survives reload`() {
+    val manager = WebBrowserManager()
+    manager.setDefaultBrowserId(firefoxId)
+
+    assertEquals("""<state defaultBrowser="$firefoxId" />""", write(manager))
+    assertEquals(firefoxId, reload(manager).defaultBrowser.id)
+    assertFalse(GeneralLocalSettings.getInstance().useDefaultBrowser)
+  }
+
+  @Test
+  fun `picking the system default browser writes nothing`() {
+    val manager = WebBrowserManager()
+    manager.setDefaultBrowserId(firefoxId)
+    manager.setDefaultBrowserId(SystemDefaultBrowser.id)
+
+    assertEquals("<state />", write(manager))
+    assertTrue(GeneralLocalSettings.getInstance().useDefaultBrowser)
+  }
+
+  @Test
+  fun `inactive or unknown default browser gives the system default browser`() {
+    val inactive = load("""
+      <state defaultBrowser="$firefoxId">
+        <inactive>
+          <browser id="$firefoxId" />
+        </inactive>
+      </state>
+    """)
+    assertTrue(inactive.defaultBrowser === SystemDefaultBrowser)
+
+    val unknown = load("""<state defaultBrowser="${UUID.randomUUID()}" />""")
+    assertTrue(unknown.defaultBrowser === SystemDefaultBrowser)
+  }
+
+  @Test
+  fun `first listed policy becomes the first active browser`() {
+    val manager = load("""
+      <state default="first">
+        <active>
+          <browser id="$firefoxId" />
+          <browser id="$chromeId" />
+        </active>
+      </state>
+    """)
+
+    assertEquals(firefoxId, manager.defaultBrowser.id)
+    assertEquals("""<state defaultBrowser="$firefoxId">""", write(manager).lineSequence().first())
+  }
+
+  @Test
+  fun `first listed policy without an active browser becomes the system default browser`() {
+    GeneralLocalSettings.getInstance().useDefaultBrowser = false
+    val manager = load("""
+      <state default="first">
+        <inactive>
+          ${listOf(chromeId, firefoxId, safariId, operaId, edgeId).joinToString("") { "<browser id=\"$it\" />" }}
+        </inactive>
+      </state>
+    """)
+
+    assertTrue(manager.defaultBrowser === SystemDefaultBrowser)
+    assertTrue(GeneralLocalSettings.getInstance().useDefaultBrowser)
+  }
+
+  @Test
+  fun `custom command becomes a new browser of the list`() {
+    useCustomCommand("/opt/my-browser/run")
+    val manager = load("""<state default="alternative" />""")
+
+    val browser = manager.defaultBrowser
+    assertEquals("run", browser.name)
+    assertEquals("/opt/my-browser/run", browser.path)
+    assertNull(browser.family)
+    assertTrue(manager.isActive(browser))
+    assertTrue(browser in manager.browsers)
+  }
+
+  @Test
+  fun `custom command migrates once`() {
+    useCustomCommand("/opt/my-browser/run")
+    val manager = load("""<state default="alternative" />""")
+
+    val reloaded = reload(manager)
+    assertEquals(manager.browsers.size, reloaded.browsers.size)
+    assertEquals(manager.defaultBrowser.id, reloaded.defaultBrowser.id)
+  }
+
+  @Test
+  fun `custom command of a known browser gets its family`() {
+    useCustomCommand("/opt/firefox-dev/firefox")
+    val manager = load("""
+      <state default="alternative">
+        <inactive>
+          <browser id="$firefoxId" />
+        </inactive>
+      </state>
+    """)
+
+    val browser = manager.defaultBrowser
+    assertEquals("/opt/firefox-dev/firefox", browser.path)
+    assertEquals(BrowserFamily.FIREFOX, browser.family)
+  }
+
+  @Test
+  fun `custom command reuses an active browser with the same path`() {
+    useCustomCommand("/usr/bin/my-chrome")
+    val manager = load("""
+      <state default="alternative">
+        <browsers>
+          <browser id="$chromeId" path="/usr/bin/my-chrome" />
+        </browsers>
+      </state>
+    """)
+
+    assertEquals(chromeId, manager.defaultBrowser.id)
+    assertEquals(WebBrowserManager().browsers.size, manager.browsers.size)
+  }
+
+  @Test
+  fun `custom command reuses the browser that it names by id`() {
+    useCustomCommand(firefoxId.toString())
+    val manager = load("""<state default="alternative" />""")
+
+    assertEquals(firefoxId, manager.defaultBrowser.id)
+  }
+
+  @Test
+  fun `Internet Explorer custom command becomes the system default browser`() {
+    useCustomCommand("C:\\Program Files\\Internet Explorer\\IExplore.exe")
+    val manager = load("""<state default="alternative" />""")
+
+    assertTrue(manager.defaultBrowser === SystemDefaultBrowser)
+    assertTrue(GeneralLocalSettings.getInstance().useDefaultBrowser)
+    assertEquals(WebBrowserManager().browsers.size, manager.browsers.size)
+  }
+
+  @Test
+  fun `custom path policy with the system default flag becomes the system default browser`() {
+    GeneralLocalSettings.getInstance().browserPath = "/opt/my-browser/run"
+    GeneralLocalSettings.getInstance().useDefaultBrowser = true
+    val manager = load("""<state default="alternative" />""")
+
+    assertTrue(manager.defaultBrowser === SystemDefaultBrowser)
+    assertEquals(WebBrowserManager().browsers.size, manager.browsers.size)
+  }
+
+  @Test
+  fun `system default policy without the system default flag becomes the custom command`() {
+    useCustomCommand("/opt/my-browser/run")
+    val manager = load("""<state />""")
+
+    assertEquals("/opt/my-browser/run", manager.defaultBrowser.path)
+  }
+
+  @Test
+  fun `missing state without the system default flag becomes the custom command`() {
+    useCustomCommand("/opt/my-browser/run")
+    val manager = WebBrowserManager()
+    manager.noStateLoaded()
+
+    assertEquals("/opt/my-browser/run", manager.defaultBrowser.path)
+  }
+
+  @Suppress("DEPRECATION")
+  @Test
+  fun `deprecated policy getter reports the system default or a browser of the list`() {
+    val manager = WebBrowserManager()
+    assertEquals(DefaultBrowserPolicy.SYSTEM, manager.defaultBrowserPolicy)
+
+    manager.setDefaultBrowserId(firefoxId)
+    assertEquals(DefaultBrowserPolicy.FIRST, manager.defaultBrowserPolicy)
+  }
+
+  private fun useCustomCommand(path: String) {
+    GeneralLocalSettings.getInstance().browserPath = path
+    GeneralLocalSettings.getInstance().useDefaultBrowser = false
   }
 
   private fun WebBrowserManager.browser(id: UUID): WebBrowser = browsers.first { it.id == id }
