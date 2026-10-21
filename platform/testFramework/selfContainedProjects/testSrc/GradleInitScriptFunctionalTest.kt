@@ -3,8 +3,6 @@ package com.intellij.platform.testFramework.selfContainedProjects
 
 import com.intellij.openapi.application.PathManager
 import kotlinx.coroutines.runBlocking
-import org.hamcrest.MatcherAssert.assertThat
-import org.hamcrest.Matchers.greaterThan
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.extractFileToCacheLocation
 import org.jetbrains.intellij.build.downloadFileToCacheLocation
@@ -124,7 +122,7 @@ class GradleInitScriptFunctionalTest {
                cacheDir.walk().joinToString("\n") { it.toString() })
 
     val fetchCount = proxy.fetchCount
-    assertThat(fetchCount, greaterThan(50))
+    assertTrue(fetchCount > 50, "Expected more than 50 fetches, but was $fetchCount")
     assertEquals(0, proxy.hitCount)
 
     // Run gradle build with missing proxy, build should succeed
