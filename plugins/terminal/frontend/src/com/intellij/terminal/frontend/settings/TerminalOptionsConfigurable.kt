@@ -49,6 +49,7 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.terminal.TerminalUiSettingsManager
+import com.intellij.terminal.frontend.action.TerminalInsertInlineCompletionAction
 import com.intellij.terminal.frontend.toolwindow.impl.migration.askForFeedbackIfSwitchedBackToClassicTerminal
 import com.intellij.terminal.updateActionShortcut
 import com.intellij.ui.DocumentAdapter
@@ -231,6 +232,19 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
           if (inlineCompletionAvailable) {
             inlineCompletionSettingsProvider.addSettingsRow(this, project)
+
+            row {
+              actionShortcutCombobox(
+                labelText = message("terminal.inline.completion.shortcut.insert"),
+                presets = listOf(
+                  RIGHT_ARROW_SHORTCUT_PRESET,
+                  TAB_SHORTCUT_PRESET,
+                  ENTER_SHORTCUT_PRESET,
+                  SHIFT_RIGHT_ARROW_SHORTCUT_PRESET,
+                ),
+                actionId =  TerminalInsertInlineCompletionAction.ACTION_ID
+              )
+            }
           }
         }.bottomGap(BottomGap.NONE)
           .visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED)
@@ -858,6 +872,16 @@ private fun getActionShortcuts(actionId: String): List<Shortcut> {
   val keymapManager = KeymapManager.getInstance() ?: return emptyList()
   return keymapManager.activeKeymap.getShortcuts(actionId).toList()
 }
+
+private val RIGHT_ARROW_SHORTCUT_PRESET = ShortcutPreset(
+  KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), null),
+  "→"
+)
+
+private val SHIFT_RIGHT_ARROW_SHORTCUT_PRESET = ShortcutPreset(
+  KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, InputEvent.SHIFT_DOWN_MASK), null),
+  "Shift →"
+)
 
 private val TAB_SHORTCUT_PRESET = ShortcutPreset(
   KeyboardShortcut(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), null),
