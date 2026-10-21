@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.MarkupIterator
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
-import com.intellij.openapi.editor.impl.marker.MarkerSpec
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
@@ -42,7 +41,7 @@ internal class SnapshotHighlighterStorage(
     highlightersById.clear()
   }
 
-  fun add(highlighter: SnapshotRangeHighlighterImpl, startOffset: Int, endOffset: Int, spec: MarkerSpec) {
+  fun add(highlighter: SnapshotRangeHighlighterImpl, startOffset: Int, endOffset: Int, spec: Byte) {
     assertMayChange()
     val markerId = highlighter.idForStorage()
     val markerReference = SnapshotMarkerEngineImpl.createMarkerReference(highlighter, retainStrong = true)
@@ -52,7 +51,7 @@ internal class SnapshotHighlighterStorage(
     var inserted = false
     try {
       inserted = rootStore.updateCurrentRoot(CompoundPMarkerRoot.empty()) {
-        it.insert(markerId, startOffset, endOffset, spec, flavorFlags, markerReference)
+        it.insert(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, policy = highlighter.policy)
       }
     }
     finally {

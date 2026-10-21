@@ -8,7 +8,9 @@ import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.event.MarkupModelListener
+import com.intellij.openapi.editor.impl.marker.MarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
+import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
@@ -55,22 +57,21 @@ class SnapshotRangeHighlighterImplTest {
       val root = CompoundPMarkerRoot.empty().insertMany(entries) as CompoundPMarkerRoot
       val ids = LongArrayList(longArrayOf(line.id, exact.id, line.id, Long.MAX_VALUE))
 
-      Assertions.assertThat(root.exactRangeRoot.resolve(exact.id, TextRange.EMPTY_RANGE)).isEqualTo(
-        original.exactRangeRoot.resolve(exact.id, TextRange.EMPTY_RANGE)
+      Assertions.assertThat(root.exactRangeRoot.resolve(exact.id)).isEqualTo(
+        original.exactRangeRoot.resolve(exact.id)
       )
-      Assertions.assertThat(root.linesInRangeRoot.resolve(line.id, TextRange.EMPTY_RANGE)).isEqualTo(
-        original.linesInRangeRoot.resolve(line.id, TextRange.EMPTY_RANGE)
+      Assertions.assertThat(root.linesInRangeRoot.resolve(line.id)).isEqualTo(
+        original.linesInRangeRoot.resolve(line.id)
       )
       val removed = root.removeMany(ids)
       val purged = root.purgeMany(ids)
       Assertions.assertThat(removed.isEmpty()).isTrue()
       Assertions.assertThat(purged.isEmpty()).isTrue()
       for (entry in entries) {
-        val absentRange = TextRange.EMPTY_RANGE
-        Assertions.assertThat(removed.resolve(entry.markerId, absentRange)).isEqualTo(
-          root.remove(entry.markerId).resolve(entry.markerId, absentRange)
+        Assertions.assertThat(removed.resolve(entry.markerId)).isEqualTo(
+          root.remove(entry.markerId).resolve(entry.markerId)
         )
-        Assertions.assertThat(purged.resolve(entry.markerId, absentRange)).isEqualTo(absentRange)
+        Assertions.assertThat(purged.resolve(entry.markerId)).isEqualTo(PMarkerResolution.ABSENT)
       }
       Assertions.assertThat(root.isEmpty()).isFalse()
       Assertions.assertThat(root.insertMany(emptyList())).isSameAs(root)
@@ -149,7 +150,7 @@ class SnapshotRangeHighlighterImplTest {
           Assertions.assertThat(highlighter.isValid).isFalse()
           Assertions.assertThat(model.allHighlighters).doesNotContain(highlighter)
           val root = checkNotNull(model.rootStore().root(document.core.snapshot()))
-          Assertions.assertThat(root.resolve(highlighter.id, TextRange.EMPTY_RANGE).isAbsent).isTrue()
+          Assertions.assertThat(PMarkerResolution.isAbsent(root.resolve(highlighter.id))).isTrue()
           model.overlappingIterator(0, document.textLength).use { iterator ->
             Assertions.assertThat(iterator.asSequence().toList()).doesNotContain(highlighter)
           }
@@ -196,9 +197,9 @@ class SnapshotRangeHighlighterImplTest {
       Assertions.assertThat(disposedRenderer).isTrue()
       Assertions.assertThat(model.allHighlighters).isEmpty()
       val root = checkNotNull(model.rootStore().root(document.core.snapshot()))
-      val resolution = root.resolve(highlighter.id, TextRange.EMPTY_RANGE)
-      Assertions.assertThat(resolution.isAbsent).isTrue()
-      Assertions.assertThat(resolution).isEqualTo(TextRange(1, 2))
+      val resolution = root.resolve(highlighter.id)
+      Assertions.assertThat(PMarkerResolution.isAbsent(resolution)).isTrue()
+      Assertions.assertThat(resolution).isEqualTo(PMarkerResolution.ABSENT)
     }
     finally {
       model.dispose()
@@ -256,7 +257,7 @@ class SnapshotRangeHighlighterImplTest {
       Assertions.assertThat(highlighter.isValid).isFalse()
       Assertions.assertThat(model.allHighlighters).isEmpty()
       val root = checkNotNull(model.rootStore().root(document.core.snapshot()))
-      Assertions.assertThat(root.resolve(highlighter.id, TextRange.EMPTY_RANGE).isAbsent).isTrue()
+      Assertions.assertThat(PMarkerResolution.isAbsent(root.resolve(highlighter.id))).isTrue()
     }
     finally {
       model.dispose()
@@ -289,7 +290,7 @@ class SnapshotRangeHighlighterImplTest {
       Assertions.assertThatThrownBy { highlighter.dispose() }.isSameAs(failure)
 
       val root = checkNotNull(model.rootStore().root(document.core.snapshot()))
-      Assertions.assertThat(root.resolve(highlighter.id, TextRange.EMPTY_RANGE).isAbsent).isEqualTo(!beforeRemoval)
+      Assertions.assertThat(PMarkerResolution.isAbsent(root.resolve(highlighter.id))).isEqualTo(!beforeRemoval)
       Assertions.assertThat(highlighter.isValid).isEqualTo(beforeRemoval)
       Assertions.assertThat(beforeCalls).isEqualTo(1)
       Assertions.assertThat(afterCalls).isEqualTo(if (beforeRemoval) 0 else 1)
@@ -305,7 +306,7 @@ class SnapshotRangeHighlighterImplTest {
       Assertions.assertThat(highlighter.isValid).isFalse()
       Assertions.assertThat(model.allHighlighters).isEmpty()
       val removedRoot = checkNotNull(model.rootStore().root(document.core.snapshot()))
-      Assertions.assertThat(removedRoot.resolve(highlighter.id, TextRange.EMPTY_RANGE).isAbsent).isTrue()
+      Assertions.assertThat(PMarkerResolution.isAbsent(removedRoot.resolve(highlighter.id))).isTrue()
     }
     finally {
       model.dispose()
@@ -332,28 +333,28 @@ class SnapshotRangeHighlighterImplTest {
       val lineMarker = lineHighlighter as SnapshotRangeMarkerImpl
       val rootStore = model.rootStore()
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(exactMarker, rootStore.rootReference(initialSnapshot).get()))
-        .extracting("startOffset", "endOffset").containsExactly(4, 12)
+        .isEqualTo(PMarkerResolution.valid(4, 12))
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(lineMarker, rootStore.rootReference(initialSnapshot).get()))
-        .extracting("startOffset", "endOffset").containsExactly(6, 12)
+        .isEqualTo(PMarkerResolution.valid(6, 12))
 
       val insertedBefore = markerStores.applyPatch(initialSnapshot, textPatch(0, 0, "x\n"))
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(exactMarker, rootStore.rootReference(insertedBefore).get()))
-        .extracting("startOffset", "endOffset").containsExactly(6, 14)
+        .isEqualTo(PMarkerResolution.valid(6, 14))
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(lineMarker, rootStore.rootReference(insertedBefore).get()))
-        .extracting("startOffset", "endOffset").containsExactly(8, 14)
+        .isEqualTo(PMarkerResolution.valid(8, 14))
 
       val replacedText = "prefix\none\n  target\nlast"
       val replaced = markerStores.applyPatch(initialSnapshot, textPatch(0, initialSnapshot.text().length(), replacedText))
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(exactMarker, rootStore.rootReference(replaced).get()))
-        .extracting("startOffset", "endOffset").containsExactly(11, 19)
+        .isEqualTo(PMarkerResolution.valid(11, 19))
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(lineMarker, rootStore.rootReference(replaced).get()))
-        .extracting("startOffset", "endOffset").containsExactly(13, 19)
+        .isEqualTo(PMarkerResolution.valid(13, 19))
 
       val deleted = markerStores.applyPatch(initialSnapshot, textPatch(4, 13, ""))
-      Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(exactMarker, rootStore.rootReference(deleted).get()).isValid)
-        .isFalse()
-      Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(lineMarker, rootStore.rootReference(deleted).get()).isValid)
-        .isFalse()
+      val deletedExactResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(exactMarker, rootStore.rootReference(deleted).get())
+      val deletedLineResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(lineMarker, rootStore.rootReference(deleted).get())
+      Assertions.assertThat(PMarkerResolution.isValid(deletedExactResolution)).isFalse()
+      Assertions.assertThat(PMarkerResolution.isValid(deletedLineResolution)).isFalse()
     }
     finally {
       model.dispose()
@@ -404,11 +405,11 @@ class SnapshotRangeHighlighterImplTest {
       val secondBranch = markerStores.applyPatch(initialSnapshot, textPatch(0, 0, "YYYY"))
 
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(highlighter, rootStore.rootReference(initialSnapshot).get()))
-        .extracting("startOffset", "endOffset").containsExactly(2, 4)
+        .isEqualTo(PMarkerResolution.valid(2, 4))
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(highlighter, rootStore.rootReference(firstBranch).get()))
-        .extracting("startOffset", "endOffset").containsExactly(3, 5)
+        .isEqualTo(PMarkerResolution.valid(3, 5))
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(highlighter, rootStore.rootReference(secondBranch).get()))
-        .extracting("startOffset", "endOffset").containsExactly(6, 8)
+        .isEqualTo(PMarkerResolution.valid(6, 8))
     }
     finally {
       model.dispose()
@@ -430,9 +431,9 @@ class SnapshotRangeHighlighterImplTest {
       val secondRootStore = secondModel.rootStore()
 
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(first, firstRootStore.rootReference(snapshot).get()))
-        .extracting("startOffset", "endOffset").containsExactly(1, 2)
+        .isEqualTo(PMarkerResolution.valid(1, 2))
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(second, secondRootStore.rootReference(snapshot).get()))
-        .extracting("startOffset", "endOffset").containsExactly(4, 5)
+        .isEqualTo(PMarkerResolution.valid(4, 5))
       Assertions.assertThat(firstModel.allHighlighters).containsExactly(firstHighlighter)
       Assertions.assertThat(secondModel.allHighlighters).containsExactly(secondHighlighter)
     }
@@ -547,7 +548,7 @@ class SnapshotRangeHighlighterImplTest {
 
       val root = checkNotNull(model.rootStore().root(document.core.snapshot()))
       val entry = root.overlappingIterator(0, document.textLength, 0).next()
-      Assertions.assertThat(entry.spec.isGreedyToRight).isTrue()
+      Assertions.assertThat(MarkerSpec.isGreedyToRight(entry.spec)).isTrue()
     }
     finally {
       model.dispose()
@@ -669,7 +670,7 @@ class SnapshotRangeHighlighterImplTest {
       val transformed = CountDownLatch(1)
       val commit = CountDownLatch(1)
       val pausingRoot = object : PMarkerRoot by root.exactRangeRoot {
-        override fun updateSpec(markerId: Long, spec: MarkerSpec): PMarkerRoot {
+        override fun updateSpec(markerId: Long, spec: Byte): PMarkerRoot {
           Assertions.assertThat(Thread.holdsLock(document.snapshotMarkerStores)).isFalse()
           val result = root.exactRangeRoot.updateSpec(markerId, spec)
           transformed.countDown()
@@ -695,7 +696,7 @@ class SnapshotRangeHighlighterImplTest {
 
       assertValidHighlighter(highlighter, 3, 5)
       val entry = marker.currentRootReference().get().overlappingIterator(0, document.textLength, 0).next()
-      Assertions.assertThat(entry.spec.isGreedyToRight).isTrue()
+      Assertions.assertThat(MarkerSpec.isGreedyToRight(entry.spec)).isTrue()
       Assertions.assertThat(highlighter.isGreedyToRight).isTrue()
     }
     finally {
@@ -824,10 +825,11 @@ class SnapshotRangeHighlighterImplTest {
           markerId: Long,
           startOffset: Int,
           endOffset: Int,
-          spec: MarkerSpec,
+          spec: Byte,
           flavorFlags: Byte,
           markerReference: SnapshotMarkerReference?,
           measure: Int,
+          policy: MarkerPolicy,
         ): PMarkerRoot {
           insertedIds.add(markerId)
           throw failure

@@ -28,27 +28,31 @@ internal class SnapshotCaretMarkerStorage(
 
   fun nextMarkerId(): Long = SnapshotMarkerEngineImpl.nextMarkerId()
 
-  fun positionSpec(): MarkerSpec = POSITION_SPEC
+  fun positionSpec(): Byte = POSITION_SPEC
 
-  fun selectionSpec(): MarkerSpec = SELECTION_SPEC
+  fun selectionSpec(): Byte = SELECTION_SPEC
 
-  fun add(marker: SnapshotRangeMarkerImpl, startOffset: Int, endOffset: Int, spec: MarkerSpec) {
+  fun positionPolicy(): MarkerPolicy = CaretPositionMarkerPolicy
+
+  fun selectionPolicy(): MarkerPolicy = CaretSelectionMarkerPolicy
+
+  fun add(marker: SnapshotRangeMarkerImpl, startOffset: Int, endOffset: Int, spec: Byte) {
     rootStore.updateRoot(currentSnapshot()) {
-      it.insert(marker.id, startOffset, endOffset, spec, marker.flavorFlags)
+      it.insert(marker.id, startOffset, endOffset, spec, marker.flavorFlags, policy = marker.policy)
     }
   }
 
-  fun relocate(marker: SnapshotRangeMarkerImpl, offset: Int, spec: MarkerSpec) {
+  fun relocate(marker: SnapshotRangeMarkerImpl, offset: Int, spec: Byte) {
     rootStore.updateRoot(currentSnapshot()) {
-      it.remove(marker.id).insert(marker.id, offset, offset, spec, marker.flavorFlags)
+      it.remove(marker.id).insert(marker.id, offset, offset, spec, marker.flavorFlags, policy = marker.policy)
     }
   }
 
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 
   companion object {
-    private val POSITION_SPEC: MarkerSpec = MarkerSpec(isGreedyToLeft = false, isGreedyToRight = false, policy = CaretPositionMarkerPolicy)
-    private val SELECTION_SPEC: MarkerSpec = MarkerSpec(isGreedyToLeft = false, isGreedyToRight = false, policy = CaretSelectionMarkerPolicy)
+    private val POSITION_SPEC: Byte = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+    private val SELECTION_SPEC: Byte = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
   }
 }
 

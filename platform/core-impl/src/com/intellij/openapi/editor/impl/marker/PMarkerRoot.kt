@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentPatch
-import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
 import it.unimi.dsi.fastutil.longs.LongList
 import java.util.function.LongConsumer
@@ -31,12 +30,12 @@ interface PMarkerRoot {
   /**
    * Resolves [markerId] in this root.
    *
-   * @return [PMarkerResolution.Valid], [PMarkerResolution.Invalid], or
-   * [PMarkerResolution.Absent]
-   * @param absentRange range to return when this root has never observed [markerId]; removed markers use their stored
-   * last range instead
+   * @return offsets and state packed by [PMarkerResolution], or [PMarkerResolution.ABSENT] when the marker is absent or removed
    */
-  fun resolve(markerId: Long, absentRange: TextRange): PMarkerResolution
+  fun resolve(markerId: Long): Long
+
+  /** Returns the invalidation reason, or `null` when the marker is valid or absent. */
+  fun invalidationReason(markerId: Long): String?
 
   /**
    * Derives the marker root for the document state after [patch].
@@ -71,19 +70,21 @@ interface PMarkerRoot {
    *
    * A duplicate [markerId] should cause [IllegalArgumentException] or a more
    * specific implementation-defined exception.
-   *
+   * [spec] a marker flags, see [MarkerSpec]
    * [flavorFlags] is the value obtained from the marker's `RangeMarkerEx.getFlavorFlags()` method at insertion time.
    * [markerReference] provides the marker handle with either weak or strong ownership. Standalone roots may omit it.
    * [measure] contributes to prefix aggregate queries.
+   * [policy] defines how document edits transform the marker.
    */
   fun insert(
     markerId: Long,
     startOffset: Int,
     endOffset: Int,
-    spec: MarkerSpec,
+    spec: Byte,
     flavorFlags: Byte,
     markerReference: SnapshotMarkerReference? = null,
     measure: Int = 0,
+    policy: MarkerPolicy = DefaultMarkerPolicy,
   ): PMarkerRoot
 
   /**
@@ -101,11 +102,11 @@ interface PMarkerRoot {
   fun updateFlavor(markerId: Long, flavorFlags: Byte): PMarkerRoot
 
   /**
-   * Replaces the specification of a valid marker, preserving its range, flavor flags, and handle reference.
+   * Replaces the specification of a valid marker, preserving its range, flavor flags, handle reference, and policy.
    *
    * If [markerId] is absent or invalid, this method returns the receiver unchanged.
    */
-  fun updateSpec(markerId: Long, spec: MarkerSpec): PMarkerRoot
+  fun updateSpec(markerId: Long, spec: Byte): PMarkerRoot
 
   /**
    * Replaces the measure of a valid marker, preserving its range and other properties.
@@ -115,8 +116,7 @@ interface PMarkerRoot {
   fun updateMeasure(markerId: Long, measure: Int): PMarkerRoot
 
   /**
-   * Removes the marker's endpoint anchors and secondary-index entries, retaining an absent tombstone with its last
-   * range.
+   * Removes the marker's endpoint anchors and secondary-index entries, retaining an absent tombstone without offsets.
    *
    * If [markerId] is absent, this method should return the receiver
    * unchanged.
@@ -126,7 +126,7 @@ interface PMarkerRoot {
   fun remove(markerId: Long): PMarkerRoot
 
   /**
-   * Removes [markerIds] and retains each marker's last range, as [remove] does.
+   * Removes [markerIds] and retains absent tombstones, as [remove] does.
    * Repeated or absent IDs have no effect. An unchanged batch returns the receiver.
    */
   fun removeMany(markerIds: LongList): PMarkerRoot
@@ -164,8 +164,8 @@ interface PMarkerRoot {
     /** Gives the exclusive end stored in the tree node. */
     val nodeEnd: Int,
 
-    /** Defines how document edits transform the marker. */
-    val spec: MarkerSpec,
+    /** Controls the marker boundaries at insertions. see [MarkerSpec]*/
+    val spec: Byte,
 
     /** Selects query categories that the root uses for subtree pruning. */
     val flavorFlags: Byte,
@@ -175,6 +175,9 @@ interface PMarkerRoot {
 
     /** Contributes this integer to prefix aggregates. Non-empty markers must use the identity measure, zero. */
     val measure: Int = 0,
+
+    /** Defines how document edits transform the marker. */
+    val policy: MarkerPolicy = DefaultMarkerPolicy,
   ) {
     init {
       require(measure == 0 || nodeStart == nodeEnd) {

@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.openapi.vfs.VirtualFile
 import it.unimi.dsi.fastutil.longs.LongArrayList
 import java.lang.ref.Reference
@@ -61,11 +62,14 @@ class VirtualFileMarkerRoot private constructor(
     val resolvedMarkers = ArrayList<SnapshotLazyRangeMarker>()
     sourceRoot.processAllRangeMarkers { entry, ancestorDelta ->
       val marker = entry.markerReference?.get() as? SnapshotLazyRangeMarker ?: return@processAllRangeMarkers true
-      val range = marker.initialRange(document, tabSize) ?: return@processAllRangeMarkers true
+      val range = marker.initialRange(document, tabSize)
+      if (range == PMarkerResolution.UNRESOLVED) return@processAllRangeMarkers true
+      val startOffset = TextRangeScalarUtil.startOffset(range)
+      val endOffset = TextRangeScalarUtil.endOffset(range)
       resolvedMarkers.add(marker)
-      if (range.startOffset != entry.nodeStart + ancestorDelta || range.endOffset != entry.nodeEnd + ancestorDelta) {
+      if (startOffset != entry.nodeStart + ancestorDelta || endOffset != entry.nodeEnd + ancestorDelta) {
         val entries = restoredEntries ?: ArrayList<PMarkerRoot.MarkerEntry>().also { restoredEntries = it }
-        entries.add(entry.copy(nodeStart = range.startOffset, nodeEnd = range.endOffset))
+        entries.add(entry.copy(nodeStart = startOffset, nodeEnd = endOffset))
       }
       true
     }

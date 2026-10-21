@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.FoldingListener
+import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
@@ -38,11 +39,13 @@ class SnapshotFoldingModelTest {
       val region = addFoldRegion(editor, 1, 4) as SnapshotRangeMarkerImpl
       val rootStore = editor.foldingModel.rootStore()
       val shiftedSnapshot = document.snapshotMarkerStores.applyPatch(initialSnapshot, textPatch(0, 0, "xy"))
+      val initialResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(region, rootStore.rootReference(initialSnapshot).get())
+      val shiftedResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(region, rootStore.rootReference(shiftedSnapshot).get())
 
       BranchState(
         usesSnapshotStorage = editor.foldingModel.isUsingSnapshotFoldingStorage,
-        initialStart = SnapshotMarkerEngineImpl.resolveRangeMarker(region, rootStore.rootReference(initialSnapshot).get()).startOffset,
-        shiftedStart = SnapshotMarkerEngineImpl.resolveRangeMarker(region, rootStore.rootReference(shiftedSnapshot).get()).startOffset,
+        initialStart = PMarkerResolution.startOffset(initialResolution),
+        shiftedStart = PMarkerResolution.startOffset(shiftedResolution),
       )
     }
 
@@ -192,6 +195,7 @@ class SnapshotFoldingModelTest {
               return laterRegion
             }
           },
+          policy = entry.policy,
         )
       }
 

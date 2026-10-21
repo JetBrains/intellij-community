@@ -6,8 +6,6 @@ import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerDeltaProcessor
 import com.intellij.openapi.editor.impl.marker.PMarkerRootImpl.Companion.NULL_NODE
-import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.TextRangeScalarUtil.endOffset
 import com.intellij.openapi.util.TextRangeScalarUtil.startOffset
 import com.intellij.openapi.util.TextRangeScalarUtil.toScalarRange
 import com.intellij.util.Processor
@@ -65,22 +63,25 @@ open class PMarkerRootImpl private constructor(
   /**
    * Advances a valid cached resolution across one direct edit without traversing the tree.
    * Reuses unchanged offsets before the affected area and adds the edit delta after it.
-   * Returns `null` when the source identity differs, metadata is unavailable, or the range touches the affected area.
+   * Returns [PMarkerResolution.UNRESOLVED] when the source identity differs or edit metadata is unavailable.
+   * Ranges that touch the affected area also require normal resolution.
    * Invalid and absent resolutions also require normal resolution.
    *
    * @param previousIdentity The root identity associated with [resolution].
    * @param resolution The cached resolution before the edit.
    */
-  internal fun advanceResolution(previousIdentity: Any, resolution: PMarkerResolution): PMarkerResolution? {
-    val update = resolutionUpdate ?: return null
-    if (update.previousIdentity !== previousIdentity || !resolution.isValid) return null
+  internal fun advanceResolution(previousIdentity: Any, resolution: Long): Long {
+    val update = resolutionUpdate ?: return PMarkerResolution.UNRESOLVED
+    if (update.previousIdentity !== previousIdentity || !PMarkerResolution.isValid(resolution)) return PMarkerResolution.UNRESOLVED
+    val startOffset = PMarkerResolution.startOffset(resolution)
+    val endOffset = PMarkerResolution.endOffset(resolution)
     return when {
-      resolution.endOffset < update.unchangedPrefixEnd -> resolution
-      resolution.startOffset > update.editEnd -> {
+      endOffset < update.unchangedPrefixEnd -> resolution
+      startOffset > update.editEnd -> {
         if (update.delta == 0) resolution
-        else PMarkerResolution.Valid(resolution.startOffset + update.delta, resolution.endOffset + update.delta)
+        else PMarkerResolution.valid(startOffset + update.delta, endOffset + update.delta)
       }
-      else -> null
+      else -> PMarkerResolution.UNRESOLVED
     }
   }
 
@@ -88,38 +89,33 @@ open class PMarkerRootImpl private constructor(
 
   override fun isEmpty(): Boolean = rootId == NULL_NODE
 
-  override fun resolve(markerId: Long, absentRange: TextRange): PMarkerResolution {
+  override fun resolve(markerId: Long): Long {
     val cached = cachedOffsets?.get(markerId) ?: UNCACHED_OFFSETS
     if (cached != UNCACHED_OFFSETS) {
-      return PMarkerResolution.Valid(startOffset(cached), endOffset(cached))
+      return cached
     }
     return when (val state = states.getUnchecked(markerId)) {
-      null -> PMarkerResolution.Absent(absentRange.startOffset, absentRange.endOffset)
-      is AbsentNode -> PMarkerResolution.Absent(state.startOffset, state.endOffset)
-      is InvalidNode -> PMarkerResolution.Invalid(
-        state.reason,
-        state.startOffset,
-        state.endOffset,
-      )
-      is ValidNode -> {
-        val offsets = absoluteOffsets(state, markerId)
-        PMarkerResolution.Valid(startOffset(offsets), endOffset(offsets))
-      }
+      null, AbsentNode -> PMarkerResolution.ABSENT
+      is InvalidNode -> PMarkerResolution.invalid(state.startOffset, state.endOffset)
+      is ValidNode -> absoluteOffsets(state, markerId)
     }
   }
+
+  override fun invalidationReason(markerId: Long): String? = (states.getUnchecked(markerId) as? InvalidNode)?.reason
 
   override fun insert(
     markerId: Long,
     startOffset: Int,
     endOffset: Int,
-    spec: MarkerSpec,
+    spec: Byte,
     flavorFlags: Byte,
     markerReference: SnapshotMarkerReference?,
     measure: Int,
+    policy: MarkerPolicy,
   ): PMarkerRoot {
     val editor = MapBatchEditor(states, persistentMarkerCount)
     val newRoot = editor.insert(
-      rootId, MarkerEntry(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, measure)
+      rootId, MarkerEntry(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, measure, policy)
     )
     return PMarkerRootImpl(newRoot, editor.build(), editor.persistentMarkerCount())
   }
@@ -152,15 +148,12 @@ open class PMarkerRootImpl private constructor(
     return PMarkerRootImpl(rootId, editor.build(), persistentMarkerCount)
   }
 
-  override fun updateSpec(markerId: Long, spec: MarkerSpec): PMarkerRoot {
+  override fun updateSpec(markerId: Long, spec: Byte): PMarkerRoot {
     val state = states.getUnchecked(markerId) as? ValidNode ?: return this
     return PMarkerRootImpl(
       rootId,
       states.put(markerId, state.copy(entry = state.entry.copy(spec = spec))),
-      incrementPersistentMarkerCount(
-        decrementPersistentMarkerCount(persistentMarkerCount, state.entry.spec.policy),
-        spec.policy,
-      ),
+      persistentMarkerCount,
       cachedOffsets,
       resolutionCacheIdentity,
       resolutionUpdate,
@@ -188,35 +181,34 @@ open class PMarkerRootImpl private constructor(
   override fun remove(markerId: Long): PMarkerRoot {
     return when (val state = states.getUnchecked(markerId)) {
       null -> this
-      is AbsentNode -> this
+      AbsentNode -> this
       is InvalidNode -> PMarkerRootImpl(
         rootId,
-        states.put(markerId, AbsentNode(state.startOffset, state.endOffset)),
+        states.put(markerId, AbsentNode),
         persistentMarkerCount,
       )
       is ValidNode -> {
         val offsets = absoluteOffsets(state, markerId)
         val startOffset = startOffset(offsets)
-        val endOffset = endOffset(offsets)
         val key = PositionKey(startOffset, markerId)
         val editor = MapBatchEditor(states, persistentMarkerCount)
         val newRoot = removeByKey(editor, rootId, key)
-        editor.putAbsent(markerId, startOffset, endOffset)
+        editor.putAbsent(markerId)
         editor.setParent(newRoot, NULL_NODE)
         PMarkerRootImpl(
           newRoot,
           editor.build(),
-          decrementPersistentMarkerCount(persistentMarkerCount, state.entry.spec.policy),
+          decrementPersistentMarkerCount(persistentMarkerCount, state.entry.policy),
         )
       }
     }
   }
 
-  override fun removeMany(markerIds: LongList): PMarkerRoot = removeMarkers(markerIds, retainRange = true)
+  override fun removeMany(markerIds: LongList): PMarkerRoot = removeMarkers(markerIds, retainTombstones = true)
 
-  override fun purgeMany(markerIds: LongList): PMarkerRoot = removeMarkers(markerIds, retainRange = false)
+  override fun purgeMany(markerIds: LongList): PMarkerRoot = removeMarkers(markerIds, retainTombstones = false)
 
-  private fun removeMarkers(markerIds: LongList, retainRange: Boolean): PMarkerRoot {
+  private fun removeMarkers(markerIds: LongList, retainTombstones: Boolean): PMarkerRoot {
     if (markerIds.isEmpty()) return this
     val editor = MapBatchEditor(states, persistentMarkerCount)
     var newRoot = rootId
@@ -224,10 +216,10 @@ open class PMarkerRootImpl private constructor(
       val markerId = markerIds.getLong(i)
       when (val state = editor.state(markerId)) {
         null -> Unit
-        is AbsentNode -> if (!retainRange) editor.remove(markerId)
+        AbsentNode -> if (!retainTombstones) editor.remove(markerId)
         is InvalidNode -> {
-          if (retainRange) {
-            editor.putAbsent(markerId, state.startOffset, state.endOffset)
+          if (retainTombstones) {
+            editor.putAbsent(markerId)
           }
           else {
             editor.remove(markerId)
@@ -236,15 +228,14 @@ open class PMarkerRootImpl private constructor(
         is ValidNode -> {
           val offsetDelta = editor.ancestorDelta(state)
           val startOffset = state.entry.nodeStart + offsetDelta
-          val endOffset = state.entry.nodeEnd + offsetDelta
           newRoot = removeByKey(editor, newRoot, PositionKey(startOffset, markerId))
-          if (retainRange) {
-            editor.putAbsent(markerId, startOffset, endOffset)
+          if (retainTombstones) {
+            editor.putAbsent(markerId)
           }
           else {
             editor.remove(markerId)
           }
-          editor.removePolicy(state.entry.spec.policy)
+          editor.removePolicy(state.entry.policy)
           editor.setParent(newRoot, NULL_NODE)
         }
       }
@@ -391,7 +382,7 @@ open class PMarkerRootImpl private constructor(
           subtreeAggregate = entry.measure,
         )
       )
-      editor.addPolicy(entry.spec.policy)
+      editor.addPolicy(entry.policy)
       mergedRootId = insertAvl(editor, mergedRootId, entry.markerId)
     }
     editor.setParent(mergedRootId, NULL_NODE)
@@ -679,10 +670,7 @@ open class PMarkerRootImpl private constructor(
     val endOffset: Int,
   ) : StoredNode
 
-  private data class AbsentNode(
-    val startOffset: Int,
-    val endOffset: Int,
-  ) : StoredNode
+  private object AbsentNode : StoredNode
 
   private data class PositionKey(val startOffset: Int, val markerId: Long) : Comparable<PositionKey> {
     constructor(entry: MarkerEntry) : this(entry.nodeStart, entry.markerId)
@@ -728,7 +716,7 @@ open class PMarkerRootImpl private constructor(
         "endOffset must not precede startOffset, but got: (${entry.nodeStart}, ${entry.nodeEnd})"
       }
       val existingState = state(markerId)
-      require(existingState == null || existingState is AbsentNode) { "Marker $markerId already exists: $existingState" }
+      require(existingState == null || existingState === AbsentNode) { "Marker $markerId already exists: $existingState" }
       putValid(
         markerId,
         ValidNode(
@@ -743,7 +731,7 @@ open class PMarkerRootImpl private constructor(
           subtreeAggregate = entry.measure,
         )
       )
-      addPolicy(entry.spec.policy)
+      addPolicy(entry.policy)
       val newRoot = insertAvl(this, rootId, markerId)
       setParent(newRoot, NULL_NODE)
       return newRoot
@@ -765,19 +753,15 @@ open class PMarkerRootImpl private constructor(
     }
 
     fun putInvalid(entry: MarkerEntry, reason: String) {
-      persistentMarkerCount = decrementPersistentMarkerCount(persistentMarkerCount, entry.spec.policy)
+      persistentMarkerCount = decrementPersistentMarkerCount(persistentMarkerCount, entry.policy)
       builder.put(
         entry.markerId,
         InvalidNode(reason, entry.nodeStart, entry.nodeEnd)
       )
     }
 
-    fun putAbsent(
-      markerId: Long,
-      startOffset: Int,
-      endOffset: Int,
-    ) {
-      builder.put(markerId, AbsentNode(startOffset, endOffset))
+    fun putAbsent(markerId: Long) {
+      builder.put(markerId, AbsentNode)
     }
 
     fun remove(markerId: Long) {
@@ -1283,7 +1267,7 @@ open class PMarkerRootImpl private constructor(
       return processTransformResult(
         editor,
         entry,
-        entry.spec.policy.afterRetarget(entry, afterText),
+        entry.policy.afterRetarget(entry, afterText),
         invalidatedMarkerConsumer,
         affectedMarkerConsumer,
       )
@@ -1301,7 +1285,7 @@ open class PMarkerRootImpl private constructor(
       }
       editor.recordTransform(entry, result)
       if (result.errorReason == null) {
-        editor.replacePolicy(entry.spec.policy, result.entry.spec.policy)
+        editor.replacePolicy(entry.policy, result.entry.policy)
         affectedMarkerConsumer.accept(entry.markerId)
       }
       else {
@@ -1393,7 +1377,7 @@ open class PMarkerRootImpl private constructor(
       return processTransformResult(
         editor,
         entry,
-        entry.spec.policy.transform(entry, patch, beforeText, afterText),
+        entry.policy.transform(entry, patch, beforeText, afterText),
         invalidatedMarkerConsumer,
         affectedMarkerConsumer,
       )

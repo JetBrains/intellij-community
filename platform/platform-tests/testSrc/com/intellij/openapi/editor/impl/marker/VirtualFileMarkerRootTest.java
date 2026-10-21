@@ -111,7 +111,7 @@ final class VirtualFileMarkerRootTest {
       fileRoot.updateCurrentRoot$intellij_platform_core_impl(root -> {
         updateStarted.countDown();
         await(finishUpdate);
-        return root.insert(markerId, 1, 2, new MarkerSpec(false, false), (byte)0, null, 0);
+        return root.insert(markerId, 1, 2, MarkerSpec.create(false, false), (byte)0, null, 0, DefaultMarkerPolicy.INSTANCE);
       })
     );
     new Thread(updateTask, "file marker root update").start();

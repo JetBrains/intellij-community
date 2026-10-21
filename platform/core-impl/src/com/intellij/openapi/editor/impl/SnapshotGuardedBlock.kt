@@ -6,24 +6,24 @@ import com.intellij.openapi.editor.impl.marker.MarkerSpec
 import com.intellij.openapi.editor.impl.marker.PersistentMarkerPolicy
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
-import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.TextRangeScalarUtil
 
 /** A guarded block whose offsets are stored in the snapshot marker engine. */
 internal class SnapshotGuardedBlock private constructor(
     document: DocumentImpl,
     fileRoot: VirtualFileMarkerRoot?,
     markerId: Long,
-    initialSpec: MarkerSpec,
-    initialRange: TextRange,
-) : SnapshotRangeMarkerImpl(document, fileRoot, markerId, initialSpec, initialRange) {
+    initialSpec: Byte,
+    initialRange: Long,
+) : SnapshotRangeMarkerImpl(document, fileRoot, markerId, initialSpec, initialRange, PersistentMarkerPolicy) {
   override fun getFlavorFlags(): Byte = GuardedBlock.GUARD_BLOCK_FLAVOR_FLAG
 
   companion object {
     @JvmStatic
     fun create(document: DocumentImpl, startOffset: Int, endOffset: Int): SnapshotGuardedBlock {
       val snapshot = document.core.snapshot()
-      val spec = MarkerSpec(isGreedyToLeft = false, isGreedyToRight = false, policy = PersistentMarkerPolicy)
-      val initialRange = TextRange(startOffset, endOffset)
+      val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+      val initialRange = TextRangeScalarUtil.toScalarRange(startOffset, endOffset)
       return SnapshotMarkerEngineImpl.createRangeMarker(
         document,
         snapshot,

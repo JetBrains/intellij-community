@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.util.DocumentEventUtil
 import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentLongObjectMap
@@ -49,18 +49,17 @@ internal class SnapshotInlayStorage(
     renderer: R,
   ): SnapshotInlineInlayMarker<R> {
     val markerId = SnapshotMarkerEngineImpl.nextMarkerId()
-    val spec = MarkerSpec(
+    val spec = MarkerSpec.create(
       isGreedyToLeft = false,
       isGreedyToRight = false,
       isStickingToRight = relatesToPrecedingText,
-      policy = InlineInlayMarkerPolicy,
     )
     val marker = SnapshotInlineInlayMarker(
       storage = this,
       editor = editor,
       markerId = markerId,
       spec = spec,
-      initialRange = TextRange(offset, offset),
+      initialRange = TextRangeScalarUtil.toScalarRange(offset, offset),
       relatesToPrecedingText = relatesToPrecedingText,
       priority = priority,
       renderer = renderer,
@@ -76,7 +75,7 @@ internal class SnapshotInlayStorage(
     renderer: R,
   ): SnapshotAfterLineEndInlayMarker<R> {
     val markerId = SnapshotMarkerEngineImpl.nextMarkerId()
-    val spec = MarkerSpec(
+    val spec = MarkerSpec.create(
       isGreedyToLeft = false,
       isGreedyToRight = false,
       isStickingToRight = relatesToPrecedingText,
@@ -86,7 +85,7 @@ internal class SnapshotInlayStorage(
       editor = editor,
       markerId = markerId,
       spec = spec,
-      initialRange = TextRange(offset, offset),
+      initialRange = TextRangeScalarUtil.toScalarRange(offset, offset),
       relatesToPrecedingText = relatesToPrecedingText,
       softWrappable = softWrappable,
       priority = priority,
@@ -104,7 +103,7 @@ internal class SnapshotInlayStorage(
     renderer: R,
   ): SnapshotBlockInlayMarker<R> {
     val markerId = SnapshotMarkerEngineImpl.nextMarkerId()
-    val spec = MarkerSpec(
+    val spec = MarkerSpec.create(
       isGreedyToLeft = false,
       isGreedyToRight = false,
       isStickingToRight = relatesToPrecedingText,
@@ -114,7 +113,7 @@ internal class SnapshotInlayStorage(
       editor = editor,
       markerId = markerId,
       spec = spec,
-      initialRange = TextRange(offset, offset),
+      initialRange = TextRangeScalarUtil.toScalarRange(offset, offset),
       relatesToPrecedingText = relatesToPrecedingText,
       showAbove = showAbove,
       showWhenFolded = showWhenFolded,
@@ -186,11 +185,11 @@ internal class SnapshotInlayStorage(
     rootStore.updateRoot(currentSnapshot()) { it.updateMeasure(marker.id, heightInPixels) }
   }
 
-  private fun <T : SnapshotInlayMarker<*>> register(marker: T, offset: Int, spec: MarkerSpec, measure: Int = 0): T {
+  private fun <T : SnapshotInlayMarker<*>> register(marker: T, offset: Int, spec: Byte, measure: Int = 0): T {
     check(markersById.putIfAbsent(marker.id, marker) == null) { "Inlay marker ${marker.id} is already registered" }
     val markerReference = SnapshotMarkerEngineImpl.createMarkerReference(marker, retainStrong = true)
     rootStore.updateRoot(currentSnapshot()) {
-      it.insert(marker.id, offset, offset, spec, marker.flavorFlags, markerReference, measure)
+      it.insert(marker.id, offset, offset, spec, marker.flavorFlags, markerReference, measure, marker.policy)
     }
     return marker
   }
@@ -254,11 +253,12 @@ internal abstract class SnapshotInlayMarker<R : EditorCustomElementRenderer>(
   private val storage: SnapshotInlayStorage,
   private val editor: EditorImpl,
   markerId: Long,
-  spec: MarkerSpec,
-  initialRange: TextRange,
+  spec: Byte,
+  initialRange: Long,
   private val relatesToPrecedingText: Boolean,
   private val renderer: R,
-) : SnapshotRangeMarkerImpl(storage.document, storage.rootStore, markerId, spec, initialRange), EditorInlay<R> {
+  policy: MarkerPolicy = DefaultMarkerPolicy,
+) : SnapshotRangeMarkerImpl(storage.document, storage.rootStore, markerId, spec, initialRange, policy), EditorInlay<R> {
   private var widthInPixels: Int = 0
 
   @Volatile
@@ -303,12 +303,13 @@ internal class SnapshotInlineInlayMarker<R : EditorCustomElementRenderer>(
   storage: SnapshotInlayStorage,
   editor: EditorImpl,
   markerId: Long,
-  spec: MarkerSpec,
-  initialRange: TextRange,
+  spec: Byte,
+  initialRange: Long,
   relatesToPrecedingText: Boolean,
   private val priority: Int,
   renderer: R,
-) : SnapshotInlayMarker<R>(storage, editor, markerId, spec, initialRange, relatesToPrecedingText, renderer), InlineInlay<R> {
+) : SnapshotInlayMarker<R>(storage, editor, markerId, spec, initialRange, relatesToPrecedingText, renderer, InlineInlayMarkerPolicy),
+    InlineInlay<R> {
   init {
     doUpdate()
   }
@@ -335,8 +336,8 @@ internal class SnapshotAfterLineEndInlayMarker<R : EditorCustomElementRenderer>(
   storage: SnapshotInlayStorage,
   editor: EditorImpl,
   markerId: Long,
-  spec: MarkerSpec,
-  initialRange: TextRange,
+  spec: Byte,
+  initialRange: Long,
   relatesToPrecedingText: Boolean,
   private val softWrappable: Boolean,
   private val priority: Int,
@@ -372,8 +373,8 @@ internal class SnapshotBlockInlayMarker<R : EditorCustomElementRenderer>(
   private val storage: SnapshotInlayStorage,
   editor: EditorImpl,
   markerId: Long,
-  spec: MarkerSpec,
-  initialRange: TextRange,
+  spec: Byte,
+  initialRange: Long,
   relatesToPrecedingText: Boolean,
   private val showAbove: Boolean,
   private val showWhenFolded: Boolean,

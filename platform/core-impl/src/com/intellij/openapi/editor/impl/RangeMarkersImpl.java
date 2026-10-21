@@ -62,15 +62,15 @@ public final class RangeMarkersImpl implements RangeMarkers {
                                                   int endOffset,
                                                   boolean surviveOnExternalChange) {
     if (myRangeMarkerTree == null) {
-      MarkerSpec spec = new MarkerSpec(false, false, false,
-                                       surviveOnExternalChange ? PersistentMarkerPolicy.INSTANCE : DefaultMarkerPolicy.INSTANCE);
+      byte spec = MarkerSpec.create(false, false);
       return SnapshotMarkerEngineImpl.INSTANCE.createRangeMarker(
         hostDocument,
         ((DocumentImpl)hostDocument).getCore().snapshot(),
         startOffset,
         endOffset,
         spec,
-        false
+        false,
+        surviveOnExternalChange ? PersistentMarkerPolicy.INSTANCE : DefaultMarkerPolicy.INSTANCE
       );
     }
     if (surviveOnExternalChange) {

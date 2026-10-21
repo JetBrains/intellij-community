@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
-import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentLongObjectMap
 import it.unimi.dsi.fastutil.longs.LongArrayList
@@ -35,11 +35,13 @@ internal class SnapshotFocusRegionStorage(val document: DocumentImpl) {
     require(endOffset <= snapshot.text().length()) { "Focus region exceeds the snapshot length" }
 
     val markerId = SnapshotMarkerEngineImpl.nextMarkerId()
-    val spec = MarkerSpec(isGreedyToLeft = false, isGreedyToRight = false, isStickingToRight = true)
-    val region = SnapshotFocusRegion(this, markerId, spec, TextRange(startOffset, endOffset))
+    val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false, isStickingToRight = true)
+    val region = SnapshotFocusRegion(this, markerId, spec, TextRangeScalarUtil.toScalarRange(startOffset, endOffset))
     val regionReference = RegionReference(region, regionQueue)
     check(regionsById.putIfAbsent(markerId, regionReference) == null) { "Focus region $markerId is already registered" }
-    rootStore.updateRoot(snapshot) { it.insert(markerId, startOffset, endOffset, spec, region.flavorFlags, regionReference) }
+    rootStore.updateRoot(snapshot) {
+      it.insert(markerId, startOffset, endOffset, spec, region.flavorFlags, regionReference, policy = region.policy)
+    }
     return region
   }
 
@@ -113,8 +115,8 @@ internal class SnapshotFocusRegionStorage(val document: DocumentImpl) {
 internal class SnapshotFocusRegion(
   private val storage: SnapshotFocusRegionStorage,
   markerId: Long,
-  spec: MarkerSpec,
-  initialRange: TextRange,
+  spec: Byte,
+  initialRange: Long,
 ) : SnapshotRangeMarkerImpl(storage.document, storage.rootStore, markerId, spec, initialRange) {
   override fun afterDispose() {
     storage.afterDisposed(this)

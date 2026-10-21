@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
+import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.PersistentMarkerPolicy
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
@@ -67,11 +68,11 @@ internal class DocumentLineDiffTest {
       initialSnapshot,
       markerStart,
       markerStart + 3,
-      MarkerSpec(
+      MarkerSpec.create(
         isGreedyToLeft = false,
         isGreedyToRight = false,
-        policy = PersistentMarkerPolicy,
       ),
+      policy = PersistentMarkerPolicy,
     ) as SnapshotRangeMarkerImpl
     val patch = DocumentPatch.simple(
       startOffset = 0,
@@ -87,8 +88,8 @@ internal class DocumentLineDiffTest {
     runConcurrently {
       val snapshot = markerStores.applyPatch(initialSnapshot, patch)
       val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, rootStore.rootReference(snapshot).get())
-      assertEquals(expectedStart, resolution.startOffset)
-      assertEquals(expectedStart + 3, resolution.endOffset)
+      assertEquals(expectedStart, PMarkerResolution.startOffset(resolution))
+      assertEquals(expectedStart + 3, PMarkerResolution.endOffset(resolution))
     }
   }
 
@@ -115,17 +116,17 @@ internal class DocumentLineDiffTest {
         initialSnapshot,
         markerStart,
         markerStart + 3,
-        MarkerSpec(
+        MarkerSpec.create(
           isGreedyToLeft = false,
           isGreedyToRight = false,
-          policy = PersistentMarkerPolicy,
         ),
+        policy = PersistentMarkerPolicy,
       ) as SnapshotRangeMarkerImpl
 
       val snapshot = document.snapshotMarkerStores.applyPatch(initialSnapshot, patch)
       val root = document.rangeMarkers.rootStore().rootReference(snapshot).get()
       val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, root)
-      return resolution.startOffset to resolution.endOffset
+      return PMarkerResolution.startOffset(resolution) to PMarkerResolution.endOffset(resolution)
     }
 
     val sharedPatch = createPatch()

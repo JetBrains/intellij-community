@@ -67,7 +67,8 @@ public class SnapshotMarkerEngineBenchmark {
         startOffset,
         startOffset + MARKER_LENGTH,
         NON_GREEDY_SPEC,
-        false
+        false,
+        DefaultMarkerPolicy.INSTANCE
       );
       state.createdMarkers[index] = marker;
       checksum ^= marker.getId();
@@ -187,7 +188,8 @@ public class SnapshotMarkerEngineBenchmark {
           startOffset,
           startOffset + MARKER_LENGTH,
           NON_GREEDY_SPEC,
-          false
+          false,
+          DefaultMarkerPolicy.INSTANCE
         );
       }
 
@@ -215,7 +217,7 @@ public class SnapshotMarkerEngineBenchmark {
           (long)index + 1L,
           startOffset,
           startOffset + MARKER_LENGTH,
-          NON_GREEDY_SPEC, (byte)0, null, 0
+          NON_GREEDY_SPEC, (byte)0, null, 0, DefaultMarkerPolicy.INSTANCE
         );
       }
       root = currentRoot;
@@ -255,7 +257,8 @@ public class SnapshotMarkerEngineBenchmark {
           startOffset,
           startOffset + MARKER_LENGTH,
           NON_GREEDY_SPEC,
-          false
+          false,
+          DefaultMarkerPolicy.INSTANCE
         );
       }
 
@@ -328,7 +331,7 @@ public class SnapshotMarkerEngineBenchmark {
   private static final int DOCUMENT_LENGTH = MARKER_COUNT * MARKER_STRIDE + MARKER_LENGTH;
 
   private static final String BENCHMARK_TEXT = createBenchmarkText();
-  private static final MarkerSpec NON_GREEDY_SPEC = new MarkerSpec(false, false, false);
+  private static final byte NON_GREEDY_SPEC = MarkerSpec.create(false, false, false);
 
   /**
    * Runs this benchmark class through JMH. Command-line arguments are forwarded directly to the JMH runner. When no

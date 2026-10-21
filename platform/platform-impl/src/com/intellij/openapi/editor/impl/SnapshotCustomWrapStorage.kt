@@ -14,7 +14,7 @@ import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
-import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.util.containers.ConcurrentLongObjectMap
 import it.unimi.dsi.fastutil.longs.LongList
 
@@ -34,16 +34,15 @@ internal class SnapshotCustomWrapStorage(
   fun create(offset: Int, indent: Int, priority: Int): SnapshotCustomWrap {
     val snapshot = currentSnapshot()
     val markerId = SnapshotMarkerEngineImpl.nextMarkerId()
-    val spec = MarkerSpec(
+    val spec = MarkerSpec.create(
       isGreedyToLeft = false,
       isGreedyToRight = false,
       isStickingToRight = false,
-      policy = CustomWrapMarkerPolicy,
     )
-    val wrap = SnapshotCustomWrap(this, markerId, spec, TextRange(offset, offset), indent, priority)
+    val wrap = SnapshotCustomWrap(this, markerId, spec, TextRangeScalarUtil.toScalarRange(offset, offset), indent, priority)
     check(wrapsById.putIfAbsent(markerId, wrap) == null) { "Custom wrap $markerId is already registered" }
     val markerReference = SnapshotMarkerEngineImpl.createMarkerReference(wrap, retainStrong = true)
-    rootStore.updateRoot(snapshot) { it.insert(markerId, offset, offset, spec, wrap.flavorFlags, markerReference) }
+    rootStore.updateRoot(snapshot) { it.insert(markerId, offset, offset, spec, wrap.flavorFlags, markerReference, policy = wrap.policy) }
     return wrap
   }
 
@@ -99,11 +98,11 @@ internal class SnapshotCustomWrapStorage(
 internal class SnapshotCustomWrap(
   internal val storage: SnapshotCustomWrapStorage,
   markerId: Long,
-  spec: MarkerSpec,
-  initialRange: TextRange,
+  spec: Byte,
+  initialRange: Long,
   override val indent: Int,
   override val priority: Int,
-) : SnapshotRangeMarkerImpl(storage.document, storage.rootStore, markerId, spec, initialRange), CustomWrap {
+) : SnapshotRangeMarkerImpl(storage.document, storage.rootStore, markerId, spec, initialRange, CustomWrapMarkerPolicy), CustomWrap {
   override val offset: Int
     get() = startOffset
 

@@ -72,11 +72,11 @@ object DefaultMarkerPolicy : MarkerPolicy {
 
     if (editStart < point && point < editEnd) return MarkerTransformResult(entry, INVALIDATED_BY_EDIT)
 
-    if (oldLength == 0 && editStart == point && entry.spec.isGreedyToRight) {
+    if (oldLength == 0 && editStart == point && MarkerSpec.isGreedyToRight(entry.spec)) {
       return MarkerTransformResult(entry.copy(nodeEnd = point + newLength))
     }
 
-    if (oldLength == 0 && editStart == point && entry.spec.isStickingToRight) {
+    if (oldLength == 0 && editStart == point && MarkerSpec.isStickingToRight(entry.spec)) {
       val shifted = point + newLength
       return MarkerTransformResult(entry.copy(nodeStart = shifted, nodeEnd = shifted))
     }
@@ -98,7 +98,7 @@ object DefaultMarkerPolicy : MarkerPolicy {
     val delta = newLength - (editEnd - editStart)
 
     if (editStart > endOffset) return MarkerTransformResult(entry)
-    if (!entry.spec.isGreedyToRight && endOffset == editStart) {
+    if (!MarkerSpec.isGreedyToRight(entry.spec) && endOffset == editStart) {
       if (editStart == editEnd && patch.originStartOffset() < editStart) {
         return MarkerTransformResult(entry.copy(nodeEnd = endOffset + newLength))
       }
@@ -109,7 +109,7 @@ object DefaultMarkerPolicy : MarkerPolicy {
         entry.copy(nodeStart = startOffset + delta, nodeEnd = endOffset + delta)
       )
     }
-    if (!entry.spec.isGreedyToLeft && startOffset == editEnd) {
+    if (!MarkerSpec.isGreedyToLeft(entry.spec) && startOffset == editEnd) {
       if (editStart == editEnd && patch.originEndOffset() > editStart) {
         return MarkerTransformResult(entry.copy(nodeEnd = endOffset + newLength))
       }

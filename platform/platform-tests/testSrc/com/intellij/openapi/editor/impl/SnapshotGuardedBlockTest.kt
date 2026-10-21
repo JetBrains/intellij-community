@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
@@ -32,19 +33,19 @@ class SnapshotGuardedBlockTest {
     val markerStores = document.snapshotMarkerStores
     val rootStore = document.rangeMarkers.rootStore()
     Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotGuard, rootStore.rootReference(initialSnapshot).get()))
-      .extracting("startOffset", "endOffset").containsExactly(4, 10)
+      .isEqualTo(PMarkerResolution.valid(4, 10))
 
     val insertedBefore = markerStores.applyPatch(initialSnapshot, textPatch(0, 0, "x\n"))
     Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotGuard, rootStore.rootReference(insertedBefore).get()))
-      .extracting("startOffset", "endOffset").containsExactly(6, 12)
+      .isEqualTo(PMarkerResolution.valid(6, 12))
 
     val replaced = markerStores.applyPatch(initialSnapshot, textPatch(0, initialSnapshot.text().length(), "prefix\none\ntarget\nlast"))
     Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotGuard, rootStore.rootReference(replaced).get()))
-      .extracting("startOffset", "endOffset").containsExactly(11, 17)
+      .isEqualTo(PMarkerResolution.valid(11, 17))
 
     val deleted = markerStores.applyPatch(initialSnapshot, textPatch(3, 11, ""))
-    Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotGuard, rootStore.rootReference(deleted).get()).isValid)
-      .isFalse()
+    val deletedResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotGuard, rootStore.rootReference(deleted).get())
+    Assertions.assertThat(PMarkerResolution.isValid(deletedResolution)).isFalse()
 
     document.removeGuardedBlock(guard)
     Assertions.assertThat(guard.isValid).isFalse()

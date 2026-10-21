@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl.marker
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
-import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.junit5.TestApplication
 import it.unimi.dsi.fastutil.longs.LongArrayList
 import it.unimi.dsi.fastutil.longs.LongLists
@@ -23,8 +22,8 @@ class PMarkerRootBatchTest {
     val initial = PMarkerRootImpl.empty().insertMany(entries() + entry(100, 0, 0))
     val shifted = applyPatch(initial, TEXT, 0, 0, "abcd")
     val edited = applyPatch(shifted, "abcd$TEXT", 10, 12, "")
-    edited.resolve(12, TextRange.EMPTY_RANGE)
-    val spec = MarkerSpec(isGreedyToLeft = false, isGreedyToRight = false, isStickingToRight = false, policy = DefaultMarkerPolicy)
+    edited.resolve(12)
+    val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false, isStickingToRight = false)
     val roots = listOf(initial, shifted, edited, edited.updateSpec(12, spec))
 
     for (root in roots) {
@@ -32,16 +31,16 @@ class PMarkerRootBatchTest {
       repeat(2) { pass ->
         for (id in expected.keys.shuffled(Random(pass))) {
           val entry = expected.getValue(id)
-          val resolution = root.resolve(id, TextRange.EMPTY_RANGE)
-          assertTrue(resolution.isValid)
-          assertEquals(TextRange(entry.nodeStart, entry.nodeEnd), resolution)
+          val resolution = root.resolve(id)
+          assertTrue(PMarkerResolution.isValid(resolution))
+          assertEquals(PMarkerResolution.valid(entry.nodeStart, entry.nodeEnd), resolution)
         }
       }
       val entry = expected.getValue(12)
       val removed = root.remove(12)
-      assertTrue(removed.resolve(12, TextRange.EMPTY_RANGE).isAbsent)
-      assertEquals(TextRange(entry.nodeStart, entry.nodeEnd), removed.resolve(12, TextRange.EMPTY_RANGE))
-      assertEquals(PMarkerResolution.Valid(entry.nodeStart, entry.nodeEnd), root.resolve(12, TextRange.EMPTY_RANGE))
+      assertTrue(PMarkerResolution.isAbsent(removed.resolve(12)))
+      assertEquals(PMarkerResolution.ABSENT, removed.resolve(12))
+      assertEquals(PMarkerResolution.valid(entry.nodeStart, entry.nodeEnd), root.resolve(12))
     }
   }
 
@@ -50,8 +49,8 @@ class PMarkerRootBatchTest {
     val root = PMarkerRootImpl.empty().insertMany(listOf(entry(1, 0, 0), entry(2, Int.MAX_VALUE - 1, Int.MAX_VALUE)))
 
     repeat(2) {
-      assertEquals(TextRange.EMPTY_RANGE, root.resolve(1, TextRange.EMPTY_RANGE))
-      assertEquals(TextRange(Int.MAX_VALUE - 1, Int.MAX_VALUE), root.resolve(2, TextRange.EMPTY_RANGE))
+      assertEquals(PMarkerResolution.valid(0, 0), root.resolve(1))
+      assertEquals(PMarkerResolution.valid(Int.MAX_VALUE - 1, Int.MAX_VALUE), root.resolve(2))
     }
   }
 
@@ -86,8 +85,8 @@ class PMarkerRootBatchTest {
     assertEquivalent(individuallyRemoved, removed.purgeMany(ids), (1L..48L).toList(), ids.toSet())
     assertTrue((removed as PMarkerRootImpl).containsMarkerId(24))
     assertFalse((purged as PMarkerRootImpl).containsMarkerId(24))
-    assertEquals(root.resolve(24, TextRange.EMPTY_RANGE), removed.resolve(24, TextRange.EMPTY_RANGE))
-    assertEquals(TextRange.EMPTY_RANGE, purged.resolve(24, TextRange.EMPTY_RANGE))
+    assertEquals(PMarkerResolution.ABSENT, removed.resolve(24))
+    assertEquals(PMarkerResolution.ABSENT, purged.resolve(24))
     assertEquals(before, resolvedEntries(root))
 
     val beforeText = "xx$TEXT".removeRange(3, 7)
@@ -120,8 +119,8 @@ class PMarkerRootBatchTest {
       MarkerTransformResult(marker)
     }
     val root = PMarkerRootImpl.empty().insertMany(listOf(
-      entry(1, 0, 0).copy(spec = MarkerSpec(isGreedyToLeft = false, isGreedyToRight = false, policy = countingPolicy)),
-      entry(2, 5, 6).copy(spec = MarkerSpec(isGreedyToLeft = false, isGreedyToRight = false, policy = PersistentMarkerPolicy)),
+      entry(1, 0, 0).copy(spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false), policy = countingPolicy),
+      entry(2, 5, 6).copy(spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false), policy = PersistentMarkerPolicy),
     ))
 
     applyPatch(root, "0123456789", 1, 9, "")
@@ -201,14 +200,15 @@ class PMarkerRootBatchTest {
     id,
     start,
     end,
-    MarkerSpec(id % 2 == 0L, measure == 0 && id % 3 == 0L, id % 4 == 0L,
-               if (id % 5 == 0L) PersistentMarkerPolicy else DefaultMarkerPolicy),
+    MarkerSpec.create(id % 2 == 0L, measure == 0 && id % 3 == 0L, id % 4 == 0L),
     (1 shl (id % 8).toInt()).toByte(),
     measure = measure,
+    policy = if (id % 5 == 0L) PersistentMarkerPolicy else DefaultMarkerPolicy,
   )
 
   private fun insertIndividually(root: PMarkerRoot, entries: List<MarkerEntry>): PMarkerRoot = entries.fold(root) { current, entry ->
-    current.insert(entry.markerId, entry.nodeStart, entry.nodeEnd, entry.spec, entry.flavorFlags, entry.markerReference, entry.measure)
+    current.insert(entry.markerId, entry.nodeStart, entry.nodeEnd, entry.spec, entry.flavorFlags, entry.markerReference, entry.measure,
+                   entry.policy)
   }
 
   private fun resolvedEntries(root: PMarkerRoot): List<MarkerEntry> {
@@ -224,10 +224,10 @@ class PMarkerRootBatchTest {
     assertEquals(resolvedEntries(expected), resolvedEntries(actual))
     assertEquals(expected.isEmpty(), actual.isEmpty())
     for (id in ids) {
-      val expectedResolution = if (id in purgedIds) PMarkerResolution.Absent(0, 0) else expected.resolve(id, TextRange.EMPTY_RANGE)
-      val actualResolution = actual.resolve(id, TextRange.EMPTY_RANGE)
-      assertEquals(expectedResolution::class, actualResolution::class, "Marker $id")
+      val expectedResolution = if (id in purgedIds) PMarkerResolution.ABSENT else expected.resolve(id)
+      val actualResolution = actual.resolve(id)
       assertEquals(expectedResolution, actualResolution, "Marker $id")
+      assertEquals(if (id in purgedIds) null else expected.invalidationReason(id), actual.invalidationReason(id), "Marker $id")
       val expectedContains = id !in purgedIds && (expected as PMarkerRootImpl).containsMarkerId(id)
       assertEquals(expectedContains, (actual as PMarkerRootImpl).containsMarkerId(id), "Marker $id")
     }

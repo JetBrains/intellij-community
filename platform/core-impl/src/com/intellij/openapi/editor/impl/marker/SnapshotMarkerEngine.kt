@@ -37,8 +37,9 @@ interface SnapshotMarkerEngine {
    * @param snapshot snapshot in whose current root the marker is inserted
    * @param startOffset inclusive range start
    * @param endOffset exclusive range end
-   * @param spec immutable marker configuration
+   * @param spec immutable marker configuration. see [MarkerSpec]
    * @param retainStrong true when the marker root must retain the marker handle
+   * @param policy defines how document edits transform the marker
    * @return stable marker handle
    */
   fun createRangeMarker(
@@ -46,8 +47,9 @@ interface SnapshotMarkerEngine {
     snapshot: DocumentSnapshot,
     startOffset: Int,
     endOffset: Int,
-    spec: MarkerSpec,
+    spec: Byte,
     retainStrong: Boolean = false,
+    policy: MarkerPolicy = DefaultMarkerPolicy,
   ): SnapshotMarker
 
   /**

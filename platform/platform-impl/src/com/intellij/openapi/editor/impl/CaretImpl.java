@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.intellij.openapi.editor.impl.marker.MarkerSpec;
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.impl.view.EditorPainter;
@@ -1745,7 +1744,8 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     private int offsetBeforeChange;
 
     private SnapshotPositionMarker(@NotNull SnapshotCaretMarkerStorage storage, int offset) {
-      super(myDocument, storage.getRootStore(), storage.nextMarkerId(), storage.positionSpec(), new TextRange(offset, offset));
+      super(myDocument, storage.getRootStore(), storage.nextMarkerId(), storage.positionSpec(),
+            TextRangeScalarUtil.toScalarRange(offset, offset), storage.positionPolicy());
       this.storage = storage;
       offsetBeforeChange = offset;
       storage.add(this, offset, offset, storage.positionSpec());
@@ -1810,8 +1810,9 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
                                     int startOffset,
                                     int endOffset,
                                     long markerId,
-                                    @NotNull MarkerSpec spec) {
-      super(myDocument, storage.getRootStore(), markerId, spec, new TextRange(startOffset, endOffset));
+                                    byte spec) {
+      super(myDocument, storage.getRootStore(), markerId, spec, TextRangeScalarUtil.toScalarRange(startOffset, endOffset),
+            storage.selectionPolicy());
       storage.add(this, startOffset, endOffset, spec);
     }
 

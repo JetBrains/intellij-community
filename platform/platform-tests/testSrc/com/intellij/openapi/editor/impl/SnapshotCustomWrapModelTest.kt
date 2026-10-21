@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.CustomWrap
 import com.intellij.openapi.editor.CustomWrapModel
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.DocumentPatch
+import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
@@ -65,11 +66,11 @@ class SnapshotCustomWrapModelTest {
       val invalidResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotWrap, rootStore.rootReference(invalidBranch).get())
       BranchState(
         wrap = wrap,
-        initialRange = initialResolution.startOffset to initialResolution.endOffset,
-        shiftedRange = shiftedResolution.startOffset to shiftedResolution.endOffset,
-        invalidRange = invalidResolution.startOffset to invalidResolution.endOffset,
-        invalidBranchIsValid = invalidResolution.isValid,
-        initialBranchIsValid = initialResolution.isValid,
+        initialRange = PMarkerResolution.startOffset(initialResolution) to PMarkerResolution.endOffset(initialResolution),
+        shiftedRange = PMarkerResolution.startOffset(shiftedResolution) to PMarkerResolution.endOffset(shiftedResolution),
+        invalidRange = PMarkerResolution.startOffset(invalidResolution) to PMarkerResolution.endOffset(invalidResolution),
+        invalidBranchIsValid = PMarkerResolution.isValid(invalidResolution),
+        initialBranchIsValid = PMarkerResolution.isValid(initialResolution),
       )
     }
 

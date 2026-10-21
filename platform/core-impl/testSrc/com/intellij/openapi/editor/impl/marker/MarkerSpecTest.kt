@@ -2,34 +2,46 @@
 package com.intellij.openapi.editor.impl.marker
 
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 
 internal class MarkerSpecTest {
   @Test
-  fun `with methods return the original spec for unchanged values`() {
-    val spec = MarkerSpec(isGreedyToLeft = false, isGreedyToRight = true, isStickingToRight = true)
+  fun `packs all boundary flag combinations`() {
+    for (flags in 0..7) {
+      val left = flags and 1 != 0
+      val right = flags and 2 != 0
+      val sticky = flags and 4 != 0
+      val spec = MarkerSpec.create(left, right, sticky)
 
-    assertSame(spec, spec.withGreedyToLeft(false))
-    assertSame(spec, spec.withGreedyToRight(true))
-    assertSame(spec, spec.withStickyToRight(true))
+      assertEquals(flags.toByte(), spec)
+      assertEquals(left, MarkerSpec.isGreedyToLeft(spec))
+      assertEquals(right, MarkerSpec.isGreedyToRight(spec))
+      assertEquals(sticky, MarkerSpec.isStickingToRight(spec))
+    }
   }
 
   @Test
-  fun `with methods update one property`() {
-    val spec = MarkerSpec(isGreedyToLeft = false, isGreedyToRight = true, isStickingToRight = true)
+  fun `with methods update only the selected flag`() {
+    for (flags in 0..7) {
+      val left = flags and 1 != 0
+      val right = flags and 2 != 0
+      val sticky = flags and 4 != 0
+      val spec = MarkerSpec.create(left, right, sticky)
 
-    assertEquals(
-      MarkerSpec(isGreedyToLeft = true, isGreedyToRight = true, isStickingToRight = true),
-      spec.withGreedyToLeft(true),
-    )
-    assertEquals(
-      MarkerSpec(isGreedyToLeft = false, isGreedyToRight = false, isStickingToRight = true),
-      spec.withGreedyToRight(false),
-    )
-    assertEquals(
-      MarkerSpec(isGreedyToLeft = false, isGreedyToRight = true, isStickingToRight = false),
-      spec.withStickyToRight(false),
-    )
+      for (value in listOf(false, true)) {
+        assertEquals(MarkerSpec.create(value, right, sticky), MarkerSpec.withGreedyToLeft(spec, value))
+        assertEquals(MarkerSpec.create(left, value, sticky), MarkerSpec.withGreedyToRight(spec, value))
+        assertEquals(MarkerSpec.create(left, right, value), MarkerSpec.withStickyToRight(spec, value))
+      }
+    }
+  }
+
+  @Test
+  fun `sticking to right defaults to false`() {
+    for (left in listOf(false, true)) {
+      for (right in listOf(false, true)) {
+        assertEquals(MarkerSpec.create(left, right, false), MarkerSpec.create(left, right))
+      }
+    }
   }
 }

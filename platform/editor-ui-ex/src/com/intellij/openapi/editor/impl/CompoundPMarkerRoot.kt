@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentPatch
-import com.intellij.openapi.editor.impl.marker.MarkerSpec
+import com.intellij.openapi.editor.impl.marker.MarkerPolicy
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerDeltaProcessor
 import com.intellij.openapi.editor.impl.marker.PMarkerRootImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
-import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
 import it.unimi.dsi.fastutil.longs.LongList
 import org.jetbrains.annotations.ApiStatus
@@ -28,18 +27,19 @@ open class CompoundPMarkerRoot private constructor(
 
   override fun isEmpty(): Boolean = exactRangeRoot.isEmpty() && linesInRangeRoot.isEmpty()
 
-  override fun resolve(markerId: Long, absentRange: TextRange): PMarkerResolution {
-    val exactResolution = exactRangeRoot.resolve(markerId, absentRange)
-    if (exactResolution !is PMarkerResolution.Absent) return exactResolution
+  override fun resolve(markerId: Long): Long {
+    val exactResolution = exactRangeRoot.resolve(markerId)
+    if (!PMarkerResolution.isAbsent(exactResolution)) return exactResolution
 
-    val lineResolution = linesInRangeRoot.resolve(markerId, absentRange)
-    if (lineResolution !is PMarkerResolution.Absent) return lineResolution
+    return linesInRangeRoot.resolve(markerId)
+  }
 
-    return if (exactResolution.startOffset != absentRange.startOffset || exactResolution.endOffset != absentRange.endOffset) {
-      exactResolution
+  override fun invalidationReason(markerId: Long): String? {
+    return if (PMarkerResolution.isAbsent(exactRangeRoot.resolve(markerId))) {
+      linesInRangeRoot.invalidationReason(markerId)
     }
     else {
-      lineResolution
+      exactRangeRoot.invalidationReason(markerId)
     }
   }
 
@@ -60,23 +60,24 @@ open class CompoundPMarkerRoot private constructor(
     markerId: Long,
     startOffset: Int,
     endOffset: Int,
-    spec: MarkerSpec,
+    spec: Byte,
     flavorFlags: Byte,
     markerReference: SnapshotMarkerReference?,
     measure: Int,
+    policy: MarkerPolicy,
   ): PMarkerRoot {
     val highlighter = markerReference?.get() as? SnapshotRangeHighlighterImpl
     require(highlighter != null) { "A compound marker root requires a snapshot highlighter" }
     return if (highlighter.targetAreaForStorage() == HighlighterTargetArea.EXACT_RANGE) {
       withRoots(
-        exactRangeRoot.insert(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, measure),
+        exactRangeRoot.insert(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, measure, policy),
         linesInRangeRoot,
       )
     }
     else {
       withRoots(
         exactRangeRoot,
-        linesInRangeRoot.insert(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, measure),
+        linesInRangeRoot.insert(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, measure, policy),
       )
     }
   }
@@ -102,7 +103,7 @@ open class CompoundPMarkerRoot private constructor(
     return updateMarker { it.updateFlavor(markerId, flavorFlags) }
   }
 
-  override fun updateSpec(markerId: Long, spec: MarkerSpec): PMarkerRoot {
+  override fun updateSpec(markerId: Long, spec: Byte): PMarkerRoot {
     return updateMarker { it.updateSpec(markerId, spec) }
   }
 
