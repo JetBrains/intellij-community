@@ -6327,24 +6327,14 @@ a:com.intellij.ui.GroupedElementsRenderer$Tree
 f:com.intellij.ui.GuiUtils
 - <init>():V
 - s:colorToHex(java.awt.Color):java.lang.String
-- s:constructFieldWithBrowseButton(com.intellij.ui.TextFieldWithHistory,java.awt.event.ActionListener):javax.swing.JPanel
-- s:constructFieldWithBrowseButton(javax.swing.JComponent,java.awt.event.ActionListener):javax.swing.JPanel
 - s:createUndoableTextField():javax.swing.JTextField
 - s:createVerticalStrut():java.awt.Component
 - s:enableChildren(java.awt.Component,Z,javax.swing.JComponent[]):V
-- s:enableChildren(Z,java.awt.Component[]):V
-- s:getDisplayedMnemonic(java.lang.String):C
-- s:getDisplayedMnemonicIndex(java.lang.String):I
 - s:getSizeByChars(I,javax.swing.JComponent):java.awt.Dimension
-- s:getTextWithoutMnemonicEscaping(java.lang.String):java.lang.String
 - s:installVisibilityReferent(javax.swing.JComponent,javax.swing.JComponent):V
-- s:installVisibilityReferents(javax.swing.JComponent,javax.swing.JComponent[]):V
 - s:invokeLaterIfNeeded(java.lang.Runnable,com.intellij.openapi.application.ModalityState):V
-- s:iterateChildren(java.awt.Component,java.util.function.Consumer,javax.swing.JComponent[]):V
-- s:removePotentiallyLeakingReferences(java.awt.Container):V
 - s:replaceJSplitPaneWithIDEASplitter(javax.swing.JComponent):V
 - s:replaceJSplitPaneWithIDEASplitter(javax.swing.JComponent,Z):V
-- s:showComponents(Z,java.awt.Component[]):V
 c:com.intellij.ui.HighlightableCellRenderer
 - com.intellij.ui.HighlightableComponent
 - javax.swing.ListCellRenderer
