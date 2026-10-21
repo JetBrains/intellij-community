@@ -57,6 +57,7 @@ mod stream;
 mod tests;
 
 pub use answer::{ProbeExit, ProbeOutput, probe_unanswered};
+pub use group::ChildGroup;
 pub use identity::ProcessIdentity;
 pub use probe::{ProcessTable, PsField};
 pub use stream::{GuestStream, PipedChild};

@@ -1,0 +1,176 @@
+#[cfg(unix)]
+use std::time::SystemTime;
+
+use pretty_assertions::assert_eq;
+
+use super::*;
+
+/// A checkout with the docs project and the kernel, whose sources are an hour old.
+#[cfg(unix)]
+fn checkout() -> tempfile::TempDir {
+    let checkout = tempfile::tempdir().unwrap();
+    for project in ["plugins/air/docs", "community/tools/docs-site"] {
+        let dir = checkout.path().join(project);
+        fs::create_dir_all(dir.join("src")).unwrap();
+        fs::write(dir.join("package.json"), "{}").unwrap();
+        let source = dir.join("src/main.ts");
+        fs::write(&source, "export {}").unwrap();
+        fs::File::options()
+            .write(true)
+            .open(&source)
+            .unwrap()
+            .set_modified(SystemTime::now() - Duration::from_hours(1))
+            .unwrap();
+    }
+    checkout
+}
+
+/// A fake node, and a fake pnpm that appends its arguments to `calls`, prints its verb, and runs `build` for
+/// `run build:viewer`.
+#[cfg(unix)]
+fn tools(dir: &Path, build: &str) -> SiteTools {
+    use std::os::unix::fs::PermissionsExt;
+    let script = |name: &str, text: String| {
+        let path = dir.join(name);
+        fs::write(&path, text).unwrap();
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o755)).unwrap();
+        path
+    };
+    let calls = dir.join("calls");
+    SiteTools::Pinned {
+        node: script("node", "#!/bin/sh\nexit 0\n".to_owned()),
+        pnpm: script(
+            "pnpm",
+            format!(
+                "#!/bin/sh\necho \"$*\" >> '{}'\necho \"pnpm $3 $4\"\nif [ \"$3 $4\" = 'run build:viewer' ]; then\n{build}\nfi\n",
+                calls.display()
+            ),
+        ),
+    }
+}
+
+/// What `build:viewer` writes: the page and one asset in `<checkout>/out/air-trace-viewer`. `$2` is the project.
+#[cfg(unix)]
+const BUILDS_THE_VIEWER: &str = "out=\"$2/../../../out/air-trace-viewer\"; mkdir -p \"$out/assets\"; \
+                                 echo '<!doctype html>' > \"$out/index.html\"; echo 'export {}' > \"$out/assets/index.js\"";
+
+/// The viewer of a build in the checkout with the tools, and the stderr of the step.
+#[cfg(unix)]
+fn build(checkout: &Path, tools: SiteTools, timeout: Duration) -> (Result<PathBuf, String>, String) {
+    let source = ViewerSource::Build {
+        checkout: checkout.to_path_buf(),
+        tools: Some(tools),
+        timeout,
+    };
+    let mut stderr = Vec::new();
+    let dir = viewer_dir(&source, &mut stderr).unwrap();
+    (dir, String::from_utf8(stderr).unwrap())
+}
+
+/// Without `--viewer`, the step installs the kernel and the docs project, builds the viewer, and says the time it took.
+/// A viewer newer than its sources is not built again.
+#[cfg(unix)]
+#[test]
+fn a_missing_viewer_is_built_in_the_checkout_and_kept_while_it_is_current() {
+    let checkout = checkout();
+    let fakes = tempfile::tempdir().unwrap();
+    let tools = tools(fakes.path(), BUILDS_THE_VIEWER);
+    let (dir, stderr) = build(checkout.path(), tools.clone(), Duration::from_mins(1));
+    let built = checkout.path().join("out/air-trace-viewer");
+    assert_eq!(dir, Ok(built.clone()));
+    let project = checkout.path().join("plugins/air/docs");
+    let kernel = checkout.path().join("community/tools/docs-site");
+    assert_eq!(
+        fs::read_to_string(fakes.path().join("calls")).unwrap(),
+        format!(
+            "--dir {kernel} install --frozen-lockfile\n--dir {project} install --frozen-lockfile\n--dir {project} run build:viewer\n",
+            kernel = kernel.display(),
+            project = project.display()
+        )
+    );
+    let lines: Vec<&str> = stderr.lines().collect();
+    assert_eq!(
+        lines[0],
+        format!(
+            "air-trace teamcity-publish: the viewer is not built; building it with `pnpm run build:viewer` in {}",
+            project.display()
+        )
+    );
+    assert!(
+        lines.contains(&"pnpm run build:viewer"),
+        "the build's output goes to stderr: {stderr}"
+    );
+    let last = lines.last().unwrap();
+    assert!(
+        last.starts_with("air-trace teamcity-publish: built the viewer in ") && last.ends_with(&format!(" s {}", tools_text(&tools))),
+        "{last}"
+    );
+    assert!(built.join(VIEWER_PAGE).is_file());
+
+    let (again, stderr) = build(checkout.path(), tools, Duration::from_mins(1));
+    assert_eq!(again, Ok(built.clone()));
+    assert_eq!(
+        stderr,
+        format!(
+            "air-trace teamcity-publish: the viewer in {} is newer than its sources; no build\n",
+            built.display()
+        )
+    );
+    assert_eq!(fs::read_to_string(fakes.path().join("calls")).unwrap().lines().count(), 3);
+}
+
+/// A build that fails, or that does not end within its time, is the reason there is no viewer, with the time it took.
+#[cfg(unix)]
+#[test]
+fn a_viewer_build_that_fails_or_does_not_end_is_the_reason_for_no_viewer() {
+    let checkout = checkout();
+    let fakes = tempfile::tempdir().unwrap();
+    let project = checkout.path().join("plugins/air/docs");
+    let (failed, _) = build(checkout.path(), tools(fakes.path(), "exit 3"), Duration::from_mins(1));
+    let failed = failed.unwrap_err();
+    assert!(failed.starts_with("the viewer build failed after "), "{failed}");
+    assert!(
+        failed.ends_with(&format!(" s: pnpm --dir {} run build:viewer: exit status: 3", project.display())),
+        "{failed}"
+    );
+
+    // The build starts a child of its own and waits for it, as Vite does under pnpm.
+    let child = fakes.path().join("child.pid");
+    let start = Instant::now();
+    let hangs = format!("sleep 30 & echo $! > '{}'; wait", child.display());
+    let (hung, _) = build(checkout.path(), tools(fakes.path(), &hangs), Duration::from_millis(500));
+    let hung = hung.unwrap_err();
+    assert!(hung.ends_with(" s: it did not end within 500ms"), "{hung}");
+    assert!(start.elapsed() < Duration::from_secs(20), "the build stops at its time limit");
+    let pid: i32 = fs::read_to_string(&child).unwrap().trim().parse().unwrap();
+    let alive = || nix::sys::signal::kill(nix::unistd::Pid::from_raw(pid), None).is_ok();
+    let deadline = Instant::now() + Duration::from_secs(5);
+    while alive() && Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    assert!(!alive(), "the child of the build, {pid}, outlived the build");
+}
+
+/// Without `--viewer` and without a checkout, or in a checkout without the docs project, there is nothing to build.
+#[test]
+fn without_a_checkout_or_its_docs_project_there_is_no_viewer() {
+    let mut stderr = Vec::new();
+    assert_eq!(
+        viewer_dir(&ViewerSource::Missing, &mut stderr).unwrap(),
+        Err("no --viewer DIR, and no checkout to build one in".to_owned())
+    );
+    let empty = tempfile::tempdir().unwrap();
+    let source = ViewerSource::Build {
+        checkout: empty.path().to_path_buf(),
+        tools: None,
+        timeout: VIEWER_BUILD_TIMEOUT,
+    };
+    assert_eq!(
+        viewer_dir(&source, &mut stderr).unwrap(),
+        Err(format!(
+            "no --viewer DIR, and {} holds no docs project to build one from",
+            empty.path().display()
+        ))
+    );
+    assert_eq!(stderr, b"");
+}

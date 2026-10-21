@@ -7,6 +7,7 @@ use avl_trace_tools::pack::{PackOptions, pack};
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 
+use super::viewer::VIEWER_PAGE;
 use super::*;
 
 fn real(path: &Path) -> PathBuf {
@@ -21,10 +22,11 @@ fn testdata(name: &str) -> PathBuf {
 /// Publishes the testlogs `root` into `out`, with the stdout and the stderr of the step.
 fn run(root: &Path, out: &Path, viewer: Option<&Path>, build: Option<&Build>) -> (String, String) {
     let (mut stdout, mut stderr) = (Vec::new(), Vec::new());
+    let viewer = viewer.map_or(ViewerSource::Missing, |dir| ViewerSource::Built(dir.to_path_buf()));
     let job = Publish {
         testlogs: &[root.to_path_buf()],
         out,
-        viewer,
+        viewer: &viewer,
         build,
     };
     publish(&job, &mut stdout, &mut stderr).unwrap();
@@ -157,7 +159,8 @@ fn the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests() 
     assert_eq!(
         stderr,
         format!(
-            "air-trace teamcity-publish: no viewer: no --viewer DIR; so air-traces/ holds the bundles and runs.json only\n\
+            "air-trace teamcity-publish: no viewer: no --viewer DIR, and no checkout to build one in; so air-traces/ \
+             holds the bundles and runs.json only\n\
              air-trace teamcity-publish: <testlogs>/plugins/air/tests/integration/ui/ui_lane_test/test.outputs/air-traces/copies/1: \
              another bundle has the name a_b.zip, so this one is <out>/ui_lane_test/{class_dir}/a_b.2.zip\n\
              air-trace teamcity-publish: 4 bundle zip(s) from 3 test.xml file(s) into <out>\n"
@@ -209,7 +212,7 @@ fn testlogs_without_bundles_print_nothing() {
     let job = Publish {
         testlogs: &missing,
         out: out.path(),
-        viewer: None,
+        viewer: &ViewerSource::Missing,
         build: None,
     };
     let refused = publish(&job, &mut Vec::new(), &mut Vec::new()).unwrap_err();
@@ -250,7 +253,7 @@ fn on_team_city_the_listing_names_the_build_and_each_test_links_its_trace() {
     }
 }
 
-/// A viewer that is the output, or holds it, is refused before the copy removes anything.
+/// A viewer that is the output, or holds it, is refused before the copy removes or creates anything.
 #[test]
 fn a_viewer_that_overlaps_the_output_is_refused() {
     let viewer = viewer();
@@ -259,6 +262,7 @@ fn a_viewer_that_overlaps_the_output_is_refused() {
         assert!(refused.ends_with(&format!("and the output {} overlap", out.display())), "{refused}");
     }
     assert_eq!(files_of(viewer.path()), ["assets/index.js", VIEWER_PAGE]);
+    assert!(!viewer.path().join("assets/out").exists(), "the refused output is not created");
 }
 
 /// A viewer that is missing, or a directory without its page, is a line on stderr. The bundles and the listing still
@@ -273,7 +277,11 @@ fn without_a_viewer_the_bundles_and_the_listing_publish_alone() {
         let (stdout, stderr) = run(root.path(), out.path(), viewer, Some(&build()));
         let names = [(out.path(), "<out>"), (empty.path(), "<viewer>")];
         let (stdout, stderr) = (placeholders(&stdout, &names), placeholders(&stderr, &names));
-        let reason = if given { "<viewer> holds no index.html" } else { "no --viewer DIR" };
+        let reason = if given {
+            "<viewer> holds no index.html"
+        } else {
+            "no --viewer DIR, and no checkout to build one in"
+        };
         assert!(
             stderr.starts_with(&format!(
                 "air-trace teamcity-publish: no viewer: {reason}; so air-traces/ holds the bundles and runs.json only\n"

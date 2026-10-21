@@ -15,8 +15,9 @@
 //! Beside the zips, `<out>/runs.json` lists the published bundles as `GET /__air/runs` of `air-trace serve` lists
 //! bundles, with the server's own types. Each scenario carries its `zip`, relative to the listing, and is a zip at that
 //! path in its `source` and its id. On TeamCity, each run names the build as its `origin`, from the agent's property
-//! files ([teamcity]). The built viewer of `--viewer` goes into `<out>` too, so `air-traces/index.html` opens the
-//! listing, and each test links to `index.html#/trace?zip=<zip>`. The link needs both the viewer and the build.
+//! files ([teamcity]). The viewer goes into `<out>` too: the one of `--viewer`, or one that the step builds in the
+//! checkout ([viewer]). So `air-traces/index.html` opens the listing, and each test links to
+//! `index.html#/trace?zip=<zip>`. The link needs both the viewer and the build.
 //!
 //! A testlogs tree without bundles prints nothing and writes nothing. A bundle that cannot be packed, a viewer that is
 //! missing and build properties that do not read are each a line on the standard error. The rest still publishes, so
@@ -37,8 +38,10 @@ use avl_trace_tools::pack::{PackOptions, pack, pack_zip_bundle};
 use crate::serve::{Runs, Scenario, group_runs, listed};
 use crate::{Exit, Refusal, report, usage};
 use teamcity::Build;
+use viewer::{VIEWER_BUILD_TIMEOUT, ViewerSource, copy_viewer, viewer_dir};
 
 mod teamcity;
+mod viewer;
 
 /// `air-trace teamcity-publish`'s command line.
 #[derive(clap::Args, Clone, Debug, PartialEq, Eq)]
@@ -50,8 +53,9 @@ pub(crate) struct PublishArgs {
     /// Where the bundle zips, runs.json and the viewer are written (default <workspace>/out/air-traces-publish).
     #[arg(long, value_name = "DIR")]
     pub out: Option<PathBuf>,
-    /// The built trace viewer, a directory with index.html, which is published beside the bundles. Without it, the
-    /// bundles and runs.json publish alone and the tests get no viewer link.
+    /// The built trace viewer, a directory with index.html, which is published beside the bundles. Without it, the step
+    /// builds the viewer in the checkout with `pnpm run build:viewer`, within 10 minutes. Without a viewer, the bundles
+    /// and runs.json publish alone and the tests get no viewer link.
     #[arg(long, value_name = "DIR")]
     pub viewer: Option<PathBuf>,
 }
@@ -64,8 +68,6 @@ const TEST_OUTPUTS: &str = "test.outputs";
 const OUTPUTS_ZIP: &str = "outputs.zip";
 /// The listing of the published bundles, at the top of the output.
 const RUNS_FILE: &str = "runs.json";
-/// The page of the viewer, at the top of its build.
-const VIEWER_PAGE: &str = "index.html";
 /// The generation of the listing: the step writes one listing, as a server's first scan answers generation 1.
 const LISTING_GENERATION: u64 = 1;
 
@@ -73,8 +75,7 @@ const LISTING_GENERATION: u64 = 1;
 pub(crate) struct Publish<'a> {
     pub testlogs: &'a [PathBuf],
     pub out: &'a Path,
-    /// The built viewer, or `None` for no viewer.
-    pub viewer: Option<&'a Path>,
+    pub viewer: &'a ViewerSource,
     /// The TeamCity build that the step runs in, or `None` off TeamCity.
     pub build: Option<&'a Build>,
 }
@@ -114,10 +115,19 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
         );
         None
     });
+    let viewer = match (&args.viewer, workspace) {
+        (Some(dir), _) => ViewerSource::Built(dir.clone()),
+        (None, Some(checkout)) => ViewerSource::Build {
+            checkout,
+            tools: None,
+            timeout: VIEWER_BUILD_TIMEOUT,
+        },
+        (None, None) => ViewerSource::Missing,
+    };
     let job = Publish {
         testlogs: &testlogs,
         out: &out,
-        viewer: args.viewer.as_deref(),
+        viewer: &viewer,
         build: build.as_ref(),
     };
     match publish(&job, stdout, stderr) {
@@ -207,20 +217,15 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
         return summarize(stderr, 0, xmls, out, problems).map_err(write_failed);
     }
 
-    let page = match job.viewer.map(|viewer| copy_viewer(viewer, out)) {
-        Some(Ok(entries)) => Some(entries),
-        Some(Err(reason)) => {
+    let copied = viewer_dir(job.viewer, stderr)
+        .map_err(write_failed)?
+        .and_then(|dir| copy_viewer(&dir, out));
+    let page = match copied {
+        Ok(entries) => Some(entries),
+        Err(reason) => {
             say(
                 stderr,
                 &format!("no viewer: {reason}; so air-traces/ holds the bundles and {RUNS_FILE} only"),
-            )
-            .map_err(write_failed)?;
-            None
-        }
-        None => {
-            say(
-                stderr,
-                &format!("no viewer: no --viewer DIR; so air-traces/ holds the bundles and {RUNS_FILE} only"),
             )
             .map_err(write_failed)?;
             None
@@ -395,66 +400,6 @@ fn write_listing(listing: &Runs<'_>, out: &Path) -> Result<PathBuf, String> {
         .and_then(|()| fs::write(&file, json))
         .map_err(|error| format!("cannot write {}: {error}", file.display()))?;
     Ok(file)
-}
-
-/// Copies the built viewer into out. Each entry at the top of the viewer, a file or a directory, replaces the entry of
-/// that name in out. Answers the entries, each with whether it is a directory, or why the viewer is not published. A
-/// viewer inside out, or out inside the viewer, is refused, because the copy would remove or copy itself.
-fn copy_viewer(viewer: &Path, out: &Path) -> Result<Vec<(String, bool)>, String> {
-    if !viewer.join(VIEWER_PAGE).is_file() {
-        return Err(format!("{} holds no {VIEWER_PAGE}", viewer.display()));
-    }
-    let failed = |path: &Path, error: &dyn std::fmt::Display| format!("cannot copy {}: {error}", path.display());
-    fs::create_dir_all(out).map_err(|error| failed(out, &error))?;
-    if let (Ok(real_viewer), Ok(real_out)) = (fscopy::real_path(viewer), fscopy::real_path(out))
-        && (real_viewer.starts_with(&real_out) || real_out.starts_with(&real_viewer))
-    {
-        return Err(format!("{} and the output {} overlap", viewer.display(), out.display()));
-    }
-    let mut entries = Vec::new();
-    for entry in fs::read_dir(viewer).map_err(|error| failed(viewer, &error))? {
-        let entry = entry.map_err(|error| failed(viewer, &error))?;
-        let is_dir = fs::metadata(entry.path()).map_err(|error| failed(&entry.path(), &error))?.is_dir();
-        entries.push((entry.file_name().to_string_lossy().into_owned(), is_dir));
-    }
-    entries.sort();
-    for (name, is_dir) in &entries {
-        let source = viewer.join(name);
-        let target = out.join(name);
-        let removed = match fs::symlink_metadata(&target) {
-            Ok(existing) if existing.is_dir() => fs::remove_dir_all(&target),
-            Ok(_) => fs::remove_file(&target),
-            Err(_) => Ok(()),
-        };
-        removed.map_err(|error| failed(&target, &error))?;
-        if *is_dir {
-            copy_tree(&source, &target)?;
-        } else {
-            copy_file(&source, &target).map_err(|error| failed(&source, &error))?;
-        }
-    }
-    Ok(entries)
-}
-
-/// Copies a directory tree, following symbolic links, as a Bazel output tree has them.
-fn copy_tree(source: &Path, destination: &Path) -> Result<(), String> {
-    for entry in walkdir::WalkDir::new(source).follow_links(true).sort_by_file_name() {
-        let entry = entry.map_err(|error| format!("cannot copy {}: {error}", source.display()))?;
-        let target = destination.join(entry.path().strip_prefix(source).unwrap_or(entry.path()));
-        let copied = if entry.file_type().is_dir() {
-            fs::create_dir_all(&target)
-        } else {
-            copy_file(entry.path(), &target)
-        };
-        copied.map_err(|error| format!("cannot copy {}: {error}", entry.path().display()))?;
-    }
-    Ok(())
-}
-
-/// Copies the content of a file into a new file. The copy is writable, though a Bazel output is not, so the next run
-/// can replace it.
-fn copy_file(source: &Path, destination: &Path) -> io::Result<()> {
-    io::copy(&mut fs::File::open(source)?, &mut fs::File::create(destination)?).map(drop)
 }
 
 /// Every `test.xml` under a testlogs directory, in path order.

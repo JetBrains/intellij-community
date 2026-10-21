@@ -56,6 +56,21 @@ async fn a_kill_ends_the_whole_group() {
     assert!(emptied(&group).await, "a member of the group survived the kill");
 }
 
+// The guard of a child that a caller spawned itself kills the child and the child's own child when it drops.
+#[tokio::test]
+async fn a_dropped_child_group_ends_the_whole_group() {
+    let mut child = sleeper().spawn().expect("the sleeper starts");
+    let guard = ChildGroup::attach(&child).expect("the group takes the child");
+    let group = guard.0.clone().expect("the child runs");
+    drop(guard);
+    let status = tokio::time::timeout(Duration::from_secs(10), child.wait())
+        .await
+        .expect("the drop did not end the child")
+        .unwrap();
+    assert_eq!(exit_code(status), 128 + 9);
+    assert!(emptied(&group).await, "a member of the group survived the drop of its guard");
+}
+
 // A child that has ended and was reaped has no group left to reach.
 #[tokio::test]
 async fn a_reaped_child_has_no_group() {
