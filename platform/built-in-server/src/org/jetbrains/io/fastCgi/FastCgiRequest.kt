@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io.fastCgi
 
 import com.intellij.openapi.util.io.FileUtil
@@ -8,6 +8,7 @@ import io.netty.buffer.ByteBufUtil
 import io.netty.channel.Channel
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.HttpHeaderNames
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.builtInWebServer.PathInfo
 import org.jetbrains.io.serverHeaderValue
 import java.net.InetSocketAddress
@@ -28,9 +29,17 @@ class FastCgiRequest(val requestId: Int, allocator: ByteBufAllocator) {
   private val params = allocator.ioBuffer(4096)
 
   fun writeFileHeaders(pathInfo: PathInfo, canonicalRequestPath: CharSequence) {
-    val root = pathInfo.root
-    addHeader("DOCUMENT_ROOT", FileUtil.toSystemDependentName(root.path))
-    addHeader("SCRIPT_FILENAME", pathInfo.filePath)
+    writeFileHeaders(FileUtil.toSystemDependentName(pathInfo.root.path), pathInfo.filePath, canonicalRequestPath)
+  }
+
+  /**
+   * Writes the file headers with [documentRoot] and [scriptFilename] as the FastCGI server sees them, for a server whose files have other
+   * paths than on the IDE host, such as one in WSL or a container.
+   */
+  @ApiStatus.Internal
+  fun writeFileHeaders(documentRoot: CharSequence, scriptFilename: CharSequence, canonicalRequestPath: CharSequence) {
+    addHeader("DOCUMENT_ROOT", documentRoot)
+    addHeader("SCRIPT_FILENAME", scriptFilename)
     addHeader("SCRIPT_NAME", canonicalRequestPath)
   }
 

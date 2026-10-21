@@ -15,7 +15,7 @@ import java.util.ServiceLoader
     "com.intellij.platform.eel.impl.portAccessibleLocally.EelPortAccessibleLocallyEpBridge",
     "com.intellij.platform.eel.impl.portAccessibleLocally.EelPortAccessibleLocallyProviderImpl",
     "com.intellij.terminal.frontend.view.portForwarding.TerminalPortForwardingInstallerKt",
-    "com.jetbrains.php.debug.tunnel.PhpDebugTunnelService",
+    "com.jetbrains.php.config.interpreters.eel.PhpEelProxiesKt",
 )
 interface EelPortAccessibleLocally {
   companion object {
