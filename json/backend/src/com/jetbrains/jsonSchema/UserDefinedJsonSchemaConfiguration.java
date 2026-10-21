@@ -150,9 +150,9 @@ public final class UserDefinedJsonSchemaConfiguration {
                                   : pathText.indexOf('/') >= 0
                                     ? PatternUtil.compileSafe(".*/" + PatternUtil.convertToRegex(pathText), PatternUtil.NOTHING)
                                     : PatternUtil.fromMask(pathText);
-          result.add((project, file) -> JsonSchemaObjectReadingUtils.matchPattern(pattern, pathText.indexOf('/') >= 0
-                                                                               ? file.getPath()
-                                                                               : file.getName()));
+          result.add((_, file) -> JsonSchemaObjectReadingUtils.matchPattern(pattern, pathText.indexOf('/') >= 0
+                                                                                     ? file.getPath()
+                                                                                     : file.getName(), true));
         }
         case Directory -> result.add((project, vfile) -> {
           final VirtualFile relativeFile = getRelativeFile(project, patternText);

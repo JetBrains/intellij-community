@@ -25,6 +25,8 @@ import org.junit.jupiter.api.Test;
 
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
 public class JsonSchemaPatternComparatorTest {
@@ -75,6 +77,34 @@ public class JsonSchemaPatternComparatorTest {
     assertEquals(ThreeState.YES, comparator.isSimilar(d(".."), f("test/lower")));
     assertEquals(ThreeState.NO, comparator.isSimilar(d("one"), f("test/lower")));
     assertEquals(ThreeState.NO, comparator.isSimilar(d("one"), f("test")));
+  }
+
+  @Test
+  public void testCalculatedPatternFullMatch() {
+    UserDefinedJsonSchemaConfiguration config = new UserDefinedJsonSchemaConfiguration(
+      "test", null, "schema.json", false, java.util.List.of(p("composer.json"), p("dir/composer.json"))
+    );
+    var processors = config.getCalculatedPatterns();
+    assertEquals(2, processors.size());
+    var exactFile = new com.intellij.testFramework.LightVirtualFile("composer.json");
+    var substringFile = new com.intellij.testFramework.LightVirtualFile("my-composer.json.bak");
+    assertTrue(processors.getFirst().process(projectFixture.get(), exactFile));
+    assertFalse(processors.getFirst().process(projectFixture.get(), substringFile));
+
+    var exactPathFile = new com.intellij.testFramework.LightVirtualFile("composer.json") {
+      @Override
+      public @NotNull String getPath() {
+        return "/project/dir/composer.json";
+      }
+    };
+    var substringPathFile = new com.intellij.testFramework.LightVirtualFile("composer.json.bak") {
+      @Override
+      public @NotNull String getPath() {
+        return "/project/dir/composer.json.bak";
+      }
+    };
+    assertTrue(processors.get(1).process(projectFixture.get(), exactPathFile));
+    assertFalse(processors.get(1).process(projectFixture.get(), substringPathFile));
   }
 
   private static UserDefinedJsonSchemaConfiguration.Item p(@NotNull final String p) {
