@@ -567,7 +567,7 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   [@test] ../crates/air-trace/src/publish/tests.rs (`without_a_viewer_the_bundles_and_the_listing_publish_alone`)
 
 - The viewer is the directory of `--viewer`. Without it, the step builds the viewer in the checkout that
-  `BUILD_WORKSPACE_DIRECTORY` names, with the node and the pnpm of the site build. It runs `pnpm install
+  `BUILD_WORKSPACE_DIRECTORY` names, with the node and the pnpm below. It runs `pnpm install
   --frozen-lockfile` in the kernel and in `plugins/air/docs`, also over an existing `node_modules`, so a changed
   lockfile takes effect. Then it runs `pnpm run build:viewer`, which writes `out/air-trace-viewer/index.html`. A
   viewer there that is newer than its sources is not built again. Its sources are the sources of the site and the UI
@@ -578,6 +578,14 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   there is no viewer.
   [@test] ../crates/air-trace/src/publish/viewer/tests.rs
   [@test] ../crates/air-trace/src/serve/tests/service.rs (`the_kernel_is_installed_before_the_project_that_links_it`)
+
+- The node and the pnpm of the viewer build are `--node` and `--pnpm`, or `AIR_TRACE_NODE` and `AIR_TRACE_PNPM`. A
+  step before the publish on TeamCity finds them with the startup options of the build and sets the two variables. A
+  value `none` builds no viewer, with one warning, and so does one tool alone. Without the two, a local step asks
+  `bazel.cmd cquery` of the checkout, as `serve` does. On TeamCity the step never starts a Bazel: without the two it
+  builds no viewer, with one warning.
+  [@test] ../crates/air-trace/src/publish/viewer/tests.rs (`the_viewer_comes_from_the_flag_the_named_tools_or_bazel_but_never_bazel_on_team_city`)
+  [@test] ../crates/air-trace/tests/cli.rs (`teamcity_publish_takes_its_tools_from_the_variables_and_starts_no_bazel_on_team_city`)
 
 - On TeamCity, the step reads the build from the agent's property files: `TEAMCITY_BUILD_PROPERTIES_FILE`, and
   the file of the configuration parameters that `teamcity.configuration.properties.file` names. The build gives each

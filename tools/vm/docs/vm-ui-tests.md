@@ -933,11 +933,14 @@ its siblings are refused. Each test of the Tests tab gets its trace and a `trace
 scenario also gets its last picture and its video as loose files in `air-traces-failed/`, which the Tests tab shows.
 
 `--viewer DIR` names a built viewer, a directory with `index.html`. Without it, the step builds the viewer in the
-checkout, as `serve` builds the site: with the pinned node and pnpm, `pnpm install --frozen-lockfile` in the kernel and
-in `plugins/air/docs`, then `pnpm run build:viewer` there, which writes `out/air-trace-viewer/index.html`. A viewer
-there that is newer than its sources is not built again: the site's sources, the Vite and site configuration, the
-lockfiles, and the UI primitives of the genui catalog. The build has 10 minutes, and stderr says how long it took. A
-build that does not end in time is stopped with every process that it started.
+checkout: `pnpm install --frozen-lockfile` in the kernel and in `plugins/air/docs`, then `pnpm run build:viewer` there,
+which writes `out/air-trace-viewer/index.html`. The node and the pnpm are `--node` and `--pnpm`, or `AIR_TRACE_NODE` and
+`AIR_TRACE_PNPM`, which a step before the publish sets on TeamCity. A tool `none` builds no viewer. Without them, a
+local step asks Bazel for the pinned ones, as `serve` does. On TeamCity the step never starts a Bazel, because a nested
+one would start a server without the startup options of the build. There it builds no viewer and warns. A viewer that is
+newer than its sources is not built again: the site's sources, the Vite and site configuration, the lockfiles, and the
+UI primitives of the genui catalog. The build has 10 minutes, and stderr says how long it took. A build that does not
+end in time is stopped with every process that it started.
 
 The step reads the build from the agent's property files, `TEAMCITY_BUILD_PROPERTIES_FILE` and the configuration file
 that it names. `bazel run` passes the environment of the step to the program. The listing then names the build of each
