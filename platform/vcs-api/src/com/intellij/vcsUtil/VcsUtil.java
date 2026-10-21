@@ -169,11 +169,11 @@ public final class VcsUtil {
   }
 
   public static @Nullable VirtualFile getVirtualFile(@NotNull @NonNls String path) {
-    return ReadAction.computeBlocking(() -> StandardFileSystems.local().findFileByPath(path.replace(File.separatorChar, '/')));
+    return StandardFileSystems.local().findFileByPath(path.replace(File.separatorChar, '/'));
   }
 
   public static @Nullable VirtualFile getVirtualFile(@NotNull File file) {
-    return ReadAction.computeBlocking(() -> StandardFileSystems.local().findFileByPath(file.getAbsolutePath()));
+    return StandardFileSystems.local().findFileByPath(file.getAbsolutePath());
   }
 
   public static @Nullable VirtualFile getVirtualFileWithRefresh(@Nullable File file) {
