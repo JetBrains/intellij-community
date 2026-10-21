@@ -58,20 +58,17 @@ extremely unpractical.
    > Do not make any changes in the _Transitive dependencies_ dialog — click _Cancel_ when you've found the Skiko
    version to use.
 7. Navigate to the _intellij.libraries.compose.foundation.desktop.junit_ module and update the
-   _org.jetbrains.compose.ui.ui.test.junit4.desktop_ library to the same version
-8. Navigate to the _intellij.libraries.compose.runtime.desktop_ module and update the various libraries the same way as you did in
-   _compose-foundation-desktop_
-9. Navigate to the _intellij.platform.jewel.ui_ module
+   _org.jetbrains.compose.ui.ui.test.junit4.desktop_ library to the same version.
+8. Navigate to the _intellij.libraries.compose.runtime.desktop_ module and update the `androidx.compose.runtime.*`
+   libraries to the AndroidX Compose Runtime version that `org.jetbrains.compose.runtime:runtime-desktop` depends on.
+9. Navigate to the _intellij.platform.jewel.ui_ and _intellij.platform.jewel.ui.tests_ modules.
 10. Update the _org.jetbrains.compose.components.components.resources_ and
-    _org.jetbrains.compose.components.components.resources.desktop_ dependencies to the same CMP version with the same
-    procedure as above
-11. Now it's time to update the Skiko dependency. Go to the _intellij.libraries.skiko_ module
-12. If the Skiko version currently listed is different from the one CMP requires — which is usually the case — then
-    follow the same procedure as above to upgrade Skiko to the required version. Note that the required Skiko version
-    may not be the latest one.
-    * **Important:** `skiko-awt-runtime-all` is a custom-built package hosted in the
-      [IntelliJ Dependencies](https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/skiko/skiko-awt-runtime-all/)
-      repo. If the required version is not available, you'll need to ask Kuba/Nebojsa to build it and publish it.
+    _org.jetbrains.compose.components.components.resources.desktop_ dependencies in both modules to the new CMP version.
+11. Navigate to the _intellij.libraries.skiko_ module.
+12. If the required Skiko version differs from the current version, update both _jetbrains.skiko.awt.compose_
+    (`org.jetbrains.skiko:skiko-awt`) and _jetbrains.skiko.awt.runtime.all_
+    (`org.jetbrains.skiko:skiko-awt-runtime-all`) to the required version. Both artifacts are published on Maven Central
+    and in the [CMP dev repository](https://packages.jetbrains.team/maven/p/cmp/dev/org/jetbrains/skiko/skiko-awt-runtime-all/).
 
 You should now be able to see the changes in `.iml` files that correspond to the upgrades. If they do not immediately
 show up, you can use the _Save all_ action to force the IDE to write changes to disk.
