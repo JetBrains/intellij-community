@@ -120,6 +120,13 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
   public static final @NotNull TreeStateStrategy<?> ALWAYS_RESET = new AlwaysResetTreeStateStrategy();
   public static final @NotNull TreeStateStrategy<?> ALWAYS_KEEP = new AlwaysKeepTreeStateStrategy();
   public static final @NotNull TreeStateStrategy<?> KEEP_NON_EMPTY = new KeepNonEmptyTreeStateStrategy();
+  /**
+   * Resets the tree state when the tree had no nodes before the update, and keeps the tree state in other cases.
+   * <p>
+   * Unlike {@link #KEEP_NON_EMPTY}, it keeps a tree with all nodes collapsed and no selection.
+   * The saved state of such a tree is empty.
+   */
+  public static final @NotNull TreeStateStrategy<?> RESET_ONLY_EMPTY_TREE = new ResetOnlyEmptyTreeStrategy();
   public static final @NotNull TreeStateStrategy<?> KEEP_SELECTED_OBJECTS = new KeepSelectedObjectsStrategy();
 
   protected final @NotNull Project myProject;
@@ -1040,6 +1047,23 @@ public abstract class ChangesTree extends Tree implements UiCompatibleDataProvid
     @Override
     public void restoreState(@NotNull ChangesTree tree, TreeState state, boolean scrollToSelection) {
       if (state != null && !state.isEmpty()) {
+        tree.applyTreeState(state, scrollToSelection);
+      }
+      else {
+        tree.resetTreeState();
+      }
+    }
+  }
+
+  private static class ResetOnlyEmptyTreeStrategy implements TreeStateStrategy<TreeState> {
+    @Override
+    public TreeState saveState(@NotNull ChangesTree tree) {
+      return tree.isEmpty() ? null : TreeState.createOn(tree, true, true);
+    }
+
+    @Override
+    public void restoreState(@NotNull ChangesTree tree, TreeState state, boolean scrollToSelection) {
+      if (state != null) {
         tree.applyTreeState(state, scrollToSelection);
       }
       else {

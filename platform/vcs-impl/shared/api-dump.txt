@@ -437,6 +437,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesTree
 - sf:GROUP_BY_ACTION_GROUP:java.lang.String
 - sf:KEEP_NON_EMPTY:com.intellij.openapi.vcs.changes.ui.ChangesTree$TreeStateStrategy
 - sf:KEEP_SELECTED_OBJECTS:com.intellij.openapi.vcs.changes.ui.ChangesTree$TreeStateStrategy
+- sf:RESET_ONLY_EMPTY_TREE:com.intellij.openapi.vcs.changes.ui.ChangesTree$TreeStateStrategy
 - pf:myProject:com.intellij.openapi.project.Project
 - pf:myShowConflictsNode:Z
 - <init>(com.intellij.openapi.project.Project,Z,Z):V

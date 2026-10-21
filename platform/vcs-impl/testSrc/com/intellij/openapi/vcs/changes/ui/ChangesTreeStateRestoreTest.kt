@@ -1,11 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.mock.MockProject
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.TestDisposable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -14,12 +16,14 @@ import javax.swing.tree.DefaultTreeModel
 
 /**
  * A restore of the tree state must not expand the only child of a restored node, when the user collapsed that child.
+ * [ChangesTree.RESET_ONLY_EMPTY_TREE] must also keep a tree with all nodes collapsed and no selection.
  */
 @TestApplication
 internal class ChangesTreeStateRestoreTest {
-  companion object {
-    private val projectFixture = projectFixture()
-  }
+  @TestDisposable
+  lateinit var disposable: Disposable
+
+  private val project: Project by lazy { MockProject(null, disposable) }
 
   @Test
   fun `the collapsed only child stays collapsed with ALWAYS_KEEP`(): Unit = checkOnlyChildStaysCollapsed(ChangesTree.ALWAYS_KEEP)
@@ -28,9 +32,38 @@ internal class ChangesTreeStateRestoreTest {
   fun `the collapsed only child stays collapsed with KEEP_NON_EMPTY`(): Unit = checkOnlyChildStaysCollapsed(ChangesTree.KEEP_NON_EMPTY)
 
   @Test
+  fun `the collapsed only child stays collapsed with RESET_ONLY_EMPTY_TREE`(): Unit =
+    checkOnlyChildStaysCollapsed(ChangesTree.RESET_ONLY_EMPTY_TREE)
+
+  @Test
+  fun `the first load expands the default nodes with RESET_ONLY_EMPTY_TREE`(): Unit = timeoutRunBlocking {
+    val actual = withContext(Dispatchers.EDT) {
+      val tree = TestTree(project, ChangesTree.RESET_ONLY_EMPTY_TREE)
+      tree.replaceModel()
+      tree.rows()
+    }
+    assertEquals(listOf("/repo:true", "/repo/module:true",
+                        "/repo/module/a:true", "/repo/module/a/file.txt:false",
+                        "/repo/module/b:true", "/repo/module/b/file.txt:false"), actual)
+  }
+
+  @Test
+  fun `the collapsed top node without a selection stays collapsed with RESET_ONLY_EMPTY_TREE`(): Unit = timeoutRunBlocking {
+    val actual = withContext(Dispatchers.EDT) {
+      val tree = TestTree(project, ChangesTree.RESET_ONLY_EMPTY_TREE)
+      tree.replaceModel()
+      tree.collapseRow(0)
+      tree.clearSelection()
+      tree.replaceModel()
+      tree.rows()
+    }
+    assertEquals(listOf("/repo:false"), actual)
+  }
+
+  @Test
   fun `an expand by the user still expands the only child`(): Unit = timeoutRunBlocking {
     val actual = withContext(Dispatchers.EDT) {
-      val tree = TestTree(projectFixture.get(), ChangesTree.ALWAYS_KEEP)
+      val tree = TestTree(project, ChangesTree.ALWAYS_KEEP)
       tree.replaceModel()
       tree.collapseRow(0)
       tree.expandRow(0)
@@ -41,7 +74,7 @@ internal class ChangesTreeStateRestoreTest {
 
   private fun checkOnlyChildStaysCollapsed(strategy: ChangesTree.TreeStateStrategy<*>): Unit = timeoutRunBlocking {
     val (expected, actual) = withContext(Dispatchers.EDT) {
-      val tree = TestTree(projectFixture.get(), strategy)
+      val tree = TestTree(project, strategy)
       tree.replaceModel()
       tree.expandRow(0)
       tree.collapseRow(1)
@@ -59,6 +92,11 @@ internal class ChangesTreeStateRestoreTest {
     }
 
     override fun rebuildTree() {}
+
+    /**
+     * The grouping support reads its settings from a project service, which [MockProject] does not have.
+     */
+    override fun installGroupingSupport(): ChangesGroupingSupport = ChangesGroupingSupport.Disabled(myProject, this)
 
     /**
      * Sets a new model with new nodes: "/repo" is the only top-level node, and "/repo/module" is its only child.

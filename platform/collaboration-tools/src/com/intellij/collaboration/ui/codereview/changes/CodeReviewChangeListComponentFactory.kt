@@ -54,7 +54,7 @@ object CodeReviewChangeListComponentFactory {
     }.also { tree ->
       ClientProperty.put(tree, ExpandableItemsHandler.IGNORE_ITEM_SELECTION, true)
       SelectionSaver.installOn(tree)
-      tree.treeStateStrategy = ChangesTree.KEEP_NON_EMPTY
+      tree.treeStateStrategy = ChangesTree.RESET_ONLY_EMPTY_TREE
       tree.doubleClickHandler = Processor { e ->
         if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return@Processor false
         vm.updateSelectedChangesFromTree(tree)
