@@ -84,7 +84,7 @@
         "-Dsun.tools.attach.tmp.only=true",
         "-Dawt.lock.fair=true",
         "-Dawt.toolkit.name=auto",
-        "-Dsun.java2d.vulkan=True"
+        "-Dsun.java2d.vulkan=true"
       ]
     }
   },
