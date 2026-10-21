@@ -122,6 +122,13 @@ open class McpServerService(private val cs: CoroutineScope) {
     var elicitationKind: McpElicitationKind? = null
       private set
 
+    /**
+     * Lists the router tool only while the session has a router-only tool, a tool that the agent can reach only through
+     * the router. False keeps the default contract, in which the session always lists the router.
+     */
+    var omitsUnusedRouterTool: Boolean = false
+      private set
+
     constructor(
       commandExecutionMode: AskCommandExecutionMode,
       toolFilter: McpToolFilter?,
@@ -147,10 +154,21 @@ open class McpServerService(private val cs: CoroutineScope) {
     fun withOwnerKey(ownerKey: String?): McpSessionOptions =
       copy().also { it.ownerKey = ownerKey?.takeIf(String::isNotBlank) }
 
+    /** Returns a copy that lists the router tool only while the session has a router-only tool. See [omitsUnusedRouterTool]. */
+    @ApiStatus.Internal
+    fun withUnusedRouterToolOmitted(): McpSessionOptions =
+      copy().also { it.omitsUnusedRouterTool = true }
+
     internal fun withToolFilter(toolFilter: McpToolFilter): McpSessionOptions =
       copy(toolFilter = toolFilter)
 
-    private fun copy(toolFilter: McpToolFilter? = this.toolFilter): McpSessionOptions {
+    internal fun withClientTags(clientTags: Set<String>): McpSessionOptions =
+      copy(clientTags = clientTags)
+
+    private fun copy(
+      toolFilter: McpToolFilter? = this.toolFilter,
+      clientTags: Set<String> = this.clientTags,
+    ): McpSessionOptions {
       return McpSessionOptions(
         commandExecutionMode = commandExecutionMode,
         toolFilter = toolFilter,
@@ -158,7 +176,10 @@ open class McpServerService(private val cs: CoroutineScope) {
         invocationMode = invocationMode,
         elicitationKind = elicitationKind,
         clientTags = clientTags,
-      ).also { it.ownerKey = ownerKey }
+      ).also {
+        it.ownerKey = ownerKey
+        it.omitsUnusedRouterTool = omitsUnusedRouterTool
+      }
     }
 
     @Deprecated("ABI compat with 261.22158 that doesn't have `localAgentId`", level = DeprecationLevel.HIDDEN)
@@ -548,14 +569,7 @@ open class McpServerService(private val cs: CoroutineScope) {
         val useFiltersFromEP = allowedToolsFromHeader.isNullOrEmpty()
         // if no header provided, use the existing filter from sessionOptions
         val sessionOptions = if (headerFilter != null || clientTagsHeader != null) {
-          McpSessionOptions(
-            commandExecutionMode = baseSessionOptions.commandExecutionMode,
-            toolFilter = baseSessionOptions.toolFilter,
-            localAgentId = baseSessionOptions.localAgentId,
-            invocationMode = baseSessionOptions.invocationMode,
-            elicitationKind = baseSessionOptions.elicitationKind,
-            clientTags = clientTags,
-          ).withOwnerKey(baseSessionOptions.ownerKey)
+          baseSessionOptions.withClientTags(clientTags)
             .let { options -> headerFilter?.let(options::withToolFilter) ?: options }
         }
         else {
@@ -694,6 +708,11 @@ open class McpServerService(private val cs: CoroutineScope) {
    * Returns MCP tools filtered by all filter providers except those specified in [excludeProviders].
    * This is useful for UI that needs to show tools filtered by some providers but not others
    * (e.g., showing tools for disallow list configuration without applying the disallow-list filter itself).
+   *
+   * The result always has the router tool, unless [McpSessionOptions.omitsUnusedRouterTool] is true. Then the result
+   * has the router tool only in the [McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED] pass, and only while a router-only
+   * tool other than the router passes [filter]. A `DIRECT` pass and a pass without filter providers list every tool
+   * directly. A `VIA_ROUTER` pass lists the tools behind the router, and the router does not route to itself.
    */
   @ApiStatus.Internal
   fun getMcpToolsFiltered(
@@ -706,14 +725,16 @@ open class McpServerService(private val cs: CoroutineScope) {
   ): List<McpTool> {
     val allTools = getAllMcpTools()
     val filterAdjusted = filter ?: McpToolFilter.AllowAll
+    val omitsUnusedRouterTool = sessionOptions?.omitsUnusedRouterTool == true
 
     val routerToolName = ROUTER_TOOL_NAME
     if (!useFiltersFromEP) {
-      return allTools.filter { tool ->
+      val tools = allTools.filter { tool ->
         val isRouterTool = tool.descriptor.name == routerToolName
 
         isRouterTool || filterAdjusted.shouldInclude(tool)
       }
+      return withRouterTool(tools, allTools, listsRouter = !omitsUnusedRouterTool)
     }
     val filterProviders = McpToolFilterProvider.EP.extensionList
       .filter { provider -> excludeProviders.none { it.isInstance(provider) } }
@@ -725,14 +746,27 @@ open class McpServerService(private val cs: CoroutineScope) {
       filterProvider.applyFilters(context, clientInfo, sessionOptions, invocationMode)
     }
 
-    val filteredTools = linkedSetOf<McpTool>()
-    filteredTools += when (invocationMode) {
+    val filteredTools = when (invocationMode) {
       McpToolInvocationMode.DIRECT -> context.onTools + context.routerOnlyTools
       McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED -> context.onTools
       McpToolInvocationMode.VIA_ROUTER -> context.routerOnlyTools
     }.filter { filterAdjusted.shouldInclude(it) }
-    allTools.firstOrNull { it.descriptor.name == routerToolName }?.let { filteredTools += it }
-    return filteredTools.toList()
+    val listsRouter = !omitsUnusedRouterTool ||
+                      invocationMode == McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED &&
+                      context.routerOnlyTools.any { it.descriptor.name != routerToolName && filterAdjusted.shouldInclude(it) }
+    return withRouterTool(filteredTools, allTools, listsRouter)
+  }
+
+  /**
+   * Returns [tools] with the router tool when [listsRouter] is true, and without it otherwise.
+   * A missing router tool from [allTools] goes to the end.
+   */
+  private fun withRouterTool(tools: List<McpTool>, allTools: List<McpTool>, listsRouter: Boolean): List<McpTool> {
+    if (!listsRouter) {
+      return tools.filter { it.descriptor.name != ROUTER_TOOL_NAME }
+    }
+    val routerTool = allTools.firstOrNull { it.descriptor.name == ROUTER_TOOL_NAME }
+    return if (routerTool == null || routerTool in tools) tools else tools + routerTool
   }
 
   /** Applies the persisted enable setting after the [after] jobs complete, so a dying transition cannot override it. */

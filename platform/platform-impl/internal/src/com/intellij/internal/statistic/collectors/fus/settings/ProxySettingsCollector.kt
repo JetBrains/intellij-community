@@ -10,9 +10,10 @@ import com.intellij.util.net.ProxyConfiguration
 import com.intellij.util.net.ProxySettings
 
 internal class ProxySettingsCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("proxy.settings", 3)
+  private val GROUP = EventLogGroup("proxy.settings", 4)
   private val TYPE = GROUP.registerEvent("proxy.type", EventFields.Enum("name", ProxyType::class.java))
   private val AUTO_DETECT_DURATION = GROUP.registerEvent("auto.detect.duration", EventFields.DurationMs)
+  private val LEGACY_AUTH = GROUP.registerEvent("legacy.auth")
 
   enum class ProxyType { Auto, Socks, Http }
 
@@ -33,7 +34,15 @@ internal class ProxySettingsCollector : ApplicationUsagesCollector() {
       result.add(TYPE.metric(type))
       if (type == ProxyType.Auto) {
         val autoDetectMs = IdeProxySelector.getProxyAutoDetectDurationMs()
-        if (autoDetectMs >= 0) result.add(AUTO_DETECT_DURATION.metric(autoDetectMs))
+        if (autoDetectMs >= 0) result += AUTO_DETECT_DURATION.metric(autoDetectMs)
+      }
+      if (type == ProxyType.Http || type == ProxyType.Socks) {
+        @Suppress("DEPRECATION", "removal")
+        val legacyAuth = (
+          com.intellij.util.net.HttpConfigurable.getInstance().KEEP_PROXY_PASSWORD &&
+          com.intellij.util.net.HttpConfigurable.getInstance().readCredentials() != null
+        )
+        if (legacyAuth) result += LEGACY_AUTH.metric()
       }
     }
 

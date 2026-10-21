@@ -60,19 +60,16 @@ interface PythonRepositoryManager {
   @ApiStatus.Internal
   suspend fun awaitReady() {}
 
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  fun searchPackages(repository: PyPackageRepository, needle: String, pageSize: Int = 100): PythonPackageSearchResult {
+  suspend fun searchPackages(repository: PyPackageRepository, needle: String, pageSize: Int = 100): PythonPackageSearchResult {
     val normalizedNeedle = PyPackageName.normalizePackageName(needle)
     return repository.search(normalizedNeedle, pageSize)
   }
 
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  fun searchPackages(needle: String, pageSize: Int = 100): Map<PyPackageRepository, PythonPackageSearchResult> {
+  suspend fun searchPackages(needle: String, pageSize: Int = 100): Map<PyPackageRepository, PythonPackageSearchResult> {
     return repositories.associateWith { searchPackages(it, needle, pageSize) }
   }
 
-  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  fun hasPackageSnapshot(packageName: String): Boolean {
+  suspend fun hasPackageSnapshot(packageName: String): Boolean {
     return repositories.any { it.hasPackage(packageName) }
   }
 
@@ -99,12 +96,10 @@ interface PythonRepositoryManager {
   class PythonRepositorySearchApi internal constructor(private val manager: PythonRepositoryManager) {
     val repositories: List<PyPackageRepository> get() = manager.repositories
 
-    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-    fun searchPackages(query: String, pageSize: Int = 100): Map<PyPackageRepository, PythonPackageSearchResult> =
+    suspend fun searchPackages(query: String, pageSize: Int = 100): Map<PyPackageRepository, PythonPackageSearchResult> =
       manager.searchPackages(query, pageSize)
 
-    @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-    fun searchPackages(repository: PyPackageRepository, needle: String, pageSize: Int = 100): PythonPackageSearchResult =
+    suspend fun searchPackages(repository: PyPackageRepository, needle: String, pageSize: Int = 100): PythonPackageSearchResult =
       manager.searchPackages(repository, needle, pageSize)
   }
 
@@ -119,7 +114,6 @@ interface PythonRepositoryManager {
  * readiness is required — the type system then enforces that a caller has waited, so it can't
  * accidentally search against a half-initialised manager.
  */
-@ApiStatus.Internal
 internal suspend fun PythonRepositoryManager.getSearchApi(): PythonRepositoryManager.PythonRepositorySearchApi {
   awaitReady()
   return PythonRepositoryManager.PythonRepositorySearchApi(this)

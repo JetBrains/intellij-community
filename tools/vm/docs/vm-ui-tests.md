@@ -1,10 +1,10 @@
 # Running UI Tests in a VM
 
-`BT --lane ui` and `--lane ui-real` launch a real IDE with `InputEventsRobot`. That robot posts
-component-relative events through the IDE event queue, and it never moves the physical pointer.
-`BT --lane gui-chat` may still use `SmoothRobot` and physical input. A UI lane is run and judged in
-a VM, and the controller's default is a Linux container on a Docker engine. On a Mac that engine is Apple
-`container`, or a Lima VM on a macOS older than 26. The VM isolates the host session, and it gives a failure a real screenshot. Never move a run onto the host silently.
+`BT --lane ui`, `--lane ui-real` and `--lane gui-chat` launch a real IDE with `InputEventsRobot`. That robot posts
+component-relative events through the IDE event queue, and it never moves the physical pointer. Every lane
+document selects that robot. A UI lane is run and judged in a VM, and the controller's default is a Linux container
+on a Docker engine. On a Mac of macOS 26 or newer, on Apple
+silicon, that engine is Apple `container`. The VM isolates the host session, and it gives a failure a real screenshot. Never move a run onto the host silently.
 
 The flow lanes validate Swing and AWT component behaviour. They do not validate native title bars
 and menus, OS dialogs, WindowServer hit testing, or physical focus. That coverage stays separate.
@@ -31,7 +31,7 @@ macOS guest, for the golden image, and for the Parallels VM. It is needed for a 
 takes the user's own screen and focus.
 
 The host-side provider, layout-plan, fragment and composition flow is documented
-in [Dev-build architecture](../../../../build/dev-build-architecture.md). The guest consumes a
+in [Dev-build architecture](../../../../build/docs/guides/dev-build-architecture.md). The guest consumes a
 self-contained Bazel distribution, and it needs no checkout of its own. Nothing caches a guest run,
 so an iteration runs every suite it selects again. On 2026-09-30 the `ui` lane was 71 tests in 40
 classes, and it took 750 s of test time on a Tart Linux worker with a cold daemon. Ask `vm.cmd suites <paths>` what your change reaches, then run `run --changed <paths>`. To
@@ -49,16 +49,16 @@ the iteration can still run on the guest, and the refusal names the receipt that
 ## The four guests
 
 All four run tests the same way. The guest executes Bazel outputs built on the host, against a warm
-IDE that a guest daemon holds open. They differ in what kind of machine they are, and in what guest
+IDE that the lane daemon holds open. They differ in what kind of machine they are, and in what guest
 runs in it.
 
 | | Docker (default) | Tart macOS | Parallels | container-linux |
 | --- | --- | --- | --- | --- |
-| machine | a container on Apple `container` or on the controller's Lima VM, or on the engine that `DOCKER_BIN` or `DOCKER_HOST` names | a Tart VM | one Parallels VM | the container of the `testing-ui` skill, on Apple `container`, rootless Podman or `wslc` |
+| machine | a container on Apple `container`, or on the engine of the host environment, which `DOCKER_BIN` or `DOCKER_HOST` can name | a Tart VM | one Parallels VM | the container of the `testing-ui` skill, on Apple `container`, rootless Podman or `wslc` |
 | image | a Dockerfile from a digest-pinned `ubuntu:26.04`, pulled from the JetBrains registry by its content tag, built when the pull fails | a sealed Packer golden | one pre-existing VM | the skill's image, which its `start` builds |
 | session | `Xvfb :88` and fluxbox, from the image's entrypoint | Aqua | Aqua | the skill's `Xvnc :1`, with noVNC |
-| root disk and memory | on Apple `container` a VM of its own, 8 GiB; on Lima the engine VM's, shared by every container | 120 GB, 32 GiB | the VM's own | the container's disk, 6 GiB |
-| `pool stop` | stops the container, and on Lima then the VM when nothing is leased, keeps nothing warm; on Apple `container` an unleased worker also stops by itself an hour after its release | `tart suspend`, keeps the daemon and the IDE | suspends | removes the container and the staged runtime with it, keeps nothing warm |
+| root disk and memory | on Apple `container` a VM of its own, 8 GiB; on the engine of the host environment the engine's, shared by every container | 120 GB, 32 GiB | the VM's own | the container's disk, 6 GiB |
+| `pool stop` | stops the container and never an engine, keeps nothing warm; on Apple `container` an unleased worker also stops by itself an hour after its release | `tart suspend`, keeps the daemon and the IDE | suspends | removes the container and its guest-local state with it, keeps nothing warm |
 | Robot screenshot | a real frame | black, see ADR 0113 | a real frame | a real frame |
 | Peekaboo | no | no | yes | no |
 | provenance | the base digest and the image tag | a seal receipt per worker | none | none |
@@ -67,8 +67,8 @@ runs in it.
 Docker is the default on every host
 ([ADR 0190](decisions/0190-the-docker-engine-is-the-default-worker.md)), and it is the one Linux worker
 ([the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). A red run
-there is a verdict. `java.awt.Robot` captures a real frame there, so a failure arrives with a picture. It needs
-no installation, and one engine holds two lanes. `--backend container-linux` runs the same Linux guest profile
+there is a verdict. `java.awt.Robot` captures a real frame there, so a failure arrives with a picture. On a Mac of
+macOS 26 or newer, on Apple silicon, it needs no installation. One engine holds two lanes. `--backend container-linux` runs the same Linux guest profile
 in the container of the `testing-ui` skill, on every host of the skill. The skill's noVNC is the live view
 ([the lane runs in the testing-ui container](decisions/2026-10-04-the-lane-runs-in-the-testing-ui-container.md)), and
 [the container-linux backend becomes the default worker](decisions/2026-10-09-the-container-linux-backend-becomes-the-default-worker.md) decides that it becomes the
@@ -157,14 +157,18 @@ provenance. A Docker row of `status` has no field for any of them.
 
 A Linux guest has no seat until something starts an X server. The entrypoint of the image starts
 `Xvfb :88` and `fluxbox`, and it waits for the display to answer. The IDE gets `DISPLAY=:88` from the
-environment of the guest agent. The agent's `ide-launch` refuses `ide_display_missing` on a Linux guest when that
-environment has no `DISPLAY`. So every IDE of a lane reuses one display. A server image also carries none of the shared
-libraries the IDE's own native code links against. `GUEST_PACKAGES` names them, and their absence is quiet.
+environment of the guest agent. The agent's launch of the IDE refuses `ide_display_missing` on a Linux guest when
+that environment has no `DISPLAY`. So every IDE of a lane reuses one display. A server image also carries none of the
+shared libraries the IDE's own native code links against. `GUEST_PACKAGES` names them, and their absence is quiet.
 
-So each boot ends with the guest proving itself. `validate-guest` refuses the boot unless four things
-hold. The C library is glibc, the display answers, a window manager is registered on it, and `ldd`
-resolves every staged shared object. Each refusal carries its own code and sentence.
+So each boot ends with the guest proving itself. `validate-guest` refuses the boot unless three things
+hold. The C library is glibc, the display answers, and a window manager is registered on it. Each refusal
+carries its own code and sentence.
 [ADR 0108](decisions/0108-the-guest-half-of-the-image-pipeline-is-go.md) is why.
+
+The lane daemon proves the shared objects at its own boot. It runs `ldd` over each shared object of its
+distribution. A library that the guest does not have refuses the boot of the lane daemon with
+`linux_shared_object_unresolved`.
 
 The image carries Node 24.19.0 at `/usr/local/bin/node`, and `AIR_VM_NODE` defaults to that path. The
 image tag pins the Node, so a boot runs no Node check ([the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md)). Only `ui-live` uses the guest Node.
@@ -216,10 +220,10 @@ The share is a bind mount at `/mnt/AirVmShares/<share-name>`, read-only, which i
 parity layout expects. **There is no remount on Docker.** A spike on 2026-09-29 replaced a file by rename
 on the host, as Bazel does. In the container, `cat` returned the new bytes at once, and `open` never
 failed with `ENOENT`. Only `stat` was late: it reported the old size at +0 s and the new size from +1 s
-on. On the Lima engine, on 2026-09-30, `open` failed with `ENOENT` after the rename when the guest had
-looked the path up just before it. That dead node expired by itself in under one second, and no remount
-was needed ([ADR 0189](decisions/0189-the-docker-engine-is-a-lima-vm-the-controller-owns.md)). So a
-remount on Docker is a 2 s settle for the virtiofs dead nodes and the attribute cache, on both engines.
+on. On Apple `container`, on 2026-10-09, `open` failed with `ENOENT` after the rename when the guest had
+read the path just before it. That dead node expired by itself after 34 ms to 58 ms. No remount was
+needed ([Apple container is a second engine of the Docker backend](decisions/2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend.md)).
+So a remount on Docker is a 2 s settle for the virtiofs dead nodes and the attribute cache, on both engines.
 A lane run on Docker goes through
 the same daemon, and the remount step of the daemon becomes the 2 s settle. The controller recreates a
 container when its create arguments change. The record of those arguments covers the share, the image
@@ -227,61 +231,52 @@ tag, the display and `AIR_VM_SCREEN`. The arguments name no checkout, so every c
 same container, and a switch to another checkout recreates nothing
 ([the guest reads no checkout](decisions/2026-10-10-the-guest-reads-no-checkout.md)). A warm iteration compares the record too, before it reuses the
 daemon. On a difference it recreates the container under its own lease and starts the daemon cold. A missing record also gives a recreate, and so does an engine
-container id that differs from the recorded id. `pool start` and `pool init` refuse with
-`worker_leased` when the stale container runs and another holder leases it. A stopped stale container
+container id that differs from the recorded id. `pool start <worker>` and `pool init` refuse with
+`worker_leased` when the stale container runs and another holder leases it. `pool start all` and
+`pool stop all` change the other workers and name the refused worker in `refused`. A stopped stale container
 is recreated for any caller.
 
 The guest-local state is the named volume `air-<worker>-data` at `/home/admin/WorkerData`, so a
-recreate keeps the staged runtime. `pool stop` stops the container and never suspends. `pool recycle`
+recreate keeps it. `pool stop` stops the container and never suspends. `pool recycle`
 removes the container and its volume. `pool gc` removes stopped, unleased containers and keeps their
 volumes. `vnc`, `peekaboo` and `image validate|build` have no meaning here, and they refuse with
 `unsupported_backend_operation` (exit 2).
 
-One rule decides the engine, and no flag selects it ([ADR 0224](decisions/0224-apple-container-is-the-default-engine-of-a-mac.md)). When `DOCKER_BIN` or
-`DOCKER_HOST` names an engine, the controller runs that CLI against that engine. When neither variable
-is set, a macOS host of macOS 26 or newer, on Apple silicon, runs Apple `container`. An older macOS runs
-a Docker CLI that Bazel pins against a Lima VM that the controller owns. `AIR_VM_DOCKER_ENGINE=lima` or
-`AIR_VM_DOCKER_ENGINE=container` overrides the version either way. On a macOS older than 26, the engine
-gate refuses `AIR_VM_DOCKER_ENGINE=container` with `container_macos_too_old` (exit 2), before it runs a
-`container` command. The controller reads the version from the host at each command. So a Mac installs
-nothing, as for Tart. OrbStack is the fast path, and the first two lane rows of the cost table ran on it.
-A Mac with OrbStack keeps it with one variable:
+One rule decides the engine, and no flag selects it
+([the Lima engine is retired](decisions/2026-10-13-the-lima-engine-is-retired.md)). When `DOCKER_BIN` or `DOCKER_HOST`
+names an engine, the controller runs that CLI against that engine, on every host. When neither variable is set, a
+macOS host of macOS 26 or newer, on Apple silicon, runs Apple `container`. Every other Mac keeps the engine of its
+host environment: an older macOS, an Intel Mac, and a Mac whose version cannot be read. On such a Mac, the Docker CLI
+asks only `/var/run/docker.sock`. When no engine answers on that socket, a command that needs the engine refuses
+`docker_missing`. Its remedy names two ways out. Name a Docker engine with `DOCKER_BIN` or `DOCKER_HOST`, or run the
+lane on a Mac with macOS 26 or newer on Apple silicon. `suites` still works, and `status` refuses `docker_missing`
+with the same remedy. A Linux or a Windows host keeps the engine it has. The controller reads the version from the
+host at each command, and no setting overrides it. So a Mac of macOS 26 or newer on Apple silicon installs nothing, as
+for Tart. `status` names the engine in its first line, `engine=host` or `engine=container`, and it never starts the
+engine. OrbStack is the fast path, and the first two lane rows of the cost table ran on it. A Mac with OrbStack keeps
+it with one variable, and an older Mac names its engine in the same way:
 
 ```bash
 export DOCKER_HOST=unix://$HOME/.orbstack/run/docker.sock   # or DOCKER_BIN=<OrbStack's docker>
 ```
 
-The Lima VM is `air-docker-engine` under `AIR_VM_LIMA_HOME`, made from `community/tools/vm/docker/engine.lima.yaml`.
-It boots Ubuntu 26.04 and runs a rootful `dockerd` of the Ubuntu archive. Lima forwards the Docker socket
-through its SSH connection, and on 26.04 that connection runs over vsock, not through Lima's userspace
-network stack ([ADR 0191](decisions/0191-the-engine-vm-leaves-the-usernet-path.md)). The VM has one
-network, the usernet of Lima. Its disk is raw. It mounts the home read-only at its host path, as
-the default template of Lima does, so the share binds as on any engine. A Bazel output user root outside the
-home is refused `share_outside_home`. The checkout may lie anywhere, because no share holds it. The socket reaches the controller
-as `DOCKER_HOST`. The pinned CLI has no `buildx`, so the controller also pins buildx. With the pinned
-CLI (`DOCKER_BIN` unset), the controller passes `DOCKER_CONFIG=<runtime root>/docker-config` and names
-the pinned plugin in its `config.json`, on every engine. It keeps every other key of that file, so a
-`docker login` made there survives. A CLI that `DOCKER_BIN` names keeps its own configuration.
-`AIR_VM_CPU` and `AIR_VM_ROOT_DISK_GB` size the VM with the Linux defaults. `AIR_VM_MEMORY_MB` has a
-larger default for the engine, because the two containers share its memory. The skill's settings
-reference lists the values.
-
-A Docker command that needs the engine starts it, under one engine lock, so concurrent commands start
-it once. The first start downloads the cloud image and runs `apt-get`, so it takes minutes. Lima keeps
-the image in `~/Library/Caches/lima`, which every Lima home shares, so a VM that is made again
-downloads no image. A change of the home, a size or an image pin makes the VM again, and a checkout
-switch keeps it. A lease of another process blocks that recreate. The leases of one `shard` or `flake` do not. `pool stop` stops the VM after the
-containers, when no worker is leased and no container runs. `pool recycle all` deletes the VM unless a
-worker holds a lease of another process, and `pool recycle <worker>` keeps it. `pool gc` keeps it, and on a stopped VM it runs
-no `docker` command. `pool stop`, `pool gc` and `lease release` never start the VM or make it again. A
-`lease release` on a VM that does not run refuses `worker_stopped`. `status` never starts the VM, and it names the engine in its first line. A
+On a Mac, an unset `DOCKER_BIN` is a Docker CLI that Bazel pins. That CLI has no `buildx`, so the controller also pins
+buildx. With the pinned CLI, the controller passes `DOCKER_CONFIG=<runtime root>/docker-config` and names the pinned
+plugin in its `config.json`. So the pinned CLI reads no context of `~/.docker`. The controller keeps every other key
+of that file, so a `docker login` made there survives. A CLI that `DOCKER_BIN` names keeps its own configuration. A
 publish with the pinned CLI needs a login into that configuration first:
 
 ```bash
 DOCKER_CONFIG="<runtime root>/docker-config" docker login <registry>
 ```
 
-A Linux or a Windows host keeps the engine it has, because Lima needs QEMU on Linux and WSL2 on Windows.
+A Lima VM of an earlier controller stays on disk, and the controller does not know it. A running one keeps its
+memory. The pinned `limactl` is gone, so stop and delete the VM with a `limactl` of your own. When the VM does not
+run, remove `~/.local/state/JetBrains/air-vm-ui-tests/lima` instead:
+
+```bash
+LIMA_HOME=~/.local/state/JetBrains/air-vm-ui-tests/lima limactl delete --force air-docker-engine
+```
 
 On Apple `container` ([Apple container is a second engine of the Docker backend](decisions/2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend.md)),
 each container is a VM of its own. The controller runs the Apple CLI that Bazel pins in
@@ -290,12 +285,6 @@ each container is a VM of its own. The controller runs the Apple CLI that Bazel 
 ```bash
 env -u DOCKER_HOST ./community/tools/vm.cmd run AgentSessionToolWindowComposerUiTest
 ```
-
-- **The move from Lima.** The first `run` or `pool start` on Apple `container` makes the worker
-  containers again on that engine, and it downloads the worker image from the file mirror. The Lima VM stays on disk, and a
-  running one keeps its memory. `AIR_VM_DOCKER_ENGINE=lima ./community/tools/vm.cmd pool stop` stops it,
-  and `AIR_VM_DOCKER_ENGINE=lima ./community/tools/vm.cmd pool recycle all` deletes it
-  ([ADR 0224](decisions/0224-apple-container-is-the-default-engine-of-a-mac.md)).
 
 - **One server per login session.** The controller uses the server that runs, on the default data root of the tool.
   It never stops the server, because a `system stop` stops every container of the session, also the containers of
@@ -318,7 +307,7 @@ env -u DOCKER_HOST ./community/tools/vm.cmd run AgentSessionToolWindowComposerUi
   workers of 8 GiB has 4 slots, and a host of 64 GiB has 2. `AIR_VM_MAX_WORKERS` sets the count
   ([the Apple container pool follows the host memory, and the builder stops after a build](decisions/2026-10-10-the-container-pool-follows-the-host-memory-and-the-builder-stops.md)).
 - **The idle stop.** A release keeps the warm daemon for an hour. Then the unleased worker stops, and it gives its
-  memory back. The next run starts it again with a cold daemon, and the volume keeps the staged runtime.
+  memory back. The next run starts it again with a cold daemon, and the volume keeps the guest-local state.
   `AIR_VM_IDLE_STOP` sets the grace in seconds, `off` keeps the worker running, and `0` stops it at the release
   ([an idle Apple container worker stops itself](decisions/2026-10-10-an-idle-container-worker-stops-itself.md)).
 - **The pool commands.** `pool stop` stops the containers only. `pool recycle all` deletes the builder too. `status`
@@ -327,7 +316,7 @@ env -u DOCKER_HOST ./community/tools/vm.cmd run AgentSessionToolWindowComposerUi
 - **A boot that fails.** The engine keeps no exit code. A container that stops while it starts is refused
   `container_exited`, with its log and its boot log, which holds the code.
 
-A shell that exports `DOCKER_HOST`, for example for OrbStack, keeps the external engine. Unset it for the run, as the
+A shell that exports `DOCKER_HOST`, for example for OrbStack, keeps that engine. Unset it for the run, as the
 example does.
 
 The live lane `ui-live` runs on the Docker guest too, but only when a caller names it, because each of its scenarios
@@ -339,12 +328,13 @@ with `explicit_only_lane`. The run hands the guest a per-run Central login as a 
 central login export | ./community/tools/vm.cmd run --lane ui-live --test-env AIR_LIVE_CENTRAL_LOGIN=@-
 ```
 
-The test JVM imports that login into the guest account, starts the Central proxy and wires the agents with
-`central add`. It tears all of it down when the iteration's test plan ends, before the run reports its verdict. A
-macOS guest refuses the lane by name. The pinned Linux CLIs
-reach only a build that opts in with `build --define=air_lane_live_runtimes=on` in
-`.bazelrc-user.bazelrc`, until the mirror holds them. Every session of this checkout shares that file, so all their
-builds carry the define, still share one analysis, and their Linux-guest builds fetch the archives too. The skill's live-lane reference has the procedure.
+The lane daemon imports that login into the guest account, starts the Central proxy and wires the agents with
+`central add`. It tears all of it down at the end of the iteration, before the run reports its verdict. A run without
+the login input is refused with `lane_live_input` before any build or lease, and so is a run on a macOS guest.
+`lane-run` on a host refuses the lane with the same code, so the lane has no host run. A run that holds the live lane
+builds the descriptor `ui_daemon_linux_guest_live`, which adds the pinned Linux CLIs of Claude
+Code, Junie and Central. A build of another lane fetches none of them, and no build needs an option of its own. The
+skill's live-lane reference has the procedure.
 
 ## Windows
 
@@ -394,7 +384,7 @@ The `container-linux` backend has passed the `ui` lane of `flow-new-session` on 
 9 tests, cold in 283 s with a daemon start of 84 s, warm in 134 s
 ([the lane runs in the testing-ui container](decisions/2026-10-04-the-lane-runs-in-the-testing-ui-container.md)). That run took the MANIFEST branch through
 a real daemon start. No `vm.cmd run` has passed on a Windows PC with a Docker engine yet, so `--mount source=C:\…`
-on Docker Desktop and the MANIFEST name that the daemon descriptor gets there are not confirmed, and the cost table
+on Docker Desktop and the MANIFEST name that the runtime descriptor gets there are not confirmed, and the cost table
 below has no Docker row for Windows. The 2 s share settle of ADR 0183 is a VirtioFS measurement on OrbStack, and a
 Windows engine needs its own. A bind mount of a Windows path crosses from Windows into the engine's Linux VM, and
 the guest reads the IDE distribution and every test jar through it. That cost is not measured yet either.
@@ -408,12 +398,15 @@ route exists. No lane time is measured for this route.
 
 ## How a run reaches the guest
 
-Two `jps_test` targets launch an IDE: `//plugins/air/tests/integration/ui:ui_test` and
-`//plugins/air/tests/integration/gui-chat:gui-chat_test`. Their runfiles carry everything a run
-needs. The IDE arrives as an already-assembled distribution: `//plugins/air/tests/integration/ide:idea_air_lane_dist_linux` on
-the default guest, and `//plugins/air/tests/integration/ide:idea_air_lane_dist` on a macOS one. `-Dair.lane.ide.config` names
-that distribution's `_ide_config` companion target rather than the distribution itself. Beside it the targets
-carry the guest agent, the IDE flags file and the JBR archive that the IDE runs on.
+The runtime descriptor of the lanes names everything a run needs, and its runfiles carry it. The lane test of each
+lane, such as `//plugins/air/tests/integration/ui:ui_lane_test`, runs the descriptor
+`//plugins/air/tests/integration/ui:ui_daemon` on the host, through the `lane-run` verb of the guest agent. The IDE arrives as an already-assembled distribution: `//plugins/air/tests/integration/ide:idea_air_lane_dist_linux` on
+the default guest, and `//plugins/air/tests/integration/ide:idea_air_lane_dist` on a macOS one. The field `devDist.config`
+of the descriptor names the file of that distribution's `_ide_config` companion target, not the distribution itself.
+The field `ide.flagsFile` names the IDE flags file. The guest agent reads both from these fields. Of the static flags,
+it reads only `-Dair.trace.recorder`, `-Dair.flow.trace=off`, `-Dair.flow.trace.screen=on` and
+`-Dair.test.<name>.runtime`. The IDE runs on `jbr/` of the distribution, the production JBR, and gets JCEF from the
+JCEF plugin of the distribution.
 
 `run` resolves the selector with bt's resolution logic. It runs `bazel build` on the host against
 its warm cache, then it launches the built test stub in the guest. The launch environment is the one
@@ -431,11 +424,9 @@ the path table and the digest of each staged runfile, so the host predicts the r
 predicted one is `guest_runfiles_mismatch`, and a bad reply is `guest_runfiles_protocol`. The verb keeps that tree
 and the newest other one.
 
-The daemon JVM gets `-Didea.home.path=<generation>/home`, an empty directory of its staged generation, and an
-explicit config, system and log directory under `$AIR_VM_DATA/out/daemon`. IDE Starter keeps its output tree in
-`$AIR_VM_DATA/out` (`-Dide.starter.out.dir`). So no path of the JVM derives from a checkout.
-`AirUiDaemonServer.requireStagedRuntime` refuses a home outside the generation. The IDE distribution itself is
-read, not written, and the IDE writes its data into its context under `$AIR_VM_DATA/ide`.
+The lane daemon gets `--home $AIR_VM_DATA/daemon/home`, a directory in its state directory, and its IDE root on the
+guest disk. The boot of the verb makes both, so no path of the lane daemon derives from a checkout. The IDE
+distribution itself is read, not written, and the IDE writes its data into its context under `$AIR_VM_DATA/ide`.
 
 The share arrives on Apple's one VirtioFS automount device, and the controller mounts that device
 itself: at `/mnt/AirVmShares` on a Linux guest and `/Volumes/AirVmShares` on a macOS one
@@ -463,9 +454,12 @@ lane build with options of its own discarded the analysis of every other command
 the lane's: one test before a lane build cost 11.6 s of analysis on 2026-10-10. The guest is therefore a target, and
 the lane builds no runfile links: the controller reads the MANIFEST of the runtime descriptor on every host.
 
-A lane IDE downloads nothing. Under the daemon it runs on the daemon's own staged JVM, which the
-controller stages from the JBR archive of the runtime descriptor. A standalone lane run stages the JBR
-archive of its target with the guest agent's `stage`, and the IDE runs on that JVM.
+A lane IDE downloads nothing and stages no JVM. It runs on `jbr/` of its distribution, under the lane daemon
+and under `lane-run`. The lane daemon is a verb of the guest agent and runs no JVM, so a daemon start copies no
+JBR to the guest. The `jbr` section of the runtime descriptor names only the platform of the guest. No
+identity reads a file of the JBR, because the fingerprint of the distribution covers it. The lane daemon refuses a
+distribution without the JBR at its boot, and the refusal names the path. No lane target and no descriptor carries a
+JBR archive.
 
 **Remounting is a correctness requirement, not hygiene.** A VirtioFS guest keeps a dead node for any
 file the host rewrites after the mount. `stat` then still answers from the cache, while `open` fails
@@ -477,24 +471,24 @@ Linux worker on 2026-08-13.
 `umount` answers "target is busy" while anything in the guest still holds the mount open. The IDE
 holds it, because the IDE runs from the share, and so does any in-flight run that reads share-backed
 data. The daemon does not, and the next section states how that is asserted. Each lane IDE is a run of
-the guest agent's supervisor, so after a quiesce the controller asks the supervisor about every IDE
-context. A run that is not finished refuses the remount as `daemon_mount_quiesce_failed`.
+the guest agent's supervisor, so after the IDE stop the controller asks the supervisor about every IDE
+context. A run that is not finished refuses the remount as `daemon_remount_ide_running`.
 
 ### Guest-local writable state
 
-Everything a worker writes lives under `$AIR_VM_DATA`, in eight directories and the parity marker
+Everything a worker writes lives under `$AIR_VM_DATA`, in five directories and the parity marker
 `.air-vm-parity.json`:
 
 | directory | holds |
 | --- | --- |
-| `out` | the output tree of IDE Starter, and the config, system and log directories of the daemon JVM under `out/daemon` |
 | `runfiles` | the runfiles trees the guest builds from the MANIFEST, with the copies of the staged runfiles |
 | `ide` | one context for each launch key of the lane IDE: its `config`, `system`, `plugins`, `log`, `project`, `home` and `bin` directories, its argument file `ide-jvm.args`, its launch record `launch.json`, and the run directories of its supervisor slot |
 | `tmp` | temporary files |
-| `build-download` | the persistent build-dependency cache |
-| `daemon` | the daemon's own state and each iteration's results |
-| `daemon-runtime` | content-addressed stable-tier and JBR generations |
+| `daemon` | the daemon's own state, the `home` that the lane IDE gets as `idea.dev.project.root`, and each iteration's results. The run of the lane daemon starts in this directory |
 | `state` | the supervisor run roots, the SSH host-key fingerprint, and the guest agent binary itself |
+
+An older controller also wrote `daemon-runtime`, `out` and `build-download` there. Nothing reads them now, and each
+daemon start removes them before its free-space check.
 
 `state` is where the controller's own
 guest-side program lives, so a worker with no `state` is one nothing here can reach. A Linux worker
@@ -502,42 +496,34 @@ holds no checkout, no credentials and no cache, so a recycle loses nothing.
 
 ## The daemon loop
 
-A one-shot run would pay fixed costs on every iteration: a fresh test JVM, an IDE assembly inside
-it, and an IDE launch with a project open. `run` keeps those paid-for states warm in a persistent
-guest process, the **UI-test daemon** (`//plugins/air/tests/integration/ui:ui_daemon`, module
-`intellij.air.integrationTests.uiDaemon`). Why it is kept, now that Bazel caches the distribution it
-launches, is [ADR 0104](../../../../plugins/air/docs/decisions/0104-the-daemon-caches-a-process-not-a-build.md).
+A one-shot run pays an IDE launch with a project open on every iteration. `run` keeps that IDE warm in a
+persistent guest process: the **lane daemon**, the `lane-daemon` verb of the guest agent. It reads the runtime
+descriptor of the lane build. `lane-run` is the one-shot form of the same library, with no control channel. A Bazel
+lane test, `bt --lane` and a TeamCity agent run it on their own host. Why a daemon is kept,
+now that Bazel caches the distribution it launches, is [ADR 0104](../../../../plugins/air/docs/decisions/0104-the-daemon-caches-a-process-not-a-build.md).
 
-The daemon is the same JVM the `ui_test` target would start, on half its classpath. The **stable**
-tier is the platform and framework jars and the daemon's own module, and it is the JVM's app
-classpath. The **hot** tier is everything built from `plugins/air` except the daemon's own
-module. It is withheld from the app classpath, and each iteration loads it in a child classloader,
-from a guest-local content-addressed store the controller pushes into. A hot jar that reaches the
-app classpath is not a degraded mode but a silent one: parent-first delegation would answer every
-reload with the bytes the daemon booted on.
+The rule `plugins/air/tests/integration/air_ui_daemon_runtime.bzl` writes a versioned JSON **runtime
+descriptor**, and `//plugins/air/tests/integration/ui:ui_daemon` is that descriptor. It names the static flags, the
+distribution, the guest platform, the inputs of the lane IDE and the data inputs. The test code of a run reaches the
+lane IDE as the context plugin files and the lane inputs, which the controller pushes by digest. The data inputs are
+the runfiles of the `data` of the rule, without the files that another field names. Each file that the descriptor
+names is a runfile of the descriptor target. Both ends assert its `schemaVersion`, so the shape is a contract between
+Bazel and the controller. `parse_runtime_descriptor` in `crates/avl-wire/src/runtime.rs` validates it fail-closed.
+The lane daemon reads the inputs of the lane IDE from it at its boot, and the boot makes the directories of the run.
 
-Bazel declares the split rather than leaving it to be inferred. `_is_hot` in
-`plugins/air/tests/integration/air_ui_daemon_runtime.bzl` is "owner contains `//plugins/air/` and
-not the daemon's own module". The rule emits the two tiers as a versioned JSON **runtime
-descriptor**, and `//plugins/air/tests/integration/ui:ui_daemon` is that descriptor rather than a
-Java launcher. Both ends assert its `schemaVersion`, so the shape is a contract between Bazel and
-the controller. `parse_runtime_descriptor` in `crates/avl-wire/src/runtime.rs` validates it fail-closed,
-`daemon_launch_arg_file` beside it emits the argfile, and `AirUiDaemonServer` re-checks the result against its
-own classpath at boot.
-
-Every UI lane runs through this one daemon, because its classpath is the union of both IDE-launching
-targets. A lane is only a JUnit filter. Air's own `AirLaneIde`, in the daemon's stable module, then
-carries the warm IDE across whole controller iterations
-([ADR 0138](../../../../plugins/air/docs/decisions/0138-air-owns-its-lane-ide.md)).
+Every UI lane runs over this one descriptor, which names the suite documents and the lane documents of every lane. The
+run request of the lane daemon names the lane, and the lane daemon carries the warm IDE across whole controller
+iterations ([ADR 0138](../../../../plugins/air/docs/decisions/0138-air-owns-its-lane-ide.md)).
 
 The guest agent launches the IDE and owns its process
 ([ADR 0234](../../../../plugins/air/docs/decisions/0234-the-guest-agent-launches-the-lane-ide.md)). The daemon
-decides what to launch and when. The agent's `ide-prepare` lays out the context `$AIR_VM_DATA/ide/<launchKey>`:
-the data directories, the project, the disabled plugins, and the `home` and `bin` directories. The daemon then
-writes the option files, the bridge token, the seeds of the home and the launchers into the context. The agent's
-`ide-launch` composes the argument file of the IDE and starts the supervisor run `run-ide-<launchName>` in that
-context, in one call. So the context is also the run slot of the IDE. The IDE argv is
-`java @<context>/ide-jvm.args <project>`.
+decides what to launch and when, and it prepares and launches the IDE in its own process. The preparation lays out
+the context `$AIR_VM_DATA/ide/<launchKey>`: the data directories, the project, the disabled plugins, and the `home`
+and `bin` directories. The daemon then writes the option files, the bridge token, the seeds of the home and the
+launchers into the context. The launch composes the argument file of the IDE and starts the supervisor run
+`run-ide-<launchName>` in that context, in one call. So the context is also the run slot of the IDE. The preparation
+and the launch check their documents first. A launch property that names a data directory of the context is refused.
+The IDE argv is `java @<context>/ide-jvm.args <project>`.
 
 The environment of the IDE is closed, and the layout of its context sets it. `HOME` is the `home` directory of the
 context, and `PATH` starts with its `bin` directory. The agent copies a short allowlist from its own environment,
@@ -547,12 +533,15 @@ No other variable reaches the IDE, and the run spec records this policy and no v
 The bridge token is a private file of the config directory, `config/air-ui-test/token`, which the daemon
 writes. No launch document, argument file or argv holds it.
 
-The IDE has no run budget. It ends only when something stops it: `--fresh-ide`, a quiesce, the watchdog, the
-controller, or its own crash. An IDE that ended on its own, or whose bridge stopped answering, is found by the
-host's probe at the next suite boundary and relaunched on its context, so the lane pays a launch and no timeout.
+The IDE has no run budget. It ends only when something stops it: `--fresh-ide`, a remount, the watchdog, the
+controller, or its own crash. The lane daemon checks the IDE at the start of each iteration. An IDE that ended on its
+own, or that does not answer one lifecycle poll within 5 s, is relaunched on its context. So the lane pays a launch
+and no timeout. The lane daemon reads the lifecycle of the IDE only through the long poll
+`GET /api/air/ui-test-events` of the bridge. The poll uses the port and the token of the bridge. A readiness wait
+ends at once with `lane_ide_not_ready` when the run of its IDE ends.
 
 **The IDE outlives a daemon restart of the same product.** A cancel of the daemon run does not reach the IDE run.
-A restart for a change of the stable tier keeps each live IDE whose launch record names the product of the build,
+A restart for another launch digest keeps each live IDE whose launch record names the product of the build,
 and the timing line reports `ide keep`. The new daemon adopts that IDE on its first attach. Every other daemon
 start, `daemon stop`, a lease release and a pool recycle stop every lane IDE of the worker through the agent's
 `ide-gc`. The next run on a healthy daemon that holds no running IDE launches the IDE again, and the timing line
@@ -572,39 +561,46 @@ share.
 ### Invalidation
 
 Per `run`, the controller builds on the host and digests the stub's runfiles manifest with a
-stat-keyed content cache. It then pushes only changed hot jars into the daemon's store over HTTP.
-One connection carries a push of at most 8 MiB, and each further 8 MiB begun opens one more, up to four. It streams the JUnit run back as NDJSON. Three levels fall out of the digests, and each
+stat-keyed content cache. It then pushes only the changed context plugin files and lane inputs into the store of
+the lane daemon over HTTP.
+One connection carries a push of at most 8 MiB, and each further 8 MiB begun opens one more, up to four. It streams the run back as NDJSON, the run stream. Three levels fall out of the digests, and each
 iteration's timing line reports the one it took.
 
 | change | detection | cost |
 | --- | --- | --- |
-| test code, meaning the Air test-only modules | hot-jar digest diff | a push plus a fresh classloader. The IDE is reused, and there is **no remount** |
-| product inputs, meaning anything inside the prepared distribution | product stamp diff | quiesce, remount, resume, then launch the IDE again. The daemon JVM survives, and nothing is assembled |
-| the context plugins, meaning the in-IDE test bridge, which no lane distribution carries | plugins digest diff | a push of the changed plugin files and an IDE relaunch on the same context. The timing line reports `ide relaunch`, and there is **no remount** and no distribution compose |
-| the daemon's parent tier, meaning platform and framework jars | stable digest diff | an automatic daemon restart. The IDE of the same product survives it, and the timing line reports `ide keep` |
+| product inputs, meaning anything inside the prepared distribution | product stamp diff | stop every lane IDE, remount, then launch the IDE again. The daemon survives, and nothing is assembled |
+| the context plugins, meaning the in-IDE test bridge and its resident part, which no lane distribution carries | the digest of each plugin directory | a push of the changed plugin files, with **no remount** and no distribution compose. An edit of the bridge directory alone reloads the bridge plugin in the running IDE, and the timing line reports `ide reload`. An edit of the resident part relaunches the IDE on the same context, and so does a reload that fails |
+| the launch of the lane daemon, meaning a static flag of the runtime descriptor, a boot setting or the daemon environment | launch digest diff | an automatic daemon restart. The IDE of the same product survives it, and the timing line reports `ide keep` |
 | the container's declaration, meaning the image tag, the share or the display | create-record diff | a recreate plus a cold daemon start; Docker only |
 
-The three questions are asked independently, and one file may answer yes to more than one. An Air
-production jar is both hot and a product input. Treating "hot" as an answer to the product question
-is what would let a run report green against an IDE built from the previous commit.
+The series of 2026-10-15 measured the plugin rows under the lane daemon. It ran on master `64c3e5270948e`, on
+the worker `air-docker-2`, under one held lease, with the suite `rename-session`. The other lanes held their builds.
+The first row of each kind includes a host build of 7 to 13 s.
+
+| row | edit | decision | total s |
+| --- | --- | --- | --- |
+| R0 | none | `ide reuse` | 22.9, 10.0, 10.4 |
+| R3 | a literal of the resident plugin | `ide relaunch` | 23.1, 19.6, 15.9 |
+| R4 | a literal of the bridge plugin | `ide reload` | 20.4, 8.7, 9.1. The reload took 3.6, 2.4 and 2.4 s |
+
+The questions are asked independently, and one file may answer yes to more than one.
 
 The product stamp reads the `fingerprint.txt` that the dev build wrote inside the distribution's
 tree artifact. It is an xxh3 over every entry's content hash, so stamping never walks a
-multi-gigabyte tree. The stamp folds into the lane config key (`AirFlowLaneHost.configKey`), so a
+multi-gigabyte tree. The stamp folds into the lane config key of the guest agent, so a
 relaunch is the host's own key-change path rather than a new mechanism. The launch record of each IDE
 context names the product digest, which is how a restart knows which IDE it may keep.
 
-Nothing the daemon holds open lives on the share, and `AirUiDaemonServer.requireStagedRuntime`
-asserts that rather than arranging it: it refuses to serve unless `user.dir`, every stable classpath
-entry and `java.home` are under the guest-local runtime root. So the daemon can outlive a remount,
-and there are two remount windows:
+Nothing the lane daemon holds open lives on the share. It runs from the installed guest agent, in its state
+directory on the guest disk, so the daemon can outlive a remount, and there are two remount windows:
 
-- **With the daemon alive**, for a product change. `POST /mount/quiesce` refuses new runs and stops
-  the IDE, and it answers `409 busy` if a run is in flight. The controller remounts, and
-  `POST  /mount/resume` hands the run endpoint back. The timing line reports `ide remount`. On
+- **With the daemon alive**, for a product change. `POST /ide/stop` makes the daemon quit its IDE, and it
+  answers `409 busy` if a run is in flight. `ide-gc --stop-all` then cancels every other IDE run of the
+  worker, and the controller remounts. The controller holds the lease, so no run starts in between. The lane
+  daemon serves `/ide/stop`, so the remount needs no route of its own. The timing line reports `ide remount`. On
   Docker, the controller refreshes the shares with the 2 s settle instead of a remount. The timing
   line still reads `ide remount`.
-- **Between daemons**, for a stable-tier change. `start_daemon` in `crates/avl-vm/src/daemon/start.rs`
+- **Between daemons**, for a change of the launch digest. `start_daemon` in `crates/avl-vm/src/daemon/start.rs`
   remounts after the old daemon stops and before the new one starts. Before the remount, the guest
   agent's `ide-gc` keeps or stops the lane IDEs. On Docker, the controller refreshes the shares with
   the 2 s settle instead of a remount, so an IDE of the same product survives it.
@@ -643,13 +639,14 @@ published its state file in that case, so read `daemon log` to see why the daemo
 A worker whose VM Tart no longer lists, while its `tart run` process lives on, releases its lease
 without the guest check. `pool recycle <worker>` then ends that process and clones the slot again.
 
-The daemon environment is a fourth invalidation, because a JVM cannot change its own environment.
+The daemon environment is part of the launch row, because a running daemon cannot change its own environment.
 `prepare_build` in `crates/avl-vm/src/daemon/build.rs` folds that environment into the launch digest, so a
 changed value restarts the daemon.
 
 Two refusals exist to prevent a false green: `no_tests_discovered` for a selection that matches
-nothing, and `all_tests_skipped` for classes a JUnit condition ruled out, each listed with its own
-reason.
+nothing, and `all_tests_skipped` for a run that skipped every scenario, each listed with its own
+reason. A body that aborts its scenario through its scope ends the scenario as `ABORTED`, and the run counts it as
+skipped.
 
 The daemon publishes one `planStarted` record before the first execution. It includes the execution
 count and each discovered class. The report lists each class without a later result in
@@ -657,17 +654,18 @@ count and each discovered class. The report lists each class without a later res
 
 ### What a host build during a run takes away
 
-The guest runs the jars the iteration pushed, so a host build while a run is in flight does not corrupt the
+The guest runs the files the iteration pushed, so a host build while a run is in flight does not corrupt the
 execution. It corrupts the **attribution**. The verdict then describes bytes the checkout no longer produces,
-and a reader maps it to the source in their editor. Bazel replaces a jar by rename, so nothing else notices:
+and a reader maps it to the source in their editor. Bazel replaces a file by rename, so nothing else notices:
 the run keeps its open handles and reports green.
 
-So each iteration re-hashes its own hot tier when the run ends and compares it with what it pushed. A jar that
-moved is a verdict diagnostic, which makes the iteration an `infrastructure_error` and never green. The
-diagnostic names the jars and says to re-run. `PreparedBuild::hot_jar_drift` in
-`crates/avl-vm/src/daemon/build.rs` is the check, and the reason it is a
-diagnostic rather than a note is the rule `crates/avl-report/src/report.rs` opens with: a run whose
-subject changed under it looks exactly as authoritative as one whose subject did not.
+So each iteration re-hashes the files it pushed when the run ends, the context plugin files and the lane inputs, and
+compares them with what it pushed. A file that moved is a note. The note names the files and says to re-run. The
+terminal and the run journal show it, and the report carries it in `notes`. A note never changes the verdict, so the
+status follows the counts. The guest ran the bytes that the iteration pushed, so the execution and its counts stay
+true. Only the attribution to the checkout is lost. `PreparedBuild::pushed_file_drift` in
+`crates/avl-vm/src/daemon/build.rs` is the check. The verdict card shows no note, so read the journal or the report
+before you map a verdict to your editor.
 
 ### What a remount does not notice
 
@@ -682,33 +680,43 @@ such a digest would remount for every unrelated edit anybody made. A remount cos
 
 ## The watchdog and the report
 
-The daemon has no fixed whole-lane timeout. Its watchdog validates the execution that is active and
-the gaps around executions, so another scenario does not make a lane-size constant stale. Only JUnit
-lifecycle events move its deadlines; console, log, HTTP and XML activity never claim that a scenario
-made progress. The skill owns the budgets and their overrides.
+The watchdog of the lane daemon validates the active scenario and the gaps around scenarios. So another scenario
+does not make a lane-size constant stale. An emergency deadline caps the whole run from the count of the
+scenarios that the plan names. Only the start and the end of a scenario move the deadlines. Console, log, HTTP and
+XML activity never claim that a scenario made progress. The skill owns the budgets and their overrides.
 
-On expiry the daemon kills the IDE first, because an in-IDE operation that never answers holds the
-run thread. The kill is a cancel of the IDE run through the guest agent, which first writes a thread
-dump of the IDE into its log directory. The daemon then waits for the run thread to unwind. The `/run` request can set
-`wedgeGraceTimeoutSec`, which defaults to 60 s. This budget has no command-line or environment
-override. If the thread remains alive, the daemon flushes partial JUnit XML and exits with code 3.
-Measured twice, against a cold IDE and a warm one, the thread did not unwind either time. Expect the
-exit rather than the unwind. Recovery is automatic and costs one daemon boot. The controller
+On expiry the watchdog marks the run expired and kills the IDE first, because an in-IDE operation that never
+answers holds the run thread. The kill is a cancel of the IDE run through the guest agent. The
+cancel first writes a thread dump of the IDE into its log directory. The watchdog writes `watchdogExpired` after the kill, so a blocked
+stream cannot hold the kill. It then waits one minute for the run thread to unwind, and a run thread that does not
+unwind gets a note. The run thread starts no further scenario. The controller
 reports a stream that ends mid-run as `daemon_died` (exit 70). `daemon log` still works after the
 daemon is gone. The next run starts a new daemon, and that start stops a lane IDE that the dead daemon
 left alive.
 
-**The versioned JSON report is the contract, and JUnit XML is only the daemon's producer format.**
-The controller fetches the XML through an authenticated endpoint, and it falls back to a guest pull
-after daemon death. It returns the report in both the success and the error envelope. Missing,
-stale, truncated, malformed, oversized or summary-mismatched producer evidence can never be green.
-Agents consume the JSON report.
+`lane-run` has a run budget too: the smaller of `--run-budget-sec` and `$TEST_TIMEOUT`, less a teardown reserve of
+180 s. `air_lane_test` passes 2700 s by default, because a TeamCity lane job ends at 60 minutes. The lane tests of
+`ui-real`, `ui-perf` and `ui-live` pass none, so the Bazel test timeout is their budget. The budget caps every
+deadline, and its end is `run_budget_timeout`. A monitor thread writes a hang report every 3 minutes. One minute
+after the end of the budget, the monitor stops the run hard. It writes the partial JUnit XML, cancels each live IDE
+run with a thread dump, kills each recorder, writes `lane-hang-report.txt` and exits 1. On TeamCity, the end of the
+budget and the hard stop each write a build problem with the identity `lane-run-budget`. Under a Bazel test, the end
+of a run that is not green and the hard stop also keep its evidence in `lane/` of `TEST_UNDECLARED_OUTPUTS_DIR`, as
+the next section states.
+
+**The versioned JSON report is the contract, and the run stream is its one source.** The report, the
+JUnit XML and the TeamCity service messages are three readers of that stream. The controller writes
+the XML of each iteration beside its report, and the XML of the command to the file that
+`XML_OUTPUT_FILE` names. It returns the report in both the success and the error envelope. A stream
+that ends without a summary, a summary that contradicts its records, and a recorder that contradicts
+the stream can never be green. Agents consume the JSON report.
 
 ## What it costs
 
 The fixed costs around a lane, measured on `air-linux-1`, each reproduced on the same worker and
 day. `air-linux-1` was a Tart Linux worker, which
-the decision [the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md) retired, so its rows are history:
+the decision [the Docker image carries Node, and the Tart Linux worker is retired](decisions/2026-10-08-the-docker-image-carries-node-and-the-tart-linux-worker-is-retired.md) retired, so its rows are history.
+The decision [the Lima engine is retired](decisions/2026-10-13-the-lima-engine-is-retired.md) retired the Lima engine, so its rows are history too:
 
 | what | cost |
 | --- | --- |
@@ -718,20 +726,20 @@ the decision [the Docker image carries Node, and the Tart Linux worker is retire
 | a second run of one class against the warm IDE | 11 s |
 | one run of `AgentSessionToolWindowComposerUiTest` on `air-docker-1`, after a cold daemon start | 234 s of tests for 8 scenarios, after a 37.1 s host build |
 | a later run of the same class against the warm IDE on `air-docker-1` (`ide reuse`) | 286.6 s of tests for 8 scenarios, after a 75.4 s host build |
-| the `ui` lane, 71 tests in 40 classes, on `air-docker-1` on the Lima engine: cold daemon, then warm daemon | 756.4 s, then 697.0 s of tests |
+| the `ui` lane, 71 tests in 40 classes, on `air-docker-1` on the Lima engine, since retired: cold daemon, then warm daemon | 756.4 s, then 697.0 s of tests |
 | the same lane on `air-linux-1`, in the next hour: cold daemon, then warm daemon | 750.4 s, then 860.1 s of tests |
-| the `ui-real` lane, 4 tests in 2 classes: twice on the Lima engine, then on `air-linux-1` | 70.5 s and 70.4 s, then 84.6 s of tests |
-| the first start of the Lima engine, with the cloud image in Lima's cache | 76 s |
-| the first start of the Lima engine, with the cloud image download | 147.4 s, of which the download is 103 s |
-| the engine recreate with the image download from the mirror, plus an image build (`pool start`) | 322 s, of which the engine start is 189 s |
-| a warm stop, then a warm start, of the Lima engine | 11.1 s, then 19.8 s |
-| the first start of the Lima engine on Ubuntu 26.04, with the image download from the mirror | 197 s, of which the download and its conversion are 137 s |
-| in the Lima log, a warm start of the engine inside `pool start` or `run`, on Ubuntu 26.04, then on 24.04 | 7 s, then 15 s |
+| the `ui-real` lane, 4 tests in 2 classes: twice on the Lima engine, since retired, then on `air-linux-1` | 70.5 s and 70.4 s, then 84.6 s of tests |
+| the first start of the Lima engine, since retired, with the cloud image in Lima's cache | 76 s |
+| the first start of the Lima engine, since retired, with the cloud image download | 147.4 s, of which the download is 103 s |
+| the recreate of the Lima engine, since retired, with the image download from the mirror, plus an image build (`pool start`) | 322 s, of which the engine start is 189 s |
+| a warm stop, then a warm start, of the Lima engine, since retired | 11.1 s, then 19.8 s |
+| the first start of the Lima engine, since retired, on Ubuntu 26.04, with the image download from the mirror | 197 s, of which the download and its conversion are 137 s |
+| in the Lima log, a warm start of the Lima engine, since retired, inside `pool start` or `run`, on Ubuntu 26.04, then on 24.04 | 7 s, then 15 s |
+| a warm `pool stop`, then `pool start`, of the Lima engine, since retired, on Ubuntu 26.04 | 20.3 s, then 39.5 s |
 | the `ui` lane of `flow-new-session`, 9 tests in 4 classes, on `container-linux-1` on a Mac with Apple `container`: cold daemon, then warm daemon | 152 s, then 84 s; 65 s of tests each |
 | the same lane on an Ubuntu 26.04 host with 8 cores and rootless Podman 5.7: cold daemon after a cold Bazel build, then warm daemon | 760 s, of which the Bazel build is 497 s and the tests 200 s; then 223 s, of which the tests are 143 s |
 | the same lane on a Windows 10 PC with WSL 2.9.13 and `wslc`: a fresh container with a cold daemon, then warm daemon | 283 s, of which the daemon start is 84 s and the tests 159 s; then 134 s, of which the tests are 102 s |
-| a warm `pool stop`, then `pool start`, on Ubuntu 26.04 | 20.3 s, then 39.5 s |
-| `shard --shards 2` of the `ui` lane on two containers of one engine | 429 s makespan, 770 s serial |
+| `shard --shards 2` of the `ui` lane on two containers of the Lima engine, since retired | 429 s makespan, 770 s serial |
 
 The two single-class rows on `air-docker-1` ran on OrbStack. Each is one iteration on 2026-09-29, and
 all 8 scenarios passed in each. In the cold run, every trace has a video. A third iteration also
@@ -744,13 +752,13 @@ does not call one of them faster. The `shard` row is one iteration on 2026-09-30
 measured ([ADR 0190](decisions/0190-the-docker-engine-is-the-default-worker.md)). The engine rows come from
 [ADR 0189](decisions/0189-the-docker-engine-is-a-lima-vm-the-controller-owns.md). The ADR 0189 rows ran on Ubuntu
 24.04. The 26.04 rows come from [ADR 0191](decisions/0191-the-engine-vm-leaves-the-usernet-path.md), on
-2026-10-01, and each is one sample. The lane time on 26.04 is not measured yet, because the tree held another
-session's half-finished edits. ADR 0191 names the runs that are still owed.
+2026-10-01, and each is one sample. The lane time on 26.04 was never measured. The runs that ADR 0191
+names are no longer owed, because the engine is retired.
 
 The **daemon** is the expensive warm state, several times the IDE it holds. A restart that keeps the
 IDE saves the launch and its readiness dwell, and it pays the rest of the restart. Read those rows
 against the invalidation ladder. A test-only edit pays the 11 s row. An Air product edit pays about 61 s,
-including its host build. Only a platform, framework or `uiDaemon` edit pays the restart.
+including its host build. Only an edit that changes the launch digest of the lane daemon pays the restart.
 `ide remount` in the timing line is a label rather than a duration, so one run cannot price the IDE
 action.
 
@@ -789,15 +797,27 @@ Normal execution requires neither Peekaboo nor guest Screen Recording or Accessi
 
 | what | where in the guest |
 | --- | --- |
-| JUnit XML, per iteration. A wedged exit flushes partial XML | `$AIR_VM_DATA/daemon/iterations/<iterationId>/test.xml` |
+| JUnit XML of the lane daemon, per iteration, which `/results` serves. The controller writes its own XML of the stream beside the report on the host | `$AIR_VM_DATA/daemon/iterations/<iterationId>/test.xml` |
 | `idea.log`, the heartbeat screenshots and the other IDE logs, per IDE launch | `$AIR_VM_DATA/ide/<launchKey>/log/<launchName>/` |
 | the thread dump of an IDE that the watchdog or a stop killed | `threadDump-before-kill-<millis>.txt` in that same directory |
 | the standard output and error of one IDE launch, and its supervisor log | `$AIR_VM_DATA/ide/<launchKey>/run-ide-<launchName>/` |
 
-Three properties of those paths are worth stating. Each IDE launch writes its own log directory, so
-iterations never overwrite each other, and `TEST_UNDECLARED_OUTPUTS_DIR` stays empty for that reason.
-The first launch of a context is `start-<stamp>`, and a relaunch is `recycle-N`, so list the `log`
-directory rather than assuming the path. The guest agent keeps the newest five log directories of each
+Under a Bazel test the same files stay below `TEST_TMPDIR`, which Bazel deletes after the test. So `lane-run` copies
+them into `lane/` of `TEST_UNDECLARED_OUTPUTS_DIR` for a run that is not green, and Bazel keeps them in `test.outputs/`:
+
+| what | where in `lane/` |
+| --- | --- |
+| the log directory of each IDE launch that ran a failed scenario, an expiry or the hard stop: each `idea.log`, the kill dump, the other IDE logs and the heartbeat screenshots | `ide/<launchKey>/<launchName>/` |
+| the standard output and error of the IDE process of each such launch, `run.log`, and its `supervisor.log`. An IDE that dies before its logger starts leaves its reason only there | `ide/<launchKey>/<launchName>/run/` |
+| the slow-step dumps and the authored artifacts | `iterations/<iterationId>/slow-steps/`, `iterations/<iterationId>/authored-artifacts/` |
+| what the copy kept, and each file that its caps of 32 MiB per file and 256 MiB in all cut or left out | `evidence.txt` |
+| a trace attachment that came outside a recorded scenario, such as the dump of a slow launch, in any run | `attachments/<n>-<name>.<ext>` |
+
+A green run copies nothing, so only `attachments/` can hold files then. Three properties of the guest paths are worth
+stating. Each IDE launch writes its own log directory, so iterations never overwrite each other.
+The first launch of a context is `start-<stamp>`. Under the lane daemon, a relaunch for `restart-ide` is
+`restart-N` and a relaunch after a reset that did not hold is `recycle-N`. So list the `log` directory rather than
+assuming the path. The guest agent keeps the newest five log directories of each
 context, and always the one of a live IDE. A fresh preparation deletes the data directories, the project, the
 argument file and the launch record. It keeps the log directories and the run directories of earlier launches, and
 `ide-gc` trims them. An iteration id includes the daemon boot identity, and each
@@ -805,9 +825,15 @@ result directory is reserved with an atomic create. So a restarted daemon cannot
 authoritative.
 
 `ls` aims `pull`, and both work throughout the daemon's lifetime, because neither wants the
-supervisor's run slot. Both take the worker's operation lock, which `run` holds for the whole lane,
-so both fail `lease_busy` (exit 75) during an iteration. The fix is to wait, not to stop the daemon
-that makes the next iteration fast.
+supervisor's run slot. Both answer during a run too, because a run holds the worker's lifecycle lock
+only at its two ends. The run takes the lock to write its run marker
+`<runtime root>/workers/<key>/run.json`, and again to remove it. The marker names the run in flight,
+and `lease show` with the receipt names it as `run=<id>`. `exec` and `peekaboo` act inside the guest,
+so they refuse `lease_busy` (exit 75) until the run ends. Another operation on the worker, such as a
+`daemon start` or a `lease release`, holds the lock for its whole length. Then `ls` and `pull` refuse
+`lease_busy` until it ends. The fix is to wait, not to stop the daemon that makes the next iteration
+fast. [A run marks its worker and holds the lock at its ends](decisions/2026-10-13-a-run-marks-its-worker-and-holds-the-lock-at-its-ends.md)
+records the decision.
 
 The trace bundles and the heartbeat screenshots of the IDE log directory are the evidence of record
 on Linux and Parallels. On a Tart macOS worker a Robot screenshot is black, and ADR 0113 says why. Read
@@ -826,17 +852,16 @@ contract is [`community/tools/vm/spec/scenario-trace.spec.md`](../spec/scenario-
 [`plugins/air/spec/docs/flow-trace.spec.md`](../../../../plugins/air/spec/docs/flow-trace.spec.md), and
 [ADR 0155](../../../../plugins/air/docs/decisions/0155-a-ui-scenario-leaves-a-trace.md) is why the trace is shaped this way.
 
-The recorder is `air-trace-record`, a binary that the lane JVM starts from its runfiles. The lane tells it
-what happens, one line per event on its standard input. A lane the watchdog kills closes that pipe too, so
-its bundle still gets its video and its manifest, marked `truncated` and naming the span that was running.
+The recorder is `air-trace-record`, a binary that the lane daemon starts from its runfiles, once per iteration. The
+lane daemon tells it what happens, one line per event on its standard input. A lane daemon that dies closes that
+pipe. Its bundle then still gets its video and its manifest, marked `truncated` and naming the span that was running.
 A trace is evidence and never a verdict: every capture problem becomes a record in the bundle, and a trace
 that could not be pulled leaves a green run green.
 
 | launcher | where the bundles land | who cleans up |
 | --- | --- | --- |
-| the daemon on a worker | `$AIR_VM_DATA/daemon/iterations/<iterationId>/air-traces` in the guest, then pulled after each test to `<runtime root>/runs/<runId>/traces/<iterationId>/<NNN>.zip` | the guest's iteration retention; the run directory on the host |
-| a Bazel test, host `bt.cmd` included | `air-traces/` inside the target's `bazel-testlogs/.../test.outputs/outputs.zip` | Bazel |
-| JUnit run from the IDE | `<checkout>/out/air-traces` | the recorder, which keeps the newest 20 runs |
+| the lane daemon on a worker | `$AIR_VM_DATA/daemon/iterations/<iterationId>/air-traces` in the guest, then pulled after each test to `<runtime root>/runs/<runId>/traces/<iterationId>/<NNN>.zip` | the guest's iteration retention; the run directory on the host |
+| a Bazel test, host `bt.cmd` included | `air-traces/` in the target's `bazel-testlogs/.../test.outputs/`, with `lane/` beside it for a run that is not green. A local Bazel packs them into `outputs.zip` there, and the TeamCity build keeps them as files in `bazel.logs.zip` | Bazel |
 
 A bundle is `<root>/<runId>/<TestClass>/<scenario>/`. A second attempt of the same scenario in one run is
 `<scenario>.2`. The controller pulls each finished bundle after the test that finished it, so a failed
@@ -845,20 +870,30 @@ journal. `run`'s text verdict ends with a traces block, one line for each scenar
 or with `traces: not pulled: <reason>`. The JSON report names each zip and its bundles in `traceArchives`, and
 a failed pull in `tracesError`.
 
-**Allure results.** At the end of each scenario, the recorder also writes one Allure result into
-`<root>/<runId>/allure-results/`, beside the bundles of the run. The result has a step for each lane span, with the
-Before and After pictures of the step and the files that the lane attached to it. It also attaches the video, the
-`idea.log` slice and the path of the bundle. The attachment files sit in the same directory. The lane runs no Allure
-code. A pulled zip holds the results of the bundles it holds. Open the results of a run with the Allure command line:
+**Allure results.** The recorder writes Allure results only when you ask for them with
+`-Dair.flow.trace.allure=on`. A zip has no hard links, so the results carry each video and picture of the bundles a
+second time, and nothing uploads them to Allure TestOps yet. For one Bazel run, give the flag to `lane-run`:
 
 ```bash
-allure serve out/air-traces/<runId>/allure-results
+./bazel.cmd test //plugins/air/tests/integration/ui:ui_lane_test --test_arg=--jvm_flag=-Dair.flow.trace.allure=on
+```
+
+On TeamCity, the build parameter `system.pass.air.flow.trace.allure=on` gives the same flag. For a `vm.cmd` run on a
+worker, add the flag to the lane flags of `_flags` in `plugins/air/tests/integration/ui_lane_ide.bzl`.
+
+With the flag, the recorder writes one Allure result into `<root>/<runId>/allure-results/` at the end of each
+scenario, beside the bundles of the run. The result has a step for each lane span, with the Before and After pictures
+of the step and the files that the lane attached to it. It also attaches the video, the `idea.log` slice and the path
+of the bundle. The attachment files sit in the same directory. The lane runs no Allure code. A pulled zip holds the
+results of the bundles it holds. Open the results of a run with the Allure command line:
+
+```bash
+allure serve <root>/<runId>/allure-results
 ```
 
 Unzip a Bazel `outputs.zip` or a pulled zip first, and pass the `allure-results` directory inside it. `allure serve`
-takes more than one directory, so the zips of one run open as one report. On TeamCity, the Air UI lane builds already
-publish `bazel.logs.zip`, which holds every Bazel test output. So the results reach TeamCity inside it. Nothing
-uploads them to Allure TestOps yet.
+takes more than one directory, so the zips of one run open as one report. On TeamCity, the results of a build with the
+flag reach TeamCity inside `bazel.logs.zip`, which holds every Bazel test output.
 
 **Opening them.** One server shows every bundle and every `vm.cmd` run on this machine, live, in the Air docs
 site:
@@ -868,15 +903,16 @@ site:
 ./community/tools/trace.cmd serve --detach  # one server for this machine, in the background
 ```
 
-It looks in `out/air-traces`, in the Air lanes' `bazel-testlogs`, in every pulled zip, and in the journal of
+It looks in the Air lanes' `bazel-testlogs`, in every pulled zip, and in the journal of
 each run under `<runtime root>/runs`. It serves zips by byte range without unpacking them, and it tells the page
 when a run appears or a run's journal grows. It listens on 127.0.0.1 only. `--root DIR` adds a place to look.
 `pnpm dev` in `plugins/air/docs` proxies `/__air` to it, so the viewer under development reads the same runs.
 
-When the site in `out/air-site` is missing, or older than `plugins/air/docs/src`, the server builds it once in
-the background: `pnpm install --frozen-lockfile` when `plugins/air/docs` has no `node_modules`, then
-`pnpm build`. The page says that the site is building, or why the build failed. The node and the pnpm are the
-ones `//:MODULE.bazel` pins for the site (`//plugins/air/docs/toolchain:air_docs_node`, `//plugins/air/docs/toolchain:air_docs_pnpm`), which the server asks
+When the site in `out/air-site` is missing, or older than `plugins/air/docs/src` or the `src`, `scripts` and
+`styles` of the kernel `community/tools/docs-site`, the server builds it once in the background:
+`pnpm install --frozen-lockfile` in the kernel and then in `plugins/air/docs`, each when it has no `node_modules`,
+then `pnpm build`. The page says that the site is building, or why the build failed. The node and the pnpm are the
+ones `//:MODULE.bazel` pins for the docs sites (`//build:docs_site_node`, `//build:docs_site_pnpm`), which the server asks
 Bazel for in the checkout `BUILD_WORKSPACE_DIRECTORY` names; Bazel fetches them the first time, and a regular
 build never does. Nothing has to be on the PATH. `AIR_TRACE_NODE` and `AIR_TRACE_PNPM`, set together, name the two
 directly; a server started outside a checkout uses the `pnpm` on its PATH.
@@ -914,7 +950,7 @@ a place. The planner on the Runs page gives the same answer:
 
 ```bash
 ./community/tools/trace.cmd plan plugins/air/docs/flows/flow-rename-session.txt
-./community/tools/trace.cmd plan out/bazel-testlogs/plugins/air/tests/integration/ui/ui_test/test.xml
+./community/tools/trace.cmd plan out/bazel-testlogs/plugins/air/tests/integration/ui/ui_lane_test/test.xml
 ./community/tools/trace.cmd plan plugins/air/frontend/session/toolwindow/src/ui/AgentAttachedProjects.kt
 ```
 
@@ -924,11 +960,15 @@ screen. The planner prints commands and never starts a run, because a run costs 
 
 **What each guest captures.** The Linux guest records X11 directly: real pixels, native popups, and an H.264 video.
 The recorder encodes that video itself, so the guest needs no package for it. A macOS host and the macOS guests take
-stills from the IDE's own paint route. A direct lane on your own machine never reads your screen unasked, because it
-shows everything else you have open and macOS would ask for Screen Recording permission in the middle of a scenario.
-Pass `--jvmopt=-Dair.flow.trace.screen=on`, or set `AIR_TRACE_SCREEN=on`, to let it: a Mac with `ffmpeg` on the path
-then records a video too, and a Linux host records X11. Every bundle's manifest names its capture source and, when a
-better one was missing, why.
+stills from the IDE's own paint route. A direct lane on your own machine never reads your screen, because it shows
+everything else you have open and macOS would ask for Screen Recording permission in the middle of a scenario. It
+takes the paint stills and records no video, and `lane-run` refuses `-Dair.flow.trace.screen=on` as a JVM flag. A
+TeamCity build on Linux is the exception: no person works on the display of a TeamCity agent, so `lane-run` lets the
+recorder read it when `TEAMCITY_VERSION` and `DISPLAY` are set. The recorder reads a display of depth 24, whose pixels
+are BGRX, up to 3840x2160. The Air UI builds start `Xvfb :0 -screen 0 1024x768x24`. On a Linux UI agent, another X
+server can already hold `:0`. That `Xvfb` then exits, and the IDE draws on the other server, with a frame of
+1920x1200. At 1920x1080 a video costs about 3 MB per scenario minute. Every bundle's manifest names its capture source
+and, when a better one was missing, why.
 
 **What the IDE did.** A bundle also holds the OpenTelemetry spans that the IDE ended in the scenario, such as
 each `air.session.log.read`. The viewer shows each one as an `ide` row under the step it started in. The spans are
@@ -979,13 +1019,13 @@ every guest-side verb:
 | verbs | concern |
 | --- | --- |
 | `start`, `status`, `active`, `log`, `cancel` | the run supervisor, for the daemon and for each lane IDE. `cancel --thread-dump <jcmd>` writes a thread dump of the process before the signal |
-| `ide-prepare`, `ide-launch`, `ide-gc` | the lane IDE: the layout of one context, the launch of one IDE run with its argument file, and the stop of the IDE runs that a worker must not keep, with the removal of old log directories |
-| `stage`, `stage-check`, `launch-prep`, `gc` | the runtime stager, the probe that answers whether a generation is already staged, and one daemon launch's preparation |
+| `ide-gc` | the lane IDE: the stop of the IDE runs that a worker must not keep, with the removal of old log directories. The lane daemon prepares and launches the IDE in its own process |
+| `lane-daemon`, `lane-run` | the lane daemon. `lane-daemon` serves the control channel of the controller in the run slot. `lane-run` runs one iteration from a runfiles tree on a host, for a Bazel lane test, `bt --lane` and a TeamCity agent |
 | `contract` | what the agent declares about itself, its own digest included. An install that would push a binary the guest already has is skipped |
 | `validate-guest` | the Linux boot |
 | `provision-image`, `validate-image` | the macOS image pipeline |
 | `trace-pack-ready` | zips the scenario traces that finished since the last pull, with the code of `air-trace pack` |
-| `relay` | bridges its standard input and output to a loopback port inside the guest, so the controller reaches the UI daemon without the guest's network address |
+| `relay` | bridges its standard input and output to a loopback port inside the guest, so the controller reaches the lane daemon without the guest's network address |
 | `runfiles-tree` | builds the runfiles tree of a host MANIFEST on the guest's own disk. A Windows host writes the MANIFEST and no tree |
 | `read-file` | writes one guest file on standard output unchanged, and names its size and SHA-256 on standard error. A pull on Tart and Docker reads the file through it. The controller refuses `pull_digest_mismatch` when the bytes that arrived are not the ones it named. A pull on Parallels is a `base64` of the file |
 | `supervise` | internal, the agent's own detached mode |
@@ -993,7 +1033,7 @@ every guest-side verb:
 Each verb's name is declared once, as `avl_wire::verb::AgentVerb`, and the agent and the controller both spell
 it from there. The list exists so that a log line or a refusal that names a verb is recognizable. It is not an
 interface to drive. The controller sends the verbs, and an operator does not. An agent invoked by hand
-is how a run slot or a staged generation stops matching what the host believes.
+is how a run slot stops matching what the host believes.
 
 ## What is intentionally absent
 
@@ -1002,8 +1042,8 @@ is how a run slot or a staged generation stops matching what the host believes.
   share and writes only to guest-local storage. The only checkout files it gets are the staged runfiles of the
   runtime descriptor, as copies in its runfiles tree. A run tests exactly what
   `bazel build` on the host sees, and a release cleans nothing.
-- **No second execution engine.** Every lane goes through the daemon. A lane the daemon cannot
-  resolve has no runner. Raw Bazel passthrough is rejected because there is no guest Bazel to receive
+- **No second execution engine.** Every lane goes through the lane daemon. A lane that the lane
+  daemon cannot resolve has no runner. Raw Bazel passthrough is rejected because there is no guest Bazel to receive
   it.
 - **No GUI automation on Tart.** Worker start enforces fail-closed, grant-free TCC admission. Peekaboo
   needs Accessibility and Screen Recording grants baked into the golden image, which would fail that
@@ -1061,7 +1101,7 @@ workers, because the guest model behind them is one model.
 | 1 | a worker boots, provisions and reports ready | **Verified** on both pools. A macOS worker also reports console login, TCC admission and a unique SSH host key. A Docker worker has no field for those, and it is never verified by them |
 | 2 | the lane is green on a macOS worker | **Not met, and understood.** 8 of 24 classes pass, and not one of the 16 failures reproduces on Linux. See [ADR 0113](../../../../plugins/air/docs/decisions/0113-the-macos-lane-is-red-on-window-activation.md) and [IJAI-1228](https://youtrack.jetbrains.com/issue/IJAI-1228) |
 | 3 | two lanes run concurrently | **Open behind criterion 2.** Guest-side work does go in parallel, and every host-side Bazel call queues. Lane truncation under load is [ADR 0110](decisions/0110-the-truncation-chain-is-a-daemon-kill-under-load.md) |
-| 4 | a product edit invalidates correctly | **Met.** The stamp moved, the shares were remounted, the IDE relaunched, and the daemon JVM survived it |
+| 4 | a product edit invalidates correctly | **Met.** The stamp moved, the shares were remounted, the IDE relaunched, and the daemon survived it |
 | 5 | per-class time is comparable to the default runner | **Met.** A macOS worker is slower around a run, not per class. ADR 0113 has the figures |
 | 6 | the controller's own suite passes | **Verified.** Run it with the commands under [Verifying the controller](#verifying-the-controller) |
 

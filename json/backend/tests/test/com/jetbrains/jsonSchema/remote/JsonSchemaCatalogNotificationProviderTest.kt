@@ -2,91 +2,107 @@
 package com.jetbrains.jsonSchema.remote
 
 import com.intellij.json.JsonBundle
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.testFramework.runInEdtAndWait as runInEdtAndWaitKt
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.HyperlinkLabel
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration
-import com.jetbrains.jsonSchema.JsonSchemaHeavyAbstractTest
+import com.jetbrains.jsonSchema.JsonSchemaHeavyTestFixture
 import com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 import java.beans.PropertyChangeListener
 import java.util.TreeMap
 import java.util.function.Function
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-class JsonSchemaCatalogNotificationProviderTest : BasePlatformTestCase() {
+@TestApplication
+class JsonSchemaCatalogNotificationProviderTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  private val project get() = projectFixture.get()
+
   private lateinit var catalogManager: JsonSchemaCatalogManager
 
-  @Throws(Exception::class)
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
+    myFixture.testDataPath = JsonSchemaHeavyTestFixture.getJsonSchemaTestDataFilePath("schemaStore/")
     catalogManager = configureCatalog()
   }
 
-  @Throws(Exception::class)
-  override fun tearDown() {
-    try {
-      JsonSchemaMappingsProjectConfiguration.getInstance(project).setState(TreeMap())
-      JsonSchemaCatalogProjectConfiguration.getInstance(project).setState(true, true, false, true)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+  @AfterEach
+  fun tearDown() {
+    JsonSchemaMappingsProjectConfiguration.getInstance(project).setState(TreeMap())
+    JsonSchemaCatalogProjectConfiguration.getInstance(project).setState(true, true, false, true)
   }
 
-  override fun getTestDataPath(): String = JsonSchemaHeavyAbstractTest.getJsonSchemaTestDataFilePath("schemaStore/")
-
-  fun testMatchingCatalogSchemaIsSuggestedInsteadOfApplied() {
+  @Test
+  fun testMatchingCatalogSchemaIsSuggestedInsteadOfApplied(): Unit = timeoutRunBlocking {
     val file = addSchemaStoreOnlyFile()
 
-    assertNotNull(catalogManager.getSchemaCatalogEntryForFile(file))
-    assertEmpty(JsonSchemaService.Impl.get(project).getSchemaFilesForFile(file))
+    assertNotNull(readAction { catalogManager.getSchemaCatalogEntryForFile(file) })
+    assertTrue(readAction { JsonSchemaService.Impl.get(project).getSchemaFilesForFile(file) }.isEmpty())
 
     val provider = JsonSchemaCatalogNotificationProvider()
-    val panelFactory = provider.collectNotificationData(project, file)
+    val panelFactory = readAction { provider.collectNotificationData(project, file) }
     assertNotNull(panelFactory)
   }
 
-  fun testApplyingSuggestedSchemaCreatesExplicitMapping() {
+  @Test
+  fun testApplyingSuggestedSchemaCreatesExplicitMapping(): Unit = timeoutRunBlocking {
     val file = addSchemaStoreOnlyFile()
     val provider = JsonSchemaCatalogNotificationProvider()
 
-    val panelFactory = provider.collectNotificationData(project, file)
+    val panelFactory = readAction { provider.collectNotificationData(project, file) }
     assertNotNull(panelFactory)
 
     val panel = createPanel(file, panelFactory!!)
     clickAction(panel, JsonBundle.message("schema.catalog.suggestion.apply"))
 
     assertNotNull(JsonSchemaMappingsProjectConfiguration.getInstance(project).findMappingForFile(file))
-    assertNull(provider.collectNotificationData(project, file))
+    assertNull(readAction { provider.collectNotificationData(project, file) })
   }
 
-  fun testDisableCatalogSuggestionTurnsOffCatalog() {
+  @Test
+  fun testDisableCatalogSuggestionTurnsOffCatalog(): Unit = timeoutRunBlocking {
     val file = addSchemaStoreOnlyFile()
     val provider = JsonSchemaCatalogNotificationProvider()
 
-    val panelFactory = provider.collectNotificationData(project, file)
+    val panelFactory = readAction { provider.collectNotificationData(project, file) }
     assertNotNull(panelFactory)
 
     val panel = createPanel(file, panelFactory!!)
     clickAction(panel, JsonBundle.message("schema.catalog.suggestion.disable"))
 
     assertFalse(JsonSchemaCatalogProjectConfiguration.getInstance(project).isCatalogEnabled)
-    assertNull(provider.collectNotificationData(project, file))
+    assertNull(readAction { provider.collectNotificationData(project, file) })
   }
 
-  private fun addSchemaStoreOnlyFile(): VirtualFile {
+  private suspend fun addSchemaStoreOnlyFile(): VirtualFile {
     val service = JsonSchemaService.Impl.get(project)
     val candidates = arrayOf(
       arrayOf("jenkins-x.yml", "kind: pipeline"),
@@ -97,39 +113,36 @@ class JsonSchemaCatalogNotificationProviderTest : BasePlatformTestCase() {
 
     for (candidate in candidates) {
       val file = myFixture.addFileToProject(candidate[0], candidate[1]).virtualFile
-      if (service.isApplicableToFile(file) && catalogManager.getSchemaCatalogEntryForFile(file) != null && service.getSchemaFilesForFile(file).isEmpty()) {
+      if (readAction { service.isApplicableToFile(file) && catalogManager.getSchemaCatalogEntryForFile(file) != null && service.getSchemaFilesForFile(file).isEmpty() }) {
         return file
       }
     }
 
     fail("Could not find a SchemaStore-only test fixture for the current product")
-    error("unreachable")
   }
 
-  private fun clickAction(panel: EditorNotificationPanel, linkText: String) {
+  private suspend fun clickAction(panel: EditorNotificationPanel, linkText: String) {
     val links = UIUtil.findComponentsOfType(panel, HyperlinkLabel::class.java)
     val link = links.firstOrNull { it.text == linkText }
-    assertNotNull("Could not find action '$linkText'", link)
-    runInEdtAndWaitKt { link!!.doClick() }
+    assertNotNull(link, "Could not find action '$linkText'")
+    withContext(Dispatchers.EDT) { link!!.doClick() }
   }
 
-  private fun createPanel(
+  private suspend fun createPanel(
     file: VirtualFile,
     panelFactory: Function<in FileEditor, out JComponent?>,
   ): EditorNotificationPanel {
-    lateinit var panel: EditorNotificationPanel
-    runInEdtAndWaitKt {
-      panel = panelFactory.apply(TestFileEditor(file)) as EditorNotificationPanel
+    return withContext(Dispatchers.EDT) {
+      panelFactory.apply(TestFileEditor(file)) as EditorNotificationPanel
     }
-    return panel
   }
 
   private fun configureCatalog(): JsonSchemaCatalogManager {
     val manager = JsonSchemaService.Impl.get(project).catalogManager
-    val path = JsonSchemaHeavyAbstractTest.getJsonSchemaTestDataFilePath("schemaStore/catalog.json")
+    val path = JsonSchemaHeavyTestFixture.getJsonSchemaTestDataFilePath("schemaStore/catalog.json")
     val catalogFile = StandardFileSystems.local().findFileByPath(path)
     assertNotNull(catalogFile)
-    manager.registerTestSchemaStoreFile(catalogFile!!, testRootDisposable)
+    manager.registerTestSchemaStoreFile(catalogFile!!, myFixture.testRootDisposable)
     return manager
   }
 

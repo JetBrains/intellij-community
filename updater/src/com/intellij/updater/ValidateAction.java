@@ -18,6 +18,7 @@ package com.intellij.updater;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.zip.ZipOutputStream;
 
 public class ValidateAction extends PatchAction {
@@ -35,5 +36,10 @@ public class ValidateAction extends PatchAction {
   @Override
   public ValidationResult validate(File toDir) throws IOException {
     return doValidateNotChanged(getFile(toDir), ValidationResult.Action.VALIDATE);
+  }
+
+  @Override
+  protected List<File> getValidationFiles(File toDir) {
+    return List.of();
   }
 }

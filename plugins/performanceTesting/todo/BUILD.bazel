@@ -1,0 +1,97 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.performanceTesting.todo` start
+content_module_jar(module = ":todo")
+### auto-generated section `dev intellij.performanceTesting.todo` end
+
+### auto-generated section `build intellij.performanceTesting.todo` start
+jvm_library(
+    name = "todo",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.performanceTesting.todo",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/performanceTesting/core:performanceTesting",
+        "//platform/platform-frontend:frontend",
+        "//platform/todo",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/indexing-api:indexing",
+        "//platform/indexing-impl",
+        "//platform/lang-impl",
+        "//platform/lang-api:lang",
+        "//platform/diagnostic/telemetry",
+        "//libraries/opentelemetry",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl/playback",
+        "//platform/util:util-ui",
+        "//libraries/kotlinx/coroutines/core",
+    ],
+)
+
+jvm_library(
+    name = "todo_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.performanceTesting.todo",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":todo",
+        "//plugins/performanceTesting/core:performanceTesting_test_lib",
+        "//platform/platform-frontend:frontend_test_lib",
+        "//platform/todo:todo_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
+        "//platform/indexing-impl:indexing-impl_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/diagnostic/telemetry:telemetry_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/editor-ui-ex:editor-ex_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-impl/playback:playback_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.performanceTesting.todo` end
+
+### auto-generated section `iml intellij.performanceTesting.todo` start
+exports_files(
+    [
+        "intellij.performanceTesting.todo.iml",
+        "resources/intellij.performanceTesting.todo.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.performanceTesting.todo` end

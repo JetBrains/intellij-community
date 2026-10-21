@@ -13,6 +13,7 @@ import com.intellij.driver.sdk.ui.UiText.Companion.asString
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.EditorComponentImpl
+import com.intellij.driver.sdk.ui.components.common.GutterUiComponent
 import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
 import com.intellij.driver.sdk.ui.components.common.editor
 import com.intellij.driver.sdk.ui.components.common.ideFrame
@@ -113,6 +114,17 @@ class NotebookEditorUiComponent(private val data: ComponentData) : JEditorUiComp
     get() = x("//div[@class='JupyterFileEditorToolbar']")
   val cellIndexPanel: UiComponent
     get() = x("//div[@class='MyScrollPane']//div[@class='JBViewport']//div[@class='EditorGutterComponentImpl']")
+
+  /** The gutter of the notebook editor, with its folding anchors and line markers. */
+  val notebookGutter: GutterUiComponent
+    get() = x("//div[@class='MyScrollPane']//div[@class='JBViewport']//div[@class='EditorGutterComponentImpl']",
+              GutterUiComponent::class.java, "notebook editor gutter")
+
+  /** Waits until the notebook contains [text], and returns the 1-based line of its first occurrence. */
+  fun waitForLineNumber(text: String, timeout: Duration = 30.seconds): Int =
+    waitNotNull("The notebook contains '$text'", timeout = timeout) {
+      getLineNumber(text).takeIf { this.text.contains(text) }
+    }
   val cellActions: List<UiComponent>
     get() = xx("//div[@class='JupyterCellActionsToolbar']").list()
   val newCellActions: List<UiComponent>

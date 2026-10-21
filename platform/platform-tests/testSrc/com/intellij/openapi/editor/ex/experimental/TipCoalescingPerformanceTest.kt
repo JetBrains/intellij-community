@@ -75,7 +75,7 @@ class TipCoalescingPerformanceTest {
     println("  %-10s %9s".format("history", "runs"))
     for (sharedAgent in booleanArrayOf(true, false)) {
       val label = if (sharedAgent) "coalesced" else "control"
-      val base = DocBranch.createBranch(left.startText, agent("base"))
+      val base = DocumentBranch.createBranch(left.startText, agent("base"))
       val leftBranch = left.branch(base, "left", sharedAgent)
       val rightBranch = right.branch(base, "right", sharedAgent)
       val merged = leftBranch.merge(rightBranch)
@@ -141,7 +141,7 @@ class TipCoalescingPerformanceTest {
    */
   private class Typist(private val sharedAgent: Boolean) {
     private var graph = EventGraph.createGraph()
-    private val seqs = IntArray(AUTHORS.size)
+    private val seqs = LongArray(AUTHORS.size)
     private var ops = 0
 
     fun graph(): EventGraph {
@@ -166,7 +166,7 @@ class TipCoalescingPerformanceTest {
       return author
     }
 
-    private fun takeSeqs(author: Int, count: Int): Int {
+    private fun takeSeqs(author: Int, count: Int): Long {
       val seq = seqs[author]
       seqs[author] += count
       return seq
@@ -208,7 +208,7 @@ class TipCoalescingPerformanceTest {
     /**
      * The session applied to a fork of [base]. Without [sharedAgent], two agents take turns.
      */
-    fun branch(base: DocBranch, name: String, sharedAgent: Boolean): DocBranch {
+    fun branch(base: DocumentBranch, name: String, sharedAgent: Boolean): DocumentBranch {
       val authors = arrayOf(agent("$name-a"), agent("$name-b"))
       var branch = base.fork(authors[0])
       for (i in kinds.indices) {

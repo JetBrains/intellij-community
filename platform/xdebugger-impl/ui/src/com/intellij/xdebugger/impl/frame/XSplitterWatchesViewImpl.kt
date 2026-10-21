@@ -24,6 +24,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = com.intellij.openapi.diagnostic.logger<XSplitterWatchesViewImpl>()
@@ -69,7 +70,8 @@ class XSplitterWatchesViewImpl(
             withContext(Dispatchers.EDT) { updateView() }
           }
           catch (ex: Throwable) {
-            LOG.warn("Failed to update watches view", ex)
+            if (ex !is CancellationException)
+              LOG.error(ex)
           }
         }
     }

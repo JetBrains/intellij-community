@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.SearchEverywhereManagerFactory
 import com.intellij.ide.actions.searcheverywhere.PreviewExperiment.isExperimentEnabled
@@ -25,8 +26,7 @@ import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.project.projectId
 import com.intellij.platform.searchEverywhere.SeSession
-import com.intellij.platform.searchEverywhere.SeSessionEntity
-import com.intellij.platform.searchEverywhere.asRef
+import com.intellij.platform.searchEverywhere.SeSessionImpl
 import com.intellij.platform.searchEverywhere.frontend.ml.SeMlService
 import com.intellij.platform.searchEverywhere.frontend.resultsProcessing.DataContextWithRpcId
 import com.intellij.platform.searchEverywhere.frontend.tabs.SeAdaptedTab
@@ -42,6 +42,7 @@ import com.intellij.platform.searchEverywhere.frontend.ui.SePopupContentPane
 import com.intellij.platform.searchEverywhere.frontend.ui.SePopupHeaderPane
 import com.intellij.platform.searchEverywhere.frontend.vm.SeDummyTabVm
 import com.intellij.platform.searchEverywhere.frontend.vm.SePopupVm
+import com.intellij.platform.searchEverywhere.impl.SeItemRegistry
 import com.intellij.platform.searchEverywhere.impl.SeRemoteApi
 import com.intellij.platform.searchEverywhere.providers.SeLegacyContributorsRegistry
 import com.intellij.platform.searchEverywhere.providers.SeLog
@@ -58,8 +59,7 @@ import com.intellij.ui.popup.AbstractPopup
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
-import fleet.kernel.change
-import fleet.kernel.rebase.shared
+import fleet.rpc.client.durable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -72,6 +72,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -82,6 +83,7 @@ import java.awt.Dimension
 import java.awt.KeyboardFocusManager
 import java.awt.Point
 import java.awt.event.MouseEvent
+import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -168,13 +170,15 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     popupInstanceFuture = popupFuture
 
     coroutineScope.launch {
-      val session = SeSessionEntity.createSession()
+      // The backend opens its part of the session on the first call that needs the providers.
+      val session = SeSessionImpl(UUID.randomUUID().toString())
       var sessionProvidersHolder: SeProvidersHolder? = null
       var initFailure: Throwable? = null
 
       try {
         try {
           popupSemaphore.withPermit {
+            popupScope.ensureActive()
             val mlService = SeMlService.getInstanceIfEnabled()
             mlService?.onSessionStarted(project, tabId)
 
@@ -190,6 +194,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
               sessionProvidersHolder = providersHolder
               localProvidersHolder = providersHolder
               project?.let { Disposer.tryRegister(it, providersHolder) }
+              popupScope.ensureActive()
               initializeVmAndSetToPopup(popupFuture,
                                         popup,
                                         popupContentPane,
@@ -232,6 +237,12 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
           if (!popupFuture.isDone) {
             // The popup view model hasn't reached the popup panel because of an exception. Try to reopen once.
             withContext(Dispatchers.EDT) {
+              if (popup.isDisposed) {
+                if (e !is CancellationException) {
+                  SeLog.warn("Exception while opening the popup. The popup is already closed. Exception: ${e.message}\n${e.stackTraceToString()}")
+                }
+                return@withContext
+              }
               popup.cancel()
 
               if (isRetry) {
@@ -263,13 +274,27 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       }
       finally {
         sessionProvidersHolder?.let { Disposer.dispose(it) }
-        withContext(NonCancellable) {
-          change {
-            shared {
-              session.asRef().derefOrNull()?.delete()
-            }
-          }
-        }
+        closeBackendSession(session)
+        SeItemRegistry.getInstance().closeSession(session)
+      }
+    }
+  }
+
+  /**
+   * Closes the backend [session] in the service scope, because the popup scope can be cancelled already.
+   * The close also forbids a later open, so a late call does not open the session again.
+   * If the close does not reach the backend, the backend closes the session at the end of the client session.
+   */
+  private fun closeBackendSession(session: SeSession) {
+    val project = project ?: return
+    val remoteApi = SeRemoteApi.tryGetInstance() ?: return
+    coroutineScope.launch {
+      try {
+        durable { remoteApi.closeSession(project.projectId(), session) }
+      }
+      catch (e: Throwable) {
+        rethrowControlFlowException(e)
+        SeLog.warn("Cannot close the backend Search Everywhere session: $e")
       }
     }
   }
@@ -310,7 +335,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
           tabLoadingProperty.getValue()
         } ?: run {
           if (loadingTabId == tabId || loadingTabId in MAIN_TABS) {
-            SeLog.warn("Tab $tabId initialization took too long (> ${tabInitializationTimeoutMillis}ms), waiting it's initialization anyway")
+            SeLog.log(LIFE_CYCLE) { "Tab $tabId initialization took too long (> ${tabInitializationTimeoutMillis}ms), waiting it's initialization anyway" }
             // If we have to open this tab right after the popup is there, we wait until it gets initialized
             tabLoadingProperty.getValue()
           }
@@ -335,6 +360,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
     }
     val deferredTabs = tabsOrDeferredTabs.filterIsInstance<SuspendLazyProperty<SeTab?>>()
 
+    popupScope.ensureActive()
     val popupVm = SePopupVm(
       popupScope,
       session,
@@ -422,6 +448,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
                                              popup.size = size
                                            }
                                          },
+                                         closePopupHandler = { popup?.cancel() },
                                          searchStatePublisher,
                                          popupScope,
                                          initialTabs,

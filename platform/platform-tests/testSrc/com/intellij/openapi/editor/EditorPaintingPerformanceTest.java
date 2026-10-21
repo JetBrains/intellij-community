@@ -15,36 +15,72 @@
  */
 package com.intellij.openapi.editor;
 
-import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.EditorModelFixture;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.awt.Rectangle;
 
+import static com.intellij.openapi.editor.impl.EditorModelFixture.LOREM_IPSUM;
+import static com.intellij.openapi.editor.impl.EditorModelFixture.TEST_CHAR_WIDTH;
+import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+
 @PerformanceUnitTest
-public class EditorPaintingPerformanceTest extends AbstractEditorTest {
-  private static final int EDITOR_WIDTH_PX = 1000;
+@TestApplication
+public class EditorPaintingPerformanceTest {
+  private static final Logger LOG = Logger.getInstance(EditorPaintingPerformanceTest.class);
 
-  public void testScrollingThroughLongTextFile() {
-    initText(StringUtil.repeat(LOREM_IPSUM + '\n', 15000));
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
 
-    doTestScrollingPerformance("scrolling through text file with many lines");
-    // attempt.min.ms varies ~5% (from experiments)
+  private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
+
+  private EditorModelFixture myFixture;
+
+
+  @BeforeEach
+  void setUp() {
+    myFixture = editorFixture.get();
   }
 
+  private static final int EDITOR_WIDTH_PX = 1000;
+
+  @Test
+  public void testScrollingThroughLongTextFile() {
+    myFixture.runTest(() -> {
+      myFixture.initText(StringUtil.repeat(LOREM_IPSUM + '\n', 15000));
+
+      doTestScrollingPerformance("scrolling through text file with many lines");
+      // attempt.min.ms varies ~5% (from experiments)
+    });
+  }
+
+  @Test
   public void testScrollingThroughLongSoftWrappedLine() {
-    initText(StringUtil.repeat(LOREM_IPSUM + ' ', 15000));
-    EditorTestUtil.configureSoftWraps(getEditor(), EDITOR_WIDTH_PX, TEST_CHAR_WIDTH);
+    myFixture.runTest(() -> {
+      myFixture.initText(StringUtil.repeat(LOREM_IPSUM + ' ', 15000));
+      EditorTestUtil.configureSoftWraps(myFixture.getEditor(), EDITOR_WIDTH_PX, TEST_CHAR_WIDTH);
     
-    doTestScrollingPerformance("scrolling through long soft wrapped line");
-    // attempt.min.ms varies ~4% (from experiments)
+      doTestScrollingPerformance("scrolling through long soft wrapped line");
+      // attempt.min.ms varies ~4% (from experiments)
+    });
   }
 
   private void doTestScrollingPerformance(String message) {
-    EditorImpl editor = (EditorImpl)getEditor();
+    EditorImpl editor = (EditorImpl)myFixture.getEditor();
     int editorHeight = editor.getPreferredHeight();
     int[] result = {0};
     Benchmark.newBenchmark(message, () -> {

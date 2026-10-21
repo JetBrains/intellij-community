@@ -25,19 +25,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.kotlin-compiler-fir" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-fir-for-ide:2.5.0-dev-9840">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-fir-for-ide:2.5.20-dev-1532">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-dev-9840/kotlin-compiler-fir-for-ide-2.5.0-dev-9840.jar">
-              <sha256sum>ceea85cc389e74516f605a45f5f1231318f27db7f6f06a498d3bc62c2f731efb</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.20-dev-1532/kotlin-compiler-fir-for-ide-2.5.20-dev-1532.jar">
+              <sha256sum>5445fe6b673b7779e4b9f565da21d8f43990e175edea8532487563dec135083b</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-dev-9840/kotlin-compiler-fir-for-ide-2.5.0-dev-9840.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.20-dev-1532/kotlin-compiler-fir-for-ide-2.5.20-dev-1532.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.0-dev-9840/kotlin-compiler-fir-for-ide-2.5.0-dev-9840-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-fir-for-ide/2.5.20-dev-1532/kotlin-compiler-fir-for-ide-2.5.20-dev-1532-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

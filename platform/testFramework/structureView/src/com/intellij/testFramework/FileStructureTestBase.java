@@ -9,7 +9,9 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
+ * @deprecated Use {@link FileStructureTestUtil} in a JUnit 5 test.
  */
+@Deprecated
 public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
 
   protected FileStructureTestFixture myPopupFixture;

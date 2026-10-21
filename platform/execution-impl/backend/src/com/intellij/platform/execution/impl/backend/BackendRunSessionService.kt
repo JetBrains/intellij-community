@@ -14,10 +14,10 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.kernel.ids.BackendValueIdType
-import com.intellij.platform.kernel.ids.findValueById
-import com.intellij.platform.kernel.ids.storeValueGlobally
 import com.intellij.platform.project.ProjectId
+import com.intellij.platform.rpc.ids.BackendValueIdType
+import com.intellij.platform.rpc.ids.findValueById
+import com.intellij.platform.rpc.ids.storeValueGlobally
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

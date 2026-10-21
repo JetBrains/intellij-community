@@ -298,6 +298,7 @@ c:com.intellij.codeInsight.actions.ReformatCodeAction
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.codeInsight.actions.ReformatCodeProcessor
 - com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor
+- p:afterTaskCompleted():V
 - s:getCommandName():java.lang.String
 - setDoNotKeepLineBreaks(com.intellij.psi.PsiFile):V
 f:com.intellij.codeInsight.actions.ReformatCodeRunOptions
@@ -1805,6 +1806,15 @@ f:com.intellij.conversion.impl.ConversionContextImpl
 - <init>(java.nio.file.Path):V
 - collapsePath(java.lang.String):java.lang.String
 - expandPath(java.lang.String):java.lang.String
+f:com.intellij.execution.TerminateRemoteProcessDialog
+- s:show(com.intellij.openapi.project.Project,java.lang.String,com.intellij.execution.process.ProcessHandler):com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult
+e:com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult
+- java.lang.Enum
+- sf:DISCONNECT:com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult
+- sf:LEAVE_RUNNING:com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult
+- sf:TERMINATE:com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult
+- s:valueOf(java.lang.String):com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult
+- s:values():com.intellij.execution.TerminateRemoteProcessDialog$ProcessCloseConfirmationResult[]
 f:com.intellij.execution.configuration.EnvFilesDialog
 - <init>(javax.swing.JComponent,java.util.List,com.intellij.openapi.project.Project):V
 - b:<init>(javax.swing.JComponent,java.util.List,com.intellij.openapi.project.Project,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -1986,6 +1996,13 @@ c:com.intellij.execution.services.ServiceViewToolWindowFactory
 - com.intellij.openapi.project.DumbAware
 - com.intellij.openapi.wm.ToolWindowFactory
 - <init>():V
+a:com.intellij.execution.ui.BaseContentCloseListener
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.project.VetoableProjectManagerListener
+- com.intellij.ui.content.ContentManagerListener
+c:com.intellij.execution.ui.layout.impl.JBRunnerTabs
+- com.intellij.ui.tabs.impl.SingleHeightTabs
+- com.intellij.execution.ui.layout.impl.JBRunnerTabsBase
 c:com.intellij.execution.util.EnvVariablesTable
 - com.intellij.execution.util.ListTableWithButtons
 - sf:Companion:com.intellij.execution.util.EnvVariablesTable$Companion
@@ -3573,6 +3590,7 @@ a:com.intellij.ide.util.gotoByName.SimpleChooseByNameModel
 a:com.intellij.ide.util.projectWizard.AbstractNewProjectDialog
 - com.intellij.openapi.ui.DialogWrapper
 - <init>():V
+- <init>(java.nio.file.Path):V
 a:com.intellij.ide.util.projectWizard.AbstractNewProjectStep
 - com.intellij.openapi.actionSystem.DefaultActionGroup
 - com.intellij.openapi.project.DumbAware
@@ -3601,6 +3619,7 @@ c:com.intellij.ide.util.projectWizard.ProjectSettingsStepBase
 - pf:createContentPanelWithAdvancedSettingsPanel():javax.swing.JPanel
 - p:createLocationComponent():com.intellij.openapi.ui.LabeledComponent
 - getActionButton():javax.swing.JButton
+- pf:getBaseDirectory():java.nio.file.Path
 - pf:getIcon():javax.swing.Icon
 - p:getPeer():com.intellij.platform.ProjectGeneratorPeer
 - getProjectGenerator():com.intellij.platform.DirectoryProjectGenerator

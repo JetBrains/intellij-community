@@ -29,7 +29,11 @@ jvm_library(
     module_name = "intellij.mcpserver.tests",
     visibility = ["//visibility:public"],
     exports = ["//plugins/mcp-server/mcpserver.testFramework"],
-    runtime_deps = ["//xml/plugin"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/vcs/plugin",
+        "//xml/plugin",
+    ],
 )
 
 jvm_library(
@@ -63,6 +67,7 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
+        "//platform/vcs/plugin:plugin_test_lib",
         "//xml/plugin:plugin_test_lib",
     ],
     deps = [
@@ -95,8 +100,6 @@ jvm_library(
         "//plugins/mcp-server/mcpserver.stdio:mcpserver.stdio_test_lib",
         "//plugins/mcp-server/mcpserver.testFramework",
         "//plugins/mcp-server/mcpserver.testFramework:mcpserver.testFramework_test_lib",
-        "//plugins/mcp-server/tests/plugin",
-        "//plugins/mcp-server/tests/plugin:plugin_test_lib",
         "//plugins/mcp-server/mcpserver.vcs",
         "//plugins/mcp-server/mcpserver.vcs:mcpserver.vcs_test_lib",
         "//plugins/mcp-server/mcpserver.terminal",

@@ -151,6 +151,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   private Configurable myQueuedConfigurable;
   private MyControl myControl;
+  private boolean myRegularGroups;
 
   public SettingsTreeView(@NotNull SettingsFilter filter, @NotNull List<? extends ConfigurableGroup> groups) {
     myFilter = filter;
@@ -217,7 +218,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
           myHeader.setIconTextGap(JBUIScale.scale(ICON_GAP));
           myHeader.setBorder(JBUI.Borders.empty(2, 10 + getLeftMargin(0), 0, 0));
         }
-        myHeader.setFont(myTree.getFont());
+        myHeader.setFont(myRegularGroups ? StartupUiUtil.getLabelFont() : myTree.getFont());
         myHeader.setIcon(getIcon(null, false));
         int height = myHeader.getPreferredSize().height;
         String group = findGroupNameAt(0, height + 3);
@@ -277,6 +278,19 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   @ApiStatus.Internal
   public @NotNull SimpleTree getTree() {
     return myTree;
+  }
+
+  /**
+   * Shows the tree in the Settings tool window: with the tool window background, and with the groups in the regular font.
+   */
+  void useToolWindowStyle() {
+    myRegularGroups = true;
+    Color background = JBUI.CurrentTheme.ToolWindow.background();
+    myTree.setBackground(background);
+    myScroller.setBackground(background);
+    myScroller.getViewport().setBackground(background);
+    myScroller.getVerticalScrollBar().setBackground(background);
+    myTree.repaint();
   }
 
   private Icon getIcon(@Nullable DefaultMutableTreeNode node, boolean selected) {
@@ -498,6 +512,23 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
 
   @NotNull
   Promise<? super Object> select(@Nullable Configurable configurable) {
+    return queueSelection(configurable);
+  }
+
+  /**
+   * Selects {@code configurable} on the next EDT event, without the merge delay of {@link #select(Configurable)}.
+   * Use it for the first page of a new Settings editor.
+   * The first selection has nothing to merge with, so it does not need the merge delay.
+   * The selection still runs after the current EDT event, so the window shows before the page is created.
+   */
+  @NotNull
+  Promise<? super Object> selectWithoutDelay(@Nullable Configurable configurable) {
+    Promise<? super Object> promise = queueSelection(configurable);
+    myQueue.sendFlush();
+    return promise;
+  }
+
+  private @NotNull Promise<? super Object> queueSelection(@Nullable Configurable configurable) {
     AsyncPromise<? super Object> promise = new AsyncPromise<>();
     myQueuedConfigurable = configurable;
     myQueue.queue(new Update(this) {
@@ -757,10 +788,10 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       setPreferredSize(null);
 
       MyNode node = extractNode(value);
-      boolean isGroup = node != null && node.getParent() instanceof MyRoot;
+      boolean isBoldGroup = !myRegularGroups && node != null && node.getParent() instanceof MyRoot;
       String name = node != null ? node.myDisplayName : String.valueOf(value);
-      myTextLabel.append(name, isGroup ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      myTextLabel.setFont(isGroup ? myTree.getFont() : StartupUiUtil.getLabelFont());
+      myTextLabel.append(name, isBoldGroup ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      myTextLabel.setFont(isBoldGroup ? myTree.getFont() : StartupUiUtil.getLabelFont());
 
       // update font color for modified configurables
       myTextLabel.setForeground(selected ? UIUtil.getTreeSelectionForeground(true) : UIUtil.getTreeForeground());

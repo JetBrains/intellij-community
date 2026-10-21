@@ -48,14 +48,12 @@ wasmjs_library(
 
 wasmjs_test(
     name = "e2e",
-    awaited_imports = {"marker.mjs": "ready"},
+    awaited_imports = {"./marker.mjs": "ready"},
     configuration_scripts = ["config/set-global.js"],
     module = ":e2e-module",
     module_name = "wasmjs-test-e2e",
-    module_runtime_files = ["runtime/marker.mjs"],
+    module_runtime_files = {"./marker.mjs": "runtime/marker.mjs"},
     npm_packages = {"nanoid": "@nanoid//:package"},
-    # The default value, behavior unchanged; exercises the macro -> flagfile -> harness plumbing.
-    test_completion_grace_period_ms = 3000,
     testdata = ["testdata/sample.txt"],
 )
 
@@ -84,8 +82,6 @@ wasmjs_test(
     module = ":e2e-failing-module",
     module_name = "wasmjs-test-e2e-failing",
     tags = ["manual"],
-    # Its tests are synchronous, so a short window only makes :e2e-outcomes finish sooner.
-    test_completion_grace_period_ms = 3000,
 )
 
 filegroup(
@@ -136,19 +132,19 @@ wasmjs_test(
 
 wasmjs_test(
     name = "e2e-awaited-missing",
-    awaited_imports = {"marker.mjs": "nonexistent"},
+    awaited_imports = {"./marker.mjs": "nonexistent"},
     module = ":e2e-failing-module",
     module_name = "wasmjs-awaited-missing",
-    module_runtime_files = ["runtime/marker.mjs"],
+    module_runtime_files = {"./marker.mjs": "runtime/marker.mjs"},
     tags = ["manual"],
 )
 
 wasmjs_test(
     name = "e2e-awaited-hanging",
-    awaited_imports = {"never.mjs": "never"},
+    awaited_imports = {"./never.mjs": "never"},
     module = ":e2e-failing-module",
     module_name = "wasmjs-awaited-hanging",
-    module_runtime_files = ["runtime/never.mjs"],
+    module_runtime_files = {"./never.mjs": "runtime/never.mjs"},
     tags = ["manual"],
 )
 
@@ -166,8 +162,7 @@ kt_jvm_library(
 
 # The anti-false-positive guarantee of wasmjs_test, enforced end to end: a failing, hanging,
 # or unloadable test module must fail the run with the reason in the JUnit XML — and the green
-# fixture must report every one of its tests, which is what catches an end-of-run decision taken
-# too early.
+# fixture must report every one of its tests.
 java_test(
     name = "e2e-outcomes",
     size = "large",

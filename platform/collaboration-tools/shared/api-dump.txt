@@ -162,14 +162,12 @@ f:icons.CollaborationToolsIcons
 - sf:Comment:javax.swing.Icon
 - sf:Delete:javax.swing.Icon
 - sf:DeleteHovered:javax.swing.Icon
-- sf:FileUnread:javax.swing.Icon
 - sf:PullRequestClosed:javax.swing.Icon
 - sf:PullRequestOpen:javax.swing.Icon
 - sf:Send:javax.swing.Icon
 - sf:SendHovered:javax.swing.Icon
 - <init>():V
 f:icons.CollaborationToolsIcons$Review
-- sf:Branch:javax.swing.Icon
 - sf:BranchCurrent:javax.swing.Icon
 - sf:CommentHovered:javax.swing.Icon
 - sf:CommentReadMany:javax.swing.Icon

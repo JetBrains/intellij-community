@@ -182,9 +182,19 @@ private const val aeExperimentsPluginId = "com.jetbrains.ae.experiments"
 private const val aeDatabasePluginId = "com.jetbrains.ae.database"
 private const val aiAssistantPluginId = "com.intellij.ml.llm"
 private const val juniePluginId = "org.jetbrains.junie"
+private const val airPluginId = "com.intellij.air"
 private const val androidPluginId = "org.jetbrains.android"
+private const val ijsPluginId = "com.intellij.srmi.ijs"
 
-private val allowedPlugins = setOf(tbePluginId, aeExperimentsPluginId, aeDatabasePluginId, aiAssistantPluginId, juniePluginId)
+private val allowedPlugins = setOf(
+  tbePluginId,
+  aeExperimentsPluginId,
+  aeDatabasePluginId,
+  aiAssistantPluginId,
+  juniePluginId,
+  airPluginId,
+  ijsPluginId
+)
 
 /**
  * IntelliJ IDEA also bundles the Android plugin, but only Android Studio maps the FUS events to the Google analytics.

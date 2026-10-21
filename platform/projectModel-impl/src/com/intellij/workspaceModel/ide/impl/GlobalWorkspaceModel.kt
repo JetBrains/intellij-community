@@ -238,7 +238,7 @@ class GlobalWorkspaceModel internal constructor(
     globalWorkspaceModels.resetVirtualFileUrlManager()
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
     ThreadingAssertions.assertWriteAccess()
 
@@ -276,7 +276,7 @@ class GlobalWorkspaceModel internal constructor(
     }
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   private fun onChanged(change: VersionedStorageChange) {
     ThreadingAssertions.assertWriteAccess()
 
@@ -294,7 +294,7 @@ class GlobalWorkspaceModel internal constructor(
     isFromGlobalWorkspaceModel = false
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun applyStateToProject(targetProject: Project): Unit = applyStateToProjectTimeMs.addMeasuredTime {
     ThreadingAssertions.assertWriteAccess()
 
@@ -309,6 +309,17 @@ class GlobalWorkspaceModel internal constructor(
     }
   }
 
+  /**
+   * Whether [targetWorkspaceModel] may require synchronization by [applyStateToProject]:
+   * this model has global entities to copy, or [targetWorkspaceModel] has global entities to replace.
+   * Identical global entities on both sides also give `true`.
+   * A later change of this model reaches the project through [registerInitializingProjectForUpdatesFromGlobalModel].
+   */
+  fun hasStateToApplyToProject(targetWorkspaceModel: WorkspaceModel): Boolean {
+    return currentSnapshot.entitiesBySource(globalEntitiesFilter).any() ||
+           targetWorkspaceModel.currentSnapshot.entitiesBySource(globalEntitiesFilter).any()
+  }
+
   fun applyStateToProjectBuilder(
     targetBuilder: MutableEntityStorage,
     workspaceModel: WorkspaceModelImpl,
@@ -320,7 +331,7 @@ class GlobalWorkspaceModel internal constructor(
     )
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun syncEntitiesWithProject(sourceProject: Project): Unit = syncEntitiesWithProjectTimeMs.addMeasuredTime {
     ThreadingAssertions.assertWriteAccess()
 

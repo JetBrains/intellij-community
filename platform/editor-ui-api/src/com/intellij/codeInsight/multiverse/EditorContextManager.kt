@@ -75,7 +75,7 @@ interface EditorContextManager {
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   fun getEditorContexts(editor: Editor): EditorSelectedContexts
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun setEditorContext(editor: Editor, contexts: EditorSelectedContexts)
   @ApiStatus.Internal
   fun setEditorContextNoFire(editor: Editor, contexts: EditorSelectedContexts)

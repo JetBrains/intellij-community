@@ -13,3 +13,4 @@ fun fn(value: Any) {
 // K1_TYPE: value -> <html>B & A (smart cast from Any)</html>
 
 // K2_TYPE: value -> <b>B &amp; A</b><br/>smart cast from <b>Any</b>
+// K2_TYPE: println(value) -> <b>Unit</b>

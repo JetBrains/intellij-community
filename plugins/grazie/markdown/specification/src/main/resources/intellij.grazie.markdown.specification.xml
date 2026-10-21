@@ -1,0 +1,59 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.grazie.core"/>
+    <module name="intellij.libraries.ai.grazie.semantic.engine"/>
+    <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
+    <module name="intellij.markdown"/>
+    <module name="intellij.markdown.backend"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="grazie.specification.semantics.specification.pattern" defaultValue="(?i).*\/\.(agents|claude|codex|junie)\/.*"
+                 description="Regex pattern to define specification-like files"/>
+
+    <!--suppress PluginXmlCapitalization -->
+    <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.contradiction.name"
+                     shortName="SpecificationContradiction" level="WEAK WARNING" enabledByDefault="true" language="Markdown"
+                     implementationClass="com.intellij.grazie.markdown.specification.inspection.SpecificationContradictionInspection"/>
+
+    <!--suppress PluginXmlCapitalization -->
+    <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.security.name"
+                     shortName="SpecificationSecurity" level="WEAK WARNING" enabledByDefault="true" language="Markdown"
+                     implementationClass="com.intellij.grazie.markdown.specification.inspection.SpecificationSecurityInspection"/>
+
+    <!--suppress PluginXmlCapitalization -->
+    <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.semanticCoverage.name"
+                     shortName="SpecificationSemanticCoverage" level="WEAK WARNING" enabledByDefault="true" language="Markdown"
+                     implementationClass="com.intellij.grazie.markdown.specification.inspection.SpecificationSematicCoverageInspection"/>
+
+    <!--suppress PluginXmlCapitalization -->
+    <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.ambiguity.name"
+                     shortName="SpecificationAmbiguity" level="WEAK WARNING" enabledByDefault="true" language="Markdown"
+                     implementationClass="com.intellij.grazie.markdown.specification.inspection.SpecificationAmbiguityInspection"/>
+
+    <!--suppress PluginXmlCapitalization -->
+    <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.cognitiveLoad.name"
+                     shortName="SpecificationCognitiveLoad" level="WEAK WARNING" enabledByDefault="true" language="Markdown"
+                     implementationClass="com.intellij.grazie.markdown.specification.inspection.SpecificationCognitiveLoadInspection"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.grazie.markdown.specification.fus.SpecificationFUSCollector"/>
+    <codeInsight.lineMarkerProvider
+      language="Markdown" implementationClass="com.intellij.grazie.markdown.specification.inspection.SpecificationUsageMarkerProvider"/>
+  </extensions>
+</idea-plugin>

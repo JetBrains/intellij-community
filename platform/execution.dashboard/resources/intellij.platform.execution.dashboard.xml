@@ -1,7 +1,6 @@
 <idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="fleet.rhizomedb"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
@@ -21,7 +20,6 @@
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.rpc"/>
-    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>
@@ -122,7 +120,7 @@
               class="com.intellij.platform.execution.dashboard.actions.UngroupConfigurationsActions"/>
       <separator/>
     </group>
-    <group id="RunDashboard.ViewOptions" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup">
+    <group id="RunDashboard.ViewOptions" popup="true" class="com.intellij.ide.actions.NonEmptyActionGroup" searchable="false">
       <separator key="separator.RunDashboard.GroupBy"/>
       <action id="RunDashboard.GroupByType"
               class="com.intellij.platform.execution.dashboard.actions.GroupByConfigurationTypeAction"/>
@@ -135,6 +133,7 @@
     </group>
     <action id="RunDashboard.AddConfiguration" class="com.intellij.platform.execution.dashboard.actions.AddRunConfigurationAction">
       <add-to-group group-id="ServiceView.AddService" anchor="first"/>
+      <override-text place="GoToAction"/>
     </action>
     <reference ref="RunDashboard.RestoreHiddenConfigurations">
       <add-to-group group-id="ServiceView.AddService" anchor="after" relative-to-action="RunDashboard.AddConfiguration"/>

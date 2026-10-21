@@ -2,12 +2,11 @@
 package com.jetbrains.python.packaging.requirementsTxt
 
 import com.intellij.ide.IconProvider
-import com.intellij.openapi.module.ModuleUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.requirements.RequirementsFileType
 import com.jetbrains.python.icons.PythonIcons
-import com.jetbrains.python.sdk.pythonSdk
 import javax.swing.Icon
 
 /**
@@ -18,10 +17,9 @@ internal class RequirementsTxtIconProvider : IconProvider() {
     val psiFile = element as? PsiFile ?: return null
     if (psiFile.fileType !is RequirementsFileType) return null
     val vFile = psiFile.virtualFile ?: return null
-    val module = ModuleUtil.findModuleForFile(vFile, psiFile.project) ?: return null
-
-    val sdk = module.pythonSdk ?: return null
-    val saved = PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(sdk)
+    // An icon provider cannot suspend, so it peeks at the snapshot. Before the first one, the icon is the default one.
+    val interpreter = psiFile.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return null
+    val saved = PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(interpreter)
     return if (saved == vFile) {
       PythonIcons.Python.ReferencedFile
     } else {

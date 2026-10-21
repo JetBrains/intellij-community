@@ -7,6 +7,7 @@ import java.awt.geom.Rectangle2D
 internal data class CacheRequest(
   val key: EditorAnimationCacheKey,
   private val rectangles: List<Rectangle2D>,
+  val forcePrefetch: Boolean
 ) {
   fun isDuplicate(previousKey: EditorAnimationCacheKey?): Boolean {
     return key == previousKey
@@ -34,6 +35,7 @@ internal data class CacheRequest(
     if (javaClass != other?.javaClass) return false
     other as CacheRequest
     if (key != other.key) return false
+    if (forcePrefetch != other.forcePrefetch) return false
     return true
   }
 

@@ -12,7 +12,7 @@
 # `http_archive` cannot read the `.pkg` itself, which is a xar archive with a cpio payload. The Mach-O signatures
 # survive the re-pack. The layout stays `bin/` and `libexec/`, because the CLI finds its plugins and its server from
 # its real path: the install root is the grandparent of `bin/container`. The cache redirector does not serve
-# `github.com/apple`, and `bazel_downloader.cfg` routes `packages.jetbrains.team/files/` through the redirector.
+# `github.com/apple`, and the URL below reaches the Space mirror through the redirector.
 #
 # To bump the pin:
 #   1. Download `container-<version>-installer-signed.pkg` of the release at https://github.com/apple/container and
@@ -40,5 +40,5 @@ air_container_archive(
     name = "air_container_darwin_arm64",
     build_file_content = _AIR_CONTAINER_BUILD_FILE,
     sha256 = "f7459d9f9fd5604259713d44da75f172828103ae3ec377ea2f1e78ccba84ef63",
-    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/container/{v}/container-{v}-darwin-arm64.tar.gz".format(v = AIR_CONTAINER_VERSION),
+    url = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/container/{v}/container-{v}-darwin-arm64.tar.gz".format(v = AIR_CONTAINER_VERSION),
 )

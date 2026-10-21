@@ -760,7 +760,8 @@ internal class GitSingleRepoRebaseTest {
 
     refresh()
     updateChangeListManager()
-    GitTestingRebaseProcess(project, GitRebaseParams.editCommits(vcs.version, "HEAD^", rebaseEditor, false), repo).rebase()
+    val params = GitRebaseParams.editCommits(vcs.version, RebaseUpstream.Reference("HEAD^"), rebaseEditor, preserveMerges = false)
+    GitTestingRebaseProcess(project, params, repo).rebase()
 
     assertThat(receivedEntries).describedAs("Didn't get any rebase entries").isNotNull()
     assertThat(receivedEntries!!.map { it.action })

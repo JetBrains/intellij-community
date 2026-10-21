@@ -1,5 +1,6 @@
 WRITE_OUT = 1
 WRITE_ERR = 2
+# Not above MAX_IO_MSG_SIZE in pydevd_comm: make_io_message cuts a longer message down to that size.
 MAX_STRING_LENGTH = 1000
 
 
@@ -25,9 +26,8 @@ class ConsoleOutputHook:
         raise AttributeError("%s has no attribute %s" % (self.original_out, item))
 
     def _write_long_string(self, string):
-        str_len, chunk_size = len(string), len(string) // MAX_STRING_LENGTH
-        for i in range(0, str_len, chunk_size):
-            self._write_short_string(string[i:i + chunk_size])
+        for i in range(0, len(string), MAX_STRING_LENGTH):
+            self._write_short_string(string[i:i + MAX_STRING_LENGTH])
 
     def _write_short_string(self, string):
         if self.is_error:

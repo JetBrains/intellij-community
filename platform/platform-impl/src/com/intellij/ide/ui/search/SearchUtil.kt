@@ -10,6 +10,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ColorUtil
@@ -19,11 +20,13 @@ import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.SimpleTextAttributes.StyleAttributeConstant
 import com.intellij.ui.TabbedPaneWrapper.TabbedPaneHolder
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent
 import com.intellij.util.IntPair
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Contract
 import java.awt.Color
@@ -522,6 +525,27 @@ object SearchUtil {
     val result = ArrayList<Configurable>()
     processExpandedGroups(group = group, result)
     return result
+  }
+}
+
+/**
+ * Creates a group title that the searchable options index skips.
+ */
+@ApiStatus.Experimental
+fun nonSearchableGroupTitle(@NlsContexts.BorderTitle title: String): JBLabel {
+  @Suppress("DialogTitleCapitalization")
+  return JBLabel(title).apply {
+    putClientProperty(SEARCH_SKIP_COMPONENT_KEY, true)
+  }
+}
+
+/**
+ * Creates a row title that the searchable options index skips.
+ */
+@ApiStatus.Experimental
+fun nonSearchableRowTitle(@NlsContexts.Label title: String): JLabel {
+  return JBLabel(title).apply {
+    putClientProperty(SEARCH_SKIP_COMPONENT_KEY, true)
   }
 }
 

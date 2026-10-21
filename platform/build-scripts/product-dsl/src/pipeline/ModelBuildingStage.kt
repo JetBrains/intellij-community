@@ -44,6 +44,7 @@ import org.jetbrains.intellij.build.productLayout.discovery.PluginXmlOverride
 import org.jetbrains.intellij.build.productLayout.discovery.computePluginContentFromDslSpec
 import org.jetbrains.intellij.build.productLayout.graph.PluginGraphBuilder
 import org.jetbrains.intellij.build.productLayout.model.ErrorSink
+import org.jetbrains.intellij.build.productLayout.model.error.SyntheticTestPluginRunnerError
 import org.jetbrains.intellij.build.productLayout.model.error.DuplicateDslTestPluginIdError
 import org.jetbrains.intellij.build.productLayout.stats.SuppressionUsage
 import org.jetbrains.intellij.build.productLayout.traversal.collectPluginContentModules
@@ -164,6 +165,12 @@ internal object ModelBuildingStage {
         val plugins = spec.testPlugins.takeIf { it.isNotEmpty() } ?: continue
         put(name, plugins)
       }
+      for ((productName, specs) in config.syntheticTestPlugins.specsByProduct) {
+        put(productName, get(productName).orEmpty() + specs)
+      }
+    }
+    for (problem in config.syntheticTestPlugins.problems) {
+      errorSink.emit(SyntheticTestPluginRunnerError(context = problem.runner, runnerName = problem.runner, message = problem.message))
     }
     val dslTestPluginIdOwners = LinkedHashMap<PluginId, MutableList<String>>()
     for ((productName, testPlugins) in dslTestPluginsByProduct) {
@@ -183,7 +190,10 @@ internal object ModelBuildingStage {
     }
     val dslTestPlugins = dslTestPluginsByProduct.values.flatten()
     val dslTestPluginIds: Set<PluginId> = dslTestPlugins.mapTo(HashSet()) { it.pluginId }
+    // A synthetic dev-build plugin counts the whole bundled list of its product as bundled, so that list seeds no plugin:
+    // a seeded plugin is a declared one, and that changes the graph for every product.
     val dslTestPluginAdditionalBundles: Set<TargetName> = dslTestPlugins.asSequence()
+      .filterNot { it.devBuildSynthetic }
       .flatMap { it.additionalBundledPluginTargetNames.asSequence() }
       .toSet()
 

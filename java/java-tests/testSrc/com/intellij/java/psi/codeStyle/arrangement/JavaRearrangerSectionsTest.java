@@ -2,9 +2,13 @@
 package com.intellij.java.psi.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementSectionRule;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.rule;
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.section;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.CLASS;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.ENUM;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.FIELD;
@@ -13,7 +17,9 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.En
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PRIVATE;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC;
 
+@TestApplication
 public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
+  @Test
   public void test_single_section() {
     doTest("""
 
@@ -41,6 +47,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
                                    rule(METHOD))));
   }
 
+  @Test
   public void test_multi_section() {
     doTest("""
 
@@ -81,6 +88,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
                                    rule(PRIVATE, METHOD))));
   }
 
+  @Test
   public void test_multi_region() {
     doTest("""
 
@@ -119,6 +127,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
              section("//region Private Methods", "//endregion private", rule(PRIVATE, METHOD))));
   }
 
+  @Test
   public void test_new_single_section() {
     doTest("""
 
@@ -142,6 +151,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
              section("// --- Public Methods ---", "// --- End Public Methods ---", rule(METHOD))));
   }
 
+  @Test
   public void test_all_new_multi_section_without_comments() {
     doTest("""
 
@@ -165,6 +175,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
                                    rule(METHOD))));
   }
 
+  @Test
   public void test_new_multi_section() {
     doTest("""
 
@@ -189,6 +200,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
                                    rule(METHOD))));
   }
 
+  @Test
   public void test_new_not_arranged_multi_section() {
     doTest("""
 
@@ -213,6 +225,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
                                    rule(METHOD))));
   }
 
+  @Test
   public void test_blank_lines() {
     doTest("""
 
@@ -238,6 +251,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
                                    rule(METHOD))));
   }
 
+  @Test
   public void test_multi_rules_in_section() {
     doTest("""
 
@@ -271,6 +285,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
                                    rule(PRIVATE, METHOD))));
   }
 
+  @Test
   public void test_multi_rules_in_new_section() {
     doTest("""
 
@@ -310,6 +325,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
               rule(PRIVATE, METHOD))));
   }
 
+  @Test
   public void test_section_without_close_comment() {
     doTest("""
 
@@ -343,6 +359,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
                                         METHOD))));
   }
 
+  @Test
   public void test_new_section_without_close_comment() {
     doTest("""
 
@@ -374,6 +391,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
                                    rule(PRIVATE, METHOD))));
   }
 
+  @Test
   public void test_new_section_in_hierarchy() {
     doTest("""
 
@@ -403,6 +421,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
                            rule(PRIVATE, METHOD))));
   }
 
+  @Test
   public void test_new_sections_in_hierarchy() {
     doTest("""
 
@@ -438,6 +457,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
               rule(PRIVATE, METHOD))));
   }
 
+  @Test
   public void test_two_methods_section_comments_in_a_row() {
     doTest("""
 
@@ -475,6 +495,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
                                   rule(PRIVATE, METHOD))));
   }
 
+  @Test
   public void test_two_fields_section_comments_in_a_row() {
     doTest("""
 
@@ -506,6 +527,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
                    rule(METHOD)));
   }
 
+  @Test
   public void test_no_additional_sections_added() {
     doTest("""
 
@@ -522,6 +544,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
              """, List.of(section("//sectionClassStart", "//sectionClassEnd", rule(CLASS))));
   }
 
+  @Test
   public void test_inner_classes_sections() {
     doTest("""
 
@@ -555,6 +578,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
                                   rule(INTERFACE))));
   }
 
+  @Test
   public void test_a_lot_of_sections() {
     List<ArrangementSectionRule> rules = List.of(
       section("//sectionInterfaceStart", "//sectionInterfaceEnd", rule(INTERFACE)),
@@ -725,6 +749,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
              """, rules);
   }
 
+  @Test
   public void test_range_rearrangement() {
     doTest("""
 
@@ -757,6 +782,7 @@ public class JavaRearrangerSectionsTest extends AbstractJavaRearrangerTest {
                           section("//privMS", "//privME", rule(PRIVATE, METHOD))));
   }
 
+  @Test
   public void test_on_range_with_nested_sections() {
     doTest("""
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.JBColor
+import org.jetbrains.annotations.TestOnly
 import java.awt.Color
 
 internal data class TabGroup(val name: String, val key: String)
@@ -25,15 +26,22 @@ internal fun agentsTabGroup(): TabGroup =
 @Suppress("SplitModeApiUsage")
 internal object EditorTabGroupingProvider {
 
-  @Suppress("UnregisteredNamedColor")
   private val groupColors = listOf(
-    JBColor(JBColor.namedColor("ColorPalette.Blue4"), JBColor.namedColor("ColorPalette.Blue6")),
-    JBColor(JBColor.namedColor("ColorPalette.Purple3"), JBColor.namedColor("ColorPalette.Purple7")),
-    JBColor(JBColor.namedColor("ColorPalette.Teal3"), JBColor.namedColor("ColorPalette.Teal6")),
-    JBColor(JBColor.namedColor("ColorPalette.Green3"), JBColor.namedColor("ColorPalette.Green7")),
-    JBColor(JBColor.namedColor("ColorPalette.Yellow2"), JBColor.namedColor("ColorPalette.Yellow7")),
-    JBColor(JBColor.namedColor("ColorPalette.Orange3"), JBColor.namedColor("ColorPalette.Orange7")),
-  )
+    "ColorPalette.Blue4" to "ColorPalette.Blue6",
+    "ColorPalette.Blue6" to "ColorPalette.Blue4",
+    "ColorPalette.Purple3" to "ColorPalette.Purple7",
+    "ColorPalette.Purple5" to "ColorPalette.Purple5",
+    "ColorPalette.Teal3" to "ColorPalette.Teal6",
+    "ColorPalette.Teal5" to "ColorPalette.Teal4",
+    "ColorPalette.Green3" to "ColorPalette.Green7",
+    "ColorPalette.Green5" to "ColorPalette.Green5",
+    "ColorPalette.Yellow2" to "ColorPalette.Yellow7",
+    "ColorPalette.Yellow4" to "ColorPalette.Yellow5",
+    "ColorPalette.Orange3" to "ColorPalette.Orange7",
+    "ColorPalette.Orange5" to "ColorPalette.Orange5",
+  ).map { (light, dark) ->
+    JBColor(JBColor.namedColor(light), JBColor.namedColor(dark))
+  }
 
   /**
    * Returns the group of [file]: the synthetic Agents group for known AIR editor tabs,
@@ -52,6 +60,9 @@ internal object EditorTabGroupingProvider {
     val key = "${contentRoot.path}/${relative}"
     return TabGroup(name = parent.name, key = key)
   }
+
+  @TestOnly
+  fun groupColors(): List<JBColor> = groupColors
 
   fun colorForGroup(group: TabGroup): Color {
     return groupColors[Math.floorMod(group.key.hashCode(), groupColors.size)]

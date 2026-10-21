@@ -29,8 +29,10 @@ import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooser.Panel
+import com.intellij.openapi.fileChooser.universal.UniversalFileChooser.toVirtualFile
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.MountStatus
 import com.intellij.openapi.observable.util.whenDisposed
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -52,6 +54,8 @@ import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.progress.ProgressState
@@ -75,7 +79,6 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Consumer
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.toArray
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -86,6 +89,8 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
@@ -164,14 +169,9 @@ object UniversalFileChooser {
     private val descriptor: FileChooserDescriptor,
     private val contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
     private val persistLocation: Boolean = true,
-    private val preselectPath: Path? = null
+    private val preselectPath: (suspend () -> Path?)? = null
   ) : DialogWrapper(project, parent, true, IdeModalityType.IDE), FileChooserDialog, PathChooserDialog {
     private lateinit var mainPanel: Panel
-
-    /** The files resolved on OK. [choose] reads only this list, so no VFS call runs on the EDT. */
-    private var chosenFiles: List<VirtualFile> = emptyList()
-    private var okJob: Job? = null
-    private var isResolving: Boolean = false
 
     init {
       init()
@@ -182,19 +182,19 @@ object UniversalFileChooser {
 
     override fun choose(project: Project?, vararg toSelect: VirtualFile?): Array<out VirtualFile?> {
       val explicit = toSelect.firstOrNull()?.let { runCatching { it.toNioPath() }.getOrNull() }
-      mainPanel.preselect(explicit)
+      mainPanel.preselect(explicit?.let { path -> suspend { path } })
       if (this.showAndGet()) {
-        return chosenFiles.toArray(VirtualFile.EMPTY_ARRAY)
+        return toVirtualFiles(descriptor, this.project, mainPanel.getSelectedFiles()).toArray(VirtualFile.EMPTY_ARRAY)
       }
       return emptyArray()
     }
 
     override fun choose(toSelect: VirtualFile?, callback: Consumer<in MutableList<VirtualFile>>) {
       val explicit = toSelect?.let { runCatching { it.toNioPath() }.getOrNull() }
-      mainPanel.preselect(explicit)
+      mainPanel.preselect(explicit?.let { path -> suspend { path } })
       if (showAndGet()) {
         val mutableList = mutableListOf<VirtualFile>()
-        mutableList.addAll(chosenFiles)
+        mutableList.addAll(toVirtualFiles(descriptor, project, mainPanel.getSelectedFiles()))
         callback.consume(mutableList)
       }
     }
@@ -210,49 +210,13 @@ object UniversalFileChooser {
     fun getSelectedFiles(): List<Path> = mainPanel.getSelectedFiles()
 
     override fun doOKAction() {
-      if (isResolving) return
       // Before confirming, resolve the path typed in the text field when it diverges from the tree selection
       mainPanel.confirmOk {
-        if (isDisposed || isResolving) return@confirmOk
-        val paths = getSelectedFiles()
-        paths.firstOrNull()?.let { lastSelected ->
+        getSelectedFiles().firstOrNull()?.let { lastSelected ->
           FileChooserUtil.setLastOpenedFile(project, lastSelected)
         }
-        if (paths.isEmpty()) {
-          chosenFiles = emptyList()
-          performOkAction()
-          return@confirmOk
-        }
-        // Resolve the NIO paths to VirtualFiles on a background thread while the dialog is still open.
-        isResolving = true
-        isOKActionEnabled = false
-        setErrorText(null)
-        rootPane.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
-        okJob = mainPanel.resolveSelectionToVirtualFiles(paths) { result ->
-          if (isDisposed) return@resolveSelectionToVirtualFiles
-          isResolving = false
-          okJob = null
-          rootPane.cursor = Cursor.getDefaultCursor()
-          val files = result.getOrNull()
-          if (files.isNullOrEmpty()) {
-            // Keep the dialog open instead of closing it with an empty selection.
-            setErrorText(IdeBundle.message("dialog.message.specified.path.cannot.be.found"))
-          }
-          else {
-            chosenFiles = files
-            isOKActionEnabled = true
-            performOkAction()
-          }
-        }
+        performOkAction()
       }
-    }
-
-    override fun doCancelAction() {
-      okJob?.cancel()
-      okJob = null
-      isResolving = false
-      chosenFiles = emptyList()
-      super.doCancelAction()
     }
 
     private fun performOkAction() {
@@ -261,16 +225,32 @@ object UniversalFileChooser {
   }
 
   /**
-   * Converts [paths] to VirtualFiles. The VFS lookup can do disk or EEL I/O, so call it only on a background thread.
+   * Converts [paths] to VirtualFiles through [toVirtualFile]. The VFS lookup does disk or EEL I/O,
+   * so it runs on [Dispatchers.IO]. Callable from the EDT: there it shows a modal progress when the
+   * lookup takes long, and no progress otherwise.
    */
-  private fun toVirtualFiles(descriptor: FileChooserDescriptor, paths: List<Path>): List<VirtualFile> {
-    ThreadingAssertions.assertBackgroundThread()
-    // Mirror FileChooserDialogImpl.doOKAction: after resolving NIO paths to VirtualFiles, run each
-    // result through `descriptor.getFileToSelect(...)` (via FileChooserUtil.getChosenFiles) so that,
-    // e.g., an archive file is returned as its `jar://…!/` JarFileSystem VirtualFile when the
-    // descriptor has `isChooseJarContents = true` (see IJPL-250874).
-    val resolved = paths.mapNotNull { path -> VfsUtil.findFile(path, true) }
+  private fun toVirtualFiles(descriptor: FileChooserDescriptor, project: Project, paths: List<Path>): List<VirtualFile> {
+    val title = IdeBundle.message("universal.file.chooser.progress.resolving.files")
+    val resolved: List<VirtualFile> = if (ApplicationManager.getApplication().isDispatchThread) {
+      val owner = if (project.isDefault) ModalTaskOwner.guess() else ModalTaskOwner.project(project)
+      runWithModalProgressBlocking(owner, title) { resolveVirtualFiles(paths) }
+    }
+    else {
+      runBlockingMaybeCancellable { resolveVirtualFiles(paths) }
+    }
     return FileChooserUtil.getChosenFiles(descriptor, resolved)
+  }
+
+  /** Resolves every path in [paths] to a VirtualFile. The lookups run in parallel. */
+  private suspend fun resolveVirtualFiles(paths: List<Path>): List<VirtualFile> = coroutineScope {
+    paths.map { path -> async { toVirtualFile(path) } }.awaitAll().filterNotNull()
+  }
+
+  /** Resolves one [path] to a VirtualFile. The lookup runs on [Dispatchers.IO]. */
+  private suspend fun toVirtualFile(path: Path): VirtualFile? {
+    return withContext(Dispatchers.IO) {
+      VfsUtil.findFile(path, true)
+    }
   }
 
   class Panel @JvmOverloads constructor(
@@ -282,7 +262,7 @@ object UniversalFileChooser {
     private val contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
     private val extraToolbarActions: ActionGroup = DefaultActionGroup(),
     private val extraPopupActions: ActionGroup = DefaultActionGroup(),
-    preselectPath: Path? = null
+    preselectPath: (suspend () -> Path?)? = null
   ) : JPanel(), FileBrowserPanel {
 
     companion object {
@@ -328,7 +308,7 @@ object UniversalFileChooser {
       tabbedPane = JBTabbedPane()
       val projectContrib = projectContributor(project, contributors)
       val localContrib = localContributor(contributors)
-      val rootOwners = rootOwnerContributors(descriptor.roots.mapNotNull { it.toNioPathOrNull() }, contributors)
+      val rootOwners = rootOwnerContributors(NioFileChooserUtil.getNioRoots(descriptor), contributors)
       val restrictedContributors: Set<UniversalFileChooserContributor>
       effectiveContributors = if (rootOwners.isNotEmpty()) {
         // The descriptor names the roots to show. The tree shows only these roots, so a tab that owns
@@ -587,13 +567,21 @@ object UniversalFileChooser {
       }
     }
 
-    fun preselect(toSelect: Path?) {
+    fun preselect(toSelect: (suspend () -> Path?)?) {
       val requestId = ++preselectRequestId
       scope.launch {
         withContext(Dispatchers.IO) {
-          val target = pathToSelect(toSelect) ?: return@withContext
+          val requested = try {
+            toSelect?.invoke()
+          }
+          catch (e: Exception) {
+            rethrowControlFlowException(e)
+            logger<UniversalFileChooser>().warn("Failed to compute the path to preselect", e)
+            null
+          }
+          val target = pathToSelect(requested) ?: return@withContext
           val effective = if (descriptor is FileSaverDescriptor && Files.exists(target) && !Files.isDirectory(target)) {
-            target?.parent ?: target
+            target.parent ?: target
           }
           else {
             target
@@ -601,7 +589,7 @@ object UniversalFileChooser {
           runOnEdt {
             if (requestId != preselectRequestId) return@runOnEdt
             navigateToFile(effective, preselectPathText = true)
-            if (toSelect == null) {
+            if (requested == null) {
               preselectProjectTab(project)
             }
           }
@@ -647,25 +635,6 @@ object UniversalFileChooser {
         return
       }
       activeView.confirmSelection(proceed)
-    }
-
-    /**
-     * Converts [paths] to VirtualFiles on [Dispatchers.IO] and calls [onResolved] on the EDT with the result.
-     * An I/O error is given to [onResolved] as a failure. A cancellation is not.
-     */
-    internal fun resolveSelectionToVirtualFiles(paths: List<Path>, onResolved: (Result<List<VirtualFile>>) -> Unit): Job {
-      return scope.launch {
-        val result = try {
-          Result.success(withContext(Dispatchers.IO) { toVirtualFiles(descriptor, paths) })
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Exception) {
-          Result.failure(e)
-        }
-        runOnEdt { onResolved(result) }
-      }
     }
 
     /**

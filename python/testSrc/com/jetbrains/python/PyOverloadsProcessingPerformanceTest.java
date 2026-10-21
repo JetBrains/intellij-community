@@ -31,7 +31,6 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 @SkipSlowTestLocally
@@ -48,7 +47,7 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
     super.setUp();
 
     myRoot = StandardFileSystems.local().refreshAndFindFileByPath(getTestDataPath() + "/fixture");
-    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
+    final Sdk sdk = getSdkForRootEdits();
     final SdkModificator modificator = sdk.getSdkModificator();
     assertNotNull(modificator);
     modificator.addRoot(myRoot, OrderRootType.CLASSES);
@@ -60,7 +59,7 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
   @Override
   public void tearDown() throws Exception {
     try {
-      final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
+      final Sdk sdk = getSdkForRootEdits();
       final SdkModificator modificator = sdk.getSdkModificator();
       assertNotNull(modificator);
       modificator.removeRoot(myRoot, OrderRootType.CLASSES);

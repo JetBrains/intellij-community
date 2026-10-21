@@ -1,0 +1,136 @@
+---
+name: markdown-library-update
+description: Update markdown-jvm and regenerate Bazel/Fleet metadata.
+---
+
+# Update the Markdown library
+
+Use this skill when the user gives a Markdown version in `A.B.C` form. Treat it as `MARKDOWN_VERSION`. Never guess the version.
+
+Use the 0.7.15 to 0.7.16 update commit (`783603fe95b8`) as the model. This is normally a metadata-only update.
+
+## Files
+
+Edit this source descriptor:
+
+- `community/libraries/markdown/intellij.libraries.markdown.iml`
+
+These files are generated. Do not edit them by hand:
+
+- `community/lib/BUILD.bazel`
+- `community/lib/MODULE.bazel`
+- `fleet/build/jps-library-mappings.tsv`
+- `fleet/kmp.MODULE.bazel`
+- `MODULE.bazel.lock`
+
+`fleet/build/gradle/jps.versions.toml` normally does not change. Do not add a Markdown entry when the generator omits it.
+
+## 1. Wait for cache-redirector
+
+Before editing, verify all required artifacts through cache-redirector. Follow redirects. Do not use direct Maven URLs.
+
+```bash
+set -euo pipefail
+
+MARKDOWN_VERSION="A.B.C" # replace with the requested version
+MARKDOWN_JVM_BASE_URL="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/markdown-jvm/${MARKDOWN_VERSION}"
+MARKDOWN_WASM_BASE_URL="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/markdown-wasm-js/${MARKDOWN_VERSION}"
+MARKDOWN_KMP_BASE_URL="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/markdown/${MARKDOWN_VERSION}"
+MARKDOWN_ARTIFACT_DIR="$(mktemp -d)"
+
+for MARKDOWN_ARTIFACT in \
+  "markdown-jvm-${MARKDOWN_VERSION}.jar" \
+  "markdown-jvm-${MARKDOWN_VERSION}-sources.jar"; do
+  curl --fail --silent --show-error --location \
+    --output "$MARKDOWN_ARTIFACT_DIR/$MARKDOWN_ARTIFACT" \
+    "$MARKDOWN_JVM_BASE_URL/$MARKDOWN_ARTIFACT"
+done
+
+for MARKDOWN_ARTIFACT in \
+  "markdown-wasm-js-${MARKDOWN_VERSION}.klib" \
+  "markdown-wasm-js-${MARKDOWN_VERSION}-sources.jar"; do
+  curl --fail --silent --show-error --location \
+    --output "$MARKDOWN_ARTIFACT_DIR/$MARKDOWN_ARTIFACT" \
+    "$MARKDOWN_WASM_BASE_URL/$MARKDOWN_ARTIFACT"
+done
+
+curl --fail --silent --show-error --location \
+  --output "$MARKDOWN_ARTIFACT_DIR/markdown-${MARKDOWN_VERSION}.module" \
+  "$MARKDOWN_KMP_BASE_URL/markdown-${MARKDOWN_VERSION}.module"
+
+shasum -a 256 \
+  "$MARKDOWN_ARTIFACT_DIR/markdown-jvm-${MARKDOWN_VERSION}.jar" \
+  "$MARKDOWN_ARTIFACT_DIR/markdown-jvm-${MARKDOWN_VERSION}-sources.jar"
+```
+
+If any download fails, make no edits. Wait for cache-redirector. If the version stays unavailable for 12-24 hours, report it in `#ij-builds`.
+
+Use the downloaded main-JAR SHA-256 in the `.iml`. Never invent or reuse a checksum.
+
+## 2. Update the source descriptor
+
+Check the current `jetbrains.markdown` coordinate in the `.iml`. Stop if the descriptor is inconsistent.
+
+Update only these values:
+
+- `org.jetbrains:markdown-jvm:${MARKDOWN_VERSION}`
+- the verification artifact URL and the downloaded main-JAR SHA-256
+- the `CLASSES` JAR URL
+- the `SOURCES` JAR URL
+
+Keep the exclusions, XML format, and no-trailing-line-break format unchanged.
+
+Register the edited module, then regenerate JVM metadata:
+
+```bash
+bun build/jps-module.mjs register community/libraries/markdown/intellij.libraries.markdown.iml --fix-iml-eof
+./build/jpsModelToBazel.cmd
+```
+
+Check that the Markdown entries in `community/lib/BUILD.bazel` and `community/lib/MODULE.bazel` use the new version, filenames, cache-redirector URLs, and generated checksums. Do not edit these files by hand.
+
+## 3. Regenerate Fleet metadata
+
+Run:
+
+```bash
+./fleet/build/generateProjectModel.cmd dump
+```
+
+Check that every `jetbrains.markdown` row in `fleet/build/jps-library-mappings.tsv` and the `org.jetbrains:markdown` coordinate in `fleet/kmp.MODULE.bazel` use the new version.
+
+Do not hand-edit generated Fleet files.
+
+Refresh the lockfile and wait for Bazel to finish:
+
+```bash
+./bazel.cmd mod deps --lockfile_mode=update
+```
+
+Do not stop the command or report success while it is running. Check `MODULE.bazel.lock` for the new `markdown-wasm-js` filenames, cache-redirector URLs, and integrity values. Do not hand-edit the lockfile.
+
+## 4. Verify
+
+Run the Fleet synchronization test:
+
+```bash
+./tests.cmd --module fleet.app.fleet.fleetProjectStructure --test fleet.projectStructure.FleetGradleBuildTests
+```
+
+Build the local Ultimate application:
+
+```bash
+./bazel.cmd build //build:idea_ultimate_build_local_linux_distribution_build_target
+```
+
+If the update causes a real compilation failure, make the smallest compatible source change, then rerun the failing build and affected tests. Do not weaken tests or edit generated metadata to hide a failure.
+
+Because the update changes Bazel files, run:
+
+```bash
+./bazel.cmd run //:format.check
+```
+
+If the check reports a diff, run `./bazel.cmd run //:format`, inspect the changes, and run the check again. Run `lint_files` on changed files when IDE MCP is available. Finish with `git diff --check` and inspect the complete diff.
+
+The normal metadata-only diff contains the source `.iml`, the two community library files, the two Fleet files, and `MODULE.bazel.lock`. Additional source changes need a verified compatibility failure.

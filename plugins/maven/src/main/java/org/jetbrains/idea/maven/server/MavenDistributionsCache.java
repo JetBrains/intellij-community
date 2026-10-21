@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
@@ -15,7 +16,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenExternalParameters;
@@ -47,8 +47,8 @@ import static org.jetbrains.idea.maven.utils.MavenUtil.isValidMavenHome;
 public final class MavenDistributionsCache {
   private static final ClearableLazyValue<Path> mySourcePath = ClearableLazyValue.create(MavenDistributionsCache::getSourceMavenPath);
 
-  private final ConcurrentMap<String, String> myWorkingDirToMultiModuleMap = CollectionFactory.createConcurrentWeakMap();
-  private final ConcurrentMap<String, String> myVmSettingsMap = CollectionFactory.createConcurrentWeakMap();
+  private final ConcurrentMap<String, String> myWorkingDirToMultiModuleMap = ConcurrentCollectionFactory.createConcurrentWeakMap();
+  private final ConcurrentMap<String, String> myVmSettingsMap = ConcurrentCollectionFactory.createConcurrentWeakMap();
   private final ConcurrentMap<String, MavenDistribution> myMultimoduleDirToWrapperedMavenDistributionsMap = new ConcurrentHashMap<>();
   private final Project myProject;
   private final ClearableLazyValue<MavenDistribution> mySettingsDistribution = ClearableLazyValue.create(this::getSettingsDistribution);

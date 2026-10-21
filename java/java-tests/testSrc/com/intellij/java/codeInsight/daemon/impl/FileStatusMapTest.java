@@ -11,6 +11,7 @@ import com.intellij.codeInsight.daemon.ProductionDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInsight.daemon.impl.EditorTracker;
 import com.intellij.codeInsight.daemon.impl.FileStatusMap;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -256,6 +257,30 @@ public class FileStatusMapTest extends ProductionDaemonAnalyzerTestCase {
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments(); // reset "defensively marked"
     myTestDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests();
     assertEquals(new TextRange(offset-1, offset+1), fileStatusMap.getFileDirtyScope(document, myFile, Pass.LOCAL_INSPECTIONS));
+  }
+
+  public void testTypingDoesNotMarkOtherFilesDirty() throws Exception {
+    @Language("JAVA")
+    String otherText = "class Other { void foo() { int i = 0; } }";
+    PsiFile other = createFile("Other.java", otherText);
+    @Language("JAVA")
+    String text = "class S { void foo() { int i = 0;<caret> } }";
+    configureByText(JavaFileType.INSTANCE, text);
+    Editor otherEditor = createEditor(other.getVirtualFile());
+    PsiFile otherPsiFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(otherEditor.getDocument());
+    EditorTracker.getInstance(myProject).setActiveEditorsInTests(List.of(getEditor(), otherEditor));
+    myTestDaemonCodeAnalyzer.waitHighlighting(otherPsiFile, HighlightSeverity.ERROR);
+    myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.ERROR);
+    FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
+    assertNull(fileStatusMap.getFileDirtyScope(otherEditor.getDocument(), otherPsiFile, Pass.UPDATE_ALL));
+
+    // Only the edited editor is active, so the daemon does not re-highlight the other file and clean its status.
+    EditorTracker.getInstance(myProject).setActiveEditorsInTests(List.of(getEditor()));
+    type(' ');
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    myTestDaemonCodeAnalyzer.waitForUpdateFileStatusBackgroundQueueInTests();
+    assertNotNull(fileStatusMap.getFileDirtyScope(myEditor.getDocument(), myFile, Pass.UPDATE_ALL));
+    assertNull(fileStatusMap.getFileDirtyScope(otherEditor.getDocument(), otherPsiFile, Pass.UPDATE_ALL));
   }
 
   public void testDefensivelyDirtyFlagDoesNotClearPrematurely() {

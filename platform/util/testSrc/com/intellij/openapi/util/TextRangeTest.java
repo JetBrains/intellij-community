@@ -3,15 +3,17 @@
 package com.intellij.openapi.util;
 
 import com.intellij.util.text.TextRangeUtil;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TextRangeTest {
   @Test
@@ -30,10 +32,10 @@ public class TextRangeTest {
     assertEquals(new TextRange(3, 3), new TextRange(1, 5).cutOut(new TextRange(2, 2)));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void cutOutExc() {
     //noinspection ResultOfMethodCallIgnored
-    new TextRange(1, 5).cutOut(new TextRange(1, 10));
+    assertThrows(IllegalArgumentException.class, () -> new TextRange(1, 5).cutOut(new TextRange(1, 10)));
   }
 
   @Test
@@ -74,10 +76,10 @@ public class TextRangeTest {
     Iterable<TextRange> result = TextRangeUtil.excludeRanges(new TextRange(30, 100), excludedRanges);
     Iterator<TextRange> resultIterator = result.iterator();
     for (TextRange expectedRange : expectedRanges) {
-      assertTrue("Less elements than expected", resultIterator.hasNext());
+      assertTrue(resultIterator.hasNext(), "Less elements than expected");
       TextRange actualRange = resultIterator.next();
-      assertEquals("Ranges do not match", expectedRange, actualRange);
+      assertEquals(expectedRange, actualRange, "Ranges do not match");
     }
-    assertTrue("More elements than expected", !resultIterator.hasNext());
+    assertFalse(resultIterator.hasNext(), "More elements than expected");
   }
 }

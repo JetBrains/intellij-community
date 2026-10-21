@@ -5,48 +5,37 @@
   <title>wasmjs_test</title>
 </head>
 <body>
-<script type="module">
-  const includes = new URLSearchParams(window.location.search).getAll("include");
-  const filterArguments = includes.length === 0 ? [] : ["--include", includes.join(",")];
-  globalThis.process = { argv: ["NEVER_PROCESSED", "NEVER_PROCESSED", ...filterArguments], env: {}, release: {} };
+<script>
   globalThis.addEventListener("error", (event) => {
     console.error(`wasmjs_test page error: ${event.message}`);
   });
   globalThis.addEventListener("unhandledrejection", (event) => {
     console.error(`wasmjs_test page error: ${event.reason}`);
   });
+</script>
+<script src="/_harness/mocha.js"></script>
+<script>
+  const parameters = new URLSearchParams(window.location.search);
+  const includes = parameters.getAll("include");
+  window.kotlinTestBrowserRunner = {
+    kotlinTestCliArguments: includes.length === 0 ? [] : ["--include", includes.join(",")],
+    reporterOptions: { Base: Mocha.reporters.Base },
+    mochaSetupOptions: { timeout: 0, bail: parameters.has("failFast") },
+    testsFinishedMarker: "wasmjs_test: mocha completed the run",
+    onComplete: () => setTimeout(() => console.log("KOTLIN-TEST-FINISHED"), 0),
+  };
+</script>
+<script src="/_harness/kotlin-test-mocha-browser-runner.js"></script>
+<script type="module">
   const awaitedExport = (module, path, member) => {
     if (!(member in module)) {
       throw new Error(`awaited import ${path} has no export '${member}'`);
     }
     return module[member];
   };
-  const testStartedAt = new Map();
-  const testNameOf = (line) => {
-    const name = /\sname='((?:[^'|]|\|.)*)'/.exec(line);
-    return name === null ? null : name[1];
-  };
-  const timed = (line) => {
-    if (line.startsWith("##teamcity[testStarted ")) {
-      const name = testNameOf(line);
-      if (name !== null) testStartedAt.set(name, performance.now());
-      return line;
-    }
-    if (!line.startsWith("##teamcity[testFinished ") || line.includes(" duration='") || !line.endsWith("]")) {
-      return line;
-    }
-    const name = testNameOf(line);
-    const startedAt = testStartedAt.get(name);
-    if (startedAt === undefined) return line;
-    testStartedAt.delete(name);
-    return line.slice(0, -1) + " duration='" + Math.round(performance.now() - startedAt) + "']";
-  };
-  ["log", "info", "debug"].forEach((method) => {
-    const original = console[method].bind(console);
-    console[method] = (...args) => original(...(typeof args[0] === "string" ? [timed(args[0]), ...args.slice(1)] : args));
-  });
   globalThis.__kotlinTestRun = (async () => {
-    return (await import("./my-module-js/my-module.mjs")).startUnitTests?.();
+    (await import("./my-module-js/my-module.mjs")).startUnitTests?.();
+    await window.kotlinTestBrowserRunner.run();
   })();
 </script>
 </body>

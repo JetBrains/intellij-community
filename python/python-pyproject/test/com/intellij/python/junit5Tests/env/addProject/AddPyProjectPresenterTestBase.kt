@@ -25,7 +25,7 @@ import com.intellij.testFramework.utils.vfs.refreshAndGetVirtualDirectory
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.setPythonSdkForTests
 import com.jetbrains.python.sdk.withSdkConfigurationLock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -93,7 +93,7 @@ abstract class AddPyProjectPresenterTestBase protected constructor(
     @Suppress("DEPRECATION") val sdk = sdkFixture.interpreter.getSdkAPI()
     withSdkConfigurationLock(projectFixture.get()) {
       withContext(Dispatchers.IO) {
-        module.pythonSdk = sdk
+        module.setPythonSdkForTests(sdk)
       }
     }
     // The action reads the interpreter from the model snapshot, which follows the module change a moment later.

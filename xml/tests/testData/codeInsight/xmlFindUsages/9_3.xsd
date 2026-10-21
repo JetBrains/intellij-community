@@ -1,0 +1,21 @@
+<xs:schema
+    xmlns = "http://aaa.bbb"
+    xmlns:xs = "http://www.w3.org/2001/XMLSchema"
+    targetNamespace = "http://aaa.bbb"
+    elementFormDefault = "qualified"
+    attributeFormDefault = "unqualified">
+
+  <xs:group name="group">
+    <xs:annotation>
+      <xs:documentation>
+        Fake empty group to check resolve
+      </xs:documentation>
+    </xs:annotation>
+  </xs:group>
+  
+  <xs:complexType name="aaa">
+      <xs:sequence>
+          <xs:group ref = "gr<caret>oup" minOccurs = "0" maxOccurs = "unbounded"/>
+      </xs:sequence>
+   </xs:complexType>
+</xs:schema>

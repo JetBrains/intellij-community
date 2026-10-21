@@ -2,7 +2,6 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +34,7 @@ public final class PlatformUtils {
   public static final String IDEA_PREFIX = "idea";
   public static final String IDEA_CE_PREFIX = "Idea";
   public static final String IDEA_EDU_PREFIX = "IdeaEdu";
+  public static final String ANDROID_STUDIO_PREFIX = "AndroidStudio";
   public static final String APPCODE_PREFIX = "AppCode";
   public static final String AQUA_PREFIX = "Aqua";
   public static final String CLION_PREFIX = "CLion";
@@ -205,10 +205,6 @@ public final class PlatformUtils {
 
   public static boolean isQodana() {
     return SystemProperties.getBooleanProperty("qodana.application", false);
-  }
-
-  public static @NotNull @NlsSafe String freeIdePaidVersionName() {
-    return isPyCharm() ? "Pro" : "Ultimate";
   }
 
   private static boolean is(String idePrefix) {

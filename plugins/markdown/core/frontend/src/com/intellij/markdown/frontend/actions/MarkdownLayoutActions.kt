@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.markdown.frontend.actions
 
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -29,6 +30,14 @@ internal class MarkdownEditorOnlyLayoutAction :
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    if (e.place == ActionPlaces.ACTION_SEARCH) {
+      e.presentation.isEnabledAndVisible = false
+    }
+  }
 }
 
 /** Shows the Markdown text editor alone with live preview on. The `markdown.live.preview.enabled` registry key shows this action. */

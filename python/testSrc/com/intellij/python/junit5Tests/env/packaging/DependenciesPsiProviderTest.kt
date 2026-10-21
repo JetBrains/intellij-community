@@ -20,7 +20,7 @@ import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfoData
 import com.intellij.python.junit5Tests.framework.metaInfo.TestMethodInfoData
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.python.venv.createVenv
 import com.intellij.python.venv.createVenvAdditionalData
 import com.intellij.testFramework.ExtensionTestUtil
@@ -52,8 +52,9 @@ import com.jetbrains.python.packaging.management.TestPythonPackageManagerService
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.poetry.PyPoetrySdkAdditionalData
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.setPythonSdkForTests
 import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -246,18 +247,20 @@ internal class DependenciesPsiProviderTest {
         val module = moduleFixture.get()
         val venvDir = tempPathFixture.get().resolve(".venv")
         val venvPython = createVenv(env.pythonPath, venvDir).getOrThrow()
-        createSdk(module.project, PathHolder.Eel(venvPython), additionalData(module))
+        createSdk(ModuleOrProject.ModuleAndProject(module), PathHolder.Eel(venvPython), additionalData(module))
           .orThrow()
           .getSdkAPI()
           .also {
-            module.pythonSdk = it
+            // This test sets the SDK on its module through the platform, so it adds the SDK to the table itself.
+            edtWriteAction { ProjectJdkTable.getInstance().addJdk(it) }
+            module.setPythonSdkForTests(it)
             it.setAssociationToModule(module)
             beforePackageManager()
           }
       }
 
       sdk.putUserData(TestPythonPackageManager.REQUIREMENTS_PROVIDER_KEY, requirementsProviderType)
-      PythonPackageManager.forPythonInterpreter(project, sdk.pythonInterpreterAsync()).waitForInit()
+      PythonPackageManager.forPythonInterpreter(project, sdk.pythonInterpreterResultAsync().orThrow()).waitForInit()
 
       fixture.configureFromTempProjectFile(requirementsProviderType.filename)
 

@@ -93,11 +93,6 @@ f:com.intellij.ide.plugins.PluginNode
 - com.intellij.ide.plugins.IdeaPluginDescriptor
 - *:getChannel():java.lang.String
 - *:setChannel(java.lang.String):V
-*:com.intellij.ide.plugins.PluginNonLoadReason
-- a:getDetailedMessage():java.lang.String
-- a:getPlugin():com.intellij.ide.plugins.IdeaPluginDescriptor
-- a:getShortMessage():java.lang.String
-- a:getShouldNotifyUser():Z
 f:com.intellij.ide.startup.StartupActionScriptManager
 - *s:addActionCommandsToBeginning(java.util.List):V
 *f:com.intellij.ide.ui.PopupLocationTracker
@@ -151,6 +146,9 @@ f:com.intellij.ide.startup.StartupActionScriptManager
 - propertyChange(java.beans.PropertyChangeEvent):V
 - show():V
 - uninstallingUI():V
+f:com.intellij.ide.ui.search.SearchUtilKt
+- *sf:nonSearchableGroupTitle(java.lang.String):com.intellij.ui.components.JBLabel
+- *sf:nonSearchableRowTitle(java.lang.String):javax.swing.JLabel
 f:com.intellij.ide.wizard.UIWizardUtil
 - *sf:runAfterOpened(com.intellij.ide.wizard.NewProjectWizardStep,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1):V
 - *sf:setupProjectSafe(com.intellij.ide.wizard.NewProjectWizardStep,com.intellij.openapi.project.Project,java.lang.String,kotlin.jvm.functions.Function0):V
@@ -348,6 +346,20 @@ a:com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 - *:requestOpenTextEditor(com.intellij.openapi.fileEditor.OpenFileDescriptor,com.intellij.openapi.fileEditor.FileEditorOpenRequest):java.util.concurrent.CompletableFuture
 a:com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 - *a:reallyExcludeCurrentCommandAsNavigation():V
+*f:com.intellij.openapi.fileEditor.ex.PlaceInfo
+- f:getCaretPosition():com.intellij.openapi.editor.RangeMarker
+- f:getEditorTypeId():java.lang.String
+- f:getFile():com.intellij.openapi.vfs.VirtualFile
+- f:getNavigationState():com.intellij.openapi.fileEditor.FileEditorState
+- f:getTimeStamp():J
+- f:getWindow():com.intellij.openapi.fileEditor.impl.EditorWindow
+- f:isPreviewTab():Z
+*:com.intellij.openapi.fileEditor.ex.RecentPlacesListener
+- *sf:Companion:com.intellij.openapi.fileEditor.ex.RecentPlacesListener$Companion
+- sf:TOPIC:com.intellij.util.messages.Topic
+- recentPlaceAdded(com.intellij.openapi.fileEditor.ex.PlaceInfo,Z,java.lang.Object):V
+- recentPlaceRemoved(com.intellij.openapi.fileEditor.ex.PlaceInfo,Z):V
+*f:com.intellij.openapi.fileEditor.ex.RecentPlacesListener$Companion
 f:com.intellij.openapi.fileEditor.impl.HTMLEditorProvider
 - com.intellij.openapi.fileEditor.FileEditorProvider
 - com.intellij.openapi.project.DumbAware
@@ -433,6 +445,7 @@ c:com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen
 - a:getIconPadding(com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.util.ui.JBInsets
 - *s:getInstance():com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
 - a:getStripeIconUnscaledSize():I
+- a:isShowToolWindowsNumbersSupported():Z
 - a:isStripeResizable():Z
 - a:isToolWindowNameVisible():Z
 *f:com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension$Companion
@@ -440,6 +453,8 @@ c:com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen
 - f:exists():Z
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 - f:getInstance():com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension
+*f:com.intellij.ui.SoundPreviewButtonKt
+- sf:soundPreviewButton(com.intellij.ui.dsl.builder.Row,kotlin.jvm.functions.Function0):com.intellij.ui.dsl.builder.Cell
 *a:com.intellij.ui.ToolbarActionTracker
 - com.intellij.openapi.Disposable
 - sf:ARROW_SHIFT:I

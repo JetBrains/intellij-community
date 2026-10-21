@@ -17,7 +17,7 @@ use pretty_assertions::assert_eq;
 use super::*;
 use crate::daemon::fixture::{Fixture, passing_run};
 use crate::daemon::shard::read_shard_baseline;
-use crate::daemon::testing::{FakeDaemon, PASSING_XML, Recorded, passing_run_lines};
+use crate::daemon::testing::{FakeDaemon, Recorded, passing_run_lines};
 
 // --- the decisions -------------------------------------------------------------------------------------------
 
@@ -129,9 +129,7 @@ async fn leased_warm_worker(fixture: &Fixture) -> PathBuf {
 
 /// One green trial per entry of `iterations`, on the first worker's double, in order.
 fn passing_trials(fixture: &Fixture, iterations: &[&str]) {
-    let streams = iterations.iter().map(|id| passing_run_lines(id)).collect();
-    let documents = vec![PASSING_XML; iterations.len()];
-    fixture.queue_runs(streams, &documents);
+    fixture.queue_runs(iterations.iter().map(|id| passing_run_lines(id)).collect());
 }
 
 /// A daemon that walks away with no transcript at all, which is one unusable trial.
@@ -142,8 +140,7 @@ fn trials(fixture: &Fixture, script: &[&str]) {
         .iter()
         .map(|id| if id.is_empty() { Vec::new() } else { passing_run_lines(id) })
         .collect();
-    let documents: Vec<&str> = script.iter().filter(|id| !id.is_empty()).map(|_| PASSING_XML).collect();
-    fixture.queue_runs(streams, &documents);
+    fixture.queue_runs(streams);
 }
 
 // --- a measurement ------------------------------------------------------------------------------------------------
@@ -256,10 +253,7 @@ async fn a_release_this_run_cannot_complete_is_named_rather_than_swallowed() {
     let prep = fixture.pool_build().await;
     for worker in &workers {
         let daemon = fixture.warm_daemon(worker, &prep).await;
-        let (lines, xml) = passing_run(&format!("iter-{worker}"), "com.example.OneTest");
-        let mut script = daemon.script();
-        script.run_lines = lines;
-        script.results_xml = xml.into_bytes();
+        daemon.script().run_lines = passing_run(&format!("iter-{worker}"), "com.example.OneTest");
     }
     let receipt = fixture.leased_by(&workers[0], "suite", GuestOs::Macos);
     fixture.read_as_running(borrowed).await;
@@ -312,11 +306,9 @@ async fn an_interrupt_keeps_the_leases_this_run_took_and_writes_no_summary() {
     let mut daemons = Vec::new();
     for worker in &workers {
         let daemon = fixture.warm_daemon(worker, &prep).await;
-        let (lines, xml) = passing_run(&format!("iter-{worker}"), "com.example.OneTest");
         {
             let mut script = daemon.script();
-            script.run_lines = lines;
-            script.results_xml = xml.into_bytes();
+            script.run_lines = passing_run(&format!("iter-{worker}"), "com.example.OneTest");
             script.block = Some(gate.clone());
         }
         daemons.push(daemon);
@@ -578,9 +570,9 @@ async fn a_reset_that_cannot_be_applied_becomes_an_excluded_trial_rather_than_an
 /// This module's own source, compiled in, so the guard can never scan a file that is not the one that runs.
 const SOURCE: &str = include_str!("../command.rs");
 
-/// Every non-test source of the `flake` module, by the name its `mod` declaration gives it, and the leased-run
-/// driver that holds the chain's lock. The chain's reset and trial folding live in `plan`, and a call to a wrapper
-/// there or in the driver would collide with the chain's lock just the same.
+/// Every non-test source of the `flake` module, by the name of its `mod` declaration, and the leased-run driver. The
+/// driver puts the chain's run marker on the worker. The chain's reset and trial folding live in `plan`. A call to a
+/// wrapper there or in the driver would nest in the chain just the same.
 const MODULE_SOURCES: [(&str, &str); 4] = [
     ("flake", include_str!("../../flake.rs")),
     ("command", SOURCE),
@@ -589,11 +581,11 @@ const MODULE_SOURCES: [(&str, &str); 4] = [
 ];
 
 // A source guard rather than a behavioural one: this is an invariant of the chain, not something any single trial
-// demonstrates. A second acquisition of one worker's lifecycle lock by the same live process is refused rather than
-// reclaimed, so a command wrapper called inside the chain would fail `lease_busy` on the second trial, after the first
-// had already paid for a build, a daemon start and a lane.
+// demonstrates. The chain's run marker is on the worker for the whole chain. A second run marker of the same process
+// is refused as an internal error. So a `run` wrapper inside the chain would fail after the chain paid for a build, a
+// daemon start and a lane. A `daemon` wrapper would change the daemon under the chain.
 #[test]
-fn the_trial_chain_cannot_reach_lease_busy_because_it_calls_no_command_wrapper() {
+fn the_trial_chain_nests_no_run_because_it_calls_no_command_wrapper() {
     let start = SOURCE
         .find("async fn run_trial_chain(")
         .expect("the chain must be findable by name for this guard to mean anything");
@@ -608,13 +600,13 @@ fn the_trial_chain_cannot_reach_lease_busy_because_it_calls_no_command_wrapper()
     );
     let wrappers = command_wrapper_calls(chain);
     assert_eq!(wrappers, Vec::<&str>::new(), "the chain must call no command wrapper");
-    // ...and the module never reaches the two whose lock would collide, so no future edit can call one without also
-    // changing this guard's answer.
+    // ...and the module never reaches the two that would nest in the chain. So no future edit can call one without a
+    // change of this guard's answer.
     for (name, source) in MODULE_SOURCES {
         for forbidden in ["command_run(", "command_daemon("] {
             assert!(
                 !source.contains(forbidden),
-                "{name}: {forbidden} takes the worker's lifecycle lock, which a chain already holds"
+                "{name}: {forbidden} is a command of its own on the worker, and the chain's run marker is already there"
             );
         }
     }

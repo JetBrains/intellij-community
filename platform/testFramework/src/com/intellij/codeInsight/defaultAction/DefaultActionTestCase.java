@@ -6,6 +6,10 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
+/**
+ * @deprecated Use {@link DefaultActionTestUtil} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class DefaultActionTestCase extends LightPlatformCodeInsightTestCase {
   protected void performAction(char c) {
     EditorActionManager.getInstance();

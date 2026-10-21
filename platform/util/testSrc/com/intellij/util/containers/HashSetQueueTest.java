@@ -16,15 +16,22 @@
 
 package com.intellij.util.containers;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-public class HashSetQueueTest extends TestCase {
+public class HashSetQueueTest {
   private final HashSetQueue<String> myQueue = new HashSetQueue<>();
 
   private static final int[] primeCapacities = {
@@ -58,12 +65,14 @@ public class HashSetQueueTest extends TestCase {
     return primeCapacities[i];
   }
 
+  @Test
   public void testEmpty() {
     assertEquals(0, myQueue.size());
     assertTrue(myQueue.isEmpty());
     assertThat(myQueue).isEmpty();
   }
 
+  @Test
   public void testAddingGetting() {
     String element = "1";
     myQueue.add(element);
@@ -82,6 +91,7 @@ public class HashSetQueueTest extends TestCase {
     testEmpty();
   }
 
+  @Test
   public void testQuibble() {
     String xxx = "xxx";
     myQueue.add(xxx);
@@ -91,6 +101,7 @@ public class HashSetQueueTest extends TestCase {
     assertTrue(myQueue.isEmpty());
   }
 
+  @Test
   public void testRemoving() {
     for (int i = 0; i < 9; i++) {
       myQueue.add(String.valueOf(i));
@@ -104,12 +115,14 @@ public class HashSetQueueTest extends TestCase {
     }
   }
 
+  @Test
   public void testAddTwice() {
     assertTrue(myQueue.add("1"));
     assertFalse(myQueue.add("1"));
     assertEquals(1, myQueue.size());
   }
 
+  @Test
   public void testOrder() {
     int N = 10000;
     for (int i = 0; i < N; i++) {
@@ -147,6 +160,7 @@ public class HashSetQueueTest extends TestCase {
     }
   }
 
+  @Test
   public void testIteratorCatchesUpQueueModificationImmediately() {
     assertTrue(myQueue.add("1"));
     Iterator<String> iterator = myQueue.iterator();
@@ -164,6 +178,7 @@ public class HashSetQueueTest extends TestCase {
     assertFalse(iterator.hasNext());
   }
 
+  @Test
   public void testIterator() {
     assertTrue(myQueue.add("1"));
     Iterator<String> iterator = myQueue.iterator();
@@ -172,6 +187,7 @@ public class HashSetQueueTest extends TestCase {
     assertFalse(iterator.hasNext());
   }
 
+  @Test
   public void testIteratorPosition() {
     String o = "1";
     assertTrue(myQueue.add(o));

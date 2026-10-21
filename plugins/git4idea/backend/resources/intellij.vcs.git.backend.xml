@@ -4,7 +4,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.vcs"/>
-    <module name="fleet.rhizomedb"/>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.gson"/>
@@ -22,7 +21,6 @@
     <module name="intellij.libraries.stream"/>
     <module name="intellij.libraries.xz"/>
     <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.backend"/>
     <module name="intellij.platform.backend.observation"/>
     <module name="intellij.platform.builtInServer"/>
     <module name="intellij.platform.codeStyle"/>
@@ -51,7 +49,6 @@
     <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.ide.ui"/>
     <module name="intellij.platform.ide.util.netty"/>
-    <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.lvcs"/>
@@ -59,7 +56,7 @@
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
-    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.rpc.lite"/>
     <module name="intellij.platform.scopes"/>
     <module name="intellij.platform.searchEverywhere"/>
     <module name="intellij.platform.statistics"/>
@@ -140,7 +137,7 @@
             class="git4idea.ui.branch.dashboard.BranchesDashboardActions$NavigateLogToSelectedBranchAction"/>
     <action id="Git.Log.Hide.Branches" class="git4idea.ui.branch.dashboard.BranchesDashboardActions$HideBranchesAction"
             icon="AllIcons.Actions.ArrowCollapse"/>
-    <group id="Git.Log.Branches.Settings" popup="true" icon="AllIcons.General.GearPlain"
+    <group id="Git.Log.Branches.Settings" popup="true" icon="AllIcons.General.GearPlain" searchable="false"
            class="com.intellij.ide.actions.NonTrivialActionGroup">
       <separator key="group.Git.Log.Branches.Settings.Separator.text"/>
       <action id="Git.Log.Branches.Change.Branch.Filter.On.Selection"
@@ -163,7 +160,9 @@
     <group id="Git.FileActions">
       <reference ref="CheckinFiles"/>
       <action id="Git.Add" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionWithIgnoredFilesConfirmationAction"
-              icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned"/>
+              icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned">
+        <override-text place="GoToAction"/>
+      </action>
       <separator/>
       <reference ref="Annotate"/>
       <reference ref="Compare.SameVersion"/>
@@ -294,7 +293,8 @@
       <reference ref="Git.Rebase.Skip"/>
     </group>
 
-    <group id="Git.Compare.With.Branch.Popup.Settings" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
+    <group id="Git.Compare.With.Branch.Popup.Settings" class="com.intellij.vcs.git.branch.popup.GitBranchesTreePopupSettings"
+           icon="AllIcons.Actions.More" searchable="false">
       <reference ref="git.branches.group.by.directory"/>
       <reference ref="git.branches.show.recent"/>
       <reference ref="git.branches.show.tags"/>
@@ -503,7 +503,7 @@
       <reference ref="ChangesView.Refresh"/>
       <reference ref="Git.Stage.Add.Tracked"/>
       <reference ref="Git.Stash.Silently"/>
-      <group id="Git.Stage.Ui.Settings" icon="AllIcons.Actions.GroupBy" popup="true">
+      <group id="Git.Stage.Ui.Settings" searchable="false" icon="AllIcons.Actions.GroupBy" popup="true">
         <reference ref="ChangesView.GroupBy"/>
         <separator key="separator.show"/>
         <reference ref="Git.Stage.ToggleIgnored"/>
@@ -635,7 +635,9 @@
       <mouse-shortcut keymap="$default" keystroke="button1 doubleClick"/>
     </action>
     <action id="Git.WorkingTrees.Refresh" class="git4idea.workingTrees.ui.actions.RefreshWorkingTreesAction"
-            icon="AllIcons.General.Refresh" use-shortcut-of="Synchronize"/>
+            icon="AllIcons.General.Refresh" use-shortcut-of="Synchronize">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Git.WorkingTrees.Prune" class="git4idea.workingTrees.ui.actions.PruneWorkingTreesAction"
             icon="AllIcons.Actions.ClearCash"/>
     <action id="Git.WorkingTrees.ToggleLock" class="git4idea.workingTrees.ui.actions.GitToggleLockWorkingTreeAction"/>
@@ -1006,6 +1008,7 @@
                         isInCommitToolWindow="false"/>
     <statistics.actionCustomPlaceAllowlist places="GitWorkingTreeToolWindowTabToolbar;GitWorkingTreeToolWindowTabEmptyList"/>
     <backgroundPostStartupActivity implementation="git4idea.workingTrees.GitWorkingTreeStartupActivity"/>
+    <editorNotificationProvider implementation="git4idea.workingTrees.GitWorktreeIncludeEditorNotificationProvider"/>
 
     <projectService serviceInterface="git4idea.commands.GitCommandOutputPrinter"
                     serviceImplementation="git4idea.commands.GitCommandOutputConsolePrinter"/>
@@ -1050,13 +1053,17 @@
     <vcs.diffRevisionMetadataProvider implementation="git4idea.diff.GitDiffRevisionMetadataProvider"/>
 
     <troubleInfoCollector implementation="git4idea.troubleshooting.GitTroubleInfoCollector"/>
-
-    <platform.rpc.backend.remoteApiProvider implementation="git4idea.remoteApi.GitApiProvider"
-                                            apiInterfaces="com.intellij.vcs.git.rpc.GitWidgetApi,
-                                                           com.intellij.vcs.git.rpc.GitRepositoryApi,
-                                                           com.intellij.vcs.git.rpc.GitIncomingOutgoingStateApi,
-                                                           com.intellij.vcs.git.rpc.GitUiSettingsApi,
-                                                           com.intellij.vcs.git.rpc.GitOperationsApi"/>
+    <!-- The remote API implementations are application services, so a light IDE reaches them without the rpc backend. -->
+    <applicationService serviceInterface="com.intellij.vcs.git.rpc.GitWidgetApi"
+                        serviceImplementation="git4idea.remoteApi.GitWidgetApiImpl"/>
+    <applicationService serviceInterface="com.intellij.vcs.git.rpc.GitRepositoryApi"
+                        serviceImplementation="git4idea.remoteApi.GitRepositoryApiImpl"/>
+    <applicationService serviceInterface="com.intellij.vcs.git.rpc.GitIncomingOutgoingStateApi"
+                        serviceImplementation="git4idea.remoteApi.GitIncomingOutgoingStateApiImpl"/>
+    <applicationService serviceInterface="com.intellij.vcs.git.rpc.GitUiSettingsApi"
+                        serviceImplementation="git4idea.remoteApi.GitUiSettingsApiImpl"/>
+    <applicationService serviceInterface="com.intellij.vcs.git.rpc.GitOperationsApi"
+                        serviceImplementation="git4idea.remoteApi.GitOperationsApiImpl"/>
 
     <uiDataRule implementation="git4idea.actions.branch.GitBackendBranchesWidgetUiDataRule"/>
 
@@ -1112,6 +1119,12 @@
     <extensionPoint interface="git4idea.workingTrees.dialog.GitWorktreeSettingsPanelProvider"
                     qualifiedName="Git4Idea.worktreeSettingsPanelProvider" dynamic="true"/>
   </extensionPoints>
+
+  <applicationListeners>
+    <listener class="git4idea.repo.GitFsMonitorProjectCloseListener"
+              topic="com.intellij.ide.AppLifecycleListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+  </applicationListeners>
 
   <projectListeners>
     <listener class="git4idea.repo.GitFsMonitorProjectCloseListener"

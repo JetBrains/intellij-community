@@ -20,6 +20,7 @@ jvm_library(
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
+        allow_empty = True,
         exclude = ["resources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
@@ -30,7 +31,6 @@ jvm_library(
         "//platform/core-api:core",
         "@lib//:kotlin-stdlib",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/kernel/shared:kernel",
         "//platform/platform-impl/rpc",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/serialization/core",
@@ -39,7 +39,6 @@ jvm_library(
         "//platform/xdebugger-impl/rpc",
         "//platform/xdebugger-impl/shared",
         "//platform/xdebugger-impl/ui",
-        "//fleet/rhizomedb",
         "//platform/statistics",
     ],
 )
@@ -60,7 +59,6 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
@@ -69,7 +67,6 @@ jvm_library(
         "//platform/xdebugger-impl/rpc:rpc_test_lib",
         "//platform/xdebugger-impl/shared:shared_test_lib",
         "//platform/xdebugger-impl/ui:ui_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/statistics:statistics_test_lib",
     ],
 )

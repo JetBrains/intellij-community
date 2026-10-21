@@ -4,6 +4,8 @@ package org.jetbrains.idea.devkit.dom.impl
 import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.java.workspace.files.findResourceFileByRelativePath
+import com.intellij.java.workspace.files.findResourceFilesInDirectory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
@@ -22,14 +24,17 @@ import com.intellij.util.xml.DomUtil
 import com.intellij.util.xml.ElementPresentationManager
 import com.intellij.util.xml.GenericDomValue
 import com.intellij.util.xml.ResolvingConverter
+import com.intellij.workspaceModel.ide.legacyBridge.findSnapshotModuleEntity
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.ContentDescriptor
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
 private const val SUB_DESCRIPTOR_DELIMITER = "/"
+private val SOURCE_ROOT_TYPES = setOf<JpsModuleSourceRootType<*>>(JavaResourceRootType.RESOURCE, JavaSourceRootType.SOURCE)
 private const val SUB_DESCRIPTOR_FILENAME_DELIMITER = "."
 private const val GRADLE_MAIN_MODULE_SUFFIX = ".main"
 private val LOOKUP_PRIORITY = Key.create<Double>("LOOKUP_PRIORITY")
@@ -116,28 +121,25 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
     for (module in ModuleManager.getInstance(project).modules) {
       val prioritize = module === currentModule || dependencies.contains(module)
       val moduleName = module.name
-
-      processModuleSourceRoots(module) { root ->
-        root.children
-          .filter { it.extension == "xml" && it.name.startsWith(moduleName) }
-          .mapNotNull {
-            findIdeaPlugin(root, it.name, project)?.apply {
-              if (prioritize) {
-                putUserData(LOOKUP_PRIORITY, if (module === currentModule) 200.0 else 100.0)
-              }
+      val moduleEntity = module.findSnapshotModuleEntity() ?: continue
+      moduleEntity
+        .findResourceFilesInDirectory(relativePath = "", SOURCE_ROOT_TYPES)
+        .filter { it.extension == "xml" && it.name.startsWith(moduleName) }
+        .mapNotNull {
+          findIdeaPlugin(it, project)?.apply {
+            if (prioritize) {
+              putUserData(LOOKUP_PRIORITY, if (module === currentModule) 200.0 else 100.0)
             }
           }
-          .forEach { variants.add(it) }
-        true
-      }
+        }
+        .forEach { variants.add(it) }
       // plugin Gradle projects:
       if (moduleName.endsWith(GRADLE_MAIN_MODULE_SUFFIX)) {
-        for (resourceRoot in ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE)) {
-          resourceRoot.children
-            .filter { it.extension == "xml" }
-            .mapNotNull { findIdeaPlugin(resourceRoot, it.name, project)?.apply { putUserData(CONTEXT, ModuleContext.SOURCES_GRADLE) } }
-            .forEach { variants.add(it) }
-        }
+        moduleEntity
+          .findResourceFilesInDirectory(relativePath = "", setOf(JavaResourceRootType.RESOURCE))
+          .filter { it.extension == "xml" }
+          .mapNotNull { findIdeaPlugin(it, project)?.apply { putUserData(CONTEXT, ModuleContext.SOURCES_GRADLE) } }
+          .forEach { variants.add(it) }
       }
     }
     processModuleLibraryRoots(currentModule) { root ->
@@ -179,12 +181,8 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
   }
 
   private fun findDescriptorFileInModuleSources(module: Module, fileName: String): IdeaPlugin? {
-    var ideaPlugin: IdeaPlugin? = null
-    processModuleSourceRoots(module) {
-      ideaPlugin = findIdeaPlugin(it, fileName, module.project)
-      ideaPlugin == null // continue if not found
-    }
-    return ideaPlugin
+    val moduleEntity = module.findSnapshotModuleEntity() ?: return null
+    return findIdeaPlugin(moduleEntity.findResourceFileByRelativePath(fileName, SOURCE_ROOT_TYPES), module.project)
   }
 
   private fun findDescriptorFileInGradleSubProjectContent(
@@ -193,23 +191,24 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
     fileName: String,
   ): IdeaPlugin? {
     val module = moduleManager.findModuleByName("$moduleNamePrefix$GRADLE_MAIN_MODULE_SUFFIX") ?: return null
-    for (resourceRoot in ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE)) {
-      val candidate = resourceRoot.findChild(fileName)
-      val ideaPlugin = findIdeaPlugin(candidate, module.project)
-      if (ideaPlugin != null) {
-        return ideaPlugin
-      }
-    }
-    return null
+    return findIdeaPlugin(
+      candidate = module
+        .findSnapshotModuleEntity()
+        ?.findResourceFileByRelativePath(fileName, setOf(JavaResourceRootType.RESOURCE)),
+      project = module.project
+    )
   }
 
   private fun findDescriptorInAllGradleModuleResources(moduleManager: ModuleManager, fileName: String): IdeaPlugin? {
     for (module in moduleManager.modules) {
       if (!module.name.endsWith(GRADLE_MAIN_MODULE_SUFFIX)) continue
-      for (resourceRoot in ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE)) {
-        val ideaPlugin = findIdeaPlugin(resourceRoot.findChild(fileName), module.project)
-        if (ideaPlugin != null) return ideaPlugin
-      }
+      val ideaPlugin = findIdeaPlugin(
+        candidate = module
+          .findSnapshotModuleEntity()
+          ?.findResourceFileByRelativePath(fileName, setOf(JavaResourceRootType.RESOURCE)),
+        project = module.project
+      )
+      if (ideaPlugin != null) return ideaPlugin
     }
     return null
   }
@@ -235,16 +234,6 @@ class ModuleDescriptorNameConverter : ResolvingConverter<IdeaPlugin>() {
       return DescriptorUtil.getIdeaPlugin(psiFile as XmlFile)
     }
     return null
-  }
-
-  private fun processModuleSourceRoots(module: Module, processor: Processor<VirtualFile>) {
-    val moduleRootManager = ModuleRootManager.getInstance(module)
-    for (root in moduleRootManager.getSourceRoots(JavaResourceRootType.RESOURCE)) {
-      if (!processor.process(root)) return
-    }
-    for (root in moduleRootManager.getSourceRoots(JavaSourceRootType.SOURCE)) {
-      if (!processor.process(root)) return
-    }
   }
 
   private fun processModuleLibraryRoots(module: Module, processor: Processor<VirtualFile>) {

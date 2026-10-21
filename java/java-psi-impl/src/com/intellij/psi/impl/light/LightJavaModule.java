@@ -29,6 +29,7 @@ import com.intellij.psi.PsiProvidesStatement;
 import com.intellij.psi.PsiRequiresStatement;
 import com.intellij.psi.PsiUsesStatement;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.impl.JavaOptionalServices;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -98,7 +99,7 @@ public final class LightJavaModule extends LightElement implements PsiJavaModule
     List<PsiPackageAccessibilityStatement> exports = new ArrayList<>();
 
     VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor<Void>() {
-      private final JavaDirectoryService service = JavaDirectoryService.getInstance();
+      private final JavaDirectoryService service = JavaOptionalServices.getJavaDirectoryService();
 
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {

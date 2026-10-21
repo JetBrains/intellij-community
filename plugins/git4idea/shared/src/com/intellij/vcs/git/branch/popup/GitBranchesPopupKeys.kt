@@ -2,8 +2,6 @@
 package com.intellij.vcs.git.branch.popup
 
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.vcs.git.branch.popup.GitBranchesPopupKeys.AFFECTED_REPOSITORIES
-import com.intellij.vcs.git.branch.popup.GitBranchesPopupKeys.SELECTED_REPOSITORY
 import com.intellij.vcs.git.repo.GitRepositoryModel
 import org.jetbrains.annotations.ApiStatus
 
@@ -22,4 +20,5 @@ object GitBranchesPopupKeys {
 
   val SELECTED_REPOSITORY: DataKey<GitRepositoryModel> = DataKey.create("Git.Widget.Selected.Repository")
   val AFFECTED_REPOSITORIES: DataKey<List<GitRepositoryModel>> = DataKey.create("Git.Frontend.Repositories")
+  val OPEN_CREATED_WORKTREE: DataKey<Boolean> = DataKey.create("Git.Branches.Popup.Open.Created.Worktree")
 }

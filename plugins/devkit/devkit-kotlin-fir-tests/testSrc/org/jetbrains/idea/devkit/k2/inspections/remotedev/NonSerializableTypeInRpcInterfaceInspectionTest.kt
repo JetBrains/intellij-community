@@ -536,56 +536,6 @@ Type reference chain: SerializableTypeWithPropertyOfGenericTypeParameterizedByNo
     )
   }
 
-  fun `test should not report DurableRef`() {
-    myFixture.addKotlinFile(
-      "fleet/kernel.DurableEntity.kt",
-      """
-      package fleet.kernel
-      import kotlinx.serialization.Serializable
-      
-      @Serializable
-      data class DurableRef<T>
-      """.trimIndent()
-    )
-    myFixture.addKotlinFile(
-      "RhizomeEntity.kt",
-      """
-      class RhizomeEntity // Rhizome classes are not analysed
-      """.trimIndent()
-    )
-    myFixture.addKotlinFile(
-      "SerializableType.kt",
-      """
-      import kotlinx.serialization.Serializable
-      import kotlinx.serialization.Transient
-      import kotlinx.serialization.KSerializer
-      import fleet.kernel.DurableRef
-      
-      @Serializable
-      class SerializableType(
-        val durableRef: DurableRef<RhizomeEntity>
-      ) {
-        companion object {
-          fun serializer(): KSerializer<SerializableType> { return null /*any; it doesn't matter here*/ }
-        }
-      }
-      """.trimIndent()
-    )
-    testHighlighting(
-      """
-      import fleet.rpc.RemoteApi
-      import fleet.rpc.Rpc
-      import kotlinx.serialization.Serializable
-      import kotlinx.serialization.KSerializer
-      
-      @Rpc
-      interface RpcInterface : RemoteApi<Unit> {
-        suspend fun test(param: SerializableType): SerializableType
-      }
-      """.trimIndent()
-    )
-  }
-
   fun `test abstract property of Any type should not be reported as it can be overridden by a serializable property`() {
     myFixture.addKotlinFile(
       "AbstractType.kt",

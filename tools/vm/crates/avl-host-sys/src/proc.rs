@@ -48,6 +48,7 @@ use group::{ProcessGroup, exit_code};
 
 mod answer;
 pub(crate) mod group;
+mod identity;
 mod probe;
 mod stream;
 // The tests drive `/bin/sh`.
@@ -56,6 +57,7 @@ mod stream;
 mod tests;
 
 pub use answer::{ProbeExit, ProbeOutput, probe_unanswered};
+pub use identity::ProcessIdentity;
 pub use probe::{ProcessTable, PsField};
 pub use stream::{GuestStream, PipedChild};
 
@@ -276,10 +278,14 @@ impl Runner {
     /// because it is meant to outlive the call and usually the controller. It goes through the runner all the same,
     /// because the scrub of the bridge credentials is the runner's rule, and a detached process is the longest-lived
     /// one on the host.
+    ///
+    /// The child runs in `directory`, and never in the directory of the controller. A child that outlives the call
+    /// holds its directory for its whole life, so a child that inherits the directory of its caller pins that
+    /// checkout or lease slot. A tool that asks whether a process works in that directory then answers yes.
     pub fn spawn_session(
         &self,
         argv: &[impl AsRef<OsStr>],
-        directory: Option<&Path>,
+        directory: &Path,
         stdout: File,
         stderr: File,
     ) -> std::io::Result<std::process::Child> {
@@ -289,7 +295,7 @@ impl Runner {
 
     /// [`Runner::spawn_session`], answering the pid only. Never reaped, because a child that died at once must stay
     /// visible to [`Runner::probe_process`] until the caller has identified it and read what it said.
-    pub fn spawn_detached(&self, argv: &[impl AsRef<OsStr>], directory: Option<&Path>, stdout: File, stderr: File) -> std::io::Result<u32> {
+    pub fn spawn_detached(&self, argv: &[impl AsRef<OsStr>], directory: &Path, stdout: File, stderr: File) -> std::io::Result<u32> {
         Ok(self.spawn_session(argv, directory, stdout, stderr)?.id())
     }
 

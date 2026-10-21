@@ -22,7 +22,7 @@
     <orderEntry type="module" module-name="intellij.json.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.json.structureView" scope="TEST" />
     <orderEntry type="module" module-name="intellij.json.backend.regexp" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.json.backend.spellchecker" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.json.spellchecker" scope="TEST" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.lucene.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.grazie.core" scope="TEST" />
@@ -52,7 +52,6 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
     <orderEntry type="module" module-name="intellij.json.networknt.wrapper" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
     <orderEntry type="module" module-name="intellij.grazie" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="RUNTIME" />

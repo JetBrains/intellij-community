@@ -74,6 +74,8 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyInternalExecApi;
+import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.debugger.PyEelSdkKt;
@@ -294,6 +296,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * Python run configurations with "Run with Python Console" flag. It is more a workaround, so please annotate the overridden methods with
    * {@link NotNull} where possible.
    */
+  @RequiresBackgroundThread
   public @Nullable ExecutionResult execute(@NotNull Executor executor,
                                            @NotNull PythonScriptTargetedCommandLineBuilder converter) throws ExecutionException {
     final ProcessHandler processHandler = startProcess(converter);
@@ -382,12 +385,13 @@ public abstract class PythonCommandLineState extends CommandLineState {
     HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest = getPythonTargetInterpreter();
 
     Sdk sdk = getSdk();
-    if (sdk != null) {
-      RunConfigurationTargetEnvironmentAdjuster adjuster =
-        RunConfigurationTargetEnvironmentAdjuster.Factory.findTargetEnvironmentRequestAdjuster(sdk);
-      if (adjuster != null) {
-        adjuster.adjust(helpersAwareTargetRequest.getTargetEnvironmentRequest(), myConfig);
-      }
+    if (sdk == null) {
+      throw new ExecutionException(PyBundle.message("runcfg.unittest.no_valid_sdk"));
+    }
+    RunConfigurationTargetEnvironmentAdjuster adjuster =
+      RunConfigurationTargetEnvironmentAdjuster.Factory.findTargetEnvironmentRequestAdjuster(sdk);
+    if (adjuster != null) {
+      adjuster.adjust(helpersAwareTargetRequest.getTargetEnvironmentRequest(), myConfig);
     }
 
     // The original Python script to be executed
@@ -414,7 +418,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
         .toList();
 
     PyRunToolParameters runToolParameters = null;
-    if (sdk != null && getEnableRunTool()) {
+    if (getEnableRunTool()) {
       PyRunToolProvider runToolProvider = PyRunToolProvider.forSdk(sdk);
       if (runToolProvider != null && useRunTool(myConfig, sdk)) {
         // Resolved here rather than in the tool: only the configuration knows whether it runs a bare script.
@@ -834,8 +838,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
     Sdk sdk = runParams.getSdk();
     if (sdk == null) return;
 
-    PythonInterpreter pythonInterpreter = PythonInterpreterKt.pythonInterpreter(sdk, false);
-    boolean shouldActivate = (Registry.is("python.activate.virtualenv.on.run") && pythonInterpreter.isActivatable());
+    // A broken SDK names no interpreter, so there is nothing to activate.
+    PythonInterpreter pythonInterpreter = PythonInterpreterKt.pythonInterpreterResult(sdk, false).getSuccessOrNull();
+    boolean shouldActivate = Registry.is("python.activate.virtualenv.on.run") && pythonInterpreter != null &&
+                             PythonInterpreterKt.isDetectedActivatable(pythonInterpreter);
     if (!shouldActivate) return;
 
     // A failed activation read is already logged by ActivatableEnvironmentService; fall back to no extra vars here.
@@ -938,6 +944,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
   }
 
+  @PyInternalExecApi
   @ApiStatus.Internal
   public static void buildPythonPath(@NotNull Project project,
                                      @Nullable Module module,
@@ -1149,7 +1156,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     if (config.isUseModuleSdk() || StringUtil.isEmpty(sdkHome)) {
       Module module = getModule(project, config);
 
-      Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+      Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
 
       if (sdk != null) {
         sdkHome = sdk.getHomePath();

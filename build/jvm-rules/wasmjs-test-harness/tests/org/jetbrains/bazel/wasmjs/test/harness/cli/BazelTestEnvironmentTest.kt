@@ -2,6 +2,7 @@
 package org.jetbrains.bazel.wasmjs.test.harness.cli
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -59,11 +60,13 @@ class BazelTestEnvironmentTest {
   }
 
   @Test
-  fun `fail fast is an unsupported feature`() {
+  fun `fail fast is read from TESTBRIDGE_TEST_RUNNER_FAIL_FAST`() {
     val failFast = BazelTestEnvironment.from(mapOf("TESTBRIDGE_TEST_RUNNER_FAIL_FAST" to "1"))
-    assertTrue(failFast.unsupportedFeatures.single().contains("fail_fast"))
+    assertTrue(failFast.failFast)
+    assertEquals(emptyList<String>(), failFast.unsupportedFeatures)
 
-    assertEquals(emptyList<String>(), BazelTestEnvironment.from(mapOf("TESTBRIDGE_TEST_RUNNER_FAIL_FAST" to "0")).unsupportedFeatures)
+    assertFalse(BazelTestEnvironment.from(mapOf("TESTBRIDGE_TEST_RUNNER_FAIL_FAST" to "0")).failFast)
+    assertFalse(BazelTestEnvironment.from(emptyMap()).failFast)
   }
 
   @Test

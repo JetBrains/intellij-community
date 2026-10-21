@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginXmlPathResolver
 import com.intellij.ide.plugins.PluginsSourceContext
 import com.intellij.ide.plugins.ProductLoadingStrategy
 import com.intellij.ide.plugins.deprecatedLoadCorePluginForModuleBasedLoader
+import com.intellij.ide.plugins.loadBundledPluginDescriptorsForPathBasedLoader
 import com.intellij.ide.plugins.loadDescriptorFromDir
 import com.intellij.ide.plugins.loadDescriptorFromFileOrDir
 import com.intellij.ide.plugins.loadDescriptorFromJar
@@ -109,7 +110,13 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
     }
     val custom = loadCustomPluginDescriptors(scope, customPluginDir, loadingContext, zipPool)
     val effectiveBundledPluginsDir = bundledPluginDir ?: PathManager.getBundledPluginsDir()
-    val bundled = loadBundledPluginsFromPluginHeaders(scope, effectiveBundledPluginsDir, loadingContext, zipPool)
+    val bundled = if (java.lang.Boolean.getBoolean(LOAD_ALL_BUNDLED_PLUGINS_PROPERTY)) {
+      // IJPL-258583: every plugin of the installation, as the path-based loader of the monolithic IDE loads them
+      scope.loadBundledPluginDescriptorsForPathBasedLoader(loadingContext = loadingContext, zipPool = zipPool, bundledPluginDir = effectiveBundledPluginsDir)
+    }
+    else {
+      loadBundledPluginsFromPluginHeaders(scope, effectiveBundledPluginsDir, loadingContext, zipPool)
+    }
     return scope.async {
       listOfNotNull(
         corePlugin.await()?.let { DiscoveredPluginsList(listOf(it), PluginsSourceContext.Product) },
@@ -303,3 +310,5 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
 
 private const val PLATFORM_CORE_PLUGIN_DESCRIPTOR_MODULE_PROPERTY = "intellij.platform.core.plugin.descriptor.module"
 private const val PLATFORM_ROOT_MODULE_PROPERTY = "intellij.platform.root.module"
+// todo temp property for gradual migration to PathBasedProductLoadingStrategy
+private const val LOAD_ALL_BUNDLED_PLUGINS_PROPERTY = "intellij.platform.load.all.bundled.plugins"

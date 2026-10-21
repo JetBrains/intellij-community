@@ -10,9 +10,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Processor
+import it.unimi.dsi.fastutil.longs.LongArrayList
 import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.ReferenceQueue
 import java.lang.ref.WeakReference
+import java.util.IdentityHashMap
 
 /**
  * Mutable snapshot-marker engine backed by immutable persistent [PMarkerRoot] values in external marker stores.
@@ -44,7 +46,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
   ) : WeakSnapshotMarkerReference(marker, queue) {
     val markerId: Long = marker.markerId
     val documentReference: WeakReference<DocumentImpl>? = document?.let(::WeakReference)
-    val fileRootReference: WeakReference<FileMarkerRoot>? = marker.fileRoot?.let(::WeakReference)
+    val fileRootReference: WeakReference<VirtualFileMarkerRoot>? = marker.fileRoot?.let(::WeakReference)
   }
 
   /**
@@ -73,7 +75,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     endOffset: Int,
     spec: MarkerSpec,
     retainStrong: Boolean = false,
-    markerFactory: (FileMarkerRoot?, Long) -> T,
+    markerFactory: (VirtualFileMarkerRoot?, Long) -> T,
   ): T {
     processQueue()
     val documentImpl = document as DocumentImpl
@@ -82,7 +84,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     require(endOffset >= startOffset) { "endOffset must not precede startOffset" }
     require(endOffset <= snapshot.text().length()) { "Marker range exceeds snapshot length" }
 
-    val fileRoot = FileMarkerRoot.getOrCreate(documentImpl)
+    val fileRoot = VirtualFileMarkerRoot.getOrCreate(documentImpl)
 
     val markerId = nextMarkerId()
     val marker = markerFactory(fileRoot, markerId)
@@ -116,7 +118,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     require(startOffset >= 0) { "startOffset must be non-negative" }
 
     val cachedDocument = FileDocumentManager.getInstance().getCachedDocument(file) as? DocumentImpl
-    val fileRoot = FileMarkerRoot.getOrCreate(file)
+    val fileRoot = VirtualFileMarkerRoot.getOrCreate(file)
     val markerId = nextMarkerId()
     val spec = MarkerSpec(
       isGreedyToLeft = false,
@@ -145,13 +147,29 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
    * @return `true` when at least one root changed
    */
   fun processQueue(): Boolean {
-    var purgedAny = false
+    var reference = markerQueue.poll() as? QueuedMarkerReference ?: return false
+    var firstRootStorage: MarkerRootUpdater? = null
+    val firstMarkerIds = LongArrayList()
+    var markerIdsByRoot: IdentityHashMap<MarkerRootUpdater, LongArrayList>? = null
     while (true) {
-      val reference = markerQueue.poll() as QueuedMarkerReference? ?: break
       val rootStorage = reference.fileRootReference?.get()
                         ?: reference.documentReference?.get()?.rangeMarkers?.rootStore()
-      val purged = rootStorage?.updateCurrentRoot { it.purge(reference.markerId) } ?: false
-      if (purged) purgedAny = true
+      if (rootStorage != null) {
+        if (firstRootStorage == null) firstRootStorage = rootStorage
+        if (rootStorage === firstRootStorage) {
+          firstMarkerIds.add(reference.markerId)
+        }
+        else {
+          // allocate map only when there are at least two distinct storages found
+          val batches = markerIdsByRoot ?: IdentityHashMap<MarkerRootUpdater, LongArrayList>().also { markerIdsByRoot = it }
+          batches.getOrPut(rootStorage) { LongArrayList() }.add(reference.markerId)
+        }
+      }
+      reference = markerQueue.poll() as? QueuedMarkerReference ?: break
+    }
+    var purgedAny = firstRootStorage?.updateCurrentRoot { it.purgeMany(firstMarkerIds) } ?: false
+    for ((rootStorage, markerIds) in markerIdsByRoot ?: return purgedAny) {
+      if (rootStorage.updateCurrentRoot { it.purgeMany(markerIds) }) purgedAny = true
     }
     return purgedAny
   }
@@ -170,6 +188,22 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     return storedMarker.updateCurrentRoot { it.remove(markerId) }
   }
 
+  override fun processAllRangeMarkers(
+    rootStore: SnapshotMarkerRootStore,
+    snapshot: DocumentSnapshot,
+    processor: Processor<in RangeMarkerEx>,
+  ): Boolean {
+    processQueue()
+    val root = rootStore.root(snapshot) ?: return true
+    val markerProcessor = MarkerProcessor(processor)
+    try {
+      return root.processAllRangeMarkers(markerProcessor)
+    }
+    finally {
+      markerProcessor.purgeCollected(rootStore, snapshot)
+    }
+  }
+
   override fun processRangeMarkersOverlappingWith(
     rootStore: SnapshotMarkerRootStore,
     snapshot: DocumentSnapshot,
@@ -180,15 +214,35 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
   ): Boolean {
     processQueue()
     val root = rootStore.root(snapshot) ?: return true
-    return root.processRangeMarkersOverlappingWith(startOffset, endOffset, tastePreference) { entry ->
+    val markerProcessor = MarkerProcessor(processor)
+    try {
+      return root.processRangeMarkersOverlappingWith(startOffset, endOffset, tastePreference, markerProcessor)
+    }
+    finally {
+      markerProcessor.purgeCollected(rootStore, snapshot)
+    }
+  }
+
+  private class MarkerProcessor(
+    private val processor: Processor<in RangeMarkerEx>,
+  ) : Processor<PMarkerRoot.MarkerEntry>, PMarkerRoot.MarkerDeltaProcessor {
+    private var collectedMarkerIds: LongArrayList? = null
+
+    override fun process(entry: PMarkerRoot.MarkerEntry): Boolean {
       val marker = entry.markerReference?.get()
       if (marker == null) {
-        rootStore.purge(snapshot, entry.markerId)
-        true
+        val markerIds = collectedMarkerIds ?: LongArrayList().also { collectedMarkerIds = it }
+        markerIds.add(entry.markerId)
+        return true
       }
-      else {
-        marker.disposed || processor.process(marker)
-      }
+      return marker.disposed || processor.process(marker)
+    }
+
+    override fun process(entry: PMarkerRoot.MarkerEntry, ancestorDelta: Int): Boolean = process(entry)
+
+    fun purgeCollected(rootStore: SnapshotMarkerRootStore, snapshot: DocumentSnapshot) {
+      val markerIds = collectedMarkerIds ?: return
+      rootStore.purgeMany(snapshot, markerIds)
     }
   }
 

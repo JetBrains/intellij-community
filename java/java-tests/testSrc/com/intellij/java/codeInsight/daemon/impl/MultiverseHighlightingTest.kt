@@ -4,8 +4,10 @@ package com.intellij.java.codeInsight.daemon.impl
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase.CanChangeDocumentDuringHighlighting
+import com.intellij.codeInsight.daemon.ProductionLightDaemonAnalyzerTestCase
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
+import com.intellij.codeInsight.daemon.impl.EditorTracker
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.CodeInsightContextManager
@@ -30,6 +32,7 @@ import com.intellij.multiverse.SdkContextImpl
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
@@ -182,6 +185,32 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
     val globalContext = createGlobalContextForTool(scope, project, listOf(toolWrapper))
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
     return globalContext.getPresentation(toolWrapper) as DefaultInspectionToolResultExporter
+  }
+
+  // CPP-24696: a file restart dirties every context, but the daemon re-runs only the context of the editor
+  fun testAnalysisFinishesAfterEditorSwitchesContext() {
+    configureByText(JavaFileType.INSTANCE, "class C {}")
+    PsiTestUtil.addModule(project, ModuleType.EMPTY, "module2", module.rootManager.contentRoots[0])
+    val contexts = getContexts()
+    assertSize(2, contexts)
+    val (first, second) = contexts
+    val fileStatusMap = myDaemonCodeAnalyzer.fileStatusMap
+
+    ProductionLightDaemonAnalyzerTestCase.runTestInProduction(false, myDaemonCodeAnalyzer) {
+      EditorTracker.getInstance(project).setActiveEditorsInTests(listOf(editor))
+      context = first
+      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
+      assertTrue("precondition: analysis under the first context finishes", myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile))
+
+      context = second
+      myDaemonCodeAnalyzer.restart(myFile, "test")
+      assertFalse("the restart dirties the context the editor left", fileStatusMap.allDirtyScopesAreNullFor(editor.document, first))
+      myTestDaemonCodeAnalyzer.waitForDaemonToFinish(myFile)
+      assertFalse("nothing re-analyzes the context the editor left", fileStatusMap.allDirtyScopesAreNullFor(editor.document, first))
+      assertTrue("analysis under the second context finishes", myDaemonCodeAnalyzer.isAllAnalysisFinished(myFile))
+      val textEditor = TextEditorProvider.getInstance().getTextEditor(editor)
+      assertTrue("the editor reports its highlighting as completed", DaemonCodeAnalyzerEx.isHighlightingCompleted(textEditor, project))
+    }
   }
 
   private fun getAllDocumentHighlights(): List<HighlightInfo> {

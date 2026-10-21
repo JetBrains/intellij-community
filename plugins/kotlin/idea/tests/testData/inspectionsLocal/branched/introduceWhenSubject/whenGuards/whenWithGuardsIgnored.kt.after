@@ -1,0 +1,11 @@
+// COMPILER_ARGUMENTS: -Xwhen-guards
+// HIGHLIGHT: INFORMATION
+// FIX: Introduce 'when' subject
+
+fun test(a: Any) {
+    when (a) {
+        is String if a.isNotEmpty() -> Unit
+        is Int -> Unit
+        else -> Unit
+    }
+}

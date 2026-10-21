@@ -54,6 +54,7 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
   override fun setupToolWindowPane(pane: JComponent) {
     left.topStripe.bottomAnchorDropAreaComponent = pane
     left.bottomStripe.bottomAnchorDropAreaComponent = pane
+    left.footerStripe.bottomAnchorDropAreaComponent = pane
     right.topStripe.bottomAnchorDropAreaComponent = pane
     right.bottomStripe.bottomAnchorDropAreaComponent = pane
     top?.topStripe?.bottomAnchorDropAreaComponent = pane
@@ -253,17 +254,28 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
     return listOfNotNull(left, right, top, bottom)
   }
 
-  override fun createStripeButton(toolWindow: ToolWindowImpl, info: WindowInfo, task: RegisterToolWindowTask?): StripeButtonManager {
-    val manager = createStripeButton(toolWindow)
+  override fun createStripeButton(
+    toolWindow: ToolWindowImpl,
+    info: WindowInfo,
+    task: RegisterToolWindowTask?,
+    isRefreshedAfterRegistration: Boolean,
+  ): StripeButtonManager {
+    val manager = createStripeButton(toolWindow, isRefreshedAfterRegistration)
 
-    findToolbar(anchor = toolWindow.anchor, isSplit = toolWindow.isSplitMode)
-      .getStripeFor(toolWindow.windowInfo.anchor)
-      .addButton(manager)
+    findStripe(toolWindow = toolWindow, anchor = toolWindow.windowInfo.anchor, isSplit = toolWindow.isSplitMode).addButton(manager)
     return manager
   }
 
-  protected fun createStripeButton(toolWindow: ToolWindowImpl): StripeButtonManager {
-    val squareStripeButton = SquareStripeButton(toolWindow)
+  /** A [ToolWindowImpl.isInLeftToolbarFooter] window has its button in the footer of the left toolbar while it stays on the left. */
+  private fun findStripe(toolWindow: ToolWindowImpl, anchor: ToolWindowAnchor, isSplit: Boolean): AbstractDroppableStripe {
+    if (toolWindow.isInLeftToolbarFooter && anchor == ToolWindowAnchor.LEFT) {
+      return left.footerStripe
+    }
+    return findToolbar(anchor, isSplit).getStripeFor(anchor)
+  }
+
+  protected fun createStripeButton(toolWindow: ToolWindowImpl, isRefreshedAfterRegistration: Boolean = false): StripeButtonManager {
+    val squareStripeButton = SquareStripeButton(toolWindow, syncsOnFirstUpdate = isRefreshedAfterRegistration)
     return object : StripeButtonManager {
       override val id: String = toolWindow.id
       override val toolWindow: ToolWindowImpl = toolWindow
@@ -284,7 +296,7 @@ internal open class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Bo
       }
 
       override fun remove(anchor: ToolWindowAnchor, split: Boolean) {
-        findToolbar(anchor, split).getStripeFor(anchor).removeButton(this)
+        findStripe(toolWindow = toolWindow, anchor = anchor, isSplit = split).removeButton(this)
       }
 
       override fun getComponent() = squareStripeButton

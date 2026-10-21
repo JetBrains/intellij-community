@@ -162,7 +162,7 @@ fn collect(options: &Options<PluginComponentSpec>, root: &trace::Span) -> anyhow
         }
         Mode::Files { files_file } => {
             let span = root.child("collect explicit files");
-            let result = collect::explicit_files(files_file);
+            let result = collect::explicit_files(files_file, &options.os);
             (record_collection(&span, "fileCount", result)?, None)
         }
         Mode::PluginComponent { spec, classpath } => {

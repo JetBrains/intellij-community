@@ -25,7 +25,9 @@ import org.jetbrains.intellij.build.PRESIGNED_NATIVE_LIBS
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.SignNativeFileMode
 import org.jetbrains.intellij.build.buildSpan
-import org.jetbrains.intellij.build.classPath.contentModuleJarCoreClasspathEntries
+import org.jetbrains.intellij.build.classPath.bundledPluginsWithIdeaClassloader
+import org.jetbrains.intellij.build.classPath.platformLibraryJarDestination
+import org.jetbrains.intellij.build.classPath.splitDistributionCoreClassPathJarNames
 import org.jetbrains.intellij.build.dev.DevPluginLayoutAssetSource
 import org.jetbrains.intellij.build.devDist.isNativeTreeAsset
 import org.jetbrains.intellij.build.impl.BazelTargetsInfo
@@ -39,11 +41,11 @@ import org.jetbrains.intellij.build.impl.createProductModeContentModuleFilter
 import org.jetbrains.intellij.build.impl.getBundledPluginModules
 import org.jetbrains.intellij.build.impl.getLibNameBySourceFile
 import org.jetbrains.intellij.build.impl.getPluginLayoutsByJpsModuleNames
-import org.jetbrains.intellij.build.impl.nameToJarFileName
 import org.jetbrains.intellij.build.impl.nativeBinFiles
 import org.jetbrains.intellij.build.impl.productInfo.ProductLaunchModel
 import org.jetbrains.intellij.build.impl.productInfo.computeDevProductLaunchModel
 import org.jetbrains.intellij.build.impl.productInfo.encodeProductLaunchModel
+import org.jetbrains.intellij.build.impl.productInfo.frontendVmOptionsFileName
 import org.jetbrains.intellij.build.impl.productInfo.vmOptionsFileName
 import org.jetbrains.intellij.build.isTestModule
 import org.jetbrains.intellij.build.mapConcurrent
@@ -759,6 +761,10 @@ private data class ProductFragmentPlan(
   @JvmField val launchModelRelativePath: String,
   /** The label of the base `idea.properties` of [launchModel], see [DevDistHalf.baseIdeaProperties]. */
   @JvmField val ideaProperties: String,
+  /** `WindowsDistributionCustomizer.includeGuiLauncher`, or false for a product without a Windows customizer. */
+  @JvmField val windowsGuiLauncher: Boolean,
+  /** `WindowsDistributionCustomizer.includeConsoleLauncher`, or false for a product without a Windows customizer. */
+  @JvmField val windowsConsoleLauncher: Boolean,
   /** The application info sources that the `platform_resources` component reads beside [launchModel]. */
   @JvmField val applicationInfoSources: ApplicationInfoSources,
   /** The `lib/` jar order of the platform. `null` for a product without the [runtimeModuleRepository] component. */
@@ -1558,6 +1564,15 @@ private fun collectFragmentPlan(
   layout.getIncludedModuleLibraries().firstOrNull()?.let {
     error("${product.name}: the platform layout places the module library '${it.libraryName}' of '${it.moduleName}' outside its module jar")
   }
+  // A classic-loader launch also puts the jars of a `use-idea-classloader` plugin on its boot class path, see
+  // `generateCoreClasspathFromPlugins`. The product files action renders that list from the core classpath of `lib/`.
+  if (properties.rootModuleForModularLoader == null) {
+    val pluginsWithIdeaClassloader = bundledPluginsWithIdeaClassloader(properties, outputProvider)
+    check(pluginsWithIdeaClassloader.isEmpty()) {
+      "${product.name}: the bundled plugins $pluginsWithIdeaClassloader set use-idea-classloader. Production puts their jars on " +
+      "the boot class path of the launch, but the dev distribution renders that list from the jars of lib/ alone."
+    }
+  }
   // The entries a layout patcher of the product writes, keyed by the patched module, in the order the patchers write
   // them. See `DevPlatformPatchOwner`.
   val entryPatches = LinkedHashMap<String, LinkedHashMap<String, String>>()
@@ -1781,16 +1796,11 @@ private fun collectFragmentPlan(
         "${product.name}: a platform jar has no producer: " +
         layout.includedModules.map { it.relativeOutputFile }.distinct().filter { it !in handedOver }.joinToString()
       }
-      // The rule of `generateClassPathByLayoutReport` over the jars the fragment does not pack. A split fragment
-      // starts with `isBootClassPathCorrect = false`, so `nio-fs.jar` stays on the core classpath. The payload rule
-      // derives the core classpath again, and `moduleSystemLoadedLabels` proves that both answers are equal.
-      val libDir = Path.of("lib")
-      val coreClassPath = contentModuleJarCoreClasspathEntries(
-        libDir = libDir,
-        includedModules = layout.includedModules,
-        externallyPackedJars = handedOver,
-        skipNioFs = false,
-      ).mapTo(HashSet()) { libDir.relativize(it).invariantSeparatorsPathString }
+      // The rule of `generateClassPathByLayoutReport` over the jars the fragment does not pack. The check above makes
+      // `handedOver` the set of every module jar of the layout, which the function reads. The list keeps `nio-fs.jar`,
+      // as the payload does. The payload rule derives the core classpath again, and `moduleSystemLoadedLabels` proves
+      // that both answers are equal. The product files action renders the boot class path from the payload list.
+      val coreClassPath = splitDistributionCoreClassPathJarNames(layout).toHashSet()
       // The payload packs every handed-over jar, so a jar that the layout does not place is a defect of the handover.
       val notPlaced = packed.filterNot { it in placedLabels }
       check(notPlaced.isEmpty()) {
@@ -1851,6 +1861,7 @@ private fun collectFragmentPlan(
     )
   }
   val launchModel = computeDevProductLaunchModel(properties, outputProvider, PINNED_BUILD_DATE_IN_SECONDS)
+  val windowsCustomizer = properties.createWindowsCustomizer(index.projectRoot)
   return ProductFragmentPlan(
     platformPrefix = product.name,
     productMode = properties.productMode.id,
@@ -1863,6 +1874,8 @@ private fun collectFragmentPlan(
     launchModel = launchModel,
     launchModelRelativePath = launchModelRelativePath(half.caseSafeProductName(product.name)),
     ideaProperties = index.planLabel(half.baseIdeaProperties(product.name, languageServerBase = launchModel.ideaProperties.languageServerBase)),
+    windowsGuiLauncher = windowsCustomizer?.includeGuiLauncher == true,
+    windowsConsoleLauncher = windowsCustomizer?.includeConsoleLauncher == true,
     applicationInfoSources = applicationInfoSources(
       index = index,
       project = jpsProject,
@@ -2119,9 +2132,8 @@ fun mergedPresignedNativeLibs(
  * The jars of [layout] that hold libraries and no module, keyed by destination: a project library that the layout
  * places in a jar of its own, such as `product-backend.jar`.
  *
- * The destination is the one `JarPackager` writes, see `computeProjectLibrariesSources`: the stated jar, or the library
- * name as `nameToJarFileName` spells it. A library whose destination holds a module is not here, because the residual
- * jar of that module merges it, see [layoutPlacedLibraryLabels].
+ * The destination is the one `JarPackager` writes, see [platformLibraryJarDestination]. A library whose destination
+ * holds a module is not here, because the residual jar of that module merges it, see [layoutPlacedLibraryLabels].
  *
  * `JarPackager` keeps the native files of such a library inside the jar, presigned or not, and so does the rule for a
  * jar with no module. The generator fails on a library that Bazel does not name, and on a library that
@@ -2142,12 +2154,7 @@ private fun collectLibraryOnlyJars(
   // `JarPackager` packs the project libraries sorted by name.
   for (data in layout.getIncludedProjectLibraries().sortedBy { it.libraryName }) {
     val outPath = data.outPath
-    val jarName = nameToJarFileName(data.libraryName)
-    val destination = when {
-      outPath == null -> jarName
-      outPath.endsWith(".jar") -> outPath
-      else -> "$outPath/$jarName"
-    }
+    val destination = platformLibraryJarDestination(data)
     if (destination in moduleDestinations) {
       continue
     }
@@ -3421,6 +3428,9 @@ private fun referenceInputModel(targets: BazelTargetsInfo.TargetsFile, outputPro
 }
 
 
+/** A Starlark boolean literal. */
+private fun starlarkBoolean(value: Boolean): String = if (value) "True" else "False"
+
 /** One field value of a product plan as [planFieldBodies] renders it at the top level, keyed with its field. */
 private data class PlanFieldBody(@JvmField val field: String, @JvmField val body: String)
 
@@ -3447,15 +3457,39 @@ private fun planFieldBodies(product: ProductFragmentPlan): List<PlanFieldBody> {
   }
   // The facts of the launch model that Bazel reads at analysis time. `DEV_DIST_LAUNCH_MODELS` names the model itself.
   val model = product.launchModel
+  val osTokens = listOf("darwin" to OsFamily.MACOS, "linux" to OsFamily.LINUX, "windows" to OsFamily.WINDOWS)
   result.add(PlanFieldBody("launch", buildString {
     append("struct(\n")
     append("    idea_properties = \"").append(product.ideaProperties).append("\",\n")
     append("    vmoptions = {\n")
-    for ((token, os) in listOf("darwin" to OsFamily.MACOS, "linux" to OsFamily.LINUX, "windows" to OsFamily.WINDOWS)) {
+    for ((token, os) in osTokens) {
       append("        \"").append(token).append("\": \"").append(model.vmOptionsFileName(os)).append("\",\n")
     }
     append("    },\n")
+    // The vmoptions file of the embedded frontend, on one line. The `thinClient` command of the model names it.
+    if (model.frontendVmOptions != null) {
+      append("    frontend_vmoptions = {")
+      osTokens.joinTo(this, separator = ", ") { (token, os) -> "\"$token\": \"${model.frontendVmOptionsFileName(os)}\"" }
+      append("},\n")
+    }
     append("    main_class = \"").append(model.launch.mainClass).append("\",\n")
+    // The facts the native launcher files derive from, see `_launcher_files` in `intellij_dev_dist_declarations.bzl`.
+    append("    launcher = struct(base_file_name = \"").append(model.baseFileName)
+      .append("\", language_server = ").append(starlarkBoolean(model.languageServer))
+      .append(", windows_gui = ").append(starlarkBoolean(product.windowsGuiLauncher))
+      .append(", windows_console = ").append(starlarkBoolean(product.windowsConsoleLauncher)).append("),\n")
+    // The base of the environment variables that the native launcher reads, such as `IDEA_VM_OPTIONS`.
+    // A custom command can state its own base, so a launch target that starts the command sets the variable of it.
+    append("    env_var_base_name = \"").append(model.envVarBaseName).append("\",\n")
+    val commandEnvVarBaseNames = model.customCommands.flatMap { command ->
+      val base = command.envVarBaseName ?: return@flatMap emptyList()
+      command.commands.map { it to base }
+    }
+    if (commandEnvVarBaseNames.isNotEmpty()) {
+      append("    command_env_var_base_names = {")
+      commandEnvVarBaseNames.joinTo(this, separator = ", ") { (command, base) -> "\"$command\": \"$base\"" }
+      append("},\n")
+    }
     append(")")
   }))
   return result

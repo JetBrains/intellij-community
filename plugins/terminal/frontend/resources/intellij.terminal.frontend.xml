@@ -2,7 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.frontend"/>
-    <module name="fleet.rhizomedb"/>
+    <module name="fleet.rpc"/>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.guava"/>
@@ -25,8 +25,6 @@
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.eel.impl"/>
     <module name="intellij.platform.eel.provider"/>
-    <module name="intellij.platform.execution"/>
-    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.feedback"/>
     <module name="intellij.platform.ide.codeinsight.inline"/>
     <module name="intellij.platform.ide.core"/>
@@ -38,7 +36,6 @@
     <module name="intellij.platform.ide.ui"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.inline.completion"/>
-    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.project"/>
@@ -46,6 +43,7 @@
     <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.rpc.topics"/>
     <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.terminal"/>
     <module name="intellij.platform.util.annotations"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>
@@ -162,6 +160,7 @@
     <action id="Terminal.CreateRectangularSelectionOnMouseDrag"
             class="com.intellij.terminal.frontend.action.TerminalCreateRectangularSelectionOnMouseDragAction"
             use-shortcut-of="EditorCreateRectangularSelectionOnMouseDrag">
+      <override-text place="GoToAction"/>
       <mouse-shortcut keystroke="shift alt button1" keymap="$default"/>
     </action>
     <action id="Terminal.Find" class="com.intellij.terminal.frontend.action.TerminalFindAction" use-shortcut-of="Find">

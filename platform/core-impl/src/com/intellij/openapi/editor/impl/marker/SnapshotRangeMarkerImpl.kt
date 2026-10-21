@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -17,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference
 @ApiStatus.Internal
 open class SnapshotRangeMarkerImpl private constructor(
   private val documentOrFile: Any,
-  internal val fileRoot: FileMarkerRoot?,
+  internal val fileRoot: VirtualFileMarkerRoot?,
   private val rootStorage: MarkerRootUpdater,
   internal val markerId: Long,
   initialSpec: MarkerSpec,
@@ -28,7 +29,7 @@ open class SnapshotRangeMarkerImpl private constructor(
    */
   internal constructor(
     document: DocumentImpl,
-    fileRoot: FileMarkerRoot?,
+    fileRoot: VirtualFileMarkerRoot?,
     markerId: Long,
     initialSpec: MarkerSpec,
     initialRange: TextRange,
@@ -36,7 +37,7 @@ open class SnapshotRangeMarkerImpl private constructor(
 
   /** Creates a marker in [fileRoot] before the document is available. */
   internal constructor(
-    fileRoot: FileMarkerRoot,
+    fileRoot: VirtualFileMarkerRoot,
     markerId: Long,
     initialSpec: MarkerSpec,
     initialRange: TextRange,
@@ -51,14 +52,16 @@ open class SnapshotRangeMarkerImpl private constructor(
     markerId: Long,
     initialSpec: MarkerSpec,
     initialRange: TextRange,
-  ) : this(document, null, rootStore, markerId, initialSpec, initialRange)
+  ) : this(document, null, rootStore.currentRootUpdater, markerId, initialSpec, initialRange)
 
   @Volatile
-  internal var disposed: Boolean = false
-    private set
+  private var disposalState: Int = ACTIVE
+
+  internal val disposed: Boolean
+    get() = disposalState == DISPOSED
 
   internal fun markDisposed() {
-    disposed = true
+    disposalState = DISPOSED
   }
 
   @Volatile
@@ -87,8 +90,10 @@ open class SnapshotRangeMarkerImpl private constructor(
   override fun getTextRange(): TextRange = currentResolution()
 
   override fun isValid(): Boolean {
-    return !disposed && currentResolution().isValid && (documentOrFile is Document || (documentOrFile as VirtualFile).isValid)
+    return !disposed && isValidResolution(currentResolution()) && (documentOrFile is Document || (documentOrFile as VirtualFile).isValid)
   }
+
+  protected open fun isValidResolution(resolution: PMarkerResolution): Boolean = resolution.isValid
 
   override fun isGreedyToLeft(): Boolean = spec.isGreedyToLeft
 
@@ -108,12 +113,18 @@ open class SnapshotRangeMarkerImpl private constructor(
 
   fun isStickingToRight(): Boolean = spec.isStickingToRight
 
-  @Synchronized
   override fun dispose() {
-    if (disposed) return
-    beforeDispose()
-    SnapshotMarkerEngineImpl.removeRangeMarker(this)
-    afterDispose()
+    if (DISPOSAL_STATE_UPDATER.compareAndSet(this, ACTIVE, DISPOSING)) {
+      try {
+        beforeDispose()
+        markDisposed()
+        SnapshotMarkerEngineImpl.removeRangeMarker(this)
+        afterDispose()
+      }
+      finally {
+        DISPOSAL_STATE_UPDATER.compareAndSet(this, DISPOSING, ACTIVE)
+      }
+    }
   }
 
   protected open fun beforeDispose() {
@@ -146,6 +157,10 @@ open class SnapshotRangeMarkerImpl private constructor(
     cachedResolution = CachedResolution(cacheIdentity(root), resolution)
   }
 
+  /**
+   * Resolves this marker in the current root. Reuses cached offsets for the same identity or advances them across one direct edit.
+   * Traverses the tree when neither shortcut applies.
+   */
   private fun currentResolution(): PMarkerResolution {
     val root = currentRootReference().get()
     val cacheIdentity = cacheIdentity(root)
@@ -153,7 +168,13 @@ open class SnapshotRangeMarkerImpl private constructor(
     if (cached != null && cached.cacheIdentity === cacheIdentity) {
       return cached.resolution
     }
-    val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(this, root)
+    val advanced = if (cached != null && !disposed) {
+      (root as? PMarkerRootImpl)?.advanceResolution(cached.cacheIdentity, cached.resolution)
+    }
+    else {
+      null
+    }
+    val resolution = advanced ?: SnapshotMarkerEngineImpl.resolveRangeMarker(this, root)
     cachedResolution = CachedResolution(cacheIdentity, resolution)
     return resolution
   }
@@ -169,4 +190,12 @@ open class SnapshotRangeMarkerImpl private constructor(
   override fun toString(): String = "SnapshotRangeMarker(id=$markerId" +
                                     (if (disposed) ", disposed" else "") +
                                     ")"
+
+  private companion object {
+    private const val ACTIVE: Int = 0
+    private const val DISPOSING: Int = 1
+    private const val DISPOSED: Int = 2
+    private val DISPOSAL_STATE_UPDATER: AtomicIntegerFieldUpdater<SnapshotRangeMarkerImpl> =
+      AtomicIntegerFieldUpdater.newUpdater(SnapshotRangeMarkerImpl::class.java, "disposalState")
+  }
 }

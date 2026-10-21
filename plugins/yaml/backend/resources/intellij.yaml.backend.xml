@@ -30,7 +30,6 @@
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.util.ui"/>
-    <module name="intellij.spellchecker"/>
   </dependencies>
   <!-- endregion -->
   
@@ -161,8 +160,8 @@
     <jsonSchemaEnabler implementation="org.jetbrains.yaml.schema.YamlJsonEnabler"/>
   </extensions>
 
-  <extensions defaultExtensionNs="com.intellij.spellchecker">
-    <support language="yaml" id="yaml" implementationClass="org.jetbrains.yaml.YAMLSpellcheckerStrategy"/>
+  <extensions defaultExtensionNs="com.intellij.yaml">
+    <schemaNameMatcher implementation="org.jetbrains.yaml.YAMLSchemaNameMatcherImpl"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

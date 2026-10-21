@@ -28,7 +28,7 @@ internal open class MoveMemberToCompanionBlockIntention(textGetter: Supplier<@In
         if (element is KtClassOrObject) return null
         if (element.isFromCompanionBlock) return null
         if (!isApplicableForMoveMember(element)) return null
-        if (element.isExtensionDeclaration()) return null // member extension
+        if (element.isExtensionDeclaration()) return null
         val containingClassOrObject = element.containingClassOrObject
         if (containingClassOrObject is KtObjectDeclaration && !containingClassOrObject.isCompanion()) return null
         return findTextRangeForMoveMemberIntention(element)

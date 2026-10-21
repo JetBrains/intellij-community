@@ -95,6 +95,7 @@
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.XmlMover" id="xml" order="before line"/>
     <moveLeftRightHandler language="XML" implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.XmlMoveLeftRightHandler"/>
     <preFormatProcessor implementation="com.intellij.lang.html.HtmlQuotesFormatPreprocessor"/>
+    <postFormatProcessor implementation="com.intellij.lang.html.HtmlTrailingBlankLinesPostFormatProcessor"/>
 
     <liveTemplateContext contextId="HTML_TEXT" baseContextId="HTML" implementation="com.intellij.codeInsight.template.HtmlTextContextType"/>
     <liveTemplateContext contextId="HTML" implementation="com.intellij.codeInsight.template.HtmlContextType"/>

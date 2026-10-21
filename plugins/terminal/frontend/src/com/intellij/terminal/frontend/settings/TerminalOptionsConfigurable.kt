@@ -8,6 +8,7 @@ import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBro
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.setToolTipText
+import com.intellij.ide.ui.search.nonSearchableGroupTitle
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.KeyboardShortcut
@@ -261,7 +262,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
 
       }.visibleIf(newUiPredicate())
 
-      group(message("settings.terminal.project.settings")) {
+      group(nonSearchableGroupTitle(message("settings.terminal.project.settings"))) {
         workingDirectoryField(project)
 
         row(message("settings.environment.variables")) {
@@ -275,7 +276,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         }
       }
 
-      group(message("settings.terminal.font.settings")) {
+      group(nonSearchableGroupTitle(message("settings.terminal.font.settings"))) {
         var fontSettings = TerminalFontSettingsService.getInstance().getSettings()
         row(message("settings.font.name")) {
           cell(fontComboBox())
@@ -346,7 +347,7 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         }
       }
 
-      group(message("settings.terminal.application.settings")) {
+      group(nonSearchableGroupTitle(message("settings.terminal.application.settings"))) {
         row(message("settings.shell.path")) {
           cell(shellPathField)
             .setupShellField(project)

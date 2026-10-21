@@ -15,28 +15,32 @@
  */
 package com.intellij.java.ide.fileStructure;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 /**
  * @author Konstantin Bulenkov
  */
+@TestApplication
 public class JavaFileStructureHierarchyTest extends JavaFileStructureTestCase {
   @Override
   protected String getTestDataFolderName() {
     return "hierarchy";
   }
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
     myFixture.copyDirectoryToProject("", "");
   }
 
   @Override
-  protected void configureDefault() {
-    super.configureDefault();
+  protected void configurePopup() {
+    super.configurePopup();
     setShowParents(true);
   }
 
-  public void testSimple() {checkTree();}
-  public void testAnonymousAsConstantInInterface() {checkTree("getA");}
-  public void testAnonymousHashCode() {checkTree("hash");}
+  @Test public void testSimple() {checkTree();}
+  @Test public void testAnonymousAsConstantInInterface() {checkTree("getA");}
+  @Test public void testAnonymousHashCode() {checkTree("hash");}
 }

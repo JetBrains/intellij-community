@@ -2,6 +2,7 @@
 @file:JvmName("LocalFileSystemEelUtil")
 package com.intellij.openapi.vfs.impl.local
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileTooBigException
@@ -9,6 +10,8 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.limits.FileSizeLimit
+import com.intellij.openapi.vfs.newvfs.FileSystemUnavailableException
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.fs.EelFileInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi
@@ -84,8 +87,8 @@ fun readAttributesUsingEel(nioPath: Path): FileAttributes {
     return eelPath.fsBlocking {
       // stale persisted descriptor (machine deregistered) - surface as not-found (IJPL-245202)
       val machine = eelPath.descriptor.getResolvedEelMachine() ?: throw NoSuchFileException(nioPath.toString())
-      val eelFsApi = machine.toEelApi(eelPath.descriptor).fs
-      val fileInfo = eelFsApi.stat(eelPath).eelIt().getOrThrowFileSystemException()
+      val eelFsApi = connectOrThrowUnavailable { machine.toEelApi(eelPath.descriptor) }.fs
+      val fileInfo = throwUnavailableOnEelFailure { eelFsApi.stat(eelPath).eelIt() }.getOrThrowFileSystemException()
       toVfs(eelPath, fileInfo, eelFsApi)
     }
   }
@@ -123,7 +126,11 @@ fun listWithAttributesUsingEel(eelPath: EelPath, filter: Set<String>?): Map<Stri
       val childAttributes = toVfs(file, attributes, eelFsApi)
       childrenWithAttributes[file.fileName] = amendAttributes(childAttributes) { file.asNioPath() }
     }
+    catch (e: FileSystemUnavailableException) {
+      throw e
+    }
     catch (e: Exception) {
+      rethrowControlFlowException(e)
       @Suppress("removal", "DEPRECATION")
       LocalFileSystemBase.LOG.debug(e)
     }
@@ -237,10 +244,12 @@ internal fun fetchCaseSensitivityUsingEel(eelPath: EelPath): FileAttributes.Case
 
 private suspend fun toVfs(eelPath: EelPath, eelFileInfo: EelFileInfo, eelFsApi: EelFileSystemApi): FileAttributes {
   val resolvedFileInfo = if (eelFileInfo.type is EelPosixFileInfo.Type.Symlink) {
-    eelFsApi
-      .stat(eelPath)
-      .symlinkPolicy(EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)
-      .eelIt().getOrNull() ?: return FileAttributes.BROKEN_SYMLINK
+    throwUnavailableOnEelFailure {
+      eelFsApi
+        .stat(eelPath)
+        .symlinkPolicy(EelFileSystemApi.SymlinkPolicy.RESOLVE_AND_FOLLOW)
+        .eelIt()
+    }.getOrNull() ?: return FileAttributes.BROKEN_SYMLINK
   }
   else {
     eelFileInfo
@@ -282,10 +291,10 @@ private fun visitDirectory(
     return  //nothing to read
   }
   directory.fsBlocking {
-    val eelFsApi = directory.descriptor.toEelApi().fs
-    val directoryList =
+    val eelFsApi = connectOrThrowUnavailable { directory.descriptor.toEelApi() }.fs
+    val directoryList = throwUnavailableOnEelFailure {
       eelFsApi.listDirectoryWithAttrs(directory).symlinkPolicy(EelFileSystemApi.SymlinkPolicy.DO_NOT_RESOLVE).eelIt()
-        .getOrThrowFileSystemException()
+    }.getOrThrowFileSystemException()
     for ((childName, childStat) in directoryList) {
       val childIjentPath = directory.getChild(childName)
       if (filter != null && !filter.contains(childIjentPath.fileName)) {
@@ -297,6 +306,24 @@ private fun visitDirectory(
     }
   }
 }
+
+/** A failed connect says nothing about the file, so any failure that is not a control-flow exception means "unavailable". */
+private inline fun <T> connectOrThrowUnavailable(connect: () -> T): T =
+  try {
+    connect()
+  }
+  catch (e: Exception) {
+    rethrowControlFlowException(e)
+    throw FileSystemUnavailableException(e)
+  }
+
+private inline fun <T> throwUnavailableOnEelFailure(operation: () -> T): T =
+  try {
+    operation()
+  }
+  catch (e: EelUnavailableException) {
+    throw FileSystemUnavailableException(e)
+  }
 
 private fun EelPosixFileInfo.isWritable(eelFsApi: EelFileSystemPosixApi): Boolean {
   return EelPathUtils.checkAccess(eelFsApi.user, this, AccessMode.WRITE) == null

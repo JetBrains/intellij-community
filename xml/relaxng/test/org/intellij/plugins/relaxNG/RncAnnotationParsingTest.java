@@ -16,32 +16,42 @@
 
 package org.intellij.plugins.relaxNG;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
+
+@TestApplication
 public class RncAnnotationParsingTest extends AbstractParsingTest {
   public RncAnnotationParsingTest() {
     super("annotations");
   }
 
+  @Test
   public void testSimple1() {
-   doTest(true);
+   parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testSimple2() {
-   doTest(true);
+   parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testNested() {
-   doTest(true);
+   parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testGrammarLevel() {
-   doTest(true);
+   parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testFollowing() {
-   doTest(true);
+   parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testFollowingIncomplete() {
-   doTest(true);
+   parsingFixture.get().doTest(true);
   }
 }

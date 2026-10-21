@@ -42,7 +42,7 @@ open class LspCompletionSupport : LspCompletionCustomizer() {
    * in the server's `CompletionOptions.triggerCharacters`.
    */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   open fun isTriggerCharacterRespected(charTyped: Char): Boolean = true
 
   /**

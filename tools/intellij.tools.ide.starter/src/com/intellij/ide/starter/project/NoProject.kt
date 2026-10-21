@@ -15,4 +15,6 @@ object NoProject : ProjectInfoSpec {
   override fun downloadAndUnpackProject(): Path? = null
 
   override val configureProjectBeforeUse: (IDETestContext) -> Unit = {}
+
+  override fun getName(): String = "no-project"
 }

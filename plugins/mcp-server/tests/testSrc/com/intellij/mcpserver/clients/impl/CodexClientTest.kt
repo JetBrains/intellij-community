@@ -1,5 +1,6 @@
 package com.intellij.mcpserver.clients.impl
 
+import com.intellij.mcpserver.McpLaunchOrigin
 import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.clients.McpClient.Companion.TransportType
 import com.intellij.mcpserver.clients.McpClientInfo
@@ -341,6 +342,24 @@ class CodexClientTest {
     assertTrue(result.contains("[random.section]"))
     assertTrue(result.contains("value = 42"))
     assertTrue(result.contains("[mcp_servers.codextest]"))
+  }
+
+  @Test
+  fun `configure reads the launch origin header from the environment`() {
+    val configPath = tempDir.resolve("config.toml")
+    configPath.writeText("")
+
+    McpClient.overrideProductSpecificServerKeyForTests("codextest")
+    McpClient.overrideWriteLegacyForTests(false)
+
+    val client = TestCodexClient(McpClientInfo.McpClientScope.McpClientGlobalScope, configPath, "http://localhost:5555/stream")
+    runBlocking(Dispatchers.Default) {
+      client.configure(client.getStreamableHttpConfig())
+    }
+
+    val result = configPath.readText()
+    assertTrue(result.contains("[mcp_servers.codextest.env_http_headers]"))
+    assertTrue(result.contains("""${McpLaunchOrigin.NAME} = "${McpLaunchOrigin.NAME}""""))
   }
 
   @Test

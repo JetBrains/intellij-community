@@ -72,7 +72,7 @@ internal class DocumentPatchImpl(
     }
     ops.add(DocumentOp.modStampOp(newModStamp, false))
     if (clearLineFlags) {
-      ops.add(DocumentOp.unmodifiedLinesOp(0, Int.MAX_VALUE, ArrayUtil.EMPTY_INT_ARRAY))
+      ops.add(DocumentOp.cleanLinesOp(0, Int.MAX_VALUE, ArrayUtil.EMPTY_INT_ARRAY))
     }
     return ops
   }

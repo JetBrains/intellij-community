@@ -17,14 +17,20 @@ package com.intellij.lang.properties.editor;
 
 import com.intellij.openapi.editor.impl.AbstractRtlTest;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 
+@TestApplication
 public class PropertiesRtlTest extends AbstractRtlTest {
+  @Test
   public void testComment() {
-    EncodingProjectManager.getInstance(getProject()).setDefaultCharsetForPropertiesFiles(null, StandardCharsets.UTF_8);
-    UIUtil.dispatchAllInvocationEvents();
-    checkBidiRunBoundaries("# |R", "properties");
+    myFixture.runTest(() -> {
+      EncodingProjectManager.getInstance(myFixture.getProject()).setDefaultCharsetForPropertiesFiles(null, StandardCharsets.UTF_8);
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      checkBidiRunBoundaries("# |R", "properties");
+    });
   }
 }

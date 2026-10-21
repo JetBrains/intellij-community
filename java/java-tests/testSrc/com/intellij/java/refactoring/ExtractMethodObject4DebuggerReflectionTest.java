@@ -4,6 +4,7 @@ package com.intellij.java.refactoring;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.JavaCodeFragmentFactory;
@@ -95,6 +96,36 @@ public class ExtractMethodObject4DebuggerReflectionTest extends LightJavaCodeIns
     doTest("value", "/PrivateWildcardTypeParameter.java");
   }
 
+  public void testThisExpressionWithPrivateType() {
+    doTest("this", "/PrivateThisExpression.java");
+  }
+
+  public void testSuperMethodWithJava6() {
+    doSuperMethodTestForLegacyJavaVersions(JavaSdkVersion.JDK_1_6, false);
+  }
+
+  public void testSuperMethodWithJava6MagicAccessor() {
+    doSuperMethodTestForLegacyJavaVersions(JavaSdkVersion.JDK_1_6, true);
+  }
+
+  public void testSuperMethodWithJava7() {
+    doSuperMethodTestForLegacyJavaVersions(JavaSdkVersion.JDK_1_7, false);
+  }
+
+  /**
+   * Compares the complete generated super call and class with the expected output when the reflection registry flag is enabled.
+   * Java 6 keeps direct calls without Java 7 APIs. Java 7 uses method handles.
+   * Checks that extraction preserves the magic accessor setting.
+   */
+  private void doSuperMethodTestForLegacyJavaVersions(@NotNull JavaSdkVersion javaVersion, boolean useMagicAccessor) {
+    Registry.get("debugger.compiling.evaluator.reflection.access.with.java8").setValue(true, getTestRootDisposable());
+    Registry.get("debugger.compiling.evaluator.magic.accessor").setValue(useMagicAccessor, getTestRootDisposable());
+    configureByFile("/PrivateSuperMethod.java");
+    var extractedData = extract("super.hashCode()", javaVersion);
+    assertEquals(useMagicAccessor, extractedData.useMagicAccessor());
+    checkResult(extractedData, false);
+  }
+
   public void testDefaultPackageTypeParameterBound() {
     doTest("value", "/DefaultPackageTypeParameter.java");
   }
@@ -142,16 +173,14 @@ public class ExtractMethodObject4DebuggerReflectionTest extends LightJavaCodeIns
   private void doTest(@NotNull String evaluatedText,
                       @NotNull String pathToSource,
                       boolean includeImports) throws PrepareFailedException {
-    String testName = getTestName(true);
     configureByFile(pathToSource);
-    final int offset = getEditor().getCaretModel().getOffset();
-    final PsiElement context = getFile().findElementAt(offset);
-    final JavaCodeFragmentFactory fragmentFactory = JavaCodeFragmentFactory.getInstance(getProject());
-    final JavaCodeFragment fragment = fragmentFactory.createExpressionCodeFragment(evaluatedText, context, null, false);
-    final LightMethodObjectExtractedData extractedData =
-      ExtractLightMethodObjectHandler.extractLightMethodObject(getProject(), context, fragment, "test", JavaSdkVersion.JDK_1_9);
-    assertNotNull(extractedData);
+    var extractedData = extract(evaluatedText, JavaSdkVersion.JDK_1_9);
     assertFalse(extractedData.useMagicAccessor());
+    checkResult(extractedData, includeImports);
+  }
+
+  private void checkResult(@NotNull LightMethodObjectExtractedData extractedData, boolean includeImports) {
+    var testName = getTestName(true);
     String importsText = "";
     if (includeImports) {
       PsiJavaFile generatedFile = (PsiJavaFile)extractedData.getGeneratedInnerClass().getContainingFile();
@@ -163,5 +192,16 @@ public class ExtractMethodObject4DebuggerReflectionTest extends LightJavaCodeIns
                         "class: " + "\n" +
                         extractedData.getGeneratedInnerClass().getText();
     UsefulTestCase.assertSameLinesWithFile(getTestDataPath() + "/outs/" + testName + ".out", actualText, true);
+  }
+
+  private @NotNull LightMethodObjectExtractedData extract(@NotNull String evaluatedText, @NotNull JavaSdkVersion javaVersion) {
+    final int offset = getEditor().getCaretModel().getOffset();
+    final PsiElement context = getFile().findElementAt(offset);
+    final JavaCodeFragmentFactory fragmentFactory = JavaCodeFragmentFactory.getInstance(getProject());
+    final JavaCodeFragment fragment = fragmentFactory.createExpressionCodeFragment(evaluatedText, context, null, false);
+    final LightMethodObjectExtractedData extractedData =
+      ExtractLightMethodObjectHandler.extractLightMethodObject(getProject(), context, fragment, "test", javaVersion);
+    assertNotNull(extractedData);
+    return extractedData;
   }
 }

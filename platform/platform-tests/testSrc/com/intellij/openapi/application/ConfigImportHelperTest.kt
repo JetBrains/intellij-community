@@ -549,6 +549,14 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     assertThat(findConfigDirectories(current).paths).isEmpty()
   }
 
+  @Test fun `flavor directories of the same product are excluded`() {
+    createConfigDir(product = "JetBrainsLight", version = "2027.1-go")
+    createConfigDir(product = "JetBrainsLight", version = "2027.1-rust")
+    val cfg271 = createConfigDir(product = "JetBrainsLight", version = "2027.1")
+    val current = createConfigDir(product = "JetBrainsLight", version = "2027.2")
+    assertThat(findConfigDirectories(current).paths).containsExactly(cfg271)
+  }
+
   @Test fun `merging VM options`() {
     val oldConfigDir = createConfigDir(version = "2023.1")
     val oldVmOptionsFile = oldConfigDir.resolve(VMOptions.getFileName()).writeLines(listOf("-Xmx4g", "-Dsome.prop=old.val"))

@@ -23,7 +23,7 @@ import java.util.BitSet
  * - a rebuild through branches: each transaction starts from the branch at its parents, which is a
  *   merge of the branches at those units, and applies its ops as local edits. Every merge of two
  *   branches that went apart is a partial replay, so this path checks the partial replay too. It
- *   needs a history that keeps the agent contract of [DocBranch].
+ *   needs a history that keeps the agent contract of [DocumentBranch].
  *
  * A history is a list of transactions in the export format of diamond types. A transaction names
  * its agent, its first seq, its parents as lvs, and a list of ops. Each op after the first has the
@@ -48,7 +48,7 @@ class EgWalkerConformanceTest {
   }
 
   /**
-   * An agent that edits concurrently with itself breaks the agent contract of [DocBranch]. So
+   * An agent that edits concurrently with itself breaks the agent contract of [DocumentBranch]. So
    * these histories take the full replay only.
    */
   @Test
@@ -80,7 +80,7 @@ class EgWalkerConformanceTest {
     var graph = EventGraph.createGraph()
     for (txn in history.txns) {
       assertEquals(txn.start, graph.size()) { "the first lv of $txn" }
-      var seq = txn.seqStart
+      var seq = txn.seqStart.toLong()
       var parents = versionOf(txn.parents)
       for (op in txn.ops) {
         val event = if (op.deleted > 0) {
@@ -103,7 +103,7 @@ class EgWalkerConformanceTest {
    *
    * A branch mints the next seq of its agent, so the rebuild gives the ids of the history only when
    * each transaction of an agent descends from the one before it. That is the agent contract of
-   * [DocBranch], and [checkAgentContract] makes sure the data keeps it.
+   * [DocumentBranch], and [checkAgentContract] makes sure the data keeps it.
    *
    * The branch at a unit exists only after the op that holds it, so an op is cut at every unit that
    * a later transaction names as a parent.
@@ -124,8 +124,8 @@ class EgWalkerConformanceTest {
     for (head in heads) {
       needed.set(head)
     }
-    val branchAt = HashMap<Int, DocBranch>()
-    val root = DocBranch.createBranch("", agent("root"))
+    val branchAt = HashMap<Int, DocumentBranch>()
+    val root = DocumentBranch.createBranch("", agent("root"))
     for (txn in history.txns) {
       var branch = branchAt(txn.parents, root.fork(txn.agent), branchAt)
       assertEquals(stepGraph.replay(versionOf(txn.parents)).string(), branch.string()) {
@@ -161,9 +161,9 @@ class EgWalkerConformanceTest {
    */
   private fun branchAt(
     lvs: IntArray,
-    start: DocBranch,
-    branchAt: Map<Int, DocBranch>,
-  ): DocBranch {
+    start: DocumentBranch,
+    branchAt: Map<Int, DocumentBranch>,
+  ): DocumentBranch {
     if (lvs.isEmpty()) {
       return start
     }

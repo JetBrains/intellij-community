@@ -81,8 +81,6 @@ jvm_library(
         "//libraries/guava:guava_test_lib",
         "//platform/execution-impl:execution-impl_test_lib",
         "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
-        "//platform/xdebugger-testFramework:debugger-testFramework",
-        "//platform/xdebugger-testFramework:debugger-testFramework_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
         "//libraries/netty/buffer:buffer_test_lib",
         "//platform/core-ui:core-ui_test_lib",

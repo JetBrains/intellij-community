@@ -60,21 +60,6 @@ object FileSystem {
     .replace("\"", replaceWith)
     .replace("/", replaceWith)
 
-  fun hasAtLeastFiles(path: Path, minCount: Long): Boolean {
-    // Files.walk() does not follow a symbolic link at the root without FileVisitOption.FOLLOW_LINKS, so a path that
-    // is itself a symlink (e.g. a shared reused-IDE system directory) would otherwise count as a single entry.
-    val realPath = if (Files.isSymbolicLink(path)) path.toRealPath() else path
-    Files.walk(realPath).use { stream ->
-      val iterator = stream.iterator()
-      var seen = 0L
-      while (iterator.hasNext()) {
-        iterator.next()
-        if (++seen >= minCount) return true
-      }
-      return false
-    }
-  }
-
   fun compressToZip(sourceToCompress: Path, outputArchive: Path) {
     if (sourceToCompress.extension == "zip") {
       logOutput("Looks like $sourceToCompress is already a zip file")

@@ -27,11 +27,16 @@ public final class CommandsRunner {
     getInstance().actionCallback = actionCallback;
   }
 
+  /**
+   * Returns whether the commands of the startup script have finished. Before the script starts, the commands
+   * are finished only when the script has none.
+   */
   public static boolean haveCommandsFinished() {
-    if (getInstance().actionCallback == null) {
-      return false;
+    CompletableFuture<?> actionCallback = getInstance().actionCallback;
+    if (actionCallback == null) {
+      return !ProjectLoadedKt.hasStartupScriptCommands();
     }
-    return getInstance().actionCallback.isDone();
+    return actionCallback.isDone();
   }
 
   public static boolean haveCommandsFinishedSuccessfully() {
@@ -39,7 +44,8 @@ public final class CommandsRunner {
   }
 
   public static boolean haveCommandsFailed() {
-    return getInstance().actionCallback.isCancelled();
+    CompletableFuture<?> actionCallback = getInstance().actionCallback;
+    return actionCallback != null && actionCallback.isCompletedExceptionally();
   }
 
   public static int getPid() {

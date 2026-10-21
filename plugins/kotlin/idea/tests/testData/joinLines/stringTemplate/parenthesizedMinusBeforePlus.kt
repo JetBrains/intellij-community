@@ -1,0 +1,3 @@
+fun minusPlus(list: List<String>): List<String> =
+    (list - "a") +<caret>
+            "b"

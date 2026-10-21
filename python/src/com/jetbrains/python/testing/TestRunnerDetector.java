@@ -10,8 +10,10 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.python.sdk.backend.PythonInterpreterKt;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.util.Function;
+import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.management.PythonPackageManager;
 import com.jetbrains.python.packaging.management.PythonPackageManagerExt;
@@ -20,8 +22,6 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,10 +62,11 @@ final class TestRunnerDetector implements Function<Pair<Module, Collection<Virtu
       }
     }
     //check if installed in sdk
-    final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
-    if (sdk != null && sdk.getSdkType() instanceof PythonSdkType) {
-      PythonPackageManager packageManager =
-        PythonPackageManager.Companion.forPythonInterpreter(module.getProject(), PythonInterpreterKt.pythonInterpreter(sdk, false));
+    final PythonInterpreter interpreter = PyModuleInterpreterReader.findModuleInterpreterIfReady(module);
+    //noinspection deprecation
+    final Sdk sdk = interpreter == null ? null : PythonInterpreterExtKt.getSdkAPI(interpreter);
+    if (interpreter != null) {
+      PythonPackageManager packageManager = PythonPackageManager.Companion.forPythonInterpreter(module.getProject(), interpreter);
       PythonPackageManagerExt.waitInitBlocking(packageManager);
       var factories = PythonTestConfigurationType.getInstance().getTypedFactories();
       var factory = factories.stream().filter(o -> o.isFrameworkInstalled(module.getProject(), sdk)).findFirst();

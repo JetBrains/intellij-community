@@ -23,6 +23,11 @@ public class KotlinFirMultiplatformTestGenerated extends AbstractKotlinFirMultip
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("abstractClassInCommon.kt")
+    public void testAbstractClassInCommon() throws Exception {
+        runTest("testData/inlineMultiModule/abstractClassInCommon.kt");
+    }
+
     @TestMetadata("commonAnonymousFunction.kt")
     public void testCommonAnonymousFunction() throws Exception {
         runTest("testData/inlineMultiModule/commonAnonymousFunction.kt");

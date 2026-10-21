@@ -11,7 +11,7 @@ import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecOptions
-import com.intellij.python.pytools.executeInteractiveOn
+import com.intellij.python.pytools.backend.runtime.executeToolInteractive
 import com.jetbrains.python.Result
 import com.intellij.python.black.PyBlackBundle.message
 import com.intellij.python.black.configuration.BlackFormatterConfiguration
@@ -63,8 +63,8 @@ suspend fun BlackPyTool.execute(
   // (e.g. force-exclude) only when source comes from a path/stdin.
   args.addArgs("-")
 
-  val res = executeInteractiveOn(
-    moduleOrProject = moduleOrProject,
+  val res = moduleOrProject.executeToolInteractive(
+    tool = this,
     args = args,
     execOptions = ExecOptions(timeout = timeout)
   ) { stdin, processResult ->
@@ -73,7 +73,7 @@ suspend fun BlackPyTool.execute(
       stdin.close(null)
     }
     catch (ex: IOException) {
-      return@executeInteractiveOn Result.failure(ex.localizedMessage)
+      return@executeToolInteractive Result.failure(ex.localizedMessage)
     }
 
     val output = processResult.await()

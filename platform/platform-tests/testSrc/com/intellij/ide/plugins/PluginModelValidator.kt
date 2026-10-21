@@ -93,10 +93,25 @@ data class PluginValidationOptions(
   val moduleLevelServicesToIgnore: Set<String> = emptySet(),
 
   /**
+   * Maps the name of a forbidden extension point to the implementation classes of its existing extensions that shouldn't be reported as
+   * errors. The names must be keys of [forbiddenWorkspaceFileIndexExtensionPoints].
+   */
+  val extensionsToIgnore: Map<String, Set<String>> = emptyMap(),
+
+  /**
    * Names of service interfaces that are overridden by plugins which sources are located outside the current project, and therefore need
    * to be registered as `open`.
    */
   val externallyOverriddenServices: Set<String> = emptySet(),
+)
+
+/**
+ * The FQN of an extension point that is forbidden in intellij monorepo to the simple name of its interface. Each one is not incremental,
+ * and a workspace entity with a WorkspaceFileIndexContributor replaces it.
+ */
+private val forbiddenWorkspaceFileIndexExtensionPoints: Map<String, String> = java.util.Map.of(
+  "com.intellij.additionalLibraryRootsProvider", "AdditionalLibraryRootsProvider",
+  "com.intellij.directoryIndexExcludePolicy", "DirectoryIndexExcludePolicy",
 )
 
 /** The extension point FQN to the attribute that carries the id the RPC registry routes by. */
@@ -215,8 +230,11 @@ internal class PluginModelValidator(
       checkServicesOverrides(descriptorFileInfos, RawPluginDescriptor::appElementsContainer)
     }
 
+    val unknownExtensionPoints = validationOptions.extensionsToIgnore.keys - forbiddenWorkspaceFileIndexExtensionPoints.keys
+    check(unknownExtensionPoints.isEmpty()) { "extensionsToIgnore has extension points that are not forbidden: $unknownExtensionPoints" }
     for (descriptorFileInfo in descriptorFileInfos) {
       checkLazyRpcExtensionAttributes(descriptorFileInfo)
+      checkForbiddenWorkspaceFileIndexExtensions(descriptorFileInfo)
     }
 
     // 3. check dependencies - we are aware about all modules now
@@ -357,6 +375,25 @@ internal class PluginModelValidator(
             mapOf("descriptorFile" to descriptorFileInfo.descriptorFile),
           )
         }
+      }
+    }
+  }
+
+  private fun checkForbiddenWorkspaceFileIndexExtensions(descriptorFileInfo: DescriptorFileInfo) {
+    for ((extensionPointName, interfaceName) in forbiddenWorkspaceFileIndexExtensionPoints) {
+      val extensions = descriptorFileInfo.descriptor.extensions.get(extensionPointName) ?: continue
+      val ignored = validationOptions.extensionsToIgnore[extensionPointName].orEmpty()
+      for (extension in extensions) {
+        if (extension.implementation in ignored) continue
+        reportError(
+          """
+          |$interfaceName '${extension.implementation}' is defined in '${descriptorFileInfo.sourceModule.name}'.
+          |$interfaceName is not incremental, so it is forbidden to add new ones in intellij monorepo.
+          |Describe the files with a workspace entity and a WorkspaceFileIndexContributor instead.
+          """.trimMargin(),
+          descriptorFileInfo.sourceModule,
+          mapOf("descriptorFile" to descriptorFileInfo.descriptorFile),
+        )
       }
     }
   }

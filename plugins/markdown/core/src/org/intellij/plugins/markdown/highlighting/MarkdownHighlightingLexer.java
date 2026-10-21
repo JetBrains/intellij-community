@@ -44,11 +44,11 @@ public class MarkdownHighlightingLexer extends LayeredLexer {
     if (htmlSyntaxHighlighter != null) {
       registerLayer(htmlSyntaxHighlighter.getHighlightingLexer(), MarkdownTokenTypes.HTML_BLOCK_CONTENT);
     }
-    registerSelfStoppingLayer(
-      new MarkdownMergingLexer(),
-      MarkdownTokenTypeSets.INLINE_HOLDING_ELEMENT_TYPES.getTypes(),
-      IElementType.EMPTY_ARRAY
-    );
+    var inlineLexer = new LayeredLexer(new MarkdownMergingLexer());
+    if (htmlSyntaxHighlighter != null) {
+      inlineLexer.registerLayer(htmlSyntaxHighlighter.getHighlightingLexer(), MarkdownTokenTypes.HTML_TAG);
+    }
+    registerSelfStoppingLayer(inlineLexer, MarkdownTokenTypeSets.INLINE_HOLDING_ELEMENT_TYPES.getTypes(), IElementType.EMPTY_ARRAY);
   }
 
   static @Nullable SyntaxHighlighter getHtmlSyntaxHighlighter() {

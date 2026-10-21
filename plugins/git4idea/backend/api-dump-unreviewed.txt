@@ -803,8 +803,6 @@ f:git4idea.branch.GitRebaseParams
 - f:getUpstream():git4idea.branch.GitRebaseParams$RebaseUpstream
 - f:isInteractive():Z
 f:git4idea.branch.GitRebaseParams$Companion
-- f:editCommits(git4idea.config.GitVersion,git4idea.branch.GitRebaseParams$RebaseUpstream,git4idea.rebase.GitRebaseEditorHandler,Z):git4idea.branch.GitRebaseParams
-- f:editCommits(git4idea.config.GitVersion,java.lang.String,git4idea.rebase.GitRebaseEditorHandler,Z):git4idea.branch.GitRebaseParams
 git4idea.branch.GitRebaseParams$RebaseUpstream
 - sf:Companion:git4idea.branch.GitRebaseParams$RebaseUpstream$Companion
 f:git4idea.branch.GitRebaseParams$RebaseUpstream$Commit

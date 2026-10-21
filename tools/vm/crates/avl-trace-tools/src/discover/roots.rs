@@ -8,8 +8,6 @@ use avl_trace::vocabulary;
 vocabulary! {
     /// Why a root is looked in, for the listing and the startup lines.
     pub enum RootKind {
-        /// `<repo>/out/air-traces`, where a lane run from the IDE writes.
-        AirTraces = "air-traces",
         /// The AIR lanes' `bazel-testlogs`, whose `test.outputs` hold a Bazel run's bundles: zipped into
         /// `outputs.zip`, or as directories while the test runs and under `--nozip_undeclared_test_outputs`.
         BazelTestlogs = "bazel-testlogs",
@@ -62,16 +60,12 @@ pub const VM_RUN_TRACES_DIR: &str = "traces";
 /// pins the two together.
 pub const VM_RUNS_GLOB: &str = "*/traces/*/*.zip";
 
-/// The four places a trace is left on this machine: the checkout's own two, when there is a checkout, and the
-/// controller's two under its runtime root. A runtime root that could not be resolved gives the controller's two
-/// roots its error instead of a path.
+/// The three places a trace is left on this machine: the Air lanes' `bazel-testlogs` of the checkout, when there is
+/// a checkout, and the controller's two roots under its runtime root. A runtime root that could not be resolved gives
+/// the controller's two roots its error instead of a path.
 pub fn default_roots(repo: Option<&Path>, runtime_root: Result<&Path, &str>) -> Vec<Root> {
     let mut roots = Vec::new();
     if let Some(repo) = repo {
-        roots.push(Root::new(
-            RootKind::AirTraces,
-            repo.join("out").join(avl_trace::bundle::ROOT_DIR_NAME),
-        ));
         let testlogs = ["bazel-testlogs", "plugins", "air", "tests", "integration"];
         roots.push(Root::new(
             RootKind::BazelTestlogs,

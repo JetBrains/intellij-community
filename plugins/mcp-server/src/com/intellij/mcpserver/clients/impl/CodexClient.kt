@@ -5,6 +5,7 @@ import com.electronwill.nightconfig.core.UnmodifiableConfig
 import com.electronwill.nightconfig.core.io.ParsingMode
 import com.electronwill.nightconfig.toml.TomlFormat
 import com.electronwill.nightconfig.toml.TomlWriter
+import com.intellij.mcpserver.McpLaunchOrigin
 import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.clients.McpClientInfo
 import com.intellij.mcpserver.clients.configs.CodexStreamableHttpConfig
@@ -28,7 +29,12 @@ open class CodexClient(scope: McpClientInfo.McpClientScope, configPath: Path) : 
     return stdio || network
   }
 
-  override suspend fun getStreamableHttpConfig(): ServerConfig = CodexStreamableHttpConfig(url = streamableHttpUrl, headers = buildScopeHeaders())
+  // Codex sends the header only when its environment has the variable.
+  override suspend fun getStreamableHttpConfig(): ServerConfig = CodexStreamableHttpConfig(
+    url = streamableHttpUrl,
+    headers = buildScopeHeaders(),
+    envHttpHeaders = mapOf(McpLaunchOrigin.NAME to McpLaunchOrigin.NAME),
+  )
 
   override fun readMcpServers(): Map<String, ExistingConfig>? {
     if (!configPath.exists()) return null
@@ -125,6 +131,7 @@ open class CodexClient(scope: McpClientInfo.McpClientScope, configPath: Path) : 
       when (this) {
         is CodexStreamableHttpConfig -> table.set<Any?>(listOf("url"), url)
           .also { headers?.takeIf { it.isNotEmpty() }?.let { table.set(listOf("headers"), it.toTomlConfig()) } }
+          .also { envHttpHeaders?.takeIf { it.isNotEmpty() }?.let { table.set(listOf("env_http_headers"), it.toTomlConfig()) } }
         is STDIOServerConfig -> {
           command?.let { table.set<Any?>(listOf("command"), it) }
           args?.let { table.set<Any?>(listOf("args"), it) }

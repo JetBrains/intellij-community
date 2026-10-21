@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.util.ThrowableRunnable
 import com.jetbrains.python.PythonFileType
 
@@ -17,6 +18,9 @@ interface PythonCommonCodeInsightTestFixture {
   val project: Project
 
   val module: Module
+
+  /** The interpreter of the Python project of [module], read from the snapshot when it holds the fixture SDK. */
+  val pythonInterpreter: PythonInterpreter?
 
   val file: PsiFile?
 

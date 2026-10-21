@@ -16,6 +16,9 @@
       "launcherPath": "bin/server.exe",
       "javaExecutablePath": "jbr/bin/java.exe",
       "vmOptionsFilePath": "bin/server.exe.vmoptions",
+      "bootClassPathJarNames": [
+        "platform-loader.jar"
+      ],
       "additionalJvmArguments": [
         "-Xbootclasspath/a:%IDE_HOME%\\lib\\nio-fs.jar",
         "-Djava.system.class.loader=com.example.ServerClassLoader",
@@ -47,6 +50,10 @@
           "commands": [
             "qodana",
             "inspect"
+          ],
+          "bootClassPathJarNames": [
+            "platform-loader.jar",
+            "nio-fs.jar"
           ],
           "additionalJvmArguments": [
             "-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader",

@@ -7,6 +7,6 @@ import com.intellij.tools.ide.starter.product.goland.GoLand
 
 object GoLandCases : TestCaseTemplate(IdeInfo.GoLand) {
   val CliProject = withProject(
-    GitHubProject.fromGithub(repoRelativeUrl = "/urfave/cli")
+    GitHubProject.fromGithubOverSsh(repoRelativeUrl = "/urfave/cli")
   )
 }

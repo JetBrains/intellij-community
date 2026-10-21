@@ -2,15 +2,30 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.VisualPosition
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class CustomWrapBackspaceTest : AbstractEditorTest() {
-
-  override fun setUp() {
-    super.setUp()
-    setUpCustomWrapSupport()
+@TestApplication
+class CustomWrapBackspaceTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
   }
 
-  fun testBackspaceRemovesWrapWhenCaretIsAfterCustomWrap() {
+  private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
+
+  @BeforeEach
+  fun setUp() {
+    fixture.setUpCustomWrapSupport()
+  }
+
+  @Test
+  fun testBackspaceRemovesWrapWhenCaretIsAfterCustomWrap(): Unit = fixture.runTest {
     initText("abcd")
     assertNotNull(editor.customWrapModel.runBatchMutation { addWrap(2) })
     editor.caretModel.moveToVisualPosition(VisualPosition(1, 0))
@@ -21,7 +36,8 @@ class CustomWrapBackspaceTest : AbstractEditorTest() {
     assertTrue(editor.customWrapModel.getWraps().isEmpty())
   }
 
-  fun testBackspaceBeforeCustomWrapDeletesCharacter() {
+  @Test
+  fun testBackspaceBeforeCustomWrapDeletesCharacter(): Unit = fixture.runTest {
     initText("abcd")
     assertNotNull(editor.customWrapModel.runBatchMutation { addWrap(2) })
     editor.caretModel.moveToVisualPosition(VisualPosition(0, 2))
@@ -32,7 +48,8 @@ class CustomWrapBackspaceTest : AbstractEditorTest() {
     assertEquals(1, editor.customWrapModel.getWraps().single().offset)
   }
 
-  fun testBackspaceWithSelectionKeepsCustomWrap() {
+  @Test
+  fun testBackspaceWithSelectionKeepsCustomWrap(): Unit = fixture.runTest {
     initText("abcd")
     assertNotNull(editor.customWrapModel.runBatchMutation { addWrap(2) })
     editor.caretModel.moveToVisualPosition(VisualPosition(1, 0))

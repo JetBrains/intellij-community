@@ -1400,6 +1400,68 @@ fun <T : CommandChain> T.assertProblemViewCount(expectedProblemCount: Int): T = 
   addCommand("${CMD_PREFIX}assertProblemsViewCount $expectedProblemCount")
 }
 
+/** Opens the Project tab in its default view and records `todo.open.treeReady`. [expectedGroups] counts the rows under the summary. */
+fun <T : CommandChain> T.openTodoToolWindow(expectedFiles: Int, expectedItems: Int, expectedGroups: Int, hideAfter: Boolean = true): T = apply {
+  val keepOpen = if (hideAfter) "" else " keepOpen"
+  addCommand("${CMD_PREFIX}todoOpen files $expectedFiles items $expectedItems groups $expectedGroups$keepOpen")
+}
+
+/** Measures one [insertText] or [replaceText] command until TODO shows the expected comment at [line] (1-based) and counts. */
+fun <T : CommandChain> T.editTodo(
+  kind: TodoEdit,
+  line: Int,
+  expectedFiles: Int,
+  expectedItems: Int,
+  expectedFileItems: Int,
+  edit: CommandChain.() -> Unit,
+): T = apply {
+  val command = CommandChain().apply(edit).single().storeToString()
+  addCommand("${CMD_PREFIX}todoEdit ${kind.argument} line $line files $expectedFiles items $expectedItems " +
+             "fileItems $expectedFileItems command $command")
+}
+
+/** Switches to an open editor on the Current File tab and measures until the tab shows [expectedItems] items. */
+fun <T : CommandChain> T.switchTodoFile(relativePath: String, expectedItems: Int): T = apply {
+  addCommand("${CMD_PREFIX}todoSwitchFile $relativePath items $expectedItems")
+}
+
+/** Adds a TODO filter [name] for the existing pattern [pattern]. Call it before the TODO tool window opens. */
+fun <T : CommandChain> T.addTodoFilter(name: String, pattern: String): T = apply {
+  addCommand("${CMD_PREFIX}todoFilter add $name $pattern")
+}
+
+/** Applies the TODO filter [name] on the Project tab, or shows all items when [name] is null. Counts describe the result. */
+fun <T : CommandChain> T.applyTodoFilter(name: String?, expectedFiles: Int, expectedItems: Int, expectedGroups: Int): T = apply {
+  addCommand("${CMD_PREFIX}todoFilter apply ${name ?: "all"} files $expectedFiles items $expectedItems groups $expectedGroups")
+}
+
+/** Selects a scope and waits for the expected counts. A null [spanName] prepares the scope without a measurement. */
+fun <T : CommandChain> T.selectTodoScope(
+  scopeName: String,
+  expectedFiles: Int,
+  expectedItems: Int,
+  spanName: String? = null,
+): T = apply {
+  val span = spanName?.let { " span $it" }.orEmpty()
+  val scope = scopeName.replace(" ", "SPACE_SYMBOL")
+  addCommand("${CMD_PREFIX}todoSelectScope $scope files $expectedFiles items $expectedItems$span")
+}
+
+/** Selects the item at [line] (1-based), or goes to the next or the previous item, and measures until the preview shows that item. */
+fun <T : CommandChain> T.previewTodo(action: TodoPreviewAction, relativePath: String, line: Int, spanName: String): T = apply {
+  addCommand("${CMD_PREFIX}todoPreview ${action.argument} $relativePath line $line span $spanName")
+}
+
+/** Turns the TODO preview on and measures until it shows the selected item as [spanName]. */
+fun <T : CommandChain> T.enableTodoPreview(spanName: String): T = apply {
+  addCommand("${CMD_PREFIX}todoPreview on span $spanName")
+}
+
+/** Turns the TODO preview off, then selects the item at [line] (1-based) of [relativePath]. Nothing is measured. */
+fun <T : CommandChain> T.disableTodoPreview(relativePath: String, line: Int): T = apply {
+  addCommand("${CMD_PREFIX}todoPreview off $relativePath line $line")
+}
+
 fun <T : CommandChain> T.waitForReOpenedFile(relativePath: String): T = apply {
   addCommand("${CMD_PREFIX}waitForReOpenedFile -file ${relativePath.replace(" ", "SPACE_SYMBOL")}")
 }

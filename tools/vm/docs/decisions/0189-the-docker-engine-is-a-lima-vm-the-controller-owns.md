@@ -12,7 +12,8 @@ Accepted. It amends [ADR 0183](0183-a-linux-worker-may-be-a-container.md) for th
 host. It did not move the default. [ADR 0190](0190-the-docker-engine-is-the-default-worker.md) makes the Docker
 container the default worker, the same day. [ADR 0191](0191-the-engine-vm-leaves-the-usernet-path.md) amends this
 ADR on 2026-10-01: the engine boots Ubuntu 26.04, and its SSH runs over vsock. How the lane uses the engine is
-[the VM guide](../vm-ui-tests.md).
+[the VM guide](../vm-ui-tests.md). Superseded by
+[the Lima engine is retired](2026-10-13-the-lima-engine-is-retired.md).
 
 ## Context
 

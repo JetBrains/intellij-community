@@ -27,7 +27,8 @@ internal abstract class GitCommitEditingOperation(protected val repository: GitR
       repository.vcs.version,
       base,
       rebaseEditor,
-      preserveMerges
+      preserveMerges,
+      noAutoSquash = true,
     )
     val indicator = ProgressManager.getInstance().progressIndicator ?: EmptyProgressIndicator()
     val spec = GitRebaseSpec.forNewRebase(project, params, listOf(repository), indicator)

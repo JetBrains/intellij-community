@@ -505,13 +505,9 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
       assertThat(vDir1.getChildren()).hasSize(1);
       assertThat(vDir2.getChildren()).hasSize(1);
 
-      //todo order should be the same
-      if (waitForDiskRefreshCompletionBeforeStartingModality) {
-        assertThat(log).containsExactlyInAnyOrder("modal finished", "non-modal finished");
-      }
-      else {
-        assertThat(log).containsExactly("modal finished", "non-modal finished");
-      }
+      // VFS refresh can fire events in background write action, so non-modal can finish before EDT enters modal progress
+      // Therefore, order can be any
+      assertThat(log).containsExactlyInAnyOrder("modal finished", "non-modal finished");
     }, false);
   }
 

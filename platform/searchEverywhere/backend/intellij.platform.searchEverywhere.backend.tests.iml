@@ -16,6 +16,8 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.searchEverywhere" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.searchEverywhere.backend" />
 </module>

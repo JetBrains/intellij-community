@@ -98,6 +98,68 @@ class McpToolInvocationModeTest {
       .doesNotContain("tool_c", "tool_direct")
   }
 
+  @Test
+  fun `DIRECT mode omits the unused router when the session opts in`() {
+    val names = toolNames(McpToolInvocationMode.DIRECT, omittingRouterOptions())
+
+    assertThat(names)
+      .contains("tool_a", "tool_b", "tool_c", "tool_direct")
+      .doesNotContain(ROUTER_TOOL)
+  }
+
+  @Test
+  fun `DIRECT_WITH_ROUTER_ENABLED mode lists the router for a router-only tool when the session opts in`() {
+    val names = toolNames(McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED, omittingRouterOptions())
+
+    assertThat(names)
+      .contains("tool_c", "tool_direct", ROUTER_TOOL)
+      .doesNotContain("tool_a", "tool_b")
+  }
+
+  @Test
+  fun `DIRECT_WITH_ROUTER_ENABLED mode omits the router when the mask leaves no router-only tool`() {
+    val filter = McpToolFilter.AllowList(setOf("tool_c", "tool_direct"))
+
+    assertThat(toolNames(McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED, omittingRouterOptions(), filter))
+      .containsExactlyInAnyOrder("tool_c", "tool_direct")
+    assertThat(toolNames(McpToolInvocationMode.DIRECT_WITH_ROUTER_ENABLED, sessionOptions = null, filter))
+      .describedAs("a session without the opt-in keeps the router")
+      .containsExactlyInAnyOrder("tool_c", "tool_direct", ROUTER_TOOL)
+  }
+
+  @Test
+  fun `VIA_ROUTER mode omits the router when the session opts in`() {
+    val names = toolNames(McpToolInvocationMode.VIA_ROUTER, omittingRouterOptions())
+
+    assertThat(names)
+      .contains("tool_a", "tool_b")
+      .doesNotContain("tool_c", "tool_direct", ROUTER_TOOL)
+  }
+
+  @Test
+  fun `the path without filter providers omits the router when the session opts in`() {
+    val tools = McpServerService.getInstance().getMcpTools(
+      filter = McpToolFilter.AllowList(setOf("tool_a")),
+      useFiltersFromEP = false,
+      sessionOptions = omittingRouterOptions(),
+    )
+
+    assertThat(tools.map { it.descriptor.name }).containsExactly("tool_a")
+  }
+
+  private fun omittingRouterOptions(): McpServerService.McpSessionOptions =
+    McpServerService.McpSessionOptions(McpServerService.AskCommandExecutionMode.DONT_ASK).withUnusedRouterToolOmitted()
+
+  private fun toolNames(
+    invocationMode: McpToolInvocationMode,
+    sessionOptions: McpServerService.McpSessionOptions?,
+    filter: McpToolFilter? = null,
+  ): List<String> {
+    return McpServerService.getInstance()
+      .getMcpTools(filter = filter, sessionOptions = sessionOptions, invocationMode = invocationMode)
+      .map { it.descriptor.name }
+  }
+
   /**
    * The toolset a call belongs to is reported, and the value set is derived from the tools actually registered rather
    * than from a list someone maintains — so a new toolset is measurable the day it is added, and no unregistered name

@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.shared.rpc
 
+import com.intellij.ide.rpc.awaitWithLocalFallback
+import com.intellij.openapi.components.service
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import com.intellij.platform.vcs.changes.ChangeListManagerState
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -30,6 +32,6 @@ interface ChangeListsApi : RemoteApi<Unit> {
   suspend fun addUnversionedFiles(projectId: ProjectId, files: List<FilePathDto>, changeListId: String)
 
   companion object {
-    suspend fun getInstance(): ChangeListsApi = RemoteApiProviderService.Companion.resolve(remoteApiDescriptor<ChangeListsApi>())
+    suspend fun getInstance(): ChangeListsApi = LiteRemoteApiProviderService.awaitWithLocalFallback(remoteApiDescriptor<ChangeListsApi>()) { service<ChangeListsApi>() }
   }
 }

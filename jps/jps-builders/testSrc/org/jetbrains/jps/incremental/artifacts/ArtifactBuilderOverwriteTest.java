@@ -4,6 +4,7 @@ package org.jetbrains.jps.incremental.artifacts;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.PathUtil;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -16,6 +17,7 @@ import static com.intellij.util.io.TestFileSystemBuilder.fs;
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root;
 
 public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
+  @Test
   public void testOverwriteArchives() {
     final String aFile = createFile("aaa.txt", "a");
     final String bFile = createFile("bbb.txt", "b");
@@ -44,6 +46,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
     buildAllAndAssertUpToDate();
   }
 
+  @Test
   public void testOverwriteNestedArchive() {
     final String cFile = createFile("c.txt", "c");
     final String eFile = createFile("e.txt", "e");
@@ -68,6 +71,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
     buildAllAndAssertUpToDate();
   }
 
+  @Test
   public void testOverwriteFileByArchive() {
     final String xFile = createFile("x.txt", "1");
     final String jarFile = createFile("lib/junit.jar", "123");
@@ -90,6 +94,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
     buildAllAndAssertUpToDate();
   }
 
+  @Test
   public void testOverwriteArchiveByFile() {
     final String xFile = createFile("d/x.txt", "1");
     final String jarFile = createFile("lib/jdom.jar", "123");
@@ -112,6 +117,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
     buildAllAndAssertUpToDate();
   }
 
+  @Test
   public void testOverwriteCopiedFileByExtracted() {
     String jar = createArchive("x.jar", "x.txt", "1");
     String file = createFile("x.txt", "2");
@@ -134,6 +140,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
     assertOutput(a, fs().file("x.txt", "3"));
   }
 
+  @Test
   public void testOverwriteExtractedFileByCopied() {
     String file = createFile("x.txt", "1");
     String jar = createArchive("x.jar", "x.txt", "2");
@@ -165,6 +172,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
     return FileUtilRt.toSystemIndependentName(file.getAbsolutePath());
   }
 
+  @Test
   public void testFileOrder() {
     final String firstFile = createFile("d1/xxx.txt", "first");
     final String secondFile = createFile("d2/xxx.txt", "second");
@@ -197,6 +205,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
     buildAllAndAssertUpToDate();
   }
 
+  @Test
   public void testDeleteOverwritingFiles() {
     final String firstFile = createFile("d1/xxx.txt", "1");
     final String secondFile = createFile("d2/xxx.txt", "2");
@@ -218,6 +227,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
     assertOutput(a, fs().dir("ddd").file("y.txt"));
   }
 
+  @Test
   public void testUpdateManifest() {
     final String manifestText1 = "Manifest-Version: 1.0\r\nMain-Class: A\r\n\r\n";
     final String manifest = createFile("d/MANIFEST.MF", manifestText1);

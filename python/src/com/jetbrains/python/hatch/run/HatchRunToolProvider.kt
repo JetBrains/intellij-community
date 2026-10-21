@@ -31,7 +31,7 @@ internal class HatchRunToolProvider : PySdkRunToolProvider<HatchSdkFlavorData, H
     flavorData.hatchEnvironmentName?.let {
       env += HatchConstants.AppEnvVars.ENV to it
     }
-    return PyRunToolParameters(hatchPath.toStringForExecution(), listOf("run", "python"), env, includeOriginalExe = false)
+    return PyRunToolParameters(hatchPath, listOf("run", "python"), env, includeOriginalExe = false)
   }
 
   override val runToolData: PyRunToolData = PyRunToolData(

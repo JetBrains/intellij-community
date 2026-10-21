@@ -64,7 +64,7 @@ interface CustomImlComponentService {
   /**
    * Serializes and stores a persistent component value for the given module. Requires write action.
    */
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun <T> setComponentValueBlocking(module: Module, componentName: String, component: T)
 
   companion object {

@@ -28,6 +28,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubServerPath
@@ -51,6 +52,10 @@ object GHAccountsUtil {
     get() = accountManager.accountsState.value
 
   @JvmStatic
+  val accountsState: StateFlow<Set<GithubAccount>>
+    get() = accountManager.accountsState
+
+  @JvmStatic
   fun getDefaultAccount(project: Project): GithubAccount? =
     project.service<GithubProjectDefaultAccountHolder>().account
 
@@ -62,6 +67,74 @@ object GHAccountsUtil {
   @JvmStatic
   fun getSingleOrDefaultAccount(project: Project): GithubAccount? =
     getDefaultAccount(project) ?: accounts.singleOrNull()
+
+  /**
+   * Ask the user to log into GitHub with a new account
+   *
+   * @param server the target server if needed
+   * @param login the target login if needed (the account login will be compared with this login)
+   * @param project parent project for the login dialog
+   * @param parentComponent parent component for the login dialog
+   * @param reason reason for the login request (a url or a service name for example)
+   * * @param authType type of authorization to use
+   * @param loginSource source of the login request
+   *
+   * @return a new account if the login was successful, `null` otherwise
+   */
+  @RequiresEdt
+  @JvmOverloads
+  @JvmStatic
+  fun logIn(
+    server: GithubServerPath? = null,
+    login: String? = null,
+    project: Project?,
+    parentComponent: Component? = null,
+    authType: AuthorizationType = AuthorizationType.UNDEFINED,
+    reason: @NlsContexts.DialogMessage String? = null,
+    loginSource: GHLoginSource = GHLoginSource.UNKNOWN,
+  ): GithubAccount? {
+    return doLogIn(
+      server,
+      login,
+      project,
+      parentComponent,
+      reason,
+      authType,
+      loginSource
+    )?.account
+  }
+
+  /**
+   * Ask the user to re-login into the [account]
+   *
+   * @param project parent project for the login dialog
+   * @param parentComponent parent component for the login dialog
+   * @param reason reason for the login request (a missing or an incorrect token, for example)
+   * @param authType type of authorization to use
+   * @param loginSource source of the login request
+   *
+   * @return `true` if the re-login was successful, `false` otherwise
+   */
+  @RequiresEdt
+  @JvmOverloads
+  @JvmStatic
+  fun reLogIn(
+    account: GithubAccount,
+    project: Project?,
+    parentComponent: Component? = null,
+    reason: @NlsContexts.DialogMessage String? = null,
+    authType: AuthorizationType = AuthorizationType.UNDEFINED,
+    loginSource: GHLoginSource = GHLoginSource.UNKNOWN,
+  ): Boolean {
+    return doReLogIn(
+      account,
+      project,
+      parentComponent,
+      reason,
+      authType,
+      loginSource
+    ) != null
+  }
 
   fun createAddAccountLink(project: Project, accountSelectionModel: CollectionComboBoxModel<GithubAccount>, loginSource: GHLoginSource): JButton {
     val model = object : GHLoginModel {
@@ -93,30 +166,19 @@ object GHAccountsUtil {
     group.add(createTokenLoginAction(model, project, parentComponent, loginData))
     group.add(Separator())
 
-    group.add(
-      DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")) {
-        scopedDialog(project) {
-          GHLoginDialog.Token(model, project, this, parentComponent, loginData).apply {
-            title = GithubBundle.message("dialog.title.add.github.account")
-            setServer("", true)
-            setLoginButtonText(GithubBundle.message("accounts.add.button"))
-          }
-        }.showAndGet()
-      }
-    )
+    group.add(createGHETokenLoginAction(project, model, parentComponent, loginData))
     return group
   }
 
-  @ApiStatus.Internal
-  fun createBrowserLoginAction(
-    model: GHLoginModel, project: Project, parentComponent: JComponent, loginData: GHLoginData
+  //region Login actions
+  private fun createBrowserLoginAction(
+    model: GHLoginModel, project: Project, parentComponent: JComponent, loginData: GHLoginData,
   ): AnAction = DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHAccount.text")) {
     loginViaBrowser(model, project, parentComponent, loginData)
   }
 
-  @ApiStatus.Internal
-  fun loginViaBrowser(
-    model: GHLoginModel, project: Project, parentComponent: JComponent?, loginData: GHLoginData
+  private fun loginViaBrowser(
+    model: GHLoginModel, project: Project, parentComponent: JComponent?, loginData: GHLoginData,
   ) {
     scopedDialog(project) {
       GHLoginDialog.OAuth(model, project, this, parentComponent, loginData).apply {
@@ -125,16 +187,14 @@ object GHAccountsUtil {
     }.showAndGet()
   }
 
-  @ApiStatus.Internal
-  fun createTokenLoginAction(
+  private fun createTokenLoginAction(
     model: GHLoginModel, project: Project, parentComponent: JComponent, loginData: GHLoginData,
   ): AnAction = DumbAwareAction.create(CollaborationToolsBundle.message("accounts.action.add.account.with.token")) {
     loginViaToken(model, project, parentComponent, loginData)
   }
 
-  @ApiStatus.Internal
-  fun loginViaToken(
-    model: GHLoginModel, project: Project, parentComponent: JComponent?, loginData: GHLoginData
+  private fun loginViaToken(
+    model: GHLoginModel, project: Project, parentComponent: JComponent?, loginData: GHLoginData,
   ) {
     scopedDialog(project) {
       GHLoginDialog.Token(model, project, this, parentComponent, loginData).apply {
@@ -145,7 +205,34 @@ object GHAccountsUtil {
     }.showAndGet()
   }
 
-  @JvmStatic
+  private fun createGHETokenLoginAction(
+    project: Project,
+    model: GHLoginModel,
+    parentComponent: JComponent,
+    loginData: GHLoginData,
+  ): DumbAwareAction = DumbAwareAction.create(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")) {
+    loginToGHEViaToken(project, model, parentComponent, loginData)
+  }
+
+  private fun loginToGHEViaToken(
+    project: Project,
+    model: GHLoginModel,
+    parentComponent: JComponent,
+    loginData: GHLoginData,
+  ) {
+    scopedDialog(project) {
+      GHLoginDialog.Token(model, project, this, parentComponent, loginData).apply {
+        title = GithubBundle.message("dialog.title.add.github.account")
+        setLoginButtonText(GithubBundle.message("accounts.add.button"))
+        setServer("", true)
+      }
+    }.showAndGet()
+  }
+  //endregion
+
+  /**
+   * Internal login API, see [reLogIn] for public API
+   */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @JvmOverloads
   @ApiStatus.Internal
@@ -153,24 +240,20 @@ object GHAccountsUtil {
     account: GithubAccount,
     project: Project?,
     parentComponent: Component? = null,
-    loginSource: GHLoginSource
+    loginSource: GHLoginSource,
   ): String? {
-    val model = AccountManagerLoginModel(account)
-    login(
-      model,
-      GHLoginRequest(
-        text = CollaborationToolsBundle.message("account.token.missing.for", account),
-        server = account.server, login = account.name,
-        loginData = GHLoginData(loginSource)
-      ),
-      project, parentComponent,
-    )
-    return model.authData?.token
+    return doReLogIn(account, project, parentComponent,
+                     reason = CollaborationToolsBundle.message("account.token.missing.for", account),
+                     loginSource = loginSource)?.token
   }
 
+  /**
+   * Internal login API, see [reLogIn] for public API
+   */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @JvmOverloads
   @JvmStatic
+  @ApiStatus.Internal
   fun requestReLogin(
     account: GithubAccount,
     project: Project?,
@@ -178,16 +261,40 @@ object GHAccountsUtil {
     authType: AuthorizationType = AuthorizationType.UNDEFINED,
     loginSource: GHLoginSource,
   ): GHAccountAuthData? {
+    return doReLogIn(account, project, parentComponent, null, authType, loginSource)
+  }
+
+  private fun doReLogIn(
+    account: GithubAccount,
+    project: Project?,
+    parentComponent: Component? = null,
+    reason: @NlsContexts.DialogMessage String? = null,
+    authType: AuthorizationType = AuthorizationType.UNDEFINED,
+    loginSource: GHLoginSource,
+  ): GHAccountAuthData? {
     val model = AccountManagerLoginModel(account)
     login(
-      model, GHLoginRequest(server = account.server, login = account.name, authType = authType, loginData = GHLoginData(loginSource).reLogin()),
-      project, parentComponent)
+      model,
+      GHLoginRequest(
+        server = account.server,
+        login = account.name,
+        text = reason,
+        authType = authType,
+        loginData = GHLoginData(loginSource).reLogin()
+      ),
+      project,
+      parentComponent
+    )
     return model.authData
   }
 
+  /**
+   * Internal login API, see [logIn] for public API
+   */
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   @JvmOverloads
   @JvmStatic
+  @ApiStatus.Internal
   fun requestNewAccount(
     server: GithubServerPath? = null,
     login: String? = null,
@@ -195,11 +302,31 @@ object GHAccountsUtil {
     parentComponent: Component? = null,
     authType: AuthorizationType = AuthorizationType.UNDEFINED,
     loginSource: GHLoginSource = GHLoginSource.UNKNOWN,
+  ): GHAccountAuthData? =
+    doLogIn(server, login, project, parentComponent, reason = null, authType = authType, loginSource = loginSource)
+
+  private fun doLogIn(
+    server: GithubServerPath? = null,
+    login: String? = null,
+    project: Project?,
+    parentComponent: Component? = null,
+    reason: @NlsContexts.DialogMessage String? = null,
+    authType: AuthorizationType = AuthorizationType.UNDEFINED,
+    loginSource: GHLoginSource = GHLoginSource.UNKNOWN,
   ): GHAccountAuthData? {
     val model = AccountManagerLoginModel()
     login(
-      model, GHLoginRequest(server = server, login = login, isLoginEditable = login != null, authType = authType, loginData = GHLoginData(loginSource)),
-      project, parentComponent
+      model,
+      GHLoginRequest(
+        server = server,
+        login = login,
+        text = reason,
+        isLoginEditable = login != null,
+        authType = authType,
+        loginData = GHLoginData(loginSource)
+      ),
+      project,
+      parentComponent
     )
     return model.authData
   }
@@ -219,6 +346,7 @@ object GHAccountsUtil {
   }
 }
 
+@ApiStatus.Internal
 class GHAccountAuthData(val account: GithubAccount, login: String, token: String) : AuthData(login, token) {
   val server: GithubServerPath get() = account.server
   val token: String get() = password!!

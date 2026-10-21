@@ -126,6 +126,8 @@ object Git {
     if (shallow) arguments.addAll(listOf("--depth", "1"))
     if (withSubmodules) arguments.add("--recurse-submodules")
 
+    val command = arguments.joinToString(" ")
+
     // The retry drops each throwable, so keep the output for the message.
     val stdoutRedirect = ExecOutputRedirect.ToStdOutAndTail("[$cmdName]")
     val stderrRedirect = ExecOutputRedirect.ToStdOutAndTail("[$cmdName]")
@@ -145,10 +147,73 @@ object Git {
         onlyEnrichExistedEnvVariables = true
       ).start()
     } ?: throw GitRemoteException(cmdName, buildString {
+      appendLine("The command was: $command")
+      if (isSshUrl(repoUrl)) appendLine(sshIdentityReport(repoUrl))
       appendLine("The last output of `$cmdName`:")
       appendLine(stderrRedirect.read())
       appendLine(stdoutRedirect.read())
     })
+  }
+
+  /** `true` when [repoUrl] uses SSH, either in the `ssh://` form or in the `git@host:path` form. */
+  private fun isSshUrl(repoUrl: String): Boolean =
+    repoUrl.startsWith("ssh://") || (!repoUrl.contains("://") && repoUrl.contains("@"))
+
+  /**
+   * The SSH identities that this machine offers to the host of [repoUrl].
+   *
+   * `Permission denied (publickey)` names no key, so the output of git alone does not say which identity
+   * git sent. This report lists the public keys of the agent and the identity files of the configuration.
+   * It prints no private key.
+   */
+  internal fun sshIdentityReport(repoUrl: String): String {
+    val authority = repoUrl.substringAfter("://").substringBefore("/")
+    val host = authority.substringAfter("@").substringBefore(":")
+
+    // `GIT_SSH_COMMAND` overrides the agent and the identity files, so the report must use it too.
+    // The split on a space keeps this simple. A quoted path in the variable breaks it, and that is
+    // acceptable for a report.
+    val sshCommand = System.getenv("GIT_SSH_COMMAND")?.takeIf { it.isNotBlank() }
+    val ssh = sshCommand?.trim()?.split(" ") ?: listOf("ssh")
+
+    val agentKeys = diagnosticOutput("ssh-add-list", listOf("ssh-add", "-L"))
+    val identities = diagnosticOutput("ssh-config-get", ssh + listOf("-G", authority))
+      .lines()
+      .filter { it.startsWith("identityfile ") || it.startsWith("identityagent ") }
+      .joinToString("\n")
+      .ifEmpty { "(none)" }
+
+    return buildString {
+      appendLine("The SSH identities for '$host':")
+      appendLine("  the ssh command of git: ${sshCommand ?: "(GIT_SSH_COMMAND is not set, so git runs `ssh`)"}")
+      appendLine("  the identities that this command resolves (`${ssh.joinToString(" ")} -G $authority`):")
+      appendLine(identities.prependIndent("    "))
+      appendLine("  the public keys of the agent (`ssh-add -L`):")
+      appendLine(agentKeys.prependIndent("    "))
+    }
+  }
+
+  /** The output of [args], for a log message. A non-zero exit is fine, because this only reports. */
+  private fun diagnosticOutput(name: String, args: List<String>): String {
+    val stdout = ExecOutputRedirect.ToString()
+    val stderr = ExecOutputRedirect.ToString()
+    try {
+      ProcessExecutor(
+        presentableName = name,
+        workDir = null,
+        timeout = 30.seconds,
+        args = args,
+        stdoutRedirect = stdout,
+        stderrRedirect = stderr,
+        onlyEnrichExistedEnvVariables = true,
+        analyzeProcessExit = false,
+        silent = true,
+      ).start()
+    }
+    catch (e: Exception) {
+      return "the command `${args.joinToString(" ")}` failed: ${e.message}"
+    }
+    return (stdout.read() + stderr.read()).trim().ifEmpty { "(no output)" }
   }
 
   fun status(projectDir: Path): Int {
@@ -313,7 +378,7 @@ object Git {
   fun fetch(repositoryDirectory: Path, remote: String = "") {
     val cmdName = "git-fetch"
 
-    val arguments = mutableListOf("git", "fetch")
+    val arguments = mutableListOf("git", "fetch", "--no-auto-maintenance")
     if (remote.isNotEmpty()) arguments.add(remote)
 
     onRemote(cmdName) {
@@ -337,7 +402,7 @@ object Git {
         presentableName = cmdName,
         workDir = repositoryDirectory.toAbsolutePath(),
         timeout = 10.minutes,
-        args = listOf("git", "pull"),
+        args = listOf("git", "-c", "maintenance.auto=false", "pull"),
         stdoutRedirect = ExecOutputRedirect.ToStdOutAndTail("[$cmdName]"),
         stderrRedirect = ExecOutputRedirect.ToStdOutAndTail("[$cmdName]"),
         onlyEnrichExistedEnvVariables = true
@@ -924,6 +989,25 @@ object Git {
     ).start()
     return stdout.read().trim().lines().filter { it.isNotBlank() }
   }
+}
+
+/**
+ * Sets the URL of [remote] to [url], if the repository has that remote and its URL differs.
+ *
+ * A cached checkout keeps the URL of the clone that created it. Without this, a change of the URL of a test
+ * project never reaches an agent that already holds the checkout.
+ *
+ * @return `true` if the URL changed
+ */
+fun Git.setRemoteUrlIfDifferent(repositoryDirectory: Path, url: String, remote: String = "origin"): Boolean {
+  require(url.isNotEmpty()) { "URL must not be empty" }
+
+  val currentUrl = getRemoteUrl(repositoryDirectory, remote)
+  if (currentUrl.isEmpty() || currentUrl == url) return false
+
+  logOutput("The $remote of $repositoryDirectory is '$currentUrl'. Setting it to '$url' ...")
+  setRemoteUrl(repositoryDirectory, remote, url)
+  return true
 }
 
 /**

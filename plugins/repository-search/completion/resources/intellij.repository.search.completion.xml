@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.externalSystem"/>
     <module name="intellij.platform.lang.impl"/>

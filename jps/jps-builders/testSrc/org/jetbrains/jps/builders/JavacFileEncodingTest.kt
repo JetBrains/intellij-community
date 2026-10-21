@@ -17,8 +17,10 @@ package org.jetbrains.jps.builders
 
 import com.intellij.util.io.directoryContent
 import org.jetbrains.jps.builders.rebuild.JpsRebuildTestCase
+import org.junit.jupiter.api.Test
 
 class JavacFileEncodingTest: JpsRebuildTestCase() {
+  @Test
   fun test() {
     doTest("javacFileEncoding/javacFileEncoding.ipr", directoryContent {
       dir("production") {

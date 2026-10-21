@@ -16,10 +16,74 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.testFramework.LoggedErrorProcessor
 import junit.framework.TestCase
 import org.junit.Test
 
 class DeclarativeInlayHintsPassTest : DeclarativeInlayHintPassTestBase() {
+  @Test
+  fun testFailingProviderDoesNotStopOtherProviders() {
+    myFixture.configureByText("test.txt", "content")
+    val error = NoSuchMethodError("Broken provider")
+    val providers = listOf(
+      "broken" to StoredHintsProvider {
+        throw error
+      },
+      "working" to StoredHintsProvider {
+        addPresentation(InlineInlayPosition(1, false), hintFormat = HintFormat.default) {
+          text("inlay text")
+        }
+      },
+    )
+    val loggedError = LoggedErrorProcessor.executeAndReturnLoggedError {
+      providers.runPass(myFixture.file, myFixture.editor)
+    }
+    assertSame(error, loggedError.cause)
+    assertEquals(listOf("inlay text"), getInlineInlays().map { it.toText() })
+  }
+
+  @Test
+  fun testSharedCollectorFailureDiscardsItsHintsAndOtherCollectorsContinue() {
+    myFixture.configureByText("Test.java", "class Test {}")
+    val error = NoSuchMethodError("Broken provider")
+    var workingCalls = 0
+    var brokenCalls = 0
+    val workingProvider = object : InlayHintsProvider {
+      override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector {
+        return object : SharedBypassCollector {
+          override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
+            workingCalls++
+            sink.addPresentation(InlineInlayPosition(element.textRange.startOffset, false), hintFormat = HintFormat.default) {
+              text("working")
+            }
+          }
+        }
+      }
+    }
+    val brokenProvider = object : InlayHintsProvider {
+      override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector {
+        return object : SharedBypassCollector {
+          override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
+            if (brokenCalls++ > 0) {
+              throw error
+            }
+            sink.addPresentation(InlineInlayPosition(0, false), hintFormat = HintFormat.default) {
+              text("broken")
+            }
+          }
+        }
+      }
+    }
+    val providers = listOf("working" to workingProvider, "broken" to brokenProvider)
+    val loggedError = LoggedErrorProcessor.executeAndReturnLoggedError {
+      providers.runPass(myFixture.file, myFixture.editor)
+    }
+    assertSame(error, loggedError.cause)
+    assertEquals(2, brokenCalls)
+    assertTrue("The working collector must visit elements after the failure", workingCalls > brokenCalls)
+    assertEquals(List(workingCalls) { "working" }, getInlineInlays().map { it.toText() })
+  }
+
   @Test
   fun testAddInlay() {
     myFixture.configureByText("test.txt", "my content of file")

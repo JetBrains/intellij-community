@@ -66,6 +66,10 @@ public final class DependencyValidationManagerImpl extends DependencyValidationM
 
     myNamedScopeManager = NamedScopeManager.getInstance(project);
     myNamedScopeManager.addScopeListener(() -> reloadScopes(), project);
+    // The language server analyzer registers this service in a container without the point.
+    if (project.getExtensionArea().hasExtensionPoint(CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.getName())) {
+      CustomScopesProvider.CUSTOM_SCOPES_PROVIDER.addChangeListener(project, this::fireScopeListeners, project);
+    }
   }
 
   @Override

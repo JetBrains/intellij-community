@@ -2,51 +2,84 @@
 package com.intellij.json;
 
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.json.json5.Json5FileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.InjectionTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.jetbrains.jsonSchema.JsonSchemaTestProvider;
 import com.jetbrains.jsonSchema.JsonSchemaTestServiceImpl;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.intellij.lang.regexp.RegExpLanguage;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.function.Predicate;
+
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.testNameFixture;
 
 /**
  * @author Mikhail Golubev
  */
-public class JsonSpellcheckerTest extends JsonTestCase {
+@TestApplication
+@TestDataPath("$PROJECT_ROOT/community/json/backend/tests/testData/spellchecker")
+public class JsonSpellcheckerTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+  private final TestFixture<String> testNameFixture = testNameFixture(false);
+
+  private CodeInsightTestFixture myFixture;
+  private String myTestName;
+
+  @BeforeEach
+  void setUp() {
+    myFixture = codeInsightFixture.get();
+    myTestName = testNameFixture.get();
+  }
 
   private void doTest() {
     myFixture.enableInspections(GrazieSpellCheckingInspection.class);
-    myFixture.configureByFile(getTestName(false) + ".json");
+    myFixture.configureByFile(myTestName + ".json");
     myFixture.checkHighlighting(true, false, true);
   }
 
+  @Test
   public void testEscapeAwareness() {
     doTest();
   }
 
+  @Test
   public void testSimple() {
     doTest();
   }
 
-  protected Predicate<VirtualFile> getAvailabilityPredicate() {
+  private static Predicate<VirtualFile> getAvailabilityPredicate() {
     return file -> file.getFileType() instanceof LanguageFileType && ((LanguageFileType)file.getFileType()).getLanguage().isKindOf(
       JsonLanguage.INSTANCE);
   }
 
+  @Test
   public void testWithSchema() {
-    PsiFile[] files = myFixture.configureByFiles(getTestName(false) + ".json", "Schema.json");
+    PsiFile[] files = myFixture.configureByFiles(myTestName + ".json", "Schema.json");
     JsonSchemaTestServiceImpl.setProvider(new JsonSchemaTestProvider(files[1].getVirtualFile(), getAvailabilityPredicate()));
-    ServiceContainerUtil.replaceService(getProject(), JsonSchemaService.class, new JsonSchemaTestServiceImpl(getProject()), getTestRootDisposable());
-    Disposer.register(getTestRootDisposable(), new Disposable() {
+    ServiceContainerUtil.replaceService(myFixture.getProject(), JsonSchemaService.class, new JsonSchemaTestServiceImpl(myFixture.getProject()), myFixture.getTestRootDisposable());
+    Disposer.register(myFixture.getTestRootDisposable(), new Disposable() {
       @Override
       public void dispose() {
         JsonSchemaTestServiceImpl.setProvider(null);
@@ -57,8 +90,9 @@ public class JsonSpellcheckerTest extends JsonTestCase {
   }
 
   // WEB-31894 EA-117068
+  @Test
   public void testAfterModificationOfStringLiteralWithEscaping() {
-    myFixture.configureByFile(getTestName(false) + ".json");
+    myFixture.configureByFile(myTestName + ".json");
     myFixture.enableInspections(GrazieSpellCheckingInspection.class);
     myFixture.checkHighlighting();
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
@@ -66,6 +100,7 @@ public class JsonSpellcheckerTest extends JsonTestCase {
     myFixture.doHighlighting();
   }
 
+  @Test
   public void testHashesQuotedSpelling() {
     myFixture.enableInspections(GrazieSpellCheckingInspection.class);
     myFixture.configureByText("hashes.json", """
@@ -82,6 +117,7 @@ public class JsonSpellcheckerTest extends JsonTestCase {
     myFixture.checkHighlighting(true, false, true);
   }
 
+  @Test
   public void testInjectedFragments() {
     myFixture.enableInspections(GrazieSpellCheckingInspection.class);
 
@@ -91,14 +127,9 @@ public class JsonSpellcheckerTest extends JsonTestCase {
     }
     """.stripIndent());
 
-    new InjectionTestFixture(myFixture)
-      .assertInjectedLangAtCaret(RegExpLanguage.INSTANCE.getID());
+    ReadAction.runBlocking(() -> new InjectionTestFixture(myFixture)
+      .assertInjectedLangAtCaret(RegExpLanguage.INSTANCE.getID()));
 
     myFixture.checkHighlighting(true, false, true);
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return super.getTestDataPath() + "/spellchecker";
   }
 }

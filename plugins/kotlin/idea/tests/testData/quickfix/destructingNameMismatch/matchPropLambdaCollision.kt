@@ -1,6 +1,5 @@
 // "Rename variable to 'productName'" "true"
 // COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
-// SHOULD_FAIL_WITH: Variable 'productName' is already declared in lambda
 
 data class Product (val id: String, val productName: String)
 

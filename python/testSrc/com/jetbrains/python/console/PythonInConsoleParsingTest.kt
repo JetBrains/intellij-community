@@ -5,6 +5,7 @@ import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.allure.Layers
 
 import com.intellij.openapi.project.Project
+import com.intellij.testFramework.junit5.TestApplication
 import com.jetbrains.python.PythonParserDefinition
 import com.jetbrains.python.parsing.PythonParsingTest
 import com.jetbrains.python.parsing.console.PyConsoleParser
@@ -17,7 +18,10 @@ import com.jetbrains.python.psi.LanguageLevel
  */
 @Subsystems.PythonConsole
 @Layers.Functional
-class PythonInConsoleParsingTest : PythonParsingTest(PyConsoleParsingDefinition(true))
+@TestApplication
+class PythonInConsoleParsingTest : PythonParsingTest() {
+  override fun createParserDefinition(): PythonParserDefinition = PyConsoleParsingDefinition(true)
+}
 
 internal class PyConsoleParsingDefinition(private val isIPython: Boolean) : PythonParserDefinition() {
   override fun createLexer(project: Project) = PythonConsoleLexer()

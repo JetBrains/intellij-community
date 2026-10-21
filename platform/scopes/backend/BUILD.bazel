@@ -28,7 +28,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//platform/scopes",
         "//platform/project/shared:project",
-        "//platform/kernel/backend",
         "//platform/core-api:core",
         "//platform/util",
         "//platform/lang-impl",
@@ -39,7 +38,6 @@ jvm_library(
         "//platform/util/jdom",
         "//platform/platform-impl:ide-impl",
         "//platform/platform-impl/rpc",
-        "//fleet/rhizomedb",
         "//platform/kernel/rpc.backend",
     ],
 )
@@ -59,7 +57,6 @@ jvm_library(
         "//platform/backend:backend_test_lib",
         "//platform/scopes:scopes_test_lib",
         "//platform/project/shared:project_test_lib",
-        "//platform/kernel/backend:backend_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/util:util_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
@@ -70,7 +67,6 @@ jvm_library(
         "//platform/util/jdom:jdom_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/kernel/rpc.backend:rpc.backend_test_lib",
     ],
 )

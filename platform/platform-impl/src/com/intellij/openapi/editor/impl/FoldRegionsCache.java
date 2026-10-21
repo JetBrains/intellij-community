@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.IntPair;
@@ -148,15 +149,16 @@ abstract class FoldRegionsCache {
     int lineHeight = getLineHeight();
     for (int i = 0; i < topLevelRegions.length; i++) {
       FoldRegion region = topLevelRegions[i];
-      startOffsets[i] = region.getStartOffset();
-      endOffsets[i] = region.getEndOffset() - 1;
+      TextRange range = region.getTextRange();
+      startOffsets[i] = range.getStartOffset();
+      endOffsets[i] = range.getEndOffset() - 1;
       Document document = region.getDocument();
-      int startLine = document.getLineNumber(region.getStartOffset());
+      int startLine = document.getLineNumber(range.getStartOffset());
       startVisualLines[i] = startLine - foldedLinesSum;
-      foldedLinesSum += document.getLineNumber(region.getEndOffset()) - startLine;
+      foldedLinesSum += document.getLineNumber(range.getEndOffset()) - startLine;
       foldedLines[i] = foldedLinesSum;
-      if (region instanceof CustomFoldRegion) {
-        currentCustomYAdjustment += ((CustomFoldRegion)region).getHeightInPixels() - lineHeight;
+      if (region instanceof CustomFoldRegion customFoldRegion) {
+        currentCustomYAdjustment += customFoldRegion.getHeightInPixels() - lineHeight;
       }
       customYAdjustment[i] = currentCustomYAdjustment;
     }

@@ -7,8 +7,9 @@ internal val pluginsExplicitlyAllowedToExportOT = setOf(
   "org.jetbrains.toolbox-enterprise-client",
   "com.intellij.ml.llm",
   "com.jetbrains.otp.diagnostic",
-  // The in-IDE test bridge of the Air UI lanes, which loads from the IDE context and not from the distribution.
-  "com.intellij.air.integrationTests.bridge.plugin",
+  // The resident part of the in-IDE test bridge of the Air UI lanes. It holds the span exporter, and it loads from the
+  // IDE context and not from the distribution.
+  "com.intellij.air.integrationTests.bridge.resident",
 )
 
 internal fun PluginDescriptor.isAllowedToExportOT(): Boolean {

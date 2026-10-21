@@ -196,7 +196,7 @@ class ProgressSoundSignalTrackerTest {
     player.awaitPlayOf(STAGE_1)
 
     progress.setFraction(0.9)
-    player.awaitPlayOf(STAGE_3)
+    player.awaitPlayOf(STAGE_4)
   }
 
   @Test
@@ -208,15 +208,17 @@ class ProgressSoundSignalTrackerTest {
   }
 
   @Test
-  fun `the fraction picks the stage by thirds`() {
-    assertThat(progressSoundSignal(indeterminate = true, fraction = 0.5)).isSameAs(INDETERMINATE)
-    assertThat(progressSoundSignal(indeterminate = true, fraction = 1.0)).isSameAs(INDETERMINATE)
-    assertThat(progressSoundSignal(indeterminate = false, fraction = 0.0)).isSameAs(STAGE_1)
-    assertThat(progressSoundSignal(indeterminate = false, fraction = 0.33)).isSameAs(STAGE_1)
-    assertThat(progressSoundSignal(indeterminate = false, fraction = 1.0 / 3)).isSameAs(STAGE_2)
-    assertThat(progressSoundSignal(indeterminate = false, fraction = 0.5)).isSameAs(STAGE_2)
-    assertThat(progressSoundSignal(indeterminate = false, fraction = 2.0 / 3)).isSameAs(STAGE_3)
-    assertThat(progressSoundSignal(indeterminate = false, fraction = 1.0)).isSameAs(STAGE_3)
+  fun `the fraction picks the stage by quarters`() {
+    assertThat(progressSound(indeterminate = true, fraction = 0.5)).isEqualTo(INDETERMINATE)
+    assertThat(progressSound(indeterminate = true, fraction = 1.0)).isEqualTo(INDETERMINATE)
+    assertThat(progressSound(indeterminate = false, fraction = 0.0)).isEqualTo(STAGE_1)
+    assertThat(progressSound(indeterminate = false, fraction = 0.24)).isEqualTo(STAGE_1)
+    assertThat(progressSound(indeterminate = false, fraction = 0.25)).isEqualTo(STAGE_2)
+    assertThat(progressSound(indeterminate = false, fraction = 0.49)).isEqualTo(STAGE_2)
+    assertThat(progressSound(indeterminate = false, fraction = 0.5)).isEqualTo(STAGE_3)
+    assertThat(progressSound(indeterminate = false, fraction = 0.74)).isEqualTo(STAGE_3)
+    assertThat(progressSound(indeterminate = false, fraction = 0.75)).isEqualTo(STAGE_4)
+    assertThat(progressSound(indeterminate = false, fraction = 1.0)).isEqualTo(STAGE_4)
   }
 
   @Test
@@ -234,7 +236,7 @@ class ProgressSoundSignalTrackerTest {
     tracker.track(TestProgress())
     player.awaitPlay()
 
-    for (signal in PROGRESS_SIGNALS) service<AccessibilitySettings>().setSignal(signal, false)
+    service<AccessibilitySettings>().setSignal(IdeSoundSignals.PROGRESS, false)
     delay(REPEAT_DELAY * 2)
 
     assertThat(tracker.isTimerRunning).isFalse()
@@ -248,7 +250,7 @@ class ProgressSoundSignalTrackerTest {
   }
 
   @Test
-  fun `no tracker while every Progress signal is off`() = trackerTest(muteProgress = true) { _, _ ->
+  fun `no tracker while the Progress signal is off`() = trackerTest(muteProgress = true) { _, _ ->
     assertThat(ProgressSoundSignalTracker.getInstanceIfEnabled()).isNull()
   }
 
@@ -267,7 +269,7 @@ class ProgressSoundSignalTrackerTest {
     withSoundSignalsSettings { settings ->
       val trackerScope = childScope("ProgressSoundSignalTracker under test")
       try {
-        for (signal in PROGRESS_SIGNALS) settings.setSignal(signal, !muteProgress)
+        settings.setSignal(IdeSoundSignals.PROGRESS, !muteProgress)
         ApplicationManager.getApplication().replaceService(SoundSignalPlayer::class.java, player, disposable)
 
         body(ProgressSoundSignalTracker(trackerScope), player)
@@ -285,27 +287,29 @@ class ProgressSoundSignalTrackerTest {
   }
 
   private class RecordingPlayer : SoundSignalPlayer() {
-    private val all = CopyOnWriteArrayList<List<SoundSignal>>()
-    private val batches = Channel<Pair<List<SoundSignal>, Long>>(Channel.UNLIMITED)
+    private val all = CopyOnWriteArrayList<List<String>>()
+    private val batches = Channel<Pair<List<String>, Long>>(Channel.UNLIMITED)
 
-    override fun playEnabled(signals: Collection<SoundSignal>) {
-      val batch = signals.toList()
+    override fun playEnabled(sounds: Map<SoundSignal, String>) {
+      val batch = sounds.values.toList()
       all += batch
       batches.trySend(batch to System.nanoTime())
     }
 
-    val recorded: List<List<SoundSignal>> get() = all.toList()
+    override fun playPreview(sounds: List<Pair<SoundSignal, String>>) {}
 
-    suspend fun awaitPlay(): List<SoundSignal> = awaitTimedPlay().first
+    val recorded: List<List<String>> get() = all.toList()
 
-    suspend fun awaitTimedPlay(): Pair<List<SoundSignal>, Long> = batches.receive()
+    suspend fun awaitPlay(): List<String> = awaitTimedPlay().first
+
+    suspend fun awaitTimedPlay(): Pair<List<String>, Long> = batches.receive()
 
     /** Skips the ticks that ran before a progress change. */
-    suspend fun awaitPlayOf(signal: SoundSignal) {
+    suspend fun awaitPlayOf(sound: String) {
       do {
         val batch = awaitPlay()
       }
-      while (signal !in batch)
+      while (sound !in batch)
     }
 
     suspend fun assertStopped() {
@@ -356,10 +360,10 @@ class ProgressSoundSignalTrackerTest {
 
     const val TITLE = "Test progress"
 
-    val INDETERMINATE = IdeSoundSignals.PROGRESS_INDETERMINATE
-    val STAGE_1 = IdeSoundSignals.PROGRESS_DETERMINATE_STAGE_1
-    val STAGE_2 = IdeSoundSignals.PROGRESS_DETERMINATE_STAGE_2
-    val STAGE_3 = IdeSoundSignals.PROGRESS_DETERMINATE_STAGE_3
-    val PROGRESS_SIGNALS = listOf(INDETERMINATE, STAGE_1, STAGE_2, STAGE_3)
+    const val INDETERMINATE = IdeSounds.PROGRESS_INDETERMINATE
+    const val STAGE_1 = IdeSounds.PROGRESS_DETERMINATE_STAGE_1
+    const val STAGE_2 = IdeSounds.PROGRESS_DETERMINATE_STAGE_2
+    const val STAGE_3 = IdeSounds.PROGRESS_DETERMINATE_STAGE_3
+    const val STAGE_4 = IdeSounds.PROGRESS_DETERMINATE_STAGE_4
   }
 }

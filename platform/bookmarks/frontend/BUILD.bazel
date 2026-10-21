@@ -28,9 +28,8 @@ jvm_library(
         "//platform/ide-core-impl",
         "//platform/platform-impl:ide-impl",
         "//platform/bookmarks",
-        "//platform/kernel/shared:kernel",
         "//platform/project/shared:project",
-        "//fleet/rhizomedb",
+        "//fleet/rpc",
     ],
 )
 
@@ -58,9 +57,8 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/bookmarks:bookmarks_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/project/shared:project_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
+        "//fleet/rpc:rpc_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.bookmarks.frontend` end

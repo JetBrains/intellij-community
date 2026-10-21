@@ -11,9 +11,12 @@ use avl_trace_tools::viewer::RUNS_ROUTE;
 use avl_wire::progress::{
     Event as Progress, IterationReported, Phase, PhaseChange, PhaseState, Record, RunFinished, RunStarted, TraceReady,
 };
+use notify::event::{CreateKind, EventKind, Flag};
 
 use super::super::journals::STOPPED_AFTER;
-use super::super::service::{PATH_PNPM, SITE_SOURCES_DIR, SiteTools, site_needs_build, site_steps};
+use super::super::service::{
+    KERNEL_SOURCES_DIRS, PATH_PNPM, SITE_SOURCES_DIR, SiteTools, site_installs, site_needs_build, site_source_dirs, site_steps,
+};
 #[cfg(unix)]
 use super::super::service::{build_site_with, detach};
 use super::*;
@@ -245,8 +248,10 @@ async fn the_run_route_answers_the_journal_from_an_offset() {
     }
 }
 
-/// A record appended to a running run's journal is announced by the watcher, and the counts it changes reach the
-/// listing.
+/// The platform's watcher alone announces a record appended to a running run's journal, and a run that appears under
+/// the runs directory. The poll is off, so a lost event fails the test. The new run arrives as one directory entry,
+/// its directory moved in with its journal: [a_run_directory_seen_before_its_journal_is_watched] covers the order of
+/// a directory and its journal.
 #[tokio::test(flavor = "multi_thread")]
 async fn run_appended_is_sent_when_a_journal_grows() {
     let scratch = Scratch::default();
@@ -254,8 +259,8 @@ async fn run_appended_is_sent_when_a_journal_grows() {
     let journal = write_journal(&runs_dir, "run-1", &[run_started("run-1", "run", &[])]);
     let mut settings = test_settings(&scratch, vec![Root::new(RootKind::Flag, scratch.dir())]);
     settings.runs_dir = Some(runs_dir.clone());
-    // The new run's directory at the end has only the platform's watcher to announce it.
     settings.watch = native_watch();
+    settings.tail_interval = Duration::from_hours(1);
     let served = start_server(settings).await;
     served.list_runs().await;
     let mut events = served.subscribe().await;
@@ -264,7 +269,8 @@ async fn run_appended_is_sent_when_a_journal_grows() {
         &journal,
         journal_line(&trace_ready("iter-1", "one"), jiff::Timestamp::now()).as_bytes(),
     );
-    // The two come in either order: a scan that was due anyway can read the record before the watcher reports it.
+    // The two come in either order: a scan that an earlier event asked for can read the record before the event of
+    // the append arrives.
     let mut seen = BTreeSet::new();
     while seen.len() < 2 {
         let event = events.wait_for(&["run-appended", "runs-changed"]).await;
@@ -273,26 +279,146 @@ async fn run_appended_is_sent_when_a_journal_grows() {
         }
         seen.insert(event.name);
     }
-    let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
-    loop {
-        let runs = served.list_runs().await;
-        if runs["controllerRuns"].as_array().map(Vec::len) == Some(1) && runs["controllerRuns"][0]["traces"] == 1 {
-            break;
-        }
-        assert!(
-            tokio::time::Instant::now() < deadline,
-            "the listing never counted the trace: {runs}"
-        );
-        tokio::time::sleep(Duration::from_millis(100)).await;
+    // Only the record changes the listing, so `runs-changed` came from the scan that counted the trace.
+    let runs = served.list_runs().await;
+    assert_eq!(
+        (
+            runs["controllerRuns"].as_array().map(Vec::len),
+            &runs["controllerRuns"][0]["traces"]
+        ),
+        (Some(1), &json!(1)),
+        "the listing counts the trace: {runs}"
+    );
+
+    let staged = scratch.dir();
+    write_journal(&staged, "run-2", &[run_started("run-2", "run", &[])]);
+    fs::rename(staged.join("run-2"), runs_dir.join("run-2")).expect("move the run into the runs directory");
+    events.wait_for_run("run-2").await;
+}
+
+/// The settings of a server over one runs directory whose watcher the test drives, with no poll and no periodic
+/// scan: only an event that the test sends can make the server read the runs directory again.
+fn driven_settings(scratch: &Scratch, runs_dir: &Path, driven: &DrivenWatch) -> Settings {
+    let mut settings = test_settings(scratch, vec![Root::new(RootKind::Flag, scratch.dir())]);
+    settings.runs_dir = Some(runs_dir.to_path_buf());
+    settings.watch = driven.watch();
+    settings.tail_interval = Duration::from_hours(1);
+    settings
+}
+
+/// The controller creates a run's directory before its journal, so a scan can see the directory alone. The directory
+/// is then watched: the creation of the journal raises an event, and the run is announced.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_run_directory_seen_before_its_journal_is_watched() {
+    let scratch = Scratch::default();
+    let runs_dir = scratch.dir();
+    let driven = DrivenWatch::default();
+    let served = start_server(driven_settings(&scratch, &runs_dir, &driven)).await;
+    let mut events = served.subscribe().await;
+
+    fs::create_dir_all(runs_dir.join("run-2")).expect("create the run's directory");
+    served.scan().await;
+    served.settle().await;
+    let journal = write_journal(&runs_dir, "run-2", &[run_started("run-2", "run", &[])]);
+    assert!(
+        driven.send(notify::Event::new(EventKind::Create(CreateKind::File)).add_path(journal)),
+        "the run's directory without a journal is not watched"
+    );
+    events.wait_for_run("run-2").await;
+}
+
+/// A watcher that dropped events sends a rescan notice, which names no path. The notice starts a scan, and the scan
+/// announces a run whose own event was lost.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_rescan_notice_of_the_watcher_starts_a_scan() {
+    let scratch = Scratch::default();
+    let runs_dir = scratch.dir();
+    let driven = DrivenWatch::default();
+    let served = start_server(driven_settings(&scratch, &runs_dir, &driven)).await;
+    let mut events = served.subscribe().await;
+
+    write_journal(&runs_dir, "run-2", &[run_started("run-2", "run", &[])]);
+    assert!(driven.send(notify::Event::new(EventKind::Other).set_flag(Flag::Rescan)));
+    events.wait_for_run("run-2").await;
+}
+
+/// With no file event at all, the poll announces a new run: one whose journal comes with its directory, and one whose
+/// directory a scan saw before its journal.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_new_run_is_announced_without_a_file_event() {
+    let scratch = Scratch::default();
+    let runs_dir = scratch.dir();
+    let mut settings = test_settings(&scratch, vec![Root::new(RootKind::Flag, scratch.dir())]);
+    settings.runs_dir = Some(runs_dir.clone());
+    let served = start_server(settings).await;
+    let mut events = served.subscribe().await;
+
+    write_journal(&runs_dir, "run-2", &[run_started("run-2", "run", &[])]);
+    events.wait_for_run("run-2").await;
+
+    fs::create_dir_all(runs_dir.join("run-3")).expect("create the run's directory");
+    served.scan().await;
+    served.settle().await;
+    write_journal(&runs_dir, "run-3", &[run_started("run-3", "run", &[])]);
+    events.wait_for_run("run-3").await;
+}
+
+/// A file watcher that the test drives. It keeps the directories that the server watches, and it delivers an event
+/// the way a platform watcher that is not recursive does: only for a path in a watched directory.
+#[derive(Clone, Default)]
+struct DrivenWatch {
+    events: Arc<Mutex<Option<state::WatchEvents>>>,
+    watched: Arc<Mutex<BTreeSet<PathBuf>>>,
+}
+
+impl DrivenWatch {
+    fn watch(&self) -> state::Watch {
+        let driven = self.clone();
+        Arc::new(move |events| {
+            *driven.events.lock().expect("the events lock") = Some(events);
+            Ok(Box::new(DrivenWatcher(Arc::clone(&driven.watched))))
+        })
     }
 
-    // A new run's directory appears under the watched runs directory.
-    write_journal(&runs_dir, "run-2", &[run_started("run-2", "run", &[])]);
-    loop {
-        let event = events.wait_for(&["run-appended"]).await;
-        if event.data == r#"{"runId":"run-2"}"# {
-            return;
+    /// Delivers an event and answers true, or answers false when a path of the event is in no watched directory. A
+    /// rescan notice names no path, so it is always delivered.
+    fn send(&self, event: notify::Event) -> bool {
+        let covered = {
+            let watched = self.watched.lock().expect("the watched lock");
+            event
+                .paths
+                .iter()
+                .all(|path| path.parent().is_some_and(|parent| watched.contains(parent)))
+        };
+        if covered {
+            let events = self.events.lock().expect("the events lock");
+            let events = events.as_ref().expect("the server started its watcher");
+            events.send(Ok(event)).expect("the watch loop receives");
         }
+        covered
+    }
+}
+
+/// The watcher that [DrivenWatch] hands to the server.
+struct DrivenWatcher(Arc<Mutex<BTreeSet<PathBuf>>>);
+
+impl notify::Watcher for DrivenWatcher {
+    fn new<F: notify::EventHandler>(_: F, _: notify::Config) -> notify::Result<Self> {
+        Err(notify::Error::generic("a driven watcher is made by its test"))
+    }
+
+    fn watch(&mut self, path: &Path, _: notify::RecursiveMode) -> notify::Result<()> {
+        self.0.lock().expect("the watched lock").insert(path.to_path_buf());
+        Ok(())
+    }
+
+    fn unwatch(&mut self, path: &Path) -> notify::Result<()> {
+        self.0.lock().expect("the watched lock").remove(path);
+        Ok(())
+    }
+
+    fn kind() -> notify::WatcherKind {
+        notify::WatcherKind::NullWatcher
     }
 }
 
@@ -510,7 +636,7 @@ fn site_project(scratch: &Scratch, source_time: SystemTime) -> PathBuf {
 fn build_site(
     run: impl Fn(PathBuf, state::BuildOutput) -> futures::future::BoxFuture<'static, Result<(), Refusal>> + Send + Sync + 'static,
 ) -> state::BuildSite {
-    Arc::new(move |project, output, _cancel| run(project, output))
+    Arc::new(move |project, _kernel, output, _cancel| run(project, output))
 }
 
 #[tokio::test(flavor = "multi_thread")]
@@ -537,20 +663,21 @@ async fn the_site_is_built_once_while_the_placeholder_says_so() {
     let served = start_server(settings).await;
     let building = tokio::spawn(Arc::clone(&served.server).build_site_once(CancellationToken::new()));
     let html = [("accept", "text/html")];
+    // The server is building before the build writes its first line, so a page that says so without that line is
+    // still early, and the poll goes on.
     let deadline = tokio::time::Instant::now() + Duration::from_secs(5);
-    loop {
+    let page = loop {
         let page = served.get("/air/runs", &html).await.text();
-        if page.contains("is building") {
-            assert!(page.contains("vite building for production"), "{page}");
-            assert!(page.contains(r#"http-equiv="refresh""#), "{page}");
-            break;
+        if page.contains("is building") && page.contains("vite building for production") {
+            break page;
         }
         assert!(
             tokio::time::Instant::now() < deadline,
-            "the placeholder never said the site is building: {page}"
+            "the placeholder never said the site is building with the first line of the build: {page}"
         );
         tokio::time::sleep(Duration::from_millis(20)).await;
-    }
+    };
+    assert!(page.contains(r#"http-equiv="refresh""#), "{page}");
     release.notify_one();
     building.await.expect("the build did not panic");
     let page = served.get("/air/runs", &html).await;
@@ -608,11 +735,11 @@ async fn a_current_site_is_not_built() {
 
     let stale = site_project(&scratch, SystemTime::now() + Duration::from_hours(1));
     assert_eq!(
-        site_needs_build(Some(&stale), Some(&site)),
+        site_needs_build(Some(&stale), None, Some(&site)),
         Some("the site is older than its sources")
     );
     assert_eq!(
-        site_needs_build(Some(&scratch.dir()), Some(&site)),
+        site_needs_build(Some(&scratch.dir()), None, Some(&site)),
         None,
         "a directory without package.json"
     );
@@ -759,7 +886,7 @@ fn the_site_is_installed_before_it_is_built_when_its_dependencies_are_missing() 
     };
     let project = Path::new("/repo/plugins/air/docs");
 
-    let steps = site_steps(&tools, project, true);
+    let steps = site_steps(&tools, &[project], project);
     assert_eq!(
         steps.iter().map(|step| step.label.as_str()).collect::<Vec<_>>(),
         [
@@ -780,7 +907,7 @@ fn the_site_is_installed_before_it_is_built_when_its_dependencies_are_missing() 
         ["--dir", "/repo/plugins/air/docs", "install", "--frozen-lockfile"].map(OsString::from)
     );
 
-    let built_only = site_steps(&tools, project, false);
+    let built_only = site_steps(&tools, &[], project);
     assert_eq!(
         built_only.iter().map(|step| step.label.as_str()).collect::<Vec<_>>(),
         ["pnpm --dir /repo/plugins/air/docs build"],
@@ -789,8 +916,113 @@ fn the_site_is_installed_before_it_is_built_when_its_dependencies_are_missing() 
 }
 
 #[test]
+fn the_kernel_is_installed_before_the_project_that_links_it() {
+    let tools = SiteTools::Pinned {
+        node: PathBuf::from("/tools/node/bin/node"),
+        pnpm: PathBuf::from("/tools/pnpm/pnpm"),
+    };
+    let kernel = Path::new("/repo/community/tools/docs-site");
+    let project = Path::new("/repo/plugins/air/docs");
+
+    let steps = site_steps(&tools, &[kernel, project], project);
+    assert_eq!(
+        steps.iter().map(|step| step.label.as_str()).collect::<Vec<_>>(),
+        [
+            "pnpm --dir /repo/community/tools/docs-site install --frozen-lockfile",
+            "pnpm --dir /repo/plugins/air/docs install --frozen-lockfile",
+            "pnpm --dir /repo/plugins/air/docs build",
+        ]
+    );
+    assert_eq!(
+        steps[0].args,
+        ["--dir", "/repo/community/tools/docs-site", "install", "--frozen-lockfile"].map(OsString::from)
+    );
+}
+
+#[test]
+fn only_a_directory_without_node_modules_is_installed() {
+    let scratch = Scratch::default();
+    let kernel = scratch.dir().join("kernel");
+    let project = scratch.dir().join("docs");
+    write_file(&kernel.join("package.json"), b"{}");
+    write_file(&project.join("package.json"), b"{}");
+
+    assert_eq!(site_installs(&project, Some(&kernel)), [kernel.as_path(), project.as_path()]);
+
+    fs::create_dir_all(kernel.join("node_modules")).expect("the kernel's node_modules");
+    assert_eq!(
+        site_installs(&project, Some(&kernel)),
+        [project.as_path()],
+        "an installed kernel is not installed again"
+    );
+
+    fs::create_dir_all(project.join("node_modules")).expect("the project's node_modules");
+    assert!(site_installs(&project, Some(&kernel)).is_empty(), "nothing is missing");
+
+    let no_kernel = scratch.dir().join("no-kernel");
+    fs::create_dir_all(&no_kernel).expect("a directory without package.json");
+    fs::remove_dir_all(project.join("node_modules")).expect("drop the project's node_modules");
+    assert_eq!(
+        site_installs(&project, Some(&no_kernel)),
+        [project.as_path()],
+        "a kernel without package.json is not installed"
+    );
+    assert_eq!(site_installs(&project, None), [project.as_path()]);
+}
+
+#[test]
+fn the_staleness_check_reads_the_kernel_sources_too() {
+    let kernel = Path::new("/repo/community/tools/docs-site");
+    let project = Path::new("/repo/plugins/air/docs");
+    assert_eq!(
+        site_source_dirs(project, Some(kernel)),
+        [
+            "/repo/plugins/air/docs/src",
+            "/repo/community/tools/docs-site/src",
+            "/repo/community/tools/docs-site/scripts",
+            "/repo/community/tools/docs-site/styles",
+        ]
+        .map(PathBuf::from)
+    );
+    assert_eq!(site_source_dirs(project, None), [PathBuf::from("/repo/plugins/air/docs/src")]);
+}
+
+#[test]
+fn a_kernel_edit_makes_the_site_stale() {
+    for dir in KERNEL_SOURCES_DIRS {
+        let scratch = Scratch::default();
+        let project = site_project(&scratch, SystemTime::now() - Duration::from_hours(2));
+        let site = scratch.dir().join("site");
+        let index = site.join("index.html");
+        write_file(&index, b"<!doctype html>");
+        set_modified(&index, SystemTime::now() - Duration::from_hours(1));
+        let kernel = scratch.dir().join("kernel");
+        let source = kernel.join(dir).join("edited.ts");
+        write_file(&source, b"export {}");
+        set_modified(&source, SystemTime::now() - Duration::from_hours(2));
+        assert_eq!(
+            site_needs_build(Some(&project), Some(&kernel), Some(&site)),
+            None,
+            "{dir}: nothing is newer"
+        );
+
+        set_modified(&source, SystemTime::now());
+        assert_eq!(
+            site_needs_build(Some(&project), Some(&kernel), Some(&site)),
+            Some("the site is older than its sources"),
+            "{dir}: a kernel file newer than the site"
+        );
+        assert_eq!(
+            site_needs_build(Some(&project), None, Some(&site)),
+            None,
+            "{dir}: without the kernel only the project's sources count"
+        );
+    }
+}
+
+#[test]
 fn outside_a_checkout_the_site_is_built_with_the_pnpm_on_the_path() {
-    let steps = site_steps(&SiteTools::Path, Path::new("/docs"), false);
+    let steps = site_steps(&SiteTools::Path, &[], Path::new("/docs"));
     assert_eq!(steps.len(), 1);
     assert_eq!(steps[0].program, PathBuf::from(PATH_PNPM));
     assert_eq!(steps[0].path_prefix, None, "the PATH is left as it is");
@@ -833,7 +1065,7 @@ async fn the_pinned_pnpm_runs_each_step_with_the_pinned_node_first_on_the_path()
     let (output, lines) = kept_output();
 
     let tools = SiteTools::Pinned { node: node.clone(), pnpm };
-    build_site_with(&tools, &project, true, &output, &CancellationToken::new())
+    build_site_with(&tools, &[&project], &project, &output, &CancellationToken::new())
         .await
         .expect("both steps pass");
 
@@ -877,7 +1109,7 @@ async fn a_failing_install_stops_the_build_and_names_the_step() {
     let (output, _lines) = kept_output();
 
     let tools = SiteTools::Pinned { node, pnpm };
-    let failed = build_site_with(&tools, &project, true, &output, &CancellationToken::new())
+    let failed = build_site_with(&tools, &[&project], &project, &output, &CancellationToken::new())
         .await
         .expect_err("the install fails");
 

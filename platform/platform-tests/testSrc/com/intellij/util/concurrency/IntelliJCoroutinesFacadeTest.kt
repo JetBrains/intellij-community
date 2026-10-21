@@ -6,50 +6,51 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.IntelliJCoroutinesFacade.withGrantedParallelism
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
-import java.util.stream.IntStream
-import kotlin.streams.toList
+import java.util.concurrent.TimeUnit.SECONDS
 import kotlin.time.Duration.Companion.seconds
 
-@OptIn(InternalCoroutinesApi::class)
 @TestApplication
 @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
 class IntelliJCoroutinesFacadeTest {
   @Test
   fun launchingZillionOfCoroutinesMustNotPrecludeRunningAnotherInsideCompensateParallelism(): Unit = timeoutRunBlocking(timeout = 60.seconds) {
-    val latch = CountDownLatch(1)
+    val allowToExit = CountDownLatch(1)
     val poolSize = kotlinx.coroutines.scheduling.CORE_POOL_SIZE
-    val started = AtomicInteger()
-    val jobs = IntStream.range(0, poolSize).toList().map {
+    val started = CountDownLatch(poolSize)
+    val jobs = List(poolSize) {
       launch(Dispatchers.Default) {
-        started.incrementAndGet()
-        latch.await()
+        started.countDown()
+        allowToExit.await()
       }
     }
-    while (started.get() < poolSize) {
-      Thread.yield()
+    try {
+      assertTrue(started.await(10, SECONDS), "The coroutines did not saturate the Default dispatcher")
+      Dispatchers.Default.withGrantedParallelism { granted ->
+        assertTrue(granted, "The Default dispatcher did not grant extra parallelism")
+        val ran = CountDownLatch(1)
+        launch(Dispatchers.Default) {
+          ran.countDown()
+        }
+        assertTrue(ran.await(10, SECONDS), "The coroutine did not run with extra parallelism")
+      }
+      Dispatchers.Default.withGrantedParallelism { granted ->
+        assertTrue(granted, "The Default dispatcher did not grant extra parallelism")
+        val factory = IntelliJVirtualThreads.ofVirtual().name("IntelliJCoroutinesFacadeTest").factory()
+        val thread = factory.newThread {}
+        thread.start()
+        thread.join(10_000)
+        assertFalse(thread.isAlive, "The virtual thread did not finish with extra parallelism")
+      }
     }
-    val j2: AtomicReference<Job> = AtomicReference()
-    Dispatchers.Default.withGrantedParallelism {
-      j2.set(launch(Dispatchers.Default) {
-          started.incrementAndGet()
-      })
+    finally {
+      allowToExit.countDown()
     }
-    j2.get().join()
-    Dispatchers.Default.withGrantedParallelism {
-      val factory = IntelliJVirtualThreads.ofVirtual().name("IntelliJCoroutinesFacadeTest").factory()
-      val thread = factory.newThread {}
-      thread.start()
-      thread.join()
-    }
-    latch.countDown()
     jobs.joinAll()
   }
 }

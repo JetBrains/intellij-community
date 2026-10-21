@@ -4,19 +4,25 @@ package com.intellij.java.parser.annotationParsing;
 import com.intellij.java.parser.AbstractBasicJavaParsingTestCase;
 import com.intellij.java.parser.AbstractBasicJavaParsingTestConfigurator;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 public abstract class AbstractBasicAnnotationDeclarationParsingTest extends AbstractBasicJavaParsingTestCase {
   public AbstractBasicAnnotationDeclarationParsingTest(@NotNull AbstractBasicJavaParsingTestConfigurator configurator) {
     super("parser-full/annotationParsing/declaration", configurator);
   }
 
+  @Test
   public void testSimple() { doTest(true); }
 
+  @Test
   public void testDefault() { doTest(true); }
 
+  @Test
   public void testNested() { doTest(true); }
 
+  @Test
   public void testInner() { doTest(true); }
 
+  @Test
   public void testOtherMembers() { doTest(true); }
 }

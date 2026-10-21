@@ -896,7 +896,6 @@ e:com.intellij.ide.browsers.BrowserFamily
 - java.lang.Enum
 - com.intellij.openapi.util.Iconable
 - sf:CHROME:com.intellij.ide.browsers.BrowserFamily
-- sf:EXPLORER:com.intellij.ide.browsers.BrowserFamily
 - sf:FIREFOX:com.intellij.ide.browsers.BrowserFamily
 - sf:SAFARI:com.intellij.ide.browsers.BrowserFamily
 - createBrowserSpecificSettings():com.intellij.ide.browsers.BrowserSpecificSettings
@@ -1358,6 +1357,8 @@ f:com.intellij.ide.util.treeView.TreeState
 - sf:CALLBACK:com.intellij.openapi.util.Key
 - applyTo(javax.swing.JTree):V
 - applyTo(javax.swing.JTree,java.lang.Object):V
+- applyTo(javax.swing.JTree,java.lang.Object,Z):V
+- applyTo(javax.swing.JTree,Z):V
 - s:createFrom(org.jdom.Element):com.intellij.ide.util.treeView.TreeState
 - s:createOn(javax.swing.JTree):com.intellij.ide.util.treeView.TreeState
 - s:createOn(javax.swing.JTree,java.util.List,java.util.List):com.intellij.ide.util.treeView.TreeState
@@ -6326,24 +6327,14 @@ a:com.intellij.ui.GroupedElementsRenderer$Tree
 f:com.intellij.ui.GuiUtils
 - <init>():V
 - s:colorToHex(java.awt.Color):java.lang.String
-- s:constructFieldWithBrowseButton(com.intellij.ui.TextFieldWithHistory,java.awt.event.ActionListener):javax.swing.JPanel
-- s:constructFieldWithBrowseButton(javax.swing.JComponent,java.awt.event.ActionListener):javax.swing.JPanel
 - s:createUndoableTextField():javax.swing.JTextField
 - s:createVerticalStrut():java.awt.Component
 - s:enableChildren(java.awt.Component,Z,javax.swing.JComponent[]):V
-- s:enableChildren(Z,java.awt.Component[]):V
-- s:getDisplayedMnemonic(java.lang.String):C
-- s:getDisplayedMnemonicIndex(java.lang.String):I
 - s:getSizeByChars(I,javax.swing.JComponent):java.awt.Dimension
-- s:getTextWithoutMnemonicEscaping(java.lang.String):java.lang.String
 - s:installVisibilityReferent(javax.swing.JComponent,javax.swing.JComponent):V
-- s:installVisibilityReferents(javax.swing.JComponent,javax.swing.JComponent[]):V
 - s:invokeLaterIfNeeded(java.lang.Runnable,com.intellij.openapi.application.ModalityState):V
-- s:iterateChildren(java.awt.Component,java.util.function.Consumer,javax.swing.JComponent[]):V
-- s:removePotentiallyLeakingReferences(java.awt.Container):V
 - s:replaceJSplitPaneWithIDEASplitter(javax.swing.JComponent):V
 - s:replaceJSplitPaneWithIDEASplitter(javax.swing.JComponent,Z):V
-- s:showComponents(Z,java.awt.Component[]):V
 c:com.intellij.ui.HighlightableCellRenderer
 - com.intellij.ui.HighlightableComponent
 - javax.swing.ListCellRenderer
@@ -8264,6 +8255,18 @@ c:com.intellij.ui.components.ProgressBarLoadingDecorator
 - startLoading():V
 - startLoading(Z):V
 - stopLoading():V
+c:com.intellij.ui.components.ShimmerLabel
+- com.intellij.ui.components.JBLabel
+- <init>():V
+- <init>(java.lang.String):V
+- <init>(java.lang.String,javax.swing.Icon):V
+- <init>(java.lang.String,javax.swing.Icon,I):V
+- b:<init>(java.lang.String,javax.swing.Icon,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- addNotify():V
+- f:isShimmering():Z
+- p:paintComponent(java.awt.Graphics):V
+- removeNotify():V
+- f:setShimmering(Z):V
 c:com.intellij.ui.components.TextComponentEmptyText
 - com.intellij.util.ui.StatusText
 - sf:STATUS_VISIBLE_FUNCTION:java.lang.String
@@ -8907,7 +8910,7 @@ com.intellij.ui.dsl.builder.Cell
 - a:getComment():javax.swing.JEditorPane
 - a:getCommentRight():javax.swing.JEditorPane
 - a:getComponent():javax.swing.JComponent
-- a:horizontalAlign(com.intellij.ui.dsl.gridLayout.HorizontalAlign):com.intellij.ui.dsl.builder.Cell
+- ba:horizontalAlign(com.intellij.ui.dsl.gridLayout.HorizontalAlign):com.intellij.ui.dsl.builder.Cell
 - a:label(java.lang.String,com.intellij.ui.dsl.builder.LabelPosition):com.intellij.ui.dsl.builder.Cell
 - a:label(javax.swing.JLabel,com.intellij.ui.dsl.builder.LabelPosition):com.intellij.ui.dsl.builder.Cell
 - bs:label$default(com.intellij.ui.dsl.builder.Cell,java.lang.String,com.intellij.ui.dsl.builder.LabelPosition,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
@@ -8928,7 +8931,7 @@ com.intellij.ui.dsl.builder.Cell
 - a:validationRequestor(com.intellij.openapi.ui.validation.DialogValidationRequestor$WithParameter):com.intellij.ui.dsl.builder.Cell
 - a:validationRequestor(com.intellij.openapi.ui.validation.DialogValidationRequestor):com.intellij.ui.dsl.builder.Cell
 - a:validationRequestor(kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
-- a:verticalAlign(com.intellij.ui.dsl.gridLayout.VerticalAlign):com.intellij.ui.dsl.builder.Cell
+- ba:verticalAlign(com.intellij.ui.dsl.gridLayout.VerticalAlign):com.intellij.ui.dsl.builder.Cell
 - a:visible(Z):com.intellij.ui.dsl.builder.Cell
 - a:visibleIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.Cell
 - a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.Cell
@@ -9162,7 +9165,7 @@ com.intellij.ui.dsl.builder.Row
 - bs:text$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - a:textArea():com.intellij.ui.dsl.builder.Cell
 - a:textField():com.intellij.ui.dsl.builder.Cell
-- textFieldWithBrowseButton(java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- b:textFieldWithBrowseButton(java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
 - bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - a:threeStateCheckBox(java.lang.String):com.intellij.ui.dsl.builder.Cell
 - a:topGap(com.intellij.ui.dsl.builder.TopGap):com.intellij.ui.dsl.builder.Row
@@ -9184,7 +9187,7 @@ Ff:com.intellij.ui.dsl.builder.Row$DefaultImpls
 - bs:spinner$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.ClosedRange,D,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:spinner$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.IntRange,I,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:text$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
-- s:textFieldWithBrowseButton(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- bs:textFieldWithBrowseButton(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
 - bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 e:com.intellij.ui.dsl.builder.RowLayout
@@ -9309,7 +9312,7 @@ f:com.intellij.ui.dsl.builder.UtilsKt
 - sf:asRange(com.intellij.ide.ui.UINumericRange):kotlin.ranges.IntRange
 - sf:classIconProvider(java.lang.Class):com.intellij.ui.dsl.builder.IconsProvider
 - sf:cleanupHtml(java.lang.String):java.lang.String
-- sf:listCellRenderer(kotlin.jvm.functions.Function2):com.intellij.ui.SimpleListCellRenderer
+- bsf:listCellRenderer(kotlin.jvm.functions.Function2):com.intellij.ui.SimpleListCellRenderer
 f:com.intellij.ui.dsl.builder.VerticalComponentGap
 - sf:BOTH:com.intellij.ui.dsl.builder.VerticalComponentGap
 - sf:Companion:com.intellij.ui.dsl.builder.VerticalComponentGap$Companion
@@ -10285,6 +10288,7 @@ f:com.intellij.ui.tabs.TabInfo
 - f:getSideComponent():javax.swing.JComponent
 - f:getTabActionPlace():java.lang.String
 - f:getTabColor():java.awt.Color
+- f:getTabLabel():com.intellij.ui.tabs.impl.TabLabel
 - f:getTabLabelActions():com.intellij.openapi.actionSystem.ActionGroup
 - f:getTabPaneActions():com.intellij.openapi.actionSystem.ActionGroup
 - f:getText():java.lang.String
@@ -11293,7 +11297,6 @@ c:com.intellij.util.net.HttpConfigurable
 - getGenericPassword(java.lang.String,I):java.net.PasswordAuthentication
 - getGenericPromptedAuthentication(java.lang.String,java.lang.String,java.lang.String,I,Z):java.net.PasswordAuthentication
 - s:getInstance():com.intellij.util.net.HttpConfigurable
-- getJvmProperties(Z,java.net.URI):java.util.List
 - getOnlyBySettingsSelector():java.net.ProxySelector
 - getPlainProxyPassword():java.lang.String
 - getPromptedAuthentication(java.lang.String,java.lang.String):java.net.PasswordAuthentication
@@ -11308,8 +11311,6 @@ c:com.intellij.util.net.HttpConfigurable
 - openConnection(java.lang.String):java.net.URLConnection
 - openHttpConnection(java.lang.String):java.net.HttpURLConnection
 - prepareURL(java.lang.String):V
-- putGenericPassword(java.lang.String,I,java.net.PasswordAuthentication,Z):V
-- removeGeneric(com.intellij.util.proxy.CommonProxy$HostInfo):V
 f:com.intellij.util.net.HttpConnectionUtils
 - sf:INSTANCE:com.intellij.util.net.HttpConnectionUtils
 - sf:openConnection(java.lang.String):java.net.URLConnection
@@ -11412,7 +11413,6 @@ com.intellij.util.net.ProxyCredentialStore
 - sf:Companion:com.intellij.util.net.ProxyCredentialStore$Companion
 - a:areCredentialsRemembered(java.lang.String,I):Z
 - a:clearAllCredentials():V
-- a:clearTransientCredentials():V
 - getCredentials(com.intellij.util.net.ProxyConfiguration):com.intellij.credentialStore.Credentials
 - a:getCredentials(java.lang.String,I):com.intellij.credentialStore.Credentials
 - s:getInstance():com.intellij.util.net.ProxyCredentialStore
@@ -11787,6 +11787,7 @@ com.intellij.util.ui.ErrorTreeView
 - a:addMessage(I,java.lang.String[],java.lang.String,com.intellij.pom.Navigatable,java.lang.String,java.lang.String,java.lang.Object):V
 - a:getComponent():javax.swing.JComponent
 c:com.intellij.util.ui.FormBuilder
+- sf:Companion:com.intellij.util.ui.FormBuilder$Companion
 - <init>():V
 - addComponent(javax.swing.JComponent):com.intellij.util.ui.FormBuilder
 - addComponent(javax.swing.JComponent,I):com.intellij.util.ui.FormBuilder
@@ -11806,15 +11807,16 @@ c:com.intellij.util.ui.FormBuilder
 - addSeparator(I):com.intellij.util.ui.FormBuilder
 - addTooltip(java.lang.String):com.intellij.util.ui.FormBuilder
 - addVerticalGap(I):com.intellij.util.ui.FormBuilder
-- s:createFormBuilder():com.intellij.util.ui.FormBuilder
+- sf:createFormBuilder():com.intellij.util.ui.FormBuilder
 - p:getFill(javax.swing.JComponent):I
-- getLineCount():I
 - getPanel():javax.swing.JPanel
 - setAlignLabelOnRight(Z):com.intellij.util.ui.FormBuilder
 - setFormLeftIndent(I):com.intellij.util.ui.FormBuilder
 - setHorizontalGap(I):com.intellij.util.ui.FormBuilder
 - setVertical(Z):com.intellij.util.ui.FormBuilder
 - setVerticalGap(I):com.intellij.util.ui.FormBuilder
+f:com.intellij.util.ui.FormBuilder$Companion
+- f:createFormBuilder():com.intellij.util.ui.FormBuilder
 a:com.intellij.util.ui.ImmutableColumnInfo
 - com.intellij.util.ui.ColumnInfo
 - <init>(java.lang.String):V

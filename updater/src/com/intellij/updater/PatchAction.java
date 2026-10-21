@@ -144,6 +144,10 @@ public abstract class PatchAction {
 
   protected abstract ValidationResult validate(File toDir) throws IOException;
 
+  protected List<File> getValidationFiles(File toDir) {
+    return List.of(getFile(toDir));
+  }
+
   protected ValidationResult doValidateAccess(File toFile, ValidationResult.Action action, boolean checkWriteable) {
     if (!toFile.exists() || toFile.isDirectory()) return null;
     ValidationResult result = validateProcessLock(toFile, action);
@@ -178,6 +182,7 @@ public abstract class PatchAction {
   }
 
   private ValidationResult validateProcessLock(File toFile, ValidationResult.Action action) {
+    if (myPatch.isKnownUnused(toFile)) return null;
     List<NativeFileManager.Process> processes = NativeFileManager.getProcessesUsing(toFile);
     if (processes.isEmpty()) return null;
     var message = UpdaterUI.message("file.locked", processes.stream().map(p -> "[" + p.pid + "] " + p.name).collect(Collectors.joining(", ")));

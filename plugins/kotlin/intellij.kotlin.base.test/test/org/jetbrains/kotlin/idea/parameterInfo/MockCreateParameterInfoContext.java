@@ -39,7 +39,7 @@ public class MockCreateParameterInfoContext implements CreateParameterInfoContex
 
     @Override
     public int getParameterListStart() {
-        return 0;
+        return -1;
     }
 
     @Override

@@ -27,25 +27,32 @@ import com.sun.jna.platform.win32.WinNT;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
 import com.sun.jna.win32.StdCallLibrary;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 
 import static com.intellij.updater.Runner.LOG;
 import static com.sun.jna.platform.win32.WinError.ERROR_MORE_DATA;
 
 /**
  * <p>A utility class to find processes that hold a lock to a file. This relies on a Windows API called
- * <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/cc948910(v=vs.85).aspx">RestartManager</a>}.</p>
+ * <a href="http://msdn.microsoft.com/en-us/library/windows/desktop/cc948910(v=vs.85).aspx">RestartManager</a>.</p>
  *
  * <p>This class uses the RestartManager and the Kernel32 APIs, and it tries to initialize them the first
  * time it is run. If the RestartManager DLL is not found, it being because we are running on XP or
  * because we are not running on Windows, then the class is flagged as failed and no further attempts
  * will be made to load the DLL.</p>
  */
+@SuppressWarnings("IO_FILE_USAGE")
 public final class NativeFileManager {
   private static final int MAX_PROCESSES = 10;
   private static final int MAX_RETRIES = 5;
@@ -80,8 +87,16 @@ public final class NativeFileManager {
     }
   }
 
+  public static boolean isAvailable() {
+    return !ourFailed;
+  }
+
   @VisibleForTesting
-  public static List<Process> getProcessesUsing(File file, int initialBufferSize) {
+  public static @NotNull List<Process> getProcessesUsing(File file, int initialBufferSize) {
+    return queryProcesses(List.of(file), initialBufferSize);
+  }
+
+  private static @NotNull List<Process> queryProcesses(List<File> files, int initialBufferSize) {
     // If the DLL was not present (XP or other OS), do not try to find it again.
     if (!ourFailed) {
       try {
@@ -93,10 +108,16 @@ public final class NativeFileManager {
         }
         else {
           try {
-            StringArray resources = new StringArray(new WString[]{new WString(file.toString())});
-            error = Win32RestartManager.INSTANCE.RmRegisterResources(session.getValue(), 1, resources, 0, Pointer.NULL, 0, null);
+            WString[] names = new WString[files.size()];
+            for (int i = 0; i < names.length; i++) {
+              names[i] = new WString(files.get(i).toString());
+            }
+
+            StringArray resources = new StringArray(names);
+            error = Win32RestartManager.INSTANCE.RmRegisterResources(session.getValue(), names.length, resources, 0, Pointer.NULL, 0, null);
+
             if (error != 0) {
-              LOG.warning("RmRegisterResources('" + file + "'): " + error);
+              LOG.warning("RmRegisterResources(" + describe(files) + "): " + error);
             }
             else {
               int arraySize = initialBufferSize;
@@ -112,7 +133,7 @@ public final class NativeFileManager {
                 }
 
                 if (error != 0) {
-                  LOG.warning("RmGetList('" + file + "'): " + error);
+                  LOG.warning("RmGetList(" + describe(files) + "): " + error);
                 }
                 else {
                   int n = procInfo.getValue();
@@ -140,8 +161,49 @@ public final class NativeFileManager {
     return List.of();
   }
 
-  public static List<Process> getProcessesUsing(File file) {
+  public static @NotNull List<Process> getProcessesUsing(File file) {
     return getProcessesUsing(file, MAX_PROCESSES);
+  }
+
+  public static Set<File> findUnusedFiles(@NotNull Collection<File> files, @NotNull UpdaterUI ui) throws OperationCancelledException {
+    if (ourFailed || files.isEmpty()) return Set.of();
+    return findUnusedFiles(files, ui, group -> queryProcesses(group, MAX_PROCESSES));
+  }
+
+  @VisibleForTesting
+  static @NotNull Set<File> findUnusedFiles(@NotNull Collection<File> files,
+                                            @NotNull UpdaterUI ui,
+                                            @NotNull Function<List<File>,
+                                            @NotNull List<Process>> query)
+    throws OperationCancelledException {
+    var unused = new HashSet<File>();
+    if (!files.isEmpty()) {
+      collectUnusedFiles(new ArrayList<>(files), unused, ui, query);
+    }
+    ui.checkCancelled();
+    LOG.info("Restart Manager: " + unused.size() + " of " + files.size() + " files are free");
+    return unused;
+  }
+
+  private static @NotNull String describe(@NotNull List<File> files) {
+    return files.stream().map(File::getAbsolutePath).collect(Collectors.joining(", "));
+  }
+
+  private static void collectUnusedFiles(@NotNull List<File> files,
+                                         @NotNull Set<File> unused,
+                                         @NotNull UpdaterUI ui,
+                                         @NotNull Function<List<File>,
+                                         @NotNull List<Process>> query) throws OperationCancelledException {
+    ui.checkCancelled();
+    var result = query.apply(files);
+    if (result.isEmpty()) {
+      unused.addAll(files);
+    }
+    else if (files.size() > 1) {
+      int half = files.size() / 2;
+      collectUnusedFiles(files.subList(0, half), unused, ui, query);
+      collectUnusedFiles(files.subList(half, files.size()), unused, ui, query);
+    }
   }
 
   @SuppressWarnings({"SpellCheckingInspection", "unused", "UnusedReturnValue"})

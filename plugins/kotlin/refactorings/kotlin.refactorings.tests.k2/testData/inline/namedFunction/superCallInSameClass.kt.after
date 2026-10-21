@@ -1,0 +1,12 @@
+open class Base {
+    open fun bar() = 1
+}
+
+class Impl : Base() {
+
+    fun use() = super.bar()
+
+    fun useThis() = super.bar()
+
+    fun useLabeledThis() = super.bar()
+}

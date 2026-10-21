@@ -5,8 +5,10 @@ import com.intellij.execution.ExecutionListener
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.ide.ui.ToolbarSettings
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
+import com.intellij.openapi.actionSystem.impl.DynamicActionConfigurationCustomizer
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -114,11 +116,15 @@ private class RunToolbarComponentService(private val project: Project, private v
   }
 }
 
-internal class MyActionConfigurationCustomizer : ActionConfigurationCustomizer, ActionConfigurationCustomizer.LightCustomizeStrategy {
+internal class MyActionConfigurationCustomizer : DynamicActionConfigurationCustomizer, ActionConfigurationCustomizer.LightCustomizeStrategy {
   override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
     if (ExperimentalUI.isNewUI()) {
       actionRegistrar.unregisterAction("RunToolbarWidgetAction")
       actionRegistrar.unregisterAction("SegmentedVcsControlAction")
     }
+  }
+
+  override fun unregisterActions(actionManager: ActionManager) {
+    //currently, `intellij.platform.execution.impl` module can be never unloaded
   }
 }

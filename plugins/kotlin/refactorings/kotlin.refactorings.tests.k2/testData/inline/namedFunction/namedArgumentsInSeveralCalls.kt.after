@@ -1,0 +1,7 @@
+fun first(p: Int, q: Int) = p + q
+
+fun second(p: Int, q: Int) = p - q
+
+fun test(): Int {
+    return first(p = 1, q = 0) + second(0, q = 2)
+}

@@ -53,7 +53,7 @@ internal suspend fun createUvSdk(pyProject: PyProject, venvs: List<PythonBinary>
   val mode = detectUvMode(workingDir)
   val sdkSetupResult = if (envExists) {
     target.existing?.let {
-      setupExistingEnvAndSdk(ModuleOrProject.ModuleAndProject(sdkAssociatedProject), it, uv, workingDir, mode)
+      setupExistingEnvAndSdk(ModuleOrProject.ModuleAndProject(sdkAssociatedProject), it, workingDir, mode)
     } ?: run {
       logger.warn("Can't find existing uv environment in project, but it was expected. " +
                   "Probably it was deleted. New environment will be created")

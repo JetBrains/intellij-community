@@ -11,6 +11,7 @@ import com.intellij.notebooks.visualization.ui.NotebookUiUtils
 import com.intellij.notebooks.visualization.ui.notebookEditor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.ui.getMousePositionOrNull
 import java.awt.GraphicsEnvironment
 import java.awt.Point
 import java.awt.event.MouseAdapter
@@ -24,10 +25,10 @@ class NotebookEditorCellHoverDetector(private val manager: NotebookCellInlayMana
   private var mouseOverCell: EditorCell? = null
 
   private val scrollChange = ChangeListener {
-    editor.contentComponent.mousePosition?.let {
+    editor.contentComponent.getMousePositionOrNull()?.let {
       updateMouseOverCell(it)
     }
-    editor.gutterComponentEx.mousePosition?.let {
+    editor.gutterComponentEx.getMousePositionOrNull()?.let {
       updateMouseOverCell(it)
     }
   }

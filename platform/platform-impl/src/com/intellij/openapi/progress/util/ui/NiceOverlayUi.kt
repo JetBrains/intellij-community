@@ -17,6 +17,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.getPointerInfoOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BasicStroke
@@ -24,7 +25,6 @@ import java.awt.Color
 import java.awt.Cursor
 import java.awt.FontMetrics
 import java.awt.Graphics2D
-import java.awt.MouseInfo
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.Robot
@@ -338,7 +338,7 @@ class NiceOverlayUi(
   }
 
   private fun trySetCursor(cursor: Cursor) {
-    val point = MouseInfo.getPointerInfo()?.location ?: return
+    val point = getPointerInfoOrNull()?.location ?: return
     val window = SwingUtilities.getWindowAncestor(rootPane) ?: return
     if (!window.isShowing || !window.bounds.contains(point)) return
     SwingUtilities.convertPointFromScreen(point, window) // handles insets/decorations

@@ -12,11 +12,6 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
-    name = "platform_backend_provided",
-    lib = "//platform/backend",
-)
-
-jvm_provided_library(
     name = "platform_core_provided",
     lib = "//platform/core-api:core",
 )
@@ -89,7 +84,6 @@ jvm_library(
         "//platform/core-impl",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         ":libraries_jetbrains_annotations_provided",
-        ":platform_backend_provided",
         ":platform_core_provided",
         ":platform_util_provided",
         ":platform_analysis-impl_provided",
@@ -117,8 +111,6 @@ jvm_library(
         ":backend",
         "//libraries/jetbrains/annotations",
         "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/backend",
-        "//platform/backend:backend_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//platform/util",

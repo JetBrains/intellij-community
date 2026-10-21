@@ -4,13 +4,13 @@ use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
 
-use crate::worker::lease::{receipt_for_path, required_receipt, with_lease_operation};
+use crate::worker::lease::{receipt_for_path, required_receipt, with_lease_operation, with_lease_read, with_run_marker};
 use crate::worker::worker::Lease;
 use avl_base::clock::millis;
 use avl_base::format::{seconds, words};
 use avl_base::phase::{Timeline, Timing};
 use avl_base::plain::release_command;
-use avl_base::{Exit, Outcome, Refusal, Scope, Selection, history};
+use avl_base::{Exit, GuestOs, Outcome, Refusal, Scope, Selection, history};
 use avl_host_sys::Ctx;
 use avl_host_sys::guest::{SupervisorOptions, ensure_host_paths};
 use avl_wire::daemon::Status as DaemonStatus;
@@ -19,7 +19,7 @@ use avl_wire::report::{RunReport, Status};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use crate::daemon::build::{BuildScope, PreparedBuild};
+use crate::daemon::build::{BuildScope, DaemonTarget, PreparedBuild};
 use crate::daemon::host::Host;
 use crate::daemon::iterate::RunAttempt;
 use crate::daemon::leased::Workers;
@@ -27,7 +27,7 @@ use crate::daemon::run::{RunArgs, RunCommandArgs, RunPlan};
 use crate::daemon::state::HostState;
 use crate::daemon::verdict::{iteration_verdict, lanes_verdict};
 use crate::lane::ide::{IdeRetention, gc_guest_ides, gc_note};
-use crate::lane::secrets::{RunSecrets, clear_run_secrets};
+use crate::lane::secrets::{LIVE_INPUT_CODE, RunSecrets, clear_run_secrets};
 use avl_base::RefusalExt;
 
 /// The timeout of the supervisor verb that reads the tail of the daemon log for `daemon log`: a read of one file in
@@ -126,7 +126,6 @@ pub(crate) struct DaemonStartData {
     pub worker: String,
     pub run_id: String,
     pub port: u16,
-    pub runtime_digest: String,
     pub product_digest: String,
     pub phases: Vec<Timing>,
 }
@@ -149,7 +148,7 @@ pub(crate) struct DaemonName {
     pub endpoint: String,
 }
 
-/// `daemon warm`'s payload: no worker, the configuration that was warmed, and the four identities the build
+/// `daemon warm`'s payload: no worker, the configuration that was warmed, and the three identities the build
 /// stamped.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -162,7 +161,6 @@ pub(crate) struct DaemonWarmData {
     /// configuration. Both, because the caller retypes the first and reasons about the second.
     pub config: String,
     pub guest_os: String,
-    pub runtime_digest: String,
     /// What a start compares its own build against, and warming reaches no guest to change it.
     pub launch_digest: String,
     pub product_digest: String,
@@ -176,7 +174,7 @@ pub(crate) struct DaemonWarmData {
 /// The `daemon` verbs.
 #[derive(clap::Subcommand, Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum DaemonVerb {
-    /// Stages the runtime and boots the daemon, replacing any running one.
+    /// Boots the daemon, replacing any running one.
     Start,
     /// The same as start.
     Restart,
@@ -232,6 +230,37 @@ impl Host {
         .await
     }
 
+    /// [`Host::plan_run`], and the daemon descriptor that its build builds. A plan that holds the live lane builds the
+    /// descriptor of the live lane, which adds its CLIs. Such a plan is refused when its run lacks the run input of the
+    /// Central login, and on a macOS guest. The check reads the committed lane documents, so a refusal costs no build
+    /// and no lease. A plan of `--lane` alone reads no checkout, so the host paths resolve here first.
+    async fn plan_run_with(&self, ctx: &Ctx, args: &RunArgs, secrets: &RunSecrets) -> Result<(RunPlan, DaemonTarget), Refusal> {
+        let plan = self.plan_run(ctx, args).await?;
+        ensure_host_paths(ctx, &self.runner, &self.settings).await?;
+        let mut target = DaemonTarget::Lanes;
+        if let Some(documents) = crate::lane::lane_document_root(&self.settings)? {
+            for lane in plan.iterations.iter().filter_map(|iteration| iteration.selection.lane.as_deref()) {
+                let Some(live) = crate::lane::lane_live_context(&documents, lane)? else {
+                    continue;
+                };
+                secrets.require_live_login(lane, &live)?;
+                if self.settings.guest_os != GuestOs::Linux {
+                    return Err(Refusal::new(
+                        LIVE_INPUT_CODE,
+                        Exit::USAGE,
+                        format!(
+                            "the lane {lane} runs only in a Linux guest, and the backend {} has macOS guests; run it with \
+                             --backend docker",
+                            self.settings.backend
+                        ),
+                    ));
+                }
+                target = DaemonTarget::LiveLane;
+            }
+        }
+        Ok((plan, target))
+    }
+
     /// Says what the run will execute, once its selection resolved, and how long that work took in the earlier
     /// runs whose journals are on this machine.
     fn publish_plan(&self, plan: &RunPlan, argv: &[String]) {
@@ -268,11 +297,14 @@ impl Host {
         secrets: &RunSecrets,
     ) -> Result<Outcome, Refusal> {
         let (_, receipt) = receipt_for_path(&self.settings, lease_file)?;
-        with_lease_operation(ctx, &self.manager, &receipt, "run", async |current: Lease| {
-            let plan = self.plan_run(ctx, args).await?;
+        let run_id = ctx
+            .run_id()
+            .ok_or_else(|| Refusal::internal("a run under a receipt has no run id"))?;
+        with_run_marker(ctx, &self.manager, &receipt, run_id, "run", async |current: Lease| {
+            let (plan, target) = self.plan_run_with(ctx, args, secrets).await?;
             self.publish_plan(&plan, argv);
             ensure_host_paths(ctx, &self.runner, &self.settings).await?;
-            let scope = BuildScope::worker(&self.settings, &current.worker)?;
+            let scope = BuildScope::worker(&self.settings, &current.worker)?.for_target(target);
             let built = self.prepare_build(ctx, &scope).await?;
             let attempts = self.run_plan(ctx, &current, &built, &plan, secrets).await;
             let (outcome, verdict) = plan_verdict(&self.reporter.program(), &plan, &attempts, None);
@@ -337,7 +369,7 @@ impl Host {
         run_id: &str,
         secrets: &RunSecrets,
     ) -> Result<Outcome, Refusal> {
-        let plan = self.plan_run(ctx, args).await?;
+        let (plan, target) = self.plan_run_with(ctx, args, secrets).await?;
         self.publish_plan(&plan, argv);
         let workers = Workers {
             borrowed: None,
@@ -351,6 +383,7 @@ impl Host {
                 run_id,
                 "run",
                 workers,
+                target,
                 |_| Ok(()),
                 async |(): &(), _, current: Lease, built: &Arc<PreparedBuild>| self.run_plan(ctx, &current, built, &plan, secrets).await,
             )
@@ -634,6 +667,9 @@ pub(crate) fn render_phase_table(phases: &[Timing]) -> String {
 impl Host {
     /// Drives the daemon lifecycle deliberately: start/restart, status, stop, log, warm.
     ///
+    /// Start, restart and stop change the daemon, so they refuse while a run of another live process is in flight.
+    /// Status and log only read it, so they answer during a run.
+    ///
     /// `warm` is answered before the receipt is resolved, and that placement is the verb's whole point: warming
     /// touches no worker, so requiring a lease would make the cheapest useful command in this controller cost a
     /// worker some other shard could be running tests on.
@@ -650,7 +686,7 @@ impl Host {
                 .await
             }
             DaemonVerb::Status => {
-                with_lease_operation(ctx, &self.manager, &receipt, "status", async |current: Lease| {
+                with_lease_read(ctx, &self.manager, &receipt, "status", async |current: Lease| {
                     self.daemon_status_outcome(ctx, &current.worker).await
                 })
                 .await
@@ -658,6 +694,9 @@ impl Host {
             DaemonVerb::Stop => {
                 with_lease_operation(ctx, &self.manager, &receipt, "cancel", async |current: Lease| {
                     let state = HostState::read(&self.settings, &current.worker);
+                    if self.manager.runs_nothing(ctx, &current.worker).await? {
+                        return self.forget_daemon_of_stopped_worker(&current.worker, state);
+                    }
                     self.stop_daemon(ctx, &current.worker, state.as_ref()).await?;
                     // `stop_daemon` refuses and keeps the record while the recorded run still holds the slot, so
                     // this runs only once no record names a daemon: a daemon run in the slot is retired here, and
@@ -685,13 +724,35 @@ impl Host {
                 .await
             }
             DaemonVerb::Log => {
-                with_lease_operation(ctx, &self.manager, &receipt, "log", async |current: Lease| {
+                with_lease_read(ctx, &self.manager, &receipt, "log", async |current: Lease| {
                     self.daemon_log(ctx, &current.worker).await
                 })
                 .await
             }
             DaemonVerb::Warm => unreachable!("warm is answered before the receipt is read"),
         }
+    }
+
+    /// The answer of `daemon stop` on a worker that runs nothing
+    /// ([`Manager::runs_nothing`](crate::worker::worker::Manager::runs_nothing)).
+    ///
+    /// No process of the guest runs there, so no daemon outlived the stop of the worker. The stop forgets the record and
+    /// sends no guest command, as a release of such a worker does. The guest keeps the run slot of the ended run, the
+    /// state file of its daemon and the run secrets. The next daemon start retires that run and removes the state file.
+    /// A later `daemon stop` of the running worker removes the run secrets.
+    fn forget_daemon_of_stopped_worker(&self, worker: &str, state: Option<HostState>) -> Result<Outcome, Refusal> {
+        let stopped = state.map(|state| state.run_id);
+        if let Some(run_id) = &stopped {
+            self.reporter.note(
+                format!("{worker} is not running, so daemon run {run_id} ended with it; forgetting its record"),
+                Some(&Scope::worker(worker)),
+            );
+        }
+        HostState::remove(&self.settings, worker)?;
+        Ok(Outcome {
+            text: if stopped.is_some() { "stopped" } else { "no daemon to stop" }.to_owned(),
+            data: json!({ "worker": worker, "stopped": stopped, "workerWasStopped": true }),
+        })
     }
 
     /// Builds and stamps the host half of the lane, for no worker.
@@ -724,7 +785,6 @@ impl Host {
             worker: None,
             config: label.to_owned(),
             guest_os: self.settings.guest_os.as_str().to_owned(),
-            runtime_digest: built.runtime_digest.clone(),
             launch_digest: built.launch_digest.clone(),
             product_digest: built.product_digest.clone(),
             mount_digest: built.mount_digest.clone(),
@@ -733,7 +793,7 @@ impl Host {
         };
         // The configuration is named in the prose form too, because the trap this command exists to remove is paid
         // for again by warming the wrong guest, and a bare digest does not say which one was warmed.
-        let short = built.runtime_digest.get(..12).unwrap_or(&built.runtime_digest);
+        let short = built.launch_digest.get(..12).unwrap_or(&built.launch_digest);
         Outcome::new(
             &data,
             format!("warmed {label} {short} in {}", seconds(millis(built.build + built.stamp) as f64)),
@@ -787,7 +847,6 @@ impl Host {
             worker: current.worker.clone(),
             run_id: state.run_id,
             port: state.port,
-            runtime_digest: prep.runtime_digest,
             product_digest: prep.product_digest,
             phases,
         };

@@ -1,5 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 jps_test(
@@ -16,11 +16,6 @@ content_module_jar(module = ":diagnostic-telemetry-agent-extension")
 ### auto-generated section `dev intellij.platform.diagnostic.telemetry.agent.extension` end
 
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.agent.extension` start
-jvm_provided_library(
-    name = "libraries_opentelemetry-sdk-autoconfigure-spi_provided",
-    lib = "//libraries/opentelemetry-sdk-autoconfigure-spi",
-)
-
 jvm_library(
     name = "diagnostic-telemetry-agent-extension",
     srcs = glob(
@@ -45,7 +40,6 @@ jvm_library(
         "//libraries/opentelemetry-exporter-otlp-common",
         "//libraries/jackson3/jackson:libraries-jackson3",
         "//libraries/jackson3/databind",
-        ":libraries_opentelemetry-sdk-autoconfigure-spi_provided",
     ],
 )
 
@@ -66,8 +60,6 @@ jvm_library(
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/opentelemetry-exporter-otlp-common:opentelemetry-exporter-otlp-common_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-        "//libraries/opentelemetry-sdk-autoconfigure-spi",
-        "//libraries/opentelemetry-sdk-autoconfigure-spi:opentelemetry-sdk-autoconfigure-spi_test_lib",
         "//libraries/jackson3/databind:databind_test_lib",
     ],
 )

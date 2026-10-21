@@ -126,7 +126,7 @@ val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
  *
  * @see ProductModulesLayout.compatiblePluginsToIgnore
  */
-val COMPATIBLE_PLUGINS_TO_IGNORE: PersistentList<String> = persistentListOf(
+private val COMPATIBLE_PLUGINS_TO_IGNORE: PersistentList<String> = persistentListOf(
   // it registers a file type named Dart, Lua, Rust and Swift, and takes the name from the real plugin
   "intellij.lsp.client.playground",
 )
@@ -139,7 +139,7 @@ val COMPATIBLE_PLUGINS_TO_IGNORE: PersistentList<String> = persistentListOf(
  *
  * @see ProductModulesLayout.pluginModulesWithoutSearchableOptions
  */
-val PLUGINS_WITHOUT_SEARCHABLE_OPTIONS: PersistentSet<String> = persistentSetOf()
+private val PLUGINS_WITHOUT_SEARCHABLE_OPTIONS: PersistentSet<String> = persistentSetOf()
 
 /**
  * Add the default entries to [ProductModulesLayout.compatiblePluginsToIgnore] and to

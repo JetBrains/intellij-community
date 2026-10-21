@@ -1,0 +1,20 @@
+Some␣text␣with␣embedded
+    MARKDOWN_TEXT => TEXT
+␣
+    HTML_CODE => TEXT
+<
+    HTML_TAG => DEFAULT_TAG => TEXT
+b
+    HTML_TAG_NAME => DEFAULT_KEYWORD
+>
+    HTML_TAG => DEFAULT_TAG => TEXT
+html
+    MARKDOWN_TEXT => TEXT
+</
+    HTML_TAG => DEFAULT_TAG => TEXT
+b
+    HTML_TAG_NAME => DEFAULT_KEYWORD
+>
+    HTML_TAG => DEFAULT_TAG => TEXT
+.
+    MARKDOWN_TEXT => TEXT

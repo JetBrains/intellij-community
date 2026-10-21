@@ -31,8 +31,10 @@ import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
+import javax.swing.KeyStroke
 import javax.swing.SwingConstants
 
 
@@ -197,6 +199,10 @@ private class WelcomeScreenDisclosureButtonAction(
     }
 
     button.addActionListener { performAction(button, presentation) }
+    button.getInputMap(JComponent.WHEN_FOCUSED).apply {
+      put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false), "pressed")
+      put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, true), "released")
+    }
 
     updateCustomComponent(button, presentation)
 

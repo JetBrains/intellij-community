@@ -22,11 +22,6 @@ jvm_provided_library(
     lib = "//libraries/groovy",
 )
 
-jvm_provided_library(
-    name = "libraries_groovy_ant_provided",
-    lib = "//libraries/groovy/ant",
-)
-
 jvm_library(
     name = "toolingExtension-impl",
     srcs = glob(
@@ -69,7 +64,6 @@ jvm_library(
         "//libraries/guava",
         "//libraries/kryo5",
         ":libraries_groovy_provided",
-        ":libraries_groovy_ant_provided",
     ],
 )
 
@@ -106,8 +100,6 @@ jvm_library(
         "//libraries/guava:guava_test_lib",
         "//libraries/groovy",
         "//libraries/groovy:groovy_test_lib",
-        "//libraries/groovy/ant",
-        "//libraries/groovy/ant:ant_test_lib",
         "//libraries/kryo5:kryo5_test_lib",
     ],
 )
@@ -132,6 +124,11 @@ jvm_library(
     ),
     module_name = "intellij.gradle.toolingExtension.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/groovy/ant",
+        "//libraries/byte-buddy",
+    ],
 )
 
 jvm_library(
@@ -152,7 +149,12 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":toolingExtension-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":toolingExtension-tests",
+        "//libraries/groovy/ant:ant_test_lib",
+        "//libraries/byte-buddy:byte-buddy_test_lib",
+    ],
     deps = [
         # do not sort,
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
@@ -165,7 +167,8 @@ jvm_library(
         "//java/testFramework:testFramework_test_lib",
         "//libraries/assertj-core",
         "//libraries/assertj-core:assertj-core_test_lib",
-        "@lib//:gradle-tooling_extension-tests-io-github-classgraph-classgraph-4-8-87",
+        "//libraries/classgraph",
+        "//libraries/classgraph:classgraph_test_lib",
         "@lib//:gradle-tooling_extension-tests-org-jeasy-easy-random-core-4-2-0",
         "//libraries/ion",
         "//libraries/ion:ion_test_lib",

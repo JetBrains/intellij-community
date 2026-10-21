@@ -2,6 +2,7 @@
 package org.jetbrains.ether;
 
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
+import org.junit.jupiter.api.Test;
 
 import java.util.Set;
 
@@ -20,38 +21,47 @@ public class ClassModifierTest extends IncrementalTestCase {
     return !GRAPH_ONLY_TESTS.contains(getTestName(true));
   }
 
+  @Test
   public void testAddStatic() {
     doTest();
   }
 
+  @Test
   public void testRemoveStatic() {
     doTest();
   }
 
+  @Test
   public void testDecAccess() {
     doTest();
   }
 
+  @Test
   public void testSetAbstract() {
     doTest();
   }
 
+  @Test
   public void testDropAbstract() {
     doTest();
   }
 
+  @Test
   public void testSetFinal() {
     doTest();
   }
 
+  @Test
   public void testSetFinal1() {
     doTest();
   }
 
+  @Test
   public void testBecameSealed() {
     doTest().assertFailed();
   }
 
+  @Test
   public void testChangeInnerClassModifiers() {
     doTest();
   }

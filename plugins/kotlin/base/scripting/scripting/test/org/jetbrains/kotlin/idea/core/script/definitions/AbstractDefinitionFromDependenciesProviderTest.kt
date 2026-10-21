@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PsiTestUtil
@@ -35,7 +36,7 @@ abstract class AbstractDefinitionFromDependenciesProviderTest : HeavyPlatformTes
         )
 
         val testModules = testDataDir.listFiles { f -> f.name.startsWith("module") }
-            ?.map { createTestModule(it) }
+            ?.map { createTestModule(it, projectRoot) }
             .orEmpty()
 
         val jars = testDataDir.listFiles { f -> f.name.startsWith("jar") }
@@ -66,7 +67,7 @@ abstract class AbstractDefinitionFromDependenciesProviderTest : HeavyPlatformTes
 
     private fun String.removeTestDirPrefix(): String = substringAfterLast(getTestName(true))
 
-    private fun createTestModule(dir: File): Module {
+    private fun createTestModule(dir: File, projectRoot: VirtualFile): Module {
         val newModule = createModuleAt("${name}_${dir.name}", project, JavaModuleType.getModuleType(), dir.toPath())
         dir.listFiles()?.forEach {
             val root = VfsUtil.findFileByIoFile(it, true) ?: return@forEach
@@ -74,6 +75,10 @@ abstract class AbstractDefinitionFromDependenciesProviderTest : HeavyPlatformTes
                 "src" -> PsiTestUtil.addSourceRoot(newModule, root)
                 "test" -> PsiTestUtil.addSourceRoot(newModule, root, true)
                 "resources" -> PsiTestUtil.addSourceRoot(newModule, root, JavaResourceRootType.RESOURCE)
+                "classes" -> {
+                    val outputRoot = projectRoot.findFileByRelativePath("${dir.name}/${it.name}") ?: return@forEach
+                    PsiTestUtil.setCompilerOutputPath(newModule, outputRoot.url, false)
+                }
             }
         }
         return newModule

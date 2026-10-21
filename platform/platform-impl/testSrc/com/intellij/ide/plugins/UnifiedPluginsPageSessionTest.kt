@@ -13,6 +13,8 @@ import com.intellij.ide.plugins.newui.CustomPluginRepositoryLoadResult
 import com.intellij.ide.plugins.newui.EventHandler.SelectionType
 import com.intellij.ide.plugins.newui.LegacyPluginUiHost
 import com.intellij.ide.plugins.newui.ListPluginComponent
+import com.intellij.ide.plugins.newui.PluginManagerSession
+import com.intellij.ide.plugins.newui.PluginManagerSessionService
 import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUpdatesEvent
@@ -35,6 +37,7 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataMap
@@ -44,12 +47,17 @@ import com.intellij.openapi.actionSystem.DataSnapshotProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.newEditor.SpotlightPainter
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.TestDialog
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ExpirableRunnable
@@ -58,6 +66,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntilAssertSucceeds
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
@@ -76,6 +85,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import org.assertj.core.api.Assertions.assertThat
@@ -345,6 +355,123 @@ internal class UnifiedPluginsPageSessionTest {
     }
 
   @Test
+  fun `session reports filter selection removal and sort changes`(): Unit =
+    uiTest {
+      val searches = mutableListOf<Pair<UnifiedPluginSearchStatistics, Int>>()
+      val session = createSession(
+        searchQuery = "Plugin",
+        unifiedSearchLogger = { statistics, searchIndex -> searches.add(statistics to searchIndex) },
+      )
+      try {
+        waitForSearchCount(searches, 1)
+        val disabled = filterActions(session).takeLast(5)[2]
+
+        disabled.actionPerformed(TestActionEvent.createTestEvent(disabled))
+        waitForSearchCount(searches, 2)
+
+        assertThat(searches.last().first.queryShape).isEqualTo(UnifiedPluginSearchQueryShape.TEXT_AND_CONTROLS)
+        assertThat(searches.last().first.filterKinds).containsExactly(UnifiedPluginSearchFilterKind.DISABLED)
+
+        disabled.actionPerformed(TestActionEvent.createTestEvent(disabled))
+        waitForSearchCount(searches, 3)
+
+        assertThat(searches.last().first.queryShape).isEqualTo(UnifiedPluginSearchQueryShape.TEXT_ONLY)
+        assertThat(searches.last().first.filterKinds).isEmpty()
+
+        val header = session.getCenterComponent(Configurable.TopComponentController.EMPTY)
+        val searchComponent = componentsOfType(header, SearchFieldWithExtension::class.java).single()
+        val sortGroup = componentsOfType(searchComponent, ActionButton::class.java).first().action as ActionGroup
+        val name = sortGroup.getChildren(TestActionEvent.createTestEvent())[3]
+
+        name.actionPerformed(TestActionEvent.createTestEvent(name))
+        waitForSearchCount(searches, 4)
+
+        assertThat(searches.last().first.sort).isEqualTo(MarketplaceTabSearchSortByOptions.NAME)
+
+        name.actionPerformed(TestActionEvent.createTestEvent(name))
+        session.enableSearch("Plugin /tag:Private")!!.run()
+        waitForSearchCount(searches, 5)
+
+        assertThat(searches.map { it.second }).containsExactly(0, 1, 2, 3, 4)
+        assertThat(searches.last().first.filterKinds).containsExactly(UnifiedPluginSearchFilterKind.TAG)
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `session reports each installed menu filter with and without text`(): Unit =
+    uiTest {
+      val kinds = listOf(
+        UnifiedPluginSearchFilterKind.OUTDATED,
+        UnifiedPluginSearchFilterKind.ENABLED,
+        UnifiedPluginSearchFilterKind.DISABLED,
+        UnifiedPluginSearchFilterKind.INVALID,
+        UnifiedPluginSearchFilterKind.UPDATED_BUNDLED,
+      )
+      for (text in listOf("", "Plugin")) {
+        val searches = mutableListOf<Pair<UnifiedPluginSearchStatistics, Int>>()
+        val session = createSession(
+          searchQuery = text,
+          unifiedSearchLogger = { statistics, searchIndex -> searches.add(statistics to searchIndex) },
+        )
+        try {
+          var searchCount = if (text.isEmpty()) 0 else 1
+          if (searchCount != 0) waitForSearchCount(searches, searchCount)
+          for ((index, kind) in kinds.withIndex()) {
+            val action = filterActions(session).takeLast(kinds.size)[index]
+            action.actionPerformed(TestActionEvent.createTestEvent(action))
+            waitForSearchCount(searches, ++searchCount)
+
+            val statistics = searches.last().first
+            assertThat(statistics.filterKinds).containsExactly(kind)
+            val shape = if (text.isEmpty()) UnifiedPluginSearchQueryShape.CONTROLS_ONLY else UnifiedPluginSearchQueryShape.TEXT_AND_CONTROLS
+            assertThat(statistics.queryShape).isEqualTo(shape)
+          }
+          assertThat(searches.map { it.second }).containsExactlyElementsOf(0 until searchCount)
+        }
+        finally {
+          Disposer.dispose(session)
+        }
+      }
+    }
+
+  @Test
+  fun `session reports only the latest menu query after pending sources settle`(): Unit =
+    uiTest {
+      val searches = mutableListOf<Pair<UnifiedPluginSearchStatistics, Int>>()
+      val repositoryResult = CompletableDeferred<List<PluginUiModel>>()
+      val repository = CustomPluginRepository("private.repository", PluginSource.LOCAL)
+      val session = createSession(
+        searchQuery = "Plugin",
+        repositoryProvider = DeferredRepositoryDataProvider(listOf(repository), mapOf(repository.id to repositoryResult)),
+        unifiedSearchLogger = { statistics, searchIndex -> searches.add(statistics to searchIndex) },
+      )
+      try {
+        val installedActions = filterActions(session).takeLast(5)
+        val disabled = installedActions[2]
+        val enabled = installedActions[1]
+
+        disabled.actionPerformed(TestActionEvent.createTestEvent(disabled))
+        enabled.actionPerformed(TestActionEvent.createTestEvent(enabled))
+
+        assertThat(searches).isEmpty()
+        repositoryResult.complete(emptyList())
+        waitForSearchCount(searches, 1)
+
+        assertThat(searches.single().second).isEqualTo(2)
+        assertThat(searches.single().first.queryShape).isEqualTo(UnifiedPluginSearchQueryShape.TEXT_AND_CONTROLS)
+        assertThat(searches.single().first.sourceKinds).containsExactly(UnifiedPluginSearchSourceKind.LOCAL)
+        waitForSearchQuery(searchField(session), "Plugin /enabled")
+      }
+      finally {
+        repositoryResult.complete(emptyList())
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
   fun `session started identifies the unified page`(@TestDisposable disposable: Disposable): Unit =
     uiTest {
       lateinit var session: UnifiedPluginsPageSession
@@ -441,7 +568,8 @@ internal class UnifiedPluginsPageSessionTest {
             inventoryItem("disabled", "Disabled"),
           ),
           bundledPlugins = emptyList(),
-        )
+        ),
+        enabledStates = mapOf(disabled.pluginId to false),
       )
       val session = createSession(
         searchQuery = null,
@@ -468,6 +596,42 @@ internal class UnifiedPluginsPageSessionTest {
         executor.callbacks.single().prepared(first.pluginId, restartRequired = false)
         waitForButton(button, "Updating 1/2...", enabled = false)
         executor.callbacks.single().prepared(second.pluginId, restartRequired = false)
+        waitForButton(button, "Updated", enabled = false)
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  fun `Update All follows session enablement with cached disabled updates`(): Unit =
+    uiTest {
+      val update = PluginDto("Plugin Update", PluginId.getId("disabled.update.plugin"))
+      val enabledStates = hashMapOf(update.pluginId to false)
+      val provider = FixedLocalDataProvider(
+        inventory = UnifiedPluginInventory(listOf(inventoryItem(update.pluginId.idString, "Installed Plugin")), emptyList()),
+        enabledStates = enabledStates,
+      )
+      val executor = RecordingUpdateAllExecutor()
+      val updates = MutableSharedFlow<PluginUpdatesEvent>(replay = 1)
+      updates.emit(PluginUpdatesEvent(emptyList(), listOf(update), emptyList()))
+      val session = createSession(null, provider, pluginUpdates = updates, updateAllExecutor = executor)
+      try {
+        val button = updateAllButton(session.getCenterComponent(Configurable.TopComponentController.EMPTY))
+        waitForPluginIds(session.getComponent(), setOf(update.pluginId.idString))
+        assertThat(button.isVisible).isFalse()
+
+        for (enabled in listOf(true, false, true)) {
+          enabledStates[update.pluginId] = enabled
+          session.refresh()
+          waitUntilAssertSucceeds {
+            assertThat(button.isVisible).isEqualTo(enabled)
+          }
+        }
+        button.doClick()
+
+        assertThat(executor.requests.single().updates).containsExactly(update)
+        executor.callbacks.single().prepared(update.pluginId, restartRequired = false)
         waitForButton(button, "Updated", enabled = false)
       }
       finally {
@@ -504,6 +668,86 @@ internal class UnifiedPluginsPageSessionTest {
         Disposer.dispose(session)
       }
     }
+
+  @Test
+  fun `header Restart applies the session before restart`(@TestDisposable disposable: Disposable) {
+    withForcedRespectIsShowingClientProperty {
+      checkHeaderRestart(confirmRestart = true, disposable)
+    }
+  }
+
+  @Test
+  fun `declining header Restart keeps the session`(@TestDisposable disposable: Disposable) {
+    withForcedRespectIsShowingClientProperty {
+      checkHeaderRestart(confirmRestart = false, disposable)
+    }
+  }
+
+  private fun checkHeaderRestart(
+    confirmRestart: Boolean,
+    disposable: Disposable,
+  ): Unit = timeoutRunBlocking {
+    val updates = MutableSharedFlow<PluginUpdatesEvent>(replay = 1)
+    val executor = RecordingUpdateAllExecutor()
+    val pluginSessionReady = CompletableDeferred<PluginManagerSession>()
+    val dialogShown = CompletableDeferred<Unit>()
+    val appliedAtRestart = CompletableDeferred<Boolean>()
+    val sessions = PluginManagerSessionService.getInstance()
+    val application = ApplicationManager.getApplication()
+    TestDialogManager.setTestDialog(TestDialog {
+      dialogShown.complete(Unit)
+      if (confirmRestart) Messages.YES else Messages.NO
+    }, disposable)
+    val session = withContext(Dispatchers.EDT) {
+      createSession(
+        searchQuery = null,
+        provider = FixedLocalDataProvider(UnifiedPluginInventory(
+          installedPlugins = listOf(inventoryItem("dynamic", "Dynamic"), inventoryItem("restart", "Restart")),
+          bundledPlugins = emptyList(),
+        )),
+        pluginUpdates = updates,
+        updateAllExecutor = executor,
+        sessionInitializationReadiness = { host ->
+          host.awaitSessionInitialization()
+          pluginSessionReady.complete(checkNotNull(sessions.getSession(host.sessionId)))
+        },
+      )
+    }
+    try {
+      val pluginSession = pluginSessionReady.await()
+      application.addApplicationListener(object : ApplicationListener {
+        override fun canRestartApplication(): Boolean {
+          appliedAtRestart.complete(pluginSession.isUiDisposedWithApply)
+          return false
+        }
+      }, disposable)
+      withContext(Dispatchers.EDT) {
+        val button = updateAllButton(session.getCenterComponent(Configurable.TopComponentController.EMPTY))
+        val dynamicUpdate = PluginDto("Dynamic", PluginId.getId("dynamic"))
+        val restartUpdate = PluginDto("Restart", PluginId.getId("restart"))
+        updates.emit(PluginUpdatesEvent(listOf(dynamicUpdate, restartUpdate), emptyList(), emptyList()))
+        waitForButton(button, "Update All", enabled = true)
+        button.doClick()
+        waitForButton(button, "Updating 0/2...", enabled = false)
+        executor.callbacks.single().prepared(dynamicUpdate.pluginId, restartRequired = false)
+        executor.callbacks.single().prepared(restartUpdate.pluginId, restartRequired = true)
+        waitForButton(button, "Restart IDE", enabled = true)
+        button.doClick()
+      }
+      dialogShown.await()
+      if (confirmRestart) {
+        assertThat(appliedAtRestart.await()).isTrue()
+      }
+      assertThat(pluginSession.isUiDisposedWithApply).isEqualTo(confirmRestart)
+      assertThat(sessions.getSession(pluginSession.sessionId)).isSameAs(pluginSession)
+      assertThat(application.isDisposed).isFalse()
+    }
+    finally {
+      withContext(Dispatchers.EDT) {
+        Disposer.dispose(session)
+      }
+    }
+  }
 
   @Test
   fun `unmodified lifecycle calls and repeated disposal are safe`(): Unit =
@@ -1032,6 +1276,13 @@ internal class UnifiedPluginsPageSessionTest {
     ).single()
   }
 
+  private fun filterActions(session: UnifiedPluginsPageSession): Array<AnAction> {
+    val header = session.getCenterComponent(Configurable.TopComponentController.EMPTY)
+    val searchComponent = componentsOfType(header, SearchFieldWithExtension::class.java).single()
+    val filterGroup = componentsOfType(searchComponent, ActionButton::class.java).last().action as ActionGroup
+    return filterGroup.getChildren(TestActionEvent.createTestEvent())
+  }
+
   private fun visibleSearchControlCount(searchComponent: JComponent): Int {
     return componentsOfType(searchComponent, ActionButton::class.java).count(ActionButton::isVisible)
   }
@@ -1133,6 +1384,7 @@ internal class UnifiedPluginsPageSessionTest {
     private val enrichmentReadiness: suspend () -> Unit = {},
     private val onEnrichmentRequested: () -> Unit = {},
     private val errors: Map<PluginId, List<HtmlChunk>> = emptyMap(),
+    private val enabledStates: Map<PluginId, Boolean> = emptyMap(),
   ) : UnifiedPluginLocalDataProvider {
     override suspend fun loadInventory(): UnifiedPluginInventory {
       onInventoryLoaded()
@@ -1152,7 +1404,7 @@ internal class UnifiedPluginsPageSessionTest {
         inventory = inventory,
         updates = updates,
         contentRevision = contentRevision,
-        enabledStates = plugins.associate { it.model.pluginId to true },
+        enabledStates = plugins.associate { it.model.pluginId to (enabledStates[it.model.pluginId] ?: true) },
         errors = errors,
         installationStates = emptyMap(),
         restrictions = emptyMap(),

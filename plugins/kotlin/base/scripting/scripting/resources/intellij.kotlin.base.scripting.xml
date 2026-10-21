@@ -10,6 +10,7 @@
     <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.compilerConfiguration"/>
     <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.indices"/>
     <module name="intellij.kotlin.base.platforms"/>
     <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.kotlin.base.projectStructure"/>
@@ -19,6 +20,7 @@
     <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.codeInsight.utils"/>
     <module name="intellij.kotlin.ide"/>
+    <module name="intellij.kotlin.navigation"/>
     <module name="intellij.kotlin.preferences"/>
     <module name="intellij.kotlin.runConfigurations.jvm"/>
     <module name="intellij.libraries.guava"/>
@@ -218,11 +220,14 @@
     <scriptDefinitionsProvider implementation="org.jetbrains.kotlin.idea.core.script.definitions.DefinitionFromDependenciesProvider"/>
     <idea.base.platforms.targetPlatformDetector
             implementation="org.jetbrains.kotlin.idea.core.script.ScriptingTargetPlatformDetector"/>
+    <clsCustomNavigationPolicy implementation="org.jetbrains.kotlin.idea.core.script.navigation.ModuleOutputNavigationPolicy"/>
   </extensions>
 
   <projectListeners>
     <listener class="org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService$KotlinScriptWorkspaceModelListener"
               topic="com.intellij.platform.backend.workspace.WorkspaceModelChangeListener"/>
+    <listener class="org.jetbrains.kotlin.idea.core.script.definitions.ScriptDefinitionsBuildListener"
+              topic="com.intellij.task.ProjectTaskListener"/>
   </projectListeners>
 
   <actions resource-bundle="messages.KotlinBaseScriptingBundle">

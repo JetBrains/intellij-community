@@ -25,6 +25,7 @@ dev_dist_plugin(
         "intellij.performanceTesting.frontend.baseline",
         "intellij.performanceTesting.problemsView",
         "intellij.performanceTesting.structureView",
+        "intellij.performanceTesting.todo",
         "intellij.performanceTesting.backend",
         "intellij.performanceTesting.rdct",
         "intellij.tools.ide.starter.bus",
@@ -61,6 +62,7 @@ jvm_library(
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
+        allow_empty = True,
         exclude = ["resources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
@@ -359,6 +361,8 @@ jvm_library(
         "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-params",
         "//libraries/junit6-params:junit6-params_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.performanceTesting.tests` end

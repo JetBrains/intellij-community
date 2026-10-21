@@ -8,6 +8,7 @@ import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import com.intellij.util.ui.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -194,6 +195,26 @@ public final class ComplementaryFontsRegistry {
       LOG.trace("Fallback font: " + result.getFont().getFontName());
     }
     return result;
+  }
+
+  /**
+   * Checks the code point in the preferred font families without the registry lock, the same way as
+   * {@link #getFontAbleToDisplay(int, int, FontPreferences, FontRenderContext)} does under the lock.
+   * The first check of a glyph can be slow, for example on macOS. After this call, the check under the lock is fast,
+   * so a concurrent font request does not wait for it.
+   */
+  @ApiStatus.Internal
+  public static void preloadGlyph(int codePoint, @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences) {
+    List<String> fontFamilies = preferences.getEffectiveFontFamilies();
+    for (int i = 0, len = fontFamilies.size(); i < len; ++i) {
+      Font font = FontFamilyService.getFont(fontFamilies.get(i),
+                                            i == 0 ? preferences.getRegularSubFamily() : null,
+                                            i == 0 ? preferences.getBoldSubFamily() : null,
+                                            style);
+      if (FontInfo.canDisplay(font, codePoint, true)) {
+        return;
+      }
+    }
   }
 
   /**

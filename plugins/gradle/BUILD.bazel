@@ -11,6 +11,7 @@ resourcegroup(
     name = "gradle_resources",
     srcs = glob(
         ["resources/**/*"],
+        allow_empty = True,
         exclude = ["resources/**/icon-robots.txt"],
     ),
     strip_prefix = "resources",
@@ -19,11 +20,6 @@ resourcegroup(
 jvm_provided_library(
     name = "libraries_groovy_provided",
     lib = "//libraries/groovy",
-)
-
-jvm_provided_library(
-    name = "libraries_groovy_ant_provided",
-    lib = "//libraries/groovy/ant",
 )
 
 jvm_library(
@@ -124,7 +120,6 @@ jvm_library(
         "//platform/util-ex",
         "//platform/testRunner",
         ":libraries_groovy_provided",
-        ":libraries_groovy_ant_provided",
     ],
 )
 
@@ -220,8 +215,6 @@ jvm_library(
         "//platform/testRunner:testRunner_test_lib",
         "//libraries/groovy",
         "//libraries/groovy:groovy_test_lib",
-        "//libraries/groovy/ant",
-        "//libraries/groovy/ant:ant_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle` end
@@ -543,6 +536,8 @@ jvm_library(
         "//plugins/gradle/java:java-tests_test_lib",
         "//plugins/gradle/java/toml/tests",
         "//plugins/gradle/java/toml/tests:tests_test_lib",
+        "//plugins/gradle/java/coverage/tests",
+        "//plugins/gradle/java/coverage/tests:tests_test_lib",
         "//plugins/gradle/jps-plugin:jps-tests",
         "//plugins/gradle/jps-plugin:jps-tests_test_lib",
         "//plugins/gradle/properties:properties-tests",

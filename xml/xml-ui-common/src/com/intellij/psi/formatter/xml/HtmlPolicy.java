@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.LeafElement;
@@ -199,6 +200,12 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   }
 
   @Override
+  public boolean shouldWrapFirstAttribute() {
+    return myHtmlCodeStyleSettings.HTML_NEWLINE_BEFORE_FIRST_ATTRIBUTE == CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline &&
+           myHtmlCodeStyleSettings.HTML_ATTRIBUTE_WRAP != CommonCodeStyleSettings.WRAP_ALWAYS;
+  }
+
+  @Override
   public boolean getShouldAlignAttributes() {
     return myHtmlCodeStyleSettings.HTML_ALIGN_ATTRIBUTES;
   }
@@ -272,7 +279,8 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   @Override
   public @Nullable Spacing getSpacingAfterLastAttribute(XmlAttribute attribute) {
     XmlTag parent = attribute.getParent();
-    final int spaces = addSpaceIntoEmptyTag() && parent.isEmpty() && FormatterUtil.isFollowedBy(attribute.getNode(), XmlTokenType.XML_EMPTY_ELEMENT_END) ? 1 : 0;
+    final boolean beforeEmptyElementEnd = FormatterUtil.isFollowedBy(attribute.getNode(), XmlTokenType.XML_EMPTY_ELEMENT_END);
+    final int spaces = beforeEmptyElementEnd && (addSpaceIntoEmptyTag() && parent.isEmpty() || hasUnquotedValue(attribute)) ? 1 : 0;
     boolean isEnabled = myHtmlCodeStyleSettings.HTML_NEWLINE_AFTER_LAST_ATTRIBUTE == CodeStyleSettings.HtmlTagNewLineStyle.WhenMultiline;
     return getStartTagDependantSpacingOrNull(parent, isEnabled, spaces);
   }

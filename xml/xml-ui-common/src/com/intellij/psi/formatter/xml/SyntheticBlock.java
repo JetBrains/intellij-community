@@ -63,6 +63,10 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
       return Spacing.createSpacing(0, Integer.MAX_VALUE, 0, true, myXmlFormattingPolicy.getKeepBlankLines());
     }
     if (type1 == XmlElementType.XML_COMMENT) {
+      if (child1.getTextRange().getEndOffset() == child2.getTextRange().getStartOffset()) {
+        // Keep an element that touches the end of a comment, e.g. a comment between inline-block elements
+        return Spacing.getReadOnlySpacing();
+      }
       ASTNode prev = node1.getTreePrev();
       if (prev != null) {
         node1 = prev;
@@ -125,7 +129,8 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
     }
 
     if (isXmlTagName(type1, type2)) {
-      final int spaces = shouldAddSpaceAroundTagName(node1, node2) ? 1 : 0;
+      final int spaces = shouldAddSpaceAroundTagName(node1, node2) ||
+                         type2 == XmlTokenType.XML_EMPTY_ELEMENT_END && XmlFormattingPolicy.hasUnquotedValue(node1.getPsi()) ? 1 : 0;
       return Spacing.createSpacing(spaces, spaces, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(),
                                    myXmlFormattingPolicy.getKeepBlankLines());
     }
@@ -146,7 +151,8 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block {
     }
 
     if (((AbstractXmlBlock)child1).isTextElement() && ((AbstractXmlBlock)child2).isTextElement()) {
-      return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaksInText(), myXmlFormattingPolicy.getKeepBlankLines());
+      return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaksBetweenTextElements(),
+                                       myXmlFormattingPolicy.getKeepBlankLines());
     }
 
     if (firstIsTag && insertLineFeedAfter((XmlTag)node1.getPsi())) {

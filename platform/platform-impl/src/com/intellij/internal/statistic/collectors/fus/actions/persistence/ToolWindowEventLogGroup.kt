@@ -16,7 +16,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.toolWindow.ToolWindowEventSource
 
 internal object ToolWindowEventLogGroup : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("toolwindow", 64)
+  private val GROUP = EventLogGroup("toolwindow", 65)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -44,6 +44,7 @@ internal object ToolWindowEventLogGroup : CounterUsagesCollector() {
   val RESIZED: VarargEventId = registerToolwindowEvent("resized")
 
   private fun registerToolwindowEvent(eventId: String): VarargEventId {
-    return GROUP.registerVarargEvent(eventId, TOOLWINDOW_ID, EventFields.PluginInfo, VIEW_MODE, LOCATION, SOURCE, WEIGHT, IS_MAXIMIZED)
+    return GROUP.registerVarargEvent(eventId, TOOLWINDOW_ID, EventFields.PluginInfo, VIEW_MODE, LOCATION, SOURCE, WEIGHT, IS_MAXIMIZED,
+                                    EventFields.Projectless)
   }
 }

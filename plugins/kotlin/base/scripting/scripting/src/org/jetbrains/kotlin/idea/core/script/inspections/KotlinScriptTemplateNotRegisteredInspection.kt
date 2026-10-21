@@ -25,27 +25,27 @@ import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.core.script.settings.parseClasspathInput
 import org.jetbrains.kotlin.idea.core.script.settings.parseExplicitTemplateInput
 import org.jetbrains.kotlin.idea.core.script.KotlinBaseScriptingBundle
-import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import kotlin.io.path.absolutePathString
 
 internal class KotlinScriptTemplateNotRegisteredInspection :
-    KotlinApplicableInspectionBase<KtClass, KotlinScriptTemplateNotRegisteredInspection.Context>() {
+    KotlinApplicableInspectionBase<KtClassOrObject, KotlinScriptTemplateNotRegisteredInspection.Context>() {
 
     data class Context(val fqName: String, val needsRegister: Boolean, val needsMarker: Boolean)
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
-        override fun visitClass(klass: KtClass) {
-            visitTargetElement(klass, holder, isOnTheFly)
+        override fun visitClassOrObject(classOrObject: KtClassOrObject) {
+            visitTargetElement(classOrObject, holder, isOnTheFly)
         }
     }
 
-    override fun isApplicableByPsi(element: KtClass): Boolean = hasKotlinScriptAnnotation(element)
+    override fun isApplicableByPsi(element: KtClassOrObject): Boolean = hasKotlinScriptAnnotation(element)
 
-    override fun getApplicableRanges(element: KtClass): List<TextRange> = ApplicabilityRange.single(element) { it.nameIdentifier }
+    override fun getApplicableRanges(element: KtClassOrObject): List<TextRange> = ApplicabilityRange.single(element) { it.nameIdentifier }
 
     context(session: KaSession)
-    override fun prepareContext(element: KtClass): Context? {
+    override fun prepareContext(element: KtClassOrObject): Context? {
         if (element.symbol.annotations.none {
             it.classId?.asSingleFqName() == KOTLIN_SCRIPT_ANNOTATION_FQ_NAME
         }) return null
@@ -60,7 +60,7 @@ internal class KotlinScriptTemplateNotRegisteredInspection :
     }
 
     override fun InspectionManager.createProblemDescriptor(
-        element: KtClass,
+        element: KtClassOrObject,
         context: Context,
         rangeInElement: TextRange?,
         onTheFly: Boolean,

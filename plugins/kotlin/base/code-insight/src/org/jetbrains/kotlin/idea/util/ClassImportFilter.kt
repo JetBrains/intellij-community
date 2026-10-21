@@ -2,6 +2,7 @@ package org.jetbrains.kotlin.idea.util
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.descriptors.ClassKind
@@ -24,6 +25,19 @@ fun interface ClassImportFilter {
 
     companion object {
         val EP_NAME = ExtensionPointName.create<ClassImportFilter>("org.jetbrains.kotlin.classImportFilter")
+
+        fun allowClassImport(classSymbol: KaClassSymbol, contextFile: KtFile): Boolean {
+            val classId = classSymbol.classId
+            val fqName = classId?.asSingleFqName() ?: return true
+            return allowClassImport(
+                fqName,
+                classSymbol.classKind,
+                classSymbol.modality,
+                classSymbol.visibility,
+                classId.isNestedClass,
+                contextFile,
+            )
+        }
 
         fun allowClassImport(fqName: FqName,
                              kaClassKind: KaClassKind,

@@ -7,6 +7,7 @@ import com.intellij.lang.parameterInfo.ParameterInfoHandlerWithTabActionSupport
 import com.intellij.lang.parameterInfo.ParameterInfoUIContext
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -94,6 +95,12 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
     override fun findElementForParameterInfo(context: CreateParameterInfoContext): TArgumentList? {
         val file = context.file as? KtFile ?: return null
+
+        val parameterListStart = context.parameterListStart
+        if (parameterListStart >= 0 && PsiTreeUtil.getNonStrictParentOfType(file.findElementAt(parameterListStart), PsiComment::class.java) != null) {
+            // Do not show parameter when typing in comments
+            return null
+        }
 
         val argumentList = findElementForParameterInfo(file, context.offset) ?: return null
 

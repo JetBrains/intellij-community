@@ -6,6 +6,8 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.SelectInTarget
 import com.intellij.ide.actions.OpenInRightSplitActionProvider
 import com.intellij.ide.projectView.impl.ProjectViewInitNotifier
+import com.intellij.ide.util.treeView.CachedTreePresentationData
+import com.intellij.ide.util.treeView.DefaultTreeModelWithCachedPresentation
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -26,10 +28,12 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
+import com.intellij.platform.projectView.frontend.pane.RestorePaneStateOptions
 import com.intellij.platform.projectView.frontend.pane.id
 import com.intellij.platform.projectView.frontend.window.ProjectViewToolWindowServiceImpl
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
+import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
 import com.intellij.platform.projectView.pane.ProjectViewNodeModelImpl
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
@@ -74,6 +78,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jdom.Element
+import java.util.function.BiFunction
 import javax.swing.JComponent
 import javax.swing.JScrollPane
 import javax.swing.JTree
@@ -103,6 +108,7 @@ internal class TreeBasedFrontendProjectViewPane(
   private val treeExpander = ProjectViewTreeExpander(tree, expandRequests)
   private val autoscrollToSourceHandler = MyAutoscrollToSourceHandler(project)
   private val cutCopyPasteDeleteProvider = FrontendProjectViewCutCopyPasteDeleteProvider(paneTreeModel)
+  private val lateTopLevelCachedPresentation = LateTopLevelCachedPresentation(tree, paneTreeModel.treeModel)
   private val singleRootExpandRequest = MutableStateFlow(SingleRootExpand.MAYBE_NEEDED)
   private enum class SingleRootExpand {
     MAYBE_NEEDED,
@@ -204,12 +210,21 @@ internal class TreeBasedFrontendProjectViewPane(
       else {
         LOG.debug { "The pane $id doesn't need to expand the first top node (already expanded something)" }
       }
-      if (tree.selectionPath == null && tree.rowCount > 0) {
-        LOG.debug { "The pane $id has no initial selection, selecting the first row" }
-        tree.selectionPath = tree.getPathForRow(0)
-      }
     }
-    tree.addTreeSelectionListener(RestoreSelectionListener())
+    val restoreSelectionListener = RestoreSelectionListener()
+    ClientProperty.put(tree, RestoreSelectionListener.MATCHER, BiFunction { pathComponent, thisComponent ->
+      if (pathComponent == thisComponent) {
+        true
+      }
+      else {
+        val pathId = TreeState.calcId(pathComponent)
+        val pathType = TreeState.calcType(pathComponent)
+        val thisId = TreeState.calcId(thisComponent)
+        val thisType = TreeState.calcType(thisComponent)
+        pathId == thisId && pathType == thisType
+      }
+    })
+    tree.addTreeSelectionListener(restoreSelectionListener)
     enableDnD(tree, paneTreeModel)
     if (!descriptor.isDefault) {
       tree.emptyText
@@ -267,6 +282,9 @@ internal class TreeBasedFrontendProjectViewPane(
       // We need to load every visible node, otherwise we may end with broken frontend-only nodes that can't do anything (IJPL-254925).
       if (event is ProjectViewChildrenLoaded) {
         loadVisibleGrandchildren(event.parentId)
+      }
+      if (event is ProjectViewChildrenLoaded || event is ProjectViewNodeAdded) {
+        lateTopLevelCachedPresentation.topLevelNodesMayHaveChanged()
       }
     }
   }
@@ -473,18 +491,24 @@ internal class TreeBasedFrontendProjectViewPane(
 
   override fun saveStateTo(element: Element): Boolean {
     if (paneTreeModel.isEffectivelyEmpty) return false
-    TreeState.createOn(tree, true, false, true).writeExternal(element)
+    TreeState.createOn(tree, true, true, true).writeExternal(element)
     return true
   }
 
-  override fun restoreStateFrom(element: Element?) {
+  override fun restoreStateFrom(element: Element?, options: RestorePaneStateOptions) {
     val treeState = TreeState.createFrom(element)
     if (!treeState.isEmpty) {
       singleRootExpandRequest.value = SingleRootExpand.NOT_NEEDED
-      treeState.applyTo(tree)
+      treeState.applyTo(tree, options.restoreSelection)
+      lateTopLevelCachedPresentation.stateRestored(treeState.cachedPresentationData)
     }
     else {
       singleRootExpandRequest.value = SingleRootExpand.DEFINITELY_NEEDED
+      lateTopLevelCachedPresentation.stateRestored(null)
+    }
+    if (tree.selectionPath == null && tree.rowCount > 0) {
+      LOG.debug { "The pane $id has no initial selection, selecting the first row" }
+      tree.selectionPath = tree.getPathForRow(0)
     }
   }
 }
@@ -569,6 +593,59 @@ private class TreeStateInitListener(
   override fun treeExpanded(event: TreeExpansionEvent?) { }
 
   override fun treeCollapsed(event: TreeExpansionEvent?) { }
+}
+
+/**
+ * Applies the restored cached presentation to the top-level nodes that are loaded late.
+ *
+ * The children of the root can load in batches.
+ * While the restored presentation is pending, the model applies it to a late node itself.
+ * After the presentation is done, this class applies the entries for the late nodes once more.
+ * Each top-level entry applies at most once.
+ */
+private class LateTopLevelCachedPresentation(
+  private val tree: Tree,
+  private val treeModel: DefaultTreeModelWithCachedPresentation,
+) {
+  private var cachedRoot: CachedTreePresentationData? = null
+  private var unmatchedEntries: List<CachedTreePresentationData> = emptyList()
+
+  fun stateRestored(cachedRoot: CachedTreePresentationData?) {
+    this.cachedRoot = cachedRoot
+    unmatchedEntries = cachedRoot?.children.orEmpty()
+    // The restored presentation has already applied to the loaded top-level nodes.
+    matchEntries()
+  }
+
+  fun topLevelNodesMayHaveChanged() {
+    val cachedRoot = cachedRoot ?: return
+    val entries = unmatchedEntries
+    if (!matchEntries()) return
+    if (tree.cachedPresentation != null) {
+      LOG.debug("The restored cached presentation is pending, so it applies to the late top-level nodes itself")
+      return
+    }
+    LOG.debug("Applying the cached presentation to the late top-level nodes")
+    // The entries that are still unmatched stay in the presentation, so they apply to the nodes that come while it's pending.
+    val presentation = CachedTreePresentationData(cachedRoot.pathElement, cachedRoot.presentation, cachedRoot.extraAttributes, entries)
+    tree.cachedPresentation = presentation.createTree()
+    treeModel.promiseRealNodes().onProcessed {
+      tree.cachedPresentation = null
+    }
+  }
+
+  /**
+   * Forgets the entries that match a real top-level node.
+   *
+   * @return `true` if any entry matched
+   */
+  private fun matchEntries(): Boolean {
+    val topLevelNodes = treeModel.root?.children()?.toList()?.filterIsInstance<Node>().orEmpty()
+    val stillUnmatched = unmatchedEntries.filter { entry -> topLevelNodes.none { entry.pathElement.matches(it) } }
+    val anyMatched = stillUnmatched.size < unmatchedEntries.size
+    unmatchedEntries = stillUnmatched
+    return anyMatched
+  }
 }
 
 private val LOG = logger<TreeBasedFrontendProjectViewPane>()

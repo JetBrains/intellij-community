@@ -72,6 +72,8 @@
     <orderEntry type="module" module-name="intellij.devkit.plugin.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.eclipse" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.vcs.git.rpc.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git.featuresTrainer" scope="RUNTIME" />
@@ -148,6 +150,7 @@
     <orderEntry type="module" module-name="intellij.platform.warmup" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.remoteControl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.polySymbols" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.polySymbols.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.performanceTesting" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.smart.update" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.analysis" scope="RUNTIME" />
@@ -185,7 +188,6 @@
     <orderEntry type="module" module-name="intellij.maven.server.m36.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.maven.server.m40" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.mcpserver.plugin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.python.processOutput.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.plugin" scope="RUNTIME" />
   </component>
 </module>

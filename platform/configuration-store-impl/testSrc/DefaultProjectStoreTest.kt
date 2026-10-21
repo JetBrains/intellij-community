@@ -97,6 +97,22 @@ class DefaultProjectStoreTest {
   }
 
   @Test
+  fun `new project from default - project dictionary`() {
+    val element = JDOMUtil.load("""<state><component name="ProjectDictionaryState"><dictionary name="user"><words><w>foo</w></words></dictionary></component></state>""")
+
+    val tempDir = fsRule.fs.getPath("")
+    normalizeDefaultProjectElement(ProjectManager.getInstance().defaultProject, element, tempDir)
+    assertThat(tempDir.resolve("dictionaries/user.xml")).hasContent("""
+      <component name="ProjectDictionaryState">
+        <dictionary name="user">
+          <words>
+            <w>foo</w>
+          </words>
+        </dictionary>
+      </component>""".trimIndent())
+  }
+
+  @Test
   fun `new IPR project from default - remove workspace component configuration`() {
     val testData = Path.of(PathManagerEx.getCommunityHomePath(), "platform/configuration-store-impl/testData")
     val element = JDOMUtil.load(testData.resolve("testData1.xml"))

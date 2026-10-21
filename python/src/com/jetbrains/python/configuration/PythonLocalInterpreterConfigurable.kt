@@ -3,7 +3,6 @@ package com.jetbrains.python.configuration
 
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -12,14 +11,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.text
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.bindSelected
-import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.sdk.PythonSdkType
-import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
@@ -36,10 +33,6 @@ internal class PythonLocalInterpreterConfigurable(
   private val sdk: Sdk,
   private val item: PyInterpreterItem,
 ) : BoundConfigurable(sdk.name) {
-  private val initialSdkHomePath = sdk.homePath
-
-  private val interpreterPath = AtomicProperty(sdk.homePath ?: "")
-
   private var isSdkAssociatedWithOtherPathInitiallyAndReset: Boolean = false
 
   private val wasSdkAssociatedWithPathInitially = sdk.associatedModulePath?.isNotBlank() == true
@@ -47,12 +40,11 @@ internal class PythonLocalInterpreterConfigurable(
   private var isSdkAssociatedWithPath: Boolean = wasSdkAssociatedWithPathInitially
 
   override fun createPanel(): DialogPanel = panel {
+    // Read-only: another binary is another interpreter.
     row(PyBundle.message("form.edit.sdk.interpreter.path")) {
-      textFieldWithBrowseButton(
-        PythonSdkType.getInstance().homeChooserDescriptor.withTitle(PyBundle.message("sdk.edit.dialog.specify.interpreter.path")),
-        project
-      ) { it.name }
-        .bindText(interpreterPath)
+      textField()
+        .text(sdk.homePath.orEmpty())
+        .applyToComponent { isEditable = false }
         .align(AlignX.FILL)
         // Why the list flags this interpreter, stated where it needs no hover. Until PY-91967 the reason reached
         // `idea.log` only, so the marker in the list was the whole of what the user was told.
@@ -101,10 +93,6 @@ internal class PythonLocalInterpreterConfigurable(
     super.apply()
 
     val sdkModificator = sdk.sdkModificator
-    if (interpreterPath.get() != initialSdkHomePath) {
-      sdkModificator.homePath = interpreterPath.get()
-    }
-
     if (isSdkAssociatedWithOtherPathInitiallyAndReset || wasSdkAssociatedWithPathInitially != isSdkAssociatedWithPath) {
       if (isSdkAssociatedWithPath) {
         if (module != null) {
@@ -124,10 +112,6 @@ internal class PythonLocalInterpreterConfigurable(
 
     WriteAction.run<Throwable> {
       sdkModificator.commitChanges()
-    }
-
-    if (initialSdkHomePath != sdk.homePath) {
-      PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project)
     }
   }
 }

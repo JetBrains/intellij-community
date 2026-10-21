@@ -27,8 +27,9 @@ pub(crate) type Log = Arc<dyn Fn(&str) + Send + Sync>;
 /// Where the site build's output goes, a chunk of lines at a time.
 pub(crate) type BuildOutput = Arc<dyn Fn(&str) + Send + Sync>;
 
-/// The site build: the docs project to build, where its output goes, and what ends it early.
-pub(crate) type BuildSite = Arc<dyn Fn(PathBuf, BuildOutput, CancellationToken) -> BoxFuture<'static, Result<(), Refusal>> + Send + Sync>;
+/// The site build: the docs project to build, the kernel it links, where its output goes, and what ends it early.
+pub(crate) type BuildSite =
+    Arc<dyn Fn(PathBuf, Option<PathBuf>, BuildOutput, CancellationToken) -> BoxFuture<'static, Result<(), Refusal>> + Send + Sync>;
 
 /// The planner.
 pub(crate) type Resolve = Arc<dyn Fn(&Path, Input) -> anyhow::Result<PlanResult> + Send + Sync>;
@@ -57,7 +58,8 @@ pub(crate) struct Settings {
     /// The scan the watcher runs regardless, for what it cannot see: a watch it had to skip, a staleness that is
     /// only the clock moving.
     pub rescan_interval: Duration,
-    /// How often a running bundle's JSON Lines and the running runs' journals are checked, besides on events.
+    /// How often a running bundle's JSON Lines, the running runs' journals and the runs directory are checked,
+    /// besides on events.
     pub tail_interval: Duration,
     /// Bounds the directories watched; a kqueue or inotify watcher holds a descriptor or a watch for each.
     pub max_watches: usize,
@@ -68,6 +70,9 @@ pub(crate) struct Settings {
     /// The docs site's project, `<repo>/plugins/air/docs`, which the server builds the site from when the site is
     /// missing or older than its sources; `None` for a site the server does not build.
     pub site_project: Option<PathBuf>,
+    /// The docs-site kernel that the project links, `<repo>/community/tools/docs-site`. The server installs it before
+    /// the project and reads its sources for the staleness check; `None` for no kernel.
+    pub site_kernel: Option<PathBuf>,
     pub build_site: BuildSite,
     pub resolve: Resolve,
     /// The file watcher: the platform's own, or one that sees nothing for a server that only rescans.
@@ -91,7 +96,8 @@ impl Settings {
             idle_exit: None,
             pid_file: None,
             site_project: None,
-            build_site: Arc::new(|project, output, cancel| Box::pin(build_site(project, output, cancel))),
+            site_kernel: None,
+            build_site: Arc::new(|project, kernel, output, cancel| Box::pin(build_site(project, kernel, output, cancel))),
             resolve: Arc::new(crate::plan::resolve),
             watch: native_watch(),
         }
@@ -233,7 +239,7 @@ impl Server {
         for run in &next.controller_runs {
             self.announce_journal(&run.run_id);
         }
-        // The running runs' directories come first, so a cap on the watches never drops them.
+        // The runs' directories come first, so a cap on the watches never drops them.
         let wanted: Vec<PathBuf> = run_watch.into_iter().chain(next.found.watch.iter().cloned()).collect();
         self.request_watches(wanted);
         next

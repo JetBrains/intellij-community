@@ -10,7 +10,7 @@ import com.intellij.util.DocumentUtil
 
 /** A snapshot range marker created for a file before its document loads. */
 internal class SnapshotLazyRangeMarker(
-  fileRoot: FileMarkerRoot,
+  fileRoot: VirtualFileMarkerRoot,
   markerId: Long,
   spec: MarkerSpec,
   initialRange: TextRange,

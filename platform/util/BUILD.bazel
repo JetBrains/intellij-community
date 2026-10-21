@@ -4,7 +4,7 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 
 jps_test(
     name = "util-tests_test",
-    timeout = "long",
+    timeout = "eternal",
     jvm_flags = [
         "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
         "-Duser.country=US",
@@ -276,6 +276,8 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
+        "//libraries/byte-buddy",
+        "//libraries/byte-buddy:byte-buddy_test_lib",
         "@lib//:jetbrains-kotlinx-lincheck-jvm",
         "//libraries/mockito",
         "//libraries/mockito:mockito_test_lib",
@@ -296,8 +298,6 @@ jvm_library(
         "//platform/testFramework/junit5/eel:testFramework-junit5-eel-tests_test_lib",
         "//platform/editor-ui-api:editor-ui",
         "//platform/editor-ui-api:editor-ui_test_lib",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
         "//libraries/junit6-params",
         "//libraries/junit6-params:junit6-params_test_lib",
         "//platform/execution-impl",

@@ -12,6 +12,7 @@ import com.intellij.platform.eel.provider.utils.CopyError
 import com.intellij.platform.eel.provider.utils.asEelChannel
 import com.intellij.platform.eel.provider.utils.copy
 import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.util.causeChain
 import com.intellij.util.io.awaitExit
 import com.intellij.util.io.computeDetached
 import com.intellij.util.io.copyToAsync
@@ -114,7 +115,7 @@ suspend fun <T> bodyLimitedCoroutineScope(
     onSuccess = { Result.success(it) },
     onFailure = { caughtError ->
       Result.failure(
-        generateSequence(caughtError, Throwable::cause).find { it !is CancellationException }
+        caughtError.causeChain().find { it !is CancellationException }
         ?: Exception("Unexpected CancellationException: $caughtError", caughtError)
       )
     }

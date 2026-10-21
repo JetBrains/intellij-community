@@ -15,26 +15,9 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.psi.PyUtil
 import org.jetbrains.annotations.ApiStatus
-
-/**
- * Applies [transferRoots] to all modules inheriting python sdk from the [project].
- */
-@ApiStatus.Internal
-
-fun transferRootsToModulesWithInheritedSdk(project: Project, sdk: Sdk?) {
-  updateRootsForModulesWithInheritedSdk(project, sdk, ::transferRoots)
-}
-
-/**
- * See [transferRootsToModulesWithInheritedSdk] and [removeTransferredRoots].
- */
-@ApiStatus.Internal
-
-fun removeTransferredRootsFromModulesWithInheritedSdk(project: Project, sdk: Sdk?) {
-  updateRootsForModulesWithInheritedSdk(project, sdk, ::removeTransferredRoots)
-}
 
 /**
  * Returns [sdk] paths that are located under project modules and hence should be turned into source roots,
@@ -61,12 +44,13 @@ fun setPathsToTransfer(sdk: Sdk, roots: Set<VirtualFile>) {
 }
 
 /**
- * Turns [getPathsToTransfer] result into [module] source roots and dependencies if [module] python sdk is [sdk].
+ * Turns [getPathsToTransfer] result into [module] source roots and dependencies. [sdk] is the interpreter that the caller
+ * gives [module], so a caller passes it right after the set, before a snapshot states it.
  */
 @ApiStatus.Internal
 
 fun transferRoots(module: Module, sdk: Sdk?) {
-  if (sdk != null && module.pythonSdk == sdk) {
+  if (sdk != null) {
     runInEdt {
       val transferredRoots = getPathsToTransfer(sdk)
       val newTransferredRoots = TransferredRootsDetector(module.project).detect(module, transferredRoots, transferredRoots)
@@ -83,12 +67,13 @@ private fun addTransferredRoots(module: Module, newTransferredRoots: ModuleTrans
 }
 
 /**
- * Removes [getPathsToTransfer] result from [module] source roots and dependencies if [module] python sdk is [sdk].
+ * Removes [getPathsToTransfer] result from [module] source roots and dependencies. [sdk] is the interpreter that
+ * [module] had until the caller changed it.
  */
 @ApiStatus.Internal
 
 fun removeTransferredRoots(module: Module, sdk: Sdk?) {
-  if (sdk != null && module.pythonSdk == sdk) {
+  if (sdk != null) {
     runInEdt {
       val transferredRoots = getPathsToTransfer(sdk)
       val newTransferredRoots = TransferredRootsDetector(module.project).detect(module, transferredRoots, transferredRoots)
@@ -105,10 +90,11 @@ private fun removeTransferredRoots(module: Module, newTransferredRoots: ModuleTr
 }
 
 @ApiStatus.Internal
-
+@RequiresBackgroundThread
 fun updateTransferredRoots(project: Project, sdk: Sdk, newInProjectPaths: Set<VirtualFile>) {
   val rootsDetector = TransferredRootsDetector(project)
-  val modulesWithThisSdk = rootsDetector.projectModules.filter { it.pythonSdk == sdk }
+  val modulesUsingSdk = awaitSnapshot(project).modulesUsing(sdk).toSet()
+  val modulesWithThisSdk = rootsDetector.projectModules.filter { it in modulesUsingSdk }
   val oldTransferredRoots = getPathsToTransfer(sdk)
   val oldTransferredRootsStructure = modulesWithThisSdk.associateWith { rootsDetector.detect(it, oldTransferredRoots, oldTransferredRoots) }
   val newTransferredRootsStructure = modulesWithThisSdk.associateWith { rootsDetector.detect(it, newInProjectPaths, oldTransferredRoots) }
@@ -130,26 +116,9 @@ fun updateTransferredRoots(project: Project, sdk: Sdk, newInProjectPaths: Set<Vi
   }
 }
 
-private fun updateRootsForModulesWithInheritedSdk(project: Project, sdk: Sdk?, action: (Module, Sdk) -> Unit) {
-  if (sdk == null) {
-    return
-  }
-
-  for (module in runReadAction { ModuleManager.getInstance(project).modules }) {
-    if (!ModuleRootManager.getInstance(module).isSdkInherited) {
-      continue
-    }
-
-    action(module, sdk)
-  }
-}
-
 /**
  * Handles transferred roots and virtualenv exclusion when a module's Python SDK changes.
  * Registered as a listener for [PySdkListener.TOPIC].
- *
- * Note: cannot use the public [removeTransferredRoots] for `prevSdk` because its guard
- * `module.pythonSdk == sdk` fails — by the time the listener fires, the SDK is already changed.
  */
 internal class PySdkTransferredRootsListener : PySdkListener {
   override fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?) {

@@ -31,12 +31,16 @@ fn launch_document() -> Value {
     })
 }
 
+/// The context document of `value`, or the refusal of its check.
 fn context(value: &Value) -> Result<IdeContext, IdeDocumentError> {
-    decode_ide_context(value.to_string().as_bytes())
+    let document: IdeContext = serde_json::from_value(value.clone()).unwrap_or_else(|error| panic!("{value} is no context: {error}"));
+    validate_ide_context(&document).map(|()| document)
 }
 
+/// The launch document of `value`, or the refusal of its check.
 fn launch(value: &Value) -> Result<IdeLaunch, IdeDocumentError> {
-    decode_ide_launch(value.to_string().as_bytes())
+    let document: IdeLaunch = serde_json::from_value(value.clone()).unwrap_or_else(|error| panic!("{value} is no launch: {error}"));
+    validate_ide_launch(&document).map(|()| document)
 }
 
 fn context_refusal(value: &Value) -> String {
@@ -107,31 +111,6 @@ fn the_defaulted_fields_may_be_absent() {
     assert_eq!(document.product_digest, "");
 }
 
-// A decode error names the JSON path of the bad field, and a syntax error names the line and the column.
-#[test]
-fn a_decode_error_names_the_path() {
-    let mut wrong_kind = launch_document();
-    wrong_kind["properties"]["user.home"] = json!(7);
-    assert_eq!(
-        launch_refusal(&wrong_kind),
-        "the IDE launch document has no valid value at `properties.user.home`"
-    );
-    let mut wrong_kind = context_document();
-    wrong_kind["fresh"] = json!("yes");
-    assert_eq!(
-        context_refusal(&wrong_kind),
-        "the IDE context document has no valid value at `fresh`"
-    );
-    let not_json = decode_ide_launch(b"{\"properties\":{").unwrap_err();
-    assert!(
-        not_json.message.starts_with("the IDE launch document is not JSON"),
-        "{}",
-        not_json.message
-    );
-    let trailing = decode_ide_context(format!("{} {{}}", context_document()).as_bytes()).unwrap_err();
-    assert!(trailing.message.contains("trailing data"), "{}", trailing.message);
-}
-
 #[test]
 fn a_context_document_the_agent_cannot_act_on_is_refused() {
     let cases: [(&str, Value, &str); 5] = [
@@ -151,7 +130,6 @@ fn a_context_document_the_agent_cannot_act_on_is_refused() {
         ("archiveRoot", json!("../outside")),
         ("archiveRoot", json!("/absolute")),
         ("relocateTo", json!("/live")),
-        ("relocateTo", json!(null)),
         ("archive", json!("project.zip")),
     ] {
         let mut document = context_document();
@@ -225,9 +203,16 @@ fn a_launch_record_round_trips_and_checks_its_version() {
 
 // Every list of the collection answer is an array, also when it is empty.
 #[test]
-fn an_empty_collection_writes_three_arrays() {
+fn an_empty_collection_writes_five_arrays() {
     assert_eq!(
         serde_json::to_string(&IdeGcResult::default()).unwrap(),
-        r#"{"stopped":[],"kept":[],"removed":[]}"#
+        r#"{"stopped":[],"killed":[],"abandoned":[],"kept":[],"removed":[]}"#
     );
+}
+
+// An answer of an older agent names no killed and no abandoned run, and it still decodes.
+#[test]
+fn an_older_collection_answer_decodes_without_killed_and_abandoned() {
+    let older: IdeGcResult = serde_json::from_str(r#"{"stopped":[],"kept":[],"removed":[]}"#).unwrap();
+    assert_eq!(older, IdeGcResult::default());
 }

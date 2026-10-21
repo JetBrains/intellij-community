@@ -28,7 +28,6 @@
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry.exporter.otlp.common" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3" />
-    <orderEntry type="module" module-name="intellij.libraries.opentelemetry.sdk.autoconfigure.spi" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3.databind" />
   </component>
 </module>

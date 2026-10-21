@@ -32,7 +32,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent
-import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter
+import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapterBackgroundable
 import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
@@ -147,7 +147,7 @@ abstract class EditorBasedStatusBarPopup(
       }
     }, this)
     if (isWriteableFileRequired) {
-      myConnection.subscribe(VirtualFileManager.VFS_CHANGES, BulkVirtualFileListenerAdapter(object : VirtualFileListener {
+      myConnection.subscribe(VirtualFileManager.VFS_CHANGES_BG, BulkVirtualFileListenerAdapterBackgroundable(object : VirtualFileListener {
         override fun propertyChanged(event: VirtualFilePropertyEvent) {
           if (event.propertyName == VirtualFile.PROP_WRITABLE) {
             updateForFile(event.file)

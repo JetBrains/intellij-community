@@ -3,6 +3,7 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
@@ -12,10 +13,7 @@ import com.intellij.tasks.TaskManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Dmitry Avdeev
- */
-public class OpenTaskInBrowserAction extends BaseTaskAction {
+final class OpenTaskInBrowserAction extends BaseTaskAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -28,6 +26,7 @@ public class OpenTaskInBrowserAction extends BaseTaskAction {
   @Override
   public void update(@NotNull AnActionEvent event) {
     super.update(event);
+
     if (event.getPresentation().isEnabled()) {
       Presentation presentation = event.getPresentation();
       String url = getIssueUrl(event);
@@ -39,6 +38,10 @@ public class OpenTaskInBrowserAction extends BaseTaskAction {
         presentation.setText(TaskBundle.message("action.open.in.browser.text",
                                                 StringUtil.escapeMnemonics(TaskManager.getManager(project).getActiveTask().getPresentableName())));
       }
+    }
+
+    if (ActionPlaces.ACTION_SEARCH.equals(event.getPlace())) {
+      event.getPresentation().setEnabledAndVisible(false);
     }
   }
 

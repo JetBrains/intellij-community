@@ -6,6 +6,7 @@ import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.codeWithMe.ClientIdContextElement
 import com.intellij.codeWithMe.clientId
 import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.awaitOccurred
 import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.ide.ApplicationInitializedListener
@@ -69,7 +70,6 @@ import kotlin.io.path.Path
 import kotlin.reflect.KClass
 import kotlin.reflect.full.companionObject
 import kotlin.reflect.full.isSubclassOf
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -127,9 +127,7 @@ open class LambdaTestHost(private val coroutineScope: CoroutineScope) : Applicat
           delay(20.seconds)
           LOG.warn("LoadingState.COMPONENTS_LOADED has not occurred in 20 seconds: ${dumpCoroutines()}")
         }
-        while (!LoadingState.COMPONENTS_LOADED.isOccurred) {
-          delay(10.milliseconds)
-        }
+        LoadingState.COMPONENTS_LOADED.awaitOccurred()
         coroutineDumperOnTimeout.cancel()
         withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
           runLogged("Flush queue before tests") {

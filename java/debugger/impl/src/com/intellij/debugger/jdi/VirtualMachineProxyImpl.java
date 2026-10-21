@@ -105,10 +105,6 @@ public class VirtualMachineProxyImpl extends UserDataHolderBase implements JdiTi
     return myVirtualMachine;
   }
 
-  public ClassesByNameProvider getClassesByNameProvider() {
-    return this::classesByName;
-  }
-
   @ApiStatus.Internal
   public @NotNull JavaThreadFieldsResolver getThreadFieldsResolver() {
     return myThreadFieldsResolver;
@@ -282,7 +278,7 @@ public class VirtualMachineProxyImpl extends UserDataHolderBase implements JdiTi
     }
     clearCaches();
     LOG.debug("before resume VM");
-    DebuggerUtilsAsync.resume(myVirtualMachine).whenComplete((unused, throwable) -> {
+    DebuggerUtilsAsync.resume(myVirtualMachine).whenComplete((_, throwable) -> {
       if (throwable != null && !(DebuggerUtilsAsync.unwrap(throwable) instanceof RejectedExecutionException)) {
         myDebugProcess.logError("Error on resume", throwable);
       }
@@ -363,6 +359,7 @@ public class VirtualMachineProxyImpl extends UserDataHolderBase implements JdiTi
    * Avoid using directly, as the result may be garbage collected immediately -
    * use {@link com.intellij.debugger.impl.DebuggerUtilsEx#mirrorOfString(String, EvaluationContext)} instead
    */
+  @SuppressWarnings("SSBasedInspection")
   @ApiStatus.Obsolete
   public StringReference mirrorOf(String s) {
     return myVirtualMachine.mirrorOf(s);

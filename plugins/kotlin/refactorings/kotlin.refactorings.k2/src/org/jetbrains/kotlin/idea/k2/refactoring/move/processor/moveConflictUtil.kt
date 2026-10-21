@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkMov
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkNameClashConflicts
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkRequiresClassInstanceConflict
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkSealedClassesConflict
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkSuperReferenceConflict
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkUsedTypeParameterFromParentClassConflict
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkVisibilityConflictForNonMovedUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkVisibilityConflictsForInternalUsages
@@ -112,6 +113,7 @@ internal fun findAllMoveConflicts(
         putAllValues(checkSealedClassesConflict(allDeclarationsToMove, targetPkg, targetKaModule, targetIdeaModule))
         putAllValues(checkNameClashConflicts(allDeclarationsToMove, targetPkg, targetKaModule, target?.getTarget() as? KtClassOrObject))
         putAllValues(checkUsedTypeParameterFromParentClassConflict(allDeclarationsToMove, target))
+        putAllValues(checkSuperReferenceConflict(allDeclarationsToMove, target))
         putAllValues(checkFunctionOverriddenInSubclassConflict(allDeclarationsToMove))
         putAllValues(checkRequiresClassInstanceConflict(usages, allDeclarationsToMove, target))
         putAllValues(checkImplicitPackagePrefixConflict(targetDir, targetPkg))

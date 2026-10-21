@@ -1,15 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
-import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.system.OS;
 import org.jetbrains.annotations.Contract;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,27 +16,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PathManagerTest {
   private static final String TEST_PROP = "__ij_subst_test__";
   private static final String TEST_VALUE = "__" + new Random().nextInt(1000) + "__";
 
-  @Before
+  @BeforeEach
   public void setUp() {
     System.setProperty(TEST_PROP, TEST_VALUE);
   }
 
-  @After
+  @AfterEach
   public void tearDown() {
     System.clearProperty(TEST_PROP);
   }
 
-  @Rule
-  public final TempDirectory tempDir = new TempDirectory();
+  @TempDir
+  Path tempDir;
 
   @Test
   public void testResourceRoot() throws Exception {
@@ -45,10 +44,10 @@ public class PathManagerTest {
     var jarRoot = PathManager.getResourceRoot(getClass(), resourceName);
     var jar = Path.of(jarRoot);
     assertNotNull(jarRoot);
-    assertTrue(jarRoot, jarRoot.endsWith(".jar"));
+    assertTrue(jarRoot.endsWith(".jar"), jarRoot);
     assertTrue(Files.isRegularFile(jar));
 
-    var directory = tempDir.newDirectoryPath("extracted-jar");
+    var directory = tempDir.resolve("extracted-jar");
     new Decompressor.Zip(jar).extract(directory);
 
     var loader = UrlClassLoader.build().files(List.of(directory)).get();
@@ -56,7 +55,7 @@ public class PathManagerTest {
 
     var dirRoot = PathManager.getResourceRoot(loadedClass, resourceName);
     assertNotNull(dirRoot);
-    assertFalse(dirRoot, dirRoot.endsWith("/"));
+    assertFalse(dirRoot.endsWith("/"), dirRoot);
     assertTrue(Files.isDirectory(Path.of(dirRoot)));
     assertEquals(directory.toString(), dirRoot);
   }

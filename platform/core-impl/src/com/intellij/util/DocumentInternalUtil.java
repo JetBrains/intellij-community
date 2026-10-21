@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.DocumentSnapshot;
 import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.impl.DocumentImpl;
@@ -73,6 +74,9 @@ public final class DocumentInternalUtil {
   public static @NotNull DocumentSnapshot getDocumentSnapshot(@NotNull Document document) {
     if (document instanceof DocumentImpl) {
       return ((DocumentImpl)document).getCore().snapshot();
+    }
+    if (document instanceof DocumentEx) {
+      return new DocumentSnapshotImpl(((DocumentEx)document).getDocText());
     }
     return new DocumentSnapshotImpl(DocumentText.createText(document.getImmutableCharSequence()));
   }

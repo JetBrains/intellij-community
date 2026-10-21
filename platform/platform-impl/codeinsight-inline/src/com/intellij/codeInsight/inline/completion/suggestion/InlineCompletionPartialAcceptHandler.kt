@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 interface InlineCompletionPartialAcceptHandler {
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun insertNextWord(
     editor: Editor,
     file: PsiFile,
@@ -24,7 +24,7 @@ interface InlineCompletionPartialAcceptHandler {
   ): List<InlineCompletionElement>
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun insertNextLine(
     editor: Editor,
     file: PsiFile,

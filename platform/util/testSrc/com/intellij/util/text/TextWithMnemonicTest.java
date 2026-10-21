@@ -2,18 +2,19 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.TextWithMnemonic;
+import com.intellij.testFramework.TestLoggerKt;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.awt.event.KeyEvent;
 
 import static com.intellij.util.ui.UIUtil.MNEMONIC;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class TextWithMnemonicTest {
   @Test
@@ -214,17 +215,11 @@ public class TextWithMnemonicTest {
   }
 
   private static void assertIllegalMnemonicText(@NotNull String illegalText) {
-    TextWithMnemonic mnemonic;
-    try {
-      mnemonic = TextWithMnemonic.fromMnemonicText(illegalText);
-    }
-    catch (AssertionError e) {
-      // LOG.error becomes assertion error in test
-      assertTrue(e.getCause() instanceof IllegalArgumentException);
-      assertTrue(e.getMessage().contains("mnemonic"));
-      return;
-    }
-    fail("unexpected: " + mnemonic);
+    IllegalArgumentException error = TestLoggerKt.assertErrorLogged(
+      IllegalArgumentException.class,
+      () -> TextWithMnemonic.fromMnemonicText(illegalText)
+    );
+    assertTrue(error.getMessage().contains("mnemonic"));
   }
 
   @Test
@@ -277,10 +272,6 @@ public class TextWithMnemonicTest {
   }
 
   private static void assertMnemonicIndexOutOfBounds(@NotNull TextWithMnemonic wrapper, int invalidIndex) {
-    try {
-      fail("unexpected: " + wrapper.withMnemonicIndex(invalidIndex));
-    }
-    catch (IndexOutOfBoundsException ignored) {
-    }
+    assertThrows(IndexOutOfBoundsException.class, () -> wrapper.withMnemonicIndex(invalidIndex));
   }
 }

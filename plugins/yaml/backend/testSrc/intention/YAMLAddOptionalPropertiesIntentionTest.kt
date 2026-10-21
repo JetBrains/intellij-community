@@ -4,7 +4,7 @@ package org.jetbrains.yaml.intention
 import com.intellij.json.JsonBundle
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase
+import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestFixture
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.fixes.AddOptionalPropertiesIntention
 import org.intellij.lang.annotations.Language
@@ -12,7 +12,7 @@ import org.junit.Assert
 
 class YAMLAddOptionalPropertiesIntentionTest : BasePlatformTestCase() {
   private fun addSchema() {
-    JsonSchemaHighlightingTestBase.registerJsonSchema(
+    JsonSchemaHighlightingTestFixture.registerJsonSchema(
       myFixture,
       """
         {
@@ -115,7 +115,7 @@ class YAMLAddOptionalPropertiesIntentionTest : BasePlatformTestCase() {
 
 
   fun `test intention unavailable if all properties are present`() {
-    JsonSchemaHighlightingTestBase.registerJsonSchema(myFixture, """
+    JsonSchemaHighlightingTestFixture.registerJsonSchema(myFixture, """
       {
         "properties": {
           "aa" : {}

@@ -5,6 +5,7 @@ import com.intellij.find.FindManager
 import com.intellij.find.FindModel
 import com.intellij.find.FindUtil
 import com.intellij.find.SearchSession
+import com.intellij.ide.actions.ToolWindowTabLocationFusUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
@@ -112,7 +113,12 @@ class BlockTerminalController(
       session.commandExecutionManager.sendCommandToExecute(command) // will trigger `userCommandSent`
     }
     // report event even if it is an empty command, because it will be reported as a separate command type
-    TerminalUsageTriggerCollector.triggerCommandStarted(project, command, isBlockTerminal = true)
+    TerminalUsageTriggerCollector.triggerCommandStarted(
+      project,
+      command,
+      isBlockTerminal = true,
+      tabLocation = ToolWindowTabLocationFusUtil.fromComponentHierarchy(outputController.outputModel.editor.component),
+    )
   }
 
   @RequiresEdt(generateAssertion = false)

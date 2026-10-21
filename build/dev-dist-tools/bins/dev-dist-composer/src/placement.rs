@@ -1,9 +1,8 @@
 //! The check of the home placement that the Starlark rules state at analysis.
 //!
-//! A launcher that starts `java` directly gets its home from the runfiles tree, and Bazel writes that tree only from
-//! paths that analysis knows. So each component states its placement in Starlark too. The composer checks that the
-//! placement names every entry of the component manifests and nothing else. A difference fails the build, not the
-//! launch.
+//! A launch target gets its home from the runfiles tree, and Bazel writes that tree only from paths that analysis
+//! knows. So each component states its placement in Starlark too. The composer checks that the placement names every
+//! entry of the component manifests and nothing else. A difference fails the build, not the launch.
 
 use std::collections::{BTreeMap, HashSet};
 

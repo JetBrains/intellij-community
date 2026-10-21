@@ -16,7 +16,6 @@
 package org.jetbrains.jps.ant;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.bazel.runfiles.BazelLabel;
 import com.intellij.testFramework.common.BazelTestUtil;
@@ -26,6 +25,8 @@ import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderTestCase;
 import org.jetbrains.jps.model.serialization.JpsGlobalSettingsLoading;
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,12 +39,12 @@ import static com.intellij.util.io.TestFileSystemBuilder.fs;
 public class JpsAntArtifactBuilderTaskTest extends ArtifactBuilderTestCase {
   private File myArtifactsOutput;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myArtifactsOutput = FileUtil.createTempDirectory("artifactsOutput", null);
+  @BeforeEach
+  void setUp() throws Exception {
+    myArtifactsOutput = createTempDirectory("artifactsOutput");
   }
 
+  @Test
   public void testSimple() throws IOException {
     JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(myModel.getGlobal()).addPathVariable(PathMacroUtil.APPLICATION_HOME_DIR, PathManager.getHomePath());
     JpsGlobalSettingsLoading.loadGlobalSettings(myModel.getGlobal(), Paths.get(getTestDataRootPath(), "config/options"));
@@ -64,7 +65,7 @@ public class JpsAntArtifactBuilderTaskTest extends ArtifactBuilderTestCase {
       var label = BazelLabel.Companion.fromString("@community//plugins/ant/jps-plugin:testData");
       return BazelTestUtil.getFileFromBazelRuntime(label).toAbsolutePath().toString();
     }
-    return PathManagerEx.findFileUnderProjectHome("plugins/ant/jps-plugin/testData", getClass()).getAbsolutePath();
+    return findFindUnderProjectHome("plugins/ant/jps-plugin/testData").getAbsolutePath();
   }
 
   @NotNull

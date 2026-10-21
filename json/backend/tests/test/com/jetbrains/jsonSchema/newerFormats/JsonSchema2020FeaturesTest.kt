@@ -4,25 +4,35 @@ package com.jetbrains.jsonSchema.newerFormats
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.navigation.action.GotoDeclarationUtil
 import com.intellij.json.psi.JsonProperty
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.asSafely
+import com.intellij.openapi.application.readAction
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.JsonSchemaType
 import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectBackedByJacksonBase
 import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 
-internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
-  override val testDataLanguage: TestDataLanguage
-    get() = TestDataLanguage.JSON
-
-  override fun setUp() {
-    super.setUp()
-    Registry.get("json.schema.use.networknt.validation").setValue(false, testRootDisposable)
+@TestApplication
+@RegistryKey(key = "json.schema.use.networknt.validation", value = "false")
+internal open class JsonSchema2020FeaturesTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
   }
 
+  private val codeInsightFixture = codeInsightModuleFixture(projectFixture)
+  protected val versionFixture by jsonSchemaVersionFixture(codeInsightFixture, TestDataLanguage.JSON)
+
+  protected val dollar = "$"
+
+  @Test
   fun `test dynamic anchor resolve`() {
     val schemaFile = LightVirtualFile("schema.json", """
       {
@@ -33,17 +43,18 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
         }
       }
     """.trimIndent())
-    val schemaRootObject = JsonSchemaObjectStorage.getInstance(project).getOrComputeSchemaRootObject(schemaFile) as? JsonSchemaObjectBackedByJacksonBase
-    Assert.assertNotNull(schemaRootObject)
+    val schemaRootObject = JsonSchemaObjectStorage.getInstance(versionFixture.fixture.project).getOrComputeSchemaRootObject(schemaFile) as? JsonSchemaObjectBackedByJacksonBase
+    Assertions.assertNotNull(schemaRootObject)
     val resolvedNodePointer = schemaRootObject!!.getRootSchemaObject().resolveDynamicAnchor("CustomAnchor")
-    Assert.assertEquals("/test", resolvedNodePointer)
+    Assertions.assertEquals("/test", resolvedNodePointer)
     val relativeDefinition = schemaRootObject.getRootSchemaObject().findRelativeDefinition(resolvedNodePointer!!)
-    Assert.assertNotNull(relativeDefinition)
-    Assert.assertEquals(JsonSchemaType._array, relativeDefinition?.type)
+    Assertions.assertNotNull(relativeDefinition)
+    Assertions.assertEquals(JsonSchemaType._array, relativeDefinition?.type)
   }
 
+  @Test
   fun `test local dynamic ref based validation`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
           "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -77,6 +88,7 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
+  @Test
   fun `test remote dynamic ref based object validation`() {
     val baseSchema = """
       {
@@ -113,7 +125,7 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
       }
     """.trimIndent()
 
-    doTestValidationAgainstComplexSchema(
+    versionFixture.doTestValidationAgainstComplexSchema(
       extendedSchema,
       listOf(baseSchema),
       listOf(
@@ -131,6 +143,7 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
+  @Test
   fun `test remote dynamic ref based array validation`() {
     val baseSchema = """
       {
@@ -158,7 +171,7 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
       }
     """.trimIndent()
 
-    doTestValidationAgainstComplexSchema(
+    versionFixture.doTestValidationAgainstComplexSchema(
       extendedSchema,
       listOf(baseSchema),
       listOf(
@@ -169,7 +182,8 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
-  fun `test read external vocabulary`() {
+  @Test
+  fun `test read external vocabulary`(): Unit = timeoutRunBlocking {
     val mockSchema2020 = LightVirtualFile("schema.json", """
       {
         "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -183,15 +197,19 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
         "${dollar}ref": "meta/core"
       }
     """.trimIndent())
-    val schemaRootObject = JsonSchemaObjectStorage.getInstance(project).getOrComputeSchemaRootObject(mockSchema2020)
-    Assert.assertNotNull(schemaRootObject)
-    val remoteVocabulary = schemaRootObject!!.resolveRefSchema(JsonSchemaService.Impl.get(project))
-    Assert.assertNotNull(remoteVocabulary)
-    Assert.assertEquals("Core vocabulary meta-schema", remoteVocabulary?.title)
+    val project = versionFixture.fixture.project
+    val remoteVocabulary = readAction {
+      val schemaRootObject = JsonSchemaObjectStorage.getInstance(project).getOrComputeSchemaRootObject(mockSchema2020)
+      Assertions.assertNotNull(schemaRootObject)
+      schemaRootObject!!.resolveRefSchema(JsonSchemaService.Impl.get(project))
+    }
+    Assertions.assertNotNull(remoteVocabulary)
+    Assertions.assertEquals("Core vocabulary meta-schema", remoteVocabulary?.title)
   }
 
+  @Test
   fun `test array items validation`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
             "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -220,8 +238,9 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
+  @Test
   open fun `test array items validation against always invalid schema`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
             "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -246,8 +265,9 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
+  @Test
   fun `test array items validation against always valid schema`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
             "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -277,8 +297,9 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
+  @Test
   fun `test prefixItems positional validation`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
             "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -301,6 +322,7 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
+  @Test
   fun `test complete properties from if-else schema with reference`() {
     // check that detailed resolve is called before completion to ensure all necessary properties are considered
     val ifThenElseSchemaWithReferenceInElseBranch = """
@@ -339,7 +361,7 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
       """.trimIndent()
 
     // check completion taken from 'then' branch because 'if' evaluates to 'true'
-    doTestSchemaCompletion(
+    versionFixture.doTestSchemaCompletion(
       ifThenElseSchemaWithReferenceInElseBranch,
       """
         {
@@ -352,7 +374,7 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
 
     // check completion taken from 'else' branch because 'if' evaluates to 'false'
-    doTestSchemaCompletion(
+    versionFixture.doTestSchemaCompletion(
       ifThenElseSchemaWithReferenceInElseBranch,
       """
         {
@@ -364,8 +386,9 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
+  @Test
   fun `test validation by if then else`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
           "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -442,18 +465,19 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
   private fun getResolvedElementText(elementAtCaret: PsiElement): String {
     val propertyKeyAtCaret = elementAtCaret.asSafely<JsonProperty>()?.nameElement
     val target = GotoDeclarationUtil.findTargetElementsFromProviders(propertyKeyAtCaret,
-                                                                     myFixture.elementAtCaret.textOffset,
-                                                                     myFixture.editor)
-    Assert.assertNotNull(target)
-    Assert.assertEquals(1, target!!.size)
+                                                                     versionFixture.fixture.elementAtCaret.textOffset,
+                                                                     versionFixture.fixture.editor)
+    Assertions.assertNotNull(target)
+    Assertions.assertEquals(1, target!!.size)
     val singleTargetParent = target.single().parent
-    Assert.assertTrue(singleTargetParent is JsonProperty)
+    Assertions.assertTrue(singleTargetParent is JsonProperty)
     return singleTargetParent.text
   }
 
+  @Test
   fun `test gtd from json to json schema's if-then-else branch`() {
-    doTestGtdWithSingleTarget(
-      loadSchemaTextFromResources("IfElseSchemaWithDepth1.json"),
+    versionFixture.doTestGtdWithSingleTarget(
+      versionFixture.loadSchemaTextFromResources("IfElseSchemaWithDepth1.json"),
 
       """
         {
@@ -489,9 +513,10 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     }
   }
 
+  @Test
   fun `test gtd from json to nested if-then-else branch`() {
-    doTestGtdWithSingleTarget(
-      loadSchemaTextFromResources("IfElseSchemaWithDepth2.json"),
+    versionFixture.doTestGtdWithSingleTarget(
+      versionFixture.loadSchemaTextFromResources("IfElseSchemaWithDepth2.json"),
 
       """
         {
@@ -556,8 +581,9 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     }
   }
 
+  @Test
   open fun `test unevaluatedProperties constant support`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
           "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -585,8 +611,9 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
+  @Test
   fun `test unevaluatedProperties combined with additionalProperties support`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
           "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -615,8 +642,9 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
+  @Test
   open fun `test unevaluatedProperties with pattern`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
             "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -641,8 +669,9 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
+  @Test
   fun `test unevaluatedProperties schema support`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
           "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -674,8 +703,9 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
+  @Test
   open fun `test unevaluatedProperties with adjacent nested properties`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
             "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -709,8 +739,9 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
+  @Test
   open fun `test unevaluatedItems constant schema validation`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
             "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -726,8 +757,9 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
+  @Test
   fun `test unevaluatedItems schema validation`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
             "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -747,8 +779,9 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
+  @Test
   open fun `test unevaluatedItems and prefixItems compound validation`() {
-    doTestSchemaValidation(
+    versionFixture.doTestSchemaValidation(
       """
         {
             "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -767,8 +800,9 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
+  @Test
   fun `test if-else basic completion considers all available branches`() {
-    doTestSchemaCompletion(
+    versionFixture.doTestSchemaCompletion(
       """
         {
           "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -806,8 +840,9 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
+  @Test
   fun `test if-else smart completion considers only valid branch`() {
-    doTestSchemaCompletion(
+    versionFixture.doTestSchemaCompletion(
       """
         {
           "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",
@@ -845,10 +880,11 @@ internal open class JsonSchema2020FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
+  @Test
   fun `test if-then-else schema with adjacent properties completion`() {
     // todo implement inheritanceStrategy for if-else, oneOf/anyOF/allOf
     // and generic cases and write a test with inherited required properties as well
-    doTestSchemaCompletion(
+    versionFixture.doTestSchemaCompletion(
       """
         {
           "${dollar}schema": "https://json-schema.org/draft/2020-12/schema",

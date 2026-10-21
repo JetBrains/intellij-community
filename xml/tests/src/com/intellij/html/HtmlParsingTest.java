@@ -3,7 +3,9 @@ package com.intellij.html;
 
 import com.intellij.html.testFramework.HtmlParsingTestBase;
 import com.intellij.lang.html.HTMLParserDefinition;
+import com.intellij.testFramework.junit5.TestApplication;
 
+@TestApplication
 public class HtmlParsingTest extends HtmlParsingTestBase {
 
   public HtmlParsingTest() {

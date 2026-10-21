@@ -78,7 +78,7 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
 
     val widgetIcon = (fileSpecificItems.takeIf { it.isNotEmpty() }?.let { createStatusBarIcon(it) }
                       ?: AllIcons.Json.Object)
-      .let { addLivenessBadge(it, allItems) }
+      .let { addLivenessBadge(it, fileSpecificItems.ifEmpty { allItems }) }
 
     val widgetText = when {
       fileSpecificItems.size > maxIconsInStatusBar -> "+${fileSpecificItems.size - maxIconsInStatusBar + 1}"
@@ -97,11 +97,12 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
     }
   }
 
-  private fun addLivenessBadge(icon: Icon, allItems: List<LanguageServiceWidgetItem>): Icon = when {
-    allItems.any { it.runningState == LanguageServiceItemRunningState.Running } ->
+  /** The current file's items decide the badge when there are any; a not-yet-ready service wins over a running one. */
+  private fun addLivenessBadge(icon: Icon, items: List<LanguageServiceWidgetItem>): Icon = when {
+    items.any { it.runningState == LanguageServiceItemRunningState.Initializing } ->
+      IconManager.getInstance().withIconBadge(icon, JBUI.CurrentTheme.IconBadge.WARNING)
+    items.any { it.runningState == LanguageServiceItemRunningState.Running } ->
       IconManager.getInstance().withIconBadge(icon, JBUI.CurrentTheme.IconBadge.SUCCESS)
-    allItems.any { it.runningState == LanguageServiceItemRunningState.Initializing } ->
-      IconManager.getInstance().withIconBadge(icon, JBUI.CurrentTheme.IconBadge.INFORMATION)
     else -> icon
   }
 

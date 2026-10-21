@@ -8,7 +8,6 @@ import com.intellij.ui.DrawUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.TimerUtil
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -32,7 +31,6 @@ import javax.swing.plaf.basic.BasicHTML
  * in [setCopyable] mode are painted normally even while [isShimmering] is `true`. The animation is suppressed
  * in power-save mode and in a remote desktop session.
  */
-@ApiStatus.Experimental
 open class ShimmerLabel @JvmOverloads constructor(
   @NlsContexts.Label text: String = "",
   icon: Icon? = null,

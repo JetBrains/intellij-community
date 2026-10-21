@@ -2,8 +2,8 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.xml.testFramework` start
 jvm_provided_library(
-    name = "libraries_junit4_provided",
-    lib = "//libraries/junit4",
+    name = "libraries_junit6_provided",
+    lib = "//libraries/junit6",
 )
 
 jvm_library(
@@ -31,7 +31,9 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/lang-api:lang",
         "//platform/editor-ui-api:editor-ui",
-        ":libraries_junit4_provided",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5/codeInsight",
+        ":libraries_junit6_provided",
     ],
 )
 
@@ -58,8 +60,10 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.xml.testFramework` end

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -10,14 +11,13 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
-import com.intellij.util.containers.CollectionFactory
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentMap
 
 @Service(Service.Level.PROJECT)
 class JsonSchemaCacheManager : Disposable {
 
-  private val cache: ConcurrentMap<VirtualFile, CachedValue<JsonSchemaObjectFuture>> = CollectionFactory.createConcurrentWeakMap()
+  private val cache: ConcurrentMap<VirtualFile, CachedValue<JsonSchemaObjectFuture>> = ConcurrentCollectionFactory.createConcurrentWeakMap()
 
   /**
    *  Computes [JsonSchemaObject] preventing multiple concurrent computations of the same schema.

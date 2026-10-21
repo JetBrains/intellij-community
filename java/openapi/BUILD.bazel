@@ -1,4 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library", "resourcegroup")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.java` start
@@ -12,11 +12,6 @@ resourcegroup(
         ["compatibilityResources/**/*"],
     ),
     strip_prefix = "compatibilityResources",
-)
-
-jvm_provided_library(
-    name = "platform_java-guiForms-rt_provided",
-    lib = "//platform/forms_rt:java-guiForms-rt",
 )
 
 jvm_library(
@@ -34,6 +29,7 @@ jvm_library(
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
+        allow_empty = True,
         exclude = ["resources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
@@ -78,7 +74,6 @@ jvm_library(
         "//libraries/fastutil",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
-        ":platform_java-guiForms-rt_provided",
     ],
 )
 
@@ -110,8 +105,6 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/util:util_test_lib",
         "//platform/util/jdom:jdom_test_lib",
-        "//platform/forms_rt:java-guiForms-rt",
-        "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//platform/extensions:extensions_test_lib",
         "//platform/icons:icons_test_lib",
         "//platform/workspace/storage:storage_test_lib",

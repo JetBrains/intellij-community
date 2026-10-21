@@ -15,18 +15,45 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.editor.impl.EditorModelFixture;
 import com.intellij.openapi.editor.impl.EditorViewAccessor;
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-public class LogicalPositionCacheStressTest extends AbstractEditorTest {
+import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+
+@TestApplication
+public class LogicalPositionCacheStressTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
+
+  private EditorModelFixture myFixture;
+
+  private static final Logger LOG = Logger.getInstance(LogicalPositionCacheStressTest.class);
+
+  @BeforeEach
+  void setUp() {
+    myFixture = editorFixture.get();
+  }
+
   private static final int ITERATIONS = 10000;
   private static final Long SEED_OVERRIDE = null; // set non-null value to run with a specific seed
 
@@ -36,32 +63,35 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
   }};
   private long mySeed;
 
+  @Test
   public void testRandomActions() {
-    List<? extends Action> actions = Arrays.asList(new AddText(),
-                                                     new RemoveText(),
-                                                     new ReplaceText(),
-                                                     new MoveText());
-    LOG.debug("Seed is " + mySeed);
-    int i = 0;
-    try {
-      initText("");
-      for (i = 1; i <= ITERATIONS; i++) {
-        doRandomAction(actions);
-        checkConsistency(getEditor());
+    myFixture.runTest(() -> {
+      List<? extends Action> actions = Arrays.asList(new AddText(),
+                                                       new RemoveText(),
+                                                       new ReplaceText(),
+                                                       new MoveText());
+      LOG.debug("Seed is " + mySeed);
+      int i = 0;
+      try {
+        myFixture.initText("");
+        for (i = 1; i <= ITERATIONS; i++) {
+          doRandomAction(actions);
+          checkConsistency(myFixture.getEditor());
+        }
       }
-    }
-    catch (Throwable t) {
-      String message = "Failed when run with seed=" + mySeed + " in iteration " + i;
-      System.err.println(message);
-      throw new RuntimeException(message, t);
-    }
+      catch (Throwable t) {
+        String message = "Failed when run with seed=" + mySeed + " in iteration " + i;
+        System.err.println(message);
+        throw new RuntimeException(message, t);
+      }
+    });
   }
 
   private void doRandomAction(List<? extends Action> actions) {
     actions.get(myRandom.nextInt(Arrays.asList(new AddText(),
                                                new RemoveText(),
                                                new ReplaceText(),
-                                               new MoveText()).size())).perform(getEditor(), myRandom);
+                                               new MoveText()).size())).perform(myFixture.getEditor(), myRandom);
   }
 
   private static void checkConsistency(Editor editor) {
@@ -96,7 +126,7 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
       Document document = editor.getDocument();
       int offset = random.nextInt(document.getTextLength() + 1);
       CharSequence text = generateText(random);
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(offset, text));
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> document.insertString(offset, text));
     }
   }
 
@@ -108,7 +138,7 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
       if (textLength <= 0) return;
       int from = random.nextInt(textLength + 1);
       int to = random.nextInt(textLength + 1);
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> document.deleteString(Math.min(from, to), Math.max(from, to)));
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> document.deleteString(Math.min(from, to), Math.max(from, to)));
     }
   }
 
@@ -121,7 +151,8 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
       int from = random.nextInt(textLength + 1);
       int to = random.nextInt(textLength + 1);
       CharSequence text = generateText(random);
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(Math.min(from, to), Math.max(from, to), text));
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(),
+                                               () -> document.replaceString(Math.min(from, to), Math.max(from, to), text));
     }
   }
 
@@ -134,7 +165,7 @@ public class LogicalPositionCacheStressTest extends AbstractEditorTest {
       int[] offsets = {random.nextInt(textLength + 1), random.nextInt(textLength + 1), random.nextInt(textLength + 1)};
       Arrays.sort(offsets);
       if (offsets[0] == offsets[1] || offsets[1] == offsets[2]) return;
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
         if (random.nextBoolean()) {
           ((DocumentEx)document).moveText(offsets[0], offsets[1], offsets[2]);
         }

@@ -1,8 +1,8 @@
-//! The daemon control channel's wire: the state file, the HTTP routes, and the NDJSON run stream.
+//! The daemon control channel's wire: the state file, the HTTP routes, the run request, and the NDJSON run stream.
 //!
-//! The far end is Kotlin (`plugins/air/tests/integration/uiDaemon/testSrc/AirUiDaemonProtocol.kt`); this is the
-//! controller's half. Two guards make it worth its own module: the version refuses a daemon this controller
-//! does not understand, and the decoder refuses a record it cannot read rather than yielding a silent zero.
+//! The guest agent's `lane-daemon` verb serves it and speaks [`PROTOCOL_VERSION`]. Two guards make it worth its own
+//! module: the version refuses a daemon this controller does not understand, and the decoder refuses a record it
+//! cannot read rather than yielding a silent zero.
 //!
 //! Two rules run through the whole file, and they are opposites on purpose:
 //!
@@ -13,6 +13,7 @@
 //!   field is a rename that landed halfway, and is refused too.
 
 use std::borrow::Cow;
+use std::collections::BTreeMap;
 use std::fmt;
 use std::time::Duration;
 
@@ -20,12 +21,18 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 use serde_json::{Map, Value};
+use sha2::{Digest, Sha256};
 
 #[cfg(test)]
 mod tests;
 
-/// Must match `AIR_UI_DAEMON_PROTOCOL_VERSION` on the Kotlin side. Bump both together, or a boot fails by name.
-pub const PROTOCOL_VERSION: u32 = 5;
+/// The protocol of the guest agent's `lane-daemon` verb. The agent is built from the same tree as the controller, so
+/// the two halves move together.
+pub const PROTOCOL_VERSION: u32 = 6;
+
+/// The daemon environment variable that names the guest directory of the run inputs of `run --test-env NAME=@FILE`.
+/// The controller sets it to a path, never to a value. A file of that directory holds a secret of one run.
+pub const RUN_SECRETS_VARIABLE: &str = "AIR_VM_RUN_SECRETS";
 
 /// The Bazel target the runtime descriptor of a macOS guest comes from.
 pub const LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon";
@@ -34,6 +41,11 @@ pub const LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon";
 /// so the lane build shares one analysis with every other Bazel command
 /// (`plugins/air/tests/integration/ui_lane_ide.bzl`).
 pub const LINUX_GUEST_LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon_linux_guest";
+
+/// The Bazel target of the runtime descriptor of a Linux guest with the CLIs of the live lane. A run that holds the live
+/// lane builds it in place of [`LINUX_GUEST_LABEL`], so a build of another lane fetches no archive of them, and no build
+/// needs an option of its own.
+pub const LINUX_GUEST_LIVE_LABEL: &str = "//plugins/air/tests/integration/ui:ui_daemon_linux_guest_live";
 
 /// The prefix of every daemon run id. Only a daemon start sends a supervisor `start` with it, so it is what lets a
 /// controller that holds no record still recognise a daemon run in the slot.
@@ -58,8 +70,6 @@ vocabulary! {
         Status = "status",
         MissingJars = "missingJars",
         Run = "run",
-        MountQuiesce = "mountQuiesce",
-        MountResume = "mountResume",
         IdeStop = "ideStop",
         Shutdown = "shutdown",
         UploadJar = "uploadJar",
@@ -96,18 +106,16 @@ const fn fixed(route: Route, method: Method, path: &'static str, timeout: Option
     }
 }
 
-// The budgets were bare literals at each call, which is why `/mount/quiesce` (a full IDE stop) and `/status`
-// (one field read) had once been given the same one.
+// The budgets were bare literals at each call, which is why a full IDE stop and `/status` (one field read) had once
+// been given the same one.
 pub const STATUS: Endpoint = fixed(Route::Status, Method::Get, "/status", Some(Duration::from_secs(5)));
 pub const MISSING_JARS: Endpoint = fixed(Route::MissingJars, Method::Post, "/jars", Some(Duration::from_secs(15)));
 pub const RUN: Endpoint = fixed(Route::Run, Method::Post, "/run", None);
-pub const MOUNT_QUIESCE: Endpoint = fixed(Route::MountQuiesce, Method::Post, "/mount/quiesce", Some(Duration::from_secs(180)));
-pub const MOUNT_RESUME: Endpoint = fixed(Route::MountResume, Method::Post, "/mount/resume", Some(Duration::from_secs(30)));
 pub const IDE_STOP: Endpoint = fixed(Route::IdeStop, Method::Post, "/ide/stop", Some(Duration::from_secs(180)));
 pub const SHUTDOWN: Endpoint = fixed(Route::Shutdown, Method::Post, "/shutdown", Some(Duration::from_secs(10)));
 
 /// Every fixed route, in declared order. A list rather than a map, so the first match is a fact.
-pub const FIXED_ENDPOINTS: [Endpoint; 7] = [STATUS, MISSING_JARS, RUN, MOUNT_QUIESCE, MOUNT_RESUME, IDE_STOP, SHUTDOWN];
+pub const FIXED_ENDPOINTS: [Endpoint; 5] = [STATUS, MISSING_JARS, RUN, IDE_STOP, SHUTDOWN];
 
 pub const UPLOAD_JAR_TIMEOUT: Duration = Duration::from_secs(120);
 pub const RESULTS_TIMEOUT: Duration = Duration::from_secs(10);
@@ -145,7 +153,7 @@ pub fn match_route(method: &str, path: &str) -> Option<Route> {
     {
         return Some(endpoint.route);
     }
-    if method == "PUT" && path.strip_prefix("/jars/").is_some_and(crate::stage::is_sha256_hex) {
+    if method == "PUT" && path.strip_prefix("/jars/").is_some_and(crate::digest::is_sha256_hex) {
         return Some(Route::UploadJar);
     }
     // One segment, so a traversal in the iteration id never reaches the results handler.
@@ -158,27 +166,24 @@ pub fn match_route(method: &str, path: &str) -> Option<Route> {
 
 // --- the bodies those routes answer with ------------------------------------------------------------------
 //
-// The Kotlin DTOs behind these carry no `@SerialName`, so every name below is a Kotlin property name spelled
-// out by hand. `AirUiDaemonProtocolTest` asserts these keys as bytes on the Kotlin side.
+// The lane daemon of the guest agent writes these bodies with the same types, so each name below is the name on both
+// ends.
 
 /// `GET /status`.
 ///
-/// All ten fields always cross: Kotlin declares every one non-nullable and encodes defaults. Four of them
-/// (`product_stamp`, `busy`, `metaspace_used_bytes`, `pid`) are read by no decision here, and are declared
-/// anyway - a field the daemon sends and this file omits is a field a fake is free to drop.
+/// All eight fields always cross. Three of them (`product_stamp`, `busy`, `pid`) are read by no decision here, and are
+/// declared anyway - a field the daemon sends and this file omits is a field a fake is free to drop. The JVM daemon also
+/// sends `mountQuiesced` and `metaspaceUsedBytes`, which this reader ignores.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Status {
     pub protocol_version: u32,
     pub daemon_boot_stamp: String,
     pub controller_launch_digest: String,
-    pub mount_quiesced: bool,
     pub product_stamp: String,
     pub ide_running: bool,
     pub busy: bool,
     pub iteration_count: u32,
-    /// Bytes on a long-lived JVM; passes a billion routinely, so nothing a float would round.
-    pub metaspace_used_bytes: i64,
     pub pid: i64,
 }
 
@@ -201,11 +206,141 @@ pub struct Conflict {
     pub launch_digest: Option<String>,
 }
 
-/// The refusals the daemon names today, each of which the controller answers differently.
+/// The refusals the daemon names today. The controller answers `stale-daemon` with a restart and every other reason
+/// as busy.
 pub mod conflict {
     pub const BUSY: &str = "busy";
-    pub const MOUNT_QUIESCED: &str = "mount-quiesced";
     pub const STALE_DAEMON: &str = "stale-daemon";
+    /// The daemon has its `/shutdown`, and it takes no run more.
+    pub const SHUTTING_DOWN: &str = "shutting-down";
+}
+
+/// `POST /run`: what one iteration runs, and the inputs it runs with.
+///
+/// An empty selection is `[]` and never `null`. A field that a run does not use is absent, so a request of a run with no
+/// lane inputs, such as one in a test, stays short.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RunRequest {
+    pub selectors: Vec<String>,
+    pub junit5_filters: Vec<String>,
+    /// The identity of the product under test. The lane daemon folds it into the config key of the lane IDE.
+    pub product_stamp: String,
+    /// The launch generation that the controller prepared the run for. A daemon of another generation refuses it.
+    pub launch_digest: String,
+    pub active_execution_timeout_sec: u64,
+    pub progress_gap_timeout_sec: u64,
+    /// The budget of the whole run, in seconds from the request. The watchdog ends the run at it, and no instruction
+    /// waits past it. Absent sets no budget.
+    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
+    pub run_budget_sec: Option<u64>,
+    /// The context plugin files, which the daemon installs into the plugin directory of the IDE context.
+    pub ide_plugins: Vec<IdePlugin>,
+    /// The catalog lane of the run, such as `ui`: the lane document `lanes/<lane>.json`.
+    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
+    pub lane: Option<String>,
+    /// The digests that the push stored the lane inputs under.
+    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
+    pub lane_inputs: Option<LaneInputs>,
+    /// Every suite of the lane that the catalog names: the suite documents and the authored suites. The lane daemon
+    /// plans each one, and a suite without a suite document ends as a failed container. Empty plans the suite documents
+    /// alone.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub lane_classes: Vec<LaneClass>,
+    /// The recorded sessions of the run, which the push stored as zips. The lane daemon unpacks them into the context
+    /// of the lane IDE, as [`crate::session_log`] states.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub session_logs: Vec<SessionLog>,
+}
+
+/// One recorded session of a run: its label and the digest that the push stored its zip under.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SessionLog {
+    pub label: String,
+    pub sha256: String,
+}
+
+/// One suite of a lane: its id and its test class, by its simple name.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LaneClass {
+    pub suite: String,
+    pub test_class_name: String,
+}
+
+/// One context plugin file of a run: its destination below the plugin directory of the IDE context, and the digest
+/// that the push stored it under.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct IdePlugin {
+    pub destination: String,
+    pub sha256: String,
+}
+
+/// The digest of each context plugin directory, by the name of the directory: the first component of a destination.
+///
+/// `files` holds one `(destination, sha256)` pair per file. The digest of a directory is the SHA-256 of the destination
+/// and the content digest of each of its files, each followed by a NUL byte, in destination order. The resident plugin
+/// computes the `bridgePlugin` value of the lifecycle state by the same formula, so the controller, the guest agent and
+/// the IDE name one copy of a plugin by one value.
+pub fn plugin_directory_digests<'a>(files: impl IntoIterator<Item = (&'a str, &'a str)>) -> BTreeMap<String, String> {
+    let mut by_directory: BTreeMap<&str, Vec<(&str, &str)>> = BTreeMap::new();
+    for (destination, sha256) in files {
+        let directory = destination.split('/').next().unwrap_or_default();
+        by_directory.entry(directory).or_default().push((destination, sha256));
+    }
+    by_directory
+        .into_iter()
+        .map(|(directory, mut files)| {
+            files.sort_unstable();
+            let mut hash = Sha256::new();
+            for (destination, sha256) in files {
+                hash.update(destination.as_bytes());
+                hash.update([0]);
+                hash.update(sha256.as_bytes());
+                hash.update([0]);
+            }
+            (directory.to_owned(), hex::encode(hash.finalize()))
+        })
+        .collect()
+}
+
+/// The digests of the three lane inputs of the runtime descriptor, as the push stored them.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LaneInputs {
+    pub fake_agent_jar: String,
+    pub lane_documents: String,
+    pub suite_documents: String,
+}
+
+/// Why a test or a container failed, as the lane daemon types it: the kind, the first account and the rest of it.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TypedFailure {
+    /// The kind of the failure, such as `not_implemented` or the class name of an exception in the IDE.
+    #[serde(
+        rename = "type",
+        default,
+        deserialize_with = "crate::json::non_null",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub kind: Option<String>,
+    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+    /// The cause chain or the stack, after the message.
+    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
+    pub detail: Option<String>,
+}
+
+impl TypedFailure {
+    /// The line that names the failure for a person: the first line of the message, else the kind. `None` when the
+    /// failure has neither.
+    pub fn headline(&self) -> Option<&str> {
+        self.message
+            .as_deref()
+            .and_then(|message| message.lines().next())
+            .filter(|line| !line.is_empty())
+            .or_else(|| self.kind.as_deref().filter(|kind| !kind.is_empty()))
+    }
 }
 
 /// What the daemon publishes for the controller to read over the hypervisor exec channel. The token never
@@ -251,6 +386,13 @@ vocabulary! {
         /// A relaunch, a reset or a readiness gate of the lane was open past its budget, and the daemon wrote its
         /// dumps.
         SlowStep = "slowStep",
+        /// A choice the lane daemon made about the lane IDE, and why: a reuse, a reload of the bridge plugin, a
+        /// relaunch or a fresh context. The controller publishes it as its own `decision` record.
+        Decision = "decision",
+        /// The recorder of the lane daemon records nothing from here on, or misses a scenario: it did not start, it
+        /// refused the hello or a scenario, or it went away. The controller makes the first reason the report's
+        /// `tracesError`.
+        TraceFailed = "traceFailed",
     }
 }
 
@@ -305,13 +447,18 @@ pub struct RunStarted {
 }
 
 /// A plan that discovered nothing and a record that carried no count are different facts: the first is a lane
-/// whose selection matched nothing, the second a decoder that was bypassed. So the count is required.
+/// whose selection matched nothing, the second a decoder that was bypassed. So the count is required. From the lane
+/// daemon, `class_names` is the `testClassName` of each selected suite document.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PlanStarted {
     pub timestamp: String,
     pub discovered_executions: u32,
     pub class_names: Vec<String>,
+    /// Each scenario of the plan, in run order, so that a reader of a cut-off stream names each scenario that never
+    /// ran. The lane daemon writes it. An empty list is absent on the wire.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub executions: Vec<ExecutionIdentity>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -329,8 +476,12 @@ pub struct TestFinished {
     pub execution: ExecutionIdentity,
     pub status: String,
     pub duration_ms: i64,
-    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
+    #[serde(flatten)]
+    pub failure: TypedFailure,
+    /// The notes and the metrics of the scenario, which the lane daemon reads from the answers of its authored parts.
+    /// Absent when the scenario reported none.
+    #[serde(default, skip_serializing_if = "crate::report::ScenarioReport::is_empty")]
+    pub report: crate::report::ScenarioReport,
 }
 
 /// A skipped test, or a skipped container: the same record under two names.
@@ -347,8 +498,8 @@ pub struct ContainerFailed {
     pub timestamp: String,
     #[serde(flatten)]
     pub execution: ExecutionIdentity,
-    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
+    #[serde(flatten)]
+    pub failure: TypedFailure,
 }
 
 /// The daemon's watchdog, as it last published itself.
@@ -466,6 +617,15 @@ impl SlowStep {
     }
 }
 
+/// The recorder of the lane daemon stopped recording, or did not record a scenario. `reason` is the first cause the
+/// daemon met, as its log states it.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TraceFailed {
+    pub timestamp: String,
+    pub reason: String,
+}
+
 /// The reading of one record, by kind. Serializes back to the record's own shape, `event` included.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 #[serde(tag = "event", rename_all = "camelCase")]
@@ -485,6 +645,8 @@ pub enum RunEventKind {
     IdeLaunched(IdeLaunched),
     IdeExited(IdeExited),
     SlowStep(SlowStep),
+    Decision(crate::progress::Decision),
+    TraceFailed(TraceFailed),
 }
 
 /// One decoded record: what the daemon sent, and the reading of it.
@@ -535,6 +697,8 @@ impl RunEvent {
             RunEventKind::IdeLaunched(_) => Event::IdeLaunched,
             RunEventKind::IdeExited(_) => Event::IdeExited,
             RunEventKind::SlowStep(_) => Event::SlowStep,
+            RunEventKind::Decision(_) => Event::Decision,
+            RunEventKind::TraceFailed(_) => Event::TraceFailed,
         }
     }
 
@@ -656,6 +820,8 @@ pub fn decode_run_event(line: &[u8]) -> Result<RunEvent, DecodeError> {
         Event::IdeLaunched => RunEventKind::IdeLaunched(record(event, body)?),
         Event::IdeExited => RunEventKind::IdeExited(record(event, body)?),
         Event::SlowStep => RunEventKind::SlowStep(record(event, body)?),
+        Event::Decision => RunEventKind::Decision(record(event, body)?),
+        Event::TraceFailed => RunEventKind::TraceFailed(record(event, body)?),
     };
     Ok(RunEvent { raw: Some(raw), kind })
 }

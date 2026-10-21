@@ -808,7 +808,8 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
         Color fg = UIUtil.getListForeground(isSelected, cellHasFocus);
 
         if (showIcon) {
-          panel.setIcon(EMPTY_ICON);
+          Icon icon = ActionSearchUtilKt.getOptionDescriptionIcon((OptionDescription)value);
+          panel.setIcon(icon != null ? icon : EMPTY_ICON);
         }
         if (value instanceof BooleanOptionDescription) {
           boolean selected = ((BooleanOptionDescription)value).isOptionEnabled();

@@ -16,11 +16,16 @@
 package com.intellij.util.io;
 
 import com.intellij.util.containers.IntObjectCache;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.HashSet;
 
-public class IntObjectCacheTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class IntObjectCacheTest {
+  @Test
   public void testResize() {
     final int SIZE = 4;
     final IntObjectCache<String> cache = new IntObjectCache<>(SIZE);

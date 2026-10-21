@@ -16,6 +16,7 @@
     <extensionPoint qualifiedName="com.intellij.consoleFilterProvider" interface="com.intellij.execution.filters.ConsoleFilterProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.invisibleHyperlinkFilterProvider" interface="com.intellij.execution.filters.InvisibleHyperlinkFilterProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.consoleInputFilterProvider" interface="com.intellij.execution.filters.ConsoleInputFilterProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.analyzeStacktraceFilter" interface="com.intellij.execution.filters.Filter" area="IDEA_PROJECT" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.execution.filters.PreparationOfDocumentForNavigation" open="true"/>

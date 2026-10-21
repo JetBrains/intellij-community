@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.util.Consumer
+import com.intellij.util.io.HttpRequests.HttpStatusException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -30,6 +31,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
+import java.net.HttpURLConnection
 import java.net.URI
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -46,21 +48,22 @@ internal class ITNReporterSubmitService(val coroutineScope: CoroutineScope) {
     errorBean: ErrorBean,
     parentComponent: Component,
     callback: (SubmittedReportInfo) -> Unit,
+    textOnly: Boolean = false,
   ): Boolean {
     coroutineScope.launch(DiagnosticDispatchers.Default) {
       try {
         val reportId = if (project != null) {
           withBackgroundProgress(project, DiagnosticBundle.message("title.submitting.error.report")) {
-            ITNProxy.sendError(errorBean, postUrl)
+            ITNProxy.sendError(errorBean, postUrl, textOnly)
           }
         }
         else {
-          ITNProxy.sendError(errorBean, postUrl)
+          ITNProxy.sendError(errorBean, postUrl, textOnly)
         }
         onSuccess(project, reportId, callback)
       }
       catch (e: Exception) {
-        onError(postUrl, project, e, errorBean, parentComponent, callback)
+        onError(postUrl, project, e, errorBean, parentComponent, callback, textOnly)
       }
     }
     return true
@@ -87,7 +90,8 @@ internal class ITNReporterSubmitService(val coroutineScope: CoroutineScope) {
     e: Exception,
     errorBean: ErrorBean,
     parentComponent: Component,
-    callback: (SubmittedReportInfo) -> Unit
+    callback: (SubmittedReportInfo) -> Unit,
+    textOnly: Boolean,
   ) {
     LOG.info("reporting failed: ${e}")
     LOG.debug(e)
@@ -105,11 +109,19 @@ internal class ITNReporterSubmitService(val coroutineScope: CoroutineScope) {
       else if (e is CancellationException) {
         callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
       }
+      else if (!textOnly && e is HttpStatusException && e.statusCode == HttpURLConnection.HTTP_ENTITY_TOO_LARGE) {
+        val message = DiagnosticBundle.message("error.report.too.large.message")
+        val title = DiagnosticBundle.message("error.report.too.large.title")
+        val result = MessageDialogBuilder.yesNo(title, message).ask(project)
+        if (!result || !submit(postUrl, project, errorBean, parentComponent, callback, textOnly = true)) {
+          callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
+        }
+      }
       else {
         val message = DiagnosticBundle.message("error.report.failed.message", e.message ?: e.javaClass.name)
         val title = DiagnosticBundle.message("error.report.failed.title")
         val result = MessageDialogBuilder.yesNo(title, message).ask(project)
-        if (!result || !submit(postUrl, project, errorBean, parentComponent, callback)) {
+        if (!result || !submit(postUrl, project, errorBean, parentComponent, callback, textOnly)) {
           callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
         }
       }

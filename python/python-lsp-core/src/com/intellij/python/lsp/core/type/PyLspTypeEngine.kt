@@ -13,7 +13,7 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.python.lsp.core.isUsable
-import com.intellij.python.lsp.core.pyServedModules
+import com.intellij.python.lsp.core.pyServedProjects
 import com.jetbrains.python.psi.PyExpressionCodeFragment
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.types.engine.PyTypeEngine
@@ -67,7 +67,7 @@ interface PyLspTypeEngine : PyTypeEngine {
     // A file of no module goes to any server: a library file reaches this point, and so
     // does a scratch file or a file outside every content root.
     // Before the server runs, the engine knows its own module alone.
-    val servedModules = lspClient?.pyServedModules ?: listOf(module)
+    val servedModules = lspClient?.pyServedProjects?.map { it.residesOnModule } ?: listOf(module)
     val fileModule = moduleOfFile(realFile)
     return fileModule == null || fileModule in servedModules
   }

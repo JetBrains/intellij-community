@@ -18,11 +18,15 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
@@ -31,8 +35,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiRecordComponent;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.TestIndexingModeSupporter;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -43,10 +49,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @SuppressWarnings("NewClassNamingConvention")
@@ -676,6 +685,124 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
                                  "ffffffffffffffffff/ggggggggggggggggg/hhhhhhhhhhhhhhhh/ClassName.java"), List.of(veryLongNameFile));
   }
 
+  public void test_pasted_relative_path_finds_the_file() {
+    PsiFile file = addEmptyFile("foo/bar/goo/index.html");
+    addEmptyFile("foo/index.html");
+    assertOrderedEquals(gotoFile("foo/bar/goo/index.html"), List.of(file));
+  }
+
+  /** The literal lookup streams the fast results, and the walk of the project tree must return the same files. */
+  public void test_literal_path_lookup_and_the_walk_return_the_same_files() {
+    addEmptyFile("foo/bar/goo/index.html");
+    addEmptyFile("foo/bar/goo2/index.html");
+    addEmptyFile("moduleA/foo/bar/goo/index.html");
+    addEmptyFile("platform/core-util/foo/a.txt");
+    addEmptyFile("platform/util/foo/a.txt");
+
+    for (String pattern : List.of("foo/bar/goo/index.html", "platform/util/foo/a.txt", "foo/bar/goo/", "bar/goo/index.html")) {
+      List<PsiFile> withLookup = gotoFile(pattern);
+      withLiteralPathLookupDisabled(() -> assertSameElements(gotoFile(pattern), withLookup));
+    }
+  }
+
+  public void test_pasted_relative_path_finds_the_same_path_under_another_directory() {
+    PsiFile atRoot = addEmptyFile("src/main/java/Foo.java");
+    PsiFile nested = addEmptyFile("moduleA/src/main/java/Foo.java");
+    assertSameElements(gotoFile("src/main/java/Foo.java"), List.of(atRoot, nested));
+  }
+
+  public void test_pasted_relative_path_keeps_a_loosely_matching_directory() {
+    PsiFile exact = addEmptyFile("main/java/util/Foo.java");
+    PsiFile loose = addEmptyFile("main/javafx/util/Foo.java");
+    assertOrderedEquals(gotoFile("main/java/util/Foo.java"), List.of(exact, loose));
+  }
+
+  public void test_pasted_relative_path_keeps_a_directory_that_only_a_subsequence_matches() {
+    PsiFile exact = addEmptyFile("platform/util/foo/a.txt");
+    PsiFile loose = addEmptyFile("platform/core-util/foo/a.txt");
+    assertOrderedEquals(gotoFile("platform/util/foo/a.txt"), List.of(exact, loose));
+  }
+
+  /** The full name of a file in the popup starts with the name of its root, so a copied path can repeat it. */
+  public void test_pasted_relative_path_reads_the_root_name_both_ways() {
+    PsiFile withoutPrefix = addEmptyFile("main/java/Foo.java");
+    PsiFile withPrefix = addEmptyFile("src/main/java/Foo.java");
+    assertSameElements(gotoFile("src/main/java/Foo.java"), List.of(withoutPrefix, withPrefix));
+  }
+
+  /**
+   * The literal lookup resolves the path only to a library directory, so the project-only search finds no file there,
+   * and the library offers one. The pass must still run the walk, which finds the file in a loosely matching directory.
+   */
+  public void test_pasted_relative_path_in_a_library_keeps_the_walk_results() throws IOException {
+    // the library must be outside the source root, which holds every file of the temp directory fixture
+    VirtualFile tempRoot = ModuleRootManager.getInstance(getModule()).getSourceRoots()[0].getParent();
+    VirtualFile libRoot = VfsTestUtil.createDir(tempRoot, "lib");
+    VfsTestUtil.createFile(libRoot, "foo/bar/goo/index.html");
+    Library library = PsiTestUtil.addProjectLibrary(getModule(), "lib", List.of(libRoot), List.of());
+    PsiFile loose = addEmptyFile("foo/bar/goo2/index.html");
+    fuzzySearchRegistryValue.setValue(false);
+    try {
+      assertOrderedEquals(gotoFile("foo/bar/goo/index.html"), List.of(loose));
+    }
+    finally {
+      fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
+      PsiTestUtil.removeLibrary(getModule(), library);
+      WriteAction.run(() -> libRoot.delete(this));
+    }
+  }
+
+  public void test_pasted_relative_path_reports_each_file_once() {
+    PsiFile exact = addEmptyFile("foo/bar/goo/index.html");
+    PsiFile loose = addEmptyFile("foo/bar/goo2/index.html");
+    List<PsiFile> result = gotoFile("foo/bar/goo/index.html");
+    assertOrderedEquals(result, List.of(exact, loose));
+  }
+
+  public void test_mis_cased_relative_path_still_finds_the_file() {
+    PsiFile file = addEmptyFile("foo/bar/goo/index.html");
+    assertOrderedEquals(gotoFile("FOO/BAR/goo/index.html"), List.of(file));
+  }
+
+  public void test_pasted_relative_path_with_backslashes_finds_the_file() {
+    PsiFile file = addEmptyFile("foo/bar/goo/index.html");
+    assertOrderedEquals(gotoFile("foo\\bar\\goo\\index.html"), List.of(file));
+  }
+
+  public void test_pasted_relative_path_of_a_directory_finds_the_directory() {
+    PsiFile file = addEmptyFile("foo/bar/goo/doo/index.html");
+    PsiDirectory dooDir = file.getContainingDirectory();
+
+    SearchEverywhereContributor<Object> contributor = createFileContributor(getProject(), getTestRootDisposable(), file);
+    fuzzySearchRegistryValue.setValue(false);
+    try {
+      assertOrderedEquals(calcContributorElements(contributor, "foo/bar/goo/doo/"), List.of(dooDir));
+    }
+    finally {
+      fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
+    }
+  }
+
+  /**
+   * The search reports a file in the only matched directory twice: once by its name, and once as a child of that
+   * directory. A long gap in the qualifier can put the name weight below the child weight, so the child copy must go through.
+   * The gap must be longer than about a thousand characters to get there.
+   */
+  public void test_a_repeated_file_keeps_its_better_weight() {
+    PsiFile file = addEmptyFile("shop/" + ("a".repeat(250) + "/").repeat(6) + "billing/billing.txt");
+    WeightedSearchEverywhereContributor<?> contributor =
+      (WeightedSearchEverywhereContributor<?>)createFileContributor(getProject(), getTestRootDisposable(), file);
+    fuzzySearchRegistryValue.setValue(true);
+    try {
+      List<Integer> weights = weightsOf(contributor, "shop/billing", file);
+      assertTrue("the name weight must be below the child weight: " + weights, weights.getFirst() < 0);
+      assertEquals(weights.toString(), 0, (int)Collections.max(weights));
+    }
+    finally {
+      fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
+    }
+  }
+
   public void test_exactly_matching_qualified_symbol_gets_the_exact_match_degree() {
     PsiMethod method = myFixture.addClass("package foo; class Bar { void createBreakpoints() {} }").getMethods()[0];
     WeightedSearchEverywhereContributor<?> contributor =
@@ -725,13 +852,32 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     assertTrue(weightOf(contributor, "foo.Bar$1", barClass) < DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE);
   }
 
-  private static int weightOf(WeightedSearchEverywhereContributor<?> contributor, String text, Object item) {
+  private static void withLiteralPathLookupDisabled(Runnable action) {
+    RegistryValue registryValue = Registry.get("search.everywhere.goto.file.literal.directory.match");
+    boolean previous = registryValue.asBoolean();
+    registryValue.setValue(false);
+    try {
+      action.run();
+    }
+    finally {
+      registryValue.setValue(previous);
+    }
+  }
+
+  /** @return the weight of each copy of the item, in the order of the search */
+  private static List<Integer> weightsOf(WeightedSearchEverywhereContributor<?> contributor, String text, Object item) {
     List<?> items = contributor.searchWeightedElements(text, new MockProgressIndicator(), ELEMENTS_LIMIT).getItems();
+    List<Integer> weights = new ArrayList<>();
     for (Object each : items) {
       FoundItemDescriptor<?> descriptor = (FoundItemDescriptor<?>)each;
-      if (item.equals(descriptor.getItem())) return descriptor.getWeight();
+      if (item.equals(descriptor.getItem())) weights.add(descriptor.getWeight());
     }
-    throw new AssertionError("The search for '" + text + "' did not return " + item);
+    assertFalse("The search for '" + text + "' did not return " + item, weights.isEmpty());
+    return weights;
+  }
+
+  private static int weightOf(WeightedSearchEverywhereContributor<?> contributor, String text, Object item) {
+    return weightsOf(contributor, text, item).getFirst();
   }
 
   @SuppressWarnings("unchecked")
@@ -784,13 +930,20 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     return contributor.search(text, new MockProgressIndicator(), ELEMENTS_LIMIT).getItems();
   }
 
-  @SuppressWarnings("unchecked")
+  /**
+   * @return the found items, the best weight first.
+   * The provider can report one item more than once, so the result keeps the best copy, as Search Everywhere does.
+   */
   public static List<Object> calcWeightedContributorElements(WeightedSearchEverywhereContributor<?> contributor, String text) {
-    List<? super FoundItemDescriptor<?>> items =
-      (List<? super FoundItemDescriptor<?>>)contributor.searchWeightedElements(text, new MockProgressIndicator(), ELEMENTS_LIMIT)
-        .getItems();
-    return ContainerUtil.map(ContainerUtil.sorted(items, Comparator.comparingInt(a -> -((FoundItemDescriptor<?>)a).getWeight())),
-                             e -> ((FoundItemDescriptor<?>)e).getItem());
+    List<?> items = contributor.searchWeightedElements(text, new MockProgressIndicator(), ELEMENTS_LIMIT).getItems();
+    Map<Object, Integer> bestWeights = new LinkedHashMap<>();
+    for (Object each : items) {
+      FoundItemDescriptor<?> descriptor = (FoundItemDescriptor<?>)each;
+      bestWeights.merge(descriptor.getItem(), descriptor.getWeight(), Math::max);
+    }
+    List<Map.Entry<Object, Integer>> sortedEntries =
+      ContainerUtil.sorted(bestWeights.entrySet(), Comparator.comparingInt(e -> -e.getValue()));
+    return ContainerUtil.map(sortedEntries, Map.Entry::getKey);
   }
 
   public static SearchEverywhereContributor<Object> createClassContributor(Project project,

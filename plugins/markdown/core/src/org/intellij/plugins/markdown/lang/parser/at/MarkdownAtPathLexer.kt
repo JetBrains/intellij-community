@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.lang.parser.at
 
+import com.intellij.openapi.util.text.StringUtil
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.lexer.GeneratedLexer
@@ -43,6 +44,10 @@ class MarkdownAtPathLexer(private val delegate: MarkdownLexer) : GeneratedLexer 
     val type = delegate.type ?: return emptyList()
     if (type != MarkdownTokenTypes.TEXT) return listOf(Segment(type, delegate.tokenStart, delegate.tokenEnd))
     if (delegate.originalText.getOrNull(delegate.tokenStart - 1) == '[') {
+      return listOf(Segment(type, delegate.tokenStart, delegate.tokenEnd))
+    }
+
+    if (StringUtil.indexOf(delegate.originalText, '@', delegate.tokenStart, delegate.tokenEnd) < 0) {
       return listOf(Segment(type, delegate.tokenStart, delegate.tokenEnd))
     }
 

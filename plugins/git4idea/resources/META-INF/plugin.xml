@@ -35,6 +35,7 @@
     <module name="intellij.vcs.git.model.generated"/>
 
     <module name="intellij.vcs.git.performanceTesting"/>
+    <module name="intellij.vcs.git.rpc.backend" required-if-available="intellij.platform.backend"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">

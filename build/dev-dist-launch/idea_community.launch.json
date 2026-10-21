@@ -19,8 +19,7 @@
       "commands": [
         "qodana"
       ],
-      "bootClassPathJarNames": [
-        "platform-loader.jar",
+      "additionalBootClassPathJarNames": [
         "nio-fs.jar"
       ],
       "jvmArguments": "launch",
@@ -59,8 +58,7 @@
         "macOS": "../bin/mcp-server.vmoptions",
         "Linux": "bin/mcp-server.vmoptions"
       },
-      "bootClassPathJarNames": [
-        "platform-loader.jar",
+      "additionalBootClassPathJarNames": [
         "../plugins/mcpserver-plugin/lib/intellij.mcpserver.stdio.jar",
         "../plugins/mcpserver-plugin/lib/intellij.libraries.kotlin.logging.jar",
         "../plugins/mcpserver-plugin/lib/intellij.libraries.ktor.server.sse.jar",

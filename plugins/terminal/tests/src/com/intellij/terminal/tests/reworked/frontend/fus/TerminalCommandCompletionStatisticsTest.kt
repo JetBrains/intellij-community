@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.tests.reworked.frontend.fus
 
+import com.intellij.ide.actions.ToolWindowTabLocation
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
@@ -27,6 +28,7 @@ import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.impl.MutableTerminalOutputModelImpl
 import org.jetbrains.plugins.terminal.view.shellIntegration.impl.TerminalShellIntegrationImpl
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -330,6 +332,34 @@ internal class TerminalCommandCompletionStatisticsTest {
     assertEquals(4, data["rounded_total_command_inserted_length"])
   }
 
+  @Test
+  fun `reports the tab location when it is known`(@TestDisposable disposable: Disposable) {
+    val events = doTest(disposable) {
+      tabLocation = ToolWindowTabLocation.EDITOR
+      updateCommandText("git")
+      updateCursor(3)
+      recordTextChange()
+      startCommand("git")
+    }
+
+    val data = events.single { it.event.id == "terminal.command.executed" }.event.data
+    assertEquals("EDITOR", data["toolwindow_tab_location"])
+  }
+
+  @Test
+  fun `omits the tab location when it is unknown`(@TestDisposable disposable: Disposable) {
+    val events = doTest(disposable) {
+      tabLocation = null
+      updateCommandText("git")
+      updateCursor(3)
+      recordTextChange()
+      startCommand("git")
+    }
+
+    val data = events.single { it.event.id == "terminal.command.executed" }.event.data
+    assertFalse(data.containsKey("toolwindow_tab_location"))
+  }
+
   private fun doTest(disposable: Disposable, test: Fixture.() -> Unit): List<LogEvent> {
     return FUCollectorTestCase.collectLogEvents(disposable) {
       timeoutRunBlocking(timeout = 10.seconds) {
@@ -354,6 +384,7 @@ internal class TerminalCommandCompletionStatisticsTest {
       ShellName.of("unknown"),
     )
     private lateinit var keyEventsListener: TerminalKeyEventsListener
+    var tabLocation: ToolWindowTabLocation? = null
     private val statistics = TerminalCommandCompletionStatistics.install(
       project = project,
       shellIntegration = shellIntegration,
@@ -361,6 +392,7 @@ internal class TerminalCommandCompletionStatisticsTest {
       isCursorVisible = { true },
       registerKeyEventsListener = { _, listener -> keyEventsListener = listener },
       coroutineScope = scope,
+      tabLocationProvider = { tabLocation },
     )
 
     fun initializePrompt() {

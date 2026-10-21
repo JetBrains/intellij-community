@@ -26,7 +26,7 @@ interface IncompleteDependenciesService {
   @ApiStatus.Internal
   fun getStateUnsafe(): DependenciesState
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun enterIncompleteState(requestor: Any): IncompleteDependenciesAccessToken
 
   enum class DependenciesState(val isComplete: Boolean) {
@@ -35,7 +35,7 @@ interface IncompleteDependenciesService {
   }
 
   abstract class IncompleteDependenciesAccessToken {
-    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+    @RequiresWriteLock
     abstract fun finish()
   }
 }

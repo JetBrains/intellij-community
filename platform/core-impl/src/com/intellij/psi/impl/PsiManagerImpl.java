@@ -2,6 +2,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -436,12 +437,20 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     }
     try {
       for (PsiTreeChangePreprocessor preprocessor : myTreeChangePreprocessorsBackgroundable) {
-        preprocessor.treeChanged(event);
+        try {
+          preprocessor.treeChanged(event);
+        } catch (Throwable e) {
+          LOG.error(PluginException.createByClass(e, preprocessor.getClass()));
+        }
       }
       if (!myTreeChangePreprocessors.isEmpty()) {
         runWriteActionOnEdtRegardlessOfCurrentThread(() -> {
           for (PsiTreeChangePreprocessor preprocessor : myTreeChangePreprocessors) {
-            preprocessor.treeChanged(event);
+            try {
+              preprocessor.treeChanged(event);
+            } catch (Throwable e) {
+              LOG.error(PluginException.createByClass(e, preprocessor.getClass()));
+            }
           }
         });
       }
@@ -457,7 +466,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
         notifyPsiTreeChangeListener(event, listener);
       }
       List<PsiTreeChangeListener> listeners = PsiTreeChangeListener.EP.getExtensions(myProject);
-      if (!myTreeChangeListeners.isEmpty() && !listeners.isEmpty()) {
+      if (!myTreeChangeListeners.isEmpty() || !listeners.isEmpty()) {
         runWriteActionOnEdtRegardlessOfCurrentThread(() -> {
           for (PsiTreeChangeListener listener : myTreeChangeListeners) {
             notifyPsiTreeChangeListener(event, listener);

@@ -1,12 +1,16 @@
 <idea-plugin>
   <actions>
     <action id="RunConfiguration" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction"/>
-    <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" icon="AllIcons.Actions.Execute"/>
+    <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" icon="AllIcons.Actions.Execute">
+      <override-text place="GoToAction"/>
+    </action>
     <action id="Unscramble" class="com.intellij.unscramble.AnalyzeStacktraceAction">
       <override-text place="EditorPopup"/>
       <add-to-group group-id="AnalyzePlatformMenu"/>
     </action>
-    <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" icon="AllIcons.Actions.StartDebugger"/>
+    <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" icon="AllIcons.Actions.StartDebugger">
+      <override-text place="GoToAction"/>
+    </action>
     <group id="CreateRunConfiguration" class="com.intellij.execution.actions.CreateAction"/>
     <action id="SaveTemporaryRunConfiguration" class="com.intellij.execution.actions.SaveTemporaryRunConfigurationAction"/>
     <action id="DeleteRunConfiguration" class="com.intellij.execution.actions.DeleteRunConfigurationAction"/>
@@ -69,10 +73,10 @@
     </action>
     <action id="Runner.FocusOnStartup" class="com.intellij.execution.ui.actions.FocusOnStartAction"/>
 
-    <group id="RunTab.TopToolbar.More" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup"/>
-    <group id="RunnerLayoutActions">
+    <group id="RunTab.TopToolbar.More" class="com.intellij.openapi.actionSystem.impl.MoreActionGroup" searchable="false"/>
+    <group id="RunnerLayoutActions" searchable="false">
       <reference ref="Runner.ToggleTabLabels"/>
-      <group id="Runner.Layout">
+      <group id="Runner.Layout" searchable="false">
         <reference ref="Runner.RestoreLayout"/>
       </group>
       <group id="Runner.View.Close.Group" popup="false">
@@ -141,13 +145,12 @@
     </group>
     <group id="ExternalToolsGroup" class="com.intellij.tools.ExternalToolsGroup">
       <add-to-group group-id="ExternalToolsGroupPlaceholder"/>
-      <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
 
     <reference ref="RunConfigurationTemplatesForNewProjects">
       <add-to-group group-id="FileOtherSettingsGroup" anchor="before" relative-to-action="FileSettingsGroup"/>
-      <add-to-group group-id="WelcomeScreen.Configure" anchor="before" relative-to-action="WelcomeScreen.Configure.Import"/>
+      <add-to-group group-id="WelcomeScreen.Configure" anchor="before" relative-to-action="ImportSettings"/>
     </reference>
 
     <group id="RunToolbarActionsGroup" popup="false">
@@ -197,7 +200,7 @@
     </reference>
     <reference ref="RerunTests"/>
 
-    <group id="RunMenu" popup="true">
+    <group id="RunMenu" class="com.intellij.execution.actions.RunMenuGroup" popup="true" searchable="false">
       <group id="RunnerActions"/>
       <separator/>
       <reference ref="ChooseRunConfiguration"/>
@@ -220,7 +223,7 @@
     <group id="DebugReloadGroup"/>
 
     <!--region Build Main Menu-->
-    <group id="BuildMenu" class="com.intellij.ide.actions.NonEmptyActionGroup" popup="true">
+    <group id="BuildMenu" class="com.intellij.ide.actions.NonEmptyActionGroup" popup="true" searchable="false">
       <add-to-group group-id="MainMenu" anchor="before" relative-to-action="RunMenu"/>
     </group>
     <!--endregion-->
@@ -256,7 +259,7 @@
     </reference>
 
     <!--region TouchBar -->
-    <group id="TouchBarDebug">
+    <group id="TouchBarDebug" searchable="false">
       <reference ref="Rerun"/>
       <reference ref="Stop"/>
 

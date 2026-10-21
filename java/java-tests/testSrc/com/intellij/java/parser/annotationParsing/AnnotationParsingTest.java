@@ -16,7 +16,9 @@
 package com.intellij.java.parser.annotationParsing;
 
 import com.intellij.java.parser.JavaParsingTestConfigurator;
+import com.intellij.testFramework.junit5.TestApplication;
 
+@TestApplication
 public class AnnotationParsingTest extends AbstractBasicAnnotationParsingTest {
   public AnnotationParsingTest() {
     super(new JavaParsingTestConfigurator());

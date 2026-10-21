@@ -2,15 +2,16 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Version;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.Arrays;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@RunWith(Parameterized.class)
 public class VersionUtilTest {
   private static final Pattern[] VERSION_PATTERNS = {
     Pattern.compile("^GNU gdb ([\\d]+\\.[\\d]+\\.?[\\d]*)", Pattern.MULTILINE),
@@ -29,16 +30,13 @@ public class VersionUtilTest {
     {"GNU gdb (GDB) Red Hat Enterprise Linux (7.2-60.el6_4.1)",                         new Version(7, 2, 0)}
   };
 
-  @Parameterized.Parameters(name = "{0}")
-  public static Object[][] testData() {
-    return testDataVersion;
+  @ParameterizedTest(name = "{0}")
+  @MethodSource("testData")
+  public void testParseVersion(String input, Version expected) {
+    assertEquals(expected, VersionUtil.parseVersion(input, VERSION_PATTERNS));
   }
 
-  @Parameterized.Parameter public String input;
-  @Parameterized.Parameter(1) public Version expected;
-
-  @Test
-  public void testParseVersion() {
-    assertEquals(expected, VersionUtil.parseVersion(input, VERSION_PATTERNS));
+  public static Stream<Arguments> testData() {
+    return Arrays.stream(testDataVersion).map(Arguments::of);
   }
 }

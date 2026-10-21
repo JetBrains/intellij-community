@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus
  * Marker interface for ids which will be passed from the backend to a frontend,
  * so the frontend may use it later on for other RPC calls.
  *
- * [Id] can be generated on the backend using [com.intellij.platform.kernel.backend.ids.storeGlobally] and then passed to the frontend.
+ * [Id] can be generated on the backend using [com.intellij.platform.rpc.ids.storeValueGlobally] and then passed to the frontend.
  * Afterward, frontend may make RPC calls using this [Id].
  */
 @ApiStatus.Internal
@@ -19,6 +19,6 @@ interface Id {
  * Unique identifier for the [Id].
  * It should be unique across all the [Id] in the backend's application.
  *
- * @see com.intellij.platform.kernel.backend.ids.BackendGlobalIdsManager
+ * @see com.intellij.platform.rpc.ids.BackendGlobalIdsManager
  */
 typealias UID = Int

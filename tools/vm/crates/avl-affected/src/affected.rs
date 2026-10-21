@@ -19,7 +19,6 @@
 //! - The suite documents under the flow profile directory. Each carries `suite`, `lane`, `testClassName` and the
 //!   flow of every profile and step, and what its routes reach: the `module:` endpoints of every step they walk,
 //!   and the implementation flows the story flows of those routes declare. The generator publishes both facts.
-//! - The authored suites file, the copy of `AirJourneySuites` that a fast-lane test keeps equal to the Kotlin.
 //! - The `targets` and the `[@test]` links of the specs.
 //! - The `.iml` files above a path, for its JPS module, and the lane-wide modules and lane-wide paths of the Air
 //!   lane table, for the harness.
@@ -29,8 +28,8 @@
 //! A path is joined by the first of these that answers, most exact first:
 //!
 //! 1. The suite's own files: its document or its test class source, as `suite:<id>`.
-//! 2. The harness: a path in a lane-wide module or under a lane-wide path reaches every suite of its lanes, as
-//!    `lane-wide:<module>` or `lane-wide:<directory>`.
+//! 2. The harness: a path in a lane-wide module, or at or under a lane-wide path, reaches every suite of its lanes,
+//!    as `lane-wide:<module>` or `lane-wide:<path>`.
 //! 3. The tags: a `[suite: <id>]` attribute as `suite:<id>`, and a `@flow` tag as `flow:<id>`.
 //! 4. With no tag answered, two coarse relations answer together. The owning specs give `spec:<path>`, and for a
 //!    path with no tag at all the module relation gives `module:<endpoint>`. They reach different suites: an
@@ -47,28 +46,24 @@
 //!
 //! # The harness reaches its whole lane
 //!
-//! A path in a lane-wide module is the lane harness: the flow driver, `AirScenarioRunner`, the state reset, the
-//! generated scaffolding, the daemon or the bridge. A change there can break every suite of the lanes the module
-//! serves. The list is held by module name because the module cache already names a path's module, so no path list
-//! goes stale beside it. Each entry is a decision about what the module holds:
+//! A path in a lane-wide module is the lane harness: the bridge with the state reset and the authored bodies, or the
+//! fake agents. A change there can break every suite of the lanes the module serves. The list is held by module name
+//! because the module cache already names a path's module, so no path list goes stale beside it. Each entry is a
+//! decision about what the module holds:
 //!
-//! - `intellij.air.integrationTests` is `support/`, the drivers every lane uses, and the directories without a
-//!   module of their own under it, such as the lane `.bzl` rules.
-//! - `…flow` is the flow driver, `AirScenarioRunner`, the state reset, and the generated shared scaffolding.
-//! - `…uiDaemon` is the daemon, one JVM over the classpath of every lane.
-//! - `…bridge` and `…bridge.plugin` are the test bridge every lane installs into the IDE under test.
+//! - `…bridge` and `…bridge.plugin` are the test bridge every lane installs into the IDE under test. The bridge also
+//!   holds the state reset and the authored bodies of the suites.
 //! - `…testSupport` is the fake agents and the fake registry the flow harness links for every lane.
-//! - `…ui`, `…uiReal` and `…guiChat` are the lane leaves. Each holds its lane's generated test classes, so it serves
-//!   that one lane. An authored test class in a leaf reaches its own suite first.
 //!
 //! Left out on purpose: `…contract` runs in the fast lane and in no UI lane, `…flowProfiles` holds suite documents
 //! that each reach their own suite, and the `…headless.*` modules run in no UI lane.
 //!
-//! A harness directory that no module of the area holds is a lane-wide path of the lane table, by its repo-relative
-//! directory. A path under it is the harness too, for the lanes the directory serves. The Air table names one: this
-//! controller, `community/tools/vm`, which a change can break for every lane. The controller reads the directory
-//! from the table and names no area directory itself. A path in a lane-wide module answers first, so a lane-wide
-//! path only holds a path that no harness module holds.
+//! A harness file or directory that no module of the area holds is a lane-wide path of the lane table, by its
+//! repo-relative path. A path under a lane-wide directory is the harness too, for the lanes the directory serves. The
+//! Air table names this controller, `community/tools/vm`, which a change can break for every lane. It also names the
+//! lane rules, the lane table, the plain project and the lane folders under `plugins/air/tests/integration` that have
+//! no module. The controller reads the paths from the table and names no area path itself. A path in a lane-wide
+//! module answers first, so a lane-wide path only holds a path that no harness module holds.
 //!
 //! The harness answers after the suite's own files and before the tag relation. The harness declares no flow, so a
 //! tag that matches in it is a test fixture or a comment.

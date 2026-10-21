@@ -10,13 +10,16 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.markup.SeparatorPlacement
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
+import org.junit.jupiter.api.Test
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Rectangle
 
-@TestDataPath("\$CONTENT_ROOT/testData/diff/painting")
+@TestDataPath($$"$PROJECT_ROOT/community/platform/diff-impl/tests/testData/diff/painting")
+@TestApplication
 class DiffEditorPaintingTest : EditorPaintingTestCase() {
   override fun getTestDataPath(): String {
     if (ExperimentalUI.isNewUI()) {
@@ -25,95 +28,109 @@ class DiffEditorPaintingTest : EditorPaintingTestCase() {
     return "platform/diff-impl/tests/testData/diff/painting"
   }
 
-  fun testWholeLineChanged() {
+  @Test
+  fun testWholeLineChanged(): Unit = myFixture.runTest {
     initText("foo")
     DiffDrawUtil.createHighlighter(editor, 0, 1, MyDiffType, false)
     checkResultWithGutter()
   }
 
-  fun testOneLetterChanged() {
+  @Test
+  fun testOneLetterChanged(): Unit = myFixture.runTest {
     initText("foo")
     DiffDrawUtil.createHighlighter(editor, 0, 1, MyDiffType, true)
     DiffDrawUtil.createInlineHighlighter(editor, 1, 2, MyDiffType)
     checkResultWithGutter()
   }
 
-  fun testNewlineChanged() {
+  @Test
+  fun testNewlineChanged(): Unit = myFixture.runTest {
     initText("fo\nbar")
     DiffDrawUtil.createHighlighter(editor, 0, 2, MyDiffType, true)
     DiffDrawUtil.createInlineHighlighter(editor, 2, 3, MyDiffType)
     checkResultWithGutter()
   }
 
-  fun testLastLineChanged() {
+  @Test
+  fun testLastLineChanged(): Unit = myFixture.runTest {
     initText("foo\nx")
     DiffDrawUtil.createHighlighter(editor, 1, 2, MyDiffType, false)
     checkResultWithGutter()
   }
 
-  fun testLastEmptyLineChanged() {
+  @Test
+  fun testLastEmptyLineChanged(): Unit = myFixture.runTest {
     initText("foo\n")
     DiffDrawUtil.createHighlighter(editor, 1, 2, MyDiffType, false)
     checkResultWithGutter()
   }
 
-  fun testLastLineSoftWraps() {
+  @Test
+  fun testLastLineSoftWraps(): Unit = myFixture.runTest {
     initText("foo ba biz")
-    configureSoftWraps(4)
+    this@DiffEditorPaintingTest.configureSoftWraps(4)
     DiffDrawUtil.createHighlighter(editor, 0, 1, MyDiffType, false)
     checkResultWithGutter()
   }
 
-  fun testEmptyRange() {
+  @Test
+  fun testEmptyRange(): Unit = myFixture.runTest {
     initText("foo\nbar")
     DiffDrawUtil.createHighlighter(editor, 1, 1, MyDiffType, false)
     checkResultWithGutter()
   }
 
-  fun testEmptyRangeFirstLine() {
+  @Test
+  fun testEmptyRangeFirstLine(): Unit = myFixture.runTest {
     initText("foo\nbar")
     DiffDrawUtil.createHighlighter(editor, 0, 0, MyDiffType, false)
     checkResultWithGutter()
   }
 
-  fun testEmptyRangeLastEmptyLine() {
+  @Test
+  fun testEmptyRangeLastEmptyLine(): Unit = myFixture.runTest {
     initText("foo")
     DiffDrawUtil.createHighlighter(editor, 1, 1, MyDiffType, false)
     checkResultWithGutter()
   }
 
-  fun testEmptyRangeLastLineSoftWraps() {
+  @Test
+  fun testEmptyRangeLastLineSoftWraps(): Unit = myFixture.runTest {
     initText("foo ba biz")
-    configureSoftWraps(4)
+    this@DiffEditorPaintingTest.configureSoftWraps(4)
     DiffDrawUtil.createHighlighter(editor, 1, 1, MyDiffType, false)
     checkResultWithGutter()
   }
 
-  fun testLineMarker() {
+  @Test
+  fun testLineMarker(): Unit = myFixture.runTest {
     initText("fo o\nba r")
-    configureSoftWraps(2)
+    this@DiffEditorPaintingTest.configureSoftWraps(2)
 
     DiffDrawUtil.createLineMarker(editor, 1, MyDiffType)
     checkResultWithGutter()
   }
 
-  fun testBorderLineMarker() {
+  @Test
+  fun testBorderLineMarker(): Unit = myFixture.runTest {
     initText("fo o\nba r")
-    configureSoftWraps(2)
+    this@DiffEditorPaintingTest.configureSoftWraps(2)
 
     DiffDrawUtil.createBorderLineMarker(editor, 1, SeparatorPlacement.BOTTOM)
     DiffDrawUtil.createBorderLineMarker(editor, 1, SeparatorPlacement.TOP)
     checkResultWithGutter()
   }
 
-  fun testEmptyRangeWithInlayBelow1() {
+  @Test
+  fun testEmptyRangeWithInlayBelow1(): Unit = myFixture.runTest {
     initText("foo\nbar")
     editor.inlayModel.addBlockElement(5, true, true, 0, MyInlayRenderer())
     DiffDrawUtil.createHighlighter(editor, 1, 1, MyDiffType, false)
     checkResultWithGutter()
   }
 
-  fun testEmptyRangeWithInlayBelow2() {
+  @Test
+  fun testEmptyRangeWithInlayBelow2(): Unit = myFixture.runTest {
     initText("foo\nbar")
     editor.inlayModel.addBlockElement(3, true, false, 0, MyInlayRenderer())
     DiffDrawUtil.createHighlighter(editor, 1, 1, MyDiffType, false)
@@ -121,28 +138,32 @@ class DiffEditorPaintingTest : EditorPaintingTestCase() {
   }
 
   // TODO: move inlay inside 'changed area', as it's related to the changed text?
-  fun testRangeWithInlayBelow1() {
+  @Test
+  fun testRangeWithInlayBelow1(): Unit = myFixture.runTest {
     initText("foo\nbar\nbiz")
     editor.inlayModel.addBlockElement(9, true, true, 0, MyInlayRenderer())
     DiffDrawUtil.createHighlighter(editor, 1, 2, MyDiffType, false)
     checkResultWithGutter()
   }
 
-  fun testRangeWithInlayBelow2() {
+  @Test
+  fun testRangeWithInlayBelow2(): Unit = myFixture.runTest {
     initText("foo\nbar\nbiz")
     editor.inlayModel.addBlockElement(7, true, false, 0, MyInlayRenderer())
     DiffDrawUtil.createHighlighter(editor, 1, 2, MyDiffType, false)
     checkResultWithGutter()
   }
 
-  fun testEmptyRangeWithInlayAbove1() {
+  @Test
+  fun testEmptyRangeWithInlayAbove1(): Unit = myFixture.runTest {
     initText("foo\nbar")
     editor.inlayModel.addBlockElement(5, false, true, 0, MyInlayRenderer())
     DiffDrawUtil.createHighlighter(editor, 1, 1, MyDiffType, false)
     checkResultWithGutter()
   }
 
-  fun testEmptyRangeWithInlayAbove2() {
+  @Test
+  fun testEmptyRangeWithInlayAbove2(): Unit = myFixture.runTest {
     initText("foo\nbar")
     editor.inlayModel.addBlockElement(2, false, false, 0, MyInlayRenderer())
     DiffDrawUtil.createHighlighter(editor, 1, 1, MyDiffType, false)
@@ -150,28 +171,32 @@ class DiffEditorPaintingTest : EditorPaintingTestCase() {
   }
 
   // TODO: move inlay inside 'changed area', as it's related to the changed text?
-  fun testRangeWithInlayAbove1() {
+  @Test
+  fun testRangeWithInlayAbove1(): Unit = myFixture.runTest {
     initText("foo\nbar\nbiz")
     editor.inlayModel.addBlockElement(5, false, true, 0, MyInlayRenderer())
     DiffDrawUtil.createHighlighter(editor, 1, 2, MyDiffType, false)
     checkResultWithGutter()
   }
 
-  fun testRangeWithInlayAbove2() {
+  @Test
+  fun testRangeWithInlayAbove2(): Unit = myFixture.runTest {
     initText("foo\nbar\nbiz")
     editor.inlayModel.addBlockElement(2, false, false, 0, MyInlayRenderer())
     DiffDrawUtil.createHighlighter(editor, 1, 2, MyDiffType, false)
     checkResultWithGutter()
   }
 
-  fun testRangeWithInlayInside() {
+  @Test
+  fun testRangeWithInlayInside(): Unit = myFixture.runTest {
     initText("foo\nbar\nbiz\nbuzz")
     editor.inlayModel.addBlockElement(7, true, false, 0, MyInlayRenderer())
     DiffDrawUtil.createHighlighter(editor, 1, 3, MyDiffType, false)
     checkResultWithGutter()
   }
 
-  fun testRangeWithInlayBelow1_excluded() {
+  @Test
+  fun testRangeWithInlayBelow1_excluded(): Unit = myFixture.runTest {
     initText("foo\nbar\nbiz")
     editor.inlayModel.addBlockElement(9, true, true, 0, MyInlayRenderer())
     DiffDrawUtil.createHighlighter(editor, 1, 2, MyDiffType,
@@ -180,7 +205,8 @@ class DiffEditorPaintingTest : EditorPaintingTestCase() {
   }
 
   // FIXME: gutter-editor ranges are inconsistent
-  fun testRangeWithInlayBelow2_excluded() {
+  @Test
+  fun testRangeWithInlayBelow2_excluded(): Unit = myFixture.runTest {
     initText("foo\nbar\nbiz")
     editor.inlayModel.addBlockElement(7, true, false, 0, MyInlayRenderer())
     DiffDrawUtil.createHighlighter(editor, 1, 2, MyDiffType,
@@ -189,7 +215,8 @@ class DiffEditorPaintingTest : EditorPaintingTestCase() {
   }
 
   // FIXME: gutter-editor ranges are inconsistent
-  fun testRangeWithInlayAbove1_excluded() {
+  @Test
+  fun testRangeWithInlayAbove1_excluded(): Unit = myFixture.runTest {
     initText("foo\nbar\nbiz")
     editor.inlayModel.addBlockElement(5, false, true, 0, MyInlayRenderer())
     DiffDrawUtil.createHighlighter(editor, 1, 2, MyDiffType,
@@ -197,7 +224,8 @@ class DiffEditorPaintingTest : EditorPaintingTestCase() {
     checkResultWithGutter()
   }
 
-  fun testRangeWithInlayAbove2_excluded() {
+  @Test
+  fun testRangeWithInlayAbove2_excluded(): Unit = myFixture.runTest {
     initText("foo\nbar\nbiz")
     editor.inlayModel.addBlockElement(2, false, false, 0, MyInlayRenderer())
     DiffDrawUtil.createHighlighter(editor, 1, 2, MyDiffType,
@@ -205,7 +233,8 @@ class DiffEditorPaintingTest : EditorPaintingTestCase() {
     checkResultWithGutter()
   }
 
-  fun testRangeWithInlayInside_excluded() {
+  @Test
+  fun testRangeWithInlayInside_excluded(): Unit = myFixture.runTest {
     initText("foo\nbar\nbiz\nbuzz")
     editor.inlayModel.addBlockElement(7, true, false, 0, MyInlayRenderer())
     DiffDrawUtil.createHighlighter(editor, 1, 3, MyDiffType,

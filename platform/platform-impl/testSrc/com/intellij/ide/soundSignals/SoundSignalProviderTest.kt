@@ -2,6 +2,7 @@
 package com.intellij.ide.soundSignals
 
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
+import com.intellij.notification.NotificationType
 import com.intellij.notification.impl.NotificationSoundEP
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
@@ -25,9 +26,20 @@ class SoundSignalProviderTest {
     assertThat(signals).isNotEmpty()
     for (signal in signals) {
       assertThat(signal.title).describedAs("title of '%s'", signal.id).isNotBlank()
-      val sound = signal.ownerClass.classLoader.getResourceAsStream(signal.resourcePath)
-      assertThat(sound).describedAs("sound of '%s'", signal.id).isNotNull()
-      assertThat(sound!!.use { it.read() }).describedAs("sound of '%s'", signal.id).isNotEqualTo(-1)
+      for (path in signal.sounds) {
+        val sound = signal.ownerClass.classLoader.getResourceAsStream(path)
+        assertThat(sound).describedAs("sound '%s' of '%s'", path, signal.id).isNotNull()
+        assertThat(sound!!.use { it.read() }).describedAs("sound '%s' of '%s'", path, signal.id).isNotEqualTo(-1)
+      }
+    }
+  }
+
+  @Test
+  fun `every notification type has a readable sound`() {
+    for (type in NotificationType.entries) {
+      val sound = IdeSounds::class.java.classLoader.getResourceAsStream(notificationSound(type))
+      assertThat(sound).describedAs("sound of %s", type).isNotNull()
+      assertThat(sound!!.use { it.read() }).describedAs("sound of %s", type).isNotEqualTo(-1)
     }
   }
 
@@ -36,8 +48,7 @@ class SoundSignalProviderTest {
     val ideIds = IdeSoundSignalProvider().soundSignals.map { it.id }.toSet()
 
     assertThat(getSoundSignals().map { it.id }.filter { it in ideIds })
-      .containsExactly("build.finished", "test.results", "progress.indeterminate", "progress.determinate.stage.1", "progress.determinate.stage.2",
-                       "progress.determinate.stage.3", "error.line", "error.caret", "warning.line", "warning.caret", "folded.line", "folded.caret")
+      .containsExactly("build.finished", "test.results", "progress", "error.line", "error.caret", "warning.line", "warning.caret", "folded.line", "folded.caret")
   }
 
   @Test
@@ -51,7 +62,7 @@ class SoundSignalProviderTest {
 
   @Test
   fun `two signals can share one sound`() {
-    assertThat(IdeSoundSignals.ERROR_LINE.resourcePath).isEqualTo(IdeSoundSignals.ERROR_CARET.resourcePath)
+    assertThat(IdeSoundSignals.ERROR_LINE.sounds).isEqualTo(IdeSoundSignals.ERROR_CARET.sounds)
   }
 
   @Test

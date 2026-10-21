@@ -93,14 +93,23 @@ fun TestFixture<Project>.pyProjectFixture(
     initialized(path) {}
   }
   val project = this@pyProjectFixture.init()
-  val path = directory.init()
-  val manager = ModuleManager.getInstance(project)
-  val module = edtWriteAction { manager.newModule(path, PYTHON_MODULE_ID) }
+  val pyProject = project.pyProjectAt(directory.init())
+  val module = pyProject.residesOnModule
+  // A test can remove every module itself, for example before an import builds them again.
+  initialized(pyProject) { edtWriteAction { if (!module.isDisposed) ModuleManager.getInstance(project).disposeModule(module) } }
+}
+
+/**
+ * A [PyProject] in [path]: a new Python module whose content root and source root is [path]. The caller disposes its
+ * module, see [PyProject.residesOnModule].
+ */
+@TestOnly
+suspend fun Project.pyProjectAt(path: Path): PyProject {
+  withContext(Dispatchers.IO) { path.createDirectories() }
+  val module = edtWriteAction { ModuleManager.getInstance(this).newModule(path, PYTHON_MODULE_ID) }
   val root = withContext(Dispatchers.IO) { VfsUtil.findFile(path, true) } ?: error("No $path in VFS")
   ModuleRootModificationUtil.updateModel(module) { it.addContentEntry(root).addSourceFolder(root, false) }
-  val pyProject = requireNotNull(module.asPyProject()) { "Module ${module.name} with a content root is not a Python project" }
-  // A test can remove every module itself, for example before an import builds them again.
-  initialized(pyProject) { edtWriteAction { if (!module.isDisposed) manager.disposeModule(module) } }
+  return requireNotNull(module.asPyProject()) { "Module ${module.name} with a content root is not a Python project" }
 }
 
 /** The [PyProject] of the module [moduleName] that the project already has, for example after an import. */

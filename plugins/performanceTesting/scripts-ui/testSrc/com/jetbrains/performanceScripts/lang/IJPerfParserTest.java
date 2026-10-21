@@ -1,58 +1,73 @@
 package com.jetbrains.performanceScripts.lang;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.testFramework.ParsingTestCase;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.project.Project;
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class IJPerfParserTest extends ParsingTestCase {
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixtureKt.parsingFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 
+@TestApplication
+public class IJPerfParserTest {
+  private static final TestFixture<Project> projectFixture = projectFixture();
+
+  private final TestFixture<ParsingTestFixture> parsingFixture = parsingFixture(
+    projectFixture,
+    PathManager.getCommunityHomePath() + TestUtil.getDataSubPath("") + "/parser",
+    IJPerfFileType.DEFAULT_EXTENSION,
+    new IJPerfParserDefinition()
+  );
+
+  @Test
   public void testCommandWithoutOptions() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testCommandWithSimpleOption() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testCommandWithSeveralOptions() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testCommandWithSeveralOptionsWithValue() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testCommandWithSeveralOptionsSeparated() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testCommandWithNumberOptions() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testCommandWithPipeOptionSeparator() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testCommandWithSimpleOptionWithValue() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testSimpleExample() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testCommandWithFilePathInParameters() {
-    doTest(true);
-  }
-
-  public IJPerfParserTest() {
-    super("parser", IJPerfFileType.DEFAULT_EXTENSION, new IJPerfParserDefinition());
-  }
-
-  @Override
-  @NonNls
-  protected String getTestDataPath() {
-    return PathManager.getCommunityHomePath() + TestUtil.getDataSubPath("");
+    parsingFixture.get().doTest(true);
   }
 }

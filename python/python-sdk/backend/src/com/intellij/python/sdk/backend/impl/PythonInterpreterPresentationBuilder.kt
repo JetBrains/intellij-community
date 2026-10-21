@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.sdk.backend.impl
 
-import com.intellij.python.sdk.backend.ref
 import com.intellij.ide.ui.icons.IconId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.icons.rpcId
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.python.sdk.backend.PySdkBundle.message
 import com.intellij.python.sdk.backend.PythonInterpreter
@@ -71,6 +71,20 @@ fun PythonInterpreter.presentation(customName: String? = null): PythonInterprete
     toolShortName = toolShortName,
   )
 }
+
+/**
+ * What a row draws for an SDK that names no interpreter, see [com.intellij.python.sdk.backend.pythonInterpreterResult].
+ * The row is `[invalid]`, and [reason] says why. The user can only remove or recreate such an SDK.
+ */
+fun brokenSdkPresentation(sdk: Sdk, reason: @Nls String): PythonInterpreterPresentation = PythonInterpreterPresentation(
+  name = sdk.name,
+  suffix = null,
+  description = sdk.homePath.orEmpty(),
+  problem = invalidProblem(reason),
+  icon = wrapIconWithWarningDecorator(AllIcons.Nodes.Unknown).rpcId(),
+  isPathDerivedName = isNameDerivedFromHomePath(sdk.name, sdk.homePath),
+  toolShortName = null,
+)
 
 /** A configuration the user has to fix, which is `[invalid]` like any other. */
 private fun invalidProblem(reason: @Nls String) = PythonInterpreterProblem(message("python.sdk.problem.invalid"), reason)

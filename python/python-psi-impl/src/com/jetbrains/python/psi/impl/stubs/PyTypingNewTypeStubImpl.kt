@@ -14,11 +14,16 @@ import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.stubs.PyTypingNewTypeStub
 import java.io.IOException
 
-class PyTypingNewTypeStubImpl private constructor(val qualifiedName: String, private val baseClassName: String) : PyTypingNewTypeStub {
+class PyTypingNewTypeStubImpl private constructor(
+  val qualifiedName: String,
+  private val baseClassName: String,
+  private val unresolvedCalleeName: String?,
+) : PyTypingNewTypeStub {
 
   override fun serialize(stream: StubOutputStream) {
     stream.writeName(qualifiedName)
     stream.writeName(baseClassName)
+    stream.writeName(unresolvedCalleeName)
   }
 
   override fun getCalleeName(): QualifiedName {
@@ -33,8 +38,10 @@ class PyTypingNewTypeStubImpl private constructor(val qualifiedName: String, pri
 
   override fun getClassType(): String = baseClassName
 
+  override fun getUnresolvedCalleeName(): String? = unresolvedCalleeName
+
   override fun toString(): String {
-    return "PyTypingNewTypeStub(qualifiedName='$qualifiedName', baseClass='$baseClassName')"
+    return "PyTypingNewTypeStub(qualifiedName='$qualifiedName', baseClass='$baseClassName', unresolvedCallee=$unresolvedCalleeName)"
   }
 
   companion object {
@@ -44,16 +51,16 @@ class PyTypingNewTypeStubImpl private constructor(val qualifiedName: String, pri
     }
 
     fun create(expression: PyCallExpression): PyTypingNewTypeStub? {
-      if (isTypingNewType(expression)) {
-        val newTypeName = PyResolveUtil.resolveStrArgument(expression, 0, "name")
-        if (newTypeName != null) {
-          val secondArgument = PyPsiUtils.flattenParens(expression.getArgument(1, "tp", PyExpression::class.java))
-          if (secondArgument != null) {
-            return PyTypingNewTypeStubImpl(newTypeName, secondArgument.text)
-          }
-        }
+      val callee = expression.callee as? PyReferenceExpression ?: return null
+      val unresolvedCalleeName = when {
+        isTypingNewType(callee) -> null
+        // The callee may be a re-export of `typing.NewType` from another module, which stubs cannot resolve
+        callee.referencedName == NEW_TYPE_NAME -> callee.asQualifiedName()?.toString() ?: return null
+        else -> return null
       }
-      return null
+      val newTypeName = PyResolveUtil.resolveStrArgument(expression, 0, "name") ?: return null
+      val secondArgument = PyPsiUtils.flattenParens(expression.getArgument(1, "tp", PyExpression::class.java)) ?: return null
+      return PyTypingNewTypeStubImpl(newTypeName, secondArgument.text, unresolvedCalleeName)
     }
 
     @Throws(IOException::class)
@@ -61,16 +68,20 @@ class PyTypingNewTypeStubImpl private constructor(val qualifiedName: String, pri
       if (stream != null) {
         val typeName = stream.readNameString()
         val classType = stream.readNameString()
+        val unresolvedCalleeName = stream.readNameString()
         if (typeName != null && classType != null) {
-          return PyTypingNewTypeStubImpl(typeName, classType)
+          return PyTypingNewTypeStubImpl(typeName, classType, unresolvedCalleeName)
         }
       }
       return null
     }
 
-    private fun isTypingNewType(callExpression: PyCallExpression): Boolean {
-      val callee = callExpression.callee as? PyReferenceExpression ?: return false
-      return QualifiedName.fromDottedString(PyTypingTypeProvider.NEW_TYPE) in PyResolveUtil.resolveImportedElementQNameLocally(callee)
+    private const val NEW_TYPE_NAME = "NewType"
+
+    private fun isTypingNewType(callee: PyReferenceExpression): Boolean {
+      return PyResolveUtil.resolveImportedElementQNameLocally(callee).any {
+        it.toString() == PyTypingTypeProvider.NEW_TYPE || it.toString() == PyTypingTypeProvider.NEW_TYPE_EXT
+      }
     }
   }
 }

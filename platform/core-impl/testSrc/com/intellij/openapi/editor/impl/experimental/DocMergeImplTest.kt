@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl.experimental
 
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.experimental.Agent
-import com.intellij.openapi.editor.ex.experimental.DocBranch
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import com.intellij.openapi.editor.ex.experimental.DocMerge
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
@@ -91,7 +91,7 @@ internal class DocMergeImplTest {
   }
 
   private companion object {
-    val BRANCH: DocBranch = DocBranch.createBranch("abc", Agent.createAgent("a"))
+    val BRANCH: DocumentBranch = DocumentBranch.createBranch("abc", Agent.createAgent("a"))
     const val THREADS = 8
     const val ROUNDS = 50
 

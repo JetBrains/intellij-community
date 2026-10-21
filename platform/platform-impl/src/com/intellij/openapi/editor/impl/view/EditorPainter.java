@@ -193,11 +193,11 @@ public final class EditorPainter implements TextDrawingCallback {
     myCache.invalidate(clip);
   }
 
-  void prefetchCaretFrames(@NotNull List<CaretRectangle> locations, @NotNull CaretRepaintMetrics repaintMetrics) {
+  void prefetchCaretFrames(@NotNull List<CaretRectangle> locations, @NotNull CaretRepaintMetrics repaintMetrics, boolean forcePrefetch) {
     EditorAnimationCacheKey key = EditorAnimationCacheKey.of(locations);
     if (myCache.canCacheKey(key)) {
       List<Rectangle> rectangles = myCaretPainter.caretRectanglesForLocations(locations, repaintMetrics);
-      myCache.cacheFrames(key, rectangles);
+      myCache.cacheFrames(key, rectangles, forcePrefetch);
     }
   }
 

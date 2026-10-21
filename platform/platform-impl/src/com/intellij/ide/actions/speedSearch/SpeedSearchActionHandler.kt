@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.speedSearch
 
 import com.intellij.ide.IdeEventQueue
@@ -51,7 +51,7 @@ internal class SpeedSearchActionHandler(val targetComponent: JComponent, private
       ActionsBundle.message("action.SpeedSearch.GotItTooltip.text", shortcut)
     }
     val gotItTooltip = GotItTooltip("speed.search.shown", gotItMessage).withPosition(Balloon.Position.atRight)
-    IdeEventQueue.getInstance().addDispatcher({ event ->
+    IdeEventQueue.getInstance().addDispatcher(IdeEventQueue.NonLockedEventDispatcher { event ->
       when {
         event !is KeyEvent -> false
         // A single key press will generate at least three events: key pressed, key typed and key released.

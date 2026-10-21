@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
 sealed interface K2MoveTargetDescriptor {
     /**
@@ -43,7 +44,7 @@ sealed interface K2MoveTargetDescriptor {
     /**
      * Gets or creates the target
      */
-    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+    @RequiresWriteLock
     fun getOrCreateTarget(dirStructureMatchesPkg: Boolean): PsiElement
 
     open class Directory(
@@ -188,6 +189,13 @@ sealed interface K2MoveTargetDescriptor {
             val declaration = target.add(element)
             if (declaration is KtCallableDeclaration) {
                 declaration.addModifierKeyword(KtTokens.COMPANION_KEYWORD)
+                val receiverClasses = generateSequence(containingClass as KtClassOrObject) { it.containingClassOrObject }
+                if (receiverClasses.any { it.hasModifier(KtTokens.PRIVATE_KEYWORD) && it.parent is KtFile }) {
+                    declaration.addModifierKeyword(KtTokens.PRIVATE_KEYWORD)
+                } else if (!declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) &&
+                           receiverClasses.any { it.hasModifier(KtTokens.INTERNAL_KEYWORD) }) {
+                    declaration.addModifierKeyword(KtTokens.INTERNAL_KEYWORD)
+                }
                 val receiverFqName = requireNotNull(containingClass.fqName)
                 val typeReference = KtPsiFactory(target.project).createType(receiverFqName.asString())
                 declaration.setCallableReceiverTypeReference(typeReference)?.let { shortenReferences(it) }

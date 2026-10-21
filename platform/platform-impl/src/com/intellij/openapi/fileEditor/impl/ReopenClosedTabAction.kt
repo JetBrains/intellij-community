@@ -7,6 +7,8 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
+import com.intellij.openapi.fileEditor.FileEditorOpenMode
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -33,7 +35,8 @@ internal class ReopenClosedTabAction : DumbAwareAction(), ActionRemoteBehaviorSp
       return
     }
     val lastHistoryFile = getLastHistoryFile(project) ?: return
-    FileEditorManager.getInstance(project).requestOpenFile(lastHistoryFile)
+    val request = FileEditorOpenRequest.withFocus(true).withOpenMode(FileEditorOpenMode.DEFAULT)
+    FileEditorManager.getInstance(project).requestOpenFile(lastHistoryFile, request)
   }
 
   private fun isReopenAvailable(e: AnActionEvent): Boolean {

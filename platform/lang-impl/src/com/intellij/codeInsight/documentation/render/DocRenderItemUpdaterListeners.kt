@@ -23,8 +23,8 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.util.ui.getPointerInfoOrNull
 import org.jetbrains.annotations.ApiStatus
-import java.awt.MouseInfo
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.geom.AffineTransform
@@ -143,7 +143,7 @@ object DocRenderItemUpdaterListeners {
       var y = 0
       var offset = -1
       if (event == null) {
-        val info = MouseInfo.getPointerInfo()
+        val info = getPointerInfoOrNull()
         if (info != null) {
           val screenPoint = info.location
           val component = editor.component

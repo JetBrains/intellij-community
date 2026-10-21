@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -213,10 +213,10 @@ final class RecordBuilder {
     myRecordText.append(psiElement.getText());
   }
 
-  PsiClass build() {
+  PsiClass build(LanguageLevel level) {
     JavaDummyElement dummyElement = new JavaDummyElement(myRecordText.toString(), (builder, languageLevel) -> {
       new JavaParser(languageLevel).getDeclarationParser().parse(builder, DeclarationParser.Context.CLASS);
-    }, LanguageLevel.JDK_16);
+    }, level.compareTo(LanguageLevel.JDK_16) > 0 ? level : LanguageLevel.JDK_16);
     DummyHolder holder = DummyHolderFactory.createHolder(myOriginClass.getManager(), dummyElement, myOriginClass);
     return (PsiClass)Objects.requireNonNull(SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode()));
   }

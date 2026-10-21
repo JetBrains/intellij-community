@@ -243,6 +243,29 @@ async fn pull_refuses_a_stream_that_is_not_base64() {
     assert_no_temporaries_left(directory.path());
 }
 
+/// `pull` answers while a run of another process is in flight on the worker, and its gate starts nothing under that
+/// run. The container here does not even run, and the only engine call is the read of the file.
+#[tokio::test]
+async fn the_pull_command_answers_during_a_run_of_another_process() {
+    let fixture = Fixture::docker();
+    let receipt = fixture.lease_receipt("air-docker-1");
+    fixture.run_of_another_process("air-docker-1").await;
+    answer_pull(&fixture.fake, b"evidence");
+    let outcome = outcome_of(
+        command_pull(
+            &Ctx::background(),
+            &fixture.manager,
+            "/guest/log.txt".to_owned(),
+            "logs/log.txt".to_owned(),
+            Some(&receipt),
+        )
+        .await,
+    );
+    assert_eq!(outcome.data["bytes"], json!(8));
+    let calls = fixture.fake.calls();
+    assert!(calls.iter().all(|call| call.starts_with("exec ")), "{calls:#?}");
+}
+
 /// The command form: the destination is resolved inside the worker's own artifact directory, and the reply names
 /// what landed where.
 #[tokio::test]

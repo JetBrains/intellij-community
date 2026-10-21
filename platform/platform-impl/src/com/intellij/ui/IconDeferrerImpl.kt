@@ -152,7 +152,7 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
                          // check if our result is not outdated yet
                          if (started == lastClearTimestamp.sum()) {
                            // use `replace` instead of `put` to ensure that our result is not outdated yet
-                           iconCache.replace(source.param, source, icon)
+                           iconCache.replace(source.evaluationParam, source, icon)
                          }
                        })
     }
@@ -166,7 +166,7 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
                        param = param,
                        asyncEvaluator = { evaluator(it) ?: DeferredIconImpl.EMPTY_ICON },
                        listener = { source, icon ->
-                         iconCache.replace(source.param, source, icon)
+                         iconCache.replace(source.evaluationParam, source, icon)
                        })
     }
     mightBePopulated = true

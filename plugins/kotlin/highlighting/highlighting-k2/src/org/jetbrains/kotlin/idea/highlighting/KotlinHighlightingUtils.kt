@@ -55,8 +55,28 @@ fun KtFile.shouldDefinitelyHighlight(): Boolean =
             SyntheticPsiFileSupport.isOutsiderFile(virtualFile) ||
             (this !is KtCodeFragment && virtualFile?.fileSystem is NonPhysicalFileSystem)
 
+/**
+ * Whether the [KaModule][org.jetbrains.kotlin.analysis.api.projectStructure.KaModule] of the file is a [KaNotUnderContentRootModule]
+ *
+ * The result is cached, as it is requested from the highlighting settings on every highlighting pass.
+ */
+@ApiStatus.Internal
+fun KtFile.notUnderContentRoot(): Boolean {
+    if (isIndexingInProgress(project)) {
+        // `KaModule`s are not available during indexing (the dumb mode), so the index-free root kind check is used instead.
+        return !RootKindFilter.everything.copy(includeScriptsOutsideSourceRoots = true).matches(this)
+    }
+
+    // a file under a source root is always covered by the content scope of the corresponding `KaSourceModule`
+    if (RootKindFilter.projectSources.matches(this)) return false
+
+    return CachedValuesManager.getManager(project).getCachedValue(this) {
+        Result.create(
+            getKaModule(project, useSiteModule = null) is KaNotUnderContentRootModule,
+            ProjectRootModificationTracker.getInstance(project),
+        )
+    }
+}
+
 private fun KtFile.calculateShouldHighlightFile(): Boolean =
-    shouldDefinitelyHighlight() || RootKindFilter.everything.matches(this) && getKaModule(
-        project,
-        useSiteModule = null
-    ) !is KaNotUnderContentRootModule
+    shouldDefinitelyHighlight() || RootKindFilter.everything.matches(this) && !notUnderContentRoot()

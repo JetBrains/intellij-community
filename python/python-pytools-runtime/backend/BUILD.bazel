@@ -1,0 +1,84 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.python.pytools.backend.runtime` start
+content_module_jar(module = ":python-pytools-backend-runtime")
+### auto-generated section `dev intellij.python.pytools.backend.runtime` end
+
+### auto-generated section `build intellij.python.pytools.backend.runtime` start
+create_kotlinc_options(
+    name = "custom_python-pytools-backend-runtime",
+    opt_in = ["com.jetbrains.python.PyInternalExecApi"],
+    warn = "error",
+)
+
+jvm_library(
+    name = "python-pytools-backend-runtime",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_python-pytools-backend-runtime",
+    module_name = "intellij.python.pytools.backend.runtime",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/util",
+        "//platform/core-api:core",
+        "//platform/execution",
+        "//platform/eel",
+        "//platform/eel-provider",
+        "//python/openapi:community",
+        "//python/python-exec-service:community-execService",
+        "//python/python-pytools/backend",
+        "//python/python-sdk/backend",
+        "//python/python-pyproject:pyproject",
+    ],
+)
+
+jvm_library(
+    name = "python-pytools-backend-runtime_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_python-pytools-backend-runtime",
+    module_name = "intellij.python.pytools.backend.runtime",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":python-pytools-backend-runtime",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/eel:eel_test_lib",
+        "//platform/eel-provider:eel-provider_test_lib",
+        "//python/openapi:community_test_lib",
+        "//python/python-exec-service:community-execService_test_lib",
+        "//python/python-pytools/backend:backend_test_lib",
+        "//python/python-sdk/backend:backend_test_lib",
+        "//python/python-pyproject:pyproject_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.pytools.backend.runtime` end
+
+### auto-generated section `iml intellij.python.pytools.backend.runtime` start
+exports_files(
+    [
+        "intellij.python.pytools.backend.runtime.iml",
+        "resources/intellij.python.pytools.backend.runtime.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.pytools.backend.runtime` end

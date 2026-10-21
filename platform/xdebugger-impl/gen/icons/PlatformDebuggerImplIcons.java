@@ -18,15 +18,6 @@ public final class PlatformDebuggerImplIcons {
     return IconManager.getInstance().loadRasterizedIcon(path, PlatformDebuggerImplIcons.class.getClassLoader(), cacheKey, flags);
   }
 
-  public static final class Actions {
-
-    /** @deprecated to be removed (Use AllIcons.Debugger.DebuggerSync instead) */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    /** 16x16 */ public static final @NotNull Icon DebuggerSync = load("icons/actions/debuggerSync.svg", -370007676, 2);
-  }
-
   public static final class MemoryView {
     /** 16x16 */ public static final @NotNull Icon Active = load("icons/memoryView/active.svg", 1852454030, 2);
   }

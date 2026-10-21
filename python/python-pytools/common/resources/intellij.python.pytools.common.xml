@@ -7,7 +7,6 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.rpc"/>
-    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.objectSerializer"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.rpc"/>

@@ -38,6 +38,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
+import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.packaging.requirementsTxt.PythonRequirementTxtSdkUtils;
 import com.jetbrains.python.packaging.requirementsTxt.RequirementsTxtManipulationHelper;
 import com.jetbrains.python.packaging.setupPy.SetupPyHelpers;
@@ -99,7 +100,7 @@ public final class PyPackageUtil {
 
   @RequiresReadLock
   public static @Nullable PyFile findSetupPy(@NotNull Module module) {
-    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
     if (sdk == null) {
       return SetupPyHelpers.detectSetupPyInModule(module);
     }
@@ -114,7 +115,7 @@ public final class PyPackageUtil {
 
   @SuppressWarnings("unused")
   public static @Nullable VirtualFile findRequirementsTxt(@NotNull Module module) {
-    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
     if (sdk != null) {
       VirtualFile stored = PythonRequirementTxtSdkUtils.resolvePersistedRequirementsFile(sdk);
       if (stored != null) {
@@ -149,7 +150,7 @@ public final class PyPackageUtil {
   @RequiresReadLock
   @RequiresBackgroundThread(generateAssertion = false)
   private static @Nullable PyFile findSetupPyPsiFileForSdk(@NotNull Module module) {
-    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
     if (sdk == null) return null;
 
     VirtualFile setupPyVFile = findSetupPyFile(module);

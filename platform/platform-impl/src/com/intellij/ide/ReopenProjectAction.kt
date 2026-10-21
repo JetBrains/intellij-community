@@ -25,7 +25,6 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.util.BitUtil
 import com.intellij.util.PathUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.event.ActionEvent
@@ -124,15 +123,12 @@ open class ReopenProjectAction @JvmOverloads constructor(
       forceOpenInNewFrame = BitUtil.isSet(modifiers, ActionEvent.CTRL_MASK) ||
                             BitUtil.isSet(modifiers, ActionEvent.SHIFT_MASK) ||
                             ActionPlaces.WELCOME_SCREEN == e.place ||
-                            LightEdit.owns(project) ||
-                            forceOpenInNewFrame()
+                            LightEdit.owns(project)
+      forceReuseFrame = BitUtil.isSet(modifiers, ActionEvent.ALT_MASK)
       runConfigurators = true
     }
     openProjectAndLogRecent(file = file, options = options, projectGroup = projectGroup)
   }
-
-  @ApiStatus.Internal
-  protected open fun forceOpenInNewFrame(): Boolean = false
 
   val projectName: @NlsSafe String?
     get() {

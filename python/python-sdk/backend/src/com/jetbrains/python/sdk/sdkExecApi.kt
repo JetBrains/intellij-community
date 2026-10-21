@@ -14,6 +14,7 @@ import com.intellij.python.community.execService.PyProcessListener
 import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.community.execService.python.StdInProvider
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
@@ -96,6 +97,7 @@ fun PythonInterpreter.asBinToExecute(): Result<BinaryToExec, MessageError> = sdk
  * Configures [targetCommandLineBuilder] (sets a binary path and other stuff) so it could run python on this target
  */
 @Internal
+@RequiresBackgroundThread
 fun Sdk.configureBuilderToRunPythonOnTarget(targetCommandLineBuilder: TargetedCommandLineBuilder) {
   pySdkAdditionalData.flavorAndData.data.prepareTargetCommandLine(this, targetCommandLineBuilder)
 }

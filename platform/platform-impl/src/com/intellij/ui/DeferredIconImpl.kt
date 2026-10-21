@@ -38,6 +38,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Component
 import java.awt.Graphics
+import java.lang.ref.WeakReference
 import java.util.Objects
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
@@ -70,8 +71,30 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
 
   private val isScheduled = AtomicBoolean(false)
 
-  @JvmField
-  internal val param: T
+  /**
+   * The parameter of the evaluator, such as a request with a PSI pointer. [setDone] releases it, because the evaluator is gone then,
+   * so a done icon that a component keeps for a long time keeps no file of a plugin that unloaded.
+   */
+  @Volatile
+  private var param: T?
+
+  /** The released [param], for [equals] only. */
+  @Volatile
+  private var releasedParam: WeakReference<T & Any>? = null
+
+  /** The hash of [param], so the hash of this icon stays the same after [setDone]. */
+  private val paramHash: Int
+
+  /** Whether [param] was not null, so [setDone] has a parameter to release. */
+  private val hasParam: Boolean
+
+  /** The parameter of the evaluator, until [setDone]. A listener of the evaluation reads it before [setDone]. */
+  internal val evaluationParam: T
+    get() {
+      val param = param
+      check(param != null || !hasParam) { "The parameter of $this is read after setDone released it" }
+      return evaluationParamOf(param)
+    }
 
   @ApiStatus.Internal
   val uniqueId: Long = nextDeferredIconId.getAndIncrement()
@@ -93,6 +116,9 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     asyncEvaluator = icon.asyncEvaluator
     isScheduled.set(icon.isScheduled.get())
     param = icon.param
+    releasedParam = icon.releasedParam
+    paramHash = icon.paramHash
+    hasParam = icon.hasParam
     isNeedReadAction = icon.isNeedReadAction
     isDone = icon.isDone
     evaluatedListener = icon.evaluatedListener
@@ -105,6 +131,8 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
                        evaluator: (T) -> Icon?,
                        listener: ((DeferredIconImpl<T>, Icon) -> Unit)?) {
     this.param = param
+    paramHash = param.hashCode()
+    hasParam = param != null
     delegateIcon = baseIcon ?: EMPTY_ICON
     scaledDelegateIcon = delegateIcon
     cachedScaledIcon = null
@@ -121,6 +149,8 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
   @ApiStatus.Internal
   constructor(baseIcon: Icon?, param: T, asyncEvaluator: suspend (T) -> Icon, listener: ((DeferredIconImpl<T>, Icon) -> Unit)?) {
     this.param = param
+    paramHash = param.hashCode()
+    hasParam = param != null
     delegateIcon = baseIcon ?: EMPTY_ICON
     scaledDelegateIcon = delegateIcon
     cachedScaledIcon = null
@@ -323,8 +353,16 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
       evaluator = null
       asyncEvaluator = null
       scheduledRepaints = null
+      releaseParam()
       deferredIconListener.evaluated(this@DeferredIconImpl, result)
     }
+  }
+
+  /** Keeps [param] for [equals] through a weak reference. The evaluators are cleared first, so no evaluation reads a released parameter. */
+  private fun releaseParam() {
+    val param = param ?: return
+    releasedParam = WeakReference(param)
+    this.param = null
   }
 
   override fun retrieveIcon(): Icon {
@@ -334,20 +372,38 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
     return evaluate()
   }
 
-  override fun evaluate(): Icon = runEvaluator {
-    evaluator?.invoke(param) ?: EMPTY_ICON
+  /** After [setDone] released [param], gives [scaledDelegateIcon], the icon that this icon paints. */
+  override fun evaluate(): Icon {
+    val param = param
+    if (param == null && hasParam) {
+      return scaledDelegateIcon
+    }
+    return runEvaluator {
+      val evaluator = evaluator
+      if (evaluator == null) EMPTY_ICON else evaluator(evaluationParamOf(param)) ?: EMPTY_ICON
+    }
   }
 
   /**
    * Computes and returns the computed icon immediately.
    *
    * Unlike [evaluate], supports suspending evaluators, falling back to the regular one if no suspending was specified.
+   * After [setDone] released [param], gives [scaledDelegateIcon], as [evaluate] does.
    */
   @ApiStatus.Internal
   @VisibleForTesting
-  suspend fun evaluateAsync(): Icon = runEvaluator {
-    asyncEvaluator?.invoke(param) ?: evaluator?.invoke(param) ?: EMPTY_ICON
+  suspend fun evaluateAsync(): Icon {
+    val param = param
+    if (param == null && hasParam) {
+      return scaledDelegateIcon
+    }
+    return runEvaluator {
+      asyncEvaluator?.invoke(evaluationParamOf(param)) ?: evaluator?.invoke(evaluationParamOf(param)) ?: EMPTY_ICON
+    }
   }
+
+  @Suppress("UNCHECKED_CAST")
+  private fun evaluationParamOf(param: T?): T = param as T
 
   private inline fun runEvaluator(evaluator: () -> Icon): Icon {
     val result = try {
@@ -394,15 +450,26 @@ class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconW
 
   override fun getToolTip(composite: Boolean): String? = (scaledDelegateIcon as? IconWithToolTip)?.getToolTip(composite)
 
+  /**
+   * Icons of equal parameters are equal, before and after the evaluation, while the parameter lives. After [setDone], an icon compares
+   * its parameter through a weak reference. The parameter can be collected right after [setDone], because a holder of it, such as the
+   * cache of [IconDeferrerImpl], can be cleared at any time. After that, a done icon equals only itself. So equals stays reflexive,
+   * symmetric and transitive.
+   */
   override fun equals(other: Any?): Boolean {
     return when {
       this === other -> true
       other !is DeferredIconImpl<*> -> false
-      else -> param == other.param
+      paramHash != other.paramHash -> false
+      else -> {
+        val param = param ?: releasedParam?.get()
+        val otherParam = other.param ?: other.releasedParam?.get()
+        if (param == null) !hasParam && !other.hasParam else param == otherParam
+      }
     }
   }
 
-  override fun hashCode(): Int = param.hashCode()
+  override fun hashCode(): Int = paramHash
 
   override fun toString(): String = "Deferred. Base=$scaledDelegateIcon"
 

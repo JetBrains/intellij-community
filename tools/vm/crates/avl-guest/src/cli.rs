@@ -16,7 +16,7 @@ use clap::{Args, ColorChoice, Parser, Subcommand};
 use crate::reply::AgentRefusalExt;
 use crate::reply::{self, AgentRefusal, Streams, answer_bare, answer_enveloped};
 use crate::step::SystemRunner;
-use crate::{ide, image, linux, read_file, relay, runfiles, shape, stage, supervisor, tracepack};
+use crate::{ide, image, lane, linux, read_file, relay, runfiles, shape, supervisor, tracepack};
 
 #[cfg(test)]
 mod tests;
@@ -36,15 +36,13 @@ pub(crate) struct Agent {
 }
 
 // One line per paragraph: clap wraps to the terminal.
-const AFTER_HELP: &str = "validate-guest takes its arguments positionally, and every one of them is required.
+const AFTER_HELP: &str = "validate-guest takes the X display as its one positional argument, and it is required.
 
 trace-pack-ready zips only the finished bundles that LEDGER does not name yet, or with --all every bundle that it \
 does not name, and adds them to LEDGER. When nothing is new it writes no zip.
 
 relay copies bytes both ways between its standard streams and 127.0.0.1:PORT until the guest side closes. It \
 writes nothing on stdout that the guest side did not send.
-
-stage reads its manifest on standard input, or from the file MANIFEST names. It refuses a manifest in both places.
 
 read-file copies PATH to standard output unchanged. Then it writes its envelope on standard error, which names the \
 size and the SHA-256 of what it wrote.
@@ -53,16 +51,18 @@ runfiles-tree reads a JSON request on standard input: the MANIFEST text, the hos
 destination directory. It builds one link per MANIFEST line under DESTINATION/DIGEST, copies a package directory of a \
 node_modules store, and answers that root.
 
-ide-prepare reads the IDE context document on standard input and lays out the context IDE_ROOT/LAUNCH_KEY: the data \
-directories, the project, the home and the bin directory of the IDE. The caller then seeds the home, the bin directory \
-and the config files.
-
-ide-launch reads the IDE launch document on standard input. It composes the argument file of the IDE and starts the \
-run run-ide-LAUNCH_NAME on the context. The IDE gets HOME and PATH from the context and a fixed list of variables from \
-the agent, and nothing else.
-
 ide-gc cancels every live IDE under ROOT with --stop-all, or every one whose launch record names another product with \
 --keep-product. It keeps the newest --keep-logs log directories of each context.
+
+lane-daemon serves the control channel of the lane daemon on --bind:--port until a POST /shutdown. It reads the lane IDE \
+inputs from the runtime descriptor, publishes STATE_DIR/daemon.json with its token, and owns the lane services and the \
+lane IDE. It writes its log on standard error.
+
+lane-run runs one iteration of --lane from the runfiles of --descriptor, with no control channel. It writes the run \
+stream on standard output and into RUNTIME_ROOT/run.ndjson, quits the IDE, and exits 0 when the run is green. With \
+--plan-only it stages the inputs, writes the plan of the run as one JSON document on standard output, and launches no \
+IDE. --jvm_flag takes the -D flags of a TeamCity UI job: its runner index and count split the lane between the runners, \
+and -Dair.flow.trace.allure=on asks the recorder for the Allure results.
 
 cancel --thread-dump JCMD runs JCMD PID Thread.print before the TERM, and writes the dump into the log directory of an \
 IDE launch or into the run directory.
@@ -84,19 +84,11 @@ pub(crate) enum Verb {
     Log(LogArgs),
     /// Cancel a run: TERM its process group, then KILL it after the grace period.
     Cancel(CancelArgs),
-    /// Stage the daemon's runtime generation.
-    Stage(StageArgs),
-    /// Answer whether a staged runtime generation can be reused as it is.
-    StageCheck(StageCheckArgs),
-    /// Prepare one daemon launch; the request is read from standard input.
-    LaunchPrep(LaunchPrepArgs),
-    /// Remove staged generations, keeping the two newest and the requested ones.
-    Gc(GcArgs),
     /// Turn a freshly cloned macOS base into the golden image.
     ProvisionImage(ImagePins),
     /// Prove a finished macOS golden image.
     ValidateImage(ImagePins),
-    /// Prove a Linux worker: the display, the window manager and the shared objects of the runtime.
+    /// Prove a Linux worker: the C library, the display and the window manager.
     ValidateGuest(ValidateGuestArgs),
     /// Zip the trace bundles no earlier call packed.
     TracePackReady(TracePackReadyArgs),
@@ -108,12 +100,12 @@ pub(crate) enum Verb {
     RunfilesTree,
     /// Copy one file to standard output unchanged, and name it on standard error.
     ReadFile(ReadFileArgs),
-    /// Lay out one context of the lane IDE; the context document is read from standard input.
-    IdePrepare,
-    /// Start the lane IDE on a prepared context; the launch document is read from standard input.
-    IdeLaunch,
     /// Cancel or keep the live IDEs under an IDE root, and remove their old log directories.
     IdeGc(IdeGcArgs),
+    /// Serve the control channel of the lane daemon until its shutdown.
+    LaneDaemon(LaneDaemonArgs),
+    /// Run one iteration of a lane from a runfiles tree, with no control channel.
+    LaneRun(LaneRunArgs),
 }
 
 impl Verb {
@@ -126,10 +118,6 @@ impl Verb {
             Self::Active(_) => AgentVerb::Active,
             Self::Log(_) => AgentVerb::Log,
             Self::Cancel(_) => AgentVerb::Cancel,
-            Self::Stage(_) => AgentVerb::Stage,
-            Self::StageCheck(_) => AgentVerb::StageCheck,
-            Self::LaunchPrep(_) => AgentVerb::LaunchPrep,
-            Self::Gc(_) => AgentVerb::Gc,
             Self::ProvisionImage(_) => AgentVerb::ProvisionImage,
             Self::ValidateImage(_) => AgentVerb::ValidateImage,
             Self::ValidateGuest(_) => AgentVerb::ValidateGuest,
@@ -138,9 +126,9 @@ impl Verb {
             Self::Relay(_) => AgentVerb::Relay,
             Self::RunfilesTree => AgentVerb::RunfilesTree,
             Self::ReadFile(_) => AgentVerb::ReadFile,
-            Self::IdePrepare => AgentVerb::IdePrepare,
-            Self::IdeLaunch => AgentVerb::IdeLaunch,
             Self::IdeGc(_) => AgentVerb::IdeGc,
+            Self::LaneDaemon(_) => AgentVerb::LaneDaemon,
+            Self::LaneRun(_) => AgentVerb::LaneRun,
         }
     }
 }
@@ -199,40 +187,6 @@ pub(crate) struct CancelArgs {
     pub thread_dump: Option<PathBuf>,
 }
 
-// --- the stager ---------------------------------------------------------------------------------------------
-//
-// The runtime root and every value after it are checked inside the verb rather than here, so a malformed one
-// is the verb's own refusal (`guest_stage_failed`, exit 70), as it always was.
-
-#[derive(Args, Debug, Clone)]
-pub(crate) struct StageArgs {
-    pub runtime_root: String,
-    /// A manifest file. Without it, the manifest is read from standard input.
-    #[arg(value_name = "MANIFEST")]
-    pub manifest: Option<PathBuf>,
-}
-
-#[derive(Args, Debug, Clone)]
-pub(crate) struct StageCheckArgs {
-    pub runtime_root: String,
-    pub digest: String,
-    pub stable_count: String,
-    pub java_home_suffix: String,
-    pub classpath_sha256: String,
-}
-
-#[derive(Args, Debug, Clone)]
-pub(crate) struct LaunchPrepArgs {
-    pub runtime_root: String,
-}
-
-#[derive(Args, Debug, Clone)]
-pub(crate) struct GcArgs {
-    pub root: String,
-    /// Generations to keep whatever their age.
-    pub keep: Vec<String>,
-}
-
 // --- the lane IDE -------------------------------------------------------------------------------------------
 
 #[derive(Args, Debug, Clone)]
@@ -256,6 +210,84 @@ pub(crate) struct IdeGcArgs {
     pub grace_ms: u64,
 }
 
+// --- the lane daemon ----------------------------------------------------------------------------------------
+
+#[derive(Args, Debug, Clone)]
+pub(crate) struct LaneDaemonArgs {
+    /// The state directory: the state file, the jar store and the iterations.
+    #[arg(long, value_name = "DIR", value_parser = absolute_path)]
+    pub state_dir: PathBuf,
+    /// The port of the control channel.
+    #[arg(long, value_name = "PORT", value_parser = clap::value_parser!(u16).range(1..))]
+    pub port: u16,
+    /// The address of the control channel. A container-linux guest binds every interface.
+    #[arg(long, value_name = "ADDRESS", default_value = "127.0.0.1")]
+    pub bind: std::net::IpAddr,
+    /// The launch digest that the controller prepared the daemon for. A run of another one is refused.
+    #[arg(long, value_name = "DIGEST", value_parser = non_empty_string)]
+    pub launch_digest: String,
+    /// The runtime descriptor in the guest runfiles tree.
+    #[arg(long, value_name = "FILE", value_parser = absolute_path)]
+    pub descriptor: PathBuf,
+    /// The root of the guest runfiles tree, which every runfile of the descriptor is below.
+    #[arg(long, value_name = "DIR", value_parser = absolute_path)]
+    pub runfiles_root: PathBuf,
+    /// The parent of every context of the lane IDE.
+    #[arg(long, value_name = "DIR", value_parser = absolute_path)]
+    pub ide_root: PathBuf,
+    /// The empty home that the IDE gets as idea.dev.project.root. The controller passes a directory in the state directory.
+    #[arg(long, value_name = "DIR", value_parser = absolute_path)]
+    pub home: PathBuf,
+}
+
+#[derive(Args, Debug, Clone)]
+pub(crate) struct LaneRunArgs {
+    /// The lane of the run, such as ui: the lane document lanes/<lane>.json.
+    #[arg(long, value_name = "LANE", value_parser = non_empty_string)]
+    pub lane: String,
+    /// The runtime descriptor in the runfiles tree.
+    #[arg(long, value_name = "FILE", value_parser = absolute_path)]
+    pub descriptor: PathBuf,
+    /// The root of the runfiles tree. The default is the root that holds the descriptor.
+    #[arg(long, value_name = "DIR", value_parser = absolute_path)]
+    pub runfiles_root: Option<PathBuf>,
+    /// The directory of the run: the jar store, the IDE contexts, the home and the run stream. The default is
+    /// $AIR_LANE_RUNTIME_ROOT, and then $TEST_TMPDIR/air-lane.
+    #[arg(long, value_name = "DIR", value_parser = absolute_path)]
+    pub runtime_root: Option<PathBuf>,
+    /// A test class, with or without a package, and an optional #<scenario>. Repeat it to name more. A Bazel
+    /// --test_filter, $TESTBRIDGE_TEST_ONLY, adds its comma-separated selectors.
+    #[arg(long = "selector", value_name = "CLASS[#SCENARIO]")]
+    pub selectors: Vec<String>,
+    /// A JUnit5 filter <option>=<value>. Repeat it to name more. $JB_TEST_JUNIT5_FILTERS adds its filters, separated by
+    /// ';'.
+    #[arg(long = "junit5-filter", value_name = "FILTER")]
+    pub junit5_filters: Vec<String>,
+    /// The budget of one scenario, in seconds.
+    #[arg(long, value_name = "SECONDS", default_value_t = 1_800)]
+    pub active_execution_timeout_sec: u64,
+    /// The budget between two records of the run, in seconds.
+    #[arg(long, value_name = "SECONDS", default_value_t = 300)]
+    pub progress_gap_timeout_sec: u64,
+    /// The budget of the whole run, in seconds. lane-run takes the smaller of it and $TEST_TIMEOUT of a Bazel test, less
+    /// a teardown reserve of 180 s. At the end of the budget the watchdog ends the run. A minute later lane-run writes
+    /// the JUnit XML of the records so far itself, cancels the lane IDE and exits 1. On a TeamCity agent both ends also
+    /// write a buildProblem on standard output, so a muted case cannot leave the build green.
+    #[arg(long, value_name = "SECONDS")]
+    pub run_budget_sec: Option<u64>,
+    /// Stage the inputs, select the suite documents, write the plan of the run on standard output, and launch no IDE.
+    #[arg(long)]
+    pub plan_only: bool,
+    /// A JVM flag of the JUnit runner, -D<name>=<value>, as the UI job of TeamCity passes it with
+    /// --test_arg=--jvm_flag=<flag>. Repeat it to name more. The values of idea.test.runner.index and
+    /// idea.test.runners.count split the selected suites of the lane between the runners of the job.
+    /// -Dair.flow.trace.allure=on asks the recorder for the Allure results. java.awt.headless, idea.bucketing.season
+    /// and idea.tests.duration.bucketing.enabled are ignored, each with a note in the run stream. Another flag is refused
+    /// by name.
+    #[arg(long = "jvm_flag", value_name = "FLAG", allow_hyphen_values = true)]
+    pub jvm_flags: Vec<String>,
+}
+
 // --- the image and Linux worker verbs -----------------------------------------------------------------------
 
 /// The three pins the golden image is built to, every one of them required, in any order. Named because the
@@ -274,8 +306,6 @@ pub(crate) struct ImagePins {
 pub(crate) struct ValidateGuestArgs {
     #[arg(value_parser = display)]
     pub display: String,
-    #[arg(value_parser = absolute_path)]
-    pub runtime_root: PathBuf,
 }
 
 // --- the trace verb -----------------------------------------------------------------------------------------
@@ -394,17 +424,6 @@ pub(crate) fn dispatch(verb: Verb, streams: &mut Streams<'_>) -> u8 {
         Verb::Active(args) => answer_enveloped(streams, name, supervisor::active(&system, &args)),
         Verb::Log(args) => answer_enveloped(streams, name, supervisor::log(&system, &args)),
         Verb::Cancel(args) => answer_enveloped(streams, name, supervisor::cancel(&system, &args)),
-        Verb::Stage(args) => {
-            let result = stage::runtime::stage(&args.runtime_root, args.manifest.as_deref(), streams.stdin);
-            answer_bare(streams, name, result)
-        }
-        Verb::StageCheck(args) => answer_bare(streams, name, stage::runtime::check(&args)),
-        Verb::LaunchPrep(args) => {
-            let result = stage::launch_prep::read_request(streams.stdin)
-                .and_then(|request| stage::launch_prep::prepare(&args.runtime_root, &request));
-            answer_bare(streams, name, result)
-        }
-        Verb::Gc(args) => answer_bare(streams, name, stage::gc::collect(&args.root, &args.keep)),
         Verb::ProvisionImage(pins) => {
             let mut provisioner = image::provision::ImageProvisioner::new(&pins, SystemRunner);
             let result = provisioner.provision();
@@ -429,17 +448,14 @@ pub(crate) fn dispatch(verb: Verb, streams: &mut Streams<'_>) -> u8 {
             answer_enveloped(streams, name, result)
         }
         Verb::ReadFile(args) => read_file::read_file(&args.path, streams),
-        Verb::IdePrepare => {
-            let result = ide::prepare::read_document(streams.stdin).and_then(|document| ide::prepare::prepare(&system, &document));
-            answer_bare(streams, name, result)
-        }
-        Verb::IdeLaunch => {
-            let launcher = supervisor::Launcher::current();
-            let guest = ide::launch::Guest::current();
-            let result =
-                ide::launch::read_document(streams.stdin).and_then(|document| ide::launch::launch(&system, &launcher, &guest, &document));
-            answer_bare(streams, name, result)
-        }
         Verb::IdeGc(args) => answer_bare(streams, name, ide::gc::collect(&system, &args)),
+        Verb::LaneDaemon(args) => match lane::channel::serve(&args, &|name| std::env::var(name).ok()) {
+            Ok(exit) => exit,
+            Err(refusal) => reply::fail(streams, name.as_str(), refusal),
+        },
+        Verb::LaneRun(args) => match lane::run::run(&args, &|name| std::env::var(name).ok()) {
+            Ok(exit) => exit,
+            Err(refusal) => reply::fail(streams, name.as_str(), refusal),
+        },
     }
 }

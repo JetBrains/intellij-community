@@ -129,6 +129,7 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:OpenNewTab:javax.swing.Icon
 - sf:Pause:javax.swing.Icon
 - sf:PinTab:javax.swing.Icon
+- sf:PlaySound:javax.swing.Icon
 - sf:Play_back:javax.swing.Icon
 - sf:Play_first:javax.swing.Icon
 - sf:Play_forward:javax.swing.Icon
@@ -493,7 +494,6 @@ f:com.intellij.icons.AllIcons$General
 - sf:Add:javax.swing.Icon
 - sf:AddJdk:javax.swing.Icon
 - sf:Add_20x20:javax.swing.Icon
-- sf:Alpha:javax.swing.Icon
 - sf:ArrowDown:javax.swing.Icon
 - sf:ArrowDownSmall:javax.swing.Icon
 - sf:ArrowLeft:javax.swing.Icon
@@ -549,6 +549,7 @@ f:com.intellij.icons.AllIcons$General
 - sf:Hashtag:javax.swing.Icon
 - sf:HideToolWindow:javax.swing.Icon
 - sf:History:javax.swing.Icon
+- sf:Home:javax.swing.Icon
 - sf:ImplementingMethod:javax.swing.Icon
 - sf:IndentDetected:javax.swing.Icon
 - sf:Information:javax.swing.Icon
@@ -640,7 +641,6 @@ f:com.intellij.icons.AllIcons$General
 - sf:Tree:javax.swing.Icon
 - sf:TreeHovered:javax.swing.Icon
 - sf:TreeSelected:javax.swing.Icon
-- sf:TrialBadge:javax.swing.Icon
 - sf:User:javax.swing.Icon
 - sf:Vcs:javax.swing.Icon
 - sf:Warning:javax.swing.Icon

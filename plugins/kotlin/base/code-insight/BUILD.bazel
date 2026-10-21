@@ -153,8 +153,6 @@ jvm_library(
         "//platform/backend/workspace:workspace_test_lib",
         "//plugins/kotlin/formatter:formatter_test_lib",
         "//plugins/kotlin/base/code-insight/minimal:minimal_test_lib",
-        "//libraries/kotlin/test:libraries-kotlinTest",
-        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
         "//platform/util:util-ui_test_lib",
     ],

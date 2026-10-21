@@ -211,22 +211,22 @@ async fn supervisor_failure_carries_the_agents_own_code() {
 #[tokio::test]
 async fn invoke_agent_keeps_the_argv_and_answers_the_verbs_own_document() {
     let host = Host::new(GuestOs::Linux);
-    let channel = FakeChannel::spoke("air-docker-1", r#"{"complete":true}"#);
+    let channel = FakeChannel::spoke("air-docker-1", r#"{"stopped":[],"kept":[],"removed":[]}"#);
     let stdout = host
         .guest(&channel)
         .invoke_agent(
             AgentAccount::Worker,
-            AgentVerb::StageCheck,
-            &words(["/vm/runtime", "abc123"]),
+            AgentVerb::IdeGc,
+            &words(["--root", "/vm/data/ide", "--stop-all"]),
             &SpawnOptions::within(Duration::from_mins(1)),
         )
         .await
         .unwrap();
-    assert_eq!(stdout, r#"{"complete":true}"#);
+    assert_eq!(stdout, r#"{"stopped":[],"kept":[],"removed":[]}"#);
     assert_eq!(
         channel.lines()[0],
         format!(
-            "/usr/bin/sudo -H -u {} {} stage-check /vm/runtime abc123",
+            "/usr/bin/sudo -H -u {} {} ide-gc --root /vm/data/ide --stop-all",
             host.settings.vm_user, host.settings.vm_agent
         )
     );
@@ -242,14 +242,14 @@ async fn invoke_agent_runs_a_verb_under_the_account_its_caller_named() {
         .invoke_agent(
             AgentAccount::Root,
             AgentVerb::ValidateGuest,
-            &words([":88", "/data"]),
+            &words([":88"]),
             &SpawnOptions::within(Duration::from_mins(1)),
         )
         .await
         .unwrap();
     assert_eq!(
         channel.lines()[0],
-        format!("/usr/bin/sudo -H {} validate-guest :88 /data", host.settings.vm_agent)
+        format!("/usr/bin/sudo -H {} validate-guest :88", host.settings.vm_agent)
     );
 }
 
@@ -257,20 +257,28 @@ async fn invoke_agent_runs_a_verb_under_the_account_its_caller_named() {
 #[tokio::test]
 async fn invoke_agent_reports_the_agents_own_refusal() {
     let host = Host::new(GuestOs::Linux);
-    let answer = refused("stage", "stage_manifest_unreadable", "manifest is truncated");
+    let answer = refused(
+        "runfiles-tree",
+        "runfiles_target_unmapped",
+        "no prefix of the path table holds /x/a",
+    );
     let channel = FakeChannel::answering("air-docker-1", move |_| Ok(failed(70, &answer)));
     let refusal = host
         .guest(&channel)
         .invoke_agent(
             AgentAccount::Worker,
-            AgentVerb::Stage,
-            &words(["/vm/runtime", "/vm/data/state/runtime-stage.json"]),
+            AgentVerb::RunfilesTree,
+            &[],
             &SpawnOptions::within(Duration::from_mins(1)),
         )
         .await
         .unwrap_err();
-    assert_eq!(refusal.code, "stage_manifest_unreadable");
-    assert!(refusal.message.contains("manifest is truncated"), "{}", refusal.message);
+    assert_eq!(refusal.code, "runfiles_target_unmapped");
+    assert!(
+        refusal.message.contains("no prefix of the path table holds /x/a"),
+        "{}",
+        refusal.message
+    );
     assert_eq!(refusal.exit, Exit::SOFTWARE);
 }
 
@@ -280,24 +288,24 @@ async fn invoke_agent_reports_the_agents_own_refusal() {
 #[tokio::test]
 async fn invoke_agent_reports_a_usage_refusal_with_its_first_line() {
     let host = Host::new(GuestOs::Linux);
-    let usage = "usage: vm-guest-agent stage <runtime-root> <manifest> | stage-check <runtime-root> <digest>\n";
+    let usage = "usage: vm-guest-agent <start|status|log|cancel> --root <dir>\n";
     let channel = FakeChannel::answering("air-docker-1", move |_| Ok(failed(64, usage)));
     let refusal = host
         .guest(&channel)
         .invoke_agent(
             AgentAccount::Worker,
-            AgentVerb::LaunchPrep,
-            &words(["/vm/runtime"]),
+            AgentVerb::RunfilesTree,
+            &[],
             &SpawnOptions::within(Duration::from_mins(1)),
         )
         .await
         .unwrap_err();
     assert_eq!(refusal.code, "guest_agent_failed");
     for fragment in [
-        "launch-prep",
+        "runfiles-tree",
         "air-docker-1",
         "exited with 64",
-        "usage: vm-guest-agent stage",
+        "usage: vm-guest-agent <start",
         "older than this controller",
     ] {
         assert!(refusal.message.contains(fragment), "no {fragment:?}: {}", refusal.message);
@@ -313,13 +321,13 @@ async fn invoke_agent_reports_a_usage_refusal_with_its_first_line() {
 #[tokio::test]
 async fn a_usage_envelope_from_the_rust_agent_keeps_its_code() {
     let host = Host::new(GuestOs::Linux);
-    let answer = refused("launch-prep", "usage", "usage: vm-guest-agent launch-prep <runtime-root>");
+    let answer = refused("ide-gc", "usage", "usage: vm-guest-agent ide-gc --root <DIR>");
     let channel = FakeChannel::answering("air-docker-1", move |_| Ok(failed(64, &answer)));
     let refusal = host
         .guest(&channel)
         .invoke_agent(
             AgentAccount::Worker,
-            AgentVerb::LaunchPrep,
+            AgentVerb::IdeGc,
             &[],
             &SpawnOptions::within(Duration::from_mins(1)),
         )
@@ -328,51 +336,54 @@ async fn a_usage_envelope_from_the_rust_agent_keeps_its_code() {
     assert_eq!(refusal.code, "usage");
     assert_eq!(
         refusal.message,
-        "the guest agent's launch-prep in air-docker-1 refused: usage: vm-guest-agent launch-prep <runtime-root>. \
+        "the guest agent's ide-gc in air-docker-1 refused: usage: vm-guest-agent ide-gc --root <DIR>. \
          the installed guest agent does not have this verb or these arguments, which is what an agent older than \
          this controller looks like"
     );
     assert_eq!(refusal.exit, Exit::from_status(64, Exit::FAILURE));
 }
 
-// What a staging verb refuses *with* reaches the refusal, because it arrives in the envelope both halves declare -
-// and the refusal still names the verb and the worker.
+// The message of a refusal of a verb reaches the refusal, because it arrives in the envelope that both halves declare.
+// The refusal still names the verb and the worker.
 #[tokio::test]
-async fn a_staging_envelope_carries_its_message_and_keeps_the_attribution() {
+async fn a_verb_envelope_carries_its_message_and_keeps_the_attribution() {
     let host = Host::new(GuestOs::Linux);
-    let spoken = "stable classpath source is not a file: /vm/runtime/generations/abc/lib/0001-app.jar";
-    let answer = refused("stage", "guest_stage_failed", spoken);
+    let spoken = "cannot read /vm/data/ide: Permission denied (os error 13)";
+    let answer = refused("ide-gc", "guest_ide_gc_failed", spoken);
     let channel = FakeChannel::answering("air-docker-1", move |_| Ok(failed(70, &answer)));
     let refusal = host
         .guest(&channel)
         .invoke_agent(
             AgentAccount::Worker,
-            AgentVerb::Stage,
-            &words(["/vm/runtime"]),
+            AgentVerb::IdeGc,
+            &words(["--root", "/vm/data/ide", "--stop-all"]),
             &SpawnOptions::within(Duration::from_mins(1)),
         )
         .await
         .unwrap_err();
-    assert_eq!(refusal.code, "guest_stage_failed");
-    for fragment in [spoken, "stage", "air-docker-1"] {
+    assert_eq!(refusal.code, "guest_ide_gc_failed");
+    for fragment in [spoken, "ide-gc", "air-docker-1"] {
         assert!(refusal.message.contains(fragment), "no {fragment:?}: {}", refusal.message);
     }
     assert_eq!(refusal.exit, Exit::SOFTWARE);
     // An envelope that names a code and no message still says where it happened.
-    let silent = r#"{"schemaVersion":1,"ok":false,"command":"gc","error":{"code":"guest_gc_failed"}}"#;
+    let silent = r#"{"schemaVersion":1,"ok":false,"command":"runfiles-tree","error":{"code":"guest_runfiles_tree_failed"}}"#;
     let quiet = FakeChannel::answering("air-docker-2", move |_| Ok(failed(70, silent)));
     let refusal = host
         .guest(&quiet)
         .invoke_agent(
             AgentAccount::Worker,
-            AgentVerb::Gc,
-            &words(["/vm/runtime"]),
+            AgentVerb::RunfilesTree,
+            &[],
             &SpawnOptions::within(Duration::from_mins(1)),
         )
         .await
         .unwrap_err();
-    assert_eq!(refusal.code, "guest_gc_failed");
-    assert_eq!(refusal.message, "the guest agent's gc in air-docker-2 refused: it stated no reason");
+    assert_eq!(refusal.code, "guest_runfiles_tree_failed");
+    assert_eq!(
+        refusal.message,
+        "the guest agent's runfiles-tree in air-docker-2 refused: it stated no reason"
+    );
 }
 
 // The agent's own message is bounded like everything else a refusal carries, and on a character boundary.
@@ -381,14 +392,14 @@ async fn an_envelope_message_is_bounded_on_a_rune_boundary() {
     let host = Host::new(GuestOs::Linux);
     // `é` is two bytes and the prefix is odd-length, so the bound falls inside a character.
     let spoken = format!("cannot read x{}", "é".repeat(GUEST_AGENT_MESSAGE_BYTES));
-    let answer = refused("stage", "guest_stage_failed", &spoken);
+    let answer = refused("ide-gc", "guest_ide_gc_failed", &spoken);
     let channel = FakeChannel::answering("air-docker-1", move |_| Ok(failed(70, &answer)));
     let refusal = host
         .guest(&channel)
         .invoke_agent(
             AgentAccount::Worker,
-            AgentVerb::Stage,
-            &words(["/vm/runtime"]),
+            AgentVerb::IdeGc,
+            &words(["--root", "/vm/data/ide", "--stop-all"]),
             &SpawnOptions::within(Duration::from_mins(1)),
         )
         .await
@@ -409,15 +420,27 @@ async fn invoke_agent_quotes_a_usage_line_and_withholds_every_other_stderr() {
     let cases = [
         (
             "a verb's usage refusal",
-            "usage: vm-guest-agent gc <root> [keep-digest...]\nTART_VM_TOKEN=secret\n",
-            Some("usage: vm-guest-agent gc"),
+            "usage: vm-guest-agent ide-gc --root <DIR>\nTART_VM_TOKEN=secret\n",
+            Some("usage: vm-guest-agent ide-gc"),
         ),
-        ("dispatch's usage block", "Usage:\n  vm-guest-agent gc ROOT\n", Some("Usage:")),
+        (
+            "dispatch's usage block",
+            "Usage:\n  vm-guest-agent ide-gc --root DIR\n",
+            Some("Usage:"),
+        ),
         // A verb's own message quoting what a guest subprocess printed.
-        ("a verb's own failure message", "JBR extraction failed: tar: broken pipe\n", None),
-        ("a bare refusal", "gc refused\nTART_VM_TOKEN=secret\n", None),
+        (
+            "a verb's own failure message",
+            "cannot stop the IDE: kill: operation not permitted\n",
+            None,
+        ),
+        ("a bare refusal", "ide-gc refused\nTART_VM_TOKEN=secret\n", None),
         // A usage line that is not the first one is not a usage refusal.
-        ("usage behind another line", "gc refused\nusage: vm-guest-agent gc <root>\n", None),
+        (
+            "usage behind another line",
+            "ide-gc refused\nusage: vm-guest-agent ide-gc --root <DIR>\n",
+            None,
+        ),
         ("nothing at all", "", None),
     ];
     for (name, stderr, quoted) in cases {
@@ -433,14 +456,14 @@ async fn invoke_agent_quotes_a_usage_line_and_withholds_every_other_stderr() {
             .guest(&channel)
             .invoke_agent(
                 AgentAccount::Worker,
-                AgentVerb::Gc,
-                &words(["/vm/runtime"]),
+                AgentVerb::IdeGc,
+                &words(["--root", "/vm/data/ide", "--stop-all"]),
                 &SpawnOptions::within(Duration::from_mins(1)),
             )
             .await
             .unwrap_err();
         assert_eq!(refusal.code, "guest_agent_failed", "{name}");
-        let bare = "the guest agent's gc in air-docker-1 exited with 1";
+        let bare = "the guest agent's ide-gc in air-docker-1 exited with 1";
         match quoted {
             // The bare `exited with N`, with nothing of the stream appended. Equality rather than a substring sweep:
             // this is the assertion that fails if the exception widens again.
@@ -469,12 +492,12 @@ async fn invoke_agent_names_a_sudo_refusal_rather_than_blaming_the_agent() {
         // The prefix is what is tested, not the position.
         (
             "a sudo line behind another line",
-            "gc refused\nsudo: a password is required\n",
+            "validate-guest refused\nsudo: a password is required\n",
             "guest_agent_failed",
         ),
         (
             "a line that merely mentions sudo",
-            "gc could not sudo to the worker account\n",
+            "validate-guest could not sudo to the worker account\n",
             "guest_agent_failed",
         ),
     ];
@@ -506,13 +529,13 @@ async fn invoke_agent_names_a_sudo_refusal_rather_than_blaming_the_agent() {
 #[tokio::test]
 async fn invoke_agent_does_not_blame_the_agents_age_for_a_plain_failure() {
     let host = Host::new(GuestOs::Linux);
-    let channel = FakeChannel::answering("air-docker-1", |_| Ok(failed(1, "gc refused\n")));
+    let channel = FakeChannel::answering("air-docker-1", |_| Ok(failed(1, "ide-gc refused\n")));
     let refusal = host
         .guest(&channel)
         .invoke_agent(
             AgentAccount::Worker,
-            AgentVerb::Gc,
-            &words(["/vm/runtime"]),
+            AgentVerb::IdeGc,
+            &words(["--root", "/vm/data/ide", "--stop-all"]),
             &SpawnOptions::within(Duration::from_mins(1)),
         )
         .await

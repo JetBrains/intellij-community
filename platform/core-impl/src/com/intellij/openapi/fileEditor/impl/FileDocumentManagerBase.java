@@ -21,6 +21,8 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashingStrategy;
+import com.intellij.util.containers.Java11Shim;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +42,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   private static final Key<Boolean> BIG_FILE_PREVIEW = Key.create("BIG_FILE_PREVIEW");
   private static final Object lock = new Object();
   private final Map<VirtualFile, DocumentEx> myDocumentCache = CollectionFactory.createConcurrentWeakValueMap();
-  private static final Map<Document, Boolean> nonPhysicalFilesDocumentsCache = CollectionFactory.createConcurrentWeakMap();
+  private static final Map<Document, Boolean> nonPhysicalFilesDocumentsCache = Java11Shim.INSTANCE.createConcurrentWeakMap(HashingStrategy.canonical());
 
   @ApiStatus.Experimental
   public static boolean isTrackable(@NotNull VirtualFile file) {

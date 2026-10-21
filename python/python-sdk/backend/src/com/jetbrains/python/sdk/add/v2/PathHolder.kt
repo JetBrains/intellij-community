@@ -18,8 +18,8 @@ import kotlin.io.path.pathString
  *
  *  Targets only have [FullPathOnTarget] (`/usr/bin/python`).
  *
- *  To get MRFS use [toStringForUI].
- *  To get remote path use [toStringForExecution]
+ *  To get MRFS use [toStringPossiblyMRFS].
+ *  To get remote path use [toStringOnRemoteMachine]
  *
  *  Please, read https://jetbrains.team/blog/Developing_intuition_about_eel_paths before using this class.
  */
@@ -30,7 +30,7 @@ sealed class PathHolder {
   }
 
   /**
-   * This method has no semantics, please use either [toStringForExecution] or [toStringForUI].
+   * This method has no semantics, please use either [toStringOnRemoteMachine] or [toStringPossiblyMRFS].
    * See class KDoc
    */
   @Suppress("POTENTIALLY_NON_REPORTED_ANNOTATION")
@@ -41,32 +41,32 @@ sealed class PathHolder {
       is Target -> "Target on $pathString"
     }
     log.error("Do not call toString on $me")
-    return this.toStringForUI()
+    return this.toStringPossiblyMRFS()
   }
 
   /**
    * For targets returns [FullPathOnTarget].
    * For [Eel] returns [Path.toString]
    *
-   * To be used in UI.
+   * To be used in UI and **as a first argument of [com.intellij.execution.configurations.GeneralCommandLine] **.
    */
-  abstract fun toStringForUI(): FullPathOnTarget
+  abstract fun toStringPossiblyMRFS(): FullPathOnTarget
 
   /**
-   * Path on remote machine, use to execute things.
-   */
-  abstract fun toStringForExecution(): FullPathOnTarget
+   * Path on remote machine, to be used as arguments for Exec API, env vars and so on
+   * */
+  abstract fun toStringOnRemoteMachine(): FullPathOnTarget
 
   data class Eel(val path: Path) : PathHolder() {
 
-    override fun toStringForUI(): FullPathOnTarget = path.pathString
+    override fun toStringPossiblyMRFS(): FullPathOnTarget = path.pathString
 
-    override fun toStringForExecution(): FullPathOnTarget = path.asEelPath().toString()
+    override fun toStringOnRemoteMachine(): FullPathOnTarget = path.asEelPath().toString()
   }
 
   data class Target(val pathString: FullPathOnTarget) : PathHolder() {
 
-    override fun toStringForUI(): FullPathOnTarget = pathString
-    override fun toStringForExecution(): FullPathOnTarget = pathString
+    override fun toStringPossiblyMRFS(): FullPathOnTarget = pathString
+    override fun toStringOnRemoteMachine(): FullPathOnTarget = pathString
   }
 }

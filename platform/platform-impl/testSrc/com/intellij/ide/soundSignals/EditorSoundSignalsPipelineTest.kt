@@ -540,11 +540,13 @@ class EditorSoundSignalsPipelineTest {
     private val all = CopyOnWriteArrayList<List<SoundSignal>>()
     private val batches = Channel<List<SoundSignal>>(Channel.UNLIMITED)
 
-    override fun playEnabled(signals: Collection<SoundSignal>) {
-      val batch = signals.toList()
+    override fun playEnabled(sounds: Map<SoundSignal, String>) {
+      val batch = sounds.keys.toList()
       all += batch
       batches.trySend(batch)
     }
+
+    override fun playPreview(sounds: List<Pair<SoundSignal, String>>) {}
 
     val recorded: List<List<SoundSignal>> get() = all.toList()
 

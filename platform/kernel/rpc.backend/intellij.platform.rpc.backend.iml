@@ -16,6 +16,5 @@
     <orderEntry type="module" module-name="fleet.rpc.server" exported="" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.rpc.lite" />
-    <orderEntry type="module" module-name="intellij.platform.kernel.backend.baseline" />
   </component>
 </module>

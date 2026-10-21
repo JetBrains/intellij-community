@@ -2,26 +2,22 @@
 package com.intellij.platform.testFramework.junit5.codeInsight.fixture
 
 import com.intellij.openapi.project.Project
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotSame
-import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 
 /**
- * Checks that [codeInsightProjectFixture] and [codeInsightFixture] share one project per class and create one fixture per test.
+ * Checks that [codeInsightProjectFixture] as an instance property gives each test a new project.
  */
 @TestApplication
 class CodeInsightProjectFixtureTest {
   companion object {
-    private val projectFixture = codeInsightProjectFixture()
-
     private var previousProject: Project? = null
-    private var previousFixture: CodeInsightTestFixture? = null
   }
 
+  private val projectFixture = codeInsightProjectFixture()
   private val myFixture by codeInsightFixture(projectFixture)
 
   @Test
@@ -30,14 +26,8 @@ class CodeInsightProjectFixtureTest {
   }
 
   @RepeatedTest(2)
-  fun `project is shared and fixture is new for each test`() {
-    val project = previousProject
-    val fixture = previousFixture
-    if (project != null && fixture != null) {
-      assertSame(project, myFixture.project)
-      assertNotSame(fixture, myFixture)
-    }
+  fun `project is new for each test`() {
+    previousProject?.let { assertNotSame(it, myFixture.project) }
     previousProject = myFixture.project
-    previousFixture = myFixture
   }
 }

@@ -48,6 +48,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 import com.jetbrains.python.psi.impl.PyTypeProvider
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.resolve.pythonSdkIfReady
 import com.jetbrains.python.psi.types.PyCallableParameterMapping.mapCallableParameters
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment.getDeclaredOrInferredVariance
 import com.jetbrains.python.psi.types.PyLiteralStringType.Companion.match
@@ -63,7 +64,6 @@ import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
 import java.util.Collections
 import java.util.Optional
@@ -2504,6 +2504,7 @@ object PyTypeChecker {
           if (substitution is PyTypeVarType) {
             val sameScopeSubstitution = substitutions.typeVars.keys.firstOrNull { typeVarType2 ->
               (typeVarType2 != substitution) && typeVarType2.declarationElement != null && typeVarType2.declarationElement == substitution.declarationElement
+              && typeVarType2.scopeOwner === substitution.scopeOwner
             }
 
             if (sameScopeSubstitution != null && substitution.defaultType != null) {
@@ -2530,6 +2531,7 @@ object PyTypeChecker {
         if (paramSpecType !in substitutions.paramSpecs) {
           val sameScopeSubstitution = substitutions.paramSpecs.keys.firstOrNull { typeVarType ->
             typeVarType.declarationElement != null && typeVarType.declarationElement == paramSpecType.declarationElement
+            && (paramSpecType.scopeOwner == null || typeVarType.scopeOwner === paramSpecType.scopeOwner)
           }
 
           if (sameScopeSubstitution != null) {
@@ -2832,7 +2834,7 @@ object PyTypeChecker {
     val subClassFile = subClass.containingFile
 
     val isPy2 = if (subClassFile is PyiFile)
-      PythonRuntimeService.getInstance().getLanguageLevelForSdk(PythonSdkUtil.findPythonSdk(subClassFile)).isPython2
+      PythonRuntimeService.getInstance().getLanguageLevelForSdk(subClassFile.pythonSdkIfReady()).isPython2
     else
       LanguageLevel.forElement(subClass).isPython2
 

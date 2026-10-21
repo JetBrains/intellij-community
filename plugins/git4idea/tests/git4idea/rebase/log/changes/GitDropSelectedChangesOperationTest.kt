@@ -10,6 +10,7 @@ import git4idea.i18n.GitBundle
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.test.GitSingleRepoContext
 import git4idea.test.assertCommitted
+import git4idea.test.assertLatestHistory
 import git4idea.test.assertStagedChanges
 import git4idea.test.commit
 import git4idea.test.commitDetails
@@ -194,6 +195,29 @@ internal class GitDropSelectedChangesOperationTest {
       assertCommitted(3) { added("b") }
       assertCommitted(4) { added("a") }
     }
+  }
+
+  @Test
+  fun `test drop changes preserves fixup commits when autosquash is enabled`(): Unit = with(context) {
+    git("config rebase.autoSquash true")
+    file("a").create().addCommit("Add a")
+
+    file("b").create().add()
+    file("c").create().add()
+    val targetCommit = commitDetails(commit("Add b, c"))
+
+    file("d").create().addCommit("Add d")
+    file("fixup").create().addCommit("fixup! Add d")
+
+    refresh()
+    updateChangeListManager()
+
+    val changesToDrop = filterChangesByFileName(targetCommit, listOf("c"))
+
+    val result = executeDropSelectedChangesOperation(changesToDrop, targetCommit)
+
+    assertThat(result).isInstanceOf(GitCommitEditingOperationResult.Complete::class.java)
+    repo.assertLatestHistory("fixup! Add d", "Add d")
   }
 
   @Test

@@ -2,8 +2,8 @@
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
-import com.intellij.editor.EditorColorSchemeTestCase;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.idea.TestFor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,12 +22,18 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.TestLoggerKt;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.TestDisposable;
 import com.intellij.util.ui.UIUtil;
 import org.assertj.core.api.Assertions;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.xml.sax.SAXException;
 
 import java.awt.Color;
@@ -38,21 +44,39 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
+import static com.intellij.editor.EditorColorSchemeTestUtil.assertXmlOutputEquals;
+import static com.intellij.editor.EditorColorSchemeTestUtil.doTestWriteRead;
+import static com.intellij.editor.EditorColorSchemeTestUtil.loadScheme;
+import static com.intellij.editor.EditorColorSchemeTestUtil.serialize;
+import static com.intellij.editor.EditorColorSchemeTestUtil.serializeWithFixedMeta;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+@TestApplication
+public class EditorColorsSchemeImplTest {
   private EditorColorsSchemeImpl myScheme;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @TestDisposable
+  private Disposable testRootDisposable;
+
+  @BeforeEach
+  void setUp() {
     myScheme = new EditorColorsSchemeImpl(null);
   }
 
-  @Override
-  protected void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() {
     myScheme = null;
-    super.tearDown();
   }
 
+  @Test
   public void testAppLevelEditorFontDefaults() {
     ModifiableFontPreferences appFontPrefs = (ModifiableFontPreferences)AppEditorFontOptions.getInstance().getFontPreferences();
     FontPreferences stored = new FontPreferencesImpl();
@@ -83,6 +107,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(fontSize, myScheme.getConsoleFontSize());
   }
 
+  @Test
   public void testDefaults() {
     myScheme.setFontPreferences(new FontPreferencesImpl());
     FontPreferencesTest.checkState(myScheme.getFontPreferences(),
@@ -102,19 +127,20 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(FontPreferences.DEFAULT_FONT_SIZE, myScheme.getConsoleFontSize());
   }
 
+  @Test
   public void testSetFontPreferences() {
     String fontName1 = FontPreferencesTest.getExistingNonDefaultFontName();
     String fontName2 = FontPreferencesTest.getAnotherExistingNonDefaultFontName();
     myScheme.setEditorFontName(fontName1);
     FontPreferences fontPreferences = myScheme.getFontPreferences();
-    assertInstanceOf(fontPreferences, ModifiableFontPreferences.class);
+    assertInstanceOf(ModifiableFontPreferences.class, fontPreferences);
     ((ModifiableFontPreferences)fontPreferences).register(fontName1, 25);
     ((ModifiableFontPreferences)fontPreferences).register(fontName2, 13);
     FontPreferences consoleFontPreferences = myScheme.getConsoleFontPreferences();
-    assertInstanceOf(consoleFontPreferences, FontPreferences.class);
+    assertInstanceOf(FontPreferences.class, consoleFontPreferences);
     myScheme.setConsoleFontSize(10);
     consoleFontPreferences = myScheme.getConsoleFontPreferences();
-    assertInstanceOf(consoleFontPreferences, ModifiableFontPreferences.class);
+    assertInstanceOf(ModifiableFontPreferences.class, consoleFontPreferences);
     ((ModifiableFontPreferences)consoleFontPreferences).register(fontName1, 21);
     ((ModifiableFontPreferences)consoleFontPreferences).register(fontName2, 15);
 
@@ -145,6 +171,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
 
   }
 
+  @Test
   public void testSetName() {
     String fontName1 = FontPreferencesTest.getExistingNonDefaultFontName();
     String fontName2 = FontPreferencesTest.getAnotherExistingNonDefaultFontName();
@@ -168,6 +195,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(scaledSize, myScheme.getConsoleFontSize2D());
   }
 
+  @Test
   public void testSetSize() {
     myScheme.setEditorFontSize(25);
     myScheme.setConsoleFontSize(21);
@@ -188,6 +216,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(21, myScheme.getConsoleFontSize());
   }
 
+  @Test
   public void testSetNameAndSize() {
     String fontName1 = FontPreferencesTest.getExistingNonDefaultFontName();
     String fontName2 = FontPreferencesTest.getAnotherExistingNonDefaultFontName();
@@ -212,6 +241,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(21, myScheme.getConsoleFontSize());
   }
 
+  @Test
   public void testSetSizeAndName() {
     String fontName1 = FontPreferencesTest.getExistingNonDefaultFontName();
     String fontName2 = FontPreferencesTest.getAnotherExistingNonDefaultFontName();
@@ -236,13 +266,14 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(21, myScheme.getConsoleFontSize());
   }
 
+  @Test
   public void testWriteColorWithAlpha() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme scheme = (EditorColorsScheme)defaultScheme.clone();
     scheme.setName("test");
     scheme.setColor(ColorKey.createColorKey("BASE_COLOR"), new Color(0x80, 0x81, 0x82));
     scheme.setColor(ColorKey.createColorKey("ALPHA_COLOR"), new Color(0x80, 0x81, 0x82, 0x83));
-    EditorColorSchemeTestCase.assertXmlOutputEquals(
+    assertXmlOutputEquals(
       """
         <scheme name="test" version="142" parent_scheme="Default">
           <colors>
@@ -254,9 +285,10 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   @TestFor(issues = "IJPL-223521")
+  @Test
   public void testWriteTextAttributesWithAlpha() {
     enableTextAttributesTransparency();
-    EditorColorSchemeTestCase.assertXmlOutputEquals(
+    assertXmlOutputEquals(
       """
         <scheme name="test" version="142" parent_scheme="Default">
           <attributes>
@@ -276,9 +308,10 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
    * transparency support, so that turning the key on is the only thing that changes the saved format.
    */
   @TestFor(issues = "IJPL-223521")
+  @Test
   public void testWriteTextAttributesWithAlphaWhenTransparencyDisabled() {
     assertFalse(Registry.is("editor.text.attributes.transparency"));
-    EditorColorSchemeTestCase.assertXmlOutputEquals(
+    assertXmlOutputEquals(
       """
         <scheme name="test" version="142" parent_scheme="Default">
           <attributes>
@@ -294,6 +327,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   @TestFor(issues = "IJPL-223521")
+  @Test
   public void testTextAttributesAlphaSurvivesWriteRead() {
     enableTextAttributesTransparency();
     TextAttributesKey key = TextAttributesKey.createTextAttributesKey("TEST_TRANSPARENT_TEXT_ROUND_TRIP");
@@ -306,6 +340,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   @TestFor(issues = "IJPL-223521")
+  @Test
   public void testTextAttributesAlphaDroppedWhenTransparencyDisabled() {
     assertFalse(Registry.is("editor.text.attributes.transparency"));
     TextAttributesKey key = TextAttributesKey.createTextAttributesKey("TEST_OPAQUE_TEXT_ROUND_TRIP");
@@ -316,7 +351,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   private void enableTextAttributesTransparency() {
-    Registry.get("editor.text.attributes.transparency").setValue(true, getTestRootDisposable());
+    Registry.get("editor.text.attributes.transparency").setValue(true, testRootDisposable);
   }
 
   private static @NotNull EditorColorsScheme schemeWithTransparentText() {
@@ -329,11 +364,12 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     return scheme;
   }
 
+  @Test
   public void testWriteInheritedFromDefault() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
     editorColorsScheme.setName("test");
-    EditorColorSchemeTestCase.assertXmlOutputEquals(
+    assertXmlOutputEquals(
       "<scheme name=\"test\" version=\"142\" parent_scheme=\"Default\" />",
       serialize(editorColorsScheme));
 
@@ -341,7 +377,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
 
     editorColorsScheme.setConsoleFontName(fontName);
     editorColorsScheme.setConsoleFontSize(10);
-    EditorColorSchemeTestCase.assertXmlOutputEquals(
+    assertXmlOutputEquals(
       """
         <scheme name="test" version="142" parent_scheme="Default">
           <option name="CONSOLE_FONT_NAME" value="Test" />
@@ -351,22 +387,25 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       serialize(editorColorsScheme));
   }
 
+  @Test
   public void testWriteInheritedFromDarcula() {
     EditorColorsScheme darculaScheme = EditorColorsManager.getInstance().getScheme("Darcula");
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)darculaScheme.clone();
     editorColorsScheme.setName("test");
-    EditorColorSchemeTestCase.assertXmlOutputEquals(
+    assertXmlOutputEquals(
       "<scheme name=\"test\" version=\"142\" parent_scheme=\"Darcula\" />",
       serialize(editorColorsScheme));
   }
 
 
+  @Test
   public void testSaveInheritance() {
     Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.STATIC_METHOD, AbstractColorsScheme.INHERITED_ATTRS_MARKER);
     TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.STATIC_METHOD.getFallbackAttributeKey());
     assertSame(result.second, fallbackAttrs);
   }
 
+  @Test
   public void testSaveNoInheritanceAndDefaults() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     TextAttributes declarationAttrs = defaultScheme.getAttributes(DefaultLanguageHighlighterColors.IDENTIFIER).clone();
@@ -377,6 +416,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     Assertions.assertThat(ExpectedHighlightingData.sameTextAttributesByValue(result.second, fallbackAttrs)).isTrue();
   }
 
+  @Test
   public void testSaveInheritanceForEmptyAttrs() {
     Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(DefaultLanguageHighlighterColors.INSTANCE_FIELD, AbstractColorsScheme.INHERITED_ATTRS_MARKER);
     TextAttributes fallbackAttrs = result.first.getAttributes(DefaultLanguageHighlighterColors.INSTANCE_FIELD.getFallbackAttributeKey());
@@ -386,12 +426,13 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertSame(fallbackAttrs, result.second);
   }
 
+  @Test
   public void testUpgradeFromVer141() throws Exception {
     TextAttributesKey constKey = DefaultLanguageHighlighterColors.CONSTANT;
     TextAttributesKey fallbackKey = constKey.getFallbackAttributeKey();
     assertNotNull(fallbackKey);
 
-    EditorColorsScheme scheme = EditorColorSchemeTestCase.loadScheme(
+    EditorColorsScheme scheme = loadScheme(
       """
         <?xml version="1.0" encoding="UTF-8"?>
         <scheme name="Test" version="141" parent_scheme="Default">
@@ -413,8 +454,9 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertSame(classFallbackAttrs, classAttrs);
   }
 
+  @Test
   public void testPreventCyclicTextAttributeDependency() {
-    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    DefaultLogger.disableStderrDumping(testRootDisposable);
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
     editorColorsScheme.setName("test");
@@ -428,7 +470,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
     catch (IllegalArgumentException e) {
       String s = e.getMessage();
-      assertTrue(s, s.matches(".*B.*->C.*->.*D.*"));
+      assertTrue(s.matches(".*B.*->C.*->.*D.*"), s);
 
       try {
         editorColorsScheme.getAttributes(keyA);
@@ -445,8 +487,9 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
   }
 
+  @Test
   public void testMustNotBePossibleToRegisterTextAttributeKeysWithDifferentFallBacks() throws Exception {
-    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    DefaultLogger.disableStderrDumping(testRootDisposable);
     TestLoggerKt.rethrowLoggedErrorsIn(() -> {
       TextAttributesKey keyB = TextAttributesKey.createTextAttributesKey("B");
       TextAttributesKey keyD = TextAttributesKey.createTextAttributesKey("D");
@@ -466,6 +509,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     });
   }
 
+  @Test
   public void testIdea152156() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme parentScheme = (EditorColorsScheme)defaultScheme.clone();
@@ -494,6 +538,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   @TestFor(issues = "IJPL-26971")
+  @Test
   public void testTransparencyHexPadding() {
     // Opacity gets stored in color schemes without padding.
     var testColor = new Color(0x88, 0x99, 0xAA, 0x01);
@@ -501,6 +546,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   @TestFor(issues = "IJPL-26971")
+  @Test
   public void testColorZeroPadding() {
     // Another consequence of IJPL-26971: the color components also lose paddings, which would break if the opacity component is not FF.
     var testColor = new Color(0x00, 0x99, 0xAA, 0x00);
@@ -524,6 +570,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(color, targetColor);
   }
 
+  @Test
   public void testWriteDefaultSemanticHighlighting() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
@@ -544,16 +591,16 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     boolean nonDefaultRainbow = !RainbowHighlighter.DEFAULT_RAINBOW_ON;
 
     RainbowHighlighter.setRainbowEnabled(editorColorsScheme, null, nonDefaultRainbow);
-    assertEquals(nonDefaultRainbow, (boolean)RainbowHighlighter.isRainbowEnabled(editorColorsScheme, null));
-    EditorColorSchemeTestCase.assertXmlOutputEquals(
+    assertEquals(nonDefaultRainbow, RainbowHighlighter.isRainbowEnabled(editorColorsScheme, null));
+    assertXmlOutputEquals(
       BEGIN +
       "    <property name=\"rainbow Default language\">" + nonDefaultRainbow + "</property>\n" +
       END,
       serializeWithFixedMeta(editorColorsScheme));
 
     RainbowHighlighter.setRainbowEnabled(editorColorsScheme, Language.ANY, nonDefaultRainbow);
-    assertEquals(nonDefaultRainbow, (boolean)RainbowHighlighter.isRainbowEnabled(editorColorsScheme, Language.ANY));
-    EditorColorSchemeTestCase.assertXmlOutputEquals(
+    assertEquals(nonDefaultRainbow, RainbowHighlighter.isRainbowEnabled(editorColorsScheme, Language.ANY));
+    assertXmlOutputEquals(
       BEGIN +
       "    <property name=\"rainbow " + Language.ANY.getID() + "\">" + nonDefaultRainbow + "</property>\n" +
       "    <property name=\"rainbow Default language\">" + nonDefaultRainbow + "</property>\n" +
@@ -563,22 +610,23 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     RainbowHighlighter.setRainbowEnabled(editorColorsScheme, Language.ANY, null);
     assertNull(RainbowHighlighter.isRainbowEnabled(editorColorsScheme, Language.ANY));
     assertEquals(nonDefaultRainbow, RainbowHighlighter.isRainbowEnabledWithInheritance(editorColorsScheme, Language.ANY));
-    EditorColorSchemeTestCase.assertXmlOutputEquals(
+    assertXmlOutputEquals(
       BEGIN +
       "    <property name=\"rainbow Default language\">" + nonDefaultRainbow + "</property>\n" +
       END,
       serializeWithFixedMeta(editorColorsScheme));
 
     RainbowHighlighter.setRainbowEnabled(editorColorsScheme, null, RainbowHighlighter.DEFAULT_RAINBOW_ON);
-    assertEquals((boolean)RainbowHighlighter.DEFAULT_RAINBOW_ON,
+    assertEquals(RainbowHighlighter.DEFAULT_RAINBOW_ON,
                  RainbowHighlighter.isRainbowEnabledWithInheritance(editorColorsScheme, null));
-    assertEquals((boolean)RainbowHighlighter.DEFAULT_RAINBOW_ON,
+    assertEquals(RainbowHighlighter.DEFAULT_RAINBOW_ON,
                  RainbowHighlighter.isRainbowEnabledWithInheritance(editorColorsScheme, Language.ANY));
-    EditorColorSchemeTestCase.assertXmlOutputEquals(
+    assertXmlOutputEquals(
       BEGIN + END,
       serializeWithFixedMeta(editorColorsScheme));
   }
 
+  @Test
   public void testSettingsEqual() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)defaultScheme.clone();
@@ -587,10 +635,11 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertFalse(editorColorsScheme.settingsEqual(defaultScheme));
   }
 
+  @Test
   public void testReadFontPreferences() throws Exception {
     String name1 = FontPreferencesTest.getExistingNonDefaultFontName();
     String name2 = FontPreferencesTest.getAnotherExistingNonDefaultFontName();
-    EditorColorsScheme scheme = EditorColorSchemeTestCase.loadScheme(
+    EditorColorsScheme scheme = loadScheme(
       "<scheme name=\"fira\" version=\"142\" parent_scheme=\"Default\">\n" +
       "  <option name=\"LINE_SPACING\" value=\"0.93\" />\n" +
       "  <font>\n" +
@@ -612,9 +661,10 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertFalse(scheme.getConsoleFontPreferences().useLigatures());
   }
 
+  @Test
   public void testReadFontPreferencesIdea176762() throws Exception {
     String fontName = FontPreferencesTest.getExistingNonDefaultFontName();
-    EditorColorsScheme scheme = EditorColorSchemeTestCase.loadScheme(
+    EditorColorsScheme scheme = loadScheme(
       "<scheme name=\"_@user_Default\" version=\"142\" parent_scheme=\"Default\">\n" +
       "  <option name=\"FONT_SCALE\" value=\"1.5\" />\n" +
       "  <option name=\"EDITOR_FONT_SIZE\" value=\"18\" />\n" +
@@ -623,12 +673,13 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       "</scheme>"
     );
     assertEquals(fontName, scheme.getEditorFontName());
-    assertTrue("Expected font ligatures on", scheme.getFontPreferences().useLigatures());
+    assertTrue(scheme.getFontPreferences().useLigatures(), "Expected font ligatures on");
   }
 
+  @Test
   public void testOptimizeAttributes() throws Exception {
     TextAttributesKey staticFieldKey = TextAttributesKey.createTextAttributesKey("STATIC_FIELD_ATTRIBUTES");
-    AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)EditorColorSchemeTestCase.loadScheme(
+    AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)loadScheme(
       """
         <scheme name="IdeaLight" version="142" parent_scheme="Default">
           <colors>
@@ -764,10 +815,11 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertSame(AbstractColorsScheme.INHERITED_ATTRS_MARKER, editorColorsScheme.getDirectlyDefinedAttributes(staticFieldKey));
   }
 
+  @Test
   public void testInheritedElementWithoutFallback() throws Exception {
     TextAttributesKey TEST_KEY = TextAttributesKey.createTextAttributesKey("TEST_ATTRIBUTE_KEY", DefaultLanguageHighlighterColors.KEYWORD);
     try {
-      AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)EditorColorSchemeTestCase.loadScheme(
+      AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)loadScheme(
         """
           <scheme name="Super Scheme" parent_scheme="Darcula" version="1">
             <attributes>
@@ -777,7 +829,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
       TextAttributes originalAttributes = editorColorsScheme.getAttributes(TEST_KEY);
 
       Element dumpedDom = editorColorsScheme.writeScheme();
-      AbstractColorsScheme reloadedScheme = (AbstractColorsScheme)EditorColorSchemeTestCase.loadScheme(JDOMUtil.writeElement(dumpedDom));
+      AbstractColorsScheme reloadedScheme = (AbstractColorsScheme)loadScheme(JDOMUtil.writeElement(dumpedDom));
 
       assertEquals(originalAttributes, reloadedScheme.getAttributes(TEST_KEY));
     }
@@ -786,6 +838,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
   }
 
+  @Test
   public void testIdea188308() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme initialScheme = (EditorColorsScheme)defaultScheme.clone();
@@ -798,6 +851,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     assertEquals(1.0f, targetScheme.getConsoleLineSpacing());
   }
 
+  @Test
   public void testNonDefaultConsoleLineSpacing() {
     ModifiableFontPreferences appPrefs = (ModifiableFontPreferences)AppEditorFontOptions.getInstance().getFontPreferences();
     float currSpacing = appPrefs.getLineSpacing();
@@ -821,6 +875,7 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     }
   }
 
+  @Test
   public void testEa124005() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme editorColorsScheme = (EditorColorsScheme)defaultScheme.clone();
@@ -831,8 +886,9 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   /**
    * Previously saved schemes containing no "partialSave" attribute are considered to be valid and complete.
    */
+  @Test
   public void testMissingBundledSchemeNoException() throws Exception{
-    AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)EditorColorSchemeTestCase.loadScheme(
+    AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)loadScheme(
       """
         <scheme name="_@user_NonExistentBundled" version="142" parent_scheme="Darcula">
           <metaInfo>
@@ -853,8 +909,9 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
     EditorColorsManager.getInstance().resolveSchemeParent(editorColorsScheme);
   }
 
+  @Test
   public void testMissingBundledSchemeError() throws Exception{
-    AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)EditorColorSchemeTestCase.loadScheme(
+    AbstractColorsScheme editorColorsScheme = (AbstractColorsScheme)loadScheme(
       """
         <scheme name="_@user_NonExistentBundled" version="142" parent_scheme="Darcula">
           <metaInfo>
@@ -884,9 +941,10 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
   }
 
   @TestFor(issues = "IJPL-148477")
+  @Test
   public void testAnnounceEditableCopy() throws IOException, SAXException, InterruptedException {
     final String fontName = FontPreferencesTest.getExistingNonDefaultFontName();
-    EditorColorsScheme userScheme = EditorColorSchemeTestCase.loadScheme(
+    EditorColorsScheme userScheme = loadScheme(
       "<scheme name=\"_@user_Default\" version=\"142\" parent_scheme=\"Default\">\n" +
       "  <option name=\"FONT_SCALE\" value=\"1.5\" />\n" +
       "  <option name=\"EDITOR_FONT_SIZE\" value=\"18\" />\n" +
@@ -901,21 +959,22 @@ public class EditorColorsSchemeImplTest extends EditorColorSchemeTestCase {
 
     try {
       final AtomicBoolean handlerProcessed = new AtomicBoolean();
-      ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(EditorColorsManager.TOPIC, scheme -> {
-        assertEquals("Should have received actual scheme", fontName, scheme.getEditorFontName());
+      ApplicationManager.getApplication().getMessageBus().connect(testRootDisposable).subscribe(EditorColorsManager.TOPIC, scheme -> {
+        assertEquals(fontName, scheme.getEditorFontName(), "Should have received actual scheme");
         handlerProcessed.set(true);
       });
       EditorColorsScheme bundledDefault = EditorColorsManager.getInstance().getScheme("Default");
-      assertNotSame("Should have have default font name in bundled scheme", fontName, bundledDefault.getEditorFontName());
+      assertNotSame(fontName, bundledDefault.getEditorFontName(), "Should have have default font name in bundled scheme");
       EditorColorsManager.getInstance().setGlobalScheme(bundledDefault);
-      UIUtil.dispatchAllInvocationEvents();
-      assertTrue("Should have processed EditorColorsManager.TOPIC in 50ms", handlerProcessed.get());
+      EdtTestUtil.runInEdtAndWait(() -> UIUtil.dispatchAllInvocationEvents());
+      assertTrue(handlerProcessed.get(), "Should have processed EditorColorsManager.TOPIC in 50ms");
     }
     finally {
       schemeManager.removeScheme(userScheme);
     }
   }
 
+  @Test
   public void testCopyDoesNotCatastrophicallyWipeOldAttributes() {
     TextAttributesKey tempKey = TextAttributesKey.createTempTextAttributesKey("myxxx", null);
 

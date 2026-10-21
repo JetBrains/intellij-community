@@ -23,6 +23,7 @@ dev_dist_plugin_descriptor(
         "intellij.terminal.cloud",
         "intellij.terminal.completion.ml",
         "intellij.terminal.emulator",
+        "intellij.terminal.execution",
         "intellij.terminal.frontend",
         "intellij.terminal.libraries.completionDbWithExtensions",
         "intellij.terminal.sh",

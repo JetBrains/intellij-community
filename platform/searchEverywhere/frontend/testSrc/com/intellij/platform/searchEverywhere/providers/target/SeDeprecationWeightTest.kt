@@ -21,7 +21,7 @@ import java.awt.Font
 class SeDeprecationWeightTest {
 
   @Test
-  fun struckOutItemGoesBelowItemWithSameMatch() {
+  fun strikethroughItemGoesBelowItemWithSameMatch() {
     val struckOut = weightOf(100, presentation(EffectType.STRIKEOUT))
     val plain = weightOf(100, presentation(null))
     val noAttributes = weightOf(100, TargetPresentation.builder("Owner").presentation())

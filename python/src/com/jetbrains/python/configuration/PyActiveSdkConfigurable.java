@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration;
 
-import com.intellij.python.sdk.backend.PyInterpreterRefsKt;
-import com.intellij.python.sdk.common.PyInterpreterRef;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltipKt;
 import com.intellij.openapi.Disposable;
@@ -12,7 +10,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -20,8 +17,10 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.python.sdk.backend.PyInterpreterRefsKt;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.python.sdk.common.PyInterpreterItem;
+import com.intellij.python.sdk.common.PyInterpreterRef;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.components.DropDownLink;
@@ -38,7 +37,6 @@ import com.jetbrains.python.sdk.ProjectExtKt;
 import com.jetbrains.python.sdk.PyCustomSdkUiProvider;
 import com.jetbrains.python.sdk.PyInterpreterSelection;
 import com.jetbrains.python.sdk.PyRenderedSdkType;
-import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PyTransferredSdkRootsKt;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -228,14 +226,11 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @Nullable
   protected Sdk getSdk() {
-    Sdk sdk;
-    if (myModule == null) {
-      sdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
+    final Module module = PyModuleInterpreterSetter.findInterpreterModule(myProject, myModule);
+    if (module == null) {
+      return null;
     }
-    else {
-      sdk = com.jetbrains.python.sdk.PythonSdkUtil.findPythonSdk(myModule);
-    }
-
+    final Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
     if (sdk != null && PythonSdkUtil.isPythonSdk(sdk)) {
       return sdk;
     }
@@ -244,18 +239,15 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   }
 
   protected void setSdk(@Nullable Sdk item) {
-    // This function literally associates SDK with module and must be moved to the service
-    final var currentSdk = getSdk();
-
-    PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithInheritedSdk(myProject, currentSdk);
-    PySdkExtKt.setPythonSdk(myProject, item);
-    PyTransferredSdkRootsKt.transferRootsToModulesWithInheritedSdk(myProject, item);
-
-    if (myModule != null) {
-      PyTransferredSdkRootsKt.removeTransferredRoots(myModule, currentSdk);
-      PyModuleInterpreterSetter.setPythonInterpreterBlocking(myModule, item);
-      PyTransferredSdkRootsKt.transferRoots(myModule, item);
+    // An interpreter belongs to a Python project, so a project with no Python project has no interpreter to set.
+    final Module module = PyModuleInterpreterSetter.findInterpreterModule(myProject, myModule);
+    if (module == null) {
+      return;
     }
+    final var currentSdk = getSdk();
+    PyTransferredSdkRootsKt.removeTransferredRoots(module, currentSdk);
+    PyModuleInterpreterSetter.setPythonInterpreterBlocking(module, item);
+    PyTransferredSdkRootsKt.transferRoots(module, item);
   }
 
   @Override

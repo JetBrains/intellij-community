@@ -165,16 +165,14 @@ fun resolveModuleAt(name: QualifiedName, item: PsiFileSystemItem?, context: PyQu
  */
 fun fromFoothold(foothold: PsiElement): PyQualifiedNameResolveContext {
   val module = ModuleUtilCore.findModuleForPsiElement(foothold.containingFile ?: foothold)
-  return PyQualifiedNameResolveContextImpl(foothold.manager, module, foothold,
-                                           PythonSdkUtil.findPythonSdk(module))
+  return PyQualifiedNameResolveContextImpl(foothold.manager, module, foothold, module?.pythonSdkIfReady())
 }
 
 /**
  * Creates a [PyQualifiedNameResolveContext] from a [module].
  */
 fun fromModule(module: Module): PyQualifiedNameResolveContext =
-  PyQualifiedNameResolveContextImpl(PsiManager.getInstance(module.project), module, null,
-                                    PythonSdkUtil.findPythonSdk(module))
+  PyQualifiedNameResolveContextImpl(PsiManager.getInstance(module.project), module, null, module.pythonSdkIfReady())
 
 /**
  * Creates a [PyQualifiedNameResolveContext] from an [sdk].
@@ -226,7 +224,7 @@ private fun relativeResultsFromSkeletons(name: QualifiedName, context: PyQualifi
       val containingName = QualifiedNameFinder.findCanonicalImportPath(containingDirectory, null)
       if (containingName != null && containingName.componentCount > 0) {
         val absoluteName = containingName.append(name)
-        val sdk = PythonSdkUtil.findPythonSdk(footholdFile) ?: return emptyList()
+        val sdk = footholdFile.pythonSdkIfReady() ?: return emptyList()
         val skeletonsVirtualFile = PythonSdkUtil.findSkeletonsDir(sdk) ?: return emptyList()
         val skeletonsDir = context.psiManager.findDirectory(skeletonsVirtualFile)
         return resolveModuleAt(absoluteName, skeletonsDir, context.copyWithoutForeign())
@@ -478,7 +476,7 @@ private fun resolvedElementPriority(element: PsiElement, module: Module?): Prior
 }
 
 fun isInSkeletons(element: PsiElement): Boolean {
-  val sdk = PythonSdkUtil.findPythonSdk(element) ?: return false
+  val sdk = element.pythonSdkIfReady() ?: return false
   val vFile = (if (element is PsiDirectory) element.virtualFile else element.containingFile?.virtualFile) ?: return false
   return PythonSdkUtil.isFileInSkeletons(vFile, sdk)
 }

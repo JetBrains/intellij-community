@@ -17,14 +17,16 @@ package org.jetbrains.jps.builders.java;
 
 import com.intellij.util.PathUtil;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
-import org.jetbrains.jps.builders.JpsBuildTestCase;
+import org.jetbrains.jps.builders.JpsBuildTestBase;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaModuleExtension;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-public class ForcedCompilationTest extends JpsBuildTestCase {
+public class ForcedCompilationTest extends JpsBuildTestBase {
+  @Test
   public void testRecompileDependentAfterForcedCompilation() {
     String srcRoot = PathUtil.getParentPath(createFile("src/A.java", "class A{ { new B(); } }"));
     String b = createFile("depSrc/B.java", "public class B{}");
@@ -38,6 +40,7 @@ public class ForcedCompilationTest extends JpsBuildTestCase {
     doBuild(CompileScopeTestBuilder.make().module(main)).assertFailed();
   }
 
+  @Test
   public void testClearModuleOutputOnForcedCompilation() {
     String srcRoot = PathUtil.getParentPath(createFile("src/A.java", "class A{ }"));
     JpsModule main = addModule("main", srcRoot);
@@ -51,6 +54,7 @@ public class ForcedCompilationTest extends JpsBuildTestCase {
     assertDoesntExist(b);
   }
 
+  @Test
   public void testDontClearModuleOutputOnForcedCompilation() {
     JpsModule m1 = addModule("m1", PathUtil.getParentPath(createFile("src/A.java", "class A{ }")));
     JpsModule m2 = addModule("m2", PathUtil.getParentPath(createFile("src/B.java", "class B{ }")));

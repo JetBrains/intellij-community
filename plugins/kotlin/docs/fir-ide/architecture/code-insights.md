@@ -31,9 +31,10 @@ The most important methods you need to implement:
     - `element` is a non-physical PSI.
     - `elementContext` is an Analysis API context.
     - Use `updater` (see `ModPsiUpdater`) to perform editor-like actions like moving caret or highlighting an element.
-- `getPresentation(context, element)`
+- `getActionPresentation(context, element)`
     - Provides the whole presentation, including an action text, icon, priority, and highlighting in the editor.
-    - The default implementation of `getPresentation` is `Presentation.of(familyName)`.
+    - The default implementation is `Presentation.of(familyName)`.
+    - `getPresentation` is final. It adds the Fix All option unless `addFixAllOption(context, element)` returns `false`.
     - To customize `ModCommandAction` priority, use `Presentation#withPriority` and  
       do NOT use the `HighPriorityAction` and `LowPriorityAction` marker interfaces for `ModCommandActions`,  
       as they have no effect on them.
@@ -49,71 +50,475 @@ The most important methods you need to implement:
 
 ## Inspections
 
-Inspections are some kind of checkers, or linters.
-They inspect code and report some kind of warnings and can recommend how to change code to improve it.
+Inspections are checkers, or linters.
+They inspect code, report problems, and can offer quick fixes that change the code.
+
+This section is the guideline for a new inspection and for a change to an existing one.
+Follow it step by step.
 
 ### Location
-- `kotlin.code-insight.inspections.k2`
 
-There are several classes for inspections: `KotlinApplicableInspectionBase.Simple`, `KotlinDiagnosticBasedInspectionBase`,
-and `AbstractKotlinInspection`.
+| What | Where |
+|---|---|
+| Inspection class | `code-insight/inspections-k2/src/org/jetbrains/kotlin/idea/codeInsight/inspections/` (module `intellij.kotlin.codeInsight.inspections`) |
+| Registration | `code-insight/inspections-k2/resources/intellij.kotlin.codeInsight.inspections.xml` |
+| Description | `code-insight/descriptions/resources-en/inspectionDescriptions/<ShortName>.html` |
+| Messages | `base/resources/resources-en/messages/KotlinBundle.properties` |
+| Test data | `code-insight/inspections-k2/tests/testData/inspectionsLocal/<inspectionName>/` |
+| Generated tests | `K2LocalInspectionTestGenerated` (module `intellij.kotlin.codeInsight.inspections.tests`) |
+| Base classes | `code-insight/api/src/org/jetbrains/kotlin/idea/codeinsight/api/applicable/inspections/` |
+| Shared utilities | `code-insight/utils`, `code-insight/impl-base`, `base/code-insight` |
 
-### `KotlinApplicableInspectionBase.Simple`
-- `isApplicableByPsi(element)`, `getApplicableRanges(element)`, and `prepareContext(element)`.
-    - Are the same as for `KotlinApplicableModCommandAction`.
-- `createQuickFix(element, context)`
-    - Returns a `KotlinModCommandQuickFix`.
-    - Note: The `HighPriorityAction` and `LowPriorityAction` marker interfaces apply to `KotlinModCommandQuickFix`.
+Use a subpackage when one fits: `collections`, `coroutines`, `declarations`, `expressions`, `java`, `kdoc`, `diagnosticBased`.
 
-### `KotlinDiagnosticBasedInspectionBase`
-A subclass of `KotlinApplicableInspectionBase.Simple` that is intended
-to create inspections from [extra compiler checks](https://kotlinlang.org/docs/whatsnew21.html#kotlin-k2-compiler)
-(`KaDiagnosticCheckerFilter.ONLY_EXTENDED_CHECKERS`), whose warnings are not highlighted by default, unlike warnings
-from regular checks (`KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS`).\
-Extending `KotlinDiagnosticBasedInspectionBase` also allows to run extra compiler checks and possibly apply fixes in batch.
-- `prepareContextByDiagnostic(element, diagnostic)`
-    - Prepares the context that is provided for `getProblemDescription` and `createQuickFix`.
-    - `element` is a physical PSI.
-    - `diagnostic` is a specific diagnostic associated with the element.
+### Before you write code
 
-### `AbstractKotlinInspection`
-- Use `AbstractKotlinInspection` if the quick fix cannot be `KotlinModCommandQuickFix`
+1. Find the KTIJ issue. If no issue exists, create one.
+2. Search for an existing inspection, intention, or compiler diagnostic that covers the case.
+   Extend it instead of adding a duplicate.
+3. Write down the positive cases and the negative cases first.
+   Use the [Quality checklist](#quality-checklist) to find the negative cases.
+
+### Choose the base class
+
+Use the applicable base classes. They are mandatory for a new inspection.
+
+| Case | Base class |
+|---|---|
+| One quick fix | `KotlinApplicableInspectionBase.Simple<E, C>` |
+| No quick fix, or more than one | `KotlinApplicableInspectionBase<E, C>`. Override `InspectionManager.createProblemDescriptor`. |
+| Extended compiler checker, diagnostic on a `Kt…` element | `KotlinKtDiagnosticBasedInspectionBase<E, D, C>` |
+| Extended compiler checker, diagnostic on a `PsiElement` | `KotlinPsiDiagnosticBasedInspectionBase<E, D, C>` |
+
+Use `AbstractKotlinInspection` only for these cases. Write the reason in the commit message.
+- The quick fix cannot be a ModCommand. For example, it opens a dialog or starts a refactoring.
+- The inspection must report many elements from one traversal, and one element per visit does not fit.
+
+Do not use `AbstractApplicabilityBasedInspection` or `IntentionBasedInspection`. They are legacy.
+
+### Structure of an applicable inspection
+
+`KotlinApplicableInspectionBase.visitTargetElement` calls the methods in this order.
+Each step must be cheaper than the next one.
+
+1. `isAvailableForFile(file)`
+    - Return `false` for a file where the inspection can never apply. Call `super` first.
+    - Gate new syntax with `file.languageVersionSettings.supportsFeature(LanguageFeature.X)`.
+    - Skip injected fragments with `file.isNotInjectedOrShouldBeAnalyzed` if the check is not valid there.
+    - Skip the file when the required library or platform is absent.
+2. `buildVisitor(holder, isOnTheFly)`
+    - Visit only the element type that you need. Use a helper such as `callExpressionVisitor { }`.
+    - Call `visitTargetElement(element, holder, isOnTheFly)` from the visitor.
+3. `isApplicableByPsi(element)`
+    - Do all the PSI-only checks here. The Analysis API is forbidden here (`forbidAnalysis`).
+    - Reject most elements in this step. For example, check the callee name before you resolve the call.
+4. `getApplicableRanges(element)`
+    - Return the narrowest range. Highlight the name or the keyword, not the whole declaration or call.
+    - Use `ApplicabilityRange.self/single/multiple/union` or the presets in `ApplicabilityRanges`.
+    - The ranges are relative to `element`.
+5. `context(session: KaSession) prepareContext(element)`
+    - Do all the Analysis API work here. Return `null` when the inspection does not apply.
+    - Use `Unit` as the context if the fix needs no data. Return `condition.asUnit` for a boolean check.
+    - Use a `data class Context` if the fix needs data.
+6. `getProblemDescription(element, context)` and `createQuickFix(element, context)`
+    - Take the messages from `KotlinBundle`.
+    - Keep the default `ProblemHighlightType.GENERIC_ERROR_OR_WARNING`. The user can then change the level in the profile.
+    - Use `INFORMATION` only for a fix-only suggestion. The base class drops it in batch mode.
+
+Rules for the context:
+- Do not store `KaSession`, `KaSymbol`, `KaType`, or a call. Use `KaSymbolPointer` if you must keep a symbol.
+- Do not store a raw `PsiElement`. Use `SmartPsiElementPointer`, a name, an `FqName`, a `ClassId`, or a string.
+
+Rules for the quick fix:
+- Extend `KotlinModCommandQuickFix<E>`. It runs in a background read action on a non-physical copy of the file.
+- Do not call `analyze` in `applyFix`. Compute everything in `prepareContext`.
+- Change only `element` or elements from `updater.getWritable(...)`.
+  For an element in another file, map it to the copy explicitly.
+- `getFamilyName()` contains no element-specific text. Use `getName()` for the element-specific text.
+- Do not touch a symbol in `getName()`, `getFamilyName()`, or `toString()`.
+- Keep comments. Use `CommentSaver` around a `replace()`. If you cannot keep a comment, do not report the problem.
+- Generate code from source text, not from `name.asString()`. Use `quoteIfNeeded()` and shorten references (`ShortenReferencesFacility`) for names that need backticks or a qualifier.
+- Put the caret with `updater.moveCaretTo(...)` if the user must continue at a specific place.
+
+An example of a small inspection is `CopyWithoutNamedArgumentsInspection`. An example with a `Unit` context
+and a language feature gate is `RedundantContextSensitiveResolutionQualifierInspection`.
+
+### Inspections from extended compiler checkers
+
+Extended checkers are [extra compiler checks](https://kotlinlang.org/docs/whatsnew21.html#kotlin-k2-compiler)
+(`KaDiagnosticCheckerKind.EXTENDED`). The IDE does not highlight their warnings by default.
+A diagnostic-based inspection shows such a warning, makes it configurable in the profile, and supports batch fixes.
+- Set `diagnosticType` to the `KaFirDiagnostic` class.
+- Implement `prepareContextByDiagnostic(element, diagnostic)`. `prepareContext` is final.
+- Choose `E` so that it is the PSI type of the element that has the diagnostic.
+
+Quick fixes for regular compiler diagnostics are not inspections. Register them in `KotlinK2QuickFixRegistrar`.
+See [Quick Fixes](#quick-fixes).
+
+### Options
+
+Use a constructor property with `@JvmField` and override `getOptionsPane()` with `OptPane.pane(...)`.
+See `RemoveCurlyBracesFromTemplateInspection` for an example.
+Add a test with a `settings.xml` file in the test data directory for each option value.
+
+### Registration
+
+Add a `<localInspection>` entry to `intellij.kotlin.codeInsight.inspections.xml`:
+
+```xml
+<localInspection implementationClass="org.jetbrains.kotlin.idea.codeInsight.inspections.FooInspection"
+                 groupPath="Kotlin" groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
+                 enabledByDefault="false" level="WEAK WARNING"
+                 language="kotlin" key="inspection.foo.display.name" bundle="messages.KotlinBundle"/>
+```
+
+- Make the class `internal`. Name it `<ShortName>Inspection`.
+- The platform takes the short name from the class name without the `Inspection` suffix.
+  Set `shortName` only to keep the ID of an existing inspection.
+- Use one of the existing `group.names.*` keys. Do not add a new group without agreement from the team.
+- Set `cleanupTool="true"` and implement `CleanupLocalInspectionTool` only if the fix is always safe.
+  Code Cleanup applies the fix without a review by the user.
+- For a redundant construct, set `editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"`.
+
+#### Default level
+
+A new inspection starts with a conservative level:
+- Use `enabledByDefault="false"`, or `level="WEAK WARNING"` or `level="INFORMATION"`.
+- Use `level="WARNING"` only for a probable bug, and only when a run on a large project shows no false positives.
+- Do not use `ERROR`. The compiler reports errors.
+
+Raise the level in a separate commit after the inspection has users and no open false-positive issues.
+
+### Description and messages
+
+- Write the description in `<ShortName>.html`. Use this structure:
+  1. One sentence that starts with "Reports".
+  2. A paragraph that tells why the code is a problem.
+  3. `<p><b>Example:</b></p>` with a `<pre><code>` block.
+  4. `<p>After the quick-fix is applied:</p>` with a `<pre><code>` block.
+- Add the keys to `KotlinBundle.properties`:
+    - `inspection.<name>.display.name` for the display name.
+    - `inspection.<name>.problem.description` for the problem message.
+    - `inspection.<name>.fix.text` for the fix family name, or reuse an existing key with the same text.
+- Write the display name as a noun phrase, for example "Redundant underscore entry".
+  Write the fix text as an imperative, for example "Remove redundant underscore entry".
+
+### Tests
+
+Put the test data in `code-insight/inspections-k2/tests/testData/inspectionsLocal/<inspectionName>/`.
+The generator model for this directory is recursive, so a new subdirectory needs no change in the generator.
+- Add a `.inspection` file with the fully qualified class name of the inspection.
+- Add one `<case>.kt` file for each case. Put `<caret>` on the element that the inspection must report.
+- Add `<case>.kt.after` for each case where the fix applies. Do not add it for a negative case.
+- Name a negative case with a `NoWarn` or `NotApplicable` suffix, for example `lateinitNoWarn.kt`.
+
+Directives for a local inspection test:
+
+| Directive | Meaning |
+|---|---|
+| `// PROBLEM: none` | The inspection must not report a problem at the caret. |
+| `// PROBLEM: <text>` | The expected problem message. |
+| `// HIGHLIGHT: <type>` | The expected `ProblemHighlightType`, for example `INFORMATION`. |
+| `// FIX: <text>` | The fix to apply when there is more than one. `// FIX: none` means no fix. |
+| `// NO_FIX: <text>` | A fix that must not be offered. |
+| `// K2_ERROR: <text>` / `// K2_AFTER_ERROR: <text>` | The expected compiler errors before and after the fix. |
+| `// COMPILER_ARGUMENTS: <args>` | Compiler arguments, for example `-XXLanguage:+Feature`. |
+| `// LANGUAGE_VERSION: <v>` / `// API_VERSION: <v>` | The language and API versions. |
+| `// WITH_COROUTINES`, `// RUNTIME_WITH_FULL_JDK`, `// JS` | Other project descriptors. The standard library is on by default. |
+| `// IGNORE_K2` | A known failure. The test fails if it starts to pass. |
+
+The `// "<fix text>" "true"` header and `// FUS_QUICKFIX_NAME:` are quick fix test directives.
+The local inspection test does not read them, so do not add them.
+
+Regenerate the tests with the "Generate Kotlin Tests" run configuration. Commit the changed `K2LocalInspectionTestGenerated.java`.
+Do not edit a generated file by hand.
+
+Run the tests from the `community` directory.
+The nested test class name is the test data directory name in upper camel case, inside `InspectionsLocal`:
+
+```shell
+./tests.cmd --module intellij.kotlin.codeInsight.inspections.tests \
+  --test 'org.jetbrains.kotlin.idea.inspections.tests.K2LocalInspectionTestGenerated$InspectionsLocal$RedundantDestructuringUnderscore'
+```
+
+Use `inspections/<name>/inspectionData/` with `inspections.test` and `expected.xml` only for a test that must check all problems in a file.
+
+### Quality checklist
+
+These defect categories occur again and again in fixes to existing inspections.
+For each category that applies, add a negative test, a fix, or both.
+
+| Category | What to check |
+|---|---|
+| Expected type | A "redundant" construct can be necessary for an expected type, an overload, or type inference. Do not report when the type of the result would change. |
+| Call forms | Test a plain call, `a.b()`, `a?.b()`, `a!!.b()`, an infix call, an operator call, `invoke`, a callable reference, and a call chain. |
+| Nullability | Test nullable receivers and platform types. Unwrap a flexible type before you compare class IDs. Keep checks that a later smart cast needs. |
+| Resolution | A call can be ambiguous or unresolved. Do not assume one successful call. Handle `null` from every resolve call. |
+| Broken code | The PSI can contain error elements. Use `typeIfSafeToResolve`, `firstOrNull`, and `?:`. Do not use `!!`, `single()`, or `error()` on data from user code. |
+| Comments and formatting | The fix keeps all comments and KDoc once. Add a test with comments inside the changed range. |
+| Names | Test names that need backticks, `this@label`, labeled lambdas, and a name that shadows another one. |
+| Side effects | Do not remove an expression that can have a side effect, for example a custom getter, a delegate, or a call. |
+| Declarations | Handle `expect` and `actual` declarations together. Do not report "unused" on an `expect` declaration. |
+| Compiler plugins | Take modality and visibility from the symbol, not from the PSI. The all-open and JPA plugins change them. |
+| Language features | Add a test with the feature off for each `supportsFeature` gate. |
+| Location | Do not report in import directives, the package directive, or injected fragments if the check is not valid there. |
+| Java interoperability | Test Java getters and setters, Java fields, and SAM conversions. |
+| Suppression | An inspection that inspects other elements in one visit must check suppression for each reported element. |
+| User intent | Do not report a name `_`, or code where the user handles the concern explicitly. |
+| Performance | Do not search indexes or references in the visitor. Compute expensive fix data only when the fix runs. |
+
+### Check on a real project
+
+Run the inspection on a large Kotlin project before you commit, for example this repository.
+Use "Run Inspection by Name" in a development IDE.
+- Check the time and the memory usage.
+- Review a sample of the reported problems for false positives.
+- Apply the fix to some problems and compile the result.
+
+Write the project and the result in the commit message.
+
+### After the change
+
+- Run `lint_files` on the changed files, if the IDE tools are available.
+- Use the `commits` skill for the commit message. Put the `KTIJ-NNNNN` issue and the `[kotlin]` tag in the subject.
 
 ## Quick Fixes
 
-Quick fixes are actions on errors and warnings provided by the compiler – they are registered in `KotlinK2QuickFixRegistrar`.
+Quick fixes are actions on errors and warnings that the compiler reports.
+This section is the guideline for a new quick fix and for a change to an existing one.
+
+A quick fix for a regular compiler diagnostic goes to a quick fix registrar.
+A warning from an extended checker is not highlighted by default. Make it a diagnostic-based inspection instead.
+See [Inspections from extended compiler checkers](#inspections-from-extended-compiler-checkers).
 
 ### Location
-- `kotlin.code-insight.fixes.k2`
-- `kotlin.fir.frontend-independent`
 
-There are two ways to register a quick-fix factory:
+| What | Where |
+|---|---|
+| Fix factories and actions | `code-insight/fixes-k2/src/org/jetbrains/kotlin/idea/k2/codeinsight/fixes/` (module `intellij.kotlin.codeInsight.fixes`) |
+| Registrar | `KotlinK2QuickFixRegistrar` in the same package |
+| Shared PSI-only fixes | `frontend-independent/src/org/jetbrains/kotlin/idea/quickfix/` (module `kotlin.fir.frontend-independent`) and `code-insight/impl-base/.../quickFix/` |
+| Factory API | `code-insight/api/src/org/jetbrains/kotlin/idea/codeinsight/api/applicators/fixes/` |
+| Action base classes | `code-insight/api/src/org/jetbrains/kotlin/idea/codeinsight/api/applicable/intentions/KotlinPsiUpdateModCommandAction.kt` |
+| Messages | `base/resources/resources-en/messages/KotlinBundle.properties` |
+| Test data | `idea/tests/testData/quickfix/<group>/` |
+| Generated tests | `HighLevelQuickFixTestGenerated` (module `intellij.kotlin.codeInsight.fixes.tests`) |
 
-1. `registerFactory(factory)`
-    - `factory` can be:
-        - `KotlinQuickFixFactory.ModCommandBased`, which is preferable as the one that produces a list of `ModCommandActions`:
-            - Use `KotlinPsiUpdateModCommandAction.ElementContextless` if no element context is required.
-            - Use `KotlinPsiUpdateModCommandAction.ElementBased` if an element context is required.
-            - Both classes provide the "Fix All" option by default.
-            - Override `getActionPresentation(context, element)` to customize the presentation of the quick fix.
-            - Override `addFixAllOption(context, element)` and return `false` to disable the default "Fix All" option.
-            - Do not override `getPresentation(context, element)`; use `getActionPresentation(context, element)` instead.
-        - `KotlinQuickFixFactory.IntentionBased`, which produces a list of `IntentionAction`.
+Other registrars use the same extension point, `org.jetbrains.kotlin.codeinsight.quickfix.registrar`.
+They are `K2CreateFromUsageQuickFixesRegistrar`, `ChangeSignatureQuickFixesRegistrar`, and the registrars of the compiler plugins.
+Put a fix for a compiler plugin diagnostic in the registrar of that plugin.
 
-2. `registerPsiQuickFixes(diagnosticClass, factories)`
-    - `factories` are pure PSI-based quick-fix factories that do not make Analysis API calls.
-       They can be created using `quickFixesPsiBasedFactory`.
-    - You should use this way only in cases of reusing quick fixes for K2 that have already been implemented for K1.
+### Before you write code
+
+1. Find the KTIJ issue and the diagnostic class, for example `KaFirDiagnostic.ArgumentTypeMismatch`.
+2. Search `KotlinK2QuickFixRegistrar` for the diagnostic. Extend an existing factory instead of adding a second fix with the same effect.
+3. Search `frontend-independent` and `impl-base` for a fix that you can reuse, for example `AddModifierFix` or `RemoveModifierFixBase`.
+4. Write down the PSI forms on which the compiler reports the diagnostic.
+   Write down the cases where the fix cannot remove the diagnostic. These are your negative tests.
+
+### Write the factory
+
+Put the factory in an `internal object XxxFixFactory`, or `XxxFixFactories` for several diagnostics.
+Put the action in a `private class` in the same object.
+
+```kotlin
+internal object RemoveUnnamedPropertyFixFactory {
+    val unnamedPropertyWithImplicitIgnorableTypeFixFactory =
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnnamedPropertyWithImplicitIgnorableType ->
+            val property = diagnostic.psi.getParentOfType<KtProperty>(strict = false) ?: return@ModCommandBased emptyList()
+            if (property.name != "_" || property.initializer == null) return@ModCommandBased emptyList()
+            listOf(RemoveUnnamedPropertyFix(property))
+        }
+
+    private class RemoveUnnamedPropertyFix(element: KtProperty) :
+        KotlinPsiUpdateModCommandAction.ElementContextless<KtProperty>(element) {
+        override fun getFamilyName(): String = KotlinBundle.message("remove.unused.underscore.declaration")
+        override fun invoke(context: ActionContext, element: KtProperty, updater: ModPsiUpdater) {
+            val initializer = element.initializer ?: return
+            element.replace(initializer.copy())
+        }
+    }
+}
+```
+
+Choose the factory type:
+
+| Factory | Use when |
+|---|---|
+| `KotlinQuickFixFactory.ModCommandBased` | Default. The fix changes PSI, opens a chooser, or starts a template. |
+| `KotlinQuickFixFactory.IntentionBased` | Only if ModCommand cannot express the fix. For example, it changes the project model or the build, opens a refactoring dialog, or creates a file in another module. |
+| `quickFixesPsiBasedFactory { psi -> ... }` | Only to register an existing PSI-only fix. It must not use the Analysis API. |
+
+Rules for the factory:
+- The factory runs in a `KaSession`. Do all the resolution and the type checks here.
+- Return `emptyList()` when the fix cannot remove the diagnostic. Do not offer a fix that leaves the code red.
+- Use the typed properties of the diagnostic, for example `diagnostic.expectedType`, before you navigate from `diagnostic.psi`.
+  `diagnostic.psi` is often a broad type such as `PsiElement`.
+- Use `as?`, `getParentOfType`, and `?: return@ModCommandBased emptyList()`. Do not use `!!` or `first()` on PSI navigation.
+- Do not search indexes or references for each diagnostic. If you must, register the factory in `lazyList`, as the import fixes do.
+  The platform then builds a lazy fix only when the user opens the list of fixes.
+- If the fix edits a declaration that a reference resolves to, check `canRefactorElement()`.
+  Do not offer the fix for library, compiled, or read-only code.
+
+### Write the action
+
+Choose the action base class:
+
+| Base class | Use when |
+|---|---|
+| `KotlinPsiUpdateModCommandAction.ElementContextless<E>` | The fix needs no data from the analysis. |
+| `KotlinPsiUpdateModCommandAction.ElementBased<E, C>` | The fix needs data from the analysis. The factory computes the context `C`. |
+| `PsiBasedModCommandAction<E>` | The fix returns a custom `ModCommand`, for example `ModCommand.chooseAction(...)`, or changes several elements in one `ModCommand.psiUpdate`. |
+
+Rules for the action:
+- The action runs on a non-physical copy of the file, in a background read action.
+  Do not call `analyze` in `invoke`.
+- Keep the context free of the session. Do not store `KaSymbol`, `KaType`, or `KaSession`.
+  Store strings, names, `FqName`, `ClassId`, `SmartPsiElementPointer`, or `KaSymbolPointer`.
+- Change only `element` and elements from `updater.getWritable(...)`.
+- Insert fully qualified text, then shorten references. Do not add imports by hand.
+- Keep comments. Use `CommentSaver` around a `replace()`.
+- Generate names with `Name.render()` or `quoteIfNeeded()`, not `asString()`. This applies to the code and to the action text.
+- Apply a change to an `expect` declaration or an `actual` declaration on all the counterparts.
+  See `AddModifierFixMpp` for an example.
+- Guard a side effect that must not run in the preview with `IntentionPreviewUtils.isIntentionPreviewActive()`.
+
+#### Text, priority, and Fix All
+
+- `getFamilyName()` must be specific. The Fix All action shows it: "Apply all '<family name>' fixes in file".
+  Do not use a generic text such as "Remove element".
+- Override `getActionPresentation(context, element)` for an element-specific text or a priority.
+  Use `Presentation.of(text).withPriority(PriorityAction.Priority.HIGH)`.
+  `getPresentation` is final. `HighPriorityAction` and `LowPriorityAction` throw an exception on these classes.
+- `ElementContextless` and `ElementBased` add the Fix All option by default.
+  A Fix All runs the fix on all the diagnostics of this type in the file, so the fix must be idempotent.
+  It must also not conflict with the same fix on a near element, for example in the same function.
+- Return `false` from `addFixAllOption(context, element)` if a batch run is not safe.
+  For an `IntentionAction`, return `false` from `availableInBatchMode()`.
+  Do this for a fix that changes the build, a dependency, or a project setting, and for a fix that asks the user.
+
+#### Language features and opt-in
+
+- Gate a fix that produces new syntax with `languageVersionSettings.supportsFeature(LanguageFeature.X)`.
+- To offer "Increase language version" or "Enable feature" for a new language feature, add one entry to
+  `LanguageFeatureSupportWhiteList` in `UnsupportedFeatureFixFactory`.
+  Add a test file `idea/tests/testData/quickfix/unsupportedFeature/<Feature>_<version>_Increase_Version.kt`.
+- Each opt-in diagnostic has a warning and an error variant, for example `OptInUsage` and `OptInUsageError`. Register a factory for each one.
+
+### Register the factory
+
+Add a line to the thematic block of `KotlinK2QuickFixRegistrar` that fits, for example `typeMismatch`, `visibility`, or `other`:
+
+```kotlin
+registerFactory(RemoveUnnamedPropertyFixFactory.unnamedPropertyWithImplicitIgnorableTypeFixFactory)
+```
+
+- `registerFactory` takes the diagnostic class from the type of the factory.
+- If you add a new block, add it to `createCombined(...)` in `list`. If you do not, the registrar ignores the block without an error.
+- If the compiler reports the same problem with several diagnostic classes, register the factory for each class.
+- Register each fix in one place only. Two registrations show the fix twice.
+- Put a message in `KotlinBundle.properties`. Use a specific key, for example `fix.<name>.text`.
+
+### Tests
+
+Put the test data in `idea/tests/testData/quickfix/<group>/`. Use an existing group if one fits.
+- Add `<case>.kt`. Put `<caret>` on the element that has the diagnostic.
+- Put the action hint on the first line: `// "<action text>" "true"`.
+  Use `"false"` for a negative test. The test then checks that the action is not available.
+- Add `<case>.kt.after` for each `"true"` case. Copy the `.kt` file and change the code to the expected result.
+  The `.after` file keeps all the directives.
+- Add a `"false"` test for each case where the factory returns no fix.
+
+A test with `"true"` also checks these points:
+- The action is not available at the caret after it runs.
+- The errors before and after the fix match `K2_ERROR` and `K2_AFTER_ERROR`.
+- The FUS event matches `FUS_QUICKFIX_NAME`.
+
+Directives for a quick fix test:
+
+| Directive | Meaning |
+|---|---|
+| `// "<text>" "true\|false"` | The action that must be available or not available. Use `/regex/` for a text pattern. |
+| `// FUS_QUICKFIX_NAME: <class>` | The class in the FUS event, for example `...RemoveUnnamedPropertyFixFactory$RemoveUnnamedPropertyFix`. Required for `"true"`. Not allowed for `"false"`. |
+| `// K2_ERROR: <FACTORY_NAME>` | An expected compiler error before the fix, for example `UNRESOLVED_REFERENCE`. Use one line for each error. |
+| `// K2_AFTER_ERROR: <FACTORY_NAME>` | An expected compiler error after the fix. |
+| `// DISABLE_K2_ERRORS` | Turns off the error checks. Use it only with a reason. |
+| `// ENABLE_WARNINGS`, `// WARNING:`, `// AFTER_WARNING:` | Checks warnings before and after the fix. |
+| `// ACTION: <text>`, `// K2_ACTIONS_LIST: <text>` | The full list of actions at the caret. `HighLevelQuickFixTestGenerated` checks the list only with `// KEEP_ACTIONS_LIST_ORDER`, which also checks the order. |
+| `// PRIORITY: HIGH` | The expected priority, if it is not `NORMAL`. |
+| `// TEST_PREVIEW: <text>` | The expected intention preview text, if the preview differs from the result. |
+| `// APPLY_QUICKFIX: false` | The action must be available, but the test does not run it. |
+| `// SHOULD_FAIL_WITH: <message>` | The expected error message of a fix that refuses to run. |
+| `// CHOSEN_OPTION: <regex>` | The option to select in a chooser. |
+| `// SHOULD_BE_AVAILABLE_AFTER_EXECUTION` | The action can stay available after it runs. |
+| `// LANGUAGE_VERSION: <v>`, `// COMPILER_ARGUMENTS: <args>` | The compiler settings. Pin the language version if the result depends on it. |
+| `// IGNORE_K2` | A known failure. Add a KTIJ issue in a comment. The test fails if it starts to pass. |
+
+To test Fix All, add a separate file with the platform text as the hint, for example
+`// "Apply all 'Change to star projection' fixes in file" "true"`.
+Put two or more diagnostics in the file. See `quickfix/addStarProjections/checkType/changeToStarProjectionSingleParameterFixAll.kt`.
+
+If the fix changes another file, use a multi-file test:
+`<case>.before.Main.kt`, `<case>.before.Dependency.kt` (or `.java`), and `<case>.after.kt`.
+Add `<case>.after.Dependency.kt` for each other file that changes.
+
+If the quick fix belongs to an inspection, put a `.inspection` file with the inspection class name in the test data directory.
+
+#### Generate the test data
+
+The test helps you fill in the directives. Run the test, then apply the diff of the comparison failure in the IDE.
+- If `FUS_QUICKFIX_NAME` is missing or wrong, the failure shows the file with the correct line.
+- If `K2_ERROR` or `K2_AFTER_ERROR` is wrong, the failure shows the file with the actual errors.
+- If the `ACTION` list is wrong, the failure shows the file with the actual list.
+- If the action text is wrong, the failure lists all the available actions as `// "<text>" "true"` lines.
+- A multi-file test writes a missing `.after` file and fails once. Review the written file.
+
+A single-file test does not write a missing `.kt.after` file. Create it yourself.
+Then review each generated line. The test accepts any current behavior, also a wrong one.
+
+#### Generate and run the tests
+
+A new file in an existing group needs no change in the generator. For a new group, add a `model("$idea/quickfix/<group>", ...)` line
+to `util/test-generator-fir/test/org/jetbrains/kotlin/fir/testGenerator/codeinsight/GenerateK2QuickFixTests.kt`.
+Then run the "Generate Kotlin Tests" run configuration, and commit the changed `HighLevelQuickFixTestGenerated.java`.
+
+Run the tests from the `community` directory:
+
+```shell
+./tests.cmd --module intellij.kotlin.codeInsight.fixes.tests \
+  --test 'org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixTestGenerated$Nullables'
+```
+
+### Quality checklist
+
+These defect categories occur again and again in fixes to existing quick fixes.
+For each category that applies, add a negative test, a fix, or both.
+
+| Category | What to check |
+|---|---|
+| Fix does not help | The fix must remove the diagnostic and add no new error. Check error types, existing modifiers, enum entries, generated members such as `copy`, `Unit` and `Unit?`, and smart casts. Use `KaSubtypingErrorTypePolicy.STRICT` for subtype checks. |
+| PSI forms | Test the plain, qualified, safe call, infix, nested, type reference, `when` subject, destructuring, constructor, and local forms. |
+| Diagnostic changes | The compiler can move or split a diagnostic. Register every diagnostic class, and pin `LANGUAGE_VERSION` in tests that depend on it. |
+| Action text | The text names the real change. It is specific enough for the Fix All label. Names with backticks render correctly. |
+| Priority and duplicates | Set the priority through `Presentation`. Do not offer the same fix from two factories. Remove duplicate targets. |
+| Fix All | Running the fix on all diagnostics in a file gives correct code. No duplicate declarations or parameters. |
+| Session leaks | The context holds no `KaType` or `KaSymbol`. Analyze only elements of the file of the current session. |
+| Other files | Check `canRefactorElement()` before you edit another declaration. Handle a Java target explicitly. Add a multi-file test. |
+| Multiplatform | Change the `expect` declaration and all the `actual` declarations. Check that types are visible from the common module. |
+| Broken code | Use `typeIfSafeToResolve`. Rethrow control-flow exceptions with `rethrowControlFlowException`. |
+| Performance | Exit early on an error type before you search an index. Call `ProgressManager.checkCanceled()` in loops. |
+| K1 port | Compare with all the diagnostics that the K1 fix was registered for. Remove `IGNORE_K2` from the tests that now pass. |
+
+### After the change
+
+- Run `lint_files` on the changed files, if the IDE tools are available.
+- Use the `commits` skill for the commit message. Put the `KTIJ-NNNNN` issue and the `[kotlin]` tag in the subject.
 
 ### Testing actions
 
-* If the action priority differs from NORMAL, it is good practice to use the `// PRIORITY` directive in test data files.
-  For example:
-```kotlin
-// PRIORITY: HIGH
-```
-If you call `updater.moveCaretTo()` or `editor.moveCaret()` inside the `invoke` or `applyTo` method,
-including `<caret>` in the after-test data file is recommended.
+These rules apply to intentions and to quick fixes.
+- If the action priority is not `NORMAL`, add the `// PRIORITY` directive to the test data, for example `// PRIORITY: HIGH`.
+- If the action calls `updater.moveCaretTo()` or `editor.moveCaret()`, put `<caret>` in the `.after` file.
 
 ## Completion
 

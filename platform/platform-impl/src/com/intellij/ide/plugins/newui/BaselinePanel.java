@@ -211,7 +211,15 @@ public final class BaselinePanel extends NonOpaquePanel {
           component.setBounds(x, getInsets().top - JBUI.scale(1), width, height);
         }
         else {
-          component.setBounds(x, y - component.getBaseline(prefSize.width, prefSize.height), width, height);
+          int baseline = component.getBaseline(prefSize.width, prefSize.height);
+          if (baseline >= 0) {
+            component.setBounds(x, y - baseline, width, height);
+          }
+          else {
+            Insets insets = getInsets();
+            int contentHeight = getHeight() - insets.top - insets.bottom;
+            component.setBounds(x, insets.top + (contentHeight - height) / 2, width, height);
+          }
         }
       }
     });

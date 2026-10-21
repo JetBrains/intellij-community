@@ -17,6 +17,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.configuration.findModuleSdkIfReady
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyConditionalStatementPart
@@ -25,7 +26,6 @@ import com.jetbrains.python.psi.PyForPart
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyStatementList
 import com.jetbrains.python.psi.StringLiteralExpression
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 
 object PyCompletionFeatures {
@@ -91,11 +91,11 @@ object PyCompletionFeatures {
     val containingFile = psiElement.containingFile
     if (psiElement is PsiDirectory) {
       vFile = psiElement.virtualFile
-      sdk = PythonSdkUtil.findPythonSdk(psiElement)
+      sdk = findModuleSdkIfReady(ModuleUtilCore.findModuleForPsiElement(psiElement))
     }
     else if (containingFile != null) {
       vFile = containingFile.virtualFile
-      sdk = PythonSdkUtil.findPythonSdk(containingFile)
+      sdk = findModuleSdkIfReady(ModuleUtilCore.findModuleForPsiElement(containingFile))
     }
     if (vFile != null) {
       val isFromStdLib = PySkeletonUtil.isStdLib(vFile, sdk)

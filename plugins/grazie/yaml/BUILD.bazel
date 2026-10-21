@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.grazie.yaml` start
+content_module_jar(module = ":yaml")
+### auto-generated section `dev intellij.grazie.yaml` end
 
 ### auto-generated section `build intellij.grazie.yaml` start
 jvm_library(
@@ -17,13 +22,10 @@ jvm_library(
         ["main/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/grazie/src:core",
-        "//plugins/yaml/backend",
-        "//json/backend",
         "//platform/util",
         "//plugins/yaml",
         "//platform/core-api:core",
@@ -45,14 +47,11 @@ jvm_library(
         # do not sort,
         ":yaml",
         "//plugins/grazie/src:core_test_lib",
-        "//plugins/yaml/backend:backend_test_lib",
-        "//json/backend:backend_test_lib",
         "//platform/util:util_test_lib",
         "//plugins/yaml:yaml_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/util-ex:util-ex_test_lib",
-        "//platform/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.grazie.yaml` end

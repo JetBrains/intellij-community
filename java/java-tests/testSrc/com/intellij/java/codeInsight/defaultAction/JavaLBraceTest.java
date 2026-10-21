@@ -2,8 +2,12 @@
 package com.intellij.java.codeInsight.defaultAction;
 
 import com.intellij.codeInsight.AbstractBasicJavaLBraceTest;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
 
+@TestApplication
 public class JavaLBraceTest extends AbstractBasicJavaLBraceTest {
+  @Test
   public void testIndentLBrace() { doTest(); } //requires formatting
 
 }

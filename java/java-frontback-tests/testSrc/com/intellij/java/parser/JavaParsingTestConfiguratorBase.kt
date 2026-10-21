@@ -5,10 +5,8 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.java.syntax.JavaSyntaxDefinition
 import com.intellij.java.syntax.element.JavaLanguageLevelProvider
 import com.intellij.lang.ASTNode
-import com.intellij.lang.LanguageASTFactory
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.java.parser.JavaParserUtil
-import com.intellij.lang.java.syntax.JavaElementTypeConverterExtension
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.parser.SyntaxTreeBuilder
@@ -26,7 +24,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.SingleRootFileViewProvider
 import com.intellij.psi.impl.source.PsiJavaFileImpl
 import com.intellij.psi.impl.source.tree.FileElement
-import com.intellij.psi.impl.source.tree.JavaASTFactory
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.testFramework.LightVirtualFile
 
@@ -39,13 +36,7 @@ abstract class JavaParsingTestConfiguratorBase(
 
     ElementTypeConverters.instance.let { elementTypeConverters ->
       testCase.addExplicit(elementTypeConverters, java, JavaTestElementTypeConverterExtension())
-      testCase.addExplicit(elementTypeConverters, java, JavaElementTypeConverterExtension())
       testCase.clearCachesOfLanguageExtension(java, elementTypeConverters)
-    }
-
-    LanguageASTFactory.INSTANCE.let { languageASTFactory ->
-      testCase.addExplicit(languageASTFactory, java, JavaASTFactory())
-      testCase.clearCachesOfLanguageExtension(java, languageASTFactory)
     }
 
     ExtensionPointName<JavaLanguageLevelProvider>("com.intellij.java.syntax.languageLevelProvider").let { ep ->

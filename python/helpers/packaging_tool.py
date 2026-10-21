@@ -21,7 +21,7 @@ def exit(retcode):
 
 
 def usage():
-    sys.stderr.write('Usage: packaging_tool.py <list|list_outdated|install|uninstall|pyvenv>\n')
+    sys.stderr.write('Usage: packaging_tool.py <list|list_outdated|install|install_bundled_wheels|uninstall|pyvenv>\n')
     sys.stderr.flush()
     exit(ERROR_WRONG_USAGE)
 
@@ -49,6 +49,14 @@ def do_list_outdated():
 
 def do_install(pkgs):
     run_pip(['install'] + pkgs)
+
+
+def do_install_bundled_wheels(pip_wheel, wheels):
+    # The wheels are in the helpers directory, next to this script. It is also true on a remote machine,
+    # where the helpers directory is a copy. pip is imported from its wheel, so it works when pip is missing.
+    helpers_dir = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, os.path.join(helpers_dir, pip_wheel))
+    run_pip(['install', '--no-index'] + [os.path.join(helpers_dir, wheel) for wheel in wheels])
 
 
 def do_uninstall(pkgs):
@@ -108,6 +116,11 @@ def main():
 
             pkgs = sys.argv[2:]
             do_install(pkgs)
+
+        elif cmd == 'install_bundled_wheels':
+            if len(sys.argv) < 4:
+                usage()
+            do_install_bundled_wheels(sys.argv[2], sys.argv[3:])
 
         elif cmd == 'uninstall':
             if len(sys.argv) < 2:

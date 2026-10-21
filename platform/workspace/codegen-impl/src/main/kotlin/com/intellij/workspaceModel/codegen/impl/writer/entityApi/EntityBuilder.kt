@@ -17,6 +17,7 @@ import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaName
 import com.intellij.workspaceModel.codegen.impl.writer.getAllProperties
 import com.intellij.workspaceModel.codegen.impl.writer.getJavaBuilderTypeWithGeneric
 import com.intellij.workspaceModel.codegen.impl.writer.getJavaMutableType
+import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdBuilderCode
 
 fun CodeContext.generateBuilderCode(objClass: ObjClass<*>) {
   additionalAnnotations(objClass)
@@ -39,5 +40,6 @@ fun CodeContext.generateBuilderCode(objClass: ObjClass<*>) {
       }
       +"${explicitApiModifier}${override}var ${property.javaName}: $returnType"
     }
+    symbolicIdBuilderCode(objClass)
   }
 }

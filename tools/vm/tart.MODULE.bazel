@@ -6,8 +6,8 @@
 # downloads it.
 #
 # The archive is the GitHub release `tart.tar.gz`, byte-identical, on the Space file mirror. The cache
-# redirector does not serve `github.com/cirruslabs/tart`, and `bazel_downloader.cfg` routes
-# `packages.jetbrains.team/files/` through the redirector.
+# redirector does not serve `github.com/cirruslabs/tart`, and the URL below reaches
+# the Space mirror through the redirector.
 #
 # To bump the pin:
 #   1. Download `tart.tar.gz` of the release and check it against `tart_<version>_checksums.txt`.
@@ -31,5 +31,5 @@ filegroup(
 )
 """,
     sha256 = "d531752c4dad5d4214ac7ff540cefc2647df1fca2338d413d3c01754f54b356b",
-    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/tart/%s/tart.tar.gz" % AIR_TART_VERSION,
+    url = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/tart/%s/tart.tar.gz" % AIR_TART_VERSION,
 )

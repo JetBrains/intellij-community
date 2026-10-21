@@ -3,11 +3,10 @@ package com.intellij.ide.minimap.actions
 
 import com.intellij.ide.minimap.MinimapUsageCollector
 import com.intellij.ide.minimap.settings.MinimapSettings
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
 
-class DisableMinimapAction : AnAction() {
-  override fun isDumbAware(): Boolean = true
+internal class DisableMinimapAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val settings = MinimapSettings.getInstance()
     val currentState = settings.state

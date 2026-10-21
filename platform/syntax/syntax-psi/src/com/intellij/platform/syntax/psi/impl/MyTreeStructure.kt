@@ -12,16 +12,11 @@ import kotlin.math.min
 
 internal class MyTreeStructure(
   private val root: CompositeNode,
-  parentTree: MyTreeStructure?
+  parentTree: MyTreeStructure?,
 ) : FlyweightCapableTreeStructure<LighterASTNode> {
 
-  private val rangePool: LimitedPool<TokenRangeNode> = parentTree?.rangePool ?: LimitedPool<TokenRangeNode>(1000, object : LimitedPool.ObjectFactory<TokenRangeNode> {
-    override fun create(): TokenRangeNode = TokenRangeNode()
-  })
-
-  private val lexemePool: LimitedPool<SingleLexemeNode> = parentTree?.lexemePool ?: LimitedPool<SingleLexemeNode>(1000, object : LimitedPool.ObjectFactory<SingleLexemeNode> {
-    override fun create(): SingleLexemeNode = SingleLexemeNode()
-  })
+  private val rangePool: LimitedPool<TokenRangeNode> = parentTree?.rangePool ?: LimitedPool(1000) { TokenRangeNode() }
+  private val lexemePool: LimitedPool<SingleLexemeNode> = parentTree?.lexemePool ?: LimitedPool(1000) { SingleLexemeNode() }
 
   // used by getChildren
   private var count = 0

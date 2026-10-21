@@ -4,8 +4,6 @@ package com.intellij.terminal
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -68,10 +66,7 @@ fun refreshVfsOnFocusChange(component: Component, coroutineScope: CoroutineScope
 
 /** Hack for a Java code with no coroutine scopes */
 internal fun refreshVfsOnFocusChange(component: Component, parentDisposable: Disposable) {
-  val scope = service<TerminalCoroutineScopeProvider>().coroutineScope.childScope("Terminal VFS refresh on focus change")
+  val scope = platformTerminalApplicationScope().childScope("Terminal VFS refresh on focus change")
   scope.coroutineContext.job.cancelOnDispose(parentDisposable)
   refreshVfsOnFocusChange(component, scope)
 }
-
-@Service(Service.Level.APP)
-private class TerminalCoroutineScopeProvider(val coroutineScope: CoroutineScope)

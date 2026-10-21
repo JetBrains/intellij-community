@@ -4,18 +4,18 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
+import com.intellij.sh.ShTestData
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
 class ShHighlightUsagesInMarkdownTest : BasePlatformTestCase() {
 
-  override fun getTestDataPath(): String = PluginPathManager.getPluginHomePath("sh") + "/core/testData/highlight_usages/"
+  override fun getTestDataPath(): String = ShTestData.getTestDataPath() + "/highlight_usages/"
 
   fun testHighlightUsagesInMarkdownCodeFence() {
     IdentifierHighlighterPassFactory.doWithIdentifierHighlightingEnabled(project) {

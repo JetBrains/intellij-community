@@ -278,6 +278,7 @@ abstract class ComponentManagerImpl(
     )
     else null,
     ordered = false,
+    isKeyClassUnloading = ::isClassUnloading,
   )
 
   private val componentContainer: InstanceContainerImpl = InstanceContainerImpl(
@@ -285,6 +286,7 @@ abstract class ComponentManagerImpl(
     containerName = "${debugString(true)} components",
     dynamicInstanceSupport = null,
     ordered = true,
+    isKeyClassUnloading = ::isClassUnloading,
   )
 
   private val pluginServicesStore: PluginServicesStore = PluginServicesStore()
@@ -1070,6 +1072,8 @@ abstract class ComponentManagerImpl(
     componentContainer.cleanCache()
     // IJPL-157548 If `serviceIfCreated` is used, no dynamic instance is registered,
     // and the fact that there is no instance is kept in the cache by the `keyClass`.
+    // IJPL-258458 This holds only for a lookup made before the plugin scope is cancelled.
+    // After the cancel, `isClassUnloading` stops the cache from taking a missing holder for a key class of the plugin.
     //
     // An alternative approach would be to put `cleanCache` inside `UnregisterHandle`, but it would make the handle non-null.
     // Another more robust approach is to integrate `PluginServicesStore` into the `InstanceContainer`.
@@ -1526,6 +1530,17 @@ private class PluginServicesStore {
     dynamicServices.clear()
     regularServices.clear()
   }
+}
+
+/**
+ * Tells whether the plugin of this class loader unloads.
+ * The dynamic plugin unload cancels the plugin scope before it unregisters the services,
+ * and the class loader derives its state from that scope.
+ */
+internal fun PluginAwareClassLoader.isUnloading(): Boolean = state != PluginAwareClassLoader.ACTIVE
+
+private fun isClassUnloading(aClass: Class<*>): Boolean {
+  return (aClass.classLoader as? PluginAwareClassLoader)?.isUnloading() == true
 }
 
 private fun createPluginExceptionIfNeeded(error: Throwable, pluginId: PluginId): RuntimeException {

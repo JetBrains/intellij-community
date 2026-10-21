@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.learn
 
 import com.intellij.ide.IdeEventQueue
@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionResult
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.diagnostic.logger
@@ -58,7 +59,7 @@ internal class ActionsRecorder(private val project: Project,
 
   // TODO: do we really need a lot of listeners?
   private val actionListeners: MutableList<AnActionListener> = mutableListOf()
-  private val eventDispatchers: MutableList<IdeEventQueue.EventDispatcher> = mutableListOf()
+  private val eventDispatchers: MutableList<IdeEventQueue.NonLockedEventDispatcher> = mutableListOf()
 
   var disposed = false
     private set
@@ -266,10 +267,14 @@ internal class ActionsRecorder(private val project: Project,
   }
 
   private fun addKeyEventListener(onKeyEvent: () -> Unit) {
-    val myEventDispatcher: IdeEventQueue.EventDispatcher = IdeEventQueue.EventDispatcher { e ->
+    val myEventDispatcher: IdeEventQueue.NonLockedEventDispatcher = IdeEventQueue.NonLockedEventDispatcher { e ->
       if (e is KeyEvent ||
           (e as? MouseEvent)?.id == MouseEvent.MOUSE_RELEASED ||
-          (e as? MouseEvent)?.id == MouseEvent.MOUSE_CLICKED) onKeyEvent()
+          (e as? MouseEvent)?.id == MouseEvent.MOUSE_CLICKED) {
+        WriteIntentReadAction.run {
+          onKeyEvent()
+        }
+      }
       false
     }
     eventDispatchers.add(myEventDispatcher)

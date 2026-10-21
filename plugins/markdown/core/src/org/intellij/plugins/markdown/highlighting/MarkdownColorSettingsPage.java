@@ -160,8 +160,6 @@ public class MarkdownColorSettingsPage implements ColorSettingsPage {
       put("markdown.editor.colors.unordered_list", MarkdownHighlighterColors.UNORDERED_LIST);
       put("markdown.editor.colors.ordered_list", MarkdownHighlighterColors.ORDERED_LIST);
       put("markdown.editor.colors.list_item", MarkdownHighlighterColors.LIST_ITEM);
-      put("markdown.editor.colors.html_block", MarkdownHighlighterColors.HTML_BLOCK);
-      put("markdown.editor.colors.inline_html", MarkdownHighlighterColors.INLINE_HTML);
 
       put("markdown.editor.colors.definition_list", MarkdownHighlighterColors.DEFINITION_LIST);
       put("markdown.editor.colors.definition_list_marker", MarkdownHighlighterColors.DEFINITION_LIST_MARKER);

@@ -212,7 +212,7 @@ object ClassOverriddenAtRuntimeProjectDescriptor : DefaultLightProjectDescriptor
       val av1Module = createModule(project, "${FileUtil.getTempDirectory()}/Av1Module.iml")
       ModuleRootModificationUtil.updateModel(av1Module) { model ->
         model.sdk = sdk
-        val src = createSourceRoot(av1Module, AV1_SRC)
+        val src = createSourceRoot(AV1_SRC)
         model.addContentEntry(src).addSourceFolder(src, JavaSourceRootType.SOURCE)
         model.getModuleExtension(com.intellij.openapi.roots.LanguageLevelModuleExtension::class.java).languageLevel = LanguageLevel.JDK_1_8
       }
@@ -229,7 +229,7 @@ object ClassOverriddenAtRuntimeProjectDescriptor : DefaultLightProjectDescriptor
       val av2Module = createModule(project, "${FileUtil.getTempDirectory()}/Av2Module.iml")
       ModuleRootModificationUtil.updateModel(av2Module) { model ->
         model.sdk = sdk
-        val src = createSourceRoot(av2Module, AV2_SRC)
+        val src = createSourceRoot(AV2_SRC)
         model.addContentEntry(src).addSourceFolder(src, JavaSourceRootType.SOURCE)
         model.getModuleExtension(com.intellij.openapi.roots.LanguageLevelModuleExtension::class.java).languageLevel = LanguageLevel.JDK_1_8
       }
@@ -364,7 +364,7 @@ object ClassOverriddenAtRuntimeDeepDescriptor : DefaultLightProjectDescriptor() 
       val av1Module = createModule(project, "${FileUtil.getTempDirectory()}/DeepAv1Module.iml")
       ModuleRootModificationUtil.updateModel(av1Module) { model ->
         model.sdk = sdk
-        val src = createSourceRoot(av1Module, AV1_SRC)
+        val src = createSourceRoot(AV1_SRC)
         model.addContentEntry(src).addSourceFolder(src, JavaSourceRootType.SOURCE)
         model.getModuleExtension(com.intellij.openapi.roots.LanguageLevelModuleExtension::class.java).languageLevel = LanguageLevel.JDK_1_8
       }
@@ -386,7 +386,7 @@ object ClassOverriddenAtRuntimeDeepDescriptor : DefaultLightProjectDescriptor() 
       val av2Module = createModule(project, "${FileUtil.getTempDirectory()}/DeepAv2Module.iml")
       ModuleRootModificationUtil.updateModel(av2Module) { model ->
         model.sdk = sdk
-        val src = createSourceRoot(av2Module, AV2_SRC)
+        val src = createSourceRoot(AV2_SRC)
         model.addContentEntry(src).addSourceFolder(src, JavaSourceRootType.SOURCE)
         model.getModuleExtension(com.intellij.openapi.roots.LanguageLevelModuleExtension::class.java).languageLevel = LanguageLevel.JDK_1_8
       }

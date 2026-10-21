@@ -2,11 +2,10 @@
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class RunToolbarMainRunConfigurationsAction : RunToolbarRunConfigurationsAction() {
+internal class RunToolbarMainRunConfigurationsAction : RunToolbarRunConfigurationsAction() {
 
   override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
     return state == RunToolbarMainSlotState.CONFIGURATION
@@ -17,5 +16,13 @@ class RunToolbarMainRunConfigurationsAction : RunToolbarRunConfigurationsAction(
       val manager = RunToolbarSlotManager.getInstance(it)
       manager.mainSlotData.configuration
     } ?: super.getSelectedConfiguration(e)
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    if (e.place == ActionPlaces.ACTION_SEARCH) {
+      e.presentation.isEnabledAndVisible = false
+    }
   }
 }

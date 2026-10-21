@@ -2,11 +2,11 @@
 package com.intellij.json;
 
 import com.intellij.json.syntax.JsonLazyParsingKt;
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.junit5.TestApplication;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * Runs all {@link JsonParsingTest} tests is non-lazy parsing mode is on ({@code -Djson.lazy.parsing=false}).
@@ -15,16 +15,17 @@ import java.io.IOException;
  * gold file alongside the standard {@code TestName.txt}. If no {@code _nonLazy} variant exists,
  * the standard gold file is used (validating that both modes produce identical trees).
  */
+@TestApplication
 public class JsonNonLazyParsingTest extends JsonParsingTest {
 
   @Override
-  protected void checkResult(@NotNull String targetDataName, @NotNull PsiFile file) throws IOException {
-    String nonLazyGoldFile = myFullDataPath + File.separatorChar + targetDataName + "_nonLazy.txt";
+  protected void checkResult(ParsingTestFixture fixture, String targetDataName, PsiFile file) {
+    String nonLazyGoldFile = fixture.getFullDataPath() + File.separatorChar + targetDataName + "_nonLazy.txt";
     if (new File(nonLazyGoldFile).exists()) {
-      checkResult(myFullDataPath, targetDataName + "_nonLazy", file);
+      fixture.checkResult(fixture.getFullDataPath(), targetDataName + "_nonLazy", file);
     }
     else {
-      super.checkResult(targetDataName, file);
+      super.checkResult(fixture, targetDataName, file);
     }
   }
 

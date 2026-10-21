@@ -3,7 +3,10 @@ package org.jetbrains.kotlin.idea.k2.refactoring.inline
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import com.intellij.usageView.UsageInfo
+import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CallableUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CodeToInlineBuilder
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.fullyExpandCall
@@ -30,6 +33,10 @@ class KotlinInlineFunctionProcessor(
     editor = editor,
     project = project,
 ) {
+    override fun additionalPreprocessUsages(usages: Array<out UsageInfo>, conflicts: MultiMap<PsiElement, String>) {
+        collectSuperCallConflicts(declaration, usages, conflicts)
+    }
+
     override fun createReplacementStrategy(): UsageReplacementStrategy? {
         return createUsageReplacementStrategyForFunction(declaration, editor, fallbackToSuperCall = false)
     }

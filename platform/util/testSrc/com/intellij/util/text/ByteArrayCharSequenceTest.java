@@ -1,11 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 
-public class ByteArrayCharSequenceTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public class ByteArrayCharSequenceTest {
+  @Test
   public void testSubSequenceHashCode() {
     String s = "hello world";
     ByteArrayCharSequence bacs = new ByteArrayCharSequence(s.getBytes(StandardCharsets.UTF_8));

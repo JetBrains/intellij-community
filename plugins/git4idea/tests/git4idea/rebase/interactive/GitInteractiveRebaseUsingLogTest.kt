@@ -3,6 +3,7 @@ package git4idea.rebase.interactive
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.data.VcsLogData
@@ -20,6 +21,7 @@ import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog
 import git4idea.rebase.log.GetEntriesUsingLogResult
 import git4idea.rebase.log.GitInteractiveRebaseEntriesProvider
 import git4idea.test.GitSingleRepoContext
+import git4idea.test.assertLatestHistory
 import git4idea.test.build
 import git4idea.test.file
 import git4idea.test.git
@@ -35,6 +37,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.util.concurrent.atomic.AtomicBoolean
 
 
 @TestApplication
@@ -140,6 +143,28 @@ internal class GitInteractiveRebaseUsingLogTest {
     assertFailureDuringEntriesGeneration(commit0, GetEntriesUsingLogResult.FailureReason.MERGE) {
       "We shouldn't generate entries if merge commit between HEAD and Rebase Base. Generated entries: $it"
     }
+  }
+
+  @Test
+  fun `test interactive rebase dialog respects autosquash`(): Unit = with(context) {
+    git("config rebase.autoSquash true")
+    val commit = file("a").create().addCommit("Commit a").details()
+    file("b").create().addCommit("Commit b")
+    file("fixup").create().addCommit("fixup! Commit b")
+
+    logData.refreshAndWait(repo, true)
+    updateChangeListManager()
+
+    val dialogShown = AtomicBoolean()
+    dialogManager.onDialog(GitInteractiveRebaseDialog::class.java) {
+      dialogShown.set(true)
+      DialogWrapper.OK_EXIT_CODE
+    }
+
+    timeoutRunBlocking { interactivelyRebaseUsingLog(repo, commit, logData) }
+
+    assertThat(dialogShown.get()).isTrue()
+    repo.assertLatestHistory("Commit b", "Commit a")
   }
 
   @Test
@@ -265,7 +290,7 @@ internal class GitInteractiveRebaseUsingLogTest {
     refresh()
     updateChangeListManager()
 
-    val params = GitRebaseParams.editCommits(repo.vcs.version, commit.parents.first().asString(), editorHandler, false)
+    val params = GitRebaseParams.editCommits(repo.vcs.version, getRebaseUpstreamFor(commit), editorHandler, preserveMerges = false)
     runUnderProgress { indicator ->
       GitRebaseUtils.rebase(repo.project, listOf(repo), params, indicator)
     }

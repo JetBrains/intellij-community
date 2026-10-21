@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.unified
 
 import com.intellij.ide.IdeBundle
+import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.ListPluginModel
 import com.intellij.ide.plugins.PluginInfoProvider
@@ -18,6 +19,7 @@ import com.intellij.ide.plugins.newui.PluginDetailsPageComponent
 import com.intellij.ide.plugins.newui.PluginDetailsPageLayout
 import com.intellij.ide.plugins.newui.PluginInstallationCustomization
 import com.intellij.ide.plugins.newui.PluginInstallationState
+import com.intellij.ide.plugins.newui.PluginLogo
 import com.intellij.ide.plugins.newui.PluginNodeModelBuilderFactory
 import com.intellij.ide.plugins.newui.PluginPreparedUpdateState
 import com.intellij.ide.plugins.newui.PluginProgressState
@@ -35,6 +37,7 @@ import com.intellij.ide.plugins.newui.buttons.OptionButton
 import com.intellij.ide.ui.LafManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
@@ -56,6 +59,7 @@ import com.intellij.ui.tabs.impl.JBTabsImpl
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.within
@@ -133,6 +137,45 @@ internal class LegacyPluginRowFactoryTest {
     }
     finally {
       host.dispose(closeSession = false)
+    }
+  }
+
+  @Test
+  fun `product restricted rows suppress loading error text`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
+      try {
+        val pluginId = PluginId.getId("restricted.plugin")
+        val plugin = PluginNodeModelBuilderFactory.createBuilder(pluginId).setName("Restricted Plugin").build()
+        val factory = LegacyPluginRowFactory(host, ListPluginModel(), { _, _ -> }, onSelectionChanged = {})
+        for (restricted in listOf(false, true)) {
+          val input = PluginRowInput(
+            installedPlugin = plugin,
+            installationState = PluginInstallationState(true),
+            errors = listOf(HtmlChunk.text("Loading problem")),
+            updateDescriptor = null,
+            enabled = true,
+            restrictedByProduct = restricted,
+            expectedExplanations = listOf("Light mode is not supported"),
+          )
+          val item = PluginItemState(pluginId, plugin.name, modelHandle = PluginItemModelHandle(plugin), rowInput = input)
+          val section = PluginSectionState(PluginSectionId.Installed, items = listOf(item))
+          val specification = factory.specification(section, item)
+          (factory.createRow(specification.occurrenceId, specification.item, specification.renderKey) as LegacyPluginRow).use { row ->
+            row.renderInput(input)
+
+            assertThat(row.component.isNotFreeInFreeMode()).isEqualTo(restricted)
+            val errors = componentsOfType(row.component, JEditorPane::class.java).filter { it.text.contains("Loading problem") }
+            assertThat(errors).hasSize(if (restricted) 0 else 1)
+            val hints = componentsOfType(row.component, JLabel::class.java).filter { it.icon == AllIcons.General.Note && it.isVisible }
+            assertThat(hints).isEmpty()
+            assertThat(row.component.getExpectedExplanations()).hasSize(if (restricted) 0 else 1)
+          }
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
     }
   }
 
@@ -278,6 +321,100 @@ internal class LegacyPluginRowFactoryTest {
     }
     finally {
       host.dispose(closeSession = false)
+    }
+  }
+
+  @Test
+  fun `product mode exclusions gray the plugin and keep the toggle active on reused rows`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
+      try {
+        val id = PluginId.getId("mode.hint.plugin")
+        val plugin = PluginNodeModelBuilderFactory.createBuilder(id).setName("Mode Hint Plugin").setIsConverted(true).build()
+        val explanations = listOf("Client: Light mode is not supported.", "Host: Backend mode is not supported.")
+        val input = PluginRowInput(plugin, PluginInstallationState(true), emptyList(), null, true, false,
+                                   expectedExplanations = explanations)
+        val item = PluginItemState(id, plugin.name, modelHandle = PluginItemModelHandle(plugin), rowInput = input)
+        val factory = LegacyPluginRowFactory(host, ListPluginModel(), { _, _ -> }, onSelectionChanged = {})
+        for (sectionId in listOf(PluginSectionId.Installed, PluginSectionId.Marketplace)) {
+          val section = PluginSectionState(sectionId, items = listOf(item))
+          factory.createReconciler { _, _ -> }.use { reconciler ->
+            val binding = reconciler.reconcile(listOf(factory.specification(section, item))).single()
+            factory.rowsRendered(listOf(binding))
+            val row = (binding.row as LegacyPluginRow).component
+            val toggle = componentsOfType(row, OnOffButton::class.java).single()
+            val title = componentsOfType(row, JLabel::class.java).single { it.text == plugin.name }
+            val icon = componentsOfType(row, JLabel::class.java).single { it.icon != null }
+            assertThat(toggle.isSelected).isTrue()
+            assertThat(toggle.isEnabled).isTrue()
+            assertThat(title.foreground).isEqualTo(ListPluginComponent.DisabledColor)
+            assertThat(icon.icon).isSameAs(PluginLogo.getIcon(plugin.getDescriptor(), false, false, true))
+            assertThat(toggle.accessibleContext.accessibleDescription).contains(explanations[0], explanations[1])
+            assertThat(row.accessibleContext.accessibleDescription).contains(explanations[0], explanations[1])
+            assertThat(componentsOfType(row, JEditorPane::class.java)).isEmpty()
+            for (width in listOf(360, 900)) {
+              row.setSize(JBUI.scale(width), row.preferredSize.height)
+              row.doLayout()
+              assertThat(title.x + title.width).isLessThanOrEqualTo(toggle.x)
+              assertThat(toggle.x + toggle.width).isLessThanOrEqualTo(row.width)
+            }
+
+            for (next in listOf(listOf("Frontend mode is not supported <here>."), emptyList(), explanations)) {
+              val refreshed = item.copy(rowInput = input.copy(expectedExplanations = next))
+              val refreshedSection = section.copy(items = listOf(refreshed))
+              val refreshedBinding = reconciler.reconcile(listOf(factory.specification(refreshedSection, refreshed))).single()
+              factory.rowsRendered(listOf(refreshedBinding))
+              assertThat(refreshedBinding.row).isSameAs(binding.row)
+              assertThat(componentsOfType(row, OnOffButton::class.java).single()).isSameAs(toggle)
+              assertThat(toggle.isSelected).isTrue()
+              assertThat(toggle.isEnabled).isTrue()
+              assertThat(icon.icon).isSameAs(PluginLogo.getIcon(plugin.getDescriptor(), false, false, next.isNotEmpty()))
+              if (next.isEmpty()) {
+                assertThat(title.foreground).isNotEqualTo(ListPluginComponent.DisabledColor)
+                assertThat(toggle.accessibleContext.accessibleDescription).isNull()
+                assertThat(row.accessibleContext.accessibleDescription).doesNotContain("mode is not supported")
+              }
+              else {
+                assertThat(title.foreground).isEqualTo(ListPluginComponent.DisabledColor)
+                assertThat(toggle.accessibleContext.accessibleDescription).contains(next.first())
+              }
+            }
+          }
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
+    }
+  }
+
+  @Test
+  fun `a product mode exclusion keeps an ordinary side error visible`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this)
+      try {
+        val id = PluginId.getId("mixed.hint.plugin")
+        val plugin = PluginNodeModelBuilderFactory.createBuilder(id).setName("Mixed Hint Plugin").build()
+        val input = PluginRowInput(plugin, PluginInstallationState(true), listOf(HtmlChunk.text("Host: Missing dependency")), null,
+                                   true, false, expectedExplanations = listOf("Client: Light mode is not supported."))
+        val item = PluginItemState(id, plugin.name, modelHandle = PluginItemModelHandle(plugin), rowInput = input)
+        val section = PluginSectionState(PluginSectionId.Installed, items = listOf(item))
+        val factory = LegacyPluginRowFactory(host, ListPluginModel(), { _, _ -> }, onSelectionChanged = {})
+        val specification = factory.specification(section, item)
+        (factory.createRow(specification.occurrenceId, item, specification.renderKey) as LegacyPluginRow).use { row ->
+          row.renderInput(input)
+          val title = componentsOfType(row.component, JLabel::class.java).single { it.text == plugin.name }
+          val icon = componentsOfType(row.component, JLabel::class.java).single { it.icon != null }
+          assertThat(title.foreground).isEqualTo(ListPluginComponent.DisabledColor)
+          assertThat(icon.icon).isSameAs(PluginLogo.getIcon(plugin.getDescriptor(), false, true, true))
+          assertThat(row.component.accessibleContext.accessibleDescription).contains("Client: Light mode is not supported.")
+          val error = componentsOfType(row.component, JEditorPane::class.java).single()
+          assertThat(error.text).contains("Host: Missing dependency").doesNotContain("Light mode")
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
     }
   }
 
@@ -1215,6 +1352,63 @@ internal class LegacyPluginRowFactoryTest {
           assertThat(row.parent).isNotNull()
           assertThat(row.parent.isFocusable).isFalse()
           assertThat(row.getUpdatePluginDescriptor()?.pluginId).isEqualTo(pluginId)
+        }
+      }
+      finally {
+        host.dispose(closeSession = false)
+      }
+    }
+
+  @Test
+  fun `disabled plugin updates appear in rows and details after enabling`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val host = LegacyPluginUiHost(parentScope = this, operationScope = this, unifiedDetailsPageLayout = true)
+      try {
+        val pluginId = PluginId.getId("disabled.update.plugin")
+        val installed = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+          .setName("Disabled Update Plugin")
+          .setVersion("1.0")
+          .setIsConverted(true)
+          .build()
+        val update = PluginNodeModelBuilderFactory.createBuilder(pluginId)
+          .setName("Disabled Update Plugin")
+          .setVersion("2.0")
+          .setIsConverted(true)
+          .build()
+        val listModel = ListPluginModel().apply {
+          setPluginInstallationState(pluginId, PluginInstallationState(true))
+        }
+        val input = PluginRowInput(
+          installedPlugin = installed,
+          installationState = PluginInstallationState(true),
+          errors = emptyList(),
+          updateDescriptor = update,
+          enabled = false,
+          restrictedByProduct = false,
+        )
+        val item = PluginItemState(pluginId, installed.name, modelHandle = PluginItemModelHandle(installed), rowInput = input)
+        val listener = LinkListener<Any> { _, _ -> }
+        val factory = LegacyPluginRowFactory(host, listModel, listener, onSelectionChanged = {})
+        val presenter = LegacyPluginDetailsPresenter(host, listener)
+        UnifiedPluginsPageView({}, {}, { _, _ -> }, rowFactory = factory, detailsPresenter = presenter).use { view ->
+          val controller = UnifiedPluginsPageController()
+          for ((revision, enabled) in listOf(false, true, false, true).withIndex()) {
+            controller.updateSection(PluginSectionState(
+              PluginSectionId.Installed,
+              items = listOf(item.copy(contentRevision = revision.toLong(), rowInput = input.copy(enabled = enabled))),
+            ))
+            view.render(controller.state.value)
+            val row = componentsOfType(view.component, ListPluginComponent::class.java).single()
+            assertThat(row.myUpdateButton?.isVisible == true).isEqualTo(enabled)
+            assertThat(row.getUpdateActionDescriptors() != null).isEqualTo(enabled)
+            waitUntilAssertSucceeds {
+              val details = componentsOfType(presenter.component, PluginDetailsPageComponent::class.java).single { it.isVisible }
+              assertThat(componentsOfType(details, JLabel::class.java).map(JLabel::getText))
+                .anyMatch { it?.startsWith("1.0") == true }
+              val updateButton = componentsOfType(details, UpdateButton::class.java).single()
+              assertThat(updateButton.isVisible).isEqualTo(enabled)
+            }
+          }
         }
       }
       finally {

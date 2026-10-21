@@ -1,0 +1,131 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.editor.ex.experimental
+
+import com.intellij.openapi.editor.ex.DocumentModState
+import com.intellij.openapi.editor.ex.DocumentOp
+import com.intellij.openapi.editor.ex.DocumentSnapshot
+import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.impl.experimental.DocumentBranchImpl
+
+/**
+ * An immutable document that records its edit history in an Eg-walker [EventGraph]
+ * (arXiv 2409.14252). Two divergent copies of one document can then [merge] without losing either
+ * side.
+ *
+ * The branch is a value: [applyOp], [fork], and [merge] return a new branch. [text] gives the
+ * document at the branch's version. A merge costs the size of the change and of the concurrent
+ * region, not the size of the history.
+ *
+ * Contract:
+ * - Branches that edit concurrently must edit under different [Agent]s. [fork] sets the agent.
+ *   Two concurrent edits under one agent can make a merge throw [EventIdClashException], or build
+ *   a wrong text.
+ * - [merge] takes only branches that descend from one [createBranch] value.
+ * - `a.merge(b)` succeeds exactly when `b.merge(a)` succeeds, and then both give the same text and
+ *   the same version. A merge with an ancestor changes nothing. A merge with a descendant
+ *   fast-forwards. A repeated merge changes nothing.
+ * - After [trimmedTo], two branches merge only when the base version of each one is a critical
+ *   version of the other. The other branch must hold it, and it must hold no event that is
+ *   concurrent with it. Otherwise both directions throw [TrimmedHistoryException], even for a merge
+ *   with an ancestor.
+ */
+interface DocumentBranch : DocumentSnapshot {
+  /**
+   * The document at this branch's version.
+   */
+  override fun text(): DocumentText
+
+  /**
+   * The modification state of [text]. It belongs to this branch, and a merge never takes the one of
+   * the other branch. Only a [DocumentOp.ModStamp] changes the stamp.
+   */
+  override fun modState(): DocumentModState
+
+  /**
+   * The version of [text]. Under the agent contract, it stays valid in every branch that merges
+   * this one, and a replay of it there returns [text]. A trim of that branch past it drops it.
+   */
+  fun version(): Version
+
+  /**
+   * A branch with [op] applied at this branch's version: the same edit as [DocumentText.applyOp].
+   *
+   * An op with a move offset is half of a text move. The branch ignores a move offset that does not
+   * name the moved text, or that overlaps the text that the op changes.
+   *
+   * Only a text op records an event.
+   */
+  override fun applyOp(op: DocumentOp): DocumentBranch
+
+  /**
+   * The identity this branch edits under.
+   */
+  fun agent(): Agent
+
+  /**
+   * The event graph that records this branch's history.
+   */
+  fun graph(): EventGraph
+
+  /**
+   * A branch with the same text, mod state and history that edits under [agent].
+   */
+  fun fork(agent: Agent): DocumentBranch
+
+  /**
+   * A branch that contains the histories of both this branch and [other].
+   * Concurrent edits are resolved deterministically; no edit is dropped.
+   * The result keeps this branch's [agent].
+   *
+   * Throws [LineageMismatchException] when [other] does not descend from the [createBranch] value of
+   * this branch. Throws [TrimmedHistoryException] when the merge needs events that [trimmedTo]
+   * dropped. Throws [EventIdClashException] when the two branches broke the agent contract. It
+   * does not find every break. A merge that throws changes nothing.
+   *
+   * The result is the branch of [mergeWithOps] for the same two branches.
+   */
+  fun merge(other: DocumentBranch): DocumentBranch
+
+  /**
+   * The same merge as [merge], plus the ops that turn the [text] of this branch into the merged
+   * text. An editor needs them to apply a merge to its document. See [DocMerge] for their order
+   * and their cost.
+   */
+  fun mergeWithOps(other: DocumentBranch): DocMerge
+
+  /**
+   * A branch with the same text, mod state, agent and version, whose graph drops every event at or
+   * below [safepoint]. [safepoint] becomes the base version of the graph. A replay of a version below
+   * it, and a merge that needs a dropped event, then throw [TrimmedHistoryException].
+   *
+   * [safepoint] must be safe. Every live branch of this lineage must hold it, and no live branch may
+   * hold an event that is concurrent with it. A merge with a branch that breaks the rule throws
+   * [TrimmedHistoryException] in both directions, so it never builds a wrong text.
+   *
+   * Today [safepoint] must be [version] or the base version. A trim to the base version returns
+   * this branch. A trim costs one entry per agent and per head, not the size of the history.
+   */
+  fun trimmedTo(safepoint: Version): DocumentBranch
+
+  /**
+   * A branch with the same text, mod state, agent and history. It is never `===` to this branch.
+   * Edit only one of the two, because they share the agent.
+   */
+  override fun newInstance(): DocumentBranch
+
+  /**
+   * A list of the line ranges of [text], for diagnostics only.
+   */
+  override fun dumpState(): String
+
+  companion object {
+    /**
+     * A new branch with the text [chars] that edits under [agent]. It has no events yet: its
+     * [version] is [Version.root], and the replay of that version returns [chars].
+     */
+    @JvmStatic
+    fun createBranch(chars: CharSequence, agent: Agent): DocumentBranch {
+      return DocumentBranchImpl.create(chars, agent)
+    }
+  }
+}

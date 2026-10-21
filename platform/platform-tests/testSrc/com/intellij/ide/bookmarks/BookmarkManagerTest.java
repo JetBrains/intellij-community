@@ -10,29 +10,41 @@ import com.intellij.ide.bookmark.LineBookmark;
 import com.intellij.ide.bookmark.providers.InvalidBookmark;
 import com.intellij.ide.bookmark.providers.LineBookmarkImpl;
 import com.intellij.ide.bookmark.providers.LineBookmarkProvider;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.CaretState;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
-import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.EditorModelFixture;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentListener;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,7 +56,20 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class BookmarkManagerTest extends AbstractEditorTest {
+import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
+@TestApplication
+public class BookmarkManagerTest {
   private static final int DEFAULT_SWITCH_CYCLES = 2;
   
   private static final String CLASS_HEADER = """
@@ -65,22 +90,60 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     """;
   
   private static final String CLASS_FOOTER = "}";
-  
-  @Override
-  protected void tearDown() throws Exception {
-    try {
+
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
+
+  private EditorModelFixture myFixture;
+  private Editor myEditor;
+  private VirtualFile myVFile;
+
+  @BeforeEach
+  void setUp() {
+    myFixture = editorFixture.get();
+  }
+
+  @AfterEach
+  void tearDown() {
+    EdtTestUtil.runInEdtAndWait(() -> {
       for (Bookmark bookmark : getManager().getBookmarks()) {
         getManager().remove(bookmark);
       }
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+    });
   }
 
+  private Editor getEditor() {
+    return myEditor != null ? myEditor : myFixture.getEditor();
+  }
+
+  private void setEditor(@NotNull Editor editor) {
+    myEditor = editor;
+  }
+
+  private VirtualFile getVFile() {
+    return myVFile != null ? myVFile : myFixture.getFile().getVirtualFile();
+  }
+
+  private void setVFile(@NotNull VirtualFile virtualFile) {
+    myVFile = virtualFile;
+  }
+
+  private VirtualFile getSourceRoot() throws IOException {
+    return myFixture.getFixture().getTempDirFixture().findOrCreateDir("");
+  }
+
+  private Editor createEditor(@NotNull VirtualFile file) {
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+    Project project = myFixture.getProject();
+    Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, 0), false);
+    assertNotNull(editor);
+    ((EditorImpl)editor).setCaretActive();
+    return editor;
+  }
+
+  
   /*TODO:SAM
   public void testLoadState() {
     BookmarkManager manager = new BookmarkManager(getProject());
@@ -99,251 +162,270 @@ public class BookmarkManagerTest extends AbstractEditorTest {
   }
   */
 
+  @Test
   public void testWholeTextReplace() {
-    @Language("JAVA")
-    @NonNls String text =
-      """
-        public class Test {
-            public void test() {
-                int i = 1;
-            }
-        }""";
-    init(text, PlainTextFileType.INSTANCE);
+    myFixture.runTest(() -> {
+      @Language("JAVA")
+      @NonNls String text =
+        """
+          public class Test {
+              public void test() {
+                  int i = 1;
+              }
+          }""";
+      myFixture.init(text, PlainTextFileType.INSTANCE);
 
-    addBookmark(2);
-    List<Bookmark> bookmarksBefore = getManager().getBookmarks();
-    assertEquals(1, bookmarksBefore.size());
+      addBookmark(2);
+      List<Bookmark> bookmarksBefore = getManager().getBookmarks();
+      assertEquals(1, bookmarksBefore.size());
 
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> getEditor().getDocument().setText(text));
+      WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> getEditor().getDocument().setText(text));
 
-    List<Bookmark> bookmarksAfter = getManager().getBookmarks();
-    assertEquals(1, bookmarksAfter.size());
-    assertSame(bookmarksBefore.get(0), bookmarksAfter.get(0));
-    for (Bookmark bookmark : bookmarksAfter) {
-      checkBookmarkNavigation(bookmark);
-    }
+      List<Bookmark> bookmarksAfter = getManager().getBookmarks();
+      assertEquals(1, bookmarksAfter.size());
+      assertSame(bookmarksBefore.getFirst(), bookmarksAfter.getFirst());
+      for (Bookmark bookmark : bookmarksAfter) {
+        checkBookmarkNavigation(bookmark);
+      }
+    });
   }
 
+  @Test
   public void testBookmarkLineRemove() {
-    @Language("JAVA")
-    @NonNls String text =
-      """
-        public class Test {
-            public void test() {
-                int i = 1;
-            }
-        }""";
-    init(text, PlainTextFileType.INSTANCE);
+    myFixture.runTest(() -> {
+      @Language("JAVA")
+      @NonNls String text =
+        """
+          public class Test {
+              public void test() {
+                  int i = 1;
+              }
+          }""";
+      myFixture.init(text, PlainTextFileType.INSTANCE);
 
-    addBookmark(2);
-    Document document = getEditor().getDocument();
-    getEditor().getSelectionModel().setSelection(document.getLineStartOffset(2) - 1, document.getLineEndOffset(2));
-    delete();
-    List<Bookmark> after = getManager().getBookmarks();
-    assertEquals(1, after.size());
-    assertInstanceOf(after.getFirst(), InvalidBookmark.class);
-    assertEquals("Memorial must carry the deleted line's text",
-                 "        int i = 1;", after.getFirst().getAttributes().get("lineText"));
+      addBookmark(2);
+      Document document = getEditor().getDocument();
+      getEditor().getSelectionModel().setSelection(document.getLineStartOffset(2) - 1, document.getLineEndOffset(2));
+      myFixture.delete();
+      List<Bookmark> after = getManager().getBookmarks();
+      assertEquals(1, after.size());
+      assertInstanceOf(InvalidBookmark.class, after.getFirst());
+      assertEquals("        int i = 1;", after.getFirst().getAttributes().get("lineText"), "Memorial must carry the deleted line's text");
+    });
   }
 
+  @Test
   public void testBookmarkSurvivesLineDeleteAndContentRestore() {
-    @NonNls String initial = "line 0\nline 1\noriginal line 2\nline 3\n";
-    init(initial, PlainTextFileType.INSTANCE);
-    Document document = getEditor().getDocument();
+    myFixture.runTest(() -> {
+      @NonNls String initial = "line 0\nline 1\noriginal line 2\nline 3\n";
+      myFixture.init(initial, PlainTextFileType.INSTANCE);
+      Document document = getEditor().getDocument();
 
-    addBookmark(2);
-    assertEquals(1, getManager().getBookmarks().size());
+      addBookmark(2);
+      assertEquals(1, getManager().getBookmarks().size());
 
-    getEditor().getSelectionModel().setSelection(document.getLineStartOffset(2) - 1, document.getLineEndOffset(2));
-    delete();
-    List<Bookmark> afterDelete = getManager().getBookmarks();
-    assertEquals(1, afterDelete.size());
-    assertInstanceOf(afterDelete.getFirst(), InvalidBookmark.class);
+      getEditor().getSelectionModel().setSelection(document.getLineStartOffset(2) - 1, document.getLineEndOffset(2));
+      myFixture.delete();
+      List<Bookmark> afterDelete = getManager().getBookmarks();
+      assertEquals(1, afterDelete.size());
+      assertInstanceOf(InvalidBookmark.class, afterDelete.getFirst());
 
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> document.setText(initial));
+      WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> document.setText(initial));
 
-    List<Bookmark> afterRestore = getManager().getBookmarks();
-    assertEquals(1, afterRestore.size());
-    assertInstanceOf(afterRestore.getFirst(), LineBookmark.class);
-    assertEquals("original line 2", afterRestore.getFirst().getAttributes().get("lineText"));
-    assertEquals(2, ((LineBookmark)afterRestore.getFirst()).getLine());
+      List<Bookmark> afterRestore = getManager().getBookmarks();
+      assertEquals(1, afterRestore.size());
+      assertInstanceOf(LineBookmark.class, afterRestore.getFirst());
+      assertEquals("original line 2", afterRestore.getFirst().getAttributes().get("lineText"));
+      assertEquals(2, ((LineBookmark)afterRestore.getFirst()).getLine());
+    });
   }
 
+  @Test
   public void testWholeTextReplaceInsideBulkUpdateStillReanchorsByLineText() {
-    @NonNls String before = "line 0\nline 1\nbookmarked\nline 3\n";
-    @NonNls String after = "inserted\nline 0\nline 1\nbookmarked\nline 3\n";
-    init(before, PlainTextFileType.INSTANCE);
-    Document document = getEditor().getDocument();
+    myFixture.runTest(() -> {
+      @NonNls String before = "line 0\nline 1\nbookmarked\nline 3\n";
+      @NonNls String after = "inserted\nline 0\nline 1\nbookmarked\nline 3\n";
+      myFixture.init(before, PlainTextFileType.INSTANCE);
+      Document document = getEditor().getDocument();
 
-    addBookmark(2);
+      addBookmark(2);
 
-    WriteCommandAction.writeCommandAction(getProject()).run(
-      () -> DocumentUtil.executeInBulk(document, () -> document.setText(after)));
+      WriteCommandAction.writeCommandAction(myFixture.getProject()).run(
+        () -> DocumentUtil.executeInBulk(document, () -> document.setText(after)));
 
-    List<Bookmark> result = getManager().getBookmarks();
-    assertEquals("the bookmark must survive the replacement, got: " + result, 1, result.size());
-    assertInstanceOf(result.getFirst(), LineBookmark.class);
-    assertEquals(3, ((LineBookmark)result.getFirst()).getLine());
-    assertEquals("bookmarked", result.getFirst().getAttributes().get("lineText"));
+      List<Bookmark> result = getManager().getBookmarks();
+      assertEquals(1, result.size(), "the bookmark must survive the replacement, got: " + result);
+      assertInstanceOf(LineBookmark.class, result.getFirst());
+      assertEquals(3, ((LineBookmark)result.getFirst()).getLine());
+      assertEquals("bookmarked", result.getFirst().getAttributes().get("lineText"));
+    });
   }
 
+  @Test
   public void testBookmarkSurvivesBulkEditOnItsLine() {
-    @NonNls String text = "line 0\nline 1\noriginal\nline 3\n";
-    init(text, PlainTextFileType.INSTANCE);
-    Document document = getEditor().getDocument();
+    myFixture.runTest(() -> {
+      @NonNls String text = "line 0\nline 1\noriginal\nline 3\n";
+      myFixture.init(text, PlainTextFileType.INSTANCE);
+      Document document = getEditor().getDocument();
 
-    addBookmark(2);
-    Bookmark bookmark = getManager().getBookmarks().getFirst();
-    getManager().setType(bookmark, BookmarkType.DIGIT_4);
+      addBookmark(2);
+      Bookmark bookmark = getManager().getBookmarks().getFirst();
+      getManager().setType(bookmark, BookmarkType.DIGIT_4);
 
-    int start = document.getLineStartOffset(2);
-    int end = document.getLineEndOffset(2);
-    WriteCommandAction.writeCommandAction(getProject()).run(
-      () -> DocumentUtil.executeInBulk(document, () -> document.replaceString(start, end, "renamed")));
+      int start = document.getLineStartOffset(2);
+      int end = document.getLineEndOffset(2);
+      WriteCommandAction.writeCommandAction(myFixture.getProject()).run(
+        () -> DocumentUtil.executeInBulk(document, () -> document.replaceString(start, end, "renamed")));
 
-    List<Bookmark> after = getManager().getBookmarks();
-    assertEquals("bulk edit must not drop the bookmark, got: " + after, 1, after.size());
-    assertInstanceOf(after.getFirst(), LineBookmark.class);
-    assertEquals(2, ((LineBookmark)after.getFirst()).getLine());
-    assertEquals(BookmarkType.DIGIT_4, getManager().getType(after.getFirst()));
+      List<Bookmark> after = getManager().getBookmarks();
+      assertEquals(1, after.size(), "bulk edit must not drop the bookmark, got: " + after);
+      assertInstanceOf(LineBookmark.class, after.getFirst());
+      assertEquals(2, ((LineBookmark)after.getFirst()).getLine());
+      assertEquals(BookmarkType.DIGIT_4, getManager().getType(after.getFirst()));
+    });
   }
 
+  @Test
   public void testBookmarkFollowsLineShiftDoneInsideBulkUpdate() {
-    @NonNls String text = "line 0\nline 1\nline 2\noriginal\nline 4\n";
-    init(text, PlainTextFileType.INSTANCE);
-    Document document = getEditor().getDocument();
+    myFixture.runTest(() -> {
+      @NonNls String text = "line 0\nline 1\nline 2\noriginal\nline 4\n";
+      myFixture.init(text, PlainTextFileType.INSTANCE);
+      Document document = getEditor().getDocument();
 
-    addBookmark(3);
+      addBookmark(3);
 
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> DocumentUtil.executeInBulk(document, () -> {
-      document.replaceString(document.getLineStartOffset(3), document.getLineEndOffset(3), "renamed");
-      document.deleteString(document.getLineStartOffset(1), document.getLineStartOffset(2));
-    }));
+      WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> DocumentUtil.executeInBulk(document, () -> {
+        document.replaceString(document.getLineStartOffset(3), document.getLineEndOffset(3), "renamed");
+        document.deleteString(document.getLineStartOffset(1), document.getLineStartOffset(2));
+      }));
 
-    List<Bookmark> after = getManager().getBookmarks();
-    assertEquals("bulk edit must not drop the bookmark, got: " + after, 1, after.size());
-    assertInstanceOf(after.getFirst(), LineBookmark.class);
-    assertEquals(2, ((LineBookmark)after.getFirst()).getLine());
+      List<Bookmark> after = getManager().getBookmarks();
+      assertEquals(1, after.size(), "bulk edit must not drop the bookmark, got: " + after);
+      assertInstanceOf(LineBookmark.class, after.getFirst());
+      assertEquals(2, ((LineBookmark)after.getFirst()).getLine());
+    });
   }
 
+  @Test
   public void testRestoredLineTextMergesTheMemorialBackIntoTheBookmark() {
-    @NonNls String text = "line 0\nline 1\noriginal\nline 3\n";
-    init(text, PlainTextFileType.INSTANCE);
-    Document document = getEditor().getDocument();
+    myFixture.runTest(() -> {
+      @NonNls String text = "line 0\nline 1\noriginal\nline 3\n";
+      myFixture.init(text, PlainTextFileType.INSTANCE);
+      Document document = getEditor().getDocument();
 
-    addBookmark(2);
+      addBookmark(2);
 
-    bulkEditLineTo(document, 2, "renamed");
-    PlatformTestUtil.waitWithEventsDispatching(
-      "the memorial did not appear after the first refactoring",
-      () -> getManager().getBookmarks().stream().anyMatch(InvalidBookmark.class::isInstance),
-      15);
-    assertEquals("expected the live bookmark and its memorial, got: " + getManager().getBookmarks(),
-                 2, getManager().getBookmarks().size());
+      bulkEditLineTo(document, 2, "renamed");
+      PlatformTestUtil.waitWithEventsDispatching(
+        "the memorial did not appear after the first refactoring",
+        () -> ContainerUtil.exists(getManager().getBookmarks(), InvalidBookmark.class::isInstance),
+        15);
+      assertEquals(2, getManager().getBookmarks().size(), "expected the live bookmark and its memorial, got: " + getManager().getBookmarks());
 
-    bulkEditLineTo(document, 2, "original");
-    PlatformTestUtil.waitWithEventsDispatching(
-      "the memorial was not merged back into the live bookmark",
-      () -> {
-        List<Bookmark> bookmarks = getManager().getBookmarks();
-        return bookmarks.size() == 1 && "original".equals(bookmarks.getFirst().getAttributes().get("lineText"));
-      },
-      15);
+      bulkEditLineTo(document, 2, "original");
+      PlatformTestUtil.waitWithEventsDispatching(
+        "the memorial was not merged back into the live bookmark",
+        () -> {
+          List<Bookmark> bookmarks = getManager().getBookmarks();
+          return bookmarks.size() == 1 && "original".equals(bookmarks.getFirst().getAttributes().get("lineText"));
+        },
+        15);
 
-    List<Bookmark> after = getManager().getBookmarks();
-    assertInstanceOf(after.getFirst(), LineBookmark.class);
-    assertEquals(2, ((LineBookmark)after.getFirst()).getLine());
-    assertEquals("original", after.getFirst().getAttributes().get("lineText"));
+      List<Bookmark> after = getManager().getBookmarks();
+      assertInstanceOf(LineBookmark.class, after.getFirst());
+      assertEquals(2, ((LineBookmark)after.getFirst()).getLine());
+      assertEquals("original", after.getFirst().getAttributes().get("lineText"));
+    });
   }
 
   private void bulkEditLineTo(Document document, int line, @NonNls String newText) {
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> DocumentUtil.executeInBulk(
+    WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> DocumentUtil.executeInBulk(
       document, () -> document.replaceString(document.getLineStartOffset(line), document.getLineEndOffset(line), newText)));
   }
 
+  @Test
   public void testFirstEditLeavesOneMemorialFurtherEditsAreSilent() {
-    @NonNls String text = "line 0\nline 1\noriginal\nline 3\n";
-    init(text, PlainTextFileType.INSTANCE);
-    Document document = getEditor().getDocument();
-    String originalLineText = LineBookmarkProvider.Util.readLineText(document, 2);
-    assertNotNull(originalLineText);
+    myFixture.runTest(() -> {
+      @NonNls String text = "line 0\nline 1\noriginal\nline 3\n";
+      myFixture.init(text, PlainTextFileType.INSTANCE);
+      Document document = getEditor().getDocument();
+      String originalLineText = LineBookmarkProvider.Util.readLineText(document, 2);
+      assertNotNull(originalLineText);
 
-    addBookmark(2);
-    assertEquals(1, getManager().getBookmarks().size());
+      addBookmark(2);
+      assertEquals(1, getManager().getBookmarks().size());
 
-    editLineTo(document, 2, "first edit");
-    PlatformTestUtil.waitWithEventsDispatching(
-      "first memorial did not appear",
-      () -> getManager().getBookmarks().stream().anyMatch(InvalidBookmark.class::isInstance),
-      15);
-    assertEquals("First edit should produce exactly one memorial",
-                 1, getManager().getBookmarks().stream().filter(InvalidBookmark.class::isInstance).count());
-    String memorialText = getManager().getBookmarks().stream()
-      .filter(InvalidBookmark.class::isInstance).findFirst().orElseThrow()
-      .getAttributes().get("lineText");
-    assertEquals(originalLineText, memorialText);
+      editLineTo(document, 2, "first edit");
+      PlatformTestUtil.waitWithEventsDispatching(
+        "first memorial did not appear",
+        () -> ContainerUtil.exists(getManager().getBookmarks(), InvalidBookmark.class::isInstance),
+        15);
+      assertEquals(1, getManager().getBookmarks().stream().filter(InvalidBookmark.class::isInstance).count(), "First edit should produce exactly one memorial");
+      String memorialText = getManager().getBookmarks().stream()
+        .filter(InvalidBookmark.class::isInstance).findFirst().orElseThrow()
+        .getAttributes().get("lineText");
+      assertEquals(originalLineText, memorialText);
 
-    editLineTo(document, 2, "second edit");
-    PlatformTestUtil.waitWithEventsDispatching(
-      "live bookmark text did not pick up the second edit",
-      () -> getManager().getBookmarks().stream()
-        .filter(LineBookmark.class::isInstance)
-        .anyMatch(b -> "second edit".equals(b.getAttributes().get("lineText"))),
-      15);
-    assertEquals("Second in-branch edit must NOT add a new memorial",
-                 1, getManager().getBookmarks().stream().filter(InvalidBookmark.class::isInstance).count());
+      editLineTo(document, 2, "second edit");
+      PlatformTestUtil.waitWithEventsDispatching(
+        "live bookmark text did not pick up the second edit",
+        () -> getManager().getBookmarks().stream()
+          .filter(LineBookmark.class::isInstance)
+          .anyMatch(b -> "second edit".equals(b.getAttributes().get("lineText"))),
+        15);
+      assertEquals(1, getManager().getBookmarks().stream().filter(InvalidBookmark.class::isInstance).count(), "Second in-branch edit must NOT add a new memorial");
 
-    editLineTo(document, 2, "third edit");
-    PlatformTestUtil.waitWithEventsDispatching(
-      "live bookmark text did not pick up the third edit",
-      () -> getManager().getBookmarks().stream()
-        .filter(LineBookmark.class::isInstance)
-        .anyMatch(b -> "third edit".equals(b.getAttributes().get("lineText"))),
-      15);
-    assertEquals("Third in-branch edit must NOT add a new memorial",
-                 1, getManager().getBookmarks().stream().filter(InvalidBookmark.class::isInstance).count());
+      editLineTo(document, 2, "third edit");
+      PlatformTestUtil.waitWithEventsDispatching(
+        "live bookmark text did not pick up the third edit",
+        () -> getManager().getBookmarks().stream()
+          .filter(LineBookmark.class::isInstance)
+          .anyMatch(b -> "third edit".equals(b.getAttributes().get("lineText"))),
+        15);
+      assertEquals(1, getManager().getBookmarks().stream().filter(InvalidBookmark.class::isInstance).count(), "Third in-branch edit must NOT add a new memorial");
+    });
   }
 
+  @Test
   public void testMemorialFlagResetsAcrossBranches() {
-    @NonNls String branch1Initial = "line 0\nline 1\nA\nline 3\n";
-    init(branch1Initial, PlainTextFileType.INSTANCE);
-    Document document = getEditor().getDocument();
+    myFixture.runTest(() -> {
+      @NonNls String branch1Initial = "line 0\nline 1\nA\nline 3\n";
+      myFixture.init(branch1Initial, PlainTextFileType.INSTANCE);
+      Document document = getEditor().getDocument();
 
-    addBookmark(2);
-    editLineTo(document, 2, "B");
-    PlatformTestUtil.waitWithEventsDispatching(
-      "memorial 'A' did not appear after branch-1 edit",
-      () -> memorialLineTexts().contains("A"),
-      15);
+      addBookmark(2);
+      editLineTo(document, 2, "B");
+      PlatformTestUtil.waitWithEventsDispatching(
+        "memorial 'A' did not appear after branch-1 edit",
+        () -> memorialLineTexts().contains("A"),
+        15);
 
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> document.setText(branch1Initial));
-    PlatformTestUtil.waitWithEventsDispatching(
-      "live bookmark did not resurrect to 'A' after whole-text-replace",
-      () -> getManager().getBookmarks().stream()
-        .filter(LineBookmark.class::isInstance)
-        .anyMatch(b -> "A".equals(b.getAttributes().get("lineText"))),
-      15);
+      WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> document.setText(branch1Initial));
+      PlatformTestUtil.waitWithEventsDispatching(
+        "live bookmark did not resurrect to 'A' after whole-text-replace",
+        () -> getManager().getBookmarks().stream()
+          .filter(LineBookmark.class::isInstance)
+          .anyMatch(b -> "A".equals(b.getAttributes().get("lineText"))),
+        15);
 
-    editLineTo(document, 2, "C");
-    PlatformTestUtil.waitWithEventsDispatching(
-      "branch-2 edit memorial 'A' did not appear",
-      () -> memorialLineTexts().contains("A") && memorialLineTexts().contains("B"),
-      15);
-    Set<String> memorials = memorialLineTexts();
-    assertTrue("Memorial set must contain branch-1 demoted live 'B', got: " + memorials,
-               memorials.contains("B"));
-    assertTrue("Memorial set must contain the branch-2 pre-edit text 'A', got: " + memorials,
-               memorials.contains("A"));
-    assertEquals("Live bookmark should now carry the branch-2 edit text 'C', got: " + getManager().getBookmarks(),
-                 "C", getManager().getBookmarks().stream()
-                   .filter(LineBookmark.class::isInstance).findFirst().orElseThrow()
-                   .getAttributes().get("lineText"));
+      editLineTo(document, 2, "C");
+      PlatformTestUtil.waitWithEventsDispatching(
+        "branch-2 edit memorial 'A' did not appear",
+        () -> memorialLineTexts().contains("A") && memorialLineTexts().contains("B"),
+        15);
+      Set<String> memorials = memorialLineTexts();
+      assertTrue(memorials.contains("B"), "Memorial set must contain branch-1 demoted live 'B', got: " + memorials);
+      assertTrue(memorials.contains("A"), "Memorial set must contain the branch-2 pre-edit text 'A', got: " + memorials);
+      assertEquals("C", getManager().getBookmarks().stream()
+                     .filter(LineBookmark.class::isInstance).findFirst().orElseThrow()
+                     .getAttributes().get("lineText"), "Live bookmark should now carry the branch-2 edit text 'C', got: " + getManager().getBookmarks());
+    });
   }
 
   private void editLineTo(Document document, int line, @NonNls String newText) {
     int start = document.getLineStartOffset(line);
     int end = document.getLineEndOffset(line);
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> document.replaceString(start, end, newText));
+    WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> document.replaceString(start, end, newText));
   }
 
   private Set<String> memorialLineTexts() {
@@ -353,157 +435,164 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       .collect(Collectors.toSet());
   }
 
+  @Test
   public void testTwoBookmarksOnSameLine1() {
-    @Language("JAVA")
-    @NonNls String text =
-      """
-        public class Test {
-            public void test() {
-                int i = 1;
-                int j = 1;
-            }
-        }""";
-    init(text, PlainTextFileType.INSTANCE);
+    myFixture.runTest(() -> {
+      @Language("JAVA")
+      @NonNls String text =
+        """
+          public class Test {
+              public void test() {
+                  int i = 1;
+                  int j = 1;
+              }
+          }""";
+      myFixture.init(text, PlainTextFileType.INSTANCE);
 
-    addBookmark(2);
-    addBookmark(3);
-    List<Bookmark> bookmarksBefore = getManager().getBookmarks();
-    assertEquals(2, bookmarksBefore.size());
+      addBookmark(2);
+      addBookmark(3);
+      List<Bookmark> bookmarksBefore = getManager().getBookmarks();
+      assertEquals(2, bookmarksBefore.size());
 
-    getEditor().getCaretModel().setCaretsAndSelections(
-      Collections.singletonList(new CaretState(getEditor().visualToLogicalPosition(new VisualPosition(3, 0)), null, null)));
-    backspace();
+      getEditor().getCaretModel().setCaretsAndSelections(
+        Collections.singletonList(new CaretState(getEditor().visualToLogicalPosition(new VisualPosition(3, 0)), null, null)));
+      myFixture.backspace();
 
-    List<Bookmark> bookmarksAfter = getManager().getBookmarks();
-    assertEquals(1, bookmarksAfter.size());
-    for (Bookmark bookmark : bookmarksAfter) {
-      checkBookmarkNavigation(bookmark);
-    }
+      List<Bookmark> bookmarksAfter = getManager().getBookmarks();
+      assertEquals(1, bookmarksAfter.size());
+      for (Bookmark bookmark : bookmarksAfter) {
+        checkBookmarkNavigation(bookmark);
+      }
+    });
   }
 
+  @Test
   public void testTwoBookmarksOnSameLine2() {
-    @Language("JAVA")
-    @NonNls String text =
-      """
-        public class Test {
-            public void test() {
-                int i = 1;
-                int j = 1;
-            }
-        }""";
-    init(text, PlainTextFileType.INSTANCE);
+    myFixture.runTest(() -> {
+      @Language("JAVA")
+      @NonNls String text =
+        """
+          public class Test {
+              public void test() {
+                  int i = 1;
+                  int j = 1;
+              }
+          }""";
+      myFixture.init(text, PlainTextFileType.INSTANCE);
 
-    addBookmark(2);
-    addBookmark(3);
-    List<Bookmark> bookmarksBefore = getManager().getBookmarks();
-    assertEquals(2, bookmarksBefore.size());
+      addBookmark(2);
+      addBookmark(3);
+      List<Bookmark> bookmarksBefore = getManager().getBookmarks();
+      assertEquals(2, bookmarksBefore.size());
 
-    getEditor().getCaretModel().setCaretsAndSelections(
-      Collections.singletonList(new CaretState(
-        getEditor().visualToLogicalPosition(new VisualPosition(2, getEditor().getDocument().getLineEndOffset(2) + 1)), null, null)));
-    delete();
+      getEditor().getCaretModel().setCaretsAndSelections(
+        Collections.singletonList(new CaretState(
+          getEditor().visualToLogicalPosition(new VisualPosition(2, getEditor().getDocument().getLineEndOffset(2) + 1)), null, null)));
+      myFixture.delete();
 
-    List<Bookmark> bookmarksAfter = getManager().getBookmarks();
-    assertEquals(1, bookmarksAfter.size());
-    for (Bookmark bookmark : bookmarksAfter) {
-      checkBookmarkNavigation(bookmark);
-    }
-    init(text, PlainTextFileType.INSTANCE);
-    getEditor().getCaretModel().setCaretsAndSelections(
-      Collections.singletonList(
-        new CaretState(getEditor().visualToLogicalPosition(new VisualPosition(2, getEditor().getDocument().getLineEndOffset(2))), null, null)));
-    delete();
+      List<Bookmark> bookmarksAfter = getManager().getBookmarks();
+      assertEquals(1, bookmarksAfter.size());
+      for (Bookmark bookmark : bookmarksAfter) {
+        checkBookmarkNavigation(bookmark);
+      }
+      myFixture.init(text, PlainTextFileType.INSTANCE);
+      getEditor().getCaretModel().setCaretsAndSelections(
+        Collections.singletonList(
+          new CaretState(getEditor().visualToLogicalPosition(new VisualPosition(2, getEditor().getDocument().getLineEndOffset(2))), null, null)));
+      myFixture.delete();
+    });
   }
 
+  @Test
   public void testBookmarkIsSavedAfterRemoteChange() {
-    @Language("JAVA")
-    @NonNls String text =
-      """
-        public class Test {
-            public void test() {
-                int i = 1;
-            }
-        }""";
-    init(text, PlainTextFileType.INSTANCE);
-    addBookmark(2);
-    assertEquals(1, getManager().getBookmarks().size());
+    myFixture.runTest(() -> {
+      @Language("JAVA")
+      @NonNls String text =
+        """
+          public class Test {
+              public void test() {
+                  int i = 1;
+              }
+          }""";
+      myFixture.init(text, PlainTextFileType.INSTANCE);
+      addBookmark(2);
+      assertEquals(1, getManager().getBookmarks().size());
 
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> getEditor().getDocument().setText("111\n222" + text + "333"));
+      WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> getEditor().getDocument().setText("111\n222" + text + "333"));
 
-    List<Bookmark> bookmarks = getManager().getBookmarks();
-    assertEquals(1, bookmarks.size());
-    Bookmark bookmark = bookmarks.get(0);
-    assertEquals(3, ((LineBookmark)bookmark).getLine());
-    checkBookmarkNavigation(bookmark);
+      List<Bookmark> bookmarks = getManager().getBookmarks();
+      assertEquals(1, bookmarks.size());
+      Bookmark bookmark = bookmarks.getFirst();
+      assertEquals(3, ((LineBookmark)bookmark).getLine());
+      checkBookmarkNavigation(bookmark);
+    });
   }
 
-  public void testBookmarkManagerDoesNotHardReferenceDocuments() throws IOException {
-    @Language("JAVA")
-    @NonNls String text =
-      "public class Test {\n" +
-      "}";
+  @Test
+  public void testBookmarkManagerDoesNotHardReferenceDocuments() {
+    myFixture.runTest(() -> {
+      @Language("JAVA")
+      @NonNls String text =
+        "public class Test {\n" +
+        "}";
 
-    setVFile(WriteAction.compute(() -> {
-      VirtualFile file = getSourceRoot().createChildData(null, getTestName(false) + ".txt");
-      VfsUtil.saveText(file, text);
-      return file;
-    }));
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      setVFile(WriteAction.compute(() -> {
+        VirtualFile file = getSourceRoot().createChildData(null, myFixture.getTestName() + ".txt");
+        VfsUtil.saveText(file, text);
+        return file;
+      }));
+      PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
 
-    addBookmark(getVFile(), 1);
-    LeakHunter.checkLeak(getManager(), Document.class, doc -> getVFile().equals(FileDocumentManager.getInstance().getFile(doc)));
+      addBookmark(getVFile(), 1);
+      LeakHunter.checkLeak(getManager(), Document.class, doc -> getVFile().equals(FileDocumentManager.getInstance().getFile(doc)));
 
-    Document document = FileDocumentManager.getInstance().getDocument(getVFile());
-    assertNotNull(document);
-    PsiDocumentManager.getInstance(getProject()).getPsiFile(document); // create psi so that PsiChangeHandler won't leak
+      Document document = FileDocumentManager.getInstance().getDocument(getVFile());
+      assertNotNull(document);
+      PsiDocumentManager.getInstance(myFixture.getProject()).getPsiFile(document); // create psi so that PsiChangeHandler won't leak
 
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "line 0\n"));
+      WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> document.insertString(0, "line 0\n"));
 
-    List<Bookmark> bookmarks = getManager().getBookmarks();
-    assertEquals(1, bookmarks.size());
-    Bookmark bookmark = bookmarks.get(0);
-    assertEquals(2, ((LineBookmark)bookmark).getLine());
+      List<Bookmark> bookmarks = getManager().getBookmarks();
+      assertEquals(1, bookmarks.size());
+      Bookmark bookmark = bookmarks.getFirst();
+      assertEquals(2, ((LineBookmark)bookmark).getLine());
 
-    setEditor(createEditor(getVFile()));
-    checkBookmarkNavigation(bookmark);
+      setEditor(createEditor(getVFile()));
+      checkBookmarkNavigation(bookmark);
+    });
   }
 
   private void addBookmark(int line) {
-    addBookmark(getFile().getVirtualFile(), line);
+    addBookmark(myFixture.getFile().getVirtualFile(), line);
   }
 
   private void addBookmark(VirtualFile file, int line) {
-    getManager().add(LineBookmarkProvider.Util.find(getProject()).createBookmark(file, line), BookmarkType.DEFAULT);
+    getManager().add(LineBookmarkProvider.Util.find(myFixture.getProject()).createBookmark(file, line), BookmarkType.DEFAULT);
   }
 
-  public void testBookmarkCreationMustNotLoadDocumentUnnecessarily() throws IOException {
-    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(PsiDocumentListener.TOPIC,
-                                                                            (document, psiFile, project) -> fail("Document " + document + " was loaded unexpectedly"));
+  @Test
+  public void testBookmarkCreationMustNotLoadDocumentUnnecessarily() {
+    myFixture.runTest(() -> {
+      myFixture.getProject().getMessageBus().connect(myFixture.getTestRootDisposable()).subscribe(
+        PsiDocumentListener.TOPIC, (document, psiFile, project) -> fail("Document " + document + " was loaded unexpectedly"));
 
-    @NonNls String text =
-      "public class Test {\n" +
-      "}";
+      @NonNls String text =
+        "public class Test {\n" +
+        "}";
 
-    setVFile(WriteAction.compute(() -> {
-      VirtualFile file = getSourceRoot().createChildData(null, getTestName(false) + ".txt");
-      VfsUtil.saveText(file, text);
-      return file;
-    }));
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      setVFile(WriteAction.compute(() -> {
+        VirtualFile file = getSourceRoot().createChildData(null, myFixture.getTestName() + ".txt");
+        VfsUtil.saveText(file, text);
+        return file;
+      }));
+      PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
 
-    addBookmark(getVFile(), 1);
+      addBookmark(getVFile(), 1);
+    });
   }
 
   private BookmarksManager getManager() {
-    return BookmarksManager.getInstance(getProject());
-  }
-
-  @Override
-  public Object getData(@NotNull String dataId) {
-    if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
-      return getEditor();
-    }
-    return super.getData(dataId);
+    return BookmarksManager.getInstance(myFixture.getProject());
   }
 
   private void checkBookmarkNavigation(Bookmark bookmark) {
@@ -521,47 +610,53 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     assertEquals(line, caretModel.getLogicalPosition().line);
   }
 
+  @Test
   public void testBranchSwitch_BookmarksInvalidatedAndRestored() {
-    init(BranchKind.BRANCH1.getContent(), PlainTextFileType.INSTANCE);
-    VirtualFile file = getFile().getVirtualFile();
-    LineBookmarkProvider provider = LineBookmarkProvider.Util.find(getProject());
-    Document document = FileDocumentManager.getInstance().getDocument(file);
+    myFixture.runTest(() -> {
+      myFixture.init(BranchKind.BRANCH1.getContent(), PlainTextFileType.INSTANCE);
+      VirtualFile file = myFixture.getFile().getVirtualFile();
+      LineBookmarkProvider provider = LineBookmarkProvider.Util.find(myFixture.getProject());
+      Document document = FileDocumentManager.getInstance().getDocument(file);
 
-    String classLine = LineBookmarkProvider.Util.readLineText(document, 0);
-    String usage1Line = LineBookmarkProvider.Util.readLineText(document, 3);
-    String usage2Line = LineBookmarkProvider.Util.readLineText(document, 7);
+      String classLine = LineBookmarkProvider.Util.readLineText(document, 0);
+      String usage1Line = LineBookmarkProvider.Util.readLineText(document, 3);
+      String usage2Line = LineBookmarkProvider.Util.readLineText(document, 7);
 
-    addBookmark(file, 0);
-    addBookmark(file, 3);
-    addBookmark(file, 7);
-    assertEquals(3, getManager().getBookmarks().size());
+      addBookmark(file, 0);
+      addBookmark(file, 3);
+      addBookmark(file, 7);
+      assertEquals(3, getManager().getBookmarks().size());
 
-    runSwitchSequence(new BranchKind[]{BranchKind.BRANCH2, BranchKind.BRANCH3, BranchKind.BRANCH1}, DEFAULT_SWITCH_CYCLES, provider, classLine, usage1Line, usage2Line);
+      runSwitchSequence(new BranchKind[]{BranchKind.BRANCH2, BranchKind.BRANCH3, BranchKind.BRANCH1}, DEFAULT_SWITCH_CYCLES, provider, classLine, usage1Line, usage2Line);
+    });
   }
 
+  @Test
   public void testBranchSwitch_BookmarksWithoutExpectedText() {
-    init(BranchKind.BRANCH1.getContent(), PlainTextFileType.INSTANCE);
-    VirtualFile file = getFile().getVirtualFile();
-    LineBookmarkProvider provider = LineBookmarkProvider.Util.find(getProject());
-    Document document = FileDocumentManager.getInstance().getDocument(file);
+    myFixture.runTest(() -> {
+      myFixture.init(BranchKind.BRANCH1.getContent(), PlainTextFileType.INSTANCE);
+      VirtualFile file = myFixture.getFile().getVirtualFile();
+      LineBookmarkProvider provider = LineBookmarkProvider.Util.find(myFixture.getProject());
+      Document document = FileDocumentManager.getInstance().getDocument(file);
 
-    String classLine = LineBookmarkProvider.Util.readLineText(document, 0);
-    String usage1Line = LineBookmarkProvider.Util.readLineText(document, 3);
-    String usage2Line = LineBookmarkProvider.Util.readLineText(document, 7);
+      String classLine = LineBookmarkProvider.Util.readLineText(document, 0);
+      String usage1Line = LineBookmarkProvider.Util.readLineText(document, 3);
+      String usage2Line = LineBookmarkProvider.Util.readLineText(document, 7);
 
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> 
-      getEditor().getDocument().setText(BranchKind.BRANCH1.getContent()));
-    getManager().remove();
-    BookmarkGroup group = getManager().addGroup("Test", true);
-    if (group == null) group = getManager().getGroup("Test");
-    assertNotNull(group);
-    group.add(new LineBookmarkImpl(provider, file, 0), BookmarkType.DEFAULT, null);
-    group.add(new LineBookmarkImpl(provider, file, 3), BookmarkType.DEFAULT, null);
-    group.add(new LineBookmarkImpl(provider, file, 7), BookmarkType.DEFAULT, null);
-    assertEquals(3, getManager().getBookmarks().size());
+      WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> 
+        getEditor().getDocument().setText(BranchKind.BRANCH1.getContent()));
+      getManager().remove();
+      BookmarkGroup group = getManager().addGroup("Test", true);
+      if (group == null) group = getManager().getGroup("Test");
+      assertNotNull(group);
+      group.add(new LineBookmarkImpl(provider, file, 0), BookmarkType.DEFAULT, null);
+      group.add(new LineBookmarkImpl(provider, file, 3), BookmarkType.DEFAULT, null);
+      group.add(new LineBookmarkImpl(provider, file, 7), BookmarkType.DEFAULT, null);
+      assertEquals(3, getManager().getBookmarks().size());
 
-    runSwitchSequence(new BranchKind[]{BranchKind.BRANCH2, BranchKind.BRANCH3, BranchKind.BRANCH1}, 
-                      DEFAULT_SWITCH_CYCLES, provider, classLine, usage1Line, usage2Line);
+      runSwitchSequence(new BranchKind[]{BranchKind.BRANCH2, BranchKind.BRANCH3, BranchKind.BRANCH1}, 
+                        DEFAULT_SWITCH_CYCLES, provider, classLine, usage1Line, usage2Line);
+    });
   }
 
   private enum BranchKind {
@@ -588,7 +683,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
                                  String usage2Line) {
     for (int i = 0; i < cycles; i++) {
       for (BranchKind branch : order) {
-        WriteCommandAction.writeCommandAction(getProject()).run(() -> getEditor().getDocument().setText(branch.getContent()));
+        WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> getEditor().getDocument().setText(branch.getContent()));
         assertBranchState(branch, classLine, usage1Line, usage2Line, provider);
       }
     }
@@ -628,7 +723,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
     assertGutterState(classLine, usage1Line, usage2Line, classValid, usage1Valid, usage2Valid);
   }
 
-  private Bookmark findBookmarkByLineText(List<Bookmark> bookmarks, String lineText) {
+  private static Bookmark findBookmarkByLineText(List<Bookmark> bookmarks, String lineText) {
     for (Bookmark b : bookmarks) {
       String text = b.getAttributes().get("lineText");
       if (Objects.equals(text, lineText)) return b;
@@ -650,73 +745,76 @@ public class BookmarkManagerTest extends AbstractEditorTest {
         if (child.getValue() instanceof InvalidBookmark) foundInvalid = true;
       }
     }
-    assertTrue("Invalid bookmark should be visible in the tree (directly or grouped)", foundInvalid);
+    assertTrue(foundInvalid, "Invalid bookmark should be visible in the tree (directly or grouped)");
   }
 
+  @Test
   public void testBookmarkGroupingWithValidAndInvalidBookmarks() {
-    init(BranchKind.BRANCH1.getContent(), PlainTextFileType.INSTANCE);
-    VirtualFile file = getFile().getVirtualFile();
-    LineBookmarkProvider provider = LineBookmarkProvider.Util.find(getProject());
+    myFixture.runTest(() -> {
+      myFixture.init(BranchKind.BRANCH1.getContent(), PlainTextFileType.INSTANCE);
+      VirtualFile file = myFixture.getFile().getVirtualFile();
+      LineBookmarkProvider provider = LineBookmarkProvider.Util.find(myFixture.getProject());
 
-    addBookmark(file, 0);
-    addBookmark(file, 3);
-    addBookmark(file, 7);
-    assertEquals(3, getManager().getBookmarks().size());
+      addBookmark(file, 0);
+      addBookmark(file, 3);
+      addBookmark(file, 7);
+      assertEquals(3, getManager().getBookmarks().size());
 
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> 
-      getEditor().getDocument().setText(BranchKind.BRANCH2.getContent()));
+      WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> 
+        getEditor().getDocument().setText(BranchKind.BRANCH2.getContent()));
 
-    List<Bookmark> bookmarks = getManager().getBookmarks();
-    assertEquals(3, bookmarks.size());
+      List<Bookmark> bookmarks = getManager().getBookmarks();
+      assertEquals(3, bookmarks.size());
     
-    long validCount = bookmarks.stream().filter(b -> b instanceof LineBookmark).count();
-    long invalidCount = bookmarks.stream().filter(b -> b instanceof InvalidBookmark).count();
-    assertEquals(2, validCount);
-    assertEquals(1, invalidCount);
+      long validCount = bookmarks.stream().filter(b -> b instanceof LineBookmark).count();
+      long invalidCount = bookmarks.stream().filter(b -> b instanceof InvalidBookmark).count();
+      assertEquals(2, validCount);
+      assertEquals(1, invalidCount);
 
-    List<AbstractTreeNode<?>> nodes = new ArrayList<>();
-    for (Bookmark b : bookmarks) {
-      nodes.add(b.createNode());
-    }
-    List<AbstractTreeNode<?>> prepared = provider.prepareGroup(nodes);
-
-    List<Bookmark> seenBookmarks = new ArrayList<>();
-    
-    for (AbstractTreeNode<?> node : prepared) {
-      Object value = node.getValue();
-      
-      if (value instanceof Bookmark) {
-        seenBookmarks.add((Bookmark) value);
+      List<AbstractTreeNode<?>> nodes = new ArrayList<>();
+      for (Bookmark b : bookmarks) {
+        nodes.add(b.createNode());
       }
+      List<AbstractTreeNode<?>> prepared = provider.prepareGroup(nodes);
+
+      List<Bookmark> seenBookmarks = new ArrayList<>();
+    
+      for (AbstractTreeNode<?> node : prepared) {
+        Object value = node.getValue();
       
-      for (AbstractTreeNode<?> child : node.getChildren()) {
-        Object childValue = child.getValue();
-        if (childValue instanceof Bookmark) {
-          seenBookmarks.add((Bookmark)childValue);
+        if (value instanceof Bookmark bookmark) {
+          seenBookmarks.add(bookmark);
+        }
+      
+        for (AbstractTreeNode<?> child : node.getChildren()) {
+          Object childValue = child.getValue();
+          if (childValue instanceof Bookmark bookmark) {
+            seenBookmarks.add(bookmark);
+          }
         }
       }
-    }
 
-    long uniqueCount = seenBookmarks.stream().distinct().count();
-    assertEquals(bookmarks.size(), uniqueCount);
-    assertEquals(3, seenBookmarks.size());
+      long uniqueCount = seenBookmarks.stream().distinct().count();
+      assertEquals(bookmarks.size(), uniqueCount);
+      assertEquals(3, seenBookmarks.size());
     
-    long visibleValid = seenBookmarks.stream().filter(b -> b instanceof LineBookmark).count();
-    long visibleInvalid = seenBookmarks.stream().filter(b -> b instanceof InvalidBookmark).count();
-    assertEquals(2, visibleValid);
-    assertEquals(1, visibleInvalid);
+      long visibleValid = seenBookmarks.stream().filter(b -> b instanceof LineBookmark).count();
+      long visibleInvalid = seenBookmarks.stream().filter(b -> b instanceof InvalidBookmark).count();
+      assertEquals(2, visibleValid);
+      assertEquals(1, visibleInvalid);
     
-    dispatchGutterUpdates();
-    for (Bookmark bookmark : bookmarks) {
-      boolean isValid = bookmark instanceof LineBookmark;
-      boolean hasGutter = hasBookmarkGutter(bookmark);
-      if (isValid) {
-        assertTrue(hasGutter);
+      dispatchGutterUpdates();
+      for (Bookmark bookmark : bookmarks) {
+        boolean isValid = bookmark instanceof LineBookmark;
+        boolean hasGutter = hasBookmarkGutter(bookmark);
+        if (isValid) {
+          assertTrue(hasGutter);
+        }
+        else {
+          assertFalse(hasGutter);
+        }
       }
-      else {
-        assertFalse(hasGutter);
-      }
-    }
+    });
   }
 
   private void assertGutterState(String classLine,
@@ -747,8 +845,8 @@ public class BookmarkManagerTest extends AbstractEditorTest {
 
   private boolean hasBookmarkGutter(Bookmark bookmark) {
     int line;
-    if (bookmark instanceof LineBookmark) {
-      line = ((LineBookmark)bookmark).getLine();
+    if (bookmark instanceof LineBookmark lineBookmark) {
+      line = lineBookmark.getLine();
     } else {
       String lineStr = bookmark.getAttributes().get("line");
       if (lineStr == null) {
@@ -802,114 +900,112 @@ public class BookmarkManagerTest extends AbstractEditorTest {
    * - Many bookmarks (100 total, ~3-4 per file)
    * - Branch switches with content changes (some lines moved, some removed)
    * - Multiple rapid switches to test performance and correctness
-   * 
+   * <p>
    * Tests the performance of:
    * - BookmarkContextProvider.mergeState() with many bookmarks
    * - LineBookmarkProvider.Util.findLineByText() for moved lines
    * - BookmarkContextProvider.saveContext() with file cache
    */
-  public void testBranchSwitchStressWithManyBookmarksAndFiles() throws IOException {
-    final int FILE_COUNT = 30;
-    final int BOOKMARKS_PER_FILE = 3;
-    final int TOTAL_BOOKMARKS = FILE_COUNT * BOOKMARKS_PER_FILE;
-    final int SWITCH_CYCLES = 5;
+  @Test
+  public void testBranchSwitchStressWithManyBookmarksAndFiles() {
+    myFixture.runTest(() -> {
+      final int FILE_COUNT = 30;
+      final int BOOKMARKS_PER_FILE = 3;
+      final int TOTAL_BOOKMARKS = FILE_COUNT * BOOKMARKS_PER_FILE;
+      final int SWITCH_CYCLES = 5;
 
-    // Create 30 files with different content
-    List<VirtualFile> files = new ArrayList<>();
-    for (int i = 0; i < FILE_COUNT; i++) {
-      final int fileIndex = i;
-      String content = generateFileContent(fileIndex, 50); // 50 lines per file
-      VirtualFile file = WriteAction.compute(() -> {
-        VirtualFile f = getSourceRoot().createChildData(null, "File" + fileIndex + ".txt");
-        VfsUtil.saveText(f, content);
-        return f;
-      });
-      files.add(file);
-    }
+      // Create 30 files with different content
+      List<VirtualFile> files = new ArrayList<>();
+      for (int i = 0; i < FILE_COUNT; i++) {
+        final int fileIndex = i;
+        String content = generateFileContent(fileIndex, 50); // 50 lines per file
+        VirtualFile file = WriteAction.compute(() -> {
+          VirtualFile f = getSourceRoot().createChildData(null, "File" + fileIndex + ".txt");
+          VfsUtil.saveText(f, content);
+          return f;
+        });
+        files.add(file);
+      }
 
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     
-    // Add 3 bookmarks per file (beginning, middle, end)
-    LineBookmarkProvider provider = LineBookmarkProvider.Util.find(getProject());
-    assertNotNull(provider);
+      // Add 3 bookmarks per file (beginning, middle, end)
+      LineBookmarkProvider provider = LineBookmarkProvider.Util.find(myFixture.getProject());
+      assertNotNull(provider);
     
-    for (VirtualFile file : files) {
-      addBookmark(file, 5);   // Beginning bookmark
-      addBookmark(file, 25);  // Middle bookmark  
-      addBookmark(file, 45);  // End bookmark
-    }
+      for (VirtualFile file : files) {
+        addBookmark(file, 5);   // Beginning bookmark
+        addBookmark(file, 25);  // Middle bookmark  
+        addBookmark(file, 45);  // End bookmark
+      }
     
-    assertEquals(TOTAL_BOOKMARKS, getManager().getBookmarks().size());
+      assertEquals(TOTAL_BOOKMARKS, getManager().getBookmarks().size());
     
-    // Capture expected line texts for verification
-    Map<VirtualFile, List<String>> expectedTexts = new HashMap<>();
-    for (VirtualFile file : files) {
-      Document document = FileDocumentManager.getInstance().getDocument(file);
-      List<String> texts = List.of(
-        LineBookmarkProvider.Util.readLineText(document, 5),
-        LineBookmarkProvider.Util.readLineText(document, 25),
-        LineBookmarkProvider.Util.readLineText(document, 45)
-      );
-      expectedTexts.put(file, texts);
-    }
+      // Capture expected line texts for verification
+      Map<VirtualFile, List<String>> expectedTexts = new HashMap<>();
+      for (VirtualFile file : files) {
+        Document document = FileDocumentManager.getInstance().getDocument(file);
+        List<String> texts = List.of(
+          LineBookmarkProvider.Util.readLineText(document, 5),
+          LineBookmarkProvider.Util.readLineText(document, 25),
+          LineBookmarkProvider.Util.readLineText(document, 45)
+        );
+        expectedTexts.put(file, texts);
+      }
 
-    long startTime = System.currentTimeMillis();
+      long startTime = System.currentTimeMillis();
     
-    // Simulate branch switching with performance tracking
-    for (int cycle = 0; cycle < SWITCH_CYCLES; cycle++) {
-      // Branch 2: Remove lines 20-30 from each file (middle bookmark at line 25 becomes invalid)
-      switchToBranch2(files);
+      // Simulate branch switching with performance tracking
+      for (int cycle = 0; cycle < SWITCH_CYCLES; cycle++) {
+        // Branch 2: Remove lines 20-30 from each file (middle bookmark at line 25 becomes invalid)
+        switchToBranch2(files);
       
-      List<Bookmark> bookmarks = getManager().getBookmarks();
-      assertEquals("Cycle " + cycle + ": Should maintain all bookmarks", TOTAL_BOOKMARKS, bookmarks.size());
+        List<Bookmark> bookmarks = getManager().getBookmarks();
+        assertEquals(TOTAL_BOOKMARKS, bookmarks.size(), "Cycle " + cycle + ": Should maintain all bookmarks");
       
-      long validCount = bookmarks.stream().filter(b -> b instanceof LineBookmark).count();
-      long invalidCount = bookmarks.stream().filter(b -> b instanceof InvalidBookmark).count();
+        long validCount = bookmarks.stream().filter(b -> b instanceof LineBookmark).count();
+        long invalidCount = bookmarks.stream().filter(b -> b instanceof InvalidBookmark).count();
       
-      // In branch 2, middle bookmarks (line 25 with method content) should be invalidated
-      // because lines 20-30 are removed
-      assertEquals("Cycle " + cycle + ": Should have invalid bookmarks in branch 2", 
-                   FILE_COUNT, invalidCount);
-      assertEquals("Cycle " + cycle + ": Should have valid bookmarks in branch 2",
-                   FILE_COUNT * 2, validCount);
+        // In branch 2, middle bookmarks (line 25 with method content) should be invalidated
+        // because lines 20-30 are removed
+        assertEquals(FILE_COUNT, invalidCount, "Cycle " + cycle + ": Should have invalid bookmarks in branch 2");
+        assertEquals(FILE_COUNT * 2, validCount, "Cycle " + cycle + ": Should have valid bookmarks in branch 2");
 
-      // Branch 3: Method at line 25 moved to line 35, should be found by text matching
-      switchToBranch3(files);
+        // Branch 3: Method at line 25 moved to line 35, should be found by text matching
+        switchToBranch3(files);
       
-      bookmarks = getManager().getBookmarks();
-      assertEquals("Cycle " + cycle + ": Should maintain all bookmarks", TOTAL_BOOKMARKS, bookmarks.size());
+        bookmarks = getManager().getBookmarks();
+        assertEquals(TOTAL_BOOKMARKS, bookmarks.size(), "Cycle " + cycle + ": Should maintain all bookmarks");
       
-      validCount = bookmarks.stream().filter(b -> b instanceof LineBookmark).count();
-      // All bookmarks should be valid: line 5 unchanged, line 25 moved to 35, line 45 unchanged
-      assertEquals("Cycle " + cycle + ": Should restore all bookmarks in branch 3", 
-                   TOTAL_BOOKMARKS, validCount);
+        validCount = bookmarks.stream().filter(b -> b instanceof LineBookmark).count();
+        // All bookmarks should be valid: line 5 unchanged, line 25 moved to 35, line 45 unchanged
+        assertEquals(TOTAL_BOOKMARKS, validCount, "Cycle " + cycle + ": Should restore all bookmarks in branch 3");
 
-      // Back to original branch
-      restoreOriginalContent(files, expectedTexts);
+        // Back to original branch
+        restoreOriginalContent(files, expectedTexts);
       
-      bookmarks = getManager().getBookmarks();
-      assertEquals("Cycle " + cycle + ": Should maintain all bookmarks", TOTAL_BOOKMARKS, bookmarks.size());
+        bookmarks = getManager().getBookmarks();
+        assertEquals(TOTAL_BOOKMARKS, bookmarks.size(), "Cycle " + cycle + ": Should maintain all bookmarks");
       
-      validCount = bookmarks.stream().filter(b -> b instanceof LineBookmark).count();
-      assertEquals("Cycle " + cycle + ": All bookmarks should be valid in original branch",
-                   TOTAL_BOOKMARKS, validCount);
+        validCount = bookmarks.stream().filter(b -> b instanceof LineBookmark).count();
+        assertEquals(TOTAL_BOOKMARKS, validCount, "Cycle " + cycle + ": All bookmarks should be valid in original branch");
       
-      // Verify bookmarks are at correct lines
-      verifyBookmarkLines(files, List.of(5, 25, 45));
-    }
+        // Verify bookmarks are at correct lines
+        verifyBookmarkLines(files, List.of(5, 25, 45));
+      }
     
-    long duration = System.currentTimeMillis() - startTime;
+      long duration = System.currentTimeMillis() - startTime;
     
-    // Performance assertion: 30 files × 3 bookmarks × 3 switches × 5 cycles = 1350 operations
-    // Should complete in reasonable time (< 10 seconds)
-    assertTrue("Stress test took too long: " + duration + "ms (expected < 10000ms)", 
-               duration < 10000);
+      // Performance assertion: 30 files × 3 bookmarks × 3 switches × 5 cycles = 1350 operations
+      // Should complete in reasonable time (< 10 seconds)
+      assertTrue(duration < 10000, "Stress test took too long: " + duration + "ms (expected < 10000ms)");
     
-    System.out.println("Stress test completed in " + duration + "ms for " + 
-                       (TOTAL_BOOKMARKS * SWITCH_CYCLES * 3) + " bookmark operations");
+      System.out.println("Stress test completed in " + duration + "ms for " + 
+                         (TOTAL_BOOKMARKS * SWITCH_CYCLES * 3) + " bookmark operations");
+    });
   }
 
-  private String generateFileContent(int fileIndex, int lineCount) {
+  private static String generateFileContent(int fileIndex, int lineCount) {
     StringBuilder sb = new StringBuilder();
     sb.append("// File ").append(fileIndex).append("\n");
     sb.append("class File").append(fileIndex).append(" {\n");
@@ -946,11 +1042,11 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       String content = generateFileContentBranch2(i);
       WriteAction.run(() -> VfsUtil.saveText(file, content));
     }
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
   }
 
-  private String generateFileContentBranch2(int fileIndex) {
+  private static String generateFileContentBranch2(int fileIndex) {
     // Branch 2: Method section (lines 23-27) removed, so line 25 bookmark (method body) becomes invalid
     // Other lines stay at same positions
     StringBuilder sb = new StringBuilder();
@@ -980,11 +1076,11 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       String content = generateFileContentBranch3(i);
       WriteAction.run(() -> VfsUtil.saveText(file, content));
     }
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
   }
 
-  private String generateFileContentBranch3(int fileIndex) {
+  private static String generateFileContentBranch3(int fileIndex) {
     // Branch 3: Method body at line 25 moved to line 35
     StringBuilder sb = new StringBuilder();
     sb.append("// File ").append(fileIndex).append("\n");
@@ -1026,7 +1122,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
       String content = generateFileContent(i, 50);
       WriteAction.run(() -> VfsUtil.saveText(file, content));
     }
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
   }
 
@@ -1040,8 +1136,7 @@ public class BookmarkManagerTest extends AbstractEditorTest {
         .sorted()
         .toList();
       
-      assertEquals("File " + file.getName() + " should have bookmarks at expected lines",
-                   expectedLines, actualLines);
+      assertEquals(expectedLines, actualLines, "File " + file.getName() + " should have bookmarks at expected lines");
     }
   }
 }

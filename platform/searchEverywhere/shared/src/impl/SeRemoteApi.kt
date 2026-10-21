@@ -25,6 +25,19 @@ import org.jetbrains.annotations.Nls
 @ApiStatus.Internal
 @Rpc
 interface SeRemoteApi : RemoteApi<Unit> {
+
+  /**
+   * Closes the backend session and disposes its providers.
+   *
+   * The frontend makes the [session]. The backend opens the session on the first call that needs the providers.
+   * The session stays open until this call, the end of the client session, the project close, or the plugin unload.
+   * An RPC reconnect keeps the client session, so it does not close the session.
+   *
+   * After this call, the backend ignores the session. This is also true when this call comes before the other calls.
+   * A second call does nothing.
+   */
+  suspend fun closeSession(projectId: ProjectId, session: SeSession)
+
   // In the case of sending search results via RPC,
   // we can't limit the flow buffer on the backend side
   // and somehow suspend generating new search results while the UI has enough of them to present.

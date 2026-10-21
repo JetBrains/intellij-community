@@ -14,30 +14,20 @@ fn duration(class_name: &str, duration_ms: f64) -> ClassDuration {
 }
 
 #[test]
-fn a_class_costs_what_the_suite_that_ran_it_cost_fixture_time_included() {
+fn a_class_costs_the_sum_of_its_cases() {
     let durations = class_durations_of(&typed(&baseline_report(&[("a.Heavy", 41_300.0), ("a.Light", 3_000.0)])));
-    // 41.3 s, not the 20.65 s the one test case reported: the other 20 s is the IDE relaunch in `@BeforeAll`, and
-    // attributing it to nobody is how the balancer would under-weight exactly the classes that matter.
     assert_eq!(
         durations,
         BTreeMap::from([("a.Heavy".to_owned(), 41_300.0), ("a.Light".to_owned(), 3_000.0)])
     );
 
-    // A suite that mixes classes has no non-arbitrary way to split its fixture time, so it is not invented: each
-    // class gets its own cases and nothing more.
-    let mut mixed = baseline_report(&[]);
-    mixed["suites"] = json!([{
-        "name": "a.Mixed", "timestamp": "2026-08-21T12:00:00Z", "durationMs": 30_000.0, "documentIndex": 0,
-        "tests": 2, "failures": 0, "errors": 0, "skipped": 0,
-        "cases": [
-            {"className": "a.One", "name": "x", "status": "passed", "durationMs": 4_000.0},
-            {"className": "a.Two", "name": "y", "status": "passed", "durationMs": 5_000.0},
-        ],
-    }]);
-    assert_eq!(
-        class_durations_of(&typed(&mixed)),
-        BTreeMap::from([("a.One".to_owned(), 4_000.0), ("a.Two".to_owned(), 5_000.0)])
-    );
+    // Two cases of one class add up.
+    let mut two = baseline_report(&[]);
+    two["cases"] = json!([
+        {"className": "a.One", "name": "x", "status": "passed", "durationMs": 4_000.0, "startedAt": "2026-08-21T12:00:00Z"},
+        {"className": "a.One", "name": "y", "status": "passed", "durationMs": 5_000.0, "startedAt": "2026-08-21T12:00:04Z"},
+    ]);
+    assert_eq!(class_durations_of(&typed(&two)), BTreeMap::from([("a.One".to_owned(), 9_000.0)]));
 }
 
 fn at(mut document: Value, completed_at: &str) -> Value {
@@ -60,17 +50,16 @@ async fn the_baseline_is_the_most_recent_measurement_per_class_and_only_from_a_r
     // Newer: what `a.Slow` costs now.
     let newer = at(baseline_report(&[("a.Slow", 12_000.0)]), "2026-08-21T12:00:00Z");
     write_report(settings, first, "run-2", "iter-1", &newer);
-    // Newest, and not evidence: a truncated XML arrives as an infrastructure error, and a run that measured nothing
+    // Newest, and not evidence: a cut-off stream arrives as an infrastructure error, and a run that measured nothing
     // trustworthy must not be the thing a split is balanced on.
     let mut truncated = at(baseline_report(&[("a.Slow", 999_000.0)]), "2026-08-22T12:00:00Z");
     truncated["status"] = json!("infrastructure_error");
-    truncated["source"]["integrity"] = json!("truncated");
     write_report(settings, first, "run-3", "iter-1", &truncated);
     // Neither is a run that discovered nothing, however complete its (empty) XML.
     let mut empty = at(baseline_report(&[]), "2026-08-22T13:00:00Z");
     empty["status"] = json!("no_tests");
     write_report(settings, first, "run-4", "iter-1", &empty);
-    // Nor a report of an older layout, whose fields this reader would take as zeros.
+    // Nor a report that claims an older layout and does not hold it, whose fields this reader would take as zeros.
     let mut stale = at(baseline_report(&[("a.Stale", 7_000.0)]), "2026-08-22T14:00:00Z");
     stale["reportSchemaVersion"] = json!(RUN_REPORT_SCHEMA_VERSION - 1);
     write_report(settings, first, "run-5", "iter-1", &stale);
@@ -106,6 +95,31 @@ async fn the_baseline_is_the_most_recent_measurement_per_class_and_only_from_a_r
             .iter()
             .all(|entry| entry.class_name != "a.OtherPoolOnly"),
         "a worker outside this pool is not evidence about it"
+    );
+}
+
+/// A report of schema 2 holds suites, not cases. It still measures, so a pool keeps its history across the change, and
+/// the fixture time of a suite of one class is that class's.
+#[tokio::test]
+async fn a_report_of_schema_2_measures_its_suites() {
+    let fixture = Fixture::pool().await;
+    let suite = |class_name: &str, suite_ms: f64, case_ms: f64| {
+        json!({"name": class_name, "durationMs": suite_ms, "documentIndex": 0, "tests": 1, "failures": 0, "errors": 0,
+            "skipped": 0, "cases": [{"className": class_name, "name": "x", "status": "passed", "durationMs": case_ms}]})
+    };
+    let schema_2 = |integrity: &str| {
+        json!({"reportSchemaVersion": 2, "status": "passed", "completedAt": "2026-08-20T12:00:00Z",
+            "source": {"guestPath": "/x/test.xml", "retrieval": "daemon_http", "integrity": integrity},
+            "suites": [suite("a.Heavy", 41_300.0, 20_650.0), suite("a.Light", 3_000.0, 3_000.0)]})
+    };
+    write_report(&fixture.settings, &fixture.worker, "run-1", "iter-1", &schema_2("complete"));
+    write_report(&fixture.settings, &fixture.worker, "run-2", "iter-1", &schema_2("truncated"));
+    let baseline = read_shard_baseline(&fixture.settings);
+    assert_eq!(baseline.durations, [duration("a.Heavy", 41_300.0), duration("a.Light", 3_000.0)]);
+    assert_eq!(
+        (baseline.admitted_reports, baseline.scanned_reports),
+        (1, 2),
+        "a truncated XML measured nothing"
     );
 }
 

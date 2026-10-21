@@ -19,10 +19,6 @@ fn every_verb_keeps_its_wire_spelling() {
             "active",
             "log",
             "cancel",
-            "stage",
-            "stage-check",
-            "launch-prep",
-            "gc",
             "provision-image",
             "validate-image",
             "validate-guest",
@@ -31,9 +27,9 @@ fn every_verb_keeps_its_wire_spelling() {
             "relay",
             "runfiles-tree",
             "read-file",
-            "ide-prepare",
             "ide-gc",
-            "ide-launch",
+            "lane-daemon",
+            "lane-run",
         ]
     );
     for verb in AgentVerb::ALL {

@@ -282,6 +282,10 @@ class MacDistributionBuilder(
 
   override fun writeVmOptions(distBinDir: Path): Path = writeMacOsVmOptions(distBinDir, context)
 
+  override fun writeEmbeddedFrontendVmOptions(distBinDir: Path): Path? {
+    return context.getEmbeddedFrontendProductContext()?.let { writeMacOsVmOptions(distBinDir, it) }
+  }
+
   private fun layoutMacCli(macDistDir: Path, arch: JvmArchitecture) {
     val executable = context.productProperties.baseFileName
     val (execPath, licensePath) = NativeBinaryDownloader.getLauncher(context, OsFamily.MACOS, arch)
@@ -413,16 +417,18 @@ class MacDistributionBuilder(
           mainClass = context.ideMainClassName,
           stdioRedirectArg = context.productProperties.stdioRedirectArg,
           customCommands = run {
-            val vmOptionsFilePath: (BuildContext) -> String = {
-              "${toRoot}bin/${it.productProperties.baseFileName}.vmoptions"
+            if (context.productProperties.launcherCustomCommands) {
+              val vmOptionsFilePath: (BuildContext) -> String = {
+                "${toRoot}bin/${it.productProperties.baseFileName}.vmoptions"
+              }
+              listOfNotNull(
+                generateEmbeddedFrontendLaunchData(arch, OsFamily.MACOS, context, vmOptionsFilePath),
+                generateIjLightLaunchData(arch, OsFamily.MACOS, context, vmOptionsFilePath),
+                generateQodanaLaunchData(context, arch, OsFamily.MACOS),
+                generateStdioMcpRunnerLaunchData(context, OsFamily.MACOS)
+              )
             }
-            val base = listOfNotNull(
-              generateEmbeddedFrontendLaunchData(arch, OsFamily.MACOS, context, vmOptionsFilePath),
-              generateIjLightLaunchData(arch, OsFamily.MACOS, context, vmOptionsFilePath),
-              generateQodanaLaunchData(context, arch, OsFamily.MACOS),
-              generateStdioMcpRunnerLaunchData(context, OsFamily.MACOS)
-            )
-            if (context.productProperties.launcherCustomCommands) base else emptyList()
+            else emptyList()
           }
         )
       ),
@@ -721,6 +727,7 @@ class MacDistributionBuilder(
     NioFiles.setExecutable(tempDir.resolve("makedmg.sh"))
     Files.copy(scriptsDir.resolve("makedmg.py"), tempDir.resolve("makedmg.py"), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
     Files.copy(scriptsDir.resolve("staple.sh"), tempDir.resolve("staple.sh"), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
+    Files.copy(scriptsDir.resolve("retry.sh"), tempDir.resolve("retry.sh"), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
     val entrypoint = tempDir.resolve("build.sh")
     Files.writeString(
       entrypoint,

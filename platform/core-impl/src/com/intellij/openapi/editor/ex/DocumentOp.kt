@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex
 
+import com.intellij.openapi.editor.impl.CleanLinesOpImpl
 import com.intellij.openapi.editor.impl.DeleteOpImpl
 import com.intellij.openapi.editor.impl.InsertOpImpl
 import com.intellij.openapi.editor.impl.ModStampOpImpl
-import com.intellij.openapi.editor.impl.UnmodifiedLinesOpImpl
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -52,7 +52,7 @@ sealed interface DocumentOp {
     fun incSequence(): Boolean
   }
 
-  interface UnmodifiedLines : DocumentOp {
+  interface CleanLines : DocumentOp {
     fun startLine(): Int
     fun endLine(): Int
     fun exceptLines(): IntArray
@@ -104,8 +104,8 @@ sealed interface DocumentOp {
     }
 
     @JvmStatic
-    fun unmodifiedLinesOp(startLine: Int, endLine: Int, exceptLines: IntArray): UnmodifiedLines {
-      return UnmodifiedLinesOpImpl(startLine, endLine, exceptLines)
+    fun cleanLinesOp(startLine: Int, endLine: Int, exceptLines: IntArray): CleanLines {
+      return CleanLinesOpImpl(startLine, endLine, exceptLines)
     }
   }
 }

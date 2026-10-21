@@ -918,6 +918,10 @@ function extractClientTimeoutMs(args: ToolArgs): number | undefined {
 }
 
 function parseLintFilesToolResult(result: unknown): LintFilesToolResult {
+  // callToolForClient does not throw on tool errors; surface the IDE's message instead of a parse failure.
+  if (isRecord(result) && result.isError) {
+    throw new Error(extractTextFromResult(result) || 'Upstream tool error')
+  }
   const structured = extractStructuredContent(result)
   if (!isRecord(structured)) {
     throw new Error('Upstream lint_files returned unexpected result')

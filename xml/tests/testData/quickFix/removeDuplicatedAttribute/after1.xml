@@ -1,0 +1,3 @@
+<!-- "Remove attribute id" "true" -->
+
+<tag id="1"<caret>/>

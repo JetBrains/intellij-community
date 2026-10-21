@@ -1,9 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools
 
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
-import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer.LightCustomizeStrategy
+import com.intellij.openapi.actionSystem.impl.DynamicActionConfigurationCustomizer
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -33,8 +35,12 @@ class ToolManager : BaseToolManager<Tool>(SchemeManagerFactory.getInstance(), "t
   public override fun getGroupIdPrefix(): String = "Tools_"
 }
 
-internal class ToolManagerActionTuner : ActionConfigurationCustomizer, LightCustomizeStrategy {
+internal class ToolManagerActionTuner : DynamicActionConfigurationCustomizer, LightCustomizeStrategy {
   override suspend fun customize(actionRegistrar: ActionRuntimeRegistrar) {
     getInstance().registerActions(actionRegistrar)
+  }
+
+  override fun unregisterActions(actionManager: ActionManager) {
+    getInstance().unregisterActions((actionManager as ActionManagerEx).asActionRuntimeRegistrar())
   }
 }

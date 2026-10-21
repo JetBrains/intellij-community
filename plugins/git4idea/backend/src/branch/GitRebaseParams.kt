@@ -24,26 +24,27 @@ class GitRebaseParams internal constructor(
 
     fun editCommits(
       version: GitVersion,
-      base: String,
-      editorHandler: GitRebaseEditorHandler?,
-      preserveMerges: Boolean,
-    ): GitRebaseParams = editCommits(version, RebaseUpstream.Reference(base), editorHandler, preserveMerges)
-
-    fun editCommits(
-      version: GitVersion,
       base: RebaseUpstream,
       editorHandler: GitRebaseEditorHandler?,
       preserveMerges: Boolean,
+      noAutoSquash: Boolean = false,
     ): GitRebaseParams = GitRebaseParams(version, null, null, base,
-                                                         collectOptions(true, preserveMerges),
-                                                         editorHandler)
+                                         collectOptions(interactive = true, preserveMerges, noAutoSquash),
+                                         editorHandler)
 
-    private fun collectOptions(interactive: Boolean, rebaseMerges: Boolean) = mutableSetOf<GitRebaseOption>().apply {
+    private fun collectOptions(
+      interactive: Boolean,
+      rebaseMerges: Boolean,
+      noAutoSquash: Boolean,
+    ) = mutableSetOf<GitRebaseOption>().apply {
       if (interactive) {
         add(GitRebaseOption.INTERACTIVE)
       }
       if (rebaseMerges) {
         add(GitRebaseOption.REBASE_MERGES)
+      }
+      if (noAutoSquash) {
+        add(GitRebaseOption.NO_AUTOSQUASH)
       }
     }
   }
@@ -103,7 +104,7 @@ class GitRebaseParams internal constructor(
     interactive: Boolean,
     preserveMerges: Boolean,
   ) : this(version, branch, newBase, RebaseUpstream.Reference(upstream),
-           collectOptions(interactive, preserveMerges))
+           collectOptions(interactive, preserveMerges, noAutoSquash = false))
 
   fun asCommandLineArguments(): List<String> = mutableListOf<String>().apply {
     selectedOptions.mapNotNull { option ->
@@ -115,7 +116,8 @@ class GitRebaseParams internal constructor(
         GitRebaseOption.KEEP_EMPTY,
         GitRebaseOption.INTERACTIVE,
         GitRebaseOption.UPDATE_REFS,
-        GitRebaseOption.AUTOSQUASH -> option.getOption(version)
+        GitRebaseOption.AUTOSQUASH,
+        GitRebaseOption.NO_AUTOSQUASH -> option.getOption(version)
       }
     }.also { addAll(it) }
 

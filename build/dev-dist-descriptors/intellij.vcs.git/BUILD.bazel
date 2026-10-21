@@ -25,6 +25,7 @@ dev_dist_plugin_descriptor(
         "intellij.vcs.git.hosting",
         "intellij.vcs.git.localHistory",
         "intellij.vcs.git.performanceTesting",
+        "intellij.vcs.git.rpc.backend",
         "intellij.vcs.git.shared",
         "intellij.vcs.git.terminal",
     ],
@@ -38,6 +39,7 @@ dev_dist_plugin_descriptor(
             "intellij.vcs.git.terminal",
             "intellij.vcs.git.coverage",
             "intellij.vcs.git.performanceTesting",
+            "intellij.vcs.git.rpc.backend",
         ],
     },
     refused_content_modules = [
@@ -55,6 +57,7 @@ dev_plugin(
         "//plugins/git4idea/intellij.vcs.git.coverage:vcs-git-coverage_content_module_jar",
         "//plugins/git4idea/localHistory:localHistory_content_module_jar",
         "//plugins/git4idea/performanceTesting:performanceTesting_content_module_jar",
+        "//plugins/git4idea/rpc.backend:rpc.backend_content_module_jar",
         "//plugins/git4idea/shared:shared_content_module_jar",
         "//plugins/git4idea/terminal:terminal_content_module_jar",
     ],

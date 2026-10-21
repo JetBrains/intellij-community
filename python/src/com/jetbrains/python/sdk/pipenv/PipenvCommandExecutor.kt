@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.pipenv
 
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.intellij.openapi.components.service
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.execService.DownloadConfig
 import com.intellij.python.community.execService.ProcessOutputTransformer
@@ -13,7 +12,6 @@ import com.jetbrains.python.errorProcessing.PyResult
 import com.intellij.python.community.impl.pipenv.PipEnvPyTool
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.add.v2.TargetFileSystemCache
 import com.jetbrains.python.sdk.add.v2.toEelFileSystem
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.intellij.python.sdk.backend.PythonInterpreter
@@ -22,8 +20,7 @@ import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.intellij.python.pytools.runTool
 import com.jetbrains.python.sdk.add.v2.EelOrJustPath
 import com.jetbrains.python.sdk.add.v2.EelOrJustPath.Companion.toEelFileSystem
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
-import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.target.ui.TargetPanelExtension
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
@@ -43,7 +40,7 @@ internal suspend fun <P : PathHolder> runPipEnv(
 ): PyResult<String> =
   PipEnvPyTool.getInstance().runTool(
     fileSystem = fileSystem,
-    pathFromSdk = pipenvExecutable?.toStringForExecution(),
+    pathFromSdk = pipenvExecutable?.toStringOnRemoteMachine(),
     dirPath = dirPath,
     args = args,
     env = baseEnv,
@@ -83,24 +80,12 @@ internal suspend fun runPipEnvWithSdk(sdk: Sdk, vararg args: String): PyResult<S
   val sdkHomePath = sdk.homePath
                     ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", sdk.name))
 
-  return when (data) {
-    is PyTargetAwareAdditionalData -> {
-      val targetConfig = data.targetEnvironmentConfiguration
-                         ?: return PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", sdk.name))
-      runPipEnvWithSdk(
-        fileSystem = service<TargetFileSystemCache>().getOrCreate(targetConfig, PythonLanguageRuntimeConfiguration()),
-        workingDirectory = workingDirectory,
-        sdkHomePath = sdkHomePath,
-        args = args,
-      )
-    }
-    else -> runPipEnvWithSdk(
-      fileSystem = workingDirectory.toEelFileSystem(),
-      workingDirectory = workingDirectory,
-      sdkHomePath = sdkHomePath,
-      args = args,
-    )
-  }
+  return runPipEnvWithSdk(
+    fileSystem = sdk.toFileSystem(),
+    workingDirectory = workingDirectory,
+    sdkHomePath = sdkHomePath,
+    args = args,
+  )
 }
 
 private suspend fun <P : PathHolder> runPipEnvWithSdk(
@@ -115,7 +100,7 @@ private suspend fun <P : PathHolder> runPipEnvWithSdk(
     fileSystem = fileSystem,
     dirPath = workingDirectory,
     args = args,
-    baseEnv = mapOf("VIRTUAL_ENV" to pythonHomePath.toStringForExecution()),
+    baseEnv = mapOf("VIRTUAL_ENV" to pythonHomePath.toStringOnRemoteMachine()),
     downloadConfig = PIPENV_PROJECT_DOWNLOAD_CONFIG.takeIf { args.firstOrNull() in PIPENV_PROJECT_MUTATING_COMMANDS },
   )
 }
@@ -142,7 +127,7 @@ internal suspend fun <P : PathHolder> setupPipEnvSdkWithProgressReport(
     installPackages = installPackages,
   ).getOr { return it }
   val pythonBinaryPath = fileSystem.resolvePythonBinary(pythonHomePath)
-                         ?: return PyResult.localizedError(PyBundle.message("python.sdk.cannot.setup.sdk", pythonHomePath.toStringForUI()))
+                         ?: return PyResult.localizedError(PyBundle.message("python.sdk.cannot.setup.sdk", pythonHomePath.toStringPossiblyMRFS()))
 
   return fileSystem.setupSdk(
     moduleOrProject = moduleOrProject,
@@ -193,7 +178,7 @@ internal suspend fun <P : PathHolder> setupPipEnv(
       runPipEnv(
         fileSystem = fileSystem,
         dirPath = projectPath,
-        args = pipenvSetupCommandWithPythonPath(projectPath, basePythonBinaryPath?.toStringForExecution()).toTypedArray(),
+        args = pipenvSetupCommandWithPythonPath(projectPath, basePythonBinaryPath?.toStringOnRemoteMachine()).toTypedArray(),
         pipenvExecutable = pipenvExecutable,
         downloadConfig = PIPENV_PROJECT_DOWNLOAD_CONFIG,
       ).getOr { return it }
@@ -202,7 +187,7 @@ internal suspend fun <P : PathHolder> setupPipEnv(
       runPipEnv(
         fileSystem = fileSystem,
         dirPath = projectPath,
-        "--python", basePythonBinaryPath.toStringForExecution(),
+        "--python", basePythonBinaryPath.toStringOnRemoteMachine(),
         pipenvExecutable = pipenvExecutable,
         downloadConfig = PIPENV_PROJECT_DOWNLOAD_CONFIG,
       ).getOr { return it }

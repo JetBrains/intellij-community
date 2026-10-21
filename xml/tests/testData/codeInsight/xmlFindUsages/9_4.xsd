@@ -1,0 +1,25 @@
+<xs:schema
+    xmlns = "http://aaa.bbb"
+    xmlns:xs = "http://www.w3.org/2001/XMLSchema"
+    targetNamespace = "http://aaa.bbb"
+    elementFormDefault = "qualified"
+    attributeFormDefault = "unqualified">
+
+  <xs:attributeGroup name="group2">
+    <xs:annotation>
+      <xs:documentation>
+        Fake group to check resolve
+      </xs:documentation>
+    </xs:annotation>
+  </xs:attributeGroup>
+    
+  <xs:complexType name="aaa">
+      <xs:attributeGroup ref = "gro<caret>up2" />
+   </xs:complexType>
+  
+    <xs:element name="control2" type="xs:annotated"/>
+        
+    <xs:complexType name="bbb">
+      <xs:attributeGroup ref = "group2" />
+   </xs:complexType>
+</xs:schema>

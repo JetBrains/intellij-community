@@ -11,6 +11,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory;
 import com.intellij.psi.PsiFile;
@@ -33,6 +34,11 @@ public final class CodeStyleStatusBarWidgetFactory extends StatusBarEditorBasedW
   @Override
   public @NotNull String getDisplayName() {
     return UIBundle.message("status.bar.code.style.widget.name");
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return !Registry.is("ide.status.bar.simplified");
   }
 
   public static @NotNull DumbAwareAction createDefaultIndentConfigureAction(@NotNull PsiFile psiFile) {

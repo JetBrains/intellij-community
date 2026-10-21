@@ -15,6 +15,8 @@ import org.jetbrains.intellij.build.classPath.XIncludeElementResolverImpl
 import org.jetbrains.intellij.build.classPath.descriptorResolveContext
 import org.jetbrains.intellij.build.classPath.embedContentModule
 import org.jetbrains.intellij.build.classPath.resolveIncludes
+import org.jetbrains.intellij.build.dev.syntheticTestPluginModuleName
+import org.jetbrains.intellij.build.dev.syntheticTestPluginXml
 import org.jetbrains.intellij.build.getUnprocessedPluginXmlContent
 
 private val buildNumberRegex = Regex("""(\d+\.)+\d+""")
@@ -129,8 +131,14 @@ internal fun patchPluginXml(
   pluginDescriptorCache: ScopedCachedDescriptorContainer,
   context: BuildContext,
 ) {
-  val pluginModule = context.outputProvider.findRequiredModule(pluginLayout.mainModule)
-  val sourceContent = getUnprocessedPluginXmlContent(pluginModule, context.outputProvider).decodeToString()
+  // the synthetic test plugin has no plugin.xml in the sources
+  val sourceContent = if (pluginLayout.mainModule == syntheticTestPluginModuleName()) {
+    syntheticTestPluginXml(pluginModuleName = pluginLayout.mainModule, platformLayout = platformLayout, context = context)
+  }
+  else {
+    val pluginModule = context.outputProvider.findRequiredModule(pluginLayout.mainModule)
+    getUnprocessedPluginXmlContent(pluginModule, context.outputProvider).decodeToString()
+  }
   val descriptorContent = pluginLayout.rawPluginXmlPatcher(sourceContent, context)
 
   val compatibleBuildRange = context.productProperties.customCompatibleBuildRange ?: when {

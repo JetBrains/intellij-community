@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.CustomFoldRegionRenderer;
 import com.intellij.openapi.editor.CustomWrap;
@@ -14,11 +16,16 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JViewport;
 import java.awt.Dimension;
@@ -28,7 +35,28 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-public class EditorStressTest extends AbstractEditorTest {
+import static com.intellij.openapi.editor.impl.EditorModelFixture.SURROGATE_PAIR;
+import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+
+@TestApplication
+public class EditorStressTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
+
+  private EditorModelFixture myFixture;
+
+  @BeforeEach
+  void setUp() {
+    myFixture = editorFixture.get();
+    myFixture.setUpCustomWrapSupport();
+  }
+
+  private static final Logger LOG = Logger.getInstance(EditorStressTest.class);
   private static final int ITERATIONS = 10_000;
   private static final Long SEED_OVERRIDE = null; // set non-null value to run with a specific seed
 
@@ -45,12 +73,6 @@ public class EditorStressTest extends AbstractEditorTest {
   private static final int MAX_INLAY_WIDTH = 9;
   private static final int MAX_INLAY_OPERATIONS_IN_BATCH = 3;
   private static final int MAX_CUSTOM_FOLD_REGION_WIDTH = 50;
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    setUpCustomWrapSupport();
-  }
 
   private static final List<? extends Action> CUSTOM_WRAP_ACTIONS = Arrays.asList(
     new AddCustomWrap(),
@@ -79,24 +101,27 @@ public class EditorStressTest extends AbstractEditorTest {
     new MoveCaret()
   ), INLAY_PRIMITIVE_ACTIONS, CUSTOM_WRAP_ACTIONS);
 
+  @Test
   public void testRandomActions() {
-    LOG.debug("Seed is " + mySeed);
-    int i = 0;
-    try {
-      initText("");
-      ((DocumentImpl)getEditor().getDocument()).setAcceptSlashR(true);
-      configureSoftWraps(10);
-      EditorImpl editor = (EditorImpl)getEditor();
-      for (i = 0; i < ITERATIONS; i++) {
-        doRandomAction(editor, myRandom, ACTIONS);
-        editor.validateState();
+    myFixture.runTest(() -> {
+      LOG.debug("Seed is " + mySeed);
+      int i = 0;
+      try {
+        myFixture.initText("");
+        ((DocumentImpl)myFixture.getEditor().getDocument()).setAcceptSlashR(true);
+        myFixture.configureSoftWraps(10);
+        EditorImpl editor = (EditorImpl)myFixture.getEditor();
+        for (i = 0; i < ITERATIONS; i++) {
+          doRandomAction(editor, myRandom, ACTIONS);
+          editor.validateState();
+        }
       }
-    }
-    catch (Throwable t) {
-      String message = "Failed when run with seed=" + mySeed + " in iteration " + i;
-      System.err.println(message);
-      throw new RuntimeException(message, t);
-    }
+      catch (Throwable t) {
+        String message = "Failed when run with seed=" + mySeed + " in iteration " + i;
+        System.err.println(message);
+        throw new RuntimeException(message, t);
+      }
+    });
   }
 
   private static void doRandomAction(EditorEx editor, Random random, List<? extends Action> actions) {
@@ -118,7 +143,7 @@ public class EditorStressTest extends AbstractEditorTest {
       }
       Document document = editor.getDocument();
       int offset = random.nextInt(document.getTextLength() + 1);
-      WriteCommandAction.writeCommandAction(getProject()).run(() -> document.insertString(offset, text.toString()));
+      WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> document.insertString(offset, text.toString()));
     }
   }
 
@@ -130,7 +155,7 @@ public class EditorStressTest extends AbstractEditorTest {
       if (textLength <= 0) return;
       int count = 1 + random.nextInt(Math.min(MAX_CHARS_TO_REMOVE, textLength));
       int offset = random.nextInt(textLength - count + 1);
-      WriteCommandAction.writeCommandAction(getProject()).run(() -> document.deleteString(offset, offset + count));
+      WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> document.deleteString(offset, offset + count));
     }
   }
 
@@ -144,7 +169,7 @@ public class EditorStressTest extends AbstractEditorTest {
       int srcStart = random.nextInt(textLength - count + 1);
       int targetPos = random.nextInt(textLength - count);
       int targetOffset = targetPos < srcStart ? targetPos : targetPos + count + 1;
-      WriteCommandAction.writeCommandAction(getProject()).run(() -> document.moveText(srcStart, srcStart + count, targetOffset));
+      WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> document.moveText(srcStart, srcStart + count, targetOffset));
     }
   }
 

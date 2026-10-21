@@ -10,16 +10,17 @@ import com.intellij.workspaceModel.codegen.impl.writer.ModifiableWorkspaceEntity
 import com.intellij.workspaceModel.codegen.impl.writer.MutableWorkspaceList
 import com.intellij.workspaceModel.codegen.impl.writer.MutableWorkspaceSet
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntity
+import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntityBaseMembers.calculateSymbolicIdFun
 import com.intellij.workspaceModel.codegen.impl.writer.collectionProperties
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.compatibleJavaBuilderName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaFullName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaName
 import com.intellij.workspaceModel.codegen.impl.writer.getAllProperties
-import com.intellij.workspaceModel.codegen.impl.writer.referencesInSymbolicId
-import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdIsInitializedCode
-import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdReferenceCode
 import com.intellij.workspaceModel.codegen.impl.writer.getToStringProperty
 import com.intellij.workspaceModel.codegen.impl.writer.getVfuProperties
+import com.intellij.workspaceModel.codegen.impl.writer.referenceNameToSyntheticSymbolicIdFieldName
+import com.intellij.workspaceModel.codegen.impl.writer.referencesInSymbolicId
+import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdIsInitializedCode
 
 fun CodeContext.entityBuilderImplementationCode(objClass: ObjClass<*>, hasConnections: Boolean) {
   section("internal class Builder(result: ${objClass.javaDataName}?): ${ModifiableWorkspaceEntityBase}<${objClass.javaFullName}, ${objClass.javaDataName}>(result), ${objClass.compatibleJavaBuilderName}") {
@@ -62,11 +63,12 @@ fun CodeContext.entityBuilderImplementationCode(objClass: ObjClass<*>, hasConnec
     section("override fun relabel(dataSource: ${WorkspaceEntity}, parents: Set<${WorkspaceEntity}>?)") {
       line("dataSource as ${objClass.javaFullName}")
       val properties = getAllProperties(objClass, withSymbolicId = false, withRefs = false)
-      for (property in properties) { 
+      for (property in properties) {
         val valueTypeRaw = property.valueType
         val (valueType, safeCall) = if (valueTypeRaw is ValueType.Optional<*>) {
           valueTypeRaw.type to "?"
-        } else {
+        }
+        else {
           valueTypeRaw to ""
         }
         when (valueType) {
@@ -106,20 +108,21 @@ fun CodeContext.entityBuilderImplementationCode(objClass: ObjClass<*>, hasConnec
 
     val propertiesToGenerate = getAllProperties(objClass, withSymbolicId = false)
     for (property in propertiesToGenerate) {
-      generateBuilderPropertyCode(objClass, property, referencesInSymbolicId, vfuProperties)
+      generateBuilderPropertyCode(objClass, property, vfuProperties)
     }
 
     +"override fun getEntityClass(): Class<${objClass.javaFullName}> = ${objClass.javaFullName}::class.java"
 
     customBuilderToString(objClass)
-    
+
     if (!referencesInSymbolicId.isNullOrEmpty()) {
-      section("override fun updateSymbolicId(parent: WorkspaceEntityBuilder<*>, connectionId: ConnectionId)") {
+      section("override fun $calculateSymbolicIdFun()") {
         for (reference in referencesInSymbolicId) {
-          val connectionName = connectionIdForReference(reference)
-          `if`("connectionId == $connectionName") {
-            symbolicIdReferenceCode(referencesInSymbolicId, reference)
-          }
+          val referenceAsBase = "_${reference.name}AsBase"
+          +"val $referenceAsBase = ${reference.name} as ${ModifiableWorkspaceEntityBase}<*,*>"
+          +"$referenceAsBase.$calculateSymbolicIdFun()"
+          val syntheticName = referenceNameToSyntheticSymbolicIdFieldName(reference.name)
+          +"getEntityData(true).${syntheticName} = ${reference.name}.symbolicId"
         }
       }
     }

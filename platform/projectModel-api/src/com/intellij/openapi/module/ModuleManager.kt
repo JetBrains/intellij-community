@@ -46,10 +46,10 @@ abstract class ModuleManager : SimpleModificationTracker() {
    * @param moduleTypeId the ID of the module type to create.
    * @return the module instance.
    */
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   abstract fun newModule(filePath: @NonNls String, moduleTypeId: String): Module
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun newModule(file: Path, moduleTypeId: String): Module {
     return newModule(file.toString().replace(File.separatorChar, '/'), moduleTypeId)
   }

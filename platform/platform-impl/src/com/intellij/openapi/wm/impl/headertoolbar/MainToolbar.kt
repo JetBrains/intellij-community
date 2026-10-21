@@ -4,6 +4,7 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.accessibility.AccessibilityUtils
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.repaintWhenProjectGradientOffsetChanged
 import com.intellij.ide.ui.LafManagerListener
@@ -49,6 +50,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.ex.ProjectFrameTypeService
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.hideNativeLinuxTitle
@@ -56,6 +58,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHe
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ExpandableMenu
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
 import com.intellij.openapi.wm.impl.getProjectFrameTypeId
+import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ColorUtil
@@ -96,6 +99,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JFrame
 import javax.swing.JPanel
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.min
 
 private const val MAIN_TOOLBAR_ID = IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
@@ -213,7 +217,36 @@ class MainToolbar(
     return InternalUICustomization.runGlobalCGTransformWithInactiveFrameSupport(this, g)
   }
 
+  /**
+   * Fills the toolbar of a custom frame header.
+   * A welcome-experience frame fills it after its content paints, see `FrameLoadingState.mainMenuFillPermit`:
+   * the creation and the first update of each widget are EDT events that the tool window initialization would wait for.
+   * The first update of such a deferred fill skips the fast track: the actions expand in the background,
+   * and only the result of each update is an EDT event, so the post-paint work of the frame keeps the EDT.
+   */
+  internal suspend fun initInHeader(customTitleBar: WindowDecorations.CustomTitleBar?) {
+    val permit = ProjectFrameHelper.getFrameHelper(frame)?.mainMenuFillPermit
+    if (permit == null || permit.isCompleted) {
+      init(customTitleBar)
+      return
+    }
+
+    // the scope of the frame header does not carry the start-up trace
+    withContext(if (StartUpMeasurer.isEnabled()) rootTask() else EmptyCoroutineContext) {
+      span("main toolbar fill: frame content painted waiting") {
+        permit.join()
+      }
+      span("main toolbar fill") {
+        doInit(customTitleBar = customTitleBar, suppressesFirstUpdateFastTrack = true)
+      }
+    }
+  }
+
   suspend fun init(customTitleBar: WindowDecorations.CustomTitleBar? = null) {
+    doInit(customTitleBar = customTitleBar, suppressesFirstUpdateFastTrack = false)
+  }
+
+  private suspend fun doInit(customTitleBar: WindowDecorations.CustomTitleBar?, suppressesFirstUpdateFastTrack: Boolean) {
     val schema = CustomActionsSchema.getInstanceAsync()
     val actionGroups = computeMainActionGroups(schema, projectFrameTypeId = frame.rootPane.getProjectFrameTypeId())
     val customizationGroup = schema.getCorrectedActionAsync(MAIN_TOOLBAR_ID)
@@ -221,7 +254,7 @@ class MainToolbar(
       CustomizationUtil.createToolbarCustomizationHandler(it, MAIN_TOOLBAR_ID, this, ActionPlaces.MAIN_TOOLBAR)
     }
 
-    val widgets = withContext(Dispatchers.UiWithModelAccess) {
+    val widgets = span("main toolbar widgets creating", Dispatchers.UiWithModelAccess) {
       removeAll()
 
       flavor.addWidget()
@@ -230,6 +263,10 @@ class MainToolbar(
         createActionBar(group = actionGroup, customizationGroup = customizationGroup) to position
       }
       for ((widget, position) in widgets) {
+        if (suppressesFirstUpdateFastTrack) {
+          // before the widget is added: a toolbar added to a showing parent runs its first update at once
+          ClientProperty.put(widget, ActionToolbarImpl.SUPPRESS_FAST_TRACK, true)
+        }
         addWidget(widget = widget.component, parent = this@MainToolbar, position = position)
       }
       focusSupport.registerComponent(this@MainToolbar)
@@ -238,10 +275,14 @@ class MainToolbar(
       widgets
     }
 
-    for (widget in widgets) {
-      // separate EDT action - avoid long-running update
-      withContext(Dispatchers.UiWithModelAccess) {
-        widget.first.updateActions()
+    // a deferred fill leaves the first update to each widget: a toolbar starts it when it is added to a showing parent or first shown,
+    // and a second request here would cancel that update and take another data context snapshot on the EDT
+    if (!suppressesFirstUpdateFastTrack) {
+      for (widget in widgets) {
+        // separate EDT action - avoid long-running update
+        span("main toolbar widget first update", Dispatchers.UiWithModelAccess) {
+          widget.first.updateActions()
+        }
       }
     }
 

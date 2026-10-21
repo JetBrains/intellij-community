@@ -18,7 +18,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
@@ -294,7 +293,8 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       if (directory == null) {
         directory = anotherDirectory;
       }
-      else {
+      // the two matcher chains of NamePass can both find the same directory
+      else if (!directory.getVirtualFile().equals(anotherDirectory.getVirtualFile())) {
         moreThanOne = true;
       }
     }
@@ -314,23 +314,16 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
                                          @NotNull Ref<Boolean> hasSuggestions) {
     String sanitized = getSanitizedPattern(parameters.getCompletePattern(), myModel);
     int qualifierEnd = sanitized.lastIndexOf('/') + 1;
-    NameGrouper grouper = new NameGrouper(sanitized.substring(qualifierEnd), indicator);
+    String namePattern = sanitized.substring(qualifierEnd);
+    String dirPattern = sanitized.substring(0, qualifierEnd);
+
+    NameGrouper grouper = new NameGrouper(namePattern, indicator);
     processNames(parameters, name -> grouper.processName(name));
 
-    DirectoryPathMatcher dirMatcher = DirectoryPathMatcher.root(myModel, sanitized.substring(0, qualifierEnd));
     DirectoryConsumer directoryConsumer = new DirectoryConsumer(isFuzzyFileSearchEnabled());
-    while (dirMatcher != null) {
-      int index = grouper.index;
-      SuffixMatches group = grouper.nextGroup(base);
-      if (group == null) break;
-      if (!group.processFiles(parameters.withLocalPattern(dirMatcher.dirPattern), consumer, hasSuggestions, dirMatcher,
-                              directoryConsumer)) {
-        return false;
-      }
-      dirMatcher = dirMatcher.appendChar(grouper.namePattern.charAt(index));
-      if (!myModel.isSlashlessMatchingEnabled()) {
-        return true;
-      }
+    NamePass pass = new NamePass(base, parameters, consumer, hasSuggestions, directoryConsumer, grouper);
+    if (!pass.process(dirPattern)) {
+      return false;
     }
 
     PsiDirectory directory = directoryConsumer.getDirectoryIfTheOnlyOne();
@@ -342,6 +335,93 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     return true;
+  }
+
+  /**
+   * One pass over the grouped file names of the project, along up to two {@link DirectoryPathMatcher} chains.
+   * <p>
+   * The pass consumes the grouper: {@link NameGrouper#nextGroup} empties the bucket it reads.
+   */
+  private final class NamePass {
+    private final @NotNull ChooseByNameViewModel base;
+    private final @NotNull FindSymbolParameters parameters;
+    private final @NotNull Processor<? super FoundItemDescriptor<?>> consumer;
+    private final @NotNull Ref<Boolean> hasSuggestions;
+    private final @NotNull DirectoryConsumer directoryConsumer;
+    private final @NotNull NameGrouper grouper;
+    /** Whether the consumer asked to stop, which is the only reason that may end the pass along the literal chain. */
+    private boolean stoppedByConsumer = false;
+
+    NamePass(@NotNull ChooseByNameViewModel base,
+             @NotNull FindSymbolParameters parameters,
+             @NotNull Processor<? super FoundItemDescriptor<?>> consumer,
+             @NotNull Ref<Boolean> hasSuggestions,
+             @NotNull DirectoryConsumer directoryConsumer,
+             @NotNull NameGrouper grouper) {
+      this.base = base;
+      this.parameters = parameters;
+      this.consumer = item -> {
+        if (consumer.process(item)) return true;
+        stoppedByConsumer = true;
+        return false;
+      };
+      this.hasSuggestions = hasSuggestions;
+      this.directoryConsumer = directoryConsumer;
+      this.grouper = grouper;
+    }
+
+    /**
+     * Reports the files of each name group, and narrows each chain by one character of the name pattern per group.
+     * <p>
+     * {@link DirectoryPathMatcher#literalRoot} resolves a pasted path at once, but its chain holds a subset of the
+     * walk, so the walk chain follows in each group and adds every result the literal chain missed. The walk root is
+     * built after the literal chain reported the first group, because the walk is the expensive stage.
+     * Both chains can report one file. Search Everywhere keeps one copy of it.
+     *
+     * @return {@code false} when the pass stopped, either because the consumer asked for it or because the project
+     * holds no suggestion
+     */
+    boolean process(@NotNull String dirPattern) {
+      DirectoryPathMatcher literalMatcher = DirectoryPathMatcher.literalRoot(myModel, dirPattern);
+      DirectoryPathMatcher walkMatcher = null;
+      boolean walkRootBuilt = false;
+
+      while (literalMatcher != null || !walkRootBuilt || walkMatcher != null) {
+        int index = grouper.index;
+        SuffixMatches group = grouper.nextGroup(base);
+        if (group == null) break;
+        char nameChar = grouper.namePattern.charAt(index);
+
+        if (literalMatcher != null) {
+          // a stop that the consumer did not ask for means "no suggestion here", and the walk chain can still find one
+          if (!processGroup(group, literalMatcher) && stoppedByConsumer) {
+            return false;
+          }
+          literalMatcher = literalMatcher.appendChar(nameChar);
+        }
+
+        if (!walkRootBuilt) {
+          walkMatcher = DirectoryPathMatcher.root(myModel, dirPattern);
+          walkRootBuilt = true;
+        }
+        if (walkMatcher != null) {
+          if (!processGroup(group, walkMatcher)) {
+            return false;
+          }
+          walkMatcher = walkMatcher.appendChar(nameChar);
+        }
+
+        if (!myModel.isSlashlessMatchingEnabled()) {
+          return true;
+        }
+      }
+      return true;
+    }
+
+    private boolean processGroup(@NotNull SuffixMatches group, @NotNull DirectoryPathMatcher dirMatcher) {
+      return group.processFiles(parameters.withLocalPattern(dirMatcher.dirPattern), consumer, hasSuggestions, dirMatcher,
+                                directoryConsumer);
+    }
   }
 
   /**
@@ -396,7 +476,8 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
    * Resolves a Go to File pattern that is an absolute path, or a path relative to the project base directory.
    * <p>
    * The line and column suffix of the pattern is ignored. A file outside the project content and libraries
-   * is found only for an absolute path, and only when {@code search.everywhere.absolute.path.outside.project} is on.
+   * is found only for an absolute path or a path relative to the project base directory,
+   * and only when {@code search.everywhere.absolute.path.outside.project} is on.
    * Needs a read action.
    *
    * @return the file or directory the pattern points to, or {@code null} if the pattern is not such a path
@@ -410,15 +491,17 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     // the line and column detection is the same for every model that is not a class or symbol model
     String path = FileUtil.toSystemIndependentName(ChooseByNamePopup.getTransformedPattern(pattern, null));
     if (Registry.is("search.everywhere.absolute.path.outside.project")) {
-      if (!SystemInfo.isWindows) {
-        // '~' is a shell convention, not a Windows one
-        path = OSAgnosticPathUtil.expandUserHome(path);
-      }
+      path = OSAgnosticPathUtil.expandUserHome(path);
       // the filesystem root is not a meaningful exact match, and being one it would outrank every real candidate
       if (OSAgnosticPathUtil.isAbsolute(path) && !isFileSystemRoot(path)) {
         // an absolute path is an explicit navigation request, so the file doesn't have to belong to the project
         VirtualFile vFile = findFileByAbsolutePathWithoutCaching(path);
         return vFile == null ? null : PsiUtilCore.findFileSystemItem(project, vFile);
+      }
+      if (!OSAgnosticPathUtil.isAbsolute(path)) {
+        // a path relative to the project base directory is just as explicit, and a file search may well skip it, e.g. a git-ignored file
+        VirtualFile vFile = findFileRelativeToBasePath(project, path);
+        if (vFile != null) return PsiUtilCore.findFileSystemItem(project, vFile);
       }
     }
 
@@ -471,6 +554,13 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       return cacheAvoiding.asCacheable();
     }
     return file;
+  }
+
+  private static @Nullable VirtualFile findFileRelativeToBasePath(@NotNull Project project, @NotNull String relativePath) {
+    String basePath = project.getBasePath();
+    if (basePath == null) return null;
+    String path = FileUtil.toCanonicalPath(basePath + "/" + relativePath);
+    return isFileSystemRoot(path) ? null : findFileByAbsolutePathWithoutCaching(path);
   }
 
   /** @return true for {@code "/"}, {@code "//"} and a bare DOS drive root such as {@code "C:/"} */

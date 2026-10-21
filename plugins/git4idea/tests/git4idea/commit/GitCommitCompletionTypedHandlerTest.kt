@@ -5,9 +5,15 @@ import com.intellij.codeInsight.completion.CompletionPhase
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ui.CommitMessage
-import com.intellij.testFramework.fixtures.CompletionAutoPopupTestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.fixtures.CompletionAutoPopupTestUtil
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.testFramework.runInEdtAndWait
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Test
 
 /**
  * The test has no Git repository, so `GitCommitCompletionContributor` adds no item.
@@ -15,21 +21,38 @@ import com.intellij.testFramework.runInEdtAndWait
  * [CompletionPhase.EmptyAutoPopup] means that the session ran and found nothing.
  * [CompletionPhase.NoCompletion] means that no session started.
  */
-class GitCommitCompletionTypedHandlerTest : CompletionAutoPopupTestCase() {
-  fun `test the popup starts after the fixup command`() = assertPopupStarts("fixup")
+@TestApplication
+class GitCommitCompletionTypedHandlerTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  fun `test the popup starts after the squash command`() = assertPopupStarts("squash")
+  private val myFixture by codeInsightModuleFixture(projectFixture)
 
-  fun `test the popup starts after the amend command`() = assertPopupStarts("amend")
+  private fun type(s: String) = CompletionAutoPopupTestUtil.type(myFixture, s)
 
-  fun `test the popup ignores a partial command`() = assertPopupDoesNotStart("fixu")
+  private fun runTest(block: () -> Unit) = CompletionAutoPopupTestUtil.runWithAutoPopupEnabled<Throwable>(myFixture, block)
 
-  fun `test the popup ignores an other word`() = assertPopupDoesNotStart("hello")
+  @Test
+  fun `test the popup starts after the fixup command`(): Unit = runTest { assertPopupStarts("fixup") }
 
-  fun `test the popup ignores a command that is not at the start`() = assertPopupDoesNotStart("wip fixup")
+  @Test
+  fun `test the popup starts after the squash command`(): Unit = runTest { assertPopupStarts("squash") }
+
+  @Test
+  fun `test the popup starts after the amend command`(): Unit = runTest { assertPopupStarts("amend") }
+
+  @Test
+  fun `test the popup ignores a partial command`(): Unit = runTest { assertPopupDoesNotStart("fixu") }
+
+  @Test
+  fun `test the popup ignores an other word`(): Unit = runTest { assertPopupDoesNotStart("hello") }
+
+  @Test
+  fun `test the popup ignores a command that is not at the start`(): Unit = runTest { assertPopupDoesNotStart("wip fixup") }
 
   private fun assertPopupStarts(message: String) {
-    assertInstanceOf(typeCommandEnd(message), CompletionPhase.EmptyAutoPopup::class.java)
+    assertInstanceOf(CompletionPhase.EmptyAutoPopup::class.java, typeCommandEnd(message))
   }
 
   private fun assertPopupDoesNotStart(message: String) {
@@ -39,7 +62,7 @@ class GitCommitCompletionTypedHandlerTest : CompletionAutoPopupTestCase() {
   private fun typeCommandEnd(message: String): CompletionPhase {
     myFixture.configureByText("commitMessage.txt", "$message<caret>")
     runInEdtAndWait {
-      val commitMessage = CommitMessage(project)
+      val commitMessage = CommitMessage(myFixture.project)
       Disposer.register(myFixture.testRootDisposable, commitMessage)
       myFixture.editor.document.putUserData(CommitMessage.DATA_KEY, commitMessage)
     }

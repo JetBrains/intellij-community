@@ -37,7 +37,7 @@ import com.intellij.python.community.execService.RelativePath
 import com.intellij.python.community.execService.impl.processLaunchers.uploadMeasureTime
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython
 import com.intellij.python.community.execService.python.advancedApi.executeHelperAdvanced
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.Result
@@ -207,7 +207,8 @@ internal class PyTargetsSkeletonGenerator(skeletonPath: Path, pySdk: Sdk, curren
   private inner class EelBuilder(private val sdk: Sdk, private val skeletonsLocalRootPath: Path) : Builder() {
     @RequiresBackgroundThread(generateAssertion = false)
     override fun runProcessWithLineOutputListener(listener: LineWiseProcessOutputListener): ProcessOutput = runBlockingMaybeCancellable {
-      val binary = sdk.pythonInterpreterAsync().asBinToExecute().getOr { throw InvalidSdkException(it.error.message) }
+      val interpreter = sdk.pythonInterpreterResultAsync().getOr { throw InvalidSdkException(it.error.message) }
+      val binary = interpreter.asBinToExecute().getOr { throw InvalidSdkException(it.error.message) }
 
       val args = Args(SKELETOR_DIR_ARG).addLocalDir(skeletonsLocalRootPath) {
         reportDir(andReport = { it to AnArgument })

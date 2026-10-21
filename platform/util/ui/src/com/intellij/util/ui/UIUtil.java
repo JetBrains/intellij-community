@@ -207,6 +207,7 @@ public final class UIUtil {
   public static final @NlsSafe String LINE_SEPARATOR = "\n";
   private static final Key<WeakReference<Component>> FOSTER_PARENT = Key.create("Component.fosterParent");
   private static final Key<Boolean> HAS_FOCUS = Key.create("Component.hasFocus");
+  private static final Key<Boolean> DEPRECATED_API_USED_KEY = Key.create("Component.deprecated.api.used");
 
   /**
    * A key for hiding a line under the window title bar on macOS
@@ -709,8 +710,8 @@ public final class UIUtil {
    * Computes the minimum size the component must have to keep the given number of characters
    *
    * Same as {@code computeTextComponentMinimumSize(preferredSize, text, fontMetrics, nCharactersToKeep, 0, "...")}.
-   * 
-   * @see #computeTextComponentMinimumSize(int, String, FontMetrics, int, int) 
+   *
+   * @see #computeTextComponentMinimumSize(int, String, FontMetrics, int, int)
    */
   public static int computeTextComponentMinimumSize(
     int preferredSize,
@@ -3576,15 +3577,30 @@ public final class UIUtil {
   }
 
   public static void applyDeprecatedBackground(@Nullable JComponent component) {
+    if (component == null) {
+      return;
+    }
+
+    component.putClientProperty(DEPRECATED_API_USED_KEY, Boolean.TRUE);
+
     Color color = getDeprecatedBackground();
-    if (component != null && color != null) {
+    if (color != null) {
       component.setBackground(color);
       component.setOpaque(true);
     }
   }
 
   @ApiStatus.Internal
-  public static @Nullable Color getDeprecatedBackground() {
+  public static boolean isDeprecatedBackgroundEnabled() {
+    return getDeprecatedBackground() != null;
+  }
+
+  @ApiStatus.Internal
+  public static boolean isDeprecatedApiUsed(@NotNull JComponent component) {
+    return component.getClientProperty(DEPRECATED_API_USED_KEY) == Boolean.TRUE;
+  }
+
+  private static @Nullable Color getDeprecatedBackground() {
     return Registry.getColor("ui.deprecated.components.color", null);
   }
 

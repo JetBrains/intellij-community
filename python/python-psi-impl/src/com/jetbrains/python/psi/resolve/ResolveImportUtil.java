@@ -379,7 +379,7 @@ public final class ResolveImportUtil {
 
   @ApiStatus.Internal
   public static @Nullable PsiDirectory findCorrespondingSkeletonsDir(@NotNull PsiDirectory packageDir) {
-    Sdk sdk = PythonSdkUtil.findPythonSdk(packageDir);
+    Sdk sdk = MainPythonSdkKt.pythonSdkIfReady(packageDir);
     if (sdk == null) return null;
 
     VirtualFile skeletonsDir = PythonSdkUtil.findSkeletonsDir(sdk);

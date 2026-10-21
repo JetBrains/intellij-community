@@ -497,8 +497,8 @@ gh pr edit <number> --repo JetBrains/intellij-community \
 ### Update YouTrack ticket state
 
 After the PR is created, set the YouTrack ticket state to "In Review" for each `JEWEL-xxx` issue referenced in the
-commit message/PR title. Use the `youtrack-community` skill to do this. The user may have to do some manual setup if
-they have never run it.
+commit message/PR title. Use the `youtrack` skill in the monorepo, or the `youtrack-community` skill in a community
+checkout. The user may have to do some manual setup if they have never run it.
 
 ## 10. Subsequent PR updates
 

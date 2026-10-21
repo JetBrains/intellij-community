@@ -65,6 +65,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectFrameAllocatorKt;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.ActionCallback;
@@ -83,6 +84,7 @@ import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService;
+import com.intellij.openapi.wm.ex.ProjectFrameCapability;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
@@ -115,6 +117,7 @@ import com.intellij.util.progress.CancellationUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import kotlin.Unit;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.CalledInAny;
@@ -143,6 +146,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
@@ -603,6 +608,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final String ATTRIBUTE_ID = "id";
   private JPanel viewContentPanel;
   private static final Comparator<AbstractProjectViewPane> PANE_WEIGHT_COMPARATOR = Comparator.comparingInt(AbstractProjectViewPane::getWeight);
+  private static final int OTHER_PANES_TIMEOUT_SECONDS = 10;
   private final JComponent myDataProvider;
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
   private final Map<String, Element> myUninitializedPaneState = new HashMap<>();
@@ -1174,7 +1180,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     GuiUtils.replaceJSplitPaneWithIDEASplitter(panel);
     SwingUtilities.invokeLater(() -> splitterProportions.restoreSplitterProportions(panel));
 
-    if (loadPaneExtensions) {
+    if (loadPaneExtensions && !addDefaultPaneOfWelcomeProject()) {
       ensurePanesLoaded();
     }
     isInitialized = true;
@@ -1303,7 +1309,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     try {
       for (AbstractProjectViewPane pane : loadPanes().values()) {
         try {
-          if (pane.isInitiallyVisible()) {
+          // the default pane of a welcome-experience project can be added already
+          if (pane.isInitiallyVisible() && idToPane.get(pane.getId()) != pane && !uninitializedPanes.contains(pane)) {
             addProjectPane(pane);
           }
         }
@@ -1316,6 +1323,43 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     finally {
       isExtensionsLoading = false;
     }
+  }
+
+  /**
+   * Adds only the default pane of a welcome-experience project, so its frame does not wait for every pane extension.
+   * The other panes are added once the frame content has painted or after a timeout,
+   * and earlier when a pane that is not added yet or a select-in target is asked for.
+   * The paint or the dispose of the project cancels the timeout.
+   *
+   * @return false when the project is not a welcome-experience one or has no initially visible default pane
+   */
+  private boolean addDefaultPaneOfWelcomeProject() {
+    checkLock();
+    if (!ApplicationManager.getApplication().getService(ProjectFrameCapabilitiesService.class)
+      .has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)) {
+      return false;
+    }
+
+    AbstractProjectViewPane defaultPane = AbstractProjectViewPane.EP.findFirstSafe(project, pane -> pane.isDefaultPane(project));
+    if (defaultPane == null || !defaultPane.isInitiallyVisible()) {
+      return false;
+    }
+
+    applyUninitializedPaneState(defaultPane);
+    doAddProjectPane(defaultPane, false);
+
+    Runnable addOtherPanes = () -> ApplicationManager.getApplication().invokeLater(this::ensurePanesLoaded, project.getDisposed());
+    ScheduledFuture<?> timeout =
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(addOtherPanes, OTHER_PANES_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    // the deferred is cancelled when the project is disposed
+    ProjectFrameAllocatorKt.getOrCreateFrameContentPaintedDeferred(project).invokeOnCompletion(cause -> {
+      timeout.cancel(false);
+      if (cause == null) {
+        addOtherPanes.run();
+      }
+      return Unit.INSTANCE;
+    });
+    return true;
   }
 
   private @NotNull Map<String, AbstractProjectViewPane> loadPanes() {
@@ -1411,12 +1455,18 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       return null;
     }
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      // most tests don't need all panes to be loaded
-      ensurePanesLoaded();
+    AbstractProjectViewPane pane = findAddedPane(id);
+    // most tests don't need all panes to be loaded
+    if (pane != null || ApplicationManager.getApplication().isUnitTestMode()) {
+      return pane;
     }
 
-    final AbstractProjectViewPane pane = idToPane.get(id);
+    ensurePanesLoaded();
+    return findAddedPane(id);
+  }
+
+  private @Nullable AbstractProjectViewPane findAddedPane(@NotNull String id) {
+    AbstractProjectViewPane pane = idToPane.get(id);
     if (pane != null) {
       return pane;
     }
@@ -1691,12 +1741,9 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   @Override
   public @NotNull String getDefaultViewId() {
-    for (AbstractProjectViewPane extension : AbstractProjectViewPane.EP.getExtensions(project)) {
-      if (extension.isDefaultPane(project)) {
-        return extension.getId();
-      }
-    }
-    return ProjectViewPane.ID;
+    // instantiates the panes only up to the default one
+    AbstractProjectViewPane defaultPane = AbstractProjectViewPane.EP.findFirstSafe(project, pane -> pane.isDefaultPane(project));
+    return defaultPane == null ? ProjectViewPane.ID : defaultPane.getId();
   }
 
   private void readPaneState(@NotNull Element panesElement) {

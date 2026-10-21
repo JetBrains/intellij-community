@@ -27,8 +27,8 @@ import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithReturnType
-import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
@@ -69,7 +69,7 @@ fun KtExpression.shouldShowType(): Boolean = when (this) {
     is KtParameter -> typeReference == null && (isLoopParameter || isLambdaParameter)
     is KtPropertyAccessor -> false
     is KtDestructuringDeclarationEntry -> true
-    is KtStatementExpression, is KtDestructuringDeclaration -> false
+    is KtStatementExpression, is KtDeclaration -> false
     is KtIfExpression, is KtWhenExpression, is KtTryExpression -> shouldShowStatementType()
     is KtConstantExpression -> false
     is KtThisExpression -> false

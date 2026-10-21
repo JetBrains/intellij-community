@@ -3,16 +3,23 @@ package git4idea.workingTrees
 
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
+import com.intellij.ide.RecentProjectMetaInfo
+import com.intellij.ide.RecentProjectsManager
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
@@ -36,10 +43,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.vcsUtil.VcsUtil
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
 import git4idea.GitBranch
-import git4idea.GitNotificationIdsHolder
 import git4idea.GitOperationsCollector
 import git4idea.GitReference
 import git4idea.GitWorkingTree
@@ -50,6 +54,7 @@ import git4idea.commands.GitBranchAlreadyCheckedOutInOtherWorktreeDetector
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.util.EelUtils.getEel
+import git4idea.workingTrees.actions.GitChooseWorkingTreeDialog
 import git4idea.workingTrees.dialog.GitWorkingTreeDialog
 import git4idea.workingTrees.dialog.GitWorktreeCreationRequest
 import git4idea.workingTrees.dialog.GitWorktreeDialogContext
@@ -63,6 +68,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.coroutines.resume
@@ -111,13 +118,18 @@ class GitCreateWorkingTreeService(private val coroutineScope: CoroutineScope) {
   ) {
     if (!GitWorkingTreesService.isWorktreeCreationSupported(repository)) return
 
-    val existingWorkingTree = GitSingleRefAction.findCheckedOutWorkingTree(branch, listOf(repository), skipCurrentWorkingTree = false)
+    val checkedOutWorkingTrees = GitSingleRefAction.findCheckedOutWorkingTrees(branch, listOf(repository), skipCurrentWorkingTree = false)
     var force = false
-    if (existingWorkingTree != null) {
+    if (checkedOutWorkingTrees.isNotEmpty()) {
       // If the branch is checked out in the current worktree there's nothing to open; the popup item is hidden in that case.
-      if (existingWorkingTree.isCurrent) return
-      if (!confirmCreateNewWorktreeInsteadOfOpening(repository.project, branch, existingWorkingTree.path.path)) {
-        GitWorkingTreesService.getInstance(repository.project).openWorkingTreeProject(existingWorkingTree, onProjectOpened)
+      if (checkedOutWorkingTrees.any { it.isCurrent }) return
+      // Name the single location only when there is one; naming one of several would read as if it were the only one.
+      val worktreePathToMention = checkedOutWorkingTrees.singleOrNull()?.path?.path
+      if (!confirmCreateNewWorktreeInsteadOfOpening(repository.project, branch, worktreePathToMention)) {
+        val chosen = chooseWorkingTreeToOpen(repository.project, checkedOutWorkingTrees)
+        if (chosen != null) {
+          GitWorkingTreesService.getInstance(repository.project).openWorkingTreeProject(chosen, onProjectOpened)
+        }
         return
       }
       force = true
@@ -147,6 +159,16 @@ class GitCreateWorkingTreeService(private val coroutineScope: CoroutineScope) {
     return decision == GitBranchUiHandler.CheckoutInOtherWorktreeDecision.CHECKOUT_ANYWAY
   }
 
+  /**
+   * [workingTrees]' only entry, or the one the user picks from a chooser when there is more than one.
+   * Skips the UI-thread hop entirely when [workingTrees] already has a single entry.
+   */
+  private suspend fun chooseWorkingTreeToOpen(project: Project, workingTrees: List<GitWorkingTree>): GitWorkingTree? {
+    val single = workingTrees.singleOrNull()
+    if (single != null) return single
+    return withContext(Dispatchers.UiWithModelAccess) { GitChooseWorkingTreeDialog.chooseAmong(project, workingTrees) }
+  }
+
   private fun loadLastParentPath(project: Project): String? =
     PropertiesComponent.getInstance(project).getValue(LAST_PARENT_PATH_KEY)
 
@@ -168,6 +190,7 @@ class GitCreateWorkingTreeService(private val coroutineScope: CoroutineScope) {
     refFromContext: GitReference?,
     place: String,
     candidateRepositories: List<GitRepository> = listOf(repository),
+    openAfterCreation: Boolean = true,
     onProjectOpened: ((Project) -> Unit)? = null,
   ) {
     val project = repository.project
@@ -185,7 +208,7 @@ class GitCreateWorkingTreeService(private val coroutineScope: CoroutineScope) {
         val lastParentPath = loadLastParentPath(project)
         val initialParentPath = computeInitialParentPath(project, repository, systemTempDir) { getDefaultParentDir(eel) }
         GitWorktreeDialogContext(project, repository, ideActivity, refFromContext,
-                                 lastParentPath ?: initialParentPath, candidateRepositories)
+                                 lastParentPath ?: initialParentPath, candidateRepositories, openAfterCreation)
       }
 
       withContext(Dispatchers.UiWithModelAccess) {
@@ -198,18 +221,26 @@ class GitCreateWorkingTreeService(private val coroutineScope: CoroutineScope) {
               val request = dialog.getWorkTreeData()
               request.workingTreePath.parentPath?.path?.let { saveLastParentPath(project, it) }
               withContext(Dispatchers.Default) {
-                doCreateWorkingTree(dialogContext.ideActivity, request, onProjectOpened)
+                doCreateWorkingTree(dialogContext.ideActivity, request, onProjectOpened,
+                                    openAfterCreation = dialogContext.openAfterCreation)
               }
               return@withContext
             }
             GitWorkingTreeDialog.CREATE_WORKTREE_INCLUDE_EXIT_CODE -> {
               // The dialog already wrote the file and opened it for editing. Keep its field values, so the
-              // dialog can reopen with the same choices once that editor tab closes.
+              // dialog can reopen with the same choices once the user asks to return to it.
               currentDialogContext = currentDialogContext.copy(initialState = dialog.captureState())
-              dialog.worktreeIncludeFile?.let { waitForEditorClosed(project, it) }
-              // waitForEditorClosed also resumes when the project disposes first (see its doc comment), so
-              // that case must not be mistaken for "the editor tab closed" and reopen the dialog.
-              if (project.isDisposed) return@withContext
+              val targetFile = dialog.worktreeIncludeFile
+              val result = if (targetFile != null) {
+                waitForReturnToDialogAction(project, targetFile)
+              }
+              else {
+                WorktreeIncludeEditResult.ABORTED
+              }
+              // waitForReturnToDialogAction also resumes when the project disposes first (see its doc
+              // comment) or when the user closes the editor tab without clicking the banner action.
+              // In those cases, terminate the wizard loop instead of reopening the dialog.
+              if (project.isDisposed || result == WorktreeIncludeEditResult.ABORTED) return@withContext
             }
             else -> return@withContext
           }
@@ -219,30 +250,54 @@ class GitCreateWorkingTreeService(private val coroutineScope: CoroutineScope) {
   }
 
   /**
-   * Suspends until [file]'s editor tab is closed, or returns immediately if it isn't open. Teardown
-   * runs through a [Disposer]-registered [Disposable] so it also fires if [project] disposes first,
-   * instead of leaking the coroutine and its [com.intellij.util.messages.MessageBusConnection].
+   * Suspends until the user invokes the "Return to the dialog" action on [file]'s editor notification
+   * banner (see [GitWorktreeIncludeEditorNotificationProvider]) or closes the editor tab. Teardown runs
+   * through a [Disposer]-registered [Disposable] so it also fires if [project] disposes first, instead of leaking
+   * the coroutine.
    */
   @VisibleForTesting
-  @Suppress("SplitModeApiUsage")
-  internal suspend fun waitForEditorClosed(project: Project, file: VirtualFile) {
-    if (!FileEditorManager.getInstance(project).isFileOpen(file)) return
-    suspendCancellableCoroutine { continuation ->
-      val connection = project.messageBus.connect()
-      val disposable = Disposable {
-        connection.disconnect()
-        if (continuation.isActive) continuation.resume(Unit)
-      }
-      connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
-        override fun fileClosed(source: FileEditorManager, closedFile: VirtualFile) {
-          if (closedFile == file) {
-            Disposer.dispose(disposable)
+  internal suspend fun waitForReturnToDialogAction(project: Project, file: VirtualFile): WorktreeIncludeEditResult {
+    val session = GitWorktreeIncludeEditingSessionService.getInstance(project)
+    // Registered under project so a project disposal still resumes the coroutine, but disposed in the `finally`
+    // below so it doesn't linger on the project's disposable tree once this call is done, e.g. after just closing
+    // the editor tab.
+    val disposable = Disposer.newDisposable()
+    try {
+      return suspendCancellableCoroutine { continuation ->
+        val connection = project.messageBus.connect()
+        var resumed = false
+
+        fun finish(result: WorktreeIncludeEditResult) {
+          if (resumed) return
+          resumed = true
+          session.clearPendingReturn(file)
+          connection.disconnect()
+          if (continuation.isActive) {
+            continuation.resume(result)
           }
         }
-      })
-      @Suppress("IncorrectParentDisposable")
-      Disposer.register(project, disposable)
-      continuation.invokeOnCancellation { Disposer.dispose(disposable) }
+
+        session.setPendingReturn(file) {
+          finish(WorktreeIncludeEditResult.RETURN_TO_DIALOG)
+        }
+
+        @Suppress("SplitModeApiUsage")
+        connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+          override fun fileClosed(source: FileEditorManager, closedFile: VirtualFile) {
+            if (closedFile == file) {
+              finish(WorktreeIncludeEditResult.ABORTED)
+            }
+          }
+        })
+
+        Disposer.register(disposable, Disposable { finish(WorktreeIncludeEditResult.ABORTED) })
+        @Suppress("IncorrectParentDisposable")
+        Disposer.register(project, disposable)
+        continuation.invokeOnCancellation { finish(WorktreeIncludeEditResult.ABORTED) }
+      }
+    }
+    finally {
+      Disposer.dispose(disposable)
     }
   }
 
@@ -272,8 +327,11 @@ class GitCreateWorkingTreeService(private val coroutineScope: CoroutineScope) {
     onProjectOpened: ((Project) -> Unit)? = null,
     force: Boolean = false,
     reportOwnProgress: Boolean = true,
+    openAfterCreation: Boolean = true,
   ) {
     GitOperationsCollector.logWorktreeCreationDialogExitedWithOk(ideActivity, request)
+
+    FileDocumentManager.getInstance().saveAllDocuments()
 
     val project = request.repository.project
     val path = request.workingTreePath.path
@@ -295,6 +353,13 @@ class GitCreateWorkingTreeService(private val coroutineScope: CoroutineScope) {
       createAndConfigureWorkingTree(project, request, gitWTService, targetWorktreeDir, force)
     }
     if (!workingTreeCreated) return
+
+    if (!openAfterCreation) {
+      registerAsRecentProject(project, targetWorktreeDir)
+      request.repository.workingTreeHolder.scheduleReload()
+      GitWorktreeNotifications.notifyWorktreeCreated(project, request.branch.presentableBranchName, targetWorktreeDir)
+      return
+    }
 
     openWorktreeProject(project, request, gitWTService, targetWorktreeDir, ideActivity, onProjectOpened)
   }
@@ -476,6 +541,15 @@ class GitCreateWorkingTreeService(private val coroutineScope: CoroutineScope) {
     }
   }
 
+  private suspend fun registerAsRecentProject(project: Project, worktreePath: Path) {
+    val pathToOpen = resolveWorktreeOpenPath(project, worktreePath)
+    val recentProjectsManager = serviceAsync<RecentProjectsManager>() as? RecentProjectsManagerBase ?: return
+    recentProjectsManager.addRecentPath(pathToOpen, RecentProjectMetaInfo())
+    withContext(Dispatchers.EDT) {
+      ApplicationManager.getApplication().messageBus.syncPublisher(RecentProjectsManager.RECENT_PROJECTS_CHANGE_TOPIC).change()
+    }
+  }
+
   private suspend fun createWorkingTreeTracked(
     gitWTService: GitWorkingTreesService,
     request: GitWorktreeCreationRequest,
@@ -506,4 +580,9 @@ class GitCreateWorkingTreeService(private val coroutineScope: CoroutineScope) {
     }
     return decision == GitBranchUiHandler.CheckoutInOtherWorktreeDecision.CHECKOUT_ANYWAY
   }
+}
+
+internal enum class WorktreeIncludeEditResult {
+  RETURN_TO_DIALOG,
+  ABORTED,
 }

@@ -55,6 +55,8 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
 
   private final List<TextRange> myRanges = new ArrayList<>();
   private SelectionModel mySelectionModel;
+  // An async formatting service changes the document after doReformat returns, so the line count waits for afterTaskCompleted.
+  private @Nullable Pair<Document, CharSequence> myTextBeforeFormatting;
 
   public ReformatCodeProcessor(Project project, boolean processChangedTextOnly) {
     super(project, getCommandName(), getProgressText(), processChangedTextOnly);
@@ -261,7 +263,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
       }
 
       if (infoCollector != null) {
-        prepareUserNotificationMessage(document, before);
+        myTextBeforeFormatting = Pair.create(document, before);
       }
 
       return !CodeFormatterFacade.FORMATTING_CANCELLED_FLAG.get();
@@ -295,9 +297,18 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     return provider.hasLanguage(language) ? provider.getPsi(language) : provider.getPsi(provider.getBaseLanguage());
   }
 
+  @Override
+  protected void afterTaskCompleted() {
+    Pair<Document, CharSequence> textBeforeFormatting = myTextBeforeFormatting;
+    myTextBeforeFormatting = null;
+    if (textBeforeFormatting != null) {
+      prepareUserNotificationMessage(textBeforeFormatting.first, textBeforeFormatting.second);
+    }
+  }
+
   private void prepareUserNotificationMessage(@NotNull Document document, @NotNull CharSequence before) {
     LOG.assertTrue(getInfoCollector() != null);
-    int number = VcsFacade.getInstance().calculateChangedLinesNumber(document, before);
+    int number = ReadAction.computeBlocking(() -> VcsFacade.getInstance().calculateChangedLinesNumber(document, before));
     if (number > 0) {
       String message = CodeInsightBundle.message("hint.text.formatted.line", number);
       getInfoCollector().setReformatCodeNotification(message);

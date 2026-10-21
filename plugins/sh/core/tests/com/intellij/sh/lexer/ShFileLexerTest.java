@@ -2,8 +2,8 @@
 package com.intellij.sh.lexer;
 
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.LexerTestFixture;
+import com.intellij.sh.ShTestData;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.testFramework.junit5.fixture.TestFixtures;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.Lex
 @TestFixtures
 public class ShFileLexerTest {
   private final TestFixture<LexerTestFixture> lexer =
-    lexerFixture(PluginPathManager.getPluginHomePath("sh") + "/core/testData/lexer", () -> new ShLexer());
+    lexerFixture(ShTestData.getTestDataPath() + "/lexer", () -> new ShLexer());
   private String testName;
 
   @Test public void testFirst() { doFileTest("sh"); }

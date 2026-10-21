@@ -5,20 +5,15 @@ import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.toEelApi
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
-import com.jetbrains.python.sdk.add.v2.TargetFileSystem
 import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.sdk.sdkFlavor
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
-import com.jetbrains.python.target.PythonLanguageRuntimeConfiguration
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -68,10 +63,10 @@ data class PyRunToolData(
  */
 @ApiStatus.Internal
 data class PyRunToolParameters(
-  val exe: String,
-  val args: List<String>,
-  val envs: Map<String, String>,
-  val includeOriginalExe: Boolean = true,
+  internal val exe: PathHolder,
+  internal val args: List<String>,
+  internal val envs: Map<String, String>,
+  internal val includeOriginalExe: Boolean = true,
 )
 
 /**
@@ -133,12 +128,7 @@ abstract class PySdkRunToolProvider<T : PyFlavorData, U : PythonSdkFlavor<T>>(
 
   override suspend fun getRunToolParameters(sdk: Sdk, inlineScriptTarget: Path?): PyRunToolParameters {
     val additionalData = sdk.pySdkAdditionalData
-    val fileSystem = when (additionalData) {
-                       is PyTargetAwareAdditionalData -> additionalData.targetEnvironmentConfiguration?.let {
-                         TargetFileSystem(it, PythonLanguageRuntimeConfiguration())
-                       }
-                       else -> null
-                     } ?: Path.of(sdk.homePath!!).getEelDescriptor().toEelApi().toFileSystem()
+    val fileSystem = sdk.toFileSystem()
 
     @Suppress("UNCHECKED_CAST") // Checked by isAvailable and the flavor's data contract
     val flavorAndData = additionalData.flavorAndData as PyFlavorAndData<T, U>

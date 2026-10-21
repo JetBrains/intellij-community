@@ -3,6 +3,7 @@ package com.intellij.platform.versionDownloadManager
 
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.project.Project
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.text.SemVer
@@ -42,9 +43,9 @@ private class FakeVersionDownloadManager(
 
   override suspend fun prepareTargetDir(targetDir: Path) {}
 
-  override suspend fun getLatestVersion(): SemVer = SemVer("1.0.0", 1, 0, 0)
+  override suspend fun getLatestVersion(stable: Boolean): SemVer = error("Registry access is not expected")
 
-  override suspend fun getAvailableVersions(): List<SemVer> = listOf(SemVer("1.0.0", 1, 0, 0))
+  override suspend fun getAvailableVersions(): List<SemVer> = error("Registry access is not expected")
 }
 
 @TestApplication
@@ -156,5 +157,88 @@ class VersionDownloadManagerTest {
 
     assertThat(manager.installCount).hasValue(2)
     assertThat(manager.getVersion(VERSION)).isEqualTo(manager.versionPath(VERSION))
+  }
+
+  @Test
+  fun `purge keeps the latest installed stable version and prerelease`(@TempDir root: Path): Unit = timeoutRunBlocking {
+    val latest = SemVer("3.0.0-rc.1", 3, 0, 0, "rc.1")
+    val oldPrerelease = SemVer("2.0.0-rc.1", 2, 0, 0, "rc.1")
+    val manager = FakeVersionDownloadManager(root)
+    for (version in listOf(VERSION, oldPrerelease, OTHER_VERSION, latest)) {
+      manager.downloadItem(project, version)
+    }
+    manager.versionPath(VERSION).resolve("nested").createDirectories().resolve(PAYLOAD_FILE_NAME).writeText("old content")
+
+    manager.purgeNonLatest(project)
+
+    assertThat(manager.getInstalledVersions()).containsExactly(latest, OTHER_VERSION)
+    assertThat(manager.versionPath(VERSION)).doesNotExist()
+    assertThat(manager.versionPath(oldPrerelease)).doesNotExist()
+    assertThat(manager.versionPath(OTHER_VERSION).resolve(PAYLOAD_FILE_NAME)).exists()
+    assertThat(manager.versionPath(latest).resolve(PAYLOAD_FILE_NAME)).exists()
+  }
+
+  @Test
+  fun `purge keeps one version when the latest version is stable`(@TempDir root: Path): Unit = timeoutRunBlocking {
+    val manager = FakeVersionDownloadManager(root)
+    val oldPrerelease = SemVer("2.0.0-rc.1", 2, 0, 0, "rc.1")
+    manager.downloadItem(project, VERSION)
+    manager.downloadItem(project, oldPrerelease)
+    manager.downloadItem(project, OTHER_VERSION)
+
+    manager.purgeNonLatest(project)
+
+    assertThat(manager.getInstalledVersions()).containsExactly(OTHER_VERSION)
+    assertThat(manager.versionPath(VERSION)).doesNotExist()
+    assertThat(manager.versionPath(oldPrerelease)).doesNotExist()
+    assertThat(manager.versionPath(OTHER_VERSION).resolve(PAYLOAD_FILE_NAME)).exists()
+  }
+
+  @Test
+  fun `purge keeps the latest installed prerelease when no stable version is installed`(@TempDir root: Path): Unit = timeoutRunBlocking {
+    val manager = FakeVersionDownloadManager(root)
+    val latest = SemVer("2.0.0-rc.2", 2, 0, 0, "rc.2")
+    val older = SemVer("2.0.0-rc.1", 2, 0, 0, "rc.1")
+    manager.downloadItem(project, older)
+    manager.downloadItem(project, latest)
+
+    manager.purgeNonLatest(project)
+
+    assertThat(manager.getInstalledVersions()).containsExactly(latest)
+    assertThat(manager.versionPath(older)).doesNotExist()
+    assertThat(manager.versionPath(latest).resolve(PAYLOAD_FILE_NAME)).exists()
+  }
+
+  @Test
+  fun `purge keeps the latest installed version when a newer version is incomplete`(@TempDir root: Path): Unit = timeoutRunBlocking {
+    val manager = FakeVersionDownloadManager(root)
+    manager.downloadItem(project, VERSION)
+    val incomplete = manager.versionPath(OTHER_VERSION).createDirectories()
+    incomplete.resolve(PAYLOAD_FILE_NAME).writeText("incomplete")
+
+    manager.purgeNonLatest(project)
+
+    assertThat(manager.getInstalledVersions()).containsExactly(VERSION)
+    assertThat(manager.versionPath(VERSION).resolve(PAYLOAD_FILE_NAME)).exists()
+    assertThat(incomplete).doesNotExist()
+  }
+
+  @Test
+  fun `purge removes incomplete versions and keeps unrelated entries`(@TempDir root: Path): Unit = timeoutRunBlocking {
+    val manager = FakeVersionDownloadManager(root)
+    val incomplete = manager.versionPath(OTHER_VERSION).createDirectories()
+    incomplete.resolve(PAYLOAD_FILE_NAME).writeText("incomplete")
+    val unrelated = root.resolve("other-package-2.0.0").createDirectories()
+    unrelated.resolve(PAYLOAD_FILE_NAME).writeText("unrelated")
+    val invalidVersion = root.resolve("fake-package-not-a-version").createDirectories()
+    val regularFile = root.resolve("fake-package-3.0.0")
+    regularFile.writeText("unrelated")
+
+    manager.purgeNonLatest(project)
+
+    assertThat(incomplete).doesNotExist()
+    assertThat(unrelated.resolve(PAYLOAD_FILE_NAME)).hasContent("unrelated")
+    assertThat(invalidVersion).isDirectory()
+    assertThat(regularFile).hasContent("unrelated")
   }
 }

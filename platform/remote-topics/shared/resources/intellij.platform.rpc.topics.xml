@@ -5,17 +5,19 @@
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.platform.core"/>
-    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.rpc.lite"/>
     <module name="intellij.platform.util.coroutines"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
-    <!-- `hasAttributes` exposes the `topicId` attribute to the listener index, so a listener is constructed on the first event of its topic -->
     <extensionPoint qualifiedName="com.intellij.platform.rpc.applicationRemoteTopicListener"
-                    interface="com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener" hasAttributes="true" dynamic="true"/>
+                    beanClass="com.intellij.platform.rpc.topics.impl.ApplicationRemoteTopicListenerBean" dynamic="true">
+      <with attribute="implementation" implements="com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener"/>
+    </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.platform.rpc.projectRemoteTopicListener"
-                    interface="com.intellij.platform.rpc.topics.ProjectRemoteTopicListener" hasAttributes="true" dynamic="true"/>
+                    beanClass="com.intellij.platform.rpc.topics.impl.ProjectRemoteTopicListenerBean" dynamic="true">
+      <with attribute="implementation" implements="com.intellij.platform.rpc.topics.ProjectRemoteTopicListener"/>
+    </extensionPoint>
   </extensionPoints>
 </idea-plugin>

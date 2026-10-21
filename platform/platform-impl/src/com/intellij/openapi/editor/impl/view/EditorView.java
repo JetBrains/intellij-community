@@ -404,8 +404,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     myPainter.invalidateCache(clip);
   }
 
-  public void prefetchCaretFrames(@NotNull List<CaretRectangle> locations, @NotNull CaretRepaintMetrics repaintMetrics) {
-    myPainter.prefetchCaretFrames(locations, repaintMetrics);
+  public void prefetchCaretFrames(@NotNull List<CaretRectangle> locations, @NotNull CaretRepaintMetrics repaintMetrics, boolean forcePrefetch) {
+    myPainter.prefetchCaretFrames(locations, repaintMetrics, forcePrefetch);
   }
 
   @RequiresEdt
@@ -636,6 +636,14 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     else {
       return myCharWidthCache.getCodePointWidth(codePoint, fontStyle);
     }
+  }
+
+  /**
+   * Returns an upper bound of {@link #getCodePointWidth} for a printable ASCII character in any font style.
+   * The bound does not apply to a character grid.
+   */
+  float getMaxPrintableAsciiWidth() {
+    return myCharWidthCache.getMaxPrintableAsciiWidth();
   }
 
   Insets getInsets() {

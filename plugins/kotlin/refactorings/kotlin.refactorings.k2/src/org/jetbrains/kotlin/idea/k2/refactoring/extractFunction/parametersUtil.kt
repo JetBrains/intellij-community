@@ -9,6 +9,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.text.UniqueNameGenerator
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.components.scopeContext
 import org.jetbrains.kotlin.analysis.api.dataflow.smartCastInfo
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
@@ -159,10 +160,9 @@ internal fun ExtractionData.inferParametersInfo(
             val errors = (referenceExpression as? KtResolvableCall)?.tryResolveCall()?.errors
             if (errors?.isNotEmpty() != true) continue
 
+            val originalCall = referenceExpression.resolveResult!!.originalRefExpr.tryResolveExpressionCall()?.single?.simple
             val substitutions = buildSubstitutor {
-                referenceExpression.resolveResult!!.originalRefExpr.tryResolveExpressionCall()?.single?.simple?.typeArgumentsMapping?.let {
-                    substitutions(it)
-                }
+                originalCall?.typeArgumentsMapping?.let { substitutions(it) }
             }
 
             val elementToCheck = referenceExpression.parent as? KtCallExpression ?: referenceExpression
@@ -172,8 +172,23 @@ internal fun ExtractionData.inferParametersInfo(
                 .takeIf { it.isNotEmpty() }
                 ?: errors.map { it.diagnostic }
 
-            diagnostics.filterIsInstance<KaFirDiagnostic.NoContextArgument>().forEach { diagnostic ->
-                val parameter = (diagnostic.symbol as? KaContextParameterSymbol)?.psi as? KtParameter
+            val missingContextParameters = diagnostics.flatMap { diagnostic ->
+                when (diagnostic) {
+                    is KaFirDiagnostic.NoContextArgument -> listOf(diagnostic.symbol)
+                    is KaFirDiagnostic.NoneApplicable -> {
+                        val implicitValues = elementToCheck.containingKtFile.scopeContext(elementToCheck).implicitValues
+                        val explicitArgumentNames = (elementToCheck as? KtCallExpression)?.valueArguments.orEmpty()
+                            .mapNotNull { it.getArgumentName()?.asName }
+                        originalCall?.signature?.contextParameters.orEmpty().filter { parameter ->
+                            parameter.symbol.name !in explicitArgumentNames &&
+                                    implicitValues.none { it.type.isSubtypeOf(parameter.returnType) }
+                        }.map { it.symbol }
+                    }
+                    else -> emptyList()
+                }
+            }
+            missingContextParameters.forEach { symbol ->
+                val parameter = (symbol as? KaContextParameterSymbol)?.psi as? KtParameter
                 if (parameter != null) {
                     val implicitContextParameterType = substitutions.substitute(parameter.returnType)
                     if (extractedDescriptorToParameter.none { it.value.contextParameter && (it.value.originalDescriptor as? KtParameter)?.returnType?.isSubtypeOf(implicitContextParameterType) == true }) {

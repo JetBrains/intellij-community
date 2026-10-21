@@ -25,7 +25,6 @@
     <module name="intellij.libraries.kotlin.tooling.core"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
     <module name="intellij.libraries.kotlinc.kotlin.jps.common"/>
-    <module name="intellij.libraries.kotlinc.kotlin.script.runtime"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.common"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.compiler.impl"/>
     <module name="intellij.libraries.kotlinc.kotlin.scripting.jvm"/>

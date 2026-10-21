@@ -3,17 +3,32 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.awt.Point
 
-class CustomWrapInlayTest : AbstractEditorTest() {
-
-  override fun setUp() {
-    super.setUp()
-    setUpCustomWrapSupport()
+@TestApplication
+class CustomWrapInlayTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
   }
 
-  fun testInlaysAtCustomWrapOffsetOccupyDifferentVisualLines() {
+  private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
+
+  @BeforeEach
+  fun setUp() {
+    fixture.setUpCustomWrapSupport()
+  }
+
+  @Test
+  fun testInlaysAtCustomWrapOffsetOccupyDifferentVisualLines(): Unit = fixture.runTest {
     initText("ab")
     assertNotNull(editor.customWrapModel.runBatchMutation { addWrap(1) })
 
@@ -24,7 +39,8 @@ class CustomWrapInlayTest : AbstractEditorTest() {
     assertVisualPosition(beforeWrapInlay, 0, 1)
   }
 
-  fun testTypingAtAfterWrapLineMovesOnlyAfterWrapInlay() {
+  @Test
+  fun testTypingAtAfterWrapLineMovesOnlyAfterWrapInlay(): Unit = fixture.runTest {
     initText("ab")
     assertNotNull(editor.customWrapModel.runBatchMutation { addWrap(1) })
 
@@ -42,7 +58,8 @@ class CustomWrapInlayTest : AbstractEditorTest() {
     assertVisualPosition(afterWrapInlay, 1, 1)
   }
 
-  fun testInlayHitTestingAtCustomWrapOffsetTreatsInlaysAsNonText() {
+  @Test
+  fun testInlayHitTestingAtCustomWrapOffsetTreatsInlaysAsNonText(): Unit = fixture.runTest {
     initText("ab")
     assertNotNull(editor.customWrapModel.runBatchMutation { addWrap(1) })
 
@@ -53,7 +70,8 @@ class CustomWrapInlayTest : AbstractEditorTest() {
     assertFalse(EditorUtil.isPointOverText(editor, pointInside(afterWrapInlay)))
   }
 
-  fun testVisualLineWidthIncludesInlayBeforeCustomWrap() {
+  @Test
+  fun testVisualLineWidthIncludesInlayBeforeCustomWrap(): Unit = fixture.runTest {
     initText("ab")
     assertNotNull(editor.customWrapModel.runBatchMutation { addWrap(1) })
 

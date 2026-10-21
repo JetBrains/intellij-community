@@ -22,8 +22,8 @@ in.
 
 Exit 0 when something was reached, 3 when nothing was, 2 for usage, 1 when the checkout could not be read.
 
-The bundles on this machine are looked for where air-trace serve looks: out/air-traces, the AIR lanes' \
-bazel-testlogs, and the VM reports and runs. --root adds a directory or zip, and --no-default-roots drops those.";
+The bundles on this machine are looked for where air-trace serve looks: the AIR lanes' bazel-testlogs, and the \
+VM reports and runs. --root adds a directory or zip, and --no-default-roots drops those.";
 
 /// `air-trace plan`'s command line.
 #[derive(clap::Args, Clone, Debug, Default)]

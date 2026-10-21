@@ -1,7 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
 
 jps_test(
     name = "images-tests_test",
@@ -29,6 +29,14 @@ dev_dist_plugin(
 ### auto-generated section `dev intellij.platform.images` end
 
 ### auto-generated section `build intellij.platform.images` start
+resourcegroup(
+    name = "images_resources",
+    srcs = glob(
+        ["compatibilityResources/**/*"],
+    ),
+    strip_prefix = "compatibilityResources",
+)
+
 jvm_library(
     name = "images",
     srcs = glob(
@@ -40,9 +48,11 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.platform.images",
+    resource_jars = [":images_resources"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
+        allow_empty = True,
         exclude = ["resources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],

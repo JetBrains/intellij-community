@@ -24,11 +24,9 @@ import kotlin.io.path.readText
  */
 class E2eOutcomesTest {
   /**
-   * The only test that can catch an end-of-run decision taken too early: the harness ends a run
-   * whose console went quiet for the completion grace period with nothing open, and that period elapsing in
-   * the gap between two root suites would drop the remaining suites from the report while the run
-   * still exits 0. The green fixture mixes synchronous suites with promise-returning tests (a
-   * `fetch` and a dynamic `import()`), so its later suites only appear if the decision waited.
+   * The run ends when the page reports that mocha completed it. The green fixture mixes
+   * synchronous suites with promise-returning tests (a `fetch` and a dynamic `import()`), so its
+   * later suites only appear when mocha waited for the async tests before the end of the run.
    */
   @Test
   fun `the green e2e reports every test`() {
@@ -65,9 +63,9 @@ class E2eOutcomesTest {
 
   @Test
   fun `a positive test filter selects only the matching tests`() {
-    // The only check that the --test_filter chain (query parameters -> the page's process.argv
-    // shim -> kotlin-test --include) actually selects: the matching-nothing case cannot tell
-    // selection from a broken filter pipeline.
+    // The only check that the --test_filter chain (query parameters -> the kotlin-test runner's
+    // --include argument) actually selects: the matching-nothing case cannot tell selection from
+    // a broken filter pipeline.
     val run = runFixture("E2E_GREEN", environment = mapOf("TESTBRIDGE_TEST_ONLY" to "e2e.SampleTest.passes"))
 
     assertEquals(run.log, 0, run.exitCode.toLong())
@@ -106,7 +104,16 @@ class E2eOutcomesTest {
 
     assertEquals(run.log, 1, run.exitCode.toLong())
     assertTrue(run.log, run.xml.contains("deliberateFailure"))
-    assertTrue(run.log, run.xml.contains("<failure"))
+    assertEquals(run.log, 2, run.xml.occurrences("<failure"))
+  }
+
+  @Test
+  fun `fail fast stops the run after the first failed test`() {
+    val run = runFixture("E2E_FAILING", environment = mapOf("TESTBRIDGE_TEST_RUNNER_FAIL_FAST" to "1"))
+
+    assertEquals(run.log, 1, run.exitCode.toLong())
+    assertEquals(run.log, 1, run.xml.occurrences("<testcase"))
+    assertEquals(run.log, 1, run.xml.occurrences("<failure"))
   }
 
   @Test
@@ -154,6 +161,8 @@ class E2eOutcomesTest {
     assertTrue(run.log, run.log.contains("cannot write the test report"))
   }
 
+  private fun String.occurrences(text: String): Int = windowed(text.length).count { it == text }
+
   /** The `time` attribute of the named testcase, or null when the report has no such case. */
   private fun reportedTime(xml: String, testName: String): String? =
     Regex("<testcase[^>]*\\bname=\"" + Regex.escape(testName) + "\"[^>]*\\btime=\"([^\"]*)\"")
@@ -184,7 +193,7 @@ class E2eOutcomesTest {
         // The fixture must not inherit this wrapper's own Bazel test contract (its report
         // paths, filters, timeout, sharding); the runfiles discovery variables stay inherited.
         listOf(
-          "XML_OUTPUT_FILE", "TEST_UNDECLARED_OUTPUTS_DIR", "TESTBRIDGE_TEST_ONLY",
+          "XML_OUTPUT_FILE", "TEST_UNDECLARED_OUTPUTS_DIR", "TESTBRIDGE_TEST_ONLY", "TESTBRIDGE_TEST_RUNNER_FAIL_FAST",
           "TEST_TIMEOUT", "TEST_TOTAL_SHARDS", "TEST_SHARD_INDEX", "TEST_SHARD_STATUS_FILE",
           "TEST_RANDOM_SEED", "TEST_BINARY",
         ).forEach { variable -> env.remove(variable) }

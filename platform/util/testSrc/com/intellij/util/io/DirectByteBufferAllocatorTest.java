@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
@@ -13,15 +13,15 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.IntStream;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DirectByteBufferAllocatorTest {
 
 
   private DirectByteBufferAllocator allocator;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     //TODO make dedicated allocator for test, to not interfere with other tests
     allocator = DirectByteBufferAllocator.ALLOCATOR;
@@ -38,8 +38,8 @@ public class DirectByteBufferAllocatorTest {
       ByteBuffer buffer = allocator.allocate(bufferSize);
       try {
         assertTrue(
-          "Allocated buffer.capacity(=" + buffer.capacity() + ") must be <= twice requested size(=" + bufferSize + ")",
-          buffer.capacity() <= bufferSize * 2
+          buffer.capacity() <= bufferSize * 2,
+          "Allocated buffer.capacity(=" + buffer.capacity() + ") must be <= twice requested size(=" + bufferSize + ")"
         );
       }
       finally {
@@ -59,9 +59,9 @@ public class DirectByteBufferAllocatorTest {
       ByteBuffer buffer = allocator.allocate(bufferSize);
       try {
         assertEquals(
-          "Allocated buffer must be already positioned so that remaining=bufferSize",
           bufferSize,
-          buffer.remaining()
+          buffer.remaining(),
+          "Allocated buffer must be already positioned so that remaining=bufferSize"
         );
       }
       finally {

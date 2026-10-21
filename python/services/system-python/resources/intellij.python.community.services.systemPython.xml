@@ -23,8 +23,6 @@
     <registryKey defaultValue="10" description="How often system pythons must be refreshed (minutes)" key="python.system.refresh.minutes" restartRequired="true"/>
   </extensions>
   <extensionPoints>
-    <extensionPoint dynamic="false" qualifiedName="com.intellij.python.community.services.systemPython.impl.eelFilter"
-                    interface="com.intellij.python.community.services.systemPython.impl.EelDescriptorFilter"/>
     <extensionPoint qualifiedName="Pythonid.systemPythonProvider"
                     dynamic="true"
                     interface="com.intellij.python.community.services.systemPython.SystemPythonProvider"/>

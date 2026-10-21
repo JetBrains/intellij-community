@@ -15,55 +15,94 @@
  */
 package com.intellij.json;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.json.psi.JsonElementGenerator;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonPsiUtil;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+
+import static com.intellij.json.JsonTestUtil.getCustomCodeStyleSettings;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * @author Mikhail Golubev
  */
-public class JsonPsiUtilTest extends JsonTestCase {
+@TestApplication
+@TestDataPath("$PROJECT_ROOT/community/json/backend/tests/testData")
+public class JsonPsiUtilTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+
+  private CodeInsightTestFixture myFixture;
+
+  @BeforeEach
+  void setUp() {
+    myFixture = codeInsightFixture.get();
+  }
+
+  @Test
   public void testAddPropertyInEmptyLiteral() {
     checkAddProperty("{}", "{\"foo\": null}", true);
   }
   
+  @Test
   public void testAddPropertyInEmptyUnclosedLiteral() {
     checkAddProperty("{", "{\"foo\": null", true);
   }
 
+  @Test
   public void testAddPropertyFirst() {
     checkAddProperty("{\"bar\": 42}", "{\"foo\": null, \"bar\": 42}", true);
   }
   
+  @Test
   public void testAddPropertyLast() {
     checkAddProperty("{\"bar\": 42}", "{\"bar\": 42, \"foo\": null}", false);
   }
 
   private void checkAddProperty(@NotNull String before, @NotNull String after, final boolean first) {
-    getCustomCodeStyleSettings().OBJECT_WRAPPING = CommonCodeStyleSettings.DO_NOT_WRAP;
+    getCustomCodeStyleSettings(myFixture.getProject()).OBJECT_WRAPPING = CommonCodeStyleSettings.DO_NOT_WRAP;
     myFixture.configureByText(JsonFileType.INSTANCE, before);
-    final PsiElement atCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
-    final JsonObject jsonObject = PsiTreeUtil.getParentOfType(atCaret, JsonObject.class);
+    final JsonObject jsonObject = ReadAction.computeBlocking(() -> {
+      final PsiElement atCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
+      return PsiTreeUtil.getParentOfType(atCaret, JsonObject.class);
+    });
     assertNotNull(jsonObject);
-    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-      JsonPsiUtil.addProperty(jsonObject, new JsonElementGenerator(getProject()).createProperty("foo", "null"), first);
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+      JsonPsiUtil.addProperty(jsonObject, new JsonElementGenerator(myFixture.getProject()).createProperty("foo", "null"), first);
     });
     myFixture.checkResult(after);
   }
 
+  @Test
   public void testGetOtherSiblingPropertyNames() {
     myFixture.configureByText(JsonFileType.INSTANCE, "{\"firs<caret>t\" : 1, \"second\" : 2}");
-    PsiElement atCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
-    JsonProperty property = PsiTreeUtil.getParentOfType(atCaret, JsonProperty.class);
-    assertNotNull(property);
-    assertEquals(Collections.singleton("second"), JsonPsiUtil.getOtherSiblingPropertyNames(property));
+    ReadAction.runBlocking(() -> {
+      PsiElement atCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
+      JsonProperty property = PsiTreeUtil.getParentOfType(atCaret, JsonProperty.class);
+      assertNotNull(property);
+      assertEquals(Collections.singleton("second"), JsonPsiUtil.getOtherSiblingPropertyNames(property));
+    });
   }
 }

@@ -16,9 +16,10 @@
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.util.PathUtil;
+import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetIndex;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
-import org.jetbrains.jps.builders.JpsBuildTestCase;
+import org.jetbrains.jps.builders.JpsBuildTestBase;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -33,11 +34,16 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleDependency;
 import org.jetbrains.jps.util.JpsPathUtil;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 
-public class DependentModulesCompilationTest extends JpsBuildTestCase {
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class DependentModulesCompilationTest extends JpsBuildTestBase {
+  @Test
   public void testSimpleDependency() {
     String depRoot = PathUtil.getParentPath(createFile("dep/A.java", "class A{}"));
     String mainRoot = PathUtil.getParentPath(createFile("main/B.java", "class B extends A{}"));
@@ -47,6 +53,7 @@ public class DependentModulesCompilationTest extends JpsBuildTestCase {
     rebuildAllModules();
   }
 
+  @Test
   public void testTestOnProductionDependency() {
     String depRoot = PathUtil.getParentPath(createFile("dep/A.java", "class A{}"));
     String testRoot = PathUtil.getParentPath(createFile("test/B.java", "class B extends A{}"));
@@ -57,6 +64,7 @@ public class DependentModulesCompilationTest extends JpsBuildTestCase {
     rebuildAllModules();
   }
 
+  @Test
   public void testTransitiveDependencyViaDummyModule() {
     String depRoot = PathUtil.getParentPath(createFile("dep/A.java", "class A{}"));
     String mainRoot = PathUtil.getParentPath(createFile("main/B.java", "class B extends A{}"));
@@ -75,6 +83,7 @@ public class DependentModulesCompilationTest extends JpsBuildTestCase {
   }
 
   //https://youtrack.jetbrains.com/issue/IDEA-129728
+  @Test
   public void testIgnoreDependenciesFromDummyTargets() {
     String mSrcRoot = PathUtil.getParentPath(createFile("m/src/A.java", "class A{}"));
     String mTestRoot = PathUtil.getParentPath(createFile("m/test/Test.java", "class Test{}"));
@@ -92,15 +101,17 @@ public class DependentModulesCompilationTest extends JpsBuildTestCase {
       CompileContext context = CompileContextImpl.createContextForTests(scope, descriptor);
       List<BuildTargetChunk> chunks = targetIndex.getSortedTargetChunks(context);
       for (BuildTargetChunk chunk : chunks) {
-        assertTrue("Circular dependency between build targets " + chunk.getTargets(), chunk.getTargets().size() == 1);
+        assertTrue(chunk.getTargets().size() == 1, "Circular dependency between build targets " + chunk.getTargets());
       }
-      assertEmpty(targetIndex.getDependencies(new ModuleBuildTarget(t, JavaModuleBuildTargetType.TEST), context));
+      Collection<BuildTarget<?>> dependencies = targetIndex.getDependencies(new ModuleBuildTarget(t, JavaModuleBuildTargetType.TEST), context);
+      assertTrue(dependencies.isEmpty(), dependencies.toString());
     }
     finally {
       descriptor.release();
     }
   }
 
+  @Test
   public void testCleanOutputForDeletedModuleTarget() {
     String srcRoot = PathUtil.getParentPath(createFile("main/A.java", "class A{}"));
     JpsModule main = addModule("main", srcRoot);

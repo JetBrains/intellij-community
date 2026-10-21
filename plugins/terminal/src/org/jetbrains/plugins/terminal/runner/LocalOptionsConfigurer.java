@@ -30,6 +30,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.jetbrains.plugins.terminal.TerminalStartupKt.buildStartupEelContext;
@@ -49,6 +50,7 @@ public final class LocalOptionsConfigurer {
     var eelContext = buildStartupEelContext(workingDir, initialCommand);
     Map<String, String> envs = getTerminalEnvironment(
       baseOptions.getEnvVariables(),
+      baseOptions.getRemovedEnvVariables(),
       baseOptions.getProcessType(),
       project,
       eelContext.getEelDescriptor(),
@@ -138,6 +140,7 @@ public final class LocalOptionsConfigurer {
   }
 
   private static @NotNull Map<String, String> getTerminalEnvironment(@NotNull Map<String, String> baseEnvs,
+                                                                     @NotNull Set<String> removedEnvs,
                                                                      @NotNull TerminalProcessType processType,
                                                                      @NotNull Project project,
                                                                      @NotNull EelDescriptor eelDescriptor,
@@ -166,6 +169,9 @@ public final class LocalOptionsConfigurer {
       LOG.info("No parent environment passed");
     }
 
+    for (String name : removedEnvs) {
+      envs.remove(name);
+    }
     envs.putAll(baseEnvs);
     if (!isWindows) {
       envs.put("TERM", "xterm-256color");

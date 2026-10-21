@@ -152,16 +152,25 @@ async fn pool_init_on_container_linux_starts_the_one_slot_and_takes_no_golden() 
             PoolCommand::Init {
                 golden: Some("air-macos-golden".to_owned()),
             },
+            None,
         )
         .await
         .unwrap_err();
     assert_eq!(refusal.code, "usage");
     assert!(start_calls(&fixture).is_empty());
 
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Init { golden: None }).await.unwrap();
+    let outcome = fixture
+        .manager
+        .pool(&ctx(), PoolCommand::Init { golden: None }, None)
+        .await
+        .unwrap();
     assert_eq!(outcome.data["started"], json!(["container-linux-1"]));
     assert_eq!(start_calls(&fixture).len(), 1);
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Init { golden: None }).await.unwrap();
+    let outcome = fixture
+        .manager
+        .pool(&ctx(), PoolCommand::Init { golden: None }, None)
+        .await
+        .unwrap();
     assert_eq!(outcome.data["started"], json!([]));
 }
 
@@ -170,13 +179,13 @@ async fn pool_init_on_container_linux_starts_the_one_slot_and_takes_no_golden() 
 async fn pool_gc_on_container_linux_stops_an_unleased_container_and_keeps_a_leased_one() {
     let fixture = Fixture::container_linux();
     let worker = fixture.worker(0).to_owned();
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc).await.unwrap();
+    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
     assert_eq!(outcome.data["kept"], json!({ worker.as_str(): "stopped" }));
     assert!(!verbs(&fixture).iter().any(|verb| verb == "stop"), "{:?}", fixture.fake.calls());
 
     fixture.manager.start(&ctx(), &worker).await.unwrap();
     fixture.fake.forget_calls();
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc).await.unwrap();
+    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
     assert_eq!(outcome.data["removed"], json!([worker.as_str()]));
     assert_eq!(verbs(&fixture).iter().filter(|verb| *verb == "stop").count(), 1);
     assert_eq!(control_port_files(&fixture), [false, false, false]);
@@ -184,7 +193,7 @@ async fn pool_gc_on_container_linux_stops_an_unleased_container_and_keeps_a_leas
     fixture.manager.start(&ctx(), &worker).await.unwrap();
     fixture.write_lease(&worker, "token");
     fixture.fake.forget_calls();
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc).await.unwrap();
+    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
     assert_eq!(outcome.data["kept"], json!({ worker.as_str(): "leased" }));
     assert!(!verbs(&fixture).iter().any(|verb| verb == "stop"), "{:?}", fixture.fake.calls());
     assert_eq!(control_port_files(&fixture), [true, true, true]);
@@ -201,7 +210,7 @@ async fn pool_recycle_on_container_linux_stops_the_container_clears_the_slot_and
     fixture.fake.forget_calls();
     fixture
         .manager
-        .pool(&ctx(), PoolCommand::Recycle(PoolTarget::Worker(worker.clone())))
+        .pool(&ctx(), PoolCommand::Recycle(PoolTarget::Worker(worker.clone())), None)
         .await
         .unwrap();
     let verbs = verbs(&fixture);

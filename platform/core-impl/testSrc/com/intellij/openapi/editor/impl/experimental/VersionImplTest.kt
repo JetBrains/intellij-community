@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl.experimental
 
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.experimental.Agent
-import com.intellij.openapi.editor.ex.experimental.DocBranch
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import com.intellij.openapi.editor.ex.experimental.Event
 import com.intellij.openapi.editor.ex.experimental.EventGraph
 import com.intellij.openapi.editor.ex.experimental.Version
@@ -44,7 +44,7 @@ internal class VersionImplTest {
   @Test
   fun `a head at the end of a run finds its unit inside a closed run of another graph`() {
     // In the graph of u, "b" ends the newest run.
-    val base = DocBranch.createBranch("", Agent.createAgent("base"))
+    val base = DocumentBranch.createBranch("", Agent.createAgent("base"))
     val typed = base.fork(U)
       .applyOp(DocumentOp.insertOp(0, "a"))
       .applyOp(DocumentOp.insertOp(1, "b"))

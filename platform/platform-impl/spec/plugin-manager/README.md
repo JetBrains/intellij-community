@@ -1,9 +1,10 @@
 # Plugin Manager Specifications
 
-These specifications define stable plugin manager behavior in the community repository.
+These specifications define plugin manager behavior in the community repository.
 
-- [Unified Plugin Manager UI](./unified-plugin-manager-ui.spec.md) defines the page, sections, search, loading, and navigation behavior.
+- [Unified Plugin Manager UI](./unified-plugin-manager-ui.spec.md) defines the page, sections, search, source loading, and navigation behavior.
 - [Plugin Operations](./plugin-operations.spec.md) defines operations, session changes, and Update All behavior.
+- [Plugin Loading Problems](./plugin-loading-problems.spec.md) defines loading explanations, notifications, and offered recovery actions.
 
 ## Local Format
 
@@ -14,17 +15,20 @@ Each specification uses sections that describe its own domain:
 
 - The UI specification separates structure, membership, search, reporting, loading, interaction, presentation, integration, and source behavior.
 - The operation specification separates lifecycle, Installing, the settings session, install and update, management, Update All, presentation, integration, and recovery.
+- The loading problem specification separates selection, visibility, page presentation, notifications, recovery, product restrictions, and state changes.
 
 The local verifier defines the required sections for each specification. It does not impose this format on another specification family.
 
 Put `[@test]` links next to the behavior that they verify. Use `Untested:` when focused coverage does not exist.
 
+Specifications describe implemented behavior only. Keep future designs in the implementation plan, not in specification requirements.
+
 Update the owning specification in the same changelist as a behavior change.
 
 Report existing drift and suggest a separate repair. Do not include that repair in the active commit.
 
-Run this reference gate from the community repository root:
+Run this reference gate from the repository root:
 
 ```shell
-./bazel.cmd test //platform/platform-impl:ide-impl-tests_test --test_filter=com.intellij.ide.plugins.PluginManagerSpecReferencesTest
+./community/tools/bt.cmd --module intellij.platform.ide.impl.tests --filter com.intellij.ide.plugins.PluginManagerSpecReferencesTest
 ```

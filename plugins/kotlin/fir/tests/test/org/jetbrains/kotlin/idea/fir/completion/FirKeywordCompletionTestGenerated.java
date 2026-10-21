@@ -668,6 +668,11 @@ public class FirKeywordCompletionTestGenerated extends AbstractFirKeywordComplet
         runTest("../../completion/testData/keywords/ReturnWithLabelPrefix.kt");
     }
 
+    @TestMetadata("RichErrorsModifier.kt")
+    public void testRichErrorsModifier() throws Exception {
+        runTest("../../completion/testData/keywords/RichErrorsModifier.kt");
+    }
+
     @TestMetadata("SealedForAlreadySealed.kt")
     public void testSealedForAlreadySealed() throws Exception {
         runTest("../../completion/testData/keywords/SealedForAlreadySealed.kt");

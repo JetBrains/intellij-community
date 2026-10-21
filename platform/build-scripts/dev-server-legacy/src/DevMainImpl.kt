@@ -40,6 +40,7 @@ fun buildDevMain(rawArgs: Array<String>): java.util.AbstractMap.SimpleImmutableE
     val isRelevantProperty = name.startsWith("rider.", ignoreCase = true) ||
                              name.startsWith("resharper.", ignoreCase = true) ||
                              name == "idea.platform.prefix" ||
+                             name == "intellij.platform.product.mode" || // the mode of the run, e.g. the smart mode of JetBrains Light
                              name == "idea.suppressed.plugins.set.selector" ||
                              name == "awt.toolkit.name" // this one is resolved (rewritten) by JBR on startup, it shouldn't be updated after that
     if (isRelevantProperty && systemProperties.containsKey(name)) {

@@ -21,6 +21,7 @@ fn the_gc_note_names_what_the_gc_did() {
         kept: vec![run("kept"); kept],
         stopped: vec![run("stopped"); stopped],
         removed: vec!["/vm/data/ide/kept/log/old".to_owned()],
+        ..IdeGcResult::default()
     };
     assert_eq!(gc_note(&result(0, 0)), None);
     assert_eq!(gc_note(&result(1, 0)).as_deref(), Some("kept 1 lane IDE(s) of this product"));
@@ -28,5 +29,17 @@ fn the_gc_note_names_what_the_gc_did() {
     assert_eq!(
         gc_note(&result(1, 2)).as_deref(),
         Some("kept 1 lane IDE(s) of this product and stopped 2")
+    );
+    let stuck = IdeGcResult {
+        killed: vec![run("killed")],
+        abandoned: vec![run("abandoned")],
+        ..IdeGcResult::default()
+    };
+    assert_eq!(
+        gc_note(&stuck).as_deref(),
+        Some(
+            "killed 1 lane IDE(s) whose cancel did not end in time; the processes of the lane IDE run(s) run-ide-abandoned \
+             outlived a kill; their slots are free, and `pool recycle` discards them"
+        )
     );
 }

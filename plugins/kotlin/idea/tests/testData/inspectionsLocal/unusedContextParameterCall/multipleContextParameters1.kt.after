@@ -1,0 +1,24 @@
+// COMPILER_ARGUMENTS: -Xcontext-parameters
+interface A
+interface B { val name: String }
+interface C
+
+class Both(override val name: String) : A, B
+
+context(a: A)
+fun useA() {}
+
+context(b: B)
+fun useB(): String = b.name
+
+context(c: C)
+fun useC() {}
+
+context(value: Both)
+fun example(c: C) {
+    context(c) {
+        useA()
+        useB()
+        useC()
+    }
+}

@@ -8,13 +8,17 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.MockFontLayoutService
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.assertNothingLogged
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import org.intellij.plugins.markdown.MarkdownTestingUtil.paintInlay
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.plugins.markdown.editor.livepreview.enableLivePreview
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
+import org.intellij.plugins.markdown.publishSpecsAndWait
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 @Suppress("MarkdownIncorrectTableFormatting")
@@ -84,18 +88,32 @@ class MarkdownTableInlayHintsPassTest : BasePlatformTestCase() {
     myFixture.editor.caretModel.moveToOffset(content.length)
 
     val reconciler = requireNotNull(MarkdownLivePreviewReconciler.getOrCreate(myFixture.editor))
-    reconciler.publishSpecs(computeLivePreviewSpecs(myFixture.file, myFixture.editor))
+    reconciler.publishSpecsAndWait(computeLivePreviewSpecs(myFixture.file, myFixture.editor))
     val bar = requireNotNull(getInlay())
+    paintInlay(bar)
     val hiddenWidth = bar.widthInPixels
 
     myFixture.editor.caretModel.moveToOffset(content.indexOf("**aa**") + 2)
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    paintInlay(bar)
     assertTrue("the mounted bar must include revealed table-cell markers", bar.widthInPixels > hiddenWidth)
 
     myFixture.editor.caretModel.moveToOffset(content.length)
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    paintInlay(bar)
     assertEquals(hiddenWidth, bar.widthInPixels)
     assertEquals(content, myFixture.editor.document.text)
+  }
+
+  fun `test the pass adds the bar in dumb mode`() {
+    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, testRootDisposable)
+    DumbModeTestUtils.runInDumbModeSynchronously(project) {
+      configureTable()
+
+      myFixture.doHighlighting()
+
+      assertEquals(expectedBarWidth(), getInlayWidth())
+    }
   }
 
   private fun configureTable() {
@@ -125,6 +143,7 @@ class MarkdownTableInlayHintsPassTest : BasePlatformTestCase() {
   private fun getInlayWidth(): Int {
     val bar = requireNotNull(getInlay()) { "the table must have a horizontal bar" }
     assertEquals("HorizontalBarPresentation", bar.renderer.toString())
+    paintInlay(bar)
     return bar.widthInPixels
   }
 

@@ -3,12 +3,15 @@ package org.jetbrains.kotlin.idea.k2.refactoring.inline
 
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.lang.refactoring.InlineActionHandler
+import com.intellij.refactoring.BaseRefactoringProcessor
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightMultiplatformCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.configureMultiPlatformModuleStructure
 import java.io.File
 
 abstract class AbstractKotlinFirMultiplatformTest: KotlinLightMultiplatformCodeInsightFixtureTestCase() {
     fun doTest(path: String) {
+        val expectedConflicts = InTextDirectivesUtils.findLinesWithPrefixesRemoved(File(path).readText(), "// CONFLICT: ")
         val virtualFile = myFixture.configureMultiPlatformModuleStructure(path).mainFile
         require(virtualFile != null)
 
@@ -23,8 +26,19 @@ abstract class AbstractKotlinFirMultiplatformTest: KotlinLightMultiplatformCodeI
             null
 
         if (handler != null) {
-            handler.inlineElement(project, editor, targetElement)
-            myFixture.checkResultByFile("${File(path).nameWithoutExtension}.after.kt")
+            if (expectedConflicts.isEmpty()) {
+                handler.inlineElement(project, editor, targetElement)
+                myFixture.checkResultByFile("${File(path).nameWithoutExtension}.after.kt")
+            }
+            else {
+                try {
+                    handler.inlineElement(project, editor, targetElement)
+                    fail("Expected a conflict")
+                }
+                catch (e: BaseRefactoringProcessor.ConflictsInTestsException) {
+                    assertTrue("Conflicts: ${e.message}", expectedConflicts.all { it in e.message.orEmpty() })
+                }
+            }
         } else {
             fail("No refactoring handler available")
         }

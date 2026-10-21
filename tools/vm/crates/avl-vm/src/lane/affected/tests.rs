@@ -123,8 +123,26 @@ impl Checkout {
     }
 }
 
+// The lane daemon plans every suite of its lane that the catalog names: each suite document of the lane, by test class.
+// A suite of another lane is none of them.
+#[test]
+fn the_lane_classes_are_the_suite_documents_of_the_lane() {
+    let checkout = Checkout::new();
+    let class = |suite: &str, test_class_name: &str| LaneClass {
+        suite: suite.to_owned(),
+        test_class_name: test_class_name.to_owned(),
+    };
+    assert_eq!(
+        lane_classes(&checkout.settings(), "ui", &quiet()).unwrap(),
+        [
+            class("quick-start", "AirQuickStartGeneratedFlowUiTest"),
+            class("second-ui", "AirSecondGeneratedFlowUiTest"),
+        ]
+    );
+}
+
 fn filters_of(selection: &AffectedSelection) -> Vec<&str> {
-    selection.selection.test_env["JB_TEST_JUNIT5_FILTERS"].split(';').collect()
+    selection.selection.junit5_filters.iter().map(String::as_str).collect()
 }
 
 const PRESET: &str = "plugins/air/frontend/src/Preset.kt";
@@ -133,26 +151,25 @@ const PLAIN: &str = "plugins/air/frontend/src/Plain.kt";
 const COARSE: &str = "plugins/air/session/src/Coarse.kt";
 
 #[test]
-fn one_lanes_suites_become_the_lanes_tag_and_one_class_filter_each() {
+fn one_lanes_suites_become_one_class_filter_each() {
     let checkout = Checkout::new();
 
     let resolved = resolve_affected_selection(&checkout.settings(), &paths([PRESET]), None, &quiet()).unwrap();
 
-    // The lane's tag comes first and the class filters after it - the order `shard` uses, and the reason one
-    // iteration can carry both. Each pattern accepts any package, because the catalog names a suite by its simple
-    // class name while JUnit matches the fully qualified one. An anchored literal of a simple name selected nothing
-    // at all, which a live run on a Linux worker reported as "matched no tests in the hot tier" on 2026-08-26.
+    // The lane selects its documents, and one class filter for each suite narrows them. Each pattern accepts any
+    // package, because the catalog names a suite by its simple class name while a filter matches the fully qualified
+    // one. An anchored literal of a simple name selected nothing at all, which a live run on a Linux worker reported as
+    // "matched no tests in the hot tier" on 2026-08-26.
     assert_eq!(
         filters_of(&resolved),
         [
-            "include-tag=air-flow-ui",
             r"include-classname=(^|.*\.)AirQuickStartGeneratedFlowUiTest$",
             r"include-classname=(^|.*\.)AirSecondGeneratedFlowUiTest$",
         ]
     );
     assert_eq!(resolved.lane, "ui");
     assert_eq!(resolved.selection.lane.as_deref(), Some("ui"));
-    assert_eq!(resolved.selection.label, "//plugins/air/tests/integration/ui:ui_test");
+    assert_eq!(resolved.selection.label, "//plugins/air/tests/integration/ui:ui_lane_test");
     assert_eq!(resolved.classes.len(), 2);
 }
 
@@ -283,8 +300,8 @@ fn the_requested_lane_settles_a_two_lane_change() {
 
     assert_eq!(resolved.lane, "gui-chat");
     assert_eq!(resolved.classes, ["AirChatGeneratedFlowUiTest"]);
-    // The GUI-chat lane's own tag selects it.
-    assert_eq!(filters_of(&resolved)[0], "include-tag=air-gui-chat");
+    assert_eq!(resolved.selection.lane.as_deref(), Some("gui-chat"));
+    assert_eq!(filters_of(&resolved), [r"include-classname=(^|.*\.)AirChatGeneratedFlowUiTest$"]);
 }
 
 #[test]
@@ -352,13 +369,7 @@ fn a_flow_selects_what_a_path_tagged_with_it_selects() {
     }
 
     let by_suite = resolve_named_suite_selection(&settings, "second-ui", None, &quiet()).unwrap();
-    assert_eq!(
-        filters_of(&by_suite),
-        [
-            "include-tag=air-flow-ui",
-            r"include-classname=(^|.*\.)AirSecondGeneratedFlowUiTest$"
-        ]
-    );
+    assert_eq!(filters_of(&by_suite), [r"include-classname=(^|.*\.)AirSecondGeneratedFlowUiTest$"]);
 }
 
 /// A flow of two lanes gets the one two-lane refusal, worded for the flow, and `--lane` settles it.

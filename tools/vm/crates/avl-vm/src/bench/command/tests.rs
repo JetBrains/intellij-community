@@ -112,6 +112,7 @@ async fn the_help_of_bench_names_the_verbs_and_the_exit_codes_and_each_verb_its_
             "trace",
             "activities",
             "classes",
+            "triggers",
             "compare",
             "ls",
         ],
@@ -144,6 +145,10 @@ async fn the_help_of_bench_names_the_verbs_and_the_exit_codes_and_each_verb_its_
         );
     }
     assert_contains(&welcome, &["--arm <ARM>", &format!("[default: {DEFAULT_WELCOME_RUNS}]")]);
+    for text in [&welcome, &project] {
+        assert_contains(text, &["--suppress-plugin <ID>", "idea.suppressed.plugins.id"]);
+    }
+    assert!(!open_project.contains("--suppress-plugin"), "{open_project}");
     assert_contains(&open_project, &["<PROJECT>", &format!("[default: {DEFAULT_OPEN_PROJECT_RUNS}]")]);
     assert_contains(
         &project,
@@ -185,6 +190,21 @@ async fn the_help_of_bench_names_the_verbs_and_the_exit_codes_and_each_verb_its_
             "quit",
             "class-load.log",
             "JVM",
+            &format!("[default: {DEFAULT_TOP}]"),
+        ],
+    );
+    let triggers = help_of(&root, &["triggers"]).await;
+    assert_contains(
+        &triggers,
+        &[
+            "<SESSION>",
+            "--run <DIR>",
+            "--arm <ARM>",
+            "--plugin <ID>",
+            "--at <ANCHOR>",
+            "--top <N>",
+            "(no activation stack)",
+            "kotlinx.",
             &format!("[default: {DEFAULT_TOP}]"),
         ],
     );
@@ -519,7 +539,15 @@ async fn classes_answer_the_tables_of_one_arm_in_prose_and_in_the_envelope() {
     assert_eq!(data["totals"]["classes.named@frameBecameVisible"]["median"], 26.0);
     assert_eq!(
         data["byPlugin"],
-        serde_json::json!([{"name": "com.intellij", "classes": 4.0}, {"name": "intellij.webp", "classes": 0.0}])
+        serde_json::json!([
+            {"name": "com.intellij", "classes": 4.0, "loaders": 2.0},
+            {"name": "intellij.webp", "classes": 0.0, "loaders": 0.0}
+        ]),
+        "a plugin log of the old shape has no times"
+    );
+    assert_eq!(
+        data["ranks"],
+        serde_json::json!([{"plugin": "com.intellij", "rank": 1, "of": 2, "percent": 66.7}])
     );
     assert_eq!(data["missing"], serde_json::json!(["intellij.webp"]));
 

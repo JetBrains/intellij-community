@@ -6,11 +6,16 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.miscProject.impl.MiscProjectUsageCollector
+import com.intellij.pycharm.community.ide.impl.miscProject.impl.createMiscProject as createMiscProjectAndSdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.emit
+import com.jetbrains.python.mapResult
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -22,7 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 class PyMiscService(private val scope: CoroutineScope) {
   fun createMiscProject(project: Project?, miscFileType: MiscFileType): Unit {
     scope.launch {
-      val projectCreationResult = com.intellij.pycharm.community.ide.impl.miscProject.impl.createMiscProject(
+      val projectCreationResult = createMiscProjectAndSdk(
         miscFileType,
         confirmInstallation = {
           withContext(Dispatchers.EDT) {
@@ -49,9 +54,16 @@ class PyMiscService(private val scope: CoroutineScope) {
     }
   }
 
-  fun createMiscProject(project: Project) {
+  /**
+   * Configures the Python interpreter of [project], then calls [configureInterpreter], if given, with the result.
+   * The service reports a failure of either step to the user.
+   */
+  fun createMiscProject(
+    project: Project,
+    configureInterpreter: (suspend (Project, PythonInterpreter) -> PyResult<Unit>)? = null,
+  ) {
     scope.launch {
-      val projectCreationResult = com.intellij.pycharm.community.ide.impl.miscProject.impl.createMiscProject(
+      val result = createMiscProjectAndSdk(
         confirmInstallation = {
           withContext(Dispatchers.EDT) {
             MessageDialogBuilder.yesNo(
@@ -61,13 +73,22 @@ class PyMiscService(private val scope: CoroutineScope) {
           }
         },
         currentProject = project,
-      )
+      ).mapResult { (miscProject, pythonInterpreter) ->
+        if (configureInterpreter == null) {
+          PyResult.success(Unit)
+        }
+        else {
+          withBackgroundProgress(miscProject, PyCharmCommunityCustomizationBundle.message("misc.project.filling.file")) {
+            configureInterpreter(miscProject, pythonInterpreter)
+          }
+        }
+      }
 
-      when (projectCreationResult) {
+      when (result) {
         is Result.Success -> Unit
         is Result.Failure -> {
           withContext(Dispatchers.EDT) {
-            ErrorSink().emit(projectCreationResult.error, project)
+            ErrorSink().emit(result.error, project)
           }
         }
       }

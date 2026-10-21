@@ -16,6 +16,13 @@ class MarkdownIncorrectListNumberingQuickFixTest: LightPlatformCodeInsightFixtur
   @Test
   fun `test fix in deep sublist`() = doTest()
 
+  @Test
+  fun `test fix in unparsed sublist`() {
+    doTest()
+    val targetText = MarkdownBundle.message("markdown.fix.list.items.numbering,quick.fix.text")
+    assertEquals(1, myFixture.getAllQuickFixes().count { it.text == targetText })
+  }
+
   private fun doTest() {
     val name = getTestName(true)
     myFixture.configureByFile("$name.md")

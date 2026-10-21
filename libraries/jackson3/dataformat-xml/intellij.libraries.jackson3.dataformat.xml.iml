@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="jackson3-dataformat-xml" type="repository">
-        <properties include-transitive-deps="false" maven-id="tools.jackson.dataformat:jackson-dataformat-xml:3.2.2">
+        <properties include-transitive-deps="false" maven-id="tools.jackson.dataformat:jackson-dataformat-xml:3.2.3">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-xml/3.2.2/jackson-dataformat-xml-3.2.2.jar">
-              <sha256sum>627a1c904e866822c929fec9c4447068f78f3b94fa84d1fd1b47f6ce1e7dca4a</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-xml/3.2.3/jackson-dataformat-xml-3.2.3.jar">
+              <sha256sum>1437abeede26551cd001c4cce290615d63c003cfeb365c10a73b32e41a6e5947</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-xml/3.2.2/jackson-dataformat-xml-3.2.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-xml/3.2.3/jackson-dataformat-xml-3.2.3.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-xml/3.2.2/jackson-dataformat-xml-3.2.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/tools/jackson/dataformat/jackson-dataformat-xml/3.2.3/jackson-dataformat-xml-3.2.3-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

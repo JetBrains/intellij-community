@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Caret;
@@ -13,347 +14,454 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.awt.Point;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertArrayEquals;
+import static com.intellij.openapi.editor.impl.EditorModelFixture.HIGH_SURROGATE;
+import static com.intellij.openapi.editor.impl.EditorModelFixture.LOW_SURROGATE;
+import static com.intellij.openapi.editor.impl.EditorModelFixture.TEST_CHAR_WIDTH;
+import static com.intellij.openapi.editor.impl.EditorModelFixture.TEST_LINE_HEIGHT;
+import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class EditorInlayTest extends AbstractEditorTest {
+@TestApplication
+public class EditorInlayTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
+
+  private EditorModelFixture myFixture;
+
+  @BeforeEach
+  void setUp() {
+    myFixture = editorFixture.get();
+  }
+
+  @Test
   public void testCaretMovement() {
-    initText("ab");
-    addInlay(1);
-    right();
-    checkCaretPosition(1, 1, 1);
-    right();
-    checkCaretPosition(1, 1, 2);
-    right();
-    checkCaretPosition(2, 2, 3);
-    left();
-    checkCaretPosition(1, 1, 2);
-    left();
-    checkCaretPosition(1, 1, 1);
-    left();
-    checkCaretPosition(0, 0, 0);
+    myFixture.runTest(() -> {
+      myFixture.initText("ab");
+      myFixture.addInlay(1);
+      myFixture.right();
+      checkCaretPosition(1, 1, 1);
+      myFixture.right();
+      checkCaretPosition(1, 1, 2);
+      myFixture.right();
+      checkCaretPosition(2, 2, 3);
+      myFixture.left();
+      checkCaretPosition(1, 1, 2);
+      myFixture.left();
+      checkCaretPosition(1, 1, 1);
+      myFixture.left();
+      checkCaretPosition(0, 0, 0);
+    });
   }
 
+  @Test
   public void testFoldedInlay() {
-    initText("abc");
-    addInlay(1);
-    addCollapsedFoldRegion(1, 2, ".");
-    right();
-    checkCaretPosition(1, 1, 1);
-    right();
-    checkCaretPosition(2, 2, 2);
+    myFixture.runTest(() -> {
+      myFixture.initText("abc");
+      myFixture.addInlay(1);
+      myFixture.addCollapsedFoldRegion(1, 2, ".");
+      myFixture.right();
+      checkCaretPosition(1, 1, 1);
+      myFixture.right();
+      checkCaretPosition(2, 2, 2);
+    });
   }
 
+  @Test
   public void testCaretMovementWithSelection() {
-    initText("ab");
-    addInlay(1);
-    rightWithSelection();
-    checkCaretPositionAndSelection(1, 1, 1, 0, 1);
-    rightWithSelection();
-    checkCaretPositionAndSelection(2, 2, 3, 0, 2);
-    leftWithSelection();
-    checkCaretPositionAndSelection(1, 1, 1, 0, 1);
-    leftWithSelection();
-    checkCaretPositionAndSelection(0, 0, 0, 0, 0);
+    myFixture.runTest(() -> {
+      myFixture.initText("ab");
+      myFixture.addInlay(1);
+      myFixture.rightWithSelection();
+      checkCaretPositionAndSelection(1, 1, 1, 0, 1);
+      myFixture.rightWithSelection();
+      checkCaretPositionAndSelection(2, 2, 3, 0, 2);
+      myFixture.leftWithSelection();
+      checkCaretPositionAndSelection(1, 1, 1, 0, 1);
+      myFixture.leftWithSelection();
+      checkCaretPositionAndSelection(0, 0, 0, 0, 0);
 
-    getEditor().getCaretModel().moveToOffset(2);
-    leftWithSelection();
-    checkCaretPositionAndSelection(1, 1, 2, 1, 2);
-    leftWithSelection();
-    checkCaretPositionAndSelection(0, 0, 0, 0, 2);
-    rightWithSelection();
-    checkCaretPositionAndSelection(1, 1, 2, 1, 2);
-    rightWithSelection();
-    checkCaretPositionAndSelection(2, 2, 3, 2, 2);
+      myFixture.getEditor().getCaretModel().moveToOffset(2);
+      myFixture.leftWithSelection();
+      checkCaretPositionAndSelection(1, 1, 2, 1, 2);
+      myFixture.leftWithSelection();
+      checkCaretPositionAndSelection(0, 0, 0, 0, 2);
+      myFixture.rightWithSelection();
+      checkCaretPositionAndSelection(1, 1, 2, 1, 2);
+      myFixture.rightWithSelection();
+      checkCaretPositionAndSelection(2, 2, 3, 2, 2);
+    });
   }
 
+  @Test
   public void testBackspace() {
-    initText("ab<caret>c");
-    addInlay(1);
-    backspace();
-    checkResultByText("ac");
-    checkCaretPosition(1, 1, 2);
-    backspace();
-    checkResultByText("ac");
-    checkCaretPosition(1, 1, 1);
-    backspace();
-    checkResultByText("c");
-    checkCaretPosition(0, 0, 0);
+    myFixture.runTest(() -> {
+      myFixture.initText("ab<caret>c");
+      myFixture.addInlay(1);
+      myFixture.backspace();
+      myFixture.checkResultByText("ac");
+      checkCaretPosition(1, 1, 2);
+      myFixture.backspace();
+      myFixture.checkResultByText("ac");
+      checkCaretPosition(1, 1, 1);
+      myFixture.backspace();
+      myFixture.checkResultByText("c");
+      checkCaretPosition(0, 0, 0);
+    });
   }
 
+  @Test
   public void testDelete() {
-    initText("a<caret>bc");
-    addInlay(2);
-    delete();
-    checkResultByText("ac");
-    checkCaretPosition(1, 1, 1);
-    delete();
-    checkResultByText("ac");
-    checkCaretPosition(1, 1, 2);
-    delete();
-    checkResultByText("a");
-    checkCaretPosition(1, 1, 2);
+    myFixture.runTest(() -> {
+      myFixture.initText("a<caret>bc");
+      myFixture.addInlay(2);
+      myFixture.delete();
+      myFixture.checkResultByText("ac");
+      checkCaretPosition(1, 1, 1);
+      myFixture.delete();
+      myFixture.checkResultByText("ac");
+      checkCaretPosition(1, 1, 2);
+      myFixture.delete();
+      myFixture.checkResultByText("a");
+      checkCaretPosition(1, 1, 2);
+    });
   }
 
+  @Test
   public void testMulticaretDelete() {
-    initText("<caret>ab <caret>ab");
-    addInlay(1);
-    addInlay(4);
-    right();
-    delete();
-    checkResultByText("a<caret>b a<caret>b");
-    delete();
-    checkResultByText("a<caret> a<caret>");
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>ab <caret>ab");
+      myFixture.addInlay(1);
+      myFixture.addInlay(4);
+      myFixture.right();
+      myFixture.delete();
+      myFixture.checkResultByText("a<caret>b a<caret>b");
+      myFixture.delete();
+      myFixture.checkResultByText("a<caret> a<caret>");
+    });
   }
 
+  @Test
   public void testMulticaretTyping() {
-    initText("<caret>ab <caret>ab");
-    addInlay(1);
-    addInlay(4);
-    right();
-    type(' ');
-    checkResultByText("a <caret>b a <caret>b");
-    assertEquals(Arrays.asList(new VisualPosition(0, 2), new VisualPosition(0, 7)),
-                 ContainerUtil.map(getEditor().getCaretModel().getAllCarets(), Caret::getVisualPosition));
-    right();
-    type(' ');
-    checkResultByText("a  <caret>b a  <caret>b");
-    assertEquals(Arrays.asList(new VisualPosition(0, 4), new VisualPosition(0, 10)),
-                 ContainerUtil.map(getEditor().getCaretModel().getAllCarets(), Caret::getVisualPosition));
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>ab <caret>ab");
+      myFixture.addInlay(1);
+      myFixture.addInlay(4);
+      myFixture.right();
+      myFixture.type(' ');
+      myFixture.checkResultByText("a <caret>b a <caret>b");
+      assertEquals(Arrays.asList(new VisualPosition(0, 2), new VisualPosition(0, 7)),
+                   ContainerUtil.map(myFixture.getEditor().getCaretModel().getAllCarets(), Caret::getVisualPosition));
+      myFixture.right();
+      myFixture.type(' ');
+      myFixture.checkResultByText("a  <caret>b a  <caret>b");
+      assertEquals(Arrays.asList(new VisualPosition(0, 4), new VisualPosition(0, 10)),
+                   ContainerUtil.map(myFixture.getEditor().getCaretModel().getAllCarets(), Caret::getVisualPosition));
+    });
   }
 
+  @Test
   public void testDocumentEditingWithSoftWraps() {
-    initText("long line");
-    configureSoftWraps(7);
-    Inlay<?> inlay = addInlay(1);
-    assertNotNull(getEditor().getSoftWrapModel().getSoftWrap(5));
-    runWriteCommand(() -> getEditor().getDocument().setText(" "));
-    assertFalse(inlay.isValid());
+    myFixture.runTest(() -> {
+      myFixture.initText("long line");
+      myFixture.configureSoftWraps(7);
+      Inlay<?> inlay = myFixture.addInlay(1);
+      assertNotNull(myFixture.getEditor().getSoftWrapModel().getSoftWrap(5));
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().setText(" "));
+      assertFalse(inlay.isValid());
+    });
   }
 
+  @Test
   public void testInlayDoesntGetInsideSurrogatePair() {
-    initText(""); // Cannot set up text with singular surrogate characters directly
-    runWriteCommand(() -> getEditor().getDocument().setText(HIGH_SURROGATE + LOW_SURROGATE + LOW_SURROGATE));
-    Inlay<?> inlay = addInlay(2);
-    assertNotNull(inlay);
-    assertTrue(inlay.isValid());
-    runWriteCommand(() -> ((DocumentEx)getEditor().getDocument()).moveText(2, 3, 1));
-    assertFalse(inlay.isValid() && DocumentUtil.isInsideSurrogatePair(getEditor().getDocument(), inlay.getOffset()));
+    myFixture.runTest(() -> {
+      myFixture.initText(""); // Cannot set up text with singular surrogate characters directly
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().setText(HIGH_SURROGATE + LOW_SURROGATE + LOW_SURROGATE));
+      Inlay<?> inlay = myFixture.addInlay(2);
+      assertNotNull(inlay);
+      assertTrue(inlay.isValid());
+      myFixture.runWriteCommand(() -> ((DocumentEx)myFixture.getEditor().getDocument()).moveText(2, 3, 1));
+      assertFalse(inlay.isValid() && DocumentUtil.isInsideSurrogatePair(myFixture.getEditor().getDocument(), inlay.getOffset()));
+    });
   }
 
+  @Test
   public void testTwoInlaysAtSameOffset() {
-    initText("ab");
-    addInlay(1);
-    addInlay(1);
-    right();
-    checkCaretPosition(1, 1, 1);
-    right();
-    checkCaretPosition(1, 1, 2);
-    right();
-    checkCaretPosition(1, 1, 3);
-    right();
-    checkCaretPosition(2, 2, 4);
-    left();
-    checkCaretPosition(1, 1, 3);
-    left();
-    checkCaretPosition(1, 1, 2);
-    left();
-    checkCaretPosition(1, 1, 1);
-    left();
-    checkCaretPosition(0, 0, 0);
+    myFixture.runTest(() -> {
+      myFixture.initText("ab");
+      myFixture.addInlay(1);
+      myFixture.addInlay(1);
+      myFixture.right();
+      checkCaretPosition(1, 1, 1);
+      myFixture.right();
+      checkCaretPosition(1, 1, 2);
+      myFixture.right();
+      checkCaretPosition(1, 1, 3);
+      myFixture.right();
+      checkCaretPosition(2, 2, 4);
+      myFixture.left();
+      checkCaretPosition(1, 1, 3);
+      myFixture.left();
+      checkCaretPosition(1, 1, 2);
+      myFixture.left();
+      checkCaretPosition(1, 1, 1);
+      myFixture.left();
+      checkCaretPosition(0, 0, 0);
+    });
   }
 
+  @Test
   public void testTypingBetweenInlaysAtSameOffset() {
-    initText("ab");
-    Inlay<?> inlay1 = addInlay(1);
-    Inlay<?> inlay2 = addInlay(1);
-    right();
-    right();
-    type(' ');
-    checkResultByText("a <caret>b");
-    checkCaretPosition(2, 2, 3);
-    assertTrue(inlay1.isValid());
-    assertEquals(1, inlay1.getOffset());
-    assertTrue(inlay2.isValid());
-    assertEquals(2, inlay2.getOffset());
+    myFixture.runTest(() -> {
+      myFixture.initText("ab");
+      Inlay<?> inlay1 = myFixture.addInlay(1);
+      Inlay<?> inlay2 = myFixture.addInlay(1);
+      myFixture.right();
+      myFixture.right();
+      myFixture.type(' ');
+      myFixture.checkResultByText("a <caret>b");
+      checkCaretPosition(2, 2, 3);
+      assertTrue(inlay1.isValid());
+      assertEquals(1, inlay1.getOffset());
+      assertTrue(inlay2.isValid());
+      assertEquals(2, inlay2.getOffset());
+    });
   }
 
+  @Test
   public void testHasInlayAtVisualPosition() {
-    initText("ab");
-    addInlay(1);
-    addInlay(1);
-    assertTrue(getEditor().getInlayModel().hasInlineElementAt(new VisualPosition(0, 2)));
+    myFixture.runTest(() -> {
+      myFixture.initText("ab");
+      myFixture.addInlay(1);
+      myFixture.addInlay(1);
+      assertTrue(myFixture.getEditor().getInlayModel().hasInlineElementAt(new VisualPosition(0, 2)));
+    });
   }
 
+  @Test
   public void testBackspaceWithTwoInlaysAtSameOffset() {
-    initText("ab<caret>c");
-    addInlay(1);
-    addInlay(1);
-    backspace();
-    checkResultByText("ac");
-    checkCaretPosition(1, 1, 3);
-    backspace();
-    checkResultByText("ac");
-    checkCaretPosition(1, 1, 2);
-    backspace();
-    checkResultByText("ac");
-    checkCaretPosition(1, 1, 1);
-    backspace();
-    checkResultByText("c");
-    checkCaretPosition(0, 0, 0);
+    myFixture.runTest(() -> {
+      myFixture.initText("ab<caret>c");
+      myFixture.addInlay(1);
+      myFixture.addInlay(1);
+      myFixture.backspace();
+      myFixture.checkResultByText("ac");
+      checkCaretPosition(1, 1, 3);
+      myFixture.backspace();
+      myFixture.checkResultByText("ac");
+      checkCaretPosition(1, 1, 2);
+      myFixture.backspace();
+      myFixture.checkResultByText("ac");
+      checkCaretPosition(1, 1, 1);
+      myFixture.backspace();
+      myFixture.checkResultByText("c");
+      checkCaretPosition(0, 0, 0);
+    });
   }
 
+  @Test
   public void testDeleteWithTwoInlaysAtSameOffset() {
-    initText("a<caret>bc");
-    addInlay(2);
-    addInlay(2);
-    delete();
-    checkResultByText("ac");
-    checkCaretPosition(1, 1, 1);
-    delete();
-    checkResultByText("ac");
-    checkCaretPosition(1, 1, 2);
-    delete();
-    checkResultByText("ac");
-    checkCaretPosition(1, 1, 3);
-    delete();
-    checkResultByText("a");
-    checkCaretPosition(1, 1, 3);
+    myFixture.runTest(() -> {
+      myFixture.initText("a<caret>bc");
+      myFixture.addInlay(2);
+      myFixture.addInlay(2);
+      myFixture.delete();
+      myFixture.checkResultByText("ac");
+      checkCaretPosition(1, 1, 1);
+      myFixture.delete();
+      myFixture.checkResultByText("ac");
+      checkCaretPosition(1, 1, 2);
+      myFixture.delete();
+      myFixture.checkResultByText("ac");
+      checkCaretPosition(1, 1, 3);
+      myFixture.delete();
+      myFixture.checkResultByText("a");
+      checkCaretPosition(1, 1, 3);
+    });
   }
 
+  @Test
   public void testSelectionWithTwoInlaysAtSameOffset() {
-    initText("ab");
-    addInlay(1);
-    addInlay(1);
-    rightWithSelection();
-    checkCaretPositionAndSelection(1, 1, 1, 0, 1);
-    rightWithSelection();
-    checkCaretPositionAndSelection(2, 2, 4, 0, 2);
-    leftWithSelection();
-    checkCaretPositionAndSelection(1, 1, 1, 0, 1);
-    leftWithSelection();
-    checkCaretPositionAndSelection(0, 0, 0, 0, 0);
+    myFixture.runTest(() -> {
+      myFixture.initText("ab");
+      myFixture.addInlay(1);
+      myFixture.addInlay(1);
+      myFixture.rightWithSelection();
+      checkCaretPositionAndSelection(1, 1, 1, 0, 1);
+      myFixture.rightWithSelection();
+      checkCaretPositionAndSelection(2, 2, 4, 0, 2);
+      myFixture.leftWithSelection();
+      checkCaretPositionAndSelection(1, 1, 1, 0, 1);
+      myFixture.leftWithSelection();
+      checkCaretPositionAndSelection(0, 0, 0, 0, 0);
 
-    getEditor().getCaretModel().moveToOffset(2);
-    leftWithSelection();
-    checkCaretPositionAndSelection(1, 1, 3, 1, 2);
-    leftWithSelection();
-    checkCaretPositionAndSelection(0, 0, 0, 0, 2);
-    rightWithSelection();
-    checkCaretPositionAndSelection(1, 1, 3, 1, 2);
-    rightWithSelection();
-    checkCaretPositionAndSelection(2, 2, 4, 2, 2);
+      myFixture.getEditor().getCaretModel().moveToOffset(2);
+      myFixture.leftWithSelection();
+      checkCaretPositionAndSelection(1, 1, 3, 1, 2);
+      myFixture.leftWithSelection();
+      checkCaretPositionAndSelection(0, 0, 0, 0, 2);
+      myFixture.rightWithSelection();
+      checkCaretPositionAndSelection(1, 1, 3, 1, 2);
+      myFixture.rightWithSelection();
+      checkCaretPositionAndSelection(2, 2, 4, 2, 2);
+    });
   }
 
+  @Test
   public void testDeleteBetweenInlays() {
-    initText("abc");
-    addInlay(1);
-    addInlay(2);
-    right();
-    right();
-    delete();
-    checkResultByText("ac");
-    checkCaretPosition(1, 1, 2);
-    assertInlaysPositions(1, 1);
+    myFixture.runTest(() -> {
+      myFixture.initText("abc");
+      myFixture.addInlay(1);
+      myFixture.addInlay(2);
+      myFixture.right();
+      myFixture.right();
+      myFixture.delete();
+      myFixture.checkResultByText("ac");
+      checkCaretPosition(1, 1, 2);
+      assertInlaysPositions(1, 1);
+    });
   }
 
+  @Test
   public void testCaretPositionAfterInlayDisposalToTheLeft() {
-    initText("ab");
-    Inlay<?> inlay = addInlay(1);
-    addInlay(1);
-    right();
-    right();
-    Disposer.dispose(inlay);
-    checkCaretPosition(1, 1, 1);
+    myFixture.runTest(() -> {
+      myFixture.initText("ab");
+      Inlay<?> inlay = myFixture.addInlay(1);
+      myFixture.addInlay(1);
+      myFixture.right();
+      myFixture.right();
+      Disposer.dispose(inlay);
+      checkCaretPosition(1, 1, 1);
+    });
   }
 
+  @Test
   public void testCaretPositionAfterInlayDisposalToTheRight() {
-    initText("ab");
-    addInlay(1);
-    Inlay<?> inlay = addInlay(1);
-    right();
-    right();
-    Disposer.dispose(inlay);
-    checkCaretPosition(1, 1, 2);
+    myFixture.runTest(() -> {
+      myFixture.initText("ab");
+      myFixture.addInlay(1);
+      Inlay<?> inlay = myFixture.addInlay(1);
+      myFixture.right();
+      myFixture.right();
+      Disposer.dispose(inlay);
+      checkCaretPosition(1, 1, 2);
+    });
   }
 
+  @Test
   public void testPositionConversionForAdjacentInlays() {
-    initText("ab");
-    addInlay(1);
-    addInlay(1);
-    LogicalPosition lp = getEditor().visualToLogicalPosition(new VisualPosition(0, 2));
-    assertEquals(new LogicalPosition(0, 1), lp);
-    assertFalse(lp.leansForward);
+    myFixture.runTest(() -> {
+      myFixture.initText("ab");
+      myFixture.addInlay(1);
+      myFixture.addInlay(1);
+      LogicalPosition lp = myFixture.getEditor().visualToLogicalPosition(new VisualPosition(0, 2));
+      assertEquals(new LogicalPosition(0, 1), lp);
+      assertFalse(lp.leansForward);
+    });
   }
 
+  @Test
   public void testFoldingOperationDoesntMoveCaretFromBetweenInlays() {
-    initText("abc");
-    addInlay(2);
-    addInlay(2);
-    right();
-    right();
-    right();
-    addCollapsedFoldRegion(0, 1, "...");
-    checkCaretPosition(2, 2, 5);
+    myFixture.runTest(() -> {
+      myFixture.initText("abc");
+      myFixture.addInlay(2);
+      myFixture.addInlay(2);
+      myFixture.right();
+      myFixture.right();
+      myFixture.right();
+      myFixture.addCollapsedFoldRegion(0, 1, "...");
+      checkCaretPosition(2, 2, 5);
+    });
   }
 
+  @Test
   public void testBehaviourOnTextInsertion() {
-    initText("abc");
-    Inlay<?> i1 = addInlay(1, false);
-    Inlay<?> i2 = addInlay(2, true);
-    runWriteCommand(() -> {
-      getEditor().getDocument().insertString(2, " ");
-      getEditor().getDocument().insertString(1, " ");
+    myFixture.runTest(() -> {
+      myFixture.initText("abc");
+      Inlay<?> i1 = myFixture.addInlay(1, false);
+      Inlay<?> i2 = myFixture.addInlay(2, true);
+      myFixture.runWriteCommand(() -> {
+        myFixture.getEditor().getDocument().insertString(2, " ");
+        myFixture.getEditor().getDocument().insertString(1, " ");
+      });
+      assertTrue(i1.isValid() && i1.getOffset() == 1);
+      assertTrue(i2.isValid() && i2.getOffset() == 4);
     });
-    assertTrue(i1.isValid() && i1.getOffset() == 1);
-    assertTrue(i2.isValid() && i2.getOffset() == 4);
   }
 
+  @Test
   public void testNoOpReplaceDoesntMoveCaret() {
-    initText("<caret>abc");
-    addInlay(2);
-    right();
-    right();
-    runWriteCommand(() -> getEditor().getDocument().replaceString(1, 2, "b"));
-    checkCaretPosition(2, 2, 2);
-  }
-
-  public void testCaretMovingToInlayOffset() {
-    initText("<caret>abc");
-    addInlay(2);
-    getEditor().getCaretModel().moveToOffset(2);
-    checkCaretPosition(2, 2, 3);
-  }
-
-  public void testInlayOrderAfterMerge() {
-    initText("ab");
-    Inlay<?> i0 = addInlay(0);
-    Inlay<?> i1 = addInlay(1);
-    Inlay<?> i2 = addInlay(2);
-    runWriteCommand(() -> {
-      getEditor().getDocument().deleteString(0, 1);
-      getEditor().getDocument().deleteString(0, 1);
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>abc");
+      myFixture.addInlay(2);
+      myFixture.right();
+      myFixture.right();
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().replaceString(1, 2, "b"));
+      checkCaretPosition(2, 2, 2);
     });
-    assertEquals(Arrays.asList(i0, i1, i2), getEditor().getInlayModel().getInlineElementsInRange(0, 0));
   }
 
+  @Test
+  public void testCaretMovingToInlayOffset() {
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>abc");
+      myFixture.addInlay(2);
+      myFixture.getEditor().getCaretModel().moveToOffset(2);
+      checkCaretPosition(2, 2, 3);
+    });
+  }
+
+  @Test
+  public void testInlayOrderAfterMerge() {
+    myFixture.runTest(() -> {
+      myFixture.initText("ab");
+      Inlay<?> i0 = myFixture.addInlay(0);
+      Inlay<?> i1 = myFixture.addInlay(1);
+      Inlay<?> i2 = myFixture.addInlay(2);
+      myFixture.runWriteCommand(() -> {
+        myFixture.getEditor().getDocument().deleteString(0, 1);
+        myFixture.getEditor().getDocument().deleteString(0, 1);
+      });
+      assertEquals(Arrays.asList(i0, i1, i2), myFixture.getEditor().getInlayModel().getInlineElementsInRange(0, 0));
+    });
+  }
+
+  @Test
   public void testInlayOrderAfterDocumentModification() {
-    initText("abc");
-    Inlay<?> i1 = addInlay(2);
-    runWriteCommand(() -> getEditor().getDocument().deleteString(1, 2));
-    Inlay<?> i2 = addInlay(1);
-    assertEquals(Arrays.asList(i1, i2), getEditor().getInlayModel().getInlineElementsInRange(1, 1));
+    myFixture.runTest(() -> {
+      myFixture.initText("abc");
+      Inlay<?> i1 = myFixture.addInlay(2);
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().deleteString(1, 2));
+      Inlay<?> i2 = myFixture.addInlay(1);
+      assertEquals(Arrays.asList(i1, i2), myFixture.getEditor().getInlayModel().getInlineElementsInRange(1, 1));
+    });
   }
 
   /**
@@ -369,275 +477,341 @@ public class EditorInlayTest extends AbstractEditorTest {
    *
    */
   private int geometricLineToVisualLine(int geometricLine) {
-    return getEditor().yToVisualLine(geometricLineY(geometricLine));
+    return myFixture.getEditor().yToVisualLine(geometricLineY(geometricLine));
   }
 
   private static int geometricLineY(int geometricLine) {
     return (int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT) * geometricLine;
   }
 
+  @Test
   public void testYToVisualLineCalculationForBlockInlay() {
-    initText("abc\ndef");
-    addBlockInlay(1);
-    assertEquals(0, geometricLineToVisualLine(0));
-    assertEquals(1, geometricLineToVisualLine(2));
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\ndef");
+      myFixture.addBlockInlay(1);
+      assertEquals(0, geometricLineToVisualLine(0));
+      assertEquals(1, geometricLineToVisualLine(2));
+    });
   }
 
+  @Test
   public void testYToVisualLineCalculationForAboveBlockInlay() {
-    initText("abc\ndef");
-    addBlockInlay(1, true);
-    assertEquals(0, geometricLineToVisualLine(1));
-    assertEquals(1, geometricLineToVisualLine(2));
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\ndef");
+      myFixture.addBlockInlay(1, true);
+      assertEquals(0, geometricLineToVisualLine(1));
+      assertEquals(1, geometricLineToVisualLine(2));
+    });
   }
 
+  @Test
   public void testYToVisualLineCalculationForBlockInlayAnotherCase() {
-    initText("abc\ndef\nghi");
-    addBlockInlay(1);
-    assertEquals(0, geometricLineToVisualLine(0));
-    assertEquals(1, geometricLineToVisualLine(2));
-    assertEquals(2, geometricLineToVisualLine(3));
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\ndef\nghi");
+      myFixture.addBlockInlay(1);
+      assertEquals(0, geometricLineToVisualLine(0));
+      assertEquals(1, geometricLineToVisualLine(2));
+      assertEquals(2, geometricLineToVisualLine(3));
+    });
   }
 
+  @Test
   public void testInlayInStartOfCollapsedLine() {
-    initText("abc\ndef\nghi");
-    addCollapsedFoldRegion(4, 8, "");
-    addBlockInlay(4, true, false);
-    assertEquals(0, geometricLineToVisualLine(0));
-    assertEquals(1, geometricLineToVisualLine(2));
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\ndef\nghi");
+      myFixture.addCollapsedFoldRegion(4, 8, "");
+      myFixture.addBlockInlay(4, true, false);
+      assertEquals(0, geometricLineToVisualLine(0));
+      assertEquals(1, geometricLineToVisualLine(2));
+    });
   }
 
+  @Test
   public void testInlayInStartOfCollapsedLineRelatesToPreceding() {
-    initText("abc\ndef\nghi");
-    addCollapsedFoldRegion(4, 8, "");
-    addBlockInlay(4, true, true);
-    assertEquals(geometricLineY(0), getEditor().visualLineToY(0));
-    assertEquals(geometricLineY(1), getEditor().visualLineToY(1));
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\ndef\nghi");
+      myFixture.addCollapsedFoldRegion(4, 8, "");
+      myFixture.addBlockInlay(4, true, true);
+      assertEquals(geometricLineY(0), myFixture.getEditor().visualLineToY(0));
+      assertEquals(geometricLineY(1), myFixture.getEditor().visualLineToY(1));
+    });
   }
 
+  @Test
   public void testInlayInCollapsedLine() {
-    initText("abc\ndef\nghi");
-    addCollapsedFoldRegion(4, 8, "");
-    addBlockInlay(5, true, false);
-    assertEquals(geometricLineY(0), getEditor().visualLineToY(0));
-    assertEquals(geometricLineY(1), getEditor().visualLineToY(1));
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\ndef\nghi");
+      myFixture.addCollapsedFoldRegion(4, 8, "");
+      myFixture.addBlockInlay(5, true, false);
+      assertEquals(geometricLineY(0), myFixture.getEditor().visualLineToY(0));
+      assertEquals(geometricLineY(1), myFixture.getEditor().visualLineToY(1));
+    });
   }
 
+  @Test
   public void testInlayAboveFolding() {
-    initText("abc\ndef\nghi");
-    addCollapsedFoldRegion(4, 8, "");
-    EditorTestUtil.addBlockInlay(getEditor(), 5, true, true, true, 0, null);
-    assertEquals(geometricLineY(0), getEditor().offsetToXY(0).y);
-    assertEquals(geometricLineY(2), getEditor().offsetToXY(8).y);
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\ndef\nghi");
+      myFixture.addCollapsedFoldRegion(4, 8, "");
+      EditorTestUtil.addBlockInlay(myFixture.getEditor(), 5, true, true, true, 0, null);
+      assertEquals(geometricLineY(0), myFixture.getEditor().offsetToXY(0).y);
+      assertEquals(geometricLineY(2), myFixture.getEditor().offsetToXY(8).y);
+    });
   }
 
+  @Test
   public void testInlayIsAddedIntoCollapsedFoldRegion() {
-    initText("abc");
-    addCollapsedFoldRegion(0, 3, "...");
-    Inlay inlay = EditorTestUtil.addBlockInlay(getEditor(), 0, true, false, 0, null);
-    assertEquals((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT), getEditor().visualLineToY(1));
-    assertNull(inlay.getBounds());
+    myFixture.runTest(() -> {
+      myFixture.initText("abc");
+      myFixture.addCollapsedFoldRegion(0, 3, "...");
+      Inlay<?> inlay = EditorTestUtil.addBlockInlay(myFixture.getEditor(), 0, true, false, 0, null);
+      assertEquals((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT), myFixture.getEditor().visualLineToY(1));
+      assertNull(inlay.getBounds());
+    });
   }
 
+  @Test
   public void testInlayIsAddedIntoCollapsedFoldRegionDifferentRelatesFlag() {
-    initText("abc");
-    addCollapsedFoldRegion(0, 3, "...");
-    Inlay inlay = EditorTestUtil.addBlockInlay(getEditor(), 0, false, false, 0, null);
-    assertEquals((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT) * 2, getEditor().visualLineToY(1));
-    assertNotNull(inlay.getBounds());
+    myFixture.runTest(() -> {
+      myFixture.initText("abc");
+      myFixture.addCollapsedFoldRegion(0, 3, "...");
+      Inlay<?> inlay = EditorTestUtil.addBlockInlay(myFixture.getEditor(), 0, false, false, 0, null);
+      assertEquals((int)(FontPreferences.DEFAULT_LINE_SPACING * TEST_LINE_HEIGHT) * 2, myFixture.getEditor().visualLineToY(1));
+      assertNotNull(inlay.getBounds());
+    });
   }
 
+  @Test
   public void testVerticalCaretMovementInPresenceOfBothTypesOfInlays() {
-    initText("abc\nd<caret>ef\nghi");
-    addBlockInlay(0);
-    addInlay(4, TEST_CHAR_WIDTH * 2);
-    down();
-    checkResultByText("abc\ndef\nghi<caret>");
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\nd<caret>ef\nghi");
+      myFixture.addBlockInlay(0);
+      myFixture.addInlay(4, TEST_CHAR_WIDTH * 2);
+      myFixture.down();
+      myFixture.checkResultByText("abc\ndef\nghi<caret>");
+    });
   }
 
+  @Test
   public void testInlayAtLineEndCausesSoftWrapping() {
-    initText("abcd efgh");
-    addInlay(9, TEST_CHAR_WIDTH * 3);
-    configureSoftWraps(10);
-    verifySoftWrapPositions(5);
+    myFixture.runTest(() -> {
+      myFixture.initText("abcd efgh");
+      myFixture.addInlay(9, TEST_CHAR_WIDTH * 3);
+      myFixture.configureSoftWraps(10);
+      myFixture.verifySoftWrapPositions(5);
+    });
   }
 
+  @Test
   public void testBlockInlayImpactsEditorWidth() {
-    initText("");
-    getEditor().getSettings().setAdditionalColumnsCount(0);
-    getEditor().getInlayModel().addBlockElement(0, false, false, 0, new EditorCustomElementRenderer() {
-      @Override
-      public int calcWidthInPixels(@NotNull Inlay inlay) { return 123; }
-    });
-    assertEquals(123, getEditor().getContentComponent().getPreferredSize().width);
-  }
-
-  public void testOrderForAboveInlaysWithSamePriority() {
-    initText("text");
-    addBlockInlay(0, true);
-    addBlockInlay(0, true);
-    List<Inlay<?>> list1 = getEditor().getInlayModel().getBlockElementsInRange(0, 0);
-    List<Inlay<?>> list2 = getEditor().getInlayModel().getBlockElementsForVisualLine(0, true);
-    Collections.reverse(list2);
-    assertEquals(list1, list2);
-  }
-
-  public void testOrderForBelowInlaysWithSamePriority() {
-    initText("text");
-    addBlockInlay(0, false);
-    addBlockInlay(0, false);
-    List<Inlay<?>> list1 = getEditor().getInlayModel().getBlockElementsInRange(0, 0);
-    List<Inlay<?>> list2 = getEditor().getInlayModel().getBlockElementsForVisualLine(0, false);
-    assertEquals(list1, list2);
-  }
-
-  public void testCorrectSoftWrappingAfterTextMovementWithInlays() {
-    initText(" \tabcd efghijklmno");
-    addInlay(1, TEST_CHAR_WIDTH);
-    configureSoftWraps(11, false);
-    verifySoftWrapPositions(7);
-    WriteCommandAction.writeCommandAction(getProject()).run(() -> ((EditorEx)getEditor()).getDocument().moveText(0, 1, 7));
-    verifySoftWrapPositions(7, 16);
-  }
-
-  public void testInlineElementAtDocumentEnd() {
-    initText("");
-    addInlay(0, 10);
-    assertNull(getEditor().getInlayModel().getElementAt(new Point(5, getEditor().getLineHeight() * 3 / 2)));
-  }
-
-  public void testAfterLineEndElementAtDocumentEnd() {
-    initText("");
-    addAfterLineEndInlay(0, 10);
-    assertNull(getEditor().getInlayModel().getElementAt(new Point(TEST_CHAR_WIDTH + 5, getEditor().getLineHeight() * 3 / 2)));
-  }
-
-  public void testInlayForDisposedEditor() {
-    Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl(""));
-    Inlay<?> inlay = EditorTestUtil.addInlay(editor, 0);
-    assertTrue(inlay.isValid());
-    EditorFactory.getInstance().releaseEditor(editor);
-    assertFalse(inlay.isValid());
-  }
-
-  public void testInlayForDisposedEditor2() {
-    Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl(""));
-    EditorFactory.getInstance().releaseEditor(editor);
-
-    Inlay<?> inlay1 = EditorTestUtil.addInlay(editor, 0);
-    Inlay<?> inlay2 = EditorTestUtil.addBlockInlay(editor, 0, false, false, 10, 10);
-    Inlay<?> inlay3 = EditorTestUtil.addAfterLineEndInlay(editor, 0, 10);
-
-    // inlays can be registered after Editor disposal, as many existing calls do not handle nullable result
-    assertNotNull(inlay1);
-    assertNotNull(inlay2);
-    assertNotNull(inlay3);
-
-    assertFalse(inlay1.isValid());
-    assertFalse(inlay2.isValid());
-    assertFalse(inlay3.isValid());
-
-    Disposable disposable = Disposer.newDisposable();
-    assertFalse(Disposer.tryRegister(inlay1, disposable));
-    assertFalse(Disposer.tryRegister(inlay2, disposable));
-    assertFalse(Disposer.tryRegister(inlay3, disposable));
-
-    assertThrows(RuntimeException.class, () -> {
-      Disposer.register(inlay1, disposable);
-    });
-    assertThrows(RuntimeException.class, () -> {
-      Disposer.register(inlay2, disposable);
-    });
-    assertThrows(RuntimeException.class, () -> {
-      Disposer.register(inlay3, disposable);
-    });
-  }
-
-  public void testInlayAreDisposables1() {
-    CheckedDisposable disposable1 = Disposer.newCheckedDisposable();
-    CheckedDisposable disposable2 = Disposer.newCheckedDisposable();
-    CheckedDisposable disposable3 = Disposer.newCheckedDisposable();
-
-    Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl(""));
-
-    Inlay<?> inlay1 = EditorTestUtil.addInlay(editor, 0);
-    Inlay<?> inlay2 = EditorTestUtil.addBlockInlay(editor, 0, false, false, 10, 10);
-    Inlay<?> inlay3 = EditorTestUtil.addAfterLineEndInlay(editor, 0, 10);
-
-    try {
-      try {
-        Disposer.register(inlay1, disposable1);
-        Disposer.register(inlay2, disposable2);
-        Disposer.register(inlay3, disposable3);
-      }
-      finally {
-        EditorFactory.getInstance().releaseEditor(editor);
-      }
-
-      assertTrue(disposable1.isDisposed());
-      assertTrue(disposable2.isDisposed());
-      assertTrue(disposable3.isDisposed());
-    }
-    finally {
-      Disposer.dispose(disposable1);
-      Disposer.dispose(disposable2);
-      Disposer.dispose(disposable3);
-    }
-  }
-
-  public void testInlayAreDisposables2() {
-    CheckedDisposable disposable1 = Disposer.newCheckedDisposable();
-    CheckedDisposable disposable2 = Disposer.newCheckedDisposable();
-    CheckedDisposable disposable3 = Disposer.newCheckedDisposable();
-
-    Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl("some\nmultiline\ntext"));
-
-    Inlay<?> inlay1 = EditorTestUtil.addInlay(editor, 10);
-    Inlay<?> inlay2 = EditorTestUtil.addBlockInlay(editor, 10, false, false, 10, 10);
-    Inlay<?> inlay3 = EditorTestUtil.addAfterLineEndInlay(editor, 10, 10);
-    try {
-      Disposer.register(inlay1, disposable1);
-      Disposer.register(inlay2, disposable2);
-      Disposer.register(inlay3, disposable3);
-
-      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
-        editor.getDocument().setText("qwerty");
+    myFixture.runTest(() -> {
+      myFixture.initText("");
+      myFixture.getEditor().getSettings().setAdditionalColumnsCount(0);
+      myFixture.getEditor().getInlayModel().addBlockElement(0, false, false, 0, new EditorCustomElementRenderer() {
+        @Override
+        public int calcWidthInPixels(@NotNull Inlay inlay) { return 123; }
       });
+      assertEquals(123, myFixture.getEditor().getContentComponent().getPreferredSize().width);
+    });
+  }
+
+  @Test
+  public void testOrderForAboveInlaysWithSamePriority() {
+    myFixture.runTest(() -> {
+      myFixture.initText("text");
+      myFixture.addBlockInlay(0, true);
+      myFixture.addBlockInlay(0, true);
+      List<Inlay<?>> list1 = myFixture.getEditor().getInlayModel().getBlockElementsInRange(0, 0);
+      List<Inlay<?>> list2 = myFixture.getEditor().getInlayModel().getBlockElementsForVisualLine(0, true);
+      Collections.reverse(list2);
+      assertEquals(list1, list2);
+    });
+  }
+
+  @Test
+  public void testOrderForBelowInlaysWithSamePriority() {
+    myFixture.runTest(() -> {
+      myFixture.initText("text");
+      myFixture.addBlockInlay(0, false);
+      myFixture.addBlockInlay(0, false);
+      List<Inlay<?>> list1 = myFixture.getEditor().getInlayModel().getBlockElementsInRange(0, 0);
+      List<Inlay<?>> list2 = myFixture.getEditor().getInlayModel().getBlockElementsForVisualLine(0, false);
+      assertEquals(list1, list2);
+    });
+  }
+
+  @Test
+  public void testCorrectSoftWrappingAfterTextMovementWithInlays() {
+    myFixture.runTest(() -> {
+      myFixture.initText(" \tabcd efghijklmno");
+      myFixture.addInlay(1, TEST_CHAR_WIDTH);
+      myFixture.configureSoftWraps(11, false);
+      myFixture.verifySoftWrapPositions(7);
+      WriteCommandAction.writeCommandAction(myFixture.getProject())
+        .run(() -> ((EditorEx)myFixture.getEditor()).getDocument().moveText(0, 1, 7));
+      myFixture.verifySoftWrapPositions(7, 16);
+    });
+  }
+
+  @Test
+  public void testInlineElementAtDocumentEnd() {
+    myFixture.runTest(() -> {
+      myFixture.initText("");
+      myFixture.addInlay(0, 10);
+      assertNull(myFixture.getEditor().getInlayModel().getElementAt(new Point(5, myFixture.getEditor().getLineHeight() * 3 / 2)));
+    });
+  }
+
+  @Test
+  public void testAfterLineEndElementAtDocumentEnd() {
+    myFixture.runTest(() -> {
+      myFixture.initText("");
+      myFixture.addAfterLineEndInlay(0, 10);
+      assertNull(myFixture.getEditor().getInlayModel()
+                   .getElementAt(new Point(TEST_CHAR_WIDTH + 5, myFixture.getEditor().getLineHeight() * 3 / 2)));
+    });
+  }
+
+  @Test
+  public void testInlayForDisposedEditor() {
+    myFixture.runTest(() -> {
+      Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl(""));
+      Inlay<?> inlay = EditorTestUtil.addInlay(editor, 0);
+      assertTrue(inlay.isValid());
+      EditorFactory.getInstance().releaseEditor(editor);
+      assertFalse(inlay.isValid());
+    });
+  }
+
+  @Test
+  public void testInlayForDisposedEditor2() {
+    myFixture.runTest(() -> {
+      Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl(""));
+      EditorFactory.getInstance().releaseEditor(editor);
+
+      Inlay<?> inlay1 = EditorTestUtil.addInlay(editor, 0);
+      Inlay<?> inlay2 = EditorTestUtil.addBlockInlay(editor, 0, false, false, 10, 10);
+      Inlay<?> inlay3 = EditorTestUtil.addAfterLineEndInlay(editor, 0, 10);
+
+      // inlays can be registered after Editor disposal, as many existing calls do not handle nullable result
+      assertNotNull(inlay1);
+      assertNotNull(inlay2);
+      assertNotNull(inlay3);
 
       assertFalse(inlay1.isValid());
       assertFalse(inlay2.isValid());
       assertFalse(inlay3.isValid());
 
-      assertTrue(disposable1.isDisposed());
-      assertTrue(disposable2.isDisposed());
-      assertTrue(disposable3.isDisposed());
-    }
-    finally {
-      EditorFactory.getInstance().releaseEditor(editor);
+      Disposable disposable = Disposer.newDisposable();
+      assertFalse(Disposer.tryRegister(inlay1, disposable));
+      assertFalse(Disposer.tryRegister(inlay2, disposable));
+      assertFalse(Disposer.tryRegister(inlay3, disposable));
 
-      Disposer.dispose(disposable1);
-      Disposer.dispose(disposable2);
-      Disposer.dispose(disposable3);
-    }
+      assertThrows(RuntimeException.class, () -> {
+        Disposer.register(inlay1, disposable);
+      });
+      assertThrows(RuntimeException.class, () -> {
+        Disposer.register(inlay2, disposable);
+      });
+      assertThrows(RuntimeException.class, () -> {
+        Disposer.register(inlay3, disposable);
+      });
+    });
+  }
+
+  @Test
+  public void testInlayAreDisposables1() {
+    myFixture.runTest(() -> {
+      CheckedDisposable disposable1 = Disposer.newCheckedDisposable();
+      CheckedDisposable disposable2 = Disposer.newCheckedDisposable();
+      CheckedDisposable disposable3 = Disposer.newCheckedDisposable();
+
+      Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl(""));
+
+      Inlay<?> inlay1 = EditorTestUtil.addInlay(editor, 0);
+      Inlay<?> inlay2 = EditorTestUtil.addBlockInlay(editor, 0, false, false, 10, 10);
+      Inlay<?> inlay3 = EditorTestUtil.addAfterLineEndInlay(editor, 0, 10);
+
+      try {
+        try {
+          Disposer.register(inlay1, disposable1);
+          Disposer.register(inlay2, disposable2);
+          Disposer.register(inlay3, disposable3);
+        }
+        finally {
+          EditorFactory.getInstance().releaseEditor(editor);
+        }
+
+        assertTrue(disposable1.isDisposed());
+        assertTrue(disposable2.isDisposed());
+        assertTrue(disposable3.isDisposed());
+      }
+      finally {
+        Disposer.dispose(disposable1);
+        Disposer.dispose(disposable2);
+        Disposer.dispose(disposable3);
+      }
+    });
+  }
+
+  @Test
+  public void testInlayAreDisposables2() {
+    myFixture.runTest(() -> {
+      CheckedDisposable disposable1 = Disposer.newCheckedDisposable();
+      CheckedDisposable disposable2 = Disposer.newCheckedDisposable();
+      CheckedDisposable disposable3 = Disposer.newCheckedDisposable();
+
+      Editor editor = EditorFactory.getInstance().createEditor(new DocumentImpl("some\nmultiline\ntext"));
+
+      Inlay<?> inlay1 = EditorTestUtil.addInlay(editor, 10);
+      Inlay<?> inlay2 = EditorTestUtil.addBlockInlay(editor, 10, false, false, 10, 10);
+      Inlay<?> inlay3 = EditorTestUtil.addAfterLineEndInlay(editor, 10, 10);
+      try {
+        Disposer.register(inlay1, disposable1);
+        Disposer.register(inlay2, disposable2);
+        Disposer.register(inlay3, disposable3);
+
+        WriteCommandAction.runWriteCommandAction(myFixture.getProject(), () -> {
+          editor.getDocument().setText("qwerty");
+        });
+
+        assertFalse(inlay1.isValid());
+        assertFalse(inlay2.isValid());
+        assertFalse(inlay3.isValid());
+
+        assertTrue(disposable1.isDisposed());
+        assertTrue(disposable2.isDisposed());
+        assertTrue(disposable3.isDisposed());
+      }
+      finally {
+        EditorFactory.getInstance().releaseEditor(editor);
+
+        Disposer.dispose(disposable1);
+        Disposer.dispose(disposable2);
+        Disposer.dispose(disposable3);
+      }
+    });
   }
 
   private void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,
                                               int selectionStartOffset, int selectionEndOffset) {
     checkCaretPosition(offset, logicalColumn, visualColumn);
-    assertEquals(selectionStartOffset, getEditor().getSelectionModel().getSelectionStart());
-    assertEquals(selectionEndOffset, getEditor().getSelectionModel().getSelectionEnd());
+    assertEquals(selectionStartOffset, myFixture.getEditor().getSelectionModel().getSelectionStart());
+    assertEquals(selectionEndOffset, myFixture.getEditor().getSelectionModel().getSelectionEnd());
   }
 
   private void checkCaretPosition(int offset, int logicalColumn, int visualColumn) {
-    assertEquals(offset, getEditor().getCaretModel().getOffset());
-    assertEquals(0, getEditor().getCaretModel().getLogicalPosition().line);
-    assertEquals(logicalColumn, getEditor().getCaretModel().getLogicalPosition().column);
-    assertEquals(0, getEditor().getCaretModel().getVisualPosition().line);
-    assertEquals(visualColumn, getEditor().getCaretModel().getVisualPosition().column);
+    assertEquals(offset, myFixture.getEditor().getCaretModel().getOffset());
+    assertEquals(0, myFixture.getEditor().getCaretModel().getLogicalPosition().line);
+    assertEquals(logicalColumn, myFixture.getEditor().getCaretModel().getLogicalPosition().column);
+    assertEquals(0, myFixture.getEditor().getCaretModel().getVisualPosition().line);
+    assertEquals(visualColumn, myFixture.getEditor().getCaretModel().getVisualPosition().column);
   }
 
   private void assertInlaysPositions(int... offsets) {
+    Editor editor = myFixture.getEditor();
     assertArrayEquals(offsets,
-                      getEditor().getInlayModel().getInlineElementsInRange(0, getEditor().getDocument().getTextLength()).stream()
+                      editor.getInlayModel().getInlineElementsInRange(0, editor.getDocument().getTextLength()).stream()
                         .mapToInt(inlay -> inlay.getOffset()).toArray());
   }
 }

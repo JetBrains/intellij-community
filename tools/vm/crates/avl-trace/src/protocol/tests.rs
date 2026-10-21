@@ -8,8 +8,8 @@ use serde::Deserialize;
 use super::*;
 use crate::testdata::decode_transcript;
 
-/// The golden transcript is the contract the sidecar is compared with byte for byte, so it has to be in the
-/// canonical form, or the comparison would be with a spelling no encoder produces.
+/// The golden transcripts stand for what a lane writes, and the lane writes the canonical form. So each line has to be
+/// in that form, or the recorder tests would replay a spelling that no encoder produces.
 #[test]
 fn every_transcript_line_decodes_and_is_canonical() {
     for name in [TRANSCRIPT, TRUNCATED_TRANSCRIPT] {
@@ -268,8 +268,8 @@ fn the_transcript_program_is_the_profile_it_ran() {
     }
 }
 
-/// The truncated transcript is the shape a watchdog's `exitProcess` leaves: the full session's first lines, then
-/// EOF with an assertion running.
+/// The truncated transcript is the shape that a lane leaves when it dies: the full session's first lines, then EOF
+/// with an assertion running.
 #[test]
 fn the_truncated_transcript_stops_inside_an_assertion() {
     let full = lines(&traces::path(TRANSCRIPT));
@@ -435,7 +435,7 @@ fn encode_command_puts_the_op_first_and_refuses_an_invalid_command() {
     });
     assert!(encode_command(&invalid).is_err(), "an invalid span was encoded");
 
-    // An expectation or a JVM frame is full of `<`, `>` and `&`, and the sidecar writes them raw.
+    // An expectation or a JVM frame is full of `<`, `>` and `&`, and the lane writes them raw.
     let failed = Command::End(EndCommand {
         id: 4,
         status: Status::Failed,
@@ -449,6 +449,64 @@ fn encode_command_puts_the_op_first_and_refuses_an_invalid_command() {
         String::from_utf8(encode_command(&failed).unwrap()).unwrap(),
         r#"{"op":"end","id":4,"status":"failed","error":{"type":"java.lang.AssertionError","message":"expected <a> & <b>","stack":["com.intellij.air.Flow.<init>(Flow.kt:1)"]}}"#
     );
+}
+
+// The lane daemon reads each profile from a pretty-printed suite document, and the recorder reads one command per
+// line. So the program goes out on one line, and only the whitespace between its tokens goes. The text of a string,
+// with its spaces, its escaped quote and its escaped line break, stays.
+#[test]
+fn a_program_from_a_pretty_printed_document_is_written_on_one_line() {
+    let profile = serde_json::json!({"name": "a b", "quote": "say \"hi\" ", "steps": [{"text": "one\ntwo"}]});
+    let pretty = serde_json::to_string_pretty(&profile).unwrap();
+    assert!(pretty.contains('\n'));
+    let scenario = Command::Scenario(ScenarioCommand {
+        name: "a b".to_owned(),
+        test_class: "C".to_owned(),
+        suite: None,
+        lane: "UI".to_owned(),
+        flow: None,
+        fixture: None,
+        flags: BTreeMap::new(),
+        labels: Vec::new(),
+        bridge: None,
+        program: Some(RawValue::from_string(pretty).unwrap()),
+        log_from: None,
+    });
+    let line = String::from_utf8(encode_command(&scenario).unwrap()).unwrap();
+    assert_eq!(
+        line,
+        r#"{"op":"scenario","name":"a b","testClass":"C","lane":"UI","program":{"name":"a b","quote":"say \"hi\" ","steps":[{"text":"one\ntwo"}]}}"#
+    );
+    let Command::Scenario(decoded) = decode_command(line.as_bytes()).unwrap() else {
+        panic!("{line} is no scenario");
+    };
+    let program: serde_json::Value = serde_json::from_str(decoded.program.unwrap().get()).unwrap();
+    assert_eq!(program, profile);
+}
+
+// A lane may name the byte of the IDE's log where the slice begins. It is the last field of the canonical line, and it
+// reads back.
+#[test]
+fn a_scenario_names_the_byte_where_its_log_slice_begins() {
+    let scenario = ScenarioCommand {
+        name: "a".to_owned(),
+        test_class: "C".to_owned(),
+        suite: None,
+        lane: "UI".to_owned(),
+        flow: None,
+        fixture: None,
+        flags: BTreeMap::new(),
+        labels: Vec::new(),
+        bridge: None,
+        program: None,
+        log_from: Some(0),
+    };
+    let line = String::from_utf8(encode_command(&Command::Scenario(scenario)).unwrap()).unwrap();
+    assert_eq!(line, r#"{"op":"scenario","name":"a","testClass":"C","lane":"UI","logFrom":0}"#);
+    let Command::Scenario(decoded) = decode_command(line.as_bytes()).unwrap() else {
+        panic!("{line} is no scenario");
+    };
+    assert_eq!(decoded.log_from, Some(0));
 }
 
 #[test]

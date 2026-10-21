@@ -214,7 +214,7 @@ internal class ConsoleRegion<TTag> private constructor(
       val (_, text, foreground) = line
       val attrs =
         if (foreground == null) {
-          baseStyle
+          SimpleAttributeSet(baseStyle).also { StyleConstants.setForeground(it, JBUI.CurrentTheme.Label.foreground()) }
         }
         else {
           SimpleAttributeSet(baseStyle).also { StyleConstants.setForeground(it, foreground) }
@@ -368,7 +368,8 @@ internal class ConsoleRegion<TTag> private constructor(
     const val HEADER_HORIZONTAL_PADDING = 8
     const val HEADER_ICON_TEXT_GAP = 4
     const val BODY_BOTTOM_PADDING = 8
-    val TAG_FOREGROUND = ColorUtil.withAlpha(JBUI.CurrentTheme.Label.foreground(), 0.75)
+    val TAG_FOREGROUND 
+      get() = ColorUtil.withAlpha(JBUI.CurrentTheme.Label.foreground(), 0.75)
 
     val MONOSPACED_FONT =
       EditorColorsManager.getInstance().globalScheme.let {

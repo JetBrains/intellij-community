@@ -23,7 +23,7 @@ internal class DocumentSnapshotImpl private constructor(
     return modState
   }
 
-  override fun copyWithNewIdentity(): DocumentSnapshotImpl {
+  override fun newInstance(): DocumentSnapshotImpl {
     return DocumentSnapshotImpl(text, modState)
   }
 

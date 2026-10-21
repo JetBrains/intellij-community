@@ -16,3 +16,5 @@
 - setRowSorter(javax.swing.RowSorter):V
 *f:com.intellij.ui.tree.TreeStructureDomainModelAdapterKt
 - *sf:buildTreeNodeDescriptorPresentation(com.intellij.ide.util.treeView.PresentableNodeDescriptor,com.intellij.ui.treeStructure.TreeNodePresentationBuilder):com.intellij.ui.treeStructure.TreeNodePresentation
+*:com.intellij.ui.tree.ui.TreeRowHeightEstimateProvider
+- a:getRowHeightEstimate():I

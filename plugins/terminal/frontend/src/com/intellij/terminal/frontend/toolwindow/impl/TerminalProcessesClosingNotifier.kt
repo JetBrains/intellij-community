@@ -3,11 +3,13 @@ package com.intellij.terminal.frontend.toolwindow.impl
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseConfirmationChecker
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.VetoableProjectManagerListener
 import com.intellij.openapi.startup.ProjectActivity
@@ -20,9 +22,11 @@ import com.intellij.ui.content.Content
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory
 import java.time.LocalDateTime
@@ -39,7 +43,8 @@ import java.time.LocalDateTime
  * But it is applied in a different context (should never intersect with the logic in this class).
  * TerminalTabCloseListener runs when the user closes a single terminal tab, and the project is not closing at this moment.
  */
-internal object TerminalProcessesClosingNotifier : VetoableProjectManagerListener, ApplicationListener {
+internal object TerminalProcessesClosingNotifier : VetoableProjectManagerListener, ApplicationListener,
+                                                   ProjectCloseConfirmationChecker {
   private val PROCESSES_TERMINATION_CONFIRMED_TIME_KEY = Key<LocalDateTime>("TERMINAL_PROCESSES_TERMINATION_CONFIRMED_TIME")
 
   /**
@@ -97,6 +102,13 @@ internal object TerminalProcessesClosingNotifier : VetoableProjectManagerListene
       project.putUserData(PROCESSES_TERMINATION_CONFIRMED_TIME_KEY, LocalDateTime.now())
     }
     return terminationConfirmed
+  }
+
+  override suspend fun needsConfirmationToClose(project: Project): Boolean {
+    val terminalTabs = withContext(Dispatchers.EDT) {
+      if (project.isDisposed) emptyList() else collectTerminalTabs(project)
+    }
+    return terminalTabs.isNotEmpty() && collectTabTitlesToConfirm(terminalTabs).isNotEmpty()
   }
 
   private fun collectTerminalTabs(project: Project): List<TerminalTabContent> {

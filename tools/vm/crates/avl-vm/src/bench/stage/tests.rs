@@ -5,7 +5,7 @@ use avl_host_sys::lock::LockManager;
 use avl_host_sys::{Ctx, Interrupts, Runner};
 use pretty_assertions::assert_eq;
 
-use super::{DistConfig, Generation, JBR_DIR, RECORD_FILE, Sources, open, parse_config, read_digest, stage, stays_inside};
+use super::{DistConfig, Generation, RECORD_FILE, Sources, java_in, java_name, open, parse_config, read_digest, stage, stays_inside};
 use crate::bench::launch::OPENED_PACKAGES_FILE;
 use crate::bench::session::GitInfo;
 
@@ -34,6 +34,13 @@ fn reads_a_dist_config() {
 }
 
 #[test]
+fn reads_a_dist_config_with_the_home_below_the_dist_directory() {
+    let config = parse_config("home.path=idea_dist.dist/Contents\nmain.class.name=com.intellij.idea.Main\n").expect("a config");
+    assert_eq!(config.home, "idea_dist.dist/Contents");
+    assert_eq!(config.dist_name(), "idea_dist.dist");
+}
+
+#[test]
 fn reads_the_additional_modules_of_a_dist_config() {
     let config = parse_config(
         "home.path=jetbrains_light_all_plugins_dist.dist\nmain.class.name=com.intellij.idea.Main\nadditional.modules=intellij.markdown, intellij.json,,intellij.yaml \n",
@@ -52,7 +59,15 @@ fn refuses_a_config_the_launch_cannot_follow() {
         ("home.path=a.dist\n", "it has no main.class.name"),
         (
             "home.path=../a.dist\nmain.class.name=M\n",
-            "its home.path ../a.dist is not the name of a sibling directory",
+            "its home.path ../a.dist is neither a sibling directory nor a directory in one",
+        ),
+        (
+            "home.path=a.dist/Contents/MacOS\nmain.class.name=M\n",
+            "its home.path a.dist/Contents/MacOS is neither a sibling directory nor a directory in one",
+        ),
+        (
+            "home.path=a.dist/\nmain.class.name=M\n",
+            "its home.path a.dist/ is neither a sibling directory nor a directory in one",
         ),
         ("home.path\n", "the line `home.path` is not key=value"),
     ] {
@@ -72,7 +87,15 @@ fn a_link_stays_inside_its_tree_or_is_refused() {
     assert!(!stays_inside(Path::new("a"), Path::new("/absolute")));
 }
 
-/// The sources of a small distribution, a JBR and the opened packages under `root`.
+#[test]
+fn the_java_of_a_home_is_the_one_of_its_jbr() {
+    assert_eq!(
+        java_in(Path::new("/g/idea_dist.dist/Contents")),
+        Path::new("/g/idea_dist.dist/Contents/jbr/Contents/Home/bin").join(java_name())
+    );
+}
+
+/// The sources of a small distribution with its JBR, and the opened packages, under `root`.
 fn fake_sources(root: &Path) -> Sources {
     let dist = root.join("bazel-bin/idea_dist.dist");
     std::fs::create_dir_all(dist.join("lib")).expect("a lib directory");
@@ -80,10 +103,10 @@ fn fake_sources(root: &Path) -> Sources {
     std::fs::write(dist.join("core-classpath.txt"), "lib/a.jar\n").expect("a class path");
     let config = root.join("bazel-bin/idea_dist.ide.config");
     std::fs::write(&config, "home.path=idea_dist.dist\nmain.class.name=com.intellij.idea.Main\n").expect("a config");
-    let jbr = root.join("external/jbr");
+    let jbr = dist.join("jbr/Contents/Home");
     std::fs::create_dir_all(jbr.join("bin")).expect("a bin directory");
     std::fs::create_dir_all(jbr.join("legal/java.base")).expect("a legal directory");
-    std::fs::write(jbr.join("bin/java"), "#!/bin/sh\n").expect("a java");
+    std::fs::write(jbr.join("bin").join(java_name()), "#!/bin/sh\n").expect("a java");
     std::fs::write(jbr.join("legal/java.base/LICENSE"), "license").expect("a license");
     #[cfg(unix)]
     {
@@ -96,7 +119,6 @@ fn fake_sources(root: &Path) -> Sources {
         target: "//build:idea_dist".to_owned(),
         dist,
         config,
-        jbr,
         opened_packages,
     }
 }
@@ -122,7 +144,10 @@ async fn a_stage_clones_the_sources_read_only_and_a_second_stage_reuses_them() {
     assert!(!generation.reused);
     assert_eq!(generation.root, runtime.join("bench/generations").join(&generation.digest));
     assert_eq!(generation.dist, generation.root.join("idea_dist.dist"));
-    assert_eq!(generation.java, generation.root.join(JBR_DIR).join("bin").join(super::java_name()));
+    assert_eq!(generation.home, generation.dist);
+    assert_eq!(generation.java, java_in(&generation.home));
+    assert!(generation.java.is_file(), "the clone of the distribution holds its JBR");
+    assert!(!generation.root.join("jbr").exists(), "no JBR beside the distribution");
     assert_eq!(read_digest(&generation.root).expect("the record"), generation.digest);
     let jar = generation.dist.join("lib/a.jar");
     assert_eq!(std::fs::read_to_string(&jar).expect("the clone"), "a");
@@ -130,7 +155,7 @@ async fn a_stage_clones_the_sources_read_only_and_a_second_stage_reuses_them() {
     assert!(generation.root.join(OPENED_PACKAGES_FILE).is_file());
     #[cfg(unix)]
     assert_eq!(
-        std::fs::read_link(generation.root.join("jbr/legal/java.rmi/LICENSE")).expect("the link"),
+        std::fs::read_link(generation.dist.join("jbr/Contents/Home/legal/java.rmi/LICENSE")).expect("the link"),
         std::path::PathBuf::from("../java.base/LICENSE")
     );
     let leftovers: Vec<String> = std::fs::read_dir(runtime.join("bench/generations"))
@@ -172,6 +197,80 @@ async fn a_link_out_of_the_tree_is_refused_and_leaves_no_temporary() {
         .expect_err("a refusal");
     assert_eq!(refusal.code, "bench_dist_unsupported");
     assert!(refusal.message.contains("links to /etc/hosts"), "{}", refusal.message);
+    let left = std::fs::read_dir(runtime.join("bench/generations"))
+        .expect("the generations")
+        .count();
+    assert_eq!(left, 0);
+}
+
+/// Moves the home of the fake distribution of `sources` to `Contents`, as a macOS app has it.
+fn move_home_to_contents(sources: &Sources) {
+    std::fs::create_dir_all(sources.dist.join("Contents")).expect("the home");
+    for name in ["lib", "core-classpath.txt", "jbr"] {
+        std::fs::rename(sources.dist.join(name), sources.dist.join("Contents").join(name)).expect("a move");
+    }
+    std::fs::write(
+        &sources.config,
+        "home.path=idea_dist.dist/Contents\nmain.class.name=com.intellij.idea.Main\n",
+    )
+    .expect("a config");
+}
+
+// A macOS app has its home in `Contents`. The generation clones the whole `.dist` directory, starts from the home, and
+// takes the JBR of the home.
+#[tokio::test]
+async fn a_stage_starts_from_the_home_that_the_config_names_below_the_dist_directory() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let sources = fake_sources(dir.path());
+    move_home_to_contents(&sources);
+    let (_runner, locks, reporter) = collaborators();
+    let generation = stage(
+        &Ctx::background(),
+        &locks,
+        &dir.path().join("runtime"),
+        &sources,
+        &built(),
+        &reporter,
+    )
+    .await
+    .expect("a generation");
+    assert_eq!(generation.dist, generation.root.join("idea_dist.dist"));
+    assert_eq!(generation.home, generation.dist.join("Contents"));
+    assert_eq!(std::fs::read_to_string(generation.home.join("lib/a.jar")).expect("the clone"), "a");
+    assert_eq!(
+        generation.java,
+        generation.dist.join("Contents/jbr/Contents/Home/bin").join(java_name())
+    );
+    assert!(generation.java.is_file(), "the clone of the distribution holds its JBR");
+}
+
+/// A distribution without `jbr/Contents/Home/bin/java` in its home is refused with the path, and so is a home without
+/// `core-classpath.txt`. Neither stages a generation.
+#[tokio::test]
+async fn a_distribution_without_its_jbr_or_its_class_path_is_refused() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let sources = fake_sources(dir.path());
+    move_home_to_contents(&sources);
+    let runtime = dir.path().join("runtime");
+    let (_runner, locks, reporter) = collaborators();
+    let java = sources.dist.join("Contents/jbr/Contents/Home/bin").join(java_name());
+    std::fs::remove_file(&java).expect("no java");
+    let refusal = stage(&Ctx::background(), &locks, &runtime, &sources, &built(), &reporter)
+        .await
+        .expect_err("a refusal");
+    assert_eq!(refusal.code, "bench_dist_unsupported");
+    assert!(
+        refusal.message.contains(&format!("{} is not a file", java.display())),
+        "{}",
+        refusal.message
+    );
+
+    std::fs::remove_file(sources.dist.join("Contents/core-classpath.txt")).expect("no class path");
+    let refusal = stage(&Ctx::background(), &locks, &runtime, &sources, &built(), &reporter)
+        .await
+        .expect_err("a refusal");
+    assert_eq!(refusal.code, "bench_dist_unsupported");
+    assert!(refusal.message.contains("has no core-classpath.txt"), "{}", refusal.message);
     let left = std::fs::read_dir(runtime.join("bench/generations"))
         .expect("the generations")
         .count();
@@ -232,8 +331,8 @@ async fn a_generation_names_its_commit_and_opens_by_a_prefix_of_its_digest() {
     assert_eq!(open(&runtime, &generation.digest).expect("the generation").git, Some(built()));
 }
 
-/// Writes a published generation `digest` under `generations` with the record of a stage from before the commit, and
-/// the config copy.
+/// Writes a published generation `digest` under `generations` with the record of a stage from before the commit, the
+/// config copy and the JBR of the distribution.
 fn fake_generation(generations: &Path, digest: &str) {
     let root = generations.join(digest);
     std::fs::create_dir_all(&root).expect("a generation");
@@ -252,6 +351,9 @@ fn fake_generation(generations: &Path, digest: &str) {
         "home.path=idea_dist.dist\nmain.class.name=com.intellij.idea.Main\n",
     )
     .expect("a config");
+    let java = java_in(&root.join("idea_dist.dist"));
+    std::fs::create_dir_all(java.parent().expect("a bin")).expect("a bin directory");
+    std::fs::write(&java, "").expect("a java");
 }
 
 /// A prefix that no generation has, or that several have, is refused with the candidates. An unfinished stage is no
@@ -291,4 +393,22 @@ fn an_unknown_or_ambiguous_prefix_is_refused_with_the_candidates() {
     let old = open(runtime, "cd").expect("a generation");
     assert_eq!((old.generation.digest.as_str(), old.git), ("cd56", None));
     assert_eq!(old.generation.dist, generations.join("cd56/idea_dist.dist"));
+}
+
+/// A generation of the first layout has its JBR beside the distribution, not in it. `open` refuses it with the path
+/// of the missing `java`.
+#[test]
+fn a_generation_of_the_earlier_layout_is_refused() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let generations = dir.path().join("bench/generations");
+    fake_generation(&generations, "ab12");
+    let java = java_in(&generations.join("ab12/idea_dist.dist"));
+    std::fs::remove_file(&java).expect("no java");
+    let refusal = open(dir.path(), "ab").expect_err("an earlier layout");
+    assert_eq!(refusal.code, "bench_dist_unsupported");
+    assert!(
+        refusal.message.contains(&format!("has no JBR at {}", java.display())),
+        "{}",
+        refusal.message
+    );
 }

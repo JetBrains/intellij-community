@@ -8,6 +8,7 @@ import com.intellij.execution.Executor
 import com.intellij.execution.KillableProcess
 import com.intellij.execution.RunContentDescriptorId
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.TerminateRemoteProcessDialog
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.process.ProcessEvent
@@ -82,7 +83,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
 
   companion object {
     @JvmField
-    val ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY = Key.create<Boolean>("ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY")
+    val ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY = TerminateRemoteProcessDialog.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY
 
     @ApiStatus.Internal
     @JvmField

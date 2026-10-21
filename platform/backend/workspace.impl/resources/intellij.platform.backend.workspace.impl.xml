@@ -10,6 +10,7 @@
     <module name="intellij.platform.diagnostic.telemetry"/>
     <module name="intellij.platform.diagnostic.telemetry.impl"/>
     <module name="intellij.platform.eel.provider"/>
+    <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
@@ -20,6 +21,7 @@
 
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationActivity implementation="com.intellij.platform.backend.workspace.impl.WorkspaceModelCacheSerializerWarmUp"/>
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.VirtualFileUrlsLazyInitializer"/>
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceEntitiesLifecycleActivity"/>
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.OrphanageActivity"/>

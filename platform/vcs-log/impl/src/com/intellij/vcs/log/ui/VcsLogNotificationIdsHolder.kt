@@ -12,15 +12,17 @@ class VcsLogNotificationIdsHolder : NotificationIdsHolder {
       FATAL_ERROR,
       COMMIT_NOT_FOUND,
       NAVIGATION_ERROR,
-      FILE_HISTORY_ACTION_LOAD_DETAILS_ERROR
+      FILE_HISTORY_ACTION_LOAD_DETAILS_ERROR,
+      LOAD_COMMIT_DETAILS_ERROR
     )
   }
 
   companion object {
-    const val LOG_NOT_AVAILABLE = "vcs.log.not.available"
-    const val FATAL_ERROR = "vcs.log.fatal.error"
-    const val COMMIT_NOT_FOUND = "vcs.log.commit.not.found"
-    const val NAVIGATION_ERROR = "vcs.log.navigation.error"
-    const val FILE_HISTORY_ACTION_LOAD_DETAILS_ERROR = "file.history.load.details.error"
+    const val LOG_NOT_AVAILABLE: String = "vcs.log.not.available"
+    const val FATAL_ERROR: String = "vcs.log.fatal.error"
+    const val COMMIT_NOT_FOUND: String = "vcs.log.commit.not.found"
+    const val NAVIGATION_ERROR: String = "vcs.log.navigation.error"
+    const val FILE_HISTORY_ACTION_LOAD_DETAILS_ERROR: String = "file.history.load.details.error"
+    const val LOAD_COMMIT_DETAILS_ERROR: String = "load.commit.details.error"
   }
 }

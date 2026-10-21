@@ -54,6 +54,7 @@ import com.intellij.execution.ui.RunContentManagerExtension
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.StructuredIdeActivity
+import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -1116,7 +1117,7 @@ private fun userApprovesStopForSameTypeConfigurations(project: Project, configNa
   return Messages.showOkCancelDialog(
     project,
     ExecutionBundle.message("rerun.singleton.confirmation.message", escapedConfigName, instancesCount),
-    ExecutionBundle.message("process.is.running.dialog.title", escapedConfigName),
+    LangBundle.message("process.is.running.dialog.title", escapedConfigName),
     ExecutionBundle.message("rerun.confirmation.button.text"),
     CommonBundle.getCancelButtonText(),
     Messages.getQuestionIcon(), option) == Messages.OK

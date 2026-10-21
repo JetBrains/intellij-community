@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.dsl.holders;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -22,7 +23,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +65,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   public static NonCodeMembersHolder generateMembers(@NotNull List<? extends Descriptor> methods, @NotNull PsiFile file) {
     Map<List<? extends Descriptor>, NonCodeMembersHolder> map = CachedValuesManager.getCachedValue(
       file, () -> {
-        final Map<List<? extends Descriptor>, NonCodeMembersHolder> map1 = CollectionFactory.createConcurrentSoftMap();
+        final Map<List<? extends Descriptor>, NonCodeMembersHolder> map1 = ConcurrentCollectionFactory.createConcurrentSoftMap();
         return CachedValueProvider.Result.create(map1, PsiModificationTracker.MODIFICATION_COUNT);
       });
 

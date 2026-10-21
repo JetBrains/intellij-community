@@ -74,6 +74,7 @@ a:com.intellij.ide.ui.LafManager
 - getRoot():javax.swing.tree.DefaultMutableTreeNode
 - f:insertChild(javax.swing.tree.DefaultMutableTreeNode,I,javax.swing.tree.DefaultMutableTreeNode):V
 - isLeaf(java.lang.Object):Z
+- f:moveChild(javax.swing.tree.DefaultMutableTreeNode,I,I):V
 - f:promiseRealNodes():org.jetbrains.concurrency.Promise
 - f:removeChild(javax.swing.tree.DefaultMutableTreeNode,I):V
 - removeTreeModelListener(javax.swing.event.TreeModelListener):V
@@ -82,6 +83,10 @@ a:com.intellij.ide.ui.LafManager
 - f:updateChildren(javax.swing.tree.DefaultMutableTreeNode,java.util.List,kotlin.jvm.functions.Function1):V
 - f:updateNode(javax.swing.tree.DefaultMutableTreeNode,java.lang.Object):V
 - valueForPathChanged(javax.swing.tree.TreePath,java.lang.Object):V
+f:com.intellij.ide.util.treeView.TreeState
+- com.intellij.openapi.util.JDOMExternalizable
+- *s:calcId(java.lang.Object):java.lang.String
+- *s:calcType(java.lang.Object):java.lang.String
 *f:com.intellij.openapi.actionSystem.ActionId
 - bsf:box-impl(java.lang.String):com.intellij.openapi.actionSystem.ActionId
 - s:constructor-impl(java.lang.String):java.lang.String
@@ -352,18 +357,6 @@ f:com.intellij.ui.components.BulkListModelKt
 c:com.intellij.ui.components.JBScrollPane
 - javax.swing.JScrollPane
 - *sf:FORCE_HORIZONTAL_SCROLL:com.intellij.openapi.util.Key
-*c:com.intellij.ui.components.ShimmerLabel
-- com.intellij.ui.components.JBLabel
-- <init>():V
-- <init>(java.lang.String):V
-- <init>(java.lang.String,javax.swing.Icon):V
-- <init>(java.lang.String,javax.swing.Icon,I):V
-- b:<init>(java.lang.String,javax.swing.Icon,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- addNotify():V
-- f:isShimmering():Z
-- p:paintComponent(java.awt.Graphics):V
-- removeNotify():V
-- f:setShimmering(Z):V
 c:com.intellij.ui.components.fields.ExtendableTextField
 - com.intellij.ui.components.JBTextField
 - com.intellij.ui.components.fields.ExtendableTextComponent

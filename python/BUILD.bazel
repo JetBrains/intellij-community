@@ -22,7 +22,10 @@ content_module_jar(module = ":python-pydev")
 filegroup(
     name = "dev_dist_resources",
     srcs = glob(
-        ["helpers/pydev/**"],
+        [
+            "bundledPyiStubs/**",
+            "helpers/pydev/**",
+        ],
     ),
     visibility = ["//visibility:public"],
 )
@@ -48,6 +51,7 @@ resourcegroup(
     name = "pycharm-community_resources",
     srcs = glob(
         ["resources/**/*"],
+        allow_empty = True,
         exclude = ["resources/**/icon-robots.txt"],
     ),
     strip_prefix = "resources",
@@ -186,6 +190,8 @@ jvm_library(
         "//plugins/hg4idea:vcs-hg",
         "//plugins/svn4idea:vcs-svn",
         "//plugins/git4idea/backend",
+        "//plugins/git4idea/rpc.backend",
+        "//platform/vcs-impl/backend",
         "//plugins/git4idea/shared",
         "//plugins/git4idea/frontend",
         "//plugins/git-features-trainer:vcs-git-featuresTrainer",
@@ -245,6 +251,8 @@ jvm_library(
         "//plugins/hg4idea:vcs-hg_test_lib",
         "//plugins/svn4idea:vcs-svn_test_lib",
         "//plugins/git4idea/backend:backend_test_lib",
+        "//plugins/git4idea/rpc.backend:rpc.backend_test_lib",
+        "//platform/vcs-impl/backend:backend_test_lib",
         "//plugins/git4idea/shared:shared_test_lib",
         "//plugins/git4idea/frontend:frontend_test_lib",
         "//plugins/git-features-trainer:vcs-git-featuresTrainer_test_lib",
@@ -296,6 +304,43 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.pycharm.community.main` end
+
+### auto-generated section `build intellij.python.bundledPyiStubs` start
+jvm_library(
+    name = "python-bundledPyiStubs",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.bundledPyiStubs",
+    resource_strip_prefix = "bundledPyiStubs",
+    resources = glob(
+        ["bundledPyiStubs/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "python-bundledPyiStubs_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.bundledPyiStubs",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":python-bundledPyiStubs"],
+)
+### auto-generated section `build intellij.python.bundledPyiStubs` end
+
+### auto-generated section `iml intellij.python.bundledPyiStubs` start
+exports_files(
+    [
+        "intellij.python.bundledPyiStubs.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.bundledPyiStubs` end
 
 ### auto-generated section `build intellij.python.commonTests` start
 jvm_library(
@@ -407,7 +452,6 @@ jvm_library(
     resource_strip_prefix = "pluginResources",
     resources = glob(
         ["pluginResources/**/*"],
-        exclude = ["pluginResources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
     exports = [
@@ -482,7 +526,6 @@ jvm_library(
         "//libraries/netty/codec-http:libraries-netty-codec-http",
         "//libraries/jsoup",
         "//libraries/javax/annotation",
-        "@lib//ant/lib:ant-provided",
         "//python/python-psi-impl:psi-impl",
         "//python/python-sdk/backend",
         "//python/python-sdk/common",
@@ -563,12 +606,14 @@ jvm_library(
         "//python/python-requirements/backend",
         "//python/python-pytools/common",
         "//python/python-pytools/backend",
+        "//python/python-pytools-runtime/backend:python-pytools-backend-runtime",
         "//python/python-uv/backend",
         "//platform/testIntegration",
         "//platform/testIntegration-ui",
         "//python/python-poetry/backend",
         "//platform/eel-nioFs",
         "//platform/wsl-impl",
+        "//libraries/commons/compress",
     ],
 )
 
@@ -654,7 +699,6 @@ jvm_library(
         "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
         "//libraries/jsoup:jsoup_test_lib",
         "//libraries/javax/annotation:annotation_test_lib",
-        "@lib//ant/lib:ant-provided",
         "//python/python-psi-impl:psi-impl_test_lib",
         "//python/python-sdk/backend:backend_test_lib",
         "//python/python-sdk/common:common_test_lib",
@@ -733,12 +777,14 @@ jvm_library(
         "//python/python-requirements/backend:backend_test_lib",
         "//python/python-pytools/common:common_test_lib",
         "//python/python-pytools/backend:backend_test_lib",
+        "//python/python-pytools-runtime/backend:python-pytools-backend-runtime_test_lib",
         "//python/python-uv/backend:backend_test_lib",
         "//platform/testIntegration:testIntegration_test_lib",
         "//platform/testIntegration-ui:testIntegration-ui_test_lib",
         "//python/python-poetry/backend:backend_test_lib",
         "//platform/eel-nioFs:eel-nioFs_test_lib",
         "//platform/wsl-impl:wsl-impl_test_lib",
+        "//libraries/commons/compress:compress_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.impl` end
@@ -1555,6 +1601,7 @@ jvm_library(
     resource_strip_prefix = "helpers",
     resources = glob(
         ["helpers/**/*"],
+        allow_empty = True,
         exclude = ["helpers/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],

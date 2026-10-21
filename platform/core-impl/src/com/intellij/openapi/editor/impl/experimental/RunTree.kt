@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl.experimental
 
 /**
  * A persistent, append-only sequence of runs, searched by an ascending int key. The run tree of a
- * graph keys a run by its lvStart; the tree of one agent keys it by its seq.
+ * graph keys a run by its lvStart. The tree of one agent keys it as [AgentIndex] describes.
  *
  * The layout is a 32-way B+tree with a tail, as in Clojure's vector. Every leaf in the tree is
  * full, and the newest runs wait in the tail until [WIDTH] of them fill a leaf. Every node keeps an

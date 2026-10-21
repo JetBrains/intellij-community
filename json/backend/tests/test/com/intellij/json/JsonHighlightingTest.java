@@ -1,16 +1,40 @@
 package com.intellij.json;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.json.codeinsight.JsonDuplicatePropertyKeysInspection;
 import com.intellij.json.codeinsight.JsonStandardComplianceInspection;
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.json.JsonHighlightingTestFixtureKt.jsonHighlightingFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 
 /**
  * @author Mikhail Golubev
  */
-public class JsonHighlightingTest extends JsonHighlightingTestBase {
+@TestApplication
+@TestDataPath("$PROJECT_ROOT/community/json/backend/tests/testData")
+public class JsonHighlightingTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
 
-  @Override
-  protected String getExtension() {
-    return "json";
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+  private final TestFixture<JsonHighlightingTestFixture> highlightingFixture = jsonHighlightingFixture(codeInsightFixture, "json");
+
+  private CodeInsightTestFixture myFixture;
+  private JsonHighlightingTestFixture myHighlightingFixture;
+
+  @BeforeEach
+  void setUp() {
+    myFixture = codeInsightFixture.get();
+    myHighlightingFixture = highlightingFixture.get();
   }
 
   private void enableStandardComplianceInspection(boolean checkComments, boolean checkTopLevelValues) {
@@ -20,77 +44,92 @@ public class JsonHighlightingTest extends JsonHighlightingTestBase {
     myFixture.enableInspections(inspection);
   }
 
+  @Test
   public void testStringLiterals() {
-    doTest();
+    myHighlightingFixture.doTest();
   }
 
   // IDEA-134372
+  @Test
   public void testComplianceProblemsLiteralTopLevelValueIsAllowed() {
     enableStandardComplianceInspection(true, true);
-    doTest();
+    myHighlightingFixture.doTest();
   }
 
   // WEB-16009
+  @Test
   public void testComplianceProblemsMultipleTopLevelValuesAllowed() {
     enableStandardComplianceInspection(true, false);
   }
 
+  @Test
   public void testComplianceProblems() {
     enableStandardComplianceInspection(true, true);
-    doTestHighlighting(false, true, true);
+    myHighlightingFixture.doTestHighlighting(false, true, true);
   }
 
+  @Test
   public void testJsonLinesComplianceProblems() {
     enableStandardComplianceInspection(true, true);
-    doTestHighlightingForJsonLines(false, true, true);
+    myHighlightingFixture.doTestHighlightingForJsonLines(false, true, true);
   }
 
+  @Test
   public void testJsonLinesEmptyFile() {
     enableStandardComplianceInspection(true, true);
-    doTestHighlightingForJsonLines(false, true, true);
+    myHighlightingFixture.doTestHighlightingForJsonLines(false, true, true);
   }
 
+  @Test
   public void testEmptyFile() {
     enableStandardComplianceInspection(true, true);
-    doTestHighlighting(false, true, true);
+    myHighlightingFixture.doTestHighlighting(false, true, true);
   }
 
+  @Test
   public void testDuplicatePropertyKeys() {
     myFixture.enableInspections(JsonDuplicatePropertyKeysInspection.class);
-    doTestHighlighting(false, true, true);
+    myHighlightingFixture.doTestHighlighting(false, true, true);
   }
 
   // WEB-13600
+  @Test
   public void testIncompleteFloatingPointLiteralsWithExponent() {
-    doTestHighlighting(false, false, false);
+    myHighlightingFixture.doTestHighlighting(false, false, false);
   }
 
   // Moved from JavaScript
 
+  @Test
   public void testJSON_with_comment() {
     enableStandardComplianceInspection(false, true);
-    doTestHighlighting(false, true, true);
+    myHighlightingFixture.doTestHighlighting(false, true, true);
   }
 
+  @Test
   public void testJSON() {
     enableStandardComplianceInspection(true, true);
-    doTestHighlighting(false, true, true);
+    myHighlightingFixture.doTestHighlighting(false, true, true);
   }
 
+  @Test
   public void testTabInString() {
     enableStandardComplianceInspection(true, true);
-    doTestHighlighting(false, true, true);
+    myHighlightingFixture.doTestHighlighting(false, true, true);
   }
 
+  @Test
   public void testSemanticHighlighting() {
     // WEB-11239
-    doTest();
+    myHighlightingFixture.doTest();
   }
 
+  @Test
   public void testWebUrls() {
-    doTest();
+    myHighlightingFixture.doTest();
   }
 
+  @Test
   public void testRainbow() {
     myFixture.testRainbow("test.json",
                           """

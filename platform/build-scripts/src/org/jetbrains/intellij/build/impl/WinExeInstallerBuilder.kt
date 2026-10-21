@@ -147,7 +147,7 @@ private fun prepareNsis(context: BuildContext, tempDir: Path, useBig: Boolean): 
     // NSISBI ships the same layout as stock NSIS, so only the name and version differ.
     val artifact = if (useBig) "NSISBI" else "NSIS"
     val nsisVersion = context.dependenciesProperties.property(if (useBig) "nsisbiBuild" else "nsisBuild")
-    val nsisUrl = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/org/jetbrains/intellij/deps/${artifact.lowercase()}/${artifact}-${nsisVersion}.zip"
+    val nsisUrl = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/org/jetbrains/intellij/deps/${artifact.lowercase()}/${artifact}-${nsisVersion}.zip"
     val nsisZip = downloadFileToCacheLocation(nsisUrl, context.paths.communityHomeDirRoot, context.httpSession)
     Decompressor.Zip(nsisZip).withZipExtensions().extract(tempDir)
     val nsisDir = tempDir.resolve("NSIS")

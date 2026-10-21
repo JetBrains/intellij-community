@@ -107,7 +107,7 @@ class ToolWindowEditorTabTransferControllerTest {
       val content = toolWindow.addTabContent()
 
       assertThat(controller.canMoveContentToEditor(toolWindow, content)).isTrue()
-      controller.moveContentToEditor(toolWindow, content)
+      assertThat(controller.moveContentToEditor(toolWindow, content)).isTrue()
 
       val tabFile = manager.openTabFile()
       assertThat(manager.isFileOpen(tabFile)).isTrue()
@@ -152,6 +152,25 @@ class ToolWindowEditorTabTransferControllerTest {
     }
 
   @Test
+  fun `a failed move to the editor keeps the unsplit of the emptied source decorator cell`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val toolWindow = createRegisteredToolWindow()
+      val rootDecorator = toolWindow.getOrCreateDecoratorComponent()
+      val movingContent = createTabContent(displayName = "moving")
+      rootDecorator.splitWithContent(movingContent, SwingConstants.RIGHT, -1)
+      val sourceDecorator = findDecorator(movingContent)
+      // Without a file editor provider the composite opens empty, and the editor manager closes it at once.
+      ExtensionTestUtil.maskExtensions(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, emptyList(), disposable)
+
+      assertThat(controller.moveContentToEditor(toolWindow, movingContent, sourceDecorator = sourceDecorator)).isFalse()
+
+      // The unsplit happens before the open, so the source cell is gone. The drag reports TW.Unsplit for it.
+      assertThat(sourceDecorator.contentManager.isDisposed).isTrue()
+      assertThat(rootDecorator.mode).isEqualTo(InternalDecoratorImpl.Mode.SINGLE)
+      assertThat(toolWindow.contentManager.contents.toList()).contains(movingContent)
+    }
+
+  @Test
   fun `move content to editor opens the tab in the given editor window`(): Unit =
     timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
       val toolWindow = createToolWindow(toolWindowId)
@@ -181,7 +200,7 @@ class ToolWindowEditorTabTransferControllerTest {
       // Without a file editor provider the composite opens empty, and the editor manager closes it at once.
       ExtensionTestUtil.maskExtensions(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, emptyList(), disposable)
 
-      controller.moveContentToEditor(toolWindow, content)
+      assertThat(controller.moveContentToEditor(toolWindow, content)).isFalse()
 
       assertThat(manager.openTabFiles()).isEmpty()
       // The content is not lost: it is back in the tool window, selected, alive, and no longer temporarily removed.
@@ -328,7 +347,7 @@ class ToolWindowEditorTabTransferControllerTest {
       val content = toolWindow.addTabContent()
 
       assertThat(controller.canMoveContentToEditor(toolWindow, content)).isFalse()
-      controller.moveContentToEditor(toolWindow, content)
+      assertThat(controller.moveContentToEditor(toolWindow, content)).isFalse()
 
       assertThat(manager.openTabFiles()).isEmpty()
       assertThat(toolWindow.contentManager.contents.toList()).contains(content)

@@ -104,7 +104,7 @@ interface MavenWorkspaceConfigurator {
    * * Should be as fast as possible.
    * * Necessary preparations must be done in [beforeModelApplied] or [configureMavenProject]. Data can be passed context as [UserDataHolder].
    */
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun afterModelApplied(context: AppliedModelContext) {
   }
 

@@ -115,7 +115,7 @@ public final class OldDirectoryCleaner {
     }
 
     if (myBestBefore != 0) {
-      deleteCowardly(groups);
+      deleteCowardly(groups, indicator);
       Stats.completed(groups.size(), groups.stream().mapToLong(g -> g.size).sum());
     }
     else if (!groups.isEmpty()) {
@@ -157,8 +157,10 @@ public final class OldDirectoryCleaner {
           Files.walkFileTree(directory, visitor);
           var homeDir = Path.of(Files.readString(directory.resolve(ApplicationEx.LOCATOR_FILE_NAME)));
           if (Files.exists(homeDir)) {
-            try (var reader = Files.newBufferedReader(homeDir.resolve(productInfoFileName));
-                 var parser = new JsonFactory().createParser(ObjectReadContext.empty(), reader)) {
+            try (
+              var reader = Files.newBufferedReader(homeDir.resolve(productInfoFileName));
+              var parser = new JsonFactory().createParser(ObjectReadContext.empty(), reader)
+            ) {
               if (nameAndVersion.equals(readDataDirectoryName(parser))) {
                 isInstalled = true;
               }
@@ -222,12 +224,15 @@ public final class OldDirectoryCleaner {
     }
   }
 
-  private void deleteCowardly(List<DirectoryGroup> groups) {
+  private void deleteCowardly(List<DirectoryGroup> groups, @Nullable ProgressIndicator indicator) {
     for (var group : groups) {
       for (var directory : group.directories) {
+        if (indicator != null) indicator.checkCanceled();
         myLogger.info("deleting " + directory);
         try {
-          NioFiles.deleteRecursively(directory);
+          NioFiles.deleteRecursively(directory, _ -> {
+            if (indicator != null) indicator.checkCanceled();
+          });
         }
         catch (IOException e) {
           myLogger.info(e);

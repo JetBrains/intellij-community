@@ -1,11 +1,11 @@
-//! `run`, `shard`, `flake` and `daemon`: staging, the hot-jar push, iterations, the verdict, the trace pull, and
-//! the leased-run driver the three share.
+//! `run`, `shard`, `flake` and `daemon`: the daemon start, the push of the files of the build, iterations, the
+//! verdict, the trace pull, and the leased-run driver the three share.
 //!
-//! One long-lived guest JVM (`plugins/air/tests/integration/uiDaemon`) holds the warm IDE across host iterations.
-//! Bazel publishes its launch graph as a runtime descriptor; the controller stages the stable classpath and JBR
-//! guest-locally, pushes rebuilt hot jars over HTTP, and streams JUnit back as NDJSON. Share-backed product and data
-//! changes quiesce the daemon around a refresh of the shares, while immutable runtime or boot setting changes restart
-//! it.
+//! One long-lived guest process holds the warm IDE across host iterations: the `lane-daemon` verb of the guest agent.
+//! Bazel publishes its launch graph as a runtime descriptor. The controller starts the lane daemon over it, pushes the
+//! context plugin files and the lane inputs over HTTP, and streams the run back as NDJSON.
+//! Share-backed product and data changes stop the lane IDEs around a refresh of the shares, while immutable runtime or
+//! boot setting changes restart the daemon.
 //!
 //! `run` is self-sufficient: it starts or restarts the daemon whenever the build it just prepared does not match the
 //! one running. The `daemon` subcommands exist to drive that lifecycle deliberately - to pay the boot cost up front,
@@ -19,14 +19,15 @@
 //! - [`state`]: what this controller remembers about the daemon it last started on a worker;
 //! - [`http`]: the control channel, which reaches the daemon through a relay over the worker's exec channel;
 //! - [`build`]: the one host build and its four identities;
-//! - [`stage`], [`start`]: the guest runtime generation and the daemon's boot;
+//! - [`start`]: the daemon's boot;
 //! - [`space`], [`tree`], [`slot`]: the guest disk, the host checkout, the parked-daemon probe;
 //! - [`run`]: the option grammar, the selection it resolves to, the jar push and the streamed run with its transport
 //!   watchdog;
 //! - [`iterate`], [`traces`]: one iteration as a value, and the trace pull beside its stream;
 //! - [`verdict`], [`command`]: what a report concluded, and the `run` and `daemon` commands;
 //! - [`shard`], [`flake`]: the two commands that fan a lane out over several workers;
-//! - `leased`: the journaled run and the leased-run driver `run`, `shard` and `flake` share.
+//! - `leased`: the journaled run and the leased-run driver `run`, `shard` and `flake` share;
+//! - `results`: the JUnit XML and the TeamCity service messages, written from the run stream.
 
 pub(crate) mod build;
 pub(crate) mod command;
@@ -35,11 +36,13 @@ pub(crate) mod host;
 pub(crate) mod http;
 pub(crate) mod iterate;
 mod leased;
+mod performance;
+mod results;
 pub(crate) mod run;
+mod session_logs;
 pub(crate) mod shard;
 pub(crate) mod slot;
 pub(crate) mod space;
-pub(crate) mod stage;
 pub(crate) mod start;
 pub(crate) mod state;
 pub(crate) mod traces;

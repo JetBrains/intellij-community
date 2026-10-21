@@ -1,7 +1,6 @@
 <idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="fleet.rhizomedb"/>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.fastutil"/>
     <module name="intellij.libraries.guava"/>
@@ -26,8 +25,6 @@
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
-    <module name="intellij.platform.execution"/>
-    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
@@ -38,7 +35,6 @@
     <module name="intellij.platform.ide.util.netty"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.indexing.impl"/>
-    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.markdown.utils"/>
@@ -57,9 +53,6 @@
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
-    <extensionPoint qualifiedName="org.intellij.markdown.markdownRunner"
-                    interface="org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownRunner"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.frontMatterFoldingPolicy"
                     interface="org.intellij.plugins.markdown.folding.MarkdownFrontMatterFoldingPolicy"
                     dynamic="true"/>
@@ -67,6 +60,19 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <lang.lineWrapStrategy language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy"/>
+    <!--suppress SplitModeXmlApiUsage -->
+    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.link.CommonLinkDestinationReferenceContributor"/>
+    <!--suppress SplitModeXmlApiUsage -->
+    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.link.AutoLinkWebReferenceContributor"/>
+    <!--suppress SplitModeXmlApiUsage -->
+    <psi.referenceContributor language="Markdown" implementation="org.intellij.plugins.markdown.lang.references.paths.github.GithubWikiLocalReferenceContributor"/>
+    <gotoDeclarationHandler implementation="org.intellij.plugins.markdown.lang.references.link.MarkdownLinkTextGotoDeclarationHandler"/>
+    <!--suppress SplitModeXmlApiUsage -->
+    <pathReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.RelativeFileWithoutExtensionReferenceProvider"/>
+    <!--suppress SplitModeXmlApiUsage -->
+    <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.paths.LineNumberPathReferenceProvider"/>
+    <!--suppress SplitModeXmlApiUsage -->
+    <anchorReferenceProvider implementation="org.intellij.plugins.markdown.lang.references.headers.HeaderAnchorPathReferenceProvider"/>
     <registryKey key="markdown.live.preview.enabled"
                  defaultValue="true"
                  description="Shows the Markdown live preview layout."/>
@@ -76,12 +82,5 @@
     <registryKey key="markdown.live.preview.image.max.megapixels"
                  defaultValue="4"
                  description="Maximum image megapixel count for Markdown live preview."/>
-  </extensions>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <applicationService
-      serviceInterface="org.intellij.plugins.markdown.extensions.jcef.commandRunner.PreviewCommandRunnability"
-      serviceImplementation="org.intellij.plugins.markdown.extensions.jcef.commandRunner.LocalPreviewCommandRunnability"
-      open="true"/>
   </extensions>
 </idea-plugin>

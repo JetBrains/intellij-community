@@ -23,7 +23,6 @@
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.ui"/>
     <module name="intellij.platform.indexing"/>
-    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.problemView.collector"/>
@@ -77,7 +76,7 @@
     </group>
 
     <group id="ProblemsView.ToolWindow.Toolbar">
-      <group id="ProblemsView.Options" icon="AllIcons.Actions.GroupBy" popup="true">
+      <group id="ProblemsView.Options" searchable="false" icon="AllIcons.Actions.GroupBy" popup="true">
         <separator key="group.ProblemsView.Show.text"/>
         <group id="ProblemsView.SeverityFilters" class="com.intellij.analysis.problemsView.toolWindow.SeverityFiltersActionGroup"/>
         <separator key="group.ProblemsView.SortBy.text"/>

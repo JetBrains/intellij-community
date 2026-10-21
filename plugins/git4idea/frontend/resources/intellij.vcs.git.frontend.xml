@@ -5,8 +5,7 @@
   <dependencies>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.vcs.git.shared"/>
-    <module name="fleet.kernel"/>
-    <module name="fleet.rhizomedb"/>
+    <module name="fleet.rpc"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
@@ -15,7 +14,6 @@
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.ide.rpc"/>
-    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.scopes"/>
     <module name="intellij.platform.searchEverywhere.frontend"/>

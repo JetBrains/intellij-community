@@ -14,8 +14,8 @@ use futures::future::join_all;
 use serde::{Deserialize, Serialize};
 
 use super::{
-    HostPaths, Layout, LeaseSummary, RunSlotFacts, Verdict, console_login_seen, lease_summary, leased_word, pool_report, tri_state_word,
-    verdict_word,
+    HostPaths, Layout, LeaseSummary, RunSlotFacts, Verdict, abandoned_fragment, console_login_seen, lease_summary, leased_word,
+    pool_report, tri_state_word, verdict_word,
 };
 use avl_base::RefusalExt;
 
@@ -98,6 +98,8 @@ struct TartWorkerStatus {
     /// copy-on-write clones of one sealed image and start life sharing an SSH identity.
     ssh_host_key_fingerprint: Option<String>,
     active_run: Option<RunState>,
+    /// The IDE runs whose processes outlived a kill, as on the Docker row.
+    abandoned_ide_runs: Option<Vec<String>>,
     run_error: Option<String>,
     lease: Option<LeaseSummary>,
     /// Decided in the second pass; null together with `sshHostKeyUnique` where the fingerprint question does not
@@ -252,7 +254,7 @@ async fn tart_worker_status(
         provenance_ready,
         provenance_error,
         state,
-        pid: identity.filter(|_| host_process).map(|identity| identity.pid),
+        pid: identity.filter(|_| host_process).map(|identity| identity.process.pid),
         guest_agent,
         console_login: probed.console_login,
         worker_storage_ready: probed.worker_storage_ready,
@@ -268,6 +270,7 @@ async fn tart_worker_status(
         tcc_error: probed.tcc.error,
         ssh_host_key_fingerprint: probed.ssh_host_key_fingerprint,
         active_run: probed.run.active,
+        abandoned_ide_runs: probed.abandoned_ide_runs,
         run_error: probed.run.error,
         lease,
         ssh_host_key_ready: None,
@@ -284,6 +287,7 @@ struct Probed {
     tcc: Verdict,
     ssh_host_key_fingerprint: Option<String>,
     run: RunSlotFacts,
+    abandoned_ide_runs: Option<Vec<String>>,
 }
 
 async fn probe_running_tart_guest(guest: &Guest<'_>, channel: &dyn Channel, host_paths: &HostPaths) -> Result<Probed, Refusal> {
@@ -299,6 +303,7 @@ async fn probe_running_tart_guest(guest: &Guest<'_>, channel: &dyn Channel, host
         worker_storage_ready: layout.worker_storage_ready,
         parity: layout.parity,
         tcc,
+        abandoned_ide_runs: layout.abandoned_ide_runs,
         ..Probed::default()
     };
     if probed.worker_storage_ready {
@@ -330,7 +335,7 @@ fn render_tart_status_line(row: &TartWorkerStatus) -> String {
         tri_state_word(row.ssh_host_key_ready, "collision", "not-ready")
     };
     format!(
-        "{}: {}{pid} lease={} root_disk={root_disk}/{}GB storage={} ssh_host_key={ssh_host_key} console={} parity={}",
+        "{}: {}{pid} lease={} root_disk={root_disk}/{}GB storage={} ssh_host_key={ssh_host_key} console={} parity={}{}",
         row.worker,
         row.state,
         leased_word(row.lease.as_ref()),
@@ -338,5 +343,6 @@ fn render_tart_status_line(row: &TartWorkerStatus) -> String {
         if row.worker_storage_ready { "ready" } else { "not-ready" },
         tri_state_word(row.console_login, "yes", "no"),
         verdict_word(row.parity_ready, row.parity_error.as_deref()),
+        abandoned_fragment(row.abandoned_ide_runs.as_deref()),
     )
 }

@@ -112,7 +112,6 @@ interface DocumentMutator {
 
   /**
    * Atomically changes document snapshot with semantics from `Threading` section.
-   * Eventually, all text change methods delegate to this one
    *
    * @param hostDocument communication with the outside world: document listeners, EPs, CommandProcessor, etc.
    */
@@ -123,6 +122,5 @@ interface DocumentMutator {
     moveOffset: Int,
     replaceString: CharSequence,
     newModStamp: Long,
-    wholeTextReplaced: Boolean,
   )
 }

@@ -9,13 +9,25 @@ use serde_json::{Value, json};
 use tokio_util::sync::CancellationToken;
 
 use super::*;
+use crate::daemon::build::PluginFile;
 use crate::daemon::fixture::Fixture;
 use crate::daemon::testing::{ndjson_line, run_started_record, summary_record};
 
 // --- the decisions of a run stream ----------------------------------------------------------------------------
 
-// A 409 answers by its reason: a stale daemon names both generations, quiesced shares are not busy, and any other
-// reason is busy.
+// A decision of the lane daemon is published as a decision of the journal, and every other record as itself.
+#[test]
+fn a_decision_of_the_lane_daemon_is_published_as_a_decision() {
+    let line = r#"{"event":"decision","subject":"ide","action":"reload","reason":"only the bridge plugin changed"}"#;
+    let decision = wire::decode_run_event(line.as_bytes()).unwrap();
+    let Event::Decision(record) = published(&decision) else {
+        panic!("not a decision");
+    };
+    assert_eq!(record.line(), "ide reload: only the bridge plugin changed");
+    assert_eq!(published(&RunEvent::output("a line")).kind(), avl_wire::progress::Kind::Run);
+}
+
+// A 409 answers by its reason: a stale daemon names both generations, and any other reason is busy.
 #[test]
 fn a_conflict_answers_by_its_reason() {
     let conflict = |reason: &str, launch_digest: Option<&str>| wire::Conflict {
@@ -29,8 +41,8 @@ fn a_conflict_answers_by_its_reason() {
         "{}",
         stale.message
     );
-    let quiesced = conflict_refusal(&conflict(conflict::MOUNT_QUIESCED, None), "launch-1");
-    assert_eq!(quiesced.code, "daemon_mount_quiesced");
+    let stopping = conflict_refusal(&conflict(conflict::SHUTTING_DOWN, None), "launch-1");
+    assert_eq!(stopping.code, "daemon_busy");
     let busy = conflict_refusal(&conflict("busy", None), "launch-1");
     assert_eq!(
         (busy.code.as_ref(), busy.message.as_str()),
@@ -137,15 +149,32 @@ const POLICY: WatchdogPolicy = WatchdogPolicy {
     progress_gap: Duration::from_secs(300),
 };
 
+/// A selection of the lane `ui`, the lane that the suite document of the fixture checkout names.
+fn ui_selection() -> RunSelection {
+    RunSelection {
+        lane: Some("ui".to_owned()),
+        ..RunSelection::default()
+    }
+}
+
 async fn execute(fixture: &Fixture, prep: &PreparedBuild, state: &HostState, selection: &RunSelection) -> Result<RunExecution, Refusal> {
     fixture
         .host
-        .execute_run(&Ctx::background(), &fixture.worker, state, prep, selection, POLICY, &mut |_| {})
+        .execute_run(
+            &Ctx::background(),
+            &fixture.worker,
+            state,
+            prep,
+            selection,
+            POLICY,
+            &[],
+            &mut |_| {},
+        )
         .await
 }
 
-// The `/run` body is the one the Kotlin daemon decodes: every key present, and an empty selection an empty list rather
-// than `null`, because the far end's fields are non-nullable.
+// The `/run` body is the one the lane daemon decodes: every key present, and an empty selection an empty list rather
+// than `null`. It names the lane, the digests of the lane inputs and the suites of the lane that the catalog names.
 #[tokio::test]
 async fn the_run_request_body_carries_every_key_and_empty_lists() {
     let (fixture, prep, state) = executing().await;
@@ -157,10 +186,20 @@ async fn the_run_request_body_carries_every_key_and_empty_lists() {
         selectors: vec!["com.example.MyTest#method".to_owned()],
         junit5_filters: Vec::new(),
         description: "selector".to_owned(),
+        lane: Some("ui".to_owned()),
     };
     let execution = execute(&fixture, &prep, &state, &selection).await.unwrap();
     assert!(execution.protocol_failure.is_none());
     let body: Value = serde_json::from_slice(&fixture.daemon.script().run_body).unwrap();
+    let digest = |field: &str| {
+        prep.lane_inputs
+            .iter()
+            .find(|input| input.field == field)
+            .unwrap()
+            .host
+            .sha256
+            .clone()
+    };
     assert_eq!(
         body,
         json!({
@@ -168,20 +207,26 @@ async fn the_run_request_body_carries_every_key_and_empty_lists() {
             "junit5Filters": [],
             "productStamp": prep.product_digest,
             "launchDigest": prep.launch_digest,
-            "hotJars": [prep.hot_jars[0].sha256],
             "activeExecutionTimeoutSec": 1_800,
             "progressGapTimeoutSec": 300,
             "idePlugins": [{"destination": "bridge/lib/bridge.jar", "sha256": prep.plugin_files[0].host.sha256}],
+            "lane": "ui",
+            "laneInputs": {
+                "fakeAgentJar": digest("fakeAgentJar"),
+                "laneDocuments": digest("laneDocuments"),
+                "suiteDocuments": digest("suiteDocuments"),
+            },
+            "laneClasses": [{"suite": "fixture-suite", "testClassName": "AirFixtureSuiteUiTest"}],
         })
     );
     assert_eq!(execution.iteration_id.as_deref(), Some("it-1"));
     assert!(execution.summary.is_some(), "the stream's facts are captured");
 }
 
-// A 409 is triaged into the three refusals a caller answers differently, all at 75: a stale daemon names both
-// generations and the recovery, a quiesced mount names its own, and everything else is busy.
+// A 409 is triaged into the two refusals a caller answers differently, both at 75: a stale daemon names both
+// generations and the recovery, and everything else is busy.
 #[tokio::test]
-async fn a_409_is_triaged_into_stale_quiesced_and_busy_at_75() {
+async fn a_409_is_triaged_into_stale_and_busy_at_75() {
     let (fixture, prep, state) = executing().await;
     for (name, conflict, code, fragment) in [
         (
@@ -197,12 +242,6 @@ async fn a_409_is_triaged_into_stale_quiesced_and_busy_at_75() {
             "an unnamed generation",
         ),
         (
-            "a quiesced mount",
-            json!({"reason": "mount-quiesced"}),
-            "daemon_mount_quiesced",
-            "recover with: daemon restart",
-        ),
-        (
             "anything else",
             json!({"reason": "busy"}),
             "daemon_busy",
@@ -210,7 +249,7 @@ async fn a_409_is_triaged_into_stale_quiesced_and_busy_at_75() {
         ),
     ] {
         fixture.daemon.script().conflict = Some(conflict);
-        let failure = refusal(execute(&fixture, &prep, &state, &RunSelection::default()).await);
+        let failure = refusal(execute(&fixture, &prep, &state, &ui_selection()).await);
         assert_eq!((failure.code.as_ref(), failure.exit), (code, Exit::TEMP_FAIL), "{name}");
         assert!(failure.message.contains(fragment), "{name}: said {:?}", failure.message);
     }
@@ -225,7 +264,7 @@ async fn a_protocol_break_is_returned_as_a_value_not_an_error() {
         ndjson_line(&run_started_record("it-2")),
         r#"{"event":"somethingNobodyDeclared"}"#.to_owned(),
     ];
-    let execution = execute(&fixture, &prep, &state, &RunSelection::default())
+    let execution = execute(&fixture, &prep, &state, &ui_selection())
         .await
         .expect("a protocol failure is a value");
     let failure = execution.protocol_failure.as_ref().unwrap();
@@ -251,7 +290,7 @@ async fn a_mid_stream_death_is_explained_as_daemon_died() {
         script.run_lines = vec![ndjson_line(&run_started_record("it-3"))];
         script.close_mid_stream = true;
     }
-    let execution = execute(&fixture, &prep, &state, &RunSelection::default())
+    let execution = execute(&fixture, &prep, &state, &ui_selection())
         .await
         .expect("a death mid-stream is a value");
     let failure = execution.protocol_failure.as_ref().unwrap();
@@ -275,7 +314,7 @@ async fn non_record_lines_are_kept_as_output() {
         ndjson_line(&run_started_record("it-4")),
         ndjson_line(&summary_record("it-4", 0, 0, 0, 0, 0, false)),
     ];
-    let execution = execute(&fixture, &prep, &state, &RunSelection::default()).await.unwrap();
+    let execution = execute(&fixture, &prep, &state, &ui_selection()).await.unwrap();
     assert!(execution.protocol_failure.is_none(), "stdout noise is no failure");
     assert_eq!(execution.events.len(), 3);
     assert_eq!(
@@ -289,59 +328,76 @@ async fn non_record_lines_are_kept_as_output() {
     );
 }
 
-// The push offers the hot tier and the context plugin files by digest, and uploads only what the guest does not hold.
+// The push offers the context plugin files and the lane inputs by digest, and uploads only what the guest does not
+// hold. The two documents of the fixture are one jar, so their digest is offered once.
 #[tokio::test]
 async fn push_jars_uploads_only_missing_digests() {
     let (fixture, prep, state) = executing().await;
     let ctx = Ctx::background();
-    assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep).await.unwrap(), 0);
-    let sha = prep.hot_jars[0].sha256.clone();
+    assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]).await.unwrap(), 0);
+    let documents = prep.lane_inputs[1].host.sha256.clone();
     let plugin = prep.plugin_files[0].host.sha256.clone();
-    fixture.daemon.script().missing = vec![sha.clone()];
-    assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep).await.unwrap(), 1);
+    let agent = prep.lane_inputs[0].host.sha256.clone();
+    fixture.daemon.script().missing = vec![documents.clone()];
+    assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]).await.unwrap(), 1);
     {
         let script = fixture.daemon.script();
         assert_eq!(script.uploads.len(), 1);
-        assert!(script.uploads[0].contains(&sha), "the upload names the digest");
+        assert!(script.uploads[0].contains(&documents), "the upload names the digest");
         let body: Value = serde_json::from_slice(&script.jars_body).unwrap();
-        assert_eq!(body, json!({ "jars": [sha, plugin] }));
+        assert_eq!(body, json!({ "jars": [plugin, agent, documents] }));
     }
     fixture.daemon.script().missing = vec![plugin.clone()];
-    assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep).await.unwrap(), 1);
-    let script = fixture.daemon.script();
+    assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]).await.unwrap(), 1);
+    {
+        let script = fixture.daemon.script();
+        assert!(
+            script.uploads[1].contains(&plugin),
+            "a changed plugin file travels by the same push"
+        );
+    }
+    fixture.daemon.script().missing = vec![agent.clone()];
+    assert_eq!(push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]).await.unwrap(), 1);
     assert!(
-        script.uploads[1].contains(&plugin),
-        "a changed plugin file travels by the same push"
+        fixture.daemon.script().uploads[2].contains(&agent),
+        "a changed fake agent jar travels by the same push"
     );
 }
 
-// A plugin file whose bytes equal a hot jar is offered and uploaded once.
+// A plugin file or a lane input whose bytes equal another pushed file is offered and uploaded once. The two documents
+// of the fixture are one jar already.
 #[tokio::test]
 async fn a_digest_that_two_files_share_is_offered_once() {
     let (fixture, mut prep, state) = executing().await;
-    prep.plugin_files[0].host = prep.hot_jars[0].clone();
-    let sha = prep.hot_jars[0].sha256.clone();
+    prep.plugin_files[0].host = prep.lane_inputs[1].host.clone();
+    prep.lane_inputs[0].host = prep.lane_inputs[1].host.clone();
+    let sha = prep.lane_inputs[1].host.sha256.clone();
     fixture.daemon.script().missing = vec![sha.clone()];
     assert_eq!(
-        push_jars(&Ctx::background(), fixture.host.daemon(), &state, &prep).await.unwrap(),
+        push_jars(&Ctx::background(), fixture.host.daemon(), &state, &prep, &[])
+            .await
+            .unwrap(),
         1
     );
     let body: Value = serde_json::from_slice(&fixture.daemon.script().jars_body).unwrap();
     assert_eq!(body, json!({ "jars": [sha] }));
 }
 
-/// A build whose hot tier is `count` jars of `size` bytes each, every one missing on the guest, written under
-/// `directory`.
-fn missing_hot_jars(fixture: &Fixture, prep: &mut PreparedBuild, directory: &Path, count: usize, size: usize) {
-    prep.hot_jars.clear();
+/// A build whose context plugin files are `count` jars of `size` bytes each, every one missing on the guest, written
+/// under `directory`. The lane inputs stay, and the guest holds them.
+fn missing_plugin_files(fixture: &Fixture, prep: &mut PreparedBuild, directory: &Path, count: usize, size: usize) {
+    prep.plugin_files.clear();
     for index in 0..count {
         let content = vec![u8::try_from(index).expect("a small index"); size];
-        let path = directory.join(format!("hot-{index}.jar"));
+        let path = directory.join(format!("part-{index}.jar"));
         fs::write(&path, &content).unwrap();
         let sha256 = avl_report::digest::sha256_file(&path).unwrap();
-        prep.hot_jars.push(PathDigest::new(path.to_string_lossy(), sha256));
+        prep.plugin_files.push(PluginFile {
+            destination: format!("bridge/lib/part-{index}.jar"),
+            host: PathDigest::new(path.to_string_lossy(), sha256),
+        });
     }
-    fixture.daemon.script().missing = prep.hot_jars.iter().map(|jar| jar.sha256.clone()).collect();
+    fixture.daemon.script().missing = prep.plugin_files.iter().map(|file| file.host.sha256.clone()).collect();
 }
 
 /// Waits until the double holds `count` uploads at once, or fails the test after 30 s.
@@ -383,8 +439,8 @@ fn the_upload_concurrency_follows_the_bytes() {
 async fn a_small_push_opens_no_relay_more() {
     let (fixture, mut prep, state) = executing().await;
     let directory = tempfile::tempdir().unwrap();
-    missing_hot_jars(&fixture, &mut prep, directory.path(), 4, 64 * 1024);
-    let pushed = push_jars(&Ctx::background(), fixture.host.daemon(), &state, &prep).await;
+    missing_plugin_files(&fixture, &mut prep, directory.path(), 4, 64 * 1024);
+    let pushed = push_jars(&Ctx::background(), fixture.host.daemon(), &state, &prep, &[]).await;
     assert_eq!(pushed.unwrap(), 4);
     assert_eq!(relays(&fixture), 1, "{:?}", fixture.channel().lines());
     assert_eq!(fixture.daemon.script().uploads.len(), 4);
@@ -393,14 +449,14 @@ async fn a_small_push_opens_no_relay_more() {
 // 15 MiB of jars travel two at a time over two relays, and every missing jar arrives. The answer is a count, so the
 // order in which the uploads end changes nothing in it.
 #[tokio::test]
-async fn the_hot_jars_upload_with_a_bounded_concurrency() {
+async fn the_plugin_files_upload_with_a_bounded_concurrency() {
     let (fixture, mut prep, state) = executing().await;
     let directory = tempfile::tempdir().unwrap();
-    missing_hot_jars(&fixture, &mut prep, directory.path(), 3, 5 * MIB);
+    missing_plugin_files(&fixture, &mut prep, directory.path(), 3, 5 * MIB);
     let hold = CancellationToken::new();
     fixture.daemon.script().upload_hold = Some(hold.clone());
     let ctx = Ctx::background();
-    let push = push_jars(&ctx, fixture.host.daemon(), &state, &prep);
+    let push = push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]);
     let release = async {
         wait_for_uploads_in_flight(&fixture, 2).await;
         hold.cancel();
@@ -412,9 +468,9 @@ async fn the_hot_jars_upload_with_a_bounded_concurrency() {
     let mut uploaded: Vec<String> = fixture.daemon.script().uploads.clone();
     uploaded.sort();
     let mut expected: Vec<String> = prep
-        .hot_jars
+        .plugin_files
         .iter()
-        .map(|jar| wire::upload_jar(&jar.sha256).path.into_owned())
+        .map(|file| wire::upload_jar(&file.host.sha256).path.into_owned())
         .collect();
     expected.sort();
     assert_eq!(uploaded, expected);
@@ -426,15 +482,15 @@ async fn the_hot_jars_upload_with_a_bounded_concurrency() {
 async fn a_failed_upload_ends_the_others_and_keeps_its_refusal() {
     let (fixture, mut prep, state) = executing().await;
     let directory = tempfile::tempdir().unwrap();
-    missing_hot_jars(&fixture, &mut prep, directory.path(), 2, 8 * MIB);
-    let refused = prep.hot_jars[1].clone();
+    missing_plugin_files(&fixture, &mut prep, directory.path(), 2, 8 * MIB);
+    let refused = prep.plugin_files[1].host.clone();
     {
         let mut script = fixture.daemon.script();
         script.upload_hold = Some(CancellationToken::new());
         script.upload_refused = Some((refused.sha256.clone(), 500));
     }
     let ctx = Ctx::background();
-    let push = push_jars(&ctx, fixture.host.daemon(), &state, &prep);
+    let push = push_jars(&ctx, fixture.host.daemon(), &state, &prep, &[]);
     let refusal = tokio::time::timeout(Duration::from_secs(60), push)
         .await
         .expect("the push waited for the uploads that were still in flight")
@@ -454,9 +510,13 @@ async fn parse_run_refuses_the_usage_ladder() {
         (&["--lane"][..], "--lane <LANE>"),
         (&["--frobnicate"], "unexpected argument '--frobnicate'"),
         (&["--filter"], "--filter <OPTION=VALUE>"),
-        (&["--filter", "include-tag"], "expects <option>=<value>"),
+        (&["--filter", "include-classname"], "expects <option>=<value>"),
         (&["--filter", "=x"], "expects <option>=<value>"),
         (&["--lane", "ui", "--filter", "include-engine=x"], "not one the daemon applies"),
+        (
+            &["--lane", "ui", "--filter", "include-tag=air-flow-ui"],
+            "not one the daemon applies",
+        ),
         (
             &["--lane", "ui", "--timeout", "8.0"],
             "--timeout expects positive per-execution seconds",
@@ -572,7 +632,7 @@ pub(crate) fn three_lane_catalog(root: &Path) {
     }
 }
 
-// `--changed` is the lane's tag plus one class filter per suite the change reaches, resolved from the checkout the
+// `--changed` is the lane plus one class filter per suite the change reaches, resolved from the checkout the
 // fixture owns. What is pinned here is that a parsed `--changed` reaches the daemon as an ordinary selection and says
 // what it selected; the refusals belong to the `lane` module, which owns the join.
 #[tokio::test]
@@ -586,10 +646,7 @@ async fn parse_run_turns_a_changed_path_into_its_suites_class_filters() {
         .unwrap();
     assert_eq!(
         parsed_run.selection.junit5_filters,
-        [
-            "include-tag=air-flow-ui",
-            r"include-classname=(^|.*\.)AirPresetGeneratedFlowUiTest$"
-        ]
+        [r"include-classname=(^|.*\.)AirPresetGeneratedFlowUiTest$"]
     );
     // The description is what a false-green verdict prints, so it names the classes it selected.
     assert_eq!(
@@ -638,7 +695,15 @@ async fn parse_run_composes_a_lanes_filters() {
         .host
         .parse_run(
             &Ctx::background(),
-            &parsed(&["--lane", "ui", "--filter", "exclude-tag=slow", "--timeout", "600", "--fresh-ide"]),
+            &parsed(&[
+                "--lane",
+                "ui",
+                "--filter",
+                "exclude-classname=.*Slow.*",
+                "--timeout",
+                "600",
+                "--fresh-ide",
+            ]),
         )
         .await
         .unwrap();
@@ -646,8 +711,8 @@ async fn parse_run_composes_a_lanes_filters() {
         parsed_run.selection.selectors.is_empty(),
         "a lane selects by filter, never by selector"
     );
-    assert_eq!(parsed_run.selection.junit5_filters, ["include-tag=air-flow-ui", "exclude-tag=slow"]);
-    assert_eq!(parsed_run.selection.description, "lane ui (filters: exclude-tag=slow)");
+    assert_eq!(parsed_run.selection.junit5_filters, ["exclude-classname=.*Slow.*"]);
+    assert_eq!(parsed_run.selection.description, "lane ui (filters: exclude-classname=.*Slow.*)");
     // The requested timeout wins and the gap falls back to the environment's.
     assert_eq!(
         parsed_run.policy,
@@ -659,7 +724,7 @@ async fn parse_run_composes_a_lanes_filters() {
     assert!(parsed_run.fresh_ide);
 }
 
-// An explicit-only lane is one `run` of its tag, and `shard` and `flake`, which read one selection to repeat it,
+// An explicit-only lane is one `run` of its documents, and `shard` and `flake`, which read one selection to repeat it,
 // refuse it by name: `--lane` and its own target alike. A repeat would multiply its billed turns.
 #[tokio::test]
 async fn shard_and_flake_refuse_an_explicit_only_lane_that_run_takes() {
@@ -670,10 +735,10 @@ async fn shard_and_flake_refuse_an_explicit_only_lane_that_run_takes() {
         .await
         .unwrap();
     assert_eq!(plan.iterations.len(), 1);
-    assert_eq!(plan.iterations[0].selection.junit5_filters, ["include-tag=air-flow-ui-live"]);
+    assert_eq!(plan.iterations[0].selection.junit5_filters, Vec::<String>::new());
     for argv in [
         &["--lane", "ui-live"][..],
-        &["//plugins/air/tests/integration/ui-live:ui-live_test"][..],
+        &["//plugins/air/tests/integration/ui-live:ui-live_lane_test"][..],
     ] {
         let failure = refusal(fixture.host.parse_run(&Ctx::background(), &parsed(argv)).await);
         assert_eq!(
@@ -682,8 +747,20 @@ async fn shard_and_flake_refuse_an_explicit_only_lane_that_run_takes() {
             "{argv:?}: {:?}",
             failure.message
         );
-        assert!(failure.message.contains("run --lane ui-live"), "{argv:?}: {:?}", failure.message);
+        assert!(
+            failure.message.contains(" run --lane ui-live`") && !failure.message.contains("--runner"),
+            "{argv:?}: {:?}",
+            failure.message
+        );
     }
+    // The lane daemon runs every lane, so no refusal names a runner.
+    let perf = refusal(fixture.host.parse_run(&Ctx::background(), &parsed(&["--lane", "ui-perf"])).await);
+    assert_eq!(perf.code, "explicit_only_lane", "{:?}", perf.message);
+    assert!(
+        perf.message.contains(" run --lane ui-perf`") && !perf.message.contains("--runner"),
+        "{:?}",
+        perf.message
+    );
     // A repeatable lane still parses, so the refusal is the lane's and not the command's.
     fixture
         .host
@@ -713,40 +790,37 @@ async fn watchdog_budgets_come_from_the_environment() {
 // A `--filter` is typed at the parse, and the request spells it back as it was written.
 #[test]
 fn a_filter_is_typed_and_spelled_back_as_written() {
-    let filter = parse_filter("exclude-tag=slow").unwrap();
+    let filter = parse_filter("exclude-package=com.example.slow").unwrap();
     assert_eq!(
         filter,
         Junit5Filter {
-            kind: Junit5FilterKind::ExcludeTag,
-            value: "slow".to_owned(),
+            kind: Junit5FilterKind::ExcludePackage,
+            value: "com.example.slow".to_owned(),
         }
     );
-    assert_eq!(filter.to_string(), "exclude-tag=slow");
+    assert_eq!(filter.to_string(), "exclude-package=com.example.slow");
     assert_eq!(parse_filter("include-classname=a=b").unwrap().value, "a=b");
-    assert!(
-        parse_filter("include-method=x")
-            .unwrap_err()
-            .contains("accepted: include-tag, exclude-tag")
-    );
+    // The documents carry no JUnit tag, so a tag filter is refused at the parse, before anything is built.
+    for refused in ["include-method=x", "include-tag=air-flow-ui", "exclude-tag=slow"] {
+        assert!(
+            parse_filter(refused)
+                .unwrap_err()
+                .ends_with("accepted: include-classname, exclude-classname, include-package, exclude-package"),
+            "{refused}"
+        );
+    }
 }
 
-// The six JUnit5 filter options are the daemon's own list, verbatim: `AirUiDaemonIteration.buildFilters`.
+// The four JUnit5 filter options are the list of the lane daemon, verbatim: `apply_filters` of `avl-guest`.
 #[test]
-fn junit5_filter_options_match_the_daemons_six() {
+fn junit5_filter_options_match_the_four_of_the_lane_daemon() {
     assert_eq!(
         Junit5FilterKind::ALL.map(Junit5FilterKind::as_str),
-        [
-            "include-tag",
-            "exclude-tag",
-            "include-classname",
-            "exclude-classname",
-            "include-package",
-            "exclude-package",
-        ]
+        ["include-classname", "exclude-classname", "include-package", "exclude-package",]
     );
 }
 
-// A flow id and a suite id reach the daemon as the selection `--changed` makes: the lane's tag and one class filter
+// A flow id and a suite id reach the daemon as the selection `--changed` makes: the lane and one class filter
 // per suite. The description names what was asked and what it selected, because a false-green verdict prints it.
 #[tokio::test]
 async fn parse_run_turns_a_flow_or_a_suite_into_its_suites_class_filters() {
@@ -757,20 +831,19 @@ async fn parse_run_turns_a_flow_or_a_suite_into_its_suites_class_filters() {
         (
             "a flow",
             vec!["flow-rename-session"],
-            vec!["include-tag=air-flow-ui".to_owned(), class("AirRenameSessionGeneratedFlowUiTest")],
+            vec![class("AirRenameSessionGeneratedFlowUiTest")],
             "flow-rename-session -> lane ui: AirRenameSessionGeneratedFlowUiTest",
         ),
         (
             "a suite",
             vec!["new-session-shell"],
-            vec!["include-tag=air-flow-ui".to_owned(), class("AirNewSessionShellGeneratedFlowUiTest")],
+            vec![class("AirNewSessionShellGeneratedFlowUiTest")],
             "new-session-shell -> lane ui: AirNewSessionShellGeneratedFlowUiTest",
         ),
         (
             "a two-lane flow settled by --lane",
             vec!["flow-new-session", "--lane", "ui"],
             vec![
-                "include-tag=air-flow-ui".to_owned(),
                 class("AirNewSessionNativeGeneratedFlowUiTest"),
                 class("AirNewSessionShellGeneratedFlowUiTest"),
             ],
@@ -779,13 +852,12 @@ async fn parse_run_turns_a_flow_or_a_suite_into_its_suites_class_filters() {
         ),
         (
             "a flow narrowed by --filter",
-            vec!["flow-rename-session", "--filter", "exclude-tag=slow"],
+            vec!["flow-rename-session", "--filter", "exclude-classname=.*Slow.*"],
             vec![
-                "include-tag=air-flow-ui".to_owned(),
                 class("AirRenameSessionGeneratedFlowUiTest"),
-                "exclude-tag=slow".to_owned(),
+                "exclude-classname=.*Slow.*".to_owned(),
             ],
-            "flow-rename-session -> lane ui: AirRenameSessionGeneratedFlowUiTest (filters: exclude-tag=slow)",
+            "flow-rename-session -> lane ui: AirRenameSessionGeneratedFlowUiTest (filters: exclude-classname=.*Slow.*)",
         ),
     ] {
         let parsed_run = fixture
@@ -874,10 +946,7 @@ async fn a_run_plan_holds_every_reached_lane() {
     let chat = &plan.iterations[2];
     assert_eq!(
         chat.selection.junit5_filters,
-        [
-            "include-tag=air-gui-chat",
-            r"include-classname=(^|.*\.)AirThreeLanesChatGeneratedFlowUiTest$"
-        ]
+        [r"include-classname=(^|.*\.)AirThreeLanesChatGeneratedFlowUiTest$"]
     );
     assert_eq!(chat.classes, ["AirThreeLanesChatGeneratedFlowUiTest"]);
 
@@ -902,8 +971,8 @@ async fn a_run_plan_holds_every_reached_lane() {
 // line whichever order they were typed in.
 #[test]
 fn the_same_options_spell_the_same_command_line() {
-    let typed = parsed(&["--fresh-ide", "--filter", "exclude-tag=slow", "--lane", "ui"]);
-    let reordered = parsed(&["--lane", "ui", "--filter", "exclude-tag=slow", "--fresh-ide"]);
+    let typed = parsed(&["--fresh-ide", "--filter", "exclude-classname=.*Slow.*", "--lane", "ui"]);
+    let reordered = parsed(&["--lane", "ui", "--filter", "exclude-classname=.*Slow.*", "--fresh-ide"]);
     assert_eq!(typed.argv(), reordered.argv());
     assert_eq!(parsed(&typed.argv().iter().map(String::as_str).collect::<Vec<_>>()), typed);
 }
@@ -919,27 +988,98 @@ fn a_selector_becomes_either_a_selection_or_a_class_name_filter() {
             &["com.example.AirSmokeTest#opensAProject"],
             &[],
         ),
-        // No package to select by, so it travels as a regex over a full hot-tier scan.
+        // No package to select by, so it travels as a pattern over the class names of the documents.
         ("AirSmokeTest", &[], &[r"include-classname=(^|.*\.)AirSmokeTest$"]),
     ];
     for (filter, want_selectors, want_filters) in cases {
         let (selectors, junit5_filters) = selector_to_run_request(filter);
         assert_eq!(selectors, want_selectors, "{filter}");
         assert_eq!(junit5_filters, want_filters, "{filter}");
-        // Never null on the wire: the far end is Kotlin with non-nullable fields.
-        let encoded = serde_json::to_value(RunRequestBody {
-            selectors: &selectors,
-            junit5_filters: &junit5_filters,
-            product_stamp: "",
-            launch_digest: "",
-            hot_jars: Vec::new(),
+        // Never null on the wire: the lane daemon reads these lists with no default.
+        let encoded = serde_json::to_value(RunRequest {
+            selectors: selectors.clone(),
+            junit5_filters: junit5_filters.clone(),
+            product_stamp: String::new(),
+            launch_digest: String::new(),
             active_execution_timeout_sec: 0,
             progress_gap_timeout_sec: 0,
+            run_budget_sec: None,
             ide_plugins: Vec::new(),
+            lane: None,
+            lane_inputs: None,
+            lane_classes: Vec::new(),
+            session_logs: Vec::new(),
         })
         .unwrap();
         assert!(encoded["selectors"].is_array(), "{filter}: {encoded}");
         assert!(encoded["idePlugins"].is_array(), "{filter}: {encoded}");
         assert!(encoded["junit5Filters"].is_array(), "{filter}: {encoded}");
     }
+}
+
+// The lane daemon gets the lane of the selection and the digests of the three lane inputs, and a selection of no lane
+// is refused before the request goes out.
+#[tokio::test]
+async fn the_lane_daemon_gets_the_lane_and_the_digests_of_the_lane_inputs() {
+    let (fixture, prep, _) = executing().await;
+    let policy = fixture.host.watchdog_policy(None, None);
+    let selection = RunSelection {
+        lane: Some("ui".to_owned()),
+        ..RunSelection::default()
+    };
+    let verb = run_request(&prep, &selection, policy, Vec::new(), &[]).unwrap();
+    assert_eq!(verb.lane.as_deref(), Some("ui"));
+    let digest = |field: &str| {
+        prep.lane_inputs
+            .iter()
+            .find(|input| input.field == field)
+            .unwrap()
+            .host
+            .sha256
+            .clone()
+    };
+    assert_eq!(
+        verb.lane_inputs,
+        Some(LaneInputs {
+            fake_agent_jar: digest("fakeAgentJar"),
+            lane_documents: digest("laneDocuments"),
+            suite_documents: digest("suiteDocuments"),
+        })
+    );
+    let refused = run_request(&prep, &RunSelection::default(), policy, Vec::new(), &[]).unwrap_err();
+    assert_eq!((refused.code.as_ref(), refused.exit), ("lane_daemon_lane_unknown", Exit::USAGE));
+}
+
+// The lane daemon gets the recorded sessions that the push stored, and a run without one sends no field.
+#[tokio::test]
+async fn the_lane_daemon_gets_the_recorded_sessions() {
+    let (fixture, prep, _) = executing().await;
+    let policy = fixture.host.watchdog_policy(None, None);
+    let selection = RunSelection {
+        lane: Some("ui-perf".to_owned()),
+        ..RunSelection::default()
+    };
+    let logs = [SessionLog {
+        label: "thread-7".to_owned(),
+        sha256: "z".to_owned(),
+    }];
+    let verb = run_request(&prep, &selection, policy, Vec::new(), &logs).unwrap();
+    assert_eq!(verb.session_logs, logs);
+    let without = run_request(&prep, &selection, policy, Vec::new(), &[]).unwrap();
+    assert!(!serde_json::to_string(&without).unwrap().contains("sessionLogs"));
+}
+
+// The lane field selects the documents of the lane, and the class filters of a suite go to the lane daemon as they are.
+#[tokio::test]
+async fn the_lane_daemon_gets_the_class_filters_of_a_suite() {
+    let (fixture, prep, _) = executing().await;
+    let policy = fixture.host.watchdog_policy(None, None);
+    let class = r"include-classname=(^|.*\.)AirRenameSessionGeneratedFlowUiTest$".to_owned();
+    let selection = RunSelection {
+        lane: Some("ui".to_owned()),
+        junit5_filters: vec![class.clone()],
+        ..RunSelection::default()
+    };
+    let verb = run_request(&prep, &selection, policy, Vec::new(), &[]).unwrap();
+    assert_eq!(verb.junit5_filters, [class]);
 }

@@ -4,27 +4,50 @@ package com.intellij.java.openapi.editor.actions;
 import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
-import com.intellij.openapi.editor.actions.MoveStatementUpDownTestBase;
+import com.intellij.openapi.editor.actions.MoveStatementUpDownTestUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorTestUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
-public class JavaMoveStatementUpDownTest extends MoveStatementUpDownTestBase {
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
-  @Override
-  protected @NotNull String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+@TestApplication
+public class JavaMoveStatementUpDownTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+
+  private String testMethodName;
+
+  @BeforeEach
+  void setUp(TestInfo testInfo) {
+    codeInsightFixture.get().setTestDataPath(JavaTestUtil.getJavaTestDataPath());
+    testMethodName = testInfo.getTestMethod().orElseThrow().getName();
+    setPerverseCodeStyleSettings();
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    setPerverseCodeStyleSettings();
+  private void doTest() {
+    MoveStatementUpDownTestUtil.doTest(codeInsightFixture.get(), testMethodName);
+  }
+
+  private static Project getProject() {
+    return projectFixture.get();
   }
 
   private void setPerverseCodeStyleSettings() {
@@ -51,37 +74,68 @@ public class JavaMoveStatementUpDownTest extends MoveStatementUpDownTestBase {
     CodeStyleSettingsManager.getInstance(project).setTemporarySettings(settings);
   }
 
+  @Test
   public void testStatement() { doTest(); }
+  @Test
   public void testBlockStatement() { doTest(); }
+  @Test
   public void testSelection() { doTest(); }
+  @Test
   public void testMoveOutsideMethod() { doTest(); }
+  @Test
   public void testMoveOutsideClass() { doTest(); }
+  @Test
   public void testMoveOutsideNestedClass() { doTest(); }
+  @Test
   public void testIfStatement() { doTest(); }
+  @Test
   public void testIfStatement2() { doTest(); }
+  @Test
   public void testComplexCondition() { doTest(); }
+  @Test
   public void testComment() { doTest(); }
+  @Test
   public void testMethod() { doTest(); }
+  @Test
   public void testMethodInsideClass() { doTest(); }
+  @Test
   public void testDeclarations() { doTest(); }
+  @Test
   public void testSurroundWithBlock() { doTest(); }
+  @Test
   public void testCommentAtLineStart() { doTest(); }
+  @Test
   public void testEmptyLinesBetween() { doTest(); }
+  @Test
   public void testEmptyLinesBetweenFields() { doTest(); }
+  @Test
   public void testEmptyLinesBetweenFields2() { doTest(); }
+  @Test
   public void testMethodAnnotation() { doTest(); }
+  @Test
   public void testAnonClass() { doTest(); }
+  @Test
   public void testMethodReturnElement() { doTest(); }
+  @Test
   public void testInsideEnum() { doTest(); }
+  @Test
   public void testInsideEnum2() { doTest(); }
+  @Test
   public void testMoveConstruction() { doTest(); }
+  @Test
   public void testMoveStatementWithAnonClass() { doTest(); }
+  @Test
   public void testMoveStatementWithBlankLine() { doTest(); }
+  @Test
   public void testSomewhereInTheMiddle() { doTest(); }
+  @Test
   public void testLastJavaLine() { doTest(); }
+  @Test
   public void testFieldWithBlankLineAround() { setStandardCodeStyleSettings(getProject()); doTest(); }
+  @Test
   public void testFieldWithBlankLineAround2() { setStandardCodeStyleSettings(getProject()); doTest(); }
 
+  @Test
   public void testSurroundWithBlockPerversiveCodeStyle() {
     CodeStyleSettings rootSettings = CodeStyleSettingsManager.getInstance(getProject()).createTemporarySettings();
     CommonCodeStyleSettings settings = rootSettings.getCommonSettings(JavaLanguage.INSTANCE);
@@ -96,59 +150,100 @@ public class JavaMoveStatementUpDownTest extends MoveStatementUpDownTestBase {
     doTest();
   }
 
+  @Test
   public void testClassMultilineModifierList() { setStandardCodeStyleSettings(getProject()); doTest(); }
+  @Test
   public void testBraces() { setStandardCodeStyleSettings(getProject()); doTest(); }
+  @Test
   public void testFieldWithJavadoc() { setStandardCodeStyleSettings(getProject()); doTest(); }
+  @Test
   public void testClosingCurlyBrace() { doTest(); }
+  @Test
   public void testAcrossAnonymous() { doTest(); }
+  @Test
   public void testAcrossAnonymousStatement() { doTest(); }
+  @Test
   public void testMoveMultiAnonymous() { doTest(); }
+  @Test
   public void testSingleLineAnonymous() { doTest(); }
+  @Test
   public void testAnonymousMethodCall() { doTest(); }
+  @Test
   public void testAnonymousAssignment() { doTest(); }
+  @Test
   public void testAnonymousInIfStatement() { doTest(); }
+  @Test
   public void testTopLevelEnum() { doTest(); }
+  @Test
   public void testTopLevelEnum2() { doTest(); }
+  @Test
   public void testMoveClassIntoImportList() { doTest(); }
+  @Test
   public void testEnumConstantWithJavadoc() { doTest(); }
+  @Test
   public void testEnumConstantWithJavadoc2() { doTest(); }
+  @Test
   public void testEnumConstant() { doTest(); }
+  @Test
   public void testEnumConstantEmptyLine() { doTest(); }
+  @Test
   public void testEnumConstantEmptyLine2() { doTest(); }
+  @Test
   public void testEnumConstantWithBody() { doTest(); }
+  @Test
   public void testEnumConstantWithBody2() { doTest(); }
+  @Test
   public void testCaseBlock() { doTest(); }
+  @Test
   public void testCaseBlock2() { doTest(); }
+  @Test
   public void testCaseBlockSelection() { doTest(); }
+  @Test
   public void testNonCaseBlockSelection() { doTest(); }
+  @Test
   public void testCatchSection() { doTest(); }
+  @Test
   public void testCatchSectionSelection() { doTest(); }
+  @Test
   public void testCatchSectionSelection2() { doTest(); }
+  @Test
   public void testNonsenseCatchSelection() { doTest(); }
+  @Test
   public void testNonsenseCatchSelection2() { doTest(); }
+  @Test
   public void testCatchSectionFormatting() { doTest(); }
+  @Test
   public void testStatementInCatchSection() { doTest(); }
+  @Test
   public void testSelectionBeyondMovedRegion() { doTest(); }
+  @Test
   public void testMoveFieldThroughSpace() { setStandardCodeStyleSettings(getProject()); doTest(); }
+  @Test
   public void testNotCapturingLineComment() { doTest(); }
+  @Test
   public void testNotCapturingLineComments() { doTest(); }
+  @Test
   public void testModuleInfo() { doTest(); }
 
+  @Test
   public void testMoveCollapsedMethods() {
-    myBeforeMoveTask = () -> {
-      EditorTestUtil.buildInitialFoldingsInBackground(getEditor());
-      getEditor().getFoldingModel().runBatchFoldingOperation(() -> {
-        for (FoldRegion foldRegion : getEditor().getFoldingModel().getAllFoldRegions()) {
+    CodeInsightTestFixture fixture = codeInsightFixture.get();
+    Runnable beforeMove = () -> {
+      Editor editor = fixture.getEditor();
+      EditorTestUtil.buildInitialFoldingsInBackground(editor);
+      editor.getFoldingModel().runBatchFoldingOperation(() -> {
+        for (FoldRegion foldRegion : editor.getFoldingModel().getAllFoldRegions()) {
           foldRegion.setExpanded(false);
         }
       });
     };
-    myAfterMoveTask = () -> {
-      CodeFoldingManager.getInstance(getProject()).updateFoldRegions(getEditor());
-      for (FoldRegion foldRegion : getEditor().getFoldingModel().getAllFoldRegions()) {
+    Runnable afterMove = () -> {
+      Editor editor = fixture.getEditor();
+      CodeFoldingManager.getInstance(getProject()).updateFoldRegions(editor);
+      for (FoldRegion foldRegion : editor.getFoldingModel().getAllFoldRegions()) {
         assertFalse(foldRegion.isExpanded());
       }
     };
-    doTest();
+    MoveStatementUpDownTestUtil.doTest(fixture, testMethodName, beforeMove, afterMove);
   }
 }

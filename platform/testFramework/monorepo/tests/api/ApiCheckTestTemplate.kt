@@ -236,7 +236,10 @@ private fun checkModuleDump(moduleName: String, primaryExpectedDumpPath: Path, s
       message =
         "'$moduleName' ${expectedDump.path.fileName} does not match the actual API. " +
         "If the API change was intentional, please ${if (expectedDump.pathExists) "update" else "create"} '${expectedDump.path}', " +
-        "otherwise revert the change. " + "Simplified diff:\n" + expectedDump.simplifiedBuilder.toString(),
+        "otherwise revert the change. " +
+        "See https://youtrack.jetbrains.com/articles/IJPL-A-2121 for guidance " +
+        "(docs/IntelliJ-Platform/1_API/API-Dump-Check-Authors-Guide.md). " +
+        "Simplified diff:\n" + expectedDump.simplifiedBuilder.toString(),
       expected = expectedDump.rawContent,
       expectedFilePath = if (expectedDump.pathExists) expectedDump.path.toString() else null,
       actual = actualDump,
@@ -313,7 +316,10 @@ private fun assertExposedApi(exposedThrough: Map<String, List<String>>, message:
       }
     }
   }
-  fail("$message:\n$exposedApiString")
+  fail(
+    "$message. See https://youtrack.jetbrains.com/articles/IJPL-A-2121 for guidance " +
+    "(docs/IntelliJ-Platform/1_API/API-Dump-Check-Authors-Guide.md).\n$exposedApiString"
+  )
 }
 
 internal const val exposedThirdPartyApiFileName = "exposed-third-party-api.txt"

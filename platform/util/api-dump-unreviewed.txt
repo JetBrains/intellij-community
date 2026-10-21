@@ -1016,7 +1016,7 @@ e:com.intellij.ui.icons.RowIcon$Alignment
 - s:valueOf(java.lang.String):com.intellij.ui.icons.RowIcon$Alignment
 - s:values():com.intellij.ui.icons.RowIcon$Alignment[]
 a:com.intellij.util.AbstractPathMapper
-- f:canReplaceLocal(java.lang.String):Z
+- canReplaceLocal(java.lang.String):Z
 - f:canReplaceRemote(java.lang.String):Z
 - s:convertToLocal(java.lang.String,java.lang.Iterable):java.lang.String
 - s:convertToRemote(java.lang.String,java.util.Collection):java.lang.String

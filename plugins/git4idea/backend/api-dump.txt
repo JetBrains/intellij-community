@@ -93,6 +93,9 @@ f:git4idea.branch.GitBranchesCollection
 - findLocalBranch(java.lang.String):git4idea.GitLocalBranch
 - findRemoteBranch(java.lang.String):git4idea.GitRemoteBranch
 - getHash(git4idea.GitBranch):com.intellij.vcs.log.Hash
+f:git4idea.branch.GitRebaseParams$Companion
+- f:editCommits(git4idea.config.GitVersion,git4idea.branch.GitRebaseParams$RebaseUpstream,git4idea.rebase.GitRebaseEditorHandler,Z,Z):git4idea.branch.GitRebaseParams
+- bs:editCommits$default(git4idea.branch.GitRebaseParams$Companion,git4idea.config.GitVersion,git4idea.branch.GitRebaseParams$RebaseUpstream,git4idea.rebase.GitRebaseEditorHandler,Z,Z,I,java.lang.Object):git4idea.branch.GitRebaseParams
 f:git4idea.branch.GitRebaseParams$RebaseUpstream$Companion
 - f:fromRefString(java.lang.String):git4idea.branch.GitRebaseParams$RebaseUpstream$Reference
 f:git4idea.changes.GitBranchComparisonResultImplKt
@@ -243,6 +246,8 @@ f:git4idea.push.GitPushSupport
 - getSource(git4idea.repo.GitRepository):git4idea.push.GitPushSource
 c:git4idea.rebase.GitRebaseEntry
 - sf:parseAction(java.lang.String):git4idea.rebase.GitRebaseEntry$Action
+e:git4idea.rebase.GitRebaseOption
+- sf:NO_AUTOSQUASH:git4idea.rebase.GitRebaseOption
 f:git4idea.rebase.GitSquashedCommitsMessage
 - f:canAutosquash(java.lang.String,java.util.Set):Z
 - f:formatAmendSpecificCommitMessage(java.lang.String,java.lang.String):java.lang.String

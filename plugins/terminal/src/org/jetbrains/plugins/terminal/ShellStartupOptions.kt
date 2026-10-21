@@ -32,6 +32,14 @@ class ShellStartupOptions private constructor(builder: Builder) {
   val widget: TerminalWidget? = builder.widget
   val shellIntegration: ShellIntegration? = builder.shellIntegration
   val envVariables: Map<String, String> = builder.envVariables
+
+  /**
+   * The names of the variables that the terminal removes from the parent environment. The removal happens before the terminal
+   * adds [envVariables] and the user-defined variables of the terminal settings, so those still apply.
+   */
+  @ApiStatus.Internal
+  val removedEnvVariables: Set<String> = builder.removedEnvVariables
+
   @ApiStatus.Internal
   val emulatorType: TerminalEmulatorType? = builder.emulatorType
   internal val startupMoment: TerminalStartupMoment? = builder.startupMoment
@@ -60,6 +68,7 @@ class ShellStartupOptions private constructor(builder: Builder) {
       envVariables,
       startupMoment,
       this@ShellStartupOptions.emulatorType,
+      removedEnvVariables,
     )
   }
 
@@ -70,6 +79,7 @@ class ShellStartupOptions private constructor(builder: Builder) {
            ", initialTermSize=[$initialTermSize]" +
            ", shellIntegration=$shellIntegration" +
            ", envVariables=$envVariables" +
+           ", removedEnvVariables=$removedEnvVariables" +
            ", processType=$processType" +
            ", widget=${widget != null}" +
            ", emulatorType=$emulatorType"
@@ -99,6 +109,8 @@ class ShellStartupOptions private constructor(builder: Builder) {
     internal var startupMoment: TerminalStartupMoment? = null,
     @get:ApiStatus.Internal
     var emulatorType: TerminalEmulatorType? = null,
+    @get:ApiStatus.Internal
+    var removedEnvVariables: Set<String> = emptySet(),
   ) {
 
     var workingDirectory: @NioPath String?
@@ -125,6 +137,10 @@ class ShellStartupOptions private constructor(builder: Builder) {
     fun workingDirectory(workingDirectory: @NioPath String?) = also { this.workingDirectory = workingDirectory }
     fun shellCommand(shellCommand: List<String>?) = also { this.shellCommand = shellCommand }
     fun envVariables(envs: Map<String, String>) = also { this.envVariables = envs }
+
+    @ApiStatus.Internal
+    fun removedEnvVariables(names: Set<String>): Builder = also { this.removedEnvVariables = names }
+
     fun processType(processType: TerminalProcessType) = also { this.processType = processType }
     fun commandHistoryFileProvider(commandHistoryFileProvider: (() -> Path?)?) =
       also { this.commandHistoryFileProvider = commandHistoryFileProvider }

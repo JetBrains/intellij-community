@@ -354,6 +354,18 @@ jobs:
           path: android
           ref: master
 
+      # common.bazelrc sets startup:windows and common:windows, so both the unqualified and :windows lines are needed.
+      - name: Put Bazel's output on the larger drive
+        shell: pwsh
+        run: |
+          @(
+            "startup --output_user_root=D:/b"
+            "startup:windows --output_user_root=D:/b"
+            "common --disk_cache=D:/bc"
+            "common:windows --disk_cache=D:/bc"
+          ) | Out-File -Encoding ascii .bazelrc-user.bazelrc
+          Get-PSDrive C, D | Format-Table Name, Used, Free
+
       - name: Run the Spectre headful UI tests
         # Not redundant: JDialogRenderer uses RenderSettings.SwingGraphics on Windows.
         # The IDE end-to-end test has its own job. Its build compiles the whole platform, and the standalone tests
@@ -455,10 +467,16 @@ jobs:
           ref: master
 
       # The IDE end-to-end test copies every community module into its runfiles, which does not fit on C:.
+      # common.bazelrc sets startup:windows and common:windows, so both the unqualified and :windows lines are needed.
       - name: Put Bazel's output on the larger drive
         shell: pwsh
         run: |
-          "startup --output_user_root=D:/b`ncommon --disk_cache=D:/bc" | Out-File -Encoding ascii .bazelrc-user.bazelrc
+          @(
+            "startup --output_user_root=D:/b"
+            "startup:windows --output_user_root=D:/b"
+            "common --disk_cache=D:/bc"
+            "common:windows --disk_cache=D:/bc"
+          ) | Out-File -Encoding ascii .bazelrc-user.bazelrc
           Get-PSDrive C, D | Format-Table Name, Used, Free
 
       - name: Run the IDE end-to-end test

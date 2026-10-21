@@ -55,6 +55,10 @@ public final class PythonSdkUtil {
     return com.jetbrains.python.sdk.legacy.PythonSdkUtil.getAllSdks(pyProject);
   }
 
+  /**
+   * @deprecated Use the interpreter of the Python project, {@code PyProject.getInterpreter}.
+   */
+  @Deprecated
   public static @Nullable Sdk findPythonSdk(@Nullable Module module) {
     return com.jetbrains.python.sdk.legacy.PythonSdkUtil.findPythonSdk(module);
   }
@@ -85,6 +89,10 @@ public final class PythonSdkUtil {
   }
 
 
+  /**
+   * @deprecated Use the interpreter of the Python project of the file, {@code findPythonInterpreter(file)}.
+   */
+  @Deprecated
   @ApiStatus.Internal
   public static @Nullable Sdk findPythonSdk(final @NotNull PsiElement element) {
     return com.jetbrains.python.sdk.legacy.PythonSdkUtil.findPythonSdk(element);
@@ -125,7 +133,8 @@ public final class PythonSdkUtil {
 
   /** The id its provider declares in xml, or {@code null} when no environment was detected. */
   private static @Nullable String kindIdOf(@NotNull Sdk sdk) {
-    PythonEnvironment environment = PythonInterpreterKt.pythonInterpreter(sdk, false).getPythonEnvironment();
+    PythonInterpreter interpreter = PythonInterpreterKt.pythonInterpreterResult(sdk, false).getSuccessOrNull();
+    PythonEnvironment environment = interpreter == null ? null : PythonInterpreterKt.getDetectedEnvironment(interpreter);
     return environment == null ? null : PythonEnvironmentExtKt.getKindId(environment);
   }
 }

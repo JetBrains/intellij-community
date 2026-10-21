@@ -73,6 +73,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtEnumEntrySuperclassReferenceExpression
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -168,7 +169,7 @@ class KotlinAliasedImportedElementSearcher : QueryExecutorBase<PsiReference, Ref
         private val mySession: SearchSession
     ) : RequestResultProcessor(myTarget) {
         override fun processTextOccurrence(element: PsiElement, offsetInElement: Int, consumer: Processor<in PsiReference>): Boolean {
-            val importStatement = element.parent as? KtImportDirective ?: return true
+            val importStatement = (element as? KtExpression)?.parent as? KtImportDirective ?: return true
             val alias = importStatement.alias ?: return true
             val importAlias = alias.name ?: return true
 

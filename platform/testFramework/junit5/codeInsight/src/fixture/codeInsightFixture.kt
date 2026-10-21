@@ -2,10 +2,13 @@
 package com.intellij.platform.testFramework.junit5.codeInsight.fixture
 
 import com.intellij.idea.AppMode
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.TestDataProvider
@@ -127,15 +130,15 @@ fun <T: CodeInsightTestFixture> codeInsightFixture(
  * Use it with the [codeInsightFixture] overload that takes only the project fixture:
  *
  * ```kotlin
- * companion object {
- *   private val projectFixture = codeInsightProjectFixture()
- * }
- *
+ * private val projectFixture = codeInsightProjectFixture()
  * private val myFixture by codeInsightFixture(projectFixture)
  * ```
  *
- * Declare it in a companion object to share one project between the tests of a class.
- * Declare it as an instance property to get a new project for each test.
+ * Declare it as an instance property, so that each test gets a new project.
+ * Do not declare it in a companion object.
+ * The [codeInsightFixture] overload does not delete the files that a test adds.
+ * In a shared project, the next test sees the files of an earlier test.
+ * To share one project between the tests of a class, use [codeInsightModuleFixture].
  */
 @TestOnly
 fun codeInsightProjectFixture(): TestFixture<Project> = testFixture("codeInsightProjectFixture") {
@@ -154,6 +157,59 @@ fun codeInsightProjectFixture(): TestFixture<Project> = testFixture("codeInsight
 @TestOnly
 fun codeInsightFixture(projectFixture: TestFixture<Project>): TestFixture<CodeInsightTestFixture> =
   codeInsightFixture(projectFixture, projectFixture.pathInProjectFixture(Path("")))
+
+/**
+ * Creates a [CodeInsightTestFixture] with its own temporary directory and module in the [projectFixture] project.
+ *
+ * Each test gets a new temporary directory and a new module of the [moduleTypeId] type.
+ * The module uses the directory as its content and source root.
+ * So a test does not see the files of an earlier test.
+ * The project directory is not the module directory.
+ * When the code under test needs the project directory, use [codeInsightProjectFixture].
+ *
+ * Declare [projectFixture] in a companion object to share one opened project between the tests of a class:
+ *
+ * ```kotlin
+ * companion object {
+ *   private val projectFixture = projectFixture(openAfterCreation = true)
+ * }
+ *
+ * private val myFixture by codeInsightModuleFixture(projectFixture)
+ * ```
+ */
+@JvmOverloads
+@TestOnly
+fun codeInsightModuleFixture(
+  projectFixture: TestFixture<Project>,
+  moduleTypeId: String = "",
+): TestFixture<CodeInsightTestFixture> =
+  testFixture("codeInsightModuleFixture") {
+    val pathFixture = vfsDeletedTempPathFixture()
+    val moduleFixture = projectFixture.moduleFixture(pathFixture, addPathToSourceRoot = true, moduleTypeId = moduleTypeId)
+    // The editors of the test must close before the module is disposed.
+    // Otherwise, the roots change of the module starts editor jobs that run in the next test.
+    val codeInsightFixture = codeInsightFixture(projectFixture, pathFixture).dependsOn(moduleFixture)
+    initialized(codeInsightFixture.init()) {}
+  }
+
+/**
+ * Creates a temporary directory that is deleted through the VFS, so that no [VirtualFile] of the test stays valid.
+ * [tempPathFixture] deletes the directory only on disk.
+ */
+@TestOnly
+private fun vfsDeletedTempPathFixture(): TestFixture<Path> = testFixture("vfsDeletedTempPathFixture") {
+  val path = tempPathFixture().init()
+  initialized(path) {
+    val directory = LocalFileSystem.getInstance().findFileByNioFile(path)
+    if (directory != null) {
+      writeAction {
+        if (directory.isValid) {
+          directory.delete(directory.fileSystem)
+        }
+      }
+    }
+  }
+}
 
 private fun getTestDataPathString(context: TestContext): String {
   val rootPath = context.findAnnotation(TestDataPath::class.java)?.value?.removePrefix($$"$PROJECT_ROOT/") ?: ""

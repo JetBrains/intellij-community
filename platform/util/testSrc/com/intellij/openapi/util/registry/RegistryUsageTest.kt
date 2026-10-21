@@ -10,6 +10,11 @@ private const val USAGE_COUNT_THRESHOLD = 1
 private const val LIFE_TIME_YEARS_THRESHOLD = 3
 
 /**
+ * `RegistryApplicationUsagesCollector` never reports these keys, so the statistics cannot show their usage.
+ */
+private val keysExcludedFromStatistics = setOf("ide.disable.intellij.project.analytics")
+
+/**
  * Detects unused or rarely used keys in `registry.properties`
  *
  * Usage details
@@ -25,14 +30,20 @@ private const val LIFE_TIME_YEARS_THRESHOLD = 3
  */
 fun main() {
   val usageStatistics = loadStatisticsFile()
-  val allPlatformRegistryKeys = loadPlatformRegistryKeys()
+  val allPlatformRegistryKeys = loadPlatformRegistryKeys().toSet()
   val annotations = loadAnnotations()
 
-  require(allPlatformRegistryKeys.toSet() == annotations.keys) { "Inconsistent annotations and registry keys" }
+  require(allPlatformRegistryKeys == annotations.keys) {
+    "Inconsistent annotations and registry keys.\n" +
+    "Only in registry.properties: ${allPlatformRegistryKeys - annotations.keys}\n" +
+    "Only in $annotationFile: ${annotations.keys - allPlatformRegistryKeys}"
+  }
 
-  dumpOutdatedKeys("Not used keys, older than $LIFE_TIME_YEARS_THRESHOLD years", allPlatformRegistryKeys - usageStatistics.keys, annotations)
+  dumpOutdatedKeys("Not used keys, older than $LIFE_TIME_YEARS_THRESHOLD years",
+                   allPlatformRegistryKeys - keysExcludedFromStatistics - usageStatistics.keys,
+                   annotations)
   println()
-  dumpOutdatedKeys("Used less than $USAGE_COUNT_THRESHOLD time(s), older than $LIFE_TIME_YEARS_THRESHOLD years",
+  dumpOutdatedKeys("Used at most $USAGE_COUNT_THRESHOLD time(s), older than $LIFE_TIME_YEARS_THRESHOLD years",
                    usageStatistics.filter { it.value <= USAGE_COUNT_THRESHOLD && allPlatformRegistryKeys.contains(it.key) }.keys,
                    annotations)
 }
@@ -41,7 +52,7 @@ private fun dumpOutdatedKeys(description: String, keys: Collection<String>, anno
   val outdatedKeys = keys
     .filter { isKeyOutdated(it, annotations) }
     .sorted()
-  println(outdatedKeys.joinToString("\n", "$description (${keys.size} count):\n"))
+  println(outdatedKeys.joinToString("\n", "$description (${outdatedKeys.size} count):\n"))
 }
 
 private fun isKeyOutdated(key: String, annotations: Map<String, LocalDate>): Boolean {
@@ -55,20 +66,21 @@ private fun loadStatisticsFile(): Map<String, Int> {
   val resource = object {}.javaClass.getResourceAsStream(statisticsFile)
   requireNotNull(resource) { "$statisticsFile not found" }
 
-  val regex = Regex("""^registry,([\w.]+),[\d.]+,[\d.]+,[\d.]+,(\d+)$""")
+  val regex = Regex("""^registry,([^,]+),[\d.]+,[\d.]+,[\d.]+,(\d+)$""")
   val result = mutableMapOf<String, Int>()
 
   resource.bufferedReader().useLines { lines ->
     lines.forEach { line ->
-      val match = regex.find(line)
-      if (match != null) {
-        val key = match.groupValues[1]
-        val usageCount = match.groupValues[2].toIntOrNull()
+      if (!line.startsWith("registry,")) return@forEach
 
-        require(key.isNotEmpty()) { "Invalid key: $key" }
-        requireNotNull(usageCount) { "Invalid usage count: $usageCount" }
-        require(result.put(key, usageCount) == null) { "Duplicated key $key" }
-      }
+      val match = regex.find(line)
+      requireNotNull(match) { "Unexpected line in $statisticsFile: $line" }
+
+      val key = match.groupValues[1]
+      val usageCount = match.groupValues[2].toIntOrNull()
+
+      requireNotNull(usageCount) { "Invalid usage count: $usageCount" }
+      require(result.put(key, usageCount) == null) { "Duplicated key $key" }
     }
   }
 

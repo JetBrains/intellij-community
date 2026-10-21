@@ -83,6 +83,7 @@
     <module name="intellij.performanceTesting.frontend.baseline"/>
     <module name="intellij.performanceTesting.problemsView"/>
     <module name="intellij.performanceTesting.structureView"/>
+    <module name="intellij.performanceTesting.todo"/>
     <module name="intellij.performanceTesting.backend"/>
     <module name="intellij.performanceTesting.frontend.split"/>
     <module name="intellij.performanceTesting.backend.split"/>
@@ -139,7 +140,7 @@
     <troubleInfoCollector implementation="com.jetbrains.performancePlugin.utils.HardwareCollector"/>
 
     <initProjectActivity implementation="com.jetbrains.performancePlugin.PerformancePluginInitProjectActivity"/>
-    <postStartupActivity implementation="com.jetbrains.performancePlugin.PerformanceTestTotalTimeTimer" />
+    <applicationInitializedListener implementation="com.jetbrains.performancePlugin.IdeLifetimeTimer"/>
     <applicationInitializedListener implementation="com.jetbrains.performancePlugin.ProjectLoaded"/>
 
     <notificationGroup id="PerformancePlugin" displayType="STICKY_BALLOON"

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService.impl.processLaunchers
 
+import com.intellij.execution.target.HostPort
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.impl.base.ProcessFunctions
@@ -22,10 +23,19 @@ import kotlin.time.Clock
 
 private val logger = fileLogger()
 
+/**
+ * The address of the IDE side of a forwarded port, and the address that a process listens on for one.
+ */
+internal const val LOOPBACK_ADDRESS: String = "127.0.0.1"
+
 internal class ProcessLauncher(
   val exeForError: Exe,
   val args: List<String>,
   val processCommands: ProcessCommands,
+  /**
+   * Each port of [LaunchRequest.portsToForward] to the address where the IDE connects to it.
+   */
+  val forwardedPorts: Map<UShort, HostPort> = emptyMap(),
 ) {
   suspend fun start(weight: ConcurrentProcessWeight? = null): Result<LoggingProcess, ExecErrorReason.CantStart> =
     processCommands.start()
@@ -69,6 +79,10 @@ internal data class LaunchRequest(
   val usePty: TtySize?,
   val uploadConfig: UploadConfig? = null,
   val downloadConfig: DownloadConfig? = null,
+  /**
+   * Ports on the machine of the process that the IDE must reach.
+   */
+  val portsToForward: Set<UShort> = emptySet(),
 ) {
   /**
    * Returns the environment for the process.

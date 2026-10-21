@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration
 
-import com.intellij.python.sdk.backend.interpreterItem
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.asItem
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -26,7 +29,6 @@ import com.jetbrains.python.packaging.widget.resolvePythonWidgetContext
 import com.jetbrains.python.sdk.PySdkPopupFactory
 import com.intellij.util.IconUtil
 import com.intellij.ide.ui.icons.icon
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.sdk.common.PyInterpreterItem
 import com.jetbrains.python.sdk.noInterpreterMarker
 import kotlinx.coroutines.CoroutineScope
@@ -74,13 +76,13 @@ private class PySdkStatusBar(project: Project, scope: CoroutineScope) : EditorBa
   private var module: Module? = null
 
   /**
-   * The last interpreter reading, and the SDK it was read for.
+   * The last interpreter reading, and the interpreter it was read for.
    *
-   * Kept because [getWidgetState] runs inside a read action and reading an interpreter runs it, which must not happen
-   * under the read lock. A miss shows the SDK's own name and asks for the reading in the background.
+   * Kept because [getWidgetState] runs inside a read action and building an item reads the interpreter, which must not
+   * happen under the read lock. A miss shows the SDK's own name and asks for the reading in the background.
    */
   @Volatile
-  private var lastRead: Pair<Sdk, PyInterpreterItem>? = null
+  private var lastRead: Pair<PythonInterpreter, PyInterpreterItem>? = null
 
   override fun install(statusBar: StatusBar) {
     super.install(statusBar)
@@ -89,20 +91,27 @@ private class PySdkStatusBar(project: Project, scope: CoroutineScope) : EditorBa
     scope.launch {
       statusBar.currentEditor.collect { update() }
     }
+    // A new snapshot can give the module another interpreter. It lands after `rootsChanged`, so that listener alone
+    // would show the interpreter of the generation before it.
+    scope.launch {
+      EvoPyProjectModel.getInstance(project).snapshotFlow().collect { update() }
+    }
   }
 
   override fun getWidgetState(file: VirtualFile?): WidgetState {
-    val (module, sdk) = resolvePythonWidgetContext(project, file) ?: return WidgetState.HIDDEN
+    val (module, interpreter) = resolvePythonWidgetContext(project, file) ?: return WidgetState.HIDDEN
     this.module = module
-    if (sdk == null) return WidgetState("", noInterpreterMarker, true)
+    if (interpreter == null) return WidgetState("", noInterpreterMarker, true)
 
-    val item = lastRead?.takeIf { it.first == sdk }?.second
+    val item = lastRead?.takeIf { it.first == interpreter }?.second
     if (item == null) {
       scope.launch {
-        val read = sdk.interpreterItem() ?: return@launch
-        lastRead = sdk to read
+        val read = interpreter.asItem()
+        lastRead = interpreter to read
         update()
       }
+      @Suppress("DEPRECATION") // The SDK name and home path show until the item is read.
+      val sdk = interpreter.getSdkAPI()
       return WidgetState(PyBundle.message("current.interpreter", sdk.homePath.orEmpty()), sdk.name, true)
     }
 

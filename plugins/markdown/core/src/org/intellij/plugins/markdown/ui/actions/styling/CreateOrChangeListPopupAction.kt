@@ -10,12 +10,13 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.client.currentSessionOrNull
+import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.application
 import java.awt.Point
 import java.awt.event.MouseEvent
 
-internal class CreateOrChangeListPopupAction: AnAction(), Toggleable {
+internal class CreateOrChangeListPopupAction: AnAction(), Toggleable, DumbAware {
   private val actualGroup = CreateOrChangeListActionGroup()
 
   override fun actionPerformed(event: AnActionEvent) {

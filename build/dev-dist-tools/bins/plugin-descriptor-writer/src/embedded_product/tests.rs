@@ -115,7 +115,7 @@ fn the_simple_source_without_its_dynamic_include_matches_kotlin() {
 }
 
 /// The composition of `composed.xml`: the aliases in reverse order, a required include with a nested include from a
-/// jar, an optional include, a set block, and a private additional module before a `jetbrains` one.
+/// jar, an optional include, a set block, and a private additional module before a `jetbrains` one in the flags.
 const COMPOSITION: [&str; 8] = [
     "--alias=embedded.alias.b",
     "--alias=embedded.alias.a",
@@ -457,8 +457,8 @@ fn a_composition_gives_the_stage_output_of_its_source() {
     let expected = read_text(dir.join("out").join("product.xml"));
     assert_eq!(resolve_text(&parsed, &source).unwrap(), expected);
     assert_eq!(expected, read_text(Path::new(&testdata("embedded_product/composed.expected.xml"))));
-    // The fixture reaches every rule: the nested include resolves, the optional one stays, and the blocks keep their
-    // order.
+    // The fixture reaches every rule: the nested include resolves, the optional one stays, and the private block comes
+    // last.
     for want in [
         "<id>com.intellij</id>\n  <module value=\"embedded.alias.a\" />\n  <module value=\"embedded.alias.b\" />",
         "<module name=\"intellij.embedded.jar\" loading=\"required\"><![CDATA[<idea-plugin \
@@ -466,9 +466,9 @@ fn a_composition_gives_the_stage_output_of_its_source() {
         "<xi:include href=\"optional.xml\">\n    <xi:fallback />\n  </xi:include>\n  <content namespace=\"jetbrains\">\n    \
          <module name=\"intellij.embedded.noPackage\">",
         "<module name=\"intellij.embedded/fragment\" loading=\"embedded\">",
-        "<content>\n    <module name=\"intellij.embedded.notSeparate\" loading=\"on-demand\">",
-        "</content>\n  <content namespace=\"jetbrains\">\n    <module name=\"intellij.embedded.existing\" \
+        "<content namespace=\"jetbrains\">\n    <module name=\"intellij.embedded.existing\" \
          required-if-available=\"intellij.embedded.noPackage\">",
+        "</content>\n  <content>\n    <module name=\"intellij.embedded.notSeparate\" loading=\"on-demand\">",
     ] {
         assert!(expected.contains(want), "{want:?} is not in\n{expected}");
     }

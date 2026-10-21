@@ -92,19 +92,30 @@ single_version_override(
 )
 
 bazel_dep(name = "windows_support", version = "0.4.1")
-bazel_dep(name = "llvm", version = "0.8.24")
+bazel_dep(name = "llvm", version = "0.8.25")
 single_version_override(
     module_name = "llvm",
     patch_strip = 1,
     patches = [
-        "//:build/llvm-0.8.24-clang-cl-warning-order.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/hermetic-llvm/issues/808
-        "//:build/llvm-0.8.24-merged-resource-directory-headers.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/hermetic-llvm/issues/812
-        "//:build/llvm-0.8.24-windows-exec-case-overlays.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/hermetic-llvm/issues/809
-        "//:build/llvm-0.8.24-clang-cl-quote-includes.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/hermetic-llvm/issues/807
-        "//:build/llvm-0.8.24-module-map-generator-long-paths.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/hermetic-llvm/issues/810
-        "//:build/llvm-0.8.24-msvc-legacy-stdio-definitions.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/hermetic-llvm/issues/811
-        "//:build/llvm-0.8.24-msvc-windows-subsystem.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/hermetic-llvm/issues/817
+        "//:build/llvm-0.8.25-clang-cl-warning-order.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/hermetic-llvm/issues/808
+        "//:build/llvm-0.8.25-windows-exec-case-overlays.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/hermetic-llvm/issues/809
+        "//:build/llvm-0.8.25-clang-cl-quote-includes.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/hermetic-llvm/issues/807
+        "//:build/llvm-0.8.25-module-map-generator-long-paths.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/hermetic-llvm/issues/810
+        "//:build/llvm-0.8.25-msvc-legacy-stdio-definitions.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/hermetic-llvm/issues/811
+        "//:build/llvm-0.8.25-msvc-windows-subsystem.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/hermetic-llvm/issues/817
     ],
+)
+
+# The test toolchains of the rules_rs Linux triples and of the gnu and gnullvm Windows triples. Not a dev dependency: the
+# tests of the ultimate root need them too.
+register_toolchains(
+    "//build/native/platforms:linux_aarch64_glibc_test_toolchain",
+    "//build/native/platforms:linux_aarch64_musl_test_toolchain",
+    "//build/native/platforms:linux_x86_64_glibc_test_toolchain",
+    "//build/native/platforms:linux_x86_64_musl_test_toolchain",
+    "//build/native/platforms:windows_aarch64_gnullvm_test_toolchain",
+    "//build/native/platforms:windows_x86_64_gnu_test_toolchain",
+    "//build/native/platforms:windows_x86_64_gnullvm_test_toolchain",
 )
 
 register_toolchains(
@@ -185,6 +196,7 @@ dev_launch_deps_community = use_extension("@community//build:dev_launch_dependen
 use_repo(
     dev_launch_deps_community,
     "dev_launch_jserialcomm",
+    "dev_launch_launcher_extracted",
     "dev_launch_libghostty",
     "dev_launch_libwebp",
     "dev_launch_maven",
@@ -203,6 +215,7 @@ use_repo(dev_launch_paths, "dev_launch_paths")
     "dev_launch_%s_%s" % (platform, group),
 ) for platform in DEV_LAUNCH_HOST_PLATFORMS for group in [
     "jbr",
+    "jbr_runtime_extracted",
     "jcef",
     "pyrefly_extracted",
 ]]
@@ -213,7 +226,7 @@ http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "ht
 http_archive(
     name = "remote_java_tools_windows_with_vc_redist",
     sha256 = "a9df22ddf20fcd0407ae0782845b58787e4a126eb81aa8d16dfa5be542c443d0",
-    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/rules-java/java_tools_windows-v19.0-with-vc_redist-v2.zip",
+    url = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/rules-java/java_tools_windows-v19.0-with-vc_redist-v2.zip",
 )
 
 override_repo(
@@ -249,19 +262,9 @@ use_repo(
     "nodejs_windows_arm64",
 )
 
-# Go, for //build/treehouse - the treehouse wrapper. The SDK version tracks the `go` directive of its `go.mod`.
+# No Go target lives here. `common.bazelrc` sets the `@rules_go//go/config:pure` flag, so the label must resolve in a
+# community checkout too.
 bazel_dep(name = "rules_go", version = "0.63.0")
-bazel_dep(name = "gazelle", version = "0.53.0")
-
-# No `name` on the download: `rules_go` rejects one from a non-root module, and this module is not the root when the
-# ultimate repository builds it. Nothing here names the SDK repo, so it does not need one.
-go_sdk = use_extension("@rules_go//go:extensions.bzl", "go_sdk")
-go_sdk.download(version = "1.27.0")
-
-# Every version comes from the treehouse `go.mod`, which is also what the IDE and a plain `go build` read.
-go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
-go_deps.from_file(go_mod = "//build/treehouse:go.mod")
-use_repo(go_deps, "com_github_kunchenguid_treehouse")
 
 # Rust, for the dev-distribution tools in //build/dev-dist-tools. rules_rs supplies the Rust toolchains and the
 # `@rules_rust` facade. The ultimate root declares the same `bazel_dep`, override and toolchain tag.
@@ -272,6 +275,7 @@ single_version_override(
     patch_strip = 1,
     patches = [
         "//:build/rules_rs-0.0.112-github-crate-tarball.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/rules_rs/pull/247
+        "//:build/rules_rs-0.0.112-bootstrap-toolchain-type.patch",  # TODO: remove that once merged to upstream, with rules_rust-bootstrap-toolchain-type.patch
     ],
 )
 
@@ -287,6 +291,9 @@ rules_rust.patch(
         # their asked statically linked MSVC runtime, implemented as a patch to avoid setting
         # transitions manually everywhere or with a wrapper or child rule
         "//:build/rules_rust-msvc-crt-transition.patch",
+        # A toolchain type selects the bootstrap Rust toolchain, so the process wrapper keeps the configuration of the
+        # cc toolchain and compiler-rt. It needs rules_rs-0.0.112-bootstrap-toolchain-type.patch.
+        "//:build/rules_rust-bootstrap-toolchain-type.patch",  # TODO: remove that once merged to upstream
     ],
     strip = 1,
 )
@@ -363,10 +370,9 @@ crate.from_cargo(
 )
 use_repo(crate, "bt")
 
-# The Air UI-lane controller, `tools/vm`: the pinned Docker CLI, Lima and Tart, and the crate hub `@avl`.
+# The Air UI-lane controller, `tools/vm`: the pinned Apple container, Docker CLI and Tart, and the crate hub `@avl`.
 include("//tools/vm:container.MODULE.bazel")
 include("//tools/vm:docker.MODULE.bazel")
-include("//tools/vm:lima.MODULE.bazel")
 include("//tools/vm:tart.MODULE.bazel")
 include("//tools/vm:avl.MODULE.bazel")
 include("//:fleet/kmp.MODULE.bazel")

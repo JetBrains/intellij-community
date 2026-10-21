@@ -31,6 +31,7 @@ import com.jetbrains.python.psi.PyStatementList
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.references.PyImportReference
+import com.jetbrains.python.psi.resolve.pythonSdkIfReady
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch
 import com.jetbrains.python.psi.search.PySuperMethodsSearch
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -169,7 +170,7 @@ class PyInlineFunctionHandler : InlineActionHandler() {
 
   private fun isUnderSkeletonDir(function: PyFunction): Boolean {
     val containingFile = PyiUtil.getOriginalElementOrLeaveAsIs(function, PyElement::class.java).containingFile
-    val sdk = PythonSdkUtil.findPythonSdk(containingFile) ?: return false
+    val sdk = containingFile.pythonSdkIfReady() ?: return false
     val skeletonsDir = PythonSdkUtil.findSkeletonsDir(sdk) ?: return false
     return VfsUtil.isAncestor(skeletonsDir, containingFile.virtualFile, true)
   }

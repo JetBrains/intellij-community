@@ -1,5 +1,6 @@
 package com.intellij.terminal.frontend.fus
 
+import com.intellij.ide.actions.ToolWindowTabLocation
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
@@ -35,6 +36,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class TerminalCommandCompletionStatistics private constructor(
   private val project: Project,
   private val shellIntegration: TerminalShellIntegration,
+  private val tabLocationProvider: () -> ToolWindowTabLocation?,
 ) {
   private val metrics = TerminalCommandCompletionMetrics()
   private var commandStartTime: Long? = null
@@ -45,6 +47,7 @@ class TerminalCommandCompletionStatistics private constructor(
 
   companion object {
     val KEY: Key<TerminalCommandCompletionStatistics> = Key.create("terminal.command.completion.statistics")
+
     fun install(
       project: Project,
       shellIntegration: TerminalShellIntegration,
@@ -52,8 +55,9 @@ class TerminalCommandCompletionStatistics private constructor(
       isCursorVisible: () -> Boolean,
       registerKeyEventsListener: (Disposable, TerminalKeyEventsListener) -> Unit,
       coroutineScope: CoroutineScope,
+      tabLocationProvider: () -> ToolWindowTabLocation? = { null },
     ): TerminalCommandCompletionStatistics {
-      val statistics = TerminalCommandCompletionStatistics(project, shellIntegration)
+      val statistics = TerminalCommandCompletionStatistics(project, shellIntegration, tabLocationProvider)
       statistics.installListeners(outputModel, isCursorVisible, registerKeyEventsListener, coroutineScope)
       return statistics
     }
@@ -103,6 +107,7 @@ class TerminalCommandCompletionStatistics private constructor(
           typingsCount = completionMetrics.typingsCount,
           backspacesCount = completionMetrics.backspacesCount,
           commandTypingTimeMillis = completionMetrics.commandTypingTimeMillis,
+          tabLocation = tabLocationProvider(),
         )
       }
 

@@ -3,7 +3,9 @@ package com.intellij.java.parser.partial;
 
 import com.intellij.java.parser.JavaParsingTestConfigurator;
 import com.intellij.java.syntax.parser.JavaParser;
+import com.intellij.testFramework.junit5.TestApplication;
 
+@TestApplication
 public class StatementParserTest extends AbstractBasicStatementParserTest {
   public StatementParserTest() {
     super(new JavaParsingTestConfigurator());

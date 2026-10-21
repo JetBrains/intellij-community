@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.tests.interpreters.lspTools
 
+import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.EDT
@@ -21,10 +22,10 @@ import com.intellij.platform.lsp.api.getClients
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.python.junit5Tests.framework.LeakedProcessReporterExtension
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
-import com.intellij.python.junit5Tests.framework.env.pyInterpreterFixture
+import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.junit5Tests.framework.subdirectoryFixture
-import com.intellij.python.lsp.core.pyServedModules
+import com.intellij.python.lsp.core.pyServedProjects
 import com.intellij.python.pytools.backend.PyToolsState
 import com.intellij.python.ruff.RuffPyTool
 import com.intellij.python.ruff.server.RuffLspIntegrationProvider
@@ -38,7 +39,7 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.project.PyProject
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -92,13 +93,13 @@ class RuffMultiModuleLspToolEnvTest {
   private val projectFixture = projectFixture(projectPath, openAfterCreation = true)
   private val rootPyProjectFixture = projectFixture.pyProjectFixture(projectPath)
   private val servicePyProjectFixture = projectFixture.pyProjectFixture(servicePath)
-  private val projectSdkFixture = projectFixture.pyInterpreterFixture().pyVenvFixture(where = projectPath)
-  private val serviceSdkFixture = projectFixture.pyInterpreterFixture().pyVenvFixture(where = servicePath, servicePyProjectFixture)
+  private val projectSdkFixture = pyEnvironmentFixture().pyVenvFixture(where = projectPath, rootPyProjectFixture)
+  private val serviceSdkFixture = pyEnvironmentFixture().pyVenvFixture(where = servicePath, servicePyProjectFixture)
 
   /** A module outside the project directory. It is a workspace of its own, so it never joins the group of a module above. */
   private val sparePath = tempPathFixture(prefix = "ruff_spare")
   private val sparePyProjectFixture = projectFixture.pyProjectFixture(sparePath)
-  private val spareSdkFixture = projectFixture.pyInterpreterFixture().pyVenvFixture(where = sparePath, sparePyProjectFixture)
+  private val spareSdkFixture = pyEnvironmentFixture().pyVenvFixture(where = sparePath, sparePyProjectFixture)
 
   private val project: Project by projectFixture
   private val rootPyProject: PyProject by rootPyProjectFixture
@@ -144,7 +145,7 @@ class RuffMultiModuleLspToolEnvTest {
     val client = awaitRuffClientOf(serviceModule, "the Ruff server of module 'service' did not restart with Ruff $SPARE_RUFF_VERSION") {
       it.ruffVersion == SPARE_RUFF_VERSION
     }
-    assertEquals(listOf(serviceModule), client.pyServedModules, "the service module keeps a server of its own")
+    assertEquals(listOf(serviceModule), client.pyServedModulesForTest, "the service module keeps a server of its own")
   }
 
   @Test
@@ -198,7 +199,7 @@ class RuffMultiModuleLspToolEnvTest {
    */
   private suspend fun setUpModules(oneInterpreter: Boolean = false): Pair<VirtualFile, VirtualFile> {
     assertNotEquals(pinnedRuffVersion, SERVICE_RUFF_VERSION, "the two interpreters must hold different Ruff versions")
-    assertEquals(serviceSdk, serviceModule.pythonSdk, "the service module must have its own interpreter")
+    assertEquals(serviceSdkFixture.get(), serviceModule.asPyProject()?.getInterpreter(), "the service module must have its own interpreter")
     edtWriteAction {
       ProjectRootManager.getInstance(project).projectSdk = projectSdk
       ModuleRootModificationUtil.setSdkInherited(rootModule)
@@ -227,7 +228,7 @@ class RuffMultiModuleLspToolEnvTest {
   private suspend fun awaitOneRuffServer(version: String): LspClient =
     awaitRuffClientOf(rootModule, "no single Ruff $version server serves both modules") { client ->
       client.ruffVersion == version &&
-      client.pyServedModules.toSet() == setOf(rootModule, serviceModule) &&
+      client.pyServedModulesForTest.toSet() == setOf(rootModule, serviceModule) &&
       LspClientManager.getInstance(project).getClients<RuffLspIntegrationProvider>().size == 1
     }
 
@@ -247,7 +248,7 @@ class RuffMultiModuleLspToolEnvTest {
       var found: LspClient? = null
       while (found == null) {
         found = manager.getClients<RuffLspIntegrationProvider>().firstOrNull {
-          module in it.pyServedModules && it.state == LspServerState.Running && condition(it)
+          module in it.pyServedModulesForTest && it.state == LspServerState.Running && condition(it)
         }
         if (found == null) delay(200.milliseconds)
       }
@@ -266,3 +267,7 @@ class RuffMultiModuleLspToolEnvTest {
     return file
   }
 }
+
+/** The modules of the Python projects that the server behind [this] answers for. */
+private val LspClient.pyServedModulesForTest: List<Module>
+  get() = pyServedProjects.map { it.residesOnModule }

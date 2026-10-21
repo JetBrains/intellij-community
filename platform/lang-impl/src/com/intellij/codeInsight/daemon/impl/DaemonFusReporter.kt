@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField
@@ -21,24 +22,25 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileWithId
-import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.ConcurrentMap
 import kotlin.math.log10
 import kotlin.math.pow
 
 internal class DaemonFusReporter(private val project: Project, val coroutineScope: CoroutineScope) : DaemonCodeAnalyzer.DaemonListener {
-  private val sessions = ContainerUtil.createConcurrentWeakMap<FileEditor, SessionData>()
+  private val sessions: ConcurrentMap<FileEditor, SessionData> = ConcurrentCollectionFactory.createConcurrentWeakMap()
 
   private data class SessionData(
     val daemonStartTime: Long = -1L,
     val documentStartedHash: Int = 0,
     val isDumbMode: Boolean = false,
     var sessionSegmentTotalDurationMs: Long = 0,
-    var docPreviousStamp: Long
+    val docPreviousStamp: Long,
+    val docPreviousDumbMode: Boolean
   )
 
   init {
@@ -46,7 +48,12 @@ internal class DaemonFusReporter(private val project: Project, val coroutineScop
       fusEvents.collect {
         // skip nulls emitted by drain()/by DaemonFusReporter from the other opened project
         if (it != null && it.project == project) {
-          report(it.project, it.fileEditor, it.sessionData)
+          val reportedStamp = report(it.project, it.fileEditor, it.sessionData)
+          if (reportedStamp != null) {
+            sessions.computeIfPresent(it.fileEditor) { _, data ->
+              data.copy(docPreviousStamp = reportedStamp, docPreviousDumbMode = it.sessionData.isDumbMode)
+            }
+          }
         }
       }
     }
@@ -65,7 +72,8 @@ internal class DaemonFusReporter(private val project: Project, val coroutineScop
       daemonStartTime = System.currentTimeMillis(),
       documentStartedHash = document.hashCode(),
       isDumbMode = DumbService.isDumb(project), // it's important to check for dumb mode here because state can change to opposite in daemonFinished
-      docPreviousStamp = oldData?.docPreviousStamp?:-1
+      docPreviousStamp = oldData?.docPreviousStamp ?: -1,
+      docPreviousDumbMode = oldData?.docPreviousDumbMode ?: false
     )}
   }
 
@@ -92,7 +100,7 @@ internal class DaemonFusReporter(private val project: Project, val coroutineScop
       return
     }
 
-    if (sessionData.docPreviousStamp == document.modificationStamp && sessionData.isDumbMode == DumbService.isDumb(project)) {
+    if (sessionData.docPreviousStamp == document.modificationStamp && sessionData.docPreviousDumbMode == sessionData.isDumbMode) {
       sessionData.sessionSegmentTotalDurationMs = 0
       // Don't report 'finished' event in case of no changes in the document and dumb mode status was not changed
       // since such sessions are always fast to perform.
@@ -127,8 +135,13 @@ internal class DaemonFusReporter(private val project: Project, val coroutineScop
       return (lines - lines % p).coerceAtLeast(10) // 623 -> 623 - (623 % 100) = 600
     }
 
-    private fun report(project: Project, fileEditor: TextEditor, sessionData: SessionData) {
-      if (!fileEditor.isValid || project.isDisposed) return
+    /**
+     * Reports the highlighting session to FUS.
+     *
+     * @return the document stamp if the report contains completed highlighting, or `null` otherwise.
+     */
+    private fun report(project: Project, fileEditor: TextEditor, sessionData: SessionData): Long? {
+      if (!fileEditor.isValid || project.isDisposed) return null
       val document = fileEditor.editor.document
       val analyzer = (fileEditor.editor.markupModel as? EditorMarkupModel)?.errorStripeRenderer as? TrafficLightRenderer
       val errorCounts = analyzer?.errorCountsForFus
@@ -159,9 +172,10 @@ internal class DaemonFusReporter(private val project: Project, val coroutineScop
       )
 
       if (highlightingCompleted) {
-        sessionData.docPreviousStamp = document.modificationStamp
         sessionData.sessionSegmentTotalDurationMs = 0
+        return document.modificationStamp
       }
+      return null
     }
   }
 }

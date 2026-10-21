@@ -357,13 +357,22 @@ object PluginInitializationDiagnosticUtils {
     if (rootCause is ExcludedByEnvironmentConfiguration) {
       return null
     }
+    // TODO(IJPL-258861): Replace the Ultimate check with a product exclusion reason.
+    if (rootCause is PluginIsMarkedDisabled && rootCause.descriptor.pluginId == PluginManagerCore.ULTIMATE_PLUGIN_ID) {
+      return null
+    }
     return when (rootCause) {
       is PluginIsMarkedDisabled ->
         "${plugin.shortLogDescription} requires ${rootCause.descriptor.getMainDescriptor().shortLogDescription} to be enabled"
       is PartOfDependencyCycle, is PartOfRuntimeModuleGroupDependencyCycle ->
         "${plugin.shortLogDescription} requires ${rootCause.descriptor.shortLogDescription} which is a part of a dependency cycle"
       else ->
-        "${plugin.shortLogDescription} requires ${rootCause.descriptor.getMainDescriptor().shortLogDescription}: ${rootCause.logMessage()}"
+        if (rootCause.descriptor.getMainDescriptor() === plugin) {
+          "${plugin.shortLogDescription} cannot be loaded: ${rootCause.logMessage()}"
+        }
+        else {
+          "${plugin.shortLogDescription} requires ${rootCause.descriptor.getMainDescriptor().shortLogDescription}: ${rootCause.logMessage()}"
+        }
     }
   }
 

@@ -132,7 +132,8 @@ val IDETestContext.frontendTestCase: TestCase<out ProjectInfoSpec>
       else -> this.testCase.ideInfo.executableFileName
     }
 
-    return this.testCase.copy(ideInfo = this.testCase.ideInfo.copy(
+    // The project SDK belongs to the backend. The frontend has no SDK types, so it cannot run the SDK setup command.
+    return this.testCase.copy(sdk = null, ideInfo = this.testCase.ideInfo.copy(
       platformPrefix = PlatformUtils.JETBRAINS_CLIENT_PREFIX,
       baseIdePlatformPrefixForFrontend = this.testCase.ideInfo.platformPrefix,
       executableFileName = executableFileName

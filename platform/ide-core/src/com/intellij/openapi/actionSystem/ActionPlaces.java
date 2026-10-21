@@ -55,6 +55,8 @@ public abstract class ActionPlaces {
   public static final String COMMANDER_TOOLBAR = "CommanderToolbar";
   public static final String CONTEXT_TOOLBAR = "ContextToolbar";
   public static final String TOOLWINDOW_POPUP = "ToolwindowPopup";
+  public static final String TOOLWINDOW_TAB_POPUP = "ToolwindowTabPopup";
+  public static final String TOOLWINDOW_HEADER_EMPTY_SPACE_POPUP = "ToolwindowHeaderEmptySpacePopup";
   public static final String TOOLWINDOW_TITLE = "ToolwindowTitle";
   public static final String TOOLWINDOW_CONTENT = "ToolwindowContent";
   public static final String EDITOR_INSPECTIONS_TOOLBAR = "EditorInspectionsToolbar";
@@ -265,8 +267,8 @@ public abstract class ActionPlaces {
     STRUCTURE_VIEW_POPUP, TODO_VIEW_POPUP, COMPILER_MESSAGES_POPUP, COPY_REFERENCE_POPUP,
     ANT_MESSAGES_POPUP, ANT_EXPLORER_POPUP, UPDATE_POPUP,
     FILEVIEW_POPUP, CHECKOUT_POPUP, LVCS_DIRECTORY_HISTORY_POPUP, GUI_DESIGNER_EDITOR_POPUP, GUI_DESIGNER_COMPONENT_TREE_POPUP,
-    GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP, TOOLWINDOW_POPUP, WELCOME_SCREEN,
-    ACTION_PLACE_QUICK_LIST_POPUP_ACTION, ACTION_PLACE_QUICK_LIST_POPUP_ACTION, REFACTORING_QUICKLIST,
+    GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP, TOOLWINDOW_POPUP, TOOLWINDOW_TAB_POPUP, TOOLWINDOW_HEADER_EMPTY_SPACE_POPUP,
+    WELCOME_SCREEN, ACTION_PLACE_QUICK_LIST_POPUP_ACTION, ACTION_PLACE_QUICK_LIST_POPUP_ACTION, REFACTORING_QUICKLIST,
     CHANGES_VIEW_POPUP, CHANGES_TREE_POPUP, DATABASE_VIEW_POPUP, REMOTE_HOST_VIEW_POPUP, REMOTE_HOST_DIALOG_POPUP, TFS_TREE_POPUP,
     ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_POPUP, NAVIGATION_BAR_POPUP, JS_BUILD_TOOL_POPUP,
     V8_CPU_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, RUN_DASHBOARD_POPUP, SERVICES_POPUP, EDITOR_GUTTER_POPUP,
@@ -284,6 +286,17 @@ public abstract class ActionPlaces {
   @Deprecated
   public static boolean isPopupPlace(@NotNull String place) {
     return ourPopupPlaces.contains(place) || place.startsWith(POPUP_PREFIX);
+  }
+
+  /**
+   * Returns {@code true} if the place is a popup menu of a tool window.
+   * The check includes {@link #TOOLWINDOW_POPUP} and the popup menus in the tool window header:
+   * {@link #TOOLWINDOW_TAB_POPUP} and {@link #TOOLWINDOW_HEADER_EMPTY_SPACE_POPUP}.
+   */
+  public static boolean isToolWindowPopupPlace(@Nullable String place) {
+    return TOOLWINDOW_POPUP.equals(place) ||
+           TOOLWINDOW_TAB_POPUP.equals(place) ||
+           TOOLWINDOW_HEADER_EMPTY_SPACE_POPUP.equals(place);
   }
 
   public static boolean isCommonPlace(@NotNull String place) {

@@ -61,6 +61,7 @@ open class StatisticsFileEventLogger(
     val initiator = ExecutionInitiator.currentOrNull()?.takeIf { !isState }
     return try {
       CompletableFuture.runAsync(Runnable {
+        StatisticsStartupHold.await()
         val validator = IntellijSensitiveDataValidator.getInstance(recorderId)
         if (runBlocking { !validator.isGroupAllowed(group) }) {
           return@Runnable
@@ -123,6 +124,7 @@ open class StatisticsFileEventLogger(
     eventLogDir.toFile().listFiles()?.filter { it.name.endsWith(".log") }?.maxByOrNull { it.lastModified() }?.name
 
   override fun dispose() {
+    StatisticsStartupHold.release()
     try {
       // `logExecutor` is FIFO, so this task runs after every event that the shutdown logged, `ide.close` included.
       CompletableFuture.runAsync({ closeEventWriter() }, logExecutor).get(1, TimeUnit.SECONDS)

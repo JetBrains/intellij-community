@@ -1,43 +1,92 @@
-com.intellij.platform.settings.local.SettingsControllerMediator [sub = intellij.platform.settings.local.xml] com.intellij
-com.intellij.platform.settings.local.SettingsControllerMediatorKt [sub = intellij.platform.settings.local.xml] com.intellij
-com.intellij.platform.settings.local.JsonMirrorController [sub = intellij.platform.settings.local.xml] com.intellij
-com.intellij.dfa.analysis.rml.utils.RmlServiceResolver [m] com.intellij.dfa.analysis
-com.intellij.dfa.analysis.rml.intellij.RmlServiceResolverImpl [m] com.intellij.dfa.analysis
-com.intellij.platform.kernel.impl.KernelApplicationInitializedListener [sub = intellij.platform.kernel.impl.xml] com.intellij
-com.intellij.llmInstaller.ui.promo2.AIPromoWindowAdvisorPreheat [sub = intellij.llmInstaller.xml] org.jetbrains.completion.full.line:com.intellij.llmInstaller.
-com.intellij.clouds.docker.gateway.json.ideSettings.DevcontainerSettingsController [sub = intellij.clouds.docker.gateway.json.xml] org.jetbrains.plugins.docker.gateway
-com.intellij.platform.settings.local.LocalSettingsController [sub = intellij.platform.settings.local.xml] com.intellij
-com.intellij.platform.settings.local.InternalAndCacheStorageManager [sub = intellij.platform.settings.local.xml] com.intellij
-com.jetbrains.performancePlugin.ProjectLoaded [m] com.jetbrains.performancePlugin
-org.intellij.images.util.imageio.CommonsImagingImageReaderSpi [m] com.intellij.platform.images
-com.jetbrains.performancePlugin.ProjectLoaded$Companion [m] com.jetbrains.performancePlugin
-org.intellij.images.util.imageio.CommonsImagingImageReaderSpi$MyImageReader [m] com.intellij.platform.images
-org.intellij.images.util.imageio.CommonsImagingImageReaderSpi$MyByteSource [m] com.intellij.platform.images
-com.intellij.performanceTesting.rdct.DistributedTestHost [sub = intellij.performanceTesting.rdct.xml] com.jetbrains.performancePlugin
-org.intellij.images.util.imageio.svg.SvgImageReaderSpi [m] com.intellij.platform.images
-com.intellij.performanceTesting.rdct.DistributedTestHost$Companion [sub = intellij.performanceTesting.rdct.xml] com.jetbrains.performancePlugin
-com.android.tools.adtui.webp.WebpImageReaderSpi [m] intellij.webp
-com.intellij.performanceTesting.rdct.LambdaTestHost [sub = intellij.performanceTesting.rdct.xml] com.jetbrains.performancePlugin
-com.android.tools.adtui.webp.WebpImageReaderSpi$WebpReader [m] intellij.webp
-com.intellij.performanceTesting.rdct.LambdaTestHost$Companion [sub = intellij.performanceTesting.rdct.xml] com.jetbrains.performancePlugin
-com.android.tools.adtui.webp.WebpNativeLibHelper [m] intellij.webp
-com.android.tools.adtui.webp.WebpMetadata [m] intellij.webp
-com.android.tools.adtui.webp.WebpImageWriterSpi [m] intellij.webp
-com.intellij.vcs.log.statistics.VcsLogTelemetryExporter [sub = intellij.platform.vcs.log.impl.xml] com.intellij.platform.vcs
-com.android.tools.adtui.webp.WebpImageWriterSpi$WebpWriter [m] intellij.webp
-com.intellij.vcs.log.statistics.LogHistorySpanExporter [sub = intellij.platform.vcs.log.impl.xml] com.intellij.platform.vcs
-com.intellij.vcs.log.statistics.LogFilterSpanExporter [sub = intellij.platform.vcs.log.impl.xml] com.intellij.platform.vcs
-com.android.tools.adtui.webp.WebpImageWriteParam [m] intellij.webp
-com.intellij.platform.daemon.plugins.gateway.PluginConnectionProvider [sub = intellij.platform.daemon.plugins.xml] com.intellij.platform.daemon
-com.jetbrains.rd.protocol.RdCoroutineHostInitializer [sub = intellij.rd.platform.xml] com.intellij
-com.intellij.station.core.services.IdeStationServiceInitializedListener [sub = intellij.station.core.xml] com.jetbrains.station:com.intellij.station.
-com.intellij.station.core.toolbox.ToolboxDaemonLauncher$AppInitListener [sub = intellij.station.core.xml] com.jetbrains.station:com.intellij.station.
-com.intellij.platform.diagnostic.errorAutoReport.frontend.ExceptionAutoReportServiceImpl$Starter [sub = intellij.platform.diagnostic.errorAutoReport.frontend.xml] com.intellij
-com.jetbrains.gateway.welcomeScreen.WslProjectOpeningModeSettings$NativeModeDefaultInitializer [sub = intellij.gateway.core.xml] com.jetbrains.gateway
-com.intellij.clouds.docker.gateway.DevcontainersAdvancedSettings$NativeProjectOpenSetter [m] org.jetbrains.plugins.docker.gateway
-com.intellij.clouds.docker.gateway.json.ideSettings.DevcontainerAppInitListener [sub = intellij.clouds.docker.gateway.json.xml] org.jetbrains.plugins.docker.gateway
-com.intellij.gateway.daemon.bridge.GatewayConnectorBridgeActivity [sub = intellij.gateway.daemon.bridge.xml] com.jetbrains.gateway
-com.jetbrains.performancePlugin.IntegrationTestApplicationLoadListener [m] com.jetbrains.performancePlugin
-org.intellij.plugins.markdown.lang.MarkdownFileType [m] org.intellij.plugins.markdown
-org.intellij.plugins.markdown.lang.MarkdownLanguage [m] org.intellij.plugins.markdown
-org.intellij.plugins.markdown.lang.parser.MarkdownParserAdapter [sub = intellij.markdown.core.xml] org.intellij.plugins.markdown
+#plugin-classes	2
+L	1	intellij.platform.settings.local	com.intellij
+C	1	40000	com.intellij.platform.settings.local.SettingsControllerMediator
+C	1	47919	com.intellij.platform.settings.local.SettingsControllerMediatorKt
+S	1	com.intellij.platform.settings.SettingsControllerKt.createSettingsController(SettingsController.kt:41)
+S	1	com.intellij.serviceContainer.ComponentManagerImpl.instantiate(ComponentManagerImpl.kt:1200)
+C	1	55838	com.intellij.platform.settings.local.JsonMirrorController
+L	2	-	com.intellij.dfa.analysis
+C	2	63757	com.intellij.dfa.analysis.rml.utils.RmlServiceResolver
+C	2	71676	com.intellij.dfa.analysis.rml.intellij.RmlServiceResolverImpl
+S	2	com.intellij.serviceContainer.ComponentManagerImpl.instantiate(ComponentManagerImpl.kt:1200)
+L	3	intellij.platform.kernel.impl	com.intellij
+C	3	79595	com.intellij.platform.kernel.impl.KernelApplicationInitializedListener
+L	4	intellij.llmInstaller	org.jetbrains.completion.full.line
+C	4	87514	com.intellij.llmInstaller.ui.promo2.AIPromoWindowAdvisorPreheat
+S	3	java.util.ServiceLoader$ProviderImpl.newInstance(ServiceLoader.java:789)
+S	3	com.intellij.ide.ApplicationLoadListenerKt.callAppInitialized(ApplicationLoadListener.kt:58)
+L	5	intellij.clouds.docker.gateway.json	org.jetbrains.plugins.docker.gateway
+C	5	95433	com.intellij.clouds.docker.gateway.json.ideSettings.DevcontainerSettingsController
+S	4	com.intellij.serviceContainer.ComponentManagerImpl.instantiate(ComponentManagerImpl.kt:1200)
+C	1	103352	com.intellij.platform.settings.local.LocalSettingsController
+S	5	com.intellij.platform.settings.local.SettingsControllerMediator$$Lambda/0x0000000801234000.invoke(Unknown Source)
+S	5	com.intellij.serviceContainer.ComponentManagerImpl.instantiate(ComponentManagerImpl.kt:1200)
+C	1	111271	com.intellij.platform.settings.local.InternalAndCacheStorageManager
+L	6	-	com.jetbrains.performancePlugin
+C	6	119190	com.jetbrains.performancePlugin.ProjectLoaded
+L	7	-	com.intellij.platform.images
+C	7	127109	org.intellij.images.util.imageio.CommonsImagingImageReaderSpi
+S	6	java.util.ServiceLoader$ProviderImpl.newInstance(ServiceLoader.java:789)
+S	6	kotlin.sequences.SequencesKt___SequencesKt.toList(_Sequences.kt:812)
+S	6	com.intellij.ide.ApplicationLoadListenerKt.callAppInitialized(ApplicationLoadListener.kt:58)
+C	6	135028	com.jetbrains.performancePlugin.ProjectLoaded$Companion
+S	7	java.util.ServiceLoader$ProviderImpl.newInstance(ServiceLoader.java:789)
+S	7	javax.imageio.spi.IIORegistry.registerApplicationClasspathSpis(IIORegistry.java:211)
+C	7	142947	org.intellij.images.util.imageio.CommonsImagingImageReaderSpi$MyImageReader
+C	7	150866	org.intellij.images.util.imageio.CommonsImagingImageReaderSpi$MyByteSource
+L	8	intellij.performanceTesting.rdct	com.jetbrains.performancePlugin
+C	8	158785	com.intellij.performanceTesting.rdct.DistributedTestHost
+C	7	166704	org.intellij.images.util.imageio.svg.SvgImageReaderSpi
+S	8	com.jetbrains.performancePlugin.ProjectLoaded.runActivity(ProjectLoaded.kt:50)
+C	8	174623	com.intellij.performanceTesting.rdct.DistributedTestHost$Companion
+L	9	-	intellij.webp
+C	9	182542	com.android.tools.adtui.webp.WebpImageReaderSpi
+C	8	190461	com.intellij.performanceTesting.rdct.LambdaTestHost
+S	9	java.util.ServiceLoader$ProviderImpl.newInstance(ServiceLoader.java:789)
+S	9	javax.imageio.spi.IIORegistry.registerApplicationClasspathSpis(IIORegistry.java:211)
+C	9	198380	com.android.tools.adtui.webp.WebpImageReaderSpi$WebpReader
+C	8	206299	com.intellij.performanceTesting.rdct.LambdaTestHost$Companion
+C	9	214218	com.android.tools.adtui.webp.WebpNativeLibHelper
+C	9	222137	com.android.tools.adtui.webp.WebpMetadata
+C	9	230056	com.android.tools.adtui.webp.WebpImageWriterSpi
+L	10	intellij.platform.vcs.log.impl	com.intellij.platform.vcs
+C	10	237975	com.intellij.vcs.log.statistics.VcsLogTelemetryExporter
+C	9	245894	com.android.tools.adtui.webp.WebpImageWriterSpi$WebpWriter
+S	10	com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl.getAdditionalExporters(TelemetryManagerImpl.kt:90)
+C	10	253813	com.intellij.vcs.log.statistics.LogHistorySpanExporter
+C	10	261732	com.intellij.vcs.log.statistics.LogFilterSpanExporter
+C	9	269651	com.android.tools.adtui.webp.WebpImageWriteParam
+E	9	com.android.tools.adtui.webp.WebpBroken	com/android/tools/adtui/webp/WebpBroken (wrong name: com/android/tools/adtui/webp/Other)
+L	11	intellij.platform.daemon.plugins	com.intellij.platform.daemon
+C	11	277570	com.intellij.platform.daemon.plugins.gateway.PluginConnectionProvider
+L	12	intellij.rd.platform	com.intellij
+C	12	285489	com.jetbrains.rd.protocol.RdCoroutineHostInitializer
+S	11	com.intellij.serviceContainer.ComponentManagerImpl.instantiate(ComponentManagerImpl.kt:1200)
+L	13	intellij.station.core	com.jetbrains.station
+C	13	293408	com.intellij.station.core.services.IdeStationServiceInitializedListener
+S	12	com.intellij.ide.ApplicationLoadListenerKt.callAppInitialized(ApplicationLoadListener.kt:58)
+C	13	41327	com.intellij.station.core.toolbox.ToolboxDaemonLauncher$AppInitListener
+L	14	intellij.platform.diagnostic.errorAutoReport.frontend	com.intellij
+C	14	49246	com.intellij.platform.diagnostic.errorAutoReport.frontend.ExceptionAutoReportServiceImpl$Starter
+L	15	intellij.gateway.core	com.jetbrains.gateway
+C	15	57165	com.jetbrains.gateway.welcomeScreen.WslProjectOpeningModeSettings$NativeModeDefaultInitializer
+S	14	com.intellij.ide.ApplicationLoadListenerKt.callAppInitialized(ApplicationLoadListener.kt:58)
+L	16	-	org.jetbrains.plugins.docker.gateway
+C	16	65084	com.intellij.clouds.docker.gateway.DevcontainersAdvancedSettings$NativeProjectOpenSetter
+S	15	com.intellij.ide.ApplicationLoadListenerKt.callAppInitialized(ApplicationLoadListener.kt:58)
+C	5	73003	com.intellij.clouds.docker.gateway.json.ideSettings.DevcontainerAppInitListener
+S	16	com.intellij.ide.ApplicationLoadListenerKt.callAppInitialized(ApplicationLoadListener.kt:58)
+L	17	intellij.gateway.daemon.bridge	com.jetbrains.gateway
+C	17	80922	com.intellij.gateway.daemon.bridge.GatewayConnectorBridgeActivity
+C	6	88841	com.jetbrains.performancePlugin.IntegrationTestApplicationLoadListener
+S	17	java.lang.Thread.run(Thread.java:1583)
+S	17	kotlinx.coroutines.scheduling.CoroutineScheduler$Worker.run(CoroutineScheduler.kt:749)
+L	18	-	org.intellij.plugins.markdown
+C	18	96760	org.intellij.plugins.markdown.lang.MarkdownFileType
+C	18	104679	org.intellij.plugins.markdown.lang.MarkdownLanguage
+S	18	com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl.instantiateFileTypeBean(FileTypeManagerImpl.kt:510)
+L	19	intellij.markdown.core	org.intellij.plugins.markdown
+C	19	112598	org.intellij.plugins.markdown.lang.parser.MarkdownParserAdapter
+S	19	org.intellij.plugins.markdown.lang.MarkdownLanguage.getParser(MarkdownLanguage.kt:18)
+S	19	com.intellij.lang.LanguageParserDefinitions.forLanguage(LanguageParserDefinitions.kt:30)
+#cost	90	1834000	18	912000

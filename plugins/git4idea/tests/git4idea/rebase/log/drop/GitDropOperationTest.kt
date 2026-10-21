@@ -16,7 +16,9 @@ import git4idea.rebase.log.GitCommitEditingOperationResult.Complete.UndoPossibil
 import git4idea.rebase.log.GitCommitEditingOperationResult.Complete.UndoResult
 import git4idea.test.GitSingleRepoContext
 import git4idea.test.assertCommitted
+import git4idea.test.assertLatestHistory
 import git4idea.test.file
+import git4idea.test.git
 import git4idea.test.gitSingleRepoContextFixture
 import git4idea.test.runUnderProgress
 import kotlinx.coroutines.runBlocking
@@ -102,6 +104,23 @@ internal class GitDropOperationTest private constructor(private val testType: St
     repo.assertCommitted(2) {
       added("a")
     }
+  }
+
+  @Test
+  fun `test drop preserves fixup commits when autosquash is enabled`(): Unit = with(context) {
+    git("config rebase.autoSquash true")
+    val commitToDrop = file("a").create().addCommit("Commit a").details()
+    file("b").create().addCommit("Commit b")
+    file("c").create().addCommit("Commit c")
+    file("fixup").create().addCommit("fixup! Commit b")
+
+    refresh()
+    updateChangeListManager()
+
+    val result = operation.execute(this, listOf(commitToDrop))
+
+    assertThat(result).isInstanceOf(Complete::class.java)
+    repo.assertLatestHistory("fixup! Commit b", "Commit c", "Commit b")
   }
 
   @Test

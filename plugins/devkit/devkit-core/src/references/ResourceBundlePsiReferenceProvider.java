@@ -7,17 +7,19 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.ResourceBundleReference;
-import com.intellij.openapi.module.Module;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementResolveResult;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.ResolveResult;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
@@ -46,14 +48,17 @@ class ResourceBundlePsiReferenceProvider extends PsiReferenceProvider {
       super(element, false);
     }
 
+    /**
+     * Resolves through one cached map of all bundles of the project: the base class scans every properties file per reference,
+     * and a descriptor with hundreds of {@code bundle} attributes repeats that scan hundreds of times.
+     */
     @Override
-    protected @NotNull GlobalSearchScope getKeyResolveScope() {
-      Module module = ModuleUtilCore.findModuleForPsiElement(myElement);
+    public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
+      if (ModuleUtilCore.findModuleForPsiElement(myElement) == null) return super.multiResolve(incompleteCode);
       // bundle name can be used in dependency module
-      GlobalSearchScope scope = module != null
-                                ? projectProductionScope(module.getProject())
-                                : myElement.getResolveScope();
-      return scope;
+      List<PropertiesFile> files =
+        PropertiesReferenceManager.getInstance(myElement.getProject()).findProductionPropertiesFiles(getCanonicalText());
+      return PsiElementResolveResult.createResults(ContainerUtil.map(files, PropertiesFile::getContainingFile));
     }
 
     @Override

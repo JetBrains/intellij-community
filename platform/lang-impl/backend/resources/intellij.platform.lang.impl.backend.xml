@@ -1,11 +1,9 @@
 <idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="fleet.rhizomedb"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide.core"/>
-    <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.rpc.backend"/>
@@ -13,6 +11,10 @@
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
+    <!-- FileBasedIndex / SerializationManager is quite important and in any case will be used better to preload it -->
+    <applicationService serviceInterface="com.intellij.util.indexing.FileBasedIndex"
+                        serviceImplementation="com.intellij.util.indexing.FileBasedIndexImpl" preload="notLightEdit"/>
+    <vfs.asyncListener implementation="com.intellij.util.indexing.events.ChangedFilesCollector"/>
     <applicationInitializedListener implementation="com.intellij.util.indexing.FileBasedIndexLoader" order="first"/>
     <backgroundPostStartupActivity implementation="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkUpdaterStartup"/>
     <backgroundPostStartupActivity implementation="com.intellij.facet.FacetTypeFeatureCollector"/>

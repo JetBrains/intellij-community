@@ -4,12 +4,14 @@ package com.intellij.ui;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.dsl.builder.ComboBoxKt;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
@@ -17,6 +19,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.AWTAccessor;
@@ -58,15 +61,18 @@ import java.awt.event.MouseWheelListener;
 import java.beans.PropertyChangeListener;
 import java.util.function.Consumer;
 
+@Deprecated
 public final class GuiUtils {
   private static final Insets paddingInsideDialog = JBUI.insets(5);
 
   private static final CharFilter NOT_MNEMONIC_CHAR_FILTER = ch -> ch != '&' && ch != UIUtil.MNEMONIC;
 
+  @ApiStatus.Internal
   public static JPanel constructFieldWithBrowseButton(JComponent aComponent, ActionListener aActionListener) {
     return constructFieldWithBrowseButton(aComponent, aActionListener, 0);
   }
 
+  @ApiStatus.Internal
   public static JPanel constructFieldWithBrowseButton(TextFieldWithHistory aComponent, ActionListener aActionListener) {
     return constructFieldWithBrowseButton(aComponent, aActionListener, 0);
   }
@@ -85,27 +91,42 @@ public final class GuiUtils {
     return result;
   }
 
+  /**
+   * @deprecated Use the Kotlin UI DSL, which provides appropriate padding in most cases
+   */
+  @Deprecated
   public static Component createVerticalStrut() {
     return Box.createRigidArea(new Dimension(0, paddingInsideDialog.top));
   }
 
+  @ApiStatus.Internal
   public static String getTextWithoutMnemonicEscaping(String text) {
     return StringUtil.strip(text, NOT_MNEMONIC_CHAR_FILTER);
   }
 
+  @ApiStatus.Internal
   public static char getDisplayedMnemonic(String text) {
     final int i = getDisplayedMnemonicIndex(text);
     return i == -1 ? (char)-1 : text.charAt(i + 1);
   }
 
+  @ApiStatus.Internal
   public static int getDisplayedMnemonicIndex(String text) {
     return text.indexOf("&");
   }
 
+  /**
+   * @deprecated Replace usages of this method with direct instantiation of {@link JBSplitter} instead of {@link JSplitPane}
+   */
+  @Deprecated
   public static void replaceJSplitPaneWithIDEASplitter(JComponent root) {
     replaceJSplitPaneWithIDEASplitter(root, false);
   }
 
+  /**
+   * @deprecated Replace usages of this method with direct instantiation of {@link JBSplitter}/{@link OnePixelSplitter}
+   * instead of {@link JSplitPane}
+   */
   public static void replaceJSplitPaneWithIDEASplitter(JComponent root, boolean useOnePixelDivider) {
     final Container parent = root.getParent();
     if (root instanceof JSplitPane pane) {
@@ -165,6 +186,7 @@ public final class GuiUtils {
     }
   }
 
+  @ApiStatus.Internal
   public static void iterateChildren(Component container, Consumer<? super Component> consumer, JComponent... excludeComponents) {
     if (excludeComponents != null && ArrayUtilRt.find(excludeComponents, container) != -1) {
       return;
@@ -179,18 +201,26 @@ public final class GuiUtils {
     }
   }
 
+  @ApiStatus.Internal
   public static void enableChildren(boolean enabled, Component... components) {
     for (Component component : components) {
       enableChildren(component, enabled);
     }
   }
 
+  @ApiStatus.Internal
   public static void showComponents(final boolean visible, Component... components) {
     for (Component component : components) {
       component.setVisible(visible);
     }
   }
 
+  /**
+   * @deprecated Use {@link UIUtil#uiChildren(Component)}, {@link UIUtil#uiTraverser(Component)},
+   * or {@link UIUtil#setEnabledRecursively(Component, boolean)} instead.
+   * Kotlin UI DSL allows enabling or disabling entire groups of components.
+   */
+  @Deprecated
   public static void enableChildren(Component container, final boolean enabled, JComponent... excludeComponents) {
     iterateChildren(container, t -> enableComponent(t, enabled), excludeComponents);
   }
@@ -231,6 +261,10 @@ public final class GuiUtils {
     }
   }
 
+  /**
+   * @deprecated Use {@link UIUtil#colorToHex(Color)} instead
+   */
+  @Deprecated
   public static String colorToHex(final Color color) {
     return UIUtil.colorToHex(color);
   }
@@ -249,6 +283,10 @@ public final class GuiUtils {
     }
   }
 
+  /**
+   * @deprecated Use {@link JBTextField} instead
+   */
+  @Deprecated
   public static JTextField createUndoableTextField() {
     return new JBTextField();
   }
@@ -259,7 +297,9 @@ public final class GuiUtils {
    * @param charCount number of chars
    * @param comp      component
    * @return dimension with width enough to insert provided number of chars into component
+   * @deprecated Use {@link javax.swing.JTextField#setColumns(int)}, {@link ComboBoxKt#columns(ComboBox, int)}, and Kotlin UI DSL
    */
+  @Deprecated
   public static @NotNull Dimension getSizeByChars(int charCount, @NotNull JComponent comp) {
     Dimension size = comp.getPreferredSize();
     FontMetrics fontMetrics = comp.getFontMetrics(comp.getFont());
@@ -267,6 +307,7 @@ public final class GuiUtils {
     return size;
   }
 
+  @Deprecated
   public static void installVisibilityReferent(@NotNull JComponent owner, @NotNull JComponent referent) {
     installVisibilityReferents(owner, referent);
   }
@@ -274,6 +315,7 @@ public final class GuiUtils {
   /**
    * Makes {@code owner} visible when any of {@code referents} is visible and invisible when all of them are invisible.
    */
+  @ApiStatus.Internal
   public static void installVisibilityReferents(@NotNull JComponent owner, JComponent @NotNull ... referents) {
     for (JComponent referent : referents) {
       referent.addComponentListener(new ComponentAdapter() {
@@ -298,6 +340,7 @@ public final class GuiUtils {
   /**
    * removes all children and parent references, listeners from {@code container} to avoid possible memory leaks
    */
+  @ApiStatus.Internal
   public static void removePotentiallyLeakingReferences(@NotNull Container container) {
     assert EDT.isCurrentThreadEdt();
     AWTAccessor.getComponentAccessor().setParent(container, null);

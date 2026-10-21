@@ -163,7 +163,7 @@ internal class CliBasedHatchService<P : PathHolder> private constructor(
     envName: String?,
   ): PyResult<PythonVirtualEnvironment.Existing<P>> {
     val pythonBasedRuntime = basePythonBinaryPath?.let { path ->
-      hatchRuntime.withEnv(HatchConstants.AppEnvVars.PYTHON to path.toStringForExecution())
+      hatchRuntime.withEnv(HatchConstants.AppEnvVars.PYTHON to path.toStringOnRemoteMachine())
     } ?: hatchRuntime
 
     val hatchEnv = pythonBasedRuntime.hatchCli<P>().env()

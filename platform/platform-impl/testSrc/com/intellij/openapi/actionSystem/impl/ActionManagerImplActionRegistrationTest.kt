@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPopupMenu
+import com.intellij.openapi.actionSystem.ActionStub
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -15,6 +16,7 @@ import com.intellij.openapi.actionSystem.Anchor
 import com.intellij.openapi.actionSystem.Constraints
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.TimerListener
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.extensions.PluginId
@@ -33,8 +35,11 @@ import org.junit.jupiter.api.Test
 import java.awt.Component
 import java.awt.event.InputEvent
 import java.nio.file.Path
+import java.util.ListResourceBundle
+import java.util.ResourceBundle
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 @TestApplication
@@ -86,6 +91,32 @@ internal class ActionManagerImplActionRegistrationTest {
     finally {
       actionManager.unregisterAction(secondId)
       actionManager.unregisterAction(firstId)
+      actionManager.unregisterAction(groupId)
+    }
+  }
+
+  @Test
+  fun runtimeRegistrarAddToGroupResolvesRelativeConstraintsToStubChild() {
+    val actionManager = ActionManager.getInstance() as ActionManagerImpl
+    val registrar = ActionManagerEx.getInstanceEx().asActionRuntimeRegistrar()
+    val groupId = "ActionManagerImplActionRegistrationTest.stubAnchor.group"
+    val stubId = "ActionManagerImplActionRegistrationTest.stubAnchor.stub"
+    val actionId = "ActionManagerImplActionRegistrationTest.stubAnchor.action"
+    val group = DefaultActionGroup()
+    val stub = ActionStub(TestAction::class.java.name, stubId, createPluginDescriptor(), null, null) { Presentation() }
+    val action = createAction()
+    actionManager.registerAction(groupId, group)
+    actionManager.registerAction(actionId, action)
+    try {
+      group.add(stub)
+      // the snapshot of the add-to-group leaves the stub out, and the stub resolves its own id for the anchor
+      registrar.addToGroup(group, action, Constraints(Anchor.BEFORE, stubId))
+
+      assertEquals(listOf(action, stub), group.childActionsOrStubs.toList())
+      assertEquals(listOf(groupId), actionManager.groupIds(actionId))
+    }
+    finally {
+      actionManager.unregisterAction(actionId)
       actionManager.unregisterAction(groupId)
     }
   }
@@ -335,6 +366,162 @@ internal class ActionManagerImplActionRegistrationTest {
     assertFalse(secondAddThread.isAlive)
     failure.get()?.let { throw it }
     assertEquals(listOf(secondAction, firstAction), group.childActionsOrStubs.toList())
+  }
+
+  @Test
+  fun groupDescriptionFromBundleIsComputedWhenRead() {
+    val groupId = "ActionManagerImplActionRegistrationTest.bundle.description.group"
+    val bundleLoads = AtomicInteger()
+    val bundle = createBundle("group.$groupId.description" to "Description from the bundle")
+    val presentation = Presentation.newTemplatePresentation()
+
+    configureGroupDescription(presentation = presentation, groupId = groupId, description = null) {
+      bundleLoads.incrementAndGet()
+      bundle
+    }
+
+    assertEquals(0, bundleLoads.get())
+    assertEquals("Description from the bundle", presentation.description)
+    assertTrue(bundleLoads.get() > 0)
+  }
+
+  @Test
+  fun emptyGroupDescriptionFromDescriptorKeepsDescriptionSetInApi() {
+    val presentation = Presentation.newTemplatePresentation()
+    presentation.description = "Description from the API"
+
+    configureGroupDescription(presentation = presentation,
+                              groupId = "ActionManagerImplActionRegistrationTest.api.description.group",
+                              description = null) { createBundle() }
+
+    assertEquals("Description from the API", presentation.description)
+  }
+
+  @Test
+  fun groupDescriptionFromDescriptorOverridesDescriptionSetInApi() {
+    val presentation = Presentation.newTemplatePresentation()
+    presentation.description = "Description from the API"
+
+    configureGroupDescription(presentation = presentation,
+                              groupId = "ActionManagerImplActionRegistrationTest.descriptor.description.group",
+                              description = "Description from the descriptor") { null }
+
+    assertEquals("Description from the descriptor", presentation.description)
+  }
+
+  @Test
+  fun overrideTextFromBundleIsComputedWhenRead() {
+    val actionId = "ActionManagerImplActionRegistrationTest.override.text.action"
+    val place = "ActionManagerImplActionRegistrationTest.place"
+    val bundleLoads = AtomicInteger()
+    val bundle = createBundle("action.$actionId.$place.text" to "Text from the bundle")
+    val action = createAction()
+
+    processOverrideTextNode(action = action,
+                            id = actionId,
+                            element = XmlElement(name = OVERRIDE_TEXT_ELEMENT_NAME, attributes = mapOf("place" to place)),
+                            module = createPluginDescriptor(),
+                            bundleSupplier = {
+                              bundleLoads.incrementAndGet()
+                              bundle
+                            })
+
+    assertEquals(0, bundleLoads.get())
+    val presentation = Presentation()
+    action.applyTextOverride(place, presentation)
+    assertEquals("Text from the bundle", presentation.text)
+    assertTrue(bundleLoads.get() > 0)
+  }
+
+  @Test
+  fun keyedSeparatorTextFromBundleIsComputedWhenRead() {
+    val key = "ActionManagerImplActionRegistrationTest.separator"
+    val bundleLoads = AtomicInteger()
+    val bundle = createBundle(key to "Separator from the bundle")
+
+    val separator = createSeparator(bundleSupplier = {
+      bundleLoads.incrementAndGet()
+      bundle
+    }, key = key)
+
+    assertEquals(0, bundleLoads.get())
+    assertEquals("Separator from the bundle", separator.text)
+    assertTrue(bundleLoads.get() > 0)
+  }
+
+  @Test
+  fun keyedSynonymFromBundleIsComputedWhenRead() {
+    val key = "ActionManagerImplActionRegistrationTest.synonym"
+    val bundleLoads = AtomicInteger()
+    val bundle = createBundle(key to "Synonym from the bundle")
+    val action = createAction()
+
+    processSynonymNode(action = action,
+                       element = XmlElement(name = SYNONYM_ELEMENT_NAME, attributes = mapOf(KEY_ATTR_NAME to key)),
+                       module = createPluginDescriptor(),
+                       bundleSupplier = {
+                         bundleLoads.incrementAndGet()
+                         bundle
+                       },
+                       hasBundle = true)
+
+    assertEquals(0, bundleLoads.get())
+    assertEquals(listOf("Synonym from the bundle"), action.synonyms.map { it.get() })
+    assertTrue(bundleLoads.get() > 0)
+  }
+
+  @Test
+  fun keyedSynonymWithoutBundleIsReportedWithoutLoadingBundle() {
+    val bundleLoads = AtomicInteger()
+    val action = createAction()
+
+    val error = LoggedErrorProcessor.executeAndReturnLoggedError {
+      processSynonymNode(action = action,
+                         element = XmlElement(name = SYNONYM_ELEMENT_NAME,
+                                              attributes = mapOf(KEY_ATTR_NAME to "ActionManagerImplActionRegistrationTest.synonym")),
+                         module = createPluginDescriptor(),
+                         bundleSupplier = {
+                           bundleLoads.incrementAndGet()
+                           null
+                         },
+                         hasBundle = false)
+    }
+
+    assertEquals(0, bundleLoads.get())
+    assertTrue(action.synonyms.isEmpty())
+    assertTrue(error.message!!.startsWith("Can't process synonym: neither text nor resource bundle key is specified"), error.message)
+  }
+
+  private fun configureGroupDescription(
+    presentation: Presentation,
+    groupId: String,
+    description: String?,
+    bundleSupplier: () -> ResourceBundle?,
+  ) {
+    configureGroupDescriptionAndIcon(presentation = presentation,
+                                     description = description,
+                                     textValue = null,
+                                     group = DefaultActionGroup(),
+                                     bundleSupplier = bundleSupplier,
+                                     id = groupId,
+                                     classLoader = javaClass.classLoader,
+                                     iconPath = null,
+                                     module = createPluginDescriptor(),
+                                     className = null)
+  }
+
+  private fun createBundle(vararg messages: Pair<String, String>): ResourceBundle {
+    return object : ListResourceBundle() {
+      override fun getContents(): Array<Array<Any>> = messages.map { arrayOf<Any>(it.first, it.second) }.toTypedArray()
+    }
+  }
+
+  private fun createPluginDescriptor(): IdeaPluginDescriptorImpl {
+    val builder = PluginDescriptorBuilder.builder()
+    builder.id = "com.intellij.actionManagerImplActionRegistrationTest"
+    return PluginMainDescriptor(raw = builder.build(),
+                                pluginPath = Path.of("ActionManagerImplActionRegistrationTest"),
+                                isBundled = true)
   }
 
   private fun createActionPluginDescriptor(actionElement: XmlElement): IdeaPluginDescriptorImpl {

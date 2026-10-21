@@ -2,15 +2,19 @@
 package com.intellij.util
 
 import com.intellij.openapi.util.getPathMatcher
-import junit.framework.TestCase
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.fail
+import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import java.nio.file.PathMatcher
 import java.util.regex.PatternSyntaxException
 
-class GlobUtilTest : TestCase() {
-  private fun PathMatcher.checkMatches(path: String) = assertTrue("path doesn't match: $path", matches(Path.of(path)))
-  private fun PathMatcher.checkDoesntMatch(path: String) = assertFalse("path matches but must not: $path", matches(Path.of(path)))
+class GlobUtilTest {
+  private fun PathMatcher.checkMatches(path: String) = assertTrue(matches(Path.of(path)), "path doesn't match: $path")
+  private fun PathMatcher.checkDoesntMatch(path: String) = assertFalse(matches(Path.of(path)), "path matches but must not: $path")
 
+  @Test
   fun testPathMatcher() {
     val m1 = getPathMatcher("**/foo.txt")
     m1.checkMatches("foo.txt")
@@ -68,6 +72,7 @@ class GlobUtilTest : TestCase() {
     m4.checkDoesntMatch("a/b/c/d/e.txt")
   }
 
+  @Test
   fun testPatternSyntaxException() {
     getPathMatcher("exception ignored \\")
     getPathMatcher("exception ignored \\", true)

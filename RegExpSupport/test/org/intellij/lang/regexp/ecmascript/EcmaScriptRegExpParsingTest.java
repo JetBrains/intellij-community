@@ -2,43 +2,50 @@
 package org.intellij.lang.regexp.ecmascript;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.openapi.project.Project;
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.lang.regexp.RegExpParserDefinition;
+import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixtureKt.parsingFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 
 /**
  * @author Bas Leijdekkers
  */
-public class EcmaScriptRegExpParsingTest extends ParsingTestCase {
+@TestApplication
+public class EcmaScriptRegExpParsingTest {
+  private static final TestFixture<Project> projectFixture = projectFixture();
 
-  public EcmaScriptRegExpParsingTest() {
-    super("ecmascript_psi", "regexp", new EcmaScriptUnicodeRegexpParserDefinition(), new RegExpParserDefinition());
+  private final TestFixture<ParsingTestFixture> parsingFixture =
+    parsingFixture(projectFixture, PathManagerEx.getCommunityHomePath() + "/RegExpSupport/testData/ecmascript_psi", "regexp",
+                   new EcmaScriptUnicodeRegexpParserDefinition(), new RegExpParserDefinition());
+
+  @Test
+  public void testDanglingMetaCharacter1() {
+    parsingFixture.get().doCodeTest("{");
   }
 
-  @Override
-  protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/RegExpSupport/testData";
+  @Test
+  public void testDanglingMetaCharacter2() {
+    parsingFixture.get().doCodeTest("}");
   }
 
-  public void testDanglingMetaCharacter1() throws IOException {
-    doCodeTest("{");
+  @Test
+  public void testDanglingMetaCharacter3() {
+    parsingFixture.get().doCodeTest("]");
   }
 
-  public void testDanglingMetaCharacter2() throws IOException {
-    doCodeTest("}");
-  }
-
-  public void testDanglingMetaCharacter3() throws IOException {
-    doCodeTest("]");
-  }
-
-  public void testEscapedMetaCharacter() throws IOException {
+  @Test
+  public void testEscapedMetaCharacter() {
     //noinspection RegExpRedundantEscape
-    doCodeTest("\\]");
+    parsingFixture.get().doCodeTest("\\]");
   }
 
-  public void testExtendedUnicode() throws IOException {
-    doCodeTest("\\u{9}");
+  @Test
+  public void testExtendedUnicode() {
+    parsingFixture.get().doCodeTest("\\u{9}");
   }
 }

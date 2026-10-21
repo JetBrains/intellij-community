@@ -389,11 +389,6 @@ public class TableResultView extends JBTableWithResizableCells
     });
   }
 
-  @Override
-  public boolean isCellComponent(@Nullable Component component) {
-    return component == this;
-  }
-
   /** The controller that pairs this table with the other one. Both roles hold the same instance. */
   protected final @NotNull FrozenColumnsController getFrozenColumnsController() {
     return myFrozenColumnsController;

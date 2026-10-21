@@ -370,6 +370,17 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       myCustomRightPropertiesPanelWrapper.add(customRightConditionPanel.getComponent(), BorderLayout.CENTER);
       myCustomPanels.add(customRightConditionPanel);
     }
+    else if (customRightConditionPanel == null && breakpoint.getDataBreakpointInfo() != null
+             && (myShowAllOptions || breakpoint.getDataBreakpointInfo().getHitCountEnabled())) {
+      // Mirrors CidrWatchpointType.createCustomRightPropertiesPanel() (CidrBreakpointHitCountPanel), which is
+      // frontend-incompatible; this generic panel fills the same wrapper slot for split mode.
+      // The visibility condition mirrors CidrBreakpointHitCountPanel.isVisibleOnPopup(): the compact popup
+      // hides the panel unless the hit count is enabled.
+      XDataBreakpointHitCountPanel dataBreakpointHitCountPanel = new XDataBreakpointHitCountPanel();
+      dataBreakpointHitCountPanel.init(project, breakpoint);
+      myCustomRightPropertiesPanelWrapper.add(dataBreakpointHitCountPanel.getComponent(), BorderLayout.CENTER);
+      mySubPanels.add(dataBreakpointHitCountPanel);
+    }
     else {
       // see IDEA-125745
       myCustomRightPropertiesPanelWrapper.getParent().remove(myCustomRightPropertiesPanelWrapper);
@@ -383,6 +394,17 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
         // The panel opted to identify the breakpoint itself, so the generic name/description label is redundant.
         myBreakpointNameLabel.setVisible(false);
       }
+    }
+    else if (customTopPropertiesPanel == null && breakpoint.getDataBreakpointInfo() != null) {
+      // Mirrors CidrWatchpointType.createCustomTopPropertiesPanel() (CidrWatchpointCustomPropertiesPanel), which is
+      // frontend-incompatible; this fills the same topmost wrapper slot (above the generic Enabled checkbox) for
+      // split mode, matching the monolith's actual placement.
+      XDataBreakpointTopPropertiesPanel dataBreakpointTopPanel = new XDataBreakpointTopPropertiesPanel();
+      dataBreakpointTopPanel.init(project, breakpoint);
+      myCustomTopMostPropertiesPanelWrapper.add(dataBreakpointTopPanel.getComponent(), BorderLayout.CENTER);
+      mySubPanels.add(dataBreakpointTopPanel);
+      // The panel already shows the expression itself, so the generic name/description label is redundant.
+      myBreakpointNameLabel.setVisible(false);
     }
     else {
       myCustomTopMostPropertiesPanelWrapper.getParent().remove(myCustomTopMostPropertiesPanelWrapper);
@@ -648,5 +670,6 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     myActionsPanel.dispose();
     myCustomPanels.forEach(Disposer::dispose);
     myCustomPanels.clear();
+    mySubPanels.forEach(XBreakpointPropertiesSubPanel::dispose);
   }
 }

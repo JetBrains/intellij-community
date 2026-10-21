@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.community.execService
 
+import com.intellij.execution.target.HostPort
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.python.community.execService.impl.ProcessSemiInteractiveHandlerImpl
@@ -58,7 +59,30 @@ interface ExecService {
     scopeToBind: CoroutineScope? = null,
     options: ExecGetProcessOptions = ExecGetProcessOptions(),
   ): Result<Process, ExecuteGetProcessError<*>>
+
+  /**
+   * Like [executeGetProcess], but the IDE can also connect to each port of [portsToForward].
+   *
+   * The process must listen on these ports on `127.0.0.1` of its own machine. On a remote machine, each port is forwarded
+   * to a free port on the machine of the IDE. On the local machine, a port stays as it is.
+   * [ProcessWithForwardedPorts.forwardedPorts] gives the address for each port. Do not use it after the process exits.
+   */
+  @CheckReturnValue
+  suspend fun executeGetProcessForwardingPorts(
+    binary: BinaryToExec,
+    portsToForward: Set<UShort>,
+    args: Args = Args(),
+    scopeToBind: CoroutineScope? = null,
+    options: ExecGetProcessOptions = ExecGetProcessOptions(),
+  ): Result<ProcessWithForwardedPorts, ExecuteGetProcessError<*>>
 }
+
+/**
+ * A process that [ExecService.executeGetProcessForwardingPorts] started.
+ * [forwardedPorts] maps each port on the machine of the process to the address where the IDE connects to it.
+ */
+@ConsistentCopyVisibility
+data class ProcessWithForwardedPorts internal constructor(val process: Process, val forwardedPorts: Map<UShort, HostPort>)
 
 /**
  * Message to be displayed to a user in case of process failure.

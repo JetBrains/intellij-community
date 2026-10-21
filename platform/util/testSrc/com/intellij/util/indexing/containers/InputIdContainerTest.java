@@ -1,11 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.containers;
 
-import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class InputIdContainerTest extends UsefulTestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
+public class InputIdContainerTest {
+
+  @Test
   public void testEmptyIdContainer() {
     doTestEmptyIdContainer(new IdBitSet(0));
     doTestEmptyIdContainer(new IdBitSet(123));

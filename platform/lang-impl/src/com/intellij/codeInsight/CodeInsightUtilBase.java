@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -35,10 +36,15 @@ public final class CodeInsightUtilBase extends CodeInsightUtilCore {
       return true;
     }
     ApplicationManager.getApplication().invokeLater(() -> {
-      final Editor editor = FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
-      if (editor != null && (ApplicationManager.getApplication().isHeadlessEnvironment() || editor.getComponent().isDisplayable())) {
-        HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("error.hint.file.is.readonly", file.getPresentableUrl()));
-      }
+      var fileEditorManager = FileEditorManager.getInstance(project);
+      var openDescriptor = new OpenFileDescriptor(project, file);
+      fileEditorManager.requestOpenTextEditor(openDescriptor, FileEditorOpenRequest.fromDescriptor(openDescriptor)
+        .withRequestFocus(true))
+        .thenAccept(editor -> {
+          if (editor != null && (ApplicationManager.getApplication().isHeadlessEnvironment() || editor.getComponent().isDisplayable())) {
+            HintManager.getInstance().showErrorHint(editor, CodeInsightBundle.message("error.hint.file.is.readonly", file.getPresentableUrl()));
+          }
+        });
     }, project.getDisposed());
 
     return false;

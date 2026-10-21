@@ -5,6 +5,7 @@ import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
+import com.jetbrains.python.PyCustomType
 import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator
 import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -26,6 +27,17 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
 
   @Nested
   inner class IsinstanceNarrowing {
+    @Test
+    @TestFor(classes = [PyCustomType::class])
+    fun `call of a value narrowed to Callable`() = test("""
+      from typing import Callable
+
+      def f(x: object):
+          if isinstance(x, Callable):
+              expr = x()
+      #       └ TYPE Unknown
+      """.trimIndent())
+
     @Test
     fun `isinstance narrows in if`() = test("""
       def f(c):

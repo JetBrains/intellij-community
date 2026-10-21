@@ -6,7 +6,7 @@ use anyhow::{Context, anyhow, bail};
 use indexmap::IndexMap;
 use serde::Deserialize;
 
-/// The parts of `bin/product-info.json` that a dev launch reads.
+/// The parts of `product-info.json` that a dev launch reads.
 #[derive(Debug, Default, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct ProductInfo {

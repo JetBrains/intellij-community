@@ -42,7 +42,6 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Dimension
@@ -55,8 +54,7 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import javax.swing.UIManager
 
-@ApiStatus.Internal
-open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTRunConfiguration {
+internal open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTRunConfiguration {
   companion object {
     private val PROP_ACTIVE_TARGET = Key<ExecutionTarget?>("PROP_ACTIVE_TARGET")
     private val PROP_TARGETS = Key<List<ExecutionTarget>>("PROP_TARGETS")
@@ -134,8 +132,6 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
     e.presentation.putClientProperty(PROP_ACTIVE_TARGET, e.executionTarget())
 
   }
-
-
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     return object : SegmentedCustomPanel(presentation) {
@@ -361,6 +357,4 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
 
     override fun getActionUpdateThread() = ActionUpdateThread.EDT
   }
-
 }
-

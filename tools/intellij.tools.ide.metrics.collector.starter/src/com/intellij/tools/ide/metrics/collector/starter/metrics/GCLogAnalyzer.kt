@@ -20,7 +20,7 @@ import kotlin.time.Duration.Companion.minutes
 
 class GCLogAnalyzer(private val ideStartResult: IDEStartResult) {
   companion object {
-    private const val gcViewerUrl = "https://packages.jetbrains.team/files/p/ij/intellij-dependencies/gcviewer/gcviewer-1.37-05122022.jar"
+    private const val gcViewerUrl = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-dependencies/gcviewer/gcviewer-1.37-05122022.jar"
   }
 
   /**

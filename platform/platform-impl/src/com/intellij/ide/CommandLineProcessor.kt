@@ -11,7 +11,6 @@ import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.lightEdit.isClaimedByWelcomeScreenProject
-import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.idea.ApplicationStartArguments
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -21,10 +20,8 @@ import com.intellij.openapi.application.ApplicationStarter
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.BaseProjectDirectories
@@ -39,8 +36,12 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.CommandLineProjectOpenProcessor
+import com.intellij.platform.CommandLineFileWait
+import com.intellij.platform.COMMAND_LINE_FILE_WAIT
 import com.intellij.platform.FolderProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.configureToOpenDotIdeaOrCreateNewIfNotExists
+import com.intellij.platform.navigateToFileFromCommandLine
+import com.intellij.platform.releaseCommandLineWaitIfNotOpen
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
@@ -50,7 +51,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.asDeferred
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -133,12 +133,26 @@ object CommandLineProcessor {
     }
 
     if (projects.isEmpty()) {
-      val project = CommandLineProjectOpenProcessor.openProjectAndFile(ioFile, tempProject, OpenProjectTask {
-        this.line = line
-        this.column = column
-      }) ?: return CommandLineProcessorResult(IdeBundle.message("dialog.message.no.project.found.to.open.file.in"))
-      val future = if (shouldWait) CommandLineWaitingManager.getInstance().addHookForFile(file).asDeferred() else OK_FUTURE
-      return CommandLineProcessorResult(project, future)
+      val wait = if (shouldWait) CommandLineFileWait(file, CommandLineWaitingManager.getInstance().addHookForFile(file)) else null
+      var opened = false
+      try {
+        val project = CommandLineProjectOpenProcessor.openProjectAndFile(ioFile, tempProject, OpenProjectTask {
+          this.line = line
+          this.column = column
+          if (wait != null) {
+            beforeInitTasks += { it.putUserData(COMMAND_LINE_FILE_WAIT, wait) }
+          }
+        }) ?: return CommandLineProcessorResult(IdeBundle.message("dialog.message.no.project.found.to.open.file.in"))
+        opened = true
+        return CommandLineProcessorResult(project, wait?.future?.asDeferred() ?: OK_FUTURE)
+      }
+      finally {
+        if (!opened && wait != null) {
+          CommandLineWaitingManager.getInstance().releaseHookForFile(
+            file, wait.future, CliResult(1, IdeBundle.message("dialog.message.no.project.found.to.open.file.in")),
+          )
+        }
+      }
     }
 
     NonProjectFileWritingAccessProvider.allowWriting(listOf(file))
@@ -151,17 +165,11 @@ object CommandLineProcessor {
     }
     else {
       val project = findBestProject(file, projects)
-      val navigatable = if (line > 0) {
-        OpenFileDescriptor(project, file, line - 1, column.coerceAtLeast(0))
+      val wait = if (shouldWait) CommandLineFileWait(file, CommandLineWaitingManager.getInstance().addHookForFile(file)) else null
+      if (!navigateToFileFromCommandLine(project, file, line, column) && wait != null) {
+        releaseCommandLineWaitIfNotOpen(wait)
       }
-      else {
-        PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)
-      }
-      @Suppress("UsagesOfObsoleteApi")
-      (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT) {
-        navigatable.navigate(true)
-      }
-      project
+      return CommandLineProcessorResult(project, wait?.future?.asDeferred() ?: OK_FUTURE)
     }
     val future = if (shouldWait) CommandLineWaitingManager.getInstance().addHookForFile(file).asDeferred() else OK_FUTURE
     return CommandLineProcessorResult(project, future)

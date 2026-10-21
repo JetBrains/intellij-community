@@ -3,16 +3,18 @@ package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
-import org.jetbrains.jps.builders.JpsBuildTestCase;
+import org.jetbrains.jps.builders.JpsBuildTestBase;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
+import org.junit.jupiter.api.Test;
 
 import static com.intellij.util.io.TestFileSystemItem.fs;
 
-public class SourceExcludesTest extends JpsBuildTestCase {
+public class SourceExcludesTest extends JpsBuildTestBase {
 
+  @Test
   public void testExcludedFileInSourceRoot() {
     String file = createFile("src/A.java", "public class A {}");
     String excludedFile = createFile("src/excluded.java", "public class excluded {}");
@@ -25,6 +27,7 @@ public class SourceExcludesTest extends JpsBuildTestCase {
     assertOutput(m, fs().file("A.class"));
   }
   
+  @Test
   public void testExcludedDirInSourceRoot() {
     String file = createFile("src/A.java", "public class A {}");
     String excludedFile = createFile("src/data/excluded.java", "public class excluded {}");
@@ -37,6 +40,7 @@ public class SourceExcludesTest extends JpsBuildTestCase {
     assertOutput(m, fs().file("A.class"));
   }
 
+  @Test
   public void testRecursivelyExcludedDirInSourceRoot() {
     String file = createFile("src/A.java", "public class A {}");
     String excludedFile = createFile("src/data/excluded.java", "public class excluded {}");
@@ -50,6 +54,7 @@ public class SourceExcludesTest extends JpsBuildTestCase {
     assertOutput(m, fs().file("A.class"));
   }
 
+  @Test
   public void testJavadocSnippetsExcludedInSourceRoot() {
     JpsJavaExtensionService.getInstance().getCompilerConfiguration(myProject).addResourcePattern("*.txt");
 

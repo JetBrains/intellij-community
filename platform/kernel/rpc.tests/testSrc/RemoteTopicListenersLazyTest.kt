@@ -10,6 +10,7 @@ import com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener
 import com.intellij.platform.rpc.topics.ProjectRemoteTopic
 import com.intellij.platform.rpc.topics.ProjectRemoteTopicListener
 import com.intellij.platform.rpc.topics.broadcast
+import com.intellij.platform.rpc.topics.impl.ApplicationRemoteTopicListenerBean
 import com.intellij.platform.rpc.topics.impl.RemoteTopicListenerIndex
 import com.intellij.platform.testFramework.loadPluginWithText
 import com.intellij.platform.testFramework.plugins.dependsIntellijModulesLang
@@ -150,12 +151,12 @@ class RemoteTopicListenersLazyTest {
   }
 
   @Test
-  fun `a listener registered without the attribute is found by its topic`() {
+  fun `a listener registered programmatically is found by its topic`() {
     val listener = object : ApplicationRemoteTopicListener<String> {
       override val topic: ApplicationRemoteTopic<String> = OTHER_APP_TOPIC
       override fun handleEvent(event: String) {}
     }
-    ApplicationRemoteTopicListener.EP_NAME.point.registerExtension(listener, testDisposable)
+    ApplicationRemoteTopicListener.EP_NAME.point.registerExtension(ApplicationRemoteTopicListenerBean(listener), testDisposable)
     assertThat(RemoteTopicListenerIndex.getInstance().applicationListeners(OTHER_APP_TOPIC.id)).contains(listener)
   }
 }

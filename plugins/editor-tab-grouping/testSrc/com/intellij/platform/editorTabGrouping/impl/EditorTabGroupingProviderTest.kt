@@ -17,6 +17,9 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.awt.Color
+import java.util.Collections
+import java.util.IdentityHashMap
 
 @TestApplication
 class EditorTabGroupingProviderTest {
@@ -152,6 +155,14 @@ class EditorTabGroupingProviderTest {
     for (g in groups) {
       assertNotNull(EditorTabGroupingProvider.colorForGroup(g), "null color for group ${g.name}")
     }
+  }
+
+  @Test
+  fun `colorForGroup uses every color of the palette`() {
+    // Compare by identity: the named colors can resolve to equal RGB values when the theme is not loaded.
+    val used = Collections.newSetFromMap(IdentityHashMap<Color, Boolean>())
+    for (i in 0 until 1000) used.add(EditorTabGroupingProvider.colorForGroup(TabGroup("g$i", "key$i")))
+    assertEquals(EditorTabGroupingProvider.groupColors().size, used.size)
   }
 
   // --- helpers ---

@@ -20,6 +20,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImplKt;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ExitStarter;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -127,10 +128,7 @@ public class Invoker implements InvokerMBean {
 
   @Override
   public void exit() {
-    SwingUtilities.invokeLater(() -> {
-      var app = ApplicationManager.getApplication();
-      app.invokeLater(() -> app.exit(true, true, false), ModalityState.current());
-    });
+    ExitStarter.forceExitApplication("Driver requested exit", false);
   }
 
   @Override

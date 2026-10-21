@@ -48,7 +48,6 @@ import com.intellij.ui.paint.PaintUtil.alignIntToInt
 import com.intellij.ui.paint.PaintUtil.alignTxToInt
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil
-import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -486,7 +485,7 @@ class ProjectWindowCustomizerService internal constructor(private val coroutineS
   fun isAvailable(): Boolean {
     return !DistractionFreeModeController.shouldMinimizeCustomHeader() &&
            InternalUICustomization.getInstance()?.isProjectCustomDecorationActive != false &&
-           (PlatformUtils.isRider () || Registry.`is`("ide.colorful.toolbar", true))
+           Registry.`is`("ide.colorful.toolbar", true)
   }
 
   fun isActive(): Boolean = wasGradientPainted && ourSettingsValue && isAvailable()
@@ -547,17 +546,16 @@ class ProjectWindowCustomizerService internal constructor(private val coroutineS
     alignTxToInt(g, null, true, false, PaintUtil.RoundingMode.FLOOR)
     val ctx = ScaleContext.create(g)
     val leftX = alignIntToInt((offset - length).coerceAtLeast(0f).toInt(), ctx, PaintUtil.RoundingMode.FLOOR, null)
-    val leftWidth = alignIntToInt((offset - leftX).toInt(), ctx, PaintUtil.RoundingMode.CEIL, null)
+    val leftWidth = alignIntToInt((offset - leftX).toInt(), ctx, PaintUtil.RoundingMode.CEIL, null).coerceAtLeast(0)
     val rightX = leftX + leftWidth
     val rightWidth = alignIntToInt(length, ctx, PaintUtil.RoundingMode.CEIL, null)
 
-    val leftGradientTexture = leftGradientCache.getHorizontalTexture(g, leftWidth, parent.background, blendedColor, leftX)
-    val rightGradientTexture = rightGradientCache.getHorizontalTexture(g, rightWidth, blendedColor, parent.background, rightX)
+    if (leftWidth > 0) {
+      g.paint = leftGradientCache.getHorizontalTexture(g, leftWidth, parent.background, blendedColor, leftX)
+      g.fillRect(leftX, 0, leftWidth, height)
+    }
 
-    g.paint = leftGradientTexture
-    g.fillRect(leftX, 0, leftWidth, height)
-
-    g.paint = rightGradientTexture
+    g.paint = rightGradientCache.getHorizontalTexture(g, rightWidth, blendedColor, parent.background, rightX)
     g.fillRect(rightX, 0, rightWidth, height)
 
     return true

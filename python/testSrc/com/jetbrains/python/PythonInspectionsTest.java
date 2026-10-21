@@ -9,6 +9,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
+import com.jetbrains.python.fixtures.PyProjectStructureTestUtilKt;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyArgumentEqualDefaultInspection;
 import com.jetbrains.python.inspections.PyBroadExceptionInspection;
@@ -47,8 +48,6 @@ import com.jetbrains.python.inspections.PyTupleItemAssignmentInspection;
 import com.jetbrains.python.inspections.PyUnnecessaryBackslashInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.Nullable;
 
 
@@ -255,7 +254,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyArgumentEqualDefaultInspection() {    //PY-3125
-    final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(PythonSdkUtil.findPythonSdk(myFixture.getModule()));
+    final LanguageLevel languageLevel = PyProjectStructureTestUtilKt.findLanguageLevelForTests(myFixture.getModule());
 
     runWithAdditionalFileInLibDir(
       PyBuiltinCache.getBuiltinsFileName(languageLevel),

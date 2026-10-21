@@ -1,0 +1,7 @@
+{
+  "type": "MARKED_ELEMENT",
+  "mainFile": "test.kt",
+  "newName": "v",
+  "hint": "Variable 'v' is already declared in function 'conflict2'",
+  "enabledInK2": true
+}

@@ -49,7 +49,7 @@ pub(crate) async fn ensure_viewer(
     let started = start_detached(
         runner,
         &serve_command(checkout),
-        Some(checkout),
+        checkout,
         &DetachRequest::for_port(port),
         runtime_root,
     );

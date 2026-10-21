@@ -27,5 +27,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.uast.ide" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.bazel.runfiles" scope="TEST" />
   </component>
 </module>

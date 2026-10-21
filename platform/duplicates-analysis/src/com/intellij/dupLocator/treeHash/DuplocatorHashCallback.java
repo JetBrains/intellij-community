@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiVersioningService;
 import com.intellij.usageView.UsageInfo;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -245,7 +246,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
         if (myPattern2Description.containsKey(pattern)) {
           return myPattern2Description.get(pattern).getFilesCount();
         }
-        return cacheGroupNodeDescription(pattern).getFilesCount();
+        return PsiVersioningService.freezePsiVersion(() -> cacheGroupNodeDescription(pattern).getFilesCount());
       }
 
       private GroupNodeDescription cacheGroupNodeDescription(final int pattern) {

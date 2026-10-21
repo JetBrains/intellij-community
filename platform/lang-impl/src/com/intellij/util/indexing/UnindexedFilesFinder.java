@@ -185,16 +185,18 @@ final class UnindexedFilesFinder {
     if (!file.isValid() || !(file instanceof VirtualFileWithId)) {
       return null;
     }
-    // snapshot at the beginning: if file changes while being processed, we can detect this on the following scanning
-    FileIndexingStamp indexingStamp = indexingRequest.getFileIndexingStamp(file);
+    FileIndexingStamp fastCheckStamp = indexingRequest.getFileIndexingStamp(file);
     FileIndexingResult.ApplicationMode applicationMode = FileBasedIndexImpl.getContentIndependentIndexesApplicationMode();
 
-    if (IndexingFlag.isFileIndexed(file, indexingStamp) && !shouldForceReindexing(file, indexingStamp)) {
+    if (IndexingFlag.isFileIndexed(file, fastCheckStamp) && !shouldForceReindexing(file, fastCheckStamp)) {
       return new UnindexedFileStatusBuilder(applicationMode);
     }
 
     Supplier<@NotNull Boolean> checker = CachedFileType.getFileTypeChangeChecker();
     FileType cachedFileType = file.getFileType();
+    // snapshot after the file type detection, which can update the file mod count:
+    // if file changes while being processed, we can detect this on the following scanning
+    FileIndexingStamp indexingStamp = indexingRequest.getFileIndexingStamp(file);
     return ReadAction.computeBlocking(() -> {
       if (myProject.isDisposed() || !file.isValid()) {
         return null;

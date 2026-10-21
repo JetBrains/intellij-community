@@ -133,6 +133,11 @@ abstract class ProjectFrameHelper internal constructor(
   // so we remember the activation time and report it against the assigned project later
   private var activationTimestamp: Long? = null
 
+  /**
+   * Completes when the first fill of the main menu may run, see [FrameLoadingState.mainMenuFillPermit].
+   */
+  internal val mainMenuFillPermit: Job? = loadingState?.mainMenuFillPermit
+
   init {
     frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
     frame.addWindowListener(WindowCloseListener)
@@ -453,8 +458,9 @@ abstract class ProjectFrameHelper internal constructor(
   override fun getProject(): Project? = project
 
   // any activities that will not access a workspace model
+  // without [initializesStatusBar], the caller calls [initializeStatusBar] later
   @Internal
-  suspend fun setRawProject(project: Project) {
+  suspend fun setRawProject(project: Project, initializesStatusBar: Boolean = true) {
     LOG.info("Setting project frame to $project")
 
     if (this.project === project) {
@@ -467,14 +473,24 @@ abstract class ProjectFrameHelper internal constructor(
     withContext(Dispatchers.UiWithModelAccess) {
       applyInitBounds()
 
-      if (statusBar == null) {
-        LOG.error("Status bar is null, so it won't be initialized")
+      if (initializesStatusBar) {
+        initializeStatusBar()
       }
-      statusBar?.initialize()
     }
     frameDecorator?.setProject()
 
     LOG.info("Project frame set to $project")
+  }
+
+  /**
+   * Starts the progress reporting of the status bar: the clone tasks and the background tasks of the project.
+   */
+  @RequiresEdt
+  internal fun initializeStatusBar() {
+    if (statusBar == null) {
+      LOG.error("Status bar is null, so it won't be initialized")
+    }
+    statusBar?.initialize()
   }
 
   @Internal
@@ -673,7 +689,7 @@ private object WindowCloseListener : WindowAdapter() {
     if (app != null && !app.isDisposed) {
       // The project closing process is also subject to cancellation checks.
       // Here we run the closing process in the scope of the application, so that the user gets the chance to abort a project closing process.
-      installThreadContext(service<CoreUiCoroutineScopeHolder>().coroutineScope.coroutineContext) {
+      installThreadContext(service<CoreUiCoroutineScopeHolder>().coroutineScope.coroutineContext, true) {
         frameHelper.windowClosing(project)
       }
     }

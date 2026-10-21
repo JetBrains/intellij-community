@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.navbar.frontend.actions;
 
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -25,10 +26,14 @@ public abstract sealed class NavBarActions extends AnAction implements ActionRem
   }
 
   @Override
-  public void update(@NotNull AnActionEvent event) {
+  public final void update(@NotNull AnActionEvent event) {
     NavBarActionHandler handler = actionHandler(event);
     boolean isEnabled = handler != null && (isEnabledWithActivePopupSpeedSearch() || !handler.isNodePopupSpeedSearchActive());
     event.getPresentation().setEnabled(isEnabled);
+
+    if (event.getPlace().equals(ActionPlaces.ACTION_SEARCH)) {
+      event.getPresentation().setEnabledAndVisible(false);
+    }
   }
 
   private static @Nullable NavBarActionHandler actionHandler(@NotNull AnActionEvent event) {
@@ -46,7 +51,7 @@ public abstract sealed class NavBarActions extends AnAction implements ActionRem
 
   abstract void actionPerformed(@NotNull NavBarActionHandler handler);
 
-  public static final class Home extends NavBarActions {
+  static final class Home extends NavBarActions {
     @Override
     protected boolean isEnabledWithActivePopupSpeedSearch() {
       return false;
@@ -58,7 +63,7 @@ public abstract sealed class NavBarActions extends AnAction implements ActionRem
     }
   }
 
-  public static final class End extends NavBarActions {
+  static final class End extends NavBarActions {
     @Override
     protected boolean isEnabledWithActivePopupSpeedSearch() {
       return false;
@@ -70,7 +75,7 @@ public abstract sealed class NavBarActions extends AnAction implements ActionRem
     }
   }
 
-  public static final class Up extends NavBarActions {
+  static final class Up extends NavBarActions {
     Up() {
       getTemplatePresentation().setRWLockRequired(Registry.is("actions.update.and.perform.arrow.actions.with.rw.lock"));
     }
@@ -86,7 +91,7 @@ public abstract sealed class NavBarActions extends AnAction implements ActionRem
     }
   }
 
-  public static final class Down extends NavBarActions {
+  static final class Down extends NavBarActions {
     Down() {
       getTemplatePresentation().setRWLockRequired(Registry.is("actions.update.and.perform.arrow.actions.with.rw.lock"));
     }

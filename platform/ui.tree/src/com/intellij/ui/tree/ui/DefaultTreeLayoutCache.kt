@@ -7,7 +7,9 @@ import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Rectangle
 import java.util.Enumeration
@@ -35,6 +37,9 @@ class DefaultTreeLayoutCache(
 
   @JvmField
   internal var isCachedSizeValid: Boolean = false
+
+  @TestOnly
+  var forceCheckInvariants: Boolean = false
 
   override fun setModel(newModel: TreeModel?) {
     @Suppress("UsePropertyAccessSyntax")
@@ -72,13 +77,13 @@ class DefaultTreeLayoutCache(
       return
     }
     super.setRowHeight(rowHeight)
-    invalidateSizes()
     if (rowHeight <= 0 && variableHeight == null) {
       variableHeight = VariableHeightSupport()
     }
     else if (rowHeight > 0 && variableHeight != null) {
       variableHeight = null
     }
+    invalidateSizes()
     checkInvariants(Location("setRowHeight(%d)", rowHeight))
   }
 
@@ -369,6 +374,20 @@ class DefaultTreeLayoutCache(
     checkInvariants(location)
   }
 
+  /**
+   * The height delta of a row of [value] until the cache measures the row. It comes from [TreeRowHeightEstimateProvider].
+   * A tree with a fixed row height does not use the height deltas, so the cache does not ask its values.
+   */
+  private fun estimatedHeightDelta(value: Any): Int {
+    if (rowHeight > 0) {
+      return 0
+    }
+    val estimateProvider = value as? TreeRowHeightEstimateProvider
+                           ?: TreeUtil.getUserObject(TreeRowHeightEstimateProvider::class.java, value)
+    val height = estimateProvider?.rowHeightEstimate ?: 0
+    return if (height > 0) height - defaultRowHeight else 0
+  }
+
   private fun getRowByY(y: Int): Int =
     if (rows.isEmpty()) {
       -1
@@ -442,7 +461,7 @@ class DefaultTreeLayoutCache(
     var row = -1
     var x = 0
     var width = 0
-    var heightDelta = 0
+    var heightDelta = estimatedHeightDelta(path.lastPathComponent)
     var fenwickTreeNodeForY = 0
 
     val y: Int
@@ -574,20 +593,30 @@ class DefaultTreeLayoutCache(
     }
 
     fun invalidateSizeRecursively() {
+      check(parent == null) { "Can only be called on the root node, as it rebuilds the entire tree, but called on $this" }
+      // Step 1: actually invalidate the sizes (Xs and widths are lost, heights are reset to the defaults or estimates).
+      doInvalidateSizeRecursively()
+      // Step 2: rebuild the deltas (Fenwick tree), if using variable heights.
+      variableHeight?.updateSums()
+    }
+
+    private fun doInvalidateSizeRecursively() {
       doInvalidateSize()
-      fenwickTreeNodeForY = 0 // We're resetting them all, so no point to update one-by-one.
-      children?.forEach { it.invalidateSizeRecursively() }
+      children?.forEach { it.doInvalidateSizeRecursively() }
     }
 
     fun invalidateSize() {
-      variableHeight?.updateHeightDelta(row, heightDelta, 0)
+      val oldHeightDelta = heightDelta
+      // Step 1: actually invalidate the size (X and width are lost, height is reset to the default or estimate).
       doInvalidateSize()
+      // Step 2: update the Fenwick tree node, if using variable heights, to match the new height.
+      variableHeight?.updateHeightDelta(row, oldHeightDelta, heightDelta)
     }
 
     private fun doInvalidateSize() {
       x = 0
       width = 0
-      heightDelta = 0
+      heightDelta = estimatedHeightDelta(userObject)
     }
 
     fun getVisibleChildCountRecursively(): Int {
@@ -909,7 +938,7 @@ class DefaultTreeLayoutCache(
   }
 
   private fun checkInvariants(location: Location) {
-    if (!Registry.`is`("ide.tree.experimental.layout.cache.debug", false)) {
+    if (!forceCheckInvariants && !Registry.`is`("ide.tree.experimental.layout.cache.debug", false)) {
       return
     }
     InvariantChecker(location).checkInvariants()

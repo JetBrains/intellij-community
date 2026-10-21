@@ -3,11 +3,16 @@ package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PerformanceUnitTest;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
+import org.junit.jupiter.api.Test;
 
-public class ImmutableTextTest extends UsefulTestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+public class ImmutableTextTest {
+
+  @Test
   public void testTextRemainsBalancedAfterAppends() {
     ImmutableText a = ImmutableText.valueOf(StringUtil.repeat("a", 10 * 64));
     ImmutableText b = ImmutableText.valueOf(StringUtil.repeat("b", 20 * 64));
@@ -21,6 +26,7 @@ public class ImmutableTextTest extends UsefulTestCase {
     assertBalanced(xabc.myNode);
   }
 
+  @Test
   @PerformanceUnitTest
   public void testDeleteAllPerformance() {
     ImmutableText original = ImmutableText.valueOf(StringUtil.repeat("abcdefghij", 1_900_000));
@@ -40,13 +46,14 @@ public class ImmutableTextTest extends UsefulTestCase {
       CharSequence tail = ((ImmutableText.CompositeNode)node).tail;
       int headLength = head.length();
       int tailLength = tail.length();
-      assertTrue("unbalanced: head " + headLength + ", tail " + tailLength,
-                          headLength <= tailLength * 2 && tailLength <= headLength * 2);
+      assertTrue(headLength <= tailLength * 2 && tailLength <= headLength * 2,
+                 "unbalanced: head " + headLength + ", tail " + tailLength);
       assertBalanced(head);
       assertBalanced(tail);
     }
   }
 
+  @Test
   public void testEquals() {
     ImmutableText i1 = ImmutableText.valueOf("anything");
     ImmutableText i2 = ImmutableText.valueOf("");

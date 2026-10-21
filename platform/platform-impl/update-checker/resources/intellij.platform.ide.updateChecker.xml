@@ -33,7 +33,7 @@
               class="com.intellij.openapi.updateSettings.impl.DownloadUpdateAction"
               icon="AllIcons.Ide.Notification.PluginUpdate"/>
       <action id="IdeUpdateToolbarWidget.WhatsNew" class="com.intellij.openapi.updateSettings.impl.WhatsNewAction"/>
-      <group id="IdeUpdateToolbarWidget.Options" popup="true">
+      <group id="IdeUpdateToolbarWidget.Options" searchable="false" popup="true">
         <action id="IdeUpdateToolbarWidget.SkipThisUpdate"
                 class="com.intellij.openapi.updateSettings.impl.SkipThisUpdateAction"/>
         <separator/>

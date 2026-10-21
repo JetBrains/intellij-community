@@ -32,15 +32,15 @@
   </extensions>
 </idea-plugin>]]></module>
   </content>
-  <content>
-    <module name="intellij.embedded.notSeparate" loading="on-demand"><![CDATA[<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="from.file">
+  <content namespace="jetbrains">
+    <module name="intellij.embedded.existing" required-if-available="intellij.embedded.noPackage"><![CDATA[<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="from.file" separate-jar="true">
   <extensions defaultExtensionNs="test">
     <extension value="a &amp; b" />
   </extensions>
 </idea-plugin>]]></module>
   </content>
-  <content namespace="jetbrains">
-    <module name="intellij.embedded.existing" required-if-available="intellij.embedded.noPackage"><![CDATA[<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="from.file" separate-jar="true">
+  <content>
+    <module name="intellij.embedded.notSeparate" loading="on-demand"><![CDATA[<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="from.file">
   <extensions defaultExtensionNs="test">
     <extension value="a &amp; b" />
   </extensions>

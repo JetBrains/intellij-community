@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project.actions
 
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
@@ -11,6 +12,7 @@ import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyze
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.module.Module
 import com.intellij.ui.treeStructure.SimpleTree
 import org.jetbrains.idea.maven.navigator.structure.ArtifactNode
@@ -60,16 +62,24 @@ class ViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<MavenNode>
   }
 }
 
-class NavigatorDependencyAnalyzerAction : DependencyAnalyzerAction() {
+internal class NavigatorDependencyAnalyzerAction : DependencyAnalyzerAction() {
 
   private val viewAction = ViewDependencyAnalyzerAction()
 
   override fun getSystemId(e: AnActionEvent): ProjectSystemId = MavenUtil.SYSTEM_ID
 
-  override fun isEnabledAndVisible(e: AnActionEvent) = true
+  override fun isEnabledAndVisible(e: AnActionEvent): Boolean = true
 
   override fun setSelectedState(view: DependencyAnalyzerView, e: AnActionEvent) {
     viewAction.setSelectedState(view, e)
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    if (e.place == ActionPlaces.ACTION_SEARCH) {
+      e.presentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.action.name.0", "Maven");
+    }
   }
 }
 

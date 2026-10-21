@@ -97,6 +97,10 @@ public class CompositeFilter implements Filter, FilterMixin, DumbAware {
   private static @NotNull Result createFinalResult(@NotNull List<? extends ResultItem> resultItems) {
     if (resultItems.size() == 1) {
       ResultItem resultItem = resultItems.get(0);
+      if (resultItem instanceof Result result) {
+        // A filter's own Result subclass can carry more than the copied fields, for example an InlayProvider.
+        return result;
+      }
       return new Result(resultItem.getHighlightStartOffset(), resultItem.getHighlightEndOffset(), resultItem.getHyperlinkInfo(),
                         resultItem.getHighlightAttributes(), resultItem.getFollowedHyperlinkAttributes(), resultItem.getHoveredHyperlinkAttributes()) {
         {

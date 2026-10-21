@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
@@ -9,8 +10,6 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
@@ -24,7 +23,9 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.intellij.python.sdk.backend.pythonInterpreter
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getSdkAPI
 
 internal class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
   override fun customizeCommandAndEnvironment(project: Project?, envs: MutableMap<String, String>, context: VcsExecutableContext) {
@@ -33,15 +34,16 @@ internal class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
     // Use a cancellable, retryable read action instead of a plain blocking one:
     // this runs in a git command (background thread) and must yield to pending write actions
     // to avoid non-cancellable read-action freezes (PY-89735).
-    val sdk: Sdk = ReadAction.nonBlocking<Sdk?> { findSdk(project, context.root) }.executeSynchronously() ?: return
+    val interpreter = ReadAction.nonBlocking<PythonInterpreter?> { findInterpreter(project, context.root) }.executeSynchronously() ?: return
+    @Suppress("DEPRECATION") // The remote and WSL checks and the activation environment read an SDK.
+    val sdk = interpreter.getSdkAPI()
     when {
       PythonSdkUtil.isRemote(sdk) -> return
       sdk.isWsl -> if (context.type != ExecutableType.WSL) return
       else -> if (context.type != ExecutableType.LOCAL) return
     }
 
-    val pyRichSdk = sdk.pythonInterpreter()
-    if (pyRichSdk.isActivatable) {
+    if (interpreter is NativePythonInterpreter && interpreter.isActivatable) {
       // in case of virtualenv sdk on unix we activate virtualenv
       envs.putAll(runBlockingMaybeCancellable { sdk.activationEnvironment() }.successOrNull ?: emptyMap())
     }
@@ -60,16 +62,13 @@ internal class PyVirtualEnvVcsCustomizer : VcsEnvCustomizer() {
     }
   }
 
-  private fun findSdk(project: Project, root: VirtualFile?): Sdk? {
-    val module = root?.let { ModuleUtil.findModuleForFile(root, project) }
-    if (module != null) return PythonSdkUtil.findPythonSdk(module)
-
-    for (m in ModuleManager.getInstance(project).modules) {
-      val sdk = PythonSdkUtil.findPythonSdk(m)
-      if (sdk != null) return sdk
-    }
-
-    return null
+  /**
+   * The interpreter of the Python project of [root], else of the main Python project. Read from the snapshot, because
+   * a git command cannot wait. Before the first snapshot, nothing is activated.
+   */
+  private fun findInterpreter(project: Project, root: VirtualFile?): PythonInterpreter? {
+    val snapshot = EvoPyProjectModel.getInstance(project).snapshotOrNull() ?: return null
+    return root?.let { snapshot.forFile(it, mainForOrphans = false) }?.interpreter ?: snapshot.main?.interpreter
   }
 
   private val Sdk.isWsl: Boolean

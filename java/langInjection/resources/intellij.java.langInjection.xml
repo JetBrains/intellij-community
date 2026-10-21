@@ -60,7 +60,8 @@
     <projectConfigurable parentId="IntelliLang.Configuration" id="IntelliLang.Advanced"
                          bundle="messages.IntelliLangBundle" key="configurable.AdvancedSettingsUI.display.name"
                          instance="org.intellij.plugins.intelliLang.AdvancedSettingsUI"
-                         nonDefaultProject="true"/>
+                         nonDefaultProject="true"
+                         searchableInActions="false"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

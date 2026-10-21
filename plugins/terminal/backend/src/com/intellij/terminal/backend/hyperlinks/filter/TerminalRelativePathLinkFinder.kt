@@ -109,6 +109,9 @@ internal class TerminalRelativePathLinkFinder(
               char == ':' -> {
                 val position = parsePosition(line, ind)
                 addLink(ind, position, true)
+                if (position != null) {
+                  ind = position.linkEndExclusiveIndex - 1
+                }
                 state = ParsingState.CANCELED_PATH
               }
               isNonPathChar(char) -> {
@@ -183,6 +186,17 @@ internal fun parsePosition(line: String, colonInd: Int): Position? {
           }
         }
       }
+    }
+    return null
+  }
+  // Try to parse as "path: line: message", the form of a groovyc error.
+  // Without the second colon and a space after it, the number might not be a line, e.g. a time "10:30".
+  if (line.isCharAt(colonInd + 1, ' ')) {
+    val lineNumberStartInd = colonInd + 2
+    val lineNumberStr = line.takeNumberFromIndex(lineNumberStartInd) ?: return null
+    val colon2Ind = lineNumberStartInd + lineNumberStr.length
+    if (line.isCharAt(colon2Ind, ':') && line.getOrElse(colon2Ind + 1, ' ').isWhitespace()) {
+      return Position(lineNumberStr.safeToIntOrDefault(1), 1, colon2Ind)
     }
     return null
   }

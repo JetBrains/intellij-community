@@ -51,7 +51,7 @@ private fun launch(
   andThen: Consumer<PydevConsoleRunner>,
 ) {
   asyncPromise(project) {
-    if (onlyWithInterpreter && findPythonSdkAndModule(project, contextModule).first == null) return@asyncPromise
+    if (onlyWithInterpreter && findPythonSdkAndModule(toModuleOrProject(project, contextModule)).first == null) return@asyncPromise
     val runner = PyConsoleRunnerFactoryAsync.getInstance().createConsoleRunnerAsync(project, contextModule)
     withContext(Dispatchers.EDT) { andThen.accept(runner) }
   }
@@ -90,7 +90,7 @@ fun setConsoleInterpreterState(
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 @RequiresBlockingContext
 fun hasPythonConsoleInterpreter(project: Project, contextModule: Module?): Boolean =
-  runBlockingCancellable { findPythonSdkAndModule(project, contextModule).first != null }
+  runBlockingCancellable { findPythonSdkAndModule(toModuleOrProject(project, contextModule)).first != null }
 
 @TestOnly
 @ApiStatus.Internal

@@ -55,6 +55,9 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   @ApiStatus.Internal
   public static final String DEFAULT_SMOOTH_CARET_MOVEMENT = "ide.default.smooth.caret.enabled";
+  /** A product sets this system property to {@code false} to hide the intention bulb by default. */
+  @ApiStatus.Internal
+  public static final String DEFAULT_SHOW_INTENTION_BULB = "ide.default.intention.bulb.shown";
 
   //Q: make it interface?
   public static final class OptionSet {
@@ -76,7 +79,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public boolean SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = true;
     public boolean SHOW_INSPECTION_WIDGET = true;
     public int TOOLTIPS_DELAY_MS = TOOLTIPS_DELAY_RANGE.initial;
-    public boolean SHOW_INTENTION_BULB = true;
+    public boolean SHOW_INTENTION_BULB = Boolean.parseBoolean(System.getProperty(DEFAULT_SHOW_INTENTION_BULB, "true"));
     public boolean IS_CARET_BLINKING = true;
     public int CARET_BLINKING_PERIOD = BLINKING_RANGE.initial;
     @ApiStatus.Experimental public boolean IS_SMOOTH_CARET_BLINKING = Boolean.getBoolean(DEFAULT_SMOOTH_CARET_MOVEMENT);

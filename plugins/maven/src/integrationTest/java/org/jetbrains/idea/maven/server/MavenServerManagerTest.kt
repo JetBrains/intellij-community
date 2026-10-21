@@ -153,8 +153,14 @@ class MavenServerManagerTest {
 
   private fun kill(connector: MavenServerConnector) {
     val support = ReflectionUtil.getField(MavenServerConnectorImpl::class.java, connector, RemoteProcessSupport::class.java, "mySupport")
-    val heartbeat = ReflectionUtil.getField(RemoteProcessSupport::class.java, support, AtomicReference::class.java, "myHeartbeatRef")
-    (heartbeat.get() as RemoteProcessSupport.Heartbeat).kill(1)
+    val heartbeatRef = ReflectionUtil.getField(RemoteProcessSupport::class.java, support, AtomicReference::class.java, "myHeartbeatRef")
+    object : WaitFor(10000) {
+      override fun condition(): Boolean {
+        return heartbeatRef.get() != null
+      }
+    }
+    val heartbeat = heartbeatRef.get() as RemoteProcessSupport.Heartbeat? ?: fail("The heartbeat of the Maven server did not start")
+    heartbeat.kill(1)
     object : WaitFor(10000) {
       override fun condition(): Boolean {
         return !connector.checkConnected()

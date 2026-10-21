@@ -3,6 +3,7 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.openapi.util.text.HtmlChunk
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 data class PluginRowInput(
@@ -15,6 +16,7 @@ data class PluginRowInput(
   val operationInProgress: Boolean = false,
   val detailsProgress: PluginProgressState? = null,
   val preparedUpdate: PluginPreparedUpdateState? = null,
+  val expectedExplanations: List<@Nls String> = emptyList(),
 )
 
 @ApiStatus.Internal

@@ -3,8 +3,12 @@ package com.jetbrains.jsonSchema.impl
 
 import com.intellij.lang.Language
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.Disposable
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.WaitFor
 import com.jetbrains.jsonSchema.remote.http.CachedFile
 import com.jetbrains.jsonSchema.remote.http.CachedSchema
@@ -21,26 +25,41 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 
-class JsonSchemaRemoteDownloadAnnotatorTest : BasePlatformTestCase() {
+@TestApplication
+class JsonSchemaRemoteDownloadAnnotatorTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+  private val project get() = projectFixture.get()
+
+  @TestDisposable
+  lateinit var disposable: Disposable
+
   private lateinit var scope: CoroutineScope
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
   }
 
-  override fun tearDown() {
-    try {
-      scope.cancel()
-    }
-    finally {
-      super.tearDown()
-    }
+  @AfterEach
+  fun tearDown() {
+    if (::scope.isInitialized) scope.cancel()
   }
 
+  @Test
   fun testUnavailableUrlIsWarningOnSchemaProperty() {
     val url = "https://example.test/annotator-404.json"
     installService(StatusCache(CachedSchema.Unavailable(404, "Not Found")))
@@ -52,6 +71,7 @@ class JsonSchemaRemoteDownloadAnnotatorTest : BasePlatformTestCase() {
     assertTrue(infos.none { it.severity == HighlightSeverity.ERROR })
   }
 
+  @Test
   fun testUnavailableUrlIsOneWarningInJson5() {
     val url = "https://example.test/annotator-json5-404.json"
     installService(StatusCache(CachedSchema.Unavailable(404, "Not Found")))
@@ -60,6 +80,7 @@ class JsonSchemaRemoteDownloadAnnotatorTest : BasePlatformTestCase() {
     assertEquals(1, infos.count { it.severity == HighlightSeverity.WARNING && it.description.contains("Cannot download JSON schema") })
   }
 
+  @Test
   fun testFailedIsWeakWarning() {
     val url = "https://example.test/annotator-failed.json"
     val service = installService(StatusCache(), FailingTransport())
@@ -71,6 +92,7 @@ class JsonSchemaRemoteDownloadAnnotatorTest : BasePlatformTestCase() {
     assertTrue(infos.none { it.severity == HighlightSeverity.WARNING && it.description.contains("Cannot download JSON schema") })
   }
 
+  @Test
   fun testFailedOffersRetryThatDownloadsAgain() {
     val url = "https://example.test/annotator-retry.json"
     val transport = FailingTransport()
@@ -83,6 +105,7 @@ class JsonSchemaRemoteDownloadAnnotatorTest : BasePlatformTestCase() {
     assertTrue(waitFor(5_000) { transport.calls.get() == 2 && !service.hasInFlight(url) })
   }
 
+  @Test
   fun testUnavailableOffersRetryThatDownloadsAgain() {
     val url = "https://example.test/annotator-unavailable-retry.json"
     val transport = CountingTransport()
@@ -95,15 +118,17 @@ class JsonSchemaRemoteDownloadAnnotatorTest : BasePlatformTestCase() {
     assertFalse(service.isUnavailable(url))
   }
 
+  @Test
   fun testRejectedOffersNoRetry() {
     val url = "https://example.test/annotator-rejected-no-retry.json"
     val service = installService(StatusCache(), RejectedTransport())
     assertNull(service.downloadAndWaitForTest(SchemaUrl.parse(url)))
     myFixture.configureByText("a.json", """{"${'$'}schema": "<caret>$url"}""")
 
-    assertEmpty(myFixture.filterAvailableIntentions("Retry downloading JSON schema"))
+    assertTrue(myFixture.filterAvailableIntentions("Retry downloading JSON schema").isEmpty())
   }
 
+  @Test
   fun testRejectedIsWarning() {
     val url = "https://example.test/annotator-rejected.json"
     val service = installService(StatusCache(), RejectedTransport())
@@ -116,6 +141,7 @@ class JsonSchemaRemoteDownloadAnnotatorTest : BasePlatformTestCase() {
     assertTrue(infos.none { it.severity == HighlightSeverity.ERROR })
   }
 
+  @Test
   fun testSuccessIsQuiet() {
     val url = "https://example.test/annotator-success.json"
     installService(StatusCache(CachedSchema.Content(SchemaContent("{}".toByteArray()))))
@@ -124,6 +150,7 @@ class JsonSchemaRemoteDownloadAnnotatorTest : BasePlatformTestCase() {
     assertTrue(infos.none { it.description?.contains("Cannot download JSON schema") == true })
   }
 
+  @Test
   fun testInFlightIsQuiet() {
     val url = "https://example.test/annotator-inflight.json"
     val gate = CompletableDeferred<Unit>()
@@ -140,6 +167,7 @@ class JsonSchemaRemoteDownloadAnnotatorTest : BasePlatformTestCase() {
     }
   }
 
+  @Test
   fun testColdIsQuiet() {
     val url = "https://example.test/annotator-cold.json"
     installService(StatusCache())
@@ -148,6 +176,7 @@ class JsonSchemaRemoteDownloadAnnotatorTest : BasePlatformTestCase() {
     assertTrue(infos.none { it.description?.contains("Cannot download JSON schema") == true })
   }
 
+  @Test
   fun testUnavailableUrlIsWarningOnSchemaComment() {
     val yaml = Language.findLanguageByID("yaml") ?: return
     val fileType = yaml.associatedFileType ?: return
@@ -170,8 +199,8 @@ class JsonSchemaRemoteDownloadAnnotatorTest : BasePlatformTestCase() {
     cache: SchemaContentCache,
     transport: SchemaHttpTransport = GatedTransport(CompletableDeferred()),
   ): JsonSchemaRemoteContentService {
-    setRemoteSchemaAccessAllowed(true, testRootDisposable)
-    return replaceRemoteSchemaServices(project, scope, testRootDisposable, cache, transport)
+    setRemoteSchemaAccessAllowed(true, disposable)
+    return replaceRemoteSchemaServices(project, scope, disposable, cache, transport)
   }
 
   private class StatusCache(private var cached: CachedSchema? = null) : SchemaContentCache {

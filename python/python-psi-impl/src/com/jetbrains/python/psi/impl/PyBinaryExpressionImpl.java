@@ -7,6 +7,7 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ThreeState;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
@@ -92,7 +93,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
       return PyUnionType.unionOrUnknown(leftContribution.get(), rightType);
     }
     final String referencedName = getReferencedName();
-    if (PyNames.CONTAINS.equals(referencedName)) {
+    if (PyNames.CONTAINS.equals(referencedName) || getOperator() == PyTokenTypes.IS_KEYWORD) {
       final PyClassType boolType = PyBuiltinCache.getInstance(this).getBoolType();
       return boolType != null ? boolType : PyAnyType.getUnknown();
     }

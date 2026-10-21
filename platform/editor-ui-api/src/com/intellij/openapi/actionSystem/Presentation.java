@@ -246,8 +246,14 @@ public final class Presentation implements Cloneable {
     setText(text, true);
   }
 
+  /**
+   * Sets {@code supplier} as the fallback of the text set before: the text is computed on read,
+   * and {@code supplier} is called when the text set before is {@code null}.
+   * Neither supplier is evaluated and listeners are not notified,
+   * so it is meant for a template presentation while the actions are registered.
+   */
   @ApiStatus.Internal
-  public void setFallbackPresentationText(@NotNull Supplier<String> supplier) {
+  public void initFallbackText(@NotNull Supplier<String> supplier) {
     Supplier<TextWithMnemonic> original = textWithMnemonicSupplier;
     Supplier<TextWithMnemonic> fallback = getTextWithMnemonic(supplier, true);
     textWithMnemonicSupplier = () -> {
@@ -294,6 +300,26 @@ public final class Presentation implements Cloneable {
     Supplier<String> oldDescriptionSupplier = descriptionSupplier;
     descriptionSupplier = () -> description;
     fireObjectPropertyChange(PROP_DESCRIPTION, oldDescriptionSupplier.get(), description);
+  }
+
+  /**
+   * Sets {@code supplier} as the description, with the description set before as its fallback.
+   * The description is computed on read: {@link #getDescription()} calls {@code supplier}.
+   * When {@code supplier} returns an empty description, the description set before is returned, unless it is {@code null}.
+   * Neither supplier is evaluated and listeners are not notified,
+   * so it is meant for a template presentation while the actions are registered.
+   */
+  @ApiStatus.Internal
+  public void initDescriptionWithFallback(@NotNull Supplier<@ActionDescription String> supplier) {
+    Supplier<String> fallback = descriptionSupplier;
+    descriptionSupplier = () -> {
+      String description = supplier.get();
+      if (Strings.isNotEmpty(description)) {
+        return description;
+      }
+      String fallbackDescription = fallback.get();
+      return fallbackDescription == null ? description : fallbackDescription;
+    };
   }
 
   public @Nullable Icon getIcon() {

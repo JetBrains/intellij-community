@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.util.text.HtmlChunk
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
 @ApiStatus.Internal
 data class ListPluginModel(
@@ -14,6 +15,7 @@ data class ListPluginModel(
   val errors: MutableMap<PluginId, List<HtmlChunk>> = mutableMapOf(),
   val pluginInstallationStates: MutableMap<PluginId, PluginInstallationState> = mutableMapOf(),
   val updateSources: MutableMap<PluginId, PluginUpdateSource> = mutableMapOf(),
+  val expectedExplanations: MutableMap<PluginId, List<@Nls String>> = mutableMapOf(),
 ) {
 
   fun setInstalledPlugins(models: Map<PluginId, PluginUiModel>) {
@@ -28,6 +30,11 @@ data class ListPluginModel(
 
   fun setErrors(pluginId: PluginId, errors: List<HtmlChunk>) {
     this.errors[pluginId] = errors
+  }
+
+  fun setExpectedExplanations(explanations: Map<PluginId, List<@Nls String>>) {
+    expectedExplanations.clear()
+    expectedExplanations.putAll(explanations)
   }
 
   fun setPluginInstallationStates(models: Map<PluginId, PluginInstallationState>) {
@@ -53,9 +60,11 @@ data class ListPluginModel(
     errors: Map<PluginId, List<HtmlChunk>>,
     installationStates: Map<PluginId, PluginInstallationState>,
     updateSources: Map<PluginId, PluginUpdateSource>,
+    expectedExplanations: Map<PluginId, List<@Nls String>> = emptyMap(),
   ) {
     setInstalledPlugins(installedModels)
     setErrors(errors)
+    setExpectedExplanations(expectedExplanations)
     setPluginInstallationStates(installationStates)
     setPluginUpdateSources(updateSources)
   }

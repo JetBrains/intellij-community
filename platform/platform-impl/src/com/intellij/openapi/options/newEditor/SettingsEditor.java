@@ -52,6 +52,7 @@ import com.intellij.ui.navigation.History;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector;
+import com.intellij.internal.statistic.collectors.fus.ui.SettingsOpeningTracker;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -70,8 +71,10 @@ import javax.swing.Action;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
+import javax.swing.LayoutFocusTraversalPolicy;
 import java.awt.AWTEvent;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -104,7 +107,9 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   private final SettingsFilter filter;
   private final SettingsTreeView treeView;
   public final ConfigurableEditor editor;
-  private final OnePixelSplitter mySplitter;
+  private final @Nullable OnePixelSplitter mySplitter;
+  private final @NotNull JComponent mySidebar;
+  private final @NotNull JComponent myContent;
   private final SpotlightPainter spotlightPainter;
   private final LoadingDecorator loadingDecorator;
   private final @NotNull ConfigurableEditorBanner myBanner;
@@ -132,6 +137,11 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   };
 
 
+  /**
+   * The opening that created this editor, for the FUS event of the first page, or null when it is logged or not tracked.
+   */
+  private @Nullable SettingsOpeningTracker.Opening myOpening;
+
   private final AbstractAction myResetAllAction = new AbstractAction(UIBundle.message("settings.reset.all.action.name")) {
     @Override
     public void actionPerformed(ActionEvent event) {
@@ -149,8 +159,26 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
                  @NotNull ISettingsTreeViewFactory factory,
                  @NotNull SpotlightPainterFactory spotlightPainterFactory,
                  @Nullable AnAction extraHeaderAction) {
+    this(parent, project, groups, configurable, filter, useLeaveState, factory, spotlightPainterFactory, extraHeaderAction, false);
+  }
+
+  /**
+   * @param detached {@code true} for the Settings tool window. Then the editor shows nothing itself:
+   *                 the tool window shows {@link #getSidebar()}, and the Settings editor tab shows {@link #getContent()}.
+   */
+  SettingsEditor(@NotNull Disposable parent,
+                 @NotNull Project project,
+                 @NotNull List<? extends ConfigurableGroup> groups,
+                 @Nullable Configurable configurable,
+                 @Nullable String filter,
+                 boolean useLeaveState,
+                 @NotNull ISettingsTreeViewFactory factory,
+                 @NotNull SpotlightPainterFactory spotlightPainterFactory,
+                 @Nullable AnAction extraHeaderAction,
+                 boolean detached) {
     super(parent);
     myProject = project;
+    myOpening = SettingsOpeningTracker.takeOpening(project);
     myUseLeaveState = useLeaveState;
     myExtraHeaderAction = extraHeaderAction;
     properties = PropertiesComponent.getInstance(project);
@@ -238,12 +266,18 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
           }
         }
         SettingsDialogPerformanceTracker.startPageLoading();
+        // only the first selection ends the opening, a later one is a user navigation
+        SettingsOpeningTracker.Opening opening = myOpening;
+        myOpening = null;
         Promise<? super Object> result = editor.select(configurable);
         result.onSuccess(it -> {
           updateController(configurable);
           //requestFocusToEditor(); // TODO
           loadingDecorator.stopLoading();
           SettingsDialogPerformanceTracker.finishPageReady();
+          if (opening != null) {
+            SettingsOpeningTracker.logOpened(myProject, opening, configurable);
+          }
         });
         return result;
       }
@@ -373,23 +407,34 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     loadingDecorator = new LoadingDecorator(editor, this, 10, true);
     loadingDecorator.setOverlayBackground(LoadingDecorator.OVERLAY_BACKGROUND);
     myBanner = new ConfigurableEditorBanner(editor.getResetAction(), myBreadcrumbs);
-    searchPanel.setBorder(JBUI.Borders.empty(7, 5, 6, 5));
-    search.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-    searchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-    JComponent left = new JPanel(new BorderLayout());
+    Color sidebarBackground = detached ? JBUI.CurrentTheme.ToolWindow.background() : UIUtil.SIDE_PANEL_BACKGROUND;
+    searchPanel.setBorder(detached ? JBUI.Borders.empty(4, 8, 6, 8) : JBUI.Borders.empty(7, 5, 6, 5));
+    search.setBackground(sidebarBackground);
+    searchPanel.setBackground(sidebarBackground);
+    JComponent left = detached ? new DetachedPanel() : new JPanel(new BorderLayout());
     left.add(BorderLayout.CENTER, treeView);
-    JPanel right = new JPanel(new BorderLayout());
+    JPanel right = detached ? new DetachedPanel() : new JPanel(new BorderLayout());
     right.add(BorderLayout.CENTER, loadingDecorator.getComponent());
-    mySplitter = new OnePixelSplitter(false, properties.getFloat(SPLITTER_PROPORTION, SPLITTER_PROPORTION_DEFAULT_VALUE));
-    mySplitter.setHonorComponentsMinimumSize(true);
-    mySplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_FIRST_MIN_SIZE);
-    mySplitter.setFirstComponent(left);
-
-    mySplitter.setSecondComponent(right);
-    right.add(BorderLayout.NORTH, withHistoryToolbar(myBanner));
+    right.add(BorderLayout.NORTH, withHistoryToolbar(myBanner, detached ? right : this));
     left.add(BorderLayout.NORTH, searchPanel);
-    editor.setPreferredSize(JBUI.size(800, 600));
-    add(BorderLayout.CENTER, mySplitter);
+    mySidebar = left;
+    myContent = right;
+    if (detached) {
+      mySplitter = null;
+      // the editor tab answers a focus search with the focus of this editor, so the search in a page must stop here
+      right.setFocusTraversalPolicyProvider(true);
+      right.setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
+      search.getTextEditor().getEmptyText().setText(UIBundle.message("settings.tool.window.search.empty.text"));
+    }
+    else {
+      mySplitter = new OnePixelSplitter(false, properties.getFloat(SPLITTER_PROPORTION, SPLITTER_PROPORTION_DEFAULT_VALUE));
+      mySplitter.setHonorComponentsMinimumSize(true);
+      mySplitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_FIRST_MIN_SIZE);
+      mySplitter.setFirstComponent(left);
+      mySplitter.setSecondComponent(right);
+      editor.setPreferredSize(JBUI.size(800, 600));
+      add(BorderLayout.CENTER, mySplitter);
+    }
 
     spotlightPainter = spotlightPainterFactory.createSpotlightPainter(project, editor, this, (painter) -> {
       Configurable currentConfigurable = this.filter.context.getCurrentConfigurable();
@@ -407,7 +452,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
       }
     }
 
-    treeView.select(configurable).onProcessed(it -> this.filter.update(filter));
+    treeView.selectWithoutDelay(configurable).onProcessed(it -> this.filter.update(filter));
 
     Disposer.register(this, treeView);
     installSpotlightRemover();
@@ -431,11 +476,21 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   }
 
   boolean isSidebarVisible() {
-    return mySplitter.getFirstComponent().isVisible();
+    return mySidebar.isVisible();
   }
 
   void setSidebarVisible(boolean visible) {
-    mySplitter.getFirstComponent().setVisible(visible);
+    mySidebar.setVisible(visible);
+  }
+
+  /** The search field and the tree. A detached editor gives them to the Settings tool window. */
+  @NotNull JComponent getSidebar() {
+    return mySidebar;
+  }
+
+  /** The banner and the page. A detached editor gives them to the Settings editor tab. */
+  @NotNull JComponent getContent() {
+    return myContent;
   }
 
   @ApiStatus.Internal
@@ -509,14 +564,14 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     search.getTextEditor().addFocusListener(spotlightRemover);
   }
 
-  private JComponent withHistoryToolbar(SimpleBanner component) {
+  private JComponent withHistoryToolbar(SimpleBanner component, JComponent targetComponent) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionUtil.copyFrom(new BackAction(), "Back"));
     group.add(ActionUtil.copyFrom(new ForwardAction(), "Forward"));
     if (myExtraHeaderAction != null) {
       group.add(myExtraHeaderAction);
     }
-    JComponent toolbar = ActionUtil.createToolbarComponent(this, ActionPlaces.SETTINGS_HISTORY, group, true);
+    JComponent toolbar = ActionUtil.createToolbarComponent(targetComponent, ActionPlaces.SETTINGS_HISTORY, group, true);
     toolbar.setOpaque(false);
     return createHeaderPanel(component, toolbar);
   }
@@ -560,7 +615,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
   @Override
   protected void disposeOnce() {
-    if (properties == null || mySplitter == null) return; // if constructor failed
+    if (properties == null || mySplitter == null) return; // if constructor failed, or the editor is detached
     properties.setValue(SPLITTER_PROPORTION, mySplitter.getProportion(), SPLITTER_PROPORTION_DEFAULT_VALUE);
   }
 
@@ -574,7 +629,13 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     return myResetAllAction;
   }
 
-  private void reset() {
+  /** Checks the current page for changes at once. Without this call, the editor checks a page only after a delay. */
+  public void checkCurrentModified() {
+    checkModified(filter.context.getCurrentConfigurable());
+  }
+
+  /** Drops every change that waits for Apply, and shows the saved values again. */
+  void reset() {
     checkModified(filter.context.getCurrentConfigurable());
     for (Configurable configurable : filter.context.getModified()) {
       filter.context.fireReset(configurable);
@@ -859,5 +920,17 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     return project.isDefault() ?
            customization.projectMessage("configurable.default.project.tooltip") :
            customization.projectMessage("configurable.current.project.tooltip");
+  }
+
+  /** A part of a detached editor. It gives the data of the editor to its children, because the editor itself is not shown. */
+  private final class DetachedPanel extends JPanel implements UiDataProvider {
+    private DetachedPanel() {
+      super(new BorderLayout());
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      SettingsEditor.this.uiDataSnapshot(sink);
+    }
   }
 }

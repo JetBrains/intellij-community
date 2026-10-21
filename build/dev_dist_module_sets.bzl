@@ -172,6 +172,7 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.ide.playback",
             "intellij.platform.ide.fileChooser.universal",
             "intellij.platform.ide.tabInEditor",
+            "intellij.platform.ide.tabInEditor.frontend",
             "intellij.platform.threadDumpParser",
             "intellij.platform.ide.favoritesTreeView",
             "intellij.platform.ide.designer",
@@ -190,7 +191,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.ijent.community.impl",
             "intellij.platform.wsl.impl",
             "intellij.platform.ide.bootstrap.eel",
-            "intellij.platform.ide.bootstrap.kernel",
             "intellij.platform.diff",
             "intellij.platform.diff.impl",
             "intellij.platform.util.diff",
@@ -219,7 +219,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.icons.impl.intellij": "embedded",
             "intellij.platform.ide.bootstrap": "embedded",
             "intellij.platform.ide.bootstrap.eel": "embedded",
-            "intellij.platform.ide.bootstrap.kernel": "embedded",
             "intellij.platform.ide.codeinsight.inline": "embedded",
             "intellij.platform.ide.concurrency": "embedded",
             "intellij.platform.ide.dnd": "embedded",
@@ -278,7 +277,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.icons.impl.intellij": "//platform/icons-impl/intellij:intellij_content_module_jar",
             "intellij.platform.ide.bootstrap": "//platform/platform-impl/bootstrap:bootstrap_content_module_jar",
             "intellij.platform.ide.bootstrap.eel": "//platform/platform-impl/bootstrap/eel:eel_content_module_jar",
-            "intellij.platform.ide.bootstrap.kernel": "//platform/platform-impl/bootstrap/kernel:kernel_content_module_jar",
             "intellij.platform.ide.codeinsight.inline": "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline_content_module_jar",
             "intellij.platform.ide.colorPicker": "//platform/platform-impl/color-picker:color-picker_content_module_jar",
             "intellij.platform.ide.concurrency": "//platform/platform-impl/concurrency:concurrency_content_module_jar",
@@ -299,6 +297,7 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.ide.progress": "//platform/progress/shared:ide-progress_content_module_jar",
             "intellij.platform.ide.remote": "//platform/platform-impl/remote:remote_content_module_jar",
             "intellij.platform.ide.tabInEditor": "//platform/platform-impl/tab-in-editor:tab-in-editor_content_module_jar",
+            "intellij.platform.ide.tabInEditor.frontend": "//platform/platform-impl/tab-in-editor/frontend:frontend_content_module_jar",
             "intellij.platform.ide.util.io.native": "//platform/platform-util-io-native:ide-util-io-native_content_module_jar",
             "intellij.platform.ijent": "//platform/ijent:ijent_content_module_jar",
             "intellij.platform.ijent.community.buildConstants": "//platform/ijent/buildConstants:buildConstants_content_module_jar",
@@ -348,6 +347,7 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.ide.pluginSignatureVerifier",
             "intellij.platform.ide.remote",
             "intellij.platform.ide.tabInEditor",
+            "intellij.platform.ide.tabInEditor.frontend",
             "intellij.platform.ide.util.io.native",
             "intellij.platform.terminal",
             "intellij.platform.threadDumpParser",
@@ -763,15 +763,10 @@ DEV_DIST_MODULE_SETS = {
         modules = [
             "fleet.bifurcan",
             "fleet.fastutil",
-            "fleet.kernel",
             "fleet.multiplatform.shims",
             "fleet.openmap",
-            "fleet.radixTrie",
             "fleet.reporting.api",
             "fleet.reporting.shared",
-            "fleet.rhizomedb",
-            "fleet.rhizomedb.transactor",
-            "fleet.rhizomedb.transactor.rebase",
             "fleet.rpc",
             "fleet.util.codepoints",
             "fleet.util.core",
@@ -784,15 +779,10 @@ DEV_DIST_MODULE_SETS = {
         loading = {
             "fleet.bifurcan": "embedded",
             "fleet.fastutil": "embedded",
-            "fleet.kernel": "embedded",
             "fleet.multiplatform.shims": "embedded",
             "fleet.openmap": "embedded",
-            "fleet.radixTrie": "embedded",
             "fleet.reporting.api": "embedded",
             "fleet.reporting.shared": "embedded",
-            "fleet.rhizomedb": "embedded",
-            "fleet.rhizomedb.transactor": "embedded",
-            "fleet.rhizomedb.transactor.rebase": "embedded",
             "fleet.rpc": "embedded",
             "fleet.rpc.server": "embedded",
             "fleet.util.codepoints": "embedded",
@@ -803,15 +793,10 @@ DEV_DIST_MODULE_SETS = {
         packed = {
             "fleet.bifurcan": "//fleet/bifurcan:bifurcan_content_module_jar",
             "fleet.fastutil": "//fleet/fastutil:fastutil_content_module_jar",
-            "fleet.kernel": "//fleet/kernel:kernel_content_module_jar",
             "fleet.multiplatform.shims": "//fleet/multiplatform.shims:multiplatform.shims_content_module_jar",
             "fleet.openmap": "//fleet/openmap:openmap_content_module_jar",
-            "fleet.radixTrie": "//fleet/radixTrie:radixTrie_content_module_jar",
             "fleet.reporting.api": "//fleet/reporting/api:api_content_module_jar",
             "fleet.reporting.shared": "//fleet/reporting/shared:shared_content_module_jar",
-            "fleet.rhizomedb": "//fleet/rhizomedb:rhizomedb_content_module_jar",
-            "fleet.rhizomedb.transactor": "//fleet/rhizomedb.transactor:rhizomedb.transactor_content_module_jar",
-            "fleet.rhizomedb.transactor.rebase": "//fleet/rhizomedb.transactor.rebase:rhizomedb.transactor.rebase_content_module_jar",
             "fleet.rpc": "//fleet/rpc:rpc_content_module_jar",
             "fleet.rpc.server": "//fleet/rpc.server:rpc.server_content_module_jar",
             "fleet.util.codepoints": "//fleet/util/codepoints:codepoints_content_module_jar",
@@ -834,7 +819,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.warmup",
             "intellij.platform.inspect",
             "intellij.spellchecker.vcs",
-            "intellij.spellchecker.xml",
             "intellij.platform.buildView",
             "intellij.platform.buildView.backend",
             "intellij.platform.buildView.frontend",
@@ -894,7 +878,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.warmup": "//platform/warmup:warmup_content_module_jar",
             "intellij.regexp": "//RegExpSupport:regexp_content_module_jar",
             "intellij.spellchecker.vcs": "//spellchecker/vcs:vcs_content_module_jar",
-            "intellij.spellchecker.xml": "//spellchecker/xml:xml_content_module_jar",
         },
         module_system_loaded = [
             "intellij.emojipicker",
@@ -924,7 +907,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.warmup",
             "intellij.regexp",
             "intellij.spellchecker.vcs",
-            "intellij.spellchecker.xml",
         ],
         mode_refused = {
             "frontend": [
@@ -941,7 +923,6 @@ DEV_DIST_MODULE_SETS = {
                 "intellij.platform.versionDownloadManager",
                 "intellij.platform.warmup",
                 "intellij.spellchecker.vcs",
-                "intellij.spellchecker.xml",
             ],
         },
     ),
@@ -1559,9 +1540,9 @@ DEV_DIST_MODULE_SETS = {
         nested = [
         ],
         packed = {
-            "intellij.platform.polySymbols": "//platform/polySymbols:polySymbols_content_module_jar",
+            "intellij.platform.polySymbols": "//platform/polySymbols/shared:polySymbols_content_module_jar",
             "intellij.platform.polySymbols.backend": "//platform/polySymbols/backend:backend_content_module_jar",
-            "intellij.platform.polySymbols.web": "//platform/polySymbols-web:polySymbols-web_content_module_jar",
+            "intellij.platform.polySymbols.web": "//platform/polySymbols/web:web_content_module_jar",
         },
         module_system_loaded = [
             "intellij.platform.polySymbols",
@@ -1598,9 +1579,6 @@ DEV_DIST_MODULE_SETS = {
     "intellij.moduleSets.rpc.backend.extended": struct(
         modules = [
             "intellij.platform.rpc.backend",
-            "intellij.platform.kernel.backend.baseline",
-            "intellij.platform.kernel.backend",
-            "intellij.platform.kernel.impl",
             "intellij.platform.rpc.topics",
             "intellij.platform.rpc.topics.backend",
             "intellij.platform.rpc.topics.frontend",
@@ -1608,18 +1586,12 @@ DEV_DIST_MODULE_SETS = {
         nested = [
         ],
         packed = {
-            "intellij.platform.kernel.backend": "//platform/kernel/backend:backend_content_module_jar",
-            "intellij.platform.kernel.backend.baseline": "//platform/kernel/backend/baseline:baseline_content_module_jar",
-            "intellij.platform.kernel.impl": "//platform/kernel/intellij.platform.kernel.impl:impl_content_module_jar",
             "intellij.platform.rpc.backend": "//platform/kernel/rpc.backend:rpc.backend_content_module_jar",
             "intellij.platform.rpc.topics": "//platform/remote-topics/shared:rpc-topics_content_module_jar",
             "intellij.platform.rpc.topics.backend": "//platform/remote-topics/backend:backend_content_module_jar",
             "intellij.platform.rpc.topics.frontend": "//platform/remote-topics/frontend:frontend_content_module_jar",
         },
         module_system_loaded = [
-            "intellij.platform.kernel.backend",
-            "intellij.platform.kernel.backend.baseline",
-            "intellij.platform.kernel.impl",
             "intellij.platform.rpc.backend",
             "intellij.platform.rpc.topics",
             "intellij.platform.rpc.topics.backend",
@@ -1627,8 +1599,6 @@ DEV_DIST_MODULE_SETS = {
         ],
         mode_refused = {
             "frontend": [
-                "intellij.platform.kernel.backend",
-                "intellij.platform.kernel.backend.baseline",
                 "intellij.platform.rpc.backend",
                 "intellij.platform.rpc.topics.backend",
             ],
@@ -1639,18 +1609,15 @@ DEV_DIST_MODULE_SETS = {
             "intellij.platform.klogger",
             "intellij.platform.rpc",
             "intellij.platform.rpc.lite",
-            "intellij.platform.kernel",
         ],
         nested = [
             "intellij.moduleSets.fleet",
         ],
         loading = {
-            "intellij.platform.kernel": "embedded",
             "intellij.platform.klogger": "embedded",
             "intellij.platform.rpc.lite": "embedded",
         },
         packed = {
-            "intellij.platform.kernel": "//platform/kernel/shared:kernel_content_module_jar",
             "intellij.platform.klogger": "//platform/kernel/klogger:klogger_content_module_jar",
             "intellij.platform.rpc": "//platform/kernel/rpc:rpc_content_module_jar",
             "intellij.platform.rpc.lite": "//platform/kernel/rpc.lite:rpc.lite_content_module_jar",
@@ -1740,17 +1707,11 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.lucene.common",
             "intellij.spellchecker",
         ],
-        mode_refused = {
-            "frontend": [
-                "intellij.spellchecker",
-            ],
-        },
     ),
     "intellij.moduleSets.split.core": struct(
         modules = [
             "intellij.platform.settings.local",
             "intellij.platform.backend",
-            "intellij.platform.backend.baseline",
             "intellij.platform.project.backend",
             "intellij.platform.progress.backend",
             "intellij.platform.lang.impl.backend",
@@ -1762,7 +1723,6 @@ DEV_DIST_MODULE_SETS = {
         ],
         packed = {
             "intellij.platform.backend": "//platform/backend:backend_content_module_jar",
-            "intellij.platform.backend.baseline": "//platform/backend/baseline:baseline_content_module_jar",
             "intellij.platform.frontend": "//platform/platform-frontend:frontend_content_module_jar",
             "intellij.platform.lang.impl.backend": "//platform/lang-impl/backend:backend_content_module_jar",
             "intellij.platform.monolith": "//platform/monolith:monolith_content_module_jar",
@@ -1772,7 +1732,6 @@ DEV_DIST_MODULE_SETS = {
         },
         module_system_loaded = [
             "intellij.platform.backend",
-            "intellij.platform.backend.baseline",
             "intellij.platform.frontend",
             "intellij.platform.lang.impl.backend",
             "intellij.platform.monolith",
@@ -1783,7 +1742,6 @@ DEV_DIST_MODULE_SETS = {
         mode_refused = {
             "frontend": [
                 "intellij.platform.backend",
-                "intellij.platform.backend.baseline",
                 "intellij.platform.lang.impl.backend",
                 "intellij.platform.monolith",
                 "intellij.platform.progress.backend",

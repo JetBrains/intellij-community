@@ -411,6 +411,89 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/weighers/basic/objectsAsCallables")
+    public static class ObjectsAsCallables extends AbstractBasicCompletionWeigherTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("cast.kt")
+        public void testCast() throws Exception {
+            runTest("../../completion/testData/weighers/basic/objectsAsCallables/cast.kt");
+        }
+
+        @TestMetadata("chainedTypeAlias.kt")
+        public void testChainedTypeAlias() throws Exception {
+            runTest("../../completion/testData/weighers/basic/objectsAsCallables/chainedTypeAlias.kt");
+        }
+
+        @TestMetadata("classLiteral.kt")
+        public void testClassLiteral() throws Exception {
+            runTest("../../completion/testData/weighers/basic/objectsAsCallables/classLiteral.kt");
+        }
+
+        @TestMetadata("classLiteralArgument.kt")
+        public void testClassLiteralArgument() throws Exception {
+            runTest("../../completion/testData/weighers/basic/objectsAsCallables/classLiteralArgument.kt");
+        }
+
+        @TestMetadata("classLiteralQualifier.kt")
+        public void testClassLiteralQualifier() throws Exception {
+            runTest("../../completion/testData/weighers/basic/objectsAsCallables/classLiteralQualifier.kt");
+        }
+
+        @TestMetadata("companionObject.kt")
+        public void testCompanionObject() throws Exception {
+            runTest("../../completion/testData/weighers/basic/objectsAsCallables/companionObject.kt");
+        }
+
+        @TestMetadata("dataObject.kt")
+        public void testDataObject() throws Exception {
+            runTest("../../completion/testData/weighers/basic/objectsAsCallables/dataObject.kt");
+        }
+
+        @TestMetadata("isComparison.kt")
+        public void testIsComparison() throws Exception {
+            runTest("../../completion/testData/weighers/basic/objectsAsCallables/isComparison.kt");
+        }
+
+        @TestMetadata("notIsComparison.kt")
+        public void testNotIsComparison() throws Exception {
+            runTest("../../completion/testData/weighers/basic/objectsAsCallables/notIsComparison.kt");
+        }
+
+        @TestMetadata("object.kt")
+        public void testObject() throws Exception {
+            runTest("../../completion/testData/weighers/basic/objectsAsCallables/object.kt");
+        }
+
+        @TestMetadata("parenthesizedEquality.kt")
+        public void testParenthesizedEquality() throws Exception {
+            runTest("../../completion/testData/weighers/basic/objectsAsCallables/parenthesizedEquality.kt");
+        }
+
+        @TestMetadata("parenthesizedQualifiedEquality.kt")
+        public void testParenthesizedQualifiedEquality() throws Exception {
+            runTest("../../completion/testData/weighers/basic/objectsAsCallables/parenthesizedQualifiedEquality.kt");
+        }
+
+        @TestMetadata("qualifiedClassLiteral.kt")
+        public void testQualifiedClassLiteral() throws Exception {
+            runTest("../../completion/testData/weighers/basic/objectsAsCallables/qualifiedClassLiteral.kt");
+        }
+
+        @TestMetadata("qualifiedEqualityLeft.kt")
+        public void testQualifiedEqualityLeft() throws Exception {
+            runTest("../../completion/testData/weighers/basic/objectsAsCallables/qualifiedEqualityLeft.kt");
+        }
+
+        @TestMetadata("typeAlias.kt")
+        public void testTypeAlias() throws Exception {
+            runTest("../../completion/testData/weighers/basic/objectsAsCallables/typeAlias.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/weighers/basic/parameterNameAndType")
     public static class ParameterNameAndType extends AbstractBasicCompletionWeigherTest {
         private void runTest(String testDataFilePath) throws Exception {

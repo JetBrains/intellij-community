@@ -139,6 +139,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private volatile boolean myPossiblyInvalidated;
   protected final PsiManagerEx myManager;
   public static final Key<Boolean> BUILDING_STUB = new Key<>("Don't use stubs mark!");
+  private static final Key<String> TREE_LOAD_INFO = Key.create("TREE_LOAD_INFO");
   private final PsiLock myPsiLock;
   private volatile boolean myLoadingAst;
 
@@ -288,6 +289,16 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
           return treeElement;
         }
 
+        // A stamp mismatch means the content changed after the stub was attached and no reparse cleared the stub,
+        // for example because the GC collected the document that carried the pending change.
+        // The mismatch alone does not prove staleness: a commit with no PSI change also moves the stamp,
+        // and the stub stays valid (see ChangedPsiRangeUtil.getChangedPsiRange).
+        // A drop on the mismatch alone would therefore discard a valid stub and its cached PSI.
+        // The stub records structure, not text, so the only reliable staleness test is the
+        // reconciliation inside withAst. Run it first; the catch below classifies a failure.
+        boolean stubMayBeStale = !InternalPsiVersioning.isInsideVersioningButNotLocks() &&
+                                 myTrees.isStubStale(viewProvider.getModificationStamp());
+
         boolean shouldNodeBeVersioned = shouldNodeBeVersioned(viewProvider);
 
         treeElement = InternalPsiVersioning.inVersionedEnvironment(shouldNodeBeVersioned, () -> {
@@ -299,10 +310,25 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
           }
         });
         treeElement.setPsi(this);
+        treeElement.putUserData(TREE_LOAD_INFO, "length=" + treeElement.getTextLength() +
+                                                ", stamp=" + viewProvider.getModificationStamp() +
+                                                ", versionedEnv=" + InternalPsiVersioning.isInsideVersioningButNotLocks() +
+                                                ", forkedTimeline=" + InternalPsiVersioning.isInForkedTimeline());
 
         myLoadingAst = true;
         try {
-          updateTrees(myTrees.withAst(createTreeElementPointer(treeElement)));
+          try {
+            updateTrees(myTrees.withAst(createTreeElementPointer(treeElement)));
+          }
+          catch (StubTreeLoader.StubTreeAndIndexUnmatchCoarseException e) {
+            if (!stubMayBeStale) throw e;
+            // A failure under a mismatched stamp proves that the stub was a stale cache, not an index fault.
+            // The failure path has already dropped the stub (see FileTrees.syncPsiWithStub),
+            // so the retry attaches the AST with nothing to reconcile, and no report is filed.
+            // A failure under an equal stamp is rethrown above and becomes the 'PSI and index do not match' report.
+            LOG.info("dropped a stale stub for " + viewProvider.getVirtualFile());
+            updateTrees(myTrees.withAst(createTreeElementPointer(treeElement)));
+          }
         }
         finally {
           myLoadingAst = false;
@@ -318,6 +344,15 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     catch (StubTreeLoader.StubTreeAndIndexUnmatchCoarseException e) {
       throw e.createCompleteException();
     }
+  }
+
+  /**
+   * Returns the state of the file content at the time when {@link #loadTreeElement} created {@code tree}, for diagnostics only.
+   * Returns {@code null} when the tree has another origin, for example a clone.
+   */
+  @ApiStatus.Internal
+  public static @Nullable @NonNls String getTreeLoadInfo(@NotNull ASTNode tree) {
+    return tree.getUserData(TREE_LOAD_INFO);
   }
 
   /**

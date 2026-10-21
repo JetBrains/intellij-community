@@ -135,7 +135,6 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-tests",
         "//java/java-impl-refactorings:impl-refactorings_test_lib",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//plugins/kotlin/references:references_test_lib",

@@ -6,6 +6,7 @@ import com.intellij.diagnostic.DialogAppender
 import com.intellij.diagnostic.LogMessage
 import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.MessagePoolAdvisor
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.Attachment
@@ -129,6 +130,7 @@ private suspend fun reportScriptError(errorMessage: LogMessage, scriptErrorsDir:
         appendLine("app.name=${namesInfo.productName}")
         appendLine("app.name.full=${namesInfo.fullProductName}")
         appendLine("app.product.code=${build.productCode}")
+        appendLine("app.product.mode=${PluginManagerCore.getPluginSet().initContext.productMode.id}")
         appendLine("app.build.number=${build.asStringWithoutProductCode()}")
       })
       val attachments = errorMessage.allAttachments

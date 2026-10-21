@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.action.task;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.action.ExternalSystemAction;
@@ -14,18 +15,22 @@ import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.RunConfigurationNode;
 import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension.getActionPrefix;
 
-/**
- * @author Vladislav.Soroka
- */
-@ApiStatus.Internal
-public class AssignRunConfigurationShortcutAction extends ExternalSystemAction {
+final class AssignRunConfigurationShortcutAction extends ExternalSystemAction {
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
+  }
 
   @Override
   protected boolean isEnabled(@NotNull AnActionEvent e) {

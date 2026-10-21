@@ -36,6 +36,7 @@ dev_dist_plugin_descriptor(
         "intellij.platform.trialPromotion.common",
         "intellij.platform.trialPromotion.idesWithFreeTier",
         "intellij.platform.trialPromotion.idesWithFreeTier.jcef",
+        "intellij.platform.trialPromotion.idesWithFreeTier.welcomeScreen",
     ],
 )
 

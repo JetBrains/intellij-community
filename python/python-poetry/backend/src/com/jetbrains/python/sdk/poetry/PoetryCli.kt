@@ -65,7 +65,7 @@ suspend fun <P : PathHolder> runPoetry(
   }
   return fileSystem.runTool(
     executable = PoetryPyTool.getInstance(),
-    pathFromSdk = poetryExecutable?.toStringForExecution(),
+    pathFromSdk = poetryExecutable?.toStringOnRemoteMachine(),
     dirPath = projectPath,
     args = args,
     env = env,

@@ -19,5 +19,6 @@
     <module name="intellij.platform.trialPromotion.common"/>
     <module name="intellij.platform.trialPromotion.idesWithFreeTier"/>
     <module name="intellij.platform.trialPromotion.idesWithFreeTier.jcef" loading="optional"/>
+    <module name="intellij.platform.trialPromotion.idesWithFreeTier.welcomeScreen"/>
   </content>
 </idea-plugin>

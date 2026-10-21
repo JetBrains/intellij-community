@@ -15,6 +15,9 @@
  */
 package com.intellij.java.parser;
 
+import com.intellij.testFramework.junit5.TestApplication;
+
+@TestApplication
 public class ImportParsingTest extends AbstractBasicImportParsingTest {
   public ImportParsingTest() {
     super(new JavaParsingTestConfigurator());

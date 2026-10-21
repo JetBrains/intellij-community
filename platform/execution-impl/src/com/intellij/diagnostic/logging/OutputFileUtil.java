@@ -12,9 +12,9 @@ import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -107,9 +107,10 @@ public final class OutputFileUtil {
 
             if (file != null) {
               file.refresh(false, false);
-              ReadAction.runBlocking(() -> {
-                FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file), true);
-              });
+              var fileEditorManager = FileEditorManager.getInstance(project);
+              var openDescriptor = new OpenFileDescriptor(project, file);
+              fileEditorManager.requestOpenTextEditor(openDescriptor, FileEditorOpenRequest.fromDescriptor(openDescriptor)
+                .withRequestFocus(true));
             }
           }
         });

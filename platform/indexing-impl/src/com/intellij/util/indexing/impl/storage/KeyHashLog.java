@@ -5,11 +5,10 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.DataExternalizer;
@@ -39,13 +38,15 @@ import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.SoftReference;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.IntPredicate;
 
-import static com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentIntObjectMap;
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 /**
  * A data structure to store key hashes to virtual file id mappings.
@@ -53,16 +54,21 @@ import static com.intellij.concurrency.ConcurrentCollectionFactory.createConcurr
 @ApiStatus.Internal
 public final class KeyHashLog<Key> implements Closeable {
   private static final Logger LOG = Logger.getInstance(KeyHashLog.class);
-  private static final boolean ENABLE_CACHED_HASH_IDS = SystemProperties.getBooleanProperty("idea.index.cashed.hashids", true);
+
+  /// Enable caching key-hashes for [IdFilter.FilterScopeType#PROJECT_AND_LIBRARIES]
+  @VisibleForTesting
+  public static final boolean ENABLE_CACHED_HASH_IDS = getBooleanProperty("idea.index.cashed.hashids", true);
+
+  private static final AtomicInteger CACHE_FILE_IDS = new AtomicInteger();
 
   private final @NotNull KeyDescriptor<Key> myKeyDescriptor;
   private final @NotNull Path myBaseStorageFile;
   private final @Nullable StorageLockContext myStorageLockContext;
   private final @NotNull AppendableObjectStorage<int[]> myKeyHashToVirtualFileMapping;
 
-  private final @NotNull ConcurrentIntObjectMap<Boolean> myInvalidatedSessionIds = createConcurrentIntObjectMap();
-  /// `myKeyHashToVirtualFileMapping.getCurrentLength()` at the last moment the file was scanned;
-  private volatile int myScannedUpToOffsetExclusive;
+
+  private final long myCacheFileId = CACHE_FILE_IDS.incrementAndGet();
+  private final @NotNull PerProjectKeyHashes myPerProjectKeyHashes = new PerProjectKeyHashes();
 
   public KeyHashLog(@NotNull KeyDescriptor<Key> descriptor, @NotNull Path baseStorageFile) throws IOException {
     this(descriptor, baseStorageFile, null);
@@ -108,55 +114,22 @@ public final class KeyHashLog<Key> implements Closeable {
     appendKeyHashToVirtualFileMappingToLog(key, -inputId);
   }
 
-  public @NotNull IntSet getSuitableKeyHashes(@NotNull IdFilter filter, @NotNull Project project) throws StorageException {
-    IdFilter.FilterScopeType filteringScopeType = filter.getFilteringScopeType();
-
-    long l = System.currentTimeMillis();
-
-    @NotNull Path sessionProjectCacheFile = getSavedProjectFileValueIds(
-      myScannedUpToOffsetExclusive,
-      filteringScopeType == IdFilter.FilterScopeType.OTHER ? IdFilter.FilterScopeType.PROJECT_AND_LIBRARIES : filteringScopeType,
-      project
-    );
-    int currentFileLength = myKeyHashToVirtualFileMapping.getCurrentLength();
-
-    boolean shouldCacheResult = (filteringScopeType == IdFilter.FilterScopeType.PROJECT_AND_LIBRARIES);
-    IntSet hashMaskSet = null;
-    if (ENABLE_CACHED_HASH_IDS
-        && currentFileLength == myScannedUpToOffsetExclusive
-        && shouldCacheResult) {
-      if (myInvalidatedSessionIds.remove(currentFileLength) == null) {
-        try {
-          hashMaskSet = loadProjectHashes(sessionProjectCacheFile);
-        }
-        catch (IOException ignored) {
-        }
-      }
+  /// @return a predicate that accepts `key.hash` if the key is likely present in files that belong to `project` and match `filter`
+  public @NotNull IntPredicate getSuitableKeyHashes(@NotNull IdFilter filter,
+                                                    @NotNull Project project) throws StorageException {
+    if (!ENABLE_CACHED_HASH_IDS || filter.getFilteringScopeType() != IdFilter.FilterScopeType.PROJECT_AND_LIBRARIES) {
+      IntSet keyHashes = getSuitableKeyHashes(filter);
+      return keyHashes::contains;
     }
 
-    if (hashMaskSet == null) {
-      if (ENABLE_CACHED_HASH_IDS && myScannedUpToOffsetExclusive != 0) {
-        try {
-          FileUtil.delete(sessionProjectCacheFile);
-        }
-        catch (NoSuchFileException ignored) { }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
-
-      hashMaskSet = getSuitableKeyHashes(filter);
-
-      if (ENABLE_CACHED_HASH_IDS && shouldCacheResult) {
-        saveHashedIds(hashMaskSet, currentFileLength, sessionProjectCacheFile);
-      }
-    }
+    long startedAt = System.currentTimeMillis();
+    IntPredicate keyHashPredicate = myPerProjectKeyHashes.getKeyHashPredicate(project, filter);
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Scanned keyHashToVirtualFileMapping of " + myBaseStorageFile + " for " + (System.currentTimeMillis() - l));
+      LOG.debug("Scanned keyHashToVirtualFileMapping of " + myBaseStorageFile + " for " + (System.currentTimeMillis() - startedAt));
     }
 
-    return hashMaskSet;
+    return keyHashPredicate;
   }
 
   private void appendKeyHashToVirtualFileMappingToLog(Key key, int inputId) throws StorageException {
@@ -170,7 +143,6 @@ public final class KeyHashLog<Key> implements Closeable {
     catch (IOException e) {
       throw new StorageException(e);
     }
-    invalidateKeyHashToVirtualFileMappingCache();
   }
 
   public @NotNull IntSet getSuitableKeyHashes(@NotNull IdFilter idFilter) throws StorageException {
@@ -231,9 +203,11 @@ public final class KeyHashLog<Key> implements Closeable {
 
   @Override
   public void close() throws IOException {
-    withLock(() -> {
-      myKeyHashToVirtualFileMapping.close();
-    }, false);
+    withLock(
+      myKeyHashToVirtualFileMapping::close,
+      /*read: */ false
+    );
+    myPerProjectKeyHashes.clear();
   }
 
   private void performCompaction() throws IOException {
@@ -312,38 +286,6 @@ public final class KeyHashLog<Key> implements Closeable {
     }
   }
 
-
-  private static @NotNull IntSet loadProjectHashes(@NotNull Path fileWithCaches) throws IOException {
-    try (DataInputStream inputStream = new DataInputStream(new BufferedInputStream(Files.newInputStream(fileWithCaches)))) {
-      int hashesCount = DataInputOutputUtil.readINT(inputStream);
-      IntSet hashMaskSet = new IntOpenHashSet(hashesCount);
-      while (hashesCount > 0) {
-        hashMaskSet.add(DataInputOutputUtil.readINT(inputStream));
-        --hashesCount;
-      }
-      return hashMaskSet;
-    }
-  }
-
-  private void saveHashedIds(@NotNull IntSet hashMaskSet,
-                             int largestId,
-                             @NotNull Path fileToStoreCache) {
-    boolean savedSuccessfully = true;
-    try (DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(fileToStoreCache)))) {
-      DataInputOutputUtil.writeINT(stream, hashMaskSet.size());
-      IntIterator iterator = hashMaskSet.iterator();
-      while (iterator.hasNext()) {
-        DataInputOutputUtil.writeINT(stream, iterator.nextInt());
-      }
-    }
-    catch (IOException ignored) {
-      savedSuccessfully = false;
-    }
-    if (savedSuccessfully) {
-      myScannedUpToOffsetExclusive = largestId;
-    }
-  }
-
   private static volatile Path mySessionDirectory;
   private static final Object mySessionDirectoryLock = new Object();
 
@@ -366,16 +308,8 @@ public final class KeyHashLog<Key> implements Closeable {
     return sessionDirectory;
   }
 
-  private @NotNull Path getSavedProjectFileValueIds(int id, @NotNull IdFilter.FilterScopeType scopeType, @NotNull Project project) {
-    return getSessionDir().resolve(getDataFile().getFileName().toString() + "." + project.hashCode() + "." + id + "." + scopeType.getId());
-  }
-
-  private void invalidateKeyHashToVirtualFileMappingCache() {
-    int lastScannedId = myScannedUpToOffsetExclusive;
-    if (lastScannedId != 0) { // we have write lock
-      myInvalidatedSessionIds.putIfAbsent(lastScannedId, Boolean.TRUE);
-      myScannedUpToOffsetExclusive = 0;
-    }
+  private @NotNull Path pathForCachedKeyHashesPerProject(@NotNull Project project) {
+    return getSessionDir().resolve(getDataFile().getFileName().toString() + "." + myCacheFileId + "." + project.hashCode());
   }
 
   private <T extends Throwable> void withLock(ThrowableRunnable<T> r, boolean read) throws T {
@@ -450,8 +384,207 @@ public final class KeyHashLog<Key> implements Closeable {
     }
   }
 
+
+  /// Keeps an in-memory hash-mask , and a disk checkpoint that can restore it after the soft reference is cleared.
+  /// The mask is per-project.
+  /// 
+  /// The actual hash-mask structure is in [InternalState] class, while this class keeps [SoftReference], and provides
+  /// locking for multithreaded access;
+  private final class PerProjectKeyHashes {
+    private @NotNull SoftReference<InternalState> stateRef = new SoftReference<>(null);
+
+    private synchronized @NotNull IntPredicate getKeyHashPredicate(@NotNull Project project,
+                                                                   @NotNull IdFilter filter) throws StorageException {
+      int currentFileLength = myKeyHashToVirtualFileMapping.getCurrentLength();
+      InternalState state = stateRef.get();
+      if (state == null || state.project != project) {
+        Path cacheFile = pathForCachedKeyHashesPerProject(project);
+        try {
+          state = InternalState.load(project, cacheFile, currentFileLength);
+        }
+        catch (IOException ignored) {
+          state = null;
+        }
+      }
+
+      //IdFilter[PROJECT_AND_LIBRARIES] could change, and we need to account for its changes
+      long currentRootsModificationCount = ProjectRootModificationTracker.getInstance(project).getModificationCount();
+      if (state == null ||
+          state.rootsModificationCount != currentRootsModificationCount ||
+          state.needsFullRescan() ||
+          state.scannedUpToOffsetExclusive > currentFileLength) {
+        state = createState(project, filter, currentFileLength, currentRootsModificationCount);
+      }
+      else if (state.scannedUpToOffsetExclusive < currentFileLength) {
+        try {
+          state.updateFromTail(myKeyHashToVirtualFileMapping, filter, currentFileLength);
+        }
+        catch (IOException e) {
+          throw new StorageException(e);
+        }
+      }
+      stateRef = new SoftReference<>(state);
+      InternalState selectedState = state;
+      return keyHash -> contains(selectedState, keyHash);
+    }
+
+    private synchronized boolean contains(@NotNull InternalState state, int keyHash) {
+      return state.keyHashes.contains(keyHash);
+    }
+
+    private @NotNull InternalState createState(@NotNull Project project,
+                                               @NotNull IdFilter filter,
+                                               int currentFileLength,
+                                               long rootsModificationCount) throws StorageException {
+      var state = new InternalState(
+        project,
+        pathForCachedKeyHashesPerProject(project),
+        new IntOpenHashSet(KeyHashLog.this.getSuitableKeyHashes(filter)),
+        currentFileLength,
+        rootsModificationCount
+      );
+      state.save();
+      return state;
+    }
+
+    private synchronized void clear() {
+      stateRef.clear();
+    }
+
+    /// Keeps an in-memory hash-mask [#keyHashes], and a disk checkpoint [#scannedUpToOffsetExclusive] that can restore it after
+    /// the soft reference is cleared.
+    /// The mask is per-project.
+    ///
+    /// The hash-mask is not exact: it is exact on creation, but incremental update could only add key-hashes, never remove them,
+    /// so the hash-mask only grows. Functionally it is still correct: hash-mask allows false-positives by definition -- but the
+    /// rate of false-positives increases with incremental updates, so the mask needs periodical re-creation to remain reasonably
+    /// effective -- [#removesUnaccountedFor] is a gauge for that.
+    private static final class InternalState {
+      private static final int STORE_FORMAT_VERSION = 2;
+
+      private final @NotNull Project project;
+      private final @NotNull Path cacheFile;
+
+      private final @NotNull IntSet keyHashes;
+
+      /// The range `[0, scannedUpToOffsetExclusive)` of the main log is already accounted for
+      private long scannedUpToOffsetExclusive;
+
+      /// `ProjectRootModificationTracker.getInstance(project).getModificationCount()` at creation
+      private final long rootsModificationCount;
+
+      /// Incremental updates keep removed hashes because another file can still use the same hash
+      private int removesUnaccountedFor;
+
+      private InternalState(@NotNull Project project,
+                            @NotNull Path cacheFile,
+                            @NotNull IntSet keyHashes,
+                            long scannedUpToOffsetExclusive,
+                            long rootsModificationCount) {
+        this(project, cacheFile, keyHashes, scannedUpToOffsetExclusive, rootsModificationCount, 0);
+      }
+
+      private InternalState(@NotNull Project project,
+                            @NotNull Path cacheFile,
+                            @NotNull IntSet keyHashes,
+                            long scannedUpToOffsetExclusive,
+                            long rootsModificationCount,
+                            int removesUnaccountedFor) {
+        this.project = project;
+        this.cacheFile = cacheFile;
+        this.keyHashes = keyHashes;
+        this.scannedUpToOffsetExclusive = scannedUpToOffsetExclusive;
+        this.rootsModificationCount = rootsModificationCount;
+        this.removesUnaccountedFor = removesUnaccountedFor;
+      }
+
+      private static @NotNull InternalState load(@NotNull Project project,
+                                                 @NotNull Path cacheFile,
+                                                 long currentFileLength) throws IOException {
+        try (var input = new DataInputStream(new BufferedInputStream(Files.newInputStream(cacheFile)))) {
+          int formatVersion = DataInputOutputUtil.readINT(input);
+          if (formatVersion != STORE_FORMAT_VERSION) {
+            throw new IOException("Unsupported project key hashes cache version: " + formatVersion);
+          }
+
+          long scannedUpToOffsetExclusive = DataInputOutputUtil.readLONG(input);
+          if (scannedUpToOffsetExclusive < 0 || scannedUpToOffsetExclusive > currentFileLength) {
+            throw new IOException("Invalid scanned offset: " + scannedUpToOffsetExclusive + ", current log length: " + currentFileLength);
+          }
+
+          long rootsModificationCount = DataInputOutputUtil.readLONG(input);
+          int removesUnaccountedFor = DataInputOutputUtil.readINT(input);
+          int hashesCount = DataInputOutputUtil.readINT(input);
+          if (removesUnaccountedFor < 0 || removesUnaccountedFor > currentFileLength ||
+              hashesCount < 0 || hashesCount > currentFileLength) {
+            throw new IOException("Invalid project key hashes cache counters");
+          }
+
+          var keyHashes = new IntOpenHashSet(hashesCount);
+          for (int i = 0; i < hashesCount; i++) {
+            keyHashes.add(DataInputOutputUtil.readINT(input));
+          }
+          return new InternalState(project, cacheFile, keyHashes, scannedUpToOffsetExclusive, rootsModificationCount, removesUnaccountedFor);
+        }
+      }
+
+      private void save() {
+        try (var output = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(cacheFile)))) {
+          DataInputOutputUtil.writeINT(output, STORE_FORMAT_VERSION);
+          DataInputOutputUtil.writeLONG(output, scannedUpToOffsetExclusive);
+          DataInputOutputUtil.writeLONG(output, rootsModificationCount);
+          DataInputOutputUtil.writeINT(output, removesUnaccountedFor);
+          DataInputOutputUtil.writeINT(output, keyHashes.size());
+          IntIterator iterator = keyHashes.iterator();
+          while (iterator.hasNext()) {
+            DataInputOutputUtil.writeINT(output, iterator.nextInt());
+          }
+        }
+        catch (IOException ignored) {
+          //MAYBE delete the file to clean up after the failure?
+        }
+      }
+
+      private void updateFromTail(@NotNull AppendableObjectStorage<int[]> mapping,
+                                  @NotNull IdFilter filter,
+                                  int currentFileLength) throws IOException {
+        mapping.lockRead();
+        try {
+          int offset = Math.toIntExact(scannedUpToOffsetExclusive);
+          while (offset < currentFileLength) {
+            int[] mappingEntry = mapping.read(offset, false);
+            int keyHash = mappingEntry[0];
+            int inputId = mappingEntry[1];
+            offset += DataInputOutputUtil.sizeOfVarint(keyHash) + DataInputOutputUtil.sizeOfVarint(inputId);
+
+            if ((keyHash & 0b11111) == 0) ProgressManager.checkCanceled();
+
+            if (!filter.containsFileId(Math.abs(inputId))) continue;
+            if (inputId > 0) {
+              keyHashes.add(keyHash);
+            }
+            else {
+              removesUnaccountedFor++;
+            }
+          }
+          scannedUpToOffsetExclusive = currentFileLength;
+        }
+        finally {
+          mapping.unlockRead();
+        }
+        save();
+      }
+
+      private boolean needsFullRescan() {
+        //heuristics:
+        return removesUnaccountedFor > Math.max(64, keyHashes.size() / 2);
+      }
+    }
+  }
+
+
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  public static void main(String[] args) throws Exception {
+  static void main(String[] args) throws Exception {
     String indexPath = args[0];
     EnumeratorStringDescriptor enumeratorStringDescriptor = EnumeratorStringDescriptor.INSTANCE;
 

@@ -2,19 +2,19 @@
 package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.codeStyle.arrangement.group.ArrangementGroupingRulesControl;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.DefaultTableModel;
 
-public final class MoveArrangementGroupingRuleUpAction extends AnAction implements DumbAware {
+final class MoveArrangementGroupingRuleUpAction extends DumbAwareAction {
 
-  public MoveArrangementGroupingRuleUpAction() {
+  MoveArrangementGroupingRuleUpAction() {
     getTemplatePresentation().setText(ApplicationBundle.messagePointer("arrangement.action.rule.move.up.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.messagePointer("arrangement.action.rule.move.up.description"));
     getTemplatePresentation().setIcon(IconUtil.getMoveUpIcon());
@@ -22,6 +22,11 @@ public final class MoveArrangementGroupingRuleUpAction extends AnAction implemen
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+
     ArrangementGroupingRulesControl control = e.getData(ArrangementGroupingRulesControl.KEY);
     if (control == null) {
       e.getPresentation().setEnabled(false);

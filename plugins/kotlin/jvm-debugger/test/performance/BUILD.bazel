@@ -17,6 +17,7 @@ jvm_library(
         "//plugins/kotlin:kotlin-plugin-community-main",
         "//aether-dependency-resolver/plugin",
         "//platform/testRunner/plugin",
+        "//platform/vcs/plugin",
     ],
 )
 
@@ -41,6 +42,7 @@ jvm_library(
         "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//aether-dependency-resolver/plugin:plugin_test_lib",
         "//platform/testRunner/plugin:plugin_test_lib",
+        "//platform/vcs/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

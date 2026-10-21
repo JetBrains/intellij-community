@@ -5,10 +5,11 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.project.DumbAware
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
 import org.intellij.plugins.markdown.lang.supportsMarkdown
 
-internal class TableColumnAlignmentActionsGroup: DefaultActionGroup() {
+internal class TableColumnAlignmentActionsGroup: DefaultActionGroup(), DumbAware {
   override fun update(event: AnActionEvent) {
     val editor = event.getData(CommonDataKeys.EDITOR)
     val file = event.getData(CommonDataKeys.PSI_FILE)

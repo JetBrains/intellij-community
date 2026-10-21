@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.DocumentOp;
-import com.intellij.openapi.editor.ex.DocumentSnapshot;
 import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
@@ -17,29 +16,33 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A read-only document: a text and a modification stamp.
+ */
 @ApiStatus.Internal
 public final class FrozenDocument implements DocumentEx {
-  private final DocumentSnapshot mySnapshot;
+  private final DocumentText myText;
+  private final long myModStamp;
 
-  FrozenDocument(@NotNull DocumentSnapshot snapshot) {
-    mySnapshot = snapshot;
+  FrozenDocument(@NotNull DocumentText text, long modStamp) {
+    myText = text;
+    myModStamp = modStamp;
   }
 
+  /**
+   * The frozen document after {@code event}. An event does not carry a modification stamp, so the result
+   * has the stamp 0.
+   */
   public @NotNull FrozenDocument applyEvent(@NotNull DocumentEvent event) {
-    DocumentSnapshot snapshot = mySnapshot
+    DocumentText text = myText
       .applyOp(DocumentOp.deleteOp(event.getOffset(), event.getOldLength()))
-      .applyOp(DocumentOp.insertOp(event.getOffset(), event.getNewFragment()))
-      .applyOp(DocumentOp.modStampOp(0, false));
-    return new FrozenDocument(snapshot);
-  }
-
-  @NotNull DocumentSnapshot getSnapshot() {
-    return mySnapshot;
+      .applyOp(DocumentOp.insertOp(event.getOffset(), event.getNewFragment()));
+    return new FrozenDocument(text, 0);
   }
 
   @Override
   public @NotNull LineIterator createLineIterator() {
-    return mySnapshot.text().lineIterator();
+    return myText.lineIterator();
   }
 
   @Override
@@ -84,12 +87,12 @@ public final class FrozenDocument implements DocumentEx {
 
   @Override
   public @NotNull String getText() {
-    return mySnapshot.text().string();
+    return myText.string();
   }
 
   @Override
   public @NotNull String getText(@NotNull TextRange range) {
-    return mySnapshot.text().string(range);
+    return myText.string(range);
   }
 
   @Override
@@ -99,27 +102,27 @@ public final class FrozenDocument implements DocumentEx {
 
   @Override
   public @NotNull CharSequence getImmutableCharSequence() {
-    return mySnapshot.text().chars();
+    return myText.chars();
   }
 
   @Override
   public int getLineCount() {
-    return mySnapshot.text().lineCount();
+    return myText.lineCount();
   }
 
   @Override
   public int getLineNumber(int offset) {
-    return mySnapshot.text().lineNumber(offset);
+    return myText.lineNumber(offset);
   }
 
   @Override
   public int getLineStartOffset(int line) {
-    return mySnapshot.text().lineStartOffset(line);
+    return myText.lineStartOffset(line);
   }
 
   @Override
   public int getLineEndOffset(int line) {
-    return mySnapshot.text().lineEndOffset(line);
+    return myText.lineEndOffset(line);
   }
 
   @Override
@@ -144,7 +147,7 @@ public final class FrozenDocument implements DocumentEx {
 
   @Override
   public long getModificationStamp() {
-    return mySnapshot.modState().stamp();
+    return myModStamp;
   }
 
   @Override
@@ -194,7 +197,7 @@ public final class FrozenDocument implements DocumentEx {
 
   @Override
   public int getLineSeparatorLength(int line) {
-    return mySnapshot.text().lineSeparatorLength(line);
+    return myText.lineSeparatorLength(line);
   }
 
   @Override
@@ -219,6 +222,6 @@ public final class FrozenDocument implements DocumentEx {
 
   @Override
   public @NotNull DocumentText getDocText() {
-    return mySnapshot.text();
+    return myText;
   }
 }

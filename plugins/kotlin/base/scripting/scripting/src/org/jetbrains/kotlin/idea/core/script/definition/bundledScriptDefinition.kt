@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.ex.PathUtilEx
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import java.io.File
@@ -19,10 +20,14 @@ import kotlin.script.experimental.api.ide
 import kotlin.script.experimental.host.createScriptDefinitionFromTemplate
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
-import kotlin.script.templates.standard.ScriptTemplateWithArgs
+import kotlin.script.experimental.templates.ScriptWithArgs
+
+// The script base class is taken from the scripting-common jar the plugin runs with, which may differ from the kotlinc dist one
+private val scriptingCommonJar: File =
+    PathUtil.getJarPathForClass(ScriptWithArgs::class.java).let(::File)
 
 val scriptClassPath: List<File> = listOf(
-    KotlinArtifacts.kotlinScriptRuntime,
+    scriptingCommonJar,
     KotlinArtifacts.kotlinStdlib,
     KotlinArtifacts.kotlinReflect
 )
@@ -35,7 +40,7 @@ val Project.javaHomePath: File?
     }
 
 fun getBundledScriptDefinition(project: Project) = createScriptDefinitionFromTemplate(
-    KotlinType(ScriptTemplateWithArgs::class),
+    KotlinType(ScriptWithArgs::class),
     defaultJvmScriptingHostConfiguration,
     compilation = {
         dependencies(JvmDependency(scriptClassPath))

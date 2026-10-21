@@ -5,7 +5,6 @@ package com.jetbrains.python.console
 
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.addedPathFiles
-import com.intellij.python.sdk.backend.targetAdditionalData
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.target.TargetEnvironment
 import com.intellij.execution.target.value.TargetEnvironmentFunction
@@ -16,27 +15,26 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.intellij.remote.RemoteMappingsManager
-import com.intellij.remote.RemoteSdkProperties
-import com.intellij.remote.TargetAwarePathMappingProvider
 import com.jetbrains.python.console.PyConsoleOptions.PyConsoleSettings
 import com.jetbrains.python.console.completion.PydevConsoleElement
 import com.jetbrains.python.console.pydev.ConsoleCommunication
 import com.jetbrains.python.parsing.console.PythonConsoleData
 import com.jetbrains.python.remote.PyRemotePathMapper
-import com.jetbrains.python.remote.PythonRemoteInterpreterManager
 import com.jetbrains.python.run.PythonCommandLineState
 import com.jetbrains.python.run.toStringLiteral
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PythonEnvUtil
+import com.jetbrains.python.sdk.asModuleOrProject
+import com.jetbrains.python.sdk.findPyProject
 import com.intellij.python.pyproject.model.evolution.getInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
-import com.jetbrains.python.project.PyProject.Companion.asPyProject
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
@@ -48,92 +46,48 @@ import java.util.function.Function
  * @param consoleSettings Python Console settings
  * @param targetEnvironment the target environment to add upload volumes to the result path mapper
  */
+
+@RequiresBackgroundThread
 internal fun createTargetEnvironmentPathMapper(project: Project,
                                       sdk: Sdk,
                                       consoleSettings: PyConsoleSettings,
                                       targetEnvironment: TargetEnvironment): PyRemotePathMapper {
-  val pathMapper = getPathMapper(project, sdk, consoleSettings) ?: PyRemotePathMapper()
+  val pathMapper = getPathMapper(project, sdk, consoleSettings)
   for (volume in targetEnvironment.uploadVolumes.values) {
     pathMapper.addMapping(volume.localRoot.toString(), volume.targetRoot, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
   }
   return pathMapper
 }
 
-@ApiStatus.Internal
-fun getPathMapper(project: Project,
-                  sdk: Sdk?,
-                  consoleSettings: PyConsoleSettings): PyRemotePathMapper? {
-  if (sdk == null) return null
-  return when (val sdkAdditionalData = sdk.sdkAdditionalData) {
-    is PyTargetAwareAdditionalData -> getPathMapper(project, consoleSettings, sdkAdditionalData)
-    else -> null
-  }
-}
-
-/** [getPathMapper] for [interpreter]: `null` for an interpreter that runs on no target. */
-@ApiStatus.Internal
-fun getPathMapper(project: Project, interpreter: PythonInterpreter, consoleSettings: PyConsoleSettings): PyRemotePathMapper? =
-  interpreter.targetAdditionalData?.let { getPathMapper(project, consoleSettings, it) }
-
-private fun getPathMapper(project: Project, consoleSettings: PyConsoleSettings, data: PyTargetAwareAdditionalData): PyRemotePathMapper {
-  val remotePathMapper = appendBasicMappings(project, data)
-  consoleSettings.mappingSettings.let { mappingSettings ->
-    remotePathMapper.addAll(mappingSettings.pathMappings, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
-  }
-  return remotePathMapper
-}
+@RequiresBackgroundThread
+internal fun getPathMapper(project: Project,
+                  sdk: Sdk,
+                  consoleSettings: PyConsoleSettings): PyRemotePathMapper =
+  runBlockingMaybeCancellable {
+    sdk.toFileSystem()
+  }.createMapper(project, consoleSettings.mappingSettings, sdk)
 
 /**
- * Collects deployment paths from suitable mapping providers.
+ * The interpreter a console starts on, and the [ModuleOrProject] it runs for. The interpreter is `null` when the
+ * project offers none.
  *
- * If {@code data} is not a {@link PyTargetAwareAdditionalData}, then an empty set is returned.
- *
- * @param project the project for which deployment paths are being retrieved
- * @param data SDK additional data
- * @return a set of paths on remote file systems
+ * The interpreter is the one of the subproject the console runs in: the module of [moduleOrProject] when it has one,
+ * and otherwise the subproject [getModuleToStartConsole] names, which is the interpreter widget's own rule. One source
+ * for every surface, so the console, the widget and the packages tool window never disagree.
+ * For [ModuleOrProject.ProjectOnly] without such a subproject, the result keeps [moduleOrProject].
  */
-private fun getDeploymentPaths(project: Project, data: RemoteSdkProperties): Set<String> {
-  val deploymentPaths = mutableSetOf<String>()
-  if (data is PyTargetAwareAdditionalData) {
-    for (provider in TargetAwarePathMappingProvider.getSuitableMappingProviders(data)) {
-      for (pathMapping in provider.getPathMappingSettings(project, data).pathMappings) {
-        deploymentPaths.add(pathMapping.remoteRoot)
-      }
-    }
+internal suspend fun findPythonSdkAndModule(moduleOrProject: ModuleOrProject): Pair<PythonInterpreter?, ModuleOrProject> {
+  val target = when (moduleOrProject) {
+    is ModuleOrProject.ModuleAndProject -> moduleOrProject
+    is ModuleOrProject.ProjectOnly -> findPyProjectToStartConsole(moduleOrProject.project)?.let { ModuleOrProject.ModuleAndProject(it) }
+                                      ?: moduleOrProject
   }
-  return deploymentPaths
+  return target.findPyProject()?.getInterpreter() to target
 }
 
-private fun appendBasicMappings(project: Project, data: RemoteSdkProperties): PyRemotePathMapper {
-  val pathMapper = PyRemotePathMapper()
-  PythonRemoteInterpreterManager.addHelpersMapping(data, pathMapper)
-
-  // We don't want to resolve remote paths to sources copied from the remote when they're available locally
-  val deploymentPaths = getDeploymentPaths(project, data)
-  pathMapper.addAll(
-    data.pathMappings.pathMappings.filter { it.remoteRoot !in deploymentPaths },
-    PyRemotePathMapper.PyPathMappingType.SYS_PATH
-  )
-
-  val mappings = RemoteMappingsManager.getInstance(project).getForServer(PythonRemoteInterpreterManager.PYTHON_PREFIX, data.sdkId)
-  if (mappings != null) {
-    pathMapper.addAll(mappings.settings, PyRemotePathMapper.PyPathMappingType.USER_DEFINED)
-  }
-  return pathMapper
-}
-
-/**
- * The interpreter a console starts on, and the module it belongs to. Both `null` when the project offers neither.
- *
- * The interpreter is the one of the subproject the console runs in: [contextModule] when the caller names one, and
- * otherwise the one [getModuleToStartConsole] names, which is the interpreter widget's own rule. One source for every
- * surface, so the console, the widget and the packages tool window never disagree.
- */
-internal suspend fun findPythonSdkAndModule(project: Project, contextModule: Module?): Pair<Sdk?, Module?> {
-  val module = contextModule ?: getModuleToStartConsole(project)
-  @Suppress("DEPRECATION") // The console runner still takes an Sdk.
-  return Pair.create(module?.asPyProject()?.getInterpreter()?.getSdkAPI(), module)
-}
+/** [ModuleOrProject] for [module] when it is not `null`, and for [project] otherwise. */
+internal fun toModuleOrProject(project: Project, module: Module?): ModuleOrProject =
+  module?.asModuleOrProject ?: project.asModuleOrProject
 
 @ApiStatus.Internal
 fun constructPyPathAndWorkingDirCommand(pythonPath: MutableCollection<Function<TargetEnvironment, String>>,
@@ -240,7 +194,9 @@ internal fun getConsoleSdk(element: PsiElement): Sdk? {
 }
 
 @ApiStatus.Internal
-suspend fun getModuleToStartConsole(project: Project): Module? {
+suspend fun getModuleToStartConsole(project: Project): Module? = findPyProjectToStartConsole(project)?.residesOnModule
+
+private suspend fun findPyProjectToStartConsole(project: Project): PyProject? {
   val selectedFile = readAction { FileEditorManager.getInstance(project).selectedFiles.firstOrNull() }
-  return resolveConsoleTarget(project, selectedFile)?.pyProject?.residesOnModule
+  return resolveConsoleTarget(project, selectedFile)?.pyProject
 }

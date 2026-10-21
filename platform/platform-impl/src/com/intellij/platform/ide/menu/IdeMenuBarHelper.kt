@@ -31,6 +31,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.util.coroutines.flow.throttle
@@ -146,6 +147,9 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
 
   private suspend fun expandMainActionGroup(isFirstUpdate: Boolean): List<ActionGroup> {
     val mainActionGroup = menuBar.getMainMenuActionGroup() ?: return emptyList()
+    if (isFirstUpdate) {
+      awaitFirstFillPermit()
+    }
     return expandMainActionGroup(
       mainActionGroup = mainActionGroup,
       menuBar = menuBar.component,
@@ -153,6 +157,19 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
       presentationFactory = presentationFactory,
       isFirstUpdate = isFirstUpdate,
     )
+  }
+
+  /**
+   * The first fill of a welcome-experience frame runs after the frame content paints, see `FrameLoadingState.mainMenuFillPermit`.
+   * The entry actions of the welcome screen are on its left panel meanwhile.
+   */
+  private suspend fun awaitFirstFillPermit() {
+    val permit = ProjectFrameHelper.getFrameHelper(menuBar.frame)?.mainMenuFillPermit ?: return
+    if (!permit.isCompleted) {
+      span("ide menu bar actions init: frame content painted waiting") {
+        permit.join()
+      }
+    }
   }
 
   private fun canUpdate(): Boolean {

@@ -7,12 +7,10 @@ import com.intellij.ide.starter.ide.IDERemDevTestContext
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.onRemDevContext
 import com.intellij.ide.starter.project.NoProject
-import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.utils.catchAll
 import com.intellij.lambda.testFramework.testApi.waitForProject
-import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder.LoadingInSplitMode.All
-import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder.LoadingInSplitMode.OnlyFrontend
+import com.intellij.lambda.testFramework.utils.LambdaTestPluginHolder.LambdaTestSetup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.remoteDev.tests.LambdaTestsConstants
 import com.intellij.performanceTesting.rdct.LambdaTestHost.Companion.TEST_MODULE_ID_PROPERTY_NAME
@@ -24,8 +22,6 @@ import com.intellij.remoteDev.tests.modelGenerated.LambdaRdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.lambdaTestModel
 import com.intellij.remoteDev.util.executeSyncNonNullable
 import com.intellij.tools.ide.starter.bus.EventsBus
-import com.intellij.util.io.copyRecursively
-import com.intellij.util.io.createDirectories
 import com.jetbrains.rd.framework.IdKind
 import com.jetbrains.rd.framework.Identities
 import com.jetbrains.rd.framework.Protocol
@@ -36,38 +32,33 @@ import com.jetbrains.rd.util.threading.SynchronousScheduler
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.io.path.exists
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 internal fun IDETestContext.runIdeWithLambda(
-  runTimeout: Duration = 10.minutes,
-  launchName: String = "",
-  expectedKill: Boolean = false,
-  expectedExitCode: Int = 0,
-  collectNativeThreads: Boolean = false,
-  configure: IDERunContext.() -> Unit = {},
+  setup: LambdaTestSetup,
+  runTimeout: Duration,
+  launchName: String,
 ): IdeWithLambda {
   onRemDevContext {
-    return@runIdeWithLambda runIdeWithLambda(runTimeout, launchName, expectedKill, expectedExitCode, collectNativeThreads, configure)
+    return@runIdeWithLambda runIdeWithLambda(setup, runTimeout, launchName)
   }
 
   val driverRunner = LocalDriverRunner()
-  val monolithRdSession = setUpLambdaTestSession(MONOLITH)
+  val monolithRdSession = setUpLambdaTestSession(MONOLITH, setup)
   val backgroundRun = driverRunner.runIdeWithDriver(this,
                                                     determineDefaultCommandLineArguments(),
                                                     emptyList(),
                                                     runTimeout,
                                                     useStartupScript = true,
                                                     launchName,
-                                                    expectedKill,
-                                                    expectedExitCode,
-                                                    collectNativeThreads = collectNativeThreads,
-                                                    configure = configure)
+                                                    expectedKill = false,
+                                                    expectedExitCode = 0,
+                                                    collectNativeThreads = false,
+                                                    configure = {})
   // Killed rather than leaked when the session never answers. Nothing else holds this run — the caller only
   // ever sees the `IdeWithLambda` below — so an IDE left behind here is a process no one can address and no one
-  // can stop, which then contends with the relaunch that follows for the remote driver's fixed ports. The kill
+  // can stop, which then contends with the restart that follows for the remote driver's fixed ports. The kill
   // is forced because an IDE whose lambda channel never came up is not reliably able to quit gracefully.
   try {
     monolithRdSession.awaitLambdaSessionReady()
@@ -80,19 +71,14 @@ internal fun IDETestContext.runIdeWithLambda(
 }
 
 internal fun IDERemDevTestContext.runIdeWithLambda(
-  runTimeout: Duration = 10.minutes,
-  launchName: String = "",
-  expectedKill: Boolean = false,
-  expectedExitCode: Int = 0,
-  collectNativeThreads: Boolean = false,
-  configure: IDERunContext.() -> Unit = {},
+  setup: LambdaTestSetup,
+  runTimeout: Duration,
+  launchName: String,
 ): IdeWithLambda {
   // the split-mode runner, unless a launch mode was selected through the DriverRunner binding - same choice runIdeWithDriver makes
   val driverRunner = selectedDriverRunner()
-  LambdaTestPluginHolder.additionalPluginDirNames(OnlyFrontend, All)
-    .forEach { addCustomFrontendPlugin(it) }
-  val backendRdSession = setUpLambdaTestSession(BACKEND)
-  val frontendRdSession = frontendIDEContext.setUpLambdaTestSession(FRONTEND)
+  val backendRdSession = setUpLambdaTestSession(BACKEND, setup)
+  val frontendRdSession = frontendIDEContext.setUpLambdaTestSession(FRONTEND, setup)
 
   val backgroundRun = driverRunner.runIdeWithDriver(this,
                                                     determineDefaultCommandLineArguments(),
@@ -100,11 +86,11 @@ internal fun IDERemDevTestContext.runIdeWithLambda(
                                                     runTimeout,
                                                     useStartupScript = true,
                                                     launchName,
-                                                    expectedKill,
-                                                    expectedExitCode,
-                                                    collectNativeThreads = collectNativeThreads,
+                                                    expectedKill = false,
+                                                    expectedExitCode = 0,
+                                                    collectNativeThreads = false,
                                                     pauseOnIndicators = null,
-                                                    configure = configure)
+                                                    configure = {})
   // Killed rather than leaked, for the reason the monolith launch above states.
   try {
     listOf(backendRdSession, frontendRdSession)
@@ -114,21 +100,28 @@ internal fun IDERemDevTestContext.runIdeWithLambda(
     catchAll("Killing the IDEs whose lambda sessions never became ready") { backgroundRun.forceKill() }
     throw notReady
   }
-  return IdeWithLambda(backgroundRun,
-                       rdSession = frontendRdSession,
-                       backendIdeWithLambda = if (backgroundRun is RemoteDevBackgroundRun)
-                         IdeWithLambda(backgroundRun.backendRun, backendRdSession, null)
-                       else null
-  ).also {
-    if (testCase.projectInfo != NoProject) {
+  val ideWithLambda = IdeWithLambda(backgroundRun,
+                                    rdSession = frontendRdSession,
+                                    backendIdeWithLambda = if (backgroundRun is RemoteDevBackgroundRun)
+                                      IdeWithLambda(backgroundRun.backendRun, backendRdSession, null)
+                                    else null
+  )
+  if (testCase.projectInfo != NoProject) {
+    // Killed rather than leaked, for the reason the monolith launch above states.
+    try {
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking {
-        it.runInFrontend("Wait for the project", globalTestScope = true) {
+        ideWithLambda.runInFrontend("Wait for the project", globalTestScope = true) {
           waitForProject(if (!ApplicationManager.getApplication().isHeadlessEnvironment) 30.seconds else 20.seconds)
         }
       }
     }
+    catch (notOpened: Throwable) {
+      catchAll("Killing the IDEs that never opened the project") { backgroundRun.forceKill() }
+      throw notOpened
+    }
   }
+  return ideWithLambda
 }
 
 /**
@@ -160,7 +153,7 @@ fun LambdaRdTestSession.awaitLambdaSessionReady(timeout: Duration = 20.seconds) 
  *
  * One session per *run*, never one per context: the protocol lifetime is nested under [EternalLifetime] and
  * terminated by this context's [IdeAfterLaunchEvent] through a one-shot subscription, so the session that
- * served a run is dead as soon as that run's IDE is. A relaunch needs a fresh one.
+ * served a run is dead as soon as that run's IDE is. A restart needs a fresh one.
  *
  * The caller owns the [IdeWithLambda] built around the returned session, because only the caller knows which
  * run it launched. [runIdeWithLambda] is one such caller; a host that starts the IDE through IDE Starter
@@ -169,7 +162,7 @@ fun LambdaRdTestSession.awaitLambdaSessionReady(timeout: Duration = 20.seconds) 
 private val sessionsSetUp = AtomicInteger()
 
 @ApiStatus.Internal
-fun IDETestContext.setUpLambdaTestSession(lambdaRdIdeType: LambdaRdIdeType): LambdaRdTestSession {
+fun IDETestContext.setUpLambdaTestSession(lambdaRdIdeType: LambdaRdIdeType, setup: LambdaTestSetup): LambdaRdTestSession {
   val testProtocolLifetimeDef = EternalLifetime.createNested()
   // Unique per session, not per IDE type: `LocalEventsFlow.subscribe` drops a duplicate key with an info log,
   // so a key shared with a subscription that is still live would leave this session's protocol lifetime
@@ -195,7 +188,7 @@ fun IDETestContext.setUpLambdaTestSession(lambdaRdIdeType: LambdaRdIdeType): Lam
 
   applyVMOptionsPatch {
     addSystemProperty(LambdaTestsConstants.protocolPortPropertyName, testProtocolPort)
-    LambdaTestPluginHolder.testModuleId()?.let {
+    setup.testModuleId?.let {
       addSystemProperty(TEST_MODULE_ID_PROPERTY_NAME, it)
     }
   }
@@ -205,15 +198,4 @@ fun IDETestContext.setUpLambdaTestSession(lambdaRdIdeType: LambdaRdIdeType): Lam
     model.session.value = rdSession
   }
   return rdSession
-}
-
-//todo
-private fun IDERemDevTestContext.addCustomFrontendPlugin(additionalFrontendPluginModuleName: String) {
-  val frontendCustomPluginsDir = frontendIDEContext.paths.pluginsDir
-  if (!frontendCustomPluginsDir.exists()) {
-    frontendCustomPluginsDir.createDirectories()
-  }
-  frontendIDEContext.ide.installationPath
-    .resolve("plugins").resolve(additionalFrontendPluginModuleName)
-    .copyRecursively(frontendCustomPluginsDir.resolve(additionalFrontendPluginModuleName))
 }

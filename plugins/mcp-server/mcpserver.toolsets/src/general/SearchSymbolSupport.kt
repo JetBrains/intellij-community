@@ -18,6 +18,7 @@ import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.navigation.NavigationItem
 import com.intellij.navigation.PsiElementNavigationItem
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.fileLogger
@@ -75,7 +76,14 @@ open class SymbolSearchEngine {
     includeExternal: Boolean,
     limit: Int,
   ): SearchResult {
-    return chooseByNameSearchSymbols(q, paths, includeExternal, limit)
+    return chooseByNameSearchSymbols(q, paths, includeExternal, limit, ::createModels)
+  }
+
+  protected open suspend fun createModels(project: Project, parentDisposable: Disposable): List<ChooseByNameModel> {
+    return listOf(
+      GotoClassModel2(project).also { Disposer.register(parentDisposable, it) },
+      GotoSymbolModel2(project, parentDisposable).also { Disposer.register(parentDisposable, it) },
+    )
   }
 }
 
@@ -87,6 +95,7 @@ private suspend fun chooseByNameSearchSymbols(
   paths: List<String>?,
   includeExternal: Boolean,
   limit: Int,
+  createModels: suspend (Project, Disposable) -> List<ChooseByNameModel>,
 ): SearchResult {
   val effectiveLimit = normalizeLimit(limit)
   val project = currentCoroutineContext().project
@@ -113,9 +122,7 @@ private suspend fun chooseByNameSearchSymbols(
       cancellable = true,
     ) {
       val parentDisposable = asDisposable()
-      val classModel = GotoClassModel2(project).also { Disposer.register(parentDisposable, it) }
-      val symbolModel = GotoSymbolModel2(project, parentDisposable).also { Disposer.register(parentDisposable, it) }
-      val models = listOf(classModel, symbolModel)
+      val models = createModels(project, parentDisposable)
       for (model in models) {
         val viewModel = McpChooseByNameViewModel(project, model, requestedCount)
         val transformedPattern = viewModel.transformPattern(q)

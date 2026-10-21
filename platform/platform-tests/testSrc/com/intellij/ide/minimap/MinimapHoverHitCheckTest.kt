@@ -14,9 +14,19 @@ import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.editor.impl.AbstractEditorTest
+import com.intellij.openapi.editor.impl.editorModelFixture
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.ui.EmptyIcon
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.awt.Point
 import java.awt.geom.Rectangle2D
 import javax.swing.Icon
@@ -27,10 +37,16 @@ import javax.swing.Icon
  * per-entry loop and out of the EDT path (see [com.intellij.ide.minimap.hover.MinimapHoverController]) so that a
  * language's lazy resolve update does not try to run a modal progress while a read lock is held.
  */
-class MinimapHoverHitCheckTest : AbstractEditorTest() {
+@TestApplication
+class MinimapHoverHitCheckTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
 
   private fun context(): MinimapRenderContext {
-    val editor = editor
+    val editor = fixture.editor
     return MinimapRenderContext(
       editor = editor,
       panelWidth = 120,
@@ -41,7 +57,7 @@ class MinimapHoverHitCheckTest : AbstractEditorTest() {
   }
 
   private fun lineEntry(line: Int, text: String): Pair<MinimapRenderEntry, RecordingStructureElement> {
-    val document = editor.document
+    val document = fixture.editor.document
     val range = TextRange(document.getLineStartOffset(line), document.getLineEndOffset(line))
     val element = RecordingStructureElement(range, text)
     return MinimapRenderEntry(element = element, rect2d = Rectangle2D.Double()) to element
@@ -70,7 +86,8 @@ class MinimapHoverHitCheckTest : AbstractEditorTest() {
     )
   }
 
-  fun testResolvesPresentationOfEntryUnderPoint() {
+  @Test
+  fun testResolvesPresentationOfEntryUnderPoint(): Unit = fixture.runTest {
     initText((0 until 20).joinToString("\n") { "line$it" })
     val context = context()
     val hitChecker = MinimapHoverHitCheck(editor)
@@ -83,13 +100,14 @@ class MinimapHoverHitCheckTest : AbstractEditorTest() {
 
     val result = resolveHitOffEdt(hitChecker, snapshot, point)
 
-    assertNotNull("the entry under the point should produce a hover target", result)
+    assertNotNull(result, "the entry under the point should produce a hover target")
     assertEquals("fn five", result!!.text)
     assertSame(EmptyIcon.ICON_16, result.icon)
-    assertTrue("presentation must be resolved for the winning entry", element.presentationResolved)
+    assertTrue(element.presentationResolved, "presentation must be resolved for the winning entry")
   }
 
-  fun testSmallestMatchingEntryWins() {
+  @Test
+  fun testSmallestMatchingEntryWins(): Unit = fixture.runTest {
     initText((0 until 20).joinToString("\n") { "line$it" })
     val context = context()
     val hitChecker = MinimapHoverHitCheck(editor)
@@ -110,13 +128,14 @@ class MinimapHoverHitCheckTest : AbstractEditorTest() {
     val result = resolveHitOffEdt(hitChecker, snapshot, point)
 
     assertNotNull(result)
-    assertEquals("the smallest entry containing the point should win", "inner", result!!.text)
+    assertEquals("inner", result!!.text, "the smallest entry containing the point should win")
     // Geometry-first: only the winning entry's presentation is resolved, not every entry's.
     assertTrue(narrowElement.presentationResolved)
-    assertFalse("the losing entry's presentation must not be resolved", wideElement.presentationResolved)
+    assertFalse(wideElement.presentationResolved, "the losing entry's presentation must not be resolved")
   }
 
-  fun testNoTargetWhenPointMissesEntries() {
+  @Test
+  fun testNoTargetWhenPointMissesEntries(): Unit = fixture.runTest {
     initText((0 until 20).joinToString("\n") { "line$it" })
     val context = context()
     val hitChecker = MinimapHoverHitCheck(editor)
@@ -126,11 +145,12 @@ class MinimapHoverHitCheckTest : AbstractEditorTest() {
 
     val result = resolveHitOffEdt(hitChecker, snapshot, Point(0, context.geometry.minimapHeight + 5_000))
 
-    assertNull("a point outside every entry rect must not produce a hover target", result)
+    assertNull(result, "a point outside every entry rect must not produce a hover target")
   }
 
   // IJPL-255407
-  fun testEntryBeyondDocumentProducesNoTarget() {
+  @Test
+  fun testEntryBeyondDocumentProducesNoTarget(): Unit = fixture.runTest {
     initText((0 until 20).joinToString("\n") { "line$it" })
     val context = context()
     val hitChecker = MinimapHoverHitCheck(editor)
@@ -144,7 +164,7 @@ class MinimapHoverHitCheckTest : AbstractEditorTest() {
     val rect = hitChecker.computeHoverRect(entry, context)!!
     val result = resolveHitOffEdt(hitChecker, snapshot, Point(rect.centerX.toInt(), rect.centerY.toInt()))
 
-    assertNull("an entry beyond the document must have no hover rect", hitChecker.computeHoverRect(foreignEntry, context))
+    assertNull(hitChecker.computeHoverRect(foreignEntry, context), "an entry beyond the document must have no hover rect")
     assertEquals("fn five", result?.text)
   }
 

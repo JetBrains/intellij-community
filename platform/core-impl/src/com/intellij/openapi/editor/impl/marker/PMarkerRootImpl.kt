@@ -4,13 +4,17 @@ package com.intellij.openapi.editor.impl.marker
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
+import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerDeltaProcessor
 import com.intellij.openapi.editor.impl.marker.PMarkerRootImpl.Companion.NULL_NODE
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentLongIntMap
 import com.intellij.util.containers.Java11Shim
+import it.unimi.dsi.fastutil.longs.LongList
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.ArrayDeque
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import java.util.function.LongConsumer
 
 /**
@@ -28,12 +32,58 @@ open class PMarkerRootImpl private constructor(
   private val states: PersistentLongMap<StoredNode>,
   /** Number of valid markers that use a persistent policy in the entire tree represented by this root. */
   private val persistentMarkerCount: Int,
-  private val cachedDelta: ConcurrentLongIntMap = Java11Shim.createConcurrentLongIntMap(UNCACHED_DELTA),
+  @Volatile
+  private var cachedDelta: ConcurrentLongIntMap? = null,
+  /**
+   * Identifies roots with identical marker validity and offsets. [updateSpec] preserves this token.
+   * The token does not retain the root or its offset cache.
+   */
+  internal val resolutionCacheIdentity: Any = Any(),
+  /**
+   * Describes one direct text edit. Null for moves, full traversals, and changes to the marker structure.
+   */
+  private val resolutionUpdate: ResolutionUpdate? = null,
 ) : PMarkerRoot {
-  internal val resolutionCacheIdentity: Any
-    get() = cachedDelta
+  /**
+   * Maps cached offsets across one edit without retaining the previous root.
+   *
+   * @property previousIdentity The [resolutionCacheIdentity] before the edit.
+   * @property unchangedPrefixEnd Ranges with an old end strictly below this offset remain unchanged.
+   * @property editEnd Ranges with an old start strictly above this offset shift by [delta].
+   * @property delta The change in the document length.
+   */
+  private data class ResolutionUpdate(
+    val previousIdentity: Any,
+    val unchangedPrefixEnd: Int,
+    val editEnd: Int,
+    val delta: Int,
+  )
+
+  /**
+   * Advances a valid cached resolution across one direct edit without traversing the tree.
+   * Reuses unchanged offsets before the affected area and adds the edit delta after it.
+   * Returns `null` when the source identity differs, metadata is unavailable, or the range touches the affected area.
+   * Invalid and absent resolutions also require normal resolution.
+   *
+   * @param previousIdentity The root identity associated with [resolution].
+   * @param resolution The cached resolution before the edit.
+   */
+  internal fun advanceResolution(previousIdentity: Any, resolution: PMarkerResolution): PMarkerResolution? {
+    val update = resolutionUpdate ?: return null
+    if (update.previousIdentity !== previousIdentity || !resolution.isValid) return null
+    return when {
+      resolution.endOffset < update.unchangedPrefixEnd -> resolution
+      resolution.startOffset > update.editEnd -> {
+        if (update.delta == 0) resolution
+        else PMarkerResolution.Valid(resolution.startOffset + update.delta, resolution.endOffset + update.delta)
+      }
+      else -> null
+    }
+  }
 
   override fun emptyRoot(): PMarkerRootImpl = empty()
+
+  override fun isEmpty(): Boolean = rootId == NULL_NODE
 
   override fun resolve(markerId: Long, absentRange: TextRange): PMarkerResolution {
     return when (val state = states.getUnchecked(markerId)) {
@@ -60,30 +110,21 @@ open class PMarkerRootImpl private constructor(
     markerReference: SnapshotMarkerReference?,
     measure: Int,
   ): PMarkerRoot {
-    require(startOffset >= 0) { "startOffset must be non-negative but got: $startOffset" }
-    require(endOffset >= startOffset) { "endOffset must not precede startOffset, but got: ($startOffset, $endOffset)" }
-    val existingState = states.getUnchecked(markerId)
-    require(existingState == null || existingState is AbsentNode) { "Marker $markerId already exists: $existingState" }
-
     val editor = MapBatchEditor(states, persistentMarkerCount)
-    editor.putValid(
-      markerId,
-      ValidNode(
-        MarkerEntry(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, measure),
-        parentId = NULL_NODE,
-        leftId = NULL_NODE,
-        rightId = NULL_NODE,
-        height = 1,
-        maximumEndOffset = endOffset,
-        lazyOffsetDelta = 0,
-        subtreeFlavorFlags = flavorFlags,
-        subtreeAggregate = measure,
-      )
+    val newRoot = editor.insert(
+      rootId, MarkerEntry(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, measure)
     )
+    return PMarkerRootImpl(newRoot, editor.build(), editor.persistentMarkerCount())
+  }
 
-    val newRoot = insertAvl(editor, rootId, markerId)
-    editor.setParent(newRoot, NULL_NODE)
-    return PMarkerRootImpl(newRoot, editor.build(), incrementPersistentMarkerCount(persistentMarkerCount, spec.policy))
+  override fun insertMany(entries: List<MarkerEntry>): PMarkerRoot {
+    if (entries.isEmpty()) return this
+    val editor = MapBatchEditor(states, persistentMarkerCount)
+    var newRoot = rootId
+    for (entry in entries) {
+      newRoot = editor.insert(newRoot, entry)
+    }
+    return PMarkerRootImpl(newRoot, editor.build(), editor.persistentMarkerCount())
   }
 
   override fun updateFlavor(markerId: Long, flavorFlags: Byte): PMarkerRoot {
@@ -114,6 +155,8 @@ open class PMarkerRootImpl private constructor(
         spec.policy,
       ),
       cachedDelta,
+      resolutionCacheIdentity,
+      resolutionUpdate,
     )
   }
 
@@ -162,23 +205,45 @@ open class PMarkerRootImpl private constructor(
     }
   }
 
-  override fun purge(markerId: Long): PMarkerRoot {
-    return when (val state = states.getUnchecked(markerId)) {
-      null -> this
-      is AbsentNode, is InvalidNode -> PMarkerRootImpl(rootId, states.remove(markerId), persistentMarkerCount)
-      is ValidNode -> {
-        val startOffset = state.entry.nodeStart + ancestorDelta(state, markerId)
-        val editor = MapBatchEditor(states, persistentMarkerCount)
-        val newRoot = removeByKey(editor, rootId, PositionKey(startOffset, markerId))
-        editor.remove(markerId)
-        editor.setParent(newRoot, NULL_NODE)
-        PMarkerRootImpl(
-          newRoot,
-          editor.build(),
-          decrementPersistentMarkerCount(persistentMarkerCount, state.entry.spec.policy),
-        )
+  override fun removeMany(markerIds: LongList): PMarkerRoot = removeMarkers(markerIds, retainRange = true)
+
+  override fun purgeMany(markerIds: LongList): PMarkerRoot = removeMarkers(markerIds, retainRange = false)
+
+  private fun removeMarkers(markerIds: LongList, retainRange: Boolean): PMarkerRoot {
+    if (markerIds.isEmpty()) return this
+    val editor = MapBatchEditor(states, persistentMarkerCount)
+    var newRoot = rootId
+    for (i in markerIds.indices) {
+      val markerId = markerIds.getLong(i)
+      when (val state = editor.state(markerId)) {
+        null -> Unit
+        is AbsentNode -> if (!retainRange) editor.remove(markerId)
+        is InvalidNode -> {
+          if (retainRange) {
+            editor.putAbsent(markerId, state.startOffset, state.endOffset)
+          }
+          else {
+            editor.remove(markerId)
+          }
+        }
+        is ValidNode -> {
+          val offsetDelta = editor.ancestorDelta(state)
+          val startOffset = state.entry.nodeStart + offsetDelta
+          val endOffset = state.entry.nodeEnd + offsetDelta
+          newRoot = removeByKey(editor, newRoot, PositionKey(startOffset, markerId))
+          if (retainRange) {
+            editor.putAbsent(markerId, startOffset, endOffset)
+          }
+          else {
+            editor.remove(markerId)
+          }
+          editor.removePolicy(state.entry.spec.policy)
+          editor.setParent(newRoot, NULL_NODE)
+        }
       }
     }
+    val newStates = editor.build()
+    return if (newStates === states) this else PMarkerRootImpl(newRoot, newStates, editor.persistentMarkerCount())
   }
 
   @TestOnly
@@ -241,7 +306,13 @@ open class PMarkerRootImpl private constructor(
       )
     }
     editor.setParent(newRoot, NULL_NODE)
-    return PMarkerRootImpl(newRoot, editor.build(), editor.persistentMarkerCount())
+    val resolutionUpdate = if (patch.moveOffset() == editStart) {
+      ResolutionUpdate(resolutionCacheIdentity, minOf(editStart, editor.firstChangedEnd), editEnd, delta)
+    }
+    else {
+      null
+    }
+    return PMarkerRootImpl(newRoot, editor.build(), editor.persistentMarkerCount(), resolutionUpdate = resolutionUpdate)
   }
 
   private fun applyPatchWithFullTraversal(
@@ -399,10 +470,11 @@ open class PMarkerRootImpl private constructor(
           val childDelta = ancestorDelta + node.lazyOffsetDelta
           pushLeft(node.rightId, childDelta)
 
-          val start = node.entry.nodeStart + ancestorDelta
-          val end = node.entry.nodeEnd + ancestorDelta
-          if (end >= startOffset && containsAllFlavorFlags(node.entry.flavorFlags, requiredFlavorFlags)) {
-            return if (ancestorDelta == 0) node.entry else node.entry.copy(nodeStart = start, nodeEnd = end)
+          val entry = node.entry
+          val end = entry.nodeEnd + ancestorDelta
+          if (end >= startOffset && containsAllFlavorFlags(entry.flavorFlags, requiredFlavorFlags)) {
+            val start = entry.nodeStart + ancestorDelta
+            return if (ancestorDelta == 0) entry else entry.copy(nodeStart = start, nodeEnd = end)
           }
         }
         return null
@@ -429,13 +501,36 @@ open class PMarkerRootImpl private constructor(
     }
   }
 
+  @ApiStatus.Internal
+  override fun processAllRangeMarkers(processor: MarkerDeltaProcessor): Boolean {
+    return processAllRangeMarkers(rootId, ancestorDelta = 0, processor)
+  }
+
+  private fun processAllRangeMarkers(nodeId: Long, ancestorDelta: Int, processor: MarkerDeltaProcessor): Boolean {
+    if (nodeId == NULL_NODE) return true
+    val node = states.getUnchecked(nodeId) as ValidNode
+    val childDelta = ancestorDelta + node.lazyOffsetDelta
+    return processAllRangeMarkers(node.leftId, childDelta, processor) &&
+           processor.process(node.entry, ancestorDelta) &&
+           processAllRangeMarkers(node.rightId, childDelta, processor)
+  }
+
+  private val maximumHeight: Int = guessMaximumHeight()
   private fun ancestorDelta(state: ValidNode, markerId: Long): Int {
-    val cached = cachedDelta.get(markerId)
+    var cachedDelta = cachedDelta
+    if (cachedDelta == null) {
+      cachedDelta = Java11Shim.createConcurrentLongIntMap(UNCACHED_DELTA)//, states.size())
+      if (!CACHED_DELTA_UPDATER.compareAndSet(this, null, cachedDelta)) {
+        cachedDelta = this.cachedDelta
+      }
+    }
+    val cached = cachedDelta!!.get(markerId)
     if (cached != UNCACHED_DELTA) {
       return cached
     }
 
-    val path = ArrayDeque<ValidNode>()
+    val path = arrayOfNulls<ValidNode>(maximumHeight)
+    var i = 0
     var node = state
     var nodeId = markerId
     var result: Int
@@ -449,7 +544,8 @@ open class PMarkerRootImpl private constructor(
         break
       }
 
-      path.addLast(node)
+      path[i] = node
+      i++
       node = states.getUnchecked(parentId) as? ValidNode
              ?: throw IllegalStateException("Parent $parentId is not a valid marker node")
       nodeId = parentId
@@ -460,14 +556,21 @@ open class PMarkerRootImpl private constructor(
       }
     }
 
-    while (path.isNotEmpty()) {
+    while (i > 0) {
       result += node.lazyOffsetDelta
-      node = path.removeLast()
+      i--
+      node = path[i]!!
       if (node.entry.markerId != markerId) {
         cachedDelta.putIfAbsent(node.entry.markerId, result)
       }
     }
     return result
+  }
+
+  private fun guessMaximumHeight(): Int {
+    // maximum AVL tree height is 1.44*log2(size)+1
+    val size = states.size()
+    return if (size == 0) 1 else ((23 * (31 - Integer.numberOfLeadingZeros(size))) shr 4) + 3
   }
 
   private fun subtreeAggregate(markerId: Long): Int =
@@ -596,8 +699,63 @@ open class PMarkerRootImpl private constructor(
     private val builder: PersistentLongMapBuilder<StoredNode> = states.builder()
     private var persistentMarkerCount: Int = initialPersistentMarkerCount
 
+    /**
+     * Smallest old end offset of a marker whose policy changes its offsets or invalidates it.
+     * [Int.MAX_VALUE] means that no such marker was found.
+     */
+    var firstChangedEnd: Int = Int.MAX_VALUE
+      private set
+
+    /** Updates [firstChangedEnd] from a policy result in absolute document coordinates. */
+    fun recordTransform(entry: MarkerEntry, result: MarkerTransformResult) {
+      if (result.errorReason != null || result.entry.nodeStart != entry.nodeStart || result.entry.nodeEnd != entry.nodeEnd) {
+        firstChangedEnd = minOf(firstChangedEnd, entry.nodeEnd)
+      }
+    }
+
+    fun state(markerId: Long): StoredNode? = builder.getUnchecked(markerId)
+
     fun valid(markerId: Long): ValidNode = builder.getUnchecked(markerId) as? ValidNode
-                                           ?: throw IllegalStateException("Marker $markerId is not a valid tree node")
+                                            ?: throw IllegalStateException("Marker $markerId is not a valid tree node")
+
+    fun insert(rootId: Long, entry: MarkerEntry): Long {
+      val markerId = entry.markerId
+      require(entry.nodeStart >= 0) { "startOffset must be non-negative but got: ${entry.nodeStart}" }
+      require(entry.nodeEnd >= entry.nodeStart) {
+        "endOffset must not precede startOffset, but got: (${entry.nodeStart}, ${entry.nodeEnd})"
+      }
+      val existingState = state(markerId)
+      require(existingState == null || existingState is AbsentNode) { "Marker $markerId already exists: $existingState" }
+      putValid(
+        markerId,
+        ValidNode(
+          entry,
+          parentId = NULL_NODE,
+          leftId = NULL_NODE,
+          rightId = NULL_NODE,
+          height = 1,
+          maximumEndOffset = entry.nodeEnd,
+          lazyOffsetDelta = 0,
+          subtreeFlavorFlags = entry.flavorFlags,
+          subtreeAggregate = entry.measure,
+        )
+      )
+      addPolicy(entry.spec.policy)
+      val newRoot = insertAvl(this, rootId, markerId)
+      setParent(newRoot, NULL_NODE)
+      return newRoot
+    }
+
+    fun ancestorDelta(state: ValidNode): Int {
+      var parentId = state.parentId
+      var delta = 0
+      while (parentId != NULL_NODE) {
+        val parent = valid(parentId)
+        delta += parent.lazyOffsetDelta
+        parentId = parent.parentId
+      }
+      return delta
+    }
 
     fun putValid(markerId: Long, node: ValidNode) {
       builder.put(markerId, node)
@@ -635,6 +793,10 @@ open class PMarkerRootImpl private constructor(
       persistentMarkerCount = incrementPersistentMarkerCount(persistentMarkerCount, policy)
     }
 
+    fun removePolicy(policy: MarkerPolicy) {
+      persistentMarkerCount = decrementPersistentMarkerCount(persistentMarkerCount, policy)
+    }
+
     fun setParent(markerId: Long, parentId: Long) {
       if (markerId == NULL_NODE) return
       val node = valid(markerId)
@@ -649,7 +811,8 @@ open class PMarkerRootImpl private constructor(
   companion object {
     private const val ALL_FLAVOR_FLAGS: Int = 0xFF
     private const val UNCACHED_DELTA: Int = Int.MIN_VALUE
-
+    private val CACHED_DELTA_UPDATER: AtomicReferenceFieldUpdater<PMarkerRootImpl, ConcurrentLongIntMap> = AtomicReferenceFieldUpdater.newUpdater(
+      PMarkerRootImpl::class.java, ConcurrentLongIntMap::class.java, "cachedDelta")
     private val ENTRY_COMPARATOR: Comparator<MarkerEntry> = Comparator { first, second -> PositionKey(first).compareTo(PositionKey(second)) }
     private const val NULL_NODE: Long = 0
     private object EMPTY : PMarkerRootImpl(
@@ -1133,6 +1296,7 @@ open class PMarkerRootImpl private constructor(
       check(result.entry.markerId == entry.markerId) {
         "Marker policy changed marker ID ${entry.markerId} to ${result.entry.markerId}"
       }
+      editor.recordTransform(entry, result)
       if (result.errorReason == null) {
         editor.replacePolicy(entry.spec.policy, result.entry.spec.policy)
         affectedMarkerConsumer.accept(entry.markerId)

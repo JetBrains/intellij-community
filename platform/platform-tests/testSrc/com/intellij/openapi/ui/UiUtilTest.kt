@@ -2,8 +2,13 @@
 package com.intellij.openapi.ui
 
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito
+import java.awt.MouseInfo
+import java.awt.PointerInfo
 import javax.swing.JEditorPane
+import javax.swing.JPanel
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 
 class UiUtilTest : UiUtilTestCase() {
 
@@ -71,5 +76,20 @@ class UiUtilTest : UiUtilTestCase() {
     assertEquals(pane.focusListeners.size, initialListeners + 1)
     pane.setCopyable(false)
     assertEquals(pane.focusListeners.size, initialListeners)
+  }
+
+  @Test
+  fun `test component is not under mouse while screen devices change`() {
+    val screenDevicesChange = ArrayIndexOutOfBoundsException("Index 1 out of bounds for length 1")
+    // Component.getMousePosition throws HeadlessException in a headless test before it asks MouseInfo
+    val component = Mockito.spy(JPanel())
+    Mockito.doThrow(screenDevicesChange).`when`(component).mousePosition
+    Mockito.mockStatic(MouseInfo::class.java).use { mouseInfo ->
+      mouseInfo.`when`<PointerInfo> { MouseInfo.getPointerInfo() }.thenThrow(screenDevicesChange)
+
+      assertFalse(component.isComponentUnderMouse())
+      Mockito.verify(component).mousePosition
+      mouseInfo.verify { MouseInfo.getPointerInfo() }
+    }
   }
 }

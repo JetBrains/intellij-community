@@ -1,4 +1,4 @@
-//! `validate-guest`, against a stubbed worker.
+//! `validate-guest`, the sweep of the shared objects and the host probe of `lane-run`, against a stubbed worker.
 //!
 //! Every refusal below is reached in milliseconds on any host, against a stubbed loader, `xdpyinfo`, `xprop` and
 //! `ldd`. Three cases could not have been written against the shell version at all: the **stale window manager
@@ -46,11 +46,11 @@ fn self_xprop() -> String {
     format!("{XPROP_TOOL} -id {WINDOW_LOWER} -display :88 {SUPPORTING_WM_CHECK_PROPERTY}")
 }
 
-/// The guest's commands, stubbed by how a command reads: the tool's base name and its arguments with the runtime
-/// root reduced away. An unstubbed command panics rather than answering an error, which would surface as some
+/// The guest's commands, stubbed by how a command reads: the tool's base name and its arguments with the distribution
+/// reduced away. An unstubbed command panics rather than answering an error, which would surface as some
 /// other check's refusal and let a case pass while testing something else.
 struct Worker {
-    runtime_root: PathBuf,
+    distribution: PathBuf,
     /// The output of a command, or the exit code it fails with.
     replies: HashMap<String, Result<String, i32>>,
     /// Answers one command gives first, one per call, before the reply table answers the rest: a root window whose
@@ -63,7 +63,7 @@ struct Worker {
 
 impl Worker {
     fn label(&self, argv: &[String]) -> String {
-        let prefix = format!("{}/", self.runtime_root.display());
+        let prefix = format!("{}/", self.distribution.display());
         let mut parts = vec![Path::new(&argv[0]).file_name().unwrap().to_string_lossy().into_owned()];
         parts.extend(
             argv[1..]
@@ -122,17 +122,14 @@ struct Fixture {
 }
 
 impl Fixture {
-    /// A worker every check passes on, holding one staged runtime with two shared objects that resolve. Every case
-    /// is this, minus one thing. The loaders are real files in a temporary directory, because the check stats them.
+    /// A worker every check passes on, with a distribution of two shared objects that resolve. Every case is this,
+    /// minus one thing. The loaders are real files in a temporary directory, because the check stats them.
     fn healthy() -> Self {
         let root = tempfile::tempdir().unwrap();
-        let runtime_root = root.path().join("daemon-runtime");
-        let args = ValidateGuestArgs {
-            display: ":88".to_owned(),
-            runtime_root: runtime_root.clone(),
-        };
+        let distribution = root.path().join("dist");
+        let args = ValidateGuestArgs { display: ":88".to_owned() };
         let worker = Worker {
-            runtime_root,
+            distribution,
             replies: HashMap::new(),
             queued: HashMap::new(),
             calls: Vec::new(),
@@ -167,8 +164,8 @@ impl Fixture {
         &mut self.validator.runner
     }
 
-    fn runtime_root(&self) -> PathBuf {
-        self.validator.runner.runtime_root.clone()
+    fn distribution(&self) -> PathBuf {
+        self.validator.runner.distribution.clone()
     }
 
     fn stage_glibc_loader(&mut self) {
@@ -185,20 +182,31 @@ impl Fixture {
         fs::remove_file(&self.validator.loaders.glibc).unwrap();
     }
 
-    /// Writes one file into the staged runtime root and stubs the `ldd` that will read it.
+    /// Writes one file into the distribution and stubs the `ldd` that will read it.
     fn stage_shared_object(&mut self, relative: &str, ldd_output: &str) {
-        let path = self.runtime_root().join(relative);
+        let path = self.distribution().join(relative);
         fs::create_dir_all(path.parent().unwrap()).unwrap();
         fs::write(&path, "\x7fELF").unwrap();
         self.worker().reply(&format!("{LDD_TOOL} {relative}"), ldd_output);
     }
 
-    fn empty_runtime_root(&self) {
-        fs::remove_dir_all(self.runtime_root()).unwrap();
+    fn empty_distribution(&self) {
+        fs::remove_dir_all(self.distribution()).unwrap();
     }
 
     fn validate(&mut self) -> Result<GuestReport, AgentRefusal> {
         self.validator.validate()
+    }
+
+    /// The sweep of the shared objects of the distribution, with the runner of the worker.
+    fn sweep(&mut self) -> Result<usize, AgentRefusal> {
+        let distribution = self.distribution();
+        check_shared_objects(&mut self.validator.runner, &distribution)
+    }
+
+    fn probe_host(&mut self) -> Result<Vec<String>, AgentRefusal> {
+        let distribution = self.distribution();
+        self.validator.probe_host(&distribution)
     }
 
     fn calls(&self) -> &[String] {
@@ -208,6 +216,8 @@ impl Fixture {
 
 // --- the happy path -------------------------------------------------------------------------------------------
 
+// The report names the C library, the display and the window manager. The self-check runs no `ldd`: the lane daemon
+// sweeps the shared objects of its distribution at its own boot.
 #[test]
 fn a_healthy_worker_is_validated_and_reports_what_it_found() {
     let mut fixture = Fixture::healthy();
@@ -219,46 +229,43 @@ fn a_healthy_worker_is_validated_and_reports_what_it_found() {
             display: ":88".to_owned(),
             window_manager: WINDOW_LOWER.to_owned(),
             window_manager_probes: 1,
-            shared_objects: 2,
-            note: None,
         }
     );
     // A warm worker pays the wait's first probe and nothing else.
     assert!(fixture.validator.runner.paused.is_empty());
-    // `note` is absent rather than null when there is nothing to note.
     let encoded = serde_json::to_value(&report).unwrap();
     assert_eq!(
         encoded,
         serde_json::json!({"glibc": "2.39", "display": ":88", "windowManager": WINDOW_LOWER,
-                           "windowManagerProbes": 1, "sharedObjects": 2})
+                           "windowManagerProbes": 1})
     );
+    assert!(!fixture.validator.runner.ran(&format!("{LDD_TOOL} ")), "{:?}", fixture.calls());
 }
 
-/// A worker that already failed a cheap check is not swept: a display that does not answer is a worker no amount
-/// of `ldd` will rescue.
+/// A host that already failed a cheap check is not swept: a display that does not answer is a host no amount of
+/// `ldd` will rescue.
 #[test]
 fn the_shared_object_sweep_runs_only_after_the_cheap_checks_passed() {
-    let mut fixture = Fixture::healthy();
+    let mut fixture = healthy_host();
     fixture.worker().fail_with(XDPYINFO_TOOL, 1);
-    fixture.validate().unwrap_err();
+    fixture.probe_host().unwrap_err();
     assert!(!fixture.validator.runner.ran(&format!("{LDD_TOOL} ")), "{:?}", fixture.calls());
 }
 
 // --- the argument contract ------------------------------------------------------------------------------------
 
-/// Exactly two values, checked before anything is read. A wrong argv is a wiring defect in the controller's
-/// `validate_argv` and refuses as usage. A controller that still passes the retired four values is a wiring defect
-/// too, and not a checked boot.
+/// Exactly one value, the display, checked before anything is read. A wrong argv is a wiring defect in the
+/// controller's `validate_argv` and refuses as usage. A controller that still passes the retired runtime root, or the
+/// retired four values, is a wiring defect too, and not a checked boot.
 #[test]
-fn the_validate_argv_is_exactly_two_checked_values() {
-    let cases: [(&str, &[&str]); 7] = [
+fn the_validate_argv_is_exactly_one_checked_value() {
+    let cases: [(&str, &[&str]); 6] = [
         ("no arguments", &[]),
-        ("one argument", &[":88"]),
-        ("a third argument", &[":88", "/ide", "24"]),
+        ("the retired runtime root", &[":88", "/data/daemon-runtime"]),
+        ("a relative second argument", &[":88", "daemon-runtime"]),
         ("the retired four-value argv", &[":88", "/node/bin/node", "/ide", "24"]),
-        ("a display with no colon", &["88", "/ide"]),
-        ("a display with a trailing letter", &[":88x", "/ide"]),
-        ("a relative runtime root", &[":88", "daemon-runtime"]),
+        ("a display with no colon", &["88"]),
+        ("a display with a trailing letter", &[":88x"]),
     ];
     for (name, argv) in cases {
         let args: Vec<&str> = std::iter::once(AgentVerb::ValidateGuest.as_str())
@@ -273,7 +280,7 @@ fn the_validate_argv_is_exactly_two_checked_values() {
 /// the refusal names what arrived.
 #[test]
 fn the_validator_takes_no_package_list() {
-    let answered = run_agent(&[AgentVerb::ValidateGuest.as_str(), ":88", "/ide", "libegl1", "libgtk-3-0t64"], b"");
+    let answered = run_agent(&[AgentVerb::ValidateGuest.as_str(), ":88", "libegl1", "libgtk-3-0t64"], b"");
     assert_eq!((answered.exit, answered.code()), (64, "usage".to_owned()));
     let message = answered.failure()["error"]["message"].as_str().unwrap().to_owned();
     assert!(message.contains("libegl1"), "{message}");
@@ -284,7 +291,7 @@ fn the_validator_takes_no_package_list() {
 #[test]
 fn every_guest_check_refuses_with_its_own_code() {
     type Damage = fn(&mut Fixture);
-    let cases: [(&str, Damage, &str); 11] = [
+    let cases: [(&str, Damage, &str); 10] = [
         (
             "the X server is not serving the display",
             |fixture| fixture.worker().fail_with(XDPYINFO_TOOL, 1),
@@ -319,16 +326,6 @@ fn every_guest_check_refuses_with_its_own_code() {
                 fixture.worker().fail_with(&self_xprop(), 1);
             },
             "linux_window_manager_stale",
-        ),
-        (
-            "a shared object the staged runtime links against is not found",
-            |fixture| {
-                fixture.worker().reply(
-                    "ldd lib/libskiko-linux-arm64.so",
-                    "\tlinux-vdso.so.1 (0x0000ffff)\n\tlibEGL.so.1 => not found\n",
-                );
-            },
-            "linux_shared_object_unresolved",
         ),
         // The C library, whose absence used to arrive as a display refusal naming Xvfb.
         (
@@ -369,26 +366,46 @@ fn every_guest_check_refuses_with_its_own_code() {
     }
 }
 
-/// A runtime root that exists and cannot be *read* is not a first boot's empty one. Skipped as root, which may
-/// open a mode-0000 directory.
+/// A distribution that exists and cannot be *read* is not an empty one. Skipped as root, which may open a mode-0000
+/// directory.
 #[test]
-fn an_unreadable_runtime_root_is_not_read_as_an_empty_one() {
+fn an_unreadable_distribution_is_not_read_as_an_empty_one() {
     if nix::unistd::geteuid().is_root() {
         eprintln!("skipped: a root process may read a mode-0000 directory, so the walk cannot be made to fail");
         return;
     }
     let mut fixture = Fixture::healthy();
-    let root = fixture.runtime_root();
+    let root = fixture.distribution();
     fs::set_permissions(&root, fs::Permissions::from_mode(0o000)).unwrap();
-    let result = fixture.validate();
+    let result = fixture.sweep();
     fs::set_permissions(&root, fs::Permissions::from_mode(0o755)).unwrap();
     let refusal = result.unwrap_err();
-    assert_eq!(refusal.code, "linux_runtime_root_unreadable");
+    assert_eq!(refusal.code, DISTRIBUTION_UNREADABLE_CODE);
+    assert_eq!(refusal.exit, AgentExit::Refused);
     assert!(refusal.message.contains(&*root.to_string_lossy()), "{}", refusal.message);
 }
 
+/// A distribution whose shared objects resolve passes, and the sweep answers how many objects `ldd` read. A library
+/// that the guest does not have is refused with its own code and the status of every guest check.
+#[test]
+fn the_sweep_refuses_a_shared_object_whose_library_the_guest_does_not_have() {
+    let mut fixture = Fixture::healthy();
+    assert_eq!(fixture.sweep().unwrap(), 2);
+
+    fixture.worker().reply(
+        "ldd lib/libskiko-linux-arm64.so",
+        "\tlinux-vdso.so.1 (0x0000ffff)\n\tlibEGL.so.1 => not found\n",
+    );
+    let refusal = fixture.sweep().unwrap_err();
+    assert_eq!(
+        (refusal.code.as_ref(), refusal.exit),
+        (SHARED_OBJECT_UNRESOLVED_CODE, AgentExit::Refused)
+    );
+    assert_eq!(SHARED_OBJECT_UNRESOLVED_CODE, "linux_shared_object_unresolved");
+}
+
 /// The unresolved-object refusal names **both** halves: the object that cannot be loaded (which feature stops
-/// working) and the library it wanted (the searchable half), and where the repair goes.
+/// working) and the library it wanted (the searchable half), the distribution, and where the repair goes.
 #[test]
 fn an_unresolved_shared_object_names_the_object_and_the_library_that_wanted_it() {
     let mut fixture = Fixture::healthy();
@@ -396,11 +413,13 @@ fn an_unresolved_shared_object_names_the_object_and_the_library_that_wanted_it()
         "ldd lib/libskiko-linux-arm64.so",
         "\tlinux-vdso.so.1 (0x0000ffff)\n\tlibEGL.so.1 => not found\n\tlibGLdispatch.so.0 => not found\n",
     );
-    let refusal = fixture.validate().unwrap_err();
+    let refusal = fixture.sweep().unwrap_err();
+    let distribution = fixture.distribution().display().to_string();
     for fragment in [
         "libskiko-linux-arm64.so",
         "libEGL.so.1",
         "libGLdispatch.so.0",
+        distribution.as_str(),
         "GUEST_PACKAGES",
         "crates/avl-vm/src/worker/docker.rs",
     ] {
@@ -456,32 +475,35 @@ fn a_guest_refusal_names_what_it_checked_and_what_it_found() {
     }
 }
 
-// --- the first boot -------------------------------------------------------------------------------------------
+// --- a distribution without a shared object ------------------------------------------------------------------
 
-/// A first boot has nothing to sweep, and says so: "resolved everything" and "there was nothing to resolve" are
-/// the same success, and only the note tells them apart.
+/// A distribution with no shared object has nothing to sweep: the sweep answers 0 and runs no `ldd`. The probe of a
+/// host says so in a note, because "resolved everything" and "there was nothing to resolve" are the same success.
 #[test]
-fn a_first_boot_reports_that_nothing_is_staged_yet() {
+fn a_distribution_without_a_shared_object_sweeps_nothing_and_the_probe_notes_it() {
     type Prepare = fn(&Fixture);
     let cases: [(&str, Prepare); 2] = [
-        ("the runtime root does not exist yet", |fixture| {
-            fixture.empty_runtime_root();
+        ("the distribution does not exist", |fixture| {
+            fixture.empty_distribution();
         }),
-        ("the runtime root exists and holds no shared object", |fixture| {
-            fixture.empty_runtime_root();
-            let java = fixture.runtime_root().join("bin/java");
+        ("the distribution exists and holds no shared object", |fixture| {
+            fixture.empty_distribution();
+            let java = fixture.distribution().join("jbr/bin/java");
             fs::create_dir_all(java.parent().unwrap()).unwrap();
             fs::write(java, "#!/bin/sh\n").unwrap();
         }),
     ];
     for (name, prepare) in cases {
-        let mut fixture = Fixture::healthy();
+        let mut fixture = healthy_host();
         prepare(&fixture);
-        let report = fixture.validate().expect(name);
-        assert_eq!(report.shared_objects, 0, "{name}");
-        let note = report.note.unwrap_or_default();
-        assert!(note.contains("nothing is staged"), "{name}: {note}");
+        assert_eq!(fixture.sweep().expect(name), 0, "{name}");
         assert!(!fixture.validator.runner.ran(&format!("{LDD_TOOL} ")), "{name}");
+        let notes = fixture.probe_host().expect(name);
+        let wanted = format!(
+            "the distribution {} holds no shared object, so ldd checked nothing",
+            fixture.distribution().display()
+        );
+        assert_eq!(notes, [wanted], "{name}");
     }
 }
 
@@ -563,28 +585,22 @@ fn the_musl_loader_is_never_run() {
 #[test]
 fn a_soname_the_tree_ships_is_not_a_base_image_gap() {
     let mut fixture = Fixture::healthy();
-    fixture.empty_runtime_root();
-    fixture.stage_shared_object(
-        "generations/abc/jbr/lib/server/libjvm.so",
-        "\tlibc.so.6 => /lib/libc.so.6 (0x0000ffff)\n",
-    );
+    fixture.empty_distribution();
+    fixture.stage_shared_object("jbr/lib/server/libjvm.so", "\tlibc.so.6 => /lib/libc.so.6 (0x0000ffff)\n");
     for name in ["libjava.so", "libjcef.so", "libawt_xawt.so"] {
-        fixture.stage_shared_object(&format!("generations/abc/jbr/lib/{name}"), "\tlibjvm.so => not found\n");
+        fixture.stage_shared_object(&format!("jbr/lib/{name}"), "\tlibjvm.so => not found\n");
     }
-    assert_eq!(fixture.validate().unwrap().shared_objects, 4);
+    assert_eq!(fixture.sweep().unwrap(), 4);
 }
 
-/// Tree-wide, so one generation's `libjvm.so` excuses another's: every generation is a copy of one JBR.
+/// Tree-wide, so the `libjvm.so` of the JBR excuses an object in another directory of the distribution.
 #[test]
-fn one_generations_shipped_soname_covers_another() {
+fn a_soname_shipped_anywhere_in_the_distribution_covers_every_object() {
     let mut fixture = Fixture::healthy();
-    fixture.empty_runtime_root();
-    fixture.stage_shared_object(
-        "generations/abc/jbr/lib/server/libjvm.so",
-        "\tlibc.so.6 => /lib/libc.so.6 (0x0000ffff)\n",
-    );
-    fixture.stage_shared_object("generations/def/jbr/lib/libjava.so", "\tlibjvm.so => not found\n");
-    fixture.validate().unwrap();
+    fixture.empty_distribution();
+    fixture.stage_shared_object("jbr/lib/server/libjvm.so", "\tlibc.so.6 => /lib/libc.so.6 (0x0000ffff)\n");
+    fixture.stage_shared_object("plugins/native/lib/libjava.so", "\tlibjvm.so => not found\n");
+    fixture.sweep().unwrap();
 }
 
 /// What the tree ships must not mask what the base image owes: the JBR's own SwiftShader `libEGL.so` differs from
@@ -592,11 +608,11 @@ fn one_generations_shipped_soname_covers_another() {
 #[test]
 fn a_soname_the_base_image_must_supply_is_not_excused_by_the_tree() {
     let mut fixture = Fixture::healthy();
-    fixture.empty_runtime_root();
-    fixture.stage_shared_object("generations/abc/jbr/lib/libEGL.so", "\tlibc.so.6 => /lib/libc.so.6 (0x0000ffff)\n");
-    fixture.stage_shared_object("generations/abc/jbr/lib/libskiko-linux-arm64.so", "\tlibEGL.so.1 => not found\n");
-    let refusal = fixture.validate().unwrap_err();
-    assert_eq!(refusal.code, "linux_shared_object_unresolved", "{}", refusal.message);
+    fixture.empty_distribution();
+    fixture.stage_shared_object("jbr/lib/libEGL.so", "\tlibc.so.6 => /lib/libc.so.6 (0x0000ffff)\n");
+    fixture.stage_shared_object("lib/libskiko-linux-arm64.so", "\tlibEGL.so.1 => not found\n");
+    let refusal = fixture.sweep().unwrap_err();
+    assert_eq!(refusal.code, SHARED_OBJECT_UNRESOLVED_CODE, "{}", refusal.message);
     assert!(refusal.message.contains("libEGL.so.1"), "{}", refusal.message);
 }
 
@@ -605,12 +621,12 @@ fn a_soname_the_base_image_must_supply_is_not_excused_by_the_tree() {
 #[test]
 fn the_sweep_reads_shared_objects_and_nothing_else() {
     let mut fixture = Fixture::healthy();
-    fixture.empty_runtime_root();
+    fixture.empty_distribution();
     let resolved = "\tlibc.so.6 => /lib/libc.so.6 (0x0000ffff)\n";
     for name in ["lib/libjvm.so", "lib/libEGL.so.1", "lib/libfoo.so.1.2.3", "lib/notes.so.txt"] {
         fixture.stage_shared_object(name, resolved);
     }
-    let root = fixture.runtime_root();
+    let root = fixture.distribution();
     for name in ["lib/app.jar", "bin/idea.sh", "plugins/readme.sonnet"] {
         let path = root.join(name);
         fs::create_dir_all(path.parent().unwrap()).unwrap();
@@ -619,7 +635,19 @@ fn the_sweep_reads_shared_objects_and_nothing_else() {
     // A symlink and a directory named like a shared object are not regular files.
     std::os::unix::fs::symlink(root.join("lib/libjvm.so"), root.join("lib/liblink.so")).unwrap();
     fs::create_dir_all(root.join("lib/libdir.so")).unwrap();
-    assert_eq!(fixture.validate().unwrap().shared_objects, 4);
+    assert_eq!(fixture.sweep().unwrap(), 4);
+}
+
+/// The distribution of a guest runfiles tree is one link to a directory of the share. The sweep follows that link and
+/// reads the objects below it, so a linked distribution is no empty one.
+#[test]
+fn a_distribution_that_is_a_link_is_swept_through_the_link() {
+    let mut fixture = Fixture::healthy();
+    let target = fixture.distribution().with_file_name("share-dist");
+    fs::rename(fixture.distribution(), &target).unwrap();
+    std::os::unix::fs::symlink(&target, fixture.distribution()).unwrap();
+    assert_eq!(find_shared_objects(&fixture.distribution()).unwrap().len(), 2);
+    assert_eq!(fixture.sweep().unwrap(), 2);
 }
 
 /// `ldd`'s own failure is not a refusal: it fails for a file that is not an ELF object, which is not this check's
@@ -628,7 +656,7 @@ fn the_sweep_reads_shared_objects_and_nothing_else() {
 fn an_ldd_that_cannot_read_a_file_is_not_a_refusal() {
     let mut fixture = Fixture::healthy();
     fixture.worker().fail_with("ldd jbr/lib/libjcef.so", 1);
-    assert_eq!(fixture.validate().unwrap().shared_objects, 2);
+    assert_eq!(fixture.sweep().unwrap(), 2);
 }
 
 /// Deduplicated and ordered (`sort -u`): the same broken worker names the same libraries on two boots.
@@ -650,11 +678,11 @@ fn unresolved_sonames_are_deduplicated_and_ordered() {
 #[test]
 fn a_long_unresolved_list_is_capped_and_says_so() {
     let mut fixture = Fixture::healthy();
-    fixture.empty_runtime_root();
+    fixture.empty_distribution();
     for index in 0..MAX_REPORTED_UNRESOLVED + 5 {
         fixture.stage_shared_object(&format!("lib/lib{index:02}.so"), "\tlibc.so.6 => not found\n");
     }
-    let refusal = fixture.validate().unwrap_err();
+    let refusal = fixture.sweep().unwrap_err();
     assert!(refusal.message.contains("(and 5 more)"), "{}", refusal.message);
     assert_eq!(refusal.message.matches(" needs ").count(), MAX_REPORTED_UNRESOLVED);
     // The first ten in order, so two boots of the same worker name the same objects.
@@ -765,9 +793,97 @@ fn both_window_manager_hops_are_told_the_display_twice() {
 #[test]
 fn the_validate_guest_verb_refuses_under_its_own_name() {
     assert_eq!(verb_refusal_code(AgentVerb::ValidateGuest), "guest_validate_guest_failed");
-    let root = tempfile::tempdir().unwrap();
-    let answered = run_agent(&[AgentVerb::ValidateGuest.as_str(), ":8765", &root.path().to_string_lossy()], b"");
+    let answered = run_agent(&[AgentVerb::ValidateGuest.as_str(), ":8765"], b"");
     assert_eq!(answered.exit, 70, "{}", answered.stderr);
     assert!(answered.code().starts_with("linux_"), "{}", answered.stderr);
     assert_eq!(answered.failure()["command"], AgentVerb::ValidateGuest.as_str());
+}
+
+// --- the host probe of lane-run ---------------------------------------------------------------------------------
+
+/// A host of `lane-run` that has what the lane IDE needs: the healthy worker with `git` on its PATH.
+fn healthy_host() -> Fixture {
+    let mut fixture = Fixture::healthy();
+    fixture.worker().reply("git --version", "git version 2.43.0\n");
+    fixture
+}
+
+// A host with an answering display, a window manager, the libraries of the distribution, git and the screen of a lane
+// guest passes the probe with no note.
+#[test]
+fn a_host_that_has_what_the_lane_ide_needs_passes_the_probe_with_no_note() {
+    let mut fixture = healthy_host();
+
+    assert_eq!(fixture.probe_host().unwrap(), Vec::<String>::new());
+    assert!(fixture.worker().ran("git --version"));
+}
+
+// A screen smaller than the 1920x1080 of a lane guest, such as the Xvfb of a TeamCity agent at 1024x768, is a note and
+// not a refusal. An answer that names no dimensions is a note too.
+#[test]
+fn a_smaller_screen_is_a_note_and_not_a_refusal() {
+    let mut fixture = healthy_host();
+    fixture.worker().reply(
+        XDPYINFO_TOOL,
+        "screen #0:\n  dimensions:    1024x768 pixels (271x203 millimeters)\n",
+    );
+    assert_eq!(
+        fixture.probe_host().unwrap(),
+        [
+            "the screen of the display :88 is 1024x768, smaller than the 1920x1080 of a lane guest, so a window of the \
+          lane IDE can lay out differently"
+        ]
+    );
+
+    fixture.worker().reply(XDPYINFO_TOOL, "name of display:    :88\n");
+    assert_eq!(
+        fixture.probe_host().unwrap(),
+        ["xdpyinfo names no screen dimensions of the display :88"]
+    );
+}
+
+// A host without git is refused by name before the lane IDE starts, because the merge-conflict and worktree scenarios
+// spawn it.
+#[test]
+fn a_host_without_git_is_refused_by_name() {
+    let mut fixture = Fixture::healthy();
+    fixture.worker().fail_with("git --version", 127);
+
+    let refusal = fixture.probe_host().unwrap_err();
+
+    assert_eq!(refusal.code, GIT_MISSING_CODE);
+    assert!(
+        refusal
+            .message
+            .starts_with("this host cannot run the lane IDE: `git --version` fails"),
+        "{}",
+        refusal.message
+    );
+}
+
+// A host whose display has no window manager, or whose distribution links a library that the host lacks, is refused
+// with the code of the same check of a worker. The message names the host, and the refusal of a library names the
+// first missing one. The probe stops there and asks for no git.
+#[test]
+fn a_host_without_a_window_manager_or_a_library_is_refused_with_the_code_of_the_guest_check() {
+    let mut fixture = healthy_host();
+    fixture.worker().reply(&root_xprop(), ABSENT);
+    let refusal = fixture.probe_host().unwrap_err();
+    assert_eq!(refusal.code, "linux_window_manager_missing");
+    assert!(
+        refusal.message.starts_with("this host cannot run the lane IDE: "),
+        "{}",
+        refusal.message
+    );
+
+    let mut fixture = healthy_host();
+    fixture.stage_shared_object("lib/libskiko-linux-arm64.so", "\tlibEGL.so.1 => not found\n");
+    let refusal = fixture.probe_host().unwrap_err();
+    assert_eq!(refusal.code, "linux_shared_object_unresolved");
+    assert!(
+        refusal.message.starts_with("this host cannot run the lane IDE: ") && refusal.message.contains("needs libEGL.so.1"),
+        "{}",
+        refusal.message
+    );
+    assert!(!fixture.worker().ran("git"), "the probe stops at the first missing requirement");
 }

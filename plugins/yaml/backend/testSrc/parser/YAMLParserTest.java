@@ -1,39 +1,30 @@
 // Copyright 2000-2026 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.parser;
 
-import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.platform.syntax.psi.ElementTypeConverters;
-import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
-import com.intellij.testFramework.ParsingTestCase;
-import org.jetbrains.yaml.YAMLLanguage;
+import com.intellij.openapi.project.Project;
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.jetbrains.yaml.YAMLParserDefinition;
-import org.jetbrains.yaml.YamlElementTypeConverterFactory;
-import org.jetbrains.yaml.YamlFileElementTypeConverterFactory;
-import com.intellij.yaml.syntax.YamlSyntaxDefinitionExtension;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
-public class YAMLParserTest extends ParsingTestCase {
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixtureKt.parsingFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 
-  public YAMLParserTest() {
-    super("", "yml", new YAMLParserDefinition());
-  }
+@TestApplication
+public class YAMLParserTest {
+  private static final TestFixture<Project> projectFixture = projectFixture();
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    addExplicitExtension(ElementTypeConverters.getInstance(), YAMLLanguage.INSTANCE, new YamlElementTypeConverterFactory());
-    addExplicitExtension(ElementTypeConverters.getInstance(), YAMLLanguage.INSTANCE, new YamlFileElementTypeConverterFactory());
-    addExplicitExtension(LanguageSyntaxDefinitions.getINSTANCE(), YAMLLanguage.INSTANCE, new YamlSyntaxDefinitionExtension());
-  }
+  private final TestFixture<ParsingTestFixture> parsingFixture = parsingFixture(
+    projectFixture, PlatformTestUtil.getCommunityPath() + "/plugins/yaml/backend/testData/org/jetbrains/yaml/parser/data/", "yml",
+    new YAMLParserDefinition());
 
-  @Override
-  protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/backend/testData/org/jetbrains/yaml/parser/data/";
-  }
-
+  @Test
   public void test2docs() throws Throwable {
-    doCodeTest("""
+    parsingFixture.get().doCodeTest("""
                  # Ranking of 1998 home runs
                  ---
                  - Mark McGwire
@@ -46,8 +37,9 @@ public class YAMLParserTest extends ParsingTestCase {
                  - St Louis Cardinals""");
   }
 
+  @Test
   public void testIndentation() throws Throwable {
-    doCodeTest("""
+    parsingFixture.get().doCodeTest("""
                  name: Mark McGwire
                  accomplishment: >
                    Mark set a major league
@@ -57,8 +49,9 @@ public class YAMLParserTest extends ParsingTestCase {
                    0.278 Batting Average""");
   }
 
+  @Test
   public void testMap_between_seq() throws Throwable {
-    doCodeTest("""
+    parsingFixture.get().doCodeTest("""
                  ?
                    - Detroit Tigers
                    - Chicago cubs
@@ -71,36 +64,44 @@ public class YAMLParserTest extends ParsingTestCase {
                      2001-08-14 ]""");
   }
 
+  @Test
   public void testFlowSequenceAsImplicitKey() throws Throwable {
-    doCodeTest("[a, b]: value");
+    parsingFixture.get().doCodeTest("[a, b]: value");
   }
 
+  @Test
   public void testFlowSequenceAsExplicitKeyInline() throws Throwable {
-    doCodeTest("? [a, b]: value");
+    parsingFixture.get().doCodeTest("? [a, b]: value");
   }
 
+  @Test
   public void testFlowSequenceKeyMissingClosingBracket() throws Throwable {
-    doCodeTest("[a, b: value");
+    parsingFixture.get().doCodeTest("[a, b: value");
   }
 
+  @Test
   public void testFlowSequenceKeyMissingColon() throws Throwable {
-    doCodeTest("[a, b] value");
+    parsingFixture.get().doCodeTest("[a, b] value");
   }
 
+  @Test
   public void testFlowSequenceKeyMissingValue() throws Throwable {
-    doCodeTest("[a, b]:");
+    parsingFixture.get().doCodeTest("[a, b]:");
   }
 
+  @Test
   public void testFlowSequenceKeyEmpty() throws Throwable {
-    doCodeTest("[]: value");
+    parsingFixture.get().doCodeTest("[]: value");
   }
 
+  @Test
   public void testFlowSequenceKeyMissingOpeningBracket() throws Throwable {
-    doCodeTest("a, b]: value");
+    parsingFixture.get().doCodeTest("a, b]: value");
   }
 
+  @Test
   public void testMap_map() throws Throwable {
-    doCodeTest("""
+    parsingFixture.get().doCodeTest("""
                  Mark McGwire: {hr: 65, avg: 0.278}
                  Sammy Sosa: {
                      hr: 63,
@@ -108,8 +109,9 @@ public class YAMLParserTest extends ParsingTestCase {
                    }""");
   }
 
+  @Test
   public void testSample_log() throws Throwable {
-    doCodeTest("""
+    parsingFixture.get().doCodeTest("""
                  Stack:
                    - file: TopClass.py
                      line: 23
@@ -121,15 +123,17 @@ public class YAMLParserTest extends ParsingTestCase {
                        foo = bar""");
   }
 
+  @Test
   public void testSeq_seq() throws Throwable {
-    doCodeTest("""
+    parsingFixture.get().doCodeTest("""
                  - [name        , hr, avg  ]
                  - [Mark McGwire, 65, 0.278]
                  - [Sammy Sosa  , 63, 0.288]""");
   }
 
+  @Test
   public void testSequence_mappings() throws Throwable {
-    doCodeTest("""
+    parsingFixture.get().doCodeTest("""
                  -
                    name: Mark McGwire
                    hr:   65
@@ -140,8 +144,9 @@ public class YAMLParserTest extends ParsingTestCase {
                    avg:  0.288""");
   }
 
+  @Test
   public void testBalance() throws Throwable {
-    doCodeTest("""
+    parsingFixture.get().doCodeTest("""
                  runningTime: 150000
                  scenarios:
                      voice_bundle_change: {
@@ -152,19 +157,22 @@ public class YAMLParserTest extends ParsingTestCase {
                      }""");
   }
 
+  @Test
   public void testInterpolation() throws Throwable {
-    doCodeTest("en:\n  foo: bar %{baz}");
+    parsingFixture.get().doCodeTest("en:\n  foo: bar %{baz}");
   }
 
+  @Test
   public void testValue_injection() throws Throwable {
-    doCodeTest("""
+    parsingFixture.get().doCodeTest("""
                  key:
                      one: 1 text
                      other: some {{count}} text""");
   }
 
+  @Test
   public void testSequence_idea76804() throws Throwable {
-    doCodeTest("""
+    parsingFixture.get().doCodeTest("""
                  server:
                  - a
                  - b
@@ -174,8 +182,9 @@ public class YAMLParserTest extends ParsingTestCase {
                    - b""");
   }
 
+  @Test
   public void testMultiline_ruby16796() throws Throwable {
-    doCodeTest("""
+    parsingFixture.get().doCodeTest("""
                  code:
                    src="keys/{{item}}"
                    mode=0600
@@ -184,23 +193,26 @@ public class YAMLParserTest extends ParsingTestCase {
                  """);
   }
 
+  @Test
   public void testRuby17389() throws Throwable {
-    doCodeTest("""
+    parsingFixture.get().doCodeTest("""
                  ---
                  foo: {}
                  bar: "baz\"""");
   }
 
+  @Test
   public void testRuby19105() throws Throwable {
-    doCodeTest("""
+    parsingFixture.get().doCodeTest("""
                  'Fn::Join':
                    - ''
                    - - Ref: hostedZoneName
                      - a""");
   }
 
+  @Test
   public void testRuby15345() throws IOException {
-    doCodeTest("""
+    parsingFixture.get().doCodeTest("""
                  - !qualified.class.name
                      propertyOne: bla bla
                      propertyWithOneSequence:
@@ -209,8 +221,9 @@ public class YAMLParserTest extends ParsingTestCase {
                          - first value of another sequence""");
   }
 
+  @Test
   public void testHonestMultiline() throws Throwable {
-    doCodeTest("""
+    parsingFixture.get().doCodeTest("""
                  ---
                  foo: >
                    first text line
@@ -223,8 +236,9 @@ public class YAMLParserTest extends ParsingTestCase {
                  bar: zoo""");
   }
 
+  @Test
   public void testEmptyMultiline() throws Throwable {
-    doCodeTest("""
+    parsingFixture.get().doCodeTest("""
                  ---
                  foo: >
                  bar:
@@ -234,19 +248,22 @@ public class YAMLParserTest extends ParsingTestCase {
                  baz: qwe""");
   }
 
+  @Test
   public void testIncompleteKey() throws Throwable {
-    doCodeTest("""
+    parsingFixture.get().doCodeTest("""
                  logging:
                    config: bla
                    index""");
   }
 
+  @Test
   public void testStringWithTag() throws IOException {
-    doCodeTest("foo: ! \"tratata\"");
+    parsingFixture.get().doCodeTest("foo: ! \"tratata\"");
   }
 
+  @Test
   public void testIncompleteKeyWithWhitespace() throws IOException {
-    doCodeTest("""
+    parsingFixture.get().doCodeTest("""
                  logging:
                    config:
                   \s
@@ -256,71 +273,88 @@ public class YAMLParserTest extends ParsingTestCase {
                  """);
   }
 
+  @Test
   public void testShiftedMap() throws IOException {
-    doCodeTest("    key: ttt\n" +
+    parsingFixture.get().doCodeTest("    key: ttt\n" +
                "    ahahah: ppp");
   }
 
+  @Test
   public void testShiftedList() throws IOException {
-    doCodeTest("    - item1\n" +
+    parsingFixture.get().doCodeTest("    - item1\n" +
                "    - item2");
   }
 
+  @Test
   public void testExplicitMaps() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testSpec2_27() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testAnsibleRoleElkInit() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testAnsibleRoleElkMain() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testBlockMapping() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testIncompleteKeyInHierarchy() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testKeyValueWithEmptyLineAhead() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testMultipleDocsWithMappings() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testScalarsWithNewlines() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testCommentInBlockScalarHeader() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testErrorInBlockScalarHeader() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testInlineMapWithBlockScalarValue()  {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
-  public void testAliasInKey() { doTest(true); }
+  @Test
+  public void testAliasInKey() { parsingFixture.get().doTest(true); }
 
+  @Test
   public void testPlainMultilineScalarRuby21788() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
+  @Test
   public void testAliasUseInArray() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 }

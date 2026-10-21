@@ -4,11 +4,13 @@ package com.intellij.java.parser.statementParsing;
 import com.intellij.java.parser.AbstractBasicJavaParsingTestCase;
 import com.intellij.java.parser.AbstractBasicJavaParsingTestConfigurator;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 public  abstract class AbstractBasicLabelParsingTest extends AbstractBasicJavaParsingTestCase {
   public AbstractBasicLabelParsingTest(@NotNull AbstractBasicJavaParsingTestConfigurator configurator) {
     super("parser-full/statementParsing/label", configurator);
   }
 
+  @Test
   public void testSimple() { doTest(true); }
 }

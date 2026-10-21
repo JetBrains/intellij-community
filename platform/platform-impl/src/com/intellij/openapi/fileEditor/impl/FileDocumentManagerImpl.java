@@ -27,7 +27,7 @@ import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.RMTreeReference;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
-import com.intellij.openapi.editor.impl.marker.FileMarkerRoot;
+import com.intellij.openapi.editor.impl.marker.VirtualFileMarkerRoot;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable;
@@ -704,7 +704,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       ContentPrefetcher prefetcher = new ContentPrefetcher(myFileDocumentManager);
       List<VirtualFile> toRecompute = new ArrayList<>();
       Map<VirtualFile, Document> strongRefsToDocuments = new HashMap<>();
-      Map<VirtualFile, ResolvedConflict> resolvedConflicts = new HashMap<>();
+      Map<VirtualFile, MergeAttempt> mergeAttempts = new HashMap<>();
       List<VFileContentChangeEvent> contentChanges = ContainerUtil.findAll(events, VFileContentChangeEvent.class);
       for (VFileContentChangeEvent event : contentChanges) {
         ProgressManager.checkCanceled();
@@ -723,9 +723,9 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
         // read the new content here, in a read action, to keep the disk read out of the write action below
         var prefetched = prefetcher.prefetch(event, toRecompute);
 
-        ResolvedConflict resolved = conflictResolver.tryMerge(event, prefetched);
-        if (resolved != null) {
-          resolvedConflicts.put(virtualFile, resolved);
+        MergeAttempt attempt = conflictResolver.tryMerge(event, prefetched);
+        if (attempt != null) {
+          mergeAttempts.put(virtualFile, attempt);
         }
       }
       return new ChangeApplier() {
@@ -748,8 +748,13 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
               case VFileContentChangeEvent changeEvent when changeEvent.getFile().isValid() -> {
                 VirtualFile changedFile = changeEvent.getFile();
                 PrefetchedContent prefetched = prefetcher.getPrefetched(changedFile);
-                ResolvedConflict resolved = resolvedConflicts.get(changedFile);
+                // removes, so that each attempt reports once
+                MergeAttempt attempt = mergeAttempts.remove(changedFile);
+                ResolvedConflict resolved = attempt instanceof ResolvedConflict conflict ? conflict : null;
                 myFileDocumentManager.contentsChanged(changeEvent, prefetched, resolved);
+                if (attempt != null) {
+                  FileCacheConflictCollector.logAutomergeFinished(changedFile, attempt.result());
+                }
               }
               case VFileDeleteEvent deleteEvent -> {
                 myFileDocumentManager.fileDeleted(deleteEvent.getFile());
@@ -770,7 +775,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
                                              @NotNull VirtualFile virtualFile) {
       Document document = myFileDocumentManager.getCachedDocument(virtualFile);
       if (document == null && (RMTreeReference.areRangeMarkersRetainedFor(virtualFile) ||
-                               FileMarkerRoot.areRangeMarkersRetainedFor(virtualFile))) {
+                               VirtualFileMarkerRoot.areRangeMarkersRetainedFor(virtualFile))) {
         // re-create document with the old contents prior to this event
         // then contentChanged() will diff the document with the new contents and update the markers
         document = myFileDocumentManager.getDocument(virtualFile);

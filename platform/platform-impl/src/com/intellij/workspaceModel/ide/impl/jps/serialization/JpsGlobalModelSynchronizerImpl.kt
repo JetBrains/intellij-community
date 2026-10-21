@@ -45,6 +45,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -82,7 +83,7 @@ open class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineS
   // Allow tests to override the delay duration
   @get:VisibleForTesting
   protected open val delayDuration: Duration
-    get() = 5.seconds
+    get() = System.getProperty("ide.global.workspace.model.delayed.load.delay")?.toLongOrNull()?.milliseconds ?: 5.seconds
 
   override fun loadInitialState(
     eelMachine: EelMachine,

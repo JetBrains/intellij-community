@@ -9,8 +9,8 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAndEdtWriteAction
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -29,10 +29,14 @@ import com.intellij.platform.lsp.impl.serviceView.LspServiceViewSupport
 import com.intellij.platform.lsp.impl.util.LspWorkspaceEditApplier
 import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.platform.util.progress.reportRawProgress
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.future.future
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.ApplyWorkspaceEditParams
 import org.eclipse.lsp4j.ApplyWorkspaceEditResponse
 import org.eclipse.lsp4j.ConfigurationParams
@@ -197,46 +201,35 @@ internal class LspServerNotificationsHandlerImpl(private val lspClient: LspClien
       return completedFuture(ShowDocumentResult(true))
     }
 
-    lspClient.descriptor.findFileByUri(uri)?.let { file ->
-      return openFile(file, focusEditor = params.takeFocus != false, params.selection)
+    // the target can be a dynamic file, whose text needs a server request: never wait for it on the LSP message thread.
+    // A server `$/cancelRequest` cancels the returned future, and so the coroutine and the content request.
+    return LspClientManagerImpl.getInstanceImpl(project).cs.future {
+      val file = lspClient.dynamicFiles.findTargetFile(uri) ?: return@future ShowDocumentResult(false)
+      val opened = withContext(Dispatchers.EDT) { openFile(file, focusEditor = params.takeFocus != false, params.selection) }
+      ShowDocumentResult(opened)
     }
-
-    return completedFuture(ShowDocumentResult(false))
   }
 
-  private fun openFile(file: VirtualFile, focusEditor: Boolean, selection: Range?): CompletableFuture<ShowDocumentResult> {
-    val future = CompletableFuture<ShowDocumentResult>()
+  /** Opens [file] in an editor and selects [selection]. Returns `false` when no text editor opens. */
+  @RequiresEdt
+  private fun openFile(file: VirtualFile, focusEditor: Boolean, selection: Range?): Boolean {
+    if (!file.isValid) return false
 
-    runInEdt {
-      try {
-        if (file.isValid) {
-          if (selection != null) {
-            val document = FileDocumentManager.getInstance().getDocument(file)
-            if (document != null) {
-              val startOffset = getOffsetInDocument(document, selection.start)
-              val endOffset = getOffsetInDocument(document, selection.end)
-              if (startOffset != null && endOffset != null) {
-                val editor =
-                  FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file, startOffset), focusEditor)
-                editor?.takeIf { startOffset != endOffset }?.selectionModel?.setSelection(startOffset, endOffset)
-                future.complete(ShowDocumentResult(editor != null))
-                return@runInEdt
-              }
-            }
-          }
-
-          val editor = FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file), focusEditor)
-          future.complete(ShowDocumentResult(editor != null))
-        }
-      }
-      finally {
-        if (!future.isDone) {
-          future.complete(ShowDocumentResult(false))
+    if (selection != null) {
+      val document = FileDocumentManager.getInstance().getDocument(file)
+      if (document != null) {
+        val startOffset = getOffsetInDocument(document, selection.start)
+        val endOffset = getOffsetInDocument(document, selection.end)
+        if (startOffset != null && endOffset != null) {
+          val editor =
+            FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file, startOffset), focusEditor)
+          editor?.takeIf { startOffset != endOffset }?.selectionModel?.setSelection(startOffset, endOffset)
+          return editor != null
         }
       }
     }
 
-    return future
+    return FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file), focusEditor) != null
   }
 
   override fun workspaceFolders(): CompletableFuture<List<WorkspaceFolder>> {

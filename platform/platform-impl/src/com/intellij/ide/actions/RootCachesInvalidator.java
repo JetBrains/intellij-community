@@ -8,7 +8,10 @@ import com.intellij.util.indexing.FileBasedIndex;
 final class RootCachesInvalidator extends CachesInvalidator {
   @Override
   public void invalidateCaches() {
-    FileBasedIndex.getInstance().invalidateCaches();
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    if (fileBasedIndex != null) {
+      fileBasedIndex.invalidateCaches();
+    }
     GistManager.getInstance().invalidateData();
   }
 }

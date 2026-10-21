@@ -15,7 +15,7 @@ internal class BackendXMixedModeApi : XMixedModeApi {
   override suspend fun isMixedModeSession(sessionId: XDebugSessionId): Boolean = sessionId.findValue()!!.isMixedMode
 
   override suspend fun shouldShowCustomizedEvaluatorView(frameId: XStackFrameId): Boolean {
-    val frameModel = frameId.findValue()!!
+    val frameModel = frameId.findValue() ?: return false // Happens when frontend still has old frame, but backend moved on to a new frame
     val session = frameModel.session
     assert(isMixedModeSession(session.id))
 

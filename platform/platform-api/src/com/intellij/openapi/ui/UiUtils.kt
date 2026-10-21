@@ -22,10 +22,11 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.getMousePositionOrNull
+import com.intellij.util.ui.getPointerInfoOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
-import java.awt.MouseInfo
 import java.awt.Rectangle
 import java.awt.event.ActionEvent
 import java.awt.event.FocusAdapter
@@ -81,10 +82,10 @@ fun JTextComponent.isTextUnderMouse(e: MouseEvent): Boolean {
 }
 
 fun Component.isComponentUnderMouse(): Boolean {
-  if (mousePosition != null) {
+  if (getMousePositionOrNull() != null) {
     return true
   }
-  val pointerInfo = MouseInfo.getPointerInfo() ?: return false
+  val pointerInfo = getPointerInfoOrNull() ?: return false
   val location = pointerInfo.location
   SwingUtilities.convertPointFromScreen(location, this)
   val bounds = Rectangle(0, 0, width, height)

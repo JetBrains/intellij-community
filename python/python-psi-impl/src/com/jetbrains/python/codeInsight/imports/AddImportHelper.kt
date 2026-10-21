@@ -46,9 +46,9 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCodeFragmentWithHiddenImports
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
+import com.jetbrains.python.psi.resolve.pythonSdkIfReady
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.Contract
@@ -390,7 +390,7 @@ object AddImportHelper {
       )
     }
     val module = ModuleUtilCore.findModuleForPsiElement(importLocation)
-    val pythonSdk = if (module != null) PythonSdkUtil.findPythonSdk(module) else toImport.project.mainPythonSdk()
+    val pythonSdk = if (module != null) module.pythonSdkIfReady() else toImport.project.mainPythonSdk()
 
     if (PySkeletonUtil.isStdLib(vFile, pythonSdk)) {
       return ImportPriorityChoice(

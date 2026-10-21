@@ -1,0 +1,5 @@
+fun newFun(p: Int, vararg v: String) {}
+
+fun test() {
+    newFun(1, "x", "y")
+}

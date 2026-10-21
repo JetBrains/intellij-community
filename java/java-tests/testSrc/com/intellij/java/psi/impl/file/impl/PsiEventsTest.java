@@ -1,11 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.impl.file.impl;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -32,9 +32,9 @@ import com.intellij.psi.impl.file.impl.FileManagerEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.JavaPsiTestCase;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
-import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.util.WaitFor;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ref.GCWatcher;
@@ -841,36 +841,33 @@ public class PsiEventsTest extends JavaPsiTestCase {
   }
 
   public void testSuccessfulRecoveryAfterTreeChangePreprocessorThrowsException() throws Exception {
-    DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
-      PsiFile psiFile = createFile("a.xml", "<tag/>");
-      VirtualFile vFile = psiFile.getVirtualFile();
-      Document document = FileDocumentManager.getInstance().getDocument(vFile);
-      assert document != null;
+    PsiFile psiFile = createFile("a.xml", "<tag/>");
+    VirtualFile vFile = psiFile.getVirtualFile();
+    Document document = FileDocumentManager.getInstance().getDocument(vFile);
+    assert document != null;
 
-      PsiTreeChangePreprocessor preprocessor = event -> {
-        if (!event.getCode().name().startsWith("BEFORE") && !event.isGenericChange()) {
-          throw new NullPointerException();
-        }
-      };
+    PsiTreeChangePreprocessor preprocessor = event -> {
+      if (!event.getCode().name().startsWith("BEFORE") && !event.isGenericChange()) {
+        throw new NullPointerException();
+      }
+    };
 
-      Disposable disposable = Disposer.newDisposable();
-      ((PsiManagerEx)getPsiManager()).addTreeChangePreprocessor(preprocessor, disposable);
-      try {
+    Disposable disposable = Disposer.newDisposable();
+    ((PsiManagerEx)getPsiManager()).addTreeChangePreprocessor(preprocessor, disposable);
+    try {
+      Throwable error = LoggedErrorProcessor.executeAndReturnLoggedError(() -> {
         WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-        fail("NPE expected");
-      }
-      catch (AssertionError e) {
-        assertInstanceOf(e.getCause(), NullPointerException.class);
-      }
-      finally {
-        Disposer.dispose(disposable);
-      }
+      });
+      assertInstanceOf(error, PluginException.class);
+      assertInstanceOf(error.getCause(), NullPointerException.class);
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
 
-      WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      assertEquals("  <tag/>", getPsiManager().findFile(vFile).getText());
-    });
+    WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    assertEquals("  <tag/>", getPsiManager().findFile(vFile).getText());
   }
 }

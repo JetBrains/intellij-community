@@ -1,20 +1,21 @@
 //! `bench`: the start-up measurement of an IDE on this host, from an immutable staged copy of its Bazel dev
 //! distribution.
 //!
-//! A session builds the self-contained `.dist` of a row and the row launcher with the host Bazel build, stages the
-//! distribution and the JBR of the launcher as a generation keyed by their digest, and starts every IDE run from that
-//! generation. A run has its own sandbox and the instrument options of the platform: the start-up report, the trace,
-//! the class logs and the FUS log, which the controller reads before the quit. A run counts only when it passed the
-//! gate of its arm: the FUS event of the welcome screen, or the highlighted editor of the `project` arm. The answer is
-//! the summary, which `summary.json` holds too, and a text digest. It takes no worker and no lease.
+//! A session builds the self-contained `.dist` of a row with the host Bazel build, stages the distribution with its
+//! JBR as a generation keyed by its digest, and starts every IDE run from that generation. A run has its own sandbox
+//! and the instrument options of the platform: the start-up report, the trace, the class logs and the FUS log, which
+//! the controller reads before the quit. A run counts only when it passed the gate of its arm: the FUS event of the
+//! welcome screen, or the highlighted editor of the `project` arm. The answer is the summary, which `summary.json`
+//! holds too, and a text digest. It takes no worker and no lease.
 //!
 //! - [`options`]: the verbs and their options;
 //! - [`command`]: a `welcome`, an `open-project` or a `project` session from the build to the summary, `replay`, `gc`,
-//!   `trace`, `activities`, `classes`, `compare` and `ls`;
+//!   `trace`, `activities`, `classes`, `triggers`, `compare` and `ls`;
 //! - [`timeline`], [`spans`], [`activities`]: the spans of one run in milliseconds from the process start, `trace`,
 //!   which prints the spans of a window, and `activities`, which groups the activities of a window by class and by
 //!   plugin;
 //! - [`classes`]: the loaded classes of one arm by plugin and by module, at an anchor of the run;
+//! - [`triggers`]: the plugin loaders of one run by the frame that triggered each one;
 //! - [`resolve`], [`stage`], [`gc`]: what Bazel built, the generation, and the removal of old generations;
 //! - [`launch`], [`load`]: the Starter-shaped IDE process and its supervision, and the host load at each run start;
 //! - [`binary`]: the age of the controller binary that `AIR_VM_BIN` names, against its sources;
@@ -53,6 +54,7 @@ mod summary;
 mod testing;
 mod timeline;
 mod trace;
+mod triggers;
 
 pub(crate) use command::Bench;
 pub(crate) use options::{BenchVerb, EXIT_CODES, LONG_ABOUT};

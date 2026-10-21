@@ -8,6 +8,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager.ConflictResolution;
+import com.intellij.openapi.fileEditor.impl.FileCacheConflictCollector.AutomergeResult;
+import com.intellij.openapi.fileEditor.impl.FileCacheConflictCollector.DialogCause;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
@@ -82,9 +84,12 @@ public class MemoryDiskConflictResolver {
     return ConflictResolution.MERGE;
   }
 
+  /**
+   * Returns null when no client asked for a merge, or when the change makes no conflict.
+   */
   @RequiresReadLock
-  @Nullable ResolvedConflict tryMerge(@NotNull VFileContentChangeEvent event, @Nullable PrefetchedContent prefetched) {
-    if (prefetched == null || ConflictResolution.MERGE != getConflictResolution()) {
+  @Nullable MergeAttempt tryMerge(@NotNull VFileContentChangeEvent event, @Nullable PrefetchedContent prefetched) {
+    if (ConflictResolution.MERGE != getConflictResolution()) {
       return null;
     }
     VirtualFile file = event.getFile();
@@ -92,17 +97,20 @@ public class MemoryDiskConflictResolver {
     if (document == null) {
       return null;
     }
+    if (prefetched == null) {
+      return new MergeAttempt.Failed(event.isFromRefresh() ? AutomergeResult.NOT_PREFETCHED : AutomergeResult.NOT_FROM_REFRESH);
+    }
     CharSequence baseText = FileDocumentCommonText.getLastKnownCommonText(document);
     if (baseText == null) {
       // resolving the conflict without common base is too fragile
-      return null;
+      return new MergeAttempt.Failed(AutomergeResult.NO_COMMON_TEXT);
     }
     CharSequence diskText = prefetched.decodeText(file);
     CharSequence memoryText = document.getImmutableCharSequence();
     CharSequence mergedText = MergeResolveUtil.tryResolve(diskText, baseText, memoryText, ProgressManager::checkCanceled);
     if (mergedText == null) {
       // the conflict is too complex
-      return null;
+      return new MergeAttempt.Failed(AutomergeResult.CONFLICTING_CHANGES);
     }
     return new ResolvedConflict(mergedText, document.getModificationStamp());
   }
@@ -115,9 +123,6 @@ public class MemoryDiskConflictResolver {
     ConflictResolution resolution = getConflictResolution();
     if (resolution == ConflictResolution.KEEP_MEMORY_CHANGES) {
       // do nothing, ignoring disk content
-      return;
-    }
-    if (event.isFromSave()) {
       return;
     }
     VirtualFile file = event.getFile();
@@ -157,11 +162,14 @@ public class MemoryDiskConflictResolver {
       conflicts = new ArrayList<>(myConflictQueue);
       myConflictQueue.clear();
     }
+    DialogCause cause = dialogCause(getConflictResolution());
     for (VirtualFile file : conflicts) {
       Document document = FileDocumentManager.getInstance().getCachedDocument(file);
       if (document != null && file.getModificationStamp() != document.getModificationStamp()) {
         LOG.info("reload " + file.getName() + " from disk?");
-        if (askReloadFromDisk(file, document)) {
+        DialogResult result = askReloadFromDisk(file, document);
+        FileCacheConflictCollector.logDialogClosed(file, cause, result);
+        if (result.loadFsChanges()) {
           FileDocumentManager.getInstance().reloadFromDisk(document);
         }
       }
@@ -169,8 +177,19 @@ public class MemoryDiskConflictResolver {
     myConflictAppearedInUnitTest = null;
   }
 
+  /**
+   * Takes the resolution at the time the dialogs show, not at the time the conflicts were queued.
+   * A merge that applies cancels its dialog, so a dialog under MERGE follows a failed merge.
+   */
+  private static @NotNull DialogCause dialogCause(@NotNull ConflictResolution resolution) {
+    return switch (resolution) {
+      case ASK, KEEP_MEMORY_CHANGES -> DialogCause.AUTOMERGE_OFF;
+      case MERGE -> DialogCause.AUTOMERGE_FAILED;
+    };
+  }
+
   @VisibleForTesting
-  protected boolean askReloadFromDisk(@NotNull VirtualFile file, @NotNull Document document) {
+  protected @NotNull DialogResult askReloadFromDisk(@NotNull VirtualFile file, @NotNull Document document) {
     if (myConflictAppearedInUnitTest != null) {
       Throwable trace = myConflictAppearedInUnitTest;
       myConflictAppearedInUnitTest = null;
@@ -185,6 +204,10 @@ public class MemoryDiskConflictResolver {
   }
 
   private static @Nullable Document findConflictingDocument(@NotNull VFileContentChangeEvent event) {
+    // a save writes the file while its document is still unsaved, so the stamps differ as in a conflict
+    if (event.isFromSave()) {
+      return null;
+    }
     VirtualFile file = event.getFile();
     Document document = FileDocumentManager.getInstance().getCachedDocument(file);
     if (document == null || !FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
@@ -196,6 +219,15 @@ public class MemoryDiskConflictResolver {
       return document;
     }
     return null;
+  }
+
+  /**
+   * What the user did in the conflict dialog.
+   *
+   * @param loadFsChanges   true when the user chose to load the file system changes
+   * @param differenceShown true when the user opened the difference view
+   */
+  public record DialogResult(boolean loadFsChanges, boolean differenceShown) {
   }
 
   /**

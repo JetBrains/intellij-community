@@ -52,10 +52,10 @@ internal class PyLspTypeEngineServerStateTest {
 
   /** The server listener of a ty client for the module, in a project that selects [selected]. */
   private fun tyListener(selected: PyTypeEngineType): LspServerListener {
-    val module = pyProjectFixture.get().residesOnModule
+    val pyProject = pyProjectFixture.get()
     // `loadState` sets the engine without the settings-change message, which would start servers.
-    PyTypeEngineProjectSettings.getInstance(module.project).loadState(PyTypeEngineSettingsState(selected))
-    return TyLspClientDescriptor(module, listOf(module)).lspServerListener
+    PyTypeEngineProjectSettings.getInstance(pyProject.residesOnModule.project).loadState(PyTypeEngineSettingsState(selected))
+    return TyLspClientDescriptor(pyProject, listOf(pyProject)).lspServerListener
   }
 
   private fun dropsCachedContexts(action: () -> Unit): Boolean {

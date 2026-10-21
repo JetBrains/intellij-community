@@ -567,13 +567,7 @@ internal fun CoroutineScope.loadPluginDescriptorsForPathBasedLoader(
   }
 
   val effectiveBundledPluginDir = bundledPluginDir ?: PathManager.getBundledPluginsDir()
-  val bundledPluginClasspathBytes = try {
-    // use only if the format is supported (first byte it is a version)
-    Files.readAllBytes(effectiveBundledPluginDir.resolve("plugin-classpath.txt")).takeIf { it[0] == 3.toByte() }
-  }
-  catch (_: NoSuchFileException) {
-    null
-  }
+  val bundledPluginClasspathBytes = readBundledPluginClasspath(effectiveBundledPluginDir)
 
   if (bundledPluginClasspathBytes == null) {
     return deprecatedLoadPluginDescriptorsWithoutDistIndex(
@@ -629,6 +623,30 @@ internal fun CoroutineScope.loadPluginDescriptorsForPathBasedLoader(
       )
     }
   }
+}
+
+private fun readBundledPluginClasspath(bundledPluginDir: Path): ByteArray? {
+  return try {
+    // use only if the format is supported (first byte it is a version)
+    Files.readAllBytes(bundledPluginDir.resolve("plugin-classpath.txt")).takeIf { it[0] == 3.toByte() }
+  }
+  catch (_: NoSuchFileException) {
+    null
+  }
+}
+
+/** Loads the bundled plugins the way the path-based loader does: from `plugin-classpath.txt`, or from a directory scan without it. */
+@Internal
+fun CoroutineScope.loadBundledPluginDescriptorsForPathBasedLoader(
+  loadingContext: PluginDescriptorLoadingContext,
+  zipPool: ZipEntryResolverPool,
+  bundledPluginDir: Path,
+): Deferred<DiscoveredPluginsList> {
+  val bundledPluginClasspathBytes = readBundledPluginClasspath(bundledPluginDir)
+                                    ?: return loadDescriptorsFromDir(dir = bundledPluginDir, loadingContext = loadingContext, isBundled = true, pool = zipPool)
+  val input = DataInputStream(ByteArrayInputStream(bundledPluginClasspathBytes, 1, bundledPluginClasspathBytes.size))
+  input.skipBytes(input.readInt())
+  return loadFromPluginClasspathDescriptor(input = input, loadingContext = loadingContext, zipPool = zipPool, bundledPluginDir = bundledPluginDir)
 }
 
 private fun createPathBasedProductModuleJarResolver(mainClassLoader: ClassLoader): (PluginModuleId, Path) -> Path? {

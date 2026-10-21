@@ -1,15 +1,13 @@
-//! The content identities that decide whether a warm iteration reuses a staged generation.
+//! The content identities that decide whether a warm iteration reuses the lane daemon, its IDE and its shares.
 //!
 //! # Why the identities are the point of this module
 //!
-//! A staged runtime generation holds the daemon's stable classpath tier and the extracted JBR. On the Linux
-//! guest that stable tier alone was 852 MiB, and `stage-runtime` cost 22.0 s of a cold `daemon start`. Whether an
-//! iteration pays that or reuses what the guest already holds is decided by five digests composed out of the
-//! primitives here. Both ways of getting one wrong are expensive and neither announces itself: a digest that
-//! changes when nothing changed restages gigabytes every iteration, and a digest that stays the same when
-//! something *did* change runs the next test against the previous build's bytes and reports the result as if it
-//! were fresh. So every input that can change a staged tree is folded in explicitly, and nothing here derives an
-//! identity from anything a build tool merely happened to write.
+//! A warm iteration reuses the lane daemon, the lane IDE and the shares of its worker, or it pays a restart, a
+//! relaunch or a remount. Four digests that the primitives here compose decide which. Both ways of getting one wrong
+//! are expensive, and neither announces itself. A digest that changes when nothing changed pays a remount or a restart
+//! at each iteration. A digest that stays the same when something *did* change runs the next test against the bytes of
+//! the previous build, and it reports the result as fresh. So every input that can change what the guest runs is
+//! folded in explicitly, and nothing here derives an identity from anything a build tool merely happened to write.
 //!
 //! The Bazel runtime descriptor these identities are taken over is [`avl_wire::runtime`].
 
@@ -54,8 +52,8 @@ pub fn sha256_file(path: &Path) -> io::Result<String> {
 /// One named thing and the digest of its bytes.
 ///
 /// `path` is not always a path: the compositions mix in synthetic names like `@static-launch` and
-/// `@guest-policy`, so that a policy change is indistinguishable, to the reuse decision, from a file change. Both
-/// mean the staged tree cannot be reused.
+/// `@project-root`, so that a changed setting is indistinguishable, to the reuse decision, from a file change. Both
+/// mean that the guest cannot reuse what it holds.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
 pub struct PathDigest {
     pub path: String,
@@ -89,43 +87,19 @@ pub fn path_sensitive_digest(entries: &[PathDigest]) -> String {
     hex::encode(hash.finalize())
 }
 
-/// How the guest is allowed to obtain and unpack its runtime.
-///
-/// The field order is contract: [`product_identity`] folds this in as the JSON text of the object, so reordering
-/// the fields changes `productDigest` for every worker, which restages 4.22 GB once per worker and says nothing
-/// about why.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct JbrPolicy {
-    pub platform: String,
-    pub java_home_suffix: String,
-    pub preloaded_only: bool,
-}
-
 /// Every declared input that can change the share-backed IDE product.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProductIdentityInput {
     pub fingerprint: PathDigest,
     pub config: PathDigest,
-    pub jbr_manifest: PathDigest,
-    pub jbr_policy: JbrPolicy,
 }
 
 /// The content identity of the staged IDE product, `productDigest`.
 ///
-/// The JBR policy is folded in under a synthetic name because it is not a file and still changes the product: the
-/// same archive unpacked under a different Java-home suffix is a different distribution, and a guest that may
-/// only use a preloaded runtime stages a different tree from one that may download.
+/// The fingerprint covers every file of the distribution, its JBR too, because the dev distribution bundles the JBR
+/// at `jbr`. So no other JBR input is folded in.
 pub fn product_identity(input: &ProductIdentityInput) -> String {
-    // A struct of strings and a bool always serializes; the error text stands in only so that a failure could
-    // never collide with a real serialization.
-    let policy = serde_json::to_string(&input.jbr_policy).unwrap_or_else(|error| format!("unencodable:{error}"));
-    path_sensitive_digest(&[
-        input.fingerprint.clone(),
-        input.config.clone(),
-        input.jbr_manifest.clone(),
-        PathDigest::new("@guest-policy", sha256_text(&policy)),
-    ])
+    path_sensitive_digest(&[input.fingerprint.clone(), input.config.clone()])
 }
 
 // --- the digest cache -----------------------------------------------------------------------------------------

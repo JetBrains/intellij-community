@@ -89,11 +89,9 @@ public final class HighlightingSettingsPerFile extends HighlightingLevelManager 
   }
 
   private static @NotNull FileHighlightingSetting getDefaultHighlightingSetting(@NotNull Project project, @NotNull VirtualFile virtualFile) {
-    for (DefaultHighlightingSettingProvider p : DumbService.getDumbAwareExtensions(project, DefaultHighlightingSettingProvider.EP_NAME)) {
-      FileHighlightingSetting setting = p.getDefaultSetting(project, virtualFile);
-      if (setting != null) {
-        return setting;
-      }
+    FileHighlightingSetting setting = DefaultHighlightingSettingProvider.getDeclaredDefaultSetting(project, virtualFile);
+    if (setting != null) {
+      return setting;
     }
     return EssentialHighlightingMode.INSTANCE.isEnabled() ? FileHighlightingSetting.ESSENTIAL : FileHighlightingSetting.FORCE_HIGHLIGHTING;
   }

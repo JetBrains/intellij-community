@@ -8,10 +8,9 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::cli::CancelArgs;
-use crate::ide::fixture::{FakeIde, Fixture, NO_DISPLAY_CHECK, PORT_PROPERTY, mode, prepared, wait_for_file};
+use crate::ide::fixture::{FakeIde, Fixture, NO_DISPLAY_CHECK, PORT_PROPERTY, VM_OPTIONS_FILE_PATH, mode, prepared, wait_for_file};
 use crate::ide::{CODE_IDE_RUNNING, live_run, prepare};
 use crate::supervisor::{CONTEXT_UTF8_LOCALE, ENVIRONMENT_ALLOWLIST, LaunchHost, LiveSystem, child_path, has_utf8_locale};
-use crate::testing::run_agent;
 
 /// A launcher that no refused launch reaches.
 fn unused_launcher() -> Launcher {
@@ -83,10 +82,27 @@ fn the_argument_file_puts_the_data_paths_of_the_context_last() {
         "-Dfrom.vmoptions=1",
         "-Dfrom.product.info=1",
         "-Dfrom.idea.properties=1",
+        &format!("-Djb.vmOptionsFile={dist}/bin/idea64.vmoptions"),
         &format!("-Duser.home={}", context.home_dir),
     ] {
         position(&arguments, property);
     }
+}
+
+// The production place of `product-info.json` comes first, and `bin/product-info.json` is the fallback.
+#[test]
+fn the_product_info_is_at_the_production_place_or_in_bin() {
+    let directory = tempfile::tempdir().unwrap();
+    let home = directory.path();
+    let production = home.join(PRODUCT_INFO_FILE);
+    let dev_build = home.join("bin/product-info.json");
+    assert_eq!(product_info_file(home), production, "no file names the production place");
+    fs::create_dir_all(home.join("bin")).unwrap();
+    fs::write(&dev_build, "{}").unwrap();
+    assert_eq!(product_info_file(home), dev_build);
+    fs::create_dir_all(production.parent().unwrap()).unwrap();
+    fs::write(&production, "{}").unwrap();
+    assert_eq!(product_info_file(home), production);
 }
 
 // The flags file cannot move a data path.
@@ -109,16 +125,57 @@ fn a_flag_that_states_a_data_path_is_refused() {
     }
 }
 
+// `product-info.json` names the main vmoptions file, so a second file in `bin` does not count.
 #[test]
-fn a_distribution_needs_one_vm_options_file() {
+fn the_product_info_names_the_vm_options_file() {
     let fixture = Fixture::new();
     let context = prepared(&fixture.context_document(true));
-    fs::write(fixture.path("dist/bin/jetbrains_client64.vmoptions"), "").unwrap();
+    fs::write(fixture.path("dist/bin/jetbrains_client64.vmoptions"), "-Dfrom.frontend=1\n").unwrap();
+    let document = fixture.launch_document("launch-1", &context);
+    let arguments = compose_arguments(&document, &LaunchPaths::new(&document)).unwrap_or_else(|refusal| panic!("{refusal}"));
+    position(&arguments, "-Dfrom.vmoptions=1");
+    assert!(!arguments.iter().any(|argument| argument == "-Dfrom.frontend=1"), "{arguments:#?}");
+
+    let product_info = fixture.path("dist").join(PRODUCT_INFO_FILE);
+    fs::write(&product_info, r#"{"launch":[]}"#).unwrap();
     let refusal = refused_launch(&fixture.launch_document("launch-1", &context));
-    assert!(refusal.message.contains("exactly one *.vmoptions"), "{}", refusal.message);
+    assert!(refusal.message.contains("states no launch"), "{}", refusal.message);
+    fs::write(&product_info, r#"{"launch":[{"vmOptionsFilePath":"../../idea.vmoptions"}]}"#).unwrap();
+    let refusal = refused_launch(&fixture.launch_document("launch-1", &context));
+    assert!(refusal.message.contains("is not a file of the home"), "{}", refusal.message);
 }
 
-// A launch needs the layout of `ide-prepare`: the context and the project.
+// The path resolves by its text against the directory of the production place, as the launcher resolves it.
+#[test]
+fn the_vm_options_path_resolves_in_the_home() {
+    assert_eq!(
+        resolve_in_home("Resources", "../bin/idea.vmoptions").as_deref(),
+        Some("bin/idea.vmoptions")
+    );
+    assert_eq!(resolve_in_home("", "bin/idea64.vmoptions").as_deref(), Some("bin/idea64.vmoptions"));
+    assert_eq!(
+        resolve_in_home("", "./bin//idea64.vmoptions").as_deref(),
+        Some("bin/idea64.vmoptions")
+    );
+    assert_eq!(
+        resolve_in_home(
+            PRODUCT_INFO_FILE.rsplit_once('/').map_or("", |(directory, _)| directory),
+            VM_OPTIONS_FILE_PATH
+        )
+        .as_deref(),
+        Some("bin/idea64.vmoptions")
+    );
+    for refused in [
+        "../bin/idea64.vmoptions",
+        "/bin/idea64.vmoptions",
+        "bin\\idea64.vmoptions",
+        "bin/..",
+    ] {
+        assert_eq!(resolve_in_home("", refused), None, "{refused}");
+    }
+}
+
+// A launch needs the layout of a preparation: the context and the project.
 #[test]
 fn a_launch_on_a_context_that_is_not_prepared_is_refused() {
     let fixture = Fixture::new();
@@ -132,7 +189,7 @@ fn a_launch_on_a_context_that_is_not_prepared_is_refused() {
         bin_dir: fixture.text("ide/key-1/bin"),
     };
     let refusal = refused_launch(&fixture.launch_document("launch-1", &context));
-    assert!(refusal.message.contains("call ide-prepare first"), "{}", refusal.message);
+    assert!(refusal.message.contains("prepare the context first"), "{}", refusal.message);
     assert!(!fixture.context().join("log").exists());
 }
 
@@ -150,17 +207,36 @@ fn a_linux_guest_needs_a_display() {
     require_display(&NO_DISPLAY_CHECK).unwrap();
 }
 
-// The verb reads the document on standard input, and a document that it cannot read is its own refusal.
+// The launch checks its document itself, so the lane daemon that calls it gets the check too. A property that names a
+// data directory of the context is refused by its name, and so is a JVM that is not an absolute path. A refused launch
+// writes no file.
 #[test]
-fn the_verb_reads_the_document_on_standard_input() {
+fn a_launch_document_that_names_a_data_directory_is_refused() {
     let fixture = Fixture::new();
     let context = prepared(&fixture.context_document(true));
-    let mut document = serde_json::to_value(fixture.launch_document("launch-1", &context)).unwrap();
-    document["javaHome"] = serde_json::json!("jbr");
-    let answered = run_agent(&["ide-launch"], document.to_string().as_bytes());
-    assert_eq!(answered.exit, 70, "{}", answered.stderr);
-    assert_eq!(answered.code(), "guest_ide_launch_failed");
-    assert_eq!(answered.stdout, "");
+    for owned in OWNED_PROPERTIES {
+        let mut document = fixture.launch_document("launch-1", &context);
+        document.properties.insert(owned.to_owned(), "/elsewhere".to_owned());
+        let refusal = refused_launch(&document);
+        assert_eq!(
+            (refusal.code.as_ref(), refusal.exit),
+            ("guest_ide_launch_failed", AgentExit::Refused),
+            "{owned}"
+        );
+        assert!(
+            refusal.message.contains(&format!("the property {owned} names a data directory")),
+            "{}",
+            refusal.message
+        );
+    }
+    let mut document = fixture.launch_document("launch-1", &context);
+    document.java_home = "jbr".to_owned();
+    let refusal = refused_launch(&document);
+    assert_eq!(refusal.code.as_ref(), "guest_ide_launch_failed");
+    assert!(refusal.message.contains("javaHome"), "{}", refusal.message);
+    for file in ["log", "ide-jvm.args", "launch.json"] {
+        assert!(!fixture.context().join(file).exists(), "a refused launch wrote {file}");
+    }
 }
 
 /// The names that the shell of the fake `java` sets itself, so the environment that it prints holds them too.
@@ -345,4 +421,35 @@ fn a_fresh_preparation_keeps_the_evidence_of_a_stopped_ide() {
         vec![first.log_dir, context.join("run-ide-launch-1").to_string_lossy().into_owned()]
     );
     assert!(Path::new(&second.log_dir).is_dir());
+}
+
+/// The publish renames a private temporary file onto the destination, so the IDE reads a whole file or none. An
+/// in-place write would keep the mode 0644 of the destination, and a publish that left its temporary file would leave
+/// two files.
+#[test]
+fn a_publish_replaces_the_file_atomically_and_privately() {
+    use std::os::unix::fs::{MetadataExt, PermissionsExt};
+
+    let root = tempfile::tempdir().unwrap();
+    let destination = root.path().join(ARG_FILE);
+    fs::write(&destination, "the previous launch\n").unwrap();
+    fs::set_permissions(&destination, fs::Permissions::from_mode(0o644)).unwrap();
+    let inode = fs::metadata(&destination).unwrap().ino();
+
+    publish_privately(&destination, b"the next launch").unwrap();
+    assert_eq!(fs::read_to_string(&destination).unwrap(), "the next launch");
+    let info = fs::metadata(&destination).unwrap();
+    assert_eq!(info.permissions().mode() & 0o777, 0o600);
+    assert_ne!(info.ino(), inode, "the previous file was written over in place");
+    assert_eq!(fs::read_dir(root.path()).unwrap().count(), 1, "the publish left a temporary file");
+
+    // A destination that no file can be renamed onto fails, and still leaves no temporary file.
+    let blocked = root.path().join("occupied");
+    fs::create_dir_all(blocked.join("child")).unwrap();
+    publish_privately(&blocked, b"refused").unwrap_err();
+    assert_eq!(
+        fs::read_dir(root.path()).unwrap().count(),
+        2,
+        "a failed publish left a temporary file"
+    );
 }

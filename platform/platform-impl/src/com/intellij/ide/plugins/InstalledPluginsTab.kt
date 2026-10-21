@@ -174,6 +174,7 @@ class InstalledPluginsTab @RequiresEdt(generateAssertion = false /* IJPL-115548 
       visiblePluginsRequiresUltimate,
       installationStates,
       updateSources,
+      MyPluginModel.getExpectedExplanations(errorCheckResults),
     )
   }
 
@@ -745,11 +746,13 @@ private data class CreateInstalledPanelModel(
   val visiblePluginsRequiresUltimate: Map<PluginId, Boolean>,
   val installationStates: Map<PluginId, PluginInstallationState>,
   val updateSources: Map<PluginId, PluginUpdateSource>,
+  val expectedExplanations: Map<PluginId, List<@Nls String>>,
 )
 
 private fun PluginsGroup.loadIntoPreloadedModel(model: CreateInstalledPanelModel) {
   val preloadedModel = getPreloadedModel()
   preloadedModel.setErrors(model.errors)
+  preloadedModel.setExpectedExplanations(model.expectedExplanations)
   preloadedModel.setPluginInstallationStates(model.installationStates)
   preloadedModel.setPluginUpdateSources(model.updateSources)
 }

@@ -12,6 +12,8 @@ import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.content.tabActions.ContentTabActionProvider
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.TestActionEvent
@@ -21,6 +23,8 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.registryKeyFixture
+import com.intellij.testFramework.replaceService
+import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flowOf
 import org.assertj.core.api.Assertions.assertThat
@@ -28,7 +32,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 /**
- * Tests [MoveToolWindowTabToEditorAction], the "Open in Editor Tab" item of the tool window tab context menu.
+ * Tests [MoveToolWindowTabToEditorAction], the "Open in Editor Tab" item of the tool window tab context menu,
+ * and [MoveToolWindowTabFromEditorToToolWindowAction], the "Return to Tool Window" item of the editor tab.
  */
 @TestApplication
 class ToolWindowEditorTabActionsTest {
@@ -59,14 +64,27 @@ class ToolWindowEditorTabActionsTest {
   }
 
   /**
-   * A tool window that counts the `hide()` calls, which the headless mock ignores.
+   * A tool window that counts the `hide()` and `activate()` calls, which the headless mock ignores.
    */
   private class HideRecordingToolWindow(project: Project, id: String, disposable: Disposable) : FakeToolWindow(project, id, disposable) {
     var hideCount: Int = 0
+    var activateCount: Int = 0
 
     override fun hide(runnable: Runnable?) {
       hideCount++
     }
+
+    override fun activate(runnable: Runnable?, autoFocusContents: Boolean, forced: Boolean) {
+      activateCount++
+      runnable?.run()
+    }
+  }
+
+  /**
+   * A headless tool window manager that returns the given tool window for its id.
+   */
+  private class SingleToolWindowManager(project: Project, private val toolWindow: ToolWindow) : ToolWindowHeadlessManagerImpl(project) {
+    override fun getToolWindow(id: String?): ToolWindow? = toolWindow.takeIf { it.id == id }
   }
 
   private fun createToolWindow(id: String = toolWindowId): HideRecordingToolWindow = HideRecordingToolWindow(project, id, disposable)
@@ -165,5 +183,26 @@ class ToolWindowEditorTabActionsTest {
       assertThat(manager.openTabFile().attachedContent(project)).isSameAs(moved)
       assertThat(toolWindow.contentManager.contents.toList()).containsExactly(remaining)
       assertThat(toolWindow.hideCount).isZero()
+    }
+
+  @Test
+  fun `returning the tab to the tool window activates the tool window`(): Unit =
+    timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+      val toolWindow = createToolWindow()
+      project.replaceService(ToolWindowManager::class.java, SingleToolWindowManager(project, toolWindow), disposable)
+      val content = toolWindow.addTabContent()
+      action.actionPerformed(createEvent(toolWindow))
+      val tabFile = manager.openTabFile()
+
+      val returnAction = MoveToolWindowTabFromEditorToToolWindowAction()
+      val dataContext = SimpleDataContext.builder()
+        .add(CommonDataKeys.PROJECT, project)
+        .add(PlatformDataKeys.FILE_EDITOR, manager.getSelectedEditor(tabFile))
+        .build()
+      returnAction.actionPerformed(TestActionEvent.createTestEvent(returnAction, dataContext))
+
+      assertThat(manager.isFileOpen(tabFile)).isFalse()
+      assertThat(toolWindow.contentManager.contents.toList()).containsExactly(content)
+      assertThat(toolWindow.activateCount).isEqualTo(1)
     }
 }

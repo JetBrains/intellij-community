@@ -228,7 +228,7 @@ internal class LspServerConfigurable(
           parent = this,
           descriptor = descriptor,
           contributors = listOf(SingleRootContributor(contributor, backendPath)),
-          preselectPath = selectedPath ?: backendPath,
+          preselectPath = { selectedPath ?: backendPath },
         )
         if (dialog.showAndGet()) {
           dialog.getSelectedFiles().singleOrNull()?.let { text = it.toString() }

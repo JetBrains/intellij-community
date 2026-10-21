@@ -1,11 +1,9 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="fleet.rhizomedb"/>
     <module name="intellij.platform.buildView"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.ide.impl"/>
-    <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.project"/>

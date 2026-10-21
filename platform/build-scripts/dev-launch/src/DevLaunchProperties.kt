@@ -43,21 +43,43 @@ fun getIdeSystemProperties(runDir: Path): Map<String, String> {
   return result
 }
 
+/**
+ * The lines of the main vmoptions file of the distribution at [runDir], then `-Djb.vmOptionsFile`, then the additional JVM
+ * arguments of the first launch. [mainVmOptionsFile] finds the file.
+ */
 @ApiStatus.Internal
 fun readVmOptions(runDir: Path): List<String> {
   val result = ArrayList<String>()
 
-  val binDir = runDir.resolve("bin")
-  val vmOptionsFile = Files.newDirectoryStream(binDir, "*.vmoptions").use { it.singleOrNull() }
-  requireNotNull(vmOptionsFile) {
-    "No single *.vmoptions file in $binDir (${Files.newDirectoryStream(binDir).use { it.asSequence().map(Path::getFileName).joinToString() }})"
-  }
+  val productInfoFile = findProductInfoFile(runDir)
+  val productInfo = readProductInfo(productInfoFile)
+  val vmOptionsFile = mainVmOptionsFile(runDir, productInfoFile, productInfo)
   result.addAll(vmOptionsFile.readLines())
   result.add("-Djb.vmOptionsFile=${vmOptionsFile}")
 
-  readProductInfo(runDir).launch.firstOrNull()?.additionalJvmArguments?.mapTo(result) { resolveIdeHomeMacro(it, runDir) }
+  productInfo.launch.first().additionalJvmArguments.mapTo(result) { resolveIdeHomeMacro(it, runDir) }
 
   return result
+}
+
+/**
+ * The main vmoptions file of the distribution at [runDir], as the native launcher finds it.
+ *
+ * It is `vmOptionsFilePath` of the first launch of [productInfo], relative to the directory of [productInfoFile] when that is
+ * a production place. The `bin/product-info.json` of the dev build of `IdeBuilder` holds the text of the production place of
+ * this OS, so [PRODUCTION_PRODUCT_INFO_PATH] gives its base. So a vmoptions file of an embedded frontend in `bin` does not
+ * matter. A path that leaves [runDir] fails.
+ */
+private fun mainVmOptionsFile(runDir: Path, productInfoFile: Path, productInfo: ProductInfoData): Path {
+  val launch = requireNotNull(productInfo.launch.firstOrNull()) { "$productInfoFile states no launch" }
+  val path = launch.vmOptionsFilePath
+  val home = runDir.normalize()
+  val base = if (productInfoFile == home.resolve(DEV_BUILD_PRODUCT_INFO_PATH)) home.resolve(PRODUCTION_PRODUCT_INFO_PATH).parent else productInfoFile.parent
+  val file = base.resolve(path).normalize()
+  require(!Path.of(path).isAbsolute && file.startsWith(home) && file != home) {
+    "The vmOptionsFilePath '$path' of $productInfoFile is not a file of $home"
+  }
+  return file
 }
 
 /**
@@ -67,7 +89,7 @@ fun readVmOptions(runDir: Path): List<String> {
 @ApiStatus.Internal
 fun readCustomCommand(runDir: Path, command: String): CustomCommandLaunchData? {
   // multi-architecture builds are not generated for dev builds
-  return readProductInfo(runDir).launch.single().customCommands.find { command in it.commands }
+  return readProductInfo(findProductInfoFile(runDir)).launch.single().customCommands.find { command in it.commands }
 }
 
 /**
@@ -108,10 +130,32 @@ fun readCustomCommandLaunch(runDir: Path, command: String): Map.Entry<String, Ma
   return java.util.AbstractMap.SimpleImmutableEntry(mainClass, customCommandSystemProperties(launch.resolveAdditionalJvmArguments(runDir)))
 }
 
-private fun readProductInfo(runDir: Path): ProductInfoData {
-  return runDir.resolve("bin").resolve(PRODUCT_INFO_FILE_NAME).inputStream().buffered().use {
+private fun readProductInfo(file: Path): ProductInfoData {
+  return file.inputStream().buffered().use {
     productInfoJson.decodeFromStream(ProductInfoData.serializer(), it)
   }
+}
+
+private const val MAC_PRODUCT_INFO_PATH = "Resources/$PRODUCT_INFO_FILE_NAME"
+
+/** The place of `product-info.json` in the dev build of `IdeBuilder`. */
+private const val DEV_BUILD_PRODUCT_INFO_PATH = "bin/$PRODUCT_INFO_FILE_NAME"
+
+/** The production place of `product-info.json` relative to the home: `Resources/product-info.json` on macOS, else the root. */
+private val PRODUCTION_PRODUCT_INFO_PATH: String = if (SystemInfoRt.isMac) MAC_PRODUCT_INFO_PATH else PRODUCT_INFO_FILE_NAME
+
+/**
+ * The `product-info.json` file of the distribution at [runDir].
+ *
+ * The first candidate is the production place of this OS: `Resources/product-info.json` on macOS, `product-info.json` on
+ * other systems. The second is the production place of the other layout, which a distribution cross-built for a Linux
+ * container on macOS has. The third is `bin/product-info.json`, which the dev build of `IdeBuilder` writes.
+ * When no file exists, the result is the first candidate, so that the read error names it.
+ */
+private fun findProductInfoFile(runDir: Path): Path {
+  val productionFile = runDir.resolve(PRODUCTION_PRODUCT_INFO_PATH)
+  val candidates = listOf(productionFile, runDir.resolve(if (SystemInfoRt.isMac) PRODUCT_INFO_FILE_NAME else MAC_PRODUCT_INFO_PATH), runDir.resolve(DEV_BUILD_PRODUCT_INFO_PATH))
+  return candidates.firstOrNull { Files.isRegularFile(it) } ?: productionFile
 }
 
 /**

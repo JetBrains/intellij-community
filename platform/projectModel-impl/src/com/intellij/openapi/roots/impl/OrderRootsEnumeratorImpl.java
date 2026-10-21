@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.EnumeratedEntry;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
@@ -79,6 +80,18 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
                                                                            myWithoutSelfModuleOutput);
     Collection<RootEntry> entries = computer.computeRoots();
     return entries;
+  }
+
+  @Override
+  public @NotNull Collection<EnumeratedEntry> getEnumeratedEntries() {
+    // A LinkedHashSet, like the root walk: the enumerator visits an entry once, but the same entry can be reached
+    // through two paths of a recursive walk, and the order of first arrival is what callers rank entries by.
+    Collection<EnumeratedEntry> result = new LinkedHashSet<>();
+    OrderRootComputer.forEachContributingEntry(
+      myOrderEnumerator, this::getRootType,
+      (orderEntry, type, rootModel, includeProduction, includeTests, customHandlers) ->
+        result.add(new EnumeratedEntry(orderEntry, type, includeProduction, includeTests)));
+    return result;
   }
 
   @Override

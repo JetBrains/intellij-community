@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.fir.navigation
 
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.psi.PsiElement
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -38,6 +39,22 @@ class LightNavigateToStdlibSourceTest : KotlinLightCodeInsightFixtureTestCase() 
         )
     }
 
+    @ProjectDescriptorKind(JDK_AND_MULTIPLATFORM_STDLIB_WITH_SOURCES)
+    fun testNavigateToArrays() {
+        doTest("fun some() { <caret>emptyArray<Int>() }") { resolved, navigationElement ->
+            assertEquals(
+                "ArrayIntrinsics.kt",
+                navigationElement.containingFile.name
+            )
+            val clsJarName =
+                JarFileSystem.getInstance().getVirtualFileForJar(resolved.containingFile.virtualFile)!!.nameWithoutExtension
+            val srcJarName =
+                JarFileSystem.getInstance().getVirtualFileForJar(navigationElement.containingFile.virtualFile)!!.nameWithoutExtension
+            assertEquals("Cls root should correspond to src root: cls: $clsJarName, src: $srcJarName",
+                clsJarName, srcJarName.replace("-sources", ""))
+        }
+    }
+
     @ProjectDescriptorKind(KOTLIN_JVM_WITH_STDLIB_SOURCES)
     fun testNavigateToJVMActualClassDeclarations() {
         val checkedTypes = listOf(
@@ -50,7 +67,7 @@ class LightNavigateToStdlibSourceTest : KotlinLightCodeInsightFixtureTestCase() 
         )
 
         for (type in checkedTypes) {
-            doTest("fun some() { val collection: <caret>$type? = null }") { navigationElement ->
+            doTest("fun some() { val collection: <caret>$type? = null }") { _, navigationElement ->
                 TestCase.assertTrue(
                     "$navigationElement is not instance of ${KtClassOrObject::class} or ${KtTypeAlias::class}",
                     navigationElement is KtClassOrObject || navigationElement is KtTypeAlias
@@ -86,17 +103,16 @@ class LightNavigateToStdlibSourceTest : KotlinLightCodeInsightFixtureTestCase() 
 
     override fun getProjectDescriptor() = getProjectDescriptorFromAnnotation()
 
-    private fun doTest(text: String, sourceFileName: String) = doTest(text) { navigationElement ->
+    private fun doTest(text: String, sourceFileName: String) = doTest(text) { resolved, navigationElement ->
         TestCase.assertEquals(sourceFileName, navigationElement.containingFile.name)
     }
 
-    private fun doTest(text: String, checker: (PsiElement) -> Unit) {
+    private fun doTest(text: String, checker: (resolved: PsiElement, navigationElement: PsiElement) -> Unit) {
         myFixture.configureByText(KotlinFileType.INSTANCE, text)
 
         val ref = file.findReferenceAt(editor.caretModel.offset)
-        val resolve = ref!!.resolve()
-        val navigationElement = resolve!!.navigationElement
+        val resolve = ref!!.resolve()!!
 
-        checker(navigationElement)
+        checker(resolve, resolve.navigationElement)
     }
 }

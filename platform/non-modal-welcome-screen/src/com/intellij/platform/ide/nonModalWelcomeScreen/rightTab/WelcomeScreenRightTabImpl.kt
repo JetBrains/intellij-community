@@ -7,15 +7,22 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.dnd.FileCopyPasteUtil
 import com.intellij.ide.gdpr.showDataSharingOptionsDialog
 import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.ui.laf.darcula.DarculaNewUIUtil
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboButtonUI
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionButtonComponent
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.UI
@@ -26,24 +33,26 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.PopupShowOptions
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.impl.ExpandableComboAction
+import com.intellij.openapi.wm.impl.ToolbarComboButton
+import com.intellij.openapi.wm.impl.ToolbarComboButtonModel
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBundle
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenComboBoxKind
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenPaintTracker
 import com.intellij.platform.ide.nonModalWelcomeScreen.WelcomeScreenTabUsageCollector
-import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider.FeatureButtonModelWithBackend
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider.WelcomeContent
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.KeymapModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenRightTabComboBoxModel.ThemeModel
 import com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenStartupSpanTracer
 import com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenStartupTracer
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.DisclosureButton
 import com.intellij.ui.components.labels.LinkLabel
@@ -53,10 +62,12 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
-import com.intellij.util.PlatformUtils
+import com.intellij.ui.popup.PopupState
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.AbstractLayoutManager
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.launchOnShow
@@ -75,6 +86,8 @@ import kotlinx.coroutines.withContext
 import java.awt.Container
 import java.awt.Dimension
 import java.awt.Graphics
+import java.awt.Graphics2D
+import java.awt.Insets
 import java.awt.KeyboardFocusManager
 import java.awt.Rectangle
 import java.awt.dnd.DnDConstants
@@ -83,6 +96,8 @@ import java.awt.dnd.DropTargetAdapter
 import java.awt.dnd.DropTargetDropEvent
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.util.function.Supplier
@@ -90,6 +105,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
+import javax.swing.KeyStroke
 import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.SwingConstants
 import javax.swing.border.Border
@@ -318,11 +334,7 @@ internal class WelcomeScreenRightTabImpl(
 
     val buttonHeight = JBUI.scale(if (extraContent) 36 else 48)
 
-    val twoRows = featureModels.size == 4
-    val rows = if (twoRows) 2 else contentProvider.buttonsPerRow
-    var commonWidth = 0
-
-    for (row in featureModels.chunked(rows)) {
+    for (row in featureModels.chunked(contentProvider.buttonsPerRow)) {
       for (model in row) {
         val button = DisclosureButton()
         button.arrowIcon = null
@@ -331,25 +343,15 @@ internal class WelcomeScreenRightTabImpl(
         button.text = model.text
         button.icon = model.icon
 
-        if (twoRows) {
-          commonWidth = max(commonWidth, button.preferredSize.width)
+        button.addActionListener { model.onClick(project, contentProvider.coroutineScope) }
+        button.getInputMap(JComponent.WHEN_FOCUSED).apply {
+          put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false), "pressed")
+          put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, true), "released")
         }
 
-        button.addActionListener { model.onClick(project, contentProvider.coroutineScope) }
-
-        gridBuilder.cell(button, gaps = UnscaledGaps(right = 10, bottom = 10))
+        gridBuilder.cell(button, gaps = UnscaledGaps(right = 10))
       }
       gridBuilder.row()
-    }
-
-    if (twoRows) {
-      val count = buttonPanel.componentCount
-      for (i in 0..<count) {
-        val component = buttonPanel.getComponent(i)
-        if (component is DisclosureButton) {
-          component.preferredSize = Dimension(commonWidth, -1)
-        }
-      }
     }
 
     return wrapper
@@ -381,7 +383,7 @@ internal class WelcomeScreenRightTabImpl(
   }
 
   private fun createSingleBanner(parentPanel: JPanel, extraContent: Boolean) {
-    val singleBanner = WelcomeScreenRightTabBannerProvider.createSurveyBanner(project)
+    val singleBanner = WelcomeScreenRightTabBannerProvider.createSingleBanner(project)
     if (singleBanner is Disposable) {
       Disposer.register(this, singleBanner)
     }
@@ -413,7 +415,7 @@ internal class WelcomeScreenRightTabImpl(
     val actions = models.mapIndexed { index, model ->
       val addBorder = index < models.size - 1
       when (model) {
-        is ComboBoxInfoPanelModel -> ComboBoxInfoPanelAction(model, addBorder)
+        is ComboBoxInfoPanelModel -> ComboBoxInfoPanelAction(model, addBorder, contentProvider)
 
         is ButtonInfoPanelModel -> ButtonInfoPanelAction(model, project, coroutineScope, addBorder)
       }
@@ -490,6 +492,7 @@ internal class WelcomeScreenRightTabImpl(
     return buildList {
       add(ButtonInfoPanelModel(WelcomeRightTabContentProvider.InfoButtonModel(IdeBundle.message("welcome.screen.plugins.title"),
                                                                               AllIcons.Nodes.Plugin) { project, _ ->
+        WelcomeScreenTabUsageCollector.logPluginsClicked()
         PluginManagerConfigurable.showSettingsDialogFromWelcomeScreen(project)
       }))
       add(ComboBoxInfoPanelModel(ThemeModel.getIcon(), "welcome.screen.right.tab.theme.switch.prefix", ThemeModel()))
@@ -539,7 +542,7 @@ internal suspend fun prepareDefaultBody(
         sectionFeatureKeys = sections.mapTo(HashSet()) { it.featureKey },
         featureKeysReplacingFeatureGrid = contentProvider.featureKeysReplacingFeatureGrid,
       )
-      PreparedBody(sections, addModels(featureModels))
+      PreparedBody(sections, featureModels)
     }
   }
   catch (e: CancellationException) {
@@ -549,32 +552,6 @@ internal suspend fun prepareDefaultBody(
     LOG.error("Cannot prepare the default content of the welcome right tab", e)
     return null
   }
-}
-
-private fun addModels(models: List<WelcomeRightTabContentProvider.FeatureButtonModel>): List<WelcomeRightTabContentProvider.FeatureButtonModel> {
-  if (!Registry.`is`("air.welcome.screen.inline.prompt", true) &&
-      !Registry.`is`("air.welcome.screen.hide.agent.sessions", true) &&
-      !PlatformUtils.isDataGrip()) {
-
-      val button = agentSessionsFeatureButtonModel()
-      if (button != null && models.find { it.text == button.text } == null) {
-        return buildList {
-          add(button)
-          addAll(models)
-        }
-      }
-  }
-  return models
-}
-
-private fun agentSessionsFeatureButtonModel(): WelcomeRightTabContentProvider.FeatureButtonModel? {
-  val feature = WelcomeScreenFeatureUI.getForFeatureKey("air.sessions") ?: return null
-  val text = feature.text ?: return null
-  return FeatureButtonModelWithBackend(
-    featureKey = feature.featureKey,
-    text = text,
-    icon = feature.icon,
-  )
 }
 
 /** What one feature answered: whether it is available, and the section it stated when the tab offered it. */
@@ -727,17 +704,42 @@ private class ButtonInfoPanelModel(private val model: WelcomeRightTabContentProv
 private class ComboBoxInfoPanelAction(
   private val comboModel: ComboBoxInfoPanelModel,
   private val addBorder: Boolean,
+  private val contentProvider: WelcomeRightTabContentProvider,
 ) : ExpandableComboAction(), DumbAware {
 
   private val model = comboModel.model
+
+  private val chooserState = PopupState.forPopup()
+
+  // The data context of an event knows only the target of the toolbar, which is the whole tab.
+  private var comboButton: JComponent? = null
 
   init {
     templatePresentation.text = comboModel.itemPrefix
     templatePresentation.icon = comboModel.icon
   }
 
+  override fun createToolbarComboButton(model: ToolbarComboButtonModel): ToolbarComboButton {
+    return object : ToolbarComboButton(model) {
+      override fun updateUI() {
+        setUI(object : ToolbarComboButtonUI() {
+          override fun paintHoverBorder(g: Graphics2D, innerRect: Rectangle) {
+            DarculaNewUIUtil.drawRoundedRectangle(g, innerRect, JBUI.CurrentTheme.ActionButton.hoverBorder(),
+                                                  DarculaUIUtil.BUTTON_ARC.float, DarculaUIUtil.LW.float)
+          }
+        })
+        foreground = JBColor.foreground()
+        hoverBackground = JBUI.CurrentTheme.ActionButton.hoverBackground()
+        transparentHoverBackground = hoverBackground
+      }
+    }
+  }
+
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val component = super.createCustomComponent(presentation, place)
+    component.isFocusable = true
+    component.isRequestFocusEnabled = false
+    comboButton = component
     if (addBorder) {
       component.border = JBUI.Borders.emptyRight(16)
     }
@@ -747,13 +749,18 @@ private class ComboBoxInfoPanelAction(
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
-    val selectedItem = model.itemNames().getOrNull(model.currentItemIndex()) ?: ""
-    e.presentation.setText(comboModel.itemPrefix + selectedItem, false)
-    e.presentation.icon = if (model is ThemeModel) ThemeModel.getIcon() else comboModel.icon
+    e.presentation.setText(comboModel.itemPrefix + model.currentItemName(), false)
+    e.presentation.icon = if (model is ThemeModel) model.currentIcon() else comboModel.icon
   }
 
   @Suppress("SplitModeApiUsage")
-  override fun createPopup(event: AnActionEvent): JBPopup {
+  override fun createPopup(event: AnActionEvent): JBPopup? {
+    val owner = comboButton
+    if (model is ThemeModel && contentProvider.isThemeChooserPopupEnabled && owner != null) {
+      showThemeChooser(model, owner)
+      return null
+    }
+
     val step = object : BaseListPopupStep<String>(null, model.itemNames()) {
       override fun isSpeedSearchEnabled(): Boolean = true
 
@@ -770,6 +777,16 @@ private class ComboBoxInfoPanelAction(
     step.defaultOptionIndex = model.currentItemIndex()
     return JBPopupFactory.getInstance().createListPopup(step)
   }
+
+  // The base class shows a popup underneath the button, and the footer is at the bottom of the screen. So the chooser opens above it.
+  private fun showThemeChooser(themeModel: ThemeModel, owner: JComponent) {
+    if (chooserState.isShowing || chooserState.isRecentlyHidden) {
+      return
+    }
+    val popup = WelcomeScreenThemeChooserPopup(themeModel, contentProvider.getThemePreviewSample()).createPopup(owner)
+    chooserState.prepareToShow(popup)
+    popup.show(PopupShowOptions.aboveComponent(owner))
+  }
 }
 
 private class ButtonInfoPanelAction(
@@ -785,6 +802,12 @@ private class ButtonInfoPanelAction(
         return JBUI.scale(4)
       }
 
+      override fun getMargins(): Insets {
+        // Set the same margins as the toolbar combo buttons next to it so the hover and focus border sizes match
+        val margin = JBInsets.create(JBUI.CurrentTheme.MainToolbar.Dropdown.margin()).unscaled
+        return JBUI.insets(margin.top, margin.left, margin.bottom, margin.left)
+      }
+
       override fun setBorder(border: Border?) {
         if (addBorder) {
           if (border == null) {
@@ -798,10 +821,42 @@ private class ButtonInfoPanelAction(
           super.setBorder(border)
         }
       }
+
+      override fun getButtonLook(): ActionButtonLook = FocusRingActionButtonLook
+    }.apply {
+      isFocusable = true
+      isRequestFocusEnabled = false
+      addKeyListener(object : KeyAdapter() {
+        override fun keyReleased(e: KeyEvent) {
+          if (e.modifiersEx == 0 && e.keyCode == KeyEvent.VK_ENTER) click()
+        }
+      })
     }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     model.onClick(project, coroutineScope)
+  }
+}
+
+private object FocusRingActionButtonLook : IdeaActionButtonLook() {
+  override fun getButtonArc(): JBValue = JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc()
+
+  override fun paintBackground(g: Graphics, component: JComponent, state: Int) {
+    if (state == ActionButtonComponent.SELECTED && component.isFocusOwner && !(component as ActionButton).isSelected) {
+      return
+    }
+    super.paintBackground(g, component, state)
+  }
+
+  override fun paintBorder(g: Graphics, component: JComponent, state: Int) {
+    if (!component.isFocusOwner) {
+      super.paintBorder(g, component, state)
+      return
+    }
+    val rect = Rectangle(component.size)
+    JBInsets.removeFrom(rect, component.insets)
+    DarculaNewUIUtil.drawRoundedRectangle(g, rect, JBUI.CurrentTheme.Focus.focusColor(),
+                                          JBUI.CurrentTheme.MainToolbar.Dropdown.hoverArc().float, DarculaUIUtil.BW.float)
   }
 }

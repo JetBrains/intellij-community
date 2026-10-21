@@ -24,7 +24,6 @@ import java.net.URLEncoder
 import java.nio.file.Path
 import kotlin.time.ComparableTimeMark
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Runs the browser test session end to end: static server and headless browser start
@@ -39,10 +38,10 @@ internal suspend fun runTests(
   staticContentDir: Path,
   indexHtml: String,
   testFilters: List<String>,
+  failFast: Boolean,
   infrastructureLog: InfrastructureLog,
   bazelDeadline: ComparableTimeMark?,
   browserSetupTimeout: Duration,
-  testCompletionGracePeriod: Duration,
 ): TestRunOutcome = withStaticServer(staticContentDir, indexHtml, infrastructureLog) { server ->
   val baseUri = async { server.serve() }
   withHeadlessBrowser(browserCommand, infrastructureLog, browserSetupTimeout) { browser ->
@@ -60,8 +59,10 @@ internal suspend fun runTests(
           }
           is RuntimeEvent.ExceptionThrown -> { // process browser exceptions
             val reason = "${event.exceptionDetails.text} ${event.exceptionDetails.exception?.description.orEmpty()}"
+            // Mocha fails the current test on an exception during the run. CDP only reports
+            // an exception outside the mocha run: while the page loads, or after the run ended.
             testRunState.addSyntheticFailure(failure = SyntheticTestFailure.UNCAUGHT_EXCEPTION, details = reason)
-            testRunState.interrupt("uncaught exception in the test page: $reason") // TODO: maybe we should not stop on first exception?
+            testRunState.interrupt("uncaught exception in the test page: $reason")
           }
           is RuntimeEvent.ExceptionRevoked, // too late to handle that, pageFailure already thrown
           is RuntimeEvent.ExecutionContextCreated,
@@ -75,31 +76,24 @@ internal suspend fun runTests(
 
       // Navigation runs alongside the loop below rather than before it: a page whose load event never
       // fires must still be bounded, and the Bazel deadline is only observed by the select.
-      val navigation = async { page.goto(testPageUri(baseUri.await(), testFilters).toString()) }
-      while (testRunState.outcome.isActive) {
-        // await for tests to complete successfully or fail
-        select {
-          browserEventsConsumptionJob.onJoin {
-            // browser event stream got closed unexpectedly
-            testRunState.interrupt(STREAM_ENDED_REASON)
-          }
-          onTimeout(TEST_COMPLETION_POLLING_FREQUENCY) { // we periodically check whether the test runner is idle
-            when {
-              !testRunState.hasSeenTestEvents() -> Unit // do not check for idleness until the first test suite has started
-              testRunState.isIdleFor(testCompletionGracePeriod) -> testRunState.complete()
-              else -> Unit
-            }
-          }
-          when (bazelDeadline) { // TODO: it would be nice not to push that Bazel timeout down that much but keep it in the Main.kt, right now it just simplifies reporting partial tests reports that's why it's done that way
-            null -> Unit
-            else -> onTimeout(-bazelDeadline.elapsedNow()) {
-              testRunState.interrupt(
-                when {
-                  navigation.isCompleted -> DEADLINE_REASON
-                  else -> NAVIGATION_DEADLINE_REASON
-                },
-              )
-            }
+      val navigation = async { page.goto(testPageUri(baseUri.await(), testFilters, failFast).toString()) }
+      // The run closes on the finished marker of the page. Every other branch interrupts it, so
+      // the outcome is complete after the select.
+      select {
+        testRunState.outcome.onAwait { }
+        browserEventsConsumptionJob.onJoin {
+          // browser event stream got closed unexpectedly
+          testRunState.interrupt(STREAM_ENDED_REASON)
+        }
+        when (bazelDeadline) { // TODO: it would be nice not to push that Bazel timeout down that much but keep it in the Main.kt, right now it just simplifies reporting partial tests reports that's why it's done that way
+          null -> Unit
+          else -> onTimeout(-bazelDeadline.elapsedNow()) {
+            testRunState.interrupt(
+              when {
+                navigation.isCompleted -> DEADLINE_REASON
+                else -> NAVIGATION_DEADLINE_REASON
+              },
+            )
           }
         }
       }
@@ -131,10 +125,10 @@ private fun List<RemoteObject>.formatConsoleLine(): String = joinToString(" ") {
 }
 
 // Internal for its unit tests: the filter encoding must round-trip through URLSearchParams.
-internal fun testPageUri(base: URI, testFilters: List<String>): URI {
-  val query = testFilters.joinToString("&") { filter ->
-    "include=${URLEncoder.encode(filter, Charsets.UTF_8)}"
-  }.takeIf { it.isNotBlank() }
+internal fun testPageUri(base: URI, testFilters: List<String>, failFast: Boolean = false): URI {
+  val parameters = testFilters.map { filter -> "include=${URLEncoder.encode(filter, Charsets.UTF_8)}" } +
+                   listOfNotNull("failFast=true".takeIf { failFast })
+  val query = parameters.joinToString("&").takeIf { it.isNotBlank() }
   val indexHtml = when (query) {
     null -> "index.html"
     else -> "index.html?$query"
@@ -149,5 +143,3 @@ context(scope: CoroutineScope)
 private fun <T> Flow<T>.startCollection(block: suspend (T) -> Unit): Job = scope.launch(start = CoroutineStart.UNDISPATCHED) {
   collect(block)
 }
-
-private val TEST_COMPLETION_POLLING_FREQUENCY = 30.milliseconds

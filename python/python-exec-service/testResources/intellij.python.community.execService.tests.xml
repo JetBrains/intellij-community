@@ -17,6 +17,8 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.remoteServers.impl"/>
     <module name="intellij.platform.util.progress"/>
+    <module name="intellij.python.community.junit5Tests.framework"/>
+    <module name="intellij.python.community.services.systemPython"/>
     <module name="intellij.python.processOutput.common"/>
   </dependencies>
   <!-- endregion -->

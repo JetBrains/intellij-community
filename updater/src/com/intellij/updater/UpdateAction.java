@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.util.List;
 import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -140,6 +141,13 @@ public class UpdateAction extends PatchAction {
       if (result != null) return result;
     }
     return doValidateNotChanged(fromFile, ValidationResult.Action.UPDATE);
+  }
+
+  @Override
+  protected List<File> getValidationFiles(File toDir) {
+    return mySource.isEmpty() || mySource.equals(getPath())
+           ? List.of(getSource(toDir))
+           : List.of(getSource(toDir), getFile(toDir));
   }
 
   @Override

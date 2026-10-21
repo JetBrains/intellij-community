@@ -1,12 +1,12 @@
 package com.intellij.grazie.ide.fus
 
 import ai.grazie.nlp.langs.Language
+import com.intellij.grazie.text.CommitMessageDetector
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextProblem
 import com.intellij.grazie.utils.getLanguageIfAvailable
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vcs.ui.CommitMessage
 import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
@@ -24,7 +24,7 @@ data class AcceptanceRateTracker(
     this(
       problem.rule,
       problem.text.domain,
-      CommitMessage.isCommitMessage(problem.text.commonParent),
+      CommitMessageDetector.isCommitMessage(problem.text.commonParent),
       problem.text.commonParent.language,
       getLanguageIfAvailable(problem.text) ?: Language.UNKNOWN,
       problem.text.containingFile.viewProvider.virtualFile.path,

@@ -9,4 +9,10 @@ class FailingTest {
   fun deliberateFailure() {
     assertEquals("expected", "actual", "this failure validates wasmjs_test failure reporting")
   }
+
+  // A second failure: without fail fast both are reported, with fail fast only the first one.
+  @Test
+  fun secondDeliberateFailure() {
+    assertEquals("expected", "actual", "this failure validates wasmjs_test fail fast")
+  }
 }

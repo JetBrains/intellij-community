@@ -253,7 +253,7 @@ internal class MultiverseFileViewProviderCache(
     return effectiveContext
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   override fun markPossiblyInvalidated() {
     SmartPointerManagerEx.getInstanceEx(project).possiblyInvalidationModCounter.incModificationCount()
     doIfInitialized { map ->

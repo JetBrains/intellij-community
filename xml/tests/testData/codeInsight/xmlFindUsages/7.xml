@@ -1,0 +1,10 @@
+<!DOCTYPE tag [
+  <!ENTITY % tag.basic "tag">
+  <!ENTITY % tag.advanced "tag, tag">
+  <!ENTITY % tag.content "( %tag.basic; | %tag.advanced; )">
+   
+  <!ELEMENT tag %tag.content;>
+  <!ELEMENT tag2 (%tag.basic;)>
+]>
+<t<caret>ag id="">
+</tag>

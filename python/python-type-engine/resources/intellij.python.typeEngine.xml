@@ -18,7 +18,6 @@
     <module name="intellij.platform.ide.observable"/>
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.ide.rpc"/>
-    <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.lsp"/>
@@ -49,14 +48,11 @@
 
     <listener class="com.intellij.python.typeEngine.RestartLspServersListener"
               topic="com.intellij.python.lsp.core.listener.PyLspListener"/>
-    <listener class="com.intellij.python.typeEngine.RestartLspServersListener"
-              topic="com.jetbrains.python.sdk.PySdkListener"/>
-    <listener class="com.intellij.python.typeEngine.RestartLspServersListener"
-              topic="com.intellij.openapi.project.ModuleListener"/>
   </projectListeners>
 
 
   <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.python.typeEngine.RestartLspServersListener$SnapshotActivity"/>
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.python.typeEngine.PyTypeEngineApiProvider"
                                             apiInterfaces="com.intellij.python.typeEngine.common.PyTypeEngineApi"/>
 

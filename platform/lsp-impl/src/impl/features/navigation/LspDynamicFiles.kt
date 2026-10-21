@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClientDescriptor
+import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.getServerId
@@ -68,6 +69,8 @@ internal class LspDynamicFiles(private val lspClient: LspClientImpl) {
 
     val result = lspClient.sendRequestSync { it.workspaceService.textDocumentContent(TextDocumentContentParams(uri)) }
     val text = result?.text ?: return null
+    // the server can stop while the request runs: a stopped session must not register a file
+    if (lspClient.state != LspServerState.Running) return null
 
     val file = createFile(uri, text)
     contentFiles.putIfAbsent(uri, file)?.let { return it }
@@ -83,7 +86,7 @@ internal class LspDynamicFiles(private val lspClient: LspClientImpl) {
   fun refreshContent(uri: String) {
     val file = contentFiles[uri] as? LightVirtualFile ?: return
     LspClientManagerImpl.getInstanceImpl(lspClient.project).cs.launch {
-      val result = lspClient.sendRequest { it.workspaceService.textDocumentContent(TextDocumentContentParams(uri)) }
+      val result = lspClient.sendRequestSync { it.workspaceService.textDocumentContent(TextDocumentContentParams(uri)) }
       val text = result?.text ?: return@launch
       withContext(Dispatchers.EDT) {
         // the content file is read-only for the user; lift the flag only for the content replacement

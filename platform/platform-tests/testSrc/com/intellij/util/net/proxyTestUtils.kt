@@ -39,7 +39,7 @@ internal fun <T> withProxyConfiguration(proxyConf: ProxyConfiguration, body: () 
 internal fun <T> withKnownProxyCredentials(host: String, port: Int, credentials: Credentials?, body: () -> T): T {
   val store = ProxyCredentialStore.getInstance()
   val previousCreds = store.getCredentials(host, port)
-  val previousRemembered = store.areCredentialsRemembered(host, port)
+  val previousRemembered = previousCreds != null && store.areCredentialsRemembered(host, port)
   store.setCredentials(host, port, credentials, false)
   assertEquals(credentials, store.getCredentials(host, port))
   try {

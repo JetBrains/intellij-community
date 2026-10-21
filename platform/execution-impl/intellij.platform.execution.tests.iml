@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="intellij.platform.consoleView" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
@@ -35,5 +36,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.eel.nioFs" scope="TEST" />
   </component>
+  <component name="TestModuleProperties" production-module="intellij.platform.execution" />
 </module>

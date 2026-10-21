@@ -88,7 +88,7 @@ internal class EditorPainterCache(
    * [paintFromCache] can ever be asked for. Caching the carets individually would leave the gaps between them
    * uncached, and no single zone would contain the clip, so every multi-caret repaint would miss.
    */
-  fun cacheFrames(key: EditorAnimationCacheKey, rectangles: List<Rectangle2D>) {
+  fun cacheFrames(key: EditorAnimationCacheKey, rectangles: List<Rectangle2D>, forcePrefetch: Boolean) {
     if (!isCacheEnabled) {
       return
     }
@@ -96,7 +96,7 @@ internal class EditorPainterCache(
       if (pending?.isDuplicate(key) == true) {
         pending
       } else {
-        CacheRequest(key, rectangles)
+        CacheRequest(key, rectangles, forcePrefetch)
       }
     }
   }
@@ -200,7 +200,7 @@ internal class EditorPainterCache(
     if (editor.isDisposed || editor.isDumb) {
       return
     }
-    if (isWithinCooldown()) {
+    if (isWithinCooldown() && !request.forcePrefetch) {
       return
     }
     if (!ensureOpaqueContent()) {

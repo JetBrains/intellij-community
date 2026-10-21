@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.xml;
 
-import com.intellij.codeInsight.completion.HtmlCompletionContributor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
@@ -21,6 +20,7 @@ import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.inspections.Splitter;
 import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -62,8 +62,7 @@ public class HtmlSpellcheckingStrategy extends XmlSpellcheckingStrategy implemen
   private static boolean shouldBeIgnored(XmlAttributeValue element) {
     PsiElement parent = element.getParent();
     if (parent instanceof XmlAttribute) {
-      if (HtmlCompletionContributor.hasHtmlAttributesCompletion(element) &&
-          HtmlCompletionContributor.addSpecificCompletions((XmlAttribute)parent).length > 0) {
+      if (ContainerUtil.exists(XmlSpellcheckingHelper.EP_NAME.getExtensionList(), helper -> helper.hasSpecificHtmlCompletions(element))) {
         return true;
       }
       XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();

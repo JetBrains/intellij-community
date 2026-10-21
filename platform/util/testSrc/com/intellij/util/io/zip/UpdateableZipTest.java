@@ -3,11 +3,13 @@ package com.intellij.util.io.zip;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ThreeState;
-import junit.framework.TestCase;
 import org.apache.commons.compress.archivers.zip.Zip64Mode;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
@@ -22,22 +24,22 @@ import java.util.List;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
 
-public class UpdateableZipTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+
+public class UpdateableZipTest {
   protected File zipFile;
 
-  @Override
+  @BeforeEach
   protected void setUp() throws Exception {
-    super.setUp();
     zipFile = createTestUtilZip();
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      FileUtil.delete(zipFile);
-    } finally {
-      super.tearDown();
-    }
+  @AfterEach
+  protected void tearDown() {
+    FileUtil.delete(zipFile);
   }
 
   public static class UpdateableZip64Test extends UpdateableZipTest {
@@ -52,6 +54,7 @@ public class UpdateableZipTest extends TestCase {
       zos.setUseZip64(Zip64Mode.Always);
     }
 
+    @Test
     public void testBigZip() throws Exception {
       var zipFile = FileUtil.createTempFile("big-test", ".zip").toPath();
       String expectedEntryText = "first";
@@ -117,6 +120,7 @@ public class UpdateableZipTest extends TestCase {
     return new JBZipFile(zipFile.toPath(), false);
   }
 
+  @Test
   public void testRead() throws Exception {
     try (JBZipFile jbZip = createZip()) {
       assertEntryWithContentExists(jbZip, "/first", "first");
@@ -124,6 +128,7 @@ public class UpdateableZipTest extends TestCase {
     }
   }
 
+  @Test
   public void testAppendEntry() throws Exception {
     try (JBZipFile jbZip = createZip()) {
 
@@ -142,6 +147,7 @@ public class UpdateableZipTest extends TestCase {
     }
   }
 
+  @Test
   public void testReplaceEntryContent() throws Exception {
     try (JBZipFile jbZip = createZip()) {
 
@@ -160,6 +166,7 @@ public class UpdateableZipTest extends TestCase {
     }
   }
 
+  @Test
   public void testRemoveEntry() throws Exception {
     try (JBZipFile jbZip = createZip()) {
 
@@ -177,6 +184,7 @@ public class UpdateableZipTest extends TestCase {
     }
   }
 
+  @Test
   public void testGc() throws Exception {
     try (JBZipFile jbZip = createZip()) {
 
@@ -206,6 +214,7 @@ public class UpdateableZipTest extends TestCase {
     }
   }
 
+  @Test
   public void testReadWrite1() throws Exception {
     try (JBZipFile jbZip = createZip()) {
       assertEntryWithContentExists(jbZip, "/first", "first");
@@ -217,6 +226,7 @@ public class UpdateableZipTest extends TestCase {
     }
   }
 
+  @Test
   public void testReadWrite2() throws Exception {
     try (JBZipFile jbZip = createZip()) {
       assertEntryWithContentExists(jbZip, "/first", "first");
@@ -228,6 +238,7 @@ public class UpdateableZipTest extends TestCase {
     }
   }
 
+  @Test
   public void testMissingSeeks() throws Exception {
     try (JBZipFile jbZip = createZip()) {
       assertEntryWithContentExists(jbZip, "/first", "first");

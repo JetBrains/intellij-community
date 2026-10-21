@@ -10,6 +10,7 @@ import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
 import com.intellij.grazie.text.CheckerRunner
+import com.intellij.grazie.text.CommitMessageDetector
 import com.intellij.grazie.text.ProofreadingService.registerProblems
 import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
@@ -25,7 +26,6 @@ import com.intellij.lang.Language
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -62,7 +62,7 @@ class GrazieInspection : LocalInspectionTool(), DumbAware, UnfairLocalInspection
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val file = holder.file
-    if (ignoreGrammarChecking(session.file) || CommitMessage.isCommitMessage(file)) return PsiElementVisitor.EMPTY_VISITOR
+    if (ignoreGrammarChecking(session.file) || CommitMessageDetector.isCommitMessage(file)) return PsiElementVisitor.EMPTY_VISITOR
 
     val checkers = buildCheckers(session)
     if (checkers.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR

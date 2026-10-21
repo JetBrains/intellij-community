@@ -25,6 +25,7 @@ use avl_host_sys::{Captured, Ctx, ProcError, Runner, SpawnOptions};
 use serde::Deserialize;
 
 use crate::worker::docker::{log_options, remove_if_present};
+use crate::worker::secure::read_json_record;
 
 #[cfg(test)]
 #[cfg(unix)]
@@ -208,9 +209,7 @@ impl ContainerLinux {
     /// Whether the recorded `start` argv of `worker` is the argv a start would use now. No record is not current.
     pub(crate) fn start_record_is_current(&self, worker: &str) -> Result<bool, Refusal> {
         let current = self.start_argv(worker)?;
-        let recorded = std::fs::read(self.start_record_path(worker))
-            .ok()
-            .and_then(|bytes| serde_json::from_slice::<Vec<String>>(&bytes).ok());
+        let recorded: Option<Vec<String>> = read_json_record(&self.start_record_path(worker)).ok().flatten();
         Ok(recorded.as_ref() == Some(&current))
     }
 

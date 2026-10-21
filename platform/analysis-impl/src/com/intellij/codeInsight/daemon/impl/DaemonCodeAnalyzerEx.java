@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.codeInsight.multiverse.CodeInsightContextHighlightingUtil;
 import com.intellij.codeInsight.multiverse.CodeInsightContexts;
+import com.intellij.codeInsight.multiverse.EditorContextManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -156,12 +157,13 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   public abstract void removeFileLevelHighlight(@NotNull PsiFile psiFile, @NotNull HighlightInfo info);
 
   public static boolean isHighlightingCompleted(@NotNull FileEditor fileEditor, @NotNull Project project) {
-    if (!(fileEditor instanceof TextEditor textEditor)) {
-      return false;
-    }
+    return fileEditor instanceof TextEditor textEditor && isHighlightingCompleted(textEditor.getEditor(), project);
+  }
 
-    Document document = textEditor.getEditor().getDocument();
-    return getInstanceEx(project).getFileStatusMap().allDirtyScopesAreNullFor(document);
+  @ApiStatus.Internal
+  public static boolean isHighlightingCompleted(@NotNull Editor editor, @NotNull Project project) {
+    CodeInsightContext context = EditorContextManager.getCachedEditorContext(editor, project);
+    return context != null && getInstanceEx(project).getFileStatusMap().allDirtyScopesAreNullFor(editor.getDocument(), context);
   }
 
   @ApiStatus.Internal

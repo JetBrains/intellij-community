@@ -421,7 +421,7 @@ impl Planner<'_> {
         }
         let detail = if cases.is_empty() {
             for document in &holder.reports {
-                for reported in document.suites.iter().flat_map(|suite| &suite.cases) {
+                for reported in &document.cases {
                     cases.push(TestCase {
                         class_name: reported.class_name.clone(),
                         name: reported.name.clone(),

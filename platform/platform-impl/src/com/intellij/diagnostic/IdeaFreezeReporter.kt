@@ -38,7 +38,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.Collections
 import java.util.LinkedList
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.name
 
 private val FREEZE_NOTIFIER_EP: ExtensionPointName<FreezeNotifier> = ExtensionPointName("com.intellij.diagnostic.freezeNotifier")
@@ -709,7 +708,8 @@ private class IdeaFreezeSamplingTask(val reportDir: Path, maxDurationMs: Int, co
   var sampleCount: Int = 0
     private set
 
-  private val stopped = AtomicBoolean()
+  private val stopLock = Any()
+  private var stopped = false
 
   init {
     fireStartEvent()
@@ -733,13 +733,21 @@ private class IdeaFreezeSamplingTask(val reportDir: Path, maxDurationMs: Int, co
     fireStopEvent()
   }
 
+  override fun samplingFinished() {
+    fireStopEvent()
+  }
+
   private fun fireStartEvent() {
     EP_NAME.forEachExtensionSafe { it.start(reportDir) }
   }
 
+  /** Stops the profilers once. A second call waits until the first one ends, because the report reads the files of the profilers. */
   private fun fireStopEvent() {
-    if (stopped.compareAndSet(false, true)) {
-      EP_NAME.forEachExtensionSafe { it.stop(reportDir) }
+    synchronized(stopLock) {
+      if (!stopped) {
+        stopped = true
+        EP_NAME.forEachExtensionSafe { it.stop(reportDir) }
+      }
     }
   }
 

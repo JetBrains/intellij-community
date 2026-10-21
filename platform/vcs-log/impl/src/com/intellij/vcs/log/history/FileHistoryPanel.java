@@ -56,6 +56,7 @@ import com.intellij.vcs.log.ui.frame.CommitDetailsLoader;
 import com.intellij.vcs.log.ui.frame.ComponentQuickActionProvider;
 import com.intellij.vcs.log.ui.frame.FrameDiffPreview;
 import com.intellij.vcs.log.ui.frame.VcsLogCommitSelectionListenerForDetails;
+import com.intellij.vcs.log.ui.frame.VcsLogComponents;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.VcsLogTableCommitSelectionListener;
@@ -200,6 +201,7 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
     };
     add(myFrameDiffPreview.getMainComponent(), BorderLayout.CENTER);
 
+    VcsLogComponents.registerMaximizeCommitMessageShortcut(myGraphTable, disposable);
     PopupHandler.installPopupMenu(myGraphTable, VcsLogActionIds.HISTORY_POPUP_ACTION_GROUP, ActionPlaces.VCS_HISTORY_PLACE);
     invokeOnDoubleClick(ActionManager.getInstance().getAction(VcsLogActionIds.VCS_LOG_SHOW_DIFF_ACTION), tableWithProgress);
 

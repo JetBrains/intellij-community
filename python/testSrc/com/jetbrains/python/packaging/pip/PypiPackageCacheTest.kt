@@ -26,24 +26,24 @@ class PypiPackageCacheTest : PyTestCase() {
     withLocalStoredPackages(listOf("c-pkg", "a-pkg", "b-pkg"), Instant.now())
     withPypiLoaderThrowingError()
     val cache = PyPiPackageCache()
-    runBlocking { cache.reloadCache().orThrow() }
-    assertThat(cache.search("").pages[0].contents().getOrThrow().toList()).contains("c-pkg", "a-pkg", "b-pkg")
+    runBlocking { cache.reload().orThrow() }
+    assertThat(runBlocking { cache.search("").pages[0].contents().getOrThrow().toList() }).contains("c-pkg", "a-pkg", "b-pkg")
   }
 
   fun testCacheShouldBeUpdatedIfLocalStorageIsExpired() {
     withLocalStoredPackages(listOf("a-pkg"), Instant.now().minus(Duration.ofDays(2)))
     withPypiPackages(listOf("c-pkg", "b-pkg", "a-pkg"))
     val cache = PyPiPackageCache()
-    runBlocking { cache.reloadCache().orThrow() }
-    assertThat(cache.search("").pages[0].contents().getOrThrow().toList()).contains("c-pkg", "a-pkg", "b-pkg")
+    runBlocking { cache.reload().orThrow() }
+    assertThat(runBlocking { cache.search("").pages[0].contents().getOrThrow().toList() }).contains("c-pkg", "a-pkg", "b-pkg")
   }
 
   fun testBrokenLocalStorageShouldBeGracefullyHandled() {
     withBrokenLocalStorage()
     withPypiPackages(listOf("c-pkg", "b-pkg", "a-pkg"))
     val cache = PyPiPackageCache()
-    runBlocking { cache.reloadCache().orThrow() }
-    assertThat(cache.search("").pages[0].contents().getOrThrow().toList()).contains("c-pkg", "a-pkg", "b-pkg")
+    runBlocking { cache.reload().orThrow() }
+    assertThat(runBlocking { cache.search("").pages[0].contents().getOrThrow().toList() }).contains("c-pkg", "a-pkg", "b-pkg")
   }
 
   private fun withLocalStoredPackages(pypiPackages: List<String>, modifiedAt: Instant) {
@@ -67,7 +67,7 @@ class PypiPackageCacheTest : PyTestCase() {
 
   private fun withPypiPackages(pypiPackages: List<String>) {
     val mock = Mockito.mock(PyPiPackageCache.PyPiPackageLoader::class.java)
-    Mockito.`when`(mock.loadPackages()).thenReturn(Result.success(pypiPackages.sorted()))
+    Mockito.`when`(mock.loadPackages()).thenReturn(Result.success(pypiPackages.toSet().associateWith { emptySet() }))
     ApplicationManager.getApplication().registerServiceInstance(
       PyPiPackageCache.PyPiPackageLoader::class.java,
       mock

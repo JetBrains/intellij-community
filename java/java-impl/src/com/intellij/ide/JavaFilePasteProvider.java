@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.core.CoreBundle;
@@ -53,7 +53,7 @@ public final class JavaFilePasteProvider implements PasteProvider {
   }
 
   @Override
-  public void performPaste(final @NotNull DataContext dataContext) {
+  public void performPaste(@NotNull DataContext dataContext) {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || ideView == null) return;
@@ -66,9 +66,7 @@ public final class JavaFilePasteProvider implements PasteProvider {
     if (targetDir == null) return;
     String fileName = className + ".java";
     PsiFile existingFile = targetDir.findFile(fileName);
-    if (existingFile != null && 
-        !MessageDialogBuilder.yesNo(IdeBundle.message("title.file.already.exists"),
-                                    CoreBundle.message("prompt.overwrite.project.file", fileName, "")).ask(project)) {
+    if (existingFile != null && !shouldOverwrite(fileName, project)) {
       return;
     }
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
@@ -89,8 +87,8 @@ public final class JavaFilePasteProvider implements PasteProvider {
           document.setText(fileText);
           PsiDocumentManager.getInstance(project).commitDocument(document);
         }
-        if (file instanceof PsiJavaFile) {
-          updatePackageStatement((PsiJavaFile)file, targetDir);
+        if (file instanceof PsiJavaFile javaFile) {
+          updatePackageStatement(javaFile, targetDir);
         }
         return file.getVirtualFile();
       });
@@ -100,7 +98,12 @@ public final class JavaFilePasteProvider implements PasteProvider {
     }, JavaBundle.message("paste.class.command.name", className), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION, false);
   }
 
-  private static void updatePackageStatement(final PsiJavaFile javaFile, final PsiDirectory targetDir) {
+  private static boolean shouldOverwrite(String fileName, Project project) {
+    return MessageDialogBuilder.yesNo(IdeBundle.message("title.file.already.exists"),
+                                      CoreBundle.message("prompt.overwrite.project.file", fileName, "")).ask(project);
+  }
+
+  private static void updatePackageStatement(PsiJavaFile javaFile, PsiDirectory targetDir) {
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(targetDir);
     if (aPackage == null) return;
     final PsiPackageStatement oldStatement = javaFile.getPackageStatement();
@@ -120,19 +123,19 @@ public final class JavaFilePasteProvider implements PasteProvider {
           CodeStyleManager.getInstance(project).reformatRange(javaFile, textRange.getStartOffset(), textRange.getEndOffset()+1);
         }
       }
-      catch (IncorrectOperationException e) {
+      catch (IncorrectOperationException _) {
         // ignore
       }
     }
   }
 
   @Override
-  public boolean isPastePossible(final @NotNull DataContext dataContext) {
+  public boolean isPastePossible(@NotNull DataContext dataContext) {
     return true;
   }
 
   @Override
-  public boolean isPasteEnabled(final @NotNull DataContext dataContext) {
+  public boolean isPasteEnabled(@NotNull DataContext dataContext) {
     if (FileCopyPasteUtil.isFileListFlavorAvailable()) return false;
 
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -161,7 +164,7 @@ public final class JavaFilePasteProvider implements PasteProvider {
   private static PsiClass @NotNull [] getPastedClasses(@NotNull Project project, @NotNull String pasteText) {
     PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(
       "A.java", JavaLanguage.INSTANCE, StringUtil.convertLineSeparators(pasteText), false, false);
-    PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, LanguageLevel.JDK_16); // to parse records
-    return psiFile instanceof PsiJavaFile ? ((PsiJavaFile)psiFile).getClasses() : PsiClass.EMPTY_ARRAY;
+    PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, LanguageLevel.JDK_X); // to parse all possible things
+    return psiFile instanceof PsiJavaFile file ? file.getClasses() : PsiClass.EMPTY_ARRAY;
   }
 }

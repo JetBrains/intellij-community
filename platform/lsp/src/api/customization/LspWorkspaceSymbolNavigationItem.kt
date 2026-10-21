@@ -5,6 +5,7 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
@@ -48,10 +49,10 @@ data class LspWorkspaceSymbolNavigationItem(
     if (range != null) {
       val document = FileDocumentManager.getInstance().getDocument(virtualFile)
       val startOffset = document?.let { getOffsetInDocument(it, range.start) } ?: 0
-      FileEditorManager.getInstance(project).openTextEditor(
-        OpenFileDescriptor(project, virtualFile, startOffset),
-        requestFocus
-      )
+      val fileEditorManager = FileEditorManager.getInstance(project)
+      val openDescriptor = OpenFileDescriptor(project, virtualFile, startOffset)
+      fileEditorManager.requestOpenTextEditor(openDescriptor, FileEditorOpenRequest.fromDescriptor(openDescriptor)
+        .withRequestFocus(requestFocus))
     }
     else {
       FileEditorManager.getInstance(project).openFile(virtualFile, requestFocus)

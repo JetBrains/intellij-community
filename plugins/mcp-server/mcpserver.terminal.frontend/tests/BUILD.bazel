@@ -55,8 +55,6 @@ jvm_library(
         "//plugins/mcp-server/mcpserver.plugin:mcpserver.plugin_test_lib",
         "//plugins/mcp-server:mcpserver",
         "//plugins/mcp-server:mcpserver_test_lib",
-        "//plugins/mcp-server/tests/plugin",
-        "//plugins/mcp-server/tests/plugin:plugin_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//platform/testFramework",

@@ -21,4 +21,5 @@ public final @NonNls class VcsLogActionIds {
   // action ids
   public static final String VCS_LOG_FOCUS_TEXT_FILTER = "Vcs.Log.FocusTextFilter";
   public static final String VCS_LOG_SHOW_DIFF_ACTION = "Diff.ShowDiff";
+  public static final String VCS_LOG_MAXIMIZE_COMMIT_MESSAGE = "Vcs.Log.MaximizeCommitMessage";
 }

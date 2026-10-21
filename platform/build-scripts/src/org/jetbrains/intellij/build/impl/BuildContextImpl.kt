@@ -456,7 +456,6 @@ class BuildContextImpl internal constructor(
       bundledPluginModules = getBundledPluginModules(),
       useModularLoader = useModularLoader,
       generateRuntimeModuleRepository = generateRuntimeModuleRepository,
-      bootClassPathJarNames = bootClassPathJarNames,
       applicationInfoOf = { loadApplicationInfoPropertiesForProduct(it, this) },
     )
   }

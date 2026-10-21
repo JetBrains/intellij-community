@@ -16,6 +16,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.grazie.GrazieConfig;
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection;
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine;
+import com.intellij.grazie.text.CommitMessageDetector;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
@@ -25,7 +26,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -79,7 +79,7 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
     if (tool == null) {
       // The commit editor uses a restricted profile that omits the spellcheck inspection.
       // CommitAnnotator (already gated by the "Commit messages" toggle) drives the check, so allow all scopes.
-      return CommitMessage.isCommitMessage(file) ? EnumSet.allOf(SpellCheckingScope.class) : Set.of();
+      return CommitMessageDetector.isCommitMessage(file) ? EnumSet.allOf(SpellCheckingScope.class) : Set.of();
     }
     return tool.buildAllowedScopes();
   }
@@ -128,7 +128,7 @@ public final class GrazieSpellCheckingInspection extends SpellCheckingInspection
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                                  boolean isOnTheFly,
                                                  @NotNull LocalInspectionToolSession session) {
-    if (CommitMessage.isCommitMessage(session.getFile()) ||
+    if (CommitMessageDetector.isCommitMessage(session.getFile()) ||
         InspectionProfileManager.hasTooLowSeverity(session, this) ||
         InjectedLanguageManager.getInstance(holder.getProject()).isFrankensteinInjection(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;

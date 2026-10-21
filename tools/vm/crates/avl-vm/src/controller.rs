@@ -140,7 +140,7 @@ impl Controller {
         let manager = self.manager.as_ref();
         match command {
             Cmd::Image { action } => command_image(ctx, manager, action, output).await,
-            Cmd::Pool { verb } => manager.pool(ctx, verb.into()).await,
+            Cmd::Pool { verb } => manager.pool(ctx, verb.into(), lease_file).await,
             Cmd::Status => crate::lane::command_status(ctx, manager).await,
             Cmd::Lease { verb } => {
                 let command = match verb {

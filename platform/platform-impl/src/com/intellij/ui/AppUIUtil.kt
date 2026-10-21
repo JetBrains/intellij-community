@@ -41,6 +41,7 @@ import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.scale.JBUIScale.sysScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
+import com.intellij.ui.svg.createJSvgDocument
 import com.intellij.ui.svg.loadWithSizes
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ResourceUtil
@@ -53,6 +54,7 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.VisibleForTesting
 import sun.awt.AWTAccessor
 import java.awt.Color
 import java.awt.Component
@@ -68,6 +70,7 @@ import java.awt.image.BufferedImage
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.Action
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -78,6 +81,7 @@ import kotlin.math.roundToInt
 
 private const val VENDOR_PREFIX = "jetbrains-"
 private const val MAC_DOCK_ICON_BORDER = 25
+@Volatile
 private var appIcons: List<Image>? = null
 private val isMacDocIconSet = AtomicBoolean(false)
 
@@ -85,41 +89,27 @@ private val LOG: Logger
   get() = logger<AppUIUtil>()
 
 object AppUIUtil {
+  /**
+   * Sets the application icon on [window], or on macOS as the dock icon.
+   * The first call takes the images of [renderAppWindowIconImages] when their scale is the scale of [window]; otherwise it renders them.
+   */
   @JvmStatic
   fun updateAppWindowIcon(window: Window) {
     if (isWindowIconAlreadyExternallySet()) {
       return
     }
 
+    var dockImage: BufferedImage? = null
     if (appIcons == null) {
-      val images = ArrayList<Image>(3)
-      val appInfo = ApplicationInfoImpl.getShadowInstance()
       val scaleContext = ScaleContext.create(window)
-      if (OS.CURRENT != OS.Windows) {
-        loadAppIconImage(appInfo.applicationSvgIconUrl, scaleContext, size = 128)?.let {
-          images.add(it)
-        }
+      val preloaded = takePreloadedAppWindowIcons(scaleContext)
+      if (preloaded == null) {
+        appIcons = loadAppWindowIconImages(scaleContext)
       }
-      if (OS.CURRENT != OS.macOS) {
-        loadAppIconImage(appInfo.applicationSvgIconUrl, scaleContext, size = 32)?.let {
-          images.add(it)
-        }
+      else {
+        appIcons = preloaded.images
+        dockImage = preloaded.dockImage
       }
-      if (OS.CURRENT == OS.Windows) {
-        loadAppIconImage(appInfo.smallApplicationSvgIconUrl, scaleContext, size = 16)?.let {
-          images.add(it)
-        }
-      }
-      for (i in images.indices) {
-        val image = images[i]
-        if (image is JBHiDPIScaledImage) {
-          when (val delegate = image.delegate) {
-            null -> images.removeAt(i)
-            else -> images[i] = delegate
-          }
-        }
-      }
-      appIcons = images.toList()
     }
 
     appIcons?.takeIf { it.isNotEmpty() }?.let { images ->
@@ -127,9 +117,43 @@ object AppUIUtil {
         window.iconImages = images
       }
       else if (!isMacDocIconSet.getAndSet(true)) {
-        MacAppIcon.setDockIcon(addTransparentBorder(images.first()))
+        MacAppIcon.setDockIcon(dockImage ?: addTransparentBorder(images.first()))
       }
     }
+  }
+
+  /**
+   * Renders the images of [updateAppWindowIcon] off the EDT, at the scale of the default screen, so the EDT only sets them.
+   * The images are plain ARGB images, and on macOS the dock image with its transparent border too.
+   * The start-up calls it after the look and feel is initialized, where the EDT rendered them before.
+   */
+  @Internal
+  @JvmStatic
+  fun renderAppWindowIconImages() {
+    if (isWindowIconAlreadyExternallySet() || appIcons != null) {
+      return
+    }
+    preloadedAppWindowIcons.set(renderAppWindowIcons(ScaleContext.create()))
+    if (appIcons != null) {
+      // the EDT rendered them meanwhile
+      preloadedAppWindowIcons.set(null)
+    }
+  }
+
+  /**
+   * Parses the SVG data of the application window icon, so the XML and SVG classes are loaded before [updateAppWindowIcon] runs on the EDT.
+   * The parsing creates no image and touches no Java2D surface, unlike the rasterization, so it may run while the EDT realizes the splash.
+   */
+  @Internal
+  @JvmStatic
+  fun preloadAppWindowIcon() {
+    if (isWindowIconAlreadyExternallySet()) {
+      return
+    }
+
+    val pixScale = ScaleContext.create().getScale(DerivedScaleType.PIX_SCALE).toFloat()
+    val svgData = findAppIconSvgData(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl, pixScale) ?: return
+    createJSvgDocument(svgData)
   }
 
   @Internal
@@ -541,6 +565,81 @@ private fun createGradientTexture(
   }
 
   return TexturePaint(image, Rectangle(xStart, yStart, width, height))
+}
+
+private val preloadedAppWindowIcons = AtomicReference<PreloadedAppWindowIcons?>()
+
+/**
+ * The images of [AppUIUtil.updateAppWindowIcon] that [AppUIUtil.renderAppWindowIconImages] rendered, with the scales they were rendered at.
+ */
+@VisibleForTesting
+internal class PreloadedAppWindowIcons(
+  private val sysScale: Double,
+  private val userScale: Double,
+  private val pixScale: Double,
+  @JvmField val images: List<Image>,
+  @JvmField val dockImage: BufferedImage?,
+) {
+  fun isRenderedAt(scaleContext: ScaleContext): Boolean {
+    return sysScale == scaleContext.getScale(ScaleType.SYS_SCALE) &&
+           userScale == scaleContext.getScale(ScaleType.USR_SCALE) &&
+           pixScale == scaleContext.getScale(DerivedScaleType.PIX_SCALE)
+  }
+}
+
+@VisibleForTesting
+internal fun renderAppWindowIcons(scaleContext: ScaleContext): PreloadedAppWindowIcons {
+  val images = loadAppWindowIconImages(scaleContext)
+  return PreloadedAppWindowIcons(
+    sysScale = scaleContext.getScale(ScaleType.SYS_SCALE),
+    userScale = scaleContext.getScale(ScaleType.USR_SCALE),
+    pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE),
+    images = images,
+    dockImage = if (OS.CURRENT == OS.macOS) images.firstOrNull()?.let(::addTransparentBorder) else null,
+  )
+}
+
+/**
+ * Takes the preloaded images once; returns null when they are not rendered yet or are rendered at another scale than [scaleContext].
+ */
+@VisibleForTesting
+internal fun takePreloadedAppWindowIcons(scaleContext: ScaleContext): PreloadedAppWindowIcons? {
+  return preloadedAppWindowIcons.getAndSet(null)?.takeIf { it.isRenderedAt(scaleContext) }
+}
+
+@VisibleForTesting
+internal fun setPreloadedAppWindowIcons(icons: PreloadedAppWindowIcons?) {
+  preloadedAppWindowIcons.set(icons)
+}
+
+private fun loadAppWindowIconImages(scaleContext: ScaleContext): List<Image> {
+  val images = ArrayList<Image>(3)
+  val appInfo = ApplicationInfoImpl.getShadowInstance()
+  if (OS.CURRENT != OS.Windows) {
+    loadAppIconImage(appInfo.applicationSvgIconUrl, scaleContext, size = 128)?.let {
+      images.add(it)
+    }
+  }
+  if (OS.CURRENT != OS.macOS) {
+    loadAppIconImage(appInfo.applicationSvgIconUrl, scaleContext, size = 32)?.let {
+      images.add(it)
+    }
+  }
+  if (OS.CURRENT == OS.Windows) {
+    loadAppIconImage(appInfo.smallApplicationSvgIconUrl, scaleContext, size = 16)?.let {
+      images.add(it)
+    }
+  }
+  for (i in images.indices) {
+    val image = images[i]
+    if (image is JBHiDPIScaledImage) {
+      when (val delegate = image.delegate) {
+        null -> images.removeAt(i)
+        else -> images[i] = delegate
+      }
+    }
+  }
+  return images.toList()
 }
 
 // returns a HiDPI-aware image

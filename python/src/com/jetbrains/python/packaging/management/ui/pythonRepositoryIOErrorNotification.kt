@@ -4,10 +4,18 @@ package com.jetbrains.python.packaging.management.ui
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.packaging.cache.PythonPackageCacheIOError
 import com.jetbrains.python.packaging.management.PythonRepositoryManager.PythonRepositoryIOError
 
-internal fun PythonRepositoryIOError.notify(project: Project) {
+internal fun PythonRepositoryIOError.notify(project: Project) =
+  errorNotification(project, message)
+
+internal fun PythonPackageCacheIOError.notify(project: Project) =
+  errorNotification(project, message)
+
+private fun errorNotification(project: Project, message: @NlsSafe String) {
   Notification(
     "PythonPackages",
     PyBundle.message("python.packaging.cache.io.error", message),

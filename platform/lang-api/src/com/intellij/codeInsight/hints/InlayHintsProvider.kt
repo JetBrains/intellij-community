@@ -44,7 +44,7 @@ enum class InlayGroup(val key: String, @Nls val description: String? = null) {
  * Both block and inline hints collection are supported.
  * Block hints are drawn between lines of code text. Inline ones are placed on the code text line (like parameter hints).
  *
- * To test it, you may use [com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase].
+ * To test it, you may use [com.intellij.testFramework.utils.inlays.InlayHintsProviderTestUtil].
  *
  * Mark as [com.intellij.openapi.project.DumbAware] to enable it in dumb mode.
  *

@@ -1,0 +1,5 @@
+fun bar(vararg elements: String) {}
+
+fun test() {
+    bar("a")
+}

@@ -129,7 +129,9 @@
     <group id="hg4idea.file.menu" popup="true" class="org.zmlx.hg4idea.action.HgMercurialMenu">
       <reference ref="CheckinFiles"/>
       <action id="hg4idea.add" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionWithIgnoredFilesConfirmationAction"
-              icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned"/>
+              icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned">
+        <override-text place="GoToAction"/>
+      </action>
       <reference ref="ChangesView.Revert"/>
       <reference ref="ChangesView.RevertFiles"/>
       <separator/>

@@ -10,6 +10,7 @@ Date: 2026-10-01
 
 Accepted. It amends [ADR 0189](0189-the-docker-engine-is-a-lima-vm-the-controller-owns.md) for the cloud image and
 the SSH transport of the Lima engine. How the lane uses the engine is [the VM guide](../vm-ui-tests.md).
+Superseded by [the Lima engine is retired](2026-10-13-the-lima-engine-is-retired.md).
 
 ## Context
 

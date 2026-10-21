@@ -560,6 +560,23 @@ class EditorHyperlinkSupportTest(private val trackDocumentChangesManually: Boole
     assertEquals("bar", (link as MyInvisibleHyperlinkFilter.InvisibleHyperlinkInfo).linkText)
   }
 
+  @Test
+  @Suppress("DEPRECATION")
+  fun `test directly created instance shares state with the cached one`() {
+    val linkText = "foo"
+    document.setText(linkText)
+    // A plugin can call the public constructor instead of `get`. Both must act as one instance.
+    val directInstance = EditorHyperlinkSupport(editor, project)
+    val activatedLinks = mutableListOf<HyperlinkInfo>()
+    directInstance.addEditorHyperlinkListener { activatedLinks.add(it) }
+
+    hyperlinkSupport.highlightHyperlinksLater(MyHyperlinkFilter(linkText), 0, 0, eternal())
+    assertHyperlinks(linkText, 1)
+
+    checkNotNull(hyperlinkSupport.getLinkNavigationRunnable(LogicalPosition(0, 0))).run()
+    assertEquals(listOf<HyperlinkInfo>(MyHyperlinkFilter.MyHyperlinkInfo(linkText)), activatedLinks)
+  }
+
   private fun assertHighlightings(textToHighlight: String, expectedCount: Int): List<RangeHighlighter> {
     val text = document.text
     val expectedRanges = text.allOccurrencesOf(textToHighlight).map {

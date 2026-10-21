@@ -6,12 +6,14 @@ import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessNotCreatedException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.python.community.impl.conda.CondaPyTool
 import com.intellij.python.community.impl.pipenv.PipEnvPyTool
 import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.RunOnEnvironments
 import com.intellij.python.junit5Tests.framework.resolvePythonTool
 import com.intellij.python.pytools.backend.setCustomExecutablePath
+import com.intellij.python.test.env.conda.CondaPyEnvironment
 import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.core.PyEnvironmentSpec
 import com.intellij.python.uv.backend.UvPyTool
@@ -81,7 +83,7 @@ class RunOnEnvironmentsExtension : TestTemplateInvocationContextProvider, ClassT
         factory.createEnvironment(envSpec)
       }
 
-      // Configure poetry, pipenv, and uv.
+      // Configure poetry, pipenv, uv, and conda.
       // Only detect tool paths from this environment if not already configured
       // by other extensions (e.g. @RequiresPoetry), to avoid overwriting a valid
       // path with a potentially broken one from an environment that doesn't ship the tool.
@@ -91,6 +93,11 @@ class RunOnEnvironmentsExtension : TestTemplateInvocationContextProvider, ClassT
 
       val uv = VirtualEnvReader().resolvePythonHomeFromPythonBinary(pythonBinary).resolvePythonTool("uv")
       UvPyTool.getInstance().setCustomExecutablePath(localEel.descriptor, uv)
+
+      // Detection does not search the directory of the test conda, so the environment of a conda SDK would get no conda.
+      (env.unwrap<PyEnvironment>() as? CondaPyEnvironment)?.let {
+        CondaPyTool.getInstance().setCustomExecutablePath(localEel.descriptor, it.condaExecutable)
+      }
 
       return env
     }

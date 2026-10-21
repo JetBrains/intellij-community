@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers;
 
 import com.intellij.icons.AllIcons;
@@ -7,6 +7,7 @@ import com.intellij.ide.browsers.chrome.ChromeSettings;
 import com.intellij.ide.browsers.firefox.FirefoxSettings;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,16 +26,15 @@ public enum BrowserFamily implements Iconable {
       return new FirefoxSettings();
     }
   },
-  EXPLORER(IdeBundle.message("browsers.explorer"), "iexplore", null, null, AllIcons.Xml.Browsers.Explorer),
   SAFARI(IdeBundle.message("browsers.safari"), "safari", null, "Safari", AllIcons.Xml.Browsers.Safari);
 
-  private final String myName;
+  private final @Nls String myName;
   private final String myWindowsPath;
   private final String myUnixPath;
   private final String myMacPath;
   private final Icon myIcon;
 
-  BrowserFamily(@NotNull String name,
+  BrowserFamily(@NotNull @Nls String name,
                 @NotNull String windowsPath,
                 @Nullable String unixPath,
                 @Nullable String macPath,
@@ -62,7 +62,7 @@ public enum BrowserFamily implements Iconable {
     }
   }
 
-  public String getName() {
+  public @Nls String getName() {
     return myName;
   }
 

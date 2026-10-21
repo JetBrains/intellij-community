@@ -17,6 +17,9 @@ import javax.swing.Icon;
 import java.util.function.Supplier;
 
 public abstract class InspectionViewActionBase extends AnAction {
+  protected InspectionViewActionBase() {
+  }
+
   public InspectionViewActionBase(@NotNull Supplier<String> text, @NotNull Supplier<String> description, @Nullable Icon icon) {
     super(text, description, icon);
   }

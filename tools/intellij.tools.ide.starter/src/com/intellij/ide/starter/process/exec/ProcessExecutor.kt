@@ -53,7 +53,7 @@ class ProcessExecutor(
     redirectOutput: ExecOutputRedirect,
   ): Thread {
     val inputStream = if (outOrErrStream) process.inputStream else process.errorStream
-    return thread(start = true, isDaemon = true, name = "Redirect " + (if (outOrErrStream) "stdout" else "stderr")) {
+    return thread(start = true, isDaemon = true, name = "Redirect ${if (outOrErrStream) "stdout" else "stderr"} '$presentableName'") {
       val reader = inputStream.bufferedReader()
       redirectOutput.open()
       try {
@@ -79,7 +79,7 @@ class ProcessExecutor(
       return null
     }
 
-    return thread(start = true, isDaemon = true, name = "Redirect input") {
+    return thread(start = true, isDaemon = true, name = "Redirect input `$presentableName`") {
       catchAll {
         process.outputStream.use {
           it.write(inputBytes)
@@ -278,9 +278,12 @@ class ProcessExecutor(
       }
     }
 
+    // A reader loses the lines that it has not read yet when its stream closes, so let the readers finish first.
+    // A child process that keeps a pipe open blocks its reader, so the streams close after the timeout.
+    ioThreads.forEach { catchAll { it.join(30.seconds.inWholeMilliseconds) } }
     catchAll { process.inputStream.close() }
     catchAll { process.errorStream.close() }
-    ioThreads.forEach { catchAll { it.join(30.seconds.inWholeMilliseconds) } }
+    ioThreads.forEach { catchAll { it.join(5.seconds.inWholeMilliseconds) } }
 
     if (analyzeProcessExit) {
       analyzeProcessExit(process)

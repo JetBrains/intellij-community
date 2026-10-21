@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiElement
@@ -14,7 +15,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 
-internal class MarkdownSetColumnAlignmentIntention: PsiElementBaseIntentionAction() {
+internal class MarkdownSetColumnAlignmentIntention: PsiElementBaseIntentionAction(), DumbAware {
   override fun getFamilyName() = text
 
   override fun getText(): String {

@@ -2,24 +2,31 @@
 package com.intellij.updater;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+@SuppressWarnings("IO_FILE_USAGE")
 class NativeFileManagerTest {
   @TempDir Path tempDir;
+  private final ConsoleUpdaterUI testUI = new ConsoleUpdaterUI(false);
 
-  @Test void singleProcessHoldsFile() throws IOException, InterruptedException {
-    assumeTrue(Utils.IS_WINDOWS);
-
+  @Test @EnabledOnOs(OS.WINDOWS) void singleProcessHoldsFile() throws IOException, InterruptedException {
     var testFile = Files.writeString(tempDir.resolve("process-locked-test.tmp"), "");
     var process = startProcessHoldingFile(testFile);
     try {
@@ -34,8 +41,7 @@ class NativeFileManagerTest {
     assertThat(NativeFileManager.getProcessesUsing(testFile.toFile())).isEmpty();
   }
 
-  @Test void moreProcessesThanBufferSize() throws IOException, InterruptedException {
-    assumeTrue(Utils.IS_WINDOWS);
+  @Test @EnabledOnOs(OS.WINDOWS) void moreProcessesThanBufferSize() throws IOException, InterruptedException {
 
     var processCount = 5;
     var bufferSize = processCount - 1; // check that we still receive all the processes even with smaller buffer size
@@ -58,6 +64,29 @@ class NativeFileManagerTest {
     }
 
     assertThat(NativeFileManager.getProcessesUsing(testFile.toFile())).isEmpty();
+  }
+
+  @Test void fewHeldFilesNeedFewQueries() throws OperationCancelledException {
+    var files = IntStream.range(0, 2501).mapToObj(i -> tempDir.resolve("file-" + i).toFile()).collect(Collectors.toList());
+
+    var heldFiles = Set.of(files.get(0), files.get(files.size() / 2), files.get(files.size() - 1));
+    var freeFiles = new ArrayList<>(files);
+    freeFiles.removeAll(heldFiles);
+
+    var queries = new AtomicInteger();
+    var callingThread = Thread.currentThread();
+
+    var unused = NativeFileManager.findUnusedFiles(files, testUI, group -> {
+      assertThat(Thread.currentThread()).isSameAs(callingThread);
+      queries.incrementAndGet();
+      //noinspection SSBasedInspection
+      return group.stream().anyMatch(heldFiles::contains)
+             ? List.of(new NativeFileManager.Process(1, "holder"))
+             : List.of();
+    });
+
+    assertThat(unused).containsExactlyInAnyOrderElementsOf(freeFiles);
+    assertThat(queries.get()).isLessThan(100);
   }
 
   private static Process startProcessHoldingFile(Path file) throws IOException {

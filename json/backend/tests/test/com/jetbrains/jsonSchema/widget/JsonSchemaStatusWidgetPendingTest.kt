@@ -2,8 +2,15 @@
 package com.jetbrains.jsonSchema.widget
 
 import com.intellij.json.JsonBundle
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.readActionBlocking
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.jetbrains.jsonSchema.extension.JsonSchemaInfo
 import com.jetbrains.jsonSchema.impl.JsonCachedValues
 import com.jetbrains.jsonSchema.impl.JsonSchemaByCommentProvider
@@ -23,31 +30,46 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 
-class JsonSchemaStatusWidgetPendingTest : BasePlatformTestCase() {
+@TestApplication
+class JsonSchemaStatusWidgetPendingTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+  private val project get() = projectFixture.get()
+
+  @TestDisposable
+  lateinit var disposable: Disposable
+
   private lateinit var scope: CoroutineScope
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
   }
 
-  override fun tearDown() {
-    try {
-      scope.cancel()
-    }
-    finally {
-      super.tearDown()
-    }
+  @AfterEach
+  fun tearDown() {
+    if (::scope.isInitialized) scope.cancel()
   }
 
-  fun testPendingRemoteSchemaUrlIsDerivedFromSchemaProperty() {
+  @Test
+  fun testPendingRemoteSchemaUrlIsDerivedFromSchemaProperty(): Unit = timeoutRunBlocking {
     val schemaUrl = "https://example.test/unique-pending-schema.json"
     val psiFile = myFixture.configureByText("pending-widget-unique.json", """{"${'$'}schema": "$schemaUrl"}""")
 
-    val url = JsonCachedValues.getSchemaUrlFromSchemaProperty(psiFile.virtualFile, project)
+    val url = readAction { JsonCachedValues.getSchemaUrlFromSchemaProperty(psiFile.virtualFile, project) }
     assertEquals(schemaUrl, url)
     assertTrue(JsonFileResolver.isHttpPath(url!!))
     val schemaName = JsonSchemaInfo(url).description
@@ -55,68 +77,75 @@ class JsonSchemaStatusWidgetPendingTest : BasePlatformTestCase() {
     assertFalse(schemaName.contains(JsonBundle.message("schema.widget.no.schema.label"), ignoreCase = true))
   }
 
-  fun testFileWithoutRemoteSchemaHasNoPendingUrl() {
+  @Test
+  fun testFileWithoutRemoteSchemaHasNoPendingUrl(): Unit = timeoutRunBlocking {
     val psiFile = myFixture.configureByText("no-schema-widget-unique.json", """{"foo": 1}""")
 
-    assertNull(JsonCachedValues.getSchemaUrlFromSchemaProperty(psiFile.virtualFile, project))
-    assertNull(JsonSchemaByCommentProvider.getCommentSchema(psiFile.virtualFile, project))
+    assertNull(readAction { JsonCachedValues.getSchemaUrlFromSchemaProperty(psiFile.virtualFile, project) })
+    assertNull(readAction { JsonSchemaByCommentProvider.getCommentSchema(psiFile.virtualFile, project) })
   }
 
+  @Test
   fun testUnavailableStatusQuery() {
     val service = JsonSchemaRemoteContentService.getInstance(project)
     assertFalse(service.isUnavailable("https://example.test/not-in-cache.json"))
   }
 
-  fun testPeekHitDoesNotRecurseIntoDoGetWidgetState() {
+  @Test
+  fun testPeekHitDoesNotRecurseIntoDoGetWidgetState(): Unit = timeoutRunBlocking {
     val url = "https://example.test/widget-peek.json"
     val cache = StatusCache(CachedSchema.Content(SchemaContent("{}".toByteArray())))
     installService(cache)
     val psi = myFixture.configureByText("w.json", """{"${'$'}schema": "$url"}""")
-    val state = JsonSchemaStatusWidget.pendingStateForTests(project, psi.virtualFile, true)
+    val state = readActionBlocking { JsonSchemaStatusWidget.pendingStateForTests(project, psi.virtualFile, true) }
     assertFalse(state.text.contains(JsonBundle.message("schema.widget.download.failed.label")))
     assertFalse(state.text.contains(JsonBundle.message("schema.widget.download.in.progress.label")))
     assertFalse(state.text.contains(JsonBundle.message("schema.widget.no.schema.label")))
   }
 
-  fun testInFlightShowsDownloading() {
+  @Test
+  fun testInFlightShowsDownloading(): Unit = timeoutRunBlocking {
     val url = "https://example.test/widget-inflight.json"
     val gate = CompletableDeferred<Unit>()
     installService(StatusCache(), GatedTransport(gate))
     val parsed = JsonSchemaRemoteContentService.parseOrNull(url)!!
     JsonSchemaRemoteContentService.getInstance(project).prefetch(parsed)
     val psi = myFixture.configureByText("w.json", """{"${'$'}schema": "$url"}""")
-    val state = JsonSchemaStatusWidget.pendingStateForTests(project, psi.virtualFile, true)
+    val state = readActionBlocking { JsonSchemaStatusWidget.pendingStateForTests(project, psi.virtualFile, true) }
     assertEquals(JsonBundle.message("schema.widget.download.in.progress.label"), state.text)
     gate.complete(Unit)
   }
 
-  fun testFailedShowsFailedAndDoesNotPrefetchAgain() {
+  @Test
+  fun testFailedShowsFailedAndDoesNotPrefetchAgain(): Unit = timeoutRunBlocking {
     val url = "https://example.test/widget-failed.json"
     val transport = CountingFailingTransport()
     val service = installService(StatusCache(), transport)
     assertNull(service.downloadAndWaitForTest(JsonSchemaRemoteContentService.parseOrNull(url)!!))
     assertEquals(1, transport.calls.get())
     val psi = myFixture.configureByText("w.json", """{"${'$'}schema": "$url"}""")
-    val state = JsonSchemaStatusWidget.widgetStateForTests(project, psi.virtualFile, true)
+    val state = readActionBlocking { JsonSchemaStatusWidget.widgetStateForTests(project, psi.virtualFile, true) }
     assertEquals(JsonBundle.message("schema.widget.download.failed.label"), state.text)
     assertEquals(1, transport.calls.get())
   }
 
-  fun testUnavailableShowsFailedNotNoSchema() {
+  @Test
+  fun testUnavailableShowsFailedNotNoSchema(): Unit = timeoutRunBlocking {
     val url = "https://example.test/widget-404.json"
     installService(StatusCache(CachedSchema.Unavailable(404, "Not Found")))
     val psi = myFixture.configureByText("w.json", """{"${'$'}schema": "$url"}""")
-    val state = JsonSchemaStatusWidget.pendingStateForTests(project, psi.virtualFile, true)
+    val state = readActionBlocking { JsonSchemaStatusWidget.pendingStateForTests(project, psi.virtualFile, true) }
     assertEquals(JsonBundle.message("schema.widget.download.failed.label"), state.text)
     assertFalse(state.text.contains(JsonBundle.message("schema.widget.no.schema.label")))
   }
 
-  fun testColdPrefetchesAndShowsDownloading() {
+  @Test
+  fun testColdPrefetchesAndShowsDownloading(): Unit = timeoutRunBlocking {
     val url = "https://example.test/widget-cold.json"
     val gate = CompletableDeferred<Unit>()
     installService(StatusCache(), GatedTransport(gate))
     val psi = myFixture.configureByText("w.json", """{"${'$'}schema": "$url"}""")
-    val state = JsonSchemaStatusWidget.pendingStateForTests(project, psi.virtualFile, true)
+    val state = readActionBlocking { JsonSchemaStatusWidget.pendingStateForTests(project, psi.virtualFile, true) }
     assertEquals(JsonBundle.message("schema.widget.download.in.progress.label"), state.text)
     assertTrue(JsonSchemaRemoteContentService.getInstance(project).hasInFlight(url))
     gate.complete(Unit)
@@ -126,8 +155,8 @@ class JsonSchemaStatusWidgetPendingTest : BasePlatformTestCase() {
     cache: SchemaContentCache,
     transport: SchemaHttpTransport = GatedTransport(CompletableDeferred()),
   ): JsonSchemaRemoteContentService {
-    setRemoteSchemaAccessAllowed(true, testRootDisposable)
-    return replaceRemoteSchemaServices(project, scope, testRootDisposable, cache, transport)
+    setRemoteSchemaAccessAllowed(true, disposable)
+    return replaceRemoteSchemaServices(project, scope, disposable, cache, transport)
   }
 
   private class StatusCache(private var cached: CachedSchema? = null) : SchemaContentCache {

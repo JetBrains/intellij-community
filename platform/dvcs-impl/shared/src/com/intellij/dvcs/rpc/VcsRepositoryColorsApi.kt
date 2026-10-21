@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.rpc
 
+import com.intellij.ide.rpc.awaitWithLocalFallback
+import com.intellij.openapi.components.service
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import com.intellij.platform.vcs.impl.shared.RepositoryId
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
@@ -19,7 +21,7 @@ interface VcsRepositoryColorsApi : RemoteApi<Unit> {
 
   companion object {
     suspend fun getInstance(): VcsRepositoryColorsApi =
-      RemoteApiProviderService.resolve(remoteApiDescriptor<VcsRepositoryColorsApi>())
+      LiteRemoteApiProviderService.awaitWithLocalFallback(remoteApiDescriptor<VcsRepositoryColorsApi>()) { service<VcsRepositoryColorsApi>() }
   }
 }
 

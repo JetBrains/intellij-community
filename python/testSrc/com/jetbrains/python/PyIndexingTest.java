@@ -1,12 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -15,9 +16,7 @@ import com.intellij.psi.impl.cache.impl.todo.TodoIndex;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -70,9 +69,10 @@ public class PyIndexingTest extends PyTestCase {
         assertFalse(indexFiles.stream().anyMatch((x) -> libraryWithTodoName.equals(x.getName())));
 
         final Module module = myFixture.getModule();
-        final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+        final PythonInterpreter interpreter = getPythonInterpreter();
+        assertNotNull(interpreter);
 
-        final VirtualFile libDir = PySearchUtilBase.findLibDir(sdk);
+        final VirtualFile libDir = PythonInterpreterExtKt.stdlibLibDirectory(interpreter);
 
         ModuleRootModificationUtil.addContentRoot(module, libDir);
         try {

@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.dashboard
 
-import com.intellij.platform.kernel.ids.BackendValueIdType
-import com.intellij.platform.kernel.ids.findValueById
 import com.intellij.platform.rpc.Id
 import com.intellij.platform.rpc.UID
+import com.intellij.platform.rpc.ids.BackendValueIdType
+import com.intellij.platform.rpc.ids.findValueById
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 

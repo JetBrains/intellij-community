@@ -3,8 +3,8 @@ package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
+import com.intellij.util.containers.Java11Shim;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -281,7 +281,7 @@ public abstract class StubList extends AbstractList<StubBase<?>> {
 
     private void switchChildrenToTempMap(int parentId) {
       if (myTempJoinedChildrenMap == null) {
-        myTempJoinedChildrenMap = ContainerUtil.createConcurrentIntObjectMap();
+        myTempJoinedChildrenMap = Java11Shim.Companion.createConcurrentIntObjectMap();
       }
 
       int start = getChildrenStart(parentId);

@@ -4,10 +4,9 @@ package com.intellij.util.io;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -27,20 +26,20 @@ import java.util.stream.IntStream;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test {@link ResilientFileChannel} behavior against async (from other thread) interrupts
  */
 public class ResilientFileChannel_MultiThreaded_Test {
-  @Rule
-  public final TemporaryFolder tempDirectory = new TemporaryFolder();
+  @TempDir
+  Path tempDirectory;
 
   @Test
   public void readsFromResilientChannel_CompletedInFull_RegardlessOfThreadInterruptions() throws Throwable {
-    final Path file = tempDirectory.newFile().toPath();
+    final Path file = Files.createFile(tempDirectory.resolve("file"));
     final int enoughReadingChunks = 1000;
     final List<String> fileContentChunks = IntStream.range(0, enoughReadingChunks)
       .mapToObj(i -> "test string#%d".formatted(i))
@@ -95,16 +94,16 @@ public class ResilientFileChannel_MultiThreaded_Test {
       }
 
       assertEquals(
-        "All read attempts should return the value written in a file before",
         stringsReadFromFile,
-        fileContentChunks
+        fileContentChunks,
+        "All read attempts should return the value written in a file before"
       );
     }
   }
 
   @Test
   public void writesToResilientChannel_CompletedInFull_RegardlessOfThreadInterruptions() throws Throwable {
-    final Path file = tempDirectory.newFile().toPath();
+    final Path file = Files.createFile(tempDirectory.resolve("file"));
     final String singleLineToWrite = "test string\n";//end with EOL so could read with Files.readLines()
     final int enoughWrites = 1000;
 
@@ -151,25 +150,25 @@ public class ResilientFileChannel_MultiThreaded_Test {
 
       final List<String> fileContentLines = Files.readAllLines(file);
       assertEquals(
-        "Must be " + enoughWrites + " lines written",
         fileContentLines.size(),
-        enoughWrites
+        enoughWrites,
+        "Must be " + enoughWrites + " lines written"
       );
       assertEquals(
-        "All lines must be the same",
         1,
-        new HashSet<>(fileContentLines).size()
+        new HashSet<>(fileContentLines).size(),
+        "All lines must be the same"
       );
       assertTrue(
-        "All writes should write same value (mod EOL)",
-        new HashSet<>(fileContentLines).contains(singleLineToWrite.trim())
+        new HashSet<>(fileContentLines).contains(singleLineToWrite.trim()),
+        "All writes should write same value (mod EOL)"
       );
     }
   }
 
   @Test
   public void readsFromResilientChannel_CompletedInFull_OrNotCompletedAtAll_RegardlessOfChannelAsyncClose() throws Throwable {
-    final Path file = tempDirectory.newFile().toPath();
+    final Path file = Files.createFile(tempDirectory.resolve("file"));
     //make string long, so it takes time to read it -- this makes the interference window larger
     final String fileContentString = "testString|".repeat(100);
     final int enoughAttempts = 1000;
@@ -213,9 +212,9 @@ public class ResilientFileChannel_MultiThreaded_Test {
           final String readResult = result.get();
           if (readResult != null) {
             assertEquals(
-              "Successful read attempt must return the value written in a file before",
               fileContentString,
-              readResult
+              readResult,
+              "Successful read attempt must return the value written in a file before"
             );
           }//else -> empty list is also a valid result, but should be pretty rare (=none of 1000 attempts succeeded)
         }
@@ -228,7 +227,7 @@ public class ResilientFileChannel_MultiThreaded_Test {
 
   @Test
   public void onceClosed_ResilientFileChannel_RemainsClosedAfterwards() throws Throwable {
-    final Path file = tempDirectory.newFile().toPath();
+    final Path file = Files.createFile(tempDirectory.resolve("file"));
     //make string long, so it takes time to read it -- this makes the interference window larger
     final String fileContentString = "testString|".repeat(100);
     final int enoughAttempts = 1000;
@@ -267,8 +266,8 @@ public class ResilientFileChannel_MultiThreaded_Test {
             //Also a valid result: .close() happens before .read() started
           }
           assertFalse(
-            "Channel must be closed since parallel thread called .close() on it",
-            channel.isOpen()
+            channel.isOpen(),
+            "Channel must be closed since parallel thread called .close() on it"
           );
         }
       }
@@ -279,10 +278,10 @@ public class ResilientFileChannel_MultiThreaded_Test {
   }
 
 
+  @Disabled("Currently this is not true: .close() is inconsistently implemented")
   @Test
-  @Ignore("Currently this is not true: .close() is inconsistently implemented")
   public void onceClosed_FileChannelInterruptsRetryer_RemainsClosedForever() throws Throwable {
-    final Path file = tempDirectory.newFile().toPath();
+    final Path file = Files.createFile(tempDirectory.resolve("file"));
     //make string long, so it takes time to read it -- this makes the interference window larger
     final String fileContentString = "testString|".repeat(100);
     final int enoughAttempts = 1000;
@@ -324,8 +323,8 @@ public class ResilientFileChannel_MultiThreaded_Test {
             //Also a valid result: .close() happens before .read() started
           }
           assertFalse(
-            "[attempt #" + attempt + "]: Retryer must be closed since parallel thread called .close() on it",
-            retryer.isOpen()
+            retryer.isOpen(),
+            "[attempt #" + attempt + "]: Retryer must be closed since parallel thread called .close() on it"
           );
         }
       }

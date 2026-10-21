@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant, SystemTime};
 
+use avl_bridge::Client;
 use avl_trace::bridge::{Facts, IdeSpan};
 use avl_trace::bundle::{
     AllureStatusDetails, BundleStatus, Capture, IDEA_LOG_FILE, MANIFEST_SCHEMA, Manifest, Video, allure_results_dir, format_manifest_time,
@@ -18,7 +19,6 @@ use avl_trace::otlp::{
 use avl_trace::protocol::{CallCommand, CaptureSource, EndCommand, Failure, Launcher, ScenarioCommand, SpanCommand, Status, VideoCodec};
 
 use crate::allure::{ResultInput, write_result};
-use crate::bridge::Client;
 use crate::bundle::{BundleWriter, nanos, unique_bundle_dir, write_manifest};
 use crate::capture::{Frame, Source};
 use crate::frames::FrameLoop;
@@ -69,6 +69,8 @@ pub(crate) struct Scenario {
     launcher: Launcher,
     /// The machine's name, the `host` label of the Allure result.
     host_name: String,
+    /// Whether the hello asked for the Allure result of the scenario.
+    allure: bool,
     pub(crate) started_ms: i64,
 
     pub(crate) open: HashMap<u32, OpenSpan>,
@@ -161,6 +163,7 @@ impl<W: Write> Session<W> {
             run_id: hello.run_id.clone(),
             launcher: hello.launcher,
             host_name: self.options.host_name.clone(),
+            allure: hello.allure,
             started_ms: at_ms,
             open: HashMap::new(),
             stack: Vec::new(),
@@ -215,7 +218,7 @@ impl<W: Write> Session<W> {
                     scenario.trace_error(ERROR_SOURCE_FACTS, &format!("no idea.log slice: {error:#}"), at_ms);
                 }
             }
-            Ok(facts) => match scenario.slicer.begin(facts) {
+            Ok(facts) => match scenario.slicer.begin(facts, scenario.command.log_from) {
                 Ok(()) => scenario.sliced = true,
                 Err(error) => scenario.trace_error(ERROR_SOURCE_LOG, &format!("{error:#}"), at_ms),
             },
@@ -621,9 +624,10 @@ impl Scenario {
     // --- the end -----------------------------------------------------------------------------------------------
 
     /// Closes the bundle: open spans, the IDE's spans, the video, the stills, the log slice, the root span, the Allure
-    /// result and, last, the manifest. A truncated bundle names the innermost span that was still running. `latest`
-    /// reads the facts at the end, after the video and the stills are done, so a log that rotated meanwhile is still
-    /// found. `details` are the `done` command's message and trace, which only the Allure result holds.
+    /// result when the hello asked for it and, last, the manifest. A truncated bundle names the innermost span that was
+    /// still running. `latest` reads the facts at the end, after the video and the stills are done, so a log that
+    /// rotated meanwhile is still found. `details` are the `done` command's message and trace, which only the Allure
+    /// result holds.
     pub(crate) fn finish(
         mut self,
         status: BundleStatus,
@@ -659,10 +663,20 @@ impl Scenario {
                 );
             }
         }
+        let log_dir = self.slicer.log_dir().map(Path::to_path_buf);
+        let latest_facts = if self.sliced { latest() } else { None };
         if self.sliced
-            && let Err(error) = self.slicer.cut(&self.dir.join(IDEA_LOG_FILE), latest().as_ref())
+            && let Err(error) = self.slicer.cut(&self.dir.join(IDEA_LOG_FILE), latest_facts.as_ref())
         {
             self.trace_error(ERROR_SOURCE_LOG, &format!("{error:#}"), at_ms);
+        }
+        if status == BundleStatus::Failed {
+            let latest_dir = latest_facts
+                .as_ref()
+                .and_then(|facts| Path::new(&facts.log_path).parent())
+                .filter(|dir| log_dir.as_deref() != Some(*dir))
+                .map(Path::to_path_buf);
+            self.attach_thread_dumps(log_dir.into_iter().chain(latest_dir), at_ms);
         }
 
         let root_status = match status {
@@ -707,7 +721,9 @@ impl Scenario {
             capture: Capture { source, reason },
             video: self.video.clone(),
         };
-        self.write_allure_result(&manifest, details);
+        if self.allure {
+            self.write_allure_result(&manifest, details);
+        }
         if let Err(error) = write_manifest(&self.dir, &manifest) {
             say!(self.diagnostics, "{}: {error:#}", self.dir.display());
         }

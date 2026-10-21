@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbols
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveSymbols
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.unwrapSmartCasts
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -147,14 +148,14 @@ object ContextParameterUtils {
     fun consumedContextParameters(
         body: KtExpression,
         contextParameters: List<KaContextParameterSymbol>,
-    ): Set<KaContextParameterSymbol> {
+    ): Map<KaContextParameterSymbol, ContextParameterUsages> {
         val allParameters = contextParameters.toSet()
-        if (allParameters.isEmpty()) return emptySet()
+        if (allParameters.isEmpty()) return emptyMap()
 
         // Cheap pre-filter: a *direct* reference to a context parameter must use its name.
         val parameterNames = allParameters.mapTo(mutableSetOf()) { it.name.asString() }
 
-        val consumed = mutableSetOf<KaContextParameterSymbol>()
+        val consumed = mutableMapOf<KaContextParameterSymbol, ContextParameterUsages>()
 
         body.forEachDescendantOfType<KtSimpleNameExpression> { node ->
             if (consumed.size == allParameters.size) return@forEachDescendantOfType
@@ -164,7 +165,10 @@ object ContextParameterUtils {
             if (node.getReferencedName() in parameterNames) {
                 val direct = node.tryResolveSymbols()?.symbols?.singleOrNull()
                 if (direct is KaContextParameterSymbol && direct in allParameters) {
-                    consumed += direct
+                    val usages = consumed.getOrPut(direct) {
+                        ContextParameterUsages(mutableSetOf())
+                    }
+                    usages.signatureParameterTypes += direct.returnType
                     return@forEachDescendantOfType
                 }
             }
@@ -172,14 +176,18 @@ object ContextParameterUtils {
             val simpleCall = node.resolveSuccessfulExpressionCall()?.simple
                 ?: return@forEachDescendantOfType
 
-            simpleCall.contextArguments.forEach { arg ->
+            simpleCall.contextArguments.forEachIndexed { index, arg ->
                 val symbol = (arg.unwrapSmartCasts() as? KaImplicitReceiverValue)?.symbol
                 if (symbol is KaContextParameterSymbol && symbol in allParameters) {
-                    consumed += symbol
+                    val usages = consumed.getOrPut(symbol) {
+                        ContextParameterUsages(mutableSetOf())
+                    }
+                    usages.signatureParameterTypes += simpleCall.signature.contextParameters[index].returnType
                 }
             }
         }
         return consumed
     }
 
+    data class ContextParameterUsages(val signatureParameterTypes: MutableSet<KaType>)
 }

@@ -1,7 +1,6 @@
 <idea-plugin visibility="public" xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="fleet.rhizomedb"/>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.cli.parser"/>
     <module name="intellij.libraries.commons.lang3"/>
@@ -65,7 +64,6 @@
     <module name="intellij.platform.ide.util.io.impl"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.indexing.impl"/>
-    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.locking.impl"/>
@@ -576,6 +574,8 @@
                  description="How long a scanning thread may keep a read action after a write action became pending, in ms"/>
     <registryKey key="ide.scanning.cancellation.monitor.max.reports" defaultValue="10"
                  description="Maximum number of scanning cancellation reports per session. Use '-1' to keep reporting."/>
+    <registryKey key="search.everywhere.goto.file.literal.directory.match" defaultValue="true"
+                 description="Goto File resolves a directory pattern that is a literal path through the VFS cache, instead of walking the project tree."/>
     <applicationService serviceImplementation="com.intellij.codeInsight.template.TemplateGroupOrderProvider" open="true"/>
     <appStarter id="intentions" implementation="com.intellij.help.impl.IntentionDump" internal="true"/>
     <appStarter id="inspections" implementation="com.intellij.help.impl.InspectionDump" internal="true"/>
@@ -683,10 +683,6 @@
       serviceImplementation="com.intellij.codeInspection.ui.UiDslOptPaneRenderer"/>
     <psi.declarationProvider implementation="com.intellij.model.psi.impl.DefaultPsiSymbolDeclarationProvider" order="last"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.NonPhysicalReferenceSearcher"/>
-    <!-- FileBasedIndex / SerializationManager is quite important and in any case will be used better to preload it -->
-    <applicationService serviceInterface="com.intellij.util.indexing.FileBasedIndex"
-                        serviceImplementation="com.intellij.util.indexing.FileBasedIndexImpl" preload="notLightEdit"/>
-    <vfs.asyncListener implementation="com.intellij.util.indexing.events.ChangedFilesCollector"/>
     <applicationService serviceImplementation="com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper" preload="notLightEdit"/>
     <applicationService serviceInterface="com.intellij.psi.stubs.StubIndex"
                         serviceImplementation="com.intellij.psi.stubs.StubIndexImpl" preload="notLightEdit"/>
@@ -873,7 +869,7 @@
     <projectFileScanner implementation="com.intellij.ide.analysisignore.AnalysisIgnoreIndexableFileScanner"/>
     <vfs.asyncListenerBackgroundable implementation="com.intellij.ide.analysisignore.AnalysisIgnoreVfsListener"/>
     <editorFactoryDocumentListener implementation="com.intellij.ide.analysisignore.AnalysisIgnoreDocumentListener"/>
-    <fileType name="AnalysisIgnore" language="AnalysisIgnore" fileNames=".analysisignore" fieldName="INSTANCE"
+    <fileType name="AnalysisIgnore" language="AnalysisIgnore" fileNames=".analysisignore;default.analysisignore" fieldName="INSTANCE"
               implementationClass="com.intellij.ide.analysisignore.lang.AnalysisIgnoreFileType"/>
     <lang.parserDefinition language="AnalysisIgnore"
                            implementationClass="com.intellij.ide.analysisignore.lang.AnalysisIgnoreParserDefinition"/>
@@ -882,6 +878,7 @@
     <lang.commenter language="AnalysisIgnore" implementationClass="com.intellij.ide.analysisignore.lang.AnalysisIgnoreCommenter"/>
     <editorNotificationProvider implementation="com.intellij.ide.analysisignore.AnalysisIgnoreEditorNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.ide.analysisignore.AnalysisIgnoreDefaultLinesNotificationProvider"/>
+    <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.analysisignore.EditAnalysisIgnoreDefaultsAction$AccessExtension"/>
     <statistics.projectUsagesCollector implementation="com.intellij.ide.analysisignore.AnalysisIgnoreUsagesCollector"/>
     <workspaceModel.optionalExclusionContributor implementation="com.intellij.ide.analysisignore.AnalysisIgnoreExclusionContributor"
                                                  order="last"/>
@@ -1162,7 +1159,7 @@
                            dynamic="true"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.EditorAppearanceConfigurable"
                            id="editor.preferences.appearance" bundle="messages.ApplicationBundle"
-                           key="tab.editor.settings.appearance" newOptions="true"/>
+                           key="tab.editor.settings.appearance"/>
     <editorAppearanceInlineDocHandler instance="com.intellij.application.options.editor.EditorAppearanceConfigurable$DefaultInlineDocAdditionalConfigurable"
                                       id="default"/>
     <editorOptionsProvider instance="com.intellij.application.options.editor.GutterIconsConfigurable" id="editor.preferences.gutterIcons"
@@ -1420,6 +1417,8 @@
       implementationClass="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationFeatureUsagesUtil"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.hints.declarative.impl.InlayActionHandlerUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.AttachDirectoryUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.WelcomeFilesUsageCollector"/>
+    <statistics.collectorExtension implementation="com.intellij.ide.actions.WelcomeNewFileFusEventFields"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor" order="last" id="renamePsiFile"/>
     <headlessRenamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileProcessor$HeadlessRenamePsiFileProcessor" order="last" id="renamePsiFile"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenamePsiFileDumbProcessor"/>
@@ -1774,7 +1773,7 @@
                         serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesRetrieverImpl"/>
     <applicationService serviceInterface="com.intellij.psi.impl.source.tree.injected.InjectedEditorWindowTracker"
                         serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedEditorWindowTrackerImpl"/>
-    <applicationActivity implementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationStartupConfigurator"/>
+    <backgroundPostStartupActivity implementation="com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationRestoreActivity"/>
     <applicationService serviceInterface="com.intellij.ide.projectView.impl.AbstractUrl$AbstractUrlLoader"
                         serviceImplementation="com.intellij.ide.projectView.impl.AbstractUrlLoaderImpl"/>
     <applicationSettings service="com.intellij.codeInspection.ex.ApplicationInspectionProfileManager"/>
@@ -1901,6 +1900,7 @@
     <applicationSettings service="com.intellij.codeInsight.inline.completion.tooltip.onboarding.InlineCompletionOnboardingComponent"/>
 
     <applicationActivity implementation="com.intellij.ide.RegionSettingsServiceActivity"/>
+    <registryKey key="ide.status.bar.simplified" defaultValue="false" description="Hides standard editing related status bar widgets by default"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.codeInsight.hints.InlayUnloadingListener" activeInHeadlessMode="false" activeInTestMode="false"

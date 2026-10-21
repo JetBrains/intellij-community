@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.editor.CustomWrap
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
@@ -15,7 +16,6 @@ import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.containers.ConcurrentLongObjectMap
-import com.intellij.util.containers.Java11Shim
 import it.unimi.dsi.fastutil.longs.LongList
 
 /** Stores the snapshot custom wraps for one editor. */
@@ -23,7 +23,7 @@ internal class SnapshotCustomWrapStorage(
   private val model: CustomWrapModelImpl,
   val document: DocumentImpl,
 ) {
-  private val wrapsById: ConcurrentLongObjectMap<SnapshotCustomWrap> = Java11Shim.createConcurrentLongObjectMap()
+  private val wrapsById: ConcurrentLongObjectMap<SnapshotCustomWrap> = ConcurrentCollectionFactory.createConcurrentLongObjectMap()
   val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(document, onMarkersInvalidated = ::processInvalidatedWraps)
 
   fun dispose() {
@@ -54,33 +54,18 @@ internal class SnapshotCustomWrapStorage(
   }
 
   fun collectAll(): List<CustomWrap> {
-    val snapshot = currentSnapshot()
-    return collect(snapshot, 0, snapshot.text().length())
+    val root = rootStore.root(currentSnapshot()) ?: return emptyList()
+    val result = ArrayList<CustomWrap>()
+    root.processAllRangeMarkers { entry, _ ->
+      val wrap = entry.markerReference?.get()
+      if (wrap is SnapshotCustomWrap) result.add(wrap)
+      true
+    }
+    return result
   }
 
   fun collectInRange(startOffset: Int, endOffset: Int): List<CustomWrap> {
-    return collect(currentSnapshot(), startOffset, endOffset)
-  }
-
-  fun hasWraps(): Boolean {
-    val snapshot = currentSnapshot()
-    val root = rootStore.root(snapshot) ?: return false
-    var found = false
-    root.processRangeMarkersOverlappingWith(0, snapshot.text().length(), 0) {
-      found = true
-      false
-    }
-    return found
-  }
-
-  fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
-
-  fun afterDisposed(wrap: SnapshotCustomWrap) {
-    if (wrapsById.remove(wrap.id, wrap)) model.notifyRemoved(wrap)
-  }
-
-  private fun collect(snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int): List<CustomWrap> {
-    val root = rootStore.root(snapshot) ?: return emptyList()
+    val root = rootStore.root(currentSnapshot()) ?: return emptyList()
     val result = ArrayList<CustomWrap>()
     root.processRangeMarkersOverlappingWith(startOffset, endOffset, 0) { entry ->
       val wrap = entry.markerReference?.get()
@@ -88,6 +73,17 @@ internal class SnapshotCustomWrapStorage(
       true
     }
     return result
+  }
+
+  fun hasWraps(): Boolean {
+    val root = rootStore.root(currentSnapshot()) ?: return false
+    return !root.isEmpty()
+  }
+
+  fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
+
+  fun afterDisposed(wrap: SnapshotCustomWrap) {
+    if (wrapsById.remove(wrap.id, wrap)) model.notifyRemoved(wrap)
   }
 
   private fun processInvalidatedWraps(invalidatedMarkerIds: LongList) {

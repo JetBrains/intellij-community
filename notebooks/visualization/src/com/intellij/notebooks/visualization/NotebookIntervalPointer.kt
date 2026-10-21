@@ -34,7 +34,7 @@ interface NotebookIntervalPointerFactory {
   /**
    * Undo and redo will be added automatically.
    */
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun modifyPointers(changes: Iterable<Change>)
 
   /**

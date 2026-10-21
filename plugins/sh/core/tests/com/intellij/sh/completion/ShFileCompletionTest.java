@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -12,6 +13,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.sh.ShStringUtil;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.EnvironmentUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.runner.RunWith;
@@ -20,8 +23,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.Assume.assumeNotNull;
@@ -103,6 +108,15 @@ public class ShFileCompletionTest extends BasePlatformTestCase {
     if (SystemInfo.isWindows) return; // "Tests shouldn't run on Windows OS",
     String envVar = "HOME";
     assumeNotNull(System.getenv(envVar));
+    // Bazel can set user.home to a temporary directory while HOME still points to the real home.
+    // Override HOME only in EnvironmentUtil so $HOME and ~ completion use the same directory.
+    // The test restores the original environment during teardown. System.getenv() remains unchanged.
+    var originalEnvironment = EnvironmentUtil.getEnvironmentMap();
+    var testEnvironment = new HashMap<>(originalEnvironment);
+    testEnvironment.put(envVar, SystemProperties.getUserHome());
+    var environment = Map.copyOf(testEnvironment);
+    Disposer.register(getTestRootDisposable(), () -> EnvironmentUtil.setEnvironmentLoader(() -> originalEnvironment));
+    EnvironmentUtil.setEnvironmentLoader(() -> environment);
 
     myFixture.configureByText("a.sh", "/<caret>");
     LookupElement[] rootLookupElements = myFixture.completeBasic();

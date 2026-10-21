@@ -31,11 +31,10 @@ import javax.swing.JComponent
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
-private const val MAIN_TOOLBAR_FOCUS_LISTENERS_INSTALLED = "MainToolbar.focusRecoveryListenerInstalled"
-private const val MAIN_TOOLBAR_ENTER_SHORTCUT_INSTALLED = "MainToolbar.enterShortcutInstalled"
+private const val MAIN_TOOLBAR_FOCUS_REGISTRATION = "MainToolbar.focusRegistration"
 
 internal class MainToolbarFocusSupport(
-  private val toolbar: MainToolbar,
+  private val toolbar: JComponent,
   private val parentDisposable: Disposable,
 ) {
   private var focusFallbackScheduled = false
@@ -78,10 +77,32 @@ internal class MainToolbarFocusSupport(
     mainToolbarComponents(toolbar).filter { it.isFocusable && it.isToolbarFocusableType() }
 
   private fun registerEnterAction(component: JComponent, onEnter: () -> Unit) {
-    if (component.getClientProperty(MAIN_TOOLBAR_ENTER_SHORTCUT_INSTALLED) == true) return
+    if (component.getClientProperty(MAIN_TOOLBAR_FOCUS_REGISTRATION) != null) return
     DumbAwareAction.create { onEnter() }
-      .registerCustomShortcutSet(CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), component, parentDisposable)
-    component.putClientProperty(MAIN_TOOLBAR_ENTER_SHORTCUT_INSTALLED, true)
+      .registerCustomShortcutSet(CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), component, newRegistration(component))
+  }
+
+  /**
+   * Ends the registrations of [component] and of each component inside it.
+   * A container that this support observes calls it when [component] leaves that container.
+   */
+  private fun unregisterComponent(component: Component) {
+    for (item in mainToolbarComponents(component)) {
+      if (item !is JComponent) continue
+      val registration = item.getClientProperty(MAIN_TOOLBAR_FOCUS_REGISTRATION) as? Disposable ?: continue
+      item.putClientProperty(MAIN_TOOLBAR_FOCUS_REGISTRATION, null)
+      Disposer.dispose(registration)
+    }
+  }
+
+  /**
+   * Makes the owner of the listeners or the Enter shortcut of [component] and keeps it in a client property of [component].
+   * The owner ends when [component] leaves the main toolbar, so a header toolbar that the main toolbar replaces keeps no registration.
+   */
+  private fun newRegistration(component: JComponent): Disposable {
+    val registration = Disposer.newDisposable(parentDisposable, "main toolbar focus registration")
+    component.putClientProperty(MAIN_TOOLBAR_FOCUS_REGISTRATION, registration)
+    return registration
   }
 
   fun restoreFocusToPreviousComponent() {
@@ -111,17 +132,22 @@ internal class MainToolbarFocusSupport(
   private fun installListeners(component: Component) {
     if (component !is JComponent ||
         (component !== toolbar && component !is ActionToolbar) ||
-        component.getClientProperty(MAIN_TOOLBAR_FOCUS_LISTENERS_INSTALLED) == true) {
+        component.getClientProperty(MAIN_TOOLBAR_FOCUS_REGISTRATION) != null) {
       return
     }
 
+    val registration = newRegistration(component)
     val childRegistrationListener = object : ContainerAdapter() {
       override fun componentAdded(event: ContainerEvent) {
         registerComponent(event.child)
       }
+
+      override fun componentRemoved(event: ContainerEvent) {
+        unregisterComponent(event.child)
+      }
     }
     component.addContainerListener(childRegistrationListener)
-    Disposer.register(parentDisposable) {
+    Disposer.register(registration) {
       component.removeContainerListener(childRegistrationListener)
     }
 
@@ -131,9 +157,8 @@ internal class MainToolbarFocusSupport(
         override fun actionsUpdated() {
           moveFocusToFallbackIfNeeded()
         }
-      }, parentDisposable)
+      }, registration)
     }
-    component.putClientProperty(MAIN_TOOLBAR_FOCUS_LISTENERS_INSTALLED, true)
   }
 
   private fun moveFocusToFallbackIfNeeded() {

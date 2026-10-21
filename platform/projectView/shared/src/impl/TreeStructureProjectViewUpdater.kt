@@ -7,12 +7,15 @@ import com.intellij.ide.bookmark.BookmarksListener
 import com.intellij.ide.bookmark.FileBookmarksListener
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper
-import com.intellij.ide.scratch.RootType
+import com.intellij.ide.scratch.ScratchTreeStructureProvider
 import com.intellij.ide.ui.VirtualFileAppearanceListener
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.BaseProjectDirectories
+import com.intellij.openapi.project.BaseProjectDirectoriesDiff
+import com.intellij.openapi.project.BaseProjectDirectoriesListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener
 import com.intellij.openapi.roots.ModuleRootEvent
@@ -77,6 +80,12 @@ private class UpdateSession(
       val connection = project.messageBus.connect(scope)
       val disposable = scope.asDisposable()
 
+      connection.subscribe(BaseProjectDirectories.TOPIC, object : BaseProjectDirectoriesListener {
+        override fun changed(project: Project, diff: BaseProjectDirectoriesDiff) {
+          emitFromRoot()
+        }
+      })
+
       connection.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
         override fun rootsChanged(event: ModuleRootEvent) {
           emitFromRoot()
@@ -118,7 +127,7 @@ private class UpdateSession(
         emitStructural(virtualFile)
       })
 
-      RootType.ROOT_EP.addChangeListener(scope) {
+      ScratchTreeStructureProvider.registerUpdaters(project, disposable) {
         emitFromRoot()
       }
 

@@ -29,13 +29,25 @@ class TextMateStringImpl private constructor(val bytes: ByteArray): TextMateStri
     return TextMateCharRange(startOffset, endOffset)
   }
 
+  /**
+   * Counts the UTF-16 units that the bytes in the range hold, without building a string for them.
+   * A byte that is not a UTF-8 continuation byte starts one character, and a four-byte sequence
+   * holds a surrogate pair, so it counts as two units.
+   */
   private fun charOffsetByByteOffset(startByteOffset: TextMateByteOffset, targetByteOffset: TextMateByteOffset): TextMateCharOffset {
-    return if (targetByteOffset.offset <= 0) {
-      0.charOffset()
+    if (targetByteOffset.offset <= 0) {
+      return 0.charOffset()
     }
-    else {
-      bytes.decodeToString(startByteOffset.offset, targetByteOffset.offset).length.charOffset()
+    var units = 0
+    var i = startByteOffset.offset
+    while (i < targetByteOffset.offset) {
+      val b = bytes[i].toInt() and 0xFF
+      if (b and 0xC0 != 0x80) {
+        units += if (b and 0xF8 == 0xF0) 2 else 1
+      }
+      i++
     }
+    return units.charOffset()
   }
 
   override fun hashCode(): Int {

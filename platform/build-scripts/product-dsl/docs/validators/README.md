@@ -15,7 +15,7 @@ This directory is the normative spec for product-dsl validation behavior. Each f
 
 - Validation uses the plugin graph after generation, filtering, and suppression. If a dependency is not represented as a graph edge, it is not validated.
 - Suppressions are explicit contracts: suppressed JPS-derived deps must not produce validation errors.
-- `TestLibraryScopeValidator` and `LibraryLicenseValidator` read `.iml` dependencies directly. The graph still gives the scope.
+- `TestLibraryScopeValidator`, `LibraryLicenseValidator` and `PlatformLibraryCopyValidator` read `.iml` dependencies directly. The graph still gives the scope.
 
 ## Index
 
@@ -40,6 +40,7 @@ This directory is the normative spec for product-dsl validation behavior. Each f
 | Test library scope | `TestLibraryScopeValidator` | `testLibraryScopeValidation` | [test-library-scope.md](test-library-scope.md) |
 | Library license coverage | `LibraryLicenseValidator` | `libraryLicenseValidation` | [library-license.md](library-license.md) |
 | Community library license coverage | `CommunityLibraryLicenseValidator` | `communityLibraryLicenseValidation` | [community-library-license.md](community-library-license.md) |
+| Platform library copies | `PlatformLibraryCopyValidator` | `platformLibraryCopyValidation` | [platform-library-copy.md](platform-library-copy.md) |
 | Suppression config keys | `SuppressionConfigValidator` | `suppressionConfigValidation` | [suppression-config.md](suppression-config.md) |
 | Module in multiple plugins | `collectModulesInMultiplePlugins` | - (no `PipelineNode`, so no NodeId) | [module-in-multiple-plugins.md](module-in-multiple-plugins.md) |
 

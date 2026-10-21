@@ -25,6 +25,7 @@
     <module name="intellij.python.pyproject"/>
     <module name="intellij.python.pytools.backend"/>
     <module name="intellij.python.pytools.common"/>
+    <module name="intellij.python.pytools.backend.runtime"/>
   </dependencies>
   <!-- endregion -->
   <extensionPoints>
@@ -48,7 +49,7 @@
                  description="Enable Python LSP-backed type engines in notebooks"/>
 
     <registryKey key="pycharm.type.engine.multi.module"
-                 defaultValue="false"
+                 defaultValue="true"
                  restartRequired="true"
                  description="Offer the external type engine to a project with more than one module"/>
 

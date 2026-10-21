@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
@@ -29,6 +30,7 @@ import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -36,15 +38,20 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LoggedError;
 import com.intellij.testFramework.MockFontLayoutService;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.TestLoggerKt;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -62,1139 +69,1442 @@ import java.awt.font.TextHitInfo;
 import java.text.AttributedString;
 import java.util.Collections;
 
-public class EditorImplTest extends AbstractEditorTest {
+import static com.intellij.openapi.editor.impl.EditorModelFixture.HIGH_SURROGATE;
+import static com.intellij.openapi.editor.impl.EditorModelFixture.LOW_SURROGATE;
+import static com.intellij.openapi.editor.impl.EditorModelFixture.SURROGATE_PAIR;
+import static com.intellij.openapi.editor.impl.EditorModelFixture.TEST_CHAR_WIDTH;
+import static com.intellij.openapi.editor.impl.EditorModelFixture.TEST_DESCENT;
+import static com.intellij.openapi.editor.impl.EditorModelFixture.TEST_LINE_HEIGHT;
+import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class EditorImplTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
+
+  private EditorModelFixture myFixture;
+
+  @BeforeEach
+  void setUp() {
+    myFixture = editorFixture.get();
+  }
+
+  @Test
   public void testPositionCalculationForZeroWidthChars() {
-    initText("some\u2044text");
-    VisualPosition pos = new VisualPosition(0, 6);
-    VisualPosition recalculatedPos = getEditor().xyToVisualPosition(getEditor().visualPositionToXY(pos));
-    assertEquals(pos, recalculatedPos);
+    myFixture.runTest(() -> {
+      myFixture.initText("some\u2044text");
+      VisualPosition pos = new VisualPosition(0, 6);
+      VisualPosition recalculatedPos = myFixture.getEditor().xyToVisualPosition(myFixture.getEditor().visualPositionToXY(pos));
+      assertEquals(pos, recalculatedPos);
+    });
   }
 
+  @Test
   public void testPositionCalculationOnEmptyLine() {
-    initText("""
-               text with
+    myFixture.runTest(() -> {
+      myFixture.initText("""
+                 text with
 
-               empty line""");
-    VisualPosition pos = new VisualPosition(1, 0);
-    VisualPosition recalculatedPos = getEditor().xyToVisualPosition(getEditor().visualPositionToXY(pos));
-    assertEquals(pos, recalculatedPos);
+                 empty line""");
+      VisualPosition pos = new VisualPosition(1, 0);
+      VisualPosition recalculatedPos = myFixture.getEditor().xyToVisualPosition(myFixture.getEditor().visualPositionToXY(pos));
+      assertEquals(pos, recalculatedPos);
+    });
   }
 
+  @Test
   public void testShiftDragAddsToSelection() {
-    initText("A quick brown fox");
-    EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000); // enable drag testing
-    mouse().clickAt(0, 1);
-    mouse().shift().pressAt(0, 2).dragTo(0, 3).release();
-    checkResultByText("A<selection> q<caret></selection>uick brown fox");
+    myFixture.runTest(() -> {
+      myFixture.initText("A quick brown fox");
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 1000, 1000); // enable drag testing
+      myFixture.mouse().clickAt(0, 1);
+      myFixture.mouse().shift().pressAt(0, 2).dragTo(0, 3).release();
+      myFixture.checkResultByText("A<selection> q<caret></selection>uick brown fox");
+    });
   }
 
+  @Test
   public void testSoftWrapsRecalculationInASpecificCase() {
-    if (ExperimentalUI.isNewUI()) {
-      // TODO: rewrite test if needed
-      return;
-    }
-    configureFromFileText(getTestName(false) + ".java",
-                          """
-                            <selection>class Foo {
-                            \t@Override
-                            \tpublic boolean equals(Object other) {
-                            \t\treturn this == other;
-                            \t}
-                            }</selection>""");
-    EditorTestUtil.buildInitialFoldingsInBackground(getEditor());
-    configureSoftWraps(32, false);
-
-    // verify initial state
-    assertEquals(4, EditorUtil.getTabSize(getEditor()));
-    assertEquals("[FoldRegion +(59:64), placeholder=' { ', FoldRegion +(85:88), placeholder=' }']", getEditor().getFoldingModel().toString());
-    verifySoftWrapPositions(52, 85);
-
-    runWriteCommand(() -> {
-      Document document = getEditor().getDocument();
-      for (int i = document.getLineCount() - 1; i >= 0; i--) {
-        document.insertString(document.getLineStartOffset(i), "//");
+    myFixture.runTest(() -> {
+      if (ExperimentalUI.isNewUI()) {
+        // TODO: rewrite test if needed
+        return;
       }
-    });
+      myFixture.configureFromFileText(myFixture.getTestName() + ".java",
+                            """
+                              <selection>class Foo {
+                              \t@Override
+                              \tpublic boolean equals(Object other) {
+                              \t\treturn this == other;
+                              \t}
+                              }</selection>""");
+      EditorTestUtil.buildInitialFoldingsInBackground(myFixture.getEditor());
+      myFixture.configureSoftWraps(32, false);
 
+      // verify initial state
+      assertEquals(4, EditorUtil.getTabSize(myFixture.getEditor()));
+      assertEquals("[FoldRegion +(59:64), placeholder=' { ', FoldRegion +(85:88), placeholder=' }']", myFixture.getEditor().getFoldingModel().toString());
+      myFixture.verifySoftWrapPositions(52, 85);
 
-    verifySoftWrapPositions(58, 93);
-  }
-
-  public void testCorrectVisibleLineCountCalculation() {
-    initText("""
-               line containing FOLDED_REGION
-               next <caret>line
-               last line""");
-    foldOccurrences("FOLDED_REGION", "...");
-    configureSoftWraps(16); // wrap right at folded region start
-    verifySoftWrapPositions(16);
-
-    executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
-    checkResultByText("""
-                        line containing FOLDED_REGION
-                        next line
-                        last <caret>line""");
-  }
-
-  public void testInsertingFirstTab() {
-    initText(" <caret>space-indented line");
-    configureSoftWraps(100);
-    getEditor().getSettings().setUseTabCharacter(true);
-
-    executeAction(IdeActions.ACTION_EDITOR_TAB);
-    checkResultByText(" \t<caret>space-indented line");
-  }
-
-  public void testNoExceptionDuringBulkModeDocumentUpdate() {
-    initText("something");
-    DocumentEx document = (DocumentEx)getEditor().getDocument();
-    runWriteCommand(() -> DocumentUtil.executeInBulk(document, ()-> document.setText("something\telse")));
-
-    checkResultByText("something\telse");
-  }
-
-  public void testCaretMergeDuringBulkModeDocumentUpdate() {
-    initText("a<selection>bcdef<caret></selection>g\n" +
-             "a<selection>bcdef<caret></selection>g");
-    runWriteCommand(() -> {
-      DocumentEx document = (DocumentEx)getEditor().getDocument();
-      DocumentUtil.executeInBulk(document, ()-> {
-        // delete selected text
-        document.deleteString(1, 6);
-        document.deleteString(4, 9);
+      myFixture.runWriteCommand(() -> {
+        Document document = myFixture.getEditor().getDocument();
+        for (int i = document.getLineCount() - 1; i >= 0; i--) {
+          document.insertString(document.getLineStartOffset(i), "//");
+        }
       });
+
+
+      myFixture.verifySoftWrapPositions(58, 93);
     });
-
-    checkResultByText("a<caret>g\n" +
-                      "a<caret>g");
   }
 
+  @Test
+  public void testCorrectVisibleLineCountCalculation() {
+    myFixture.runTest(() -> {
+      myFixture.initText("""
+                 line containing FOLDED_REGION
+                 next <caret>line
+                 last line""");
+      myFixture.foldOccurrences("FOLDED_REGION", "...");
+      myFixture.configureSoftWraps(16); // wrap right at folded region start
+      myFixture.verifySoftWrapPositions(16);
+
+      myFixture.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+      myFixture.checkResultByText("""
+                          line containing FOLDED_REGION
+                          next line
+                          last <caret>line""");
+    });
+  }
+
+  @Test
+  public void testInsertingFirstTab() {
+    myFixture.runTest(() -> {
+      myFixture.initText(" <caret>space-indented line");
+      myFixture.configureSoftWraps(100);
+      myFixture.getEditor().getSettings().setUseTabCharacter(true);
+
+      myFixture.executeAction(IdeActions.ACTION_EDITOR_TAB);
+      myFixture.checkResultByText(" \t<caret>space-indented line");
+    });
+  }
+
+  @Test
+  public void testNoExceptionDuringBulkModeDocumentUpdate() {
+    myFixture.runTest(() -> {
+      myFixture.initText("something");
+      DocumentEx document = (DocumentEx)myFixture.getEditor().getDocument();
+      myFixture.runWriteCommand(() -> DocumentUtil.executeInBulk(document, ()-> document.setText("something\telse")));
+
+      myFixture.checkResultByText("something\telse");
+    });
+  }
+
+  @Test
+  public void testCaretMergeDuringBulkModeDocumentUpdate() {
+    myFixture.runTest(() -> {
+      myFixture.initText("a<selection>bcdef<caret></selection>g\n" +
+               "a<selection>bcdef<caret></selection>g");
+      myFixture.runWriteCommand(() -> {
+        DocumentEx document = (DocumentEx)myFixture.getEditor().getDocument();
+        DocumentUtil.executeInBulk(document, ()-> {
+          // delete selected text
+          document.deleteString(1, 6);
+          document.deleteString(4, 9);
+        });
+      });
+
+      myFixture.checkResultByText("a<caret>g\n" +
+                        "a<caret>g");
+    });
+  }
+
+  @Test
   public void testPositionCalculationForOneCharacterFolds() {
-    initText("something");
-    addCollapsedFoldRegion(1, 2, "...");
-    addCollapsedFoldRegion(3, 4, "...");
+    myFixture.runTest(() -> {
+      myFixture.initText("something");
+      myFixture.addCollapsedFoldRegion(1, 2, "...");
+      myFixture.addCollapsedFoldRegion(3, 4, "...");
 
-    assertEquals(new VisualPosition(0, 5), getEditor().logicalToVisualPosition(new LogicalPosition(0, 3)));
+      assertEquals(new VisualPosition(0, 5), myFixture.getEditor().logicalToVisualPosition(new LogicalPosition(0, 3)));
+    });
   }
   
+  @Test
   public void testNavigationIntoFoldedRegionWithSoftWrapsEnabled() {
-    initText("something");
-    addCollapsedFoldRegion(4, 8, "...");
-    configureSoftWraps(1000);
+    myFixture.runTest(() -> {
+      myFixture.initText("something");
+      myFixture.addCollapsedFoldRegion(4, 8, "...");
+      myFixture.configureSoftWraps(1000);
     
-    getEditor().getCaretModel().moveToOffset(5);
+      myFixture.getEditor().getCaretModel().moveToOffset(5);
     
-    assertEquals(new VisualPosition(0, 5), getEditor().getCaretModel().getVisualPosition());
+      assertEquals(new VisualPosition(0, 5), myFixture.getEditor().getCaretModel().getVisualPosition());
+    });
   }
   
+  @Test
   public void testPositionCalculationForMultilineFoldingWithEmptyPlaceholder() {
-    initText("""
-               line1
-               line2
-               line3
-               line4""");
-    addCollapsedFoldRegion(6, 17, "");
-    configureSoftWraps(1000);
+    myFixture.runTest(() -> {
+      myFixture.initText("""
+                 line1
+                 line2
+                 line3
+                 line4""");
+      myFixture.addCollapsedFoldRegion(6, 17, "");
+      myFixture.configureSoftWraps(1000);
     
-    assertEquals(new LogicalPosition(3, 0), getEditor().visualToLogicalPosition(new VisualPosition(2, 0)));
+      assertEquals(new LogicalPosition(3, 0), myFixture.getEditor().visualToLogicalPosition(new VisualPosition(2, 0)));
+    });
   }
   
+  @Test
   public void testNavigationInsideNonNormalizedLineTerminator() {
-    initText("");
-    ((DocumentImpl)getEditor().getDocument()).setAcceptSlashR(true);
-    runWriteCommand(() -> getEditor().getDocument().insertString(0, "abc\r\ndef"));
+    myFixture.runTest(() -> {
+      myFixture.initText("");
+      ((DocumentImpl)myFixture.getEditor().getDocument()).setAcceptSlashR(true);
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().insertString(0, "abc\r\ndef"));
 
-    getEditor().getCaretModel().moveToOffset(4);
+      myFixture.getEditor().getCaretModel().moveToOffset(4);
     
-    assertEquals(new LogicalPosition(0, 3), getEditor().getCaretModel().getLogicalPosition());
-    assertEquals(new VisualPosition(0, 3), getEditor().getCaretModel().getVisualPosition());
+      assertEquals(new LogicalPosition(0, 3), myFixture.getEditor().getCaretModel().getLogicalPosition());
+      assertEquals(new VisualPosition(0, 3), myFixture.getEditor().getCaretModel().getVisualPosition());
+    });
   }
   
+  @Test
   public void testSoftWrapModeUpdateDuringBulkModeChange() {
-    initText("long long line<caret>");
-    configureSoftWraps(12);
-    DocumentEx document = (DocumentEx)getEditor().getDocument();
-    runWriteCommand(() -> DocumentUtil.executeInBulk(document, ()-> document.replaceString(4, 5, "-")));
+    myFixture.runTest(() -> {
+      myFixture.initText("long long line<caret>");
+      myFixture.configureSoftWraps(12);
+      DocumentEx document = (DocumentEx)myFixture.getEditor().getDocument();
+      myFixture.runWriteCommand(() -> DocumentUtil.executeInBulk(document, ()-> document.replaceString(4, 5, "-")));
 
-    assertEquals(new VisualPosition(1, 5), getEditor().getCaretModel().getVisualPosition());
+      assertEquals(new VisualPosition(1, 5), myFixture.getEditor().getCaretModel().getVisualPosition());
+    });
   }
 
+  @Test
   public void testForcedSoftWrapsAreDeferredUntilBulkModeFinishes() {
-    int oldForceLimit = AdvancedSettings.getInt("editor.soft.wrap.force.limit");
-    AdvancedSettings.setInt("editor.soft.wrap.force.limit", 10);
-    try {
-      initText("short");
-      EditorImpl editor = (EditorImpl)getEditor();
-      DocumentEx document = editor.getDocument();
-      setEditorVisibleSize(10, 1);
-
-      assertFalse(editor.getSettings().isUseSoftWraps());
-      assertNull(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS));
-      assertTrue(editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength()).isEmpty());
-
-      String longLine = StringUtil.repeat("1234567890", 3);
-      runWriteCommand(() -> DocumentUtil.executeInBulk(document, () -> {
-        document.setText(longLine);
+    myFixture.runTest(() -> {
+      int oldForceLimit = AdvancedSettings.getInt("editor.soft.wrap.force.limit");
+      AdvancedSettings.setInt("editor.soft.wrap.force.limit", 10);
+      try {
+        myFixture.initText("short");
+        EditorImpl editor = (EditorImpl)myFixture.getEditor();
+        DocumentEx document = editor.getDocument();
+        myFixture.setEditorVisibleSize(10, 1);
 
         assertFalse(editor.getSettings().isUseSoftWraps());
         assertNull(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS));
         assertTrue(editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength()).isEmpty());
-      }));
 
-      assertTrue(editor.getSettings().isUseSoftWraps());
-      assertEquals(Boolean.TRUE, editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS));
-      assertFalse(editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength()).isEmpty());
-    }
-    finally {
-      AdvancedSettings.setInt("editor.soft.wrap.force.limit", oldForceLimit);
-    }
+        String longLine = StringUtil.repeat("1234567890", 3);
+        myFixture.runWriteCommand(() -> DocumentUtil.executeInBulk(document, () -> {
+          document.setText(longLine);
+
+          assertFalse(editor.getSettings().isUseSoftWraps());
+          assertNull(editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS));
+          assertTrue(editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength()).isEmpty());
+        }));
+
+        assertTrue(editor.getSettings().isUseSoftWraps());
+        assertEquals(Boolean.TRUE, editor.getUserData(EditorImpl.FORCED_SOFT_WRAPS));
+        assertFalse(editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength()).isEmpty());
+      }
+      finally {
+        AdvancedSettings.setInt("editor.soft.wrap.force.limit", oldForceLimit);
+      }
+    });
   }
   
+  @Test
   public void testSuccessiveBulkModeOperations() {
-    initText("some text");
-    DocumentEx document = (DocumentEx)getEditor().getDocument();
+    myFixture.runTest(() -> {
+      myFixture.initText("some text");
+      DocumentEx document = (DocumentEx)myFixture.getEditor().getDocument();
 
-    runWriteCommand(() -> {
-      DocumentUtil.executeInBulk(document, ()-> document.replaceString(4, 5, "-"));
+      myFixture.runWriteCommand(() -> {
+        DocumentUtil.executeInBulk(document, ()-> document.replaceString(4, 5, "-"));
 
-      getEditor().getCaretModel().moveToOffset(9);
+        myFixture.getEditor().getCaretModel().moveToOffset(9);
 
-      DocumentUtil.executeInBulk(document, ()-> document.replaceString(4, 5, "+"));
-    });
-
-
-    checkResultByText("some+text<caret>");
-  }
-  
-  public void testCorrectCaretPositionRestorationAfterMultipleFoldRegionsChange() {
-    initText("so<caret>me long text");
-    final FoldRegion innerRegion = addCollapsedFoldRegion(0, 4, "...");
-    final FoldRegion outerRegion = addCollapsedFoldRegion(0, 9, "...");
-
-    runFoldingOperation(() -> {
-      getEditor().getFoldingModel().removeFoldRegion(outerRegion);
-      getEditor().getFoldingModel().removeFoldRegion(innerRegion);
-    });
-
-    checkResultByText("so<caret>me long text");
-  }
-  
-  public void testEditorSizeCalculationOnOpening() {
-    initText("a\nbbb\nccccc");
-    getEditor().getSettings().setAdditionalColumnsCount(0);
-    getEditor().getSettings().setAdditionalLinesCount(0);
-    assertEquals(new Dimension(50, (int)(30 * FontPreferences.DEFAULT_LINE_SPACING)), getEditor().getContentComponent().getPreferredSize());
-  }
-  
-  public void testCollapsingRegionContainingSoftWrap() {
-    initText("abcdef abcdef");
-    configureSoftWraps(10);
-    addCollapsedFoldRegion(0, 13, "...");
-    assertEquals(new VisualPosition(0, 3), getEditor().offsetToVisualPosition(13));
-  }
-  
-  public void testSizeRecalculationOnTurningSoftWrapsOff() {
-    initText("abc def");
-    getEditor().getSettings().setAdditionalColumnsCount(0);
-    getEditor().getSettings().setAdditionalLinesCount(0);
-    configureSoftWraps(4);
-    getEditor().getSettings().setUseSoftWraps(false);
-    assertEquals(new Dimension(70, (int)(10 * FontPreferences.DEFAULT_LINE_SPACING)), getEditor().getContentComponent().getPreferredSize());
-  }
-  
-  public void testUpdatingCaretPositionAfterBulkMode() {
-    initText("a<caret>bc");
-    runWriteCommand(() -> {
-      DocumentEx document = (DocumentEx)getEditor().getDocument();
-      DocumentUtil.executeInBulk(document, ()-> {
-        document.insertString(0, "\n "); // we're changing number of visual lines, and invalidating text layout for caret line
+        DocumentUtil.executeInBulk(document, ()-> document.replaceString(4, 5, "+"));
       });
-    });
 
-    checkResultByText("\n a<caret>bc");
+
+      myFixture.checkResultByText("some+text<caret>");
+    });
   }
   
+  @Test
+  public void testCorrectCaretPositionRestorationAfterMultipleFoldRegionsChange() {
+    myFixture.runTest(() -> {
+      myFixture.initText("so<caret>me long text");
+      final FoldRegion innerRegion = myFixture.addCollapsedFoldRegion(0, 4, "...");
+      final FoldRegion outerRegion = myFixture.addCollapsedFoldRegion(0, 9, "...");
+
+      myFixture.runFoldingOperation(() -> {
+        myFixture.getEditor().getFoldingModel().removeFoldRegion(outerRegion);
+        myFixture.getEditor().getFoldingModel().removeFoldRegion(innerRegion);
+      });
+
+      myFixture.checkResultByText("so<caret>me long text");
+    });
+  }
+  
+  @Test
+  public void testEditorSizeCalculationOnOpening() {
+    myFixture.runTest(() -> {
+      myFixture.initText("a\nbbb\nccccc");
+      myFixture.getEditor().getSettings().setAdditionalColumnsCount(0);
+      myFixture.getEditor().getSettings().setAdditionalLinesCount(0);
+      assertEquals(new Dimension(50, (int)(30 * FontPreferences.DEFAULT_LINE_SPACING)), myFixture.getEditor().getContentComponent().getPreferredSize());
+    });
+  }
+  
+  @Test
+  public void testCollapsingRegionContainingSoftWrap() {
+    myFixture.runTest(() -> {
+      myFixture.initText("abcdef abcdef");
+      myFixture.configureSoftWraps(10);
+      myFixture.addCollapsedFoldRegion(0, 13, "...");
+      assertEquals(new VisualPosition(0, 3), myFixture.getEditor().offsetToVisualPosition(13));
+    });
+  }
+  
+  @Test
+  public void testSizeRecalculationOnTurningSoftWrapsOff() {
+    myFixture.runTest(() -> {
+      myFixture.initText("abc def");
+      myFixture.getEditor().getSettings().setAdditionalColumnsCount(0);
+      myFixture.getEditor().getSettings().setAdditionalLinesCount(0);
+      myFixture.configureSoftWraps(4);
+      myFixture.getEditor().getSettings().setUseSoftWraps(false);
+      assertEquals(new Dimension(70, (int)(10 * FontPreferences.DEFAULT_LINE_SPACING)), myFixture.getEditor().getContentComponent().getPreferredSize());
+    });
+  }
+  
+  @Test
+  public void testUpdatingCaretPositionAfterBulkMode() {
+    myFixture.runTest(() -> {
+      myFixture.initText("a<caret>bc");
+      myFixture.runWriteCommand(() -> {
+        DocumentEx document = (DocumentEx)myFixture.getEditor().getDocument();
+        DocumentUtil.executeInBulk(document, ()-> {
+          document.insertString(0, "\n "); // we're changing number of visual lines, and invalidating text layout for caret line
+        });
+      });
+
+      myFixture.checkResultByText("\n a<caret>bc");
+    });
+  }
+  
+  @Test
   public void testAllowCaretPositioningInsideSoftWrapOnlyIfVirtualSpaceIsEnabled() {
-    initText("abcdef abcdef");
-    configureSoftWraps(10);
-    mouse().clickAt(0, 10);
-    assertEquals(new VisualPosition(0, 7), getEditor().getCaretModel().getVisualPosition());
+    myFixture.runTest(() -> {
+      myFixture.initText("abcdef abcdef");
+      myFixture.configureSoftWraps(10);
+      myFixture.mouse().clickAt(0, 10);
+      assertEquals(new VisualPosition(0, 7), myFixture.getEditor().getCaretModel().getVisualPosition());
+    });
   }
   
+  @Test
   public void testXYToVisualPositionWhenPrefixIsSet() {
-    initText("abc");
-    configureSoftWraps(1000); // to make sure soft wrap character width is properly mocked
-    ((EditorEx)getEditor()).setPrefixTextAndAttributes(">", new TextAttributes());
-    assertEquals(new VisualPosition(0, 0), getEditor().xyToVisualPosition(new Point(1, 0)));
+    myFixture.runTest(() -> {
+      myFixture.initText("abc");
+      myFixture.configureSoftWraps(1000); // to make sure soft wrap character width is properly mocked
+      ((EditorEx)myFixture.getEditor()).setPrefixTextAndAttributes(">", new TextAttributes());
+      assertEquals(new VisualPosition(0, 0), myFixture.getEditor().xyToVisualPosition(new Point(1, 0)));
+    });
   }
   
+  @Test
   public void testLogicalPositionCacheInvalidationAfterLineDeletion() {
-    initText("<caret>\n\t");
-    delete();
-    assertEquals(new LogicalPosition(0, 4), getEditor().offsetToLogicalPosition(1));
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>\n\t");
+      myFixture.delete();
+      assertEquals(new LogicalPosition(0, 4), myFixture.getEditor().offsetToLogicalPosition(1));
+    });
   }
   
+  @Test
   public void testSoftWrapsUpdateAfterEditorWasHidden() {
-    initText("long long line");
-    configureSoftWraps(6);
-    verifySoftWrapPositions(5, 10);
+    myFixture.runTest(() -> {
+      myFixture.initText("long long line");
+      myFixture.configureSoftWraps(6);
+      myFixture.verifySoftWrapPositions(5, 10);
 
-    JViewport viewport = ((EditorEx)getEditor()).getScrollPane().getViewport();
-    Dimension normalSize = viewport.getExtentSize();
-    viewport.setExtentSize(new Dimension(0, 0));
-    runWriteCommand(() -> getEditor().getDocument().deleteString(5, 14));
+      JViewport viewport = ((EditorEx)myFixture.getEditor()).getScrollPane().getViewport();
+      Dimension normalSize = viewport.getExtentSize();
+      viewport.setExtentSize(new Dimension(0, 0));
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().deleteString(5, 14));
 
-    viewport.setExtentSize(normalSize);
+      viewport.setExtentSize(normalSize);
     
-    verifySoftWrapPositions();
+      myFixture.verifySoftWrapPositions();
+    });
   }
   
+  @Test
   public void testUpDownNearDocumentTopAndBottom() {
-    initText("abc\nd<caret>ef\nghi");
-    up();
-    checkResultByText("a<caret>bc\ndef\nghi");
-    up();
-    checkResultByText("<caret>abc\ndef\nghi");
-    down();
-    checkResultByText("abc\nd<caret>ef\nghi");
-    down();
-    checkResultByText("abc\ndef\ng<caret>hi");
-    down();
-    checkResultByText("abc\ndef\nghi<caret>");
-    up();
-    checkResultByText("abc\nd<caret>ef\nghi");
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\nd<caret>ef\nghi");
+      myFixture.up();
+      myFixture.checkResultByText("a<caret>bc\ndef\nghi");
+      myFixture.up();
+      myFixture.checkResultByText("<caret>abc\ndef\nghi");
+      myFixture.down();
+      myFixture.checkResultByText("abc\nd<caret>ef\nghi");
+      myFixture.down();
+      myFixture.checkResultByText("abc\ndef\ng<caret>hi");
+      myFixture.down();
+      myFixture.checkResultByText("abc\ndef\nghi<caret>");
+      myFixture.up();
+      myFixture.checkResultByText("abc\nd<caret>ef\nghi");
+    });
   }
   
+  @Test
   public void testScrollingToCaretAtSoftWrap() {
-    initText("looooooooooooooooong wooooooooooooooooords");
-    configureSoftWraps(10);
-    end();
-    VisualPosition caretPosition = getEditor().getCaretModel().getCurrentCaret().getVisualPosition();
-    Point caretPoint = getEditor().visualPositionToXY(caretPosition);
-    Rectangle visibleArea = getEditor().getScrollingModel().getVisibleArea();
-    assertTrue(visibleArea.contains(caretPoint));
+    myFixture.runTest(() -> {
+      myFixture.initText("looooooooooooooooong wooooooooooooooooords");
+      myFixture.configureSoftWraps(10);
+      myFixture.end();
+      VisualPosition caretPosition = myFixture.getEditor().getCaretModel().getCurrentCaret().getVisualPosition();
+      Point caretPoint = myFixture.getEditor().visualPositionToXY(caretPosition);
+      Rectangle visibleArea = myFixture.getEditor().getScrollingModel().getVisibleArea();
+      assertTrue(visibleArea.contains(caretPoint));
+    });
   }
 
+  @Test
   public void testChangingHighlightersInBulkModeListener() {
-    initText("abcdef");
-    Document document = getEditor().getDocument();
-    document.addDocumentListener(new DocumentListener() {
-      @Override
-      public void bulkUpdateFinished(@NotNull Document document) {
-        getEditor().getMarkupModel().addRangeHighlighter(null, 7, 8, 0, HighlighterTargetArea.EXACT_RANGE);
-      }
-    }, getTestRootDisposable());
-    runWriteCommand(() -> DocumentUtil.executeInBulk(document, ()-> document.insertString(3, "\n\n")));
-    RangeHighlighter[] highlighters = ContainerUtil.findAllAsArray(getEditor().getMarkupModel().getAllHighlighters(), h->h.isValid());
-    assertEquals(1, highlighters.length);
-    assertEquals(7, highlighters[0].getStartOffset());
-    assertEquals(8, highlighters[0].getEndOffset());
+    myFixture.runTest(() -> {
+      myFixture.initText("abcdef");
+      Document document = myFixture.getEditor().getDocument();
+      document.addDocumentListener(new DocumentListener() {
+        @Override
+        public void bulkUpdateFinished(@NotNull Document document) {
+          myFixture.getEditor().getMarkupModel().addRangeHighlighter(null, 7, 8, 0, HighlighterTargetArea.EXACT_RANGE);
+        }
+      }, myFixture.getTestRootDisposable());
+      myFixture.runWriteCommand(() -> DocumentUtil.executeInBulk(document, ()-> document.insertString(3, "\n\n")));
+      RangeHighlighter[] highlighters =
+        ContainerUtil.findAllAsArray(myFixture.getEditor().getMarkupModel().getAllHighlighters(), h -> h.isValid());
+      assertEquals(1, highlighters.length);
+      assertEquals(7, highlighters[0].getStartOffset());
+      assertEquals(8, highlighters[0].getEndOffset());
+    });
   }
 
+  @Test
   public void testChangingHighlightersAfterClearingFoldingsDuringFoldingBatchUpdate() {
-    initText("abc\n\ndef");
-    addCollapsedFoldRegion(2, 6, "...");
-    runFoldingOperation(() -> {
-      ((FoldingModelEx)getEditor().getFoldingModel()).clearFoldRegions();
-      getEditor().getMarkupModel().addRangeHighlighter(7, 8, 0,
-                                                       new TextAttributes(null, null, null, null, Font.BOLD),
-                                                       HighlighterTargetArea.EXACT_RANGE);
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\n\ndef");
+      myFixture.addCollapsedFoldRegion(2, 6, "...");
+      myFixture.runFoldingOperation(() -> {
+        ((FoldingModelEx)myFixture.getEditor().getFoldingModel()).clearFoldRegions();
+        myFixture.getEditor().getMarkupModel().addRangeHighlighter(7, 8, 0,
+                                                         new TextAttributes(null, null, null, null, Font.BOLD),
+                                                         HighlighterTargetArea.EXACT_RANGE);
+      });
+      RangeHighlighter[] highlighters =
+        ContainerUtil.findAllAsArray(myFixture.getEditor().getMarkupModel().getAllHighlighters(), h -> h.isValid());
+      assertEquals(1, highlighters.length);
+      assertEquals(7, highlighters[0].getStartOffset());
+      assertEquals(8, highlighters[0].getEndOffset());
     });
-    RangeHighlighter[] highlighters = ContainerUtil.findAllAsArray(getEditor().getMarkupModel().getAllHighlighters(), h->h.isValid());
-    assertEquals(1, highlighters.length);
-    assertEquals(7, highlighters[0].getStartOffset());
-    assertEquals(8, highlighters[0].getEndOffset());
   }
 
+  @Test
   public void testShiftPressedBeforeDragOverLineNumbersIsFinished() {
-    if (ExperimentalUI.isNewUI()) {
-      // TODO: rewrite test if needed
-      return;
-    }
-    initText("abc\ndef\nghi");
-    EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000); // enable drag testing
-    mouse().pressAtLineNumbers(0).dragToLineNumbers(2).shift().release();
-    checkResultByText("<selection>abc\ndef\nghi</selection>");
+    myFixture.runTest(() -> {
+      if (ExperimentalUI.isNewUI()) {
+        // TODO: rewrite test if needed
+        return;
+      }
+      myFixture.initText("abc\ndef\nghi");
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 1000, 1000); // enable drag testing
+      myFixture.mouse().pressAtLineNumbers(0).dragToLineNumbers(2).shift().release();
+      myFixture.checkResultByText("<selection>abc\ndef\nghi</selection>");
+    });
   }
 
+  @Test
   public void testDefaultVerticalScrolling() {
-    initText("<caret>" + StringUtil.repeat("abc\n", 100));
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>" + StringUtil.repeat("abc\n", 100));
 
-    int lineHeight = getEditor().getLineHeight();
-    EditorTestUtil.setEditorVisibleSize(getEditor(), 10, 10);
+      int lineHeight = myFixture.getEditor().getLineHeight();
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 10, 10);
 
-    // test for bottom scroll offset
-    for (int i = 0; i < 49; ++i) {
-      down();
-    }
-    assertEquals(41 * lineHeight, getEditor().getScrollingModel().getVerticalScrollOffset());
+      // test for bottom scroll offset
+      for (int i = 0; i < 49; ++i) {
+        myFixture.down();
+      }
+      assertEquals(41 * lineHeight, myFixture.getEditor().getScrollingModel().getVerticalScrollOffset());
 
-    // test for top scroll offset
-    for (int i = 0; i < 20; ++i) {
-      up();
-    }
-    assertEquals(28 * lineHeight, getEditor().getScrollingModel().getVerticalScrollOffset());
+      // test for top scroll offset
+      for (int i = 0; i < 20; ++i) {
+        myFixture.up();
+      }
+      assertEquals(28 * lineHeight, myFixture.getEditor().getScrollingModel().getVerticalScrollOffset());
+    });
   }
 
+  @Test
   public void testOverridingDefaultVerticalScrolling() {
-    initText("<caret>" + StringUtil.repeat("abc\n", 100));
-    int scrollOffBefore = getEditor().getSettings().getVerticalScrollOffset();
-    getEditor().getSettings().setVerticalScrollOffset(3);
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>" + StringUtil.repeat("abc\n", 100));
+      int scrollOffBefore = myFixture.getEditor().getSettings().getVerticalScrollOffset();
+      myFixture.getEditor().getSettings().setVerticalScrollOffset(3);
 
-    int lineHeight = getEditor().getLineHeight();
-    EditorTestUtil.setEditorVisibleSize(getEditor(), 10, 10);
+      int lineHeight = myFixture.getEditor().getLineHeight();
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 10, 10);
 
-    // test for bottom scroll offset
-    for (int i = 0; i < 49; ++i) {
-      down();
-    }
-    assertEquals(43 * lineHeight, getEditor().getScrollingModel().getVerticalScrollOffset());
+      // test for bottom scroll offset
+      for (int i = 0; i < 49; ++i) {
+        myFixture.down();
+      }
+      assertEquals(43 * lineHeight, myFixture.getEditor().getScrollingModel().getVerticalScrollOffset());
 
-    // test for top scroll offset
-    for (int i = 0; i < 20; ++i) {
-      up();
-    }
-    assertEquals(26 * lineHeight, getEditor().getScrollingModel().getVerticalScrollOffset());
+      // test for top scroll offset
+      for (int i = 0; i < 20; ++i) {
+        myFixture.up();
+      }
+      assertEquals(26 * lineHeight, myFixture.getEditor().getScrollingModel().getVerticalScrollOffset());
 
-    getEditor().getSettings().setVerticalScrollOffset(scrollOffBefore);
+      myFixture.getEditor().getSettings().setVerticalScrollOffset(scrollOffBefore);
+    });
   }
 
+  @Test
   public void testScrollingInEditorOfSmallHeight() {
-    initText("abc\n<caret>");
-    int lineHeight = getEditor().getLineHeight();
-    int heightInPixels = (int)(lineHeight * 1.5);
-    EditorTestUtil.setEditorVisibleSizeInPixels(getEditor(),
-                                                1000 * EditorUtil.getSpaceWidth(Font.PLAIN, getEditor()),
-                                                heightInPixels);
-    getEditor().getSettings().setAnimatedScrolling(false);
-    type('a');
-    assertEquals(lineHeight - (heightInPixels - lineHeight) / 2, getEditor().getScrollingModel().getVerticalScrollOffset());
-    type('b');
-    assertEquals(lineHeight - (heightInPixels - lineHeight) / 2, getEditor().getScrollingModel().getVerticalScrollOffset());
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\n<caret>");
+      int lineHeight = myFixture.getEditor().getLineHeight();
+      int heightInPixels = (int)(lineHeight * 1.5);
+      EditorTestUtil.setEditorVisibleSizeInPixels(myFixture.getEditor(),
+                                                  1000 * EditorUtil.getSpaceWidth(Font.PLAIN, myFixture.getEditor()),
+                                                  heightInPixels);
+      myFixture.getEditor().getSettings().setAnimatedScrolling(false);
+      myFixture.type('a');
+      assertEquals(lineHeight - (heightInPixels - lineHeight) / 2, myFixture.getEditor().getScrollingModel().getVerticalScrollOffset());
+      myFixture.type('b');
+      assertEquals(lineHeight - (heightInPixels - lineHeight) / 2, myFixture.getEditor().getScrollingModel().getVerticalScrollOffset());
+    });
   }
 
+  @Test
   public void testVerticalScrollJump() {
-    initText("<caret>" + StringUtil.repeat("abc\n", 100));
-    int scrollJumpBefore = getEditor().getSettings().getVerticalScrollJump();
-    getEditor().getSettings().setVerticalScrollJump(7);
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>" + StringUtil.repeat("abc\n", 100));
+      int scrollJumpBefore = myFixture.getEditor().getSettings().getVerticalScrollJump();
+      myFixture.getEditor().getSettings().setVerticalScrollJump(7);
 
-    int lineHeight = getEditor().getLineHeight();
-    EditorTestUtil.setEditorVisibleSize(getEditor(), 10, 10);
+      int lineHeight = myFixture.getEditor().getLineHeight();
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 10, 10);
 
-    for (int i = 0; i < 9 - getEditor().getSettings().getVerticalScrollOffset(); ++i) {
-      down();
-    }
-    assertEquals(0, getEditor().getScrollingModel().getVerticalScrollOffset());
+      for (int i = 0; i < 9 - myFixture.getEditor().getSettings().getVerticalScrollOffset(); ++i) {
+        myFixture.down();
+      }
+      assertEquals(0, myFixture.getEditor().getScrollingModel().getVerticalScrollOffset());
 
-    down();
-    assertEquals(7 * lineHeight, getEditor().getScrollingModel().getVerticalScrollOffset());
+      myFixture.down();
+      assertEquals(7 * lineHeight, myFixture.getEditor().getScrollingModel().getVerticalScrollOffset());
 
-    getEditor().getSettings().setVerticalScrollJump(scrollJumpBefore);
+      myFixture.getEditor().getSettings().setVerticalScrollJump(scrollJumpBefore);
+    });
   }
 
+  @Test
   public void testDefaultHorizontalScrolling() {
-    initText("<caret>" + StringUtil.repeat("abc", 100));
-    assertTrue(AsyncEditorLoader.Companion.isEditorLoaded(getEditor()));
-    int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, getEditor());
-    EditorTestUtil.setEditorVisibleSize(getEditor(), 15, 2);
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>" + StringUtil.repeat("abc", 100));
+      assertTrue(AsyncEditorLoader.Companion.isEditorLoaded(myFixture.getEditor()));
+      int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, myFixture.getEditor());
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 15, 2);
 
-    // test for right scroll offset
-    for (int i = 0; i < 49; ++i) {
-      right();
-    }
-    assertEquals(37 * spaceWidth, getEditor().getScrollingModel().getHorizontalScrollOffset());
+      // test for right scroll offset
+      for (int i = 0; i < 49; ++i) {
+        myFixture.right();
+      }
+      assertEquals(37 * spaceWidth, myFixture.getEditor().getScrollingModel().getHorizontalScrollOffset());
 
-    // test for left scroll offset
-    for (int i = 0; i < 20; ++i) {
-      left();
-    } // caret offset is 30 now
-    assertEquals(26 * spaceWidth, getEditor().getScrollingModel().getHorizontalScrollOffset());
+      // test for left scroll offset
+      for (int i = 0; i < 20; ++i) {
+        myFixture.left();
+      } // caret offset is 30 now
+      assertEquals(26 * spaceWidth, myFixture.getEditor().getScrollingModel().getHorizontalScrollOffset());
+    });
   }
 
+  @Test
   public void testOverridingDefaultHorizontalScrolling() {
-    initText("<caret>" + StringUtil.repeat("abc", 100));
-    int scrollOffBefore = getEditor().getSettings().getHorizontalScrollOffset();
-    getEditor().getSettings().setHorizontalScrollOffset(5);
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>" + StringUtil.repeat("abc", 100));
+      int scrollOffBefore = myFixture.getEditor().getSettings().getHorizontalScrollOffset();
+      myFixture.getEditor().getSettings().setHorizontalScrollOffset(5);
 
-    int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, getEditor());
-    EditorTestUtil.setEditorVisibleSize(getEditor(), 15, 2);
+      int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, myFixture.getEditor());
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 15, 2);
 
-    // test for right scroll offset
-    for (int i = 0; i < 49; ++i) {
-      right();
-    }
-    assertEquals(39 * spaceWidth, getEditor().getScrollingModel().getHorizontalScrollOffset());
+      // test for right scroll offset
+      for (int i = 0; i < 49; ++i) {
+        myFixture.right();
+      }
+      assertEquals(39 * spaceWidth, myFixture.getEditor().getScrollingModel().getHorizontalScrollOffset());
 
-    // test for left scroll offset
-    for (int i = 0; i < 20; ++i) {
-      left();
-    }
-    assertEquals(24 * spaceWidth, getEditor().getScrollingModel().getHorizontalScrollOffset());
+      // test for left scroll offset
+      for (int i = 0; i < 20; ++i) {
+        myFixture.left();
+      }
+      assertEquals(24 * spaceWidth, myFixture.getEditor().getScrollingModel().getHorizontalScrollOffset());
 
-    getEditor().getSettings().setHorizontalScrollOffset(scrollOffBefore);
+      myFixture.getEditor().getSettings().setHorizontalScrollOffset(scrollOffBefore);
+    });
   }
 
+  @Test
   public void testScrollingInEditorOfSmallWidth() {
-    initText("<caret>" + StringUtil.repeat("abc", 100));
-    int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, getEditor());
-    EditorTestUtil.setEditorVisibleSize(getEditor(), 3, 2);
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>" + StringUtil.repeat("abc", 100));
+      int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, myFixture.getEditor());
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 3, 2);
 
-    // test for right scroll offset
-    for (int i = 0; i < 49; ++i) {
-      right();
-    }
-    assertEquals((int) (47.5 * spaceWidth), getEditor().getScrollingModel().getHorizontalScrollOffset());
+      // test for right scroll offset
+      for (int i = 0; i < 49; ++i) {
+        myFixture.right();
+      }
+      assertEquals((int) (47.5 * spaceWidth), myFixture.getEditor().getScrollingModel().getHorizontalScrollOffset());
 
-    // test for left scroll offset
-    for (int i = 0; i < 20; ++i) {
-      left();
-    }
-    assertEquals((int) (27.5 * spaceWidth), getEditor().getScrollingModel().getHorizontalScrollOffset());
+      // test for left scroll offset
+      for (int i = 0; i < 20; ++i) {
+        myFixture.left();
+      }
+      assertEquals((int) (27.5 * spaceWidth), myFixture.getEditor().getScrollingModel().getHorizontalScrollOffset());
+    });
   }
 
+  @Test
   public void testHorizontalScrollJump() {
-    initText("<caret>" + StringUtil.repeat("abc", 100));
-    int scrollJumpBefore = getEditor().getSettings().getHorizontalScrollJump();
-    getEditor().getSettings().setHorizontalScrollJump(10);
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>" + StringUtil.repeat("abc", 100));
+      int scrollJumpBefore = myFixture.getEditor().getSettings().getHorizontalScrollJump();
+      myFixture.getEditor().getSettings().setHorizontalScrollJump(10);
 
-    int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, getEditor());
-    EditorTestUtil.setEditorVisibleSize(getEditor(), 15, 2);
+      int spaceWidth = EditorUtil.getSpaceWidth(Font.PLAIN, myFixture.getEditor());
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 15, 2);
 
-    for (int i = 0; i < 15 - getEditor().getSettings().getHorizontalScrollOffset(); ++i) {
-      right();
-    }
-    assertEquals(0, getEditor().getScrollingModel().getHorizontalScrollOffset());
+      for (int i = 0; i < 15 - myFixture.getEditor().getSettings().getHorizontalScrollOffset(); ++i) {
+        myFixture.right();
+      }
+      assertEquals(0, myFixture.getEditor().getScrollingModel().getHorizontalScrollOffset());
 
-    right();
-    assertEquals(10 * spaceWidth, getEditor().getScrollingModel().getHorizontalScrollOffset());
+      myFixture.right();
+      assertEquals(10 * spaceWidth, myFixture.getEditor().getScrollingModel().getHorizontalScrollOffset());
 
-    getEditor().getSettings().setHorizontalScrollJump(scrollJumpBefore);
+      myFixture.getEditor().getSettings().setHorizontalScrollJump(scrollJumpBefore);
+    });
   }
 
+  @Test
   public void testEditorWithSoftWrapsBecomesVisibleAfterDocumentTextRemoval() {
-    initText("abc def ghi");
-    configureSoftWraps(3);
-    JViewport viewport = ((EditorEx)getEditor()).getScrollPane().getViewport();
-    viewport.setExtentSize(new Dimension()); // emulate editor becoming invisible
-    runWriteCommand(() -> {
-        Document document = getEditor().getDocument();
-        document.deleteString(0, document.getTextLength());
+    myFixture.runTest(() -> {
+      myFixture.initText("abc def ghi");
+      myFixture.configureSoftWraps(3);
+      JViewport viewport = ((EditorEx)myFixture.getEditor()).getScrollPane().getViewport();
+      viewport.setExtentSize(new Dimension()); // emulate editor becoming invisible
+      myFixture.runWriteCommand(() -> {
+          Document document = myFixture.getEditor().getDocument();
+          document.deleteString(0, document.getTextLength());
+      });
+      viewport.setExtentSize(new Dimension(1000, 1000)); // editor becomes visible
+      myFixture.verifySoftWrapPositions();
     });
-    viewport.setExtentSize(new Dimension(1000, 1000)); // editor becomes visible
-    verifySoftWrapPositions();
   }
 
+  @Test
   public void testMoveCaretLeftWithVirtualSpace() {
-    initText("abc\nde<caret>f");
-    getEditor().getSettings().setVirtualSpace(true);
-    left();
-    assertEquals(5, getEditor().getCaretModel().getOffset());
-    getEditor().getSettings().setVirtualSpace(false);
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\nde<caret>f");
+      myFixture.getEditor().getSettings().setVirtualSpace(true);
+      myFixture.left();
+      assertEquals(5, myFixture.getEditor().getCaretModel().getOffset());
+      myFixture.getEditor().getSettings().setVirtualSpace(false);
+    });
   }
 
+  @Test
   public void testMoveCaretAtLineStartLeftWithVirtualSpace() {
-    initText("abc\n<caret>def");
-    getEditor().getSettings().setVirtualSpace(true);
-    left();
-    assertEquals(3, getEditor().getCaretModel().getOffset());
-    getEditor().getSettings().setVirtualSpace(false);
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\n<caret>def");
+      myFixture.getEditor().getSettings().setVirtualSpace(true);
+      myFixture.left();
+      assertEquals(3, myFixture.getEditor().getCaretModel().getOffset());
+      myFixture.getEditor().getSettings().setVirtualSpace(false);
+    });
   }
 
+  @Test
   public void testMoveCaretAtFileStartLeftWithVirtualSpace() {
-    initText("<caret>abc\ndef");
-    getEditor().getSettings().setVirtualSpace(true);
-    left();
-    assertEquals(0, getEditor().getCaretModel().getOffset());
-    getEditor().getSettings().setVirtualSpace(false);
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>abc\ndef");
+      myFixture.getEditor().getSettings().setVirtualSpace(true);
+      myFixture.left();
+      assertEquals(0, myFixture.getEditor().getCaretModel().getOffset());
+      myFixture.getEditor().getSettings().setVirtualSpace(false);
+    });
   }
 
+  @Test
   public void testDocumentChangeAfterEditorDisposal() {
-    EditorFactory editorFactory = EditorFactory.getInstance();
+    myFixture.runTest(() -> {
+      EditorFactory editorFactory = EditorFactory.getInstance();
 
-    Document document = editorFactory.createDocument("ab");
-    Editor editor = editorFactory.createEditor(document);
-    try {
-      editor.getCaretModel().moveToOffset(1);
-    }
-    finally {
-      editorFactory.releaseEditor(editor);
-    }
+      Document document = editorFactory.createDocument("ab");
+      Editor editor = editorFactory.createEditor(document);
+      try {
+        editor.getCaretModel().moveToOffset(1);
+      }
+      finally {
+        editorFactory.releaseEditor(editor);
+      }
 
-    runWriteCommand(() -> document.setText("cd")); // should run without throwing an exception
+      myFixture.runWriteCommand(() -> document.setText("cd")); // should run without throwing an exception
+    });
   }
 
+  @Test
   public void testLineLengthMatchingLogicalPositionCacheFrequency() {
-    initText("\t" + StringUtil.repeat(" ", 1023));
-    assertEquals(new LogicalPosition(0, 1027), getEditor().offsetToLogicalPosition(1024));
+    myFixture.runTest(() -> {
+      myFixture.initText("\t" + StringUtil.repeat(" ", 1023));
+      assertEquals(new LogicalPosition(0, 1027), myFixture.getEditor().offsetToLogicalPosition(1024));
+    });
   }
 
+  @Test
   public void testSpecialCaseOfCaretPositionUpdateOnFolding() {
-    initText("abc\ndef\ngh<caret>i");
-    FoldRegion region = addCollapsedFoldRegion(1, 11, "...");
-    runWriteCommand(()-> getEditor().getDocument().deleteString(7, 8));
-    runFoldingOperation(()-> region.setExpanded(true));
-    runFoldingOperation(()-> region.setExpanded(false));
-    assertFalse(region.isExpanded());
-  }
-
-  public void testEditingNearInlayInBulkMode() {
-    initText("a<caret>bc");
-    addInlay(1);
-    runWriteCommand(()-> DocumentUtil.executeInBulk(getEditor().getDocument(),
-                                                    ()-> getEditor().getDocument().insertString(1, " ")));
-    checkResultByText("a<caret> bc");
-    assertTrue(getEditor().getInlayModel().hasInlineElementAt(1));
-  }
-
-  public void testCoordinateConversionsAroundSurrogatePair() {
-    initText("a" + SURROGATE_PAIR + "b");
-    assertEquals(new LogicalPosition(0, 2), getEditor().offsetToLogicalPosition(3));
-    assertEquals(3, getEditor().logicalPositionToOffset(new LogicalPosition(0, 2)));
-    assertEquals(new VisualPosition(0, 2), getEditor().logicalToVisualPosition(new LogicalPosition(0, 2)));
-    assertEquals(new LogicalPosition(0, 2), getEditor().visualToLogicalPosition(new VisualPosition(0, 2)));
-  }
-
-  public void testCreationOfSurrogatePairByMergingDividedParts() {
-    initText(""); // Cannot set up text with singular surrogate characters directly
-    runWriteCommand(() -> {
-      getEditor().getDocument().setText(HIGH_SURROGATE + " " + LOW_SURROGATE);
-      getEditor().getDocument().deleteString(1, 2);
-    });
-    checkResultByText(SURROGATE_PAIR);
-    assertEquals(new LogicalPosition(0, 1), getEditor().offsetToLogicalPosition(2));
-  }
-
-  public void testCaretDoesntGetInsideSurrogatePair() {
-    initText(""); // Cannot set up text with singular surrogate characters directly
-    runWriteCommand(() -> getEditor().getDocument().setText(HIGH_SURROGATE + LOW_SURROGATE + LOW_SURROGATE));
-    getEditor().getCaretModel().moveToOffset(2);
-    runWriteCommand(() -> ((DocumentEx)getEditor().getDocument()).moveText(2, 3, 1));
-    assertFalse(DocumentUtil.isInsideSurrogatePair(getEditor().getDocument(), getEditor().getCaretModel().getOffset()));
-  }
-
-  public void testFoldingBoundaryDoesntGetInsideSurrogatePair() {
-    initText(""); // Cannot set up text with singular surrogate characters directly
-    runWriteCommand(() -> getEditor().getDocument().setText(HIGH_SURROGATE + LOW_SURROGATE + LOW_SURROGATE));
-    addFoldRegion(2, 3, "...");
-    runWriteCommand(() -> ((DocumentEx)getEditor().getDocument()).moveText(2, 3, 1));
-    FoldRegion[] foldRegions = getEditor().getFoldingModel().getAllFoldRegions();
-    assertFalse(foldRegions.length > 0 && DocumentUtil.isInsideSurrogatePair(getEditor().getDocument(), foldRegions[0].getStartOffset()));
-  }
-
-  public void testRemovalOfNonExpandingFoldingRegion() {
-    initText("a\nb");
-    FoldingModelEx model = (FoldingModelEx)getEditor().getFoldingModel();
-    Ref<FoldRegion> regionRef = new Ref<>();
-    runFoldingOperation(() -> {
-      FoldRegion region = model.createFoldRegion(0, 3, "...", null, true);
-      assertNotNull(region);
-      assertTrue(region.isValid());
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\ndef\ngh<caret>i");
+      FoldRegion region = myFixture.addCollapsedFoldRegion(1, 11, "...");
+      myFixture.runWriteCommand(()-> myFixture.getEditor().getDocument().deleteString(7, 8));
+      myFixture.runFoldingOperation(()-> region.setExpanded(true));
+      myFixture.runFoldingOperation(()-> region.setExpanded(false));
       assertFalse(region.isExpanded());
-      regionRef.set(region);
     });
-    runFoldingOperation(() -> model.removeFoldRegion(regionRef.get()));
-    assertEquals(new VisualPosition(1, 1), getEditor().offsetToVisualPosition(3));
+  }
+
+  @Test
+  public void testEditingNearInlayInBulkMode() {
+    myFixture.runTest(() -> {
+      myFixture.initText("a<caret>bc");
+      myFixture.addInlay(1);
+      myFixture.runWriteCommand(()-> DocumentUtil.executeInBulk(myFixture.getEditor().getDocument(),
+                                                      ()-> myFixture.getEditor().getDocument().insertString(1, " ")));
+      myFixture.checkResultByText("a<caret> bc");
+      assertTrue(myFixture.getEditor().getInlayModel().hasInlineElementAt(1));
+    });
+  }
+
+  @Test
+  public void testCoordinateConversionsAroundSurrogatePair() {
+    myFixture.runTest(() -> {
+      myFixture.initText("a" + SURROGATE_PAIR + "b");
+      assertEquals(new LogicalPosition(0, 2), myFixture.getEditor().offsetToLogicalPosition(3));
+      assertEquals(3, myFixture.getEditor().logicalPositionToOffset(new LogicalPosition(0, 2)));
+      assertEquals(new VisualPosition(0, 2), myFixture.getEditor().logicalToVisualPosition(new LogicalPosition(0, 2)));
+      assertEquals(new LogicalPosition(0, 2), myFixture.getEditor().visualToLogicalPosition(new VisualPosition(0, 2)));
+    });
+  }
+
+  @Test
+  public void testCreationOfSurrogatePairByMergingDividedParts() {
+    myFixture.runTest(() -> {
+      myFixture.initText(""); // Cannot set up text with singular surrogate characters directly
+      myFixture.runWriteCommand(() -> {
+        myFixture.getEditor().getDocument().setText(HIGH_SURROGATE + " " + LOW_SURROGATE);
+        myFixture.getEditor().getDocument().deleteString(1, 2);
+      });
+      myFixture.checkResultByText(SURROGATE_PAIR);
+      assertEquals(new LogicalPosition(0, 1), myFixture.getEditor().offsetToLogicalPosition(2));
+    });
+  }
+
+  @Test
+  public void testCaretDoesntGetInsideSurrogatePair() {
+    myFixture.runTest(() -> {
+      myFixture.initText(""); // Cannot set up text with singular surrogate characters directly
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().setText(HIGH_SURROGATE + LOW_SURROGATE + LOW_SURROGATE));
+      myFixture.getEditor().getCaretModel().moveToOffset(2);
+      myFixture.runWriteCommand(() -> ((DocumentEx)myFixture.getEditor().getDocument()).moveText(2, 3, 1));
+      assertFalse(DocumentUtil.isInsideSurrogatePair(myFixture.getEditor().getDocument(),
+                                                     myFixture.getEditor().getCaretModel().getOffset()));
+    });
+  }
+
+  @Test
+  public void testFoldingBoundaryDoesntGetInsideSurrogatePair() {
+    myFixture.runTest(() -> {
+      myFixture.initText(""); // Cannot set up text with singular surrogate characters directly
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().setText(HIGH_SURROGATE + LOW_SURROGATE + LOW_SURROGATE));
+      myFixture.addFoldRegion(2, 3, "...");
+      myFixture.runWriteCommand(() -> ((DocumentEx)myFixture.getEditor().getDocument()).moveText(2, 3, 1));
+      FoldRegion[] foldRegions = myFixture.getEditor().getFoldingModel().getAllFoldRegions();
+      assertFalse(foldRegions.length > 0 &&
+                  DocumentUtil.isInsideSurrogatePair(myFixture.getEditor().getDocument(), foldRegions[0].getStartOffset()));
+    });
+  }
+
+  @Test
+  public void testRemovalOfNonExpandingFoldingRegion() {
+    myFixture.runTest(() -> {
+      myFixture.initText("a\nb");
+      FoldingModelEx model = (FoldingModelEx)myFixture.getEditor().getFoldingModel();
+      Ref<FoldRegion> regionRef = new Ref<>();
+      myFixture.runFoldingOperation(() -> {
+        FoldRegion region = model.createFoldRegion(0, 3, "...", null, true);
+        assertNotNull(region);
+        assertTrue(region.isValid());
+        assertFalse(region.isExpanded());
+        regionRef.set(region);
+      });
+      myFixture.runFoldingOperation(() -> model.removeFoldRegion(regionRef.get()));
+      assertEquals(new VisualPosition(1, 1), myFixture.getEditor().offsetToVisualPosition(3));
+    });
   }
   
+  @Test
   public void testPasteWithStickySelection() {
-    initText("<selection>abc<caret></selection>\ndef");
-    copy();
-    down();
-    home();
-    ((EditorEx)getEditor()).setStickySelection(true);
-    right();
-    right();
-    right();
-    paste();
-    checkResultByText("abc\nabc<caret>");
+    myFixture.runTest(() -> {
+      myFixture.initText("<selection>abc<caret></selection>\ndef");
+      myFixture.copy();
+      myFixture.down();
+      myFixture.home();
+      ((EditorEx)myFixture.getEditor()).setStickySelection(true);
+      myFixture.right();
+      myFixture.right();
+      myFixture.right();
+      myFixture.paste();
+      myFixture.checkResultByText("abc\nabc<caret>");
+    });
   }
   
+  @Test
   public void testPasteInVirtualSpaceWhenSelectionExists() {
-    initText("foo");
-    getEditor().getSettings().setVirtualSpace(true);
-    mouse().clickAt(0, 10);
-    executeAction(IdeActions.ACTION_SELECT_ALL);
-    CopyPasteManager.getInstance().setContents(new StringSelection("bar"));
-    paste();
-    checkResultByText("bar<caret>");
+    myFixture.runTest(() -> {
+      myFixture.initText("foo");
+      myFixture.getEditor().getSettings().setVirtualSpace(true);
+      myFixture.mouse().clickAt(0, 10);
+      myFixture.executeAction(IdeActions.ACTION_SELECT_ALL);
+      CopyPasteManager.getInstance().setContents(new StringSelection("bar"));
+      myFixture.paste();
+      myFixture.checkResultByText("bar<caret>");
+    });
   }
 
+  @Test
   public void testMoveTextNearInlayAtBrokenSurrogates() {
-    initText(""); // Cannot set up text with singular surrogate characters directly
-    runWriteCommand(() -> getEditor().getDocument().setText(LOW_SURROGATE + HIGH_SURROGATE));
-    Inlay inlay = addInlay(2);
-    FoldRegion region = addCollapsedFoldRegion(1, 2, "...");
+    myFixture.runTest(() -> {
+      myFixture.initText(""); // Cannot set up text with singular surrogate characters directly
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().setText(LOW_SURROGATE + HIGH_SURROGATE));
+      Inlay<?> inlay = myFixture.addInlay(2);
+      FoldRegion region = myFixture.addCollapsedFoldRegion(1, 2, "...");
     
-    runWriteCommand(() -> ((DocumentEx)getEditor().getDocument()).moveText(1, 2, 0));
+      myFixture.runWriteCommand(() -> ((DocumentEx)myFixture.getEditor().getDocument()).moveText(1, 2, 0));
     
-    assertFalse(inlay.isValid() && inlay.getOffset() == 1);
-    assertFalse(region.isValid() && (region.getStartOffset() == 1 || region.getEndOffset() == 1));
+      assertFalse(inlay.isValid() && inlay.getOffset() == 1);
+      assertFalse(region.isValid() && (region.getStartOffset() == 1 || region.getEndOffset() == 1));
+    });
   }
 
+  @Test
   public void testStickySelectionAtDocumentEnd() {
-    initText("ab<caret>");
-    ((EditorEx)getEditor()).setStickySelection(true);
-    left();
-    checkResultByText("a<selection><caret>b</selection>");
+    myFixture.runTest(() -> {
+      myFixture.initText("ab<caret>");
+      ((EditorEx)myFixture.getEditor()).setStickySelection(true);
+      myFixture.left();
+      myFixture.checkResultByText("a<selection><caret>b</selection>");
+    });
   }
 
+  @Test
   public void testDocumentUpdateAtCaretInVirtualSpace() {
-    initText("ab\ncd");
-    getEditor().getSettings().setVirtualSpace(true);
-    mouse().clickAt(0, 4);
-    executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_END);
-    checkResultByText("ab<caret>cd");
-    assertEquals(new LogicalPosition(0, 2), getEditor().getCaretModel().getLogicalPosition());
-    assertEquals(new VisualPosition(0, 2), getEditor().getCaretModel().getVisualPosition());
+    myFixture.runTest(() -> {
+      myFixture.initText("ab\ncd");
+      myFixture.getEditor().getSettings().setVirtualSpace(true);
+      myFixture.mouse().clickAt(0, 4);
+      myFixture.executeAction(IdeActions.ACTION_EDITOR_DELETE_TO_WORD_END);
+      myFixture.checkResultByText("ab<caret>cd");
+      assertEquals(new LogicalPosition(0, 2), myFixture.getEditor().getCaretModel().getLogicalPosition());
+      assertEquals(new VisualPosition(0, 2), myFixture.getEditor().getCaretModel().getVisualPosition());
+    });
   }
 
+  @Test
   public void testTypingInOverwriteModeWithMultilineSelection() {
-    initText("a<selection>b\nc<caret></selection>d");
-    ((EditorEx)getEditor()).setInsertMode(false);
-    type(' ');
-    checkResultByText("a <caret>");
+    myFixture.runTest(() -> {
+      myFixture.initText("a<selection>b\nc<caret></selection>d");
+      ((EditorEx)myFixture.getEditor()).setInsertMode(false);
+      myFixture.type(' ');
+      myFixture.checkResultByText("a <caret>");
+    });
   }
 
+  @Test
   public void testSettingPromptDoesNotCreateSoftWraps() {
-    initText(StringUtil.repeat("a ", 1000));
-    ((EditorEx)getEditor()).setPrefixTextAndAttributes(">", new TextAttributes());
-    runWriteCommand(() -> getEditor().getDocument().deleteString(0, getEditor().getDocument().getTextLength()));
-    assertEquals(1, ((EditorImpl)getEditor()).getVisibleLineCount());
+    myFixture.runTest(() -> {
+      myFixture.initText(StringUtil.repeat("a ", 1000));
+      ((EditorEx)myFixture.getEditor()).setPrefixTextAndAttributes(">", new TextAttributes());
+      myFixture.runWriteCommand(
+        () -> myFixture.getEditor().getDocument().deleteString(0, myFixture.getEditor().getDocument().getTextLength()));
+      assertEquals(1, ((EditorImpl)myFixture.getEditor()).getVisibleLineCount());
+    });
   }
 
+  @Test
   public void testDragInsideSelectionWithDndDisabled() {
-    initText("abcdef");
-    EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
-    getEditor().getSettings().setDndEnabled(false);
-    EditorMouseFixture mouse = mouse();
-    mouse.pressAt(0, 0).dragTo(0, 3).release();
-    checkResultByText("<selection>abc<caret></selection>def");
-    mouse.pressAt(0, 1);
-    checkResultByText("a<caret>bcdef");
-    mouse.dragTo(0, 4);
-    checkResultByText("a<selection>bcd<caret></selection>ef");
-    mouse.release();
-    checkResultByText("a<selection>bcd<caret></selection>ef");
+    myFixture.runTest(() -> {
+      myFixture.initText("abcdef");
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 100, 100);
+      myFixture.getEditor().getSettings().setDndEnabled(false);
+      EditorMouseFixture mouse = myFixture.mouse();
+      mouse.pressAt(0, 0).dragTo(0, 3).release();
+      myFixture.checkResultByText("<selection>abc<caret></selection>def");
+      mouse.pressAt(0, 1);
+      myFixture.checkResultByText("a<caret>bcdef");
+      mouse.dragTo(0, 4);
+      myFixture.checkResultByText("a<selection>bcd<caret></selection>ef");
+      mouse.release();
+      myFixture.checkResultByText("a<selection>bcd<caret></selection>ef");
+    });
   }
 
+  @Test
   public void testCreateRectangularSelectionWithDndDisabled() {
-    initText("ab\ncd<caret>");
-    getEditor().getSettings().setDndEnabled(false);
-    mouse().alt().shift().middle().clickAt(0, 0);
-    checkResultByText("<selection><caret>ab</selection>\n<selection><caret>cd</selection>");
+    myFixture.runTest(() -> {
+      myFixture.initText("ab\ncd<caret>");
+      myFixture.getEditor().getSettings().setDndEnabled(false);
+      myFixture.mouse().alt().shift().middle().clickAt(0, 0);
+      myFixture.checkResultByText("<selection><caret>ab</selection>\n<selection><caret>cd</selection>");
+    });
   }
 
+  @Test
   public void testActionsFromPopupMenuCanBeInvokedForSelection() {
-    initText("abcd");
-    EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
-    getEditor().getSettings().setDndEnabled(false);
-    EditorMouseFixture mouse = mouse();
+    myFixture.runTest(() -> {
+      myFixture.initText("abcd");
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 100, 100);
+      myFixture.getEditor().getSettings().setDndEnabled(false);
+      EditorMouseFixture mouse = myFixture.mouse();
     
-    mouse.pressAt(0, 1).dragTo(0, 3).release();
-    mouse.right().pressAt(0, 2);
-    checkResultByText("a<selection>bc</selection>d");
-    mouse.release();
+      mouse.pressAt(0, 1).dragTo(0, 3).release();
+      mouse.right().pressAt(0, 2);
+      myFixture.checkResultByText("a<selection>bc</selection>d");
+      mouse.release();
+    });
   }
 
+  @Test
   public void testTripleClickWithDndDisabled() {
-    initText("some text");
-    getEditor().getSettings().setDndEnabled(false);
-    mouse().tripleClickAt(0, 2);
-    checkResultByText("<selection>some text</selection>");
+    myFixture.runTest(() -> {
+      myFixture.initText("some text");
+      myFixture.getEditor().getSettings().setDndEnabled(false);
+      myFixture.mouse().tripleClickAt(0, 2);
+      myFixture.checkResultByText("<selection>some text</selection>");
+    });
   }
 
+  @Test
   public void testSelectionAfterSelectingWholeLine() {
-    initText("line 1\nline 2");
-    mouse().tripleClickAt(0, 2);
-    checkResultByText("<selection>li<caret>ne 1\n</selection>line 2");
-    delete();
-    checkResultByText("<caret>line 2");
-    rightWithSelection();
-    checkResultByText("<selection>l<caret></selection>ine 2");
+    myFixture.runTest(() -> {
+      myFixture.initText("line 1\nline 2");
+      myFixture.mouse().tripleClickAt(0, 2);
+      myFixture.checkResultByText("<selection>li<caret>ne 1\n</selection>line 2");
+      myFixture.delete();
+      myFixture.checkResultByText("<caret>line 2");
+      myFixture.rightWithSelection();
+      myFixture.checkResultByText("<selection>l<caret></selection>ine 2");
+    });
   }
 
+  @Test
   public void testRightClickOutsideSelectionRemovesIt() {
-    initText("<selection>some<caret></selection> text");
-    mouse().right().clickAt(0, 6);
-    checkResultByText("some t<caret>ext");
+    myFixture.runTest(() -> {
+      myFixture.initText("<selection>some<caret></selection> text");
+      myFixture.mouse().right().clickAt(0, 6);
+      myFixture.checkResultByText("some t<caret>ext");
+    });
   }
 
+  @Test
   public void testRightClickOutsideButVeryCloseToSelectionDoesNotRemoveIt() {
-    initText("<selection>some<caret></selection> text");
-    mouse().right().clickAtXY(42, 5);
-    checkResultByText("<selection>some<caret></selection> text");
+    myFixture.runTest(() -> {
+      myFixture.initText("<selection>some<caret></selection> text");
+      myFixture.mouse().right().clickAtXY(42, 5);
+      myFixture.checkResultByText("<selection>some<caret></selection> text");
+    });
   }
 
+  @Test
   public void testDragStartingBeyondSelectedLineEnd() {
-    initText("<selection>line1</selection>\nline2");
-    setEditorVisibleSize(100, 100);
-    mouse().pressAt(0, 10).dragTo(1, 10).release();
-    checkResultByText("line1<selection>\nline2</selection>");
+    myFixture.runTest(() -> {
+      myFixture.initText("<selection>line1</selection>\nline2");
+      myFixture.setEditorVisibleSize(100, 100);
+      myFixture.mouse().pressAt(0, 10).dragTo(1, 10).release();
+      myFixture.checkResultByText("line1<selection>\nline2</selection>");
+    });
   }
 
+  @Test
   public void testSizeUpdateAfterMovingFragmentWithFolding() {
-    initText("line\nline\nline\nline\nlong line");
-    getEditor().getSettings().setAdditionalColumnsCount(0);
-    addCollapsedFoldRegion(19, 25, "...");
-    runWriteCommand(() -> ((EditorEx)getEditor()).getDocument().moveText(19, 25, 0));
-    assertEquals(80, getEditor().getContentComponent().getPreferredSize().width);
+    myFixture.runTest(() -> {
+      myFixture.initText("line\nline\nline\nline\nlong line");
+      myFixture.getEditor().getSettings().setAdditionalColumnsCount(0);
+      myFixture.addCollapsedFoldRegion(19, 25, "...");
+      myFixture.runWriteCommand(() -> ((EditorEx)myFixture.getEditor()).getDocument().moveText(19, 25, 0));
+      assertEquals(80, myFixture.getEditor().getContentComponent().getPreferredSize().width);
+    });
   }
 
+  @Test
   public void testEditorIsNotScrolledOnSoftWrappingIfNotScrolledPreviously() {
-    initText("long long line");
-    EditorTestUtil.configureSoftWrapsAndViewport(getEditor(), 100, 1);
-    EditorTestUtil.configureSoftWrapsAndViewport(getEditor(), 10, 1);
-    assertEquals(0, getEditor().getScrollingModel().getVerticalScrollOffset());
+    myFixture.runTest(() -> {
+      myFixture.initText("long long line");
+      EditorTestUtil.configureSoftWrapsAndViewport(myFixture.getEditor(), 100, 1);
+      EditorTestUtil.configureSoftWrapsAndViewport(myFixture.getEditor(), 10, 1);
+      assertEquals(0, myFixture.getEditor().getScrollingModel().getVerticalScrollOffset());
+    });
   }
 
+  @Test
   public void testClickOnBlockInlayDoesNotMoveCaret() {
-    initText("text");
-    addBlockInlay(0, true, 10 * TEST_CHAR_WIDTH);
-    mouse().clickAtXY(2 * TEST_CHAR_WIDTH, 0);
-    checkResultByText("<caret>text");
+    myFixture.runTest(() -> {
+      myFixture.initText("text");
+      myFixture.addBlockInlay(0, true, 10 * TEST_CHAR_WIDTH);
+      myFixture.mouse().clickAtXY(2 * TEST_CHAR_WIDTH, 0);
+      myFixture.checkResultByText("<caret>text");
+    });
   }
 
+  @Test
   public void testDragInBlockInlayDoesNotCreateSelection() {
-    initText("text");
-    addBlockInlay(0, true, 10 * TEST_CHAR_WIDTH);
-    EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
-    mouse().pressAtXY(2 * TEST_CHAR_WIDTH, 0).dragToXY(4 * TEST_CHAR_WIDTH, 0).release();
-    checkResultByText("<caret>text");
+    myFixture.runTest(() -> {
+      myFixture.initText("text");
+      myFixture.addBlockInlay(0, true, 10 * TEST_CHAR_WIDTH);
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 100, 100);
+      myFixture.mouse().pressAtXY(2 * TEST_CHAR_WIDTH, 0).dragToXY(4 * TEST_CHAR_WIDTH, 0).release();
+      myFixture.checkResultByText("<caret>text");
+    });
   }
 
+  @Test
   public void testDragBeyondEditorTopWithBlockInlay() {
-    initText("text");
-    addBlockInlay(0, true);
-    EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
-    mouse().pressAtXY(2 * TEST_CHAR_WIDTH, (int)(getEditor().getLineHeight() * 1.5)).dragToXY(-1, -1).release();
-    checkResultByText("<selection><caret>te</selection>xt");
+    myFixture.runTest(() -> {
+      myFixture.initText("text");
+      myFixture.addBlockInlay(0, true);
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 100, 100);
+      myFixture.mouse().pressAtXY(2 * TEST_CHAR_WIDTH, (int)(myFixture.getEditor().getLineHeight() * 1.5)).dragToXY(-1, -1).release();
+      myFixture.checkResultByText("<selection><caret>te</selection>xt");
+    });
   }
 
+  @Test
   public void testCaretMovementAtFoldRegionWithEmptyPlaceholder() {
-    initText("<caret>abc");
-    addCollapsedFoldRegion(1, 2, "");
-    right();
-    Caret caret = getEditor().getCaretModel().getPrimaryCaret();
-    assertEquals(2, caret.getOffset());
-    assertEquals(new LogicalPosition(0, 2), caret.getLogicalPosition());
-    assertEquals(new VisualPosition(0, 1), caret.getVisualPosition());
-    right();
-    assertEquals(3, caret.getOffset());
-    assertEquals(new LogicalPosition(0, 3), caret.getLogicalPosition());
-    assertEquals(new VisualPosition(0, 2), caret.getVisualPosition());
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>abc");
+      myFixture.addCollapsedFoldRegion(1, 2, "");
+      myFixture.right();
+      Caret caret = myFixture.getEditor().getCaretModel().getPrimaryCaret();
+      assertEquals(2, caret.getOffset());
+      assertEquals(new LogicalPosition(0, 2), caret.getLogicalPosition());
+      assertEquals(new VisualPosition(0, 1), caret.getVisualPosition());
+      myFixture.right();
+      assertEquals(3, caret.getOffset());
+      assertEquals(new LogicalPosition(0, 3), caret.getLogicalPosition());
+      assertEquals(new VisualPosition(0, 2), caret.getVisualPosition());
+    });
   }
 
+  @Test
   public void testDragStartingAtBlockInlay() {
-    initText("abc<caret>");
-    addBlockInlay(0, true, 10);
-    EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
-    mouse().pressAtXY(0, 0).dragToXY(0, getEditor().getLineHeight()).release();
-    checkResultByText("abc<caret>");
+    myFixture.runTest(() -> {
+      myFixture.initText("abc<caret>");
+      myFixture.addBlockInlay(0, true, 10);
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 100, 100);
+      myFixture.mouse().pressAtXY(0, 0).dragToXY(0, myFixture.getEditor().getLineHeight()).release();
+      myFixture.checkResultByText("abc<caret>");
+    });
   }
 
+  @Test
   public void testMouseDraggingWithCamelHumpsDisabledForMouse() {
-    boolean savedOption = EditorSettingsExternalizable.getInstance().isCamelWords();
-    try {
-      EditorSettingsExternalizable.getInstance().setCamelWords(true);
-      initText("AbcDefGhi");
-      EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
-      getEditor().getSettings().setMouseClickSelectionHonorsCamelWords(false);
-      mouse().doubleClickNoReleaseAt(0, 4).dragTo(0, 5).release();
-      checkResultByText("<selection>AbcDefGhi<caret></selection>");
-    }
-    finally {
-      EditorSettingsExternalizable.getInstance().setCamelWords(savedOption);
-    }
+    myFixture.runTest(() -> {
+      boolean savedOption = EditorSettingsExternalizable.getInstance().isCamelWords();
+      try {
+        EditorSettingsExternalizable.getInstance().setCamelWords(true);
+        myFixture.initText("AbcDefGhi");
+        EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 100, 100);
+        myFixture.getEditor().getSettings().setMouseClickSelectionHonorsCamelWords(false);
+        myFixture.mouse().doubleClickNoReleaseAt(0, 4).dragTo(0, 5).release();
+        myFixture.checkResultByText("<selection>AbcDefGhi<caret></selection>");
+      }
+      finally {
+        EditorSettingsExternalizable.getInstance().setCamelWords(savedOption);
+      }
+    });
   }
 
+  @Test
   public void testSettingFontPreferences() {
-    initText("");
-    EditorColorsScheme colorsScheme = getEditor().getColorsScheme();
+    myFixture.runTest(() -> {
+      myFixture.initText("");
+      EditorColorsScheme colorsScheme = myFixture.getEditor().getColorsScheme();
 
-    FontPreferencesImpl preferences = new FontPreferencesImpl();
-    preferences.register("CustomFont", 32);
-    preferences.setUseLigatures(true);
-    colorsScheme.setFontPreferences(preferences);
+      FontPreferencesImpl preferences = new FontPreferencesImpl();
+      preferences.register("CustomFont", 32);
+      preferences.setUseLigatures(true);
+      colorsScheme.setFontPreferences(preferences);
 
-    FontPreferences p = colorsScheme.getFontPreferences();
-    assertEquals(Collections.singletonList("CustomFont"), p.getRealFontFamilies());
-    assertEquals(32, p.getSize("CustomFont"));
-    assertTrue(p.useLigatures());
+      FontPreferences p = colorsScheme.getFontPreferences();
+      assertEquals(Collections.singletonList("CustomFont"), p.getRealFontFamilies());
+      assertEquals(32, p.getSize("CustomFont"));
+      assertTrue(p.useLigatures());
 
-    FontPreferencesImpl preferences2 = new FontPreferencesImpl();
-    preferences2.register("CustomFont2", 23);
-    preferences2.setUseLigatures(false);
-    colorsScheme.setFontPreferences(preferences2);
+      FontPreferencesImpl preferences2 = new FontPreferencesImpl();
+      preferences2.register("CustomFont2", 23);
+      preferences2.setUseLigatures(false);
+      colorsScheme.setFontPreferences(preferences2);
 
-    FontPreferences p2 = colorsScheme.getFontPreferences();
-    assertEquals(Collections.singletonList("CustomFont2"), p2.getRealFontFamilies());
-    assertEquals(23, p2.getSize("CustomFont2"));
-    assertFalse(p.useLigatures());
+      FontPreferences p2 = colorsScheme.getFontPreferences();
+      assertEquals(Collections.singletonList("CustomFont2"), p2.getRealFontFamilies());
+      assertEquals(23, p2.getSize("CustomFont2"));
+      assertFalse(p.useLigatures());
+    });
   }
 
+  @Test
   public void testDocumentChangeAfterWidthChange() {
-    initText("Some long line of text");
-    configureSoftWraps(15);
+    myFixture.runTest(() -> {
+      myFixture.initText("Some long line of text");
+      myFixture.configureSoftWraps(15);
 
-    // emulate adding editor to a wide component
-    SoftWrapApplianceManager.VisibleAreaWidthProvider widthProvider =
-      ((SoftWrapModelImpl)getEditor().getSoftWrapModel()).getApplianceManager().getWidthProvider();
-    ((EditorTestUtil.TestWidthProvider)widthProvider).setVisibleAreaWidth(1_000_000);
-    new JPanel().add(getEditor().getComponent());
+      // emulate adding editor to a wide component
+      SoftWrapApplianceManager.VisibleAreaWidthProvider widthProvider =
+        ((SoftWrapModelImpl)myFixture.getEditor().getSoftWrapModel()).getApplianceManager().getWidthProvider();
+      ((EditorTestUtil.TestWidthProvider)widthProvider).setVisibleAreaWidth(1_000_000);
+      new JPanel().add(myFixture.getEditor().getComponent());
 
-    runWriteCommand(() -> getEditor().getDocument().insertString(0, " "));
-    verifySoftWrapPositions();
+      myFixture.runWriteCommand(() -> myFixture.getEditor().getDocument().insertString(0, " "));
+      myFixture.verifySoftWrapPositions();
+    });
   }
 
+  @Test
   public void testClickOnBlockInlayDoesNotRemoveSelection() {
-    initText("<selection>text<caret></selection>");
-    addBlockInlay(0, true, 100);
-    mouse().clickAtXY(50, getEditor().getLineHeight() / 2);
-    checkResultByText("<selection>text<caret></selection>");
+    myFixture.runTest(() -> {
+      myFixture.initText("<selection>text<caret></selection>");
+      myFixture.addBlockInlay(0, true, 100);
+      myFixture.mouse().clickAtXY(50, myFixture.getEditor().getLineHeight() / 2);
+      myFixture.checkResultByText("<selection>text<caret></selection>");
+    });
   }
 
+  @Test
   public void testWordSelectionOnMouseDragAroundPunctuation() {
-    initText("((some (text)))");
-    EditorTestUtil.setEditorVisibleSize(getEditor(), 100, 100);
-    mouse().doubleClickNoReleaseAt(0, 4).dragTo(0, 12).release();
-    checkResultByText("((<selection>some (text)<caret></selection>))");
+    myFixture.runTest(() -> {
+      myFixture.initText("((some (text)))");
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 100, 100);
+      myFixture.mouse().doubleClickNoReleaseAt(0, 4).dragTo(0, 12).release();
+      myFixture.checkResultByText("((<selection>some (text)<caret></selection>))");
+    });
   }
 
+  @Test
   public void testSurrogatePairInputInOverwriteMode() {
-    initText("ab<caret>cd");
-    ((EditorEx)getEditor()).setInsertMode(false);
-    JComponent component = getEditor().getContentComponent();
-    component.dispatchEvent(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED,
-                                                 new AttributedString("\uD83D\uDE00" /* 'GRINNING FACE' emoji (U+1F600) */).getIterator(),
-                                                 2, null, null));
-    checkResultByText("ab\uD83D\uDE00d");
+    myFixture.runTest(() -> {
+      myFixture.initText("ab<caret>cd");
+      ((EditorEx)myFixture.getEditor()).setInsertMode(false);
+      JComponent component = myFixture.getEditor().getContentComponent();
+      component.dispatchEvent(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED,
+                                                   new AttributedString("\uD83D\uDE00" /* 'GRINNING FACE' emoji (U+1F600) */).getIterator(),
+                                                   2, null, null));
+      myFixture.checkResultByText("ab\uD83D\uDE00d");
+    });
   }
 
+  @Test
   public void testInputMethodComposing() {
-    initText("hello<caret>");
-    JComponent component = getEditor().getContentComponent();
-    component.dispatchEvent(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED,
-                                                 new AttributedString("\u3145" /* ㅅ */).getIterator(),
-                                                 0, TextHitInfo.afterOffset(0),
-                                                 TextHitInfo.afterOffset(-1)));
-    component.dispatchEvent(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED,
-                                                 new AttributedString("\u3146" /* ㅆ */).getIterator(),
-                                                 0, TextHitInfo.afterOffset(0),
-                                                 TextHitInfo.afterOffset(-1)));
-    checkResultByText("hello\u3146");
+    myFixture.runTest(() -> {
+      myFixture.initText("hello<caret>");
+      JComponent component = myFixture.getEditor().getContentComponent();
+      component.dispatchEvent(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED,
+                                                   new AttributedString("\u3145" /* ㅅ */).getIterator(),
+                                                   0, TextHitInfo.afterOffset(0),
+                                                   TextHitInfo.afterOffset(-1)));
+      component.dispatchEvent(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED,
+                                                   new AttributedString("\u3146" /* ㅆ */).getIterator(),
+                                                   0, TextHitInfo.afterOffset(0),
+                                                   TextHitInfo.afterOffset(-1)));
+      myFixture.checkResultByText("hello\u3146");
+    });
   }
 
+  @Test
   public void testInputMethodCaretMove() {
-    initText("hello<caret>");
-    JComponent component = getEditor().getContentComponent();
-    component.dispatchEvent(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED,
-                                                 new AttributedString("\u3145" /* ㅅ */).getIterator(),
-                                                 0, null, null));
-    component.dispatchEvent(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED,
-                                                 new AttributedString("\u3146" /* ㅆ */).getIterator(),
-                                                 0, null, null));
-    mouse().clickAtXY(0, getEditor().getLineHeight() / 2);
-    checkResultByText("<caret>hello\u3146");
+    myFixture.runTest(() -> {
+      myFixture.initText("hello<caret>");
+      JComponent component = myFixture.getEditor().getContentComponent();
+      component.dispatchEvent(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED,
+                                                   new AttributedString("\u3145" /* ㅅ */).getIterator(),
+                                                   0, null, null));
+      component.dispatchEvent(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED,
+                                                   new AttributedString("\u3146" /* ㅆ */).getIterator(),
+                                                   0, null, null));
+      myFixture.mouse().clickAtXY(0, myFixture.getEditor().getLineHeight() / 2);
+      myFixture.checkResultByText("<caret>hello\u3146");
+    });
   }
 
+  @Test
   public void testScrollingToCaretWithWideCharacters() {
-    FontLayoutService.setInstance(new MockFontLayoutService(cp -> cp == 'Z' ? 2 * TEST_CHAR_WIDTH : TEST_CHAR_WIDTH,
-                                                            TEST_LINE_HEIGHT, TEST_DESCENT));
-    initText(StringUtil.repeatSymbol('Z', 500) + "<caret>");
-    setEditorVisibleSize(100, 100);
-    type(' ');
-    Rectangle visibleArea = getEditor().getScrollingModel().getVisibleAreaOnScrollingFinished();
-    Point caretPosition = getEditor().visualPositionToXY(getEditor().getCaretModel().getVisualPosition());
-    assertTrue(visibleArea.contains(caretPosition));
+    myFixture.runTest(() -> {
+      FontLayoutService.setInstance(new MockFontLayoutService(cp -> cp == 'Z' ? 2 * TEST_CHAR_WIDTH : TEST_CHAR_WIDTH,
+                                                              TEST_LINE_HEIGHT, TEST_DESCENT));
+      myFixture.initText(StringUtil.repeatSymbol('Z', 500) + "<caret>");
+      myFixture.setEditorVisibleSize(100, 100);
+      myFixture.type(' ');
+      Rectangle visibleArea = myFixture.getEditor().getScrollingModel().getVisibleAreaOnScrollingFinished();
+      Point caretPosition = myFixture.getEditor().visualPositionToXY(myFixture.getEditor().getCaretModel().getVisualPosition());
+      assertTrue(visibleArea.contains(caretPosition));
+    });
   }
 
+  @Test
   public void testMouseSelectionWithBlockCaret() {
-    Registry.get("editor.block.caret.selection.vim-like").setValue(true, getTestRootDisposable());
-    initText("abcdef");
-    EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000);  // enable drag testing
-    getEditor().getSettings().setBlockCursor(true);
-    int y = getEditor().getLineHeight() / 2;
+    myFixture.runTest(() -> {
+      Registry.get("editor.block.caret.selection.vim-like").setValue(true, myFixture.getTestRootDisposable());
+      myFixture.initText("abcdef");
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 1000, 1000);  // enable drag testing
+      myFixture.getEditor().getSettings().setBlockCursor(true);
+      int y = myFixture.getEditor().getLineHeight() / 2;
 
-    mouse().pressAtXY(3 * TEST_CHAR_WIDTH + 1, y);
-    checkResultByText("abc<caret>def");
-    mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, y);
-    checkResultByText("abc<caret>def");
-    mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, y);
-    checkResultByText("ab<selection><caret>cd</selection>ef");
-    mouse().dragToXY(TEST_CHAR_WIDTH + 1, y);
-    checkResultByText("a<selection><caret>bcd</selection>ef");
-    mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, y);
-    checkResultByText("ab<selection><caret>cd</selection>ef");
-    mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, y);
-    checkResultByText("abc<selection><caret>d</selection>ef");
-    mouse().dragToXY(4 * TEST_CHAR_WIDTH + 1, y);
-    checkResultByText("abc<selection>d<caret>e</selection>f");
-    mouse().dragToXY(5 * TEST_CHAR_WIDTH + 1, y);
-    checkResultByText("abc<selection>de<caret>f</selection>");
-    mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, y);
-    checkResultByText("ab<selection><caret>cd</selection>ef");
-    mouse().dragToXY(5 * TEST_CHAR_WIDTH + 1, y);
-    checkResultByText("abc<selection>de<caret>f</selection>");
+      myFixture.mouse().pressAtXY(3 * TEST_CHAR_WIDTH + 1, y);
+      myFixture.checkResultByText("abc<caret>def");
+      myFixture.mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, y);
+      myFixture.checkResultByText("abc<caret>def");
+      myFixture.mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, y);
+      myFixture.checkResultByText("ab<selection><caret>cd</selection>ef");
+      myFixture.mouse().dragToXY(TEST_CHAR_WIDTH + 1, y);
+      myFixture.checkResultByText("a<selection><caret>bcd</selection>ef");
+      myFixture.mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, y);
+      myFixture.checkResultByText("ab<selection><caret>cd</selection>ef");
+      myFixture.mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, y);
+      myFixture.checkResultByText("abc<selection><caret>d</selection>ef");
+      myFixture.mouse().dragToXY(4 * TEST_CHAR_WIDTH + 1, y);
+      myFixture.checkResultByText("abc<selection>d<caret>e</selection>f");
+      myFixture.mouse().dragToXY(5 * TEST_CHAR_WIDTH + 1, y);
+      myFixture.checkResultByText("abc<selection>de<caret>f</selection>");
+      myFixture.mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, y);
+      myFixture.checkResultByText("ab<selection><caret>cd</selection>ef");
+      myFixture.mouse().dragToXY(5 * TEST_CHAR_WIDTH + 1, y);
+      myFixture.checkResultByText("abc<selection>de<caret>f</selection>");
+    });
   }
 
+  @Test
   public void testMouseSelectionAtLineEndWithBlockCaret() {
-    Registry.get("editor.block.caret.selection.vim-like").setValue(true, getTestRootDisposable());
-    initText("abc\ndef");
-    EditorTestUtil.setEditorVisibleSize(getEditor(), 1000, 1000);  // enable drag testing
-    getEditor().getSettings().setBlockCursor(true);
-    int line1Y = getEditor().getLineHeight() / 2;
-    int line2Y = getEditor().getLineHeight() * 3 / 2;
+    myFixture.runTest(() -> {
+      Registry.get("editor.block.caret.selection.vim-like").setValue(true, myFixture.getTestRootDisposable());
+      myFixture.initText("abc\ndef");
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 1000, 1000);  // enable drag testing
+      myFixture.getEditor().getSettings().setBlockCursor(true);
+      int line1Y = myFixture.getEditor().getLineHeight() / 2;
+      int line2Y = myFixture.getEditor().getLineHeight() * 3 / 2;
 
-    mouse().pressAtXY(3 * TEST_CHAR_WIDTH + 1, line1Y);
-    checkResultByText("abc<caret>\ndef");
-    mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, line1Y);
-    checkResultByText("abc<caret>\ndef");
-    mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, line1Y);
-    checkResultByText("ab<selection><caret>c\n</selection>def");
-    mouse().dragToXY(TEST_CHAR_WIDTH + 1, line1Y);
-    checkResultByText("a<selection><caret>bc\n</selection>def");
-    mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, line1Y);
-    checkResultByText("ab<selection><caret>c\n</selection>def");
-    mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, line1Y);
-    checkResultByText("abc<selection><caret>\n</selection>def");
-    mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, line2Y);
-    checkResultByText("abc<selection>\ndef<caret></selection>");
-    mouse().dragToXY(1, line2Y);
-    checkResultByText("abc<selection>\n<caret>d</selection>ef");
-    mouse().dragToXY(1, line1Y);
-    checkResultByText("<selection><caret>abc\n</selection>def");
+      myFixture.mouse().pressAtXY(3 * TEST_CHAR_WIDTH + 1, line1Y);
+      myFixture.checkResultByText("abc<caret>\ndef");
+      myFixture.mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, line1Y);
+      myFixture.checkResultByText("abc<caret>\ndef");
+      myFixture.mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, line1Y);
+      myFixture.checkResultByText("ab<selection><caret>c\n</selection>def");
+      myFixture.mouse().dragToXY(TEST_CHAR_WIDTH + 1, line1Y);
+      myFixture.checkResultByText("a<selection><caret>bc\n</selection>def");
+      myFixture.mouse().dragToXY(2 * TEST_CHAR_WIDTH + 1, line1Y);
+      myFixture.checkResultByText("ab<selection><caret>c\n</selection>def");
+      myFixture.mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, line1Y);
+      myFixture.checkResultByText("abc<selection><caret>\n</selection>def");
+      myFixture.mouse().dragToXY(3 * TEST_CHAR_WIDTH + 1, line2Y);
+      myFixture.checkResultByText("abc<selection>\ndef<caret></selection>");
+      myFixture.mouse().dragToXY(1, line2Y);
+      myFixture.checkResultByText("abc<selection>\n<caret>d</selection>ef");
+      myFixture.mouse().dragToXY(1, line1Y);
+      myFixture.checkResultByText("<selection><caret>abc\n</selection>def");
+    });
   }
 
+  @Test
   public void testPressAndHoldInputMethodOnMac() {
-    if (!SystemInfo.isMac) return; // macOS-specific test
-    initText("<caret>b");
-    JComponent component = getEditor().getContentComponent();
-    // 'A' key pressed
-    dispatchEventToEditor(new KeyEvent(component, KeyEvent.KEY_PRESSED, 0, 0, KeyEvent.VK_A, 'a', KeyEvent.KEY_LOCATION_STANDARD));
-    dispatchEventToEditor(new KeyEvent(component, KeyEvent.KEY_TYPED, 0, 0, KeyEvent.VK_UNDEFINED, 'a', KeyEvent.KEY_LOCATION_UNKNOWN));
-    checkResultByText("a<caret>b");
-    // popup with diacritic appears while key is held pressed
-    requestSelectedTextFromEditorViaImeApi();
-    checkResultByText("a<caret>b");
-    // 'A' key released
-    dispatchEventToEditor(new KeyEvent(component, KeyEvent.KEY_RELEASED, 1, 0, KeyEvent.VK_A, 'a', KeyEvent.KEY_LOCATION_STANDARD));
-    checkResultByText("a<caret>b");
-    // 'Right arrow' key pressed to select first variant from the popup
-    requestSelectedTextFromEditorViaImeApi();
-    dispatchEventToEditor(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED, 2,
-                                                 new AttributedString("\u00e0" /* LATIN SMALL LETTER A WITH GRAVE */).getIterator(), 0,
-                                                 null, TextHitInfo.beforeOffset(0)));
-    checkResultByText("\u00e0b"); // not checking caret/selection state, as we don't need to enforce the behaviour as of test creation time
-    // 'Right arrow' key released
-    dispatchEventToEditor(new KeyEvent(component, KeyEvent.KEY_RELEASED, 3, 0, KeyEvent.VK_RIGHT, KeyEvent.CHAR_UNDEFINED,
-                                         KeyEvent.KEY_LOCATION_STANDARD));
-    checkResultByText("\u00e0b"); // not checking caret/selection state, as we don't need to enforce the behaviour as of test creation time
-    // 'Enter' key pressed to confirm selected variant
-    requestSelectedTextFromEditorViaImeApi();
-    dispatchEventToEditor(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED, 4,
-                                                 new AttributedString("\u00e0" /* LATIN SMALL LETTER A WITH GRAVE */).getIterator(), 1,
-                                                 TextHitInfo.afterOffset(0), TextHitInfo.afterOffset(0)));
-    checkResultByText("\u00e0<caret>b");
-    // 'Enter' key released
-    dispatchEventToEditor(new KeyEvent(component, KeyEvent.KEY_RELEASED, 5, 0, KeyEvent.VK_ENTER, '\n', KeyEvent.KEY_LOCATION_STANDARD));
-    checkResultByText("\u00e0<caret>b");
+    myFixture.runTest(() -> {
+      if (!SystemInfo.isMac) return; // macOS-specific test
+      myFixture.initText("<caret>b");
+      JComponent component = myFixture.getEditor().getContentComponent();
+      // 'A' key pressed
+      dispatchEventToEditor(new KeyEvent(component, KeyEvent.KEY_PRESSED, 0, 0, KeyEvent.VK_A, 'a', KeyEvent.KEY_LOCATION_STANDARD));
+      dispatchEventToEditor(new KeyEvent(component, KeyEvent.KEY_TYPED, 0, 0, KeyEvent.VK_UNDEFINED, 'a', KeyEvent.KEY_LOCATION_UNKNOWN));
+      myFixture.checkResultByText("a<caret>b");
+      // popup with diacritic appears while key is held pressed
+      requestSelectedTextFromEditorViaImeApi();
+      myFixture.checkResultByText("a<caret>b");
+      // 'A' key released
+      dispatchEventToEditor(new KeyEvent(component, KeyEvent.KEY_RELEASED, 1, 0, KeyEvent.VK_A, 'a', KeyEvent.KEY_LOCATION_STANDARD));
+      myFixture.checkResultByText("a<caret>b");
+      // 'Right arrow' key pressed to select first variant from the popup
+      requestSelectedTextFromEditorViaImeApi();
+      dispatchEventToEditor(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED, 2,
+                                                   new AttributedString("\u00e0" /* LATIN SMALL LETTER A WITH GRAVE */).getIterator(), 0,
+                                                   null, TextHitInfo.beforeOffset(0)));
+      myFixture.checkResultByText("\u00e0b"); // not checking caret/selection state, as we don't need to enforce the behaviour as of test creation time
+      // 'Right arrow' key released
+      dispatchEventToEditor(new KeyEvent(component, KeyEvent.KEY_RELEASED, 3, 0, KeyEvent.VK_RIGHT, KeyEvent.CHAR_UNDEFINED,
+                                           KeyEvent.KEY_LOCATION_STANDARD));
+      myFixture.checkResultByText("\u00e0b"); // not checking caret/selection state, as we don't need to enforce the behaviour as of test creation time
+      // 'Enter' key pressed to confirm selected variant
+      requestSelectedTextFromEditorViaImeApi();
+      dispatchEventToEditor(new InputMethodEvent(component, InputMethodEvent.INPUT_METHOD_TEXT_CHANGED, 4,
+                                                   new AttributedString("\u00e0" /* LATIN SMALL LETTER A WITH GRAVE */).getIterator(), 1,
+                                                   TextHitInfo.afterOffset(0), TextHitInfo.afterOffset(0)));
+      myFixture.checkResultByText("\u00e0<caret>b");
+      // 'Enter' key released
+      dispatchEventToEditor(new KeyEvent(component, KeyEvent.KEY_RELEASED, 5, 0, KeyEvent.VK_ENTER, '\n', KeyEvent.KEY_LOCATION_STANDARD));
+      myFixture.checkResultByText("\u00e0<caret>b");
+    });
   }
 
-  public void testSelectionOutsideVisibleAreaWithBlockCaret() throws Exception {
-    Registry.get("editor.block.caret.selection.vim-like").setValue(true, getTestRootDisposable());
-    initText(StringUtil.repeatSymbol('\n', 20));
-    EditorTestUtil.setEditorVisibleSize(getEditor(), 10, 10);  // enable drag testing
-    getEditor().getSettings().setBlockCursor(true);
-    Registry.get("editor.scrolling.animation.interval.ms").setValue(1, getTestRootDisposable()); // make scrolling faster
+  @Test
+  public void testSelectionOutsideVisibleAreaWithBlockCaret() {
+    myFixture.runTest(() -> {
+      Registry.get("editor.block.caret.selection.vim-like").setValue(true, myFixture.getTestRootDisposable());
+      myFixture.initText(StringUtil.repeatSymbol('\n', 20));
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 10, 10);  // enable drag testing
+      myFixture.getEditor().getSettings().setBlockCursor(true);
+      Registry.get("editor.scrolling.animation.interval.ms").setValue(1, myFixture.getTestRootDisposable()); // make scrolling faster
 
-    EditorMouseFixture mouse = mouse();
-    mouse.pressAt(0, 0).dragTo(15, 0);
+      EditorMouseFixture mouse = myFixture.mouse();
+      mouse.pressAt(0, 0).dragTo(15, 0);
 
-    // scroll till all text is selected
-    while (getEditor().getSelectionModel().getSelectionEnd() != getEditor().getDocument().getTextLength()) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
+      // scroll till all text is selected
+      while (myFixture.getEditor().getSelectionModel().getSelectionEnd() != myFixture.getEditor().getDocument().getTextLength()) {
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      }
 
-    Rectangle visibleArea = getEditor().getScrollingModel().getVisibleArea();
-    mouse.dragToXY((int)visibleArea.getCenterX(), (int)visibleArea.getCenterY()).release(); // stop scrolling
+      Rectangle visibleArea = myFixture.getEditor().getScrollingModel().getVisibleArea();
+      mouse.dragToXY((int)visibleArea.getCenterX(), (int)visibleArea.getCenterY()).release(); // stop scrolling
 
-    assertEquals(0, getEditor().getSelectionModel().getSelectionStart());
-    assertTrue(getEditor().getSelectionModel().getSelectionEnd() > 0);
+      assertEquals(0, myFixture.getEditor().getSelectionModel().getSelectionStart());
+      assertTrue(myFixture.getEditor().getSelectionModel().getSelectionEnd() > 0);
+    });
   }
 
-  public void testLeadSelectionPosition() throws Exception {
-    initText("<caret>abc");
-    Caret caret = getEditor().getCaretModel().getPrimaryCaret();
+  @Test
+  public void testLeadSelectionPosition() {
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>abc");
+      Caret caret = myFixture.getEditor().getCaretModel().getPrimaryCaret();
 
-    caret.moveToOffset(1);
-    caret.setSelection(0, 1);
+      caret.moveToOffset(1);
+      caret.setSelection(0, 1);
 
-    assertEquals(0, caret.getLeadSelectionOffset());
-    assertEquals(new VisualPosition(0, 0), caret.getLeadSelectionPosition());
+      assertEquals(0, caret.getLeadSelectionOffset());
+      assertEquals(new VisualPosition(0, 0), caret.getLeadSelectionPosition());
+    });
   }
 
   // IJPL-214455 editor should survive exceptions thrown by document listeners
+  @Test
   public void testEditorIsNotCorruptedByNPE() {
-    initText("<caret>");
-    //noinspection deprecation
-    getEditor().getDocument().addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(@NotNull DocumentEvent event) {
-        throw new NullPointerException("dummy");
-      }
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>");
+      //noinspection deprecation
+      myFixture.getEditor().getDocument().addDocumentListener(new DocumentListener() {
+        @Override
+        public void documentChanged(@NotNull DocumentEvent event) {
+          throw new NullPointerException("dummy");
+        }
+      });
+      assertErrorLogged(NullPointerException.class, () -> myFixture.type('a'));
+      assertErrorLogged(NullPointerException.class, () -> myFixture.type('b'));
+      assertErrorLogged(NullPointerException.class, () -> myFixture.type('c'));
+      myFixture.checkResultByText("abc<caret>");
     });
-    assertErrorLogged(NullPointerException.class, () -> type('a'));
-    assertErrorLogged(NullPointerException.class, () -> type('b'));
-    assertErrorLogged(NullPointerException.class, () -> type('c'));
-    checkResultByText("abc<caret>");
   }
 
   // IJPL-214455 editor should survive exceptions thrown by document listeners
+  @Test
   public void testEditorIsNotCorruptedByPCE() {
-    initText("<caret>");
-    //noinspection deprecation
-    getEditor().getDocument().addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(@NotNull DocumentEvent event) {
-        throw new ProcessCanceledException();
-      }
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>");
+      //noinspection deprecation
+      myFixture.getEditor().getDocument().addDocumentListener(new DocumentListener() {
+        @Override
+        public void documentChanged(@NotNull DocumentEvent event) {
+          throw new ProcessCanceledException();
+        }
+      });
+      /* TODO: fix me IJPL-214455
+      assertErrorLoggedAndRethrown(ProcessCanceledException.class, () -> myFixture.type('a'));
+      assertErrorLoggedAndRethrown(ProcessCanceledException.class, () -> myFixture.type('b'));
+      assertErrorLoggedAndRethrown(ProcessCanceledException.class, () -> myFixture.type('c'));
+      myFixture.checkResultByText("abc<caret>");
+      */
     });
-    /* TODO: fix me IJPL-214455
-    assertErrorLoggedAndRethrown(ProcessCanceledException.class, () -> type('a'));
-    assertErrorLoggedAndRethrown(ProcessCanceledException.class, () -> type('b'));
-    assertErrorLoggedAndRethrown(ProcessCanceledException.class, () -> type('c'));
-    checkResultByText("abc<caret>");
-    */
   }
 
   // IJPL-214455 editor should survive exceptions thrown by document listeners
+  @Test
   public void testEditorIsNotCorruptedByNonSuppressibleException() {
-    initText("<caret>");
-    NullPointerException cachedException = new NullPointerException("dummy");
-    //noinspection deprecation
-    getEditor().getDocument().addDocumentListener(new DocumentListener() {
-      @Override
-      public void beforeDocumentChange(@NotNull DocumentEvent event) {
-        throw cachedException;
-      }
-      @Override
-      public void documentChanged(@NotNull DocumentEvent event) {
-        throw cachedException;
-      }
+    myFixture.runTest(() -> {
+      myFixture.initText("<caret>");
+      NullPointerException cachedException = new NullPointerException("dummy");
+      //noinspection deprecation
+      myFixture.getEditor().getDocument().addDocumentListener(new DocumentListener() {
+        @Override
+        public void beforeDocumentChange(@NotNull DocumentEvent event) {
+          throw cachedException;
+        }
+        @Override
+        public void documentChanged(@NotNull DocumentEvent event) {
+          throw cachedException;
+        }
+      });
+      assertErrorLoggedTwice(NullPointerException.class, () -> myFixture.type('a'));
+      assertErrorLoggedTwice(NullPointerException.class, () -> myFixture.type('b'));
+      assertErrorLoggedTwice(NullPointerException.class, () -> myFixture.type('c'));
+      myFixture.checkResultByText("abc<caret>");
     });
-    assertErrorLoggedTwice(NullPointerException.class, () -> type('a'));
-    assertErrorLoggedTwice(NullPointerException.class, () -> type('b'));
-    assertErrorLoggedTwice(NullPointerException.class, () -> type('c'));
-    checkResultByText("abc<caret>");
   }
 
   private void dispatchEventToEditor(AWTEvent event) {
     // this method ensures key events are dispatched to editor component, even if it's not focused
-    KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(getEditor().getContentComponent(), event);
+    KeyboardFocusManager.getCurrentKeyboardFocusManager().redispatchEvent(myFixture.getEditor().getContentComponent(), event);
   }
 
   private void requestSelectedTextFromEditorViaImeApi() {
-    getEditor().getContentComponent().getInputMethodRequests().getSelectedText(null);
+    myFixture.getEditor().getContentComponent().getInputMethodRequests().getSelectedText(null);
   }
 
   private static <T extends Throwable> void assertErrorLogged(Class<T> clazz, ThrowableRunnable<?> runnable) {
@@ -1203,7 +1513,7 @@ public class EditorImplTest extends AbstractEditorTest {
 
   @SuppressWarnings("SameParameterValue")
   private static <T extends Throwable> void assertErrorLoggedAndRethrown(Class<T> clazz, ThrowableRunnable<?> runnable) {
-    assertThrows(clazz, () -> assertErrorLogged(clazz, runnable));
+    UsefulTestCase.assertThrows(clazz, () -> assertErrorLogged(clazz, runnable));
   }
 
   @SuppressWarnings("SameParameterValue")
@@ -1213,10 +1523,10 @@ public class EditorImplTest extends AbstractEditorTest {
     }
     catch (TestLoggerFactory.TestLoggerAssertionError ex) {
       Throwable[] suppressed = ex.getSuppressed();
-      assertSize(2, suppressed);
+      assertThat(suppressed).hasSize(2);
       for (Throwable throwable : suppressed) {
-        assertInstanceOf(throwable, LoggedError.class);
-        assertInstanceOf(throwable.getCause(), clazz);
+        assertInstanceOf(LoggedError.class, throwable);
+        assertInstanceOf(clazz, throwable.getCause());
       }
     }
   }

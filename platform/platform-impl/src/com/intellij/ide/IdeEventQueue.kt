@@ -274,6 +274,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use version for NonLockedEventDispatcher")
   fun addDispatcher(dispatcher: EventDispatcher, parent: Disposable?) {
     addProcessor(dispatcher, parent, dispatchers)
@@ -281,15 +282,6 @@ class IdeEventQueue private constructor() : EventQueue() {
 
   fun addDispatcher(dispatcher: NonLockedEventDispatcher, parent: Disposable?) {
     addProcessor(dispatcher, parent, nonLockingDispatchers)
-  }
-  
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use version for NonLockedEventDispatcher")
-  fun addDispatcher(dispatcher: EventDispatcher, scope: CoroutineScope) {
-    dispatchers.add(dispatcher)
-    scope.coroutineContext.job.invokeOnCompletion {
-      dispatchers.remove(dispatcher)
-    }
   }
 
   fun addDispatcher(dispatcher: NonLockedEventDispatcher, scope: CoroutineScope) {
@@ -308,7 +300,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     nonLockingDispatchers.remove(dispatcher)
   }
 
-  fun containsDispatcher(dispatcher: EventDispatcher): Boolean = dispatchers.contains(dispatcher) || nonLockingDispatchers.contains(dispatcher)
+  fun containsDispatcher(dispatcher: NonLockedEventDispatcher): Boolean = dispatchers.contains(dispatcher) || nonLockingDispatchers.contains(dispatcher)
 
   fun addPostprocessor(dispatcher: EventDispatcher, parent: Disposable?) {
     addProcessor(dispatcher, parent, postProcessors)
@@ -812,14 +804,15 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
   }
 
-  fun interface EventDispatcher {
-    fun dispatch(e: AWTEvent): Boolean
-  }
+  @Deprecated("Use NonLockedEventDispatcher")
+  fun interface EventDispatcher: NonLockedEventDispatcher
 
   /**
    * Marker interface for [EventDispatcher] which means that the dispatcher can be invoked without the write-intent lock
    */
-  interface NonLockedEventDispatcher : EventDispatcher
+  fun interface NonLockedEventDispatcher {
+    fun dispatch(e: AWTEvent): Boolean
+  }
 
   val idleTime: Long
     get() = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - lastActiveTime)
@@ -1072,7 +1065,7 @@ private fun skipMoveResizeEvents(event: AWTEvent): Boolean {
   return false
 }
 
-private fun <T : IdeEventQueue.EventDispatcher> addProcessor(dispatcher: T, parent: Disposable?, set: MutableCollection<T>) {
+private fun <T : IdeEventQueue.NonLockedEventDispatcher> addProcessor(dispatcher: T, parent: Disposable?, set: MutableCollection<T>) {
   set.add(dispatcher)
   if (parent != null) {
     Disposer.register(parent) { set.remove(dispatcher) }

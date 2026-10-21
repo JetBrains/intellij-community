@@ -1,5 +1,17 @@
+load("@community//build:bazel_targets_json.bzl", "current_bazel_targets_json")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+BAZEL_TARGETS_JSON = current_bazel_targets_json()
+
+jps_test(
+    name = "propertyBased-tests_test",
+    data = [BAZEL_TARGETS_JSON],
+    jvm_flags = ["-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON],
+    tags = ["exploratory-tests"],
+    runtime_deps = [":propertyBased-tests_test_lib"],
+)
+### skip generation section `test intellij.java.propertyBased.tests`
 
 ### auto-generated section `build intellij.java.propertyBased.tests` start
 jvm_library(
@@ -27,6 +39,7 @@ jvm_library(
         "//community-resources:customization",
         "//java/langInjection",
         "//xml/langInjection",
+        "//plugins/ui-designer/jps-plugin:java-guiForms-jps",
     ],
 )
 
@@ -70,6 +83,7 @@ jvm_library(
         "//community-resources:customization_test_lib",
         "//java/langInjection:langInjection_test_lib",
         "//xml/langInjection:langInjection_test_lib",
+        "//plugins/ui-designer/jps-plugin:java-guiForms-jps_test_lib",
         "//platform/platform-impl/internal:internal_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
@@ -385,10 +399,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.java.propertyBased.tests` end
-
-### auto-generated section `test intellij.java.propertyBased.tests` start
-jps_test(
-    name = "propertyBased-tests_test",
-    runtime_deps = [":propertyBased-tests_test_lib"],
-)
-### auto-generated section `test intellij.java.propertyBased.tests` end

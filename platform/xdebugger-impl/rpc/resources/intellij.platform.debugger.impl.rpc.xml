@@ -5,7 +5,6 @@
 <idea-plugin visibility="internal" xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="fleet.rhizomedb"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.platform.concurrency"/>
@@ -17,7 +16,6 @@
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.rpc"/>
-    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.rpc.lite"/>
     <module name="intellij.platform.rpc.topics"/>

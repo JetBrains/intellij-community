@@ -51,6 +51,7 @@ import static com.intellij.notification.impl.NotificationsEventLogGroup.NOTIFICA
 import static com.intellij.notification.impl.NotificationsEventLogGroup.SETTINGS_CLICKED;
 import static com.intellij.notification.impl.NotificationsEventLogGroup.SEVERITY;
 import static com.intellij.notification.impl.NotificationsEventLogGroup.SHOWN;
+import static com.intellij.notification.impl.NotificationsEventLogGroup.SOUND_PLAYED;
 
 @ApiStatus.Internal
 @Service
@@ -88,6 +89,13 @@ public final class NotificationCollector {
     NotificationSeverity severity = getType(notification);
     data.add(SEVERITY.with(severity));
     LOGGED.log(project, data);
+  }
+
+  public void logSoundPlayed(@NotNull Notification notification, @NotNull NotificationDisplayType displayType) {
+    List<EventPair<?>> data = createNotificationData(notification.getGroupId(), notification.id, notification.getDisplayId());
+    data.add(DISPLAY_TYPE.with(displayType));
+    data.add(SEVERITY.with(getType(notification)));
+    SOUND_PLAYED.log(data);
   }
 
   private static @NotNull NotificationSeverity getType(@NotNull Notification notification) {

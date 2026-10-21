@@ -1,4 +1,4 @@
-# The host platforms of the build. `.bazelrc` sets `--host_platform` to one of them on Linux and on Windows.
+# The host platforms of the build. `.bazelrc` sets `--host_platform` to one of them on Linux, on macOS and on Windows.
 # The ultimate root uses the same platforms through aliases in its own `build/native/platforms` package.
 #
 # `@platforms//host` alone does not match the toolchains that an exec-configuration action needs:
@@ -6,13 +6,32 @@
 #    glibc version, because the default libc constraint is `unconstrained`.
 #  - On Windows, the rules_rs toolchain for `*-pc-windows-msvc` requires the `msvc` ABI. The default ABI constraint is
 #    `unconstrained`, so without this platform no Rust toolchain matches the exec configuration.
-# macOS needs no override.
+#  - On macOS, `@platforms//host` matches the toolchains. `local_macos` only gives the host a name in the output
+#    directory. See `local_macos`.
 
 platform(
     name = "local_linux",
     constraint_values = [
         "@llvm//constraints/libc:gnu.2.28",
     ],
+    parents = ["@platforms//host"],
+    visibility = ["//visibility:public"],
+)
+
+# That macOS host platform override adds no constraint to `@platforms//host` yet, its current purpose is to gives the
+# output directory of the host a name that no other platform could conflict with.
+# `--experimental_platform_in_output_dir` puts a short name of the target platform in the output directory.
+# e.g. Without `local_macos`, the host of an arm64 Mac and the `rules_go` platform `@rules_go//go/toolchain:darwin_arm64`
+# gets the same name which could lead to action conflict.
+#
+# We chose a host platform override over
+# ```
+# common:macos --experimental_override_platform_cpu_name=@bazel_tools//tools:host_platform=local_macos
+# ```
+# because it does not use an experimental feature and it gives a home for eventual future constraints need for the host
+# platform on macOS.
+platform(
+    name = "local_macos",
     parents = ["@platforms//host"],
     visibility = ["//visibility:public"],
 )
@@ -25,3 +44,55 @@ platform(
     parents = ["@platforms//host"],
     visibility = ["//visibility:public"],
 )
+
+# Settings that match the operating system and the CPU of the target platform, and nothing else. A `select` on them
+# works for `@bazel_tools//tools:host_platform` and for a platform with more constraints, such as a rules_rs triple.
+[
+    config_setting(
+        name = "{}_{}".format(os, cpu),
+        constraint_values = [
+            "@platforms//os:" + os,
+            "@platforms//cpu:" + cpu,
+        ],
+        visibility = ["//visibility:public"],
+    )
+    for os in [
+        "linux",
+        "macos",
+        "windows",
+    ]
+    for cpu in [
+        "aarch64",
+        "x86_64",
+    ]
+]
+
+# Bazel runs a test on an exec platform that has every constraint of the target platform of the test. No exec platform
+# has the libc constraints of a rules_rs Linux triple, or the gnu and gnullvm ABIs of a rules_rs Windows triple:
+# `local_linux` must keep `gnu.2.28`, and `local_windows` must keep `msvc` for the exec tools. These toolchains let such
+# a test run on any exec platform of the same operating system and CPU. A msvc test needs none.
+[
+    toolchain(
+        name = "{}_{}_{}_test_toolchain".format(os, cpu, variant),
+        exec_compatible_with = [
+            "@platforms//os:" + os,
+            "@platforms//cpu:" + cpu,
+        ],
+        target_compatible_with = [
+            "@platforms//os:" + os,
+            "@platforms//cpu:" + cpu,
+            constraint,
+        ],
+        toolchain = "@bazel_tools//tools/test:empty_toolchain",
+        toolchain_type = "@bazel_tools//tools/test:default_test_toolchain_type",
+    )
+    for os, cpu, variant, constraint in [
+        ("linux", "aarch64", "glibc", "@rules_rs//rs/platforms/constraints:glibc"),
+        ("linux", "aarch64", "musl", "@rules_rs//rs/platforms/constraints:musl"),
+        ("linux", "x86_64", "glibc", "@rules_rs//rs/platforms/constraints:glibc"),
+        ("linux", "x86_64", "musl", "@rules_rs//rs/platforms/constraints:musl"),
+        ("windows", "aarch64", "gnullvm", "@llvm//constraints/windows/abi:gnullvm"),
+        ("windows", "x86_64", "gnu", "@llvm//constraints/windows/abi:gnu"),
+        ("windows", "x86_64", "gnullvm", "@llvm//constraints/windows/abi:gnullvm"),
+    ]
+]

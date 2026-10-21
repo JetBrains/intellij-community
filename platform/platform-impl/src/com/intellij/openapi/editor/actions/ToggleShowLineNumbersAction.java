@@ -2,10 +2,8 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.editor.Editor;
-import org.jetbrains.annotations.ApiStatus;
 
-@ApiStatus.Internal
-public final class ToggleShowLineNumbersAction extends EditorToggleDecorationAction {
+final class ToggleShowLineNumbersAction extends EditorToggleDecorationAction {
   @Override
   protected void setOption(Editor editor, boolean state) {
     editor.getSettings().setLineNumbersShown(state);

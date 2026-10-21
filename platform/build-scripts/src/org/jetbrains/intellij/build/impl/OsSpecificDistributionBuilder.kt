@@ -152,6 +152,12 @@ interface OsSpecificDistributionBuilder {
   fun writeVmOptions(distBinDir: Path): Path
 
   /**
+   * Writes the vmoptions file of the embedded frontend into [distBinDir], as [copyFilesForOsDistribution] does, and
+   * returns it. The result is `null` when the product has no embedded frontend.
+   */
+  fun writeEmbeddedFrontendVmOptions(distBinDir: Path): Path?
+
+  /**
    * @return .dmg, .tag.gz, .exe or other distribution files built
    */
   fun distributionFilesBuilt(arch: JvmArchitecture): List<Path>

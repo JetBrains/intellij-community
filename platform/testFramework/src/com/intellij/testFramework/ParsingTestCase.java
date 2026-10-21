@@ -101,7 +101,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-/** @noinspection JUnitTestCaseWithNonTrivialConstructors*/
+/**
+ * @deprecated Use the JUnit 5 {@code parsingFixture} from {@code intellij.platform.testFramework.junit5.codeInsight}.
+ * Use the {@code ParsingTestFixture} companion functions in place of {@code doCheckResult}, {@code loadFileDefault}, and {@code toParseTreeText}.
+ * Use {@code ParsingTestUtil} in place of {@code ensureParsed} and {@code ensureCorrectReparse}.
+ * @noinspection JUnitTestCaseWithNonTrivialConstructors
+ */
+@Deprecated
 public abstract class ParsingTestCase extends UsefulTestCase {
   private PluginDescriptor pluginDescriptor;
 

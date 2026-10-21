@@ -5,8 +5,15 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 private const val EDITOR_IMPL_PACKAGE = "com.intellij.openapi.editor.impl"
 
@@ -28,7 +35,14 @@ private fun Throwable.acquisitionSite(): String? =
  * while the editor is built. See IJPL-243574. `SettingsImpl` answers for the tab character from a background
  * read action instead, so these tests also cover where that value comes from.
  */
-class EditorSettingsLockFreeCreationTest : AbstractEditorTest() {
+@TestApplication
+class EditorSettingsLockFreeCreationTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
+
   /**
    * `EditorTextField` builds its editor from `addNotify`, and that can run on `Dispatchers.UI`. It uses
    * the two-argument factory method, so this test uses the same one.
@@ -41,7 +55,8 @@ class EditorSettingsLockFreeCreationTest : AbstractEditorTest() {
    * The test watches the platform. A lock that a plugin `EditorFactoryListener` takes belongs to that plugin,
    * and Ultimate loads about 40 listeners that Community does not.
    */
-  fun testTheEditorIsBuiltWithoutTheRwLock() {
+  @Test
+  fun testTheEditorIsBuiltWithoutTheRwLock(): Unit = fixture.runTest {
     initText("abc")
     // Only the file branch of the indent options reads the PSI, so the test needs a document with a file.
     assertNotNull(editor.virtualFile)
@@ -60,8 +75,8 @@ class EditorSettingsLockFreeCreationTest : AbstractEditorTest() {
     }
 
     val platformLocks = reported.filter { it.acquisitionSite()?.startsWith("$EDITOR_IMPL_PACKAGE.") == true }
-    assertTrue("the platform took a lock while the editor was built: ${platformLocks.map { it.stackTraceToString() }}",
-               platformLocks.isEmpty())
+    assertTrue(platformLocks.isEmpty(),
+               "the platform took a lock while the editor was built: ${platformLocks.map { it.stackTraceToString() }}")
   }
 
   /**
@@ -75,7 +90,8 @@ class EditorSettingsLockFreeCreationTest : AbstractEditorTest() {
    * This does not cover the *cache* invalidation. `CacheableBackgroundComputable.getDefaultAndCompute`
    * keeps no cache in unit-test mode, so there is no cached value here to invalidate.
    */
-  fun testCodeStyleChangeReachesTheTabCharacter() {
+  @Test
+  fun testCodeStyleChangeReachesTheTabCharacter(): Unit = fixture.runTest {
     initText("abc")
     val settings = editor.settings
     val original = settings.isUseTabCharacter(project)
@@ -97,7 +113,8 @@ class EditorSettingsLockFreeCreationTest : AbstractEditorTest() {
    * Its default must therefore be the project setting, and not the global one. `SettingsImpl` seeds its own
    * computable from the same expression, so the two sides open on one value.
    */
-  fun testTheTabCharacterStateDefaultIsTheProjectSetting() {
+  @Test
+  fun testTheTabCharacterStateDefaultIsTheProjectSetting(): Unit = fixture.runTest {
     initText("abc")
     val projectValue = !CodeStyleSettings.getDefaults().indentOptions.USE_TAB_CHARACTER
     val manager = CodeStyleSettingsManager.getInstance(project)

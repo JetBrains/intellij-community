@@ -15,7 +15,7 @@ private content. A library whose types cross a plugin boundary belongs to the pl
 every dependent plugin reuses that copy. Only when neither route works does the module join a module set,
 because a set ships the library to every product that includes the set.
 
-Read [ADR 0005](../../../../../build/decisions/0005-a-library-copy-belongs-to-the-plugin-that-owns-its-api.md)
+Read [ADR 0005](../../../../../build/docs/decisions/0005-a-library-copy-belongs-to-the-plugin-that-owns-its-api.md)
 for the decision, and [content-module-copy-conflict.md](validators/content-module-copy-conflict.md) for the rule
 that enforces the middle route.
 
@@ -26,7 +26,7 @@ A module set groups platform content and the library wrappers that ship with it.
 the product builder can name. A library plugin is reserved for a fat, plugin-only library that a non-bundling
 product must be able to install. Do not add a module set for a group that one product uses.
 
-Read [ADR 0010](../../../../../build/decisions/0010-a-module-set-is-the-leaf-a-fragment-is-the-feature.md)
+Read [ADR 0010](../../../../../build/docs/decisions/0010-a-module-set-is-the-leaf-a-fragment-is-the-feature.md)
 for the decision and the rejected alternatives.
 
 ## How Module Sets Work

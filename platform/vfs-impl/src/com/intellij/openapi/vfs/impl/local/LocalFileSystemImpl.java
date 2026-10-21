@@ -20,9 +20,11 @@ import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
 import com.intellij.openapi.vfs.impl.SymlinksCapableFileSystem;
 import com.intellij.openapi.vfs.impl.local.windows.WindowsBufferedDirectoryStream;
 import com.intellij.openapi.vfs.newvfs.FileNavigator;
+import com.intellij.openapi.vfs.newvfs.FileSystemUnavailableException;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.UnavailabilityAwareFileSystem;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -43,6 +45,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -50,6 +53,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.StreamSupport;
 
@@ -61,7 +65,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @SuppressWarnings("removal")
 public class LocalFileSystemImpl
   extends LocalFileSystemBase
-  implements Disposable, BatchingFileSystem, VirtualFilePointerCapableFileSystem, SymlinksCapableFileSystem
+  implements Disposable, BatchingFileSystem, UnavailabilityAwareFileSystem, VirtualFilePointerCapableFileSystem, SymlinksCapableFileSystem
 {
   private static final int STATUS_UPDATE_PERIOD = 1000;
 
@@ -343,7 +347,14 @@ public class LocalFileSystemImpl
     // simulate logic in VirtualDirectoryImpl.findChild but for all files at once
     Map<VirtualFile, List<String>> newFilesToLoad = new LinkedHashMap<>();
     for (var file : files) {
-      var result = FileNavigator.navigate(this, file.toAbsolutePath().toString(), NON_REFRESHING_NAVIGATOR);
+      String absolutePathStr;
+      try {
+        absolutePathStr = file.toAbsolutePath().toString();
+      }
+      catch (InvalidPathException _) {
+        continue;
+      }
+      var result = FileNavigator.navigate(this, absolutePathStr, NON_REFRESHING_NAVIGATOR);
       if (result.isResolved()) {
         continue;
       }
@@ -448,12 +459,22 @@ public class LocalFileSystemImpl
 
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    if (OS.CURRENT == OS.Windows && file.getParent() == null && file.getPath().startsWith("//")) {
+    if (isUncRoot(file)) {
       return UNC_ROOT_ATTRIBUTES;
     }
 
     FileAttributes attributes = myAttributeGetter.accessDiskWithCheckCanceled(file);
     return attributes;
+  }
+
+  // not relayed: a checked exception cannot cross DiskQueryRelay, and the refresh calls this in a non-cancellable section
+  @Override
+  public @Nullable FileAttributes getAttributesOrThrowIfUnavailable(@NotNull VirtualFile file) throws FileSystemUnavailableException {
+    return isUncRoot(file) ? UNC_ROOT_ATTRIBUTES : readAttributesOrThrowIfUnavailable(file);
+  }
+
+  private static boolean isUncRoot(VirtualFile file) {
+    return OS.CURRENT == OS.Windows && file.getParent() == null && file.getPath().startsWith("//");
   }
 
   private static String[] listChildren(VirtualFile dir) {
@@ -464,7 +485,9 @@ public class LocalFileSystemImpl
     if (PlatformNioHelper.useWindowsBufferedDirectoryStream(nioPath)) {
       try (var dirStream = new WindowsBufferedDirectoryStream(nioPath)) {
         return StreamSupport.stream(dirStream.spliterator(), false)
-          .map(it -> it.getFirst().getFileName().toString())
+          .map(it -> it.getFirst())
+          .map(LocalFileSystemImpl::getFileNameOrNull)
+          .filter(Objects::nonNull)
           .toArray(String[]::new);
       }
       catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
@@ -473,7 +496,8 @@ public class LocalFileSystemImpl
     }
     try (var dirStream = Files.newDirectoryStream(nioPath)) {
       return StreamSupport.stream(dirStream.spliterator(), false)
-        .map(it -> it.getFileName().toString())
+        .map(LocalFileSystemImpl::getFileNameOrNull)
+        .filter(Objects::nonNull)
         .toArray(String[]::new);
     }
     catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
@@ -481,12 +505,41 @@ public class LocalFileSystemImpl
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  private static @Nullable String getFileNameOrNull(@NotNull Path path) {
+    try {
+      return path.getFileName().toString();
+    }
+    catch (InvalidPathException _) {
+      return null;
+    }
+  }
+
   @Override
   public @NotNull Map<@NotNull String, @NotNull FileAttributes> listWithAttributes(@NotNull VirtualFile dir, @Nullable Set<String> childrenNames) {
     return dir.isDirectory() ? myChildrenAttrGetter.accessDiskWithCheckCanceled(new Pair<>(dir, childrenNames)) : Map.of();
   }
 
+  // not relayed: a checked exception cannot cross DiskQueryRelay, and the refresh calls this in a non-cancellable section
+  @Override
+  public @NotNull Map<String, FileAttributes> listWithAttributesOrThrowIfUnavailable(
+    @NotNull VirtualFile dir,
+    @Nullable Set<String> names
+  ) throws FileSystemUnavailableException {
+    return dir.isDirectory() ? listWithAttributesImplOrThrowIfUnavailable(dir, names) : Map.of();
+  }
+
   private static Map<String, FileAttributes> listWithAttributesImpl(VirtualFile dir, @Nullable Set<String> filter) {
+    try {
+      return listWithAttributesImplOrThrowIfUnavailable(dir, filter);
+    }
+    catch (FileSystemUnavailableException e) {
+      LOG.warn(e);
+      return Map.of();
+    }
+  }
+
+  private static Map<String, FileAttributes> listWithAttributesImplOrThrowIfUnavailable(VirtualFile dir, @Nullable Set<String> filter)
+    throws FileSystemUnavailableException {
     try {
       var path = Path.of(toIoPath(dir));
       var paths = LocalFileSystemEelUtil.getAttributeListingPaths(path);
@@ -497,6 +550,7 @@ public class LocalFileSystemImpl
         return LocalFileSystemEelUtil.listWithAttributesUsingEel(paths.getSecond(), filter);
       }
     }
+    catch (FileSystemUnavailableException e) { throw e; }
     catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
     catch (IOException | RuntimeException e) { LOG.warn(e); }
     return Map.of();
@@ -532,10 +586,21 @@ public class LocalFileSystemImpl
 
   private static @Nullable FileAttributes readAttributes(VirtualFile file) {
     try {
+      return readAttributesOrThrowIfUnavailable(file);
+    }
+    catch (FileSystemUnavailableException e) {
+      LOG.warn(e);
+      return null;
+    }
+  }
+
+  private static @Nullable FileAttributes readAttributesOrThrowIfUnavailable(VirtualFile file) throws FileSystemUnavailableException {
+    try {
       var nioFile = Path.of(toIoPath(file));
       var attributes = readAttributesUsingEel(nioFile);
       return amendAttributes(nioFile, attributes);
     }
+    catch (FileSystemUnavailableException e) { throw e; }
     catch (NoSuchFileException e) { LOG.debug("File doesn't exist: " + e.getMessage()); }
     catch (AccessDeniedException e) { LOG.debug(e); }
     catch (IOException | RuntimeException e) { LOG.warn(e); }

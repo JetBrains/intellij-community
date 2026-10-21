@@ -9,6 +9,8 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
   </dependencies>
   <!-- endregion -->
   <!-- this module is included in the Performance Testing plugin in IntelliJ IDEs, but it can be also used as a separate library not from

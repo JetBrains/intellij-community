@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.credentialStore.keePass
 
 import com.intellij.credentialStore.CredentialAttributes
@@ -165,7 +165,7 @@ internal class KeePassCredentialStore(
 }
 
 class InMemoryCredentialStore : BaseKeePassCredentialStore() {
-  override val db = KeePassDatabase()
+  override val db: KeePassDatabase = KeePassDatabase()
 
   override fun markDirty() {}
 }
@@ -185,6 +185,6 @@ internal fun saveDatabase(dbFile: Path, db: KeePassDatabase, mainKey: MainKey, m
 
 internal fun copyTo(from: Map<CredentialAttributes, Credentials>, store: CredentialStore) {
   for ((k, v) in from) {
-    store.set(k, v)
+    store[k] = v
   }
 }

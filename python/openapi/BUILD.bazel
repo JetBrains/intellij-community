@@ -13,6 +13,8 @@ jvm_library(
             "src/**/*.kt",
             "src/**/*.java",
             "src/**/*.form",
+            "gen/**/*.kt",
+            "gen/**/*.java",
         ],
         allow_empty = True,
     ),
@@ -20,6 +22,8 @@ jvm_library(
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
+        allow_empty = True,
+        exclude = ["resources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
     exports = [

@@ -4,10 +4,10 @@ package org.jetbrains.jps.builders.java
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.jps.builders.BuildResult
-import org.jetbrains.jps.builders.JpsBuildTestCase
+import org.jetbrains.jps.builders.JpsBuildTestBase
 import java.io.File
 
-abstract class IncrementalBuildTestCase : JpsBuildTestCase() {
+abstract class IncrementalBuildTestCase : JpsBuildTestBase() {
   protected fun doTest(checkMappingAfterRebuild: Boolean = true,
                        actions: BuildTestActions.() -> Unit) {
     addModule("m", createDir("src"))

@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.PsiFileStub
 import com.intellij.psi.tree.IStubFileElementType
 import org.intellij.plugins.markdown.lang.MarkdownLazyElementType.obtainFlavour
-import org.intellij.plugins.markdown.lang.lexer.MarkdownToplevelLexer
+import org.intellij.plugins.markdown.lang.lexer.MarkdownParsedTreeLexer
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserManager
 import org.intellij.plugins.markdown.lang.parser.PsiBuilderFillingVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
@@ -18,7 +18,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
  * The root element type for Markdown files.
  *
  * The Markdown parser produces its own AST, while IntelliJ PSI is built through [PsiBuilder]. The parsed Markdown AST is
- * therefore created once here, then passed to [MarkdownToplevelLexer] to provide the builder with token boundaries and to
+ * therefore created once here, then passed to [MarkdownParsedTreeLexer] to provide the builder with token boundaries and to
  * [PsiBuilderFillingVisitor] to create the hierarchical IntelliJ AST. The lexer is backed by the already parsed tree and
  * does not invoke the Markdown parser again.
  *
@@ -34,7 +34,7 @@ open class MarkdownFileElementType: IStubFileElementType<PsiFileStub<MarkdownFil
 
     val startTime = System.nanoTime()
     val parsedTree = MarkdownParserManager.parseContent(chameleon.chars, flavour)
-    val lexer = MarkdownToplevelLexer(flavour, parsedTree)
+    val lexer = MarkdownParsedTreeLexer(parsedTree)
     val builder = PsiBuilderFactory.getInstance()
       .createBuilder(psi.project, chameleon, lexer, MarkdownLanguage.INSTANCE, chameleon.chars)
     ParsingDiagnostics.registerParse(builder, MarkdownLanguage.INSTANCE, System.nanoTime() - startTime)

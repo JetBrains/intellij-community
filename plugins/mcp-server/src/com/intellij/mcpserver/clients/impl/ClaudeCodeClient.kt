@@ -1,5 +1,6 @@
 package com.intellij.mcpserver.clients.impl
 
+import com.intellij.mcpserver.McpLaunchOrigin
 import com.intellij.mcpserver.clients.McpClient
 import com.intellij.mcpserver.clients.McpClientInfo
 import com.intellij.mcpserver.clients.configs.ClaudeCodeNetworkConfig
@@ -20,4 +21,8 @@ class ClaudeCodeClient(scope: McpClientInfo.McpClientScope, configPath: Path) : 
   override suspend fun getSSEConfig(): ServerConfig = ClaudeCodeNetworkConfig(type = "sse", url = sseUrl, headers = buildScopeHeaders())
 
   override suspend fun getStreamableHttpConfig(): ServerConfig = ClaudeCodeNetworkConfig(type = "http", url = streamableHttpUrl, headers = buildScopeHeaders())
+
+  // Claude Code expands the variable from its own environment. The header is empty when the variable is not set.
+  override fun buildScopeHeaders(): Map<String, String> =
+    super.buildScopeHeaders().orEmpty() + (McpLaunchOrigin.NAME to $$"${$${McpLaunchOrigin.NAME}:-}")
 }

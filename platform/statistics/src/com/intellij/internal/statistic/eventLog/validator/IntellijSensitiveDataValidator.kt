@@ -7,11 +7,11 @@ import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRuleFactory
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule
 import com.jetbrains.fus.reporting.api.RecorderDataValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.TestModeValidationRule
+import com.intellij.internal.statistic.eventLog.validator.rules.utils.CustomRuleReference
 import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider
 import com.intellij.internal.statistic.eventLog.validator.storage.IntellijValidationRulesStorage
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
@@ -89,11 +89,6 @@ open class IntellijSensitiveDataValidator protected constructor(
 ) : SensitiveDataValidator<MetadataStorage<EventLogBuild>>(fusComponents?.metadataStorage ?: EMPTY_METADATA_STORAGE) {
   companion object {
     private val instances = ConcurrentHashMap<String, Lazy<IntellijSensitiveDataValidator>>()
-
-    init {
-      CustomValidationRule.EP_NAME.addChangeListener({ instances.clear() }, null)
-      CustomValidationRuleFactory.EP_NAME.addChangeListener({ instances.clear() }, null)
-    }
 
     @JvmStatic
     fun clearInstances() {
@@ -224,7 +219,7 @@ open class IntellijSensitiveDataValidator protected constructor(
 
   private fun isTestModeEnabled(rule: IEventGroupRules?): Boolean {
     return StatisticsRecorderUtil.isTestModeEnabled(recorderId) && rule != null &&
-           rule.getEventIdRules().any { it is TestModeValidationRule }
+           rule.getEventIdRules().any { it is TestModeValidationRule || (it as? CustomRuleReference)?.resolve() is TestModeValidationRule }
   }
 
   suspend fun update() {

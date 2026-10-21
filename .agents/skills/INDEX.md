@@ -25,6 +25,7 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [jna](jna/SKILL.md) | Implement or debug JNA bindings and ABI layouts in Kotlin or Java. |
 | [kotlin-ui-dsl](kotlin-ui-dsl/SKILL.md) | Write IntelliJ dialogs and settings with Kotlin UI DSL v2 panels. |
 | [kotlin-ui-swing-component-architecture](kotlin-ui-swing-component-architecture/SKILL.md) | Design IntelliJ Swing UI components, state flow, and EDT work. |
+| [markdown-library-update](markdown-library-update/SKILL.md) | Update markdown-jvm and regenerate Bazel/Fleet metadata. |
 | [modcommand-migration](modcommand-migration/SKILL.md) | Convert LocalQuickFix or IntentionAction to the ModCommand API. |
 | [module-dependencies](module-dependencies/SKILL.md) | Add or modify IntelliJ module dependencies in `.iml` files. |
 | [module-set-pluginization](module-set-pluginization/SKILL.md) | Convert Product DSL module sets into bundled wrapper plugins. |
@@ -36,14 +37,13 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [pseudo-kmp](pseudo-kmp/SKILL.md) | Create or modify IntelliJ pseudo-KMP expect/actual modules. |
 | [py-code-insight-counters](py-code-insight-counters/SKILL.md) | Count Python code insight work in tests with PyCodeInsightCounters. |
 | [registry](registry/SKILL.md) | Use the IntelliJ Registry API for registry keys and feature flags. |
-| [rust-code-style](rust-code-style/SKILL.md) | Write or review Rust in the build tools: errors, CLI, crates, tests, lint, Bazel. |
+| [rust-code-style](rust-code-style/SKILL.md) | Write or review Rust in the build tools. |
 | [safe-push](safe-push/SKILL.md) | Push IntelliJ repository changes through the Safe Push workflow. |
 | [sibling-checkout-commits](sibling-checkout-commits/SKILL.md) | Take commits from a sibling checkout as patches, without a fetch. |
 | [ssr](ssr/SKILL.md) | Create or modify IntelliJ Structural Search and Replace patterns. |
 | [symbols-api](symbols-api/SKILL.md) | Use IntelliJ Symbol API for declarations, references, and rename. |
 | [testing](testing/SKILL.md) | Run or troubleshoot IntelliJ tests with `bt.cmd` or `tests.cmd`. |
 | [testing-internals](testing-internals/SKILL.md) | Debug IntelliJ `bt.cmd` and `tests.cmd` runs, discovery, and runner internals. |
-| [treehouse](treehouse/SKILL.md) | Safely acquire, inspect, and return leased Treehouse workspaces. |
 | [ui-accessibility](ui-accessibility/SKILL.md) | Review IntelliJ UI accessibility for keyboard, focus, and labels. |
 | [writing-tests](writing-tests/SKILL.md) | Write IntelliJ JUnit 5 tests with fixtures, lifecycle, and EDT. |
 | [youtrack-community](youtrack-community/SKILL.md) | YouTrack CLI for a community checkout; the monorepo uses `youtrack`. |

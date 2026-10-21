@@ -1,0 +1,11 @@
+// COMPILER_ARGUMENTS: -Xwhen-guards
+// HIGHLIGHT: GENERIC_ERROR_OR_WARNING
+// FIX: Introduce 'when' subject
+
+fun test(a: Any) {
+    when (a) {
+        is String -> Unit
+        is Int -> Unit
+        else -> Unit
+    }
+}

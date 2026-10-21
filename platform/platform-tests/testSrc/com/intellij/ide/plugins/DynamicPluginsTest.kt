@@ -14,6 +14,8 @@ import com.intellij.ide.plugins.testPluginSrc.IJPL233642.FooCore
 import com.intellij.ide.plugins.testPluginSrc.IJPL233642.FooCoreAppActivity
 import com.intellij.ide.plugins.testPluginSrc.bar.BarAction
 import com.intellij.ide.plugins.testPluginSrc.bar.BarService
+import com.intellij.ide.plugins.testPluginSrc.customScopes.MY_CUSTOM_SCOPE_ID
+import com.intellij.ide.plugins.testPluginSrc.customScopes.MyCustomScopesProvider
 import com.intellij.ide.plugins.testPluginSrc.foo.FooAction
 import com.intellij.ide.plugins.testPluginSrc.foo.bar.FooBarAction
 import com.intellij.ide.plugins.testPluginSrc.foo.bar.FooBarService
@@ -26,6 +28,7 @@ import com.intellij.ide.plugins.testPluginSrc.registryAccess.MyRegistryAccessor
 import com.intellij.ide.plugins.testPluginSrc.registryAccess.MyRegistryAccessorService
 import com.intellij.ide.plugins.testPluginSrc.testPSC.MyPersistentComponent
 import com.intellij.ide.plugins.testPluginSrc.testPSC.impl.MyPersistentComponentImpl
+import com.intellij.ide.plugins.testPluginSrc.typePresentation.TypePresentationLookupService
 import com.intellij.ide.plugins.testPluginSrc.uiSettingsListener.MyUISettingsListener
 import com.intellij.ide.plugins.testPluginSrc.uiSettingsListener.MyUISettingsListenerService
 import com.intellij.ide.plugins.testPluginSrc.uiSettingsListener.foo.MyFooUISettingsListener
@@ -55,6 +58,7 @@ import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
+import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue
@@ -93,6 +97,7 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.ui.switcher.ShowQuickActionPopupAction
 import com.intellij.util.KeyedLazyInstanceEP
 import com.intellij.util.application
+import com.intellij.util.ref.GCWatcher
 import com.intellij.util.ui.UIUtil
 import org.junit.Rule
 import org.junit.Test
@@ -786,6 +791,37 @@ class DynamicPluginsTest {
   }
 
   @Test
+  fun `type presentation lookup during unload does not keep plugin class loader`() {
+    val pluginSet = buildPluginSet(pluginsDir) {
+      plugin("plugin") {
+        includePackageClassFiles<TypePresentationLookupService>()
+      }
+    }
+    val plugin = pluginSet.getEnabledPlugin("plugin")
+    loadPluginInTestAndCheckClassLoaderCollected(plugin) {
+      assertThat(application.getTestHandleService<TypePresentationLookupService, _, _>(plugin)).isNotNull()
+    }
+  }
+
+  @Test
+  fun `custom scope of plugin is removed from cached scopes on unload`() {
+    val project = projectRule.project
+    val pluginSet = buildPluginSet(pluginsDir) {
+      plugin("plugin") {
+        extensions("""<customScopesProvider implementation="${MyCustomScopesProvider::class.java.name}"/>""")
+        includePackageClassFiles<MyCustomScopesProvider>()
+      }
+    }
+    val plugin = pluginSet.getEnabledPlugin("plugin")
+    val dependencyValidationManager = DependencyValidationManager.getInstance(project)
+    loadPluginInTestAndCheckClassLoaderCollected(plugin) {
+      dependencyValidationManager.fireScopeListeners()
+      assertThat(dependencyValidationManager.scopes.map { it.scopeId }).contains(MY_CUSTOM_SCOPE_ID)
+    }
+    assertThat(dependencyValidationManager.scopes.map { it.scopeId }).doesNotContain(MY_CUSTOM_SCOPE_ID)
+  }
+
+  @Test
   fun `project service can be acquired from extension listener - StartupActivity`() {
     val project = projectRule.project
     StartupManagerImpl.addActivityEpListener(project)
@@ -1427,6 +1463,18 @@ private fun loadPluginInTest(plugin: PluginMainDescriptor, actionWithPluginLoade
   finally {
     assertThat(unloadAndUninstallPlugin(plugin)).isTrue()
   }
+}
+
+/**
+ * Runs [loadPluginInTest] and then checks that nothing keeps the class loader of the plugin after the unload.
+ */
+private fun loadPluginInTestAndCheckClassLoaderCollected(plugin: PluginMainDescriptor, actionWithPluginLoaded: () -> Unit) {
+  lateinit var classLoaderWatcher: GCWatcher
+  loadPluginInTest(plugin) {
+    classLoaderWatcher = GCWatcher.tracking(plugin.pluginClassLoader)
+    actionWithPluginLoaded()
+  }
+  classLoaderWatcher.ensureCollectedWithinTimeout(10_000) { UIUtil.dispatchAllInvocationEvents() }
 }
 
 /** note: can't cast the output to [T], [T] can only be loaded by the isolated classloader of [descriptor] */

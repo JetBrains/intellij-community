@@ -13,14 +13,17 @@ import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.packaging.jlink.JpsJLinkProperties.CompressionLevel;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class JLinkArtifactBuildTest extends ArtifactBuilderTestCase {
 
+  @Test
   public void testImageBuild() {
     String firstModuleDescriptor = createFile("first/src/module-info.java", "module first { requires second; }");
     String firstModuleName = "first";

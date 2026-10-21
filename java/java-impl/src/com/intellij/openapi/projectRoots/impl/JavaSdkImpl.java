@@ -240,10 +240,6 @@ public final class JavaSdkImpl extends JavaSdk {
     return JavaHomeFinder.defaultJavaLocation(path);
   }
 
-  @Override
-  public @NotNull Collection<String> suggestHomePaths() {
-    return suggestHomePaths(null);
-  }
 
   @Override
   public @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {

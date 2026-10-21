@@ -104,6 +104,7 @@ import java.util.function.Supplier;
 public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implements DocumentListener, Disposable {
   private static final Logger LOG = Logger.getInstance(PsiDocumentManagerBase.class);
   private static final Key<Document> HARD_REF_TO_DOCUMENT = Key.create("HARD_REFERENCE_TO_DOCUMENT");
+  private static final Key<String> LAST_COMMIT_REASON = Key.create("LAST_COMMIT_REASON");
 
   private boolean isInsideCommitHandler; //accessed from EDT only
 
@@ -127,7 +128,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
    * version counter advances in each write action, while this state must span every write action until the document is
    * published. See {@link DocumentUncommittedStateManager}.
    */
-  private final DocumentUncommittedStateManager myUncommittedState = new DocumentUncommittedStateManager();
+  private final DocumentUncommittedStateManager myUncommittedState;
 
   private boolean myPerformBackgroundCommit = true;
 
@@ -142,6 +143,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
 
   protected PsiDocumentManagerBase(@NotNull Project project) {
     myProject = project;
+    myUncommittedState = new DocumentUncommittedStateManager(project);
     myPsiManager = PsiManager.getInstance(project);
     myDocumentCommitProcessor = ApplicationManager.getApplication().getService(DocumentCommitProcessor.class);
     mySynchronizer = new PsiToDocumentSynchronizer(this, project.getMessageBus());
@@ -655,7 +657,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
       myUncommittedState.recordForkedCommit(document, lightweight.getFrozen(), lightweight.getEventWatermark());
     }
     else {
-      publishCommit(document);
+      publishCommit(document, "reparse");
       if (virtualFile != null) {
         SmartPointerManagerEx.getInstanceEx(myProject).updatePointerTargetsAfterReparse(virtualFile);
       }
@@ -709,6 +711,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
 
     PsiFile psiFile = getPsiFile(document);
     if (psiFile == null) {
+      document.putUserData(LAST_COMMIT_REASON, "no PSI file");
       myUncommittedDocuments.remove(document);
       if (LOG.isTraceEnabled()) {
         LOG.trace("doCommit: " + document + " became committed since psiFile==null");
@@ -1186,24 +1189,25 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
 
     List<FileViewProvider> viewProviders = getCachedViewProviders(document);
     if (viewProviders.isEmpty()) {
-      handleCommitWithoutPsi(document);
+      commitChangeWithoutPsi(document);
       return;
     }
 
     if (!isRelevant) {
-      publishCommit(document);
+      publishCommit(document, "irrelevant file");
       return;
     }
 
 
     List<PsiFile> files = ContainerUtil.flatMap(viewProviders, p -> p.getAllFiles());
     if (files.isEmpty()) {
-      handleCommitWithoutPsi(document);
+      commitChangeWithoutPsi(document);
       return;
     }
 
-    boolean commitNecessary =
-      ContainerUtil.all(files, psiFile -> !PsiToDocumentSynchronizer.isInsideAtomicChange(psiFile) && psiFile instanceof PsiFileImpl);
+    boolean insideAtomicChange = ContainerUtil.exists(files, psiFile -> PsiToDocumentSynchronizer.isInsideAtomicChange(psiFile));
+    boolean allPsiFileImpl = ContainerUtil.all(files, psiFile -> psiFile instanceof PsiFileImpl);
+    boolean commitNecessary = !insideAtomicChange && allPsiFileImpl;
 
     Application application = ApplicationManager.getApplication();
     boolean forceCommit = ExternalChangeActionUtil.isExternalChangeInProgress() &&
@@ -1234,7 +1238,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
       }
     }
     else {
-      publishCommit(document);
+      publishCommit(document, insideAtomicChange ? "atomic PSI change" : "not PsiFileImpl");
     }
 
     // optimisation: avoid documents piling up during batch processing
@@ -1310,10 +1314,27 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     }
   }
 
+  private void commitChangeWithoutPsi(@NotNull Document document) {
+    if (document instanceof DocumentImpl && ((DocumentImpl)document).isWriteThreadOnly()) {
+      handleCommitWithoutPsi(document);
+      return;
+    }
+    if (InternalPsiVersioning.isInForkedTimeline()) {
+      return;
+    }
+    if (publishCommit(document, "no psi")) {
+      myUncommittedDocuments.remove(document);
+      myUncommittedDocumentTraces.remove(document);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("commitChangeWithoutPsi: " + document + " became committed");
+      }
+    }
+  }
+
   @ApiStatus.Internal
   @Override
   public void handleCommitWithoutPsi(@NotNull Document document) {
-    if (!publishCommit(document)) {
+    if (!publishCommit(document, "no view providers")) {
       return;
     }
 
@@ -1359,9 +1380,10 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
    * Ends the pending state of {@code document}, because the commit is now published, and moves the smart pointers of the
    * main timeline onto the new text.
    *
+   * @param reason the way the document became committed, for {@link #getLastCommitReason}
    * @return whether the document had a pending state
    */
-  private boolean publishCommit(@NotNull Document document) {
+  private boolean publishCommit(@NotNull Document document, @NotNull @NonNls String reason) {
     if (InternalPsiVersioning.isInForkedTimeline()) {
       LOG.error("A forked timeline must not publish a commit: " + document);
       return false;
@@ -1370,8 +1392,18 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManagerEx implem
     if (baseline == null) {
       return false;
     }
+    document.putUserData(LAST_COMMIT_REASON, reason);
     SmartPointerManagerEx.getInstanceEx(myProject).updatePointers(document, baseline.getFrozen(), baseline.getEventsSince());
     return true;
+  }
+
+  /**
+   * Returns the way the document last became committed in the main timeline, for diagnostics only.
+   * Returns {@code null} when the document did not get a commit yet.
+   */
+  @ApiStatus.Internal
+  public static @Nullable @NonNls String getLastCommitReason(@NotNull Document document) {
+    return getTopLevelDocument(document).getUserData(LAST_COMMIT_REASON);
   }
 
   @ApiStatus.Internal

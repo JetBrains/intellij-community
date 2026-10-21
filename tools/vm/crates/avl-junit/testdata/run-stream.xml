@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="4" failures="2" errors="0" skipped="1" time="42.845">
+  <testsuite name="AirComposerGeneratedFlowUiTest" tests="2" failures="1" errors="0" skipped="0" time="42.845">
+    <testcase classname="AirComposerGeneratedFlowUiTest" name="send-prompt" time="12.345"/>
+    <testcase classname="AirComposerGeneratedFlowUiTest" name="attach-file" time="30.500">
+      <failure message="instruction 4 assert-chip-visible: the chip &lt;a.txt&gt; is not visible" type="com.intellij.air.integration.AirFlowAssertionError"><![CDATA[instruction 4 assert-chip-visible: the chip <a.txt> is not visible
+within 30000 ms
+caused by: java.lang.IllegalStateException: no chip [a.txt] | the prompt holds ]]]]><![CDATA[> & nothing else
+	at com.intellij.air.integration.bridge.AirChipAssertions.visible(AirChipAssertions.kt:41)]]></failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="AirSessionTabsGeneratedFlowUiTest" tests="1" failures="0" errors="0" skipped="1" time="0.000">
+    <testcase classname="AirSessionTabsGeneratedFlowUiTest" name="open-tab" time="0.000">
+      <skipped message="scenario 'open-tab' never ran: the recycle budget of 3 is spent"/>
+    </testcase>
+  </testsuite>
+  <testsuite name="AirRegistryGeneratedFlowUiTest" tests="1" failures="1" errors="0" skipped="0" time="0.000">
+    <testcase classname="AirRegistryGeneratedFlowUiTest" name="registry" time="0.000">
+      <failure message="the prologue of the suite 'registry' failed: lifecycle/reset-managed-agents answered HTTP 500" type="prologue_failed"><![CDATA[the prologue of the suite 'registry' failed: lifecycle/reset-managed-agents answered HTTP 500
+caused by: the bridge answered {"type":"java.util.concurrent.TimeoutException"}]]></failure>
+    </testcase>
+  </testsuite>
+</testsuites>

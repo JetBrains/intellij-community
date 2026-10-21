@@ -48,6 +48,8 @@ interface ToolWindowStripeExtension {
 
   fun isToolWindowNameVisible(): Boolean
 
+  fun isShowToolWindowsNumbersSupported(): Boolean
+
   fun getStripeIconUnscaledSize(): Int
 
   fun getIconPadding(toolbarAnchor: ToolWindowAnchor): JBInsets

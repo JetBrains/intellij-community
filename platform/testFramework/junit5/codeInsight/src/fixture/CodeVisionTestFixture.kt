@@ -26,7 +26,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase.assertEquals
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
-import com.intellij.testFramework.utils.codeVision.CodeVisionTestCase
+import com.intellij.testFramework.utils.codeVision.CodeVisionTestUtil
 import com.intellij.util.ArrayUtilRt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -54,7 +54,7 @@ class CodeVisionTestFixture(
     project.waitForSmartMode()
     val codeVisionHost = readAction { CodeVisionInitializer.getInstance(project).getCodeVisionHost() }
 
-    withContext(Dispatchers.EDT) {
+    val newFile = withContext(Dispatchers.EDT) {
       writeIntentReadAction {
         val settings = CodeVisionSettings.getInstance()
         val file = requireNotNull(PsiManager.getInstance(project).findFile(virtualFile, context))
@@ -73,9 +73,13 @@ class CodeVisionTestFixture(
           document.setText(sourceText)
           PsiDocumentManager.getInstance(project).commitDocument(editor.document)
         }
-        val newFile = requireNotNull(PsiDocumentManager.getInstance(project).getPsiFile(document, context))
-        doHighlighting(newFile)
-        CodeVisionTestCase.waitForCodeVisionSync(editor, codeVisionHost, disposable)
+        requireNotNull(PsiDocumentManager.getInstance(project).getPsiFile(document, context))
+      }
+    }
+    doHighlighting(newFile)
+    withContext(Dispatchers.EDT) {
+      writeIntentReadAction {
+        CodeVisionTestUtil.waitForCodeVisionSync(editor, codeVisionHost, disposable)
       }
     }
     assertText(expectedText)
@@ -93,7 +97,7 @@ class CodeVisionTestFixture(
 
 
   private fun dumpCodeVisionHints(sourceText: String): String {
-    return CodeVisionTestCase.dumpCodeVisionHints(sourceText, editor, onlyCodeVisionHintsAllowed)
+    return CodeVisionTestUtil.dumpCodeVisionHints(sourceText, editor, onlyCodeVisionHintsAllowed)
   }
 }
 

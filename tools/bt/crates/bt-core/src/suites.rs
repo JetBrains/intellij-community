@@ -63,13 +63,6 @@ pub struct AffectedSuite {
     /// `module:<name>` entries, sorted. Each entry names the authored fact that matched, not the path that matched
     /// it, so a caller that disagrees with the selection can see what produced it.
     pub via: Vec<String>,
-    /// A suite of the authored suites file, which has no scenario document.
-    #[serde(default, skip_serializing_if = "is_false")]
-    pub authored: bool,
-}
-
-fn is_false(value: &bool) -> bool {
-    !value
 }
 
 /// One named path that reaches no suite, and why.
@@ -102,7 +95,7 @@ pub struct Affected {
     pub suites: Vec<AffectedSuite>,
     pub unmapped: Vec<UnmappedPath>,
     /// The distinct lanes of the suites, sorted. More than one lane is a caller decision rather than an answer:
-    /// one iteration runs one lane's tag, and a GUI-chat suite needs the guest the user chose.
+    /// one iteration runs one lane, and a GUI-chat suite needs the guest the user chose.
     pub lanes: Vec<String>,
 }
 
@@ -130,6 +123,10 @@ pub fn affected_answer(area: &Area, documents: &[SuiteDocument], via: &Via, unma
     let mut lane_names = BTreeSet::new();
     for (&index, reasons) in via {
         let document = &documents[index];
+        // A changed path or a flow never reaches a suite of an explicit-only lane (ADR 0200).
+        if document.is_explicit_only(lanes) {
+            continue;
+        }
         let Some(lane) = document.lane_name(lanes) else {
             return Err(fail_infra(format!(
                 "suite {} declares lane {}, which the lane table {} does not declare; it declares {}",
@@ -145,7 +142,6 @@ pub fn affected_answer(area: &Area, documents: &[SuiteDocument], via: &Via, unma
             lane: lane.to_owned(),
             class: document.test_class_name.clone(),
             via: reasons.iter().cloned().collect(),
-            authored: document.authored,
         });
     }
     suites.sort_by(|first, second| (&first.lane, &first.suite).cmp(&(&second.lane, &second.suite)));
@@ -290,8 +286,8 @@ impl ScenarioFlows {
     }
 }
 
-/// The suites a flow or a suite selector names. A suite id names a generated suite or an authored one; a flow id
-/// names generated suites only, because an authored suite states no flow.
+/// The suites a flow or a suite selector names. A suite id names one suite document, and a flow id names every suite
+/// whose scenarios tell or walk the flow.
 ///
 /// Each suite carries `flow:<id>` or `suite:<id>` in its `via`, the spelling a path's tag gives, so every consumer
 /// of an [`Affected`] reads this answer unchanged. It never answers an empty selection: an unknown id is a usage
@@ -316,18 +312,33 @@ pub fn named_suites(runtime: &dyn Runtime, area: &Area, selector: &Selector) -> 
                 "suite",
                 &selector.name,
                 known,
-                &format!(
-                    "a suite id is the name of a document under {} or a suite of {}",
-                    catalog.flow_profile_dir, catalog.authored_suites_file
-                ),
+                &format!("a suite id is the name of a document under {}", catalog.flow_profile_dir),
             ));
         };
+        let document = &documents[suite];
+        if document.is_explicit_only(area.lanes()) {
+            let lane = document.lane_name(area.lanes()).unwrap_or_default();
+            return Err(Refusal::new(
+                "explicit_only_lane",
+                exit::USAGE,
+                format!(
+                    "the suite {} belongs to the explicit-only lane {lane}, which no suite id, flow or changed path \
+                     reaches; run it with --lane {lane}",
+                    selector.name
+                ),
+            ));
+        }
         note_via(&mut via, suite, format!("suite:{}", selector.name));
         return affected_answer(area, &documents, &via, Vec::new());
     }
 
     let by_flow = suites_by_flow(&documents);
-    for &suite in by_flow.get(&selector.name).into_iter().flatten() {
+    let reached = by_flow
+        .get(&selector.name)
+        .into_iter()
+        .flatten()
+        .filter(|&&suite| !documents[suite].is_explicit_only(area.lanes()));
+    for &suite in reached {
         note_via(&mut via, suite, format!("flow:{}", selector.name));
     }
     if !via.is_empty() {

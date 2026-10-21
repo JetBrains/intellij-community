@@ -51,7 +51,7 @@ import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
-import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
+import org.intellij.plugins.markdown.extensions.jcef.commandRunner.MarkdownCommandRunnerPreviewExtension
 import org.intellij.plugins.markdown.settings.pandoc.PandocSettingsPanel
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
@@ -143,8 +143,8 @@ internal class MarkdownSettingsConfigurable(private val project: Project) : Boun
       row {
         checkBox(MarkdownBundle.message("markdown.settings.commandrunner.text")).apply {
           bindSelected(
-            getter = { CommandRunnerExtension.isExtensionEnabled() },
-            setter = { MarkdownExtensionsSettings.getInstance().extensionsEnabledState[CommandRunnerExtension.extensionId] = it }
+            getter = { MarkdownCommandRunnerPreviewExtension.isEnabled() },
+            setter = { MarkdownExtensionsSettings.getInstance().extensionsEnabledState[MarkdownCommandRunnerPreviewExtension.EXTENSION_ID] = it }
           )
           onApply { notifyExtensionsChanged() }
         }

@@ -6,21 +6,20 @@ GOTO :CMDSCRIPT
 # Shared runner: build one Bazel target, then run it.
 #
 # A caller is a thin `.cmd` that sets the variables below and then hands control to this file.
-# `community/tools/treehouse.cmd` and `build/dev-dist.cmd` are the two callers. The split copies `bun.cmd` plus
-# `tool-wrapper.*`: the per-tool file holds only the facts, and one implementation holds the mechanics.
+# `build/dev-dist.cmd` is the caller. The split copies `bun.cmd` plus `tool-wrapper.*`: the per-tool file holds only
+# the facts, and one implementation holds the mechanics.
 #
-# Built and then run, rather than `bazel run`: these commands run Bazel themselves, and `bazel run` holds the
-# workspace lock while the binary it built executes, so the nested build would wait for its own parent. Treehouse
-# needs this more sharply than dev-dist. An agent acquires a workspace and then runs Bazel inside it, so the lock
-# must be free before the binary starts.
+# Built and then run, rather than `bazel run`: the caller runs Bazel itself, and `bazel run` holds the
+# workspace lock while the binary it built executes, so the nested build would wait for its own parent.
 #
 # Variable contract, set by the caller:
 #
 #   BAZEL_RUN_TARGET        Required. The Bazel label, with no repository prefix. Example:
-#                          `//build/treehouse:treehouse`. This file adds `@community` when it is needed.
+#                          `//build/dev-dist-tools/bins/dev-dist:dev-dist_opt`. This file adds `@community` when it is
+#                          needed.
 #   BAZEL_RUN_BINARY        Required. The path of the built binary below `out/bazel-bin`. Use `/` separators and no
-#                          file extension. Example: `build/treehouse/treehouse_/treehouse`. The Windows half swaps
-#                          the separators and appends `.exe`, so one value serves both halves.
+#                          file extension. Example: `build/dev-dist-tools/bins/dev-dist/dev-dist_opt/dev-dist`. The
+#                          Windows half swaps the separators and appends `.exe`, so one value serves both halves.
 #   BAZEL_RUN_IN_COMMUNITY  Optional. Set it to `1` when the target lives below `community/`. Both the label and the
 #                          output path change in an Ultimate checkout. See "Two checkout layouts" below.
 #   BAZEL_RUN_NAME          Optional. The name this file prints in a diagnostic. Default: `bazel-build-run`.

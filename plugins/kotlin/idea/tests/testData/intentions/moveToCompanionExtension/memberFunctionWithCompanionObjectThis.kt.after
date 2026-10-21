@@ -1,0 +1,9 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+
+class B6 {
+    companion object {
+        fun defaults() = 6
+    }
+}
+
+companion fun B6.withDefaults() = Companion.defaults() + Companion.hashCode()

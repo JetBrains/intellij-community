@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.plugins.github.authentication.AuthorizationType
 import org.jetbrains.plugins.github.authentication.GHAccountsUtil
 import org.jetbrains.plugins.github.authentication.GHLoginSource
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -27,7 +26,7 @@ open class GHApiLoadingErrorHandler(private val project: Project,
 
   private inner class ReLoginAction : AbstractAction(GithubBundle.message("accounts.relogin")) {
     override fun actionPerformed(e: ActionEvent?) {
-      if (GHAccountsUtil.requestReLogin(account, project, authType = AuthorizationType.UNDEFINED, loginSource = loginSource) != null) {
+      if (GHAccountsUtil.reLogIn(account, project, loginSource = loginSource)) {
         resetRunnable()
       }
     }

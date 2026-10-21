@@ -8,7 +8,6 @@
 - a:getTopic():com.intellij.platform.rpc.topics.ApplicationRemoteTopic
 - a:handleEvent(java.lang.Object):V
 *f:com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener$Companion
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 *:com.intellij.platform.rpc.topics.ProjectRemoteTopic
 - com.intellij.platform.rpc.topics.RemoteTopic
 *f:com.intellij.platform.rpc.topics.ProjectRemoteTopicKt
@@ -19,7 +18,6 @@
 - a:getTopic():com.intellij.platform.rpc.topics.ProjectRemoteTopic
 - a:handleEvent(com.intellij.openapi.project.Project,java.lang.Object):V
 *f:com.intellij.platform.rpc.topics.ProjectRemoteTopicListener$Companion
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 *:com.intellij.platform.rpc.topics.RemoteTopic
 - a:getId():java.lang.String
 - a:getSerializer():kotlinx.serialization.KSerializer

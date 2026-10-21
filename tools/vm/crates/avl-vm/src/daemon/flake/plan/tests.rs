@@ -31,26 +31,20 @@ fn stamp(minute: usize) -> String {
 /// A finished report of the shape the report builder produces, assembled from a class list.
 fn report_of(passed: &[&str], failed: &[&str]) -> RunReport {
     let names: Vec<&str> = passed.iter().chain(failed).copied().collect();
-    let suites: Vec<serde_json::Value> = names
+    let cases: Vec<serde_json::Value> = names
         .iter()
         .enumerate()
         .map(|(index, class_name)| {
-            let failures = u32::from(failed.contains(class_name));
-            json!({
-                "name": class_name, "timestamp": stamp(index + 1), "durationMs": 1_000.0,
-                "documentIndex": index, "tests": 1, "failures": failures, "errors": 0, "skipped": 0,
-                "cases": [{"className": class_name, "name": "test",
-                    "status": if failures == 1 { "failed" } else { "passed" }, "durationMs": 1_000.0}],
-            })
+            let status = if failed.contains(class_name) { "failed" } else { "passed" };
+            json!({"className": class_name, "name": "test", "status": status, "durationMs": 1_000.0,
+                "startedAt": stamp(index + 1)})
         })
         .collect();
     let failures: Vec<serde_json::Value> = failed
         .iter()
-        .enumerate()
-        .map(|(index, class_name)| {
+        .map(|class_name| {
             json!({
-                "source": "junit_xml", "suite": class_name, "suiteTimestamp": stamp(passed.len() + index + 1),
-                "className": class_name, "testName": "test", "kind": "failure",
+                "className": class_name, "testName": "test", "kind": "test",
                 "message": format!("{class_name} failed"), "relevantFrames": [],
                 "messageTruncated": false, "detailTruncated": false,
             })
@@ -77,9 +71,7 @@ fn report_of(passed: &[&str], failed: &[&str]) -> RunReport {
         "ordering": avl_wire::report::ORDERING,
         "execution": {"testsStarted": names.len(), "testsFailed": failed.len(), "testsSkipped": 0,
             "containersSkipped": 0, "containerFailures": 0},
-        "xml": {"tests": names.len(), "failures": failed.len(), "errors": 0, "skipped": 0},
-        "source": {"guestPath": "/worker/daemon/test.xml", "retrieval": "daemon_http", "integrity": "complete"},
-        "suites": suites,
+        "cases": cases,
         "failures": failures,
         "watchdog": {},
     }))

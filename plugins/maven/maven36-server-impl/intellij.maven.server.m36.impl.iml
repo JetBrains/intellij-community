@@ -11,7 +11,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.maven.server" />
     <orderEntry type="module" module-name="intellij.libraries.commons.logging" />
-    <orderEntry type="module" module-name="intellij.maven" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.server.m3.common" />
     <orderEntry type="module" module-name="intellij.maven.server.m3.impl" />
     <orderEntry type="module-library" scope="PROVIDED">
@@ -644,24 +643,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.25/slf4j-api-1.7.25-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/commons-cli/commons-cli/1.4/commons-cli-1.4-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.8.1/commons-lang3-3.8.1-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library" scope="PROVIDED">
-      <library name="org.apache.maven.shared:maven-dependency-tree:1.2" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.apache.maven.shared:maven-dependency-tree:1.2">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-dependency-tree/1.2/maven-dependency-tree-1.2.jar">
-              <sha256sum>dbb8c53ccc0b16a9dd8370d6e7de63102468caedac1e5fa2eb418319a6875293</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-dependency-tree/1.2/maven-dependency-tree-1.2.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-dependency-tree/1.2/maven-dependency-tree-1.2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

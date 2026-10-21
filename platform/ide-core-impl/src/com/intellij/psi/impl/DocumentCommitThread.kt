@@ -20,6 +20,7 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.useBackgroundWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.editor.Document
@@ -47,6 +48,8 @@ import com.intellij.util.SmartList
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.SequentialTaskExecutor
 import com.intellij.util.ui.EDT
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -62,19 +65,18 @@ import java.lang.ref.WeakReference
 import java.util.Objects
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentMap
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
-private val LOG = logger<DocumentCommitThread>()
-
 @ApiStatus.Internal
 class DocumentCommitThread : DocumentCommitProcessor, Disposable {
-  private val isDisposed
+  private val isDisposed: Boolean
     get() = myExecutor.isShutdown
-  private val myExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Document Commit Pool")
+  private val myExecutor: ExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Document Commit Pool")
 
   // it does not make sense to commit several documents in parallel, as they end in write action, so they'll invalidate each other
-  private val commitDispatcher = Dispatchers.Default.limitedParallelism(1, "Document commit dispatcher")
+  private val commitDispatcher: CoroutineDispatcher = Dispatchers.Default.limitedParallelism(1, "Document commit dispatcher")
 
   /**
    * Asynchronous document commit is a sequence of read actions where each of them is followed by a write action.
@@ -87,7 +89,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
    * It has a side effect that at most one "read" part can run while the EDT holds a write-intent lock;
    * but that is arguably the desirable behavior, as we know that a pending write action will invalidate all other possible "read" parts
    */
-  private val commitDispatcherSuspender = Semaphore(1)
+  private val commitDispatcherSuspender: Semaphore = Semaphore(1)
 
   companion object {
     @JvmStatic
@@ -96,6 +98,8 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     private fun canUseCoroutinesForDocumentCommit(): Boolean {
       return useBackgroundWriteAction && Registry.`is`("document.async.commit.with.coroutines")
     }
+    private val LOG: Logger = logger<DocumentCommitThread>()
+    private val CANCEL_PREVIOUS_JOB: CancellationException = java.util.concurrent.CancellationException("Previous job canceled")
   }
 
   override fun dispose() {
@@ -174,7 +178,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     }
     val existingJob = service.publishedDocumentCommitRequests.put(document, job)
     // following the logic of NBRA, we retain only the latest request to commit
-    existingJob?.cancel()
+    existingJob?.cancel(CANCEL_PREVIOUS_JOB)
     job.start()
   }
 
@@ -260,7 +264,7 @@ class DocumentCommitThread : DocumentCommitProcessor, Disposable {
     val viewProviders = findViewProvidersForCommit(document, project)
     if (viewProviders.isEmpty()) {
       if (commitTaskKind !is DocumentCommitKind.Lightweight) {
-        // handleCommitWithoutPsi fires events and performs reload of viewproviders
+        // handleCommitWithoutPsi fires events and performs reload of view providers
         // we don't need these things for just updating the PSI tree
         finishProcessors.add(handleCommitWithoutPsi(task, documentManager))
       }

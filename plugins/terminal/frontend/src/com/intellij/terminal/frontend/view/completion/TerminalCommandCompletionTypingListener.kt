@@ -2,6 +2,7 @@ package com.intellij.terminal.frontend.view.completion
 
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.Disposer
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
@@ -77,7 +79,7 @@ internal class TerminalCommandCompletionTypingListener private constructor(
     }
   }
 
-  private fun onCharTyped(
+  private suspend fun onCharTyped(
     beforeTypingCursorOffset: TerminalOffset,
     char: Char,
   ) {
@@ -86,7 +88,9 @@ internal class TerminalCommandCompletionTypingListener private constructor(
     }
     if (isTypingHappened(beforeTypingCursorOffset, char)) {
       // If typing already happened, then probably typeahead logic inserted the prediction.
-      invokeCompletion()
+      withContext(Dispatchers.UiWithModelAccess) {
+        invokeCompletion()
+      }
     }
     else {
       // Let's wait for typing to happen in the shell and then invoke completion
@@ -125,6 +129,9 @@ internal class TerminalCommandCompletionTypingListener private constructor(
            && canTriggerCompletionForChar(char)
   }
 
+  /**
+   * May access the model and acquire the write-intent lock.
+   */
   private fun invokeCompletion() {
     syncEditorCaretWithModel(editor, outputModel)
 
@@ -143,7 +150,9 @@ internal class TerminalCommandCompletionTypingListener private constructor(
     awaitTypingHappened(beforeTypingCursorOffset, char)
 
     if (canInvokeCompletion(char)) {
-      invokeCompletion()
+      withContext(Dispatchers.UiWithModelAccess) {
+        invokeCompletion()
+      }
     }
   }
 

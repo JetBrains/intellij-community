@@ -7,6 +7,8 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.java.workspace.files.findResourceFileByRelativePath
+import com.intellij.java.workspace.files.findResourceFilesInDirectory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
@@ -33,6 +35,7 @@ import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
+import com.intellij.workspaceModel.ide.legacyBridge.findSnapshotModuleEntity
 import com.siyeh.ig.psiutils.TypeUtils
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -128,17 +131,9 @@ internal class ComponentModuleRegistrationChecker(
   }
 
   private fun findModuleXmlFile(module: Module): XmlFile? {
-    for (sourceRoot in ModuleRootManager.getInstance(module).getSourceRoots(false)) {
-      for (file in sourceRoot.children) {
-        if (file.name == module.name + ".xml") {
-          val psiFile = PsiManager.getInstance(module.project).findFile(file)
-          if (psiFile is XmlFile) {
-            return psiFile
-          }
-        }
-      }
-    }
-    return null
+    val moduleEntity = module.findSnapshotModuleEntity() ?: return null
+    val file = moduleEntity.findResourceFileByRelativePath(module.name + ".xml") ?: return null
+    return PsiManager.getInstance(module.project).findFile(file) as? XmlFile
   }
 
   private fun checkProperXmlFileForClassesIncludingDependency(element: DomElement, psiClass: PsiClass?) {
@@ -230,20 +225,11 @@ internal class ComponentModuleRegistrationChecker(
   }
 
   private fun findModulePluginXmlFile(module: Module): XmlFile? {
-    for (sourceRoot in ModuleRootManager.getInstance(module).getSourceRoots(false)) {
-      val metaInf = sourceRoot.findChild("META-INF")
-      if (metaInf != null && metaInf.isDirectory) {
-        for (file in metaInf.children) {
-          if (file.name.endsWith("Plugin.xml")) {
-            val psiFile = PsiManager.getInstance(module.project).findFile(file)
-            if (psiFile is XmlFile) {
-              return psiFile
-            }
-          }
-        }
-      }
-    }
-    return null
+    val moduleEntity = module.findSnapshotModuleEntity() ?: return null
+    return moduleEntity
+      .findResourceFilesInDirectory("META-INF")
+      .filter { it.name.endsWith("Plugin.xml") }
+      .firstNotNullOfOrNull { PsiManager.getInstance(module.project).findFile(it) as? XmlFile }
   }
 
   inner class MoveRegistrationQuickFix(

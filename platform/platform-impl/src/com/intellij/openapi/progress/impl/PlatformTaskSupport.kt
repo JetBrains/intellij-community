@@ -6,6 +6,7 @@ import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.consumeUnrelatedEvent
+import com.intellij.openapi.DelicateLockingApi
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -710,7 +711,17 @@ private fun IdeEventQueue.pumpEventsForHierarchy(
   }
 }
 
+/**
+ * This is a VERY guru-only method that will deadlock unless you perform the necessary litanies.
+ *
+ * The method SHALL NOT be called under the modal progress.
+ * If it is - ensure the dialog WILL NOT be ever shown during the pumping by wrapping into [com.intellij.openapi.application.impl.inModalContext]
+ *
+ * The pumping will end ONLY by the AWT event. If no new events are posted - it WILL hang.
+ * Schedule an [EmptyRunnable] on [exitCondition] change to unlock the thread if needed.
+ */
 @Internal
+@DelicateLockingApi
 fun IdeEventQueue.pumpEventsForHierarchy(exitCondition: () -> Boolean) {
   resetThreadContext {
     pumpEventsForHierarchy(

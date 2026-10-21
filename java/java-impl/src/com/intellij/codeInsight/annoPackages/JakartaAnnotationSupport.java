@@ -12,7 +12,7 @@ final class JakartaAnnotationSupport implements AnnotationPackageSupport {
   @Override
   public @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     return switch (nullability) {
-      case NOT_NULL -> List.of("jakarta.annotation.Nonnull");
+      case NOT_NULL -> List.of("jakarta.annotation.Nonnull", "jakarta.validation.constraints.NotNull");
       case NULLABLE -> List.of("jakarta.annotation.Nullable");
       default -> Collections.emptyList();
     };

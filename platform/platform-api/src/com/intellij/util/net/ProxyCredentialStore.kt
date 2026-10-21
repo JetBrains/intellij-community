@@ -2,7 +2,7 @@
 package com.intellij.util.net
 
 import com.intellij.credentialStore.Credentials
-import com.intellij.util.net.internal.asProxyCredentialStore
+import com.intellij.util.net.internal.getPlatformProxyCredentialStore
 
 /**
  * Implementations may invoke IO and must provide thread-safety guarantees.
@@ -12,12 +12,11 @@ interface ProxyCredentialStore {
     @JvmStatic
     fun getInstance(): ProxyCredentialStore = platformCredentialStore
 
-    @Suppress("DEPRECATION", "removal")
-    private val platformCredentialStore = (HttpConfigurable::getInstance).asProxyCredentialStore()
+    private val platformCredentialStore: ProxyCredentialStore = getPlatformProxyCredentialStore()
   }
 
   /**
-   * Retrieves known credentials for the proxy located at the specified host and port
+   * Retrieves known credentials for the proxy located at the specified host and port.
    */
   fun getCredentials(host: String, port: Int): Credentials?
 
@@ -42,12 +41,7 @@ interface ProxyCredentialStore {
   fun areCredentialsRemembered(host: String, port: Int): Boolean
 
   /**
-   * Clears known credentials which are said to be not remembered
-   */
-  fun clearTransientCredentials()
-
-  /**
-   * Clears all known credentials, including the ones that were said to be remembered
+   * Clears all known credentials, including the ones that were said to be remembered.
    */
   fun clearAllCredentials()
 }
@@ -55,7 +49,7 @@ interface ProxyCredentialStore {
 @Deprecated("Pointless; use `ProxyCredentialStore.getCredentials` directly")
 fun interface ProxyCredentialProvider {
   /**
-   * Retrieves known credentials for the proxy located at the specified host and port
+   * Retrieves known credentials for the proxy located at the specified host and port.
    */
   fun getCredentials(host: String, port: Int): Credentials?
 }

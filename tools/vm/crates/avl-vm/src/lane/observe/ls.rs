@@ -3,13 +3,14 @@
 use std::path::Path;
 use std::time::Duration;
 
+use crate::worker::lease::require_ready_for_read;
 use crate::worker::worker::Manager;
 use avl_base::{Exit, Outcome, Refusal};
 use avl_host_sys::guest::user_argv;
 use avl_host_sys::{Ctx, SpawnOptions};
 use serde::Serialize;
 
-use super::{split_lines, with_leased_worker};
+use super::{observe_leased_worker, split_lines};
 
 /// The timeout of the guest `find` of `ls`. A deep listing of the IDE output walks many thousands of entries.
 const LS_TIMEOUT: Duration = Duration::from_mins(10);
@@ -78,12 +79,12 @@ struct LsData {
 /// reason `pull` cannot - one fixed read-only argv over the non-GUI channel, no shell, no glob. Without it the
 /// permitted operation was unusable exactly when it is needed: the daemon keeps its run active for as long as it
 /// holds the warm IDE, so a failing lane could not be diagnosed without stopping the thing that makes the next
-/// iteration fast.
+/// iteration fast. It answers during a run of the lease too, because it holds the lifecycle lock only for its gate.
 pub(crate) async fn command_ls(ctx: &Ctx, manager: &Manager, args: LsArgs, lease_file: Option<&Path>) -> Result<Outcome, Refusal> {
     let LsArgs { directory, depth } = args;
     let settings = manager.settings();
-    let data = with_leased_worker(ctx, manager, lease_file, "ls", async |current| {
-        manager.require_ready(ctx, &current).await?;
+    let data = observe_leased_worker(ctx, manager, lease_file, "ls", async |current| {
+        require_ready_for_read(ctx, manager, &current, "ls").await?;
         let find = [
             "/usr/bin/find".to_owned(),
             directory.clone(),

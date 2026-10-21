@@ -20,16 +20,18 @@ import kotlin.time.Duration
  * Once [startUpdate] is called (which is idempotent call) cache will be updated on [scope] every [delayer].
  *
  * Cache isn't blocked while updating: a previous version is used.
+ *
+ * When [getDataForCache] returns `null`, [K] is gone: the cache drops [K], and the background update skips it from then on.
  */
 internal class Cache<K : Any, V>(
   scope: CoroutineScope,
   delayer: UpdateCacheDelayer,
-  private val getDataForCache: suspend (K) -> List<V>,
+  private val getDataForCache: suspend (K) -> List<V>?,
 ) {
   constructor(
     scope: CoroutineScope,
     updateInterval: Duration,
-    getDataForCache: suspend (K) -> List<V>,
+    getDataForCache: suspend (K) -> List<V>?,
   ) : this(scope, UpdateCacheDelayer.TimeBased(updateInterval), getDataForCache)
 
   private companion object {
@@ -107,6 +109,11 @@ internal class Cache<K : Any, V>(
   private suspend fun updateCacheInternal(k: K): MutableSet<V> {
     logger.info("Starting update for $k")
     val data = getDataForCache(k)
+    if (data == null) {
+      cache.remove(k)
+      logger.info("$k is gone, cache dropped")
+      return ConcurrentHashMap.newKeySet()
+    }
     val newValue = ConcurrentHashMap.newKeySet<V>(data.size)
     newValue.addAll(data)
     cache[k] = newValue

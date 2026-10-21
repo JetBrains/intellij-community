@@ -15,20 +15,24 @@
  */
 package com.intellij.java.ide.fileStructure;
 
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
+
 /**
  * @author Konstantin Bulenkov
  */
+@TestApplication
 public class JavaFileStructureSelectionTest extends JavaFileStructureTestCase {
   @Override
   protected String getTestDataFolderName() {
     return "selection";
   }
 
-  public void testField()                 {checkTree();}
-  public void testMethod()                {checkTree();}
-  public void testConstructor()           {checkTree();}
-  public void testInsideClass()           {checkTree();}
-  public void testAnonymous()             {checkTree();}
-  public void testAnonymousInAnonymous()  {checkTree();}
-  public void testFoldRegion()  {checkTree();}
+  @Test public void testField()                 {checkTree();}
+  @Test public void testMethod()                {checkTree();}
+  @Test public void testConstructor()           {checkTree();}
+  @Test public void testInsideClass()           {checkTree();}
+  @Test public void testAnonymous()             {checkTree();}
+  @Test public void testAnonymousInAnonymous()  {checkTree();}
+  @Test public void testFoldRegion()  {checkTree();}
 }

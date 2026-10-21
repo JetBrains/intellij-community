@@ -4,6 +4,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.NonPhysicalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.util.getLsp4jRange
@@ -21,7 +22,7 @@ object LspDidChangeUtil {
       null
     }
     else {
-      FileDocumentManager.getInstance().getFile(event.document)
+      FileDocumentManager.getInstance().getFile(event.document)?.takeIf { it.fileSystem !is NonPhysicalFileSystem }
     }
   }
 

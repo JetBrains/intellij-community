@@ -63,7 +63,7 @@ public abstract class AbstractPathMapper implements PathMapper {
   }
 
   @Override
-  public final boolean canReplaceLocal(@NotNull String localPath) {
+  public boolean canReplaceLocal(@NotNull String localPath) {
     for (PathMappingSettings.PathMapping mapping : getAvailablePathMappings()) {
       if (mapping.canReplaceLocal(localPath)) {
         return true;

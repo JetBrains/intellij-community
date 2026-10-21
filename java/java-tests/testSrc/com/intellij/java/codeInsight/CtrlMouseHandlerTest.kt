@@ -10,28 +10,41 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.editor.impl.AbstractEditorTest
+import com.intellij.openapi.editor.impl.editorModelFixture
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.documentation.PsiDocumentationTargetProvider
 import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import java.util.Collections
 import java.util.stream.Collectors
 import java.util.stream.Stream
+import kotlin.time.Duration.Companion.milliseconds
 
-class CtrlMouseHandlerTest : AbstractEditorTest() {
+@TestApplication
+class CtrlMouseHandlerTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  fun `test highlighter disappears on mouse moving away`() {
+  private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
+
+  @Test
+  fun `test highlighter disappears on mouse moving away`(): Unit = fixture.runTest {
     init("class A {}", JavaFileType.INSTANCE)
     val mouse = mouse()
-    val handler = project.service<CtrlMouseHandler2>()
+    val handler = projectFixture.get().service<CtrlMouseHandler2>()
     mouse.ctrl().moveTo(0, 6)
     handler.handlerJob().joinPumping()
     assertHighlighted(6, 7)
@@ -40,7 +53,8 @@ class CtrlMouseHandlerTest : AbstractEditorTest() {
     assertHighlighted()
   }
 
-  fun `test the action Ctrl+hover computes for is readable from the thread context`() {
+  @Test
+  fun `test the action Ctrl+hover computes for is readable from the thread context`(): Unit = fixture.runTest {
     val actionIds = Collections.synchronizedList(mutableListOf<String?>())
     ExtensionTestUtil.maskExtensions(
       PsiDocumentationTargetProvider.EP_NAME,
@@ -49,7 +63,7 @@ class CtrlMouseHandlerTest : AbstractEditorTest() {
     )
     init("class Abc {}", JavaFileType.INSTANCE)
     val mouse = mouse()
-    val handler = project.service<CtrlMouseHandler2>()
+    val handler = projectFixture.get().service<CtrlMouseHandler2>()
 
     mouse.ctrl().moveTo(0, 6)
     handler.handlerJob().joinPumping()
@@ -57,7 +71,8 @@ class CtrlMouseHandlerTest : AbstractEditorTest() {
     assertEquals(setOf(IdeActions.ACTION_GOTO_DECLARATION), actionIds.toSet())
   }
 
-  fun `test the reference under the pointer is resolved once while the pointer stays on it`() {
+  @Test
+  fun `test the reference under the pointer is resolved once while the pointer stays on it`(): Unit = fixture.runTest {
     val actionIds = Collections.synchronizedList(mutableListOf<String?>())
     ExtensionTestUtil.maskExtensions(
       PsiDocumentationTargetProvider.EP_NAME,
@@ -66,7 +81,7 @@ class CtrlMouseHandlerTest : AbstractEditorTest() {
     )
     init("class Abc {}", JavaFileType.INSTANCE)
     val mouse = mouse()
-    val handler = project.service<CtrlMouseHandler2>()
+    val handler = projectFixture.get().service<CtrlMouseHandler2>()
 
     mouse.ctrl().moveTo(0, 6)
     handler.handlerJob().joinPumping()
@@ -74,8 +89,8 @@ class CtrlMouseHandlerTest : AbstractEditorTest() {
     mouse.ctrl().moveTo(0, 6)
     pump()
 
-    assertEquals("The second event was for the same offset, so it should have resolved nothing",
-                 resolvedOnFirstEvent, actionIds.size)
+    assertEquals(resolvedOnFirstEvent, actionIds.size,
+                 "The second event was for the same offset, so it should have resolved nothing")
   }
 
   private class ActionIdReadingDocumentationTargetProvider(private val actionIds: MutableList<String?>) : PsiDocumentationTargetProvider {
@@ -96,16 +111,16 @@ class CtrlMouseHandlerTest : AbstractEditorTest() {
     assert(offsets.size % 2 == 0)
     val highlighterCount = offsets.size / 2
     val highlighters = getCurrentHighlighters()
-    assertEquals("Unexpected number of highlighters", highlighterCount, highlighters.size)
+    assertEquals(highlighterCount, highlighters.size, "Unexpected number of highlighters")
     for (i in 0 until highlighterCount) {
-      assertEquals("Unexpected start of " + (i + 1) + " highlighter", offsets[i * 2], highlighters[i].startOffset)
-      assertEquals("Unexpected end of " + (i + 1) + " highlighter", offsets[i * 2 + 1], highlighters[i].endOffset)
+      assertEquals(offsets[i * 2], highlighters[i].startOffset, "Unexpected start of " + (i + 1) + " highlighter")
+      assertEquals(offsets[i * 2 + 1], highlighters[i].endOffset, "Unexpected end of " + (i + 1) + " highlighter")
     }
   }
 
   private fun getCurrentHighlighters(): List<RangeHighlighter> {
     val attributes = EditorColorsManager.getInstance().globalScheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR)
-    return Stream.of(*editor.markupModel.allHighlighters)
+    return Stream.of(*fixture.editor.markupModel.allHighlighters)
       .filter { h: RangeHighlighter ->
         attributes == h.getTextAttributes(null) || EditorColors.REFERENCE_HYPERLINK_COLOR == h.textAttributesKey
       }
@@ -116,19 +131,19 @@ class CtrlMouseHandlerTest : AbstractEditorTest() {
   private fun pump() {
     timeoutRunBlocking {
       repeat(20) {
-        delay(10)
+        delay(10.milliseconds)
         UIUtil.dispatchAllInvocationEvents()
       }
     }
   }
 
   private fun Job.joinPumping() {
-    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    PsiDocumentManager.getInstance(projectFixture.get()).commitAllDocuments()
     UIUtil.dispatchAllInvocationEvents()
     timeoutRunBlocking {
       val job = this@joinPumping
       while (job.isActive) {
-        delay(10)
+        delay(10.milliseconds)
         UIUtil.dispatchAllInvocationEvents()
       }
     }

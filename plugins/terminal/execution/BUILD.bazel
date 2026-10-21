@@ -1,0 +1,95 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.terminal.execution` start
+content_module_jar(module = ":execution")
+### auto-generated section `dev intellij.terminal.execution` end
+
+### auto-generated section `build intellij.terminal.execution` start
+jvm_library(
+    name = "execution",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.terminal.execution",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/extensions",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/ide-core",
+        "//platform/ide-core-impl",
+        "//platform/execution",
+        "//platform/platform-api:ide",
+        "//platform/statistics",
+        "//libraries/jetbrains/annotations",
+        "//libraries/jediterm-core",
+        "//libraries/jediterm-ui",
+        "//libraries/guava",
+        "//platform/terminal",
+        "//plugins/terminal",
+        "//platform/platform-impl:ide-impl",
+        "//platform/util:util-ui",
+        "//platform/execution-impl",
+        "//platform/core-ui",
+        "//platform/analysis-api:analysis",
+    ],
+)
+
+jvm_library(
+    name = "execution_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.terminal.execution",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":execution",
+        "//platform/extensions:extensions_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/execution:execution_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/statistics:statistics_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+        "//libraries/jediterm-core:jediterm-core_test_lib",
+        "//libraries/jediterm-ui:jediterm-ui_test_lib",
+        "//libraries/guava:guava_test_lib",
+        "//platform/terminal:terminal_test_lib",
+        "//plugins/terminal:terminal_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+    ],
+)
+### auto-generated section `build intellij.terminal.execution` end
+
+### auto-generated section `iml intellij.terminal.execution` start
+exports_files(
+    [
+        "intellij.terminal.execution.iml",
+        "resources/intellij.terminal.execution.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.terminal.execution` end

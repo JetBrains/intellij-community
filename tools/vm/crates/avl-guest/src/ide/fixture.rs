@@ -1,4 +1,4 @@
-//! The files that the tests of `ide-prepare` and `ide-launch` share: a dev distribution, a flags file, a project
+//! The files that the tests of the preparation and the launch share: a dev distribution, a flags file, a project
 //! archive, and the IDE root that the contexts go under.
 
 use std::collections::BTreeMap;
@@ -21,6 +21,12 @@ use crate::testing::agent_launcher;
 pub(crate) const LAUNCH_KEY: &str = "key-1";
 /// A property of every launch document, which the argument file must hold.
 pub(crate) const PORT_PROPERTY: &str = "air.ui.test.http.port";
+/// The `vmOptionsFilePath` of the fixture distribution, relative to the directory of its `product-info.json`.
+pub(crate) const VM_OPTIONS_FILE_PATH: &str = if cfg!(target_os = "macos") {
+    "../bin/idea64.vmoptions"
+} else {
+    "bin/idea64.vmoptions"
+};
 
 /// A guest that needs no display.
 pub(crate) const NO_DISPLAY_CHECK: Guest = Guest {
@@ -45,9 +51,13 @@ impl Fixture {
         )
         .unwrap();
         fs::write(bin.join("idea64.vmoptions"), "-Xmx2g\n-Dfrom.vmoptions=1\n").unwrap();
+        let product_info = root.join("dist").join(launch::PRODUCT_INFO_FILE);
+        fs::create_dir_all(product_info.parent().unwrap()).unwrap();
         fs::write(
-            bin.join("product-info.json"),
-            r#"{"launch":[{"additionalJvmArguments":["-Dfrom.product.info=1"]}]}"#,
+            product_info,
+            format!(
+                r#"{{"launch":[{{"vmOptionsFilePath":"{VM_OPTIONS_FILE_PATH}","additionalJvmArguments":["-Dfrom.product.info=1"]}}]}}"#
+            ),
         )
         .unwrap();
         fs::write(root.join("dist/core-classpath.txt"), "lib/a.jar\nlib/b.jar\n").unwrap();

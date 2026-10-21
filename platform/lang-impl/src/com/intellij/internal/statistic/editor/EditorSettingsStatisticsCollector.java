@@ -10,6 +10,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.beans.MetricEventUtilKt;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField;
 import com.intellij.internal.statistic.eventLog.events.EnumEventField;
 import com.intellij.internal.statistic.eventLog.events.EventField;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
@@ -19,10 +20,13 @@ import com.intellij.internal.statistic.eventLog.events.StringEventField;
 import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.actions.CaretStopBoundary;
 import com.intellij.openapi.editor.actions.CaretStopOptions;
 import com.intellij.openapi.editor.actions.CaretStopOptionsTransposed;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.editor.impl.SmoothCaretAutoEnableActivityKt;
+import com.intellij.openapi.editor.impl.SmoothCaretAutoEnableReason;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
 import com.intellij.openapi.project.Project;
@@ -38,7 +42,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("editor.settings.ide", 12);
+  private static final EventLogGroup GROUP = new EventLogGroup("editor.settings.ide", 13);
   private static final EnumEventField<Settings> SETTING_ID = EventFields.Enum("setting_id", Settings.class, it -> it.internalName);
   private static final IntEventField INT_VALUE_FIELD = EventFields.Int("value");
   private static final StringEventField TRAILING_SPACES_FIELD = EventFields.String("value", List.of("Whole", "Changed", "None"));
@@ -52,6 +56,17 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
                                                                          TRAILING_SPACES_FIELD,
                                                                          BACKSPACE_MODE,
                                                                          CARET_STOP_BOUNDARIES);
+
+  private static final BooleanEventField SMOOTH_CARET_MOVEMENT = EventFields.Boolean("movement_enabled");
+  private static final BooleanEventField SMOOTH_CARET_BLINKING = EventFields.Boolean("blinking_enabled");
+  private static final EnumEventField<EditorSettings.CaretEasing> CARET_EASING = EventFields.Enum("easing", EditorSettings.CaretEasing.class);
+  private static final EnumEventField<SmoothCaretAutoEnableReason> SMOOTH_CARET_AUTO_ENABLE_REASON =
+    EventFields.Enum("auto_enable_reason", SmoothCaretAutoEnableReason.class);
+  private static final VarargEventId SMOOTH_CARET = GROUP.registerVarargEvent("smooth.caret",
+                                                                              SMOOTH_CARET_MOVEMENT,
+                                                                              SMOOTH_CARET_BLINKING,
+                                                                              CARET_EASING,
+                                                                              SMOOTH_CARET_AUTO_ENABLE_REASON);
 
   @Override
   public EventLogGroup getGroup() {
@@ -107,6 +122,11 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     addBoolIfDiffers(set, es, esDefault, s -> s.isDocCommentRenderingEnabled(), Settings.RENDER_DOC);
     addBoolIfDiffers(set, es, esDefault, s -> s.isShowIntentionPreview(), Settings.INTENTION_PREVIEW);
     addBoolIfDiffers(set, es, esDefault, s -> s.isUseEditorFontInInlays(), Settings.USE_EDITOR_FONT_IN_INLAYS);
+
+    set.add(SMOOTH_CARET.metric(SMOOTH_CARET_MOVEMENT.with(es.isSmoothCaretMovement()),
+                                SMOOTH_CARET_BLINKING.with(es.isSmoothBlinkCaret()),
+                                CARET_EASING.with(es.getCaretEasing()),
+                                SMOOTH_CARET_AUTO_ENABLE_REASON.with(SmoothCaretAutoEnableActivityKt.getSmoothCaretAutoEnableReason())));
 
     for (String language : es.getOptions().getLanguageBreadcrumbsMap().keySet()) {
       addBoolIfDiffers(set, es, esDefault, s -> s.isBreadcrumbsShownFor(language), Settings.BREADCRUMBS,

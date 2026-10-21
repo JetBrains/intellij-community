@@ -92,6 +92,7 @@ internal sealed class EdtCoroutineDispatcher(
 The following solutions are available:
 1. Consider moving the model access outside `$this`. This would help to ensure that the UI is responsive.
 2. Consider using legacy `Dispatchers.EDT` that permits usage of the RW lock.
+3. Consider using `Application.invokeLater` for processing your model access asynchronously on the UI thread with the Write-Intent lock.
 """
 }
 

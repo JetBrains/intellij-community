@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.yaml" allow-bundled-update="true">
+<idea-plugin allow-bundled-update="true">
   <name>YAML</name>
   <id>org.jetbrains.plugins.yaml</id>
   <vendor>JetBrains</vendor>
@@ -43,6 +43,7 @@
     <module name="intellij.yaml" loading="embedded"/>
     <module name="intellij.yaml.frontend.split"/><!-- should be marked as 'required in frontend mode' when IJPL-177060 is fixed -->
     <module name="intellij.yaml.helm"/>
+    <module name="intellij.yaml.spellchecker" loading="optional"/>
     <module name="intellij.yaml.syntax" loading="embedded"/>
   </content>
 </idea-plugin>

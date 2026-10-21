@@ -94,6 +94,14 @@ internal object GitWorktreeNotifications {
     )
   }
 
+  fun notifyWorktreeCreated(project: Project, branchName: @NlsSafe String, targetWorktreeDir: Path) {
+    VcsNotifier.getInstance(project).notifyImportantInfo(
+      GitNotificationIdsHolder.WORKTREE_CREATED,
+      GitBundle.message("notification.title.worktree.created"),
+      GitBundle.message("notification.content.worktree.created", branchName, targetWorktreeDir.toString()),
+    )
+  }
+
   fun notifyOpenProjectFailed(project: Project, targetWorktreeDir: Path) {
     VcsNotifier.getInstance(project).notifyError(
       GitNotificationIdsHolder.WORKTREE_OPEN_PROJECT_FAILED,

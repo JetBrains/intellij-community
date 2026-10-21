@@ -1,37 +1,43 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.TextRange;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.testFramework.UsefulTestCase.assertOrderedEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
 
-public class PlaceholderTextRangesTest extends TestCase {
+public class PlaceholderTextRangesTest {
 
+  @Test
   public void testMissingPrefixNoRange() {
     //            0123
     assertRanges("a b}");
   }
 
+  @Test
   public void testMissingSuffixNoRange() {
     //            0123
     assertRanges("a {b");
   }
 
+  @Test
   public void testMissingPrefixFollowedByValid() {
     //            012345
     assertRanges("a }{b}",
                  4, 5);
   }
 
+  @Test
   public void testOneSimpleRange() {
     //            01234
     assertRanges("a {b}", 3, 4);
   }
 
+  @Test
   public void testOneSimpleRangeUseFullTextRange() {
     //            01234
     assertRanges("a {b}",
@@ -40,6 +46,7 @@ public class PlaceholderTextRangesTest extends TestCase {
                  2, 5);
   }
 
+  @Test
   public void testTwoSimpleRanges() {
     //            01234567890
     assertRanges("a {b} c {d}",
@@ -47,6 +54,7 @@ public class PlaceholderTextRangesTest extends TestCase {
                  9, 10);
   }
 
+  @Test
   public void testOneSimpleRangeCustom() {
     //            0123456
     assertRanges("a [[b]]",
@@ -55,6 +63,7 @@ public class PlaceholderTextRangesTest extends TestCase {
                  4, 5);
   }
 
+  @Test
   public void testTwoSimpleRangesCustom() {
     //            012345678901234
     assertRanges("a [[b]] c [[d]]",
@@ -64,6 +73,7 @@ public class PlaceholderTextRangesTest extends TestCase {
                  12, 13);
   }
 
+  @Test
   public void testOneSimpleRangePrefixSuffixEqual() {
     assertRanges("@a@",
                  "@", "@",
@@ -71,6 +81,7 @@ public class PlaceholderTextRangesTest extends TestCase {
                  1, 2);
   }
 
+  @Test
   public void testEmptyRangePrefixSuffixEqual() {
     assertRanges("@@",
                  "@", "@",
@@ -78,6 +89,7 @@ public class PlaceholderTextRangesTest extends TestCase {
                  1, 1);
   }
 
+  @Test
   public void testEmptyRangePrefixSuffixStartWithSameCharacter() {
     assertRanges("###",
                  "#", "##",
@@ -85,6 +97,7 @@ public class PlaceholderTextRangesTest extends TestCase {
                  1, 1);
   }
 
+  @Test
   public void testOneSimpleRangePrefixSuffixStartWithSameCharacter() {
     assertRanges("#A##",
                  "#", "##",
@@ -92,6 +105,7 @@ public class PlaceholderTextRangesTest extends TestCase {
                  1, 2);
   }
 
+  @Test
   public void testOverlappingTokes() {
     assertRanges("!##a!##?",
                  "!##", "##?",
@@ -99,6 +113,7 @@ public class PlaceholderTextRangesTest extends TestCase {
                  3, 5);
   }
 
+  @Test
   public void testOneRepeatablePrefix() {
     assertRanges("###a))",
                  "##", "))",
@@ -106,12 +121,14 @@ public class PlaceholderTextRangesTest extends TestCase {
                  3, 4);
   }
 
+  @Test
   public void testMissingSuffixPrefixSuffixEqual() {
     assertRanges("@a",
                  "@", "@",
                  false, false);
   }
 
+  @Test
   public void testOneNestedRange() {
     //            01234567
     assertRanges("a {b{c}}",
@@ -119,6 +136,7 @@ public class PlaceholderTextRangesTest extends TestCase {
                  3, 7);
   }
 
+  @Test
   public void testOneNestedRangeWithRepeatablePrefix() {
     assertRanges("####a))))",
                  "##", "))",
@@ -126,6 +144,7 @@ public class PlaceholderTextRangesTest extends TestCase {
                  4, 5, 2, 7);
   }
 
+  @Test
   public void testTwoNestedRanges() {
     //            01234567890
     assertRanges("a {b{c{d}}}",
@@ -134,12 +153,14 @@ public class PlaceholderTextRangesTest extends TestCase {
                  3, 10);
   }
 
+  @Test
   public void testUnclosedOuterWithNestedRange() {
     //            0123456
     assertRanges("a {b{c}",
                  5, 6);
   }
 
+  @Test
   public void testFilterOneNestedRange() {
     //            01234567
     assertRanges("a {b{c}}",
@@ -148,6 +169,7 @@ public class PlaceholderTextRangesTest extends TestCase {
                  3, 7);
   }
 
+  @Test
   public void testFilterTwoLevelNestedRange() {
     //            0123456789
     assertRanges("a {b{{c}}}",
@@ -156,6 +178,7 @@ public class PlaceholderTextRangesTest extends TestCase {
                  3, 9);
   }
 
+  @Test
   public void testTwoTopLevelRangesWithNested() {
     // IDEA-246585
     assertRanges("a {b{c}p}/{d}",
@@ -175,6 +198,7 @@ public class PlaceholderTextRangesTest extends TestCase {
                  7, 11);
   }
 
+  @Test
   public void testDeepNestedBraces() {
     assertRanges("{{{}{}}}",
                  3, 3,
@@ -193,7 +217,7 @@ public class PlaceholderTextRangesTest extends TestCase {
                                    boolean useFullTextRange,
                                    boolean filterNested,
                                    int... rangeOffsets) {
-    assertEquals("start/end offsets not balanced", 0, rangeOffsets.length % 2);
+    assertEquals(0, rangeOffsets.length % 2, "start/end offsets not balanced");
 
     int expectedRangeCount = rangeOffsets.length / 2;
     List<TextRange> expectedRanges = new ArrayList<>(expectedRangeCount);
@@ -202,6 +226,6 @@ public class PlaceholderTextRangesTest extends TestCase {
     }
 
     Set<TextRange> ranges = PlaceholderTextRanges.getPlaceholderRanges(text, prefix, suffix, useFullTextRange, filterNested);
-    assertOrderedEquals(ranges, expectedRanges);
+    assertIterableEquals(expectedRanges, ranges);
   }
 }

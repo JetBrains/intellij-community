@@ -3,6 +3,9 @@
 
 package com.intellij.internal.statistic.service.fus.collectors
 
+import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.awaitOccurred
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.EventLogSystemEvents
@@ -19,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.openapi.util.registry.RegistryManager
@@ -211,6 +213,8 @@ class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : 
   }
 
   internal suspend fun logApplicationStates(onStartup: Boolean) {
+    LoadingState.COMPONENTS_LOADED.awaitOccurred()
+
     // state loggers may depend on Registry
     RegistryManager.getInstanceAsync()
 

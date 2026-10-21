@@ -52,8 +52,10 @@ import com.intellij.util.ui.RestartDialogImpl
 import org.jetbrains.annotations.Nls
 import javax.swing.JCheckBox
 
+internal const val ACCESSIBILITY_CONFIGURABLE_ID: String = "preferences.accessibility"
+
 internal class AccessibilityConfigurable : BoundSearchableConfigurable(
-  message("configurable.AccessibilityConfigurable.display.name"), "settings.accessibility", "preferences.accessibility",
+  message("configurable.AccessibilityConfigurable.display.name"), "settings.accessibility", ACCESSIBILITY_CONFIGURABLE_ID,
 ), BackedByPersistentState {
   override fun getBackingComponents(): Collection<PersistentStateComponent<*>> =
     listOf(UISettings.getInstance(), GeneralSettings.getInstance(), service<AccessibilitySettings>(),

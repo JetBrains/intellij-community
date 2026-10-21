@@ -15,55 +15,91 @@
  */
 package com.intellij.openapi.editor.impl.view;
 
-import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.EditorModelFixture;
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class VisualLinesIteratorTest extends AbstractEditorTest {
+import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class VisualLinesIteratorTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
+
+  private EditorModelFixture myFixture;
+
+  @BeforeEach
+  void setUp() {
+    myFixture = editorFixture.get();
+  }
+
+  @Test
   public void testWrapAfterFolding() {
-    initText("abcdefghij");
-    addCollapsedFoldRegion(1, 8, "...");
-    configureSoftWraps(4);
+    myFixture.runTest(() -> {
+      myFixture.initText("abcdefghij");
+      myFixture.addCollapsedFoldRegion(1, 8, "...");
+      myFixture.configureSoftWraps(4);
     
-    verifySoftWrapPositions(8);
+      myFixture.verifySoftWrapPositions(8);
     
-    VisualLinesIterator it = createIterator(0);
-    assertFalse(it.atEnd());
-    assertEquals(0, it.getVisualLineStartOffset());
-    assertEquals(0, it.getStartFoldingIndex());
-    it.advance();
-    assertFalse(it.atEnd());
-    assertEquals(8, it.getVisualLineStartOffset());
-    assertEquals(1, it.getStartFoldingIndex());
+      VisualLinesIterator it = createIterator(0);
+      assertFalse(it.atEnd());
+      assertEquals(0, it.getVisualLineStartOffset());
+      assertEquals(0, it.getStartFoldingIndex());
+      it.advance();
+      assertFalse(it.atEnd());
+      assertEquals(8, it.getVisualLineStartOffset());
+      assertEquals(1, it.getStartFoldingIndex());
+    });
   }
   
+  @Test
   public void testWrapAtFoldedLineBreak() {
-    initText("abc\ndef");
-    addCollapsedFoldRegion(3, 4, "...");
-    configureSoftWraps(6);
+    myFixture.runTest(() -> {
+      myFixture.initText("abc\ndef");
+      myFixture.addCollapsedFoldRegion(3, 4, "...");
+      myFixture.configureSoftWraps(6);
     
-    verifySoftWrapPositions(4);
-    VisualLinesIterator it = createIterator(0);
-    assertFalse(it.atEnd());
-    it.advance();
-    assertFalse(it.atEnd());
-    it.advance();
-    assertTrue(it.atEnd());
+      myFixture.verifySoftWrapPositions(4);
+      VisualLinesIterator it = createIterator(0);
+      assertFalse(it.atEnd());
+      it.advance();
+      assertFalse(it.atEnd());
+      it.advance();
+      assertTrue(it.atEnd());
+    });
   }
 
+  @Test
   public void testEmptyDocument() {
-    initText("");
-    VisualLinesIterator it = createIterator(0);
-    assertFalse(it.atEnd());
-    assertEquals(0, it.getVisualLine());
-    assertEquals(0, it.getVisualLineStartOffset());
-    assertEquals(0, it.getVisualLineEndOffset());
-    assertEquals(0, it.getStartLogicalLine());
-    assertEquals(0, it.getEndLogicalLine());
-    it.advance();
-    assertTrue(it.atEnd());
+    myFixture.runTest(() -> {
+      myFixture.initText("");
+      VisualLinesIterator it = createIterator(0);
+      assertFalse(it.atEnd());
+      assertEquals(0, it.getVisualLine());
+      assertEquals(0, it.getVisualLineStartOffset());
+      assertEquals(0, it.getVisualLineEndOffset());
+      assertEquals(0, it.getStartLogicalLine());
+      assertEquals(0, it.getEndLogicalLine());
+      it.advance();
+      assertTrue(it.atEnd());
+    });
   }
 
   private VisualLinesIterator createIterator(int startVisualLine) {
-    return new VisualLinesIterator((EditorImpl)getEditor(), startVisualLine);
+    return new VisualLinesIterator((EditorImpl)myFixture.getEditor(), startVisualLine);
   }
 }

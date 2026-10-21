@@ -8,30 +8,47 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.impl.AbstractEditorTest
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl
+import com.intellij.openapi.editor.impl.editorModelFixture
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.DocumentEventUtil
 import com.intellij.util.DocumentUtil
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.awt.Graphics
 import java.awt.Point
 
-abstract class CustomWrapsTestBase : AbstractEditorTest() {
+abstract class CustomWrapsTestBase {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  protected val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
+
   protected open val useSoftWraps: Boolean = false
 
-  override fun setUp() {
-    super.setUp()
-    setUpCustomWrapSupport()
+  @BeforeEach
+  fun setUpCustomWrapsTestBase() {
+    fixture.setUpCustomWrapSupport()
   }
 
   fun initTextAndSoftWraps(fileText: String, charCountToSoftWrapAt: Int = 5) {
-    super.initText(fileText)
+    fixture.initText(fileText)
     if (useSoftWraps) {
-      configureSoftWraps(charCountToSoftWrapAt)
+      fixture.configureSoftWraps(charCountToSoftWrapAt)
     }
   }
 
-  fun testCustomWrapIsRegisteredInStorage() {
+  @Test
+  fun testCustomWrapIsRegisteredInStorage(): Unit = fixture.runTest {
     initTextAndSoftWraps("0123456789")
     val wrapOffset = 5
     addCustomWrap(wrapOffset)
@@ -39,7 +56,8 @@ abstract class CustomWrapsTestBase : AbstractEditorTest() {
     (editor as EditorImpl).validateState()
   }
 
-  fun testDeleteInvalidatesWrapsInsideRange() {
+  @Test
+  fun testDeleteInvalidatesWrapsInsideRange(): Unit = fixture.runTest {
     initTextAndSoftWraps("0123456789")
     editor.customWrapModel.runBatchMutation {
       addWrap(1)
@@ -55,7 +73,8 @@ abstract class CustomWrapsTestBase : AbstractEditorTest() {
     assertStorageConsistent()
   }
 
-  fun testBoundaryMergeKeepsSmallerPriorityWrap() {
+  @Test
+  fun testBoundaryMergeKeepsSmallerPriorityWrap(): Unit = fixture.runTest {
     initTextAndSoftWraps("0123456789")
     editor.customWrapModel.runBatchMutation {
       addWrap(2, 5, 10)
@@ -72,7 +91,8 @@ abstract class CustomWrapsTestBase : AbstractEditorTest() {
     assertStorageConsistent()
   }
 
-  fun testDeleteAndMerge() {
+  @Test
+  fun testDeleteAndMerge(): Unit = fixture.runTest {
     initTextAndSoftWraps("0123456789")
     editor.customWrapModel.runBatchMutation {
       addWrap(2, priority = 2)
@@ -97,7 +117,8 @@ abstract class CustomWrapsTestBase : AbstractEditorTest() {
     assertStorageConsistent()
   }
 
-  fun testCollapsedFoldFiltersWrapsInside() {
+  @Test
+  fun testCollapsedFoldFiltersWrapsInside(): Unit = fixture.runTest {
     initTextAndSoftWraps("0123456789")
     addCollapsedFoldRegion(2, 7, "...")
     editor.customWrapModel.runBatchMutation {
@@ -106,12 +127,13 @@ abstract class CustomWrapsTestBase : AbstractEditorTest() {
     }
 
     val wraps = registeredSoftWraps()
-    assertSize(1, wraps)
+    assertThat(wraps).hasSize(1)
     assertEquals(2, wraps.single().start)
     assertStorageConsistent()
   }
 
-  fun testMoveWithWrapsInCorridorKeepsStorageSorted() {
+  @Test
+  fun testMoveWithWrapsInCorridorKeepsStorageSorted(): Unit = fixture.runTest {
     initTextAndSoftWraps("0123456789ABCDEFGHIJ")
     editor.customWrapModel.runBatchMutation {
       addWrap(6, priority = 5)
@@ -127,7 +149,8 @@ abstract class CustomWrapsTestBase : AbstractEditorTest() {
     (editor as EditorImpl).validateState()
   }
 
-  fun testMixedEditsPreserveEditorState() {
+  @Test
+  fun testMixedEditsPreserveEditorState(): Unit = fixture.runTest {
     initTextAndSoftWraps("0123456789ABCDEFGHIJ")
     editor.customWrapModel.runBatchMutation {
       addWrap(2, priority = 3)
@@ -145,14 +168,15 @@ abstract class CustomWrapsTestBase : AbstractEditorTest() {
     (editor as EditorImpl).validateState()
   }
 
-  fun testMoveDeletionExpandingFoldRecalculatesWrapsInExpandedRange() {
+  @Test
+  fun testMoveDeletionExpandingFoldRecalculatesWrapsInExpandedRange(): Unit = fixture.runTest {
     initTextAndSoftWraps("abcd\n0123456789ABCDEFGHIJABCDEFGHIJ\nwxyz", charCountToSoftWrapAt = 16)
     // fold second line
     val foldRegion = addCustomFoldRegion(1, 1)
     assertNotNull(foldRegion)
     // wrap in the middle of the folded second line
     addCustomWrap(15, 2)
-    assertEmpty(registeredSoftWraps())
+    assertThat(registeredSoftWraps()).isEmpty()
 
     runWriteCommand {
       // (move-)deletion overlapping with custom folding start
@@ -182,7 +206,7 @@ abstract class CustomWrapsTestBase : AbstractEditorTest() {
   }
 
   protected fun registeredSoftWraps(): List<SoftWrap> {
-    return (editor as EditorEx).softWrapModel.registeredSoftWraps
+    return (fixture.editor as EditorEx).softWrapModel.registeredSoftWraps
   }
 
   protected fun assertStorageConsistent() {
@@ -191,20 +215,20 @@ abstract class CustomWrapsTestBase : AbstractEditorTest() {
     for (wrap in wraps) {
       val current = wrap.start
       assertTrue(current > previous)
-      val fold = editor.foldingModel.getCollapsedRegionAtOffset(current)
+      val fold = fixture.editor.foldingModel.getCollapsedRegionAtOffset(current)
       assertTrue(fold == null || fold.startOffset == current)
       previous = current
     }
   }
 
   protected fun addCustomWrap(offset: Int, indent: Int = 0): CustomWrap {
-    val wrap = editor.customWrapModel.runBatchMutation { addWrap(offset, indent) }
+    val wrap = fixture.editor.customWrapModel.runBatchMutation { addWrap(offset, indent) }
     assertNotNull(wrap)
     return wrap!!
   }
 
   protected fun installSoftWrapPainterWithWidth(width: Int) {
-    (editor.softWrapModel as SoftWrapModelImpl).setSoftWrapPainter(object : SoftWrapPainter {
+    (fixture.editor.softWrapModel as SoftWrapModelImpl).setSoftWrapPainter(object : SoftWrapPainter {
       override fun paint(g: Graphics, drawingType: SoftWrapDrawingType, x: Int, y: Int, lineHeight: Int): Int = width
 
       override fun getDrawingHorizontalOffset(g: Graphics, drawingType: SoftWrapDrawingType, x: Int, y: Int, lineHeight: Int): Int = width
@@ -217,7 +241,8 @@ abstract class CustomWrapsTestBase : AbstractEditorTest() {
     })
   }
 
-  fun testCustomWrapIgnoresSoftWrapMarkerWidthInCoordinateMapping() {
+  @Test
+  fun testCustomWrapIgnoresSoftWrapMarkerWidthInCoordinateMapping(): Unit = fixture.runTest {
     initTextAndSoftWraps("ab")
     val spaceWidth = editor.visualPositionToXY(VisualPosition(0, 1)).x - editor.visualPositionToXY(VisualPosition(0, 0)).x
     installSoftWrapPainterWithWidth(spaceWidth * 3)
@@ -233,7 +258,8 @@ abstract class CustomWrapsTestBase : AbstractEditorTest() {
     assertEquals(VisualPosition(0, 2), editor.xyToVisualPosition(Point(endOfWrappedLineX + spaceWidth / 2, firstLineY)))
   }
 
-  fun testCustomWrapIgnoresSoftWrapMarkerWidthBeforeAfterLineEndInlayCoordinateMapping() {
+  @Test
+  fun testCustomWrapIgnoresSoftWrapMarkerWidthBeforeAfterLineEndInlayCoordinateMapping(): Unit = fixture.runTest {
     initTextAndSoftWraps("ab")
     val spaceWidth = editor.visualPositionToXY(VisualPosition(0, 1)).x - editor.visualPositionToXY(VisualPosition(0, 0)).x
     val inlayWidth = spaceWidth * 2
@@ -249,7 +275,8 @@ abstract class CustomWrapsTestBase : AbstractEditorTest() {
     assertEquals(VisualPosition(1, 3), editor.xyToVisualPosition(Point(firstInlayX + inlayWidth * 3 / 4, wrappedLineY)))
   }
 
-  fun testCustomWrapIgnoresSoftWrapMarkerWidthInPreferredSize() {
+  @Test
+  fun testCustomWrapIgnoresSoftWrapMarkerWidthInPreferredSize(): Unit = fixture.runTest {
     initTextAndSoftWraps("ab")
     val widthWithoutWrap = editor.contentComponent.preferredSize.width
     installSoftWrapPainterWithWidth(editor.visualPositionToXY(VisualPosition(0, 1)).x * 3)
@@ -259,15 +286,16 @@ abstract class CustomWrapsTestBase : AbstractEditorTest() {
     assertTrue(widthWithWrap < widthWithoutWrap)
   }
 
-  fun testCustomWrapInvalidatedOnMoveRightIsRemovedAfterInsertion() {
+  @Test
+  fun testCustomWrapInvalidatedOnMoveRightIsRemovedAfterInsertion(): Unit = fixture.runTest {
     initTextAndSoftWraps("01234\n5678", charCountToSoftWrapAt = 10)
     addCustomWrap(2)
-    assertSize(1, registeredSoftWraps())
+    assertThat(registeredSoftWraps()).hasSize(1)
 
     editor.document.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         if (DocumentEventUtil.isMoveInsertion(event)) {
-          assertEmpty(registeredSoftWraps())
+          assertThat(registeredSoftWraps()).isEmpty()
         }
       }
     }, testRootDisposable)
@@ -275,11 +303,12 @@ abstract class CustomWrapsTestBase : AbstractEditorTest() {
       (editor.document as DocumentEx).moveText(2, 3, 6)
     }
 
-    assertEmpty(registeredSoftWraps())
+    assertThat(registeredSoftWraps()).isEmpty()
     (editor as EditorImpl).validateState()
   }
 
-  fun testCustomWrapChangesAreDeferredUntilBulkModeFinishes() {
+  @Test
+  fun testCustomWrapChangesAreDeferredUntilBulkModeFinishes(): Unit = fixture.runTest {
     initTextAndSoftWraps("abcdef", charCountToSoftWrapAt = 100)
     val initialWrap = addCustomWrap(2)
 
@@ -315,8 +344,10 @@ abstract class CustomWrapsTestBase : AbstractEditorTest() {
   }
 }
 
+@TestApplication
 class CustomWrapsOnlyTest : CustomWrapsTestBase() {
-  fun testMoveTextToRightReordersCustomWrapStorage() {
+  @Test
+  fun testMoveTextToRightReordersCustomWrapStorage(): Unit = fixture.runTest {
     initTextAndSoftWraps("0123456789ABCDEFGHIJ")
     editor.customWrapModel.runBatchMutation {
       addWrap(6, 1)
@@ -335,7 +366,8 @@ class CustomWrapsOnlyTest : CustomWrapsTestBase() {
     (editor as EditorImpl).validateState()
   }
 
-  fun testMoveTextToLeftReordersCustomWrapStorage() {
+  @Test
+  fun testMoveTextToLeftReordersCustomWrapStorage(): Unit = fixture.runTest {
     initTextAndSoftWraps("0123456789ABCDEFGHIJ")
     editor.customWrapModel.runBatchMutation {
       addWrap(2, 1)
@@ -360,14 +392,16 @@ class CustomWrapsOnlyTest : CustomWrapsTestBase() {
   }
 
   private fun modelCustomWraps(): List<Pair<Int, Int>> {
-    return editor.customWrapModel.getWraps().map { it.offset to it.indent }
+    return fixture.editor.customWrapModel.getWraps().map { it.offset to it.indent }
   }
 }
 
+@TestApplication
 class CustomWrapsWithSoftWrapsEnabledTest : CustomWrapsTestBase() {
   override val useSoftWraps: Boolean = true
 
-  fun testRegularSoftWrapStillUsesMarkerWidthWhenCustomWrapsArePresent() {
+  @Test
+  fun testRegularSoftWrapStillUsesMarkerWidthWhenCustomWrapsArePresent(): Unit = fixture.runTest {
     initTextAndSoftWraps("abcdefghijklmnop", 3)
     val spaceWidth = editor.visualPositionToXY(VisualPosition(0, 1)).x - editor.visualPositionToXY(VisualPosition(0, 0)).x
     val markerWidth = spaceWidth * 3
@@ -383,7 +417,8 @@ class CustomWrapsWithSoftWrapsEnabledTest : CustomWrapsTestBase() {
     assertEquals(markerWidth, afterMarkerX - beforeWrapX)
   }
 
-  fun testCorrectIndentsForSoftWrapsInALongLineMixedWithCustomWraps() {
+  @Test
+  fun testCorrectIndentsForSoftWrapsInALongLineMixedWithCustomWraps(): Unit = fixture.runTest {
     initTextAndSoftWraps("    012340123401234012340123401234567890123456789", 10)
     editor.customWrapModel.runBatchMutation {
       addWrap(9)
@@ -395,10 +430,10 @@ class CustomWrapsWithSoftWrapsEnabledTest : CustomWrapsTestBase() {
 
     fun doCheck() {
       val wraps = registeredSoftWraps()
-      assertSize(8, wraps)
+      assertThat(wraps).hasSize(8)
       assertTrue(wraps.slice(0..<5).all { it.isCustomSoftWrap })
-      assertEquals(wraps.slice(5..<8).map { it.indentInColumns }, listOf(5, 5, 5))
-      assertEquals(wraps.slice(5..<8).map { it.start }, listOf(37, 42, 47))
+      assertEquals(listOf(5, 5, 5), wraps.slice(5..<8).map { it.indentInColumns })
+      assertEquals(listOf(37, 42, 47), wraps.slice(5..<8).map { it.start })
     }
 
     doCheck()

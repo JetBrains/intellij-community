@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.tasks.actions;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -19,7 +20,7 @@ import org.jetbrains.idea.maven.utils.actions.MavenToggleAction;
 
 import java.util.List;
 
-public class ToggleBeforeRunTaskAction extends MavenToggleAction {
+final class ToggleBeforeRunTaskAction extends MavenToggleAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -29,6 +30,15 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
   @Override
   protected boolean isAvailable(@NotNull AnActionEvent e) {
     return super.isAvailable(e) && getTaskDesc(e.getDataContext()) != null;
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
   }
 
   @Override
@@ -54,7 +64,7 @@ public class ToggleBeforeRunTaskAction extends MavenToggleAction {
     }
   }
 
-  protected static @Nullable Pair<MavenProject, String> getTaskDesc(DataContext context) {
+  private static @Nullable Pair<MavenProject, String> getTaskDesc(DataContext context) {
     List<String> goals = MavenDataKeys.MAVEN_GOALS.getData(context);
     if (goals == null || goals.size() != 1) return null;
 

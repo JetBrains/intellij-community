@@ -20,7 +20,7 @@ import javax.swing.Icon
 internal abstract class WelcomeReopenProjectActionBase(path: Path, name: String) :
   ReopenProjectAction(projectPath = path.toAbsolutePath().toString(), projectName = name, displayName = name) {
 
-  override val projectIcon: Icon get() = AllIcons.Nodes.HomeFolder
+  override val projectIcon: Icon get() = AllIcons.General.Home
 
   override val projectNameToDisplay = name
 
@@ -57,7 +57,7 @@ internal class WelcomeReopenProjectAction :
     super.update(e)
     val project = e.project
     e.presentation.text = ActionsBundle.message("action.WelcomeReopenProjectAction.text")
-    e.presentation.icon = AllIcons.Nodes.HomeFolder
+    e.presentation.icon = AllIcons.General.Home
     e.presentation.isEnabledAndVisible =
       projectDisplayName.isNotBlank() && project != null && !WelcomeUtils.isWelcomeProject(project) && WelcomeAccessPoint.isAvailable()
   }

@@ -49,6 +49,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
@@ -659,6 +660,7 @@ private class TestShellStrategy(
       override val isRunning: Boolean get() = shellProcess.isAlive
       override val platform: EelPlatform = deploymentResult.targetPlatform
       override val remotePathToBinary: String = remoteBinaryPath
+      override val transportConnected = MutableStateFlow(true)
 
       @OptIn(DelicateCoroutinesApi::class)
       override val sessionCoroutineScope: IjentScope = deploymentResult.mediator.ijentProcessScope

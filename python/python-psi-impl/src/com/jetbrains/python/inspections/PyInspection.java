@@ -7,11 +7,12 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModelKt;
+import com.intellij.python.sdk.backend.evolution.EvoPyProject;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.psi.PyExpressionCodeFragment;
 import com.jetbrains.python.psi.impl.PyFileImpl;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +61,9 @@ public abstract class PyInspection extends LocalInspectionTool {
 
   private static boolean hasPythonRuntime(@NotNull InjectedLanguageManager injectedLanguageManager, @NotNull PsiFile containingFile) {
     final PsiFile topLevelFile = injectedLanguageManager.getTopLevelFile(containingFile);
-    if (PythonSdkUtil.findPythonSdk(topLevelFile) != null) {
+    // An inspection cannot suspend, so it peeks at the snapshot. Each new snapshot restarts the analysis.
+    final EvoPyProject evoPyProject = EvoPyProjectModelKt.findEvoPyProjectIfReady(topLevelFile, false);
+    if (evoPyProject != null && evoPyProject.getInterpreter() != null) {
       return true;
     }
 

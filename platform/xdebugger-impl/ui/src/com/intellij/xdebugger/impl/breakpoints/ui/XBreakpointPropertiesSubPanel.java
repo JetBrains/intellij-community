@@ -38,4 +38,8 @@ public abstract class XBreakpointPropertiesSubPanel {
   public boolean lightVariant(boolean showAllOptions) {
     return false;
   }
+
+  /** Releases a resource the panel acquired in {@link #init}, such as a live-update subscription. */
+  public void dispose() {
+  }
 }

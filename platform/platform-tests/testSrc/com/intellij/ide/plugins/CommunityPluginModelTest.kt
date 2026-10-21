@@ -50,6 +50,10 @@ val communityPluginValidationOptions: PluginValidationOptions = PluginValidation
     "com.intellij.designer.palette.PaletteToolWindowManager",
   ),
   moduleLevelServicesToIgnore = existingModuleLevelServicesInCommunity,
+  extensionsToIgnore = mapOf(
+    "com.intellij.additionalLibraryRootsProvider" to existingAdditionalLibraryRootsProvidersInCommunity,
+    "com.intellij.directoryIndexExcludePolicy" to existingDirectoryIndexExcludePoliciesInCommunity,
+  ),
 )
 
 class CommunityPluginModelTest {

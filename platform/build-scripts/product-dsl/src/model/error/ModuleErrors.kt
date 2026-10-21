@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.productLayout.model.getModuleSourceInfo
 import org.jetbrains.intellij.build.productLayout.stats.AnsiStyle
 import org.jetbrains.intellij.build.productLayout.traversal.UnusedEmbeddedLibraryModuleViolation
 import org.jetbrains.intellij.build.productLayout.traversal.UnusedSharedLibraryModuleViolation
+import java.util.TreeSet
 
 data class SelfContainedValidationError(
   override val context: String,
@@ -406,6 +407,60 @@ internal data class MissingLibraryLicenseError(
     appendLine("1. Add the license entry to $licenseFile.")
     appendLine("2. Change the dependency scope to TEST if only tests use the library.")
     appendLine("3. Change the dependency scope to PROVIDED if only compilation uses the library.")
+    appendLine()
+    appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
+    appendLine()
+  }
+}
+
+/**
+ * A Maven artifact that a content module of a bundled plugin packs, and that an embedded library module also provides.
+ */
+internal data class PlatformLibraryCopyViolation(
+  @JvmField val plugin: String,
+  @JvmField val contentModule: String,
+  @JvmField val library: String,
+  /** The `groupId:artifactId` of the copy. */
+  @JvmField val coordinate: String,
+  /** The version of the copy. */
+  @JvmField val version: String,
+  /** The embedded library module that puts the artifact into the core classloader. */
+  @JvmField val platformModule: String,
+  @JvmField val products: List<String>,
+)
+
+/**
+ * Reported when a bundled plugin packs its own copy of a library that the core classloader already holds.
+ */
+internal data class PlatformLibraryCopyError(
+  override val context: String,
+  @JvmField val violations: List<PlatformLibraryCopyViolation>,
+  override val ruleName: String = "PlatformLibraryCopyValidation",
+) : ValidationError {
+  override val category: ErrorCategory get() = ErrorCategory.PLATFORM_LIBRARY_COPY
+
+  @Suppress("DestructuringDeclaration")
+  override fun format(s: AnsiStyle): String = buildString {
+    appendLine("${s.red}${s.bold}Bundled plugins pack a copy of a platform library${s.reset}")
+    appendLine()
+    appendLine("${s.yellow}An embedded library module puts its library into the core classloader.${s.reset}")
+    appendLine("${s.yellow}A plugin that depends on the owner of a copy can load the copy instead of the platform classes.${s.reset}")
+    appendLine("${s.gray}Scope: $context${s.reset}")
+    appendLine()
+
+    val byModule = violations.groupBy { it.plugin to it.contentModule }
+    for ((key, moduleViolations) in byModule.entries.sortedWith(compareBy({ it.key.second }, { it.key.first }))) {
+      appendLine("  ${s.red}*${s.reset} ${s.bold}${key.second}${s.reset} (plugin ${key.first})")
+      for (violation in moduleViolations.sortedBy { it.coordinate }) {
+        appendLine("    ${violation.coordinate}:${violation.version} in library '${violation.library}', provided by ${violation.platformModule}")
+      }
+      appendLine("    Products: ${moduleViolations.flatMapTo(TreeSet()) { it.products }.joinToString()}")
+    }
+
+    appendLine()
+    appendLine("${s.yellow}Fix:${s.reset}")
+    appendLine("1. Exclude the dependency and add a module dependency on its wrapper.")
+    appendLine("2. A module without a namespace cannot name an internal wrapper. Give such a module dependency the PROVIDED scope.")
     appendLine()
     appendLine("${s.gray}[Rule: $ruleName]${s.reset}")
     appendLine()

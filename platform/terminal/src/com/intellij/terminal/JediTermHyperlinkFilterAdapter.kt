@@ -14,8 +14,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -28,10 +26,7 @@ import com.jediterm.terminal.model.hyperlinks.LinkResult
 import com.jediterm.terminal.model.hyperlinks.LinkResultItem
 import com.jediterm.terminal.ui.hyperlinks.LinkInfoEx
 import com.jediterm.terminal.ui.hyperlinks.LinkInfoEx.HoverConsumer
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
@@ -50,8 +45,7 @@ internal class JediTermHyperlinkFilterAdapter(
   private val requestChannel: Channel<Request> = Channel(MAX_BUFFERED_REQUESTS, BufferOverflow.DROP_OLDEST)
 
   init {
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val coroutineScope = project.service<CoroutineScopeService>().coroutineScope.childScope(
+    val coroutineScope = createScope(widget).childScope(
       "JediTerminal Filters",
       // Hyperlinks are an additional feature, so their computation should not consume significant CPU resources.
       // Even though the current implementation guarantees this implicitly, let's limit CPU
@@ -59,7 +53,6 @@ internal class JediTermHyperlinkFilterAdapter(
       Dispatchers.Default.limitedParallelism(1)
     )
     Disposer.register(widget) {
-      coroutineScope.cancel()
       requestChannel.close()
     }
     coroutineScope.launch {
@@ -115,9 +108,6 @@ private val LOG: Logger = logger<JediTermHyperlinkFilterAdapter>()
 
 private const val MAX_BUFFERED_REQUESTS = 10000
 
-@Service(Service.Level.PROJECT)
-private class CoroutineScopeService(val coroutineScope: CoroutineScope)
-
 internal fun convertLinkResult(result: Filter.Result, project: Project, widget: JBTerminalWidget): LinkResult {
   return LinkResult(result.getResultItems().mapNotNull {
     convertResultItem(it, project, widget)
@@ -126,10 +116,15 @@ internal fun convertLinkResult(result: Filter.Result, project: Project, widget: 
 
 private fun convertResultItem(item: ResultItem, project: Project, widget: JBTerminalWidget): LinkResultItem? {
   val info = item.hyperlinkInfo ?: return null
+  if (item.isInvisibleLink) {
+    // JediTerm UI doesn't support invisible links as of now.
+    // However, it's relatively easy to support them.
+    return null
+  }
   return LinkResultItem(item.highlightStartOffset, item.highlightEndOffset, convertInfo(info, project, widget))
 }
 
-private fun convertInfo(info: HyperlinkInfo, project: Project, widget: JBTerminalWidget): LinkInfo {
+internal fun convertInfo(info: HyperlinkInfo, project: Project, widget: JBTerminalWidget): LinkInfo {
   val builder = LinkInfoEx.Builder().setNavigateCallback(Runnable {
     WriteIntentReadAction.run {
       info.navigate(project)

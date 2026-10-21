@@ -3,7 +3,7 @@
 //! The lane table is data, in a JSON file an area names in `bt.json`, because it has readers outside Rust: a
 //! product's own tests can compare it with the BUILD files. See [`Lanes`] for the shape.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::OsString;
 use std::path::Path;
 
@@ -18,28 +18,26 @@ use crate::selector::Resolution;
 /// One lane table, a flat object. Only `lanes` is required:
 ///
 /// - `lanes`: every lane in declared order, which is the order a caller sees in the "Known lanes" refusal. Each
-///   is a [`LaneSpec`]. An IDE-launching lane also carries its catalog name, its test label and its JUnit tag,
-///   which the Air UI-lane controller and its trace planner read instead of a table of their own.
-/// - `integrationCategoryTags`: what an integration target of the area *is*, and what a broad run excludes. The
-///   CI exclusion of the area should be this list, so it stays correct when a lane is added.
+///   is a [`LaneSpec`]. An IDE-launching lane also carries its catalog name and its test label, which the Air
+///   UI-lane controller and its trace planner read instead of a table of their own.
+/// - `tags`: every Bazel tag a test target of the area may carry, each a [`TagSpec`]. It is the one description of
+///   them. The area's own tests hold the BUILD files to it, and [`Lanes::parse`] refuses a table whose lanes and
+///   tags disagree. The categories with an exclusion reason, in table order, are what a broad run excludes. The CI
+///   exclusion of the area should be the `ci` ones, so it stays correct when a lane is added. Adding a
+///   `dedicated-suite` category before its build configuration exists would leave the suite running nowhere.
 /// - `integrationRoot`: the target pattern prefix of the integration tree. A multi-target run the caller spelled
 ///   out inside it is asking for exactly those tests, so [`wildcard_guards`] keeps their tags.
-/// - `propertyTag`: marks the property-test targets. Neither a category nor an integration lane: it selects a lane
-///   of its own and, through `dedicatedSuiteTags`, keeps those targets out of the broad runs.
-/// - `dedicatedSuiteTags`: what a broad run skips because a suite of its own owns those targets: its own lane
-///   here, its own build configuration on CI. Adding a tag before its build configuration exists would leave the
-///   suite running nowhere.
 /// - `excludedTestLibs`: the `*_test_lib` library behind each target a broad run excludes, which a lane with
 ///   `buildsExcludedTestLibs` compiles in a second spawn. The library and not the `*_test` rule: an IDE-launching
 ///   rule declares the assembled dev distribution as `data`, and building the rule recomposes it. A tag filter
 ///   cannot select a library, so the area's own test keeps this list equal to the tagged targets.
-/// - The suite catalog, all three or none ([`Catalog`]): `flowProfileDir`, where the flow catalog generator writes
+/// - The suite catalog, both or none ([`Catalog`]): `flowProfileDir`, where the flow catalog generator writes
 ///   one document per generated suite; `flowTextDir`, where the flow text generator writes one plain-text rendering
-///   per story flow; `authoredSuitesFile`, the committed copy of the authored suites.
+///   per story flow.
 /// - `specDir`, `laneWideModules` and `laneWidePaths`: what the Air UI-lane controller joins a changed path
 ///   through. `specDir` is where the specs live. `laneWideModules` names every JPS module that holds the lane
-///   harness, with the lanes it serves (`[]` is every lane). `laneWidePaths` names every harness directory that no
-///   module of the area holds, by its repo-relative path, in the same shape. This crate reads none of them.
+///   harness, with the lanes it serves (`[]` is every lane). `laneWidePaths` names every harness file or directory
+///   that no module of the area holds, by its repo-relative path, in the same shape. This crate reads none of them.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Lanes {
@@ -48,17 +46,11 @@ pub struct Lanes {
     #[serde(default)]
     flow_text_dir: Option<String>,
     #[serde(default)]
-    authored_suites_file: Option<String>,
-    #[serde(default)]
     spec_dir: Option<String>,
     #[serde(default)]
     integration_root: Option<String>,
     #[serde(default)]
-    integration_category_tags: Vec<String>,
-    #[serde(default)]
-    property_tag: Option<String>,
-    #[serde(default)]
-    dedicated_suite_tags: Vec<String>,
+    tags: Vec<TagSpec>,
     #[serde(default)]
     excluded_test_libs: Vec<String>,
     #[serde(default)]
@@ -68,12 +60,11 @@ pub struct Lanes {
     lanes: Vec<LaneSpec>,
 }
 
-/// The suite catalog of a lane table: the three paths the suite join reads, all repo-relative.
+/// The suite catalog of a lane table: the two paths the suite join reads, both repo-relative.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Catalog<'a> {
     pub flow_profile_dir: &'a str,
     pub flow_text_dir: &'a str,
-    pub authored_suites_file: &'a str,
 }
 
 /// One lane: the targets it runs and the flags that are its definition.
@@ -104,17 +95,56 @@ pub struct LaneSpec {
     /// The flow catalog's name for this lane (`UI_REAL`), for an IDE-launching lane.
     #[serde(default)]
     pub catalog_lane: Option<String>,
+    /// The flow catalog's name for the suites of an explicit-only lane (`UI_PERF`). A suite document of this lane
+    /// belongs to the lane, and no changed path, flow or suite id reaches it (ADR 0200). A lane states this or
+    /// [`LaneSpec::catalog_lane`], never both.
+    #[serde(default)]
+    pub document_lane: Option<String>,
     /// The one test target of an IDE-launching lane, for a caller that has a resolved label and asks whose lane
     /// it is.
     #[serde(default)]
     pub test_label: Option<String>,
-    /// The JUnit tag an IDE-launching lane's suites carry, which is how a daemon that holds every lane's classpath
-    /// selects a lane. A Bazel run has no use for it, because the lane's Bazel tag already selects its one module.
-    #[serde(default)]
-    pub junit_tag: Option<String>,
     /// Whether the lane compiles `excludedTestLibs` in a second spawn; see [`LaneSpec::build_only`].
     #[serde(default)]
     builds_excluded_test_libs: bool,
+}
+
+/// One Bazel tag of the area's test targets, as the lane table describes it.
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct TagSpec {
+    pub name: String,
+    pub axis: TagAxis,
+    /// Why a broad run excludes the targets that carry the tag, or `None` when it runs them. A category only: the
+    /// category of a lane tag carries the exclusion.
+    #[serde(default)]
+    pub excluded_from_broad_runs: Option<BroadRunExclusion>,
+    /// The category that every target of a lane tag also carries. A lane tag only.
+    #[serde(default)]
+    pub category: Option<String>,
+    /// One or two sentences for a reader of the table.
+    pub description: String,
+}
+
+/// The two axes of the tags. A target carries exactly one category, and a lane tag when an IDE-launching lane owns it.
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub enum TagAxis {
+    /// What the target is, and whether a broad run excludes it.
+    Category,
+    /// Which IDE-launching lane the target is. The only thing a lane selects by.
+    Lane,
+}
+
+/// Why a broad run excludes a category.
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "kebab-case")]
+pub enum BroadRunExclusion {
+    /// The `testTagFilters` of the CI configurations name the tag. That configuration lives outside the repository,
+    /// so a target of the category cannot run on a CI agent of the main configuration.
+    Ci,
+    /// A lane and a CI configuration of its own run the targets.
+    DedicatedSuite,
 }
 
 /// A string or an array of strings, as a list.
@@ -139,11 +169,90 @@ impl Lanes {
     /// Parses a lane table, and answers why it is not one otherwise.
     pub fn parse(text: &str) -> Result<Self, String> {
         let lanes: Self = serde_json::from_str(text).map_err(|error| error.to_string())?;
-        let catalog = [&lanes.flow_profile_dir, &lanes.flow_text_dir, &lanes.authored_suites_file];
-        if catalog.iter().any(|path| path.is_some()) && catalog.iter().any(|path| path.is_none()) {
-            return Err("a suite catalog names flowProfileDir, flowTextDir and authoredSuitesFile together".to_owned());
+        if lanes.flow_profile_dir.is_some() != lanes.flow_text_dir.is_some() {
+            return Err("a suite catalog names flowProfileDir and flowTextDir together".to_owned());
         }
+        lanes.check_tags()?;
+        lanes.check_document_lanes()?;
         Ok(lanes)
+    }
+
+    /// Refuses a lane that is reached and explicit-only at once, a document lane of a lane that launches no IDE, and a
+    /// suite lane that two lanes name.
+    fn check_document_lanes(&self) -> Result<(), String> {
+        let mut named = BTreeSet::new();
+        for lane in &self.lanes {
+            if let Some(document_lane) = &lane.document_lane {
+                if lane.catalog_lane.is_some() {
+                    return Err(format!(
+                        "the lane {} states catalogLane and documentLane; a lane is reached or explicit-only, never both",
+                        lane.name
+                    ));
+                }
+                if lane.integration_tag.is_none() {
+                    return Err(format!(
+                        "the lane {} states the documentLane {document_lane} and launches no IDE",
+                        lane.name
+                    ));
+                }
+            }
+            for suite_lane in lane.catalog_lane.iter().chain(&lane.document_lane) {
+                if !named.insert(suite_lane.as_str()) {
+                    return Err(format!("two lanes name the suite lane {suite_lane}"));
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// The tags and the lanes agree: each tag is described once, a lane tag names a described category and a lane
+    /// that selects by it, and a lane selects by a described lane tag.
+    fn check_tags(&self) -> Result<(), String> {
+        let mut names = BTreeSet::new();
+        for tag in &self.tags {
+            if !names.insert(tag.name.as_str()) {
+                return Err(format!("the tag {} is described twice", tag.name));
+            }
+            match tag.axis {
+                TagAxis::Category => {
+                    if tag.category.is_some() {
+                        return Err(format!("the category {} names a category of its own", tag.name));
+                    }
+                }
+                TagAxis::Lane => {
+                    let category = tag
+                        .category
+                        .as_deref()
+                        .ok_or_else(|| format!("the lane tag {} names no category", tag.name))?;
+                    if !self.category_tags().any(|spec| spec.name == category) {
+                        return Err(format!(
+                            "the lane tag {} names the category {category}, which the table does not describe",
+                            tag.name
+                        ));
+                    }
+                    if tag.excluded_from_broad_runs.is_some() {
+                        return Err(format!(
+                            "the lane tag {} carries an exclusion; its category {category} carries it",
+                            tag.name
+                        ));
+                    }
+                    if !self.lanes.iter().any(|lane| lane.integration_tag.as_deref() == Some(&tag.name)) {
+                        return Err(format!("the lane tag {} selects no lane", tag.name));
+                    }
+                }
+            }
+        }
+        for lane in &self.lanes {
+            if let Some(tag) = &lane.integration_tag
+                && !self.lane_tags().any(|spec| &spec.name == tag)
+            {
+                return Err(format!(
+                    "the lane {} selects by {tag}, which the table describes as no lane tag",
+                    lane.name
+                ));
+            }
+        }
+        Ok(())
     }
 
     /// Reads the lane table at a repo-relative path.
@@ -182,6 +291,14 @@ impl Lanes {
         self.lanes.iter().find(|lane| lane.catalog_lane.as_deref() == Some(catalog_lane))
     }
 
+    /// The lane of a suite document whose lane is `suite_lane`: a catalog lane, or the document lane of an
+    /// explicit-only lane.
+    pub fn by_suite_lane(&self, suite_lane: &str) -> Option<&LaneSpec> {
+        self.lanes
+            .iter()
+            .find(|lane| lane.catalog_lane.as_deref() == Some(suite_lane) || lane.document_lane.as_deref() == Some(suite_lane))
+    }
+
     /// Every catalog lane name, sorted.
     pub fn catalog_lane_names(&self) -> Vec<&str> {
         let mut names: Vec<&str> = self.lanes.iter().filter_map(|lane| lane.catalog_lane.as_deref()).collect();
@@ -194,7 +311,6 @@ impl Lanes {
         Some(Catalog {
             flow_profile_dir: self.flow_profile_dir.as_deref()?,
             flow_text_dir: self.flow_text_dir.as_deref()?,
-            authored_suites_file: self.authored_suites_file.as_deref()?,
         })
     }
 
@@ -206,16 +322,24 @@ impl Lanes {
         self.integration_root.as_deref()
     }
 
-    pub fn integration_category_tags(&self) -> &[String] {
-        &self.integration_category_tags
+    /// Every tag a test target of the area may carry, in table order.
+    pub fn tags(&self) -> &[TagSpec] {
+        &self.tags
     }
 
-    pub fn property_tag(&self) -> Option<&str> {
-        self.property_tag.as_deref()
+    /// The tag of this name, or `None` for one the table does not describe.
+    pub fn tag(&self, name: &str) -> Option<&TagSpec> {
+        self.tags.iter().find(|tag| tag.name == name)
     }
 
-    pub fn dedicated_suite_tags(&self) -> &[String] {
-        &self.dedicated_suite_tags
+    /// The category axis, in table order.
+    pub fn category_tags(&self) -> impl Iterator<Item = &TagSpec> {
+        self.tags.iter().filter(|tag| tag.axis == TagAxis::Category)
+    }
+
+    /// The lane axis, in table order.
+    pub fn lane_tags(&self) -> impl Iterator<Item = &TagSpec> {
+        self.tags.iter().filter(|tag| tag.axis == TagAxis::Lane)
     }
 
     pub fn excluded_test_libs(&self) -> &[String] {
@@ -253,9 +377,11 @@ impl Lanes {
             .map(|(directory, lanes)| (directory.as_str(), lanes.as_slice()))
     }
 
-    /// The tags a broad local run excludes: the categories, then the dedicated suites.
+    /// The tags a broad local run excludes: the categories with an exclusion reason, in table order.
     fn broad_run_excluded_tags(&self) -> impl Iterator<Item = &String> {
-        self.integration_category_tags.iter().chain(&self.dedicated_suite_tags)
+        self.category_tags()
+            .filter(|tag| tag.excluded_from_broad_runs.is_some())
+            .map(|tag| &tag.name)
     }
 
     /// The one `--test_tag_filters` value a broad local run carries.

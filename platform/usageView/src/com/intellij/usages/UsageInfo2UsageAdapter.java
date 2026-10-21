@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.TextEditorLocation;
@@ -252,11 +253,21 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   @Override
   public void selectInEditor() {
     if (!isValid()) return;
-    Editor editor = openTextEditor(true);
-    Segment marker = getFirstSegment();
-    if (marker != null) {
-      editor.getSelectionModel().setSelection(marker.getStartOffset(), marker.getEndOffset());
-    }
+    OpenFileDescriptor descriptor = getDescriptor();
+    if (descriptor == null) return;
+    FileEditorManager manager = FileEditorManager.getInstance(getProject());
+    manager.requestOpenTextEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor)
+      .withRequestFocus(true)).thenAccept(editor -> {
+      if (editor != null && !editor.isDisposed()) {
+        manager.runWhenLoaded(editor, () -> ReadAction.runBlocking(() -> {
+          if (editor.isDisposed() || !isValid()) return;
+          Segment marker = getFirstSegment();
+          if (marker != null) {
+            editor.getSelectionModel().setSelection(marker.getStartOffset(), marker.getEndOffset());
+          }
+        }));
+      }
+    });
   }
 
   @Override
@@ -289,6 +300,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     }
   }
 
+  @SuppressWarnings("deprecation")
   public Editor openTextEditor(boolean focus) {
     OpenFileDescriptor descriptor = getDescriptor();
     if (descriptor == null) return null;

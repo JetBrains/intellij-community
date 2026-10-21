@@ -1,10 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.concurrency.VarHandleWrapperImpl
+import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.Java11Shim
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.ConcurrentMap
 
 @ApiStatus.Internal
 @VisibleForTesting
@@ -14,7 +17,7 @@ class Java11ShimImpl : Java11Shim() {
     VarHandleWrapperImpl.useVarHandlesInConcurrentCollections()
   }
 
-  private val walker = StackWalker.getInstance(setOf(StackWalker.Option.RETAIN_CLASS_REFERENCE), 5)
+  private val walker: StackWalker = StackWalker.getInstance(setOf(StackWalker.Option.RETAIN_CLASS_REFERENCE), 5)
 
   override fun <K : Any, V> copyOf(map: Map<K, V>): Map<K, V> = java.util.Map.copyOf(map)
 
@@ -56,15 +59,31 @@ class Java11ShimImpl : Java11Shim() {
           val newResult = arrayOfNulls<Any>(size)
           System.arraycopy(array, 0, newResult, 0, size)
           @Suppress("UNCHECKED_CAST", "KotlinConstantConditions")
-          return java.util.List.of(*newResult) as List<E>
+          java.util.List.of(*newResult) as List<E>
         }
       }
     }
+  }
+
+  override fun <K, V> createConcurrentWeakMap(hashingStrategy: HashingStrategy<in K & Any>): ConcurrentMap<K & Any, V & Any> {
+    return if (hashingStrategy === HashingStrategy.canonical<K>()) ConcurrentCollectionFactory.createConcurrentWeakMap() else ConcurrentCollectionFactory.createConcurrentWeakMap(hashingStrategy)
   }
 
   override fun getCallerClass(stackFrameIndex: Int): Class<*>? {
     return walker.walk { stream ->
       stream.skip(stackFrameIndex.toLong()).map { it.declaringClass }.findFirst().orElse(null)
     }
+  }
+
+  override val walksOnlyRequestedFrames: Boolean
+    get() = true
+
+  override fun getStackTrace(limit: Int, vararg calleeClassNames: String): Array<StackTraceElement> {
+    return StackWalker.getInstance().walk { frames ->
+      frames.dropWhile { isSkippedFrame(it.className, calleeClassNames) }
+        .limit(limit.toLong())
+        .map { it.toStackTraceElement() }
+        .toList()
+    }.toTypedArray()
   }
 }

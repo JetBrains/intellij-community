@@ -4,18 +4,28 @@ package com.intellij.java.util
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.ui.IdeUiService
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.impl.AbstractEditorTest
+import com.intellij.openapi.editor.impl.editorModelFixture
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.getBestBalloonPosition
 import com.intellij.util.getBestPopupPosition
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import java.awt.Dimension
 import java.awt.Point
 
 
-class PopupUtilTest : AbstractEditorTest() {
+@TestApplication
+class PopupUtilTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
 
   @Test
-  fun testPopupPositionsInsideEditor() {
+  fun testPopupPositionsInsideEditor(): Unit = fixture.runTest {
     init("""
       import org.junit.Test
       class TestCase {

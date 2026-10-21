@@ -3,11 +3,14 @@
 package com.intellij.util.containers;
 
 import com.intellij.diff.util.Enumerator;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-public class EnumeratorTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class EnumeratorTest {
+  @Test
   public void test() {
     Enumerator enumerator = new Enumerator(10);
     int[] indecies = enumerator.enumerate(new Object[]{"a", "b", "a"},0, 0);
@@ -16,6 +19,7 @@ public class EnumeratorTest extends TestCase {
     assertTrue(Arrays.equals(new int[]{1, 3, 2}, indecies));
   }
 
+  @Test
   public void testWithShift() {
     Enumerator enumerator = new Enumerator(10);
     int[] indecies = enumerator.enumerate(new Object[]{"1","a", "b", "a", "2"}, 1, 1);

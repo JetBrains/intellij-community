@@ -70,8 +70,16 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     this(parentDisposable, true);
   }
 
-  public JavaCoreApplicationEnvironment(@NotNull Disposable parentDisposable, boolean unitTestMode) {
-    super(parentDisposable, unitTestMode);
+  public JavaCoreApplicationEnvironment(@NotNull Disposable parentDisposable, boolean isUnitTestMode) {
+    this(parentDisposable, isUnitTestMode, false);
+  }
+
+  /**
+   * @param isHeadlessMode whether this environment is the application of a headless process, see
+   *                     {@link CoreApplicationEnvironment#CoreApplicationEnvironment(Disposable, boolean, boolean)}
+   */
+  public JavaCoreApplicationEnvironment(@NotNull Disposable parentDisposable, boolean isUnitTestMode, boolean isHeadlessMode) {
+    super(parentDisposable, isUnitTestMode, isHeadlessMode);
 
     registerFileType(JavaClassFileType.INSTANCE, "class");
     registerFileType(JavaFileType.INSTANCE, "java");

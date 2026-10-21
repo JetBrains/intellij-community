@@ -2,19 +2,23 @@
 
 package com.intellij.util.diff;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-public class ReindexerTest extends TestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class ReindexerTest {
   private Reindexer myReindexer = new Reindexer();
 
-  @Override
-  protected void tearDown() throws Exception {
+  @AfterEach
+  protected void tearDown() {
     myReindexer = null;
-    super.tearDown();
   }
 
+  @Test
   public void testNoUnique() {
     int[] ints1 = new int[]{1, 2, 3};
     int[] ints2 = new int[]{3, 2, 1, 2, 2};
@@ -29,6 +33,7 @@ public class ReindexerTest extends TestCase {
     assertEquals(4, myReindexer.restoreIndex(4, 1));
   }
 
+  @Test
   public void testSomeUniqu() {
     int[][] reindexed = myReindexer.discardUnique(new int[]{1, 2, 3}, new int[]{3, 4, 1, 3});
     assertTrue(Arrays.equals(reindexed[0], new int[]{1, 3}));
@@ -40,6 +45,7 @@ public class ReindexerTest extends TestCase {
     assertEquals(3, myReindexer.restoreIndex(2, 1));
   }
 
+  @Test
   public void testAllUnique() {
     int[][] reindexed = myReindexer.discardUnique(new int[]{1, 2, 3}, new int[]{4, 5});
     assertEquals(0, reindexed[0].length);

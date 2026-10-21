@@ -3,12 +3,17 @@
 
 package com.jetbrains.python.configuration
 
-import com.jetbrains.python.sdk.asPyProjectAddingFacet
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.pyproject.model.evolution.findMainEvoPyProjectIfReady
 import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.emit
+import com.jetbrains.python.sdk.asPyProjectAddingFacet
 import com.jetbrains.python.sdk.runWithSdkConfigurationLock
 
 /**
@@ -18,6 +23,17 @@ import com.jetbrains.python.sdk.runWithSdkConfigurationLock
 @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
 internal fun setPythonInterpreterBlocking(module: Module, sdk: Sdk?) {
   runWithSdkConfigurationLock(module.project) {
-    module.asPyProjectAddingFacet()?.setPythonInterpreter(sdk?.pythonInterpreterAsync(), waitForSnapshot = false)
+    // A broken SDK names no interpreter, so the module gets none, as for no SDK.
+    val result = module.asPyProjectAddingFacet()?.setPythonInterpreter(sdk?.pythonInterpreterResultAsync()?.successOrNull, waitForSnapshot = false)
+    if (result is Result.Failure) ErrorSink().emit(result.error, module.project)
   }
 }
+
+/**
+ * The module whose interpreter the Settings page shows and sets: [module], or the module of the main Python project
+ * when the page has none. `null` when the project has no Python project, so it has no interpreter. The page opens
+ * after startup, when the project structure has loaded.
+ */
+internal fun findInterpreterModule(project: Project, module: Module?): Module? =
+  module ?: project.findMainEvoPyProjectIfReady()?.pyProject?.residesOnModule
+

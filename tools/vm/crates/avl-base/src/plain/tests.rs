@@ -42,7 +42,7 @@ fn plain_lines_name_each_phase_and_each_test() {
     );
     reporter.publish(
         daemon_event(
-            r#"{"event":"testFinished","timestamp":"t","id":"1","displayName":"start-in-terminal","className":"AirNewSessionTest","methodName":"scenarios","status":"FAILED","durationMs":5,"error":"no chip\nat line 3"}"#,
+            r#"{"event":"testFinished","timestamp":"t","id":"1","displayName":"start-in-terminal","className":"AirNewSessionTest","methodName":"scenarios","status":"FAILED","durationMs":5,"message":"no chip","detail":"at line 3"}"#,
         ),
         Some(&scope),
     );
@@ -424,4 +424,31 @@ fn a_checkout_line_says_whether_the_tree_is_clean() {
         error: Some("not a repository\nmore".to_owned()),
     };
     assert_eq!(checkout_line(&unknown), "checkout: unknown: not a repository");
+}
+
+// A failed test line names the headline of its typed failure: the first line of the message, else the type. A failed
+// container shows the headline and the detail on the lines below it.
+#[test]
+fn a_failed_test_line_names_the_headline_of_its_typed_failure() {
+    let (reporter, stderr, _clock) = screen_recorder(Terminal::default());
+    let scope = Scope::worker("air-linux-1");
+    for record in [
+        r#"{"event":"testFinished","timestamp":"t","id":"1","displayName":"a","className":"T","methodName":"m","status":"FAILED","durationMs":5,"type":"java.lang.AssertionError","message":"no chip\nmore","detail":"at line 3"}"#,
+        r#"{"event":"testFinished","timestamp":"t","id":"2","displayName":"b","className":"T","methodName":"m","status":"FAILED","durationMs":5,"type":"java.lang.IllegalStateException"}"#,
+        r#"{"event":"containerFailed","timestamp":"t","id":"[suite:s]","displayName":"S","className":"S","message":"the prologue failed","detail":"at prologue"}"#,
+    ] {
+        reporter.publish(daemon_event(record), Some(&scope));
+    }
+    assert_eq!(
+        stderr.text(),
+        [
+            "vm: [air-linux-1] ✗ T#m[a] — no chip",
+            "vm: [air-linux-1] ✗ T#m[b] — java.lang.IllegalStateException",
+            "vm: [air-linux-1] ✗ S (container)",
+            "the prologue failed",
+            "at prologue",
+            "",
+        ]
+        .join("\n")
+    );
 }

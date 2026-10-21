@@ -322,6 +322,7 @@ object CoreModuleSets {
     module("intellij.platform.ide.fileChooser.universal")
     // intellij.platform.ide.impl opens tool window tabs in the editor through the service of this module
     module("intellij.platform.ide.tabInEditor")
+    module("intellij.platform.ide.tabInEditor.frontend")
     module("intellij.platform.threadDumpParser")
     module("intellij.platform.ide.favoritesTreeView")
     // todo not used by platform - move to plugin
@@ -350,7 +351,6 @@ object CoreModuleSets {
     // module - intellij.platform.execution.impl now depends on it, not the other way round
     module("intellij.platform.wsl.impl")
     embeddedModule("intellij.platform.ide.bootstrap.eel")
-    embeddedModule("intellij.platform.ide.bootstrap.kernel")
     embeddedModule("intellij.platform.diff")
     embeddedModule("intellij.platform.diff.impl")
     embeddedModule("intellij.platform.util.diff")
@@ -365,15 +365,10 @@ object CoreModuleSets {
     // Same modules as fleet() - all are required
     embeddedModule("fleet.bifurcan")
     embeddedModule("fleet.fastutil")
-    embeddedModule("fleet.kernel")
     embeddedModule("fleet.multiplatform.shims")
     embeddedModule("fleet.openmap")
-    embeddedModule("fleet.radixTrie")
     embeddedModule("fleet.reporting.api")
     embeddedModule("fleet.reporting.shared")
-    embeddedModule("fleet.rhizomedb")
-    embeddedModule("fleet.rhizomedb.transactor")
-    embeddedModule("fleet.rhizomedb.transactor.rebase")
     embeddedModule("fleet.rpc")
     embeddedModule("fleet.util.codepoints")
     embeddedModule("fleet.util.core")
@@ -383,29 +378,25 @@ object CoreModuleSets {
   }
 
   /**
-   * Minimal RPC infrastructure required by kernel and core platform modules.
-   * Contains fleet libraries and base RPC/kernel modules without backend/frontend split.
+   * Minimal RPC infrastructure required by core platform modules.
+   * Contains fleet libraries and base RPC modules without backend/frontend split.
    *
-   * **Use when:** Need minimal RPC support for modules like intellij.platform.kernel
-   * without full RPC backend/frontend/topics infrastructure
+   * **Use when:** Need minimal RPC support without full RPC backend/frontend/topics infrastructure
    *
-   * **Note:** Backend modules (`rpc.backend`, `kernel.backend`, `topics.backend`) are in `rpcBackend()`, not here.
+   * **Note:** Backend modules (`rpc.backend`, `topics.backend`) are in `rpcBackend()`, not here.
    *
-   * **Total:** ~15 modules (13 from fleet + 2 platform modules)
-   *
-   * @see rpcBackend for full RPC functionality with backend/frontend split (includes kernel.backend)
+   * @see rpcBackend for full RPC functionality with backend/frontend split
    * @see fleet for the fleet module set definition
    */
   fun rpcMinimal(): ModuleSet = moduleSet("rpc.minimal", outputModule = "intellij.platform.ide.core") {
-    // All fleet modules (13 total) including transitive content dependencies
+    // All fleet modules including transitive content dependencies
     // All modules are content modules with XML descriptors, so splitting is not practical
     moduleSet(fleet())
 
-    // Base RPC and kernel modules (backend modules are in rpc(), not here)
+    // Base RPC modules (backend modules are in rpcBackend(), not here)
     embeddedModule("intellij.platform.klogger")
     module("intellij.platform.rpc")
     embeddedModule("intellij.platform.rpc.lite")
-    embeddedModule("intellij.platform.kernel")
   }
 
   /**
@@ -418,15 +409,12 @@ object CoreModuleSets {
    * Products using `CommunityModuleSets.essential()` get both `rpcMinimal()` (via corePlatform) and this module set
    * through `CommunityModuleSets.splitCore()`.
    * 
-   * @see rpcMinimal for base RPC and kernel modules (included in corePlatform)
+   * @see rpcMinimal for base RPC modules (included in corePlatform)
    */
   fun rpcBackend(): ModuleSet = moduleSet("rpc.backend.extended") {
     // Base RPC (rpcMinimal) already available from corePlatform
     // Only add backend/frontend/topics functionality
     module("intellij.platform.rpc.backend")
-    module("intellij.platform.kernel.backend.baseline")
-    module("intellij.platform.kernel.backend")
-    module("intellij.platform.kernel.impl")
 
     module("intellij.platform.rpc.topics")
     module("intellij.platform.rpc.topics.backend")

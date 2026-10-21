@@ -313,10 +313,13 @@ fn the_default_roots_find_the_controllers_zips() {
     assert!(!found.roots[1].exists, "the runs directory does not exist yet");
 
     let unresolved = default_roots(Some(Path::new("/repo")), Err("AIR_VM_RUNTIME_ROOT is not absolute"));
-    assert_eq!(unresolved.len(), 4);
+    assert_eq!(
+        unresolved.iter().map(|root| root.kind).collect::<Vec<_>>(),
+        [RootKind::BazelTestlogs, RootKind::VmReports, RootKind::VmRuns]
+    );
     let states = Scanner::new(Options::default()).scan(&unresolved).roots;
+    assert_eq!(states[1].error.as_deref(), Some("AIR_VM_RUNTIME_ROOT is not absolute"));
     assert_eq!(states[2].error.as_deref(), Some("AIR_VM_RUNTIME_ROOT is not absolute"));
-    assert_eq!(states[3].error.as_deref(), Some("AIR_VM_RUNTIME_ROOT is not absolute"));
 }
 
 #[test]

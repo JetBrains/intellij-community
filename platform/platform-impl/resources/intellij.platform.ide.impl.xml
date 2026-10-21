@@ -2,7 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="fleet.andel"/>
-    <module name="fleet.rhizomedb"/>
+    <module name="fleet.rpc"/>
     <module name="fleet.util.core"/>
     <module name="intellij.libraries.aalto.xml"/>
     <module name="intellij.libraries.asm"/>
@@ -87,7 +87,6 @@
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.instanceContainer"/>
     <module name="intellij.platform.jbr"/>
-    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.locking.impl"/>
@@ -265,9 +264,7 @@
     <extensionPoint qualifiedName="com.intellij.fileTypeOverrider" interface="com.intellij.openapi.fileTypes.impl.FileTypeOverrider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.colorPickerListenerFactory" interface="com.intellij.ui.ColorPickerListenerFactory" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.search.projectOptionsTopHitProvider" interface="com.intellij.ide.ui.OptionsSearchTopHitProvider$ProjectLevelProvider" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.pluginInitializationErrorHandler"
-                    interface="com.intellij.ide.plugins.PluginInitializationErrorHandler"
-                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.pluginLoadingProblemsNotificationHandler" interface="com.intellij.ide.plugins.PluginLoadingProblemsNotificationHandler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.pluginSuggestionProvider" dynamic="true"
                     interface="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginSuggestionProvider"/>
     <extensionPoint qualifiedName="com.intellij.pluginAdvertiserSuppressor" dynamic="true"
@@ -469,7 +466,8 @@
     <applicationService serviceInterface="com.intellij.openapi.ui.DialogBackgroundImageProvider" open="true"
                         serviceImplementation="com.intellij.openapi.wm.impl.DialogBackgroundImageProviderImpl"/>
     <applicationLoadHandler implementation="com.intellij.util.imageio.ImageReaderWriterSpiRegistrar"/>
-    <applicationActivity implementation="com.intellij.ide.debug.ImageDebugUtilLoader"/>
+    <postStartupActivity implementation="com.intellij.ide.debug.ImageDebugUtilLoader"/>
+    <applicationActivity implementation="com.intellij.openapi.editor.impl.softwrap.SoftWrapSignFontPreloader"/>
     <applicationService serviceImplementation="com.intellij.ui.WaylandAppIconPatcher"
                         preload="notHeadless"
                         os="linux"/>
@@ -495,7 +493,7 @@
     />
     <registryKey
       key="ide.welcome.screen.recent.project.vcs.actions"
-      defaultValue="false"
+      defaultValue="true"
       description="Show the VCS actions icon and menu for a recent version control project on the welcome screen"
       restartRequired="true"
     />
@@ -543,6 +541,11 @@
       key="ea.diagnostic.endpoint.public.key"
       defaultValue=""
       description="Pinned public key for the ITN error reporting endpoint. Required when ea.diagnostic.endpoint is set. Accepts Base64-encoded SubjectPublicKeyInfo bytes or PEM text"
+    />
+    <registryKey
+      key="ea.diagnostic.max.request.size.mb"
+      defaultValue="50"
+      description="The size limit, in MiB, of the gzipped body of an error report. A report over the limit skips its JFR snapshot. The report listener rejects a body over 100 MiB"
     />
     <registryKey
       key="ea.auto.report.allowed"
@@ -720,7 +723,7 @@
         Enable new inspection widget experiment
       </description>
     </experimentalFeature>
-    <pluginInitializationErrorHandler implementation="com.intellij.ide.plugins.DefaultPluginInitializationErrorHandler"/>
+    <pluginLoadingProblemsNotificationHandler implementation="com.intellij.ide.plugins.DefaultPluginLoadingProblemsNotificationHandler"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.WslDistributionManager"
                         serviceImplementation="com.intellij.execution.wsl.WslDistributionManagerImpl"/>
     <virtualFileSystem implementationClass="com.intellij.openapi.vfs.impl.local.AsyncableLocalFileSystemImpl" key="file" physical="true"/>
@@ -897,6 +900,7 @@
     <projectService serviceInterface="com.intellij.openapi.util.WindowStateService"
                     serviceImplementation="com.intellij.openapi.util.WindowStateProjectService"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileEditor.impl.IdeScriptEngineUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.fileEditor.impl.FileCacheConflictCollector"/>
     <applicationService serviceInterface="com.intellij.ide.UiActivityMonitor"
                         serviceImplementation="com.intellij.ide.UiActivityMonitorImpl"/>
     <applicationService serviceImplementation="com.intellij.diagnostic.WindowsDefenderChecker" open="true"/>
@@ -1013,6 +1017,7 @@
                              bundle="messages.IdeBundle"
                              key="configurable.notifications.name"/>
     <search.optionContributor implementation="com.intellij.notification.impl.NotificationSearchableOptionContributor"/>
+    <search.optionContributor implementation="com.intellij.ide.soundSignals.SoundSignalsSearchableOptionContributor"/>
     <!-- Accessibility -->
     <applicationConfigurable groupId="appearance"
                              groupWeight="140"
@@ -1224,6 +1229,7 @@
       implementationClass="com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ui.BalloonUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.ProjectlessLifecycleCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.application.options.colors.ReaderModeStatsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.application.options.colors.RainbowCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.IdeErrorDialogUsageCollector"/>
@@ -1398,6 +1404,7 @@
       implementationClass="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.HotProjectReopenStartUpPerformanceCollector"/>
     <postStartupActivity implementation="com.intellij.ide.startup.CheckProjectActivity"/>
     <postStartupActivity implementation="com.intellij.ide.startup.CheckKeysStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.openapi.editor.impl.SmoothCaretAutoEnableActivity"/>
     <environmentKeyProvider implementation="com.intellij.ide.impl.ProjectOpenKeyProvider"/>
     <environmentKeyProvider implementation="com.intellij.ide.plugins.PluginEnvironmentKeyProvider"/>
     <actionConfigurationCustomizer implementation="com.intellij.platform.ide.menu.IdeMainMenuActionCustomizer"/>
@@ -1576,6 +1583,19 @@
     <applicationService serviceImplementation="com.intellij.openapi.options.NonModalSettingsAdvancedSettingService"/>
     <advancedSetting id="ide.ui.non.modal.settings.window" default="true" groupKey="group.advanced.settings.ui"
                      service="com.intellij.openapi.options.NonModalSettingsAdvancedSettingService" property="nonModalSettingsWindow"/>
+    <registryKey
+      key="ide.settings.tool.window.enabled"
+      defaultValue="false"
+      restartRequired="true"
+      description="Show Settings as a tool window with the settings tree at the bottom of the left toolbar, and show the settings page in an editor tab"
+    />
+    <toolWindow id="Settings" anchor="left" icon="AllIcons.General.Settings"
+                factoryClass="com.intellij.openapi.options.newEditor.SettingsToolWindowFactory"/>
+    <defaultToolWindowLayout implementation="com.intellij.openapi.options.newEditor.SettingsToolWindowLayoutExtension" order="last"/>
+    <fileEditorProvider implementation="com.intellij.openapi.options.newEditor.SettingsFileEditorProvider"/>
+    <fileIconProvider order="first" implementation="com.intellij.openapi.options.newEditor.SettingsFileIconProvider"/>
+    <editorAutoClosingHandler implementation="com.intellij.openapi.options.newEditor.SettingsTabAutoClosingHandler"/>
+    <virtualFilePreCloseCheck implementation="com.intellij.openapi.options.newEditor.SettingsTabPreCloseCheck"/>
     <advancedSetting id="ide.ui.simplified.splash.image" default="false" groupKey="group.advanced.settings.ui"
                      service="com.intellij.ide.ui.SimplifiedSplashSettingProvider" property="useSimplifiedSplashImage"/>
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.DependencyFeatureCollector"/>
@@ -1842,6 +1862,8 @@
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelCacheImpl"/>
     <projectService serviceInterface="com.intellij.platform.backend.workspace.WorkspaceModelCache"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl"/>
+    <applicationActivity implementation="com.intellij.ide.ui.UiDslAndHtmlClassesWarmUp"/>
+    <applicationActivity implementation="com.intellij.openapi.wm.impl.FrameClassesWarmUp"/>
     <cachesInvalidator implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator"/>
     <recoveryAction implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelRecoveryAction"/>
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidatorBackgroundActivity"/>
@@ -1945,7 +1967,7 @@
               class="com.intellij.internal.statistic.StatisticsRegionSettingsListener"/>
     <listener class="com.intellij.ide.plugins.DynamicPluginsFrameStateListener"
               topic="com.intellij.openapi.application.ApplicationActivationListener"/>
-    <listener class="com.intellij.ide.plugins.PluginInitializationErrorStartupReporter"
+    <listener class="com.intellij.ide.plugins.PluginLoadingProblemsStartupReporter"
               topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.openapi.updateSettings.impl.PluginAutoUpdateService$PluginAutoUpdateAppLifecycleListener"
               topic="com.intellij.ide.AppLifecycleListener"/>
@@ -2053,6 +2075,8 @@
   <projectListeners>
     <listener class="com.intellij.openapi.fileEditor.impl.EditorHistoryManager$MyEditorManagerListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+    <listener class="com.intellij.openapi.fileEditor.impl.LegacyRecentPlacesListenerBridge"
+              topic="com.intellij.openapi.fileEditor.ex.RecentPlacesListener"/>
     <listener class="com.intellij.notification.impl.NotificationsListener"
               activeInHeadlessMode="false"
               activeInTestMode="false"

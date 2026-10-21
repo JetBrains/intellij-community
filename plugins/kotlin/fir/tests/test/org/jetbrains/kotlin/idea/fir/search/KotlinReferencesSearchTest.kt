@@ -3,15 +3,19 @@
 package org.jetbrains.kotlin.idea.fir.search
 
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import com.intellij.testFramework.LightVirtualFile
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -56,12 +60,22 @@ class KotlinReferencesSearchTest : AbstractSearcherTest() {
         Assert.assertTrue(refs[1] is KtInvokeFunctionReference)
     }
 
-    // workaround for KT-9788 AssertionError from backand when we read field from inline function
-    private val myFixtureProxy: JavaCodeInsightTestFixture get() = myFixture
+    fun testImportAliasSearchInFileWithInvalidDirectory() {
+        myFixture.configureByText("Target.kt", "package a\n\nclass Tar<caret>get\n")
+        val target = myFixture.elementAtCaret.getParentOfType<KtClass>(false)!!
+        val invalidDirectory = LightVirtualFile("dir").also { it.isValid = false }
+        val usage = object : LightVirtualFile("Usage.kt", KotlinFileType.INSTANCE, "import a.Target as Alias\n\nval x: Alias? = null\n") {
+            override fun getParent(): VirtualFile = invalidDirectory
+        }
+        val usageFile = PsiManager.getInstance(project).findFile(usage)!!
+
+        val references = ReferencesSearch.search(target, LocalSearchScope(usageFile)).findAll()
+        assertSize(0, references)
+    }
 
     private inline fun <reified T : PsiElement> doTest(): List<PsiReference> {
-        val psiFile = myFixtureProxy.configureByFile(dataFile())
-        val func = myFixtureProxy.elementAtCaret.getParentOfType<T>(false)!!
+        val psiFile = myFixture.configureByFile(dataFile())
+        val func = myFixture.elementAtCaret.getParentOfType<T>(false)!!
         val refs = runReadActionBlocking { ReferencesSearch.search(func).findAll().sortedBy { it.element.textRange.startOffset } }
 
         // check that local reference search gives the same result

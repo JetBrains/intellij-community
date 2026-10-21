@@ -82,11 +82,6 @@ public final class SimpleJavaSdkType extends SdkType implements JavaSdkType {
   }
 
   @Override
-  public @NotNull @Unmodifiable Collection<String> suggestHomePaths() {
-    return suggestHomePaths(null);
-  }
-
-  @Override
   public @NotNull @Unmodifiable Collection<String> suggestHomePaths(@Nullable Project project) {
     //there is no need to search for JDKs if there is JavaSdkImpl registered
     if (!notSimpleJavaSdkTypeIfAlternativeExists().test(this)) {

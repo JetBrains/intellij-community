@@ -28,8 +28,8 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
+import com.jetbrains.python.psi.resolve.pythonSdkIfReady
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
 import one.util.streamex.StreamEx
 
@@ -158,11 +158,11 @@ fun computeCompletionWeight(
   val containingFile = element.containingFile
   if (element is PsiDirectory) {
     vFile = element.virtualFile
-    sdk = PythonSdkUtil.findPythonSdk(element)
+    sdk = element.pythonSdkIfReady()
   }
   else if (containingFile != null) {
     vFile = containingFile.virtualFile
-    sdk = PythonSdkUtil.findPythonSdk(containingFile)
+    sdk = containingFile.pythonSdkIfReady()
   }
 
   val importPath = path ?: QualifiedNameFinder.findShortestImportableQName(element.containingFile) ?: return FALLBACK_WEIGHT

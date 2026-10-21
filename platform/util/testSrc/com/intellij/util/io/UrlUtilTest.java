@@ -11,7 +11,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.net.URL;
@@ -21,11 +21,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class UrlUtilTest {
   @Test
@@ -188,8 +188,8 @@ public class UrlUtilTest {
       fail("canContainUrl returns false for " + line);
     }
 
-    assertTrue("Expected URL (" + expectedUrl + ") is not detected in [" + line + "]", found);
-    assertEquals("Text: [" + line + "]", expectedUrl, matcher.group());
+    assertTrue(found, "Expected URL (" + expectedUrl + ") is not detected in [" + line + "]");
+    assertEquals(expectedUrl, matcher.group(), "Text: [" + line + "]");
   }
 
   @Test
@@ -250,12 +250,12 @@ public class UrlUtilTest {
   private static void doUrlWithParensTest(@NotNull String text, @Nullable String expectedExtractedUrl) {
     TextRange result = URLUtil.findUrl(text, 0, text.length());
     if (expectedExtractedUrl == null) {
-      assertNull("URL shouldn't be found", result);
+      assertNull(result, "URL shouldn't be found");
     }
     else {
-      assertNotNull("URL should be found", result);
-      assertEquals("Wrong URL found", expectedExtractedUrl, result.substring(text));
-      assertNull("Extra URL found", URLUtil.findUrl(text, result.getEndOffset(), text.length()));
+      assertNotNull(result, "URL should be found");
+      assertEquals(expectedExtractedUrl, result.substring(text), "Wrong URL found");
+      assertNull(URLUtil.findUrl(text, result.getEndOffset(), text.length()), "Extra URL found");
     }
   }
 }

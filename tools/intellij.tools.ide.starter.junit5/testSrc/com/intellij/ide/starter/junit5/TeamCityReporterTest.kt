@@ -5,9 +5,11 @@ import com.intellij.platform.testFramework.teamCity.TeamCityReporter
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter.SyntheticTestKind
 import com.intellij.platform.testFramework.teamCity.TeamCityReporter.TestOutcome
 import io.kotest.matchers.collections.shouldContainInOrder
+import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
@@ -246,5 +248,35 @@ class TeamCityReporterTest {
 
     lines.any { it.contains("testStarted") }.shouldBe(true)
     lines.any { it.contains("testFinished") }.shouldBe(true)
+  }
+
+  @Test
+  fun `a Slack notification is one notification message that TeamCity can parse`() {
+    val lines = captureStdout {
+      TeamCityReporter.reportSlackNotification(message = "The agent holds a key down", sendTo = "#channel", connectionId = "PROJECT_EXT_1")
+    }
+
+    lines.size.shouldBe(1)
+    val parsed = ServiceMessage.parse(lines.single()).shouldNotBeNull()
+    parsed.messageName.shouldBe("notification")
+    parsed.attributes.shouldBe(mapOf(
+      "notifier" to "slack",
+      "message" to "The agent holds a key down",
+      "sendTo" to "#channel",
+      "connectionId" to "PROJECT_EXT_1",
+    ))
+  }
+
+  @Test
+  fun `a Slack notification escapes the message and stays on one line`() {
+    val message = "it's [a|b]\nline two"
+
+    val lines = captureStdout {
+      TeamCityReporter.reportSlackNotification(message = message, sendTo = "#channel", connectionId = "PROJECT_EXT_1")
+    }
+
+    lines.size.shouldBe(1)
+    lines.single().shouldContain("|n")
+    ServiceMessage.parse(lines.single()).shouldNotBeNull().attributes["message"].shouldBe(message)
   }
 }

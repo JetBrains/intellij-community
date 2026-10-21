@@ -9,10 +9,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.python.pyproject.model.evolution.findMainPythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -20,8 +17,9 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.python.pyproject.model.evolution.pythonInterpreters
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.util.asDisposable
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -69,19 +67,14 @@ class PyPartialStubMarkersInvalidator(
 
   private suspend fun clearPathCaches(project: Project) {
     if (project.isDisposed) return
-    val sdks = linkedSetOf<Sdk>()
-
     for (module in ModuleManager.getInstance(project).modules) {
       PythonModulePathCache.getInstance(module).clearCache()
-      PythonSdkUtil.findPythonSdk(module)?.let(sdks::add)
     }
 
-    // Debounced on a coroutine, so it can await the structure rather than miss the main interpreter.
-    @Suppress("DEPRECATION")
-    project.findMainPythonInterpreter()?.getSdkAPI()?.let(sdks::add)
-
-    for (sdk in sdks) {
-      PythonSdkPathCache.getInstance(project, sdk).clearCache()
+    // Debounced on a coroutine, so it can await the structure. The set holds the main interpreter too.
+    for (interpreter in project.pythonInterpreters()) {
+      @Suppress("DEPRECATION")
+      PythonSdkPathCache.getInstance(project, interpreter.getSdkAPI()).clearCache()
     }
   }
 

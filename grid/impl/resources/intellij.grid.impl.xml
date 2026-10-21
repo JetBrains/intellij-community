@@ -18,8 +18,6 @@
     <module name="intellij.platform.diff"/>
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
-    <module name="intellij.platform.execution"/>
-    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.core.impl"/>
@@ -51,7 +49,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <statistics.counterUsagesCollector implementationClass="com.intellij.database.csv.CsvFileUsageCollector"/>
-    <fileEditorProvider id="csv-data-editor" implementation="com.intellij.database.editor.CsvTableFileEditorProvider" isDocumentRequired="true"/>
+    <fileEditorProvider id="csv-data-editor" implementation="com.intellij.database.editor.CsvTableFileEditorProvider" allowedInUntrustedFiles="true" isDocumentRequired="true"/>
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.database.actions.EscapeEditMaximizedHandler"/>
     <statusBarWidgetFactory id="GridAggregator" implementation="com.intellij.database.datagrid.AggregatorWidget$Factory" order="before Position"/>
     <statusBarWidgetFactory id="GridPosition" implementation="com.intellij.database.datagrid.GridPositionWidget$Factory" order="before Position"/>
@@ -150,7 +148,9 @@
             icon="AllIcons.Nodes.DataTables"/>
     <action id="Console.TableResult.Copy.Csv.Settings" class="com.intellij.database.run.actions.ShowCsvFormatsAction"
             icon="AllIcons.Actions.Properties"/>
-    <action id="Console.TableResult.Copy.Csv.Settings.ForImport" class="com.intellij.database.run.actions.ShowCsvFormatsAction$ForImport"/>
+    <action id="Console.TableResult.Copy.Csv.Settings.ForImport" class="com.intellij.database.run.actions.ShowCsvFormatsAction$ForImport">
+      <override-text place="GoToAction"/>
+    </action>
 
     <action id="Console.TableResult.ChangeCellEditorFileEncoding" class="com.intellij.database.run.actions.ChangeCellEditorFileEncodingAction"
             use-shortcut-of="ChangeFileEncodingAction"/>
@@ -355,7 +355,7 @@
       <separator/>
     </group>
     <!--suppress PluginXmlCapitalization -->
-    <group id="Console.TableResult.ViewAs" popup="true" icon="AllIcons.Actions.Show">
+    <group id="Console.TableResult.ViewAs" searchable="false" popup="true" icon="AllIcons.Actions.Show">
       <action id="Console.TableResult.Transpose" class="com.intellij.database.run.actions.ViewAsAction$TransposeViewAction"/>
       <separator/>
       <action id="Console.TableResult.ViewAsTable" class="com.intellij.database.run.actions.ViewAsAction$ViewAsTableAction"/>
@@ -365,7 +365,7 @@
     <action class="com.intellij.database.actions.HideEditMaximizedAction" id="Console.TableResult.HideEditMaximized"
             icon="AllIcons.Actions.Cancel"
             use-shortcut-of="HideActiveWindow"/>
-    <group id="Console.TableResult.Options" popup="true" icon="AllIcons.General.GearPlain">
+    <group id="Console.TableResult.Options" popup="true" searchable="false" icon="AllIcons.General.GearPlain">
       <reference ref="Console.TableResult.EditValueMaximized"/>
       <reference ref="Console.TableResult.AggregateView"/>
       <reference ref="Console.TableResult.HideEditMaximized"/>
@@ -439,7 +439,9 @@
       <group id="Console.TableResult.BuiltInExtractor.Group" class="com.intellij.database.run.actions.ChooseExtractorAction$BuiltInGroup" popup="false"/>
       <separator/>
       <group id="Console.TableResult.CsvExtractors.Group" class="com.intellij.database.run.actions.ChooseExtractorAction$CsvGroup" popup="false"/>
-      <action id="Console.TableResult.Copy.Csv.Settings.ForExport" class="com.intellij.database.run.actions.ShowCsvFormatsAction$ForExport"/>
+      <action id="Console.TableResult.Copy.Csv.Settings.ForExport" class="com.intellij.database.run.actions.ShowCsvFormatsAction$ForExport">
+        <override-text place="GoToAction"/>
+      </action>
       <group id="Console.TableResult.ScriptedExtractors.Group" class="com.intellij.database.run.actions.ChooseExtractorAction$ScriptedGroup" popup="false"/>
       <action id="Console.TableResult.GoToExtractorsScriptsDirectory"
               class="com.intellij.database.run.actions.ChooseExtractorAction$GoToScriptsDirectoryAction"

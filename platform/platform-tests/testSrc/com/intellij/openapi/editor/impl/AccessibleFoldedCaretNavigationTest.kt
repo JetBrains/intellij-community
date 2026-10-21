@@ -3,8 +3,17 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.Editor
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ui.accessibility.ScreenReader
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.beans.PropertyChangeListener
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleEditableText
@@ -18,35 +27,37 @@ import javax.accessibility.AccessibleEditableText
  * it reads out is driven by the [AccessibleContext.ACCESSIBLE_CARET_PROPERTY] notifications, so the walks are
  * recorded through those.
  */
-class AccessibleFoldedCaretNavigationTest : AbstractEditorTest() {
+@TestApplication
+class AccessibleFoldedCaretNavigationTest {
+  private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
+
   /** [ScreenReader.setActive] is a process-wide static with no restore API, so its prior value is saved by hand. */
   private var screenReaderWasActive = false
 
-  override fun setUp() {
-    super.setUp()
-    screenReaderWasActive = ScreenReader.isActive()
-    ScreenReader.setActive(true)
+  @BeforeEach
+  fun setUpScreenReader() {
+    runInEdtAndWait {
+      screenReaderWasActive = ScreenReader.isActive()
+      ScreenReader.setActive(true)
+    }
   }
 
-  override fun tearDown() {
-    try {
+  @AfterEach
+  fun tearDown() {
+    runInEdtAndWait {
       ScreenReader.setActive(screenReaderWasActive)
     }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
   }
 
-  fun `test walking right over a placeholder reads it like plain text`() {
+  @Test
+  fun `test walking right over a placeholder reads it like plain text`(): Unit = fixture.runTest {
     val overCharacters = walk(initPlainEditor(), IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, 0)
     val overPlaceholder = walk(initFoldedEditor(), IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT, 0)
     assertWalksAgree(overCharacters, overPlaceholder)
   }
 
-  fun `test walking left over a placeholder reads it like plain text`() {
+  @Test
+  fun `test walking left over a placeholder reads it like plain text`(): Unit = fixture.runTest {
     val end = VISIBLE_TEXT.length
     val overCharacters = walk(initPlainEditor(), IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, end)
     val overPlaceholder = walk(initFoldedEditor(), IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT, end)
@@ -57,7 +68,8 @@ class AccessibleFoldedCaretNavigationTest : AbstractEditorTest() {
    * The other direction: a screen reader may put the caret at every on-screen offset, also inside a placeholder, and reads the
    * same offset back. This does not expand what the user collapsed.
    */
-  fun `test putting the caret at an on-screen offset round trips`() {
+  @Test
+  fun `test putting the caret at an on-screen offset round trips`(): Unit = fixture.runTest {
     val editor = initFoldedEditor()
     val context = editor.contentComponent.accessibleContext
     val text = context.accessibleText
@@ -65,17 +77,18 @@ class AccessibleFoldedCaretNavigationTest : AbstractEditorTest() {
     for (offset in 0..VISIBLE_TEXT.length) {
       context.accessibleEditableText.selectText(offset, offset)
       assertEquals(offset, text.caretPosition)
-      assertEquals("an empty selection sits where the caret is", offset, text.selectionStart)
+      assertEquals(offset, text.selectionStart, "an empty selection sits where the caret is")
       assertEquals(offset, text.selectionEnd)
     }
-    assertEquals("putting the caret inside a placeholder must not expand the fold", VISIBLE_TEXT, visibleText(editor))
+    assertEquals(VISIBLE_TEXT, visibleText(editor), "putting the caret inside a placeholder must not expand the fold")
   }
 
   /**
    * Some screen readers find word starts in the visible text and move the caret to each one.
    * They read the caret position after each move. A word start inside a placeholder must move the caret forward.
    */
-  fun `test setting the caret at each word start walks through placeholders`() {
+  @Test
+  fun `test setting the caret at each word start walks through placeholders`(): Unit = fixture.runTest {
     // a one-line method: the folds hide the line breaks around the statement
     val documentText = "get() {\n  return x;\n}"
     initText(documentText)
@@ -98,13 +111,13 @@ class AccessibleFoldedCaretNavigationTest : AbstractEditorTest() {
       context.accessibleEditableText.selectText(next, next)
       caretStops.add(text.caretPosition)
     }
-    assertEquals("the caret must stop at each word start after the first one", wordStarts.drop(1), caretStops)
-    assertEquals("setting the caret must not expand the folds", visibleText, visibleText(editor))
+    assertEquals(wordStarts.drop(1), caretStops, "the caret must stop at each word start after the first one")
+    assertEquals(visibleText, visibleText(editor), "setting the caret must not expand the folds")
   }
 
   private fun assertWalksAgree(overCharacters: List<String>, overPlaceholder: List<String>) {
-    assertEquals("moving the caret over a placeholder must read it out like the characters it stands in for",
-                 overCharacters.joinToString("\n"), overPlaceholder.joinToString("\n"))
+    assertEquals(overCharacters.joinToString("\n"), overPlaceholder.joinToString("\n"),
+                 "moving the caret over a placeholder must read it out like the characters it stands in for")
   }
 
   /**
@@ -130,33 +143,34 @@ class AccessibleFoldedCaretNavigationTest : AbstractEditorTest() {
 
     val walk = (1..VISIBLE_TEXT.length).map { press ->
       movements.clear()
-      executeAction(actionId, editor)
+      fixture.executeAction(actionId)
       describe(press, text.caretPosition, movements, editableText)
     }
 
     context.removePropertyChangeListener(listener)
-    assertEquals("walking the caret must leave the text on screen as it was", VISIBLE_TEXT, visibleText(editor))
+    assertEquals(VISIBLE_TEXT, visibleText(editor), "walking the caret must leave the text on screen as it was")
     return walk
   }
 
   private fun initPlainEditor(): Editor {
-    initText(VISIBLE_TEXT)
-    val editor = editor
+    fixture.initText(VISIBLE_TEXT)
+    val editor = fixture.editor
     assertNotNull(editor.contentComponent.accessibleContext)
     return editor
   }
 
   private fun initFoldedEditor(): Editor {
-    initText(DOCUMENT_TEXT)
-    val editor = editor
+    fixture.initText(DOCUMENT_TEXT)
+    val editor = fixture.editor
     // the accessible context has to exist before the fold appears, otherwise there is nothing to notify
     assertNotNull(editor.contentComponent.accessibleContext)
     assertNotNull(EditorTestUtil.addFoldRegion(editor, FOLD_START, FOLD_END, PLACEHOLDER, true))
-    assertEquals("the folded editor must show exactly what the plain one contains", VISIBLE_TEXT, visibleText(editor))
+    assertEquals(VISIBLE_TEXT, visibleText(editor), "the folded editor must show exactly what the plain one contains")
     return editor
   }
 
   private companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
     const val DOCUMENT_TEXT = "import java.util.List;"
     const val FOLD_START = "import ".length
     /** the fold hides everything up to the semicolon, which stays on screen behind the placeholder */

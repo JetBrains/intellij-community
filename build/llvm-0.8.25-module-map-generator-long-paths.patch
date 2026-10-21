@@ -1,0 +1,75 @@
+Let the module map generator read headers past MAX_PATH on Windows.
+
+`module-map-generator` writes each header's size into the toolchain module map. It asks `_stat64` with the
+path relative to the working directory. Windows resolves it to an absolute path, and past 260 characters
+`_stat64` fails with ENOENT. A deep libc++ header such as
+`__cxx03/__type_traits/is_trivially_lexicographically_comparable.h`, below an output directory with a
+transition suffix, already reaches 263 characters on a CI agent.
+
+On Windows, build the absolute `\\?\` path, or `\\?\UNC\` for a UNC path, and read the size with
+`GetFileAttributesExW`. That form has no MAX_PATH limit. Clang itself already opens such paths, because LLVM
+adds the prefix in its file APIs.
+--- a/tools/internal/module_map_generator.c
++++ b/tools/internal/module_map_generator.c
+@@ -17,21 +17,53 @@
+ #include <sys/stat.h>
+ 
+ #if defined(_WIN32)
+-#define stat_type struct __stat64
+-#define stat_fn _stat64
+-#else
+-#define stat_type struct stat
+-#define stat_fn stat
+-#endif
++#include <windows.h>
+ 
++#define WIDE_PATH_CAPACITY 32768
++
++// A relative path resolves against the working directory, and the absolute path can exceed MAX_PATH. The
++// `\\?\` form of the absolute path has no such limit, so query the size through it.
+ static int file_size(const char *path, unsigned long long *size) {
+-  stat_type st;
+-  if (stat_fn(path, &st) != 0) {
++  static wchar_t wide[WIDE_PATH_CAPACITY];
++  static wchar_t full[WIDE_PATH_CAPACITY];
++  static wchar_t prefixed[WIDE_PATH_CAPACITY + 8];
++  WIN32_FILE_ATTRIBUTE_DATA data;
++  DWORD length;
++
++  if (MultiByteToWideChar(CP_UTF8, 0, path, -1, wide, WIDE_PATH_CAPACITY) == 0) {
++    errno = EINVAL;
+     return -1;
+   }
++  length = GetFullPathNameW(wide, WIDE_PATH_CAPACITY, full, NULL);
++  if (length == 0 || length >= WIDE_PATH_CAPACITY) {
++    errno = ENAMETOOLONG;
++    return -1;
++  }
++  if (full[0] == L'\\' && full[1] == L'\\') {
++    // A UNC path `\\server\share\...` becomes `\\?\UNC\server\share\...`.
++    wcscpy(prefixed, L"\\\\?\\UNC\\");
++    wcscat(prefixed, full + 2);
++  } else {
++    wcscpy(prefixed, L"\\\\?\\");
++    wcscat(prefixed, full);
++  }
++  if (!GetFileAttributesExW(prefixed, GetFileExInfoStandard, &data)) {
++    errno = ENOENT;
++    return -1;
++  }
++  *size = ((unsigned long long)data.nFileSizeHigh << 32) | data.nFileSizeLow;
++  return 0;
++}
++#else
++static int file_size(const char *path, unsigned long long *size) {
++  struct stat st;
++  if (stat(path, &st) != 0) {
++    return -1;
++  }
+   *size = (unsigned long long)st.st_size;
+   return 0;
+ }
++#endif
+ 
+ int main(int argc, char **argv) {
+   if (argc != 3 || argv[2][0] != '@') {

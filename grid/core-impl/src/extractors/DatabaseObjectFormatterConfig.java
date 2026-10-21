@@ -13,7 +13,6 @@ public class DatabaseObjectFormatterConfig implements ObjectFormatterConfig {
   private static final DatabaseObjectFormatterConfig SQL_SCRIPT_CONFIG = new DatabaseObjectFormatterConfig(ObjectFormatterMode.SQL_SCRIPT);
   private static final DatabaseObjectFormatterConfig DEFAULT_CONFIG = new DatabaseObjectFormatterConfig(ObjectFormatterMode.DEFAULT);
   private static final DatabaseObjectFormatterConfig JSON_CONFIG = new DatabaseObjectFormatterConfig(ObjectFormatterMode.JSON);
-  private static final DatabaseObjectFormatterConfig DISPLAY_CONFIG = new DatabaseDisplayObjectFormatterConfig();
 
   private final ObjectFormatterMode mode;
 
@@ -59,9 +58,14 @@ public class DatabaseObjectFormatterConfig implements ObjectFormatterConfig {
            mode == ObjectFormatterMode.SQL_SCRIPT ? SQL_SCRIPT_CONFIG :
            mode == ObjectFormatterMode.DEFAULT ? DEFAULT_CONFIG :
            mode == ObjectFormatterMode.JSON ? JSON_CONFIG :
-           DISPLAY_CONFIG;
+           DisplayConfigHolder.DISPLAY_CONFIG;
 
 
+  }
+
+  /** The class initializer of the superclass must not create a subclass instance: two threads can deadlock on class initialization. */
+  private static final class DisplayConfigHolder {
+    private static final DatabaseObjectFormatterConfig DISPLAY_CONFIG = new DatabaseDisplayObjectFormatterConfig();
   }
 
   public static class DatabaseDisplayObjectFormatterConfig extends DatabaseObjectFormatterConfig implements DisplayObjectFormatterConfig {

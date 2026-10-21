@@ -20,11 +20,15 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElementFactory;
+import org.junit.jupiter.api.Test;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class RebuildArtifactOnConfigurationChangeTest extends ArtifactBuilderTestCase {
+  @Test
   public void testAddRoot() {
     String dir1 = PathUtil.getParentPath(createFile("dir1/a.txt", "a"));
     String dir2 = PathUtil.getParentPath(createFile("dir2/b.txt", "b"));
@@ -39,6 +43,7 @@ public class RebuildArtifactOnConfigurationChangeTest extends ArtifactBuilderTes
     buildAllAndAssertUpToDate();
   }
 
+  @Test
   public void testRemoveRoot() {
     String file1 = createFile("dir1/a.txt", "a");
     String file2 = createFile("dir2/b.txt", "b");
@@ -52,6 +57,7 @@ public class RebuildArtifactOnConfigurationChangeTest extends ArtifactBuilderTes
     buildAllAndAssertUpToDate();
   }
 
+  @Test
   public void testChangeOutput() {
     String file = createFile("dir/a.txt");
     JpsArtifact a = addArtifact(root().parentDirCopy(file));
@@ -68,6 +74,7 @@ public class RebuildArtifactOnConfigurationChangeTest extends ArtifactBuilderTes
     buildAllAndAssertUpToDate();
   }
 
+  @Test
   public void testChangeConfiguration() {
     String file = createFile("d/a.txt", "a");
     JpsArtifact a = addArtifact(root().parentDirCopy(file));
@@ -80,6 +87,7 @@ public class RebuildArtifactOnConfigurationChangeTest extends ArtifactBuilderTes
     buildAllAndAssertUpToDate();
   }
 
+  @Test
   public void testAddRootChangingRootIndices() {
     String file1 = createFile("d1/a/b/1.txt");
     String file2 = createFile("d2/x/y/2.txt");

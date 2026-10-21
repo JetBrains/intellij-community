@@ -20,6 +20,7 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
+import com.intellij.openapi.fileEditor.impl.forgetClosedTabsOf
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.util.Disposer
@@ -75,6 +76,10 @@ internal object DynamicPluginsCachesCleanup {
 
     for (classLoader in classLoaders) {
       IconLoader.detachClassLoader(classLoader)
+    }
+    val classLoaderSet = classLoaders.toCollection(HashSet<ClassLoader>())
+    for (project in ProjectUtil.getOpenProjects()) {
+      forgetClosedTabsOf(project, classLoaderSet)
     }
     serviceIfCreated<IconDeferrer>()?.clearCache()
 

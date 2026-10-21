@@ -8,7 +8,15 @@ import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.Metri
 import java.nio.file.Path
 import kotlin.math.min
 
+/** The performance plugin timer that runs from the first script command to the application exit. */
 const val TOTAL_TEST_TIMER_NAME: String = "test"
+
+/** The performance plugin timer that runs from the application initialization to the application exit. */
+const val IDE_LIFETIME_TIMER_NAME: String = "ide"
+
+/** The timers whose duration is the run length, so only their attributes are metrics. */
+internal val TOTAL_TIMER_NAMES: Set<String> = setOf(TOTAL_TEST_TIMER_NAME, IDE_LIFETIME_TIMER_NAME)
+
 const val DEFAULT_SPAN_NAME: String = "performance_test"
 
 data class MetricWithAttributes(

@@ -15,8 +15,9 @@ use std::sync::Arc;
 use crate::worker::docker::CreateRecord;
 use crate::worker::hypervisor::Machine;
 use crate::worker::lease::write_lease_receipt;
+use crate::worker::run_marker::write_marker_by_hand;
 use crate::worker::tart::MINIMUM_VERSION;
-use crate::worker::worker::{Dependencies, Lease, Manager, builds_nothing};
+use crate::worker::worker::{Dependencies, Lease, Manager, builds_nothing, read_lease};
 use avl_base::{Backend, GuestOs, SCHEMA_VERSION};
 use avl_host_sys::guest::write_init_receipt;
 use avl_host_sys::lock::LockManager;
@@ -35,18 +36,14 @@ pub(crate) struct Fixture {
     processes: Arc<FakeProcesses>,
 }
 
-/// The engine of a Docker fixture: the one the pool's environment gives, the Lima engine, or Apple `container`.
+/// The engine of a Docker fixture: the one the pool's environment gives, or Apple `container`.
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(
     windows,
-    expect(
-        dead_code,
-        reason = "the Lima and the Apple container fixtures run shell fakes, so they are Unix only"
-    )
+    expect(dead_code, reason = "the Apple container fixture runs shell fakes, so it is Unix only")
 )]
 enum Engine {
     Default,
-    Lima,
     AppleContainer,
 }
 
@@ -66,19 +63,13 @@ impl Fixture {
         Self::build(backend, guest_os, None, Engine::Default)
     }
 
-    /// A Docker pool on the Lima engine, whose Bazel resolves the pinned `limactl` to the fake.
-    #[cfg(unix)]
-    pub(crate) fn docker_lima() -> Self {
-        Self::build(Backend::Docker, GuestOs::Linux, None, Engine::Lima)
-    }
-
     /// A Docker pool on the Apple `container` engine, over the fake `container` that `CONTAINER_BIN` names.
     #[cfg(unix)]
     pub(crate) fn docker_container() -> Self {
         Self::build(Backend::Docker, GuestOs::Linux, None, Engine::AppleContainer)
     }
 
-    /// The Linux pool: one Docker slot over the fake `docker`, on an external engine.
+    /// The Linux pool: one Docker slot over the fake `docker`, on the host engine.
     pub(crate) fn docker() -> Self {
         Self::new(Backend::Docker, GuestOs::Linux)
     }
@@ -103,15 +94,11 @@ impl Fixture {
     }
 
     fn build(backend: Backend, guest_os: GuestOs, host_git: Option<bool>, engine: Engine) -> Self {
-        let lima = engine == Engine::Lima;
         // Both binaries, because a `status` over a Parallels pool reaches `prlctl` while every other test here
         // reaches `tart`, and the two names are what keep the two `exec` grammars apart.
         let mut builder = HostPool::builder(backend, guest_os, MINIMUM_VERSION).with_parallels();
         if host_git.is_some() {
             builder = builder.with_git().unresolved_host_paths();
-        }
-        if lima {
-            builder = builder.with_lima_engine();
         }
         if engine == Engine::AppleContainer {
             builder = builder.with_container_engine();
@@ -132,17 +119,13 @@ impl Fixture {
         };
         let processes = Arc::new(FakeProcesses::default());
         let runner = pool.runner().with_process_table(Arc::clone(&processes) as Arc<dyn ProcessTable>);
-        #[cfg(unix)]
-        let bazel = lima.then(|| Arc::new(pool.pinned_bazel()) as Arc<dyn avl_host_sys::guest::BazelHost>);
-        #[cfg(windows)]
-        let bazel = None;
         let manager = Manager::new(Dependencies {
             settings: Arc::clone(&pool.settings),
             locks: Arc::new(LockManager::new(runner.clone())),
             runner,
             reporter: quiet(),
             channel: (!container_linux).then(|| guests.factory()),
-            bazel,
+            bazel: None,
             build_guest_boot: builds_nothing(),
         });
         manager.prepare_runtime_dirs().expect("the runtime directories are created");
@@ -210,6 +193,23 @@ impl Fixture {
         encoded.push(b'\n');
         std::fs::write(self.settings.lease_path(worker), encoded).expect("the lease is written");
         write_lease_receipt(&self.settings, &lease).expect("the receipt is written")
+    }
+
+    /// Puts the run marker of a live process of another controller on `worker`, for the lease that the worker has, and
+    /// answers the run id. A run of another process is then in flight on the worker.
+    pub(crate) async fn run_of_another_process(&self, worker: &str) -> String {
+        let lease = read_lease(&self.settings.lease_path(worker))
+            .expect("the lease reads")
+            .expect("the worker is leased");
+        let pid = self.processes.start("vm run, a controller in another checkout");
+        let process = self
+            .manager
+            .runner()
+            .identify(&Ctx::background(), pid)
+            .await
+            .expect("the fake table answers")
+            .expect("a declared process has an identity");
+        write_marker_by_hand(&self.settings, &lease, "suite-user-run-1", process).run_id
     }
 }
 

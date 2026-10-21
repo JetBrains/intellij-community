@@ -46,9 +46,11 @@
     <orderEntry type="module" module-name="intellij.libraries.junit5.pioneer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.test.env.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.pyproject" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.terminal.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.services.systemPython" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.python.terminal.backend" />
 </module>

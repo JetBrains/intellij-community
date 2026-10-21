@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.textmate.language.syntax
 
 import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.persistentSetOf
 import org.jetbrains.plugins.textmate.Constants
 import org.jetbrains.plugins.textmate.language.TextMateInterner
 import org.jetbrains.plugins.textmate.language.TextMateLanguageDescriptor
@@ -18,6 +19,7 @@ private typealias ReferenceRuleId = Int
 class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
   private val currentRuleId = AtomicInt(0)
   private val syntaxNodes = AtomicReference(persistentMapOf<CharSequence, RawLanguageDescriptor>())
+  private val includedScopeNames = AtomicReference(persistentSetOf<CharSequence>())
 
   /**
    * Append a table with new syntax rules to support the new language.
@@ -32,6 +34,15 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
       }
       languageDescriptor.scopeName
     }
+  }
+
+  /**
+   * The root scope names that the added syntaxes include and that no added syntax defines.
+   * An include of such a scope resolves only after [addSyntax] of the grammar that defines the scope.
+   */
+  fun unresolvedIncludedScopeNames(): Set<CharSequence> {
+    val definedScopeNames = syntaxNodes.load()
+    return includedScopeNames.load().filterTo(LinkedHashSet()) { !definedScopeNames.containsKey(it) }
   }
 
   fun build(): TextMateSyntaxTableCore {
@@ -136,10 +147,23 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
   private fun loadNestedSyntax(plist: Plist, parentBuilder: SyntaxRawNodeImpl): SyntaxRawNode {
     val include = plist.getPlistValue(Constants.INCLUDE_KEY)?.string
     return if (include != null) {
+      rememberIncludedScopeName(include)
       SyntaxIncludeRawNode(currentRuleId.fetchAndIncrement(), parentBuilder, include)
     }
     else {
       loadRealNode(plist, parentBuilder)
+    }
+  }
+
+  private fun rememberIncludedScopeName(include: String) {
+    if (include.startsWith('#') ||
+        Constants.INCLUDE_SELF_VALUE.equals(include, ignoreCase = true) ||
+        Constants.INCLUDE_BASE_VALUE.equals(include, ignoreCase = true)) {
+      return
+    }
+    val scopeName = include.substringBefore('#')
+    if (scopeName.isNotEmpty()) {
+      includedScopeNames.update { it.adding(interner.intern(scopeName)) }
     }
   }
 

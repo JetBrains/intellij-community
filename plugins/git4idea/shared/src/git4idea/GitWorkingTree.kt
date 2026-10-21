@@ -65,6 +65,14 @@ data class GitWorkingTree(
       headHash
     )
 
+  companion object {
+    /**
+     * A [GitWorkingTree] known only by its [path]. Git reported the path, but the repository model has no other
+     * record of it, so the branch, the flags, and the head hash stay at their unknown defaults.
+     */
+    @JvmStatic
+    fun pathOnly(path: @NlsSafe String): GitWorkingTree = GitWorkingTree(path, null, isMain = false, isCurrent = false)
+  }
 }
 
 @OptIn(ExperimentalSerializationApi::class)

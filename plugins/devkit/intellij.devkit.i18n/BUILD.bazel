@@ -116,6 +116,14 @@ jvm_library(
     ),
     module_name = "intellij.devkit.i18n.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//xml/plugin",
+        "//platform/structure-view-impl/plugin",
+        "//aether-dependency-resolver/plugin",
+        "//platform/testRunner/plugin",
+        "//plugins/grazie",
+    ],
 )
 
 jvm_library(
@@ -144,6 +152,11 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//xml/plugin:plugin_test_lib",
+        "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
+        "//platform/testRunner/plugin:plugin_test_lib",
+        "//plugins/grazie:grazie_test_lib",
     ],
     deps = [
         # do not sort,

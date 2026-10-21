@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 use super::{
-    ExecutionCounts, Failure, Family, RUN_REPORT_SCHEMA_VERSION, RunReport, SchemaError, SkippedContainer, Status, Suite, XmlCounts,
+    Case, ExecutionCounts, Failure, Family, RUN_REPORT_SCHEMA_VERSION, RunReport, SchemaError, SkippedContainer, Status,
     check_run_report_vocabulary, declared_word, object, require_version, typed,
 };
 use crate::json::{Kind, Shape};
@@ -21,7 +21,7 @@ mod tests;
 
 /// The version of both aggregate documents: the same noun at two shapes. Unrelated to the run report's version,
 /// because an aggregate embeds reports and the two move independently.
-pub const AGGREGATE_SCHEMA_VERSION: u32 = 1;
+pub const AGGREGATE_SCHEMA_VERSION: u32 = 2;
 
 /// The only confidence a Wilson interval is published at. A constant, so a caller cannot quietly ask for a nicer
 /// one: a 90% interval on the same sample is narrower and says less.
@@ -99,7 +99,6 @@ vocabulary! {
         SetEmpty = "shard_set_empty",
         MissingReport = "shard_missing_report",
         InfrastructureError = "shard_infrastructure_error",
-        IncompleteSource = "shard_incomplete_source",
         DiscoveredNothing = "shard_discovered_nothing",
         /// Two shards ran the same class. The merged counts are double-counted and the split is not a
         /// partition, so the verdict is refused rather than published with a footnote.
@@ -245,11 +244,11 @@ pub struct ShardVerdict {
     /// of what sharding bought.
     pub total_duration_ms: f64,
     pub execution: ExecutionCounts,
-    pub xml: XmlCounts,
     /// Always [`super::ORDERING`].
     pub ordering: String,
+    /// The cases of every shard in [`super::ORDERING`].
     #[serde(default)]
-    pub suites: Vec<Suite>,
+    pub cases: Vec<Case>,
     #[serde(default)]
     pub failures: Vec<Failure>,
     #[serde(default)]
@@ -388,7 +387,6 @@ const SHARD_VERDICT_SHAPE: Shape = Shape {
         ("totalDurationMs", Kind::Number),
         ("ordering", Kind::String),
         ("execution", Kind::Object),
-        ("xml", Kind::Object),
     ],
     optional: &[("code", Kind::String), ("diagnostic", Kind::String)],
 };

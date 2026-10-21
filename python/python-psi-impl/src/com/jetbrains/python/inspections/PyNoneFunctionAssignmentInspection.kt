@@ -18,7 +18,7 @@ import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isNoneType
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.psi.resolve.isElementInSkeletons
 
 /**
  * User: ktisha
@@ -52,7 +52,7 @@ class PyNoneFunctionAssignmentInspection : PyInspection() {
       val callables = call.multiResolveCalleeFunction(resolveContext)
       if (callables.isEmpty() || callables.any { callable ->
           !myTypeEvalContext.getReturnType(callable).isNoneType ||
-          PythonSdkUtil.isElementInSkeletons(callable) ||
+          isElementInSkeletons(callable) ||
           callable is PyFunction && callable.hasInheritors()
         }) return
      when (val parent = call.parent) {

@@ -3,13 +3,14 @@ package org.intellij.plugins.markdown.editor.tables.intentions
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
 
-internal class MarkdownRemoveRowIntention: BaseElementAtCaretIntentionAction() {
+internal class MarkdownRemoveRowIntention: BaseElementAtCaretIntentionAction(), DumbAware {
   override fun getFamilyName() = text
 
   override fun getText(): String {

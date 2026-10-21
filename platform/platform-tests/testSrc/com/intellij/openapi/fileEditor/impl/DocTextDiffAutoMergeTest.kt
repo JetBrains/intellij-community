@@ -4,7 +4,7 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.diff.comparison.CancellationChecker
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentText
-import com.intellij.openapi.editor.ex.experimental.DocBranch
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import com.intellij.openapi.editor.ex.experimental.agent
 import com.intellij.openapi.editor.ex.experimental.string
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test
  * IDE has to recover a history for the disk change and merge it.
  *
  * Every test runs the same seven steps, and [assertAutoMerge] checks each one.
- * 1. A saved [DocBranch] holds the text that the disk also holds.
+ * 1. A saved [DocumentBranch] holds the text that the disk also holds.
  * 2. The user forks it and types. Those edits reach no file.
  * 3. An agent writes a new text to the file.
  * 4. [DocTextDiff] reads the saved text and the disk text, and returns the ops.
@@ -338,7 +338,7 @@ class DocTextDiffAutoMergeTest {
     merged: String,
   ) {
     // 1. The saved document. The file on disk holds the same text.
-    val savedBranch = DocBranch.createBranch(saved, agent("saved"))
+    val savedBranch = DocumentBranch.createBranch(saved, agent("saved"))
 
     // 2. The user types in the open document. Nothing reaches the file.
     var userBranch = savedBranch.fork(agent("user"))

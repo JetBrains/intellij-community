@@ -15,9 +15,12 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -33,6 +36,8 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
+import com.intellij.util.StackTraceSnapshot
+import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.EDT
@@ -112,9 +117,17 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
 
   private val stateLock = Any()
   private val filesYetToStartHighlighting = ConcurrentHashMap<VirtualFile, Unit>()
-  private val sessions = ConcurrentHashMap<TextEditor, ExceptionWithTime>()
+  private val sessions = ConcurrentHashMap<TextEditor, HighlightingSessionStart>()
   private val waitingJobs: MutableList<CompletableFuture<Unit>> = Collections.synchronizedList(mutableListOf<CompletableFuture<Unit>>())
   private var locked: Boolean = false
+
+  init {
+    EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
+      override fun editorReleased(event: EditorFactoryEvent) {
+        forgetReleasedEditor(event.editor)
+      }
+    }, cs.asDisposable())
+  }
 
   private fun ensureLockedIfNeeded() {
     synchronized(stateLock) {
@@ -264,8 +277,8 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     val isStartedInDumbMode = !isDumbModeHighlightingFinal() && runReadActionBlocking { DumbService.isDumb(project) }
     synchronized(stateLock) {
       for (editor in fileEditors) {
-        val previousSessionStartTrace = sessions.put(editor, ExceptionWithTime.createForAnalysisStart(editor, isStartedInDumbMode))
-        ExceptionWithTime.createIntersectionErrorIfNeeded(editor, previousSessionStartTrace)?.let { errors.add(it) }
+        val previousSessionStartTrace = sessions.put(editor, HighlightingSessionStart.createForAnalysisStart(editor, isStartedInDumbMode))
+        HighlightingSessionStart.createIntersectionErrorIfNeeded(editor, previousSessionStartTrace)?.let { errors.add(it) }
         filesYetToStartHighlighting.remove(editor.file)
       }
       ensureLockedIfNeeded()
@@ -336,7 +349,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     synchronized(stateLock) {
       val iterator = sessions.entries.iterator()
       while (iterator.hasNext()) {
-        val (editor, exceptionWithTime) = iterator.next()
+        val (editor, sessionStart) = iterator.next()
         val isHiglighted = DaemonCodeAnalyzerImpl.isHighlightingCompleted(editor, project)
         val highlightedEditor = highlightedEditors[editor]
 
@@ -346,7 +359,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
         }
 
         if (highlightedEditor != null) {
-          val shouldWait = highlightedEditor.shouldWaitForNextHighlighting || exceptionWithTime.wasStartedInLimitedSetup
+          val shouldWait = highlightedEditor.shouldWaitForNextHighlighting || sessionStart.wasStartedInLimitedSetup
           LOG.info(""" 
             Registering daemon $status for:
               for ${highlightedEditor.editor.description},
@@ -356,11 +369,11 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
         """.trimIndent())
 
           if (shouldWait) {
-            ExceptionWithTime.markAnalysisFinished(exceptionWithTime)
+            HighlightingSessionStart.markAnalysisFinished(sessionStart)
           }
           else {
             iterator.remove()
-            LOG.info(ExceptionWithTime.getLogHighlightingMessage(currentTime, highlightedEditor.editor, exceptionWithTime))
+            LOG.info(HighlightingSessionStart.getLogHighlightingMessage(currentTime, highlightedEditor.editor, sessionStart))
           }
         }
         else if (!UIUtil.isShowing(editor.getComponent())) {
@@ -387,6 +400,39 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       }
 
       unlockIfNeeded()
+    }
+  }
+
+  /**
+   * A released editor gets no more daemon events, so its release ends what this service tracks for it.
+   * The release ends the highlighting session of the editor.
+   * The release of a main editor also ends the wait for its file when the project has no other main editor of the file,
+   * shown or not: a main editor that is not shown yet still gets highlighted.
+   */
+  private fun forgetReleasedEditor(released: Editor) {
+    @Suppress("UsePropertyAccessSyntax")  // inhibit weak warning, for property access is a warning
+    if (sessions.isEmpty() && filesYetToStartHighlighting.isEmpty()) {
+      return
+    }
+
+    synchronized(stateLock) {
+      val isSessionEnded = sessions.keys.removeIf { it.editor === released }
+      val file = FileDocumentManager.getInstance().getFile(released.document)
+      val isFileEnded = file != null && released.editorKind == EditorKind.MAIN_EDITOR &&
+                        filesYetToStartHighlighting.containsKey(file) && !hasOtherMainEditor(released)
+      if (isFileEnded) {
+        filesYetToStartHighlighting.remove(file)
+      }
+      if (isSessionEnded || isFileEnded) {
+        LOG.info("Released editor of ${file?.name} ends its highlighting session: $isSessionEnded, its file: $isFileEnded")
+        unlockIfNeeded()
+      }
+    }
+  }
+
+  private fun hasOtherMainEditor(released: Editor): Boolean {
+    return EditorFactory.getInstance().editors(released.document, project).anyMatch {
+      it !== released && it.editorKind == EditorKind.MAIN_EDITOR
     }
   }
 
@@ -508,15 +554,23 @@ internal class WaitForFinishedCodeAnalysisFileEditorListener : FileOpenedSyncLis
   }
 }
 
-private sealed class ExceptionWithTime(override val message: String?) : Exception(message) {
+/**
+ * The start of the highlighting session of an editor. A session lives as long as its editor, so it keeps the stack of the daemon start
+ * as [StackTraceSnapshot] data. The backtrace of a kept Throwable would keep each plugin on that stack loaded.
+ */
+private sealed class HighlightingSessionStart(private val message: String) {
   val timestamp: Long = System.currentTimeMillis()
+  private val startTrace = StackTraceSnapshot.captureCallerOf(HighlightingSessionStart::class.java, Int.MAX_VALUE)
   abstract val wasStartedInLimitedSetup: Boolean
+
+  /** The stack of the daemon start as a new Throwable with the message of this start, for an error report. */
+  fun toThrowable(): Throwable = startTrace.toThrowable(message)
 
   companion object {
     val highlightingScopeName: String = "highlighting"
 
     private class DaemonAnalysisStarted(editor: TextEditor, override val wasStartedInLimitedSetup: Boolean) :
-      ExceptionWithTime(message = "Previous daemon start trace (editor = ${editor.description})") {
+      HighlightingSessionStart(message = "Previous daemon start trace (editor = ${editor.description})") {
       private var analysisFinished = false
 
       fun markAnalysisFinished() {
@@ -526,29 +580,29 @@ private sealed class ExceptionWithTime(override val message: String?) : Exceptio
       fun isNotFinished() = !analysisFinished
     }
 
-    fun createForAnalysisStart(editor: TextEditor, isStartedInDumbMode: Boolean): ExceptionWithTime {
+    fun createForAnalysisStart(editor: TextEditor, isStartedInDumbMode: Boolean): HighlightingSessionStart {
       return DaemonAnalysisStarted(editor, isStartedInDumbMode)
     }
 
-    fun markAnalysisFinished(exceptionWithTime: ExceptionWithTime?) {
-      (exceptionWithTime as? DaemonAnalysisStarted)?.markAnalysisFinished()
+    fun markAnalysisFinished(sessionStart: HighlightingSessionStart?) {
+      (sessionStart as? DaemonAnalysisStarted)?.markAnalysisFinished()
     }
 
-    fun getLogHighlightingMessage(currentTime: Long, editor: TextEditor, exceptionWithTime: ExceptionWithTime?): String {
-      return when (exceptionWithTime) {
+    fun getLogHighlightingMessage(currentTime: Long, editor: TextEditor, sessionStart: HighlightingSessionStart?): String {
+      return when (sessionStart) {
         null -> "Editor ${editor} wasn't opened, and highlighting didn't start, but it finished, and the editor was highlighted"
         is DaemonAnalysisStarted -> {
           HighlightingTestUtil.storeProcessFinishedTime(highlightingScopeName, "highlighting_${editor.file.name}")
-          "Total highlighting time is : ${currentTime - exceptionWithTime.timestamp} ms for ${editor.description}"
+          "Total highlighting time is : ${currentTime - sessionStart.timestamp} ms for ${editor.description}"
         }
       }
     }
 
-    fun createIntersectionErrorIfNeeded(editor: FileEditor, previousSessionStartTrace: ExceptionWithTime?): AssertionError? {
+    fun createIntersectionErrorIfNeeded(editor: FileEditor, previousSessionStartTrace: HighlightingSessionStart?): AssertionError? {
       if (previousSessionStartTrace is DaemonAnalysisStarted && previousSessionStartTrace.isNotFinished()) {
         val err = AssertionError("Overlapping highlighting sessions")
         err.addSuppressed(Exception("Current daemon start trace (editor = ${editor.description} )"))
-        err.addSuppressed(previousSessionStartTrace)
+        err.addSuppressed(previousSessionStartTrace.toThrowable())
         return err
       }
       return null

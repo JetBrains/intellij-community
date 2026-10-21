@@ -127,8 +127,8 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
     }
   }
 
-  private fun buildPyTypeOrAny(pyElement: PyTypedElement, tspType: PyreflyLsp4jServer.TspType): PyType =
-    buildPyType(pyElement, tspType)?.get() ?: PyAnyType.Any
+  private fun buildPyTypeOrAny(pyElement: PyTypedElement, tspType: PyreflyLsp4jServer.TspType): PyType? =
+    buildPyType(pyElement, tspType)?.get() ?: PyAnyType.any
 
   private fun findElement(tspNode: PyreflyLsp4jServer.TspNode): PsiElement? {
     val virtualFile = VirtualFileManager.getInstance().findFileByUrl(tspNode.uri) ?: return null

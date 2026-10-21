@@ -11,6 +11,7 @@ import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.impl.JavaOptionalServices;
 import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
@@ -28,9 +29,7 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
 
   @Override
   public PsiPackage getPackage(@NotNull PsiDirectory dir) {
-    // TODO IDEA-356815
-    //noinspection IncorrectServiceRetrieving
-    return dir.getProject().getService(CoreJavaFileManager.class).getPackage(dir);
+    return ((CoreJavaFileManager)JavaOptionalServices.getJavaFileManager(dir.getProject())).getPackage(dir);
   }
 
   @Override

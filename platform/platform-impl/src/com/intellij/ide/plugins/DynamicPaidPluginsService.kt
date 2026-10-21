@@ -20,7 +20,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.util.PlatformUtils
+import com.intellij.ui.IdeUICustomization
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -98,7 +98,7 @@ class DynamicPaidPluginsService(private val cs: CoroutineScope) {
       withPluginsMarkedDisabled(requireRestartPlugins) {
         enablePlugins(pluginEnabler, loadablePlugins, restart = false, project = project,
                       progressTitle = IdeBundle.message("modal.progress.title.activating.ultimate.subscription",
-                                                        PlatformUtils.freeIdePaidVersionName()))
+                                                        IdeUICustomization.getInstance().paidVersionName))
       }
     }
     else {

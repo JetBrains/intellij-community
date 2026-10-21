@@ -531,7 +531,6 @@ f:com.intellij.openapi.projectRoots.SimpleJavaSdkType
 - s:notSimpleJavaSdkTypeIfAlternativeExists():java.util.function.Predicate
 - s:notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType():com.intellij.openapi.util.Condition
 - saveAdditionalData(com.intellij.openapi.projectRoots.SdkAdditionalData,org.jdom.Element):V
-- suggestHomePaths():java.util.Collection
 - suggestHomePaths(com.intellij.openapi.project.Project):java.util.Collection
 - suggestSdkName(java.lang.String,java.lang.String):java.lang.String
 - versionStringComparator():java.util.Comparator

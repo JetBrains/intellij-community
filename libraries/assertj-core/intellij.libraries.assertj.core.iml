@@ -25,6 +25,5 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.libraries.byte.buddy" scope="TEST" />
   </component>
 </module>

@@ -1,9 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.shared.rpc
 
+import com.intellij.ide.rpc.awaitWithLocalFallback
+import com.intellij.openapi.components.service
 import com.intellij.openapi.vcs.VcsKey
 import com.intellij.platform.project.ProjectId
-import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -17,7 +19,7 @@ interface VcsMappingsApi : RemoteApi<Unit> {
   suspend fun getMappings(projectId: ProjectId): Flow<VcsMappingsDto>
 
   companion object {
-    suspend fun getInstance(): VcsMappingsApi = RemoteApiProviderService.resolve(remoteApiDescriptor<VcsMappingsApi>())
+    suspend fun getInstance(): VcsMappingsApi = LiteRemoteApiProviderService.awaitWithLocalFallback(remoteApiDescriptor<VcsMappingsApi>()) { service<VcsMappingsApi>() }
   }
 }
 

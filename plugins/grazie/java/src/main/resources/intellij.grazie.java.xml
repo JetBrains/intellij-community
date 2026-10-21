@@ -5,7 +5,6 @@
     <module name="intellij.grazie.core"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.util.ex"/>

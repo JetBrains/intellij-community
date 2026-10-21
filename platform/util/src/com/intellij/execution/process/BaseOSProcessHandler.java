@@ -4,6 +4,7 @@ package com.intellij.execution.process;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.StackTraceSnapshot;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseInputStreamReader;
@@ -23,14 +24,15 @@ import java.util.concurrent.atomic.AtomicLong;
 public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
   private static final Logger LOG = Logger.getInstance(BaseOSProcessHandler.class);
   private final AtomicLong mySleepStart = new AtomicLong(System.currentTimeMillis());
-  private final Throwable myProcessStart;
+  /** The stack that created this handler, as data, so a handler that outlives a plugin keeps no class loader of it. */
+  private final StackTraceSnapshot myProcessStart;
 
   /**
    * {@code commandLine} must not be empty (for correct thread attribution in the stacktrace)
    */
   public BaseOSProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
     super(process, commandLine, charset);
-    myProcessStart = new Throwable("Process creation:");
+    myProcessStart = StackTraceSnapshot.capture();
   }
 
   @Override
@@ -149,7 +151,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
                  "If it's a long-running mostly idle daemon process, consider overriding OSProcessHandler#readerOptions with" +
                  " 'BaseOutputReader.Options.forMostlySilentProcess()' to reduce CPU usage.\n" +
                  "Command line: " + StringUtil.trimLog(StringUtil.notNullize(getCommandLineForLog()), 1000),
-                 myProcessStart);
+                 myProcessStart.toThrowable("Process creation:"));
       }
     }
   }

@@ -2,6 +2,7 @@
 package com.intellij.python.junit5Tests.unit.showCase
 
 import com.intellij.python.junit5Tests.framework.env.pyMockInterpreterFixture
+import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.sdk.backend.findPythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -15,7 +16,8 @@ import org.junit.jupiter.api.Test
 class PyMockInterpreterFixtureShowCaseTest {
   private val pathFixture = tempPathFixture()
   private val projectFixture = projectFixture()
-  private val interpreterFixture = projectFixture.pyMockInterpreterFixture(pathFixture)
+  // Every interpreter belongs to a Python project: here the main one, at the project root.
+  private val interpreterFixture = projectFixture.pyProjectFixture().pyMockInterpreterFixture(pathFixture)
 
   @Test
   fun testMockSdk(): Unit = timeoutRunBlocking {

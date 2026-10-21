@@ -4,6 +4,7 @@ package com.intellij.platform.lsp.util
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.TextRange
@@ -35,7 +36,9 @@ fun navigateOrShowPopup(client: LspClient, locations: List<Location>, @Nls title
 fun navigateToLocation(client: LspClient, location: Location) {
   val file = client.descriptor.findFileByUri(location.uri) ?: return
   val descriptor = OpenFileDescriptor(client.project, file, location.range.start.line, location.range.start.character)
-  FileEditorManager.getInstance(client.project).openTextEditor(descriptor, true)
+  val fileEditorManager = FileEditorManager.getInstance(client.project)
+  fileEditorManager.requestOpenTextEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor)
+    .withRequestFocus(true))
 }
 
 /**

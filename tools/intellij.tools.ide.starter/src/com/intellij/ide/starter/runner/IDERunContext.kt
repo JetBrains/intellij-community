@@ -365,6 +365,7 @@ data class IDERunContext(
     addSystemProperty("idea.welcome.screen.non.modal.enabled", false)
   }
 
+  @Deprecated("to remove, use com.intellij.ide.starter.junit5.WithScreenRecording")
   fun withScreenRecording() {
     if (testContext.isRemDevContext() && testContext != testContext.asRemDevContext().frontendIDEContext && !calculateVmOptions().hasHeadlessMode()) {
       logOutput("Will not record screen for a backend of remote dev")

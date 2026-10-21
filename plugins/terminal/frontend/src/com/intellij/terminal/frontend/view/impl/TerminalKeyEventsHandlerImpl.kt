@@ -268,6 +268,7 @@ open class TerminalKeyEventsHandlerImpl(
 /**
  * Guarantee that the editor caret is synchronized with the output model's cursor offset.
  * Essential for correct lookup behavior.
+ * This method may access the model and acquire the write-intent lock.
  */
 internal fun syncEditorCaretWithModel(editor: EditorEx, outputModel: TerminalOutputModel) {
   val expectedCaretOffset = outputModel.cursorOffset.toRelative(outputModel)

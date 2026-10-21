@@ -47,7 +47,6 @@ internal object LibrariesRequiredForWorkspace {
 
   private val kotlinJpsCommon = JarLibrary("kotlinc-kotlin-jps-common", KotlinModuleKind::class.java)
   private val kotlinScriptingCommon = JarLibrary("kotlinc-kotlin-scripting-common", SourceCode::class.java)
-  private val kotlinCompilerCommon = JarLibrary("kotlinc-kotlin-compiler-common", K1Deprecation::class.java)
   private val rdCore = JarLibrary("rd-core", IPrintable::class.java)
   private val rdFramework = JarLibrary("rd-framework", RdId::class.java)
   private val androidStudioPlatform = JarLibrary("studio-platform", AgpVersion::class.java)
@@ -71,9 +70,6 @@ internal object LibrariesRequiredForWorkspace {
       }
       "intellij.kotlin.base.scripting" -> {
         listOf(kotlinScriptingCommon)
-      }
-      "kotlin.base.scripting.k1" -> {
-        listOf(kotlinCompilerCommon)
       }
       "intellij.kotlin.gradle.scripting" -> {
         listOf(kotlinBaseScripting, gradle, gradleToolingExtension, gradleExternalSystemImpl)

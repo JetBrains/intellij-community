@@ -148,7 +148,7 @@ data class VerticalComponentGap(val top: Boolean? = null, val bottom: Boolean? =
 fun UINumericRange.asRange(): IntRange = min..max
 
 @Deprecated("Use com.intellij.ui.dsl.listCellRenderer.BuilderKt.textListCellRenderer/listCellRenderer instead",
-            level = DeprecationLevel.ERROR)
+            level = DeprecationLevel.HIDDEN)
 @ApiStatus.ScheduledForRemoval
 fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T>.(T) -> Unit): SimpleListCellRenderer<T> {
   return object : SimpleListCellRenderer<T>() {

@@ -18,6 +18,9 @@ import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection;
 import com.intellij.diagnostic.ITNReporter;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.lang.properties.PropertiesImplUtil;
+import com.intellij.lang.properties.ResourceBundleManager;
+import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.notification.impl.NotificationGroupEP;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,6 +40,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
@@ -124,6 +128,30 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
   public void testExtensionI18n() {
     IntelliJProjectUtil.markAsIntelliJPlatformProject(getProject(), true);
     doHighlightingTest("extensionI18n.xml", "MyBundle.properties", "AnotherBundle.properties");
+  }
+
+  public void testResourceBundleResolvesAfterBundleAdded() {
+    myFixture.configureByText("plugin.xml", "<idea-plugin><resource-bundle>messages.Late<caret>Bundle</resource-bundle></idea-plugin>");
+    var reference = (PsiPolyVariantReference)myFixture.getReferenceAtCaretPositionWithAssertion();
+    assertEmpty(reference.multiResolve(false));
+
+    myFixture.addFileToProject("messages/LateBundle.properties", "key=value");
+    assertSize(1, reference.multiResolve(false));
+  }
+
+  public void testResourceBundleResolvesAfterBundlesCombined() {
+    PropertiesFile first = PropertiesImplUtil.getPropertiesFile(myFixture.addFileToProject("messages/First.properties", "key=value"));
+    PropertiesFile second = PropertiesImplUtil.getPropertiesFile(myFixture.addFileToProject("messages/Second.properties", "key=value"));
+    myFixture.configureByText("plugin.xml", "<idea-plugin><resource-bundle>messages.Comb<caret>ined</resource-bundle></idea-plugin>");
+    var reference = (PsiPolyVariantReference)myFixture.getReferenceAtCaretPositionWithAssertion();
+    assertEmpty(reference.multiResolve(false));
+
+    ResourceBundleManager manager = ResourceBundleManager.getInstance(getProject());
+    manager.combineToResourceBundle(List.of(first, second), "Combined");
+    assertSize(2, reference.multiResolve(false));
+
+    manager.dissociateResourceBundle(first.getResourceBundle());
+    assertEmpty(reference.multiResolve(false));
   }
 
   public void testMessageBundleViaIncluding() {

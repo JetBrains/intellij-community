@@ -45,9 +45,16 @@ open class RecentProjectListActionProvider {
   @Internal
   fun collectProjects(): List<RecentProjectTreeItem> = collectProjects(projectToFilterOut = null)
 
+  /**
+   * Returns the recent projects of [RecentProjectsManager] without the projects of the [RecentProjectProvider] extensions,
+   * so no provider is created: a provider may start a service to load its projects.
+   */
+  @Internal
+  fun collectLocalProjects(): List<RecentProjectTreeItem> = collectProjects(projectToFilterOut = null, includesProviders = false)
+
   open fun recentProjectsInDocSupported() = true
 
-  private fun collectProjects(projectToFilterOut: Project?): List<RecentProjectTreeItem> {
+  private fun collectProjects(projectToFilterOut: Project?, includesProviders: Boolean = true): List<RecentProjectTreeItem> {
     val recentProjectManager = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
     val openedPaths = ProjectManagerEx.getOpenProjects().mapNotNullTo(LinkedHashSet()) {
       recentProjectManager.getProjectPath(it)?.invariantSeparatorsPathString
@@ -55,7 +62,10 @@ open class RecentProjectListActionProvider {
     val allRecentProjectPaths = LinkedHashSet(recentProjectManager.getRecentPaths())
     if (projectToFilterOut != null) {
       recentProjectManager.getProjectPath(projectToFilterOut)?.let {
-        allRecentProjectPaths.remove(it.invariantSeparatorsPathString)
+        val path = it.invariantSeparatorsPathString
+        allRecentProjectPaths.remove(path)
+        // the filtered-out project counts as open: a collection that runs before it is added to the open projects names the same duplicates
+        openedPaths.add(path)
       }
     }
 
@@ -81,7 +91,7 @@ open class RecentProjectListActionProvider {
       createRecentProject(path = recentProject, duplicates = duplicates, projectGroup = null, recentProjectManager = recentProjectManager)
     }
 
-    val projectsFromEP = if (Registry.`is`("ide.recent.projects.query.ep.providers")) {
+    val projectsFromEP = if (includesProviders && Registry.`is`("ide.recent.projects.query.ep.providers")) {
       EP.extensionList.flatMap { createProjectsFromProvider(it) }
     }
     else {
@@ -417,7 +427,7 @@ internal class RemoteRecentProjectActionGroup(val projectId: String, val project
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isPerformGroup = project.additionalActions.isEmpty() || e.place == ActionPlaces.DOCK_MENU
+    e.presentation.isPerformGroup = true
     e.presentation.isPopupGroup = true
   }
 
@@ -511,7 +521,7 @@ private val EP_NAME: ExtensionPointName<RecentProjectsBranchesProvider> = Extens
 private const val RECENT_PROJECT_VCS_ACTIONS_ENABLED = "ide.welcome.screen.recent.project.vcs.actions"
 
 private fun vcsActionsEnabled(projectPath: String): Boolean =
-  Registry.`is`(RECENT_PROJECT_VCS_ACTIONS_ENABLED) && EP_NAME.findFirstSafe { it.hasRepository(projectPath) } != null
+  Registry.`is`(RECENT_PROJECT_VCS_ACTIONS_ENABLED) && EP_NAME.findFirstSafe { it.hasRepository(projectPath) != false } != null
 
 private fun getCurrentBranch(projectPath: String, nameIsDistinct: Boolean): String? {
   for (provider in EP_NAME.extensionList) {

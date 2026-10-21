@@ -1,33 +1,66 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module.impl.scopes
 
-import com.intellij.openapi.roots.OrderEntry
-import com.intellij.openapi.roots.RootEntry
 import com.intellij.openapi.roots.impl.RootDescriptor
 import com.intellij.openapi.vfs.VirtualFile
-import it.unimi.dsi.fastutil.objects.Object2IntMap
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
-import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap
 import org.jetbrains.annotations.TestOnly
 
 internal sealed interface RootContainer {
   /**
-   * @return known priority or 0 if the root is not in the container
+   * An ordering key for [root], or 0 if the root is not in the container. Smaller means earlier in the enumeration,
+   * which is what `compare` treats as more preferable. Only the classic container answers this; the multiverse one
+   * needs the owner of the root, see the [RootDescriptor] overload.
    */
-  fun getPriority(root: VirtualFile): Int
+  fun rankOf(root: VirtualFile): Long
 
-  @Deprecated("use getRootDescriptor instead")
+  @Deprecated("use findEntity instead")
   fun containsRoot(root: VirtualFile): Boolean
 
-  // todo IJPL-339 support several roots for a single root in a scope
-  fun getRootDescriptor(root: RootDescriptor): ScopeRootDescriptor?
+  /**
+   * The module, library or SDK through which this scope reaches the root the file index described, or `null` when
+   * the scope does not reach it. This is the multiverse `contains`, and the entity is what the caller turns into a
+   * [com.intellij.codeInsight.multiverse.CodeInsightContext].
+   */
+  fun findEntity(rootDescriptor: RootDescriptor): ScopeEntity?
 
-  fun getRootDescriptor(root: VirtualFile): ScopeRootDescriptor?
+  /** An ordering key for a root the file index has already resolved to its owner, or 0 if it is not in the scope. */
+  fun rankOf(rootDescriptor: RootDescriptor): Long
+
+  /**
+   * The high half of [rankOf]: the priority of the entity that brings the root in, or 0 if it is not in the scope.
+   * Two roots with different priorities are already ordered by it, and computing it costs no lookup in the shared
+   * table of entity roots for a library or an SDK, which is what lets `compare` skip the full rank on most pairs.
+   */
+  fun priorityOf(rootDescriptor: RootDescriptor): Int
 
   fun getRoots(): Collection<VirtualFile>
 
+  /**
+   * The exact number of distinct roots, which for the multiverse container means materialising them. Use
+   * [approximateSize] on any path that runs per scope rather than per test.
+   */
   val size: Int
+
+  /**
+   * An upper bound on [size] that costs no root enumeration: for the entry-set container, the sum of the entity
+   * root counts, before duplicates between two entities are removed.
+   */
+  val approximateSize: Int
+
+  /**
+   * Number of entities (or, for the classic container, nothing) the container keeps alive - the per-scope part of
+   * its cost. Zero for containers that store no entities at all.
+   *
+   * Exposed for memory tests, see `ModuleScopeMemoryTest`.
+   */
+  @get:TestOnly val entityCount: Int
+
+  /**
+   * Width of the value stored next to every key in the container's map, in bytes.
+   *
+   * Exposed for memory tests, see `ModuleScopeMemoryTest`.
+   */
+  @get:TestOnly val entryValueBytes: Int
 
   @TestOnly fun getSortedRoots(): Collection<VirtualFile>
 
@@ -42,166 +75,8 @@ internal sealed interface RootContainer {
         ClassicRootContainer.merge(this as List<ClassicRootContainer>)
       }
       else {
-        MultiverseRootContainer.merge(this as List<MultiverseRootContainer>)
+        EntrySetRootContainer.merge(this as List<EntrySetRootContainer>)
       }
-    }
-  }
-}
-
-internal class ClassicRootContainer(private val roots: Object2IntMap<VirtualFile>) : RootContainer {
-  override fun getPriority(root: VirtualFile): Int = roots.getInt(root)
-
-  @Deprecated("use getRootDescriptor instead")
-  override fun containsRoot(root: VirtualFile): Boolean = roots.containsKey(root)
-
-  override fun getRoots(): Collection<VirtualFile> = getRoots(sorted = false)
-
-  override fun getSortedRoots(): Collection<VirtualFile> = getRoots(sorted = true)
-
-  override fun getRootDescriptor(root: RootDescriptor): ScopeRootDescriptor =
-    throw UnsupportedOperationException()
-
-  override fun getRootDescriptor(root: VirtualFile): ScopeRootDescriptor =
-    throw UnsupportedOperationException()
-
-  override val size: Int
-    get() = roots.size
-
-  private fun getRoots(sorted: Boolean): Collection<VirtualFile> {
-    val files = roots.keys.toMutableList()
-    if (sorted) {
-      files.sortBy { root -> roots.getInt(root) }
-    }
-    return files
-  }
-
-  companion object {
-    internal fun merge(containers: List<ClassicRootContainer>): ClassicRootContainer {
-      val result = Object2IntOpenHashMap<VirtualFile>()
-
-      var maxPriority = 0
-      for (container in containers) {
-        val map = container.roots
-        val entrySet = map.object2IntEntrySet()
-        var curMax = 0
-
-        for (entry in entrySet) {
-          val root = entry.key
-          val priority = entry.intValue + maxPriority
-          curMax = maxOf(curMax, priority)
-
-          result.putIfAbsent(root, priority)
-        }
-
-        maxPriority = maxOf(maxPriority, curMax)
-      }
-
-      return ClassicRootContainer(result)
-    }
-  }
-}
-
-// todo IJPL-339 this does not support multiple modules per root file
-internal class MultiverseRootContainer(
-  /**
-   * root -> packed long: the high 32 bits hold an index in [descriptors], the low 32 bits hold the root priority.
-   * Priorities start at 1, so the packed value 0 means "the root is absent".
-   */
-  private val roots: Object2LongOpenHashMap<VirtualFile>,
-  /**
-   * One descriptor per distinct [OrderEntry]. Merged containers share the descriptors of their sources.
-   */
-  private val descriptors: Array<ScopeRootDescriptor>,
-) : RootContainer {
-  override fun getPriority(root: VirtualFile): Int =
-    priorityOf(roots.getLong(root))
-
-  @Deprecated("use getRootDescriptor instead")
-  override fun containsRoot(root: VirtualFile): Boolean =
-    roots.containsKey(root)
-
-  override fun getRootDescriptor(root: RootDescriptor): ScopeRootDescriptor? =
-    getRootDescriptor(root.root)?.takeIf { descriptor ->
-      descriptor.correspondTo(root)
-    }
-
-  override fun getRootDescriptor(root: VirtualFile): ScopeRootDescriptor? {
-    val packed = roots.getLong(root)
-    if (packed == 0L) return null
-    return descriptors[entryIdOf(packed)]
-  }
-
-  override fun getRoots(): Collection<VirtualFile> =
-    roots.keys
-
-  override val size: Int
-    get() = roots.size
-
-  override fun getSortedRoots(): Collection<VirtualFile> =
-    roots.keys.sortedBy { root -> priorityOf(roots.getLong(root)) }
-
-  companion object {
-    private fun pack(entryId: Int, priority: Int): Long =
-      (entryId.toLong() shl 32) or (priority.toLong() and 0xFFFF_FFFFL)
-
-    private fun priorityOf(packed: Long): Int = packed.toInt()
-
-    private fun entryIdOf(packed: Long): Int = (packed ushr 32).toInt()
-
-    internal fun build(entries: Collection<RootEntry>): MultiverseRootContainer {
-      val roots = Object2LongOpenHashMap<VirtualFile>(entries.size)
-      val descriptors = ArrayList<ScopeRootDescriptor>()
-      val entryIds = Reference2IntOpenHashMap<OrderEntry>()
-      entryIds.defaultReturnValue(-1)
-
-      var priority = 1
-      for (entry in entries) {
-        if (!roots.containsKey(entry.root)) {
-          var entryId = entryIds.getInt(entry.orderEntry)
-          if (entryId == -1) {
-            entryId = descriptors.size
-            descriptors.add(ScopeRootDescriptor(entry.orderEntry))
-            entryIds.put(entry.orderEntry, entryId)
-          }
-          roots.put(entry.root, pack(entryId, priority))
-        }
-        priority++
-      }
-      roots.trim()
-      return MultiverseRootContainer(roots, descriptors.toTypedArray())
-    }
-
-    // todo multiple modules per root file are not supported yet
-    internal fun merge(containers: List<MultiverseRootContainer>): MultiverseRootContainer {
-      val resultRoots = Object2LongOpenHashMap<VirtualFile>()
-      val resultDescriptors = ArrayList<ScopeRootDescriptor>()
-      val descriptorIds = Reference2IntOpenHashMap<ScopeRootDescriptor>()
-      descriptorIds.defaultReturnValue(-1)
-
-      var maxPriority = 0
-      for (container in containers) {
-        var curMax = 0
-        for (entry in container.roots.object2LongEntrySet().fastIterator()) {
-          val packed = entry.longValue
-          val priority = priorityOf(packed) + maxPriority
-          curMax = maxOf(curMax, priority)
-
-          if (!resultRoots.containsKey(entry.key)) {
-            val descriptor = container.descriptors[entryIdOf(packed)]
-            var descriptorId = descriptorIds.getInt(descriptor)
-            if (descriptorId == -1) {
-              descriptorId = resultDescriptors.size
-              resultDescriptors.add(descriptor)
-              descriptorIds.put(descriptor, descriptorId)
-            }
-            resultRoots.put(entry.key, pack(descriptorId, priority))
-          }
-        }
-
-        maxPriority = maxOf(maxPriority, curMax)
-      }
-
-      return MultiverseRootContainer(resultRoots, resultDescriptors.toTypedArray())
     }
   }
 }

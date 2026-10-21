@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -34,6 +35,8 @@ class PythonPlatformCodeInsightTestFixture(languageLevel: LanguageLevel) : Pytho
     get() = myDelegateFixture.project
   override val module: Module
     get() = myDelegateFixture.module
+  override val pythonInterpreter: PythonInterpreter?
+    get() = findPythonInterpreterForTests(module)
   override val file: PsiFile?
     get() = myDelegateFixture.file
   override val testDataRoot: VirtualFile?

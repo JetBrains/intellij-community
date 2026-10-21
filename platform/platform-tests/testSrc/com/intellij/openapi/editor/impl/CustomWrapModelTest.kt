@@ -4,34 +4,54 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.CustomWrap
 import com.intellij.openapi.editor.CustomWrapModel
 import com.intellij.openapi.editor.ex.DocumentEx
+import com.intellij.openapi.editor.impl.EditorModelFixture.Companion.SURROGATE_PAIR
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import kotlin.test.assertFailsWith
 
-class CustomWrapModelTest : AbstractEditorTest() {
+@TestApplication
+class CustomWrapModelTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  override fun setUp() {
-    super.setUp()
-    setUpCustomWrapSupport()
+  private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
+
+  @BeforeEach
+  fun setUp() {
+    fixture.setUpCustomWrapSupport()
   }
 
   private val customWrapModel: CustomWrapModel
-    get() = editor.customWrapModel
+    get() = fixture.editor.customWrapModel
 
-  fun testAddAndRemoveWraps() {
+  @Test
+  fun testAddAndRemoveWraps(): Unit = fixture.runTest {
     initText("Hello World")
 
     val wrap = customWrapModel.runBatchMutation { addWrap(5) }!!
 
-    assertSize(1, customWrapModel.getWraps())
-    assertSize(1, customWrapModel.getWrapsAtOffset(5))
+    assertThat(customWrapModel.getWraps()).hasSize(1)
+    assertThat(customWrapModel.getWrapsAtOffset(5)).hasSize(1)
     assertTrue(customWrapModel.hasWraps())
     assertEquals(5, wrap.offset)
     editor.customWrapModel.runBatchMutation { removeWrap(wrap) }
-    assertSize(0, customWrapModel.getWraps())
+    assertThat(customWrapModel.getWraps()).isEmpty()
     assertFalse(customWrapModel.hasWraps())
   }
 
-  fun testGetWrapsSortedByOffsetAndPriority() {
+  @Test
+  fun testGetWrapsSortedByOffsetAndPriority(): Unit = fixture.runTest {
     initText("Hello World Test String For Sorting")
 
     customWrapModel.runBatchMutation {
@@ -51,7 +71,8 @@ class CustomWrapModelTest : AbstractEditorTest() {
     assertEquals(listOf(5 to 0, 10 to 0, 15 to 1, 15 to 2, 20 to 0, 25 to 0), offsetsAndPriorities)
   }
 
-  fun testListenerReceivesSingleAddAndRemoveCallbacks() {
+  @Test
+  fun testListenerReceivesSingleAddAndRemoveCallbacks(): Unit = fixture.runTest {
     initText("abcdef")
 
     val events = mutableListOf<String>()
@@ -73,7 +94,8 @@ class CustomWrapModelTest : AbstractEditorTest() {
     assertEquals(listOf("add:3", "remove:3"), events)
   }
 
-  fun testExplicitRemoveNotifiesRemovedExactlyOnce() {
+  @Test
+  fun testExplicitRemoveNotifiesRemovedExactlyOnce(): Unit = fixture.runTest {
     initText("abcdef")
 
     var removeCount = 0
@@ -83,7 +105,7 @@ class CustomWrapModelTest : AbstractEditorTest() {
         removeCount++
         removedOffset = wrap.offset
       }
-    }, getTestRootDisposable())
+    }, testRootDisposable)
 
     val wrap = customWrapModel.runBatchMutation { addWrap(3) }!!
     customWrapModel.runBatchMutation { removeWrap(wrap) }
@@ -92,7 +114,8 @@ class CustomWrapModelTest : AbstractEditorTest() {
     assertEquals(3, removedOffset)
   }
 
-  fun testRemoveWrapReturnsFalseForAlreadyInvalidatedWrap() {
+  @Test
+  fun testRemoveWrapReturnsFalseForAlreadyInvalidatedWrap(): Unit = fixture.runTest {
     initText("abc\ndef")
 
     val (survivingWrap, invalidatedWrap) = customWrapModel.runBatchMutation {
@@ -114,7 +137,8 @@ class CustomWrapModelTest : AbstractEditorTest() {
     assertTrue(customWrapModel.getWraps().isEmpty())
   }
 
-  fun testCustomWrapInvalidatedByDocumentChangeNotifiesRemovedExactlyOnce() {
+  @Test
+  fun testCustomWrapInvalidatedByDocumentChangeNotifiesRemovedExactlyOnce(): Unit = fixture.runTest {
     initText("abc\ndef")
 
     var removeCount = 0
@@ -124,7 +148,7 @@ class CustomWrapModelTest : AbstractEditorTest() {
         removeCount++
         removedOffset = wrap.offset
       }
-    }, getTestRootDisposable())
+    }, testRootDisposable)
 
     assertNotNull(customWrapModel.runBatchMutation { addWrap(5) })
 
@@ -137,7 +161,8 @@ class CustomWrapModelTest : AbstractEditorTest() {
     assertEquals(4, removedOffset)
   }
 
-  fun testAddWrapRejectsLineBoundaryOffsets() {
+  @Test
+  fun testAddWrapRejectsLineBoundaryOffsets(): Unit = fixture.runTest {
     initText("ab\ncd")
 
     val events = mutableListOf<String>()
@@ -153,14 +178,16 @@ class CustomWrapModelTest : AbstractEditorTest() {
     assertTrue(events.isEmpty())
   }
 
-  fun testAddWrapRejectsOffsetInsideSurrogatePair() {
+  @Test
+  fun testAddWrapRejectsOffsetInsideSurrogatePair(): Unit = fixture.runTest {
     initText("a${SURROGATE_PAIR}b")
 
     assertNull(customWrapModel.runBatchMutation { addWrap(2) })
     assertFalse(customWrapModel.hasWraps())
   }
 
-  fun testDeleteRemovesWrapThatBecomesLineEnd() {
+  @Test
+  fun testDeleteRemovesWrapThatBecomesLineEnd(): Unit = fixture.runTest {
     initText("abc\ndef")
 
     val events = mutableListOf<String>()
@@ -176,7 +203,8 @@ class CustomWrapModelTest : AbstractEditorTest() {
     assertEquals(listOf("add:2", "remove:2"), events)
   }
 
-  fun testDeleteRemovesWrapThatBecomesLineStart() {
+  @Test
+  fun testDeleteRemovesWrapThatBecomesLineStart(): Unit = fixture.runTest {
     initText("abc\ndef")
 
     val events = mutableListOf<String>()
@@ -192,7 +220,8 @@ class CustomWrapModelTest : AbstractEditorTest() {
     assertEquals(listOf("add:5", "remove:4"), events)
   }
 
-  fun testMoveRemovesWrapThatBecomesLineStart() {
+  @Test
+  fun testMoveRemovesWrapThatBecomesLineStart(): Unit = fixture.runTest {
     initText("abc\ndefghi")
 
     val events = mutableListOf<String>()
@@ -209,7 +238,8 @@ class CustomWrapModelTest : AbstractEditorTest() {
     assertEquals(listOf("add:6", "remove:4"), events)
   }
 
-  fun testMutatorOperationsOutsideBatchMutationFailAndDoNotModifyModel() {
+  @Test
+  fun testMutatorOperationsOutsideBatchMutationFailAndDoNotModifyModel(): Unit = fixture.runTest {
     initText("0123456789")
     val mutator = editor.customWrapModel.runBatchMutation {
       addWrap(4)
@@ -231,6 +261,6 @@ class CustomWrapModelTest : AbstractEditorTest() {
       override fun customWrapRemoved(wrap: CustomWrap) {
         events += "remove:${wrap.offset}"
       }
-    }, getTestRootDisposable())
+    }, fixture.testRootDisposable)
   }
 }

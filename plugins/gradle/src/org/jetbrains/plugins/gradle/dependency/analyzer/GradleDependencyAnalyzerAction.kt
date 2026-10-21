@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.dependency.analyzer
 
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
@@ -11,12 +12,14 @@ import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyze
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.project.dependencies.ArtifactDependencyNode
 import com.intellij.openapi.externalSystem.model.project.dependencies.DependencyScopeNode
 import com.intellij.openapi.externalSystem.model.project.dependencies.ProjectDependencyNode
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.externalSystem.view.ExternalSystemNode
 import com.intellij.openapi.externalSystem.view.ModuleNode
 import com.intellij.openapi.externalSystem.view.ProjectNode
@@ -57,22 +60,30 @@ class ViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<ExternalSy
   }
 }
 
-class ToolbarDependencyAnalyzerAction : DependencyAnalyzerAction() {
-
+internal class ToolbarDependencyAnalyzerAction : DependencyAnalyzerAction() {
   private val viewAction = ViewDependencyAnalyzerAction()
 
-  override fun getSystemId(e: AnActionEvent) = GradleConstants.SYSTEM_ID
+  override fun getSystemId(e: AnActionEvent): ProjectSystemId? = GradleConstants.SYSTEM_ID
 
-  override fun isEnabledAndVisible(e: AnActionEvent) = true
+  override fun isEnabledAndVisible(e: AnActionEvent): Boolean = true
 
   override fun setSelectedState(view: DependencyAnalyzerView, e: AnActionEvent) {
     viewAction.setSelectedState(view, e)
   }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    if (e.place == ActionPlaces.ACTION_SEARCH) {
+      e.presentation.isEnabledAndVisible = false // ProjectViewDependencyAnalyzerAction shown instead
+      e.presentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.action.name.0", "Gradle");
+    }
+  }
 }
 
-class ProjectViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<Module>() {
+internal class ProjectViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<Module>() {
 
-  override fun getSystemId(e: AnActionEvent) = GradleConstants.SYSTEM_ID
+  override fun getSystemId(e: AnActionEvent): ProjectSystemId? = GradleConstants.SYSTEM_ID
 
   override fun getSelectedData(e: AnActionEvent): Module? {
     val module = e.getData(PlatformCoreDataKeys.MODULE) ?: return null
@@ -90,10 +101,18 @@ class ProjectViewDependencyAnalyzerAction : AbstractDependencyAnalyzerAction<Mod
     return DAModule(selectedData.name)
   }
 
-  override fun getDependencyScope(e: AnActionEvent, selectedData: Module) = null
+  override fun getDependencyScope(e: AnActionEvent, selectedData: Module): String? = null
 
   override fun isEnabledAndVisible(e: AnActionEvent): Boolean {
     return super.isEnabledAndVisible(e)
            && (e.getData(LangDataKeys.MODULE_CONTEXT_ARRAY) != null || !e.isFromContextMenu)
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+
+    if (e.place == ActionPlaces.ACTION_SEARCH) {
+      e.presentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.action.name.0", "Gradle");
+    }
   }
 }

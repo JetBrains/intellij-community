@@ -2,7 +2,6 @@
 package com.intellij.ide.startup.importSettings.chooser.ui
 
 import com.intellij.ide.startup.importSettings.data.NotificationData
-import com.intellij.ide.startup.importSettings.data.StartupWizardService
 import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogBackgroundImageProvider
@@ -48,7 +47,6 @@ internal class OnboardingDialog(
     if (shouldExit) {
       tracker.onLeave()
       ImportSettingsEventsCollector.dialogClosed()
-      StartupWizardService.getInstance()?.onCancel()
       cancelCallback()
       super.doCancelAction()
     }
@@ -123,10 +121,6 @@ internal class OnboardingDialog(
     }
   }
 
-  override fun dispose() {
-    StartupWizardService.getInstance()?.onExit()
-    super.dispose()
-  }
 }
 
 internal interface OnboardingPage: Disposable {

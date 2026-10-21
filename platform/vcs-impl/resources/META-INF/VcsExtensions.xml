@@ -377,13 +377,19 @@
 
     <vcsAwareCheckoutListener implementation="com.intellij.openapi.vcs.checkout.RegisterMappingCheckoutListener"/>
 
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.vcs.VcsRemoteApiProvider"
-                                            apiInterfaces="com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi,
-                                                           com.intellij.platform.vcs.impl.shared.rpc.VcsMappingsApi,
-                                                           com.intellij.platform.vcs.impl.shared.rpc.PartialChangesApi,
-                                                           com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi,
-                                                           com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffApi,
-                                                           com.intellij.platform.vcs.impl.shared.rpc.ChangesViewInclusionModelApi"/>
+    <!-- The remote API implementations are application services, so a light IDE reaches them without the rpc backend. -->
+    <applicationService serviceInterface="com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi"
+                        serviceImplementation="com.intellij.vcs.changes.ChangeListsApiImpl"/>
+    <applicationService serviceInterface="com.intellij.platform.vcs.impl.shared.rpc.VcsMappingsApi"
+                        serviceImplementation="com.intellij.openapi.vcs.impl.projectlevelman.VcsMappingsApiImpl"/>
+    <applicationService serviceInterface="com.intellij.platform.vcs.impl.shared.rpc.PartialChangesApi"
+                        serviceImplementation="com.intellij.vcs.changes.PartialChangesApiImpl"/>
+    <applicationService serviceInterface="com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi"
+                        serviceImplementation="com.intellij.vcs.changes.ChangesViewApiImpl"/>
+    <applicationService serviceInterface="com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffApi"
+                        serviceImplementation="com.intellij.vcs.changes.ChangesViewDiffApiImpl"/>
+    <applicationService serviceInterface="com.intellij.platform.vcs.impl.shared.rpc.ChangesViewInclusionModelApi"
+                        serviceImplementation="com.intellij.vcs.changes.ChangesViewInclusionModelApiImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.vcs.changes.ui.BackendChangesTreeCompatibilityProvider"
                         serviceInterface="com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider"/>

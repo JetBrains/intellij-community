@@ -1,13 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.devkit.build
 
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.util.PathUtil
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContent
 import org.jetbrains.jps.builders.CompileScopeTestBuilder
-import org.jetbrains.jps.builders.JpsBuildTestCase
+import org.jetbrains.jps.builders.JpsBuildTestBase
 import org.jetbrains.jps.devkit.model.JpsIdeaSdkProperties
 import org.jetbrains.jps.devkit.model.JpsIdeaSdkType
 import org.jetbrains.jps.devkit.model.JpsPluginModuleProperties
@@ -17,10 +16,13 @@ import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.java.JpsJavaLibraryType
 import org.jetbrains.jps.model.java.JpsNativeLibraryRootType
 import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import java.io.File
 import kotlin.io.path.Path
 
-class JpsPluginBuildTest : JpsBuildTestCase() {
+class JpsPluginBuildTest : JpsBuildTestBase() {
+  @Test
   fun `test show proper error message if jdk type is invalid`() {
     addModule("m", PathUtil.getParentPath(createFile("src/A.java", "class A{}")))
     val jdkName = jdk.parent.name
@@ -30,15 +32,18 @@ class JpsPluginBuildTest : JpsBuildTestCase() {
     myModel.global.addSdk(jdkName, null, null, JpsIdeaSdkType.INSTANCE, sdkProperties)
     val result = buildAllModules()
     result.assertFailed()
-    val errorMessage = assertOneElement(result.getMessages(BuildMessage.Kind.ERROR))
+    val errors = result.getMessages(BuildMessage.Kind.ERROR)
+    assertEquals(1, errors.size, errors.toString())
+    val errorMessage = errors[0]
     assertEquals("Cannot find JDK for module 'm': '${jdkName}' points to IntelliJ Platform Plugin SDK", errorMessage.messageText)
   }
 
+  @Test
   fun `test build native libraries`() {
     val pluginModuleProperties = JpsElementFactory.getInstance().createSimpleElement(JpsPluginModuleProperties(null, null))
     val m = JpsElementFactory.getInstance().createModule("m", JpsPluginModuleType.INSTANCE, pluginModuleProperties)
     myProject.addModule(m)
-    val sandboxDir = FileUtil.createTempDirectory("sandbox", null)
+    val sandboxDir = createTempDirectory("sandbox")
     val sdkProperties = JpsElementFactory.getInstance().createSimpleElement(JpsIdeaSdkProperties(sandboxDir.systemIndependentPath, jdk.parent.name))
     val pluginSdk = myModel.global.addSdk("plugin sdk", null, null, JpsIdeaSdkType.INSTANCE, sdkProperties)
     setupModuleSdk(m, pluginSdk.properties)

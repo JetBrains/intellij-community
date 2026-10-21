@@ -205,7 +205,7 @@ private fun runOnProjectInit(project: Project) {
   LOG.info("Start Execution")
   PerformanceTestSpan.startSpan()
 
-  if (ApplicationManagerEx.isInIntegrationTest()) {
+  if (ApplicationManagerEx.isInIntegrationTest() && !java.lang.Boolean.getBoolean("ide.startup.no.profiler")) {
     project.service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       subscribeToStopProfile()
     }
@@ -392,6 +392,12 @@ private fun initializeProfilerSettingsForIndexing(): Pair<String, List<String>>?
     ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
   }
   return null
+}
+
+/** Whether the startup script has a line to run. A missing script has none. */
+internal fun hasStartupScriptCommands(): Boolean {
+  val file = ProjectLoaded.TEST_SCRIPT_FILE_PATH?.let { Path.of(it) } ?: return false
+  return Files.isRegularFile(file) && Files.readAllLines(file).any { it.isNotBlank() }
 }
 
 private fun runScriptFromFile(project: Project) {

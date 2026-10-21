@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.lsp.core
 
+import com.jetbrains.python.project.PyProject
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.Lsp4jServer
@@ -41,6 +41,6 @@ internal fun fakePyLspClient(
   private fun unused(): Nothing = throw UnsupportedOperationException("The test only reads the descriptor")
 }
 
-/** A fake client of a Python LSP tool whose server answers for [servedModules] and is in [serverState]. */
-internal fun fakePyToolClient(vararg servedModules: Module, serverState: LspServerState = LspServerState.Running): LspClient =
-  fakePyLspClient(TyLspClientDescriptor(servedModules.first(), servedModules.toList()), serverState)
+/** A fake client of a Python LSP tool whose server answers for [servedProjects] and is in [serverState]. */
+internal fun fakePyToolClient(vararg servedProjects: PyProject, serverState: LspServerState = LspServerState.Running): LspClient =
+  fakePyLspClient(TyLspClientDescriptor(servedProjects.first(), servedProjects.toList()), serverState)

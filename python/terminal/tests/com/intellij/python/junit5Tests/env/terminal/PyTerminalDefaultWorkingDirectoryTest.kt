@@ -4,7 +4,7 @@ package com.intellij.python.junit5Tests.env.terminal
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
-import com.intellij.python.junit5Tests.framework.env.pyInterpreterFixture
+import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.terminal.pyTerminalDefaultWorkingDirectory
 import com.intellij.python.test.env.junit5.pyVenvFixture
@@ -40,7 +40,7 @@ class PyTerminalDefaultWorkingDirectoryTest {
   private val pyProjectWithSdk = projectFixture.pyProjectFixture(moduleWithSdkDir)
 
   @Suppress("unused") // creates the venv and assigns it to pyProjectWithSdk
-  private val venvFixture = projectFixture.pyInterpreterFixture().pyVenvFixture(
+  private val venvFixture = pyEnvironmentFixture().pyVenvFixture(
     where = moduleWithSdkDir,
     pyProjectFixture = pyProjectWithSdk,
   )

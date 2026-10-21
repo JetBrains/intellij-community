@@ -22,6 +22,7 @@ dev_dist_plugin(
     content_modules = [
         # do not sort,
         "intellij.yaml.backend",
+        "intellij.yaml.spellchecker",
         "intellij.yaml.syntax",
     ],
     main_module = "intellij.yaml",

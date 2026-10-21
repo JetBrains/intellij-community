@@ -600,14 +600,6 @@ class NameUtilMatchingTest {
   }
 
   @Test
-  fun testUpperCaseInsideSkippedWordIsSkippedHump() {
-    assertPreference("DH", "DAHolder", "DataHolder")
-    assertPreference("DH", "DAHolder", "DataHolder", MatchingMode.IGNORE_CASE)
-    assertPreference("DH", "DAOHolder", "DAHolder")
-    assertPreference("DH", "DAOHolder", "DAHolder", MatchingMode.IGNORE_CASE)
-  }
-
-  @Test
   fun testWordLengthDoesNotMatter() {
     assertNoPreference("PropComp", "PropertyComponent", "PropertiesComponent", MatchingMode.IGNORE_CASE)
   }

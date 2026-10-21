@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.images.editor
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -10,12 +11,12 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.RowLayout
-import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.rows
-import com.intellij.ui.dsl.builder.selected
+import com.intellij.ui.layout.enteredTextSatisfies
+import com.intellij.ui.layout.or
 import org.intellij.plugins.markdown.images.MarkdownImagesBundle
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -41,6 +42,7 @@ class ConfigureImageDialog(
   private var onOk: ((MarkdownImageData) -> Unit)? = null
 
   init {
+    setOKButtonText(IdeBundle.message("button.save"))
     super.init()
     this.title = title
   }
@@ -60,23 +62,22 @@ class ConfigureImageDialog(
         .focused()
     }
     row {
-      val widthLabel = label(MarkdownImagesBundle.message("markdown.configure.image.dialog.width.label"))
+      label(MarkdownImagesBundle.message("markdown.configure.image.dialog.width.label"))
       val widthField = textField()
         .columns(8)
         .bindText(::widthFieldText)
-      val heightLabel = label(MarkdownImagesBundle.message("markdown.configure.image.dialog.height.label"))
+      label(MarkdownImagesBundle.message("markdown.configure.image.dialog.height.label"))
         .gap(RightGap.SMALL)
       val heightField = textField()
         .columns(8)
         .bindText(::heightFieldText)
-      checkBox(MarkdownImagesBundle.message("markdown.configure.image.dialog.convert.to.html.label"))
-        .bindSelected(::shouldConvertToHtml)
-        .apply {
-          widthLabel.enabledIf(selected)
-          widthField.enabledIf(selected)
-          heightLabel.enabledIf(selected)
-          heightField.enabledIf(selected)
-        }
+      if (!shouldConvertToHtml) {
+        comment(MarkdownImagesBundle.message("markdown.configure.image.dialog.convert.to.html.label"))
+          .visibleIf(
+            widthField.component.enteredTextSatisfies { it.isNotBlank() } or
+              heightField.component.enteredTextSatisfies { it.isNotBlank() }
+          )
+      }
     }.layout(RowLayout.LABEL_ALIGNED)
     collapsibleGroup(MarkdownImagesBundle.message("markdown.configure.image.dialog.screen.reader.text.panel.title")) {
       row(MarkdownImagesBundle.message("markdown.configure.image.dialog.title.label")) {

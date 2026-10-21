@@ -17,7 +17,7 @@ class GitProjectDownloadingTest {
   fun downloadGitRepoProject() {
     val gitProject = GitProjectInfo(
       branchName = "gh-pages",
-      repositoryUrl = "https://github.com/facebookresearch/encodec"
+      repositoryUrl = "ssh://git@github.com/facebookresearch/encodec"
     )
       .onCommit("59d463f77b872474e4beb50d896db9eb326841da")
 

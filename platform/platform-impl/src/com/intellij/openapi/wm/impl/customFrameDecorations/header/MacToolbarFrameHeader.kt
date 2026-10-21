@@ -307,7 +307,7 @@ private class ToolbarHeaderView(private val container: JPanel, parentCoroutineSc
   }
 
   override suspend fun init(customTitleBar: WindowDecorations.CustomTitleBar?) {
-    toolbar.init(customTitleBar)
+    toolbar.initInHeader(customTitleBar)
   }
 
   override fun updateBorders(left: Int, right: Int) {

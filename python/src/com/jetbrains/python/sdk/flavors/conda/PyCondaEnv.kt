@@ -48,7 +48,10 @@ data class PyCondaEnv(
     }
   }
 
-  /** Creates an SDK for this env. The interpreter belongs to the PyProject of [moduleOrProject], or is shared. */
+  /**
+   * The interpreter of this env, not registered yet: set it with `PyProject.setPythonInterpreter`. Its owner is the
+   * PyProject of [moduleOrProject], else [workingDirectory].
+   */
   suspend fun createSdkFromThisEnv(
     moduleOrProject: ModuleOrProject,
     targetConfig: TargetEnvironmentConfiguration?,
@@ -56,14 +59,13 @@ data class PyCondaEnv(
   ): PyResult<PythonInterpreter> =
     PyCondaCommand(fullCondaPathOnTarget, targetConfig).createCondaSdkFromExistingEnvironment(moduleOrProject, envIdentity, workingDirectory)
 
-  /** [createSdkFromThisEnv] for a shared interpreter, which belongs to no PyProject. */
+  /** [createSdkFromThisEnv] for a caller without a module. [workingDirectory] is the owner directory. */
   suspend fun createSdkFromThisEnv(
     project: Project,
     targetConfig: TargetEnvironmentConfiguration?,
     workingDirectory: Path,
   ): PyResult<PythonInterpreter> =
     createSdkFromThisEnv(ModuleOrProject.ProjectOnly(project), targetConfig, workingDirectory)
-
 
   /**
    * Add conda prefix to [targetedCommandLineBuilder]

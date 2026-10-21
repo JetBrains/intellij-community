@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.util.GithubUtil
 
@@ -15,21 +16,24 @@ internal val GithubAccount.isGHAccount: Boolean get() = server.isGithubDotCom
 
 /**
  * Handles application-level Github accounts
+ *
+ * Not intended for public use. See [org.jetbrains.plugins.github.authentication.GHAccountsUtil]
  */
+@ApiStatus.Internal
 @Service
 class GHAccountManager : AccountManagerBase<GithubAccount, String>(logger<GHAccountManager>()), Disposable {
 
   override fun accountsRepository(): AccountsRepository<GithubAccount> = service<GHPersistentAccounts>()
 
-  override fun credentialsRepository() =
+  override fun credentialsRepository(): PasswordSafeCredentialsRepository<GithubAccount, String> =
     PasswordSafeCredentialsRepository<GithubAccount, String>(GithubUtil.SERVICE_DISPLAY_NAME,
                                                              PasswordSafeCredentialsRepository.CredentialsMapper.Simple)
 
   companion object {
-    fun createAccount(name: String, server: GithubServerPath) = GithubAccount(name, server)
+    fun createAccount(name: String, server: GithubServerPath): GithubAccount = GithubAccount(name, server)
   }
 
-  override fun dispose() = Unit
+  override fun dispose(): Unit = Unit
 
   fun isAccountUnique(server: GithubServerPath, accountName: String): Boolean {
     return accountsState.value.none { account: GithubAccount ->

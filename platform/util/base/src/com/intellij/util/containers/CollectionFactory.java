@@ -302,7 +302,6 @@ public final class CollectionFactory {
    * with {@link HashingStrategy#canonical()} instead.
    */
   @Contract(value = "_,_,_ -> new", pure = true)
-  @SuppressWarnings("SameParameterValue")
   @Deprecated
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftKeySoftValueMap(int initialCapacity,
                                                                                         float loadFactor,
@@ -317,11 +316,10 @@ public final class CollectionFactory {
   @ApiStatus.Internal
   @VisibleForTesting
   @Contract(value = "_,_,_ -> new", pure = true)
-  @SuppressWarnings({"SameParameterValue", "DeprecatedIsStillUsed"})
   @Deprecated
   public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentSoftKeySoftValueIdentityMap(int initialCapacity,
-                                                                                         float loadFactor,
-                                                                                         int concurrencyLevel) {
+                                                                                                                  float loadFactor,
+                                                                                                                  int concurrencyLevel) {
     return new ConcurrentSoftKeySoftValueHashMap<>(initialCapacity, loadFactor, concurrencyLevel, HashingStrategy.identity());
   }
 

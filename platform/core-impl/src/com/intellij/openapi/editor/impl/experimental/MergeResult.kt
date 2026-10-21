@@ -8,7 +8,7 @@ package com.intellij.openapi.editor.impl.experimental
 internal class MergeResult(
   private val graph: EventGraphImpl,
   private val sourceSize: Int,
-  private val remappedOtherVersion: LvVersion,
+  private val isFastForward: Boolean,
 ) {
   /**
    * Whether the other graph brought nothing: its whole history was already here.
@@ -19,10 +19,10 @@ internal class MergeResult(
 
   /**
    * Whether the source history sits inside the other one. The other branch's text is
-   * then already the merged text, so no replay is needed.
+   * then already the merged text, so no replay is needed. A merge that adds nothing is none.
    */
   fun isFastForward(): Boolean {
-    return graph.lvVersion() == remappedOtherVersion
+    return isFastForward
   }
 
   fun graph(): EventGraphImpl {

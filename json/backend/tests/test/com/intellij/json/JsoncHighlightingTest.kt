@@ -2,19 +2,31 @@
 package com.intellij.json
 
 import com.intellij.json.codeinsight.JsonStandardComplianceInspection
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.TestDataPath
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
-class JsoncHighlightingTest : JsonHighlightingTestBase() {
-  override fun getExtension(): String {
-    return "jsonc"
+@TestApplication
+@TestDataPath($$"$PROJECT_ROOT/community/json/backend/tests/testData")
+class JsoncHighlightingTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
   }
 
+  private val codeInsightFixture = codeInsightModuleFixture(projectFixture)
+  private val highlightingFixture by jsonHighlightingFixture(codeInsightFixture, "jsonc")
+
+  @Test
   fun testJSONC() {
-    myFixture.enableInspections(JsonStandardComplianceInspection())
-    doTestHighlighting(false, true, true)
+    highlightingFixture.fixture.enableInspections(JsonStandardComplianceInspection())
+    highlightingFixture.doTestHighlighting(false, true, true)
   }
 
+  @Test
   fun testJsoncComplianceProblems() {
-    myFixture.enableInspections(JsonStandardComplianceInspection())
-    doTestHighlighting(false, true, true)
+    highlightingFixture.fixture.enableInspections(JsonStandardComplianceInspection())
+    highlightingFixture.doTestHighlighting(false, true, true)
   }
 }

@@ -27,7 +27,8 @@ internal class GitRecentProjectBrancher : RecentProjectBrancher {
     }
     withContext(Dispatchers.EDT) {
       val popup = GitBranchesPopup.createDefaultPopup(project, preferredSelection = null, repositories = repositories,
-                                                      excludedTopLevelActions = excludedTopLevelActions())
+                                                      excludedTopLevelActions = excludedTopLevelActions(),
+                                                      openCreatedWorktree = false)
       if (anchor != null) popup.show(anchor) else popup.showInFocusCenter()
     }
   }

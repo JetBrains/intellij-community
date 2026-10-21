@@ -61,11 +61,11 @@ vocabulary! {
         /// The `bazel build` of the lane on the host.
         HostBuild = "host-build",
         /// Reading what the host build produced and hashing it: the runtime descriptor, the identities of the daemon
-        /// and the hot tier. It touches no worker.
+        /// and the files of the push. It touches no worker.
         Prepare = "prepare",
         /// Taking a worker. A worker that is not warm is cloned, booted and provisioned here.
         Lease = "lease",
-        /// Staging the guest runtime and starting the daemon and its IDE.
+        /// Checking the guest and starting the daemon and its IDE.
         DaemonStart = "daemon-start",
         /// The daemon running the selected tests.
         Iteration = "iteration",
@@ -332,7 +332,7 @@ pub struct Decision {
 }
 
 impl Decision {
-    /// The decision as one line of prose: `daemon restart: the stable runtime or JBR changed`.
+    /// The decision as one line of prose: `daemon restart: the launch of the daemon changed`.
     pub fn line(&self) -> String {
         match &self.reason {
             Some(reason) => format!("{} {}: {reason}", self.subject, self.action),

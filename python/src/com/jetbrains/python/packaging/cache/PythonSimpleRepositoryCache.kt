@@ -49,7 +49,7 @@ internal class PythonSimpleRepositoryCacheService {
         for (repository in service.repositories.toList()) {
           val cache = PythonSimpleRepositoryCache(repository)
 
-          cache.reloadCache().getOr {
+          cache.reload().getOr {
             thisLogger().error("Failed to refresh repository ${repository.repositoryUrl}")
             service.markInvalid(repository.repositoryUrl)
             return@withContext Result.Failure(PythonRepositoryIOError(it.error.message))
@@ -75,9 +75,9 @@ internal class PythonSimpleRepositoryCache(private val repository: PyPackageRepo
   @Volatile
   private var cache: Set<String> = emptySet()
 
-  override fun contains(name: String): Boolean = name in cache
+  override suspend fun contains(name: String): Boolean = name in cache
 
-  override fun search(prefix: String, pageSize: Int): PythonPackageSearchResult {
+  override suspend fun search(prefix: String, pageSize: Int): PythonPackageSearchResult {
     val needleLowercase = prefix.lowercase()
     val matches = cache.asSequence().filter { it.lowercase().startsWith(needleLowercase) }.toList()
 
@@ -85,7 +85,7 @@ internal class PythonSimpleRepositoryCache(private val repository: PyPackageRepo
   }
 
   @CheckReturnValue
-  suspend fun reloadCache(): Result<Unit, PythonPackageCacheIOError> = withContext(Dispatchers.IO) {
+  override suspend fun reload(): Result<Unit, PythonPackageCacheIOError> = withContext(Dispatchers.IO) {
     val packages = mutableSetOf<String>()
 
     try {
@@ -108,6 +108,10 @@ internal class PythonSimpleRepositoryCache(private val repository: PyPackageRepo
     cache = packages
     Result.Success(Unit)
   }
+
+  @CheckReturnValue
+  override suspend fun fullRefetchAndReload(): Result<Unit, PythonPackageCacheIOError> =
+    reload()
 
   fun isEmpty(): Boolean = cache.isEmpty()
 

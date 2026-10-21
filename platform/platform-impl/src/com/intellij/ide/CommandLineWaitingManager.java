@@ -108,6 +108,22 @@ public final class CommandLineWaitingManager {
     return result;
   }
 
+  /**
+   * Ends the specified wait for {@code file} with {@code result}. A newer request keeps its wait.
+   */
+  public void releaseHookForFile(@NotNull VirtualFile file,
+                                 @NotNull CompletableFuture<CliResult> future,
+                                 @NotNull CliResult result) {
+    synchronized (myFileOrProjectToCallback) {
+      if (myFileOrProjectToCallback.get(file) == future) {
+        myFileOrProjectToCallback.remove(file);
+        myDismissedObjects.remove(file);
+      }
+    }
+    LOG.info("Stopped waiting for " + file + ": " + result);
+    future.complete(result);
+  }
+
   public boolean hasHookFor(@NotNull VirtualFile file) {
     Path path = LightEditUtil.getPreferredSavePathForNonExistentFile(file);
     if (path != null && myFileOrProjectToCallback.containsKey(path)) {

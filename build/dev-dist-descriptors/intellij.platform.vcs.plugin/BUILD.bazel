@@ -24,6 +24,7 @@ dev_dist_plugin_descriptor(
         "intellij.platform.vcs.dvcs",
         "intellij.platform.vcs.dvcs.impl",
         "intellij.platform.vcs.impl",
+        "intellij.platform.vcs.impl.backend",
         "intellij.platform.vcs.impl.debugger",
         "intellij.platform.vcs.impl.exec",
         "intellij.platform.vcs.impl.frontend",
@@ -53,6 +54,7 @@ dev_dist_plugin_descriptor(
             "intellij.platform.vcs.log.impl",
             "intellij.platform.vcs.dvcs",
             "intellij.platform.vcs.dvcs.impl",
+            "intellij.platform.vcs.impl.backend",
         ],
     },
     refused_content_modules = [

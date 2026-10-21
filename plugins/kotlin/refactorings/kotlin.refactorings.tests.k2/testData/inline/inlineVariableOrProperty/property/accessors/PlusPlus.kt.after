@@ -1,0 +1,5 @@
+// ERROR: Unsupported usage: property++
+
+fun foo() {
+    property++
+}

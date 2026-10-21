@@ -1,0 +1,9 @@
+@Target(AnnotationTarget.EXPRESSION)
+@Retention(AnnotationRetention.SOURCE)
+annotation class Ann
+
+
+fun test(a: Int): Int {
+    val i = @Ann a + a * 2
+    return i
+}

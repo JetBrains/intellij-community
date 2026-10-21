@@ -379,9 +379,22 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    * Loads URL.
    */
   public final void loadURL(@NotNull String url) {
+    requestLoadURL(url);
+  }
+
+  /**
+   * Loads URL.
+   * <p>
+   * The browser skips the load when it already requested this URL.
+   *
+   * @return true if the browser starts a navigation, or starts one after it is created
+   */
+  @ApiStatus.Internal
+  public final boolean requestLoadURL(@NotNull String url) {
     if (isCefBrowserCreated() || !scheduleLoading(new LoadDeferrer(null, url))) {
-      loadUrlImpl(url);
+      return loadUrlImpl(url);
     }
+    return true;
   }
 
   /**
@@ -665,13 +678,16 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     loadUrlImpl(JBCefFileSchemeHandlerFactory.registerLoadHTMLRequest(getCefBrowser(), html, url));
   }
 
-  private void loadUrlImpl(@NotNull String url) {
+  /**
+   * @return true if navigation was requested
+   */
+  private boolean loadUrlImpl(@NotNull String url) {
     synchronized (myUrlLock) {
       if (Objects.equals(myLoadingUrl, url)) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("URL already requested, skipping: " + url);
         }
-        return;
+        return false;
       }
       myLoadingUrl = url;
       setLastRequestedUrl(""); // will be set to a correct value in onBeforeBrowse()
@@ -680,6 +696,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       LOG.debug("Loading URL: " + url);
     }
     getCefBrowser().loadURL(url);
+    return true;
   }
 
   private String getLastRequestedUrl() {

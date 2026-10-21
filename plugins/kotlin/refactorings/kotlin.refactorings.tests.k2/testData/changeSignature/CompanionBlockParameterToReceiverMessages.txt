@@ -1,0 +1,1 @@
+A function in a companion block cannot have a receiver

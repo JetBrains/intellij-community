@@ -1,8 +1,6 @@
 //! The container-linux lifecycle: the one container the skill's script starts for this checkout, its boot and its stop.
 //! It also holds `pool init`, `pool gc` and the unmaking of the slot that `pool recycle` runs.
 
-use std::collections::BTreeMap;
-
 use avl_base::{Exit, Outcome, Refusal, SystemClock};
 use avl_host_sys::guest::ensure_host_paths;
 use avl_host_sys::{Backoff, Ctx, Poll};
@@ -142,7 +140,7 @@ impl Manager {
     // --- stop ------------------------------------------------------------------------------------------------
 
     /// Stops a container-linux worker: the script's `stop` removes the container and the files of its control port. The
-    /// data directory is on the container's disk, so a stop discards the staged runtime and the next start stages it
+    /// data directory is on the container's disk, so a stop discards the guest-local state and the next start makes it
     /// again.
     pub(super) async fn stop_container_linux(
         &self,
@@ -193,47 +191,30 @@ impl Manager {
     }
 
     /// Stops the unleased container of a container-linux pool. The container is what an idle slot holds. The data directory
-    /// is on the container's disk, so a stop discards the staged runtime and the next start stages it again.
+    /// is on the container's disk, so a stop discards the guest-local state and the next start makes it again.
     ///
     /// The state is read under the slot's lifecycle lock, after the lease check, as on Docker: a start that ends
     /// between an earlier read and the lock would otherwise be stopped under a lease.
     pub(super) async fn pool_gc_container_linux(&self, ctx: &Ctx, container_linux: &ContainerLinux) -> Result<Outcome, Refusal> {
         container_linux.require_available(ctx, "").await?;
         ensure_host_paths(ctx, &self.runner, &self.settings).await?;
-        let mut removed = Vec::new();
-        let mut kept = BTreeMap::new();
-        for worker in &self.settings.workers {
-            let outcome = self
-                .with_lifecycle_lock(ctx, worker, "pool-gc", async {
-                    if read_lease(&self.settings.lease_path(worker))?.is_some() {
-                        return Ok("leased".to_owned());
-                    }
-                    if !container_linux.running(ctx, worker).await? {
-                        return Ok("stopped".to_owned());
-                    }
-                    container_linux.stop(ctx, worker).await?;
-                    Ok("removed".to_owned())
-                })
-                .await?;
-            if outcome == "removed" {
-                removed.push(worker.clone());
-            } else {
-                kept.insert(worker.clone(), outcome);
+        self.gc_each_worker(ctx, async |worker: &str| {
+            if read_lease(&self.settings.lease_path(worker))?.is_some() {
+                return Ok("leased".to_owned());
             }
-        }
-        let text = format!("removed={}", render_list(&removed));
-        Ok(Outcome {
-            data: json!({
-                "backend": self.settings.backend, "action": "gc", "removed": removed, "kept": kept,
-            }),
-            text,
+            if !container_linux.running(ctx, worker).await? {
+                return Ok("stopped".to_owned());
+            }
+            container_linux.stop(ctx, worker).await?;
+            Ok("removed".to_owned())
         })
+        .await
     }
 
     // --- pool recycle ----------------------------------------------------------------------------------------
 
     /// Stops the container and empties the host directory of the slot. The data directory is on the container's disk,
-    /// so a stop discards the staged runtime and the next start stages it again.
+    /// so a stop discards the guest-local state and the next start makes it again.
     pub(super) async fn unmake_container_linux_worker(
         &self,
         ctx: &Ctx,

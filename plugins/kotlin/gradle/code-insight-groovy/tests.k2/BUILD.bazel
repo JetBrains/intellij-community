@@ -22,6 +22,7 @@ jvm_library(
         "//platform/testRunner/plugin",
         "//plugins/groovy",
         "//plugins/groovy-scripting",
+        "//platform/vcs/plugin",
     ],
 )
 
@@ -49,6 +50,7 @@ jvm_library(
         "//platform/testRunner/plugin:plugin_test_lib",
         "//plugins/groovy:groovy_test_lib",
         "//plugins/groovy-scripting:groovy-scripting_test_lib",
+        "//platform/vcs/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

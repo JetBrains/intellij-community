@@ -28,7 +28,7 @@
 //! - whether a lease release may skip the guest of a worker that runs nothing;
 //! - the start and the stop of a worker;
 //! - `pool init` and `pool gc`;
-//! - the unmaking of a slot that `pool recycle` runs, and the stop and the delete of the Lima engine of a Docker pool.
+//! - the unmaking of a slot that `pool recycle` runs, and the delete of the builder VM of the Apple `container` engine.
 //!
 //! Every caller of the other operations already knows which backend it has, so it asks the concrete backend. These
 //! operations are:
@@ -57,7 +57,6 @@ use crate::worker::docker::{ContainerState, Docker};
 use crate::worker::parallels::Parallels;
 #[cfg(unix)]
 use crate::worker::tart::Tart;
-use crate::worker::worker::Lease;
 
 #[cfg(test)]
 mod tests;
@@ -99,9 +98,12 @@ pub(crate) enum SlotState {
     Unknown,
 }
 
-#[expect(
-    clippy::large_enum_variant,
-    reason = "a manager holds one machine for its whole life, so a box would save no memory"
+#[cfg_attr(
+    windows,
+    expect(
+        clippy::large_enum_variant,
+        reason = "a manager holds one machine for its whole life, so a box would save no memory"
+    )
 )]
 pub(crate) enum Machine {
     #[cfg(unix)]
@@ -138,17 +140,6 @@ impl Machine {
             Self::Parallels(parallels) => parallels.require_available(ctx, worker).await,
             Self::Docker(docker) => docker.require_available(ctx, worker).await,
             Self::ContainerLinux(container_linux) => container_linux.require_available(ctx, worker).await,
-        }
-    }
-
-    /// [`Machine::require_available`] for the holder of `lease`, on its own worker. Only the Docker backend reads the
-    /// lease: its Lima engine may be made again under the caller's own lease ([`Docker::require_available_for`]).
-    pub(crate) async fn require_available_for_lease(&self, ctx: &Ctx, lease: &Lease) -> Result<(), Refusal> {
-        match self {
-            Self::Docker(docker) => docker.require_available_for(ctx, Some(lease)).await,
-            #[cfg(unix)]
-            Self::Tart(_) | Self::Parallels(_) => self.require_available(ctx, &lease.worker).await,
-            Self::ContainerLinux(_) => self.require_available(ctx, &lease.worker).await,
         }
     }
 

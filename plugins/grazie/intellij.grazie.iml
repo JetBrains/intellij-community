@@ -12,7 +12,9 @@
     <orderEntry type="module" module-name="intellij.grazie.java" />
     <orderEntry type="module" module-name="intellij.grazie.json" />
     <orderEntry type="module" module-name="intellij.grazie.markdown" />
+    <orderEntry type="module" module-name="intellij.grazie.markdown.specification" />
     <orderEntry type="module" module-name="intellij.grazie.properties" />
+    <orderEntry type="module" module-name="intellij.grazie.vcs" />
     <orderEntry type="module" module-name="intellij.grazie.xml" />
     <orderEntry type="module" module-name="intellij.grazie.yaml" />
   </component>

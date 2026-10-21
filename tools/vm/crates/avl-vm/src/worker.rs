@@ -11,7 +11,8 @@
 //! - [`worker`], one pool's lifecycle: the lease *document*, the readiness gates every lease operation runs first,
 //!   start and stop, and the `pool` commands. Each operation is one `match` on the configured backend, and each arm
 //!   calls the body in the backend's own file: `worker/tart.rs`, `worker/parallels.rs`, `worker/docker.rs` and
-//!   `worker/container_linux.rs`;
+//!   `worker/container_linux.rs`. [`run_marker`] is the second document of this layer. It names the run in flight on
+//!   a worker, and a lifecycle operation of another process refuses while that run lives;
 //! - [`lease`], the lease *policy*: the atomic placement, the mode-0600 receipt that is the only accepted handle to a
 //!   lease, and the `lease` commands.
 //!
@@ -25,10 +26,10 @@ pub(crate) mod container_linux;
 pub(crate) mod docker;
 pub(crate) mod hypervisor;
 pub(crate) mod lease;
-pub(crate) mod lima;
 #[cfg(unix)]
 pub(crate) mod parallels;
 pub(crate) mod pin;
+pub(crate) mod run_marker;
 #[cfg(unix)]
 pub(crate) mod tart;
 #[expect(
@@ -37,7 +38,7 @@ pub(crate) mod tart;
 )]
 pub(crate) mod worker;
 
-mod secure;
+pub(crate) mod secure;
 
 #[cfg(test)]
 mod testing;

@@ -40,6 +40,8 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -75,7 +77,6 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.IntentionalUnstubbing;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
-import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -116,6 +117,8 @@ public abstract class PyTestCase extends UsefulTestCase {
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, createTempDirFixture());
     myFixture.setTestDataPath(getTestDataPath());
     myFixture.setUp();
+    // Resolve reads the interpreter from the snapshot, so a test starts only when the snapshot holds the fixture SDK.
+    PyProjectStructureTestUtilKt.awaitPythonInterpreters(myFixture.getProject());
 
     // Enable Any/Unknown type support by default in all tests; opt out per method or class with @PyAnyTypeDisabled.
     Registry.get(PyAnyType.REGISTRY_KEY).setValue(!isPyAnyTypeDisabledForCurrentTest());
@@ -175,12 +178,12 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   protected void assertSdkRootsNotParsed(@NotNull PsiFile currentFile) {
-    final Sdk testSdk = PythonSdkUtil.findPythonSdk(currentFile);
-    if (testSdk == null) {
-      LOG.warn("testSdk is null. assertSdkRootsNotParsed is skipped");
+    final PythonInterpreter interpreter = getPythonInterpreter();
+    if (interpreter == null) {
+      LOG.warn("The interpreter is null. assertSdkRootsNotParsed is skipped");
       return;
     }
-    for (VirtualFile root : testSdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
+    for (VirtualFile root : PythonInterpreterExtKt.getClassRoots(interpreter)) {
       assertRootNotParsed(currentFile, root, null);
     }
   }
@@ -228,14 +231,14 @@ public abstract class PyTestCase extends UsefulTestCase {
   protected void runWithAdditionalFileInLibDir(@NotNull String relativePath,
                                                @NotNull String text,
                                                @NotNull Consumer<VirtualFile> fileConsumer) {
-    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
-    final VirtualFile libDir = PySearchUtilBase.findLibDir(sdk);
+    final PythonInterpreter interpreter = getPythonInterpreter();
+    final VirtualFile libDir = interpreter == null ? null : PythonInterpreterExtKt.stdlibLibDirectory(interpreter);
     if (libDir != null) {
       runWithAdditionalFileIn(relativePath, text, libDir, fileConsumer);
     }
     else {
       createAdditionalRootAndRunWithIt(
-        sdk,
+        getSdkForRootEdits(),
         "Lib",
         OrderRootType.CLASSES,
         root -> runWithAdditionalFileIn(relativePath, text, root, fileConsumer)
@@ -246,14 +249,14 @@ public abstract class PyTestCase extends UsefulTestCase {
   protected void runWithAdditionalFileInSkeletonDir(@NotNull String relativePath,
                                                     @NotNull String text,
                                                     @NotNull Consumer<VirtualFile> fileConsumer) {
-    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
-    final VirtualFile skeletonsDir = PythonSdkUtil.findSkeletonsDir(sdk);
+    final PythonInterpreter interpreter = getPythonInterpreter();
+    final VirtualFile skeletonsDir = interpreter == null ? null : PythonInterpreterExtKt.skeletonsDirectory(interpreter);
     if (skeletonsDir != null) {
       runWithAdditionalFileIn(relativePath, text, skeletonsDir, fileConsumer);
     }
     else {
       createAdditionalRootAndRunWithIt(
-        sdk,
+        getSdkForRootEdits(),
         PythonSdkUtil.SKELETON_DIR_NAME,
         PythonSdkUtil.BUILTIN_ROOT_TYPE,
         root -> runWithAdditionalFileIn(relativePath, text, root, fileConsumer)
@@ -275,8 +278,7 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   protected void runWithAdditionalClassEntryInSdkRoots(@NotNull VirtualFile directory, @NotNull Runnable runnable) {
-    final Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
-    assertNotNull(sdk);
+    final Sdk sdk = getSdkForRootEdits();
     runWithAdditionalRoot(sdk, directory, OrderRootType.CLASSES, (_) -> runnable.run());
   }
 
@@ -367,8 +369,7 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   protected void enablePyiStubsForPackages(String @NotNull ... packageNames) {
-    Sdk sdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
-    assertNotNull(sdk);
+    Sdk sdk = getSdkForRootEdits();
     List<VirtualFile> stubPackageRoots = new ArrayList<>();
     for (String packageName : packageNames) {
       VirtualFile stubPackageRoot = PyTypeShed.INSTANCE.getStubRootForPackage(packageName);
@@ -380,6 +381,19 @@ public abstract class PyTestCase extends UsefulTestCase {
     }
     addSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES);
     Disposer.register(getTestRootDisposable(), () -> removeSdkRoots(sdk, stubPackageRoots, OrderRootType.CLASSES));
+  }
+
+  /** The interpreter of the Python project of the fixture module, read from the snapshot. */
+  protected @Nullable PythonInterpreter getPythonInterpreter() {
+    return PyProjectStructureTestUtilKt.findPythonInterpreterForTests(myFixture.getModule());
+  }
+
+  /** The SDK of the interpreter, for a test that adds or removes its class roots. A root belongs to the SDK. */
+  protected @NotNull Sdk getSdkForRootEdits() {
+    final PythonInterpreter interpreter = getPythonInterpreter();
+    assertNotNull(interpreter);
+    //noinspection deprecation
+    return PythonInterpreterExtKt.getSdkAPI(interpreter);
   }
 
   protected String getTestDataPath() {

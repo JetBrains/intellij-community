@@ -148,6 +148,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Play_first = load("expui/actions/playFirst.svg", "actions/play_first.svg", -987505166, 2);
     /** 16x16 */ public static final @NotNull Icon Play_forward = load("expui/actions/playForward.svg", "actions/play_forward.svg", 84808551, 2);
     /** 16x16 */ public static final @NotNull Icon Play_last = load("expui/actions/playLast.svg", "actions/play_last.svg", 1200003259, 2);
+    /** 16x16 */ public static final @NotNull Icon PlaySound = load("expui/actions/playSound.svg", 2005648454, 2);
     /** 16x16 */ public static final @NotNull Icon PopFrame = load("expui/actions/popFrame.svg", "actions/popFrame.svg", -2061379356, 2);
     /** 26x26 */ public static final @NotNull Icon PresentationAssistantSettings = load("actions/presentationAssistantSettings.svg", -1777013294, 0);
     /** 16x16 */ public static final @NotNull Icon PreserveCase = load("expui/inline/preserveCase.svg", "actions/preserveCase.svg", 1309462994, 0);
@@ -584,6 +585,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Hashtag = load("expui/general/hashtag.svg", 859350157, 2);
     /** 16x16 */ public static final @NotNull Icon HideToolWindow = load("expui/general/hide.svg", "general/hideToolWindow.svg", -24888126, 2);
     /** 16x16 */ public static final @NotNull Icon History = load("expui/general/history.svg", -1313586434, 2);
+    /** 16x16 */ public static final @NotNull Icon Home = load("expui/general/home.svg", -1189425360, 2);
     /** 16x16 */ public static final @NotNull Icon ImplementingMethod = load("expui/general/showToImplement.svg", "general/implementingMethod.svg", -286814761, 1);
     /** 16x16 */ public static final @NotNull Icon IndentDetected = load("expui/general/indentDetected.svg", 1513743707, 2);
     /** 16x16 */ public static final @NotNull Icon Information = load("expui/status/info.svg", "general/information.svg", 45152184, 0);
@@ -684,12 +686,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ZoomIn = load("general/zoomIn.svg", -997549918, 2);
     /** 16x16 */ public static final @NotNull Icon ZoomOut = load("general/zoomOut.svg", -2077385866, 2);
 
-    /** @deprecated to be removed, use Badge.alpha instead */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    /** 38x15 */ public static final @NotNull Icon Alpha = load("general/alpha.svg", -764382938, 2);
-
     /** @deprecated to be removed, use Badge.beta instead */
     @SuppressWarnings("unused")
     @Deprecated
@@ -701,12 +697,6 @@ public class AllIcons {
     @Deprecated
     @ScheduledForRemoval
     /** 38x16 */ public static final @NotNull Icon New_badge = load("general/new_badge.svg", 394698412, 2);
-
-    /** @deprecated to be removed, use Badge.trial instead */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    /** 32x16 */ public static final @NotNull Icon TrialBadge = load("general/trialBadge.svg", -1779199569, 0);
   }
 
   public static final class Graph {

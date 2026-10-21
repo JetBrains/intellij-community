@@ -3,8 +3,11 @@ package org.jetbrains.yaml.schema
 
 import com.intellij.json.networknt.wrapper.NetworkntValidationBridgeImpl
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.replaceService
 import com.jetbrains.jsonSchema.impl.NetworkntValidationBridge
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
 /**
  * Runs ALL tests from [YamlByYamlSchemaHighlightingTest] with the networknt validation engine enabled.
@@ -19,16 +22,19 @@ import com.jetbrains.jsonSchema.impl.NetworkntValidationBridge
  *    networknt does not auto-detect the dialect from keyword presence, so we re-declare each
  *    schema with `$schema: draft-06` (or draft-07 for if/then/else).
  */
+@TestApplication
 open class YamlByYamlSchemaHighlightingNetworkntTest : YamlByYamlSchemaHighlightingTest() {
 
-  override fun setUp() {
-    super.setUp()
-    Registry.get("json.schema.use.networknt.validation").setValue(true, testRootDisposable)
-    project.replaceService(NetworkntValidationBridge::class.java, NetworkntValidationBridgeImpl(project), testRootDisposable)
+  @BeforeEach
+  fun useNetworknt() {
+    Registry.get("json.schema.use.networknt.validation").setValue(true, myFixture.testRootDisposable)
+    val project = myFixture.project
+    project.replaceService(NetworkntValidationBridge::class.java, NetworkntValidationBridgeImpl(project), myFixture.testRootDisposable)
   }
 
   // === Cluster 1: spec-compliant semantic divergences (mirror YamlByJsonSchemaHighlightingNetworkntTest) ===
 
+  @Test
   override fun testEnum() {
     // networknt respects spec-level type distinction: unquoted YAML `18` parses as integer 18,
     // which is NOT in the enum `[1, 2, 3, "18"]`. Legacy coerced types; networknt is strict.
@@ -46,6 +52,7 @@ open class YamlByYamlSchemaHighlightingNetworkntTest : YamlByYamlSchemaHighlight
     doTestYaml(schema, """prop: <warning descr="Schema validation: Value should be one of: 1, 2, 3, \"18\"">6</warning>""")
   }
 
+  @Test
   override fun testAcceptSchemaWithoutType() {
     // networknt detects oneOf multi-match: `localhost` matches `format:hostname` and vacuously
     // matches the unknown `format:ip4` (treated as annotation-only), so both branches satisfy.
@@ -64,6 +71,7 @@ open class YamlByYamlSchemaHighlightingNetworkntTest : YamlByYamlSchemaHighlight
     doTestYaml(schema, """withFormat: <warning descr="Schema validation: Validates to more than one variant">localhost</warning>""")
   }
 
+  @Test
   override fun testDoNotMarkOneOfThatDiffersWithFormat() {
     // Same as testAcceptSchemaWithoutType but with explicit `type: string` — the multi-match
     // between `hostname` and the unknown `ip4` format remains.
@@ -83,6 +91,7 @@ open class YamlByYamlSchemaHighlightingNetworkntTest : YamlByYamlSchemaHighlight
     doTestYaml(schema, """withFormat: <warning descr="Schema validation: Validates to more than one variant">localhost</warning>""")
   }
 
+  @Test
   override fun testAllOfProperties() {
     // networknt is spec-correct: top-level `additionalProperties:false` does NOT see through allOf.
     // Properties declared inside allOf branches are additional (forbidden) at the outer level.
@@ -106,6 +115,7 @@ open class YamlByYamlSchemaHighlightingNetworkntTest : YamlByYamlSchemaHighlight
     """.trimIndent())
   }
 
+  @Test
   override fun testRefRefInvalid() {
     // networknt reports the precise actual type — `integer` — where legacy generalized to `number`.
     // Schema mirrors SCHEMA_FOR_REFS in the parent (private there, inlined here).
@@ -138,6 +148,7 @@ open class YamlByYamlSchemaHighlightingNetworkntTest : YamlByYamlSchemaHighlight
     """.trimIndent())
   }
 
+  @Test
   override fun testPropertyValueAlsoHighlightedIfPatternIsInvalid() {
     // UX regression: networknt is spec-compliant. ECMA-262 regex treats `[]` as a valid (empty)
     // character class matching nothing, so `^[]$` is accepted and never matches any instance.
@@ -155,6 +166,7 @@ open class YamlByYamlSchemaHighlightingNetworkntTest : YamlByYamlSchemaHighlight
     doTestYaml(schema, """withPattern: <warning descr="Schema validation: String violates the pattern: '^[]${'$'}'">(124)555-4216</warning>""")
   }
 
+  @Test
   override fun testNumberOfSameNamedPropertiesCorrectlyChecked() {
     // The parent feeds a YAML mapping with a duplicate `a` key and expects both flagged.
     // networknt validates the merged object (YAML 1.2 treats dup keys as a parse-level error
@@ -186,12 +198,14 @@ open class YamlByYamlSchemaHighlightingNetworkntTest : YamlByYamlSchemaHighlight
 
   // === Cluster 2: V6/V7 keywords need an explicit ${'$'}schema declaration under networknt ===
 
+  @Test
   override fun testContainsV6() {
     val schema = """{"${'$'}schema": "http://json-schema.org/draft-06/schema#", "properties": {"prop": {"type": "array", "contains": {"type": "number"}}}}"""
     doTestYaml(schema, "prop:\n <warning>- a\n - true</warning>")
     doTestYaml(schema, "prop:\n - a\n - true\n - 1")
   }
 
+  @Test
   override fun testConstV6() {
     val schema = """{"${'$'}schema": "http://json-schema.org/draft-06/schema#", "properties": {"prop": {"type": "string", "const": "foo"}}}"""
     doTestYaml(schema, "prop: <warning>a</warning>")
@@ -199,6 +213,7 @@ open class YamlByYamlSchemaHighlightingNetworkntTest : YamlByYamlSchemaHighlight
     doTestYaml(schema, "prop: foo")
   }
 
+  @Test
   override fun testIfThenElseV7() {
     val schema = """
       {
@@ -231,6 +246,7 @@ open class YamlByYamlSchemaHighlightingNetworkntTest : YamlByYamlSchemaHighlight
     doTestYaml(schema, "a: a\nb: 5")
   }
 
+  @Test
   override fun testExclusiveMinMaxV6_1() {
     val schema = """{"${'$'}schema": "http://json-schema.org/draft-06/schema#", "properties": {"prop": {"exclusiveMinimum": 3}}}"""
     doTestYaml(schema, "prop: <warning>2</warning>")
@@ -238,6 +254,7 @@ open class YamlByYamlSchemaHighlightingNetworkntTest : YamlByYamlSchemaHighlight
     doTestYaml(schema, "prop: 4")
   }
 
+  @Test
   override fun testExclusiveMinMaxV6_2() {
     val schema = """{"${'$'}schema": "http://json-schema.org/draft-06/schema#", "properties": {"prop": {"exclusiveMaximum": 3}}}"""
     doTestYaml(schema, "prop: 2")

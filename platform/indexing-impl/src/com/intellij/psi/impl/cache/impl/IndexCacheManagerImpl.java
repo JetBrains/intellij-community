@@ -84,7 +84,8 @@ public final class IndexCacheManagerImpl implements CacheManager {
     }
 
     try {
-      return FileBasedIndex.getInstance().processFilesContainingAllKeys(query.toFileBasedIndexQueries(), scope, processor);
+      FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+      return fileBasedIndex == null || fileBasedIndex.processFilesContainingAllKeys(query.toFileBasedIndexQueries(), scope, processor);
     }
     catch (IndexNotReadyException e) {
       throw new ProcessCanceledException();

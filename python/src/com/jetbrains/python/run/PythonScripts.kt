@@ -33,7 +33,6 @@ import com.jetbrains.python.HelperPackage
 import com.jetbrains.python.PYTHONIOENCODING
 import com.jetbrains.python.PYTHONPATH
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.debugger.PyDebugRunner
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.features.PyRunToolParameters
@@ -41,8 +40,8 @@ import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.run.target.PathMapping
 import com.jetbrains.python.run.target.PathPythonHelpersMapping
 import com.jetbrains.python.run.target.tryResolveAsPythonHelperDir
-import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.configureBuilderToRunPythonOnTarget
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.targetAdditionalData
@@ -58,7 +57,7 @@ private val LOG = fileLogger()
 @ApiStatus.Internal
 fun PythonExecution.buildTargetedCommandLine(
   targetEnvironment: TargetEnvironment,
-  sdk: Sdk?,
+  sdk: Sdk,
   interpreterParameters: List<String>,
   isUsePty: Boolean = false,
   runTool: PyRunToolParameters? = null,
@@ -76,7 +75,7 @@ fun PythonExecution.buildTargetedCommandLine(
       }
     }
     else -> {
-      sdk?.configureBuilderToRunPythonOnTarget(commandLineBuilder)
+      sdk.configureBuilderToRunPythonOnTarget(commandLineBuilder)
       commandLineBuilder.addParameters(interpreterParameters)
     }
   }
@@ -103,16 +102,14 @@ fun PythonExecution.buildTargetedCommandLine(
       commandLineBuilder.addParameter(resolvedParameter)
     }
   }
-  val userPathList = sdk?.targetAdditionalData?.pathsAddedByUser?.map { it.value }?.map { constant(it) }?.toMutableList() ?: ArrayList()
+  val userPathList = sdk.targetAdditionalData?.pathsAddedByUser?.map { it.value }?.map { constant(it) }?.toMutableList() ?: ArrayList()
   initPythonPath(envs, true, userPathList, targetEnvironment.request, false)
   for ((name, value) in envs) {
     commandLineBuilder.addEnvironmentVariable(name, value.apply(targetEnvironment))
   }
   val environmentVariablesForVirtualenv = mutableMapOf<String, String>()
   // TODO [Targets API] It would be cool to activate environment variables for any type of target
-  if (sdk != null) {
-    PythonSdkType.patchEnvironmentVariablesForVirtualenv(environmentVariablesForVirtualenv, sdk)
-  }
+  PythonSdkType.patchEnvironmentVariablesForVirtualenv(environmentVariablesForVirtualenv, sdk)
   // TODO [Targets API] [major] PATH env for virtualenv should extend existing PATH env
   environmentVariablesForVirtualenv.forEach { (name, value) -> commandLineBuilder.addEnvironmentVariable(name, value) }
   // TODO [Targets API] [major] `PythonSdkFlavor` should be taken into account to pass (at least) "IRONPYTHONPATH" or "JYTHONPATH"
@@ -125,20 +122,28 @@ fun PythonExecution.buildTargetedCommandLine(
 }
 
 
-@ApiStatus.Internal
-fun applyRunToolAsync(
+private fun applyRunToolAsync(
   commandLineBuilder: TargetedCommandLineBuilder,
   runTool: PyRunToolParameters,
 ) = commandLineBuilder.exePath.localValue
+  // GeneralCommandLine starts the run tool from the MRFS path, but the run tool gets the original exe as an argument,
+  // so on an eel this argument must be the path on the remote machine.
+  .then { originalExe: String? ->
+    when (runTool.exe) {
+      is PathHolder.Eel -> originalExe?.let { PathHolder.Eel(Path.of(it)).toStringOnRemoteMachine() }
+      is PathHolder.Target -> originalExe
+    }
+  }
   .onSuccess { originalExe: String? ->
-    commandLineBuilder.exePath = TargetValue.fixed(runTool.exe)
+    commandLineBuilder.exePath = TargetValue.fixed(runTool.exe.toStringPossiblyMRFS())
     commandLineBuilder.addFixedParametersAt(0, runTool.args)
     if (originalExe != null && runTool.includeOriginalExe) {
       commandLineBuilder.addParameterAt(runTool.args.size, originalExe)
     }
   }
   .onError {
-    throw ExecutionException(PyBundle.message("dialog.message.failed.to.resolve.original.executable.for.run.tool", runTool.exe))
+    throw ExecutionException(PyBundle.message("dialog.message.failed.to.resolve.original.executable.for.run.tool",
+                                              runTool.exe.toStringPossiblyMRFS()))
   }
 
 @ApiStatus.Internal
@@ -168,8 +173,10 @@ private fun PythonExecution.setHelpersCharset() {
 }
 
 @ApiStatus.Internal
-fun prepareHelperScriptExecution(helperPackage: HelperPackage,
-                                 helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): PythonScriptExecution =
+fun prepareHelperScriptExecution(
+  helperPackage: HelperPackage,
+  helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
+): PythonScriptExecution =
   PythonScriptExecution().apply {
     val uploads = applyHelperPackageToPythonPath(helperPackage, helpersAwareTargetRequest)
     pythonScriptPath = resolveUploadPath(helperPackage.asParamString(), uploads)
@@ -200,14 +207,18 @@ fun prepareHelperScriptViaToolExecution(
  * Requests the upload of PyCharm helpers root directory to the target.
  */
 @ApiStatus.Internal
-fun PythonExecution.applyHelperPackageToPythonPath(helperPackage: HelperPackage,
-                                                   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): List<PathMapping> {
+fun PythonExecution.applyHelperPackageToPythonPath(
+  helperPackage: HelperPackage,
+  helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
+): List<PathMapping> {
   return applyHelperPackageToPythonPath(helperPackage.pythonPathEntries, helpersAwareTargetRequest)
 }
 
 @ApiStatus.Internal
-fun PythonExecution.applyHelperPackageToPythonPath(pythonPathEntries: List<String>,
-                                                   helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): List<PathMapping> {
+fun PythonExecution.applyHelperPackageToPythonPath(
+  pythonPathEntries: List<String>,
+  helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
+): List<PathMapping> {
   return addHelperEntriesToPythonPath(envs, pythonPathEntries, helpersAwareTargetRequest)
 }
 
@@ -221,10 +232,12 @@ fun PythonExecution.applyHelperPackageToPythonPath(pythonPathEntries: List<Strin
  * This assumption comes from [HelpersAwareTargetEnvironmentRequest.preparePyCharmHelpers] method that returns the single path value.
  */
 @ApiStatus.Internal
-fun addHelperEntriesToPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,
-                                 pythonPathEntries: List<String>,
-                                 helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
-                                 failOnError: Boolean = true): List<PathMapping> {
+fun addHelperEntriesToPythonPath(
+  envs: MutableMap<String, TargetEnvironmentFunction<String>>,
+  pythonPathEntries: List<String>,
+  helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
+  failOnError: Boolean = true,
+): List<PathMapping> {
   val targetPlatform = helpersAwareTargetRequest.targetEnvironmentRequest.targetPlatform
   val pythonHelpersMappings = helpersAwareTargetRequest.preparePyCharmHelpers()
   val pythonHelpersRoots = pythonHelpersMappings.helpers.map(PathPythonHelpersMapping::localPath)
@@ -277,18 +290,22 @@ private fun PythonExecution.appendToPythonPath(value: TargetEnvironmentFunction<
 }
 
 @ApiStatus.Internal
-fun appendToPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,
-                       value: TargetEnvironmentFunction<String>,
-                       targetPlatform: TargetPlatform) {
+fun appendToPythonPath(
+  envs: MutableMap<String, TargetEnvironmentFunction<String>>,
+  value: TargetEnvironmentFunction<String>,
+  targetPlatform: TargetPlatform,
+) {
   envs.merge(PYTHONPATH, value) { whole, suffix ->
     listOf(whole, suffix).joinToPathValue(targetPlatform)
   }
 }
 
 @ApiStatus.Internal
-fun appendToPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,
-                       paths: Collection<TargetEnvironmentFunction<String>>,
-                       targetPlatform: TargetPlatform) {
+fun appendToPythonPath(
+  envs: MutableMap<String, TargetEnvironmentFunction<String>>,
+  paths: Collection<TargetEnvironmentFunction<String>>,
+  targetPlatform: TargetPlatform,
+) {
   if (paths.isEmpty()) return
   val value = paths.joinToPathValue(targetPlatform)
   envs.merge(PYTHONPATH, value) { whole, suffix ->

@@ -203,6 +203,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterAndChangeTypes.kt");
         }
 
+        @TestMetadata("addFunctionParameterAndChangeTypesWithContextParameter.kt")
+        public void testAddFunctionParameterAndChangeTypesWithContextParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterAndChangeTypesWithContextParameter.kt");
+        }
+
         @TestMetadata("addFunctionParameterAndChangeTypesWithReceiver.kt")
         public void testAddFunctionParameterAndChangeTypesWithReceiver() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterAndChangeTypesWithReceiver.kt");
@@ -266,6 +271,16 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         @TestMetadata("addFunctionParameterForTypeMismatch5.kt")
         public void testAddFunctionParameterForTypeMismatch5() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterForTypeMismatch5.kt");
+        }
+
+        @TestMetadata("addFunctionParameterForTypeMismatchWithContextParameter.kt")
+        public void testAddFunctionParameterForTypeMismatchWithContextParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterForTypeMismatchWithContextParameter.kt");
+        }
+
+        @TestMetadata("addFunctionParameterForTypeMismatchWithContextParameterAndReceiver.kt")
+        public void testAddFunctionParameterForTypeMismatchWithContextParameterAndReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/addFunctionParameterForTypeMismatchWithContextParameterAndReceiver.kt");
         }
 
         @TestMetadata("addFunctionParameterForTypeMismatchWithLambdaArgument.kt")
@@ -481,6 +496,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         @TestMetadata("removeFunctionFirstParameter.kt")
         public void testRemoveFunctionFirstParameter() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/changeSignature/removeFunctionFirstParameter.kt");
+        }
+
+        @TestMetadata("removeFunctionParameterWithContextParameter.kt")
+        public void testRemoveFunctionParameterWithContextParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSignature/removeFunctionParameterWithContextParameter.kt");
         }
 
         @TestMetadata("removeFunctionSecondParameter1.kt")

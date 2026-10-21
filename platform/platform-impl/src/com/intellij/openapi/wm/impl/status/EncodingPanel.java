@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.vfs.encoding.EncodingManagerListener;
 import com.intellij.openapi.vfs.encoding.EncodingUtil;
-import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapterBackgroundable;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.util.ObjectUtils;
@@ -62,7 +62,7 @@ public class EncodingPanel extends EditorBasedStatusBarPopup {
       }
     });
 
-    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileListener() {
+    connection.subscribe(VirtualFileManager.VFS_CHANGES_BG, new BulkVirtualFileListenerAdapterBackgroundable(new VirtualFileListener() {
         @Override
         public void propertyChanged(@NotNull VirtualFilePropertyEvent event) {
           if (VirtualFile.PROP_ENCODING.equals(event.getPropertyName())) {

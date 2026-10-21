@@ -169,6 +169,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class SePopupContentPane(
   private val project: Project?,
   private val resizePopupHandler: (Dimension) -> Unit,
+  private val closePopupHandler: () -> Unit,
   private val searchStatePublisher: SeSearchStatePublisher,
   private val coroutineScope: CoroutineScope,
   initialTabs: List<SeDummyTabVm>,
@@ -936,6 +937,10 @@ class SePopupContentPane(
     if (ApplicationManagerEx.isInIntegrationTest()) {
       return
     }
+    // The popup can lose focus for a moment while it opens. Close it on focus loss only after the view model is set.
+    if (vmState.value == null) {
+      return
+    }
 
     val oppositeComponent = e.oppositeComponent
     if (oppositeComponent == null || !isPopupComponent(oppositeComponent)) {
@@ -1046,7 +1051,7 @@ class SePopupContentPane(
   // Requires a non-cancellable or blocking context since it calls into dispose stacks
   private fun issueClosePopup() {
     cancelQuickDocPopup()
-    vmState.value?.closePopup()
+    closePopupHandler()
   }
 
   private suspend fun updateEmptyStatus() {

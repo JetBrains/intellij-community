@@ -168,7 +168,7 @@ private fun isSuitable(project: Project, file: VirtualFile, forcedShown: Boolean
     if (!providerExists && collector.requiresProvider()) continue
 
     if (collector.handlesFile(file)) {
-      return true
+      return collector.isShownInEditor(file)
     }
   }
   return false

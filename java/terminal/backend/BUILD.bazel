@@ -24,7 +24,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:kotlin-stdlib-provided",
         "//plugins/terminal",
         "//plugins/terminal/completion",
         "//java/execution/impl",
@@ -61,7 +60,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":backend",
-        "@lib//:kotlin-stdlib-provided",
         "//plugins/terminal:terminal_test_lib",
         "//plugins/terminal/completion:completion_test_lib",
         "//java/execution/impl:impl_test_lib",

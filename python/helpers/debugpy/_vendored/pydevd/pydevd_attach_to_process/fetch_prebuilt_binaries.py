@@ -17,7 +17,7 @@ import urllib.request
 
 _DIR = os.path.dirname(os.path.abspath(__file__))
 _PROPERTIES_FILE = os.path.join(_DIR, "bin.debugpy-attach.properties")
-_SPACE_FILES_REPO_URL = "https://packages.jetbrains.team/files/p/ij/intellij-dependencies"
+_SPACE_FILES_REPO_URL = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-dependencies"
 _SPACE_NAME = "debugpy-attach-to-process"
 _ARCHIVE_NAME = f"{_SPACE_NAME}.tar.gz"
 

@@ -31,7 +31,7 @@ envs {
   bootstrapDirectory = new File(buildDir, 'pythons')
   envsDirectory = new File(buildDir, 'envs')
 
-  zipRepository = new URL("https://packages.jetbrains.team/files/p/py/python-archives-windows/")
+  zipRepository = new URL("https://cache-redirector.jetbrains.com/files/p/py/python-archives-windows/")
   shouldUseZipsFromRepository = isWindows
 
   python "python38_64", python38version, "64"

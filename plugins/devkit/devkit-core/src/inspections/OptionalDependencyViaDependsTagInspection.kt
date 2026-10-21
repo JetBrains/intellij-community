@@ -2,15 +2,16 @@
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.java.workspace.files.findResourceFileByRelativePath
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.IntelliJProjectUtil
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.psi.xml.XmlFile
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomManager
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomHighlightingHelper
+import com.intellij.workspaceModel.ide.legacyBridge.findSnapshotModuleEntity
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Dependency
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
@@ -51,8 +52,7 @@ internal class OptionalDependencyViaDependsTagInspection : DevKitPluginXmlInspec
   }
 
   private fun isContentModule(module: Module): Boolean {
-    return ModuleRootManager.getInstance(module).getSourceRoots(JavaResourceRootType.RESOURCE).any {
-      it.findChild("${module.name}.xml") != null
-    }
+    val moduleEntity = module.findSnapshotModuleEntity() ?: return false
+    return moduleEntity.findResourceFileByRelativePath("${module.name}.xml", setOf(JavaResourceRootType.RESOURCE)) != null
   }
 }

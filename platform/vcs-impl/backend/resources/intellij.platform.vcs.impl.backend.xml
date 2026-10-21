@@ -1,0 +1,23 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.vcs.impl.backend.VcsRemoteApiProvider"
+                                            apiInterfaces="com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.VcsMappingsApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.PartialChangesApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.ChangesViewApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.ChangesViewDiffApi,
+                                                           com.intellij.platform.vcs.impl.shared.rpc.ChangesViewInclusionModelApi"/>
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.vcs.impl.backend.DvcsRemoteApiProvider"
+                                            apiInterfaces="com.intellij.dvcs.rpc.VcsRepositoryColorsApi"/>
+  </extensions>
+</idea-plugin>

@@ -26,6 +26,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ui.StartupUiUtil
+import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.livepreview.isLivePreviewEnabled
 import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettings
@@ -66,6 +67,24 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
   fun testNewEditorStartsInTheLastChosenLivePreviewLayout() {
     createEditor().setLivePreviewLayout()
     assertTrue(createEditor().editor.isLivePreviewEnabled())
+  }
+
+  fun testEmptyMarkdownOpensInEditorAfterPreviewOnlyWasChosen() {
+    val properties = PropertiesComponent.getInstance()
+    val layoutProperty = MarkdownBundle.message("markdown.editor.name") + "Layout"
+    val previousLayout = properties.getValue(layoutProperty)
+    Disposer.register(testRootDisposable) {
+      if (previousLayout == null) properties.unsetValue(layoutProperty)
+      else properties.setValue(layoutProperty, previousLayout)
+    }
+
+    createEditor().setLayout(Layout.SHOW_PREVIEW)
+
+    myFixture.configureByText("empty.md", "")
+    assertEquals(Layout.SHOW_EDITOR, createEditor().getLayout())
+
+    myFixture.configureByText("filled.md", "# Heading")
+    assertEquals(Layout.SHOW_PREVIEW, createEditor().getLayout())
   }
 
   fun testDisabledRegistryKeyHidesLivePreview() {

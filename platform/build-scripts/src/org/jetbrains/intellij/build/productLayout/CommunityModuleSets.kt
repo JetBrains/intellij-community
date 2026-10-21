@@ -48,7 +48,7 @@ object CommunityModuleSets {
    * A lean product such as Draft takes coreLang and adds only the feature sets that it needs.
    *
    * The direct members are groups that only this set carries today.
-   * ADR 0010 (`build/decisions/0010-a-module-set-is-the-leaf-a-fragment-is-the-feature.md`) gives such a group no set.
+   * ADR 0010 (`build/docs/decisions/0010-a-module-set-is-the-leaf-a-fragment-is-the-feature.md`) gives such a group no set.
    * The `completion.*` and `pluginManager.*` groups become sets when a second product takes `essential` without them.
    *
    * The debugger platform is not part of this set. [ideCommon] nests [debugger],
@@ -141,7 +141,6 @@ object CommunityModuleSets {
 
     module("intellij.platform.settings.local")
     module("intellij.platform.backend")
-    module("intellij.platform.backend.baseline")
     module("intellij.platform.project.backend")
     module("intellij.platform.progress.backend")
     module("intellij.platform.lang.impl.backend")
@@ -377,7 +376,8 @@ object CommunityModuleSets {
 
   /**
    * The spellchecker core module and its Lucene dictionary index.
-   * The VCS and XML spellchecker strategies stay in [ideCommon], because lean products bundle the core without them.
+   * The VCS spellchecker strategy stays in [ideCommon], because lean products bundle the core without it.
+   * The XML spellchecker strategies are content of the bundled plugin `intellij.xml.plugin`.
    */
   fun spellchecker(): ModuleSet = moduleSet("spellchecker") {
     module("intellij.spellchecker")
@@ -460,7 +460,6 @@ object CommunityModuleSets {
     module("intellij.platform.warmup")
     module("intellij.platform.inspect")
     module("intellij.spellchecker.vcs")
-    module("intellij.spellchecker.xml")
     module("intellij.platform.buildView")
     module("intellij.platform.buildView.backend")
     module("intellij.platform.buildView.frontend")

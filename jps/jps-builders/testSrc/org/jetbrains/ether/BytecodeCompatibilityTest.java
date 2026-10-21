@@ -8,13 +8,14 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.util.SystemProperties;
-import org.jetbrains.jps.builders.JpsBuildTestCase;
+import org.jetbrains.jps.builders.JpsBuildTestBase;
 import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.javac.ExternalJavacProcess;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,10 +26,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class BytecodeCompatibilityTest extends JpsBuildTestCase {
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+public class BytecodeCompatibilityTest extends JpsBuildTestBase {
   private static final int MIN_REQUIRED_JPS_BUILD_RUNTIME_VERSION = 11;
   private static final int MIN_REQUIRED_EXTERNAL_JAVAC_RUNTIME_VERSION = ExternalJavacProcess.MINIMUM_REQUIRED_JAVA_VERSION;
 
+  @Test
   public void testJpsBytecode() throws IOException {
 
     List<URL> classpath = new ArrayList<>();
@@ -46,6 +51,7 @@ public class BytecodeCompatibilityTest extends JpsBuildTestCase {
     ), MIN_REQUIRED_JPS_BUILD_RUNTIME_VERSION, classpath);
   }
 
+  @Test
   public void testForkedJavacBytecode() throws IOException {
 
     List<URL> classpath = new ArrayList<>();
@@ -73,14 +79,14 @@ public class BytecodeCompatibilityTest extends JpsBuildTestCase {
     try (URLClassLoader loader = new URLClassLoader(classpath.toArray(URL[]::new), null)) {
       for (String clsName : classesToCheck) {
         try (InputStream stream = loader.getResourceAsStream(clsName.replace('.', '/') + ".class")) {
-          assertNotNull("Required class " + clsName + " is not found in the classpath of the external javac process", stream);
+          assertNotNull(stream, "Required class " + clsName + " is not found in the classpath of the external javac process");
 
           int majorBytecodeVersion = InstrumenterClassWriter.getClassFileVersion(new FailSafeClassReader(stream));
 
           JavaSdkVersion targetSdkVersion = ClsParsingUtil.getJdkVersionByBytecode(majorBytecodeVersion);
           assertNotNull(targetSdkVersion);
 
-          assertTrue("Maximum allowed bytecode version for class " + clsName + " in the classpath of external javac process is " + maxJavaVersionFeatureLevel + " actual version is " + majorBytecodeVersion, targetSdkVersion.getMaxLanguageLevel().feature() <= maxJavaVersionFeatureLevel);
+          assertTrue(targetSdkVersion.getMaxLanguageLevel().feature() <= maxJavaVersionFeatureLevel, "Maximum allowed bytecode version for class " + clsName + " in the classpath of external javac process is " + maxJavaVersionFeatureLevel + " actual version is " + majorBytecodeVersion);
         }
       }
     }

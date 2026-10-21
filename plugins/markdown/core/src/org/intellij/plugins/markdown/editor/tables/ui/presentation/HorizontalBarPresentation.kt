@@ -15,16 +15,15 @@ import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
 import com.intellij.psi.util.startOffset
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.GraphicsUtil
-import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils.isSoftWrapping
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionPlaces
 import org.intellij.plugins.markdown.editor.tables.selectColumn
@@ -42,45 +41,39 @@ import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
-import java.util.concurrent.CopyOnWriteArraySet
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 class HorizontalBarPresentation(private val editor: Editor, private val table: MarkdownTable): BasePresentation() {
+  private val tableRange = table.textRange
+  private val header: RangeMarker?
+  private val headerLength: Int
+  private val separatorShifts: List<Int>
+
   init {
-    register(editor, this)
+    val row = table.headerRow
+    header = row?.textRange?.let(editor.document::createRangeMarker)
+    headerLength = row?.textLength ?: 0
+    separatorShifts = row?.let { calculateSeparatorShifts(it) }.orEmpty()
   }
-  private data class BoundsState(
-    val width: Int,
-    val height: Int,
-    val barsModel: List<Rectangle>
-  )
 
   private var lastSelectedIndex: Int? = null
-  private var boundsState: BoundsState? = null
-
-  private fun obtainBounds(): BoundsState = boundsState ?: calculateCurrentBoundsState().also { boundsState = it }
-
-  private val barsModel
-    get() = boundsState?.barsModel ?: emptyList()
-
-  private val isInvalid
-    get() = !table.isValid || editor.isDisposed
-
-  private fun refresh() {
-    val previous = boundsState ?: return
-    boundsState = null
-    fireUpdateEvent(Dimension(previous.width, previous.height))
-  }
+  private var rowWidth = 0
+  private var barsModel: List<Rectangle> = emptyList()
 
   override val width: Int
-    get() = obtainBounds().width
+    get() = rowWidth
 
-  override val height: Int
-    get() = obtainBounds().height
+  override val height: Int by lazy(LazyThreadSafetyMode.NONE) {
+    if (editor.softWrapModel.getSoftWrapsForRange(tableRange.startOffset, tableRange.endOffset).isEmpty()) barHeight else 0
+  }
 
   override fun paint(graphics: Graphics2D, attributes: TextAttributes) {
-    if (editor.isDisposed || barsModel.isEmpty()) {
+    if (editor.isDisposed) {
+      return
+    }
+    updateBarsModel()
+    if (barsModel.isEmpty()) {
       return
     }
     graphics.useCopy { local ->
@@ -108,27 +101,35 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
     updateSelectedIndexIfNeeded(null)
   }
 
-  private fun calculateCurrentBoundsState(): BoundsState {
-    if (isInvalid || editor.inlayModel.isInBatchMode || table.isSoftWrapping(editor)) {
-      return emptyBoundsState
+  private fun updateBarsModel() {
+    val marker = header?.takeIf { it.isValid && it.endOffset - it.startOffset == headerLength } ?: return
+    val startOffset = marker.startOffset
+    val endOffset = marker.endOffset
+    val separators = separatorShifts.map { startOffset + it }
+    val editorOffsetToXY = (listOf(startOffset, endOffset) + separators)
+      .distinct()
+      .associateWith { editor.offsetToXY(it) }
+    val previousWidth = rowWidth
+    rowWidth = calculateRowWidth(startOffset, endOffset, editorOffsetToXY)
+    barsModel = if (rowWidth > 0) buildBarsModel(separators, obtainFontMetrics(editor), editorOffsetToXY) else emptyList()
+    if (rowWidth != previousWidth) {
+      invokeLater {
+        if (!editor.isDisposed) {
+          fireUpdateEvent(Dimension(previousWidth, height))
+        }
+      }
     }
-    val header = table.headerRow ?: return emptyBoundsState
-    val fontsMetrics = obtainFontMetrics(editor)
-    val width = calculateRowWidth(header)
-    val barsModel = buildBarsModel(header, fontsMetrics)
-    return BoundsState(width, barHeight, barsModel)
   }
 
-  private fun calculateRowWidth(header: MarkdownTableRow): Int {
-    val range = header.textRange
-    if (editor.offsetToXY(range.startOffset).y != editor.offsetToXY(range.endOffset).y) {
+  private fun calculateRowWidth(startOffset: Int, endOffset: Int, editorOffsetToXY: Map<Int, Point>): Int {
+    if (editorOffsetToXY.getValue(startOffset).y != editorOffsetToXY.getValue(endOffset).y) {
       return 0
     }
-    return (renderedX(range.endOffset) - renderedX(range.startOffset)).coerceAtLeast(0)
+    return (renderedX(endOffset, editorOffsetToXY) - renderedX(startOffset, editorOffsetToXY)).coerceAtLeast(0)
   }
 
-  private fun renderedX(offset: Int): Int {
-    return editor.offsetToXY(offset, false, false).x +
+  private fun renderedX(offset: Int, editorOffsetToXY: Map<Int, Point>): Int {
+    return editorOffsetToXY.getValue(offset).x +
            editor.inlayModel.getInlineElementsInRange(offset, offset).sumOf { it.widthInPixels }
   }
 
@@ -140,25 +141,30 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
     }
   }
 
-  private fun buildBarsModel(header: MarkdownTableRow, fontMetrics: FontMetrics): List<Rectangle> {
-    val positions = calculatePositions(header, fontMetrics)
+  private fun buildBarsModel(
+    separators: List<Int>,
+    fontMetrics: FontMetrics,
+    editorOffsetToXY: Map<Int, Point>,
+  ): List<Rectangle> {
+    val positions = calculatePositions(separators, fontMetrics, editorOffsetToXY)
     val sectors = buildSectors(positions)
     return sectors.map { (offset, width) -> Rectangle(offset - barHeight / 2, 0, width + barHeight, barHeight) }
   }
 
-  private fun calculatePositions(header: MarkdownTableRow, fontMetrics: FontMetrics): List<Int> {
+  private fun calculatePositions(
+    separators: List<Int>,
+    fontMetrics: FontMetrics,
+    editorOffsetToXY: Map<Int, Point>,
+  ): List<Int> {
     require(barHeight % 2 == 0) { "barHeight value should be even" }
-    val separators = header.firstChild.siblings(forward = true, withSelf = true)
-      .filter { it.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) && it !is MarkdownTableSeparatorRow }
-      .map { it.startOffset }
     val separatorWidth = fontMetrics.charWidth('|')
     val firstOffset = separators.firstOrNull() ?: return emptyList()
     val result = ArrayList<Int>()
-    var position = editor.offsetToXY(firstOffset).x + separatorWidth / 2
+    var position = editorOffsetToXY.getValue(firstOffset).x + separatorWidth / 2
     var lastOffset = firstOffset
     result.add(position)
     for (offset in separators.drop(1)) {
-      position += renderedX(offset) - renderedX(lastOffset)
+      position += renderedX(offset, editorOffsetToXY) - renderedX(lastOffset, editorOffsetToXY)
       result.add(position)
       lastOffset = offset
     }
@@ -267,26 +273,8 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
   }
 
   companion object {
-    private val KEY = Key.create<MutableSet<WeakReference<HorizontalBarPresentation>>>("markdown.table.horizontal.bar.presentations")
-
-    private fun register(editor: Editor, presentation: HorizontalBarPresentation) {
-      val presentations = getExisting(editor) ?: CopyOnWriteArraySet()
-      editor.putUserData(KEY, presentations)
-      presentations.add(WeakReference(presentation))
-    }
-
-    private fun getExisting(editor: Editor): MutableSet<WeakReference<HorizontalBarPresentation>>? = editor.getUserData(KEY)
-
-    fun refresh(editor: Editor) {
-      val references = getExisting(editor) ?: return
-      references.removeIf { it.get() == null }
-      references.mapNotNull { it.get() }.forEach(HorizontalBarPresentation::refresh)
-    }
-
     private val columnActionGroup
       get() = ActionManager.getInstance().getAction("Markdown.TableColumnActions") as ActionGroup
-
-    private val emptyBoundsState = BoundsState(0, 0, emptyList())
 
     // Should be even
     const val barHeight = TableInlayProperties.barSize
@@ -308,6 +296,13 @@ class HorizontalBarPresentation(private val editor: Editor, private val table: M
     private fun obtainFontMetrics(editor: Editor): FontMetrics {
       val font = editor.colorsScheme.getFont(EditorFontType.PLAIN)
       return editor.contentComponent.getFontMetrics(font)
+    }
+
+    private fun calculateSeparatorShifts(row: MarkdownTableRow): List<Int> {
+      return row.firstChild.siblings(forward = true, withSelf = true)
+        .filter { it.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) && it !is MarkdownTableSeparatorRow }
+        .map { it.startOffset - row.startOffset }
+        .toList()
     }
 
     private fun uiDataSnapshot(sink: DataSink, table: MarkdownTable, columnIndex: Int) {

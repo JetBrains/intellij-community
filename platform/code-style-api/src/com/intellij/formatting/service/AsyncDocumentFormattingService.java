@@ -70,6 +70,17 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
   }
 
   /**
+   * Returns false if the task must always run outside the caller's read or write action.
+   * Such services ignore {@link #FORMAT_DOCUMENT_SYNCHRONOUSLY} and the headless synchronous mode.
+   * This capability controls execution mode and does not affect service selection.
+   * Callers can await completion with {@code structuredAsyncDocumentFormattingScope} outside a read or write action.
+   */
+  @ApiStatus.Experimental
+  protected boolean supportsSynchronousFormatting() {
+    return true;
+  }
+
+  /**
    * @return A name which can be used in UI, for example, in notification messages.
    */
   protected abstract @NotNull @NlsSafe String getName();
@@ -87,6 +98,11 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
    */
   protected Duration getTimeout() {
     return DEFAULT_TIMEOUT;
+  }
+
+  @ApiStatus.Experimental
+  protected @NotNull Duration getTimeout(@NotNull FormattingContext context) {
+    return getTimeout();
   }
 
   protected AnAction[] getTimeoutActions(@NotNull FormattingContext context) {
@@ -133,6 +149,11 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
   }
 
   @ApiStatus.Internal
+  public static boolean supportsSynchronousFormatting(@NotNull AsyncDocumentFormattingService service) {
+    return service.supportsSynchronousFormatting();
+  }
+
+  @ApiStatus.Internal
   public static @NotNull @NlsSafe String getName(@NotNull AsyncDocumentFormattingService service) {
     return service.getName();
   }
@@ -147,6 +168,11 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
   @ApiStatus.Internal
   public static Duration getTimeout(@NotNull AsyncDocumentFormattingService service) {
     return service.getTimeout();
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Duration getTimeout(@NotNull AsyncDocumentFormattingService service, @NotNull FormattingContext context) {
+    return service.getTimeout(context);
   }
 
   @ApiStatus.Internal

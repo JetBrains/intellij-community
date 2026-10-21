@@ -1,23 +1,24 @@
 //! The pinned tools: the one resolver of their host paths, and one parser of their versions for the version gate of
-//! Tart and for the pin tests of every tool that `tart.MODULE.bazel`, `docker.MODULE.bazel`, `lima.MODULE.bazel` and
+//! Tart and for the pin tests of every tool that `tart.MODULE.bazel`, `docker.MODULE.bazel` and
 //! `container.MODULE.bazel` declare.
 
 use std::fmt;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-#[cfg(any(unix, test))]
+#[cfg(unix)]
 use std::sync::LazyLock;
 
-use avl_base::config::{CONTAINER_LABEL, TART_LABEL, docker_buildx_label, docker_cli_label, limactl_label};
+use avl_base::config::{CONTAINER_LABEL, TART_LABEL, docker_buildx_label, docker_cli_label};
 use avl_base::{Backend, Config, Exit, OrRefuse, Refusal, RefusalExt};
 use avl_host_sys::guest::{BazelHost, ensure_host_paths, external_files};
 use avl_host_sys::{Ctx, Runner};
-#[cfg(any(unix, test))]
+#[cfg(unix)]
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use tokio::sync::OnceCell;
 
-// The suite drives Tart pools and the fake `limactl`, a shell script, and a Windows host has the Docker backend only.
+// The suite drives Tart pools and the pinned Bazel fake, which links its files with Unix symlinks, and a Windows host
+// has the Docker backend only.
 #[cfg(test)]
 #[cfg(unix)]
 mod tests;
@@ -32,8 +33,6 @@ pub(crate) enum PinnedTool {
     DockerCli,
     /// The `docker-buildx` plugin of `docker.MODULE.bazel`, which the pinned CLI gets.
     DockerBuildx,
-    /// The `limactl` of `lima.MODULE.bazel`, which a Docker pool on the Lima engine runs.
-    Limactl,
     /// The Apple `container` CLI of `container.MODULE.bazel`, which a Docker pool on the Apple `container` engine runs
     /// unless `CONTAINER_BIN` names another.
     Container,
@@ -46,7 +45,6 @@ impl PinnedTool {
         match self {
             Self::Tart => "tart.MODULE.bazel",
             Self::DockerCli | Self::DockerBuildx => "docker.MODULE.bazel",
-            Self::Limactl => "lima.MODULE.bazel",
             Self::Container => "container.MODULE.bazel",
         }
     }
@@ -56,7 +54,6 @@ impl PinnedTool {
             Self::Tart => TART_LABEL.to_owned(),
             Self::DockerCli => docker_cli_label(settings.guest_arch),
             Self::DockerBuildx => docker_buildx_label(settings.guest_arch),
-            Self::Limactl => limactl_label(settings.guest_arch),
             Self::Container => CONTAINER_LABEL.to_owned(),
         }
     }
@@ -76,9 +73,6 @@ impl PinnedTool {
             Backend::Docker if settings.docker.is_none() => tools.extend([Self::DockerCli, Self::DockerBuildx]),
             Backend::Tart | Backend::Docker | Backend::Parallels | Backend::ContainerLinux => {}
         }
-        if settings.runs_lima_engine() {
-            tools.push(Self::Limactl);
-        }
         tools
     }
 }
@@ -89,19 +83,17 @@ impl fmt::Display for PinnedTool {
             Self::Tart => "the pinned Tart",
             Self::DockerCli => "the pinned Docker CLI",
             Self::DockerBuildx => "the pinned docker-buildx plugin",
-            Self::Limactl => "the pinned limactl",
             Self::Container => "the pinned Apple container CLI",
         })
     }
 }
 
-/// The host paths of the pinned tools of one pool: one resolver for Tart, Docker, Lima and Apple `container`.
+/// The host paths of the pinned tools of one pool: one resolver for Tart, Docker and Apple `container`.
 ///
 /// The first request resolves every tool of [`PinnedTool::of_pool`] and the one it asks for. A later request asks
 /// Bazel nothing. The record of an earlier process answers first ([`PINNED_TOOLS_RECORD`]). On a miss, one `cquery`
 /// and one `info output_base` resolve every tool at once ([`external_files`]), and the record is written again. So the
-/// first command of a Docker pool on the Lima engine pays one analysis for its CLI, its plugin and its `limactl`, and
-/// not three.
+/// first command of a Docker pool on the pinned CLI pays one analysis for its CLI and its plugin, and not two.
 ///
 /// On 2026-10-10 each `cquery` of the pinned Apple CLI started with a deletion of about 510,000 Skyframe nodes, and the
 /// next lane build analyzed the whole graph again.
@@ -236,9 +228,9 @@ fn write_record(record: &Path, keys: Vec<PinnedToolKey>, paths: &[PathBuf]) -> R
 /// Anchored on a word boundary of its own (`^` or whitespace), because the output has carried a leading program name
 /// in some builds and a bare number in others, and a pattern with no left anchor would read `2.3` out of a build
 /// hash. A missing patch component reads as zero, so `v3.0` is `3.0.0`: Tart has shipped both spellings. Arrays
-/// compare lexicographically, which is the version order. The Tart gate and the pin tests read it, so a Windows build
-/// has it only for the tests.
-#[cfg(any(unix, test))]
+/// compare lexicographically, which is the version order. The Tart gate and the pin tests read it, and both are Unix
+/// only.
+#[cfg(unix)]
 pub(crate) fn parse_version(output: &str) -> Option<[u32; 3]> {
     static VERSION_SHAPE: LazyLock<Regex> =
         LazyLock::new(|| Regex::new(r"(?:^|\s)v?(\d+)\.(\d+)(?:\.(\d+))?(?:\s|$)").expect("a constant pattern compiles"));
@@ -251,7 +243,7 @@ pub(crate) fn parse_version(output: &str) -> Option<[u32; 3]> {
 ///
 /// # Panics
 /// When the file cannot be read, or declares no `variable = "<version>"` line with a version in it.
-#[cfg(test)]
+#[cfg(all(test, unix))]
 pub(crate) fn module_pin(file: &str, variable: &str) -> [u32; 3] {
     let path = avl_testkit::repo_path(&format!("tools/vm/{file}"));
     let content = std::fs::read_to_string(&path)
@@ -267,7 +259,7 @@ pub(crate) fn module_pin(file: &str, variable: &str) -> [u32; 3] {
 ///
 /// # Panics
 /// When the constant is not a version.
-#[cfg(test)]
+#[cfg(all(test, unix))]
 pub(crate) fn floor(version: &str) -> [u32; 3] {
     parse_version(version).unwrap_or_else(|| panic!("the floor {version} is not a version"))
 }

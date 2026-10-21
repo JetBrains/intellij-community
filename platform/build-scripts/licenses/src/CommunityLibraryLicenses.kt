@@ -585,7 +585,7 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     .suppliedByPersons("Asami Tomoharu", "Murata Makoto", "Kohsuke Kawaguchi"),
 
   LibraryLicense("Jackson", libraryName = "jackson", url = "https://github.com/FasterXML/jackson")
-    .additionalLibraryNames("jackson3", "jackson-core-3")
+    .additionalLibraryNames("jackson3")
     .apache("https://github.com/FasterXML/jackson-core/blob/2.14/LICENSE")
     .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
@@ -599,7 +599,7 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
   LibraryLicense("Jackson Databind", libraryName = "jackson-databind", url = "https://github.com/FasterXML/jackson-databind")
-    .additionalLibraryNames("jackson3-databind", "jackson-databind-3")
+    .additionalLibraryNames("jackson3-databind")
     .apache("https://github.com/FasterXML/jackson-databind/blob/2.16/LICENSE")
     .suppliedByPersons("Tatu Saloranta", "Christopher Currie", "Paul Brown"),
 
@@ -1494,13 +1494,10 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
   jetbrainsLibrary("download-pgp-verifier"),
   jetbrainsLibrary("file-prediction-model"),
   jetbrainsLibrary("find-action-model"),
-  jetbrainsLibrary("find-action-model-experimental"),
   jetbrainsLibrary("find-all-model-experimental"),
   jetbrainsLibrary("find-classes-model"),
-  jetbrainsLibrary("find-classes-model-experimental"),
   jetbrainsLibrary("find-ec-model-experimental"),
   jetbrainsLibrary("find-file-model"),
-  jetbrainsLibrary("find-file-model-experimental"),
   jetbrainsLibrary("git-learning-project"),
   jetbrainsLibrary("jetbrains.ai.completion.trigger.nes.polyglot"),
     jetbrainsLibrary("jetbrains.compose.components.ui.tooling.preview.desktop"),
@@ -1520,7 +1517,6 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     jetbrainsLibrary("kotlin-gradle-plugin-idea"),
     jetbrainsLibrary("kotlin-gradle-plugin-idea-browser-debug"),
     jetbrainsLibrary("kotlin-gradle-plugin-idea-proto"),
-    jetbrainsLibrary("kotlin-script-runtime"),
     jetbrainsLibrary("kotlin-test"),
     jetbrainsLibrary("kotlin-test-junit5"),
     jetbrainsLibrary("kotlin-tooling-core"),

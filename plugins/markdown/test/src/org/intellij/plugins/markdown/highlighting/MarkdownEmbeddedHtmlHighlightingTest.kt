@@ -25,6 +25,11 @@ class MarkdownEmbeddedHtmlHighlightingTest : BasePlatformTestCase() {
     EditorTestUtil.testFileSyntaxHighlighting(file, "$testDataPath/${getTestName(true)}.txt", true)
   }
 
+  fun testInlineHtmlContentIsHighlightedAsHtml() {
+    val file = myFixture.configureByText("test.md", "Some text with embedded <b>html</b>.")
+    EditorTestUtil.testFileSyntaxHighlighting(file, "$testDataPath/${getTestName(true)}.txt", true)
+  }
+
   fun testMultilineHtmlComment() {
     val text = """
         Some text.

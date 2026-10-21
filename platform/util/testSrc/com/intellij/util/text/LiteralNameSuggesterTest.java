@@ -2,12 +2,12 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.LiteralNameSuggester;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class LiteralNameSuggesterTest {
   @Test
@@ -48,7 +48,7 @@ public class LiteralNameSuggesterTest {
     };
     for (String[] test : data) {
       List<String> strings = LiteralNameSuggester.literalNames(test[0]);
-      assertEquals(test[0], Arrays.asList(test).subList(1, test.length), strings);
+      assertEquals(Arrays.asList(test).subList(1, test.length), strings, test[0]);
     }
   }
 }

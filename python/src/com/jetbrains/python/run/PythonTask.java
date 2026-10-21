@@ -39,6 +39,7 @@ import com.intellij.util.ui.EDT;
 import com.jetbrains.python.HelperPackage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonPluginDisposable;
+import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.console.PydevConsoleRunnerUtil;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
@@ -101,7 +102,7 @@ public class PythonTask {
   }
 
   protected static @NotNull Sdk requirePythonSdk(@Nullable Module module) throws ExecutionException {
-    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
     if (sdk == null) {
       throw new ExecutionException(PyBundle.message("python.task.cannot.find.python.interpreter.for.selected.module"));
     }

@@ -13,6 +13,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.PluginNodeVendorDetails
 import com.intellij.ide.plugins.api.ReviewsPageContainer
+import com.intellij.ide.plugins.asParserElement
 import com.intellij.ide.plugins.marketplace.DependencyType
 import com.intellij.ide.plugins.marketplace.ModuleDependency
 import com.intellij.ide.plugins.marketplace.PluginContentModule
@@ -20,6 +21,7 @@ import com.intellij.ide.plugins.marketplace.PluginModule
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSource
+import com.intellij.platform.pluginSystem.parser.impl.elements.xmlValue
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -379,7 +381,7 @@ fun IdeaPluginDescriptor.toPluginContentModules(): List<PluginContentModule> {
     is PluginMainDescriptor -> contentModules.map {
       PluginContentModule(
         moduleName = it.moduleId.name,
-        loadingRule = it.moduleLoadingRule.name.lowercase(),
+        loadingRule = it.moduleLoadingRule.asParserElement().xmlValue,
       )
     }
     else -> emptyList()

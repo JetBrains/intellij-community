@@ -42,6 +42,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.community.plugin.frontend"/>
     <module name="intellij.python.pytools.common"/>
     <module name="intellij.python.pytools.backend"/>
+    <module name="intellij.python.pytools.backend.runtime"/>
     <module name="intellij.python.pytools.frontend"/>
     <module name="intellij.python.community.impl.conda.common"/>
     <module name="intellij.python.community.impl.conda.frontend"/>

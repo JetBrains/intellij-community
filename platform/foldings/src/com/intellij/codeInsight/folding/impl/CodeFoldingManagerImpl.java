@@ -10,6 +10,8 @@ import com.intellij.lang.folding.LanguageFolding;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -29,6 +31,7 @@ import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.KeyedLazyInstance;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -40,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import static com.intellij.codeInsight.folding.impl.UpdateFoldRegionsOperation.CAN_BE_REMOVED_WHEN_COLLAPSED;
@@ -52,6 +56,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   private static final Key<Boolean> AUTO_CREATED_KEY = Key.create("AUTO_CREATED");
   private static final Key<Boolean> FRONTEND_CREATED_KEY = Key.create("FRONTEND_CREATED");
   private static final Key<Boolean> TRANSIENT_KEY = Key.create("TRANSIENT");
+  private static final Key<Object> FOLDING_STATE_REQUEST_KEY = Key.create("FOLDING_STATE_REQUEST");
 
   private final Project myProject;
   private final Collection<Document> myDocumentsWithFoldingInfo = new WeakList<>();
@@ -267,7 +272,8 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
       .filter(otherEditor -> otherEditor != editor && isFoldingsInitializedInEditor(otherEditor))
       .findFirst()
       .ifPresent(otherEditor -> documentFoldingInfo.loadFromEditor(otherEditor));
-    documentFoldingInfo.computeExpandRanges(firstTime && !isFoldingsInitializedInEditor(editor));
+    List<DocumentFoldingInfo.FoldingInfo>
+      computedInfos = documentFoldingInfo.computeExpandRanges(firstTime && !isFoldingsInitializedInEditor(editor));
     return () -> {
       ThreadingAssertions.assertEventDispatchThread();
       if (result != null) {
@@ -275,7 +281,7 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
       }
       if (firstTime && !isFoldingsInitializedInEditor(editor)) {
         editor.getFoldingModel().runBatchFoldingOperation(() -> {
-          documentFoldingInfo.applyFoldingExpandedState(editor);
+          DocumentFoldingInfo.applyFoldingExpandedState(editor, computedInfos);
           documentFoldingInfo.clear();
         });
         setFoldingsInitializedInEditor(editor);
@@ -291,26 +297,62 @@ public final class CodeFoldingManagerImpl extends CodeFoldingManager implements 
   @Override
   public @NotNull CodeFoldingState saveFoldingState(@NotNull Editor editor) {
     ThreadingAssertions.assertEventDispatchThread();
-    DocumentFoldingInfo info = getOrCreateDocumentFoldingInfo(editor.getDocument());
     if (isFoldingsInitializedInEditor(editor)) {
+      DocumentFoldingInfo info = new DocumentFoldingInfo(myProject, editor.getDocument());
       info.loadFromEditor(editor);
+      return info;
     }
-    return info;
+    return getOrCreateDocumentFoldingInfo(editor.getDocument()).copy(editor.getDocument());
   }
 
   @RequiresEdt
   @Override
   public void restoreFoldingState(@NotNull Editor editor, @NotNull CodeFoldingState state) {
     ThreadingAssertions.assertEventDispatchThread();
-    if (isFoldingsInitializedInEditor(editor)) {
-      state.setToEditor(editor);
+    if (editor.isDisposed()) {
+      return;
     }
+    Object request = new Object();
+    editor.putUserData(FOLDING_STATE_REQUEST_KEY, request);
+    CodeFoldingState stateToRestore = state instanceof DocumentFoldingInfo info ? info.copy(editor.getDocument()) : state;
+    if (isFoldingsInitializedInEditor(editor) &&
+        (!(stateToRestore instanceof DocumentFoldingInfo info) || info.isComputed(editor.getDocument()))) {
+      applyFoldingState(editor, stateToRestore);
+      return;
+    }
+
+    boolean computeState = stateToRestore instanceof DocumentFoldingInfo info && !info.isComputed(editor.getDocument());
+    ReadAction.nonBlocking(() -> {
+        Runnable initializeFoldings = isFoldingsInitializedInEditor(editor) ? null : updateFoldRegionsAsync(editor, true);
+      if (computeState) {
+        ((DocumentFoldingInfo)stateToRestore).computeExpandRanges(true);
+      }
+      return (Runnable)() -> {
+        if (initializeFoldings != null) {
+          initializeFoldings.run();
+        }
+        if (isFoldingsInitializedInEditor(editor)) {
+          applyFoldingState(editor, stateToRestore);
+        }
+      };
+    })
+      .withDocumentsCommitted(myProject)
+      .expireWith(myProject)
+      .expireWhen(() -> editor.isDisposed() || editor.getUserData(FOLDING_STATE_REQUEST_KEY) != request)
+      .coalesceBy(FOLDING_STATE_REQUEST_KEY, editor)
+      .finishOnUiThread(ModalityState.defaultModalityState(), Runnable::run)
+      .submit(AppExecutorUtil.getAppExecutorService());
+  }
+
+  @RequiresEdt
+  private static void applyFoldingState(@NotNull Editor editor, @NotNull CodeFoldingState state) {
+    editor.getFoldingModel().runBatchFoldingOperation(() -> state.setToEditor(editor));
   }
 
   @Override
   public void writeFoldingState(@NotNull CodeFoldingState state, @NotNull Element element) {
-    if (state instanceof DocumentFoldingInfo) {
-      ((DocumentFoldingInfo)state).writeExternal(element);
+    if (state instanceof DocumentFoldingInfo documentFolding) {
+      documentFolding.writeExternal(element);
     }
   }
 

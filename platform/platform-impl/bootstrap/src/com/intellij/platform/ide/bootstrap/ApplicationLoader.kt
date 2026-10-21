@@ -69,6 +69,7 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
+import com.intellij.openapi.wm.impl.initializeFrameClasses
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -434,6 +435,10 @@ private suspend fun initLafManagerAndCss(app: ApplicationImpl, asyncScope: Corou
       null
     }
     else {
+      // the static initializers of the frame classes read the look and feel and the UI scale
+      asyncScope.launch(CoroutineName("frame classes initializing")) {
+        initializeFrameClasses()
+      }
       asyncScope.launch {
         // preload EditorColorsManager only when LafManager is ready - that's why out of coroutineScope
         initGlobalStyleSheet()

@@ -885,7 +885,7 @@ private const val JSERIALCOMM_NATIVE_HASH: String = "9a7813435b79aa2e23c7f2a78f1
 
 /** The URL of the jSerialComm native zip the serial-monitor plugin unpacks into `bin/`. */
 private fun jSerialCommDownloadUrl(): String =
-  "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/jSerialComm/$JSERIALCOMM_NATIVE_HASH/jSerialComm.zip"
+  "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/jSerialComm/$JSERIALCOMM_NATIVE_HASH/jSerialComm.zip"
 
 /** The native jSerialComm archive unpacked into the serial-monitor plugin's `bin/`. */
 private fun jSerialCommLayoutAssetSpec(): DevPluginLayoutAssetSpec {

@@ -1,19 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
+import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry
+import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -30,53 +28,94 @@ internal class PythonSdkUpdaterInUseTest {
   private val pyProjectFixture = projectFixture.pyProjectFixture()
 
   @Test
-  fun `an interpreter that no module uses is not in use`(@TestDisposable disposable: Disposable) {
+  fun `an interpreter that no Python project uses is not in use`(): Unit = timeoutRunBlocking {
     val project = projectFixture.get()
-    pyProjectFixture.get().residesOnModule
-    val sdk = registerSdk("PY-88315 registered only", disposable)
-
-    assertThat(PythonSdkUpdater.isSdkInUse(sdk, project)).isFalse()
-    assertThat(PythonSdkUpdater.scheduleBackgroundUpdate(sdk, project))
-      .describedAs("A background update started for an interpreter that the project does not use")
-      .isFalse()
+    val pyProject = pyProjectFixture.get()
+    val registry = PythonInterpreterRegistry.getInstance(project)
+    val interpreter = registry.addMockPythonInterpreter(pyProject, PythonMockSdk.create())
+    try {
+      @Suppress("DEPRECATION") // The updater takes an SDK.
+      val sdk = interpreter.getSdkAPI()
+      assertThat(EvoPyProjectModel.getInstance(project).snapshot().usesSdk(sdk)).isFalse()
+    }
+    finally {
+      registry.removePythonInterpreter(pyProject, interpreter)
+    }
   }
 
   @Test
-  fun `the interpreter of a module is in use`(@TestDisposable disposable: Disposable) {
+  fun `the interpreter of a Python project is in use`(): Unit = timeoutRunBlocking {
     val project = projectFixture.get()
-    val module = pyProjectFixture.get().residesOnModule
-    val sdk = registerSdk("PY-88315 of the module", disposable)
-    module.useSdk(sdk)
-
-    assertThat(PythonSdkUpdater.isSdkInUse(sdk, project)).isTrue()
-    assertThat(PythonSdkUpdater.scheduleBackgroundUpdate(sdk, project))
-      .describedAs("The project uses the interpreter, so its background update must be scheduled")
-      .isTrue()
+    val pyProject = pyProjectFixture.get()
+    val registry = PythonInterpreterRegistry.getInstance(project)
+    val interpreter = registry.addMockPythonInterpreter(pyProject, PythonMockSdk.create())
+    try {
+      pyProject.setPythonInterpreter(interpreter)
+      @Suppress("DEPRECATION") // The updater takes an SDK.
+      val sdk = interpreter.getSdkAPI()
+      assertThat(EvoPyProjectModel.getInstance(project).snapshot().usesSdk(sdk)).isTrue()
+    }
+    finally {
+      pyProject.setPythonInterpreter(null)
+      registry.removePythonInterpreter(pyProject, interpreter)
+    }
   }
 
   @Test
-  fun `an interpreter stops being in use when the module moves to another one`(@TestDisposable disposable: Disposable) {
+  fun `a background update of an interpreter that no Python project uses is rejected`(): Unit = timeoutRunBlocking {
     val project = projectFixture.get()
-    val module = pyProjectFixture.get().residesOnModule
-    val sdk = registerSdk("PY-88315 replaced", disposable)
-    module.useSdk(sdk)
-    assertThat(PythonSdkUpdater.isSdkInUse(sdk, project)).isTrue()
-
-    val other = registerSdk("PY-88315 the new one", disposable)
-    module.useSdk(other)
-
-    assertThat(PythonSdkUpdater.isSdkInUse(sdk, project)).isFalse()
-    assertThat(PythonSdkUpdater.isSdkInUse(other, project)).isTrue()
+    val pyProject = pyProjectFixture.get()
+    val registry = PythonInterpreterRegistry.getInstance(project)
+    val interpreter = registry.addMockPythonInterpreter(pyProject, PythonMockSdk.create())
+    try {
+      // The check reads the current snapshot, so it must hold the interpreter list first.
+      EvoPyProjectModel.getInstance(project).snapshot()
+      @Suppress("DEPRECATION") // The updater takes an SDK.
+      assertThat(PythonSdkUpdater.scheduleBackgroundUpdate(interpreter.getSdkAPI(), project)).isFalse()
+    }
+    finally {
+      registry.removePythonInterpreter(pyProject, interpreter)
+    }
   }
 
-  /** A module entry names its interpreter, and the name resolves through the table, so the table must know it. */
-  private fun registerSdk(name: String, disposable: Disposable): Sdk {
-    val sdk = ProjectJdkImpl(name, PythonSdkType.getInstance())
-    WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance().addJdk(sdk, disposable) }
-    return sdk
+  @Test
+  fun `a background update of the interpreter of a Python project is accepted`(): Unit = timeoutRunBlocking {
+    val project = projectFixture.get()
+    val pyProject = pyProjectFixture.get()
+    val registry = PythonInterpreterRegistry.getInstance(project)
+    val interpreter = registry.addMockPythonInterpreter(pyProject, PythonMockSdk.create())
+    try {
+      pyProject.setPythonInterpreter(interpreter)
+      // Accepted, and in a unit test it then does nothing, see `PythonSdkUpdater.setEnabledInTests`.
+      @Suppress("DEPRECATION") // The updater takes an SDK.
+      assertThat(PythonSdkUpdater.scheduleBackgroundUpdate(interpreter.getSdkAPI(), project)).isTrue()
+    }
+    finally {
+      pyProject.setPythonInterpreter(null)
+      registry.removePythonInterpreter(pyProject, interpreter)
+    }
   }
 
-  private fun Module.useSdk(sdk: Sdk) {
-    WriteAction.runAndWait<RuntimeException> { ModuleRootModificationUtil.setModuleSdk(this, sdk) }
+  @Test
+  fun `an interpreter stops being in use when the Python project moves to another one`(): Unit = timeoutRunBlocking {
+    val project = projectFixture.get()
+    val pyProject = pyProjectFixture.get()
+    val registry = PythonInterpreterRegistry.getInstance(project)
+    val first = registry.addMockPythonInterpreter(pyProject, PythonMockSdk.create())
+    val second = registry.addMockPythonInterpreter(pyProject, PythonMockSdk.create())
+    try {
+      pyProject.setPythonInterpreter(first)
+      pyProject.setPythonInterpreter(second)
+      val snapshot = EvoPyProjectModel.getInstance(project).snapshot()
+      @Suppress("DEPRECATION") // The updater takes an SDK.
+      assertThat(snapshot.usesSdk(first.getSdkAPI())).isFalse()
+      @Suppress("DEPRECATION") // The updater takes an SDK.
+      assertThat(snapshot.usesSdk(second.getSdkAPI())).isTrue()
+    }
+    finally {
+      pyProject.setPythonInterpreter(null)
+      registry.removePythonInterpreter(pyProject, first)
+      registry.removePythonInterpreter(pyProject, second)
+    }
   }
 }

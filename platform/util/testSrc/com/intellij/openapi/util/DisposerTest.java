@@ -7,8 +7,8 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.PerformanceUnitTest;
+import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.TestLoggerKt;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -16,12 +16,12 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ref.GCWatcher;
 import org.jetbrains.annotations.NonNls;
-import org.junit.After;
-import org.junit.Assume;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TestName;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
+import org.opentest4j.TestAbortedException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,10 +38,14 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertIterableEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class DisposerTest  {
   private MyLoggingDisposable myRoot;
@@ -52,10 +56,7 @@ public class DisposerTest  {
   private final List<MyLoggingDisposable> myDisposedObjects = Collections.synchronizedList(new ArrayList<>());
   @NonNls private final List<String> myDisposeActions = Collections.synchronizedList(new ArrayList<>());
 
-  @Rule
-  public TestName name = new TestName();
-
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     Disposer.setDebugMode(true);
     myRoot = new MyLoggingDisposable("root");
@@ -69,7 +70,7 @@ public class DisposerTest  {
     myDisposeActions.clear();
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws Exception {
     try {
       Disposer.dispose(myRoot);
@@ -218,7 +219,7 @@ public class DisposerTest  {
   }
 
   @Test
-  public void testIsDisposingWorksForDisposablesRegisteredWithParent() throws ExecutionException, InterruptedException {
+  public void testIsDisposingWorksForDisposablesRegisteredWithParent(TestInfo testInfo) throws ExecutionException, InterruptedException {
     AtomicBoolean disposeRun = new AtomicBoolean();
     AtomicBoolean allowToContinueDispose = new AtomicBoolean();
     Disposable disposable = () -> {
@@ -228,7 +229,7 @@ public class DisposerTest  {
     Disposer.register(myRoot, disposable);
 
     assertFalse(Disposer.isDisposed(disposable));
-    ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(name.getMethodName()));
+    ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(testName(testInfo)));
     Future<?> future = executor.submit(() -> Disposer.dispose(myRoot));
     while (!disposeRun.get());
     assertTrue(Disposer.isDisposed(disposable));
@@ -239,7 +240,7 @@ public class DisposerTest  {
   }
 
   @Test
-  public void testIsDisposingWorksForUnregisteredDisposables() throws ExecutionException, InterruptedException {
+  public void testIsDisposingWorksForUnregisteredDisposables(TestInfo testInfo) throws ExecutionException, InterruptedException {
     AtomicBoolean disposeRun = new AtomicBoolean();
     AtomicBoolean allowToContinueDispose = new AtomicBoolean();
     Disposable disposable = () -> {
@@ -247,7 +248,7 @@ public class DisposerTest  {
       while (!allowToContinueDispose.get());
     };
 
-    ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(name.getMethodName()));
+    ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(testName(testInfo)));
     Future<?> future = executor.submit(() -> Disposer.dispose(disposable));
     while (!disposeRun.get());
     assertTrue(Disposer.isDisposed(disposable));
@@ -271,7 +272,7 @@ public class DisposerTest  {
     @NonNls String[] expected =
       {"beforeDispose: root", "beforeDispose: subFolder", "dispose: leaf1", "dispose: subFolder", "dispose: folder1", "dispose: root"};
 
-    UsefulTestCase.assertOrderedEquals(myDisposeActions, expected);
+    assertIterableEquals(Arrays.asList(expected), myDisposeActions);
   }
 
   private static void assertDisposed(MyLoggingDisposable disposable) {
@@ -340,8 +341,9 @@ public class DisposerTest  {
     Disposer.register(child, grand);
 
     try {
-      UsefulTestCase.assertThrows(IncorrectOperationException.class, "'grand' was already added as a child of 'parent'",
-                                  () -> Disposer.register(grand, parent));
+      assertThatThrownBy(() -> Disposer.register(grand, parent))
+        .isInstanceOf(IncorrectOperationException.class)
+        .hasMessageContaining("'grand' was already added as a child of 'parent'");
     }
     finally {
       Disposer.dispose(grand);
@@ -408,7 +410,7 @@ public class DisposerTest  {
     Disposer.dispose(disposable);
 
     Disposable newDisposable = Disposer.newDisposable();
-    UsefulTestCase.assertThrows(IncorrectOperationException.class, () -> Disposer.register(disposable, newDisposable));
+    assertThrows(IncorrectOperationException.class, () -> Disposer.register(disposable, newDisposable));
   }
 
   @Test
@@ -439,7 +441,7 @@ public class DisposerTest  {
 
       Disposer.register(parent, last);
 
-      UsefulTestCase.assertThrows(AssertionError.class, "Expected", () -> Disposer.dispose(parent));
+      assertDisposeThrows(parent, AssertionError.class, "Expected");
 
       assertTrue(Disposer.isDisposed(parent));
       assertTrue(Disposer.isDisposed(first));
@@ -467,8 +469,7 @@ public class DisposerTest  {
 
       Disposer.register(parent, last);
 
-      UsefulTestCase.assertThrows(RuntimeException.class, "CE must not be thrown from a dispose() implementation",
-                                  () -> Disposer.dispose(parent));
+      assertDisposeThrows(parent, RuntimeException.class, "CE must not be thrown from a dispose() implementation");
 
       assertTrue(Disposer.isDisposed(parent));
       assertTrue(Disposer.isDisposed(first));
@@ -491,8 +492,7 @@ public class DisposerTest  {
 
       Disposer.register(parent, last);
 
-      UsefulTestCase.assertThrows(RuntimeException.class, "CE must not be thrown from a dispose() implementation",
-                                  () -> Disposer.dispose(parent));
+      assertDisposeThrows(parent, RuntimeException.class, "CE must not be thrown from a dispose() implementation");
 
       assertTrue(Disposer.isDisposed(parent));
       assertTrue(Disposer.isDisposed(first));
@@ -510,14 +510,14 @@ public class DisposerTest  {
 
       Disposer.register(parent, () -> Disposer.register(parent, last));
 
-      UsefulTestCase.assertThrows(IncorrectOperationException.class, "Sorry but parent", () -> Disposer.dispose(parent));
+      assertDisposeThrows(parent, IncorrectOperationException.class, "Sorry but parent");
 
       assertTrue(Disposer.isDisposed(parent));
     });
   }
 
   @Test
-  public void testNoLeaksAfterConcurrentDisposeAndRegister() throws Exception {
+  public void testNoLeaksAfterConcurrentDisposeAndRegister(TestInfo testInfo) throws Exception {
     long elapsed = TimeoutUtil.measureExecutionTime(() -> {
       AtomicLong leakHash = new AtomicLong();
       try {
@@ -527,12 +527,12 @@ public class DisposerTest  {
         });
       }
       catch (AssertionError e) {
-        Assume.assumeNoException("test is ignored because MyLoggingDisposable is already leaking at the test start. " +
-                                 "myRoot=" + myRoot + "; ihc(myRoot)=" + System.identityHashCode(myRoot) + "; leakHash=" + leakHash, e);
+        throw new TestAbortedException("test is ignored because MyLoggingDisposable is already leaking at the test start. " +
+                                       "myRoot=" + myRoot + "; ihc(myRoot)=" + System.identityHashCode(myRoot) + "; leakHash=" + leakHash, e);
       }
     });
-    Assume.assumeTrue("Too long time (" + elapsed+ "ms) spent hunting memory leak, your heap must be huge! I refuse to continue", elapsed<30_000);
-    ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(name.getMethodName()));
+    Assumptions.assumeTrue(elapsed < 30_000, "Too long time (" + elapsed+ "ms) spent hunting memory leak, your heap must be huge! I refuse to continue");
+    ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(testName(testInfo)));
 
     long deadline = System.currentTimeMillis() + 3 * 60 * 1000;
     for (int i=0; i < 1000 && System.currentTimeMillis() < deadline; i++) {
@@ -656,16 +656,18 @@ public class DisposerTest  {
     Disposer.register(disposable0, child0);
     Disposer.register(disposable1, child1);
     Disposer.dispose(disposable0);
-    assertSame(child0, UsefulTestCase.assertOneElement(run));
+    assertEquals(1, run.size());
+    assertSame(child0, run.get(0));
     run.clear();
     Disposer.dispose(disposable1);
-    assertSame(child1, UsefulTestCase.assertOneElement(run));
+    assertEquals(1, run.size());
+    assertSame(child1, run.get(0));
   }
 
   @Test
   public void testMustNotAllowToRegisterToItself() {
     Disposable d = Disposer.newDisposable();
-    UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> Disposer.register(d, d));
+    assertThrows(IllegalArgumentException.class, () -> Disposer.register(d, d));
   }
 
   @Test
@@ -715,9 +717,9 @@ public class DisposerTest  {
   public void testTryRegisterMustCheckInvariantsToo() {
     Disposable parent = new MyLoggingDisposable("parent");
     Disposable child = new MyLoggingDisposable("child");
-    UsefulTestCase.assertThrows(IllegalArgumentException.class, () -> Disposer.tryRegister(parent, parent));
+    assertThrows(IllegalArgumentException.class, () -> Disposer.tryRegister(parent, parent));
     assertTrue(Disposer.tryRegister(parent, child));
-    UsefulTestCase.assertThrows(IncorrectOperationException.class, () -> Disposer.tryRegister(child, parent));
+    assertThrows(IncorrectOperationException.class, () -> Disposer.tryRegister(child, parent));
     Disposer.dispose(parent);
     assertFalse(Disposer.tryRegister(parent, child));
     Disposer.dispose(child);
@@ -741,13 +743,13 @@ public class DisposerTest  {
 
   @PerformanceUnitTest
   @Test
-  public void testPerformanceOfRegisterOrDisposeManyChildrenMustBeGood() {
+  public void testPerformanceOfRegisterOrDisposeManyChildrenMustBeGood(TestInfo testInfo) {
     Disposer.setDebugMode(false); // avoid expensive checks
     int N = 1_000_000;
     Disposable root = Disposer.newDisposable("test_root");
 
     Disposable[] children = IntStream.range(0, N).mapToObj(i -> Disposer.newDisposable("child " + i)).toArray(Disposable[]::new);
-    Benchmark.newBenchmark(name.getMethodName(), () -> {
+    Benchmark.newBenchmark(testName(testInfo), () -> {
         for (Disposable child : children) {
           Disposer.register(root, child);
         }
@@ -819,8 +821,8 @@ public class DisposerTest  {
         Future<?> disposeFuture = executor.submit(() -> Disposer.dispose(checkedParent));
 
         // Wait for Thread A to enter the race window
-        assertTrue("Timed out waiting for beforeTreeDispose",
-                   inBeforeTreeDispose.await(10, TimeUnit.SECONDS));
+        assertTrue(inBeforeTreeDispose.await(10, TimeUnit.SECONDS),
+                   "Timed out waiting for beforeTreeDispose");
 
         // Thread B (main thread): try to register during the race window
         // Without fix: succeeds because isDisposed() is still false
@@ -832,7 +834,7 @@ public class DisposerTest  {
         disposeFuture.get(10, TimeUnit.SECONDS);
 
         // Verify: the parent should be disposed
-        assertTrue("Parent should be disposed", checkedParent.isDisposed());
+        assertTrue(checkedParent.isDisposed(), "Parent should be disposed");
 
         // With the fix: tryRegister should have failed, so parent should NOT be in tree
         // Without fix: tryRegister succeeded, parent is in tree with isDisposed=true (LEAK!)
@@ -852,5 +854,18 @@ public class DisposerTest  {
       executor.shutdown();
       executor.awaitTermination(10, TimeUnit.SECONDS);
     }
+  }
+
+  private static String testName(TestInfo testInfo) {
+    return testInfo.getTestMethod().orElseThrow().getName();
+  }
+
+  /** Checks that disposing {@code parent} throws {@code expected} with {@code messagePart}. The test logger can wrap the error, so the check unwraps it first. */
+  private static void assertDisposeThrows(Disposable parent, Class<? extends Throwable> expected, String messagePart) {
+    Throwable thrown = assertThrows(Throwable.class, () -> Disposer.dispose(parent));
+    while (thrown instanceof TestLoggerFactory.TestLoggerAssertionError && thrown.getCause() != null) {
+      thrown = thrown.getCause();
+    }
+    assertThat(thrown).isInstanceOf(expected).hasMessageContaining(messagePart);
   }
 }

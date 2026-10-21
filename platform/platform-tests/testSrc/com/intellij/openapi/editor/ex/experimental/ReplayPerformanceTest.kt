@@ -127,7 +127,7 @@ class ReplayPerformanceTest {
     println("=== a merge of two concurrent pastes ===")
     println("  %-14s %10s".format("paste", "units"))
     for (paste in PASTE_SIZES) {
-      val base = DocBranch.createBranch("base\n", agent("base"))
+      val base = DocumentBranch.createBranch("base\n", agent("base"))
       val left = base.fork(agent("aaa")).applyOp(DocumentOp.insertOp(5, "L".repeat(paste)))
       val right = base.fork(agent("bbb")).applyOp(DocumentOp.insertOp(5, "R".repeat(paste)))
       assertEquals(5 + 2 * paste, left.merge(right).text().length())
@@ -174,10 +174,11 @@ class ReplayPerformanceTest {
     println("=== a merge that brings nothing, by history size ===")
     println("  %-14s %10s".format("history", "runs"))
     for (runs in HISTORY_RUNS) {
-      val branch = historyOfRuns(runs)
+      val start = DocumentBranch.createBranch("", agent("u"))
+      val branch = historyOfRuns(runs, start)
       // The same history in another graph value. A fork would share the graph itself, and then a
       // fast path for one instance would leave the row nothing to measure.
-      val same = DocBranch.createBranch("", agent("aaa")).merge(branch)
+      val same = start.fork(agent("aaa")).merge(branch)
       assertEquals(branch.text().length(), branch.merge(same).text().length())
       println("  %-14s %10d".format("$runs runs", branch.graph().runCount()))
       benchmarkSubtest("merge of nothing over $runs runs", EMPTY_MERGE_PASSES) {
@@ -200,7 +201,7 @@ class ReplayPerformanceTest {
     println("  %-14s %10s %10s %8s".format("history", "units", "runs", "passes"))
     for (runLength in RUN_LENGTHS) {
       val fragment = "x".repeat(runLength)
-      var branch = DocBranch.createBranch("", AUTHORS[0])
+      var branch = DocumentBranch.createBranch("", AUTHORS[0])
       var length = 0
       for (run in 0 until UNITS / runLength) {
         branch = branch.fork(AUTHORS[run % AUTHORS.size]).applyOp(DocumentOp.insertOp(positionOf(length), fragment))
@@ -220,9 +221,9 @@ class ReplayPerformanceTest {
    * A history of [ops] edits at random places, from one seed. Seven of ten insert one or two
    * characters, and the rest delete one.
    */
-  private fun historyOfRandomEdits(ops: Int): DocBranch {
+  private fun historyOfRandomEdits(ops: Int): DocumentBranch {
     val random = Random(20261001L)
-    var branch = DocBranch.createBranch("", agent("u"))
+    var branch = DocumentBranch.createBranch("", agent("u"))
     repeat(ops) {
       val length = branch.text().length()
       val at = random.nextInt(length + 1)
@@ -243,7 +244,7 @@ class ReplayPerformanceTest {
    * agent count.
    */
   private fun graphOfConcurrentInserts(agents: Int): EventGraph {
-    val base = DocBranch.createBranch("[]", agent("base")).graph()
+    val base = DocumentBranch.createBranch("[]", agent("base")).graph()
     var graph = base
     for (i in 0 until agents) {
       graph = graph.append(Event.createInsert(agent("a$i"), 0, 1, "<$i>"), base.version())
@@ -266,8 +267,8 @@ class ReplayPerformanceTest {
   /**
    * A text of [chars] characters, then a delete and an insert at every offset of it, in order.
    */
-  private fun historyOfOvertype(chars: Int): DocBranch {
-    var branch = DocBranch.createBranch("o".repeat(chars), agent("u"))
+  private fun historyOfOvertype(chars: Int): DocumentBranch {
+    var branch = DocumentBranch.createBranch("o".repeat(chars), agent("u"))
     for (offset in 0 until chars) {
       branch = branch.applyOp(DocumentOp.deleteOp(offset, 1))
       branch = branch.applyOp(DocumentOp.insertOp(offset, "x"))
@@ -276,11 +277,14 @@ class ReplayPerformanceTest {
   }
 
   /**
-   * A history of [runs] runs of one character. Every op inserts at the front, so no op extends
-   * the run before it.
+   * A history of [runs] runs of one character over [start]. Every op inserts at the front, so no
+   * op extends the run before it.
    */
-  private fun historyOfRuns(runs: Int): DocBranch {
-    var branch = DocBranch.createBranch("", agent("u"))
+  private fun historyOfRuns(
+    runs: Int,
+    start: DocumentBranch = DocumentBranch.createBranch("", agent("u")),
+  ): DocumentBranch {
+    var branch = start
     repeat(runs) {
       branch = branch.applyOp(DocumentOp.insertOp(0, "x"))
     }

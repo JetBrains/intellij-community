@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk
 
+import com.intellij.python.sdk.backend.detectedEnvironment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
@@ -114,25 +115,25 @@ class PySdkFromEnvironmentVariable private constructor(
 
     // Skip modules with same SDK
     val modules = modules.filter {
-      it.asPyProject()?.getInterpreter()?.pythonBinaryPath != python
+      it.asPyProject()?.getInterpreter()?.detectedEnvironment?.pythonBinaryPath != python
     }
 
     if (modules.isEmpty()) {
       return Result.success(Unit)
     }
 
-    val pythonInterpreter = withSdkConfigurationLock(project) {
-      createLocalSdkGuessingTypeByPath(python, ModuleOrProject.ProjectOnly(project))
-    }.getOr(PyBundle.message("sdk.configuration.path.cant.create.sdk", python)) { return it }
-
-
-
+    // One interpreter for [python], owned by the project working directory, and set on every module. One lock for both
+    // steps, so no other configuration runs between them.
     val pyProjects = withSdkConfigurationLock(project) {
+      val pythonInterpreter = createLocalSdkGuessingTypeByPath(python, ModuleOrProject.ProjectOnly(project))
+        .getOr(PyBundle.message("sdk.configuration.path.cant.create.sdk", python)) { return@withSdkConfigurationLock it }
       modules.mapNotNull { module ->
         check(module.project == project) { "Module $module is not in $project" }
-        module.asPyProject()?.also { it.setPythonInterpreter(pythonInterpreter, waitForSnapshot = false) }
-      }
-    }
+        val pyProject = module.asPyProject() ?: return@mapNotNull null
+        pyProject.setPythonInterpreter(pythonInterpreter, waitForSnapshot = false).getOr { return@withSdkConfigurationLock it }
+        pyProject
+      }.let { Result.success(it) }
+    }.getOr { return it }
     // Once for all modules, so that a caller that reads the snapshot next sees the new interpreter.
     EvoPyProjectModel.getInstance(project).awaitInterpreterOf(pyProjects)
     return Result.success(Unit)

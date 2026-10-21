@@ -1,15 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.shared.proxy
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
+import com.intellij.platform.debugger.impl.rpc.XDataBreakpointInfo
 import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.breakpoints.XDataBreakpointAccessType
+import com.intellij.xdebugger.breakpoints.XDataBreakpointHitCountMode
+import com.intellij.xdebugger.breakpoints.XDataBreakpointLifetime
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
 import org.jetbrains.annotations.ApiStatus
@@ -75,6 +80,15 @@ interface XBreakpointProxy : Comparable<XBreakpointProxy> {
    * See [com.intellij.xdebugger.breakpoints.XBreakpointType.hasCustomCondition].
    */
   fun hasCustomCondition(): Boolean
+
+  /** Non-null only for a data breakpoint (watchpoint); see [XDataBreakpointInfo]. */
+  fun getDataBreakpointInfo(): XDataBreakpointInfo?
+  fun setDataBreakpointAccessType(accessType: XDataBreakpointAccessType?)
+  fun setDataBreakpointLifetime(lifetime: XDataBreakpointLifetime?)
+  fun setDataBreakpointHitCount(enabled: Boolean, mode: XDataBreakpointHitCountMode, value: Int)
+
+  /** Calls [listener] with a new [XDataBreakpointInfo] whenever the backend updates it, for example after an async size lookup. */
+  fun subscribeOnDataBreakpointInfoChanges(disposable: Disposable, listener: (XDataBreakpointInfo) -> Unit)
 
 
   @NlsSafe

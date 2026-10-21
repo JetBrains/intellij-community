@@ -5,6 +5,8 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.Pair
+import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleVisibilityValue
+import com.intellij.platform.pluginSystem.parser.impl.parseContentAndXIncludes
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -52,7 +54,7 @@ class PluginDescriptorFile(@JvmField val path: Path, @JvmField val text: CharSeq
 @ApiStatus.Internal
 class PluginDescriptorFileCache(private val outputProvider: ModuleOutputProvider) {
   private val files = ConcurrentHashMap<String, Optional<PluginDescriptorFile>>()
-  private val contentModuleAliases = ConcurrentHashMap<String, Set<String>>()
+  private val contentModuleInfos = ConcurrentHashMap<String, Optional<ContentModuleInfo>>()
 
   fun find(moduleName: String): PluginDescriptorFile? {
     return files.computeIfAbsent(moduleName) {
@@ -66,26 +68,47 @@ class PluginDescriptorFileCache(private val outputProvider: ModuleOutputProvider
   }
 
   /**
-   * The plugin aliases that the descriptor of one content module declares.
+   * The descriptor data of one content module: the plugin aliases, the dependencies, and the visibility.
    * The descriptor file is in the production sources of the JPS module that owns the content module.
+   * Returns null when the owning JPS module or its descriptor file is absent.
    */
-  fun contentModuleAliases(contentModuleName: String): Set<String> {
-    contentModuleAliases.get(contentModuleName)?.let { return it }
-    val result = readContentModuleAliases(contentModuleName)
-    return contentModuleAliases.putIfAbsent(contentModuleName, result) ?: result
+  fun contentModuleInfo(contentModuleName: String): ContentModuleInfo? {
+    return contentModuleInfos.computeIfAbsent(contentModuleName) {
+      Optional.ofNullable(readContentModuleInfo(it))
+    }.orElse(null)
   }
 
-  private fun readContentModuleAliases(contentModuleName: String): Set<String> {
-    val jpsContentModule = outputProvider.findModule(contentModuleName.substringBeforeLast('/')) ?: return emptySet()
+  private fun readContentModuleInfo(contentModuleName: String): ContentModuleInfo? {
+    val jpsContentModule = outputProvider.findModule(contentModuleName.substringBeforeLast('/')) ?: return null
     val moduleFile = outputProvider.findFileInModuleSources(
       module = jpsContentModule,
       relativePath = contentModuleNameToDescriptorFileName(contentModuleName),
       onlyProductionSources = true,
-    ) ?: return emptySet()
-    val result = HashSet<String>()
-    addPluginAliases(JDOMUtil.load(moduleFile), result)
-    return java.util.Set.copyOf(result)
+    ) ?: return null
+    return parseContentModuleInfo(Files.readAllBytes(moduleFile), moduleFile.toString())
   }
+}
+
+/** The descriptor data of one content module that the compatibility resolution reads. */
+@ApiStatus.Internal
+class ContentModuleInfo(
+  @JvmField val aliases: Set<String>,
+  /** The `<dependencies><module name>` entries. A dependency behind an `xi:include` is not seen. */
+  @JvmField val moduleDependencies: List<String>,
+  /** The `<dependencies><plugin id>` entries. */
+  @JvmField val pluginDependencies: List<String>,
+  /** The `visibility` attribute of the descriptor root. An absent attribute means private. */
+  @JvmField val visibility: ModuleVisibilityValue,
+)
+
+private fun parseContentModuleInfo(data: ByteArray, locationSource: String?): ContentModuleInfo {
+  val parsed = parseContentAndXIncludes(data, locationSource)
+  return ContentModuleInfo(
+    aliases = java.util.Set.copyOf(parsed.pluginAliases),
+    moduleDependencies = parsed.moduleDependencies,
+    pluginDependencies = parsed.pluginDependencies,
+    visibility = parsed.moduleVisibility,
+  )
 }
 
 /** Reads bundled plugins from the product declaration, including modular loader includes. */
@@ -201,7 +224,7 @@ private fun collectBundledLayoutNames(
           continue
         }
 
-        result.addAll(descriptorFiles.contentModuleAliases(contentModuleName))
+        descriptorFiles.contentModuleInfo(contentModuleName)?.let { result.addAll(it.aliases) }
         result.add(contentModuleName)
       }
     }
@@ -498,7 +521,7 @@ private fun readPluginDescriptor(
     for (module in content.getChildren("module")) {
       val contentModuleName = module.getAttributeValue("name")
       if (contentModuleName != null && !contentModuleName.isEmpty()) {
-        declaredModules.addAll(descriptorFiles.contentModuleAliases(contentModuleName))
+        descriptorFiles.contentModuleInfo(contentModuleName)?.let { declaredModules.addAll(it.aliases) }
         declaredModules.add(contentModuleName)
       }
     }

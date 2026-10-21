@@ -29,6 +29,5 @@
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.platform.util.multiplatform" />
     <orderEntry type="module" module-name="intellij.platform.multiplatformSupport" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="TEST" />
   </component>
 </module>

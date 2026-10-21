@@ -4,7 +4,7 @@ Validation ensures module and plugin dependencies are resolvable at runtime and 
 
 A library module takes the lowest route that works: private plugin content, then reuse of the copy held by the
 plugin that owns the API, then a shared module set. Read
-[ADR 0005](../../../../../build/decisions/0005-a-library-copy-belongs-to-the-plugin-that-owns-its-api.md). Rule
+[ADR 0005](../../../../../build/docs/decisions/0005-a-library-copy-belongs-to-the-plugin-that-owns-its-api.md). Rule
 17 below enforces the middle route.
 
 ## Rule Index
@@ -31,6 +31,7 @@ plugin that owns the API, then a shared module set. Read
 | 18 | Module in multiple plugins | Plugin layouts | [module-in-multiple-plugins.md](validators/module-in-multiple-plugins.md) |
 | 19 | Content module dependency declarations | Content module | [content-module-dependency-declaration.md](validators/content-module-dependency-declaration.md) |
 | 20 | Restricted module activation | Product | [restricted-module-activation.md](validators/restricted-module-activation.md) |
+| 21 | Platform library copies | Bundled plugins | [platform-library-copy.md](validators/platform-library-copy.md) |
 
 ## When Validation Runs
 

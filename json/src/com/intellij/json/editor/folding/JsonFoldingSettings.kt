@@ -62,6 +62,6 @@ class JsonFoldingOptionsProvider : UiDslUnnamedConfigurable.Simple(), CodeFoldin
   }
 
   override fun getOptionDescriptors(configurableId: String, nameConverter: Function<in String?, String?>): List<OptionDescription> {
-    return listOf(showKeyCount, showFirstKey).map { it.asOptionDescriptor() }
+    return listOf(showKeyCount, showFirstKey).map { it.asOptionDescriptor(configurableId) }
   }
 }

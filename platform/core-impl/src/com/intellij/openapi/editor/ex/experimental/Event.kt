@@ -28,7 +28,7 @@ interface Event {
   /**
    * The seq of the first unit. The run consumes the seqs `[seq, seq + length)`.
    */
-  fun seq(): Int
+  fun seq(): Long
 
   /**
    * The change this event records, against the document of its parent version.
@@ -57,16 +57,17 @@ interface Event {
     /**
      * An event that records [op] under the id ([agent], [seq]). [op] must come from
      * [DocumentOp.insertOp] or [DocumentOp.deleteOp], because the event keeps it as it is.
+     * [seq] must be at least 0, and [seq] plus the length of [op] must not exceed `Long.MAX_VALUE`.
      */
     @JvmStatic
-    fun create(agent: Agent, seq: Int, op: DocumentOp.Text): Event {
+    fun create(agent: Agent, seq: Long, op: DocumentOp.Text): Event {
       return EventImpl(agent, seq, op)
     }
 
     @JvmStatic
     fun createInsert(
       agent: Agent,
-      seq: Int,
+      seq: Long,
       offset: Int,
       fragment: CharSequence,
     ): Event {
@@ -76,7 +77,7 @@ interface Event {
     @JvmStatic
     fun createDelete(
       agent: Agent,
-      seq: Int,
+      seq: Long,
       offset: Int,
       length: Int,
     ): Event {

@@ -157,6 +157,26 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
             runTest("../../completion/testData/basic/common/annotations/OnlyCompileTimeConstants4.kt");
         }
 
+        @TestMetadata("OnlyCompileTimeConstants5.kt")
+        public void testOnlyCompileTimeConstants5() throws Exception {
+            runTest("../../completion/testData/basic/common/annotations/OnlyCompileTimeConstants5.kt");
+        }
+
+        @TestMetadata("OnlyCompileTimeConstants6.kt")
+        public void testOnlyCompileTimeConstants6() throws Exception {
+            runTest("../../completion/testData/basic/common/annotations/OnlyCompileTimeConstants6.kt");
+        }
+
+        @TestMetadata("OnlyCompileTimeConstants7.kt")
+        public void testOnlyCompileTimeConstants7() throws Exception {
+            runTest("../../completion/testData/basic/common/annotations/OnlyCompileTimeConstants7.kt");
+        }
+
+        @TestMetadata("OnlyCompileTimeConstants8.kt")
+        public void testOnlyCompileTimeConstants8() throws Exception {
+            runTest("../../completion/testData/basic/common/annotations/OnlyCompileTimeConstants8.kt");
+        }
+
         @TestMetadata("ParameterAnnotation1.kt")
         public void testParameterAnnotation1() throws Exception {
             runTest("../../completion/testData/basic/common/annotations/ParameterAnnotation1.kt");

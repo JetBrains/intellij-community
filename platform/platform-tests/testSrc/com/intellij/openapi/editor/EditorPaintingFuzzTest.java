@@ -7,6 +7,8 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
 
 import javax.swing.JComponent;
 import java.awt.Color;
@@ -17,9 +19,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
 /**
  * Looks for the invalid fragment range of IJPL-176182. The test churns the editor models and paints after every step.
  */
+@TestApplication
 public class EditorPaintingFuzzTest extends EditorPaintingTestCase {
   private static final int PAINT_WIDTH = 300;
   private static final int PAINT_HEIGHT = 400;
@@ -31,25 +36,28 @@ public class EditorPaintingFuzzTest extends EditorPaintingTestCase {
     "x", "\n", "\n\n", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "\ud83d\ude00", "()", "  ",
   };
 
+  @Test
   public void testFuzz() {
-    initText("");
-    List<String> log = new ArrayList<>();
-    for (int seed = 0; seed < SEEDS; seed++) {
-      log.clear();
-      try {
-        runSeed(seed, log);
+    myFixture.runTest(() -> {
+      myFixture.initText("");
+      List<String> log = new ArrayList<>();
+      for (int seed = 0; seed < SEEDS; seed++) {
+        log.clear();
+        try {
+          runSeed(seed, log);
+        }
+        catch (Throwable e) {
+          throw new AssertionError("seed " + seed + " failed after:\n" + String.join("\n", log), e);
+        }
       }
-      catch (Throwable e) {
-        throw new AssertionError("seed " + seed + " failed after:\n" + String.join("\n", log), e);
-      }
-    }
+    });
   }
 
   private void runSeed(int seed, List<String> log) {
     Random random = new Random(seed);
-    EditorEx editor = (EditorEx)getEditor();
+    EditorEx editor = (EditorEx)myFixture.getEditor();
     Document document = editor.getDocument();
-    runWriteCommand(() -> document.setText(""));
+    myFixture.runWriteCommand(() -> document.setText(""));
     resetModels();
     log.add("reset");
 
@@ -60,14 +68,14 @@ public class EditorPaintingFuzzTest extends EditorPaintingTestCase {
           String word = WORDS[random.nextInt(WORDS.length)];
           int offset = length == 0 ? 0 : random.nextInt(length + 1);
           log.add("insert " + offset + " " + escape(word));
-          runWriteCommand(() -> document.insertString(safeOffset(document, offset), word));
+          myFixture.runWriteCommand(() -> document.insertString(safeOffset(document, offset), word));
         }
         case 3 -> {
           if (length < 2) break;
           int from = random.nextInt(length);
           int to = from + 1 + random.nextInt(Math.min(30, length - from));
           log.add("delete " + from + " " + to);
-          runWriteCommand(() -> document.deleteString(safeOffset(document, from), safeOffset(document, to)));
+          myFixture.runWriteCommand(() -> document.deleteString(safeOffset(document, from), safeOffset(document, to)));
         }
         case 4 -> {
           if (length < 2) break;
@@ -75,14 +83,14 @@ public class EditorPaintingFuzzTest extends EditorPaintingTestCase {
           int to = from + 1 + random.nextInt(Math.min(30, length - from));
           String word = WORDS[random.nextInt(WORDS.length)];
           log.add("replace " + from + " " + to + " " + escape(word));
-          runWriteCommand(() -> document.replaceString(safeOffset(document, from), safeOffset(document, to), word));
+          myFixture.runWriteCommand(() -> document.replaceString(safeOffset(document, from), safeOffset(document, to), word));
         }
         case 5 -> {
           if (length < 3) break;
           int from = random.nextInt(length - 1);
           int to = from + 1 + random.nextInt(Math.min(40, length - from - 1));
           log.add("fold " + from + " " + to);
-          runFoldingOperation(() -> {
+          myFixture.runFoldingOperation(() -> {
             FoldRegion region = editor.getFoldingModel().addFoldRegion(from, to, "...");
             if (region != null) region.setExpanded(false);
           });
@@ -92,7 +100,7 @@ public class EditorPaintingFuzzTest extends EditorPaintingTestCase {
           if (regions.length == 0) break;
           FoldRegion region = regions[random.nextInt(regions.length)];
           log.add("unfold " + region.getStartOffset() + " " + region.getEndOffset());
-          runFoldingOperation(() -> editor.getFoldingModel().removeFoldRegion(region));
+          myFixture.runFoldingOperation(() -> editor.getFoldingModel().removeFoldRegion(region));
         }
         case 7 -> {
           if (length == 0) break;
@@ -138,8 +146,8 @@ public class EditorPaintingFuzzTest extends EditorPaintingTestCase {
   }
 
   private void resetModels() {
-    EditorEx editor = (EditorEx)getEditor();
-    runFoldingOperation(() -> editor.getFoldingModel().clearFoldRegions());
+    EditorEx editor = (EditorEx)myFixture.getEditor();
+    myFixture.runFoldingOperation(() -> editor.getFoldingModel().clearFoldRegions());
     editor.getMarkupModel().removeAllHighlighters();
     editor.getCaretModel().moveToOffset(0);
     editor.getSelectionModel().removeSelection();
@@ -155,7 +163,7 @@ public class EditorPaintingFuzzTest extends EditorPaintingTestCase {
   }
 
   private void paint() {
-    JComponent component = getEditor().getContentComponent();
+    JComponent component = myFixture.getEditor().getContentComponent();
     component.setSize(PAINT_WIDTH, PAINT_HEIGHT);
     BufferedImage image = new BufferedImage(PAINT_WIDTH, PAINT_HEIGHT, BufferedImage.TYPE_INT_ARGB);
     Graphics2D graphics = new CheckingGraphics(image.createGraphics());

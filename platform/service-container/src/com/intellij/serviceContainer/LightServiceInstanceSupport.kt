@@ -24,7 +24,7 @@ internal class LightServiceInstanceSupport(
       return null
     }
     val classLoader = instanceClass.classLoader as? PluginAwareClassLoader
-    if (classLoader != null && classLoader.state != PluginAwareClassLoader.ACTIVE) {
+    if (classLoader != null && classLoader.isUnloading()) {
       lightServiceLogger.warn("Light service ${instanceClass.name} not loaded because classloader is being unloaded")
       return null
     }

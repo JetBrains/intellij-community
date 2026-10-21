@@ -13,7 +13,7 @@ import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
-import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
+import com.intellij.openapi.fileEditor.ex.PlaceInfo;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.LightEditActionFactory;
@@ -109,8 +109,8 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
                                @NotNull @NlsContexts.PopupTitle String title1,
                                @NotNull @NlsContexts.PopupTitle String title2,
                                @NotNull @NlsContexts.StatusText String emptyText,
-                               @Nullable Function<? super Boolean, ? extends List<IdeDocumentHistoryImpl.PlaceInfo>> supplier,
-                               @Nullable Consumer<? super List<IdeDocumentHistoryImpl.PlaceInfo>> remover) {
+                               @Nullable Function<? super Boolean, ? extends List<PlaceInfo>> supplier,
+                               @Nullable Consumer<? super List<PlaceInfo>> remover) {
     RecentLocationsDataModel model = new RecentLocationsDataModel(project,
                                                                   supplier == null ? null : supplier::apply,
                                                                   remover == null ? null : infos -> {

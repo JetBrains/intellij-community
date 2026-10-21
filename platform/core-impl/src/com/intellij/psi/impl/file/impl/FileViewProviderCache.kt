@@ -140,7 +140,7 @@ internal sealed interface FileViewProviderCache {
   /**
    * see documentation of [FileManagerEx.possiblyInvalidatePhysicalPsi]
    */
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun markPossiblyInvalidated()
 
   /**

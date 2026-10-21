@@ -5,7 +5,6 @@ import com.intellij.execution.TerminateRemoteProcessDialog
 import com.intellij.execution.TerminateRemoteProcessDialog.ProcessCloseConfirmationResult
 import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.ui.BaseContentCloseListener
-import com.intellij.execution.ui.RunContentManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -84,7 +83,7 @@ abstract class TerminalTabCloseListener(
 
       val proxy = NopProcessHandler().apply { startNotify() }
       // don't show 'disconnect' button
-      proxy.putUserData(RunContentManagerImpl.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY, true)
+      proxy.putUserData(TerminateRemoteProcessDialog.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY, true)
       val result = TerminateRemoteProcessDialog.show(project, content.displayName, proxy)
       return result != ProcessCloseConfirmationResult.LEAVE_RUNNING
     }

@@ -26,9 +26,9 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +84,7 @@ public final class PyCompatibilityInspectionAdvertiser implements Annotator {
   private static boolean moduleUsesPythonSdk(@NotNull PyFile file) {
     final Module module = ModuleUtilCore.findModuleForFile(file.getVirtualFile(), file.getProject());
     if (module != null) {
-      return PythonSdkUtil.findPythonSdk(module) != null;
+      return PyModuleInterpreterReader.findModuleInterpreterIfReady(module) != null;
     }
     return false;
   }

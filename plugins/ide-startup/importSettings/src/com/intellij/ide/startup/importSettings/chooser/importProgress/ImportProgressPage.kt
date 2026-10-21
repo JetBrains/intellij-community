@@ -12,7 +12,6 @@ import com.intellij.ide.startup.importSettings.data.DialogImportData
 import com.intellij.ide.startup.importSettings.data.ImportFromProduct
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBDimension
@@ -31,8 +30,7 @@ import javax.swing.SwingConstants
 
 internal class ImportProgressPage(
   importFromProduct: DialogImportData,
-  controller: ImportSettingsController,
-  importTitleOverride:  @DialogTitle String?
+  controller: ImportSettingsController
 ) : OnboardingPage {
 
   override val stage = StartupWizardStage.ImportProgressPage
@@ -51,7 +49,7 @@ internal class ImportProgressPage(
 
   private val panel = JPanel(VerticalLayout(JBUI.scale(8))).apply {
     add(JPanel(VerticalLayout(JBUI.scale(8))).apply {
-      add(JLabel(importTitleOverride ?: ImportSettingsBundle.message("import.settings.title")).apply {
+      add(JLabel(ImportSettingsBundle.message("import.settings.title")).apply {
         font = JBFont.h1()
         horizontalAlignment = SwingConstants.CENTER
       })

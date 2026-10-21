@@ -2,7 +2,11 @@
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.AbstractBasicJavaSelectWordTest;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
 
+@TestApplication
 public class JavaSelectWordTest extends AbstractBasicJavaSelectWordTest {
+  @Test
   public void testWithFolding() { doTest("java", true, true); }
 }

@@ -10,20 +10,18 @@ import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
+import java.lang.invoke.MethodHandles
 import java.util.concurrent.atomic.AtomicReference
 
 @Experimental
 fun Job.cancelOnDispose(disposable: Disposable) {
-  val origin = Throwable()
+  val caller = StackTraceSnapshot.captureOnHotPath(1, FILE_CLASS_NAME)
   val childDisposable = object : Disposable {
     override fun dispose() {
       cancel("disposed")
     }
 
-    override fun toString(): String {
-      val topTrace = origin.stackTrace[1]
-      return "Cancel on dispose spawned in `$topTrace`"
-    }
+    override fun toString(): String = "Cancel on dispose spawned in `${caller.topFrame}`"
   }
   Disposer.register(disposable, childDisposable)
   invokeOnCompletion {
@@ -79,3 +77,6 @@ fun Disposable.attachAsChildTo(cs: CoroutineScope) {
 fun CoroutineScope.asDisposable(): Disposable {
   return Disposer.newDisposable("Disposable from scope: $this").also { it.attachAsChildTo(this) }
 }
+
+/** The name of the class of this file, so [cancelOnDispose] can find the frame of its caller. */
+private val FILE_CLASS_NAME: String = MethodHandles.lookup().lookupClass().name

@@ -1,58 +1,61 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.schema;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestFixture;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLLanguage;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 
-public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    Registry.get("json.schema.use.networknt.validation").setValue(false, getTestRootDisposable());
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static com.jetbrains.jsonSchema.JsonSchemaHighlightingTestFixtureKt.jsonSchemaHighlightingFixture;
+
+@TestApplication
+public class YamlByYamlSchemaHighlightingTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+  private final TestFixture<JsonSchemaHighlightingTestFixture> schemaFixture =
+    jsonSchemaHighlightingFixture(codeInsightFixture, "config.yml", () -> new YamlJsonSchemaHighlightingInspection(), YAMLLanguage.INSTANCE);
+
+  protected CodeInsightTestFixture myFixture;
+  protected JsonSchemaHighlightingTestFixture mySchemaFixture;
+
+  @BeforeEach
+  void setUp() {
+    myFixture = codeInsightFixture.get();
+    mySchemaFixture = schemaFixture.get();
+    Registry.get("json.schema.use.networknt.validation").setValue(false, myFixture.getTestRootDisposable());
   }
 
   @NotNull
-  @Override
   public String getTestDataPath() {
     return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/backend/testData/org/jetbrains/yaml/schema/data/highlighting";
   }
 
-  @Override
-  protected String getTestFileName() {
-    return "config.yml";
-  }
-
-  @Override
-  protected InspectionProfileEntry getInspectionProfile() {
-    return new YamlJsonSchemaHighlightingInspection();
-  }
-
-
-  @Override
-  protected Predicate<VirtualFile> getAvailabilityPredicate() {
-    return file -> file.getFileType() instanceof LanguageFileType && ((LanguageFileType)file.getFileType()).getLanguage().isKindOf(
-      YAMLLanguage.INSTANCE);
-  }
-
   protected void doTestYaml(@Language("YAML") @NotNull final String schema, @NotNull final String text) {
-    configureInitially(schema, text, "yaml");
+    mySchemaFixture.configureInitially(schema, text, "yaml");
     myFixture.checkHighlighting(true, false, false);
   }
 
+  @Test
   public void testEnum1() {
     @Language("YAML") final String schema = """
       properties:
@@ -66,6 +69,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "prop: <warning>foo</warning>");
   }
 
+  @Test
   public void testMissingProp() {
     @Language("YAML") final String schema = """
       properties:\s
@@ -79,6 +83,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "flop: a");
   }
 
+  @Test
   public void testNumberMultiple() {
     @Language("YAML") String schema = """
       properties:
@@ -89,6 +94,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "prop: 4");
   }
 
+  @Test
   public void testNumberMinMax() {
     doTestYaml("""
                  properties:
@@ -99,6 +105,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
                      exclusiveMaximum: true""", "prop: 14");
   }
 
+  @Test
   public void testEnum() {
     @Language("YAML") final String schema = """
       properties:
@@ -113,6 +120,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "prop: <warning descr=\"Schema validation: Value should be one of: 1, 2, 3, \\\"18\\\"\">6</warning>");
   }
 
+  @Test
   public void testSimpleString() {
     @Language("YAML") final String schema = """
       properties:
@@ -126,6 +134,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "prop: <warning descr=\"Schema validation: String is longer than 3\">shor</warning>");
   }
 
+  @Test
   public void testArray() {
     @Language("YAML") final String schema = schema("""
                                                      {
@@ -138,6 +147,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "prop:\n - <warning descr=\"Schema validation: Incompatible types.\n Required: number. Actual: string.\">test</warning>");
   }
 
+  @Test
   public void testTopLevelArray() {
     @Language("YAML") final String schema = """
       type: array
@@ -148,6 +158,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "- 101\n- 102");
   }
 
+  @Test
   public void testTopLevelObjectArray() {
     @Language("YAML") final String schema = """
       {
@@ -159,6 +170,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "- a: 18");
   }
 
+  @Test
   public void testArrayTuples1() {
     @Language("YAML") final String schema = schema("""
                                                      {
@@ -170,6 +182,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
                "prop:\n - 101\n - <warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: integer.\">102</warning>");
   }
 
+  @Test
   public void testArrayTuples2() {
     @Language("YAML") final String schema2 = schema("""
                                                       {
@@ -180,6 +193,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema2, "prop:\n - 101\n - <warning descr=\"Schema validation: Incompatible types.\n Required: string. Actual: integer.\">102</warning>\n - <warning descr=\"Schema validation: Additional items are not allowed\">additional</warning>");
   }
 
+  @Test
   public void testArrayLength() {
     @Language("YAML") final String schema = schema("{\"type\": \"array\", \"minItems\": 2, \"maxItems\": 3}");
     doTestYaml(schema, "prop:\n <warning descr=\"Schema validation: Array is shorter than 2\">- 1</warning>");
@@ -187,12 +201,14 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "prop:\n <warning descr=\"Schema validation: Array is longer than 3\">- 1\n - 2\n - 3\n - 4</warning>");
   }
 
+  @Test
   public void testArrayUnique() {
     @Language("YAML") final String schema = schema("{\"type\": \"array\", \"uniqueItems\": true}");
     doTestYaml(schema, "prop:\n - 1\n - 2");
     doTestYaml(schema, "prop:\n - <warning descr=\"Schema validation: Item is not unique\">1</warning>\n - 2\n - test\n - <warning descr=\"Schema validation: Item is not unique\">1</warning>");
   }
 
+  @Test
   public void testMetadataIsOk() {
     @Language("YAML") final String schema = """
       {
@@ -203,6 +219,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "anything: 1");
   }
 
+  @Test
   public void testRequiredField() {
     @Language("YAML") final String schema = "{\"type\": \"object\", \"properties\": {\"a\": {}, \"b\": {}}, \"required\": [\"a\"]}";
     doTestYaml(schema, "a: 11");
@@ -210,6 +227,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "<warning descr=\"Schema validation: Missing required property 'a'\">b: alarm</warning>");
   }
 
+  @Test
   public void testInnerRequired() {
     @Language("YAML") final String schema = schema("{\"type\": \"object\", \"properties\": {\"a\": {}, \"b\": {}}, \"required\": [\"a\"]}");
     doTestYaml(schema, "prop:\n a: 11");
@@ -217,23 +235,27 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "prop:\n <warning descr=\"Schema validation: Missing required property 'a'\">b: alarm</warning>");
   }
 
+  @Test
   public void testAdditionalPropertiesAllowed() {
     @Language("YAML") final String schema = schema("{}");
     doTestYaml(schema, "prop:\n q: true\n someStuff: 20");
   }
 
+  @Test
   public void testAdditionalPropertiesDisabled() {
     @Language("YAML") final String schema = "{\"type\": \"object\", \"properties\": {\"prop\": {}}, \"additionalProperties\": false}";
     // not sure abt inner object
     doTestYaml(schema, "prop:\n q: true\n<warning descr=\"Schema validation: Property 'someStuff' is not allowed\">someStuff</warning>: 20");
   }
 
+  @Test
   public void testAdditionalPropertiesSchema() {
     @Language("YAML") final String schema = "{\"type\": \"object\", \"properties\": {\"a\": {}}," +
                                             "\"additionalProperties\": {\"type\": \"number\"}}";
     doTestYaml(schema, "a: moo\nb: 5\nc: <warning descr=\"Schema validation: Incompatible types.\n Required: number. Actual: string.\">foo</warning>");
   }
 
+  @Test
   public void testMinMaxProperties() {
     @Language("YAML") final String schema = "{\"type\": \"object\", \"minProperties\": 2, \"maxProperties\": 3}";
     doTestYaml(schema, "<warning descr=\"Schema validation: Number of properties is less than 2\">a: 3</warning>");
@@ -245,6 +267,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
       d: 4444""");
   }
 
+  @Test
   public void testOneOf() {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"number\"}");
@@ -255,6 +278,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "prop: <warning descr=\"Schema validation: Incompatible types.\n Required one of: boolean, number. Actual: string.\">aaa</warning>");
   }
 
+  @Test
   public void testOneOfForTwoMatches() {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");
@@ -265,6 +289,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "prop: <warning descr=\"Schema validation: Validates to more than one variant\">a</warning>");
   }
 
+  @Test
   public void testOneOfSelectError() {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("""
@@ -279,6 +304,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "prop: <warning descr=\"Schema validation: Value should be one of: \\\"off\\\", \\\"warn\\\", \\\"error\\\"\">wrong</warning>");
   }
 
+  @Test
   public void testAnyOf() {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"string\", \"enum\": [\"a\", \"b\"]}");
@@ -290,6 +316,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "prop: <warning descr=\"Schema validation: Value should be one of: \\\"a\\\", \\\"b\\\", \\\"c\\\"\">d</warning>");
   }
 
+  @Test
   public void testAllOf() {
     final List<String> subSchemas = new ArrayList<>();
     subSchemas.add("{\"type\": \"integer\", \"multipleOf\": 2}");
@@ -302,6 +329,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
 
   // ----
 
+  @Test
   public void testObjectInArray() {
     @Language("YAML") final String schema = schema("{\"type\": \"array\", \"items\": {\"type\": \"object\"," +
                                                    "\"properties\": {" +
@@ -311,6 +339,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "prop:\n- innerType: aaa\n  <warning descr=\"Schema validation: Property 'alien' is not allowed\">alien</warning>: bee");
   }
 
+  @Test
   public void testObjectDeeperInArray() {
     final String innerTypeSchema = "{\"properties\": {\"only\": {}}, \"additionalProperties\": false}";
     @Language("YAML") final String schema = schema("{\"type\": \"array\", \"items\": {\"type\": \"object\"," +
@@ -322,12 +351,14 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
            "prop:\n- innerType:\n   only: true\n   <warning descr=\"Schema validation: Property 'hidden' is not allowed\">hidden</warning>: false");
   }
 
+  @Test
   public void testInnerObjectPropValueInArray() {
     @Language("YAML") final String schema = "{\"properties\": {\"prop\": {\"type\": \"array\", \"items\": {\"enum\": [1,2,3]}}}}";
     doTestYaml(schema, "prop:\n - 1\n - 3");
     doTestYaml(schema, "prop:\n - <warning descr=\"Schema validation: Value should be one of: 1, 2, 3\">out</warning>");
   }
 
+  @Test
   public void testAllOfProperties() {
     @Language("YAML") final String schema = "{\"allOf\": [{\"type\": \"object\", \"properties\": {\"first\": {}}}," +
                                             " {\"properties\": {\"second\": {\"enum\": [33,44]}}}], \"additionalProperties\": false}";
@@ -336,6 +367,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "first: true\nsecond: <warning descr=\"Schema validation: Value should be one of: 33, 44\">12</warning>");
   }
 
+  @Test
   public void testWithWaySelection() {
     final String subSchema1 = "{\"enum\": [1,2,3,4,5]}";
     final String subSchema2 = "{\"type\": \"array\", \"items\": {\"properties\": {\"kilo\": {}}, \"additionalProperties\": false}}";
@@ -343,6 +375,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "prop:\n - <warning descr=\"Schema validation: Property 'foxtrot' is not allowed\">foxtrot</warning>: 15\n   kilo: 20");
   }
 
+  @Test
   public void testPatternPropertiesHighlighting() {
     @Language("YAML") final String schema = """
       {
@@ -370,6 +403,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
       """);
   }
 
+  @Test
   public void testPatternPropertiesFromIssue() {
     @Language("YAML") final String schema = """
       {
@@ -396,6 +430,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     );
   }
 
+  @Test
   public void testPatternForPropertyValue() {
     @Language("YAML") final String schema = """
       {
@@ -411,6 +446,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, wrongText);
   }
 
+  @Test
   public void testPatternWithSpecialEscapedSymbols() {
     @Language("YAML") final String schema = """
       {
@@ -429,11 +465,13 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
   // ---
 
 
+  @Test
   public void testRootObjectRedefinedAdditionalPropertiesForbidden() {
     doTestYaml(rootObjectRedefinedSchema(), "<warning descr=\"Schema validation: Property 'a' is not allowed\">a</warning>: true\n" +
                                         "r1: allowed!");
   }
 
+  @Test
   public void testNumberOfSameNamedPropertiesCorrectlyChecked() {
     @Language("YAML") final String schema = """
       {
@@ -462,6 +500,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
                  """);
   }
 
+  @Test
   public void testManyDuplicatesInArray() {
     @Language("YAML") final String schema = """
       {
@@ -488,6 +527,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
 
   // ----
 
+  @Test
   public void testPropertyValueAlsoHighlightedIfPatternIsInvalid() {
     @Language("YAML") final String schema = """
       {
@@ -504,6 +544,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, text);
   }
 
+  @Test
   public void testNotSchema() {
     @Language("YAML") final String schema = """
       {"properties": {
@@ -512,6 +553,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "not_type: <warning descr=\"Schema validation: Validates against 'not' schema\">wrong</warning>");
   }
 
+  @Test
   public void testNotSchemaCombinedWithNormal() {
     @Language("YAML") final String schema = """
       {"properties": {
@@ -525,6 +567,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "not_type: <warning descr=\"Schema validation: String violates the pattern: '^[a-z]*[0-5]*$'\">4a4</warning>");
   }
 
+  @Test
   public void testDoNotMarkOneOfThatDiffersWithFormat() {
     @Language("YAML") final String schema = """
       {
@@ -545,6 +588,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "withFormat: localhost");
   }
 
+  @Test
   public void testAcceptSchemaWithoutType() {
     @Language("YAML") final String schema = """
       {
@@ -565,6 +609,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "withFormat: localhost");
   }
 
+  @Test
   public void testArrayItemReference() {
     @Language("YAML") final String schema = """
       {
@@ -581,6 +626,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "- 1\n- <warning>foo</warning>");
   }
 
+  @Test
   public void testValidateAdditionalItems() {
     @Language("YAML") final String schema = """
       {
@@ -611,6 +657,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
 
 
 
+  @Test
   public void testExclusiveMinMaxV6_1() {
     @Language("YAML") String exclusiveMinSchema = "{\"properties\": {\"prop\": {\"exclusiveMinimum\": 3}}}";
     doTestYaml(exclusiveMinSchema, "prop: <warning>2</warning>");
@@ -618,6 +665,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(exclusiveMinSchema, "prop: 4");
   }
 
+  @Test
   public void testExclusiveMinMaxV6_2() {
     @Language("YAML") String exclusiveMaxSchema = "{\"properties\": {\"prop\": {\"exclusiveMaximum\": 3}}}";
     doTestYaml(exclusiveMaxSchema, "prop: 2");
@@ -631,12 +679,14 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml("{\"properties\": {\"prop\": {\"propertyNames\": {\"minLength\": 7}}}}", "{\"prop\": {<warning>\"qq\"</warning>: 7}}");
   }*/
 
+  @Test
   public void testContainsV6() {
     @Language("YAML") String schema = "{\"properties\": {\"prop\": {\"type\": \"array\", \"contains\": {\"type\": \"number\"}}}}";
     doTestYaml(schema, "prop:\n <warning>- a\n - true</warning>");
     doTestYaml(schema, "prop:\n - a\n - true\n - 1");
   }
 
+  @Test
   public void testConstV6() {
     @Language("YAML") String schema = "{\"properties\": {\"prop\": {\"type\": \"string\", \"const\": \"foo\"}}}";
     doTestYaml(schema, "prop: <warning>a</warning>");
@@ -644,6 +694,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "prop: foo");
   }
 
+  @Test
   public void testIfThenElseV7() {
     @Language("YAML") String schema = """
       {
@@ -679,6 +730,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "a: a\nb: 5");
   }
 
+  @Test
   public void testNestedOneOf() {
     @Language("YAML") String schema = """
       {"type":"object",
@@ -718,6 +770,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "type: <warning>ko</warning>");
   }
 
+  @Test
   public void testArrayRefs() {
     @Language("YAML") String schema = """
       {
@@ -748,12 +801,14 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "- 1\n- false");
   }
 
+  @Test
   public void testWithTags() {
     @Language("YAML") String schema = "{\"properties\": { \"platform\": { \"enum\": [\"x86\", \"x64\"] } }}";
     doTestYaml(schema, "platform:\n  !!str x64");
     doTestYaml(schema, "platform:\n  <warning>a x64</warning>");
   }
 
+  @Test
   public void testAmazonElasticSchema() throws Exception {
     @Language("YAML") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/cloudformation.schema.json"));
     doTestYaml(schema, """
@@ -766,6 +821,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
         IsDev: !Equals [!Ref AccountType, dev]""");
   }
 
+  @Test
   public void testGitlabSchema() throws Exception {
     @Language("YAML") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/gitlab-ci.schema.json"));
     doTestYaml(schema, """
@@ -797,6 +853,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     }
     """;
 
+  @Test
   public void testRefExtends() {
     // no warning about missing required property - it should be discovered in referenced object
     // no warning about extra 'property' with name '<<' with additionalProperties=false
@@ -811,6 +868,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
       """);
   }
 
+  @Test
   public void testRefRefValid() {
     // no warnings - &a references &b, which is an array - validation passes
     doTestYaml(SCHEMA_FOR_REFS, """
@@ -826,6 +884,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
         b: 5""");
   }
 
+  @Test
   public void testRefRefInvalid() {
     doTestYaml(SCHEMA_FOR_REFS, """
       x: &b <warning descr="Schema validation: Incompatible types.
@@ -838,6 +897,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
         <<: *a
         b: 5""");
   }
+  @Test
   public void testRefRefScalarValid() {
     doTestYaml(SCHEMA_FOR_REFS, """
       x: &b 7
@@ -851,6 +911,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
        Required: array. Actual: integer.">5</warning>""");
   }
 
+  @Test
   public void testInlineRef() {
     doTestYaml(SCHEMA_FOR_REFS, """
       bar:
@@ -888,6 +949,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
       """;
   }
 
+  @Test
   public void testTravisPythonVersion() throws Exception {
     @Language("YAML") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/travis.schema.json"));
     doTestYaml(schema, "python: 3.5"); // validates as 'number'
@@ -896,6 +958,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     doTestYaml(schema, "python: <warning descr=\"Schema validation: Incompatible types.\n Required one of: array, number, string. Actual: null.\">null</warning>");
   }
 
+  @Test
   public void testTravisNode() throws Exception {
     @Language("YAML") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/travis.schema.json"));
     doTestYaml(schema, """
@@ -904,6 +967,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
        Required: string. Actual: number.">2.10</warning>""");
   }
 
+  @Test
   public void testExpNumberNotation() {
     doTestYaml("""
                  {
@@ -915,6 +979,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
                  }""", "x: 2.99792458e8");
   }
 
+  @Test
   public void testTreatEmptyValueAsNull_1() {
     doTestYaml("""
                  {
@@ -926,6 +991,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
                  }""", "x:<warning descr=\"Schema validation: Incompatible types.\n Required: number. Actual: null.\"> </warning>");
   }
 
+  @Test
   public void testTreatEmptyValueAsNull_2() {
     doTestYaml("""
                  {
@@ -937,6 +1003,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
                  }""", "x: ");
   }
 
+  @Test
   public void testEmptyValueInArray() {
     doTestYaml("""
                  {
@@ -959,6 +1026,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
                    - a""");
   }
 
+  @Test
   public void testEmptyFile() {
     doTestYaml("""
                  {
@@ -973,6 +1041,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
                  }""", "<warning descr=\"Schema validation: Missing required property 'versionAsStringArray'\"></warning>");
   }
 
+  @Test
   public void testEmptyValueBetweenProps() {
     doTestYaml("""
                  {
@@ -1004,6 +1073,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
                    xxx: 0""");
   }
 
+  @Test
   public void testDeprecation() {
     doTestYaml("""
                  {"properties": {

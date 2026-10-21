@@ -40,6 +40,7 @@ import javax.xml.stream.XMLStreamConstants
 import javax.xml.stream.XMLStreamException
 import javax.xml.stream.XMLStreamReader
 import javax.xml.stream.events.XMLEvent
+import com.intellij.platform.pluginSystem.parser.impl.elements.moduleLoadingRuleValueFromXml
 import com.intellij.platform.pluginSystem.parser.impl.elements.ModuleLoadingRuleValue as LoadingRule
 
 internal fun readModuleDescriptor(
@@ -679,13 +680,9 @@ private fun readContentModuleAttributes(
     when (reader.getAttributeLocalName(i)) {
       PluginXmlConst.CONTENT_MODULE_NAME_ATTR -> name = internName(reader.getAttributeValue(i))
       PluginXmlConst.CONTENT_MODULE_LOADING_ATTR -> {
-        loadingRule = when (val loading = reader.getAttributeValue(i)) {
-          PluginXmlConst.CONTENT_MODULE_LOADING_OPTIONAL_VALUE -> LoadingRule.OPTIONAL
-          PluginXmlConst.CONTENT_MODULE_LOADING_REQUIRED_VALUE -> LoadingRule.REQUIRED
-          PluginXmlConst.CONTENT_MODULE_LOADING_EMBEDDED_VALUE -> LoadingRule.EMBEDDED
-          PluginXmlConst.CONTENT_MODULE_LOADING_ON_DEMAND_VALUE -> LoadingRule.ON_DEMAND
-          else -> error("Unexpected value '$loading' of 'loading' attribute at ${reader.location}")
-        }
+        val loading = reader.getAttributeValue(i)
+        loadingRule = moduleLoadingRuleValueFromXml(loading)
+                      ?: error("Unexpected value '$loading' of 'loading' attribute at ${reader.location}")
       }
       PluginXmlConst.CONTENT_MODULE_REQUIRED_IF_AVAILABLE_ATTR -> {
         requiredIfAvailable = getNullifiedAttributeValue(reader, i)

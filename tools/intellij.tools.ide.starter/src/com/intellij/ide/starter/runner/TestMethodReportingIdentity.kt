@@ -3,7 +3,7 @@ package com.intellij.ide.starter.runner
 import com.intellij.ide.starter.utils.ReportingPathUtils
 import com.intellij.ide.starter.utils.ReportingPathUtils.dirName
 import com.intellij.ide.starter.utils.escapeDotSegment
-import com.intellij.ide.starter.utils.flattened
+import com.intellij.ide.starter.utils.flattenedTestName
 import com.intellij.ide.starter.utils.namesWholeOf
 import org.jetbrains.annotations.ApiStatus
 
@@ -18,8 +18,8 @@ data class TestMethodReportingIdentity(
   /** What the method is called, one level at a time, as it was given: the class it is in and the method, each when it is known. */
   val rawSegments: List<String> = listOf(className, displayName).filter(String::isNotEmpty)
 
-  private val dirClassName: String? = className.takeUnless(String::isEmpty)?.flattened()
-  private val dirMethodName: String? = displayName.takeUnless(String::isEmpty)?.flattened()
+  private val dirClassName: String? = className.takeUnless(String::isEmpty)?.flattenedTestName()
+  private val dirMethodName: String? = displayName.takeUnless(String::isEmpty)?.flattenedTestName()
   private val dirSegments: List<String> = listOfNotNull(dirClassName, dirMethodName)
 
   /**

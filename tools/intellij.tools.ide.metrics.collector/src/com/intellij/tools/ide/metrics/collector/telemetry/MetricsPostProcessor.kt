@@ -17,7 +17,7 @@ class CombinedMetricsPostProcessor : MetricsPostProcessor {
       if (entry.value.size == 1) {
         val metric = entry.value.first()
         result.addAll(getAttributes(entry.key, metric))
-        if (metric.metric.id.name != TOTAL_TEST_TIMER_NAME) {
+        if (metric.metric.id.name !in TOTAL_TIMER_NAMES) {
           result.add(metric.metric)
         }
       }

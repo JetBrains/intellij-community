@@ -13,23 +13,32 @@ import org.jetbrains.annotations.NotNull;
 
 public final class JavaNonCodeSearchElementDescriptionProvider implements ElementDescriptionProvider {
   @Override
-  public String getElementDescription(final @NotNull PsiElement element, final @NotNull ElementDescriptionLocation location) {
-    if (!(location instanceof NonCodeSearchDescriptionLocation ncdLocation)) return null;
-    if (element instanceof PsiPackage pkg) {
-      return ncdLocation.isNonJava() ? pkg.getQualifiedName() : StringUtil.notNullize(pkg.getName());
-    }
-    if (element instanceof PsiClass cls) {
-      return ncdLocation.isNonJava() ? cls.getQualifiedName() : cls.getName();
-    }
-    if (element instanceof PsiMember member) {
-      String name = member.getName();
-      if (name == null) return null;
-      if (ncdLocation.isNonJava()) {
-        PsiClass containingClass = member.getContainingClass();
-        if (containingClass == null || containingClass.getQualifiedName() == null) return null;
-        return containingClass.getQualifiedName() + "." + name;
+  public String getElementDescription(@NotNull PsiElement element, @NotNull ElementDescriptionLocation location) {
+    if (location instanceof NonCodeSearchDescriptionLocation ncdLocation) {
+      switch (element) {
+        case PsiPackage pkg -> {
+          return ncdLocation.isNonJava() ? pkg.getQualifiedName() : StringUtil.notNullize(pkg.getName());
+        }
+        case PsiClass cls -> {
+          return ncdLocation.isNonJava() ? cls.getQualifiedName() : cls.getName();
+        }
+        case PsiMember member -> {
+          String name = member.getName();
+          if (name == null) {
+            return null;
+          }
+          if (ncdLocation.isNonJava()) {
+            PsiClass containingClass = member.getContainingClass();
+            if (containingClass == null || containingClass.getQualifiedName() == null) {
+              return null;
+            }
+            return containingClass.getQualifiedName() + "." + name;
+          }
+          return name;
+        }
+        default -> {
+        }
       }
-      return name;
     }
     return null;
   }

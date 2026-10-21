@@ -5,7 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.analysisignore.AnalysisIgnoreDefaults;
-import com.intellij.ide.analysisignore.AnalysisIgnoreDefaultsSettings;
+import com.intellij.ide.analysisignore.EditAnalysisIgnoreDefaultsActionKt;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
@@ -77,7 +77,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static com.intellij.ide.analysisignore.AnalysisIgnoreFileKt.ANALYSIS_IGNORE_FILE_NAME;
 import static com.intellij.openapi.util.Pair.pair;
 
 public final class FileTypeConfigurable implements SearchableConfigurable, Configurable.NoScroll, FileTypeSelectable {
@@ -93,8 +92,6 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private final Map<UserFileType<?>, UserFileType<?>> myOriginalToEditedMap = new HashMap<>();
   private FileType myFileTypeToPreselect;
   private IgnoredFilesAndFoldersPanel myIgnoreFilesPanel;
-  // The default exclusions of the .analysisignore files, or null while the defaults are off.
-  private @Nullable IgnoredFilesAndFoldersPanel myDefaultExclusionsPanel;
   private final FileTypeManagerImpl myFileTypeManager = (FileTypeManagerImpl)FileTypeManager.getInstance();
 
   @Override
@@ -158,15 +155,10 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     myIgnoreFilesPanel = new IgnoredFilesAndFoldersPanel();
     tabbedPane.add(FileTypesBundle.message("filetype.ignore.group"), myIgnoreFilesPanel);
 
-    if (AnalysisIgnoreDefaults.INSTANCE.areEnabled()) {
-      myDefaultExclusionsPanel = new IgnoredFilesAndFoldersPanel(
-        LangBundle.message("analysis.ignore.settings.default.exclusions.hint", ANALYSIS_IGNORE_FILE_NAME),
-        AnalysisIgnoreDefaults.INSTANCE::isSupportedLine,
-        LangBundle.message("analysis.ignore.settings.default.exclusions.error.unsupported"),
-        false);
-      tabbedPane.add(LangBundle.message("analysis.ignore.settings.default.exclusions.tab"), myDefaultExclusionsPanel);
+    if (!AnalysisIgnoreDefaults.INSTANCE.areEnabled()) {
+      return tabbedPane;
     }
-    return tabbedPane;
+    return EditAnalysisIgnoreDefaultsActionKt.addEditAnalysisIgnoreDefaultsLink(tabbedPane);
   }
 
   private void updateAssociateMessageLabel(@NotNull @Nls String message, @Nullable Icon icon) {
@@ -198,9 +190,6 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   @Override
   public void apply() {
     copyTypeMap();
-    if (myDefaultExclusionsPanel != null && isDefaultExclusionsModified()) {
-      AnalysisIgnoreDefaultsSettings.getInstance().setLines(myDefaultExclusionsPanel.getPatterns());
-    }
 
     ApplicationManager.getApplication().runWriteAction(() -> {
       if (!myFileTypeManager.isIgnoredFilesListEqualToCurrent(myIgnoreFilesPanel.getValues())) {
@@ -233,9 +222,6 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     updateExtensionList();
 
     myIgnoreFilesPanel.setValues(myFileTypeManager.getIgnoredFilesList());
-    if (myDefaultExclusionsPanel != null) {
-      myDefaultExclusionsPanel.setPatterns(AnalysisIgnoreDefaultsSettings.getInstance().getLines());
-    }
     if (myFileTypeToPreselect != null) {
       myRecognizedFileType.selectFileType(myFileTypeToPreselect);
     }
@@ -246,19 +232,13 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
   @Override
   public boolean isModified() {
-    if (!myFileTypeManager.isIgnoredFilesListEqualToCurrent(myIgnoreFilesPanel.getValues()) || isDefaultExclusionsModified()) {
+    if (!myFileTypeManager.isIgnoredFilesListEqualToCurrent(myIgnoreFilesPanel.getValues())) {
       return true;
     }
     return !myTempPatternsTable.equals(myFileTypeManager.getExtensionMap()) ||
            !myTempFileTypes.equals(getRegisteredFilesTypes()) ||
            !myOriginalToEditedMap.isEmpty() ||
            !myTempTemplateDataLanguages.equals(TemplateDataLanguagePatterns.getInstance().getAssocTable());
-  }
-
-  /** The panel sorts the lines, so the order of the lines does not count. */
-  private boolean isDefaultExclusionsModified() {
-    return myDefaultExclusionsPanel != null &&
-           !new HashSet<>(myDefaultExclusionsPanel.getPatterns()).equals(new HashSet<>(AnalysisIgnoreDefaultsSettings.getInstance().getLines()));
   }
 
   @Override

@@ -198,6 +198,7 @@ internal class McpSessionHandler(
     }
 
     val desiredNames = newTools.mapTo(mutableSetOf()) { it.descriptor.name }
+    warnOnUnreachableRouterTools(desiredNames)
 
     val toolsToRemove = registeredToolsStrippedMode.entries
       .filter { (name, stripped) -> name !in desiredNames || stripped != projectKnownUpfront }
@@ -216,6 +217,15 @@ internal class McpSessionHandler(
     }
 
     lastAppliedToolsState = newState
+  }
+
+  /** Warns when the session omits the router tool, but [routerToolsProvider] has a tool that only the router can reach. */
+  private fun warnOnUnreachableRouterTools(directToolNames: Set<String>) {
+    if (!sessionOptions.omitsUnusedRouterTool || ROUTER_TOOL_NAME in directToolNames) return
+    val unreachableToolNames = routerToolsProvider.mcpTools.value.map { it.descriptor.name }.filter { it !in directToolNames }
+    if (unreachableToolNames.isNotEmpty()) {
+      logger.warn("The session lists no $ROUTER_TOOL_NAME, so the agent cannot reach these router tools: $unreachableToolNames")
+    }
   }
 
   /**

@@ -433,7 +433,8 @@ internal fun buildProduct(request: BuildRequest, createBuildContext: (buildDir: 
             fork("generate runtime repository") {
               val contentReport = ContentReport(
                 platform = platformFileEntries,
-                bundledPlugins = pluginDistributionEntries.pluginEntries,
+                // the synthetic test plugin has no module in the project
+                bundledPlugins = pluginDistributionEntries.pluginEntries.filter { it.mainModule != syntheticTestPluginModuleName() },
                 nonBundledPlugins = emptyList()
               )
               checkNotNull(pluginClasspathJob).await() //this is necessary to have full data in DescriptorCacheContainer
@@ -591,8 +592,9 @@ private fun prepareDevRunDir(request: BuildRequest): Path {
 
 /**
  * Writes `build.txt`, `bin/idea.properties`, the vmoptions file and `bin/product-info.json` of [context] for [os] and
- * [arch] into [runDir], and returns the files it wrote. A complete assembly writes these files, and
- * [renderSplitPlatformResources] writes them for the launch model test.
+ * [arch] into [runDir], and returns the files it wrote. A product with an embedded frontend also gets the vmoptions
+ * file of the frontend in `bin`. A complete assembly writes these files, and [renderSplitPlatformResources] writes them
+ * for the launch model test.
  */
 internal fun writePlatformResourceFiles(context: BuildContext, os: OsFamily, arch: JvmArchitecture, runDir: Path): List<Path> {
   val result = ArrayList<Path>()
@@ -607,6 +609,7 @@ internal fun writePlatformResourceFiles(context: BuildContext, os: OsFamily, arc
   val osDistributionBuilder = getOsDistributionBuilder(os = os, libcImpl = LibcImpl.current(os), context = context)
   if (osDistributionBuilder != null) {
     result.add(osDistributionBuilder.writeVmOptions(binDir))
+    osDistributionBuilder.writeEmbeddedFrontendVmOptions(binDir)?.let(result::add)
     // the file cannot be placed right into the distribution as it throws off home dir detection in `PathManager#getHomeDirFor`
     val productInfoDir = context.paths.tempDir.resolve("product-info").createDirectories()
     val productInfoFile = osDistributionBuilder.writeProductInfoFile(productInfoDir, arch)
@@ -980,7 +983,8 @@ private fun generateRuntimeModuleRepositoryFragment(
     generateRuntimeModuleRepositoryForDevBuild(
       contentReport = ContentReport(
         platform = platformEntries,
-        bundledPlugins = pluginEntries,
+        // the synthetic test plugin has no module in the project
+        bundledPlugins = pluginEntries.filter { it.mainModule != syntheticTestPluginModuleName() },
         nonBundledPlugins = emptyList(),
       ),
       targetDirectory = runDir,

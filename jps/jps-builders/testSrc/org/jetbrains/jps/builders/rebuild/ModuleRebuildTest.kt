@@ -20,8 +20,10 @@ import com.intellij.util.io.directoryContent
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.util.JpsPathUtil
+import org.junit.jupiter.api.Test
 
 class ModuleRebuildTest: JpsRebuildTestCase() {
+  @Test
   fun testModuleCycle() {
     doTest("moduleCycle/moduleCycle.ipr", directoryContent {
         dir("production") {
@@ -38,6 +40,7 @@ class ModuleRebuildTest: JpsRebuildTestCase() {
     })
   }
 
+  @Test
   fun testOverlappingSourceRoots() {
     doTest("overlappingSourceRoots/overlappingSourceRoots.ipr", directoryContent {
         dir("production") {
@@ -56,6 +59,7 @@ class ModuleRebuildTest: JpsRebuildTestCase() {
     })
   }
 
+  @Test
   fun testContentRootUnderExcluded() {
     doTest("contentRootUnderExcluded/contentRootUnderExcluded.ipr", directoryContent {
       dir("production") {
@@ -67,6 +71,7 @@ class ModuleRebuildTest: JpsRebuildTestCase() {
     })
   }
 
+  @Test
   fun testSourceRootUnderExcluded() {
     doTest("sourceRootUnderExcluded/sourceRootUnderExcluded.ipr", directoryContent {
       dir("production") {
@@ -78,6 +83,7 @@ class ModuleRebuildTest: JpsRebuildTestCase() {
     })
   }
 
+  @Test
   fun testResourceCopying() {
     doTest("resourceCopying/resourceCopying.ipr", directoryContent {
       dir("production") {
@@ -98,6 +104,7 @@ class ModuleRebuildTest: JpsRebuildTestCase() {
     })
   }
 
+  @Test
   fun testResourceRootWithRelativeOutputPath() {
     val m = addModule("m")
     val res = PathUtil.getParentPath(createFile("res/a.txt", "42"))

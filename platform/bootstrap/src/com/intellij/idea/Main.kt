@@ -5,6 +5,7 @@
 package com.intellij.idea
 
 import com.intellij.DynamicBundle
+import com.intellij.concurrency.CoroutineDefaultDispatcherSetup
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.StartUpMeasurer
@@ -83,6 +84,8 @@ internal fun mainImpl(
   try {
     PathManager.loadProperties()
     addBootstrapTiming("properties loading", startupTimings)
+    // after `idea.properties` is loaded and before the first access to `Dispatchers.Default`, because the scheduler reads the pool size once
+    CoroutineDefaultDispatcherSetup.setupMinPoolSize()
     PathManager.customizePaths(args)
     addBootstrapTiming("customizePaths", startupTimings)
 

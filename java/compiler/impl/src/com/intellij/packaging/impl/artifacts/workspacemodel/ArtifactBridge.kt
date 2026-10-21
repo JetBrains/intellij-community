@@ -15,6 +15,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.packaging.artifacts.ArtifactListener
+import com.intellij.packaging.artifacts.ArtifactManager
 import com.intellij.packaging.artifacts.ArtifactProperties
 import com.intellij.packaging.artifacts.ArtifactPropertiesProvider
 import com.intellij.packaging.artifacts.ArtifactType
@@ -25,8 +26,6 @@ import com.intellij.packaging.impl.artifacts.InvalidArtifactType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
 import com.intellij.packaging.impl.artifacts.workspacemodel.packaging.elements
 import com.intellij.platform.backend.workspace.WorkspaceModel
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.diagnostic.telemetry.Compiler
@@ -58,29 +57,7 @@ open class ArtifactBridge(
 ) : ModifiableArtifact, UserDataHolderBase() {
 
   init {
-    project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
-      override fun beforeChanged(event: VersionedStorageChange) = beforeChangedMs.addMeasuredTime {
-        event.getChanges(ArtifactEntity::class.java).asSequence().filterIsInstance<EntityChange.Removed<ArtifactEntity>>().forEach {
-          val resolvedArtifactId = artifactId
-
-          if (it.oldEntity.symbolicId != resolvedArtifactId) return@forEach
-
-          // Artifact may be "re-added" with the same id
-          // In this case two artifact bridges exists with the same ArtifactId: one for removed artifact and one for newly created
-          // We should make sure that we "disable" removed artifact bridge
-          if (resolvedArtifactId in event.storageAfter
-              && event.storageBefore.artifactsMap.getDataByEntity(it.oldEntity) != this@ArtifactBridge
-              && event.storageBefore.artifactsMap.getDataByEntity(it.oldEntity) != originalArtifact) {
-            return@forEach
-          }
-
-          // We inject a builder instead of store because requesting of packaging elements adds new bridges to this builder.
-          // If case of storage here, the new bridges will be added to the store.
-          entityStorage = VersionedEntityStorageOnBuilder(event.storageBefore.toBuilder())
-          assert(resolvedArtifactId in entityStorage.base) { "Cannot resolve artifact $resolvedArtifactId." }
-        }
-      }
-    })
+    (ArtifactManager.getInstance(project) as ArtifactManagerBridge).registerBridge(this)
   }
 
   private val diffOrNull: MutableEntityStorage?
@@ -293,7 +270,44 @@ open class ArtifactBridge(
     return "artifact:${artifactId.name}"
   }
 
+  /**
+   * Switches this bridge to a builder of [VersionedStorageChange.storageBefore] when [removed] holds its artifact.
+   * So the bridge stays usable after the removal.
+   */
+  internal fun beforeArtifactsRemoved(event: VersionedStorageChange, removed: List<EntityChange.Removed<ArtifactEntity>>) {
+    for (change in removed) {
+      val resolvedArtifactId = artifactId
+
+      if (change.oldEntity.symbolicId != resolvedArtifactId) continue
+
+      // Artifact may be "re-added" with the same id
+      // In this case two artifact bridges exists with the same ArtifactId: one for removed artifact and one for newly created
+      // We should make sure that we "disable" removed artifact bridge
+      if (resolvedArtifactId in event.storageAfter
+          && event.storageBefore.artifactsMap.getDataByEntity(change.oldEntity) != this
+          && event.storageBefore.artifactsMap.getDataByEntity(change.oldEntity) != originalArtifact) {
+        continue
+      }
+
+      // We inject a builder instead of store because requesting of packaging elements adds new bridges to this builder.
+      // If case of storage here, the new bridges will be added to the store.
+      entityStorage = VersionedEntityStorageOnBuilder(event.storageBefore.toBuilder())
+      assert(resolvedArtifactId in entityStorage.base) { "Cannot resolve artifact $resolvedArtifactId." }
+    }
+  }
+
   companion object {
+    /**
+     * Calls [beforeArtifactsRemoved] on each of [bridges] when [event] removes an artifact.
+     */
+    internal fun beforeChanged(event: VersionedStorageChange, bridges: Collection<ArtifactBridge>) = beforeChangedMs.addMeasuredTime {
+      val removed = event.getChanges(ArtifactEntity::class.java).filterIsInstance<EntityChange.Removed<ArtifactEntity>>()
+      if (removed.isEmpty()) return@addMeasuredTime
+      for (bridge in bridges) {
+        bridge.beforeArtifactsRemoved(event, removed)
+      }
+    }
+
     internal fun resetProperties(id: ArtifactId, myDiff: MutableEntityStorage?) {
       // We process only artifact bridges with builder because this logic is applied to the new created artifacts only.
       // If the artifact entity already exists, we suppose that this artifact already has all custom properties filled.

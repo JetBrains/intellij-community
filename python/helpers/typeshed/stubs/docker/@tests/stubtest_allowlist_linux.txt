@@ -1,3 +1,0 @@
-# the named pipe transport requires pywin32, which is only installed on Windows
-docker.transport.npipeconn
-docker.transport.npipesocket

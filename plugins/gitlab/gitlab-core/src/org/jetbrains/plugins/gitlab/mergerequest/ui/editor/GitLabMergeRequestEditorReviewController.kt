@@ -48,6 +48,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestParsedChanges
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabProjectViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.editor.GitLabMergeRequestEditorReviewViewModel.FileReviewState
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -81,7 +82,7 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
           reviewVm?.getFileStateFlow(file)?.collectScoped { fileState ->
             when (fileState) {
               is FileReviewState.ReviewEnabled -> showReview(reviewVm, fileState.vm, editor)
-              FileReviewState.ReviewDisabledEmptyDiff -> showEmptyDiffNotification(reviewVm, editor)
+              is FileReviewState.ReviewDisabled -> showDiffUnavailableWarning(reviewVm, editor, fileState.reason)
               FileReviewState.NotInReview -> return@collectScoped
             }
           }
@@ -113,14 +114,22 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
     }
   }
 
-  private suspend fun showEmptyDiffNotification(reviewVm: GitLabMergeRequestEditorReviewViewModel, editor: Editor): Nothing {
+  private suspend fun showDiffUnavailableWarning(
+    reviewVm: GitLabMergeRequestEditorReviewViewModel,
+    editor: Editor,
+    reason: GitLabMergeRequestParsedChanges.EmptyPatchReason,
+  ): Nothing {
     val actionManager = serviceAsync<ActionManager>()
     ReviewInEditorUtil.showReviewToolbarWithWarning(
       reviewVm, editor,
       actionManager.getAction("CodeReview.PreviousComment"),
       actionManager.getAction("CodeReview.NextComment")
     ) {
-      GitLabBundle.message("merge.request.editor.empty.patch.warning")
+      when (reason) {
+        GitLabMergeRequestParsedChanges.EmptyPatchReason.TOO_LARGE -> GitLabBundle.message("merge.request.editor.too.large.warning")
+        GitLabMergeRequestParsedChanges.EmptyPatchReason.COLLAPSED_NO_LOCAL -> GitLabBundle.message("merge.request.editor.collapsed.warning")
+        GitLabMergeRequestParsedChanges.EmptyPatchReason.UNKNOWN -> GitLabBundle.message("merge.request.editor.empty.patch.warning")
+      }
     }
   }
 

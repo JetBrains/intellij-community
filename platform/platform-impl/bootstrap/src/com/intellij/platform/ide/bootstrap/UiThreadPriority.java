@@ -1,9 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap;
 
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.system.OS;
-import com.intellij.util.system.WindowsKernel32;
 import com.intellij.util.system.WindowsSystemLibraries;
+
 import javax.swing.SwingUtilities;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -12,14 +13,34 @@ import java.lang.foreign.Linker;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.SymbolLookup;
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
 
 final class UiThreadPriority {
+  /**
+   * Prepares native calls on a background thread and schedules the priority change on the EDT.
+   */
+  @RequiresBackgroundThread
   @SuppressWarnings("EnumSwitchStatementWhichMissesCases")
   static void adjust() {
     var os = OS.CURRENT;
+    try {
+      switch (os) {
+        case Windows -> {
+          MethodHandles.lookup().ensureInitialized(WindowsThread.class);
+        }
+        case macOS -> {
+          MethodHandles.lookup().ensureInitialized(DarwinPThread.class);
+        }
+      }
+    }
+    catch (Throwable t) {
+      logError(t);
+      return;
+    }
+
     SwingUtilities.invokeLater(() -> {
       try {
         switch (os) {
@@ -29,11 +50,15 @@ final class UiThreadPriority {
         }
       }
       catch (Throwable t) {
-        var buf = new StringWriter();
-        t.printStackTrace(new PrintWriter(buf));
-        logError(buf.toString());
+        logError(t);
       }
     });
+  }
+
+  private static void logError(Throwable t) {
+    var buf = new StringWriter();
+    t.printStackTrace(new PrintWriter(buf));
+    logError(buf.toString());
   }
 
   /**

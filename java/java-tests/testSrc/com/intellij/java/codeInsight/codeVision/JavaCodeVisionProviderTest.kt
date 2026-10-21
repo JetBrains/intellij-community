@@ -3,11 +3,29 @@ package com.intellij.java.codeInsight.codeVision
 
 import com.intellij.codeInsight.daemon.impl.JavaInheritorsCodeVisionProvider
 import com.intellij.codeInsight.daemon.impl.JavaReferencesCodeVisionProvider
-import com.intellij.testFramework.utils.codeVision.CodeVisionTestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.utils.codeVision.CodeVisionTestUtil
 import org.intellij.lang.annotations.Language
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class JavaCodeVisionProviderTest : CodeVisionTestCase() {
-  fun testMethodUsages() = doTest("""
+@TestApplication
+class JavaCodeVisionProviderTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+
+  @BeforeEach
+  fun setUp() {
+    CodeVisionTestUtil.setUp(myFixture)
+  }
+
+  @Test
+  fun testMethodUsages(): Unit = doTest("""
     class A { /*<# [no usages] #>*/
     
       void foo() { /*<# [1 usage] #>*/
@@ -19,7 +37,8 @@ class JavaCodeVisionProviderTest : CodeVisionTestCase() {
     }
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
 
-  fun testClassInheritors() = doTest("""
+  @Test
+  fun testClassInheritors(): Unit = doTest("""
       class A { /*<# [no usages] #>*/
       
         class B {} /*<# [2 usages   2 inheritors] #>*/
@@ -30,7 +49,8 @@ class JavaCodeVisionProviderTest : CodeVisionTestCase() {
       }
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId, JavaInheritorsCodeVisionProvider().groupId)
 
-  fun testInterfaceInheritors() = doTest("""
+  @Test
+  fun testInterfaceInheritors(): Unit = doTest("""
       class A { /*<# [no usages] #>*/
         interface B {} /*<# [1 usage   1 implementation] #>*/
         
@@ -38,7 +58,8 @@ class JavaCodeVisionProviderTest : CodeVisionTestCase() {
       }
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId, JavaInheritorsCodeVisionProvider().groupId)
 
-  fun testMethodOverrides() = doTest("""
+  @Test
+  fun testMethodOverrides(): Unit = doTest("""
       class A { /*<# [1 usage   1 inheritor] #>*/
         void foo(){} /*<# [no usages   1 override] #>*/
       }
@@ -48,7 +69,8 @@ class JavaCodeVisionProviderTest : CodeVisionTestCase() {
       }
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId, JavaInheritorsCodeVisionProvider().groupId)
 
-  fun testDefaultMethodOverrides() = doTest("""
+  @Test
+  fun testDefaultMethodOverrides(): Unit = doTest("""
       interface A { /*<# [2 usages   2 implementations] #>*/
         default void foo(){} /*<# [no usages   2 overrides] #>*/
       }
@@ -62,7 +84,8 @@ class JavaCodeVisionProviderTest : CodeVisionTestCase() {
       }
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId, JavaInheritorsCodeVisionProvider().groupId)
 
-  fun testAbstractMethodImplementations() = doTest("""
+  @Test
+  fun testAbstractMethodImplementations(): Unit = doTest("""
       interface A {/*<# [2 usages   2 implementations] #>*/
         void foo();/*<# [no usages   2 implementations] #>*/
       }
@@ -76,7 +99,8 @@ class JavaCodeVisionProviderTest : CodeVisionTestCase() {
       }
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId, JavaInheritorsCodeVisionProvider().groupId)
 
-  fun testEnumMembers() = doTest("""
+  @Test
+  fun testEnumMembers(): Unit = doTest("""
       class A { /*<# [no usages] #>*/
       
         enum E { /*<# [6 usages] #>*/
@@ -91,7 +115,8 @@ class JavaCodeVisionProviderTest : CodeVisionTestCase() {
       }
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
 
-  fun testEnumConstructor() = doTest("""
+  @Test
+  fun testEnumConstructor(): Unit = doTest("""
     enum LocationType {/*<# [no usages] #>*/
         FOREST("Forest"),/*<# [no usages] #>*/
         PLAIN("Plain"),/*<# [no usages] #>*/
@@ -110,7 +135,8 @@ class JavaCodeVisionProviderTest : CodeVisionTestCase() {
     }
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
 
-  fun testClassAtZeroOffset() = doTest("""      
+  @Test
+  fun testClassAtZeroOffset(): Unit = doTest("""      
       class A { /*<# [no usages] #>*/
         enum E { /*<# [6 usages] #>*/
           E1, E2, E3, E4 /*<# [1 usage] #>*/
@@ -124,7 +150,8 @@ class JavaCodeVisionProviderTest : CodeVisionTestCase() {
       }
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
 
-  fun testClassAfterPackageStatement() = doTest("""
+  @Test
+  fun testClassAfterPackageStatement(): Unit = doTest("""
       package com.company;
       
       class A{} /*<# [1 usage] #>*/
@@ -137,7 +164,8 @@ class JavaCodeVisionProviderTest : CodeVisionTestCase() {
       }
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
 
-  fun testFieldOnFirstLineOfInterfaceHasLenses() = doTest("""
+  @Test
+  fun testFieldOnFirstLineOfInterfaceHasLenses(): Unit = doTest("""
       package codeLenses;
       
       public interface Interface { /*<# [no usages] #>*/
@@ -148,6 +176,6 @@ class JavaCodeVisionProviderTest : CodeVisionTestCase() {
     """.trimIndent(), JavaReferencesCodeVisionProvider().groupId)
 
   private fun doTest(@Language("JAVA") text: String, vararg enabledProviderGroupIds: String) {
-    testProviders(text, "test.java", *enabledProviderGroupIds)
+    CodeVisionTestUtil.testProviders(myFixture, text, "test.java", *enabledProviderGroupIds)
   }
 }

@@ -15,37 +15,56 @@
  */
 package com.intellij.xml.structureView;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.smartTree.TreeStructureUtil;
 import com.intellij.lang.html.structureView.Html5SectionsNodeProvider;
-import com.intellij.testFramework.FileStructureTestBase;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.FileStructureTestFixture;
+import com.intellij.testFramework.FileStructureTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
-public class HtmlFileStructureTest extends FileStructureTestBase {
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+
+@TestApplication
+public class HtmlFileStructureTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+
+  private CodeInsightTestFixture myFixture;
+  private FileStructureTestFixture myPopupFixture;
+  private String myTestMethodName;
   private boolean myHtml5OutlineModeDefault;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp(TestInfo testInfo) {
+    myFixture = codeInsightFixture.get();
+    myFixture.setTestDataPath(PlatformTestUtil.getCommunityPath() + "/xml/tests/testData/structureView/");
+    myPopupFixture = new FileStructureTestFixture(myFixture);
+    myTestMethodName = testInfo.getTestMethod().orElseThrow().getName();
     myHtml5OutlineModeDefault = PropertiesComponent.getInstance().getBoolean(getHtml5OutlineModePropertyName());
   }
 
-  @Override
-  protected void configureDefault() {
-    super.configureDefault();
-    setHtml5OutlineMode(true);
-  }
-
-  @Override
-  public void tearDown() throws Exception {
+  @AfterEach
+  void tearDown() {
     try {
       PropertiesComponent.getInstance().setValue(getHtml5OutlineModePropertyName(), myHtml5OutlineModeDefault);
     }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
     finally {
-      super.tearDown();
+      EdtTestUtil.runInEdtAndWait(() -> Disposer.dispose(myPopupFixture));
     }
   }
 
@@ -53,19 +72,12 @@ public class HtmlFileStructureTest extends FileStructureTestBase {
     return TreeStructureUtil.getPropertyName(Html5SectionsNodeProvider.HTML5_OUTLINE_PROVIDER_PROPERTY);
   }
 
-  @Override
-  protected String getFileExtension() {
-    return "html";
-  }
-
-  @Override
-  protected String getBasePath() {
-    return "/xml/tests/testData/structureView/";
-  }
-
-  @Override
-  protected boolean isCommunity() {
-    return true;
+  private void checkTree() {
+    FileStructureTestUtil.configureDefault(myFixture, myTestMethodName, "html");
+    EdtTestUtil.runInEdtAndWait(() -> {
+      setHtml5OutlineMode(true);
+      FileStructureTestUtil.checkConfiguredTree(myFixture, myPopupFixture, myTestMethodName, null, true);
+    });
   }
 
   public void setHtml5OutlineMode(boolean enabled) {
@@ -73,9 +85,9 @@ public class HtmlFileStructureTest extends FileStructureTestBase {
     myPopupFixture.updateAndSelectCurrent();
   }
 
-  public void testEmpty() {checkTree();}
-  public void testSimple() {checkTree();}
-  public void testNoSectioningRoot() {checkTree();}
-  public void testImplicitSections() {checkTree();}
-  public void testMultipleRootTags() {checkTree();}
+  @Test public void testEmpty() {checkTree();}
+  @Test public void testSimple() {checkTree();}
+  @Test public void testNoSectioningRoot() {checkTree();}
+  @Test public void testImplicitSections() {checkTree();}
+  @Test public void testMultipleRootTags() {checkTree();}
 }

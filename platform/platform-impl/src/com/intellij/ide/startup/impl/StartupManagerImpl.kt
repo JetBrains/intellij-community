@@ -23,6 +23,7 @@ import com.intellij.openapi.application.currentThreadContextModality
 import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
@@ -47,8 +48,10 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.progress.withBackgroundProgress
@@ -251,7 +254,8 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   }
 
   /**
-   * Waits until the frame content of a project with [ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES] first paints.
+   * Waits until the frame content of a project with [ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES] first paints,
+   * and the tool windows that its frame registers after the paint are registered.
    * The wait stops after [FRAME_CONTENT_PAINTED_TIMEOUT].
    * A project without the capability does not wait.
    */
@@ -263,6 +267,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
     withContext(tracer.span("post-startup activities waiting for the frame content")) {
       withTimeoutOrNull(FRAME_CONTENT_PAINTED_TIMEOUT) {
         project.getOrCreateFrameContentPaintedDeferred().join()
+        (project.serviceIfCreated<ToolWindowManager>() as? ToolWindowManagerImpl)?.awaitToolWindowsRegistered()
       }
     }
   }

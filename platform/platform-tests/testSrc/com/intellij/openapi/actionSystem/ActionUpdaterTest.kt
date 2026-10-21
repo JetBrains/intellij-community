@@ -24,6 +24,7 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.keymap.impl.ActionProcessor
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Key
@@ -280,6 +281,45 @@ class ActionUpdaterTest {
     assertTrue(millis > 100, "The update must call getChildren and take more than 100 ms, actual $millis ms (jobCompleted=$jobCompleted)")
     assertTrue(millis < 500, "The update must not take much more than ~100 ms, actual $millis ms (jobCompleted=$jobCompleted)")
     assertTrue(jobCompleted, "The update job must be synchronously completed by fast-track")
+    assertEquals(1, actions.size)
+  }
+
+  @Test
+  fun testLeftFastTrackReleasesEdt() = timeoutRunBlocking {
+    // scenario: call expandGroup with 3 s fast-track; getChildren leaves the fast track, then takes 1 s
+    // expected: the EDT stops the wait soon, and the update completes asynchronously
+    val fastTrack = Registry.get("actionSystem.update.actions.async.fast-track.timeout.ms")
+    val prevFastTrack = fastTrack.asInteger()
+    val childrenReturned = CompletableDeferred<Unit>()
+    var waitMillis = 0L
+    var jobCompleted = true
+    val actions = try {
+      fastTrack.setValue(3_000)
+      val group = object : ActionGroup() {
+        override fun getChildren(e: AnActionEvent?): Array<AnAction> {
+          runBlockingCancellable { Utils.interruptFastTrack() }
+          awaitWithCheckCanceled(1_000)
+          childrenReturned.complete(Unit)
+          return arrayOf(EmptyAction.createEmptyAction("", null, true))
+        }
+      }
+      withContext(Dispatchers.EDT) {
+        val start = System.nanoTime()
+        val result = async(start = CoroutineStart.UNDISPATCHED) {
+          Utils.expandActionGroupSuspend(group, PresentationFactory(), DataContext.EMPTY_CONTEXT,
+                                         ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = true)
+        }
+        waitMillis = TimeoutUtil.getDurationMillis(start)
+        jobCompleted = result.isCompleted
+        result.await()
+      }
+    }
+    finally {
+      fastTrack.setValue(prevFastTrack)
+    }
+    assertFalse(jobCompleted, "The update must continue asynchronously after the fast track is left")
+    assertTrue(waitMillis < 500, "The EDT must stop the wait soon after the fast track is left, actual $waitMillis ms")
+    assertTrue(childrenReturned.isCompleted, "The update must call getChildren")
     assertEquals(1, actions.size)
   }
 

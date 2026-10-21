@@ -3,6 +3,7 @@ package com.intellij.pycharm.community.ide.impl.configuration.interpreter
 
 import com.intellij.python.sdk.backend.impl.presentation
 import com.intellij.python.sdk.backend.impl.PythonInterpreterPresentation
+import com.intellij.python.sdk.backend.impl.brokenSdkPresentation
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.icons.icon
@@ -33,7 +34,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.IdeBorderFactory
@@ -53,6 +54,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.insets
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.Result
 import com.jetbrains.python.configuration.PyInterpreterEditDialogLauncher
 import com.jetbrains.python.configuration.PyInterpreterPathsDialogLauncher
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
@@ -85,6 +87,7 @@ import javax.swing.ListSelectionModel
 import javax.swing.SwingUtilities
 import javax.swing.event.DocumentEvent
 import javax.swing.event.HyperlinkEvent
+import org.jetbrains.annotations.Nls
 
 /**
  * "Python | All Interpreters" settings page introduced by the interpreter settings redesign (PY-89840).
@@ -92,7 +95,7 @@ import javax.swing.event.HyperlinkEvent
 internal class PyAllInterpretersConfigurable(private val project: Project) : SearchableConfigurable {
 
   private val projectSdksModel = ProjectSdksModel()
-  private val listModel = CollectionListModel<PythonInterpreter>()
+  private val listModel = CollectionListModel<PyInterpreterRow>()
   private val rowActionsState = RowActionsState()
 
   /**
@@ -101,9 +104,9 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
    * own. Toolbar actions can therefore declare `ActionUpdateThread.BGT` — the reviewer-requested
    * default — without touching Swing state during `update`.
    */
-  @Volatile private var currentlySelectedInterpreter: PythonInterpreter? = null
+  @Volatile private var currentlySelectedRow: PyInterpreterRow? = null
 
-  private val interpretersList: JBList<PythonInterpreter> = object : JBList<PythonInterpreter>(listModel) {
+  private val interpretersList: JBList<PyInterpreterRow> = object : JBList<PyInterpreterRow>(listModel) {
     // Track the viewport width so long paths do not push the list wider than its scroll pane and cause the
     // parent Settings row to expand and clip content when the filter/search changes the row count.
     override fun getScrollableTracksViewportWidth(): Boolean = true
@@ -114,14 +117,14 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     selectionBackground = background
     visibleRowCount = DEFAULT_VISIBLE_ROWS
     ListHoverListener.DEFAULT.addTo(this)
-    addListSelectionListener { currentlySelectedInterpreter = selectedValue }
+    addListSelectionListener { currentlySelectedRow = selectedValue }
     val handler = RowActionsMouseHandler(this, rowActionsState, ::copyInterpreterPath)
     addMouseListener(handler)
     addMouseMotionListener(handler)
   }
 
   /** Snapshot of interpreters after the "hide other projects" filter, before the search-field filter. */
-  private var currentSnapshot: List<PythonInterpreter> = emptyList()
+  private var currentSnapshot: List<PyInterpreterRow> = emptyList()
   private var hideOthers: Boolean = true
   private var searchQuery: String = ""
 
@@ -191,8 +194,8 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
   }
 
   private fun buildToolbarAndList(): JComponent {
+    // No Add here: every interpreter belongs to a PyProject, and this page has none. Add one from a module.
     val actionGroup = DefaultActionGroup().apply {
-      add(AddInterpreterAction())
       add(RemoveInterpreterAction())
       addSeparator()
       add(HideOthersToggleAction())
@@ -270,12 +273,18 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
   }
 
   private fun reloadList(preferredSelection: Sdk? = null) {
-    val previouslySelected = (preferredSelection?.name ?: selectedInterpreter()?.sdk?.name)?.let(::PySdkName)
+    val previouslySelected = (preferredSelection?.name ?: selectedRow()?.sdk?.name)?.let(::PySdkName)
     val allEditable = project.asModuleOrProject.filterAssignablePythonSdks(projectSdksModel.sdks.toList())
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
-      val interpreters = allEditable.map { it.pythonInterpreterAsync() }
+      // A broken SDK names no interpreter, so it gets a row that says why, and the user can remove it.
+      val rows = allEditable.map { sdk ->
+        when (val result = sdk.pythonInterpreterResultAsync()) {
+          is Result.Success -> PyInterpreterRow.Interpreter(result.result)
+          is Result.Failure -> PyInterpreterRow.Broken(sdk, result.error.message)
+        }
+      }
       val moduleBasePaths = project.getPyProjects().mapTo(HashSet()) { it.baseDir }
-      val visible = filterInterpreters(interpreters, hideOthers, moduleBasePaths)
+      val visible = filterInterpreters(rows, hideOthers, moduleBasePaths)
       withContext(Dispatchers.EDT) {
         currentSnapshot = visible
         applySearchFilter()
@@ -290,44 +299,16 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     listModel.replaceAll(filterBySearchQuery(currentSnapshot, searchQuery))
   }
 
-  /** BGT-safe. See [currentlySelectedInterpreter]. */
-  private fun selectedInterpreter(): PythonInterpreter? = currentlySelectedInterpreter
+  /** BGT-safe. See [currentlySelectedRow]. */
+  private fun selectedRow(): PyInterpreterRow? = currentlySelectedRow
 
-  private inner class AddInterpreterAction : DumbAwareAction(
-    PyBundle.messagePointer("python.interpreters.add.interpreter.action.text"),
-    Presentation.NULL_STRING,
-    AllIcons.General.Add,
-  ) {
-    override fun actionPerformed(e: AnActionEvent) {
-      val group = DefaultActionGroup().apply {
-        addAll(collectAddInterpreterActions(project.asModuleOrProject) { newSdk ->
-          // Wizard already committed `newSdk` to `ProjectJdkTable`. Re-reading `projectSdksModel`
-          // from the live table picks it up (with its `PythonSdkUpdater`-filled paths) without
-          // going through the add-time clone that caused PY-92599.
-          projectSdksModel.reset(project)
-          reloadList(preferredSelection = newSdk)
-        })
-        // Optional third-party extras (AI Assistant / Toolbox / others). The group is declared
-        // empty in `intellij.python.community.impl.xml`; other plugins inject their own
-        // "Add interpreter" actions via `<add-to-group group-id="Python.NewInterpreter.Extra">`.
-        // `null` = no plugin extended it → nothing to add, popup renders without the extras.
-        ActionManager.getInstance().getAction("Python.NewInterpreter.Extra")?.let { add(it) }
-      }
-      val popup = JBPopupFactory.getInstance().createActionGroupPopup(
-        null, group, e.dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false,
-      )
-      val source = e.inputEvent?.component
-      if (source != null) popup.showUnderneathOf(source)
-      else popup.showInBestPositionFor(e.dataContext)
-    }
-
-    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-  }
+  /** The interpreter of the selected row, or `null` for no selection or a broken SDK. BGT-safe. */
+  private fun selectedInterpreter(): PythonInterpreter? = (currentlySelectedRow as? PyInterpreterRow.Interpreter)?.interpreter
 
   /**
    * Toolbar action that operates on the currently selected interpreter. Handles the "no selection →
    * disabled" state and the BGT dispatch once, so a concrete subclass only supplies its `perform`
-   * body. `getSelected` reads the volatile [currentlySelectedInterpreter], so `update` stays off
+   * body. `getSelected` reads the volatile [currentlySelectedRow], so `update` stays off
    * the EDT per reviewer feedback (formerly `ActionUpdateThread.EDT`).
    */
   private abstract inner class SelectedInterpreterAction(
@@ -348,15 +329,24 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     protected abstract fun perform(interpreter: PythonInterpreter)
   }
 
-  private inner class RemoveInterpreterAction : SelectedInterpreterAction(
+  /** Removes the SDK of the selected row. It also works for a broken SDK, which the user can only remove or recreate. */
+  private inner class RemoveInterpreterAction : DumbAwareAction(
     PyBundle.messagePointer("python.interpreters.remove.interpreter.action.text"),
+    Presentation.NULL_STRING,
     AllIcons.General.Remove,
   ) {
-    override fun perform(interpreter: PythonInterpreter) {
-      interpreter.removeFromJdkTable()
+    override fun actionPerformed(e: AnActionEvent) {
+      val row = selectedRow() ?: return
+      removeFromJdkTable(row.sdk)
       projectSdksModel.reset(project)
       reloadList()
     }
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.isEnabled = selectedRow() != null
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   }
 
   /**
@@ -421,8 +411,8 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   }
 
-  private fun copyInterpreterPath(interpreter: PythonInterpreter) {
-    val path = interpreter.sdk.homePath ?: return
+  private fun copyInterpreterPath(row: PyInterpreterRow) {
+    val path = row.sdk.homePath ?: return
     CopyPasteManager.getInstance().setContents(StringSelection(path))
   }
 
@@ -483,9 +473,9 @@ internal class RowActionsState {
  * click to [onCopyPath]. Press → release on the same row to fire, matching standard button UX.
  */
 private class RowActionsMouseHandler(
-  private val list: JBList<PythonInterpreter>,
+  private val list: JBList<PyInterpreterRow>,
   private val state: RowActionsState,
-  private val onCopyPath: (PythonInterpreter) -> Unit,
+  private val onCopyPath: (PyInterpreterRow) -> Unit,
 ) : MouseAdapter() {
 
   override fun mouseMoved(e: MouseEvent) = updateHover(e)
@@ -589,11 +579,28 @@ private object RowActionMetrics {
 private val PythonInterpreter.sdk: Sdk
   get() = getSdkAPI()
 
-/** Removes the underlying SDK from `ProjectJdkTable`. */
-internal fun PythonInterpreter.removeFromJdkTable() {
-  val target = sdk
+/** Removes [sdk] from `ProjectJdkTable`. */
+internal fun removeFromJdkTable(sdk: Sdk) {
   WriteAction.runAndWait<RuntimeException> {
-    ProjectJdkTable.getInstance().removeJdk(target)
+    ProjectJdkTable.getInstance().removeJdk(sdk)
+  }
+}
+
+/** A row of the page: the interpreter of an SDK, or an SDK that names no interpreter. */
+internal sealed interface PyInterpreterRow {
+  val sdk: Sdk
+
+  /** What the row draws. */
+  fun presentation(): PythonInterpreterPresentation
+
+  class Interpreter(val interpreter: PythonInterpreter) : PyInterpreterRow {
+    override val sdk: Sdk get() = interpreter.sdk
+    override fun presentation(): PythonInterpreterPresentation = interpreter.presentation()
+  }
+
+  /** An SDK that names no interpreter. [reason] says why, see [com.intellij.python.sdk.backend.pythonInterpreterResult]. */
+  class Broken(override val sdk: Sdk, val reason: @Nls String) : PyInterpreterRow {
+    override fun presentation(): PythonInterpreterPresentation = brokenSdkPresentation(sdk, reason)
   }
 }
 
@@ -623,13 +630,13 @@ internal suspend fun PythonInterpreter.openPathsDialog(project: Project, onCommi
  * the association path is always a module base — no project-base fallback.
  */
 internal fun filterInterpreters(
-  interpreters: List<PythonInterpreter>,
+  rows: List<PyInterpreterRow>,
   hideOthers: Boolean,
   moduleBasePaths: Set<Path>,
-): List<PythonInterpreter> {
-  if (!hideOthers) return interpreters
-  return interpreters.filter { interpreter ->
-    val associated = interpreter.sdk.associatedModuleNioPath ?: return@filter true
+): List<PyInterpreterRow> {
+  if (!hideOthers) return rows
+  return rows.filter { row ->
+    val associated = row.sdk.associatedModuleNioPath ?: return@filter true
     associated in moduleBasePaths
   }
 }
@@ -647,11 +654,11 @@ internal fun pickSelection(candidates: List<PySdkName>, previouslySelected: PySd
   candidates.firstOrNull { it == previouslySelected } ?: candidates.firstOrNull()
 
 /** Pure substring filter over `sdkName` / `homePath`. Case-insensitive; empty query keeps every row. */
-internal fun filterBySearchQuery(interpreters: List<PythonInterpreter>, query: String): List<PythonInterpreter> {
+internal fun filterBySearchQuery(rows: List<PyInterpreterRow>, query: String): List<PyInterpreterRow> {
   val q = query.trim().lowercase()
-  if (q.isEmpty()) return interpreters
-  return interpreters.filter { interpreter ->
-    interpreter.sdk.name.lowercase().contains(q) || (interpreter.sdk.homePath?.lowercase()?.contains(q) == true)
+  if (q.isEmpty()) return rows
+  return rows.filter { row ->
+    row.sdk.name.lowercase().contains(q) || (row.sdk.homePath?.lowercase()?.contains(q) == true)
   }
 }
 
@@ -675,9 +682,9 @@ internal class PyAllInterpretersConfigurableProvider(private val project: Projec
  * (icons unaligned, no hover feedback, distance-from-right hit test) drifted between painting and clicks.
  */
 private class PyInterpreterNameAndVersionRenderer(
-  private val list: JBList<PythonInterpreter>,
+  private val list: JBList<PyInterpreterRow>,
   private val state: RowActionsState,
-) : ListCellRenderer<PythonInterpreter> {
+) : ListCellRenderer<PyInterpreterRow> {
   private val label = SimpleColoredComponent().apply { isOpaque = false }
 
   private var currentRow: Int = -1
@@ -732,8 +739,8 @@ private class PyInterpreterNameAndVersionRenderer(
   }
 
   override fun getListCellRendererComponent(
-    list: JList<out PythonInterpreter>?,
-    value: PythonInterpreter?,
+    list: JList<out PyInterpreterRow>?,
+    value: PyInterpreterRow?,
     index: Int,
     isSelected: Boolean,
     cellHasFocus: Boolean,

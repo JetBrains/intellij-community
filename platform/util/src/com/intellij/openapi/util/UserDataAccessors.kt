@@ -29,7 +29,7 @@ inline fun <reified H : UserDataHolder, T : Any> userData(): ReadWriteProperty<H
  * ##### Usage example:
  * ```
  * internal var PsiFile.processedClasses: ConcurrentMap<PsiClass, Boolean> 
- *   by userData { ContainerUtil.createConcurrentWeakMap() }
+ *   by userData { Java11Shim.INSTANCE.createConcurrentWeakMap() }
  * ```
  */
 @ApiStatus.Experimental

@@ -11,11 +11,17 @@ import com.intellij.ide.minimap.scene.MinimapSceneBuilder
 import com.intellij.ide.minimap.scene.MinimapSnapshot
 import com.intellij.ide.minimap.settings.MinimapScaleMode
 import com.intellij.openapi.application.WriteIntentReadAction
-import com.intellij.openapi.editor.impl.AbstractEditorTest
+import com.intellij.openapi.editor.impl.editorModelFixture
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.awt.Color
 import java.awt.Font
 import java.awt.geom.Rectangle2D
@@ -28,12 +34,14 @@ import java.awt.geom.Rectangle2D
  * degrade to an O(tokens²) scan on long, densely highlighted lines (a real EDT freeze, see
  * the binary search in [MinimapTokenColorContext]).
  */
-class MinimapTokenColorContextTest : AbstractEditorTest() {
+@TestApplication
+class MinimapTokenColorContextTest {
+  private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
 
   private fun buildSnapshot(): MinimapSnapshot {
-    val editor = editor
+    val editor = fixture.editor
     val model = MinimapModel(editor)
-    Disposer.register(testRootDisposable, model)
+    Disposer.register(fixture.testRootDisposable, model)
     val sceneBuilder = MinimapSceneBuilder(
       editor,
       model,
@@ -52,7 +60,7 @@ class MinimapTokenColorContextTest : AbstractEditorTest() {
   }
 
   private fun addForegroundRun(start: Int, end: Int, color: Color) {
-    editor.markupModel.addRangeHighlighter(
+    fixture.editor.markupModel.addRangeHighlighter(
       start,
       end,
       HighlighterLayer.ADDITIONAL_SYNTAX,
@@ -71,7 +79,8 @@ class MinimapTokenColorContextTest : AbstractEditorTest() {
   private fun colorAt(context: MinimapTokenColorContext, offset: Int): Color =
     WriteIntentReadAction.compute { context.colorFor(MinimapRenderEntry(null, DUMMY_RECT, sampleOffset = offset)) }
 
-  fun testResolvesCorrectRunAtBoundaries() {
+  @Test
+  fun testResolvesCorrectRunAtBoundaries(): Unit = fixture.runTest {
     // Three adjacent, distinctly colored runs on a single line.
     initText("aaaaabbbbbccccc")
     setEditorVisibleSize(80, 20)
@@ -85,17 +94,17 @@ class MinimapTokenColorContextTest : AbstractEditorTest() {
     val green = colorAt(context, 5)
     val blue = colorAt(context, 10)
 
-    assertTrue("distinctly colored runs must resolve to distinct minimap colors",
-               red != green && green != blue && red != blue)
+    assertTrue(red != green && green != blue && red != blue, "distinctly colored runs must resolve to distinct minimap colors")
 
     // Every offset inside a run resolves to that run's color, including the last offset before
     // the boundary (the run is [start, end) — half-open).
-    for (offset in 0 until 5) assertEquals("offset $offset belongs to the red run", red, colorAt(context, offset))
-    for (offset in 5 until 10) assertEquals("offset $offset belongs to the green run", green, colorAt(context, offset))
-    for (offset in 10 until 15) assertEquals("offset $offset belongs to the blue run", blue, colorAt(context, offset))
+    for (offset in 0 until 5) assertEquals(red, colorAt(context, offset), "offset $offset belongs to the red run")
+    for (offset in 5 until 10) assertEquals(green, colorAt(context, offset), "offset $offset belongs to the green run")
+    for (offset in 10 until 15) assertEquals(blue, colorAt(context, offset), "offset $offset belongs to the blue run")
   }
 
-  fun testResolvesEveryOffsetOnLongDenselyHighlightedLine() {
+  @Test
+  fun testResolvesEveryOffsetOnLongDenselyHighlightedLine(): Unit = fixture.runTest {
     // A single long line split into many small distinctly-colored runs. With the old linear
     // scan this resolution was O(runs²); it must stay correct (and fast) for every offset.
     val runCount = 256
@@ -118,12 +127,13 @@ class MinimapTokenColorContextTest : AbstractEditorTest() {
       val runStart = i * runLength
       val reference = colorAt(context, runStart)
       for (offset in runStart until runStart + runLength) {
-        assertEquals("offset $offset must resolve to run #$i", reference, colorAt(context, offset))
+        assertEquals(reference, colorAt(context, offset), "offset $offset must resolve to run #$i")
       }
     }
   }
 
   companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
     private val DUMMY_RECT = Rectangle2D.Double(0.0, 0.0, 1.0, 1.0)
   }
 }

@@ -44,6 +44,7 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.getMousePositionOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
@@ -465,8 +466,8 @@ open class TextEditorWithPreview @JvmOverloads constructor(
     private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, parentDisposable)
 
     override fun eventDispatched(event: AWTEvent) {
-      val isMouseInsideComponent = component.mousePosition != null
-      val isMouseOutsideToolbar = toolbar.mousePosition == null
+      val isMouseInsideComponent = component.getMousePositionOrNull() != null
+      val isMouseOutsideToolbar = toolbar.getMousePositionOrNull() == null
       if (isMouseInsideComponent) {
         alarm.cancelAllRequests()
         toolbar.scheduleShow()

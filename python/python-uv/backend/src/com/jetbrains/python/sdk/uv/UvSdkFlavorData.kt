@@ -1,13 +1,13 @@
 package com.jetbrains.python.sdk.uv
 
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.remote.RemoteSdkPropertiesPaths
-import com.jetbrains.python.sdk.activationEnvironment
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.sdk.add.v2.toFileSystem
 import com.jetbrains.python.sdk.flavors.PyFlavorData
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -27,16 +27,16 @@ data class UvSdkFlavorData(
   val uvPath: FullPathOnTarget?,
 ) : PyFlavorData {
 
+
+  @RequiresBackgroundThread
+  @Throws(ExecutionException::class)
   override fun prepareTargetCommandLine(sdk: Sdk, targetCommandLineBuilder: TargetedCommandLineBuilder) {
-    val interpreterPath = sdk.sdkAdditionalData?.let { (it as? RemoteSdkPropertiesPaths)?.interpreterPath } ?: sdk.homePath
-    if (interpreterPath.isNullOrBlank()) {
-      throw IllegalArgumentException("Sdk ${sdk} doesn't have interpreter path set")
-    }
-    targetCommandLineBuilder.setExePath(interpreterPath)
-    val envPath = VirtualEnvReader().resolvePythonHomeFromBinaryOrDir(interpreterPath, targetCommandLineBuilder.request.targetPlatform.platform)
-    targetCommandLineBuilder.addEnvironmentVariable("UV_PROJECT_ENVIRONMENT", envPath)
-    if (!PythonSdkUtil.isRemote(sdk)) {
-      runBlockingMaybeCancellable { sdk.activationEnvironment() }
+    val fs = runBlockingMaybeCancellable { sdk.toFileSystem() }
+    PyFlavorData.Utils.prepareTargetCommandLine(sdk, targetCommandLineBuilder) { interpreterPath ->
+      val envPath =
+        VirtualEnvReader().resolvePythonHomeFromBinaryOrDir(interpreterPath, targetCommandLineBuilder.request.targetPlatform.platform)
+      fs.parsePath(envPath)
+        .mapSuccess { targetCommandLineBuilder.addEnvironmentVariable("UV_PROJECT_ENVIRONMENT", it.toStringOnRemoteMachine()) }
     }
   }
 }

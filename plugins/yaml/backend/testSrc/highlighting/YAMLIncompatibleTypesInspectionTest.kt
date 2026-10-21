@@ -5,7 +5,7 @@ import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
-import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase
+import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestFixture
 import org.jetbrains.yaml.YAMLBundle
 import org.jetbrains.yaml.inspections.YAMLIncompatibleTypesInspection
 import java.util.function.Predicate
@@ -106,7 +106,7 @@ class YAMLIncompatibleTypesInspectionTest : BasePlatformTestCase() {
   }
 
   fun testDontWarnIfSchemaType() {
-    JsonSchemaHighlightingTestBase.registerJsonSchema(myFixture, """
+    JsonSchemaHighlightingTestFixture.registerJsonSchema(myFixture, """
    {
      "type": "object",
      "properties": {

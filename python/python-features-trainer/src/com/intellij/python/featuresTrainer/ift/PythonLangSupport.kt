@@ -5,20 +5,19 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.emit
-import com.jetbrains.python.sdk.inspections.InterpreterSettingsQuickFix
 import com.jetbrains.python.projectCreation.createVenvAndSdk
 import com.jetbrains.python.sdk.ModuleOrProject
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.inspections.InterpreterSettingsQuickFix
+import com.jetbrains.python.sdk.mainPythonInterpreterIfReady
 import com.jetbrains.python.sdk.runWithSdkConfigurationLock
 import com.jetbrains.python.statistics.modules
-import com.jetbrains.python.errorProcessing.ErrorSink
 import training.dsl.LessonContext
 import training.lang.AbstractLangSupport
 import training.learn.CourseManager
@@ -91,7 +90,8 @@ internal class PythonLangSupport(private val errorSink: ErrorSink = ErrorSink())
 
   override val sampleFilePath = "src/sandbox.py"
 
-  override fun isSdkConfigured(project: Project): Boolean = project.pythonSdk != null
+  // A lesson polls this while it runs, after the project structure has loaded.
+  override fun isSdkConfigured(project: Project): Boolean = project.mainPythonInterpreterIfReady() != null
 
   override val sdkConfigurationTasks: LessonContext.(lesson: KLesson) -> Unit = { lesson ->
     task {
@@ -129,10 +129,4 @@ internal class PythonLangSupport(private val errorSink: ErrorSink = ErrorSink())
 }
 
 @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
-private fun Project.getSdks(): Set<Sdk> {
-  val projectSdk = ProjectRootManager.getInstance(this).projectSdk
-  val moduleSdks = modules.mapNotNull {
-    ModuleRootManager.getInstance(it).sdk
-  }
-  return (moduleSdks + (projectSdk?.let { listOf(it) } ?: emptyList())).toSet()
-}
+private fun Project.getSdks(): Set<Sdk> = modules.mapNotNull { ModuleRootManager.getInstance(it).sdk }.toSet()

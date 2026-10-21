@@ -107,7 +107,7 @@ public final class GradleProjectImportBuilder extends AbstractExternalProjectImp
     Set<String> existingPaths = Arrays.stream(jdkTable.getAllJdks())
                                       .map(sdk -> sdk.getHomePath())
                                       .collect(Collectors.toCollection(() -> CollectionFactory.createFilePathSet()));
-    for (String javaHome : javaSdkType.suggestHomePaths()) {
+    for (String javaHome : javaSdkType.suggestHomePaths(context.getProject())) {
       if (!existingPaths.contains(FileUtil.toCanonicalPath(javaHome))) {
         Sdk jdk = javaSdkType.createJdk(ObjectUtils.notNull(javaSdkType.suggestSdkName(null, javaHome), ""), javaHome);
         if (sdkCondition.test(jdk)) {

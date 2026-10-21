@@ -44,7 +44,6 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/util/coroutines",
         "//platform/project/shared:project",
-        "//platform/kernel/shared:kernel",
         "//platform/editor-ui-api:editor-ui",
         "//platform/ide-core",
         "//platform/runtime/product",
@@ -62,8 +61,8 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//platform/util:util-ui",
         "//platform/statistics",
-        "//fleet/rhizomedb",
         "//platform/welcome-screen",
+        "//fleet/rpc",
     ],
 )
 
@@ -92,7 +91,6 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/project/shared:project_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/runtime/product:product_test_lib",
@@ -110,8 +108,8 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/statistics:statistics_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/welcome-screen:welcome-screen_test_lib",
+        "//fleet/rpc:rpc_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.searchEverywhere.frontend` end

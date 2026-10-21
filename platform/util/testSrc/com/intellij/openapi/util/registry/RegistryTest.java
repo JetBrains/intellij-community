@@ -6,10 +6,10 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -29,13 +29,13 @@ public class RegistryTest {
   private static final String INTEGER_KEY = "editor.mouseSelectionStateResetDeadZone";
   private static final String INT_KEY_REQUIRE_RESTART = "editor.caret.width";
 
-  @Before
+  @BeforeEach
   public void setUp() {
     // Bazel sharding can run RegistryTest methods before anything else loads registry state.
     Registry.Companion.loadState(null, null);
   }
 
-  @After
+  @AfterEach
   public void tearDown(){
     Registry.Companion.setValueChangeListener(null);
   }
@@ -59,7 +59,7 @@ public class RegistryTest {
     }
   }
 
-  @Ignore("AT-4013")
+  @Disabled("AT-4013")
   @Test
   public void booleanValueTrue() {
     RegistryValue handle = Registry.get("ide.tree.painter.classic.compact");

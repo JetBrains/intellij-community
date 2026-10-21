@@ -256,6 +256,17 @@ data class VMOptions(
     addSystemProperty("performance.watcher.unresponsive.interval.ms", interval.inWholeMilliseconds)
   }
 
+  /**
+   * Makes the PerformanceWatcher treat an EDT event longer than [threshold] as a freeze and dump the threads,
+   * also below its usual 500 ms floor. The first dump is taken at the threshold and is kept even when the freeze
+   * ends before the dump completes. The dumps go to `threadDumps-freeze-*` in the IDE log directory.
+   */
+  fun setFreezeThreadDumpThreshold(threshold: Duration) {
+    addSystemProperty("performance.watcher.unresponsive.interval.force.value", true)
+    addSystemProperty("performance.watcher.unresponsive.interval.ms", threshold.inWholeMilliseconds)
+    addSystemProperty("performance.watcher.await.first.thread.dump", true)
+  }
+
   fun disableFreezeReportingProfiling() {
     addSystemProperty("freeze.reporter.profiling", false)
   }

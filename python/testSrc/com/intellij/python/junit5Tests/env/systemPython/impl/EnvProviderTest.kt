@@ -9,22 +9,20 @@ import com.intellij.python.community.services.systemPython.SystemPythonProvider
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
-import com.intellij.python.venv.createVenv
+import com.intellij.python.test.env.common.PredefinedPyEnvironments
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.registerExtension
 import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
-import com.jetbrains.python.getOrThrow
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.io.TempDir
-import java.nio.file.Path
 
-@PyEnvTestCase
+// A system python is a plain python, never a venv.
+@PyEnvTestCase(env = PredefinedPyEnvironments.VANILLA_3_12)
 class EnvProviderTest {
 
   @Test
@@ -45,14 +43,12 @@ class EnvProviderTest {
   fun testProviderWithUi(
     @TestDisposable disposable: Disposable,
     @PythonBinaryPath python: PythonBinary,
-    @TempDir venvDir: Path,
   ): Unit = timeoutRunBlocking {
-    val venvPython = createVenv(python, venvDir).getOrThrow()
     val ui = PyToolUIInfo("myui")
-    val provider = InlineTestProvider(setOf(venvPython), ui)
+    val provider = InlineTestProvider(setOf(python), ui)
     ApplicationManager.getApplication().registerExtension(SystemPythonProvider.EP, provider, disposable)
-    val python = SystemPythonService().findSystemPythons(localEel, forceRefresh = true).first { it.pythonBinary == venvPython }
-    assertTrue(ui == python.ui, "Wrong UI")
+    val systemPython = SystemPythonService().findSystemPythons(localEel, forceRefresh = true).first { it.pythonBinary == python }
+    assertTrue(ui == systemPython.ui, "Wrong UI")
   }
 
   private class InlineTestProvider(

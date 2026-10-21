@@ -2,43 +2,67 @@
 package com.intellij.openapi.editor.impl.experimental
 
 import com.intellij.openapi.editor.ex.DocumentOp
+import com.intellij.openapi.editor.ex.DocumentOp.Companion.cleanLinesOp
 import com.intellij.openapi.editor.ex.DocumentOp.Companion.deleteOp
 import com.intellij.openapi.editor.ex.DocumentOp.Companion.insertOp
 import com.intellij.openapi.editor.ex.DocumentOp.Companion.modStampOp
-import com.intellij.openapi.editor.ex.DocumentOp.Companion.unmodifiedLinesOp
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.experimental.Agent
-import com.intellij.openapi.editor.ex.experimental.DocBranch
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import com.intellij.openapi.editor.impl.DocumentSnapshotImpl
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.util.Random
 
 /**
- * Checks that a [DocBranch] keeps the mod state that a [DocumentSnapshot] keeps for the same ops.
+ * Checks that a [DocumentBranch] keeps the mod state that a [DocumentSnapshot] keeps for the same ops.
  */
 internal class DocBranchModStateFuzzTest {
 
   @Test
   fun `a branch keeps the mod state of a snapshot`() {
+    var keptClears = 0
     repeat(SEEDS) { seed ->
       val random = Random(seed.toLong())
       // Both start from one stamp, so the stamps compare too.
       val startStamp = modStampOp(1, false)
       val text = DocumentText.createText(TEXT)
       var snapshot: DocumentSnapshot = DocumentSnapshotImpl(text).applyOp(startStamp)
-      var branch = DocBranch.createBranch(TEXT, Agent.createAgent("user")).applyOp(startStamp)
+      var branch = DocumentBranch.createBranch(TEXT, Agent.createAgent("user")).applyOp(startStamp)
       repeat(STEPS) { step ->
         val op = randomOp(snapshot.text(), random)
+        val before = branch
+        val keepsExceptLine = keepsModifiedExceptLine(snapshot, op)
         snapshot = snapshot.applyOp(op)
         branch = branch.applyOp(op)
         assertSameModState(snapshot, branch, "seed $seed, step $step, $op")
+        if (keepsExceptLine && branch === before) {
+          keptClears++
+        }
       }
+    }
+    // A clear that changes no flag keeps the exact positions of a modified except line. The ops after
+    // such a clear must still match the snapshot, so the fuzz must reach it often.
+    assertTrue(keptClears > MIN_KEPT_CLEARS) { "only $keptClears clears keep a modified except line" }
+  }
+
+  /**
+   * Whether [op] is a clear with an except line in its range that is modified in [snapshot].
+   */
+  private fun keepsModifiedExceptLine(snapshot: DocumentSnapshot, op: DocumentOp): Boolean {
+    if (op !is DocumentOp.CleanLines) {
+      return false
+    }
+    val lineCount = snapshot.text().lineCount()
+    val clearedEnd = if (op.endLine() == Int.MAX_VALUE) lineCount else op.endLine()
+    return op.exceptLines().any { line ->
+      line >= op.startLine() && line < clearedEnd && snapshot.modState().isLineModified(line)
     }
   }
 
-  private fun assertSameModState(snapshot: DocumentSnapshot, branch: DocBranch, message: String) {
+  private fun assertSameModState(snapshot: DocumentSnapshot, branch: DocumentBranch, message: String) {
     val expected = snapshot.modState()
     val actual = branch.modState()
     assertEquals(expected.stamp(), actual.stamp(), message)
@@ -51,7 +75,7 @@ internal class DocBranchModStateFuzzTest {
   private fun randomOp(text: DocumentText, random: Random): DocumentOp {
     return when (random.nextInt(6)) {
       0 -> modStampOp(random.nextLong(), random.nextBoolean())
-      1 -> randomUnmodifiedLines(text, random)
+      1 -> randomCleanLines(text, random)
       2, 3 -> randomInsert(text, random)
       else -> randomDelete(text, random)
     }
@@ -85,11 +109,11 @@ internal class DocBranchModStateFuzzTest {
   /**
    * A clear of a random line range. An except line can lie outside the text, and the clear ignores it.
    */
-  private fun randomUnmodifiedLines(text: DocumentText, random: Random): DocumentOp {
+  private fun randomCleanLines(text: DocumentText, random: Random): DocumentOp {
     val lineCount = text.lineCount()
     if (lineCount == 0) {
       val endLine = if (random.nextBoolean()) 0 else Int.MAX_VALUE
-      return unmodifiedLinesOp(0, endLine, IntArray(0))
+      return cleanLinesOp(0, endLine, IntArray(0))
     }
     val startLine = random.nextInt(lineCount)
     val endLine = if (random.nextBoolean()) {
@@ -100,13 +124,14 @@ internal class DocBranchModStateFuzzTest {
     val exceptLines = IntArray(random.nextInt(3)) {
       random.nextInt(lineCount + 2) - 1
     }
-    return unmodifiedLinesOp(startLine, endLine, exceptLines)
+    return cleanLinesOp(startLine, endLine, exceptLines)
   }
 
   private companion object {
     const val TEXT = "one\ntwo\nthree\n"
     const val SEEDS = 200
     const val STEPS = 300
+    const val MIN_KEPT_CLEARS = 300
     val FRAGMENTS = listOf("x", "yz", "\n", "a\nb", "\r", "\r\n", "c\r", "\nd", "e\r\nf\n")
   }
 }

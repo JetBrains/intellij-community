@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
+import com.jetbrains.python.getOrNull
 import com.jetbrains.python.mapError
 import com.jetbrains.python.packaging.common.PythonPackageDetails
 import com.jetbrains.python.packaging.management.PythonRepositoryManager.PythonRepositoryIOError
@@ -14,7 +15,6 @@ import com.jetbrains.python.packaging.repository.PyPackageRepository
 import com.jetbrains.python.packaging.repository.PythonRepositoryManagerBase
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal class CondaRepositoryManger(override val project: Project, val sdk: Sdk) : PythonRepositoryManagerBase() {
   private val pipRepositoryManger = PipRepositoryManager.getInstance(project)
 
@@ -43,7 +43,7 @@ internal class CondaRepositoryManger(override val project: Project, val sdk: Sdk
       .getOr { return it }
 
     return condaPackageCache
-      .reloadCache(sdk, project, force = true)
+      .reload()
       .mapError { PythonRepositoryIOError(it.message) }
   }
 
@@ -51,7 +51,7 @@ internal class CondaRepositoryManger(override val project: Project, val sdk: Sdk
     pipRepositoryManger.waitForInit()
 
     return condaPackageCache
-      .reloadCache(sdk, project)
+      .reload()
       .mapError { PythonRepositoryIOError(it.message) }
   }
 
@@ -59,13 +59,13 @@ internal class CondaRepositoryManger(override val project: Project, val sdk: Sdk
     waitForInit()
     return when (repository) {
       null -> {
-        val condaVersions = condaPackageCache[packageName]
+        val condaVersions = CondaPackageRepository.getVersionsForPackage(packageName)
         val pipVersions = pipRepositoryManger.getVersions(packageName, repository)
-        if (condaVersions == null && pipVersions == null) return null
-        val allVersions = (condaVersions ?: emptyList()) + (pipVersions ?: emptyList())
+        if (condaVersions.isEmpty() && pipVersions == null) return null
+        val allVersions = condaVersions + (pipVersions ?: emptyList())
         allVersions.distinct()
       }
-      is CondaPackageRepository -> condaPackageCache[packageName]
+      is CondaPackageRepository -> CondaPackageRepository.getVersionsForPackage(packageName)
       else -> pipRepositoryManger.getVersions(packageName, repository)
     }
   }

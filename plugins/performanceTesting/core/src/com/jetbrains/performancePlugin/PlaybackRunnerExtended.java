@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.PlaybackCommand;
 import com.intellij.openapi.ui.playback.PlaybackRunner;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
+import com.intellij.openapi.ui.playback.commands.PrintCommand;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.Nls;
@@ -75,6 +76,10 @@ public final class PlaybackRunnerExtended extends PlaybackRunner {
     }
     if (playbackCommand == null) {
       playbackCommand = super.createCommand(command, line, scriptDir);
+    }
+    if (playbackCommand != null && !(playbackCommand instanceof PrintCommand)) {
+      // A print command echoes an include line. It is not test work.
+      PerformanceTestTimersKt.startTestTimerOnce();
     }
     return playbackCommand;
   }

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.CustomFoldRegionRendererEx
 import com.intellij.openapi.editor.CustomFoldRegionRenderer
 import com.intellij.openapi.editor.FoldRegion
@@ -14,6 +15,7 @@ import com.intellij.openapi.editor.impl.marker.DefaultMarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
 import com.intellij.openapi.editor.impl.marker.MarkerTransformResult
+import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
@@ -25,9 +27,9 @@ import com.intellij.util.Processor
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ConcurrentLongObjectMap
-import com.intellij.util.containers.Java11Shim
 import it.unimi.dsi.fastutil.longs.LongList
 import java.awt.Point
+import java.util.Arrays
 
 private const val FOLD_REGION_FLAVOR: Int = 1
 private const val CUSTOM_FOLD_REGION_FLAVOR: Int = 2
@@ -38,7 +40,7 @@ internal class SnapshotFoldingRegionStorage(
   internal val editor: EditorImpl,
   val document: DocumentImpl,
 ) : FoldingRegionStorage {
-  private val regionsById: ConcurrentLongObjectMap<SnapshotFoldRegion> = Java11Shim.createConcurrentLongObjectMap()
+  private val regionsById: ConcurrentLongObjectMap<SnapshotFoldRegion> = ConcurrentCollectionFactory.createConcurrentLongObjectMap()
   private val foldRegionMarkerPolicy: MarkerPolicy = FoldRegionMarkerPolicy {
     model.setComplexDocumentChange(true)
   }
@@ -96,7 +98,10 @@ internal class SnapshotFoldingRegionStorage(
   }
 
   override fun clearRegions() {
-    collectRegions(0, document.textLength).forEach(::removeRegion)
+    processAllRegions { region ->
+      removeRegion(region)
+      true
+    }
   }
 
   override fun dispose() {
@@ -106,8 +111,42 @@ internal class SnapshotFoldingRegionStorage(
 
   override fun size(): Int = regionsById.size()
 
+  /**
+   * Processes all regions from one captured root.
+   * Orders regions by start offset, length, region kind (regular precede custom), and marker ID,
+   * This is the same order as [processRegionsOverlappingWith].
+   *
+   * Stops when [processor] returns `false`, without resolving regions in later groups.
+   */
   override fun processAllRegions(processor: Processor<in FoldRegionMarker>): Boolean {
-    return processRegionsOverlappingWith(0, document.textLength, processor)
+    val root = rootStore.root(currentSnapshot()) ?: return true
+    var regions = arrayOfNulls<SnapshotFoldRegion>(4)
+    var regionCount = 0
+    var groupStart = -1
+
+    fun processGroup(): Boolean {
+      if (regionCount > 1) Arrays.sort(regions, 0, regionCount, REGION_COMPARATOR)
+      for (index in 0 until regionCount) {
+        if (!processor.process(regions[index]!!)) return false
+      }
+      regionCount = 0
+      return true
+    }
+
+    val completed = root.processAllRangeMarkers { entry, ancestorDelta ->
+      val start = entry.nodeStart + ancestorDelta
+      if (start != groupStart) {
+        if (!processGroup()) return@processAllRangeMarkers false
+        groupStart = start
+      }
+      val region = entry.markerReference?.get() as? SnapshotFoldRegion
+      if (region != null) {
+        if (regionCount == regions.size) regions = regions.copyOf(regions.size * 2)
+        regions[regionCount++] = region
+      }
+      true
+    }
+    return completed && processGroup()
   }
 
   override fun processRegionsContaining(offset: Int, processor: Processor<in FoldRegionMarker>): Boolean {
@@ -121,13 +160,39 @@ internal class SnapshotFoldingRegionStorage(
     }
   }
 
+  /**
+   * Processes overlapping regions from one captured snapshot root.
+   * Uses [processAllRegions] for queries that cover the whole document.
+   *
+   * Orders regions by start offset, length, region kind (regular precede custom), and marker ID,
+   *
+   * Stops when [processor] returns `false`, without resolving regions in later groups.
+   * The iterator can read one entry from the next group to find the current group's boundary.
+   */
   override fun processRegionsOverlappingWith(
     startOffset: Int,
     endOffset: Int,
     processor: Processor<in FoldRegionMarker>,
   ): Boolean {
-    for (region in collectRegions(startOffset, endOffset)) {
-      if (!processor.process(region)) return false
+    if (startOffset == 0 && endOffset >= document.textLength) {
+      return processAllRegions(processor)
+    }
+    val root = rootStore.root(currentSnapshot()) ?: return true
+    val iterator = root.overlappingIterator(startOffset, endOffset, 0)
+    var entry: PMarkerRoot.MarkerEntry? = if (iterator.hasNext()) iterator.next() else return true
+    val regions = ArrayList<SnapshotFoldRegion>()
+    while (entry != null) {
+      val regionStart = entry.nodeStart
+      while (entry != null && entry.nodeStart == regionStart) {
+        val region = entry.markerReference?.get() as? SnapshotFoldRegion
+        if (region != null) regions.add(region)
+        entry = if (iterator.hasNext()) iterator.next() else null
+      }
+      if (regions.size > 1) regions.sortWith(REGION_COMPARATOR)
+      for (region in regions) {
+        if (!processor.process(region)) return false
+      }
+      regions.clear()
     }
     return true
   }
@@ -226,23 +291,6 @@ internal class SnapshotFoldingRegionStorage(
     }
   }
 
-  private fun collectRegions(
-    startOffset: Int,
-    endOffset: Int,
-    tastePreference: Int = 0,
-  ): List<SnapshotFoldRegion> {
-    val snapshot = currentSnapshot()
-    val root = rootStore.root(snapshot) ?: return emptyList()
-    val regions = ArrayList<SnapshotFoldRegion>()
-    root.processRangeMarkersOverlappingWith(startOffset, endOffset, tastePreference) { entry ->
-      val region = entry.markerReference?.get() as? SnapshotFoldRegion
-      if (region != null) regions.add(region)
-      true
-    }
-    regions.sortWith(REGION_COMPARATOR)
-    return regions
-  }
-
   companion object {
     private val REGION_COMPARATOR: Comparator<SnapshotFoldRegion> = compareBy(
       { it.startOffset },
@@ -307,7 +355,9 @@ internal open class SnapshotFoldRegion(
     this.expanded = expanded
   }
 
-  override fun isValid(): Boolean = super.isValid() && startOffset < endOffset
+  override fun isValidResolution(resolution: PMarkerResolution): Boolean {
+    return super.isValidResolution(resolution) && !resolution.isEmpty
+  }
 
   override fun getPlaceholderText(): String = placeholder
 

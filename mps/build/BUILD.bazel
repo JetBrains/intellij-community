@@ -88,7 +88,11 @@ jvm_library(
     ),
     module_name = "intellij.mps.build.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["@lib//:kotlin-stdlib"],
+    runtime_deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/byte-buddy",
+    ],
 )
 
 jvm_library(
@@ -104,7 +108,11 @@ jvm_library(
     ),
     module_name = "intellij.mps.build.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":build-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":build-tests",
+        "//libraries/byte-buddy:byte-buddy_test_lib",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

@@ -1,7 +1,6 @@
 <idea-plugin visibility="internal" package="com.intellij.platform.searchEverywhere.backend">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="fleet.rhizomedb"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.analysis"/>
@@ -18,7 +17,6 @@
     <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.indexing"/>
-    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
@@ -38,6 +36,8 @@
                                             apiInterfaces="com.intellij.platform.searchEverywhere.impl.SeRemoteApi"/>
 
     <uiDataRule implementation="com.intellij.platform.searchEverywhere.backend.impl.SeUiDataRule"/>
+
+    <projectService serviceImplementation="com.intellij.platform.searchEverywhere.backend.impl.SeClientSessionScope" client="all"/>
 
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.files.SeFilesProviderFactory"/>
     <searchEverywhere.itemsProviderFactory implementation="com.intellij.platform.searchEverywhere.backend.providers.recentFiles.SeRecentFilesProviderFactory"/>

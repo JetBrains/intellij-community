@@ -107,7 +107,9 @@ f:git4idea.GitWorkingTree
 - f:isLocked():Z
 - f:isMain():Z
 - f:isPrunable():Z
+- sf:pathOnly(java.lang.String):git4idea.GitWorkingTree
 f:git4idea.GitWorkingTree$Companion
+- f:pathOnly(java.lang.String):git4idea.GitWorkingTree
 - f:serializer():kotlinx.serialization.KSerializer
 e:git4idea.branch.GitBranchType
 - java.lang.Enum

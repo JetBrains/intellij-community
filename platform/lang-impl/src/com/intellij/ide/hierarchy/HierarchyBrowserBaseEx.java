@@ -56,6 +56,7 @@ import com.intellij.psi.search.scope.TestsScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.util.PsiVersioningService;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.content.Content;
@@ -296,7 +297,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
         DnDManager.getInstance().registerSource(new DnDSource() {
           @Override
           public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
-            return getSelectedElements().length > 0;
+            return PsiVersioningService.freezePsiVersion(() -> getSelectedElements().length > 0);
           }
 
           @Override

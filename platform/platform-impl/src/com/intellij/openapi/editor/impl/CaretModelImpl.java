@@ -41,6 +41,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.awt.GraphicsEnvironment;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -61,7 +62,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   private final @Nullable RangeMarkerTree<CaretImpl.LegacySelectionMarker> selectionMarkerTree;
   private final @Nullable SnapshotCaretMarkerStorage snapshotMarkerStorage;
   private final ThreadLocal<CaretImpl> currentCaret = new ThreadLocal<>(); // active caret in the context of 'runForEachCaret' call
-  private final LinkedList<CaretImpl> allCarets = new LinkedList<>();
+  private final ArrayDeque<CaretImpl> allCarets = new ArrayDeque<>();
   private volatile @NotNull CaretImpl primaryCaret;
   private boolean performCaretMergingAfterCurrentOperation;
   private boolean visualPositionUpdateScheduled;
@@ -203,9 +204,10 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   @Override
   public void removeSecondaryCarets() {
     ThreadingAssertions.assertEventDispatchThread();
-    ListIterator<CaretImpl> caretIterator = allCarets.listIterator(allCarets.size() - 1);
-    while (caretIterator.hasPrevious()) {
-      CaretImpl caret = caretIterator.previous();
+    Iterator<CaretImpl> caretIterator = allCarets.descendingIterator();
+    caretIterator.next();
+    while (caretIterator.hasNext()) {
+      CaretImpl caret = caretIterator.next();
       synchronized (allCarets) {
         caretIterator.remove();
       }
@@ -609,7 +611,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   private void mergeOverlappingCaretsAndSelections() {
     ThreadingAssertions.assertEventDispatchThread();
     if (allCarets.size() > 1) {
-      LinkedList<CaretImpl> carets = new LinkedList<>(allCarets);
+      List<CaretImpl> carets = new LinkedList<>(allCarets);
       carets.sort(CARET_POSITION_COMPARATOR);
       ListIterator<CaretImpl> it = carets.listIterator();
       CaretImpl keepPrimary = getPrimaryCaret();

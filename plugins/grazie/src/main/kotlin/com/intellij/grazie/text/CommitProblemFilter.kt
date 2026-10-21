@@ -4,7 +4,6 @@ import com.intellij.grazie.utils.HighlightingUtil
 import com.intellij.grazie.utils.Text.findParagraphRange
 import com.intellij.grazie.utils.Text.isSingleSentence
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vcs.ui.CommitMessage
 
 internal class CommitProblemFilter : ProblemFilter() {
   override fun shouldIgnore(problem: TextProblem): Boolean {
@@ -37,7 +36,7 @@ internal class CommitProblemFilter : ProblemFilter() {
   override fun shouldIgnoreTypo(problem: TextProblem): Boolean = shouldIgnore(problem)
 
   private fun isCommitMessage(problem: TextProblem): Boolean =
-    problem.text.domain == TextContent.TextDomain.PLAIN_TEXT && CommitMessage.isCommitMessage(problem.text.containingFile)
+    problem.text.domain == TextContent.TextDomain.PLAIN_TEXT && CommitMessageDetector.isCommitMessage(problem.text.containingFile)
 
   private fun isSingleLowercaseSentence(text: CharSequence, range: TextRange): Boolean {
     val paragraphText = findParagraphRange(text, range).subSequence(text)

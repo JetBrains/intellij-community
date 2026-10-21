@@ -106,8 +106,6 @@ jvm_library(
         "//libraries/kotlinx/datetime:datetime_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
-        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
         "//plugins/gradle:gradle-common_test_lib",
         "//plugins/kotlin/project-configuration:project-configuration_test_lib",
         "//plugins/kotlin/base/facet:facet_test_lib",

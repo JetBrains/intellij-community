@@ -5,10 +5,23 @@ import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.Key
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.concurrency.ThreadingAssertions
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
-class EditorHighlightingPredicateTest : AbstractEditorTest() {
-  fun testHighlightingPredicates() {
+@TestApplication
+class EditorHighlightingPredicateTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
+
+  @Test
+  fun testHighlightingPredicates(): Unit = fixture.runTest {
     ThreadingAssertions.assertEventDispatchThread()
 
     initText("foo bar baz xyz")
@@ -30,7 +43,8 @@ class EditorHighlightingPredicateTest : AbstractEditorTest() {
     assertEditorMarkupContains(contains = listOf(highlighter1, highlighter2, highlighter3), doesNotContain = emptyList())
   }
 
-  fun testReplacingPredicate() {
+  @Test
+  fun testReplacingPredicate(): Unit = fixture.runTest {
     ThreadingAssertions.assertEventDispatchThread()
 
     initText("foo bar baz xyz")
@@ -48,14 +62,14 @@ class EditorHighlightingPredicateTest : AbstractEditorTest() {
   }
 
   private fun addHighlightingPredicate(key: Key<EditorHighlightingPredicate>, highlighterToExclude: RangeHighlighter) {
-    val editor = this.editor as EditorImpl
+    val editor = fixture.editor as EditorImpl
     editor.addHighlightingPredicate(key, EditorHighlightingPredicate { highlighter ->
       highlighter != highlighterToExclude
     })
   }
 
   private fun removeHighlightingPredicate(key: Key<EditorHighlightingPredicate>) {
-    val editor = this.editor as EditorImpl
+    val editor = fixture.editor as EditorImpl
     editor.removeHighlightingPredicate(key)
   }
 
@@ -63,19 +77,19 @@ class EditorHighlightingPredicateTest : AbstractEditorTest() {
     contains: List<RangeHighlighter>,
     doesNotContain: List<RangeHighlighter>,
   ) {
-    val allHighlighters = (editor as EditorImpl).filteredDocumentMarkupModel.allHighlighters.toSet()
+    val allHighlighters = (fixture.editor as EditorImpl).filteredDocumentMarkupModel.allHighlighters.toSet()
 
     for (highlighter in contains) {
-      assertTrue("$allHighlighters does not contain $highlighter", highlighter in allHighlighters)
+      assertTrue(highlighter in allHighlighters, "$allHighlighters does not contain $highlighter")
     }
 
     for (highlighter in doesNotContain) {
-      assertTrue("$allHighlighters contains $highlighter", highlighter !in allHighlighters)
+      assertTrue(highlighter !in allHighlighters, "$allHighlighters contains $highlighter")
     }
   }
 
   private fun addHighlighter(): RangeHighlighter {
-    val markupModel = DocumentMarkupModel.forDocument(getDocument(file), project, true)
+    val markupModel = DocumentMarkupModel.forDocument(fixture.editor.document, projectFixture.get(), true)
     return markupModel.addRangeHighlighter(0, 3, HighlighterLayer.SYNTAX, null, HighlighterTargetArea.EXACT_RANGE)
   }
 }

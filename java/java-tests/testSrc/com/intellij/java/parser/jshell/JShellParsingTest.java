@@ -2,40 +2,40 @@
 package com.intellij.java.parser.jshell;
 
 import com.intellij.ide.highlighter.JShellFileType;
-import com.intellij.java.frontback.psi.impl.syntax.JShellSyntaxDefinitionExtension;
 import com.intellij.java.parser.JavaParsingTestCase;
-import com.intellij.lang.java.JShellLanguage;
 import com.intellij.lang.java.JShellParserDefinition;
 import com.intellij.lang.java.JavaParserDefinition;
-import com.intellij.lang.java.syntax.JShellElementTypeConverterExtension;
-import com.intellij.lang.java.syntax.JavaElementTypeConverterExtension;
-import com.intellij.platform.syntax.psi.ElementTypeConverters;
-import com.intellij.platform.syntax.psi.LanguageSyntaxDefinitions;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
 
+@TestApplication
 public class JShellParsingTest extends JavaParsingTestCase {
 
   public JShellParsingTest() {
     super("parser-full/jshell", JShellFileType.DEFAULT_EXTENSION, new JShellParserDefinition(), new JavaParserDefinition());
   }
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    addExplicitExtension(ElementTypeConverters.getInstance(), JShellLanguage.INSTANCE, new JavaElementTypeConverterExtension());
-    addExplicitExtension(ElementTypeConverters.getInstance(), JShellLanguage.INSTANCE, new JShellElementTypeConverterExtension());
-    addExplicitExtension(LanguageSyntaxDefinitions.getINSTANCE(), JShellLanguage.INSTANCE, new JShellSyntaxDefinitionExtension());
-  }
-
+  @Test
   public void testClass0() { doTest(); }
+  @Test
   public void testStatement0() { doTest(); }
+  @Test
   public void testStatement1() { doTest(); }
+  @Test
   public void testExpression0() { doTest(); }
+  @Test
   public void testExpression1() { doTest(); }
+  @Test
   public void testField0() { doTest(); }
+  @Test
   public void testMethod0() { doTest(); }
+  @Test
   public void testImport0() { doTest(); }
+  @Test
   public void testVarStatement() { doTest(); }
+  @Test
   public void testGenericDeclaration1() { doTest(); }
+  @Test
   public void testGenericDeclaration2() { doTest(); }
 
   private void doTest() {

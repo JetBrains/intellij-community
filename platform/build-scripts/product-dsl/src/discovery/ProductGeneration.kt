@@ -73,6 +73,8 @@ data class ModuleSetGenerationConfig(
    */
   @JvmField val testPluginsByProduct: Map<String, Set<TargetName>> = emptyMap(),
 
+  @JvmField val syntheticTestPlugins: SyntheticTestPlugins = SyntheticTestPlugins.EMPTY,
+
   /**
    * When true, scan module sources for test plugin descriptors, and seed [contentPluginPopulation], to enrich the
    * PluginGraph in analysis-only flows.

@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.PsiElement
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
@@ -49,10 +50,14 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtThrowExpression
+import org.jetbrains.kotlin.psi.psiUtil.getOutermostParenthesizerOrThis
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
 import java.util.ArrayDeque
@@ -186,6 +191,13 @@ internal interface K2CompletionRunner {
     }
 }
 
+private fun KtElement.getParentForExpectedType(): PsiElement? {
+    if (this !is KtExpression) return parent
+    return getQualifiedExpressionForSelectorOrThis()
+        .getOutermostParenthesizerOrThis()
+        .parent
+}
+
 context(_: KaSession)
 private fun createWeighingContext(
     positionContext: KotlinRawPositionContext,
@@ -194,7 +206,7 @@ private fun createWeighingContext(
     return when (positionContext) {
         is KotlinNameReferencePositionContext -> {
             val nameExpression = positionContext.nameExpression
-            val nameExpressionParent = nameExpression.parent
+            val nameExpressionParent = nameExpression.getParentForExpectedType()
             val expectedType = when {
                 // during the sorting of completion suggestions expected type from position and actual types of suggestions are compared;
                 // see `org.jetbrains.kotlin.idea.completion.weighers.ExpectedTypeWeigher`;
@@ -203,7 +215,7 @@ private fun createWeighingContext(
                 // TODO: calculate actual types for callable references correctly and use information about expected type
                 positionContext is KotlinCallableReferencePositionContext -> null
                 nameExpression.expectedType != null -> nameExpression.expectedType
-                nameExpressionParent is KtBinaryExpression -> getEqualityExpectedType(nameExpression)
+                nameExpressionParent is KtBinaryExpression -> getEqualityExpectedType(nameExpression, nameExpressionParent)
                 nameExpressionParent is KtCollectionLiteralExpression -> getAnnotationLiteralExpectedType(nameExpressionParent)
                 nameExpressionParent is KtThrowExpression -> {
                     typeCreator.classType(StandardClassIds.Throwable)

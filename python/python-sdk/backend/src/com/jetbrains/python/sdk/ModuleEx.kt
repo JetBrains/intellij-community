@@ -14,46 +14,48 @@ import org.jetbrains.annotations.TestOnly
 import com.intellij.python.sdk.backend.pythonInterpreter
 
 /**
- * Returns the Python SDK configured for this module, or `null` if none is set.
- *
- * Unlike [pythonSdk], this method suspends until the project model is fully loaded
- * before resolving the SDK, so it is safe to call during startup.
+ * The SDK stored on this module, read when the project model has loaded. For the code that writes interpreters and
+ * builds the project structure from them, such as the registry and the configuration lock, which need the stored value
+ * at this instant. Every other caller asks the interpreter of its Python project, `PyProject.getInterpreter`.
  */
-@ApiStatus.Experimental
-suspend fun Module.findPythonSdk(): Sdk? {
-  return PyModuleService.getInstance(getProject()).findPythonSdkWaitingForProjectModel(this)
-}
+@ApiStatus.Internal
+suspend fun Module.readPythonSdkForConfiguration(): Sdk? =
+  PyModuleService.getInstance(getProject()).findPythonSdkWaitingForProjectModel(this)
 
 /**
  * The Python SDK configured for this module.
  *
  * **Startup caveat:** the getter may return `null` when a Python SDK *is* configured but hasn't
  * resolved yet (e.g., the SDK table is still loading from a stale workspace model cache).
- * Prefer the suspended [findPythonSdk] extension in coroutine contexts.
+ * Prefer the interpreter of the Python project, `PyProject.getInterpreter`, in coroutine contexts.
  */
-var Module.pythonSdk: Sdk?
-  @ApiStatus.Obsolete
+@Deprecated("Use the interpreter of the Python project: `PyProject.getInterpreter`, or the snapshot of `EvoPyProjectModel` when the caller cannot wait")
+val Module.pythonSdk: Sdk?
+  @Suppress("DEPRECATION")
   get() = PythonSdkUtil.findPythonSdk(this)
 
-  /**
-   * For tests only. A test module is often not a Python project, and a test SDK is often a mock, so a test cannot use
-   * `PyProject.setPythonInterpreter`. Production code calls that function, which is the one way to set an interpreter.
-   */
-  @TestOnly
-  @ApiStatus.Internal
-  @RequiresBackgroundThread(generateAssertion = false)
-  set(newSdk) = writePythonSdk(newSdk)
+/**
+ * Sets [sdk] on this module, for a test whose SDK cannot become a `PythonInterpreter`, such as a mock SDK, or whose
+ * module is not a Python project. Every other caller uses `PyProject.setPythonInterpreter`, which is the one way to set
+ * an interpreter.
+ */
+@TestOnly
+@ApiStatus.Internal
+@RequiresBackgroundThread(generateAssertion = false)
+fun Module.setPythonSdkForTests(sdk: Sdk?): Unit = writePythonSdk(sdk)
 
 /**
  * Writes [newSdk] to this module and notifies [PySdkListener]. The one low-level writer of a module SDK.
  *
- * Production code calls `PyProject.setPythonInterpreter`, which also waits for the snapshot. Tests set [pythonSdk].
+ * Production code calls `PyProject.setPythonInterpreter`, which also waits for the snapshot. Tests call
+ * [setPythonSdkForTests].
  *
  * Must be called under [withSdkConfigurationLock] to prevent concurrent Module/SDK changes.
  */
 @ApiStatus.Internal
 @RequiresBackgroundThread(generateAssertion = false)
 fun Module.writePythonSdk(newSdk: Sdk?) {
+  @Suppress("DEPRECATION")
   val prevSdk = pythonSdk
   thisLogger.info("Setting PythonSDK $newSdk to module $this")
   newSdk?.pythonInterpreter(forceRefresh = true)

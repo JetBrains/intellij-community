@@ -6,10 +6,10 @@
 //! the fake `tart`, named by `DOCKER_BIN`. The guest agent is a plain file named by
 //! `AIR_VM_GUEST_AGENT_SOURCE`, so nothing asks Bazel where a binary is: a named source is answered by a stat.
 //!
-//! A Docker pool can also leave `DOCKER_BIN` unset and run on the Lima engine: then [`HostPool::pinned_bazel`]
-//! resolves the pinned Docker CLI and the pinned `limactl` to the fakes of the same directory. Or it runs on the Apple
-//! `container` engine, with the fake `container` of the same directory named by `CONTAINER_BIN`, and the fake `curl`
-//! of the same directory named by `AIR_VM_HOST_CURL`, which stands in for the file mirror.
+//! A Docker pool can also leave `DOCKER_BIN` unset and run the pinned CLI: then [`HostPool::pinned_bazel`] resolves
+//! the pinned Docker CLI to the fake of the same directory. Or it runs on the Apple `container` engine, with the fake
+//! `container` of the same directory named by `CONTAINER_BIN`, and the fake `curl` of the same directory named by
+//! `AIR_VM_HOST_CURL`, which stands in for the file mirror.
 //!
 //! A container-linux pool lays the fakes out as a checkout holds the testing-ui skill, `.agents/skills/testing-ui/scripts`
 //! under the temporary root, with `out/testing-ui` beside it: the backend and the fake script derive both from the checkout. The pool
@@ -23,7 +23,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use avl_base::config::{DOCKER_SOCKET_PATH_LIMIT, HostOs, MacosHost};
+use avl_base::config::{HostOs, MacosHost};
 use avl_base::{Backend, Config, GuestArch, GuestOs};
 use avl_host_sys::Runner;
 use avl_testkit::tartfake::{Answer, Binary, Fake};
@@ -51,9 +51,6 @@ pub struct HostPool {
     #[cfg(unix)]
     control_port: Option<FakeControlPort>,
     root: TempDir,
-    /// The short directory that holds the Lima home of a pool built [`HostPoolBuilder::with_lima_engine`]. Held only
-    /// so it lives as long as the pool.
-    _lima_root: Option<TempDir>,
 }
 
 /// How a [`HostPool`] differs from the default: a Tart fake named by `TART_BIN`, host paths declared as the root,
@@ -72,7 +69,7 @@ pub struct HostPoolBuilder {
     git: bool,
     tart_bin: bool,
     docker_bin: bool,
-    lima_engine: bool,
+    names_engine: bool,
     container_engine: bool,
     host_paths: bool,
     overrides: Vec<(String, String)>,
@@ -91,7 +88,7 @@ impl HostPool {
             git: false,
             tart_bin: true,
             docker_bin: true,
-            lima_engine: false,
+            names_engine: true,
             container_engine: false,
             host_paths: true,
             overrides: Vec::new(),
@@ -108,22 +105,16 @@ impl HostPool {
         crate::runner(&self.environment)
     }
 
-    /// A Bazel that resolves every pinned tool to its fake in the pool's directory: the Tart, the Docker CLI of the
-    /// pool's architecture with a stand-in `docker-buildx`, and the `limactl` of a pool built
-    /// [`HostPoolBuilder::with_lima_engine`].
+    /// A Bazel that resolves every pinned tool to its fake in the pool's directory: the Tart, and the Docker CLI of the
+    /// pool's architecture with a stand-in `docker-buildx`.
     #[cfg(unix)]
     pub fn pinned_bazel(&self) -> PinnedBazel {
         let arch = self.settings.guest_arch;
         let plugin = self.root().join("docker-buildx");
         std::fs::write(&plugin, "a stand-in plugin\n").expect("the stand-in plugin is written");
-        let mut bazel = PinnedBazel::tart(self.fake.executable())
+        PinnedBazel::tart(self.fake.executable())
             .with_docker(arch, &self.fake.directory().join(Binary::Docker.file_name()))
-            .with_buildx(arch, &plugin);
-        let limactl = self.fake.directory().join(Binary::Limactl.file_name());
-        if limactl.exists() {
-            bazel = bazel.with_limactl(arch, &limactl);
-        }
-        bazel
+            .with_buildx(arch, &plugin)
     }
 
     /// The fake host `git` of a pool built [`HostPoolBuilder::with_git`].
@@ -198,7 +189,7 @@ impl HostPoolBuilder {
     }
 
     /// Leaves `DOCKER_BIN` unset and loads the settings as a macOS host does, so the Docker backend resolves the pinned
-    /// CLI through Bazel. `DOCKER_HOST` names an engine, so the engine rule chooses the external one. The fake `docker`
+    /// CLI through Bazel. `DOCKER_HOST` names an engine, so the engine rule keeps the host engine. The fake `docker`
     /// stays in the directory for [`HostPool::pinned_bazel`].
     #[must_use]
     pub const fn without_docker_bin(mut self) -> Self {
@@ -206,27 +197,26 @@ impl HostPoolBuilder {
         self
     }
 
-    /// Runs the Docker pool on the Lima engine, whatever the host is: the settings load as a macOS host loads them,
-    /// with `AIR_VM_DOCKER_ENGINE=lima` and neither `DOCKER_BIN` nor `DOCKER_HOST`, so the real engine rule chooses Lima
-    /// and the pinned CLI on every macOS release. The load derives the engine disk and checks the socket path. The
-    /// fake `limactl` stands beside the fake `docker`, and `AIR_VM_LIMA_HOME` is under the root. A suite resolves the
-    /// pinned tools through [`HostPool::pinned_bazel`].
+    /// Leaves `DOCKER_BIN` and `DOCKER_HOST` unset and loads the settings as a macOS host does, so the engine rule
+    /// decides by the macOS release ([`HostPoolBuilder::on_macos`]). An older release keeps the host engine with the
+    /// pinned CLI, which [`HostPool::pinned_bazel`] resolves. The fake `docker` stays in the directory for it.
     #[must_use]
-    pub const fn with_lima_engine(mut self) -> Self {
-        self.lima_engine = true;
+    pub const fn without_named_engine(mut self) -> Self {
         self.docker_bin = false;
+        self.names_engine = false;
         self
     }
 
-    /// Runs the Docker pool on the Apple `container` engine, whatever the host is: the settings load as a macOS host
-    /// loads them, with `AIR_VM_DOCKER_ENGINE=container` and neither `DOCKER_BIN` nor `DOCKER_HOST`, so the real engine
-    /// rule chooses the engine. `CONTAINER_BIN` names the fake `container` beside the fake `docker`, and `AIR_VM_DNS`
-    /// names a nameserver, so no suite reads the resolver of its host. `AIR_VM_HOST_CURL` names the fake `curl`, so no
-    /// suite downloads from the file mirror. `AIR_VM_IDLE_STOP` is `off`, so no release starts a detached process.
+    /// Runs the Docker pool on the Apple `container` engine: the settings load as a macOS host of
+    /// [`crate::FIXTURE_MACOS`] loads them, with neither `DOCKER_BIN` nor `DOCKER_HOST`, so the real engine rule
+    /// chooses the engine. `CONTAINER_BIN` names the fake `container` beside the fake `docker`, and `AIR_VM_DNS` names
+    /// a nameserver, so no suite reads the resolver of its host. `AIR_VM_HOST_CURL` names the fake `curl`, so no suite
+    /// downloads from the file mirror. `AIR_VM_IDLE_STOP` is `off`, so no release starts a detached process.
     #[must_use]
     pub const fn with_container_engine(mut self) -> Self {
         self.container_engine = true;
         self.docker_bin = false;
+        self.names_engine = false;
         self
     }
 
@@ -281,21 +271,15 @@ impl HostPoolBuilder {
             };
             if self.docker_bin {
                 environment.push(("DOCKER_BIN".to_owned(), docker.executable().to_string_lossy().into_owned()));
-            } else if !self.lima_engine && !self.container_engine {
-                // The pinned CLI against an engine the environment names, so a macOS host does not choose the Lima
-                // engine. The fake `docker` reads no variable.
+            } else if self.names_engine {
+                // The pinned CLI against an engine the environment names, so a macOS host keeps the host engine on
+                // every release. The fake `docker` reads no variable.
                 environment.push(("DOCKER_HOST".to_owned(), "unix:///nonexistent/docker.sock".to_owned()));
-            }
-            if self.lima_engine {
-                // The directory holds it; `pinned_bazel` finds it there.
-                drop(fake.install_beside(Binary::Limactl));
-                environment.push(("AIR_VM_DOCKER_ENGINE".to_owned(), "lima".to_owned()));
             }
             if self.container_engine {
                 let container = fake.install_beside(Binary::Container);
                 let curl = fake.install_beside(Binary::Curl);
                 environment.extend([
-                    ("AIR_VM_DOCKER_ENGINE".to_owned(), "container".to_owned()),
                     ("CONTAINER_BIN".to_owned(), container.executable().to_string_lossy().into_owned()),
                     ("AIR_VM_DNS".to_owned(), "192.0.2.53".to_owned()),
                     ("AIR_VM_HOST_CURL".to_owned(), curl.executable().to_string_lossy().into_owned()),
@@ -327,18 +311,11 @@ impl HostPoolBuilder {
         if let Some(git) = &git {
             environment.push(("AIR_VM_HOST_GIT".to_owned(), git.path().to_string_lossy().into_owned()));
         }
-        let lima_root = self.lima_engine.then(short_temp_root);
-        if let Some(lima_root) = &lima_root {
-            environment.push((
-                "AIR_VM_LIMA_HOME".to_owned(),
-                lima_root.path().join("lima").to_string_lossy().into_owned(),
-            ));
-        }
         for (name, value) in self.overrides {
             environment.retain(|(existing, _)| *existing != name);
             environment.push((name, value));
         }
-        // The pinned CLI and the Lima engine are what a macOS host resolves, so such a pool loads as one.
+        // The pinned CLI and the Apple `container` engine are what a macOS host resolves, so such a pool loads as one.
         let host = if self.backend == Backend::Docker && !self.docker_bin {
             HostOs::Macos
         } else {
@@ -369,30 +346,8 @@ impl HostPoolBuilder {
             #[cfg(unix)]
             control_port,
             root,
-            _lima_root: lima_root,
         }
     }
-}
-
-/// A temporary directory short enough for a Lima home: the socket path under it stays within
-/// [`DOCKER_SOCKET_PATH_LIMIT`], and the engine start keeps its length check on.
-///
-/// The system temporary directory when it is short, else `/tmp`. Under Bazel the temporary directory is the long
-/// `TEST_TMPDIR`, and on macOS the default is under `/var/folders`, so a Lima home there would be refused.
-fn short_temp_root() -> TempDir {
-    const PREFIX: &str = "avl";
-    // `/<prefix><6 random>`, `/lima`, and the socket suffix under the Lima home.
-    let room = 1 + PREFIX.len() + 6 + "/lima".len() + "/air-docker-engine/sock/docker.sock".len();
-    let system = std::env::temp_dir();
-    let base = if system.as_os_str().len() + room <= DOCKER_SOCKET_PATH_LIMIT {
-        system
-    } else {
-        PathBuf::from("/tmp")
-    };
-    tempfile::Builder::new()
-        .prefix(PREFIX)
-        .tempdir_in(&base)
-        .unwrap_or_else(|error| panic!("a short temporary directory under {}: {error}", base.display()))
 }
 
 /// The stand-in guest agent, which a boot only stats and copies into the guest. An executable script on Unix, and a

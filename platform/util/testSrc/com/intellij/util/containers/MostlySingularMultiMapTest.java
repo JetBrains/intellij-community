@@ -15,17 +15,21 @@
  */
 package com.intellij.util.containers;
 
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Tests for {@link MostlySingularMultiMap}.
  */
-public class MostlySingularMultiMapTest extends TestCase {
+public class MostlySingularMultiMapTest {
+  @Test
   public void testAddRemove() {
     MostlySingularMultiMap<String, String> map = new MostlySingularMultiMap<>();
     assertEquals(Collections.emptyList(), map.get("key"));
@@ -97,6 +101,7 @@ public class MostlySingularMultiMapTest extends TestCase {
     assertEquals(Collections.emptyList(), map.get("multiKey"));
   }
 
+  @Test
   public void testAddAll() {
     MostlySingularMultiMap<String, String> map1 = new MostlySingularMultiMap<>();
     MostlySingularMultiMap<String, String> map2 = new MostlySingularMultiMap<>();
@@ -173,6 +178,7 @@ public class MostlySingularMultiMapTest extends TestCase {
                  map1.get("k3d"));
   }
 
+  @Test
   public void testAddAllDoesntOwnOriginalValues() {
     MostlySingularMultiMap<String, String> mapEmpty = new MostlySingularMultiMap<>();
     MostlySingularMultiMap<String, String> mapWithOne = new MostlySingularMultiMap<>();

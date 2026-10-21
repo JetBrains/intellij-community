@@ -11,8 +11,8 @@ import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import com.sun.jna.Pointer;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -30,47 +30,43 @@ import static com.intellij.ui.mac.foundation.Foundation.nsString;
 import static com.intellij.ui.mac.foundation.Foundation.stringFromClass;
 import static com.intellij.ui.mac.foundation.Foundation.stringFromSelector;
 import static com.intellij.ui.mac.foundation.Foundation.toStringViaUTF8;
-import static org.hamcrest.CoreMatchers.endsWith;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class FoundationTest {
-  @BeforeClass
+  @BeforeAll
   public static void assumeMac() {
     IoTestUtil.assumeMacOS();
   }
 
   @Test
   public void testStrings() {
-    assertThat(toStringViaUTF8(nsString("Test")), equalTo("Test"));
+    assertThat(toStringViaUTF8(nsString("Test"))).isEqualTo("Test");
   }
 
   @Test
   public void testEncodings() {
-    assertThat(getEncodingName(4), equalTo("utf-8"));
-    assertThat(getEncodingName(0), nullValue());
-    assertThat(getEncodingName(-1), nullValue());
+    assertThat(getEncodingName(4)).isEqualTo("utf-8");
+    assertThat(getEncodingName(0)).isNull();
+    assertThat(getEncodingName(-1)).isNull();
 
-    assertThat(getEncodingCode("utf-8"), equalTo(4L));
-    assertThat(getEncodingCode("UTF-8"), equalTo(4L));
+    assertThat(getEncodingCode("utf-8")).isEqualTo(4L);
+    assertThat(getEncodingCode("UTF-8")).isEqualTo(4L);
 
-    assertThat(getEncodingCode(""), equalTo(-1L));
+    assertThat(getEncodingCode("")).isEqualTo(-1L);
     //noinspection SpellCheckingInspection
-    assertThat(getEncodingCode("asdasd"), equalTo(-1L));
-    assertThat(getEncodingCode(null), equalTo(-1L));
+    assertThat(getEncodingCode("asdasd")).isEqualTo(-1L);
+    assertThat(getEncodingCode(null)).isEqualTo(-1L);
 
-    assertThat(getEncodingName(10), equalTo("utf-16"));
-    assertThat(getEncodingCode("utf-16"), equalTo(10L));
+    assertThat(getEncodingName(10)).isEqualTo("utf-16");
+    assertThat(getEncodingCode("utf-16")).isEqualTo(10L);
 
-    assertThat(getEncodingName(2483028224L), equalTo("utf-16le"));
-    assertThat(getEncodingCode("utf-16le"), equalTo(2483028224L));
-    assertThat(getEncodingName(2415919360L), equalTo("utf-16be"));
-    assertThat(getEncodingCode("utf-16be"), equalTo(2415919360L));
+    assertThat(getEncodingName(2483028224L)).isEqualTo("utf-16le");
+    assertThat(getEncodingCode("utf-16le")).isEqualTo(2483028224L);
+    assertThat(getEncodingName(2415919360L)).isEqualTo("utf-16be");
+    assertThat(getEncodingCode("utf-16be")).isEqualTo(2415919360L);
   }
 
   @Test
@@ -78,20 +74,20 @@ public class FoundationTest {
     String path;
 
     path = NSWorkspace.absolutePathForAppBundleWithIdentifier("com.apple.Finder");
-    assertThat(path, notNullValue());
-    assertThat(path, endsWith("Finder.app"));
+    assertThat(path).isNotNull();
+    assertThat(path).endsWith("Finder.app");
 
     path = NSWorkspace.absolutePathForAppBundleWithIdentifier("non-existing-blah-blah");
-    assertThat(path, nullValue());
+    assertThat(path).isNull();
   }
 
   @Test
   public void testPlatformInfo() {
-    assertTrue("Word size does not match", Platform.is64Bit());
-    assertTrue("Not detected as macOS", Platform.isMac());
+    assertTrue(Platform.is64Bit(), "Word size does not match");
+    assertTrue(Platform.isMac(), "Not detected as macOS");
 
-    assertEquals("Incorrectly detected as " + CpuArch.CURRENT, CpuArch.CURRENT == CpuArch.X86_64, Platform.isIntel());
-    assertEquals("Incorrectly detected as " + CpuArch.CURRENT, CpuArch.CURRENT == CpuArch.ARM64, Platform.isARM());
+    assertEquals(CpuArch.CURRENT == CpuArch.X86_64, Platform.isIntel(), "Incorrectly detected as " + CpuArch.CURRENT);
+    assertEquals(CpuArch.CURRENT == CpuArch.ARM64, Platform.isARM(), "Incorrectly detected as " + CpuArch.CURRENT);
 
     assertEquals(1, Native.BOOL_SIZE);
     assertEquals(8, Native.POINTER_SIZE);
@@ -116,7 +112,7 @@ public class FoundationTest {
   @Test
   public void testObjcMsgSend_char() {
     ID number = autorelease(invoke("NSNumber", "numberWithChar:", 'y'));
-    assertEquals((int)'y', invoke(number, "charValue").intValue());
+    assertEquals('y', invoke(number, "charValue").intValue());
   }
 
   @Test

@@ -1,0 +1,2 @@
+<!-- "Escape '&' with '&amp;'" "true" -->
+<tag aaa="aa&<caret>amp;bbb"/>

@@ -18,7 +18,7 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
-class CacheTest {
+internal class CacheTest {
   private val producerCalled = AtomicInteger()
 
   private fun createSut(scope: CoroutineScope) = Cache<String, String>(scope, 1.milliseconds) {
@@ -57,6 +57,19 @@ class CacheTest {
     Assertions.fail("Even after $secsToWaitForUpdate seconds cache hasn't been upgraded in background")
   }
 
+
+  @Test
+  fun testGoneKeyIsDropped(): Unit = timeoutRunBlocking {
+    var gone = true
+    val sut = Cache<String, String>(this, Int.MAX_VALUE.days) {
+      producerCalled.incrementAndGet()
+      if (gone) null else listOf("$it-value")
+    }
+    Assertions.assertTrue(sut.get("foo").isEmpty(), "A gone key has no values")
+    gone = false
+    Assertions.assertArrayEquals(arrayOf("foo-value"), sut.get("foo").toTypedArray(), "The cache must not keep a gone key")
+    Assertions.assertEquals(2, producerCalled.get())
+  }
 
   @ParameterizedTest
   @ValueSource(booleans = [true, false])

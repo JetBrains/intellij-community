@@ -1,26 +1,31 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.definitions
 
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrSdkOrderEntry
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.caches.project.cacheByClass
-import org.jetbrains.kotlin.idea.base.util.allScope
+import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
+import org.jetbrains.kotlin.idea.core.script.scriptingWarnLog
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.core.script.settings.parsedClassNames
 import org.jetbrains.kotlin.idea.core.script.settings.parsedClasspath
-import org.jetbrains.kotlin.idea.core.script.definition.ScriptDefinitionMarkerFileType
-import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
+import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_PATH
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
@@ -50,7 +55,7 @@ class DefinitionFromDependenciesProvider(val project: Project) : ScriptDefinitio
 
     override fun getDefinitionClasses(): List<String> = definitionClasses()
 
-    // markers are resolved through the index by ScriptTemplatesFromDependenciesCache, not by classpath scanning
+    // ScriptTemplatesFromDependenciesCache resolves markers from the project class roots.
     override fun useDiscovery(): Boolean = false
 
     /** Where the marker file of [definitionId] lives, or null when no marker declared it. */
@@ -71,12 +76,21 @@ class DefinitionFromDependenciesProvider(val project: Project) : ScriptDefinitio
             addAll(explicitClasspath)
             addAll(discoveredClasspath)
             addAll(autoResolvedClasspath)
-        }.distinct().map { Path.of(it) }
+        }.distinct().mapNotNull { entry ->
+            val path = entry.toNioPathOrNull()
+            if (path == null) scriptingWarnLog("Invalid script definition classpath entry is skipped: $entry")
+            path
+        }
     }
 
     private fun tryToGuessClasspath(fqns: List<String>): List<String> {
-        if (fqns.isEmpty()) return emptyList()
+        if (fqns.isEmpty() || project.isDefault) return emptyList()
         return runReadActionBlocking {
+            val dumbService = DumbService.getInstance(project)
+            if (dumbService.isDumb) {
+                dumbService.runWhenSmart { ScriptDefinitionsModificationTracker.getInstance(project).incModificationCount() }
+                return@runReadActionBlocking emptyList()
+            }
             val javaFacade = JavaPsiFacade.getInstance(project)
             val projectScope = GlobalSearchScope.projectScope(project)
             val projectFileIndex = ProjectFileIndex.getInstance(project)
@@ -85,7 +99,7 @@ class DefinitionFromDependenciesProvider(val project: Project) : ScriptDefinitio
                 val psiClass = javaFacade.findClass(fqn, projectScope) ?: continue
                 val classFile = psiClass.containingFile?.virtualFile ?: continue
                 val module = projectFileIndex.getModuleForFile(classFile) ?: continue
-                for (virtualFile in OrderEnumerator.orderEntries(module).withoutSdk().classesRoots) {
+                for (virtualFile in OrderEnumerator.orderEntries(module).withoutSdk().productionOnly().classes().usingCache().roots) {
                     val localVirtualFile = VfsUtil.getLocalFile(virtualFile)
                     classpath.addIfNotNull(localVirtualFile.fileSystem.getNioPath(localVirtualFile))
                 }
@@ -101,63 +115,63 @@ internal object ScriptTemplatesFromDependenciesCache {
         ScriptDefinitionsModificationTracker.getInstance(project),
         ProjectRootModificationTracker.getInstance(project),
     ) {
-        runReadActionBlocking {
-            val templatesFolders =
-                FilenameIndex.getVirtualFilesByName(ScriptDefinitionMarkerFileType.lastPathSegment, project.allScope())
-            val projectFileIndex = ProjectFileIndex.getInstance(project)
-            val files = mutableListOf<VirtualFile>()
-            for (templatesFolder in templatesFolders) {
-                val children = templatesFolder?.takeIf { ScriptDefinitionMarkerFileType.isParentOfMyFileType(it) }
-                    ?.takeIf { projectFileIndex.isInLibraryClasses(it) }?.children?.filter {
-                        !it.name.endsWith(MAIN_KTS)
-                    } ?: continue
-                files += children
-            }
-
-            getTemplateClassPath(project, files)
-        }
+        discover(project)
     }
 
-    private fun getTemplateClassPath(project: Project, files: Collection<VirtualFile>): DefinitionTemplates {
-        val rootDirToTemplates: MutableMap<VirtualFile, MutableList<VirtualFile>> = hashMapOf()
-        for (file in files) { // parent of SCRIPT_DEFINITION_MARKERS_PATH, i.e. of `META-INF/kotlin/script/templates/`
-            val dir = file.parent?.parent?.parent?.parent?.parent ?: continue
-            rootDirToTemplates.getOrPut(dir) { arrayListOf() }.add(file)
-        }
+    /** True when the class roots now declare other definitions than the cached result, for example after a build. */
+    fun isOutdated(project: Project): Boolean = discover(project) != getOrDiscover(project)
 
+    private fun discover(project: Project): DefinitionTemplates =
+        ReadAction.nonBlocking<DefinitionTemplates> { collectDefinitionTemplates(project) }.executeSynchronously()
+
+    private fun collectDefinitionTemplates(project: Project): DefinitionTemplates {
         val templates = linkedSetOf<String>()
         val markerOrigins = linkedMapOf<String, ScriptTemplateMarkerOrigin>()
-        val classpath = linkedSetOf<Path>()
+        val ownerModules = linkedSetOf<Module>()
+        val markerRoots = linkedSetOf<VirtualFile>()
+        for (classRoot in markerCandidateRoots(project)) {
+            ProgressManager.checkCanceled()
+            val markerFiles = classRoot.findFileByRelativePath(SCRIPT_DEFINITION_MARKERS_PATH)?.children.orEmpty()
+                .filter { it.name.endsWith(SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT) && it.name != MAIN_KTS }
+                .sortedBy { it.name }
+            if (markerFiles.isEmpty()) continue
 
-        rootDirToTemplates.forEach { (root, templateFiles) ->
-            scriptingDebugLog { "Root matching SCRIPT_DEFINITION_MARKERS_PATH found: ${root.path}" }
-
-            val orderEntriesForFile = ProjectFileIndex.getInstance(project).getOrderEntriesForFile(root).filter {
-                it is LibraryOrSdkOrderEntry && it.getRootFiles(OrderRootType.CLASSES).contains(root)
-            }.takeIf { it.isNotEmpty() } ?: return@forEach
-
-            val jarPath = root.presentableUrl
-            val rootName = root.name
-
-            for (virtualFile in templateFiles) {
-                val fqn = virtualFile.name.removeSuffix(SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT)
-                templates.add(fqn)
-                markerOrigins.putIfAbsent(fqn, ScriptTemplateMarkerOrigin(rootName, jarPath))
-            }
-
-            // assuming that all libraries are placed into classes roots
-            // TODO: extract exact library dependencies instead of putting all module dependencies into classpath
-            // minimizing the classpath needed to use the template by taking cp only from modules with new templates found
-            // on the other hand the approach may fail if some module contains a template without proper classpath, while
-            // the other has properly configured classpath, so assuming that the dependencies are set correctly everywhere
-            for (orderEntry in orderEntriesForFile) {
-                for (virtualFile in OrderEnumerator.orderEntries(orderEntry.ownerModule).withoutSdk().classesRoots) {
-                    val localVirtualFile = VfsUtil.getLocalFile(virtualFile)
-                    classpath.addIfNotNull(localVirtualFile.fileSystem.getNioPath(localVirtualFile))
-                }
+            scriptingDebugLog { "Root matching SCRIPT_DEFINITION_MARKERS_PATH found: ${classRoot.path}" }
+            ownerModules += ownerModules(project, classRoot)
+            markerRoots += classRoot
+            for (markerFile in markerFiles) {
+                val fqn = markerFile.name.removeSuffix(SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT)
+                templates += fqn
+                markerOrigins.putIfAbsent(fqn, ScriptTemplateMarkerOrigin(classRoot.name, classRoot.presentableUrl))
             }
         }
 
-        return DefinitionTemplates(templates.toList(), classpath.map { it.absolutePathString() }, markerOrigins)
+        val classpath = ownerModules
+            .flatMapTo(markerRoots) { OrderEnumerator.orderEntries(it).withoutSdk().productionOnly().classes().usingCache().roots.asIterable() }
+            .mapNotNull { virtualFile ->
+                val localVirtualFile = VfsUtil.getLocalFile(virtualFile)
+                localVirtualFile.fileSystem.getNioPath(localVirtualFile)?.absolutePathString()
+            }
+        return DefinitionTemplates(templates.toList(), classpath, markerOrigins)
     }
+
+    /** The production outputs of all modules, and the class roots of all libraries in any scope. */
+    private fun markerCandidateRoots(project: Project): Set<VirtualFile> {
+        val outputRoots = OrderEnumerator.orderEntries(project).productionOutputRoots()
+        val libraryRoots = OrderEnumerator.orderEntries(project).withoutSdk().withoutModuleSourceEntries().classes().usingCache().roots
+        return linkedSetOf(*outputRoots, *libraryRoots)
+    }
+
+    private fun ownerModules(project: Project, classRoot: VirtualFile): List<Module> {
+        val libraryOwners = ProjectFileIndex.getInstance(project).getOrderEntriesForFile(classRoot)
+            .filter { it is LibraryOrSdkOrderEntry && classRoot in it.getRootFiles(OrderRootType.CLASSES) }
+            .map { it.ownerModule }
+        if (libraryOwners.isNotEmpty()) return libraryOwners
+        return ModuleManager.getInstance(project).modules.filter {
+            classRoot in OrderEnumerator.orderEntries(it).productionOutputRoots()
+        }
+    }
+
+    private fun OrderEnumerator.productionOutputRoots(): Array<VirtualFile> =
+        withoutSdk().withoutLibraries().withoutDepModules().productionOnly().classes().usingCache().roots
 }

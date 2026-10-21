@@ -9,11 +9,15 @@ import kotlinx.serialization.json.putJsonObject
  * Builds the `index.html` of a wasmjs_test: the page that loads the test module in the browser.
  *
  * The page is assembled here instead of resolving a template resource, so everything the browser
- * runs is readable in one place. Only four parts vary: the entrypoint import, one classic
- * `<script src>` tag per configuration script, an import map resolving the bare specifiers of npm
- * packages served under `/node_modules/` plus the [importRemaps] entries (omitted when there is
- * nothing to map), and the [awaitedImports] statements run before the entrypoint (omitted when the
- * test declares none).
+ * runs is readable in one place. It follows the `static/test.html` reference page of
+ * kotlin-web-helpers: [mochaScriptPath] and [kotlinTestRunnerScriptPath] install mocha, the
+ * kotlin-test adapter, and the TeamCity reporter. The page prints [TESTS_FINISHED_MARKER] one
+ * macrotask after mocha completes the run.
+ *
+ * The other parts that vary: the entrypoint import, one classic `<script src>` tag per
+ * configuration script, an import map resolving the bare specifiers of npm packages served under
+ * `/node_modules/` plus the [importRemaps] entries (omitted when there is nothing to map), and the
+ * [awaitedImports] statements run before the entrypoint (omitted when the test declares none).
  *
  * [importRemaps] redirects module-adjacent imports (e.g. the linked module's `./skiko.mjs`) to
  * where the file is actually served (`/_runtime/skiko.mjs`): a linked module is a single Bazel
@@ -23,6 +27,8 @@ import kotlinx.serialization.json.putJsonObject
  */
 internal fun generateIndexHtml(
   entrypointModulePath: String,
+  mochaScriptPath: String,
+  kotlinTestRunnerScriptPath: String,
   configurationScriptPaths: List<String>,
   npmPackageEntries: Map<String, String>,
   importRemaps: Map<String, String> = emptyMap(),
@@ -61,15 +67,7 @@ internal fun generateIndexHtml(
   }
   appendLine("""</head>""")
   appendLine("""<body>""")
-  appendLine("""<script type="module">""")
-  // Bazel's --test_filter is only known at test runtime: the runner forwards it as repeated
-  // `include` query parameters, translated here into the argv-style filters kotlin-test reads
-  // through this Node-process shim (there is no Node in a browser). kotlin-test's argument
-  // parser (kotlin.test FrameworkTestArguments) expects `--include` and the comma-separated
-  // patterns as two separate tokens, skips the first two argv entries, and re-splits on spaces.
-  appendLine("""  const includes = new URLSearchParams(window.location.search).getAll("include");""")
-  appendLine("""  const filterArguments = includes.length === 0 ? [] : ["--include", includes.join(",")];""")
-  appendLine("""  globalThis.process = { argv: ["NEVER_PROCESSED", "NEVER_PROCESSED", ...filterArguments], env: {}, release: {} };""")
+  appendLine("""<script>""")
   appendLine("""  globalThis.addEventListener("error", (event) => {""")
   appendLine("""    console.error(`wasmjs_test page error: ${'$'}{event.message}`);""")
   appendLine("""  });""")
@@ -78,6 +76,31 @@ internal fun generateIndexHtml(
   appendLine("""  globalThis.addEventListener("unhandledrejection", (event) => {""")
   appendLine("""    console.error(`wasmjs_test page error: ${'$'}{event.reason}`);""")
   appendLine("""  });""")
+  appendLine("""</script>""")
+  appendLine("""<script src="/${validatedPagePath(mochaScriptPath)}"></script>""")
+  // The runner reads this configuration when its script loads, so it must come first.
+  appendLine("""<script>""")
+  // Bazel's --test_filter and --test_runner_fail_fast are only known at test runtime: the runner
+  // forwards them as repeated `include` query parameters and a `failFast` query parameter. The
+  // kotlin-test runner expects `--include` and the comma-separated patterns as two separate arguments.
+  appendLine("""  const parameters = new URLSearchParams(window.location.search);""")
+  appendLine("""  const includes = parameters.getAll("include");""")
+  appendLine("""  window.kotlinTestBrowserRunner = {""")
+  appendLine("""    kotlinTestCliArguments: includes.length === 0 ? [] : ["--include", includes.join(",")],""")
+  // Without a page element for mocha's HTML reporter, the reporter needs the base reporter for its statistics.
+  appendLine("""    reporterOptions: { Base: Mocha.reporters.Base },""")
+  // Mocha fails a test after 2 seconds by default. The deadline derived from TEST_TIMEOUT bounds the run instead.
+  // With `bail`, mocha runs no more tests after the first failure, and still closes the suites it started.
+  appendLine("""    mochaSetupOptions: { timeout: 0, bail: parameters.has("failFast") },""")
+  // The page prints the marker the harness waits for, not the runner. The extra macrotask lets a
+  // callback that a test scheduled with `setTimeout(0)` run first: mocha removes its error hook
+  // when the run ends, so an exception in that callback reaches the harness as uncaught.
+  appendLine("""    testsFinishedMarker: "$MOCHA_RUN_COMPLETED_LINE",""")
+  appendLine("""    onComplete: () => setTimeout(() => console.log("$TESTS_FINISHED_MARKER"), 0),""")
+  appendLine("""  };""")
+  appendLine("""</script>""")
+  appendLine("""<script src="/${validatedPagePath(kotlinTestRunnerScriptPath)}"></script>""")
+  appendLine("""<script type="module">""")
   // A missing export would make `await` succeed immediately (awaiting undefined), silently
   // reintroducing the very race awaited imports exist to prevent — so it fails loudly instead.
   appendLine("""  const awaitedExport = (module, path, member) => {""")
@@ -86,39 +109,6 @@ internal fun generateIndexHtml(
   appendLine("""    }""")
   appendLine("""    return module[member];""")
   appendLine("""  };""")
-  // kotlin-test emits no duration of its own on wasmJs (its adapter knows only name, message,
-  // details, status and text). The page times each test and decorates the testFinished message
-  // with the `duration` attribute TestRunState already reads.
-  // Timing here rather than in the harness keeps CDP delivery and scheduling latency out of it.
-  appendLine("""  const testStartedAt = new Map();""")
-  // Keyed by the raw, still-escaped name: pairing a start with its finish needs no unescaping, and
-  // stepping over TeamCity's `|'` escapes keeps a name containing a quote from truncating the match.
-  appendLine("""  const testNameOf = (line) => {""")
-  appendLine("""    const name = /\sname='((?:[^'|]|\|.)*)'/.exec(line);""")
-  appendLine("""    return name === null ? null : name[1];""")
-  appendLine("""  };""")
-  appendLine("""  const timed = (line) => {""")
-  appendLine("""    if (line.startsWith("##teamcity[testStarted ")) {""")
-  appendLine("""      const name = testNameOf(line);""")
-  appendLine("""      if (name !== null) testStartedAt.set(name, performance.now());""")
-  appendLine("""      return line;""")
-  appendLine("""    }""")
-  // A duration already reported is left alone: it would be the framework's own, measured closer in.
-  appendLine("""    if (!line.startsWith("##teamcity[testFinished ") || line.includes(" duration='") || !line.endsWith("]")) {""")
-  appendLine("""      return line;""")
-  appendLine("""    }""")
-  appendLine("""    const name = testNameOf(line);""")
-  appendLine("""    const startedAt = testStartedAt.get(name);""")
-  appendLine("""    if (startedAt === undefined) return line;""")
-  appendLine("""    testStartedAt.delete(name);""")
-  // Rounded, so a genuinely sub-millisecond test still reports 0.000: the report has millisecond
-  // resolution and inflating a fast test would be a lie.
-  appendLine("""    return line.slice(0, -1) + " duration='" + Math.round(performance.now() - startedAt) + "']";""")
-  appendLine("""  };""")
-  appendLine("""  ["log", "info", "debug"].forEach((method) => {""")
-  appendLine("""    const original = console[method].bind(console);""")
-  appendLine("""    console[method] = (...args) => original(...(typeof args[0] === "string" ? [timed(args[0]), ...args.slice(1)] : args));""")
-  appendLine("""  });""")
   appendLine("""  globalThis.__kotlinTestRun = (async () => {""")
   // Awaited imports run before the entrypoint: they synchronize on module-adjacent runtime
   // the tests use synchronously (e.g. skiko's `awaitSkiko` wasm-readiness promise), which
@@ -129,14 +119,27 @@ internal fun generateIndexHtml(
     val pagePath = "/${validatedPagePath(path)}"
     appendLine("""    await awaitedExport(await import("$pagePath"), "$pagePath", "${validatedJsIdentifier(member)}");""")
   }
-  // startUnitTests is only exported when the linked module contains kotlin-test tests, and
-  // it returns undefined: async test completion is observed on the console stream, not here.
-  appendLine("""    return (await import("./${validatedPagePath(entrypointModulePath)}")).startUnitTests?.();""")
+  // The page imports the entrypoint itself instead of through the runner's `kotlinWasmJsTestsEntry`:
+  // the runner logs a failed import and runs zero tests, but here the failure stays an uncaught
+  // rejection, which the harness reports as an infrastructure failure.
+  // startUnitTests is only exported when the linked module contains kotlin-test tests. It
+  // registers the kotlin-test suites with mocha, and run() then executes them.
+  appendLine("""    (await import("./${validatedPagePath(entrypointModulePath)}")).startUnitTests?.();""")
+  appendLine("""    await window.kotlinTestBrowserRunner.run();""")
   appendLine("""  })();""")
   appendLine("""</script>""")
   appendLine("""</body>""")
   appendLine("""</html>""")
 }
+
+/**
+ * The console line that ends the run: the page prints it after mocha completes the run. It is
+ * the default marker of the kotlin-web-helpers runner.
+ */
+internal const val TESTS_FINISHED_MARKER = "KOTLIN-TEST-FINISHED"
+
+/** The marker of the kotlin-test runner itself. The harness reports it as output outside a test. */
+private const val MOCHA_RUN_COMPLETED_LINE = "wasmjs_test: mocha completed the run"
 
 private fun validatedPagePath(path: String): String {
   check(path.none { it == '"' || it == '<' || it == '>' || it == '\n' || it == '\r' }) {

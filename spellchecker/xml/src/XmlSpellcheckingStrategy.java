@@ -35,8 +35,6 @@ import com.intellij.spellchecker.tokenizer.Tokenizer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
 import com.intellij.xml.util.XmlEnumeratedValueReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,13 +91,7 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
 
   @Override
   public boolean isSuppressedFor(@NotNull PsiElement element, @NotNull String name) {
-    DomElement domElement = DomUtil.getDomElement(element);
-    if (domElement != null) {
-      if (domElement.getAnnotation(NoSpellchecking.class) != null) {
-        return true;
-      }
-    }
-    return false;
+    return ContainerUtil.exists(XmlSpellcheckingHelper.EP_NAME.getExtensionList(), helper -> helper.isSuppressedByDom(element));
   }
 
   @Override

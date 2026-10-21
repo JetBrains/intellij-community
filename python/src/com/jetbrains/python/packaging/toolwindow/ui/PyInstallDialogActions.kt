@@ -5,7 +5,7 @@ import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.community.execService.Args
 import com.intellij.python.pyproject.model.api.getPyProjectTomlFile
 import com.intellij.python.pytools.backend.PyTool
-import com.intellij.python.pytools.executeOn
+import com.intellij.python.pytools.backend.runtime.executeTool
 import com.jetbrains.python.Result as PyR
 import com.jetbrains.python.packaging.PyPackageName
 import com.intellij.python.requirements.PyPackageVersion
@@ -117,11 +117,11 @@ internal sealed interface CliCommandResult {
 }
 
 /**
- * Runs [tool] via [executeOn] against [moduleOrProject]. Delegating to [PyTool] gives us
+ * Runs [tool] via [executeTool] against [moduleOrProject]. Delegating to [PyTool] gives us
  * OS-specific binary names (`.exe` on Windows), remote / target-based SDKs and PATH resolution
  * for free — the actions layer does not have to reinvent any of it.
  *
- * Off-EDT: [executeOn] hops to [Dispatchers.IO] internally.
+ * Off-EDT: [executeTool] hops to [Dispatchers.IO] internally.
  */
 internal suspend fun runCliCommand(
   moduleOrProject: ModuleOrProject,
@@ -129,7 +129,7 @@ internal suspend fun runCliCommand(
   tool: PyTool,
   args: List<String>,
 ): CliCommandResult =
-  when (val result = tool.executeOn(moduleOrProject, Args(*args.toTypedArray()))) {
+  when (val result = moduleOrProject.executeTool(tool, Args(*args.toTypedArray()))) {
     is PyR.Success -> {
       service.reloadPackages()
       CliCommandResult.Success

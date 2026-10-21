@@ -1,0 +1,346 @@
+{
+  "steps": [
+    {
+      "service": "registry",
+      "side": "control",
+      "method": "GET",
+      "target": "/_lane/registry/mark",
+      "body": "",
+      "status": 200,
+      "answer": "{\"mark\":0}"
+    },
+    {
+      "service": "registry",
+      "side": "ide",
+      "method": "GET",
+      "target": "/nothing.txt",
+      "body": "",
+      "status": 404
+    },
+    {
+      "service": "registry",
+      "side": "control",
+      "method": "POST",
+      "target": "/_lane/registry/fault",
+      "body": "{\"fault\":\"package-http-error\"}",
+      "status": 200,
+      "answer": "{\"fault\":\"package-http-error\",\"registryStatus\":503,\"packageStatus\":404,\"holdMs\":30000}"
+    },
+    {
+      "service": "registry",
+      "side": "ide",
+      "method": "GET",
+      "target": "/packages/acp-scenario-agent-linux-x86_64.zip",
+      "body": "",
+      "status": 404
+    },
+    {
+      "service": "registry",
+      "side": "control",
+      "method": "GET",
+      "target": "/_lane/registry/mark",
+      "body": "",
+      "status": 200,
+      "answer": "{\"mark\":2}"
+    },
+    {
+      "service": "registry",
+      "side": "control",
+      "method": "GET",
+      "target": "/_lane/registry/events?since=0&prefix=",
+      "body": "",
+      "status": 200,
+      "answer": "{\"events\":[{\"fault\":\"none\",\"method\":\"GET\",\"path\":\"/nothing.txt\",\"receivedAtMs\":1760000000000,\"responseBytes\":0,\"sequence\":1,\"status\":404,\"truncated\":false},{\"fault\":\"package-http-error\",\"method\":\"GET\",\"path\":\"/packages/acp-scenario-agent-linux-x86_64.zip\",\"receivedAtMs\":1760000000000,\"responseBytes\":0,\"sequence\":2,\"status\":404,\"truncated\":false}],\"mark\":2}"
+    },
+    {
+      "service": "registry",
+      "side": "control",
+      "method": "GET",
+      "target": "/_lane/registry/events?since=1&prefix=%2Fpackages%2F",
+      "body": "",
+      "status": 200,
+      "answer": "{\"events\":[{\"fault\":\"package-http-error\",\"method\":\"GET\",\"path\":\"/packages/acp-scenario-agent-linux-x86_64.zip\",\"receivedAtMs\":1760000000000,\"responseBytes\":0,\"sequence\":2,\"status\":404,\"truncated\":false}],\"mark\":2}"
+    },
+    {
+      "service": "registry",
+      "side": "control",
+      "method": "GET",
+      "target": "/_lane/registry/fault",
+      "body": "",
+      "status": 200,
+      "answer": "{\"fault\":\"package-http-error\",\"registryStatus\":503,\"packageStatus\":404,\"holdMs\":30000}"
+    },
+    {
+      "service": "registry",
+      "side": "control",
+      "method": "POST",
+      "target": "/_lane/registry/fault",
+      "body": "{\"fault\":\"slow-package-response\",\"holdMs\":5}",
+      "status": 200,
+      "answer": "{\"fault\":\"slow-package-response\",\"registryStatus\":503,\"packageStatus\":404,\"holdMs\":5}"
+    },
+    {
+      "service": "registry",
+      "side": "control",
+      "method": "POST",
+      "target": "/_lane/registry/fault",
+      "body": "{\"fault\":\"registry-http-error\",\"status\":500}",
+      "status": 200,
+      "answer": "{\"fault\":\"registry-http-error\",\"registryStatus\":500,\"packageStatus\":404,\"holdMs\":30000}"
+    },
+    {
+      "service": "registry",
+      "side": "control",
+      "method": "POST",
+      "target": "/_lane/registry/fault",
+      "body": "{\"fault\":\"no-such-fault\"}",
+      "status": 400,
+      "answer": "{\"error\":{\"code\":\"unknown_fault\",\"message\":\"the fault \\\"no-such-fault\\\" is not one of none, registry-http-error, package-http-error, checksum-mismatch, invalid-archive, truncated-response, slow-response, slow-package-response, malformed-registry\"}}"
+    },
+    {
+      "service": "registry",
+      "side": "control",
+      "method": "POST",
+      "target": "/_lane/registry/fault",
+      "body": "{\"fault\":\"none\",\"status\":500}",
+      "status": 400,
+      "answer": "{\"error\":{\"code\":\"bad_request\",\"message\":\"the fault none takes no status\"}}"
+    },
+    {
+      "service": "registry",
+      "side": "control",
+      "method": "DELETE",
+      "target": "/_lane/registry/fault",
+      "body": "",
+      "status": 200,
+      "answer": "{\"fault\":\"none\",\"registryStatus\":503,\"packageStatus\":404,\"holdMs\":30000}"
+    },
+    {
+      "service": "registry",
+      "side": "control",
+      "method": "GET",
+      "target": "/_lane/registry/events?since=x",
+      "body": "",
+      "status": 400,
+      "answer": "{\"error\":{\"code\":\"bad_request\",\"message\":\"the mark \\\"x\\\" is not a whole number\"}}"
+    },
+    {
+      "service": "registry",
+      "side": "control",
+      "method": "PUT",
+      "target": "/_lane/registry/mark",
+      "body": "",
+      "status": 405,
+      "answer": "{\"error\":{\"code\":\"method_not_allowed\",\"message\":\"the control route /_lane/registry/mark takes GET, not PUT\"}}"
+    },
+    {
+      "service": "registry",
+      "side": "control",
+      "method": "GET",
+      "target": "/_lane/registry/unknown",
+      "body": "",
+      "status": 404,
+      "answer": "{\"error\":{\"code\":\"unknown_route\",\"message\":\"the lane service has no control route GET /_lane/registry/unknown\"}}"
+    },
+    {
+      "service": "registry",
+      "side": "anonymous",
+      "method": "GET",
+      "target": "/_lane/registry/mark",
+      "body": "",
+      "status": 401,
+      "answer": "{\"error\":{\"code\":\"token_refused\",\"message\":\"a control request needs the lane-service token in X-Air-Lane-Service-Token\"}}"
+    },
+    {
+      "service": "cloud",
+      "side": "ide",
+      "method": "GET",
+      "target": "/jcp/user-management/api/ai-access-options",
+      "body": "",
+      "status": 200
+    },
+    {
+      "service": "cloud",
+      "side": "ide",
+      "method": "GET",
+      "target": "/nothing",
+      "body": "",
+      "status": 501
+    },
+    {
+      "service": "cloud",
+      "side": "control",
+      "method": "GET",
+      "target": "/_lane/cloud/record",
+      "body": "",
+      "status": 200,
+      "answer": "{\"discoveries\":1,\"served\":[\"GET /jcp/user-management/api/ai-access-options\"],\"unexpected\":[\"GET /nothing\"]}"
+    },
+    {
+      "service": "cloud",
+      "side": "control",
+      "method": "DELETE",
+      "target": "/_lane/cloud/record",
+      "body": "",
+      "status": 200,
+      "answer": "{\"discoveries\":1,\"served\":[\"GET /jcp/user-management/api/ai-access-options\"],\"unexpected\":[\"GET /nothing\"]}"
+    },
+    {
+      "service": "cloud",
+      "side": "control",
+      "method": "GET",
+      "target": "/_lane/cloud/record",
+      "body": "",
+      "status": 200,
+      "answer": "{\"discoveries\":0,\"served\":[],\"unexpected\":[]}"
+    },
+    {
+      "service": "cloud",
+      "side": "control",
+      "method": "POST",
+      "target": "/_lane/cloud/record",
+      "body": "",
+      "status": 405,
+      "answer": "{\"error\":{\"code\":\"method_not_allowed\",\"message\":\"the control route /_lane/cloud/record takes GET or DELETE, not POST\"}}"
+    },
+    {
+      "service": "feedback",
+      "side": "control",
+      "method": "GET",
+      "target": "/_lane/feedback/submissions",
+      "body": "",
+      "status": 200,
+      "answer": "{\"submissions\":[]}"
+    },
+    {
+      "service": "feedback",
+      "side": "ide",
+      "method": "POST",
+      "target": "/feedback",
+      "body": "first submission",
+      "status": 200
+    },
+    {
+      "service": "feedback",
+      "side": "control",
+      "method": "GET",
+      "target": "/_lane/feedback/submissions",
+      "body": "",
+      "status": 200,
+      "answer": "{\"submissions\":[\"first submission\"]}"
+    },
+    {
+      "service": "feedback",
+      "side": "control",
+      "method": "POST",
+      "target": "/_lane/feedback/next",
+      "body": "{\"waitMs\":0}",
+      "status": 200,
+      "answer": "{\"submission\":\"first submission\"}"
+    },
+    {
+      "service": "feedback",
+      "side": "control",
+      "method": "POST",
+      "target": "/_lane/feedback/next",
+      "body": "{\"waitMs\":1}",
+      "status": 200,
+      "answer": "{\"submission\":null}"
+    },
+    {
+      "service": "feedback",
+      "side": "ide",
+      "method": "POST",
+      "target": "/feedback",
+      "body": "second submission",
+      "status": 200
+    },
+    {
+      "service": "feedback",
+      "side": "control",
+      "method": "DELETE",
+      "target": "/_lane/feedback/submissions",
+      "body": "",
+      "status": 200,
+      "answer": "{\"submissions\":[\"second submission\"]}"
+    },
+    {
+      "service": "feedback",
+      "side": "control",
+      "method": "POST",
+      "target": "/_lane/feedback/next",
+      "body": "{\"waitMs\":300001}",
+      "status": 400,
+      "answer": "{\"error\":{\"code\":\"bad_request\",\"message\":\"the waitMs 300001 is more than 300000\"}}"
+    },
+    {
+      "service": "codex",
+      "side": "control",
+      "method": "GET",
+      "target": "/_lane/codex/mark",
+      "body": "",
+      "status": 200,
+      "answer": "{\"mark\":0}"
+    },
+    {
+      "service": "codex",
+      "side": "ide",
+      "method": "POST",
+      "target": "/v1/responses",
+      "body": "{\"model\":\"gpt-5.4\",\"reasoning\":{\"effort\":\"high\"},\"input\":[]}",
+      "status": 200
+    },
+    {
+      "service": "codex",
+      "side": "ide",
+      "method": "POST",
+      "target": "/v1/responses",
+      "body": "[]",
+      "status": 200
+    },
+    {
+      "service": "codex",
+      "side": "ide",
+      "method": "POST",
+      "target": "/v1/responses",
+      "body": "{\"text\":{\"format\":{\"schema\":{\"required\":[\"title\"]}}}}",
+      "status": 200
+    },
+    {
+      "service": "codex",
+      "side": "control",
+      "method": "GET",
+      "target": "/_lane/codex/mark",
+      "body": "",
+      "status": 200,
+      "answer": "{\"mark\":2}"
+    },
+    {
+      "service": "codex",
+      "side": "control",
+      "method": "GET",
+      "target": "/_lane/codex/turns?since=0",
+      "body": "",
+      "status": 200,
+      "answer": "{\"mark\":2,\"turns\":[{\"effort\":\"high\",\"model\":\"gpt-5.4\",\"parsed\":true,\"sequence\":1},{\"effort\":null,\"model\":null,\"parsed\":false,\"sequence\":2}]}"
+    },
+    {
+      "service": "codex",
+      "side": "control",
+      "method": "GET",
+      "target": "/_lane/codex/turns?since=1",
+      "body": "",
+      "status": 200,
+      "answer": "{\"mark\":2,\"turns\":[{\"effort\":null,\"model\":null,\"parsed\":false,\"sequence\":2}]}"
+    },
+    {
+      "service": "codex",
+      "side": "control",
+      "method": "GET",
+      "target": "/_lane/codex/turns?since=x",
+      "body": "",
+      "status": 400,
+      "answer": "{\"error\":{\"code\":\"bad_request\",\"message\":\"the mark \\\"x\\\" is not a whole number\"}}"
+    }
+  ]
+}

@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
+import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.util.LambdaToAnonymousFunctionUt
 import org.jetbrains.kotlin.idea.k2.refactoring.util.createReplacementForContextArgument
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.ARTIFICIAL_VARARG_ARRAY_VALUE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.DEFAULT_PARAMETER_VALUE_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.MAKE_ARGUMENT_NAMED_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.PARAMETER_VALUE_KEY
@@ -72,6 +74,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.resolution.KtResolvableCall
+import org.jetbrains.kotlin.types.Variance
 
 internal class IntroduceValueForParameter(
     val parameterName: Name,
@@ -294,7 +297,13 @@ internal class ValueParameterInliner(
             val parameterType = parameter.returnType
             val elementType = parameterType.arrayElementType ?: return null
             psiFactory.buildExpression {
-                appendFixedText(arrayOfFunctionName(elementType))
+                val arrayOfFunctionName = arrayOfFunctionName(elementType)
+                appendFixedText(arrayOfFunctionName)
+                if (argumentExpressionsForParameter.isEmpty() && elementType !is KaErrorType && arrayOfFunctionName == "kotlin.arrayOf") {
+                    appendFixedText("<")
+                    appendFixedText(elementType.render(position = Variance.INVARIANT))
+                    appendFixedText(">")
+                }
                 appendFixedText("(")
                 for ((i, argument) in argumentExpressionsForParameter.withIndex()) {
                     if (i > 0) appendFixedText(",")
@@ -310,6 +319,7 @@ internal class ValueParameterInliner(
                 appendFixedText(")")
             }
         }
+        expression.putCopyableUserData(ARTIFICIAL_VARARG_ARRAY_VALUE_KEY, Unit)
 
         return analyze(expression) {
             Argument(expression, isNullableType(expression.expressionType))

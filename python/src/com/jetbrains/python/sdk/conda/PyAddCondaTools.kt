@@ -7,7 +7,6 @@ import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.conda.savePythonCondaPath
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.psi.LanguageLevel
@@ -68,7 +67,7 @@ internal suspend fun PyCondaCommand.createCondaSdkFromExistingEnvironment(
   if (targetConfig == null) {
     savePythonCondaPath(Path.of(fullCondaPathOnTarget))
   }
-  sdkType.setupSdkPaths(pythonInterpreter.getSdkAPI())
+  // The paths are set up when a PyProject registers the interpreter.
   return PyResult.success(pythonInterpreter)
 }
 

@@ -560,6 +560,10 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     /** Serializes refreshes so two concurrent callers don't both spawn redundant computes. */
     private val refreshMutex = Mutex()
 
+    /** The dependency files of the latest refresh. Outlives the [entry] that [invalidate] drops. */
+    @Volatile
+    private var trackedFiles: List<PyDependenciesFile> = emptyList()
+
     init {
       // Drive [DaemonCodeAnalyzer.restart] off the cache's call chain so the restart never
       // runs synchronously on the thread that completed the underlying deferred. `drop(1)`
@@ -601,6 +605,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
       val newEntry = Entry(filesWithStamps, deferred).also {
         this.entry = it
+        this.trackedFiles = filesWithStamps.keys.toList()
       }
 
       deferred.invokeOnCompletion { cause ->
@@ -621,11 +626,12 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     }
 
     /**
-     * Non-blocking view of the dependency files the latest cache entry tracks (root plus, e.g., uv
+     * Non-blocking view of the dependency files the latest refresh tracks (root plus, e.g., uv
      * workspace members). Empty until the cache has been seeded by [initInstalledPackages] or a
-     * [listDeclaredPackagesCached] refresh.
+     * [listDeclaredPackagesCached] refresh. An [invalidate] keeps it, so the surfaces gated on
+     * [tracksDependencyFile] stay available after a reload.
      */
-    fun trackedFilesSnapshot(): List<PyDependenciesFile> = entry?.files?.keys?.toList().orEmpty()
+    fun trackedFilesSnapshot(): List<PyDependenciesFile> = trackedFiles
 
     /**
      * [files] is the `(file -> modification stamp)` cache key; [deferred] is the

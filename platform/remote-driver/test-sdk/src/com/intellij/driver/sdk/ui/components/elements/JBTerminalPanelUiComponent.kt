@@ -22,7 +22,7 @@ class JBTerminalPanelUiComponent(data: ComponentData) : UiComponent(data) {
     }
 }
 
-@Remote("com.intellij.terminal.JBTerminalPanel")
+@Remote("com.intellij.terminal.JBTerminalPanel", plugin = "com.intellij/intellij.platform.terminal")
 interface JBTerminalPanelRef {
   fun getTerminalTextBuffer(): TerminalTextBufferRef
   fun getText(): String

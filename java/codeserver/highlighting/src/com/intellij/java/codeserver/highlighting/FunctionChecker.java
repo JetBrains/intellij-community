@@ -451,7 +451,7 @@ final class FunctionChecker {
     myVisitor.myModuleChecker.checkModuleAccess(psiClass, expression);
     if (!myVisitor.hasErrorResults()) {
       VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
-      if (virtualFile != null && !expression.getResolveScope().contains(virtualFile)) {
+      if (virtualFile != null && myVisitor.isInSourceOrLibraryClasses(virtualFile) && !expression.getResolveScope().contains(virtualFile)) {
         myVisitor.report(JavaErrorKinds.CLASS_NOT_ACCESSIBLE.create(expression, psiClass));
       }
     }

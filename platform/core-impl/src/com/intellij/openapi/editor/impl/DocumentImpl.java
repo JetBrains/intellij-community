@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.RangeMarkers;
-import com.intellij.openapi.editor.impl.marker.FileMarkerRoot;
+import com.intellij.openapi.editor.impl.marker.VirtualFileMarkerRoot;
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerStores;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
@@ -166,7 +166,7 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
 
   @Override
   public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
-    replaceString(startOffset, endOffset, startOffset, s, DocumentModStamp.next(), false);
+    replaceString(startOffset, endOffset, startOffset, s, DocumentModStamp.next());
   }
 
   @Override
@@ -236,7 +236,7 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
 
   @Override
   public boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor) {
-    return processRangeMarkersOverlappingWith(0, getTextLength(), processor);
+    return rangeMarkers.processRangeMarkers(processor);
   }
 
   @Override
@@ -394,7 +394,7 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
 
   @ApiStatus.Internal
   public void documentCreatedFrom(@NotNull VirtualFile f, int tabSize) {
-    FileMarkerRoot.restoreRangeMarkersFromFile(this, f, tabSize);
+    VirtualFileMarkerRoot.restoreRangeMarkersFromFile(this, f, tabSize);
     rangeMarkers.restoreRangeMarkersFromFile(f, hostDocument(), tabSize);
   }
 
@@ -403,9 +403,8 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
                             int endOffset,
                             int moveOffset,
                             @NotNull CharSequence s,
-                            long newModificationStamp,
-                            boolean wholeTextReplaced) {
-    impl.mutator().replaceString(hostDocument(), startOffset, endOffset, moveOffset, s, newModificationStamp, wholeTextReplaced);
+                            long newModificationStamp) {
+    impl.mutator().replaceString(hostDocument(), startOffset, endOffset, moveOffset, s, newModificationStamp);
   }
 
   /**

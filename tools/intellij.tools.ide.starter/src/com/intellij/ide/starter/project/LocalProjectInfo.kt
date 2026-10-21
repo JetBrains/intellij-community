@@ -30,4 +30,6 @@ data class LocalProjectInfo(
   override fun getDescription(): String {
     return description
   }
+
+  override fun getName(): String = projectDir.fileName.toString()
 }

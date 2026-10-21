@@ -198,7 +198,7 @@ internal class BackendStructureTreeService(private val session: ClientProjectSes
         val myStructureTreeModel = StructureTreeModel<FilteringTreeStructure>(treeModelContext.filteringStructure, disposable)
 
         val requestFlow = MutableSharedFlow<StructureViewEvent>(
-          extraBufferCapacity = 1,
+          replay = 1,
           onBufferOverflow = BufferOverflow.DROP_OLDEST
         )
         val nodesFlow = MutableStateFlow<TreeNodesDto?>(null)

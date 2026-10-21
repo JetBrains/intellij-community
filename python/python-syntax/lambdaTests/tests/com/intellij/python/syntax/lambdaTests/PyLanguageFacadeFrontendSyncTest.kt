@@ -1,10 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.syntax.lambdaTests
 
+import com.intellij.ide.starter.driver.reused.ReusedProject
+import com.intellij.ide.starter.driver.reused.ReusedRun
 import com.intellij.ide.starter.ide.IdeRunMode
 import com.intellij.lambda.testFramework.junit.RunInMonolithAndSplitMode
 import com.intellij.lambda.testFramework.junit.SetErrorIgnorerExtension
-import com.intellij.lambda.testFramework.junit.WithProject
 import com.intellij.lambda.testFramework.testApi.editor.getVirtualFileByRelativePath
 import com.intellij.lambda.testFramework.testApi.editor.openFileAndWaitEditorSelected
 import com.intellij.lambda.testFramework.testApi.editor.waitForSelectedEditor
@@ -12,15 +13,14 @@ import com.intellij.lambda.testFramework.testApi.getProject
 import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.roots.impl.FilePropertyPusher
-import com.intellij.python.syntax.lambdaTests.project.PythonLangLevelSyncProject
-import com.intellij.python.syntax.lambdaTests.util.IdeConfigSetup
-import com.intellij.python.syntax.lambdaTests.util.SetLambdaPluginCallback
+import com.intellij.python.syntax.lambdaTests.util.PythonSyntaxLambdaStrategy
+import com.intellij.python.syntax.lambdaTests.util.pythonLangLevelSyncLambdaConfiguration
 import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.jetbrains.python.PyLanguageFacade
 import com.jetbrains.python.psi.LanguageLevel
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.TestTemplate
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -67,11 +67,16 @@ import kotlin.time.Duration.Companion.seconds
  * using that class's own module's classloader, never this test module's.
  */
 @RunInMonolithAndSplitMode(IdeRunMode.SPLIT)
-@WithProject(PythonLangLevelSyncProject::class)
-@ExtendWith(IdeConfigSetup::class, SetLambdaPluginCallback::class, SetErrorIgnorerExtension::class)
+@ExtendWith(SetErrorIgnorerExtension::class)
+@ReusedRun(sessionStrategy = PythonSyntaxLambdaStrategy::class)
 internal class PyLanguageFacadeFrontendSyncTest {
 
-  @TestTemplate
+  companion object {
+    @ReusedProject
+    private val project = pythonLangLevelSyncLambdaConfiguration
+  }
+
+  @Test
   fun `frontend PyLanguageFacade follows a level the backend pushes while the file is open`(ide: IdeWithLambda) =
     timeoutRunBlocking(TEST_TIMEOUT) {
       ide {

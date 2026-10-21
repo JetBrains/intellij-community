@@ -7,7 +7,6 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.platform.kernel.withKernel
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.BitUtil
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -374,13 +373,7 @@ private fun CoroutineScope.launchUiCoroutine(
     .minusKey(Job)
     .plus(Dispatchers.UI)
     .plus(componentModality.asContextElement())
-  return launch(effectiveContext) {
-    // withKernel should be kept here, because we need to propagate the context to coroutine launched via GlobalScope
-    @Suppress("DEPRECATION")
-    withKernel {
-      block()
-    }
-  }
+  return launch(effectiveContext, block = block)
 }
 
 private fun Component.installHierarchyListener(listener: HierarchyListener): AccessToken {

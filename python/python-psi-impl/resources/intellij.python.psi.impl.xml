@@ -1035,6 +1035,9 @@
     <extensionPoint qualifiedName="Pythonid.pyDataclassParametersProvider"
                     interface="com.jetbrains.python.codeInsight.PyDataclassParametersProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.pyDeprecationProvider"
+                    interface="com.jetbrains.python.psi.impl.PyDeprecationProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.importCandidateProvider"
                     interface="com.jetbrains.python.codeInsight.imports.PyImportCandidateProvider"
                     dynamic="true"/>

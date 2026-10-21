@@ -70,10 +70,12 @@ internal object EgWalkerReplay {
   }
 
   /**
-   * Rebuilds the text at [version] from scratch and reports every effect to [sink], in order.
+   * Rebuilds the text at [version] and reports every effect to [sink], in order. [sink] must start
+   * with the base text of [graph], which one placeholder item stands for.
    */
   fun replay(graph: EventGraphImpl, version: LvVersion, sink: Sink) {
-    ReplayWalker(graph, placeholderCount = 0).replayAt(version, sink)
+    val walker = ReplayWalker(graph, placeholderCount = graph.baseText().length())
+    walker.replayAt(version, sink)
   }
 
   /**
@@ -96,13 +98,27 @@ internal object EgWalkerReplay {
     checkNewAboveConflict(conflict)
     // One span of placeholder units, at least as long as the document at the common
     // ancestor. The trailing extras sit after every reachable position, inert.
-    val walker = ReplayWalker(graph, branchVersion.unitSpan())
+    val baseLength = graph.baseText().length()
+    val walker = ReplayWalker(graph, placeholderCount(baseLength, branchVersion))
     walker.startAt(conflict.commonAncestor)
     // The branch's own units above the ancestor rebuild the concurrency context. The
     // document already has them, so this phase reports nothing.
     walker.walk(conflict.conflictRanges, sink = null)
     // The units only in the merged history are the new ones, so they report.
     walker.walk(conflict.newRanges, sink)
+  }
+
+  /**
+   * The length of the placeholder for the document at an ancestor of [branchVersion]: the base text
+   * plus every unit that the version can name. That bounds the document, because an event adds at
+   * most one character per unit. Fails when the count does not fit the placeholder units.
+   */
+  fun placeholderCount(baseLength: Int, branchVersion: LvVersion): Int {
+    val unitSpan = branchVersion.unitSpan()
+    require(unitSpan <= Int.MAX_VALUE - baseLength) {
+      "A placeholder for a base of $baseLength chars and $unitSpan units overflows the unit space"
+    }
+    return baseLength + unitSpan
   }
 
   /**

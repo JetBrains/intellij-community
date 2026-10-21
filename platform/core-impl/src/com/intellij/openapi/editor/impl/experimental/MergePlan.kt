@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.experimental
 
 import com.intellij.openapi.editor.ex.experimental.Event
+import com.intellij.openapi.editor.ex.experimental.TrimmedHistoryException
 
 /**
  * What a merge of [other] into [dest] will append, worked out before anything is appended.
@@ -17,6 +18,12 @@ import com.intellij.openapi.editor.ex.experimental.Event
  * plan itself is about to bring in, and [dest] does not hold it yet. So the plan reserves the lv
  * of every entry up front and answers such a parent from the reservation, arithmetically. That
  * also spares an index lookup for each parent inside the new region.
+ *
+ * Each graph names its base version with the empty parent set, so [remapParents] translates the
+ * set as a whole. A run of [other] with no parent follows the base version of [other]. A set that
+ * names exactly the base version of [dest] becomes the empty set. Any other set with a unit that
+ * [dest] trimmed throws [TrimmedHistoryException], so the merge never guesses a text. So a plan
+ * that builds proves that every new unit descends from the base version of [dest].
  */
 internal class MergePlan(
   private val dest: EventGraphImpl,
@@ -41,18 +48,10 @@ internal class MergePlan(
    */
   private var lvEnd: LV = dest.size()
 
-  private val remappedVersion: LvVersion
-
   init {
     for (index in newStarts.indices) {
       planEntry(index)
     }
-    // The version remap rejects an unknown unit too, so it belongs in the plan.
-    val remapped = IntArray(other.lvVersion().lvs.size) { i: Int ->
-      remap(other.lvVersion().lvs[i])
-    }
-    remapped.sort()
-    remappedVersion = LvVersion(remapped)
   }
 
   /**
@@ -77,10 +76,11 @@ internal class MergePlan(
   }
 
   /**
-   * The version of [other], re-expressed in the merged graph's lvs.
+   * The version of [other], re-expressed in the merged graph's lvs. It can reject like the plan, so
+   * a merge asks for it before the first append.
    */
   fun remappedOtherVersion(): LvVersion {
-    return remappedVersion
+    return remapParents(other.lvVersion().lvs)
   }
 
   private fun planEntry(index: Int) {
@@ -88,42 +88,74 @@ internal class MergePlan(
     val event = run.event
     val known = knownUnits(event)
     val entryParents = if (known == 0) {
-      val runParents = run.runParents()
-      val remapped = IntArray(runParents.size) { i: Int ->
-        remap(runParents[i])
-      }
-      remapped.sort()
-      remapped
+      remapParents(run.runParents())
     } else {
       // The destination holds the leading units, so the last of them is the only parent.
-      val lv = dest.lvOfUnit(event.agent(), event.seq() + known - 1)
-      checkRemapped(lv, newStarts[index] + known - 1)
-      intArrayOf(lv)
+      remapParents(intArrayOf(newStarts[index] + known - 1))
     }
     val suffix = event.suffixFrom(known)
     checkUnitSpace(suffix.length())
     events.add(suffix)
-    parents.add(LvVersion(entryParents))
+    parents.add(entryParents)
     destStarts[index] = lvEnd
     lvEnd += suffix.length()
+  }
+
+  /**
+   * The units [otherParents] of [other] as a parent set of the merged graph. The empty set names the
+   * base version of [other], which [dest] holds as units or as its own base version.
+   */
+  private fun remapParents(otherParents: Frontier): LvVersion {
+    if (otherParents.isEmpty()) {
+      return other.baseVersion().lvVersionIn(dest)
+    }
+    val remapped = IntArray(otherParents.size) { i: Int ->
+      remap(otherParents[i])
+    }
+    if (remapped.contains(NO_UNIT)) {
+      return trimmedParentsAsBase(otherParents)
+    }
+    remapped.sort()
+    return LvVersion(remapped)
+  }
+
+  /**
+   * The empty set for the units [otherParents] of [other], which name units that [dest] trimmed. Only
+   * the base version of [dest] as a whole stands for trimmed units, so every other set throws
+   * [TrimmedHistoryException].
+   */
+  private fun trimmedParentsAsBase(otherParents: Frontier): LvVersion {
+    val parentIds = VersionImpl.fromLvVersion(other, LvVersion(otherParents))
+    val destBaseVersion = dest.baseVersion()
+    if (parentIds != destBaseVersion) {
+      val message = "The other graph names the units $parentIds, which lie below the base version " +
+                    "$destBaseVersion of this graph"
+      throw TrimmedHistoryException(message)
+    }
+    return LvVersion.ROOT
   }
 
   /**
    * The leading units of [event] that [dest] already holds.
    */
   private fun knownUnits(event: Event): Int {
-    return (summary.endSeq(event.agent()) - event.seq()).coerceIn(0, event.length())
+    val distance = summary.endSeq(event.agent()) - event.seq()
+    // The clamp comes first, so the count fits an Int for any two seqs.
+    return distance.coerceIn(0L, event.length().toLong()).toInt()
   }
 
   /**
    * The lv that the unit [otherLv] of [other] has in the merged graph. It is the lv that [dest]
-   * already gave it, or the one that this plan reserves.
+   * already gave it, or the one that this plan reserves. It is [NO_UNIT] when [dest] trimmed the unit.
    */
   private fun remap(otherLv: LV): LV {
     val run = other.runAt(otherLv)
     val event = run.event
     val seq = run.seqAt(otherLv)
     if (seq < summary.endSeq(event.agent())) {
+      if (dest.hasTrimmed(event.agent(), seq)) {
+        return NO_UNIT
+      }
       val lv = dest.lvOfUnit(event.agent(), seq)
       checkRemapped(lv, otherLv)
       return lv
@@ -143,11 +175,11 @@ internal class MergePlan(
   }
 
   /**
-   * Fails when the planned runs would take the unit space past [Int.MAX_VALUE].
+   * Fails when the planned runs would take the unit space past [EventGraphImpl.unitCapacity].
    */
   private fun checkUnitSpace(length: Int) {
-    require(length <= Int.MAX_VALUE - lvEnd) {
-      "The merged unit space overflows: the plan reaches $lvEnd and adds $length"
+    require(length <= dest.unitCapacity() - lvEnd) {
+      "The merged unit space overflows: the plan reaches $lvEnd of ${dest.unitCapacity()} and adds $length"
     }
   }
 

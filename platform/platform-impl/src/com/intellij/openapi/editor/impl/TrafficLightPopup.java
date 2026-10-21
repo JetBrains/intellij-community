@@ -235,7 +235,12 @@ final class TrafficLightPopup {
 
     myPopup = myPopupBuilder.createPopup();
     myPopup.addListener(myPopupListener);
-    IdeEventQueue.getInstance().addDispatcher(this::trackMouseLocation, myPopup);
+    IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.NonLockedEventDispatcher() {
+      @Override
+      public boolean dispatch(@NotNull AWTEvent e) {
+        return TrafficLightPopup.this.trackMouseLocation(e);
+      }
+    }, myPopup);
     myEditor.getComponent().addAncestorListener(myAncestorListener);
     myAnchor = anchor;
 

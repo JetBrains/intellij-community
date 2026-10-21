@@ -13,7 +13,9 @@ import com.intellij.platform.debugger.impl.rpc.XBreakpointDtoState
 import com.intellij.platform.debugger.impl.rpc.XBreakpointTypeId
 import com.intellij.platform.debugger.impl.rpc.XLineBreakpointInfo
 import com.intellij.platform.debugger.impl.rpc.toRpc
+import com.intellij.platform.debugger.impl.shared.proxy.toDataBreakpointInfo
 import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.breakpoints.XDataBreakpointProperties
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
@@ -90,6 +92,7 @@ private suspend fun XBreakpointBase<*, *, *>.getDtoState(): XBreakpointDtoState 
       tooltipDescription = readAction { description },
       timestamp = timeStamp,
       lineBreakpointInfo = readAction { (breakpoint as? XLineBreakpointImpl<*>)?.getInfo() },
+      dataBreakpointInfo = readAction { (breakpoint.properties as? XDataBreakpointProperties)?.toDataBreakpointInfo() },
       requestId = completedRequestId,
       hasCustomCondition = XBreakpointUtil.hasCustomCondition(breakpoint)
     )

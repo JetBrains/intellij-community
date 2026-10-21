@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.python.lsp.core.fakePyToolClient
 import com.intellij.testFramework.runInEdtAndWait
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.documentation.doctest.PyDocstringCodeBlockFile
 import com.jetbrains.python.documentation.doctest.PyDoctestFile
@@ -20,6 +21,7 @@ import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.types.PyType
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -45,8 +47,10 @@ class PyLspTypeEngineInjectionTest : PyCodeInsightTestCase() {
   }
 
   /** An engine whose server serves the module of the fixture, so only the two guards can reject an element. */
-  private fun testTypeEngine(): TestTypeEngine =
-    TestTypeEngine(myFixture.module, fakePyToolClient(myFixture.module))
+  private fun testTypeEngine(): TestTypeEngine {
+    val pyProject = runBlocking { checkNotNull(myFixture.module.asPyProject()) { "The fixture module is not a Python project" } }
+    return TestTypeEngine(myFixture.module, fakePyToolClient(pyProject))
+  }
 
   @Test
   fun `element of a regular file is supported`() = runInEdtAndWait {

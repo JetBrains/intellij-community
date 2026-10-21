@@ -102,16 +102,6 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
-    name = "platform_java-guiForms-rt_provided",
-    lib = "//platform/forms_rt:java-guiForms-rt",
-)
-
-jvm_provided_library(
-    name = "platform_project_project_provided",
-    lib = "//platform/project/shared:project",
-)
-
-jvm_provided_library(
     name = "libraries_kotlinx_serialization_core_provided",
     lib = "//libraries/kotlinx/serialization/core",
 )
@@ -158,8 +148,6 @@ jvm_library(
         ":platform_core-ui_provided",
         ":platform_refactoring_provided",
         ":platform_util-ui_provided",
-        ":platform_java-guiForms-rt_provided",
-        ":platform_project_project_provided",
         ":libraries_kotlinx_serialization_core_provided",
     ],
 )
@@ -217,12 +205,8 @@ jvm_library(
         "//platform/refactoring:refactoring_test_lib",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
-        "//platform/forms_rt:java-guiForms-rt",
-        "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/remote-topics/shared:rpc-topics_test_lib",
-        "//platform/project/shared:project",
-        "//platform/project/shared:project_test_lib",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/core:core_test_lib",
     ],

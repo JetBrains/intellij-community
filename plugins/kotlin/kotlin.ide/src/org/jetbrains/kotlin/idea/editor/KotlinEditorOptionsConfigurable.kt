@@ -34,7 +34,7 @@ internal val kotlinEditorOptionsDescriptors
         cbConvertPastedJavaToKotlin,
         cbDontShowJavaToKotlinConversionDialog,
         cbAutoAddValKeywordToCtorParameters
-    ).map(CheckboxDescriptor::asUiOptionDescriptor).toList()
+    ).map { it.asUiOptionDescriptor("editor.preferences.smartKeys") }.toList()
 
 class KotlinEditorOptionsConfigurable : BeanConfigurable<KotlinEditorOptions>(editorOptions, message(ID)) {
 

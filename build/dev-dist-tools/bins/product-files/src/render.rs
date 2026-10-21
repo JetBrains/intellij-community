@@ -4,7 +4,9 @@ use anyhow::bail;
 use appinfo::{ApplicationInfo, linux_frame_class};
 use serde::Serialize;
 
-use crate::model::{BUILD_NUMBER_TOKEN, CustomCommand, IdeaProperties, JvmArguments, JvmArgumentsRef, LaunchModel, LaunchProperty};
+use crate::model::{
+    BUILD_NUMBER_TOKEN, CustomCommand, IdeaProperties, JvmArguments, JvmArgumentsRef, LaunchModel, LaunchProperty, VmOptions,
+};
 
 // OS names are `OsFamily.osName`, and architecture names are `JvmArchitecture.dirName`.
 pub(crate) const OS_MAC: &str = "macOS";
@@ -37,24 +39,39 @@ pub(crate) fn parse_platform(name: &str) -> anyhow::Result<Platform> {
     }
 }
 
-/// The four launch files of one product and one platform.
+/// The launch files of one product and one platform.
 #[derive(Debug)]
 pub(crate) struct LaunchFiles {
     pub build_txt: String,
     pub idea_properties: String,
     pub vm_options: String,
+    /// The vmoptions file of the embedded frontend, when the model states `frontendVmOptions`.
+    pub frontend_vm_options: Option<String>,
     pub product_info: String,
 }
 
-/// What the launch files of one product derive from: the launch model, the application info and the build number.
+/// What the launch files of one product derive from: the launch model, the application info, the build number, the
+/// core classpath of the distribution and the dev JVM arguments.
 #[derive(Clone, Copy)]
 pub(crate) struct Product<'a> {
     pub model: &'a LaunchModel,
     pub application_info: &'a ApplicationInfo,
     pub build_number: &'a str,
+    /// The `lib/` jars of the core classpath. A classic-loader launch needs them, and a modular-loader launch reads none.
+    pub core_class_path: Option<&'a [String]>,
+    /// The JVM arguments that mark a dev distribution, such as `-Didea.use.dev.build.server=true`. Production states
+    /// none. They go after the `additionalJvmArguments` of the launch and of each custom command with a list of its own.
+    /// The launcher gives a command with an empty list the list of the launch, so that command gets them too.
+    pub dev_jvm_arguments: &'a [String],
 }
 
-/// Renders the four files. `common_vm_options_file` is the text of `bin/common.vmoptions`.
+/// `CORE_CLASSPATH_LEADING_JARS` of `classpath.kt`: the jars that start the boot class path of a launch, in this order.
+const LEADING_JARS: [&str; 4] = ["platform-loader.jar", "util-8.jar", "util.jar", "product-backend.jar"];
+
+/// `PLATFORM_CORE_NIO_FS`: the jar that `-Xbootclasspath/a:` names for the multi-routing file system.
+pub(crate) const NIO_FS_JAR: &str = "nio-fs.jar";
+
+/// Renders the files. `common_vm_options_file` is the text of `bin/common.vmoptions`.
 pub(crate) fn render_launch_files(
     product: &Product<'_>,
     target: Platform,
@@ -63,27 +80,14 @@ pub(crate) fn render_launch_files(
     common_vm_options_file: &str,
 ) -> anyhow::Result<LaunchFiles> {
     let model = product.model;
-    let separator = if target.os == OS_WINDOWS { "\r\n" } else { "\n" };
-    let mut vm_options = model.vm_options.memory.clone();
-    vm_options.extend(common_vm_options(common_vm_options_file));
-    vm_options.extend(model.vm_options.product.iter().cloned());
-    if let Some(os_vm_options) = model.vm_options.os.get(target.os) {
-        vm_options.extend(os_vm_options.iter().cloned());
-    }
-    if product.application_info.is_eap {
-        insert_eap_vm_options(&mut vm_options);
-    }
-    if model.language_server {
-        apply_headless_vm_options(&mut vm_options);
-    }
-    let mut vm_options_text = String::new();
-    for line in &vm_options {
-        if !line.is_ascii() {
-            bail!("the vmoptions line {line:?} is not ASCII");
-        }
-        vm_options_text.push_str(line);
-        vm_options_text.push_str(separator);
-    }
+    let is_eap = product.application_info.is_eap;
+    let vm_options = render_vm_options(&model.vm_options, target, common_vm_options_file, is_eap, model.language_server)?;
+    // The production writer reads the EAP flag of the frontend context. The plan generator checks that it is the flag
+    // of the product. The generator also refuses a frontend that is a language server, so the headless rule is off.
+    let frontend_vm_options = match &model.frontend_vm_options {
+        Some(parts) => Some(render_vm_options(parts, target, common_vm_options_file, is_eap, false)?),
+        None => None,
+    };
     let product_info = render_product_info(product, target, &opened_packages(opened_packages_file, target.os)?)?;
     Ok(LaunchFiles {
         build_txt: format!("{}-{}", model.product_code, product.build_number),
@@ -91,11 +95,45 @@ pub(crate) fn render_launch_files(
             &model.idea_properties,
             idea_properties_base,
             &model.data_directory_base_name,
-            product.application_info.is_eap,
+            is_eap,
         ),
-        vm_options: vm_options_text,
+        vm_options,
+        frontend_vm_options,
         product_info,
     })
+}
+
+/// `generateVmOptions` of `VmOptionsGenerator.kt` for one OS: the memory lines, the common lines, the product lines and
+/// the OS lines of `parts`, then the EAP line and the headless rule. Each line ends with the separator of the OS.
+fn render_vm_options(
+    parts: &VmOptions,
+    target: Platform,
+    common_vm_options_file: &str,
+    is_eap: bool,
+    headless: bool,
+) -> anyhow::Result<String> {
+    let separator = if target.os == OS_WINDOWS { "\r\n" } else { "\n" };
+    let mut lines = parts.memory.clone();
+    lines.extend(common_vm_options(common_vm_options_file));
+    lines.extend(parts.product.iter().cloned());
+    if let Some(os_vm_options) = parts.os.get(target.os) {
+        lines.extend(os_vm_options.iter().cloned());
+    }
+    if is_eap {
+        insert_eap_vm_options(&mut lines);
+    }
+    if headless {
+        apply_headless_vm_options(&mut lines);
+    }
+    let mut text = String::new();
+    for line in &lines {
+        if !line.is_ascii() {
+            bail!("the vmoptions line {line:?} is not ASCII");
+        }
+        text.push_str(line);
+        text.push_str(separator);
+    }
+    Ok(text)
 }
 
 /// The data directory name of the product: the base name, then the major version and the main part of the minor version.
@@ -211,7 +249,7 @@ pub(crate) fn additional_jvm_arguments(
 
     if !qodana && jvm.multi_routing_file_system {
         let separator = if target.os == OS_WINDOWS { "\\" } else { "/" };
-        result.push(format!("-Xbootclasspath/a:{}", [macro_name, "lib", "nio-fs.jar"].join(separator)));
+        result.push(format!("-Xbootclasspath/a:{}", [macro_name, "lib", NIO_FS_JAR].join(separator)));
     }
     if let Some(class_loader) = &jvm.class_loader {
         result.push(format!("-Djava.system.class.loader={class_loader}"));
@@ -302,8 +340,8 @@ struct Launch<'a> {
     vm_options_file_path: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     startup_wm_class: Option<String>,
-    #[serde(skip_serializing_if = "<[_]>::is_empty")]
-    boot_class_path_jar_names: &'a [String],
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    boot_class_path_jar_names: Vec<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     additional_jvm_arguments: Vec<String>,
     main_class: &'a str,
@@ -319,8 +357,8 @@ struct Command<'a> {
     commands: &'a [String],
     #[serde(skip_serializing_if = "Option::is_none")]
     vm_options_file_path: Option<&'a str>,
-    #[serde(skip_serializing_if = "<[_]>::is_empty")]
-    boot_class_path_jar_names: &'a [String],
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    boot_class_path_jar_names: Vec<String>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     additional_jvm_arguments: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -366,6 +404,9 @@ fn render_product_info(product: &Product<'_>, target: Platform, opened_packages:
             "jbr/bin/java.exe".to_owned(),
         ),
     };
+    let boot_class_path_jar_names = launch_boot_class_path(product)?;
+    let mut launch_jvm_arguments = additional_jvm_arguments(&model.launch.jvm_arguments, &names, target, opened_packages, false);
+    launch_jvm_arguments.extend(product.dev_jvm_arguments.iter().cloned());
     let launch = Launch {
         os: target.os,
         arch: target.arch,
@@ -373,15 +414,15 @@ fn render_product_info(product: &Product<'_>, target: Platform, opened_packages:
         java_executable_path,
         vm_options_file_path: vm_options_file_path(target.os, &model.base_file_name, model.language_server),
         startup_wm_class: (target.os == OS_LINUX).then(|| linux_frame_class(&application_info.product_name_with_edition())),
-        boot_class_path_jar_names: &model.launch.boot_class_path_jar_names,
-        additional_jvm_arguments: additional_jvm_arguments(&model.launch.jvm_arguments, &names, target, opened_packages, false),
+        additional_jvm_arguments: launch_jvm_arguments,
         main_class: &model.launch.main_class,
         stdio_redirect_arg: model.launch.stdio_redirect_arg.as_deref(),
         custom_commands: model
             .custom_commands
             .iter()
-            .map(|command| render_custom_command(command, product, &names, target, opened_packages))
+            .map(|command| render_custom_command(command, product, &boot_class_path_jar_names, &names, target, opened_packages))
             .collect::<anyhow::Result<_>>()?,
+        boot_class_path_jar_names,
     };
     let info = ProductInfo {
         name: &application_info.full_product_name,
@@ -405,16 +446,64 @@ fn render_product_info(product: &Product<'_>, target: Platform, opened_packages:
     Ok(serde_json::to_string_pretty(&info)?)
 }
 
+/// The `bootClassPathJarNames` of the main launch.
+///
+/// A modular-loader launch states its list. A classic-loader launch takes the list of `launchBootClassPathJarNames` in
+/// `classpath.kt` over the core classpath. The list has no `nio-fs.jar` when the multi-routing file system puts the jar
+/// on `-Xbootclasspath/a:`. The leading jars come first, then the other names in bytewise order, each name once.
+pub(crate) fn launch_boot_class_path(product: &Product<'_>) -> anyhow::Result<Vec<String>> {
+    let launch = &product.model.launch;
+    let core_class_path = match (&launch.boot_class_path_jar_names, product.core_class_path) {
+        (Some(names), None) => return Ok(names.clone()),
+        (None, Some(core_class_path)) => core_class_path,
+        (Some(_), Some(_)) => bail!("the launch states bootClassPathJarNames, so it reads no core classpath"),
+        (None, None) => bail!("the launch states no bootClassPathJarNames, so it needs the core classpath"),
+    };
+    let skip_nio_fs = launch.jvm_arguments.multi_routing_file_system;
+    let mut rest: Vec<&str> = core_class_path
+        .iter()
+        .map(String::as_str)
+        .filter(|name| !(skip_nio_fs && *name == NIO_FS_JAR))
+        .collect();
+    rest.sort_unstable();
+    rest.dedup();
+    let mut result: Vec<String> = LEADING_JARS
+        .iter()
+        .filter(|jar| rest.contains(jar))
+        .map(|jar| (*jar).to_owned())
+        .collect();
+    result.extend(rest.into_iter().filter(|name| !LEADING_JARS.contains(name)).map(str::to_owned));
+    Ok(result)
+}
+
 /// Renders one custom command. The command takes the JVM arguments of the block it names, and a command that states an
-/// environment variable name states the data directory name of the product.
+/// environment variable name states the data directory name of the product. A command with additional jars takes
+/// `launch_boot_class_path_jar_names`, then these jars. A command with JVM arguments of its own also takes the dev JVM
+/// arguments.
 fn render_custom_command<'a>(
     command: &'a CustomCommand,
     product: &Product<'a>,
+    launch_boot_class_path_jar_names: &[String],
     names: &LaunchNames<'a>,
     target: Platform,
     opened_packages: &[String],
 ) -> anyhow::Result<Command<'a>> {
     let model = product.model;
+    let boot_class_path_jar_names = if command.additional_boot_class_path_jar_names.is_empty() {
+        command.boot_class_path_jar_names.clone()
+    } else {
+        if !command.boot_class_path_jar_names.is_empty() {
+            bail!(
+                "the custom command {:?} states both bootClassPathJarNames and additionalBootClassPathJarNames",
+                command.commands
+            );
+        }
+        launch_boot_class_path_jar_names
+            .iter()
+            .chain(&command.additional_boot_class_path_jar_names)
+            .cloned()
+            .collect()
+    };
     let mut arguments = Vec::new();
     let jvm = match command.jvm_arguments {
         None => None,
@@ -441,10 +530,13 @@ fn render_custom_command<'a>(
             .iter()
             .map(|argument| argument.replace(BUILD_NUMBER_TOKEN, product.build_number)),
     );
+    if !arguments.is_empty() {
+        arguments.extend(product.dev_jvm_arguments.iter().cloned());
+    }
     Ok(Command {
         commands: &command.commands,
         vm_options_file_path: command.vm_options_file_path.get(target.os).map(String::as_str),
-        boot_class_path_jar_names: &command.boot_class_path_jar_names,
+        boot_class_path_jar_names,
         additional_jvm_arguments: arguments,
         main_class: command.main_class.as_deref(),
         env_var_base_name: command.env_var_base_name.as_deref(),

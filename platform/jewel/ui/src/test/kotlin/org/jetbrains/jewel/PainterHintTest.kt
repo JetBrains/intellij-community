@@ -13,6 +13,7 @@ import org.jetbrains.jewel.ui.painter.PainterPathHint
 import org.jetbrains.jewel.ui.painter.PainterProviderScope
 import org.jetbrains.jewel.ui.painter.PainterSvgPatchHint
 import org.jetbrains.jewel.ui.painter.hints.ColorBasedPaletteReplacement
+import org.jetbrains.jewel.ui.painter.hints.ColorKeyPaletteReplacement
 import org.jetbrains.jewel.ui.painter.hints.Dark
 import org.jetbrains.jewel.ui.painter.hints.HiDpi
 import org.jetbrains.jewel.ui.painter.hints.PathOverride
@@ -283,5 +284,67 @@ public class PainterHintTest : BasicJewelUiTest() {
                 .trimMargin(),
             patchedSvg,
         )
+    }
+
+    @Test
+    public fun `color key palette hint should patch fill and stroke by their color key attributes`() {
+        val baseSvg =
+            """
+            |<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 22">
+            |    <rect color-fill-key="toggle-on-bg" fill="#ffffff" fill-opacity="0.23" height="16" width="26" x="3" y="3"/>
+            |    <rect color-stroke-key="toggle-on-border" height="15" stroke="#ffffff" width="25" x="3.5" y="3.5"/>
+            |    <g>
+            |        <circle color-fill-key="toggle-on-notch" cx="21" cy="11" fill="#000000" r="5"/>
+            |    </g>
+            |</svg>
+            """
+                .trimMargin()
+
+        val patchedSvg =
+            testScope("toggleOn.svg")
+                .applyPaletteHints(
+                    baseSvg,
+                    ColorKeyPaletteReplacement(
+                        mapOf(
+                            "toggle-on-bg" to Color(0xFF3871E1),
+                            "toggle-on-border" to Color(0xFF123456),
+                            "toggle-on-notch" to Color.White,
+                        )
+                    ),
+                )
+                .replace("\r\n", "\n")
+
+        assertEquals(
+            """
+            |<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 22">
+            |    <rect color-fill-key="toggle-on-bg" fill="#3871e1" height="16" width="26" x="3" y="3"/>
+            |    <rect color-stroke-key="toggle-on-border" height="15" stroke="#123456" width="25" x="3.5" y="3.5"/>
+            |    <g>
+            |        <circle color-fill-key="toggle-on-notch" cx="21" cy="11" fill="#ffffff" r="5"/>
+            |    </g>
+            |</svg>
+            """
+                .trimMargin(),
+            patchedSvg,
+        )
+    }
+
+    @Test
+    public fun `color key palette hint should keep colors for keys it does not know`() {
+        val baseSvg =
+            """
+            |<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 22">
+            |    <rect color-fill-key="toggle-unknown" fill="#ffffff" height="16" width="26" x="3" y="3"/>
+            |    <rect fill="#000000" height="16" width="26" x="3" y="3"/>
+            |</svg>
+            """
+                .trimMargin()
+
+        val patchedSvg =
+            testScope("toggleOn.svg")
+                .applyPaletteHints(baseSvg, ColorKeyPaletteReplacement(mapOf("toggle-on-bg" to Color.Red)))
+                .replace("\r\n", "\n")
+
+        assertEquals(baseSvg, patchedSvg)
     }
 }

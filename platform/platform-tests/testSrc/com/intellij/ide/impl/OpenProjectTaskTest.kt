@@ -26,24 +26,29 @@ internal class OpenProjectTaskTest {
     val options = OpenProjectTask {
       implOptions = originalImplOptions
       opensFileAfterProjectOpen = true
+      initFrameEarlyForNewProject = true
     }
 
     assertThat(options.implOptions).isNotSameAs(originalImplOptions)
     assertThat(options.effectiveImplOptions).isSameAs(originalImplOptions)
     assertThat(options.opensFileAfterProjectOpen).isTrue()
+    assertThat(options.initFrameEarlyForNewProject).isTrue()
 
     val derivedOptions = OpenProjectTask(options) { projectName = "derived" }
     assertThat(derivedOptions.effectiveImplOptions).isSameAs(originalImplOptions)
     assertThat(derivedOptions.opensFileAfterProjectOpen).isTrue()
+    assertThat(derivedOptions.initFrameEarlyForNewProject).isTrue()
 
     val replacedOptions = derivedOptions.withImplOptions(replacementImplOptions)
     assertThat(replacedOptions.effectiveImplOptions).isSameAs(replacementImplOptions)
     assertThat(replacedOptions.opensFileAfterProjectOpen).isTrue()
+    assertThat(replacedOptions.initFrameEarlyForNewProject).isTrue()
 
     val defaultOptions = OpenProjectTask {}
     assertThat(defaultOptions.implOptions).isNotNull()
     assertThat(defaultOptions.effectiveImplOptions).isNull()
     assertThat(defaultOptions.opensFileAfterProjectOpen).isFalse()
+    assertThat(defaultOptions.initFrameEarlyForNewProject).isFalse()
   }
 
   @Test
@@ -79,6 +84,7 @@ internal class OpenProjectTaskTest {
       projectFrameTypeId = "frame"
       this.implOptions = implOptions
       opensFileAfterProjectOpen = true
+      initFrameEarlyForNewProject = true
       line = 3
       column = 4
       projectRootDir = rootDir
@@ -108,6 +114,7 @@ internal class OpenProjectTaskTest {
     assertThat(derived.projectFrameTypeId).isEqualTo("frame")
     assertThat(derived.effectiveImplOptions).isSameAs(implOptions)
     assertThat(derived.opensFileAfterProjectOpen).isTrue()
+    assertThat(derived.initFrameEarlyForNewProject).isTrue()
     assertThat(derived.line).isEqualTo(3)
     assertThat(derived.column).isEqualTo(4)
     assertThat(derived.projectRootDir).isEqualTo(rootDir)

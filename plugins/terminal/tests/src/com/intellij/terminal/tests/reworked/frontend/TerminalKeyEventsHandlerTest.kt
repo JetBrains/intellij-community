@@ -451,7 +451,7 @@ internal class TerminalKeyEventsHandlerTest : BasePlatformTestCase() {
       }
     }
 
-  private fun createDispatcher(fixture: Fixture): IdeEventQueue.EventDispatcher {
+  private fun createDispatcher(fixture: Fixture): IdeEventQueue.NonLockedEventDispatcher {
     return createTerminalKeyEventDispatcherForTests(
       editor = fixture.editor,
       settings = JBTerminalSystemSettingsProvider(),

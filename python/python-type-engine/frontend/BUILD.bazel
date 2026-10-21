@@ -52,7 +52,6 @@ jvm_library(
         "//python/python-type-engine/common",
         "//platform/kernel/rpc",
         "//platform/platform-impl/rpc",
-        "//platform/kernel/shared:kernel",
         "//platform/platform-frontend:frontend",
     ],
 )
@@ -90,7 +89,6 @@ jvm_library(
         "//python/python-type-engine/common:common_test_lib",
         "//platform/kernel/rpc:rpc_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/platform-frontend:frontend_test_lib",
     ],
 )

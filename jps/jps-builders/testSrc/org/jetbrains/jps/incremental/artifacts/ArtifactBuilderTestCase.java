@@ -11,7 +11,7 @@ import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
-import org.jetbrains.jps.builders.JpsBuildTestCase;
+import org.jetbrains.jps.builders.JpsBuildTestBase;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.artifact.DirectoryArtifactType;
@@ -24,6 +24,7 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
+import org.junit.jupiter.api.AfterEach;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,8 +35,11 @@ import java.util.Set;
 
 import static com.intellij.util.io.TestFileSystemItem.fs;
 import static org.jetbrains.jps.builders.CompileScopeTestBuilder.make;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
+public abstract class ArtifactBuilderTestCase extends JpsBuildTestBase {
   protected static void createFileInArtifactOutput(JpsArtifact a, final String relativePath) {
     createFileInOutputDir(a.getOutputPath(), relativePath);
   }
@@ -56,21 +60,17 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
     }
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myProject)) {
-        String outputPath = artifact.getOutputPath();
-        if (outputPath != null) {
-          FileUtil.delete(new File(FileUtil.toSystemDependentName(outputPath)));
-        }
+  @AfterEach
+  void tearDownArtifactBuilderTestCase() {
+    //noinspection ConstantValue
+    if (myProject == null) {
+      return;
+    }
+    for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myProject)) {
+      String outputPath = artifact.getOutputPath();
+      if (outputPath != null) {
+        FileUtil.delete(new File(FileUtil.toSystemDependentName(outputPath)));
       }
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
     }
   }
 
@@ -94,7 +94,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
 
   protected JpsArtifact addArtifact(String name, LayoutElementTestUtil.LayoutElementCreator root,
                                     JpsArtifactType<JpsDummyElement> artifactType) {
-    assertFalse("JpsArtifact " + name + " already exists", getArtifactNames().contains(name));
+    assertFalse(getArtifactNames().contains(name), "JpsArtifact " + name + " already exists");
     JpsArtifact artifact = JpsArtifactService.getInstance().addArtifact(myProject, name, root.buildElement(),
                                                                         artifactType,
                                                                         JpsElementFactory.getInstance().createDummyElement());
@@ -134,7 +134,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
       }
     }
     assertNotNull(file);
-    assertTrue("File " + file.getAbsolutePath() + " doesn't exist", file.exists());
+    assertTrue(file.exists(), "File " + file.getAbsolutePath() + " doesn't exist");
     return FileUtilRt.toSystemIndependentName(file.getAbsolutePath());
   }
 

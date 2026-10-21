@@ -10,10 +10,8 @@ import com.intellij.workspaceModel.codegen.impl.dsl.optInWorkspaceEntityInternal
 import com.intellij.workspaceModel.codegen.impl.dsl.unsupportedTypeError
 import com.intellij.workspaceModel.codegen.impl.metadata.getFullName
 import com.intellij.workspaceModel.codegen.impl.writer.EntityMetadata
-import com.intellij.workspaceModel.codegen.impl.writer.EntityStorageInstrumentation
 import com.intellij.workspaceModel.codegen.impl.writer.MetadataStorage
 import com.intellij.workspaceModel.codegen.impl.writer.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.codegen.impl.writer.MutableEntityStorage
 import com.intellij.workspaceModel.codegen.impl.writer.SoftLinkable
 import com.intellij.workspaceModel.codegen.impl.writer.StorageCollection
 import com.intellij.workspaceModel.codegen.impl.writer.WorkspaceEntity
@@ -26,7 +24,6 @@ import com.intellij.workspaceModel.codegen.impl.writer.extensions.isOverride
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isReferenceType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isReplaceBySourceKey
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaFullName
-import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaImplBuilderName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaImplName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.javaName
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.unwrapReferenceType
@@ -38,7 +35,7 @@ import com.intellij.workspaceModel.codegen.impl.writer.getJavaType
 import com.intellij.workspaceModel.codegen.impl.writer.mandatoryProperties
 import com.intellij.workspaceModel.codegen.impl.writer.referenceNameToSyntheticSymbolicIdFieldName
 import com.intellij.workspaceModel.codegen.impl.writer.referencesInSymbolicId
-import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdField
+import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdProperty
 
 val ObjClass<*>.javaDataName
   get() = "${name.replace(".", "")}Data"
@@ -67,7 +64,7 @@ fun CodeContext.entityDataClassCode(objClass: ObjClass<*>) {
 
     for (reference in referencesInSymbolicId) {
       val syntheticName = referenceNameToSyntheticSymbolicIdFieldName(reference.name)
-      val referencedSymbolicId = unwrapReferenceType(reference.valueType)?.target?.symbolicIdField
+      val referencedSymbolicId = unwrapReferenceType(reference.valueType)?.target?.symbolicIdProperty
       if (referencedSymbolicId == null) {
         reportPropertyError("Cannot find reference ${reference.name} or the referenced entity symbolic id", reference)
       }

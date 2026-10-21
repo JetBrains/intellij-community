@@ -8,7 +8,6 @@ import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.FileResolveScopeProvider;
 import com.intellij.psi.JavaCodeFragment;
-import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.JavaModuleGraphHelper;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaResolveResult;
@@ -35,6 +34,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.ResolveState;
+import com.intellij.psi.impl.JavaOptionalServices;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiJavaModuleModificationTracker;
 import com.intellij.psi.impl.source.DummyHolder;
@@ -96,7 +96,7 @@ public final class JavaResolveUtil {
         modifierList != null &&
         accessObjectClass == null &&
         PsiUtil.getAccessLevel(modifierList) == PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL) {
-      PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)place);
+      PsiPackage aPackage = JavaOptionalServices.getJavaDirectoryService().getPackage((PsiDirectory)place);
       return aPackage != null && JavaPsiFacade.getInstance(member.getProject()).isInPackage(member, aPackage);
     }
     return isAccessible(member, memberClass, modifierList, place, accessObjectClass, fileResolveScope, place.getContainingFile());
@@ -358,7 +358,7 @@ public final class JavaResolveUtil {
     final PsiDirectory directory = file.getContainingDirectory();
     if (directory == null) return null;
 
-    return JavaDirectoryService.getInstance().getPackage(directory);
+    return JavaOptionalServices.getJavaDirectoryService().getPackage(directory);
   }
 
   /**

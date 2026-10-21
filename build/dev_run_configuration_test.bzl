@@ -3,11 +3,14 @@
 The twin of `build/dev_run_configuration_test.bzl` of the ultimate checkout. `dev_run_configuration_check_plan` fails
 at load time on a row of a product that the generated plan does not serve. A Starlark test cannot catch a `fail()`, so
 the check has one test: every community product passes it. The golden lists below are the platform components that
-each community distribution composes. A change in the component layout has to change this file too.
+each community distribution composes. A change in the component layout has to change this file too. The last two
+tests pin the production place of `product-info.json`, which the platform resources and the native launcher read, and
+the home prefix of a distribution.
 """
 
 load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
 load("//build/dev-dist-content:dev_dist_content_sets.bzl", "DEV_DIST_PLUGIN_COMPONENTS")
+load("//platform/build-scripts/bazel-rules:dev_dist_product_files.bzl", "home_prefix", "product_info_destination")
 load(":dev_dist_plan.bzl", "DEV_DIST_PLANS")
 load(":dev_server_run_configurations.bzl", "DEV_RUN_CONFIGURATIONS")
 load(
@@ -98,6 +101,29 @@ def _android_studio_platform_fragments_test_impl(ctx):
 
 android_studio_platform_fragments_test = unittest.make(_android_studio_platform_fragments_test_impl)
 
+def _product_info_destination_test_impl(ctx):
+    env = unittest.begin(ctx)
+    asserts.equals(env, "Resources/product-info.json", product_info_destination("darwin", False), "a macOS app")
+    for os, language_server in [("darwin", True), ("linux", False), ("linux", True), ("windows", False), ("windows", True)]:
+        asserts.equals(
+            env,
+            "product-info.json",
+            product_info_destination(os, language_server),
+            "%s, language server %s" % (os, language_server),
+        )
+    return unittest.end(env)
+
+product_info_destination_test = unittest.make(_product_info_destination_test_impl)
+
+def _home_prefix_test_impl(ctx):
+    env = unittest.begin(ctx)
+    asserts.equals(env, "Contents", home_prefix("darwin", False), "a macOS app")
+    for os, language_server in [("darwin", True), ("linux", False), ("linux", True), ("windows", False), ("windows", True)]:
+        asserts.equals(env, "", home_prefix(os, language_server), "%s, language server %s" % (os, language_server))
+    return unittest.end(env)
+
+home_prefix_test = unittest.make(_home_prefix_test_impl)
+
 def dev_run_configuration_test_suite(name):
     """Test suite for the helpers of the community launchers."""
     unittest.suite(
@@ -107,4 +133,6 @@ def dev_run_configuration_test_suite(name):
         distribution_name_test,
         idea_platform_fragments_test,
         android_studio_platform_fragments_test,
+        product_info_destination_test,
+        home_prefix_test,
     )

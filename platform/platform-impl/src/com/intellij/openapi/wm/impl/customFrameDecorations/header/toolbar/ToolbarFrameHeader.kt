@@ -333,7 +333,13 @@ internal class ToolbarFrameHeader(
       toolbarPlaceholder.removeAll()
       MainToolbar(coroutineScope = coroutineScope.childScope("MainToolbar"), frame = frame, isFullScreen = isFullScreen)
     }
-    newToolbar.init(customTitleBar)
+    // a compact header shows its title instead of the toolbar and adds the title after the fill, so it fills at once
+    if (compactHeader) {
+      newToolbar.init(customTitleBar)
+    }
+    else {
+      newToolbar.initInHeader(customTitleBar)
+    }
 
     withContext(Dispatchers.EDT) {
       newToolbar.addComponentListener(resizeListener)

@@ -326,13 +326,14 @@ class TipCoalescingTest {
    */
   @Test
   fun `the id check reads the newest runs`() {
-    val mine = History().type(U, 0, "abc").graph()
-    val same = History().type(U, 0, "abc").graph()
+    val origin = EventGraph.createGraph()
+    val mine = History(origin).type(U, 0, "abc").graph()
+    val same = History(origin).type(U, 0, "abc").graph()
     assertEquals("abc", mine.mergeFrom(same).replay().string())
     assertEquals("abc", same.mergeFrom(mine).replay().string())
 
     for (clash in listOf("Zbc", "abZ")) {
-      val theirs = History().type(U, 0, clash).graph()
+      val theirs = History(origin).type(U, 0, clash).graph()
       val failure = assertThrows(EventIdClashException::class.java) { mine.mergeFrom(theirs) }
       assertTrue(failure.message.orEmpty().contains("the inserted character")) { "$clash: ${failure.message}" }
       assertThrows(EventIdClashException::class.java) { theirs.mergeFrom(mine) }
@@ -343,7 +344,7 @@ class TipCoalescingTest {
 
   @Test
   fun `typing in a branch costs one run per burst`() {
-    var branch = DocBranch.createBranch("", U)
+    var branch = DocumentBranch.createBranch("", U)
     for ((offset, char) in "hello\nworld".withIndex()) {
       branch = branch.applyOp(insertOp(offset, char.toString()))
     }
@@ -365,16 +366,16 @@ class TipCoalescingTest {
    */
   @Test
   fun `typing after a merge extends the run that starts at the merge point`() {
-    val base = DocBranch.createBranch("ab", agent("base"))
+    val base = DocumentBranch.createBranch("ab", agent("base"))
     val left = base.fork(U).applyOp(insertOp(0, "L"))
     val right = base.fork(V).applyOp(insertOp(2, "R"))
     var merged = left.merge(right)
-    assertEquals(3, merged.graph().runCount())
+    assertEquals(2, merged.graph().runCount())
     val caret = merged.length()
     for ((i, char) in "xyz".withIndex()) {
       merged = merged.applyOp(insertOp(caret + i, char.toString()))
     }
-    assertEquals(4, merged.graph().runCount())
+    assertEquals(3, merged.graph().runCount())
     assertEquals("LabRxyz", merged.string())
     assertEquals(merged.string(), merged.graph().replay().string())
     // The other side receives the run with its two-parent first unit, and converges.
@@ -385,32 +386,32 @@ class TipCoalescingTest {
 
   @Test
   fun `concurrent typing bursts merge and converge`() {
-    val base = DocBranch.createBranch("0123456789", agent("base"))
+    val base = DocumentBranch.createBranch("0123456789", agent("base"))
     var left = base.fork(agent("left"))
     var right = base.fork(agent("right"))
     for ((i, char) in "abc".withIndex()) {
       left = left.applyOp(insertOp(2 + i, char.toString()))
       right = right.applyOp(insertOp(8 + i, char.uppercase()))
     }
-    assertEquals(2, left.graph().runCount())
-    assertEquals(2, right.graph().runCount())
+    assertEquals(1, left.graph().runCount())
+    assertEquals(1, right.graph().runCount())
     val forward = left.merge(right)
     val backward = right.merge(left)
     assertEquals("01abc234567ABC89", forward.string())
     assertEquals(forward.string(), backward.string())
     assertEquals(forward.string(), forward.graph().replay().string())
-    assertEquals(3, forward.graph().runCount())
+    assertEquals(2, forward.graph().runCount())
   }
 
   /**
    * A linear history and the text it must replay to. Every op appends at the graph's own
    * version, under the seq that comes next for its agent. The history keeps each version it
-   * passes, with the text it held there.
+   * passes, with the text it held there. It grows from [origin], which must have no events.
    */
-  private class History {
-    private var graph = EventGraph.createGraph()
+  private class History(origin: EventGraph = EventGraph.createGraph()) {
+    private var graph = origin
     private val text = StringBuilder()
-    private val nextSeqs = HashMap<Agent, Int>()
+    private val nextSeqs = HashMap<Agent, Long>()
     private val past = ArrayList<Pair<Version, String>>()
 
     fun graph(): EventGraph {
@@ -467,8 +468,8 @@ class TipCoalescingTest {
       }
     }
 
-    private fun takeSeqs(agent: Agent, count: Int): Int {
-      val seq = nextSeqs[agent] ?: 0
+    private fun takeSeqs(agent: Agent, count: Int): Long {
+      val seq = nextSeqs[agent] ?: 0L
       nextSeqs[agent] = seq + count
       return seq
     }

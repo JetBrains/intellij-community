@@ -1,35 +1,26 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.schema
 
-import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection
-import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.openapi.fileTypes.LanguageFileType
-import com.intellij.openapi.vfs.VirtualFile
-import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.jetbrains.jsonSchema.jsonSchemaHighlightingFixture
 import org.jetbrains.yaml.YAMLLanguage
-import java.util.function.Predicate
+import org.junit.jupiter.api.Test
 
-class YamlWithSchemaSpellcheckingTest : JsonSchemaHighlightingTestBase() {
-  override fun getTestDataPath(): String {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/backend/testData/org/jetbrains/yaml/schema/data/highlighting"
+@TestApplication
+class YamlWithSchemaSpellcheckingTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
   }
 
-  override fun getTestFileName(): String {
-    return "config.yml"
-  }
+  private val codeInsightFixture = codeInsightModuleFixture(projectFixture)
+  private val myFixture by codeInsightFixture
+  private val mySchemaFixture by jsonSchemaHighlightingFixture(codeInsightFixture, "config.yml", ::YamlJsonSchemaHighlightingInspection,
+                                                               YAMLLanguage.INSTANCE)
 
-  override fun getInspectionProfile(): InspectionProfileEntry {
-    return YamlJsonSchemaHighlightingInspection()
-  }
-
-  override fun getAvailabilityPredicate(): Predicate<VirtualFile> {
-    return Predicate { file: VirtualFile ->
-      file.fileType is LanguageFileType && (file.fileType as LanguageFileType).language.isKindOf(
-        YAMLLanguage.INSTANCE)
-    }
-  }
-
+  @Test
   fun testYamlSpellcheckingWithSchema() {
     myFixture.enableInspections(GrazieSpellCheckingInspection::class.java)
     val schema = """
@@ -50,14 +41,14 @@ class YamlWithSchemaSpellcheckingTest : JsonSchemaHighlightingTestBase() {
       }
     }
     """.trimIndent()
-    configureInitially(schema, """
+    mySchemaFixture.configureInitially(schema, """
       bugaga: <warning>foo</warning>
       ulala: <warning>123</warning>
       mememe:
         <warning>- hello</warning>
     """.trimIndent(), "json")
     myFixture.checkHighlighting(true, false, true)
-    configureInitially(schema, """
+    mySchemaFixture.configureInitially(schema, """
       bugaga: ququ
       ulala: hello
       mememe:

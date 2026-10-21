@@ -23,11 +23,11 @@ public abstract class YamlUnknownKeysInspectionBase extends YamlMetaTypeInspecti
     return new StructureChecker(holder, metaTypeProvider);
   }
 
-  private static class StructureChecker extends SimpleYamlPsiVisitor {
+  protected static class StructureChecker extends SimpleYamlPsiVisitor {
     private final YamlMetaTypeProvider myMetaTypeProvider;
     private final ProblemsHolder myProblemsHolder;
 
-    StructureChecker(@NotNull ProblemsHolder problemsHolder, @NotNull YamlMetaTypeProvider metaTypeProvider) {
+    protected StructureChecker(@NotNull ProblemsHolder problemsHolder, @NotNull YamlMetaTypeProvider metaTypeProvider) {
       myProblemsHolder = problemsHolder;
       myMetaTypeProvider = metaTypeProvider;
     }

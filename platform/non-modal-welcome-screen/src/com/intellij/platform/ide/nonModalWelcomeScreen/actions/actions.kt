@@ -2,6 +2,10 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.actions
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.actions.WELCOME_NEW_FILE_EXTENSION
+import com.intellij.ide.actions.rememberWelcomeNewFile
+import com.intellij.ide.actions.welcomeNewFileUsageData
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.actionSystem.ActionManager
@@ -12,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionWrapper
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.EmptyAction
+import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.DumbAwareAction
@@ -36,13 +41,20 @@ internal class CreateEmptyFileAction : DumbAwareAction() {
 
 @ApiStatus.Internal
 open class NewEmptyFileAction(languageId: String, private val text: Supplier<@Nls String>, private val icon: Icon) :
-  AnActionWrapper(createAction(getLanguage(languageId))) {
+  AnActionWrapper(createAction()), FusAwareAction {
 
   private val language: Language? = getLanguage(languageId)
 
+  /**
+   * The extension of the new file when the language is not available.
+   * For example, the language plugin is disabled.
+   * When it is null, the action is hidden without the language.
+   */
+  protected open val fileExtension: String? = null
+
   override fun update(e: AnActionEvent) {
     super.update(e)
-    if (e.presentation.isEnabledAndVisible && language == null) {
+    if (e.presentation.isEnabledAndVisible && language == null && fileExtension == null) {
       e.presentation.isEnabledAndVisible = false
     }
     e.presentation.icon = icon
@@ -50,18 +62,23 @@ open class NewEmptyFileAction(languageId: String, private val text: Supplier<@Nl
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    if (language == null) {
-      return
+    val extension = if (language == null) fileExtension ?: return else null
+    val dataContext = SimpleDataContext.builder()
+      .setParent(e.dataContext)
+      .add(CommonDataKeys.LANGUAGE, language)
+      .add(WELCOME_NEW_FILE_EXTENSION, extension)
+      .build()
+    val event = AnActionEvent.createEvent(dataContext, null, ActionPlaces.WELCOME_SCREEN, ActionUiKind.NONE, null)
+    super.actionPerformed(event)
+    if (welcomeNewFileUsageData(event).isNotEmpty()) {
+      rememberWelcomeNewFile(e, language)
     }
-    val dataContext = SimpleDataContext.builder().setParent(e.dataContext).add(CommonDataKeys.LANGUAGE, language).build()
-    super.actionPerformed(AnActionEvent.createEvent(dataContext, null, ActionPlaces.WELCOME_SCREEN, ActionUiKind.NONE, null))
   }
+
+  override fun getAdditionalUsageData(event: AnActionEvent): List<EventPair<*>> = welcomeNewFileUsageData(event)
 }
 
-private fun createAction(language: Language?): AnAction {
-  if (language == null) {
-    return EmptyAction()
-  }
+private fun createAction(): AnAction {
   return ActionManager.getInstance().getAction("WelcomeNewEmptyFile") ?: EmptyAction()
 }
 
@@ -75,11 +92,8 @@ private fun getLanguage(languageId: String): Language? {
   return LanguageUtil.getFileTypeLanguage(fileType)
 }
 
-internal class MarkdownNewFileAction :
-  NewEmptyFileAction("Markdown", NonModalWelcomeScreenBundle.lazyMessage("action.WelcomeMarkdownNewFile.text"), AllIcons.FileTypes.Markdown)
-
-internal class NewJavaFileAction :
-  NewEmptyFileAction("JAVA", NonModalWelcomeScreenBundle.lazyMessage("action.NewJavaFile.text"), AllIcons.FileTypes.Java)
-
-internal class NewKotlinFileAction :
-  NewEmptyFileAction("Kotlin", NonModalWelcomeScreenBundle.lazyMessage("action.NewKotlinFile.text"), AllIcons.Language.Kotlin)
+internal class MarkdownNewFileAction : NewEmptyFileAction("Markdown",
+                                                          NonModalWelcomeScreenBundle.lazyMessage("action.WelcomeMarkdownNewFile.text"),
+                                                          AllIcons.FileTypes.Markdown) {
+  override val fileExtension: String = "md"
+}

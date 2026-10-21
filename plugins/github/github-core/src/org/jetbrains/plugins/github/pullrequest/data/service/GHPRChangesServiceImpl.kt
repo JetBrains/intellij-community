@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.data.service
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.api.page.foldToList
+import com.intellij.collaboration.async.mapConcurrentOrdered
 import com.intellij.collaboration.util.ResultUtil.processErrorAndGet
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch
@@ -21,7 +22,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.fold
 import org.jetbrains.plugins.github.api.GHGQLRequests
@@ -37,6 +37,8 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import java.time.Duration
 
 private typealias DiffSpec = Pair<String?, String>
+
+internal const val MAX_CONCURRENT_COMMITS = 50
 
 class GHPRChangesServiceImpl(parentCs: CoroutineScope,
                              private val project: Project,
@@ -120,15 +122,15 @@ class GHPRChangesServiceImpl(parentCs: CoroutineScope,
                                              commits: List<GHCommit>): GitBranchComparisonResult =
     runCatching {
       coroutineScope {
-        val commitsWithPatchesReqs = commits.map { commit ->
-          async {
+        val commitsWithPatchesReq = async {
+          commits.mapConcurrentOrdered(MAX_CONCURRENT_COMMITS) { commit ->
             val patches = patchesCache.get(null to commit.oid).await()
             GitCommitShaWithPatches(commit.oid, commit.parents.map { it.oid }, patches)
           }
         }
         val request = GithubApiPagesLoader.Request(PullRequests.getDiffFiles(ghRepository, id), PullRequests::getDiffFiles)
         val prPatches = batchesFlow(requestExecutor, request).foldToList().mapNotNull(::toPatch)
-        val commitsWithPatches = commitsWithPatchesReqs.awaitAll()
+        val commitsWithPatches = commitsWithPatchesReq.await()
 
         GitBranchComparisonResult.create(project, gitRemote.repository.root, baseRef, mergeBaseRef, commitsWithPatches, prPatches)
       }

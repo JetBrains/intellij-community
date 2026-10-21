@@ -127,6 +127,15 @@ public abstract class FileBasedIndex {
     return ApplicationManager.getApplication().getService(FileBasedIndex.class);
   }
 
+  /**
+   * The backend module registers the index, so a light or frontend process has none.
+   *
+   * @return the index, or `null` when no module registers it
+   */
+  public static @Nullable FileBasedIndex getInstanceIfDefined() {
+    return ApplicationManager.getApplication().getService(FileBasedIndex.class);
+  }
+
   public static int getFileId(final @NotNull VirtualFile file) {
     if (file instanceof VirtualFileWithId) {
       return ((VirtualFileWithId)file).getId();

@@ -77,7 +77,7 @@ import java.util.stream.Collectors;
 import static com.intellij.execution.RunContentDescriptorIdImplKt.findContentValue;
 import static com.intellij.execution.dashboard.RunDashboardCustomizer.CUSTOMIZER_EP_NAME;
 import static com.intellij.execution.dashboard.RunDashboardServiceIdKt.findValue;
-import static com.intellij.platform.kernel.ids.BackendGlobalIdsKt.storeValueGlobally;
+import static com.intellij.platform.rpc.ids.BackendGlobalIdsKt.storeValueGlobally;
 
 // fixme might want to save the state on backend machine
 @Service(Service.Level.PROJECT)

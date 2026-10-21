@@ -199,6 +199,7 @@ internal class MarketplacePluginsTab @RequiresEdt(generateAssertion = false /* I
       installedPlugins,
       installationStates,
       internalPluginsGroupDescriptor,
+      MyPluginModel.getExpectedExplanations(errorCheckResults),
     )
   }
 
@@ -347,6 +348,7 @@ internal class MarketplacePluginsTab @RequiresEdt(generateAssertion = false /* I
                                                           PluginLogo.startBatchMode()
 
                                                           for (group in groups) {
+                                                            group.getPreloadedModel().setExpectedExplanations(model.expectedExplanations)
                                                             marketplacePanel.addGroup(group)
                                                           }
                                                         }
@@ -780,4 +782,5 @@ private data class CreateMarketplacePanelModel(
   val installedPlugins: Map<PluginId, PluginUiModel>,
   val installationStates: Map<PluginId, PluginInstallationState>,
   val internalPluginsGroupDescriptor: PluginsViewCustomizer.PluginsGroupDescriptor?,
+  val expectedExplanations: Map<PluginId, List<@Nls String>>,
 )

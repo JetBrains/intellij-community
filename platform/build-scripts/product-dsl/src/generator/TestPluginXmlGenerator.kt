@@ -34,12 +34,14 @@ internal object TestPluginXmlGenerator : PipelineNode {
   override fun execute(ctx: ComputeContext) {
     val model = ctx.model
     val planOutput = ctx.get(Slots.TEST_PLUGIN_DEPENDENCY_PLAN)
-    if (planOutput.plans.isEmpty()) {
+    // the dev build writes the descriptor of a synthetic test plugin itself
+    val plans = planOutput.plans.filterNot { it.spec.devBuildSynthetic }
+    if (plans.isEmpty()) {
       ctx.publish(Slots.TEST_PLUGINS, TestPluginsOutput(files = emptyList()))
       return
     }
 
-    val results = planOutput.plans.map { plan ->
+    val results = plans.map { plan ->
       val moduleDependencyChains = model.dslTestPluginDependencyChains.get(plan.spec.pluginId).orEmpty()
       generateTestPluginXml(
         spec = plan.spec,

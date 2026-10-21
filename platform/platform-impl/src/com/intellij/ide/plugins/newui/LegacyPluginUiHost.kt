@@ -233,6 +233,12 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
     customizer.requestRestart(facade, parentComponent)
   }
 
+  @RequiresEdt
+  fun runRestartButton(parentComponent: JComponent) {
+    lifecycle.checkActive()
+    model.runRestartButton(parentComponent)
+  }
+
   fun closeSession() {
     eventSink.requestSessionClose(installationMovedToBackground = false)
   }

@@ -20,7 +20,6 @@ import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.WriteExternalException;
@@ -32,6 +31,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
+import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.run.features.PyRunToolData;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -108,7 +108,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     final Module[] modules = ModuleManager.getInstance(project).getModules();
     List<Module> result = new ArrayList<>();
     for (Module module : modules) {
-      if (PythonSdkUtil.findPythonSdk(module) != null) {
+      if (PyModuleInterpreterReader.findModuleSdkIfReady(module) != null) {
         result.add(module);
       }
     }
@@ -195,21 +195,18 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     else {
       if (!myUseModuleSdk) {
         if (StringUtil.isEmptyOrSpaces(getSdkHome())) {
-          final Sdk projectSdk = ProjectRootManager.getInstance(getProject()).getProjectSdk();
-          if (projectSdk == null || !PythonSdkUtil.isPythonSdk(projectSdk)) {
-            throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_sdk"));
-          }
+          // No SDK home and no module SDK: an interpreter belongs to a Python project, so there is nothing to run.
+          throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_sdk"));
         }
-        // Only that the SDK is a Python one, which is what the project-SDK branch above checks too. Whether the
-        // interpreter actually runs is not asked here: this method runs on every validation pass of the run
-        // configuration editor, and answering it launches a process. A broken interpreter fails at launch instead,
-        // with the error the launch itself reports.
+        // Only that the SDK is a Python one. Whether the interpreter actually runs is not asked here: this method runs on
+        // every validation pass of the run configuration editor, and answering it launches a process. A broken
+        // interpreter fails at launch instead, with the error the launch itself reports.
         else if (mySdk == null || !PythonSdkUtil.isPythonSdk(mySdk)) {
           throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_valid_sdk"));
         }
       }
       else {
-        Sdk sdk = PythonSdkUtil.findPythonSdk(getModule());
+        Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(getModule());
         if (sdk == null) {
           throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_module_sdk"));
         }
@@ -224,7 +221,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     }
     String sdkHome = mySdkHome;
     if (StringUtil.isEmptyOrSpaces(mySdkHome)) {
-      final Sdk projectJdk = PythonSdkUtil.findPythonSdk(getModule());
+      final Sdk projectJdk = PyModuleInterpreterReader.findModuleSdkIfReady(getModule());
       if (projectJdk != null) {
         sdkHome = projectJdk.getHomePath();
       }
@@ -235,7 +232,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   public @Nullable String getInterpreterPath() {
     String sdkHome;
     if (myUseModuleSdk) {
-      Sdk sdk = PythonSdkUtil.findPythonSdk(getModule());
+      Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(getModule());
       if (sdk == null) return null;
       sdkHome = sdk.getHomePath();
     }
@@ -252,7 +249,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   @Transient
   public @Nullable Sdk getSdk() {
     if (myUseModuleSdk) {
-      return PythonSdkUtil.findPythonSdk(getModule());
+      return PyModuleInterpreterReader.findModuleSdkIfReady(getModule());
     }
     else if (mySdk != null) {
       return mySdk;

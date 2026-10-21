@@ -236,7 +236,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     // TODO: direct forward index access is not used right now since IdIndex shared index doesn't have forward index
     GlobalSearchScope fileScope = GlobalSearchScope.fileScope(psiFile);
     IdIndexEntry key = new IdIndexEntry(name, true);
-    return !FileBasedIndex.getInstance().getContainingFiles(IdIndex.NAME, key, fileScope).isEmpty();
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    return fileBasedIndex != null && !fileBasedIndex.getContainingFiles(IdIndex.NAME, key, fileScope).isEmpty();
   }
 
   @Override
@@ -323,10 +324,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         return processor.toString();
       }
     };
-    if (scope.getVirtualFiles().length <= 1) {
-      // scan the roots of one file on this thread: a fork-join join here can run an unrelated task (IDEA-392925)
-      return ConcurrencyUtils.runWithIndicatorOrContextCancellation(_ -> ContainerUtil.process(scopeElements, localProcessor));
-    }
     return ConcurrencyUtils.runWithIndicatorOrContextCancellation(_->JobLauncher.getInstance().invokeConcurrentlyUnderContextProgress(Arrays.asList(scopeElements), localProcessor));
   }
 
@@ -1381,9 +1378,10 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       LOG.trace("searching for words " + words + " in " + scope);
     }
 
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
     if (ApplicationManager.getApplication().isReadAccessAllowed() &&
         (!DumbService.isDumb(project) ||
-         FileBasedIndex.getInstance().getCurrentDumbModeAccessType(project) != null)) {
+         (fileBasedIndex != null && fileBasedIndex.getCurrentDumbModeAccessType(project) != null))) {
       return computeQueries(scope, processor, textIndexQueries);
     }
 
@@ -1394,7 +1392,8 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                                         @NotNull Processor<? super VirtualFile> processor,
                                         @NotNull TextIndexQuery @NotNull [] textIndexQueries) {
     Collection<AllKeysQuery<?, ?>> queries = ContainerUtil.concat(textIndexQueries, q -> q.toFileBasedIndexQueries());
-    return FileBasedIndex.getInstance().processFilesContainingAllKeys(queries, scope, processor);
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    return fileBasedIndex == null || fileBasedIndex.processFilesContainingAllKeys(queries, scope, processor);
   }
 
   @ApiStatus.Internal

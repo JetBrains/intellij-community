@@ -242,7 +242,7 @@
           <reference ref="CodeCleanup"/>
         </group>
 
-        <group id="AnalyzeActionsPopup" popup="true">
+        <group id="AnalyzeActionsPopup" popup="true" searchable="false">
           <group id="AnalyzeActions">
             <reference ref="SilentCodeCleanup"/>
             <reference ref="RunInspection"/>

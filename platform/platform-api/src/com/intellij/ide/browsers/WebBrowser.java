@@ -15,7 +15,11 @@ public abstract class WebBrowser {
 
   public abstract @NotNull UUID getId();
 
-  public abstract @NotNull BrowserFamily getFamily();
+  /**
+   * @return the browser family, or {@code null} if the user did not specify it.
+   * A browser without a family can open a URL, but the features that need a known family are not available for it.
+   */
+  public abstract @Nullable BrowserFamily getFamily();
 
   public abstract @NotNull Icon getIcon();
 

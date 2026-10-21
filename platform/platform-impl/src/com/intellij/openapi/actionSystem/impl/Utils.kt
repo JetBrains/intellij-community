@@ -122,6 +122,7 @@ import kotlinx.coroutines.ThreadContextElement
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -157,6 +158,7 @@ import javax.swing.JLabel
 import javax.swing.JMenu
 import javax.swing.JPopupMenu
 import javax.swing.SwingUtilities
+import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.math.max
@@ -381,19 +383,32 @@ object Utils {
       else if (isLockRequired(group)) lockingEdtCoroutineDispatcher
       else nonLockingEdtCoroutineDispatcher
     val updater = ActionUpdater(presentationFactory, asyncDataContext, place, uiKind, edtDispatcher)
-    val deferred = async(edtDispatcher, CoroutineStart.UNDISPATCHED) {
+    val fastTrackElement = if (fastTrackTime > 0) FastTrackElement() else null
+    val deferred = async(edtDispatcher + (fastTrackElement ?: EmptyCoroutineContext), CoroutineStart.UNDISPATCHED) {
       updater.runUpdateSession(updaterContext(place, fastTrackTime, uiKind)) {
         updater.expandActionGroup(group)
       }
     }
-    if (fastTrackTime > 0) {
-      AltEdtDispatcher.runOwnQueueBlockingAndSwitchBackToEDT(deferred, fastTrackTime)
+    if (fastTrackElement != null) {
+      AltEdtDispatcher.runOwnQueueBlockingAndSwitchBackToEDT(deferred, fastTrackTime, fastTrackElement)
     }
     val result = deferred.await()
     if (fastTrack && lockProhibitedAdvice != null) {
       reportEdtLockActions(place, updater.edtLockRequiringActions)
     }
     result
+  }
+
+  /**
+   * Stops the EDT wait of the current fast-track update, and the update continues asynchronously.
+   *
+   * Call it before the update waits for data that this process cannot compute fast, for example an answer from a remote process.
+   * Outside a fast-track update, the function does nothing.
+   */
+  suspend fun interruptFastTrack() {
+    val fastTrack = currentCoroutineContext()[FastTrackElement] ?: return
+    LOG.debug { "Fast track is interrupted: ${currentCoroutineContext()[CoroutineName]?.name}" }
+    fastTrack.isInterrupted = true
   }
 
   /**
@@ -1443,11 +1458,11 @@ private object AltEdtDispatcher : CoroutineDispatcher() {
     }
   }
 
-  fun runOwnQueueBlockingAndSwitchBackToEDT(job: Job, timeInMillis: Int) {
+  fun runOwnQueueBlockingAndSwitchBackToEDT(job: Job, timeInMillis: Int, fastTrack: FastTrackElement) {
     try {
       resetThreadContext {
         // block EDT for a short and process the explicit EDT queue for update
-        while (!job.isCompleted && TimeoutUtil.getDurationMillis(switchedAt) < timeInMillis) {
+        while (!job.isCompleted && !fastTrack.isInterrupted && TimeoutUtil.getDurationMillis(switchedAt) < timeInMillis) {
           val runnable = queue.poll(1, TimeUnit.MILLISECONDS)
           if (runnable != null) {
             runnable.run()
@@ -1460,7 +1475,7 @@ private object AltEdtDispatcher : CoroutineDispatcher() {
           }
         }
       }
-      if (!job.isCompleted) {
+      if (!job.isCompleted && !fastTrack.isInterrupted) {
         lastFailedFastTrackFinishNanos = System.nanoTime()
         lastFailedFastTrackCount++
       }
@@ -1479,6 +1494,20 @@ private object AltEdtDispatcher : CoroutineDispatcher() {
       LOG.assertTrue(queue.isEmpty(), "AltEdtDispatcher queue is not empty")
     }
   }
+}
+
+/**
+ * Marks the coroutines of one fast-track update.
+ *
+ * [Utils.interruptFastTrack] sets [isInterrupted], and [AltEdtDispatcher.runOwnQueueBlockingAndSwitchBackToEDT] then stops the EDT wait.
+ */
+private class FastTrackElement : AbstractCoroutineContextElement(FastTrackElement) {
+  companion object Key : CoroutineContext.Key<FastTrackElement>
+
+  @Volatile
+  var isInterrupted: Boolean = false
+
+  override fun toString(): String = "FastTrackElement(isInterrupted=$isInterrupted)"
 }
 
 // to avoid platform assertions

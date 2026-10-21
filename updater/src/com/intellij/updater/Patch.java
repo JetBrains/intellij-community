@@ -38,6 +38,7 @@ public class Patch {
   private final List<String> myDeleteFiles;
   private final int myTimeout;
   private final List<PatchAction> myActions;
+  private Set<File> myUnusedFiles = Set.of();
 
   public Patch(PatchSpec spec) throws IOException {
     myOldBuild = spec.getOldVersionDescription();
@@ -221,28 +222,58 @@ public class Patch {
 
     List<ValidationResult> results = new ArrayList<>();
 
-    Set<String> deletedPaths = new HashSet<>(), deletedLinks = new HashSet<>();
-    forEach(myActions, UpdaterUI.message("validating.installation"), ui, action -> {
-      ValidationResult result = action.validate(toDir);
+    ui.startProcess(UpdaterUI.message("validating.installation"));
+    ui.setProgressIndeterminate();
+    ui.checkCancelled();
+    try {
+      myUnusedFiles = findUnusedFiles(toDir, ui);
 
-      if (action instanceof DeleteAction) {
-        String path = mapPath(action.getPath());
-        deletedPaths.add(path);
-        if (Digester.isSymlink(action.getChecksum())) {
-          deletedLinks.add(path);
+      Set<String> deletedPaths = new HashSet<>(), deletedLinks = new HashSet<>();
+      forEach(myActions, UpdaterUI.message("validating.installation"), ui, action -> {
+        ValidationResult result = action.validate(toDir);
+
+        if (action instanceof DeleteAction) {
+          String path = mapPath(action.getPath());
+          deletedPaths.add(path);
+          if (Digester.isSymlink(action.getChecksum())) {
+            deletedLinks.add(path);
+          }
         }
-      }
-      else if (result != null &&
-               action instanceof CreateAction &&
-               result.message.equals(UpdaterUI.message("file.exists")) &&
-               toBeDeleted(mapPath(action.getPath()), deletedPaths, deletedLinks)) {
-        result = null;  // do not warn about files going to be deleted
-      }
+        else if (result != null &&
+                 action instanceof CreateAction &&
+                 result.message.equals(UpdaterUI.message("file.exists")) &&
+                 toBeDeleted(mapPath(action.getPath()), deletedPaths, deletedLinks)) {
+          result = null;  // do not warn about files going to be deleted
+        }
 
-      if (result != null) results.add(result);
-    });
+        if (result != null) results.add(result);
+
+      });
+    }
+    finally {
+      myUnusedFiles = Set.of();
+    }
 
     return results;
+  }
+
+  private Set<File> findUnusedFiles(File toDir, UpdaterUI ui) throws OperationCancelledException {
+    if (!NativeFileManager.isAvailable()) return Set.of();
+
+    Set<File> candidates = new LinkedHashSet<>();
+    for (PatchAction action : myActions) {
+      ui.checkCancelled();
+      for (File file : action.getValidationFiles(toDir)) {
+        if (file.isFile()) {
+          candidates.add(file);
+        }
+      }
+    }
+    return NativeFileManager.findUnusedFiles(candidates, ui);
+  }
+
+  boolean isKnownUnused(File file) {
+    return myUnusedFiles.contains(file);
   }
 
   private static String mapPath(String path) {

@@ -36,7 +36,6 @@ jvm_library(
         "//libraries/pty4j",
         "//libraries/fastutil",
         "//platform/util/coroutines",
-        "//platform/kernel/backend",
         "//platform/kernel/rpc.backend",
         "//platform/project/shared:project",
         "//platform/core-impl",
@@ -49,7 +48,6 @@ jvm_library(
         "//platform/execution",
         "//platform/consoleView",
         "//platform/consoleView/impl",
-        "//fleet/rhizomedb",
         "//platform/util/annotations",
     ],
 )
@@ -78,7 +76,6 @@ jvm_library(
         "//libraries/pty4j:pty4j_test_lib",
         "//libraries/fastutil:fastutil_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
-        "//platform/kernel/backend:backend_test_lib",
         "//platform/kernel/rpc.backend:rpc.backend_test_lib",
         "//platform/project/shared:project_test_lib",
         "//platform/core-impl:core-impl_test_lib",
@@ -91,7 +88,6 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//platform/consoleView:consoleView_test_lib",
         "//platform/consoleView/impl:impl_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/util/annotations:annotations_test_lib",
     ],
 )

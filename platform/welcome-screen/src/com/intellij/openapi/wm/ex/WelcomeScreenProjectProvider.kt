@@ -278,12 +278,5 @@ private fun getProjectsBasePath(): String {
 }
 
 private fun getUserHomeProjectDir(): String {
-  val appNamesInfo = ApplicationNamesInfo.getInstance()
-  val productName = if (PlatformUtils.isCLion() || PlatformUtils.isAppCode() || PlatformUtils.isDataGrip() || PlatformUtils.isMPS()) {
-    appNamesInfo.productName
-  }
-  else {
-    appNamesInfo.lowercaseProductName
-  }
-  return Path.of(System.getProperty("user.home"), productName + "Projects").toString()
+  return Path.of(System.getProperty("user.home"), ApplicationNamesInfo.getInstance().defaultProjectDirectoryName).toString()
 }

@@ -20,12 +20,14 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.util.JpsPathUtil;
+import org.junit.jupiter.api.Test;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.root;
 
 public class CleanArtifactOutputOnRebuildTest extends ArtifactBuilderTestCase {
 
+  @Test
   public void testCleanOutput() {
     JpsArtifact a = addArtifact(root().fileCopy(createFile("a.txt")));
     buildArtifacts(a);
@@ -36,6 +38,7 @@ public class CleanArtifactOutputOnRebuildTest extends ArtifactBuilderTestCase {
     assertOutput(a, fs().file("a.txt").file("b.txt"));
   }
 
+  @Test
   public void testDoNotCleanOnRebuildIfOptionIsSwitchedOff() {
     JpsJavaExtensionService.getInstance().getCompilerConfiguration(myProject).setClearOutputDirectoryOnRebuild(false);
     JpsArtifact a = addArtifact(root().fileCopy(createFile("a.txt")));
@@ -45,6 +48,7 @@ public class CleanArtifactOutputOnRebuildTest extends ArtifactBuilderTestCase {
     assertOutput(a, fs().file("a.txt").file("b.txt"));
   }
 
+  @Test
   public void testDoNotCleanIfContainsSourceFolder() {
     JpsArtifact a = addArtifact(root().fileCopy(createFile("a.txt")));
     addModule("m", a.getOutputPath() + "/src");
@@ -54,6 +58,7 @@ public class CleanArtifactOutputOnRebuildTest extends ArtifactBuilderTestCase {
     assertOutput(a, fs().file("a.txt").file("b.txt"));
   }
 
+  @Test
   public void testDoNotCleanIfContainsArtifactRoot() {
     JpsModule m = addModule("m");
     String resDir = PathUtil.getParentPath(createFile("res/a.txt"));
@@ -68,6 +73,7 @@ public class CleanArtifactOutputOnRebuildTest extends ArtifactBuilderTestCase {
     assertOutput(a, fs().file("a.txt").file("b.txt"));
   }
 
+  @Test
   public void testCleanArtifactOutputIfItIsIncludedIntoAnotherArtifact() {
     JpsArtifact included = addArtifact("b", root().fileCopy(createFile("a.txt")));
     JpsArtifact a = addArtifact(root().artifact(included));
@@ -78,6 +84,7 @@ public class CleanArtifactOutputOnRebuildTest extends ArtifactBuilderTestCase {
     assertOutput(included, fs().file("a.txt").file("b.txt"));
   }
 
+  @Test
   public void testCleanModuleOutputIfItIsIncludedInArtifact() {
     String file = createFile("src/A.java", "class A{}");
     JpsModule m = addModule("m", PathUtil.getParentPath(file));

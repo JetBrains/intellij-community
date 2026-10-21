@@ -3,7 +3,6 @@ package com.jetbrains.python.remote;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
@@ -11,7 +10,6 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.vcsUtil.VcsUtil;
-import com.jetbrains.python.extensions.ModuleExtKt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -36,9 +34,6 @@ public final class NewFilesProcessor {
    * @return Since this method is designed to be console filter, it returns user-readable message about files
    */
   public static @NotNull String processNewFiles(final @NotNull Module module, final @NotNull String files) {
-    final Sdk sdk = ModuleExtKt.getSdk(module);
-    assert sdk != null : String.format("Sdk can't be null on module %s", module);
-
     final String[] fileNames = ArrayUtilRt.toStringArray(StringUtil.split(files, ","));
     if (fileNames.length == 0) {
       return "";

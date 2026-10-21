@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
@@ -23,6 +24,7 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.impl.PsiDocumentManagerEx;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.PsiClassImpl;
@@ -339,6 +341,36 @@ public class StubAstSwitchTest extends LightJavaCodeInsightFixtureTestCase {
 
     assertTrue(ContainerUtil.exists(stubTree.getPlainList(),
                                     it -> JavaStubElementTypes.ANONYMOUS_CLASS.equals(it.getElementType())));
+  }
+
+  public void test_cached_stub_is_dropped_when_an_uncommitted_document_is_gc_ed() throws IOException {
+    // Keep the commit pending, so the file stays in the stub-only state until the document is collected.
+    ((PsiDocumentManagerEx)PsiDocumentManager.getInstance(getProject())).disableBackgroundCommit(getTestRootDisposable());
+
+    PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("Foo.java", "class Foo { void a() {} }");
+    StubTree stub = file.getStubTree();
+    assertNotNull(stub);
+    VirtualFile vFile = file.getVirtualFile();
+
+    String newText = "class Foo { int x; void b() {} }";
+    changeFileAndCollectUncommittedDocument(vFile, newText).ensureCollected();
+    assertNull(FileDocumentManager.getInstance().getCachedDocument(vFile));
+
+    Document reloadedDocument = FileDocumentManager.getInstance().getDocument(vFile);
+    assertNotNull(reloadedDocument);
+    assertTrue(PsiDocumentManager.getInstance(getProject()).isCommitted(reloadedDocument));
+
+    assertNotNull(file.getNode());
+    assertEquals(newText, file.getText());
+    assertEquals("b", ((PsiJavaFile)file).getClasses()[0].getMethods()[0].getName());
+  }
+
+  private GCWatcher changeFileAndCollectUncommittedDocument(VirtualFile vFile, String newText) throws IOException {
+    Document document = FileDocumentManager.getInstance().getDocument(vFile);
+    assertNotNull(document);
+    WriteAction.run(() -> VfsUtil.saveText(vFile, newText));
+    assertFalse(PsiDocumentManager.getInstance(getProject()).isCommitted(document));
+    return GCWatcher.tracking(document);
   }
 
   public void test_stub_index_is_cleared_on_AST_change() {

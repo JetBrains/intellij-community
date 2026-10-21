@@ -1,10 +1,10 @@
-//! `air-trace-record`: the sidecar a lane JVM starts, which turns the lane protocol into bundles.
+//! `air-trace-record`: the recorder process that a lane starts, which turns the lane protocol into bundles.
 //!
 //! It reads [avl_trace::protocol] commands on standard input and answers the acked ones on standard output, one
 //! JSON object per line; standard error is for diagnostics only. It owns the capture ladder, the snapshots, the
 //! video, the log slice and the bundle writer. Standard input reaching EOF before `done` is the one signal it needs
-//! to finish a truncated bundle, which is why it is a process of its own rather than code in the JVM: a watchdog's
-//! `exitProcess` kills the JVM, not this.
+//! to finish a truncated bundle. So it is a process of its own and not code in the lane: a lane that dies does not take
+//! the recorder with it.
 //!
 //! Nothing here may fail a test. Every capture, bridge and encoder failure becomes an `air.trace.error` record or a
 //! reason in the manifest, a line the recorder cannot use is answered with a negative ack, and the process exits 0
@@ -35,13 +35,12 @@ macro_rules! say {
 
 mod allure;
 mod attach;
-mod bridge;
 mod bundle;
 mod capture;
+mod dumps;
 mod frames;
 mod idealog;
 mod ladder;
-mod retention;
 mod scenario;
 mod session;
 mod snap;
@@ -61,7 +60,7 @@ const EXIT_USAGE: u8 = 2;
 
 /// Runs `air-trace-record`, the whole program behind `main`, and answers its exit code: 0 however the session ended.
 ///
-/// The lane JVM starts the recorder with no argument, so an argument is refused with one `ERROR:` line on `stderr`
+/// The lane starts the recorder with no argument, so an argument is refused with one `ERROR:` line on `stderr`
 /// and [EXIT_USAGE], and no session starts. The lane protocol arrives on `stdin`, the acks leave on `stdout`, and
 /// `stderr` takes the diagnostics.
 ///
@@ -215,7 +214,7 @@ impl Options {
         let os_type = os_type().to_owned();
         Self {
             host_name: host_name(),
-            bridge_url: Box::new(bridge::url),
+            bridge_url: Box::new(avl_bridge::url),
             ladder: Box::new(SystemLadder::new(diagnostics.clone(), clock.clone(), os_type.clone())),
             video: Box::new(SystemVideographer::new(os_type.clone(), clock.clone())),
             frame_interval: video::FRAME_INTERVAL,

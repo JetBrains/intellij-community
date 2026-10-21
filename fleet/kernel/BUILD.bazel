@@ -1,7 +1,6 @@
 load("@community//fleet/build:fleet.bzl", "fleet_plugin_services_resources", "fleet_wasmjs_module")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
-load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 fleet_wasmjs_module(
     name = "wasmjs_module",
@@ -21,10 +20,6 @@ fleet_wasmjs_module(
         "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
     ],
 )
-
-### auto-generated section `dev fleet.kernel` start
-content_module_jar(module = ":kernel")
-### auto-generated section `dev fleet.kernel` end
 
 ### auto-generated section `build fleet.kernel` start
 create_kotlinc_options(

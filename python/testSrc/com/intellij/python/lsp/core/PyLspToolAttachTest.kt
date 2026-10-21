@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.lsp.core
 
+import com.jetbrains.python.project.PyProject
 import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
@@ -30,7 +30,7 @@ internal class PyLspToolAttachTest {
   @Test
   fun `a cancelled subscription subscribes again on the next attach`() {
     val provider = CancelOnceProvider()
-    val descriptor = TyLspClientDescriptor(pyProjectFixture.get().residesOnModule)
+    val descriptor = TyLspClientDescriptor(pyProjectFixture.get())
 
     assertThrows<ProcessCanceledException> { provider.attach(descriptor) }
     provider.attach(descriptor)
@@ -43,7 +43,7 @@ internal class PyLspToolAttachTest {
   private class CancelOnceProvider : PyLspToolIntegrationProvider() {
     var subscriptions: Int = 0
 
-    override fun getDescriptor(module: Module): PyLspToolDescriptor = TyLspClientDescriptor(module)
+    override fun getDescriptor(pyProject: PyProject): PyLspToolDescriptor = TyLspClientDescriptor(pyProject)
 
     override fun pyTool(project: Project): PyLspTool<*> = TyPyTool.getInstance()
 

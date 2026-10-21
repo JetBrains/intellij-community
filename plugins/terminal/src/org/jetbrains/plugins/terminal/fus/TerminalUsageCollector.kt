@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.fus
 
+import com.intellij.ide.actions.ToolWindowTabLocation
+import com.intellij.ide.actions.ToolWindowTabLocationFusUtil
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.internal.statistic.collectors.fus.TerminalFusAwareHandler
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.ClassEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -11,7 +13,6 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.Version
-import com.intellij.terminal.TerminalShellCommandHandler
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.util.ShellType
 import kotlin.time.Duration
@@ -20,9 +21,10 @@ import kotlin.time.Duration
 object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup(GROUP_ID, 35)
+  private val GROUP = EventLogGroup(GROUP_ID, 36)
 
-  private val TERMINAL_COMMAND_HANDLER_FIELD = EventFields.Class("terminalCommandHandler")
+  @JvmField
+  val TERMINAL_COMMAND_HANDLER_FIELD: ClassEventField = EventFields.Class("terminalCommandHandler")
   private val RUN_ANYTHING_PROVIDER_FIELD = EventFields.Class("runAnythingProvider")
   private val OS_VERSION_FIELD = EventFields.StringValidatedByRegexpReference("os-version", "version")
   private val SHELL_STR_FIELD = EventFields.String("shell", TerminalShellInfoStatistics.KNOWN_SHELLS.toList())
@@ -55,9 +57,11 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
     TerminalShellInfoStatistics.isBashItField
   )
 
-  private val commandStartedEvent = GROUP.registerEvent(
+  private val commandStartedEvent = GROUP.registerVarargEvent(
     "terminal.command.executed",
-    TerminalCommandUsageStatistics.commandExecutableField, TerminalCommandUsageStatistics.subCommandField, BLOCK_TERMINAL_FIELD
+    TerminalCommandUsageStatistics.commandExecutableField,
+    TerminalCommandUsageStatistics.subCommandField, BLOCK_TERMINAL_FIELD,
+    ToolWindowTabLocationFusUtil.TOOLWINDOW_TAB_LOCATION
   )
 
   private val timespanFinishedEvent = GROUP.registerEvent(
@@ -80,9 +84,15 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   fun triggerSshShellStarted(project: Project): Unit = sshExecEvent.log(project)
 
   @JvmStatic
-  fun triggerCommandStarted(project: Project, userCommandLine: String, isBlockTerminal: Boolean) {
+  fun triggerCommandStarted(project: Project, userCommandLine: String, isBlockTerminal: Boolean, tabLocation: ToolWindowTabLocation?) {
     val commandData = TerminalCommandUsageStatistics.getLoggableCommandData(userCommandLine)
-    commandStartedEvent.log(project, commandData.command, commandData.subCommand, isBlockTerminal)
+    val pairs = listOfNotNull(
+      TerminalCommandUsageStatistics.commandExecutableField with commandData.command,
+      TerminalCommandUsageStatistics.subCommandField with commandData.subCommand,
+      BLOCK_TERMINAL_FIELD with isBlockTerminal,
+      tabLocation?.let { ToolWindowTabLocationFusUtil.TOOLWINDOW_TAB_LOCATION with it },
+    )
+    commandStartedEvent.log(project, pairs)
   }
 
   @JvmStatic
@@ -104,17 +114,9 @@ object TerminalUsageTriggerCollector : CounterUsagesCollector() {
   @JvmStatic
   fun triggerSmartCommand(
     project: Project,
-    workingDirectory: String?,
-    localSession: Boolean,
-    command: String,
-    handler: TerminalShellCommandHandler,
+    data: List<EventPair<*>>,
     executed: Boolean,
   ) {
-    val data: MutableList<EventPair<*>> = mutableListOf(TERMINAL_COMMAND_HANDLER_FIELD.with(handler::class.java))
-
-    if (handler is TerminalFusAwareHandler) {
-      handler.fillData(project, workingDirectory, localSession, command, data)
-    }
 
     if (executed) {
       terminalSmartCommandExecutedEvent.log(project, data)

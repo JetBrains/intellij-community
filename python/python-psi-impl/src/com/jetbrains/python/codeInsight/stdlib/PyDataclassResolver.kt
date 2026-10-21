@@ -179,6 +179,12 @@ interface PyDataclassResolver {
   fun buildInitSignatureParameterSets(acc: InitFieldsAccumulator): List<List<PyCallableParameter>> =
     listOf(buildParameters(acc.positionalAliasOrFieldNameParams, acc.keywordOnlyAliasOrFieldNameParams))
 
+  /**
+   * Whether instances of [cls] reject attribute assignment. Default: frozen if [cls] or any dataclass ancestor is
+   * frozen, matching stdlib and attrs, which forbid unfreezing a frozen base.
+   */
+  fun isFrozenInstance(cls: PyClass, context: TypeEvalContext): Boolean = isFrozenInAnyDataclassOfHierarchy(cls, context)
+
   /** Free functions like `dataclasses.replace(obj, ...)` / `attrs.evolve(inst, ...)`. Empty if none. */
   fun copyFunctions(): List<PyDataclassCopyFunction> = emptyList()
 
@@ -209,6 +215,10 @@ interface PyDataclassResolver {
     return true
   }
 }
+
+/** The default [PyDataclassResolver.isFrozenInstance] rule, also used for dataclass types without a resolver. */
+fun isFrozenInAnyDataclassOfHierarchy(cls: PyClass, context: TypeEvalContext): Boolean =
+  (sequenceOf(cls) + cls.getAncestorClasses(context)).any { parseDataclassParameters(it, context)?.frozen == true }
 
 /**
  * Contributes the dataclass fields declared *directly on* [pyClass] (no MRO traversal) to [acc], using this

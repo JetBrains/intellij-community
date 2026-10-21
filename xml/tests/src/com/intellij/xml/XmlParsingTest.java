@@ -2,8 +2,10 @@
 package com.intellij.xml;
 
 import com.intellij.lang.xml.XMLParserDefinition;
+import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.xml.testFramework.XmlParsingTestBase;
 
+@TestApplication
 public class XmlParsingTest extends XmlParsingTestBase {
   public XmlParsingTest() {
     super("psi/xml", "xml", new XMLParserDefinition());

@@ -48,6 +48,13 @@ class SoundSignalPlayedEventTest {
   }
 
   @Test
+  fun `a chosen sound is reported by its signal`() = collectorTest {
+    val events = collect { SoundSignalPlayer.getInstance().play(IdeSoundSignals.PROGRESS, IdeSounds.PROGRESS_DETERMINATE_STAGE_2) }
+
+    assertThat(events.map { it.event.data["signal"] }).containsExactly("progress")
+  }
+
+  @Test
   fun `a muted signal is not reported`() = collectorTest { settings ->
     settings.setSignal(IdeSoundSignals.WARNING_LINE, false)
 
@@ -85,6 +92,8 @@ class SoundSignalPlayedEventTest {
   }
 
   private class SilentPlayer : SoundSignalPlayer() {
-    override fun playEnabled(signals: Collection<SoundSignal>) {}
+    override fun playEnabled(sounds: Map<SoundSignal, String>) {}
+
+    override fun playPreview(sounds: List<Pair<SoundSignal, String>>) {}
   }
 }

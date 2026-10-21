@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.venv.sdk
 
+import java.nio.file.Path
 import com.jetbrains.python.sdk.PySdkDataProvider
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.intellij.python.sdk.common.PyEnvRef
@@ -22,5 +23,7 @@ internal class VenvSdkDataProvider : PySdkDataProvider {
     envRef: PyEnvRef,
     pythonBinary: P,
     fileSystem: FileSystem<P>,
-  ): PythonSdkAdditionalData = PythonSdkAdditionalData(fileSystem.flavorAndDataOf(pythonBinary), pyProject.baseDir)
+    requirementsFile: Path?,
+  ): PythonSdkAdditionalData =
+    PythonSdkAdditionalData(fileSystem.flavorAndDataOf(pythonBinary), pyProject.baseDir).also { it.requirementsPath = requirementsFile }
 }

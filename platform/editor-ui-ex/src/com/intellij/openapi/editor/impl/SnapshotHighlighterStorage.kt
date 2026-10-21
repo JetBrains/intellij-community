@@ -13,8 +13,6 @@ import com.intellij.util.containers.ConcurrentLongObjectMap
 import com.intellij.util.containers.Java11Shim
 import it.unimi.dsi.fastutil.longs.LongList
 import org.jetbrains.annotations.TestOnly
-import java.lang.ref.ReferenceQueue
-import java.lang.ref.WeakReference
 import java.util.Comparator
 import java.util.NoSuchElementException
 
@@ -29,11 +27,7 @@ internal class SnapshotHighlighterStorage(
     check(model.document === document)
   }
 
-  /** Receives registry references after their highlighters become unreachable. */
-  private val highlighterQueue: ReferenceQueue<SnapshotRangeHighlighterImpl> = ReferenceQueue()
-
-  /** Maps each marker ID to a weak reference used for notifications. The marker roots own valid highlighters. */
-  private val highlightersById: ConcurrentLongObjectMap<HighlighterReference> = Java11Shim.createConcurrentLongObjectMap()
+  private val highlightersById: ConcurrentLongObjectMap<SnapshotRangeHighlighterImpl> = Java11Shim.createConcurrentLongObjectMap()
 
   /** A positive value prevents structural changes during iteration on the current thread. */
   private val iteratorDepth: ThreadLocal<Int> = ThreadLocal.withInitial { 0 }
@@ -50,23 +44,29 @@ internal class SnapshotHighlighterStorage(
 
   fun add(highlighter: SnapshotRangeHighlighterImpl, startOffset: Int, endOffset: Int, spec: MarkerSpec) {
     assertMayChange()
-    processHighlighterQueue()
-    val snapshot = currentSnapshot()
     val markerId = highlighter.idForStorage()
-    val previous = highlightersById.putIfAbsent(markerId, HighlighterReference(highlighter, highlighterQueue))
-    check(previous == null) { "Highlighter $markerId is already registered" }
     val markerReference = SnapshotMarkerEngineImpl.createMarkerReference(highlighter, retainStrong = true)
-    rootStore.updateRoot(snapshot, CompoundPMarkerRoot.empty()) {
-      it.insert(markerId, startOffset, endOffset, spec, highlighter.flavorFlags, markerReference)
+    val flavorFlags = highlighter.flavorFlags
+    val previous = highlightersById.putIfAbsent(markerId, highlighter)
+    check(previous == null) { "Highlighter $markerId is already registered" }
+    var inserted = false
+    try {
+      inserted = rootStore.updateCurrentRoot(CompoundPMarkerRoot.empty()) {
+        it.insert(markerId, startOffset, endOffset, spec, flavorFlags, markerReference)
+      }
     }
-    model.invalidateHighlighterCache()
+    finally {
+      if (!inserted) highlightersById.remove(markerId, highlighter)
+      model.invalidateHighlighterCache()
+    }
   }
 
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 
   fun updateFlavor(highlighter: SnapshotRangeHighlighterImpl) {
-    rootStore.updateRoot(currentSnapshot(), CompoundPMarkerRoot.empty()) {
-      it.updateFlavor(highlighter.idForStorage(), highlighter.flavorFlags)
+    val flavorFlags = highlighter.flavorFlags
+    rootStore.updateCurrentRoot(CompoundPMarkerRoot.empty()) {
+      it.updateFlavor(highlighter.idForStorage(), flavorFlags)
     }
   }
 
@@ -81,7 +81,7 @@ internal class SnapshotHighlighterStorage(
 
   fun beforeRemoved(highlighter: SnapshotRangeHighlighterImpl) {
     assertMayChange()
-    if (highlightersById.get(highlighter.idForStorage())?.get() === highlighter) {
+    if (highlightersById.get(highlighter.idForStorage()) === highlighter) {
       removalDepth.set(removalDepth.get() + 1)
       var completed = false
       try {
@@ -98,8 +98,7 @@ internal class SnapshotHighlighterStorage(
     var removed = false
     try {
       val markerId = highlighter.idForStorage()
-      val reference = highlightersById.get(markerId)
-      if (reference != null && reference.get() === highlighter && highlightersById.remove(markerId, reference)) {
+      if (highlightersById.remove(markerId, highlighter)) {
         model.invalidateHighlighterCache()
         removed = true
       }
@@ -122,10 +121,8 @@ internal class SnapshotHighlighterStorage(
   }
 
   fun collectAll(): List<RangeHighlighterEx> {
-    processHighlighterQueue()
     val result = ArrayList<RangeHighlighterEx>()
-    for (reference in highlightersById.values()) {
-      val highlighter = reference.get() ?: continue
+    for (highlighter in highlightersById.values()) {
       if (highlighter.isValid) result.add(highlighter)
     }
     result.sortWith(SNAPSHOT_HIGHLIGHTER_COMPARATOR)
@@ -142,13 +139,21 @@ internal class SnapshotHighlighterStorage(
   }
 
   private fun highlightersChanged(invalidatedMarkerIds: LongList) {
-    processHighlighterQueue()
     val size = invalidatedMarkerIds.size
-    for (i in 0 until size) {
-      val markerId = invalidatedMarkerIds.getLong(i)
-      val highlighter = highlightersById.get(markerId)?.get() ?: continue
-      beforeRemoved(highlighter)
-      afterRemoved(highlighter)
+    if (size == 0) return
+    try {
+      for (i in 0 until size) {
+        val markerId = invalidatedMarkerIds.getLong(i)
+        val highlighter = highlightersById.get(markerId) ?: continue
+        beforeRemoved(highlighter)
+        afterRemoved(highlighter)
+      }
+    }
+    finally {
+      for (i in 0 until size) {
+        highlightersById.remove(invalidatedMarkerIds.getLong(i))
+      }
+      model.invalidateHighlighterCache()
     }
   }
 
@@ -162,16 +167,8 @@ internal class SnapshotHighlighterStorage(
     }
   }
 
-  private fun processHighlighterQueue() {
-    while (true) {
-      val reference = highlighterQueue.poll() as? HighlighterReference? ?: return
-      highlightersById.remove(reference.markerId, reference)
-    }
-  }
-
   @TestOnly
   fun containsHighlighterId(markerId: Long): Boolean {
-    processHighlighterQueue()
     return highlightersById.containsKey(markerId)
   }
 
@@ -221,16 +218,9 @@ internal class SnapshotHighlighterStorage(
   private fun nextSnapshotHighlighter(entries: Iterator<PMarkerRoot.MarkerEntry>): SnapshotRangeHighlighterImpl? {
     while (entries.hasNext()) {
       val marker = entries.next().markerReference?.get()
-      if (marker is SnapshotRangeHighlighterImpl) return marker
+      if (marker is SnapshotRangeHighlighterImpl && marker.isValid) return marker
     }
     return null
-  }
-
-  private class HighlighterReference(
-    highlighter: SnapshotRangeHighlighterImpl,
-    queue: ReferenceQueue<SnapshotRangeHighlighterImpl>,
-  ) : WeakReference<SnapshotRangeHighlighterImpl>(highlighter, queue) {
-    val markerId: Long = highlighter.idForStorage()
   }
 
   companion object {

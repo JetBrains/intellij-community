@@ -12,7 +12,7 @@ jps_test(
 
 ### auto-generated section `dev intellij.platform.credentialStore.impl` start
 content_module_jar(
-    libraries = ["@lib//:platform-credential_store-impl-dbus-java"],
+    libraries = ["@lib//:dbus-java"],
     module = ":credentialStore-impl",
 )
 ### auto-generated section `dev intellij.platform.credentialStore.impl` end
@@ -58,7 +58,7 @@ jvm_library(
         "//libraries/bouncy-castle-provider",
         "//libraries/snakeyaml",
         "//libraries/fastutil",
-        "@lib//:platform-credential_store-impl-dbus-java",
+        "@lib//:dbus-java",
         "//libraries/caffeine",
         "//platform/analysis-api:analysis",
         "//platform/platform-api:ide",
@@ -191,7 +191,7 @@ jvm_library(
         "//libraries/snakeyaml:snakeyaml_test_lib",
         "//libraries/fastutil",
         "//libraries/fastutil:fastutil_test_lib",
-        "@lib//:platform-credential_store-impl-tests-dbus-java",
+        "@lib//:dbus-java",
         "//libraries/caffeine",
         "//libraries/caffeine:caffeine_test_lib",
         "//platform/testFramework",

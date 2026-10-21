@@ -1,5 +1,5 @@
 //! The Apple `container` engine: the engine of the Docker backend on a macOS host of macOS 26 or newer, on Apple
-//! silicon, or where `AIR_VM_DOCKER_ENGINE=container` chooses it ([`avl_base::DockerEngine::AppleContainer`], the decision
+//! silicon, that names no other engine ([`avl_base::DockerEngine::AppleContainer`], the decision
 //! `2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend`, and ADR 0224).
 //!
 //! Apple `container` runs each container in a VM of its own. Its CLI has the shape of the Docker CLI, so the backend
@@ -25,21 +25,21 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
-use avl_base::config::{CONTAINER_MACOS_MAJOR, DOCKER_ENGINE_VARIABLE};
+use avl_base::config::CONTAINER_MACOS_MAJOR;
 use avl_base::{Config, Exit, GuestArch, Refusal, Reporter};
 use avl_host_sys::lock::{LockGuard, LockManager};
 use avl_host_sys::{Captured, Ctx, ProbeExit, ProbeOutput, ProcError, Runner, SpawnOptions, probe_unanswered};
 use serde::Deserialize;
 use tokio::sync::OnceCell;
 
-use crate::worker::docker::{log_options, remove_if_present};
+use crate::worker::docker::{log_options, named_engine_remedy, remove_if_present};
 use crate::worker::hypervisor::unsupported;
 
 #[cfg(test)]
 mod tests;
 
 /// The budget of `system start`. The first start downloads the kernel, about 700 MB from GitHub: 108.8 s on
-/// 2026-10-09. A start with the kernel present took 0.2 s. The budget is the one of the first Lima start.
+/// 2026-10-09. A start with the kernel present took 0.2 s.
 pub(crate) const SYSTEM_START_BUDGET: Duration = Duration::from_mins(15);
 
 /// The timeout of `system status`, of `builder stop` and of `builder delete`. The server answers each at once.
@@ -206,12 +206,15 @@ impl AppleContainer {
     /// - A host that is not Apple silicon is refused `unsupported_backend_operation`: Apple builds the engine for it
     ///   only.
     /// - A macOS older than [`CONTAINER_MACOS_MAJOR`] is refused `container_macos_too_old`, exit 2: Apple `container`
-    ///   1.5.0 needs macOS 26. The engine rule chooses the Lima engine there, so only `AIR_VM_DOCKER_ENGINE=container`
-    ///   gets here. A Mac whose version file names no version passes.
+    ///   1.5.0 needs macOS 26. A Mac whose version file names no version passes.
+    ///
+    /// The engine rule keeps the host engine on such a host, so only settings that pin the engine or the host facts
+    /// get here. The remedy is [`named_engine_remedy`].
     pub(crate) fn require_supported_host(&self) -> Result<(), Refusal> {
         if self.settings.guest_arch != GuestArch::Arm64 {
             return Err(unsupported(format!(
-                "the Apple container engine runs on Apple silicon only; set {DOCKER_ENGINE_VARIABLE}=lima to use the Lima engine"
+                "the Apple container engine runs on Apple silicon only; {}",
+                named_engine_remedy()
             )));
         }
         match self.settings.macos {
@@ -219,9 +222,9 @@ impl AppleContainer {
                 "container_macos_too_old",
                 Exit::USAGE,
                 format!(
-                    "the Apple container engine needs macOS {CONTAINER_MACOS_MAJOR} or newer, and this host runs macOS {}; \
-                     set {DOCKER_ENGINE_VARIABLE}=lima, or unset it, to use the Lima engine",
-                    macos.major
+                    "the Apple container engine needs macOS {CONTAINER_MACOS_MAJOR} or newer, and this host runs macOS {}; {}",
+                    macos.major,
+                    named_engine_remedy()
                 ),
             )),
             _ => Ok(()),

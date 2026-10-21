@@ -4,6 +4,7 @@ package com.intellij.terminal.backend.hyperlinks.filter
 import com.intellij.execution.filters.ConsoleFilterProviderEx
 import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.HyperlinkInfo
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -38,7 +39,7 @@ class TerminalGenericFileFilter(
   private val context: TerminalHyperlinkFilterContext?,
   private val fileLookup: TerminalFileLookup,
   private val relativePaths: Boolean = true,
-) : Filter {
+) : Filter, DumbAware {
 
   override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
     val indexOffset = entireLength - line.length

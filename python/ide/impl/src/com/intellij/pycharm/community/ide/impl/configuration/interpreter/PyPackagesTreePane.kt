@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration.interpreter
 
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.emit
 import com.intellij.execution.ExecutionException
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
@@ -13,7 +15,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
+import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.SimpleTextAttributes
@@ -381,7 +383,11 @@ internal class PyPackagesTreePane(
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
       // The settings hold an editable copy of the SDK, so the interpreter is detected here and not read from the
       // project structure.
-      val manager = PythonPackageManager.forPythonInterpreter(project, sdk.pythonInterpreterAsync())
+      // A broken SDK names no interpreter, so it has no packages: the tab shows it as no SDK.
+      val interpreter = sdk.pythonInterpreterResultAsync().successOrNull ?: return@launch withContext(Dispatchers.EDT) {
+        if (currentSdk === sdk) applyUiState(PackageTreeUiState.noSdk())
+      }
+      val manager = PythonPackageManager.forPythonInterpreter(project, interpreter)
       if (invalidateCache) manager.treeProvider?.invalidateCache()
       val stillCurrent = withContext(Dispatchers.EDT) {
         if (currentSdk !== sdk) return@withContext false
@@ -661,7 +667,8 @@ internal class PyPackagesTreePane(
     // Taken at the click, so the dialog opens over a modal Settings window instead of waiting for it to close.
     val modality = ModalityState.current().asContextElement()
     PyPackageCoroutine.launch(project) {
-      val interpreterToOpenOn = sdkToOpenOn?.pythonInterpreterAsync()
+      // A broken SDK names no interpreter, so the dialog opens without one.
+      val interpreterToOpenOn = sdkToOpenOn?.pythonInterpreterResultAsync()?.successOrNull
       withContext(Dispatchers.EDT + modality) {
         PyInstallPackageDialogLauncher.open(
           project = project,
@@ -724,7 +731,11 @@ internal class PyPackagesTreePane(
     val pkgName = pkg.name.name
     val member = workspaceMemberName?.let { PyWorkspaceMember(it) }
     PyPackageCoroutine.launch(project) {
-      PythonPackageManagerUI.forPythonInterpreter(project, sdk.pythonInterpreterAsync()).uninstallPackagesBackground(listOf(pkgName), workspaceMember = member)
+      val interpreter = sdk.pythonInterpreterResultAsync().getOr {
+        ErrorSink().emit(it.error, project)
+        return@launch
+      }
+      PythonPackageManagerUI.forPythonInterpreter(project, interpreter).uninstallPackagesBackground(listOf(pkgName), workspaceMember = member)
       withContext(Dispatchers.EDT) {
         val current = currentSdk ?: return@withContext
         if (current === sdk) reloadCurrentSdk()

@@ -90,7 +90,7 @@ class CachingAdaptiveImageManagerService(private val coroutineScope: CoroutineSc
 
   init {
     val vfsEvents = Channel<List<VFileEvent>>(capacity = Channel.UNLIMITED)
-    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListenerBackgroundable {
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(VirtualFileManager.VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
       override fun after(events: List<VFileEvent>) {
         vfsEvents.trySend(events)
       }

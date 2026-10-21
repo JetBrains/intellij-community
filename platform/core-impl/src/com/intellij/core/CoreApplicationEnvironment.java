@@ -64,6 +64,7 @@ import com.intellij.psi.stubs.StubElementRegistryServiceImplKt;
 import com.intellij.psi.stubs.StubRegistryExtension;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.util.KeyedLazyInstanceEP;
+import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
 import com.intellij.util.pico.DefaultPicoContainer;
@@ -92,9 +93,21 @@ public class CoreApplicationEnvironment {
     this(parentDisposable, true);
   }
 
-  public CoreApplicationEnvironment(@NotNull Disposable parentDisposable, boolean unitTestMode) {
+  public CoreApplicationEnvironment(@NotNull Disposable parentDisposable, boolean isUnitTestMode) {
+    this(parentDisposable, isUnitTestMode, false);
+  }
+
+  /**
+   * @param isHeadlessMode whether this environment is the application of a headless process, such as a compiler.
+   *                       The option makes pool threads 'daemon' so the application can finish normally.
+   */
+  public CoreApplicationEnvironment(@NotNull Disposable parentDisposable, boolean isUnitTestMode, boolean isHeadlessMode) {
     myParentDisposable = parentDisposable;
-    myUnitTestMode = unitTestMode;
+    myUnitTestMode = isUnitTestMode;
+
+    if (isHeadlessMode) {
+      AppScheduledExecutorService.configureForHeadlessProcess();
+    }
 
     boolean wasIgnoredDisabledPlugins = PluginEnabler.HEADLESS.isIgnoredDisabledPlugins();
     Disposer.register(parentDisposable, () -> PluginEnabler.HEADLESS.setIgnoredDisabledPlugins(wasIgnoredDisabledPlugins));

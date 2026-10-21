@@ -6,13 +6,12 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.platform.eel.getShell
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
-import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.where
 import com.intellij.platform.testFramework.junit5.eel.params.api.DockerTest
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelHolder
 import com.intellij.platform.testFramework.junit5.eel.params.api.EelSource
 import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplicationWithEel
 import com.intellij.platform.testFramework.junit5.eel.params.api.WslTest
+import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer
@@ -24,7 +23,8 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.createSdk
+import com.jetbrains.python.sdk.setPythonSdkForTests
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.startup.MutableShellExecOptionsImpl
@@ -54,7 +54,7 @@ internal class PyVirtualEnvTerminalCustomizerEelTest {
   fun activationScriptPathIsEelPath(eelHolder: EelHolder): Unit = timeoutRunBlocking(5.minutes) {
     val eel = eelHolder.eel
     // The local eel may have no python. A remote eel must have it: the WSL and Docker images do
-    val python = eel.exec.where("python3")?.asNioPath()
+    val python = SystemPythonService().findSystemPythons(eel).firstOrNull()?.pythonBinary
     if (python == null && eel.descriptor == LocalEelDescriptor) {
       throw TestAbortedException("No local python")
     }
@@ -63,13 +63,12 @@ internal class PyVirtualEnvTerminalCustomizerEelTest {
     val workingDirectory = tempDirFixture.get()
     val venvDir = workingDirectory.resolve(".venv")
     val venvPython = createVenv(python, venvDir).getOrThrow()
-    val sdk = createSdk(
-      pyProjectFixture.get().residesOnModule.project,
-      PathHolder.Eel(venvPython),
-      createVenvAdditionalData(workingDirectory),
-    ).orThrow().getSdkAPI()
+    val pyProject = pyProjectFixture.get()
+    val sdk = createSdk(pyProject, PathHolder.Eel(venvPython), createVenvAdditionalData(workingDirectory)).orThrow().getSdkAPI()
+    // This test sets the SDK on its module through the platform, so it adds the SDK to the table itself.
+    edtWriteAction { ProjectJdkTable.getInstance().addJdk(sdk) }
     try {
-      pyProjectFixture.get().residesOnModule.pythonSdk = sdk
+      pyProject.residesOnModule.setPythonSdkForTests(sdk)
 
       val (shell, _) = eel.exec.getShell()
       val execOptions = MutableShellExecOptionsImpl(

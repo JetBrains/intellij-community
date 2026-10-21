@@ -32,6 +32,29 @@ interface WelcomeRightTabContentProvider {
   val buttonsPerRow: Int
     get() = 3
 
+  /**
+   * Tells if the Theme control opens the theme chooser instead of a plain list.
+   * The chooser previews the highlighted theme, and it has a Light/Dark switch. The default is `false`.
+   */
+  val isThemeChooserPopupEnabled: Boolean
+    get() = false
+
+  /** The code that the theme chooser shows beside the list, or `null` for no code. */
+  fun getThemePreviewSample(): ThemePreviewSample? = null
+
+  /**
+   * The code of the theme chooser sample.
+   *
+   * @param fileName selects the highlighting only. No file exists.
+   * @param highlightTags maps a `<tag>` in [text] to the external name of a color scheme key.
+   * A lexer cannot know the roles of identifiers, so the tags state them. The editor does not get the tags.
+   */
+  class ThemePreviewSample(
+    val fileName: String,
+    val text: @NlsSafe String,
+    val highlightTags: Map<String, String> = emptyMap(),
+  )
+
   fun getFeatureButtonModels(project: Project): List<FeatureButtonModel>
 
   /**

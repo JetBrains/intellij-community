@@ -52,10 +52,20 @@ interface FrontendProjectViewPane {
   fun saveStateTo(element: Element): Boolean
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun restoreStateFrom(element: Element?)
+  fun restoreStateFrom(element: Element?, options: RestorePaneStateOptions)
 
   suspend fun manage()
 }
+
+@ApiStatus.Experimental
+interface RestorePaneStateOptions {
+  val restoreSelection: Boolean
+}
+
+@ApiStatus.Internal
+data class RestorePaneStateOptionsImpl(
+  override val restoreSelection: Boolean,
+) : RestorePaneStateOptions
 
 @get:ApiStatus.Internal
 val FrontendProjectViewPane.id: ProjectViewPaneId

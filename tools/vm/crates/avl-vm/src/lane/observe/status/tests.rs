@@ -195,6 +195,7 @@ async fn tri_state_facts_are_null_never_false() {
         workers(&outcome),
         [
             json!({
+                "abandonedIdeRuns": null,
                 "worker": "air-macos-1",
                 "exists": true,
                 "provenanceReady": false,
@@ -221,6 +222,7 @@ async fn tri_state_facts_are_null_never_false() {
             }),
             // A missing VM is still reported, with the one error that fact implies, and the guest facts still null.
             json!({
+                "abandonedIdeRuns": null,
                 "worker": "air-macos-2",
                 "exists": false,
                 "provenanceReady": false,
@@ -304,8 +306,8 @@ async fn status_resolves_the_host_paths_its_parity_verdict_needs() {
     let outcome = status(&fixture).await;
     assert_eq!(outcome.data["hostPathsError"], Value::Null);
     let host_repo = outcome.data["hostRepo"].as_str().expect("a host repo");
-    assert!(!host_repo.is_empty());
-    assert!(!outcome.data["hostBazelUserRoot"].as_str().expect("a Bazel user root").is_empty());
+    assert_ne!(host_repo, "");
+    assert_ne!(outcome.data["hostBazelUserRoot"].as_str().expect("a Bazel user root"), "");
     for row in workers(&outcome) {
         assert_eq!(row["hostRepo"], json!(host_repo), "{row}");
         // The guest's own refusal, which is the whole point: nothing provisioned these workers, so the receipt is
@@ -674,6 +676,7 @@ async fn an_absent_docker_worker_reports_every_key() {
             "poolSize": 1,
             "poolRule": "AIR_VM_MAX_WORKERS",
             "workers": [{
+                "abandonedIdeRuns": null,
                 "worker": "air-docker-1",
                 "exists": false,
                 "state": "absent",
@@ -704,7 +707,7 @@ async fn an_absent_docker_worker_reports_every_key() {
         "a Docker status asked for a Tart listing: {:?}",
         fixture.fake.calls()
     );
-    assert!(fixture.channel("air-docker-1").lines().is_empty());
+    assert_eq!(fixture.channel("air-docker-1").lines(), Vec::<String>::new());
     assert_docker_status_wrote_nothing(&fixture);
 }
 
@@ -747,6 +750,30 @@ async fn a_running_docker_worker_with_a_current_declaration_is_ready() {
         );
     }
     assert_docker_status_wrote_nothing(&fixture);
+}
+
+/// A guest whose agent abandoned an IDE run names the run on its row, and its line asks for a recycle, because the
+/// processes of that run stay until a recycle discards the guest.
+#[tokio::test]
+async fn a_guest_that_abandoned_an_ide_run_names_it_on_its_row() {
+    let fixture = Fixture::new(Backend::Docker, GuestOs::Linux);
+    running_docker_worker(&fixture);
+    let record = r#"{"runId":"run-ide-recycle-23-mv93j76j","pgid":4242,"members":["4242 java"],"abandonedAt":"t"}"#;
+    for channel in fixture.channels() {
+        channel.answer(answer_linux_guest(vec![
+            (" active ", active_reply(None)),
+            ("abandoned.json", said(&format!("{record}\n"))),
+        ]));
+    }
+    let outcome = status(&fixture).await;
+    assert_eq!(docker_row(&outcome)["abandonedIdeRuns"], json!(["run-ide-recycle-23-mv93j76j"]));
+    assert!(
+        outcome
+            .text
+            .ends_with(" parity=ready abandoned_ide=run-ide-recycle-23-mv93j76j (recycle the worker)"),
+        "{}",
+        outcome.text
+    );
 }
 
 /// The engine cannot tell a pulled image from a built one, so `status` reads the pool's image record: `pulled` for
@@ -931,59 +958,4 @@ async fn a_docker_status_names_the_idle_stop_deadline() {
     let outcome = status(&fixture).await;
     assert_eq!(docker_row(&outcome)["idleStopAt"], json!(deadline));
     assert!(outcome.text.ends_with(&format!(" idle_stop={deadline}")), "{}", outcome.text);
-}
-
-// --- the Lima engine -------------------------------------------------------------------------------------------
-
-/// An engine never created is `Absent`, and `status` resolves no `limactl`, starts nothing and asks no `docker`
-/// command: every row is `unknown`. This is what a Mac reports before its first Docker start.
-#[cfg(unix)]
-#[tokio::test]
-async fn a_docker_status_on_an_absent_lima_engine_starts_nothing() {
-    let fixture = Fixture::docker_lima();
-    let outcome = status(&fixture).await;
-    assert_eq!(
-        (&outcome.data["engine"], &outcome.data["engineStatus"]),
-        (&json!("lima"), &json!("Absent"))
-    );
-    let row = docker_row(&outcome);
-    assert_eq!(
-        (&row["state"], &row["exists"], &row["imageSource"], &row["lease"]),
-        (&json!("unknown"), &json!(false), &json!("unknown"), &Value::Null),
-        "{row}"
-    );
-    assert_eq!(
-        outcome.text,
-        "pool: engine=lima engine_status=Absent pool=1 (AIR_VM_MAX_WORKERS)\n\
-         air-docker-1: unknown lease=free image=unknown declaration=n/a parity=n/a"
-    );
-    assert!(fixture.fake.calls().is_empty(), "{:?}", fixture.fake.calls());
-    assert!(!fixture.settings.lima_engine_record_path().exists());
-}
-
-/// A running engine is listed, never started or made again, and then asked the questions of an external engine.
-#[cfg(unix)]
-#[tokio::test]
-async fn a_docker_status_on_a_running_lima_engine_asks_it() {
-    let fixture = Fixture::docker_lima();
-    let socket = fixture.settings.lima_socket_path();
-    std::fs::create_dir_all(socket.parent().unwrap()).unwrap();
-    fixture.fake.answer(Answer::LimaState, "Running\n");
-    let outcome = status(&fixture).await;
-    assert_eq!(outcome.data["engineStatus"], json!("Running"));
-    assert_eq!(docker_row(&outcome)["state"], json!("absent"));
-    assert!(
-        outcome
-            .text
-            .starts_with("pool: engine=lima engine_status=Running pool=1 (AIR_VM_MAX_WORKERS)\n"),
-        "{}",
-        outcome.text
-    );
-    let calls = fixture.fake.calls();
-    assert!(
-        !calls.iter().any(|call| call.starts_with("start ") || call.starts_with("delete ")),
-        "{calls:#?}"
-    );
-    assert!(calls.iter().any(|call| call.starts_with("list --format")), "{calls:#?}");
-    assert_docker_status_wrote_nothing(&fixture);
 }

@@ -3,10 +3,15 @@ package com.intellij.java.psi.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
+import com.intellij.testFramework.junit5.TestApplication;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.group;
+import static com.intellij.psi.codeStyle.arrangement.RearrangerTestUtil.rule;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Grouping.DEPENDENT_METHODS;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Grouping.GETTERS_AND_SETTERS;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Grouping.OVERRIDDEN_METHODS;
@@ -14,13 +19,14 @@ import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Mo
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BREADTH_FIRST;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.DEPTH_FIRST;
 
+@TestApplication
 public class JavaRearrangerGrouperTest extends AbstractJavaRearrangerTest {
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  public void setUp() {
     getCommonSettings().BLANK_LINES_AROUND_METHOD = 0;
   }
 
+  @Test
   public void test_getters_and_setters() {
     getCommonSettings().BLANK_LINES_AROUND_METHOD = 1;
 
@@ -40,6 +46,7 @@ public class JavaRearrangerGrouperTest extends AbstractJavaRearrangerTest {
            List.of(group(GETTERS_AND_SETTERS)));
   }
 
+  @Test
   public void test_getter_and_multiple_setters() {
     // Expected that setters even with the same name won't be reordered
     doTest("""
@@ -56,6 +63,7 @@ public class JavaRearrangerGrouperTest extends AbstractJavaRearrangerTest {
            List.of(group(GETTERS_AND_SETTERS)));
   }
 
+  @Test
   public void test_utility_methods_depth_first() {
     doTest("""
              class Test {
@@ -75,6 +83,7 @@ public class JavaRearrangerGrouperTest extends AbstractJavaRearrangerTest {
            List.of(group(DEPENDENT_METHODS, DEPTH_FIRST)));
   }
 
+  @Test
   public void test_utility_methods_breadth_first() {
     doTest("""
              class Test {
@@ -92,6 +101,7 @@ public class JavaRearrangerGrouperTest extends AbstractJavaRearrangerTest {
            List.of(group(DEPENDENT_METHODS, BREADTH_FIRST)));
   }
 
+  @Test
   public void test_overridden_methods() {
     //noinspection override,RedundantMethodOverride
     doTest("""
@@ -119,6 +129,7 @@ public class JavaRearrangerGrouperTest extends AbstractJavaRearrangerTest {
              }""", List.of(), List.of(group(OVERRIDDEN_METHODS)));
   }
 
+  @Test
   public void test_overridden_methods_with_class() {
     //noinspection RedundantMethodOverride
     doTest("""
@@ -200,6 +211,7 @@ public class JavaRearrangerGrouperTest extends AbstractJavaRearrangerTest {
              }""", List.of(), List.of(group(DEPENDENT_METHODS, DEPTH_FIRST), group(OVERRIDDEN_METHODS)));
   }
 
+  @Test
   public void test_that_calls_from_anonymous_class_create_a_dependency() {
     //noinspection Convert2Lambda,override,TrivialFunctionalExpressionUsage
     doTest("""
@@ -228,6 +240,7 @@ public class JavaRearrangerGrouperTest extends AbstractJavaRearrangerTest {
            List.of(group(DEPENDENT_METHODS, DEPTH_FIRST)));
   }
 
+  @Test
   public void test_keep_dependent_methods_together_multiple_times_produce_same_result() {
     List<ArrangementGroupingRule> groups =
       List.of(group(DEPENDENT_METHODS, BREADTH_FIRST));
@@ -275,6 +288,7 @@ public class JavaRearrangerGrouperTest extends AbstractJavaRearrangerTest {
     doTest(after, after, List.of(), groups);
   }
 
+  @Test
   public void test_dependent_methods_DFS() {
     doTest("""
              public class Q {
@@ -335,6 +349,7 @@ public class JavaRearrangerGrouperTest extends AbstractJavaRearrangerTest {
              """, List.of(), List.of(group(DEPENDENT_METHODS, DEPTH_FIRST)));
   }
 
+  @Test
   public void test_dependent_methods_DFS2() {
     // IDEA-149524
     doTest("""
@@ -366,6 +381,7 @@ public class JavaRearrangerGrouperTest extends AbstractJavaRearrangerTest {
              }""", List.of(), List.of(group(DEPENDENT_METHODS, DEPTH_FIRST)));
   }
 
+  @Test
   public void test_dependent_methods_DFS3() {
     // IDEA-166524
     doTest("""
@@ -403,6 +419,7 @@ public class JavaRearrangerGrouperTest extends AbstractJavaRearrangerTest {
               }""", List.of(), List.of(group(DEPENDENT_METHODS, DEPTH_FIRST)));
   }
 
+  @Test
   public void test_dependent_methods_BFS() {
     doTest("""
              public class Q {
@@ -463,6 +480,7 @@ public class JavaRearrangerGrouperTest extends AbstractJavaRearrangerTest {
              """, List.of(), List.of(group(DEPENDENT_METHODS, BREADTH_FIRST)));
   }
 
+  @Test
   public void test_method_references_dependant_methods() {
     //noinspection RedundantOperationOnEmptyContainer,MappingBeforeCount,ResultOfMethodCallIgnored,MethodMayBeStatic
     doTest("""

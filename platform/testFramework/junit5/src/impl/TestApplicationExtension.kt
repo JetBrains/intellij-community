@@ -8,6 +8,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.common.BazelTestUtil
+import com.intellij.testFramework.common.MockitoThreadLocalCleanup
+import com.intellij.testFramework.common.TheAiSlopToPerformMockKThreadLocalCleanup
 import com.intellij.testFramework.common.assertDisposerEmpty
 import com.intellij.testFramework.common.assertNonDefaultProjectsAreNotLeaked
 import com.intellij.testFramework.common.cleanApplicationState
@@ -78,6 +80,8 @@ private class TestApplicationResource(val initializationResult: Result<Unit>) : 
       return
     }
 
+    TheAiSlopToPerformMockKThreadLocalCleanup.clearMockKCallRecorder()
+    MockitoThreadLocalCleanup.clearMockitoState()
     timeoutRunBlocking(200.seconds, "TestApplication.close()") {
       withContext(Dispatchers.EDT) {
         val application = ApplicationManager.getApplication()

@@ -56,8 +56,6 @@
     <module name="intellij.platform.util.progress"/>
     <module name="intellij.platform.util.text.matching"/>
     <module name="intellij.platform.util.ui"/>
-    <module name="intellij.platform.vcs"/>
-    <module name="intellij.platform.vcs.impl"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

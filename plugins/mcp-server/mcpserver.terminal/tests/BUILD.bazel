@@ -40,6 +40,10 @@ jvm_library(
         "//plugins/mcp-server/mcpserver.terminal",
         "//plugins/mcp-server/mcpserver.terminal:mcpserver.terminal_test_lib",
     ],
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -60,8 +64,6 @@ jvm_library(
         "//plugins/mcp-server/mcpserver.testFramework:mcpserver.testFramework_test_lib",
         "//plugins/mcp-server/tests",
         "//plugins/mcp-server/tests:tests_test_lib",
-        "//plugins/mcp-server/tests/plugin",
-        "//plugins/mcp-server/tests/plugin:plugin_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//platform/testFramework",

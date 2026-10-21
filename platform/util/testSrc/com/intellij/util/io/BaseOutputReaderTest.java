@@ -6,7 +6,8 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -16,8 +17,8 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class BaseOutputReaderTest {
   private static final String[] TEST_DATA = Runner.TEST_DATA;
@@ -42,13 +43,15 @@ public class BaseOutputReaderTest {
     }
   }
 
-  @Test(timeout = 30000)
+  @Timeout(value = 30, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+  @Test
   public void testBlockingChunkRead() throws Exception {
     List<String> lines = readLines(BaseDataReader.SleepingPolicy.BLOCKING, false, true, true);
     assertThat(StringUtil.join(lines, "")).isEqualTo(StringUtil.join(Arrays.asList(TEST_DATA), ""));
   }
 
-  @Test(timeout = 30000)
+  @Timeout(value = 30, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+  @Test
   public void testBlockingRead() throws Exception {
     List<String> lines = readLines(BaseDataReader.SleepingPolicy.BLOCKING, true, true, true);
     assertThat(lines.size()).isBetween(7, 8);
@@ -56,31 +59,36 @@ public class BaseOutputReaderTest {
     assertThat(StringUtil.join(lines, "")).isEqualTo(StringUtil.join(TEST_DATA, BaseOutputReaderTest::r, ""));
   }
 
-  @Test(timeout = 30000)
+  @Timeout(value = 30, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+  @Test
   public void testBlockingLineRead() throws Exception {
     List<String> lines = readLines(BaseDataReader.SleepingPolicy.BLOCKING, true, false, true);
     assertThat(lines).containsExactly(r(TEST_DATA[0]), r(TEST_DATA[1] + TEST_DATA[2]), r(TEST_DATA[3]), r(TEST_DATA[4] + TEST_DATA[5] + TEST_DATA[6]));
   }
 
-  @Test(timeout = 30000)
+  @Timeout(value = 30, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+  @Test
   public void testBlockingLineReadTrimmed() throws Exception {
     List<String> lines = readLines(BaseDataReader.SleepingPolicy.BLOCKING, true, false, false);
     assertThat(lines).containsExactly(TEST_DATA[0].trim(), TEST_DATA[1] + TEST_DATA[2].trim(), TEST_DATA[3].trim(), TEST_DATA[4] + TEST_DATA[5] + TEST_DATA[6]);
   }
 
-  @Test(timeout = 30000)
+  @Timeout(value = 30, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+  @Test
   public void testNonBlockingChunkRead() throws Exception {
     List<String> lines = readLines(BaseDataReader.SleepingPolicy.NON_BLOCKING, false, true, true);
     assertThat(StringUtil.join(lines, "")).isEqualTo(StringUtil.join(Arrays.asList(TEST_DATA), ""));
   }
 
-  @Test(timeout = 30000)
+  @Timeout(value = 30, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+  @Test
   public void testNonBlockingLineRead() throws Exception {
     List<String> lines = readLines(BaseDataReader.SleepingPolicy.NON_BLOCKING, true, false, true);
     assertThat(lines).containsExactly(r(TEST_DATA[0]), r(TEST_DATA[1] + TEST_DATA[2]), r(TEST_DATA[3]), r(TEST_DATA[4] + TEST_DATA[5] + TEST_DATA[6]));
   }
 
-  @Test(timeout = 30000)
+  @Timeout(value = 30, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+  @Test
   public void testNonBlockingRead() throws Exception {
     List<String> lines = readLines(BaseDataReader.SleepingPolicy.NON_BLOCKING, true, true, true);
     assertThat(lines.size()).as("chunks: " + lines).isBetween(7, 9);
@@ -94,7 +102,8 @@ public class BaseOutputReaderTest {
   //  doStopTest(BaseDataReader.SleepingPolicy.BLOCKING);
   //}
 
-  @Test(timeout = 30000)
+  @Timeout(value = 30, threadMode = Timeout.ThreadMode.SEPARATE_THREAD)
+  @Test
   public void testNonBlockingStop() throws Exception {
     doStopTest(BaseDataReader.SleepingPolicy.NON_BLOCKING);
   }

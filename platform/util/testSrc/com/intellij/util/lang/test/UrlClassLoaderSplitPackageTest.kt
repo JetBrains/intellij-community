@@ -4,8 +4,8 @@ package com.intellij.util.lang.test
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.testFramework.monorepo.processProductionOutput
 import com.intellij.project.loadIntelliJProject
-import org.junit.Assert
-import org.junit.Test
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Test
 import kotlin.io.path.exists
 import kotlin.io.path.listDirectoryEntries
 
@@ -35,10 +35,10 @@ class UrlClassLoaderSplitPackageTest {
           if (packageDir.exists()) {
             val classNames = packageDir.listDirectoryEntries("*.class").map { it.fileName.toString().removeSuffix(".class") }
             val incorrectClasses = classNames - knownClassesFromOtherModules
-            Assert.assertTrue("""
+            Assertions.assertTrue(incorrectClasses.isEmpty(), """
               |Module '${module.name}' defines classes (${incorrectClasses.joinToString()}) in '$packageName' which is treated in a special way by UrlClassLoader::findClass:
               |Move these classes to a different package to avoid problems (see IDEA-331043 for details).
-            """.trimMargin(), incorrectClasses.isEmpty())
+            """.trimMargin())
           }
         }
       }

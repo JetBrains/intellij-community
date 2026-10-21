@@ -17,11 +17,19 @@ public final class WellKnownCommand {
   public final boolean isHeadless;
   public final boolean isCommandLine;
   public final boolean isRemoteDevHost;
+  /// The command loads no non-bundled plugin, the same as the `disableNonBundledPlugins` argument.
+  /// A command that installs plugins in place needs it, because a loaded plugin keeps its jars open.
+  public final boolean disablesNonBundledPlugins;
 
   private WellKnownCommand(boolean isHeadless, boolean isCommandLine, boolean isRemoteDevHost) {
+    this(isHeadless, isCommandLine, isRemoteDevHost, /*disablesNonBundledPlugins=*/false);
+  }
+
+  private WellKnownCommand(boolean isHeadless, boolean isCommandLine, boolean isRemoteDevHost, boolean disablesNonBundledPlugins) {
     this.isHeadless = isHeadless;
     this.isCommandLine = isCommandLine;
     this.isRemoteDevHost = isRemoteDevHost;
+    this.disablesNonBundledPlugins = disablesNonBundledPlugins;
   }
 
   public static @Nullable WellKnownCommand getCommandFor(@NotNull List<@NotNull String> args) {
@@ -37,6 +45,8 @@ public final class WellKnownCommand {
   private static final WellKnownCommand GUI = new WellKnownCommand(/*isHeadless=*/false, /*isCommandLine=*/false, /*isRemoteDevHost=*/false);
   private static final WellKnownCommand GUI_COMMAND = new WellKnownCommand(/*isHeadless=*/false, /*isCommandLine=*/true, /*isRemoteDevHost=*/false);
   private static final WellKnownCommand HEADLESS = new WellKnownCommand(/*isHeadless=*/true, /*isCommandLine=*/true, /*isRemoteDevHost=*/false);
+  private static final WellKnownCommand HEADLESS_WITHOUT_NON_BUNDLED_PLUGINS =
+    new WellKnownCommand(/*isHeadless=*/true, /*isCommandLine=*/true, /*isRemoteDevHost=*/false, /*disablesNonBundledPlugins=*/true);
   private static final WellKnownCommand HEADLESS_REMOTE_DEV_HOST = new WellKnownCommand(/*isHeadless=*/true, /*isCommandLine=*/true, /*isRemoteDevHost=*/true);
   // RemDev host that employs `com.intellij.platform.impl.toolkit.IdeToolkit`
   private static final WellKnownCommand REMOTE_DEV_HOST = new WellKnownCommand(/*isHeadless=*/false, /*isCommandLine=*/false, /*isRemoteDevHost=*/true);
@@ -49,6 +59,7 @@ public final class WellKnownCommand {
 
     put("update", HEADLESS);
     put("installPlugins", HEADLESS);
+    put("flavor-setup", HEADLESS_WITHOUT_NON_BUNDLED_PLUGINS);
     put("installFrontendPlugins", HEADLESS);
     put("provisionTbeBackend", HEADLESS_REMOTE_DEV_HOST);
     put("listBundledPlugins", HEADLESS);

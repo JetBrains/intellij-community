@@ -12,6 +12,9 @@
 //!
 //! Never an error, by the rule the evidence pull states: every way a pull can fail becomes the report's
 //! `tracesError`, and nothing here can turn a run red. The zips that arrived before a failure stay on the report.
+//!
+//! The lane daemon's `traceFailed` record goes first in `tracesError`. A recorder that never started, or refused every
+//! scenario, leaves no bundle to pull, so without it a run without traces would say nothing.
 
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -73,6 +76,8 @@ pub(crate) struct TraceSync {
     iteration_id: Mutex<Option<String>>,
     /// One stored permit is a pending pull, however many tests ended.
     trigger: Notify,
+    /// The reason of the first `traceFailed` of the stream.
+    recorder_failure: Mutex<Option<String>>,
 }
 
 impl TraceSync {
@@ -83,6 +88,7 @@ impl TraceSync {
             run_id: run_id.map(str::to_owned),
             iteration_id: Mutex::new(None),
             trigger: Notify::new(),
+            recorder_failure: Mutex::new(None),
         }
     }
 
@@ -90,8 +96,8 @@ impl TraceSync {
         lock(&self.iteration_id).clone()
     }
 
-    /// The stream's hook. `runStarted` names the iteration; a test or a container that ends asks for a pull. It
-    /// never waits.
+    /// The stream's hook. `runStarted` names the iteration; a test or a container that ends asks for a pull, and
+    /// `traceFailed` says why a trace is missing. It never waits.
     pub(crate) fn observe(&self, event: &RunEvent) {
         match &event.kind {
             RunEventKind::RunStarted(started) => {
@@ -99,6 +105,9 @@ impl TraceSync {
             }
             RunEventKind::TestFinished(_) | RunEventKind::ContainerFailed(_) => {
                 self.trigger.notify_one();
+            }
+            RunEventKind::TraceFailed(failed) => {
+                lock(&self.recorder_failure).get_or_insert_with(|| failed.reason.clone());
             }
             _ => {}
         }
@@ -124,7 +133,7 @@ impl TraceSync {
     }
 
     /// Makes the last pull and answers what the report says about the traces: nothing at all for an iteration the
-    /// stream never named.
+    /// stream never named. The error is the reason of the daemon's `traceFailed`, then the first pull failure.
     pub(crate) async fn finish(&self, host: &Host, ctx: &Ctx, mut pulls: Pulls) -> (Vec<TraceArchive>, Option<String>) {
         let Some(iteration_id) = self.iteration_id() else {
             return (Vec::new(), None);
@@ -133,11 +142,16 @@ impl TraceSync {
             .reporter
             .start_phase(Phase::Traces, "pull the traces the iteration left", Some(&self.scope));
         self.pull(host, ctx, &iteration_id, &mut pulls, true).await;
-        match &pulls.failure {
+        let recorder = lock(&self.recorder_failure).clone();
+        let failure = match (recorder, pulls.failure) {
+            (Some(recorder), Some(pull)) => Some(format!("{recorder}; {pull}")),
+            (recorder, pull) => recorder.or(pull),
+        };
+        match &failure {
             Some(failure) => phase.fail(failure),
             None => phase.succeed(),
         }
-        (pulls.archives, pulls.failure)
+        (pulls.archives, failure)
     }
 
     /// One round: ask the guest for the bundles that are new, pull their zip, and name what it holds.

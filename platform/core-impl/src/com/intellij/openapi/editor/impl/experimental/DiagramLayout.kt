@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.experimental
 
 import com.intellij.openapi.editor.ex.DocumentOp
+import com.intellij.openapi.editor.ex.DocumentText
 
 /**
  * The greatest number of concurrent runs that one row draws.
@@ -16,6 +17,11 @@ private const val GAP = 2
 private const val NO_COLUMN = -1
 
 /**
+ * The slot of the base box, when a layout draws one.
+ */
+private const val BASE_SLOT = 0
+
+/**
  * The [runs] placed in rows and columns, and the box art for them.
  *
  * A run continues the column of its first parent when two things hold. It is the first run to do
@@ -24,31 +30,43 @@ private const val NO_COLUMN = -1
  * a second branch aside. A column stays reserved until the deepest child of its runs, so two
  * branches never share one.
  *
- * [runs] holds the run indexes to draw, ascending. Every array below indexes a SLOT in that list
- * and not a run of the graph. So a diagram of a trimmed history stays as small as what it draws. A
+ * [runs] holds the run indexes to draw, ascending. Every array below indexes a SLOT and not a run
+ * of the graph. So a diagram that cuts the middle of a history stays as small as what it draws. A
  * parent outside [runs] counts for nothing, so a run whose parents are all outside starts at the
  * depth 0.
+ *
+ * The BASE BOX holds the base text and the base version of the graph, and it takes the slot 0.
+ * Every run with no parent follows it, so it sits alone in the first row. Only a layout that starts
+ * at the first run draws it. A new graph with an empty base text gets none.
  */
 internal class DiagramLayout(private val graph: EventGraphImpl, private val runs: List<Int>) {
+  private val drawsBase = startsAtFirstRun() && hasBaseBox()
+
+  /**
+   * The slot of the first run: 1 after the base box, and 0 without one.
+   */
+  private val firstRunSlot = if (drawsBase) BASE_SLOT + 1 else BASE_SLOT
+  private val slotCount = firstRunSlot + runs.size
+
   /**
    * The slot of each drawn run, by its run index.
    */
   private val slots = HashMap<Int, Int>(runs.size)
-  private val depths = IntArray(runs.size)
+  private val depths = IntArray(slotCount)
   private val rows = ArrayList<MutableList<Int>>()
   private val hiddenInRow = ArrayList<Int>()
-  private val children = Array(runs.size) { ArrayList<Int>() }
-  private val parents = Array(runs.size) { emptyList<Int>() }
-  private val columns = IntArray(runs.size) { NO_COLUMN }
-  private val bodies = arrayOfNulls<List<String>>(runs.size)
+  private val children = Array(slotCount) { ArrayList<Int>() }
+  private val parents = Array(slotCount) { emptyList<Int>() }
+  private val columns = IntArray(slotCount) { NO_COLUMN }
+  private val bodies = arrayOfNulls<List<String>>(slotCount)
   private val widths: IntArray
   private val middles: IntArray
   private val starts: IntArray
   private val width: Int
 
   init {
-    for (slot in runs.indices) {
-      slots[runs[slot]] = slot
+    for ((index, run) in runs.withIndex()) {
+      slots[run] = firstRunSlot + index
     }
     buildRows()
     buildLinks()
@@ -77,10 +95,28 @@ internal class DiagramLayout(private val graph: EventGraphImpl, private val runs
   // --------------------------------------------------------------------------------- layout
 
   /**
-   * The run of the [slot].
+   * Whether [runs] starts at the first run of the graph. A graph with no run starts there too.
+   */
+  private fun startsAtFirstRun(): Boolean {
+    return runs.isEmpty() || runs[0] == 0
+  }
+
+  /**
+   * Whether the graph has a base box, in this layout or in one above it.
+   */
+  private fun hasBaseBox(): Boolean {
+    return graph.baseText().length() > 0 || !graph.baseVersion().isRoot()
+  }
+
+  private fun isBase(slot: Int): Boolean {
+    return slot < firstRunSlot
+  }
+
+  /**
+   * The run of the [slot], which must not be the base box.
    */
   private fun runOf(slot: Int): StoredRun {
-    return graph.runByIndex(runs[slot])
+    return graph.runByIndex(runs[slot - firstRunSlot])
   }
 
   /**
@@ -91,13 +127,43 @@ internal class DiagramLayout(private val graph: EventGraphImpl, private val runs
   }
 
   /**
+   * The slots of the parents of the [slot], drawn or hidden by the row bound. A run with no parent
+   * follows the base box when this layout draws one.
+   */
+  private fun parentSlotsOf(slot: Int): List<Int> {
+    if (isBase(slot)) {
+      return emptyList()
+    }
+    val runParents = runOf(slot).runParents()
+    if (runParents.isEmpty() && drawsBase) {
+      return listOf(BASE_SLOT)
+    }
+    val parentSlots = ArrayList<Int>(runParents.size)
+    for (parent in runParents) {
+      val parentSlot = parentSlot(parent) ?: continue
+      parentSlots.add(parentSlot)
+    }
+    return parentSlots
+  }
+
+  /**
+   * The lines of the box of the [slot].
+   */
+  private fun contentOf(slot: Int): List<String> {
+    return if (isBase(slot)) {
+      baseBody(graph.baseText(), graph.baseVersion())
+    } else {
+      body(runOf(slot))
+    }
+  }
+
+  /**
    * Groups the runs by depth, and drops the ones that [MAX_RUNS_PER_ROW] leaves out.
    */
   private fun buildRows() {
-    for (slot in runs.indices) {
+    for (slot in 0 until slotCount) {
       var depth = 0
-      for (parent in runOf(slot).runParents()) {
-        val parentSlot = parentSlot(parent) ?: continue
+      for (parentSlot in parentSlotsOf(slot)) {
         depth = maxOf(depth, depths[parentSlot] + 1)
       }
       depths[slot] = depth
@@ -107,7 +173,7 @@ internal class DiagramLayout(private val graph: EventGraphImpl, private val runs
       }
       if (rows[depth].size < MAX_RUNS_PER_ROW) {
         rows[depth].add(slot)
-        bodies[slot] = body(runOf(slot))
+        bodies[slot] = contentOf(slot)
       } else {
         hiddenInRow[depth] = hiddenInRow[depth] + 1
       }
@@ -121,8 +187,7 @@ internal class DiagramLayout(private val graph: EventGraphImpl, private val runs
     for (row in rows) {
       for (slot in row) {
         val found = ArrayList<Int>()
-        for (parent in runOf(slot).runParents()) {
-          val parentSlot = parentSlot(parent) ?: continue
+        for (parentSlot in parentSlotsOf(slot)) {
           if (bodies[parentSlot] != null && !found.contains(parentSlot)) {
             found.add(parentSlot)
             children[parentSlot].add(slot)
@@ -174,11 +239,11 @@ internal class DiagramLayout(private val graph: EventGraphImpl, private val runs
 
   private fun widths(): IntArray {
     var count = 0
-    for (slot in runs.indices) {
+    for (slot in 0 until slotCount) {
       count = maxOf(count, columns[slot] + 1)
     }
     val widths = IntArray(count)
-    for (slot in runs.indices) {
+    for (slot in 0 until slotCount) {
       val body = bodies[slot] ?: continue
       // A box holds one space of padding, a border, and the widest line of its body.
       val box = body.maxOf { it.length } + 4
@@ -238,13 +303,23 @@ internal class DiagramLayout(private val graph: EventGraphImpl, private val runs
   /**
    * Whether a line reaches the top of the box of the [slot], which the `┴` there shows.
    *
-   * A line comes from a drawn parent. A run at the depth 0 with parents lost them to the trim of
-   * the history, and its `┴` joins the count line above the segment. A parent that the row bound
-   * hid draws no line, so a run whose only parents it hid keeps a plain border.
+   * A line comes from a drawn parent. A run at the depth 0 with parents lost them to the cut of
+   * the diagram. Its `┴` joins the count line above the segment. Below the count line, a run with
+   * no parent follows the base box above it, and it joins the count line too. A parent that the row
+   * bound hid draws no line, so a run whose only parents it hid keeps a plain border.
    */
   private fun hasParent(slot: Int): Boolean {
-    val lostToTrim = depths[slot] == 0 && runOf(slot).runParents().isNotEmpty()
-    return parents[slot].isNotEmpty() || lostToTrim
+    return parents[slot].isNotEmpty() || hasParentAboveCountLine(slot)
+  }
+
+  /**
+   * Whether the parents of the [slot] sit above the count line of the diagram.
+   */
+  private fun hasParentAboveCountLine(slot: Int): Boolean {
+    if (isBase(slot) || depths[slot] > 0) {
+      return false
+    }
+    return runOf(slot).runParents().isNotEmpty() || hasBaseBox()
   }
 
   /**
@@ -256,7 +331,15 @@ internal class DiagramLayout(private val graph: EventGraphImpl, private val runs
    * the drawn children answer first.
    */
   private fun hasChild(slot: Int): Boolean {
-    return children[slot].isNotEmpty() || !graph.lvVersion().contains(runOf(slot).lvEnd() - 1)
+    if (children[slot].isNotEmpty()) {
+      return true
+    }
+    // The first run of a graph has no parent, and a layout with the base box always draws it. So
+    // the drawn children of a base box are the whole answer.
+    if (isBase(slot)) {
+      return false
+    }
+    return !graph.lvVersion().contains(runOf(slot).lvEnd() - 1)
   }
 
   /**
@@ -282,7 +365,7 @@ internal class DiagramLayout(private val graph: EventGraphImpl, private val runs
    * the line down through the rows where the branch has no box.
    */
   private fun passesThrough(column: Int, row: Int): Boolean {
-    for (slot in runs.indices) {
+    for (slot in 0 until slotCount) {
       if (columns[slot] != column || depths[slot] >= row) {
         continue
       }
@@ -428,6 +511,17 @@ private fun body(run: StoredRun): List<String> {
     "lv ${lvs(run)}",
     "agent ${event.agent().toString().quotedForMessage()}",
   )
+}
+
+/**
+ * The lines of the base box: the base [text], and the base [version] when it is not the root.
+ */
+private fun baseBody(text: DocumentText, version: VersionImpl): List<String> {
+  val textLine = "base ${text.chars().quotedForMessage()}"
+  if (version.isRoot()) {
+    return listOf(textLine)
+  }
+  return listOf(textLine, "version ${version.quotedForMessage()}")
 }
 
 /**

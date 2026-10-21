@@ -91,6 +91,46 @@ class TestPluginPluginDependencyValidatorTest {
   }
 
   @Test
+  fun `a test plugin the dev build makes declares no plugin dependency and needs none`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
+    val graph = pluginGraph {
+      product("TestProduct") { bundlesPlugin("dep.plugin") }
+      plugin("dep.plugin") {
+        pluginId("dep.plugin")
+        content("dep.module")
+      }
+      testPlugin("consumer.tests._test_plugin") {
+        pluginId("consumer.tests._test_plugin")
+        content("consumer.tests")
+      }
+    }
+
+    val spec = TestPluginSpec(
+      pluginId = PluginId("consumer.tests._test_plugin"),
+      name = "Consumer Tests",
+      pluginXmlPath = "",
+      spec = productModules {
+        module("consumer.tests")
+      },
+      devBuildSynthetic = true,
+    )
+
+    val model = testGenerationModel(graph, outputProvider = jpsModuleOutputProvider(tempDir, testModules = listOf("consumer.tests")), fileUpdater = DeferredFileUpdater(tempDir), owner = owner).copy(
+      projectRoot = tempDir,
+      dslTestPluginsByProduct = mapOf("TestProduct" to listOf(spec)),
+    )
+
+    val result = dependencyResult("consumer.tests", listOf("dep.module"))
+    val planOutput = buildPlanOutput(model, listOf(result))
+    val errors = runValidationRule(
+      TestPluginPluginDependencyValidator,
+      model,
+      slotOverrides = mapOf(Slots.TEST_PLUGIN_DEPENDENCY_PLAN to planOutput),
+    )
+
+    assertThat(errors).isEmpty()
+  }
+
+  @Test
   fun `declared plugin dependency suppresses error`(@TempDir tempDir: Path): Unit = runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
       product("TestProduct") { bundlesPlugin("dep.plugin") }

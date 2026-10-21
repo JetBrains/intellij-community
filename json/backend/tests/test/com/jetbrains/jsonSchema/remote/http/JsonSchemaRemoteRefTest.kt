@@ -7,20 +7,33 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.common.waitUntilAssertSucceedsBlocking
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.psi.PsiFile
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntilAssertSucceeds
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestFixture
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection
 import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.net.InetSocketAddress
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Integration test verifying the two-phase highlighting flow for remote `$ref` resolution.
@@ -29,8 +42,7 @@ import java.util.concurrent.Executors
  * [JsonSchemaFileCache] and [JsonSchemaHttpClient] services.
  * The test sets the [com.jetbrains.jsonSchema.remote.JsonFileResolver.REMOTE_ENABLED_IN_TESTS] test mode flag,
  * because [com.jetbrains.jsonSchema.remote.JsonFileResolver.isRemoteEnabled] returns `false` in unit test mode without it.
- * A private [LightProjectDescriptor] keeps this test's project from being shared with
- * other tests, so `NetworkntSchemaService`/`JsonSchemaUpdater` are guaranteed to register their
+ * The class has its own project, so `NetworkntSchemaService`/`JsonSchemaUpdater` are guaranteed to register their
  * download listener against the very instance replaced in [setUp], not a pre-existing real singleton.
  *
  * Phase 1: the remote schema referenced by `$ref` is not cached. [com.intellij.json.networknt.wrapper.IntelliJSchemaLoader]'s
@@ -40,11 +52,17 @@ import java.util.concurrent.Executors
  * download listener registered by `NetworkntSchemaService`/`JsonSchemaUpdater` invalidates caches and
  * restarts the daemon for open editors. A fresh pass resolves the `$ref` from cache and reports the type mismatch.
  */
-class JsonSchemaRemoteRefTest : BasePlatformTestCase() {
+@TestApplication
+class JsonSchemaRemoteRefTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  private object IsolatedProjectDescriptor : LightProjectDescriptor()
+  private val myFixture by codeInsightModuleFixture(projectFixture)
+  private val project get() = projectFixture.get()
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = IsolatedProjectDescriptor
+  @TestDisposable
+  lateinit var disposable: Disposable
 
   private lateinit var scope: CoroutineScope
   private lateinit var httpServer: HttpServer
@@ -52,17 +70,16 @@ class JsonSchemaRemoteRefTest : BasePlatformTestCase() {
   private lateinit var daemonAnalyzer: DaemonCodeAnalyzerImpl
   private var baseUrl: String = ""
 
-  override fun setUp() {
-    super.setUp()
-
+  @BeforeEach
+  fun setUp() {
     httpServer = HttpServer.create(InetSocketAddress(0), 0)
     httpServer.executor = Executors.newCachedThreadPool()
     baseUrl = "http://localhost:${httpServer.address.port}"
 
     scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     clearRemoteSchemaCache()
-    setRemoteSchemaAccessAllowed(true, testRootDisposable)
-    replaceRemoteSchemaServices(project, scope, testRootDisposable)
+    setRemoteSchemaAccessAllowed(true, disposable)
+    replaceRemoteSchemaServices(project, scope, disposable)
 
     TrustedProjects.setProjectTrusted(project, true)
     myFixture.enableInspections(JsonSchemaComplianceInspection::class.java)
@@ -74,22 +91,16 @@ class JsonSchemaRemoteRefTest : BasePlatformTestCase() {
     daemonAnalyzer.setUpdateByTimerEnabled(true)
   }
 
-  override fun tearDown() {
-    try {
-      daemonAnalyzer.setUpdateByTimerEnabled(false)
-      httpServer.stop(0)
-      scope.cancel()
-      clearRemoteSchemaCache()
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+  @AfterEach
+  fun tearDown() {
+    if (::daemonAnalyzer.isInitialized) daemonAnalyzer.setUpdateByTimerEnabled(false)
+    if (::httpServer.isInitialized) httpServer.stop(0)
+    if (::scope.isInitialized) scope.cancel()
+    clearRemoteSchemaCache()
   }
 
-  fun testTwoPhaseHighlighting() {
+  @Test
+  fun testTwoPhaseHighlighting(): Unit = timeoutRunBlocking(timeout = 60.seconds) {
     val serverGate = CompletableFuture<Unit>()
 
     httpServer.createContext("/type-schema.json") { exchange ->
@@ -107,10 +118,10 @@ class JsonSchemaRemoteRefTest : BasePlatformTestCase() {
 
     // Phase 1: remote schema is not cached — $ref is unresolved, no schema warnings expected.
     // The resource loader's cache-miss path fires a background prefetch that blocks on serverGate.
-    val phase1 = schemaHighlights(testAnalyzer.waitHighlighting(psiFile, HighlightSeverity.WARNING))
+    val phase1 = waitSchemaHighlights(psiFile)
     assertTrue(
-      "Phase 1: expected no schema warnings while remote schema is not yet downloaded, but got: $phase1",
       phase1.isEmpty(),
+      "Phase 1: expected no schema warnings while remote schema is not yet downloaded, but got: $phase1",
     )
 
     // Unblock the HTTP server → prefetch completes → download listener fires →
@@ -118,26 +129,31 @@ class JsonSchemaRemoteRefTest : BasePlatformTestCase() {
     serverGate.complete(Unit)
 
     // Phase 2: wait until the daemon auto-restarts and produces the type mismatch warning.
-    waitUntilAssertSucceedsBlocking {
-      val phase2 = schemaHighlights(testAnalyzer.waitHighlighting(psiFile, HighlightSeverity.WARNING))
+    waitUntilAssertSucceeds {
+      val phase2 = waitSchemaHighlights(psiFile)
       assertFalse(
-        "Phase 2: expected a type mismatch warning after the remote schema download, but got none",
         phase2.isEmpty(),
+        "Phase 2: expected a type mismatch warning after the remote schema download, but got none",
       )
       assertTrue(
-        "Phase 2: expected a 'type' warning, but got: ${phase2.map { it.description }}",
         phase2.any { it.description?.contains("type", ignoreCase = true) == true },
+        "Phase 2: expected a 'type' warning, but got: ${phase2.map { it.description }}",
       )
     }
   }
 
   // region helpers
 
+  private suspend fun waitSchemaHighlights(psiFile: PsiFile): List<HighlightInfo> =
+    withContext(Dispatchers.EDT) {
+      schemaHighlights(testAnalyzer.waitHighlighting(psiFile, HighlightSeverity.WARNING))
+    }
+
   private fun schemaHighlights(highlights: List<HighlightInfo>): List<HighlightInfo> =
     highlights.filter { it.inspectionToolId == "JsonSchemaCompliance" }
 
   private fun registerSchema(schemaText: String) {
-    JsonSchemaHighlightingTestBase.registerJsonSchema(myFixture, schemaText, "json") { true }
+    JsonSchemaHighlightingTestFixture.registerJsonSchema(myFixture, schemaText, "json") { true }
   }
 
   // endregion

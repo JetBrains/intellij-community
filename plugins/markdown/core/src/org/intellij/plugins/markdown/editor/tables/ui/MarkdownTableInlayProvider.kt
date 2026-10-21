@@ -11,6 +11,7 @@ import com.intellij.codeInsight.hints.NoSettings
 import com.intellij.codeInsight.hints.SettingsKey
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.ImaginaryEditor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -21,13 +22,13 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils.calculateActualTex
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.VerticalBarPresentation
-import org.intellij.plugins.markdown.lang.supportsMarkdown
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
+import org.intellij.plugins.markdown.lang.supportsMarkdown
 import javax.swing.JPanel
 
-class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
+class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings>, DumbAware {
   override fun getCollectorFor(file: PsiFile, editor: Editor, settings: NoSettings, sink: InlayHintsSink): InlayHintsCollector? {
     return when {
       editor is ImaginaryEditor -> null
@@ -56,8 +57,9 @@ class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
       val regularRows = table.getRows(true)
       val separatorRow = table.separatorRow ?: return
       val rows = regularRows.asSequence() + sequenceOf(separatorRow)
+      val tableRangeMarker = editor.document.createRangeMarker(table.textRange)
       for (row in rows) {
-        val presentation = VerticalBarPresentation.create(factory, editor, row)
+        val presentation = VerticalBarPresentation.create(factory, editor, row, tableRangeMarker)
         val startOffset = row.calculateStartOffsetForInlay()
         sink.addInlineElement(startOffset, false, presentation, false)
       }

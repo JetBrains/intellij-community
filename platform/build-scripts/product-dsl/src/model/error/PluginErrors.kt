@@ -165,7 +165,7 @@ internal data class ContentModuleCopyConflictError(
     appendLine("1. Let the plugin that owns the API hold the one copy, and let each dependent plugin reuse it.")
     appendLine("2. Or break the dependency path so no module reaches two copies.")
     appendLine("3. Or, as a last resort, declare the module once as shared content of a module set.")
-    appendLine("   Read build/decisions/0005-a-library-copy-belongs-to-the-plugin-that-owns-its-api.md.")
+    appendLine("   Read build/docs/decisions/0005-a-library-copy-belongs-to-the-plugin-that-owns-its-api.md.")
     appendLine()
     appendLine("${s.blue}Or grandfather temporarily:${s.reset} add to contentModuleCopyConflicts in suppressions.json:")
     appendLine("       ${s.gray}\"${duplicatedModule.value}\": { \"reason\": \"owners: ...\" }${s.reset}")

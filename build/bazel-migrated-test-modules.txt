@@ -33,10 +33,12 @@ intellij.gradle.backend.tests
 intellij.gradle.completion.tests
 intellij.gradle.java.maven.tests
 intellij.gradle.toolingExtension.tests
+intellij.groovy.propertyBased.tests
 intellij.groovy.structuralSearch.tests
 intellij.groovy.tests
 intellij.groovy.uast.tests
 intellij.html.tools.tests
+intellij.ide.starter.extended.uiAgent.tests
 intellij.ide.startup.importSettings.tests
 intellij.idea.community.build.tasks.tests
 intellij.idea.community.main.tests
@@ -62,6 +64,7 @@ intellij.java.jshell.console.tests
 intellij.java.jshell.protocol.tests
 intellij.java.manifest.tests
 intellij.java.mcp.tests
+intellij.java.propertyBased.tests
 intellij.java.rareRefactorings.tests
 intellij.java.structuralSearch.tests
 intellij.java.terminal.tests
@@ -94,6 +97,7 @@ intellij.mermaid.tests
 intellij.notebooks.visualization.tests
 intellij.performanceTesting.tests
 intellij.performanceTesting.ui.tests
+intellij.platform.analysis.impl.tests
 intellij.platform.backend.observation.tests
 intellij.platform.buildScripts.productDsl.tests
 intellij.platform.buildScripts.runtimeModuleRepository.tests
@@ -158,6 +162,7 @@ intellij.platform.lsp.impl.tests
 intellij.platform.lvcs.impl.tests
 intellij.platform.markdown.utils.tests
 intellij.platform.ml.impl.tests
+intellij.platform.navbar.frontend.tests
 intellij.platform.objectSerializer.tests
 intellij.platform.pluginGraph.tests
 intellij.platform.pluginSystem.parser.impl.tests
@@ -183,6 +188,7 @@ intellij.platform.syntax.i18n.tests
 intellij.platform.syntax.psi.tests
 intellij.platform.syntax.tests
 intellij.platform.syntax.util.tests
+intellij.platform.terminal.tests
 intellij.platform.testFramework.junit5.codeInsight.tests
 intellij.platform.testFramework.junit5.eel.tests
 intellij.platform.testFramework.junit5.jimfs.tests
@@ -210,6 +216,7 @@ intellij.platform.versionDownloadManager.tests
 intellij.platform.whatsNew.tests
 intellij.platform.workspace.jps.tests
 intellij.platform.workspace.storage.tests
+intellij.properties.propertyBased.tests
 intellij.properties.tests
 intellij.python.community.execService.tests
 intellij.python.community.junit5Tests.framework
@@ -234,6 +241,7 @@ intellij.searchEverywhereMl.ranking.core.tests
 intellij.searchEverywhereMl.tests
 intellij.searchEverywhereMl.typos.tests
 intellij.settingsSync.tests
+intellij.sh.tests
 intellij.statsCollector.tests
 intellij.tasks.tests
 intellij.terminal.emulator.tests

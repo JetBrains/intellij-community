@@ -19,6 +19,7 @@ Complete reference of validation errors, their causes, and fixes.
 | [MissingTestPluginPluginDep](#missing-test-plugin-plugin-dependency) | Error | No | Test plugin missing plugin dep |
 | [ContentModuleDependencyDeclarationError](#content-module-dependency-declaration) | Error | No | A `<dependencies>` entry of a content module has the wrong form |
 | [MissingLibraryLicenseError](#missing-library-license) | Error | No | Library in a distribution has no license entry |
+| [PlatformLibraryCopyError](#platform-library-copy) | Error | No | A bundled plugin packs a copy of an embedded platform library |
 | [ModuleInMultiplePluginsError](#module-in-multiple-plugins) | Error | No | Two plugin layouts pack one JPS module |
 | [DSL Constraint Errors](#dsl-constraint-errors) | Error | No | Invalid DSL usage |
 | [Suppressible Errors](#suppressible-errors) | Warning | Yes | Errors detected during generation |
@@ -385,6 +386,40 @@ Fix:
 **Auto-Fix**: No. The error is a hard failure. No suppression and no allowlist exist.
 
 **Spec**: [validators/library-license.md](validators/library-license.md)
+
+---
+
+## Platform Library Copy
+
+Emitted by `PlatformLibraryCopyValidator` (ruleName `PlatformLibraryCopyValidation`, category `PLATFORM_LIBRARY_COPY`).
+
+```
+Bundled plugins pack a copy of a platform library
+
+An embedded library module puts its library into the core classloader.
+A plugin that depends on the owner of a copy can load the copy instead of the platform classes.
+Scope: bundled plugins
+
+  * intellij.libraries.google.auth (plugin intellij.air.plugin)
+    com.google.guava:guava:33.5.0-android in library 'google.auth.library.oauth2.http', provided by intellij.libraries.guava
+    Products: idea
+
+Fix:
+1. Exclude the dependency and add a module dependency on its wrapper.
+2. A module without a namespace cannot name an internal wrapper. Give such a module dependency the PROVIDED scope.
+
+[Rule: PlatformLibraryCopyValidation]
+```
+
+**Cause**: A module-level library of a content module of a bundled plugin resolves a Maven artifact that an embedded library module also provides.
+
+**Fixes**:
+1. **Exclude the dependency** in the library block, and add a module dependency on the wrapper module
+2. **Use the PROVIDED scope** for that module dependency when the content module has no namespace and the wrapper is `internal`
+
+**Auto-Fix**: No. The error is a hard failure. `platformLibraryCopies` in `suppressions.json` allows a copy by module and coordinate.
+
+**Spec**: [validators/platform-library-copy.md](validators/platform-library-copy.md)
 
 ---
 

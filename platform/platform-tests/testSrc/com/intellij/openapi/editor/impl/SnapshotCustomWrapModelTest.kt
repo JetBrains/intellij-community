@@ -25,6 +25,31 @@ import java.lang.ref.WeakReference
 @RegistryKey(key = "editor.custom.soft.wraps.support.enabled", value = "true")
 class SnapshotCustomWrapModelTest {
   @Test
+  fun `full traversal preserves wrap order after an edit`(): Unit = timeoutRunBlocking {
+    val state = withEditor("abcdefgh") { editor ->
+      val model = editor.customWrapModel
+      val hasWrapsBefore = model.hasWraps()
+      val wraps = model.runBatchMutation {
+        listOf(addWrap(6)!!, addWrap(2)!!, addWrap(4)!!)
+      }
+
+      editor.document.insertString(0, "xy")
+
+      val allOffsets = model.getWraps().map { it.offset }
+      val rangeOffsets = model.getWrapsInRange(5, 6).map { it.offset }
+      val hasWrapsAfterInsertion = model.hasWraps()
+      model.runBatchMutation { wraps.forEach { removeWrap(it) } }
+      TraversalState(hasWrapsBefore, allOffsets, rangeOffsets, hasWrapsAfterInsertion, model.hasWraps())
+    }
+
+    assertThat(state.hasWrapsBefore).isFalse()
+    assertThat(state.allOffsets).containsExactly(4, 6, 8)
+    assertThat(state.rangeOffsets).containsExactly(6)
+    assertThat(state.hasWrapsAfterInsertion).isTrue()
+    assertThat(state.hasWrapsAfterRemoval).isFalse()
+  }
+
+  @Test
   fun `custom wrap resolves in snapshot branches`(): Unit = timeoutRunBlocking {
     val state = withEditor("abc\ndef") { editor ->
       val document = editor.elfDocument as DocumentImpl
@@ -186,6 +211,14 @@ class SnapshotCustomWrapModelTest {
     val invalidRange: Pair<Int, Int>,
     val invalidBranchIsValid: Boolean,
     val initialBranchIsValid: Boolean,
+  )
+
+  private data class TraversalState(
+    val hasWrapsBefore: Boolean,
+    val allOffsets: List<Int>,
+    val rangeOffsets: List<Int>,
+    val hasWrapsAfterInsertion: Boolean,
+    val hasWrapsAfterRemoval: Boolean,
   )
 
   private data class EditState(

@@ -48,7 +48,8 @@ public abstract class IdFilter {
 
   public static @NotNull IdFilter getProjectIdFilter(@NotNull Project project, final boolean includeNonProjectItems) {
     if (includeNonProjectItems) {
-      IdFilter filter = FileBasedIndex.getInstance().projectIndexableFiles(project);
+      FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+      IdFilter filter = fileBasedIndex == null ? null : fileBasedIndex.projectIndexableFiles(project);
       return filter != null ? filter : new IdFilter() {
         @Override
         public boolean containsFileId(int id) {

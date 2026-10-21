@@ -221,8 +221,10 @@ public final class FrameworkDetectionManager implements FrameworkDetectionIndexL
   }
 
   private static void ensureIndexIsUpToDate(@NotNull Project project, Collection<String> detectors) {
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    if (fileBasedIndex == null) return;
     for (String detectorId : detectors) {
-      FileBasedIndex.getInstance().getValues(FrameworkDetectionIndex.NAME, detectorId, GlobalSearchScope.projectScope(project));
+      fileBasedIndex.getValues(FrameworkDetectionIndex.NAME, detectorId, GlobalSearchScope.projectScope(project));
     }
   }
 }

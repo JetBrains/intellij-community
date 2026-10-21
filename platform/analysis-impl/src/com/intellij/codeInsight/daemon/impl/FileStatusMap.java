@@ -262,7 +262,9 @@ public final class FileStatusMap implements Disposable {
     // mark the whole file dirty in case no subsequent PSI events will come, but file requires re-highlighting nevertheless
     // e.g., in the case of quick typing/backspacing char
     synchronized (myFileStatusMapState) {
-      myFileStatusMapState.markDefensivelyForAllPasses(myProject);
+      for (FileStatus status : myFileStatusMapState.getFileStatuses(document)) {
+        status.markDefensivelyForAllPasses(myProject);
+      }
     }
   }
 
@@ -300,19 +302,15 @@ public final class FileStatusMap implements Disposable {
   }
 
   /**
-   * @return true when all registered statuses are clean
+   * @return true when the status of {@code document} in {@code context} is clean.
+   * This method ignores the statuses of other contexts.
    */
   @ApiStatus.Experimental
   @ApiStatus.Internal
-  public boolean allDirtyScopesAreNullFor(@NotNull Document document) {
+  public boolean allDirtyScopesAreNullFor(@NotNull Document document, @NotNull CodeInsightContext context) {
     synchronized (myFileStatusMapState) {
-      return myFileStatusMapState.allDirtyScopesAreNullFor(document);
-    }
-  }
-  @ApiStatus.Internal
-  public boolean allDirtyScopesAreNull() {
-    synchronized (myFileStatusMapState) {
-      return myFileStatusMapState.allDirtyScopesAreNull();
+      FileStatus status = myFileStatusMapState.getStatusOrNull(document, context);
+      return status != null && !status.isDefensivelyMarkedForAnyPass() && status.isWolfPassFinished() && status.allDirtyScopesAreNull();
     }
   }
 

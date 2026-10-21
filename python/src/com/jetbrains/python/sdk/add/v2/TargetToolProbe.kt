@@ -71,7 +71,7 @@ internal fun parseTargetProbeOutput(
   val pythonProbe = when {
     pythonPath == null && serializedPython == null -> null
     pythonPath != null && serializedPython != null -> TargetPythonProbeResult(pythonPath, serializedPython)
-    else -> error("The helper Python probe does not match the requested Python path: ${pythonPath?.toStringForUI()}")
+    else -> error("The helper Python probe does not match the requested Python path: ${pythonPath?.toStringPossiblyMRFS()}")
   }
   val environments = serializedSnapshot.environments.map { environment ->
     // The helper always writes "<environment>/bin/python" here.
@@ -180,7 +180,7 @@ internal data class TargetPythonProbeResult(
   val path: PathHolder.Target,
   val probe: TargetPythonProbe,
 ) {
-  override fun toString(): String = "TargetPythonProbeResult(path=${path.toStringForUI()}, probe=$probe)"
+  override fun toString(): String = "TargetPythonProbeResult(path=${path.toStringPossiblyMRFS()}, probe=$probe)"
 }
 
 internal data class TargetProbeSnapshot(
@@ -195,5 +195,5 @@ internal data class TargetEnvironmentProbe(
   val path: PathHolder.Target,
   val python: TargetPythonProbe.Executable,
 ) {
-  override fun toString(): String = "TargetEnvironmentProbe(path=${path.toStringForUI()}, python=$python)"
+  override fun toString(): String = "TargetEnvironmentProbe(path=${path.toStringPossiblyMRFS()}, python=$python)"
 }

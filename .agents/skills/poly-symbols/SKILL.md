@@ -9,7 +9,7 @@ PolySymbols is a framework built on top of the platform's [Symbol API](../symbol
 (`PolySymbol : Symbol`) for sharing symbol definitions and code-insight features (completion,
 references, documentation, navigation, rename, find-usages, semantic highlighting) across
 languages and frameworks. It was called "Web Symbols" in 2022.3–2025.1 and is still marked
-experimental. Core module: `community/platform/polySymbols/` (`src`, `backend`, `src-web`).
+experimental. Core modules: `community/platform/polySymbols/` (`shared`, `backend`, `web`).
 
 ### Do not modify PolySymbols platform source
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableConsumer;
@@ -79,7 +80,10 @@ public final class JobLauncherImpl extends JobLauncher {
     Processor<? super T> processor = ((CoreProgressManager)pm).isCurrentThreadPrioritized()
                                      ? t -> pm.computePrioritized(() -> thingProcessor.process(t))
                                      : thingProcessor;
-    processor = FileBasedIndex.getInstance().inheritCurrentDumbAccessType(processor);
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    if (fileBasedIndex != null) {
+      processor = fileBasedIndex.inheritCurrentDumbAccessType(processor);
+    }
 
     List<ApplierCompleter<T>> failedSubTasks = Collections.synchronizedList(new ArrayList<>());
 
@@ -118,7 +122,9 @@ public final class JobLauncherImpl extends JobLauncher {
         });
 
         // all work is done or distributed; wait for in-flight appliers and manifest exceptions
-        safeIterate(globalCompleters, thrown, completer -> {
+        // FJP can run a task of another computation on this thread during the wait.
+        // That task must not see the recursion guards of this computation.
+        RecursionManager.runInNewContext(() -> safeIterate(globalCompleters, thrown, completer -> {
           while (true) {
             // while waiting for completion, check for cancellation, except when some applier returned false and the wrapper was canceled because of that
             if (wrapper.isCanceled() && !(thrown.get() instanceof ApplierCompleter.ComputationAbortedException)) {
@@ -130,7 +136,7 @@ public final class JobLauncherImpl extends JobLauncher {
               break;
             }
           }
-        });
+        }));
       }
 
       if (thrown.get() != null) {

@@ -37,11 +37,6 @@ fun isCommunityModule(module: JpsModule, context: BuildContext): Boolean {
 
 val knownMissingModuleDependencies: List<String> = java.util.List.of(
   "intellij.rider.plugins.fsharp",
-  // conditional xi-include
-  "kotlin.base.scripting.k1",
-  "kotlin.plugin.k2",
-  "intellij.kotlin.ultimate.common.native",
-  "intellij.kotlin.ultimate.native.debugger",
   // included using `withModule`
   "intellij.libraries.groovy",
   "intellij.python.frontend",

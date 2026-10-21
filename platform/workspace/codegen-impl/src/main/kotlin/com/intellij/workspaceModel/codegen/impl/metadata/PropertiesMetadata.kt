@@ -18,10 +18,10 @@ import com.intellij.workspaceModel.codegen.impl.writer.extensions.isEntityRef
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.isReplaceBySourceKey
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.unwrapReferenceType
 import com.intellij.workspaceModel.codegen.impl.writer.extensions.withDefault
-import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdFieldName
+import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdPropertyName
 
 fun MetadataContext.buildPropertyMetadata(obj: TypeProperty<*>): String? {
-  if (obj is ObjProperty<*,*> && obj.isComputable && obj.name != symbolicIdFieldName) return null
+  if (obj is ObjProperty<*, *> && obj.isComputable && obj.name != symbolicIdPropertyName) return null
   return when (obj) {
     is OwnProperty<*, *> -> {
       buildOwnPropertyMetadata(obj)

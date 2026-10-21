@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Collections;
 
 public final class FilenameIndex {
   /** @deprecated Use {@link FilenameIndex} methods instead **/
@@ -59,7 +60,10 @@ public final class FilenameIndex {
   private static void processAllFileNameCharSequences(@NotNull Processor<? super CharSequence> processor,
                                                       @NotNull GlobalSearchScope scope,
                                                       @Nullable IdFilter filter) {
-    FileBasedIndex.getInstance().processAllKeys(NAME, processor, scope, filter);
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    if (fileBasedIndex != null) {
+      fileBasedIndex.processAllKeys(NAME, processor, scope, filter);
+    }
   }
 
   /** @deprecated Use {@link FilenameIndex#getVirtualFilesByName(String, GlobalSearchScope)} */
@@ -163,7 +167,8 @@ public final class FilenameIndex {
     if (names.isEmpty()) return true;
 
     if (caseSensitively) {
-      return FileBasedIndex.getInstance().processFilesContainingAnyKey(
+      FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+      return fileBasedIndex == null || fileBasedIndex.processFilesContainingAnyKey(
         NAME, names, scope, idFilter, /*valueChecker: */null,
         new ProcessorWithThrottledCancellationCheck<>(processor)
       );
@@ -242,8 +247,10 @@ public final class FilenameIndex {
   private static @NotNull @Unmodifiable Set<VirtualFile> getVirtualFilesByNames(@NotNull Set<String> names,
                                                                                 @NotNull GlobalSearchScope scope,
                                                                                 @Nullable IdFilter filter) {
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    if (fileBasedIndex == null) return Collections.emptySet();
     Set<VirtualFile> files = CollectionFactory.createSmallMemoryFootprintSet();
-    FileBasedIndex.getInstance().processFilesContainingAnyKey(
+    fileBasedIndex.processFilesContainingAnyKey(
       NAME, names, scope, filter, null,
       new ProcessorWithThrottledCancellationCheck<>(file -> {
         files.add(file);

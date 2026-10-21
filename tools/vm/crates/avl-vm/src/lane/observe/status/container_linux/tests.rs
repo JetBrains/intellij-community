@@ -46,6 +46,7 @@ async fn a_stopped_container_linux_worker_reports_every_key() {
         json!({
             "backend": "container-linux",
             "workers": [{
+                "abandonedIdeRuns": null,
                 "worker": WORKER,
                 "state": "stopped",
                 "guestAgent": false,

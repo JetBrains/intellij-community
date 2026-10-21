@@ -36,7 +36,12 @@ public final class TrigramTextSearchService implements TextSearchService {
       return TextSearchResult.NO_TRIGRAMS;
     }
 
-    boolean fullyCompleted = FileBasedIndex.getInstance().getFilesWithKey(TrigramIndex.INDEX_ID, keys, file -> {
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    if (fileBasedIndex == null) {
+      return TextSearchResult.NO_TRIGRAMS;
+    }
+
+    boolean fullyCompleted = fileBasedIndex.getFilesWithKey(TrigramIndex.INDEX_ID, keys, file -> {
       //TODO RC: checkCanceled() is not needed here, since all processors are already wrapped in cancellableProcessor()
       ProgressManager.checkCanceled();
       return processor.process(file);

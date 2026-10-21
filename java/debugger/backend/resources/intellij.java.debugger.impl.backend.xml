@@ -1,10 +1,8 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.java.debugger.impl.shared"/>
-    <module name="fleet.rhizomedb"/>
     <module name="intellij.java.backend"/>
     <module name="intellij.java.debugger"/>
     <module name="intellij.java.debugger.impl"/>
@@ -24,7 +22,6 @@
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.rpc"/>
-    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc.backend"/>

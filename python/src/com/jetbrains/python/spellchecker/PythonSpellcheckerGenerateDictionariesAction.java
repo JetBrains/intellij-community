@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -26,7 +26,7 @@ public class PythonSpellcheckerGenerateDictionariesAction extends AnAction {
     if (contentRoots.length == 0) {
       return;
     }
-    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
     if (sdk == null) {
       return;
     }

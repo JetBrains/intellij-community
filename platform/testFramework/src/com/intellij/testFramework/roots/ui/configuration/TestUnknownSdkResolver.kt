@@ -41,7 +41,7 @@ abstract class TestUnknownSdkResolver : UnknownSdkResolver {
   private fun suggestsRealUnknownSdkLocalFixes(): Sequence<TestUnknownSdkLocalFix> {
     val appFixes = ProjectJdkTable.getInstance().allJdks.asSequence()
       .mapNotNull { createTestUnknownSdkLocalFix(it) }
-    val localFixes = javaSdkType.suggestHomePaths().asSequence()
+    val localFixes = javaSdkType.suggestHomePaths(null).asSequence()
       .mapNotNull { createTestUnknownSdkLocalFix(it) }
     return appFixes + localFixes
   }

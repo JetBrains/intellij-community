@@ -8,6 +8,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.ensureClientStarted
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
+import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.pyrefly.PyreflyExecutableProvider
 import com.intellij.python.pyrefly.PyreflyPyTool
 import com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider
@@ -39,8 +40,11 @@ class PyreflyLspTypeEngineProvider : PyTypeEngineProvider {
 
     // Skip a module whose interpreter Pyrefly cannot drive: PyreflyLspClientDescriptor
     // .startServerProcess would throw. `isAvailable` above does not imply this, because the
-    // `pyrefly.type.engine` key and unit-test mode both bypass the interpreter check.
-    if (!PyTypeEngineUtils.isLocalNonReadOnlySdk(module)) {
+    // `pyrefly.type.engine` key and unit-test mode both bypass the interpreter check. This runs under
+    // a read lock, so it reads the snapshot and does not wait. A module with no Python project, or a
+    // context made before the first snapshot, gets the built-in engine.
+    val evoPyProject = module.findEvoPyProjectIfReady() ?: return null
+    if (evoPyProject.interpreter?.let(PyTypeEngineUtils::isServedInterpreter) != true) {
       return null
     }
 
@@ -57,8 +61,8 @@ class PyreflyLspTypeEngineProvider : PyTypeEngineProvider {
     }
 
     LspClientManager.getInstance(project)
-      .ensureClientStarted<PyreflyLspIntegrationProvider>(pyreflyDescriptor(module))
-    return PyreflyLspTypeEngine(module)
+      .ensureClientStarted<PyreflyLspIntegrationProvider>(pyreflyDescriptor(evoPyProject.pyProject))
+    return PyreflyLspTypeEngine(evoPyProject.pyProject)
   }
 
   object Util {

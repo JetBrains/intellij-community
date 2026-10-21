@@ -3,13 +3,12 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -27,37 +26,39 @@ import static com.intellij.util.io.PageCacheUtils.DEFAULT_PAGE_SIZE;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.READ;
 import static java.nio.file.StandardOpenOption.WRITE;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class PagedFileStorageTest {
   private static final Logger LOG = Logger.getInstance(PagedFileStorageTest.class);
 
-  @Rule public TempDirectory tempDir = new TempDirectory();
+  @TempDir
+  Path tempDir;
 
   private final StorageLockContext storageLockContext = new StorageLockContext();
   private Path file;
   private PagedFileStorage pagedFileStorage;
 
-  @Before
+  @BeforeEach
   public void setUp() throws IOException {
-    file = tempDir.newFileNio("storage");
+    file = tempDir.resolve("storage");
+    Files.createFile(file);
     withLock(storageLockContext, () -> {
       pagedFileStorage = new PagedFileStorage(file, storageLockContext, DEFAULT_PAGE_SIZE, false, false);
     });
   }
 
-  @After
+  @AfterEach
   public void tearDown() throws IOException {
     withLock(storageLockContext, () -> {
       pagedFileStorage.close();
       Path l = file.resolveSibling(file.getFileName() + ".len");
-      assertTrue(l.toString(), !Files.exists(l) || Files.deleteIfExists(l));
-      assertTrue(file.toString(), Files.deleteIfExists(file));
+      assertTrue(!Files.exists(l) || Files.deleteIfExists(l), l.toString());
+      assertTrue(Files.deleteIfExists(file), file.toString());
     });
   }
 
@@ -109,7 +110,8 @@ public class PagedFileStorageTest {
 
   @Test
   public void testWritableStorageUsesWritableChannelsForAllOperations() throws IOException {
-    Path path = tempDir.newFileNio("writable-storage-channel-mode");
+    Path path = tempDir.resolve("writable-storage-channel-mode");
+    Files.createFile(path);
     RecordingChannelsAccessor readOnlyChannelsAccessor = new RecordingChannelsAccessor(true);
     RecordingChannelsAccessor writableChannelsAccessor = new RecordingChannelsAccessor(false);
     StorageLockContext lockContext = new StorageLockContext(false, readOnlyChannelsAccessor, writableChannelsAccessor);
@@ -137,7 +139,8 @@ public class PagedFileStorageTest {
 
   @Test
   public void testReadOnlyStorageUsesReadOnlyChannelsForAllOperations() throws IOException {
-    Path path = tempDir.newFileNio("readonly-storage-channel-mode");
+    Path path = tempDir.resolve("readonly-storage-channel-mode");
+    Files.createFile(path);
     Files.write(path, new byte[]{42});
 
     RecordingChannelsAccessor readOnlyChannelsAccessor = new RecordingChannelsAccessor(true);
@@ -166,7 +169,8 @@ public class PagedFileStorageTest {
 
   @Test
   public void testCloseAndCleanReportsOpenChannelFromOtherModeCache() throws IOException {
-    Path path = tempDir.newFileNio("close-clean-open-other-mode");
+    Path path = tempDir.resolve("close-clean-open-other-mode");
+    Files.createFile(path);
     OpenChannelsCache cache = newChannelsCache();
     StorageLockContext lockContext = new StorageLockContext(false, cache.asReadOnly(), cache.asWritable());
     ChannelsAccessor readOnlyAccessor = lockContext.getChannelsAccessor(/*readOnly: */true);
@@ -177,15 +181,15 @@ public class PagedFileStorageTest {
       boolean storageClosed = false;
       try {
         IOException closeError = assertThrows(
-          "closeAndClean() should report a cached read-only channel for the same file",
           IOException.class,
-          storage::closeAndClean
+          storage::closeAndClean,
+          "closeAndClean() should report a cached read-only channel for the same file"
         );
         storageClosed = true;
         AssertionError error = suppressedAssertion(closeError);
-        assertTrue(error.getMessage(), error.getMessage().contains("read-only accessor"));
-        assertTrue(error.getMessage(), error.getMessage().contains(path.toString()));
-        assertTrue(path.toString(), Files.exists(path));
+        assertTrue(error.getMessage().contains("read-only accessor"), error.getMessage());
+        assertTrue(error.getMessage().contains(path.toString()), error.getMessage());
+        assertTrue(Files.exists(path), path.toString());
       }
       finally {
         readOnlyAccessor.closeChannel(path);
@@ -200,7 +204,8 @@ public class PagedFileStorageTest {
 
   @Test
   public void testResizeableMappedFileCloseAndRemoveAllFilesReportsOpenChannelFromOtherModeCache() throws IOException {
-    Path path = tempDir.newFileNio("resizable-close-remove-open-other-mode");
+    Path path = tempDir.resolve("resizable-close-remove-open-other-mode");
+    Files.createFile(path);
     Path lengthFile = path.resolveSibling(path.getFileName() + ".len");
     OpenChannelsCache cache = newChannelsCache();
     StorageLockContext lockContext = new StorageLockContext(false, cache.asReadOnly(), cache.asWritable());
@@ -213,14 +218,14 @@ public class PagedFileStorageTest {
       mappedFile = new ResizeableMappedFile(path, 16, lockContext, DEFAULT_PAGE_SIZE, false);
       ResizeableMappedFile mappedFileToClose = mappedFile;
       AssertionError error = assertThrows(
-        "closeAndRemoveAllFiles() should report a cached read-only channel for the same file",
         AssertionError.class,
-        mappedFileToClose::closeAndRemoveAllFiles
+        mappedFileToClose::closeAndRemoveAllFiles,
+        "closeAndRemoveAllFiles() should report a cached read-only channel for the same file"
       );
-      assertTrue(error.getMessage(), error.getMessage().contains("read-only accessor"));
-      assertTrue(error.getMessage(), error.getMessage().contains(path.toString()));
-      assertTrue(path.toString(), Files.exists(path));
-      assertTrue(lengthFile.toString(), Files.exists(lengthFile));
+      assertTrue(error.getMessage().contains("read-only accessor"), error.getMessage());
+      assertTrue(error.getMessage().contains(path.toString()), error.getMessage());
+      assertTrue(Files.exists(path), path.toString());
+      assertTrue(Files.exists(lengthFile), lengthFile.toString());
       mappedFile = null;
     }
     finally {
@@ -236,9 +241,10 @@ public class PagedFileStorageTest {
 
   @Test
   public void testResizeableMappedFile() throws IOException {
-    Path newPath = tempDir.newFile("storage-1").toPath();
+    Path newPath = tempDir.resolve("storage-1");
+    Files.createFile(newPath);
     long freeSpace = Files.getFileStore(newPath).getUsableSpace();
-    assumeTrue("test requires at least 2Gb of empty disk space", 2L * IOUtil.GiB < freeSpace);
+    assumeTrue(2L * IOUtil.GiB < freeSpace, "test requires at least 2Gb of empty disk space");
     withLock(storageLockContext, () -> {
       try (ResizeableMappedFile file = new ResizeableMappedFile(newPath, 2000000, storageLockContext, -1, false)) {
         LOG.debug("writing...");
@@ -272,7 +278,8 @@ public class PagedFileStorageTest {
 
   @Test
   public void testResizeableMappedFile2() throws IOException {
-    Path newPath = tempDir.newFile("storage-2").toPath();
+    Path newPath = tempDir.resolve("storage-2");
+    Files.createFile(newPath);
     withLock(storageLockContext, () -> {
       int initialSize = 4096;
       try (ResizeableMappedFile file = new ResizeableMappedFile(newPath, initialSize, storageLockContext, IOUtil.MiB, false)) {
@@ -349,11 +356,11 @@ public class PagedFileStorageTest {
     }
 
     private void assertWasUsed() {
-      assertFalse(paths.toString(), paths.isEmpty());
+      assertFalse(paths.isEmpty(), paths.toString());
     }
 
     private void assertWasNotUsed() {
-      assertTrue(paths.toString(), paths.isEmpty());
+      assertTrue(paths.isEmpty(), paths.toString());
     }
   }
 

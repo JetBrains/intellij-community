@@ -32,7 +32,6 @@ public class EmmetCompositeConfigurable extends SearchableConfigurable.Parent.Ab
                                     Configurable @NotNull ... innerConfigurables) {
     myNestedConfigurables = nestedConfigurables.toArray(new Configurable[0]);
     myInnerConfigurables = innerConfigurables;
-    myTemplateExpandShortcutPanel = new TemplateExpandShortcutPanel(XmlEmmetBundle.message("emmet.expand.abbreviation.with"));
   }
 
   @Override
@@ -47,6 +46,7 @@ public class EmmetCompositeConfigurable extends SearchableConfigurable.Parent.Ab
 
   @Override
   public @Nullable JComponent createComponent() {
+    myTemplateExpandShortcutPanel = new TemplateExpandShortcutPanel(XmlEmmetBundle.message("emmet.expand.abbreviation.with"));
     final JPanel rootPanel = new JPanel(new GridLayoutManager(myInnerConfigurables.length + 1, 1, JBInsets.emptyInsets(), -1, -1, false, false));
     rootPanel.add(myTemplateExpandShortcutPanel.getPanel(), new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH,
                                                                      GridConstraints.FILL_HORIZONTAL,
@@ -72,7 +72,9 @@ public class EmmetCompositeConfigurable extends SearchableConfigurable.Parent.Ab
 
   @Override
   public void reset() {
-    myTemplateExpandShortcutPanel.setSelectedChar((char)EmmetOptions.getInstance().getEmmetExpandShortcut());
+    if (myTemplateExpandShortcutPanel != null) {
+      myTemplateExpandShortcutPanel.setSelectedChar((char)EmmetOptions.getInstance().getEmmetExpandShortcut());
+    }
     for (Configurable configurable : myInnerConfigurables) {
       configurable.reset();
     }
@@ -81,7 +83,9 @@ public class EmmetCompositeConfigurable extends SearchableConfigurable.Parent.Ab
 
   @Override
   public void apply() throws ConfigurationException {
-    EmmetOptions.getInstance().setEmmetExpandShortcut(myTemplateExpandShortcutPanel.getSelectedChar());
+    if (myTemplateExpandShortcutPanel != null) {
+      EmmetOptions.getInstance().setEmmetExpandShortcut(myTemplateExpandShortcutPanel.getSelectedChar());
+    }
     for (Configurable configurable : myInnerConfigurables) {
       configurable.apply();
     }
@@ -90,7 +94,11 @@ public class EmmetCompositeConfigurable extends SearchableConfigurable.Parent.Ab
 
   @Override
   public boolean isModified() {
-    if (EmmetOptions.getInstance().getEmmetExpandShortcut() != myTemplateExpandShortcutPanel.getSelectedChar() || super.isModified()) {
+    if (myTemplateExpandShortcutPanel != null &&
+        EmmetOptions.getInstance().getEmmetExpandShortcut() != myTemplateExpandShortcutPanel.getSelectedChar()) {
+      return true;
+    }
+    if (super.isModified()) {
       return true;
     }
     for (Configurable configurable : myInnerConfigurables) {

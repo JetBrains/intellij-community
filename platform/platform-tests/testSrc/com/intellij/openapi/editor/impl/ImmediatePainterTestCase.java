@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.mock.MockFocusManager;
@@ -15,10 +16,16 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.util.ui.ImageUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 
 import javax.imageio.ImageIO;
 import javax.swing.JComponent;
@@ -31,7 +38,20 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
-public abstract class ImmediatePainterTestCase extends AbstractEditorTest {
+import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+
+public abstract class ImmediatePainterTestCase {
+  @SuppressWarnings("deprecation")
+  protected static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
+
+  protected EditorModelFixture myFixture;
+
+  private String myTestMethodName;
   private String myDefaultFontName;
   private int myDefaultFontSize;
   private float myDefaultLineSpacing;
@@ -41,39 +61,42 @@ public abstract class ImmediatePainterTestCase extends AbstractEditorTest {
   private boolean myDefaultSmoothCaretBlinking;
   private boolean myDefaultSmoothCaretMovement;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUpImmediatePainterTestCase(TestInfo testInfo) {
+    myFixture = editorFixture.get();
+    myTestMethodName = testInfo.getTestMethod().orElseThrow().getName();
 
-    EditorColorsScheme defaultColorScheme = getDefaultColorScheme();
-    myDefaultFontName = defaultColorScheme.getEditorFontName();
-    myDefaultFontSize = defaultColorScheme.getEditorFontSize();
-    myDefaultLineSpacing = defaultColorScheme.getLineSpacing();
-    myDefaultCaretColor = defaultColorScheme.getColor(EditorColors.CARET_COLOR);
-    myDefaultFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    myDefaultAntiAliasing = UISettings.getInstance().getEditorAAType();
+    EdtTestUtil.runInEdtAndWait(() -> {
+      EditorColorsScheme defaultColorScheme = getDefaultColorScheme();
+      myDefaultFontName = defaultColorScheme.getEditorFontName();
+      myDefaultFontSize = defaultColorScheme.getEditorFontSize();
+      myDefaultLineSpacing = defaultColorScheme.getLineSpacing();
+      myDefaultCaretColor = defaultColorScheme.getColor(EditorColors.CARET_COLOR);
+      myDefaultFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+      myDefaultAntiAliasing = UISettings.getInstance().getEditorAAType();
 
-    var settings = EditorSettingsExternalizable.getInstance();
-    myDefaultSmoothCaretBlinking = settings.isSmoothBlinkCaret();
-    myDefaultSmoothCaretMovement = settings.isSmoothCaretMovement();
+      var settings = EditorSettingsExternalizable.getInstance();
+      myDefaultSmoothCaretBlinking = settings.isSmoothBlinkCaret();
+      myDefaultSmoothCaretMovement = settings.isSmoothCaretMovement();
 
-    FontLayoutService.setInstance(null);
+      FontLayoutService.setInstance(null);
 
-    // Disable smooth caret features for pixel-perfect rendering
-    settings.setSmoothBlinkCaret(false);
-    settings.setSmoothCaretMovement(false);
+      // Disable smooth caret features for pixel-perfect rendering
+      settings.setSmoothBlinkCaret(false);
+      settings.setSmoothCaretMovement(false);
 
-    setZeroLatencyRenderingEnabled(true);
-    setDoubleBufferingEnabled(true);
+      setZeroLatencyRenderingEnabled(true);
+      setDoubleBufferingEnabled(true);
 
-    setFont(Font.MONOSPACED, 14);
-    setLineSpacing(1.3F);
-    UISettings.getInstance().setEditorAAType(AntialiasingType.GREYSCALE);
+      setFont(Font.MONOSPACED, 14);
+      setLineSpacing(1.3F);
+      UISettings.getInstance().setEditorAAType(AntialiasingType.GREYSCALE);
+    });
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
+  @AfterEach
+  void tearDownImmediatePainterTestCase() {
+    EdtTestUtil.runInEdtAndWait(() -> {
       getDefaultColorScheme().setEditorFontName(myDefaultFontName);
       getDefaultColorScheme().setEditorFontSize(myDefaultFontSize);
       getDefaultColorScheme().setLineSpacing(myDefaultLineSpacing);
@@ -85,17 +108,15 @@ public abstract class ImmediatePainterTestCase extends AbstractEditorTest {
         com.intellij.openapi.editor.ex.EditorSettingsExternalizable.getInstance();
       settings.setSmoothBlinkCaret(myDefaultSmoothCaretBlinking);
       settings.setSmoothCaretMovement(myDefaultSmoothCaretMovement);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+    });
+  }
+
+  protected @NotNull String getName() {
+    return myTestMethodName;
   }
 
   protected void assertRenderedCorrectly(int offset, char c) throws IOException {
-    Editor editor = getEditor();
+    Editor editor = myFixture.getEditor();
     editor.getCaretModel().getPrimaryCaret().moveToOffset(offset);
 
     JComponent editorComponent = editor.getContentComponent();
@@ -146,11 +167,9 @@ public abstract class ImmediatePainterTestCase extends AbstractEditorTest {
                     @NotNull BufferedImage actualImage) throws IOException {
 
     File expectedImageFile = FileUtil.createTempFile(getName() + "-expected", ".png", false);
-    addTmpFileToKeep(expectedImageFile.toPath());
     ImageIO.write(expectedImage, "png", expectedImageFile);
 
     File actualImageFile = FileUtil.createTempFile(getName() + "-actual", ".png", false);
-    addTmpFileToKeep(actualImageFile.toPath());
     ImageIO.write(actualImage, "png", actualImageFile);
 
     throw new FileComparisonFailedError(message,
@@ -159,36 +178,37 @@ public abstract class ImmediatePainterTestCase extends AbstractEditorTest {
   }
 
   private static BufferedImage copy(BufferedImage image) {
-    //noinspection UndesirableClassUsage
     return new BufferedImage(image.getColorModel(),
                              image.copyData(null),
                              image.getColorModel().isAlphaPremultiplied(),
                              null);
   }
   protected void init(String text) {
-    init(text, PlainTextFileType.INSTANCE);
+    myFixture.init(text, PlainTextFileType.INSTANCE);
 
-    getEditor().getSettings().setAdditionalLinesCount(0);
-    getEditor().getSettings().setAdditionalColumnsCount(3);
+    myFixture.getEditor().getSettings().setAdditionalLinesCount(0);
+    myFixture.getEditor().getSettings().setAdditionalColumnsCount(3);
 
-    getEditor().getSettings().setCaretRowShown(false);
-    getEditor().getSettings().setSmoothCaretMovement(false);
+    myFixture.getEditor().getSettings().setCaretRowShown(false);
+    myFixture.getEditor().getSettings().setSmoothCaretMovement(false);
   }
 
-  protected RangeHighlighter addLineHighlighter(int startOffset, int endOffset, int layer, TextAttributes attributes) {
-    return getEditor().getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, attributes, HighlighterTargetArea.LINES_IN_RANGE);
+  protected void addLineHighlighter(int startOffset, int endOffset, int layer, TextAttributes attributes) {
+    myFixture.getEditor().getMarkupModel()
+      .addRangeHighlighter(startOffset, endOffset, layer, attributes, HighlighterTargetArea.LINES_IN_RANGE);
   }
 
   protected RangeHighlighter addRangeHighlighter(int startOffset, int endOffset, int layer, TextAttributes attributes) {
-    return getEditor().getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, attributes, HighlighterTargetArea.EXACT_RANGE);
+    return myFixture.getEditor().getMarkupModel()
+      .addRangeHighlighter(startOffset, endOffset, layer, attributes, HighlighterTargetArea.EXACT_RANGE);
   }
 
   protected void setCaretRowVisible(boolean visible) {
-    getEditor().getSettings().setCaretRowShown(visible);
+    myFixture.getEditor().getSettings().setCaretRowShown(visible);
   }
 
   protected void setLineCursorWidth(int width) {
-    getEditor().getSettings().setLineCursorWidth(width);
+    myFixture.getEditor().getSettings().setLineCursorWidth(width);
   }
 
   protected static void setCaretColor(Color color) {
@@ -217,11 +237,11 @@ public abstract class ImmediatePainterTestCase extends AbstractEditorTest {
   }
 
   protected void setBlockCursor(boolean blockCursor) {
-    getEditor().getSettings().setBlockCursor(blockCursor);
+    myFixture.getEditor().getSettings().setBlockCursor(blockCursor);
   }
 
   protected void setFullLineHeightCursor(boolean fullLineHeightCursor) {
-    getEditor().getSettings().setFullLineHeightCursor(fullLineHeightCursor);
+    myFixture.getEditor().getSettings().setFullLineHeightCursor(fullLineHeightCursor);
   }
 
   @NotNull

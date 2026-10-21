@@ -8,6 +8,7 @@ package org.jetbrains.jewel.intui.standalone.popup
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.input.TextFieldState
@@ -19,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.awt.ComposeWindow
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -31,16 +33,20 @@ import androidx.compose.ui.window.application
 import dev.sebastiano.spectre.core.ComposeAutomator
 import dev.sebastiano.spectre.core.RobotDriver
 import dev.sebastiano.spectre.testing.runSpectreTest
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.KeyEvent
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
+import kotlin.math.hypot
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.JewelFlags
 import org.jetbrains.jewel.intui.standalone.awaitWindow
+import org.jetbrains.jewel.intui.standalone.stopApplicationWindow
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
 import org.jetbrains.jewel.intui.standalone.window.Window as JewelWindow
 import org.jetbrains.jewel.ui.component.ComboBox
@@ -65,10 +71,40 @@ private const val RAW_POPUP_TAG = "parity.rawPopup"
 /** Set when Escape reaches the owner window's Compose tree, i.e. nothing above it consumed the key. */
 private val hostSawEscape = AtomicBoolean(false)
 
+/**
+ * Set when focus lands in the owner window's own tree.
+ *
+ * A popup can consume a key and still move the wrong focus, if it reads the owner window's [FocusManager] instead of
+ * its own. The key probe above cannot see that, because the key never reaches the owner.
+ */
+private val hostGainedFocus = AtomicBoolean(false)
+
+/**
+ * The owner window, for the anchoring comparison.
+ *
+ * The window is kept rather than its location, because `locationOnScreen` throws until the window shows. A case reads
+ * the location when it measures, by which point the window is on screen.
+ */
+private val hostWindow = AtomicReference<ComposeWindow?>(null)
+
+/**
+ * Reports whether the submenu sits next to the item that opened it, rather than next to the window origin.
+ *
+ * A submenu that reads the owner window's component instead of its parent dialog lands near the window origin. The two
+ * distances invert in that case, so a comparison tells them apart without a pixel tolerance.
+ */
+private fun anchoredToItem(submenu: Rectangle, item: Rectangle, origin: Point): Boolean {
+    val toItem = hypot((submenu.x - item.x).toDouble(), (submenu.y - item.y).toDouble())
+    val toOrigin = hypot((submenu.x - origin.x).toDouble(), (submenu.y - origin.y).toDouble())
+    return toItem < toOrigin
+}
+
 private class Case(
     val name: String,
     val open: suspend (ComposeAutomator, RobotDriver) -> Unit,
     val measure: suspend (ComposeAutomator) -> String,
+    /** The keys to press, in order, once the case is open. */
+    val keys: List<Int> = listOf(KeyEvent.VK_ESCAPE),
     /**
      * The absolute measurement both renderers must produce, for scenarios with no component logic masking the
      * renderer's own decision. Differential parity alone cannot catch both renderers being wrong the same way.
@@ -204,6 +240,94 @@ private val CASES =
         ) {
             RawPopup(dismissOnBackPress = false)
         },
+        // Arrow keys never reached this matrix before, which is how a renderer that moved the owner window's focus
+        // stayed hidden. The popup must act on its own focus, so the owner's tree must not gain focus at all.
+        Case(
+            name = "arrowDown(menu)",
+            open = { a, _ ->
+                a.click(a.waitForNode(tag = OPEN_TAG))
+                a.waitForNode(tag = MENU_TAG)
+            },
+            keys = listOf(KeyEvent.VK_DOWN),
+            measure = { "menuOpen=" + it.hasTag(MENU_TAG) + " hostGainedFocus=" + hostGainedFocus.get() },
+            expect = "menuOpen=true hostGainedFocus=false",
+        ) {
+            MenuWithSubmenu()
+        },
+        // Right opens a submenu through a focus-based handler on the item, not through the popup's key callback. It
+        // only works when the key reaches the popup's own Compose scene.
+        Case(
+            name = "arrowRight(opensSubmenu)",
+            open = { a, _ ->
+                a.click(a.waitForNode(tag = OPEN_TAG))
+                a.waitForNode(tag = MENU_TAG)
+            },
+            keys = listOf(KeyEvent.VK_DOWN, KeyEvent.VK_RIGHT),
+            measure = { "submenuOpen=" + it.hasText("Sub item") + " hostGainedFocus=" + hostGainedFocus.get() },
+            expect = "submenuOpen=true hostGainedFocus=false",
+        ) {
+            MenuWithSubmenu()
+        },
+        // With a submenu open, the parent menu must leave the key to it. Both menus listen for every key in the
+        // application, and the parent listens first.
+        Case(
+            name = "arrowDown(submenuOpen)",
+            open = { a, _ ->
+                a.click(a.waitForNode(tag = OPEN_TAG))
+                a.waitForNode(tag = MENU_TAG)
+            },
+            keys = listOf(KeyEvent.VK_DOWN, KeyEvent.VK_RIGHT, KeyEvent.VK_DOWN),
+            measure = {
+                "parentMenuOpen=" +
+                    it.hasTag(MENU_TAG) +
+                    " submenuOpen=" +
+                    it.hasText("Sub item") +
+                    " hostGainedFocus=" +
+                    hostGainedFocus.get()
+            },
+            expect = "parentMenuOpen=true submenuOpen=true hostGainedFocus=false",
+        ) {
+            MenuWithSubmenu()
+        },
+        // A parent menu that takes its submenu's key moves its own focus, so the values above do not change.
+        // A second submenu opens only when the key reaches the first one, which makes the theft visible.
+        Case(
+            name = "arrowRight(nestedSubmenu)",
+            open = { a, _ ->
+                a.click(a.waitForNode(tag = OPEN_TAG))
+                a.waitForNode(tag = MENU_TAG)
+            },
+            keys = listOf(KeyEvent.VK_DOWN, KeyEvent.VK_RIGHT, KeyEvent.VK_DOWN, KeyEvent.VK_RIGHT),
+            measure = { "nestedOpen=" + it.hasText("Nested item") + " hostGainedFocus=" + hostGainedFocus.get() },
+            expect = "nestedOpen=true hostGainedFocus=false",
+        ) {
+            MenuWithNestedSubmenu()
+        },
+        // The submenu must be positioned against the item that opened it. When it reads the owner window instead,
+        // it lands near the window origin, which inverts these two distances.
+        Case(
+            name = "submenuAnchoring",
+            open = { a, _ ->
+                a.click(a.waitForNode(tag = OPEN_TAG))
+                a.waitForNode(tag = MENU_TAG)
+            },
+            keys = listOf(KeyEvent.VK_DOWN, KeyEvent.VK_RIGHT),
+            measure = { a ->
+                val submenu = a.findByText("Sub item").firstOrNull()?.boundsOnScreen
+                val item = a.findByText("Open submenu").firstOrNull()?.boundsOnScreen
+                val origin = hostWindow.get()?.takeIf { it.isShowing }?.locationOnScreen
+                val anchored =
+                    if (submenu == null || item == null || origin == null) {
+                        "unknown"
+                    } else {
+                        anchoredToItem(submenu, item, origin).toString()
+                    }
+                "submenuOpen=" + (submenu != null) + " anchoredToItem=" + anchored
+            },
+            expect = "submenuOpen=true anchoredToItem=true",
+        ) {
+            MenuWithSubmenuAwayFromOrigin()
+        },
         Case(
             name = "speedSearchCombo(escape#1)",
             open = { a, _ ->
@@ -265,13 +389,19 @@ class PopupRendererParitySpectreTest {
         val app = MatrixApp(case.content)
         try {
             app.start()
-            val driver = RobotDriver.synthetic(app.awaitWindow())
+            val window = app.awaitWindow()
+            hostWindow.set(window)
+            val driver = RobotDriver.synthetic(window)
             val automator = ComposeAutomator.inProcess(driver)
             case.open(automator, driver)
             automator.waitForIdle()
             hostSawEscape.set(false)
+            hostGainedFocus.set(false)
 
-            automator.pressKey(KeyEvent.VK_ESCAPE)
+            for (key in case.keys) {
+                automator.pressKey(key)
+                delay(250.milliseconds)
+            }
             delay(1500.milliseconds)
             automator.refreshWindows()
 
@@ -280,7 +410,6 @@ class PopupRendererParitySpectreTest {
             return result
         } finally {
             app.stop()
-            delay(500.milliseconds)
             JewelFlags.useCustomPopupRenderer = previousRenderer
         }
     }
@@ -306,6 +435,41 @@ private fun MenuWithSubmenu() {
             }
         }
     }
+}
+
+/** The submenu's own item opens a second submenu, so a key that reaches the first submenu has a visible effect. */
+@Composable
+private fun MenuWithNestedSubmenu() {
+    var visible by remember { mutableStateOf(false) }
+    Box {
+        DefaultButton(onClick = { visible = true }, modifier = Modifier.testTag(OPEN_TAG)) { Text("Menu") }
+        if (visible) {
+            PopupMenu(
+                onDismissRequest = {
+                    visible = false
+                    true
+                },
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.testTag(MENU_TAG),
+            ) {
+                submenu(
+                    submenu = {
+                        submenu(submenu = { selectableItem(false, onClick = {}) { Text("Nested item") } }) {
+                            Text("Sub item")
+                        }
+                    }
+                ) {
+                    Text("Open submenu")
+                }
+            }
+        }
+    }
+}
+
+/** Places the menu far from the window origin, so the anchoring comparison has two clearly different distances. */
+@Composable
+private fun MenuWithSubmenuAwayFromOrigin() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) { MenuWithSubmenu() }
 }
 
 @Composable
@@ -355,34 +519,38 @@ private fun SpeedSearchCombo() {
 private class MatrixApp(private val content: @Composable () -> Unit) {
     private val exitApplication = AtomicReference<(() -> Unit)?>(null)
     private val window = AtomicReference<ComposeWindow?>(null)
+    private val appThread = AtomicReference<Thread?>(null)
 
     fun start() {
-        thread(name = "spectre-matrix-window", isDaemon = true) {
-            application(exitProcessOnExit = false) {
-                exitApplication.set(::exitApplication)
-                JewelWindow(onCloseRequest = ::exitApplication, title = "Jewel popup matrix") {
-                    this@MatrixApp.window.compareAndSet(null, window)
-                    IntUiTheme {
-                        Column(
-                            modifier =
-                                Modifier.padding(24.dp).onKeyEvent { event ->
-                                    if (event.type == KeyEventType.KeyDown && event.key == Key.Escape) {
-                                        hostSawEscape.set(true)
-                                    }
-                                    false
-                                }
-                        ) {
-                            content()
+        val startedThread =
+            thread(name = "spectre-matrix-window", isDaemon = true) {
+                application(exitProcessOnExit = false) {
+                    exitApplication.set(::exitApplication)
+                    JewelWindow(onCloseRequest = ::exitApplication, title = "Jewel popup matrix") {
+                        this@MatrixApp.window.compareAndSet(null, window)
+                        IntUiTheme {
+                            Column(
+                                modifier =
+                                    Modifier.padding(24.dp)
+                                        .onFocusEvent { if (it.hasFocus) hostGainedFocus.set(true) }
+                                        .onKeyEvent { event ->
+                                            if (event.type == KeyEventType.KeyDown && event.key == Key.Escape) {
+                                                hostSawEscape.set(true)
+                                            }
+                                            false
+                                        }
+                            ) {
+                                content()
+                            }
                         }
                     }
                 }
             }
-        }
+        appThread.set(startedThread)
     }
 
     fun stop() {
-        exitApplication.get()?.invoke()
-        window.set(null)
+        stopApplicationWindow(exitApplication, window, appThread)
     }
 
     suspend fun awaitWindow(): ComposeWindow = window.awaitWindow()

@@ -7,26 +7,22 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+@TestApplication
 public class AnnotationFormatterTest extends JavaFormatterTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  @BeforeEach
+  void setUp() {
     final CodeStyleSettingsManager codeStyleSettingsManager = CodeStyleSettingsManager.getInstance(getProject());
     codeStyleSettingsManager.setTemporarySettings(CodeStyle.createTestSettings());
   }
 
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
+  @AfterEach
+  void tearDown() {
+    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
   }
 
   @Override
@@ -34,6 +30,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
     return null;
   }
 
+  @Test
   public void testAnnotationWrapping() {
 
     getSettings(JavaLanguage.INSTANCE).PARAMETER_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
@@ -115,6 +112,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
 
   }
 
+  @Test
   public void testAnnotationParametersWrapping() {
     getSettings(JavaLanguage.INSTANCE).RIGHT_MARGIN = 50;
     getCustomJavaSettings().ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
@@ -145,6 +143,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
 
   }
 
+  @Test
   public void testAnnotationParameters_DoNotWrap() {
     getSettings(JavaLanguage.INSTANCE).RIGHT_MARGIN = 50;
     getCustomJavaSettings().ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
@@ -162,6 +161,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                  }""");
   }
 
+  @Test
   public void testAnnotationParameters_ChopDownIfLong() {
     getSettings(JavaLanguage.INSTANCE).RIGHT_MARGIN = 50;
     getCustomJavaSettings().ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM;
@@ -196,6 +196,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                  }""");
   }
 
+  @Test
   public void testAnnotationParameters_WrapAlways() {
     getSettings(JavaLanguage.INSTANCE).RIGHT_MARGIN = 150;
     getCustomJavaSettings().ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
@@ -217,6 +218,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                  }""");
   }
 
+  @Test
   public void testSpaces1() {
     doTextTest("""
                  public interface PsiClass{
@@ -230,6 +232,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                  }""");
   }
 
+  @Test
   public void testSpaces2() {
     getSettings(JavaLanguage.INSTANCE).SPACE_BEFORE_ANOTATION_PARAMETER_LIST = true;
 
@@ -245,6 +248,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                  }""");
   }
 
+  @Test
   public void testSpaces3() {
     getCustomJavaSettings().SPACE_AROUND_ANNOTATION_EQ = false;
     doTextTest("""
@@ -259,6 +263,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                  }""");
   }
 
+  @Test
   public void testSpaces4() {
     getCustomJavaSettings().SPACE_AROUND_ANNOTATION_EQ = true;
 
@@ -274,6 +279,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                  }""");
   }
 
+  @Test
   public void testSpaces6() {
     getSettings(JavaLanguage.INSTANCE).SPACE_WITHIN_ANNOTATION_PARENTHESES = true;
 
@@ -289,6 +295,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                  }""");
   }
 
+  @Test
   public void testSpaces7() {
     doTextTest("""
                  public interface PsiClass{
@@ -302,6 +309,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                  }""");
   }
 
+  @Test
   public void testAnnotationInterface() {
     doTextTest("""
                   @ Documented
@@ -322,6 +330,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                  }""");
   }
 
+  @Test
   public void testEnumFormatting() {
     getSettings(JavaLanguage.INSTANCE).ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     final LanguageLevel effectiveLanguageLevel = IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_5);
@@ -392,6 +401,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
   }
 
 
+  @Test
   public void testIdea161875() {
     getCustomJavaSettings().ALIGN_MULTILINE_ANNOTATION_PARAMETERS = true;
     doTextTest(
@@ -418,6 +428,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
   }
 
 
+  @Test
   public void testWrapAfterLparInAnnotation() {
     getCustomJavaSettings().NEW_LINE_AFTER_LPAREN_IN_ANNOTATION = true;
     getCustomJavaSettings().ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
@@ -437,6 +448,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
         """);
   }
 
+  @Test
   public void testWrapBeforeRparInAnnotation() {
     getCustomJavaSettings().RPAREN_ON_NEW_LINE_IN_ANNOTATION = true;
     getCustomJavaSettings().ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
@@ -457,6 +469,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
         """);
   }
 
+  @Test
   public void testTypeAfterAnnotationInParametersNotIndented() {
     doTextTest(
       """
@@ -479,6 +492,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
         """);
   }
 
+  @Test
   public void testAnnotationShouldNotBreakAfterKeyword() {
     getSettings().METHOD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     doTextTest(
@@ -497,6 +511,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
     );
   }
 
+  @Test
   public void testAnnotationEnumFieldsDoNotWrap() {
     getCustomJavaSettings().ENUM_FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
     doTextTest("""
@@ -510,6 +525,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                  }
                  """);
   }
+  @Test
   public void testAnnotationEnumFieldsWrapAlways() {
     getCustomJavaSettings().ENUM_FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     doTextTest("""
@@ -525,6 +541,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                  """);
   }
 
+  @Test
   public void testAnnotationsEnumFieldsWrapAsNeeded() {
     getCustomJavaSettings().ENUM_FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_AS_NEEDED;
     getSettings().RIGHT_MARGIN = 20;
@@ -542,6 +559,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                  """);
   }
 
+  @Test
   public void testAnnotationsEnumFieldsWrapAlwaysWithDoNotWrapOnFields() {
     getCustomJavaSettings().ENUM_FIELD_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
     getSettings().ENUM_CONSTANTS_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;
@@ -566,6 +584,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                  """);
   }
 
+  @Test
   public void testTypeAnnotationsForMethodReturnTypeAreOnTheSameLineWhenAnyModifierIsPresent() {
     doTextTest("""
                  public class Foo {
@@ -583,6 +602,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
                  """);
   }
 
+  @Test
   public void testTypeAnnotationsForMethodReturnTypeAreOnTheDifferentLinesWhenNoModifiersArePresent() {
     doTextTest("""
                  public class Foo {

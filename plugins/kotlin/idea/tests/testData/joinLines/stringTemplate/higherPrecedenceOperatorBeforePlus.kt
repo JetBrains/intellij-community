@@ -1,0 +1,8 @@
+class Value {
+    operator fun times(other: String): Value = this
+    operator fun plus(other: String): Value = this
+}
+
+fun test(value: Value): Value =
+    value * "a" +<caret>
+            "b"

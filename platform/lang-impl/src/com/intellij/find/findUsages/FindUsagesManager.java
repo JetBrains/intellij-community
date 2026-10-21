@@ -51,6 +51,7 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchRequestCollector;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.SearchSession;
+import com.intellij.psi.util.PsiVersioningService;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
@@ -248,7 +249,7 @@ public final class FindUsagesManager {
     if (handler == null) return;
 
     boolean singleFile = scopeFile != null;
-    AbstractFindUsagesDialog dialog = handler.getFindUsagesDialog(singleFile, shouldOpenInNewTab(), mustOpenInNewTab());
+    AbstractFindUsagesDialog dialog = PsiVersioningService.freezePsiVersion(() -> handler.getFindUsagesDialog(singleFile, shouldOpenInNewTab(), mustOpenInNewTab()));
     if (showDialog) {
       if (!dialog.showAndGet()) {
         return;

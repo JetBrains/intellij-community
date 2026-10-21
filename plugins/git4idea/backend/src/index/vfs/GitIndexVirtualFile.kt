@@ -65,12 +65,12 @@ internal class GitIndexVirtualFile(
     data = CachedData(newHash, newLength, newExecutable)
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   internal fun setDataFromRefresh(newHash: Hash?, newLength: Long, newExecutable: Boolean) {
     data = CachedData(newHash, newLength, newExecutable)
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   internal fun setDataFromWrite(newHash: Hash, newLength: Long, newModificationStamp: Long) {
     data = CachedData(newHash, newLength, isExecutable)
     modificationStamp = newModificationStamp

@@ -1,11 +1,10 @@
-<idea-plugin package="com.intellij.grazie.ide.language.xml">
+<idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
     <module name="intellij.grazie.core"/>
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
     <module name="intellij.platform.analysis"/>
-    <module name="intellij.platform.backend"/>
     <module name="intellij.platform.codeStyle"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.util.ex"/>

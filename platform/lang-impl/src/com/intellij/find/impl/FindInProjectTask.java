@@ -96,6 +96,7 @@ final class FindInProjectTask {
 
     VirtualFile directoryToSearchIn;
     boolean withSubdirectories;
+    boolean directoryStandsForProject = false;
     var directoryCandidate = FindInProjectUtil.getDirectory(findModel);
     if (directoryCandidate == null && IdeProductMode.isLight()) {
       // Make sure that in ijLight we always do a directory search. Directory search requests are easier to optimize by delegating
@@ -107,6 +108,7 @@ final class FindInProjectTask {
       directoryToSearchIn = ProjectUtil.guessProjectDir(project);
       if (directoryToSearchIn != null) {
         LOG.info("Using guessed " + directoryToSearchIn + " for search.");
+        directoryStandsForProject = true;
       }
       else {
         LOG.warn("No project directory guessed for search in " + project);
@@ -148,7 +150,7 @@ final class FindInProjectTask {
       }
     );
     scopeWalker = new ScopeWalker(findModel, project, candidateFilter, moduleToSearchIn, directoryToSearchIn, withSubdirectories,
-                                  customScope);
+                                  directoryStandsForProject, customScope);
 
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     progressIndicator = progress != null ?

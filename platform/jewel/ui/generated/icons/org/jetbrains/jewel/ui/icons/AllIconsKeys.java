@@ -401,6 +401,9 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey Play_last = new IntelliJIconKey("actions/play_last.svg", "expui/actions/playLast.svg", AllIconsKeys.class);
     /** 16x16 */
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey PlaySound = new IntelliJIconKey("expui/actions/playSound.svg", "expui/actions/playSound.svg", AllIconsKeys.class);
+    /** 16x16 */
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey PopFrame = new IntelliJIconKey("actions/popFrame.svg", "expui/actions/popFrame.svg", AllIconsKeys.class);
     /** 26x26 */
     @GeneratedFromIntelliJSources
@@ -1633,6 +1636,9 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey History = new IntelliJIconKey("expui/general/history.svg", "expui/general/history.svg", AllIconsKeys.class);
     /** 16x16 */
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey Home = new IntelliJIconKey("expui/general/home.svg", "expui/general/home.svg", AllIconsKeys.class);
+    /** 16x16 */
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey ImplementingMethod = new IntelliJIconKey("general/implementingMethod.svg", "expui/general/showToImplement.svg", AllIconsKeys.class);
     /** 16x16 */
     @GeneratedFromIntelliJSources
@@ -1929,14 +1935,6 @@ public final class AllIconsKeys {
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey ZoomOut = new IntelliJIconKey("general/zoomOut.svg", "general/zoomOut.svg", AllIconsKeys.class);
 
-    /** @deprecated to be removed, use Badge.alpha instead */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    /** 38x15 */
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey Alpha = new IntelliJIconKey("general/alpha.svg", "general/alpha.svg", AllIconsKeys.class);
-
     /** @deprecated to be removed, use Badge.beta instead */
     @SuppressWarnings("unused")
     @Deprecated
@@ -1952,14 +1950,6 @@ public final class AllIconsKeys {
     /** 38x16 */
     @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey New_badge = new IntelliJIconKey("general/new_badge.svg", "general/new_badge.svg", AllIconsKeys.class);
-
-    /** @deprecated to be removed, use Badge.trial instead */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval
-    /** 32x16 */
-    @GeneratedFromIntelliJSources
-    public static final @NotNull IntelliJIconKey TrialBadge = new IntelliJIconKey("general/trialBadge.svg", "general/trialBadge.svg", AllIconsKeys.class);
   }
 
   @GeneratedFromIntelliJSources

@@ -1,13 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.EditorModelFixture;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
@@ -16,20 +17,28 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.MockFontLayoutService;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.TestDataFile;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.TestInfo;
 
 import javax.imageio.ImageIO;
 import javax.swing.JComponent;
@@ -45,26 +54,48 @@ import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.IOException;
 
-public abstract class EditorPaintingTestCase extends AbstractEditorTest {
+import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+public abstract class EditorPaintingTestCase {
   protected static final String TEST_DATA_PATH = "platform/platform-tests/testData/editor/painting";
 
-  private float oldUserScaleFactor = 1.0f;
+  @SuppressWarnings("deprecation")
+  protected static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
+
+  protected EditorModelFixture myFixture;
+
+  private float oldUserScaleFactor = 1.0f;
+  private String myTestMethodName;
+
+  @BeforeEach
+  void setUpEditorPaintingTestCase(TestInfo testInfo) {
+    myFixture = editorFixture.get();
+    myTestMethodName = testInfo.getTestMethod().orElseThrow().getName();
     oldUserScaleFactor = JBUIScale.scale(1.0f);
     JBUIScale.setUserScaleFactorForTest(1.0f);
     FontLayoutService.setInstance(new MockFontLayoutService(BitmapFont.CHAR_WIDTH, BitmapFont.CHAR_HEIGHT, BitmapFont.CHAR_DESCENT));
   }
 
-  @Override
-  protected void tearDown() {
+  @AfterEach
+  void tearDownEditorPaintingTestCase() {
     new RunAll(
       () -> JBUIScale.setUserScaleFactorForTest(oldUserScaleFactor),
-      () -> FontLayoutService.setInstance(null),
-      () -> super.tearDown()
+      () -> FontLayoutService.setInstance(null)
     ).run();
+  }
+
+  protected @NotNull String getName() {
+    return myTestMethodName;
+  }
+
+  protected @NotNull String getTestName(boolean lowercaseFirstLetter) {
+    return PlatformTestUtil.getTestName(myTestMethodName, lowercaseFirstLetter);
   }
 
   protected void checkResult() throws IOException {
@@ -83,7 +114,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     BufferedImage originalImage = paintEditor(false, null, null);
     BufferedImage updatedImage = createImageForPainting(originalImage.getWidth(), originalImage.getHeight());
     originalImage.copyData(updatedImage.getRaster());
-    int[] yRange = getEditor().visualLineToYRange(visualLine);
+    int[] yRange = myFixture.getEditor().visualLineToYRange(visualLine);
     paintEditor(false, updatedImage, new Rectangle(0, yRange[0], updatedImage.getWidth(), yRange[1] - yRange[0]));
     assertImagesEqual(originalImage, updatedImage, null);
   }
@@ -94,38 +125,41 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   }
 
   protected void setUniformEditorHighlighter(@NotNull TextAttributes attributes) {
-    ((EditorEx)getEditor()).setHighlighter(new UniformHighlighter(attributes));
+    ((EditorEx)myFixture.getEditor()).setHighlighter(new UniformHighlighter(attributes));
   }
 
   protected RangeHighlighter addRangeHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
     return addRangeHighlighter(startOffset, endOffset, layer, new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN));
   }
 
-  protected RangeHighlighter addLineHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
-    return addLineHighlighter(startOffset, endOffset, layer, new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN));
+  protected void addLineHighlighter(int startOffset, int endOffset, int layer, Color foregroundColor, Color backgroundColor) {
+    addLineHighlighter(startOffset, endOffset, layer, new TextAttributes(foregroundColor, backgroundColor, null, null, Font.PLAIN));
   }
 
   protected RangeHighlighter addRangeHighlighter(int startOffset, int endOffset, int layer, TextAttributes textAttributes) {
-    return getEditor().getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.EXACT_RANGE);
+    return myFixture.getEditor().getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.EXACT_RANGE);
   }
 
-  protected RangeHighlighter addLineHighlighter(int startOffset, int endOffset, int layer, TextAttributes textAttributes) {
-    return getEditor().getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
+  protected void addLineHighlighter(int startOffset, int endOffset, int layer, TextAttributes textAttributes) {
+    myFixture.getEditor().getMarkupModel().addRangeHighlighter(startOffset, endOffset, layer, textAttributes, HighlighterTargetArea.LINES_IN_RANGE);
   }
 
-  protected RangeHighlighter addBorderHighlighter(int startOffset, int endOffset, int layer, Color borderColor) {
-    return addRangeHighlighter(startOffset, endOffset, layer, new TextAttributes(null, null, borderColor, EffectType.BOXED, Font.PLAIN));
+  protected void addBorderHighlighter(int startOffset, int endOffset, int layer, Color borderColor) {
+    addRangeHighlighter(startOffset, endOffset, layer, new TextAttributes(null, null, borderColor, EffectType.BOXED, Font.PLAIN));
   }
 
-  @Override
+  protected final void configureSoftWraps(int charCountToWrapAt) {
+    configureSoftWraps(charCountToWrapAt, true);
+  }
+
   protected void configureSoftWraps(int charCountToWrapAt, boolean useCustomSoftWrapIndent) {
     int charWidthInPixels = BitmapFont.CHAR_WIDTH;
     // we're adding 1 to charCountToWrapAt, to account for wrap character width, and 1 to overall width to overcome wrapping logic subtleties
-    EditorTestUtil.configureSoftWraps(getEditor(), (charCountToWrapAt + 1) * charWidthInPixels + 1, 1000, charWidthInPixels, useCustomSoftWrapIndent);
-    ((SoftWrapModelImpl)getEditor().getSoftWrapModel()).setSoftWrapPainter(new SoftWrapPainter() {
+    EditorTestUtil.configureSoftWraps(myFixture.getEditor(), (charCountToWrapAt + 1) * charWidthInPixels + 1, 1000, charWidthInPixels, useCustomSoftWrapIndent);
+    ((SoftWrapModelImpl)myFixture.getEditor().getSoftWrapModel()).setSoftWrapPainter(new SoftWrapPainter() {
       @Override
       public int paint(@NotNull Graphics g, @NotNull SoftWrapDrawingType drawingType, int x, int y, int lineHeight) {
-        g.setColor(getEditor().getColorsScheme().getDefaultForeground());
+        g.setColor(myFixture.getEditor().getColorsScheme().getDefaultForeground());
         int xStart = x + charWidthInPixels / 4;
         int xEnd = x + charWidthInPixels * 3 / 4;
         int yStart = y + lineHeight / 4;
@@ -175,7 +209,6 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     return new File(PathManagerEx.findFileUnderCommunityHome(directory), fileName);
   }
 
-  @Override
   @NotNull
   protected String getTestDataPath() {
     return TEST_DATA_PATH;
@@ -185,7 +218,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     BufferedImage image = paintEditor(withGutter, null, null);
 
     File fileWithExpectedResult = getTestDataFile(getTestDataPath(), expectedResultFileName);
-    if (OVERWRITE_TESTDATA) {
+    if (UsefulTestCase.OVERWRITE_TESTDATA) {
       ImageIO.write(image, "png", fileWithExpectedResult);
       System.err.println("File " + fileWithExpectedResult.getPath() + " created.");
     }
@@ -195,16 +228,16 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     }
     else {
       ImageIO.write(image, "png", fileWithExpectedResult);
-      fail("Missing test data created: " + fileWithExpectedResult.getPath());
+      Assertions.fail("Missing test data created: " + fileWithExpectedResult.getPath());
     }
   }
 
   protected BufferedImage paintEditor(boolean withGutter, @Nullable BufferedImage target, @Nullable Rectangle clip) throws IOException {
-    getEditor().getSettings().setAdditionalLinesCount(0);
-    getEditor().getSettings().setAdditionalColumnsCount(1);
+    myFixture.getEditor().getSettings().setAdditionalLinesCount(0);
+    myFixture.getEditor().getSettings().setAdditionalColumnsCount(1);
 
-    JComponent editorComponent = getEditor().getContentComponent();
-    JComponent gutterComponent = withGutter ? ((EditorImpl)getEditor()).getGutterComponentEx() : new MyEmptyPanel();
+    JComponent editorComponent = myFixture.getEditor().getContentComponent();
+    JComponent gutterComponent = withGutter ? ((EditorImpl)myFixture.getEditor()).getGutterComponentEx() : new MyEmptyPanel();
 
     Dimension editorSize = editorComponent.getPreferredSize();
     Dimension gutterSize = gutterComponent.getPreferredSize();
@@ -218,7 +251,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
       image = createImageForPainting(imageSize.width, imageSize.height);
     }
     else {
-      assertEquals("Unexpected image size", imageSize, new Dimension(target.getWidth(), target.getHeight()));
+      assertEquals(imageSize, new Dimension(target.getWidth(), target.getHeight()), "Unexpected image size");
       image = target;
     }
     BitmapFont plainFont = BitmapFont.loadFromFile(getFontFile(false));
@@ -258,7 +291,6 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
   }
 
   private static BufferedImage createImageForPainting(int width, int height) {
-    //noinspection UndesirableClassUsage
     return new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
   }
 
@@ -277,7 +309,6 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
 
   private File saveTmpImage(RenderedImage image, String nameSuffix) throws IOException {
     File savedImage = FileUtil.createTempFile(getName() + "-" + nameSuffix, ".png", false);
-    addTmpFileToKeep(savedImage.toPath());
     ImageIO.write(image, "png", savedImage);
     return savedImage;
   }
@@ -349,8 +380,7 @@ public abstract class EditorPaintingTestCase extends AbstractEditorTest {
     public static BitmapFont createFromFont(Font font) {
       font = font.deriveFont(FONT_SIZE);
       int imageWidth = CHAR_WIDTH * NUM_CHARACTERS;
-      //noinspection UndesirableClassUsage
-      BufferedImage image = new BufferedImage(imageWidth, CHAR_HEIGHT, BufferedImage.TYPE_BYTE_BINARY);
+        BufferedImage image = new BufferedImage(imageWidth, CHAR_HEIGHT, BufferedImage.TYPE_BYTE_BINARY);
       Graphics2D g = image.createGraphics();
       g.setColor(Color.white);
       g.fillRect(0, 0, imageWidth, CHAR_HEIGHT);

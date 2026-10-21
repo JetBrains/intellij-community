@@ -14,6 +14,34 @@ without relying on other test plugins.
 
 For full DSL reference (`moduleSet()`, `module()`, etc.), see [dsl-api-reference.md](dsl-api-reference.md).
 
+## Synthetic Test Plugins (dev build mode)
+
+A dev-mode runner of `intellij.yaml` whose `additional.modules` names `$TEST_MODULE_NAME$._test_plugin` needs no test
+plugin module: the dev build makes the plugin for the entry point module while it packs the product. To run a test module
+in dev build mode, add its name to `enabledForModules` of such a runner and run Generate Product Layouts once. The
+generator creates the missing `<module>.xml` in the test resource root, fills its `<dependencies>`, and validates the
+module in the product of the runner as it does for a `testPlugin {}` block.
+
+```yaml
+    - name: IntelliJ Community JUnit (dev mode)
+      enabledForModules:
+        - intellij.mcpserver.tests
+      jvmArgs:
+        - -Dadditional.modules=$TEST_MODULE_NAME$._test_plugin
+        - -Didea.dev.build.test.entry.point.module=$TEST_MODULE_NAME$
+```
+
+The content is the test module, the base test framework modules, and, recursively, every module the `<dependencies>`
+of a declared module name, unless the product registers the module in the `jetbrains` namespace. JPS dependencies do not
+count: the loader resolves a class only through declared dependencies. A reached module must be a test module, test
+support (`isTestSupportContentModule`), a library wrapper, or a test support module with production roots that
+`SyntheticTestPlugin.kt` names. Any other module with production roots fails the dev build, because a test runs against
+the product's copy of production code: run the test in the product that has the module, make it test support in
+`SyntheticTestPlugin.kt`, or drop the dependency.
+
+Use a `testPlugin {}` block when the plugin needs what the descriptors cannot express: `embeddedModule`,
+`additionalBundledPluginTargetNames`, `allowedMissingPluginIds`, or one plugin for several entry points.
+
 ## Usage
 
 ```kotlin
@@ -135,26 +163,11 @@ Created via `testPlugin {}` in `getProductContentDescriptor()`:
 
 ### Discovered Test Plugins
 
-Manually created plugins with handwritten plugin.xml:
-- Configured via `testPluginsByProduct` in `ModuleSetGenerationConfig`
+A hand-written test plugin, with its own plugin.xml, is for what neither a synthetic test plugin
+(`<module>._test_plugin`, see [above](#synthetic-test-plugins-dev-build-mode)) nor a `testPlugin {}` block covers:
+- Configured via `testPluginsByProduct` in `ModuleSetGenerationConfig`; the map in `ultimateGenerator.kt` is empty
 - `isDslDefined = false` in `PluginContentInfo`
 - Auto-fixes can be applied to plugin.xml
-
-```kotlin
-// In ultimateGenerator.kt
-testPluginsByProduct = mapOf(
-  "idea" to setOf(
-    "intellij.idea.ultimate.tests.devBuildTests.plugin",
-  ),
-  "CLion" to setOf(
-    "intellij.clion.dev.build.tests.plugin",
-  ),
-  "Rider" to setOf(
-    "intellij.rider.plugins.oss.test.plugin",
-    "intellij.rider.test.cases.rdct.plugin",
-  ),
-)
-```
 
 ## Automatic Dependency Addition
 

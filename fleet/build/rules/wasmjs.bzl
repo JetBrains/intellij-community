@@ -102,7 +102,6 @@ def fleet_wasmjs_module(
         test_size = None,
         test_timeout = None,
         test_skiko_runtime = False,
-        test_completion_grace_period_ms = 0,
         binary = False,
         binary_source_maps = None,
         binary_source_map_prefix = None,
@@ -216,20 +215,19 @@ def fleet_wasmjs_module(
             module_name = "%s.tests" % module_name,
             kotlinc_opts = kotlinc_opts,
             testdata = test_data,
-            test_completion_grace_period_ms = test_completion_grace_period_ms,
             configuration_scripts = test_configuration_scripts,
             npm_packages = test_npm_packages,
             # skiko/Compose modules import `./skiko.mjs` (which loads skiko.wasm) relative to the
             # linked module; wasmjs_test serves those runtime files and remaps the module-adjacent
             # URLs. See @skiko_js_wasm_runtime_extracted in fleet/fleet.MODULE.bazel.
-            module_runtime_files = [
-                "@skiko_js_wasm_runtime_extracted//:skiko.mjs",
-                "@skiko_js_wasm_runtime_extracted//:skiko.wasm",
-            ] if test_skiko_runtime else [],
+            module_runtime_files = {
+                "./skiko.mjs": "@skiko_js_wasm_runtime_extracted//:skiko.mjs",
+                "./skiko.wasm": "@skiko_js_wasm_runtime_extracted//:skiko.wasm",
+            } if test_skiko_runtime else {},
             # skiko's skia bindings are lazy stubs backed by skiko.wasm; the UI test framework
             # calls skia synchronously, so await its readiness promise before the entrypoint runs
             # (the same await production does in fleet.dock.desktop's WebFontLoading).
-            awaited_imports = {"skiko.mjs": "awaitSkiko"} if test_skiko_runtime else {},
+            awaited_imports = {"./skiko.mjs": "awaitSkiko"} if test_skiko_runtime else {},
             tags = ["fleet-browser-test"],
             size = test_size,
             timeout = test_timeout,

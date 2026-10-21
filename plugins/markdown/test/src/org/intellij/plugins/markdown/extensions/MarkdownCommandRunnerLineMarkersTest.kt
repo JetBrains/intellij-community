@@ -6,7 +6,7 @@ import com.intellij.execution.Executor
 import com.intellij.icons.AllIcons
 import com.intellij.lang.Language
 import com.intellij.markdown.backend.services.MarkdownFrontendRunnerRequestService
-import com.intellij.markdown.frontend.runner.MarkdownFrontendRunnerFlowService
+import com.intellij.markdown.frontend.execution.MarkdownFrontendRunnerFlowService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUiKind

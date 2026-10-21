@@ -1,11 +1,9 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.sceneBuilder;// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
@@ -35,6 +33,9 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CurrentJavaVersion;
 import com.intellij.util.Query;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
@@ -48,17 +49,18 @@ import com.oracle.javafx.scenebuilder.kit.fxom.FXOMProperty;
 import com.oracle.javafx.scenebuilder.kit.fxom.FXOMPropertyC;
 import com.oracle.javafx.scenebuilder.kit.library.LibraryItem;
 import com.oracle.javafx.scenebuilder.kit.metadata.util.PropertyName;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -72,6 +74,7 @@ import java.util.function.Predicate;
 
 /// Warning!
 /// It is loaded by SceneBuilderUtil to be compatible with 8 and 11 java
+@SuppressWarnings("unused")
 public class SceneBuilderImpl implements SceneBuilder {
   private static final Logger LOG = Logger.getInstance(SceneBuilderImpl.class);
   private static final PropertyName ourChildrenPropertyName = new PropertyName("children");
@@ -89,7 +92,15 @@ public class SceneBuilderImpl implements SceneBuilder {
   private Object mySelectionListener;
   private List<List<SelectionNode>> mySelectionState;
   protected final @NotNull ClassLoader myParentClassLoader;
+  private final Job myCreateJob;
+  private Job myReloadJob;
 
+  private record LibraryData(
+    @NotNull List<String> classpath,
+    @NotNull List<JavaFXPlatformHelper.CustomComponent> customComponents
+  ) {}
+
+  @RequiresEdt
   public SceneBuilderImpl(URL url, Project project, EditorCallback editorCallback, @NotNull ClassLoader loader) {
     myFileURL = url;
     myProject = project;
@@ -98,23 +109,18 @@ public class SceneBuilderImpl implements SceneBuilder {
 
     JavaFXPlatformHelper.disableImplicitExit();
 
-    final DumbService dumbService = DumbService.getInstance(myProject);
-    if (dumbService.isDumb()) {
-      dumbService.smartInvokeLater(() -> JavaFXPlatformHelper.javafxInvokeLater(this::create));
-    }
-    else {
-      JavaFXPlatformHelper.javafxInvokeLater(this::create);
-    }
+    myCreateJob = SceneBuilderBackgroundService.getInstance(project).computeInSmartMode(
+      this::collectLibraryData,
+      data -> JavaFXPlatformHelper.javafxInvokeLater(() -> create(data)),
+      myEditorCallback::handleError
+    );
   }
 
-  private void create() {
-    if (myProject.isDisposed()) {
-      return;
-    }
+  private void create(@NotNull LibraryData data) {
     Thread.currentThread().setUncaughtExceptionHandler(SceneBuilderImpl::logUncaughtException);
 
     myEditorController = new EditorController();
-    updateCustomLibrary();
+    updateCustomLibrary(data);
     JavaFXPlatformHelper.setupJFXPanel(myPanel, myEditorController);
 
     loadFile();
@@ -133,9 +139,9 @@ public class SceneBuilderImpl implements SceneBuilder {
     JavaFXPlatformHelper.addListeners(myEditorController, myListener, mySelectionListener);
   }
 
-  private void updateCustomLibrary() {
+  private void updateCustomLibrary(@NotNull LibraryData data) {
     final URLClassLoader oldClassLoader = myClassLoader;
-    myClassLoader = createProjectContentClassLoader(myProject, myParentClassLoader);
+    myClassLoader = createProjectContentClassLoader(data.classpath(), myParentClassLoader);
     JavaFXPlatformHelper.setDefaultClassLoader(myClassLoader);
 
     if (oldClassLoader != null) {
@@ -147,8 +153,7 @@ public class SceneBuilderImpl implements SceneBuilder {
       }
     }
 
-    final List<JavaFXPlatformHelper.CustomComponent> customComponents = DumbService.getInstance(myProject)
-      .runReadActionInSmartMode(this::collectCustomComponents);
+    final List<JavaFXPlatformHelper.CustomComponent> customComponents = data.customComponents();
 
     try {
       final JavaFXPlatformHelper.CustomLibrary customLibrary = new JavaFXPlatformHelper.CustomLibrary(myClassLoader, customComponents);
@@ -160,7 +165,18 @@ public class SceneBuilderImpl implements SceneBuilder {
     }
   }
 
-  private List<JavaFXPlatformHelper.CustomComponent> collectCustomComponents() {
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  private @NotNull LibraryData collectLibraryData() {
+    final List<String> classpath = OrderEnumerator.orderEntries(myProject)
+      .productionOnly().withoutSdk().recursively()
+      .getPathsList().getPathList();
+    return new LibraryData(classpath, collectCustomComponents());
+  }
+
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  private @NotNull List<JavaFXPlatformHelper.CustomComponent> collectCustomComponents() {
     if (myProject.isDisposed()) {
       return Collections.emptyList();
     }
@@ -177,15 +193,15 @@ public class SceneBuilderImpl implements SceneBuilder {
       final JavaSdkVersion ideJdkVersion = JavaSdkVersion.fromJavaVersion(CurrentJavaVersion.currentJavaVersion());
       final LanguageLevel ideLanguageLevel = ideJdkVersion != null ? ideJdkVersion.getMaxLanguageLevel() : null;
       final Query<PsiClass> query = ClassInheritorsSearch.search(nodeClass, scope, true, true, false);
-      final Set<PsiClass> result = new HashSet<>();
-      query.asIterable().forEach(psiClass -> {
-        if (psiClass.hasModifierProperty(PsiModifier.PUBLIC) &&
-            !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
-            !isBuiltInComponent(psiClass) &&
-            isCompatibleLanguageLevel(psiClass, ideLanguageLevel)) {
-          result.add(psiClass);
-        }
-      });
+      var filteredQuery = query
+        .filtering(psiClass -> {
+          return psiClass.hasModifierProperty(PsiModifier.PUBLIC) &&
+                 !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
+                 !isBuiltInComponent(psiClass) &&
+                 isCompatibleLanguageLevel(psiClass, ideLanguageLevel);
+        })
+        .findAll();
+      final Set<PsiClass> result = new HashSet<>(filteredQuery);
       return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
     });
     if (psiClasses.isEmpty()) {
@@ -195,6 +211,7 @@ public class SceneBuilderImpl implements SceneBuilder {
     return prepareCustomComponents(psiClasses);
   }
 
+  @RequiresReadLock
   private @NotNull List<JavaFXPlatformHelper.CustomComponent> prepareCustomComponents(Collection<PsiClass> psiClasses) {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
     final GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
@@ -222,6 +239,7 @@ public class SceneBuilderImpl implements SceneBuilder {
     return customComponents;
   }
 
+  @RequiresReadLock
   private @Nullable String getComponentModuleName(@NotNull PsiClass psiClass) {
     final VirtualFile vFile = PsiUtilCore.getVirtualFile(psiClass);
     if (vFile == null) return null;
@@ -245,25 +263,28 @@ public class SceneBuilderImpl implements SceneBuilder {
   }
 
   @Override
-  public boolean reload() {
-    if (myCustomComponents == null) return false;
+  public void reload(@NotNull Runnable onLibraryChanged) {
+    if (myReloadJob != null) myReloadJob.cancel(null);
 
-    final Collection<JavaFXPlatformHelper.CustomComponent> customComponents = DumbService.getInstance(myProject)
-      .runReadActionInSmartMode(this::collectCustomComponents);
-    if (!new HashSet<>(myCustomComponents).equals(new HashSet<>(customComponents))) {
-      return false;
-    }
-
-    JavaFXPlatformHelper.javafxInvokeLater(() -> {
-      if (myEditorController != null) {
-        loadFile();
-      }
-    });
-    return true;
+    myReloadJob = SceneBuilderBackgroundService.getInstance(myProject).computeInSmartMode(
+      this::collectCustomComponents,
+      customComponents -> JavaFXPlatformHelper.javafxInvokeLater(() -> {
+        if (myEditorController == null) return;
+        if (myCustomComponents == null || !new HashSet<>(myCustomComponents).equals(new HashSet<>(customComponents))) {
+          onLibraryChanged.run();
+        }
+        else {
+          loadFile();
+        }
+      }),
+      myEditorCallback::handleError
+    );
   }
 
   @Override
   public void close() {
+    myCreateJob.cancel(null);
+    if (myReloadJob != null) myReloadJob.cancel(null);
     JavaFXPlatformHelper.javafxInvokeLater(this::closeImpl);
   }
 
@@ -305,8 +326,8 @@ public class SceneBuilderImpl implements SceneBuilder {
 
   private List<List<SelectionNode>> getSelectionState() {
     AbstractSelectionGroup group = myEditorController.getSelection().getGroup();
-    if (group instanceof ObjectSelectionGroup) {
-      Set<FXOMObject> items = ((ObjectSelectionGroup)group).getItems();
+    if (group instanceof ObjectSelectionGroup selectionGroup) {
+      Set<FXOMObject> items = selectionGroup.getItems();
 
       List<List<SelectionNode>> state = new ArrayList<>();
       for (FXOMObject item : items) {
@@ -347,7 +368,7 @@ public class SceneBuilderImpl implements SceneBuilder {
     final VirtualFile file = PsiUtilCore.getVirtualFile(psiClass);
     if (file == null) return false;
     final List<OrderEntry> entries = ProjectRootManager.getInstance(psiClass.getProject()).getFileIndex().getOrderEntriesForFile(file);
-    return entries.stream().anyMatch(entry -> entry instanceof JdkOrderEntry);
+    return ContainerUtil.exists(entries, entry -> entry instanceof JdkOrderEntry);
   }
 
   private static boolean isCompatibleLanguageLevel(@NotNull PsiClass aClass, @Nullable LanguageLevel targetLevel) {
@@ -374,15 +395,12 @@ public class SceneBuilderImpl implements SceneBuilder {
     return true;
   }
 
-  private static @NotNull URLClassLoader createProjectContentClassLoader(Project project, @NotNull ClassLoader parentClassLoader) {
-    final List<String> pathList = ReadAction.compute(() ->
-                                                       OrderEnumerator.orderEntries(project).productionOnly().withoutSdk().recursively()
-                                                         .getPathsList().getPathList());
-
+  private static @NotNull URLClassLoader createProjectContentClassLoader(@NotNull List<String> pathList,
+                                                                        @NotNull ClassLoader parentClassLoader) {
     final List<URL> classpathUrls = new ArrayList<>();
     for (String path : pathList) {
       try {
-        URL url = new File(path).toURI().toURL();
+        URL url = Path.of(path).toUri().toURL();
         classpathUrls.add(url);
       }
       catch (MalformedURLException e) {
@@ -409,11 +427,11 @@ public class SceneBuilderImpl implements SceneBuilder {
   }
 
   private static List<FXOMObject> getChildComponents(FXOMObject component) {
-    if (component instanceof FXOMInstance) {
-      Map<PropertyName, FXOMProperty> properties = ((FXOMInstance)component).getProperties();
+    if (component instanceof FXOMInstance instance) {
+      Map<PropertyName, FXOMProperty> properties = instance.getProperties();
       FXOMProperty value = properties.get(ourChildrenPropertyName);
-      if (value instanceof FXOMPropertyC) {
-        return ((FXOMPropertyC)value).getValues();
+      if (value instanceof FXOMPropertyC prop) {
+        return prop.getValues();
       }
     }
     return Collections.emptyList();

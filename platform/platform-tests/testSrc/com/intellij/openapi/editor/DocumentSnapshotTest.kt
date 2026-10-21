@@ -36,7 +36,7 @@ internal class DocumentSnapshotTest {
   @Test
   fun `withClearedLineFlags of an untouched text returns the same snapshot`() {
     val snapshot = snapshot("a\nb\nc")
-    val op = DocumentOp.unmodifiedLinesOp(0, Int.MAX_VALUE, IntArray(0))
+    val op = DocumentOp.cleanLinesOp(0, Int.MAX_VALUE, IntArray(0))
     assertSame(snapshot, snapshot.applyOp(op))
   }
 
@@ -46,20 +46,6 @@ internal class DocumentSnapshotTest {
     val before = document.core.snapshot()
     document.modificationStamp = before.modState().stamp()
     assertSame(before, document.core.snapshot()) // relies on withText returning `this` for an unchanged text
-  }
-
-  @Test
-  fun `frozen document is cached while the snapshot is unchanged`() {
-    val document = DocumentImpl("abc")
-    assertSame(document.core.frozen(), document.core.frozen())
-  }
-
-  @Test
-  fun `frozen document is rebuilt once the snapshot changes`() {
-    val document = DocumentImpl("abc")
-    val before = document.core.frozen()
-    document.modificationStamp += 1
-    assertNotSame(before, document.core.frozen())
   }
 
   @Test

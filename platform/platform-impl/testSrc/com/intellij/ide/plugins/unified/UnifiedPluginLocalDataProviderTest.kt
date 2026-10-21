@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins.unified
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.ListPluginModel
 import com.intellij.ide.plugins.api.PluginDto
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.calculateTags
@@ -19,6 +20,34 @@ import org.junit.jupiter.api.Test
 
 @TestApplication
 internal class UnifiedPluginLocalDataProviderTest {
+  @Test
+  fun `local hints stay separate from errors and clear with replacement data`() {
+    val item = inventoryItem("unsupported.plugin", "Unsupported", runtimeOn = PluginSource.LOCAL)
+    val id = item.model.pluginId
+    val explanations = mapOf(id to listOf("Client: Light mode is not supported", "Host: Backend mode is not supported"))
+    val snapshot = buildLocalSnapshot(
+      inventory = UnifiedPluginInventory(listOf(item), emptyList()),
+      updates = null,
+      contentRevision = 1,
+      enabledStates = mapOf(id to true),
+      errors = emptyMap(),
+      installationStates = emptyMap(),
+      restrictions = emptyMap(),
+      expectedExplanations = explanations + (PluginId.getId("absent") to listOf("Absent plugin")),
+    )
+
+    assertThat(snapshot.installedItems.single().rowInput?.expectedExplanations).containsExactlyElementsOf(explanations.getValue(id))
+    assertThat(snapshot.installedItems.single().rowInput?.errors).isEmpty()
+    assertThat(snapshot.installedItems.single().rowInput?.enabled).isTrue()
+    assertThat(snapshot.listModelData.expectedExplanations).isEqualTo(explanations)
+    val merged = mergePluginListModelData(snapshot.listModelData, PluginListModelData.EMPTY)
+    val model = ListPluginModel()
+    model.replaceAll(merged.installedModels, merged.errors, merged.installationStates, merged.updateSources, merged.expectedExplanations)
+    assertThat(model.expectedExplanations).isEqualTo(explanations)
+    model.replaceAll(emptyMap(), emptyMap(), emptyMap(), emptyMap())
+    assertThat(model.expectedExplanations).isEmpty()
+  }
+
   @Test
   fun `local snapshot enriches row inputs and list model data`() {
     val installedModel = plugin("custom.plugin", "Custom").apply { vendor = "JetBrains" }
@@ -192,6 +221,7 @@ internal class UnifiedPluginLocalDataProviderTest {
       ),
       installationStates = emptyMap(),
       restrictions = emptyMap(),
+      expectedExplanations = mapOf(installedHealthySecond.model.pluginId to listOf("Light mode is not supported")),
     )
 
     assertThat(snapshot.installedItems.map { it.pluginId.idString }).containsExactly(

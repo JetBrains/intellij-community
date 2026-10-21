@@ -6,13 +6,15 @@ import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentText
 
 /**
- * A [DocumentModState] that keeps the modified positions of [text] in [ModifiedPositions], so an op
- * needs no line data.
+ * A [DocumentModState] that keeps the modified positions of [text] in [ModifiedPositions], so a text
+ * op needs no line data.
  *
  * A text of length `n` has `n + 1` positions. A line is modified when a position from the line start
  * to its separator is modified. These are the lines that [ModifiedLineSet] marks for the same ops.
- * Only [isLineModified] and [DocumentOp.UnmodifiedLines] read line numbers, and they read them from a
- * copy of [text], so that [text] builds no line data.
+ * Only [isLineModified] and [DocumentOp.CleanLines] read line numbers, and they read them from
+ * [text]. So [text] builds line data only when a caller asks about a line.
+ *
+ * [positions] is `null` before the first text op, as [ModifiedLineSet] does not exist then.
  *
  * [lastLineHasSeparator] follows the same flag of [ModifiedLineSet]. It decides whether an empty last
  * line can be modified, and a change inside one line keeps it even when the text then ends with a
@@ -22,15 +24,9 @@ internal class RangeModState private constructor(
   private val stamp: Long,
   private val sequence: Int,
   private val text: DocumentText,
-  private val edits: Edits,
+  private val positions: ModifiedPositions?,
   private val lastLineHasSeparator: Boolean,
 ) : DocumentModState {
-
-  /**
-   * The copy of [text] that answers line queries. Non-volatile on purpose: a racy reader makes its own
-   * copy, which is equal.
-   */
-  private var cachedLineText: DocumentText? = null
 
   override fun stamp(): Long {
     return stamp
@@ -41,10 +37,8 @@ internal class RangeModState private constructor(
   }
 
   override fun isLineModified(line: Int): Boolean {
-    return when (edits) {
-      Edits.None -> false
-      is Edits.Some -> isModified(edits.positions, lineText(), line)
-    }
+    val positions = positions ?: return false
+    return isModified(positions, line)
   }
 
   override fun applyOp(before: DocumentText, after: DocumentText, op: DocumentOp): DocumentModState {
@@ -52,23 +46,23 @@ internal class RangeModState private constructor(
       is DocumentOp.Insert -> applyTextChange(before, after, op.offset(), 0, op.fragment())
       is DocumentOp.Delete -> applyTextChange(before, after, op.offset(), op.length(), "")
       is DocumentOp.ModStamp -> applyModStamp(op)
-      is DocumentOp.UnmodifiedLines -> applyUnmodifiedLines(op)
+      is DocumentOp.CleanLines -> applyCleanLines(op)
     }
   }
 
-  private fun isModified(positions: ModifiedPositions, lines: DocumentText, line: Int): Boolean {
-    checkLine(lines, line)
-    if (isLastEmptyLine(lines, line)) {
+  private fun isModified(positions: ModifiedPositions, line: Int): Boolean {
+    checkLine(text, line)
+    if (isLastEmptyLine(line)) {
       return false
     }
-    return positions.hasModified(lines.lineStartOffset(line), lines.lineEndOffset(line))
+    return positions.hasModified(text.lineStartOffset(line), text.lineEndOffset(line))
   }
 
   /**
    * Whether [line] is the empty line after a final separator, which is never modified.
    */
-  private fun isLastEmptyLine(lines: DocumentText, line: Int): Boolean {
-    return lastLineHasSeparator && line == lines.lineCount() - 1
+  private fun isLastEmptyLine(line: Int): Boolean {
+    return lastLineHasSeparator && line == text.lineCount() - 1
   }
 
   /**
@@ -87,17 +81,14 @@ internal class RangeModState private constructor(
     val oldChars = before.chars()
     val newChars = after.chars()
     val change = widen(oldChars, newChars, offset, removed, inserted.length)
-    val oldPositions = when (edits) {
-      Edits.None -> ModifiedPositions.clean(oldChars.length + 1)
-      is Edits.Some -> edits.positions
-    }
+    val oldPositions = positions ?: ModifiedPositions.clean(oldChars.length + 1)
     val newPositions = oldPositions.splice(change.start, change.end, change.length + 1)
     checkPositions(newPositions, newChars)
     return RangeModState(
       stamp = stamp,
       sequence = sequence + 1,
       text = after,
-      edits = Edits.Some(newPositions),
+      positions = newPositions,
       lastLineHasSeparator = lastLineHasSeparatorAfter(oldChars, newChars, change, inserted),
     )
   }
@@ -141,84 +132,93 @@ internal class RangeModState private constructor(
       stamp = newStamp,
       sequence = newSequence,
       text = text,
-      edits = edits,
+      positions = positions,
       lastLineHasSeparator = lastLineHasSeparator,
     )
   }
 
   /**
    * The state with the lines of [op] cleared, as [ModifiedLineSet.clearModificationFlags] checks and
-   * clears them. An except line keeps its flag.
+   * clears them. An except line keeps its flag. A clear that changes no flag returns this state.
    */
-  private fun applyUnmodifiedLines(op: DocumentOp.UnmodifiedLines): DocumentModState {
-    val positions = when (edits) {
-      Edits.None -> return this
-      is Edits.Some -> edits.positions
+  private fun applyCleanLines(op: DocumentOp.CleanLines): DocumentModState {
+    val positions = positions ?: return this
+    val clearedLines = clearedLines(op.startLine(), op.endLine())
+    val exceptLines = op.exceptLines()
+    if (clearsNoFlag(positions, clearedLines, exceptLines)) {
+      return this
     }
-    val lines = lineText()
-    val lineCount = lines.lineCount()
-    val keptLines = op.exceptLines().filter { line ->
-      line in 0 until lineCount && isModified(positions, lines, line)
+    val lineCount = text.lineCount()
+    val keptLines = exceptLines.filter { line ->
+      line in 0 until lineCount && isModified(positions, line)
     }
-    var cleared = cleared(positions, lines, op.startLine(), op.endLine())
+    val from = text.lineStartOffset(clearedLines.first)
+    val to = text.lineEndOffset(clearedLines.last)
+    var cleared = positions.fill(from, to, modified = false)
     for (line in keptLines) {
-      cleared = cleared.fill(lines.lineStartOffset(line), lines.lineEndOffset(line), modified = true)
+      cleared = cleared.fill(text.lineStartOffset(line), text.lineEndOffset(line), modified = true)
     }
     return RangeModState(
       stamp = stamp,
       sequence = sequence,
       text = text,
-      edits = Edits.Some(cleared),
+      positions = cleared,
       lastLineHasSeparator = lastLineHasSeparator,
     )
   }
 
-  private fun cleared(
-    positions: ModifiedPositions,
-    lines: DocumentText,
-    startLine: Int,
-    endLine: Int,
-  ): ModifiedPositions {
-    val lineCount = lines.lineCount()
+  /**
+   * The lines that a clear from [startLine] to [endLine] covers. Fails for a range that [text] does not
+   * hold, as [ModifiedLineSet.clearModificationFlags] does.
+   */
+  private fun clearedLines(startLine: Int, endLine: Int): IntRange {
+    val lineCount = text.lineCount()
     require(startLine <= endLine) {
       "endLine < startLine: $endLine < $startLine; lineCount: $lineCount"
     }
     val isWholeEmptyText = endLine == 0 || endLine == Int.MAX_VALUE
     if (lineCount == 0 && startLine == 0 && isWholeEmptyText) {
-      return positions
+      return IntRange.EMPTY
     }
-    checkLine(lines, startLine)
+    checkLine(text, startLine)
     val clearedEnd = if (endLine == Int.MAX_VALUE) lineCount else endLine
-    checkLine(lines, clearedEnd - 1)
-    if (startLine >= clearedEnd) {
-      return positions
-    }
-    val from = lines.lineStartOffset(startLine)
-    val to = lines.lineEndOffset(clearedEnd - 1)
-    return positions.fill(from, to, modified = false)
+    checkLine(text, clearedEnd - 1)
+    return startLine until clearedEnd
   }
 
   /**
-   * A copy of [text] that holds the line data. A text with line data updates it on every later op, so
-   * [text] itself must not build any.
+   * Whether a clear of [clearedLines] keeps every flag, because each modified line among them is one of
+   * [exceptLines]. It reads the positions that the clear sets clean, so it never misses a change.
    */
-  private fun lineText(): DocumentText {
-    var copy = cachedLineText
-    if (copy == null) {
-      copy = DocumentText.createText(text.chars())
-      cachedLineText = copy
+  private fun clearsNoFlag(
+    positions: ModifiedPositions,
+    clearedLines: IntRange,
+    exceptLines: IntArray,
+  ): Boolean {
+    val exceptLinesInRange = exceptLines.filter { line -> line in clearedLines }.distinct().sorted()
+    var gapStart = clearedLines.first
+    for (exceptLine in exceptLinesInRange) {
+      if (gapStart < exceptLine && hasModifiedLines(positions, gapStart, exceptLine - 1)) {
+        return false
+      }
+      gapStart = exceptLine + 1
     }
-    return copy
+    if (gapStart > clearedLines.last) {
+      return true
+    }
+    return !hasModifiedLines(positions, gapStart, clearedLines.last)
   }
 
   /**
-   * The two states of the modified positions: [None] before the first text op, as [ModifiedLineSet]
-   * does not exist then, and [Some] after it.
+   * Whether a position from the start of [firstLine] to the separator of [lastLine] is modified.
    */
-  private sealed interface Edits {
-    object None : Edits
+  private fun hasModifiedLines(positions: ModifiedPositions, firstLine: Int, lastLine: Int): Boolean {
+    return positions.hasModified(text.lineStartOffset(firstLine), text.lineEndOffset(lastLine))
+  }
 
-    class Some(val positions: ModifiedPositions) : Edits
+  override fun toString(): String {
+    val runs = positions?.runCount() ?: 0
+    return "RangeModState{stamp=$stamp, sequence=$sequence, runs=$runs}"
   }
 
   /**
@@ -235,7 +235,7 @@ internal class RangeModState private constructor(
         stamp = DocumentModStamp.next(),
         sequence = 0,
         text = text,
-        edits = Edits.None,
+        positions = null,
         lastLineHasSeparator = endsWithLineBreak(text.chars()),
       )
     }
@@ -297,8 +297,8 @@ internal class RangeModState private constructor(
       }
     }
 
-    private fun checkLine(lines: DocumentText, line: Int) {
-      val lineCount = lines.lineCount()
+    private fun checkLine(text: DocumentText, line: Int) {
+      val lineCount = text.lineCount()
       if (line !in 0 until lineCount) {
         throw IndexOutOfBoundsException("Wrong line: $line. Available lines count: $lineCount")
       }

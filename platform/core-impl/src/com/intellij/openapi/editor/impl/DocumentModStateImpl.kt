@@ -37,7 +37,7 @@ internal class DocumentModStateImpl private constructor(
       is DocumentOp.Insert -> applyInsert(before, after, op)
       is DocumentOp.Delete -> applyDelete(before, after, op)
       is DocumentOp.ModStamp -> applyModStamp(op)
-      is DocumentOp.UnmodifiedLines -> applyUnmodifiedLines(before, op)
+      is DocumentOp.CleanLines -> applyCleanLines(before, op)
     }
   }
 
@@ -92,7 +92,7 @@ internal class DocumentModStateImpl private constructor(
     return DocumentModStateImpl(newModStamp, newModSeq, modifiedLines)
   }
 
-  private fun applyUnmodifiedLines(text: DocumentText, op: DocumentOp.UnmodifiedLines): DocumentModState {
+  private fun applyCleanLines(text: DocumentText, op: DocumentOp.CleanLines): DocumentModState {
     if (this.modifiedLines == null) {
       // there were no text changes if line set is not created yet
       return this

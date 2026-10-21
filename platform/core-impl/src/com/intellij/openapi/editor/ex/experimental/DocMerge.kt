@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.impl.experimental.DocMergeImpl
 
 /**
- * The result of [DocBranch.mergeWithOps]: the merged branch, plus the ops that turn the text of the
+ * The result of [DocumentBranch.mergeWithOps]: the merged branch, plus the ops that turn the text of the
  * receiver into the text of that branch.
  *
  * An editor applies these ops to its document, so the carets, the markers and every other listener
@@ -15,9 +15,9 @@ import com.intellij.openapi.editor.impl.experimental.DocMergeImpl
  */
 interface DocMerge {
   /**
-   * The merged branch: the value that [DocBranch.merge] returns for the same two branches.
+   * The merged branch: the value that [DocumentBranch.merge] returns for the same two branches.
    */
-  fun branch(): DocBranch
+  fun branch(): DocumentBranch
 
   /**
    * The ops from the text of the receiver to the text of [branch], in apply order.
@@ -43,7 +43,7 @@ interface DocMerge {
      * A merge with [ops] ready. The list must not change after this call.
      */
     @JvmStatic
-    fun ready(branch: DocBranch, ops: List<DocumentOp.Text>): DocMerge {
+    fun ready(branch: DocumentBranch, ops: List<DocumentOp.Text>): DocMerge {
       return DocMergeImpl(branch, lazyOf(ops))
     }
 
@@ -52,7 +52,7 @@ interface DocMerge {
      * that cannot change. It can run more than once when threads race, so it must give equal lists.
      */
     @JvmStatic
-    fun deferred(branch: DocBranch, lazyOps: () -> List<DocumentOp.Text>): DocMerge {
+    fun deferred(branch: DocumentBranch, lazyOps: () -> List<DocumentOp.Text>): DocMerge {
       return DocMergeImpl(branch, lazy(LazyThreadSafetyMode.PUBLICATION, lazyOps))
     }
   }

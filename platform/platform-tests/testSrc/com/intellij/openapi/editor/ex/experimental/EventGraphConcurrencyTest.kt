@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicReference
  *
  * What these tests do NOT claim: that a document is thread safe. Two threads that apply an
  * op to ONE value under ONE agent both mint the same (agent, seq) and diverge. That breaks
- * the agent contract of [DocBranch], and no lock would fix it. Each writer below therefore owns
+ * the agent contract of [DocumentBranch], and no lock would fix it. Each writer below therefore owns
  * its own agent.
  */
 class EventGraphConcurrencyTest {
@@ -50,15 +50,15 @@ class EventGraphConcurrencyTest {
    */
   @Test
   fun `a reader replays a published value while a writer appends`() {
-    val published = ConcurrentLinkedQueue<DocBranch>()
+    val published = ConcurrentLinkedQueue<DocumentBranch>()
     val writing = AtomicBoolean(true)
     withPool(READERS + 1) { pool ->
       // The barrier makes the reads overlap the writes. Without it a fixed pool can run the
       // writer to completion before it creates a reader thread, and the readers would then
       // drain a queue that nobody is still filling.
       val ready = CyclicBarrier(READERS + 1)
-      val writer = pool.submit<DocBranch> {
-        var branch = DocBranch.createBranch("", agent("writer"))
+      val writer = pool.submit<DocumentBranch> {
+        var branch = DocumentBranch.createBranch("", agent("writer"))
         try {
           ready.await(TIMEOUT_SECONDS, TimeUnit.SECONDS)
           var caret = 0
@@ -111,7 +111,7 @@ class EventGraphConcurrencyTest {
    */
   @Test
   fun `a past version replays while the graph grows`() {
-    var start = DocBranch.createBranch("", agent("writer"))
+    var start = DocumentBranch.createBranch("", agent("writer"))
     repeat(40) {
       start = start.applyOp(insertOp(start.length(), "o"))
     }
@@ -132,7 +132,7 @@ class EventGraphConcurrencyTest {
       val smallReads = CountDownLatch(READERS)
       val grownReads = CountDownLatch(READERS)
       val grownSize = past.graph().size() + APPENDS
-      val writer = pool.submit<DocBranch> {
+      val writer = pool.submit<DocumentBranch> {
         var branch = past
         try {
           ready.await(TIMEOUT_SECONDS, TimeUnit.SECONDS)
@@ -213,7 +213,7 @@ class EventGraphConcurrencyTest {
         // The barrier lines the writers up, so their appends overlap.
         val barrier = CyclicBarrier(WRITERS)
         val results = List(WRITERS) { writer ->
-          pool.submit<DocBranch> {
+          pool.submit<DocumentBranch> {
             var branch = shared.fork(agent("w$writer"))
             barrier.await(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             repeat(OPS_PER_WRITER) { op ->
@@ -265,7 +265,7 @@ class EventGraphConcurrencyTest {
         // several times instead of once, and the threads reach the same union by different merge
         // orders. Convergence and the races get tested together.
         val merged = List(WRITERS) { i ->
-          pool.submit<DocBranch> {
+          pool.submit<DocumentBranch> {
             barrier.await(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             var result = shared
             repeat(WRITERS) { step ->
@@ -305,7 +305,7 @@ class EventGraphConcurrencyTest {
   fun `replicas that gossip on their own threads converge`() {
     withPool(REPLICAS) { pool ->
       repeat(GOSSIP_ROUNDS) { round ->
-        val base = DocBranch.createBranch("abc", agent("base"))
+        val base = DocumentBranch.createBranch("abc", agent("base"))
         val published = List(REPLICAS) { i -> AtomicReference(base.fork(agent("r$i"))) }
         val ready = CyclicBarrier(REPLICAS)
         val workers = List(REPLICAS) { i ->
@@ -370,7 +370,7 @@ class EventGraphConcurrencyTest {
         val shared = baseOfRuns(baseOps)
         val barrier = CyclicBarrier(WRITERS)
         val results = List(WRITERS) { writer ->
-          pool.submit<DocBranch> {
+          pool.submit<DocumentBranch> {
             var branch = shared.fork(agent("w$writer"))
             val past = ArrayList<Pair<Version, String>>()
             var caret = 0
@@ -406,8 +406,8 @@ class EventGraphConcurrencyTest {
    * A base of [ops] runs. Every op inserts at the front, so no op extends the run before it,
    * and the run count, not only the length, sweeps with [ops].
    */
-  private fun baseOfRuns(ops: Int): DocBranch {
-    var base = DocBranch.createBranch("", agent("base"))
+  private fun baseOfRuns(ops: Int): DocumentBranch {
+    var base = DocumentBranch.createBranch("", agent("base"))
     repeat(ops) {
       base = base.applyOp(insertOp(0, "o"))
     }

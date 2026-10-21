@@ -10,7 +10,6 @@ import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.PsiClassOwnerEx;
@@ -94,7 +93,7 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
         if (JavaMultiReleaseUtil.getVersion(subDir.getVirtualFile()) != null) {
           continue;
         }
-        final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(subDir);
+        final PsiPackage aPackage = JavaOptionalServices.getJavaDirectoryService().getPackage(subDir);
         if (aPackage != null) {
           final String subQualifiedName = aPackage.getQualifiedName();
           if (subQualifiedName.startsWith(qualifiedName) && !packagesMap.containsKey(subQualifiedName)) {
@@ -120,7 +119,7 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
     List<PsiClass> list = null;
     String packageName = psiPackage.getQualifiedName();
     for (PsiDirectory dir : psiPackage.getDirectories(scope)) {
-      PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(dir, scope);
+      PsiClass[] classes = JavaOptionalServices.getJavaDirectoryService().getClasses(dir, scope);
       list = processClasses(shortName, classes, list, packageName);
     }
     for (PsiFile file : psiPackage.getIndividualFiles(scope)) {

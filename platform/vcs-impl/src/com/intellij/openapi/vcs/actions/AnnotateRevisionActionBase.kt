@@ -5,6 +5,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenMode
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.project.DumbAwareAction
@@ -159,10 +161,12 @@ internal abstract class AnnotateRevisionActionBase : DumbAwareAction {
         translateLine(oldContent, content, annotatedLine)
       }
 
-      withContext(Dispatchers.EDT) {
-        val openFileDescriptor = OpenFileDescriptor(project, file, newLine, 0)
-        FileEditorManager.getInstance(project).openTextEditor(openFileDescriptor, true)
-      }
+      val openFileDescriptor = OpenFileDescriptor(project, file, newLine, 0)
+      FileEditorManager.getInstanceAsync(project).openEditor(
+        openFileDescriptor,
+        FileEditorOpenRequest.fromDescriptor(openFileDescriptor)
+          .withRequestFocus(true).withOpenMode(FileEditorOpenMode.DEFAULT)
+      )
     }
 
     @JvmStatic

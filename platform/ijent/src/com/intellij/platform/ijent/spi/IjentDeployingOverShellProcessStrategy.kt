@@ -17,11 +17,11 @@ import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.ParentOfIjentScopes
 import com.intellij.platform.ijent.asyncSafe
-import com.intellij.platform.ijent.causeSequence
 import com.intellij.platform.ijent.getIjentGrpcArgv
 import com.intellij.platform.ijent.spi.IjentSessionMediatorUtils.readLineOrThrow
 import com.intellij.platform.ijent.tcp.MutualTlsCertificates
 import com.intellij.platform.ijent.tcp.TcpDeployInfo
+import com.intellij.util.causeChain
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
@@ -622,7 +622,7 @@ private suspend fun <T : Any> ShellSession.execCommand(block: suspend ShellSessi
 
     for (secondaryError in listOfNotNull(errorFromStack, cleanup.processFailure, cleanup.cleanupFailure)) {
       // The main error can be a copy of the exit reason for this caller. Then the exit reason is its cause, not a suppressed error.
-      if (secondaryError !in mainError.causeSequence() + mainError.suppressed) {
+      if (secondaryError !in mainError.causeChain() + mainError.suppressed) {
         mainError.addSuppressed(secondaryError)
       }
     }

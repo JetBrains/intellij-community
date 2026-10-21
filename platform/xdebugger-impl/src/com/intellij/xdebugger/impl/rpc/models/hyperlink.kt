@@ -2,9 +2,9 @@
 package com.intellij.xdebugger.impl.rpc.models
 
 import com.intellij.platform.debugger.impl.rpc.XDebuggerHyperlinkId
-import com.intellij.platform.kernel.ids.BackendValueIdType
-import com.intellij.platform.kernel.ids.findValueById
-import com.intellij.platform.kernel.ids.storeValueGlobally
+import com.intellij.platform.rpc.ids.BackendValueIdType
+import com.intellij.platform.rpc.ids.findValueById
+import com.intellij.platform.rpc.ids.storeValueGlobally
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus

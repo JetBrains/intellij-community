@@ -28,6 +28,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -116,7 +117,10 @@ internal class DiffPatchFileEditorProvider : FileEditorProvider, StructureViewFi
 }
 
 private fun switchToEditableView(project: Project, file: VirtualFile) {
-  FileEditorManager.getInstance(project).openTextEditor(OpenFileDescriptor(project, file), true)
+  val fileEditorManager = FileEditorManager.getInstance(project)
+  val openDescriptor = OpenFileDescriptor(project, file)
+  fileEditorManager.requestOpenTextEditor(openDescriptor, FileEditorOpenRequest.fromDescriptor(openDescriptor)
+    .withRequestFocus(true))
 }
 
 private fun buildCombinedDiffModel(document: Document): List<CombinedBlockProducer> {

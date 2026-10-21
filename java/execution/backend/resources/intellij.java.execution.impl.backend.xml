@@ -2,7 +2,6 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="fleet.rhizomedb"/>
     <module name="intellij.java.execution.impl"/>
     <module name="intellij.java.execution.impl.shared"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
@@ -17,7 +16,6 @@
     <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.rpc"/>
-    <module name="intellij.platform.kernel.backend"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.project"/>

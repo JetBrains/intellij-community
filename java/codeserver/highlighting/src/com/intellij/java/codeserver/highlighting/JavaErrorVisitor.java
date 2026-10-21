@@ -14,6 +14,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
@@ -236,6 +237,16 @@ final class JavaErrorVisitor extends JavaElementVisitor {
 
   @NotNull JavaSdkVersion sdkVersion() {
     return myJavaSdkVersion;
+  }
+
+  /**
+   * Returns true when the file is in a source root or in library classes.
+   * A type accessibility check against a resolve scope must skip any other file, because no resolve scope contains it.
+   * For example, a class declared in a JSP is in a web root.
+   */
+  boolean isInSourceOrLibraryClasses(@NotNull VirtualFile file) {
+    FileIndexFacade index = FileIndexFacade.getInstance(myProject);
+    return index.isInSource(file) || index.isInLibraryClasses(file);
   }
 
   @Contract(pure = true)

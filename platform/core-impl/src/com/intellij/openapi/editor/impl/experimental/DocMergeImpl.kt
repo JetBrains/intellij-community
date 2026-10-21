@@ -2,7 +2,7 @@
 package com.intellij.openapi.editor.impl.experimental
 
 import com.intellij.openapi.editor.ex.DocumentOp
-import com.intellij.openapi.editor.ex.experimental.DocBranch
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import com.intellij.openapi.editor.ex.experimental.DocMerge
 
 /**
@@ -16,11 +16,11 @@ import com.intellij.openapi.editor.ex.experimental.DocMerge
  * with it the values that only the computation needed.
  */
 internal class DocMergeImpl(
-  private val branch: DocBranch,
-  private val ops: Lazy<List<DocumentOp.Text>>,
+    private val branch: DocumentBranch,
+    private val ops: Lazy<List<DocumentOp.Text>>,
 ) : DocMerge {
 
-  override fun branch(): DocBranch {
+  override fun branch(): DocumentBranch {
     return branch
   }
 

@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test
 
 /**
  * The platform gives an LSP server an identity that holds the root paths, not the module, so a
- * caller has to pick the client that answers for its own module itself. [clientForModule] is that
+ * caller has to pick the client that answers for its own module itself. [clientFor] is that
  * pick. One server can answer for several modules, so the pick reads the whole served set.
  */
 @TestApplication
@@ -31,48 +31,48 @@ internal class PyLspModuleClientsTest {
 
   @Test
   fun `each module gets the client that answers for it`() {
-    val main = mainPyProject.get().residesOnModule
-    val second = secondPyProject.get().residesOnModule
+    val main = mainPyProject.get()
+    val second = secondPyProject.get()
     val mainClient = fakePyToolClient(main)
     val secondClient = fakePyToolClient(second)
     val clients = listOf(mainClient, secondClient)
 
-    assertSame(mainClient, clients.clientForModule(main))
-    assertSame(secondClient, clients.clientForModule(second))
+    assertSame(mainClient, clients.clientFor(main))
+    assertSame(secondClient, clients.clientFor(second))
   }
 
   @Test
   fun `one client answers for every module it serves`() {
-    val main = mainPyProject.get().residesOnModule
-    val second = secondPyProject.get().residesOnModule
+    val main = mainPyProject.get()
+    val second = secondPyProject.get()
     val client = fakePyToolClient(main, second)
 
-    assertTrue(main in client.pyServedModules)
-    assertTrue(second in client.pyServedModules)
-    assertSame(client, listOf(client).clientForModule(main))
-    assertSame(client, listOf(client).clientForModule(second))
+    assertTrue(main in client.pyServedProjects)
+    assertTrue(second in client.pyServedProjects)
+    assertSame(client, listOf(client).clientFor(main))
+    assertSame(client, listOf(client).clientFor(second))
   }
 
   @Test
   fun `the client of another module is not taken as a fallback`() {
-    val main = mainPyProject.get().residesOnModule
-    val second = secondPyProject.get().residesOnModule
+    val main = mainPyProject.get()
+    val second = secondPyProject.get()
 
-    assertNull(listOf(fakePyToolClient(main)).clientForModule(second))
+    assertNull(listOf(fakePyToolClient(main)).clientFor(second))
   }
 
   @Test
   fun `no client at all answers for no module`() {
-    assertNull(emptyList<LspClient>().clientForModule(mainPyProject.get().residesOnModule))
+    assertNull(emptyList<LspClient>().clientFor(mainPyProject.get()))
   }
 
   @Test
   fun `a client of another integration serves no python module`() {
-    val main = mainPyProject.get().residesOnModule
-    val foreign = fakePyLspClient(ForeignDescriptor(main.project))
+    val main = mainPyProject.get()
+    val foreign = fakePyLspClient(ForeignDescriptor(main.residesOnModule.project))
 
-    assertTrue(foreign.pyServedModules.isEmpty())
-    assertNull(listOf(foreign).clientForModule(main))
+    assertTrue(foreign.pyServedProjects.isEmpty())
+    assertNull(listOf(foreign).clientFor(main))
   }
 
   /**
@@ -81,17 +81,17 @@ internal class PyLspModuleClientsTest {
    */
   @Test
   fun `a shut-down client answers for no module`() {
-    val main = mainPyProject.get().residesOnModule
+    val main = mainPyProject.get()
 
-    assertNull(listOf(fakePyToolClient(main, serverState = LspServerState.ShutdownNormally)).clientForModule(main))
+    assertNull(listOf(fakePyToolClient(main, serverState = LspServerState.ShutdownNormally)).clientFor(main))
   }
 
   /** The platform answers `null` to every request sent before the server runs, so the client answers nothing yet. */
   @Test
   fun `an initializing client answers for no module`() {
-    val main = mainPyProject.get().residesOnModule
+    val main = mainPyProject.get()
 
-    assertNull(listOf(fakePyToolClient(main, serverState = LspServerState.Initializing)).clientForModule(main))
+    assertNull(listOf(fakePyToolClient(main, serverState = LspServerState.Initializing)).clientFor(main))
   }
 
   private class ForeignDescriptor(project: Project) : LspClientDescriptor(project, "foreign") {

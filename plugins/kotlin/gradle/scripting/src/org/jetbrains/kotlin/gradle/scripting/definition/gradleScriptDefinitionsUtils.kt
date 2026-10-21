@@ -17,6 +17,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 import kotlin.script.experimental.api.ScriptCompilationConfigurationKeys
 import kotlin.script.experimental.host.ScriptingHostConfiguration
+import kotlin.script.experimental.host.getRefinementEnvironment
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 import kotlin.script.experimental.util.PropertiesCollection
 
@@ -70,19 +71,23 @@ fun getGradleTemplatesNames(gradleVersion: GradleVersion?): List<String> {
     return templateClasses
 }
 
-private fun GradleDefinitionsParams.toHostConfiguration(): ScriptingHostConfiguration =
-    ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
-        getEnvironment {
-            mapOf(
-                "gradleHome" to gradleHome.let(::File),
-                "gradleJavaHome" to javaHome,
-                "projectRoot" to workingDir.let(::File),
-                "gradleOptions" to emptyList<String>(), // There is no option in UI to set project wide gradleOptions
-                "gradleJvmOptions" to jvmArguments,
-                "gradleEnvironmentVariables" to environment
-            )
-        }
+private fun GradleDefinitionsParams.toHostConfiguration(): ScriptingHostConfiguration {
+    val refinementEnvironment = {
+        mapOf(
+            "gradleHome" to gradleHome.let(::File),
+            "gradleJavaHome" to javaHome,
+            "projectRoot" to workingDir.let(::File),
+            "gradleOptions" to emptyList<String>(), // There is no option in UI to set project wide gradleOptions
+            "gradleJvmOptions" to jvmArguments,
+            "gradleEnvironmentVariables" to environment
+        )
     }
+    return ScriptingHostConfiguration(defaultJvmScriptingHostConfiguration) {
+        getRefinementEnvironment(refinementEnvironment)
+        // still consumed by the Gradle script definitions
+        @Suppress("DEPRECATION") getEnvironment(refinementEnvironment)
+    }
+}
 
 fun String?.toGradleHomePath(): Path {
     if (this == null) error(KotlinGradleScriptingBundle.message("error.text.unable.to.get.gradle.home.directory"))

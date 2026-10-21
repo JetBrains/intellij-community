@@ -38,7 +38,13 @@ public enum DumbModeAccessType {
    * @param command - A command to execute
    */
   public void ignoreDumbMode(@NotNull Runnable command) {
-    FileBasedIndex.getInstance().ignoreDumbMode(this, command);
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    if (fileBasedIndex == null) {
+      command.run();
+    }
+    else {
+      fileBasedIndex.ignoreDumbMode(this, command);
+    }
   }
 
   /**
@@ -50,6 +56,7 @@ public enum DumbModeAccessType {
    * @param computable - A command to execute
    */
   public <T, E extends Throwable> T ignoreDumbMode(@NotNull ThrowableComputable<T, E> computable) throws E {
-    return FileBasedIndex.getInstance().ignoreDumbMode(this, computable);
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    return fileBasedIndex == null ? computable.compute() : fileBasedIndex.ignoreDumbMode(this, computable);
   }
 }

@@ -8,8 +8,9 @@
 #
 # The archives are the static CLI tarballs of `download.docker.com/mac/static/stable/<arch>/`, byte-identical,
 # on the Space file mirror. The cache redirector does not serve `download.docker.com`, and
-# `bazel_downloader.cfg` routes `packages.jetbrains.team/files/` through the redirector. The tarball holds the
-# CLI only. The engine is the controller's Lima VM, see `lima.MODULE.bazel`.
+# the URL below reaches the Space mirror through the redirector. The tarball holds the
+# CLI only. The pinned CLI drives the engine of the host environment, which `DOCKER_HOST` names. A Mac of macOS 26 or
+# newer runs Apple `container` instead, with its own CLI of `container.MODULE.bazel`.
 #
 # The static CLI has no plugin, and the image build needs BuildKit (`COPY --chmod`), so `docker-buildx` is pinned
 # too: the GitHub release binaries `buildx-v<version>.darwin-<arm64|amd64>` of `docker/buildx`, byte-identical, on
@@ -44,14 +45,14 @@ air_docker_archive(
     name = "air_docker_darwin_arm64",
     build_file_content = _AIR_DOCKER_BUILD_FILE,
     sha256 = "5a8f5604d7673202b2af925229d15eb4bbb86f7f542e4ac8cd7aa3f14cfa0f8b",
-    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/docker/{v}/docker-{v}-darwin-aarch64.tgz".format(v = AIR_DOCKER_CLI_VERSION),
+    url = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/docker/{v}/docker-{v}-darwin-aarch64.tgz".format(v = AIR_DOCKER_CLI_VERSION),
 )
 
 air_docker_archive(
     name = "air_docker_darwin_x86_64",
     build_file_content = _AIR_DOCKER_BUILD_FILE,
     sha256 = "de42b6bb38d0ea08333cdddc18b054d61d4c9f003b3616ae55d85ccea72c47c9",
-    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/docker/{v}/docker-{v}-darwin-x86_64.tgz".format(v = AIR_DOCKER_CLI_VERSION),
+    url = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/docker/{v}/docker-{v}-darwin-x86_64.tgz".format(v = AIR_DOCKER_CLI_VERSION),
 )
 
 air_docker_buildx_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
@@ -62,7 +63,7 @@ air_docker_buildx_file(
     downloaded_file_path = "docker-buildx",
     executable = True,
     sha256 = "c3cbbc820d578b0aa8158dd62ef1af25a0c8a75ef53331dbe4e219471e1dbe8c",
-    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/docker-buildx/v{v}/buildx-v{v}.darwin-arm64".format(v = AIR_DOCKER_BUILDX_VERSION),
+    url = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/docker-buildx/v{v}/buildx-v{v}.darwin-arm64".format(v = AIR_DOCKER_BUILDX_VERSION),
 )
 
 air_docker_buildx_file(
@@ -70,5 +71,5 @@ air_docker_buildx_file(
     downloaded_file_path = "docker-buildx",
     executable = True,
     sha256 = "7003a7bae20e7741283db1e23dafdcb957776a8be85de3f459630b1dd4c19db0",
-    url = "https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies/docker-buildx/v{v}/buildx-v{v}.darwin-amd64".format(v = AIR_DOCKER_BUILDX_VERSION),
+    url = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/docker-buildx/v{v}/buildx-v{v}.darwin-amd64".format(v = AIR_DOCKER_BUILDX_VERSION),
 )

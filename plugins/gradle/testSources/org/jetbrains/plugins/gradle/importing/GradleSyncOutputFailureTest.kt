@@ -7,7 +7,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
 import com.intellij.platform.testFramework.assertion.consoleText
-import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
@@ -35,7 +34,6 @@ import org.junit.jupiter.params.ParameterizedClass
 @TestApplication
 @ParameterizedClass
 @AllGradleVersionsSource("true,false")
-@RegistryKey("gradle.use.resilient.model.fetch.unstable", true.toString())
 class GradleSyncOutputFailureTest(
   private val gradleVersion: GradleVersion,
   private val showSuppressedFailures: Boolean,

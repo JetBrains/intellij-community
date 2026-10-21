@@ -4,15 +4,17 @@ package org.jetbrains.jps.gradle;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PathUtil;
 import org.jetbrains.jps.builders.CompileScopeTestBuilder;
-import org.jetbrains.jps.builders.JpsBuildTestCase;
+import org.jetbrains.jps.builders.JpsBuildTestBase;
 import org.jetbrains.jps.gradle.model.JpsGradleExtensionService;
 import org.jetbrains.jps.gradle.model.JpsGradleModuleExtension;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleDependency;
 import org.jetbrains.jps.util.JpsPathUtil;
+import org.junit.jupiter.api.Test;
 
-public class GradleJavaClasspathTest extends JpsBuildTestCase {
+public class GradleJavaClasspathTest extends JpsBuildTestBase {
+  @Test
   public void testProductionOnTestDependency() {
     String srcRoot = PathUtil.getParentPath(createFile("src/A.java", "public class A { ATest test;}"));
     String testRoot = PathUtil.getParentPath(createFile("testSrc/ATest.java", "public class ATest {}"));

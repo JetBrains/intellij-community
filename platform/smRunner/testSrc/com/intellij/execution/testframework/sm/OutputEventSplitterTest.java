@@ -405,6 +405,7 @@ public class OutputEventSplitterTest {
           mySplitter.process("some string without slash n appending in raw, attempt: " + i + "; ", ProcessOutputTypes.STDOUT);
         }
       })
+      .runAsStressTest()
       .start();
   }
 
@@ -423,7 +424,7 @@ public class OutputEventSplitterTest {
         mySplitter.process("some string without slash n appending in raw, attempt: " + i + "; ", ProcessOutputTypes.STDOUT);
         mySplitter.process(testStarted, ProcessOutputTypes.STDOUT);
       }
-    }).start();
+    }).runAsStressTest().start();
   }
 
   private static Future<?> execute(final Runnable runnable) {

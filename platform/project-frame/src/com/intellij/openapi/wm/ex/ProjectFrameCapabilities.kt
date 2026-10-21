@@ -24,6 +24,13 @@ enum class ProjectFrameCapability {
   WELCOME_EXPERIENCE,
 
   /**
+   * Marks a project the IDE loaded without a frame of its own.
+   *
+   * The user sees no window for it. It runs one action for another frame, usually the welcome screen, and closes again.
+   */
+  NO_FRAME_OF_ITS_OWN,
+
+  /**
    * Suppresses VCS-oriented UI in the frame.
    */
   SUPPRESS_VCS_UI,

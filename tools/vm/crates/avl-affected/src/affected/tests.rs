@@ -3,18 +3,13 @@ use std::collections::BTreeMap;
 use pretty_assertions::assert_eq;
 
 use bt_core::exit;
-use bt_core::fake::{FakeRuntime, REPO_ROOT, area, document_path, flow_catalog_tree, kdoc, lanes, reaching, refusal, suite_document_text};
+use bt_core::fake::{FakeRuntime, REPO_ROOT, area, document_path, flow_catalog_tree, kdoc, reaching, refusal, suite_document_text};
 use bt_core::selector::{Selector, SelectorKind};
 use bt_core::suites::{AffectedSuite, UNMAPPED_LINES_PER_REASON, affected_text, classes_of_lane, named_suites, reached_by_module_only};
 
 use super::*;
 use crate::bridge::air_area;
 use crate::specs::glob_pattern;
-
-/// The authored suites file of the fixture catalog.
-fn authored_file() -> &'static str {
-    lanes().catalog().expect("the fixture names a catalog").authored_suites_file
-}
 
 type Tree = BTreeMap<String, String>;
 
@@ -493,41 +488,25 @@ fn a_deleted_suite_document_is_unreadable() {
     assert_eq!(reasons_of(&affected), reason::PATH_UNREADABLE);
 }
 
-/// The base catalog plus the layout of the lane harness: the root integration module with a lane rule under it, a
-/// shared harness module, a lane leaf, a headless module beside them, and this controller and BT outside the area.
+/// The base catalog plus the layout of the lane harness: a lane rule, a lane folder and a note with no module above
+/// them, the bridge with the state reset and an authored body, a headless module beside them, and this controller and
+/// BT outside the area.
 fn harness_tree() -> Tree {
     let mut tree = reach_tree();
-    put(
-        &mut tree,
-        "plugins/air/tests/integration/intellij.air.integrationTests.iml",
-        "<module />",
-    );
     put(&mut tree, LANE_RULE, "def ui_lane_ide():\n    pass\n");
+    put(&mut tree, LANE_FOLDER_FILE, "air_lane_test(name = \"ui-live_lane_test\")\n");
+    put(&mut tree, UNLISTED_NOTE, "The table names no path of this note.\n");
     // The controller spells real flow ids in its tests. They must not answer.
     put(&mut tree, CONTROLLER_SOURCE, "//! the join of @flow flow-new-session-terminal\n");
     put(&mut tree, BT_SOURCE, "//! the lane table\n");
     put(
         &mut tree,
-        "plugins/air/tests/integration/flow/intellij.air.integrationTests.flow.iml",
+        "plugins/air/tests/integration/bridge/intellij.air.integrationTests.bridge.iml",
         "<module />",
     );
     // The harness spells real flow ids in its comments and fixtures. They must not answer.
-    put(
-        &mut tree,
-        "plugins/air/tests/integration/flow/src/flow/AirScenarioRunner.kt",
-        kdoc(&["@flow flow-new-session-terminal"]),
-    );
-    put(
-        &mut tree,
-        "plugins/air/tests/integration/gui-chat/intellij.air.integrationTests.guiChat.iml",
-        "<module />",
-    );
-    put(&mut tree, GUI_CHAT_GENERATED, "package air\n");
-    put(
-        &mut tree,
-        "plugins/air/tests/integration/gui-chat/test/AirManageLaunchPresetGeneratedFlowUiTest.kt",
-        "package air\n",
-    );
+    put(&mut tree, HARNESS_SOURCE, kdoc(&["@flow flow-new-session-terminal"]));
+    put(&mut tree, AUTHORED_BODY, "package air\n");
     put(
         &mut tree,
         "plugins/air/tests/integration/headless/acp/intellij.air.integrationTests.headless.acp.iml",
@@ -542,30 +521,74 @@ fn harness_tree() -> Tree {
 }
 
 const LANE_RULE: &str = "plugins/air/tests/integration/ui_lane_ide.bzl";
+const LANE_FOLDER: &str = "plugins/air/tests/integration/ui-live";
+const LANE_FOLDER_FILE: &str = "plugins/air/tests/integration/ui-live/BUILD.bazel";
+const UNLISTED_NOTE: &str = "plugins/air/tests/integration/NOTES.md";
 const CONTROLLER_SOURCE: &str = "community/tools/vm/crates/avl-affected/src/affected.rs";
 const BT_SOURCE: &str = "community/tools/bt/crates/bt-core/src/lanes.rs";
-const GUI_CHAT_GENERATED: &str = "plugins/air/tests/integration/gui-chat/testGen/AirGuiChatFlowTests.generated.kt";
+const HARNESS_SOURCE: &str = "plugins/air/tests/integration/bridge/tests/AirInIdeStateReset.kt";
+const AUTHORED_BODY: &str = "plugins/air/tests/integration/bridge/tests/authored/AirAuthoredPluginReload.kt";
 
 #[test]
 fn a_harness_path_reaches_every_suite_of_every_lane() {
-    let affected = affected_of(
-        &FakeRuntime::with_tree(&harness_tree()),
-        &["plugins/air/tests/integration/flow/src/flow/AirScenarioRunner.kt"],
-    );
+    let affected = affected_of(&FakeRuntime::with_tree(&harness_tree()), &[HARNESS_SOURCE]);
     assert_eq!(classes_of(&affected), format!("{LAUNCH_PRESET_BOTH},{TERMINAL}"));
     for suite in &affected.suites {
         // The entry names the harness module and nothing its text matched.
-        assert_eq!(suite.via, [format!("{VIA_LANE_WIDE}intellij.air.integrationTests.flow")]);
+        assert_eq!(suite.via, [format!("{VIA_LANE_WIDE}intellij.air.integrationTests.bridge")]);
     }
 }
 
-/// A file without a module of its own belongs to the module above it. For a lane `.bzl` rule that is the root
-/// integration module, which serves every lane.
+/// A harness path reaches every suite of every lane, and still never a suite of an explicit-only lane (ADR 0200). Its
+/// document maps to its lane, so the join refuses no lane, and the answer leaves the suite out.
+#[test]
+fn a_harness_path_reaches_no_suite_of_an_explicit_only_lane() {
+    let fake = FakeRuntime::with_tree(&harness_tree());
+    fake.put(
+        &document_path("long-session-performance"),
+        &suite_document_text(
+            "long-session-performance",
+            "UI_PERF",
+            "AirLongSessionPerformanceUiTest",
+            "flow-manage-launch-preset",
+        ),
+    );
+    let affected = affected_of(&fake, &[HARNESS_SOURCE]);
+    assert_eq!(classes_of(&affected), format!("{LAUNCH_PRESET_BOTH},{TERMINAL}"));
+    assert_eq!(affected.lanes, ["gui-chat", "ui", "ui-real"]);
+}
+
+/// A lane `.bzl` rule has no module above it. The lane table names the file as a lane-wide path, which serves every
+/// lane, and the entry names the file.
 #[test]
 fn a_lane_rule_is_the_harness_of_every_lane() {
     let affected = affected_of(&FakeRuntime::with_tree(&harness_tree()), &[LANE_RULE]);
     assert_eq!(affected.lanes, ["gui-chat", "ui", "ui-real"]);
     assert_eq!(affected.unmapped, []);
+    for suite in &affected.suites {
+        assert_eq!(suite.via, [format!("{VIA_LANE_WIDE}{LANE_RULE}")]);
+    }
+}
+
+/// A lane folder has no module either. The lane table names the folder, so a file in it is the harness of every lane,
+/// and the entry names the folder.
+#[test]
+fn a_file_of_a_lane_folder_is_the_harness_of_every_lane() {
+    let affected = affected_of(&FakeRuntime::with_tree(&harness_tree()), &[LANE_FOLDER_FILE]);
+    assert_eq!(affected.lanes, ["gui-chat", "ui", "ui-real"]);
+    assert_eq!(affected.unmapped, []);
+    for suite in &affected.suites {
+        assert_eq!(suite.via, [format!("{VIA_LANE_WIDE}{LANE_FOLDER}")]);
+    }
+}
+
+/// The lane table names each harness path of the integration directory, not the directory. So a file there that the
+/// table does not name is not the harness.
+#[test]
+fn a_file_of_the_integration_directory_that_the_table_does_not_name_is_not_the_harness() {
+    let affected = affected_of(&FakeRuntime::with_tree(&harness_tree()), &[UNLISTED_NOTE]);
+    assert_eq!(affected.suites, []);
+    assert_eq!(reasons_of(&affected), reason::NO_FLOW_TAG);
 }
 
 /// The controller has no module of the area. The lane table names its directory as a lane-wide path, which serves
@@ -588,30 +611,8 @@ fn a_tool_beside_the_controller_is_not_the_harness() {
     assert_eq!(reasons_of(&affected), reason::NO_FLOW_TAG);
 }
 
-/// A lane leaf serves its own lane only, and a suite's own test class in it is the more exact fact.
-#[test]
-fn a_lane_leaf_reaches_its_own_lane_and_a_test_class_in_it_its_own_suite() {
-    let fake = FakeRuntime::with_tree(&harness_tree());
-    // A second GUI-chat suite, so "its own suite" and "its whole lane" are different answers.
-    fake.put(
-        &document_path("chat-other"),
-        &suite_document_text("chat-other", "GUI_CHAT", "AirChatOtherGeneratedFlowUiTest", "flow-other"),
-    );
-    let leaf = affected_of(&fake, &[GUI_CHAT_GENERATED]);
-    let own = affected_of(
-        &fake,
-        &["plugins/air/tests/integration/gui-chat/test/AirManageLaunchPresetGeneratedFlowUiTest.kt"],
-    );
-    assert_eq!(
-        classes_of(&leaf),
-        "gui-chat/AirChatOtherGeneratedFlowUiTest,gui-chat/AirManageLaunchPresetGeneratedFlowUiTest"
-    );
-    assert_eq!(classes_of(&own), "gui-chat/AirManageLaunchPresetGeneratedFlowUiTest");
-    assert_eq!(own.suites[0].via, ["suite:manage-launch-preset"]);
-}
-
-/// The harness list matches a module by its exact name. The dotted-prefix rule would make the root integration
-/// module cover every headless module under it, and those run in no UI lane.
+/// The harness list matches a module by its exact name. The dotted-prefix rule would make the entry
+/// `intellij.air.integrationTests` cover every headless module, and those run in no UI lane.
 #[test]
 fn a_headless_module_under_the_harness_is_not_the_harness() {
     let affected = affected_of(
@@ -639,55 +640,60 @@ fn every_lane_the_harness_list_names_is_a_lane_the_controller_runs() {
     }
 }
 
-/// The authored suites file in the shape `AirAuthoredSuitesDocumentTest` writes, one suite per `id lane class`.
-fn authored_suites_text(triples: &[[&str; 3]]) -> String {
-    let entries: Vec<String> = triples
-        .iter()
-        .map(|[suite, lane, class]| format!(r#"{{ "suite": "{suite}", "lane": "{lane}", "testClassName": "{class}" }}"#))
-        .collect();
-    format!(r#"{{ "source": "AirJourneySuites", "suites": [{}] }}"#, entries.join(", "))
-}
-
+/// The harness tree with two authored suites, each with a suite document of its own, as the generator writes them.
 fn authored_tree() -> Tree {
     let mut tree = harness_tree();
     put(
         &mut tree,
-        authored_file(),
-        authored_suites_text(&[
-            ["problem-feedback", "GUI_CHAT", "AcpProblemFeedbackUiTest"],
-            ["session-tool-window-composer", "UI", "AgentSessionToolWindowComposerUiTest"],
-        ]),
+        &document_path("plugin-reload"),
+        suite_document_text("plugin-reload", "GUI_CHAT", "AirPluginUnloadLeakTest", "flow-authored-reload"),
+    );
+    put(
+        &mut tree,
+        &document_path("session-tool-window-composer"),
+        suite_document_text(
+            "session-tool-window-composer",
+            "UI",
+            "AgentSessionToolWindowComposerUiTest",
+            "flow-authored-composer",
+        ),
     );
     put(&mut tree, AUTHORED_SOURCE, "package air\n");
     tree
 }
 
-const AUTHORED_SOURCE: &str = "plugins/air/tests/integration/gui-chat/test/AcpProblemFeedbackUiTest.kt";
+const AUTHORED_SOURCE: &str = "plugins/air/tests/integration/bridge/tests/authored/AirPluginUnloadLeakTest.kt";
 
-/// An authored suite has no document, so its test class source is the only file that is the suite.
+/// The test class source of an authored suite reaches its own suite. The bridge serves every lane, and the source of
+/// the class is the more exact fact.
 #[test]
 fn an_authored_test_class_reaches_its_own_suite() {
     let affected = affected_of(&FakeRuntime::with_tree(&authored_tree()), &[AUTHORED_SOURCE]);
     assert_eq!(
         affected.suites,
         [AffectedSuite {
-            suite: "problem-feedback".to_owned(),
+            suite: "plugin-reload".to_owned(),
             lane: "gui-chat".to_owned(),
-            class: "AcpProblemFeedbackUiTest".to_owned(),
-            via: vec!["suite:problem-feedback".to_owned()],
-            authored: true,
+            class: "AirPluginUnloadLeakTest".to_owned(),
+            via: vec!["suite:plugin-reload".to_owned()],
         }]
     );
 }
 
-/// The harness serves the authored suites of its lanes as it serves the generated ones.
+/// Every suite of the authored tree, as the answer sorts them: by lane, and then by suite id.
+const AUTHORED_ALL: &str = "gui-chat/AirManageLaunchPresetGeneratedFlowUiTest,gui-chat/AirPluginUnloadLeakTest,\
+                            ui/AirManageLaunchPresetQuickStartGeneratedFlowUiTest,ui/AgentSessionToolWindowComposerUiTest,\
+                            ui-real/AirNewSessionTerminalGeneratedFlowUiTest";
+
+/// An authored body is the bridge, which serves every lane. It reaches the authored suites as it reaches the generated
+/// ones, and the entry names the bridge.
 #[test]
-fn a_harness_path_reaches_the_authored_suites_of_its_lane() {
-    let affected = affected_of(&FakeRuntime::with_tree(&authored_tree()), &[GUI_CHAT_GENERATED]);
-    assert_eq!(
-        classes_of(&affected),
-        "gui-chat/AirManageLaunchPresetGeneratedFlowUiTest,gui-chat/AcpProblemFeedbackUiTest"
-    );
+fn an_authored_body_reaches_every_suite_of_every_lane() {
+    let affected = affected_of(&FakeRuntime::with_tree(&authored_tree()), &[AUTHORED_BODY]);
+    assert_eq!(classes_of(&affected), AUTHORED_ALL);
+    for suite in &affected.suites {
+        assert_eq!(suite.via, [format!("{VIA_LANE_WIDE}intellij.air.integrationTests.bridge")]);
+    }
 }
 
 /// A suite id names a suite whichever kind it is, so `run <authored suite id>` selects its class.
@@ -700,39 +706,14 @@ fn a_suite_selector_names_an_authored_suite() {
     )
     .expect("named");
     assert_eq!(classes_of(&affected), "ui/AgentSessionToolWindowComposerUiTest");
-    assert!(affected.suites[0].authored);
-}
-
-/// One id or one class must name one suite. An authored suite that clashes with a generated one would make a path
-/// that reaches one answer the other.
-#[test]
-fn an_authored_suite_that_clashes_with_a_generated_one_is_refused() {
-    let fake = FakeRuntime::with_tree(&authored_tree());
-    fake.put(
-        authored_file(),
-        &authored_suites_text(&[["authored-copy", "UI", "AirNewSessionTerminalGeneratedFlowUiTest"]]),
-    );
-    let failure = refusal(affected_suites(&fake, area(), &["plugins/air/frontend/src/Rows.kt".to_owned()]));
-    assert_eq!(failure.exit, exit::INFRA);
-    assert!(failure.message.contains("authored-copy"), "{}", failure.message);
-}
-
-/// A file that is there and cannot be parsed is refused, and the refusal says where the text to commit comes from.
-#[test]
-fn a_malformed_authored_suite_file_is_refused_with_its_regeneration() {
-    let fake = FakeRuntime::with_tree(&authored_tree());
-    fake.put(authored_file(), r#"{ "suites": [ { "suite": "problem-feedback" } ] }"#);
-    let failure = refusal(affected_suites(&fake, area(), &["plugins/air/frontend/src/Rows.kt".to_owned()]));
-    assert_eq!(failure.exit, exit::INFRA);
-    assert!(failure.message.contains("prints the text to commit"), "{}", failure.message);
 }
 
 const FEEDBACK_SPEC: &str = "plugins/air/spec/core/feedback.spec.md";
 const GENERATED_SPEC: &str = "plugins/air/spec/other/generated.spec.md";
-const GENERATED_LINK: &str = "  [@test] ../../tests/integration/gui-chat/testGen/AirGuiChatFlowTests.generated.kt";
+const GENERATED_LINK: &str = "  [@test] ../../tests/integration/bridge/testGen/AirFlowEnums.generated.kt";
 
 /// The authored catalog plus two specs: one owns a directory by a glob and links an authored test class and a suite
-/// document, and one links only a lane's generated file.
+/// document, and one links only a generated bridge file.
 fn spec_tree() -> Tree {
     let mut tree = authored_tree();
     put(
@@ -750,7 +731,7 @@ fn spec_tree() -> Tree {
             "# Feedback",
             "",
             "- The dialog opens.",
-            "  [@test] ../../tests/integration/gui-chat/test/AcpProblemFeedbackUiTest.kt",
+            "  [@test] ../../tests/integration/bridge/tests/authored/AirPluginUnloadLeakTest.kt",
             "  [@test] ../../tests/integration/flow-profiles/resources/flow-profiles/new-session-terminal.json",
         ]
         .join("\n"),
@@ -772,7 +753,7 @@ fn spec_tree() -> Tree {
     tree
 }
 
-const FEEDBACK_SUITES: &str = "gui-chat/AcpProblemFeedbackUiTest,ui-real/AirNewSessionTerminalGeneratedFlowUiTest";
+const FEEDBACK_SUITES: &str = "gui-chat/AirPluginUnloadLeakTest,ui-real/AirNewSessionTerminalGeneratedFlowUiTest";
 
 /// A path a spec owns reaches the suites the spec links, authored or generated, and the entry names the spec.
 #[test]
@@ -800,16 +781,16 @@ fn the_spec_relation_and_the_module_relation_both_answer_an_untagged_path() {
     let mut tree = spec_tree();
     let relinked = tree[GENERATED_SPEC].replace(
         GENERATED_LINK,
-        "  [@test] ../../tests/integration/gui-chat/test/AcpProblemFeedbackUiTest.kt",
+        "  [@test] ../../tests/integration/bridge/tests/authored/AirPluginUnloadLeakTest.kt",
     );
     put(&mut tree, GENERATED_SPEC, relinked);
     let affected = affected_of(&FakeRuntime::with_tree(&tree), &["plugins/air/session/src/Quiet.kt"]);
-    assert_eq!(classes_of(&affected), format!("gui-chat/AcpProblemFeedbackUiTest,{QUICK_START}"));
+    assert_eq!(classes_of(&affected), format!("gui-chat/AirPluginUnloadLeakTest,{QUICK_START}"));
 }
 
-/// A link to a lane's generated file names every suite of the lane, not one, so it links no suite.
+/// A link to the generated suite list names every suite, not one, so it links no suite.
 #[test]
-fn a_link_to_a_generated_lane_file_links_no_suite() {
+fn a_link_to_the_generated_suite_list_links_no_suite() {
     let affected = affected_of(&FakeRuntime::with_tree(&spec_tree()), &["plugins/air/session/src/Quiet.kt"]);
     for suite in &affected.suites {
         for via in &suite.via {
@@ -857,7 +838,7 @@ fn a_spec_glob_matches_as_the_spec_gate_matches() {
     }
 }
 
-/// The `unmapped` and `lanes` arrays are always present, `authored`, `flows` and `module` only when they say
+/// The `unmapped` and `lanes` arrays are always present, `flows` and `module` only when they say
 /// something: the JSON the lane controller and the trace planner pass on verbatim. It crosses as text, because BT's
 /// crates link another build of `serde`.
 #[test]
@@ -870,8 +851,8 @@ fn the_answer_serializes_with_the_agent_facing_names() {
     assert_eq!(
         json,
         serde_json::json!({
-            "suites": [{"suite": "problem-feedback", "lane": "gui-chat", "class": "AcpProblemFeedbackUiTest",
-                        "via": ["suite:problem-feedback"], "authored": true}],
+            "suites": [{"suite": "plugin-reload", "lane": "gui-chat", "class": "AirPluginUnloadLeakTest",
+                        "via": ["suite:plugin-reload"]}],
             "unmapped": [{"path": "plugins/air/notes/src/Notes.kt", "reason": "module_not_walked",
                           "module": "intellij.air.notes"}],
             "lanes": ["gui-chat"],

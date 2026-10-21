@@ -25,7 +25,6 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
@@ -43,7 +42,7 @@ internal class PythonModulePathCacheManager(
         if (event.isCausedByWorkspaceModelChangesOnly()) return
         val sdks = HashSet<Sdk>()
         for (module in pathCache.keys) {
-          val sdk = PythonSdkUtil.findPythonSdk(module)
+          val sdk = module.pythonSdkIfReady()
           if (sdk != null) {
             sdks.add(sdk)
           }
@@ -61,7 +60,7 @@ internal class PythonModulePathCacheManager(
 
     connection.subscribe(PyPackageManager.PACKAGE_MANAGER_TOPIC, PyPackageManager.Listener { sdk ->
       for (module in pathCache.keys) {
-        val moduleSdk = PythonSdkUtil.findPythonSdk(module)
+        val moduleSdk = module.pythonSdkIfReady()
         if (moduleSdk != null && moduleSdk === sdk) {
           updateCacheForSdk(project, sdk)
           pathCache.computeIfPresent(module) { _, cache ->
@@ -81,7 +80,7 @@ internal class PythonModulePathCacheManager(
     private val pathCache: ConcurrentMap<Module, PythonModulePathCache>,
   ) : WorkspaceModelChangeListener {
     override fun changed(event: VersionedStorageChange) {
-      val sdks = pathCache.keys.mapNotNull { PythonSdkUtil.findPythonSdk(it) }.toSet()
+      val sdks = pathCache.keys.mapNotNull { it.pythonSdkIfReady() }.toSet()
       for (sdk in sdks) {
         updateCacheForSdk(myProject, sdk)
       }

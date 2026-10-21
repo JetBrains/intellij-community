@@ -39,11 +39,13 @@ import java.util.concurrent.TimeUnit
 
 private val LOG = EventBusLoggerFactory.getLogger(LocalEventBusServer::class.java)
 
-object LocalEventBusServer : EventBusServer {
+// make sure Jackson is loaded lazily in startup
+private val objectMapper: ObjectMapper = jacksonObjectMapper()
+
+internal object LocalEventBusServer : EventBusServer {
   private val portsPool: List<Int> = (45654..45754 step 10).toList()
   private var currentPortIndex = 0
   private lateinit var eventsFlowService: EventsFlowService
-  private val objectMapper = jacksonObjectMapper()
   private var bossGroup: EventLoopGroup? = null
   private var workerGroup: EventLoopGroup? = null
   private var serverChannel: Channel? = null
@@ -101,7 +103,7 @@ object LocalEventBusServer : EventBusServer {
       serverChannel = future.channel()
       LOG.info("Server started on port $port")
     }
-    catch (bind: BindException) {
+    catch (_: BindException) {
       LOG.info("Port $port is busy. Trying use another")
       val savedPortIndex = currentPortIndex
       endServer()

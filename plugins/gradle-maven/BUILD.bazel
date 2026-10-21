@@ -107,6 +107,7 @@ jvm_library(
     ),
     module_name = "intellij.gradle.java.maven.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//java/plugin"],
 )
 
 jvm_library(
@@ -129,6 +130,7 @@ jvm_library(
         # do not sort,
         ":gradle-java-maven-tests",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//java/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

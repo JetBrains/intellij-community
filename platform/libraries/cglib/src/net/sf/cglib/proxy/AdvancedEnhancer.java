@@ -27,6 +27,7 @@ import net.sf.cglib.asm.$ClassVisitor;
 import net.sf.cglib.asm.$Label;
 import net.sf.cglib.asm.$Type;
 import net.sf.cglib.core.AbstractClassGenerator;
+import net.sf.cglib.core.Block;
 import net.sf.cglib.core.ClassEmitter;
 import net.sf.cglib.core.CodeEmitter;
 import net.sf.cglib.core.CodeGenerationException;
@@ -797,13 +798,26 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
   }
 
   private static void emitCommonNewInstance(CodeEmitter e) {
+    Block construction = e.begin_block();
     e.new_instance_this();
     e.dup();
     e.invoke_constructor_this();
+    construction.end();
     e.aconst_null();
     e.invoke_static_this(SET_THREAD_CALLBACKS);
     e.return_value();
+    emitClearThreadCallbacksOnThrow(e, construction);
     e.end_method();
+  }
+
+  /**
+   * Emits a handler that clears the thread callbacks and rethrows when the {@code construction} block throws.
+   */
+  private static void emitClearThreadCallbacksOnThrow(CodeEmitter e, Block construction) {
+    e.catch_exception(construction, Constants.TYPE_THROWABLE);
+    e.aconst_null();
+    e.invoke_static_this(SET_THREAD_CALLBACKS);
+    e.athrow();
   }
 
   private void emitNewInstanceCallback(ClassEmitter ce) {
@@ -831,6 +845,7 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
     final CodeEmitter e = ce.begin_method(Constants.ACC_PUBLIC, MULTIARG_NEW_INSTANCE, null);
     e.load_arg(2);
     e.invoke_static_this(SET_THREAD_CALLBACKS);
+    Block construction = e.begin_block();
     e.new_instance_this();
     e.dup();
     e.load_arg(0);
@@ -853,9 +868,11 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
         e.throw_exception(ILLEGAL_ARGUMENT_EXCEPTION, "Constructor not found");
       }
     });
+    construction.end();
     e.aconst_null();
     e.invoke_static_this(SET_THREAD_CALLBACKS);
     e.return_value();
+    emitClearThreadCallbacksOnThrow(e, construction);
     e.end_method();
   }
 

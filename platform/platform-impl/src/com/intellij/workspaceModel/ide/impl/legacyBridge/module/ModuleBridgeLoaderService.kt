@@ -30,6 +30,7 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSyn
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.impl.jsonDump.DumpWorkspaceEntitiesWsmChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CompletableDeferred
@@ -93,12 +94,17 @@ class ModuleBridgeLoaderService {
                       globalWsmAppliedToProjectWsm = globalWsmAppliedToProjectWsm,
                   )
               }
-              backgroundWriteAction {
-                  try {
-                      globalWorkspaceModel.applyStateToProject(project)
-                  } finally {
-                      globalWsmAppliedToProjectWsm.complete(project)
+              // without global libraries and SDKs on either side there is nothing to sync, and the write lock would stall the EDT
+              if (globalWorkspaceModel.hasStateToApplyToProject(workspaceModel)) {
+                  backgroundWriteAction {
+                      try {
+                          globalWorkspaceModel.applyStateToProject(project)
+                      } finally {
+                          globalWsmAppliedToProjectWsm.complete(project)
+                      }
                   }
+              } else {
+                  globalWsmAppliedToProjectWsm.complete(project)
               }
           } else {
               LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
@@ -132,8 +138,11 @@ class ModuleBridgeLoaderService {
                   project.serviceAsync<ProjectRootManager>()
                   ModuleDependencyIndex.getInstance(project)
               }
-              backgroundWriteAction {
-                  moduleDependencyIndex.setupTrackedLibrariesAndJdks()
+              // a project without modules has no dependencies to track; modules added later are tracked by the model change listener
+              if (workspaceModel.currentSnapshot.entities(ModuleEntity::class.java).any()) {
+                  backgroundWriteAction {
+                      moduleDependencyIndex.setupTrackedLibrariesAndJdks()
+                  }
               }
           }
 
@@ -159,7 +168,14 @@ private suspend fun loadModules(
             moduleManager.updateUnloadedStorage(modulesToLoad, modulesToUnload)
         }
 
-        val entities = (targetBuilder ?: moduleManager.entityStore.current).entities(ModuleEntity::class.java).toList()
+        val entities = if (targetBuilder != null) {
+            targetBuilder.entities(ModuleEntity::class.java).toList()
+        }
+        else {
+            // A module created before this load has a bridge already. A second bridge would take over its mapping and orphan the first one.
+            val storage = moduleManager.entityStore.current
+            storage.entities(ModuleEntity::class.java).filter { storage.moduleMap.getDataByEntity(it) == null }.toList()
+        }
         val unloadedEntities = (targetUnloadedEntitiesBuilder
             ?: (project.serviceAsync<WorkspaceModel>() as WorkspaceModelInternal).currentSnapshotOfUnloadedEntities)
             .entities(ModuleEntity::class.java)

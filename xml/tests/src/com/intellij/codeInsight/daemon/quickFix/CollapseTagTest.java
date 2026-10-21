@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.PsiFile;
@@ -57,5 +58,21 @@ public class CollapseTagTest extends BasePlatformTestCase {
                             <a>
                                 <b/>
                             </a>""");
+  }
+
+  public void testCollapseAfterUnquotedAttributeValue() {
+    doCollapseTest("<input type=text value=1000><caret></input>", "<input type=text value=1000 />");
+  }
+
+  public void testCollapseAfterQuotedAttributeValue() {
+    doCollapseTest("<input type=text value=\"1000\"><caret></input>", "<input type=text value=\"1000\"/>");
+  }
+
+  private void doCollapseTest(String text, String expected) {
+    PsiFile file = myFixture.configureByText(HtmlFileType.INSTANCE, text);
+    CollapseTagIntention action = new CollapseTagIntention();
+    assertTrue(action.isAvailable(getProject(), myFixture.getEditor(), file));
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> action.invoke(getProject(), myFixture.getEditor(), file));
+    myFixture.checkResult(expected);
   }
 }

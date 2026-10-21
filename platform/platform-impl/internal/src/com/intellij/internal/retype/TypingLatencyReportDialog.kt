@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.retype
 
-import com.intellij.execution.filters.TextConsoleBuilderFactory
+import com.intellij.execution.impl.AnalyzeStacktraceConsoleUtil
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.internal.performance.latencyMap
@@ -19,7 +19,6 @@ import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBBox
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.unscramble.AnalyzeStacktraceUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
 import org.jetbrains.annotations.ApiStatus
@@ -129,9 +128,7 @@ class TypingLatencyReportDialog(
   }
 
   private fun createThreadDumpBrowser(): JComponent {
-    val builder = TextConsoleBuilderFactory.getInstance().createBuilder(project)
-    builder.filters(AnalyzeStacktraceUtil.EP_NAME.getExtensions(project))
-    consoleView = builder.console
+    consoleView = AnalyzeStacktraceConsoleUtil.createConsole(project)
     Disposer.register(disposable, consoleView)
 
     val buttonsPanel = JBBox.createHorizontalBox()

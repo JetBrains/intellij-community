@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+
+internal class B5Internal {
+}
+
+internal companion fun B5Internal.g() = 1

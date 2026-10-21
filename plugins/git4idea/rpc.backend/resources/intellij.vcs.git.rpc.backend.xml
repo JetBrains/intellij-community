@@ -1,0 +1,19 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.vcs.git.backend"/>
+    <module name="intellij.vcs.git.shared"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.vcs.git.rpc.backend.GitApiProvider"
+                                            apiInterfaces="com.intellij.vcs.git.rpc.GitWidgetApi,
+                                                           com.intellij.vcs.git.rpc.GitRepositoryApi,
+                                                           com.intellij.vcs.git.rpc.GitIncomingOutgoingStateApi,
+                                                           com.intellij.vcs.git.rpc.GitUiSettingsApi,
+                                                           com.intellij.vcs.git.rpc.GitOperationsApi"/>
+  </extensions>
+</idea-plugin>

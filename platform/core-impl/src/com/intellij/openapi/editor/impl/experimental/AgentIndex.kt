@@ -4,17 +4,23 @@ package com.intellij.openapi.editor.impl.experimental
 import com.intellij.openapi.editor.ex.experimental.Agent
 
 /**
- * The closed runs of one graph value, by agent: a [RunTree] per agent, keyed by the seq of each run.
- * A merge asks it which ids a graph holds, and an append asks it for the next seq.
+ * The closed runs of one graph value, by agent: a [RunTree] per agent. A merge asks it which ids a
+ * graph holds, and an append asks it for the next seq.
  *
  * Documents have few agents, so the agents sit in one array sorted by agent, and an append copies
  * that array. The tree of the agent shares every node it does not change. The index is immutable,
  * and every field is final.
  *
  * The seqs of one agent ascend and leave no gap, so the runs of an agent cover the seqs
- * `[0, nextSeq(agent))`. Every query here rests on that order, and [appended] checks it.
+ * `[startSeq(agent), nextSeq(agent))`. Every query here rests on that order, and [appended] checks
+ * it. The start seq is 0 in a new graph. In a trimmed graph it is the next seq of the agent at the
+ * base version, because the trim dropped the units below it. [startSeqs] holds those seqs.
+ *
+ * The tree of an agent keys a run by the distance of its seq from the start seq. Each seq from the
+ * start seq up to the run names one unit that the graph stores, so the key fits an [Int].
  */
 internal class AgentIndex private constructor(
+  private val startSeqs: VersionSummary,
   private val agents: Array<Agent>,
   private val trees: Array<RunTree>,
 ) {
@@ -26,35 +32,57 @@ internal class AgentIndex private constructor(
     val agent = run.event.agent()
     val slot = slotOf(agent)
     if (slot >= 0) {
-      checkSeqContinues(trees[slot], run)
+      checkSeqContinues(endSeqOf(trees[slot]), run)
+      val newTree = trees[slot].appended(keyOf(run.event.seq(), startSeq(agent)), run)
       val newTrees = trees.copyOf()
-      newTrees[slot] = trees[slot].appended(run.event.seq(), run)
-      return AgentIndex(agents, newTrees)
+      newTrees[slot] = newTree
+      return AgentIndex(startSeqs, agents, newTrees)
     }
-    checkSeqContinues(RunTree.EMPTY, run)
+    checkSeqContinues(startSeq(agent), run)
     val insertAt = -slot - 1
     val newAgents = insertedAt(agents, insertAt, agent)
-    val newTrees = insertedAt(trees, insertAt, RunTree.EMPTY.appended(run.event.seq(), run))
-    return AgentIndex(newAgents, newTrees)
+    val newTree = RunTree.EMPTY.appended(keyOf(run.event.seq(), startSeq(agent)), run)
+    val newTrees = insertedAt(trees, insertAt, newTree)
+    return AgentIndex(startSeqs, newAgents, newTrees)
   }
 
   /**
-   * The first seq of [agent] that no closed run holds, or 0 when [agent] has none.
+   * The first seq of [agent] that this graph stores. A trim dropped the units below it.
    */
-  fun nextSeq(agent: Agent): Int {
+  fun startSeq(agent: Agent): Long {
+    return startSeqs.endSeq(agent)
+  }
+
+  /**
+   * The start seq of every agent that a trim left one for.
+   */
+  fun startSeqs(): VersionSummary {
+    return startSeqs
+  }
+
+  /**
+   * The first seq of [agent] that no closed run holds, or its [startSeq] when [agent] has none.
+   */
+  fun nextSeq(agent: Agent): Long {
     val slot = slotOf(agent)
-    return if (slot < 0) 0 else endSeqOf(trees[slot])
+    return if (slot < 0) startSeq(agent) else endSeqOf(trees[slot])
   }
 
   /**
    * The lv of the unit ([agent], [seq]) when a closed run holds it, or -1.
    */
-  fun lvOfSeq(agent: Agent, seq: Int): LV {
+  fun lvOfSeq(agent: Agent, seq: Long): LV {
     val slot = slotOf(agent)
     if (slot < 0) {
       return -1
     }
-    val run = trees[slot].floor(seq)
+    val tree = trees[slot]
+    val start = startSeq(agent)
+    // A seq outside the runs of the agent names no unit here, and its distance can be too large for a key.
+    if (seq < start || seq >= endSeqOf(tree)) {
+      return -1
+    }
+    val run = tree.floor(keyOf(seq, start))
     return if (run != null && run.holdsUnit(agent, seq)) {
       run.lvOfSeq(seq)
     } else {
@@ -63,10 +91,15 @@ internal class AgentIndex private constructor(
   }
 
   /**
-   * What the closed runs know, plus the [tail] of the graph, as one end seq per agent.
+   * What the graph knows, as one end seq per agent: the start seqs that a trim left, then the closed
+   * runs, then the [tail] of the graph.
    */
   fun summarize(tail: StoredRun?): VersionSummary {
-    val endSeqs = HashMap<Agent, Int>(agents.size + 1)
+    val baseAgents = startSeqs.agents()
+    val endSeqs = HashMap<Agent, Long>(baseAgents.size + agents.size + 1)
+    for (agent in baseAgents) {
+      endSeqs[agent] = startSeq(agent)
+    }
     for (slot in agents.indices) {
       endSeqs[agents[slot]] = endSeqOf(trees[slot])
     }
@@ -80,17 +113,21 @@ internal class AgentIndex private constructor(
    * The [StoredRun.lvStart] of every closed run that holds a unit [summary] does not cover,
    * ascending. The runs of an agent cover its seqs without a gap. So the first such run holds the
    * first seq that the summary lacks, and every later run of the agent follows it.
+   *
+   * [summary] must cover the trimmed units of every agent, because no run here holds them. The graph
+   * checks that.
    */
   fun newRunStarts(summary: VersionSummary): IntArray {
     var count = 0
     val firsts = IntArray(agents.size)
     for (slot in agents.indices) {
-      val known = summary.endSeq(agents[slot])
+      val agent = agents[slot]
+      val known = summary.endSeq(agent)
       val tree = trees[slot]
       firsts[slot] = if (known >= endSeqOf(tree)) {
         tree.size()
       } else {
-        tree.floorIndex(known)
+        tree.floorIndex(keyOf(known, startSeq(agent)))
       }
       count += tree.size() - firsts[slot]
     }
@@ -127,15 +164,33 @@ internal class AgentIndex private constructor(
   }
 
   /**
-   * Fails when [run] does not continue the seqs in [tree]. `EventGraphImpl.checkNextSeq` already
-   * rejects such an append. The index checks it anyway, because a break here would not throw later:
-   * it would leave every search here quietly wrong.
+   * Fails when [run] does not start at the [expected] seq of its agent. `EventGraphImpl.checkNextSeq`
+   * already rejects such an append. The index checks it anyway, because a break here would not throw
+   * later: it would leave every search here quietly wrong.
    */
-  private fun checkSeqContinues(tree: RunTree, run: StoredRun) {
-    val expected = endSeqOf(tree)
+  private fun checkSeqContinues(expected: Long, run: StoredRun) {
     require(run.event.seq() == expected) {
       "The seq ${run.event.seq()} of ${run.event.agent()} does not continue the seqs of the closed runs: " +
       "expected $expected"
+    }
+  }
+
+  /**
+   * The key of [seq] in the tree of an agent whose start seq is [start]. [seq] must be in
+   * `[start, nextSeq]` of that agent.
+   */
+  private fun keyOf(seq: Long, start: Long): Int {
+    val distance = seq - start
+    checkKeyFits(distance, seq, start)
+    return distance.toInt()
+  }
+
+  /**
+   * Fails when [distance] is negative or above `Int.MAX_VALUE`.
+   */
+  private fun checkKeyFits(distance: Long, seq: Long, start: Long) {
+    require(distance >= 0 && distance <= Int.MAX_VALUE) {
+      "The seq $seq is $distance from the start seq $start, which does not fit a tree key"
     }
   }
 
@@ -144,10 +199,17 @@ internal class AgentIndex private constructor(
   }
 
   companion object {
-    val EMPTY: AgentIndex = AgentIndex(emptyArray(), emptyArray())
+    val EMPTY: AgentIndex = startingAt(VersionSummary(emptyMap()))
 
-    private fun endSeqOf(tree: RunTree): Int {
-      return tree.last()?.endSeq() ?: 0
+    /**
+     * An index with no runs, whose agents start at the seqs of [startSeqs].
+     */
+    fun startingAt(startSeqs: VersionSummary): AgentIndex {
+      return AgentIndex(startSeqs, emptyArray(), emptyArray())
+    }
+
+    private fun endSeqOf(tree: RunTree): Long {
+      return tree.last()?.endSeq() ?: 0L
     }
 
     private inline fun <reified T> insertedAt(array: Array<T>, index: Int, element: T): Array<T> {

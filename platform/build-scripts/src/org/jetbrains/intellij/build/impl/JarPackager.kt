@@ -30,6 +30,7 @@ import org.jetbrains.intellij.build.buildJar
 import org.jetbrains.intellij.build.checkForNoDiskSpace
 import org.jetbrains.intellij.build.computeModuleSourcesByContent
 import org.jetbrains.intellij.build.dev.DevDistRecipe
+import org.jetbrains.intellij.build.dev.syntheticTestPluginModuleName
 import org.jetbrains.intellij.build.getLibraryFileName
 import org.jetbrains.intellij.build.getLibraryRoots
 import org.jetbrains.intellij.build.impl.projectStructureMapping.CustomAssetEntry
@@ -243,6 +244,13 @@ class JarPackager private constructor(
   internal fun computeSourcesForModule(item: ModuleItem, layout: BaseLayout?, searchableOptionSet: SearchableOptionSetDescriptor?) {
     val moduleName = item.moduleName
     val patchedSources = moduleOutputPatcher.getPatchedSources(moduleName)
+
+    // the synthetic test plugin has no module in the project: its jar holds the patched descriptor only
+    if (moduleName == syntheticTestPluginModuleName()) {
+      val asset = getJarAsset(targetFile = outDir.resolve(item.relativeOutputFile), relativeOutputFile = item.relativeOutputFile)
+      asset.includedModules.computeIfAbsent(item) { mutableListOf() }.addAll(patchedSources.values)
+      return
+    }
 
     val module = context.outputProvider.findRequiredModule(moduleName)
     val useTestModuleOutput = helper.isTestPluginModule(moduleName, module)

@@ -35,6 +35,7 @@ object TestUtil {
   const val INVALID_BUNDLE: @NonNls String = "invalid_bundle"
   const val LATEX: @NonNls String = "latex"
   const val PERL: @NonNls String = "perl"
+  const val POWERSHELL: @NonNls String = "powershell"
   const val SHELLSCRIPT: @NonNls String = "shellscript"
   const val ELIXIR: @NonNls String = "elixir"
   const val COLD_FUSION: @NonNls String = "coldfusion"

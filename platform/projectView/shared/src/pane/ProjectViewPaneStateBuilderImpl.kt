@@ -36,7 +36,6 @@ class ProjectViewPaneStateBuilderImpl(
     private var actionState: ProjectViewPaneSettingsStateDTO? = null
     private val superRoot = Node(null, SuperRootModel as ProjectViewNodeModelImpl<*>)
     private val nodeById = ConcurrentHashMap<Long, Node>().also { it[SUPER_ROOT_ID] = superRoot }
-    private val nodeByUserObject = hashMapOf<Any, Node>()
 
     override suspend fun applyUpdate(update: ProjectViewPaneStateEvent): ProjectViewPaneStateEvent? {
       LOG.debug { "Handling update: $update" }
@@ -49,7 +48,6 @@ class ProjectViewPaneStateBuilderImpl(
           actionState = null
           nodeById.clear()
           nodeById[SUPER_ROOT_ID] = superRoot
-          nodeByUserObject.clear()
           superRoot.children = null
         }
         is ProjectViewChildrenLoaded -> {
@@ -109,13 +107,10 @@ class ProjectViewPaneStateBuilderImpl(
 
     private fun addNode(id: Long, node: Node) {
       nodeById[id] = node
-      nodeByUserObject[node.model.userObject] = node
     }
 
     private fun removeNode(id: Long) {
       val removed = nodeById.remove(id) ?: return
-      val userObject = removed.model.userObject
-      nodeByUserObject.remove(userObject)
       val children = removed.children
       if (children != null) {
         for (child in children) {
@@ -216,11 +211,6 @@ class ProjectViewPaneStateBuilderImpl(
           nodeId = state.nodeById[nodeId]?.parent?.model?.id ?: return@withState null // was removed
         }
         projectViewNodePath(paneId, ids.reversed())
-      }
-
-      @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee
-      override suspend fun getNodeByUserObject(userObject: T): BackendProjectViewNodeModel<T>? = withState { state ->
-        state.nodeByUserObject[userObject as Any]?.model as BackendProjectViewNodeModel<T>?
       }
 
       @Suppress("UNCHECKED_CAST") // the platform has no idea about types, common sense the implementations is the type safety guarantee

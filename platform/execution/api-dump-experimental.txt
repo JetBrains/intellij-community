@@ -226,8 +226,6 @@ f:com.intellij.execution.target.TargetEnvironmentType$Companion
 - bs:download$default(com.intellij.execution.target.java.TargetPaths$OrderBuilder,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.execution.target.java.TargetPaths$OrderBuilder
 - f:upload(java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.execution.target.java.TargetPaths$OrderBuilder
 - bs:upload$default(com.intellij.execution.target.java.TargetPaths$OrderBuilder,java.lang.String,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.execution.target.java.TargetPaths$OrderBuilder
-f:com.intellij.execution.target.value.TargetEnvironmentFunctions
-- *sf:targetPath(java.nio.file.Path):java.util.function.Function
 *a:com.intellij.execution.target.value.TraceableTargetEnvironmentFunction
 - java.util.function.Function
 - *sf:Companion:com.intellij.execution.target.value.TraceableTargetEnvironmentFunction$Companion

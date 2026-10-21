@@ -208,8 +208,7 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
       
       class ClassTest {
         <T extends Serializable & Supplier<String>> void typeArg(T t) {
-          // TODO: wrong error; looks like a problem in isUncheckedCast, not inference-related
-          if (t instanceof <error descr="'T' cannot be safely cast to 'Box<String>'">Box<String>(var v)</error>) {
+          if (t instanceof Box<String>(var v)) {
             System.out.println(v.trim());
           }
           if (t instanceof Box(var v)) {
@@ -254,6 +253,30 @@ public class DeconstructionInferenceTest extends LightJavaCodeInsightFixtureTest
                   System.out.println(x.trim());
               }
           }
+      }
+      """);
+    myFixture.checkHighlighting();
+  }
+
+  public void testTypeParameterWithSealedBound() {
+    myFixture.configureByText("Test.java", """
+      sealed interface MyInterface<T> {}
+      record MyRecord1<T>(T value) implements MyInterface<T> {}
+      record MyRecord2<T>(T value) implements MyInterface<T> {}
+
+      class ClassTest {
+        static <T, R extends MyInterface<T>> int handle(R rec) {
+          return switch (rec) {
+            case MyRecord1<T>(T v1) -> 0;
+            case MyRecord2<T>(T v2) -> 1;
+          };
+        }
+        static <T, R extends MyInterface<T>> void wrongArgument(R rec) {
+          if (rec instanceof <error descr="'R' cannot be safely cast to 'MyRecord1<String>'">MyRecord1<String>(String v)</error>) {}
+        }
+        static <T, R extends Comparable<T>> void unrelatedBound(R rec) {
+          if (<error descr="Inconvertible types; cannot cast 'R' to 'MyRecord1<T>'">rec instanceof MyRecord1<T>(T v)</error>) {}
+        }
       }
       """);
     myFixture.checkHighlighting();

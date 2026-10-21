@@ -235,6 +235,16 @@ internal class TerminalGenericFileFilterRelativePathTest {
   }
 
   @Test
+  fun `link groovyc error`() {
+    assertSingleLink(applyFilter("/project/src/Main.kt: 2: Unexpected input: '=' @ line 2, column 9."), mainKt, 0, 23, 2)
+    fileLookup.addFile("/project/12") // the line number is not a link to it
+    assertSingleLink(applyFilter("src/Main.kt: 12: unexpected token"), mainKt, 0, 15, 12)
+    // Without the second colon and a space after it, the number is not a line.
+    assertSingleLink(applyFilter("src/Main.kt: 42 lines"), mainKt, 0, 11)
+    assertSingleLink(applyFilter("src/Main.kt: 10:30 backup"), mainKt, 0, 11)
+  }
+
+  @Test
   fun `real world gradle error with relative paths`() {
     val output = """
       > Task :app:compileKotlin FAILED

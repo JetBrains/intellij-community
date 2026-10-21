@@ -48,6 +48,10 @@ internal interface FoldingRegionStorage {
 
   fun size(): Int
 
+  /**
+   * Processes all regions in unspecified order.
+   * Stops and returns `false` when [processor] returns `false`.
+   */
   fun processAllRegions(processor: Processor<in FoldRegionMarker>): Boolean
 
   fun processRegionsContaining(offset: Int, processor: Processor<in FoldRegionMarker>): Boolean

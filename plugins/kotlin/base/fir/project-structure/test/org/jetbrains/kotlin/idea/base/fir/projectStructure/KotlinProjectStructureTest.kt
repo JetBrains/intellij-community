@@ -10,6 +10,8 @@ import com.intellij.openapi.module.impl.scopes.LibraryScope
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,6 +24,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.assertInstanceOf
 import com.intellij.testFramework.requireIs
@@ -79,6 +82,8 @@ import org.jetbrains.kotlin.test.util.multiRootProjectLibrary
 import org.jetbrains.kotlin.test.util.projectLibrary
 import org.junit.Assert
 import java.io.File
+import java.nio.file.Files
+import kotlin.io.path.readBytes
 
 class KotlinProjectStructureTest : AbstractMultiModuleTest() {
 
@@ -186,6 +191,151 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
 
         val libraryModule = kaModuleWithAssertion<KaLibraryModule>(libraryFile, contextualModule = reflectionLibSourceModule)
         assertEquals(libraryName, libraryModule.libraryName)
+    }
+
+    fun `test module library with jar directory`() {
+        val jarDirectory = directoryContent {
+            file("kotlin-reflect.jar", TestKotlinArtifacts.kotlinReflect.readBytes())
+        }.generateInVirtualTempDir()
+
+        doTestModuleLibraryWithJarDirectory(jarDirectory, recursive = false)
+    }
+
+    fun `test module library with recursive jar directory`() {
+        val jarDirectory = directoryContent {
+            dir("nested") {
+                dir("deeper") {
+                    file("kotlin-reflect.jar", TestKotlinArtifacts.kotlinReflect.readBytes())
+                }
+            }
+        }.generateInVirtualTempDir()
+
+        doTestModuleLibraryWithJarDirectory(jarDirectory, recursive = true)
+    }
+
+    private fun doTestModuleLibraryWithJarDirectory(jarDirectory: VirtualFile, recursive: Boolean) {
+        val module = createModule("a")
+        val libraryName = "jar_directory_library"
+        val library = moduleLibrary(module, libraryName = libraryName)
+        runWriteAction {
+            with(library.modifiableModel) {
+                addJarDirectory(jarDirectory, recursive, OrderRootType.CLASSES)
+                commit()
+            }
+        }
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+        // The platform file index expands the jar directory, so the class file is in the library scope.
+        val libraryScope = LibraryScope(project, library)
+        val classFile = getFile("KProperties.class", libraryScope)
+
+        val libraryModule = library.toKaModule()
+        assertTrue(
+            "The content scope of the library module must contain the class files of the jars in the jar directory",
+            classFile.virtualFile in libraryModule.contentScope,
+        )
+
+        val libraryModuleForFile = kaModuleWithAssertion<KaLibraryModule>(classFile)
+        assertEquals(libraryName, libraryModuleForFile.libraryName)
+
+        assertKotlinClassFoundFromJava(module)
+    }
+
+    fun `test module library with jar added to jar directory later`() {
+        val jarDirectory = directoryContent {}.generateInVirtualTempDir()
+
+        val module = createModule("a")
+        val libraryName = "jar_directory_library"
+        val library = moduleLibrary(module, libraryName = libraryName)
+        runWriteAction {
+            with(library.modifiableModel) {
+                addJarDirectory(jarDirectory, /* recursive = */ false, OrderRootType.CLASSES)
+                commit()
+            }
+        }
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+        // Create the library module and its content scope while the jar directory is still empty.
+        val initialLibraryModule = library.toKaModule()
+        assertTrue(initialLibraryModule.binaryVirtualFiles.isEmpty())
+        assertNotNull(initialLibraryModule.contentScope)
+
+        addJarToJarDirectoryOnDisk(jarDirectory)
+
+        val classFile = getFile("KProperties.class", LibraryScope(project, library))
+        assertTrue(
+            "The platform file index must contain the class files of a jar added to the jar directory later",
+            ProjectFileIndex.getInstance(project).isInLibraryClasses(classFile.virtualFile),
+        )
+
+        val libraryModule = library.toKaModule()
+        assertTrue(
+            "The content scope of the library module must contain the class files of a jar added to the jar directory later",
+            classFile.virtualFile in libraryModule.contentScope,
+        )
+
+        val libraryModuleForFile = kaModuleWithAssertion<KaLibraryModule>(classFile)
+        assertEquals(libraryName, libraryModuleForFile.libraryName)
+
+        assertKotlinClassFoundFromJava(module)
+    }
+
+    fun `test module library with jar removed from jar directory later`() {
+        val jarDirectory = directoryContent {
+            file("kotlin-reflect.jar", TestKotlinArtifacts.kotlinReflect.readBytes())
+        }.generateInVirtualTempDir()
+
+        val module = createModule("a")
+        val library = moduleLibrary(module, libraryName = "jar_directory_library")
+        runWriteAction {
+            with(library.modifiableModel) {
+                addJarDirectory(jarDirectory, /* recursive = */ false, OrderRootType.CLASSES)
+                commit()
+            }
+        }
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
+
+        // Create the library module and its content scope while the jar is still present.
+        val classFile = getFile("KProperties.class", LibraryScope(project, library))
+        val initialLibraryModule = library.toKaModule()
+        assertTrue(classFile.virtualFile in initialLibraryModule.contentScope)
+
+        Files.delete(jarDirectory.toNioPath().resolve("kotlin-reflect.jar"))
+        refreshJarDirectory(jarDirectory)
+
+        assertTrue(
+            "The binary roots of the library module must not contain a jar which has been removed from the jar directory",
+            library.toKaModule().binaryVirtualFiles.isEmpty(),
+        )
+    }
+
+    /**
+     * Copies a jar into [jarDirectory] *on disk* and makes it visible via a VFS refresh, like a jar produced by an external build system.
+     *
+     * The jar must not be created through the VFS API: writing its content would additionally publish a content change event for a `.jar`
+     * file, which makes `FirIdeModuleStateModificationService.LibraryUpdatesListener` invalidate all cached `KaLibraryModule`s on its own,
+     * and the test would pass without covering jar directories at all. A jar which merely *appears* in the directory publishes no content
+     * change event. The cached modules are invalidated by the `rootsChanged` event which `RootsChangeWatcher` fires after the VFS change,
+     * because the platform recomputes the file sets of a jar directory out of band (see `NonExistingWorkspaceRootsRegistry`).
+     */
+    private fun addJarToJarDirectoryOnDisk(jarDirectory: VirtualFile) {
+        Files.copy(TestKotlinArtifacts.kotlinReflect, jarDirectory.toNioPath().resolve("kotlin-reflect.jar"))
+        refreshJarDirectory(jarDirectory)
+    }
+
+    private fun refreshJarDirectory(jarDirectory: VirtualFile) {
+        VfsUtil.markDirtyAndRefresh(/* async = */ false, /* recursive = */ true, /* reloadChildren = */ true, jarDirectory)
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
+    }
+
+    /**
+     * Checks that [JavaPsiFacade] finds a Kotlin-compiled library class. See KTIJ-39129.
+     */
+    private fun assertKotlinClassFoundFromJava(module: Module) {
+        val className = "kotlin.reflect.full.IllegalCallableAccessException"
+        val psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.moduleWithLibrariesScope(module))
+        assertNotNull("JavaPsiFacade must find the Kotlin-compiled class $className", psiClass)
+        assertInstanceOf<KtLightClass>(psiClass)
     }
 
     fun `test module libraries with the same shared content`() {

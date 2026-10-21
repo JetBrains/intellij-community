@@ -2,6 +2,7 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -22,7 +23,6 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.uiDesigner.lw.AsmClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
-import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -56,8 +56,8 @@ public final class LoaderFactory implements Disposable {
 
   public LoaderFactory(final Project project) {
     myProject = project;
-    myModule2ClassLoader = CollectionFactory.createConcurrentWeakMap();
-    myModule2ClassFinder = CollectionFactory.createConcurrentWeakMap();
+    myModule2ClassLoader = ConcurrentCollectionFactory.createConcurrentWeakMap();
+    myModule2ClassFinder = ConcurrentCollectionFactory.createConcurrentWeakMap();
     myConnection = myProject.getMessageBus().connect();
     myConnection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override

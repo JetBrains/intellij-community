@@ -42,7 +42,6 @@
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="fleet.rhizomedb"/>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.guava"/>
     <module name="intellij.libraries.jediterm.core"/>
@@ -65,8 +64,6 @@
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.eel.provider"/>
-    <module name="intellij.platform.execution"/>
-    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.feedback"/>
     <module name="intellij.platform.ide.codeinsight.inline"/>
     <module name="intellij.platform.ide.core"/>
@@ -78,7 +75,6 @@
     <module name="intellij.platform.ide.ui"/>
     <module name="intellij.platform.ijent"/>
     <module name="intellij.platform.indexing"/>
-    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.project"/>
@@ -89,6 +85,7 @@
     <module name="intellij.platform.rpc.lite"/>
     <module name="intellij.platform.rpc.topics"/>
     <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.terminal"/>
     <module name="intellij.platform.util.annotations"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.diff"/>
@@ -101,6 +98,7 @@
     <module name="intellij.terminal.backend.split"/>
     <module name="intellij.terminal.backend"/>
     <module name="intellij.terminal.emulator"/>
+    <module name="intellij.terminal.execution"/>
     <module name="intellij.terminal.frontend"/>
     <module name="intellij.terminal.frontend.split"/>
     <module name="intellij.terminal.cloud"/>

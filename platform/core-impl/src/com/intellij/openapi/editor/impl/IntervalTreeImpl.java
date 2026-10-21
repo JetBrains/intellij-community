@@ -474,6 +474,10 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     return (IntervalNode<T>)root;
   }
 
+  /**
+   * Processes live intervals in unspecified order
+   * Stops and returns {@code false} when {@code processor} returns {@code false}.
+   */
   @Override
   public boolean processAll(@NotNull Processor<? super T> processor) {
     try {

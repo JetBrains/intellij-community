@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.roots.ui.configuration
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.AdditionalDataConfigurable
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
@@ -19,7 +20,7 @@ interface TestSdkType : JavaSdkType, SdkTypeId {
     override fun isValidSdkHome(path: String): Boolean = true
     override fun suggestSdkName(currentSdkName: String?, sdkHome: String): String = TestSdkGenerator.findTestSdk(sdkHome)!!.name
     override fun suggestHomePath(path: Path): String? = null
-    override fun suggestHomePaths(): Collection<String> = TestSdkGenerator.getAllTestSdks().map { it.homePath!! }
+    override fun suggestHomePaths(project: Project?): Collection<String> =TestSdkGenerator.getAllTestSdks().map { it.homePath!! }
     override fun createAdditionalDataConfigurable(sdkModel: SdkModel, sdkModificator: SdkModificator): AdditionalDataConfigurable? = null
     override fun saveAdditionalData(additionalData: SdkAdditionalData, additional: Element) {}
     override fun getBinPath(sdk: Sdk): String = File(sdk.homePath, "bin").path

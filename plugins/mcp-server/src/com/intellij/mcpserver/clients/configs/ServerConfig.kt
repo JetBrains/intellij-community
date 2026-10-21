@@ -3,6 +3,7 @@
 package com.intellij.mcpserver.clients.configs
 
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 
@@ -31,7 +32,12 @@ class AirNetworkConfig(val url: String, val type: String, val headers: Map<Strin
 class GitHubCopilotNetworkConfig(val url: String, val type: String, val headers: Map<String, String>? = null) : ServerConfig()
 
 @Serializable
-class CodexStreamableHttpConfig(val url: String, val headers: Map<String, String>? = null) : ServerConfig()
+class CodexStreamableHttpConfig(
+  val url: String,
+  val headers: Map<String, String>? = null,
+  /** Maps a header name to the name of the environment variable that Codex reads for the header value. */
+  @SerialName("env_http_headers") val envHttpHeaders: Map<String, String>? = null,
+) : ServerConfig()
 
 @Serializable
 class STDIOServerConfig(

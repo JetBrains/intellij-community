@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.CompositeTabIconHolderCreator
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ReadmeShownUsageCollector.README_OPENED_ON_START_TS
@@ -666,6 +667,11 @@ class EditorWindow internal constructor(
 
   internal fun hasClosedTabs(): Boolean = !removedTabs.isEmpty()
 
+  @RequiresEdt
+  internal fun forgetClosedTabsOf(classLoaders: Collection<ClassLoader>) {
+    removedTabs.removeAll { it.isLoadedBy(classLoaders) }
+  }
+
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
   internal fun restoreClosedTab() {
     val info = removedTabs.removeLastOrNull() ?: return
@@ -686,6 +692,24 @@ class EditorWindow internal constructor(
   fun closeFile(file: VirtualFile, disposeIfNeeded: Boolean = true) {
     val composite = getComposite(file) ?: return
     closeFile(file = file, composite = composite, disposeIfNeeded = disposeIfNeeded)
+  }
+
+  /**
+   * Removes the tab of [composite] from this window and keeps the composite alive.
+   *
+   * No file-closed event is sent, and the tab is not recorded for "Reopen Closed Tab".
+   * The caller must add the composite to a window again, or dispose it.
+   * Returns the removed tab, or `null` when the composite is not in this window.
+   */
+  @RequiresEdt
+  @Internal
+  fun detachComposite(composite: EditorComposite): TabInfo? {
+    val tab = findTabByComposite(composite) ?: return null
+    val editorTabs = tabbedPane.editorTabs
+    editorTabs.removeTab(tab)
+    // setTabs adds the listener again when the tab returns to a window
+    tab.changeSupport.removePropertyChangeListener(editorTabs)
+    return tab
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
@@ -1169,6 +1193,21 @@ private fun swapComponents(parent: JPanel, toAdd: JComponent, toRemove: JCompone
 internal val TabInfo.composite: EditorComposite
   get() = (component as EditorCompositePanel).composite
 
+/**
+ * Removes the closed tabs of the [classLoaders] from the closed-tab history of each editor window of the [project].
+ * A closed tab belongs to a class loader when the class of its file or of its file system comes from that class loader.
+ */
+@RequiresEdt
+internal fun forgetClosedTabsOf(project: Project, classLoaders: Collection<ClassLoader>) {
+  val manager = FileEditorManagerEx.getInstanceExIfCreated(project) as? FileEditorManagerImpl ?: return
+  for (splitters in manager.getAllSplitters()) {
+    for (window in splitters.windows()) {
+      window.forgetClosedTabsOf(classLoaders)
+    }
+    splitters.currentWindow?.forgetClosedTabsOf(classLoaders)
+  }
+}
+
 private data class RemovedTabInfo(
   private val file: VirtualFile,
   val openOptions: FileEditorOpenOptions,
@@ -1178,5 +1217,9 @@ private data class RemovedTabInfo(
       return file
     }
     return VirtualFileManager.getInstance().findFileByUrl(file.url)
+  }
+
+  fun isLoadedBy(classLoaders: Collection<ClassLoader>): Boolean {
+    return file.javaClass.classLoader in classLoaders || file.fileSystem.javaClass.classLoader in classLoaders
   }
 }

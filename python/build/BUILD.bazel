@@ -133,6 +133,7 @@ jvm_library(
     ),
     module_name = "intellij.pycharm.community.build.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/byte-buddy"],
 )
 
 jvm_library(
@@ -157,6 +158,7 @@ jvm_library(
         ":pycharm-community-build-tests",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//libraries/byte-buddy:byte-buddy_test_lib",
     ],
     deps = [
         # do not sort,

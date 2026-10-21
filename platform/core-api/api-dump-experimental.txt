@@ -173,6 +173,11 @@ com.intellij.lexer.RestartableLexer
 - a:getReferences(com.intellij.psi.PsiElement,com.intellij.model.psi.PsiSymbolReferenceHints):java.util.Collection
 - a:getReferences(com.intellij.psi.PsiElement,java.lang.Class):java.util.Collection
 - s:getService():com.intellij.model.psi.PsiSymbolReferenceService
+*:com.intellij.model.psi.PsiSymbolService
+- a:asSymbol(com.intellij.psi.PsiElement):com.intellij.model.Symbol
+- a:asSymbolReference(com.intellij.psi.PsiReference):com.intellij.model.psi.PsiSymbolReference
+- a:extractElementFromSymbol(com.intellij.model.Symbol):com.intellij.psi.PsiElement
+- s:getInstance():com.intellij.model.psi.PsiSymbolService
 *:com.intellij.model.psi.UrlReferenceHost
 - com.intellij.model.psi.PsiExternalReferenceHost
 *:com.intellij.navigation.DirectNavigationProvider
@@ -232,6 +237,10 @@ f:com.intellij.openapi.components.ServicesKt
 - a:moveCaretTo(I):V
 - registerTabOut(com.intellij.openapi.util.TextRange,I):V
 - a:select(com.intellij.openapi.util.TextRange):V
+com.intellij.openapi.editor.RangeMarker
+- com.intellij.openapi.util.Segment
+- com.intellij.openapi.util.UserDataHolder
+- *:setStickingToRight(Z):V
 f:com.intellij.openapi.editor.markup.AttributesFlyweight
 - *s:create(java.awt.Color,java.awt.Color,I,java.awt.Color,com.intellij.openapi.editor.markup.EffectType,java.util.Map,java.awt.Color):com.intellij.openapi.editor.markup.AttributesFlyweight
 - *:hasEffects():Z

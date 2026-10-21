@@ -47,7 +47,7 @@ interface StatisticsEventLogger {
 /**
  * Represents the recorder.
  *
- * [useDefaultRecorderId] - When enabled, device and machine ids would match FUS(default) recorder. Must NOT be enabled for non-anonymized recorders.
+ * [useDefaultRecorderId] - Shares the FUS device ID, machine ID, and anonymization salt. Must NOT be enabled for non-anonymized recorders.
  */
 abstract class StatisticsEventLoggerProvider(
   val recorderId: String,

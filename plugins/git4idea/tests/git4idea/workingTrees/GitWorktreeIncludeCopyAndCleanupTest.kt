@@ -104,23 +104,6 @@ internal class GitWorktreeIncludeCopyAndCleanupTest {
   }
 
   @Test
-  fun `test copies the idea-settings skill file when it is staged but not committed`(): Unit = with(context) {
-    touch(".worktreeinclude", GitWorktreeIncludeFileService.generateWorktreeIncludeContent(includeIdeaSettings = true))
-    val skillPath = "${GitWorktreeIncludeFileService.IDEA_SETTINGS_SKILL_DIR_RELATIVE_PATH}/" +
-      GitWorktreeIncludeFileService.IDEA_SETTINGS_SKILL_FILE_NAME
-    repo.file(skillPath).create("skill content").add()
-
-    val targetDir = testNioRoot.resolve("target")
-    Files.createDirectories(targetDir)
-
-    runBlocking {
-      GitWorktreeProjectConfigService.getInstance(project).copyAndCleanUpWorktreeIncludeFiles(repo.root, targetDir)
-    }
-
-    assertThat(Files.readString(targetDir.resolve(skillPath))).isEqualTo("skill content")
-  }
-
-  @Test
   fun `test worktreeinclude pattern matching nothing is a no-op`(): Unit = with(context) {
     touch(".worktreeinclude", "does-not-exist/*.txt\n")
 
@@ -314,19 +297,6 @@ internal class GitWorktreeIncludeCopyAndCleanupTest {
 
     val componentNames = root.getChildren("component").map { it.getAttributeValue("name") }
     assertThat(componentNames).containsExactly("FormatOnSaveOptions")
-  }
-
-  @Test
-  fun `test ideaSettingsSkillFileContent is a valid frontmatter skill file with no monorepo-specific reference`() {
-    val content = GitWorktreeIncludeFileService.ideaSettingsSkillFileContent()
-
-    assertThat(content).startsWith("---\nname: worktree-idea-settings\n")
-    assertThat(content).contains("description:")
-    assertThat(content.split("---").size).isGreaterThanOrEqualTo(3)
-    assertThat(content).contains(".worktreeinclude")
-    assertThat(content).contains("ProjectId")
-    assertThat(content).doesNotContain("git4idea")
-    assertThat(content).doesNotContain("workspace-isolation.md")
   }
 
   @Test

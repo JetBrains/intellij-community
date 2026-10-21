@@ -125,16 +125,12 @@ enum class StartupWizardStage {
   ProductChoicePage,
   SettingsToSyncPage,
   SettingsToImportPage,
-  ImportProgressPage,
-  WizardThemePage,
-  WizardKeymapPage,
-  WizardPluginPage,
-  WizardProgressPage
+  ImportProgressPage
 }
 
 @Internal
 object IdeStartupWizardCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("wizard.startup", 7)
+  private val GROUP = EventLogGroup("wizard.startup", 8)
 
   override fun getGroup(): EventLogGroup = GROUP
 

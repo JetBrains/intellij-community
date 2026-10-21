@@ -3,20 +3,19 @@ package com.intellij.ui.components
 
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.ItemEvent
 import java.awt.event.KeyEvent
 import java.util.function.Consumer
-import javax.swing.DefaultListCellRenderer
-import javax.swing.JList
 import javax.swing.KeyStroke.getKeyStroke
 import javax.swing.ListCellRenderer
 
@@ -33,6 +32,8 @@ open class DropDownLink<T>(item: T, private val popupBuilder: (DropDownLink<T>) 
       field = newItem
       fireItemStateChanged(newItem, ItemEvent.SELECTED)
     }
+
+  private var popupHorizontalShift = 0
 
   init {
     text = itemToString(item)
@@ -53,9 +54,13 @@ open class DropDownLink<T>(item: T, private val popupBuilder: (DropDownLink<T>) 
 
   @JvmOverloads
   constructor(item: T, items: List<T>, onChoose: Consumer<T> = Consumer { }) : this(item, { link ->
+    val renderer = link.createRenderer()
+    link.popupHorizontalShift = link.calcHorizontalPopupShift(renderer)
     JBPopupFactory.getInstance()
       .createPopupChooserBuilder(items)
-      .setRenderer(link.createRenderer())
+      .setRenderer(renderer)
+      // The same rule as for ComboBox: the popup is wider than the link by the shift on both sides
+      .setMinSize(Dimension(link.preferredSize.width - 2 * link.popupHorizontalShift, 0))
       .setItemChosenCallback {
         onChoose.accept(it)
         link.selectedItem = it
@@ -86,24 +91,20 @@ open class DropDownLink<T>(item: T, private val popupBuilder: (DropDownLink<T>) 
   @Nls
   protected open fun itemToString(item: T): String = item.toString()
 
-  protected open fun popupPoint(): Point = Point(0, height + scale(4))
+  protected open fun popupPoint(): Point = Point(popupHorizontalShift, height + scale(4))
 
-  open fun createRenderer(): ListCellRenderer<in T> = LinkCellRenderer(this)
-}
-
-
-private class LinkCellRenderer(private val link: Component) : DefaultListCellRenderer() {
-  private fun coerce(size: Dimension): Dimension {
-    size.width = size.width.coerceAtLeast(link.preferredSize.width)
-    size.height = size.height.coerceAtLeast(scale(22))
-    return size
+  open fun createRenderer(): ListCellRenderer<in T> {
+    return textListCellRenderer { it.toString() }
   }
 
-  override fun getMinimumSize() = coerce(super.getMinimumSize())
-  override fun getPreferredSize() = coerce(super.getPreferredSize())
-  override fun getListCellRendererComponent(list: JList<*>?, value: Any?, index: Int, selected: Boolean, focused: Boolean): Component {
-    super.getListCellRendererComponent(list, value, index, selected, false)
-    border = JBUI.Borders.empty(0, 5, 0, 10)
-    return this
+  /**
+   * Align text in popup with link text.
+   */
+  private fun calcHorizontalPopupShift(renderer: ListCellRenderer<*>): Int {
+    if (!ExperimentalUI.isNewUI() || renderer !is ExperimentalUI.NewUIComboBoxRenderer) {
+      return 0
+    }
+    val rowContentLeft = JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get() + JBUI.CurrentTheme.Popup.Selection.innerInsets().left
+    return insets.left - rowContentLeft
   }
 }

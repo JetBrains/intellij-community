@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.io.BaseOutputReader;
 import com.jetbrains.python.actions.PyExecuteInConsole;
 import com.jetbrains.python.actions.PyRunFileInConsoleAction;
@@ -114,6 +115,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   }
 
   @Override
+  @RequiresBackgroundThread
   public @Nullable ExecutionResult execute(@NotNull Executor executor, @NotNull PythonScriptTargetedCommandLineBuilder converter)
     throws ExecutionException {
     Project project = myConfig.getProject();

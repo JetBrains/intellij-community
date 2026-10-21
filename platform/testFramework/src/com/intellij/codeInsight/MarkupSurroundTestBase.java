@@ -11,6 +11,10 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.HashSet;
 import java.util.List;
 
+/**
+ * @deprecated Use the JUnit 5 {@code markupSurroundFixture} from {@code intellij.platform.testFramework.junit5.codeInsight}.
+ */
+@Deprecated
 public abstract class MarkupSurroundTestBase extends BasePlatformTestCase {
   protected static final String BASE_PATH = "/codeInsight/surroundWith/";
 

@@ -16,15 +16,19 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.regex.Pattern;
+
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Eugene Zhuravlev
  */
-public class AntpatternsTest extends TestCase {
+public class AntpatternsTest {
   
+  @Test
   public void testPatternConversion() {
     final Pattern testPattern = convertToPattern("**/test/?*.java");
     
@@ -80,12 +84,14 @@ public class AntpatternsTest extends TestCase {
     assertTrue(samplePattern2.matcher("dir/subdir/aaa/foo.txt").matches());
   }
 
+  @Test
   public void testDoubleAsterisk() {
     final Pattern pattern = convertToPattern("dir/s**");
     assertTrue(pattern.matcher("dir/subdir").matches());
     assertFalse(pattern.matcher("dir/subdir/sample.txt").matches());
   }
 
+  @Test
   public void testDoubleAsteriskInside() {
     final Pattern pattern = convertToPattern("dir/s**/ttt");
     assertTrue(pattern.matcher("dir/subdir/ttt").matches());
@@ -93,6 +99,7 @@ public class AntpatternsTest extends TestCase {
     assertFalse(pattern.matcher("dir/subdir").matches());
   }
 
+  @Test
   public void testDoubleAsteriskOnly() {
     final Pattern pattern = convertToPattern("**");
     assertTrue(pattern.matcher("dir/subdir/ttt").matches());
@@ -100,6 +107,7 @@ public class AntpatternsTest extends TestCase {
     assertTrue(pattern.matcher("dir/subdir").matches());
   }
 
+  @Test
   public void testDoubleAsteriskOnly2() {
     final Pattern pattern = convertToPattern("/**");
     assertTrue(pattern.matcher("dir/subdir/ttt").matches());
@@ -107,6 +115,7 @@ public class AntpatternsTest extends TestCase {
     assertTrue(pattern.matcher("dir/subdir").matches());
   }
 
+  @Test
   public void testAsterisks() {
     final Pattern pattern = convertToPattern("dir/*?*");
     assertTrue(pattern.matcher("dir/subdir").matches());
@@ -114,6 +123,7 @@ public class AntpatternsTest extends TestCase {
     assertFalse(pattern.matcher("dir/subdir/aaa/ttt.txt").matches());
   }
 
+  @Test
   public void testTrailingAsterisks() {
     final Pattern pattern = convertToPattern("dir/subdir/**");
     assertTrue(pattern.matcher("dir/subdir/ttt").matches());
@@ -121,6 +131,7 @@ public class AntpatternsTest extends TestCase {
     assertTrue(pattern.matcher("dir/subdir").matches());
   }
 
+  @Test
   public void testTrailingAsterisks2() {
     final Pattern pattern = convertToPattern("dir/subdir/");
     assertTrue(pattern.matcher("dir/subdir/ttt").matches());

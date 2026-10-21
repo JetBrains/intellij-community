@@ -9,6 +9,10 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NonNls;
 
+/**
+ * @deprecated Use {@link EnterActionTestUtil} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class AbstractEnterActionTestCase extends LightPlatformCodeInsightTestCase {
   private static final String TEST_PATH = "/codeInsight/enterAction/";
 

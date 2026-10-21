@@ -14,6 +14,7 @@ import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.localEel
@@ -22,7 +23,6 @@ import com.intellij.python.community.impl.installer.PySdkToInstallManager
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
 import com.intellij.python.community.services.systemPython.SystemPythonServiceImpl.MyServiceState
 import com.intellij.python.community.services.systemPython.impl.Cache
-import com.intellij.python.community.services.systemPython.impl.EelDescriptorFilter.Companion.isEphemeral
 import com.intellij.python.community.services.systemPython.impl.PySystemPythonBundle
 import com.intellij.python.community.services.systemPython.impl.UpdateCacheDelayer
 import com.intellij.python.community.services.systemPython.impl.BinaryStamp
@@ -97,7 +97,23 @@ class SystemPythonServiceImpl internal constructor(
       _cacheImpl.complete(createUpdateCacheDelayer()?.let { delayer ->
         Cache(scope, delayer) { eelDescriptor ->
           withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT) {
-            searchPythonsPhysicallyNoCache(eelDescriptor.toEelApi())
+            try {
+              // Eel can wrap its error into a CancellationException. Without the unwrap, the background update would stop silently.
+              EelUnavailableException.unwrapFromCancellationExceptions {
+                searchPythonsPhysicallyNoCache(eelDescriptor.toEelApi())
+              }
+            }
+            catch (e: EelUnavailableException) {
+              when (e) {
+                is EelUnavailableException.Conclusive -> {
+                  logger.info("$eelDescriptor is dead, forgetting its pythons", e)
+                  forgetPythons(eelDescriptor)
+                }
+                // A new attempt can succeed, so keep the records. The next request searches again.
+                is EelUnavailableException.CommunicationFailure -> logger.info("$eelDescriptor is unavailable", e)
+              }
+              null
+            }
           }
         }
       })
@@ -117,11 +133,9 @@ class SystemPythonServiceImpl internal constructor(
     val systemPython = SystemPython.create(pythonWithLangLevel, null)
 
     val eelDescriptor = pythonPath.getEelDescriptor()
-    if (!eelDescriptor.isEphemeral) {
-      state.userProvidedPythons.add(pythonPath.pathString)
-      logger.debug("Registering $pythonPath")
-      cache()?.get(eelDescriptor)?.add(systemPython)
-    }
+    state.userProvidedPythons.add(pythonPath.pathString)
+    logger.debug("Registering $pythonPath")
+    cache()?.get(eelDescriptor)?.add(systemPython)
     return Result.success(systemPython)
   }
 
@@ -130,8 +144,7 @@ class SystemPythonServiceImpl internal constructor(
 
   override suspend fun findSystemPythons(eelApi: EelApi, forceRefresh: Boolean): List<SystemPython> {
     val eelDescriptor = eelApi.descriptor
-    val cache = if (!eelDescriptor.isEphemeral) cache() else null
-    return cache?.let { cache ->
+    return cache()?.let { cache ->
       // Cache enabled
       cache.startUpdate()
       if (forceRefresh) {
@@ -207,6 +220,21 @@ class SystemPythonServiceImpl internal constructor(
       state.userProvidedPythons.addAll(newPaths)
       logger.info("pythons refreshed")
       return@withContext result.sorted()
+    }
+  }
+
+  /**
+   * Removes all records of the pythons on [eelDescriptor].
+   * Call it when [eelDescriptor] is dead ([EelUnavailableException.Conclusive]): the records would outlive it,
+   * and a search on it would only fail.
+   */
+  private suspend fun forgetPythons(eelDescriptor: EelDescriptor) {
+    findPythonsMutex.withLock {
+      pythonInfoCache.keys.removeAll { it.getEelDescriptor().equalsMayBeUsingMachine(eelDescriptor) }
+      val deadPythons = state.userProvidedPythonsAsPath
+        .filter { it.getEelDescriptor().equalsMayBeUsingMachine(eelDescriptor) }
+        .map { it.pathString }
+      state.userProvidedPythons.removeAll(deadPythons)
     }
   }
 

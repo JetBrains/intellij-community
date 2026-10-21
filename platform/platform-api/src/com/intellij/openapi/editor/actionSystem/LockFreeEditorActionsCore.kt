@@ -1,17 +1,21 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actionSystem
 
+import com.intellij.concurrency.withThreadLocal
 import com.intellij.ide.BrowserUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import java.awt.datatransfer.StringSelection
 import kotlin.time.Duration.Companion.minutes
 
@@ -23,7 +27,7 @@ object LockFreeEditorActionsCore {
   private var lastNotificationTime: Long = 0
 
   @Suppress("HardCodedStringLiteral", "OPT_IN_USAGE")
-  fun showBalloonWithAdvice(e: Throwable) {
+  fun showBalloonWithAdvice(e: Throwable, ticketId: @NonNls String) {
     if (System.currentTimeMillis() - lastNotificationTime < 1.minutes.inWholeMilliseconds) {
       return
     } else {
@@ -33,7 +37,7 @@ object LockFreeEditorActionsCore {
     val assigneeLink = "https://jetbrains.slack.com/team/UL4EL747Q"
     val builder = HtmlBuilder()
       .append("An IDE operation failed because of recent changes in read access (")
-      .appendLink(issueLink, "see IJPL-231208")
+      .appendLink(issueLink, "see $ticketId")
       .append(")");
     if (ApplicationManager.getApplication().isInternal) {
       builder.append(" Please report it to ")
@@ -67,6 +71,13 @@ object LockFreeEditorActionsCore {
     GlobalScope.launch {
       delay(1.minutes)
       notification.expire()
+    }
+  }
+
+  @JvmStatic
+  fun notifyErrorsInLockAccess(ticketId: @NonNls String): AccessToken {
+    return withThreadLocal(ThreadingAssertions.inputEventWithoutWriteIntentLock) {
+      { exception -> showBalloonWithAdvice(exception, ticketId)}
     }
   }
 

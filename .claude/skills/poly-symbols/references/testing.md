@@ -10,7 +10,7 @@ before migrating production code, see [migration.md](migration.md).
 ## Class hierarchy
 
 `PolySymbolsTestCase(mode: HybridTestMode = BasePlatform) : HybridTestCase(mode)`
-(`community/platform/polySymbols/testFramework/com/intellij/polySymbols/testFramework/PolySymbolsTestCase.kt`)
+(`community/platform/polySymbols/testFramework/src/com/intellij/polySymbols/testFramework/PolySymbolsTestCase.kt`)
 is the base. `HybridTestMode.BasePlatform` is a light/in-memory fixture (like
 `BasePlatformTestCase`); `CodeInsightFixture` is heavyweight/real-files (needed when a test copies
 real project files to disk — e.g. GDScript's SDK/`.godot` fixtures). Framework-specific bases layer
@@ -34,7 +34,7 @@ doesn't fit your scenario — see "Escape hatch" below.
 ## Cheat sheet — `PolySymbolsTestUtil.kt` extension functions
 
 All of the following live in
-`community/platform/polySymbols/testFramework/com/intellij/polySymbols/testFramework/PolySymbolsTestUtil.kt`.
+`community/platform/polySymbols/testFramework/src/com/intellij/polySymbols/testFramework/PolySymbolsTestUtil.kt`.
 **Always re-read this file before relying on a signature** — it is actively evolving; treat exact
 parameter lists as illustrative, not gospel.
 

@@ -145,7 +145,7 @@ pub(crate) fn conclude(
         // something it expects to execute.
         Status::NoTests => {
             let summary = match reach {
-                Reach::Iteration(id) => format!("{selection} matched no tests in the hot tier (iteration {id}); check the selector's FQN"),
+                Reach::Iteration(id) => format!("{selection} matched no tests (iteration {id}); check the selector's FQN"),
                 Reach::Shards(count) => format!(
                     "{selection} matched no tests in any of {count} shard(s); the split covers the whole lane by \
                      construction, so this is the lane's own selection"
@@ -256,22 +256,19 @@ pub(crate) fn failures_of(failures: &[ReportFailure], bundles: &[TraceBundle]) -
         .collect()
 }
 
-/// The class a failure names, or its suite.
+/// The class a failure names.
 fn failure_class(failure: &ReportFailure) -> Option<&str> {
-    failure.class_name.as_deref().or(failure.suite.as_deref())
+    failure.class_name.as_deref()
 }
 
 /// The trace of a failure's scenario. A bundle names its class by the simple name and the report by the FQN, so
-/// the simple names are compared. A failure from the stream names its test by the scenario; one from the XML names
-/// it as the JUnit reporter does, which can add an index or parentheses, so the test name must contain the
-/// scenario.
+/// the simple names are compared. The lane daemon names a case and its bundle by the same scenario name, so the test
+/// name must equal the scenario, as the report matches a case to its bundle.
 fn trace_of(failure: &ReportFailure, bundles: &[TraceBundle]) -> Option<TraceRef> {
     let class = simple_name(failure.class_name.as_deref()?);
     bundles
         .iter()
-        .find(|bundle| {
-            simple_name(&bundle.test_class) == class && !bundle.scenario.is_empty() && failure.test_name.contains(&bundle.scenario)
-        })
+        .find(|bundle| simple_name(&bundle.test_class) == class && !bundle.scenario.is_empty() && failure.test_name == bundle.scenario)
         .map(trace_ref)
 }
 

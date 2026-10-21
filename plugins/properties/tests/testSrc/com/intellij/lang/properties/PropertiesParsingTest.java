@@ -1,30 +1,31 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
-import com.intellij.lang.LanguageASTFactory;
 import com.intellij.lang.properties.parsing.PropertiesParserDefinition;
-import com.intellij.lang.properties.psi.impl.PropertiesASTFactory;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.openapi.project.Project;
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Test;
 
-public class PropertiesParsingTest extends ParsingTestCase {
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixtureKt.parsingFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 
-  public PropertiesParsingTest() {
-    super("", "properties", new PropertiesParserDefinition());
-  }
+@TestApplication
+public class PropertiesParsingTest {
+  private static final TestFixture<Project> projectFixture = projectFixture();
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    addExplicitExtension(LanguageASTFactory.INSTANCE, PropertiesLanguage.INSTANCE, new PropertiesASTFactory());
-  }
+  private final TestFixture<ParsingTestFixture> parsingFixture =
+    parsingFixture(projectFixture, PluginPathManager.getPluginHomePath("properties") + "/tests/testData/propertiesFile/psi/", "properties",
+                   new PropertiesParserDefinition());
 
-  @Override
-  protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("properties") + "/tests/testData/propertiesFile/psi";
-  }
+  @Test
+  public void testProp1() { parsingFixture.get().doTest(true); }
 
-  public void testProp1() { doTest(true); }
-  public void testComments() { doTest(true); }
-  public void testHeader() { doTest(true); }
+  @Test
+  public void testComments() { parsingFixture.get().doTest(true); }
+
+  @Test
+  public void testHeader() { parsingFixture.get().doTest(true); }
 }

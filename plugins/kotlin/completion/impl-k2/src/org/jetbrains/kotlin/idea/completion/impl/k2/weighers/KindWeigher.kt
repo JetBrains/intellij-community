@@ -11,9 +11,11 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.helpers.KtSymbo
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.keywords.ReturnKeywordHandler.isReturnAtHighlyLikelyPosition
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.KotlinCallableLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.AnonymousObjectLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.ClassifierLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.OperatorNameLookupObject
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.PackagePartLookupObject
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
@@ -37,6 +39,8 @@ internal object KindWeigher: KotlinLookupElementWeigher("kotlin.kind"), KotlinSe
 
     private var LookupElement.isEnumEntry: Boolean by NotNullableUserDataProperty(Key("KOTLIN_KIND_WEIGHER_IS_ENUM"), false)
 
+    private var LookupElement.shouldWeighObjectsAsCallables: Boolean by NotNullableUserDataProperty(Key("KOTLIN_WEIGH_OBJECTS_AS_CALLABLES"), false)
+
     private var LookupElement.isNullAtHighlyLikelyPosition: Boolean by NotNullableUserDataProperty(
         Key("KOTLIN_IS_NULL_AT_HIGHLY_LIKELY_POSITION"),
         defaultValue = false
@@ -52,6 +56,9 @@ internal object KindWeigher: KotlinLookupElementWeigher("kotlin.kind"), KotlinSe
         lookupElement.isSymbolToSkip = symbol in context.symbolsToSkip
         lookupElement.isEnumEntry = symbol is KaEnumEntrySymbol
 
+        lookupElement.shouldWeighObjectsAsCallables = sectionContext.weighingContext.expectedType != null &&
+                sectionContext.positionContext is KotlinExpressionNameReferencePositionContext
+
         if (lookupElement.lookupString != KtTokens.NULL_KEYWORD.value || lookupElement.`object` !is KeywordLookupObject) return
         lookupElement.isNullAtHighlyLikelyPosition = context.isPositionSuitableForNull && context.expectedType == null
     }
@@ -62,10 +69,12 @@ internal object KindWeigher: KotlinLookupElementWeigher("kotlin.kind"), KotlinSe
         if (element.isReturnAtHighlyLikelyPosition) return Weight.RETURN_KEYWORD_AT_HIGHLY_LIKELY_POSITION
         if (element.isNullAtHighlyLikelyPosition) return Weight.NULL_KEYWORD_AT_HIGHLY_LIKELY_POSITION
         if (element.isConstructorCall) return Weight.DEFAULT
-        return when (element.`object`) {
+        val lookupObject = element.`object`
+        return when (lookupObject) {
             is KeywordLookupObject -> Weight.KEYWORD
             is PackagePartLookupObject -> Weight.PACKAGES
             is KotlinCallableLookupObject -> Weight.CALLABLE
+            is ClassifierLookupObject if element.shouldWeighObjectsAsCallables && lookupObject.isObject -> Weight.CALLABLE
             is NamedArgumentLookupObject -> Weight.NAMED_ARGUMENT
             is OperatorNameLookupObject -> Weight.OPERATOR_NAME
             is AnonymousObjectLookupObject -> Weight.ANONYMOUS_OBJECT

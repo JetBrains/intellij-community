@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.util.TextRange
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -18,7 +19,7 @@ class DocBranchTest {
   @Test
   fun `local edits match a plain DocumentText`() {
     var plain = DocumentText.createText("fun main() {\n  println()\n}\n")
-    var branch: DocBranch = DocBranch.createBranch(plain.string(), agent("user"))
+    var branch: DocumentBranch = DocumentBranch.createBranch(plain.string(), agent("user"))
     val ops = listOf(
       insertOp(13, "  val x = 1\n"),
       deleteOp(0, 4),
@@ -36,7 +37,7 @@ class DocBranchTest {
 
   @Test
   fun `concurrent inserts converge and order by agent`() {
-    val base = DocBranch.createBranch("", agent("a"))
+    val base = DocumentBranch.createBranch("", agent("a"))
     val a = base.applyOp(insertOp(0, "X"))
     val b = base.fork(agent("b")).applyOp(insertOp(0, "Y"))
     val ab = a.merge(b)
@@ -48,7 +49,7 @@ class DocBranchTest {
 
   @Test
   fun `concurrent runs do not interleave`() {
-    val base = DocBranch.createBranch("()", agent("a"))
+    val base = DocumentBranch.createBranch("()", agent("a"))
     val a = base.applyOp(insertOp(1, "111"))
     val b = base.fork(agent("b")).applyOp(insertOp(1, "222"))
     val merged = a.merge(b)
@@ -58,7 +59,7 @@ class DocBranchTest {
 
   @Test
   fun `an insert into a concurrently deleted range survives`() {
-    val base = DocBranch.createBranch("abcdef", agent("a"))
+    val base = DocumentBranch.createBranch("abcdef", agent("a"))
     val a = base.applyOp(deleteOp(1, 3)) // deletes "bcd" -> "aef"
     val b = base.fork(agent("b")).applyOp(insertOp(3, "X")) // -> "abcXdef"
     val ab = a.merge(b)
@@ -69,7 +70,7 @@ class DocBranchTest {
 
   @Test
   fun `a concurrent delete of one char deletes it once`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val a = base.applyOp(deleteOp(1, 1))
     val b = base.fork(agent("b")).applyOp(deleteOp(1, 1))
     assertEquals("ac", a.merge(b).string())
@@ -78,14 +79,14 @@ class DocBranchTest {
 
   @Test
   fun `a merge with an ancestor changes nothing`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val a = base.applyOp(insertOp(3, "def"))
     assertSame(a, a.merge(base))
   }
 
   @Test
   fun `a merge with a descendant fast-forwards`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val b = base.fork(agent("b")).applyOp(insertOp(3, "def")).applyOp(deleteOp(0, 1))
     val merged = base.merge(b)
     assertEquals("bcdef", merged.string())
@@ -95,7 +96,7 @@ class DocBranchTest {
 
   @Test
   fun `a repeated merge changes nothing`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val a = base.applyOp(insertOp(0, "1"))
     val b = base.fork(agent("b")).applyOp(insertOp(3, "2"))
     val merged = a.merge(b)
@@ -105,7 +106,7 @@ class DocBranchTest {
 
   @Test
   fun `edits continue after a merge`() {
-    val base = DocBranch.createBranch("start\n", agent("a"))
+    val base = DocumentBranch.createBranch("start\n", agent("a"))
     val a = base.applyOp(insertOp(6, "from a\n"))
     val b = base.fork(agent("b")).applyOp(insertOp(6, "from b\n"))
     val merged = a.merge(b)
@@ -118,7 +119,7 @@ class DocBranchTest {
 
   @Test
   fun `the merged text matches a replay of the merged graph`() {
-    val base = DocBranch.createBranch("one\ntwo\n", agent("a"))
+    val base = DocumentBranch.createBranch("one\ntwo\n", agent("a"))
     val a = base.applyOp(insertOp(4, "1.5\n"))
     val b = base.fork(agent("b")).applyOp(deleteOp(0, 4))
     val merged = a.merge(b)
@@ -127,7 +128,7 @@ class DocBranchTest {
 
   @Test
   fun `the line structure after a merge matches a fresh DocumentText`() {
-    val base = DocBranch.createBranch("a\nb\nc\n", agent("a"))
+    val base = DocumentBranch.createBranch("a\nb\nc\n", agent("a"))
     val a = base.applyOp(insertOp(2, "a2\n"))
     val b = base.fork(agent("b")).applyOp(deleteOp(4, 2)).applyOp(insertOp(0, "top\n"))
     val merged = a.merge(b)
@@ -136,24 +137,44 @@ class DocBranchTest {
 
   @Test
   fun `an empty op keeps the instance`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     assertSame(base, base.applyOp(insertOp(1, "")))
     assertSame(base, base.applyOp(deleteOp(1, 0)))
   }
 
   @Test
   fun `a metadata op that changes nothing keeps the instance`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val sameStamp = modStampOp(base.modState().stamp(), false)
     // A new branch has no modified lines to clear.
-    val noModifiedLines = unmodifiedLinesOp(0, 1, IntArray(0))
+    val noModifiedLines = cleanLinesOp(0, 1, IntArray(0))
     assertSame(base, base.applyOp(sameStamp))
     assertSame(base, base.applyOp(noModifiedLines))
   }
 
   @Test
+  fun `a new instance keeps the state and the agent`() {
+    val base = DocumentBranch.createBranch("abc", agent("a"))
+    // A fast-forward defers its mod state. The new instance must give the same one.
+    val forward = base.merge(base.fork(agent("b")).applyOp(insertOp(1, "x")))
+    val copy = forward.newInstance()
+    assertNotSame(forward, copy)
+    assertSame(forward.text(), copy.text())
+    assertSame(forward.modState(), copy.modState())
+    assertSame(forward.graph(), copy.graph())
+    assertEquals(forward.agent(), copy.agent())
+    assertEquals(forward.version(), copy.version())
+  }
+
+  @Test
+  fun `dumpState lists the line ranges of the text`() {
+    val branch = DocumentBranch.createBranch("ab", agent("a")).applyOp(insertOp(2, "\ncd"))
+    assertEquals("intervals:\n0: 0-2, 1: 3-5", branch.dumpState())
+  }
+
+  @Test
   fun `a merge of two merged branches converges`() {
-    val base = DocBranch.createBranch("abc\n", agent("a"))
+    val base = DocumentBranch.createBranch("abc\n", agent("a"))
     val a = base.applyOp(insertOp(0, "1"))
     val b = base.fork(agent("b")).applyOp(insertOp(4, "2"))
     val c = base.fork(agent("c")).applyOp(deleteOp(1, 1))
@@ -170,7 +191,7 @@ class DocBranchTest {
 
   @Test
   fun `a concurrent edit survives a full deletion`() {
-    val base = DocBranch.createBranch("abcdef", agent("a"))
+    val base = DocumentBranch.createBranch("abcdef", agent("a"))
     val wipe = base.applyOp(deleteOp(0, 6))
     val edit = base.fork(agent("b")).applyOp(insertOp(3, "X"))
     assertEquals("X", wipe.merge(edit).string())
@@ -180,7 +201,7 @@ class DocBranchTest {
   @Test
   fun `alternating pulls converge over many rounds`() {
     // A staircase history: the common ancestor of every merge climbs round by round.
-    var x = DocBranch.createBranch("seed\n", agent("x"))
+    var x = DocumentBranch.createBranch("seed\n", agent("x"))
     var y = x.fork(agent("y"))
     for (round in 0 until 12) {
       x = x.applyOp(insertOp(0, "x$round "))
@@ -207,7 +228,7 @@ class DocBranchTest {
 
   @Test
   fun `a merge applies pastes and deletions as batches`() {
-    val base = DocBranch.createBranch("line1\nline2\nline3\n", agent("a"))
+    val base = DocumentBranch.createBranch("line1\nline2\nline3\n", agent("a"))
     val a = base.applyOp(insertOp(0, "top\n"))
     // The other branch mixes a multi-char paste, a range deletion, and another paste,
     // so the merge sink flushes at every kind and position boundary.
@@ -234,7 +255,7 @@ class DocBranchTest {
 
   @Test
   fun `a fork from a stale value mints fresh seqs`() {
-    val base = DocBranch.createBranch("xy", agent("a"))
+    val base = DocumentBranch.createBranch("xy", agent("a"))
     // The abandoned fork makes two runs, so its first run closes into the fork's own trees. The
     // base shares their older nodes and must not see it.
     val abandoned = base.fork(agent("b")).applyOp(insertOp(0, "A")).applyOp(insertOp(0, "Z"))
@@ -248,17 +269,17 @@ class DocBranchTest {
 
   @Test
   fun `a fragment op makes one run`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
-    assertEquals(3, base.graph().size())
-    assertEquals(1, base.graph().runCount())
-    val edited = base.applyOp(insertOp(1, "xyz")).applyOp(deleteOp(0, 2))
-    assertEquals(8, edited.graph().size())
-    assertEquals(3, edited.graph().runCount())
+    val base = DocumentBranch.createBranch("abc", agent("a"))
+    val edited = base
+      .applyOp(insertOp(1, "xyz"))
+      .applyOp(deleteOp(0, 2))
+    assertEquals(5, edited.graph().size())
+    assertEquals(2, edited.graph().runCount())
   }
 
   @Test
   fun `a resumed agent continues its seqs after multi-unit runs`() {
-    val base = DocBranch.createBranch("0123", agent("a"))
+    val base = DocumentBranch.createBranch("0123", agent("a"))
     val b1 = base.fork(agent("b")).applyOp(insertOp(4, "bbb")).applyOp(deleteOp(0, 2))
     val merged = base.merge(b1) // the agent "b" owns five unit ids now, in two runs
     val resumed = merged.fork(agent("b")).applyOp(insertOp(0, "RR"))
@@ -273,31 +294,46 @@ class DocBranchTest {
   }
 
   @Test
-  fun `a large document costs one run and fast-forwards without a replay`() {
+  fun `a large document costs no event and fast-forwards without a replay`() {
     val size = 100_000
     val text = buildString {
       repeat(size) { append('x') }
     }
-    val base = DocBranch.createBranch(text, agent("a"))
-    assertEquals(size, base.graph().size())
-    assertEquals(1, base.graph().runCount())
+    val base = DocumentBranch.createBranch(text, agent("a"))
+    assertEquals(0, base.graph().size())
+    assertEquals(0, base.graph().runCount())
     val edited = base.fork(agent("b")).applyOp(insertOp(size, "end"))
     // A fast-forward adopts the text of the descendant as it is, so no replay ran.
     val merged = base.merge(edited)
     assertSame(edited.text(), merged.text())
-    assertEquals(2, merged.graph().runCount())
+    assertEquals(1, merged.graph().runCount())
+  }
+
+  @Test
+  fun `the base text of a new branch is the text of the branch`() {
+    val base = DocumentBranch.createBranch("abc", agent("a"))
+    assertTrue(base.version().isRoot())
+    assertEquals("abc", base.graph().replay().string())
+    val edited = base.applyOp(insertOp(1, "x"))
+    assertEquals("axbc", edited.graph().replay().string())
+    assertEquals("abc", edited.graph().replay(Version.root()).string())
+    // A fork shares the base text, so the merge replays its edit over the same text.
+    val forked = base.fork(agent("b")).applyOp(deleteOp(2, 1))
+    val merged = edited.merge(forked)
+    assertEquals("axb", merged.string())
+    assertEquals("axb", merged.graph().replay().string())
   }
 
   @Test
   fun `a merge with an unedited fork keeps the instance`() {
-    val base = DocBranch.createBranch("abc", agent("a")).applyOp(insertOp(0, "x"))
+    val base = DocumentBranch.createBranch("abc", agent("a")).applyOp(insertOp(0, "x"))
     val fork = base.fork(agent("b"))
     assertSame(base, base.merge(fork))
   }
 
   @Test
   fun `concurrent inserts at the opposite ends converge`() {
-    val base = DocBranch.createBranch("mid", agent("a"))
+    val base = DocumentBranch.createBranch("mid", agent("a"))
     val left = base.applyOp(insertOp(0, "L"))
     val right = base.fork(agent("b")).applyOp(insertOp(3, "R"))
     assertEquals("LmidR", left.merge(right).string())
@@ -311,7 +347,7 @@ class DocBranchTest {
    */
   @Test
   fun `a delete run across interleaved runs retreats its own characters`() {
-    val base = DocBranch.createBranch("abc", agent("base"))
+    val base = DocumentBranch.createBranch("abc", agent("base"))
     val edited = base.fork(agent("a")).applyOp(insertOp(1, "X")).applyOp(deleteOp(0, 3))
     val concurrent = base.fork(agent("b")).applyOp(insertOp(3, "Y"))
     assertEquals("c", edited.string())
@@ -321,7 +357,7 @@ class DocBranchTest {
 
   @Test
   fun `concurrent overlapping deletes erase the union of the ranges`() {
-    val base = DocBranch.createBranch("abcdef", agent("a"))
+    val base = DocumentBranch.createBranch("abcdef", agent("a"))
     val a = base.applyOp(deleteOp(1, 2)) // deletes "bc" -> "adef"
     val b = base.fork(agent("b")).applyOp(deleteOp(2, 2)) // deletes "cd" -> "abef"
     assertEquals("aef", a.merge(b).string())
@@ -330,7 +366,7 @@ class DocBranchTest {
 
   @Test
   fun `concurrent deletes that cover the text erase all of it`() {
-    val base = DocBranch.createBranch("abcdef", agent("a"))
+    val base = DocumentBranch.createBranch("abcdef", agent("a"))
     val a = base.applyOp(deleteOp(0, 4)) // -> "ef"
     val b = base.fork(agent("b")).applyOp(deleteOp(2, 4)) // -> "ab"
     assertEquals("", a.merge(b).string())
@@ -339,7 +375,7 @@ class DocBranchTest {
 
   @Test
   fun `a criss-cross merge converges`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val a1 = base.applyOp(insertOp(0, "1"))
     val b1 = base.fork(agent("b")).applyOp(insertOp(3, "2"))
     // Both sides merge each other, then edit again, then merge again.
@@ -356,7 +392,7 @@ class DocBranchTest {
 
   @Test
   fun `an incremental sync equals a fresh merge`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val a1 = base.applyOp(insertOp(3, "1"))
     var b1 = base.fork(agent("b")).applyOp(insertOp(0, "2"))
     val first = a1.merge(b1)
@@ -369,7 +405,7 @@ class DocBranchTest {
 
   @Test
   fun `an edit based on a pre-merge state merges cleanly`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val a1 = base.applyOp(deleteOp(1, 1)) // -> "ac"
     val b1 = base.fork(agent("b")).applyOp(insertOp(2, "Z")) // -> "abZc"
     val merged = a1.merge(b1) // -> "aZc"
@@ -384,7 +420,7 @@ class DocBranchTest {
 
   @Test
   fun `three replicas converge in every merge order`() {
-    val base = DocBranch.createBranch("base\n", agent("m"))
+    val base = DocumentBranch.createBranch("base\n", agent("m"))
     val replicas = listOf(
       base.fork(agent("a")).applyOp(insertOp(0, "aa")),
       base.fork(agent("b")).applyOp(insertOp(5, "bb")),
@@ -406,7 +442,7 @@ class DocBranchTest {
 
   @Test
   fun `surrogate pairs survive a concurrent merge`() {
-    val base = DocBranch.createBranch("ab", agent("a"))
+    val base = DocumentBranch.createBranch("ab", agent("a"))
     val rocket = base.applyOp(insertOp(1, "🚀")) // 🚀
     val smile = base.fork(agent("b")).applyOp(insertOp(1, "🙂")) // 🙂
     val forward = rocket.merge(smile)
@@ -418,17 +454,25 @@ class DocBranchTest {
   }
 
   @Test
-  fun `branches with no common history merge deterministically`() {
-    val first = DocBranch.createBranch("ab", agent("a"))
-    val second = DocBranch.createBranch("cd", agent("b"))
-    // This is correct CRDT behavior, not the intended use: both texts survive as runs.
-    assertEquals("abcd", first.merge(second).string())
-    assertEquals("abcd", second.merge(first).string())
+  fun `branches from two createBranch calls do not merge`() {
+    val first = DocumentBranch.createBranch("ab", agent("a")).applyOp(insertOp(2, "x"))
+    val second = DocumentBranch.createBranch("ab", agent("b")).applyOp(insertOp(2, "x"))
+    for ((receiver, other) in listOf(first to second, second to first)) {
+      assertThrows(LineageMismatchException::class.java) {
+        receiver.merge(other)
+      }
+      assertThrows(LineageMismatchException::class.java) {
+        receiver.mergeWithOps(other)
+      }
+    }
+    // The failed merges changed nothing.
+    assertEquals("abx", first.string())
+    assertEquals("abxy", first.applyOp(insertOp(3, "y")).string())
   }
 
   @Test
   fun `CRLF separators merge and match a fresh DocumentText`() {
-    val base = DocBranch.createBranch("a\r\nb", agent("a"))
+    val base = DocumentBranch.createBranch("a\r\nb", agent("a"))
     val a = base.applyOp(insertOp(1, "X")) // -> "aX\r\nb"
     val b = base.fork(agent("b")).applyOp(deleteOp(1, 1)) // deletes '\r' -> "a\nb"
     val forward = a.merge(b)
@@ -441,18 +485,18 @@ class DocBranchTest {
 
   @Test
   fun `an invalid op throws and keeps the branch usable`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     assertThrows(IndexOutOfBoundsException::class.java) { base.applyOp(insertOp(4, "X")) }
     assertThrows(IndexOutOfBoundsException::class.java) { base.applyOp(insertOp(-1, "X")) }
     assertThrows(IndexOutOfBoundsException::class.java) { base.applyOp(deleteOp(2, 5)) }
     // The failed ops left no events behind.
-    assertEquals(3, base.graph().size())
+    assertEquals(0, base.graph().size())
     assertEquals("abcX", base.applyOp(insertOp(3, "X")).string())
   }
 
   @Test
   fun `divergent edits on one instance stay independent`() {
-    val base = DocBranch.createBranch("ab", agent("a"))
+    val base = DocumentBranch.createBranch("ab", agent("a"))
     val first = base.applyOp(insertOp(0, "X"))
     val second = base.applyOp(insertOp(2, "Y"))
     // Both values are usable, and each one appends to its own trees.
@@ -460,14 +504,14 @@ class DocBranchTest {
     assertEquals("ab", base.string())
     assertEquals("Xab", first.string())
     assertEquals("abY", second.string())
-    assertEquals(2, base.graph().size())
-    assertEquals(3, first.graph().size())
-    assertEquals(3, second.graph().size())
+    assertEquals(0, base.graph().size())
+    assertEquals(1, first.graph().size())
+    assertEquals(1, second.graph().size())
   }
 
   @Test
   fun `a fork that reuses an agent stays consistent after merges`() {
-    val base = DocBranch.createBranch("ab", agent("a"))
+    val base = DocumentBranch.createBranch("ab", agent("a"))
     val b1 = base.fork(agent("b")).applyOp(insertOp(2, "1"))
     val merged = base.merge(b1)
     // The agent "b" resumes on a fresh fork; its seq numbers must continue, not restart.
@@ -483,18 +527,19 @@ class DocBranchTest {
 
   @Test
   fun `a self merge keeps the instance`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val edited = base.applyOp(insertOp(3, "d"))
     assertSame(edited, edited.merge(edited))
   }
 
   @Test
-  fun `a second round over unrelated histories converges`() {
-    // Two branches with no common history join into a concatenation. The joined graph
-    // holds two parentless runs, so its version has two heads. The next round merges
-    // above that two-head version.
-    val first = DocBranch.createBranch("aaa\n", agent("a"))
-    val second = DocBranch.createBranch("bbb\n", agent("b"))
+  fun `a second round over two parentless runs converges`() {
+    // Two forks of an empty branch each type at the root. The joined graph holds two
+    // parentless runs, so its version has two heads. The next round merges above that
+    // two-head version.
+    val base = DocumentBranch.createBranch("", agent("base"))
+    val first = base.fork(agent("a")).applyOp(insertOp(0, "aaa\n"))
+    val second = base.fork(agent("b")).applyOp(insertOp(0, "bbb\n"))
     val joined = first.merge(second)
     assertEquals("aaa\nbbb\n", joined.string())
     val left = joined.applyOp(insertOp(0, "L"))
@@ -512,7 +557,7 @@ class DocBranchTest {
   fun `a concurrent run beside a long run keeps both runs whole`() {
     // The long run makes the replay walk the implicit parent chain inside one run,
     // and the delete run removes units from the middle of it.
-    val base = DocBranch.createBranch("()", agent("a"))
+    val base = DocumentBranch.createBranch("()", agent("a"))
     val a = base
       .applyOp(insertOp(1, "0123456789"))
       .applyOp(deleteOp(5, 3)) // removes "456" -> "(0123789)"
@@ -528,7 +573,7 @@ class DocBranchTest {
   fun `a concurrent insert survives a delete run over the whole region`() {
     // The delete run consumes six placeholder units, so the merge splits the single placeholder
     // span, and the delete takes the six units as one piece.
-    val base = DocBranch.createBranch("abcdefghij", agent("a"))
+    val base = DocumentBranch.createBranch("abcdefghij", agent("a"))
     val a = base.applyOp(deleteOp(2, 6)) // removes "cdefgh" -> "abij"
     val b = base.fork(agent("b"))
       .applyOp(insertOp(5, "X")) // inside the deleted range
@@ -545,7 +590,7 @@ class DocBranchTest {
     // The placeholder span is longer than the document at the common ancestor, so the
     // trailing units sit after every reachable position. The insert lands at the end of
     // the ancestor document, which is exactly the boundary of those trailing units.
-    val base = DocBranch.createBranch("abcdefgh", agent("a"))
+    val base = DocumentBranch.createBranch("abcdefgh", agent("a"))
     val wipe = base.applyOp(deleteOp(0, 8))
     assertEquals("", wipe.string())
     val tail = base.fork(agent("b")).applyOp(insertOp(8, "TAIL"))
@@ -560,7 +605,7 @@ class DocBranchTest {
   fun `three concurrent runs at one anchor converge in every order`() {
     // Every run has the same left origin and the same right parent, so the tie-break
     // by agent decides the whole order. This is the case the integrate scan resolves.
-    val base = DocBranch.createBranch("<>", agent("m"))
+    val base = DocumentBranch.createBranch("<>", agent("m"))
     val replicas = listOf("a", "b", "c").map { name ->
       base.fork(agent(name)).applyOp(insertOp(1, name.repeat(3)))
     }
@@ -578,7 +623,7 @@ class DocBranchTest {
 
   @Test
   fun `an edit based on a pre-merge delete run merges cleanly`() {
-    val base = DocBranch.createBranch("abcdef", agent("a"))
+    val base = DocumentBranch.createBranch("abcdef", agent("a"))
     val a1 = base.applyOp(deleteOp(1, 3)) // -> "aef"
     val b1 = base.fork(agent("b")).applyOp(insertOp(3, "Z")) // -> "abcZdef"
     val merged = a1.merge(b1) // -> "aZef"
@@ -597,7 +642,7 @@ class DocBranchTest {
     // One agent edited the same value twice, which the contract forbids: both results
     // hold the id (a, 3). Before the merge check, the merge silently kept one edit and
     // dropped the other, and the two directions returned different texts.
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val sameSpot = base.applyOp(insertOp(0, "X"))
     for (clash in listOf(insertOp(0, "Y"), insertOp(2, "Y"), insertOp(0, "YY"), deleteOp(0, 1))) {
       val other = base.applyOp(clash)
@@ -614,7 +659,7 @@ class DocBranchTest {
     // One paste op makes one run, and the replay covers it with one span. The other
     // branch deletes the middle of that run, so the merge must split the span in three
     // and retreat only the middle part.
-    val base = DocBranch.createBranch("[]", agent("a"))
+    val base = DocumentBranch.createBranch("[]", agent("a"))
     val a = base.applyOp(insertOp(1, "0123456789"))
     val b = base.fork(agent("b")).merge(a).applyOp(deleteOp(4, 4)) // removes "3456"
     val a2 = a.applyOp(insertOp(6, "X")) // inside the range that b deletes
@@ -627,7 +672,7 @@ class DocBranchTest {
 
   @Test
   fun `a replay at a merged past version returns that merged text`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val a1 = base.applyOp(insertOp(3, "1"))
     val b1 = base.fork(agent("b")).applyOp(insertOp(0, "2"))
     val merged = a1.merge(b1)
@@ -641,7 +686,7 @@ class DocBranchTest {
   @Test
   fun `the version of a merged branch replays its text in the merge`() {
     // A memory-disk merge: the user branch merges the disk branch and keeps both versions.
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val user = base.applyOp(insertOp(0, "U"))
     val disk = base.fork(agent("disk")).applyOp(insertOp(3, "D"))
     val merged = user.merge(disk).applyOp(insertOp(0, "Z"))
@@ -653,7 +698,7 @@ class DocBranchTest {
 
   @Test
   fun `the version of a branch follows a fast-forward and a merge that adds nothing`() {
-    val empty = DocBranch.createBranch("", agent("a"))
+    val empty = DocumentBranch.createBranch("", agent("a"))
     val ahead = empty.applyOp(insertOp(0, "x"))
     assertTrue(empty.version().isRoot())
     assertFalse(ahead.version().isRoot())
@@ -667,7 +712,7 @@ class DocBranchTest {
   fun `a merge that brings back the agent's own edit keeps its seqs going`() {
     // The descendant holds an edit of this agent that the base value never saw. So the next seq
     // must come from the merged history, or the next edit would reuse the id of that edit.
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val descendant = base.applyOp(insertOp(3, "x"))
     val edited = base.merge(descendant).applyOp(insertOp(0, "y"))
     assertEquals("yabcx", edited.string())
@@ -679,7 +724,7 @@ class DocBranchTest {
 
   @Test
   fun `a merge keeps the agent of the receiver`() {
-    val base = DocBranch.createBranch("abc", agent("a"))
+    val base = DocumentBranch.createBranch("abc", agent("a"))
     val a = base.applyOp(insertOp(0, "1"))
     val b = base.fork(agent("b")).applyOp(insertOp(3, "2"))
     assertEquals(agent("a"), a.merge(b).agent())
@@ -693,7 +738,7 @@ class DocBranchTest {
     // The delete leaves an item of zero width at the place of "X". The cached cursor sits after
     // that item, so the insert must take the earliest boundary, before it. The reference
     // implementation gives "aXY" in both merge orders too.
-    val base = DocBranch.createBranch("ab", agent("base"))
+    val base = DocumentBranch.createBranch("ab", agent("base"))
     val a = base.fork(agent("a")).applyOp(deleteOp(1, 1)).applyOp(insertOp(1, "X"))
     val b = base.fork(agent("b")).applyOp(insertOp(1, "Y"))
     val ab = a.merge(b)
@@ -706,7 +751,7 @@ class DocBranchTest {
   fun `concurrent inserts order as Fugue and not as FugueMax`() {
     // The smallest history that a random search found where the two variants differ. FugueMax
     // gives "bcead". The reference implementation gives "becad", and this port must too.
-    val empty = DocBranch.createBranch("", agent("base"))
+    val empty = DocumentBranch.createBranch("", agent("base"))
     val c = empty.fork(agent("c")).applyOp(insertOp(0, "a"))
     val b1 = empty.fork(agent("b")).applyOp(insertOp(0, "b"))
     val b2 = b1.applyOp(insertOp(1, "c"))
@@ -721,9 +766,9 @@ class DocBranchTest {
 
 internal fun agent(name: String): Agent = Agent.createAgent(name)
 
-internal fun DocBranch.string(): String = text().string()
+internal fun DocumentBranch.string(): String = text().string()
 
-internal fun DocBranch.length(): Int = text().length()
+internal fun DocumentBranch.length(): Int = text().length()
 
 internal fun insertOp(offset: Int, fragment: CharSequence): DocumentOp.Insert = DocumentOp.insertOp(offset, fragment)
 
@@ -733,12 +778,12 @@ internal fun modStampOp(stamp: Long, incSequence: Boolean): DocumentOp.ModStamp 
   return DocumentOp.modStampOp(stamp, incSequence)
 }
 
-internal fun unmodifiedLinesOp(
+internal fun cleanLinesOp(
   startLine: Int,
   endLine: Int,
   exceptLines: IntArray,
-): DocumentOp.UnmodifiedLines {
-  return DocumentOp.unmodifiedLinesOp(startLine, endLine, exceptLines)
+): DocumentOp.CleanLines {
+  return DocumentOp.cleanLinesOp(startLine, endLine, exceptLines)
 }
 
 /**
@@ -757,7 +802,7 @@ internal fun moveOps(text: CharSequence, srcStart: Int, srcEnd: Int, dst: Int): 
   return listOf(copy, removal)
 }
 
-internal fun DocBranch.moveText(srcStart: Int, srcEnd: Int, dst: Int): DocBranch {
+internal fun DocumentBranch.moveText(srcStart: Int, srcEnd: Int, dst: Int): DocumentBranch {
   val ops = moveOps(text().chars(), srcStart, srcEnd, dst)
   return ops.fold(this) { branch, op -> branch.applyOp(op) }
 }

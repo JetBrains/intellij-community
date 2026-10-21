@@ -16,10 +16,6 @@ import com.intellij.testFramework.junit5.TestDisposable
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.io.ByteArrayInputStream
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
-import java.util.zip.GZIPInputStream
 
 /**
  * An [UnhandledException] must not reach a report, but its kind must. See IJPL-254578 and IJPL-100.
@@ -160,14 +156,7 @@ internal class UnhandledExceptionReportingTest {
 
   private fun reportForm(event: IdeaLoggingEvent): Map<String, String> {
     val bean = ITNProxy.ErrorBean(event, null, null, null, null, null, false)
-    val body = ITNProxy.createRequest(event, bean)
-    val text = GZIPInputStream(ByteArrayInputStream(body.internalBuffer, 0, body.size()))
-      .readBytes()
-      .toString(StandardCharsets.UTF_8)
-    return text.split("&").associate { pair ->
-      URLDecoder.decode(pair.substringBefore('='), StandardCharsets.UTF_8) to
-        URLDecoder.decode(pair.substringAfter('=', ""), StandardCharsets.UTF_8)
-    }
+    return parseReportForm(unpackReportForm(ITNProxy.createRequest(event, bean))).toMap()
   }
 
   private fun collect(action: () -> Unit): List<LogEvent> =

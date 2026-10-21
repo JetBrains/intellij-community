@@ -38,6 +38,8 @@ class GitDefaultBranchesPopupStep private constructor(
   private val isFirstStep: Boolean,
   /** Ids of the top level actions this popup leaves out, for a caller that offers only some of them. */
   private val excludedTopLevelActions: Set<String> = emptySet(),
+  /** Whether a worktree created from this popup is opened as a project afterwards; travels to the actions through the data context. */
+  internal val openCreatedWorktree: Boolean = true,
 ) : GitBranchesPopupStepBase(project, selectedRepository, repositories) {
   init {
     check(repositories.isNotEmpty()) { "Repositories list must not be empty" }
@@ -48,7 +50,7 @@ class GitDefaultBranchesPopupStep private constructor(
   private val topLevelItems: List<Any> = buildList {
     val presentationFactory = PresentationFactory()
 
-    val dataContext = createDataContext(project, selectedRepository, repositories)
+    val dataContext = createDataContext(project, selectedRepository, repositories, openCreatedWorktree = openCreatedWorktree)
 
     if (ExperimentalUI.isNewUI() && isFirstStep) {
       val actions = GitBranchesPopupActions.createTopLevelActionItems(dataContext, GitBranchesPopupActions.NEW_UI_TOP_LEVEL_ACTIONS_ACTION_GROUP, presentationFactory)
@@ -95,7 +97,7 @@ class GitDefaultBranchesPopupStep private constructor(
 
   override fun onChosen(selectedValue: Any?, finalChoice: Boolean): PopupStep<out Any>? {
     if (selectedValue is GitBranchesTreeModel.RepositoryNode) {
-      return createPopupStepForSelectedRepo(project, selectedValue.repository)
+      return createPopupStepForSelectedRepo(project, selectedValue.repository, openCreatedWorktree)
     }
 
     val refUnderRepository = selectedValue as? GitBranchesTreeModel.RefUnderRepository
@@ -104,19 +106,21 @@ class GitDefaultBranchesPopupStep private constructor(
     if (reference != null) {
       val actionGroup = GitSingleRefActions.getSingleRefActionGroup()
       val repo = refUnderRepository?.repository
-      return createActionStep(actionGroup, project, selectedRepository, repo?.let(::listOf) ?: affectedRepositories, reference)
+      return createActionStep(actionGroup, project, selectedRepository, repo?.let(::listOf) ?: affectedRepositories,
+                              openCreatedWorktree, reference)
     }
 
     if (selectedValue is PopupFactoryImpl.ActionItem) {
       if (!selectedValue.isEnabled) return FINAL_CHOICE
       val action = selectedValue.action
       if (action is ActionGroup && (!finalChoice || !selectedValue.isPerformGroup)) {
-        return createActionStep(action, project, selectedRepository, affectedRepositories)
+        return createActionStep(action, project, selectedRepository, affectedRepositories, openCreatedWorktree)
       }
       else {
         finalRunnable = Runnable {
           val place = if (isFirstStep) GitBranchesPopupActions.MAIN_POPUP_ACTION_PLACE else GitBranchesPopupActions.NESTED_POPUP_ACTION_PLACE
-          val dataContext = createDataContext(project, selectedRepository, affectedRepositories)
+          val dataContext = createDataContext(project, selectedRepository, affectedRepositories,
+                                              openCreatedWorktree = openCreatedWorktree)
           ActionUtil.invokeAction(action, dataContext, place, null, null)
         }
       }
@@ -150,6 +154,7 @@ class GitDefaultBranchesPopupStep private constructor(
       preferredSelection: GitRepositoryModel?,
       repositories: List<GitRepositoryModel>,
       excludedTopLevelActions: Set<String> = emptySet(),
+      openCreatedWorktree: Boolean = true,
     ): GitDefaultBranchesPopupStep {
       val selectedRepoIfNeeded = when {
         repositories.size <= 1 -> null
@@ -157,21 +162,28 @@ class GitDefaultBranchesPopupStep private constructor(
         else -> preferredSelection
       }
 
-      return GitDefaultBranchesPopupStep(project, selectedRepoIfNeeded, repositories, true, excludedTopLevelActions)
+      return GitDefaultBranchesPopupStep(project, selectedRepoIfNeeded, repositories, true, excludedTopLevelActions, openCreatedWorktree)
     }
 
     /**
      * 2nd-level popup shown on repository click
      */
-    private fun createPopupStepForSelectedRepo(project: Project, repository: GitRepositoryModel): GitDefaultBranchesPopupStep =
-      GitDefaultBranchesPopupStep(project, repository, listOf(repository), false)
+    private fun createPopupStepForSelectedRepo(
+      project: Project,
+      repository: GitRepositoryModel,
+      openCreatedWorktree: Boolean,
+    ): GitDefaultBranchesPopupStep =
+      GitDefaultBranchesPopupStep(project, repository, listOf(repository), false, openCreatedWorktree = openCreatedWorktree)
 
-    private fun createActionStep(actionGroup: ActionGroup,
-                                 project: Project,
-                                 selectedRepository: GitRepositoryModel?,
-                                 repositories: List<GitRepositoryModel>,
-                                 reference: GitReference? = null): ListPopupStep<*> {
-      val dataContext = createDataContext(project, selectedRepository, repositories, reference)
+    private fun createActionStep(
+      actionGroup: ActionGroup,
+      project: Project,
+      selectedRepository: GitRepositoryModel?,
+      repositories: List<GitRepositoryModel>,
+      openCreatedWorktree: Boolean,
+      reference: GitReference? = null,
+    ): ListPopupStep<*> {
+      val dataContext = createDataContext(project, selectedRepository, repositories, reference, openCreatedWorktree)
       return JBPopupFactory.getInstance()
         .createActionsStep(actionGroup, dataContext, GitBranchesPopupActions.NESTED_POPUP_ACTION_PLACE, false, true, null, null, false, 0, false)
     }
@@ -192,12 +204,14 @@ class GitDefaultBranchesPopupStep private constructor(
       selectedRepository: GitRepositoryModel?,
       repositories: List<GitRepositoryModel>,
       reference: GitReference? = null,
+      openCreatedWorktree: Boolean,
     ): DataContext =
       CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT) { sink ->
         sink[CommonDataKeys.PROJECT] = project
         sink[GitSingleRefActions.SELECTED_REF_DATA_KEY] = reference
         sink[GitBranchesPopupKeys.SELECTED_REPOSITORY] = selectedRepository
         sink[GitBranchesPopupKeys.AFFECTED_REPOSITORIES] = repositories
+        sink[GitBranchesPopupKeys.OPEN_CREATED_WORKTREE] = openCreatedWorktree
       }
   }
 }

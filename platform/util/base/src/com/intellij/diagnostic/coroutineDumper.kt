@@ -371,9 +371,6 @@ private fun CoroutineContext.joinElementsToString(): String =
   }.toString()
 
 private val noisyElements = setOf(
-  "fleet.kernel.Transactor",
-  "fleet.kernel.DbSource",
-  "fleet.kernel.rete.Rete",
   "com.intellij.codeWithMe.ClientIdContextElementPrecursor"
 )
 

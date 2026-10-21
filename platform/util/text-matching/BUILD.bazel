@@ -61,8 +61,6 @@ jvm_library(
         "//platform/util/base:base_test_lib",
         "//platform/util/base/multiplatform:multiplatform_test_lib",
         "//platform/util-rt:util-rt_test_lib",
-        "//libraries/kotlin/test:libraries-kotlinTest",
-        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.util.text.matching` end

@@ -1,5 +1,6 @@
 package com.intellij.python.processOutput.frontend
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
@@ -10,14 +11,9 @@ import com.intellij.python.processOutput.frontend.ui.components.ProcessOutputToo
 import com.intellij.ui.content.ContentFactory
 
 internal class ProcessOutputToolWindowFactory : SdkAwareToolWindowFactory(), DumbAware {
-  private lateinit var processOutputToolWindow: ProcessOutputToolWindow
-
   override fun init(toolWindow: ToolWindow) {
-    processOutputToolWindow = ProcessOutputToolWindow(toolWindow)
-
-    // start listening to UI events
-    // also pre-initialize the service to warm up the logged processes flow
-    UIEventListener(processOutputToolWindow.uiContext, toolWindow).launch()
+    // pre-initialize the service to warm up the logged processes flow
+    toolWindow.project.service<ProcessOutputControllerService>()
 
     toolWindow.setStripeTitleProvider { message("process.output.title") }
     toolWindow.setStripeShortTitleProvider { message("process.output.title") }
@@ -27,6 +23,11 @@ internal class ProcessOutputToolWindowFactory : SdkAwareToolWindowFactory(), Dum
     project: Project,
     toolWindow: ToolWindow,
   ) {
+    val processOutputToolWindow = ProcessOutputToolWindow(toolWindow)
+
+    // start listening to UI events
+    UIEventListener(processOutputToolWindow.uiContext, toolWindow).launch()
+    
     val content =
       ContentFactory
         .getInstance()

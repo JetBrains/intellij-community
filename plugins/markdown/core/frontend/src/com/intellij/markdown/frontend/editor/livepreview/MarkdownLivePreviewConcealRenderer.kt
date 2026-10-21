@@ -5,7 +5,6 @@ import com.intellij.markdown.frontend.editor.tables.ui.alignment.MarkdownTableAl
 import com.intellij.openapi.editor.Editor
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
 import org.intellij.plugins.markdown.editor.livepreview.toTextRange
-import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 
 internal class MarkdownLivePreviewConcealRenderer(private val editor: Editor) : MarkdownLivePreviewElementRenderer {
   override fun presentation(spec: MarkdownLivePreviewSpec): List<MarkdownLivePreviewFold> {
@@ -16,7 +15,6 @@ internal class MarkdownLivePreviewConcealRenderer(private val editor: Editor) : 
   override fun documentChanged() = Unit
   override fun reconcile(presentation: MarkdownLivePreviewPresentation?) {
     MarkdownTableAlignmentController.getExisting(editor)?.performRefresh()
-    HorizontalBarPresentation.refresh(editor)
   }
   override fun dispose() = Unit
 }

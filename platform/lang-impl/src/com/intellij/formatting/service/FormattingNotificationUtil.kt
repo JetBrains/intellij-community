@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorOpenRequest
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.project.DumbAwareAction
@@ -68,5 +69,7 @@ internal object FormattingNotificationUtil {
 
 private fun navigateToFile(project: Project, file: VirtualFile, offset: Int) {
   val descriptor = OpenFileDescriptor(project, file, offset)
-  FileEditorManager.getInstance(project).openTextEditor(descriptor, true)
+  val fileEditorManager = FileEditorManager.getInstance(project)
+  fileEditorManager.requestOpenTextEditor(descriptor, FileEditorOpenRequest.fromDescriptor(descriptor)
+    .withRequestFocus(true))
 }

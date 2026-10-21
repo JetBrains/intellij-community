@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.progress
 
-import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.init
@@ -12,6 +11,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.plus
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertIterableEquals
 
 fun progressReporterTest(
   vararg expectedUpdates: ExpectedState,
@@ -32,5 +32,5 @@ fun progressReporterTest(
   }
   assertEquals(ExpectedState(null, null, null), actualUpdates.first())
   assertEquals(ExpectedState(fraction = 1.0, text = null, details = null), actualUpdates.last())
-  assertOrderedEquals(actualUpdates.toList().init().tail(), expectedUpdates.toList())
+  assertIterableEquals(expectedUpdates.toList(), actualUpdates.toList().init().tail())
 }

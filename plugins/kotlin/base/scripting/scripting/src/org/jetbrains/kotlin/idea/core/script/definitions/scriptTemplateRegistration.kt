@@ -18,18 +18,18 @@ import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.core.script.settings.parsedClassNames
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
 
 internal val KOTLIN_SCRIPT_ANNOTATION_FQ_NAME: FqName = FqName("kotlin.script.experimental.annotations.KotlinScript")
 
 /**
- * True when [klass] carries `@KotlinScript`.
+ * True when [classOrObject] carries `@KotlinScript`.
  *
  * The check runs where analysis is not available, so it reads the PSI only. It follows an import
  * alias, and it does not tell our annotation from another one of the same short name.
  */
-internal fun hasKotlinScriptAnnotation(klass: KtClass): Boolean =
-    KotlinPsiHeuristics.hasAnnotation(klass, KOTLIN_SCRIPT_ANNOTATION_FQ_NAME)
+internal fun hasKotlinScriptAnnotation(classOrObject: KtClassOrObject): Boolean =
+    KotlinPsiHeuristics.hasAnnotation(classOrObject, KOTLIN_SCRIPT_ANNOTATION_FQ_NAME)
 
 internal const val SCRIPT_TEMPLATE_MARKER_DIR: String = "META-INF/kotlin/script/templates"
 

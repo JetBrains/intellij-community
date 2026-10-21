@@ -34,6 +34,9 @@
             "module": "intellij.python.pytools.backend"
         },
         {
+            "module": "intellij.python.pytools.backend.runtime"
+        },
+        {
             "module": "intellij.python.pytools.frontend"
         },
         {
@@ -459,9 +462,17 @@
             "classPath": false
         },
         {
+            "destination": "bundledPyiStubs",
+            "inputs": [
+                "module-resource:resource-generator:1:0:source"
+            ],
+            "kind": "tree",
+            "classPath": false
+        },
+        {
             "destination": "pyrefly/license",
             "inputs": [
-                "layout-source:resource-generator:1:0"
+                "layout-source:resource-generator:2:0"
             ],
             "kind": "tree",
             "classPath": false

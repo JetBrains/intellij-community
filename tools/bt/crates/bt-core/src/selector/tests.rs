@@ -2,7 +2,14 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::exit;
-use crate::fake::{FakeRuntime, REPO_ROOT, air_tree, areas, fake_air_tree, refusal};
+use std::collections::BTreeMap;
+
+use crate::areas::{Area, Areas};
+use crate::fake::{
+    AREA_DIR, FakeRuntime, LANES_FILE, LANES_TEXT, REPO_ROOT, air_tree, areas, build_bazel_text, document_path, fake_air_tree, iml_text,
+    refusal,
+};
+use crate::lanes::Lanes;
 use crate::scan::ResolutionInputs;
 
 fn classify(raw: &str) -> Selector {
@@ -419,4 +426,159 @@ fn a_module_selector_resolves_without_the_tree_scan() {
     assert_eq!(resolution.labels, ["@community//plugins/x:x_test"]);
     assert!(!resolution.multi_target);
     assert!(fake.reads().iter().all(|read| !read.starts_with("readDir")), "{:?}", fake.reads());
+}
+
+// --- the classes that suite documents name ---------------------------------------------------------------------------
+
+/// The FQN of a generated suite class of the ui lane.
+const RENAME: &str = "com.intellij.air.integration.flow.generated.ui.AirRenameSessionGeneratedFlowUiTest";
+
+/// The test label of the ui lane in the fixture lane table, which is the label of its lane test.
+const UI_LANE_TEST: &str = "//plugins/air/tests/integration/ui:ui_lane_test";
+
+/// A suite document of `lane` whose class is `fqn`, with the `testClass` label that the generator writes.
+fn class_document(suite: &str, lane: &str, fqn: &str) -> String {
+    let simple = fqn.rsplit('.').next().unwrap_or(fqn);
+    format!(
+        r#"{{"suite": "{suite}", "lane": "{lane}", "testClassName": "{simple}",
+  "labels": [{{"name": "testClass", "value": "{fqn}"}}], "profiles": []}}"#
+    )
+}
+
+/// The fixture tree with the suite documents `documents`, each a suite id, a catalog lane and a class FQN.
+fn with_documents(mut tree: BTreeMap<String, String>, documents: &[(&str, &str, &str)]) -> FakeRuntime {
+    for (suite, lane, fqn) in documents {
+        tree.insert(document_path(suite), class_document(suite, lane, fqn));
+    }
+    FakeRuntime::with_tree(&tree)
+}
+
+/// The fixture tree with a module whose test root holds the class `fqn`, and whose test target is `shells_test`.
+fn with_shell_module(fqn: &str) -> BTreeMap<String, String> {
+    let (package, simple) = fqn.rsplit_once('.').expect("an FQN");
+    let mut tree = air_tree();
+    tree.insert(
+        "plugins/air/shells/intellij.air.shells.tests.iml".to_owned(),
+        iml_text(&[&format!(
+            r#"<sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" packagePrefix="{package}" />"#
+        )]),
+    );
+    tree.insert("plugins/air/shells/BUILD.bazel".to_owned(), build_bazel_text("shells_test"));
+    tree.insert(
+        format!("plugins/air/shells/testSrc/{simple}.kt"),
+        format!("package {package}\n\nclass {simple} {{\n}}\n"),
+    );
+    tree
+}
+
+// A class that a suite document names resolves to the test label of the lane of the document. No module of the tree
+// holds it, so the lane needs no test target of the module. A scenario after `#` stays on the filter, which the lane
+// test reads as its selector. A class of an explicit-only lane resolves the same way, because a class names its suite.
+#[test]
+fn a_class_that_a_suite_document_names_resolves_to_the_test_label_of_its_lane() {
+    let fake = with_documents(
+        air_tree(),
+        &[
+            ("rename-session", "UI", RENAME),
+            (
+                "long-session-performance",
+                "UI_PERF",
+                "com.intellij.air.integration.acp.AirLongSessionPerformanceUiTest",
+            ),
+        ],
+    );
+    let ui = Resolution {
+        labels: vec![UI_LANE_TEST.to_owned()],
+        filter: Some(RENAME.to_owned()),
+        ..Resolution::default()
+    };
+    assert_eq!(resolve_in(&fake, "AirRenameSessionGeneratedFlowUiTest"), Ok(ui.clone()));
+    assert_eq!(resolve_in(&fake, RENAME), Ok(ui));
+    assert_eq!(
+        resolve_in(&fake, "AirRenameSessionGeneratedFlowUiTest#renameSession").map(|resolution| resolution.filter),
+        Ok(Some(format!("{RENAME}#renameSession")))
+    );
+    assert_eq!(
+        resolve_in(&fake, "AirLongSessionPerformanceUiTest").map(|resolution| resolution.labels),
+        Ok(vec!["//plugins/air/tests/integration/ui-perf:ui-perf_lane_test".to_owned()])
+    );
+}
+
+// The answer for a documented class depends on the lane row alone. When the row of the ui lane names another test
+// label, the class resolves to that label, and every other field of the answer stays the same.
+#[test]
+fn a_documented_class_follows_the_test_label_of_its_lane_row() {
+    let row = format!("\"testLabel\": \"{UI_LANE_TEST}\"");
+    assert_eq!(
+        LANES_TEXT.matches(&row).count(),
+        1,
+        "the fixture table names the ui test label once"
+    );
+    let other = "//plugins/air/tests/integration/ui:ui_other_test";
+    let flipped = LANES_TEXT.replace(&row, &format!("\"testLabel\": \"{other}\""));
+    let flipped = Areas::new(vec![Area::new(
+        AREA_DIR,
+        LANES_FILE,
+        Lanes::parse(&flipped).expect("the flipped table parses"),
+    )]);
+    let fake = with_documents(air_tree(), &[("rename-session", "UI", RENAME)]);
+    let resolve = |areas: &Areas| {
+        resolve_selector(
+            &fake,
+            &classify("AirRenameSessionGeneratedFlowUiTest"),
+            &ResolutionInputs::new(&fake, areas),
+        )
+        .expect("resolves")
+    };
+    let (lane, moved) = (resolve(areas()), resolve(&flipped));
+    assert_eq!(lane.labels, [UI_LANE_TEST]);
+    assert_eq!(moved.labels, [other]);
+    assert_eq!(
+        Resolution {
+            labels: lane.labels.clone(),
+            ..moved
+        },
+        lane
+    );
+}
+
+// A module of the tree may still hold the class that a document names, as the generated shells of a lane do. The two
+// answers are one class, and it runs in the lane of the document. Without the document, the module answers.
+#[test]
+fn a_class_in_a_module_and_in_a_document_is_one_class_of_the_lane() {
+    let module_only = FakeRuntime::with_tree(&with_shell_module(RENAME));
+    assert_eq!(
+        resolve_in(&module_only, "AirRenameSessionGeneratedFlowUiTest").map(|resolution| resolution.labels),
+        Ok(vec!["//plugins/air/shells:shells_test".to_owned()])
+    );
+    let both = with_documents(with_shell_module(RENAME), &[("rename-session", "UI", RENAME)]);
+    assert_eq!(
+        resolve_in(&both, "AirRenameSessionGeneratedFlowUiTest"),
+        Ok(Resolution {
+            labels: vec![UI_LANE_TEST.to_owned()],
+            filter: Some(RENAME.to_owned()),
+            ..Resolution::default()
+        })
+    );
+}
+
+// A document and a module that name two classes of one simple name are two classes. The simple name is refused with
+// both, and the FQN of either one resolves to it.
+#[test]
+fn a_documented_class_and_another_class_of_its_simple_name_are_refused_by_the_simple_name() {
+    let other = "com.intellij.air.frontend.AirRenameSessionGeneratedFlowUiTest";
+    let fake = with_documents(with_shell_module(other), &[("rename-session", "UI", RENAME)]);
+    let failure = refusal(resolve_in(&fake, "AirRenameSessionGeneratedFlowUiTest"));
+    assert_eq!(failure.exit, exit::USAGE);
+    for expected in ["2 classes named", RENAME, UI_LANE_TEST, other, "//plugins/air/shells:shells_test"] {
+        assert!(failure.message.contains(expected), "no {expected:?} in:\n{}", failure.message);
+    }
+    assert_eq!(
+        resolve_in(&fake, RENAME).map(|resolution| resolution.labels),
+        Ok(vec![UI_LANE_TEST.to_owned()])
+    );
+    assert_eq!(
+        resolve_in(&fake, other).map(|resolution| resolution.labels),
+        Ok(vec!["//plugins/air/shells:shells_test".to_owned()])
+    );
 }

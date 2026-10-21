@@ -719,20 +719,21 @@ public final class VirtualFilePointerManagerImpl extends VirtualFilePointerManag
 
   @VisibleForTesting
   public @NotNull ChangeApplier prepareChange(@NotNull List<? extends VFileEvent> events) {
-    myCollectedEvents = collectEvents(events);
+    CollectedEvents prepared = collectEvents(events);
     return new ChangeApplier() {
       @Override
       public void beforeVfsChange() {
         CollectedEvents collected;
         //noinspection SynchronizeOnThis
         synchronized (VirtualFilePointerManagerImpl.this) {
-          collected = myCollectedEvents;
+          collected = prepared;
           if (collected.startModCount == myPointerSetModCount) {
             incModificationCount();
           }
           else {
-            myCollectedEvents = collected = collectEvents(events);
+            collected = collectEvents(events);
           }
+          myCollectedEvents = collected;
         }
 
         for (EventDescriptor descriptor : collected.eventList) {

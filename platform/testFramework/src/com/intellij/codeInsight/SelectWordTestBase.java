@@ -13,6 +13,10 @@ import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
 
+/**
+ * @deprecated Use {@link SelectWordTestUtil} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class SelectWordTestBase extends LightPlatformCodeInsightTestCase {
   protected void doTest(@NonNls String ext) { doTest(ext, true); }
 

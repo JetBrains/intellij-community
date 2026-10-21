@@ -2,6 +2,7 @@
 package com.intellij.devkit.compose
 
 import com.intellij.facet.FacetManager
+import com.intellij.java.workspace.files.findResourceFileByRelativePath
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -22,8 +23,10 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlFile
+import com.intellij.workspaceModel.ide.legacyBridge.findSnapshotModuleEntity
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
+import org.jetbrains.idea.devkit.module.PluginDescriptorConstants
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
@@ -208,22 +211,11 @@ private fun addPlatformComposeModuleDependency(module: Module) {
 private fun findXmlDescriptor(module: Module): XmlFile? {
   val project = module.project
   val psiManager = PsiManager.getInstance(project)
-  for (sourceRoot in ModuleRootManager.getInstance(module).getSourceRoots(false)) {
-    val moduleXml = sourceRoot.findChild("${module.name}.xml")
-    if (moduleXml != null && !moduleXml.isDirectory) {
-      val psiFile = psiManager.findFile(moduleXml)
-      if (psiFile is XmlFile) return psiFile
-    }
-
-    val metaInf = sourceRoot.findChild("META-INF")
-    if (metaInf != null && metaInf.isDirectory) {
-      for (file in metaInf.children) {
-        if (file.name == "plugin.xml") {
-          val psiFile = psiManager.findFile(file)
-          if (psiFile is XmlFile) return psiFile
-        }
-      }
-    }
+  val moduleEntity = module.findSnapshotModuleEntity() ?: return null
+  for (outputPath in listOf("${module.name}.xml", PluginDescriptorConstants.PLUGIN_XML_PATH)) {
+    val descriptor = moduleEntity.findResourceFileByRelativePath(outputPath) ?: continue
+    val psiFile = psiManager.findFile(descriptor)
+    if (psiFile is XmlFile) return psiFile
   }
   return null
 }

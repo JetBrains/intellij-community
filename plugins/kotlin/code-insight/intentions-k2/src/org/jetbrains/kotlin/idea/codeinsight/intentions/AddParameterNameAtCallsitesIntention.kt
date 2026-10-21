@@ -6,6 +6,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.PsiBasedModCommandAction
 import com.intellij.psi.PsiReference
+import com.intellij.psi.util.endOffset
 import com.intellij.psi.util.findParentOfType
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
@@ -13,9 +14,12 @@ import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
+import org.jetbrains.kotlin.idea.references.KtArrayAccessReference
+import org.jetbrains.kotlin.idea.references.KtCollectionLiteralReference
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtNamed
 import org.jetbrains.kotlin.psi.KtParameter
@@ -29,13 +33,21 @@ internal class AddParameterNameAtCallsitesIntention : PsiBasedModCommandAction<K
     }
 
     override fun isElementApplicable(element: KtParameter, context: ActionContext): Boolean {
-        return element.parent.parent is KtNamed && !element.isVarArg && element.nameAsName != null
+        return element.parent.parent.let { it is KtNamed && it !is KtFunctionLiteral && it.nameAsName != null } &&
+                !element.isVarArg &&
+                element.nameIdentifier.let { it != null && context.offset in it.startOffset..it.endOffset }
     }
 
     override fun perform(context: ActionContext, element: KtParameter): ModCommand {
-        val parameterName = element.nameAsName ?: return ModCommand.nop()
-        val function = element.findParentOfType<KtFunction>() ?: return ModCommand.nop()
-        val references = ConvertFunctionToPropertyAndViceVersaUtils.findReferencesToElement(function) ?: return ModCommand.nop()
+        val parameterName = element.nameAsName
+            ?: return ModCommand.info(KotlinBundle.message("add.parameter.names.to.callsites.cannot.determine.the.parameter.name"))
+
+        val function = element.findParentOfType<KtFunction>()
+            ?: return ModCommand.info(KotlinBundle.message("add.parameter.names.to.callsites.enclosing.function.not.found"))
+
+        val references = ConvertFunctionToPropertyAndViceVersaUtils
+            .findReferencesToElement(function)
+            ?: return ModCommand.info(KotlinBundle.message("add.parameter.names.to.callsites.no.references.found"))
 
         // One reference could contain a lambda argument that contains another reference.
         // To prevent PsiInvalidElementAccessException, we sort the references descending by offset
@@ -45,38 +57,49 @@ internal class AddParameterNameAtCallsitesIntention : PsiBasedModCommandAction<K
                 .thenByDescending { it.element.startOffset }
         )
 
-        return ModCommand.psiUpdate(element) { _, updater ->
-            val simpleArguments = mutableListOf<KtValueArgument>()
-            val lambdaArguments = mutableListOf<KtLambdaArgument>()
+        val arguments = sortedReferences.mapNotNull { reference ->
+            if (reference.element !is KtElement) return@mapNotNull null
+            if (reference is KtArrayAccessReference || reference is KtCollectionLiteralReference) return@mapNotNull null
 
-            for (reference in sortedReferences) {
-                if (reference.element !is KtElement) continue
-                val callExpression = reference.element.parentsWithSelf.firstIsInstanceOrNull<KtCallElement>() ?: continue
-                if (!callExpression.isValid) continue
-                analyze(callExpression) {
-                    val resolveCall = callExpression.resolveSuccessfulCall() ?: return@analyze
-                    val (argument) = resolveCall.valueArgumentMapping.entries.firstOrNull { it.value.name == parameterName }
-                        ?: return@analyze
-                    when (val parent = argument.parent) {
-                        is KtLambdaArgument -> {
-                            lambdaArguments.add(updater.getWritable(parent))
-                        }
+            val callExpression = reference.element.parentsWithSelf.firstIsInstanceOrNull<KtCallElement>()
+                ?: return@mapNotNull null
 
-                        is KtValueArgument -> {
-                            if (parent.getArgumentName() != null) return@analyze
-                            simpleArguments.add(updater.getWritable(parent))
-                        }
-                    }
+            if (!callExpression.isValid) return@mapNotNull null
+
+            analyze(callExpression) {
+                val resolveCall = callExpression.resolveSuccessfulCall() ?: return@analyze null
+                val (argument) = resolveCall.valueArgumentMapping.entries.firstOrNull { it.value.name == parameterName }
+                    ?: return@analyze null
+
+                when (val parent = argument.parent) {
+                    is KtLambdaArgument -> parent
+                    is KtValueArgument -> parent.takeIf { it.getArgumentName() == null }
+                    else -> null
                 }
             }
+        }.distinct()
 
-            for (argument in simpleArguments) {
-                NamedArgumentUtils.addArgumentName(updater.getWritable(argument), parameterName)
-            }
+        if (arguments.isEmpty()) {
+            return ModCommand.info(KotlinBundle.message("add.parameter.names.to.callsites.no.unnamed.arguments.to.update"))
+        }
 
-            for (lambdaArgument in lambdaArguments) {
-                lambdaArgument.moveInsideParenthesesAndReplaceWith(lambdaArgument.getArgumentExpression() ?: continue, parameterName)
-            }
+        return ModCommand.psiUpdate(element) { _, updater ->
+            arguments
+                .map { updater.getWritable(it) }
+                .forEach { argument ->
+                    if (argument !is KtLambdaArgument) {
+                        NamedArgumentUtils.addArgumentName(argument, parameterName)
+                        return@forEach
+                    }
+                    val expression = argument.getArgumentExpression()
+                        ?: return@forEach
+
+                    argument.moveInsideParenthesesAndReplaceWith(
+                        expression,
+                        parameterName,
+                    )
+                }
         }
     }
+
 }

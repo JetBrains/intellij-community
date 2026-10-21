@@ -14,7 +14,9 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.utils.coroutines.waitCoroutinesBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.idea.devkit.inspections.extractModule.getExtractToJpsModuleCoroutineScope
+import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.seconds
@@ -143,4 +145,37 @@ internal class OptionalDependencyViaDependsTagInspectionTest {
     """.trimMargin(), true)
   }
 
+  @Test
+  fun `quick fix to extract optional dependency when its module has descriptor in single-file resource root`(): Unit = timeoutRunBlocking(timeout = 20.seconds) {
+    IntelliJProjectUtil.markAsIntelliJPlatformProject(projectFixture.get(), true)
+
+    withContext(Dispatchers.EDT) {
+      val pluginXml = fixture.addFileToProject("plugin.xml", """
+      |<idea-plugin>
+      |    <id>plugin</id>
+      |    <depends optional="true<caret>" config-file="optional.xml">anotherPlugin</depends>
+      |</idea-plugin>
+    """.trimMargin())
+      val optionalModule = PsiTestUtil.addModule(
+        fixture.project,
+        JavaModuleType.getModuleType(),
+        "optional",
+        fixture.tempDirFixture.findOrCreateDir("optional")
+      )
+      val descriptor = fixture.addFileToProject("optional/resources/optional.xml", "<idea-plugin/>")
+      PsiTestUtil.addSourceRoot(optionalModule, descriptor.virtualFile, JavaResourceRootType.RESOURCE)
+
+      fixture.addFileToProject("optional.xml", """
+      |<idea-plugin>
+      |    <actions>
+      |        <action class="com.example.MyAction"/>
+      |    </actions>
+      |</idea-plugin>
+    """.trimMargin())
+      fixture.addFileToProject("optional/com/example/MyAction.java", "package com.example; class MyAction {}")
+      fixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
+    }
+    fixture.findSingleIntention("Extract 'optional.xml' to a content module")
+    assertThat(fixture.filterAvailableIntentions("Convert 'optional.xml' to a content module")).isEmpty()
+  }
 }

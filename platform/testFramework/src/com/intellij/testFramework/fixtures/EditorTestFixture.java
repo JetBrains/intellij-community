@@ -191,7 +191,8 @@ public class EditorTestFixture {
     Editor editor = myEditor;
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
-      file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
+      PsiFile injectedFile = file;
+      file = ReadAction.computeBlocking(() -> InjectedLanguageManager.getInstance(injectedFile.getProject()).getTopLevelFile(injectedFile));
     }
     assertNotNull(file);
     return CodeInsightTestFixtureImpl.instantiateAndRun(file, editor, ArrayUtilRt.EMPTY_INT_ARRAY, myAllowDocumentModification, readEditorMarkupModel);

@@ -193,6 +193,22 @@ public final class IterationState {
     advance();
   }
 
+  /**
+   * Moves the iteration forward to the offset. The offset must not be inside a collapsed fold region.
+   * The highlighters collected at the start stay in use, so a jump costs no new markup search.
+   */
+  @ApiStatus.Internal
+  public void advanceTo(int offset) {
+    assert !myReverseIteration &&
+           myCaretData == CaretData.getNullCaret() &&
+           offset >= myStartOffset &&
+           offset <= myEnd &&
+           !DocumentUtil.isInsideSurrogatePair(myDocument, offset);
+    if (offset == myStartOffset) return;
+    myEndOffset = offset;
+    advance();
+  }
+
   @ApiStatus.Internal
   public void advance() {
     myNextIsFoldRegion = false;

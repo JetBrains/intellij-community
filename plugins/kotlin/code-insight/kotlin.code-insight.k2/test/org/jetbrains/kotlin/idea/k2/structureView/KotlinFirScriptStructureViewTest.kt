@@ -44,7 +44,7 @@ import kotlin.script.experimental.host.createScriptDefinitionFromTemplate
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
-import kotlin.script.templates.standard.ScriptTemplateWithArgs
+import kotlin.script.experimental.templates.ScriptWithArgs
 
 class KotlinFirScriptStructureViewTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun runInDispatchThread(): Boolean = false
@@ -85,7 +85,7 @@ class KotlinFirScriptStructureViewTest : KotlinLightCodeInsightFixtureTestCase()
             assertTrue(childTexts(findChild(configuration, "JDK")).single().isNotBlank())
 
             val implicitReceiverPresentation = children(findChild(configuration, "Implicit Receivers")).first().presentation
-            assertEquals("kotlin.script.templates.standard.ScriptTemplateWithArgs", implicitReceiverPresentation.presentableText)
+            assertEquals("kotlin.script.experimental.templates.ScriptWithArgs", implicitReceiverPresentation.presentableText)
 
             assertEquals(
                 listOf("scriptName: kotlin.String", "value: kotlin.Int"),
@@ -294,14 +294,14 @@ class KotlinFirScriptStructureViewTest : KotlinLightCodeInsightFixtureTestCase()
             configurationDependencies.append(JvmDependency(definitionJar))
         }
         val definition = createScriptDefinitionFromTemplate(
-            KotlinType(ScriptTemplateWithArgs::class),
+            KotlinType(ScriptWithArgs::class),
             hostConfiguration,
             compilation = {
                 fileExtension("context.kts")
                 kotlinScriptTemplate {
                     title = "Context Test Script"
                 }
-                implicitReceivers(ScriptTemplateWithArgs::class)
+                implicitReceivers(ScriptWithArgs::class)
                 providedProperties(
                     "scriptName" to KotlinType(String::class),
                     "value" to KotlinType(Int::class),

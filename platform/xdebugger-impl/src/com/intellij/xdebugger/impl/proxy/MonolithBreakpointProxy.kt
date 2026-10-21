@@ -1,13 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.proxy
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId
+import com.intellij.platform.debugger.impl.rpc.XDataBreakpointInfo
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XBreakpointTypeProxy
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy
+import com.intellij.platform.debugger.impl.shared.proxy.toDataBreakpointInfo
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XExpression
@@ -16,6 +22,10 @@ import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.breakpoints.XDataBreakpointAccessType
+import com.intellij.xdebugger.breakpoints.XDataBreakpointHitCountMode
+import com.intellij.xdebugger.breakpoints.XDataBreakpointLifetime
+import com.intellij.xdebugger.breakpoints.XDataBreakpointProperties
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.breakpoints.CustomizedBreakpointPresentation
@@ -23,6 +33,17 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl
+import com.intellij.xdebugger.impl.breakpoints.setDataBreakpointAccessType
+import com.intellij.xdebugger.impl.breakpoints.setDataBreakpointHitCount
+import com.intellij.xdebugger.impl.breakpoints.setDataBreakpointLifetime
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -125,6 +146,32 @@ internal open class MonolithBreakpointProxy @Deprecated("Use breakpoint.asProxy(
 
   override fun hasCustomCondition(): Boolean {
     return XBreakpointUtil.hasCustomCondition(breakpoint)
+  }
+
+  override fun getDataBreakpointInfo(): XDataBreakpointInfo? = (breakpoint.properties as? XDataBreakpointProperties)?.toDataBreakpointInfo()
+
+  override fun setDataBreakpointAccessType(accessType: XDataBreakpointAccessType?) {
+    breakpoint.setDataBreakpointAccessType(accessType)
+  }
+
+  override fun setDataBreakpointLifetime(lifetime: XDataBreakpointLifetime?) {
+    breakpoint.setDataBreakpointLifetime(lifetime)
+  }
+
+  override fun setDataBreakpointHitCount(enabled: Boolean, mode: XDataBreakpointHitCountMode, value: Int) {
+    breakpoint.setDataBreakpointHitCount(enabled, mode, value)
+  }
+
+  override fun subscribeOnDataBreakpointInfoChanges(disposable: Disposable, listener: (XDataBreakpointInfo) -> Unit) {
+    val scope = breakpoint.coroutineScope.childScope("DataBreakpointInfoChangesListener")
+    Disposer.register(disposable, Disposable { scope.cancel("disposed") })
+    scope.launch(start = CoroutineStart.UNDISPATCHED) {
+      breakpoint.breakpointChangedFlow().map { getDataBreakpointInfo() }.filterNotNull().distinctUntilChanged().collect {
+        withContext(Dispatchers.EDT) {
+          listener(it)
+        }
+      }
+    }
   }
 
   override fun getGeneralDescription(): String = XBreakpointUtil.getGeneralDescription(breakpoint)

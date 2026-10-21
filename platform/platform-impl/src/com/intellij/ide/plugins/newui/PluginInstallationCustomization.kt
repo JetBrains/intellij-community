@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.ReflectionUtil
 import org.jetbrains.annotations.ApiStatus
+import java.lang.reflect.InvocationTargetException
 import javax.swing.JComponent
 
 @ApiStatus.Internal
@@ -45,7 +46,15 @@ interface PluginInstallationCustomization {
     val method = ReflectionUtil.getMethod(this::class.java, CUSTOMIZE_TAGS_COMPATIBILITY_METHOD, List::class.java) ?: return tags
 
     return runCatching {
-      method.invoke(this, tags) as List<String>
+      try {
+        @Suppress("UNCHECKED_CAST")
+        method.invoke(this, tags) as List<String>
+      }
+      catch (e: InvocationTargetException) {
+        // The reflective call wraps every exception, so getOrLogException sees no control flow exception and
+        // logs a cancellation as an error. Throw the real cause instead.
+        throw e.cause ?: e
+      }
     }.getOrLogException(LOG) ?: tags
   }
 }

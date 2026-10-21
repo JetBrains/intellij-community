@@ -4,7 +4,6 @@ package com.intellij.util.lang.test;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ijent.community.buildConstants.IjentBuildScriptsConstantsKt;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableConsumer;
@@ -12,8 +11,8 @@ import com.intellij.util.lang.ClassPath;
 import com.intellij.util.lang.ClasspathCache;
 import com.intellij.util.lang.PathClassLoader;
 import com.intellij.util.lang.UrlClassLoader;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,12 +41,13 @@ import static com.intellij.openapi.util.io.IoTestUtil.createTestFile;
 import static com.intellij.openapi.util.io.IoTestUtil.createTestJar;
 import static com.intellij.openapi.util.io.IoTestUtil.toLocalUncPath;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class UrlClassLoaderTest {
-  @Rule public TempDirectory tempDir = new TempDirectory();
+  @TempDir
+  Path tempDir;
 
   @Test
   public void testBootstrapResources() {
@@ -59,11 +59,10 @@ public class UrlClassLoaderTest {
 
   @Test
   public void testNonCanonicalPaths() throws IOException {
-    tempDir.newFile("dir/a.txt");
+    createTestFile(createTestDir(tempDir.toFile(), "dir"), "a.txt");
 
-    Path path = tempDir.getRoot().toPath();
-    UrlClassLoader customCl = builder().files(List.of(path)).get();
-    try (URLClassLoader standardCl = new URLClassLoader(new URL[]{path.toUri().toURL()})) {
+    UrlClassLoader customCl = builder().files(List.of(tempDir)).get();
+    try (URLClassLoader standardCl = new URLClassLoader(new URL[]{tempDir.toUri().toURL()})) {
       String relativePathToFile = "dir/a.txt";
       assertNotNull(customCl.findResource(relativePathToFile));
       assertNotNull(standardCl.findResource(relativePathToFile));
@@ -142,15 +141,15 @@ public class UrlClassLoaderTest {
   @Test
   public void testInvalidJarsInClassPath() throws IOException {
     String entryName = "test_res_dir/test_res.txt";
-    Path theGood = createTestJar(tempDir.newFile("1_normal.jar"), entryName, "-").toPath();
-    Path theBad = tempDir.newFile("2_broken.jar", new byte[1024]).toPath();
+    Path theGood = createTestJar(createTestFile(tempDir.toFile(), "1_normal.jar"), entryName, "-").toPath();
+    Path theBad = Files.write(tempDir.resolve("2_broken.jar"), new byte[1024]);
 
     UrlClassLoader flat = builder().files(List.of(theBad, theGood)).get();
     assertThat(findResource(flat, entryName, false)).isNotNull();
 
     String content = Attributes.Name.MANIFEST_VERSION + ": 1.0\n" +
                      Attributes.Name.CLASS_PATH + ": " + theBad.toUri().toURL() + " " + theGood.toUri().toURL() + "\n\n";
-    Path theUgly = createTestJar(tempDir.newFile(ClassPath.CLASSPATH_JAR_FILE_NAME_PREFIX + "_3.jar"), JarFile.MANIFEST_NAME, content).toPath();
+    Path theUgly = createTestJar(createTestFile(tempDir.toFile(), ClassPath.CLASSPATH_JAR_FILE_NAME_PREFIX + "_3.jar"), JarFile.MANIFEST_NAME, content).toPath();
 
     UrlClassLoader recursive = builder().files(List.of(theUgly)).get();
     assertThat(recursive.findResource(entryName)).isNotNull();
@@ -160,7 +159,7 @@ public class UrlClassLoaderTest {
   public void testDirEntry() throws IOException {
     String resourceDirName = "test_res_dir";
     String resourceDirName2 = "test_res_dir2";
-    File theGood = createTestJar(tempDir.newFile("1_normal.jar"), resourceDirName + "/test_res.txt", "-", resourceDirName2 + "/", null);
+    File theGood = createTestJar(createTestFile(tempDir.toFile(), "1_normal.jar"), resourceDirName + "/test_res.txt", "-", resourceDirName2 + "/", null);
     UrlClassLoader flat = builder().files(List.of(theGood.toPath())).get();
 
     String resourceDirNameWithSlash = resourceDirName + "/";
@@ -195,7 +194,7 @@ public class UrlClassLoaderTest {
     int counter = 1;
     for (String dirName : new String[]{"dir", "dir.class", "dir.class"}) {
       for (String resourceName : new String[]{"a.class", "a.txt"}) {
-        Path root = tempDir.newDirectory("testFindDirWhenUsingCache" + (counter++)).toPath();
+        Path root = createTestDir(tempDir.toFile(), "testFindDirWhenUsingCache" + (counter++)).toPath();
         Path subDir = createTestDir(root.toFile(), dirName).toPath();
         createTestFile(subDir.toFile(), resourceName);
 
@@ -227,11 +226,11 @@ public class UrlClassLoaderTest {
   @Test
   public void testUncInClasspath() {
     assumeWindows();
-    Path uncRootPath = Paths.get(toLocalUncPath(tempDir.getRoot().getPath()));
-    assumeTrue("Cannot access " + uncRootPath, Files.isDirectory(uncRootPath));
+    Path uncRootPath = Paths.get(toLocalUncPath(tempDir.toString()));
+    assumeTrue(Files.isDirectory(uncRootPath), "Cannot access " + uncRootPath);
 
     String entryName = "test_res_dir/test_res.txt";
-    File jar = createTestJar(tempDir.newFile("test.jar"), entryName, "-");
+    File jar = createTestJar(createTestFile(tempDir.toFile(), "test.jar"), entryName, "-");
     UrlClassLoader cl = builder().files(List.of(uncRootPath.resolve(jar.getName()))).get();
     assertNotNull(cl.findResource(entryName));
   }

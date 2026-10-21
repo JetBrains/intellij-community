@@ -1,0 +1,14 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide.tabInEditor"/>
+  </dependencies>
+  <!-- endregion -->
+  <projectListeners>
+    <listener class="com.intellij.platform.ide.tabInEditor.frontend.ToolWindowEditorTabBackendMirrorSyncListener"
+              topic="com.intellij.openapi.fileEditor.FileOpenedSyncListener"/>
+  </projectListeners>
+</idea-plugin>

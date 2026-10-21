@@ -10,6 +10,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.highlighting.notUnderContentRoot
 import org.jetbrains.kotlin.idea.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
@@ -38,6 +39,7 @@ class KotlinHighlightingUtilsTest : LightPlatformTestCase() {
     fun testFileOutsideContentRoot() {
         val file = createKotlinFileAtPath("Main.kt")
         assertFalse(file.shouldHighlightFile())
+        assertTrue(file.notUnderContentRoot())
     }
 
     fun testFileUnderContentRoot() {
@@ -49,6 +51,7 @@ class KotlinHighlightingUtilsTest : LightPlatformTestCase() {
             }.commit()
         }
         assertTrue(file.shouldHighlightFile())
+        assertFalse(file.notUnderContentRoot())
     }
 
     fun testMarkedAsOutsider() {

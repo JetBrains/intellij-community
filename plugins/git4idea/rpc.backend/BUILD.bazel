@@ -1,0 +1,65 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.vcs.git.rpc.backend` start
+content_module_jar(module = ":rpc.backend")
+### auto-generated section `dev intellij.vcs.git.rpc.backend` end
+
+### auto-generated section `build intellij.vcs.git.rpc.backend` start
+jvm_library(
+    name = "rpc.backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.vcs.git.rpc.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/kernel/rpc.backend",
+        "//plugins/git4idea/shared",
+        "//plugins/git4idea/backend",
+    ],
+)
+
+jvm_library(
+    name = "rpc.backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.vcs.git.rpc.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":rpc.backend",
+        "//platform/core-api:core_test_lib",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+        "//platform/backend:backend_test_lib",
+        "//plugins/git4idea/shared:shared_test_lib",
+        "//plugins/git4idea/backend:backend_test_lib",
+    ],
+)
+### auto-generated section `build intellij.vcs.git.rpc.backend` end
+
+### auto-generated section `iml intellij.vcs.git.rpc.backend` start
+exports_files(
+    [
+        "intellij.vcs.git.rpc.backend.iml",
+        "resources/intellij.vcs.git.rpc.backend.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.vcs.git.rpc.backend` end

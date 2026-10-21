@@ -15,4 +15,8 @@ class PluginXmlRegistrationCheckInspectionTest : PluginXmlRegistrationCheckInspe
   fun testRegistrationCheck() {
     doTestRegistrationCheck()
   }
+
+  fun testRegistrationCheckWithDependencyDescriptorInSingleFileResourceRoot() {
+    doTestRegistrationCheck(dependencyDescriptorInSingleFileRoot = true)
+  }
 }

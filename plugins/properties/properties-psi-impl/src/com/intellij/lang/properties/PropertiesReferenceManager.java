@@ -12,17 +12,22 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 
 @Service(Service.Level.PROJECT)
@@ -48,6 +53,31 @@ public final class PropertiesReferenceManager {
         return CachedValueProvider.Result.create(factoryMap, PsiModificationTracker.MODIFICATION_COUNT);
       });
     return map.get(bundleName);
+  }
+
+  /**
+   * The properties files of the production scope of the project with the given bundle name.
+   * Unlike {@link #findPropertiesFiles(GlobalSearchScope, String, BundleNameEvaluator)}, which scans every properties file per call,
+   * one cached scan serves all lookups.
+   */
+  public @NotNull List<PropertiesFile> findProductionPropertiesFiles(@NotNull String bundleName) {
+    List<VirtualFile> files = productionBundleFiles().getOrDefault(bundleName, List.of());
+    return ContainerUtil.mapNotNull(files, file -> PropertiesImplUtil.getPropertiesFile(myPsiManager.findFile(file)));
+  }
+
+  private @NotNull Map<String, List<VirtualFile>> productionBundleFiles() {
+    Project project = myPsiManager.getProject();
+    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+      Map<String, List<VirtualFile>> files = new HashMap<>();
+      processPropertiesFiles(GlobalSearchScopesCore.projectProductionScope(project), (baseName, propertiesFile) -> {
+        VirtualFile file = propertiesFile.getVirtualFile();
+        if (file != null) files.computeIfAbsent(baseName, __ -> new SmartList<>()).add(file);
+        return true;
+      }, BundleNameEvaluator.DEFAULT);
+      // a dumb scan misses the XML properties files; custom bundles change names without a PSI change
+      return CachedValueProvider.Result.create(files, PsiModificationTracker.MODIFICATION_COUNT, myDumbService.getModificationTracker(),
+                                               ResourceBundleManager.getInstance(project).getModificationTracker());
+    });
   }
 
   public @NotNull List<PropertiesFile> findPropertiesFiles(@NotNull GlobalSearchScope searchScope,

@@ -89,7 +89,7 @@ private fun KtBinaryExpression.joinable(): Boolean {
     if (right !is KtStringTemplateExpression) return false
     return when (val left = left) {
         is KtStringTemplateExpression -> true
-        is KtBinaryExpression -> left.right is KtStringTemplateExpression
+        is KtBinaryExpression -> left.operationToken == KtTokens.PLUS && left.right is KtStringTemplateExpression
         else -> false
     }
 }

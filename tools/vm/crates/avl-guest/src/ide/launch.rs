@@ -1,39 +1,34 @@
-//! `ide-launch`: one launch of the lane IDE on a prepared context, from the launch document on standard input to a
-//! running supervisor run.
+//! The launch: one launch of the lane IDE on a prepared context, from the launch document to a running supervisor run.
 //!
-//! The steps, in order: refuse a Linux guest whose agent names no X display, and a context with a live IDE run. Kill
-//! the JCEF helpers that name the context. Create `log/<launchName>` with `jvm`, `heap-dump` and `snapshots`. Compose
-//! the argument file through `dev-launch`, with the data paths of the context last. Publish the argument file and the
-//! launch record. Start the run `run-ide-<launchName>` in the run slot of the context: `<javaHome>/bin/java
-//! @<argument file> <projectDir>` in the distribution home, with the closed environment of the context.
-//!
-//! The document comes on standard input, as the document of `ide-prepare` does: it is large, and the two verbs read
-//! their documents the same way. It holds no secret.
+//! The steps, in order: refuse a launch document that [`ide::validate_ide_launch`] refuses, a Linux guest whose agent
+//! names no X display, and a context with a live IDE run. Kill the JCEF helpers that name the context. Create
+//! `log/<launchName>` with `jvm`, `heap-dump` and `snapshots`. Compose the argument file through `dev-launch`, with the
+//! data paths of the context last. Publish the argument file and the launch record. Start the run
+//! `run-ide-<launchName>` in the run slot of the context: `<javaHome>/bin/java @<argument file> <projectDir>` in the
+//! distribution home, with the closed environment of the context.
 
 use std::ffi::OsString;
 use std::fs;
-use std::io::Read;
-use std::path::Path;
+use std::io::{self, Write};
+use std::os::unix::fs::PermissionsExt;
+use std::path::{Path, PathBuf};
 
 use avl_wire::ide::{
     self, ARG_FILE, CONFIG_DIR, IdeLaunch, IdeLaunched, LAUNCH_RECORD_FILE, LOG_DIR, LaunchRecord, OWNED_JVM_OPTIONS, OWNED_PROPERTIES,
     PLUGINS_DIR, SYSTEM_DIR,
 };
 use avl_wire::supervisor::EnvironmentPolicy;
-use avl_wire::verb::AgentVerb;
 use dev_launch::{Distribution, DistributionFiles};
+use serde::Deserialize;
 
-use super::{create_private_dirs, reap, require_free_slot};
+use super::{CODE_LAUNCH_FAILED, create_private_dirs, reap, require_free_slot};
 use crate::clock::stamp;
-use crate::reply::{AgentRefusal, AgentRefusalExt, refuse};
-use crate::stage::launch_prep::publish_privately;
-use crate::stage::{is_directory, is_file};
+use crate::fs::{is_directory, is_file};
+use crate::reply::{AgentRefusal, AgentRefusalExt};
 use crate::supervisor::{self, Launcher, System};
 
 #[cfg(test)]
 mod tests;
-
-const VERB: AgentVerb = AgentVerb::IdeLaunch;
 
 /// The refusal of a launch on a Linux guest whose agent names no X display.
 pub(crate) const CODE_DISPLAY_MISSING: &str = "ide_display_missing";
@@ -53,13 +48,9 @@ impl Guest {
     }
 }
 
-/// Reads the launch document from standard input.
-pub(crate) fn read_document(stdin: &mut dyn Read) -> Result<IdeLaunch, AgentRefusal> {
-    let mut raw = Vec::new();
-    stdin
-        .read_to_end(&mut raw)
-        .map_err(|error| AgentRefusal::for_verb(VERB, format!("cannot read the IDE launch document: {error}")))?;
-    ide::decode_ide_launch(&raw).map_err(|error| AgentRefusal::for_verb(VERB, error.message))
+/// A refusal of the launch, with [`CODE_LAUNCH_FAILED`].
+fn refused(message: impl Into<String>) -> AgentRefusal {
+    AgentRefusal::refused(CODE_LAUNCH_FAILED, message)
 }
 
 /// The paths of one context for one launch, as guest path text.
@@ -89,27 +80,31 @@ impl LaunchPaths {
     }
 }
 
-/// Launches the IDE of `document` on its prepared context and answers the state of the run.
+/// Launches the IDE of `document` on its prepared context and answers the state of the run. The document is checked
+/// first, so every caller gets the checks of [`ide::validate_ide_launch`].
 pub(crate) fn launch(system: &dyn System, launcher: &Launcher, guest: &Guest, document: &IdeLaunch) -> Result<IdeLaunched, AgentRefusal> {
+    ide::validate_ide_launch(document).map_err(|error| refused(error.message))?;
     require_display(guest)?;
     let paths = LaunchPaths::new(document);
     let context = Path::new(&paths.context);
     require_free_slot(system, context)?;
     for (directory, what) in [(&paths.config, "context"), (&document.project_dir, "project")] {
         if !is_directory(Path::new(directory)) {
-            refuse!(VERB, "the {what} directory {directory} does not exist; call ide-prepare first");
+            return Err(refused(format!(
+                "the {what} directory {directory} does not exist; prepare the context first"
+            )));
         }
     }
     reap::reap_jcef_helpers(context);
     for directory in ["jvm", "heap-dump", "snapshots"] {
-        create_private_dirs(VERB, &Path::new(&paths.log).join(directory))?;
+        create_private_dirs(CODE_LAUNCH_FAILED, &Path::new(&paths.log).join(directory))?;
     }
 
     let arguments = compose_arguments(document, &paths)?;
-    let text = dev_launch::argument_file_text(&arguments)
-        .map_err(|error| AgentRefusal::for_verb(VERB, format!("cannot write the IDE argument file: {error:#}")))?;
+    let text =
+        dev_launch::argument_file_text(&arguments).map_err(|error| refused(format!("cannot write the IDE argument file: {error:#}")))?;
     publish_privately(Path::new(&paths.arg_file), text.as_bytes())
-        .map_err(|error| AgentRefusal::for_verb(VERB, format!("cannot publish {}: {error}", paths.arg_file)))?;
+        .map_err(|error| refused(format!("cannot publish {}: {error}", paths.arg_file)))?;
     let record = LaunchRecord {
         schema_version: ide::SCHEMA_VERSION,
         launch_key: document.launch_key.clone(),
@@ -122,7 +117,7 @@ pub(crate) fn launch(system: &dyn System, launcher: &Launcher, guest: &Guest, do
     let mut encoded = serde_json::to_vec(&record).map_err(AgentRefusal::internal)?;
     encoded.push(b'\n');
     publish_privately(Path::new(&paths.launch_record), &encoded)
-        .map_err(|error| AgentRefusal::for_verb(VERB, format!("cannot publish {}: {error}", paths.launch_record)))?;
+        .map_err(|error| refused(format!("cannot publish {}: {error}", paths.launch_record)))?;
 
     let Some(run_id) = ide::ide_run_id(&document.launch_name) else {
         return Err(AgentRefusal::internal("the checked launch name gives no run id"));
@@ -171,26 +166,25 @@ fn require_display(guest: &Guest) -> Result<(), AgentRefusal> {
 fn compose_arguments(document: &IdeLaunch, paths: &LaunchPaths) -> Result<Vec<String>, AgentRefusal> {
     let home = document.dist_home.as_str();
     let bin = Path::new(home).join("bin");
-    let vm_options = single_vm_options(&bin)?;
+    let product_info = product_info_file(Path::new(home));
+    let vm_options = vm_options_destination(&product_info)?;
 
     let flags_file = Path::new(&document.flags_file);
-    let flags = dev_launch::read_lines(flags_file).map_err(|error| AgentRefusal::for_verb(VERB, format!("{error:#}")))?;
+    let flags = dev_launch::read_lines(flags_file).map_err(|error| refused(format!("{error:#}")))?;
     let mut command_line = Vec::new();
     for flag in flags.iter().map(|line| line.trim()).filter(|line| !line.is_empty()) {
         if let Some(owned) = owned_option(flag) {
-            refuse!(
-                VERB,
+            return Err(refused(format!(
                 "the flags file {} states {owned}, which names a data path that the agent owns",
                 flags_file.display()
-            );
+            )));
         }
         command_line.push(flag.to_owned());
     }
     command_line.extend(document.properties.iter().map(|(key, value)| format!("-D{key}={value}")));
 
     let idea_properties = bin.join("idea.properties");
-    let vm_options_file = bin.join(&vm_options);
-    let product_info = bin.join("product-info.json");
+    let vm_options_file = vm_options.split('/').fold(PathBuf::from(home), |path, part| path.join(part));
     let core_classpath = Path::new(home).join("core-classpath.txt");
     let files = DistributionFiles {
         ide_config: Path::new(&document.ide_config),
@@ -200,10 +194,10 @@ fn compose_arguments(document: &IdeLaunch, paths: &LaunchPaths) -> Result<Vec<St
         core_classpath: &core_classpath,
     };
     let runtime_module_repository = is_file(&Path::new(home).join("modules").join("module-descriptors.dat"));
-    let distribution = Distribution::read(home, &files, &format!("bin/{vm_options}"), runtime_module_repository)
-        .map_err(|error| AgentRefusal::for_verb(VERB, format!("cannot read the distribution {home}: {error:#}")))?;
+    let distribution = Distribution::read(home, &files, &vm_options, runtime_module_repository)
+        .map_err(|error| refused(format!("cannot read the distribution {home}: {error:#}")))?;
     let mut arguments = dev_launch::java_arguments(command_line, distribution, None)
-        .map_err(|error| AgentRefusal::for_verb(VERB, format!("cannot compose the IDE launch: {error:#}")))?;
+        .map_err(|error| refused(format!("cannot compose the IDE launch: {error:#}")))?;
 
     // `java_arguments` ends with `-cp <class path> <main class>`, and a JVM option after the main class is a program
     // argument.
@@ -218,23 +212,81 @@ fn compose_arguments(document: &IdeLaunch, paths: &LaunchPaths) -> Result<Vec<St
     Ok(arguments)
 }
 
-/// The one `*.vmoptions` file of the `bin` directory of the distribution, by its name.
-fn single_vm_options(bin: &Path) -> Result<String, AgentRefusal> {
-    let entries = fs::read_dir(bin).map_err(|error| AgentRefusal::for_verb(VERB, format!("cannot read {}: {error}", bin.display())))?;
-    let mut names: Vec<String> = entries
-        .filter_map(Result::ok)
-        .filter_map(|entry| entry.file_name().into_string().ok())
-        .filter(|name| name.ends_with(".vmoptions"))
-        .collect();
-    if names.len() != 1 {
-        names.sort();
-        refuse!(
-            VERB,
-            "{} must hold exactly one *.vmoptions file, and holds {names:?}",
-            bin.display()
-        );
+/// The place of `product-info.json` in a production distribution on this OS, relative to the home.
+pub(crate) const PRODUCT_INFO_FILE: &str = if cfg!(target_os = "macos") {
+    "Resources/product-info.json"
+} else {
+    "product-info.json"
+};
+
+/// The `product-info.json` of the distribution at `home`, as `DevLaunchProperties.kt` finds it.
+///
+/// The first candidate is [`PRODUCT_INFO_FILE`]. The second is `bin/product-info.json`, the place in an older dev
+/// distribution. When neither file exists, the answer is the first candidate, so that the read error names it.
+fn product_info_file(home: &Path) -> PathBuf {
+    let production = home.join(PRODUCT_INFO_FILE);
+    if is_file(&production) {
+        return production;
     }
-    Ok(names.remove(0))
+    let dev_build = home.join("bin").join("product-info.json");
+    if is_file(&dev_build) { dev_build } else { production }
+}
+
+/// The slash path of the main vmoptions file relative to the home, as the launcher finds it.
+///
+/// It is `vmOptionsFilePath` of the first launch of `product_info`, relative to the directory of [`PRODUCT_INFO_FILE`].
+/// The `bin/product-info.json` of an older dev distribution holds the text of the production place, so the same base
+/// applies to it.
+fn vm_options_destination(product_info: &Path) -> Result<String, AgentRefusal> {
+    #[derive(Deserialize)]
+    struct ProductInfo {
+        launch: Vec<Launch>,
+    }
+    #[derive(Deserialize)]
+    #[serde(rename_all = "camelCase")]
+    struct Launch {
+        vm_options_file_path: String,
+    }
+
+    let data = fs::read(product_info).map_err(|error| refused(format!("cannot read {}: {error}", product_info.display())))?;
+    let info: ProductInfo = serde_json::from_slice(&data).map_err(|error| {
+        refused(format!(
+            "{} states no launch with a vmOptionsFilePath: {error}",
+            product_info.display()
+        ))
+    })?;
+    let Some(launch) = info.launch.first() else {
+        return Err(refused(format!("{} states no launch", product_info.display())));
+    };
+    let base = PRODUCT_INFO_FILE.rsplit_once('/').map_or("", |(directory, _)| directory);
+    let Some(destination) = resolve_in_home(base, &launch.vm_options_file_path) else {
+        return Err(refused(format!(
+            "the vmOptionsFilePath '{}' of {} is not a file of the home",
+            launch.vm_options_file_path,
+            product_info.display()
+        )));
+    };
+    Ok(destination)
+}
+
+/// The slash path `relative`, resolved against the slash directory `base` by its text. Both are relative to the home.
+///
+/// The answer is `None` for an absolute path, a backslash, a path that leaves the home and the home itself.
+fn resolve_in_home(base: &str, relative: &str) -> Option<String> {
+    if relative.starts_with('/') || relative.contains('\\') {
+        return None;
+    }
+    let mut parts: Vec<&str> = base.split('/').filter(|part| !part.is_empty()).collect();
+    for part in relative.split('/') {
+        match part {
+            "" | "." => {}
+            ".." => {
+                parts.pop()?;
+            }
+            _ => parts.push(part),
+        }
+    }
+    if parts.is_empty() { None } else { Some(parts.join("/")) }
 }
 
 /// The data path that a flag states, or `None`.
@@ -261,4 +313,24 @@ fn data_options(paths: &LaunchPaths) -> Vec<String> {
         format!("-XX:HeapDumpPath={log}/heap-dump/heap-dump.hprof"),
         format!("-Xlog:gc*:file={log}/gcLog.log"),
     ]
+}
+
+/// Writes `content` where a reader sees the whole file or no file, readable only by this account.
+///
+/// The publish is atomic, because the IDE that starts next reads the file. A half-written argument file is an IDE
+/// that starts with part of its options. The file is synced before the rename, because a worker can hard-reset. A
+/// failed publish leaves no temporary file.
+fn publish_privately(path: &Path, content: &[u8]) -> io::Result<()> {
+    let parent = path.parent().unwrap_or(Path::new("."));
+    let name = path.file_name().map(|name| name.to_string_lossy().into_owned()).unwrap_or_default();
+    let mut temporary = tempfile::Builder::new()
+        .prefix(&format!(".{name}."))
+        .permissions(fs::Permissions::from_mode(0o600))
+        .tempfile_in(parent)?;
+    temporary.write_all(content)?;
+    temporary.as_file().sync_all()?;
+    let mut temporary = temporary.into_temp_path();
+    fs::rename(&temporary, path)?;
+    temporary.disable_cleanup(true);
+    Ok(())
 }

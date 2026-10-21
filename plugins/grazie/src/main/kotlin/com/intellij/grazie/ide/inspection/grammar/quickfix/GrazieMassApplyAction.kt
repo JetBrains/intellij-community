@@ -10,6 +10,7 @@ import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.icons.GrazieIcons
 import com.intellij.grazie.ide.ui.mass.GrazieMassApplyDialog
 import com.intellij.grazie.ide.ui.mass.ProblemWithSuggestions
+import com.intellij.grazie.text.CommitMessageDetector
 import com.intellij.grazie.text.ProofreadingService
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
@@ -19,7 +20,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiFile
 import javax.swing.Icon
@@ -32,7 +32,7 @@ class GrazieMassApplyAction : IntentionAndQuickFixAction(), Iconable, Customizab
   override fun startInWriteAction(): Boolean = false
 
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    if (file == null || editor == null || CommitMessage.isCommitMessage(file)) return false
+    if (file == null || editor == null || CommitMessageDetector.isCommitMessage(file)) return false
     val range = getSelectionRange(editor)
     if (!range.isEmpty) return ProofreadingService.covers(file, listOf(range))
     val ranges = TextExtractor.findTextAt(file, range.startOffset, TextContent.TextDomain.ALL)?.rangesInFile ?: return false

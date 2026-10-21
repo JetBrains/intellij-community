@@ -118,7 +118,6 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
-        "@lib//:kotlinc-kotlin-compiler-tests",
         "//java/java-impl-refactorings:impl-refactorings_test_lib",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",

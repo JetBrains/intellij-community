@@ -29,7 +29,8 @@ class RenameKotlinParameterProcessor : RenameKotlinPsiProcessor(), DelegatingHea
         is KtDestructuringDeclarationEntry -> original.initializer == null
         is KtParameter -> !original.hasValOrVar() && (
                 original.ownerDeclaration is KtFunction ||
-                original.ownerDeclaration is KtPropertyAccessor
+                original.ownerDeclaration is KtPropertyAccessor ||
+                original.isLoopParameter
         )
         // rename started from java (for example by automatic renamer)
         is KtLightParameter -> true

@@ -4,8 +4,16 @@ package com.intellij.commandInterface.commandLine;
 
 import com.intellij.commandInterface.commandLine.psi.CommandLineArgument;
 import com.intellij.commandInterface.commandLine.psi.CommandLineFile;
-import com.intellij.testFramework.ParsingTestCase;
-import org.junit.Assert;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.Project;
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixtureKt.parsingFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 
 
 /**
@@ -13,43 +21,46 @@ import org.junit.Assert;
  *
  * @author Ilya.Kazakevich
  */
-public final class CommandLineParserTest extends ParsingTestCase {
-  public CommandLineParserTest() {
-    super("", CommandLineFileType.EXTENSION, true, new CommandLineParserDefinition());
-  }
+@TestApplication
+public final class CommandLineParserTest {
+  private static final TestFixture<Project> projectFixture = projectFixture();
 
-  @Override
-  protected String getTestDataPath() {
-    return CommandTestTools.TEST_PATH;
-  }
+  private final TestFixture<ParsingTestFixture> parsingFixture =
+    parsingFixture(projectFixture, CommandTestTools.TEST_PATH + "/", CommandLineFileType.EXTENSION, true, new CommandLineParserDefinition());
 
+  @Test
   public void testSpaces() {
-    doTest(true);
-    final CommandLineFile commandLineFile = (CommandLineFile)myFile;
-    Assert.assertEquals("Bad argument value", "spam and eggs", commandLineFile.getArguments().iterator().next().getValueNoQuotes());
-    final CommandLineArgument optionArgument = commandLineFile.getOptions().iterator().next().findArgument();
-    Assert.assertNotNull("No option argument found", optionArgument);
-    Assert.assertEquals("Bad option argument value", "ketchup", optionArgument.getValueNoQuotes());
+    parsingFixture.get().doTest(true);
+    final CommandLineFile commandLineFile = (CommandLineFile)parsingFixture.get().getFile();
+    ReadAction.runBlocking(() -> {
+      Assertions.assertEquals("spam and eggs", commandLineFile.getArguments().iterator().next().getValueNoQuotes(), "Bad argument value");
+      final CommandLineArgument optionArgument = commandLineFile.getOptions().iterator().next().findArgument();
+      Assertions.assertNotNull(optionArgument, "No option argument found");
+      Assertions.assertEquals("ketchup", optionArgument.getValueNoQuotes(), "Bad option argument value");
+    });
   }
 
   /**
    * Should be ok
    */
+  @Test
   public void testCommandLine() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
   /**
    * Should have a lot of errors
    */
+  @Test
   public void testJunk() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 
   /**
    * Should have error because option ends with "="
    */
+  @Test
   public void testOptionNoValueJunk() {
-    doTest(true);
+    parsingFixture.get().doTest(true);
   }
 }

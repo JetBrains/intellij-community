@@ -25,7 +25,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//platform/kernel/shared:kernel",
+        "//fleet/rpc",
         "//platform/buildView",
         "//platform/core-api:core",
         "//platform/platform-impl:ide-impl",
@@ -44,7 +44,6 @@ jvm_library(
         "//platform/execution-impl",
         "//platform/util-ex",
         "//platform/util:util-ui",
-        "//fleet/rhizomedb",
         "//platform/execution-impl/frontend",
     ],
 )
@@ -61,7 +60,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":frontend",
-        "//platform/kernel/shared:kernel_test_lib",
+        "//fleet/rpc:rpc_test_lib",
         "//platform/buildView:buildView_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
@@ -80,7 +79,6 @@ jvm_library(
         "//platform/execution-impl:execution-impl_test_lib",
         "//platform/util-ex:util-ex_test_lib",
         "//platform/util:util-ui_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/execution-impl/frontend:frontend_test_lib",
     ],
 )

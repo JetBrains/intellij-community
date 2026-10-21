@@ -1,0 +1,6 @@
+fun bar(vararg elements: String) {}
+
+fun test(values: Array<String>) {
+    bar(elements = *values)
+    bar(*values, *values)
+}

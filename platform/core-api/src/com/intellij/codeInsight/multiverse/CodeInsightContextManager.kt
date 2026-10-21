@@ -77,6 +77,6 @@ interface CodeInsightContextManager {
  * Synchronous listener notifying about changes in the codeinsight-context model
  */
 interface CodeInsightContextChangeListener : EventListener {
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun contextsChanged()
 }

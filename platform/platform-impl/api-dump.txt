@@ -137,7 +137,10 @@ a:com.intellij.application.options.colors.TextAttributesDescription
 - p:getTextAttributes():com.intellij.openapi.editor.markup.TextAttributes
 - setExternalForeground(java.awt.Color):V
 f:com.intellij.application.options.editor.CheckboxDescriptor
+- f:asOptionDescriptor(java.lang.String):com.intellij.ide.ui.search.BooleanOptionDescription
+- f:asOptionDescriptor(java.lang.String,kotlin.jvm.functions.Function0):com.intellij.ide.ui.search.BooleanOptionDescription
 - f:asOptionDescriptor(kotlin.jvm.functions.Function0):com.intellij.ide.ui.search.BooleanOptionDescription
+- f:asUiOptionDescriptor(java.lang.String):com.intellij.ide.ui.search.BooleanOptionDescription
 com.intellij.application.options.editor.EditorOptionsListener
 - sf:APPEARANCE_CONFIGURABLE_TOPIC:com.intellij.util.messages.Topic
 - sf:FOLDING_CONFIGURABLE_TOPIC:com.intellij.util.messages.Topic
@@ -505,6 +508,7 @@ f:com.intellij.ide.IdeEventQueue
 - f:addDispatcher(com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher,com.intellij.openapi.Disposable):V
 - f:addDispatcher(com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher,kotlinx.coroutines.CoroutineScope):V
 - f:blockNextEvents(java.awt.event.MouseEvent):V
+- f:containsDispatcher(com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher):Z
 - f:disableInputMethods(com.intellij.openapi.Disposable):V
 - dispatchEvent(java.awt.AWTEvent):V
 - f:doWhenReady(java.lang.Runnable):V
@@ -529,9 +533,9 @@ e:com.intellij.ide.IdeEventQueue$BlockMode
 f:com.intellij.ide.IdeEventQueue$Companion
 - f:getInstance():com.intellij.ide.IdeEventQueue
 com.intellij.ide.IdeEventQueue$EventDispatcher
-- a:dispatch(java.awt.AWTEvent):Z
+- com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher
 com.intellij.ide.IdeEventQueue$NonLockedEventDispatcher
-- com.intellij.ide.IdeEventQueue$EventDispatcher
+- a:dispatch(java.awt.AWTEvent):Z
 f:com.intellij.ide.IdePopupManager
 - com.intellij.ide.IdeEventQueue$EventDispatcher
 - closeAllPopups():Z
@@ -725,6 +729,7 @@ f:com.intellij.ide.actions.DistractionFreeModeController
 c:com.intellij.ide.actions.EditSourceAction
 - com.intellij.ide.actions.BaseNavigateToSourceAction
 - <init>():V
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.ExportToTextFileAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
@@ -1698,6 +1703,7 @@ com.intellij.ide.ui.search.ComponentHighlightingListener
 - a:highlight(javax.swing.JComponent,java.lang.String):V
 f:com.intellij.ide.ui.search.SearchUtil
 - sf:expand(com.intellij.openapi.options.ConfigurableGroup[]):java.util.List
+f:com.intellij.ide.ui.search.SearchUtilKt
 a:com.intellij.ide.util.ChooseElementsDialog
 - com.intellij.openapi.ui.DialogWrapper
 - getChosenElements():java.util.List
@@ -1979,6 +1985,8 @@ c:com.intellij.notification.impl.ui.StickyButton
 - p:createUI():javax.swing.plaf.ButtonUI
 - getForeground():java.awt.Color
 - setUI(javax.swing.plaf.ButtonUI):V
+@:com.intellij.openapi.DelicateLockingApi
+- java.lang.annotation.Annotation
 c:com.intellij.openapi.actionSystem.SplitButtonAction
 - com.intellij.openapi.actionSystem.ActionGroupWrapper
 - com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -2273,10 +2281,6 @@ a:com.intellij.openapi.editor.actions.TextComponentEditorAction
 - com.intellij.openapi.editor.actionSystem.EditorAction
 - p:<init>(com.intellij.openapi.editor.actionSystem.EditorActionHandler):V
 - s:getEditorFromContext(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.editor.Editor
-f:com.intellij.openapi.editor.actions.ToggleShowWhitespacesAction
-- com.intellij.ide.lightEdit.LightEditCompatible
-- com.intellij.openapi.actionSystem.ToggleAction
-- com.intellij.openapi.project.DumbAware
 c:com.intellij.openapi.editor.actions.ToggleUseSoftWrapsMenuAction
 - com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction
 - <init>():V
@@ -4692,9 +4696,6 @@ f:com.intellij.ui.FontComboBox
 - setFontName(java.lang.String):V
 - setMonospacedOnly(Z):V
 - setupDefaultRenderer(Z,Z):V
-c:com.intellij.ui.FontInfoRenderer
-- com.intellij.ui.ColoredListCellRenderer
-- <init>():V
 f:com.intellij.ui.FontInfoRendererBuilder
 - <init>():V
 - f:build():javax.swing.ListCellRenderer
@@ -5141,8 +5142,6 @@ c:com.intellij.ui.components.BasicOptionButtonUI$MainButton
 - com.intellij.ui.components.BasicOptionButtonUI$BaseButton
 - <init>(com.intellij.ui.components.BasicOptionButtonUI):V
 f:com.intellij.ui.components.ComponentsKt
-- sf:RadioButton(java.lang.String):javax.swing.JRadioButton
-- sf:noteComponent(java.lang.String):javax.swing.JComponent
 com.intellij.ui.components.DialogManager
 - a:performAction(kotlin.jvm.functions.Function0):V
 - bs:performAction$default(com.intellij.ui.components.DialogManager,kotlin.jvm.functions.Function0,I,java.lang.Object):V

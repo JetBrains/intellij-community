@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -57,7 +58,7 @@ public abstract class SdkType implements SdkTypeId {
    */
   @Deprecated(forRemoval = true)
   protected @Nullable String suggestHomePath() {
-    throw new AssertionError("Do not call this method, call the one with path instead");
+    throw new AssertionError("Do not call this method, call the one with path instead (fix " + this + ")");
   }
 
   /**
@@ -67,35 +68,26 @@ public abstract class SdkType implements SdkTypeId {
    * E.g. for Python SDK on Unix the method may return either {@code "/usr/bin"} or {@code "/usr/bin/python"}
    * (if there is only one Python interpreter installed on a host).
    * <p/>
-   * This method should work fast and allow running from the EDT thread. See the {@link #suggestHomePaths()}
+   * This method should work fast and allow running from the EDT thread. See the {@link #suggestHomePaths(Project)}
    * for more advanced scenarios
    *
    * @param path Any path which belongs to the file system where the search for SDK should occur.
    *             It can be any local path, but when JDK should be searched for in a containerized environment,
    *             then it should be a path pointing to somewhere within that environment.
-   * @see #suggestHomePaths()
+   * @see #suggestHomePaths(Project)
    */
   public @Nullable String suggestHomePath(@NotNull Path path) {
     return suggestHomePath();
   }
 
   /**
-   * Returns a list of all valid SDKs found on this host.
-   * <p/>
-   * E.g. for Python SDK on Unix the method may return {@code ["/usr/bin/python2", "/usr/bin/python3"]}.
-   * <p/>
-   * This method may take significant time to execute. The implementation may check {@link ProgressManager#checkCanceled()}
-   * for possible interruption request. It is not recommended to call this method from a ETD thread. See
-   * an alternative {@link #suggestHomePath()} method for EDT-friendly calls.
-   * @see #suggestHomePath()
-   *
    * @deprecated Use {@link #suggestHomePaths(Project)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Unmodifiable @NotNull Collection<String> suggestHomePaths() {
-    String home = suggestHomePath();
-    return ContainerUtil.createMaybeSingletonList(home);
+    return suggestHomePaths(null);
   }
+
 
   /**
    * Returns a list of all valid SDKs found on the host where {@code project} is located.
@@ -105,14 +97,17 @@ public abstract class SdkType implements SdkTypeId {
    * <p/>
    * This method may take significant time to execute. The implementation may check {@link ProgressManager#checkCanceled()}
    * for possible interruption request. It is not recommended to call this method from a ETD thread. See
-   * an alternative {@link #suggestHomePath()} method for EDT-friendly calls.
+   * an alternative {@link #suggestHomePath(Path)} method for EDT-friendly calls.
    */
   public @Unmodifiable @NotNull Collection<String> suggestHomePaths(@Nullable Project project) {
-    return suggestHomePaths();
+    // Do not call the deprecated suggestHomePath(): new implementations override only suggestHomePath(Path).
+    String home = suggestHomePath(Path.of(SystemProperties.getUserHome()));
+    return ContainerUtil.createMaybeSingletonList(home);
   }
 
   /**
    * Contains information about a detected SDK.
+   *
    * @param isSymlink true iff the SDK path contains a symlink
    */
   public record SdkEntry(@NotNull String homePath, @NotNull String versionString, boolean isSymlink) {
@@ -183,8 +178,8 @@ public abstract class SdkType implements SdkTypeId {
    */
   public String getInvalidHomeMessage(@NotNull String path) {
     return new File(path).isDirectory()
-      ? ProjectBundle.message("sdk.configure.home.invalid.error", getPresentableName())
-      : ProjectBundle.message("sdk.configure.home.file.invalid.error", getPresentableName());
+           ? ProjectBundle.message("sdk.configure.home.invalid.error", getPresentableName())
+           : ProjectBundle.message("sdk.configure.home.file.invalid.error", getPresentableName());
   }
 
   @Override
@@ -212,12 +207,13 @@ public abstract class SdkType implements SdkTypeId {
     return true;
   }
 
-  public void setupSdkPaths(@NotNull Sdk sdk) {}
+  public void setupSdkPaths(@NotNull Sdk sdk) { }
 
   /**
    * @return Configurable object for the SDKs additional data or null if not applicable
    */
-  public abstract @Nullable AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull SdkModel sdkModel, @NotNull SdkModificator sdkModificator);
+  public abstract @Nullable AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull SdkModel sdkModel,
+                                                                                        @NotNull SdkModificator sdkModificator);
 
   public @Nullable SdkAdditionalData loadAdditionalData(@NotNull Element additional) {
     return null;
@@ -338,8 +334,8 @@ public abstract class SdkType implements SdkTypeId {
 
   /**
    * @return for sdk build over another sdk, returns type of the nested sdk,
-   *         e.g. plugins or android sdks are build over java sdk and for them the method returns {@link JavaSdkType},
-   *         null otherwise
+   * e.g. plugins or android sdks are build over java sdk and for them the method returns {@link JavaSdkType},
+   * null otherwise
    */
   public SdkType getDependencyType() {
     return null;
@@ -369,7 +365,6 @@ public abstract class SdkType implements SdkTypeId {
    * @param sdkCreatedCallback the callback to which the created SDK is passed.
    * @implSpec method's implementations should not add sdk to the jdkTable neither invoke {@link SdkType#setupSdkPaths}. Only create and
    * and pass to the callback. The rest is done by {@link com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel#setupSdk(Sdk, Consumer)}
-   *
    * @see #supportsCustomCreateUI()
    */
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
@@ -378,7 +373,8 @@ public abstract class SdkType implements SdkTypeId {
                                  @NotNull JComponent parentComponent,
                                  @Nullable Sdk selectedSdk,
                                  @NotNull Consumer<? super Sdk> sdkCreatedCallback) {
-    showCustomCreateUI(sdkModel, parentComponent, selectedSdk, (com.intellij.util.Consumer<? super Sdk>) (sdk) -> sdkCreatedCallback.accept(sdk));
+    showCustomCreateUI(sdkModel, parentComponent, selectedSdk,
+                       (com.intellij.util.Consumer<? super Sdk>)(sdk) -> sdkCreatedCallback.accept(sdk));
   }
 
   /**

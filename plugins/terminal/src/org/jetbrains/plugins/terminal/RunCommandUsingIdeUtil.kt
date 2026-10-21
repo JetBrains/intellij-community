@@ -16,7 +16,7 @@ object RunCommandUsingIdeUtil {
     }
 
   val isVisible: Boolean
-    get() = TerminalShellCommandHandlerHelper.isFeatureEnabled()
+    get() = TerminalShellCommandHandlerHelper.Factory.isFeatureEnabled()
 
   interface TerminalCommandHandlerListener {
     fun modeChanged()
@@ -25,7 +25,8 @@ object RunCommandUsingIdeUtil {
   private const val PROPERTY_NAME = "terminalCustomCommandExecutionTurnOff"
   internal const val DEFAULT_VALUE = false
 
+  @ApiStatus.Internal
   @JvmField
   @Topic.AppLevel
-  internal val TERMINAL_COMMAND_HANDLER_TOPIC = Topic(TerminalCommandHandlerListener::class.java)
+  val TERMINAL_COMMAND_HANDLER_TOPIC: Topic<TerminalCommandHandlerListener> = Topic(TerminalCommandHandlerListener::class.java)
 }

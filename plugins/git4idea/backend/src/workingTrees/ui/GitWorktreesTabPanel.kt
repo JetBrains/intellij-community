@@ -21,7 +21,6 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBList
 import com.intellij.ui.hover.ListHoverListener
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.launchOnShow
 import git4idea.i18n.GitBundle
@@ -99,12 +98,7 @@ internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineS
       sink[PlatformCoreDataKeys.HELP_ID] = TOOLWINDOW_CONTENT_HELP_ID
     }
 
-    val worktreeListPanel = BorderLayoutPanel().addToCenter(wrappedComponent).addToLeft(toolbar.component).apply {
-      preferredSize = JBUI.size(LEFT_PANEL_WIDTH, preferredSize.height)
-    }
-    val rightPanel = BorderLayoutPanel()
-
-    component = BorderLayoutPanel().addToLeft(worktreeListPanel).addToCenter(rightPanel)
+    component = BorderLayoutPanel().addToCenter(wrappedComponent).addToLeft(toolbar.component)
   }
 
   private fun createPopupHandler(): PopupHandler = object : PopupHandler() {
@@ -173,8 +167,9 @@ internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineS
         .appendLine(GitBundle.message("toolwindow.working.trees.tab.empty.text.create.working.tree"),
                     SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) { _ ->
           val repository = GitWorktreesUiUtil.findBackendRepository(project, singleRepository) ?: return@appendLine
+          val currentBranch = repository.currentBranch
           GitCreateWorkingTreeService.getInstance()
-            .collectDataAndCreateWorkingTree(repository, null, GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST)
+            .collectDataAndCreateWorkingTree(repository, currentBranch, GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST)
         }
     }
     else {
@@ -186,9 +181,5 @@ internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineS
                          SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) { _ ->
       HelpManager.getInstance().invokeHelp(GitWorkingTreesContentProvider.EMPTY_TAB_WORKING_TREE_CONCEPT_HELP_ID)
     }
-  }
-
-  companion object {
-    private const val LEFT_PANEL_WIDTH = 500
   }
 }

@@ -18,10 +18,9 @@ import java.awt.geom.Point2D;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.editor.impl.AbstractEditorTest.TEST_CHAR_WIDTH;
-import static com.intellij.openapi.editor.impl.AbstractEditorTest.TEST_DESCENT;
-import static com.intellij.openapi.editor.impl.AbstractEditorTest.TEST_LINE_HEIGHT;
-import static com.intellij.openapi.editor.impl.AbstractEditorTest.assertTrue;
+import static com.intellij.openapi.editor.impl.EditorModelFixture.TEST_CHAR_WIDTH;
+import static com.intellij.openapi.editor.impl.EditorModelFixture.TEST_DESCENT;
+import static com.intellij.openapi.editor.impl.EditorModelFixture.TEST_LINE_HEIGHT;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 
@@ -185,7 +184,7 @@ public class ComplexTextFragmentTest {
     private final Integer[] myGlyphWidths;
 
     private MyGlyphVector(boolean rtl, Integer[] glyphPositions, Integer[] glyphWidths) {
-      assertTrue(glyphPositions.length == glyphWidths.length);
+      assertEquals(glyphWidths.length, glyphPositions.length);
       myRtl = rtl;
       myGlyphPositions = glyphPositions;
       myGlyphWidths = glyphWidths;

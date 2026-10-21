@@ -23,6 +23,8 @@ data class BazelTestEnvironment(
   val undeclaredOutputsDir: Path?,
   val tmpDir: Path?,
   val testFilters: List<String>,
+  /** `--test_runner_fail_fast`: the run stops after the first failed test. */
+  val failFast: Boolean,
   val timeout: Duration?,
   val unsupportedFeatures: List<String>,
   val warnings: List<String>,
@@ -47,6 +49,7 @@ data class BazelTestEnvironment(
       undeclaredOutputsDir = environment["TEST_UNDECLARED_OUTPUTS_DIR"]?.let(::Path),
       tmpDir = environment["TEST_TMPDIR"]?.let(::Path),
       testFilters = environment["TESTBRIDGE_TEST_ONLY"]?.split(',')?.filter(String::isNotBlank).orEmpty(),
+      failFast = environment["TESTBRIDGE_TEST_RUNNER_FAIL_FAST"] == "1",
       timeout = environment["TEST_TIMEOUT"]?.toLongOrNull()?.seconds,
       unsupportedFeatures = unsupportedFeatures(environment),
       warnings = warnings(environment),
@@ -73,9 +76,6 @@ data class BazelTestEnvironment(
         add("flag --test_sharding_strategy")
         add("BUILD.bazel test attribute: shard_count")
         add("env variable TEST_TOTAL_SHARDS")
-      }
-      if (environment["TESTBRIDGE_TEST_RUNNER_FAIL_FAST"] == "1") {
-        add("flag --test_runner_fail_fast")
       }
     }
 

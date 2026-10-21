@@ -5,6 +5,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.lang.injection.MultiHostInjector
 import com.intellij.lang.injection.MultiHostRegistrar
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
@@ -27,7 +28,7 @@ import org.intellij.plugins.markdown.settings.MarkdownSettings
  *   and formatting is disabled via [MarkdownFormattingBlock].
  *   The reason for it is many problems with injection-based formatting.
  */
-internal open class CodeFenceInjector : MultiHostInjector {
+internal open class CodeFenceInjector : MultiHostInjector, DumbAware {
   private val toInject = listOf(MarkdownCodeFence::class.java)
 
   override fun elementsToInjectIn(): List<Class<out PsiElement>?> = toInject

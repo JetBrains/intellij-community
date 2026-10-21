@@ -12,11 +12,11 @@ fleet_wasmjs_module(
         "@lib//:kotlin-serialization-plugin",
     ],
     visibility = ["//visibility:public"],
+    exports = ["@community//fleet/util/core:wasmjs_module_lib"],
     deps = [
         "@community//fleet/multiplatform.shims:wasmjs_module_lib",
         "@community//fleet/reporting/api:wasmjs_module_lib",
         "@community//fleet/reporting/shared:wasmjs_module_lib",
-        "@community//fleet/util/core:wasmjs_module_lib",
         "@kmp_deps//:org_jetbrains_annotations",
         "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
         "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
@@ -61,6 +61,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    exports = ["//fleet/util/core"],
     deps = [
         # do not sort,
         "//fleet/reporting/api",
@@ -85,6 +86,11 @@ jvm_library(
     kotlinc_opts = ":custom_rpc",
     module_name = "fleet.rpc",
     visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//fleet/util/core",
+        "//fleet/util/core:core_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":rpc",

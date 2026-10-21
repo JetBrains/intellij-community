@@ -36,6 +36,10 @@ object TrustedProjectsDialog {
    * Shows the "Trust project" dialog if the user wasn't asked yet if they trust this project
    * and sets the project trusted state according to the user's choice.
    *
+   * [isSafeModeOffered] tells whether the dialog offers "Preview in Safe Mode". Pass `false` from a caller whose whole point needs a
+   * trusted project: a safe mode project activates no VCS and runs no build scripts, so the option would record the project as distrusted
+   * and then do nothing. Declining is the cancel button there.
+   *
    * @return `false` if the user chose not to open (link) the project at all;
    *   `true` otherwise, i.e., if the user chose to open (link) the project either in trust or in the safe mode,
    *   or if the confirmation wasn't shown because the project trust state was already known.
@@ -47,7 +51,8 @@ object TrustedProjectsDialog {
     message: @NlsContexts.DialogMessage String = IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfo.getInstance().fullApplicationName),
     trustButtonText: @NlsContexts.Button String = IdeBundle.message("untrusted.project.dialog.trust.button"),
     distrustButtonText: @NlsContexts.Button String = IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
-    cancelButtonText: @NlsContexts.Button String = IdeBundle.message("untrusted.project.open.dialog.cancel.button")
+    cancelButtonText: @NlsContexts.Button String = IdeBundle.message("untrusted.project.open.dialog.cancel.button"),
+    isSafeModeOffered: Boolean = true,
   ): Boolean {
     val locatedProject = TrustedProjectsLocator.locateProject(projectRoot, project)
     val projectTrustedState = TrustedProjects.getProjectTrustedState(locatedProject)
@@ -60,7 +65,7 @@ object TrustedProjectsDialog {
 
     val dialog = TrustedProjectStartupDialog.showAndGet(
       project, projectRoot,
-      title, message, trustButtonText, distrustButtonText, cancelButtonText
+      title, message, trustButtonText, distrustButtonText, cancelButtonText, isSafeModeOffered
     )
     val pathsToExclude = dialog.defenderExcludePaths
     val openChoice = dialog.openChoice

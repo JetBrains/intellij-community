@@ -18,7 +18,7 @@ package com.intellij.util.graph;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,10 +31,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class DFSTBuilderTest {
   @Test
@@ -213,7 +213,7 @@ public class DFSTBuilderTest {
       Comparator<TestNode> comparator = builder.comparator();
       TestNode[] sorted = allNodes.clone();
       Arrays.sort(sorted, comparator);
-      assertEquals("All nodes: " + list, Arrays.asList(c, b, a, o), Arrays.asList(sorted));
+      assertEquals(Arrays.asList(c, b, a, o), Arrays.asList(sorted), "All nodes: " + list);
     }
   }
 
@@ -237,15 +237,15 @@ public class DFSTBuilderTest {
       DFSTBuilder<TestNode> builder = new DFSTBuilder<>(graphByNodes(allNodes, mapIn));
       assertFalse(builder.isAcyclic());
       Comparator<TestNode> comparator = builder.comparator();
-      assertTrue("All nodes: " + list, comparator.compare(b, a) < 0); //reversed loading order
-      assertTrue("All nodes: " + list, comparator.compare(c, a) < 0); //reversed loading order
-      assertTrue("All nodes: " + list, comparator.compare(c, b) < 0); //reversed loading order
-      assertTrue("All nodes: " + list, comparator.compare(a, o1) < 0);
-      assertTrue("All nodes: " + list, comparator.compare(a, o2) < 0);
-      assertTrue("All nodes: " + list, comparator.compare(b, o1) < 0);
-      assertTrue("All nodes: " + list, comparator.compare(b, o2) < 0);
-      assertTrue("All nodes: " + list, comparator.compare(c, o1) < 0);
-      assertTrue("All nodes: " + list, comparator.compare(c, o2) < 0);
+      assertTrue(comparator.compare(b, a) < 0, "All nodes: " + list); //reversed loading order
+      assertTrue(comparator.compare(c, a) < 0, "All nodes: " + list); //reversed loading order
+      assertTrue(comparator.compare(c, b) < 0, "All nodes: " + list); //reversed loading order
+      assertTrue(comparator.compare(a, o1) < 0, "All nodes: " + list);
+      assertTrue(comparator.compare(a, o2) < 0, "All nodes: " + list);
+      assertTrue(comparator.compare(b, o1) < 0, "All nodes: " + list);
+      assertTrue(comparator.compare(b, o2) < 0, "All nodes: " + list);
+      assertTrue(comparator.compare(c, o1) < 0, "All nodes: " + list);
+      assertTrue(comparator.compare(c, o2) < 0, "All nodes: " + list);
     }
   }
 

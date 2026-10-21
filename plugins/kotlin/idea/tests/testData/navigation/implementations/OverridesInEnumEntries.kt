@@ -12,5 +12,5 @@ enum class E {
     open fun <caret>foo(n: Int): Int = n
 }
 
-// REF: (in E.A).foo(Int)
-// REF: (in E.B).foo(Int)
+// REF: foo(Int)
+// REF: foo(Int)

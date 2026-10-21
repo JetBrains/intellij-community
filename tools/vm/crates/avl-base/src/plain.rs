@@ -305,10 +305,11 @@ impl State {
                     self.failed += 1;
                     self.paint("✗", "31")
                 };
-                let suffix = match finished.error.as_deref() {
-                    Some(error) if !error.is_empty() => format!(" — {}", first_line(error)),
-                    _ => String::new(),
-                };
+                let suffix = finished
+                    .failure
+                    .headline()
+                    .map(|headline| format!(" — {headline}"))
+                    .unwrap_or_default();
                 let text = format!("{mark} {}{suffix}", finished.execution.describe());
                 self.line(scope, &text);
             }
@@ -320,11 +321,12 @@ impl State {
             RunEventKind::ContainerFailed(failed) => {
                 self.failed += 1;
                 let named = named(failed.execution.class_name.as_deref(), &failed.execution.display_name);
-                let text = format!(
-                    "{} {named} (container)\n{}",
-                    self.paint("✗", "31"),
-                    failed.error.as_deref().unwrap_or("")
-                );
+                let failure = [failed.failure.headline(), failed.failure.detail.as_deref()]
+                    .into_iter()
+                    .flatten()
+                    .collect::<Vec<_>>()
+                    .join("\n");
+                let text = format!("{} {named} (container)\n{failure}", self.paint("✗", "31"));
                 self.line(scope, &text);
             }
             RunEventKind::WatchdogState(watchdog) => {
@@ -360,7 +362,13 @@ impl State {
                 );
                 self.line(scope, &text);
             }
-            RunEventKind::PlanStarted(_)
+            RunEventKind::TraceFailed(failed) => {
+                let text = format!("trace failed: {}", first_line(&failed.reason));
+                self.line(scope, &text);
+            }
+            // The controller publishes a decision of the daemon as its own decision, which has its own line.
+            RunEventKind::Decision(_)
+            | RunEventKind::PlanStarted(_)
             | RunEventKind::ContainerSkipped(_)
             | RunEventKind::RunFailed(_)
             | RunEventKind::Summary(_)

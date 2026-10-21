@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.createPreloadedRecentProjectsWithoutCurrentCollector
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.nonModalWelcomeScreen.DefaultFileDragAndDropHandler
@@ -159,7 +160,8 @@ class WelcomeScreenLeftPanel(private val project: Project, private val scope: Co
     welcomeScreenStartupSpanTracer.spanBuilder("welcome recent projects collecting").use {
       RecentProjectPanelComponentFactory.createComponent(
         this,
-        collectors = listOf(ProjectCollectors.cloneableProjectsCollector, ProjectCollectors.createRecentProjectsWithoutCurrentCollector(project)),
+        // the frame allocator collects the recent projects in the background, see `preloadRecentProjectsWithoutCurrent`
+        collectors = listOf(ProjectCollectors.cloneableProjectsCollector, createPreloadedRecentProjectsWithoutCurrentCollector(project)),
         treeBackground = null
       )
     }.apply {

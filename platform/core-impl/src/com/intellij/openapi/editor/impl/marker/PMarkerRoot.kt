@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Processor
+import it.unimi.dsi.fastutil.longs.LongList
 import java.util.function.LongConsumer
 
 /**
@@ -20,6 +21,12 @@ import java.util.function.LongConsumer
 interface PMarkerRoot {
   /** Returns an empty root with the same implementation and configuration as this root. */
   fun emptyRoot(): PMarkerRoot
+
+  /**
+   * Returns `true` when this root contains no valid markers.
+   * Removed and invalid markers do not affect the result.
+   */
+  fun isEmpty(): Boolean
 
   /**
    * Resolves [markerId] in this root.
@@ -80,6 +87,13 @@ interface PMarkerRoot {
   ): PMarkerRoot
 
   /**
+   * Inserts [entries] in list order and returns one new root.
+   * The entry offsets are document offsets and must satisfy the preconditions of [insert].
+   * Duplicate IDs cause an exception. An empty list returns the receiver unchanged.
+   */
+  fun insertMany(entries: List<MarkerEntry>): PMarkerRoot
+
+  /**
    * Replaces the flavor flags of a valid marker, preserving its range and specification.
    *
    * If [markerId] is absent or invalid, this method returns the receiver unchanged.
@@ -112,12 +126,20 @@ interface PMarkerRoot {
   fun remove(markerId: Long): PMarkerRoot
 
   /**
-   * Removes every trace of [markerId], including its stored resolution.
-   *
-   * This operation is intended for garbage-collected marker handles. Unlike [remove], it does not retain an absent
-   * tombstone because no handle remains that could resolve against it.
+   * Removes [markerIds] and retains each marker's last range, as [remove] does.
+   * Repeated or absent IDs have no effect. An unchanged batch returns the receiver.
    */
-  fun purge(markerId: Long): PMarkerRoot
+  fun removeMany(markerIds: LongList): PMarkerRoot
+
+  /**
+   * Removes every trace of [markerIds], including their stored resolutions.
+   *
+   * This operation is intended for garbage-collected marker handles. Unlike [removeMany], it does not retain an absent
+   * tombstone because no handle remains that could resolve against it.
+   *
+   * Repeated or absent IDs have no effect. An unchanged batch returns the receiver.
+   */
+  fun purgeMany(markerIds: LongList): PMarkerRoot
 
   /**
    * Keeps this root's marker states and adds valid markers that exist only in [other].
@@ -183,6 +205,22 @@ interface PMarkerRoot {
    * The iterator orders entries by start offset and marker ID.
    */
   fun overlappingIterator(startOffset: Int, endOffset: Int, tastePreference: Int): Iterator<MarkerEntry>
+
+  /**
+   * Processes all valid markers by increasing actual start offset, then increasing marker ID.
+   * The start offset includes pending shifts in this root.
+   * The end offset, flavor flags, and tree shape do not affect the order.
+   *
+   * Supplies each entry and an offset delta. Add the delta to the node range to get the actual range.
+   * Stops and returns `false` when [processor] returns `false`.
+   */
+  fun processAllRangeMarkers(processor: MarkerDeltaProcessor): Boolean
+
+  /** Processes one marker entry with an offset delta. */
+  fun interface MarkerDeltaProcessor {
+    /** Processes an entry whose actual range is its node range plus [ancestorDelta]. */
+    fun process(entry: MarkerEntry, ancestorDelta: Int): Boolean
+  }
 
   companion object {
     /** Ignores invalidated marker IDs. */

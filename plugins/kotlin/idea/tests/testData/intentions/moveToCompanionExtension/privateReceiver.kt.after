@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+
+private class B5Private {
+}
+
+private companion fun B5Private.f() = 1

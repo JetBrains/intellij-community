@@ -21,20 +21,21 @@ import java.awt.Point
 import javax.swing.JComponent
 
 /**
+ * See [com.intellij.ide.startup.importSettings.chooser.ui.UiUtils.DEFAULT_BUTTON_WIDTH]
+ */
+private const val DEFAULT_BUTTON_WIDTH = 280
+
+/**
  * See [com.intellij.ide.startup.importSettings.chooser.productChooser.ProductChooserAction]
  */
 internal class WelcomeScreenLeftTabActionNew : DumbAwareAction() {
-  companion object {
-    /**
-     * See [com.intellij.ide.startup.importSettings.chooser.ui.UiUtils.DEFAULT_BUTTON_WIDTH]
-     */
-    private const val DEFAULT_BUTTON_WIDTH = 280
-  }
-
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.putClientProperty("ChevronDown", true)
+    if (e.place == ActionPlaces.ACTION_SEARCH) {
+      e.presentation.isEnabledAndVisible = false
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {

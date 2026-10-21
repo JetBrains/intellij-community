@@ -33,14 +33,14 @@ class RunnerContentUiTest {
       val firstUi = createUi(runnerId, "first", disposable)
       val secondUi = createUi(runnerId, "second", disposable)
 
-      assertThat(firstUi.contentUI.tabs.tabCount).isEqualTo(2)
-      assertThat(secondUi.contentUI.tabs.tabCount).isEqualTo(2)
+      assertThat(firstUi.contentUI.getTabs().tabCount).isEqualTo(2)
+      assertThat(secondUi.contentUI.getTabs().tabCount).isEqualTo(2)
 
       secondUi.contentUI.restoreLayout()
       firstUi.contentUI.restoreLayout()
 
-      assertThat(firstUi.contentUI.tabs.tabCount).isEqualTo(2)
-      assertThat(secondUi.contentUI.tabs.tabCount).isEqualTo(2)
+      assertThat(firstUi.contentUI.getTabs().tabCount).isEqualTo(2)
+      assertThat(secondUi.contentUI.getTabs().tabCount).isEqualTo(2)
     }
 
   private fun createUi(runnerId: String, sessionName: String, disposable: Disposable): RunnerLayoutUiImpl {

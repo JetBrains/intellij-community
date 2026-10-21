@@ -14,6 +14,11 @@ import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.util.JpsPathUtil
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.FileOutputStream
@@ -34,12 +39,14 @@ import kotlin.io.path.inputStream
 import kotlin.io.path.invariantSeparatorsPathString
 
 class ArtifactBuilderTest : ArtifactBuilderTestCase() {
+  @Test
   fun testFileCopy() {
     val a = addArtifact(root().fileCopy(createFile("file.txt", "foo")))
     buildAll()
     assertOutput(a, directoryContent { file("file.txt", "foo") })
   }
 
+  @Test
   fun testDir() {
     val a = addArtifact(
       root()
@@ -56,6 +63,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     })
   }
 
+  @Test
   fun testArchive() {
     val a = addArtifact(
       root()
@@ -75,6 +83,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     })
   }
 
+  @Test
   fun testTwoDirsInArchive() {
     val dir1 = PathUtil.getParentPath(PathUtil.getParentPath(createFile("dir1/a/x.txt")))
     val dir2 = PathUtil.getParentPath(PathUtil.getParentPath(createFile("dir2/a/y.txt")))
@@ -97,6 +106,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     })
   }
 
+  @Test
   fun testArchiveInArchive() {
     val a = addArtifact(
       root()
@@ -114,6 +124,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     })
   }
 
+  @Test
   fun testIncludedArtifact() {
     val included = addArtifact("included",
                                root()
@@ -136,6 +147,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   })
   }
 
+  @Test
   fun testMergeDirectories() {
     val included = addArtifact("included",
                                root().dir("dir").fileCopy(createFile("aaa.class")))
@@ -153,6 +165,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     })
   }
 
+  @Test
   fun testCopyLibrary() {
     val libDir = createDir("lib")
     directoryContent {
@@ -164,6 +177,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     assertOutput(a, directoryContent { zip("a.jar") { file("a.txt") } })
   }
 
+  @Test
   fun testModuleOutput() {
     val file = createFile("src/A.java", "public class A {}")
     val module = addModule("a", PathUtil.getParentPath(file))
@@ -173,6 +187,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     assertOutput(artifact, directoryContent { file("A.class") })
   }
 
+  @Test
   fun testModuleSources() {
     val file = createFile("src/A.java", "class A{}")
     val testFile = createFile("tests/ATest.java", "class ATest{}")
@@ -199,10 +214,11 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     })
   }
 
+  @Test
   fun testModuleSourcesWithPackagePrefix() {
     val file = createFile("src/A.java", "class A{}")
     val m = addModule("m", PathUtil.getParentPath(file))
-    val sourceRoot = assertOneElement(m.sourceRoots)
+    val sourceRoot = m.sourceRoots.single()
     val typed = sourceRoot.asTyped(JavaSourceRootType.SOURCE)
     assertNotNull(typed)
     typed!!.properties.packagePrefix = "org.foo"
@@ -218,6 +234,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     })
   }
 
+  @Test
   fun testCopyResourcesFromModuleOutput() {
     val file = createFile("src/a.xml", "")
     JpsJavaExtensionService.getInstance().getCompilerConfiguration(myProject).addResourcePattern("*.xml")
@@ -227,6 +244,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     assertOutput(artifact, directoryContent { file("a.xml") })
   }
 
+  @Test
   fun testIgnoredFile() {
     val file = createFile("a/.svn/a.txt")
     createFile("a/svn/b.txt")
@@ -235,6 +253,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     assertOutput(a, directoryContent { dir("svn") { file("b.txt") }})
   }
 
+  @Test
   fun testIgnoredFileInArchive() {
     val file = createFile("a/.svn/a.txt")
     createFile("a/svn/b.txt")
@@ -243,6 +262,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     assertOutput(a, directoryContent { zip("a.jar") { dir("svn") { file("b.txt")}}})
   }
 
+  @Test
   fun testCopyExcludedFolder() {
     //explicitly added excluded files should be copied (e.g. compile output)
     val file = createFile("xxx/excluded/a.txt")
@@ -259,6 +279,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     assertOutput(a, directoryContent { file("a.txt") })
   }
 
+  @Test
   fun testCopyExcludedFile() {
     //excluded files under non-excluded directory should not be copied
     val file = createFile("xxx/excluded/a.txt")
@@ -275,6 +296,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     assertOutput(a, directoryContent { file("b.txt") })
   }
 
+  @Test
   fun testExtractDirectory() {
     val jarFile = createXJarFile()
     val a = addArtifact("a", root().dir("dir").extractedDir(jarFile, "/dir"))
@@ -287,6 +309,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   }
 
   @Throws(IOException::class)
+  @Test
   fun testExtractDirectoryFromExcludedJar() {
     val jarPath = createFile("dir/lib/j.jar")
     val libDir = File(getOrCreateProjectDir(), "dir/lib")
@@ -306,6 +329,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     })
   }
 
+  @Test
   fun testPackExtractedDirectory() {
     val zipPath = createXJarFile()
     val a = addArtifact("a", root().archive("a.jar").extractedDir(zipPath, "/dir"))
@@ -327,6 +351,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     Base64.getEncoder().encodeToString(digest.digest())
   }
 
+  @Test
   fun `test jars build reproducibility`() {
     myBuildParams[GlobalOptions.BUILD_DATE_IN_SECONDS] = (System.currentTimeMillis() / 1000).toString()
     val jar = root().archive("a.jar")
@@ -348,6 +373,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     assert(checksums.count() == 1)
   }
 
+  @Test
   fun `test no duplicated directory entries for extracted directory packed into JAR file`() {
     val zipPath = createXJarFile()
     val a = addArtifact("a", root().archive("a.jar").extractedDir(zipPath, ""))
@@ -367,12 +393,14 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     return zipFile.toAbsolutePath().invariantSeparatorsPathString
   }
 
+  @Test
   fun testSelfIncludingArtifact() {
     val a = addArtifact("a", root().fileCopy(createFile("a.txt")))
     LayoutElementTestUtil.addArtifactToLayout(a, a)
     assertBuildFailed(a)
   }
 
+  @Test
   fun testCircularInclusion() {
     val a = addArtifact("a", root().fileCopy(createFile("a.txt")))
     val b = addArtifact("b", root().fileCopy(createFile("b.txt")))
@@ -382,6 +410,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     assertBuildFailed(b)
   }
 
+  @Test
   fun testArtifactContainingSelfIncludingArtifact() {
     val c = addArtifact("c", root().fileCopy(createFile("c.txt")))
     val a = addArtifact("a", root().artifact(c).fileCopy(createFile("a.txt")))
@@ -393,6 +422,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     assertBuildFailed(a)
   }
 
+  @Test
   fun testArtifactContainingSelfIncludingArtifactWithoutOutput() {
     val a = addArtifact("a", root().fileCopy(createFile("a.txt")))
     LayoutElementTestUtil.addArtifactToLayout(a, a)
@@ -404,6 +434,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
 
   //IDEA-73893
   @Throws(IOException::class)
+  @Test
   fun testManifestFileIsFirstEntry() {
     val firstFile = createFile("src/A.txt")
     val manifestFile = createFile("src/MANIFEST.MF")
@@ -422,6 +453,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
   }
 
   @Throws(IOException::class)
+  @Test
   fun testPreserveCompressionMethodForEntryExtractedFromOneArchiveAndPackedIntoAnother() {
     val path = createFile("data/a.jar")
     val output = ZipOutputStream(BufferedOutputStream(FileOutputStream(File(path))))
@@ -456,15 +488,17 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     }
   }
 
+  @Test
   fun testProperlyReportValueWithInvalidCrcInRepackedFile() {
     val corruptedJar = PathManagerEx.findFileUnderCommunityHome("jps/jps-builders/testData/output/corruptedJar/incorrect-crc.jar")!!.absolutePath
     val a = addArtifact(archive("a.jar").extractedDir(corruptedJar, ""))
     val result = doBuild(CompileScopeTestBuilder.rebuild().artifacts(a))
     result.assertFailed()
     val message = result.getMessages(BuildMessage.Kind.ERROR).first()
-    assertTrue(message.messageText, message.messageText.contains("incorrect-crc.jar"))
+    assertTrue(message.messageText.contains("incorrect-crc.jar"), message.messageText)
   }
 
+  @Test
   fun testBuildModuleBeforeArtifactIfSomeDirectoryInsideModuleOutputIsCopiedToArtifact() {
     val src = PathUtil.getParentPath(PathUtil.getParentPath(createFile("src/x/A.java", "package x; class A{}")))
     val module = addModule("m", src)
@@ -475,6 +509,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     assertOutput(artifact, directoryContent { file("A.class") })
   }
 
+  @Test
   fun testClearOutputOnRebuild() {
     val file = createFile("d/a.txt")
     val a = addArtifact(root().parentDirCopy(file))
@@ -493,6 +528,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     })
   }
 
+  @Test
   fun testDeleteOnlyOutputFileOnRebuildForArchiveArtifact() {
     val file = createFile("a.txt")
     val a = addArtifact(archive("a.jar").fileCopy(file))
@@ -511,6 +547,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     })
   }
 
+  @Test
   fun testDoNotCreateEmptyArchive() {
     val file = createFile("dir/a.txt")
     val a = addArtifact(archive("a.jar").parentDirCopy(file))
@@ -519,6 +556,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     assertEmptyOutput(a)
   }
 
+  @Test
   fun testDoNotCreateEmptyArchiveInsideArchive() {
     val file = createFile("dir/a.txt")
     val a = addArtifact(archive("a.jar").archive("inner.jar").parentDirCopy(file))
@@ -527,6 +565,7 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     assertEmptyOutput(a)
   }
 
+  @Test
   fun testDoNotCreateEmptyArchiveFromExtractedDirectory() {
     val jarFile = createXJarFile()
     val a = addArtifact("a", archive("a.jar").dir("dir").extractedDir(jarFile, "/xxx/"))
@@ -534,12 +573,14 @@ class ArtifactBuilderTest : ArtifactBuilderTestCase() {
     assertEmptyOutput(a)
   }
 
+  @Test
   fun testExtractNonExistentJarFile() {
     val a = addArtifact(root().extractedDir("this-file-does-not-exist.jar", "/"))
     buildAll()
     assertEmptyOutput(a)
   }
 
+  @Test
   fun testRepackNonExistentJarFile() {
     val a = addArtifact(archive("a.jar").extractedDir("this-file-does-not-exist.jar", "/").fileCopy(createFile("a.txt")))
     buildAll()

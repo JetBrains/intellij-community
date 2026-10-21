@@ -117,7 +117,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         return expression.containingKtFile.addImport(fqName)
     }
 
-    @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+    @RequiresWriteLock
     private fun bindToElement(
         docReference: KDocReference,
         targetElement: PsiElement,

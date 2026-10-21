@@ -132,13 +132,15 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEven
     }
     else {
       trackFrameInteractiveWaiting(loadingState, coroutineScope)
+      val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: EmptyCoroutineContext
       if (hasSplash()) {
         loadingState.done.invokeOnCompletion {
-          FUSProjectHotStartUpMeasurer.reportFrameBecameInteractive()
-          val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: EmptyCoroutineContext
           coroutineScope.launch(RawSwingDispatcher + startUpContextElementToPass + CoroutineName("hide splash")) {
             span("hide splash") {
               hideSplash()
+            }
+            withContext(Dispatchers.IO) {
+              FUSProjectHotStartUpMeasurer.reportFrameBecameInteractive()
             }
           }
         }
@@ -650,6 +652,14 @@ private class IdePaneLoadingLayer(
 
 internal interface FrameLoadingState {
   val done: Job
+
+  /**
+   * Completes when the first fill of the main menu may run.
+   * The fill of a welcome-experience frame waits until the frame content paints: its EDT part takes the write-intent lock,
+   * and the lock waits for the background write actions of the project pre-init while it holds the EDT.
+   * The toolbar of a custom frame header waits for the same permit, see `MainToolbar.initInHeader`.
+   */
+  val mainMenuFillPermit: Job
 }
 
 @OptIn(AwaitCancellationAndInvoke::class)

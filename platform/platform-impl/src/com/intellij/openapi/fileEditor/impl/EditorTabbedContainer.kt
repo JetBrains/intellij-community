@@ -105,10 +105,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.AWTEvent
 import java.awt.AWTException
 import java.awt.Color
-import java.awt.Insets
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Image
+import java.awt.Insets
 import java.awt.Robot
 import java.awt.Toolkit
 import java.awt.datatransfer.DataFlavor

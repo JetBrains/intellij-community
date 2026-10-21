@@ -27,7 +27,6 @@ jvm_library(
         # do not sort,
         "//platform/core-api:core",
         "@lib//:kotlin-stdlib",
-        "//platform/kernel/shared:kernel",
         "//platform/kernel/rpc.backend",
         "//platform/platform-impl:ide-impl",
         "//platform/projectModel-api:projectModel",
@@ -39,7 +38,6 @@ jvm_library(
         "//platform/project/shared:project",
         "//platform/platform-impl/update-checker",
         "//platform/ide-core",
-        "//fleet/rhizomedb",
         "//platform/pluginManager/shared.baseline",
     ],
 )
@@ -57,7 +55,6 @@ jvm_library(
         # do not sort,
         ":backend",
         "//platform/core-api:core_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/backend:backend_test_lib",
         "//platform/kernel/rpc.backend:rpc.backend_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
@@ -70,7 +67,6 @@ jvm_library(
         "//platform/project/shared:project_test_lib",
         "//platform/platform-impl/update-checker:update-checker_test_lib",
         "//platform/ide-core:ide-core_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
         "//platform/pluginManager/shared.baseline:shared.baseline_test_lib",
     ],
 )

@@ -16,23 +16,41 @@
 package com.intellij.lang.properties;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.lang.properties.psi.codeStyle.PropertiesCodeStyleSettings;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.formatter.FormatterTestCase;
+import com.intellij.psi.formatter.FormatterTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 
 /**
  * @author Dmitry Batkovich
  */
-public class PropertiesFormatterTest extends FormatterTestCase {
+@TestApplication
+public class PropertiesFormatterTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+
+  private Project project;
   private CommonCodeStyleSettings mySettings;
   private PropertiesCodeStyleSettings myCustomSettings;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    final CodeStyleSettings settings = CodeStyle.getSettings(getProject());
+  @BeforeEach
+  void setUp() {
+    project = codeInsightFixture.get().getProject();
+    FormatterTestUtil.assertNoProjectCodeStyle(project);
+    final CodeStyleSettings settings = CodeStyle.getSettings(project);
     mySettings = settings.getCommonSettings(PropertiesLanguage.INSTANCE);
     myCustomSettings = settings.getCustomSettings(PropertiesCodeStyleSettings.class);
     mySettings.ALIGN_GROUP_FIELD_DECLARATIONS = false;
@@ -40,11 +58,7 @@ public class PropertiesFormatterTest extends FormatterTestCase {
     myCustomSettings.KEEP_BLANK_LINES = false;
   }
 
-  @Override
-  public void tearDown() throws Exception {
-    super.tearDown();
-  }
-
+  @Test
   public void testSimple1() {
     doTextTest("""
 
@@ -59,6 +73,7 @@ public class PropertiesFormatterTest extends FormatterTestCase {
                  key1=value1""");
   }
 
+  @Test
   public void testSimple2() {
     mySettings.ALIGN_GROUP_FIELD_DECLARATIONS = true;
     doTextTest("""
@@ -72,6 +87,7 @@ public class PropertiesFormatterTest extends FormatterTestCase {
                  key1                 =value1""");
   }
 
+  @Test
   public void testSimple3() {
     mySettings.ALIGN_GROUP_FIELD_DECLARATIONS = true;
     myCustomSettings.SPACES_AROUND_KEY_VALUE_DELIMITER = true;
@@ -86,10 +102,12 @@ public class PropertiesFormatterTest extends FormatterTestCase {
                  key1                  = value1""");
   }
 
+  @Test
   public void testWhitespaceDelimiter() {
     doTextTest("k    v", "k v");
   }
 
+  @Test
   public void testKeepBlankLines() {
     myCustomSettings.KEEP_BLANK_LINES = true;
     String propertiesWithBlankLines =
@@ -105,6 +123,7 @@ public class PropertiesFormatterTest extends FormatterTestCase {
     doTextTest(propertiesWithBlankLines, propertiesWithBlankLines);
   }
 
+  @Test
   public void testDoNotKeepBlankLines() {
     myCustomSettings.KEEP_BLANK_LINES = false;
     doTextTest("""
@@ -123,17 +142,11 @@ public class PropertiesFormatterTest extends FormatterTestCase {
                  """);
   }
 
-  protected void doTextTest(String text) {
+  private void doTextTest(String text) {
     doTextTest(text, text);
   }
 
-  @Override
-  protected String getBasePath() {
-    return "";
-  }
-
-  @Override
-  protected String getFileExtension() {
-    return PropertiesFileType.DEFAULT_EXTENSION;
+  private void doTextTest(String text, String textAfter) {
+    FormatterTestUtil.doTextTest(project, PropertiesFileType.DEFAULT_EXTENSION, text, textAfter);
   }
 }

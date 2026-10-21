@@ -8,10 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Svetlana.Zemlyanskaya
- */
-public final class AddArrangementAliasRuleAction extends AddArrangementRuleAction {
+final class AddArrangementAliasRuleAction extends AddArrangementRuleAction {
   @Override
   protected @Nullable ArrangementMatchingRulesControl getRulesControl(@NotNull AnActionEvent e) {
     return e.getData(ArrangementRuleAliasControl.KEY);

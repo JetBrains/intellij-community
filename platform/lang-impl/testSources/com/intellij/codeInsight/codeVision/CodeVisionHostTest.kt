@@ -20,7 +20,7 @@ import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.psiFileFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
-import com.intellij.testFramework.utils.codeVision.CodeVisionTestCase
+import com.intellij.testFramework.utils.codeVision.CodeVisionTestUtil
 import com.intellij.util.ArrayUtilRt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.await
@@ -74,7 +74,7 @@ class CodeVisionHostTest {
 
 
 private fun dumpCodeVisionHints(editor: Editor): String {
-  return CodeVisionTestCase.dumpCodeVisionHints(editor.document.text, editor, onlyCodeVisionHintsAllowed = true)
+  return CodeVisionTestUtil.dumpCodeVisionHints(editor.document.text, editor, true)
 }
 
 abstract class TestCodeVisionProvider : CodeVisionProvider<Unit> {

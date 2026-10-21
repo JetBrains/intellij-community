@@ -77,9 +77,10 @@ class Checksums private constructor(
       if (Files.exists(checksumFile)) {
         verifyChecksumFile(file = path, checksumFile = checksumFile, expectedChecksum = checksum, withFileName = withFileName)
       }
-      else {
-        Files.writeString(checksumFile, createChecksumFileContent(file = path, checksum = checksum, withFileName = withFileName))
-      }
+      /**
+       * [withFileName] should always be respected regardless the supplied [checksumFile] content
+       */
+      Files.writeString(checksumFile, createChecksumFileContent(file = path, checksum = checksum, withFileName = withFileName))
       checksumFile
     }
   }

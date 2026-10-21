@@ -1,12 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -44,7 +44,6 @@ import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -454,8 +453,8 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   public void testEmptyModuleNamesake() {
     final PsiElement module = doResolve();
     assertNotNull(module);
-    final Sdk moduleSdk = PythonSdkUtil.findPythonSdk(myFixture.getModule());
-    assertFalse(PySkeletonUtil.isStdLib(module.getContainingFile().getVirtualFile(), moduleSdk));
+    final PythonInterpreter interpreter = getPythonInterpreter();
+    assertFalse(PySkeletonUtil.isStdLib(module.getContainingFile().getVirtualFile(), interpreter));
   }
 
   // PY-18626

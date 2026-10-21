@@ -4,12 +4,18 @@ package com.jetbrains.python;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 
+import com.intellij.idea.TestFor;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.util.ref.GCWatcher;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyDeprecationInspection;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.impl.PyDeprecationProvider;
+
+import java.util.List;
 
 
 @Subsystems.Inspections
@@ -42,6 +48,23 @@ public class PyDeprecationTest extends PyTestCase {
     
     assertEquals("commands.getstatus() is deprecated", file.findTopLevelFunction("getstatus").getDeprecationMessage());
     assertNotParsed(file);
+  }
+
+  @TestFor(issues = "PY-89345")
+  public void testDeprecationFromProvider() {
+    PyDeprecationProvider provider = (element, _) ->
+      element instanceof PyTargetExpression target && "legacy".equals(target.getName()) ? "Use current instead" : null;
+    ExtensionTestUtil.maskExtensions(PyDeprecationProvider.Companion.getEP_NAME(), List.of(provider), getTestRootDisposable());
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByText(PythonFileType.INSTANCE,
+                              """
+                                class A:
+                                    legacy = 1
+                                    current = 2
+
+                                A().<warning descr="Use current instead">legacy</warning>
+                                A().current""");
+    myFixture.checkHighlighting(true, false, false);
   }
 
   public void testDeprecatedAsFallback() {

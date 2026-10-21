@@ -31,6 +31,14 @@ internal class RecentFilesModel(private val project: Project) {
       .collect { update -> applyChangesToModel(update, targetFilesKind) }
   }
 
+  /**
+   * Removes the files of unloading plugins from the lists of all kinds.
+   * A recently opened file stays in the list after its editor closes, so no event removes the file of an unloaded plugin.
+   */
+  fun removeFilesOfUnloadingPlugins() {
+    modelState.removeFromAllStates(::isFileOfUnloadingPlugin)
+  }
+
   private fun applyChangesToModel(event: LocalRecentFilesEvent, targetFilesKind: RecentFileKind) {
     when (event) {
       is LocalRecentFilesEvent.ItemsAdded -> modelState.addEvent(targetFilesKind, event.batch.map { it.virtualFile })

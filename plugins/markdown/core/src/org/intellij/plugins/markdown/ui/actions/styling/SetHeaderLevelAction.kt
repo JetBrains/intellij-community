@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
 import com.intellij.openapi.client.currentSessionOrNull
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
@@ -33,7 +34,7 @@ import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.ListCellRenderer
 
-internal class SetHeaderLevelAction: AnAction(), CustomComponentAction {
+internal class SetHeaderLevelAction: AnAction(), CustomComponentAction, DumbAware {
   private val group = SetHeaderLevelGroup()
 
   override fun actionPerformed(event: AnActionEvent) = Unit

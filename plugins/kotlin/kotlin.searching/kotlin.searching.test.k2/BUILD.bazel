@@ -25,6 +25,7 @@ jvm_library(
         "//platform/structuralsearch/plugin",
         "//platform/testRunner/plugin",
         "//plugins/gradle/plugin",
+        "//platform/vcs/plugin",
     ],
 )
 
@@ -52,6 +53,7 @@ jvm_library(
         "//platform/structuralsearch/plugin:plugin_test_lib",
         "//platform/testRunner/plugin:plugin_test_lib",
         "//plugins/gradle/plugin:plugin_test_lib",
+        "//platform/vcs/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,

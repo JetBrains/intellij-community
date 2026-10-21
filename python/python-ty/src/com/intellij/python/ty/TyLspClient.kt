@@ -1,9 +1,9 @@
 package com.intellij.python.ty
 
+import com.jetbrains.python.project.PyProject
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.Lsp4jServer
@@ -16,7 +16,7 @@ import com.intellij.python.lsp.core.PyLspToolIntegrationProvider
 import com.intellij.python.lsp.core.PyLspToolDescriptor
 import com.intellij.python.lsp.core.PyLspToolSettings
 import com.intellij.python.lsp.core.pyLspAttachedDescriptor
-import com.intellij.python.lsp.core.pyLspModulesToServeWith
+import com.intellij.python.lsp.core.pyLspProjectsToServeWith
 import com.intellij.python.lsp.core.utils.PyLspServerModificationTracker
 import org.eclipse.lsp4j.ConfigurationItem
 import org.eclipse.lsp4j.DidChangeWorkspaceFoldersParams
@@ -27,7 +27,7 @@ import org.eclipse.lsp4j.WorkspaceFoldersChangeEvent
 private const val TY_CONFIGURATION_SECTION = "ty"
 
 class TyLspIntegrationProvider : PyLspToolIntegrationProvider() {
-  override fun getDescriptor(module: Module): PyLspToolDescriptor = tyDescriptor(module)
+  override fun getDescriptor(pyProject: PyProject): PyLspToolDescriptor = tyDescriptor(pyProject)
 
   override fun pyTool(project: Project): PyLspTool<*> = TyPyTool.getInstance()
 
@@ -35,19 +35,20 @@ class TyLspIntegrationProvider : PyLspToolIntegrationProvider() {
 }
 
 /**
- * The descriptor to start ty with for [module].
+ * The descriptor to start ty with for [pyProject].
  *
  * ty keeps its settings for each workspace folder and resolves the environment against that
- * folder's root, so one server answers for every module of a multi-module project. This holds for
- * the type engine and for the External Tools tool: both start the server from this descriptor. A
- * module whose environment pins another ty version gets a server of its own, because one server runs
- * one binary. For a project of one served module the server answers for [module] alone.
+ * folder's root, so one server answers for every Python project of a multi-module project. This holds
+ * for the type engine and for the External Tools tool: both start the server from this descriptor. A
+ * Python project whose environment pins another ty version gets a server of its own, because one
+ * server runs one binary. For a project of one served Python project the server answers for
+ * [pyProject] alone.
  *
  * We send ty no interpreter. It finds the environment of each folder itself, and its
  * `python_extension` option refuses to be merged with the initialization options.
  */
-internal fun tyDescriptor(module: Module): TyLspClientDescriptor {
-  val served = pyLspModulesToServeWith(module, TyPyTool.getInstance())
+internal fun tyDescriptor(pyProject: PyProject): TyLspClientDescriptor {
+  val served = pyLspProjectsToServeWith(pyProject, TyPyTool.getInstance())
   val descriptor = TyLspClientDescriptor(served.first(), served)
   // The type engine builds a descriptor and starts the server itself, so it must wire the provider
   // here. `fileOpened` may never run for the file that started the server.
@@ -56,9 +57,9 @@ internal fun tyDescriptor(module: Module): TyLspClientDescriptor {
 }
 
 class TyLspClientDescriptor(
-  module: Module,
-  servedModules: List<Module> = listOf(module),
-) : PyLspToolDescriptor(module, TyPyTool.getInstance(), servedModules) {
+  pyProject: PyProject,
+  servedProjects: List<PyProject> = listOf(pyProject),
+) : PyLspToolDescriptor(pyProject, TyPyTool.getInstance(), servedProjects) {
   override fun lspArguments(): List<String> =
     listOf("server")
 

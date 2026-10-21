@@ -141,7 +141,7 @@ actively tested now, not the `@Ignore`d placeholder this pointer used to cite);
 ## JS/TS, HTML, CSS
 
 **Where**: JS-specific glue in `plugins/JavaScriptLanguage/web-platform/src/com/intellij/polySymbols/js/`;
-generic `html`-namespace core support in `community/platform/polySymbols/src-web/.../html/`; the
+generic `html`-namespace core support in `community/platform/polySymbols/web/src/.../html/`; the
 legacy-integration bridges live in `community/xml/xml-psi-impl/.../polySymbols/html/` and
 `plugins/css/backend/src/com/intellij/polySymbols/css/`.
 
@@ -179,7 +179,7 @@ indexed access) via `JSLiteralExpressionSymbolReferenceProvider`; `js/symbols` m
 `JSPolySymbolMatchCustomizer`; JSDoc tags via `JSDocSymbolQueryScopeContributor`.
 
 **Web Types as the static source**: loaded by `WebTypesDefinitionsEP`
-(`community/platform/polySymbols/src-web/.../webTypes/impl/WebTypesDefinitionsEP.kt`) into
+(`community/platform/polySymbols/web/src/.../webTypes/impl/WebTypesDefinitionsEP.kt`) into
 `WebTypesScopeBase`/`StaticPolySymbolScope`. `PackageJsonPolySymbolsRegistryManager`
 (`plugins/JavaScriptLanguage/web-platform/.../nodejs/PackageJsonPolySymbolsRegistryManager.kt`)
 watches `package.json`/`node_modules` and loads each dependency's bundled/npm-shipped

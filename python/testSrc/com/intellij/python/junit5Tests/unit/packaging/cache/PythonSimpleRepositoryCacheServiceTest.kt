@@ -66,8 +66,8 @@ class PythonSimpleRepositoryCacheServiceTest {
     assertTrue(result is Result.Success, "reloadAll should succeed: $result")
 
     val cache = checkNotNull(cacheService[repo]) { "Cache should be populated for added repository" }
-    assertTrue("numpy" in cache, "numpy should appear in cache after reloadAll")
-    assertTrue("pandas" in cache, "pandas should appear in cache after reloadAll")
+    assertTrue(cache.contains("numpy"), "numpy should appear in cache after reloadAll")
+    assertTrue(cache.contains("pandas"), "pandas should appear in cache after reloadAll")
   }
 
   @Test
@@ -83,13 +83,13 @@ class PythonSimpleRepositoryCacheServiceTest {
     assertTrue(result is Result.Success, "reloadAll should succeed: $result")
 
     val firstCache = checkNotNull(cacheService[firstRepo]) { "First repo cache should be populated" }
-    assertTrue("numpy" in firstCache, "numpy should be in first repo cache")
-    assertTrue("pandas" in firstCache, "pandas should be in first repo cache")
-    assertTrue("requests" !in firstCache, "requests should not leak into first repo cache")
+    assertTrue(firstCache.contains("numpy"), "numpy should be in first repo cache")
+    assertTrue(firstCache.contains("pandas" ), "pandas should be in first repo cache")
+    assertTrue(firstCache.contains("requests" ), "requests should not leak into first repo cache")
 
     val secondCache = checkNotNull(cacheService[secondRepo]) { "Second repo cache should be populated" }
-    assertTrue("requests" in secondCache, "requests should be in second repo cache")
-    assertTrue("urllib3" in secondCache, "urllib3 should be in second repo cache")
-    assertTrue("numpy" !in secondCache, "numpy should not leak into second repo cache")
+    assertTrue(secondCache.contains("requests"), "requests should be in second repo cache")
+    assertTrue(secondCache.contains("urllib3" ), "urllib3 should be in second repo cache")
+    assertTrue(secondCache.contains("numpy" ), "numpy should not leak into second repo cache")
   }
 }

@@ -15,75 +15,94 @@
  */
 package org.jetbrains.ether;
 
+import org.junit.jupiter.api.Test;
+
 public class MethodModifierTest extends IncrementalTestCase {
   public MethodModifierTest() {
     super("methodModifiers");
   }
 
+  @Test
   public void testDecConstructorAccess() {
     doTest();
   }
 
+  @Test
   public void testIncAccess() {
     doTest();
   }
 
+  @Test
   public void testChangePrivateToPackagePrivate() {
     doTest().assertFailed();
   }
   
+  @Test
   public void testChangePrivateToProtected() {
     doTest().assertFailed();
   }
 
+  @Test
   public void testChangePrivateToPublic() {
     doTest().assertFailed();
   }
 
+  @Test
   public void testChangePackagePrivateToProtected() {
     doTest().assertFailed();
   }
 
+  @Test
   public void testChangePackagePrivateToPublic() {
     doTest().assertFailed();
   }
 
+  @Test
   public void testChangeProtectedToPublic() {
     doTest().assertFailed();
   }
 
+  @Test
   public void testSetAbstract() {
     doTest();
   }
 
+  @Test
   public void testSetFinal() {
     doTest();
   }
 
+  @Test
   public void testSetPrivate() {
     doTest();
   }
 
+  @Test
   public void testSetProtected() {
     doTest();
   }
 
+  @Test
   public void testSetProtectedFromPublic() {
     doTest();
   }
 
+  @Test
   public void testUnsetFinal() {
     doTest();
   }
 
+  @Test
   public void testUnsetAbstractForSAMInterface() {
     doTest();
   }
 
+  @Test
   public void testUnsetStatic() {
     doTest();
   }
 
+  @Test
   public void testSetStatic() {
     doTest();
   }

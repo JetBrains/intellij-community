@@ -6,5 +6,5 @@ import com.intellij.python.sdk.backend.PythonInterpreter
 
 data class PythonInterpreterWrapper<P>(val pythonInterpreter: PythonInterpreter, val homePath: P) {
   override fun toString(): String =
-    "PythonInterpreterWrapper(pythonInterpreter=$pythonInterpreter, homePath=${(homePath as? PathHolder)?.toStringForUI() ?: homePath})"
+    "PythonInterpreterWrapper(pythonInterpreter=$pythonInterpreter, homePath=${(homePath as? PathHolder)?.toStringPossiblyMRFS() ?: homePath})"
 }

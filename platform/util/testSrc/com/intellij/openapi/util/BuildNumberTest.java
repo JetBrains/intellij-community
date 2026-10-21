@@ -2,14 +2,14 @@
 package com.intellij.openapi.util;
 
 import com.google.common.primitives.Ints;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class BuildNumberTest {
   @Test
@@ -74,7 +74,7 @@ public class BuildNumberTest {
   @Test
   public void devSnapshotVersion() {
     BuildNumber b = BuildNumber.fromString("__BUILD_NUMBER__");
-    assertTrue(b.asString(), b.getBaselineVersion() >= 145 && b.getBaselineVersion() <= 3000);
+    assertTrue(b.getBaselineVersion() >= 145 && b.getBaselineVersion() <= 3000, b.asString());
     assertTrue(b.isSnapshot());
 
     assertEquals(BuildNumber.fromString("__BUILD_NUMBER__"), BuildNumber.fromString("SNAPSHOT"));
@@ -88,7 +88,7 @@ public class BuildNumberTest {
   @Test
   public void devSnapshotVersionWithProductCode() {
     BuildNumber b = BuildNumber.fromString("IU-__BUILD__");
-    assertTrue(b.asString(), b.getBaselineVersion() >= 145 && b.getBaselineVersion() <= 3000);
+    assertTrue(b.getBaselineVersion() >= 145 && b.getBaselineVersion() <= 3000, b.asString());
     assertTrue(b.isSnapshot());
     assertEquals("IU", b.getProductCode());
   }

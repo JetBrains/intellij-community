@@ -4,6 +4,7 @@ package com.intellij.debugger.memory.action;
 import com.intellij.debugger.memory.filtering.ClassInstancesProvider;
 import com.intellij.debugger.memory.ui.InstancesWindow;
 import com.intellij.debugger.memory.ui.JavaTypeInfo;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
@@ -11,9 +12,19 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.memory.ui.ClassesTable;
 import com.intellij.xdebugger.memory.ui.TypeInfo;
 import com.sun.jdi.ReferenceType;
+import org.jetbrains.annotations.NotNull;
 
 final class ShowInstancesFromClassesViewAction extends ShowInstancesAction {
   private static final String POPUP_ELEMENT_LABEL = "Show Instances";
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
+  }
 
   @Override
   protected void perform(AnActionEvent e) {

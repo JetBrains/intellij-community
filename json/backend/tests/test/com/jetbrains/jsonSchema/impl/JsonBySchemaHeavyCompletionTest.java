@@ -1,132 +1,185 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.jetbrains.jsonSchema.JsonSchemaHeavyTestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class JsonBySchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletionTestBase {
-  @Override
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static com.jetbrains.jsonSchema.JsonSchemaHeavyTestFixtureKt.jsonSchemaHeavyFixture;
+
+@TestApplication
+@TestDataPath("$PROJECT_ROOT/community/json/backend/tests/testData/jsonSchema/completion")
+public class JsonBySchemaHeavyCompletionTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+  private final TestFixture<JsonSchemaHeavyTestFixture> schemaFixture = jsonSchemaHeavyFixture(codeInsightFixture, getExtensionWithoutDot());
+
+  protected CodeInsightTestFixture myFixture;
+  protected JsonSchemaHeavyTestFixture mySchemaFixture;
+
+  @BeforeEach
+  void setUp() {
+    myFixture = codeInsightFixture.get();
+    mySchemaFixture = schemaFixture.get();
+  }
+
+  /**
+   * The field initializer calls it, so an override must not read the state of the subclass.
+   */
   protected String getExtensionWithoutDot() {
     return "json";
   }
 
-  @Override
-  protected String getBasePath() {
-    return "/tests/testData/jsonSchema/completion";
+  @Test
+  public void testInsertEnumValue() {
+    mySchemaFixture.baseInsertTest(mySchemaFixture.getTestName(true), "testValue");
   }
 
-  public void testInsertEnumValue() throws Exception {
-    baseInsertTest(getTestName(true), "testValue");
+  @Test
+  public void testInsertPropertyName() {
+    mySchemaFixture.baseInsertTest("insertPropertyName", "testName");
   }
 
-  public void testInsertPropertyName() throws Exception {
-    baseInsertTest("insertPropertyName", "testName");
+  @Test
+  public void testInsertNameWithDefaultStringValue() {
+    mySchemaFixture.baseInsertTest("insertPropertyName", "testNameWithDefaultStringValue");
   }
 
-  public void testInsertNameWithDefaultStringValue() throws Exception {
-    baseInsertTest("insertPropertyName", "testNameWithDefaultStringValue");
+  @Test
+  public void testIncompleteNameWithDefaultStringValue() {
+    mySchemaFixture.baseInsertTest("insertPropertyName", "testIncompleteNameWithDefaultStringValue");
   }
 
-  public void testIncompleteNameWithDefaultStringValue() throws Exception {
-    baseInsertTest("insertPropertyName", "testIncompleteNameWithDefaultStringValue");
+  @Test
+  public void testInsertNameWithDefaultIntegerValue() {
+    mySchemaFixture.baseInsertTest("insertPropertyName", "testNameWithDefaultIntegerValue");
   }
 
-  public void testInsertNameWithDefaultIntegerValue() throws Exception {
-    baseInsertTest("insertPropertyName", "testNameWithDefaultIntegerValue");
+  @Test
+  public void testInsertIntegerType() {
+    mySchemaFixture.baseInsertTest("insertPropertyName", "testIntegerType");
   }
 
-  public void testInsertIntegerType() throws Exception {
-    baseInsertTest("insertPropertyName", "testIntegerType");
+  @Test
+  public void testInsertStringType() {
+    mySchemaFixture.baseInsertTest("insertPropertyName", "testStringType");
   }
 
-  public void testInsertStringType() throws Exception {
-    baseInsertTest("insertPropertyName", "testStringType");
+  @Test
+  public void testInsertObjectType() {
+    mySchemaFixture.baseInsertTest("insertPropertyName", "testObjectType");
   }
 
-  public void testInsertObjectType() throws Exception {
-    baseInsertTest("insertPropertyName", "testObjectType");
+  @Test
+  public void testInsertArrayType() {
+    mySchemaFixture.baseInsertTest("insertPropertyName", "testArrayType");
   }
 
-  public void testInsertArrayType() throws Exception {
-    baseInsertTest("insertPropertyName", "testArrayType");
-  }
-
-  public void testInsertBooleanType() throws Exception {
-    baseInsertTest("insertPropertyName", "testBooleanType");
+  @Test
+  public void testInsertBooleanType() {
+    mySchemaFixture.baseInsertTest("insertPropertyName", "testBooleanType");
   }
 
   //no quotes
-  public void testNameWithDefaultStringValueNoQuotes() throws Exception {
-    baseInsertTest("insertPropertyName", "testNameWithDefaultStringValueNoQuotes");
+  @Test
+  public void testNameWithDefaultStringValueNoQuotes() {
+    mySchemaFixture.baseInsertTest("insertPropertyName", "testNameWithDefaultStringValueNoQuotes");
   }
 
-  public void testNameWithDefaultIntegerValueNoQuotesComma() throws Exception {
-    baseInsertTest("insertPropertyName", "testNameWithDefaultIntegerValueNoQuotesComma");
+  @Test
+  public void testNameWithDefaultIntegerValueNoQuotesComma() {
+    mySchemaFixture.baseInsertTest("insertPropertyName", "testNameWithDefaultIntegerValueNoQuotesComma");
   }
 
   //comma
-  public void testInsertIntegerTypeComma() throws Exception {
-    baseInsertTest("insertPropertyName", "testIntegerTypeComma");
+  @Test
+  public void testInsertIntegerTypeComma() {
+    mySchemaFixture.baseInsertTest("insertPropertyName", "testIntegerTypeComma");
   }
 
-  public void testInsertBooleanTypeComma() throws Exception {
-    baseInsertTest("insertPropertyName", "testBooleanTypeComma");
+  @Test
+  public void testInsertBooleanTypeComma() {
+    mySchemaFixture.baseInsertTest("insertPropertyName", "testBooleanTypeComma");
   }
 
-  public void testStringTypeComma() throws Exception {
-    baseInsertTest("insertPropertyName", "testStringTypeComma");
+  @Test
+  public void testStringTypeComma() {
+    mySchemaFixture.baseInsertTest("insertPropertyName", "testStringTypeComma");
   }
 
-  public void testNameWithDefaultStringValueComma() throws Exception {
-    baseInsertTest("insertPropertyName", "testNameWithDefaultStringValueComma");
+  @Test
+  public void testNameWithDefaultStringValueComma() {
+    mySchemaFixture.baseInsertTest("insertPropertyName", "testNameWithDefaultStringValueComma");
   }
 
-  public void testWhitespaceAfterColon() throws Exception {
-    baseInsertTest("addWhitespaceAfterColon", "colon");
+  @Test
+  public void testWhitespaceAfterColon() {
+    mySchemaFixture.baseInsertTest("addWhitespaceAfterColon", "colon");
   }
 
-  public void testArrayLiteral() throws Exception {
-    baseInsertTest("insertArrayOrObjectLiteral", "arrayLiteral");
-    complete();
-    assertStringItems("1", "2", "3");
+  @Test
+  public void testArrayLiteral() {
+    mySchemaFixture.baseInsertTest("insertArrayOrObjectLiteral", "arrayLiteral");
+    mySchemaFixture.complete();
+    mySchemaFixture.assertStringItems("1", "2", "3");
   }
 
-  public void testObjectLiteral() throws Exception {
-    baseInsertTest("insertArrayOrObjectLiteral", "objectLiteral");
-    complete();
-    assertStringItems("\"insideTopObject1\"", "\"insideTopObject2\"");
+  @Test
+  public void testObjectLiteral() {
+    mySchemaFixture.baseInsertTest("insertArrayOrObjectLiteral", "objectLiteral");
+    mySchemaFixture.complete();
+    mySchemaFixture.assertStringItems("\"insideTopObject1\"", "\"insideTopObject2\"");
   }
 
-  public void testOneOfWithNotFilledPropertyValue() throws Exception {
-    baseCompletionTest("oneOfWithEnumValue", "oneOfWithEmptyPropertyValue", "\"business\"", "\"home\"");
+  @Test
+  public void testOneOfWithNotFilledPropertyValue() {
+    mySchemaFixture.baseCompletionTest("oneOfWithEnumValue", "oneOfWithEmptyPropertyValue", "\"business\"", "\"home\"");
   }
 
-  public void testRequiredPropsFirst() throws Exception {
-    baseTestNoSchema("requiredProps", "requiredPropsFirst", () -> {
-      complete();
-      assertStringItems("a", "b");
+  @Test
+  public void testRequiredPropsFirst() {
+    mySchemaFixture.baseTestNoSchema("requiredProps", "requiredPropsFirst", () -> {
+      mySchemaFixture.complete();
+      mySchemaFixture.assertStringItems("a", "b");
     });
   }
 
-  public void testRequiredPropsLast() throws Exception {
-    baseTestNoSchema("requiredProps", "requiredPropsLast", () -> {
-      complete();
-      assertStringItems("b");
+  @Test
+  public void testRequiredPropsLast() {
+    mySchemaFixture.baseTestNoSchema("requiredProps", "requiredPropsLast", () -> {
+      mySchemaFixture.complete();
+      mySchemaFixture.assertStringItems("b");
     });
   }
 
-  public void testEditingSchemaAffectsCompletion() throws Exception {
-    baseTest(getTestName(true), "testEditing", () -> {
-      complete();
-      assertStringItems("\"preserve\"", "\"react\"", "\"react-native\"");
+  @Test
+  public void testEditingSchemaAffectsCompletion() {
+    mySchemaFixture.baseTest(mySchemaFixture.getTestName(true), "testEditing", () -> {
+      mySchemaFixture.complete();
+      mySchemaFixture.assertStringItems("\"preserve\"", "\"react\"", "\"react-native\"");
 
-      final PsiFile schema = myFixture.getFile().getParent().findFile("Schema.json");
-      CommandProcessor.getInstance().runUndoTransparentAction(
+      final PsiFile schema = ReadAction.computeBlocking(() -> myFixture.getFile().getParent().findFile("Schema.json"));
+      EdtTestUtil.runInEdtAndWait(() -> CommandProcessor.getInstance().runUndoTransparentAction(
         () -> WriteAction.run(
           () -> {
             try {
@@ -149,35 +202,41 @@ public class JsonBySchemaHeavyCompletionTest extends JsonBySchemaHeavyCompletion
             }
           }
         )
-      );
+      ));
       VfsUtil.markDirtyAndRefresh(false, false, true, schema.getVirtualFile());
       schema.getVirtualFile().refresh(false, false);
-      complete();
-      assertStringItems("\"completelyChanged\"", "\"preserve\"", "\"react\"");
+      mySchemaFixture.complete();
+      mySchemaFixture.assertStringItems("\"completelyChanged\"", "\"preserve\"", "\"react\"");
     });
   }
 
-  public void testGuessType() throws Exception {
-    baseInsertTest("guessType", "test");
+  @Test
+  public void testGuessType() {
+    mySchemaFixture.baseInsertTest("guessType", "test");
   }
 
-  public void testDontGuessType() throws Exception {
-    baseInsertTest("dontGuessType", "test");
+  @Test
+  public void testDontGuessType() {
+    mySchemaFixture.baseInsertTest("dontGuessType", "test");
   }
 
-  public void testDontInsertExtraValue() throws Exception {
-    baseInsertTest("dontInsertExtraValue", "testWithValue");
+  @Test
+  public void testDontInsertExtraValue() {
+    mySchemaFixture.baseInsertTest("dontInsertExtraValue", "testWithValue");
   }
 
-  public void testDontInsertExtraValueColonOnly() throws Exception {
-    baseInsertTest("dontInsertExtraValueColonOnly", "testWithValue");
+  @Test
+  public void testDontInsertExtraValueColonOnly() {
+    mySchemaFixture.baseInsertTest("dontInsertExtraValueColonOnly", "testWithValue");
   }
 
-  public void testPreserveColon() throws Exception {
-    baseReplaceTest("preserveColon", "test");
+  @Test
+  public void testPreserveColon() {
+    mySchemaFixture.baseReplaceTest("preserveColon", "test");
   }
 
-  public void testEnumOrderSensitive() throws Exception {
-    baseCompletionTest(getTestName(true), "testValue", "\"c\"", "\"b\"", "\"a\"");
+  @Test
+  public void testEnumOrderSensitive() {
+    mySchemaFixture.baseCompletionTest(mySchemaFixture.getTestName(true), "testValue", "\"c\"", "\"b\"", "\"a\"");
   }
 }

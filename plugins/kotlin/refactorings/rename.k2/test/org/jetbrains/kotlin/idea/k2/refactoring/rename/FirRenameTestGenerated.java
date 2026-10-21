@@ -128,6 +128,16 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
         runTest("testData/rename/backingField/backingField.test");
     }
 
+    @TestMetadata("bodyVariableConflictsWithForParameter/bodyVariableConflictsWithForParameter.test")
+    public void testBodyVariableConflictsWithForParameter_BodyVariableConflictsWithForParameter() throws Exception {
+        runTest("testData/rename/bodyVariableConflictsWithForParameter/bodyVariableConflictsWithForParameter.test");
+    }
+
+    @TestMetadata("branchVariableConflictsWithWhenSubject/branchVariableConflictsWithWhenSubject.test")
+    public void testBranchVariableConflictsWithWhenSubject_BranchVariableConflictsWithWhenSubject() throws Exception {
+        runTest("testData/rename/branchVariableConflictsWithWhenSubject/branchVariableConflictsWithWhenSubject.test");
+    }
+
     @TestMetadata("clashOfNestedWithOuterClass/clashOfNestedWithOuterClass.test")
     public void testClashOfNestedWithOuterClass_ClashOfNestedWithOuterClass() throws Exception {
         runTest("testData/rename/clashOfNestedWithOuterClass/clashOfNestedWithOuterClass.test");
@@ -256,6 +266,11 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
     @TestMetadata("enumValueOf/enumValueOf.test")
     public void testEnumValueOf_EnumValueOf() throws Exception {
         runTest("testData/rename/enumValueOf/enumValueOf.test");
+    }
+
+    @TestMetadata("forParameterConflictsWithBodyVariable/forParameterConflictsWithBodyVariable.test")
+    public void testForParameterConflictsWithBodyVariable_ForParameterConflictsWithBodyVariable() throws Exception {
+        runTest("testData/rename/forParameterConflictsWithBodyVariable/forParameterConflictsWithBodyVariable.test");
     }
 
     @TestMetadata("funTextOccurrences/funTextOccurrences.test")
@@ -411,6 +426,16 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
     @TestMetadata("localVariableNoConflictInDifferentWhenBranches/localVariableNoConflictInDifferentWhenBranches.test")
     public void testLocalVariableNoConflictInDifferentWhenBranches_LocalVariableNoConflictInDifferentWhenBranches() throws Exception {
         runTest("testData/rename/localVariableNoConflictInDifferentWhenBranches/localVariableNoConflictInDifferentWhenBranches.test");
+    }
+
+    @TestMetadata("localVariableNoConflictWithForParameter/localVariableNoConflictWithForParameter.test")
+    public void testLocalVariableNoConflictWithForParameter_LocalVariableNoConflictWithForParameter() throws Exception {
+        runTest("testData/rename/localVariableNoConflictWithForParameter/localVariableNoConflictWithForParameter.test");
+    }
+
+    @TestMetadata("localVariableNoConflictWithWhenSubject/localVariableNoConflictWithWhenSubject.test")
+    public void testLocalVariableNoConflictWithWhenSubject_LocalVariableNoConflictWithWhenSubject() throws Exception {
+        runTest("testData/rename/localVariableNoConflictWithWhenSubject/localVariableNoConflictWithWhenSubject.test");
     }
 
     @TestMetadata("memberFunctionRedeclaration/memberFunctionRedeclaration.test")
@@ -1466,5 +1491,10 @@ public class FirRenameTestGenerated extends AbstractFirRenameTest {
     @TestMetadata("varInDoWhile/varInDoWhile.test")
     public void testVarInDoWhile_VarInDoWhile() throws Exception {
         runTest("testData/rename/varInDoWhile/varInDoWhile.test");
+    }
+
+    @TestMetadata("whenSubjectConflictsWithBranchVariable/whenSubjectConflictsWithBranchVariable.test")
+    public void testWhenSubjectConflictsWithBranchVariable_WhenSubjectConflictsWithBranchVariable() throws Exception {
+        runTest("testData/rename/whenSubjectConflictsWithBranchVariable/whenSubjectConflictsWithBranchVariable.test");
     }
 }

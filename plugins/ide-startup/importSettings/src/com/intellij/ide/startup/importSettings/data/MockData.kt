@@ -3,7 +3,6 @@ package com.intellij.ide.startup.importSettings.data
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.startup.importSettings.TransferableIdeId
-import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingController
 import com.intellij.ide.startup.importSettings.chooser.ui.SettingsImportOrigin
 import com.intellij.openapi.diagnostic.logger
 import com.jetbrains.rd.util.lifetime.Lifetime
@@ -212,7 +211,7 @@ class TestJbService private constructor() : JbService {
   }
 
   fun configChosen() {
-    OnboardingController.getInstance().startWizard(isModal = false)
+    LOG.info("${IMPORT_SERVICE} configChosen")
   }
 
   override suspend fun hasDataToImport(): Boolean = true

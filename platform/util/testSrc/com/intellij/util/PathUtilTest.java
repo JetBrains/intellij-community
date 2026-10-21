@@ -6,7 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.util.PathUtilRt.Platform;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.CharBuffer;
 import java.nio.charset.CharacterCodingException;
@@ -21,8 +21,8 @@ import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PathUtilTest {
   @Test
@@ -94,7 +94,7 @@ public class PathUtilTest {
     // and must be replaced, otherwise File.toPath() throws InvalidPathException (IJPL-247915 / CLion crash).
     String ascii = PathUtilRt.suggestFileName(name, false, false, StandardCharsets.US_ASCII);
     assertThat(ascii).isEqualTo("Uncommitted_changes_before_Checkout_at_6_25_26,_3_19_PM");
-    assertTrue("result must be encodable by the fs charset", StandardCharsets.US_ASCII.newEncoder().canEncode(ascii));
+    assertTrue(StandardCharsets.US_ASCII.newEncoder().canEncode(ascii), "result must be encodable by the fs charset");
 
     // With a Unicode filesystem charset the character is mappable and is preserved (no regression on UTF-8 systems).
     String utf8 = PathUtilRt.suggestFileName(name, false, false, StandardCharsets.UTF_8);

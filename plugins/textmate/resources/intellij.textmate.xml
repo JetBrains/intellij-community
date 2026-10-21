@@ -82,9 +82,4 @@
     <applicationSettings service="org.jetbrains.plugins.textmate.configuration.TextMateUserBundlesSettings"/>
     <applicationSettings service="org.jetbrains.plugins.textmate.configuration.TextMateBuiltinBundlesSettings"/>
   </extensions>
-
-  <applicationListeners>
-    <listener class="org.jetbrains.plugins.textmate.TextMateAppLifecycleListener"
-              topic="com.intellij.ide.AppLifecycleListener"/>
-  </applicationListeners>
 </idea-plugin>

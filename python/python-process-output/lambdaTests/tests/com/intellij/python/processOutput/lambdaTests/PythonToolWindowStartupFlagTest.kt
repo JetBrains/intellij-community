@@ -1,16 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.processOutput.lambdaTests
 
+import com.intellij.ide.starter.driver.reused.ReusedProject
+import com.intellij.ide.starter.driver.reused.ReusedRun
 import com.intellij.ide.starter.ide.IdeRunMode
 import com.intellij.lambda.testFramework.junit.RunInMonolithAndSplitMode
 import com.intellij.lambda.testFramework.junit.SetErrorIgnorerExtension
 import com.intellij.lambda.testFramework.utils.IdeWithLambda
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.python.processOutput.lambdaTests.util.IdeConfigSetup
-import com.intellij.python.processOutput.lambdaTests.util.SetLambdaPluginCallback
+import com.intellij.python.processOutput.lambdaTests.util.PythonProcessOutputLambdaStrategy
+import com.intellij.python.processOutput.lambdaTests.util.pythonProcessOutputLambdaConfiguration
 import com.intellij.testFramework.common.timeoutRunBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.TestTemplate
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.time.Duration.Companion.minutes
 
@@ -26,17 +28,23 @@ import kotlin.time.Duration.Companion.minutes
  * PY-88193), so a monolith invocation adds nothing to this one.
  *
  * This pins the flag, not the tool window. Locking the symptom itself means asking `ToolWindowManager` for
- * `PythonProcessOutput` via `waitForToolWindow`, which needs a project-bearing `IdeStartConfig` this suite
+ * `PythonProcessOutput` via `waitForToolWindow`, which needs a project-bearing `CachedProjectConfiguration` this suite
  * does not have; until then, a change that re-gates the factory on an SDK would still pass here.
  *
  * The setup sets no override for this key, and that is load-bearing: a forced value would be read back
  * instead of the plugin-declared default, and the test would survive the revert above.
  */
 @RunInMonolithAndSplitMode(IdeRunMode.SPLIT)
-@ExtendWith(IdeConfigSetup::class, SetLambdaPluginCallback::class, SetErrorIgnorerExtension::class)
+@ExtendWith(SetErrorIgnorerExtension::class)
+@ReusedRun(sessionStrategy = PythonProcessOutputLambdaStrategy::class)
 internal class PythonToolWindowStartupFlagTest {
 
-  @TestTemplate
+  companion object {
+    @ReusedProject
+    private val project = pythonProcessOutputLambdaConfiguration
+  }
+
+  @Test
   fun `the python tool window startup-availability flag defaults to true on the split frontend`(ide: IdeWithLambda) =
     timeoutRunBlocking(TEST_TIMEOUT) {
       ide {

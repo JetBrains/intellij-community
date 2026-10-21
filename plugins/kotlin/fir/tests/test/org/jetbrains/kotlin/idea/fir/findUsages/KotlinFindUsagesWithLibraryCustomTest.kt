@@ -36,6 +36,23 @@ class KotlinFindUsagesWithLibraryCustomTest : AbstractKotlinFindUsagesWithLibrar
         )
     }
 
+    fun testFindUsagesForConstructorProperty() {
+        myFixture.addFileToProject("usage.kt", """
+            package usage
+            import library.*
+            fun test(v: WithConstructorProperty) {
+                val p = v.constrProp
+            }
+        """.trimIndent())
+        val constructorProperty = findElementInLibrary<KtParameter>("constrProp")
+
+        val usages = findUsages(constructorProperty, null, false, project).map { it.file?.name }
+        assertEquals(
+            listOf("usage.kt"),
+            usages.map { it.toString() }.sorted(),
+        )
+    }
+
     private inline fun <reified T : PsiElement> findElementInLibrary(text: String): T {
         val libraryFile = FilenameIndex.getFilesByName(project, "library.kt", GlobalSearchScope.everythingScope(project)).first()
         val indexOf = libraryFile.text.indexOf(text)

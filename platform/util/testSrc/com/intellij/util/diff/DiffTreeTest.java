@@ -5,15 +5,17 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThreeState;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 @SuppressWarnings({"HardCodedStringLiteral"})
-public class DiffTreeTest extends TestCase {
+public class DiffTreeTest {
   private static class Node {
     private final int myStartOffset;
     private final Node @NotNull [] myChildren;
@@ -135,6 +137,7 @@ public class DiffTreeTest extends TestCase {
     }
   }
 
+  @Test
   public void testEmptyEqualRoots() {
     Node r1 = new Node(0,0);
     Node r2 = new Node(0,0);
@@ -143,6 +146,7 @@ public class DiffTreeTest extends TestCase {
     performTest(r1, r2, expected);
   }
 
+  @Test
   public void testSingleChildEqualRoots() {
     Node r1 = new Node(0,0, new Node(1,0));
     Node r2 = new Node(0,0, new Node(1,0));
@@ -151,6 +155,7 @@ public class DiffTreeTest extends TestCase {
     performTest(r1, r2, expected);
   }
 
+  @Test
   public void testTheOnlyChildRemoved() {
     Node r1 = new Node(0,0, new Node(1,0));
     Node r2 = new Node(0,0);
@@ -159,6 +164,7 @@ public class DiffTreeTest extends TestCase {
     performTest(r1, r2, expected);
   }
 
+  @Test
   public void testTheOnlyChildAdded() {
     Node r1 = new Node(0,0);
     Node r2 = new Node(0,0, new Node(1,0));
@@ -168,6 +174,7 @@ public class DiffTreeTest extends TestCase {
 
   }
 
+  @Test
   public void testTheOnlyChildReplaced() {
     Node r1 = new Node(0,0, new Node(1,0));
     Node r2 = new Node(0,0, new Node(2,0));
@@ -176,6 +183,7 @@ public class DiffTreeTest extends TestCase {
     performTest(r1, r2, expected);
   }
 
+  @Test
   public void testInsertedIntoTheMiddle() {
     Node r1 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(3,1)));
     Node r2 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(4,1), new Node(3,2)));
@@ -184,6 +192,7 @@ public class DiffTreeTest extends TestCase {
     performTest(r1, r2, expected);
   }
 
+  @Test
   public void testInsertedFirst() {
     Node r1 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(4,1)));
     Node r2 = new Node(0,0, new Node(1,0, new Node(3,0), new Node(2,1), new Node(4,2)));
@@ -192,6 +201,7 @@ public class DiffTreeTest extends TestCase {
     performTest(r1, r2, expected);
   }
 
+  @Test
   public void testInsertedLast() {
     Node r1 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(3,1)));
     Node r2 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(3,1), new Node(4,2)));
@@ -200,6 +210,7 @@ public class DiffTreeTest extends TestCase {
     performTest(r1, r2, expected);
   }
 
+  @Test
   public void testInsertedTwoLast() {
     Node r1 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(3,1)));
     Node r2 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(3,1), new Node(4,2), new Node(5,3)));
@@ -207,6 +218,7 @@ public class DiffTreeTest extends TestCase {
     performTest(r1, r2, "INSERTED to 1: 4 at 2", "INSERTED to 1: 5 at 3");
   }
 
+  @Test
   public void testSubtreeAppears() {
     Node r1 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(3,1), new Node(4,2)));
     Node r2 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(3,1, new Node(6,1)), new Node(4,2)));
@@ -214,6 +226,7 @@ public class DiffTreeTest extends TestCase {
     performTest(r1, r2, "INSERTED to 3: 6 at 0");
   }
 
+  @Test
   public void testSubtreeChanges() {
     Node r1 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(3,1, new Node(6,1)), new Node(4,2)));
     Node r2 = new Node(0,0, new Node(1,0, new Node(2,0), new Node(5,1, new Node(6,1)), new Node(4,2)));

@@ -17,11 +17,15 @@ import org.jetbrains.jps.model.java.JpsJavaDependencyScope;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Eugene Zhuravlev
@@ -50,6 +54,7 @@ public class Java9Test extends IncrementalTestCase {
     return super.doTestBuild(makesCount);
   }
 
+  @Test
   public void testModuleInfoAdded() {
     // expected result: the whole target is recompiled after the module-info.java file was newly added
     // because necessary 'require' directives may be missing from the newly added module-info file
@@ -57,61 +62,73 @@ public class Java9Test extends IncrementalTestCase {
     buildResult.assertSuccessful();
   }
 
+  @Test
   public void testRemoveModuleRequires() {
     final BuildResult buildResult = doTest();
     buildResult.assertFailed();
   }
 
+  @Test
   public void testRemoveTransitiveModuleRequires() {
     final BuildResult buildResult = doTest();
     buildResult.assertFailed();
   }
 
+  @Test
   public void testChangeTransitiveModuleRequires() {
     final BuildResult buildResult = doTest();
     buildResult.assertFailed();
   }
 
+  @Test
   public void testChangeQualifiedTransitiveModuleRequires() {
     final BuildResult buildResult = doTest();
     buildResult.assertSuccessful();
   }
 
+  @Test
   public void testRemoveModuleExports() {
     final BuildResult buildResult = doTest();
     buildResult.assertSuccessful();
   }
 
+  @Test
   public void testRemoveTransitiveModuleExports() {
     final BuildResult buildResult = doTest();
     buildResult.assertFailed();
   }
 
+  @Test
   public void testRemoveQualifiedModuleExports() {
     final BuildResult buildResult = doTest();
     buildResult.assertSuccessful();
   }
 
+  @Test
   public void testRemoveQualifiedTransitiveModuleExports() {
     final BuildResult buildResult = doTest();
     buildResult.assertFailed();
   }
 
+  @Test
   public void testChangeQualifiedTransitiveModuleExportsNoRebuild() {
     final BuildResult buildResult = doTest();
     buildResult.assertSuccessful();
   }
 
+  @Test
   public void testChangeQualifiedTransitiveModuleExportsRebuildIndirectDeps() {
     final BuildResult buildResult = doTest();
     buildResult.assertFailed();
   }
 
+  @Test
   public void testChangeQualifiedTransitiveModuleExportsRebuildDirectDeps() {
     final BuildResult buildResult = doTest();
     buildResult.assertSuccessful();
   }
 
+  @Test
   public void testIntegrateAfterErrors() {
     setupInitialProject();
     setupModules();
@@ -123,6 +140,7 @@ public class Java9Test extends IncrementalTestCase {
     doBuild(CompileScopeTestBuilder.make().allModules()).assertFailed();
   }
 
+  @Test
   public void testSplitModulePath() {
     setupInitialProject();
     final Map<String, JpsModule> modules = setupModules();
@@ -158,6 +176,7 @@ public class Java9Test extends IncrementalTestCase {
     assertTrue(classpath.contains(new File(libDir, "module_lib_3.jar")));
   }
 
+  @Test
   public void testPartialModuleCompilation() {
     setupInitialProject();
     final Map<String, JpsModule> modules = setupModules();
@@ -177,6 +196,7 @@ public class Java9Test extends IncrementalTestCase {
   }
 
 
+  @Test
   public void testExplodedAutoModule() {
     setupInitialProject();
     final Map<String, JpsModule> modules = setupModules();
@@ -187,6 +207,7 @@ public class Java9Test extends IncrementalTestCase {
     doBuild(CompileScopeTestBuilder.rebuild().allModules()).assertSuccessful();
   }
 
+  @Test
   public void testExplodedAutoModuleWithManifest() {
     setupInitialProject();
     final Map<String, JpsModule> modules = setupModules();

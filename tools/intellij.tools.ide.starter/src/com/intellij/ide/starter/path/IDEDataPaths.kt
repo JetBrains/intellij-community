@@ -11,15 +11,18 @@ import kotlin.io.path.div
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
-open class IDEDataPaths(
+open class IDEDataPaths @JvmOverloads constructor(
   open val testHome: Path,
   private val inMemoryRoot: Path?,
+  /** The system directory of a cached context that this context shares, or `null` when the context has its own. */
+  val sharedSystemDir: Path? = null,
 ) : AutoCloseable {
 
   companion object {
     private val CLEANER = Cleaner.create()
 
-    inline fun <reified T> createPaths(testName: String, testHome: Path, useInMemoryFs: Boolean): T where T : Any {
+    /** Clears [testHome] and creates the paths over it. With [sharedSystemDir], the paths take that system directory. */
+    inline fun <reified T> createPaths(testName: String, testHome: Path, useInMemoryFs: Boolean, sharedSystemDir: Path? = null): T where T : Any {
       val isTestHomeCleanupSuccessful = testHome.listDirectoryEntriesQuietly()
         ?.filterNot { it.name == "system" && it.isDirectory() }
         ?.all { it.deleteRecursivelyQuietly() }
@@ -33,8 +36,8 @@ open class IDEDataPaths(
       else {
         null
       }
-      return T::class.java.getConstructor(Path::class.java, Path::class.java)
-        .newInstance(testHome, inMemoryRoot)
+      return T::class.java.getConstructor(Path::class.java, Path::class.java, Path::class.java)
+        .newInstance(testHome, inMemoryRoot, sharedSystemDir)
     }
   }
 
@@ -44,7 +47,7 @@ open class IDEDataPaths(
   val tempDir = (testHome / "temp").createDirectories()
 
   val configDir = ((inMemoryRoot ?: testHome) / "config").createDirectories()
-  val systemDir = ((inMemoryRoot ?: testHome) / "system").createDirectories()
+  val systemDir = (sharedSystemDir ?: ((inMemoryRoot ?: testHome) / "system")).createDirectories()
   val pluginsDir = (testHome / "plugins").createDirectories()
   open val eventLogMetadataDir = (configDir / "event-log-metadata").createDirectories()
   open val eventLogDataDir = (systemDir / "event-log-data").createDirectories()
@@ -56,7 +59,7 @@ open class IDEDataPaths(
    * Unlike [createPaths] this neither wipes nor re-creates [testHome], so it is safe to call for paths already in use.
    */
   internal fun asFrontendDataPaths(): FrontendIDEDataPaths {
-    val frontendPaths = FrontendIDEDataPaths(testHome, inMemoryRoot)
+    val frontendPaths = FrontendIDEDataPaths(testHome, inMemoryRoot, sharedSystemDir)
     inMemoryRootOwner.released = true
     return frontendPaths
   }

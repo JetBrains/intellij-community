@@ -32,4 +32,10 @@
     <listener class="com.intellij.platform.ide.nonModalWelcomeScreen.frontend.welcomeFiles.WelcomeFilesEditorListener"
               topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
   </projectListeners>
+
+  <actions resource-bundle="messages.ActionsBundle">
+    <action id="WelcomeSaveFileAction" class="com.intellij.platform.ide.nonModalWelcomeScreen.frontend.welcomeFiles.FrontendWelcomeSaveFileAction">
+      <add-to-group group-id="SaveEditorsGroup" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>

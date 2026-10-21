@@ -89,6 +89,13 @@ interface EelDescriptorWithInteractiveDeployment : EelDescriptor {
  */
 @ApiStatus.Experimental
 interface EelMachine {
+  /**
+   * Returns true if [toEelApi] was successfully called and if there is no evidence of connection failure.
+   * In this case, [toEelApi] will unlikely perform any I/O under the hood.
+   *
+   * If it returns false, then call of [toEelApi] will certainly do a lot of I/O under the hood.
+   */
+  val isConnected: Boolean
 
   @get:ApiStatus.Internal
   val internalName: String
@@ -116,9 +123,9 @@ interface EelMachine {
  * the absence of the interface is not evidence of a missing connection.
  */
 @ApiStatus.Experimental
-interface EelMachineWithConnectionState : EelMachine {
-  val isConnected: Boolean
-}
+@ApiStatus.NonExtendable
+@Deprecated("Now every EelMachine has this property. Stop checking for this property")
+interface EelMachineWithConnectionState : EelMachine
 
 /**
  * Represents an abstract description of an environment where [EelApi] may exist.

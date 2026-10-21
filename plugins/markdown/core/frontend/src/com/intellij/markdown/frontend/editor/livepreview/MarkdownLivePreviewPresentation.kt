@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewDocumentVersion
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpecSet
+import java.util.function.Supplier
 
 /**
  * Holds the editor elements for one backend document state.
@@ -47,6 +48,12 @@ internal interface MarkdownLivePreviewFold {
 
   /** Creates a region after obsolete folds are removed. The reconciler owns the returned region and runs the folding batch. */
   fun create(editor: EditorEx): FoldRegion?
+
+  /**
+   * Returns the work that [create] needs and that can run off the EDT, or null when there is none.
+   * The [MarkdownLivePreviewReconciler] calls this method on the EDT. Then it runs the work on a background thread.
+   */
+  fun prepare(): Supplier<Runnable>? = null
 }
 
 /**

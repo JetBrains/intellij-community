@@ -25,7 +25,6 @@ class RemoveExclExclCallFix(
     override fun getActionPresentation(context: ActionContext, element: PsiElement): Presentation =
         Presentation.of(familyName)
             .withPriority(PriorityAction.Priority.HIGH)
-            .withFixAllOption(this)
 
     override fun invoke(context: ActionContext, element: PsiElement, updater: ModPsiUpdater): Unit = invoke(element)
 

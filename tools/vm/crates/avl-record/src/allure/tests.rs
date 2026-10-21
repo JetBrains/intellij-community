@@ -77,7 +77,7 @@ fn label(result: &AllureResult, name: &str) -> Vec<String> {
 fn a_failed_scenario_becomes_a_result_with_its_steps_pictures_and_attachment() {
     let h = Harness::new();
     let mut session = h.session(h.options());
-    h.feed(&mut session, &[&h.hello(false)]);
+    h.feed(&mut session, &[&h.allure_hello()]);
     feed_failed_scenario(&h, &mut session);
 
     let results = results_of(&h);
@@ -173,7 +173,7 @@ fn a_retry_shares_the_history_and_a_replay_writes_the_same_result() {
     let write = || {
         let h = Harness::new();
         let mut session = h.session(h.options());
-        h.feed(&mut session, &[&h.hello(false)]);
+        h.feed(&mut session, &[&h.allure_hello()]);
         feed_failed_scenario(&h, &mut session);
         feed_failed_scenario(&h, &mut session);
         let results: Vec<AllureResult> = results_of(&h).into_iter().map(|(result, _)| result).collect();
@@ -195,7 +195,7 @@ fn a_retry_shares_the_history_and_a_replay_writes_the_same_result() {
 fn a_truncated_scenario_is_broken_and_names_its_running_span() {
     let h = Harness::new();
     let mut session = h.session(h.options());
-    h.feed(&mut session, &[&h.hello(false), SCENARIO, OPERATION, ACTION]);
+    h.feed(&mut session, &[&h.allure_hello(), SCENARIO, OPERATION, ACTION]);
     session.close("the test ended");
     let results = results_of(&h);
     let [(result, _)] = results.as_slice() else {

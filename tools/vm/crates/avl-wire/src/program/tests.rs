@@ -6,7 +6,7 @@ use super::*;
 /// A one-scenario suite whose instructions are `instructions`, stated by `vocabulary`.
 fn program(vocabulary: &Value, instructions: &Value) -> SuiteProgram {
     let document = json!({
-        "suite": "suite", "lane": "UI", "testClassName": "AirSuiteGeneratedFlowUiTest", "restartsIde": false,
+        "schemaVersion": 2, "suite": "suite", "lane": "UI", "testClassName": "AirSuiteGeneratedFlowUiTest", "restartsIde": false,
         "labels": [{"name": "testClass", "value": "com.example.AirSuiteGeneratedFlowUiTest"}, {"name": "Subsystem", "value": "AI"}],
         "modules": [], "implementationFlows": [],
         "vocabulary": vocabulary,
@@ -155,31 +155,184 @@ fn a_value_that_an_earlier_instruction_may_answer_is_answered() {
     );
 }
 
-#[test]
-fn a_string_parameter_accepts_any_string_and_nothing_else() {
-    let params = json!({"text": {"type": "string", "optional": false}});
-    let vocabulary = json!({"runnerAnswers": [], "actions": {"type-text": spec("ide", &params)}, "assertions": {}});
-    let instructions = json!([
-        {"action": "type-text", "args": {"text": "Any text, with \"quotes\" and $1."}},
-        {"action": "type-text", "args": {"text": ""}},
-        {"action": "type-text", "args": {"text": 1}},
-    ]);
-    assert_eq!(
-        program(&vocabulary, &instructions).refusals(),
-        vec!["scenario 'scenario' operation 'submit': the action 'type-text' parameter 'text' does not accept 1".to_owned()]
-    );
+/// A one-scenario authored suite whose program is `instructions`, with the one id `authored-step`.
+fn authored(instructions: &Value) -> SuiteProgram {
+    let key = |values: &[&str]| json!({"type": "enum", "values": values, "optional": false});
+    let params = json!({"part": key(&["seed", "use"]), "scenario": key(&["scenario"]), "suite": key(&["authored"]),
+        "timeoutMs": {"type": "int", "optional": false}});
+    let document = json!({
+        "schemaVersion": 2, "suite": "authored", "lane": "UI", "testClassName": "AgentAuthoredUiTest", "restartsIde": false,
+        "authored": true,
+        "labels": [{"name": "testClass", "value": "com.example.AgentAuthoredUiTest"}],
+        "modules": [], "implementationFlows": [],
+        "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": spec("ide", &params)}, "assertions": {}},
+        "profiles": [{"name": "scenario", "fixture": "authored-authored", "flags": {}, "followsLastUsedPreset": false,
+            "requiresPromptProbe": false, "setups": [], "steps": [], "program": instructions}],
+    });
+    parse_suite_program(document.to_string().as_bytes()).unwrap()
+}
+
+fn part(name: &str, takes: &[&str], answers: &[&str]) -> Value {
+    json!({"action": "authored-step", "args": {"part": name, "scenario": "scenario", "suite": "authored", "timeoutMs": 1000},
+        "uses": {"takes": takes, "answers": answers}})
 }
 
 #[test]
-fn a_scenario_of_setups_with_no_flow_and_no_step_has_no_refusal() {
-    let document = json!({
-        "suite": "probe", "lane": "GUI_CHAT", "testClassName": "AirProbeGeneratedFlowUiTest", "restartsIde": false,
-        "labels": [{"name": "testClass", "value": "com.example.AirProbeGeneratedFlowUiTest"}],
-        "modules": [], "implementationFlows": [],
-        "vocabulary": {"runnerAnswers": [], "actions": {"launch": spec("ide", &json!({}))}, "assertions": {}},
-        "profiles": [{"name": "scenario", "fixture": "fixture", "flags": {}, "followsLastUsedPreset": false,
-            "requiresPromptProbe": false, "setups": [{"operation": "launch", "instructions": [{"action": "launch"}]}], "steps": []}],
-    });
-    let program = parse_suite_program(document.to_string().as_bytes()).unwrap();
+fn a_part_takes_a_value_that_an_earlier_part_answers() {
+    let fits = json!([part("seed", &[], &["session"]), part("use", &["session"], &[])]);
+    assert_eq!(authored(&fits).refusals(), Vec::<String>::new());
+    let early = json!([part("use", &["session"], &[]), part("seed", &[], &["session"])]);
+    assert_eq!(
+        authored(&early).refusals(),
+        vec!["scenario 'scenario' program takes the value 'session', which no earlier instruction answers".to_owned()]
+    );
+}
+
+// A scenario may require only a value that the runner answers, as the runnerAnswers of its vocabulary list them.
+#[test]
+fn a_required_runner_value_is_one_of_the_runner_answers() {
+    let mut program = authored(&json!([part("seed", &[], &[])]));
+    program.profiles[0].requires_runner_values = vec!["realSessionLogs".to_owned()];
+    assert_eq!(
+        program.refusals(),
+        vec![
+            "scenario 'scenario' requires the runner value 'realSessionLogs', which the runnerAnswers of the vocabulary do not list"
+                .to_owned()
+        ]
+    );
+    program.vocabulary.runner_answers.push("realSessionLogs".to_owned());
     assert_eq!(program.refusals(), Vec::<String>::new());
+}
+
+#[test]
+fn a_part_that_names_no_part_of_its_suite_is_refused() {
+    let program = json!([part("other", &[], &[])]);
+    assert_eq!(
+        authored(&program).refusals(),
+        vec!["scenario 'scenario' program: the action 'authored-step' parameter 'part' does not accept \"other\"".to_owned()]
+    );
+}
+
+/// The suite document `startup-class-loading` of a bare launch: one authored program of one IDE id, and `launch`. A
+/// `launch` of null leaves the field out.
+fn bare(authored: bool, launch: &Value, actions: &Value) -> Result<SuiteProgram, String> {
+    let mut document = json!({
+        "schemaVersion": 2, "suite": "startup-class-loading", "lane": "UI", "testClassName": "AirStartupClassLoadingBudgetUiTest",
+        "authored": authored, "restartsIde": false,
+        "labels": [{"name": "testClass", "value": "com.example.AirStartupClassLoadingBudgetUiTest"}],
+        "modules": [], "implementationFlows": [], "launch": launch,
+        "vocabulary": {"runnerAnswers": [], "actions": actions, "assertions": {}},
+        "profiles": [{"name": "Air loads no more classes than its budget while a project opens", "fixture": "bare",
+            "flags": {}, "followsLastUsedPreset": false, "requiresPromptProbe": false, "setups": [], "steps": [],
+            "program": [{"action": "startup-class-loading-within-budget"}]}],
+    });
+    if launch.is_null() {
+        document.as_object_mut().unwrap().remove("launch");
+    }
+    parse_suite_program(document.to_string().as_bytes())
+}
+
+// A suite of a bare IDE states its profile in `launch`. The profile is a word of the runner, and the section has no
+// other field, so a document of a later profile fails to parse. A document without `launch` runs on the shared IDE.
+#[test]
+fn a_bare_launch_is_a_profile_word_and_a_section_with_no_other_field() {
+    let actions = json!({"startup-class-loading-within-budget": spec("ide", &json!({}))});
+    let program = bare(true, &json!({"profile": "bare", "key": "air-startup-class-loading"}), &actions).unwrap();
+    assert_eq!(
+        program.launch,
+        Some(SuiteLaunch {
+            profile: LaunchProfile::Bare,
+            key: "air-startup-class-loading".to_owned(),
+        })
+    );
+    assert_eq!(program.refusals(), Vec::<String>::new());
+    let unknown = bare(true, &json!({"profile": "warm", "key": "air-startup-class-loading"}), &actions).unwrap_err();
+    assert!(unknown.contains("unknown variant `warm`, expected `bare`"), "{unknown}");
+    let extra = bare(
+        true,
+        &json!({"profile": "bare", "key": "air-startup-class-loading", "port": 1}),
+        &actions,
+    )
+    .unwrap_err();
+    assert!(extra.contains("unknown field `port`"), "{extra}");
+    assert_eq!(bare(true, &Value::Null, &actions).unwrap().launch, None);
+}
+
+// A bare IDE runs an authored program, and no host id: no restart, no recycle, no lane service.
+#[test]
+fn a_bare_launch_of_a_story_suite_or_of_a_host_id_is_refused() {
+    let actions = json!({"startup-class-loading-within-budget": spec("ide", &json!({}))});
+    assert_eq!(
+        bare(false, &json!({"profile": "bare", "key": "air-startup-class-loading"}), &actions)
+            .unwrap()
+            .refusals(),
+        vec!["the suite launches a bare IDE, which runs an authored program and no story scenario".to_owned()]
+    );
+    let with_restart = json!({
+        "startup-class-loading-within-budget": spec("ide", &json!({})),
+        "restart-ide": {"side": "host", "timeoutMs": 840_000, "restarts": 1, "answers": [], "takes": [], "mayTake": [], "params": {}},
+    });
+    let refusals = bare(true, &json!({"profile": "bare", "key": "air-startup-class-loading"}), &with_restart)
+        .unwrap()
+        .refusals();
+    assert!(
+        refusals.contains(&"the suite launches a bare IDE, which runs no host id, and the vocabulary states 'restart-ide'".to_owned()),
+        "{refusals:?}"
+    );
+}
+
+// A suite document states the schema version of this reader. A document of another version is refused, so a runner
+// never reads a field that it does not know as an absent one.
+#[test]
+fn a_document_of_another_schema_version_is_refused() {
+    let actions = json!({"startup-class-loading-within-budget": spec("ide", &json!({}))});
+    let mut document: Value = serde_json::from_str(&format!(
+        r#"{{"schemaVersion": 1, "suite": "s", "lane": "UI", "testClassName": "AirSUiTest", "labels": [],
+            "vocabulary": {{"runnerAnswers": [], "actions": {actions}, "assertions": {{}}}}, "profiles": []}}"#
+    ))
+    .unwrap();
+    assert_eq!(
+        parse_suite_program(document.to_string().as_bytes()).unwrap_err(),
+        "has the schema version 1, and this reader reads 2"
+    );
+    document.as_object_mut().unwrap().remove("schemaVersion");
+    let missing = parse_suite_program(document.to_string().as_bytes()).unwrap_err();
+    assert!(missing.contains("missing field `schemaVersion`"), "{missing}");
+}
+
+// The launch key names the context of the bare IDE, a directory below the IDE root, so it is a plain name.
+#[test]
+fn a_launch_key_that_is_no_plain_name_is_refused() {
+    let actions = json!({"startup-class-loading-within-budget": spec("ide", &json!({}))});
+    let program = bare(true, &json!({"profile": "bare", "key": "../lane"}), &actions).unwrap();
+    assert_eq!(
+        program.refusals(),
+        vec!["the launch key '../lane' is no name of lowercase letters, digits and dashes".to_owned()]
+    );
+}
+
+// A suite states the bridge request that installs its managed agents once, and a runner reads it verbatim. A bare IDE
+// installs nothing, so a bare suite that states an install is refused.
+#[test]
+fn the_managed_agent_install_is_read_verbatim_and_a_bare_suite_states_none() {
+    let install = r#"{"type":"com.intellij.air.integration.bridge.InstallManagedAgents","agents":[{"displayName":"Codex","fullAgentId":"acp.registry.codex-acp"}],"timeoutMs":300000}"#;
+    let document = |extra: &str| {
+        format!(
+            r#"{{"schemaVersion": 2, "suite": "s", "lane": "UI", "testClassName": "AirSUiTest",
+                "labels": [{{"name": "testClass", "value": "com.example.AirSUiTest"}}],
+                "vocabulary": {{"runnerAnswers": [], "actions": {{}}, "assertions": {{}}}}, "profiles": [],
+                {extra}"managedAgentInstall": {install}}}"#
+        )
+    };
+    let program = parse_suite_program(document("").as_bytes()).unwrap();
+    assert_eq!(program.managed_agent_install.as_deref().map(RawValue::get), Some(install));
+    assert_eq!(program.refusals(), Vec::<String>::new());
+    let bare = parse_suite_program(
+        document(r#""authored": true, "launch": {"profile": "bare", "key": "air-startup-class-loading"}, "#).as_bytes(),
+    )
+    .unwrap();
+    assert_eq!(
+        bare.refusals(),
+        vec!["the suite launches a bare IDE, which installs no managed agent, and it states managedAgentInstall".to_owned()]
+    );
 }

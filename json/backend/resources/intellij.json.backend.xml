@@ -98,6 +98,7 @@
     <fileBasedIndex implementation="com.jetbrains.jsonSchema.impl.JsonSchemaFileValuesIndex" />
 
     <!-- Codeinsight -->
+    <colorProvider implementation="com.intellij.json.codeinsight.JsonColorProvider"/>
     <breadcrumbsInfoProvider implementation="com.intellij.json.breadcrumbs.JsonBreadcrumbsProvider"/>
     <qualifiedNameProvider implementation="com.intellij.json.navigation.JsonQualifiedNameProvider"/>
     <completion.contributor language="JSON" id="JsonCompletionContributor" order="last" implementationClass="com.intellij.json.codeinsight.JsonCompletionContributor"/>
@@ -185,7 +186,6 @@
 
     <lang.floatingToolbar language="JSON" minimal="true"/>
 
-    <pluginSuggestionProvider implementation="com.jetbrains.jsonSchema.wiremock.WireMockSuggestionProvider"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.jsonSchema.fus.JsonFeatureUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.jsonSchema.fus.JsonSchemaCatalogNotificationUsageCollector"/>
     <statistics.validation.customValidationRule implementation="com.jetbrains.jsonSchema.fus.JsonSchemaIdValidationRule"/>
@@ -202,6 +202,7 @@
   <extensions defaultExtensionNs="com.intellij.json">
     <jsonLikePsiWalkerFactory implementation="com.intellij.json.json5.Json5PsiWalkerFactory"/>
     <jsonSchemaEnabler implementation="com.jetbrains.jsonSchema.impl.JsonSchemaInJsonFilesEnabler"/>
+    <schemaNameMatcher implementation="com.intellij.json.JsonSchemaNameMatcherImpl"/>
   </extensions>
 
   <extensionPoints>

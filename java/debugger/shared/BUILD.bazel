@@ -34,7 +34,6 @@ jvm_library(
         "//platform/xdebugger-api:debugger",
         "//platform/xdebugger-impl:debugger-impl",
         "//platform/platform-impl:ide-impl",
-        "//platform/kernel/shared:kernel",
         "//platform/core-ui",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/serialization/core",
@@ -51,7 +50,6 @@ jvm_library(
         "//platform/xdebugger-impl/shared",
         "//platform/xdebugger-impl/ui",
         "//platform/project/shared:project",
-        "//fleet/rhizomedb",
     ],
 )
 
@@ -76,7 +74,6 @@ jvm_library(
         "//platform/xdebugger-api:debugger_test_lib",
         "//platform/xdebugger-impl:debugger-impl_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/kernel/shared:kernel_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
@@ -93,7 +90,6 @@ jvm_library(
         "//platform/xdebugger-impl/shared:shared_test_lib",
         "//platform/xdebugger-impl/ui:ui_test_lib",
         "//platform/project/shared:project_test_lib",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.debugger.impl.shared` end

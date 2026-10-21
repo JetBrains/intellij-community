@@ -39,6 +39,7 @@ import com.intellij.platform.workspace.storage.impl.serialization.registration.S
 import com.intellij.platform.workspace.storage.impl.serialization.registration.StorageRegistrar
 import com.intellij.platform.workspace.storage.impl.serialization.registration.registerEntitiesClasses
 import com.intellij.platform.workspace.storage.impl.serialization.serializer.StorageSerializerUtil
+import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.metadata.diff.ComparisonResult
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -75,6 +76,16 @@ public class EntityStorageSerializerImpl(
 
     init {
       setupOpenTelemetryReporting(TelemetryManager.getMeter(JPS))
+    }
+
+    /**
+     * Creates a Kryo instance with the storage classes registered and drops it,
+     * so the classes that serialization needs are loaded and initialized before the first cache load.
+     * Each serialization still creates its own Kryo instance: an instance keeps the state of one call and is not thread-safe.
+     */
+    public fun warmUp(typesResolver: EntityTypesResolver) {
+      EntityStorageSerializerImpl(typesResolver = typesResolver, virtualFileManager = VirtualFileUrlManagerImpl(), ijBuildVersion = "")
+        .createKryo()
     }
   }
 

@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.VirtualFileUrlWithVirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
@@ -522,17 +523,21 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
       includeExternalNonIndexableSets, includeCustomKindSets
     )
     return when (info) {
-      is WorkspaceFileSetImpl -> listOfNotNull(resolveEntity(info))
-      is MultipleWorkspaceFileSets -> info.fileSets.mapNotNull { fileSet ->
-        (fileSet as? StoredFileSet?)?.let { resolveEntity(it) }
+      is WorkspaceFileSetImpl -> listOfNotNull(resolveEntity(info, WorkspaceModel.getInstance(project).currentSnapshot))
+      is MultipleWorkspaceFileSets -> {
+        // one snapshot for the whole call: fetching the service per file set costs more than the resolution
+        val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
+        info.fileSets.mapNotNull { fileSet ->
+          (fileSet as? StoredFileSet?)?.let { resolveEntity(it, snapshot) }
+        }
       }
       is NonWorkspace -> emptyList()
     }
   }
 
-  private fun resolveEntity(fileSet: StoredFileSet): WorkspaceEntity? {
+  private fun resolveEntity(fileSet: StoredFileSet, snapshot: ImmutableEntityStorage): WorkspaceEntity? {
     if (fileSet.entityStorageKind != EntityStorageKind.MAIN) return null
-    return fileSet.entityPointer.resolve(WorkspaceModel.getInstance(project).currentSnapshot)
+    return fileSet.entityPointer.resolve(snapshot)
   }
 
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)

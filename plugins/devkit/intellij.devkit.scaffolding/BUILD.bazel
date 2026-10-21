@@ -48,6 +48,7 @@ jvm_library(
         "//plugins/devkit/devkit-core:core",
         "//platform/progress/shared:ide-progress",
         "//java/java-backend:backend",
+        "//platform/workspace/storage",
     ],
 )
 
@@ -86,6 +87,7 @@ jvm_library(
         "//plugins/devkit/devkit-core:core_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
         "//java/java-backend:backend_test_lib",
+        "//platform/workspace/storage:storage_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.scaffolding` end

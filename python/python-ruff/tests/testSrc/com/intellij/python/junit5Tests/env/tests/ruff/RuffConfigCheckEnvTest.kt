@@ -6,7 +6,7 @@ import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.ruff.codeinsight.RuffConfigError
 import com.intellij.python.ruff.codeinsight.checkRuffConfig
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
-import com.intellij.python.junit5Tests.framework.env.pyInterpreterFixture
+import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.ruff.RuffPyTool
 import com.intellij.python.test.env.junit5.LspToolVersions
@@ -119,7 +119,7 @@ internal class RuffConfigCheckEnvTest {
     private val tempPathFixture = tempPathFixture()
     private val projectFixture = projectFixture(openAfterCreation = true)
     private val pyProjectFixture = projectFixture.pyProjectFixture(tempPathFixture)
-    private val venvFixture = projectFixture.pyInterpreterFixture().pyVenvFixture(
+    private val venvFixture = pyEnvironmentFixture().pyVenvFixture(
       where = tempPathFixture,
       pyProjectFixture = pyProjectFixture,
     )

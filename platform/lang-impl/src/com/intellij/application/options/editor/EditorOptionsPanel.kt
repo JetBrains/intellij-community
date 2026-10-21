@@ -159,7 +159,6 @@ private val cdStripTrailingSpacesEnabled
 internal val optionDescriptors: List<OptionDescription>
   get() {
     return sequenceOf(
-      cbHonorCamelHumpsWhenSelectingByClicking,
       enableWheelFontChange,
       enableDnD,
       virtualSpace,
@@ -172,7 +171,7 @@ internal val optionDescriptors: List<OptionDescription>
       preselectCheckBox,
       showInlineDialogForCheckBox
     )
-      .map(CheckboxDescriptor::asUiOptionDescriptor)
+      .map { it.asUiOptionDescriptor(EditorOptionsPanel.ID) }
       .toList()
   }
 

@@ -168,6 +168,102 @@ fn compose_cli_writes_local_launch_metadata_without_payload() {
     assert_eq!(read_text("out/dist/plugins/plugin-classpath.txt"), "\x03\x01\x00\x01\x07");
 }
 
+/// The children of `directory`, sorted by name.
+fn children(directory: &str) -> Vec<String> {
+    let mut names: Vec<String> = std::fs::read_dir(directory)
+        .unwrap_or_else(|error| panic!("{directory}: {error}"))
+        .map(|entry| entry.expect("an entry").file_name().to_string_lossy().into_owned())
+        .collect();
+    names.sort();
+    names
+}
+
+// A macOS app has its home in `Contents`. The home holds the same files as a flat home, so the fingerprint stays.
+#[test]
+fn compose_cli_writes_the_distribution_below_the_home_prefix() {
+    let _directory = WorkingDirectory::enter();
+    write_cli_fixture(false);
+    let (code, errors) = run_cli(&cli_args(&[]));
+    assert_eq!(code, 0, "{errors}");
+    let flat_fingerprint = read_text("out/dist.fingerprint");
+
+    let (code, errors) = run_cli(&cli_args(&["--home-prefix=Contents"]));
+    assert_eq!(code, 0, "{errors}");
+    assert_eq!(children("out/dist"), ["Contents"]);
+    assert_eq!(read_text("out/dist.fingerprint"), flat_fingerprint);
+    for (name, content) in [
+        ("out/dist/Contents/lib/app.jar", "app"),
+        ("out/dist/Contents/bin/idea.properties", "properties"),
+        ("out/dist/Contents/plugins/packed/lib/packed.jar", "packed"),
+        ("out/dist/Contents/plugins/plugin-classpath.txt", "\x03\x01\x00\x01\x07"),
+        ("out/dist/Contents/core-classpath.txt", "lib/util.jar\nlib/app.jar"),
+        ("out/dist/Contents/fingerprint.txt", flat_fingerprint.as_str()),
+        (
+            "out/dist.ide.config",
+            "home.path=dist/Contents\nmain.class.name=com.intellij.idea.Main\nplatform.prefix=idea\nadditional.modules=intellij.packed,intellij.bundled\n",
+        ),
+    ] {
+        assert_eq!(read_text(name), content, "{name}");
+    }
+}
+
+#[test]
+fn compose_cli_writes_local_launch_metadata_below_the_home_prefix() {
+    let _directory = WorkingDirectory::enter();
+    write_cli_fixture(true);
+    let (code, errors) = run_cli(&cli_args(&[
+        "--home-prefix=Contents",
+        "--core-classpath-file=out/dist.core-classpath.txt",
+        "--plugin-classpath-file=out/dist.plugin-classpath.txt",
+    ]));
+    assert_eq!(code, 0, "{errors}");
+    assert_eq!(children("out/dist"), ["Contents"]);
+    assert_eq!(
+        children("out/dist/Contents"),
+        ["core-classpath.txt", "fingerprint.txt", "local-layout.json", "plugins"]
+    );
+    assert_eq!(read_text("out/dist.core-classpath.txt"), "lib/util.jar\nlib/app.jar");
+    assert_eq!(read_text("out/dist.plugin-classpath.txt"), "\x03\x01\x00\x01\x07");
+    assert!(read_text("out/dist.ide.config").starts_with("home.path=dist/Contents\n"));
+}
+
+// The check of the launch class path reads `product-info.json` below the home prefix.
+#[test]
+fn compose_cli_checks_the_product_info_below_the_home_prefix() {
+    let _directory = WorkingDirectory::enter();
+    write_cli_fixture(false);
+    let core = read_text("fragments/core.json").replace(
+        r#""entries":["#,
+        r#""entries":[{"type":"component-file","relativePath":"Resources/product-info.json","hash":5,"source":"fragments/core/product-info.json"},"#,
+    );
+    write_file("fragments/core.json", core);
+    let binding = binding_line(
+        "fragments/core.json",
+        "fragments/core/product-info.json",
+        "fragments/core/product-info.json",
+        "file",
+        &[],
+    );
+    write_file(
+        "dist.source-bindings.jsonl",
+        format!("{binding}\n{}", read_text("dist.source-bindings.jsonl")),
+    );
+    let launch = |names: &str| format!(r#"{{"launch":[{{"mainClass":"com.intellij.idea.Main","bootClassPathJarNames":[{names}]}}]}}"#);
+
+    write_file("fragments/core/product-info.json", launch(r#""app.jar""#));
+    let (code, errors) = run_cli(&cli_args(&["--home-prefix=Contents"]));
+    assert_eq!(code, 1);
+    assert!(
+        errors.contains(r#"Resources/product-info.json: the bootClassPathJarNames of the main launch differ from the core classpath; missing: ["util.jar"]"#),
+        "errors = {errors:?}"
+    );
+
+    write_file("fragments/core/product-info.json", launch(r#""app.jar","util.jar""#));
+    let (code, errors) = run_cli(&cli_args(&["--home-prefix=Contents"]));
+    assert_eq!(code, 0, "{errors}");
+    assert!(read_text("out/dist/Contents/Resources/product-info.json").contains("util.jar"));
+}
+
 #[test]
 fn compose_cli_rejects_invalid_options() {
     let directory = WorkingDirectory::enter();
@@ -195,6 +291,14 @@ fn compose_cli_rejects_invalid_options() {
         ),
         (spec(&["--output-dir=out"]), "ERROR: --composition-spec is required"),
         (spec(&["--composition-spec=absent.json"]), "absent.json"),
+        (
+            cli_args(&["--home-prefix=Contents/MacOS"]),
+            "ERROR: --home-prefix must be one directory name, not \"Contents/MacOS\"",
+        ),
+        (
+            cli_args(&["--home-prefix=.."]),
+            "ERROR: --home-prefix must be one directory name, not \"..\"",
+        ),
     ] {
         let (code, errors) = run_cli(&args);
         assert_eq!(code, 1, "{args:?}: {errors}");

@@ -3,8 +3,10 @@ package org.jetbrains.intellij.build.org.jetbrains.intellij.build.impl.sbom
 
 import com.intellij.util.io.write
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.intellij.build.impl.ChecksumMismatch
 import org.jetbrains.intellij.build.impl.Checksums
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.io.path.readText
@@ -59,5 +61,32 @@ class ChecksumsTest {
     assert(checksums.sha256sum == checksumFile.readText()) {
       "Unexpected checksum file content '${checksumFile.readText()}'"
     }
+  }
+
+  @Test
+  fun `supplied checksum file in sha256sum format is rewritten without file name`(@TempDir tempDir: Path) = runBlocking {
+    val file = tempDir.resolve("file.txt")
+    file.write("test")
+    val checksums = Checksums.compute(file, Checksums.Algorithm.SHA256)
+    tempDir.resolve("file.txt.sha256").write("${checksums.sha256sum} *file.txt\n")
+
+    val checksumFile = checksums.verifyOrWriteChecksumFile(Checksums.Algorithm.SHA256, withFileName = false)
+
+    assert(checksums.sha256sum == checksumFile.readText()) {
+      "Unexpected checksum file content '${checksumFile.readText()}'"
+    }
+  }
+
+  @Test
+  fun `supplied checksum file with wrong checksum is rejected`(@TempDir tempDir: Path) = runBlocking {
+    val file = tempDir.resolve("file.txt")
+    file.write("test")
+    val checksums = Checksums.compute(file, Checksums.Algorithm.SHA256)
+    tempDir.resolve("file.txt.sha256").write("${"0".repeat(64)} *file.txt\n")
+
+    assertThrows<ChecksumMismatch> {
+      checksums.verifyOrWriteChecksumFile(Checksums.Algorithm.SHA256, withFileName = false)
+    }
+    Unit
   }
 }

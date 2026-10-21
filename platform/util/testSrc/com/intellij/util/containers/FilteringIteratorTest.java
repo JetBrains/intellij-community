@@ -17,24 +17,28 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
-import junit.framework.TestCase;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class FilteringIteratorTest extends TestCase {
+public class FilteringIteratorTest {
   public static final Condition STRINGS_ONLY = FilteringIterator.instanceOf(String.class);
   public static final Condition ANY = object -> true;
 
+  @Test
   public void testIteration() {
     Object[] values = new Object[]{"1", new Object(), "3", new Object()};
     Iterator iterator = FilteringIterator.create(Arrays.asList(values).iterator(), STRINGS_ONLY);
     assertThat(ContainerUtil.collect(iterator)).containsExactly("1", "3");
   }
 
+  @Test
   public void testRemove() {
     ArrayList collection = new ArrayList();
     collection.add(new Integer(1));
@@ -48,12 +52,14 @@ public class FilteringIteratorTest extends TestCase {
     checkRemove(expected, collection);
   }
 
+  @Test
   public void testIteratingNulls() {
     Object[] array = new Object[]{"1", null, "2", null};
     Iterator iterator = FilteringIterator.create(Arrays.asList(array).iterator(), ANY);
     assertThat(ContainerUtil.collect(iterator)).containsExactly(array);
   }
 
+  @Test
   public void testCallsHashNextOncePerElement() {
     ArrayList list = new ArrayList(Arrays.asList(null, "a", null, "b"));
     MockIterator mockIterator = new MockIterator(list.iterator());

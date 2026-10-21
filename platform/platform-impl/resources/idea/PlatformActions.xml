@@ -385,7 +385,7 @@
         <separator/>
         <group id="FileMenu.RemoteDevelopmentActions"/>
         <separator/>
-        <group id="FileMainSettingsGroup">
+        <group id="FileMainSettingsGroup" searchable="false">
           <reference ref="ShowSettings"/>
           <reference ref="ShowPlugins"/>
         </group>
@@ -409,7 +409,7 @@
 
         <reference ref="InvalidateCaches"/>
         <separator/>
-        <group id="ExportImportGroup" popup="true">
+        <group id="ExportImportGroup" popup="true" searchable="false">
           <reference ref="ImportSettings"/>
           <reference ref="ExportSettings"/>
           <separator/>
@@ -417,7 +417,7 @@
         </group>
         <group id="FileOtherSettingsGroup">
           <reference ref="TemplateProjectProperties"/>
-          <group id="FileSettingsGroup"/>
+          <group id="FileSettingsGroup" searchable="false"/>
         </group>
         <separator/>
         <group id="PrintExportGroup">
@@ -455,7 +455,7 @@
         </group>
         <separator/>
         <reference ref="ToggleFindInSelection"/>
-        <group id="FindMenuGroup" popup="true">
+        <group id="FindMenuGroup" popup="true" searchable="false">
           <reference ref="Find"/>
           <reference ref="Replace"/>
           <reference ref="FindNext"/>
@@ -550,7 +550,7 @@
         </group>
         <separator/>
         <reference ref="QuickChangeScheme"/>
-        <group id="EditorToggleActions" popup="true">
+        <group id="EditorToggleActions" popup="true" searchable="false">
           <reference ref="EditorToggleUseSoftWraps"/>
           <separator/>
           <reference ref="EditorToggleShowWhitespaces"/>
@@ -664,14 +664,14 @@
           </group>
         </group>
 
-        <group id="EditorTabsGroup" popup="true">
+        <group id="EditorTabsGroup" popup="true" searchable="false">
           <reference ref="NextTab"/>
           <reference ref="PreviousTab"/>
           <reference ref="PinActiveEditorTab"/>
           <reference ref="KeepTabOpen"/>
           <reference ref="TabList"/>
           <separator/>
-          <group id="CloseEditorsGroup">
+          <group id="CloseEditorsGroup" searchable="false">
             <reference ref="CloseContent"/>
             <reference ref="CloseAllEditorsButActive"/>
             <reference ref="CloseAllEditors"/>
@@ -702,18 +702,18 @@
           <reference ref="ConfigureEditorTabs"/>
         </group>
 
-        <group id="Notifications" popup="true">
+        <group id="Notifications" popup="true" searchable="false">
           <reference ref="CloseFirstNotification"/>
           <reference ref="CloseAllNotifications"/>
         </group>
 
-        <group id="BackgroundTasks" popup="true">
+        <group id="BackgroundTasks" popup="true" searchable="false">
           <reference ref="ShowProcessWindow"/>
           <reference ref="AutoShowProcessWindow"/>
         </group>
 
         <separator/>
-        <group id="OpenProjectWindows">
+        <group id="OpenProjectWindows" searchable="false">
           <reference ref="NextProjectWindow"/>
           <reference ref="PreviousProjectWindow"/>
           <reference ref="MergeAllWindowsAction"/>
@@ -953,8 +953,8 @@
       <reference ref="ShowSettings"/>
       <reference ref="ShowPlugins"/>
 
-      <reference ref="WelcomeScreen.Configure.Import"/>
-      <reference ref="WelcomeScreen.Configure.Export"/>
+      <reference ref="ImportSettings"/>
+      <reference ref="ExportSettings"/>
       <reference ref="RestoreDefaultSettings"/>
 
       <reference ref="CollectZippedLogs"/>
@@ -1064,7 +1064,7 @@
       <separator/>
       <group id="Internal.WorkspaceModel" popup="true"/>
       <separator/>
-      <group id="Internal.Editor" popup="true"/>
+      <group id="Internal.Editor" popup="true" searchable="false"/>
 
       <group id="Internal.UI" internal="true" popup="true">
         <separator/>
@@ -1076,7 +1076,9 @@
       <reference ref="DataSharingOptions"/>
       <separator/>
 
-      <group id="Internal.VFS" popup="true" internal="true"/>
+      <group id="Internal.VFS" popup="true" internal="true">
+        <reference ref="CheckVfsSanity"/>
+      </group>
 
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>

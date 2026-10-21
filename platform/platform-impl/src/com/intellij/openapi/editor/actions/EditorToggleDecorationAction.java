@@ -3,6 +3,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -38,7 +39,12 @@ public abstract class EditorToggleDecorationAction extends ToggleAction implemen
   @Override
   public final void update(@NotNull AnActionEvent e) {
     super.update(e);
+
     e.getPresentation().setEnabled(getEditor(e) != null);
+
+    if (ActionPlaces.ACTION_SEARCH.equals(e.getPlace())) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
   }
 
   @Override

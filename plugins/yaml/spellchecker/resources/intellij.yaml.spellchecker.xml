@@ -1,0 +1,14 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.spellchecker"/>
+    <module name="intellij.yaml"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij.spellchecker">
+    <support language="yaml" id="yaml" implementationClass="com.intellij.yaml.spellchecker.YAMLSpellcheckerStrategy"/>
+  </extensions>
+</idea-plugin>

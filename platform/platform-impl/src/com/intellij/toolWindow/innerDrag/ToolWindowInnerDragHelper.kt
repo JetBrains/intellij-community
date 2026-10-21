@@ -199,10 +199,16 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     }
 
     val content = myDraggingTab!!.content
+    val wasSourceCell = sourceDecorator.mode == InternalDecoratorImpl.Mode.CELL
 
     val shouldUnsplitSourceIfEmpty = when (curLocation) {
       is DropLocation.ToolWindow -> {
-        dropIntoToolWindow(content, sourceDecorator, curLocation.decorator)
+        val targetDecorator = curLocation.decorator
+        val wasTargetSplit = targetDecorator.mode.isSplit
+        dropIntoToolWindow(content, sourceDecorator, targetDecorator)
+        if (!wasTargetSplit && targetDecorator.mode.isSplit) {
+          recordSplitByDrag(sourceDecorator)
+        }
         true
       }
       is DropLocation.Editor -> dropIntoEditor(content, sourceDecorator, curLocation.target)
@@ -210,6 +216,9 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
 
     if (shouldUnsplitSourceIfEmpty) {
       unsplitSourceIfEmpty(sourceDecorator, content)
+    }
+    if (wasSourceCell && sourceDecorator.contentManager.isDisposed) {
+      recordActionByDrag(sourceDecorator.toolWindow, "TW.Unsplit", sourceDecorator)
     }
 
     val toolWindow = sourceDecorator.toolWindow
@@ -283,6 +292,15 @@ internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponen
     if (sourceDecorator.contentManager.isEmpty) {
       sourceDecorator.unsplit(content)
     }
+  }
+
+  private fun recordSplitByDrag(sourceDecorator: InternalDecoratorImpl) {
+    val actionId = when (currentDropSide) {
+      SwingConstants.RIGHT -> "TW.SplitAndMoveRight"
+      SwingConstants.BOTTOM -> "TW.SplitAndMoveDown"
+      else -> return
+    }
+    recordActionByDrag(sourceDecorator.toolWindow, actionId, sourceDecorator)
   }
 
   override fun cancelDragging(): Boolean {

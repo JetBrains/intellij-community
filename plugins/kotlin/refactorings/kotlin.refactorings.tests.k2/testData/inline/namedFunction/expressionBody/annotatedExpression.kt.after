@@ -1,0 +1,9 @@
+@Target(AnnotationTarget.EXPRESSION)
+@Retention(AnnotationRetention.SOURCE)
+annotation class Ann
+
+fun test(a: Int): Int {
+    println("side effect")
+    @Ann
+    return a + 1
+}

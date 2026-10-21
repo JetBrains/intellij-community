@@ -3,16 +3,20 @@ package com.intellij.build.output
 
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.StartId
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.observable.util.setKotlinProperty
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.CoroutineContext
 
 @Internal
 class BuildOutputParserDispatcherImpl(
@@ -26,7 +30,7 @@ class BuildOutputParserDispatcherImpl(
   internal val reader = BuildOutputReplayableLineReaderImpl(linesBufferSize, pushBackBufferSize)
 
   @OptIn(DelicateCoroutinesApi::class)
-  private val coroutineScope = GlobalScope.childScope(name = BuildOutputParserDispatcherImpl::class.java.name, context = Dispatchers.IO)
+  private val coroutineScope = GlobalScope.childScope(BuildOutputParserDispatcherImpl::class.java.name, COROUTINE_CONTEXT ?: Dispatchers.IO)
 
   private val parserAction = coroutineScope.launch {
     try {
@@ -72,7 +76,6 @@ class BuildOutputParserDispatcherImpl(
     parserAction.join()
   }
 
-  @Suppress("RAW_RUN_BLOCKING")
   private class BuildOutputInstantReaderWrapper(
     private val bufferedReader: BuildOutputReplayableLineReader,
     private val parentEventId: StartId,
@@ -83,7 +86,7 @@ class BuildOutputParserDispatcherImpl(
     override fun getParentEventId() = parentEventId
 
     override fun readLine(): String? {
-      val line = runBlocking { bufferedReader.readLine() }
+      val line = runBlockingCancellable { bufferedReader.readLine() }
       if (line != null) linesRead++
       return line
     }
@@ -102,6 +105,13 @@ class BuildOutputParserDispatcherImpl(
   companion object {
 
     private val LOG = logger<BuildOutputInstantReader>()
+
+    private var COROUTINE_CONTEXT: CoroutineContext? = null
+
+    @TestOnly
+    fun setCoroutineContext(coroutineContext: CoroutineContext, parentDisposable: Disposable) {
+      setKotlinProperty(::COROUTINE_CONTEXT, coroutineContext, parentDisposable)
+    }
 
     private fun logException(message: String, exception: Exception) {
       when {

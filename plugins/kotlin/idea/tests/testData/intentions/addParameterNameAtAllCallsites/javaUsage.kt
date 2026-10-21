@@ -1,5 +1,4 @@
-// INTENTION_TEXT: "Add parameter name to all callsites"
-
+// SHOULD_FAIL_WITH: No unnamed arguments to update.
 class C {
     fun foo(s<caret>: String) {}
 }

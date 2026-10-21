@@ -336,6 +336,13 @@ public class PyEvaluatorTest extends PyTestCase {
     assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = TYPE_CHECKING")));
   }
 
+  @TestFor(issues = "PY-87570")
+  public void testAliasedTypingTypeChecking() {
+    // Name resolution uses the control flow and the scopes, and they use this check. Thus, the check cannot resolve `t` to `typing`.
+    assertTrue(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = t.TYPE_CHECKING")));
+    assertNull(PyEvaluator.evaluateAsBooleanNoResolve(parseText("expr = a.b.TYPE_CHECKING")));
+  }
+
   @TestFor(issues="PY-85200")
   public void testBooleanShortCircuit() {
     // `True or <unknown>` is True regardless of the unevaluable operand, like `multidict`'s

@@ -74,6 +74,7 @@ import org.jetbrains.kotlin.lexer.KtTokens.DO_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.DYNAMIC_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.ELSE_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.ENUM_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.ERROR_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.EXPECT_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.FALSE_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.FIELD_KEYWORD
@@ -821,6 +822,7 @@ class KeywordCompletion() {
         val feature = when (keyword) {
             TYPE_ALIAS_KEYWORD -> LanguageFeature.TypeAliases
             ALL_KEYWORD -> LanguageFeature.AnnotationAllUseSiteTarget
+            ERROR_KEYWORD -> LanguageFeature.RichErrors
             EXPECT_KEYWORD, ACTUAL_KEYWORD -> LanguageFeature.MultiPlatformProjects
             SUSPEND_KEYWORD -> LanguageFeature.Coroutines
             FIELD_KEYWORD -> {

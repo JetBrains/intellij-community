@@ -18,6 +18,7 @@ import com.intellij.platform.project.projectId
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneModel
 import com.intellij.platform.projectView.frontend.pane.PureUiProjectViewPaneProvider
+import com.intellij.platform.projectView.frontend.pane.RestorePaneStateOptions
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
 import com.intellij.platform.projectView.pane.projectViewPaneId
@@ -130,5 +131,5 @@ internal class FrontendWelcomeScreenLeftPanel(
     return false
   }
 
-  override fun restoreStateFrom(element: Element?) { }
+  override fun restoreStateFrom(element: Element?, options: RestorePaneStateOptions) { }
 }

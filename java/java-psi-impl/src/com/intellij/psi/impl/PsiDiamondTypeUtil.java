@@ -54,11 +54,6 @@ import java.util.List;
 public final class PsiDiamondTypeUtil {
   private static final Logger LOG = Logger.getInstance(PsiDiamondTypeUtil.class);
 
-  /**
-   * Limits the walk of {@link #changesNullability}, so that a recursive generic type cannot make it loop.
-   */
-  private static final int MAX_NULLABILITY_CHECK_DEPTH = 10;
-
   private PsiDiamondTypeUtil() {
   }
 
@@ -373,11 +368,6 @@ public final class PsiDiamondTypeUtil {
    * @return true if the explicit type argument specifies a nullability that differs from the inferred one
    */
   private static boolean changesNullability(@NotNull PsiType typeArgument, @NotNull PsiType inferredType) {
-    return changesNullability(typeArgument, inferredType, 0);
-  }
-
-  private static boolean changesNullability(@NotNull PsiType typeArgument, @NotNull PsiType inferredType, int depth) {
-    if (depth > MAX_NULLABILITY_CHECK_DEPTH) return false;
     Nullability nullability = typeArgument.getNullability().nullability();
     Nullability inferredNullability = inferredType.getNullability().nullability();
     if (nullability != Nullability.UNKNOWN && inferredNullability != Nullability.UNKNOWN && nullability != inferredNullability) {
@@ -385,7 +375,7 @@ public final class PsiDiamondTypeUtil {
     }
     if (typeArgument instanceof PsiArrayType && inferredType instanceof PsiArrayType) {
       return changesNullability(((PsiArrayType)typeArgument).getComponentType(),
-                                ((PsiArrayType)inferredType).getComponentType(), depth + 1);
+                                ((PsiArrayType)inferredType).getComponentType());
     }
     // A wildcard needs no branch of its own: PsiWildcardType#getNullability already reports the nullability of an
     // `extends` bound, and a type argument that contains a wildcard does not reach here anyway, as capture conversion
@@ -395,7 +385,7 @@ public final class PsiDiamondTypeUtil {
       PsiType[] inferredParameters = ((PsiClassType)inferredType).getParameters();
       if (parameters.length != inferredParameters.length) return false;
       for (int i = 0; i < parameters.length; i++) {
-        if (changesNullability(parameters[i], inferredParameters[i], depth + 1)) return true;
+        if (changesNullability(parameters[i], inferredParameters[i])) return true;
       }
     }
     return false;

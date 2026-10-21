@@ -7,6 +7,7 @@ import com.intellij.ide.rpc.dataContextWithDiagnostics
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.client.currentSessionOrNull
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -26,9 +27,9 @@ import com.intellij.platform.searchEverywhere.SeTransferEnd
 import com.intellij.platform.searchEverywhere.SeTransferEvent
 import com.intellij.platform.searchEverywhere.SeTransferItem
 import com.intellij.platform.searchEverywhere.SeTransferSkippedItem
-import com.intellij.platform.searchEverywhere.asRef
 import com.intellij.platform.searchEverywhere.equalityProviders.SeEqualityChecker
 import com.intellij.platform.searchEverywhere.impl.SeFindToolWindowManager
+import com.intellij.platform.searchEverywhere.impl.SeItemRegistry
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.SeLegacyContributorsRegistry
 import com.intellij.platform.searchEverywhere.providers.SeLog
@@ -41,9 +42,6 @@ import com.intellij.platform.searchEverywhere.providers.isPreviewEnabled
 import com.intellij.platform.searchEverywhere.providers.target.SeTypeVisibilityStatePresentation
 import com.intellij.platform.searchEverywhere.toProviderId
 import com.intellij.platform.searchEverywhere.utils.SeResultsCountBalancer
-import com.jetbrains.rhizomedb.EID
-import fleet.kernel.onDispose
-import fleet.kernel.rete.Rete
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -72,8 +70,29 @@ import java.util.concurrent.ConcurrentHashMap
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class SeBackendService(val project: Project, private val coroutineScope: CoroutineScope) {
-  private val sessionIdToProviderHolders: ConcurrentHashMap<EID, SeProvidersHolder> = ConcurrentHashMap()
+  private val sessionIdToProviderHolders: ConcurrentHashMap<String, SeProvidersHolder> = ConcurrentHashMap()
+
+  private val sessions = SeBackendSessions { session ->
+    SeItemRegistry.getInstance().closeSession(session)
+    sessionIdToProviderHolders.remove(session.id)?.let(Disposer::dispose)
+  }
+
+  private fun getCachedProviderOrNull(session: SeSession): SeProvidersHolder? {
+    if (!sessions.isOpen(session)) return null
+    return sessionIdToProviderHolders[session.id]
+  }
+
   private val mutex: Mutex = Mutex()
+
+  suspend fun closeSession(session: SeSession): Unit = sessions.close(session)
+
+  /**
+   * Returns the scope of a session of the client of [com.intellij.codeWithMe.ClientId.current].
+   * The scope ends when the client project session ends.
+   */
+  private fun clientScope(): CoroutineScope {
+    return project.currentSessionOrNull?.service<SeClientSessionScope>()?.coroutineScope ?: coroutineScope
+  }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   suspend fun getItems(
@@ -153,9 +172,7 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
   }
 
   fun tryGetProvider(id: SeProviderId, isAllTab: Boolean, session: SeSession): SeItemsProvider? {
-    return session.asRef().derefOrNull()?.eid?.let {
-      sessionIdToProviderHolders[it]?.get(id, isAllTab)?.provider
-    }
+    return getCachedProviderOrNull(session)?.get(id, isAllTab)?.provider
   }
 
   private suspend fun getProvidersHolder(
@@ -163,13 +180,16 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
     dataContextId: DataContextId?,
   ): SeProvidersHolder? =
     mutex.withLock {
-      val sessionEntity = session.asRef().derefOrNull() ?: return@withLock null
-      sessionIdToProviderHolders[sessionEntity.eid]?.let { return@withLock it }
+      getCachedProviderOrNull(session)?.let { return@withLock it }
+      if (sessions.isClosed(session)) return@withLock null
 
       if (dataContextId == null) {
         SeLog.error("Cannot create providers on the backend: no serialized data context")
         return@withLock null
       }
+
+      // The first call that needs the providers opens the session.
+      if (!sessions.openIfNotClosed(session, clientScope())) return@withLock null
 
       val dataContextResolution = withContext(Dispatchers.EDT) {
         dataContextId.dataContextWithDiagnostics()
@@ -186,12 +206,16 @@ class SeBackendService(val project: Project, private val coroutineScope: Corouti
         Disposer.dispose(providersHolder)
         return@withLock null
       }
-      sessionIdToProviderHolders[sessionEntity.eid] = providersHolder
+      sessionIdToProviderHolders[session.id] = providersHolder
       SeLegacyContributorsRegistry.getInstance().register(session, providersHolder.legacyContributors, providersHolder)
 
-      sessionEntity.onDispose(coroutineScope.coroutineContext[Rete]!!) {
-        Disposer.dispose(providersHolder)
-        sessionIdToProviderHolders.remove(sessionEntity.eid)
+      // The session can close during the suspensions above.
+      // Only one of the close and this check removes the holder, so only one disposes it.
+      if (!sessions.isOpen(session)) {
+        if (sessionIdToProviderHolders.remove(session.id, providersHolder)) {
+          Disposer.dispose(providersHolder)
+        }
+        return@withLock null
       }
 
       return@withLock providersHolder

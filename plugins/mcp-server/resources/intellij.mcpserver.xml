@@ -1,21 +1,19 @@
 <idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="intellij.libraries.kotlinx.io"/>
-    <module name="intellij.libraries.ktor.client"/>
-    <module name="intellij.libraries.ktor.io"/>
     <module name="intellij.libraries.ktor.network.tls"/>
     <module name="intellij.libraries.ktor.server.cio"/>
     <module name="intellij.libraries.ktor.client.cio"/>
-    <module name="fleet.rhizomedb"/>
-    <module name="fleet.rhizomedb.transactor"/>
     <module name="intellij.libraries.gson"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.kotlin.logging"/>
     <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.io"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.ktor.client"/>
+    <module name="intellij.libraries.ktor.io"/>
     <module name="intellij.libraries.ktor.server.content.negotiation"/>
     <module name="intellij.libraries.ktor.server.sse"/>
     <module name="intellij.libraries.mcp.kotlin.sdk"/>
@@ -60,6 +58,7 @@
     <extensionPoint qualifiedName="com.intellij.mcpServer.elicitationProvider" interface="com.intellij.mcpserver.elicitation.McpElicitationProvider" dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.mcpServer.freshInstallPolicy" interface="com.intellij.mcpserver.McpServerFreshInstallPolicy" dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.mcpServer.projectDependenciesProvider" interface="com.intellij.mcpserver.McpProjectDependenciesProvider" dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.mcpServer.lintFilesPreparer" interface="com.intellij.mcpserver.McpLintFilesPreparer" dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.mcpServer.statusBarWidgetProvider" interface="com.intellij.mcpserver.widget.McpServerStatusBarWidgetProvider" dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.mcpServer.mcpCallOwnerTelemetryProvider" interface="com.intellij.mcpserver.McpCallOwnerTelemetryProvider" dynamic="true" />
     <extensionPoint qualifiedName="com.intellij.mcpServer.missingImportProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
@@ -86,6 +85,7 @@
       notificationIds="mcp.client.detected;mcp.client.autoconfigured;mcp.client.error.autoconfigured;mcp.client.wrong.port.detected"/>
 
     <mcpServer.mcpToolsProvider implementation="com.intellij.mcpserver.impl.ReflectionToolsProvider" />
+    <mcpServer.elicitationProvider implementation="com.intellij.mcpserver.elicitation.McpAirChatElicitationProvider" />
     <mcpServer.elicitationProvider implementation="com.intellij.mcpserver.elicitation.McpElicitationCliProvider" />
     <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.DisallowListBasedMcpToolFilterProvider" />
     <mcpServer.mcpToolFilterProvider implementation="com.intellij.mcpserver.impl.SettingsBasedMcpToolFilterProvider" />
@@ -112,6 +112,9 @@
     <registryKey defaultValue="1000"
                  description="Throttle interval in milliseconds for MCP progress notifications and keep-alives"
                  key="mcp.server.progress.notification.interval.ms"/>
+    <registryKey defaultValue="300"
+                 description="How long, in seconds, the MCP server waits for the user to answer an elicitation form"
+                 key="mcp.server.elicitation.timeout.seconds"/>
     <registryKey defaultValue="300000"
                  description="Idle time in milliseconds after which an abandoned MCP Streamable HTTP session is closed"
                  key="mcp.server.streamable.session.idle.timeout.ms"/>

@@ -359,7 +359,8 @@ public class FileReferenceSet implements FileReferenceSetParameters {
 
   protected @NotNull Collection<PsiFileSystemItem> getContextByFileSystemItem(@NotNull PsiFileSystemItem file) {
     VirtualFile virtualFile = file.getVirtualFile();
-    if (virtualFile != null && FileBasedIndex.getInstance().getFileBeingCurrentlyIndexed() == null) {
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    if (virtualFile != null && (fileBasedIndex == null || fileBasedIndex.getFileBeingCurrentlyIndexed() == null)) {
       final FileReferenceHelper[] helpers = FileReferenceHelperRegistrar.getHelpers();
       final Collection<PsiFileSystemItem> result = new SmartList<>();
       final Project project = file.getProject();

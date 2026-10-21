@@ -361,7 +361,7 @@ fn measure(files: &RunFiles) -> RunTime {
     let mut cases: Vec<CaseTime> = Vec::new();
     let mut classes: BTreeMap<String, f64> = BTreeMap::new();
     for (_, report) in &files.reports {
-        for case in report.suites.iter().flat_map(|suite| &suite.cases) {
+        for case in &report.cases {
             *classes.entry(case.class_name.clone()).or_default() += case.duration_ms;
             cases.push(CaseTime {
                 class_name: case.class_name.clone(),

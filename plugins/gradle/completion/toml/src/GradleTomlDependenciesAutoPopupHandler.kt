@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 import org.toml.lang.TomlLanguage
 
+@Suppress("SplitModeApiUsage") // todo split plugin debt
 internal class GradleTomlDependenciesAutoPopupHandler : TypedHandlerDelegate() {
   override fun checkAutoPopup(charTyped: Char, project: Project, editor: Editor, file: PsiFile): Result {
     if (!useDependencyCompletionService()) return Result.CONTINUE

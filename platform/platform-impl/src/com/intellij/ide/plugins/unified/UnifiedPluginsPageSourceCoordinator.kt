@@ -648,6 +648,7 @@ internal fun mergePluginListModelData(
   return PluginListModelData(
     installedModels = remote.installedModels + local.installedModels,
     errors = remote.errors + local.errors,
+    expectedExplanations = remote.expectedExplanations + local.expectedExplanations,
     installationStates = remote.installationStates + local.installationStates,
     updateSources = remote.updateSources + local.updateSources,
   )
@@ -676,7 +677,7 @@ private fun filterPluginItems(
       (!parser.updatedBundled || model.isBundledUpdate) &&
       (!parser.userInstalled || !model.isBundled && !model.isBundledUpdate) &&
       (!parser.invalid || input?.errors?.isNotEmpty() == true) &&
-      (!parser.needUpdate || input?.updateDescriptor != null) &&
+      (!parser.needUpdate || input?.enabled == true && input.updateDescriptor != null) &&
       (parser.updateSources.isEmpty() ||
        (parser.updateSources.contains(item.updateSourceId.getPresentableName()) &&
         input?.installedPlugin?.isUpdateable == true))

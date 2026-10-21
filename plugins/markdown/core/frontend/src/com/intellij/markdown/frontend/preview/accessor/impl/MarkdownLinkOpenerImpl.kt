@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.project.findProject
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -33,9 +34,11 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.dto.MarkdownHeaderInfo
 import org.intellij.plugins.markdown.dto.MarkdownLinkNavigationData
 import org.intellij.plugins.markdown.lang.isMarkdownType
+import org.intellij.plugins.markdown.service.MarkdownLinkNavigationResolver
 import org.intellij.plugins.markdown.service.MarkdownLinkOpenerRemoteApi
 import org.intellij.plugins.markdown.settings.DocumentLinksSafeState
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewPathResolver
 import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
 import org.intellij.plugins.markdown.util.MarkdownDisposable
 import org.intellij.plugins.markdown.util.MarkdownLinkFragmentUtil
@@ -52,13 +55,17 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
       val remoteApi = MarkdownLinkOpenerRemoteApi.tryGetInstance()
       val data = when {
         remoteApi != null -> remoteApi.fetchLinkNavigationData(link, containingFile?.rpcId())
+        // A light process has no remote API provider and no backend to await, so it resolves the link itself.
+        IdeProductMode.getInstance().currentMode.isLightWithoutRemoteApi -> {
+          MarkdownLinkNavigationResolver.resolve(link, containingFile, MarkdownLinkNavigationResolver::collectHeadersFromPsi)
+        }
         else -> MarkdownLinkNavigationData(link, null, null, null)
       }
 
       val uri = MarkdownLinkOpenerUtil.createUri(data.uri) ?: return@launch
       if (uri.scheme != "file") {
         // An unresolved local file path must not fall through to the external browser.
-        if (isLocalFilePathLink(link)) {
+        if (isLocalFilePathLink(link, containingFile != null)) {
           return@launch
         }
         openExternalLink(currentProject, uri)
@@ -196,10 +203,17 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
     private val logger = logger<MarkdownLinkOpenerImpl>()
 
     /**
-     * True when [link] is written as an explicit local filesystem path (absolute or relative),
-     * which a real web URL never is. Used to avoid opening unresolved local paths in the browser.
+     * Returns true for a local path that must not open in the browser.
+     * When [hasContainingFile] is true, a link without an external scheme or a `//` prefix stays local.
+     * Otherwise, only explicit local paths match.
      */
-    private fun isLocalFilePathLink(link: String): Boolean {
+    internal fun isLocalFilePathLink(link: String, hasContainingFile: Boolean): Boolean {
+      if (MarkdownPreviewPathResolver.isBrowserOwned(link)) {
+        return false
+      }
+      if (hasContainingFile) {
+        return true
+      }
       return link.startsWith("/") ||
              link.startsWith("./") ||
              link.startsWith("../") ||

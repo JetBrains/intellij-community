@@ -14,24 +14,39 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.impl.BundledColorSchemeEPName
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
 
 private class LafAndEditorColorSchemeDynamicPluginListener : DynamicPluginListener {
+  override fun beforePluginsLoaded() {
+    forceLafDynamicPluginManagerCreation()
+  }
+
   override fun pluginsLoaded() {
     service<LafDynamicPluginManager>().pluginsLoaded()
+  }
+
+  override fun beforePluginsUnloaded() {
+    forceLafDynamicPluginManagerCreation()
   }
 
   override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
     service<LafDynamicPluginManager>().beforePluginUnload(isUpdate)
   }
 
-  override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+  override fun pluginsUnloaded() {
     service<LafDynamicPluginManager>().reloadColorSchemesAndApplyScheduledLaF()
+  }
+
+  // creates the service before the plugins register their extensions, so that its extension point listeners see them
+  private fun forceLafDynamicPluginManagerCreation() {
+    service<LafDynamicPluginManager>()
   }
 }
 
@@ -43,11 +58,20 @@ internal class LafDynamicPluginManager(private val coroutineScope: CoroutineScop
   // access only from EDT
   private var scheduledLaF: UIThemeLookAndFeelInfo? = null
 
+  private val isColorSchemesReloadRequested = AtomicBoolean()
+
+  init {
+    UIThemeProvider.EP_NAME.addExtensionPointListener(coroutineScope, ColorSchemesReloadRequester())
+    BundledColorSchemeEPName.addExtensionPointListener(coroutineScope, ColorSchemesReloadRequester())
+  }
+
   @RequiresEdt
   fun reloadColorSchemesAndApplyScheduledLaF() {
-    serviceIfCreated<EditorColorsManager>()?.let { manager ->
-      runWriteAction {
-        manager.reloadKeepingActiveScheme()
+    if (isColorSchemesReloadRequested.getAndSet(false)) {
+      serviceIfCreated<EditorColorsManager>()?.let { manager ->
+        runWriteAction {
+          manager.reloadKeepingActiveScheme()
+        }
       }
     }
     applyScheduledLaF()
@@ -105,5 +129,15 @@ internal class LafDynamicPluginManager(private val coroutineScope: CoroutineScop
   fun beforePluginUnload(isUpdate: Boolean) {
     isUpdatingPlugin = isUpdate
     themeIdBeforePluginUpdate = LafManager.getInstance().currentUIThemeLookAndFeel?.id
+  }
+
+  private inner class ColorSchemesReloadRequester<T> : ExtensionPointListener<T> {
+    override fun extensionAdded(extension: T, pluginDescriptor: PluginDescriptor) {
+      isColorSchemesReloadRequested.set(true)
+    }
+
+    override fun extensionRemoved(extension: T, pluginDescriptor: PluginDescriptor) {
+      isColorSchemesReloadRequested.set(true)
+    }
   }
 }

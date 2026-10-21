@@ -8,6 +8,8 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 data object LocalEelMachine : EelMachine {
+  override val isConnected: Boolean = true
+
   override val internalName: String = "Local"
 
   override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {

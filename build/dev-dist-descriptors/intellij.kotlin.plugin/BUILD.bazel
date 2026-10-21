@@ -294,7 +294,6 @@ dev_dist_plugin_descriptor(
             "intellij.kotlin.codeInsight.overrideImplement",
             "intellij.kotlin.projectConfiguration",
             "intellij.kotlin.compilerPlugins.parcelize",
-            "intellij.kotlin.spellchecker",
             "intellij.kotlin.uast.base",
             "intellij.kotlin.uast.idea.base",
             "intellij.kotlin.uast",

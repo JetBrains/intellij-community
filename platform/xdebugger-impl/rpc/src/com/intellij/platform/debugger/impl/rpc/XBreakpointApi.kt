@@ -10,6 +10,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
+import com.intellij.xdebugger.breakpoints.XDataBreakpointAccessType
+import com.intellij.xdebugger.breakpoints.XDataBreakpointHitCountMode
+import com.intellij.xdebugger.breakpoints.XDataBreakpointLifetime
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import fleet.rpc.RemoteApi
@@ -53,6 +56,12 @@ interface XBreakpointApi : RemoteApi<Unit> {
   suspend fun setFileUrl(breakpointId: XBreakpointId, requestId: Long, fileUrl: String?)
 
   suspend fun setPlacement(breakpointId: XBreakpointId, requestId: Long, placement: XLineBreakpointVerticalPlacement)
+
+  suspend fun setDataBreakpointAccessType(breakpointId: XBreakpointId, requestId: Long, accessType: XDataBreakpointAccessType?)
+
+  suspend fun setDataBreakpointLifetime(breakpointId: XBreakpointId, requestId: Long, lifetime: XDataBreakpointLifetime?)
+
+  suspend fun setDataBreakpointHitCount(breakpointId: XBreakpointId, requestId: Long, enabled: Boolean, mode: XDataBreakpointHitCountMode, value: Int)
 
   /**
    * Returns `true` on success, `false` if the request should be retried later due to version mismatch.
@@ -111,6 +120,7 @@ data class XBreakpointDtoState(
   val tooltipDescription: String,
   val timestamp: Long,
   val lineBreakpointInfo: XLineBreakpointInfo?,
+  val dataBreakpointInfo: XDataBreakpointInfo?,
   val requestId: Long,
   val hasCustomCondition: Boolean,
 )
@@ -123,6 +133,19 @@ data class XLineBreakpointInfo(
   val placement: XLineBreakpointVerticalPlacement,
   val highlightingRange: TextRangeDto?,
   val file: VirtualFileId?,
+)
+
+@ApiStatus.Internal
+@Serializable
+data class XDataBreakpointInfo(
+  val expressionPresentation: @NlsSafe String?,
+  val sizeBytes: Int?,
+  val registrationError: @NlsSafe String?,
+  val accessType: XDataBreakpointAccessType?,
+  val lifetime: XDataBreakpointLifetime?,
+  val hitCountEnabled: Boolean,
+  val hitCountMode: XDataBreakpointHitCountMode,
+  val hitCountValue: Int,
 )
 
 @ApiStatus.Internal

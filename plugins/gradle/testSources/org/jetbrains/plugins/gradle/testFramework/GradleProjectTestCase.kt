@@ -78,7 +78,7 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
     return file
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   private fun VirtualFile.writeTextAndCommit(text: String) {
     findDocument()?.reloadFromDisk()
     writeText(text)

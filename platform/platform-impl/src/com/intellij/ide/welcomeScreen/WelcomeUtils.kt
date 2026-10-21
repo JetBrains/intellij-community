@@ -80,7 +80,7 @@ object WelcomeUtils {
 
   fun getWelcomeProjectIcon(project: Project): Icon? {
     if (WelcomeAccessPoint.isAvailable() && isWelcomeProject(project)) {
-      return AllIcons.Nodes.HomeFolder
+      return AllIcons.General.Home
     }
     return null
   }

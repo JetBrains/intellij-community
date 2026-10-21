@@ -85,8 +85,7 @@ pub(crate) struct ServeArgs {
     /// Another directory or zip to find bundles in; repeatable.
     #[arg(long = "root", value_name = "DIR")]
     pub roots: Vec<PathBuf>,
-    /// Look only in the --root values, not in out/air-traces, the AIR lanes' bazel-testlogs and the VM runs and
-    /// reports.
+    /// Look only in the --root values, not in the AIR lanes' bazel-testlogs and the VM runs and reports.
     #[arg(long)]
     pub no_default_roots: bool,
     /// Make sure a server answers on the port, starting one in the background when none does, then exit.
@@ -325,6 +324,7 @@ pub(crate) async fn serve(args: ServeArgs, program: &DetachProgram, context: Con
     settings.site_dir = args.site.clone().or_else(|| Some(repo.as_ref()?.join("out").join("air-site")));
     if args.site.is_none() {
         settings.site_project = repo.as_ref().map(|repo| repo.join("plugins").join("air").join("docs"));
+        settings.site_kernel = repo.as_ref().map(|repo| repo.join("community").join("tools").join("docs-site"));
     }
     settings.repo_root = repo;
     if !args.no_default_roots

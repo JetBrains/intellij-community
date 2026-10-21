@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger
 
+import com.intellij.execution.ProgramRunnerUtil
+import com.intellij.execution.RunManager
+import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.ReportFeedbackService
@@ -13,53 +16,50 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.ExecutionDataKeys
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.toolWindow.InternalDecoratorImpl
-import com.intellij.execution.ProgramRunnerUtil
-import com.intellij.execution.RunManager
-import com.intellij.execution.executors.DefaultDebugExecutor
-import com.intellij.openapi.actionSystem.ExecutionDataKeys
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.ui.MessageDialogBuilder
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
-import com.jetbrains.python.PyBundle
-import com.jetbrains.python.run.AbstractPythonRunConfiguration
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.intellij.ui.ColorUtil
-import com.intellij.util.ui.JBUI
-import com.jetbrains.python.sdk.findPythonSdk
-import kotlinx.coroutines.launch
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
 import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.python.pyproject.model.evolution.evoPyProjects
+import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.toolWindow.InternalDecoratorImpl
+import com.intellij.ui.ColorUtil
+import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.icons.PythonIcons
+import com.jetbrains.python.run.AbstractPythonRunConfiguration
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.mainPythonInterpreterIfReady
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.lang.ref.WeakReference
-import java.util.concurrent.ConcurrentHashMap
 import java.net.URLEncoder
+import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
@@ -314,11 +314,13 @@ private fun isPythonDebugTab(e: AnActionEvent): Boolean {
 }
 
 /**
- * Returns the SDK of the currently selected run configuration, falling back to the project SDK.
+ * Returns the SDK of the currently selected run configuration, falling back to the interpreter of the main Python
+ * project. The debugger settings and actions ask this after startup, when the project structure has loaded.
  */
+@Suppress("DEPRECATION") // The debugger backends still take an SDK.
 internal fun getEffectiveSdk(project: Project): Sdk? =
   (RunManager.getInstance(project).selectedConfiguration?.configuration as? AbstractPythonRunConfiguration<*>)?.sdk
-  ?: ProjectRootManager.getInstance(project).projectSdk
+  ?: project.mainPythonInterpreterIfReady()?.getSdkAPI()
 
 @ApiStatus.Internal
 fun installPythonDapPlugin(project: Project, onLoaded: Runnable? = null) {
@@ -528,13 +530,9 @@ fun isDebugpyAvailableInProject(project: Project): Boolean {
   val configSdk = (RunManager.getInstance(project).selectedConfiguration?.configuration as? AbstractPythonRunConfiguration<*>)?.sdk
   if (configSdk != null) return isDebugpyAvailableForSdk(configSdk, project)
 
-  val supportingModuleExists = runBlockingCancellable {
-    ModuleManager.getInstance(project).modules.any {
-      it.findPythonSdk()?.let { sdk -> isDebugpyAvailableForSdk(sdk, project) } ?: false
-    }
+  // Every interpreter belongs to a Python project, so the interpreters of the snapshot cover them all.
+  @Suppress("DEPRECATION") // The debugpy check still takes an SDK.
+  return runBlockingCancellable {
+    project.evoPyProjects().any { it.interpreter?.let { interpreter -> isDebugpyAvailableForSdk(interpreter.getSdkAPI(), project) } ?: false }
   }
-  if (supportingModuleExists) return true
-
-  val projectInterpreter = ProjectRootManager.getInstance(project).projectSdk
-  return projectInterpreter != null && isDebugpyAvailableForSdk(projectInterpreter, project)
 }

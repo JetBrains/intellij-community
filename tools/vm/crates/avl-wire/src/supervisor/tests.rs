@@ -244,7 +244,7 @@ fn the_controller_reads_every_envelope_the_agent_writes() {
     assert!(received.error.is_none());
 
     let written = serde_json::to_string(&Envelope::<()>::failure(
-        AgentVerb::Stage.as_str(),
+        AgentVerb::RunfilesTree.as_str(),
         EnvelopeError {
             code: USAGE_CODE.to_owned(),
             message: "no such verb".to_owned(),
@@ -253,7 +253,7 @@ fn the_controller_reads_every_envelope_the_agent_writes() {
     ))
     .unwrap();
     let received = ReceivedEnvelope::read(&written).unwrap();
-    assert_eq!((received.ok, received.command.as_str()), (false, "stage"));
+    assert_eq!((received.ok, received.command.as_str()), (false, "runfiles-tree"));
     let error = received.error.unwrap();
     assert_eq!((error.code.as_str(), error.message.as_str()), (USAGE_CODE, "no such verb"));
     assert!(received.data.is_none());

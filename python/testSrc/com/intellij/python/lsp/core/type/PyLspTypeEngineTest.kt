@@ -15,6 +15,7 @@ import com.intellij.python.lsp.core.fakePyToolClient
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.types.PyType
@@ -44,14 +45,14 @@ internal class PyLspTypeEngineTest {
 
   @Test
   fun `an element of a served module is supported`() = runBlocking {
-    val engine = engineServing(mainPyProject.get().residesOnModule)
+    val engine = engineServing(mainPyProject.get())
 
     assertTrue(engine.supports(referenceIn(mainPath.get())))
   }
 
   @Test
   fun `an element of a module the server does not serve is not supported`() = runBlocking {
-    val engine = engineServing(mainPyProject.get().residesOnModule)
+    val engine = engineServing(mainPyProject.get())
     secondPyProject.get().residesOnModule
 
     assertFalse(engine.supports(referenceIn(secondPath.get())))
@@ -59,7 +60,7 @@ internal class PyLspTypeEngineTest {
 
   @Test
   fun `one server that serves both modules answers for both`() = runBlocking {
-    val engine = engineServing(mainPyProject.get().residesOnModule, secondPyProject.get().residesOnModule)
+    val engine = engineServing(mainPyProject.get(), secondPyProject.get())
 
     assertTrue(engine.supports(referenceIn(mainPath.get())))
     assertTrue(engine.supports(referenceIn(secondPath.get())))
@@ -67,7 +68,7 @@ internal class PyLspTypeEngineTest {
 
   @Test
   fun `the answer does not change when it is asked twice`() = runBlocking {
-    val engine = engineServing(mainPyProject.get().residesOnModule)
+    val engine = engineServing(mainPyProject.get())
     secondPyProject.get().residesOnModule
     val ownReference = referenceIn(mainPath.get())
     val otherReference = referenceIn(secondPath.get())
@@ -80,7 +81,7 @@ internal class PyLspTypeEngineTest {
 
   @Test
   fun `an element of no module is supported`() = runBlocking {
-    val engine = engineServing(mainPyProject.get().residesOnModule)
+    val engine = engineServing(mainPyProject.get())
     secondPyProject.get().residesOnModule
 
     assertTrue(engine.supports(referenceIn(outsidePath.get())))
@@ -94,7 +95,7 @@ internal class PyLspTypeEngineTest {
   @Test
   @TestFor(issues = ["PY-92008", "PY-92254"])
   fun `an engine behind a stopped server is not ready`() = runBlocking {
-    val stopped = fakePyToolClient(mainPyProject.get().residesOnModule, serverState = LspServerState.ShutdownNormally)
+    val stopped = fakePyToolClient(mainPyProject.get(), serverState = LspServerState.ShutdownNormally)
     val engine = FakeLspTypeEngine(mainPyProject.get().residesOnModule, stopped)
 
     assertFalse(engine.isReady)
@@ -108,7 +109,7 @@ internal class PyLspTypeEngineTest {
   @Test
   @TestFor(issues = ["PY-92008", "PY-92254"])
   fun `an engine behind an initializing server is not ready`() = runBlocking {
-    val initializing = fakePyToolClient(mainPyProject.get().residesOnModule, serverState = LspServerState.Initializing)
+    val initializing = fakePyToolClient(mainPyProject.get(), serverState = LspServerState.Initializing)
     val engine = FakeLspTypeEngine(mainPyProject.get().residesOnModule, initializing)
 
     assertFalse(engine.isReady)
@@ -119,9 +120,9 @@ internal class PyLspTypeEngineTest {
   private suspend fun PyLspTypeEngine.supports(element: PyTypedElement): Boolean =
     readAction { isSupportedForResolve(element) }
 
-  /** An engine for the first of [servedModules], behind a server that answers for all of them. */
-  private fun engineServing(vararg servedModules: Module): FakeLspTypeEngine =
-    FakeLspTypeEngine(servedModules.first(), fakePyToolClient(*servedModules))
+  /** An engine for the first of [servedProjects], behind a server that answers for all of them. */
+  private fun engineServing(vararg servedProjects: PyProject): FakeLspTypeEngine =
+    FakeLspTypeEngine(servedProjects.first().residesOnModule, fakePyToolClient(*servedProjects))
 
   /** A `PyReferenceExpression` in a new `main.py` under [directory]. [LspIsSupportedTypesVisitor] accepts it. */
   private suspend fun referenceIn(directory: Path): PyReferenceExpression {

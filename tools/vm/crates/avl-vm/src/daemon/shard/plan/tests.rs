@@ -313,8 +313,9 @@ fn two_equally_loaded_bins_are_ordered_by_their_first_class_name() {
 fn a_shards_selection_carries_the_lanes_own_filters_and_names_itself() {
     let base = RunSelection {
         selectors: Vec::new(),
-        junit5_filters: vec!["include-tag=air-flow-ui".to_owned()],
+        junit5_filters: vec!["exclude-package=com.example.slow".to_owned()],
         description: "lane ui".to_owned(),
+        lane: Some("ui".to_owned()),
     };
     let include = shard_selection(
         &base,
@@ -330,7 +331,7 @@ fn a_shards_selection_carries_the_lanes_own_filters_and_names_itself() {
     // The lane's filters come first and the shard's after.
     assert_eq!(
         include.junit5_filters,
-        ["include-tag=air-flow-ui", "include-classname=x", "include-classname=y"]
+        ["exclude-package=com.example.slow", "include-classname=x", "include-classname=y"]
     );
     assert_eq!(include.description, "lane ui — shard 1/2 (2 class(es))");
     let remainder = shard_selection(

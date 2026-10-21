@@ -4,15 +4,11 @@ package com.jetbrains.python.console
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.allure.Layers
 
-import com.intellij.lang.LanguageASTFactory
 import com.intellij.openapi.application.PathManager
-import com.intellij.testFramework.ParsingTestCase
-import com.jetbrains.python.PyLanguageFacade
-import com.jetbrains.python.PyLanguageFacadeImpl
-import com.jetbrains.python.PythonDialectsTokenSetContributor
-import com.jetbrains.python.PythonLanguage
-import com.jetbrains.python.PythonTokenSetContributor
-import com.jetbrains.python.psi.impl.PythonASTFactory
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.parsingFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
 /**
  * Test parsing that is specific for IPython console.
@@ -22,73 +18,95 @@ import com.jetbrains.python.psi.impl.PythonASTFactory
  */
 @Subsystems.PythonConsole
 @Layers.Functional
-class IPythonConsoleParsingTest : ParsingTestCase(
-  "psi",
-  "py",
-  true,
-  PyConsoleParsingDefinition(true)
-) {
-
-  override fun setUp() {
-    super.setUp()
-    application.registerService(PyLanguageFacade::class.java, PyLanguageFacadeImpl())
-    registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor::class.java)
-    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, PythonTokenSetContributor())
-    addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), PythonASTFactory())
+@TestApplication
+class IPythonConsoleParsingTest {
+  companion object {
+    private val projectFixture = projectFixture()
   }
 
-  override fun getTestDataPath() = "${PathManager.getHomePath()}/community/python/testData/console/ipython"
+  private val parsing by parsingFixture(
+    projectFixture,
+    "${PathManager.getHomePath()}/community/python/testData/console/ipython/psi",
+    "py",
+    true,
+    PyConsoleParsingDefinition(true)
+  )
 
+  @Test
   fun testHelp1() = doTestInternal()
 
+  @Test
   fun testHelp2() = doTestInternal()
 
+  @Test
   fun testHelp3() = doTestInternal()
 
+  @Test
   fun testHelpObjectPrefix() = doTestInternal()
 
+  @Test
   fun testHelpObjectSuffix() = doTestInternal()
 
+  @Test
   fun testHelpObjectVerbosePrefix() = doTestInternal()
 
+  @Test
   fun testHelpObjectVerboseSuffix() = doTestInternal()
 
+  @Test
   fun testHelpWildcards() = doTestInternal()
 
+  @Test
   fun testHelpError() = doTestInternal(false)
 
+  @Test
   fun testShell1() = doTestInternal()
 
+  @Test
   fun testShell2() = doTestInternal()
 
+  @Test
   fun testShell3() = doTestInternal()
 
+  @Test
   fun testShell4() = doTestInternal()
 
+  @Test
   fun testShell5() = doTestInternal()
 
+  @Test
   fun testShell6() = doTestInternal()
 
+  @Test
   fun testShellAssignment1() = doTestInternal()
 
+  @Test
   fun testShellAssignment2() = doTestInternal()
 
+  @Test
   fun testShellExpansion() = doTestInternal()
 
+  @Test
   fun testShellError() = doTestInternal(false)
 
+  @Test
   fun testMagic1() = doTestInternal()
 
+  @Test
   fun testMagic2() = doTestInternal()
 
+  @Test
   fun testMagic3() = doTestInternal()
 
+  @Test
   fun testMagicAssignment() = doTestInternal()
 
+  @Test
   fun testMagicError() = doTestInternal(false)
 
+  @Test
   fun testMagicMultiline() = doTestInternal()
 
-  private fun doTestInternal(ensureNoErrorElements: Boolean = true) = doTest(true, ensureNoErrorElements)
+  private fun doTestInternal(ensureNoErrorElements: Boolean = true) = parsing.doTest(true, ensureNoErrorElements)
 
 }

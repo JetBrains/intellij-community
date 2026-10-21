@@ -122,15 +122,31 @@ class EventLogConfiguration {
   }
 
   /**
-   * Certain recorders should have ids matching to the default one(FUS).
-   * Since the calculated values are cached make sure to pass correct parameters before the first initialization.
+   * Uses the FUS identity when the provider enables [StatisticsEventLoggerProvider.useDefaultRecorderId].
+   * An explicit [alternativeRecorderId] overrides the provider setting and must be supplied on the first call.
    */
   @JvmOverloads
   fun getOrCreate(recorderId: String, alternativeRecorderId: String? = null): EventLogRecorderConfiguration {
     if (isDefaultRecorderId(recorderId)) return defaultConfiguration
 
     synchronized(this) {
-      return configurations.getOrPut(recorderId) { EventLogRecorderConfiguration(recorderId = recorderId, eventLogConfiguration = this, alternativeRecorderId = alternativeRecorderId) }
+      configurations[recorderId]?.let { return it }
+    }
+
+    // Keep the provider lookup outside the lock.
+    // The lookup can create the provider service and the logger provider extensions, and that code can call getOrCreate.
+    val effectiveAlternativeRecorderId = alternativeRecorderId ?: FUS_RECORDER.takeIf {
+      StatisticsEventLogProviderUtil.getEventLogProvider(recorderId).useDefaultRecorderId
+    }
+
+    synchronized(this) {
+      return configurations.getOrPut(recorderId) {
+        EventLogRecorderConfiguration(
+          recorderId = recorderId,
+          eventLogConfiguration = this,
+          alternativeRecorderId = effectiveAlternativeRecorderId,
+        )
+      }
     }
   }
 

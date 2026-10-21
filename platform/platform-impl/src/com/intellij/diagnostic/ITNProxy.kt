@@ -9,10 +9,13 @@ import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
 import com.intellij.openapi.diagnostic.UnhandledExceptionKind
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -37,6 +40,7 @@ import tools.jackson.core.ObjectReadContext
 import tools.jackson.core.json.JsonFactory
 import java.io.FilterWriter
 import java.io.IOException
+import java.io.InputStream
 import java.io.OutputStreamWriter
 import java.io.Writer
 import java.net.HttpURLConnection
@@ -54,6 +58,7 @@ import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 import kotlin.io.path.Path
 import kotlin.io.path.bufferedReader
+import kotlin.io.path.isRegularFile
 
 internal object DiagnosticDispatchers {
   @JvmField
@@ -70,6 +75,13 @@ object ITNProxy {
 
   private val DEFAULT_ENDPOINT = URI.create("https://ea-report.jetbrains.com/trackerRpc/idea/createScr")
   private val LOG = logger<ITNProxy>()
+
+  private const val MAX_REQUEST_SIZE_KEY = "ea.diagnostic.max.request.size.mb"
+  private const val DEFAULT_MAX_REQUEST_SIZE_MB = 50
+  @VisibleForTesting
+  internal const val SKIPPED_ATTACHMENTS_NAME = "skipped-attachments.txt"
+  // the room for the skipped-attachments note and the fields after the attachments
+  private const val SKIPPED_ATTACHMENTS_RESERVE = 16L * 1024
 
   private typealias Endpoint = Pair<URI, ByteArray?>
 
@@ -132,11 +144,16 @@ object ITNProxy {
     val homeDir = System.getProperty("idea.home.path")?.let { Path(it) }
                   ?: PathManager.getHomeDirFor(ITNProxy::class.java)
                   ?: throw RuntimeException("Cannot detect the IDE home directory")
-    val appDataFile = homeDir.resolve(when {
-                                        AppMode.isRunningFromDevBuild() -> "bin/product-info.json"
-                                        OS.CURRENT == OS.macOS -> "Resources/product-info.json"
-                                        else -> "product-info.json"
-                                      })
+    val productInfoFile = homeDir.resolve(
+      if (OS.CURRENT == OS.macOS) ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC else ApplicationEx.PRODUCT_INFO_FILE_NAME
+    )
+    // the dev build of `IdeBuilder` keeps the file in `bin/`
+    val appDataFile = if (AppMode.isRunningFromDevBuild() && !productInfoFile.isRegularFile()) {
+      homeDir.resolve("bin").resolve(ApplicationEx.PRODUCT_INFO_FILE_NAME)
+    }
+    else {
+      productInfoFile
+    }
 
     try {
       var appName = null as String?
@@ -207,9 +224,9 @@ object ITNProxy {
   }
 
   @Throws(Exception::class)
-  internal suspend fun sendError(errorBean: ErrorBean, postUrl: URI?): Long {
+  internal suspend fun sendError(errorBean: ErrorBean, postUrl: URI?, textOnly: Boolean = false): Long {
     val context = currentCoroutineContext()
-    val request = createRequest(errorBean.event, errorBean)
+    val request = createRequest(errorBean.event, errorBean, textOnly = textOnly)
     val response = post(resolveReportEndpoint(postUrl), request)
     context.ensureActive()
     val reportId = handleResponse(response)
@@ -246,6 +263,14 @@ object ITNProxy {
       return null
     }
     return uri
+  }
+
+  private fun getMaxRequestSize(): Long {
+    val megabytes = when {
+      LoadingState.COMPONENTS_LOADED.isOccurred -> Registry.intValue(MAX_REQUEST_SIZE_KEY, DEFAULT_MAX_REQUEST_SIZE_MB)
+      else -> System.getProperty(MAX_REQUEST_SIZE_KEY)?.toIntOrNull() ?: DEFAULT_MAX_REQUEST_SIZE_MB
+    }
+    return megabytes.coerceAtLeast(1) * 1024L * 1024
   }
 
   private fun getConfiguredReportEndpointPublicKey(): ByteArray? {
@@ -301,10 +326,54 @@ object ITNProxy {
     append(builder, "app.product.mode", PluginManagerCore.getPluginSet().initContext.productMode.id)
   }
 
+  /**
+   * Builds the gzipped form body of the report.
+   *
+   * When the gzipped body is over [maxSize], the body is built again without the `.jfr` attachments.
+   * The report listener applies its limit to the gzipped body.
+   * A body with no `.jfr` attachment goes as is, and the caller handles the HTTP 413 of the server.
+   * With [textOnly], only the `.txt` attachments are sent.
+   * The body names each skipped attachment in [SKIPPED_ATTACHMENTS_NAME].
+   * The build checks for cancellation after each chunk of an attachment, because the gzip of a large attachment takes seconds.
+   */
   @Throws(Exception::class)
   @VisibleForTesting
-  internal fun createRequest(event: IdeaLoggingEvent, errorBean: ErrorBean?): BufferExposingByteArrayOutputStream {
+  internal fun createRequest(
+    event: IdeaLoggingEvent,
+    errorBean: ErrorBean?,
+    maxSize: Long = getMaxRequestSize(),
+    textOnly: Boolean = false,
+  ): BufferExposingByteArrayOutputStream {
+    val skipped = LinkedHashMap<Attachment, String>()
+    if (textOnly) {
+      event.attachments.filterNot { it.name.endsWith(".txt") }.associateWithTo(skipped) { "the server rejected the size of the full report" }
+    }
+    val budget = maxSize - SKIPPED_ATTACHMENTS_RESERVE
+    val request = try {
+      writeRequest(event, errorBean, skipped, budget)
+    }
+    catch (_: RequestTooLargeException) {
+      event.attachments.filter(::isJfrSnapshot).associateWithTo(skipped) { "the report must stay under $maxSize bytes" }
+      writeRequest(event, errorBean, skipped, budget)
+    }
+    if (skipped.isNotEmpty()) {
+      LOG.info("The report skips the attachments: ${skipped.keys.joinToString { it.name }}")
+    }
+    return request
+  }
+
+  private fun isJfrSnapshot(attachment: Attachment): Boolean = attachment.name.endsWith(".jfr")
+
+  @Throws(Exception::class)
+  private fun writeRequest(
+    event: IdeaLoggingEvent,
+    errorBean: ErrorBean?,
+    skipped: Map<Attachment, String>,
+    budget: Long,
+  ): BufferExposingByteArrayOutputStream {
     val compressed = BufferExposingByteArrayOutputStream(8192)
+    // without a JFR snapshot to skip, a body over the budget goes as is
+    val canSkipJfr = event.attachments.any { it !in skipped && isJfrSnapshot(it) }
 
     TrackingStreamWriter(OutputStreamWriter(GZIPOutputStream(compressed), StandardCharsets.UTF_8)).use { builder ->
       if (errorBean != null) {
@@ -338,17 +407,18 @@ object ITNProxy {
       }
 
       for (attachment in event.attachments) {
-        append(builder, "attachment.name", attachment.name)
+        if (attachment in skipped) continue
         attachment.openContentStream().use { input ->
-          builder.append("&attachment.value=")
-          val buffer = ByteArray(8190) // a multiple of 3
-          while (true) {
-            val n = input.readNBytes(buffer, 0, buffer.size)
-            if (n <= 0) break
-            val chunk = if (n == buffer.size) buffer else buffer.copyOf(n)
-            builder.append(URLEncoder.encode(Base64.getEncoder().encodeToString(chunk), StandardCharsets.UTF_8))
+          appendAttachment(builder, attachment.name, input) {
+            ProgressManager.checkCanceled()
+            // the deflater holds back a part of the input, so this size lags; the check after the close is exact
+            if (canSkipJfr && compressed.size() > budget) throw RequestTooLargeException()
           }
         }
+      }
+      if (skipped.isNotEmpty()) {
+        val note = skipped.entries.joinToString("\n", postfix = "\n") { (attachment, reason) -> "${attachment.name}: skipped, $reason" }
+        appendAttachment(builder, SKIPPED_ATTACHMENTS_NAME, note.byteInputStream(StandardCharsets.UTF_8)) {}
       }
 
       // optional fields; added only when the app is loaded
@@ -392,7 +462,22 @@ object ITNProxy {
       }
     }
 
+    if (canSkipJfr && compressed.size() > budget) throw RequestTooLargeException()
     return compressed
+  }
+
+  @Throws(Exception::class)
+  private fun appendAttachment(builder: TrackingStreamWriter, name: String, input: InputStream, afterChunk: () -> Unit) {
+    append(builder, "attachment.name", name)
+    builder.append("&attachment.value=")
+    val buffer = ByteArray(8190) // a multiple of 3
+    while (true) {
+      val n = input.readNBytes(buffer, 0, buffer.size)
+      if (n <= 0) break
+      val chunk = if (n == buffer.size) buffer else buffer.copyOf(n)
+      builder.append(URLEncoder.encode(Base64.getEncoder().encodeToString(chunk), StandardCharsets.UTF_8))
+      afterChunk()
+    }
   }
 
   @Throws(Exception::class)
@@ -477,4 +562,7 @@ object ITNProxy {
       isEmpty = false
     }
   }
+
+  /** Stops a pass of [writeRequest] that is over the budget and has a JFR snapshot to skip. */
+  private class RequestTooLargeException : RuntimeException(null, null, false, false)
 }

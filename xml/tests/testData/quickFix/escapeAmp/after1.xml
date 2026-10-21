@@ -1,0 +1,4 @@
+<!-- "Escape '&' with '&amp;'" "true" -->
+<tag>
+  &<caret>amp;
+</tag>

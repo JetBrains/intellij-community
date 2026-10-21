@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.grazie" allow-bundled-update="true">
+<idea-plugin allow-bundled-update="true">
   <id>tanvd.grazi</id>
   <name>Natural Languages</name>
   <vendor>JetBrains</vendor>
@@ -20,7 +20,7 @@
       </li>
       <li>Uses <a href="https://www.languagetool.org/">LanguageTool</a> as its proofreading engine.</li>
     </ul>
-    <p>Data privacy: all verification is performed locally, inside your IDE.</p>
+    <p>All verification is performed locally, inside your IDE.</p>
   ]]></description>
 
   <dependencies>
@@ -33,7 +33,9 @@
     <module name="intellij.grazie.java"/>
     <module name="intellij.grazie.json"/>
     <module name="intellij.grazie.markdown"/>
+    <module name="intellij.grazie.markdown.specification"/>
     <module name="intellij.grazie.properties"/>
+    <module name="intellij.grazie.vcs"/>
     <module name="intellij.grazie.xml"/>
     <module name="intellij.grazie.yaml"/>
     <module name="intellij.libraries.ai.grazie.rule.engine" loading="embedded"/>
@@ -45,7 +47,6 @@
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
-    <spellchecker.support language="IgnoreLang" implementationClass="com.intellij.grazie.ide.language.ignore.IgnoreSpellcheckingStrategy"/>
     <typedHandler implementation="com.intellij.grazie.ide.inspection.auto.GrazieTypedHandler"/>
     <projectConfigurable parentId="proofread" instance="com.intellij.grazie.spellcheck.settings.SpellCheckerConfigurable"
                          id="reference.settings.ide.settings.spelling"
@@ -140,7 +141,6 @@
 
   <extensions defaultExtensionNs="com.intellij.grazie">
     <textExtractor language="TEXT" implementationClass="com.intellij.grazie.text.PlainTextExtractor"/>
-    <textExtractor language="IgnoreLang" implementationClass="com.intellij.grazie.ide.language.ignore.IgnoreTextExtractor"/>
 
     <problemFilter language="" implementationClass="com.intellij.grazie.text.CodeProblemFilter"/>
     <problemFilter language="" implementationClass="com.intellij.grazie.text.CommitProblemFilter"/>
@@ -174,6 +174,9 @@
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.grazie.cloudConnector"
                     interface="com.intellij.grazie.cloud.GrazieCloudConnector"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.grazie.commitMessageDetector"
+                    interface="com.intellij.grazie.text.CommitMessageDetector"
                     dynamic="true"/>
   </extensionPoints>
 

@@ -16,9 +16,10 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -27,7 +28,9 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.io.File;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 /**
  * Defines requirements for a light test's project environment (SDK, module, libraries, ...).
@@ -49,6 +52,21 @@ public class LightProjectDescriptor {
   public static final LightProjectDescriptor EMPTY_PROJECT_DESCRIPTOR = new LightProjectDescriptor();
 
   public static final String TEST_MODULE_NAME = "light_idea_test_case";
+
+  private final boolean myUsePhysicalFs;
+
+  /**
+   * @param usePhysicalFs put the sources in a temporary directory on the local file system instead of {@code temp:///}.
+   *                      Use it when the code under test needs the NIO API, which {@code temp:///} does not support.
+   *                      A subclass must include this value in {@code equals()}, for example, through its class.
+   */
+  protected LightProjectDescriptor(boolean usePhysicalFs) {
+    myUsePhysicalFs = usePhysicalFs;
+  }
+
+  public LightProjectDescriptor() {
+    this(false);
+  }
 
   public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
     WriteAction.run(() -> {
@@ -73,15 +91,15 @@ public class LightProjectDescriptor {
     }
   }
 
-  public @NotNull Module createMainModule(@NotNull Project project) {
+  public final @NotNull Module createMainModule(@NotNull Project project) {
     return createModule(project, Paths.get(FileUtil.getTempDirectory(), TEST_MODULE_NAME + ".iml"));
   }
 
-  protected final Module createModule(@NotNull Project project, @NotNull String moduleFilePath) {
+  protected final @NotNull Module createModule(@NotNull Project project, @NotNull String moduleFilePath) {
     return createModule(project, Paths.get(moduleFilePath));
   }
 
-  protected Module createModule(@NotNull Project project, @NotNull Path moduleFile) {
+  protected @NotNull Module createModule(@NotNull Project project, @NotNull Path moduleFile) {
     try {
       // temporary workaround for IDEA-147530: otherwise if someone saved module with this name before the created module will get its settings
       Files.deleteIfExists(moduleFile);
@@ -102,14 +120,15 @@ public class LightProjectDescriptor {
   }
 
   /**
-   * Creates in-memory directory {@code temp:///some/path} where sources for test project will be placed.
+   * Creates in-memory directory {@code temp:///some/path} where sources for test project will be placed
+   * (a temporary directory on the local file system if the descriptor uses the physical FS).
    * Please keep in mind that this directory will be marked as "Source root". If you want to disable this
    * behaviour use {@link #markDirForSourcesAsSourceRoot()}.
    *
    * @see #markDirForSourcesAsSourceRoot()
    */
   public @Nullable VirtualFile createDirForSources(@NotNull Module module) {
-    return createSourceRoot(module, "src");
+    return createSourceRoot("src");
   }
 
   /**
@@ -121,14 +140,30 @@ public class LightProjectDescriptor {
     return true;
   }
 
-  protected VirtualFile createSourceRoot(@NotNull Module module, String srcPath) {
-    VirtualFile dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
+  @RequiresWriteLock
+  protected final @NotNull VirtualFile createSourceRoot(@NotNull String srcPath) {
+    VirtualFile dummyRoot;
+    if (myUsePhysicalFs) {
+      Path tempDir;
+      try {
+        tempDir = Files.createTempDirectory("Test" + hashCode());
+        //noinspection SSBasedInspection // We need to delete it after the tests
+        tempDir.toFile().deleteOnExit();
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      dummyRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(tempDir);
+    }
+    else {
+      dummyRoot = Objects.requireNonNull(TempFileSystem.getInstance().refreshAndFindFileByPath("/"), "temp:/// root not found");
+    }
     assert dummyRoot != null;
-    dummyRoot.refresh(false, false);
     return doCreateSourceRoot(dummyRoot, srcPath);
   }
 
-  protected VirtualFile doCreateSourceRoot(VirtualFile root, String srcPath) {
+  @RequiresWriteLock
+  private @NotNull VirtualFile doCreateSourceRoot(@NotNull VirtualFile root, @NotNull String srcPath) {
     VirtualFile srcRoot;
     try {
       srcRoot = root.createChildDirectory(this, srcPath);
@@ -141,7 +176,7 @@ public class LightProjectDescriptor {
     return srcRoot;
   }
 
-  protected void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {
+  protected final void createContentEntry(@NotNull Module module, @NotNull VirtualFile srcRoot) {
     ModuleRootModificationUtil.updateModel(module, model -> {
       Sdk sdk = getSdk();
       if (sdk != null) {
@@ -172,12 +207,15 @@ public class LightProjectDescriptor {
   }
 
   private void cleanSourceRoot(@NotNull VirtualFile contentRoot) throws IOException {
-    TempFileSystem tempFs = (TempFileSystem)contentRoot.getFileSystem();
-    for (VirtualFile child : contentRoot.getChildren()) {
-      if (!tempFs.exists(child)) {
-        tempFs.createChildFile(this, contentRoot, child.getName());
+    // On the physical FS, each call makes a new empty temp dir, so there is nothing to clean.
+    if (!myUsePhysicalFs) {
+      TempFileSystem tempFs = (TempFileSystem)contentRoot.getFileSystem();
+      for (VirtualFile child : contentRoot.getChildren()) {
+        if (!tempFs.exists(child)) {
+          tempFs.createChildFile(this, contentRoot, child.getName());
+        }
+        child.delete(this);
       }
-      child.delete(this);
     }
   }
 

@@ -1,32 +1,41 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.schema;
 
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.jsonSchema.fixes.JsonSchemaQuickFixTestBase;
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.project.Project;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestFixture;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.yaml.YAMLLanguage;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import java.util.function.Predicate;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static com.jetbrains.jsonSchema.JsonSchemaHighlightingTestFixtureKt.jsonSchemaHighlightingFixture;
 
-public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
-  @Override
-  protected String getTestFileName() {
-    return "config.yml";
+@TestApplication
+public class YamlByJsonSchemaQuickFixTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+  private final TestFixture<JsonSchemaHighlightingTestFixture> schemaFixture =
+    jsonSchemaHighlightingFixture(codeInsightFixture, "config.yml", () -> new YamlJsonSchemaHighlightingInspection(), YAMLLanguage.INSTANCE);
+
+  private CodeInsightTestFixture myFixture;
+  private JsonSchemaHighlightingTestFixture mySchemaFixture;
+
+  @BeforeEach
+  void setUp() {
+    myFixture = codeInsightFixture.get();
+    mySchemaFixture = schemaFixture.get();
   }
 
-  @Override
-  protected InspectionProfileEntry getInspectionProfile() {
-    return new YamlJsonSchemaHighlightingInspection();
-  }
-
-  @Override
-  protected Predicate<VirtualFile> getAvailabilityPredicate() {
-    return file -> file.getFileType() instanceof LanguageFileType && ((LanguageFileType)file.getFileType()).getLanguage().isKindOf(
-      YAMLLanguage.INSTANCE);
-  }
-
+  @Test
   public void testAddMissingProperty() {
     @Language("JSON") String schema = """
       {
@@ -42,60 +51,64 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
       c: 5
       a: q
       b:""";
-    doTest(schema, text, "Add missing properties 'a', 'b'", expectedAfterFix);
+    mySchemaFixture.doTest(schema, text, "Add missing properties 'a', 'b'", expectedAfterFix);
   }
 
+  @Test
   public void testRemoveProhibitedProperty() {
-    doTest("""
-             {
-               "properties": {
-                 "a": {},
-                 "c": {}
-               },
-               "additionalProperties": false
-             }""", "a: 5\n<warning>b<caret></warning>: 6\nc: 7", "Remove prohibited property 'b'", "a: 5\n" +
-                                                                                                   "c: 7");
+    mySchemaFixture.doTest("""
+                             {
+                               "properties": {
+                                 "a": {},
+                                 "c": {}
+                               },
+                               "additionalProperties": false
+                             }""", "a: 5\n<warning>b<caret></warning>: 6\nc: 7", "Remove prohibited property 'b'", "a: 5\n" +
+                                                                                                                   "c: 7");
   }
 
+  @Test
   public void testEmptyFile() {
-    doTest("""
-             {
-               "type": "object",
+    mySchemaFixture.doTest("""
+                             {
+                               "type": "object",
 
-               "properties": {
-                 "versionAsStringArray": {
-                   "type": "array"
-                 }
-               },
-               "required": ["versionAsStringArray"]
-             }""", "<warning></warning>", "Add missing property 'versionAsStringArray'", "versionAsStringArray:\n" +
-                                                                                         "  - ");
+                               "properties": {
+                                 "versionAsStringArray": {
+                                   "type": "array"
+                                 }
+                               },
+                               "required": ["versionAsStringArray"]
+                             }""", "<warning></warning>", "Add missing property 'versionAsStringArray'", "versionAsStringArray:\n" +
+                                                                                                         "  - ");
   }
 
+  @Test
   public void testEmptyObject() {
-    doTest("""
-             {
-               "type": "object",
+    mySchemaFixture.doTest("""
+                             {
+                               "type": "object",
 
-               "properties": {
-                 "versionAsStringArray": {
-                   "type": "object",
-                   "properties": {
-                     "xxx": {
-                       "type": "array"
-                     }
-                   },
-                   "required": ["xxx"]
-                 }
-               },
-               "required": ["versionAsStringArray"]
-             }""", "versionAsStringArray:\n" +
-                   "<warning>  <caret></warning>", "Add missing property 'xxx'", """
-             versionAsStringArray:
-               xxx:
-                 -\s""");
+                               "properties": {
+                                 "versionAsStringArray": {
+                                   "type": "object",
+                                   "properties": {
+                                     "xxx": {
+                                       "type": "array"
+                                     }
+                                   },
+                                   "required": ["xxx"]
+                                 }
+                               },
+                               "required": ["versionAsStringArray"]
+                             }""", "versionAsStringArray:\n" +
+                                   "<warning>  <caret></warning>", "Add missing property 'xxx'", """
+                             versionAsStringArray:
+                               xxx:
+                                 -\s""");
   }
 
+  @Test
   public void testAddPropAfterObjectProp() {
     @Language("JSON") String schema = """
       {
@@ -132,9 +145,10 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
           aa: 42
           ab: 42
         baz: 0""";
-    doTest(schema, text, "Add missing property 'baz'", afterFix);
+    mySchemaFixture.doTest(schema, text, "Add missing property 'baz'", afterFix);
   }
 
+  @Test
   public void testAddPropInHashMapping() {
     @Language("JSON") String schema = """
       {
@@ -179,9 +193,10 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
       age: 18
       addresses:
         - { city: DefaultCity, street:,postalCode: }""";
-    doTest(schema, text, "Add missing properties 'postalCode', 'street'", afterFix);
+    mySchemaFixture.doTest(schema, text, "Add missing properties 'postalCode', 'street'", afterFix);
   }
 
+  @Test
   public void testAddPropAfterObjectProp_wrongFormatting() {
     @Language("JSON") String schema = """
       {
@@ -218,9 +233,10 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
           aa: 42
           ab: 42
         baz: 0""";
-    doTest(schema, text, "Add missing property 'baz'", afterFix);
+    mySchemaFixture.doTest(schema, text, "Add missing property 'baz'", afterFix);
   }
 
+  @Test
   public void testEmptyObjectMultipleProps() {
     String text = """
       xyzObject:
@@ -230,9 +246,10 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
         xxx: 0
         yyy:
         zzz: 0""";
-    doTest(SCHEMA_WITH_NESTED_XYZ, text, "Add missing properties 'xxx', 'yyy', 'zzz'", afterFix);
+    mySchemaFixture.doTest(SCHEMA_WITH_NESTED_XYZ, text, "Add missing properties 'xxx', 'yyy', 'zzz'", afterFix);
   }
 
+  @Test
   public void testAddMultiplePropsToNestedObject() {
     String text = """
       xyzObject:
@@ -244,7 +261,7 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
         xxx: 0
         zzz: 0
       """;
-    doTest(SCHEMA_WITH_NESTED_XYZ, text, "Add missing properties 'xxx', 'zzz'", afterFix);
+    mySchemaFixture.doTest(SCHEMA_WITH_NESTED_XYZ, text, "Add missing properties 'xxx', 'zzz'", afterFix);
   }
 
   @Language("JSON") private static final String SCHEMA_WITH_NESTED_XYZ = """
@@ -272,18 +289,21 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
     }
     """;
 
+  @Test
   public void testAddMissingPropertyAfterComment() {
-    doTest(SCHEMA_WITH_NESTING, "image: #aaa\n" +
-                                "<warning descr=\"Schema validation: Missing required property 'tag'\"> <caret>  </warning>", "Add missing property 'tag'", "image: #aaa\n" +
-                                                                                                                                           "  tag: ");
+    mySchemaFixture.doTest(SCHEMA_WITH_NESTING, "image: #aaa\n" +
+                                                "<warning descr=\"Schema validation: Missing required property 'tag'\"> <caret>  </warning>", "Add missing property 'tag'", "image: #aaa\n" +
+                                                                                                                                                           "  tag: ");
   }
 
+  @Test
   public void testAddMissingPropertyAfterWhitespace() {
-    doTest(SCHEMA_WITH_NESTING, "image: \n" +
-                                "<warning descr=\"Schema validation: Missing required property 'tag'\"> <caret>  </warning>", "Add missing property 'tag'", "image:\n" +
-                                                                                                                                           "  tag: ");
+    mySchemaFixture.doTest(SCHEMA_WITH_NESTING, "image: \n" +
+                                                "<warning descr=\"Schema validation: Missing required property 'tag'\"> <caret>  </warning>", "Add missing property 'tag'", "image:\n" +
+                                                                                                                                                           "  tag: ");
   }
 
+  @Test
   public void testSuggestEnumValuesFix() {
     @Language("JSON") String schema = """
       {
@@ -297,14 +317,15 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
           }
         }
       }""";
-    doTest(schema, """
+    mySchemaFixture.doTest(schema, """
       "x"<warning descr="Schema validation: Value should be one of: \\"xxx\\", \\"yyy\\", \\"zzz\\""><caret>:</warning>
       """, "Replace with allowed value", "\"x\": xxx\n");
-    doTest(schema, """
+    mySchemaFixture.doTest(schema, """
       "y": <warning descr="Schema validation: Value should be one of: 1, 2, 3, 4, 5"><caret>no</warning>
       """, "Replace with allowed value", "\"y\": 1\n");
   }
   
+  @Test
   public void testSuggestEnumValuesFixInjection() {
     myFixture.setCaresAboutInjection(false);
     @Language("JSON") String schema = """
@@ -318,7 +339,7 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
           }
         }
       }""";
-    doTest(schema, """
+    mySchemaFixture.doTest(schema, """
       "outer": |
         "inner": <warning descr="Schema validation: Value should be one of: \\"xxx\\", \\"yyy\\", \\"zzz\\""><caret>"oops"</warning>""",
            "Replace with allowed value", """

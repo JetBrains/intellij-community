@@ -12,8 +12,10 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -36,6 +38,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
   private static final Logger LOG = Logger.getInstance(ResourceBundleManager.class);
 
   private ResourceBundleManagerState myState = new ResourceBundleManagerState();
+  private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
   public ResourceBundleManager(@NotNull Project project) {
     PsiManager manager = PsiManager.getInstance(project);
@@ -157,6 +160,13 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
     return project.getService(ResourceBundleManager.class);
   }
 
+  /**
+   * Changes when custom or dissociated bundles change without a PSI change, so {@link #getBaseName} may change.
+   */
+  public @NotNull ModificationTracker getModificationTracker() {
+    return myModificationTracker;
+  }
+
   public @Nullable String getFullName(final @NotNull PropertiesFile propertiesFile) {
     return ReadAction.compute(() -> {
       final String packageQualifiedName = PropertiesImplUtil.getPackageQualifiedName(propertiesFile.getContainingFile());
@@ -201,6 +211,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
         myState.getDissociatedFiles().add(file.getUrl());
       }
     }
+    myModificationTracker.incModificationCount();
   }
 
   public void combineToResourceBundle(final @NotNull List<? extends PropertiesFile> propertiesFiles, final String baseName) {
@@ -209,6 +220,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
     }
     myState.getCustomResourceBundles()
       .add(new CustomResourceBundleState().addAll(ContainerUtil.map(propertiesFiles, file -> file.getVirtualFile().getUrl())).setBaseName(baseName));
+    myModificationTracker.incModificationCount();
   }
 
   public ResourceBundle combineToResourceBundleAndGet(final @NotNull List<? extends PropertiesFile> propertiesFiles, final String baseName) {
@@ -254,6 +266,7 @@ public final class ResourceBundleManager implements PersistentStateComponent<Res
   @Override
   public void loadState(@NotNull ResourceBundleManagerState state) {
     myState = state.removeNonExistentFiles();
+    myModificationTracker.incModificationCount();
   }
 
   private static void closeResourceBundleEditors(@NotNull ResourceBundle resourceBundle) {

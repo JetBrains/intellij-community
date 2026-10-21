@@ -15,32 +15,55 @@
  */
 package com.jetbrains.jsonSchema;
 
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.ExpectedHighlightingData;
+import com.intellij.testFramework.TestDataPath;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaRefReferenceInspection;
 import org.intellij.lang.annotations.Language;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
-public class JsonSchemaSelfHighlightingTest extends JsonSchemaHeavyAbstractTest {
-  public static final String BASE_PATH = "/tests/testData/jsonSchema/selfHighlighting";
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static com.jetbrains.jsonSchema.JsonSchemaHeavyTestFixtureKt.jsonSchemaHeavyFixture;
 
-  @Override
-  protected String getBasePath() {
-    return BASE_PATH;
+@TestApplication
+@TestDataPath("$PROJECT_ROOT/community/json/backend/tests/testData/jsonSchema/selfHighlighting")
+public class JsonSchemaSelfHighlightingTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<CodeInsightTestFixture> codeInsightFixture = codeInsightModuleFixture(projectFixture);
+  private final TestFixture<JsonSchemaHeavyTestFixture> schemaFixture = jsonSchemaHeavyFixture(codeInsightFixture);
+
+  private CodeInsightTestFixture myFixture;
+  private JsonSchemaHeavyTestFixture mySchemaFixture;
+
+  @BeforeEach
+  void setUp() {
+    myFixture = codeInsightFixture.get();
+    mySchemaFixture = schemaFixture.get();
   }
 
-  private void doSelfTest(String schemaFile, @Language("JSON") String expectedText) throws Exception {
-    skeleton(new Callback() {
+  private void doSelfTest(String schemaFile, @Language("JSON") String expectedText) {
+    mySchemaFixture.skeleton(new JsonSchemaHeavyTestFixture.Callback() {
       @Override
       public void registerSchemes() {
         final UserDefinedJsonSchemaConfiguration pattern =
-          new UserDefinedJsonSchemaConfiguration("pattern", JsonSchemaVersion.SCHEMA_4, getUrlUnderTestRoot(schemaFile), false, Collections.emptyList());
-        addSchema(pattern);
-        myDoCompletion = false;
+          new UserDefinedJsonSchemaConfiguration("pattern", JsonSchemaVersion.SCHEMA_4, mySchemaFixture.getUrlUnderTestRoot(schemaFile), false, Collections.emptyList());
+        mySchemaFixture.addSchema(pattern);
+        mySchemaFixture.setDoCompletion(false);
       }
 
       @Override
@@ -58,7 +81,8 @@ public class JsonSchemaSelfHighlightingTest extends JsonSchemaHeavyAbstractTest 
     });
   }
 
-  public void testPatterns() throws Exception {
+  @Test
+  public void testPatterns() {
     myFixture.enableInspections(new JsonSchemaComplianceInspection());
     doSelfTest("/patternSchema.json", """
       {
@@ -77,7 +101,8 @@ public class JsonSchemaSelfHighlightingTest extends JsonSchemaHeavyAbstractTest 
       }""");
   }
 
-  public void testRefs() throws Exception {
+  @Test
+  public void testRefs() {
     myFixture.enableInspections(new JsonSchemaRefReferenceInspection());
     doSelfTest("/refsSchema.json", """
       {

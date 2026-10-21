@@ -3,20 +3,36 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.ex.DocumentEx
 import com.intellij.openapi.editor.ex.FoldingModelEx
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.editor.impl.EditorModelFixture.Companion.SURROGATE_PAIR
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.util.DocumentUtil
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import javax.swing.BorderFactory
 import kotlin.test.assertFailsWith
 
-class EditorMappingTest : AbstractEditorTest() {
-  fun `test yToVisualLine with top inset`() {
+@TestApplication
+class EditorMappingTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
+
+  @Test
+  fun `test yToVisualLine with top inset`(): Unit = fixture.runTest {
     initText("foo\nbar")
     editor.contentComponent.border = BorderFactory.createEmptyBorder(5, 0, 0, 0)
     val y = editor.visualLineToY(1)
     assertEquals(1, editor.yToVisualLine(y))
   }
 
-  fun `test visualLineStartOffset clamps non-positive and past-last visual lines`() {
+  @Test
+  fun `test visualLineStartOffset clamps non-positive and past-last visual lines`(): Unit = fixture.runTest {
     initText("abc\ndef")
 
     assertEquals(0, editorImpl.visualLineStartOffset(-1))
@@ -25,14 +41,16 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(editor.document.textLength, editorImpl.visualLineStartOffset(editorImpl.visibleLineCount + 1))
   }
 
-  fun `test visualLineStartOffset returns zero for empty document`() {
+  @Test
+  fun `test visualLineStartOffset returns zero for empty document`(): Unit = fixture.runTest {
     initText("")
 
     assertEquals(0, editorImpl.visualLineStartOffset(0))
     assertEquals(0, editorImpl.visualLineStartOffset(1))
   }
 
-  fun `test visualLineStartOffset is not allowed during bulk document update`() {
+  @Test
+  fun `test visualLineStartOffset is not allowed during bulk document update`(): Unit = fixture.runTest {
     initText("abc")
 
     assertFailsWith<RuntimeException> {
@@ -42,7 +60,8 @@ class EditorMappingTest : AbstractEditorTest() {
     }
   }
 
-  fun `test visualLineStartOffset is not allowed during batch inlay update`() {
+  @Test
+  fun `test visualLineStartOffset is not allowed during batch inlay update`(): Unit = fixture.runTest {
     initText("abc")
 
     assertFailsWith<IllegalStateException> {
@@ -52,7 +71,8 @@ class EditorMappingTest : AbstractEditorTest() {
     }
   }
 
-  fun `test offsetToVisualLine returns zero for negative offsets and empty document`() {
+  @Test
+  fun `test offsetToVisualLine returns zero for negative offsets and empty document`(): Unit = fixture.runTest {
     initText("abc")
 
     assertEquals(0, editorImpl.offsetToVisualLine(-1, false))
@@ -64,7 +84,8 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(0, editorImpl.offsetToVisualLine(1, true))
   }
 
-  fun `test offsetToVisualLine is not allowed during bulk document update`() {
+  @Test
+  fun `test offsetToVisualLine is not allowed during bulk document update`(): Unit = fixture.runTest {
     initText("abc")
 
     assertFailsWith<RuntimeException> {
@@ -74,7 +95,8 @@ class EditorMappingTest : AbstractEditorTest() {
     }
   }
 
-  fun `test offsetToVisualLine is not allowed during batch inlay update`() {
+  @Test
+  fun `test offsetToVisualLine is not allowed during batch inlay update`(): Unit = fixture.runTest {
     initText("abc")
 
     assertFailsWith<IllegalStateException> {
@@ -84,7 +106,8 @@ class EditorMappingTest : AbstractEditorTest() {
     }
   }
 
-  fun `test offsetToVisualLine clamps offsets past document end`() {
+  @Test
+  fun `test offsetToVisualLine clamps offsets past document end`(): Unit = fixture.runTest {
     initText("abc\ndef")
 
     assertEquals(1, editorImpl.offsetToVisualLine(editor.document.textLength, false))
@@ -92,7 +115,8 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(1, editorImpl.offsetToVisualLine(editor.document.textLength + 10, true))
   }
 
-  fun `test offsetToVisualLine returns logical lines without wraps or folds`() {
+  @Test
+  fun `test offsetToVisualLine returns logical lines without wraps or folds`(): Unit = fixture.runTest {
     initText("abc\ndef\nghi")
 
     assertEquals(0, editorImpl.offsetToVisualLine(0, false))
@@ -102,7 +126,8 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(2, editorImpl.offsetToVisualLine(8, false))
   }
 
-  fun `test offsetToVisualLine returns logical lines when soft wraps are enabled but none are registered`() {
+  @Test
+  fun `test offsetToVisualLine returns logical lines when soft wraps are enabled but none are registered`(): Unit = fixture.runTest {
     initText("abc\ndef")
     configureSoftWraps(100)
     verifySoftWrapPositions()
@@ -111,7 +136,8 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(1, editorImpl.offsetToVisualLine(4, false))
   }
 
-  fun `test offsetToVisualLine ignores registered soft wraps when soft wrapping is disabled`() {
+  @Test
+  fun `test offsetToVisualLine ignores registered soft wraps when soft wrapping is disabled`(): Unit = fixture.runTest {
     initText("abcdefghi\nxyz")
     configureSoftWraps(4)
     verifySoftWrapPositions(4, 7)
@@ -123,7 +149,8 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(1, editorImpl.offsetToVisualLine(10, false))
   }
 
-  fun `test offsetToVisualLine distinguishes offsets before and after exact soft wrap`() {
+  @Test
+  fun `test offsetToVisualLine distinguishes offsets before and after exact soft wrap`(): Unit = fixture.runTest {
     initText("abcdefghi")
     configureSoftWraps(4)
     verifySoftWrapPositions(4, 7)
@@ -136,7 +163,8 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(2, editorImpl.offsetToVisualLine(8, false))
   }
 
-  fun `test offsetToVisualLine with custom soft wrap`() {
+  @Test
+  fun `test offsetToVisualLine with custom soft wrap`(): Unit = fixture.runTest {
     setUpCustomWrapSupport()
     initText("abcdefghi")
 
@@ -147,13 +175,15 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(1, editorImpl.offsetToVisualLine(5, false))
   }
 
-  fun `test offsetToVisualLine aligns offset inside surrogate pair`() {
+  @Test
+  fun `test offsetToVisualLine aligns offset inside surrogate pair`(): Unit = fixture.runTest {
     initText("a\n${SURROGATE_PAIR}bc")
 
     assertEquals(editorImpl.offsetToVisualLine(2, false), editorImpl.offsetToVisualLine(3, false))
   }
 
-  fun `test offsetToVisualLine maps collapsed fold start and interior to the same visual line`() {
+  @Test
+  fun `test offsetToVisualLine maps collapsed fold start and interior to the same visual line`(): Unit = fixture.runTest {
     initText("aaa\nbbbb\ncccc\ndddd\neeee")
     val foldStartOffset = editor.document.getLineStartOffset(1)
     val foldEndOffset = editor.document.getLineEndOffset(3)
@@ -166,7 +196,8 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(2, editorImpl.offsetToVisualLine(afterFoldOffset, false))
   }
 
-  fun `test offsetToVisualLine returns zero inside whole-document collapsed fold`() {
+  @Test
+  fun `test offsetToVisualLine returns zero inside whole-document collapsed fold`(): Unit = fixture.runTest {
     initText("aaa\nbbbb\ncccc")
     addCollapsedFoldRegion(0, editor.document.textLength, "...")
 
@@ -175,11 +206,12 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(0, editorImpl.offsetToVisualLine(editor.document.textLength, false))
   }
 
-  fun `test offsetToVisualLine ignores expanded fold region`() {
+  @Test
+  fun `test offsetToVisualLine ignores expanded fold region`(): Unit = fixture.runTest {
     initText("aaa\nbbbb\ncccc")
     val foldStartOffset = editor.document.getLineStartOffset(1)
     val foldEndOffset = editor.document.getLineEndOffset(2)
-    val foldRegion = addFoldRegion(foldStartOffset, foldEndOffset, "...")
+    val foldRegion = addFoldRegion(foldStartOffset, foldEndOffset, "...")!!
 
     assertNotNull(foldRegion)
     assertTrue(foldRegion.isExpanded)
@@ -187,7 +219,8 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(2, editorImpl.offsetToVisualLine(editor.document.getLineStartOffset(2), false))
   }
 
-  fun `test offsetToVisualLine uses outer collapsed fold for nested folds`() {
+  @Test
+  fun `test offsetToVisualLine uses outer collapsed fold for nested folds`(): Unit = fixture.runTest {
     initText("aaa\nbbbb\ncccc\ndddd\neeee")
     val outerStartOffset = editor.document.getLineStartOffset(1)
     val outerEndOffset = editor.document.getLineEndOffset(3)
@@ -208,20 +241,23 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(2, editorImpl.offsetToVisualLine(afterOuterFoldOffset, false))
   }
 
-  fun `test visualLineStartOffset returns document line starts without wraps or folds`() {
+  @Test
+  fun `test visualLineStartOffset returns document line starts without wraps or folds`(): Unit = fixture.runTest {
     initText("abc\ndefghi")
 
     assertEquals(0, editorImpl.visualLineStartOffset(0))
     assertEquals(4, editorImpl.visualLineStartOffset(1))
   }
 
-  fun `test visualLineStartOffset returns start of trailing empty line`() {
+  @Test
+  fun `test visualLineStartOffset returns start of trailing empty line`(): Unit = fixture.runTest {
     initText("abc\n")
 
     assertEquals(editor.document.textLength, editorImpl.visualLineStartOffset(1))
   }
 
-  fun `test visualLineStartOffset returns document line starts when soft wraps are enabled but none are registered`() {
+  @Test
+  fun `test visualLineStartOffset returns document line starts when soft wraps are enabled but none are registered`(): Unit = fixture.runTest {
     initText("abc\ndef")
     configureSoftWraps(100)
     verifySoftWrapPositions()
@@ -230,7 +266,8 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(4, editorImpl.visualLineStartOffset(1))
   }
 
-  fun `test visualLineStartOffset ignores soft wraps when soft wrapping is disabled`() {
+  @Test
+  fun `test visualLineStartOffset ignores soft wraps when soft wrapping is disabled`(): Unit = fixture.runTest {
     initText("abcdefghi\nxyz")
     configureSoftWraps(4)
     verifySoftWrapPositions(4, 7)
@@ -242,7 +279,8 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(editor.document.textLength, editorImpl.visualLineStartOffset(2))
   }
 
-  fun `test visualLineStartOffset returns folded region start when binary search lands inside collapsed fold`() {
+  @Test
+  fun `test visualLineStartOffset returns folded region start when binary search lands inside collapsed fold`(): Unit = fixture.runTest {
     initText("aaa\nbbbb\ncccc\ndddd\neeee")
     val foldStartOffset = editor.document.getLineStartOffset(1)
     val foldEndOffset = editor.document.getLineStartOffset(4)
@@ -251,7 +289,8 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(foldStartOffset, editorImpl.visualLineStartOffset(1))
   }
 
-  fun `test visualLineStartOffset maps collapsed fold that does not include following line break`() {
+  @Test
+  fun `test visualLineStartOffset maps collapsed fold that does not include following line break`(): Unit = fixture.runTest {
     initText("line 0\nline 1\nimport a\nimport b\nimport c\nclass C\nline 6")
     val foldStartOffset = editor.document.getLineStartOffset(2)
     val foldEndOffset = editor.document.getLineEndOffset(4)
@@ -267,7 +306,8 @@ class EditorMappingTest : AbstractEditorTest() {
     )
   }
 
-  fun `test visualLineStartOffset maps collapsed fold that ends at following line start`() {
+  @Test
+  fun `test visualLineStartOffset maps collapsed fold that ends at following line start`(): Unit = fixture.runTest {
     initText("line 0\nline 1\nline 2\nline 3\nline 4")
     val foldStartOffset = editor.document.getLineStartOffset(1)
     val foldEndOffset = editor.document.getLineStartOffset(3)
@@ -283,7 +323,8 @@ class EditorMappingTest : AbstractEditorTest() {
     )
   }
 
-  fun `test visualLineStartOffset handles adjacent collapsed folds with the same visual start`() {
+  @Test
+  fun `test visualLineStartOffset handles adjacent collapsed folds with the same visual start`(): Unit = fixture.runTest {
     initText("line 0\nline 1\nline 2\nline 3\nline 4\nline 5\nline 6")
     val firstFoldStartOffset = editor.document.getLineStartOffset(1)
     val firstFoldEndOffset = editor.document.getLineStartOffset(3)
@@ -302,7 +343,8 @@ class EditorMappingTest : AbstractEditorTest() {
     )
   }
 
-  fun `test visualLineStartOffset maps mid-line collapsed fold to containing line start`() {
+  @Test
+  fun `test visualLineStartOffset maps mid-line collapsed fold to containing line start`(): Unit = fixture.runTest {
     initText("header\nbefore hidden starts\nstill hidden after\nnext")
     val foldStartOffset = editor.document.getLineStartOffset(1) + "before ".length
     val foldEndOffset = editor.document.getLineEndOffset(2)
@@ -316,7 +358,8 @@ class EditorMappingTest : AbstractEditorTest() {
     )
   }
 
-  fun `test visualLineStartOffset maps custom fold region`() {
+  @Test
+  fun `test visualLineStartOffset maps custom fold region`(): Unit = fixture.runTest {
     initText("line 0\nline 1\nline 2\nline 3\nline 4")
     assertNotNull(addCustomFoldRegion(1, 2, 30))
 
@@ -329,7 +372,8 @@ class EditorMappingTest : AbstractEditorTest() {
     )
   }
 
-  fun `test visualLineStartOffset ignores collapsed folds when folding is disabled`() {
+  @Test
+  fun `test visualLineStartOffset ignores collapsed folds when folding is disabled`(): Unit = fixture.runTest {
     initText("line 0\nline 1\nline 2")
     addCollapsedFoldRegion(editor.document.getLineStartOffset(1), editor.document.getLineEndOffset(2), "...")
     val foldingModel = editor.foldingModel as FoldingModelEx
@@ -349,7 +393,8 @@ class EditorMappingTest : AbstractEditorTest() {
     }
   }
 
-  fun `test visualLineStartOffset ignores single-line collapsed folds`() {
+  @Test
+  fun `test visualLineStartOffset ignores single-line collapsed folds`(): Unit = fixture.runTest {
     initText("line 0\nline 1\nline 2")
     addCollapsedFoldRegion(editor.document.getLineStartOffset(1), editor.document.getLineEndOffset(1), "...")
 
@@ -361,7 +406,8 @@ class EditorMappingTest : AbstractEditorTest() {
     )
   }
 
-  fun `test visualLineStartOffset returns whole-document collapsed fold boundaries`() {
+  @Test
+  fun `test visualLineStartOffset returns whole-document collapsed fold boundaries`(): Unit = fixture.runTest {
     initText("aaa\nbbbb\ncccc")
     addCollapsedFoldRegion(0, editor.document.textLength, "...")
 
@@ -369,11 +415,12 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(editor.document.textLength, editorImpl.visualLineStartOffset(1))
   }
 
-  fun `test visualLineStartOffset ignores expanded fold region`() {
+  @Test
+  fun `test visualLineStartOffset ignores expanded fold region`(): Unit = fixture.runTest {
     initText("aaa\nbbbb\ncccc")
     val foldStartOffset = editor.document.getLineStartOffset(1)
     val foldEndOffset = editor.document.getLineEndOffset(2)
-    val foldRegion = addFoldRegion(foldStartOffset, foldEndOffset, "...")
+    val foldRegion = addFoldRegion(foldStartOffset, foldEndOffset, "...")!!
 
     assertNotNull(foldRegion)
     assertTrue(foldRegion.isExpanded)
@@ -381,7 +428,8 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(editor.document.getLineStartOffset(2), editorImpl.visualLineStartOffset(2))
   }
 
-  fun `test visualLineStartOffset uses outer collapsed fold start for nested folds`() {
+  @Test
+  fun `test visualLineStartOffset uses outer collapsed fold start for nested folds`(): Unit = fixture.runTest {
     initText("aaa\nbbbb\ncccc\ndddd\neeee")
     val outerStartOffset = editor.document.getLineStartOffset(1)
     val outerEndOffset = editor.document.getLineStartOffset(4)
@@ -400,7 +448,8 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(outerStartOffset, editorImpl.visualLineStartOffset(1))
   }
 
-  fun `test visualLineStartOffset returns exact soft wrap offset`() {
+  @Test
+  fun `test visualLineStartOffset returns exact soft wrap offset`(): Unit = fixture.runTest {
     initText("abcdefghi")
     configureSoftWraps(4)
     verifySoftWrapPositions(4, 7)
@@ -409,7 +458,8 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(7, editorImpl.visualLineStartOffset(2))
   }
 
-  fun `test visualLineStartOffset returns previous soft wrap offset`() {
+  @Test
+  fun `test visualLineStartOffset returns previous soft wrap offset`(): Unit = fixture.runTest {
     initText("abcdefgh")
     configureSoftWraps(4)
     verifySoftWrapPositions(4)
@@ -417,7 +467,8 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(4, editorImpl.visualLineStartOffset(1))
   }
 
-  fun `test visualLineStartOffset keeps line start when soft wrap starts at same offset`() {
+  @Test
+  fun `test visualLineStartOffset keeps line start when soft wrap starts at same offset`(): Unit = fixture.runTest {
     initText("abc\ndef")
     addCollapsedFoldRegion(3, 4, "...")
     configureSoftWraps(6)
@@ -426,7 +477,8 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(4, editorImpl.visualLineStartOffset(1))
   }
 
-  fun `test visualLineStartOffset with custom soft wrap`() {
+  @Test
+  fun `test visualLineStartOffset with custom soft wrap`(): Unit = fixture.runTest {
     setUpCustomWrapSupport()
     initText("abcdefghi")
 
@@ -436,7 +488,8 @@ class EditorMappingTest : AbstractEditorTest() {
     assertEquals(4, editorImpl.visualLineStartOffset(1))
   }
 
-  fun `test visualLineStartOffset aligns binary search result from inside surrogate pair`() {
+  @Test
+  fun `test visualLineStartOffset aligns binary search result from inside surrogate pair`(): Unit = fixture.runTest {
     initText("a\n${SURROGATE_PAIR}bcde")
 
     assertEquals(2, editorImpl.visualLineStartOffset(1))
@@ -449,5 +502,5 @@ class EditorMappingTest : AbstractEditorTest() {
   }
 
   private val editorImpl: EditorImpl
-    get() = editor as EditorImpl
+    get() = fixture.editor as EditorImpl
 }

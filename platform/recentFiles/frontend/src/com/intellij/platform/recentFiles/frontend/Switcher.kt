@@ -367,7 +367,11 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
         override fun contentsChanged(e: ListDataEvent?) {}
       })
 
-      files = JBListWithOpenInRightSplit.createListWithOpenInRightSplitter<SwitcherVirtualFile>(maybeSearchableModel, null)
+      files = JBListWithOpenInRightSplit.createListWithOpenInRightSplitter(maybeSearchableModel) {
+        it.virtualFile?.let { file ->
+          !FileEditorManagerImpl.forbidSplitFor(file)
+        } ?: false
+      }
       files.visibleRowCount = files.itemsCount
 
       val selectedValueFlow = MutableStateFlow<SwitcherListItem?>(null)

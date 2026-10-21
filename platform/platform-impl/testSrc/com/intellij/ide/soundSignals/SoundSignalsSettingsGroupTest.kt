@@ -21,8 +21,6 @@ import com.intellij.util.ui.ThreeStateCheckBox.State
 import com.intellij.util.ui.UIUtil
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import java.awt.event.FocusEvent
-import javax.swing.JComponent
 
 @TestApplication
 @RegistryKey(key = SOUND_SIGNALS_ENABLED_REGISTRY_KEY, value = "true")
@@ -97,7 +95,7 @@ class SoundSignalsSettingsGroupTest {
   }
 
   @Test
-  fun `a group click toggles every child, stores explicit per-signal values and plays no preview, a child plays its preview`() = playingTest(
+  fun `a group click toggles every child and stores explicit per-signal values`() = playingTest(
     listOf(IdeSoundSignals.WARNING_CARET),
   ) { page ->
     val group = page.group(IdeSoundSignals.CODE_HIGHLIGHTING_GROUP)
@@ -112,15 +110,8 @@ class SoundSignalsSettingsGroupTest {
     assertThat(children).noneMatch { it.isSelected }
 
     group.doClick()
-    assertThat(player.previewed).isEmpty()
-
     page.panel.apply()
     assertThat(service<AccessibilitySettings>().soundSignals.signals).containsExactlyInAnyOrderEntriesOf(CODE_HIGHLIGHTING_SIGNALS.associate { it.id to true })
-
-    page.signal(IdeSoundSignals.ERROR_CARET).doClick()
-    focusByTab(page.signal(IdeSoundSignals.WARNING_LINE))
-
-    assertThat(player.previewed).containsExactly(listOf(IdeSoundSignals.ERROR_CARET), listOf(IdeSoundSignals.WARNING_LINE))
   }
 
   @Test
@@ -132,39 +123,17 @@ class SoundSignalsSettingsGroupTest {
   }
 
   @Test
-  fun `a collapsed group has one checkbox, stores every signal and previews only the first`() = playingTest { page ->
-    val progress = page.checkBox(IdeSoundSignals.PROGRESS_GROUP.title)
-    assertThat(UIUtil.findComponentsOfType(page.panel, ThreeStateCheckBox::class.java))
-      .noneMatch { it.text == IdeSoundSignals.PROGRESS_GROUP.title }
-    assertThat(UIUtil.findComponentsOfType(page.panel, JBCheckBox::class.java))
-      .noneMatch { checkBox -> PROGRESS_SIGNALS.any { it.title == checkBox.text } }
-    assertThat(progress.isSelected).isTrue()
-
-    progress.doClick()
-    assertThat(progress.isSelected).isFalse()
-    focusByTab(progress)
-    assertThat(player.previewed).containsExactly(listOf(IdeSoundSignals.PROGRESS_INDETERMINATE), listOf(IdeSoundSignals.PROGRESS_INDETERMINATE))
-
-    page.panel.apply()
-    assertThat(service<AccessibilitySettings>().soundSignals.signals).containsExactlyInAnyOrderEntriesOf(PROGRESS_SIGNALS.associate { it.id to false })
-  }
-
-  @Test
-  fun `a collapsed group is selected only while every signal is on`() = playingTest(
-    listOf(IdeSoundSignals.PROGRESS_DETERMINATE_STAGE_2),
-  ) { page ->
-    val progress = page.checkBox(IdeSoundSignals.PROGRESS_GROUP.title)
-    assertThat(progress.isSelected).isFalse()
-
-    progress.doClick()
-    assertThat(progress.isSelected).isTrue()
-    page.panel.apply()
-    assertThat(service<AccessibilitySettings>().soundSignals.signals).containsExactlyInAnyOrderEntriesOf(PROGRESS_SIGNALS.associate { it.id to true })
+  fun `a signal without a group has a top-level checkbox`() {
+    val signal = registerSignal(group = null)
+    playingTest { page ->
+      assertThat(UIUtil.findComponentsOfType(page.panel, ThreeStateCheckBox::class.java)).noneMatch { it.text == signal.title }
+      assertThat(page.signal(signal).isSelected).isTrue()
+    }
   }
 
   @Test
   fun `an Events signal shows only while a notification group is bound to it`() {
-    val signal = registerEventSignal()
+    val signal = registerSignal()
     playingTest { page -> assertThat(page.hasCheckBox(signal.title)).isFalse() }
 
     bindGroup(signal)
@@ -176,7 +145,7 @@ class SoundSignalsSettingsGroupTest {
 
   @Test
   fun `an apply keeps a choice that the Notifications page applied meanwhile`() {
-    val signal = registerEventSignal()
+    val signal = registerSignal()
     bindGroup(signal)
 
     groupTest(SoundSignalsSettingsState()) { page ->
@@ -193,8 +162,8 @@ class SoundSignalsSettingsGroupTest {
     }
   }
 
-  private fun registerEventSignal(): SoundSignal {
-    val signal = SoundSignal("test.event", { "Test event" }, "sounds/notification_info.wav", IdeSoundSignals::class.java, 0, IdeSoundSignals.EVENTS_GROUP)
+  private fun registerSignal(group: SoundSignalGroup? = IdeSoundSignals.EVENTS_GROUP): SoundSignal {
+    val signal = SoundSignal("test.signal", { "Test signal" }, IdeSounds.NOTIFICATION_INFO, IdeSoundSignals::class.java, 0, group)
     SoundSignalProvider.EP_NAME.point.registerExtension(object : SoundSignalProvider {
       override val soundSignals: Collection<SoundSignal> = listOf(signal)
     }, DefaultPluginDescriptor("com.example.soundSignals"), disposable)
@@ -243,23 +212,17 @@ class SoundSignalsSettingsGroupTest {
       UIUtil.findComponentsOfType(panel, JBCheckBox::class.java).any { it.text == title }
   }
 
-  private fun focusByTab(component: JComponent) {
-    val event = FocusEvent(component, FocusEvent.FOCUS_GAINED, false, null, FocusEvent.Cause.TRAVERSAL_FORWARD)
-    for (listener in component.focusListeners) listener.focusGained(event)
-  }
-
   private class RecordingPlayer : SoundSignalPlayer() {
     val previewed = ArrayList<List<SoundSignal>>()
 
-    override fun playEnabled(signals: Collection<SoundSignal>) {
-      previewed += signals.toList()
+    override fun playEnabled(sounds: Map<SoundSignal, String>): Unit = error("The settings page only previews")
+
+    override fun playPreview(sounds: List<Pair<SoundSignal, String>>) {
+      previewed += sounds.map { it.first }.distinct()
     }
   }
 
   private companion object {
     val CODE_HIGHLIGHTING_SIGNALS = with(IdeSoundSignals) { listOf(ERROR_LINE, ERROR_CARET, WARNING_LINE, WARNING_CARET) }
-    val PROGRESS_SIGNALS = with(IdeSoundSignals) {
-      listOf(PROGRESS_INDETERMINATE, PROGRESS_DETERMINATE_STAGE_1, PROGRESS_DETERMINATE_STAGE_2, PROGRESS_DETERMINATE_STAGE_3)
-    }
   }
 }

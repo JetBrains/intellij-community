@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.ui.components.common.toolwindows
 
+import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
@@ -31,9 +32,17 @@ class ProjectViewToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data)
 
   override fun waitReady(timeout: Duration) {
     super.waitReady(timeout)
-    waitFor("The project tree has at least one node", timeout) {
-      projectViewTree.collectExpandedPaths().isNotEmpty()
+    waitFor("The project tree has nodes and its visible nodes are loaded", timeout) {
+      projectViewTree.collectExpandedPaths().isNotEmpty() && projectViewTree.fixture.areTreeNodesLoaded()
     }
+  }
+
+  fun expandSelectedPathRecursively() {
+    driver.invokeAction("ExpandRecursively", component = projectViewTree.component)
+  }
+
+  fun collapseSelectedPath() {
+    driver.invokeAction("CollapseTreeNode", component = projectViewTree.component)
   }
 
   val expandAllIcon = x("//div[@myicon='expandAll.svg']")

@@ -3,6 +3,7 @@ package com.intellij.ui.tree
 
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.tree.ui.DefaultTreeLayoutCache
+import com.intellij.ui.tree.ui.TreeRowHeightEstimateProvider
 import com.intellij.ui.treeStructure.CachingTreePath
 import org.assertj.core.api.AbstractBooleanAssert
 import org.easymock.EasyMock.niceMock
@@ -34,7 +35,9 @@ class DefaultTreeLayoutCacheTest {
   @BeforeEach
   fun setUp() {
     model = DefaultTreeModel(null)
-    sut = DefaultTreeLayoutCache(defaultRowHeight) { }
+    sut = DefaultTreeLayoutCache(defaultRowHeight) { }.also {
+      it.forceCheckInvariants = true
+    }
     heights = hashMapOf()
     sut.nodeDimensions = NodeDimensionsImpl(heights)
   }
@@ -873,6 +876,170 @@ class DefaultTreeLayoutCacheTest {
     )
   }
 
+  @Test
+  fun `row height - a node starts with the estimated height`() {
+    testSizes(
+      initOps = {
+        setModelStructure("""
+          |r1
+          | a1
+          | a2
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+        useEstimates("r1/a1" to 10)
+        heights["a1"] = 10
+      },
+      assertions = {
+        assertHeight(defaultRowHeight * 2 + 10) // nothing measured the rows yet
+        assertWidth(0, defaultRowHeight * 2 + 10, indent + "a1".length) // measures all rows
+        assertHeight(defaultRowHeight * 2 + 10)
+      },
+    )
+  }
+
+  @Test
+  fun `row height - a node starts with the estimated height (node-level interface)`() {
+    testSizes(
+      initOps = {
+        setModelStructure(
+          """
+          |r1
+          | a1
+          | a2
+          """.trimMargin(),
+          estimates = mapOf(
+            "a1" to 10
+          )
+        )
+        sut.isRootVisible = true
+        heights["a1"] = 10
+      },
+      assertions = {
+        assertHeight(defaultRowHeight * 2 + 10) // nothing measured the rows yet
+        assertWidth(0, defaultRowHeight * 2 + 10, indent + "a1".length) // measures all rows
+        assertHeight(defaultRowHeight * 2 + 10)
+      },
+    )
+  }
+
+  @Test
+  fun `row height - a changed node returns to the estimated height until it is measured again`() {
+    testSizes(
+      initOps = {
+        setModelStructure("""
+          |r1
+          | a1
+          | a2
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+        useEstimates("r1/a1" to 10)
+        heights["a1"] = 15
+      },
+      modOps = {
+        assertWidth(0, defaultRowHeight * 2 + 10, indent + "a1".length) // measures all rows
+        assertHeight(defaultRowHeight * 2 + 15)
+        model.nodeChanged(node("r1/a1"))
+      },
+      assertions = {
+        assertHeight(defaultRowHeight * 2 + 10)
+        assertWidth(0, defaultRowHeight * 2 + 10, indent + "a1".length) // measures all rows again
+        assertHeight(defaultRowHeight * 2 + 15)
+      },
+    )
+  }
+
+  @Test
+  fun `row height - invalidated sizes return to the estimated heights`() {
+    testSizes(
+      initOps = {
+        setModelStructure("""
+          |r1
+          | a1
+          | a2
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+        useEstimates("r1/a1" to 10)
+        heights["a1"] = 15
+      },
+      modOps = {
+        assertWidth(0, defaultRowHeight * 2 + 10, indent + "a1".length) // measures all rows
+        sut.invalidateSizes()
+      },
+      assertions = {
+        assertHeight(defaultRowHeight * 2 + 10)
+        assertWidth(0, defaultRowHeight * 2 + 10, indent + "a1".length) // measures all rows again
+        assertHeight(defaultRowHeight * 2 + 15)
+      },
+    )
+  }
+
+  @Test
+  fun `row height - a variable row height starts again from the estimated heights`() {
+    testSizes(
+      initOps = {
+        setModelStructure("""
+          |r1
+          | a1
+          | a2
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+        useEstimates("r1/a1" to 10)
+        heights["a1"] = 15
+      },
+      modOps = {
+        assertWidth(0, defaultRowHeight * 2 + 10, indent + "a1".length) // measures all rows
+        sut.rowHeight = 10
+        assertHeight(10 * 3)
+        sut.rowHeight = 0
+      },
+      assertions = {
+        assertHeight(defaultRowHeight * 2 + 10)
+        assertWidth(0, defaultRowHeight * 2 + 10, indent + "a1".length) // measures all rows again
+        assertHeight(defaultRowHeight * 2 + 15)
+      },
+    )
+  }
+
+  @Test
+  fun `row height - a fixed row height does not ask for the estimates`() {
+    testSizes(
+      initOps = {
+        setModelStructure("""
+          |r1
+          | a1
+          | a2
+          """.trimMargin()
+        )
+        sut.isRootVisible = true
+        sut.rowHeight = 10
+        useEstimates("r1/a1" to 15)
+      },
+      modOps = {
+        assertWidth(0, 10 * 3, indent + "a1".length) // measures all rows
+        model.nodeChanged(node("r1/a1"))
+        sut.invalidateSizes()
+      },
+      assertions = {
+        assertHeight(10 * 3)
+        assertThat(estimatedName("r1/a1").requestCount).isZero()
+      },
+    )
+  }
+
+  /** Gives each node at a path a user object that estimates the height of its row. Call it before [setModels]. */
+  private fun useEstimates(vararg estimates: Pair<String, Int>) {
+    for ((path, height) in estimates) {
+      val node = node(path)
+      node.userObject = EstimatedName(node.userObject.toString(), height)
+    }
+  }
+
+  private fun estimatedName(path: String): EstimatedName = node(path).userObject as EstimatedName
+
   private fun testStructure(
     initOps: () -> Unit = { },
     modOps: () -> Unit = { },
@@ -925,13 +1092,20 @@ class DefaultTreeLayoutCacheTest {
     })
   }
 
-  private fun setModelStructure(s: String) {
+  private fun setModelStructure(s: String, estimates: Map<String, Int> = emptyMap()) {
     val rows = s.split("\n")
     val stack = ArrayDeque<Node>()
     var level = -1
     for (row in rows) {
       val rowLevel = row.indexOfFirst { !it.isWhitespace() }
-      val node = Node(row.substring(rowLevel until row.length))
+      val nodeName = row.substring(rowLevel until row.length)
+      val estimate = estimates[nodeName]
+      val node = if (estimate == null) {
+        Node(nodeName)
+      }
+      else {
+        EstimatedNode(nodeName, estimate)
+      }
       if (rowLevel > level) {
         assertThat(rowLevel).isEqualTo(level + 1) // can't have a child deeper than one level below
         val parent = stack.lastOrNull()
@@ -1022,7 +1196,7 @@ class DefaultTreeLayoutCacheTest {
     for (name in names) {
       if (path == null) {
         if (onlyExisting) {
-          assertThat((model.root as Node).userObject).isEqualTo(name)
+          assertThat((model.root as Node).userObject.toString()).isEqualTo(name)
           path = TreePath(model.root)
         }
         else {
@@ -1033,7 +1207,7 @@ class DefaultTreeLayoutCacheTest {
         val parent = path.lastPathComponent
         var child = (0 until model.getChildCount(parent))
           .map { model.getChild(parent, it) }
-          .firstOrNull { (it as Node).userObject == name }
+          .firstOrNull { (it as Node).userObject.toString() == name }
         if (onlyExisting) {
           requireNotNull(child) { "Node $name not found in path $s" }
         }
@@ -1122,13 +1296,13 @@ class DefaultTreeLayoutCacheTest {
       (bounds ?: Rectangle()).apply {
         x = depth * indent
         value as Node
-        val userObject = value.userObject as String
+        val userObject = value.userObject.toString()
         width = userObject.length
         height = heights[userObject] ?: defaultRowHeight
       }
   }
 
-  private class Node(userObject: String) : DefaultMutableTreeNode(userObject) {
+  private open class Node(userObject: String) : DefaultMutableTreeNode(userObject) {
 
     private var isLeaf: Boolean? = null
 
@@ -1149,6 +1323,28 @@ class DefaultTreeLayoutCacheTest {
 
     override fun hashCode() = userObject.hashCode()
 
+  }
+
+  private class EstimatedNode(userObject: String, height: Int) : Node(userObject), TreeRowHeightEstimateProvider {
+    override val rowHeightEstimate: Int = height
+  }
+
+  /** A user object with the text [name] that estimates the height of its row as [height]. */
+  private class EstimatedName(private val name: String, private val height: Int) : TreeRowHeightEstimateProvider {
+    var requestCount = 0
+      private set
+
+    override val rowHeightEstimate: Int
+      get() {
+        ++requestCount
+        return height
+      }
+
+    override fun equals(other: Any?): Boolean = other is EstimatedName && other.name == name
+
+    override fun hashCode(): Int = name.hashCode()
+
+    override fun toString(): String = name
   }
 
 }

@@ -33,6 +33,9 @@
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.tasks.jira" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.codeInsight" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.git.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.hg" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.testFramework" scope="TEST" />

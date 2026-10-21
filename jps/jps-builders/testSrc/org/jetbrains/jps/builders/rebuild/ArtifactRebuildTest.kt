@@ -18,12 +18,16 @@ package org.jetbrains.jps.builders.rebuild
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.ZipUtil
 import com.intellij.util.io.directoryContent
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.io.File
 import java.io.FileInputStream
 import java.util.jar.Attributes
 import java.util.jar.Manifest
 
 class ArtifactRebuildTest: JpsRebuildTestCase() {
+  @Test
   fun testArtifactIncludesArchiveArtifact() {
     val name = "artifactIncludesArchiveArtifact"
     try {
@@ -42,8 +46,9 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
     }
   }
 
+  @Test
   fun testArtifactWithoutOutput() {
-    val outDir = FileUtil.createTempDirectory("output", "").absolutePath
+    val outDir = createTempDirectory("output").absolutePath
     loadProject("artifactWithoutOutput/artifactWithoutOutput.ipr", mapOf("OUTPUT_DIR" to outDir))
 
     rebuild()
@@ -57,6 +62,7 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
     })
   }
 
+  @Test
   fun testExtractDir() {
     doTest("extractDirTest/extractDirTest.ipr", directoryContent {
       dir("artifacts") {
@@ -88,11 +94,12 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
     })
   }
 
+  @Test
   fun testManifestInArtifact() {
     loadAndRebuild("manifestInArtifact/manifest.ipr", mapOf())
     val jarFile = File(myOutputDirectory, "artifacts/simple/simple.jar")
     assertTrue(jarFile.exists())
-    val extracted = FileUtil.createTempDirectory("build-manifest", "")
+    val extracted = createTempDirectory("build-manifest")
     ZipUtil.extract(jarFile, extracted, null)
     val manifestFile = File(extracted, "META-INF/MANIFEST.MF")
     assertTrue(manifestFile.exists())
@@ -100,6 +107,7 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
     assertEquals("MyClass", manifest.mainAttributes!!.getValue(Attributes.Name.MAIN_CLASS))
   }
 
+  @Test
   fun testOverwriteArtifacts() {
     doTest("overwriteTest/overwriteTest.ipr", directoryContent {
       dir("artifacts") {
@@ -128,6 +136,7 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
     })
   }
 
+  @Test
   fun testPathVariablesInArtifact() {
     val externalDir = "${testDataRootPath}/pathVariables/external"
     doTest("pathVariables/pathVariables.ipr", mapOf("EXTERNAL_DIR" to externalDir), directoryContent {
@@ -141,6 +150,7 @@ class ArtifactRebuildTest: JpsRebuildTestCase() {
     })
   }
 
+  @Test
   fun testModuleTestOutputElement() {
     doTest("moduleTestOutput/moduleTestOutput.ipr", directoryContent {
       dir("artifacts") {

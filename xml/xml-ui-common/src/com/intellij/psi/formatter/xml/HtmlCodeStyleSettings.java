@@ -59,7 +59,7 @@ public class HtmlCodeStyleSettings extends CustomCodeStyleSettings {
   @Property(externalName = "keep_whitespaces_inside") @CommaSeparatedValues public @NonNls String HTML_KEEP_WHITESPACES_INSIDE = "span,pre,textarea";
 
   @Property(externalName = "inline_tags") @CommaSeparatedValues public @NonNls String HTML_INLINE_ELEMENTS =
-    "a,abbr,acronym,b,basefont,bdo,big,br,cite,cite,code,dfn,em,font,i,img,input,kbd,label,q,s,samp,select,small,span,strike,strong,sub,sup,textarea,tt,u,var";
+    "a,abbr,acronym,b,basefont,bdo,big,br,cite,code,dfn,em,font,i,img,input,kbd,label,q,s,samp,select,small,span,strike,strong,sub,sup,textarea,tt,u,var";
 
   @Property(externalName = "do_not_break_if_inline_tags") @CommaSeparatedValues public @NonNls String HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT = "title,h1,h2,h3,h4,h5,h6,p";
 

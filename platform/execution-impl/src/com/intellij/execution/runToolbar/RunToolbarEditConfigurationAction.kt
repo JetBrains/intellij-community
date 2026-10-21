@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
@@ -11,12 +12,14 @@ internal class RunToolbarEditConfigurationAction : DumbAwareAction() {
     const val ACTION_ID = "RunToolbarEditConfigurationAction"
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     e.dataContext.editConfiguration()
+  }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = e.place != ActionPlaces.ACTION_SEARCH
   }
 }
 
@@ -45,13 +48,16 @@ internal class RunToolbarShowToolWindowTab : DumbAwareAction() {
         }
         else false
       } ?: false
+
+    if (e.place == ActionPlaces.ACTION_SEARCH) {
+      e.presentation.isEnabledAndVisible = false
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     e.environment()?.showToolWindowTab()
   }
 }
-
 
 internal class RunToolbarRemoveSlotAction : DumbAwareAction() {
 
@@ -68,6 +74,10 @@ internal class RunToolbarRemoveSlotAction : DumbAwareAction() {
       val slotManager = RunToolbarSlotManager.getInstance(project)
       e.runToolbarData() != slotManager.mainSlotData || (slotManager.slotsCount() != 0 && e.mainState() != RunToolbarMainSlotState.INFO)
     } ?: false
+
+    if (e.place == ActionPlaces.ACTION_SEARCH) {
+      e.presentation.isEnabledAndVisible = false
+    }
   }
   
   override fun getActionUpdateThread(): ActionUpdateThread {
@@ -93,15 +103,17 @@ internal class RunToolbarMoveToTopAction : DumbAwareAction() {
     }
   }
 
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.project?.let { project ->
       val manager = RunToolbarSlotManager.getInstance(project)
       e.runToolbarData() != manager.mainSlotData
       || manager.getState().isSinglePlain()
     } ?: false
-  }
 
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.BGT
+    if (e.place == ActionPlaces.ACTION_SEARCH) {
+      e.presentation.isEnabledAndVisible = false
+    }
   }
 }

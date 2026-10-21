@@ -1,0 +1,61 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.platform.ide.tabInEditor.recentFiles` start
+content_module_jar(module = ":recentFiles")
+### auto-generated section `dev intellij.platform.ide.tabInEditor.recentFiles` end
+
+### auto-generated section `build intellij.platform.ide.tabInEditor.recentFiles` start
+jvm_library(
+    name = "recentFiles",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.tabInEditor.recentFiles",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/platform-impl/tab-in-editor",
+        "//platform/recentFiles/shared:recentFiles",
+    ],
+)
+
+jvm_library(
+    name = "recentFiles_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.tabInEditor.recentFiles",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":recentFiles",
+        "//platform/core-api:core_test_lib",
+        "//platform/platform-impl/tab-in-editor:tab-in-editor_test_lib",
+        "//platform/recentFiles/shared:recentFiles_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.ide.tabInEditor.recentFiles` end
+
+### auto-generated section `iml intellij.platform.ide.tabInEditor.recentFiles` start
+exports_files(
+    [
+        "intellij.platform.ide.tabInEditor.recentFiles.iml",
+        "resources/intellij.platform.ide.tabInEditor.recentFiles.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.ide.tabInEditor.recentFiles` end

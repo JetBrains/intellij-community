@@ -157,25 +157,13 @@ private class ConfigurableSettingChooserPage<T : BaseService>(
 
   override val stage = StartupWizardStage.SettingsToImportPage
 
-  private val importButton = controller.createDefaultButton(
-    if (controller.canShowFeaturedPluginsPage(product.origin)) {
-      ImportSettingsBundle.message("import.next")
-    }
-    else {
-      ImportSettingsBundle.message("import.settings.ok")
-    }
-  ) {
+  private val importButton = controller.createDefaultButton(ImportSettingsBundle.message("import.settings.ok")) {
     val productService = provider.productService
     val dataForSaves = prepareDataForSave()
     ImportSettingsEventsCollector.configurePageImportSettingsClicked()
-    if (controller.canShowFeaturedPluginsPage(product.origin)
-        && controller.shouldShowFeaturedPluginsPage(product.id, dataForSaves, productService)) {
-      controller.goToFeaturedPluginsPage(provider, productService, product, dataForSaves)
-    } else {
-      val dataToApply = DataToApply(dataForSaves, emptyList())
-      val importSettings = productService.importSettings(product.id, dataToApply)
-      controller.goToProgressPage(importSettings, dataToApply)
-    }
+    val dataToApply = DataToApply(dataForSaves)
+    val importSettings = productService.importSettings(product.id, dataToApply)
+    controller.goToProgressPage(importSettings)
   }
 
   override val buttons: List<JButton>
@@ -221,10 +209,10 @@ private class SyncSettingChooserPage(val provider: SyncActionsDataProvider,
 
   private val importOnceButton = controller.createButton(ImportSettingsBundle.message("import.settings.sync.import.once")) {
     val syncSettings = provider.productService.importSyncSettings()
-    controller.goToProgressPage(syncSettings, DataToApply(emptyList(), emptyList()))
+    controller.goToProgressPage(syncSettings)
   }
   private val syncButton = controller.createDefaultButton(ImportSettingsBundle.message("import.settings.sync.ok")) {
-    controller.goToProgressPage(provider.productService.syncSettings(), DataToApply(emptyList(), emptyList()))
+    controller.goToProgressPage(provider.productService.syncSettings())
   }
 
   override val buttons: List<JButton>

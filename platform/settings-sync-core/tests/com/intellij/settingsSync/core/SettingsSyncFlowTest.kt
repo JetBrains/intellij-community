@@ -25,8 +25,10 @@ import org.junit.jupiter.api.Test
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 import java.time.Instant
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.createFile
 import kotlin.io.path.div
 import kotlin.io.path.exists
@@ -614,6 +616,116 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       bridge.waitForAllExecuted()
       cleanup()
     }
+  }
+
+  @Test
+  fun `SyncRequest is skipped while another SyncRequest waits for the lock`() = timeoutRunBlockingAndStopBridge {
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+    bridge.waitForAllExecuted()
+
+    val checks = AtomicInteger()
+    val releaseFirstCheck = CountDownLatch(1)
+    remoteCommunicator.checkServerStateInterceptor = {
+      if (checks.incrementAndGet() == 1) {
+        releaseFirstCheck.await(10, TimeUnit.SECONDS)
+      }
+    }
+    try {
+      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
+      waitUntil("The first SyncRequest holds the lock", 5.seconds) { checks.get() == 1 }
+
+      repeat(5) {
+        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
+      }
+      releaseFirstCheck.countDown()
+      waitUntil("All SyncRequests are processed", 5.seconds) { bridge.queueSize == 0 }
+    }
+    finally {
+      releaseFirstCheck.countDown()
+      remoteCommunicator.checkServerStateInterceptor = null
+    }
+
+    // the running request and one waiting request; the bridge skips the other requests, because one request waits already
+    Assertions.assertEquals(2, checks.get())
+  }
+
+  @Test
+  fun `exclusive event is skipped with an error when it waits for the lock too long`() {
+    val errors = CopyOnWriteArrayList<String>()
+    LoggedErrorProcessor.executeWith(object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<out String>, t: Throwable?): Set<Action> {
+        errors.add(t?.message ?: message)
+        return Action.NONE
+      }
+    }).use {
+      timeoutRunBlockingAndStopBridge {
+        initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+        bridge.waitForAllExecuted()
+        bridge.setLockWaitErrorTimeout(100.milliseconds)
+        Assertions.assertNotEquals(true, remoteCommunicator.ideCrossSyncState())
+
+        val checks = AtomicInteger()
+        val releaseFirstCheck = CountDownLatch(1)
+        remoteCommunicator.checkServerStateInterceptor = {
+          if (checks.incrementAndGet() == 1) {
+            releaseFirstCheck.await(10, TimeUnit.SECONDS)
+          }
+        }
+        try {
+          SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
+          waitUntil("The SyncRequest holds the lock", 5.seconds) { checks.get() == 1 }
+
+          SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.CrossIdeSyncStateChanged(true))
+          waitUntil("The waiting event reports an error", 5.seconds) { errors.isNotEmpty() }
+
+          releaseFirstCheck.countDown()
+          waitUntil("All exclusive events are processed", 5.seconds) { bridge.queueSize == 0 }
+        }
+        finally {
+          releaseFirstCheck.countDown()
+          remoteCommunicator.checkServerStateInterceptor = null
+        }
+
+        Assertions.assertNotEquals(true, remoteCommunicator.ideCrossSyncState(), "CrossIdeSyncStateChanged must be skipped after the timeout")
+      }
+    }
+
+    Assertions.assertEquals(1, errors.size, errors.toString())
+    val error = errors.single()
+    Assertions.assertTrue(error.startsWith("exclusive event CrossIdeSyncStateChanged could not get the settings sync events lock"), error)
+    Assertions.assertTrue(error.contains("The lock is held by exclusive event SyncRequest"), error)
+    Assertions.assertTrue(error.contains("The current stage is 'remote communicator call'"), error)
+  }
+
+  @Test
+  fun `exclusive event is skipped when sync is disabled while it waits for the lock`() = timeoutRunBlockingAndStopBridge {
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+    bridge.waitForAllExecuted()
+    Assertions.assertNotEquals(true, remoteCommunicator.ideCrossSyncState())
+
+    val checks = AtomicInteger()
+    val releaseFirstCheck = CountDownLatch(1)
+    remoteCommunicator.checkServerStateInterceptor = {
+      if (checks.incrementAndGet() == 1) {
+        releaseFirstCheck.await(10, TimeUnit.SECONDS)
+      }
+    }
+    try {
+      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
+      waitUntil("The SyncRequest holds the lock", 5.seconds) { checks.get() == 1 }
+
+      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.CrossIdeSyncStateChanged(true))
+      SettingsSyncSettings.getInstance().syncEnabled = false
+
+      releaseFirstCheck.countDown()
+      waitUntil("All exclusive events are processed", 5.seconds) { bridge.queueSize == 0 }
+    }
+    finally {
+      releaseFirstCheck.countDown()
+      remoteCommunicator.checkServerStateInterceptor = null
+    }
+
+    Assertions.assertNotEquals(true, remoteCommunicator.ideCrossSyncState(), "CrossIdeSyncStateChanged must be skipped when sync is disabled")
   }
 
   @Test

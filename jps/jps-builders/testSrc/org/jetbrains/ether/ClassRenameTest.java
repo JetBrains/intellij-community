@@ -15,15 +15,19 @@
  */
 package org.jetbrains.ether;
 
+import org.junit.jupiter.api.Test;
+
 public class ClassRenameTest extends IncrementalTestCase {
   public ClassRenameTest() {
     super("changeName");
   }
 
+  @Test
   public void testChangeClassName() {
     doTest().assertSuccessful();
   }
 
+  @Test
   public void testChangeCaseOfName() {
     doTest().assertSuccessful();
   }

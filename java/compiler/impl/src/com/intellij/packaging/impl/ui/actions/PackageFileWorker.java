@@ -65,16 +65,14 @@ public final class PackageFileWorker {
         try {
           for (final VirtualFile file : files) {
             indicator.checkCanceled();
-            ReadAction.run(() -> {
-              try {
-                packageFile(file, project, artifacts, packIntoArchives);
-              }
-              catch (IOException e) {
-                LOG.info(e);
-                String message = JavaCompilerBundle.message("message.tect.package.file.io.error", e.toString());
-                Notifications.Bus.notify(new Notification("Package File", JavaCompilerBundle.message("cannot.package.file"), message, NotificationType.ERROR));
-              }
-            });
+            try {
+              packageFile(file, project, artifacts, packIntoArchives);
+            }
+            catch (IOException e) {
+              LOG.info(e);
+              String message = JavaCompilerBundle.message("message.tect.package.file.io.error", e.toString());
+              Notifications.Bus.notify(new Notification("Package File", JavaCompilerBundle.message("cannot.package.file"), message, NotificationType.ERROR));
+            }
             callback.setDone();
           }
         }
@@ -91,7 +89,9 @@ public final class PackageFileWorker {
   public static void packageFile(@NotNull VirtualFile file, @NotNull Project project, final Artifact[] artifacts,
                                  final boolean packIntoArchives) throws IOException {
     LOG.debug("Start packaging file: " + file.getPath());
-    final Collection<ArtifactUtil.ArtifactInfo> items = ArtifactUtil.findContainingArtifactsWithOutputPaths(file, project, artifacts);
+    // Only resolve the containing artifacts under a read action; the file I/O below does not need the read lock.
+    final Collection<ArtifactUtil.ArtifactInfo> items =
+      ReadAction.computeBlocking(() -> ArtifactUtil.findContainingArtifactsWithOutputPaths(file, project, artifacts));
     File ioFile = VfsUtilCore.virtualToIoFile(file);
     for (ArtifactUtil.ArtifactInfo item : items) {
       final Artifact artifact = item.artifact();

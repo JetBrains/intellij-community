@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.Property;
 import com.jetbrains.python.psi.PyAugAssignmentStatement;
@@ -18,7 +19,9 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.impl.PyDeprecationProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.types.PyCallableArgument;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyDeprecatable;
@@ -38,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 
@@ -157,8 +161,12 @@ public final class PyDeprecationInspection extends PyInspection {
           }
         }
       }
-      else if (resolveResult instanceof PyFile) {
-        deprecationMessage = ((PyFile)resolveResult).getDeprecationMessage();
+      else if (resolveResult instanceof PyFile file) {
+        deprecationMessage = file.getDeprecationMessage();
+      }
+      // TODO consult PyDeprecationProvider on the operator, call-site and property paths too, through one shared lookup
+      if (deprecationMessage == null && resolveResult != null) {
+        deprecationMessage = PyDeprecationProvider.findDeprecationMessage(resolveResult, myTypeEvalContext);
       }
       if (deprecationMessage == null) return;
 
@@ -176,8 +184,22 @@ public final class PyDeprecationInspection extends PyInspection {
 
       TypeEvalContext ctx = getResolveContext().getTypeEvalContext();
 
-      PyFunction matchingStubOverload = PyCallExpressionHelper.selectMatchingOverload(stubFn, call, ctx);
+      PyFunction matchingStubOverload = selectMatchingOverload(stubFn, call, ctx);
       return matchingStubOverload != null ? matchingStubOverload : stubFn;
+    }
+
+    private static @Nullable PyFunction selectMatchingOverload(@NotNull PyFunction function,
+                                                               @NotNull PyCallExpression call,
+                                                               @NotNull TypeEvalContext context) {
+      Set<PyFunction> overloads = new HashSet<>(PyiUtil.getOverloads(function, context));
+      if (overloads.isEmpty()) return null;
+
+      List<PyCallableType> overloadTypes = ContainerUtil.filter(call.multiResolveCallee(PyResolveContext.defaultContext(context)),
+                                                                type -> overloads.contains(type.getCallable()));
+      List<PyCallableArgument> arguments = ContainerUtil.map(call.getArguments(), PyCallableArgument::new);
+      PyCallableType matching = ContainerUtil.getOnlyItem(PyCallExpressionHelper
+                                                            .selectMatchingOverloads(overloadTypes, arguments, context));
+      return matching != null && matching.getCallable() instanceof PyFunction func ? func : null;
     }
 
     private @Nullable PyElement resolve(@NotNull PyReferenceExpression node) {
@@ -191,7 +213,7 @@ public final class PyDeprecationInspection extends PyInspection {
       TypeEvalContext typeEvalContext = resolveContext.getTypeEvalContext();
 
       if (resolvedResult instanceof PyFunction function) {
-        PyFunction matchingOverload = PyCallExpressionHelper.selectMatchingOverload(function, call, typeEvalContext);
+        PyFunction matchingOverload = selectMatchingOverload(function, call, typeEvalContext);
         PyElement target = matchingOverload != null ? matchingOverload : function;
         return PyiUtil.getOriginalElementOrLeaveAsIs(target, PyElement.class);
       }
@@ -200,7 +222,7 @@ public final class PyDeprecationInspection extends PyInspection {
       for (PyCallableType callableType : call.multiResolveCallee(resolveContext)) {
         PyElement callable = callableType.getCallable();
         if (callable instanceof PyFunction function) {
-          PyElement matching = PyCallExpressionHelper.selectMatchingOverload(function, call, typeEvalContext);
+          PyElement matching = selectMatchingOverload(function, call, typeEvalContext);
           if (matching != null) {
             return PyiUtil.getOriginalElementOrLeaveAsIs(matching, PyElement.class);
           }

@@ -2,10 +2,16 @@
 package com.intellij.codeInsight.wrap;
 
 import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.testFramework.junit5.TestApplication;
+import org.junit.jupiter.api.Test;
 
+@TestApplication
 public class PlainTextWrapTest extends AbstractWrapTest {
+  @Test
   public void testWrapAfterSpaceOnMargin() {
-    mySettings.setDefaultRightMargin(10);
-    checkWrapOnTyping(PlainTextFileType.INSTANCE, "t", "text text <caret>", "text text \nt<caret>");
+    myFixture.runTest(() -> {
+      mySettings.setDefaultRightMargin(10);
+      checkWrapOnTyping(PlainTextFileType.INSTANCE, "t", "text text <caret>", "text text \nt<caret>");
+    });
   }
 }

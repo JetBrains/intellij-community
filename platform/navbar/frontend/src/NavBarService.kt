@@ -1,9 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.navbar.frontend
 
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -32,14 +35,20 @@ import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.yield
+import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Window
 import javax.swing.JComponent
 
@@ -57,6 +66,26 @@ class NavBarService(private val project: Project, cs: CoroutineScope) {
 
   private val visible: MutableStateFlow<Boolean> = MutableStateFlow(UISettings.getInstance().isNavbarShown())
   private val updateRequests: MutableSharedFlow<Unit> = MutableSharedFlow(replay = 1, onBufferOverflow = DROP_OLDEST)
+  private val pluginUnloads: MutableSharedFlow<Unit> = MutableSharedFlow(extraBufferCapacity = 1, onBufferOverflow = DROP_OLDEST)
+
+  /** Emits into [pluginUnloadEvents] after each unload of a plugin, not before it, so no item of the plugin can follow. */
+  // The items come from NavBarServiceDelegate of this process, so the unload of a plugin in this process is the one that matters.
+  @Suppress("SplitModeApiUsage")
+  @VisibleForTesting
+  internal val pluginUnloadListener: DynamicPluginListener = object : DynamicPluginListener {
+    override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+      check(pluginUnloads.tryEmit(Unit))
+    }
+  }
+
+  /** Each unload of a plugin, see [navBarContextItems]. */
+  @get:VisibleForTesting
+  internal val pluginUnloadEvents: Flow<Unit>
+    get() = pluginUnloads.asSharedFlow()
+
+  init {
+    ApplicationManager.getApplication().messageBus.connect(this.cs).subscribe(DynamicPluginListener.TOPIC, pluginUnloadListener)
+  }
 
   init {
     cs.launch {
@@ -103,13 +132,13 @@ class NavBarService(private val project: Project, cs: CoroutineScope) {
     )
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   private fun contextItems(window: Window, panel: JComponent): Flow<List<NavBarVmItem>> {
-    return updateRequests.transformLatest {
-      dataContext(window, panel)?.let {
-        emit(contextModel(it, project))
-      }
-    }
+    return navBarContextItems(
+      updates = updateRequests,
+      unloads = pluginUnloads,
+      contextModel = { dataContext(window, panel)?.let { contextModel(it, project) } },
+      defaultModel = ::defaultModel,
+    )
   }
 
   fun showFloatingNavbar(dataContext: DataContext) {
@@ -149,6 +178,39 @@ class NavBarService(private val project: Project, cs: CoroutineScope) {
       updateRequests.emit(Unit)
     }
   }
+}
+
+/**
+ * The items of a static navigation bar for each request: an update, or the reset after an unload of a plugin.
+ * The bar keeps its last items while focus is away, so an unload must replace items that may show objects of the unloaded plugin.
+ *
+ * Each request cancels the computation of the previous one, so an update that took its context before an unload emits nothing after it.
+ * A reset gives the items of the live context, or the default model when [contextModel] gives no items. A later request can cancel
+ * a reset before it emits, so the reset stays pending until the bar gets items.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+@VisibleForTesting
+internal fun navBarContextItems(
+  updates: Flow<Unit>,
+  unloads: Flow<Unit>,
+  contextModel: suspend () -> List<NavBarVmItem>?,
+  defaultModel: suspend () -> List<NavBarVmItem>,
+): Flow<List<NavBarVmItem>> = flow {
+  var resetPending = false
+  val requests = merge(updates.map { false }, unloads.map { true })
+  emitAll(requests.transformLatest { isReset ->
+    if (isReset) {
+      resetPending = true
+    }
+    val items = contextModel()
+    if (resetPending && items.isNullOrEmpty()) {
+      emit(defaultModel())
+    }
+    else if (items != null) {
+      emit(items)
+    }
+    resetPending = false
+  })
 }
 
 suspend fun contextModel(ctx: DataContext, project: Project): List<NavBarVmItem> {

@@ -38,7 +38,8 @@ import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.time.Duration
 
-internal fun TerminalTextBuffer.addModelListener(parentDisposable: Disposable, listener: TerminalModelListener) {
+@ApiStatus.Internal
+fun TerminalTextBuffer.addModelListener(parentDisposable: Disposable, listener: TerminalModelListener) {
   addModelListener(listener)
   Disposer.register(parentDisposable) {
     removeModelListener(listener)

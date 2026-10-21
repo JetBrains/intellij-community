@@ -6,6 +6,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.MockFontLayoutService
 import com.intellij.testFramework.PlatformTestUtil
+import org.intellij.plugins.markdown.MarkdownTestingUtil.paintPresentation
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 
@@ -47,12 +48,9 @@ class MarkdownHorizontalBarPresentationWidthTest : LightPlatformCodeInsightTestC
     )
     val expected = renderedWidth(header.textRange.startOffset, header.textRange.endOffset)
 
-    assertEquals(expected, HorizontalBarPresentation(editor, table).width)
-    val batchPresentation = HorizontalBarPresentation(editor, table)
-    editor.inlayModel.execute(true) {
-      assertEquals(0, batchPresentation.width)
-    }
-    assertEquals(expected, batchPresentation.width)
+    val presentation = HorizontalBarPresentation(editor, table)
+    paintPresentation(presentation)
+    assertEquals(expected, presentation.width)
   }
 
   private fun renderedWidth(startOffset: Int, endOffset: Int): Int {

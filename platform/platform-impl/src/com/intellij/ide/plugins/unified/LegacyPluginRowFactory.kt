@@ -128,6 +128,7 @@ internal class LegacyPluginRow(
     val canRenderWithoutButtonRebuild = renderedInput?.let { previous ->
       previous.copy(
         errors = input.errors,
+        expectedExplanations = input.expectedExplanations,
         updateDescriptor = input.updateDescriptor,
         enabled = input.enabled,
         detailsProgress = input.detailsProgress,
@@ -146,7 +147,8 @@ internal class LegacyPluginRow(
       component.updateButtons(input.installedPlugin, input.installationState)
     }
     component.updateErrors(input.errors)
-    component.setUpdateDescriptor(input.updateDescriptor)
+    component.updateExpectedExplanations(input.expectedExplanations)
+    component.setUpdateDescriptor(input.updateDescriptor.takeIf { input.enabled })
     input.preparedUpdate?.let { prepared ->
       component.pluginInstalled(true, prepared.restartRequired, input.installedPlugin)
     }

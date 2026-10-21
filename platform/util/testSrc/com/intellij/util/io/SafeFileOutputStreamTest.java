@@ -3,12 +3,11 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.After;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,43 +24,46 @@ import java.util.Random;
 import java.util.Set;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assumeUnix;
+import static com.intellij.openapi.util.io.IoTestUtil.createTestDir;
+import static com.intellij.openapi.util.io.IoTestUtil.createTestFile;
 import static java.nio.file.attribute.PosixFilePermission.OTHERS_EXECUTE;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_READ;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_WRITE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.fail;
 
 public class SafeFileOutputStreamTest {
   private static final String TEST_BACKUP_EXT = ".bak";
   private static final byte[] TEST_DATA = {'h', 'e', 'l', 'l', 'o'};
 
-  @Rule public TempDirectory tempDir = new TempDirectory();
+  @TempDir
+  File tempDir;
 
-  @After public void tearDown() throws Exception {
+  @AfterEach public void tearDown() throws Exception {
     if (SystemInfo.isUnix) {
-      new ProcessBuilder("chmod", "-R", "u+rw", tempDir.getRoot().getPath()).start().waitFor();
+      new ProcessBuilder("chmod", "-R", "u+rw", tempDir.getPath()).start().waitFor();
     }
   }
 
   @Test public void newFile() throws IOException {
-    checkWriteSucceed(new File(tempDir.getRoot(), "new-file.txt"));
+    checkWriteSucceed(new File(tempDir, "new-file.txt"));
   }
 
   @Test public void existingFile() throws IOException {
-    checkWriteSucceed(tempDir.newFile("test.txt"));
+    checkWriteSucceed(createTestFile(tempDir, "test.txt"));
   }
 
   @Test public void overwritingBackup() throws IOException {
-    File target = tempDir.newFile("test.txt");
-    tempDir.newFile(target.getName() + TEST_BACKUP_EXT);
+    File target = createTestFile(tempDir, "test.txt");
+    createTestFile(tempDir, target.getName() + TEST_BACKUP_EXT);
     checkWriteSucceed(target);
   }
 
   @Test public void keepingAttributes() throws IOException {
     assumeUnix();
 
-    File target = tempDir.newFile("test.txt");
+    File target = createTestFile(tempDir, "test.txt");
     Set<PosixFilePermission> permissions = EnumSet.of(OWNER_READ, OWNER_WRITE, OTHERS_EXECUTE);
     Files.setPosixFilePermissions(target.toPath(), permissions);
     checkWriteSucceed(target);
@@ -71,8 +73,8 @@ public class SafeFileOutputStreamTest {
   @Test public void preservingSymlinks() throws IOException {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
-    File target = tempDir.newFile("test.txt");
-    File link = new File(tempDir.getRoot(), "link");
+    File target = createTestFile(tempDir, "test.txt");
+    File link = new File(tempDir, "link");
     @NotNull Path link1 = link.toPath();
     @NotNull Path target1 = target.toPath();
     Files.createSymbolicLink(link1, target1);
@@ -83,7 +85,7 @@ public class SafeFileOutputStreamTest {
   @Test public void newFileInReadOnlyDirectory() throws IOException {
     assumeUnix();
 
-    File dir = tempDir.newDirectory("dir");
+    File dir = createTestDir(tempDir, "dir");
     Files.setPosixFilePermissions(dir.toPath(), EnumSet.of(OWNER_READ, OWNER_EXECUTE));
     checkWriteFailed(new File(dir, "test.txt"));
   }
@@ -91,14 +93,14 @@ public class SafeFileOutputStreamTest {
   @Test public void existingFileInReadOnlyDirectory() throws IOException {
     assumeUnix();
 
-    File target = tempDir.newFile("dir/test.txt");
+    File target = createTestFile(new File(tempDir, "dir"), "test.txt");
     Files.write(target.toPath(), new byte[]{'.'});
     Files.setPosixFilePermissions(target.getParentFile().toPath(), EnumSet.of(OWNER_READ, OWNER_EXECUTE));
     checkWriteFailed(target);
   }
 
   @Test public void largeFile() throws IOException, NoSuchAlgorithmException {
-    File target = tempDir.newFile("test.dat");
+    File target = createTestFile(tempDir, "test.dat");
     MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
     Random random = new Random();
@@ -119,7 +121,7 @@ public class SafeFileOutputStreamTest {
   @Test public void backupRemovalNotCritical() throws IOException {
     assumeUnix();
 
-    File target = tempDir.newFile("dir/test.txt"), backup = new File(target.getParent(), target.getName() + TEST_BACKUP_EXT);
+    File target = createTestFile(new File(tempDir, "dir"), "test.txt"), backup = new File(target.getParent(), target.getName() + TEST_BACKUP_EXT);
     try (OutputStream out = openStream(target)) {
       out.write(TEST_DATA);
       while (!backup.exists()) TimeoutUtil.sleep(10);
@@ -130,7 +132,7 @@ public class SafeFileOutputStreamTest {
   }
 
   @Test public void abort() throws IOException {
-    File target = tempDir.newFile("dir/test.txt"), backup = new File(target.getParent(), target.getName() + TEST_BACKUP_EXT);
+    File target = createTestFile(new File(tempDir, "dir"), "test.txt"), backup = new File(target.getParent(), target.getName() + TEST_BACKUP_EXT);
     try (OutputStream out = openStream(target)) {
       out.write(TEST_DATA);
     }
@@ -144,7 +146,7 @@ public class SafeFileOutputStreamTest {
   }
 
   @Test public void readOnlyFileBackup() throws IOException {
-    File target = tempDir.newFile("dir/test.txt");
+    File target = createTestFile(new File(tempDir, "dir"), "test.txt");
     if (SystemInfo.isWindows) {
       Files.getFileAttributeView(target.toPath(), DosFileAttributeView.class).setReadOnly(true);
     }
@@ -162,7 +164,7 @@ public class SafeFileOutputStreamTest {
   }
 
   @Test public void preemptiveStreamNew() throws IOException {
-    File target = new File(tempDir.getRoot(), "new-file.txt");
+    File target = new File(tempDir, "new-file.txt");
     try (OutputStream out = new PreemptiveSafeFileOutputStream(target.toPath())) {
       out.write(TEST_DATA[0]);
       out.write(TEST_DATA, 1, TEST_DATA.length - 1);
@@ -172,7 +174,7 @@ public class SafeFileOutputStreamTest {
   }
 
   @Test public void preemptiveStreamExisting() throws IOException {
-    File target = tempDir.newFile("test.txt");
+    File target = createTestFile(tempDir, "test.txt");
     try (OutputStream out = new PreemptiveSafeFileOutputStream(target.toPath())) {
       out.write(TEST_DATA[0]);
       out.write(TEST_DATA, 1, TEST_DATA.length - 1);

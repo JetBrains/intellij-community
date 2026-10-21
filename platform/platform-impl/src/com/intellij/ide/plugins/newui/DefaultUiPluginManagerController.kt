@@ -13,12 +13,12 @@ import com.intellij.ide.plugins.InstallPluginRequest
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.InstalledPluginsTableModel
 import com.intellij.ide.plugins.PendingDynamicPluginInstall
-import com.intellij.ide.plugins.PluginDependencyIsDisabled
 import com.intellij.ide.plugins.PluginEnableDisableAction
 import com.intellij.ide.plugins.PluginEnabledState
 import com.intellij.ide.plugins.PluginEnabler
 import com.intellij.ide.plugins.PluginInstallOperation
 import com.intellij.ide.plugins.PluginInstaller
+import com.intellij.ide.plugins.PluginLoadingProblem
 import com.intellij.ide.plugins.PluginMainDescriptor
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
@@ -844,7 +844,8 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
         requiredPlugins.add(result)
       }
     }
-    val result = enableDependencies(session, requiredPlugins.toList(), PluginEnableDisableAction.ENABLE_GLOBALLY,
+    val pluginsToEnable = requiredPlugins.filter { it.pluginId != PluginManagerCore.ULTIMATE_PLUGIN_ID }
+    val result = enableDependencies(session, pluginsToEnable, PluginEnableDisableAction.ENABLE_GLOBALLY,
                                     buildPluginIdMap(), getPluginSet().buildContentModuleIdMap())
     return result.changedStates.filterValues { it }.keys
   }
@@ -1025,6 +1026,13 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
   }
 
   private fun getErrors(session: PluginManagerSession, pluginId: PluginId): CheckErrorsResult {
+    val result = checkErrors(session, pluginId)
+    val pluginPresent = PluginManagerCore.findPlugin(pluginId) != null ||
+                        InstalledPluginsState.getInstance().installedPlugins.any { it.pluginId == pluginId }
+    return result.copy(pluginPresent = pluginPresent)
+  }
+
+  private fun checkErrors(session: PluginManagerSession, pluginId: PluginId): CheckErrorsResult {
     if (InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(pluginId) ||
         InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginId)) {
       // we'll actually install the plugin when the configurable is closed; at this time we don't know if there's any loadingError
@@ -1036,9 +1044,9 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     }
 
     val loadingError = service<PluginManagerStateService>().getPluginNonLoadReason(pluginId)
-    val disabledDependency = if (loadingError is PluginDependencyIsDisabled) loadingError.dependencyId else null
+    val disabledDependency = loadingError?.disabledDependencyId
     if (disabledDependency == null) {
-      return CheckErrorsResult(loadingError = loadingError?.shortMessage, isDisabledDependencyError = true)
+      return CheckErrorsResult(loadingError = loadingError?.shortMessage).withLoadingProblem(loadingError)
     }
 
     val requiredPlugins = mutableMapOf<PluginId, IdeaPluginDescriptor?>()
@@ -1050,12 +1058,35 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       return CheckErrorsResult()
     }
 
+    when (loadingError.kind) {
+      PluginLoadingProblem.Kind.ULTIMATE_DISABLED -> {
+        return CheckErrorsResult(loadingError = loadingError.shortMessage).withLoadingProblem(loadingError)
+      }
+      PluginLoadingProblem.Kind.OTHER, PluginLoadingProblem.Kind.PRODUCT_MODE_MISMATCH -> {}
+    }
+
+    if (PluginManagerCore.ULTIMATE_PLUGIN_ID in requiredPlugins) {
+      return CheckErrorsResult(loadingError = loadingError.shortMessage).withLoadingProblem(loadingError)
+    }
+
     if (requiredPlugins.entries.none { it.value == null || PluginManagerCore.isIncompatible(it.value!!) }) {
       val pluginNames = requiredPlugins.map { InstalledPluginsTableModel.getPluginNameOrId(it.key, it.value) }
       return CheckErrorsResult(suggestToEnableRequiredPlugins = true,
-                               requiredPluginNames = pluginNames.toSet())
+                               requiredPluginNames = pluginNames.toSet()).withLoadingProblem(loadingError)
     }
     return CheckErrorsResult()
+  }
+
+  private fun CheckErrorsResult.withLoadingProblem(problem: PluginLoadingProblem?): CheckErrorsResult {
+    if (problem == null) return this
+    return copy(
+      kind = problem.kind,
+      severity = problem.severity,
+      disabledDependencyId = problem.disabledDependencyId,
+      productMode = problem.productMode,
+      unavailableModuleId = problem.unavailableModuleId,
+      dependencyPluginId = problem.dependencyPluginId,
+    )
   }
 
   private fun findSession(sessionId: String): PluginManagerSession? {

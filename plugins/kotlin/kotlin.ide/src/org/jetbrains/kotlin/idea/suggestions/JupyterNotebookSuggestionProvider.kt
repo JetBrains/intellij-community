@@ -8,6 +8,8 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
@@ -125,7 +127,7 @@ private class JupyterPluginSuggestion(
             FUSEventSource.EDITOR.logInstallPlugins(pluginIdsToInstallOrEnable, project)
             val pluginIdsToInstall = checker.pluginIdsToInstall(pluginIdsToInstallOrEnable)
             installAndEnable(project, pluginIdsToInstallOrEnable.map(PluginId::getId).toSet(), true) {
-                handlePluginChanges()
+                ApplicationManager.getApplication().invokeLater(::handlePluginChanges, ModalityState.nonModal(), project.disposed)
             }
             if (pluginIdsToInstall.isEmpty() && pluginIdsToInstallOrEnable.all(checker::isPluginInstalledAndEnabled)) {
                 handlePluginChanges()
@@ -169,6 +171,8 @@ private class PluginEnablementChecker(
     fun pluginsInstalledAndEnabled(): Boolean = pluginIds.all(::isPluginInstalledAndEnabled)
 
     private fun isPluginInstalled(pluginId: PluginId): Boolean {
-        return !InstalledPluginsState.getInstance().wasUninstalledWithoutRestart(pluginId) && PluginManager.isPluginInstalled(pluginId)
+        val installedPluginsState = InstalledPluginsState.getInstance()
+        if (installedPluginsState.wasInstalled(pluginId)) return true
+        return !installedPluginsState.wasUninstalledWithoutRestart(pluginId) && PluginManager.isPluginInstalled(pluginId)
     }
 }

@@ -21,7 +21,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.projectAndScopeMethodType
 import com.intellij.openapi.project.impl.projectMethodType
-import com.intellij.platform.kernel.util.kernelCoroutineContext
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.serviceContainer.findConstructorOrNull
@@ -50,10 +49,7 @@ abstract class ClientSessionImpl(
   private val sharedComponentManager: ClientAwareComponentManager
 ) : ComponentManagerImpl(
   parent = null,
-  parentScope = GlobalScope.childScope(
-    "Client[$clientId] Session scope",
-    context = sharedComponentManager.getCoroutineScope().coroutineContext.kernelCoroutineContext()
-  ),
+  parentScope = GlobalScope.childScope("Client[$clientId] Session scope"),
   additionalContext = clientId.asContextElement(),
 ), ClientSession {
   final override val isLightServiceSupported: Boolean

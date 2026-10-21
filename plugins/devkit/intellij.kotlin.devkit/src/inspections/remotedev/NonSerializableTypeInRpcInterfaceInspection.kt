@@ -128,14 +128,6 @@ internal class NonSerializableTypeInRpcInterfaceInspection : LocalInspectionTool
     .map { ClassId.topLevel(FqName(it)) }
     .toSet()
 
-  /**
-   * Types that we don't want to report now (their support should be implemented later).
-   */
-  private val ignoredTypes = setOf(
-    // related to Rhizome entities; unclear how to handle them
-    FqName("fleet.kernel.DurableRef")
-  )
-
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     if (!DevKitInspectionUtil.isAllowed(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
     return object : KtVisitorVoid() {
@@ -217,7 +209,6 @@ internal class NonSerializableTypeInRpcInterfaceInspection : LocalInspectionTool
       ): Pair<List<String>, List<KaClassType>>? {
         if (type == null) return null
         val typeSymbol = type.symbol
-        if (typeSymbol.getFqn() in ignoredTypes) return null
         if (!visited.add(type)) return null
 
         // check type and its arguments
@@ -273,7 +264,6 @@ internal class NonSerializableTypeInRpcInterfaceInspection : LocalInspectionTool
         if (type == null) return null // * in A<*> for generics
         if (type.isEnum()) return null // do not report enums until IJPL-190471 is clarified
         val typeSymbol = type.symbol
-        if (typeSymbol.getFqn() in ignoredTypes) return null // do not report ignored types
         if (typeSymbol.hasCustomSerializer()) return null
         val typeName = typeSymbol.getFqn() ?: return null
         if (typeName !in defaultSerializableTypes && !hasSerializer(typeSymbol)) {

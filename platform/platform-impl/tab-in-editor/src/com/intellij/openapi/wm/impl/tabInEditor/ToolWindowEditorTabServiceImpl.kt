@@ -22,7 +22,13 @@ internal class ToolWindowEditorTabServiceImpl : ToolWindowEditorTabService {
     return ToolWindowEditorTabTransferController.getInstance(toolWindow.project).canMoveContentToEditor(toolWindow, content)
   }
 
-  override fun moveContentToEditor(toolWindow: ToolWindow, content: Content, window: EditorWindow, sourceDecorator: InternalDecoratorImpl) {
-    ToolWindowEditorTabTransferController.getInstance(toolWindow.project).moveContentToEditor(toolWindow, content, window, sourceDecorator)
+  override fun moveContentToEditor(
+    toolWindow: ToolWindow,
+    content: Content,
+    window: EditorWindow,
+    sourceDecorator: InternalDecoratorImpl,
+  ): Boolean {
+    val controller = ToolWindowEditorTabTransferController.getInstance(toolWindow.project)
+    return controller.moveContentToEditor(toolWindow, content, window, sourceDecorator)
   }
 }

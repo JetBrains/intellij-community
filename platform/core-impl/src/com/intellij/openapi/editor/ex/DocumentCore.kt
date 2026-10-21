@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex
 
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 
@@ -13,13 +14,13 @@ import org.jetbrains.annotations.Contract
 interface DocumentCore {
 
   /**
-   * Returns an immutable, self-consistent snapshot of the current document content.
+   * Returns the current branch of the document: an immutable, self-consistent snapshot of its content.
    *
    * NOTE: this is a performance-critical method; ideally, implementation should be a direct volatile
    * field read, without extra indirection, allocation, or synchronization
    */
   @Contract(pure = true)
-  fun snapshot(): DocumentSnapshot
+  fun snapshot(): DocumentBranch
 
   /**
    * Returns a live character sequence backed by the current document [snapshot]
@@ -46,7 +47,7 @@ interface DocumentCore {
   fun settings(): DocumentSettings
 
   /**
-   * Returns frozen document based on current [snapshot].
+   * Returns a frozen document with the text and the modification stamp of the current [snapshot].
    *
    * It is a bridge between internal [DocumentSnapshot] and public [DocumentEx]
    */

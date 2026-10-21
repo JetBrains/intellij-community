@@ -10,6 +10,7 @@ import javax.swing.border.Border
 internal class ToolWindowLeftToolbar(paneId: String, isPrimary: Boolean) : ToolWindowToolbar(isPrimary, ToolWindowAnchor.LEFT) {
   override val topStripe: StripeV2 = StripeV2(this, paneId, ToolWindowAnchor.LEFT)
   override val bottomStripe: StripeV2 = StripeV2(this, paneId, ToolWindowAnchor.BOTTOM)
+  override val footerStripe: StripeV2 = StripeV2(this, paneId, ToolWindowAnchor.LEFT)
   override val moreButton: MoreSquareStripeButton = MoreSquareStripeButton(this, ToolWindowAnchor.LEFT, ToolWindowAnchor.RIGHT)
   override val accessibleGroupName: String get() = UIBundle.message("toolbar.group.left.accessible.group.name")
 

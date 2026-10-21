@@ -1,7 +1,7 @@
 <idea-plugin visibility="public">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <module name="fleet.rhizomedb"/>
+    <module name="fleet.rpc"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.backend.workspace"/>
     <module name="intellij.platform.concurrency"/>
@@ -15,14 +15,12 @@
     <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.ide.progress"/>
-    <module name="intellij.platform.kernel"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.lvcs"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
-    <module name="intellij.platform.rpc.backend"/>
     <module name="intellij.platform.util.coroutines"/>
     <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs"/>
@@ -136,7 +134,8 @@
     <openapi.vcs.history.actions.GetVersionAction.ExtensionProvider
       implementation="com.intellij.dvcs.ui.CompareBranchesDiffPanel$GetVersionActionProvider"/>
 
-    <platform.rpc.backend.remoteApiProvider implementation="com.intellij.dvcs.DvcsRemoteApiProvider"
-                                            apiInterfaces="com.intellij.dvcs.rpc.VcsRepositoryColorsApi"/>
+    <!-- The remote API implementation is an application service, so a light IDE reaches it without the rpc backend. -->
+    <applicationService serviceInterface="com.intellij.dvcs.rpc.VcsRepositoryColorsApi"
+                        serviceImplementation="com.intellij.dvcs.repo.VcsRepositoryColorsApiImpl"/>
   </extensions>
 </idea-plugin>

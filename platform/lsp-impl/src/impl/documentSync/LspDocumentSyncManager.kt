@@ -27,7 +27,6 @@ import com.intellij.xml.breadcrumbs.BreadcrumbsXmlWrapper
 import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.DidCloseTextDocumentParams
 import org.eclipse.lsp4j.TextDocumentSyncKind
-import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -39,7 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 internal class LspDocumentSyncManager(private val client: LspClientImpl) {
 
-  private val openedFiles: MutableSet<VirtualFile> = Collections.synchronizedSet(HashSet())
+  private val openedFiles: MutableSet<VirtualFile> = ConcurrentHashMap.newKeySet()
   private val shutdown = AtomicBoolean(false)
 
   /**
@@ -85,7 +84,7 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
     documentVersions.clear()
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun open(file: VirtualFile) {
     if (client.state != LspServerState.Running) {
       val message = "Server is not in the Running state. Ignoring open($file)"
@@ -114,7 +113,7 @@ internal class LspDocumentSyncManager(private val client: LspClientImpl) {
     }
   }
 
-  @RequiresWriteLock(generateAssertion = false /* IJPL-115548 */)
+  @RequiresWriteLock
   fun close(file: VirtualFile) {
     if (!openedFiles.remove(file) || shutdown.get()) {
       // Error should not be logged if the sync manager is disposed of, as the server state

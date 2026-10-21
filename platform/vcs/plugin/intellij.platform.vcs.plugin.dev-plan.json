@@ -43,6 +43,9 @@
             "module": "intellij.platform.vcs.dvcs.impl"
         },
         {
+            "module": "intellij.platform.vcs.impl.backend"
+        },
+        {
             "module": "intellij.platform.vcs.impl.frontend"
         },
         {

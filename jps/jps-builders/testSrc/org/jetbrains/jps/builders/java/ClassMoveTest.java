@@ -16,12 +16,14 @@
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.util.PathUtil;
-import org.jetbrains.jps.builders.JpsBuildTestCase;
+import org.jetbrains.jps.builders.JpsBuildTestBase;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.junit.jupiter.api.Test;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 
-public class ClassMoveTest extends JpsBuildTestCase {
+public class ClassMoveTest extends JpsBuildTestBase {
+  @Test
   public void testMoveClassAndDelete() {
     String a1 = createFile("src1/A.java", "class A{}");
     String b = createFile("src2/B.java", "class B{}");

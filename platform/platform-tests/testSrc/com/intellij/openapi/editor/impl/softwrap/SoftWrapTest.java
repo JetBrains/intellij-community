@@ -1,33 +1,71 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.softwrap;
 
+import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.SoftWrap;
-import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.openapi.editor.impl.EditorModelFixture;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class SoftWrapTest extends AbstractEditorTest {
+import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class SoftWrapTest {
+  @SuppressWarnings("deprecation")
+  private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
+  private final TestFixture<EditorModelFixture> editorFixture = editorModelFixture(codeInsightModuleFixture(projectFixture));
+
+  private EditorModelFixture myFixture;
+
+  @BeforeEach
+  void setUp() {
+    myFixture = editorFixture.get();
+  }
+
+  @Test
   public void testCollapsedRegionWithLongPlaceholderAtLineStart1() {
-    doTestSoftWraps(10, "<fold text='veryVeryVeryLongPlaceholder'>foo</fold>");
+    myFixture.runTest(() -> {
+      doTestSoftWraps(10, "<fold text='veryVeryVeryLongPlaceholder'>foo</fold>");
+    });
   }
 
+  @Test
   public void testCollapsedRegionWithLongPlaceholderAtLineStart2() {
-    doTestSoftWraps(10, "<fold text='veryVeryVeryLongPlaceholder'>foo</fold><wrap>bar");
+    myFixture.runTest(() -> {
+      doTestSoftWraps(10, "<fold text='veryVeryVeryLongPlaceholder'>foo</fold><wrap>bar");
+    });
   }
 
+  @Test
   public void testCollapsedRegionWithLongPlaceholderAtLineStart3() {
-    doTestSoftWraps(10, "<fold text='veryVeryVeryLongPlaceholder'>foo</fold>\nvery long <wrap>text");
+    myFixture.runTest(() -> {
+      doTestSoftWraps(10, "<fold text='veryVeryVeryLongPlaceholder'>foo</fold>\nvery long <wrap>text");
+    });
   }
 
+  @Test
   public void testNoWrapInsideFoldRegion() {
-    doTestSoftWraps(10, "start<fold text='.....'>text with space</fold><wrap>end");
+    myFixture.runTest(() -> {
+      doTestSoftWraps(10, "start<fold text='.....'>text with space</fold><wrap>end");
+    });
   }
 
   private static final String TAGS_PATTERN = "(<fold(\\stext='([^']*)')?>)|(</fold>)|<wrap>";
@@ -48,32 +86,33 @@ public class SoftWrapTest extends AbstractEditorTest {
         foldRegions.add(foldInsertPosition++, new MyFoldRegion(docPos, matcher.group(3), matcher.group(2) != null));
       }
       else if (matcher.group(4) != null) {  // </fold>
-        assertTrue("Misplaced closing fold marker tag: " + text, foldInsertPosition > 0);
+        assertTrue(foldInsertPosition > 0, "Misplaced closing fold marker tag: " + text);
         foldRegions.get(--foldInsertPosition).endPos = docPos;
       }
       else {                                // <wrap>
         wrapPositions.add(docPos);
       }
     }
-    assertTrue("Missing closing fold marker tag: " + text, foldInsertPosition == 0);
+    assertEquals(0, foldInsertPosition, "Missing closing fold marker tag: " + text);
     cleanedText.append(text.substring(pos));
 
-    init(cleanedText.toString(), PlainTextFileType.INSTANCE);
+    myFixture.init(cleanedText.toString(), PlainTextFileType.INSTANCE);
 
     for (MyFoldRegion region : foldRegions) {
-      FoldRegion r = addFoldRegion(region.startPos, region.endPos, region.placeholder);
+      FoldRegion r = myFixture.addFoldRegion(region.startPos, region.endPos, region.placeholder);
       if (region.collapse) {
-        toggleFoldRegionState(r, false);
+        myFixture.toggleFoldRegionState(r, false);
       }
     }
 
-    EditorTestUtil.configureSoftWraps(getEditor(), wrapWidth);
+    EditorTestUtil.configureSoftWraps(myFixture.getEditor(), wrapWidth);
 
     List<Integer> actualWrapPositions = new ArrayList<>();
-    for (SoftWrap wrap : getEditor().getSoftWrapModel().getSoftWrapsForRange(0, getEditor().getDocument().getTextLength())) {
+    Editor editor = myFixture.getEditor();
+    for (SoftWrap wrap : editor.getSoftWrapModel().getSoftWrapsForRange(0, editor.getDocument().getTextLength())) {
       actualWrapPositions.add(wrap.getStart());
     }
-    assertEquals("Wrong wrap positions", wrapPositions, actualWrapPositions);
+    assertEquals(wrapPositions, actualWrapPositions, "Wrong wrap positions");
   }
 
   private static final class MyFoldRegion {

@@ -28,9 +28,9 @@ interface PyLspToolSettings {
   var completions: Boolean?
   var inlayHints: Boolean?
   var documentation: Boolean?
-  @Deprecated("replaced with PyToolState", ReplaceWith("PyTool.executeOn()"))
+  @Deprecated("replaced with PyToolState", ReplaceWith("moduleOrProject.executeTool(tool, args)"))
   var pathToExecutable: String
-  @Deprecated("replaced with PyToolState", ReplaceWith("PyTool.executeOn()"))
+  @Deprecated("replaced with PyToolState", ReplaceWith("moduleOrProject.executeTool(tool, args)"))
   var sdkName: String
 }
 

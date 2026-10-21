@@ -11,6 +11,9 @@ package com.intellij.openapi.editor.impl.experimental
  *
  * An LV is not a seq. A seq is the durable half of an event id and travels between graphs
  * unchanged. That is why [AgentIndex.lvOfSeq] translates one into the other.
+ *
+ * An LV indexes only the units that one graph stores, so it fits an [Int]. A seq indexes every unit
+ * that its agent authored. That includes the units that a trim dropped, so a seq is a [Long].
  */
 internal typealias LV = Int
 

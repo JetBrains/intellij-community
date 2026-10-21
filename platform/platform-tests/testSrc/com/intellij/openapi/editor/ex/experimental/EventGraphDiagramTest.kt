@@ -15,8 +15,8 @@ import org.junit.jupiter.api.Test
  * carries nothing.
  *
  * The shapes below cover every part of the notation: a straight step, a fork, a merge, a
- * branch that ends, a branch that waits a row, a history with no common root, a line that
- * crosses a column, and the bounds that keep the diagram out of a log.
+ * branch that ends, a branch that waits a row, a history with no common event, a line that
+ * crosses a column, the base box of a base text, and the bounds that keep the diagram out of a log.
  */
 class EventGraphDiagramTest {
 
@@ -56,7 +56,7 @@ class EventGraphDiagramTest {
     val u1 = agent("user1")
     var graph = EventGraph.createGraph()
     for ((seq, char) in "abc".withIndex()) {
-      graph = graph.append(Event.createInsert(u1, seq, seq, char.toString()), graph.version())
+      graph = graph.append(Event.createInsert(u1, seq.toLong(), seq, char.toString()), graph.version())
     }
     graph = graph.append(Event.createInsert(agent("user2"), 0, 1, "Z"), Version.of(0))
     assertEquals(
@@ -175,12 +175,13 @@ class EventGraphDiagramTest {
   }
 
   @Test
-  fun `two histories with no common root stand side by side`() {
+  fun `two histories with no common event stand side by side`() {
     val u1 = agent("user1")
     val u2 = agent("user2")
     val root = Version.root()
-    val first = EventGraph.createGraph().append(Event.createInsert(u1, 0, 0, "ab"), root)
-    val second = EventGraph.createGraph().append(Event.createInsert(u2, 0, 0, "cd"), root)
+    val origin = EventGraph.createGraph()
+    val first = origin.append(Event.createInsert(u1, 0, 0, "ab"), root)
+    val second = origin.append(Event.createInsert(u2, 0, 0, "cd"), root)
     // Neither run descends from the other, so both sit at depth 0 and neither takes a join.
     assertEquals(
       """
@@ -194,6 +195,146 @@ class EventGraphDiagramTest {
       """.trimIndent(),
       first.mergeFrom(second).toString(),
     )
+  }
+
+  @Test
+  fun `a new branch draws only the base box of its text`() {
+    val branch = DocumentBranch.createBranch("abc", agent("u"))
+    assertEquals(
+      """
+      EventGraph(units=0, runs=0, version=v[])
+      ┌────────────┐
+      │ base "abc" │
+      └────────────┘
+      """.trimIndent(),
+      branch.graph().toString(),
+    )
+  }
+
+  @Test
+  fun `a trimmed graph draws its base version in the base box`() {
+    val start = DocumentBranch.createBranch("ab", agent("u")).applyOp(DocumentOp.insertOp(2, "c"))
+    val trimmed = start.trimmedTo(start.version()).applyOp(DocumentOp.insertOp(3, "d"))
+    assertEquals(
+      """
+      EventGraph(units=1, runs=1, version=v[0])
+      ┌─────────────────────┐
+      │ base "abc"          │
+      │ version v[("u", 0)] │
+      └──────────┬──────────┘
+                 │
+      ┌──────────┴──────────┐
+      │ insert "d"          │
+      │ offset 3            │
+      │ lv 0                │
+      │ agent "u"           │
+      └─────────────────────┘
+      """.trimIndent(),
+      trimmed.graph().toString(),
+    )
+  }
+
+  @Test
+  fun `a trimmed graph with an empty base text still draws its base box`() {
+    val start = DocumentBranch.createBranch("", agent("u"))
+      .applyOp(DocumentOp.insertOp(0, "a"))
+      .applyOp(DocumentOp.deleteOp(0, 1))
+    val trimmed = start.trimmedTo(start.version())
+    assertEquals(
+      """
+      EventGraph(units=0, runs=0, version=v[])
+      ┌─────────────────────┐
+      │ base ""             │
+      │ version v[("u", 1)] │
+      └─────────────────────┘
+      """.trimIndent(),
+      trimmed.graph().toString(),
+    )
+  }
+
+  @Test
+  fun `an agent name neither breaks the base box nor widens it past the bound`() {
+    val broken = DocumentBranch.createBranch("ab", agent("a\nb")).applyOp(DocumentOp.insertOp(2, "c"))
+    assertEquals(
+      """
+      EventGraph(units=0, runs=0, version=v[])
+      ┌────────────────────────┐
+      │ base "abc"             │
+      │ version v[("a\nb", 0)] │
+      └────────────────────────┘
+      """.trimIndent(),
+      broken.trimmedTo(broken.version()).graph().toString(),
+    )
+    val long = DocumentBranch.createBranch("ab", agent("n".repeat(300))).applyOp(DocumentOp.insertOp(2, "c"))
+    val diagram = long.trimmedTo(long.version()).graph().toString()
+    assertTrue(diagram.contains("(300 chars)")) { "the length is not reported: $diagram" }
+    assertTrue(diagram.lines().all { it.length < 80 }) { "a line is too wide: $diagram" }
+  }
+
+  @Test
+  fun `the first run follows the base box`() {
+    val branch = DocumentBranch.createBranch("abc", agent("u")).applyOp(DocumentOp.insertOp(3, "d"))
+    assertEquals(
+      """
+      EventGraph(units=1, runs=1, version=v[0])
+      ┌────────────┐
+      │ base "abc" │
+      └──────┬─────┘
+             │
+      ┌──────┴─────┐
+      │ insert "d" │
+      │ offset 3   │
+      │ lv 0       │
+      │ agent "u"  │
+      └────────────┘
+      """.trimIndent(),
+      branch.graph().toString(),
+    )
+  }
+
+  @Test
+  fun `concurrent runs at the start fork from the base box`() {
+    val base = DocumentBranch.createBranch("ab", agent("u0"))
+    val left = base.fork(agent("u1")).applyOp(DocumentOp.insertOp(0, "x"))
+    val right = base.fork(agent("u2")).applyOp(DocumentOp.insertOp(2, "y"))
+    assertEquals(
+      """
+      EventGraph(units=2, runs=2, version=v[0, 1])
+      ┌────────────┐
+      │ base "ab"  │
+      └──────┬─────┘
+             │
+             ├───────────────┐
+             │               │
+      ┌──────┴─────┐  ┌──────┴─────┐
+      │ insert "x" │  │ insert "y" │
+      │ offset 0   │  │ offset 2   │
+      │ lv 0       │  │ lv 1       │
+      │ agent "u1" │  │ agent "u2" │
+      └────────────┘  └────────────┘
+      """.trimIndent(),
+      left.merge(right).graph().toString(),
+    )
+  }
+
+  @Test
+  fun `a run with no parent below the count line joins the count line`() {
+    val base = DocumentBranch.createBranch("ab", agent("u0"))
+    var main = base
+    // Every edit inserts at the front, so no run extends the one before it.
+    repeat(44) {
+      main = main.applyOp(DocumentOp.insertOp(0, "x"))
+    }
+    val late = base.fork(agent("u1")).applyOp(DocumentOp.insertOp(0, "y"))
+    val lines = main.merge(late).graph().toString().lines()
+    // The header, then the base box with the line under it. Then the first two boxes with the
+    // line between them, and the count of what went.
+    assertEquals("│ base \"ab\"  │", lines[2])
+    assertEquals("... 5 more runs ...", lines[18])
+    // The late run follows the base box above the count line, so it joins the count line beside
+    // the run whose parent went.
+    assertEquals(2, lines[19].count { it == '┴' }) { "a join is missing: ${lines[19]}" }
+    assertTrue(lines[22].contains("lv 7") && lines[22].contains("lv 44")) { lines[22] }
   }
 
   @Test
@@ -225,7 +366,7 @@ class EventGraphDiagramTest {
     val u = agent("u")
     var graph = EventGraph.createGraph()
     // Every append inserts at the front, so no run extends the one before it.
-    for (seq in 0 until 45) {
+    for (seq in 0L until 45L) {
       graph = graph.append(Event.createInsert(u, seq, 0, "x"), graph.version())
     }
     assertEquals(45, graph.runCount())
@@ -253,7 +394,8 @@ class EventGraphDiagramTest {
    */
   @Test
   fun `a merge line leaves only the box of a parent`() {
-    val base = DocBranch.createBranch("base", agent("u0"))
+    // The text is an event of its own, so the diagram draws it as a box.
+    val base = DocumentBranch.createBranch("", agent("u0")).applyOp(DocumentOp.insertOp(0, "base"))
     val a = base.fork(agent("u1")).applyOp(DocumentOp.insertOp(0, "a"))
     val d = base.fork(agent("u2")).applyOp(DocumentOp.insertOp(4, "b")).applyOp(DocumentOp.insertOp(4, "d"))
     val f = a.fork(agent("u3")).merge(d).applyOp(DocumentOp.insertOp(0, "f"))

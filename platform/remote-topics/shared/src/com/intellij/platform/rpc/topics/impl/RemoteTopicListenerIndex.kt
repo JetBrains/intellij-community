@@ -2,6 +2,7 @@
 package com.intellij.platform.rpc.topics.impl
 
 import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -17,9 +18,9 @@ private val LOG = logger<RemoteTopicListenerIndex>()
 /**
  * Finds the listeners of a remote topic by its id.
  *
- * A listener declaration carries the topic id in the `topicId` attribute, so the index reads it from the plugin descriptor.
+ * A listener declaration carries the topic id in [RemoteTopicListenerBean.topicId], so the index reads it from the plugin descriptor.
  * The listener class is loaded and the listener is constructed on the first event of its topic.
- * A listener registered without the attribute is constructed on the first event of any topic, because only the instance knows its topic.
+ * A listener declared without the attribute is constructed on the first event of any topic, because only the instance knows its topic.
  */
 @ApiStatus.Internal
 @Service(Service.Level.APP)
@@ -44,8 +45,8 @@ class RemoteTopicListenerIndex(cs: CoroutineScope) {
   }
 }
 
-private class TopicListenerCache<L : Any>(
-  private val epName: ExtensionPointName<L>,
+private class TopicListenerCache<L : Any, B : RemoteTopicListenerBean<L>>(
+  private val epName: ExtensionPointName<B>,
   private val topicIdOf: (L) -> String,
 ) {
   private val cache = ConcurrentHashMap<String, List<L>>()
@@ -71,30 +72,42 @@ private class TopicListenerCache<L : Any>(
 
   private fun collect(topicId: String): List<L> {
     val result = ArrayList<L>()
-    for (extension in epName.filterableLazySequence()) {
-      val declaredTopicId = extension.getCustomAttribute(RemoteTopicListenerIndex.TOPIC_ID_ATTRIBUTE)
+    for (bean in epName.extensionList) {
+      val declaredTopicId = bean.topicId
       if (declaredTopicId == null) {
-        // an instance registered programmatically, or a declaration the plugin model validator rejects
-        val listener = extension.instance ?: continue
+        // a declaration that the plugin model validator rejects
+        val listener = createListener(bean) ?: continue
         if (topicIdOf(listener) == topicId) {
           result.add(listener)
         }
       }
       else if (declaredTopicId == topicId) {
-        val listener = extension.instance ?: continue
+        val listener = createListener(bean) ?: continue
         val actualTopicId = topicIdOf(listener)
         if (actualTopicId == topicId) {
           result.add(listener)
         }
         else {
-          LOG.error(PluginException(
-            "Listener ${extension.implementationClassName} is declared with ${RemoteTopicListenerIndex.TOPIC_ID_ATTRIBUTE}='$declaredTopicId' " +
+          LOG.error(PluginException.createByClass(
+            "Listener ${bean.implementation} is declared with ${RemoteTopicListenerIndex.TOPIC_ID_ATTRIBUTE}='$declaredTopicId' " +
             "but its topic id is '$actualTopicId'. The listener receives no event until the declaration is fixed.",
-            extension.pluginDescriptor.pluginId,
+            null,
+            listener.javaClass,
           ))
         }
       }
     }
     return result
+  }
+
+  private fun createListener(bean: B): L? {
+    try {
+      return bean.instance
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.error(PluginException("Cannot create listener ${bean.implementation}", e, bean.pluginDescriptor.pluginId))
+      return null
+    }
   }
 }

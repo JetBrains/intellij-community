@@ -65,12 +65,14 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtVariableDeclaration
+import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.findPropertyByName
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -152,22 +154,38 @@ fun checkDeclarationNewNameConflicts(
             val functionLikeSymbol = containingSymbol as? KaFunctionSymbol ?: return emptySequence()
             val functionPsi = functionLikeSymbol.psi
 
-            val block = if (declaration is KtParameter) {
-                functionPsi
-            } else {
-                ((declaration.parent as? KtDestructuringDeclaration) ?: declaration).parent as? KtBlockExpression
+            val block = when {
+                declaration is KtParameter -> {
+                    val parent = declaration.parent
+                    parent as? KtForExpression ?: functionPsi
+                }
+                else -> {
+                    val parent = ((declaration.parent as? KtDestructuringDeclaration) ?: declaration).parent
+                    parent as? KtBlockExpression ?: parent as? KtWhenExpression
+                }
             }
 
             val locals = block?.descendantsOfType<KtVariableDeclaration>()
-                ?.filter { it.nameAsName == newName }
+                ?.filter { it.nameAsName == newName && (block !is KtBlockExpression || it.parent == block) }
                 ?.map { it.symbol } ?: emptySequence()
             val destructuringEntries = block?.descendantsOfType<KtDestructuringDeclarationEntry>()
-                ?.filter { it.nameAsName == newName }
+                ?.filter { it.nameAsName == newName && (block !is KtBlockExpression || it.parent?.parent == block) }
                 ?.map { it.symbol } ?: emptySequence()
             val parameters =
                 if (declaration is KtParameter || block?.parent == functionPsi) functionLikeSymbol.valueParameters.filter { it.name == newName }.asSequence()
                 else emptySequence()
-            return parameters + locals + destructuringEntries
+            val enclosingVariables = generateSequence(declaration.parent) { it.parent }
+                .takeWhile { it != functionPsi }
+                .mapNotNull {
+                    when (it) {
+                        is KtWhenExpression -> it.subjectVariable
+                        is KtForExpression -> it.loopParameter
+                        else -> null
+                    }
+                }
+                .filter { it.nameAsName == newName }
+                .map { it.symbol }
+            return parameters + locals + destructuringEntries + enclosingVariables
         }
 
         if (symbol is KaTypeParameterSymbol) {

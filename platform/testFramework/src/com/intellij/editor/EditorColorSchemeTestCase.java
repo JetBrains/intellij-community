@@ -25,6 +25,10 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @deprecated Use {@link EditorColorSchemeTestUtil} in a JUnit 5 test.
+ */
+@Deprecated
 public abstract class EditorColorSchemeTestCase extends LightPlatformTestCase {
   protected static EditorColorsScheme loadScheme(@NotNull String docText) throws IOException, SAXException {
     Document doc = JavaXmlDocumentKt.createDocumentBuilder().parse(new InputSource(new StringReader(docText)));

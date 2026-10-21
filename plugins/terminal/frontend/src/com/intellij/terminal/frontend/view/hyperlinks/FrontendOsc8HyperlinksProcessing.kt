@@ -1,9 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.frontend.view.hyperlinks
 
-import com.intellij.execution.filters.Filter
 import com.intellij.execution.filters.HyperlinkInfo
-import com.intellij.execution.filters.UrlFilter
 import com.intellij.execution.impl.EditorTextDecoration
 import com.intellij.execution.impl.EditorTextDecorationApplier
 import com.intellij.execution.impl.EditorTextDecorationId
@@ -20,6 +18,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.terminal.frontend.view.impl.toRelative
+import com.intellij.terminal.osc8.CompositeOsc8UriResolverWrapper
+import com.intellij.terminal.osc8.Osc8UriResolver
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineName
@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
@@ -45,8 +46,7 @@ import kotlin.time.Duration.Companion.milliseconds
  *
  * Unlike the filter-based hyperlinks (see `FrontendTerminalHyperlinksProcessing`), an OSC8 link's
  * text range and target URI are already known, so no text scanning and no backend round trip are needed.
- * The target URI is checked by the platform [UrlFilter]: recognized URIs become clickable links,
- * and clicking navigates via the produced [HyperlinkInfo].
+ * The target URI is resolved by the [Osc8UriResolver]s.
  *
  * Hovering a link shows the target URI in a tooltip: the link text is arbitrary, so the tooltip is
  * the only way to see the real destination before clicking.
@@ -67,19 +67,23 @@ fun installOsc8HyperlinksProcessing(
   applier: EditorTextDecorationApplier,
   coroutineScope: CoroutineScope,
 ) {
-  // Counts the output model changes seen; a change to this value triggers a reconciliation.
-  // The output model's own modification stamp can't be used here: an update that only drops an OSC8
-  // escape leaves the text (and therefore the stamp) untouched, but still needs a reconciliation.
-  // The initial value is arbitrary: only changes to it matter, and the first
-  // sample tick reconciles whatever content, if any, is already present.
+  // Counts the changes seen that need a reconciliation; a change to this value triggers one.
+  // The `outputModel.modificationStamp` can't be used here: an update that only
+  // drops/creates/modifies an OSC8 link URI leaves the modificationStamp untouched.
+  // The initial value is arbitrary: only changes to it matter.
   val observedChanges = MutableStateFlow(1L)
-  val renderer = Osc8HyperlinksRenderer(project, outputModel, applier)
+  val uriResolverWrapper = CompositeOsc8UriResolverWrapper(project, coroutineScope)
+  val renderer = Osc8HyperlinksRenderer(project, outputModel, applier, uriResolverWrapper)
 
   outputModel.addListener(coroutineScope.asDisposable(), object : TerminalOutputModelListener {
     override fun afterContentChanged(event: TerminalContentChangeEvent) {
       observedChanges.update { it + 1 }
     }
   })
+
+  uriResolverWrapper.addUpdateListener {
+    observedChanges.update { it + 1 }
+  }
 
   // The hovered decoration is tracked by the applier's own mouse listener. It runs before this one
   // on every mouse move because the applier is always created (and its listener registered) earlier.
@@ -114,9 +118,8 @@ private class Osc8HyperlinksRenderer(
   private val project: Project,
   private val outputModel: TerminalOutputModel,
   private val applier: EditorTextDecorationApplier,
+  private val uriResolverWrapper: CompositeOsc8UriResolverWrapper,
 ) {
-  private val urlFilter: Filter = UrlFilter(project)
-
   // Negative ids keep OSC8 decorations disjoint from the filter-based hyperlinks that share the applier
   // (those are assigned positive ids by the backend).
   private val idCounter = AtomicLong(-1)
@@ -132,23 +135,40 @@ private class Osc8HyperlinksRenderer(
    * bookkeeping trivially correct under trimming. Recreating is also what makes the pass self-healing:
    * a document replace can invalidate a decoration's range highlighter without changing the link itself
    * (same offsets, same target), so a diff keyed by the link would never restore its decoration.
+   *
+   * The target URIs are resolved on a background thread, as [Osc8UriResolver] requires.
+   * The document can change meanwhile, and a link from before the change could get
+   * a decoration with offsets that no longer fit the document. So the links are read
+   * again after the resolution if the document changed. A link added in between is
+   * left to the pass that the change already scheduled.
    */
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
-  fun reconcile() {
-    val links = Osc8HyperlinkUtil.mergeSplitUrls(outputModel, outputModel.getOsc8Hyperlinks())
-    val toAdd = ArrayList<EditorTextDecoration>()
-    val addedUriById = LinkedHashMap<EditorTextDecorationId, String>()
-    for (link in links) {
-      val hyperlinkInfo = resolve(link.uri) ?: continue
-      val decoration = createDecoration(link, hyperlinkInfo)
-      toAdd.add(decoration)
-      addedUriById[decoration.id] = link.uri
-    }
+  suspend fun reconcile() {
+    val stampBefore = outputModel.modificationStamp
+    val linksBefore = currentLinks()
+    val hyperlinkInfoByUri = resolve(linksBefore)
+    // during the resolve, the document might have changed, so the links might be invalid
+    val linksAfter = if (outputModel.modificationStamp == stampBefore) linksBefore else currentLinks()
+    val (decorations, uriByDecorationId) = decorate(linksAfter, hyperlinkInfoByUri)
 
     applier.removeDecorations(appliedUriById.keys)
     appliedUriById.clear()
-    appliedUriById.putAll(addedUriById)
-    applier.addDecorations(toAdd)
+    appliedUriById.putAll(uriByDecorationId)
+    applier.addDecorations(decorations)
+  }
+
+  private fun decorate(
+    links: List<TerminalOutputOsc8Hyperlink>,
+    hyperlinkInfoByUri: Map<String, HyperlinkInfo>,
+  ): Pair<List<EditorTextDecoration>, Map<EditorTextDecorationId, String>> {
+    val decorations = ArrayList<EditorTextDecoration>()
+    val uriById = LinkedHashMap<EditorTextDecorationId, String>()
+    for (link in links) {
+      val hyperlinkInfo = hyperlinkInfoByUri[link.uri] ?: continue
+      val decoration = createDecoration(link, hyperlinkInfo)
+      decorations.add(decoration)
+      uriById[decoration.id] = link.uri
+    }
+    return Pair(decorations, uriById)
   }
 
   /**
@@ -163,6 +183,10 @@ private class Osc8HyperlinksRenderer(
     return appliedUriById[hovered.id]
   }
 
+  private fun currentLinks(): List<TerminalOutputOsc8Hyperlink> {
+    return Osc8HyperlinkUtil.mergeSplitUrls(outputModel, outputModel.getOsc8Hyperlinks())
+  }
+
   private fun createDecoration(link: TerminalOutputOsc8Hyperlink, hyperlinkInfo: HyperlinkInfo): EditorTextDecoration {
     return buildHyperlink(
       id = createTextDecorationId(idCounter.getAndDecrement()),
@@ -174,14 +198,19 @@ private class Osc8HyperlinksRenderer(
     }
   }
 
-  /**
-   * A target is a link only if [UrlFilter] matches it over its whole length.
-   */
-  private fun resolve(uri: String): HyperlinkInfo? {
-    val result = urlFilter.applyFilter(uri, uri.length) ?: return null
-    return result.resultItems.firstOrNull {
-      it.highlightStartOffset == 0 && it.highlightEndOffset == uri.length && it.hyperlinkInfo != null
-    }?.hyperlinkInfo
+  private suspend fun resolve(hyperlinks: List<TerminalOutputOsc8Hyperlink>): Map<String, HyperlinkInfo> {
+    if (hyperlinks.isEmpty()) return emptyMap()
+    return withContext(Dispatchers.Default) {
+      val resolver = uriResolverWrapper.getCompositeResolver()
+      val distinctUris = hyperlinks.mapTo(HashSet()) { it.uri }
+      buildMap(distinctUris.size) {
+        for (uri in distinctUris) {
+          resolver.resolve(uri)?.let {
+            put(uri, it)
+          }
+        }
+      }
+    }
   }
 }
 

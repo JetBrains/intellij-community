@@ -19,6 +19,7 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.LogLevel;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -228,6 +229,39 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
 
     getPsiDocumentManager().commitDocument(document);
     assertEquals(0, getPsiDocumentManager().getUncommittedDocuments().length);
+  }
+
+  public void testFileTextMismatchReportsLastCommitReason() throws IOException {
+    VirtualFile vFile = createTempVirtualFile("x.txt", null, "abc", StandardCharsets.UTF_8);
+    PsiFile file = findFile(vFile);
+    Document document = getDocument(file);
+    assertNotNull(file.getNode());
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.insertString(0, "x"));
+    getPsiDocumentManager().commitDocument(document);
+    assertEquals("reparse", PsiDocumentManagerBase.getLastCommitReason(document));
+    assertEquals("xabc", file.getText());
+
+    // the document changes inside an atomic PSI change, so the commit is published without a reparse
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> PsiToDocumentSynchronizer.performAtomically(file, () -> document.insertString(0, "y")));
+    assertTrue(getPsiDocumentManager().isCommitted(document));
+    assertEquals("atomic PSI change", PsiDocumentManagerBase.getLastCommitReason(document));
+
+    RuntimeExceptionWithAttachments e;
+    try {
+      //noinspection ResultOfMethodCallIgnored
+      file.getText();
+      fail("file text mismatch expected");
+      return;
+    }
+    catch (RuntimeExceptionWithAttachments exception) {
+      e = exception;
+    }
+    assertEquals("File text mismatch", e.getUserMessage());
+    assertTrue(e.getMessage(), e.getMessage().contains("\nlast.commit.reason=atomic PSI change"));
+    assertTrue(e.getMessage(), e.getMessage().contains("\ntree.load=length=3,"));
+    assertTrue(e.getMessage(), e.getMessage().contains("\ncommon.prefix=0"));
+    assertTrue(e.getMessage(), e.getMessage().contains("\ncommon.suffix=4"));
   }
 
   private Document getDocument(PsiFile file) {

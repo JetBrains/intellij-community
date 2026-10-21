@@ -11,9 +11,9 @@ use super::*;
 use crate::guest::testing::{FakeChannel, ForbiddenBazel, Host, failed, has, prose, said};
 use crate::proc::Captured;
 
-/// What the controller's `validate_argv` passes: the display, and the runtime root the sweep reads.
+/// What the controller's `validate_argv` passes: the display alone.
 fn validate_argv() -> Vec<String> {
-    words([":88", "/data/daemon-runtime"])
+    words([":88"])
 }
 
 fn provisioned_host() -> Host {
@@ -44,7 +44,7 @@ async fn provision_linux_ends_with_the_guest_proving_itself() {
             format!("{as_worker} /usr/bin/tee {agent}.incoming"),
             format!("{as_worker} /bin/chmod 700 {agent}.incoming"),
             format!("{as_worker} /bin/mv -f {agent}.incoming {agent}"),
-            format!("{sudo} {agent} validate-guest :88 /data/daemon-runtime"),
+            format!("{sudo} {agent} validate-guest :88"),
         ]
     );
     assert_eq!(channel.calls()[2].options.stdin.as_deref(), Some(&b"agent bytes"[..]));
@@ -75,7 +75,7 @@ async fn provision_linux_on_an_unprivileged_guest_runs_no_sudo_and_no_chown() {
             format!("/usr/bin/tee {agent}.incoming"),
             format!("/bin/chmod 700 {agent}.incoming"),
             format!("/bin/mv -f {agent}.incoming {agent}"),
-            format!("{agent} validate-guest :88 /data/daemon-runtime"),
+            format!("{agent} validate-guest :88"),
         ]
     );
     assert_eq!(channel.calls()[1].options.stdin.as_deref(), Some(&b"agent bytes"[..]));
@@ -141,7 +141,7 @@ async fn provision_linux_reports_the_verbs_own_refusal() {
 #[tokio::test]
 async fn provision_linux_notes_what_the_verb_reported() {
     let host = provisioned_host();
-    let validated = r#"{"display":":88","windowManager":"0x400001","windowManagerProbes":2,"sharedObjects":41}"#;
+    let validated = r#"{"glibc":"2.43","display":":88","windowManager":"0x400001","windowManagerProbes":2}"#;
     let reply = format!(r#"{{"schemaVersion":1,"ok":true,"command":"validate-guest","data":{validated}}}"#);
     let channel = FakeChannel::answering("air-docker-1", move |argv| {
         Ok(if has(argv, "validate-guest") {

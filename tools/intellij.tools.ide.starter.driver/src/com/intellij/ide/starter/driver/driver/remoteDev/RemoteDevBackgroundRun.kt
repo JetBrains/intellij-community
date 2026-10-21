@@ -5,6 +5,7 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.hasVisibleWindow
 import com.intellij.driver.sdk.waitFor
 import com.intellij.ide.starter.driver.engine.BackgroundRun
+import com.intellij.ide.starter.driver.engine.syncVfsAfterProjectFilesRestore
 import com.intellij.ide.starter.models.IDEStartResult
 import com.intellij.ide.starter.runner.IDEHandle
 import com.intellij.ide.starter.runner.IDERunContext
@@ -25,9 +26,13 @@ open class RemoteDevBackgroundRun(
                   driverWithoutAwaitedConnection = frontendDriver,
                   process = frontendProcess,
                   runContext = frontendRunContext) {
+  override val ownedProcesses: List<IDEHandle> get() = backendRun.ownedProcesses + process
+
   override fun <R> useDriverAndCloseIde(closeIdeTimeout: Duration, takeScreenshot: Boolean, shutdownHook: Driver.() -> Unit, block: Driver.() -> R): IDEStartResult {
     val testError = runCatching {
       waitAndPrepareForTest()
+      syncVfsAfterProjectFilesRestore()
+
       driver.withContext { block(this) }
     }.exceptionOrNull()
     catchAll { shutdownHook(driver) }

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.passwordSafe.impl
 
 import com.intellij.configurationStore.SettingsSavingComponent
@@ -34,7 +34,7 @@ import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.Closeable
 import java.nio.file.Path
@@ -43,7 +43,7 @@ import java.nio.file.Paths
 private val LOG: Logger
   get() = logger<CredentialStore>()
 
-@Internal
+@ApiStatus.Internal
 abstract class BasePasswordSafe : PasswordSafe() {
   protected abstract val settings: PasswordSafeSettings
 
@@ -91,11 +91,9 @@ abstract class BasePasswordSafe : PasswordSafe() {
     }
   }
 
-  private fun createMainKeyEncryptionSpec(): EncryptionSpec {
-    return when (val pgpKey = settings.state.pgpKeyId) {
-      null -> EncryptionSpec(type = getDefaultEncryptionType(), pgpKeyId = null)
-      else -> EncryptionSpec(type = EncryptionType.PGP_KEY, pgpKeyId = pgpKey)
-    }
+  private fun createMainKeyEncryptionSpec(): EncryptionSpec = when (val pgpKey = settings.state.pgpKeyId) {
+    null -> EncryptionSpec(type = getDefaultEncryptionType(), pgpKeyId = null)
+    else -> EncryptionSpec(type = EncryptionType.PGP_KEY, pgpKeyId = pgpKey)
   }
 
   // it is a helper storage to support set password as memory-only (see setPassword memoryOnly flag)
@@ -106,10 +104,10 @@ abstract class BasePasswordSafe : PasswordSafe() {
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     SlowOperations.assertNonCancelableSlowOperationsAreAllowed()
-    val value = currentProvider.get(attributes)
+    val value = currentProvider[attributes]
     if ((value == null || value.password.isNullOrEmpty()) && memoryHelperProvider.isInitialized()) {
       // if password was set as `memoryOnly`
-      memoryHelperProvider.value.get(attributes)?.let {
+      memoryHelperProvider.value[attributes]?.let {
         return it
       }
     }
@@ -118,31 +116,29 @@ abstract class BasePasswordSafe : PasswordSafe() {
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?) {
     SlowOperations.assertNonCancelableSlowOperationsAreAllowed()
-    currentProvider.set(attributes, credentials)
+    currentProvider[attributes] = credentials
     if (attributes.isPasswordMemoryOnly && !credentials?.password.isNullOrEmpty()) {
       // we must store because otherwise on get will be no password
-      memoryHelperProvider.value.set(CredentialAttributes(attributes.serviceName, attributes.userName), credentials)
+      memoryHelperProvider.value[CredentialAttributes(attributes.serviceName, attributes.userName)] = credentials
     }
     else if (memoryHelperProvider.isInitialized()) {
-      memoryHelperProvider.value.set(attributes, null)
+      memoryHelperProvider.value[attributes] = null
     }
   }
 
   override fun set(attributes: CredentialAttributes, credentials: Credentials?, memoryOnly: Boolean) {
     if (memoryOnly) {
-      memoryHelperProvider.value.set(
-        if (attributes.isPasswordMemoryOnly) CredentialAttributes(attributes.serviceName, attributes.userName) else attributes,
-        credentials)
+      val attributes = if (attributes.isPasswordMemoryOnly) CredentialAttributes(attributes.serviceName, attributes.userName) else attributes
+      memoryHelperProvider.value[attributes] = credentials
       // remove to ensure that on getPassword we will not return some value from the default provider
-      currentProvider.set(attributes, null)
+      currentProvider[attributes] = null
     }
     else {
       set(attributes, credentials)
     }
   }
 
-  override suspend fun getAsync(attributes: CredentialAttributes): Ephemeral<Credentials> =
-    currentProvider.getAsync(attributes)
+  override suspend fun getAsync(attributes: CredentialAttributes): Ephemeral<Credentials> = currentProvider.getAsync(attributes)
 
   suspend fun save() {
     val keePassCredentialStore = currentProviderIfComputed as? KeePassCredentialStore ?: return
@@ -160,7 +156,7 @@ abstract class BasePasswordSafe : PasswordSafe() {
       return false
     }
 
-    return memoryHelperProvider.value.get(attributes)?.let {
+    return memoryHelperProvider.value[attributes]?.let {
       !it.password.isNullOrEmpty()
     } ?: false
   }
@@ -230,7 +226,7 @@ abstract class BasePasswordSafe : PasswordSafe() {
 }
 
 @TestOnly
-@Internal
+@ApiStatus.Internal
 class TestPasswordSafeImpl @NonInjectable constructor(
   override val settings: PasswordSafeSettings
 ) : BasePasswordSafe() {
@@ -244,13 +240,13 @@ class TestPasswordSafeImpl @NonInjectable constructor(
   }
 }
 
-@Internal
+@ApiStatus.Internal
 class PasswordSafeImpl : BasePasswordSafe(), SettingsSavingComponent {
   override val settings: PasswordSafeSettings
     get() = service<PasswordSafeSettings>()
 }
 
-@Internal
+@ApiStatus.Internal
 fun createPersistentCredentialStore(): CredentialStore? {
   for (factory in CredentialStoreFactory.CREDENTIAL_STORE_FACTORY.extensionList) {
     return factory.create() ?: continue
@@ -259,7 +255,7 @@ fun createPersistentCredentialStore(): CredentialStore? {
 }
 
 @TestOnly
-@Internal
+@ApiStatus.Internal
 fun createKeePassStore(dbFile: Path, mainPasswordFile: Path): PasswordSafe {
   val store = KeePassCredentialStore(dbFile, mainPasswordFile)
   val settings = PasswordSafeSettings()

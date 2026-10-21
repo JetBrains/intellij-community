@@ -5,19 +5,28 @@ package org.jetbrains.kotlin.idea.core.script.scratch
 import com.intellij.execution.impl.ConsoleViewImpl
 import com.intellij.ide.scratch.ScratchFileService
 import com.intellij.ide.scratch.ScratchRootType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.testFramework.FileEditorManagerTestCase
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.TestDataProvider
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.runInEdtAndGet
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ui.UIUtil
 import kotlin.io.path.Path
 import kotlin.io.path.readText
@@ -31,31 +40,57 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils.assertEqualsToFile
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.TestMetadataUtil
-import org.junit.Assert
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.TestInfo
 
-abstract class AbstractKotlinScratchRunActionTest : FileEditorManagerTestCase() {
+abstract class AbstractKotlinScratchRunActionTest {
+    private val myFixture by codeInsightModuleFixture(projectFixture, descriptor.moduleTypeId)
 
-    override fun getTestDataPath() = TestMetadataUtil.getTestDataPath(this::class.java)
+    private val manager by projectFixture.fileEditorManagerFixture()
+
+    private val project: Project get() = projectFixture.get()
+
+    @TestDisposable
+    lateinit var disposable: Disposable
+
+    private lateinit var testMethodName: String
+
+    private val testDataPath: String get() = TestMetadataUtil.getTestDataPath(this::class.java)
 
     protected abstract val isExplainEnabled: Boolean
 
+    @BeforeEach
+    fun setUp(testInfo: TestInfo) {
+        testMethodName = testInfo.testMethod.get().name
+        val module = myFixture.module
+        val sdk = descriptor.sdk!!
+        WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance().addJdk(sdk, disposable) }
+        ModuleRootModificationUtil.setModuleSdk(module, sdk)
+        ModuleRootModificationUtil.updateModel(module) { descriptor.configureModule(module, it, it.contentEntries.single()) }
+        IndexingTestUtil.waitUntilIndexesAreReady(project)
+    }
+
     fun doScratchTest() {
-        val fileName = getTestDataFileName(this::class.java, this.name) ?: error("scratch file not found")
+        val fileName = getTestDataFileName(this::class.java, testMethodName) ?: error("scratch file not found")
         val editorWithPreview = configureScratchEditor(fileName)
 
-        launchAction(RunKotlinScratchAction())
+        val (actualOutput, previewText) = runInEdtAndGet {
+            launchAction(RunKotlinScratchAction())
 
-        PlatformTestUtil.waitWhileBusy {
-            editorWithPreview.kotlinScratchFile.executor.scope.coroutineContext.job.children.any { it.isActive }
+            PlatformTestUtil.waitWhileBusy {
+                editorWithPreview.kotlinScratchFile.executor.scope.coroutineContext.job.children.any { it.isActive }
+            }
+
+            UIUtil.dispatchAllInvocationEvents()
+
+            val consoleView = ToolWindowManager.getInstance(project).getToolWindow(ScratchToolWindowFactory.ID)?.contentManager?.contents
+                ?.firstNotNullOfOrNull { it.component as? ConsoleViewImpl } ?: error("failed to get console view")
+            consoleView.flushDeferredText()
+
+            val output = consoleView.editor?.document?.text ?: error("failed to get output text")
+            output to if (isExplainEnabled) editorWithPreview.dumpExplainContent() else null
         }
-
-        UIUtil.dispatchAllInvocationEvents()
-
-        val consoleView = ToolWindowManager.getInstance(project).getToolWindow(ScratchToolWindowFactory.ID)?.contentManager?.contents
-            ?.firstNotNullOfOrNull { it.component as? ConsoleViewImpl } ?: error("failed to get console view")
-        consoleView.flushDeferredText()
-
-        val actualOutput = consoleView.editor?.document?.text ?: error("failed to get output text")
         val expectedOutputFile = Path(testDataPath, fileName.replace(".kts", ".output"))
         val scratchFilePath = editorWithPreview.kotlinScratchFile.virtualFile.path
         assertEqualsToFile(expectedOutputFile, actualOutput) { output ->
@@ -64,8 +99,7 @@ abstract class AbstractKotlinScratchRunActionTest : FileEditorManagerTestCase() 
                 .replace(Regex("(?m)^WARNING:[^\n]*\n"), "")
         }
 
-        if (isExplainEnabled) {
-            val previewText = editorWithPreview.dumpExplainContent()
+        if (previewText != null) {
             val expectedExplainFile = Path(testDataPath, fileName.replace(".kts", ".explain"))
             assertEqualsToFile(expectedExplainFile, previewText) { output ->
                 output.replace(hexAddressRegex, "<address>")
@@ -84,23 +118,24 @@ abstract class AbstractKotlinScratchRunActionTest : FileEditorManagerTestCase() 
             ScratchFileService.Option.create_if_missing
         ) ?: error("Couldn't create scratch file")
 
-        myFixture.openFileInEditor(scratchVirtualFile)
+        runInEdtAndWait { myFixture.openFileInEditor(scratchVirtualFile) }
 
         IndexingTestUtil.waitUntilIndexesAreReady(myFixture.project)
 
-        val scratchFileEditor = manager?.let {
-            getScratchEditorForSelectedFile(it, myFixture.file.virtualFile)
-        } ?: error("Couldn't find scratch file")
+        return runInEdtAndGet {
+            val scratchFileEditor = getScratchEditorForSelectedFile(manager, myFixture.file.virtualFile)
+                ?: error("Couldn't find scratch file")
 
-        configureOptions(scratchFileEditor, text, myFixture.module, isExplainEnabled)
+            configureOptions(scratchFileEditor, text, myFixture.module, isExplainEnabled)
 
-        return scratchFileEditor
+            scratchFileEditor
+        }
     }
 
     protected fun launchAction(action: AnAction) {
         val e = getActionEvent(action)
         ActionUtil.updateAction(action, e)
-        Assert.assertTrue(e.presentation.isEnabledAndVisible)
+        assertTrue(e.presentation.isEnabledAndVisible)
         ActionUtil.performAction(action, e)
     }
 
@@ -109,13 +144,10 @@ abstract class AbstractKotlinScratchRunActionTest : FileEditorManagerTestCase() 
         return TestActionEvent.createTestEvent(action, context::getData)
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor {
-        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
-    }
-
-    
-
     companion object {
+        private val projectFixture = projectFixture(openAfterCreation = true)
+        private val descriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
+
         fun configureOptions(
             scratchFileEditor: KotlinScratchFileEditorWithPreview,
             fileText: String,

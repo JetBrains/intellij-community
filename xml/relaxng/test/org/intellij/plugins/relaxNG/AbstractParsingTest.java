@@ -16,17 +16,22 @@
 
 package org.intellij.plugins.relaxNG;
 
-import com.intellij.testFramework.ParsingTestCase;
+import com.intellij.openapi.project.Project;
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixture;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.intellij.plugins.relaxNG.compact.RncParserDefinition;
 
-public abstract class AbstractParsingTest extends ParsingTestCase {
-  public AbstractParsingTest(String s) {
-    super("psi/" + s, "rnc", new RncParserDefinition());
-  }
+import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.ParsingTestFixtureKt.parsingFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 
-  @Override
-  protected String getTestDataPath() {
-    return PlatformTestUtil.getCommunityPath() + "/xml/relaxng/testData/parsing";
+public abstract class AbstractParsingTest {
+  private static final TestFixture<Project> projectFixture = projectFixture();
+
+  protected final TestFixture<ParsingTestFixture> parsingFixture;
+
+  public AbstractParsingTest(String s) {
+    parsingFixture = parsingFixture(projectFixture, PlatformTestUtil.getCommunityPath() + "/xml/relaxng/testData/parsing" + "/" + "psi/" + s,
+                                    "rnc", new RncParserDefinition());
   }
 }

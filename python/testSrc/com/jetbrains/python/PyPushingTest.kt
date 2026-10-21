@@ -25,7 +25,7 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.writeChild
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.setPythonSdkForTests
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -76,7 +76,7 @@ class PyPushingTest {
     val languageLevel = LanguageLevel.PYTHON312
     val sdk = PythonMockSdk.create(languageLevel)
     WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance().addJdk(sdk, disposableRule.disposable) }
-    module.pythonSdk = sdk
+    module.setPythonSdkForTests(sdk)
     IndexingTestUtil.waitUntilIndexesAreReady(project)
 
     val pusher = FilePropertyPusher.EP_NAME.findExtension(PythonLanguageLevelPusher::class.java)

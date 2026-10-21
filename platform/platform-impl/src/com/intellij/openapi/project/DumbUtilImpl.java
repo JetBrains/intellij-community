@@ -12,7 +12,9 @@ public final class DumbUtilImpl implements DumbUtil {
 
   @Override
   public boolean mayUseIndices(@NotNull Project project) {
-    return !DumbService.getInstance(project).isDumb() || FileBasedIndex.getInstance().getCurrentDumbModeAccessType(project) != null;
+    if (!DumbService.getInstance(project).isDumb()) return true;
+    FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+    return fileBasedIndex != null && fileBasedIndex.getCurrentDumbModeAccessType(project) != null;
   }
 
   @Override

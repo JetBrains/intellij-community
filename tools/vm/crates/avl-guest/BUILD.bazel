@@ -1,3 +1,16 @@
 load("//tools/vm:avl.bzl", "avl_crate")
 
-avl_crate(closure = True)
+avl_crate(
+    closure = True,
+    # The option file templates of the lane context, which `lane::context` embeds (`include_str!`).
+    compile_data = glob(["src/lane/context/options/*.xml"]),
+    test_data = [":testdata"],
+)
+
+# The goldens of the lane services and the fixture agent jar. Public, because the Kotlin test of the Codex mock model
+# holds its event stream to the same golden.
+filegroup(
+    name = "testdata",
+    srcs = glob(["testdata/**"]),
+    visibility = ["//visibility:public"],
+)

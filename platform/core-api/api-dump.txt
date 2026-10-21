@@ -1503,6 +1503,7 @@ com.intellij.openapi.project.Project
 - isDefault():Z
 - a:isInitialized():Z
 - a:isOpen():Z
+- isWelcomeProject():Z
 - a:save():V
 - scheduleSave():V
 f:com.intellij.openapi.project.ProjectCoreUtil

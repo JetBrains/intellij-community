@@ -493,7 +493,6 @@ c:org.jetbrains.jewel.foundation.lazy.tree.DefaultTreeViewPointerEventAction
 - org.jetbrains.jewel.foundation.lazy.tree.DefaultSelectableLazyColumnEventAction
 - sf:$stable:I
 - <init>(org.jetbrains.jewel.foundation.lazy.tree.TreeState):V
-- handlePointerEventPress(androidx.compose.ui.input.pointer.PointerEvent,org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings,org.jetbrains.jewel.foundation.lazy.SelectableLazyListState,org.jetbrains.jewel.foundation.lazy.SelectionMode,java.util.List,java.lang.Object):V
 org.jetbrains.jewel.foundation.lazy.tree.KeyActions
 - a:getActions():org.jetbrains.jewel.foundation.lazy.SelectableColumnOnKeyEvent
 - a:getKeybindings():org.jetbrains.jewel.foundation.lazy.SelectableColumnKeybindings

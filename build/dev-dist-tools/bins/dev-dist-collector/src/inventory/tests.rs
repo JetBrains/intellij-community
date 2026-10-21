@@ -283,6 +283,30 @@ fn inventory_rejects_a_link_with_an_executable_override() {
     require_error(inventory(&[file]), "symbolic link has an executable override: bin/current");
 }
 
+/// The inventory takes the executable bit from the record, never from the source. Bazel can give a source of a restored
+/// repository the mode `0555`.
+#[cfg(unix)]
+#[test]
+fn inventory_ignores_the_mode_of_the_source() {
+    let directory = TempDir::new();
+    let java = directory.join("jbr/bin/java");
+    write_file(&java, "program");
+    testkit::set_mode(&java, 0o555);
+    let release = directory.join("jbr/release");
+    write_file(&release, "data");
+    testkit::set_mode(&release, 0o555);
+    let files = [
+        SourcedFile {
+            executable: true,
+            ..SourcedFile::new(&java, "jbr/bin/java")
+        },
+        SourcedFile::new(&release, "jbr/release"),
+    ];
+    let (entries, _) = inventory(&files).unwrap();
+    let executables: Vec<(&str, bool)> = entries.iter().map(|entry| (entry.relative_path(), entry.executable())).collect();
+    assert_eq!(executables, [("jbr/bin/java", true), ("jbr/release", false)]);
+}
+
 #[test]
 fn inventory_rejects_non_files() {
     let directory = TempDir::new();

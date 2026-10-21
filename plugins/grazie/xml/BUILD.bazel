@@ -1,4 +1,9 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.grazie.xml` start
+content_module_jar(module = ":xml")
+### auto-generated section `dev intellij.grazie.xml` end
 
 ### auto-generated section `build intellij.grazie.xml` start
 jvm_library(
@@ -17,7 +22,6 @@ jvm_library(
         ["main/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -62,7 +66,6 @@ jvm_library(
         "//spellchecker:spellchecker_test_lib",
         "//spellchecker/xml:xml_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//platform/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.grazie.xml` end

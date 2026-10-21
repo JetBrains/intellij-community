@@ -393,8 +393,9 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public abstract boolean isInNonCancelableSection();
 
   /**
-   * Performs the given computation while giving more priority to the current thread
-   * (by forcing all other non-prioritized threads to sleep a bit whenever they call {@link #checkCanceled()}).<p></p>
+   * Performs the given computation and marks the current thread as prioritized while it runs.
+   * When the {@code intellij.progress.sleep.to.give.priority} system property is true, all other non-prioritized threads
+   * also sleep a bit whenever they call {@link #checkCanceled()}. The property is false by default.<p></p>
    *
    * This is intended for relatively short (expected to be under 10 seconds) background activities that the user is waiting for
    * (e.g. code navigation), and which shouldn't be slowed down by CPU-intensive background tasks like highlighting or indexing.

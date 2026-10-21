@@ -168,10 +168,12 @@ public abstract class StubIndexEx extends StubIndex {
       .withProject(project);
 
     try {
+      FileBasedIndex fileBasedIndex = FileBasedIndex.getInstanceIfDefined();
+      if (fileBasedIndex == null) return true;
       boolean dumb = DumbService.isDumb(project);
       if (dumb) {
         if (isIndexingActivitiesSuppressedSync(project)) return false;
-        DumbModeAccessType accessType = FileBasedIndex.getInstance().getCurrentDumbModeAccessType(project);
+        DumbModeAccessType accessType = fileBasedIndex.getCurrentDumbModeAccessType(project);
         if (accessType == DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) {
           // Do not disable this assertion.
           // Accessing Stub index in RAW_INDEX_DATA_ACCEPTABLE mode will likely cause stub/psi inconsistency
@@ -196,7 +198,7 @@ public abstract class StubIndexEx extends StubIndex {
 
       if (singleFileInScope != null) {
         if (!(singleFileInScope.hasNext())) return true;
-        FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
+        fileBasedIndex.ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
         fileStream = singleFileInScope;
         trace.lookupResultSize(1);
         shouldHaveKeys = false;
@@ -210,7 +212,7 @@ public abstract class StubIndexEx extends StubIndex {
         else {
           trace.lookupResultSize(fileIds.size());
         }
-        IntPredicate accessibleFileFilter = ((FileBasedIndexEx)FileBasedIndex.getInstance()).getAccessibleFileIdFilter(project);
+        IntPredicate accessibleFileFilter = ((FileBasedIndexEx)fileBasedIndex).getAccessibleFileIdFilter(project);
 
         // already ensured up-to-date in getContainingIds() method
         IntIterator idIterator = fileIds.iterator();
@@ -328,8 +330,9 @@ public abstract class StubIndexEx extends StubIndex {
                                     @NotNull Processor<? super K> processor,
                                     @NotNull GlobalSearchScope scope,
                                     @Nullable IdFilter idFilter) {
+    FileBasedIndexEx fileBasedIndexEx = (FileBasedIndexEx)FileBasedIndex.getInstanceIfDefined();
+    if (fileBasedIndexEx == null) return true;
     final UpdatableIndex<K, Void, FileContent, ?> index = getIndex(indexKey); // wait for initialization to finish
-    FileBasedIndexEx fileBasedIndexEx = (FileBasedIndexEx)FileBasedIndex.getInstance();
     if (index == null ||
         !fileBasedIndexEx.ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope, null)) {
       return true;
@@ -383,7 +386,8 @@ public abstract class StubIndexEx extends StubIndex {
                                                   @Nullable IdFilter idFilter,
                                                   @Nullable GlobalSearchScope scope) {
     var trace = TRACE_OF_STUB_ENTRIES_LOOKUP.get();
-    FileBasedIndexEx fileBasedIndex = (FileBasedIndexEx)FileBasedIndex.getInstance();
+    FileBasedIndexEx fileBasedIndex = (FileBasedIndexEx)FileBasedIndex.getInstanceIfDefined();
+    if (fileBasedIndex == null) return null;
     ID<Integer, SerializedStubTree> stubUpdatingIndexId = StubUpdatingIndex.INDEX_ID;
     UpdatableIndex<Key, Void, FileContent, ?> index = getIndex(indexKey);   // wait for initialization to finish
     if (index == null || !fileBasedIndex.ensureUpToDate(stubUpdatingIndexId, project, scope, null)) return null;
@@ -392,7 +396,7 @@ public abstract class StubIndexEx extends StubIndex {
 
     IdFilter finalIdFilter = idFilter != null
                              ? idFilter
-                             : ((FileBasedIndexEx)FileBasedIndex.getInstance()).extractIdFilter(scope, project);
+                             : fileBasedIndex.extractIdFilter(scope, project);
 
     UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> stubUpdatingIndex = fileBasedIndex.getIndex(stubUpdatingIndexId);
 

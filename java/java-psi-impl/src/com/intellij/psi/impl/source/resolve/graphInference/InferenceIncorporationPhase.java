@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilitySource;
 import com.intellij.codeInsight.TypeNullability;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -205,10 +206,8 @@ public class InferenceIncorporationPhase {
               }
             }
 
-            for (PsiType lowerBound : lowerBounds) {
-              if (isInferenceVariableOrFreshTypeParameter(inferenceVariable, lowerBound)) {
-                return false;
-              }
+            if (!checkNoLowerBoundForCapture(inferenceVariable, (PsiWildcardType)aType, lowerBounds)) {
+              return false;
             }
 
           } else if (((PsiWildcardType)aType).isExtends()) {
@@ -226,10 +225,8 @@ public class InferenceIncorporationPhase {
               }
             }
 
-            for (PsiType lowerBound : lowerBounds) {
-              if (isInferenceVariableOrFreshTypeParameter(inferenceVariable, lowerBound)) {
-                return false;
-              }
+            if (!checkNoLowerBoundForCapture(inferenceVariable, (PsiWildcardType)aType, lowerBounds)) {
+              return false;
             }
 
           } else {
@@ -270,6 +267,25 @@ public class InferenceIncorporationPhase {
     if (changedUpperBounds != null) {
       upDown(variable, lowerBounds, changedUpperBounds);
     }
+  }
+
+  /**
+   * JLS 18.3.2: for a capture of {@code ?} or {@code ? extends T}, a bound {@code R <: αi} implies false.
+   * Here R is a type that is not an inference variable.
+   *
+   * @return false and register an error message if one of the lower bounds is such a type
+   */
+  private boolean checkNoLowerBoundForCapture(InferenceVariable inferenceVariable, PsiWildcardType wildcard, List<PsiType> lowerBounds) {
+    for (PsiType lowerBound : lowerBounds) {
+      if (!isInferenceVariableOrFreshTypeParameter(inferenceVariable, lowerBound)) {
+        Set<InferenceVariable> dependencies = new LinkedHashSet<>();
+        mySession.collectDependencies(wildcard, dependencies);
+        mySession.registerIncompatibleErrorMessage(dependencies, JavaPsiBundle.message(
+          "type.conforms.to.capture.constraint", mySession.getPresentableText(lowerBound), mySession.getPresentableText(wildcard)));
+        return false;
+      }
+    }
+    return true;
   }
 
   private static Boolean isInferenceVariableOrFreshTypeParameter(InferenceVariable inferenceVariable,

@@ -690,5 +690,7 @@ data class TestPluginSpec(
   @JvmField val additionalBundledPluginTargetNames: List<TargetName> = emptyList(),
   @JvmField val allowedMissingPluginIds: List<PluginId> = emptyList(),
   @JvmField val checkModuleActivation: Boolean = false,
+  /** A test plugin the dev build makes for a runner of `intellij.yaml`: the generator writes no plugin.xml for it, and [pluginXmlPath] is empty. */
+  @JvmField val devBuildSynthetic: Boolean = false,
 )
 

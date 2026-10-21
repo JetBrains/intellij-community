@@ -25,6 +25,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("argumentIsEnclosingContextParameter.kt")
+        public void testArgumentIsEnclosingContextParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameterCall/argumentIsEnclosingContextParameter.kt");
+        }
+
         @TestMetadata("callableReference.kt")
         public void testCallableReference() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameterCall/callableReference.kt");
@@ -53,6 +58,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("contextualMemberCalledDirectly.kt")
         public void testContextualMemberCalledDirectly() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameterCall/contextualMemberCalledDirectly.kt");
+        }
+
+        @TestMetadata("doubleUsingSupertype.kt")
+        public void testDoubleUsingSupertype() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameterCall/doubleUsingSupertype.kt");
         }
 
         @TestMetadata("explicitContextArgument.kt")
@@ -103,6 +113,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("labelUnrelated.kt")
         public void testLabelUnrelated() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameterCall/labelUnrelated.kt");
+        }
+
+        @TestMetadata("multipleContextParameters1.kt")
+        public void testMultipleContextParameters1() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameterCall/multipleContextParameters1.kt");
         }
 
         @TestMetadata("multipleStatements.kt")
@@ -173,6 +188,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("userDefinedContext.kt")
         public void testUserDefinedContext() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameterCall/userDefinedContext.kt");
+        }
+
+        @TestMetadata("usingSupertype.kt")
+        public void testUsingSupertype() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedContextParameterCall/usingSupertype.kt");
         }
 
         @TestMetadata("wholeCallUnused.kt")
@@ -10401,6 +10421,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("whenWithConjunctionInsideConditionWithIgnoreOption.kt")
+            public void testWhenWithConjunctionInsideConditionWithIgnoreOption() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithConjunctionInsideConditionWithIgnoreOption.kt");
+            }
+
             @TestMetadata("whenWithGuards.kt")
             public void testWhenWithGuards() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuards.kt");
@@ -10426,6 +10451,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuardsAdditionalAndConditionsParenthesesRight.kt");
             }
 
+            @TestMetadata("whenWithGuardsExplicitlyHighlighted.kt")
+            public void testWhenWithGuardsExplicitlyHighlighted() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuardsExplicitlyHighlighted.kt");
+            }
+
+            @TestMetadata("whenWithGuardsIgnored.kt")
+            public void testWhenWithGuardsIgnored() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuardsIgnored.kt");
+            }
+
             @TestMetadata("whenWithGuardsInapplicableComplexLhs.kt")
             public void testWhenWithGuardsInapplicableComplexLhs() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuardsInapplicableComplexLhs.kt");
@@ -10444,6 +10479,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("whenWithGuardsWithGuardOrCondition.kt")
             public void testWhenWithGuardsWithGuardOrCondition() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithGuardsWithGuardOrCondition.kt");
+            }
+
+            @TestMetadata("whenWithoutGuardsWithIgnoreOption.kt")
+            public void testWhenWithoutGuardsWithIgnoreOption() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/branched/introduceWhenSubject/whenGuards/whenWithoutGuardsWithIgnoreOption.kt");
             }
         }
     }

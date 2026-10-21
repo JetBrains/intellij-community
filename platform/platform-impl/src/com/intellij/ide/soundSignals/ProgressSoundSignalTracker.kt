@@ -68,18 +68,18 @@ class ProgressSoundSignalTracker(private val scope: CoroutineScope) {
         update { clear() }
         return
       }
-      currentSignal()?.let { SoundSignalPlayer.getInstance().play(it) }
+      currentSound()?.let { SoundSignalPlayer.getInstance().play(IdeSoundSignals.PROGRESS, it) }
       delay(repeatDelay)
     }
   }
 
-  private suspend fun currentSignal(): SoundSignal? {
+  private suspend fun currentSound(): String? {
     return withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
       val (over, running) = synchronized(lock) { progresses.toList() }.partition { it.isOver() }
       if (over.isNotEmpty()) update { removeAll(over) }
       val active = ProjectUtil.getActiveProject()
       val progress = running.firstOrNull { it.project != null && it.project === active } ?: running.firstOrNull()
-      progress?.model?.let { progressSoundSignal(it.isIndeterminate(), it.getFraction()) }
+      progress?.model?.let { progressSound(it.isIndeterminate(), it.getFraction()) }
     }
   }
 
@@ -92,24 +92,18 @@ class ProgressSoundSignalTracker(private val scope: CoroutineScope) {
   }
 }
 
-internal fun progressSoundSignal(indeterminate: Boolean, fraction: Double): SoundSignal = when {
-  indeterminate -> IdeSoundSignals.PROGRESS_INDETERMINATE
-  fraction < 1.0 / 3 -> IdeSoundSignals.PROGRESS_DETERMINATE_STAGE_1
-  fraction < 2.0 / 3 -> IdeSoundSignals.PROGRESS_DETERMINATE_STAGE_2
-  else -> IdeSoundSignals.PROGRESS_DETERMINATE_STAGE_3
+internal fun progressSound(indeterminate: Boolean, fraction: Double): String = when {
+  indeterminate -> IdeSounds.PROGRESS_INDETERMINATE
+  fraction < 0.25 -> IdeSounds.PROGRESS_DETERMINATE_STAGE_1
+  fraction < 0.5 -> IdeSounds.PROGRESS_DETERMINATE_STAGE_2
+  fraction < 0.75 -> IdeSounds.PROGRESS_DETERMINATE_STAGE_3
+  else -> IdeSounds.PROGRESS_DETERMINATE_STAGE_4
 }
 
 internal const val INITIAL_DELAY_REGISTRY_KEY: String = "ide.sound.signals.progress.initial.delay.ms"
 internal const val REPEAT_DELAY_REGISTRY_KEY: String = "ide.sound.signals.progress.repeat.delay.ms"
 
-private val PROGRESS_SIGNALS = listOf(
-  IdeSoundSignals.PROGRESS_INDETERMINATE,
-  IdeSoundSignals.PROGRESS_DETERMINATE_STAGE_1,
-  IdeSoundSignals.PROGRESS_DETERMINATE_STAGE_2,
-  IdeSoundSignals.PROGRESS_DETERMINATE_STAGE_3,
-)
-
-private fun isProgressSignalOn(): Boolean = PROGRESS_SIGNALS.any(::isSoundSignalOn)
+private fun isProgressSignalOn(): Boolean = isSoundSignalOn(IdeSoundSignals.PROGRESS)
 
 private fun registryValue(key: String, defaultValue: Int): Duration =
   RegistryManager.getInstance().intValue(key, defaultValue).coerceAtLeast(0).milliseconds

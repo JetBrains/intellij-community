@@ -133,7 +133,7 @@
     - id: org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil
       version: 8.5.15-jb1
 # https://github.com/netty/netty/pull/15131
-- url: https://packages.jetbrains.team/files/p/ij/intellij-build-dependencies
+- url: https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies
   libs:
     # Netty
     - id: io.netty:netty-common

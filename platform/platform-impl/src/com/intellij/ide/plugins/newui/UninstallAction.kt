@@ -2,6 +2,9 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerButtonType
+import com.intellij.ide.plugins.marketplace.statistics.enums.PluginManagerSide
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
@@ -60,7 +63,16 @@ internal class UninstallAction<C : JComponent>(
   }
 
   override fun actionPerformed(e: AnActionEvent) {
+    uninstall(if (e.isFromContextMenu) PluginManagerButtonType.CONTEXT_MENU else PluginManagerButtonType.DEFAULT)
+  }
+
+  fun uninstall(buttonType: PluginManagerButtonType) {
     val models = allDescriptors.toList()
+    if (PluginManagerCustomizer.getInstance() == null) {
+      models.forEach { model ->
+        PluginManagerUsageCollector.pluginUninstallButtonClicked(model.pluginId, PluginManagerSide.FRONTEND, buttonType)
+      }
+    }
     val modelFacade = myPluginModelFacade
     val operationUi = operationUi
     val operationContext = operationUi.captureContext()

@@ -7,8 +7,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.startOffset
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
 import org.intellij.plugins.markdown.lang.supportsMarkdown
@@ -21,7 +23,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
  *
  * By default, table actions are intended to be updated on BGT.
  */
-internal abstract class RowBasedTableAction(private val considerSeparatorRow: Boolean = false) : AnAction() {
+internal abstract class RowBasedTableAction(private val considerSeparatorRow: Boolean = false) : AnAction(), DumbAware {
   override fun actionPerformed(event: AnActionEvent) {
     val editor = event.getData(CommonDataKeys.EDITOR) ?: return
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return
@@ -93,10 +95,10 @@ internal abstract class RowBasedTableAction(private val considerSeparatorRow: Bo
   ): Pair<MarkdownTable, PsiElement>? {
     val elementFromEvent = event.getData(TableActionKeys.ELEMENT)?.get()
     if (elementFromEvent != null) {
-      val table = obtainParentTable(elementFromEvent)
-      if (table != null) {
-        return table to elementFromEvent
-      }
+      val row = elementFromEvent.takeIf { it.isValid }?.let { rowGetter(file, document, it.startOffset) } ?: return null
+      if (row != elementFromEvent) return null
+      val table = obtainParentTable(row)?.takeIf { it.isValid } ?: return null
+      return table to row
     }
     val row = rowGetter(file, document, offset)?.takeIf { it.isValid }
     val table = row?.let(::obtainParentTable)?.takeIf { it.isValid }

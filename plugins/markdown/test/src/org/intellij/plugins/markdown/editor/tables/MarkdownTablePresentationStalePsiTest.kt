@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
 import com.intellij.testFramework.PlatformTestUtil
+import org.intellij.plugins.markdown.MarkdownTestingUtil.paintPresentation
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBarPresentation
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.VerticalBarPresentation
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
@@ -36,6 +37,7 @@ class MarkdownTablePresentationStalePsiTest : LightPlatformCodeInsightTestCase()
     )
     val table = requireNotNull(PsiTreeUtil.findChildOfType(file, MarkdownTable::class.java))
     val presentation = HorizontalBarPresentation(editor, table)
+    paintPresentation(presentation)
     assertTrue(presentation.width > 0)
 
     paintInEditor(presentation)
@@ -53,7 +55,7 @@ class MarkdownTablePresentationStalePsiTest : LightPlatformCodeInsightTestCase()
     )
     val table = requireNotNull(PsiTreeUtil.findChildOfType(file, MarkdownTable::class.java))
     val row = requireNotNull(table.headerRow)
-    val presentation = VerticalBarPresentation.create(PresentationFactory(editor), editor, row)
+    val presentation = VerticalBarPresentation.create(PresentationFactory(editor), editor, row, tableRangeMarker = editor.document.createRangeMarker(table.textRange))
 
     WriteCommandAction.runWriteCommandAction(project) {
       editor.document.setText("plain text")
@@ -77,9 +79,10 @@ class MarkdownTablePresentationStalePsiTest : LightPlatformCodeInsightTestCase()
       """.trimIndent()
     )
     val table = requireNotNull(PsiTreeUtil.findChildOfType(file, MarkdownTable::class.java))
-    val rowPresentation = VerticalBarPresentation(editor, requireNotNull(table.getRows(true).lastOrNull()), hover = false)
+    val rowPresentation = VerticalBarPresentation(editor, requireNotNull(table.getRows(true).lastOrNull()), hover = false, tableRangeMarker = editor.document.createRangeMarker(table.textRange))
     val columnPresentation = HorizontalBarPresentation(editor, table)
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    paintPresentation(columnPresentation)
     assertTrue(rowPresentation.width > 0)
     assertTrue(columnPresentation.width > 0)
 
@@ -88,18 +91,8 @@ class MarkdownTablePresentationStalePsiTest : LightPlatformCodeInsightTestCase()
     }
     PsiDocumentManager.getInstance(project).commitDocument(editor.document)
 
-    paint(rowPresentation)
-    paint(columnPresentation)
-  }
-
-  private fun paint(presentation: BasePresentation) {
-    val graphics = BufferedImage(presentation.width, presentation.height, BufferedImage.TYPE_INT_ARGB).createGraphics()
-    try {
-      presentation.paint(graphics, TextAttributes())
-    }
-    finally {
-      graphics.dispose()
-    }
+    paintPresentation(rowPresentation)
+    paintPresentation(columnPresentation)
   }
 
   private fun paintInEditor(presentation: BasePresentation) {

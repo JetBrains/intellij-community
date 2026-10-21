@@ -195,10 +195,9 @@ async fn start_server(settings: Settings) -> TestServer {
     let server = Server::new(settings);
     let cancel = CancellationToken::new();
     tokio::spawn(Arc::clone(&server).watch_loop(cancel.clone()));
-    while !server.watches_settled() {
-        tokio::time::sleep(Duration::from_millis(5)).await;
-    }
-    TestServer { server, cancel }
+    let served = TestServer { server, cancel };
+    served.settle().await;
+    served
 }
 
 struct Answer {
@@ -258,9 +257,15 @@ impl TestServer {
         answer.json()
     }
 
-    #[cfg(unix)]
     async fn scan(&self) {
         self.server.blocking(Server::scan).await;
+    }
+
+    /// Returns once the watcher thread watches what the last scan asked for and owes no scan.
+    async fn settle(&self) {
+        while !self.server.watches_settled() {
+            tokio::time::sleep(Duration::from_millis(5)).await;
+        }
     }
 
     /// Opens the event stream and answers its events, after `ready`.
@@ -350,6 +355,13 @@ impl Events {
         tokio::time::timeout(Duration::from_secs(15), next)
             .await
             .unwrap_or_else(|_| panic!("none of {names:?} within 15 s"))
+    }
+
+    /// The next `run-appended` that names the run. A journal can grow in several writes, so the announcements of
+    /// other runs are skipped.
+    async fn wait_for_run(&mut self, run_id: &str) {
+        let want = format!(r#"{{"runId":"{run_id}"}}"#);
+        while self.wait_for(&["run-appended"]).await.data != want {}
     }
 }
 

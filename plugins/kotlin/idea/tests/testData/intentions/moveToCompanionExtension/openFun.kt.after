@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -XXLanguage:+CompanionBlocks -XXLanguage:+CompanionExtensions
+
+open class A {
+}
+
+companion fun A.foo() = 1

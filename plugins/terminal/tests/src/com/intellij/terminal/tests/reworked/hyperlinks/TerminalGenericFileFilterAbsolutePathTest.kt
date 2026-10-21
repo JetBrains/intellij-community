@@ -140,6 +140,20 @@ internal class TerminalGenericFileFilterAbsolutePathTest {
   }
 
   @Test
+  fun `pseudo file systems are not linked`() =
+    getFilterResultAndCheckHighlightPositions(
+      "echo /dev /dev/fd /dev/monotonic /proc/cpuinfo /sys/class/net /development/notes.txt /tmp",
+      listOf("/dev/fd", "/dev/monotonic", "/proc/cpuinfo", "/sys/class/net", "/development/notes.txt", "/tmp"),
+      checkHighlights = false,
+    ).checkFileLinks("/development/notes.txt", "/tmp")
+
+  @Test
+  fun `pseudo file system names on a Windows drive are linked`() =
+    getFilterResultAndCheckHighlightPositions(
+      "see C:\\dev\\file and C:\\proc\\file", listOf("C:\\dev\\file", "C:\\proc\\file"), checkHighlights = false, windows = true
+    ).checkFileLinks("C:\\dev\\file", "C:\\proc\\file")
+
+  @Test
   fun `path with space in the first segment is not cancelled early`() =
     getFilterResultAndCheckHighlightPositions("blah /with space blah", listOf("/with space"), checkHighlights = false)
       .checkFileLinks("/with space")

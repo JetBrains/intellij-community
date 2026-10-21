@@ -33,7 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.PythonTestUtil;
-import com.jetbrains.python.extensions.ModuleExtKt;
+import com.jetbrains.python.fixtures.PyProjectStructureTestUtilKt;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.InvalidSdkException;
@@ -169,7 +169,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
 
   @NotNull
   public LanguageLevel getLevelForSdk() {
-    return PythonSdkType.getLanguageLevelForSdk(ModuleExtKt.getSdk(myFixture.getModule()));
+    return PyProjectStructureTestUtilKt.findLanguageLevelForTests(myFixture.getModule());
   }
 
   /**

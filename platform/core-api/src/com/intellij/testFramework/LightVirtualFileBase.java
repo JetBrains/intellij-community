@@ -14,9 +14,12 @@ import com.intellij.openapi.vfs.VirtualFileWithAssignedFileType;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.StackTraceSnapshot;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 
@@ -235,7 +238,7 @@ public abstract class LightVirtualFileBase extends VirtualFile implements Virtua
 
   private void registerCreationTrace(@Nullable Object creationTrace) {
     if (creationTrace == DEFAULT_CREATION_TRACE) {
-      creationTrace = getDefaultCreationTrace();
+      creationTrace = getDefaultCreationTrace(getClass());
     }
 
     if (creationTrace != null) {
@@ -243,14 +246,29 @@ public abstract class LightVirtualFileBase extends VirtualFile implements Virtua
     }
   }
 
-  private static @Nullable Object getDefaultCreationTrace() {
+  private static @Nullable Object getDefaultCreationTrace(@NotNull Class<? extends LightVirtualFileBase> fileClass) {
     Application application = ApplicationManager.getApplication();
     if (application == null || application.isUnitTestMode()) {
       return null;
     }
 
-    return new Throwable();
+    return captureCreationTrace(fileClass);
   }
+
+  /**
+   * The creation trace that a light file of {@code fileClass} keeps outside the unit test mode: the top {@code CREATION_TRACE_FRAMES}
+   * frames of the code that creates the file, below the constructors of {@code fileClass} and of its superclasses, as
+   * {@link StackTraceSnapshot} data. A plugin can create a light file that outlives the plugin, and the data keeps no class loader.
+   * Light files are created on hot paths, so the trace is bounded, see {@link StackTraceSnapshot#captureOnHotPath}.
+   */
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static @NotNull Object captureCreationTrace(@NotNull Class<? extends LightVirtualFileBase> fileClass) {
+    String[] fileClassNames = StackTraceSnapshot.classChainNames(fileClass, LightVirtualFileBase.class);
+    return StackTraceSnapshot.captureOnHotPath(CREATION_TRACE_FRAMES, fileClassNames);
+  }
+
+  private static final int CREATION_TRACE_FRAMES = 16;
 
   /** marker object saying that the creation trace should be inferred with the default algorithm */
   static final @NotNull Object DEFAULT_CREATION_TRACE = ObjectUtils.sentinel("default creation trace");

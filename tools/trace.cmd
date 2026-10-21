@@ -62,8 +62,8 @@ exec "$resolved" "$@"
 
 setlocal
 
-REM The same steps as the sh half, see note 5. The launcher is only read for its last line and never run.
-REM This half still runs `bazel run --script_path`, for the reason that the CMD half of vm.cmd states.
+REM The same steps as the sh half, see note 5. The `build` step of polyglot-wrapper.cmd runs the `bazel build` and
+REM reads the build event file through PowerShell.
 
 call "%~dp0polyglot-wrapper.cmd"
 set "TARGET=%LABEL_PREFIX%tools/vm:air-trace"
@@ -93,30 +93,9 @@ if defined AIR_TRACE_BIN (
   exit /B %ERRORLEVEL%
 )
 
-if not exist "%ROOT%\out\air" mkdir "%ROOT%\out\air"
-REM One %RANDOM% read, reused: two reads would produce two different names.
-set "LAUNCHER=%ROOT%\out\air\trace.launcher.%RANDOM%"
-REM `1>&2` keeps the build output off stdout, which `plan` answers on.
-pushd "%ROOT%"
-call bazel.cmd run --config=bt --script_path="%LAUNCHER%" "%TARGET%" 1>&2
-set "STATUS=%ERRORLEVEL%"
-popd
-if not "%STATUS%"=="0" (
-  if exist "%LAUNCHER%" del /q "%LAUNCHER%"
-  echo trace: could not build %TARGET%; see the bazel output above 1>&2
-  exit /B 78
-)
-
-REM Only the last line is wanted - `<binary> <args> %*` - so the loop deliberately overwrites.
-set "RESOLVED="
-for /f "usebackq tokens=1" %%b in ("%LAUNCHER%") do set "RESOLVED=%%~b"
-del /q "%LAUNCHER%"
-if not defined RESOLVED goto :RESOLVEFAILED
-if not exist "%RESOLVED%" goto :RESOLVEFAILED
+REM The build output goes to stderr, which keeps stdout for the answer of `plan`. A failure exits 78 (note 3).
+call "%POLYGLOT_WRAPPER%" build trace "%TARGET%" 78 air-trace.exe
+if not "%ERRORLEVEL%"=="0" exit /B %ERRORLEVEL%
 
 "%RESOLVED%"%ARGS%
 exit /B %ERRORLEVEL%
-
-:RESOLVEFAILED
-echo trace: could not resolve air-trace from %TARGET% ^(got '%RESOLVED%'^) 1>&2
-exit /B 78

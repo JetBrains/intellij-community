@@ -1,0 +1,6 @@
+fun first(p: Int, q: Int) = p + q
+
+fun test() {
+    first(p = 1, q = 0)
+    unknownFun(2)
+}

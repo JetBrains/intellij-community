@@ -8,8 +8,19 @@ import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FoldingListener
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.ui.accessibility.ScreenReader
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.awt.Point
 import java.util.concurrent.TimeUnit
 import javax.accessibility.AccessibleContext
@@ -22,37 +33,39 @@ import javax.swing.text.JTextComponent
  * With a screen reader attached, the accessible text of the editor is the text on screen, so a collapsed fold region reads as
  * its placeholder and the lines it spans read as a single line. Without one it stays the document text.
  */
-class AccessibleFoldedTextTest : AbstractEditorTest() {
+@TestApplication
+class AccessibleFoldedTextTest {
+  private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
+
   /** [ScreenReader.setActive] is a process-wide static with no restore API, so its prior value is saved by hand. */
   private var screenReaderWasActive = false
 
-  override fun setUp() {
-    super.setUp()
-    screenReaderWasActive = ScreenReader.isActive()
-    ScreenReader.setActive(true)
+  @BeforeEach
+  fun setUpScreenReader() {
+    runInEdtAndWait {
+      screenReaderWasActive = ScreenReader.isActive()
+      ScreenReader.setActive(true)
+    }
   }
 
-  override fun tearDown() {
-    try {
+  @AfterEach
+  fun tearDown() {
+    runInEdtAndWait {
       ScreenReader.setActive(screenReaderWasActive)
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
     }
   }
 
   // ---- Reading ----
 
-  fun `test char count is visible length`() {
+  @Test
+  fun `test char count is visible length`(): Unit = fixture.runTest {
     val editor = initFoldedEditor()
     assertEquals(TEXT.length, editor.document.textLength)
     assertEquals(VISIBLE_TEXT.length, accessibleText(editor).charCount)
   }
 
-  fun `test two document lines read as one visible line`() {
+  @Test
+  fun `test two document lines read as one visible line`(): Unit = fixture.runTest {
     val editor = initFoldedEditor()
     val text = accessibleText(editor) as AccessibleExtendedText
 
@@ -60,15 +73,15 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
     assertNotNull(first)
     assertEquals("line one...", first.text)
     assertEquals(0, first.startIndex)
-    assertEquals("sequence indices are indices into the accessible text",
-                 first.text, editableText(editor).getTextRange(first.startIndex, first.endIndex))
+    assertEquals(first.text, editableText(editor).getTextRange(first.startIndex, first.endIndex), "sequence indices are indices into the accessible text")
 
     val second = text.getTextSequenceAfter(AccessibleExtendedText.LINE, 0)
     assertNotNull(second)
     assertEquals("line three", second.text)
   }
 
-  fun `test placeholder reads as its characters and as one word`() {
+  @Test
+  fun `test placeholder reads as its characters and as one word`(): Unit = fixture.runTest {
     val editor = initFoldedEditor()
     val text = accessibleText(editor)
     for (offset in FOLD_START until FOLD_START + PLACEHOLDER.length) {
@@ -83,7 +96,8 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
     assertEquals("\n", text.getAtIndex(AccessibleText.CHARACTER, FOLD_START + PLACEHOLDER.length))
   }
 
-  fun `test adjacent folds`() {
+  @Test
+  fun `test adjacent folds`(): Unit = fixture.runTest {
     initText(TEXT)
     val editor = editor
     assertNotNull(editor.contentComponent.accessibleContext)
@@ -97,7 +111,8 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
     assertEquals(TEXT.substring(0, 4) + remainingText, editor.document.text)
   }
 
-  fun `test lines with adjacent empty and nested folds`() {
+  @Test
+  fun `test lines with adjacent empty and nested folds`(): Unit = fixture.runTest {
     initText("aa\nbb\ncc\ndd\nee\nff")
     val editor = editor
     assertNotNull(EditorTestUtil.addFoldRegion(editor, 3, 5, "inner", true))
@@ -109,14 +124,16 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
   }
 
   /** A placeholder occupies one visual line, so its own line breaks must not become accessible line boundaries. */
-  fun `test lines with a flattened placeholder and trailing separator`() {
+  @Test
+  fun `test lines with a flattened placeholder and trailing separator`(): Unit = fixture.runTest {
     initText("one\ntwo\nthree\n")
     assertNotNull(EditorTestUtil.addFoldRegion(editor, 1, 8, "X\nY\rZ", true))
     assertVisibleLines("oX Y Zthree\n")
   }
 
   /** The macOS bridge can ask with an offset from before the text got shorter; a Swing element then gives the closest line. */
-  fun `test out of range offset maps to the closest line`() {
+  @Test
+  fun `test out of range offset maps to the closest line`(): Unit = fixture.runTest {
     val editor = initFoldedEditor()
     val root = textComponent(editor).document.defaultRootElement
     assertEquals(1, root.getElementIndex(VISIBLE_TEXT.length + 1))
@@ -128,7 +145,8 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
 
   // ---- Caret and selection ----
 
-  fun `test caret is reported in visible offsets`() {
+  @Test
+  fun `test caret is reported in visible offsets`(): Unit = fixture.runTest {
     val editor = initFoldedEditor()
     val text = accessibleText(editor)
 
@@ -138,11 +156,12 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
 
     editor.caretModel.moveToOffset(FOLD_START)
     assertEquals(FOLD_START, text.selectionStart)
-    assertEquals("an empty selection must not grow over the fold", FOLD_START, text.selectionEnd)
+    assertEquals(FOLD_START, text.selectionEnd, "an empty selection must not grow over the fold")
     assertNull(text.selectedText)
   }
 
-  fun `test selection spanning fold reads the placeholder`() {
+  @Test
+  fun `test selection spanning fold reads the placeholder`(): Unit = fixture.runTest {
     val editor = initFoldedEditor()
     editor.selectionModel.setSelection(5, FOLD_END + 5)
     val text = accessibleText(editor)
@@ -151,16 +170,16 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
     assertEquals(VISIBLE_LINE_THREE + 4, text.selectionEnd)
   }
 
-  fun `test selecting through the accessible text maps bounds to the document`() {
+  @Test
+  fun `test selecting through the accessible text maps bounds to the document`(): Unit = fixture.runTest {
     val editor = initFoldedEditor()
 
     editableText(editor).selectText(0, FOLD_START)
     assertEquals(0, editor.selectionModel.selectionStart)
-    assertEquals("a range ending where the placeholder begins stops in front of the fold",
-                 FOLD_START, editor.selectionModel.selectionEnd)
+    assertEquals(FOLD_START, editor.selectionModel.selectionEnd, "a range ending where the placeholder begins stops in front of the fold")
 
     editableText(editor).selectText(FOLD_START, FOLD_START)
-    assertFalse("selecting an empty range must not select the fold", editor.selectionModel.hasSelection())
+    assertFalse(editor.selectionModel.hasSelection(), "selecting an empty range must not select the fold")
     assertEquals(FOLD_START, editor.caretModel.offset)
   }
 
@@ -168,7 +187,8 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
    * A selection reaching into virtual space has no folds to map, so it reads exactly as the selection model spells it out -
    * padding included, which no range of the document text could express.
    */
-  fun `test virtual space selection is reported without folds`() {
+  @Test
+  fun `test virtual space selection is reported without folds`(): Unit = fixture.runTest {
     initText("abc")
     val editor = editor as EditorEx
     editor.settings.isVirtualSpace = true
@@ -178,7 +198,8 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
     assertEquals("bc   ", accessibleText(editor).selectedText)
   }
 
-  fun `test placeholder character bounds round trip`() {
+  @Test
+  fun `test placeholder character bounds round trip`(): Unit = fixture.runTest {
     val editor = initFoldedEditor()
     val text = accessibleText(editor)
     for (offset in FOLD_START until FOLD_START + PLACEHOLDER.length) {
@@ -193,7 +214,8 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
   // ---- Editing ----
 
   /** Range bounds strictly inside a placeholder snap outwards to the fold; bounds at its start and empty ranges do not. */
-  fun `test edit ranges touching the placeholder`() {
+  @Test
+  fun `test edit ranges touching the placeholder`(): Unit = fixture.runTest {
     assertEquals(TEXT.substring(0, FOLD_START) + TEXT.substring(FOLD_END), afterDeleting(FOLD_START + 1, FOLD_START + 2))
     assertEquals(TEXT.substring(FOLD_START), afterDeleting(0, FOLD_START))
     assertEquals(TEXT, afterDeleting(FOLD_START, FOLD_START))
@@ -206,7 +228,8 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
     return editor.document.text
   }
 
-  fun `test edits around and inside the fold are reflected`() {
+  @Test
+  fun `test edits around and inside the fold are reflected`(): Unit = fixture.runTest {
     val editor = initFoldedEditor()
     val document = editor.document
     writeText(editor) { document.insertString(0, "xy") }
@@ -221,7 +244,8 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
     assertVisibleLines("xyline -...\nline three!")
   }
 
-  fun `test changing the placeholder is reflected`() {
+  @Test
+  fun `test changing the placeholder is reflected`(): Unit = fixture.runTest {
     val editor = initFoldedEditor()
     editor.foldingModel.runBatchFoldingOperation { collapsedFold(editor).placeholderText = "longer" }
     assertVisibleLines("line onelonger\nline three")
@@ -229,23 +253,25 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
 
   // ---- Folding changes ----
 
-  fun `test collapse and expand are announced and reflected`() {
+  @Test
+  fun `test collapse and expand are announced and reflected`(): Unit = fixture.runTest {
     initText(TEXT)
     val editor = editor
     val events = textEvents(editor)
 
     val region = EditorTestUtil.addFoldRegion(editor, FOLD_START, FOLD_END, PLACEHOLDER, true)
     assertNotNull(region)
-    assertFalse("collapsing a fold must notify the accessible context", events.isEmpty())
+    assertFalse(events.isEmpty(), "collapsing a fold must notify the accessible context")
     assertVisibleLines(VISIBLE_TEXT)
 
     events.clear()
     editor.foldingModel.runBatchFoldingOperation { region!!.isExpanded = true }
-    assertFalse("expanding a fold must notify the accessible context", events.isEmpty())
+    assertFalse(events.isEmpty(), "expanding a fold must notify the accessible context")
     assertVisibleLines(TEXT)
   }
 
-  fun `test text queried on a background thread during a folding change is not served afterwards`() {
+  @Test
+  fun `test text queried on a background thread during a folding change is not served afterwards`(): Unit = fixture.runTest {
     initText(TEXT)
     val editor = editor
     val text = accessibleText(editor)
@@ -260,12 +286,13 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
     }, testRootDisposable)
 
     assertNotNull(EditorTestUtil.addFoldRegion(editor, FOLD_START, FOLD_END, PLACEHOLDER, true))
-    assertEquals("text read during a folding change must not be served after it", VISIBLE_TEXT.length, text.charCount)
+    assertEquals(VISIBLE_TEXT.length, text.charCount, "text read during a folding change must not be served after it")
   }
 
   // ---- Without a screen reader, or without folds ----
 
-  fun `test without a screen reader folds are neither read nor announced`() {
+  @Test
+  fun `test without a screen reader folds are neither read nor announced`(): Unit = fixture.runTest {
     ScreenReader.setActive(false)
     initText(TEXT)
     val editor = editor
@@ -273,27 +300,28 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
 
     val region = EditorTestUtil.addFoldRegion(editor, FOLD_START, FOLD_END, PLACEHOLDER, true)
     assertNotNull(region)
-    assertEquals("a fold does not change the document, so nothing may be announced", emptyList<String>(), events)
+    assertEquals(emptyList<String>(), events, "a fold does not change the document, so nothing may be announced")
     assertVisibleLines(TEXT)
 
     editor.foldingModel.runBatchFoldingOperation { region!!.isExpanded = true }
     assertEquals(emptyList<String>(), events)
   }
 
-  fun `test turning the screen reader off and on is picked up at once`() {
+  @Test
+  fun `test turning the screen reader off and on is picked up at once`(): Unit = fixture.runTest {
     val editor = initFoldedEditor()
     val text = accessibleText(editor)
     assertEquals(VISIBLE_TEXT.length, text.charCount)
 
     ScreenReader.setActive(false)
-    assertEquals("without a screen reader the accessible text is the document, with no edit or folding change in between",
-                 TEXT.length, text.charCount)
+    assertEquals(TEXT.length, text.charCount, "without a screen reader the accessible text is the document, with no edit or folding change in between")
 
     ScreenReader.setActive(true)
     assertEquals(VISIBLE_TEXT.length, text.charCount)
   }
 
-  fun `test without folds the accessible text is the document`() {
+  @Test
+  fun `test without folds the accessible text is the document`(): Unit = fixture.runTest {
     initText(TEXT)
     assertVisibleLines(TEXT)
     assertEquals(TEXT, textComponent(editor).text)
@@ -303,7 +331,8 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
    * [JTextComponent.getText] is not how a screen reader reads the editor - the [AccessibleContext] is. Ordinary
    * platform code calls it on whatever [JTextComponent] it comes across, so it has to keep reporting the document.
    */
-  fun `test JTextComponent text stays in document offsets`() {
+  @Test
+  fun `test JTextComponent text stays in document offsets`(): Unit = fixture.runTest {
     val editor = initFoldedEditor()
     val component = textComponent(editor)
     assertEquals(VISIBLE_TEXT, editableText(editor).getTextRange(0, accessibleText(editor).charCount))
@@ -318,7 +347,7 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
    * the [JTextComponent] element tree the macOS bridge maps offsets to lines through.
    */
   private fun assertVisibleLines(expected: String) {
-    val editor = editor
+    val editor = fixture.editor
     val root = textComponent(editor).document.defaultRootElement
     val text = accessibleText(editor) as AccessibleExtendedText
     val lines = expected.split("\n")
@@ -345,8 +374,8 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
   }
 
   private fun initFoldedEditor(): Editor {
-    initText(TEXT)
-    val editor = editor
+    fixture.initText(TEXT)
+    val editor = fixture.editor
     // the accessible context must exist before the fold appears, otherwise there is nothing to notify
     assertNotNull(editor.contentComponent.accessibleContext)
     assertNotNull(EditorTestUtil.addFoldRegion(editor, FOLD_START, FOLD_END, PLACEHOLDER, true))
@@ -354,6 +383,7 @@ class AccessibleFoldedTextTest : AbstractEditorTest() {
   }
 
   private companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
     /** `line one\nline two\nline three`: the fold below swallows the first line separator. */
     const val TEXT = "line one\nline two\nline three"
     const val FOLD_START = 8

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentSnapshot
@@ -23,7 +24,6 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.util.DocumentEventUtil
 import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentLongObjectMap
-import com.intellij.util.containers.Java11Shim
 import it.unimi.dsi.fastutil.longs.LongList
 import it.unimi.dsi.fastutil.longs.LongLists
 
@@ -33,7 +33,7 @@ internal class SnapshotInlayStorage(
   private val editor: EditorImpl,
   val document: DocumentImpl,
 ) {
-  private val markersById: ConcurrentLongObjectMap<SnapshotInlayMarker<*>> = Java11Shim.createConcurrentLongObjectMap()
+  private val markersById: ConcurrentLongObjectMap<SnapshotInlayMarker<*>> = ConcurrentCollectionFactory.createConcurrentLongObjectMap()
   val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(
     document,
     onMarkersInvalidated = ::saveInvalidatedMarkers,
@@ -229,12 +229,19 @@ internal class SnapshotInlayStorage(
     flavor: Int,
     convert: (SnapshotInlayMarker<*>) -> T?,
   ): List<T> {
-    val root = rootStore.root(snapshotForQueries()) ?: return emptyList()
+    val snapshot = snapshotForQueries()
+    val root = rootStore.root(snapshot) ?: return emptyList()
     val markers = ArrayList<SnapshotInlayMarker<*>>()
-    root.processRangeMarkersOverlappingWith(startOffset, endOffset, flavor) { entry ->
+    val processor = Processor<PMarkerRoot.MarkerEntry> { entry ->
       val marker = entry.markerReference?.get() as? SnapshotInlayMarker<*>
       if (marker != null) markers.add(marker)
       true
+    }
+    if (flavor == 0 && startOffset == 0 && endOffset >= snapshot.text().length()) {
+      root.processAllRangeMarkers { entry, _ -> processor.process(entry) }
+    }
+    else {
+      root.processRangeMarkersOverlappingWith(startOffset, endOffset, flavor, processor)
     }
     markers.sortWith(compareBy({ it.startOffset }, { it.iterationOrder }))
     return markers.mapNotNull(convert)

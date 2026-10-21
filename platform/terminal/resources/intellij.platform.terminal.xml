@@ -25,6 +25,10 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.terminal.osc8UriResolverProvider"
+                    interface="com.intellij.terminal.osc8.Osc8UriResolverProvider" dynamic="true"/>
+  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <advancedSetting id="terminal.show.application.title" default="false" groupKey="group.advanced.settings.terminal" visible="false"/>
     <applicationService serviceInterface="com.intellij.terminal.TerminalUtilsBridge"
@@ -32,6 +36,8 @@
     <applicationSettings service="com.intellij.terminal.TerminalUiSettingsManager"/>
     <colorSettings implementation="com.intellij.terminal.ANSIColoredConsoleColorsPage"
                    bundle="messages.OptionsBundle" key="color.settings.console.name" priority="COMMON_SETTINGS" id="ansi"/>
+    <terminal.osc8UriResolverProvider implementation="com.intellij.terminal.osc8.UrlFilterOsc8UriResolverProvider"/>
+    <terminal.osc8UriResolverProvider implementation="com.intellij.terminal.osc8.JbProtocolOsc8UriResolverProvider"/>
   </extensions>
   <actions>
     <action id="TerminalIncreaseFontSize" class="com.intellij.terminal.actions.TerminalChangeFontSizeAction$IncreaseEditorFontSize"

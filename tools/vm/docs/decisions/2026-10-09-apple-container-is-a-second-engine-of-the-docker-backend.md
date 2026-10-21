@@ -17,6 +17,9 @@ the engine is [the VM guide](../vm-ui-tests.md).
 Amended on 2026-10-09: [ADR 0224](0224-apple-container-is-the-default-engine-of-a-mac.md) makes Apple `container` the
 default on macOS 26 or newer, on Apple silicon. `AIR_VM_DOCKER_ENGINE` of item 1 becomes an override of that rule.
 
+Superseded in part on 2026-10-13: [the Lima engine is retired](2026-10-13-the-lima-engine-is-retired.md) removes
+`AIR_VM_DOCKER_ENGINE` of item 1.
+
 ## Context
 
 The Lima engine of ADR 0189 costs a lot for one engine: a 632-line module, a VM template, three Bazel pins (the

@@ -34,10 +34,10 @@ import com.intellij.workspaceModel.codegen.impl.writer.extensions.unwrapReferenc
 import com.intellij.workspaceModel.codegen.impl.writer.getAllProperties
 import com.intellij.workspaceModel.codegen.impl.writer.getAllReferenceProperties
 import com.intellij.workspaceModel.codegen.impl.writer.getJavaType
-import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdFieldName
-import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdImplCode
-import com.intellij.workspaceModel.codegen.impl.writer.toQualifiedName
 import com.intellij.workspaceModel.codegen.impl.writer.getToStringProperty
+import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdImplementationCode
+import com.intellij.workspaceModel.codegen.impl.writer.symbolicIdPropertyName
+import com.intellij.workspaceModel.codegen.impl.writer.toQualifiedName
 
 fun CodeContext.entityImplementationClassCode(objClass: ObjClass<*>) {
   val inheritanceModifier = when {
@@ -65,10 +65,11 @@ fun CodeContext.entityImplementationClassCode(objClass: ObjClass<*>) {
       }
     }
 
-    +symbolicIdImplCode(objClass)
+    symbolicIdImplementationCode(objClass)
+    +"" // TODO: empty line to be removed
 
-    for (property in getAllProperties(objClass).filter { it.name !in listOf(entitySourceFieldName, symbolicIdFieldName) }) {
-      implWsEntityFieldCode(property)
+    for (property in getAllProperties(objClass).filter { it.name !in listOf(entitySourceFieldName, symbolicIdPropertyName) }) {
+      entityImplementationPropertyCode(property)
     }
 
     +"override val $entitySourceFieldName: EntitySource"
@@ -95,8 +96,9 @@ private fun CodeContext.entityImplementationAnnotations(objClass: ObjClass<*>) {
   optInWorkspaceEntityInternalApi()
 }
 
-fun CodeContext.implWsEntityFieldCode(objProperty: ObjProperty<*, *>) {
+fun CodeContext.entityImplementationPropertyCode(objProperty: ObjProperty<*, *>) {
   if (objProperty.hasSetter) {
+    // TODO: name?!
     if (objProperty.isOverride && objProperty.name !in listOf("name", entitySourceFieldName)) {
       implWsBlockingCodeOverride(objProperty)
     }
@@ -192,16 +194,9 @@ internal fun CodeContext.implWsBlockingCodeOverride(objProperty: ObjProperty<*, 
   if (valueType is ValueType.Optional<*>) {
     valueType = valueType.type
   }
-  // TODO
   val getterName = when (valueType) {
-    is ValueType.List<*> -> if (objProperty.receiver.openness.extendable)
-      Instrumentation.getParent
-    else
-      Instrumentation.getParent
-    is ValueType.ObjRef<*> -> if (objProperty.receiver.openness.extendable)
-      Instrumentation.getParent
-    else
-      Instrumentation.getParent
+    is ValueType.List<*> -> Instrumentation.getParent
+    is ValueType.ObjRef<*> -> Instrumentation.getParent
     else -> {
       reportPropertyError("Unsupported reference type", objProperty)
       return

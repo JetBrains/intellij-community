@@ -28,7 +28,6 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.analysis.api.platform.interface" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.script.runtime" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.jvm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.compiler.impl" scope="TEST" />
@@ -88,6 +87,7 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.structureView" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.codeInsight" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.ide" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.velocity" scope="TEST" />

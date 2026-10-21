@@ -11,9 +11,8 @@ def wasmjs_test(
         testdata = [],
         configuration_scripts = [],
         npm_packages = {},
-        module_runtime_files = [],
+        module_runtime_files = {},
         awaited_imports = {},
-        test_completion_grace_period_ms = 0,
         size = "medium",
         tags = [],
         visibility = None,
@@ -24,8 +23,9 @@ def wasmjs_test(
     linked module, `testdata`, `configuration_scripts`, npm packages, `module_runtime_files`),
     and runs it with the //wasmjs-test-harness runner: it generates the index.html test page,
     serves the root over a static server, and drives a chromium headless-shell over the
-    DevTools protocol, translating kotlin-test's TeamCity service messages into the Bazel
-    JUnit XML report.
+    DevTools protocol. The page runs the tests with mocha and the kotlin-web-helpers runner,
+    like the Kotlin Gradle plugin does. The harness translates the TeamCity service messages
+    of their reporter into the Bazel JUnit XML report.
 
     Args:
       name: name of the test target.
@@ -44,20 +44,18 @@ def wasmjs_test(
         served under `/node_modules/` and resolved through a generated import map.
         The npm packages carried by the module's transitive `KtWasmJsInfo.npm_packages` are
         served automatically; this attribute is only for packages the test page needs beyond them.
-      module_runtime_files: files the linked module expects next to its entrypoint (e.g. the
-        skiko `./skiko.mjs` glue and its `skiko.wasm`). They are served under `/_runtime/`
-        like configuration_scripts, but remapped for `./<basename>` imports to work in test
-        and production code. Basenames must be unique as they will be used as the key.
-      awaited_imports: module_runtime_files basename -> exported member the page awaits, in
+      module_runtime_files: import specifier -> file, for the files the linked module expects
+        next to its entrypoint (e.g. `{"./skiko.mjs": ..., "./skiko.wasm": ...}` for the skiko
+        glue and its wasm). The specifier is written as the linked module imports it, relative
+        to its own directory: it must start with `./` and must not contain `..`. Each file is
+        served under `/_runtime/` at that path, and the page's import map redirects the
+        module-adjacent URL there. An import map only applies to module imports: a file that
+        the runtime fetches (e.g. `skiko.wasm`) resolves relative to the importing file, which
+        is also served under `/_runtime/`.
+      awaited_imports: module_runtime_files specifier -> exported member the page awaits, in
         order, before the test entrypoint. For runtime that loads asynchronously but is used
         synchronously by tests: e.g. skiko exposes its skia bindings as lazy stubs and an
         `awaitSkiko` readiness promise; without the await, tests race its wasm instantiation.
-      test_completion_grace_period_ms: this is *not* the test_timeout, most of the time you want to tweak test_timeout.
-        this is how long, in milliseconds, the harness still waits before assuming the run is finished.
-        As kotlin-test never announces the end of a run, so the harness infers by waiting test_completion_grace_period_ms
-        time since console output is silent and no test or test suite is in-flight (resets if one is not true anymore).
-        Raise it for tests whose async gap between two suites outlasts it and some tests are missed because of that.
-        The default is set by the test harness to 3 seconds.
       size: standard test size attribute.
       tags: standard tags attribute.
       visibility: standard visibility attribute.
@@ -87,7 +85,6 @@ def wasmjs_test(
         npm_packages = npm_packages,
         module_runtime_files = module_runtime_files,
         awaited_imports = awaited_imports,
-        test_completion_grace_period_ms = test_completion_grace_period_ms,
         size = size,
         tags = tags,
         visibility = visibility,
@@ -106,8 +103,9 @@ def _wasmjs_browser_test_impl(ctx):
     config_links, config_paths = _configuration_scripts(ctx, static_prefix)
     testdata_links = _testdata(ctx, static_prefix, module_name)
     npm_links, npm_specifiers = _npm_packages(ctx, static_prefix)
-    runtime_links, runtime_basenames = _module_runtime_files(ctx, static_prefix)
-    _validate_awaited_imports(ctx, runtime_basenames)
+    runtime_links, runtime_paths = _module_runtime_files(ctx, static_prefix)
+    harness_links, mocha_path, kotlin_test_runner_path = _harness_scripts(ctx, static_prefix)
+    _validate_awaited_imports(ctx, runtime_paths)
 
     browser_files = ctx.files._browser
 
@@ -131,31 +129,26 @@ def _wasmjs_browser_test_impl(ctx):
     flag_args.add("--entrypoint=%s-js/%s.mjs" % (module_name, module_name))
     flag_args.add_all(config_paths, format_each = "--configuration-script=%s")
     flag_args.add_all(npm_specifiers, format_each = "--npm-package=%s")
-
-    grace_period_ms = ctx.attr.test_completion_grace_period_ms
-    if grace_period_ms < 0:
-        fail("wasmjs_test test_completion_grace_period_ms expects a positive number of milliseconds, got: %d" % grace_period_ms)
-    if grace_period_ms > 0:
-        flag_args.add("--test-completion-grace-period-ms=%d" % grace_period_ms)
+    flag_args.add("--mocha-script=%s" % mocha_path)
+    flag_args.add("--kotlin-test-runner-script=%s" % kotlin_test_runner_path)
 
     # The linked module directory is a single tree artifact, so runtime files cannot sit inside
     # it; they are served under _runtime/ and the page's import map redirects module-adjacent
     # imports (e.g. the linked module's `./skiko.mjs`) there.
     flag_args.add_all([
-        "--import-remap=%s-js/%s=_runtime/%s" % (module_name, basename, basename)
-        for basename in runtime_basenames
-        if basename.endswith(".mjs") or basename.endswith(".js")
+        "--import-remap=%s-js/%s=_runtime/%s" % (module_name, path, path)
+        for path in runtime_paths.values()
     ])
     flag_args.add_all([
-        "--awaited-import=_runtime/%s=%s" % (basename, member)
-        for basename, member in ctx.attr.awaited_imports.items()
+        "--awaited-import=_runtime/%s=%s" % (runtime_paths[specifier], member)
+        for specifier, member in ctx.attr.awaited_imports.items()
     ])
     ctx.actions.write(output = flagfile, content = flag_args)
 
     executable = _runner_executable(ctx)
     runfiles = ctx.runfiles(
         files = [flagfile, browser_flagfile, static_root_marker, dist_link] +
-                config_links + testdata_links + npm_links + runtime_links + browser_files,
+                config_links + testdata_links + npm_links + runtime_links + harness_links + browser_files,
     ).merge(ctx.attr._runner[DefaultInfo].default_runfiles).merge_all([
         target[DefaultInfo].default_runfiles
         for target in ctx.attr.test_data + ctx.attr.configuration_scripts + [ctx.attr._browser]
@@ -193,11 +186,22 @@ def _configuration_scripts(ctx, static_prefix):
         paths.append("_config/%s" % f.basename)
     return links, paths
 
+def _harness_scripts(ctx, static_prefix):
+    # The kotlin-test browser runner: served under _harness/, and loaded by the page as classic scripts.
+    links = []
+    paths = []
+    for f in [ctx.file._mocha_script, ctx.file._kotlin_test_runner_script]:
+        link = ctx.actions.declare_file("%s/_harness/%s" % (static_prefix, f.basename))
+        ctx.actions.symlink(output = link, target_file = f)
+        links.append(link)
+        paths.append("_harness/%s" % f.basename)
+    return links, paths[0], paths[1]
+
 def _testdata(ctx, static_prefix, module_name):
     if ctx.label.package == "":
         fail("wasmjs_test targets must not live in a repository root package (the testdata path convention is package-relative)")
     marker = ctx.label.package + "/"
-    reserved = [_STATIC_ROOT_MARKER, "index.html", "_config", "_runtime", "node_modules", "%s-js" % module_name, "%s.flagfile" % ctx.label.name, "%s.browser.flagfile" % ctx.label.name]
+    reserved = [_STATIC_ROOT_MARKER, "index.html", "_config", "_harness", "_runtime", "node_modules", "%s-js" % module_name, "%s.flagfile" % ctx.label.name, "%s.browser.flagfile" % ctx.label.name]
     links = []
     for f in ctx.files.test_data:
         owner = f.owner
@@ -248,22 +252,28 @@ def _npm_packages(ctx, static_prefix):
     return links, specifiers
 
 def _module_runtime_files(ctx, static_prefix):
+    # Returns the links and, for each specifier, the path relative to _runtime/ (the specifier
+    # without its `./`).
     links = []
-    basenames = []
-    for f in ctx.files.module_runtime_files:
-        _validate_page_path(ctx, f.basename)
-        if f.basename in basenames:
-            fail("wasmjs_test module_runtime_files basenames must be unique, got %s twice" % f.basename)
-        basenames.append(f.basename)
-        link = ctx.actions.declare_file("%s/_runtime/%s" % (static_prefix, f.basename))
-        ctx.actions.symlink(output = link, target_file = f)
+    paths = {}
+    for specifier, target in ctx.attr.module_runtime_files.items():
+        _validate_page_path(ctx, specifier)
+        path = specifier[len("./"):]
+        if not specifier.startswith("./") or [segment for segment in path.split("/") if segment in ["", ".", ".."]]:
+            fail("wasmjs_test module_runtime_files specifier must start with ./ and be a plain relative path, got %s" % specifier)
+        files = target[DefaultInfo].files.to_list()
+        if len(files) != 1:
+            fail("wasmjs_test module_runtime_files entry %s must be exactly one file, got %d from %s" % (specifier, len(files), target.label))
+        link = ctx.actions.declare_file("%s/_runtime/%s" % (static_prefix, path))
+        ctx.actions.symlink(output = link, target_file = files[0])
         links.append(link)
-    return links, basenames
+        paths[specifier] = path
+    return links, paths
 
-def _validate_awaited_imports(ctx, runtime_basenames):
-    for basename, member in ctx.attr.awaited_imports.items():
-        if basename not in runtime_basenames:
-            fail("wasmjs_test awaited_imports key %s is not a module_runtime_files basename" % basename)
+def _validate_awaited_imports(ctx, runtime_paths):
+    for specifier, member in ctx.attr.awaited_imports.items():
+        if specifier not in runtime_paths:
+            fail("wasmjs_test awaited_imports key %s is not a module_runtime_files specifier" % specifier)
 
         # The harness enforces the strict JS-identifier shape; this only keeps the flagfile sane.
         _validate_page_path(ctx, member)
@@ -360,18 +370,20 @@ _wasmjs_browser_test = rule(
             doc = """Bare import specifier -> npm package files served under /node_modules/ and mapped in the
               generated import map, in addition to the npm packages of the module's transitive runtime closure.""",
         ),
-        "module_runtime_files": attr.label_list(
+        "module_runtime_files": attr.string_keyed_label_dict(
             allow_files = True,
-            doc = "Files the linked module expects next to its entrypoint (e.g. skiko.mjs/skiko.wasm); served under /_runtime/ with import-map remapping of the module-adjacent URLs.",
+            doc = "Import specifier (`./skiko.mjs`) -> the one file the linked module expects at that path next to its entrypoint; served under /_runtime/ with import-map remapping of the module-adjacent URL.",
         ),
         "awaited_imports": attr.string_dict(
-            doc = "module_runtime_files basename -> exported member the page awaits, in order, before the test entrypoint (e.g. skiko.mjs -> awaitSkiko).",
+            doc = "module_runtime_files specifier -> exported member the page awaits, in order, before the test entrypoint (e.g. ./skiko.mjs -> awaitSkiko).",
         ),
-        "test_completion_grace_period_ms": attr.int(
-            doc = """How long, in milliseconds, the harness still waits for output before calling the run
-              finished: measured from the last console line, and only once no test and no suite is still open.
-              0 leaves the phase at the harness default. The only tunable harness phase: browser setup keeps
-              its harness default, and page load is bounded by the deadline derived from TEST_TIMEOUT.""",
+        "_mocha_script": attr.label(
+            default = Label("//wasmjs-test-harness:mocha-script"),
+            allow_single_file = True,
+        ),
+        "_kotlin_test_runner_script": attr.label(
+            default = Label("//wasmjs-test-harness:kotlin-test-mocha-runner-script"),
+            allow_single_file = True,
         ),
         "_runner": attr.label(
             default = Label("//wasmjs-test-harness"),

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal;
 
+import com.intellij.ide.actions.ToolWindowTabLocationFusUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -73,7 +74,7 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
                              @NotNull JBTerminalSystemSettingsProvider settingsProvider,
                              @NotNull Disposable parent) {
     super(project, settingsProvider, parent);
-    myShellCommandHandlerHelper = new TerminalShellCommandHandlerHelper(this);
+    myShellCommandHandlerHelper = TerminalShellCommandHandlerHelper.Factory.createHelper(this);
 
     ClassicTerminalVfsRefresher refresher = new ClassicTerminalVfsRefresher(this);
     getTerminalPanel().addPreKeyEventHandler(e -> {
@@ -86,9 +87,9 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
           refresher.scheduleRefreshOnCommandFinished(() -> isPromptSame(prompt));
         }
       }
-      if (e.getKeyCode() == KeyEvent.VK_ENTER || TerminalShellCommandHandlerHelper.matchedExecutor(e) != null) {
+      if (e.getKeyCode() == KeyEvent.VK_ENTER || TerminalShellCommandHandlerHelper.Factory.canProcessCustomKey(e)) {
         String shellCommand = getTypedShellCommand();
-        TerminalUsageTriggerCollector.triggerCommandStarted(project, shellCommand, false);
+        TerminalUsageTriggerCollector.triggerCommandStarted(project, shellCommand, false, ToolWindowTabLocationFusUtil.fromComponentHierarchy(this));
         myCommandStartedDispatcher.getMulticaster().commandStarted(shellCommand);
         if (myShellCommandHandlerHelper.processEnterKeyPressed(e)) {
           e.consume();
@@ -165,7 +166,8 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
     myCommandStartedDispatcher.addListener(listener, parent);
   }
 
-  <T> T processTerminalBuffer(@NotNull Function<TerminalTextBuffer, T> processor) {
+  @ApiStatus.Internal
+  public <T> T processTerminalBuffer(@NotNull Function<TerminalTextBuffer, T> processor) {
     TerminalTextBuffer textBuffer = getTerminalPanel().getTerminalTextBuffer();
     textBuffer.lock();
     try {
@@ -176,7 +178,8 @@ public class ShellTerminalWidget extends JBTerminalWidget implements TerminalPan
     }
   }
 
-  int getLineNumberAtCursor() {
+  @ApiStatus.Internal
+  public int getLineNumberAtCursor() {
     TerminalTextBuffer textBuffer = getTerminalPanel().getTerminalTextBuffer();
     Terminal terminal = getTerminal();
     return Math.max(0, Math.min(terminal.getCursorY() - 1, textBuffer.getHeight() - 1));

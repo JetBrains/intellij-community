@@ -96,6 +96,7 @@ import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
@@ -165,6 +166,11 @@ public class IndexTest extends JavaCodeInsightFixtureTestCase {
       File exe = new File(otherRoot, "intellij.exe");
       assertTrue(exe.createNewFile());
       FileUtil.writeToFile(exe, new byte[]{1, 2, 3, 22});// convince IDEA it's binary
+      // detect the file type before the scanning
+      TestApplicationManager.getInstance();
+      VirtualFile exeFile = VfsUtil.findFileByIoFile(exe, true);
+      assertNotNull(exeFile);
+      exeFile.getFileType();
       moduleBuilder.addSourceContentRoot(otherRoot);
     }
   }

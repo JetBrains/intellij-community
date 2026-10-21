@@ -3,13 +3,14 @@ package org.intellij.plugins.markdown.editor.tables.intentions
 
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.removeColumn
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 
-internal class MarkdownRemoveColumnIntention: PsiElementBaseIntentionAction() {
+internal class MarkdownRemoveColumnIntention: PsiElementBaseIntentionAction(), DumbAware {
   override fun getFamilyName() = text
 
   override fun getText(): String {

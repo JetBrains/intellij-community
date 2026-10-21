@@ -74,7 +74,7 @@ object ConvertToBlockBodyUtils {
         )
     }
 
-    fun convert(element: KtDeclarationWithBody, context: ConvertToBlockBodyContext) {
+    fun convert(element: KtDeclarationWithBody, context: ConvertToBlockBodyContext, pullUpExpressionAnnotations: Boolean = true) {
         val body = element.bodyExpression ?: return
 
         element.setTypeReferenceIfNeeded(context)
@@ -82,7 +82,7 @@ object ConvertToBlockBodyUtils {
         val prevComments = body.comments(next = false)
         val nextComments = body.comments(next = true)
         val returnsValue = element.returnsValue(context)
-        val newBody = generateBody(body, prevComments, nextComments, context, returnsValue)
+        val newBody = generateBody(body, prevComments, nextComments, context, returnsValue, pullUpExpressionAnnotations)
 
         element.equalsToken?.delete()
         prevComments.filterIsInstance<PsiComment>().forEach { it.delete() }
@@ -166,6 +166,7 @@ object ConvertToBlockBodyUtils {
         nextComments: List<PsiElement>,
         context: ConvertToBlockBodyContext,
         returnsValue: Boolean,
+        pullUpExpressionAnnotations: Boolean
     ): KtExpression {
         val factory = KtPsiFactory(body.project)
         if (context.bodyTypeIsUnit && body is KtNameReferenceExpression) return factory.createEmptyBody()
@@ -177,20 +178,22 @@ object ConvertToBlockBodyUtils {
             when {
                 annotatedExpr != null -> {
                     val returnedExpr = annotatedExpr.baseExpression ?: body
-                    val block = factory.createSingleStatementBlock(factory.createExpressionByPattern("return $0", returnedExpr))
-                    val statement = block.firstStatement
-                    annotatedExpr.annotationEntries.forEach {
-                        block.addBefore(it, statement)
-                        block.addBefore(factory.createNewLine(), statement)
-                    }
-                    block
+                    val annotations = annotatedExpr.annotationEntries.joinToString("\n") { it.text }
+                    factory.createSingleStatementBlock(factory.createExpressionByPattern("$0\nreturn $1", annotations, returnedExpr))
                 }
 
-                firstChildAnnotatedExpr != null -> {
-                    val baseExpr = firstChildAnnotatedExpr.baseExpression!!
-                    val exprWithoutAnnotation = body.text.replace(firstChildAnnotatedExpr.text, baseExpr.text)
+                pullUpExpressionAnnotations && firstChildAnnotatedExpr != null -> {
+                    val expressionWithoutAnnotation = body.copy() as KtExpression
+                    val annotatedOperand = expressionWithoutAnnotation.firstChild as KtAnnotatedExpression
+                    annotatedOperand.replace(annotatedOperand.baseExpression!!)
                     val annotations = firstChildAnnotatedExpr.annotationEntries.joinToString("\n") { it.text }
-                    factory.createBlock("$annotations\nreturn $exprWithoutAnnotation")
+                    factory.createSingleStatementBlock(
+                        factory.createExpressionByPattern(
+                            "$0\nreturn $1",
+                            annotations,
+                            expressionWithoutAnnotation
+                        )
+                    )
                 }
 
                 else -> {

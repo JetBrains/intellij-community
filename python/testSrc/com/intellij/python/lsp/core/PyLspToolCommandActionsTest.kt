@@ -8,6 +8,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.ty.TyLspClientDescriptor
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -15,6 +16,7 @@ import com.intellij.testFramework.createTestOpenProjectOptions
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import org.eclipse.lsp4j.ExecuteCommandOptions
 import org.eclipse.lsp4j.InitializeResult
@@ -51,7 +53,7 @@ internal class PyLspToolCommandActionsTest {
 
   @Test
   fun `the stop of the server unregisters its command actions`() {
-    val descriptor = TyLspClientDescriptor(pyProjectFixture.get().residesOnModule)
+    val descriptor = TyLspClientDescriptor(pyProjectFixture.get())
     descriptor.lspServerListener.serverInitialized(initializeResult())
     assertNotNull(commandAction())
 
@@ -65,9 +67,13 @@ internal class PyLspToolCommandActionsTest {
     val project = projectManager.newProjectAsync(closedProjectPath.get(), createTestOpenProjectOptions())
     val descriptor = try {
       val module: Module = edtWriteAction {
-        ModuleManager.getInstance(project).newModule(closedProjectPath.get().resolve("main.iml"), PYTHON_MODULE_ID)
+        ModuleManager.getInstance(project).newModule(closedProjectPath.get().resolve("main.iml"), PYTHON_MODULE_ID).also {
+          // A Python project needs a content root.
+          ModuleRootModificationUtil.addContentRoot(it, closedProjectPath.get().toString())
+        }
       }
-      TyLspClientDescriptor(module).also {
+      val pyProject = checkNotNull(module.asPyProject()) { "'${module.name}' must be a Python project" }
+      TyLspClientDescriptor(pyProject).also {
         it.lspServerListener.serverInitialized(initializeResult())
         assertNotNull(commandAction())
       }
@@ -82,8 +88,8 @@ internal class PyLspToolCommandActionsTest {
 
   @Test
   fun `the stop of a server keeps the command action that another server took over`() {
-    val first = TyLspClientDescriptor(pyProjectFixture.get().residesOnModule)
-    val second = TyLspClientDescriptor(pyProjectFixture.get().residesOnModule)
+    val first = TyLspClientDescriptor(pyProjectFixture.get())
+    val second = TyLspClientDescriptor(pyProjectFixture.get())
     first.lspServerListener.serverInitialized(initializeResult())
     second.lspServerListener.serverInitialized(initializeResult())
     val secondAction = commandAction()
@@ -99,7 +105,7 @@ internal class PyLspToolCommandActionsTest {
   /** A restart reuses the descriptor, and the old server can report its stop after the new one initialized. */
   @Test
   fun `the late stop of the old server keeps the command actions of the restarted one`() {
-    val descriptor = TyLspClientDescriptor(pyProjectFixture.get().residesOnModule)
+    val descriptor = TyLspClientDescriptor(pyProjectFixture.get())
     descriptor.lspServerListener.serverInitialized(initializeResult())
     descriptor.lspServerListener.serverInitialized(initializeResult())
     val restartedAction = commandAction()
@@ -115,7 +121,7 @@ internal class PyLspToolCommandActionsTest {
   /** A server that fails to initialize also reports a stop, and that stop must not take the actions of a later start. */
   @Test
   fun `the stop of a server that never initialized keeps the command actions of the next start`() {
-    val descriptor = TyLspClientDescriptor(pyProjectFixture.get().residesOnModule)
+    val descriptor = TyLspClientDescriptor(pyProjectFixture.get())
     descriptor.lspServerListener.serverStopped(false)
     descriptor.lspServerListener.serverInitialized(initializeResult())
     assertNotNull(commandAction())
@@ -126,7 +132,7 @@ internal class PyLspToolCommandActionsTest {
 
   @Test
   fun `a server without server info names the command action after the tool`() {
-    val descriptor = TyLspClientDescriptor(pyProjectFixture.get().residesOnModule)
+    val descriptor = TyLspClientDescriptor(pyProjectFixture.get())
     descriptor.lspServerListener.serverInitialized(initializeResult(serverInfo = null))
     try {
       assertEquals("${descriptor.presentableName}: $COMMAND", commandAction()?.templateText)
@@ -139,7 +145,7 @@ internal class PyLspToolCommandActionsTest {
   private fun initializeResult(serverInfo: ServerInfo? = ServerInfo("ty")): InitializeResult =
     InitializeResult(ServerCapabilities().apply { executeCommandProvider = ExecuteCommandOptions(listOf(COMMAND)) }, serverInfo)
 
-  private val commandActionId by lazy { "LSP.Command.${TyLspClientDescriptor(pyProjectFixture.get().residesOnModule).presentableName}.$COMMAND" }
+  private val commandActionId by lazy { "LSP.Command.${TyLspClientDescriptor(pyProjectFixture.get()).presentableName}.$COMMAND" }
 
   private fun commandAction(): AnAction? = ActionManager.getInstance().getAction(commandActionId)
 }

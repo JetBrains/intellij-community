@@ -20,6 +20,18 @@ class TestPageUriTest {
   }
 
   @Test
+  fun `fail fast becomes a failFast query parameter after the filters`() {
+    assertEquals(
+      URI("http://127.0.0.1:1234/index.html?include=a.B.c&failFast=true"),
+      testPageUri(URI("http://127.0.0.1:1234/"), listOf("a.B.c"), failFast = true),
+    )
+    assertEquals(
+      URI("http://127.0.0.1:1234/index.html?failFast=true"),
+      testPageUri(URI("http://127.0.0.1:1234/"), emptyList(), failFast = true),
+    )
+  }
+
+  @Test
   fun `filter characters are encoded the way URLSearchParams decodes them`() {
     // URLEncoder emits '+' for a space and %26 for '&'; URLSearchParams.getAll decodes both back.
     assertEquals(

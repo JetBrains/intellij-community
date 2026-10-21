@@ -7,18 +7,20 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.ide.highlighter.XmlFileType
+import com.intellij.java.workspace.files.findResourceFilesInDirectory
 import com.intellij.model.Pointer
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.XmlElementVisitor
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.xml.XmlFile
+import com.intellij.workspaceModel.ide.legacyBridge.findSnapshotModuleEntity
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
+import org.jetbrains.idea.devkit.module.PluginDescriptorConstants.META_DATA
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 
@@ -69,11 +71,12 @@ internal class ModuleNotRegisteredAsPluginContentInspection : LocalInspectionToo
         .distinct()
       for (module in currentAndSiblingDirsModules) {
         if (!checkedModules.add(module)) continue
-        val rootManager = ModuleRootManager.getInstance(module)
-        val resourcesRoots = rootManager.getSourceRoots(JavaModuleSourceRootTypes.RESOURCES)
-        for (resourcesRoot in resourcesRoots) {
-          val metaInf = resourcesRoot.findChild("META-INF") ?: continue
-          val foundPluginXml = metaInf.findChild("plugin.xml")?.let { xmlFile.manager.findFile(it) as? XmlFile } ?: continue
+        val moduleEntity = module.findSnapshotModuleEntity() ?: continue
+        val pluginXmlFiles = moduleEntity
+          .findResourceFilesInDirectory(META_DATA.directoryPath, JavaModuleSourceRootTypes.RESOURCES)
+          .filter { it.name == META_DATA.fileName }
+        for (pluginXmlFile in pluginXmlFiles) {
+          val foundPluginXml = xmlFile.manager.findFile(pluginXmlFile) as? XmlFile ?: continue
           val ideaPlugin = DescriptorUtil.getIdeaPlugin(foundPluginXml) ?: continue
           val pluginIdOrPlaceholder = ideaPlugin.pluginId ?: continue // we expect a correct plugin with ID
           return Pair(foundPluginXml, pluginIdOrPlaceholder)

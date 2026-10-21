@@ -12,8 +12,30 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 pub mod fakebin;
+pub mod http;
 mod shared;
 pub mod tartfake;
+
+/// The window of [`free_port_below_ephemeral_floor`]: below 32768, the lowest ephemeral floor of Linux and macOS, and
+/// below the windows of the lane services, which start at 26000.
+const FIXED_TEST_PORTS: std::ops::Range<u16> = 21_000..26_000;
+
+/// A loopback port that is free now, and that no bind of port 0 is ever given.
+///
+/// A test that releases a port and then binds it again, or connects to it and expects a refusal, races every parallel
+/// bind of port 0, because the system may give the released port to one of them. A port below the ephemeral floor has
+/// no such race. The search starts at a random offset of each call, because the test processes that Bazel starts at
+/// once have neighbouring process ids, and starts that the id picks would make their searches meet.
+pub fn free_port_below_ephemeral_floor() -> u16 {
+    use std::hash::{BuildHasher as _, Hasher as _};
+    let width = FIXED_TEST_PORTS.end - FIXED_TEST_PORTS.start;
+    let random = std::collections::hash_map::RandomState::new().build_hasher().finish();
+    let start = u16::try_from(random % u64::from(width)).unwrap_or_default();
+    (0..width)
+        .map(|offset| FIXED_TEST_PORTS.start + (start + offset) % width)
+        .find(|port| std::net::TcpListener::bind(("127.0.0.1", *port)).is_ok())
+        .unwrap_or_else(|| panic!("no port of {FIXED_TEST_PORTS:?} is free on the loopback"))
+}
 
 /// A file of the calling crate, e.g. `crate_path!("testdata/lane-transcript.ndjson")`.
 ///
@@ -147,7 +169,7 @@ fn from_manifest(text: &str, key: &str) -> Option<PathBuf> {
 /// The scenario-trace goldens: the lane transcript and the golden bundles. Another program reads them too, so they stay
 /// plain files rather than a snapshot tool's format.
 ///
-/// They are `avl-trace`'s `testdata`, which the Kotlin contract test and the docs site read too. A test that reads them
+/// They are `avl-trace`'s `testdata`, which the docs site reads too. A test that reads them
 /// needs `//tools/vm/crates/avl-trace:testdata` of the community module in its `data` under Bazel. The recorder's
 /// replay test writes them: `UPDATE_EXPECT=1`, the variable of `expect-test`, rewrites the text files.
 pub mod traces {

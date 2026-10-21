@@ -35,7 +35,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.common.ThreadLeakTracker;
 import com.intellij.xdebugger.XDebuggerTestUtil;
-import com.jetbrains.python.extensions.ModuleExtKt;
+import com.jetbrains.python.fixtures.PyProjectStructureTestUtilKt;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +103,7 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
     }
     else {
       final Module module = myFixture.getModule();
-      if (ModuleExtKt.getSdk(module) == null) {
+      if (PyProjectStructureTestUtilKt.findPythonInterpreterForTests(module) == null) {
         // If sdk is provided and not set for module -- use it
         EdtTestUtil.runInEdtAndWait(() -> WriteAction.run(() -> {
           final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
