@@ -33,7 +33,7 @@ internal class PooledThreadDumperTest {
 
     // The process stalled for 6 s: the sampler is stale and the watcher overslept by the same time.
     clock.advanceMs(6000)
-    dumper.dumpThreadsIfNeeded(lastSampleNs = 0, oversleptMs = 6000)
+    dumper.dumpThreadsIfNeeded(lastSample = clock.markAt(0), oversleptMs = 6000)
 
     assertTrue(dumps.isEmpty(), "expected a process stall to save no dump")
     assertTrue(warnings.isEmpty(), "expected a process stall to write no warning, got $warnings")
@@ -48,7 +48,7 @@ internal class PooledThreadDumperTest {
 
     // The sampler is stale for 3 s and the watcher woke up on time: the pool itself is unresponsive.
     clock.advanceMs(3000)
-    dumper.dumpThreadsIfNeeded(lastSampleNs = 0, oversleptMs = 0)
+    dumper.dumpThreadsIfNeeded(lastSample = clock.markAt(0), oversleptMs = 0)
 
     assertEquals(1, dumps.size, "expected a pool exhaustion to save one dump")
     assertEquals(1, warnings.size, "expected exactly one warning, got $warnings")

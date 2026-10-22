@@ -18,7 +18,7 @@ internal class DefaultCompensatablePoolTest {
   private fun newPool(clock: FakeClock, lastSampleNs: Long = 0): DefaultCompensatablePool {
     return DefaultCompensatablePool(
       dispatcher = Dispatchers.Default,
-      getLastSampleNs = { lastSampleNs },
+      getLastSample = { clock.markAt(lastSampleNs) },
       unresponsiveIntervalMs = unresponsiveIntervalMs,
       clock = clock,
     )

@@ -41,7 +41,7 @@ internal class ProcessStallWatcherTest {
     val warnings = mutableListOf<String>()
     val watcher = newWatcher(clock, warnings)
 
-    clock.gcTime = 350
+    clock.gcTimeMs = 350
     runBlocking { watcher.tick() }
 
     assertEquals(1, warnings.size, "expected exactly one warning, got $warnings")

@@ -88,6 +88,7 @@ import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.useDirectoryEntries
 import kotlin.math.min
+import kotlin.time.ComparableTimeMark
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -661,14 +662,14 @@ private class CoroutineDispatcherWatcher(
   compensationIntervalMs: Int,
 ) {
   @Volatile
-  private var lastSampleNs = System.nanoTime()
+  private var lastSample: ComparableTimeMark = SystemClock.now()
 
   private val threadDumper = PooledThreadDumper(dispatcher, getUnresponsiveIntervalMs)
 
   private val parallelismCompensator = ParallelismCompensator(
     pool = DefaultCompensatablePool(
       dispatcher = dispatcher,
-      getLastSampleNs = { lastSampleNs },
+      getLastSample = { lastSample },
       unresponsiveIntervalMs = compensationIntervalMs.toLong(),
     ),
     maxGrantsAllowed = Registry.intValue("performance.watcher.pooled.compensation.max.grants", 100).coerceAtLeast(1),
@@ -695,8 +696,8 @@ private class CoroutineDispatcherWatcher(
     return coroutineScope.launchWithSafeContext(CoroutineName("$dispatcher sampling") + dispatcher) {
       try {
         while (true) {
-          delay(pooledSamplingInterval.milliseconds)
-          lastSampleNs = System.nanoTime()
+          SystemClock.delay(pooledSamplingInterval.milliseconds)
+          lastSample = SystemClock.now()
         }
       }
       finally {
@@ -711,13 +712,13 @@ private class CoroutineDispatcherWatcher(
     return coroutineScope.launchWithSafeContext(CoroutineName("$dispatcher watcher") + blockingDispatcher) {
       try {
         while (true) {
-          val beforeSleep = System.nanoTime()
-          delay(pooledSamplingInterval.milliseconds)
-          val oversleptMs = (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - beforeSleep) - pooledSamplingInterval).coerceAtLeast(0)
+          val beforeSleep = SystemClock.now()
+          SystemClock.delay(pooledSamplingInterval.milliseconds)
+          val oversleptMs = ((SystemClock.now() - beforeSleep).inWholeMilliseconds - pooledSamplingInterval).coerceAtLeast(0)
           // Skip the check if the thread overslept too much to avoid false positives when the host is overloaded.
           // This check provides an estimate, not 100% accuracy.
           if (oversleptMs <= pooledSamplingInterval / 2) {
-            threadDumper.dumpThreadsIfNeeded(lastSampleNs, oversleptMs)
+            threadDumper.dumpThreadsIfNeeded(lastSample, oversleptMs)
           }
         }
       }
@@ -753,14 +754,14 @@ internal class PooledThreadDumper(
   private val warn: (String) -> Unit = { LOG.warn(it) },
 ) {
   private var reportedDumpsCount = 0
-  private var lastReportedNs = clock.nanoTime()
+  private var lastReported = clock.now()
 
-  fun dumpThreadsIfNeeded(lastSampleNs: Long, oversleptMs: Long) {
+  fun dumpThreadsIfNeeded(lastSample: ComparableTimeMark, oversleptMs: Long) {
     // Add the overslept time to the unresponsiveness threshold to handle stalled processes.
     val unresponsiveIntervalMs = getUnresponsiveIntervalMs(reportedDumpsCount) + oversleptMs
-    val unresponsiveMs = TimeUnit.NANOSECONDS.toMillis(clock.nanoTime() - lastSampleNs)
+    val unresponsiveMs = (clock.now() - lastSample).inWholeMilliseconds
     if (unresponsiveMs <= unresponsiveIntervalMs ||
-        TimeUnit.NANOSECONDS.toMillis(clock.nanoTime() - lastReportedNs) <= unresponsiveIntervalMs) {
+        (clock.now() - lastReported).inWholeMilliseconds <= unresponsiveIntervalMs) {
       return
     }
 
@@ -774,7 +775,7 @@ internal class PooledThreadDumper(
       warn(message)
     }
 
-    lastReportedNs = clock.nanoTime()
+    lastReported = clock.now()
     reportedDumpsCount++
   }
 }
@@ -859,7 +860,7 @@ internal interface CompensatablePool {
  *
  *
  * @param dispatcher the dispatcher whose pool is monitored
- * @param getLastSampleNs returns the timestamp, in nanoseconds, of the latest successful dispatcher health check.
+ * @param getLastSample returns the point of [clock] at the latest successful dispatcher health check.
  * This reuses the existing health check coroutine managed by [CoroutineDispatcherWatcher] instead of submitting
  * a separate probe coroutine.
  * @param unresponsiveIntervalMs the interval, in milliseconds, after which the pool is considered unresponsive
@@ -867,12 +868,12 @@ internal interface CompensatablePool {
  */
 internal class DefaultCompensatablePool(
   private val dispatcher: CoroutineDispatcher,
-  private val getLastSampleNs: () -> Long,
+  private val getLastSample: () -> ComparableTimeMark,
   private val unresponsiveIntervalMs: Long,
   private val clock: ProcessClock = SystemClock,
 ) : CompensatablePool {
   override fun waitForStatus(timeMs: Long): Boolean {
-    // This function checks the pool's health using `getLastSampleNs`. The health check coroutine is managed by
+    // This function checks the pool's health using `getLastSample`. The health check coroutine is managed by
     // [CoroutineDispatcherWatcher].
     //
     // Using an empty coroutine as a probe would cause canceled probe coroutines to accumulate in a starved pool's queue.
@@ -880,16 +881,16 @@ internal class DefaultCompensatablePool(
     // When the pool is starved, no worker is available to drain these canceled probes.
 
     while (true) {
-      val beforeSleep = clock.nanoTime()
-      clock.sleep(timeMs)
-      val now = clock.nanoTime()
-      val overslept = (TimeUnit.NANOSECONDS.toMillis(now - beforeSleep) - timeMs).coerceAtLeast(0)
+      val beforeSleep = clock.now()
+      clock.sleep(timeMs.milliseconds)
+      val now = clock.now()
+      val overslept = ((now - beforeSleep).inWholeMilliseconds - timeMs).coerceAtLeast(0)
       if (overslept <= timeMs / 2) {
         // Avoid granting parallelism when the host is overloaded:
         // * Skip the check if the thread overslept too much.
         // * Add the overslept time to the unresponsiveness threshold to handle stalled processes.
         // This check provides an estimate, not 100% accuracy.
-        return TimeUnit.NANOSECONDS.toMillis(now - getLastSampleNs()) < unresponsiveIntervalMs + overslept
+        return (now - getLastSample()).inWholeMilliseconds < unresponsiveIntervalMs + overslept
       }
     }
   }

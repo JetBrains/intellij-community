@@ -1,35 +1,47 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
-import java.util.concurrent.TimeUnit
+import kotlin.time.ComparableTimeMark
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.nanoseconds
+import kotlin.time.TestTimeSource
 
 /**
- * A fake [ProcessClock] where `sleep(ms)` and `delay(ms)` advance the time by `ms` plus the next scripted lateness.
+ * A fake [ProcessClock] where `sleep` and `delay` advance the time by the requested duration plus the next scripted lateness.
  * A lateness above zero models a thread that did not get CPU time on schedule and therefore overslept.
  */
 internal class FakeClock(vararg lateMsPerSleep: Long) : ProcessClock {
   private val lateness = lateMsPerSleep.toMutableList()
 
-  var nowNs: Long = 0
-    private set
+  private val timeSource = TestTimeSource()
+
+  private val origin = timeSource.markNow()
+
+  /** The time since time zero, in nanoseconds. */
+  val nowNs: Long
+    get() = origin.elapsedNow().inWholeNanoseconds
 
   /** The total GC time the clock reports. A test sets it to check the GC delta in a warning. */
-  var gcTime: Long = 0
+  var gcTimeMs: Long = 0
 
   fun advanceMs(ms: Long) {
-    nowNs += TimeUnit.MILLISECONDS.toNanos(ms)
+    timeSource += ms.milliseconds
   }
 
-  override fun nanoTime(): Long = nowNs
+  /** The point of this clock at [ns] nanoseconds after time zero. */
+  fun markAt(ns: Long): ComparableTimeMark = origin + ns.nanoseconds
 
-  override fun sleep(ms: Long) {
+  override fun now(): ComparableTimeMark = timeSource.markNow()
+
+  override fun sleep(duration: Duration) {
     val lateMs = if (lateness.isEmpty()) 0 else lateness.removeFirst()
-    advanceMs(ms + lateMs)
+    advanceMs(duration.inWholeMilliseconds + lateMs)
   }
 
-  override suspend fun delay(ms: Long) {
-    sleep(ms)
+  override suspend fun delay(duration: Duration) {
+    sleep(duration)
   }
 
-  override fun gcTimeMs(): Long = gcTime
+  override fun gcTime(): Duration = gcTimeMs.milliseconds
 }

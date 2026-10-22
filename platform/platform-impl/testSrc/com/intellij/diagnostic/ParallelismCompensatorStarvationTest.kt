@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.time.ComparableTimeMark
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -21,7 +22,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * pool is flooded with blocking tasks (far more than its nominal capacity), and the observed concurrency is
  * expected to rise above 1 as the compensator grants extra parallelism to the stuck dispatcher.
  *
- * The compensator relies on a "heartbeat" -- something periodically updating [DefaultCompensatablePool.getLastSampleNs]
+ * The compensator relies on a "heartbeat" -- something periodically updating [DefaultCompensatablePool.getLastSample]
  * from a coroutine running on the watched dispatcher, exactly like [CoroutineDispatcherWatcher] does in production --
  * so this test runs that heartbeat itself instead of going through [CoroutineDispatcherWatcher].
  *
@@ -39,21 +40,21 @@ internal class ParallelismCompensatorStarvationTest {
 
     val heartbeat = object {
       @Volatile
-      var lastSampleNs = System.nanoTime()
+      var lastSample: ComparableTimeMark = SystemClock.now()
     }
 
     val heartbeatIntervalMs = 15L
     val heartbeatJob = scope.launch(CoroutineName("heartbeat") + dispatcher) {
       while (true) {
         delay(heartbeatIntervalMs.milliseconds)
-        heartbeat.lastSampleNs = System.nanoTime()
+        heartbeat.lastSample = SystemClock.now()
       }
     }
 
     val compensator = ParallelismCompensator(
       pool = DefaultCompensatablePool(
         dispatcher = dispatcher,
-        getLastSampleNs = { heartbeat.lastSampleNs },
+        getLastSample = { heartbeat.lastSample },
         unresponsiveIntervalMs = 30,
       ),
       maxGrantsAllowed = 100,

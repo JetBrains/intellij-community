@@ -4,6 +4,7 @@ package com.intellij.diagnostic
 import com.intellij.openapi.diagnostic.logger
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<ProcessStallWatcher>()
 
@@ -31,7 +32,7 @@ internal class ProcessStallWatcher(
 ) {
   private val reportThresholdNs = TimeUnit.MILLISECONDS.toNanos(reportThresholdMs)
 
-  private var lastGcTimeMs = clock.gcTimeMs()
+  private var lastGcTime = clock.gcTime()
 
   /** Runs the ticks until the caller cancels the coroutine. The caller selects the dispatcher. */
   suspend fun run() {
@@ -50,21 +51,21 @@ internal class ProcessStallWatcher(
   internal suspend fun tick() {
     var lateInTickNs = 0L
     repeat(slicesPerTick) {
-      val start = clock.nanoTime()
-      clock.delay(sliceMs)
-      val lateNs = clock.nanoTime() - start - TimeUnit.MILLISECONDS.toNanos(sliceMs)
+      val start = clock.now()
+      clock.delay(sliceMs.milliseconds)
+      val lateNs = (clock.now() - start).inWholeNanoseconds - TimeUnit.MILLISECONDS.toNanos(sliceMs)
       lateInTickNs += lateNs.coerceAtLeast(0)
     }
 
-    val gcTimeMs = clock.gcTimeMs()
-    val gcDeltaMs = gcTimeMs - lastGcTimeMs
-    lastGcTimeMs = gcTimeMs
+    val gcTime = clock.gcTime()
+    val gcDelta = gcTime - lastGcTime
+    lastGcTime = gcTime
 
     if (lateInTickNs >= reportThresholdNs) {
       val lateMs = TimeUnit.NANOSECONDS.toMillis(lateInTickNs)
       warn("Process stall: the watcher woke up $lateMs ms late " +
            "over the last ${sliceMs * slicesPerTick} ms of requested delay " +
-           "(GC time: $gcDeltaMs ms, system load average: ${systemLoadAverage()})")
+           "(GC time: ${gcDelta.inWholeMilliseconds} ms, system load average: ${systemLoadAverage()})")
     }
   }
 }
