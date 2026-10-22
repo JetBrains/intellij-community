@@ -2,12 +2,12 @@
 
 use std::time::{Duration, Instant, SystemTime};
 
+use avl_bridge::Client;
 use avl_trace::bridge::Input;
 use avl_trace::bundle::{bundle_file, snap_image_path, snap_tree_path};
 use avl_trace::otlp::{KeyValue, attr, event};
 use avl_trace::protocol::{CaptureSource, SnapCommand};
 
-use crate::bridge::Client;
 use crate::bundle::write_file_atomically;
 use crate::capture::Frame;
 use crate::scenario::Scenario;

@@ -11,7 +11,7 @@ use jiff::Timestamp;
 use jiff::tz::TimeZone;
 use serde::Serialize;
 
-use super::arm::Arm;
+use super::arm::{Arm, in_arm_order};
 use super::digest::{minute, number, short};
 use super::session::{self, SUMMARY_FILE};
 use super::summary::Summary;
@@ -151,10 +151,10 @@ impl Listing {
         let _ = writeln!(
             text,
             "per arm: the valid/measured runs and the median ms of {}; open-project: \"{}\"; project: \"{}\"; empty-editor: {}",
-            Arm::Modal.main_metric(),
-            Arm::OpenProject.main_metric(),
-            Arm::Project.main_metric(),
-            Arm::EmptyEditor.main_metric()
+            Arm::MODAL.main_metric(),
+            Arm::OPEN_PROJECT.main_metric(),
+            Arm::PROJECT.main_metric(),
+            Arm::EMPTY_EDITOR.main_metric()
         );
         let name_width = self.sessions.iter().map(|listed| listed.name.chars().count()).max().unwrap_or(0);
         for listed in &self.sessions {
@@ -170,9 +170,8 @@ impl Listing {
                     .to_owned()
                 },
                 |arms| {
-                    Arm::ALL
+                    in_arm_order(arms)
                         .into_iter()
-                        .filter_map(|arm| arms.get(arm.key()).map(|listed| (arm, listed)))
                         .map(|(arm, listed)| {
                             let median = listed.median.map_or_else(unknown, number);
                             format!("{} {}/{} {median}", arm.label(), listed.valid_runs, listed.measured_runs)

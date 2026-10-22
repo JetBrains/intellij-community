@@ -1,0 +1,16 @@
+{
+  "file": [
+    {
+      "name": "bazel-execution-report.html",
+      "size": 32739
+    },
+    {
+      "name": "bazel.logs.zip",
+      "size": 19091215
+    },
+    {
+      "name": "Xvfb.out",
+      "size": 253
+    }
+  ]
+}

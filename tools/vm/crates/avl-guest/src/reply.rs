@@ -15,6 +15,9 @@ use avl_wire::supervisor::{AgentExit, Envelope, EnvelopeError, USAGE_CODE};
 use avl_wire::verb::AgentVerb;
 use serde::Serialize;
 
+#[cfg(test)]
+mod tests;
+
 /// A verb's expected failure: the shared [`refusal::Refusal`] with a code the host can switch on, a message a human
 /// reads, and one of the closed set of agent exit statuses ([`AgentExit`]).
 ///
@@ -83,8 +86,8 @@ macro_rules! refuse {
 }
 pub(crate) use refuse;
 
-/// The refusal code one verb's failure answers with: `guest_gc_failed`, `guest_launch_prep_failed`,
-/// `guest_stage_check_failed`. Derived from the verb, so it needs no list to stay accurate.
+/// The refusal code of a failure of one verb, such as `guest_ide_gc_failed` or `guest_runfiles_tree_failed`. The code
+/// derives from the verb, so it needs no list to stay accurate.
 pub(crate) fn verb_refusal_code(verb: AgentVerb) -> String {
     format!("guest_{}_failed", verb.as_str().replace('-', "_"))
 }
@@ -138,7 +141,7 @@ pub(crate) fn answer_enveloped<T: Serialize>(streams: &mut Streams<'_>, verb: Ag
     }
 }
 
-/// Answers `result` as the bare document, which is what the staging verbs' host decodes, or fails.
+/// Answers `result` as the bare document, which the controller decodes for `ide-gc`, or fails.
 pub(crate) fn answer_bare<T: Serialize>(streams: &mut Streams<'_>, verb: AgentVerb, result: Result<T, AgentRefusal>) -> u8 {
     match result {
         Ok(document) => write_document(streams, verb, &document),

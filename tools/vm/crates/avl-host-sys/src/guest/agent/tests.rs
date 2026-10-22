@@ -76,7 +76,8 @@ async fn install_agent_skips_when_the_guest_already_runs_these_bytes() {
     let contract = format!(r#"{{"selfDigest":"{}"}}"#, agent_digest(b"agent bytes"));
     let channel = FakeChannel::spoke("air-docker-1", contract);
     let bazel = FakeBazel::default();
-    host.guest(&channel).install_agent(&bazel).await.unwrap();
+    let installed = host.guest(&channel).install_agent(&bazel).await.unwrap();
+    assert_eq!(installed, agent_digest(b"agent bytes"));
     // Exactly the one `contract` round-trip: no push, and - the expensive half - no resolution either, which is only
     // skippable because the comparison is against a host-side receipt rather than against the binary.
     let calls = channel.calls();
@@ -91,7 +92,8 @@ async fn install_agent_renames_onto_the_running_binary_and_records_what_it_pushe
     let source = host.agent_source("new agent bytes");
     host.settings.vm_agent_source = Some(source.clone());
     let channel = FakeChannel::new("air-docker-1");
-    host.guest(&channel).install_agent(&ForbiddenBazel).await.unwrap();
+    let pushed = host.guest(&channel).install_agent(&ForbiddenBazel).await.unwrap();
+    assert_eq!(pushed, agent_digest(b"new agent bytes"));
     let settings = &host.settings;
     let as_user = format!("/usr/bin/sudo -H -u {}", settings.vm_user);
     let incoming = format!("{}.incoming", settings.vm_agent);
@@ -107,6 +109,12 @@ async fn install_agent_renames_onto_the_running_binary_and_records_what_it_pushe
         ]
     );
     assert_eq!(channel.calls()[0].options.stdin.as_deref(), Some(&b"new agent bytes"[..]));
+    // `tee` echoes the binary to stdout. The agent of 2026-10-15 is 8.4 MB, above the capture limit of 8 MiB, so the
+    // write permits a truncated capture; the install failed as `subprocess_output_limit` without it.
+    assert!(
+        channel.calls()[0].options.allow_truncated,
+        "the agent write must permit the tee echo past the capture limit"
+    );
     let installed = installed_agent_receipt(settings, "air-docker-1", &host.quiet).unwrap();
     assert_eq!(installed, receipt(&host, &source, "new agent bytes"));
 }

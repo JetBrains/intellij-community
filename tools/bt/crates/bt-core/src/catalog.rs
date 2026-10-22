@@ -1,9 +1,8 @@
 //! The committed suite documents of an area's suite catalog, read once for every reader: `bt`'s join, the Air
 //! UI-lane controller and its trace planner.
 //!
-//! A generated document is one suite of the flow catalog, under the flow profile directory; an authored suite is
-//! an entry of the authored suites file. Only the fields a reader here uses are declared, and an unknown field is
-//! ignored on purpose: `docs/scripts/flowCatalog.ts` owns the schema, and the scenario runner reads far more of it.
+//! A document is one suite of the flow catalog, under the flow profile directory. Only the fields a reader here uses
+//! are declared, and an unknown field is ignored on purpose: `docs/scripts/flowCatalog.ts` owns the schema, and the scenario runner reads far more of it.
 //!
 //! The join stops at the suite, because what it needs is which classes to run. The planner needs one level
 //! further down, because a trace is per scenario: a scenario name, a step or an id out of a program is answerable
@@ -20,7 +19,7 @@ use crate::lanes::{Catalog, Lanes};
 use crate::runtime::{Runtime, par_map, repo_file};
 use crate::suites::ScenarioFlows;
 
-/// One suite: a committed suite document, or an entry of the authored suites file.
+/// One suite: a committed suite document.
 #[derive(Clone, Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SuiteDocument {
@@ -33,15 +32,26 @@ pub struct SuiteDocument {
     /// What the story flows of those routes declare they implement. The generator joins the two flows, so this is
     /// the only place that relation enters the controller.
     pub implementation_flows: Vec<String>,
-    /// The scenarios, in declared order. An authored suite has none.
+    /// The scenarios, in declared order.
     pub profiles: Vec<SuiteProfile>,
-    /// The repo-relative path of the document, how a named path finds its own document. Empty for an authored
-    /// suite and for a document read from bytes.
+    /// The labels of the suite for the JUnit report. `testClass` names the class with its package.
+    pub labels: Vec<SuiteLabel>,
+    /// The repo-relative path of the document, how a named path finds its own document. Empty for a document read from
+    /// bytes.
     #[serde(skip)]
     pub path: String,
-    #[serde(skip)]
-    pub authored: bool,
 }
+
+/// One label of a suite document: a name and a value.
+#[derive(Clone, Debug, Default, Deserialize)]
+#[serde(default)]
+pub struct SuiteLabel {
+    pub name: String,
+    pub value: String,
+}
+
+/// The label that names the class of a suite with its package.
+const TEST_CLASS_LABEL: &str = "testClass";
 
 /// One scenario of a suite document.
 #[derive(Clone, Debug, Default, Deserialize)]
@@ -80,10 +90,25 @@ pub struct Instruction {
 }
 
 impl SuiteDocument {
-    /// The lane table's name for the suite's lane (`ui-real` for `UI_REAL`), or `None` for a lane it does not
-    /// declare.
+    /// The lane table's name for the suite's lane (`ui-real` for `UI_REAL`, `ui-perf` for `UI_PERF`), or `None` for a
+    /// lane it does not declare.
     pub fn lane_name<'l>(&self, lanes: &'l Lanes) -> Option<&'l str> {
-        lanes.by_catalog_lane(&self.lane).map(|lane| lane.name.as_str())
+        lanes.by_suite_lane(&self.lane).map(|lane| lane.name.as_str())
+    }
+
+    /// The fully qualified name of the suite's class: the value of its `testClass` label, or the simple name when the
+    /// document has no such label.
+    pub fn test_class(&self) -> &str {
+        self.labels
+            .iter()
+            .find(|label| label.name == TEST_CLASS_LABEL)
+            .map_or(self.test_class_name.as_str(), |label| label.value.as_str())
+    }
+
+    /// Whether the suite belongs to an explicit-only lane, whose suites no changed path, flow or suite id reaches
+    /// (ADR 0200).
+    pub fn is_explicit_only(&self, lanes: &Lanes) -> bool {
+        lanes.by_suite_lane(&self.lane).is_some_and(|lane| lane.document_lane.is_some())
     }
 }
 
@@ -125,65 +150,9 @@ pub fn parse_suite_document(content: &[u8]) -> Result<SuiteDocument, String> {
     Ok(document)
 }
 
-/// Every committed suite document of the area's catalog in name order, and then every authored suite.
-///
-/// Both kinds are one set: a suite id and a test class name each name one suite, whichever kind it is. A clash is
-/// refused, because the answer would name one suite for a path that reaches the other.
+/// Every committed suite document of the area's catalog in name order.
 pub fn read_suite_documents(runtime: &dyn Runtime, area: &Area) -> Result<Vec<SuiteDocument>, Refusal> {
-    let catalog = area.catalog()?;
-    let mut documents = read_generated_suites(runtime, &catalog)?;
-    let authored = read_authored_suites(runtime, &catalog)?;
-    let mut suites: BTreeSet<String> = documents.iter().map(|document| document.suite.clone()).collect();
-    let mut classes: BTreeSet<String> = documents.iter().map(|document| document.test_class_name.clone()).collect();
-    for document in &authored {
-        if !suites.insert(document.suite.clone()) || !classes.insert(document.test_class_name.clone()) {
-            return Err(fail_infra(format!(
-                "the authored suite {} ({}) has the id or the test class of another suite; rename it where \
-                 {} is written from",
-                document.suite, document.test_class_name, catalog.authored_suites_file
-            )));
-        }
-    }
-    documents.extend(authored);
-    Ok(documents)
-}
-
-/// The authored suites file.
-///
-/// A checkout without the file answers no authored suite, as every checkout did before the file existed. The
-/// fast-lane test owns that the committed file exists and matches. A file that is there and cannot be read or
-/// parsed is refused.
-fn read_authored_suites(runtime: &dyn Runtime, catalog: &Catalog<'_>) -> Result<Vec<SuiteDocument>, Refusal> {
-    #[derive(Deserialize)]
-    struct Held {
-        #[serde(default)]
-        suites: Vec<SuiteDocument>,
-    }
-
-    let relative = catalog.authored_suites_file;
-    let file = repo_file(runtime, relative);
-    if !runtime.exists(&file) {
-        return Ok(Vec::new());
-    }
-    let text = runtime
-        .read_text_file(&file)
-        .map_err(|error| fail_infra(format!("the authored suites are unreadable at {relative}: {error}")))?;
-    let held: Held = serde_json::from_str(&text).map_err(|error| {
-        fail_infra(format!(
-            "{relative} is malformed: {error}; the test that owns the file prints the text to commit"
-        ))
-    })?;
-    let mut suites = held.suites;
-    for document in &mut suites {
-        if document.suite.is_empty() || document.lane.is_empty() || document.test_class_name.is_empty() {
-            return Err(fail_infra(format!(
-                "{relative} holds a suite with no suite, lane or test class; the test that owns the file prints \
-                 the text to commit"
-            )));
-        }
-        document.authored = true;
-    }
-    Ok(suites)
+    read_generated_suites(runtime, &area.catalog()?)
 }
 
 /// Every committed suite document under the flow profile directory, in name order.

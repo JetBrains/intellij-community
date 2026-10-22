@@ -6,14 +6,13 @@ use std::path::Path;
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime};
 
+use avl_bridge::Client;
 use avl_trace::bridge::Facts;
-use avl_trace::bundle::{AllureStatusDetails, BundleStatus, IDE_ROOT_RETAINED_RUNS, sanitize_name};
-use avl_trace::protocol::{Ack, Bridge, CaptureSource, Command, HelloAck, HelloCommand, Launcher, VideoCodec, decode_command};
+use avl_trace::bundle::{AllureStatusDetails, BundleStatus, sanitize_name};
+use avl_trace::protocol::{Ack, Bridge, CaptureSource, Command, HelloAck, HelloCommand, VideoCodec, decode_command};
 
-use crate::bridge::Client;
 use crate::capture::Source;
 use crate::ladder::ScreenAccess;
-use crate::retention::prune_runs;
 use crate::scenario::{ERROR_SOURCE_PROTOCOL, FLUSHED_SPANS_TIMEOUT, Scenario};
 use crate::{Options, join_reasons};
 
@@ -151,18 +150,12 @@ impl<W: Write> Session<W> {
             let now = (self.options.clock)();
             return self.refuse(now, "a second hello: one recorder serves one root");
         }
-        let run = sanitize_name(&hello.run_id).into_owned();
-        let run_dir = Path::new(&hello.root).join(&run);
+        let run_dir = Path::new(&hello.root).join(&*sanitize_name(&hello.run_id));
         self.hello = Some(hello.clone());
         if let Err(error) = fs::create_dir_all(&run_dir) {
             let disabled = format!("cannot create {}: {error}", run_dir.display());
             self.disabled = Some(disabled.clone());
             return self.hello_ack(false, CaptureSource::None, VideoCodec::None, disabled);
-        }
-        if hello.launcher == Launcher::Ide
-            && let Err(error) = prune_runs(Path::new(&hello.root), &run, IDE_ROOT_RETAINED_RUNS)
-        {
-            say!(self.options.diagnostics, "pruning {}: {error}", hello.root);
         }
         self.use_bridge(hello.bridge.as_ref());
         let facts = self.facts().ok();
@@ -238,7 +231,7 @@ impl<W: Write> Session<W> {
     pub(crate) fn facts(&self) -> anyhow::Result<Facts> {
         match &self.client {
             None => anyhow::bail!("the lane named no bridge"),
-            Some(client) => client.facts(Instant::now() + FACTS_TIMEOUT),
+            Some(client) => Ok(client.facts(Instant::now() + FACTS_TIMEOUT)?),
         }
     }
 

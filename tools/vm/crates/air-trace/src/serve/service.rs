@@ -15,6 +15,7 @@ use std::time::{Duration, Instant, SystemTime};
 use avl_base::sync::lock;
 use avl_host_sys::Runner;
 use avl_host_sys::private::{PrivateOpen, open_private_file};
+use avl_host_sys::proc::ChildGroup;
 use avl_host_sys::viewer::{DetachRequest, PROBE_TIMEOUT, Started, format_duration, probe_viewer, start_detached};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio_util::sync::CancellationToken;
@@ -166,7 +167,16 @@ fn find_or_start(
             format!("the controller's runtime root is unknown: {}", refused.message),
         )
     })?;
-    let Started { mut child, log_path } = start_detached(runner, command, None, request, &root)
+    // Without `BUILD_WORKSPACE_DIRECTORY` the server finds its checkout from its directory, so it runs where the caller
+    // runs.
+    let directory = std::env::current_dir().map_err(|error| {
+        Refusal::new(
+            "viewer_start_failed",
+            Exit::Broken,
+            format!("cannot name the current directory: {error}"),
+        )
+    })?;
+    let Started { mut child, log_path } = start_detached(runner, command, &directory, request, &root)
         .map_err(|refused| Refusal::new(refused.code, Exit::Broken, refused.message))?;
     let deadline = Instant::now() + DETACH_WAIT;
     loop {
@@ -255,18 +265,28 @@ pub(crate) fn site_needs_build(project: Option<&Path>, kernel: Option<&Path>, si
     if !project.join("package.json").exists() {
         return None;
     }
-    let Ok(index) = fs::metadata(site.join("index.html")).and_then(|info| info.modified()) else {
+    let index = site.join("index.html");
+    if fs::metadata(&index).and_then(|info| info.modified()).is_err() {
         return Some("the site is not built");
+    }
+    newer_sources(&index, &site_source_dirs(project, kernel)).then_some("the site is older than its sources")
+}
+
+/// Whether a file under `sources`, each a directory or a file, is newer than the built `index`. An `index` that does
+/// not read counts as older than every source.
+pub(crate) fn newer_sources(index: &Path, sources: &[PathBuf]) -> bool {
+    let Ok(built) = fs::metadata(index).and_then(|info| info.modified()) else {
+        return true;
     };
-    let newest = site_source_dirs(project, kernel)
-        .into_iter()
+    let newest = sources
+        .iter()
         .flat_map(walkdir::WalkDir::new)
         .filter_map(Result::ok)
         .filter(|entry| !entry.file_type().is_dir())
         .filter_map(|entry| entry.metadata().ok()?.modified().ok())
         .max()
         .unwrap_or(SystemTime::UNIX_EPOCH);
-    (newest > index).then_some("the site is older than its sources")
+    newest > built
 }
 
 impl Server {
@@ -355,9 +375,12 @@ pub(crate) struct SiteStep {
 /// spawn finds a `.cmd` on the PATH only by its full name.
 pub(crate) const PATH_PNPM: &str = if cfg!(windows) { "pnpm.cmd" } else { "pnpm" };
 
-/// The steps that build the site: `pnpm install --frozen-lockfile` in each directory of `installs`, in order, then
-/// `pnpm build` in the project, which harvests the model and runs Vite.
-pub(crate) fn site_steps(tools: &SiteTools, installs: &[&Path], project: &Path) -> Vec<SiteStep> {
+/// The last step of the site build: `pnpm build`, which harvests the model and runs Vite.
+pub(crate) const SITE_BUILD: [&str; 1] = ["build"];
+
+/// The steps that build a docs project. First `pnpm install --frozen-lockfile` runs in each directory of `installs`, in
+/// order. Then `pnpm <build>` runs in the project, such as [SITE_BUILD].
+pub(crate) fn site_steps(tools: &SiteTools, installs: &[&Path], project: &Path, build: &[&str]) -> Vec<SiteStep> {
     let (program, path_prefix) = match tools {
         SiteTools::Pinned { node, pnpm } => (pnpm.clone(), node.parent().map(Path::to_path_buf)),
         SiteTools::Path => (PathBuf::from(PATH_PNPM), None),
@@ -374,7 +397,7 @@ pub(crate) fn site_steps(tools: &SiteTools, installs: &[&Path], project: &Path) 
     installs
         .iter()
         .map(|dir| step(dir, &["install", "--frozen-lockfile"]))
-        .chain([step(project, &["build"])])
+        .chain([step(project, build)])
         .collect()
 }
 
@@ -399,7 +422,16 @@ pub(crate) async fn build_site(
 ) -> Result<(), Refusal> {
     let tools = site_tools(&output, &cancel).await?;
     let installs = site_installs(&project, kernel.as_deref());
-    build_site_with(&tools, &installs, &project, &output, &cancel).await
+    output(&format!("air-trace serve: building the site {}\n", tools_text(&tools)));
+    build_site_with(&tools, &installs, &project, &SITE_BUILD, &output, &cancel).await
+}
+
+/// The tools of a build as a log line names them: `with <node> and <pnpm>`, or `with the pnpm on the PATH`.
+pub(crate) fn tools_text(tools: &SiteTools) -> String {
+    match tools {
+        SiteTools::Pinned { node, pnpm } => format!("with {} and {}", node.display(), pnpm.display()),
+        SiteTools::Path => "with the pnpm on the PATH".to_owned(),
+    }
 }
 
 /// Runs [`site_steps`] in order, and stops at the first that fails.
@@ -407,18 +439,11 @@ pub(crate) async fn build_site_with(
     tools: &SiteTools,
     installs: &[&Path],
     project: &Path,
+    build: &[&str],
     output: &BuildOutput,
     cancel: &CancellationToken,
 ) -> Result<(), Refusal> {
-    match tools {
-        SiteTools::Pinned { node, pnpm } => output(&format!(
-            "air-trace serve: building the site with {} and {}\n",
-            node.display(),
-            pnpm.display()
-        )),
-        SiteTools::Path => output("air-trace serve: building the site with the pnpm on the PATH\n"),
-    }
-    for step in site_steps(tools, installs, project) {
+    for step in site_steps(tools, installs, project, build) {
         output(&format!("$ {}\n", step.label));
         run_step(&step, output, cancel).await?;
     }
@@ -488,7 +513,8 @@ async fn bazel_file(
     Ok(Path::new(root.trim()).join(path))
 }
 
-/// Runs the checkout's `bazel.cmd` with [`BAZEL_OPTIONS`] and answers its stdout; its stderr goes to `output`.
+/// Runs the checkout's `bazel.cmd` with [`BAZEL_OPTIONS`] and answers its stdout; its stderr goes to `output`. The
+/// client runs in a process group of its own, as a step does ([run_step]).
 async fn bazel(checkout: &Path, args: &[&str], output: &BuildOutput, cancel: &CancellationToken) -> Result<String, Refusal> {
     let (command, rest) = args.split_first().expect("a bazel command");
     let label = format!("bazel {}", args.join(" "));
@@ -502,7 +528,11 @@ async fn bazel(checkout: &Path, args: &[&str], output: &BuildOutput, cancel: &Ca
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .kill_on_drop(true);
+    ChildGroup::prepare(&mut process);
     let mut child = process.spawn().map_err(|error| build_failed(format!("{label}: {error}")))?;
+    // After the child, so it drops first, while the unreaped leader still holds the group id.
+    let tree =
+        ChildGroup::attach(&child).map_err(|error| build_failed(format!("{label}: cannot take it into a process group: {error}")))?;
     let stdout = child.stdout.take();
     let err = forward_lines(child.stderr.take().map(|stream| Box::new(stream) as _), output);
     let out = tokio::spawn(async move {
@@ -517,6 +547,8 @@ async fn bazel(checkout: &Path, args: &[&str], output: &BuildOutput, cancel: &Ca
         text
     });
     let status = wait_or_cancel(&mut child, cancel, &label).await?;
+    // What the client left running ends with it, so its pipes close.
+    drop(tree);
     let text = out.await.unwrap_or_default();
     let _ = err.await;
     if !status.success() {
@@ -525,7 +557,9 @@ async fn bazel(checkout: &Path, args: &[&str], output: &BuildOutput, cancel: &Ca
     Ok(text)
 }
 
-/// Runs one step with its output forwarded, and fails with the step's label and its exit status.
+/// Runs one step with its output forwarded, and fails with the step's label and its exit status. The step runs in a
+/// process group of its own. A build can be dropped at a timeout or when the server stops. Then every process that the
+/// step started ends. What a step leaves running when it ends is stopped too.
 async fn run_step(step: &SiteStep, output: &BuildOutput, cancel: &CancellationToken) -> Result<(), Refusal> {
     let mut command = tokio::process::Command::new(&step.program);
     command
@@ -534,6 +568,7 @@ async fn run_step(step: &SiteStep, output: &BuildOutput, cancel: &CancellationTo
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .kill_on_drop(true);
+    ChildGroup::prepare(&mut command);
     if let Some(prefix) = &step.path_prefix {
         let rest = std::env::var_os("PATH").unwrap_or_default();
         let entries = std::iter::once(prefix.clone()).chain(std::env::split_paths(&rest));
@@ -545,9 +580,13 @@ async fn run_step(step: &SiteStep, output: &BuildOutput, cancel: &CancellationTo
         (io::ErrorKind::NotFound, None) => Refusal::new("site_pnpm_missing", Exit::Broken, "pnpm is not on the PATH of the server"),
         _ => build_failed(format!("{}: {}: {error}", step.label, step.program.display())),
     })?;
+    // After the child, so it drops first, while the unreaped leader still holds the group id.
+    let tree = ChildGroup::attach(&child)
+        .map_err(|error| build_failed(format!("{}: cannot take it into a process group: {error}", step.label)))?;
     let out = forward_lines(child.stdout.take().map(|stream| Box::new(stream) as _), output);
     let err = forward_lines(child.stderr.take().map(|stream| Box::new(stream) as _), output);
     let status = wait_or_cancel(&mut child, cancel, &step.label).await?;
+    drop(tree);
     let _ = out.await;
     let _ = err.await;
     if !status.success() {

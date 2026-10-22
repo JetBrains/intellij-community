@@ -1,49 +1,37 @@
 //! What a `--lane` or a selector becomes. The UI lanes themselves are `avl_affected::lanes`.
 
-use std::collections::BTreeMap;
-use std::sync::LazyLock;
-
-use avl_affected::{air_area, air_areas, ui_lane, ui_lane_of_label, ui_lanes};
+use avl_affected::{air_areas, ui_lane, ui_lane_of_label, ui_lanes};
 use avl_base::{Config, Exit, Refusal, Reporter};
 use bt_core::{ResolutionInputs, Selector, resolve_selector};
-use regex::Regex;
 
+use crate::daemon::run::selector_to_run_request;
 use crate::lane::runtime::bt_runtime;
 use avl_base::RefusalExt;
 
-/// What a `--lane` or a selector became: the lane's content label, and the test JVM's filters.
+/// What a `--lane` or a selector became: the lane's content label, and the selectors and filters that the run request
+/// gets.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(crate) struct Selection {
     pub label: String,
-    /// `None` for a selector, which names no lane at all. The daemon branches on it: a lane iteration is selected
-    /// by tag, a selector iteration by class filter.
+    /// `None` for a selector, which names no lane at all. The lane daemon branches on it: a lane iteration runs the
+    /// documents of its lane, and a selector iteration narrows them by class filter.
     pub lane: Option<String>,
-    /// The environment for the guest test JVM: lane JUnit filters, or the resolved class filter.
-    pub test_env: BTreeMap<String, String>,
+    /// The JUnit selectors of the run request: the class or the method that a selector names. Empty for a whole lane.
+    pub selectors: Vec<String>,
+    /// The JUnit5 filters of the run request, `<option>=<value>`: the class filters of the suites, or the filter of a
+    /// selector. Empty for a whole lane.
+    pub junit5_filters: Vec<String>,
 }
 
-/// The variable a JUnit filter travels in, for the daemon's runner and for `JUnit5BazelRunner` alike.
-pub(crate) const JUNIT5_FILTERS: &str = "JB_TEST_JUNIT5_FILTERS";
-
-/// Answers what one UI lane runs, and refuses a lane a VM worker cannot.
+/// Answers what one UI lane runs, and refuses a lane a VM worker cannot. The lane daemon selects the documents of the
+/// lane by its name, so a whole lane has no filter.
 pub(crate) fn lane_selection(lane: &str) -> Result<Selection, Refusal> {
     let ui = ui_lane(lane)?;
-    let mut test_env = BTreeMap::from([(JUNIT5_FILTERS.to_owned(), format!("include-tag={}", ui.junit_tag))]);
-    // Bazel's `--test_env=NAME=VALUE` form: a variable the lane sets *by value*. The valueless form forwards the
-    // client's own variable, and a host value names a machine the guest is not.
-    static ASSIGNMENT: LazyLock<Regex> = LazyLock::new(|| {
-        // An invariant: a literal pattern, exercised by the tests.
-        Regex::new(r"^--test_env=([A-Za-z_][A-Za-z0-9_]*)=(.*)$").expect("a literal pattern compiles")
-    });
-    for extra in air_area().lanes().get(lane).map(|spec| spec.extra.as_slice()).unwrap_or_default() {
-        if let Some(assignment) = ASSIGNMENT.captures(extra) {
-            test_env.insert(assignment[1].to_owned(), assignment[2].to_owned());
-        }
-    }
     Ok(Selection {
         label: ui.label.to_owned(),
         lane: Some(ui.name.to_owned()),
-        test_env,
+        selectors: Vec::new(),
+        junit5_filters: Vec::new(),
     })
 }
 
@@ -66,18 +54,23 @@ pub(crate) fn resolve_selector_selection(settings: &Config, selector: &str, repo
             )));
         }
     };
-    let mut test_env = BTreeMap::new();
-    // The same selection Bazel would apply: `--test_filter` travels as TESTBRIDGE_TEST_ONLY.
-    if let Some(filter) = resolution.filter {
-        test_env.insert("TESTBRIDGE_TEST_ONLY".to_owned(), filter);
-    }
-    if let Some(package) = resolution.include_package {
-        test_env.insert(JUNIT5_FILTERS.to_owned(), format!("include-package={package}"));
-    }
+    // The same selection Bazel would apply: the test filter wins over the package of the target.
+    let (selectors, junit5_filters) = match resolution.filter.filter(|filter| !filter.is_empty()) {
+        Some(filter) => selector_to_run_request(&filter),
+        None => (
+            Vec::new(),
+            resolution
+                .include_package
+                .map(|package| format!("include-package={package}"))
+                .into_iter()
+                .collect(),
+        ),
+    };
     Ok(Selection {
         label,
         lane: None,
-        test_env,
+        selectors,
+        junit5_filters,
     })
 }
 

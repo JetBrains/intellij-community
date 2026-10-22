@@ -13,7 +13,7 @@ use std::path::Path;
 use crate::lane::is_patternable_class_name;
 use avl_base::Config;
 use avl_report::report::instant_millis;
-use avl_wire::report::{Integrity, RUN_REPORT_SCHEMA_VERSION, RunReport, Status};
+use avl_wire::report::{RUN_REPORT_SCHEMA_VERSION, RunReport, Status};
 use serde_json::Value;
 
 use crate::daemon::shard::ClassDuration;
@@ -35,27 +35,11 @@ pub(crate) struct ShardBaseline {
     pub unpatternable: Vec<String>,
 }
 
-/// What one report says each of its classes cost.
-///
-/// Fixture time is attributed to the class that pays it rather than to nobody: four of the lane's five heaviest
-/// classes relaunch the IDE in `@BeforeAll` at 10-12 s each, and that time lives in the suite's own duration rather
-/// than in any test case's. It is folded in only for a suite whose cases are all one class - the lane's shape -
-/// because for a mixed suite there is no non-arbitrary way to split it.
+/// What one report says each of its classes cost: the sum of the durations of its cases.
 pub(crate) fn class_durations_of(document: &RunReport) -> BTreeMap<String, f64> {
     let mut per_class: BTreeMap<String, f64> = BTreeMap::new();
-    for suite in &document.suites {
-        let mut in_suite: BTreeMap<&str, f64> = BTreeMap::new();
-        for case in &suite.cases {
-            *in_suite.entry(&case.class_name).or_default() += case.duration_ms;
-        }
-        if in_suite.len() == 1
-            && let Some(only) = in_suite.values_mut().next()
-        {
-            *only = only.max(suite.duration_ms);
-        }
-        for (class_name, duration_ms) in in_suite {
-            *per_class.entry(class_name.to_owned()).or_default() += duration_ms;
-        }
+    for case in &document.cases {
+        *per_class.entry(case.class_name.clone()).or_default() += case.duration_ms;
     }
     per_class
 }
@@ -63,14 +47,63 @@ pub(crate) fn class_durations_of(document: &RunReport) -> BTreeMap<String, f64> 
 /// Whether a report may be used as a duration measurement.
 ///
 /// The same false-green guards the rest of the controller already owns, read here as "did this run measure anything
-/// trustworthy": a truncated, stale or malformed XML arrives as an `infrastructure_error` with an integrity that is
-/// not `complete`, and a `no_tests` or `all_skipped` run measured nothing at all. The schema check is there because
+/// trustworthy": a cut-off or contradicted stream arrives as an `infrastructure_error`, and a `no_tests` or
+/// `all_skipped` run measured nothing at all. The schema check is there because
 /// a report of an older layout would be read field by field as zeros, and a class believed to cost 0 ms is worse
 /// than a class with no measurement - the latter is at least visible as a missing baseline.
-fn is_duration_evidence(document: &RunReport) -> bool {
-    document.report_schema_version == RUN_REPORT_SCHEMA_VERSION
-        && matches!(document.status, Status::Passed | Status::Failed)
-        && document.source.integrity == Integrity::Complete
+const fn is_duration_evidence(document: &RunReport) -> bool {
+    document.report_schema_version == RUN_REPORT_SCHEMA_VERSION && matches!(document.status, Status::Passed | Status::Failed)
+}
+
+/// What one report on disk measured: the instant it completed, and the duration of each class. A stamp nobody can read
+/// is "do not know", which sorts such a report last.
+///
+/// A report of schema 2, from before the run stream was the one source of a report, still measures: its suites are
+/// read as they were, so a pool keeps its history across the change of schema.
+fn read_measurement(path: &Path) -> Option<(i64, BTreeMap<String, f64>)> {
+    let content = fs::read(path).ok()?;
+    let loose: Value = serde_json::from_slice(&content).ok()?;
+    if loose.get("reportSchemaVersion").and_then(Value::as_u64) == Some(SCHEMA_2) {
+        return schema_2_measurement(&loose);
+    }
+    let document = read_report(loose)?;
+    if !is_duration_evidence(&document) {
+        return None;
+    }
+    Some((instant_millis(&document.completed_at).unwrap_or(0), class_durations_of(&document)))
+}
+
+/// The run report schema whose suites [`schema_2_measurement`] reads.
+const SCHEMA_2: u64 = 2;
+
+/// The measurement of a report of schema 2: a passed or failed run whose XML was complete, each class costing what the
+/// suite that ran it cost. The fixture time of a suite of one class is that class's, because a `@BeforeAll` IDE
+/// relaunch lives in the suite and in no case.
+fn schema_2_measurement(loose: &Value) -> Option<(i64, BTreeMap<String, f64>)> {
+    let text = |value: &Value, key: &str| value.get(key).and_then(Value::as_str).map(str::to_owned);
+    let measured = matches!(text(loose, "status").as_deref(), Some("passed" | "failed"))
+        && loose.pointer("/source/integrity").and_then(Value::as_str) == Some("complete");
+    if !measured {
+        return None;
+    }
+    let completed_ms = instant_millis(&text(loose, "completedAt")?).unwrap_or(0);
+    let mut per_class: BTreeMap<String, f64> = BTreeMap::new();
+    for suite in loose.get("suites")?.as_array()? {
+        let mut in_suite: BTreeMap<String, f64> = BTreeMap::new();
+        for case in suite.get("cases").and_then(Value::as_array).into_iter().flatten() {
+            let class_name = text(case, "className")?;
+            *in_suite.entry(class_name).or_default() += case.get("durationMs").and_then(Value::as_f64).unwrap_or(0.0);
+        }
+        if in_suite.len() == 1
+            && let Some(only) = in_suite.values_mut().next()
+        {
+            *only = only.max(suite.get("durationMs").and_then(Value::as_f64).unwrap_or(0.0));
+        }
+        for (class_name, duration_ms) in in_suite {
+            *per_class.entry(class_name).or_default() += duration_ms;
+        }
+    }
+    Some((completed_ms, per_class))
 }
 
 /// One report, read permissively: a half-written or hand-edited report is not evidence, and a baseline scan is not
@@ -78,11 +111,9 @@ fn is_duration_evidence(document: &RunReport) -> bool {
 ///
 /// The three fields checked before the typed decode are the ones a report cannot be trusted without, and which the
 /// typed decode would otherwise default.
-fn read_report(path: &Path) -> Option<RunReport> {
-    let content = fs::read(path).ok()?;
-    let loose: Value = serde_json::from_slice(&content).ok()?;
+fn read_report(loose: Value) -> Option<RunReport> {
     let present = |key: &str| loose.get(key).is_some_and(|value| !value.is_null());
-    if !loose.get("suites").is_some_and(Value::is_array) || !present("completedAt") || !present("source") {
+    if !loose.get("cases").is_some_and(Value::is_array) || !present("completedAt") || !present("execution") {
         return None;
     }
     serde_json::from_value(loose).ok()
@@ -126,15 +157,9 @@ pub(crate) fn read_shard_baseline(settings: &Config) -> ShardBaseline {
                     continue;
                 }
                 scanned_reports += 1;
-                let Some(document) = read_report(&entry.path()) else {
-                    continue;
-                };
-                if !is_duration_evidence(&document) {
-                    continue;
+                if let Some(measurement) = read_measurement(&entry.path()) {
+                    admitted.push(measurement);
                 }
-                // A stamp nobody can read is "do not know", which sorts such a report last.
-                let completed_ms = instant_millis(&document.completed_at).unwrap_or(0);
-                admitted.push((completed_ms, class_durations_of(&document)));
             }
         }
     }

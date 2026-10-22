@@ -29,12 +29,13 @@ fn routes_are_matched_the_way_the_daemon_routes_them() {
         ("GET", "/status", Some(Route::Status)),
         ("POST", "/jars", Some(Route::MissingJars)),
         ("POST", "/run", Some(Route::Run)),
-        ("POST", "/mount/quiesce", Some(Route::MountQuiesce)),
-        ("POST", "/mount/resume", Some(Route::MountResume)),
         ("POST", "/ide/stop", Some(Route::IdeStop)),
         ("POST", "/shutdown", Some(Route::Shutdown)),
         ("PUT", &format!("/jars/{digest}"), Some(Route::UploadJar)),
         ("GET", "/results/iter-1/test.xml", Some(Route::Results)),
+        // Protocol 6 has no quiesce of the shares.
+        ("POST", "/mount/quiesce", None),
+        ("POST", "/mount/resume", None),
         // A route matched by path alone would answer the wrong handler for the wrong verb.
         ("GET", "/run", None),
         ("POST", "/status", None),
@@ -113,7 +114,7 @@ fn a_declared_field_of_the_wrong_kind_is_refused() {
         r#"{"event":"summary","iterationId":"i","daemonBootStamp":"b","startedAt":"s","testsStarted":0,"testsFailed":0,"testsSkipped":0,"containersSkipped":0,"containerFailures":0,"hasFailures":"no","ideRunning":true}"#,
         // An optional field that is present must still be of its kind, and an explicit null is present.
         r#"{"event":"testStarted","timestamp":"t","displayName":"d","id":"i","className":null}"#,
-        r#"{"event":"testFinished","timestamp":"t","displayName":"d","id":"i","status":"FAILED","durationMs":1,"error":null}"#,
+        r#"{"event":"testFinished","timestamp":"t","displayName":"d","id":"i","status":"FAILED","durationMs":1,"message":null}"#,
     ] {
         assert_eq!(protocol_code(line), CODE_FIELD_MISSING, "{line}");
     }
@@ -213,15 +214,116 @@ fn an_unknown_conflict_reason_is_data() {
     );
 }
 
-// The metaspace figure passes a billion routinely, so it must not be carried by anything a float would round.
+// The lane daemon sends the eight fields of protocol 6. A JVM daemon that a guest still holds from an older controller
+// also sends the two fields that protocol 6 dropped. The reader ignores them, so the controller reads the protocol of
+// that daemon and retires it.
 #[test]
-fn status_counters_keep_every_digit() {
-    let status = decode_status(
-        br#"{"protocolVersion":2,"daemonBootStamp":"b","controllerLaunchDigest":"d","mountQuiesced":false,"productStamp":"p","ideRunning":true,"busy":false,"iterationCount":7,"metaspaceUsedBytes":9007199254740993,"pid":42}"#,
+fn a_status_of_either_runner_decodes() {
+    let lane_daemon = br#"{"protocolVersion":6,"daemonBootStamp":"b","controllerLaunchDigest":"d","productStamp":"p","ideRunning":true,"busy":false,"iterationCount":7,"pid":42}"#;
+    let status = decode_status(lane_daemon).unwrap();
+    assert_eq!(serde_json::to_vec(&status).unwrap(), lane_daemon);
+    let jvm = decode_status(
+        br#"{"protocolVersion":5,"daemonBootStamp":"b","controllerLaunchDigest":"d","mountQuiesced":false,"productStamp":"p","ideRunning":true,"busy":false,"iterationCount":7,"metaspaceUsedBytes":9007199254740993,"pid":42}"#,
     )
     .unwrap();
-    assert_eq!(status.metaspace_used_bytes, 9_007_199_254_740_993);
+    assert_eq!((jvm.protocol_version, jvm.iteration_count, jvm.pid), (5, 7, 42));
     assert_eq!(decode_missing_jars(br#"{"missing":["a"]}"#).unwrap().missing, ["a"]);
+}
+
+// A field that a request does not use is absent from it. A run of the lane daemon names the lane and the digests of the
+// lane inputs.
+#[test]
+fn the_run_request_names_the_lane_inputs_for_the_lane_daemon_only() {
+    let mut request = RunRequest {
+        selectors: Vec::new(),
+        junit5_filters: vec!["include-tag=air-integration-ui".to_owned()],
+        product_stamp: "p".to_owned(),
+        launch_digest: "l".to_owned(),
+        active_execution_timeout_sec: 1800,
+        progress_gap_timeout_sec: 300,
+        run_budget_sec: None,
+        ide_plugins: vec![IdePlugin {
+            destination: "air-integrationTests-bridge-plugin/lib/a.jar".to_owned(),
+            sha256: "s".to_owned(),
+        }],
+        lane: None,
+        lane_inputs: None,
+        lane_classes: Vec::new(),
+        session_logs: Vec::new(),
+    };
+    assert_eq!(
+        serde_json::to_string(&request).unwrap(),
+        r#"{"selectors":[],"junit5Filters":["include-tag=air-integration-ui"],"productStamp":"p","launchDigest":"l","activeExecutionTimeoutSec":1800,"progressGapTimeoutSec":300,"idePlugins":[{"destination":"air-integrationTests-bridge-plugin/lib/a.jar","sha256":"s"}]}"#
+    );
+    request.lane = Some("ui".to_owned());
+    request.lane_inputs = Some(LaneInputs {
+        fake_agent_jar: "f".to_owned(),
+        lane_documents: "d".to_owned(),
+        suite_documents: "d".to_owned(),
+    });
+    let encoded = serde_json::to_string(&request).unwrap();
+    assert!(
+        encoded.ends_with(r#""lane":"ui","laneInputs":{"fakeAgentJar":"f","laneDocuments":"d","suiteDocuments":"d"}}"#),
+        "{encoded}"
+    );
+    assert_eq!(serde_json::from_str::<RunRequest>(&encoded).unwrap(), request);
+    request.lane_classes = vec![
+        LaneClass {
+            suite: "composer".to_owned(),
+            test_class_name: "AirComposerGeneratedFlowUiTest".to_owned(),
+        },
+        LaneClass {
+            suite: "genui-host".to_owned(),
+            test_class_name: "AirGenUiHostUiTest".to_owned(),
+        },
+    ];
+    let encoded = serde_json::to_string(&request).unwrap();
+    assert!(
+        encoded.ends_with(
+            r#""laneClasses":[{"suite":"composer","testClassName":"AirComposerGeneratedFlowUiTest"},{"suite":"genui-host","testClassName":"AirGenUiHostUiTest"}]}"#
+        ),
+        "{encoded}"
+    );
+    assert_eq!(serde_json::from_str::<RunRequest>(&encoded).unwrap(), request);
+    request.session_logs = vec![SessionLog {
+        label: "thread-7".to_owned(),
+        sha256: "z".to_owned(),
+    }];
+    let encoded = serde_json::to_string(&request).unwrap();
+    assert!(
+        encoded.ends_with(r#""sessionLogs":[{"label":"thread-7","sha256":"z"}]}"#),
+        "{encoded}"
+    );
+    assert_eq!(serde_json::from_str::<RunRequest>(&encoded).unwrap(), request);
+}
+
+// The lane daemon types a failure: its kind, its message and its detail, and the record keeps its bytes when it is
+// published again. The `error` text of an older journal is no field, so that record reads with no failure.
+#[test]
+fn a_failure_record_carries_the_typed_failure_and_no_error_text() {
+    let typed = r#"{"event":"containerFailed","timestamp":"t","id":"[suite:s]","displayName":"S","className":"S","type":"not_implemented","message":"m","detail":"d"}"#;
+    let RunEventKind::ContainerFailed(failed) = decode(typed).kind else {
+        panic!("not a container failure");
+    };
+    assert_eq!(
+        failed.failure,
+        TypedFailure {
+            kind: Some("not_implemented".to_owned()),
+            message: Some("m".to_owned()),
+            detail: Some("d".to_owned()),
+        }
+    );
+    let re_encoded = serde_json::to_value(RunEventKind::ContainerFailed(failed)).unwrap();
+    assert_eq!(re_encoded, serde_json::from_str::<Value>(typed).unwrap());
+    let older = r#"{"event":"testFinished","timestamp":"t","id":"i","displayName":"n","status":"FAILED","durationMs":3,"error":"boom"}"#;
+    let RunEventKind::TestFinished(finished) = decode(older).kind else {
+        panic!("not a finished test");
+    };
+    assert_eq!(finished.failure, TypedFailure::default());
+    assert_eq!(
+        protocol_code(r#"{"event":"containerFailed","timestamp":"t","id":"i","displayName":"n","type":null}"#),
+        CODE_FIELD_MISSING
+    );
 }
 
 #[test]
@@ -324,10 +426,10 @@ fn the_plan_record_carries_the_discovered_classes() {
     );
 }
 
+// A literal, so a bump of the protocol is a deliberate change of the lane daemon and of the controller together.
 #[test]
-fn protocol_version_is_the_one_kotlin_declares() {
-    // A literal, so bumping the constant without the Kotlin side is a deliberate two-file change.
-    assert_eq!(PROTOCOL_VERSION, 5, "`AIR_UI_DAEMON_PROTOCOL_VERSION` must move with it");
+fn the_lane_daemon_speaks_protocol_6() {
+    assert_eq!(PROTOCOL_VERSION, 6);
 }
 
 // A dynamic node carries its factory's method and its own display name, so a progress line names both; a plain
@@ -451,4 +553,75 @@ fn the_ide_life_records_decode_and_refuse_a_wrong_field() {
     ] {
         assert_eq!(protocol_code(&line), CODE_FIELD_MISSING, "{line}");
     }
+}
+
+// A decision of the lane daemon about its IDE decodes as the decision of the controller, keeps its bytes, and
+// serializes back to its own shape.
+#[test]
+fn a_decision_record_of_the_lane_daemon_decodes_and_keeps_its_bytes() {
+    let line = r#"{"event":"decision","subject":"ide","action":"reload","reason":"only the bridge plugin changed"}"#;
+    let event = decode(line);
+    assert_eq!(event.event(), Event::Decision);
+    assert_eq!(event.to_raw().get(), line);
+    let RunEventKind::Decision(decision) = &event.kind else {
+        panic!("read {:?}", event.kind);
+    };
+    assert_eq!(decision.line(), "ide reload: only the bridge plugin changed");
+    let synthesized = RunEvent::synthesized(event.kind.clone());
+    assert_eq!(synthesized.to_raw().get(), line);
+    assert_eq!(
+        protocol_code(r#"{"event":"decision","subject":"plugin","action":"reload"}"#),
+        CODE_FIELD_MISSING
+    );
+}
+
+// The lane daemon says when its recorder records nothing. The record keeps its bytes, serializes back to its own
+// shape, and needs its reason.
+#[test]
+fn a_trace_failure_of_the_lane_daemon_decodes_and_keeps_its_bytes() {
+    let line = r#"{"event":"traceFailed","timestamp":"2026-10-16T08:00:00Z","reason":"the recorder refused the scenario 'a'"}"#;
+    let event = decode(line);
+    assert_eq!(event.event(), Event::TraceFailed);
+    assert_eq!(event.to_raw().get(), line);
+    let RunEventKind::TraceFailed(failed) = &event.kind else {
+        panic!("read {:?}", event.kind);
+    };
+    assert_eq!(failed.reason, "the recorder refused the scenario 'a'");
+    assert_eq!(RunEvent::synthesized(event.kind.clone()).to_raw().get(), line);
+    assert_eq!(
+        protocol_code(r#"{"event":"traceFailed","timestamp":"2026-10-16T08:00:00Z"}"#),
+        CODE_FIELD_MISSING
+    );
+}
+
+// The digest of a plugin directory reads each destination and content digest of its files in destination order, so
+// the order of the files does not move it, and a file of another directory does not either.
+#[test]
+fn the_digest_of_a_plugin_directory_is_over_its_own_files_in_destination_order() {
+    let by_hand = |files: &[(&str, &str)]| {
+        let mut hash = Sha256::new();
+        for (destination, sha256) in files {
+            hash.update(destination.as_bytes());
+            hash.update([0]);
+            hash.update(sha256.as_bytes());
+            hash.update([0]);
+        }
+        hex::encode(hash.finalize())
+    };
+    let digests = plugin_directory_digests([("bridge/lib/b.jar", "2"), ("resident/lib/r.jar", "3"), ("bridge/lib/a.jar", "1")]);
+    assert_eq!(
+        digests,
+        BTreeMap::from([
+            (
+                "bridge".to_owned(),
+                by_hand(&[("bridge/lib/a.jar", "1"), ("bridge/lib/b.jar", "2")])
+            ),
+            ("resident".to_owned(), by_hand(&[("resident/lib/r.jar", "3")])),
+        ])
+    );
+    assert_eq!(
+        plugin_directory_digests([("bridge/lib/a.jar", "1"), ("bridge/lib/b.jar", "2")])["bridge"],
+        digests["bridge"]
+    );
+    assert!(plugin_directory_digests([]).is_empty());
 }

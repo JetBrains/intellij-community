@@ -25,9 +25,8 @@ use crate::step::Step;
 // processes. They fail independently, and a worker with an X server and no window manager is a distinct condition
 // that the validator has its own refusal for.
 //
-// IDE Starter wraps a launch in `xvfb-run --server-num=88` only when it finds DISPLAY unset
-// (`XorgWindowManagerHandler`). A guest with no display gives every IDE in a lane a private X server with no window
-// manager on it, and without a window manager the driver cannot resize or raise a window.
+// The guest has no Xvfb wrapper, so every IDE of a lane draws on this display. Without a window manager on it, the
+// driver cannot resize or raise a window.
 pub(crate) const XVFB_PROCESS: &str = "Xvfb";
 pub(crate) const FLUXBOX_PROCESS: &str = "fluxbox";
 

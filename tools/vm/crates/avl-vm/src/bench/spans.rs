@@ -76,8 +76,8 @@ impl SpanLine {
 /// `--overlap` the spans that run in it.
 pub(crate) fn report(session: &Path, args: &TraceArgs) -> Result<SpanReport, Refusal> {
     let selection = &args.selection;
-    let (SelectedRun { id, median_by, .. }, timeline) = Timeline::select(session, selection.run.as_deref(), selection.arm)?;
-    let window = WindowMs::of(&args.window, default_window(&timeline, id.arm), &id)?;
+    let (SelectedRun { id, median_by, .. }, timeline) = Timeline::select(session, selection.run.as_deref(), selection.arm.as_ref())?;
+    let window = WindowMs::of(&args.window, default_window(&timeline, &id.arm), &id)?;
     let spans = timeline
         .spans
         .iter()
@@ -104,7 +104,7 @@ pub(crate) fn report(session: &Path, args: &TraceArgs) -> Result<SpanReport, Ref
 /// The window of a run without `--from` and `--to`: from `frameBecameVisible` to the welcome screen paint. A run
 /// without the frame, such as a modal run, starts at the process start and ends at the main anchor of its arm, see
 /// [`Arm::main_anchor`]. A missing end widens the window to the end of the run.
-pub(crate) fn default_window(timeline: &Timeline, arm: Arm) -> WindowMs {
+pub(crate) fn default_window(timeline: &Timeline, arm: &Arm) -> WindowMs {
     let (from_ms, to_ms) = match timeline.anchor(FRAME_BECAME_VISIBLE) {
         Some(frame) => (frame, timeline.anchor(WELCOME_SCREEN_PAINTED)),
         None => (0.0, timeline.anchor(arm.main_anchor())),

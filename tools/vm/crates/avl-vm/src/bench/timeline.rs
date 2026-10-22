@@ -144,7 +144,7 @@ impl Timeline {
     /// Reads the timeline of the run that `run` names, else of the median run of `arm`, else of the median run of the
     /// session. See [`session::select_run`]. A session without `summary.json` is the refusal `no_summary`, and a run
     /// without its files is a usage refusal.
-    pub(crate) fn select(session: &Path, run: Option<&str>, arm: Option<Arm>) -> Result<(SelectedRun, Self), Refusal> {
+    pub(crate) fn select(session: &Path, run: Option<&str>, arm: Option<&Arm>) -> Result<(SelectedRun, Self), Refusal> {
         let summary = session::read_summary(session)?;
         let selected = session::select_run(session, &summary, run, arm)?;
         let timeline = Self::read(&selected.dir).map_err(|error| Refusal::usage(format!("{error:#}")))?;

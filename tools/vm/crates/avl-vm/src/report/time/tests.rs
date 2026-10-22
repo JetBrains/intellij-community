@@ -8,8 +8,7 @@ use avl_trace::otlp::{
 };
 use avl_wire::progress::{Event, IterationReported, Record, RunStarted, TraceReady};
 use avl_wire::report::{
-    Case, CaseStatus, ExecutionCounts, Integrity, ORDERING, RUN_REPORT_SCHEMA_VERSION, Retrieval, RunReport, Source, Status, Suite,
-    TraceArchive, TraceBundle, Watchdog, XmlCounts,
+    Case, CaseStatus, ExecutionCounts, ORDERING, RUN_REPORT_SCHEMA_VERSION, RunReport, Status, TraceArchive, TraceBundle, Watchdog,
 };
 use expect_test::expect;
 use pretty_assertions::assert_eq;
@@ -137,32 +136,18 @@ fn report(
         duration_ms,
         ordering: ORDERING.to_owned(),
         execution: ExecutionCounts::default(),
-        xml: XmlCounts::default(),
-        source: Source {
-            guest_path: "/it/test.xml".to_owned(),
-            retrieval: Retrieval::DaemonHttp,
-            integrity: Integrity::Complete,
-            diagnostic: None,
-        },
-        suites: vec![Suite {
-            name: "suite".to_owned(),
-            timestamp: None,
-            duration_ms,
-            document_index: 0,
-            tests: u32::try_from(cases.len()).unwrap(),
-            failures: 0,
-            errors: 0,
-            skipped: 0,
-            cases: cases
-                .iter()
-                .map(|(class_name, name, duration_ms)| Case {
-                    class_name: (*class_name).to_owned(),
-                    name: (*name).to_owned(),
-                    status: CaseStatus::Passed,
-                    duration_ms: *duration_ms,
-                })
-                .collect(),
-        }],
+        cases: cases
+            .iter()
+            .map(|(class_name, name, duration_ms)| Case {
+                class_name: (*class_name).to_owned(),
+                name: (*name).to_owned(),
+                status: CaseStatus::Passed,
+                duration_ms: *duration_ms,
+                started_at: "2026-10-09T12:00:00Z".to_owned(),
+                recorded: None,
+                reason: None,
+            })
+            .collect(),
         failures: Vec::new(),
         skipped_containers: Vec::new(),
         active_tests: Vec::new(),

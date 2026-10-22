@@ -32,7 +32,7 @@ fn replayed() -> (tempfile::TempDir, std::path::PathBuf) {
 fn an_arm_picks_its_median_run() {
     let (_dir, session) = replayed();
     let mut modal = args(None, None, None, DEFAULT_TOP);
-    modal.selection.arm = Some(Arm::Modal);
+    modal.selection.arm = Some(Arm::MODAL);
     let report = report(&session, &modal).expect("a report");
     assert_eq!(
         (report.run.as_str(), report.median_by),

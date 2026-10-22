@@ -18,7 +18,7 @@
 //!   named volume. The shares are arguments of the create, as they are arguments of `tart run` on Tart, so a
 //!   share-set change makes the container again. The create arguments are recorded ([`CreateRecord`]), and a record
 //!   that differs from the current arguments is how that change is seen. The volume survives a recreate, so the
-//!   staged daemon runtime, the download cache and the guest agent stay.
+//!   runfiles trees, the download cache and the guest agent stay.
 //! - **liveness** is `docker inspect`. There is no process of the controller's to identify, as there is none on
 //!   Parallels: the container is the engine's, found by name.
 //!
@@ -89,7 +89,8 @@ const DOCKER_STOP_TIMEOUT: Duration = Duration::from_mins(1);
 /// layers of an image.
 const DOCKER_REMOVE_TIMEOUT: Duration = Duration::from_mins(5);
 
-/// The timeout of `docker volume rm`. The volume holds what the worker staged: the daemon runtimes and the caches.
+/// The timeout of `docker volume rm`. The volume holds the guest-local state of the worker: the runfiles trees and
+/// the caches.
 const DOCKER_VOLUME_REMOVE_TIMEOUT: Duration = Duration::from_mins(10);
 
 /// The timeout of `docker build`. The first build installs the guest packages over the base image and takes minutes.
@@ -173,14 +174,13 @@ pub(crate) const GUEST_PACKAGES: &[&str] = &[
     // No video encoder: `air-trace-record` encodes the per-scenario video itself.
 ];
 
-/// What the guest agent's `validate-guest` verb is told: the display, and the runtime root whose shared objects it
-/// runs `ldd` over.
+/// What the guest agent's `validate-guest` verb is told: the display alone.
 ///
-/// Neither is the package list: the validator reads what the guest *has*, and one handed the list would need a
-/// soname-to-package mapping to use it. The root is [`Config::guest_runtime_root`], where the JBR and JCEF are, not
-/// the IDE root, where nothing is staged and the sweep would find nothing on every boot.
+/// It is not the package list: the validator reads what the guest *has*, and one handed the list would need a
+/// soname-to-package mapping to use it. The verb sweeps no shared object. The lane daemon runs `ldd` over the shared
+/// objects of its distribution at its own boot, because the boot of a worker does not know the distribution of a run.
 pub(crate) fn validate_argv(settings: &Config) -> Vec<String> {
-    vec![settings.guest_display.clone(), settings.guest_runtime_root()]
+    vec![settings.guest_display.clone()]
 }
 
 /// The build argument that carries [`GUEST_PACKAGES`]. The Dockerfile must read it, and a unit test holds it to that.

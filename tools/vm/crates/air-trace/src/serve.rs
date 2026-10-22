@@ -22,6 +22,12 @@
 //!   `/air/runs`. A site that is missing, or older than `plugins/air/docs/src`, is built once in the background, and
 //!   a placeholder page says so meanwhile.
 //!
+//! # A TeamCity build
+//!
+//! `--teamcity <build>` resolves a build, a composite one to the builds that ran under it, and downloads the
+//! `bazel.logs.zip` of each into the cache before the server starts. Each zip is a root, and its bundles carry the
+//! build as their origin. [teamcity] has the details.
+//!
 //! # One server for each machine
 //!
 //! `--detach` starts the server in a new session and returns when it answers, or at once when one already answers
@@ -44,6 +50,7 @@ mod http;
 mod journals;
 mod service;
 mod state;
+mod teamcity;
 
 use std::ffi::OsString;
 use std::fs::File;
@@ -63,7 +70,10 @@ use tokio_util::sync::CancellationToken;
 
 use crate::{Exit, Refusal, code, usage};
 use service::{PidFile, detach};
+pub(crate) use service::{SiteTools, build_site_with, newer_sources, site_source_dirs, site_tools, tools_text};
+pub(crate) use state::{BuildOutput, Runs, Scenario, group_runs, listed};
 use state::{Log, Server, Settings};
+pub(crate) use teamcity::{Rest, agent_client};
 
 pub(crate) const RUN_ROUTE: &str = "/__air/run/";
 pub(crate) const BUNDLE_ROUTE: &str = "/__air/bundle/";
@@ -85,7 +95,15 @@ pub(crate) struct ServeArgs {
     /// Another directory or zip to find bundles in; repeatable.
     #[arg(long = "root", value_name = "DIR")]
     pub roots: Vec<PathBuf>,
-    /// Look only in the --root values, not in out/air-traces, the AIR lanes' bazel-testlogs and the VM runs and
+    /// A TeamCity build to find bundles in, by its id or the URL of its page; repeatable. A composite build stands
+    /// for the builds that ran under it. The bazel.logs.zip of each is downloaded once into the cache. The token is
+    /// TEAMCITY_TOKEN, or else the one that the TeamCity CLI (`teamcity auth login`) keeps.
+    #[arg(long = "teamcity", value_name = "BUILD")]
+    pub teamcity: Vec<String>,
+    /// The TeamCity server of a --teamcity build given by its id.
+    #[arg(long, value_name = "URL", env = "TEAMCITY_URL", default_value = teamcity::DEFAULT_TEAMCITY_URL)]
+    pub teamcity_url: String,
+    /// Look only in the --root and --teamcity values, not in the AIR lanes' bazel-testlogs and the VM runs and
     /// reports.
     #[arg(long)]
     pub no_default_roots: bool,
@@ -236,8 +254,14 @@ pub(crate) async fn serve(args: ServeArgs, program: &DetachProgram, context: Con
         err(format!("air-trace {command}: {}", refused.message));
         refused.exit.code()
     };
-    if args.no_default_roots && args.roots.is_empty() {
+    if args.no_default_roots && args.roots.is_empty() && args.teamcity.is_empty() {
         return fail("serve", usage("no roots to look in; pass --root DIR"));
+    }
+    if args.detach && !args.teamcity.is_empty() {
+        return fail(
+            "serve",
+            usage("--teamcity needs a server of its own, so it does not go with --detach; pick a --port, or 0 for a free one"),
+        );
     }
     if args.detach {
         if args.port == 0 {
@@ -316,6 +340,29 @@ pub(crate) async fn serve(args: ServeArgs, program: &DetachProgram, context: Con
         match std::path::absolute(root) {
             Ok(absolute) => roots.push(Root::new(RootKind::Flag, absolute)),
             Err(error) => return fail("serve", usage(format!("--root {}: {error}", root.display()))),
+        }
+    }
+    if !args.teamcity.is_empty() {
+        let server = match teamcity::parse_server(&args.teamcity_url) {
+            Ok(server) => server,
+            Err(refused) => return fail("serve", refused),
+        };
+        let (given, cache) = (args.teamcity.clone(), cache_dir.clone());
+        let log = Arc::clone(&streams.out);
+        let resolved = tokio::task::spawn_blocking(move || {
+            let client = |build_server: &str| teamcity::client(build_server, &server, &|name| std::env::var(name).ok());
+            teamcity::teamcity_roots(&given, &server, &cache, &client, &|line| log(&line))
+        })
+        .await;
+        match resolved {
+            Ok(Ok(found)) => roots.extend(found),
+            Ok(Err(refused)) => return fail("serve", refused),
+            Err(_) => {
+                return fail(
+                    "serve",
+                    Refusal::new("teamcity_interrupted", Exit::Broken, "the TeamCity download was interrupted"),
+                );
+            }
         }
     }
     let mut settings = Settings::new(cache_dir, roots);

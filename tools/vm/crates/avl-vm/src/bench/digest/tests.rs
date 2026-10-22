@@ -65,7 +65,7 @@ fn a_project_session_shows_the_editor_and_the_additional_modules() {
     let (_dir, session_dir) = fixture_session();
     let mut info = session::read_info(&session_dir).expect("the session");
     info.command = "project".to_owned();
-    info.arms = vec![Arm::Project];
+    info.arms = vec![Arm::PROJECT];
     info.project = Some("<template>/projects/markdown".to_owned());
     info.project_file = Some("README.md".to_owned());
     info.additional_modules = vec!["intellij.markdown".to_owned(), "intellij.json".to_owned()];
@@ -98,7 +98,7 @@ fn an_empty_editor_session_shows_the_composer() {
     let (_dir, session_dir) = fixture_session();
     let mut info = session::read_info(&session_dir).expect("the session");
     info.command = "project".to_owned();
-    info.arms = vec![Arm::EmptyEditor];
+    info.arms = vec![Arm::EMPTY_EDITOR];
     info.cold = true;
     info.project = Some("<template>/projects/markdown".to_owned());
     let run_dir = empty_editor_run(&session_dir, &EMPTY_STATE_FIXTURE_SPANS);
@@ -147,7 +147,7 @@ fn a_modal_session_shows_the_modal_spans_and_their_ends() {
     use crate::bench::summary::Summary;
     let (_dir, session_dir) = fixture_session();
     let mut info = session::read_info(&session_dir).expect("the session");
-    info.arms = vec![Arm::Modal];
+    info.arms = vec![Arm::MODAL];
     let run_dir = session_dir.join("modal-run-01");
     let id = RunId::parse("modal-run-01").expect("a run");
     let run = record::collect(&run_dir, &id, LaunchFacts::default());
@@ -203,7 +203,7 @@ fn the_digest_notes_the_samples_of_the_symbol_parsing_of_the_profiler() {
     use crate::bench::summary::Summary;
     let (_dir, session_dir) = fixture_session();
     let mut info = session::read_info(&session_dir).expect("the session");
-    info.arms = vec![Arm::NonModal];
+    info.arms = vec![Arm::NON_MODAL];
     let run_dir = session_dir.join("non-modal-run-01");
     std::fs::write(
         run_dir.join("cpu-gate.collapsed"),

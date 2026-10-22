@@ -129,6 +129,10 @@ The doc harvest also fails on a record without a known status or a known topic. 
 site runs these checks and its own checks. Then it runs the script tests of the site and of the kernel. Air does not run `specRefs` and `vocabulary`. `AirSpecReferencesTest` owns the Air spec
 references.
 
+The doc harvest runs the decision, diagram, prose, and vocabulary checks too. It takes them from a check run of
+`scripts/checkRun.ts`, which runs each check at most once. The check of the build site gives its run to the harvest,
+so no check runs twice there.
+
 ### The gate protocol
 
 A JUnit test runs `scripts/gate.ts` of a site on the bun that Bazel declares, `//build:bun`. The gate follows one
@@ -191,10 +195,11 @@ pnpm run test:scripts
 pnpm run typecheck
 ```
 
-The `check` script of each site also runs `test:scripts` of the kernel. `src/noSiteImports.test.ts` fails on a kernel
-import from a site. The kernel has no Playwright run of its own. A site runs the kernel e2e suite from its own
-suite. It calls `defineKernelSuite` of `e2e/kernel.test.ts` with its `test` and `expect`. Playwright refuses a second
-copy of its test module. After a kernel change, run the checks and the e2e suite of both sites.
+`test:scripts` runs the tests with `scripts/scriptTests.ts`, which loads every test file into one process. The `check`
+script of each site also runs the kernel tests. `src/noSiteImports.test.ts` fails on a kernel import from a site. The
+kernel has no Playwright run of its own. A site runs the kernel e2e suite from its own suite. It calls
+`defineKernelSuite` of `e2e/kernel.test.ts` with its `test` and `expect`. Playwright refuses a second copy of its test
+module. After a kernel change, run the checks and the e2e suite of both sites.
 
 ## Add a site
 

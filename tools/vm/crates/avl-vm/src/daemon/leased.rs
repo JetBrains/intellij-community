@@ -30,6 +30,7 @@
 use std::path::Path;
 use std::sync::Arc;
 
+use crate::daemon::results;
 use crate::worker::lease::{
     AcquireRequest, HeldWorker, ReleaseResult, SlotReason, acquire_workers, disposition, receipt_for_path, release_workers,
     require_one_guest_os, with_run_marker,
@@ -43,7 +44,7 @@ use avl_wire::progress::{Event, LeaseDisposition, Phase, RunStarted, VerdictLeas
 use futures::StreamExt;
 use futures::stream::FuturesUnordered;
 
-use crate::daemon::build::{BuildScope, PreparedBuild};
+use crate::daemon::build::{BuildScope, DaemonTarget, PreparedBuild};
 use crate::daemon::host::Host;
 use crate::daemon::slot::parked_daemon_probe;
 use crate::daemon::verdict::release_error;
@@ -141,6 +142,7 @@ impl Host {
         let run_id = avl_base::actor_id(&self.environment, command);
         let ctx = ctx.clone().with_run_id(run_id.as_str());
         let _journal = journal::attach(&self.settings.runtime_root, &self.reporter, &run_id);
+        let _results = results::attach(&self.reporter, &self.environment);
         let process_started_at = self.process_started_at(&ctx).await;
         self.reporter.publish(
             Event::RunStarted(RunStarted {
@@ -180,6 +182,7 @@ impl Host {
         run_id: &str,
         operation: &'static str,
         workers: Workers<'_>,
+        target: DaemonTarget,
         divide: impl FnOnce(&[HeldWorker]) -> Result<P, Refusal>,
         body: impl AsyncFn(&P, usize, Lease, &Arc<PreparedBuild>) -> T,
     ) -> Result<Leased<P, T>, Refusal> {
@@ -210,7 +213,7 @@ impl Host {
         };
 
         ensure_host_paths(ctx, &self.runner, settings).await?;
-        let built = Arc::new(self.prepare_build(ctx, &BuildScope::pool(settings)?).await?);
+        let built = Arc::new(self.prepare_build(ctx, &BuildScope::pool(settings)?.for_target(target)).await?);
 
         if let Some(request) = &request {
             let label = match wanted {

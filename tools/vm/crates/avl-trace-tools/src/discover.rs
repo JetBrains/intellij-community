@@ -1,8 +1,8 @@
 //! Finds the trace bundles on this machine and says what each one is.
 //!
-//! A bundle is found by its `spans.jsonl`, in a directory tree or inside a zip, and named by its manifest; a
-//! bundle without one is named by what its first and last log records say, and by its path. `air-trace serve`
-//! lists what a [Scanner] finds. `air-trace plan` reads the bundles an input holds, and finds those of the
+//! A bundle is found by its `spans.jsonl`, in a directory tree, inside a zip or inside a zip in a zip, and named by
+//! its manifest; a bundle without one is named by what its first and last log records say, and by its path.
+//! `air-trace serve` lists what a [Scanner] finds. `air-trace plan` reads the bundles an input holds, and finds those of the
 //! scenarios it plans, with the same readers, so both name a bundle the same way. The controller's trace sync
 //! reads a pulled zip with [read_zip].
 //!
@@ -22,9 +22,9 @@ use avl_trace::vocabulary;
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 
-pub use roots::{Root, RootKind, VM_REPORTS_GLOB, VM_RUN_TRACES_DIR, VM_RUNS_DIR, VM_RUNS_GLOB, default_roots, within};
+pub use roots::{Origin, Root, RootKind, VM_REPORTS_GLOB, VM_RUN_TRACES_DIR, VM_RUNS_DIR, VM_RUNS_GLOB, default_roots, within};
 pub use scan::{Options, RootState, Scanner, Snapshot};
-pub use zips::{EntryMeta, ZipCache, ZipIndex, clean_bundle_path, read_zip};
+pub use zips::{EntryMeta, InnerZip, ZipCache, ZipIndex, clean_bundle_path, read_zip, read_zip_reporting};
 
 // --- what a bundle says --------------------------------------------------------------------------------------
 
@@ -87,6 +87,9 @@ pub struct Summary {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub thumbnail: Option<String>,
     pub source: Source,
+    /// The CI build that ran the bundle, when its root names one.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub origin: Option<Origin>,
     /// Why the manifest could not be read, when the status is [Status::Invalid].
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
@@ -110,7 +113,7 @@ vocabulary! {
 pub struct Source {
     pub kind: SourceKind,
     /// The bundle's directory or the zip that holds it, as a real path; for a file read alone, the name it was
-    /// given as.
+    /// given as. A zip inside a zip is the outer zip, `!/` and the inner zip's entry.
     pub path: String,
     /// The bundle's directory inside the zip, ending in `/`, and empty at the zip's top.
     #[serde(skip_serializing_if = "String::is_empty")]
@@ -122,7 +125,8 @@ pub struct Source {
 pub enum Location {
     /// A directory bundle's real directory.
     Dir(PathBuf),
-    /// A zip bundle's real zip, and its directory inside it: ending in `/`, or empty at the zip's top.
+    /// A zip bundle's real zip, and its directory inside it: ending in `/`, or empty at the zip's top. For a zip
+    /// inside a zip, the path is the inner zip's extraction.
     Zip { path: PathBuf, prefix: String },
     /// A file read alone, whose bundle is nowhere.
     File,

@@ -957,8 +957,8 @@ fn is_root_disk_options(value: &str) -> bool {
     })
 }
 
-/// The size of a Tart worker's root disk. The floor is the image plus room for the writable state (`out`, `tmp`,
-/// `build-download`, the daemon's jar store). A Tart macOS worker grows its disk to this size, and its image is
+/// The size of a Tart worker's root disk. The floor is the image plus room for the writable state (`tmp`, the
+/// runfiles trees, the daemon's jar store). A Tart macOS worker grows its disk to this size, and its image is
 /// 50 GB. Only ever applied upwards: `tart set --disk-size` cannot shrink a disk.
 fn tart_root_disk_gb(reader: &mut Reader<'_>) -> u32 {
     const FLOOR: u32 = 80;
@@ -1131,7 +1131,6 @@ pub struct Config {
     host_paths: OnceLock<HostPaths>,
     pub host_repo_override: Option<PathBuf>,
 
-    pub vm_out: String,
     pub vm_tmp: String,
     /// The guest directory that holds the files of `run --test-env NAME=@FILE` for one run (`AIR_VM_RUN_SECRETS`).
     ///
@@ -1139,9 +1138,6 @@ pub struct Config {
     /// is part of the launch digest. A Linux guest keeps it on `/dev/shm`, a tmpfs, so a secret never reaches the
     /// persistent data volume. A macOS guest has no tmpfs and keeps it under [`Config::vm_tmp`].
     pub vm_run_secrets: String,
-    /// The build-dependencies download cache the test JVM is redirected to, since the guest has no checkout to keep
-    /// it in. Persistent across runs: a warm cache keeps the per-class inner loop at about a minute.
-    pub vm_download_cache: String,
 
     pub git: String,
     /// The guest's Node. The lane's tests need it rather than the controller: the daemon puts its directory first
@@ -1435,7 +1431,7 @@ impl Config {
         }
         let docker = docker_bin.or_else(|| (host != HostOs::Macos).then(|| PathBuf::from("docker")));
 
-        // The daemon JVM sets no `-Xmx`, so its default maximum heap follows the cap. An Apple `container` worker is a
+        // The memory cap of a worker, which holds the lane daemon and the lane IDE. An Apple `container` worker is a
         // VM of its own; see [`Config::vm_memory_mib`]. It resolves before the slots, because the Apple `container`
         // pool size follows it.
         let vm_memory_fallback = match (backend, docker_engine) {
@@ -1612,10 +1608,8 @@ impl Config {
             configured_bazel_user_root: reader.path("AIR_VM_BAZEL_USER_ROOT", || host.bazel_user_root(&home)),
             host_paths: OnceLock::new(),
             host_repo_override: reader.optional("AIR_VM_HOST_REPO").map(PathBuf::from),
-            vm_out: reader.string("AIR_VM_OUT", format!("{vm_data}/out")),
             vm_tmp,
             vm_run_secrets,
-            vm_download_cache: reader.string("AIR_VM_DOWNLOAD_CACHE", format!("{vm_data}/build-download")),
             git: reader.string("AIR_VM_HOST_GIT", "git"),
             vm_node: reader.string("AIR_VM_NODE", vm_node_fallback),
             vm_user,
@@ -1746,12 +1740,6 @@ impl Config {
                 self.guest_os.as_str()
             )))
         }
-    }
-
-    /// Where staged daemon runtime generations live in the guest, one directory per digest: the JBR and JCEF, so
-    /// the one place on a worker where the shared objects the guest must resolve are.
-    pub fn guest_runtime_root(&self) -> String {
-        format!("{}/daemon-runtime", self.vm_data)
     }
 
     /// Whether the guest has an Aqua session, TCC, and the rest of the macOS-only path.

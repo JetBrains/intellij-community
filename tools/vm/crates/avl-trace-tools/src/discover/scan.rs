@@ -10,7 +10,7 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use avl_trace::bundle::{LOGS_FILE, MANIFEST_FILE, SNAP_DIR, SPANS_FILE, VIDEO_FILE, decode_manifest};
 use serde::Serialize;
 
-use super::roots::{Root, RootKind, within};
+use super::roots::{Origin, Root, RootKind, within};
 use super::zips::ZipCache;
 use super::{
     Bundle, Location, Source, SourceKind, Status, Summary, apply_inference, apply_manifest, bundle_id, infer_from_logs, last_complete_line,
@@ -26,6 +26,9 @@ pub struct Options {
     /// so in the root's problems. A trace root holds a few hundred entries per run; the bound is for a directory
     /// someone names without knowing whether it is one, such as the checkout.
     pub max_entries: Option<usize>,
+    /// Where the inner zips of a zip are extracted to be read. `None` extracts them into a private temporary
+    /// directory, which the scanner removes when it is dropped.
+    pub nested_dir: Option<PathBuf>,
     /// The clock.
     pub now: Box<dyn Fn() -> SystemTime + Send + Sync>,
 }
@@ -35,6 +38,7 @@ impl Default for Options {
         Self {
             stale_after: Duration::from_mins(5),
             max_entries: None,
+            nested_dir: None,
             now: Box::new(SystemTime::now),
         }
     }
@@ -45,6 +49,8 @@ impl Default for Options {
 pub struct RootState {
     pub kind: RootKind,
     pub path: PathBuf,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub origin: Option<Origin>,
     pub exists: bool,
     pub bundles: usize,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -102,8 +108,8 @@ const SKIPPED_DIRS: &[&str] = &[".git", "node_modules"];
 impl Scanner {
     pub fn new(options: Options) -> Self {
         Self {
+            zips: ZipCache::new(options.nested_dir.clone()),
             options,
-            zips: ZipCache::default(),
             state: Mutex::default(),
         }
     }
@@ -159,6 +165,7 @@ impl Scanner {
             state: RootState {
                 kind: configured.kind,
                 path: configured.path.clone(),
+                origin: configured.origin.clone(),
                 exists: false,
                 bundles: 0,
                 error: configured.error.clone(),
@@ -218,6 +225,11 @@ impl Scanner {
             self.add_zip(&mut found, &real, seen);
         } else if info.is_dir() {
             self.walk(state, &mut found, &real, now, seen);
+        }
+        if let Some(origin) = &configured.origin {
+            for bundle in &mut found.bundles {
+                bundle.summary.origin = Some(origin.clone());
+            }
         }
         found.state.bundles = found.bundles.len();
         found.real = Some(real);
@@ -285,6 +297,10 @@ impl Scanner {
                 if let Some(error) = index.error() {
                     found.problem(format!("{}: {error}", zip.display()));
                 }
+                for error in index.inner_errors() {
+                    found.problem(format!("{}!/{error}", zip.display()));
+                }
+                seen.zips.extend(index.inner().iter().map(|inner| inner.index.path.clone()));
                 found.bundles.extend(index.bundles(&zip.to_string_lossy()));
             }
             Err(error) => found.problem(format!("{}: {error}", zip.display())),

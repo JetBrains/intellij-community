@@ -21,6 +21,8 @@ use avl_trace::bundle::{
 use avl_trace::{Error, refuse};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use zip::write::SimpleFileOptions;
+
+use crate::discover::clean_bundle_path;
 use zip::{CompressionMethod, DateTime, System, ZipWriter};
 
 /// The entries kept uncompressed: media that is compressed already, which deflate would only make slower to
@@ -161,6 +163,105 @@ pub fn pack(source: &Path, destination: &Path, options: &PackOptions<'_>) -> Res
 
     report.packed = bundles;
 
+    let mut skipped = Vec::new();
+    let mut written = 0;
+    report.bytes = write_zip(&destination, &mut |writer| {
+        for item in &entries {
+            if write_entry(writer, item).map_err(|error| Error::new(format!("{}: {error}", item.name)))? {
+                written += 1;
+            } else {
+                skipped.push(Skipped {
+                    path: item.name.clone(),
+                    reason: "removed while it was packed".to_owned(),
+                });
+            }
+        }
+        Ok(())
+    })?;
+    report.entries = written;
+    report.skipped.extend(skipped);
+    report.destination = Some(destination);
+    Ok(report)
+}
+
+/// Zips one bundle of a zip into destination, with the bundle at the top of the new zip, as [pack] zips a tree: media
+/// stored, the rest deflated, one time and one mode, atomically. `prefix` is the bundle's directory in the zip,
+/// ending in `/`, or empty for a zip whose top is the bundle. The entries are inflated and checked against their
+/// checksums, so a deflated video of Bazel's `outputs.zip` is stored in the new zip. The zip is not trusted: an entry
+/// whose name under the prefix is not a clean relative path, such as one with `..`, refuses the pack.
+pub fn pack_zip_bundle(zip: &Path, prefix: &str, destination: &Path) -> Result<Report, Error> {
+    let source = absolute(zip)?;
+    let destination = absolute(destination)?;
+    let read_error = |error: &dyn std::fmt::Display| Error::new(format!("cannot read {}: {error}", source.display()));
+    let mut archive = File::open(&source)
+        .map_err(|error| read_error(&error))
+        .and_then(|file| zip::ZipArchive::new(file).map_err(|error| read_error(&error)))?;
+    let mut names: Vec<String> = archive
+        .file_names()
+        .filter(|name| !name.ends_with('/'))
+        .filter_map(|name| name.strip_prefix(prefix).map(|_| name.to_owned()))
+        .collect();
+    names.sort();
+    if !names.iter().any(|name| name.strip_prefix(prefix) == Some(SPANS_FILE)) {
+        refuse!("{} holds no bundle at {prefix:?}: no {SPANS_FILE} there", source.display());
+    }
+    if let Some(unclean) = names.iter().find(|name| clean_bundle_path(&name[prefix.len()..]).is_none()) {
+        refuse!(
+            "{} holds the entry {unclean:?}, which is not a clean path inside its bundle",
+            source.display()
+        );
+    }
+    let bytes = write_zip(&destination, &mut |writer| {
+        for name in &names {
+            let relative = &name[prefix.len()..];
+            let mut entry = archive.by_name(name).map_err(|error| Error::new(format!("{name}: {error}")))?;
+            writer
+                .start_file(relative, entry_options(method_of(relative), entry.size()))
+                .map_err(|error| Error::new(format!("{name}: {error}")))?;
+            io::copy(&mut entry, writer).map_err(|error| Error::new(format!("{name}: {error}")))?;
+        }
+        Ok(())
+    })?;
+    Ok(Report {
+        source,
+        destination: Some(destination),
+        entries: names.len(),
+        bundles: 1,
+        packed: vec![prefix.trim_end_matches('/').to_owned()],
+        bytes,
+        skipped: Vec::new(),
+    })
+}
+
+/// Zips files at the names given, in the order given, as [pack] writes a zip. Each entry is stored or deflated by its
+/// extension, so a zip or a picture is stored and JSON or HTML is deflated. Every entry has one time and one mode, so
+/// the same files give the same bytes. The zip is written atomically. Each entry is `(name, file)`, and a name that is
+/// not a clean relative path, such as one with `..`, refuses the zip. Answers the size of the zip.
+pub fn archive(destination: &Path, entries: &[(String, PathBuf)]) -> Result<u64, Error> {
+    if let Some((unclean, _)) = entries.iter().find(|(name, _)| clean_bundle_path(name).is_none()) {
+        refuse!("{unclean:?} is not a clean relative path for an entry of {}", destination.display());
+    }
+    let destination = absolute(destination)?;
+    write_zip(&destination, &mut |writer| {
+        for (name, file) in entries {
+            let failed = |error: &dyn std::fmt::Display| Error::new(format!("{name}: {}: {error}", file.display()));
+            let mut source = File::open(file).map_err(|error| failed(&error))?;
+            let size = source.metadata().map_err(|error| failed(&error))?.len();
+            writer
+                .start_file(name.as_str(), entry_options(method_of(name), size))
+                .map_err(|error| failed(&error))?;
+            io::copy(&mut source, writer).map_err(|error| failed(&error))?;
+        }
+        Ok(())
+    })
+}
+
+/// The zip writer of [pack], [pack_zip_bundle] and [archive].
+type Writer<'a> = ZipWriter<BufWriter<&'a mut File>>;
+
+/// Writes a zip beside destination under a temporary name, with `fill` adding the entries, and renames it onto
+/// destination. Answers the size of the zip.
+fn write_zip(destination: &Path, fill: &mut dyn FnMut(&mut Writer<'_>) -> Result<(), Error>) -> Result<u64, Error> {
     let parent = destination.parent().unwrap_or(Path::new("/"));
     let base = destination.file_name().unwrap_or_default().to_string_lossy();
     let io_error = |error: io::Error| Error::new(format!("cannot write {}: {error}", destination.display()));
@@ -170,26 +271,16 @@ pub fn pack(source: &Path, destination: &Path, options: &PackOptions<'_>) -> Res
         .tempfile_in(parent)
         .map_err(io_error)?;
     let mut writer = ZipWriter::new(BufWriter::with_capacity(1 << 20, temporary.as_file_mut()));
-    for item in &entries {
-        if write_entry(&mut writer, item).map_err(|error| Error::new(format!("{}: {error}", item.name)))? {
-            report.entries += 1;
-        } else {
-            report.skipped.push(Skipped {
-                path: item.name.clone(),
-                reason: "removed while it was packed".to_owned(),
-            });
-        }
-    }
+    fill(&mut writer)?;
     let buffered = writer.finish().map_err(|error| io_error(error.into()))?;
     buffered.into_inner().map_err(|error| io_error(error.into_error()))?;
     let file = temporary.as_file();
     file.sync_all().map_err(io_error)?;
-    report.bytes = file.metadata().map_err(io_error)?.len();
+    let bytes = file.metadata().map_err(io_error)?.len();
     let mut temporary = temporary.into_temp_path();
-    fs::rename(&temporary, &destination).map_err(io_error)?;
+    fs::rename(&temporary, destination).map_err(io_error)?;
     temporary.disable_cleanup(true);
-    report.destination = Some(destination);
-    Ok(report)
+    Ok(bytes)
 }
 
 /// The path made absolute and lexically clean, as the zip's report and the inside-the-tree check need it.

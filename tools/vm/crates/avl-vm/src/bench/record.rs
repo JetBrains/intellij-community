@@ -7,17 +7,18 @@ use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 
-use super::arm::{Arm, Gate};
+use super::arm::{Arm, ArmKind, Gate};
 use super::classload::{self, ClassLoadLog};
 use super::files;
 use super::fus;
 use super::load::HostLoad;
-use super::pluginlog::{self, PluginLog};
+use super::pluginlog::{self, Owner, PluginLog, Tally};
 use super::profile::{self, EdtProfile, ExcludedSamples, FrameSamples, GATE_PROFILE, ProfileScope, WHOLE_PROFILE};
 use super::session::{CLASS_LOAD_LOG, TRACE_FILE};
 use super::stats::{self, StartupStats};
 use super::timeline::QUIT_SPAN;
-use super::trace::{self, Trace, as_f64, micros_to_ms};
+use super::trace::{self, Trace, as_f64, micros_to_ms, tenth};
+use super::triggers;
 
 /// The line of `idea.log` that tells that the IDE opened the welcome project.
 pub(crate) const WELCOME_PROJECT_LOG_LINE: &str = "Opened the welcome screen project";
@@ -40,6 +41,11 @@ pub(crate) const CLASS_EDT_TIME: &str = "classLoading.edtTime";
 
 /// The lines of `plugin-classes.txt`: the classes that a plugin class loader defined.
 pub(crate) const PLUGIN_CLASSES: &str = "pluginClasses";
+/// The milliseconds that the IDE spent on the writes of `plugin-classes.txt`, from the trailer of a v2 log. A log
+/// without the trailer gives no metric.
+pub(crate) const PLUGIN_LOG_WRITE_MS: &str = "pluginLog.writeMs";
+/// The milliseconds that the IDE spent on the capture of the activation stacks, from the same trailer.
+pub(crate) const PLUGIN_LOG_STACK_MS: &str = "pluginLog.stackMs";
 /// The class log of the plugin class loaders, which `plugin.classloader.debug` names. See [`pluginlog`].
 pub(crate) const PLUGIN_CLASSES_FILE: &str = "plugin-classes.txt";
 
@@ -73,6 +79,19 @@ pub(crate) const CLASS_ANCHORS: [&str; 6] = [
 pub(crate) fn named_at(anchor: &str) -> String {
     format!("{CLASSES_NAMED}@{anchor}")
 }
+
+/// The named classes that the EDT loaded, the classes of the platform and of the plugins. A run needs a class-load log
+/// that knows the EDT for it, see [`classload::Threads::knows_edt`].
+pub(crate) const CLASSES_EDT: &str = "classes.edt";
+
+/// The metric key of the named classes that the EDT loaded before `anchor`, such as `classes.edt@quit`.
+pub(crate) fn edt_at(anchor: &str) -> String {
+    format!("{CLASSES_EDT}@{anchor}")
+}
+
+/// The thread dump of the IDE that a run takes after its gate, with `jcmd <pid> Thread.print`. It names the Java
+/// threads by the tid of the class-load log.
+pub(crate) const THREAD_DUMP_FILE: &str = "threads.txt";
 
 /// The platform spans. The metric key is the span name.
 pub(crate) const PLATFORM_SPANS: [&str; 11] = [
@@ -221,6 +240,10 @@ pub(crate) struct LaunchFacts {
     /// or one that stopped it, has none.
     #[serde(default)]
     pub(crate) profile_stop_failure: Option<String>,
+    /// Why the run wrote no thread dump after its gate, see [`THREAD_DUMP_FILE`]. A run before the dump, and a run that
+    /// wrote one, has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) thread_dump_failure: Option<String>,
 }
 
 /// One run.
@@ -241,18 +264,10 @@ pub(crate) struct RunRecord {
     pub(crate) notes: Vec<String>,
     /// Milliseconds, or a count for the class metrics.
     pub(crate) metrics: BTreeMap<String, f64>,
-    /// The named classes of each plugin over the whole run: the JVM class-load log joined with `plugin-classes.txt`,
-    /// else `plugin-classes.txt` alone. [`Summary::build`](super::summary::Summary::build) drops the class maps, so
-    /// only `result.json` holds them.
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub(crate) classes_by_plugin: BTreeMap<String, u64>,
-    /// The named classes of each content module over the whole run, from the same source as `classes_by_plugin`.
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub(crate) classes_by_module: BTreeMap<String, u64>,
-    /// The named classes of each plugin before each anchor of [`CLASS_ANCHORS`] that the run has, by the anchor. It
-    /// needs the class-load log, the plugin log and the report.
-    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
-    pub(crate) classes_by_plugin_at: BTreeMap<String, BTreeMap<String, u64>>,
+    /// The class maps of the run. [`Summary::build`](super::summary::Summary::build) drops them, so only `result.json`
+    /// holds them.
+    #[serde(flatten)]
+    pub(crate) class_maps: ClassMaps,
     /// The span of the run that its profile covers, when the run has a profile.
     #[serde(default)]
     pub(crate) profile_scope: Option<ProfileScope>,
@@ -271,6 +286,94 @@ pub(crate) struct RunRecord {
     /// The whole EDT profile, for the session summary. Not in `result.json`.
     #[serde(skip)]
     pub(crate) profile: Option<EdtProfile>,
+}
+
+/// The class maps of a run: the JVM class-load log joined with `plugin-classes.txt`, else `plugin-classes.txt` alone.
+/// A map before an anchor needs the class-load log, the plugin log and the report.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct ClassMaps {
+    /// The named classes of each plugin over the whole run.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub(crate) classes_by_plugin: BTreeMap<String, u64>,
+    /// The named classes of each plugin before each anchor of [`CLASS_ANCHORS`] that the run has, by the anchor.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub(crate) classes_by_plugin_at: BTreeMap<String, BTreeMap<String, u64>>,
+    /// The named classes of each loader over the whole run, in the order of the loader.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) classes_by_loader: Vec<LoaderClasses>,
+    /// The named classes of each loader before each anchor that the run has, by the anchor.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub(crate) classes_by_loader_at: BTreeMap<String, Vec<LoaderClasses>>,
+    /// The first class of each loader and the stack that loaded it, in the order of the loader.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) activations: Vec<LoaderActivation>,
+}
+
+/// The named classes of one loader: the main module or a content module of a plugin.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct LoaderClasses {
+    pub(crate) plugin: String,
+    /// The content module. The main module of a plugin has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) module: Option<String>,
+    pub(crate) classes: u64,
+    /// The defines of the classes, when the plugin log times each one. A log of the old shape has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) times: Option<DefineTimes>,
+}
+
+/// The defines of the classes of a loader, by the thread that defined them. A time is the sum of the `findClass`
+/// nanos that the plugin log writes.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct DefineTimes {
+    pub(crate) edt_classes: u64,
+    pub(crate) edt_nanos: u64,
+    pub(crate) bg_nanos: u64,
+}
+
+impl LoaderClasses {
+    fn of(owner: &Owner, tally: &Tally) -> Self {
+        Self {
+            plugin: owner.plugin.clone(),
+            module: owner.module.clone(),
+            classes: tally.classes,
+            times: tally.is_timed().then_some(DefineTimes {
+                edt_classes: tally.edt_classes,
+                edt_nanos: tally.edt_nanos,
+                bg_nanos: tally.bg_nanos,
+            }),
+        }
+    }
+}
+
+/// The first class of one loader, when the JVM loaded it, and the stack that loaded it.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct LoaderActivation {
+    pub(crate) plugin: String,
+    /// The content module. The main module of a plugin has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) module: Option<String>,
+    /// The class of the record with the stack, else the class of the first record of the loader.
+    pub(crate) first_class: String,
+    /// Milliseconds from the process start, to a tenth, of the first class of the loader in the class-load log. A run
+    /// without the class-load log or without `jvm.loadingTime` has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) first_load_ms: Option<f64>,
+    /// The frames, the top frame first. A plugin log of the old shape has none.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) stack: Vec<String>,
+    /// The trigger frame of the stack, see [`triggers::trigger_frame`]. A loader without a stack has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) trigger: Option<String>,
+}
+
+/// The rows of `tallies`, in the order of the loader.
+fn loader_rows(tallies: &BTreeMap<Owner, Tally>) -> Vec<LoaderClasses> {
+    tallies.iter().map(|(owner, tally)| LoaderClasses::of(owner, tally)).collect()
 }
 
 /// The top lists of a run.
@@ -315,7 +418,7 @@ impl RunId {
 /// Reads one run directory and applies the gate.
 pub(crate) fn collect(run_dir: &Path, id: &RunId, launch: LaunchFacts) -> RunRecord {
     let mut record = RunRecord {
-        arm: id.arm,
+        arm: id.arm.clone(),
         kind: id.kind,
         index: id.index,
         dir: id.dir_name(),
@@ -324,9 +427,7 @@ pub(crate) fn collect(run_dir: &Path, id: &RunId, launch: LaunchFacts) -> RunRec
         reason: None,
         notes: Vec::new(),
         metrics: BTreeMap::new(),
-        classes_by_plugin: BTreeMap::new(),
-        classes_by_module: BTreeMap::new(),
-        classes_by_plugin_at: BTreeMap::new(),
+        class_maps: ClassMaps::default(),
         profile_scope: None,
         excluded_samples: None,
         edt_samples: None,
@@ -362,7 +463,7 @@ fn measure(run_dir: &Path, record: &mut RunRecord) -> Result<(), String> {
         Err(error) => return Err(format!("{error:#}")),
     };
     if let Gate::Welcome { modal } = gate {
-        welcome_gate(run_dir, record.arm, modal, &events)?;
+        welcome_gate(run_dir, &record.arm, modal, &events)?;
     }
     let metrics = &mut record.metrics;
     for (key, id) in [
@@ -421,7 +522,7 @@ fn measure(run_dir: &Path, record: &mut RunRecord) -> Result<(), String> {
     if let Gate::Span { name, missing } = gate {
         span_gate(trace.as_ref(), name, missing)?;
     }
-    if record.arm == Arm::OpenProject {
+    if record.arm.kind == ArmKind::OpenProject {
         open_project_metrics(record.launch.open_request_us, trace.as_ref(), stats.as_ref(), metrics)?;
     }
     if gate == Gate::Highlighted {
@@ -444,10 +545,20 @@ fn measure(run_dir: &Path, record: &mut RunRecord) -> Result<(), String> {
         read_file(run_dir, PLUGIN_CLASSES_FILE, pluginlog::parse, &mut record.notes),
         &mut record.notes,
     );
-    let class_log = detail(
+    if let Some(failure) = &record.launch.thread_dump_failure {
+        record
+            .notes
+            .push(format!("no {THREAD_DUMP_FILE}, so a Java thread has no name: {failure}"));
+    }
+    let mut class_log = detail(
         read_file(run_dir, CLASS_LOAD_LOG, classload::parse, &mut record.notes),
         &mut record.notes,
     );
+    // The dump names the Java threads, the EDT among them, which the class-load log names only when they end. A run
+    // from before the dump has none, and its classes then have no thread.
+    if let (Some(log), Ok(Some(dump))) = (class_log.as_mut(), files::read_optional(&run_dir.join(THREAD_DUMP_FILE))) {
+        log.threads.add_dump(&dump);
+    }
     let quit_ms = trace.as_ref().and_then(|trace| {
         let origin = trace.origin_us()?;
         trace.first(QUIT_SPAN).map(|span| span.offset_ms(origin))
@@ -494,10 +605,10 @@ fn profile_metrics(run_dir: &Path, record: &mut RunRecord) {
     }
 }
 
-/// The class metrics and the class maps of a run. The plugin log alone gives `pluginClasses` and the maps. The
-/// class-load log gives the counts by source, and with the plugin log the owners of its classes. With the report too,
-/// it gives the counts before each anchor: a bound on the process clock plus `jvm.loadingTime` is a bound on the JVM
-/// clock of the log.
+/// The class metrics and the class maps of a run. The plugin log alone gives `pluginClasses`, the maps and the
+/// activations. The class-load log gives the counts by source, and with the plugin log the owners of its classes. With
+/// the report too, it gives the counts before each anchor and the first load of each loader: a bound on the process
+/// clock plus `jvm.loadingTime` is a bound on the JVM clock of the log.
 fn class_metrics(
     record: &mut RunRecord,
     plugin_log: Option<&PluginLog>,
@@ -505,12 +616,18 @@ fn class_metrics(
     stats: Option<&StartupStats>,
     quit_ms: Option<f64>,
 ) {
+    let maps = &mut record.class_maps;
     if let Some(plugin_log) = plugin_log {
         record.metrics.insert(PLUGIN_CLASSES.to_owned(), count(plugin_log.counts.total));
-        record.classes_by_plugin.clone_from(&plugin_log.counts.by_plugin);
-        record.classes_by_module.clone_from(&plugin_log.counts.by_module);
+        if let Some(cost) = plugin_log.cost {
+            record.metrics.insert(PLUGIN_LOG_WRITE_MS.to_owned(), nanos_to_ms(cost.write_nanos));
+            record.metrics.insert(PLUGIN_LOG_STACK_MS.to_owned(), nanos_to_ms(cost.stack_nanos));
+        }
+        maps.classes_by_plugin.clone_from(&plugin_log.counts.by_plugin);
+        maps.classes_by_loader = loader_rows(&plugin_log.counts.by_loader);
     }
     let Some(log) = class_log else {
+        maps.activations = plugin_log.map(|owners| activations(owners, None)).unwrap_or_default();
         return;
     };
     let kinds = log.by_source_kind();
@@ -524,27 +641,36 @@ fn class_metrics(
         record.metrics.insert(key.to_owned(), count(value));
     }
     if let Some(owners) = plugin_log {
-        record.classes_by_plugin = classload::by_plugin(log, owners, None);
-        record.classes_by_module = classload::by_module(log, owners, None);
+        maps.classes_by_plugin = classload::by_plugin(log, owners, None);
+        maps.classes_by_loader = loader_rows(&classload::by_loader(log, owners, None));
         let platform = classload::platform_count(log, owners, None);
-        let plugins = record.classes_by_plugin.values().sum();
+        let plugins = maps.classes_by_plugin.values().sum();
         record.metrics.insert(CLASSES_PLATFORM.to_owned(), count(platform));
         record.metrics.insert(CLASSES_PLUGINS.to_owned(), count(plugins));
     }
     let offset_ms = match stats.map(StartupStats::jvm_loading_ms) {
-        Some(Some(offset_ms)) => as_f64(offset_ms),
+        Some(Some(offset_ms)) => Some(as_f64(offset_ms)),
         Some(None) => {
             record
                 .notes
                 .push("startup-stats.json has no jvm.loadingTime, so the class counts have no anchors".to_owned());
-            return;
+            None
         }
         None => {
             record
                 .notes
                 .push("no startup-stats.json, so the class counts have no anchors".to_owned());
-            return;
+            None
         }
+    };
+    maps.activations = plugin_log
+        .map(|owners| {
+            let first_loads = offset_ms.map(|offset_ms| (classload::first_loads(log, owners), offset_ms));
+            activations(owners, first_loads.as_ref())
+        })
+        .unwrap_or_default();
+    let Some(offset_ms) = offset_ms else {
+        return;
     };
     for anchor in CLASS_ANCHORS {
         let anchor_ms = if anchor == QUIT_ANCHOR {
@@ -557,12 +683,40 @@ fn class_metrics(
         };
         let bound = anchor_ms + offset_ms;
         record.metrics.insert(named_at(anchor), count(log.count_before(bound)));
+        if let Some(edt) = log.edt_count_before(bound) {
+            record.metrics.insert(edt_at(anchor), count(edt));
+        }
         if let Some(owners) = plugin_log {
-            record
-                .classes_by_plugin_at
+            maps.classes_by_plugin_at
                 .insert(anchor.to_owned(), classload::by_plugin(log, owners, Some(bound)));
+            maps.classes_by_loader_at
+                .insert(anchor.to_owned(), loader_rows(&classload::by_loader(log, owners, Some(bound))));
         }
     }
+}
+
+/// The activation of each loader of the plugin log, with its trigger frame. With the first loads on the JVM clock
+/// and the offset of that clock, each one has its first load on the process clock.
+fn activations(owners: &PluginLog, first_loads: Option<&(BTreeMap<Owner, f64>, f64)>) -> Vec<LoaderActivation> {
+    owners
+        .activations
+        .iter()
+        .map(|(owner, activation)| LoaderActivation {
+            plugin: owner.plugin.clone(),
+            module: owner.module.clone(),
+            first_class: activation.first_class.clone(),
+            first_load_ms: first_loads.and_then(|(loads, offset_ms)| loads.get(owner).map(|uptime_ms| tenth(uptime_ms - offset_ms))),
+            stack: activation.stack.clone(),
+            trigger: triggers::trigger_frame(owner, &activation.stack, owners),
+        })
+        .collect()
+}
+
+/// Milliseconds of nanos, to a tenth.
+fn nanos_to_ms(nanos: u64) -> f64 {
+    #[expect(clippy::cast_precision_loss, reason = "a sum of write nanos stays far below 2^53")]
+    let nanos = nanos as f64;
+    tenth(nanos / 1e6)
 }
 
 /// A class count as a metric value. The counts stay far below 2^53.
@@ -580,7 +734,7 @@ fn detail<T>(read: Result<Option<T>, String>, notes: &mut Vec<String>) -> Option
 }
 
 /// The welcome gate: the welcome event with the `is_modal` of the arm, and the welcome project for a non-modal arm.
-fn welcome_gate(run_dir: &Path, arm: Arm, expected: bool, events: &[fus::Event]) -> Result<(), String> {
+fn welcome_gate(run_dir: &Path, arm: &Arm, expected: bool, events: &[fus::Event]) -> Result<(), String> {
     let visible: Vec<&fus::Event> = events
         .iter()
         .filter(|event| event.group.id == fus::WELCOME_GROUP && event.event.id == fus::WELCOME_BECAME_VISIBLE)

@@ -1,7 +1,8 @@
 //! The agent-facing result documents: one run's report, and the two aggregates built over many of them.
 //!
-//! JUnit XML is an internal producer format. What a caller of this controller receives - in both the successful
-//! and the failed command envelope - is the bounded, timestamp-ordered document declared here. An agent reads
+//! The run stream of the daemon is the one account of a run. The report, the JUnit XML and the TeamCity messages are
+//! its three readers. What a caller of this controller receives - in both the successful and the failed command
+//! envelope - is the bounded document declared here. An agent reads
 //! these bytes, so a field renamed here is a field renamed for every reader, and `reportSchemaVersion` is the
 //! promise that says so. A report inside its `reportSchemaVersion` stays readable, and an optional field added
 //! later defaults, because the shard baseline and the trace viewer read reports from earlier runs.
@@ -15,14 +16,15 @@
 //!   one means something wrote a reason and lost it. An explicit `null` is refused.
 //! - **A declared array is always an array**, never `null`.
 //!
-//! What this module deliberately does *not* hold is the arithmetic: building a report from a JUnit corpus and a
-//! run's event stream, and folding many reports into a verdict or a flake rate, are decisions about evidence
-//! and live with the host. This is the shape the decisions are written in.
+//! What this module deliberately does *not* hold is the arithmetic: building a report from a run's event stream and
+//! its traces, and folding many reports into a verdict or a flake rate, are decisions about evidence and live with
+//! the host. This is the shape the decisions are written in.
 //!
 //! Every refusal carries an agent-facing code (`report_schema_*`, `aggregate_schema_*`). A document is decoded
 //! in the order that keeps each code honest: the JSON object, the version, the top-level shape, the vocabulary
 //! words, the typed decode, and the invariants a type cannot state.
 
+use std::collections::BTreeMap;
 use std::fmt;
 use std::str::FromStr;
 
@@ -42,12 +44,7 @@ pub use aggregate::*;
 /// The version of the single-run document. Separate from [`AGGREGATE_SCHEMA_VERSION`]: an aggregate is a
 /// different noun with a different audience, and it embeds these reports rather than pretending to be a bigger
 /// one of them.
-pub const RUN_REPORT_SCHEMA_VERSION: u32 = 2;
-
-/// The largest document the controller retrieves from a guest. Past it the run is reported with
-/// [`Integrity::Oversized`] rather than with a truncated parse, because a parse of the first 8 MiB of a JUnit
-/// file is a count that looks authoritative and is not.
-pub const MAX_JUNIT_XML_BYTES: usize = 8 * 1024 * 1024;
+pub const RUN_REPORT_SCHEMA_VERSION: u32 = 3;
 
 // The bounds a builder clips a failure to, declared beside the fields that report having been clipped: a reader
 // who wants to know what `messageTruncated` lost needs the number.
@@ -55,8 +52,9 @@ pub const MAX_FAILURE_MESSAGE_CHARS: usize = 8 * 1024;
 pub const MAX_FAILURE_DETAIL_CHARS: usize = 32 * 1024;
 pub const MAX_RELEVANT_FRAMES: usize = 8;
 
-/// The one order suites are ever written in: by instant and by document position, never by timestamp text.
-pub const ORDERING: &str = "suite_timestamp_ascending";
+/// The one order cases are ever written in: by the instant of their first record, and in the order of the run stream
+/// for two cases of one instant. Never by timestamp text.
+pub const ORDERING: &str = "case_start_ascending";
 
 // --- the vocabularies -------------------------------------------------------------------------------------
 
@@ -70,73 +68,28 @@ vocabulary! {
         /// selector takes, which is why an aggregate must not fold it in as a green trial.
         NoTests = "no_tests",
         AllSkipped = "all_skipped",
-        /// The verdict every false-green guard collapses into - missing, stale, truncated, malformed or
-        /// oversized XML, an absent summary, a summary-versus-XML mismatch, a watchdog expiry. An aggregate
-        /// re-uses it instead of re-deriving it, because a second derivation is a second opinion.
+        /// The verdict every false-green guard collapses into - an absent summary, a summary that contradicts the
+        /// stream, a recorder that contradicts the stream, a class that never reported, a watchdog expiry. An
+        /// aggregate re-uses it instead of re-deriving it, because a second derivation is a second opinion.
         InfrastructureError = "infrastructure_error",
     }
 }
 
 vocabulary! {
-    /// How much of a run's XML can be trusted. The first four are the JUnit reader's own; the last two are the
-    /// controller's, describing a document it never got to parse.
-    pub enum Integrity {
-        Complete = "complete",
-        Empty = "empty",
-        Truncated = "truncated",
-        Malformed = "malformed",
-        Missing = "missing",
-        Oversized = "oversized",
-    }
-}
-
-vocabulary! {
-    /// How the controller got the XML.
-    pub enum Retrieval {
-        DaemonHttp = "daemon_http",
-        GuestPull = "guest_pull",
-        Unavailable = "unavailable",
-    }
-}
-
-vocabulary! {
-    /// Which of the two accounts of a run a failure was read from. Both exist because they disagree usefully:
-    /// the XML is what the JVM wrote down, and the progress stream is what the daemon watched happen.
-    pub enum FailureSource {
-        JunitXml = "junit_xml",
-        Progress = "progress",
-    }
-}
-
-vocabulary! {
-    /// What failed. The first two come from the XML, the last two from the progress stream, which is why
-    /// `container` and `error` are not one word.
+    /// What failed: a test, or a container - a prologue of a suite document, or a JUnit class that failed outside its
+    /// tests.
     pub enum FailureKind {
-        Failure = "failure",
-        Error = "error",
         Container = "container",
         Test = "test",
     }
 }
 
 vocabulary! {
-    /// One test case's outcome, as the report spells it. Narrower than the JUnit outcome on purpose: the
-    /// distinction between a failure and an error lives on the failure entry.
+    /// One test case's outcome, as the report spells it.
     pub enum CaseStatus {
         Passed = "passed",
         Failed = "failed",
         Skipped = "skipped",
-    }
-}
-
-vocabulary! {
-    /// What a retrieval attempt produced, before anything was parsed: whether the bytes arrived and whether
-    /// there were too many of them. `available` is then *replaced* by the parser's own verdict on its way into
-    /// [`Source`], which is why the report has no such word.
-    pub enum RetrievedIntegrity {
-        Available = "available",
-        Missing = "missing",
-        Oversized = "oversized",
     }
 }
 
@@ -155,29 +108,7 @@ pub struct ExecutionCounts {
     pub container_failures: u32,
 }
 
-/// What the XML said about itself, kept beside [`ExecutionCounts`] rather than reconciled with it: two counts
-/// of one run from two producers, and a run where they disagree is an `infrastructure_error`, so collapsing them
-/// would delete the evidence for that verdict.
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
-pub struct XmlCounts {
-    pub tests: u32,
-    pub failures: u32,
-    pub errors: u32,
-    pub skipped: u32,
-}
-
-/// Where the run's XML came from and what could be trusted about it.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Source {
-    pub guest_path: String,
-    pub retrieval: Retrieval,
-    pub integrity: Integrity,
-    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
-    pub diagnostic: Option<String>,
-}
-
-/// One test case in a suite.
+/// One case of the run: a scenario, a failed container or a skipped container, as the run stream reports it.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Case {
@@ -185,37 +116,42 @@ pub struct Case {
     pub name: String,
     pub status: CaseStatus,
     pub duration_ms: f64,
-}
-
-/// One JUnit document's worth of cases.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Suite {
-    pub name: String,
-    /// Optional because a truncated document may carry cases and no header.
+    /// The `timestamp` of the first record of the case.
+    pub started_at: String,
+    /// The status the recorder closed the trace bundle of the scenario with, or `truncated` for a bundle it never
+    /// closed: the second account of the case. Absent when no bundle of the scenario arrived.
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
-    pub timestamp: Option<String>,
-    pub duration_ms: f64,
-    /// The suite's position among the documents read, which is what makes [`ORDERING`] total: two suites
-    /// written in the same second are ordered by the order they were found in.
-    pub document_index: usize,
-    pub tests: u32,
-    pub failures: u32,
-    pub errors: u32,
-    pub skipped: u32,
-    #[serde(default)]
-    pub cases: Vec<Case>,
+    pub recorded: Option<String>,
+    /// Why a skipped case did not run, as its `testSkipped` record says. Absent for a case that ran.
+    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
+    pub reason: Option<String>,
 }
 
-/// One thing that went wrong, from either account of the run.
+/// What the authored parts of one scenario report beside their values: the notes and the measurements of the
+/// scenario, merged over its parts. The `testFinished` of the scenario carries it. A note and a metric explain a run and
+/// never decide its verdict. The TeamCity messages turn a note into a text `testMetadata` and a metric into a `number`
+/// one.
+///
+/// A metric is a JSON number rather than an `f64`, so the records of the run stream keep their equality.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ScenarioReport {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub notes: Vec<String>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub metrics: BTreeMap<String, serde_json::Number>,
+}
+
+impl ScenarioReport {
+    /// Whether the scenario reported nothing, which is how the record leaves the field out.
+    pub fn is_empty(&self) -> bool {
+        self.notes.is_empty() && self.metrics.is_empty()
+    }
+}
+
+/// One thing that went wrong, as the run stream reports it.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Failure {
-    pub source: FailureSource,
-    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
-    pub suite: Option<String>,
-    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
-    pub suite_timestamp: Option<String>,
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
     pub class_name: Option<String>,
     pub test_name: String,
@@ -345,10 +281,9 @@ pub struct RunReport {
     /// Always [`ORDERING`].
     pub ordering: String,
     pub execution: ExecutionCounts,
-    pub xml: XmlCounts,
-    pub source: Source,
+    /// Every case of the run in [`ORDERING`]. A case that started and never finished is in `active_tests` instead.
     #[serde(default)]
-    pub suites: Vec<Suite>,
+    pub cases: Vec<Case>,
     #[serde(default)]
     pub failures: Vec<Failure>,
     #[serde(default)]
@@ -357,10 +292,10 @@ pub struct RunReport {
     pub active_tests: Vec<ActiveTest>,
     /// Every class the plan discovered that the run then said nothing about at all: lost coverage, named.
     ///
-    /// It comes from the daemon's `planStarted` record and not from the XML, which is what makes it survive the
-    /// case it exists for: when a watchdog kills the IDE, the suites queued behind the failure write no testcase,
-    /// and a run that dropped half a lane used to read exactly like a run that covered it. A non-empty list is a
-    /// diagnostic, so it can only make a verdict worse.
+    /// It comes from the daemon's `planStarted` record, which is what makes it survive the case it exists for: when a
+    /// watchdog kills the IDE, the suites queued behind the failure write no record, and a run that dropped half a lane
+    /// used to read exactly like a run that covered it. A non-empty list is a diagnostic, so it can only make a verdict
+    /// worse.
     #[serde(default)]
     pub unreported_classes: Vec<String>,
     pub watchdog: Watchdog,
@@ -370,10 +305,10 @@ pub struct RunReport {
     /// The iteration's scenario traces as they arrived on the host, one zip per pull, and why a pull failed. Both
     /// can be set: the zips that arrived before a pull failed stay named.
     ///
-    /// Neither ever touches `status` or `verdict_diagnostic`: a trace is evidence about the run, and a verdict
-    /// that turned red because a video did not arrive would be evidence deciding the verdict it exists to
-    /// explain. Optional fields of v2 rather than a v3; a report of the first pull design, with one `traces`
-    /// object, still decodes and names no archive.
+    /// An archive that did not arrive never touches `status` or `verdict_diagnostic`: a verdict that turned red
+    /// because a video did not arrive would be evidence deciding the verdict it exists to explain. A bundle that did
+    /// arrive is the second account of its scenario: its status is the case's `recorded`, and a status that
+    /// contradicts the stream is a diagnostic.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub trace_archives: Vec<TraceArchive>,
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
@@ -387,8 +322,7 @@ pub struct RunReport {
     pub tree_error: Option<String>,
     /// The facts about the run that a reader must see and that do not change the verdict. An example is a test jar
     /// that the host rebuilt while the iteration ran. Carried verbatim, and never read by anything that decides
-    /// `status` or `verdict_diagnostic`, as `traces_error` is. An optional field of v2, so an older report decodes
-    /// with no note.
+    /// `status` or `verdict_diagnostic`, as `traces_error` is.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub notes: Vec<String>,
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
@@ -441,19 +375,6 @@ pub struct TraceBundle {
     /// The manifest's status, or `truncated` for a bundle whose recorder never finished it.
     pub status: String,
     pub has_video: bool,
-}
-
-/// What a retrieval attempt produced, before anything has been parsed.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct RetrievedXml {
-    pub guest_path: String,
-    pub retrieval: Retrieval,
-    pub integrity: RetrievedIntegrity,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub xml: Option<String>,
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub diagnostic: Option<String>,
 }
 
 // --- the evidence guard -----------------------------------------------------------------------------------
@@ -668,8 +589,6 @@ const RUN_REPORT_SHAPE: Shape = Shape {
         ("durationMs", Kind::Number),
         ("ordering", Kind::String),
         ("execution", Kind::Object),
-        ("xml", Kind::Object),
-        ("source", Kind::Object),
         ("watchdog", Kind::Object),
     ],
     optional: &[
@@ -683,7 +602,7 @@ const RUN_REPORT_SHAPE: Shape = Shape {
 
 /// Reads one run report and refuses anything it cannot read as one.
 ///
-/// The version is checked before the fields: a v3 document that happens to satisfy v2's shape is still a
+/// The version is checked before the fields: a v2 document that happens to satisfy v3's shape is still a
 /// document whose meaning this code does not know, and "it decoded" is not the same as "it means what I think".
 pub fn decode_run_report(document: &[u8]) -> Result<RunReport, SchemaError> {
     let fields = object(document, Family::Report, "run report")?;
@@ -713,43 +632,19 @@ pub(crate) fn check_run_report_vocabulary(report: &Map<String, Value>) -> Result
             format_args!("a run report has the unknown status {word:?}"),
         )
     })?;
-    let source = field("source");
-    declared_word::<Retrieval>(&source["retrieval"], |word| {
-        SchemaError::new(
-            "report_schema_unknown_retrieval",
-            format_args!("a run report has the unknown retrieval {word:?}"),
-        )
-    })?;
-    declared_word::<Integrity>(&source["integrity"], |word| {
-        SchemaError::new(
-            "report_schema_unknown_integrity",
-            format_args!("a run report has the unknown integrity {word:?}"),
-        )
-    })?;
-    for suite in field("suites").as_array().into_iter().flatten() {
-        for case in suite["cases"].as_array().into_iter().flatten() {
-            declared_word::<CaseStatus>(&case["status"], |word| {
-                SchemaError::new(
-                    "report_schema_unknown_case_status",
-                    format_args!(
-                        "a run report has the unknown case status {word:?} on {}.{}",
-                        text(&case["className"]),
-                        text(&case["name"])
-                    ),
-                )
-            })?;
-        }
-    }
-    for failure in field("failures").as_array().into_iter().flatten() {
-        declared_word::<FailureSource>(&failure["source"], |word| {
+    for case in field("cases").as_array().into_iter().flatten() {
+        declared_word::<CaseStatus>(&case["status"], |word| {
             SchemaError::new(
-                "report_schema_unknown_failure_source",
+                "report_schema_unknown_case_status",
                 format_args!(
-                    "a run report has the unknown failure source {word:?} on {}",
-                    text(&failure["testName"])
+                    "a run report has the unknown case status {word:?} on {}.{}",
+                    text(&case["className"]),
+                    text(&case["name"])
                 ),
             )
         })?;
+    }
+    for failure in field("failures").as_array().into_iter().flatten() {
         declared_word::<FailureKind>(&failure["kind"], |word| {
             SchemaError::new(
                 "report_schema_unknown_failure_kind",

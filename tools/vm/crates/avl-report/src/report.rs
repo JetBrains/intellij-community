@@ -2,36 +2,34 @@
 //! overwritten.
 //!
 //! The document itself lives in `avl_wire::report`; what is here is the arithmetic that decides what goes in it.
-//! Two accounts arrive of every run - the JUnit XML the JVM wrote, and the NDJSON progress stream the daemon
-//! watched - and they disagree usefully. The XML is authoritative when it is complete and worthless when it is
-//! not, which is why nothing here reads a count off a truncated document: [`build`] takes the progress stream's
-//! failures whenever the source is anything but `complete`, every disagreement it can see becomes a diagnostic,
-//! and every diagnostic makes the run an `infrastructure_error`.
+//! The run stream of the daemon is the first account of a run, and [`avl_junit::cases`] reads it as cases. The recorder
+//! is the second account: it closes the trace bundle of each scenario with a status of its own. Every disagreement
+//! that [`build`] can see becomes a diagnostic, and every diagnostic makes the run an `infrastructure_error`.
 //!
-//! That is the whole design rule, and it is a refusal rather than a preference. A count read off a document that
-//! was cut off when the JVM was killed looks exactly as authoritative as a real one, and the run it describes
-//! reads green. Every branch below that adds a diagnostic instead of a number exists because some run once
-//! reported the wrong thing that way.
+//! That is the whole design rule, and it is a refusal rather than a preference. A stream that was cut off when the IDE
+//! was killed looks exactly as authoritative as a whole one, and the run it describes reads green. Every branch below
+//! that adds a diagnostic instead of a number exists because some run once reported the wrong thing that way.
 //!
 //! A note is the other kind of fact. It explains the run and never decides the verdict. A test jar that the host
 //! rebuilt while the iteration ran is a note. The guest ran the jars that the iteration pushed, so the execution and
 //! its counts stay true. Only the attribution to the checkout changes, and the note names the jars.
 
-use std::collections::HashSet;
 use std::fs;
 use std::io;
 use std::path::PathBuf;
 
 use avl_base::RefusalExt;
-use avl_base::format::first_line;
 use avl_base::fs::{PublishError, create_private_dir};
 use avl_base::{Config, Exit, OrRefuse, Refusal, validate_name};
 use avl_wire::daemon::{RunEvent, RunEventKind, Summary};
 use avl_wire::report::{
-    ActiveTest, Case, CaseStatus, EvidenceArtifact, ExecutionCounts, Failure, FailureKind, FailureSource, Integrity,
-    MAX_FAILURE_DETAIL_CHARS, MAX_FAILURE_MESSAGE_CHARS, MAX_RELEVANT_FRAMES, ORDERING, RUN_REPORT_SCHEMA_VERSION, RetrievedIntegrity,
-    RetrievedXml, RunReport, SkippedContainer, Source, Status, Suite, TraceArchive, Tree, Watchdog, WatchdogExpiry, WatchdogState,
-    XmlCounts, expiry_evidence_paths,
+    ActiveTest, Case, CaseStatus, EvidenceArtifact, ExecutionCounts, Failure, FailureKind, MAX_FAILURE_DETAIL_CHARS,
+    MAX_FAILURE_MESSAGE_CHARS, MAX_RELEVANT_FRAMES, ORDERING, RUN_REPORT_SCHEMA_VERSION, RunReport, SkippedContainer, Status, TraceArchive,
+    TraceBundle, Tree, Watchdog, WatchdogExpiry, WatchdogState, expiry_evidence_paths,
+};
+
+use avl_junit::cases::{
+    self, CaseOutcome, FailureOrigin, STATUS_ABORTED, STATUS_FAILED, StreamCase, simple_class_name, unreported_classes,
 };
 
 #[cfg(test)]
@@ -41,7 +39,7 @@ mod tests;
 ///
 /// `summary` is optional and `events` is not: a stream that ended without a summary is the normal shape of a
 /// killed run and has to stay representable, while a run with no events at all never started and is reported
-/// from its source and its watchdog alone.
+/// from its watchdog alone.
 #[derive(Clone, Debug)]
 pub struct Input {
     pub iteration_id: String,
@@ -54,7 +52,6 @@ pub struct Input {
     /// [`avl_wire::daemon::find_summary`].
     pub summary: Option<Summary>,
     pub events: Vec<RunEvent>,
-    pub source: RetrievedXml,
     /// The guest files the controller managed to fetch, or the reason it could not. Every entry names a path
     /// [`avl_wire::report::safe_evidence_paths`] admitted.
     pub evidence: Vec<EvidenceArtifact>,
@@ -64,65 +61,37 @@ pub struct Input {
     /// The facts the report carries as [`RunReport::notes`], such as a test jar that the host rebuilt while the
     /// iteration ran. A note never enters the verdict, and [`build`] drops an empty one.
     pub notes: Vec<String>,
-    /// The iteration's scenario traces as the controller pulled them, and why it could not. Carried verbatim and
-    /// never read by anything that decides the verdict: a trace explains a run.
+    /// The iteration's scenario traces as the controller pulled them, and why it could not. The status of a bundle
+    /// that arrived is the second account of its scenario. A missing archive and the error never decide the verdict.
     pub traces: Vec<TraceArchive>,
     pub traces_error: Option<String>,
-    /// The host checkout the build read, and why it could not be read; carried verbatim by the same rule.
+    /// The host checkout the build read, and why it could not be read; carried verbatim and never read by the verdict.
     pub tree: Option<Tree>,
     pub tree_error: Option<String>,
 }
 
 /// Assembles one run's report and decides its verdict.
-///
-/// The one refusal is an inconsistent [`Input`]: a source that claims `available` and carries no XML is not a
-/// run this function can describe, because the integrity it would publish is the parser's verdict on a document
-/// that is not there.
-pub fn build(input: Input) -> Result<RunReport, Refusal> {
-    let (parsed, integrity) = read_source(&input.source)?;
-    let suites = parsed.as_ref().map_or(&[][..], |report| report.suites.as_slice());
-
+pub fn build(input: Input) -> RunReport {
     let execution = execution_counts(input.summary.as_ref(), &input.events);
-    let reported = xml_counts(suites);
-    let progress = progress_state(&input.events);
+    let stream_cases = cases::cases(&input.events);
+    let reported = report_cases(&stream_cases, &input.traces);
+    let failures = failures_of(&stream_cases);
     let watchdog = watchdog_report(&input.events);
     let unreported = unreported_classes(&input.events);
 
-    // The listener serializes a failed container as a testcase, so complete XML already owns its own diagnostic.
-    // Progress remains the fallback only when the XML is unavailable or cannot be trusted.
-    let failures = if integrity == Integrity::Complete {
-        xml_failures(suites)
-    } else {
-        progress.failures
-    };
+    let diagnostics = verdict_diagnostics(&input, &execution, &watchdog, &unreported, &reported);
+    let status = decide_status(&diagnostics, &execution, &failures);
 
-    let diagnostics = verdict_diagnostics(&input, parsed.as_ref(), integrity, &execution, &reported, &watchdog, &unreported);
-    let status = decide_status(&diagnostics, &execution, &reported);
-    let source = Source {
-        guest_path: input.source.guest_path.clone(),
-        retrieval: input.source.retrieval,
-        integrity,
-        // The retriever's diagnostic outranks the parser's: a document truncated on the way off the guest is
-        // explained by the transfer, and the parse error is a consequence.
-        diagnostic: input
-            .source
-            .diagnostic
-            .clone()
-            .or_else(|| parsed.as_ref().and_then(|report| report.integrity.message.clone())),
-    };
-
-    Ok(RunReport {
+    RunReport {
         report_schema_version: RUN_REPORT_SCHEMA_VERSION,
         duration_ms: elapsed_ms(&input.started_at, &input.completed_at),
         ordering: ORDERING.to_owned(),
         status,
         execution,
-        xml: reported,
-        source,
-        suites: reported_suites(suites),
+        cases: reported,
         failures,
         skipped_containers: skipped_containers(&input.events),
-        active_tests: progress.active_tests,
+        active_tests: active_tests(&input.events),
         unreported_classes: unreported,
         watchdog,
         verdict_diagnostic: (!diagnostics.is_empty()).then(|| diagnostics.join("; ")),
@@ -143,63 +112,31 @@ pub fn build(input: Input) -> Result<RunReport, Refusal> {
         // controller's channel to the daemon, a verdict diagnostic about the run, and a reader acting on them goes
         // to different machines.
         protocol_diagnostic: input.protocol_diagnostic,
-    })
-}
-
-/// The integrity of a document the JUnit reader parsed: the first four integrities of the report are the reader's.
-const fn integrity_of(status: bt_junit::IntegrityStatus) -> Integrity {
-    match status {
-        bt_junit::IntegrityStatus::Complete => Integrity::Complete,
-        bt_junit::IntegrityStatus::Empty => Integrity::Empty,
-        bt_junit::IntegrityStatus::Truncated => Integrity::Truncated,
-        bt_junit::IntegrityStatus::Malformed => Integrity::Malformed,
-    }
-}
-
-/// The parsed document and the integrity the report publishes, the one place the parser's verdict replaces the
-/// retriever's. `available` means the bytes arrived; what a reader needs is whether they parse. Anything else is
-/// a document that was never read.
-fn read_source(source: &RetrievedXml) -> Result<(Option<bt_junit::Report>, Integrity), Refusal> {
-    match source.integrity {
-        RetrievedIntegrity::Available => {
-            let Some(xml) = &source.xml else {
-                return Err(Refusal::new(
-                    "report_source_inconsistent",
-                    Exit::FAILURE,
-                    format!("the retrieval of {} claims available and carries no XML", source.guest_path),
-                ));
-            };
-            let parsed = bt_junit::parse_report(xml);
-            let integrity = integrity_of(parsed.integrity.status);
-            Ok((Some(parsed), integrity))
-        }
-        RetrievedIntegrity::Missing => Ok((None, Integrity::Missing)),
-        RetrievedIntegrity::Oversized => Ok((None, Integrity::Oversized)),
     }
 }
 
 // --- the two accounts of a run --------------------------------------------------------------------------------
 
-/// The two `testFinished` statuses this module branches on; a typo in either is a silent zero in a count a
-/// verdict is read off.
-const STATUS_FAILED: &str = "FAILED";
-const STATUS_ABORTED: &str = "ABORTED";
-
-/// The daemon's own count of what it ran, and the reconstruction used when it never said.
+/// The daemon's own count of what it ran, and the reconstruction from the records when it never said.
 ///
 /// The reconstruction is not a substitute: a stream with no summary is already a diagnostic, so these counts
 /// describe a run that is reported as broken, never one that passes. `ABORTED` counts as skipped because that is
 /// what the daemon's own summary does with it: a test the run gave up on did not fail.
 fn execution_counts(summary: Option<&Summary>, events: &[RunEvent]) -> ExecutionCounts {
-    if let Some(summary) = summary {
-        return ExecutionCounts {
+    match summary {
+        Some(summary) => ExecutionCounts {
             tests_started: summary.tests_started,
             tests_failed: summary.tests_failed,
             tests_skipped: summary.tests_skipped,
             containers_skipped: summary.containers_skipped,
             container_failures: summary.container_failures,
-        };
+        },
+        None => stream_counts(events),
     }
+}
+
+/// The counts that the records of the stream add up to.
+fn stream_counts(events: &[RunEvent]) -> ExecutionCounts {
     let mut counts = ExecutionCounts::default();
     for event in events {
         match &event.kind {
@@ -219,144 +156,83 @@ fn execution_counts(summary: Option<&Summary>, events: &[RunEvent]) -> Execution
     counts
 }
 
-/// The classes a condition ruled out before anything started.
+/// The cases of the stream in the shape the document declares, in [`ORDERING`], each with the status the recorder
+/// gave its bundle. A case that never finished is an active test instead.
+fn report_cases(stream_cases: &[StreamCase], archives: &[TraceArchive]) -> Vec<Case> {
+    let bundles: Vec<&TraceBundle> = archives.iter().flat_map(|archive| &archive.bundles).collect();
+    let mut cases: Vec<Case> = stream_cases
+        .iter()
+        .filter_map(|case| {
+            let (status, reason) = match &case.outcome {
+                CaseOutcome::Passed => (CaseStatus::Passed, None),
+                CaseOutcome::Failed(_) => (CaseStatus::Failed, None),
+                CaseOutcome::Skipped(reason) => (CaseStatus::Skipped, Some(reason.clone())),
+                CaseOutcome::Unfinished => return None,
+            };
+            Some(Case {
+                recorded: recorded_status(&bundles, case),
+                reason,
+                class_name: case.class_name.clone(),
+                name: case.name.clone(),
+                status,
+                #[expect(clippy::cast_precision_loss, reason = "a duration in milliseconds is far below 2^53")]
+                duration_ms: case.duration_ms as f64,
+                started_at: case.started_at.clone(),
+            })
+        })
+        .collect();
+    // Stable, so two cases of one instant, and cases whose stamp is not an instant, keep the order of the stream.
+    cases.sort_by_key(|case| instant_millis(&case.started_at).unwrap_or(i64::MAX));
+    cases
+}
+
+/// The status of the last bundle of the scenario of `case`. A recorder may name the class without its package, so
+/// the simple names are compared.
+fn recorded_status(bundles: &[&TraceBundle], case: &StreamCase) -> Option<String> {
+    bundles
+        .iter()
+        .rev()
+        .find(|bundle| bundle.scenario == case.name && simple_class_name(&bundle.test_class) == simple_class_name(&case.class_name))
+        .map(|bundle| bundle.status.clone())
+}
+
+/// Every failed case of the stream, as failure entries, in the order of the stream.
+fn failures_of(stream_cases: &[StreamCase]) -> Vec<Failure> {
+    stream_cases
+        .iter()
+        .filter_map(|case| {
+            let CaseOutcome::Failed(failure) = &case.outcome else {
+                return None;
+            };
+            let (message, message_truncated) = clip(&failure.message, MAX_FAILURE_MESSAGE_CHARS);
+            let (detail, detail_truncated) = clip(&failure.detail, MAX_FAILURE_DETAIL_CHARS);
+            Some(Failure {
+                class_name: Some(case.class_name.clone()),
+                test_name: case.name.clone(),
+                kind: match failure.kind {
+                    FailureOrigin::Test => FailureKind::Test,
+                    FailureOrigin::Container => FailureKind::Container,
+                },
+                r#type: failure.r#type.clone(),
+                message,
+                relevant_frames: relevant_frames(&detail),
+                detail: non_empty(detail),
+                message_truncated,
+                detail_truncated,
+            })
+        })
+        .collect()
+}
+
+/// The tests the stream started and never finished: what a killed run leaves behind.
 ///
-/// Load-bearing for the summary-versus-XML check: a discovery-time skip has no `testStarted`, so the XML holds a
-/// testcase the daemon's `testsStarted` never counted. A skip of a test that *had* started is already inside
-/// `testsStarted`, and counting it twice would manufacture a mismatch on a healthy run.
-fn pre_start_skipped_count(events: &[RunEvent]) -> u32 {
-    let mut started = HashSet::new();
-    let mut skipped = 0;
+/// The active set is the point. It is the only evidence naming *which* test the worker died on. Insertion order is
+/// kept, and re-starting an id that is still active keeps its original position; a start after a finish is a new
+/// entry at the end. The list reaches an agent verbatim.
+fn active_tests(events: &[RunEvent]) -> Vec<ActiveTest> {
+    let mut active: Vec<ActiveTest> = Vec::new();
     for event in events {
         match &event.kind {
-            RunEventKind::TestStarted(test) => {
-                started.insert(test.execution.id.as_str());
-            }
-            RunEventKind::TestSkipped(test) if !started.contains(test.execution.id.as_str()) => {
-                skipped += 1;
-            }
-            _ => {}
-        }
-    }
-    skipped
-}
-
-/// What the XML said about itself, summed over the per-suite counts the document publishes, so a reader adding
-/// up `suites[].tests` reaches `xml.tests`.
-fn xml_counts(suites: &[bt_junit::Suite]) -> XmlCounts {
-    suites.iter().fold(XmlCounts::default(), |total, suite| XmlCounts {
-        tests: total.tests.saturating_add(suite.tests),
-        failures: total.failures.saturating_add(suite.failures),
-        errors: total.errors.saturating_add(suite.errors),
-        skipped: total.skipped.saturating_add(suite.skipped),
-    })
-}
-
-/// The parser's suites in the shape the document declares, in the order [`ORDERING`] promises - which is the
-/// order [`bt_junit::parse_report`] already put them in.
-fn reported_suites(suites: &[bt_junit::Suite]) -> Vec<Suite> {
-    suites
-        .iter()
-        .map(|suite| Suite {
-            name: suite.name.clone(),
-            timestamp: suite.timestamp.clone(),
-            duration_ms: millis_of(suite.time_seconds),
-            document_index: suite.document_index,
-            tests: suite.tests,
-            failures: suite.failures,
-            errors: suite.errors,
-            skipped: suite.skipped,
-            cases: suite
-                .cases
-                .iter()
-                .map(|case| Case {
-                    class_name: case.class_name.clone(),
-                    name: case.name.clone(),
-                    status: match case.outcome {
-                        bt_junit::Outcome::Passed => CaseStatus::Passed,
-                        bt_junit::Outcome::Failed => CaseStatus::Failed,
-                        bt_junit::Outcome::Skipped => CaseStatus::Skipped,
-                    },
-                    duration_ms: millis_of(case.time_seconds),
-                })
-                .collect(),
-        })
-        .collect()
-}
-
-/// A JUnit `time` in seconds as the milliseconds the document publishes.
-fn millis_of(seconds: f64) -> f64 {
-    (seconds * 1_000.0).round()
-}
-
-/// Every failed case in the XML, as failure entries.
-fn xml_failures(suites: &[bt_junit::Suite]) -> Vec<Failure> {
-    suites
-        .iter()
-        .flat_map(|suite| {
-            suite
-                .cases
-                .iter()
-                .filter(|case| case.outcome == bt_junit::Outcome::Failed)
-                .map(move |case| failure_from_xml(suite, case))
-        })
-        .collect()
-}
-
-/// One failed case.
-///
-/// The message falls back through three sources, and the order is the contract: the `message` attribute even
-/// when it is empty - an empty message is a writer that had nothing to say, not a missing one - then the first
-/// line of the detail, then a constant.
-fn failure_from_xml(suite: &bt_junit::Suite, case: &bt_junit::TestCase) -> Failure {
-    let failure = case.failure.as_ref();
-    let detail_text = failure.map_or("", |failure| failure.detail.as_str());
-    let raw = match failure {
-        Some(bt_junit::CaseFailure {
-            message: Some(message), ..
-        }) => message.as_str(),
-        _ if !detail_text.is_empty() => first_line(detail_text),
-        _ => "test failed",
-    };
-    let (message, message_truncated) = clip(raw, MAX_FAILURE_MESSAGE_CHARS);
-    let (detail, detail_truncated) = clip(detail_text, MAX_FAILURE_DETAIL_CHARS);
-    Failure {
-        source: FailureSource::JunitXml,
-        suite: Some(suite.name.clone()),
-        suite_timestamp: suite.timestamp.clone(),
-        class_name: Some(case.class_name.clone()),
-        test_name: case.name.clone(),
-        kind: match failure.map(|failure| failure.kind) {
-            Some(bt_junit::FailureKind::Error) => FailureKind::Error,
-            _ => FailureKind::Failure,
-        },
-        r#type: failure.and_then(|failure| failure.r#type.clone()),
-        message,
-        relevant_frames: relevant_frames(&detail),
-        detail: non_empty(detail),
-        message_truncated,
-        detail_truncated,
-    }
-}
-
-/// The two things one pass over the stream answers.
-struct Progress {
-    failures: Vec<Failure>,
-    active_tests: Vec<ActiveTest>,
-}
-
-/// The daemon's account of the run: what failed, and what never finished.
-///
-/// The active set is the point. A test that started and never finished is what a killed run leaves behind, and it
-/// is the only evidence naming *which* test the worker died on - the XML for it was never written.
-///
-/// Insertion order is kept, and re-starting an id that is still active keeps its original position; a start after
-/// a finish is a new entry at the end. The list reaches an agent verbatim.
-fn progress_state(events: &[RunEvent]) -> Progress {
-    let mut active: Vec<ActiveTest> = Vec::new();
-    let mut failures = Vec::new();
-    for event in events {
-        let (execution, error, kind) = match &event.kind {
             RunEventKind::TestStarted(started) => {
                 let test = ActiveTest {
                     id: started.execution.id.clone(),
@@ -369,44 +245,13 @@ fn progress_state(events: &[RunEvent]) -> Progress {
                     Some(known) => *known = test,
                     None => active.push(test),
                 }
-                continue;
             }
-            RunEventKind::TestSkipped(skipped) => {
-                active.retain(|known| known.id != skipped.execution.id);
-                continue;
-            }
-            RunEventKind::TestFinished(finished) => {
-                active.retain(|known| known.id != finished.execution.id);
-                if finished.status != STATUS_FAILED {
-                    continue;
-                }
-                (&finished.execution, &finished.error, FailureKind::Test)
-            }
-            RunEventKind::ContainerFailed(failed) => (&failed.execution, &failed.error, FailureKind::Container),
-            _ => continue,
-        };
-        let raw = error.clone().unwrap_or_else(|| format!("{} failed", execution.display_name));
-        let (message, message_truncated) = clip(first_line(&raw), MAX_FAILURE_MESSAGE_CHARS);
-        let (detail, detail_truncated) = clip(&raw, MAX_FAILURE_DETAIL_CHARS);
-        failures.push(Failure {
-            source: FailureSource::Progress,
-            suite: None,
-            suite_timestamp: None,
-            class_name: execution.class_name.clone(),
-            test_name: execution.display_name.clone(),
-            kind,
-            r#type: None,
-            message,
-            relevant_frames: relevant_frames(&detail),
-            detail: non_empty(detail),
-            message_truncated,
-            detail_truncated,
-        });
+            RunEventKind::TestSkipped(skipped) => active.retain(|known| known.id != skipped.execution.id),
+            RunEventKind::TestFinished(finished) => active.retain(|known| known.id != finished.execution.id),
+            _ => {}
+        }
     }
-    Progress {
-        failures,
-        active_tests: active,
-    }
+    active
 }
 
 /// Every class a condition ruled out, with the reason JUnit gave. Read from the stream because a ruled-out class
@@ -423,40 +268,6 @@ fn skipped_containers(events: &[RunEvent]) -> Vec<SkippedContainer> {
             }),
             _ => None,
         })
-        .collect()
-}
-
-/// Every class the plan discovered that the run then said nothing about at all.
-///
-/// The one account of a suite that never ran: `planStarted` names what JUnit selected, and every later record
-/// names a class it reached. A class in the first list and in none of the rest is a suite the run dropped, which
-/// is what a watchdog that kills the IDE leaves behind. Read from the stream and not from the suites, because the
-/// XML is written in one burst at the end of the plan, so the run this describes is exactly the run whose XML is
-/// incomplete or absent.
-///
-/// A class the run merely did not *finish* started, so it is among the active tests instead. The two lists are
-/// disjoint: what broke, and what never got a turn. The daemon's own order is kept.
-fn unreported_classes(events: &[RunEvent]) -> Vec<String> {
-    let Some(plan) = events.iter().rev().find_map(|event| match &event.kind {
-        RunEventKind::PlanStarted(plan) => Some(plan),
-        _ => None,
-    }) else {
-        return Vec::new();
-    };
-    let reached: HashSet<&str> = events
-        .iter()
-        .filter_map(|event| match &event.kind {
-            RunEventKind::TestStarted(started) => started.execution.class_name.as_deref(),
-            RunEventKind::TestFinished(finished) => finished.execution.class_name.as_deref(),
-            RunEventKind::TestSkipped(skipped) | RunEventKind::ContainerSkipped(skipped) => skipped.execution.class_name.as_deref(),
-            RunEventKind::ContainerFailed(failed) => failed.execution.class_name.as_deref(),
-            _ => None,
-        })
-        .collect();
-    plan.class_names
-        .iter()
-        .filter(|class_name| !reached.contains(class_name.as_str()))
-        .cloned()
         .collect()
 }
 
@@ -501,22 +312,12 @@ fn watchdog_report(events: &[RunEvent]) -> Watchdog {
 /// is what lets the shard and flake aggregates re-use one word instead of re-deriving a second opinion.
 fn verdict_diagnostics(
     input: &Input,
-    parsed: Option<&bt_junit::Report>,
-    integrity: Integrity,
     execution: &ExecutionCounts,
-    reported: &XmlCounts,
     watchdog: &Watchdog,
     unreported: &[String],
+    cases: &[Case],
 ) -> Vec<String> {
     let mut diagnostics = Vec::new();
-    if integrity != Integrity::Complete {
-        let explained = input
-            .source
-            .diagnostic
-            .clone()
-            .or_else(|| parsed.and_then(|report| report.integrity.message.clone()));
-        diagnostics.push(explained.unwrap_or_else(|| format!("JUnit result is {integrity}")));
-    }
     if input.summary.is_none() {
         diagnostics.push("daemon stream ended without a summary".to_owned());
     }
@@ -534,15 +335,86 @@ fn verdict_diagnostics(
             describe_classes(unreported)
         ));
     }
-    // The two accounts are only worth comparing when both are trustworthy: comparing a complete XML against an
-    // absent summary, or a summary against a truncated document, would send the reader to reconcile counts that
-    // were never meant to agree about a run whose real problem is already named above.
-    if let Some(summary) = &input.summary
-        && integrity == Integrity::Complete
-    {
-        diagnostics.extend(count_mismatches(summary, &input.events, execution, reported));
+    // The summary is compared with the records only when it exists: an absent one is already named above, and the
+    // counts are then the records' own.
+    if let Some(summary) = &input.summary {
+        diagnostics.extend(summary_mismatches(
+            summary,
+            execution,
+            &stream_counts(&input.events),
+            failed_as_a_whole(&input.events),
+        ));
     }
+    diagnostics.extend(recorder_mismatch(cases));
     diagnostics
+}
+
+/// The statuses a recorder closes a scenario with: its `done` command.
+const DONE_STATUSES: [&str; 3] = ["passed", "failed", "aborted"];
+
+/// Whether the stream names a failure of the run as a whole: a `runFailed` or a `watchdogExpired` record. Such a
+/// run has no failed case to count, and each record is a diagnostic of its own.
+fn failed_as_a_whole(events: &[RunEvent]) -> bool {
+    events
+        .iter()
+        .any(|event| matches!(event.kind, RunEventKind::RunFailed(_) | RunEventKind::WatchdogExpired(_)))
+}
+
+/// The daemon's summary against the records of its own stream.
+///
+/// Each count is compared on its own, because each names a different defect: a record the decoder lost, a summary
+/// that counts another way, or a `hasFailures` that contradicts its own counts. A run that failed as a whole has
+/// failures and no failed case, so it may say `hasFailures` with no failed count.
+fn summary_mismatches(summary: &Summary, execution: &ExecutionCounts, records: &ExecutionCounts, whole_run_failed: bool) -> Vec<String> {
+    let mut mismatches = Vec::new();
+    let expected_has_failures = execution.tests_failed > 0 || execution.container_failures > 0;
+    if summary.has_failures != expected_has_failures && !(summary.has_failures && whole_run_failed) {
+        mismatches.push(format!(
+            "summary hasFailures mismatch: reported={}, expected={expected_has_failures}",
+            summary.has_failures
+        ));
+    }
+    let counts = [
+        ("testsStarted", execution.tests_started, records.tests_started),
+        ("testsFailed", execution.tests_failed, records.tests_failed),
+        ("testsSkipped", execution.tests_skipped, records.tests_skipped),
+        ("containersSkipped", execution.containers_skipped, records.containers_skipped),
+        ("containerFailures", execution.container_failures, records.container_failures),
+    ];
+    for (name, summarized, recorded) in counts {
+        if summarized != recorded {
+            mismatches.push(format!("summary/stream {name} mismatch: summary={summarized}, records={recorded}"));
+        }
+    }
+    mismatches
+}
+
+/// The recorder's account of each case against the stream's: one diagnostic that names every case the two
+/// accounts disagree on.
+///
+/// Only a status of the recorder's `done` is an account. A case with no bundle is not compared, because a trace that
+/// did not arrive explains a run and never decides it. Nor is a bundle the recorder never closed, such as one the last
+/// pull took while the recorder still wrote it: it holds no `done` at all.
+fn recorder_mismatch(cases: &[Case]) -> Option<String> {
+    let contradicted: Vec<String> = cases
+        .iter()
+        .filter_map(|case| {
+            let recorded = case.recorded.as_deref().filter(|status| DONE_STATUSES.contains(status))?;
+            let expected = match case.status {
+                CaseStatus::Passed => "passed",
+                CaseStatus::Failed => "failed",
+                CaseStatus::Skipped => "aborted",
+            };
+            (recorded != expected).then(|| format!("{}.{} (stream {}, recorder {recorded})", case.class_name, case.name, case.status))
+        })
+        .collect();
+    (!contradicted.is_empty()).then(|| {
+        format!(
+            "the recorder contradicts the run stream on {} case(s): {}",
+            contradicted.len(),
+            describe_classes(&contradicted)
+        )
+    })
 }
 
 /// The watchdog's expiry as one diagnostic line. Detail, the running test and the evidence ride on this line
@@ -597,47 +469,6 @@ fn describe_evidence(artifacts: &[EvidenceArtifact], guest_paths: &[String]) -> 
     String::new()
 }
 
-/// The daemon's account of the run against the XML's.
-///
-/// Four separate comparisons, because each names a different producer bug. The expectations are not guesses: the
-/// XML counts every test that *started*, including aborted ones; a discovery-time skip never started; and a failed
-/// container is serialized as its own testcase, so it appears in both the test count and the failure count.
-fn count_mismatches(summary: &Summary, events: &[RunEvent], execution: &ExecutionCounts, reported: &XmlCounts) -> Vec<String> {
-    let expected_tests = execution
-        .tests_started
-        .saturating_add(pre_start_skipped_count(events))
-        .saturating_add(execution.container_failures);
-    let expected_failures = execution.tests_failed.saturating_add(execution.container_failures);
-    let expected_has_failures = execution.tests_failed > 0 || execution.container_failures > 0;
-    let reported_failures = reported.failures.saturating_add(reported.errors);
-
-    let mut mismatches = Vec::new();
-    if summary.has_failures != expected_has_failures {
-        mismatches.push(format!(
-            "summary hasFailures mismatch: reported={}, expected={expected_has_failures}",
-            summary.has_failures
-        ));
-    }
-    if reported.tests != expected_tests {
-        mismatches.push(format!(
-            "summary/XML test-count mismatch: summary={expected_tests}, XML={}",
-            reported.tests
-        ));
-    }
-    if reported_failures != expected_failures {
-        mismatches.push(format!(
-            "summary/XML failure-count mismatch: summary={expected_failures}, XML={reported_failures}"
-        ));
-    }
-    if reported.skipped != execution.tests_skipped {
-        mismatches.push(format!(
-            "summary/XML skip-count mismatch: summary={}, XML={}",
-            execution.tests_skipped, reported.skipped
-        ));
-    }
-    mismatches
-}
-
 /// The single-run status ladder: first match wins, and the order is the whole point.
 ///
 /// - A diagnostic outranks everything. A run nobody can believe has no verdict to give.
@@ -646,7 +477,7 @@ fn count_mismatches(summary: &Summary, events: &[RunEvent], execution: &Executio
 ///   for a lane whose first class crashed - a missing prerequisite CLI rather than a broken IDE launch. Measured on
 ///   air-linux-1 on 2026-08-22: a `@BeforeAll` timeout came back as `no_tests` with advice to check the FQN.
 /// - A class a condition ruled out is `all_skipped`, not `no_tests`: the reason it carries is the answer.
-const fn decide_status(diagnostics: &[String], execution: &ExecutionCounts, reported: &XmlCounts) -> Status {
+const fn decide_status(diagnostics: &[String], execution: &ExecutionCounts, failures: &[Failure]) -> Status {
     let nothing_ran = execution.tests_started == 0 && execution.tests_skipped == 0;
     if !diagnostics.is_empty() {
         Status::InfrastructureError
@@ -656,7 +487,7 @@ const fn decide_status(diagnostics: &[String], execution: &ExecutionCounts, repo
         Status::AllSkipped
     } else if nothing_ran {
         Status::NoTests
-    } else if execution.tests_failed > 0 || execution.container_failures > 0 || reported.failures > 0 || reported.errors > 0 {
+    } else if execution.tests_failed > 0 || execution.container_failures > 0 || !failures.is_empty() {
         Status::Failed
     } else {
         Status::Passed

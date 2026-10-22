@@ -138,7 +138,7 @@ fn is_caller_owned_property(name: &str) -> bool {
         || lower.starts_with("resharper.")
         || matches!(
             name,
-            "idea.platform.prefix" | "idea.suppressed.plugins.set.selector" | "awt.toolkit.name"
+            "idea.platform.prefix" | "intellij.platform.product.mode" | "idea.suppressed.plugins.set.selector" | "awt.toolkit.name"
         )
 }
 

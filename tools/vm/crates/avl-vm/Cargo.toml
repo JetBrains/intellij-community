@@ -21,6 +21,7 @@ async-trait.workspace = true
 avl-affected.workspace = true
 avl-base.workspace = true
 avl-host-sys.workspace = true
+avl-junit.workspace = true
 avl-report.workspace = true
 avl-trace.workspace = true
 avl-trace-tools.workspace = true

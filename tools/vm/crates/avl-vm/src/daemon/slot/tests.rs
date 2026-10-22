@@ -2,14 +2,12 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::daemon::fixture::Fixture;
+use crate::daemon::http::RETIRED_JVM_PROTOCOL_VERSION;
 
 /// Records a daemon the HTTP double answers healthy for, under the given run id.
 fn record_daemon(fixture: &Fixture, run_id: &str) {
-    fixture
-        .daemon
-        .host_state(run_id, "launch-slot")
-        .write(&fixture.settings, &fixture.worker)
-        .unwrap();
+    let state = fixture.daemon.host_state(run_id, "launch-slot");
+    state.write(&fixture.settings, &fixture.worker).unwrap();
 }
 
 // The probe answers "parked" for exactly one state of the world, and everything else - including every way of
@@ -18,7 +16,7 @@ fn record_daemon(fixture: &Fixture, run_id: &str) {
 #[tokio::test]
 async fn only_an_answering_idle_daemon_reads_as_parked() {
     type Seed = fn(&Fixture);
-    let cases: [(&str, Seed, Option<&str>); 5] = [
+    let cases: [(&str, Seed, Option<&str>); 6] = [
         ("no daemon recorded on the worker", |_| {}, None),
         (
             "a recorded daemon that does not answer",
@@ -41,6 +39,15 @@ async fn only_an_answering_idle_daemon_reads_as_parked() {
             |fixture| {
                 record_daemon(fixture, "run-daemon");
                 fixture.daemon.script().protocol_version = 99;
+            },
+            None,
+        ),
+        // A guest can still hold the JVM daemon of an older controller, which this controller retires and never parks.
+        (
+            "a recorded JVM daemon of an older controller",
+            |fixture| {
+                record_daemon(fixture, "run-daemon");
+                fixture.daemon.script().protocol_version = RETIRED_JVM_PROTOCOL_VERSION;
             },
             None,
         ),

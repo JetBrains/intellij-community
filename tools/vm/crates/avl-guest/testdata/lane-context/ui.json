@@ -1,0 +1,664 @@
+{
+  "schemaVersion": 2,
+  "lane": "UI",
+  "launchProperties": [
+    {
+      "key": "jb.consents.confirmation.enabled",
+      "value": "false"
+    },
+    {
+      "key": "jb.privacy.policy.text",
+      "value": "<!--999.999-->"
+    },
+    {
+      "key": "jb.privacy.policy.ai.assistant.text",
+      "value": "<!--999.999-->"
+    },
+    {
+      "key": "marketplace.eula.reviewed.and.accepted",
+      "value": "true"
+    },
+    {
+      "key": "writerside.eula.reviewed.and.accepted",
+      "value": "true"
+    },
+    {
+      "key": "ide.newUsersOnboarding",
+      "value": "false"
+    },
+    {
+      "key": "freeze.reporter.profiling",
+      "value": "false"
+    },
+    {
+      "key": "idea.fatal.error.notification",
+      "value": "true"
+    },
+    {
+      "key": "idea.is.integration.test",
+      "value": "true"
+    },
+    {
+      "key": "ide.browser.jcef.jsQueryPoolSize",
+      "value": "10000"
+    },
+    {
+      "key": "idea.diagnostic.opentelemetry.metrics.max-files-to-keep",
+      "value": "120"
+    },
+    {
+      "key": "ide.performance.screenshot",
+      "value": "heartbeat"
+    },
+    {
+      "key": "idea.jar.repository.priority.url",
+      "value": "https://cache-redirector.jetbrains.com/maven-central"
+    },
+    {
+      "key": "ij.load.shell.env",
+      "value": "false"
+    },
+    {
+      "key": "ide.instant.shutdown",
+      "value": "false"
+    },
+    {
+      "key": "feature.usage.event.log.send.on.ide.close",
+      "value": "false"
+    },
+    {
+      "key": "linux.native.menu.force.disable",
+      "value": "true"
+    },
+    {
+      "key": "jdk.gtk.verbose",
+      "value": "true"
+    },
+    {
+      "key": "vcs.log.index.enable",
+      "value": "false"
+    },
+    {
+      "key": "ide.slow.operations.assertion",
+      "value": "false"
+    },
+    {
+      "key": "ide.default.smooth.caret.enabled",
+      "value": "true"
+    },
+    {
+      "key": "idea.local.statistics.without.report",
+      "value": "true"
+    },
+    {
+      "key": "idea.updates.url",
+      "value": "http://127.0.0.1"
+    },
+    {
+      "key": "kotest.assertions.collection.enumerate.size",
+      "value": "2147483647"
+    },
+    {
+      "key": "llm.ai.assistant.toolwindow.activation.on.start",
+      "value": "false"
+    },
+    {
+      "key": "llm.show.ai.promotion.window.on.start",
+      "value": "false"
+    },
+    {
+      "key": "ide.integration.test.disable.got.it.tooltips",
+      "value": "true"
+    },
+    {
+      "key": "ide.mac.file.chooser.native",
+      "value": "false"
+    },
+    {
+      "key": "ide.win.file.chooser.native",
+      "value": "false"
+    },
+    {
+      "key": "platform.experiment.ab.manual.option",
+      "value": "control.option"
+    },
+    {
+      "key": "platform.enable.plugin.update.source.feature",
+      "value": "false"
+    },
+    {
+      "key": "idea.plugins.host",
+      "value": "http://127.0.0.1"
+    },
+    {
+      "key": "jdk.gtk.version",
+      "value": "2",
+      "when": "linux"
+    },
+    {
+      "key": "ide.enable.notification.trace.data.sharing",
+      "value": "false",
+      "when": "notTeamCity"
+    },
+    {
+      "key": "idea.is.internal",
+      "value": "true"
+    },
+    {
+      "key": "idea.welcome.screen.non.modal.enabled",
+      "value": "true"
+    },
+    {
+      "key": "nosplash",
+      "value": "true"
+    },
+    {
+      "key": "driver.robot.use.input.events",
+      "value": "true"
+    },
+    {
+      "key": "ide.browser.jcef.sandbox.enable",
+      "value": "false"
+    },
+    {
+      "key": "java.util.prefs.PreferencesFactory",
+      "value": "java.util.prefs.FileSystemPreferencesFactory",
+      "when": "notWindows"
+    },
+    {
+      "key": "idea.log.debug.categories",
+      "value": "#com.intellij.air.frontend.prompt.composer.actions.popup"
+    },
+    {
+      "key": "air.acp.initialize.timeout.ms",
+      "value": "8000"
+    }
+  ],
+  "requirements": [
+    {
+      "name": "ACP_TRANSPORT_CAPTURE",
+      "properties": {
+        "air.acp.debug.enabled": "true"
+      }
+    },
+    {
+      "name": "WORKFLOWS",
+      "properties": {
+        "air.workflows": "true"
+      }
+    }
+  ],
+  "agents": [
+    {
+      "key": "air-ui-flow-resume-acp",
+      "delivery": "local",
+      "configName": "air-ui-flow-resume-acp",
+      "displayName": "air-ui-flow-resume-acp",
+      "controlled": false,
+      "deterministic": {
+        "responsePrefix": "Air UI flow resume ACP",
+        "responseDelayMs": 0,
+        "asksPermission": false,
+        "loadsSessions": false
+      },
+      "acpJson": {
+        "command": "${java}",
+        "args": [
+          "-jar",
+          "${fakeAgentJar}"
+        ],
+        "env": {
+          "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI flow resume ACP"
+        }
+      }
+    },
+    {
+      "key": "air-ui-context-first",
+      "delivery": "local",
+      "configName": "air-ui-context-first",
+      "displayName": "air-ui-context-first",
+      "controlled": false,
+      "deterministic": {
+        "responsePrefix": "Air UI context first",
+        "responseDelayMs": 0,
+        "asksPermission": false,
+        "loadsSessions": false
+      },
+      "acpJson": {
+        "command": "${java}",
+        "args": [
+          "-jar",
+          "${fakeAgentJar}"
+        ],
+        "env": {
+          "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI context first"
+        }
+      }
+    },
+    {
+      "key": "air-ui-context-second",
+      "delivery": "local",
+      "configName": "air-ui-context-second",
+      "displayName": "air-ui-context-second",
+      "controlled": false,
+      "deterministic": {
+        "responsePrefix": "Air UI context second",
+        "responseDelayMs": 0,
+        "asksPermission": false,
+        "loadsSessions": false
+      },
+      "acpJson": {
+        "command": "${java}",
+        "args": [
+          "-jar",
+          "${fakeAgentJar}"
+        ],
+        "env": {
+          "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI context second"
+        }
+      }
+    },
+    {
+      "key": "air-ui-flow-acp",
+      "delivery": "local",
+      "configName": "air-ui-flow-acp",
+      "displayName": "air-ui-flow-acp",
+      "controlled": false,
+      "deterministic": {
+        "responsePrefix": "Air UI flow ACP event",
+        "responseDelayMs": 0,
+        "asksPermission": false,
+        "loadsSessions": false
+      },
+      "acpJson": {
+        "command": "${java}",
+        "args": [
+          "-jar",
+          "${fakeAgentJar}"
+        ],
+        "env": {
+          "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI flow ACP event"
+        }
+      }
+    },
+    {
+      "key": "consent-repair",
+      "delivery": "registry",
+      "registryId": "github-copilot",
+      "displayName": "GitHub Copilot",
+      "controlled": false,
+      "deterministic": {
+        "responsePrefix": "Air repair response",
+        "responseDelayMs": 0,
+        "asksPermission": false,
+        "loadsSessions": false
+      },
+      "env": {
+        "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air repair response"
+      }
+    },
+    {
+      "key": "consent-agents",
+      "delivery": "registry",
+      "registryId": "gemini",
+      "displayName": "Gemini Consent Fixture",
+      "controlled": false,
+      "deterministic": {
+        "responsePrefix": "Air consent Agents response",
+        "responseDelayMs": 0,
+        "asksPermission": false,
+        "loadsSessions": false
+      },
+      "env": {
+        "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air consent Agents response"
+      }
+    },
+    {
+      "key": "consent-prompt",
+      "delivery": "registry",
+      "registryId": "junie",
+      "displayName": "Junie",
+      "controlled": false,
+      "deterministic": {
+        "responsePrefix": "Air consent prompt response",
+        "responseDelayMs": 0,
+        "asksPermission": false,
+        "loadsSessions": true
+      },
+      "env": {
+        "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air consent prompt response",
+        "ACP_DEBUG_TEST_LOAD_SESSION": "true"
+      }
+    },
+    {
+      "key": "air-ui-flow-mark-done-acp",
+      "delivery": "local",
+      "configName": "air-ui-flow-mark-done-acp",
+      "displayName": "air-ui-flow-mark-done-acp",
+      "controlled": false,
+      "deterministic": {
+        "responsePrefix": "Air UI flow Mark Done ACP",
+        "responseDelayMs": 0,
+        "asksPermission": false,
+        "loadsSessions": false
+      },
+      "acpJson": {
+        "command": "${java}",
+        "args": [
+          "-jar",
+          "${fakeAgentJar}"
+        ],
+        "env": {
+          "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI flow Mark Done ACP"
+        }
+      }
+    },
+    {
+      "key": "air-ui-flow-closed-project-acp",
+      "delivery": "local",
+      "configName": "air-ui-flow-closed-project-acp",
+      "displayName": "air-ui-flow-closed-project-acp",
+      "controlled": false,
+      "deterministic": {
+        "responsePrefix": "Air UI flow closed project ACP",
+        "responseDelayMs": 0,
+        "asksPermission": false,
+        "loadsSessions": false
+      },
+      "acpJson": {
+        "command": "${java}",
+        "args": [
+          "-jar",
+          "${fakeAgentJar}"
+        ],
+        "env": {
+          "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI flow closed project ACP"
+        }
+      }
+    },
+    {
+      "key": "air-ui-flow-activity-acp",
+      "delivery": "local",
+      "configName": "air-ui-flow-activity-acp",
+      "displayName": "air-ui-flow-activity-acp",
+      "controlled": false,
+      "deterministic": {
+        "responsePrefix": "Air UI flow activity",
+        "responseDelayMs": 9000,
+        "asksPermission": false,
+        "loadsSessions": false
+      },
+      "acpJson": {
+        "command": "${java}",
+        "args": [
+          "-jar",
+          "${fakeAgentJar}"
+        ],
+        "env": {
+          "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI flow activity",
+          "ACP_DEBUG_TEST_RESPONSE_DELAY_MS": "9000"
+        }
+      }
+    },
+    {
+      "key": "air-ui-flow-activity-ask-acp",
+      "delivery": "local",
+      "configName": "air-ui-flow-activity-ask-acp",
+      "displayName": "air-ui-flow-activity-ask-acp",
+      "controlled": false,
+      "deterministic": {
+        "responsePrefix": "Air UI flow activity ask",
+        "responseDelayMs": 9000,
+        "asksPermission": true,
+        "loadsSessions": false
+      },
+      "acpJson": {
+        "command": "${java}",
+        "args": [
+          "-jar",
+          "${fakeAgentJar}"
+        ],
+        "env": {
+          "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI flow activity ask",
+          "ACP_DEBUG_TEST_RESPONSE_DELAY_MS": "9000",
+          "ACP_DEBUG_TEST_ASK_PERMISSION": "true"
+        }
+      }
+    },
+    {
+      "key": "resume-surface-paired",
+      "delivery": "registry",
+      "registryId": "codex-acp",
+      "displayName": "Codex",
+      "controlled": false,
+      "deterministic": {
+        "responsePrefix": "Air consent Codex response",
+        "responseDelayMs": 0,
+        "asksPermission": false,
+        "loadsSessions": false
+      },
+      "env": {
+        "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air consent Codex response"
+      }
+    },
+    {
+      "key": "air-ui-flow-restart-acp",
+      "delivery": "local",
+      "configName": "air-ui-flow-restart-acp",
+      "displayName": "air-ui-flow-restart-acp",
+      "controlled": false,
+      "deterministic": {
+        "responsePrefix": "Air UI flow restart ACP",
+        "responseDelayMs": 0,
+        "asksPermission": false,
+        "loadsSessions": false
+      },
+      "acpJson": {
+        "command": "${java}",
+        "args": [
+          "-jar",
+          "${fakeAgentJar}"
+        ],
+        "env": {
+          "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI flow restart ACP"
+        }
+      }
+    },
+    {
+      "key": "air-ui-flow-restart-reads-acp",
+      "delivery": "local",
+      "configName": "air-ui-flow-restart-reads-acp",
+      "displayName": "air-ui-flow-restart-reads-acp",
+      "controlled": false,
+      "deterministic": {
+        "responsePrefix": "Air UI flow restart reads ACP",
+        "responseDelayMs": 0,
+        "asksPermission": false,
+        "loadsSessions": false
+      },
+      "acpJson": {
+        "command": "${java}",
+        "args": [
+          "-jar",
+          "${fakeAgentJar}"
+        ],
+        "env": {
+          "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI flow restart reads ACP"
+        }
+      }
+    },
+    {
+      "key": "air-ui-flow-worktree-session-acp",
+      "delivery": "local",
+      "configName": "air-ui-flow-worktree-session-acp",
+      "displayName": "air-ui-flow-worktree-session-acp",
+      "controlled": false,
+      "deterministic": {
+        "responsePrefix": "Air UI flow worktree session ACP",
+        "responseDelayMs": 0,
+        "asksPermission": false,
+        "loadsSessions": false
+      },
+      "acpJson": {
+        "command": "${java}",
+        "args": [
+          "-jar",
+          "${fakeAgentJar}"
+        ],
+        "env": {
+          "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Air UI flow worktree session ACP"
+        }
+      }
+    },
+    {
+      "key": "workflow-run",
+      "delivery": "local",
+      "configName": "air-scenario-workflow-run",
+      "displayName": "air-scenario-workflow-run",
+      "controlled": false,
+      "deterministic": {
+        "responsePrefix": "Workflow completed",
+        "responseDelayMs": 0,
+        "asksPermission": false,
+        "loadsSessions": false
+      },
+      "acpJson": {
+        "command": "${java}",
+        "args": [
+          "-jar",
+          "${fakeAgentJar}"
+        ],
+        "env": {
+          "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Workflow completed"
+        }
+      }
+    },
+    {
+      "key": "workflow-source",
+      "delivery": "local",
+      "configName": "air-scenario-workflow-source",
+      "displayName": "air-scenario-workflow-source",
+      "controlled": true,
+      "controlOwner": "IDE",
+      "acpJson": {
+        "command": "${java}",
+        "args": [
+          "-jar",
+          "${fakeAgentJar}"
+        ],
+        "env": {}
+      }
+    },
+    {
+      "key": "session-window-seed",
+      "delivery": "local",
+      "configName": "air-scenario-session-window-seed",
+      "displayName": "air-scenario-session-window-seed",
+      "controlled": false,
+      "deterministic": {
+        "responsePrefix": "Session window seed response",
+        "responseDelayMs": 0,
+        "asksPermission": false,
+        "loadsSessions": false
+      },
+      "acpJson": {
+        "command": "${java}",
+        "args": [
+          "-jar",
+          "${fakeAgentJar}"
+        ],
+        "env": {
+          "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "Session window seed response"
+        }
+      }
+    },
+    {
+      "key": "session-window-first",
+      "delivery": "local",
+      "configName": "air-scenario-session-window-first",
+      "displayName": "air-scenario-session-window-first",
+      "controlled": true,
+      "controlOwner": "IDE",
+      "acpJson": {
+        "command": "${java}",
+        "args": [
+          "-jar",
+          "${fakeAgentJar}"
+        ],
+        "env": {}
+      }
+    },
+    {
+      "key": "session-window-second",
+      "delivery": "local",
+      "configName": "air-scenario-session-window-second",
+      "displayName": "air-scenario-session-window-second",
+      "controlled": true,
+      "controlOwner": "IDE",
+      "acpJson": {
+        "command": "${java}",
+        "args": [
+          "-jar",
+          "${fakeAgentJar}"
+        ],
+        "env": {}
+      }
+    },
+    {
+      "key": "genui-seed",
+      "delivery": "local",
+      "configName": "air-scenario-genui-seed",
+      "displayName": "air-scenario-genui-seed",
+      "controlled": false,
+      "deterministic": {
+        "responsePrefix": "GenUI seed response",
+        "responseDelayMs": 0,
+        "asksPermission": false,
+        "loadsSessions": false
+      },
+      "acpJson": {
+        "command": "${java}",
+        "args": [
+          "-jar",
+          "${fakeAgentJar}"
+        ],
+        "env": {
+          "ACP_FAKE_AGENT_STANDALONE_RESPONSE_PREFIX": "GenUI seed response"
+        }
+      }
+    },
+    {
+      "key": "genui-agent",
+      "delivery": "local",
+      "configName": "air-scenario-genui-agent",
+      "displayName": "air-scenario-genui-agent",
+      "controlled": true,
+      "controlOwner": "IDE",
+      "acpJson": {
+        "command": "${java}",
+        "args": [
+          "-jar",
+          "${fakeAgentJar}"
+        ],
+        "env": {}
+      }
+    }
+  ],
+  "registryAgents": [
+    "consent-repair",
+    "consent-agents",
+    "consent-prompt",
+    "resume-surface-paired"
+  ],
+  "disabledPluginIds": [
+    "com.intellij.ml.llm"
+  ],
+  "cliRuntimes": [
+    "codex",
+    "pi"
+  ],
+  "services": {
+    "codexModel": "mock-responses port=31500 reply=Air UI lane Codex reply",
+    "jetBrainsCloud": "jba-jcp-emulator-1"
+  }
+}

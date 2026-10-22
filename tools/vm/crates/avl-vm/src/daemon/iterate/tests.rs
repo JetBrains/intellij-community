@@ -20,12 +20,13 @@ use serde_json::json;
 
 use super::*;
 use crate::daemon::fixture::Fixture;
+use crate::daemon::http::RETIRED_JVM_PROTOCOL_VERSION;
 use crate::lane::secrets::{RunSecretFile, ScriptedStdin, SecretSource};
 use avl_base::RefusalExt;
 
 /// The pack verb, as the fake channel matches it in an argv.
 const TRACE_PACK_READY_VERB: &str = AgentVerb::TracePackReady.as_str();
-use crate::daemon::testing::{PASSING_XML, PLENTIFUL_DF, Recorded, passing_run_lines};
+use crate::daemon::testing::{PLENTIFUL_DF, Recorded, ndjson_line, passing_run_lines};
 use crate::daemon::traces::TRACE_PACK_TIMEOUT;
 
 // --- the decisions ---------------------------------------------------------------------------------------------
@@ -33,34 +34,24 @@ use crate::daemon::traces::TRACE_PACK_TIMEOUT;
 const BUILD: DaemonDigests<'static> = DaemonDigests {
     launch: "launch-1",
     mount: "mount-1",
-    runtime: "runtime-1",
     plugins: "plugins-1",
 };
 
-fn healthy(launch: &'static str, mount: &'static str, runtime: &'static str, ide_running: bool) -> HealthyDaemon<'static> {
-    healthy_with_plugins(launch, mount, runtime, "plugins-1", ide_running)
+fn healthy(launch: &'static str, mount: &'static str, ide_running: bool) -> HealthyDaemon<'static> {
+    healthy_with_plugins(launch, mount, "plugins-1", ide_running)
 }
 
-fn healthy_with_plugins(
-    launch: &'static str,
-    mount: &'static str,
-    runtime: &'static str,
-    plugins: &'static str,
-    ide_running: bool,
-) -> HealthyDaemon<'static> {
+fn healthy_with_plugins(launch: &'static str, mount: &'static str, plugins: &'static str, ide_running: bool) -> HealthyDaemon<'static> {
     HealthyDaemon {
-        recorded: DaemonDigests {
-            launch,
-            mount,
-            runtime,
-            plugins,
-        },
+        recorded: DaemonDigests { launch, mount, plugins },
         ide_running,
+        agent: None,
     }
 }
 
 // A healthy daemon of this launch serves the iteration, refreshed or relaunched when an axis asks for it; any other
-// daemon is started, and the decision names which axis moved.
+// daemon is started, and the decision names which axis moved. A daemon of another launch restarts for one reason, and
+// `--fresh-ide` does not change it.
 #[test]
 fn the_daemon_decision_names_the_axis_that_moved() {
     let start = |verb, reason| DaemonAction::Start {
@@ -70,57 +61,49 @@ fn the_daemon_decision_names_the_axis_that_moved() {
     };
     for (seen, fresh_ide, expected) in [
         (None, false, start("start", "no healthy daemon")),
-        (Some(healthy("launch-1", "mount-1", "runtime-1", true)), false, DaemonAction::Reuse),
+        (Some(healthy("launch-1", "mount-1", true)), false, DaemonAction::Reuse),
         (
-            Some(healthy("launch-1", "mount-1", "runtime-1", false)),
+            Some(healthy("launch-1", "mount-1", false)),
             false,
             DaemonAction::Relaunch { stop_ide: false },
         ),
-        (Some(healthy("launch-1", "mount-0", "runtime-1", true)), true, DaemonAction::Remount),
+        (Some(healthy("launch-1", "mount-0", true)), true, DaemonAction::Remount),
         (
-            Some(healthy("launch-1", "mount-1", "runtime-1", true)),
+            Some(healthy("launch-1", "mount-1", true)),
             true,
             DaemonAction::Relaunch { stop_ide: true },
         ),
         (
-            Some(healthy("launch-1", "mount-1", "runtime-1", false)),
+            Some(healthy("launch-1", "mount-1", false)),
             true,
             DaemonAction::Relaunch { stop_ide: false },
         ),
-        // Only the context plugins moved: a relaunch on the same context, and no remount.
+        // Only the context plugins moved: the lane daemon compares the digest of each plugin directory itself.
         (
-            Some(healthy_with_plugins("launch-1", "mount-1", "runtime-1", "plugins-0", true)),
+            Some(healthy_with_plugins("launch-1", "mount-1", "plugins-0", true)),
             false,
-            DaemonAction::RelaunchForPlugins,
+            DaemonAction::Reuse,
         ),
         // A record of an older controller holds no plugin identity, so nothing is decided on it.
         (
-            Some(healthy_with_plugins("launch-1", "mount-1", "runtime-1", "", true)),
+            Some(healthy_with_plugins("launch-1", "mount-1", "", true)),
             false,
             DaemonAction::Reuse,
         ),
         // A moved mount wins: the remount gives a fresh context, which installs the plugins anyway.
         (
-            Some(healthy_with_plugins("launch-1", "mount-0", "runtime-1", "plugins-0", true)),
+            Some(healthy_with_plugins("launch-1", "mount-0", "plugins-0", true)),
             false,
             DaemonAction::Remount,
         ),
         // An IDE that is not running is launched again, and the launch installs the plugins.
         (
-            Some(healthy_with_plugins("launch-1", "mount-1", "runtime-1", "plugins-0", false)),
+            Some(healthy_with_plugins("launch-1", "mount-1", "plugins-0", false)),
             false,
             DaemonAction::Relaunch { stop_ide: false },
         ),
-        (
-            Some(healthy("launch-0", "mount-1", "runtime-0", true)),
-            false,
-            start("restart", "the stable runtime or JBR changed"),
-        ),
-        (
-            Some(healthy("launch-0", "mount-1", "runtime-1", true)),
-            true,
-            start("restart", "the controller boot settings changed"),
-        ),
+        (Some(healthy("launch-0", "mount-1", true)), false, start("restart", LAUNCH_CHANGED)),
+        (Some(healthy("launch-0", "mount-0", true)), true, start("restart", LAUNCH_CHANGED)),
     ] {
         assert_eq!(
             decide_daemon_action(seen, BUILD, fresh_ide),
@@ -130,10 +113,195 @@ fn the_daemon_decision_names_the_axis_that_moved() {
     }
 }
 
+// A lane daemon is its guest agent. When the guest holds another agent than the one the daemon started from, the run
+// restarts the daemon, so the code of the daemon is the code of the install. The new daemon keeps the IDE. An agent that
+// the run does not know decides nothing.
+#[test]
+fn a_lane_daemon_whose_guest_agent_was_reinstalled_restarts() {
+    let with_agent = |started: &'static str, installed: &'static str, mount: &'static str| HealthyDaemon {
+        agent: Some(AgentDigests {
+            started,
+            installed: Some(installed),
+            built: Some(started),
+        }),
+        ..healthy("launch-1", mount, true)
+    };
+    let restart = DaemonAction::Start {
+        verb: "restart",
+        reason: AGENT_REINSTALLED,
+        keep_ide: true,
+    };
+    let decide = |seen| decide_daemon_action(Some(seen), BUILD, false);
+    assert_eq!(decide(with_agent("agent-a", "agent-b", "mount-1")), restart);
+    // The start refreshes the shares too, so a moved mount restarts the same way.
+    assert_eq!(decide(with_agent("agent-a", "agent-b", "mount-0")), restart);
+    assert_eq!(decide(with_agent("agent-a", "agent-a", "mount-1")), DaemonAction::Reuse);
+    assert_eq!(decide(healthy("launch-1", "mount-1", true)), DaemonAction::Reuse);
+}
+
+/// A healthy lane daemon of `launch` that started from the agent `started`, whose build made the agent `built`. The guest
+/// holds the agent of the start.
+fn with_built(launch: &'static str, started: &'static str, built: Option<&'static str>) -> HealthyDaemon<'static> {
+    HealthyDaemon {
+        agent: Some(AgentDigests {
+            started,
+            installed: Some(started),
+            built,
+        }),
+        ..healthy(launch, "mount-1", true)
+    }
+}
+
+// The context writer is part of the guest agent. So a lane daemon whose build made another guest agent restarts, and the
+// restart keeps no IDE: the new daemon makes a fresh context and writes its files. A restart for a moved launch keeps
+// its reason and also keeps no IDE then.
+#[test]
+fn a_lane_daemon_whose_build_made_another_guest_agent_restarts_with_a_fresh_ide() {
+    let fresh = DaemonAction::Start {
+        verb: "restart",
+        reason: AGENT_BUILT,
+        keep_ide: false,
+    };
+    let decide = |seen| decide_daemon_action(Some(seen), BUILD, false);
+    assert_eq!(decide(with_built("launch-1", "agent-a", Some("agent-b"))), fresh);
+    let mut reinstalled = with_built("launch-1", "agent-a", Some("agent-b"));
+    reinstalled.agent = reinstalled.agent.map(|agent| AgentDigests {
+        installed: Some("agent-c"),
+        ..agent
+    });
+    assert_eq!(decide(reinstalled), fresh, "the built agent wins over a reinstalled one");
+    assert_eq!(
+        decide(with_built("launch-0", "agent-a", Some("agent-b"))),
+        DaemonAction::Start {
+            verb: "restart",
+            reason: LAUNCH_CHANGED,
+            keep_ide: false,
+        }
+    );
+}
+
+// A lane daemon whose build made the agent of its start serves the run as it is, and so does one whose built agent the
+// run does not know. A restart for a moved launch then keeps the IDE of the product.
+#[test]
+fn a_lane_daemon_whose_build_made_the_agent_of_its_start_is_reused() {
+    let decide = |seen| decide_daemon_action(Some(seen), BUILD, false);
+    assert_eq!(decide(with_built("launch-1", "agent-a", Some("agent-a"))), DaemonAction::Reuse);
+    assert_eq!(decide(with_built("launch-1", "agent-a", None)), DaemonAction::Reuse);
+    assert_eq!(
+        decide(with_built("launch-0", "agent-a", Some("agent-a"))),
+        DaemonAction::Start {
+            verb: "restart",
+            reason: LAUNCH_CHANGED,
+            keep_ide: true,
+        }
+    );
+}
+
+// The run reads the agent of the build only for a lane daemon whose record names the agent of its start. The digest is
+// the digest of the bytes that a start installs. A digest that moved is a note with both digests.
+#[tokio::test]
+async fn the_run_reads_the_agent_of_the_build_only_for_a_lane_daemon_with_a_recorded_agent() {
+    let fixture = Fixture::new().await;
+    let ctx = Ctx::background();
+    let scope = Scope::worker(&fixture.worker);
+    let source = fixture.settings.vm_agent_source.as_ref().expect("the pool names the agent source");
+    let built = avl_host_sys::guest::agent_digest(&std::fs::read(source).unwrap());
+    let mut state = fixture.daemon.host_state("run-ui-daemon-1", "launch-1");
+    assert_eq!(fixture.host.built_agent(&ctx, &state, &scope).await, None);
+    state.agent_digest = built.clone();
+    assert_eq!(
+        fixture.host.built_agent(&ctx, &state, &scope).await.as_deref(),
+        Some(built.as_str())
+    );
+    let started = avl_host_sys::guest::agent_digest(b"agent of an earlier build");
+    state.agent_digest = started.clone();
+    assert_eq!(
+        fixture.host.built_agent(&ctx, &state, &scope).await.as_deref(),
+        Some(built.as_str())
+    );
+    let said = fixture.stdout.text() + &fixture.stderr.text();
+    let moved = format!(
+        "the lane daemon runs the guest agent {} of its start, and the build made {}",
+        &started[..12],
+        &built[..12]
+    );
+    assert_eq!(said.matches(&moved).count(), 1, "{said}");
+}
+
+// The run asks the guest which agent it holds only for a lane daemon whose record names the agent of its start. A digest
+// that moved is a note of the run stream with both digests. A guest that does not say keeps the daemon, and the note
+// says why.
+#[tokio::test]
+async fn the_run_asks_the_guest_for_its_agent_only_for_a_lane_daemon_with_a_recorded_agent() {
+    let fixture = Fixture::new().await;
+    let ctx = Ctx::background();
+    let scope = Scope::worker(&fixture.worker);
+    let started = avl_host_sys::guest::agent_digest(b"agent of the start");
+    let reinstalled = avl_host_sys::guest::agent_digest(b"agent of another checkout");
+    let contract = |digest: &str| answer_text(json!({ "selfDigest": digest }).to_string());
+    let mut state = fixture.daemon.host_state("run-ui-daemon-1", "launch-1");
+    fixture.on("contract", contract(&reinstalled));
+    assert_eq!(fixture.host.installed_agent(&ctx, &state, &scope).await, None);
+    state.agent_digest = started.clone();
+    assert!(fixture.channel().calls_containing("vm-guest-agent contract").is_empty());
+
+    assert_eq!(
+        fixture.host.installed_agent(&ctx, &state, &scope).await.as_deref(),
+        Some(reinstalled.as_str())
+    );
+    let said = fixture.stdout.text() + &fixture.stderr.text();
+    let moved = format!(
+        "the lane daemon runs the guest agent {} of its start, and the guest holds {} now",
+        &started[..12],
+        &reinstalled[..12]
+    );
+    assert!(said.contains(&moved), "{said}");
+
+    fixture.on("contract", contract(&started));
+    assert_eq!(
+        fixture.host.installed_agent(&ctx, &state, &scope).await.as_deref(),
+        Some(started.as_str())
+    );
+    fixture.on("contract", answer_exit(70));
+    assert_eq!(fixture.host.installed_agent(&ctx, &state, &scope).await, None);
+    let said = fixture.stdout.text() + &fixture.stderr.text();
+    assert_eq!(said.matches(&moved).count(), 1, "{said}");
+    assert!(
+        said.contains("the lane daemon stays, because the guest agent did not say which build it is"),
+        "{said}"
+    );
+}
+
+// The IDE action of a lane daemon iteration is the word of its last decision about the IDE, and a fallback after a
+// reload is a relaunch. A decision about another subject or of an unknown word names none.
+#[test]
+fn the_ide_action_of_the_lane_daemon_is_its_last_decision_about_the_ide() {
+    let decision = |subject: Subject, action: &str| {
+        RunEvent::synthesized(RunEventKind::Decision(Decision {
+            subject,
+            action: action.to_owned(),
+            reason: Some("why".to_owned()),
+        }))
+    };
+    assert_eq!(IdeAction::of_lane_daemon(&[]), None);
+    assert_eq!(
+        IdeAction::of_lane_daemon(&[decision(Subject::Ide, "reload")]),
+        Some(IdeAction::Reload)
+    );
+    assert_eq!(
+        IdeAction::of_lane_daemon(&[decision(Subject::Ide, "reload"), decision(Subject::Ide, "relaunch")]),
+        Some(IdeAction::Relaunch)
+    );
+    assert_eq!(
+        IdeAction::of_lane_daemon(&[decision(Subject::Ide, "fresh"), decision(Subject::Jars, "push")]),
+        Some(IdeAction::Fresh)
+    );
+    assert_eq!(IdeAction::of_lane_daemon(&[decision(Subject::Ide, "explode")]), None);
+    assert_eq!(IdeAction::Reload.as_str(), "reload");
+}
+
 #[test]
 fn the_push_notes_count_the_changed_jars() {
-    assert_eq!(reuse_reason(0), "no daemon input and no test jar changed");
-    assert_eq!(reuse_reason(2), "the daemon inputs did not change");
     assert_eq!(jar_push_reason(0), None);
     assert_eq!(jar_push_reason(1).as_deref(), Some("1 changed test jar"));
     assert_eq!(jar_push_reason(3).as_deref(), Some("3 changed test jars"));
@@ -171,6 +339,7 @@ fn lane_ui() -> RunSelection {
         selectors: Vec::new(),
         junit5_filters: Vec::new(),
         description: "lane ui".to_owned(),
+        lane: Some("ui".to_owned()),
     }
 }
 
@@ -185,7 +354,7 @@ async fn iteration_fixture_over(fixture: Fixture, iteration_id: &str) -> (Fixtur
     let prep = fixture.prepared().await;
     let state = fixture.seed_healthy_daemon(&prep);
     fixture.seed_current_container().await;
-    fixture.script_run(passing_run_lines(iteration_id), PASSING_XML);
+    fixture.script_run(passing_run_lines(iteration_id));
     (fixture, prep, state)
 }
 
@@ -248,7 +417,6 @@ async fn a_warm_iteration_reuses_the_daemon() {
     assert_eq!(report.status, Status::Passed);
     let (_, path) = attempt.report.as_ref().unwrap();
     assert!(path.is_file(), "the report is persisted at {}", path.display());
-    assert!(!fixture.daemon.saw_request("POST /mount/quiesce"));
     assert!(!fixture.daemon.saw_request("POST /ide/stop"));
     assert!(
         fixture.channel().calls_containing("vm-guest-agent start").is_empty(),
@@ -265,9 +433,9 @@ fn remounts(fixture: &Fixture) -> usize {
     fixture.channel().calls_containing("/bin/sh /vm/data/state/remount-shares.sh").len()
 }
 
-// On Tart a moved mount digest quiesces the daemon around the remount and resumes it, without a restart.
+// On Tart a moved mount digest stops the lane IDEs around the remount, without a restart of the daemon.
 #[tokio::test]
-async fn a_mount_digest_mismatch_quiesces_remounts_and_resumes() {
+async fn a_mount_digest_mismatch_stops_the_ides_and_remounts() {
     let (fixture, prep, mut state) = iteration_fixture_over(Fixture::tart_macos().await, "it-11").await;
     state.last_mount_digest = "something-else".to_owned();
     state.write(&fixture.settings, &fixture.worker).unwrap();
@@ -275,8 +443,11 @@ async fn a_mount_digest_mismatch_quiesces_remounts_and_resumes() {
     report_of(&attempt);
     assert_eq!(attempt.ide_action, IdeAction::Remount);
     assert!(attempt.timing.contains("  ide remount  "), "{:?}", attempt.timing);
-    assert!(fixture.daemon.saw_request("POST /mount/quiesce"));
-    assert!(fixture.daemon.saw_request("POST /mount/resume"));
+    assert!(fixture.daemon.saw_request("POST /ide/stop"));
+    assert!(
+        !fixture.channel().calls_containing("vm-guest-agent ide-gc").is_empty(),
+        "every IDE run of the worker is stopped"
+    );
     assert!(
         !fixture
             .channel()
@@ -289,12 +460,12 @@ async fn a_mount_digest_mismatch_quiesces_remounts_and_resumes() {
         fixture.channel().calls_containing("vm-guest-agent start").is_empty(),
         "a share-backed change never restarts the daemon"
     );
-    // The persisted state carries the run's mount digest forward, so the next iteration skips the quiesce.
+    // The persisted state carries the run's mount digest forward, so the next iteration skips the remount.
     let recorded = HostState::read(&fixture.settings, &fixture.worker).unwrap();
     assert_eq!(recorded.last_mount_digest, prep.mount_digest);
 }
 
-// On Docker a moved mount digest still quiesces and resumes the daemon and still reports `ide remount`, but the guest
+// On Docker a moved mount digest still stops the lane IDEs and still reports `ide remount`, but the guest
 // sees no remount script: the shares are bind mounts, and the refresh is a settle. The scripted guest is where every
 // guest command lands, and the fake `docker` log shows the backend was Docker and ran no guest command of its own.
 #[tokio::test]
@@ -306,8 +477,7 @@ async fn a_mount_digest_mismatch_on_docker_settles_without_a_remount_script() {
     report_of(&attempt);
     assert_eq!(attempt.ide_action, IdeAction::Remount);
     assert!(attempt.timing.contains("  ide remount  "), "{:?}", attempt.timing);
-    assert!(fixture.daemon.saw_request("POST /mount/quiesce"));
-    assert!(fixture.daemon.saw_request("POST /mount/resume"));
+    assert!(fixture.daemon.saw_request("POST /ide/stop"));
     let scripted = fixture.channel().calls_containing("remount-shares.sh");
     assert!(scripted.is_empty(), "{scripted:#?}");
     let said = fixture.stdout.text() + &fixture.stderr.text();
@@ -330,7 +500,7 @@ async fn a_mount_digest_mismatch_on_docker_settles_without_a_remount_script() {
 async fn a_warm_iteration_on_docker_recreates_a_container_of_another_declaration() {
     let (fixture, prep, _state) = iteration_fixture_over(Fixture::docker().await, "it-12d").await;
     // The new container needs a daemon start: the guest and the daemon double answer one.
-    fixture.install_happy_guest(&prep);
+    fixture.install_happy_guest();
     fixture.daemon.script().launch_digest = prep.launch_digest.clone();
     let record_path = fixture.settings.docker_create_record_path(&fixture.worker);
     let mut record: serde_json::Value = serde_json::from_slice(&std::fs::read(&record_path).unwrap()).unwrap();
@@ -406,10 +576,29 @@ async fn a_daemon_without_a_running_ide_relaunches_it() {
     assert!(!decisions.iter().any(|decision| decision["action"] == "reuse"), "{decisions:?}");
 }
 
-// A change of the context plugins alone relaunches the IDE on the same context: no remount, no stop and no daemon
-// start. The state records the plugin identity the iteration ran with.
+// Each iteration names the digest of each lane input in the journal, after the push that offered them.
 #[tokio::test]
-async fn a_change_of_the_context_plugins_alone_relaunches_the_ide() {
+async fn an_iteration_names_the_digests_of_the_lane_inputs() {
+    let (fixture, prep, _) = iteration_fixture("it-12l").await;
+    let recorded = Recorded::start(&fixture.host.reporter);
+    let attempt = run_warm_iteration(&fixture, false).await;
+    report_of(&attempt);
+    let digest = |index: usize| prep.lane_inputs[index].host.sha256[..12].to_owned();
+    let expected = format!(
+        "lane inputs by digest: fakeAgentJar {}, laneDocuments {}, suiteDocuments {}",
+        digest(0),
+        digest(1),
+        digest(2)
+    );
+    let notes = recorded.messages_of(Kind::Note);
+    assert!(notes.contains(&expected), "{notes:?}");
+}
+
+// A change of the context plugins alone leaves the IDE to the lane daemon, which compares the digest of each plugin
+// directory itself: no remount, no stop, no daemon start and no IDE decision of the controller. The state records the
+// plugin identity the iteration ran with.
+#[tokio::test]
+async fn a_change_of_the_context_plugins_alone_leaves_the_ide_to_the_lane_daemon() {
     let (fixture, prep, mut state) = iteration_fixture("it-12p").await;
     fixture.daemon.script().ide_running = true;
     state.last_plugins_digest = "plugins-before".to_owned();
@@ -417,19 +606,14 @@ async fn a_change_of_the_context_plugins_alone_relaunches_the_ide() {
     let recorded = Recorded::start(&fixture.host.reporter);
     let attempt = run_warm_iteration(&fixture, false).await;
     report_of(&attempt);
-    assert_eq!(attempt.ide_action, IdeAction::Relaunch);
-    assert!(attempt.timing.contains("  ide relaunch  "), "{:?}", attempt.timing);
+    assert_eq!(attempt.ide_action, IdeAction::Reuse);
     assert!(!fixture.daemon.saw_request("POST /ide/stop"));
-    assert!(!fixture.daemon.saw_request("POST /mount/quiesce"));
     assert!(
         fixture.channel().calls_containing("vm-guest-agent start").is_empty(),
-        "a relaunch for the plugins keeps the daemon"
+        "a change of the plugins keeps the daemon"
     );
     let decisions: Vec<serde_json::Value> = recorded.data_of(Kind::Decision);
-    assert!(
-        decisions.contains(&json!({"subject": "ide", "action": "relaunch", "reason": "the bridge plugin changed"})),
-        "{decisions:?}"
-    );
+    assert!(!decisions.iter().any(|decision| decision["subject"] == "ide"), "{decisions:?}");
     assert!(!decisions.iter().any(|decision| decision["subject"] == "shares"), "{decisions:?}");
     let written = HostState::read(&fixture.settings, &fixture.worker).expect("the state is kept");
     assert_eq!(written.last_plugins_digest, prep.plugins_digest);
@@ -452,9 +636,9 @@ async fn fresh_ide_stops_a_running_ide() {
 async fn no_healthy_daemon_restarts_the_daemon() {
     let fixture = Fixture::new().await;
     let prep = fixture.prepared().await;
-    fixture.install_happy_guest(&prep);
+    fixture.install_happy_guest();
     fixture.daemon.script().launch_digest = prep.launch_digest.clone();
-    fixture.script_run(passing_run_lines("it-13"), PASSING_XML);
+    fixture.script_run(passing_run_lines("it-13"));
     // Readiness needs a live run process and a provisioned layout; both are the suite's to arrange.
     fixture.mark_ready().await;
     let recorded = Recorded::start(&fixture.host.reporter);
@@ -474,15 +658,45 @@ async fn no_healthy_daemon_restarts_the_daemon() {
     );
 }
 
-// A restart for a stable-tier change keeps the IDE of the product on a worker whose refresh unmounts nothing: the gc
-// keeps the product, the timing line says `keep`, and the decision names the kept IDE.
+// A guest can still hold the JVM daemon of an older controller, whose record names its runner. A run retires that
+// daemon and starts the lane daemon, and it does not refuse `daemon_protocol_unsupported`.
+#[tokio::test]
+async fn a_leftover_jvm_daemon_is_retired_and_the_lane_daemon_started() {
+    let fixture = Fixture::new().await;
+    let prep = fixture.prepared().await;
+    fixture.install_happy_guest();
+    let state = fixture.seed_healthy_daemon(&prep);
+    let path = HostState::path(&fixture.settings, &fixture.worker);
+    let mut record: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+    record["runner"] = json!("jvm");
+    std::fs::write(&path, record.to_string()).unwrap();
+    assert_eq!(HostState::read(&fixture.settings, &fixture.worker), Some(state));
+    {
+        let mut script = fixture.daemon.script();
+        script.protocol_version = RETIRED_JVM_PROTOCOL_VERSION;
+        script.protocol_after_shutdown = Some(wire::PROTOCOL_VERSION);
+    }
+    fixture.script_run(passing_run_lines("it-13r"));
+    fixture.mark_ready().await;
+    let attempt = run_warm_iteration(&fixture, false).await;
+    report_of(&attempt);
+    assert_eq!(attempt.ide_action, IdeAction::DaemonRestart);
+    assert!(fixture.daemon.saw_request("POST /shutdown"), "the JVM daemon is retired");
+    assert_eq!(
+        fixture.channel().calls_containing("vm-guest-agent start").len(),
+        1,
+        "the lane daemon is started"
+    );
+}
+
+// A restart for a moved launch keeps the IDE of the product on a worker whose refresh unmounts nothing: the gc keeps
+// the product, the timing line says `keep`, and the decision names the kept IDE.
 #[tokio::test]
 async fn a_restart_keeps_the_ide_of_the_product_on_docker() {
     let (fixture, prep, _) = iteration_fixture_over(Fixture::docker().await, "it-16d").await;
-    fixture.install_happy_guest(&prep);
-    // The recorded daemon answers for another launch of the same runtime and product, so the iteration restarts it.
+    fixture.install_happy_guest();
+    // The recorded daemon answers for another launch of the same product, so the iteration restarts it.
     let mut recorded_state = fixture.daemon.host_state("run-ui-daemon-stale", "launch-stale");
-    recorded_state.runtime_digest = prep.runtime_digest.clone();
     recorded_state.last_product_digest = prep.product_digest.clone();
     recorded_state.last_mount_digest = prep.mount_digest.clone();
     recorded_state.write(&fixture.settings, &fixture.worker).unwrap();
@@ -520,8 +734,8 @@ async fn a_restart_keeps_the_ide_of_the_product_on_docker() {
     );
 }
 
-// The quiesce quits the IDE through the daemon, and the guest agent owns the process: the share refresh waits for the
-// supervisor to report every IDE run finished, and the iteration refuses while one still runs.
+// The daemon quits its IDE, the guest agent stops every other one and owns each process: the share refresh waits for
+// the supervisor to report every IDE run finished, and the iteration refuses while one still runs.
 #[tokio::test]
 async fn a_remount_refuses_while_a_lane_ide_still_runs() {
     let (fixture, _prep, mut state) = iteration_fixture("it-17").await;
@@ -537,14 +751,13 @@ async fn a_remount_refuses_while_a_lane_ide_still_runs() {
     );
     let attempt = run_warm_iteration(&fixture, false).await;
     let error = error_of(&attempt);
-    assert_eq!((error.code.as_ref(), error.exit), ("daemon_mount_quiesce_failed", Exit::SOFTWARE));
+    assert_eq!((error.code.as_ref(), error.exit), (REMOUNT_IDE_RUNNING, Exit::SOFTWARE));
     assert!(
         error.message.contains("run-ide-lane in /vm/data/ide/launch-key-1"),
         "{}",
         error.message
     );
-    assert!(fixture.daemon.saw_request("POST /mount/quiesce"));
-    assert!(!fixture.daemon.saw_request("POST /mount/resume"));
+    assert!(fixture.daemon.saw_request("POST /ide/stop"));
     assert_eq!(remounts(&fixture), 0, "nothing is unmounted under a live IDE");
 }
 
@@ -587,87 +800,6 @@ async fn an_unclassified_failure_becomes_internal_error() {
     let error = error_of(&attempt);
     assert_eq!((error.code.as_ref(), error.exit), ("internal_error", Exit::FAILURE));
     assert!(attempt.report.is_none());
-}
-
-// The JUnit XML falls back to the guest pull when the daemon's endpoint cannot answer, and the HTTP half of the story
-// is carried into the fallback's diagnostic.
-#[tokio::test]
-async fn junit_retrieval_falls_back_to_the_guest_pull() {
-    let (fixture, _, state) = iteration_fixture("it-15").await;
-    fixture.daemon.script().results_status = Some(500);
-    answer_pull(&fixture.tart, PASSING_XML.as_bytes());
-    let retrieved = fixture
-        .host
-        .retrieve_iteration_junit_xml(&Ctx::background(), &fixture.worker, &state, "it-15")
-        .await
-        .unwrap();
-    assert_eq!(
-        (retrieved.retrieval, retrieved.integrity),
-        (Retrieval::GuestPull, RetrievedIntegrity::Available)
-    );
-    assert_eq!(retrieved.xml.as_deref(), Some(PASSING_XML));
-    assert!(
-        retrieved
-            .diagnostic
-            .as_deref()
-            .is_some_and(|diagnostic| diagnostic.contains("/results returned HTTP 500")),
-        "{:?}",
-        retrieved.diagnostic
-    );
-    assert_eq!(retrieved.guest_path, "/vm/data/daemon/iterations/it-15/test.xml");
-}
-
-// Both retrieval paths enforce the size limit; an oversized document is never read into a report.
-#[tokio::test]
-async fn oversized_junit_xml_is_refused_on_both_paths() {
-    let (fixture, _, state) = iteration_fixture("it-16").await;
-    let oversized = vec![b'x'; MAX_JUNIT_XML_BYTES + 1];
-    fixture.daemon.script().results_xml = oversized.clone();
-    let ctx = Ctx::background();
-    let retrieved = fixture
-        .host
-        .retrieve_iteration_junit_xml(&ctx, &fixture.worker, &state, "it-16")
-        .await
-        .unwrap();
-    assert_eq!(
-        (retrieved.retrieval, retrieved.integrity),
-        (Retrieval::DaemonHttp, RetrievedIntegrity::Oversized)
-    );
-
-    fixture.daemon.script().results_status = Some(404);
-    answer_pull(&fixture.tart, &oversized);
-    let retrieved = fixture
-        .host
-        .retrieve_iteration_junit_xml(&ctx, &fixture.worker, &state, "it-16b")
-        .await
-        .unwrap();
-    assert_eq!(
-        (retrieved.retrieval, retrieved.integrity),
-        (Retrieval::GuestPull, RetrievedIntegrity::Oversized)
-    );
-    assert!(retrieved.xml.is_none());
-}
-
-// A JUnit XML nobody can produce is an honest unavailable/missing with both halves of the story joined.
-#[tokio::test]
-async fn unretrievable_junit_xml_carries_both_diagnostics() {
-    let (fixture, _, state) = iteration_fixture("it-17").await;
-    fixture.daemon.script().results_status = Some(500);
-    fixture.tart.answer(Answer::ReadFileFails, "1");
-    let retrieved = fixture
-        .host
-        .retrieve_iteration_junit_xml(&Ctx::background(), &fixture.worker, &state, "it-17")
-        .await
-        .unwrap();
-    assert_eq!(
-        (retrieved.retrieval, retrieved.integrity),
-        (Retrieval::Unavailable, RetrievedIntegrity::Missing)
-    );
-    let diagnostic = retrieved.diagnostic.unwrap_or_default();
-    assert!(
-        diagnostic.contains("/results returned HTTP 500") && diagnostic.contains("guest pull failed"),
-        "{diagnostic:?}"
-    );
 }
 
 // Evidence file names join the last two guest path segments with `_` and sanitize the rest, so
@@ -740,7 +872,7 @@ async fn traces_fixture(iteration_id: &str) -> (Fixture, Arc<Mutex<Vec<Vec<Strin
 /// the iteration's trace directory, the agent's pack verb packs one bundle on its first call and nothing after, and
 /// the pull answers that bundle's zip. A test arms it again for each of its cases. Answers the argv of every pack.
 fn arm_traces(fixture: &Fixture, iteration_id: &str) -> Arc<Mutex<Vec<Vec<String>>>> {
-    fixture.script_run(passing_run_lines(iteration_id), PASSING_XML);
+    fixture.script_run(passing_run_lines(iteration_id));
     fixture.on("test", answer_exit(0));
     let packed: Arc<Mutex<Vec<Vec<String>>>> = Arc::default();
     fixture.on(TRACE_PACK_READY_VERB, {
@@ -901,6 +1033,30 @@ async fn an_iteration_without_traces_reports_neither() {
     );
 }
 
+// A lane daemon whose recorder recorded nothing says why with `traceFailed`. With no trace directory to pull, that
+// reason is the report's `tracesError`, the verdict stays, and the agent is asked for no pack.
+#[tokio::test]
+async fn a_trace_failure_of_the_daemon_is_the_traces_error_of_an_iteration_without_traces() {
+    let (fixture, _, _) = iteration_fixture("it-33").await;
+    let reason = "the recorder refused the scenario 'works': a command line is not a JSON object";
+    let mut lines = passing_run_lines("it-33");
+    lines.insert(
+        1,
+        ndjson_line(&json!({"event": "traceFailed", "timestamp": "2026-08-23T12:00:00.500Z", "reason": reason})),
+    );
+    lines.insert(
+        2,
+        ndjson_line(&json!({"event": "traceFailed", "timestamp": "2026-08-23T12:00:00.600Z", "reason": "a later one"})),
+    );
+    fixture.script_run(lines);
+    let attempt = run_warm_iteration(&fixture, false).await;
+    let report = report_of(&attempt);
+    assert!(report.trace_archives.is_empty());
+    assert_eq!(report.traces_error.as_deref(), Some(reason));
+    assert_eq!(report.status, Status::Passed);
+    assert!(fixture.channel().calls_containing(TRACE_PACK_READY_VERB).is_empty());
+}
+
 // A warm iteration passes the hypervisor's gate before its first guest command, as every worker operation must: the
 // gate resolves the pinned Tart on demand, so an iteration that skipped it ran `tart exec` with no executable. A Tart
 // the gate cannot use is the gate's own refusal, and no guest was asked anything.
@@ -950,13 +1106,13 @@ async fn a_tree_failure_is_recorded_and_never_the_verdict() {
     assert_eq!(report.verdict_diagnostic, None);
 }
 
-// A test jar that the host rebuilds while the iteration runs is a note. The terminal shows it, the report carries it,
+// A pushed file that the host rebuilds while the iteration runs is a note. The terminal shows it, the report carries it,
 // and the status still follows the counts.
 #[tokio::test]
-async fn a_rebuilt_hot_jar_is_a_note_and_never_the_verdict() {
+async fn a_rebuilt_pushed_file_is_a_note_and_never_the_verdict() {
     let (fixture, _, _) = iteration_fixture("it-52").await;
     let built = fixture.prepared().await;
-    let jar = Path::new(&built.hot_jars[0].path);
+    let jar = Path::new(&built.plugin_files[0].host.path);
     let name = jar.file_name().unwrap().to_string_lossy().into_owned();
     std::fs::write(jar, b"rebuilt on the host").unwrap();
     let attempt = fixture
@@ -1047,7 +1203,7 @@ async fn a_run_secret_travels_on_stdin_and_is_removed_after_the_run() {
 #[tokio::test]
 async fn a_failed_run_still_removes_its_secret() {
     let (fixture, _, _) = iteration_fixture("it-61").await;
-    fixture.script_run(Vec::new(), PASSING_XML);
+    fixture.script_run(Vec::new());
     let directory = tempfile::tempdir().unwrap();
     let attempt = run_iteration_with(&fixture, &Ctx::background(), false, &login_secret(directory.path())).await;
     assert_eq!(error_of(&attempt).code, "daemon_run_failed");
@@ -1083,7 +1239,7 @@ async fn a_secret_in_the_report_refuses_the_run_and_withholds_the_report() {
         .into_iter()
         .map(|line| line.replace("\"works\"", &format!("\"{SECRET}\"")))
         .collect();
-    fixture.script_run(leaked, &PASSING_XML.replace("name=\"works\"", &format!("name=\"{SECRET}\"")));
+    fixture.script_run(leaked);
     let directory = tempfile::tempdir().unwrap();
     let attempt = run_iteration_with(&fixture, &Ctx::background(), false, &login_secret(directory.path())).await;
     let error = error_of(&attempt);

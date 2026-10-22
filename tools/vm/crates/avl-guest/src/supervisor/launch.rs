@@ -9,13 +9,21 @@
 //! `launchctl asuser` puts the agent in the session of the console user, and no unit holds what it starts. A Docker
 //! worker runs no systemd: its pid 1 is `docker-init`, and the exec channel is `docker exec`. When the exec ends,
 //! `docker-init` adopts the detached supervisor, so the run outlives the verb that started it.
+//!
+//! # Who reaps an ended supervisor
+//!
+//! A verb that ends after the spawn leaves its supervisor to the init process, which reaps it. A process that keeps
+//! running, `lane-run` and the lane daemon, is the parent of every supervisor that it spawns, so it reaps each one
+//! that ended with [`reap_ended`]. An ended supervisor that nobody reaps stays a zombie. A zombie still answers
+//! `ps -p` and a signal 0, so the identity check reads it as a live supervisor.
 
 use std::ffi::OsString;
 use std::fs::File;
 use std::io;
 use std::os::unix::process::CommandExt;
 use std::path::Path;
-use std::process::{Command, Stdio};
+use std::process::{Child, Command, Stdio};
+use std::sync::{Mutex, PoisonError};
 
 use avl_wire::supervisor::Command as Verb;
 
@@ -24,6 +32,26 @@ use crate::reply::{AgentRefusal, AgentRefusalExt};
 /// The exec channel's own variables. Nothing under the channel gets them: a supervised child has no use for the
 /// worker's capability.
 pub(crate) const CHANNEL_VARIABLES: [&str; 3] = ["TART_VM_TOKEN", "TART_VM_WORKER", "PARALLELS_VM_TOKEN"];
+
+/// The supervisors that this process spawned and did not wait for. [`reap_ended`] reaps each one that ended.
+static SPAWNED: Mutex<Vec<Child>> = Mutex::new(Vec::new());
+
+/// Reaps each supervisor that this process spawned and that ended, and answers their pids. It waits for no
+/// supervisor that still runs.
+pub(crate) fn reap_ended() -> Vec<u32> {
+    let mut spawned = SPAWNED.lock().unwrap_or_else(PoisonError::into_inner);
+    let mut reaped = Vec::new();
+    spawned.retain_mut(|child| {
+        // A supervisor that still runs stays. One that ended is reaped now, and so is one that cannot be waited for,
+        // which nothing can reap later either.
+        let runs = matches!(child.try_wait(), Ok(None));
+        if !runs {
+            reaped.push(child.id());
+        }
+        runs
+    });
+    reaped
+}
 
 /// The guest OS the supervisor runs on, which sets the PATH and the home of a supervised child. A runtime value, so
 /// both are built and tested on whatever host runs the tests.
@@ -81,7 +109,8 @@ pub(crate) fn detach_into_own_session(command: &mut Command) {
 }
 
 impl SuperviseLaunch {
-    /// Spawns the supervisor in a session of its own, with `log` as both of its streams, and releases it.
+    /// Spawns the supervisor in a session of its own, with `log` as both of its streams, and releases it: this process
+    /// does not wait for it, and [`reap_ended`] reaps it after it ended.
     pub(super) fn start(&self, log: &File) -> Result<(), AgentRefusal> {
         let Some((program, arguments)) = self.argv.split_first() else {
             return Err(AgentRefusal::internal("the supervisor launch is empty"));
@@ -93,9 +122,10 @@ impl SuperviseLaunch {
             .stdout(log.try_clone().map_err(AgentRefusal::internal)?)
             .stderr(log.try_clone().map_err(AgentRefusal::internal)?);
         detach_into_own_session(&mut command);
-        // Released on purpose: dropping a `Child` neither kills nor waits, and the supervisor outlives this process,
-        // which only reports that it began.
-        command.spawn().map_err(AgentRefusal::internal)?;
+        // Released on purpose: the supervisor outlives a verb that only reports that it began. The `Child` stays here, so
+        // a process that keeps running can reap it.
+        let child = command.spawn().map_err(AgentRefusal::internal)?;
+        SPAWNED.lock().unwrap_or_else(PoisonError::into_inner).push(child);
         Ok(())
     }
 }

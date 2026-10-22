@@ -25,6 +25,7 @@ dependencies = [
  "avl-affected",
  "avl-base",
  "avl-host-sys",
+ "avl-report",
  "avl-testkit",
  "avl-trace",
  "avl-trace-tools",
@@ -178,10 +179,25 @@ dependencies = [
 ]
 
 [[package]]
-name = "avl-guest"
+name = "avl-bridge"
 version = "0.1.0"
 dependencies = [
  "avl-testkit",
+ "avl-trace",
+ "expect-test",
+ "pretty_assertions",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "avl-guest"
+version = "0.1.0"
+dependencies = [
+ "avl-bridge",
+ "avl-junit",
+ "avl-testkit",
+ "avl-trace",
  "avl-trace-tools",
  "avl-wire",
  "clap",
@@ -192,6 +208,7 @@ dependencies = [
  "nix",
  "pretty_assertions",
  "refusal",
+ "regex",
  "serde",
  "serde_json",
  "sha2",
@@ -242,10 +259,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "avl-junit"
+version = "0.1.0"
+dependencies = [
+ "avl-testkit",
+ "avl-wire",
+ "bt-junit",
+ "expect-test",
+ "pretty_assertions",
+]
+
+[[package]]
 name = "avl-record"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "avl-bridge",
  "avl-testkit",
  "avl-trace",
  "crossbeam-channel",
@@ -268,8 +297,10 @@ name = "avl-report"
 version = "0.1.0"
 dependencies = [
  "avl-base",
+ "avl-junit",
+ "avl-testkit",
  "avl-wire",
- "bt-junit",
+ "expect-test",
  "hex",
  "jiff",
  "pretty_assertions",
@@ -334,6 +365,7 @@ dependencies = [
  "avl-base",
  "avl-host-sys",
  "avl-host-testkit",
+ "avl-junit",
  "avl-report",
  "avl-testkit",
  "avl-trace",
@@ -381,6 +413,8 @@ dependencies = [
  "serde_json",
  "serde_path_to_error",
  "sha2",
+ "tempfile",
+ "zip",
 ]
 
 [[package]]

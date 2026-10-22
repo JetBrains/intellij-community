@@ -8,10 +8,6 @@ use super::*;
 const GUEST_JBR_PLATFORM: &str = "linux-x64";
 const DESCRIPTOR_PATH: &str = "/out/bin/plugins/air/ui_daemon.runtime.json";
 
-fn staged<const N: usize>(paths: [&str; N]) -> Vec<String> {
-    paths.map(str::to_owned).to_vec()
-}
-
 fn file(logical_path: &str, owner: &str) -> Value {
     json!({
         "execPath": format!("bazel-out/k8-fastbuild/bin/{logical_path}"),
@@ -35,35 +31,43 @@ fn plugin(destination: &str) -> Value {
 /// Bazel rule actually emits.
 fn valid_descriptor() -> Value {
     json!({
-        "schemaVersion": 8,
+        "schemaVersion": 10,
         "kind": "air-ui-daemon-runtime",
-        "mainClass": "com.intellij.air.uiDaemon.AirUiDaemonMain",
         "staticJvmFlags": ["-Xmx4g", "-Dsun.io.useCanonCaches=false", "-Dair.ui.runfiles=${RUNFILES_ROOT}/_main"],
-        "classpath": {
-            "hot": [file("_main/plugins/air/ui-tests.jar", "//plugins/air/tests/integration/ui:ui_tests")],
-            "stable": [file("_main/platform/util.jar", "//platform/util"), file("_main/platform/core.jar", "//platform/core")],
-        },
         "devDist": {
             "config": file("_main/dist/ultimate.ide.config", "//build:dev_config"),
             "fingerprint": file("_main/dist/fingerprint.txt", "//build:dev_fingerprint"),
             "home": file("_main/dist/home", "//build:dev_home"),
         },
         "jbr": {
-            "directory": "jbr",
-            "javaHomeSuffix": "",
             "platform": "linux-x64",
         },
         "ide": {
+            "fakeAgentJar": file(FAKE_AGENT_JAR, "//plugins/air/integrationTests/test-support:acp_scenario_agent"),
             "flagsFile": file("_main/plugins/air/tests/integration/ui/ide_flags.jvm-flags.txt", "//plugins/air/tests/integration/ui:ide_flags"),
+            // One jar holds both kinds of document.
+            "laneDocuments": documents_jar(),
             "plugins": [
                 plugin("air-integrationTests-bridge-plugin/lib/air-integrationTests-bridge-plugin.jar"),
                 plugin("air-integrationTests-bridge-plugin/lib/modules/intellij.air.integrationTests.bridge.jar"),
             ],
             "projectArchive": file("_main/external/air_integration_test_deps/simpleJavaProject.zip", "@air_integration_test_deps//:simpleJavaProject.zip"),
             "projectRoot": "BookmarksTestProject",
+            "suiteDocuments": documents_jar(),
         },
         "data": [file("_main/plugins/air/testData/project.zip", "//plugins/air:test_data")],
     })
+}
+
+const FAKE_AGENT_JAR: &str = "_main/plugins/air/integrationTests/test-support/acp_scenario_agent_deploy.jar";
+const DOCUMENTS_JAR: &str = "_main/plugins/air/tests/integration/flow-profiles/flow-profiles_test_lib.jar";
+
+/// The flow-profiles resource jar, which holds the suite and the lane documents.
+fn documents_jar() -> Value {
+    file(
+        DOCUMENTS_JAR,
+        "//plugins/air/tests/integration/flow-profiles:flow-profiles_test_lib",
+    )
 }
 
 /// Sets the field at a JSON pointer. A pointer that names nothing panics: a silent no-op would leave the case
@@ -94,24 +98,32 @@ fn parse(descriptor: &Value) -> RuntimeDescriptor {
 #[test]
 fn a_well_formed_descriptor_parses_into_the_launch_contract() {
     let parsed = parse(&valid_descriptor());
-    assert_eq!((parsed.schema_version, parsed.kind.as_str()), (8, DESCRIPTOR_KIND));
-    assert_eq!(parsed.main_class, "com.intellij.air.uiDaemon.AirUiDaemonMain");
-    assert_eq!((parsed.classpath.hot.len(), parsed.classpath.stable.len()), (1, 2));
-    // The stable tier keeps its order: a classpath is ordered.
+    assert_eq!((parsed.schema_version, parsed.kind.as_str()), (10, DESCRIPTOR_KIND));
+    // The lane inputs in key order, each with its runfile.
+    let inputs: Vec<(&str, &str)> = parsed
+        .ide
+        .lane_inputs()
+        .iter()
+        .map(|(field, input)| (*field, input.logical_path.as_str()))
+        .collect();
     assert_eq!(
-        parsed.classpath.stable[0],
-        RuntimeFile {
-            exec_path: "bazel-out/k8-fastbuild/bin/_main/platform/util.jar".to_owned(),
-            logical_path: "_main/platform/util.jar".to_owned(),
-            owner: "//platform/util".to_owned(),
-        }
+        inputs,
+        [
+            ("fakeAgentJar", FAKE_AGENT_JAR),
+            ("laneDocuments", DOCUMENTS_JAR),
+            ("suiteDocuments", DOCUMENTS_JAR),
+        ]
+    );
+    // A data entry is the file with its three fields.
+    assert_eq!(
+        parsed.data,
+        [RuntimeFile {
+            exec_path: "bazel-out/k8-fastbuild/bin/_main/plugins/air/testData/project.zip".to_owned(),
+            logical_path: "_main/plugins/air/testData/project.zip".to_owned(),
+            owner: "//plugins/air:test_data".to_owned(),
+        }]
     );
     assert_eq!(parsed.jbr.platform, GUEST_JBR_PLATFORM);
-    assert_eq!(parsed.jbr.directory, "jbr");
-    // An empty Java-home suffix is legal - it is what a Linux JBR declares - so the check on it is a type check
-    // and not an emptiness one.
-    assert_eq!(parsed.jbr.java_home_suffix, "");
-    assert_eq!(parsed.data.len(), 1);
     assert_eq!(parsed.dev_dist.home.logical_path, "_main/dist/home");
     assert_eq!(parsed.ide.project_root, "BookmarksTestProject");
     assert_eq!(
@@ -150,14 +162,29 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             "a JSON array has no schema version",
             b"[]".to_vec(),
             code::SCHEMA_VERSION,
-            &["schemaVersion is absent, expected 8"],
+            &["schemaVersion is absent, expected 10"],
         ),
         // The version before the JBR of the distribution: it names a JBR archive, which this controller stages no more.
         (
             "a descriptor of the version that names a JBR archive",
             bytes(set(valid(), "/schemaVersion", json!(7))),
             code::SCHEMA_VERSION,
-            &["schemaVersion is 7, expected 8"],
+            &["schemaVersion is 7, expected 10"],
+        ),
+        // The version before the lane inputs: its fake agent jar is data, so an edit of the agent moves the mount.
+        (
+            "a descriptor of the version without the lane inputs",
+            bytes(set(valid(), "/schemaVersion", json!(8))),
+            code::SCHEMA_VERSION,
+            &["schemaVersion is 8, expected 10"],
+        ),
+        // The version before this one: it declares the classpath tiers, the main class and the JBR directory of the
+        // retired JVM daemon.
+        (
+            "a descriptor of the version with the classpath tiers",
+            bytes(set(valid(), "/schemaVersion", json!(9))),
+            code::SCHEMA_VERSION,
+            &["schemaVersion is 9, expected 10"],
         ),
         (
             "an older rule emits no schema version",
@@ -167,9 +194,9 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
         ),
         (
             "a schema version this controller predates",
-            bytes(set(valid(), "/schemaVersion", json!(9))),
+            bytes(set(valid(), "/schemaVersion", json!(11))),
             code::SCHEMA_VERSION,
-            &["schemaVersion is 9, expected 8"],
+            &["schemaVersion is 11, expected 10"],
         ),
         (
             "the schema version arrives as text",
@@ -190,18 +217,6 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             &["kind is absent"],
         ),
         (
-            "no main class",
-            bytes(drop_field(valid(), "/mainClass")),
-            code::FIELD_INVALID,
-            &["mainClass"],
-        ),
-        (
-            "an empty main class, which would exec a JVM with no argv tail",
-            bytes(set(valid(), "/mainClass", json!(""))),
-            code::FIELD_INVALID,
-            &["mainClass", "empty"],
-        ),
-        (
             "flags that are not a list",
             bytes(set(valid(), "/staticJvmFlags", json!({}))),
             code::FIELD_INVALID,
@@ -219,12 +234,6 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             bytes(set(valid(), "/staticJvmFlags", json!([null]))),
             code::FIELD_INVALID,
             &["staticJvmFlags[0]"],
-        ),
-        (
-            "no classpath section",
-            bytes(drop_field(valid(), "/classpath")),
-            code::FIELD_INVALID,
-            &["classpath"],
         ),
         (
             "a null devDist section",
@@ -254,50 +263,43 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             &["devDist"],
         ),
         (
-            "a hot tier that is not there",
-            bytes(drop_field(valid(), "/classpath/hot")),
+            "a data list that is null",
+            bytes(set(valid(), "/data", Value::Null)),
             code::FIELD_INVALID,
-            &["classpath", "hot"],
-        ),
-        // "No hot tier" must not read as "an empty hot tier", which is the other code.
-        (
-            "a hot tier that is null",
-            bytes(set(valid(), "/classpath/hot", Value::Null)),
-            code::FIELD_INVALID,
-            &["classpath.hot"],
+            &["data"],
         ),
         (
-            "a classpath entry that is a bare string",
-            bytes(set(valid(), "/classpath/hot/0", json!("util.jar"))),
+            "a data entry that is a bare string",
+            bytes(set(valid(), "/data/0", json!("project.zip"))),
             code::FIELD_INVALID,
-            &["classpath.hot[0]"],
+            &["data[0]"],
         ),
         // A derived decoder would take three strings positionally as a file.
         (
-            "a classpath entry that is an array",
-            bytes(set(valid(), "/classpath/hot/0", json!(["a", "b", "c"]))),
+            "a data entry that is an array",
+            bytes(set(valid(), "/data/0", json!(["a", "b", "c"]))),
             code::FIELD_INVALID,
-            &["classpath.hot[0]"],
+            &["data[0]"],
         ),
         (
-            "a classpath entry with no exec path",
-            bytes(set(valid(), "/classpath/hot/0/execPath", json!(""))),
+            "a data entry with no exec path",
+            bytes(set(valid(), "/data/0/execPath", json!(""))),
             code::FIELD_INVALID,
-            &["classpath.hot[0].execPath"],
+            &["data[0].execPath"],
         ),
         // The owner is only read to name a rule in a message, and it is still required: a refusal that cannot say
         // which rule produced the bad file is a refusal nobody can act on.
         (
-            "a classpath entry with no owning label",
-            bytes(drop_field(valid(), "/classpath/stable/1/owner")),
+            "a data entry with no owning label",
+            bytes(drop_field(valid(), "/data/0/owner")),
             code::FIELD_INVALID,
-            &["classpath.stable[1]", "owner"],
+            &["data[0]", "owner"],
         ),
         (
             "an absolute logical path",
-            bytes(set(valid(), "/classpath/hot/0/logicalPath", json!("/etc/passwd"))),
+            bytes(set(valid(), "/devDist/home/logicalPath", json!("/etc/passwd"))),
             code::PATH_ESCAPES,
-            &["classpath.hot[0].logicalPath escapes the runfiles root"],
+            &["devDist.home.logicalPath escapes the runfiles root"],
         ),
         (
             "a logical path that climbs out of the tree",
@@ -306,50 +308,12 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             &["data[0].logicalPath escapes the runfiles root"],
         ),
         (
-            "an empty hot tier, which boots a JVM with no test code on it",
-            bytes(set(valid(), "/classpath/hot", json!([]))),
-            code::TIER_EMPTY,
-            &["both classpath tiers must be non-empty"],
-        ),
-        (
-            "an empty stable tier",
-            bytes(set(valid(), "/classpath/stable", json!([]))),
-            code::TIER_EMPTY,
-            &["both classpath tiers must be non-empty"],
-        ),
-        (
             "no JBR platform",
             bytes(drop_field(valid(), "/jbr/platform")),
             code::FIELD_INVALID,
             &["jbr", "platform"],
         ),
-        (
-            "no JBR directory",
-            bytes(drop_field(valid(), "/jbr/directory")),
-            code::FIELD_INVALID,
-            &["jbr", "directory"],
-        ),
-        (
-            "an empty JBR directory",
-            bytes(set(valid(), "/jbr/directory", json!(""))),
-            code::FIELD_INVALID,
-            &["jbr.directory", "is an empty string"],
-        ),
-        // The controller joins the directory onto the distribution home, so one that escapes names another JVM.
-        (
-            "a JBR directory that climbs out of the distribution",
-            bytes(set(valid(), "/jbr/directory", json!("../jbr"))),
-            code::JBR_DIRECTORY_INVALID,
-            &["jbr.directory ../jbr escapes the distribution home"],
-        ),
-        (
-            "an absolute JBR directory",
-            bytes(set(valid(), "/jbr/directory", json!("/usr/lib/jvm"))),
-            code::JBR_DIRECTORY_INVALID,
-            &["jbr.directory /usr/lib/jvm escapes the distribution home"],
-        ),
-        // Keeps a darwin distribution off a Linux worker, where its `Contents/Home` suffix exists inside the macOS
-        // JBR and staging therefore succeeds.
+        // Keeps a darwin distribution off a Linux worker, where the lane IDE would fail only after its launch.
         (
             "a descriptor built for another guest",
             bytes(set(valid(), "/jbr/platform", json!("osx-aarch64"))),
@@ -488,9 +452,52 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
         // Two *different* files claiming one staged name: the stage materializes whichever it reaches last.
         (
             "two files claiming one staged name",
-            bytes(set(valid(), "/data/0/logicalPath", json!("_main/platform/util.jar"))),
+            bytes(set(valid(), "/data/0/logicalPath", json!("_main/dist/ultimate.ide.config"))),
             code::DUPLICATE_LOGICAL_PATH,
-            &["duplicate logical path _main/platform/util.jar"],
+            &["duplicate logical path _main/dist/ultimate.ide.config"],
+        ),
+        (
+            "no fake agent jar",
+            bytes(drop_field(valid(), "/ide/fakeAgentJar")),
+            code::FIELD_INVALID,
+            &["missing field `fakeAgentJar`"],
+        ),
+        (
+            "no jar of the suite documents",
+            bytes(drop_field(valid(), "/ide/suiteDocuments")),
+            code::FIELD_INVALID,
+            &["missing field `suiteDocuments`"],
+        ),
+        (
+            "a lane input outside the runfiles tree",
+            bytes(set(valid(), "/ide/laneDocuments/logicalPath", json!("../lanes.jar"))),
+            code::PATH_ESCAPES,
+            &["ide.laneDocuments.logicalPath escapes the runfiles root"],
+        ),
+        // The point of a lane input: the rule must take the fake agent jar out of the data list, or an edit of the
+        // agent still moves the mount identity.
+        (
+            "a fake agent jar that is also declared data",
+            bytes(set(valid(), "/data/0/logicalPath", json!(FAKE_AGENT_JAR))),
+            code::LANE_INPUT_STAGED,
+            &["ide.fakeAgentJar _main/plugins/air/integrationTests/test-support/acp_scenario_agent_deploy.jar is also staged"],
+        ),
+        // The rule must take the jar of the documents out of the data list too, as it takes the fake agent jar.
+        (
+            "a jar of the documents that is also declared data",
+            bytes(set(valid(), "/data/0/logicalPath", json!(DOCUMENTS_JAR))),
+            code::LANE_INPUT_STAGED,
+            &["ide.laneDocuments _main/plugins/air/tests/integration/flow-profiles/flow-profiles_test_lib.jar is also staged"],
+        ),
+        (
+            "a jar of the documents that is the IDE flags file",
+            bytes(set(
+                valid(),
+                "/ide/suiteDocuments/logicalPath",
+                json!("_main/plugins/air/tests/integration/ui/ide_flags.jvm-flags.txt"),
+            )),
+            code::LANE_INPUT_STAGED,
+            &["ide.suiteDocuments _main/plugins/air/tests/integration/ui/ide_flags.jvm-flags.txt is also staged"],
         ),
     ]
 }
@@ -524,9 +531,13 @@ fn every_way_the_descriptor_can_be_wrong_is_its_own_refusal() {
 #[test]
 fn the_validator_refuses_nothing_it_should_accept() {
     // A float that is the same number in JSON.
-    parse(&set(valid_descriptor(), "/schemaVersion", json!(8.0)));
-    // The JBR of a macOS distribution, whose IDE home is `Contents`.
-    parse(&set(valid_descriptor(), "/jbr/directory", json!("Contents/jbr")));
+    parse(&set(valid_descriptor(), "/schemaVersion", json!(10.0)));
+    // A jar of the lane documents apart from the jar of the suite documents.
+    parse(&set(
+        valid_descriptor(),
+        "/ide/laneDocuments/logicalPath",
+        json!("_main/plugins/air/tests/integration/flow-profiles/lanes.zip"),
+    ));
     // A build with no context plugin installs nothing.
     assert!(parse(&set(valid_descriptor(), "/ide/plugins", json!([]))).ide.plugins.is_empty());
     // An empty data list is a build that mounts nothing.
@@ -574,81 +585,4 @@ fn the_runfiles_root_is_derived_from_the_descriptor_path() {
         runtime_file_path(&root, &file),
         root.join("_main").join("platform").join("util.jar")
     );
-}
-
-// --- the daemon @-file ----------------------------------------------------------------------------------------
-
-#[test]
-fn the_daemon_arg_file_is_the_exact_bytes_the_jvm_reads() {
-    let descriptor = parse(&valid_descriptor());
-    // A tmpdir with a space in it, because the controller's own runtime root on macOS lives under
-    // `Library/Application Support` and an unquoted @-file token would split there.
-    let content = daemon_launch_arg_file(
-        &descriptor,
-        Path::new("/out/rf"),
-        &staged(["/g/util.jar", "/g/core.jar"]),
-        &LaunchOptions {
-            test_tmp_dir: "/g/tmp dir".to_owned(),
-            extra_flags: vec!["-Dair.ui.machine=air-linux-1".to_owned()],
-        },
-    )
-    .unwrap();
-    let want = [
-        r#""-Djava.io.tmpdir=/g/tmp dir""#,
-        r#""-Xmx4g""#,
-        r#""-Dsun.io.useCanonCaches=false""#,
-        r#""-Dair.ui.runfiles=/out/rf/_main""#,
-        r#""-Dair.ui.machine=air-linux-1""#,
-        r#""-cp""#,
-        r#""/g/util.jar:/g/core.jar""#,
-        r#""com.intellij.air.uiDaemon.AirUiDaemonMain""#,
-    ]
-    .join("\n");
-    assert_eq!(content, want);
-}
-
-#[test]
-fn arg_file_tokens_are_escaped_rather_than_trusted() {
-    let descriptor = parse(&valid_descriptor());
-    let content = daemon_launch_arg_file(
-        &descriptor,
-        Path::new("/out/rf"),
-        &staged(["/g/a.jar", "/g/b.jar"]),
-        &LaunchOptions {
-            test_tmp_dir: r#"/g/a\b"c"#.to_owned(),
-            extra_flags: Vec::new(),
-        },
-    )
-    .unwrap();
-    assert_eq!(content.split('\n').next().unwrap(), r#""-Djava.io.tmpdir=/g/a\\b\"c""#);
-}
-
-#[test]
-fn a_staged_classpath_of_the_wrong_length_is_refused() {
-    let descriptor = parse(&valid_descriptor());
-    let refusal = daemon_launch_arg_file(
-        &descriptor,
-        Path::new("/out/rf"),
-        &staged(["/g/util.jar"]),
-        &LaunchOptions::default(),
-    )
-    .unwrap_err();
-    assert_eq!(refusal.code, code::DAEMON_STAGE_INVALID);
-    assert!(refusal.message.contains("has 1 entries, expected 2"), "{}", refusal.message);
-}
-
-/// The only way to reach the guard, since the substitution that precedes it removes every occurrence of the
-/// token. Still worth keeping: the root is derived from a path a caller supplied.
-#[test]
-fn a_runfiles_root_that_names_the_token_is_refused_rather_than_execd() {
-    let descriptor = parse(&valid_descriptor());
-    let refusal = daemon_launch_arg_file(
-        &descriptor,
-        Path::new("/out/${RUNFILES_ROOT}"),
-        &staged(["a", "b"]),
-        &LaunchOptions::default(),
-    )
-    .unwrap_err();
-    assert_eq!(refusal.code, code::FLAG_UNRESOLVED);
-    assert!(refusal.message.contains("unresolved RUNFILES_ROOT"), "{}", refusal.message);
 }

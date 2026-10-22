@@ -3,7 +3,8 @@
 //! The controller is a command line with no resident process. So a lease release writes a record with a deadline
 //! and starts a detached `pool idle-stop` process. That process waits for the deadline and then stops the container
 //! when no lease took the worker. A lease acquisition and a start remove the record, so the process then finds no
-//! record of its nonce and exits.
+//! record of its nonce and exits. A process that died before its deadline stops nothing, so each release also stops
+//! the other workers whose deadline passed without their process.
 
 use std::io::Write;
 use std::sync::Arc;
@@ -113,10 +114,19 @@ impl Manager {
     /// A grace of zero stops the worker here. Otherwise the record goes first and the process second, so the process
     /// always finds its record. A process that cannot start is a note and no refusal: the release is done, and the
     /// worker then runs until `pool stop`.
+    ///
+    /// Then it stops the other workers whose process died ([`Manager::stop_stranded_idle_workers`]).
     pub(crate) async fn schedule_idle_stop(&self, ctx: &Ctx, worker: &str) -> Result<Option<String>, Refusal> {
         let Some(grace) = self.settings.idle_stop else {
             return Ok(None);
         };
+        let scheduled = self.schedule_own_idle_stop(ctx, worker, grace).await?;
+        self.stop_stranded_idle_workers(ctx, worker).await;
+        Ok(scheduled)
+    }
+
+    /// The idle stop of the released worker itself, for [`Manager::schedule_idle_stop`].
+    async fn schedule_own_idle_stop(&self, ctx: &Ctx, worker: &str, grace: Duration) -> Result<Option<String>, Refusal> {
         let now = Timestamp::now();
         if grace.is_zero() {
             remove_idle_stop_record(&self.settings, worker)?;
@@ -149,6 +159,47 @@ impl Manager {
             return Ok(None);
         }
         Ok(Some(record.deadline))
+    }
+
+    /// Stops each worker of the pool other than `released` whose record passed its deadline more than one
+    /// [`IDLE_STOP_POLL`] ago. A live process decides within one poll after its deadline, so such a record has no
+    /// process: a kill, a crash or a logout ended it.
+    ///
+    /// The decision is [`Manager::idle_stop_worker`], under the lifecycle lock of that worker, which it only tries
+    /// to take. So the caller can hold the lock of `released`, and a busy worker is kept. The nonce and the lease
+    /// check keep a worker that a later operation took, and a process that is only late then finds no record. A
+    /// failure is a note and no refusal, because the release of `released` is done.
+    async fn stop_stranded_idle_workers(&self, ctx: &Ctx, released: &str) {
+        let now = Timestamp::now();
+        for worker in self.settings.workers.iter().filter(|worker| *worker != released) {
+            let Some(record) = read_idle_stop_record(&self.settings, worker) else {
+                continue;
+            };
+            let Ok(deadline) = record.deadline.parse::<Timestamp>() else {
+                continue;
+            };
+            let overdue = Duration::try_from(now.duration_since(deadline)).unwrap_or(Duration::ZERO);
+            if overdue <= IDLE_STOP_POLL {
+                continue;
+            }
+            match self.idle_stop_worker(ctx, worker, &record.nonce).await {
+                Ok(IdleStopVerdict::Stopped) => self.note(
+                    worker,
+                    format!(
+                        "stopped {worker}, whose idle stop passed its deadline at {} without its detached process",
+                        record.deadline
+                    ),
+                ),
+                Ok(_) => {}
+                Err(refusal) => self.note(
+                    worker,
+                    format!(
+                        "cannot stop {worker}, whose idle stop passed its deadline at {} without its detached process: {}",
+                        record.deadline, refusal.message
+                    ),
+                ),
+            }
+        }
     }
 
     /// The decision of one idle stop, under the lifecycle lock of the worker: stop the container when the record of
@@ -222,7 +273,9 @@ impl Manager {
 /// through the runner of the manager, with its output appended to `<worker>/idle-stop.log`.
 ///
 /// The process outlives the controller, as the detached trace viewer does ([`avl_host_sys::Runner::spawn_session`]).
-/// The environment of the runner carries every setting, so the process resolves the same pool.
+/// The environment of the runner carries every setting, so the process resolves the same pool. It runs in the
+/// directory of the worker, which holds the record and the log. The directory of the release is a checkout or a
+/// lease slot, and the process must not hold it for the whole grace.
 pub(crate) fn spawn_detached_idle_stop(manager: &Manager, request: &IdleStopRequest) -> Result<(), Refusal> {
     let settings = manager.settings();
     let failed = |what: String| Refusal::new("idle_stop_start_failed", Exit::CANT_CREATE, what);
@@ -245,7 +298,7 @@ pub(crate) fn spawn_detached_idle_stop(manager: &Manager, request: &IdleStopRequ
     ];
     manager
         .runner()
-        .spawn_session(&argv, None, log, log_err)
+        .spawn_session(&argv, &settings.worker_dir(&request.worker), log, log_err)
         .map(drop)
         .map_err(|error| failed(format!("cannot start the idle stop of {}: {error}", request.worker)))
 }

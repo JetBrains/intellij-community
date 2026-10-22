@@ -435,6 +435,7 @@ fn scenario_with_bridge(name: &str, token: Option<&str>) -> String {
             token: token.to_owned(),
         }),
         program: None,
+        log_from: None,
     };
     String::from_utf8(encode_command(&Command::Scenario(command)).unwrap()).unwrap()
 }

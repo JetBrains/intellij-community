@@ -34,11 +34,11 @@ fn state(worker: &str, port: u16) -> HostState {
         token: "token".to_owned(),
         worker: worker.to_owned(),
         daemon_boot_stamp: "boot-1".to_owned(),
-        runtime_digest: String::new(),
         launch_digest: String::new(),
         last_product_digest: String::new(),
         last_mount_digest: String::new(),
         last_plugins_digest: String::new(),
+        agent_digest: String::new(),
     }
 }
 

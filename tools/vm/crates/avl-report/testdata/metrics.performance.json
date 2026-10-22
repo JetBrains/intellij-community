@@ -1,0 +1,24 @@
+{
+  "version": "1",
+  "generated": "Thu, 15 Oct 2026 12:00:00 +0200",
+  "project": "air/send-prompt",
+  "projectURL": "",
+  "projectDescription": "Air performance test: air/send-prompt",
+  "build": "271.SNAPSHOT",
+  "buildDate": "Thu, 15 Oct 2026 12:00:00 +0200",
+  "methodName": "com.intellij.air.integration.AirComposerGeneratedFlowUiTest#send-prompt",
+  "mode": "",
+  "owner": "",
+  "metrics": [
+    {
+      "n": "replyMs",
+      "d": 1840,
+      "v": 1840
+    },
+    {
+      "n": "turns",
+      "c": 1,
+      "v": 1
+    }
+  ]
+}

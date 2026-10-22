@@ -1,0 +1,40 @@
+{
+  "id": 1100229901,
+  "number": "2862",
+  "status": "SUCCESS",
+  "state": "finished",
+  "composite": true,
+  "webUrl": "https://buildserver.labs.intellij.net/buildConfiguration/ijplatform_master_AirPluginUiTestsAggregator/1100229901",
+  "buildType": {
+    "id": "ijplatform_master_AirPluginUiTestsAggregator",
+    "name": "Air Plugin UI Tests Aggregator"
+  },
+  "snapshot-dependencies": {
+    "build": [
+      {
+        "id": 1099482364,
+        "number": "18619",
+        "status": "SUCCESS",
+        "state": "finished",
+        "composite": true,
+        "webUrl": "https://buildserver.labs.intellij.net/buildConfiguration/ijplatform_master_AirPluginUiTests/1099482364",
+        "buildType": {
+          "id": "ijplatform_master_AirPluginUiTests",
+          "name": "Air Plugin UI Tests"
+        }
+      },
+      {
+        "id": 1099482408,
+        "number": "17485",
+        "status": "SUCCESS",
+        "state": "finished",
+        "composite": true,
+        "webUrl": "https://buildserver.labs.intellij.net/buildConfiguration/ijplatform_master_AirPluginGuiChatTests/1099482408",
+        "buildType": {
+          "id": "ijplatform_master_AirPluginGuiChatTests",
+          "name": "Air Plugin GUI Chat Tests"
+        }
+      }
+    ]
+  }
+}

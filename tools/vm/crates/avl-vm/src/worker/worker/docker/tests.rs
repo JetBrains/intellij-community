@@ -8,7 +8,7 @@ use pretty_assertions::assert_eq;
 use super::*;
 use crate::worker::testing::{Fixture, find_step};
 #[cfg(unix)]
-use crate::worker::worker::{IdleStopVerdict, read_idle_stop_record, remove_idle_stop_record};
+use crate::worker::worker::{IdleStopRecord, IdleStopRequest, IdleStopVerdict, read_idle_stop_record, remove_idle_stop_record};
 use crate::worker::worker::{PoolCommand, PoolTarget};
 
 fn ctx() -> Ctx {
@@ -758,4 +758,114 @@ async fn the_idle_stop_process_waits_for_the_deadline() {
     assert_eq!(read_idle_stop_record(&fixture.settings, worker), None);
     let after_start = fixture.manager.pool_idle_stop(&ctx(), worker, &second).await.unwrap();
     assert_eq!(after_start.data["idleStop"], "superseded");
+}
+
+/// A container pool of two workers with an idle stop of 60 s. The fake holds one container for every name, so both
+/// workers run.
+#[cfg(unix)]
+async fn idle_container_pair() -> Fixture {
+    let fixture = Fixture::docker_builder()
+        .container_engine()
+        .env("AIR_VM_IDLE_STOP", "60")
+        .env("AIR_VM_WORKERS", "air-docker-1,air-docker-2")
+        .build();
+    fixture.manager.prepare_runtime_dirs().unwrap();
+    fixture
+        .manager
+        .start_without_lifecycle_lock(&ctx(), fixture.worker(0))
+        .await
+        .unwrap();
+    fixture.fake.forget_calls();
+    fixture
+}
+
+/// Writes a record of `worker` whose deadline passed `overdue` ago, as a release leaves it when its process died.
+#[cfg(unix)]
+fn write_overdue_idle_stop(fixture: &Fixture, worker: &str, overdue: jiff::SignedDuration) -> IdleStopRecord {
+    let deadline = jiff::Timestamp::now().checked_sub(overdue).unwrap();
+    let record = IdleStopRecord {
+        schema_version: avl_base::SCHEMA_VERSION,
+        worker: worker.to_owned(),
+        released_at: avl_base::clock::stamp(deadline.checked_sub(jiff::SignedDuration::from_mins(1)).unwrap()),
+        deadline: avl_base::clock::stamp(deadline),
+        nonce: "the-nonce-of-a-dead-process".to_owned(),
+    };
+    avl_base::fs::write_atomically(
+        &fixture.settings.idle_stop_record_path(worker),
+        &serde_json::to_vec(&record).unwrap(),
+        0o600,
+    )
+    .unwrap();
+    record
+}
+
+/// A release stops another unleased worker whose record passed its deadline more than one poll ago, because no
+/// process waits for that record. The release still schedules the idle stop of its own worker.
+#[cfg(unix)]
+#[tokio::test]
+async fn a_release_stops_another_worker_whose_idle_stop_has_no_process() {
+    let fixture = idle_container_pair().await;
+    let [stranded, released] = [fixture.worker(0), fixture.worker(1)];
+    let overdue = write_overdue_idle_stop(&fixture, stranded, jiff::SignedDuration::from_mins(10));
+    let notes = crate::worker::testing::Notes::start(fixture.manager.reporter());
+
+    let deadline = fixture
+        .manager
+        .schedule_idle_stop(&ctx(), released)
+        .await
+        .unwrap()
+        .expect("a deadline");
+
+    assert_eq!(stop_calls(&fixture), [format!("stop -t 10 {stranded}")]);
+    assert_eq!(read_idle_stop_record(&fixture.settings, stranded), None);
+    let own = read_idle_stop_record(&fixture.settings, released).expect("the record of the released worker");
+    assert_eq!(own.deadline, deadline);
+    assert_eq!(
+        avl_base::sync::lock(&fixture.idle_stops).clone(),
+        [IdleStopRequest {
+            worker: released.to_owned(),
+            nonce: own.nonce,
+        }]
+    );
+    let notes = notes.all();
+    let expected = format!(
+        "stopped {stranded}, whose idle stop passed its deadline at {} without its detached process",
+        overdue.deadline
+    );
+    assert!(notes.contains(&expected), "{notes:#?}");
+}
+
+/// A release keeps another worker whose record passed its deadline by less than one poll, because its process can
+/// still decide. It also keeps a worker with a lease, a worker whose lifecycle lock another operation holds, and a
+/// worker without a record.
+#[cfg(unix)]
+#[tokio::test]
+async fn a_release_keeps_another_worker_whose_idle_stop_can_still_decide() {
+    let fixture = idle_container_pair().await;
+    let [other, released] = [fixture.worker(0), fixture.worker(1)];
+
+    let late = write_overdue_idle_stop(&fixture, other, jiff::SignedDuration::from_secs(5));
+    fixture.manager.schedule_idle_stop(&ctx(), released).await.unwrap();
+    assert_eq!(read_idle_stop_record(&fixture.settings, other), Some(late));
+
+    let leased = write_overdue_idle_stop(&fixture, other, jiff::SignedDuration::from_mins(10));
+    let lease = fixture.write_lease(other, "token-1");
+    fixture.manager.schedule_idle_stop(&ctx(), released).await.unwrap();
+    assert_eq!(read_idle_stop_record(&fixture.settings, other), Some(leased.clone()));
+    std::fs::remove_file(fixture.settings.lease_path(&lease.worker)).unwrap();
+
+    let busy = fixture
+        .manager
+        .locks()
+        .acquire(&ctx(), &fixture.manager.lifecycle_lock_path(other), "run", "busy")
+        .await
+        .unwrap();
+    fixture.manager.schedule_idle_stop(&ctx(), released).await.unwrap();
+    assert_eq!(read_idle_stop_record(&fixture.settings, other), Some(leased));
+    drop(busy);
+
+    remove_idle_stop_record(&fixture.settings, other).unwrap();
+    fixture.manager.schedule_idle_stop(&ctx(), released).await.unwrap();
+    assert_eq!(stop_calls(&fixture), Vec::<String>::new());
+    assert_eq!(avl_base::sync::lock(&fixture.idle_stops).len(), 4);
 }

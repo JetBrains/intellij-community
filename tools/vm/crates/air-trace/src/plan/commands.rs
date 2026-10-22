@@ -1,6 +1,12 @@
 //! The commands, and the plan as text.
 
+use std::collections::BTreeMap;
 use std::fmt::Write as _;
+use std::path::PathBuf;
+
+use avl_affected::air_area;
+use avl_wire::program::LANE_DOCUMENT_DIRECTORY;
+use avl_wire::program::lane::parse_lane_document;
 
 use avl_trace_tools::discover::Summary;
 use avl_trace_tools::viewer::DEFAULT_SERVE_PORT;
@@ -16,31 +22,40 @@ const BT_WRAPPER: &str = "./community/tools/bt.cmd";
 pub(crate) const HOST_WARNING: &str = "takes your screen: the lane launches a real IDE on this machine's display, \
                                        which holds the pointer and the focus until it finishes";
 
-/// What a run of an explicit-only lane costs beyond its time, on either side.
+/// What a run of the live lane costs beyond its time, on either side.
 pub(crate) const BILLED_WARNING: &str = "explicit-only: every scenario spends a billed turn on a real account, so no \
                                          --changed, suites, shard or flake runs it";
 
-/// The run input of the live lane's guest run, and the host command whose output it is: the developer's own Central
+/// What a run of another explicit-only lane, such as ui-perf, costs beyond its time.
+pub(crate) const EXPLICIT_WARNING: &str = "explicit-only: the lane runs only when a caller names it, so no --changed, \
+                                           suites, shard or flake runs it";
+
+/// The live lane, whose scenarios spend billed turns on a real account.
+const LIVE_LANE: &str = "ui-live";
+
+/// The guest input of a lane: the run input that its guest run reads, and the host command whose output it is. The
+/// live context of the committed lane document states both. For the live lane they are the developer's own Central
 /// session, piped into the run so no file on the host holds it (ADR 0200).
-const LIVE_LOGIN_INPUT: &str = "AIR_LIVE_CENTRAL_LOGIN";
-const LIVE_LOGIN_SOURCE: &str = "central login export";
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct GuestInput {
+    pub(crate) input: String,
+    pub(crate) source: String,
+}
 
 /// Whether the lane runs only when a caller names it: the lane table gives it no catalog lane.
-fn explicit_only(lane: &str) -> bool {
+pub(crate) fn explicit_only(lane: &str) -> bool {
     avl_affected::ui_lane(lane).is_ok_and(|lane| lane.explicit_only)
 }
 
-/// The guest run's input of a lane that needs one, as the pipe that feeds it and the `--test-env` that names it.
-///
-/// Only the live lane has one. Without it the guest run of that lane fails, naming the input.
-fn guest_input(lane: &str) -> Option<(&'static str, String)> {
-    (lane == "ui-live").then(|| (LIVE_LOGIN_SOURCE, format!("--test-env {LIVE_LOGIN_INPUT}=@-")))
+/// The warning of an explicit-only lane: the billed turns of the live lane, and the explicit selection of another.
+pub(crate) fn explicit_warning(lane: &str) -> &'static str {
+    if lane == LIVE_LANE { BILLED_WARNING } else { EXPLICIT_WARNING }
 }
 
 /// The host passthroughs of a lane, as `bt` takes them for one class: only `--lane` applies the lane's `extra`, so a
 /// class line names each valueless `--test_env` itself.
 fn host_passthroughs(lane: &str) -> Vec<String> {
-    let Some(spec) = avl_affected::air_area().lanes().get(lane) else {
+    let Some(spec) = air_area().lanes().get(lane) else {
         return Vec::new();
     };
     spec.extra
@@ -61,13 +76,52 @@ fn guest_backend(lane: &str) -> Option<&'static str> {
 }
 
 impl Planner<'_> {
-    /// One VM run and one host run per lane, VM first.
+    /// The guest input of each lane of the result, from the live context of its committed lane document. A lane without
+    /// a document, or whose document states no live context, has none. A document that the planner cannot read gives a
+    /// note, and its lane no input, so its guest run then fails and names the input.
+    pub(crate) fn guest_inputs(&mut self) -> BTreeMap<String, GuestInput> {
+        let Some(directory) = air_area()
+            .catalog()
+            .ok()
+            .and_then(|catalog| self.repo_root.join(catalog.flow_profile_dir).parent().map(PathBuf::from))
+            .map(|root| root.join(LANE_DOCUMENT_DIRECTORY))
+        else {
+            return BTreeMap::new();
+        };
+        let mut inputs = BTreeMap::new();
+        for lane in self.result.lanes.clone() {
+            let path = directory.join(format!("{lane}.json"));
+            let read = match std::fs::read(&path) {
+                Ok(bytes) => parse_lane_document(&bytes).map_err(|problem| format!("the lane document {} {problem}", path.display())),
+                Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
+                Err(error) => Err(format!("cannot read the lane document {}: {error}", path.display())),
+            };
+            match read {
+                Ok(document) => {
+                    if let Some(live) = document.live {
+                        inputs.insert(
+                            lane,
+                            GuestInput {
+                                input: live.login_input,
+                                source: live.login_source,
+                            },
+                        );
+                    }
+                }
+                Err(problem) => self.note(format!("{problem}; the VM line of {lane} names no guest input")),
+            }
+        }
+        inputs
+    }
+
+    /// One VM run and one host run per lane, VM first. The live lane gets no host run: it runs only in the lane daemon of
+    /// a Linux guest, with the Central login piped in, and `lane-run` refuses it on a host.
     ///
     /// Per lane, because a lane is the unit a person picks and the one a guest is chosen for: the skill keeps a
     /// GUI-chat suite on the guest the user chose, and a run per lane lets them run one and not the other. Each line
     /// stands alone: `vm.cmd run` without a receipt warms the analysis, takes its own lease and releases it (ADR
     /// 0157), so the planner spells no lease script.
-    pub(crate) fn commands(&self) -> Vec<Command> {
+    pub(crate) fn commands(&self, inputs: &BTreeMap<String, GuestInput>) -> Vec<Command> {
         let mut commands = Vec::new();
         for lane in &self.result.lanes {
             let classes: Vec<&String> = self
@@ -79,11 +133,11 @@ impl Planner<'_> {
             let covered = self.changed_classes.get(lane);
             let mut lines = Vec::new();
             if !self.changed.is_empty() && covered.is_some_and(|covered| !covered.is_empty()) {
-                lines.push(self.changed_run(lane));
+                lines.push(self.changed_run(lane, inputs.get(lane)));
             }
             for class in &classes {
                 if !covered.is_some_and(|covered| covered.contains(*class)) {
-                    lines.push(vm_run(lane, &[class.as_str()]));
+                    lines.push(vm_run(lane, &[class.as_str()], inputs.get(lane)));
                 }
             }
             let guest = match guest_backend(lane) {
@@ -97,14 +151,17 @@ impl Planner<'_> {
                 kind: CommandKind::Vm,
                 title: format!("the {lane} lane on {guest}{kind} ({} class(es))", classes.len()),
                 lines,
-                warning: explicit.then(|| BILLED_WARNING.to_owned()),
+                warning: explicit.then(|| explicit_warning(lane).to_owned()),
             });
+            if lane == LIVE_LANE {
+                continue;
+            }
             commands.push(Command {
                 kind: CommandKind::Host,
                 title: format!("the {lane} lane on this machine{kind} ({} class(es))", classes.len()),
                 lines: classes.iter().map(|class| host_run(class, &passthroughs)).collect(),
                 warning: Some(if explicit {
-                    format!("{HOST_WARNING}; {BILLED_WARNING}")
+                    format!("{HOST_WARNING}; {}", explicit_warning(lane))
                 } else {
                     HOST_WARNING.to_owned()
                 }),
@@ -117,7 +174,7 @@ impl Planner<'_> {
     /// one flag before every path. `--lane` is added only when the paths reach more than one lane: `run` without it
     /// runs every reached lane, and the planner prints one line per lane, so that a GUI-chat line can name its own
     /// backend.
-    fn changed_run(&self, lane: &str) -> String {
+    fn changed_run(&self, lane: &str, input: Option<&GuestInput>) -> String {
         let mut arguments: Vec<String> = Vec::new();
         for path in &self.changed {
             arguments.push("--changed".to_owned());
@@ -127,21 +184,21 @@ impl Planner<'_> {
             arguments.push("--lane".to_owned());
             arguments.push(lane.to_owned());
         }
-        vm_run(lane, &arguments.iter().map(String::as_str).collect::<Vec<_>>())
+        vm_run(lane, &arguments.iter().map(String::as_str).collect::<Vec<_>>(), input)
     }
 }
 
-/// One self-leased `vm.cmd run`, with the lane's guest when it is not the default one, and the lane's guest input
-/// piped in when it needs one.
-pub(crate) fn vm_run(lane: &str, arguments: &[&str]) -> String {
+/// One self-leased `vm.cmd run`, with the lane's guest when it is not the default one, and the lane's guest input piped
+/// in when it has one.
+pub(crate) fn vm_run(lane: &str, arguments: &[&str], input: Option<&GuestInput>) -> String {
     let mut parts = vec![VM_WRAPPER];
     if let Some(backend) = guest_backend(lane) {
         parts.extend(["--backend", backend]);
     }
     parts.push("run");
     parts.extend(arguments);
-    match guest_input(lane) {
-        Some((source, flag)) => format!("{source} | {} {flag}", parts.join(" ")),
+    match input {
+        Some(GuestInput { input, source }) => format!("{source} | {} --test-env {input}=@-", parts.join(" ")),
         None => parts.join(" "),
     }
 }

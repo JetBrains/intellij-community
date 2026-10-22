@@ -10,8 +10,8 @@ use super::*;
 fn the_effective_argv_skips_every_wrapper_production_code_builds() {
     let agent = "/vm/data/state/vm-guest-agent";
     for wrapped in [
-        words(["/usr/bin/sudo", "-H", "-u", "admin", agent, "stage", "/x"]),
-        words(["/usr/bin/sudo", "-H", agent, "stage", "/x"]),
+        words(["/usr/bin/sudo", "-H", "-u", "admin", agent, "read-file", "/x"]),
+        words(["/usr/bin/sudo", "-H", agent, "read-file", "/x"]),
         words([
             "/usr/bin/sudo",
             "-H",
@@ -24,7 +24,7 @@ fn the_effective_argv_skips_every_wrapper_production_code_builds() {
             "/usr/bin/env",
             "IJ_PRIVATE_PACKAGES_AUTHORIZER_SKIP=true",
             agent,
-            "stage",
+            "read-file",
             "/x",
         ]),
         words([
@@ -36,11 +36,11 @@ fn the_effective_argv_skips_every_wrapper_production_code_builds() {
             "-u",
             "admin",
             agent,
-            "stage",
+            "read-file",
             "/x",
         ]),
     ] {
-        assert_eq!(effective_argv(&wrapped), words([agent, "stage", "/x"]), "{wrapped:?}");
+        assert_eq!(effective_argv(&wrapped), words([agent, "read-file", "/x"]), "{wrapped:?}");
     }
     assert!(effective_argv(&words(["/usr/bin/sudo", "-H"])).is_empty());
 }
@@ -50,13 +50,13 @@ fn the_effective_argv_skips_every_wrapper_production_code_builds() {
 fn verbs_route_the_agent_by_subcommand_and_the_rest_by_basename() {
     let agent = "/vm/data/state/vm-guest-agent";
     let verbs = Verbs::new(agent);
-    verbs.on("gc", handler(|argv, _| Ok(said(&argv.join(" ")))));
+    verbs.on("ide-gc", handler(|argv, _| Ok(said(&argv.join(" ")))));
     verbs.on("df", answer_exit(3));
     let options = SpawnOptions::within(Duration::from_mins(1));
     let gc = verbs
-        .route(&words(["/usr/bin/sudo", "-H", "-u", "admin", agent, "gc"]), &options)
+        .route(&words(["/usr/bin/sudo", "-H", "-u", "admin", agent, "ide-gc"]), &options)
         .unwrap();
-    assert_eq!(gc.stdout, format!("{agent} gc"));
+    assert_eq!(gc.stdout, format!("{agent} ide-gc"));
     assert_eq!(verbs.route(&words(["/bin/df", "-k"]), &options).unwrap().exit_code, 3);
     assert_eq!(verbs.route(&words(["/bin/ls"]), &options).unwrap(), Captured::default());
 }

@@ -28,8 +28,8 @@ pub(crate) mod secrets;
 mod testing;
 
 pub(crate) use affected::{
-    AffectedSelection, class_name_pattern, command_suites, is_named_suite_selector, is_patternable_class_name, resolve_changed_suites,
-    resolve_named_suites,
+    AffectedSelection, class_name_pattern, command_suites, is_named_suite_selector, is_patternable_class_name, lane_classes,
+    lane_document_root, lane_live_context, resolve_changed_suites, resolve_named_suites,
 };
 pub(crate) use bazel::Bazel;
 pub(crate) use env::{daemon_environment, guest_jbr_platform, guest_run_environment};

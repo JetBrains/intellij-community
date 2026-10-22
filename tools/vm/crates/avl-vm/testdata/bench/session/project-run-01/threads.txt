@@ -1,0 +1,14 @@
+51234:
+2026-10-19 09:12:03
+Full thread dump OpenJDK 64-Bit Server VM (25.0.4.1+1-b456.1 mixed mode, sharing):
+
+"main" #1 [4355] prio=5 os_prio=31 cpu=812.41ms elapsed=3.21s tid=0x000000012e00a200 nid=4355 waiting on condition  [0x000000016f3c8000]
+   java.lang.Thread.State: TIMED_WAITING (parking)
+
+"AWT-EventQueue-0" #34 [12291] prio=6 os_prio=31 cpu=1402.17ms elapsed=2.11s tid=0x000000012e81c000 nid=12291 waiting on condition  [0x000000017110a000]
+   java.lang.Thread.State: WAITING (parking)
+	at jdk.internal.misc.Unsafe.park(java.base@25.0.4.1/Native Method)
+
+"GC Thread#1" os_prio=31 cpu=4.02ms elapsed=1.90s tid=0x000000012e70e400 nid=13571 runnable
+
+JNI global refs: 52, weak refs: 0

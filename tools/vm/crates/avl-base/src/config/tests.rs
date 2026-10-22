@@ -106,20 +106,12 @@ fn refuse(selection: Selection, environment: &Environment) -> Refusal {
 #[test]
 fn the_linux_defaults_are_the_documented_ones() {
     let config = load_on(HostOs::Linux, docker(), &env(&[]));
-    let guest_runtime_root = config.guest_runtime_root();
     let cases = [
         ("vm user", config.vm_user.as_str(), "admin"),
         ("vm home", &config.vm_home, "/home/admin"),
         ("vm data", &config.vm_data, "/home/admin/WorkerData"),
-        ("vm out", &config.vm_out, "/home/admin/WorkerData/out"),
-        (
-            "vm download cache",
-            &config.vm_download_cache,
-            "/home/admin/WorkerData/build-download",
-        ),
+        ("vm tmp", &config.vm_tmp, "/home/admin/WorkerData/tmp"),
         ("vm node", &config.vm_node, "/usr/local/bin/node"),
-        // The root `validate-guest` sweeps with `ldd`, and the root the daemon stages a generation into.
-        ("guest runtime root", &guest_runtime_root, "/home/admin/WorkerData/daemon-runtime"),
         ("vm uid", &config.vm_uid, "1000"),
         ("guest display", &config.guest_display, ":88"),
         ("share mount", config.guest.share_mount, "/mnt/AirVmShares"),
@@ -1301,7 +1293,7 @@ fn the_container_linux_defaults_are_the_skills_container() {
         ),
         ("ubuntu", "1000", "/home/ubuntu", "/home/ubuntu/WorkerData")
     );
-    assert_eq!(config.vm_out, "/home/ubuntu/WorkerData/out");
+    assert_eq!(config.vm_tmp, "/home/ubuntu/WorkerData/tmp");
     assert_eq!(config.vm_runs_root, "/home/ubuntu/WorkerData/state/ui-runs");
     assert_eq!(config.vm_agent, "/home/ubuntu/WorkerData/state/vm-guest-agent");
     assert_eq!(config.guest_display, ":1");

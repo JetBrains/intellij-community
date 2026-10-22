@@ -138,8 +138,14 @@ impl Planner<'_> {
         if content.starts_with(ZIP_MAGIC) {
             match zip::ZipArchive::new(Cursor::new(content.as_slice())) {
                 Ok(mut archive) => {
-                    let bundles = discover::read_zip(&mut archive, &input.given);
-                    if !self.add_bundles(&input.given, bundles.iter()) {
+                    let (bundles, errors) = discover::read_zip_reporting(&mut archive, &input.given);
+                    if self.add_bundles(&input.given, bundles.iter()) {
+                        for error in errors {
+                            self.note(format!("{}!/{error}", input.given));
+                        }
+                    } else if !errors.is_empty() {
+                        self.unmapped(Unmapped::new(&input.given, reason::UNREADABLE, errors.join("; ")));
+                    } else {
                         self.unmapped(Unmapped::new(
                             &input.given,
                             reason::NO_BUNDLE,
@@ -421,7 +427,7 @@ impl Planner<'_> {
         }
         let detail = if cases.is_empty() {
             for document in &holder.reports {
-                for reported in document.suites.iter().flat_map(|suite| &suite.cases) {
+                for reported in &document.cases {
                     cases.push(TestCase {
                         class_name: reported.class_name.clone(),
                         name: reported.name.clone(),

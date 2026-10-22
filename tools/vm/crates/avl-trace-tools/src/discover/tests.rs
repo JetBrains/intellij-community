@@ -192,6 +192,210 @@ fn a_zip_in_memory_and_a_lone_bundle_file_are_read_like_a_scanned_bundle() {
     assert!(broken.error.is_some());
 }
 
+/// Wraps zips into one more zip, deflated, as TeamCity packs the testlogs into `bazel.logs.zip`: each `(entry, zip)`
+/// is one inner zip. Answers the outer zip, in its own directory under keep.
+fn zip_of_zips(inner: &[(&str, &Path)], keep: &tempfile::TempDir) -> PathBuf {
+    let outer = keep.path().join("bazel.logs.zip");
+    let mut writer = zip::ZipWriter::new(fs::File::create(&outer).unwrap());
+    let options = zip::write::SimpleFileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+    for (entry, zip) in inner {
+        writer.start_file(*entry, options).unwrap();
+        std::io::copy(&mut fs::File::open(zip).unwrap(), &mut writer).unwrap();
+    }
+    writer.finish().unwrap();
+    outer
+}
+
+/// Bazel's `outputs.zip` inside TeamCity's `bazel.logs.zip` is read as a zip of its own. Its bundle names the outer
+/// zip and the inner entry, its files are served from the extraction, and a second scanner reuses that extraction.
+/// An inner zip without a bundle leaves no extraction behind.
+#[test]
+fn a_zip_inside_a_zip_is_extracted_once_and_read_as_a_zip() {
+    let manifest = example_manifest();
+    let keep = tempfile::tempdir().unwrap();
+    let outputs = packed_example(&manifest, &keep);
+    let empty = keep.path().join("empty.zip");
+    zip::ZipWriter::new(fs::File::create(&empty).unwrap()).finish().unwrap();
+    let inner_entry = "abc/execroot/_main/bazel-out/k8-fastbuild/testlogs/ui/ui_lane_test/test.outputs/outputs.zip";
+    let outer_dir = tempfile::tempdir().unwrap();
+    let outer = zip_of_zips(
+        &[(inner_entry, &outputs), ("abc/other/test.outputs/outputs.zip", &empty)],
+        &outer_dir,
+    );
+    let nested = tempfile::tempdir().unwrap();
+    let options = || Options {
+        nested_dir: Some(nested.path().to_path_buf()),
+        ..Options::default()
+    };
+
+    let scanner = Scanner::new(options());
+    let found = scanner.scan(&[Root::new(RootKind::Flag, &outer)]);
+    assert_eq!(found.bundles.len(), 1, "{:?}", found.roots);
+    let bundle = &found.bundles[0];
+    let container = format!("{}!/{inner_entry}", real_path(&outer).to_string_lossy());
+    let entry = example_entry(&manifest);
+    assert_eq!(
+        bundle.source,
+        Source {
+            kind: SourceKind::Zip,
+            path: container.clone(),
+            entry: entry.clone()
+        }
+    );
+    assert_eq!(bundle.id, bundle_id(SourceKind::Zip, &container, &entry));
+    assert_eq!(bundle.scenario, manifest.scenario);
+    let Location::Zip { path: extracted, prefix } = &bundle.location else {
+        panic!("a nested bundle is a zip bundle: {:?}", bundle.location);
+    };
+    assert!(extracted.starts_with(nested.path()), "{}", extracted.display());
+    assert_eq!(prefix, &entry);
+    let index = scanner.zips().get(extracted).unwrap();
+    let image = &index.entries()[&format!("{entry}snap/0001.webp")];
+    assert_eq!(index.read_stored(image, 0..image.size).unwrap(), example_file("snap/0001.webp"));
+    let extractions = || fs::read_dir(nested.path()).unwrap().count();
+    assert_eq!(extractions(), 1, "the inner zip without a bundle is removed");
+
+    let written = fs::metadata(extracted).unwrap().modified().unwrap();
+    let again = Scanner::new(options()).scan(&[Root::new(RootKind::Flag, &outer)]);
+    assert_eq!(again.bundles[0].summary, bundle.summary);
+    assert_eq!(
+        fs::metadata(extracted).unwrap().modified().unwrap(),
+        written,
+        "the extraction is reused"
+    );
+    assert_eq!(extractions(), 1);
+
+    let private = Scanner::new(Options::default()).scan(&[Root::new(RootKind::Flag, &outer)]);
+    assert_eq!(private.bundles[0].id, bundle.id, "a private nested directory finds the same bundle");
+
+    let mut archive = ZipArchive::new(Cursor::new(fs::read(&outer).unwrap())).unwrap();
+    let in_memory = read_zip(&mut archive, "bazel.logs.zip");
+    assert_eq!(in_memory.len(), 1);
+    assert_eq!(in_memory[0].source.path, format!("bazel.logs.zip!/{inner_entry}"));
+    scanner.close();
+}
+
+/// A root's origin, such as the TeamCity build of a downloaded `bazel.logs.zip`, is on the root and on each of its
+/// bundles; the bundle's id does not change with it.
+#[test]
+fn the_origin_of_a_root_is_on_each_of_its_bundles() {
+    let manifest = example_manifest();
+    let keep = tempfile::tempdir().unwrap();
+    let zip = packed_example(&manifest, &keep);
+    let origin = Origin {
+        name: "Air Plugin UI Tests / 1".to_owned(),
+        id: "1099482304".to_owned(),
+        url: None,
+    };
+    let scanner = Scanner::new(Options::default());
+    let plain = scanner.scan(&[Root::new(RootKind::Flag, &zip)]);
+    let found = scanner.scan(&[Root {
+        origin: Some(origin.clone()),
+        ..Root::new(RootKind::TeamCity, &zip)
+    }]);
+    assert_eq!(found.roots[0].origin.as_ref(), Some(&origin));
+    assert_eq!(found.bundles[0].origin.as_ref(), Some(&origin));
+    assert_eq!(
+        (plain.bundles[0].origin.as_ref(), &plain.bundles[0].id),
+        (None, &found.bundles[0].id)
+    );
+}
+
+/// A zip inside a bundle is one of its files, not a zip to open.
+#[test]
+fn a_zip_inside_a_bundle_is_not_opened() {
+    let manifest = example_manifest();
+    let keep = tempfile::tempdir().unwrap();
+    let inner = packed_example(&manifest, &keep);
+    let root = tempfile::tempdir().unwrap();
+    let bundle = bundle_file(root.path(), "run/AirExampleUiTest/example");
+    copy_tree(&example_bundle(), &bundle);
+    fs::copy(&inner, bundle.join("attachment.zip")).unwrap();
+    let packed = tempfile::tempdir().unwrap();
+    let zip = packed.path().join("traces.zip");
+    pack(root.path(), &zip, &PackOptions::default()).unwrap();
+    let nested = tempfile::tempdir().unwrap();
+    let found = Scanner::new(Options {
+        nested_dir: Some(nested.path().to_path_buf()),
+        ..Options::default()
+    })
+    .scan(&[Root::new(RootKind::Flag, &zip)]);
+    assert_eq!(found.bundles.len(), 1);
+    assert_eq!(fs::read_dir(nested.path()).unwrap().count(), 0);
+}
+
+/// Requests that open one outer zip at once share one extraction, and each reads it. An extraction is read as a zip
+/// of its own, so a zip inside it is a file, even when the cache opens the extraction again.
+#[test]
+fn concurrent_reads_share_an_extraction_that_opens_no_second_level() {
+    let manifest = example_manifest();
+    let keep = tempfile::tempdir().unwrap();
+    let deeper = packed_example(&manifest, &keep);
+    // The inner zip holds a bundle and, beside it, one more zip with a bundle: two levels down from the outer zip.
+    let tree = tempfile::tempdir().unwrap();
+    copy_tree(&example_bundle(), &bundle_file(tree.path(), &example_entry(&manifest)));
+    fs::create_dir_all(tree.path().join("extra")).unwrap();
+    fs::copy(&deeper, tree.path().join("extra").join("deeper.zip")).unwrap();
+    let inner_dir = tempfile::tempdir().unwrap();
+    let inner = inner_dir.path().join("outputs.zip");
+    pack(tree.path(), &inner, &PackOptions::default()).unwrap();
+    let outer_dir = tempfile::tempdir().unwrap();
+    let outer = zip_of_zips(&[("a/outputs.zip", &inner)], &outer_dir);
+    let outer = real_path(&outer);
+    let nested = tempfile::tempdir().unwrap();
+    let scanner = Scanner::new(Options {
+        nested_dir: Some(nested.path().to_path_buf()),
+        ..Options::default()
+    });
+
+    let counts: Vec<usize> = std::thread::scope(|scope| {
+        let readers: Vec<_> = (0..8)
+            .map(|_| scope.spawn(|| scanner.zips().get(&outer).unwrap().bundles("outer").len()))
+            .collect();
+        readers.into_iter().map(|reader| reader.join().unwrap()).collect()
+    });
+    assert_eq!(counts, [1; 8], "only the bundle one level deep is found");
+    let index = scanner.zips().get(&outer).unwrap();
+    let extraction = index.inner()[0].index.path.clone();
+    scanner.zips().clear();
+    let reopened = scanner.zips().get(&extraction).unwrap();
+    assert!(reopened.inner().is_empty(), "an extraction opens no inner zip");
+    assert_eq!(reopened.bundles("x").len(), 1);
+    let image = &reopened.entries()[&format!("{}snap/0001.webp", example_entry(&manifest))];
+    assert_eq!(reopened.read_stored(image, 0..image.size).unwrap(), example_file("snap/0001.webp"));
+}
+
+/// An inner `.zip` that is no zip is a problem of its root, and leaves no extraction behind. The reader of a zip in
+/// memory reports it too, so the planner can say why it found no bundle.
+#[test]
+fn an_inner_zip_that_does_not_read_is_reported_and_leaves_nothing() {
+    let keep = tempfile::tempdir().unwrap();
+    let bogus = keep.path().join("bogus.zip");
+    fs::write(&bogus, b"not a zip").unwrap();
+    let outer_dir = tempfile::tempdir().unwrap();
+    let outer = zip_of_zips(&[("a/test.outputs/outputs.zip", &bogus)], &outer_dir);
+    let nested = tempfile::tempdir().unwrap();
+    let found = Scanner::new(Options {
+        nested_dir: Some(nested.path().to_path_buf()),
+        ..Options::default()
+    })
+    .scan(&[Root::new(RootKind::Flag, &outer)]);
+    assert!(found.bundles.is_empty());
+    let problems = &found.roots[0].problems;
+    assert_eq!(problems.len(), 1, "{problems:?}");
+    assert!(
+        problems[0].starts_with(&format!("{}!/a/test.outputs/outputs.zip: ", real_path(&outer).display())),
+        "{problems:?}"
+    );
+    assert_eq!(fs::read_dir(nested.path()).unwrap().count(), 0, "the failed extraction is removed");
+
+    let mut archive = ZipArchive::new(Cursor::new(fs::read(&outer).unwrap())).unwrap();
+    let (bundles, errors) = read_zip_reporting(&mut archive, "bazel.logs.zip");
+    assert!(bundles.is_empty());
+    assert_eq!(errors.len(), 1, "{errors:?}");
+    assert!(errors[0].starts_with("a/test.outputs/outputs.zip: "), "{errors:?}");
+}
+
 /// A bundle without its manifest is named by its logs and its path: running while its files still change,
 /// truncated once they stopped, and always truncated inside a zip.
 #[test]
@@ -313,10 +517,13 @@ fn the_default_roots_find_the_controllers_zips() {
     assert!(!found.roots[1].exists, "the runs directory does not exist yet");
 
     let unresolved = default_roots(Some(Path::new("/repo")), Err("AIR_VM_RUNTIME_ROOT is not absolute"));
-    assert_eq!(unresolved.len(), 4);
+    assert_eq!(
+        unresolved.iter().map(|root| root.kind).collect::<Vec<_>>(),
+        [RootKind::BazelTestlogs, RootKind::VmReports, RootKind::VmRuns]
+    );
     let states = Scanner::new(Options::default()).scan(&unresolved).roots;
+    assert_eq!(states[1].error.as_deref(), Some("AIR_VM_RUNTIME_ROOT is not absolute"));
     assert_eq!(states[2].error.as_deref(), Some("AIR_VM_RUNTIME_ROOT is not absolute"));
-    assert_eq!(states[3].error.as_deref(), Some("AIR_VM_RUNTIME_ROOT is not absolute"));
 }
 
 #[test]

@@ -7,6 +7,7 @@ targets:
   - ../crates/avl-record/**
   - ../crates/air-trace/**
   - ../crates/avl-guest/src/tracepack.rs
+  - ../crates/avl-guest/src/lane/trace.rs
   - ../crates/avl-guest/src/cli.rs
   - ../crates/avl-vm/src/daemon/iterate.rs
   - ../crates/avl-vm/src/daemon/traces.rs
@@ -38,17 +39,18 @@ Air docs site. `air-trace plan` says what to run to record new ones.
 the bridge routes and the viewer.
 
 The contract is declared once, in Rust, in `community/tools/vm/crates/avl-trace`. Two golden files there
-pin the Kotlin and TypeScript ends to it.
+pin the viewer to it.
 
 ## Goals
 
 - A bundle is self-contained, so a CI publisher can adopt it later without a viewer change.
-- A killed lane JVM still leaves a readable bundle, marked as truncated.
+- A killed lane still leaves a readable bundle, marked as truncated.
 - The parts that must run are Rust, so a guest needs no JVM to record, pack or serve.
 
 ## Non-goals
 
-- Deciding a verdict. A trace is evidence, and every capture problem is recorded instead of thrown.
+- Deciding a verdict from a capture problem. A trace is evidence, and every capture problem is recorded instead of
+  thrown. The status of a bundle that arrived is the second account of its scenario, which the run report states.
 - Uploading traces. Storage is local, and CI storage is a later decision.
 - A generic OpenTelemetry viewer. The bundle is OTLP JSON so that such tools read it, but the viewer is
   Air's own.
@@ -109,8 +111,16 @@ pin the Kotlin and TypeScript ends to it.
   `air.trace.error` of the failure names the file that is missing.
   [@test] ../crates/avl-record/src/stills/tests.rs
 
-- At the end of a scenario, the recorder writes one Allure result into `<root>/<runId>/allure-results/`. It writes
-  the result before `bundle.json`, so a finished bundle has its result.
+- The recorder writes the Allure results only when the hello says `allure`. The lane says it when a person asks
+  with `-Dair.flow.trace.allure=on`. That flag is a lane flag of the runtime descriptor, or a `--jvm_flag` of
+  `lane-run` for one Bazel run. Without it, the run has no `allure-results` directory.
+  [@test] ../crates/avl-record/src/tests.rs (`the_golden_transcript_writes_no_allure_result_unasked`)
+  [@test] ../crates/avl-guest/src/lane/trace/tests.rs (`the_hello_asks_for_the_allure_results_only_when_the_inputs_do`)
+  [@test] ../crates/avl-guest/src/lane/inputs/tests.rs (`the_trace_flags_name_the_recorder_the_screen_and_the_allure_results`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_allure_flag_asks_for_the_allure_results_of_one_run`)
+
+- When the hello says `allure`, the recorder writes one Allure result into `<root>/<runId>/allure-results/` at the
+  end of each scenario. It writes the result before `bundle.json`, so a finished bundle has its result.
   [@test] ../crates/avl-record/src/tests.rs (`the_golden_transcript_writes_the_golden_allure_result`)
 
 - The result is `<uuid>-result.json`. Its `fullName` is `<testClass>.<scenario>`, and its `historyId` is the SHA-256
@@ -165,7 +175,7 @@ pin the Kotlin and TypeScript ends to it.
   [@test] ../crates/avl-record/src/tests.rs
 
 - The root span carries the scenario name, the test class, the suite, the flow, the fixture and the flags.
-  It also carries `air.program`, the generated profile verbatim.
+  It also carries `air.program`, the generated profile of the `scenario` command.
   [@test] ../crates/avl-trace/src/bundle/tests.rs
 
 - Every other lane span carries `air.span.kind` and `air.span.key`. An assertion span also carries its
@@ -237,6 +247,11 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   `driverSteps` op like any other unknown op.
   [@test] ../crates/avl-trace/src/protocol/tests.rs
 
+- A command line holds no whitespace between its tokens. So a program that a lane reads from a pretty-printed
+  suite document stays on one line. The strings of the program keep their text.
+  [@test] ../crates/avl-trace/src/protocol/tests.rs (`a_program_from_a_pretty_printed_document_is_written_on_one_line`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_pretty_printed_suite_document_reaches_the_recorder_one_line_per_command`)
+
 - The lane waits for an ack after `hello`, `scenario`, `snap` and `done` only. Every other op costs the
   scenario no time.
   [@test] ../crates/avl-trace/src/protocol/tests.rs
@@ -275,6 +290,12 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   once. The recorder refuses a label without a name or a value.
   [@test] ../crates/avl-trace/src/protocol/tests.rs (`labels_attachments_and_a_failed_done_are_canonical`)
 
+- `scenario` can carry `logFrom`, the byte of the IDE's `idea.log` where the slice of the scenario begins. Absent,
+  the slice begins at the size that the IDE reports as the scenario opens. A byte past the end of the log starts the
+  slice at the end.
+  [@test] ../crates/avl-trace/src/protocol/tests.rs (`a_scenario_names_the_byte_where_its_log_slice_begins`)
+  [@test] ../crates/avl-record/src/idealog/tests.rs (`a_slice_starts_at_the_byte_that_the_lane_names`)
+
 - `attach` carries `name`, `mime`, `file` and `span`. The file is a path that the lane wrote under the hello's
   root. The recorder moves the file into the bundle as `attach/NNNN.<ext>` and writes an `air.attachment` record
   on the span. The record names the title, the media type and the bundle file. Ordinals count from 1 in each
@@ -290,6 +311,13 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 - The recorder moves an attachment with a rename. When the rename fails, it copies the file under a partial name,
   renames the copy into place and removes the lane file.
   [@test] ../crates/avl-record/src/attach/tests.rs (`a_move_that_cannot_place_the_file_keeps_the_lane_file`)
+
+- A failed scenario keeps the thread dumps that the IDE wrote while the scenario ran. A dump is a file of the IDE log
+  directory with `thread-dump` in its name. The recorder copies each dump into the bundle as `attach/NNNN.log`. An
+  `air.attachment` record on the root span names it, and the IDE keeps its file. A bundle keeps at most 4 dumps. A
+  passed scenario keeps none.
+  [@test] ../crates/avl-record/src/dumps/tests.rs (`a_failed_scenario_keeps_the_thread_dumps_that_the_ide_wrote_while_it_ran`)
+  [@test] ../crates/avl-record/src/dumps/tests.rs (`a_passed_scenario_keeps_no_thread_dump`)
 
 - `done` can carry the `message` and the `trace` of the failure that ended the scenario. The trace is the
   failure's class on the first line, then the lines of its stack. The recorder refuses either field on a passed
@@ -308,6 +336,31 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 - The recorder ignores SIGPIPE, so a lane that died cannot stop it from finishing the bundle.
   [@test] ../crates/avl-record/src/tests.rs
 
+- The lane daemon is a lane of the protocol. Its `hello` names the launcher `daemon` and the root
+  `<iterationDir>/air-traces`, and its transcript of a green scenario is held to a golden. Under a Bazel test,
+  `lane-run` names the launcher `bazel` and the root `$TEST_UNDECLARED_OUTPUTS_DIR/air-traces`. A bundle does
+  not hold the full `idea.log`. That log and the other evidence of a run that is not green go to
+  `$TEST_UNDECLARED_OUTPUTS_DIR/lane`, as [the controller spec](lane-controller.spec.md) states under `lane-run`.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)
+  [@test] ../crates/avl-guest/src/lane/trace/tests.rs (`a_bazel_test_roots_the_bundles_in_its_outputs_directory`)
+
+- The lane daemon writes one `call` for each bridge request, and one for each step of a chain after it.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)
+
+- The lane daemon photographs the first failure of a scenario once, in the span that failed. It attaches the IDE
+  dump of a slow step to the span of that step.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_failed_slow_instruction_is_typed_photographed_and_dumped`)
+  [@test] ../crates/avl-guest/src/lane/trace/tests.rs (`a_failure_is_photographed_once_in_its_own_span_and_fails_the_spans_it_unwinds`)
+
+- The lane daemon says on its stream when its recorder loses a trace. The causes are a recorder that did not
+  start, a refused hello or scenario, and a recorder that went away. One `traceFailed` record carries the first
+  reason, and a later one stays in the daemon log. A scenario that the recorder refused gets no further command.
+  [@test] ../crates/avl-guest/src/lane/trace/tests.rs (`a_refused_scenario_gets_no_further_command_and_is_the_failure_of_the_session`)
+  [@test] ../crates/avl-guest/src/lane/trace/tests.rs (`a_recorder_that_went_away_is_the_failure_of_the_session`)
+  [@test] ../crates/avl-guest/src/lane/trace/tests.rs (`only_a_recorder_that_did_not_start_is_a_failure_of_a_quiet_session`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_recorder_that_refuses_the_scenarios_is_one_trace_failure_of_the_stream`)
+  [@test] ../crates/avl-wire/src/daemon/tests.rs (`a_trace_failure_of_the_lane_daemon_decodes_and_keeps_its_bytes`)
+
 ### Capture and video
 
 - The recorder takes pixels from the first available source. X11 comes first, then the IDE's paint route,
@@ -315,12 +368,15 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   [@test] ../crates/avl-record/src/capture/tests.rs
 
 - The recorder reads the screen itself only when the hello says `screen`. The Linux guest's lane targets set
-  `-Dair.flow.trace.screen=on`, because the guest's `Xvfb` belongs to the lane. A direct lane on a
-  developer's machine records the IDE's paint and no screen video. It records the screen only when the person
-  running it passes the property or sets `AIR_TRACE_SCREEN=on`. Their screen shows everything else they have
-  open. On macOS, reading it asks for Screen Recording permission, and that prompt can take the focus from the
-  IDE.
+  `-Dair.flow.trace.screen=on`, because the guest's `Xvfb` belongs to the lane. `lane-run` says `screen` on a
+  TeamCity build on Linux with a `DISPLAY`, because no person works on the display of a TeamCity agent. A direct
+  lane on a developer's machine records the IDE's paint and no screen video, and it never reads the screen.
+  `lane-run` refuses the property as a JVM flag, so a person cannot give it to a direct lane. The screen of a
+  developer shows everything else they have open. On macOS, reading it asks for Screen Recording permission, and
+  that prompt can take the focus from the IDE.
   [@test] ../crates/avl-record/src/ladder/tests.rs (`the_ladder_reads_x_only_where_allowed_and_where_the_ide_draws_to_it`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`an_unknown_jvm_flag_or_a_split_that_is_not_one_is_refused_by_name`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`only_a_teamcity_build_on_linux_with_a_display_lets_the_recorder_read_the_screen`)
   [@test] ../../../../plugins/air/tests/integration/ui_lane_ide.bzl
 
 - X11 is read only where the IDE draws to it, which is Linux. A Mac with XQuartz has a `DISPLAY` too, and its
@@ -376,10 +432,6 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   log adds the new file. A slice is capped at 32 MiB.
   [@test] ../crates/avl-record/src/idealog/tests.rs
 
-- Under the checkout's root the recorder keeps the newest 20 runs, the current run always among them. The
-  daemon's and Bazel's roots belong to owners who already clean them up.
-  [@test] ../crates/avl-record/src/retention.rs
-
 ### Packing and the VM pull
 
 - `air-trace pack SOURCE DEST` writes a deterministic zip of every bundle under a directory. Entries are in
@@ -390,8 +442,9 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   server answers a byte range straight out of the zip.
   [@test] ../crates/avl-trace-tools/src/pack/tests.rs
 
-- A pack keeps the `allure-results` directory of each run. A pack that selects bundles keeps the result of each
-  bundle it packs and the files that the result names. A result that it cannot read is skipped, and the report names it.
+- A pack keeps the `allure-results` directory of each run that has one. A pack that selects bundles keeps the
+  result of each bundle it packs and the files that the result names. A result that it cannot read is skipped, and
+  the report names it.
   [@test] ../crates/avl-trace-tools/src/pack/tests.rs (`a_pack_keeps_the_allure_results_of_its_bundles`)
 
 - A pack lists each `allure-results` directory after it walks the tree. So a finished bundle leaves with its result,
@@ -400,8 +453,8 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 
 - The guest agent's `trace-pack-ready <sourceDir> <destinationZip> <ledger> [--all]` verb runs the code of
   `air-trace pack` on the guest. It packs only the bundles that the ledger does not name. Without `--all` it
-  packs only the finished bundles, the ones with a manifest. It packs the Allure result of each bundle with the
-  bundle. It adds each packed bundle to the ledger, and it writes no zip when nothing is new.
+  packs only the finished bundles, the ones with a manifest. It packs the Allure result of each bundle that has one
+  with the bundle. It adds each packed bundle to the ledger, and it writes no zip when nothing is new.
   [@test] ../crates/avl-guest/src/tracepack/tests.rs (`trace_pack_ready_packs_each_finished_bundle_once`)
   [@test] ../crates/avl-guest/src/tracepack/tests.rs (`trace_pack_ready_packs_the_allure_result_with_its_bundle`)
 
@@ -428,8 +481,141 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
   [@test] ../crates/avl-wire/src/report/tests.rs
 
+- The reason of the daemon's first `traceFailed` record comes first in `tracesError`, before a pack or pull
+  failure. It never changes the verdict either.
+  [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs (`a_trace_failure_of_the_daemon_is_the_traces_error_of_an_iteration_without_traces`)
+
 - The Linux guest installs no video encoder. The recorder carries its own, so a Linux worker records video.
   [@test] ../crates/avl-vm/src/worker/docker/tests.rs
+
+- One bundle of a zip packs into a zip of its own, with the bundle at the top. Its entries are inflated and written
+  as a pack writes them, so a video that Bazel deflated is stored again. An entry name with `..` refuses the pack.
+  [@test] ../crates/avl-trace-tools/src/pack/tests.rs (`one_bundle_of_a_zip_is_packed_with_its_media_stored`)
+
+- `air-trace teamcity-publish` is the step after `bazel test` on TeamCity. It reads each `test.xml` under the
+  testlogs, and the bundles of `test.outputs/air-traces/` and `test.outputs/outputs.zip` beside it. Each bundle
+  becomes the zip `<lane>/<runId>/<TestClass>/<scenario>.zip` of the archive `air-traces.zip`. The lane is the Bazel
+  target with its shard directory. The step prints the `testMetadata` of the test: the viewer link, and the
+  `artifact` named `trace`, `air-traces.zip!/<lane>/<runId>/<TestClass>/<scenario>.zip`. The test name is
+  `<classname>.<name>` of the XML beside the bundle, and the messages carry no flow. Two bundles whose names sanitize
+  to one file get `<scenario>.zip` and `<scenario>.2.zip`, and stderr says so. Testlogs without bundles print nothing
+  and write nothing.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests`)
+  [@test] ../crates/air-trace/src/publish/tests.rs (`testlogs_without_bundles_print_nothing`)
+  [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_published_trace_names_the_case_of_its_own_xml`)
+
+- The step publishes one archive artifact, `air-traces.zip`, with no target, so TeamCity keeps it as it is. TeamCity
+  redirects a loose artifact to a signed address, where a sibling file is refused. It serves an entry of an archive
+  itself, with byte ranges. The archive holds `index.html`, the viewer page, then `runs.json`, then each bundle zip in
+  the order of the metadata. The page and the listing are deflated, and the zips are stored. Each entry has one time
+  and one mode, so two publishes of one testlogs tree write one archive. No bundle zip is a loose artifact.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`on_team_city_the_listing_names_the_build_and_each_test_links_its_trace`)
+  [@test] ../crates/air-trace/src/publish/tests.rs (`the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests`)
+  [@test] ../crates/avl-trace-tools/src/pack/tests.rs (`an_archive_keeps_its_order_and_stores_its_zips`)
+
+- Once `air-traces.zip` is written and published, the step removes from the testlogs each bundle directory that the
+  archive holds. TeamCity packs the testlogs into `bazel.logs.zip` at the end of the build, which would hold the bundles
+  a second time. A directory goes only when it is a directory and no link. Its real path must be inside
+  `test.outputs/air-traces` of its test, inside its testlogs. A directory stays when its zip lacks a part of it, such as
+  a link to a directory or a broken link. Only a temporary `.partial` file of a recorder may go without a copy. A run or
+  class directory that the removal empties goes too. The other outputs stay: `outputs.zip`, the evidence of the lane,
+  and the Allure results. A test of an earlier build is not published, so its bundles stay. One stderr line says the
+  count and the bytes of the removed files. A file with another hard link frees no disk space, but it leaves the
+  testlogs. A directory that does not go is a warning. On TeamCity the step always removes. Elsewhere it removes only
+  with `--remove-packed`, so the local Bazel outputs stay.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`the_packed_bundles_leave_the_testlogs_once_the_archive_is_published`)
+  [@test] ../crates/air-trace/src/publish/tests.rs (`a_packed_directory_outside_the_traces_or_behind_a_link_stays`)
+  [@test] ../crates/air-trace/src/publish/tests.rs (`a_bundle_that_its_zip_does_not_hold_whole_stays_in_the_testlogs`)
+  [@test] ../crates/air-trace/tests/cli.rs (`teamcity_publish_removes_the_packed_bundles_on_team_city_or_when_asked`)
+
+- For a failed scenario only, the step also publishes two loose files, so the Tests tab of TeamCity shows them. They
+  are `air-traces-failed/<lane>/<runId>/<TestClass>/<scenario>/failure.webp`, the last picture, and `…/video.mp4`,
+  when the bundle has a video. The `image` named `failure` and the `video` named `video` of the test name them. A file
+  that does not copy out of the bundle zip is a warning.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests`)
+
+- The step never turns a build red. Each problem is a line on stderr and a `message` with the status `WARNING` on
+  stdout. A problem is no testlogs, a missing testlogs directory, or an output that does not read. A bundle that does
+  not pack, no viewer, and build properties that do not read are problems too. The rest still publishes, and the exit
+  is 0. Only a usage error of the command line exits 2.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`testlogs_without_bundles_print_nothing`)
+  [@test] ../crates/air-trace/tests/cli.rs (`teamcity_publish_answers_0_without_testlogs_and_2_for_a_usage_error`)
+  [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_warning_is_a_message_with_the_warning_status`)
+
+- Without `--testlogs`, the step reads every `bazel-out/<configuration>/testlogs` of the `bazel-out` that holds the
+  real file of its binary. `bazel run` starts the binary through links into the `-opt` configuration, and the tests
+  write their logs into another configuration.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`the_testlogs_are_found_beside_the_binary_that_bazel_run_starts`)
+
+- A TeamCity agent keeps its checkout and its Bazel output base across builds. So the testlogs can hold the tests of
+  an earlier build, which this build did not run. The step publishes only a test whose `test.xml` is from the start
+  of the build or later. The start is `--since`, or on TeamCity the `startDate` of the REST API of the build. The step
+  asks `teamcity.serverUrl` with `teamcity.auth.userId` and `teamcity.auth.password` of the build. The `currentTime` of
+  the server gives the skew between its clock and the clock of the agent, and the start moves by it. A test then counts
+  from two minutes before the start. Each skipped test is one line on stderr, and one warning counts them. A stronger
+  warning says when no test is left to publish. A start that does not read is a warning, and then every test
+  publishes. Off TeamCity without `--since`, every test publishes.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`the_tests_of_an_earlier_build_are_skipped`)
+  [@test] ../crates/air-trace/src/publish/teamcity/tests.rs (`the_start_of_a_build_is_its_start_date_in_the_clock_of_this_machine`)
+  [@test] ../crates/air-trace/src/serve/teamcity/tests.rs (`the_agent_client_gives_curl_the_build_credentials_on_its_standard_input`)
+
+- Before it writes, the step empties its output, so the output holds the files of this run only. It empties the
+  default output, and an output that holds its marker file `.air-traces-publish`. It refuses another `--out` that
+  holds files, and then publishes nothing.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`the_output_holds_the_files_of_this_run_only`)
+
+- A relative path of `--testlogs`, `--out` or `--viewer` is taken from `BUILD_WORKING_DIRECTORY`, the directory where
+  `bazel run` ran. It is not taken from the runfiles tree that the program starts in.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`a_relative_path_is_taken_from_the_directory_where_bazel_run_ran`)
+
+- The listing `runs.json` of the archive is the listing of `GET /__air/runs`, written with the server's own types.
+  Each scenario carries `zip`, the path of its zip relative to `runs.json`. Its `source` is that zip, and its id is
+  the id of that zip. `controllerRuns` is empty. Each testlogs directory is one `bazel-testlogs` root. The root counts
+  its published bundles, and its problems name each output that did not read and each bundle that did not pack. A
+  `zip` is a relative path with no `.` or `..` segment, so it stays in the directory of `runs.json`. Each zip holds
+  its bundle at its top.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`on_team_city_the_listing_names_the_build_and_each_test_links_its_trace`)
+
+- The viewer is one file, `index.html`, with its scripts, styles and fonts inside. The step puts only that file into
+  the archive. A viewer that is missing, or that holds no `index.html`, is a warning. The archive then holds
+  `runs.json` and the zips.
+  [@test] ../crates/air-trace/src/publish/tests.rs (`without_a_viewer_the_bundles_and_the_listing_publish_alone`)
+
+- The viewer is the directory of `--viewer`. Without it, the step builds the viewer in the checkout that
+  `BUILD_WORKSPACE_DIRECTORY` names, with the node and the pnpm below. It runs `pnpm install
+  --frozen-lockfile` in the kernel and in `plugins/air/docs`, also over an existing `node_modules`, so a changed
+  lockfile takes effect. Then it runs `pnpm run build:viewer`, which writes `out/air-trace-viewer/index.html`. A
+  viewer there that is newer than its sources is not built again. Its sources are the sources of the site and the UI
+  primitives of the genui catalog. The configuration files and the lockfiles of the docs project and of the kernel
+  count too. The output of the build goes to stderr, and stderr says how long the build took. Each step runs in a
+  process group of its own. A build that fails, or that does not end within 10 minutes, is stopped with every process
+  that it started. It is then the reason for no viewer. Without a checkout, or in a checkout without the docs project,
+  there is no viewer.
+  [@test] ../crates/air-trace/src/publish/viewer/tests.rs
+  [@test] ../crates/air-trace/src/serve/tests/service.rs (`the_kernel_is_installed_before_the_project_that_links_it`)
+
+- The node and the pnpm of the viewer build are `--node` and `--pnpm`, or `AIR_TRACE_NODE` and `AIR_TRACE_PNPM`. A
+  step before the publish on TeamCity finds them with the startup options of the build and sets the two variables. A
+  value `none` builds no viewer, with one warning, and so does one tool alone. Without the two, a local step asks
+  `bazel.cmd cquery` of the checkout, as `serve` does. On TeamCity the step never starts a Bazel: without the two it
+  builds no viewer, with one warning.
+  [@test] ../crates/air-trace/src/publish/viewer/tests.rs (`the_viewer_comes_from_the_flag_the_named_tools_or_bazel_but_never_bazel_on_team_city`)
+  [@test] ../crates/air-trace/tests/cli.rs (`teamcity_publish_takes_its_tools_from_the_variables_and_starts_no_bazel_on_team_city`)
+
+- On TeamCity, the step reads the build from the agent's property files: `TEAMCITY_BUILD_PROPERTIES_FILE`, and
+  the file of the configuration parameters that `teamcity.configuration.properties.file` names. The build gives each
+  run and root of `runs.json` its `origin`: the name of the build configuration, the build id and the build page. The
+  server is the root of `BUILD_URL` when that is `<root>/build/<build id>`, else `teamcity.serverUrl`. Files that
+  do not name the build are a line on stderr, and the listing then names no build.
+  [@test] ../crates/air-trace/src/publish/teamcity/tests.rs
+
+- With the build and the viewer, each test gets a `link` named `trace viewer`:
+  `<server>/repository/download/<buildTypeId>/<buildId>:id/air-traces.zip!/index.html#/trace?zip=<zip>`. The zip path
+  is encoded as the viewer's `traceHash` writes it: as `URLSearchParams` writes a value, with each `/` kept. Without
+  the build or the viewer, no test gets a link.
+  [@test] ../crates/air-trace/src/publish/teamcity/tests.rs (`the_build_of_a_step_comes_from_the_agent_files`)
+  [@test] ../crates/air-trace/src/publish/tests.rs (`on_team_city_the_listing_names_the_build_and_each_test_links_its_trace`)
+  [@test] ../crates/air-trace/src/publish/tests.rs (`without_a_viewer_the_bundles_and_the_listing_publish_alone`)
 
 ### The server
 
@@ -437,9 +623,29 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   a loopback name, and refuses a request the browser marks as cross-site.
   [@test] ../crates/air-trace/src/serve/tests.rs
 
-- By default it looks in `out/air-traces`, in the Air lanes' `bazel-testlogs`, and in the controller's pulled
+- By default it looks in the Air lanes' `bazel-testlogs` and in the controller's pulled
   zips. `--root` adds a place, and `--no-default-roots` drops the defaults.
   [@test] ../crates/air-trace/src/serve/tests.rs
+
+- A zip entry that ends in `.zip` and lies outside every bundle is an inner zip. Discovery extracts it once into
+  the cache and reads it as a zip, one level deep. Its bundles name the container `<outer>!/<entry>`, and the
+  server serves them from the extraction. A planner without a cache extracts into a temporary directory. An inner
+  zip over 1 GiB, or longer than its declared size, is refused. An inner zip that does not read is a problem of its
+  root, and it leaves no extraction behind.
+  [@test] ../crates/avl-trace-tools/src/discover/tests.rs (`a_zip_inside_a_zip_is_extracted_once_and_read_as_a_zip`)
+  [@test] ../crates/avl-trace-tools/src/discover/tests.rs (`an_inner_zip_that_does_not_read_is_reported_and_leaves_nothing`)
+  [@test] ../crates/avl-trace-tools/src/discover/tests.rs (`a_zip_inside_a_bundle_is_not_opened`)
+  [@test] ../crates/air-trace/src/serve/tests.rs (`a_zip_inside_a_zip_is_served_from_its_extraction`)
+
+- `--teamcity <build id or URL>` resolves a build through the REST API, a composite build to the builds that ran
+  under it. It downloads the `bazel.logs.zip` of each once into the cache, as `tc-<server hash>-<build id>/`. Each zip
+  is a root with an `origin`: the name of the build configuration, the build id and the page. Each bundle and run of
+  the listing carries it. A build that does not resolve or download is a root with its error, and the other builds
+  still serve. `TEAMCITY_TOKEN` goes to the server of `--teamcity-url` only, through `curl`. For another server, or
+  without the token, the TeamCity CLI signs the request. A server is `https`, or `http` on a loopback host.
+  `--teamcity` refuses `--detach`.
+  [@test] ../crates/air-trace/src/serve/teamcity/tests.rs
+  [@test] ../crates/avl-trace-tools/src/discover/tests.rs (`the_origin_of_a_root_is_on_each_of_its_bundles`)
 
 - The controller's pulled zips are the iteration zips under `workers/*/reports/*/traces/` and the scenario zips
   under `runs/*/traces/*/`. A scenario zip has the bundle id that the controller's `traceReady` names, and a
@@ -467,10 +673,16 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   `bundle-append` event names its bundle and its file, and carries complete lines only.
   [@test] ../crates/air-trace/src/serve/tests.rs
 
-- `GET /__air/events` sends `run-appended` with `{runId}` when a run's journal grows. The watcher follows the
-  runs directory and the directory of each running run. A record that changes a count also changes the
-  listing, and `runs-changed` follows.
+- `GET /__air/events` sends `run-appended` with `{runId}` when a run's journal grows, and when a new run appears.
+  The watcher follows the runs directory, the directory of each running run, and each run directory without a
+  journal. A record that changes a count also changes the listing, and `runs-changed` follows.
   [@test] ../crates/air-trace/src/serve/tests/service.rs (`run_appended_is_sent_when_a_journal_grows`)
+  [@test] ../crates/air-trace/src/serve/tests/service.rs (`a_run_directory_seen_before_its_journal_is_watched`)
+
+- A file event can come late or not at all. The server reads the runs directory every second, so a new run is
+  announced without its event. A watcher that dropped events sends a rescan notice, and the notice starts a scan.
+  [@test] ../crates/air-trace/src/serve/tests/service.rs (`a_new_run_is_announced_without_a_file_event`)
+  [@test] ../crates/air-trace/src/serve/tests/service.rs (`a_rescan_notice_of_the_watcher_starts_a_scan`)
 
 - `POST /__air/plan` answers the planner's result for `{text}`, or for a dropped file whose bytes are the body
   and whose name is `?fileName=`. It adds the bundles of the server's listing for the scenarios the plan names,
@@ -568,14 +780,21 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 - A plan for one scenario of a class that runs several says so. Both runners select a whole class.
   [@test] ../crates/air-trace/src/plan/tests.rs
 
+- The planner plans a suite of an explicit-only lane when its own class names it. Its warning names the cost of the
+  lane. Each scenario of `ui-live` spends a billed turn, and another lane runs only when a caller names it. The
+  live lane gets the piped guest run and no host line, because a host refuses the live lane.
+  [@test] ../crates/air-trace/src/plan/tests.rs (`an_explicit_only_class_plans_the_piped_guest_run_and_no_host_run_of_the_live_lane`)
+
 - The planner answers commands and never starts a run. The exit is 0 when it reached something, 3 when it
   reached nothing, 2 for usage, and 1 for an unreadable checkout.
   [@test] ../crates/air-trace/src/plan/tests.rs
 
-- The planner and the controller read the UI lanes, their test labels and their JUnit tags from one table.
-  That table reads them from bt's lane table. Neither tool keeps a lane table of its own.
+- The planner and the controller read the UI lanes and their test labels from one table. That table reads them
+  from bt's lane table. Neither tool keeps a list of lanes of its own. Neither table names a JUnit tag, because the
+  lane daemon selects the documents of a lane by its name.
   [@test] ../crates/avl-affected/src/lanes/tests.rs
   [@test] ../../bt/crates/bt-core/src/lanes/tests.rs
+  [@test] ../crates/avl-vm/src/lane/lanes/tests.rs
 
 ## User Experience
 
@@ -592,8 +811,8 @@ The Runs page, the run page and the trace page are in
   missing and why.
   [@test] ../crates/avl-record/src/session/tests.rs
 
-- The controller's trace pull never fails an iteration. An iteration without a trace directory reports
-  neither `traces` nor `tracesError`.
+- The controller's trace pull never fails an iteration. An iteration without a trace directory and without a
+  `traceFailed` record reports neither `traces` nor `tracesError`.
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
 
 ## Testing / Local Run

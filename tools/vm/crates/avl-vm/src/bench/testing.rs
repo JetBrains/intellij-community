@@ -2,6 +2,12 @@
 
 use std::path::{Path, PathBuf};
 
+use super::arm::Arm;
+use super::files;
+use super::record::{self, LaunchFacts, RunId};
+use super::session::{self, SUMMARY_FILE};
+use super::summary::Summary;
+
 /// The `testdata/bench` directory of this crate, under cargo and under Bazel.
 pub(crate) fn testdata_dir() -> PathBuf {
     avl_testkit::crate_path!("testdata/bench")
@@ -13,6 +19,31 @@ pub(crate) fn fixture_session() -> (tempfile::TempDir, PathBuf) {
     let session = dir.path().join("session");
     avl_testkit::traces::copy_tree(&testdata_dir().join("session"), &session);
     (dir, session)
+}
+
+/// Collects the run directories `runs` of `session` into their `result.json`, and writes a `summary.json` whose arms
+/// are `arms`. The session keeps its other inputs. A run directory name gives the arm of the run.
+pub(crate) fn summarize(session: &Path, arms: Vec<Arm>, runs: &[&str]) -> Summary {
+    let mut info = session::read_info(session).expect("the session");
+    info.arms = arms;
+    let records: Vec<_> = runs
+        .iter()
+        .map(|run| {
+            let id = RunId::parse(run).unwrap_or_else(|| panic!("{run} is no run directory name"));
+            let record = record::collect(&session.join(run), &id, LaunchFacts::default());
+            files::write_json(&session.join(run).join("result.json"), &record).expect("result.json");
+            record
+        })
+        .collect();
+    let summary = Summary::build(&info, &session.display().to_string(), &records);
+    files::write_json(&session.join(SUMMARY_FILE), &summary).expect("summary.json");
+    summary
+}
+
+/// Writes `summary.json` of a session whose only arm is the project arm, over `project-run-01` of the fixture. Its
+/// plugin log has the new shape, with the thread, the time and the activation stack of a class.
+pub(crate) fn project_session(session: &Path) {
+    summarize(session, vec![Arm::PROJECT], &["project-run-01"]);
 }
 
 /// The spans of the Air empty-state composer that [`empty_editor_run`] adds: the name, the start in milliseconds from

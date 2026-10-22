@@ -1,0 +1,14 @@
+load("//tools/vm:avl.bzl", "avl_crate")
+
+avl_crate(
+    portable = True,
+    test_data = [":testdata"],
+)
+
+# The recorded run stream and the golden of its JUnit XML. Public, because the tests of `avl-report` read the same
+# stream for the golden of its TeamCity messages.
+filegroup(
+    name = "testdata",
+    srcs = glob(["testdata/**"]),
+    visibility = ["//visibility:public"],
+)

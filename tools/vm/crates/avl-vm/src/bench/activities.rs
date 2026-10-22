@@ -63,7 +63,7 @@ pub(crate) struct PluginLine {
 /// Reads the run that `args` selects and groups the activities of its window.
 pub(crate) fn report(session: &Path, args: &ActivitiesArgs) -> Result<ActivityReport, Refusal> {
     let selection = &args.selection;
-    let (SelectedRun { id, median_by, .. }, timeline) = Timeline::select(session, selection.run.as_deref(), selection.arm)?;
+    let (SelectedRun { id, median_by, .. }, timeline) = Timeline::select(session, selection.run.as_deref(), selection.arm.as_ref())?;
     let window = WindowMs::of(&args.window, timeline.whole(), &id)?;
     let top = usize::try_from(args.top).unwrap_or(usize::MAX);
     let mut activities: Vec<&TimedSpan> = timeline

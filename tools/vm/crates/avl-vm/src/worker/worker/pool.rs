@@ -284,7 +284,7 @@ impl Manager {
     /// Empties a worker's host directory, keeping the lifecycle lock file.
     ///
     /// Everything else in there describes the guest that has just been deleted - the pid receipt, the
-    /// suspended-state record, the parity and agent receipts, the daemon's stage, the reports of runs that happened
+    /// suspended-state record, the parity and agent receipts, the daemon record, the reports of runs that happened
     /// inside it - so none of it may outlive the VM. The lock file is the exception, and it is the lock module's
     /// rule: a `flock` binds to the inode, so unlinking the file this operation holds lets a contender lock a fresh
     /// one at the same path, and both would believe they hold the worker.
@@ -293,9 +293,9 @@ impl Manager {
     }
 
     /// Forgets what the host recorded about a guest that is gone, for a worker that stays: a container-linux
-    /// container the script made again has a fresh disk, so the agent, the stage and the daemon records of the
-    /// previous one describe nothing. The lease and the run marker are the caller's, because the gate of a run calls
-    /// this. `reports` holds what earlier runs pulled out.
+    /// container the script made again has a fresh disk, so the agent and the daemon records of the previous one
+    /// describe nothing. The lease and the run marker are the caller's, because the gate of a run calls this.
+    /// `reports` holds what earlier runs pulled out.
     pub(super) fn forget_guest(&self, worker: &str) -> Result<(), Refusal> {
         let settings = &self.settings;
         self.remove_worker_state_except(
@@ -440,7 +440,7 @@ impl Manager {
     /// process of the slot. A worker that is stopped, or whose state cannot be read, gets no guest call. A refusal of
     /// the gc is a note.
     async fn stop_lane_ides(&self, ctx: &Ctx, worker: &str) {
-        if !matches!(self.stopped_for_release(ctx, worker).await, Ok(false)) {
+        if !matches!(self.runs_nothing(ctx, worker).await, Ok(false)) {
             return;
         }
         let channel = self.channel(worker);

@@ -8,7 +8,8 @@
 //! - `build.log`: the output of the host Bazel build.
 //! - `template/`: the sandbox template (`config`, `system`, `plugins`), with the FUS test scheme. A `project` session
 //!   also writes its project into `template/projects/<name>`.
-//! - `<arm>-prime/`, `<arm>-run-NN/`: one directory per run, each with `sandbox/`, `log/`, `launch.args` and
+//! - `<arm>-prime/`, `<arm>-run-NN/`: one directory per run, by the label of its arm, such as
+//!   `project-without-com.intellij.air-run-01` for a twin, each with `sandbox/`, `log/`, `launch.args` and
 //!   `result.json`.
 //! - `<arm>-sandbox/`: the sandbox of the run that is running now. See [`live_sandbox`].
 //! - `summary.json`: the summary.
@@ -20,9 +21,10 @@ use std::time::SystemTime;
 use anyhow::Context;
 use avl_base::{Exit, Refusal, RefusalExt};
 use avl_trace_tools::discover::VM_RUNS_DIR;
+use avl_wire::ide::{ADVANCED_SETTINGS_FILE, NO_README_SETTINGS};
 use serde::{Deserialize, Serialize};
 
-use super::arm::Arm;
+use super::arm::{Arm, ArmKind};
 use super::files;
 use super::profile::ProfileEvent;
 use super::record::{RunId, RunRecord};
@@ -81,22 +83,10 @@ fn xml_attribute(value: &str) -> String {
         .replace('"', "&quot;")
 }
 
-/// The advanced settings of a sandbox whose project opens no editor. On the first open of a project, the IDE opens its
-/// `README.md`, and the next start restores that editor. The generated Markdown project has one.
-pub(crate) const NO_README_SETTINGS: &str = r#"<application>
-  <component name="AdvancedSettings">
-    <option name="settings">
-      <map>
-        <entry key="ide.open.readme.md.on.startup" value="false" />
-      </map>
-    </option>
-  </component>
-</application>
-"#;
-
-/// Keeps the IDE from opening the README of a project in this sandbox. See [`NO_README_SETTINGS`].
+/// Keeps the IDE from opening the README of a project in this sandbox: the generated Markdown project has one. The
+/// bytes are those of a bare lane IDE. See [`NO_README_SETTINGS`].
 pub(crate) fn open_no_readme(sandbox: &Sandbox) -> anyhow::Result<()> {
-    files::write_text(&sandbox.config().join("options").join("advancedSettings.xml"), NO_README_SETTINGS)
+    files::write_text(&sandbox.config().join("options").join(ADVANCED_SETTINGS_FILE), NO_README_SETTINGS)
 }
 
 /// Points the welcome project of a sandbox at its own `projects` directory.
@@ -111,7 +101,7 @@ pub(crate) fn own_welcome_project(sandbox: &Sandbox) -> anyhow::Result<()> {
 ///
 /// The path is the same for each run of the arm, so the caches that the IDE keys by the path of the welcome project
 /// match in each copy of the primed sandbox. After the run, the sandbox moves into the run directory.
-pub(crate) fn live_sandbox(session: &Path, arm: Arm) -> Sandbox {
+pub(crate) fn live_sandbox(session: &Path, arm: &Arm) -> Sandbox {
     Sandbox::new(session.join(format!("{}-sandbox", arm.label())))
 }
 
@@ -150,6 +140,10 @@ pub(crate) struct SessionInfo {
     /// session checked no load, and in a session from before the limit.
     #[serde(default)]
     pub(crate) max_load: Option<f64>,
+    /// The plugin that the twin arms of `--suppress-plugin` suppress. Each twin is in `arms` too. A session without a
+    /// twin, and a session from before the option, has none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub(crate) suppressed_plugin: Option<String>,
     /// What the session changed or dropped, such as the agent of the profile.
     pub(crate) warnings: Vec<String>,
 }
@@ -158,8 +152,9 @@ pub(crate) struct SessionInfo {
 /// [`super::launch::INTEGRATION_TEST_PROPERTY`].
 pub(crate) const MEASURE_MODEL_NAME: &str = "integration-test";
 
-/// The version of [`MEASURE_MODEL_NAME`]. A change of what every run passes to the IDE takes the next version.
-pub(crate) const MEASURE_MODEL_VERSION: u32 = 1;
+/// The version of [`MEASURE_MODEL_NAME`]. A change of what every run passes to the IDE takes the next version. Version 2
+/// adds the thread lines to the class-load log and the thread dump after the gate.
+pub(crate) const MEASURE_MODEL_VERSION: u32 = 2;
 
 /// What every measured run of a session passes that changes the IDE it measures, as a name and a version. `compare`
 /// notes two sessions of two models, because a delta between them mixes the change under test with the model.
@@ -487,7 +482,7 @@ pub(crate) struct SelectedRun {
 /// The run that `--run` names, else the median run of the arm that `--arm` names, else of the first arm that is not
 /// modal, else of the modal arm. A name that is not a run directory of the session is a usage refusal, and so is a run
 /// of another arm than `--arm`. An arm is selected as [`select_arm`] selects it.
-pub(crate) fn select_run(session: &Path, summary: &Summary, run: Option<&str>, arm: Option<Arm>) -> Result<SelectedRun, Refusal> {
+pub(crate) fn select_run(session: &Path, summary: &Summary, run: Option<&str>, arm: Option<&Arm>) -> Result<SelectedRun, Refusal> {
     if let Some(name) = run {
         let id = RunId::parse(name)
             .ok_or_else(|| Refusal::usage(format!("{name} is not a run directory name: use <arm>-run-NN or <arm>-prime")))?;
@@ -510,7 +505,7 @@ pub(crate) fn select_run(session: &Path, summary: &Summary, run: Option<&str>, a
             )));
         }
         if let Some(arm) = arm
-            && arm != id.arm
+            && *arm != id.arm
         {
             return Err(Refusal::usage(format!(
                 "{} is a run of the {} arm, and --arm names the {} arm; drop one of them",
@@ -523,7 +518,7 @@ pub(crate) fn select_run(session: &Path, summary: &Summary, run: Option<&str>, a
     }
     let median = |record: &RunRecord| SelectedRun {
         id: RunId {
-            arm: record.arm,
+            arm: record.arm.clone(),
             kind: record.kind,
             index: record.index,
         },
@@ -542,7 +537,7 @@ pub(crate) fn select_run(session: &Path, summary: &Summary, run: Option<&str>, a
         });
     }
     let mut arms: Vec<_> = summary.arms.values().collect();
-    arms.sort_by_key(|arm| arm.arm == Arm::Modal);
+    arms.sort_by_key(|arm| arm.arm.kind == ArmKind::Modal);
     arms.iter().find_map(|arm| arm.median_run()).map(median).ok_or_else(|| {
         Refusal::usage(format!(
             "no arm of {} has a valid measured run, so it has no median run; name a run with --run",
@@ -552,11 +547,11 @@ pub(crate) fn select_run(session: &Path, summary: &Summary, run: Option<&str>, a
 }
 
 /// The arm that `arm` names, else the first arm of [`Arm::ALL`] that is not modal and has a valid run, else the modal
-/// arm. An arm that the session does not have, or without a valid run, is a usage refusal.
-pub(crate) fn select_arm<'a>(session: &Path, summary: &'a Summary, arm: Option<Arm>) -> Result<&'a ArmSummary, Refusal> {
-    let arms: Vec<&str> = summary.arms.values().map(|arm| arm.arm.label()).collect();
+/// arm. The default is never a twin. An arm that the session does not have, or without a valid run, is a usage refusal.
+pub(crate) fn select_arm<'a>(session: &Path, summary: &'a Summary, arm: Option<&Arm>) -> Result<&'a ArmSummary, Refusal> {
+    let arms: Vec<String> = summary.arms.values().map(|arm| arm.arm.label()).collect();
     let selected = match arm {
-        Some(arm) => summary.arms.get(arm.key()).ok_or_else(|| {
+        Some(arm) => summary.arms.get(&arm.key()).ok_or_else(|| {
             Refusal::usage(format!(
                 "{} has no {} arm; its arms are {}",
                 session.display(),
@@ -566,9 +561,9 @@ pub(crate) fn select_arm<'a>(session: &Path, summary: &'a Summary, arm: Option<A
         })?,
         None => Arm::ALL
             .into_iter()
-            .filter(|arm| *arm != Arm::Modal)
-            .chain([Arm::Modal])
-            .filter_map(|arm| summary.arms.get(arm.key()))
+            .filter(|arm| *arm != Arm::MODAL)
+            .chain([Arm::MODAL])
+            .filter_map(|arm| summary.arms.get(&arm.key()))
             .find(|arm| arm.valid_runs > 0)
             .ok_or_else(|| Refusal::usage(format!("no arm of {} has a valid measured run", session.display())))?,
     };

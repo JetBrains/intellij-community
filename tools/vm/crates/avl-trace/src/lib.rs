@@ -1,26 +1,25 @@
 //! Scenario traces: the lane protocol, OTLP, the bundle and the bridge routes.
 //!
-//! Three documents cross here, and every far end is Kotlin or TypeScript:
+//! Three documents cross here:
 //!
-//! - The lane protocol ([protocol]). The lane JVM's sidecar (`AirTraceSidecar`) writes one command per line to
-//!   the recorder's standard input and reads the acks from its standard output.
+//! - The lane protocol ([protocol]). The lane writes one command per line to the recorder's standard input and reads
+//!   the acks from its standard output. The lane is the lane daemon or `lane-run` of `avl-guest`, so both ends are
+//!   Rust.
 //! - The bundle ([bundle], [otlp]). The recorder writes it and the viewer in `plugins/air/docs` reads it.
 //! - The bridge routes ([bridge]). The recorder asks the IDE's trace handler (`AirUiTraceHttpHandler`) for the
 //!   facts, the Swing tree, a painted frame and the IDE's own spans.
 //!
-//! None of those ends is Rust. So this crate is the Rust half of each contract, declared once, and the golden
-//! files under the trace testdata pin the other halves to it: a Kotlin contract test asserts the sidecar emits
-//! `lane-transcript.ndjson`, and the viewer's tests read `example.airtrace`.
+//! This crate declares each contract once. The golden files under the trace testdata pin the viewer to it: the
+//! recorder replays `lane-transcript.ndjson` into `example.airtrace`, and the viewer's tests read that bundle.
 //!
 //! One rule differs from the daemon wire, and on purpose. There an unknown field is kept, because the host
-//! republishes the daemon's records verbatim and a new field is how the daemon grows compatibly. Here the sidecar
-//! and the recorder are built from one checkout by one Bazel build, so an unknown field can only be a rename that
-//! one end missed. A recorder that ignored it would write a bundle without the renamed fact, and nobody would
-//! notice until a failure needed it. The decoders therefore refuse an unknown field just as they refuse an
-//! unknown op.
+//! republishes the daemon's records verbatim and a new field is how the daemon grows compatibly. Here the lane and
+//! the recorder are built from one checkout, so an unknown field can only be a rename that one end missed. A recorder
+//! that ignored it would write a bundle without the renamed fact, and nobody would notice until a failure needed it.
+//! The decoders therefore refuse an unknown field just as they refuse an unknown op.
 //!
-//! The recorder links this crate alone. `avl-trace-tools` holds the tools over these documents, which the recorder
-//! does not run: the packer, the discovery of bundles and the viewer's URLs.
+//! The recorder links this crate and `avl-bridge`, the client of the bridge routes. `avl-trace-tools` holds the tools
+//! over these documents, which the recorder does not run: the packer, the discovery of bundles and the viewer's URLs.
 
 use std::fmt;
 

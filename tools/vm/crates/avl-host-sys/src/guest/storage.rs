@@ -14,11 +14,12 @@ use super::supervisor::AgentAccount;
 use super::{GUEST_COMMAND_TIMEOUT, Guest, chown_argv, guest_join};
 use crate::proc::SpawnOptions;
 
-/// The timeout of `validate-guest`. It checks the display, the packages and the accounts, seconds of work.
+/// The timeout of `validate-guest`. It checks the C library, the display and the window manager, and it waits up to a
+/// minute for the window manager.
 const VALIDATE_TIMEOUT: Duration = Duration::from_mins(5);
 
-/// The timeout of the recursive `chown` of the data root. The root holds the staged runtimes, so the walk visits
-/// every file of them.
+/// The timeout of the recursive `chown` of the data root. The root holds the runfiles trees and the IDE contexts, so
+/// the walk visits every file of them.
 const DATA_CHOWN_TIMEOUT: Duration = Duration::from_mins(10);
 
 /// The timeout of the storage script. It grows the APFS container of the data volume with `diskutil`.

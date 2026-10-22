@@ -1,0 +1,8 @@
+##teamcity[testMetadata testName='com.example.ui.AirComposerUiTest.attaches a file' name='trace' type='artifact' value='air-traces.zip!/ui_lane_test/iter-1/AirComposerUiTest/attaches_a_file.zip']
+##teamcity[testMetadata testName='com.example.ui.AirComposerUiTest.attaches a file' name='trace viewer' type='link' value='https://teamcity.example/repository/download/Air_Ui/7:id/air-traces.zip!/index.html#/trace?zip=ui_lane_test/iter-1/AirComposerUiTest/attaches_a_file.zip']
+##teamcity[testMetadata testName='com.example.ui.AirComposerUiTest.attaches a file' name='video' type='video' value='air-traces-failed/ui_lane_test/iter-1/AirComposerUiTest/attaches_a_file/video.mp4']
+##teamcity[testMetadata testName='com.example.ui.AirComposerUiTest.attaches a file' name='failure' type='image' value='air-traces-failed/ui_lane_test/iter-1/AirComposerUiTest/attaches_a_file/failure.webp']
+##teamcity[testMetadata testName='com.example.real.AirComposerUiTest.attaches a file' name='trace' type='artifact' value='air-traces.zip!/ui-real_lane_test/iter-2/AirComposerUiTest/attaches_a_file.zip']
+##teamcity[testMetadata testName='com.example.ui.AirComposerUiTest.sends a prompt' name='trace' type='artifact' value='air-traces.zip!/ui_lane_test/iter-1/AirComposerUiTest/sends_a_prompt.zip']
+##teamcity[testMetadata testName='AirComposerUiTest.never ran' name='trace' type='artifact' value='air-traces.zip!/ui_lane_test/iter-1/AirComposerUiTest/never_ran.zip']
+##teamcity[publishArtifacts '/out/air-traces.zip']

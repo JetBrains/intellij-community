@@ -1,4 +1,4 @@
-//! The files that the tests of `ide-prepare` and `ide-launch` share: a dev distribution, a flags file, a project
+//! The files that the tests of the preparation and the launch share: a dev distribution, a flags file, a project
 //! archive, and the IDE root that the contexts go under.
 
 use std::collections::BTreeMap;

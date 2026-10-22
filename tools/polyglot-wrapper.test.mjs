@@ -1,12 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 // The bash half of the polyglot wrappers, without Bazel: the Git Bash hand-off, the roots in both checkout layouts,
-// the override, the build step against a stand-in `bazel.cmd`, and the jscpd paths that need no Bazel.
+// the override, the build step against a stand-in `bazel.cmd`, and the jscpd paths that need no Bazel. The event file
+// reader of the CMD half runs when a PowerShell is on PATH.
 // Run with `node --test community/tools/polyglot-wrapper.test.mjs`.
 
 import {after, before, describe, it} from "node:test"
 import {deepEqual, equal, match} from "node:assert/strict"
 import {spawnSync} from "node:child_process"
+import {existsSync} from "node:fs"
 import {chmod, copyFile, mkdir, mkdtemp, readdir, realpath, rm, writeFile} from "node:fs/promises"
 import {tmpdir} from "node:os"
 import {dirname, join} from "node:path"
@@ -244,5 +246,57 @@ describe("the build step", () => {
     bash([join(tools, "vm.cmd")], {env: {STUB_BAZEL_EVENTS: namedSetOfFiles([vm])}})
     bash([join(tools, "vm.cmd")], {env: {STUB_BAZEL_FAIL: "1", STUB_BAZEL_EVENTS: ""}})
     deepEqual(await readdir(join(root, "out", "air")), [])
+  })
+})
+
+describe("the event file reader of the CMD half", () => {
+  /** The first PowerShell on PATH: `pwsh` on any host, `powershell.exe` on a Windows host. */
+  function powerShell() {
+    const directories = (process.env.PATH ?? "").split(process.platform === "win32" ? ";" : ":").filter(Boolean)
+    for (const name of ["pwsh", "pwsh.exe", "powershell.exe"]) {
+      for (const directory of directories) {
+        const candidate = join(directory, name)
+        if (existsSync(candidate)) {
+          return candidate
+        }
+      }
+    }
+    return undefined
+  }
+
+  const shell = powerShell()
+  const skip = shell === undefined ? "no pwsh or powershell.exe on PATH" : false
+
+  /**
+   * @param {string} events
+   * @param {string} name
+   */
+  function read(events, name) {
+    const script = join(toolsDir, "polyglot-built-file.ps1")
+    const args = ["-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", script, events, name]
+    const result = spawnSync(/** @type {string} */ (shell), args, {encoding: "utf8"})
+    return {status: result.status, stdout: result.stdout, stderr: result.stderr}
+  }
+
+  it("answers the last file with the base name as a local path, across records", {skip}, async () => {
+    const events = join(scratch, "reader-events.json")
+    await writeFile(events, [
+      '{"id":{"namedSet":{"id":"0"}},"namedSetOfFiles":{"files":[{"name":"bt.d","uri":"file:///C:/out/a/bt.d"},{"name":"bt.exe","uri":"file:///C:/out/a/bt.exe"}]}}',
+      '{"id":{"progress":{}},"progress":{"stderr":"\\"uri\\":\\"file:///C:/decoy/bt.exe\\" is text"}}',
+      '{"id":{"namedSet":{"id":"1"}},"namedSetOfFiles":{"files":[{"name":"bt.exe","uri":"file:///C:/out/b/bt.exe"}]}}',
+    ].join("\n"))
+    const found = read(events, "bt.exe")
+    equal(found.status, 0, found.stderr)
+    // `System.Uri` answers the path of the host: `C:\out\b\bt.exe` on Windows, `/C:/out/b/bt.exe` elsewhere.
+    match(found.stdout.trim().replaceAll("\\", "/"), /^\/?C:\/out\/b\/bt\.exe$/)
+    const missing = read(events, "vm.exe")
+    equal(missing.status, 0, missing.stderr)
+    equal(missing.stdout.trim(), "")
+  })
+
+  it("fails on an event file that is not there", {skip}, () => {
+    const result = read(join(scratch, "no-such-events.json"), "bt.exe")
+    equal(result.status, 1)
+    match(result.stderr, /no-such-events\.json/)
   })
 })

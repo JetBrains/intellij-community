@@ -18,10 +18,10 @@
 //! order, on the selected backend ([`Reached::every_lane`]). The VM keeps the physical input of a GUI-chat suite off
 //! the host, so every lane runs on every backend.
 
-use std::collections::BTreeMap;
+use std::path::{Path, PathBuf};
 
 use avl_affected::{affected_suites, air_area};
-use avl_base::{Config, Outcome, Refusal, Reporter};
+use avl_base::{Config, Exit, Outcome, Refusal, Reporter};
 use avl_host_sys::guest::ensure_host_paths;
 use avl_host_sys::{Ctx, Runner};
 use bt_core::{
@@ -30,7 +30,11 @@ use bt_core::{
 };
 use serde::Serialize;
 
-use crate::lane::lanes::{JUNIT5_FILTERS, Selection, as_usage, lane_selection};
+use avl_wire::daemon::LaneClass;
+use avl_wire::program::LANE_DOCUMENT_DIRECTORY;
+use avl_wire::program::lane::{LiveContext, parse_lane_document};
+
+use crate::lane::lanes::{Selection, as_usage, lane_selection};
 use crate::lane::runtime::bt_runtime;
 use avl_base::RefusalExt;
 
@@ -66,8 +70,7 @@ pub(crate) struct AffectedSelection {
     pub classes: Vec<String>,
 }
 
-/// Turns generated suites into one iteration's selection: one lane, its tag, and one class filter per suite of
-/// that lane.
+/// Turns generated suites into one iteration's selection: one lane, and one class filter per suite of that lane.
 ///
 /// The one place this happens. `run --changed`, a flow selector and a suite selector all end here, so they share
 /// the lane choice, its two-lane refusal, and the class-name rule. `subject` names what the caller asked for in a
@@ -77,20 +80,13 @@ pub(crate) fn select_suites(affected: Affected, requested_lane: Option<&str>, su
     let selected = lane_selection(&lane)?;
     let classes = classes_of_lane(&affected, &lane);
     let class_filters = suite_class_filters(&classes, &lane).map_err(avl_affected::refusal)?;
-    // The lane's own tag comes first and the class filters after it, which is the order `shard` uses: the tag says
-    // which lane's suites exist and the class list says which of them this iteration wants.
-    let filters: Vec<String> = selected
-        .test_env
-        .get(JUNIT5_FILTERS)
-        .cloned()
-        .into_iter()
-        .chain(class_filters)
-        .collect();
+    // The lane says which suites exist, and the class filters say which of them this iteration wants.
     Ok(AffectedSelection {
         selection: Selection {
             label: selected.label,
             lane: Some(lane.clone()),
-            test_env: BTreeMap::from([(JUNIT5_FILTERS.to_owned(), filters.join(";"))]),
+            selectors: Vec::new(),
+            junit5_filters: class_filters,
         },
         affected,
         lane,
@@ -136,6 +132,59 @@ pub(crate) fn resolve_changed_suites(settings: &Config, paths: &[String], report
         affected: resolve_affected(settings, paths, reporter)?,
         subject: CHANGED_PATHS_SUBJECT.to_owned(),
     })
+}
+
+/// The resource root of the lane documents of the checkout: the directory above the suite documents that the catalog
+/// names, `None` for an area without a catalog.
+pub(crate) fn lane_document_root(settings: &Config) -> Result<Option<PathBuf>, Refusal> {
+    let Some(catalog) = air_area().lanes().catalog() else {
+        return Ok(None);
+    };
+    Ok(settings.host_repo()?.join(catalog.flow_profile_dir).parent().map(Path::to_path_buf))
+}
+
+/// The live context of the committed lane document of `lane` below the resource root `documents`, or `None` for a lane
+/// without a document there or whose document states none. A document that cannot be read or does not parse is a
+/// refusal that names it.
+pub(crate) fn lane_live_context(documents: &Path, lane: &str) -> Result<Option<LiveContext>, Refusal> {
+    let path = documents.join(LANE_DOCUMENT_DIRECTORY).join(format!("{lane}.json"));
+    let bytes = match std::fs::read(&path) {
+        Ok(bytes) => bytes,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(error) => {
+            return Err(Refusal::new(
+                "lane_document_unreadable",
+                Exit::NO_INPUT,
+                format!("cannot read the lane document {}: {error}", path.display()),
+            ));
+        }
+    };
+    let document = parse_lane_document(&bytes).map_err(|problem| {
+        Refusal::new(
+            "lane_document",
+            Exit::DATA_ERR,
+            format!("the lane document {} {problem}", path.display()),
+        )
+    })?;
+    Ok(document.live)
+}
+
+/// Every suite of the lane `lane` that the catalog names, by test class: the generated suite documents and the authored
+/// suites. The lane daemon plans each one, so a suite that it cannot run is a failed container and never an omission.
+pub(crate) fn lane_classes(settings: &Config, lane: &str, reporter: &Reporter) -> Result<Vec<LaneClass>, Refusal> {
+    let runtime = bt_runtime(settings.host_repo()?, reporter);
+    let area = air_area();
+    let mut classes: Vec<LaneClass> = bt_core::catalog::read_suite_documents(&runtime, area)
+        .map_err(as_usage)?
+        .into_iter()
+        .filter(|document| document.lane_name(area.lanes()) == Some(lane))
+        .map(|document| LaneClass {
+            suite: document.suite,
+            test_class_name: document.test_class_name,
+        })
+        .collect();
+    classes.sort_by(|left, right| left.test_class_name.cmp(&right.test_class_name));
+    Ok(classes)
 }
 
 /// The generated suites a flow or a suite selector names.

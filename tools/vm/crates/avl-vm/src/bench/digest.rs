@@ -7,13 +7,14 @@ use std::time::SystemTime;
 use jiff::Timestamp;
 use jiff::tz::TimeZone;
 
-use super::arm::Arm;
+use super::arm::ArmKind;
 use super::profile::{FrameSamples, ProfileEvent, ProfileScope};
 use super::record::{
     CLASS_ANCHORS, CLASS_EDT_TIME, CLASS_REQUESTS, CLASS_TIME, CLASSES_HIDDEN, CLASSES_JAR, CLASSES_JDK, CLASSES_NAMED, CLASSES_PLATFORM,
     CLASSES_PLUGINS, CREATE_CONTENT_PREFIX, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT, EMPTY_STATE_SPANS, EMPTY_STATE_STEP_PREFIX, END_SPANS,
     FRAME_BECAME_INTERACTIVE, FRAME_BECAME_VISIBLE, JVM_LOADING_TIME, MODAL_SPANS, OPEN_EDITOR_PAINT, OPEN_FRAME, OPEN_HIGHLIGHTED,
-    PLATFORM_SPANS, PLUGIN_CLASSES, TOTAL_DURATION, WELCOME_BECAME_VISIBLE, WELCOME_SPANS, named_at, span_end,
+    PLATFORM_SPANS, PLUGIN_CLASSES, PLUGIN_LOG_STACK_MS, PLUGIN_LOG_WRITE_MS, TOTAL_DURATION, WELCOME_BECAME_VISIBLE, WELCOME_SPANS,
+    edt_at, named_at, span_end,
 };
 use super::session::SUMMARY_FILE;
 use super::summary::{ArmSummary, Summary};
@@ -51,6 +52,10 @@ const CLASS_METRICS: [&str; 7] = [
     CLASSES_PLUGINS,
     PLUGIN_CLASSES,
 ];
+
+/// The metrics of the cost of `plugin-classes.txt`, which the IDE measures itself. Only a v2 log with its trailer has
+/// them.
+const PLUGIN_LOG_METRICS: [&str; 2] = [PLUGIN_LOG_WRITE_MS, PLUGIN_LOG_STACK_MS];
 
 /// The metrics of the second project, in order.
 const OPEN_METRICS: [&str; 3] = [OPEN_FRAME, OPEN_EDITOR_PAINT, OPEN_HIGHLIGHTED];
@@ -132,34 +137,47 @@ fn header(text: &mut String, summary: &Summary, arms: &[&ArmSummary]) {
 /// The metric groups of a table over `arms`, in order: a title and its rows. The editor needs the project arm, the
 /// welcome spans need an arm with the non-modal welcome screen, the modal spans need the modal arm, and the second
 /// project needs the open-project arm. The project arm finds its editor spans in the platform spans. The class group
-/// holds a row of [`named_at`] only for an anchor that an arm has. The span ends are on the clock of the anchors.
+/// holds a row of [`named_at`] only for an anchor that an arm has. The cost of the plugin class log needs an arm with
+/// the metric, so a log without the trailer adds no `not measured` row. The span ends are on the clock of the anchors.
 pub(crate) fn metric_groups(arms: &[&ArmSummary]) -> Vec<(&'static str, Vec<String>)> {
     let mut classes = CLASS_METRICS.map(str::to_owned).to_vec();
     classes.extend(
         CLASS_ANCHORS
             .iter()
-            .map(|anchor| named_at(anchor))
+            .flat_map(|anchor| [named_at(anchor), edt_at(anchor)])
             .filter(|metric| arms.iter().any(|arm| arm.summary.contains_key(metric))),
     );
     let mut groups = vec![
         ("events and report", EVENT_METRICS.map(str::to_owned).to_vec()),
         ("classes", classes),
     ];
-    if arms.iter().any(|arm| arm.arm == Arm::Project) {
+    if arms
+        .iter()
+        .any(|arm| PLUGIN_LOG_METRICS.iter().any(|metric| arm.summary.contains_key(*metric)))
+    {
+        groups.push((
+            "plugin class log cost (measured by the IDE)",
+            PLUGIN_LOG_METRICS.map(str::to_owned).to_vec(),
+        ));
+    }
+    if arms.iter().any(|arm| arm.arm.kind == ArmKind::Project) {
         groups.push(("editor", vec![EDITOR_HIGHLIGHTED.to_owned()]));
     }
-    if arms.iter().any(|arm| arm.arm == Arm::EmptyEditor) {
+    if arms.iter().any(|arm| arm.arm.kind == ArmKind::EmptyEditor) {
         groups.push(("empty-state composer", empty_state_rows(arms)));
     }
     groups.push(("platform spans", PLATFORM_SPANS.map(str::to_owned).to_vec()));
-    if arms.iter().any(|arm| matches!(arm.arm, Arm::NonModal | Arm::OpenProject)) {
+    if arms
+        .iter()
+        .any(|arm| matches!(arm.arm.kind, ArmKind::NonModal | ArmKind::OpenProject))
+    {
         groups.push(("welcome spans", welcome_rows(arms)));
     }
-    if arms.iter().any(|arm| arm.arm == Arm::Modal) {
+    if arms.iter().any(|arm| arm.arm.kind == ArmKind::Modal) {
         groups.push(("modal spans", MODAL_SPANS.map(str::to_owned).to_vec()));
     }
     groups.push(("span ends (ms from the process start)", END_SPANS.map(span_end).to_vec()));
-    if arms.iter().any(|arm| arm.arm == Arm::OpenProject) {
+    if arms.iter().any(|arm| arm.arm.kind == ArmKind::OpenProject) {
         groups.push(("second project", OPEN_METRICS.map(str::to_owned).to_vec()));
     }
     groups

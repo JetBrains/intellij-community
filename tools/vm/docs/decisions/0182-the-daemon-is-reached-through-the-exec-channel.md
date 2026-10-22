@@ -18,6 +18,11 @@ Amended by [ADR 0074](0074-the-ui-lane-crates-follow-the-re-key-domains.md): `av
 test file below moved with its module. The relay and the measurements stand. The measurement of `tart exec -i` is the
 evidence of the raw pull on Tart.
 
+Since 2026-10-19 the guest daemon is the lane daemon of the guest agent, and `AirUiDaemonServer` of decision 3 is gone.
+The lane daemon binds `127.0.0.1` by default, and only a container-linux guest binds every interface.
+[The lane daemon is the only runner of the Air UI lanes](2026-10-19-the-lane-daemon-is-the-only-runner-of-the-air-ui-lanes.md)
+records the change.
+
 ## Context
 
 The host controller `vm` reached the guest daemon over TCP. It asked the hypervisor for the guest address, a

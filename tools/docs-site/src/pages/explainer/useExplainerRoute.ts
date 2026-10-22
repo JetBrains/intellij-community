@@ -8,7 +8,7 @@ import type { ExplainerChapter } from '../../../scripts/explainerDoc.ts'
 import { ownsKeys } from '../../keys'
 import { explainerRoute, navigate } from '../../router'
 import { site } from '../../site.ts'
-import type { ExplainerDoc } from '../../siteData.ts'
+import { type ExplainerDoc, guideSlug } from '../../siteData.ts'
 
 export interface ExplainerRouteInput {
   chapter: string | null
@@ -21,12 +21,20 @@ export interface ExplainerRouteModel {
   chapters: ExplainerChapter[]
   chapter: ExplainerChapter
   index: number
+  /** The chapter before this one, or null on the first chapter. */
+  previous: ExplainerChapter | null
+  /** The chapter after this one, or null on the last chapter. */
+  next: ExplainerChapter | null
+  /** The explainer after this one in the index order, or null after the last explainer. */
+  nextExplainer: { href: string, title: string } | null
   diagram: HarvestedDiagram | null
   /** The 1-based active step, or null for the overview. */
   step: number | null
   /** The selected card id, or null. */
   node: string | null
   hrefOf: (chapter: ExplainerChapter) => string
+  /** The number of steps of the chapter diagram; 0 for a chapter without a diagram. */
+  stepsOf: (chapter: ExplainerChapter) => number
   goStep: (step: number | null) => void
   goNext: () => void
   goPrevious: () => void
@@ -36,12 +44,13 @@ export interface ExplainerRouteModel {
 
 /** The route of the explainer `slug`, or null for an unknown explainer. */
 export function useExplainerRoute(slug: string, input: ExplainerRouteInput): ExplainerRouteModel | null {
-  const { diagramsById, docForExplainerSlug } = site().index
+  const { diagramsById, docForExplainerSlug, explainerDocs } = site().index
+  const diagramOf = (target: ExplainerChapter): HarvestedDiagram | null => target.diagram === null ? null : diagramsById.get(target.diagram) ?? null
   const doc = docForExplainerSlug(slug)
   const chapters = doc?.chapters ?? []
   const index = Math.max(0, chapters.findIndex(candidate => candidate.id === input.chapter))
   const chapter = chapters[index] ?? null
-  const diagram = chapter?.diagram === null || chapter === null ? null : diagramsById.get(chapter.diagram) ?? null
+  const diagram = chapter === null ? null : diagramOf(chapter)
   const total = diagram?.steps.length ?? 0
   const step = input.step !== null && input.step >= 1 && input.step <= total ? input.step : null
   const node = input.node !== null && diagram?.nodes.some(candidate => candidate.id === input.node) ? input.node : null
@@ -55,6 +64,7 @@ export function useExplainerRoute(slug: string, input: ExplainerRouteInput): Exp
     }
   }, [canonicalHref, inputHref])
 
+  const following = doc === undefined ? undefined : explainerDocs[explainerDocs.indexOf(doc) + 1]
   const go = (target: ExplainerChapter, next: number | null, selected: string | null = null): void => {
     navigate(explainerRoute(slug, target.id, { step: next, node: selected }))
   }
@@ -65,10 +75,14 @@ export function useExplainerRoute(slug: string, input: ExplainerRouteInput): Exp
         chapters,
         chapter,
         index,
+        previous: chapters[index - 1] ?? null,
+        next: chapters[index + 1] ?? null,
+        nextExplainer: following === undefined ? null : { href: explainerRoute(guideSlug(following.path)), title: following.title },
         diagram,
         step,
         node,
         hrefOf: target => explainerRoute(slug, target.id),
+        stepsOf: target => diagramOf(target)?.steps.length ?? 0,
         goStep: next => go(chapter, next, node),
         goNext: () => {
           if (step !== null && step >= total) {
@@ -94,8 +108,8 @@ export function useExplainerRoute(slug: string, input: ExplainerRouteInput): Exp
           else if (index > 0) {
             // before the first step: the previous chapter at its last step
             const previous = chapters[index - 1]
-            const previousDiagram = previous.diagram === null ? null : diagramsById.get(previous.diagram) ?? null
-            go(previous, previousDiagram === null || previousDiagram.steps.length === 0 ? null : previousDiagram.steps.length)
+            const previousSteps = diagramOf(previous)?.steps.length ?? 0
+            go(previous, previousSteps === 0 ? null : previousSteps)
           }
         },
         goChapter: (offset) => {

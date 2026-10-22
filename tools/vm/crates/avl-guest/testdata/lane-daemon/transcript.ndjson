@@ -1,0 +1,29 @@
+{"op":"hello","root":"/vm/iterations/iter-golden/air-traces","runId":"iter-golden","launcher":"daemon","bridge":{"port":31347,"token":"golden-transcript-token"}}
+{"op":"scenario","name":"rename-closed-project-session","testClass":"AirRenameSessionGeneratedFlowUiTest","suite":"rename-session","lane":"UI","flow":"flow-rename-session","fixture":"fixture","flags":{"air.inline.empty.state.prompt":"true"},"labels":[{"name":"testClass","value":"com.intellij.air.integration.flow.generated.ui.AirRenameSessionGeneratedFlowUiTest"},{"name":"testMethod","value":"generatedFlowScenarios"},{"name":"Subsystem","value":"AI"}],"bridge":{"port":31347,"token":"golden-transcript-token"},"program":{"fixture":"fixture","flags":{"air.inline.empty.state.prompt":"true"},"flow":"flow-rename-session","followsLastUsedPreset":false,"name":"rename-closed-project-session","requiresPromptProbe":false,"setups":[],"steps":[{"flow":"flow-rename-session","operations":[{"instructions":[{"action":"rename-session-select","args":{"surface":"GLOBAL_PROMPT"}},{"assertion":"rename-session-title","expectation":"The session is listed under the new title."}],"operation":"rename"}],"step":"rename"}]}}
+{"op":"span","id":1,"kind":"reset","key":"reset:before","title":"[reset] before rename-closed-project-session"}
+{"op":"call","span":1,"request":"Reset","startMs":1,"durationMs":0,"ok":true}
+{"op":"end","id":1,"status":"passed"}
+{"op":"call","span":0,"request":"StepSequence","startMs":1,"durationMs":0,"ok":true}
+{"op":"call","span":0,"request":"StepSequence step 1 of 5 (SetScenarioFixture)","startMs":1,"durationMs":0,"ok":true}
+{"op":"call","span":0,"request":"StepSequence step 2 of 5 (SetRegistryFlag)","startMs":1,"durationMs":0,"ok":true}
+{"op":"call","span":0,"request":"StepSequence step 3 of 5 (SeedSessionPresets)","startMs":1,"durationMs":0,"ok":true}
+{"op":"call","span":0,"request":"StepSequence step 4 of 5 (RemountEditorEmptyState)","startMs":1,"durationMs":0,"ok":true}
+{"op":"call","span":0,"request":"StepSequence step 5 of 5 (SessionTabs)","startMs":1,"durationMs":0,"ok":true}
+{"op":"span","id":2,"kind":"step","key":"step:rename","title":"[flow] rename"}
+{"op":"span","id":3,"parent":2,"kind":"operation","key":"operation:rename","title":"[operation] rename"}
+{"op":"span","id":4,"parent":3,"kind":"action","key":"action:rename-session-select(surface=GLOBAL_PROMPT)","title":"[action] rename-session-select(surface=GLOBAL_PROMPT)","side":"ide","timeoutMs":180000}
+{"op":"snap","span":4,"phase":"boundary"}
+{"op":"call","span":4,"request":"AirFlowActionRenameSessionSelect","startMs":1,"durationMs":0,"ok":true}
+{"op":"end","id":4,"status":"passed"}
+{"op":"span","id":5,"parent":3,"kind":"assertion","key":"assertion:rename-session-title","title":"[assertion] rename-session-title: The session is listed under the new title.","expectation":"The session is listed under the new title.","side":"ide","timeoutMs":180000}
+{"op":"snap","span":5,"phase":"boundary"}
+{"op":"call","span":5,"request":"AirFlowAssertionRenameSessionTitle","startMs":1,"durationMs":0,"ok":true}
+{"op":"snap","span":5,"phase":"check"}
+{"op":"end","id":5,"status":"passed"}
+{"op":"snap","span":3,"phase":"boundary"}
+{"op":"end","id":3,"status":"passed"}
+{"op":"end","id":2,"status":"passed"}
+{"op":"span","id":6,"kind":"reset","key":"reset:after","title":"[reset] after rename-closed-project-session"}
+{"op":"call","span":6,"request":"Reset","startMs":1,"durationMs":0,"ok":true}
+{"op":"end","id":6,"status":"passed"}
+{"op":"done","status":"passed"}

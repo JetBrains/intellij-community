@@ -2,4 +2,14 @@ load("//tools/vm:avl.bzl", "avl_crate")
 
 avl_crate(
     portable = True,
+    # The golden of the TeamCity messages, and the recorded run stream of `avl-junit` that it renders.
+    test_data = [
+        ":testdata",
+        "//tools/vm/crates/avl-junit:testdata",
+    ],
+)
+
+filegroup(
+    name = "testdata",
+    srcs = glob(["testdata/**"]),
 )

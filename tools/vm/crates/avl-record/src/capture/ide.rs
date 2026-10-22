@@ -7,11 +7,11 @@
 use std::time::Instant;
 
 use anyhow::Context;
+use avl_bridge::Client;
 use avl_trace::protocol::CaptureSource;
 
 use super::{Frame, Source};
 use crate::Clock;
-use crate::bridge::Client;
 
 #[cfg(test)]
 mod tests;

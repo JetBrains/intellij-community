@@ -2,9 +2,9 @@
 //! into a per-class flake rate.
 //!
 //! One rule shapes every function here, and it is why both halves are ladders rather than sums: **an aggregate may
-//! only ever be as green as its worst entry.** Every false-green guard this controller owns - missing, stale,
-//! truncated, malformed or oversized XML, an absent summary, a summary-versus-XML count mismatch, a watchdog
-//! expiry - has already been folded into one entry's `infrastructure_error` by [`crate::report`], so this module
+//! only ever be as green as its worst entry.** Every false-green guard this controller owns - an absent summary, a
+//! summary that contradicts its stream, a recorder that contradicts the stream, a class that never reported, a
+//! watchdog expiry - has already been folded into one entry's `infrastructure_error` by [`crate::report`], so this module
 //! *re-uses that verdict* instead of re-deriving one. A second derivation would be a second opinion, and two
 //! opinions that must agree eventually will not.
 //!
@@ -16,11 +16,10 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use avl_base::format::whole_percent;
 use avl_wire::report::{
-    AGGREGATE_SCHEMA_VERSION, AggregateError, AggregateKind, CONFIDENCE_95, CaseStatus, Entry, EntryStatus, ExecutionCounts, FlakeBucket,
-    FlakeClass, FlakeExclusion, FlakeSummary, FlakeTrial, Integrity, ORDERING, OrderSignature, ResetPolicy, RunReport, ShardCoverage,
-    ShardDiagnosticCode, ShardEntry, ShardOverlapEntry, ShardVerdict, Status, WilsonInterval, XmlCounts,
+    AGGREGATE_SCHEMA_VERSION, AggregateError, AggregateKind, CONFIDENCE_95, Case, CaseStatus, Entry, EntryStatus, ExecutionCounts,
+    FlakeBucket, FlakeClass, FlakeExclusion, FlakeSummary, FlakeTrial, ORDERING, OrderSignature, ResetPolicy, RunReport, ShardCoverage,
+    ShardDiagnosticCode, ShardEntry, ShardOverlapEntry, ShardVerdict, Status, WilsonInterval,
 };
-use bt_junit::{Suite, compare_suites_by_timestamp};
 
 use crate::report::instant_millis;
 
@@ -139,36 +138,30 @@ const fn ran_nothing(document: &RunReport) -> bool {
     document.execution.tests_started == 0 && document.execution.container_failures > 0
 }
 
-/// Every class with at least one case in the XML, whatever the outcome: what this run actually covered.
+/// Every class with at least one case, whatever the outcome: what this run actually covered.
 ///
-/// The failures are unioned in, and that is not belt-and-braces: a failure whose class never reached the XML - a
-/// container that died before writing one - would otherwise be failed and not executed, which lets `f > n`
+/// The failures are unioned in, and that is not belt-and-braces: a failure whose class has no case would otherwise be
+/// failed and not executed, which lets `f > n`
 /// through to [`wilson_interval`] as a NaN. A run [`ran_nothing`] describes answers the empty set here *and* in
 /// [`failed_classes`], so executed ⊇ failed still holds.
 pub fn executed_classes(document: &RunReport) -> BTreeSet<String> {
     if ran_nothing(document) {
         return BTreeSet::new();
     }
-    let cases = document
-        .suites
-        .iter()
-        .flat_map(|suite| &suite.cases)
-        .map(|case| case.class_name.clone());
+    let cases = document.cases.iter().map(|case| case.class_name.clone());
     let failures = document.failures.iter().filter_map(|failure| failure.class_name.clone());
     cases.chain(failures).collect()
 }
 
-/// Every class this run has a failed case or a failure entry for: a complete XML owns its failures, and a run
-/// whose XML never arrived has only the progress stream's. The same [`ran_nothing`] guard as
+/// Every class this run has a failed case or a failure entry for. The same [`ran_nothing`] guard as
 /// [`executed_classes`], or `f > n` gets back in by the side door.
 pub fn failed_classes(document: &RunReport) -> BTreeSet<String> {
     if ran_nothing(document) {
         return BTreeSet::new();
     }
     let cases = document
-        .suites
+        .cases
         .iter()
-        .flat_map(|suite| &suite.cases)
         .filter(|case| case.status == CaseStatus::Failed)
         .map(|case| case.class_name.clone());
     let failures = document.failures.iter().filter_map(|failure| failure.class_name.clone());
@@ -246,37 +239,12 @@ fn span_ms(started_at: Option<&str>, completed_at: Option<&str>) -> f64 {
     }
 }
 
-/// Items of many reports in timestamp order, with a *global* position as the tiebreak.
-///
-/// Every report numbers its own suites from zero, so tiebreaking on the per-report index would interleave two
-/// shards arbitrarily. The position here is entry order then in-report order, which is stable; each suite keeps
-/// its own `documentIndex`, the only pointer back into the XML it came from. The comparison itself is
-/// `bt_junit::compare_suites_by_timestamp`, the one report-order definition, applied to a key suite that
-/// carries the stamp and the global position: items with no readable instant keep their position, last.
-fn in_timestamp_order<T>(items: Vec<(Option<String>, T)>) -> Vec<T> {
-    let mut keyed: Vec<(Suite, T)> = items
-        .into_iter()
-        .enumerate()
-        .map(|(position, (timestamp, value))| (order_key(timestamp, position), value))
-        .collect();
-    keyed.sort_by(|(left, _), (right, _)| compare_suites_by_timestamp(left, right));
-    keyed.into_iter().map(|(_, value)| value).collect()
-}
-
-const fn order_key(timestamp: Option<String>, position: usize) -> Suite {
-    Suite {
-        name: String::new(),
-        timestamp,
-        time_seconds: 0.0,
-        document_index: position,
-        tests: 0,
-        failures: 0,
-        errors: 0,
-        skipped: 0,
-        cases: Vec::new(),
-        bucketing_stub: false,
-        wrapper_exit_code: None,
-    }
+/// The cases of many reports in [`ORDERING`]: by the instant of their first record, with the position of the shard
+/// and then of the case in its report as the tiebreak. A case whose stamp is not an instant keeps its position, last.
+fn in_start_order(cases: Vec<Case>) -> Vec<Case> {
+    let mut keyed: Vec<(usize, Case)> = cases.into_iter().enumerate().collect();
+    keyed.sort_by_key(|(position, case)| (instant_millis(&case.started_at).unwrap_or(i64::MAX), *position));
+    keyed.into_iter().map(|(_, case)| case).collect()
 }
 
 // --- the shard verdict ----------------------------------------------------------------------------------------
@@ -380,26 +348,7 @@ fn decide_shard_status(
         );
     }
 
-    // 3. Belt over rule 2's braces. Redundant today - the report builder turns every incomplete source into an
-    // `infrastructure_error` - and kept because it is the invariant rather than a consequence of one diagnostic
-    // list. If that list ever loses an entry, this catches the hole instead of shipping a verdict read off a
-    // truncated XML.
-    let incomplete = labels(
-        reported
-            .iter()
-            .copied()
-            .filter(|(_, report)| report.source.integrity != Integrity::Complete),
-        |attempt, report| format!("{}: {}", shard_label(attempt), report.source.integrity),
-    );
-    if !incomplete.is_empty() {
-        return decided(
-            Status::InfrastructureError,
-            ShardDiagnosticCode::IncompleteSource,
-            format!("incomplete JUnit source in {}", describe(&incomplete)),
-        );
-    }
-
-    // 4. Every shard finding nothing means the selection matched nothing. *One* shard finding nothing while its
+    // 3. Every shard finding nothing means the selection matched nothing. *One* shard finding nothing while its
     // siblings ran tests is lost coverage wearing a green hat: a different bug with a different fix.
     let empty_selection = labels(with_status(Status::NoTests), |attempt, _| shard_label(attempt));
     if empty_selection.len() == attempts.len() {
@@ -421,7 +370,7 @@ fn decide_shard_status(
         );
     }
 
-    // 5. All ruled out is a lane-wide prerequisite verdict, named with the code rule 6 would have reached; some
+    // 4. All ruled out is a lane-wide prerequisite verdict, named with the code rule 5 would have reached; some
     // ruled out just means those shards contribute their reasons and the verdict comes from the rest.
     if with_status(Status::AllSkipped).count() == attempts.len() {
         return decided(
@@ -431,7 +380,7 @@ fn decide_shard_status(
         );
     }
 
-    // 6. The coverage invariant, which nothing in the single-run path can provide: a split is only a split if the
+    // 5. The coverage invariant, which nothing in the single-run path can provide: a split is only a split if the
     // pieces are disjoint and non-empty. Plain summing would hide a duplicated class as extra green tests, and a
     // balancer that dropped every class as an empty, passing lane.
     if !overlaps.is_empty() {
@@ -456,7 +405,7 @@ fn decide_shard_status(
         );
     }
 
-    // 7. Only `passed`, `failed` and `all_skipped` are left, and the skipped ones have no verdict to give. The one
+    // 6. Only `passed`, `failed` and `all_skipped` are left, and the skipped ones have no verdict to give. The one
     // branch that reaches a caller unnamed, deliberately: every diagnostic code names a way the *lane* went wrong,
     // and a lane that ran perfectly and found a bug is described by its `failures`.
     let status = if with_status(Status::Failed).next().is_some() {
@@ -525,9 +474,8 @@ pub fn merge_shard_verdict(attempts: &[ShardAttempt]) -> ShardVerdict {
 
     let reports: Vec<&RunReport> = ordered.iter().filter_map(|attempt| attempt.attempt.report.as_ref()).collect();
     let mut execution = ExecutionCounts::default();
-    let mut xml = XmlCounts::default();
     let mut total_duration_ms = 0.0;
-    let mut suites = Vec::new();
+    let mut cases = Vec::new();
     let mut failures = Vec::new();
     let mut skipped_containers = Vec::new();
     // Each count is the guest's, so any u32 is possible: saturate, because a wrapped sum would be a small, wrong
@@ -538,18 +486,9 @@ pub fn merge_shard_verdict(attempts: &[ShardAttempt]) -> ShardVerdict {
         execution.tests_skipped = execution.tests_skipped.saturating_add(report.execution.tests_skipped);
         execution.containers_skipped = execution.containers_skipped.saturating_add(report.execution.containers_skipped);
         execution.container_failures = execution.container_failures.saturating_add(report.execution.container_failures);
-        xml.tests = xml.tests.saturating_add(report.xml.tests);
-        xml.failures = xml.failures.saturating_add(report.xml.failures);
-        xml.errors = xml.errors.saturating_add(report.xml.errors);
-        xml.skipped = xml.skipped.saturating_add(report.xml.skipped);
         total_duration_ms += report.duration_ms;
-        suites.extend(report.suites.iter().map(|suite| (suite.timestamp.clone(), suite.clone())));
-        failures.extend(
-            report
-                .failures
-                .iter()
-                .map(|failure| (failure.suite_timestamp.clone(), failure.clone())),
-        );
+        cases.extend(report.cases.iter().cloned());
+        failures.extend(report.failures.iter().cloned());
         skipped_containers.extend(report.skipped_containers.iter().cloned());
     }
     let started_at = extreme(reports.iter().map(|report| report.started_at.as_str()), false);
@@ -576,10 +515,10 @@ pub fn merge_shard_verdict(attempts: &[ShardAttempt]) -> ShardVerdict {
         completed_at,
         total_duration_ms,
         execution,
-        xml,
         ordering: ORDERING.to_owned(),
-        suites: in_timestamp_order(suites),
-        failures: in_timestamp_order(failures),
+        cases: in_start_order(cases),
+        // In the order of the shards, and of the stream within each.
+        failures,
         skipped_containers,
         executed_classes: owners.keys().map(|class_name| (*class_name).to_owned()).collect(),
         coverage,
@@ -627,12 +566,6 @@ fn exclusion_of(attempt: &TrialAttempt) -> Option<FlakeExclusion> {
         return Some(exclusion(
             "trial_discovered_nothing",
             format!("the trial reported {}", report.status),
-        ));
-    }
-    if report.source.integrity != Integrity::Complete {
-        return Some(exclusion(
-            "trial_incomplete_source",
-            format!("the trial's JUnit source is {}", report.source.integrity),
         ));
     }
     None
