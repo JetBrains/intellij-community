@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -40,6 +41,13 @@ jvm_library(
     module_name = "intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies",
     visibility = ["//visibility:public"],
     runtime_deps = [":testPluginWithMissingDependencies"],
+)
+
+ij_plugin(
+    name = "testPluginWithMissingDependencies_plugin",
+    descriptor_module = ":testPluginWithMissingDependencies",
+    content_modules = ["//platform/build-scripts/testPlugins/testPluginWithMissingDependencies/module"],
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` end
 
