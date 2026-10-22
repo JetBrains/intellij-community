@@ -1,18 +1,33 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.lang.Language
+import com.intellij.lang.LanguageParserDefinitions
+import com.intellij.lang.LanguageStructureViewBuilder
+import com.intellij.lang.PsiStructureViewFactory
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.PlainTextFileType
+import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiManager
 import com.intellij.testFramework.IndexingTestUtil.Companion.suspendUntilIndexesAreReady
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -219,6 +234,53 @@ internal class StructuralHunkNamerTest {
     assertEquals(listOf("Sample" to FileStatus.ADDED), name.parts.map { it.text to it.status })
   }
 
+  @Test
+  fun `snapshots keep the file context without changing its content`(): Unit = timeoutRunBlocking {
+    val project = projectFixture.get()
+    suspendUntilIndexesAreReady(project)
+    smartReadAction(project) {
+      val originalText = "class Sample {\n  int value() { return 1; }\n}"
+      val changedText = "class Sample {\n  int value() { return 2; }\n}"
+      val original = PsiFileFactory.getInstance(project).createFileFromText("Sample.java", javaFileType(), originalText, 0, true)
+      val before = requireNotNull(StructureChangeCollector.createSnapshot(original, originalText))
+      val after = requireNotNull(StructureChangeCollector.createSnapshot(original, changedText))
+
+      assertSame(original, before.originalFile)
+      assertSame(original, after.originalFile)
+      assertNotSame(original.virtualFile, before.virtualFile)
+      assertNotSame(before.virtualFile, after.virtualFile)
+      assertEquals(originalText, original.text)
+      assertEquals(changedText, after.text)
+      val name = StructuralHunkNamer.name(before, after, listOf(HunkLines(1, 2, 1, 2))).single()
+      assertEquals(listOf("int value() { return 2; }" to FileStatus.MODIFIED), name.parts.map { it.text to it.status })
+    }
+  }
+
+  @Test
+  fun `a secondary PSI root names the hunks of its file`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    val project = projectFixture.get()
+    suspendUntilIndexesAreReady(project)
+    val javaLanguage = requireNotNull(Language.findLanguageByID("JAVA"))
+    val builders = LanguageStructureViewBuilder.getInstance()
+    builders.addExplicitExtension(PlainTextLanguage.INSTANCE, PsiStructureViewFactory { file ->
+      builders.getStructureViewBuilder(requireNotNull(file.viewProvider.getPsi(javaLanguage)))
+    }, disposable)
+    smartReadAction(project) {
+      val manager = PsiManager.getInstance(project)
+      fun file(text: String): PsiFile {
+        val provider = JavaTemplateViewProvider(manager, LightVirtualFile("Sample.txt", PlainTextFileType.INSTANCE, text), javaLanguage)
+        return requireNotNull(provider.getPsi(provider.baseLanguage))
+      }
+      val before = file("class Sample {\n  int changed() { return 1; }\n  void removed() {}\n  void stable() {}\n}")
+      val after = file("class Sample {\n  int changed() { return 2; }\n  void added() { log(); }\n  void stable() {}\n}")
+
+      val name = StructuralHunkNamer.name(before, after, listOf(HunkLines(1, 3, 1, 3))).single()
+      assertEquals(listOf("int changed() { return 2; }" to FileStatus.MODIFIED, "added(): void" to FileStatus.ADDED,
+                          "removed(): void" to FileStatus.DELETED),
+                   name.parts.map { it.text to it.status })
+    }
+  }
+
   /** Names the hunks of two versions of `Sample.java`. The versions lose their common indent, as in [String.trimIndent]. */
   private suspend fun nameHunks(before: String, after: String, vararg hunks: HunkLines): List<HunkName> {
     val project = projectFixture.get()
@@ -234,4 +296,21 @@ internal class StructuralHunkNamerTest {
   }
 
   private fun javaFileType() = FileTypeManager.getInstance().getFileTypeByFileName("Sample.java")
+
+  /** A plain text file with a Java root, as a template language has. */
+  private class JavaTemplateViewProvider(
+    manager: PsiManager,
+    file: VirtualFile,
+    private val javaLanguage: Language,
+  ) : MultiplePsiFilesPerDocumentFileViewProvider(manager, file, false) {
+    override fun getBaseLanguage(): Language = PlainTextLanguage.INSTANCE
+
+    override fun getLanguages(): Set<Language> = setOf(baseLanguage, javaLanguage)
+
+    override fun createFile(language: Language): PsiFile =
+      requireNotNull(LanguageParserDefinitions.INSTANCE.forLanguage(language)).createFile(this)
+
+    override fun cloneInner(fileCopy: VirtualFile): MultiplePsiFilesPerDocumentFileViewProvider =
+      JavaTemplateViewProvider(manager, fileCopy, javaLanguage)
+  }
 }
