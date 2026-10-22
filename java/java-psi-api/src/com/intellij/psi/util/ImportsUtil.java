@@ -19,6 +19,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParserFacade;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -81,53 +82,25 @@ public final class ImportsUtil {
   }
 
   /**
-   * Runs {@code action}, which is expected to delete and/or re-add an import (see {@link #expand}), with
-   * the comment directly following the import list protected: re-adding an import can otherwise glue it
-   * onto that comment with no separating whitespace, which then misparses as part of the import list on
-   * the next reparse.
+   * Runs {@code action}, which is expected to delete and/or re-add an import (see {@link #expand}), and keeps
+   * the whitespace between the import list and the comment that directly follows it: re-adding an import can
+   * otherwise glue it onto that comment, which then misparses as part of the import list on the next reparse.
    */
   public static void protectTrailingComment(@NotNull PsiJavaFile file, @NotNull Runnable action) {
-    final List<PsiElement> trailingComment = detachTrailingComment(file);
+    // before action
+    String whitespace = null;
+    PsiImportList importList = file.getImportList();
+    if (importList != null) {
+      final PsiElement next = importList.getNextSibling();
+      whitespace = next instanceof PsiWhiteSpace && next.getNextSibling() instanceof PsiComment ? next.getText() : null;
+    }
+    // action
     action.run();
-    restoreTrailingComment(file, trailingComment);
-  }
-
-  private static @NotNull List<PsiElement> detachTrailingComment(@NotNull PsiJavaFile file) {
-    final PsiImportList importList = file.getImportList();
-    if (importList == null) {
-      return Collections.emptyList();
-    }
-    final List<PsiElement> elements = new ArrayList<>();
-    boolean hasComment = false;
-    for (PsiElement e = importList.getNextSibling(); e instanceof PsiWhiteSpace || e instanceof PsiComment; e = e.getNextSibling()) {
-      hasComment |= e instanceof PsiComment;
-      elements.add(e);
-    }
-    if (!hasComment) {
-      return Collections.emptyList();
-    }
-    final List<PsiElement> copies = ContainerUtil.map(elements, PsiElement::copy);
-    importList.getParent().deleteChildRange(elements.get(0), elements.get(elements.size() - 1));
-    return copies;
-  }
-
-  private static void restoreTrailingComment(@NotNull PsiJavaFile file, @NotNull List<PsiElement> elements) {
-    if (elements.isEmpty()) {
-      return;
-    }
-    PsiElement anchor = file.getImportList();
-    if (anchor == null) {
-      anchor = file.getPackageStatement();
-    }
-    if (anchor == null) {
-      anchor = file.getFirstChild();
-    }
-    if (anchor == null) {
-      return;
-    }
-    final PsiElement parent = anchor.getParent();
-    for (PsiElement element : elements) {
-      anchor = parent.addAfter(element, anchor);
+    // after action
+    if (whitespace == null) return;
+    importList = file.getImportList();
+    if (importList != null && importList.getTextLength() > 0 && importList.getNextSibling() instanceof PsiComment) {
+      importList.getParent().addAfter(PsiParserFacade.getInstance(file.getProject()).createWhiteSpaceFromText(whitespace), importList);
     }
   }
 
