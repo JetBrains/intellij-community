@@ -54,6 +54,11 @@ private val WARM_UP_FILE_TYPE_CACHE_OUTSIDE_NCS: Boolean = SystemProperties.getB
   true
 )
 
+private val WARM_UP_WORKSPACE_FILE_INDEX_OUTSIDE_NCS: Boolean = SystemProperties.getBooleanProperty(
+  "indexes.warm-workspace-file-index-outside-ncs",
+  true
+)
+
 /**
  * Collects file changes supplied from VFS via [AsyncFileListener] into [eventMerger].
  * Collected changes could be accessed via [getEventMerger]
@@ -202,6 +207,7 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
     processFilesInReadAction(object : VfsEventProcessor {
       private val perFileElementTypeUpdateProcessor = (StubIndex.getInstance() as StubIndexImpl)
         .perFileElementTypeModificationTrackerUpdateProcessor
+      private var workspaceFileIndexWarmedUp = !WARM_UP_WORKSPACE_FILE_INDEX_OUTSIDE_NCS
 
       override fun prepare(info: VfsEventsMerger.ChangeInfo) {
         if (WARM_UP_FILE_TYPE_CACHE_OUTSIDE_NCS && !info.isFileRemoved) {
@@ -210,6 +216,15 @@ class ChangedFilesCollector internal constructor(coroutineScope: CoroutineScope)
           // detection by content => does IO on first access => better avoid it inside locks/NCS => let's
           // do it earlier, so the fileType is cached, and just read from the cache inside lock/NCS below
           info.file.fileType
+        }
+        if (!workspaceFileIndexWarmedUp && !info.isFileRemoved && info.file.isValid) {
+          // IJPL-259436: Warm the excluded and library roots OUTSIDE the lock/non-cancellable section below.
+          // The first getContainingProjects() after a roots change rebuilds them and calls DirectoryIndexExcludePolicy
+          // and AdditionalLibraryRootsProvider => slow inside lock/NCS, where a write action cannot cancel it => do it
+          // here; the roots change only in a write action, so one call warms them for the whole batch, and process()
+          // runs in the same read action, so it reads the cached roots
+          fileBasedIndex.getContainingProjects(info.file)
+          workspaceFileIndexWarmedUp = true
         }
       }
 
