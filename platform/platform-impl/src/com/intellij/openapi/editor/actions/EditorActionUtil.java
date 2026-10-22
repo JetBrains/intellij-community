@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.actions;
 
@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.SoftWrapModel;
 import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -668,7 +667,7 @@ public final class EditorActionUtil {
   }
 
   public static void moveCaretToNextWord(@NotNull Editor editor, boolean isWithSelection, boolean camel) {
-    moveToNextCaretStop(editor, EditorSettingsExternalizable.getInstance().getCaretStopOptions().getForwardPolicy(),
+    moveToNextCaretStop(editor, editor.getSettings().getCaretStopOptions().getForwardPolicy(),
                         isWithSelection, camel);
   }
 
@@ -762,7 +761,7 @@ public final class EditorActionUtil {
   }
 
   public static void moveCaretToPreviousWord(@NotNull Editor editor, boolean isWithSelection, boolean camel) {
-    moveToPreviousCaretStop(editor, EditorSettingsExternalizable.getInstance().getCaretStopOptions().getBackwardPolicy(),
+    moveToPreviousCaretStop(editor, editor.getSettings().getCaretStopOptions().getBackwardPolicy(),
                             isWithSelection, camel);
   }
 

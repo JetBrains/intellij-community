@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.actions.CaretStopOptions;
 import com.intellij.openapi.editor.ex.BidiTextDirection;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
@@ -313,6 +314,12 @@ public interface EditorSettings {
 
   @ApiStatus.Internal
   void setRtlEnabled(boolean value);
+
+  /**
+   * Returns the places where a caret stops when it moves to the next or the previous word.
+   */
+  @ApiStatus.Internal
+  @NotNull CaretStopOptions getCaretStopOptions();
 
   enum LineNumerationType {
     ABSOLUTE,

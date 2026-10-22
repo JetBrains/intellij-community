@@ -52,7 +52,6 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -1736,7 +1735,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     }
 
     private CaretStopPolicy resolveCaretStopPolicy(@MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction) {
-      var caretStopOptions = EditorSettingsExternalizable.getInstance().getCaretStopOptions();
+      var caretStopOptions = editor.getSettings().getCaretStopOptions();
       switch (direction) {
         case AFTER -> {
           return caretStopOptions.getForwardPolicy();

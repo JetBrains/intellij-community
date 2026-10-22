@@ -1174,7 +1174,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   @ApiStatus.Internal
   public void setCaretStopOptions(@NotNull CaretStopOptions options) {
+    CaretStopOptions old = myOsSpecificState.CARET_STOP_OPTIONS;
+    if (old.equals(options)) return;
     myOsSpecificState.CARET_STOP_OPTIONS = options;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_CARET_STOP_OPTIONS, old, options);
   }
 
   public boolean isUseEditorFontInInlays() {
@@ -1267,6 +1270,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public static final @NonNls String PROP_BIDI_TEXT_DIRECTION = "bidiTextDirection";
     public static final @NonNls String PROP_KEEP_TRAILING_SPACE_ON_CARET_LINE = "keepTrailingSpaceOnCaretLine";
     public static final @NonNls String PROP_INSERT_PARENTHESES_AUTOMATICALLY = "insertParenthesesAutomatically";
+    @ApiStatus.Internal public static final @NonNls String PROP_CARET_STOP_OPTIONS = "caretStopOptions";
     // inconsistent name for backward compatibility because such constants are inlined at compilation stage
     public static final @NonNls String PROP_BREADCRUMBS_PER_LANGUAGE = "BreadcrumbsPerLanguage";
   }

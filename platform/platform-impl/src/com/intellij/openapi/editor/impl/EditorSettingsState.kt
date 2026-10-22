@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorCoreUtil
 import com.intellij.openapi.editor.EditorSettings
+import com.intellij.openapi.editor.actions.CaretStopOptions
 import com.intellij.openapi.editor.ex.BidiTextDirection
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -155,6 +156,7 @@ class EditorSettingsState(
   val showInspectionWidget: Boolean by property { externalizable().isShowInspectionWidget }
   val useEditorFontInInlays: Boolean by property { externalizable().isUseEditorFontInInlays }
   val bidiTextDirection: BidiTextDirection by property { externalizable().bidiTextDirection }
+  val caretStopOptions: CaretStopOptions by property { externalizable().caretStopOptions }
 
   // Settings from AdvancedSettings. `EditorFactoryImpl` refreshes all editors when this setting changes.
   var showingSpecialCharacters: Boolean by property { AdvancedSettings.getBoolean(EDITOR_SHOW_SPECIAL_CHARS) }
@@ -416,6 +418,7 @@ class EditorSettingsState(
       EditorSettingsExternalizable.PropNames.PROP_SHOW_INSPECTION_WIDGET -> refresh(::showInspectionWidget)
       EditorSettingsExternalizable.PropNames.PROP_USE_EDITOR_FONT_IN_INLAYS -> refresh(::useEditorFontInInlays)
       EditorSettingsExternalizable.PropNames.PROP_BIDI_TEXT_DIRECTION -> refresh(::bidiTextDirection)
+      EditorSettingsExternalizable.PropNames.PROP_CARET_STOP_OPTIONS -> refresh(::caretStopOptions)
     }
   }
 

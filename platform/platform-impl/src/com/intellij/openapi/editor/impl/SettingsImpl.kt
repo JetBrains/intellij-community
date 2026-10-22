@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.EditorSettings.LineNumerationType
+import com.intellij.openapi.editor.actions.CaretStopOptions
 import com.intellij.openapi.editor.ex.BidiTextDirection
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
 import com.intellij.openapi.editor.state.ObservableStateListener
@@ -483,6 +484,8 @@ class SettingsImpl internal constructor(
     state.rtlEnabled = value
   }
 
+  override fun getCaretStopOptions(): CaretStopOptions = state.caretStopOptions
+
   /**
    * Refreshes the editor after a change of a state property, unless the property is in [PROPERTIES_WITHOUT_EDITOR_REFRESH].
    */
@@ -572,6 +575,7 @@ private val PROPERTIES_WITHOUT_EDITOR_REFRESH: Set<String> = setOf(
   EditorSettingsState::addCaretsOnDoubleCtrl.name,
   EditorSettingsState::insertParenthesesAutomatically.name,
   EditorSettingsState::showInspectionWidget.name,
+  EditorSettingsState::caretStopOptions.name,
 )
 
 private fun softWrapAppliancePlaceOf(kind: EditorKind?): SoftWrapAppliancePlaces {
