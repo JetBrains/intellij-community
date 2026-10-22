@@ -3,6 +3,12 @@ package com.intellij.openapi.editor.state
 
 import com.intellij.openapi.util.Ref
 
+/**
+ * A [StateProperty] that holds its value in memory.
+ *
+ * The value is the override, or else the result of [defaultValueCalculator]. Then [customOutValueModifier] can change
+ * it. A change of the value notifies the [ObservableState].
+ */
 open class ObjectStateProperty<T>(
   initialValue: T,
   private val defaultValueCalculator: SyncDefaultValueCalculator<T>,
@@ -11,13 +17,20 @@ open class ObjectStateProperty<T>(
   private var overriddenValue: T? = null
   private var outValue: T = initialValue
 
-  var isValueOverridden: Boolean = false  // this is need for supporting possible `null` values
+  /**
+   * Whether the property has an override. This is a separate flag, because `null` can be an override.
+   */
+  var isValueOverridden: Boolean = false
     private set
 
-  protected val value: T get() = outValue
+  /**
+   * The current value, after [customOutValueModifier].
+   */
+  protected val value: T
+    get() = outValue
 
   override fun getValue(thisRef: ObservableState): T {
-    return this.outValue
+    return outValue
   }
 
   override fun setValue(thisRef: ObservableState, value: T) {
@@ -32,7 +45,8 @@ open class ObjectStateProperty<T>(
   override fun clearOverriding(thisRef: ObservableState) {
     if (isValueOverridden) {
       isValueOverridden = false
-      overriddenValue = null  // avoid memory leak
+      // Drop the reference, so that the old value can be collected.
+      overriddenValue = null
       recalculate(thisRef)
     }
   }
@@ -40,19 +54,21 @@ open class ObjectStateProperty<T>(
   override fun recalculate(thisRef: ObservableState) {
     if (isValueOverridden) {
       @Suppress("UNCHECKED_CAST")
-      updateOutValueAndFireEventIfNeed(thisRef, overriddenValue as T)
-      return
+      updateOutValue(thisRef, overriddenValue as T)
+    } else {
+      updateOutValue(thisRef, defaultValueCalculator.calculate())
     }
-    val newVal = defaultValueCalculator.calculate()
-    updateOutValueAndFireEventIfNeed(thisRef, newVal)
   }
 
-  private fun updateOutValueAndFireEventIfNeed(thisRef: ObservableState, calculatedOutValue: T) {
-    val newOutValue = customOutValueModifier?.modifyOutValue(calculatedOutValue) ?: calculatedOutValue
-    if (newOutValue != this.outValue) {
-      val oldOut = this.outValue
-      this.outValue = newOutValue
-      thisRef.propertyChanged(name, Ref(oldOut), newOutValue)
+  /**
+   * Stores [calculated] after [customOutValueModifier], and notifies [thisRef] when the stored value changes.
+   */
+  private fun updateOutValue(thisRef: ObservableState, calculated: T) {
+    val newOutValue = customOutValueModifier?.modifyOutValue(calculated) ?: calculated
+    if (newOutValue != outValue) {
+      val oldOutValue = outValue
+      outValue = newOutValue
+      thisRef.propertyChanged(name, Ref(oldOutValue), newOutValue)
     }
   }
 }

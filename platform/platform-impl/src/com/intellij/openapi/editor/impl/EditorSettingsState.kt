@@ -325,7 +325,7 @@ class EditorSettingsState(
   }
 
   private fun subscribeToEditorState(editor: EditorImpl, disposable: Disposable) {
-    (editor.state as? ObservableState)?.addPropertyChangeListener(
+    editor.state.addPropertyChangeListener(
       object : ObservableStateListener {
         override fun propertyChanged(event: ObservableStateListener.PropertyChangeEvent) {
           when (event.propertyName) {

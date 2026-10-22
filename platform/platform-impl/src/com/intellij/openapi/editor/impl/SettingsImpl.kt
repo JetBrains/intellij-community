@@ -52,9 +52,9 @@ class SettingsImpl internal constructor(
         onStatePropertyChanged(event)
       }
     })
-    // The first computation of the indent values starts here, so that a read of them starts nothing. It comes after the
-    // listener above, which refreshes the editor when the result changes the tab size. Settings without an editor have
-    // no file, so their seed is the computed value already. In unit-test mode, a read computes the value itself.
+    // The first computation of the inputs starts here, so that a read starts nothing. It comes after the listener above,
+    // which refreshes the editor when a result changes a value. Settings without an editor have no file, so their seeds
+    // are the computed values already. In unit-test mode, the state computes the values at once instead.
     if (editor != null && BackgroundStateInput.computesInBackground()) {
       state.recalculateInputs()
     }
@@ -68,7 +68,8 @@ class SettingsImpl internal constructor(
   }
 
   /**
-   * Recalculates the defaults of all state properties, and the inputs of the state: the language and the indent values.
+   * Recalculates the defaults of all state properties, and the inputs of the state: the language, the margins, and the
+   * indent values.
    */
   fun reinitSettings() {
     state.refreshAll()
