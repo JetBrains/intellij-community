@@ -574,6 +574,19 @@ fn an_empty_editor_run_ends_at_the_built_composer_and_counts_the_classes_before_
         ])
     );
     assert_eq!(
+        record.empty_state_order,
+        [
+            EMPTY_STATE_SPAN,
+            "air.emptyState.prologue",
+            "air.emptyState.prologue.aiSource",
+            "air.emptyState.prologue.promptDocument",
+            "air.emptyState.buildOnEdt",
+            "air.emptyState.createContent",
+            "air.emptyState.initializeContent",
+        ],
+        "by the start, the longer span first at one start, without the helper twin"
+    );
+    assert_eq!(
         record.metrics.get(&named_at(EMPTY_STATE_BUILT)),
         Some(&19.0),
         "the bound is 2900 ms, before the highlighted editor of the fixture at 2950 ms"

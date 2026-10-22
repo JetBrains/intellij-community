@@ -11,7 +11,7 @@ use super::arm::ArmKind;
 use super::profile::{FrameSamples, ProfileEvent, ProfileScope};
 use super::record::{
     CLASS_ANCHORS, CLASS_EDT_TIME, CLASS_REQUESTS, CLASS_TIME, CLASSES_HIDDEN, CLASSES_JAR, CLASSES_JDK, CLASSES_NAMED, CLASSES_PLATFORM,
-    CLASSES_PLUGINS, CREATE_CONTENT_PREFIX, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT, EMPTY_STATE_SPANS, EMPTY_STATE_STEP_PREFIX, END_SPANS,
+    CLASSES_PLUGINS, CREATE_CONTENT_PREFIX, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT, EMPTY_STATE_PREFIX, EMPTY_STATE_SPANS, END_SPANS,
     FRAME_BECAME_INTERACTIVE, FRAME_BECAME_VISIBLE, JVM_LOADING_TIME, JVM_PROCESS_START, MODAL_SPANS, OPEN_EDITOR_PAINT, OPEN_FRAME,
     OPEN_HIGHLIGHTED, PLATFORM_SPANS, PLUGIN_CLASSES, PLUGIN_LOG_STACK_MS, PLUGIN_LOG_WRITE_MS, TOTAL_DURATION, WELCOME_BECAME_VISIBLE,
     WELCOME_SPANS, edt_at, named_at, span_end,
@@ -213,19 +213,38 @@ pub(crate) fn table_line(name: &str, cells: &[String]) -> String {
     line.trim_end().to_owned()
 }
 
-/// The rows of the Air empty-state composer: its end, the spans with a fixed name, then the prologue steps that an
-/// arm has, in name order.
+/// The rows of the Air empty-state composer: its end, then each span under [`EMPTY_STATE_PREFIX`] that an arm has. The
+/// spans follow the order of the median run of each arm, see [`super::record::RunRecord::empty_state_order`], else of
+/// its first valid run with an order, so a nested span follows its parent. The spans with a fixed name that no order
+/// holds follow, and then the other spans of the arms, in name order.
 fn empty_state_rows(arms: &[&ArmSummary]) -> Vec<String> {
-    let steps: BTreeSet<String> = arms
+    let mut rows = vec![EMPTY_STATE_BUILT.to_owned()];
+    let mut add = |name: &str| {
+        if !rows.iter().any(|row| row == name) {
+            rows.push(name.to_owned());
+        }
+    };
+    for arm in arms {
+        let ordered = arm
+            .median_run()
+            .filter(|run| !run.empty_state_order.is_empty())
+            .or_else(|| arm.runs.iter().find(|run| run.valid && !run.empty_state_order.is_empty()));
+        for name in ordered.iter().flat_map(|run| &run.empty_state_order) {
+            add(name);
+        }
+    }
+    for name in EMPTY_STATE_SPANS {
+        add(name);
+    }
+    let others: BTreeSet<&String> = arms
         .iter()
         .flat_map(|arm| arm.summary.keys())
-        .filter(|metric| metric.starts_with(EMPTY_STATE_STEP_PREFIX))
-        .cloned()
+        .filter(|metric| metric.starts_with(EMPTY_STATE_PREFIX))
         .collect();
-    std::iter::once(EMPTY_STATE_BUILT.to_owned())
-        .chain(EMPTY_STATE_SPANS.map(str::to_owned))
-        .chain(steps)
-        .collect()
+    for name in others {
+        add(name);
+    }
+    rows
 }
 
 /// The welcome span rows: the fixed names, with the per-feature rows after the feature ids.

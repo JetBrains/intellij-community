@@ -191,14 +191,12 @@ const ERROR_TAG: &str = "error";
 /// [`EMPTY_STATE_SPAN`].
 pub(crate) const EMPTY_STATE_BUILT: &str = "emptyStateBuilt";
 
-/// The prefix of the spans of the Air empty-state composer. Each span is a metric with its duration.
+/// The prefix of the spans of the Air empty-state composer. Each span is a metric with its duration, and the digest
+/// shows each one.
 pub(crate) const EMPTY_STATE_PREFIX: &str = "air.emptyState.";
 
-/// The prefix of the prologue steps of the composer, which the digest shows after [`EMPTY_STATE_SPANS`].
-pub(crate) const EMPTY_STATE_STEP_PREFIX: &str = "air.emptyState.prologue.";
-
-/// The spans of the composer with a fixed name, in the order of the digest: the whole build, the off-EDT prologue,
-/// the EDT build, and its two halves.
+/// The spans of the composer with a fixed name: the whole build, the off-EDT prologue, the EDT build, and its two
+/// halves. The digest shows them in this order when no run has an order of its spans.
 pub(crate) const EMPTY_STATE_SPANS: [&str; 5] = [
     EMPTY_STATE_SPAN,
     "air.emptyState.prologue",
@@ -267,6 +265,11 @@ pub(crate) struct RunRecord {
     pub(crate) notes: Vec<String>,
     /// Milliseconds, or a count for the class metrics.
     pub(crate) metrics: BTreeMap<String, f64>,
+    /// The names of the spans of the Air empty-state composer, see [`EMPTY_STATE_PREFIX`], in the order of their first
+    /// span: by the start, and the longer span first at one start. So a span comes before the spans inside it, and the
+    /// digest shows a nested span after its parent.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) empty_state_order: Vec<String>,
     /// The class maps of the run. [`Summary::build`](super::summary::Summary::build) drops them, so only `result.json`
     /// holds them.
     #[serde(flatten)]
@@ -430,6 +433,7 @@ pub(crate) fn collect(run_dir: &Path, id: &RunId, launch: LaunchFacts) -> RunRec
         reason: None,
         notes: Vec::new(),
         metrics: BTreeMap::new(),
+        empty_state_order: Vec::new(),
         class_maps: ClassMaps::default(),
         profile_scope: None,
         excluded_samples: None,
@@ -444,6 +448,7 @@ pub(crate) fn collect(run_dir: &Path, id: &RunId, launch: LaunchFacts) -> RunRec
         Err(reason) => {
             record.reason = Some(reason);
             record.metrics.clear();
+            record.empty_state_order.clear();
         }
     }
     record
@@ -520,7 +525,7 @@ fn measure(run_dir: &Path, record: &mut RunRecord) -> Result<(), String> {
         }
     }
     if let Some(trace) = &trace {
-        empty_state_metrics(trace, metrics);
+        record.empty_state_order = empty_state_metrics(trace, metrics);
     }
     if let Gate::Span { name, missing } = gate {
         span_gate(trace.as_ref(), name, missing)?;
@@ -864,8 +869,10 @@ pub(crate) fn highlighted_ms(trace: Option<&Trace>, stats: Option<&StartupStats>
 
 /// The metrics of the Air empty-state composer: the duration of the first span of each name under
 /// [`EMPTY_STATE_PREFIX`], and [`EMPTY_STATE_BUILT`], the end of the first [`EMPTY_STATE_SPAN`]. A composer that the
-/// IDE builds again, after an editor closed, adds no metric: the first span of a name counts.
-fn empty_state_metrics(trace: &Trace, metrics: &mut BTreeMap<String, f64>) {
+/// IDE builds again, after an editor closed, adds no metric: the first span of a name counts. Answers the names in the
+/// order of [`RunRecord::empty_state_order`].
+fn empty_state_metrics(trace: &Trace, metrics: &mut BTreeMap<String, f64>) -> Vec<String> {
+    let mut firsts: Vec<&trace::Span> = Vec::new();
     for span in &trace.spans {
         let name = span.operation_name.as_str();
         if name.starts_with(EMPTY_STATE_PREFIX)
@@ -874,11 +881,16 @@ fn empty_state_metrics(trace: &Trace, metrics: &mut BTreeMap<String, f64>) {
             && let Some(first) = trace.first(name)
         {
             metrics.insert(name.to_owned(), micros_to_ms(first.duration));
+            firsts.push(first);
         }
     }
     if let (Some(origin), Some(span)) = (trace.origin_us(), trace.first(EMPTY_STATE_SPAN)) {
         metrics.insert(EMPTY_STATE_BUILT.to_owned(), span.end_ms(origin));
     }
+    firsts.sort_by(|left, right| {
+        (left.start_time, right.duration, &left.operation_name).cmp(&(right.start_time, left.duration, &right.operation_name))
+    });
+    firsts.into_iter().map(|span| span.operation_name.clone()).collect()
 }
 
 /// The duration of a span: the trace when it has the span, else the report item.

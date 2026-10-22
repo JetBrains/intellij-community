@@ -262,6 +262,7 @@ fn the_default_run_is_the_median_of_the_non_modal_arm_else_of_the_modal_arm() {
         metrics: value
             .map(|value| std::collections::BTreeMap::from([(WELCOME_BECAME_VISIBLE.to_owned(), value)]))
             .unwrap_or_default(),
+        empty_state_order: Vec::new(),
         class_maps: crate::bench::record::ClassMaps::default(),
         profile_scope: None,
         excluded_samples: None,

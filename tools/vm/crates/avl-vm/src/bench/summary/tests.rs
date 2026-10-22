@@ -40,6 +40,7 @@ fn run(arm: Arm, kind: RunKind, index: u32, value: Option<f64>) -> RunRecord {
         reason: value.is_none().then(|| "no event".to_owned()),
         notes: Vec::new(),
         metrics: value.map(|value| BTreeMap::from([("m".to_owned(), value)])).unwrap_or_default(),
+        empty_state_order: Vec::new(),
         class_maps: crate::bench::record::ClassMaps::default(),
         profile_scope: None,
         excluded_samples: None,

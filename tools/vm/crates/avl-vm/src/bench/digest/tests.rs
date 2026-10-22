@@ -86,8 +86,9 @@ fn a_project_session_shows_the_editor_and_the_additional_modules() {
     }
 }
 
-/// A session with the empty-editor arm renders the composer group: its end, the spans with a fixed name, then the
-/// prologue steps in name order. It names no prime file, because that arm opens none.
+/// A session with the empty-editor arm renders the composer group: its end, then each composer span in the order of
+/// its start, so a nested span such as a prologue step or an `air.emptyState.content.` part follows its parent. It
+/// names no prime file, because that arm opens none.
 #[test]
 fn an_empty_editor_session_shows_the_composer() {
     use crate::bench::arm::Arm;
@@ -101,7 +102,12 @@ fn an_empty_editor_session_shows_the_composer() {
     info.arms = vec![Arm::EMPTY_EDITOR];
     info.cold = true;
     info.project = Some("<template>/projects/markdown".to_owned());
-    let run_dir = empty_editor_run(&session_dir, &EMPTY_STATE_FIXTURE_SPANS);
+    let mut spans = EMPTY_STATE_FIXTURE_SPANS.to_vec();
+    spans.extend([
+        ("air.emptyState.content.toolbar", 2400, 100),
+        ("air.emptyState.content.editor", 2180, 200),
+    ]);
+    let run_dir = empty_editor_run(&session_dir, &spans);
     let id = RunId::parse("empty-editor-run-01").expect("a run");
     let run = record::collect(&run_dir, &id, LaunchFacts::default());
     let summary = Summary::build(&info, "<session>", &[run]);
@@ -126,11 +132,13 @@ fn an_empty_editor_session_shows_the_composer() {
             "emptyStateBuilt",
             "air.emptyState.createComponent",
             "air.emptyState.prologue",
-            "air.emptyState.buildOnEdt",
-            "air.emptyState.createContent",
-            "air.emptyState.initializeContent",
             "air.emptyState.prologue.aiSource",
             "air.emptyState.prologue.promptDocument",
+            "air.emptyState.buildOnEdt",
+            "air.emptyState.createContent",
+            "air.emptyState.content.editor",
+            "air.emptyState.content.toolbar",
+            "air.emptyState.initializeContent",
         ]
     );
     assert!(!lines.contains(&"editor:"), "the editor group needs the project arm: {text}");
