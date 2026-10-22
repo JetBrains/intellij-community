@@ -8,6 +8,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.SettingsCategory;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.EnumSet;
@@ -47,8 +49,9 @@ import java.util.stream.Collectors;
  *   <li>An IDE option, such as a save action or the breadcrumbs. No editor reads it.</li>
  * </ul>
  * A setter sends a property change event with a name from {@link PropNames}, and the editor settings follow these
- * events. A direct write to {@link OptionSet} and {@link #loadState} send no event. Open editors see such a change only
- * after {@code EditorFactory.refreshAllEditors()}.
+ * events. {@link #loadState} sends {@link PropNames#PROP_OPTIONS_RELOADED} on the EDT. A direct write to {@link OptionSet}
+ * sends no event, so open editors see it only after {@code EditorFactory.refreshAllEditors()}. A reload of
+ * {@link OsSpecificState} sends no event either.
  *
  * @see EditorSettingsRefactoringOptionsProvider
  */
@@ -123,6 +126,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     state.LINE_NUMERATION = Objects.requireNonNullElse(state.LINE_NUMERATION, DEFAULT_LINE_NUMERATION);
     myOptions = state;
     parseRawSoftWraps();
+    fireOptionsReloaded();
   }
 
   @Override
@@ -1017,6 +1021,19 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   // Private details.
 
+  /**
+   * Tells the listeners that each option can have a new value. A reload can run on any thread, and a listener can refresh
+   * an editor, so the event comes on the EDT.
+   */
+  private void fireOptionsReloaded() {
+    Application application = ApplicationManager.getApplication();
+    if (application == null) {
+      return;
+    }
+    PropertyChangeEvent event = new PropertyChangeEvent(this, PropNames.PROP_OPTIONS_RELOADED, null, null);
+    application.invokeLater(() -> myPropertyChangeSupport.firePropertyChange(event), ModalityState.any());
+  }
+
   private void parseRawSoftWraps() {
     myPlacesToUseSoftWraps.clear();
 
@@ -1298,6 +1315,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public static final @NonNls String PROP_KEEP_TRAILING_SPACE_ON_CARET_LINE = "keepTrailingSpaceOnCaretLine";
     public static final @NonNls String PROP_INSERT_PARENTHESES_AUTOMATICALLY = "insertParenthesesAutomatically";
     @ApiStatus.Internal public static final @NonNls String PROP_CARET_STOP_OPTIONS = "caretStopOptions";
+    /**
+     * Comes on the EDT after a reload of the stored options. Each option can have a new value.
+     */
+    @ApiStatus.Internal public static final @NonNls String PROP_OPTIONS_RELOADED = "optionsReloaded";
     // inconsistent name for backward compatibility because such constants are inlined at compilation stage
     public static final @NonNls String PROP_BREADCRUMBS_PER_LANGUAGE = "BreadcrumbsPerLanguage";
   }

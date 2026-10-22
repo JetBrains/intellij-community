@@ -365,10 +365,13 @@ class EditorSettingsState(
   }
 
   /**
-   * Refreshes the property that reads the [EditorSettingsExternalizable] setting with [propertyName].
+   * Refreshes the property that reads the [EditorSettingsExternalizable] setting with [propertyName]. A reload of the
+   * stored options refreshes each property.
    */
   private fun refreshFromEditorSettings(propertyName: String?) {
     when (propertyName) {
+      EditorSettingsExternalizable.PropNames.PROP_OPTIONS_RELOADED -> refreshAll()
+
       EditorSettingsExternalizable.PropNames.PROP_IS_VIRTUAL_SPACE -> refresh(::myIsVirtualSpace)
       EditorSettingsExternalizable.PropNames.PROP_IS_CARET_INSIDE_TABS -> refresh(::myIsCaretInsideTabs)
       EditorSettingsExternalizable.PropNames.PROP_IS_CARET_BLINKING -> refresh(::myIsCaretBlinking)

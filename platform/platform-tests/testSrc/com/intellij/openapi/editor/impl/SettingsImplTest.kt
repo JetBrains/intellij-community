@@ -12,12 +12,15 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.util.xmlb.XmlSerializerUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.util.concurrent.TimeUnit
 
 /**
  * The contract of [SettingsImpl] as [com.intellij.openapi.editor.EditorSettings] defines it, and the events that keep
@@ -27,6 +30,7 @@ import org.junit.jupiter.api.Test
 class SettingsImplTest {
   companion object {
     private val projectFixture = projectFixture(openAfterCreation = true)
+    private const val TIMEOUT_SECONDS = 30L
   }
 
   private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
@@ -213,6 +217,37 @@ class SettingsImplTest {
       options.IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER = original
       EditorFactory.getInstance().refreshAllEditors()
     }
+  }
+
+  /**
+   * A reload of the stored options, for example by Settings Sync, can run on any thread. Open editors must follow it
+   * without a refresh of all editors.
+   */
+  @Test
+  fun testAReloadOfTheStoredOptionsReachesOpenEditors(): Unit = fixture.runTest {
+    initText("abc")
+    val global = EditorSettingsExternalizable.getInstance()
+    val original = XmlSerializerUtil.createCopy(global.state)
+    val reloaded = XmlSerializerUtil.createCopy(global.state)
+    reloaded.ARE_LINE_NUMBERS_SHOWN = !original.ARE_LINE_NUMBERS_SHOWN
+    reloaded.IS_FOLDING_ENDINGS_SHOWN = !original.IS_FOLDING_ENDINGS_SHOWN
+    try {
+      loadOnAPooledThread(global, reloaded)
+      assertEquals(reloaded.ARE_LINE_NUMBERS_SHOWN, editor.settings.isLineNumbersShown)
+      assertEquals(reloaded.IS_FOLDING_ENDINGS_SHOWN, editor.settings.isFoldingEndingsShown)
+    } finally {
+      loadOnAPooledThread(global, original)
+    }
+  }
+
+  /**
+   * Loads [options] on a pooled thread, as a reload of the stored settings can do, and then runs the events on the EDT.
+   */
+  private fun loadOnAPooledThread(global: EditorSettingsExternalizable, options: EditorSettingsExternalizable.OptionSet) {
+    ApplicationManager.getApplication().executeOnPooledThread {
+      global.loadState(options)
+    }.get(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
   }
 
   /**
