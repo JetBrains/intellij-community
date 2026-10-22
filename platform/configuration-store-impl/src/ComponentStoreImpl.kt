@@ -6,6 +6,7 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.concurrency.installTemporaryThreadContext
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
 import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
@@ -36,7 +37,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.shared.ConfigFolderChangedListener
@@ -241,6 +241,31 @@ abstract class ComponentStoreImpl : IComponentStore {
       rethrowControlFlowException(e)
       error(PluginException("Cannot init component state (componentName=$componentName, componentClass=${component.javaClass.simpleName})", e, pluginId))
     }
+  }
+
+  override fun prefetchComponentState(componentClass: Class<out PersistentStateComponent<*>>) {
+    if (!isStoreInitialized ||
+        // `getResolution` needs the component instance
+        StateStorageChooserEx::class.java.isAssignableFrom(componentClass)) {
+      return
+    }
+
+    val stateSpec = getStateSpec(componentClass) ?: return
+    if (loadPolicy != StateLoadPolicy.LOAD && !stateSpec.allowLoadInTests) {
+      return
+    }
+
+    val storageSpecs = getStorageSpecs(
+      componentClass = componentClass,
+      component = null,
+      stateSpec = stateSpec,
+      operation = StateStorageOperation.READ,
+    )
+    // as a heuristic, we are trying to load only the content of the first storage spec
+    // in reality, it can contain no state and be skipped in favor of the latter storages
+    // but in the majority of cases this heuristic should work
+    val storageSpec = storageSpecs.firstOrNull() ?: return
+    (storageManager.getStateStorage(storageSpec) as? StateStorageBase<*>)?.getStorageData()
   }
 
   private fun initializeComponent(component: PersistentStateComponent<*>, stateSpec: State?) {

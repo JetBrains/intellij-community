@@ -50,6 +50,7 @@ import java.io.InputStream
 import java.nio.file.Path
 import java.util.EnumMap
 import java.util.concurrent.CancellationException
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.zip.ZipInputStream
 import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.createDirectories
@@ -323,6 +324,39 @@ class ApplicationStoreTest {
     component.loadStateCallback = null
     componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
     assertThat(component.options).isEqualTo(TestState("old"))
+  }
+
+  @Test
+  fun `prefetched state is used by initComponent`() = runBlocking<Unit>(Dispatchers.Default) {
+    val file = writeConfig("a.xml", """<application><component name="A" foo="old"/></application>""")
+    testAppConfig.refreshVfs()
+
+    componentStore.prefetchComponentState(A::class.java)
+    // initComponent must not read the file again
+    file.deleteIfExists()
+
+    val component = A()
+    componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
+    assertThat(component.options).isEqualTo(TestState("old"))
+  }
+
+  @Test
+  fun `prefetch skips the second storage`() = runBlocking<Unit>(Dispatchers.Default) {
+    writeConfig("new.xml", """<application><component name="B" foo="new"/></application>""")
+    writeConfig("old.xml", """<application><component name="A" foo="old"/></application>""")
+    testAppConfig.refreshVfs()
+    val streamProvider = ReadRecordingStreamProvider()
+    componentStore.storageManager.addStreamProvider(streamProvider)
+
+    componentStore.prefetchComponentState(SeveralStoragesConfigured::class.java)
+    // the first storage has no state of the component, but the prefetch must not read the second storage
+    assertThat(streamProvider.readFileSpecs).containsExactly("new.xml")
+
+    val component = SeveralStoragesConfigured()
+    componentStore.initComponent(component, null, PluginManagerCore.CORE_ID)
+    // initComponent reads the second storage, and it uses the prefetched data of the first storage
+    assertThat(component.foo).isEqualTo("old")
+    assertThat(streamProvider.readFileSpecs).containsExactly("new.xml", "old.xml")
   }
 
   private class MyElement(val id: String) : CoroutineContext.Element {
@@ -671,6 +705,35 @@ class ApplicationStoreTest {
 
   private fun writeConfig(fileName: String, @Language("XML") data: String): Path =
     testAppConfig.resolve(fileName).createParentDirectories().apply { writeText(data) }
+
+  /**
+   * Records the file specs of all reads.
+   * It does not serve any data, so the storage reads the local file.
+   */
+  private class ReadRecordingStreamProvider : StreamProvider {
+    val readFileSpecs: MutableList<String> = CopyOnWriteArrayList()
+
+    override val isExclusive: Boolean = false
+
+    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = true
+
+    override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
+    }
+
+    override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
+      readFileSpecs.add(fileSpec)
+      return false
+    }
+
+    override fun processChildren(
+      path: String,
+      roamingType: RoamingType,
+      filter: (String) -> Boolean,
+      processor: (String, InputStream, Boolean) -> Boolean,
+    ): Boolean = false
+
+    override fun delete(fileSpec: String, roamingType: RoamingType): Boolean = false
+  }
 
   private class MyStreamProvider : StreamProvider {
     override val isExclusive = true
