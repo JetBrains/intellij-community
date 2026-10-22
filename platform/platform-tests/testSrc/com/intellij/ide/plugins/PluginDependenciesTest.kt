@@ -1162,6 +1162,7 @@ internal class PluginDependenciesTest {
         "intellij.platform.todo",
         "intellij.platform.bookmarks",
         "intellij.platform.smRunner",
+        "intellij.platform.scratch",
         "intellij.platform.vcs.impl",
         "intellij.platform.vcs.dvcs",
         "intellij.platform.vcs.dvcs.impl",

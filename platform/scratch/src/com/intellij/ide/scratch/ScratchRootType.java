@@ -15,6 +15,10 @@ import java.io.IOException;
 /**
  * Root for files placed under the "Scratches" folder in the
  * "Scratches and Consoles" section of the project view.
+ * <p>
+ * The Scratch Files plugin ({@code com.intellij.scratch}) registers this root type. A plugin that uses this class declares
+ * {@code <depends>com.intellij.scratch</depends>} or {@code <dependencies><module name="intellij.platform.scratch"/></dependencies>}.
+ * Code that must load without the plugin uses {@link ScratchUtil#findScratchesRootType()} instead.
  */
 public final class ScratchRootType extends RootType {
   public static @NotNull ScratchRootType getInstance() {
