@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.editor.ex.BidiTextDirection;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -296,6 +297,22 @@ public interface EditorSettings {
    */
   @ApiStatus.Internal
   void setCharacterGridWidthMultiplier(@Nullable Float value);
+
+  /**
+   * Returns the base direction of a line that mixes left-to-right and right-to-left text.
+   */
+  @ApiStatus.Internal
+  @NotNull BidiTextDirection getBidiTextDirection();
+
+  /**
+   * Returns {@code true} if the editor shows right-to-left text in its natural order. With {@code false}, the editor shows
+   * all characters in left-to-right order. The default comes from the registry key {@code editor.disable.rtl}.
+   */
+  @ApiStatus.Internal
+  boolean isRtlEnabled();
+
+  @ApiStatus.Internal
+  void setRtlEnabled(boolean value);
 
   enum LineNumerationType {
     ABSOLUTE,

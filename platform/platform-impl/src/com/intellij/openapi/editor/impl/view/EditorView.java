@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorModel;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.InlayModelEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -105,7 +104,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     myEditor = editor;
     mySnapshot = new EditorViewSnapshot(
       normalizeFontRenderContext(readFontRenderContext(), true),
-      !Registry.is("editor.disable.rtl", false)
+      editor.getSettings().isRtlEnabled()
     );
     myEditorModel = editorModel;
     myDocument = myEditorModel.getDocument();
@@ -420,6 +419,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
         .withMetrics(EditorViewMetrics.UNINITIALIZED)
         .withTabSize(newTabSize)
         .withBidiFlags(newBidiFlags)
+        .withRtlEnabled(myEditor.getSettings().isRtlEnabled())
         .withPrefixLayout(NOT_INITIALIZED_PREFIX);
     });
     myLogicalPositionCache.reset(false, getTabSize());
@@ -724,11 +724,11 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return getSnapshotWithMetrics().capHeight();
   }
 
-  int getBidiFlags() {
+  public int getBidiFlags() {
     return mySnapshot.bidiFlags();
   }
 
-  boolean isRtlEnabled() {
+  public boolean isRtlEnabled() {
     return mySnapshot.rtlEnabled();
   }
 
@@ -759,8 +759,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return newFontRenderContext;
   }
 
-  private static int readBidiFlags() {
-    return switch (EditorSettingsExternalizable.getInstance().getBidiTextDirection()) {
+  private int readBidiFlags() {
+    return switch (myEditor.getSettings().getBidiTextDirection()) {
       case LTR -> Bidi.DIRECTION_LEFT_TO_RIGHT;
       case RTL -> Bidi.DIRECTION_RIGHT_TO_LEFT;
       default -> Bidi.DIRECTION_DEFAULT_LEFT_TO_RIGHT;

@@ -77,6 +77,14 @@ internal data class EditorViewSnapshot(
     }
   }
 
+  fun withRtlEnabled(rtlEnabled: Boolean): EditorViewSnapshot {
+    return if (rtlEnabled == this.rtlEnabled) {
+      this
+    } else {
+      copy(rtlEnabled = rtlEnabled)
+    }
+  }
+
   fun withPrefix(prefix: EditorPrefix?): EditorViewSnapshot {
     return if (prefix === this.prefix) {
       this

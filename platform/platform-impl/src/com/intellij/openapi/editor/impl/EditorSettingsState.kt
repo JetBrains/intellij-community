@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorCoreUtil
 import com.intellij.openapi.editor.EditorSettings
+import com.intellij.openapi.editor.ex.BidiTextDirection
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl.CODE_STYLE_SETTINGS
@@ -70,6 +71,7 @@ class EditorSettingsState(
   var myAllowSingleLogicalLineFolding: Boolean by property(false)
   var myAutoCodeFoldingEnabled: Boolean by property(true)
   var myAreLineNumbersAfterIcons: Boolean by property(false)
+  var rtlEnabled: Boolean by property(!Registry.`is`("editor.disable.rtl", false))
 
   // Settings from the code style.
 
@@ -152,6 +154,7 @@ class EditorSettingsState(
   val insertParenthesesAutomatically: Boolean by property { externalizable().isInsertParenthesesAutomatically }
   val showInspectionWidget: Boolean by property { externalizable().isShowInspectionWidget }
   val useEditorFontInInlays: Boolean by property { externalizable().isUseEditorFontInInlays }
+  val bidiTextDirection: BidiTextDirection by property { externalizable().bidiTextDirection }
 
   // Settings from AdvancedSettings. `EditorFactoryImpl` refreshes all editors when this setting changes.
   var showingSpecialCharacters: Boolean by property { AdvancedSettings.getBoolean(EDITOR_SHOW_SPECIAL_CHARS) }
@@ -412,6 +415,7 @@ class EditorSettingsState(
       EditorSettingsExternalizable.PropNames.PROP_INSERT_PARENTHESES_AUTOMATICALLY -> refresh(::insertParenthesesAutomatically)
       EditorSettingsExternalizable.PropNames.PROP_SHOW_INSPECTION_WIDGET -> refresh(::showInspectionWidget)
       EditorSettingsExternalizable.PropNames.PROP_USE_EDITOR_FONT_IN_INLAYS -> refresh(::useEditorFontInInlays)
+      EditorSettingsExternalizable.PropNames.PROP_BIDI_TEXT_DIRECTION -> refresh(::bidiTextDirection)
     }
   }
 

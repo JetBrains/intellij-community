@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.EditorSettings.LineNumerationType
+import com.intellij.openapi.editor.ex.BidiTextDirection
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
 import com.intellij.openapi.editor.state.ObservableStateListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -472,6 +473,14 @@ class SettingsImpl internal constructor(
 
   override fun setCharacterGridWidthMultiplier(value: Float?) {
     state.characterGridWidth = value
+  }
+
+  override fun getBidiTextDirection(): BidiTextDirection = state.bidiTextDirection
+
+  override fun isRtlEnabled(): Boolean = state.rtlEnabled
+
+  override fun setRtlEnabled(value: Boolean) {
+    state.rtlEnabled = value
   }
 
   /**

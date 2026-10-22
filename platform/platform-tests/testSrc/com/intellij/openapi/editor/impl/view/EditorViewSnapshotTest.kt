@@ -2,7 +2,9 @@
 package com.intellij.openapi.editor.impl.view
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.ex.BidiTextDirection
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorViewAccessor
 import com.intellij.openapi.editor.impl.editorModelFixture
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -15,6 +17,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import java.awt.Font
+import java.text.Bidi
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -88,6 +91,37 @@ class EditorViewSnapshotTest {
       view.lineHeight + view.topOverhang + view.bottomOverhang,
       view.caretHeight,
       "A default caret adds both overhangs",
+    )
+  }
+
+  @Test
+  fun `test a global bidi direction change reaches the view without a refresh of all editors`(): Unit = fixture.runTest {
+    initText("text")
+    val view = EditorViewAccessor.getView(editor)
+    val global = EditorSettingsExternalizable.getInstance()
+    val original = global.bidiTextDirection
+    try {
+      global.bidiTextDirection = BidiTextDirection.RTL
+      assertEquals(
+        Bidi.DIRECTION_RIGHT_TO_LEFT,
+        view.bidiFlags,
+        "The view takes the bidi direction from the editor settings",
+      )
+    } finally {
+      global.bidiTextDirection = original
+    }
+  }
+
+  @Test
+  fun `test the RTL setting of one editor reaches its view`(): Unit = fixture.runTest {
+    initText("text")
+    val view = EditorViewAccessor.getView(editor)
+    val rtlEnabled = editor.settings.isRtlEnabled
+    editor.settings.isRtlEnabled = !rtlEnabled
+    assertEquals(
+      !rtlEnabled,
+      view.isRtlEnabled,
+      "The view takes the RTL setting from the editor settings",
     )
   }
 
