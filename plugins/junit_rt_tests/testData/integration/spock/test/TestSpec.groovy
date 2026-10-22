@@ -33,4 +33,12 @@ class TestSpec extends Specification {
     where:
     something << (0..1).collect()
   }
+
+  def "mixed multiple-where test"() {
+    expect:
+    something == 0
+
+    where:
+    something << (0..1).collect()
+  }
 }

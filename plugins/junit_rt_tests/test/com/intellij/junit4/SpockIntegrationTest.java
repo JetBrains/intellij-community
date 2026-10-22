@@ -3,7 +3,12 @@ package com.intellij.junit4;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.testframework.sm.runner.GeneralIdBasedToSMTRunnerEventsConvertor;
+import com.intellij.execution.testframework.sm.runner.OutputToGeneralTestEventsConverter;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiClass;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -65,8 +70,12 @@ public class SpockIntegrationTest extends AbstractTestFrameworkCompilingIntegrat
                    ##TC[suiteTreeNode id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='simple' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0' locationHint='java:test://TestSpec/simple' metainfo='']
                    ##TC[suiteTreeNode id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='passing single test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0' locationHint='java:test://TestSpec/passing single test' metainfo='']
                    ##TC[suiteTreeNode id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='failing single test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0' locationHint='java:test://TestSpec/failing single test' metainfo='']
-                   ##TC[suiteTreeNode id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='passing multiple-where test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0' locationHint='java:test://TestSpec/passing multiple-where test' metainfo='java.lang.Object']
-                   ##TC[suiteTreeNode id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='failing multiple-where test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0' locationHint='java:test://TestSpec/failing multiple-where test' metainfo='java.lang.Object']
+                   ##TC[suiteTreeStarted id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='passing multiple-where test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0' locationHint='java:test://TestSpec/passing multiple-where test' metainfo='java.lang.Object']
+                   ##TC[suiteTreeEnded id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='passing multiple-where test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0']
+                   ##TC[suiteTreeStarted id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='failing multiple-where test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0' locationHint='java:test://TestSpec/failing multiple-where test' metainfo='java.lang.Object']
+                   ##TC[suiteTreeEnded id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='failing multiple-where test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0']
+                   ##TC[suiteTreeStarted id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='mixed multiple-where test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0' locationHint='java:test://TestSpec/mixed multiple-where test' metainfo='java.lang.Object']
+                   ##TC[suiteTreeEnded id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='mixed multiple-where test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0']
                    ##TC[treeEnded]
                    ##TC[rootName name='TestSpec' location='java:suite://TestSpec']
                    ##TC[testStarted id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='simple' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0' locationHint='java:test://TestSpec/simple' metainfo='']
@@ -76,13 +85,13 @@ public class SpockIntegrationTest extends AbstractTestFrameworkCompilingIntegrat
                    ##TC[testStarted id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='failing single test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0' locationHint='java:test://TestSpec/failing single test' metainfo='']
                    ##TC[testFailed id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='failing single test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0' message='Condition not satisfied:|n|nfalse|n' details='TRACE']
                    ##TC[testFinished id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='failing single test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0']
-                   ##TC[testStarted id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='passing multiple-where test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0' locationHint='java:test://TestSpec/passing multiple-where test' metainfo='java.lang.Object']
+                   ##TC[testSuiteStarted id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='passing multiple-where test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0' locationHint='java:test://TestSpec/passing multiple-where test' metainfo='java.lang.Object']
                    ##TC[testStarted id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:0|]' name='passing multiple-where test |[something: 0, #0|]' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:0|]' parentNodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' locationHint='java:test://TestSpec/passing multiple-where test' metainfo='java.lang.Object']
                    ##TC[testFinished id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:0|]' name='passing multiple-where test |[something: 0, #0|]' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:0|]' parentNodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]']
                    ##TC[testStarted id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:1|]' name='passing multiple-where test |[something: 1, #1|]' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:1|]' parentNodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' locationHint='java:test://TestSpec/passing multiple-where test' metainfo='java.lang.Object']
                    ##TC[testFinished id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:1|]' name='passing multiple-where test |[something: 1, #1|]' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:1|]' parentNodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]']
                    ##TC[testSuiteFinished id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='passing multiple-where test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0']
-                   ##TC[testStarted id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='failing multiple-where test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0' locationHint='java:test://TestSpec/failing multiple-where test' metainfo='java.lang.Object']
+                   ##TC[testSuiteStarted id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='failing multiple-where test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0' locationHint='java:test://TestSpec/failing multiple-where test' metainfo='java.lang.Object']
                    ##TC[testStarted id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:0|]' name='failing multiple-where test |[something: 0, #0|]' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:0|]' parentNodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' locationHint='java:test://TestSpec/failing multiple-where test' metainfo='java.lang.Object']
                    ##TC[testFailed id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:0|]' name='failing multiple-where test |[something: 0, #0|]' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:0|]' parentNodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' message='Condition not satisfied:|n|nsomething == (something + 1)|n||         ||   ||         |||n0         ||   0         1|n          false|n' expected='1|n' actual='0|n' details='TRACE']
                    ##TC[testFinished id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:0|]' name='failing multiple-where test |[something: 0, #0|]' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:0|]' parentNodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]']
@@ -90,7 +99,67 @@ public class SpockIntegrationTest extends AbstractTestFrameworkCompilingIntegrat
                    ##TC[testFailed id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:1|]' name='failing multiple-where test |[something: 1, #1|]' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:1|]' parentNodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' message='Condition not satisfied:|n|nsomething == (something + 1)|n||         ||   ||         |||n1         ||   1         2|n          false|n' expected='2|n' actual='1|n' details='TRACE']
                    ##TC[testFinished id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:1|]' name='failing multiple-where test |[something: 1, #1|]' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:1|]' parentNodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]']
                    ##TC[testSuiteFinished id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='failing multiple-where test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0']
+                   ##TC[testSuiteStarted id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='mixed multiple-where test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0' locationHint='java:test://TestSpec/mixed multiple-where test' metainfo='java.lang.Object']
+                   ##TC[testStarted id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:0|]' name='mixed multiple-where test |[something: 0, #0|]' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:0|]' parentNodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' locationHint='java:test://TestSpec/mixed multiple-where test' metainfo='java.lang.Object']
+                   ##TC[testFinished id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:0|]' name='mixed multiple-where test |[something: 0, #0|]' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:0|]' parentNodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]']
+                   ##TC[testStarted id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:1|]' name='mixed multiple-where test |[something: 1, #1|]' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:1|]' parentNodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' locationHint='java:test://TestSpec/mixed multiple-where test' metainfo='java.lang.Object']
+                   ##TC[testFailed id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:1|]' name='mixed multiple-where test |[something: 1, #1|]' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:1|]' parentNodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' message='Condition not satisfied:|n|nsomething == 0|n||         |||n1         false|n' expected='0|n' actual='1|n' details='TRACE']
+                   ##TC[testFinished id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:1|]' name='mixed multiple-where test |[something: 1, #1|]' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]/|[iteration:1|]' parentNodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]']
+                   ##TC[testSuiteFinished id='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' name='mixed multiple-where test' nodeId='|[engine:spock|]/|[spec:TestSpec|]/|[feature:$spock_feature|]' parentNodeId='0']
                    """, actual);
+  }
+
+  @Test
+  public void testFailingIterationFailsFeature() throws ExecutionException {
+    PsiClass psiClass = findClass(myModule, "TestSpec");
+    assertNotNull(psiClass);
+    ProcessOutput processOutput = doStartTestsProcess(createConfiguration(psiClass));
+
+    SMTestProxy.SMRootTestProxy root = new SMTestProxy.SMRootTestProxy();
+    GeneralIdBasedToSMTRunnerEventsConvertor processor = new GeneralIdBasedToSMTRunnerEventsConvertor(getProject(), root, "JUnit");
+    OutputToGeneralTestEventsConverter converter = new OutputToGeneralTestEventsConverter("JUnit", false, false, false);
+    try {
+      converter.setProcessor(processor);
+      processor.onStartTesting();
+      for (ServiceMessage message : processOutput.messages) {
+        converter.process(message.asString() + "\n", ProcessOutputTypes.STDOUT);
+      }
+      processor.onFinishTesting();
+    }
+    finally {
+      Disposer.dispose(converter);
+      Disposer.dispose(processor);
+    }
+
+    String actual = printTree(root);
+    assertEquals("""
+                   [root]: FAILED_INDEX
+                     simple: PASSED_INDEX
+                     passing single test: PASSED_INDEX
+                     failing single test: FAILED_INDEX
+                     passing multiple-where test: PASSED_INDEX
+                       passing multiple-where test [something: 0, #0]: PASSED_INDEX
+                       passing multiple-where test [something: 1, #1]: PASSED_INDEX
+                     failing multiple-where test: FAILED_INDEX
+                       failing multiple-where test [something: 0, #0]: FAILED_INDEX
+                       failing multiple-where test [something: 1, #1]: FAILED_INDEX
+                     mixed multiple-where test: FAILED_INDEX
+                       mixed multiple-where test [something: 0, #0]: PASSED_INDEX
+                       mixed multiple-where test [something: 1, #1]: FAILED_INDEX
+                   """, actual);
+  }
+
+  private static String printTree(SMTestProxy root) {
+    StringBuilder builder = new StringBuilder();
+    printTree(root, "", builder);
+    return builder.toString();
+  }
+
+  private static void printTree(SMTestProxy proxy, String indent, StringBuilder builder) {
+    builder.append(indent).append(proxy.getName()).append(": ").append(proxy.getMagnitudeInfo()).append('\n');
+    for (SMTestProxy child : proxy.getChildren()) {
+      printTree(child, indent + "  ", builder);
+    }
   }
 
   private static String getNormalizedOutput(ProcessOutput processOutput) {
