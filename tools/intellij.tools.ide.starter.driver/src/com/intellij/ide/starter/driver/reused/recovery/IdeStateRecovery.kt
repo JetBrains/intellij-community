@@ -5,6 +5,7 @@ import com.intellij.driver.sdk.Project
 import com.intellij.driver.sdk.getOpenProjects
 import com.intellij.driver.sdk.reloadChangedSettings
 import com.intellij.driver.sdk.step
+import com.intellij.driver.sdk.withoutPauseOnIndicators
 import com.intellij.ide.starter.driver.driver.remoteDev.RemoteDevBackgroundRun
 import com.intellij.ide.starter.driver.engine.BackgroundRun
 import com.intellij.ide.starter.driver.engine.syncVfsWithRestoredProjectFiles
@@ -45,7 +46,7 @@ internal class IdeStateRecovery(
 
   /** Stops [bgRun], as the strategy of this session decides an IDE of it may be stopped. */
   fun closeIde(bgRun: BackgroundRun) {
-    strategy.closeIde(extensionContext, bgRun)
+    withoutPauseOnIndicators { strategy.closeIde(extensionContext, bgRun) }
   }
 
   /**
@@ -69,7 +70,7 @@ internal class IdeStateRecovery(
     val threadName = "Reused IDE live recovery for ${bgRun.formatForRecoveryLog()}"
     val worker = newDaemonExecutor(threadName)
     val restore = runCatching {
-      worker.submit<SettingsRecoveryPlan> { restoreInPlace(bgRun) }.getOrRethrowCause(LIVE_RECOVERY_TIMEOUT, threadName)
+      worker.submit<SettingsRecoveryPlan> { withoutPauseOnIndicators { restoreInPlace(bgRun) } }.getOrRethrowCause(LIVE_RECOVERY_TIMEOUT, threadName)
     }
     worker.shutdown()
     return restore.fold(
@@ -216,7 +217,7 @@ internal class IdeStateRecovery(
    * The first start restores the prepared project files and captures the baseline after it. A failed preparation or
    * capture closes the run.
    */
-  private fun startFromBaseline(start: () -> BackgroundRun): BackgroundRun {
+  private fun startFromBaseline(start: () -> BackgroundRun): BackgroundRun = withoutPauseOnIndicators {
     val hasBaseline = baseline.isCaptured
     val projectFilesRestored = baseline.restoreBeforeStart(testContext)
     val bgRun = start()
@@ -233,7 +234,7 @@ internal class IdeStateRecovery(
       else {
         bgRun.driver.waitForProjectsWithNoPendingIndexingWork("starting the first test on the reused IDE")
       }
-      return bgRun
+      bgRun
     }
     catch (failure: Throwable) {
       runCatching { closeIde(bgRun) }

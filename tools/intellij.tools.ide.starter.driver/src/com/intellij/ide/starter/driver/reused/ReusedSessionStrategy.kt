@@ -11,6 +11,7 @@ import com.intellij.ide.starter.testContextCache.CachedProjectConfiguration
 import org.junit.jupiter.api.extension.ExtensionContext
 import kotlin.reflect.KClass
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * Customizes reused IDE session mechanics for [ReusedRun].
@@ -49,8 +50,9 @@ interface ReusedSessionStrategy {
    */
   fun reusedIdeSessionKey(context: ExtensionContext): Any = context.requiredTestClass
 
+  /** The default pauses each Driver call while the IDE shows an indicator, for up to 5 minutes. Recovery runs without the pause. */
   fun startIde(context: ExtensionContext, testContext: IDETestContext, ideRunTimeout: Duration): BackgroundRun =
-    testContext.runIdeWithDriver(runTimeout = ideRunTimeout)
+    testContext.runIdeWithDriver(runTimeout = ideRunTimeout, pauseOnIndicators = 5.minutes)
 
   @Suppress("UNUSED_PARAMETER")
   fun closeIde(context: ExtensionContext, bgRun: BackgroundRun) {
