@@ -5,6 +5,7 @@ import com.intellij.ide.util.treeView.NodeRenderer
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.ui.KeyStrokeAdapter
@@ -47,6 +48,7 @@ import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JMenuItem
 import javax.swing.JTree
+import javax.swing.plaf.basic.BasicHTML
 import javax.swing.tree.TreePath
 
 @LearningDsl
@@ -288,7 +290,7 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
 
 private fun getValueWithCellRenderer(cellRendererComponent: Component, isExtended: Boolean = true): String? {
   val result = when (cellRendererComponent) {
-    is JLabel -> cellRendererComponent.text
+    is JLabel -> cellRendererComponent.plainText()
     is NodeRenderer -> {
       if (isExtended) cellRendererComponent.getFullText()
       else cellRendererComponent.getFirstText()
@@ -312,6 +314,10 @@ private class ExtendedJListCellReader : BasicJListCellReader() {
   }
 }
 
+private fun JLabel.plainText(): String? {
+  return text?.let { if (BasicHTML.isHTMLString(it)) StringUtil.removeHtmlTags(it) else it }
+}
+
 private fun SimpleColoredComponent.getFullText(): String {
   return invokeAndWaitIfNeeded {
     this.getCharSequence(false).toString()
@@ -333,8 +339,8 @@ private fun Component.findText(): String? {
     resultList.addAll(
       findAllWithBFS(container, JLabel::class.java)
         .asSequence()
-        .filter { !it.text.isNullOrEmpty() }
-        .map { it.text }
+        .mapNotNull { it.plainText() }
+        .filter { it.isNotEmpty() }
         .toList()
     )
     resultList.addAll(
