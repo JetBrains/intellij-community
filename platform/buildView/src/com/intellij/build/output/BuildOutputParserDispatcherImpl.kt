@@ -3,8 +3,8 @@ package com.intellij.build.output
 
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.StartId
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +26,10 @@ class BuildOutputParserDispatcherImpl(
   internal val reader = BuildOutputReplayableLineReaderImpl(linesBufferSize, pushBackBufferSize)
 
   @OptIn(DelicateCoroutinesApi::class)
-  private val coroutineScope = GlobalScope.childScope(name = BuildOutputParserDispatcherImpl::class.java.name, context = Dispatchers.IO)
+  private val coroutineScope = GlobalScope.childScope(
+    BuildOutputParserDispatcherImpl::class.java.name,
+    Dispatchers.IO.limitedParallelism(Int.MAX_VALUE, "BuildOutputParserDispatcher")
+  )
 
   private val parserAction = coroutineScope.launch {
     try {

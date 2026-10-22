@@ -20,10 +20,15 @@ import com.intellij.platform.testFramework.assertion.collectionAssertion.Collect
 import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.plugins.gradle.execution.build.output.GradleOutputDispatcherFactory.GradleOutputMessageDispatcher
 import org.jetbrains.plugins.gradle.execution.build.output.GradleOutputDispatcherFactory.TaskNameId
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
+import org.junitpioneer.jupiter.cartesian.CartesianTest
 import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
 @TestApplication
@@ -337,6 +342,67 @@ class GradleOutputMessageDispatcherTest {
       buildId to { assertEqualsOrdered(listOf(startEvent, finishEvent), it) },
       startEvent.id to { assertOutputEventsOrdered(listOf("> Task :task\n", "task output\n"), it) }
     )
+  }
+
+  // `10 builds x 10 tasks` creates 110 dispatchers, one hanging parser each. That is above the 64
+  // permits of Dispatchers.IO, so the test fails if the parser consumer waits for a shared permit.
+  @Timeout(value = 10, unit = TimeUnit.SECONDS)
+  @CartesianTest(name = "{0} builds x {1} tasks")
+  fun `test hanging parsers do not exhaust the parser dispatcher`(
+    @CartesianTest.Values(ints = [1, 10]) numBuilds: Int,
+    @CartesianTest.Values(ints = [1, 10]) numTasks: Int,
+  ) {
+    val eooCounter = AtomicInteger()
+    val parser = BuildOutputParser { _, reader, _ ->
+      reader.readAllLines() // hangs until EOO (End of Output)
+      eooCounter.incrementAndGet()
+      true
+    }
+
+    val buildIds = List(numBuilds) { BuildId() }
+    val startBuildEvents = buildIds.map { StartBuildEvent.builder("Build", DefaultBuildDescriptor(it, "Build", "/", 0L)).build() }
+    val finishBuildEvents = startBuildEvents.map { FinishBuildEvent.builder(it.id, "Build", SuccessResultImpl()).build() }
+    val startEvents = List(numTasks) { taskIndex ->
+      startBuildEvents.map { StartEvent.builder(StartId(), ":task$taskIndex").withParentId(it.id).build() }
+    }
+    val finishEvents = List(numTasks) { taskIndex ->
+      startEvents[taskIndex].map { FinishEvent.builder(it.id, ":task$taskIndex", SuccessResultImpl()).withParentId(it.parentId).build() }
+    }
+
+    val dispatchers = List(numBuilds) { buildIndex ->
+      GradleOutputMessageDispatcher(buildIds[buildIndex], BuildProgressListener { _, _ -> }, false, listOf(parser))
+    }
+
+    repeat(numBuilds) { buildIndex ->
+      dispatchers[buildIndex].onEvent(buildIds[buildIndex], startBuildEvents[buildIndex])
+    }
+    repeat(numTasks) { taskIndex ->
+      repeat(numBuilds) { buildIndex ->
+        dispatchers[buildIndex].onEvent(buildIds[buildIndex], startEvents[taskIndex][buildIndex])
+      }
+    }
+    repeat(numTasks) { taskIndex ->
+      repeat(numBuilds) { buildIndex ->
+        dispatchers[buildIndex].appendLine("> Task :task$taskIndex")
+        dispatchers[buildIndex].appendLine("task$taskIndex output")
+      }
+    }
+    repeat(numTasks) { taskIndex ->
+      repeat(numBuilds) { buildIndex ->
+        dispatchers[buildIndex].onEvent(buildIds[buildIndex], finishEvents[taskIndex][buildIndex])
+      }
+    }
+    repeat(numBuilds) { buildIndex ->
+      dispatchers[buildIndex].appendLine("BUILD SUCCESSFUL in 1s")
+      dispatchers[buildIndex].onEvent(buildIds[buildIndex], finishBuildEvents[buildIndex])
+    }
+    repeat(numBuilds) { buildIndex ->
+      dispatchers[buildIndex].close()
+    }
+
+    assertEquals(numBuilds + numBuilds * numTasks, eooCounter.get()) {
+      "A parser parked on an output that is over holds a slot of the parser dispatcher"
+    }
   }
 
   private class RecordingBuildOutputParser : BuildOutputParser {
