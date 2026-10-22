@@ -55,6 +55,8 @@ final class AccessibleEditorComponentImpl extends JComponent.AccessibleJComponen
   private final EditorImpl editor;
   private final EditorAccessibleText myAccessibleText;
   private final EditorAccessibleTextNavigation navigation;
+  private int myCaretPos;
+  private int myPreviousCaretPos;
 
   AccessibleEditorComponentImpl(@NotNull EditorComponentImpl component) {
     component.super();
@@ -72,10 +74,6 @@ final class AccessibleEditorComponentImpl extends JComponent.AccessibleJComponen
   }
 
   // ---- Implements CaretListener ----
-
-  private int myCaretPos;
-  private int myPreviousCaretPos;
-
 
   @Override
   public void caretPositionChanged(@NotNull CaretEvent e) {
@@ -359,12 +357,12 @@ final class AccessibleEditorComponentImpl extends JComponent.AccessibleJComponen
   // ---- Implements AccessibleAction ----
 
   @Override
-  public int getAccessibleActionCount(){
+  public int getAccessibleActionCount() {
     return 0;
   }
 
   @Override
-  public String getAccessibleActionDescription(int i){
+  public String getAccessibleActionDescription(int i) {
     return null;
   }
 

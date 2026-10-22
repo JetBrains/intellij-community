@@ -64,8 +64,8 @@ final class EditorAccessibilityDocument implements javax.swing.text.Document, ja
         return null;
       }
     };
+    javax.swing.event.DocumentEvent.EventType type = swingEvent.getType();
     for (javax.swing.event.DocumentListener listener : listeners) {
-      javax.swing.event.DocumentEvent.EventType type = swingEvent.getType();
       if (type == javax.swing.event.DocumentEvent.EventType.INSERT) {
         listener.insertUpdate(swingEvent);
       } else if (type == javax.swing.event.DocumentEvent.EventType.REMOVE) {

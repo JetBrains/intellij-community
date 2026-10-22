@@ -110,24 +110,20 @@ final class EditorAccessibleTextNavigation {
   }
 
   private int moveLineOffset(int offset, @Direction int direction) {
-    if (direction == AFTER) {
-      int lineNumber = myAccessibleText.getLineNumber(offset);
-      lineNumber++;
-      if (lineNumber == myAccessibleText.getLineCount()) {
-        return -1;
+    return switch (direction) {
+      case AFTER -> {
+        int lineNumber = myAccessibleText.getLineNumber(offset) + 1;
+        yield lineNumber == myAccessibleText.getLineCount() ? -1 : myAccessibleText.getLineStartOffset(lineNumber);
       }
-      return myAccessibleText.getLineStartOffset(lineNumber);
-    } else if (direction == BEFORE) {
-      int lineNumber = myAccessibleText.getLineNumber(offset);
-      lineNumber--;
-      if (lineNumber < 0) {
-        return -1;
+      case BEFORE -> {
+        int lineNumber = myAccessibleText.getLineNumber(offset) - 1;
+        yield lineNumber < 0 ? -1 : myAccessibleText.getLineStartOffset(lineNumber);
       }
-      return myAccessibleText.getLineStartOffset(lineNumber);
-    } else {
-      assert direction == HERE;
-      return offset;
-    }
+      default -> {
+        assert direction == HERE;
+        yield offset;
+      }
+    };
   }
 
   private int getLineAtOffsetStart(int offset, @Direction int direction) {
@@ -150,18 +146,11 @@ final class EditorAccessibleTextNavigation {
 
   private CaretStopPolicy resolveCaretStopPolicy(@Direction int direction) {
     var caretStopOptions = editor.getSettings().getCaretStopOptions();
-    switch (direction) {
-      case AFTER -> {
-        return caretStopOptions.getForwardPolicy();
-      }
-      case BEFORE -> {
-        return caretStopOptions.getBackwardPolicy();
-      }
-      case HERE -> {
-        return isLastCaretMoveForward.getAsBoolean() ? caretStopOptions.getForwardPolicy() : caretStopOptions.getBackwardPolicy();
-      }
-    }
-    return caretStopOptions.getForwardPolicy();
+    return switch (direction) {
+      case BEFORE -> caretStopOptions.getBackwardPolicy();
+      case HERE -> isLastCaretMoveForward.getAsBoolean() ? caretStopOptions.getForwardPolicy() : caretStopOptions.getBackwardPolicy();
+      default -> caretStopOptions.getForwardPolicy();
+    };
   }
 
   private AccessibleTextSequence getWordOrLexeme(int offset, @Direction int direction) {
