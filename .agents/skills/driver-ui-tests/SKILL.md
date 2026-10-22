@@ -376,3 +376,4 @@ The `ui-hierarchy/ui.html` and `full-screen.png` written on failure are captured
 - **Use common UI components** – create new if necessary
 - **Always check UI hierarchy** to understand the UI state when a test fails
 - **Keep a helper for a specific test scenario `private`** – keep it in its test class. Put a reusable helper into a common UI component
+- **Do not add retries to test-sdk** – a retry hides the cause of a failure. Find the cause and wait for the correct UI state. If a test really needs `withRetries`, keep it in the test module
