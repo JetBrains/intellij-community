@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.JavaSyntheticLibrary
@@ -27,6 +28,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import com.intellij.util.progress.withLockMaybeCancellable
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
@@ -38,6 +40,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMaps
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.system.measureTimeMillis
 
 /**
@@ -51,10 +54,10 @@ internal class NonIncrementalContributors(private val project: Project) {
   private var excludedUrls = emptySet<VirtualFileUrl>()
   @Volatile
   private var upToDate = false
-  private val lock = Any()
+  private val lock = ReentrantLock()
 
   /**
-   * When the caller runs on a background thread and holds no read action, a write action interrupts the rebuild, which then restarts.
+   * When the caller runs on a background thread and holds no read action, a write action interrupts the call, which then restarts.
    */
   fun updateIfNeeded(
     fileSets: MutableMap<VirtualFile, StoredFileSetCollection>,
@@ -63,9 +66,10 @@ internal class NonIncrementalContributors(private val project: Project) {
   ) {
     if (upToDate) return
 
-    val rebuild: () -> Unit = rebuild@{
-      synchronized(lock) {
+    val rebuild: () -> Unit = {
+      lock.withLockMaybeCancellable rebuild@{
         if (upToDate) return@rebuild
+        ProgressManager.checkCanceled()
 
         val excludeRootsComputationTime: Long
         val fileSetsComputationTime: Long
