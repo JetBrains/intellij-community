@@ -56,6 +56,11 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration<Pytho
   private boolean myModuleMode = false;
   private @NotNull String myInputFile = "";
   private boolean myRedirectInput = false;
+  /**
+   * Set by {@link LegacyUvRunConfigurationConverterKt#applyLegacyUvRunConfiguration} and consumed by the next {@link #writeExternal}.
+   * Never serialized.
+   */
+  boolean myLegacyUvMigrationPending = false;
 
   protected PythonRunConfiguration(Project project, ConfigurationFactory configurationFactory) {
     super(project, configurationFactory);
@@ -192,6 +197,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration<Pytho
     JDOMExternalizerUtil.writeField(element, MODULE_MODE, Boolean.toString(myModuleMode));
     JDOMExternalizerUtil.writeField(element, REDIRECT_INPUT, Boolean.toString(myRedirectInput));
     JDOMExternalizerUtil.writeField(element, INPUT_FILE, myInputFile);
+    LegacyUvRunConfigurationConverterKt.writeLegacyUvMigrationMarker(element, this);
   }
 
   @Override
