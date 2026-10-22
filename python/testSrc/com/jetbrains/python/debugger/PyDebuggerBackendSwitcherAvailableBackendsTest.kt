@@ -41,17 +41,17 @@ internal class PyDebuggerBackendSwitcherAvailableBackendsTest {
     val owner = FakeHandler(owns = true, backends = null)
     register(stranger, owner)
 
-    assertThat(getAvailableBackends(event())).isNull()
+    assertThat(getHandlersAvailableBackends(event())).isNull()
     assertThat(stranger.asked).isFalse()
     assertThat(owner.asked).isTrue()
   }
 
   @Test
-  fun `without an owner the defaults apply`() {
-    val stranger = FakeHandler(owns = false, backends = setOf(PyDebuggerBackend.PYDEVD))
+  fun `without an owner no handler decides`() {
+    val stranger = FakeHandler(owns = false, backends = setOf(PyDebuggerBackend.DEBUGPY))
     register(stranger)
 
-    assertThat(getAvailableBackends(event())).isNull()
+    assertThat(getHandlersAvailableBackends(event())).isNull()
     assertThat(stranger.asked).isFalse()
   }
 

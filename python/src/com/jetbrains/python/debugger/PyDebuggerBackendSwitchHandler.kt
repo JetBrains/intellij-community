@@ -47,7 +47,7 @@ interface PyDebuggerBackendSwitchHandler {
    * Returns a non-empty set of available backends, or null to use the SDK defaults.
    * The switcher calls only the handler whose [ownsRunProfile] returns true for the same event.
    */
-  fun getAvailableBackends(e: AnActionEvent): Set<PyDebuggerBackend>? = null
+  fun getAvailableBackends(e: AnActionEvent): Set<PyDebuggerBackend>?
 
   /**
    * Called after the backend has been switched via the toolbar or post-install prompt.
