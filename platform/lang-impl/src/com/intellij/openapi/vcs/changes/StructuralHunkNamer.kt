@@ -10,10 +10,13 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.ui.DeferredIcon
 import com.intellij.ui.icons.RowIcon
 import com.intellij.util.IconUtil
@@ -55,6 +58,21 @@ object StructuralHunkNamer {
   private val WORD = Regex("[\\p{L}\\p{N}_]+")
   private const val MAX_LABEL_LENGTH = 200
   private const val RENAME_SIMILARITY = 0.5
+
+  /** Creates a snapshot with its own virtual file and the original file context. */
+  @JvmStatic
+  @RequiresReadLock
+  fun createSnapshot(original: PsiFile, text: String): PsiFile? {
+    val snapshot = PsiFileFactory.getInstance(original.project)
+      .createFileFromText(original.name, original.language, StringUtil.convertLineSeparators(text), true, false, false,
+                          original.viewProvider.virtualFile) ?: return null
+    for (language in snapshot.viewProvider.languages) {
+      val root = snapshot.viewProvider.getPsi(language) as? PsiFileImpl ?: continue
+      val originalRoot = original.viewProvider.getPsi(language) ?: continue
+      root.setOriginalFile(originalRoot)
+    }
+    return snapshot
+  }
 
   /** A null baseline marks every element as added. */
   @JvmStatic

@@ -89,8 +89,8 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
                ?: compareLines(file, document, baseContent)
     if (diff.currentText.length > MAX_CONTENT_LENGTH) return emptyList()
     val original = PsiManager.getInstance(project).findFile(file) ?: return emptyList()
-    val before = StructureChangeCollector.createSnapshot(original, diff.baseText) ?: return emptyList()
-    val after = StructureChangeCollector.createSnapshot(original, diff.currentText) ?: return emptyList()
+    val before = StructuralHunkNamer.createSnapshot(original, diff.baseText) ?: return emptyList()
+    val after = StructuralHunkNamer.createSnapshot(original, diff.currentText) ?: return emptyList()
     val names = StructuralHunkNamer.name(before, after, diff.hunks)
     return diff.hunks.zip(names) { lines, name -> Hunk(lines, name, documentModificationStamp) }
   }

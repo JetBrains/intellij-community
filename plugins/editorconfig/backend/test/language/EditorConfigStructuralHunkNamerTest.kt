@@ -6,7 +6,6 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.HunkLines
 import com.intellij.openapi.vcs.changes.StructuralHunkNamer
-import com.intellij.openapi.vcs.changes.StructureChangeCollector
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -26,8 +25,8 @@ internal class EditorConfigStructuralHunkNamerTest {
     val after = "[*]\nindent_size = 4\nend_of_line = lf\ntrim_trailing_whitespace = true"
     val name = readAction {
       val original = PsiFileFactory.getInstance(projectFixture.get()).createFileFromText(".editorconfig", EditorConfigFileType, after)
-      val afterFile = checkNotNull(StructureChangeCollector.createSnapshot(original, after))
-      val beforeFile = checkNotNull(StructureChangeCollector.createSnapshot(original, before))
+      val afterFile = checkNotNull(StructuralHunkNamer.createSnapshot(original, after))
+      val beforeFile = checkNotNull(StructuralHunkNamer.createSnapshot(original, before))
       StructuralHunkNamer.name(beforeFile, afterFile, listOf(HunkLines(1, 3, 1, 3))).single()
     }
 

@@ -242,8 +242,8 @@ internal class StructuralHunkNamerTest {
       val originalText = "class Sample {\n  int value() { return 1; }\n}"
       val changedText = "class Sample {\n  int value() { return 2; }\n}"
       val original = PsiFileFactory.getInstance(project).createFileFromText("Sample.java", javaFileType(), originalText, 0, true)
-      val before = requireNotNull(StructureChangeCollector.createSnapshot(original, originalText))
-      val after = requireNotNull(StructureChangeCollector.createSnapshot(original, changedText))
+      val before = requireNotNull(StructuralHunkNamer.createSnapshot(original, originalText))
+      val after = requireNotNull(StructuralHunkNamer.createSnapshot(original, changedText))
 
       assertSame(original, before.originalFile)
       assertSame(original, after.originalFile)
