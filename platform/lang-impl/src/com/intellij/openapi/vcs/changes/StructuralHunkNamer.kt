@@ -58,6 +58,7 @@ object StructuralHunkNamer {
   private val WORD = Regex("[\\p{L}\\p{N}_]+")
   private const val MAX_LABEL_LENGTH = 200
   private const val RENAME_SIMILARITY = 0.5
+  private const val MAX_RENAME_PAIRS = 100_000
 
   /** Creates a snapshot with its own virtual file and the original file context. */
   @JvmStatic
@@ -206,26 +207,22 @@ object StructuralHunkNamer {
 
     fun build(): HunkName {
       val parts = ArrayList<Part>()
+      val shown = HashSet<Element>()
       for (element in changedElements(current, current.roots, hunk.line1, hunk.line2)) {
         parts.add(Part(element, statusOf(element) ?: continue, element.startLine - hunk.line1, isBase = false))
+        shown.add(element)
       }
       for (element in changedElements(base, base.roots, hunk.vcsLine1, hunk.vcsLine2)) {
         val line = element.startLine - hunk.vcsLine1
         // A modified element reports its current version, so that a deletion inside a method names the method.
         val counterpart = current.byId[element.id]
         if (counterpart == null) parts.add(Part(element, FileStatus.DELETED, line, isBase = true))
-        else if (parts.none { it.element === counterpart }) parts.add(Part(counterpart, FileStatus.MODIFIED, line, isBase = false))
+        else if (shown.add(counterpart)) parts.add(Part(counterpart, FileStatus.MODIFIED, line, isBase = false))
       }
       val named = withoutImpliedParts(parts)
       val entries = ArrayList<Entry>()
       val renamed = HashSet<Element>()
-      // The most similar pairs become renames first, so that a removed neighbor does not take the place of the renamed element.
-      val pairs = named.filter { it.status == FileStatus.DELETED }.flatMap { removed ->
-        named.filter {
-          it.status == FileStatus.ADDED && it.element.kind == removed.element.kind && it.element.parent?.id == removed.element.parent?.id
-        }.map { added -> Triple(removed, added, similarity(removed.element, added.element)) }
-      }.filter { it.third >= RENAME_SIMILARITY }.sortedByDescending { it.third }
-      for ((removed, added) in pairs) {
+      for ((removed, added) in renames(named)) {
         if (removed.element in renamed || added.element in renamed) continue
         renamed.add(added.element)
         renamed.add(removed.element)
@@ -266,7 +263,7 @@ object StructuralHunkNamer {
         ProgressManager.checkCanceled()
         if (!element.eligible) continue
         val inner = changedElements(side, element.children, from, to)
-        if (isChanged(side, element) && element.overlaps(from, to)) {
+        if (element.overlaps(from, to) && isChanged(side, element)) {
           val firstChild = element.children.filter { it.eligible }.minOfOrNull { it.startLine }
           val headerEnd = if (firstChild == null) element.endLine else minOf(element.endLine, maxOf(element.startLine + 1, firstChild))
           val changesHeader = (maxOf(from, element.startLine) until minOf(to, headerEnd)).any { !isTrivial(side.lines.line(it)) }
@@ -279,14 +276,51 @@ object StructuralHunkNamer {
 
     /** Removes the children of added and removed elements, and all but the first element of an added or removed group. */
     private fun withoutImpliedParts(parts: List<Part>): List<Part> {
-      val created = parts.filter { it.status != FileStatus.MODIFIED }
-      return parts.filter { part ->
-        created.none { it.isBase == part.isBase && part.element.isDescendantOf(it.element) } &&
-        (part.element.group == null || part.status == FileStatus.MODIFIED || parts.none {
-          it !== part && it.status == part.status && it.isBase == part.isBase && it.element.parent === part.element.parent &&
-          it.element.group == part.element.group && it.line < part.line
-        })
+      val createdBase = HashSet<Element>()
+      val createdCurrent = HashSet<Element>()
+      val groupStarts = HashMap<GroupKey, Int>()
+      for (part in parts) {
+        if (part.status == FileStatus.MODIFIED) continue
+        (if (part.isBase) createdBase else createdCurrent).add(part.element)
+        val group = part.element.group ?: continue
+        groupStarts.merge(GroupKey(part.status, part.isBase, part.element.parent, group), part.line, ::minOf)
       }
+      return parts.filter { part ->
+        ProgressManager.checkCanceled()
+        val created = if (part.isBase) createdBase else createdCurrent
+        val group = part.element.group
+        generateSequence(part.element.parent) { it.parent }.none { it in created } &&
+        (group == null || part.status == FileStatus.MODIFIED ||
+         part.line <= groupStarts.getValue(GroupKey(part.status, part.isBase, part.element.parent, group)))
+      }
+    }
+
+    /**
+     * The rename candidates: removed and added elements of one kind under one parent, the most similar pairs first, so that a removed
+     * neighbor does not take the place of the renamed element. A hunk compares at most [MAX_RENAME_PAIRS] pairs. A group that needs more
+     * pairs shows its elements as added and removed.
+     */
+    private fun renames(parts: List<Part>): List<Candidate> {
+      val added = parts.filter { it.status == FileStatus.ADDED }.groupBy { it.element.kind to it.element.parent?.id }
+      val words = HashMap<Element, Words>()
+      val candidates = ArrayList<Candidate>()
+      var remainingPairs = MAX_RENAME_PAIRS
+      for ((key, removedGroup) in parts.filter { it.status == FileStatus.DELETED }.groupBy { it.element.kind to it.element.parent?.id }) {
+        val addedGroup = added[key] ?: continue
+        val pairs = removedGroup.size.toLong() * addedGroup.size
+        if (pairs > remainingPairs) continue
+        remainingPairs -= pairs.toInt()
+        for (removed in removedGroup) {
+          ProgressManager.checkCanceled()
+          val removedWords = words.getOrPut(removed.element) { Words(removed.element) }
+          for (addedPart in addedGroup) {
+            val similarity = removedWords.similarity(words.getOrPut(addedPart.element) { Words(addedPart.element) })
+            if (similarity >= RENAME_SIMILARITY) candidates.add(Candidate(removed, addedPart, similarity))
+          }
+        }
+      }
+      candidates.sortByDescending { it.similarity }
+      return candidates
     }
 
     private fun label(part: Part): String {
@@ -354,26 +388,6 @@ object StructuralHunkNamer {
     }
   }
 
-  /** The share of common words of two elements, from 0 to 1. A multi-line element compares its body, without the first line. */
-  private fun similarity(removed: Element, added: Element): Double {
-    val before = contentWords(removed)
-    val after = contentWords(added)
-    if (before.isEmpty() || after.isEmpty()) return 0.0
-    val remaining = HashMap<String, Int>()
-    for (word in after) remaining.merge(word, 1, Int::plus)
-    val common = before.count { word ->
-      val count = remaining[word] ?: 0
-      if (count > 0) remaining[word] = count - 1
-      count > 0
-    }
-    return 2.0 * common / (before.size + after.size)
-  }
-
-  private fun contentWords(element: Element): List<String> {
-    val content = if (element.isSingleLine) element.source else element.source.substringAfter('\n', "")
-    return WORD.findAll(content).map { it.value }.toList()
-  }
-
   private fun wordDifference(text: String, other: String): List<String> {
     val remaining = HashMap<String, Int>()
     for (match in WORD.findAll(other)) remaining.merge(match.value, 1, Int::plus)
@@ -409,6 +423,32 @@ object StructuralHunkNamer {
 
   private class Entry(val line: Int, val name: HunkNamePart, val part: Part?)
 
+  private data class Candidate(val removed: Part, val added: Part, val similarity: Double)
+
+  /** Identifies an added or removed group. The parent compares by identity. */
+  private data class GroupKey(val status: FileStatus, val isBase: Boolean, val parent: Element?, val group: Int)
+
+  /** The words of an element with their counts. A multi-line element counts the words of its body, without the first line. */
+  private class Words(element: Element) {
+    private val counts = HashMap<String, Int>()
+    private val size: Int
+
+    init {
+      val content = if (element.isSingleLine) element.source else element.source.substringAfter('\n', "")
+      for (match in WORD.findAll(content)) counts.merge(match.value, 1, Int::plus)
+      size = counts.values.sum()
+    }
+
+    /** The share of common words of two elements, from 0 to 1. */
+    fun similarity(other: Words): Double {
+      if (size == 0 || other.size == 0) return 0.0
+      val (fewer, more) = if (counts.size <= other.counts.size) counts to other.counts else other.counts to counts
+      var common = 0
+      for ((word, count) in fewer) common += minOf(count, more[word] ?: 0)
+      return 2.0 * common / (size + other.size)
+    }
+  }
+
   /** A Structure View element with its lines. It holds no PSI. The text adds the compared value to the presentation. */
   private class Element(
     val kind: String,
@@ -428,8 +468,6 @@ object StructuralHunkNamer {
     val isSingleLine: Boolean get() = endLine - startLine == 1
 
     fun overlaps(from: Int, to: Int): Boolean = startLine < to && from < endLine
-
-    fun isDescendantOf(ancestor: Element): Boolean = generateSequence(parent) { it.parent }.any { it === ancestor }
   }
 
   private class Side(val lines: LineTable, val roots: List<Element>) {
