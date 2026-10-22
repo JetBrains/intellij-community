@@ -85,7 +85,7 @@ public class JsonSchemaCatalogManagerTest {
         JsonSchemaCatalogEntry result = myCatalogManager.getSchemaCatalogEntryForFile(file);
         assertNull(result);
       }
-    })).start();
+    })).runAsStressTest().start();
   }
 
   private void doTest(@NotNull String filePath, @Nullable String expectedSchemaUrl) {

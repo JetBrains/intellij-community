@@ -154,7 +154,7 @@ public class JsonFormattingTest {
   public void testHugeJsonFilePerformance() {
     // IDEA-195340 bad JSON kills IntelliJ
     myFixture.configureByFile(myTestName + ".json");
-    Benchmark.newBenchmark(myTestName, this::reformatAndCheck).attempts(1).start();
+    Benchmark.newBenchmark(myTestName, this::reformatAndCheck).attempts(1).runAsStressTest().start();
   }
 
   private void doTest() {
