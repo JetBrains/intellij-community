@@ -172,7 +172,7 @@ class MethodReturnInferenceVisitor {
       private final List<ReturnValue> values = new ArrayList<>();
 
       @Override
-      public void visitNode(LighterASTNode element) {
+      public void visitNode(@NotNull LighterASTNode element) {
         IElementType type = element.getTokenType();
         if (type == YIELD_STATEMENT) {
           values.add(getExpressionValue(findExpressionChild(tree, element)));

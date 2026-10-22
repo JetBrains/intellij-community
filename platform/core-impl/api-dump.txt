@@ -1255,6 +1255,7 @@ c:com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl
 - com.intellij.psi.PsiWhiteSpace
 - <init>(java.lang.CharSequence):V
 a:com.intellij.psi.impl.source.tree.RecursiveLighterASTNodeWalkingVisitor
+- com.intellij.lang.LighterASTNodeVisitor
 - p:<init>(com.intellij.lang.LighterAST):V
 - visitNode(com.intellij.lang.LighterASTNode):V
 a:com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor

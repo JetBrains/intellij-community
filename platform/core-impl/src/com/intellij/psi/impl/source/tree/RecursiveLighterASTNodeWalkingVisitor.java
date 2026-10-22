@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
+import com.intellij.lang.LighterASTNodeVisitor;
 import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.lang.LighterLazyParseableNode;
 import com.intellij.openapi.progress.ProgressManager;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public abstract class RecursiveLighterASTNodeWalkingVisitor extends LighterASTNodeVisitor {
+public abstract class RecursiveLighterASTNodeWalkingVisitor implements LighterASTNodeVisitor {
   private final @NotNull LighterAST ast;
   private final Stack<IndexedLighterASTNode> parentStack = new Stack<>();
 

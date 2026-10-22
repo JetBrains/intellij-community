@@ -357,6 +357,10 @@ com.intellij.lang.LighterASTNode
 - a:getStartOffset():I
 - getTextLength():I
 - a:getTokenType():com.intellij.psi.tree.IElementType
+com.intellij.lang.LighterASTNodeVisitor
+- visitLazyParseableNode(com.intellij.lang.LighterLazyParseableNode):V
+- a:visitNode(com.intellij.lang.LighterASTNode):V
+- visitTokenNode(com.intellij.lang.LighterASTTokenNode):V
 com.intellij.lang.LighterASTTokenNode
 - com.intellij.lang.LighterASTNode
 - a:getText():java.lang.CharSequence
