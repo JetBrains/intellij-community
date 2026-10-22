@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.laf.macos">
+<idea-plugin>
   <id>com.intellij.laf.macos</id>
   <name>macOS Light Theme</name>
 
