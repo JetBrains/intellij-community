@@ -2,6 +2,9 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -13,6 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CopyOnWriteArrayList
@@ -99,19 +103,68 @@ internal class BackgroundStateInputTest {
   }
 
   /**
-   * Unit-test mode computes the value before [BackgroundStateInput.recalculate] returns.
+   * Unit-test mode computes the value on the EDT before [BackgroundStateInput.recalculate] returns.
    */
   @Test
-  fun testUnitTestModeComputesAtOnce(): Unit = runWithScope { scope ->
+  fun testUnitTestModeComputesAtOnceOnTheEdt(): Unit = runWithScope { scope ->
     val input = BackgroundStateInput(
       scope = scope,
       compute = { "value" },
       update = { updates.add(it) },
     )
 
+    withContext(Dispatchers.EDT) {
+      input.recalculate()
+      assertEquals(listOf("value"), updates)
+    }
+  }
+
+  /**
+   * [BackgroundStateInput.update] refreshes the editor, so it must run on the EDT. A thread other than the EDT
+   * therefore computes in the background, also in unit-test mode.
+   */
+  @Test
+  fun testAThreadOtherThanTheEdtComputesInTheBackground(): Unit = runWithScope { scope ->
+    val updatesOnTheEdt = CopyOnWriteArrayList<Boolean>()
+    val input = BackgroundStateInput(
+      scope = scope,
+      compute = { "value" },
+      update = {
+        updatesOnTheEdt.add(ApplicationManager.getApplication().isDispatchThread)
+        updates.add(it)
+      },
+    )
+
     input.recalculate()
+    input.awaitForTests()
 
     assertEquals(listOf("value"), updates)
+    assertEquals(listOf(true), updatesOnTheEdt)
+  }
+
+  /**
+   * An EDT that forbids the RW lock, such as `Dispatchers.UI`, cannot compute at once. So the computation runs in the
+   * background there, also in unit-test mode.
+   */
+  @Test
+  fun testAThreadThatForbidsTheLockComputesInTheBackground(): Unit = runWithScope { scope ->
+    val input = BackgroundStateInput(
+      scope = scope,
+      compute = { "value" },
+      update = { updates.add(it) },
+    )
+
+    val reported = CopyOnWriteArrayList<Throwable>()
+    withContext(Dispatchers.EDT) {
+      ApplicationManagerEx.getApplicationEx().withLocksSoftlyProhibited("the test forbids the lock", { reported.add(it) }) {
+        input.recalculate()
+      }
+      assertEquals(emptyList<String>(), updates)
+    }
+    input.awaitForTests()
+
+    assertEquals(listOf("value"), updates)
+    assertEquals(emptyList<Throwable>(), reported)
   }
 
   /**

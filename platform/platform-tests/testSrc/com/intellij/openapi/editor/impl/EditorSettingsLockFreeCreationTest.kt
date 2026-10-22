@@ -12,11 +12,13 @@ import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsigh
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.util.concurrent.TimeUnit
 
 /** The packages of the editor settings and of the code style that the settings read. */
 private val SETTINGS_PACKAGES = listOf(
@@ -47,6 +49,7 @@ private fun Throwable.acquisitionSite(): String? =
 class EditorSettingsLockFreeCreationTest {
   companion object {
     private val projectFixture = projectFixture(openAfterCreation = true)
+    private const val TIMEOUT_SECONDS = 30L
   }
 
   private val fixture by editorModelFixture(codeInsightModuleFixture(projectFixture))
@@ -269,6 +272,35 @@ class EditorSettingsLockFreeCreationTest {
       CodeStyle.doWithTemporarySettings(project, temporary, Runnable {
         created.isViewer = true
         assertEquals(changed, state.tabSize)
+      })
+    }
+    finally {
+      editorFactory.releaseEditor(created)
+    }
+  }
+
+  /**
+   * A console can set the renderer mode on a background thread. The new tab size must still reach the editor on the EDT,
+   * because a changed tab size refreshes the editor.
+   */
+  @Test
+  fun testARendererModeChangeOffTheEdtComputesTheTabSizeAgain(): Unit = fixture.runTest {
+    initText("abc")
+    val editorFactory = EditorFactory.getInstance()
+    val created = editorFactory.createEditor(editor.document, project) as EditorImpl
+    try {
+      val state = (created.settings as SettingsImpl).getState()
+      val changed = state.tabSize + 3
+      val manager = CodeStyleSettingsManager.getInstance(project)
+      val temporary = manager.cloneSettings(CodeStyle.getSettings(project))
+      temporary.indentOptions.TAB_SIZE = changed
+
+      CodeStyle.doWithTemporarySettings(project, temporary, Runnable {
+        ApplicationManager.getApplication().executeOnPooledThread {
+          created.setRendererMode(true)
+        }.get(TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        PlatformTestUtil.waitWithEventsDispatching("The tab size did not reach the editor", { state.tabSize == changed },
+                                                   TIMEOUT_SECONDS.toInt())
       })
     }
     finally {

@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl
 import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -36,7 +37,8 @@ private val LOG: Logger = logger<BackgroundStateInput<*>>()
  * A new computation cancels the previous one, because the previous one can have read the inputs before they changed.
  * A failed computation is logged, and it does not stop the next one.
  *
- * Unit-test mode computes the value at once, on the calling thread, unless a test calls [computeInBackgroundInTests].
+ * Unit-test mode computes the value at once on the EDT, unless a test calls [computeInBackgroundInTests] or the EDT
+ * forbids the RW lock. A call on another thread computes in the background, so that [update] still runs on the EDT.
  */
 internal class BackgroundStateInput<T>(
   private val scope: CoroutineScope,
@@ -49,9 +51,12 @@ internal class BackgroundStateInput<T>(
    * Computes the value again, and then gives it to [update].
    */
   fun recalculate() {
-    if (!computesInBackground()) {
+    val application = ApplicationManager.getApplication()
+    // Only the EDT can compute at once, because [update] refreshes the editor. An EDT that forbids the RW lock, such as
+    // `Dispatchers.UI`, cannot compute at once either. This holds also in unit-test mode.
+    if (!computesInBackground() && application.isDispatchThread && application.lockProhibitedAdvice == null) {
       val result = try {
-        ApplicationManager.getApplication().runReadAction(Computable { compute() })
+        computeOnThisThread(application)
       } catch (e: Throwable) {
         rethrowControlFlowException(e)
         LOG.error(e)
@@ -78,6 +83,16 @@ internal class BackgroundStateInput<T>(
     }
     jobRef.getAndSet(job)?.cancel()
     job.start()
+  }
+
+  /**
+   * Computes on the EDT. With read access already, such as with the write-intent lock, it takes no new read action.
+   */
+  private fun computeOnThisThread(application: Application): T {
+    if (application.isReadAccessAllowed) {
+      return compute()
+    }
+    return application.runReadAction(Computable { compute() })
   }
 
   /**
