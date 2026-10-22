@@ -20,11 +20,11 @@ import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.registry.EditorRegistry;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
@@ -246,10 +246,8 @@ public final class FocusModeModel implements Disposable {
   private void applyFocusMode(@NotNull Segment focusRange) {
     EditorColorsScheme scheme = ObjectUtils.notNull(myEditor.getColorsScheme(), EditorColorsManager.getInstance().getGlobalScheme());
     Color background = scheme.getDefaultBackground();
-    //noinspection UseJBColor
-    Color foreground = Registry.getColor(ColorUtil.isDark(background) ?
-                                         "editor.focus.mode.color.dark" :
-                                         "editor.focus.mode.color.light", Color.GRAY);
+    EditorRegistry registry = EditorRegistry.current();
+    Color foreground = ColorUtil.isDark(background) ? registry.focusModeColorDark() : registry.focusModeColorLight();
     TextAttributes attributes = new TextAttributes(foreground, background, background, LINE_UNDERSCORE, Font.PLAIN);
     myEditor.putUserData(FOCUS_MODE_ATTRIBUTES, attributes);
 

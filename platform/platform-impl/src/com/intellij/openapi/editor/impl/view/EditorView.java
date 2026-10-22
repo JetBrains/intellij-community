@@ -37,9 +37,9 @@ import com.intellij.openapi.editor.impl.caret.model.CaretRepaintMetrics;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.impl.view.animation.EditorPainterCache;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.registry.EditorRegistry;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentInternalUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -993,7 +993,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     int fontMetricsHeight,
     float verticalScalingFactor
   ) {
-    if (Registry.is("editor.text.xcode.vertical.spacing")) {
+    EditorRegistry registry = EditorRegistry.current();
+    if (registry.isXcodeVerticalSpacing()) {
       //Here we approximate line calculation to the variant used in Xcode 9 editor
       LineMetrics metrics = font.getLineMetrics("", fontRenderContext);
       double height = Math.ceil(metrics.getHeight()) + metrics.getLeading();
@@ -1006,7 +1007,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
       }
       return (int)Math.ceil(height) + spacing;
     }
-    if (Registry.is("editor.text.vertical.spacing.correct.rounding")) {
+    if (registry.isVerticalSpacingRoundingCorrect()) {
       if (verticalScalingFactor == 1f) {
         return fontMetricsHeight;
       } else {

@@ -39,14 +39,13 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.impl.view.EditorPainter;
+import com.intellij.openapi.editor.registry.EditorRegistry;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.StackTraceSnapshot;
@@ -66,7 +65,6 @@ import java.awt.Rectangle;
 @ApiStatus.Internal
 public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private static final Logger LOG = Logger.getInstance(CaretImpl.class);
-  private static final RegistryValue VIM_LIKE_CARET_SELECTION_ENABLED = Registry.get("editor.block.caret.selection.vim-like");
   /** Removing many carets disposes many of them, so the disposal trace keeps a bounded number of frames. */
   private static final int DISPOSAL_TRACE_FRAMES = 16;
 
@@ -537,7 +535,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     final EditorComponentImpl content = myEditor.getContentComponent();
     int editorUpdateWidth = myEditor.getScrollPane().getHorizontalScrollBar().getValue() + visibleArea.width;
     int gutterUpdateWidth = gutter.getWidth();
-    int additionalRepaintHeight = this == myCaretModel.getPrimaryCaret() && Registry.is("editor.adjust.right.margin")
+    int additionalRepaintHeight = this == myCaretModel.getPrimaryCaret() && EditorRegistry.current().isRightMarginAdjusted()
                                   && EditorPainter.isMarginShown(myEditor) ? 1 : 0;
     if ((oldY <= newY + newHeight) && (oldY + oldHeight >= newY)) { // repaint regions overlap
       int y = Math.min(oldY, newY);
@@ -1418,7 +1416,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
         // lead so that block-caret mouse-drag selection (see EditorImpl#processMouseDragged) is unchanged.
         boolean useEndPosition = mySelectionEndPositionIsLead &&
                                  EditorUtil.isBlockLikeCaret(this) &&
-                                 VIM_LIKE_CARET_SELECTION_ENABLED.asBoolean();
+                                 EditorRegistry.current().isVimLikeBlockCaretSelection();
         return getSelectionVisualPosition(selectionMarker, !useEndPosition);
       }
       return getSelectionVisualPosition(selectionMarker, !mySelectionEndPositionIsLead);

@@ -8,13 +8,13 @@ import com.intellij.idea.AppMode
 import com.intellij.idea.AppModeAssertions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.editor.registry.EditorRegistry
 import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus.Internal
 
 val isLocalEditorUx: Boolean
-  get() = Registry.`is`("editor.rd.local.ux")
+  get() = EditorRegistry.current().isLocalEditorUxEnabled()
 
 fun isMonolith(): Boolean {
   return isLocalEditorUx || AppMode.isMonolith()

@@ -93,6 +93,7 @@ import com.intellij.openapi.editor.markup.LineMarkerRenderer;
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.registry.EditorRegistry;
 import com.intellij.openapi.fileEditor.impl.EditorCompositeKt;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -113,7 +114,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiFile;
@@ -814,7 +814,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     if (!myEditor.getSettings().isCaretRowShown()) {
       return null;
     }
-    if (!Registry.is("highlight.caret.line.at.custom.fold") && isCaretAtCustomFolding()) {
+    if (!EditorRegistry.current().isCaretLineHighlightedAtCustomFold() && isCaretAtCustomFolding()) {
       return null;
     }
     if (myEditor.isStickyLinePainting()) {
@@ -1775,7 +1775,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     boolean shown = isFoldingOutlineShown();
     double x = getFoldingMarkerCenterOffset2D();
 
-    if ((shown || myEditor.isInDistractionFreeMode() && Registry.is("editor.distraction.gutter.separator")) && myPaintBackground) {
+    if ((shown || myEditor.isInDistractionFreeMode() && EditorRegistry.current().isDistractionFreeGutterSeparatorShown()) &&
+        myPaintBackground) {
       g.setColor(getOutlineColor(false));
       LinePainter2D.paint(g, x, clip.y, x, clip.y + clip.height, StrokeType.CENTERED, getStrokeWidth());
     }
@@ -2290,7 +2291,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   private void updateFreePainters(@NotNull MouseEvent e) {
     if (!isLineMarkersShown() ||
         !ExperimentalUI.isNewUI() ||
-        !Registry.is("ide.gutter.update.free.markers.on.hover")) {
+        !EditorRegistry.current().isGutterFreeMarkersUpdatedOnHover()) {
       return;
     }
 
@@ -2317,7 +2318,16 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   }
 
   private static boolean debug() {
-    return Registry.is("ide.debug.gutter.area", false);
+    return EditorRegistry.current().isGutterAreaDebugEnabled();
+  }
+
+  /**
+   * Returns {@code true} when a registry value that the gutter paints differs between the two snapshots.
+   */
+  static boolean needsRepaint(@NotNull EditorRegistry oldRegistry, @NotNull EditorRegistry newRegistry) {
+    return oldRegistry.isCaretLineHighlightedAtCustomFold() != newRegistry.isCaretLineHighlightedAtCustomFold() ||
+           oldRegistry.isDistractionFreeGutterSeparatorShown() != newRegistry.isDistractionFreeGutterSeparatorShown() ||
+           oldRegistry.isGutterAreaDebugEnabled() != newRegistry.isGutterAreaDebugEnabled();
   }
 
   private GutterIconRenderer myCalculatingInBackground;
@@ -2938,7 +2948,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     ClickInfo clickInfo = myLastActionableClick;
     if (clickInfo == null) return;
     boolean[] removed = {false};
-    EdtScheduler.getInstance().schedule(Registry.intValue("actionSystem.popup.progress.icon.delay", 500), () -> {
+    EdtScheduler.getInstance().schedule(EditorRegistry.current().popupProgressIconDelayMs(), () -> {
       if (myLastActionableClick != clickInfo || removed[0]) return;
       clickInfo.myProgressVisualLine = info.visualLine;
       clickInfo.myProgressGutterMark = info.renderer;

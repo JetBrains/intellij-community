@@ -2,7 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.editor.registry.EditorRegistry;
 import com.intellij.util.SingleEdtTaskScheduler;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
@@ -121,7 +121,7 @@ final class EditorSizeAdjustmentStrategy {
    * A proper fix should be implemented in the future.
    */
   private static int getFrequentSizeChangesNumber() {
-    return Registry.intValue("editor.viewport.width.update.frequency", 200);
+    return EditorRegistry.current().viewportWidthUpdateFrequency();
   }
 
   private final class UpdateSizeTask implements Runnable {

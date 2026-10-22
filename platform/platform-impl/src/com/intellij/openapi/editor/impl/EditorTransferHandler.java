@@ -16,9 +16,9 @@ import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
+import com.intellij.openapi.editor.registry.EditorRegistry;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,7 +92,7 @@ final class EditorTransferHandler extends TransferHandler {
 
     // IDEA-152214 Xcode like way to disable/remove breakpoints
     //should be used a better representation class
-    if (Registry.is("debugger.click.disable.breakpoints") &&
+    if (EditorRegistry.current().isDebuggerClickDisablingBreakpoints() &&
         ArrayUtil.contains(GutterDraggableObject.flavor, transferFlavors)) {
       return true;
     }

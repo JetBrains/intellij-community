@@ -130,6 +130,7 @@ import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLineShadowPainter;
 import com.intellij.openapi.editor.impl.stickyLines.ui.StickyLinesPanel;
 import com.intellij.openapi.editor.impl.view.CharacterGrid;
 import com.intellij.openapi.editor.impl.view.CharacterGridImpl;
+import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.impl.view.animation.EditorPainterCache;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
@@ -137,6 +138,8 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.rd.LocalEditorSupportUtil;
+import com.intellij.openapi.editor.registry.EditorRegistry;
+import com.intellij.openapi.editor.registry.EditorRegistryListener;
 import com.intellij.openapi.editor.state.ObservableStateListener;
 import com.intellij.openapi.editor.toolbar.floating.EditorFloatingToolbar;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -162,7 +165,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.TraceableDisposable;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -812,6 +814,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.addPropertyChangeListener(propertyChangeListener);
     Disposer.register(myDisposable, () -> myDocument.removePropertyChangeListener(propertyChangeListener));
 
+    ApplicationManager.getApplication().getMessageBus().connect(myDisposable).subscribe(
+      EditorRegistryListener.TOPIC,
+      (oldSnapshot, newSnapshot) -> {
+        if (EditorPainter.needsRepaint(oldSnapshot, newSnapshot)) {
+          myEditorComponent.repaint();
+        }
+        if (EditorGutterComponentImpl.needsRepaint(oldSnapshot, newSnapshot)) {
+          myGutterComponent.repaint();
+        }
+      }
+    );
+
     CodeStyleSettingsListener codeStyleSettingsListener = e -> {
       codeStyleSettingsChanged(e);
     };
@@ -1171,7 +1185,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * @return {@code true} if a scrollbar should be opaque, {@code false} otherwise
    */
   boolean shouldScrollBarBeOpaque() {
-    return !myBackgroundImageSet && !Registry.is("editor.transparent.scrollbar");
+    return !myBackgroundImageSet && !EditorRegistry.current().isScrollBarTransparent();
   }
 
   static @NotNull Color adjustThumbColor(@NotNull Color base, boolean dark) {
@@ -2097,8 +2111,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * This method is used to scale editors elements such as gutter icons, folding elements, and others
    */
   public float getScale() {
-    if (Registry.is("editor.scale.gutter.icons")) {
-      float newUINormLineHeight = (float)Registry.doubleValue("ide.new.ui.editor.normalized.line.height");
+    EditorRegistry registry = EditorRegistry.current();
+    if (registry.isGutterIconScaled()) {
+      float newUINormLineHeight = (float)registry.newUiNormalizedLineHeight();
       float standardNormalizedLineHeight = ExperimentalUI.isNewUI() ? newUINormLineHeight : 16.0f;
       float normLineHeight = getLineHeight() / myScheme.getLineSpacing(); // normalized, as for 1.0f line spacing
       return normLineHeight / JBUIScale.scale(standardNormalizedLineHeight);
@@ -2343,7 +2358,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   public void hideCursor() {
-    if (!myState.isViewer() && EMPTY_CURSOR != null && Registry.is("ide.hide.cursor.when.typing")) {
+    if (!myState.isViewer() && EMPTY_CURSOR != null && EditorRegistry.current().isCursorHiddenWhenTyping()) {
       myDefaultCursor = EMPTY_CURSOR;
       updateEditorCursor();
     }
@@ -2876,7 +2891,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (isReleased) {
       return new Dimension();
     }
-    if (Registry.is("idea.true.smooth.scrolling.dynamic.scrollbars")) {
+    if (EditorRegistry.current().isDynamicScrollBarsEnabled()) {
       return new Dimension(getPreferredWidthOfVisibleLines(), myView.getPreferredHeight());
     }
     return myView.getPreferredSize();
@@ -3184,7 +3199,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private void processMouseDragged(@NotNull MouseEvent e) {
     if (!SwingUtilities.isLeftMouseButton(e) && !SwingUtilities.isMiddleMouseButton(e)
-        || (Registry.is("editor.disable.drag.with.right.button") && SwingUtilities.isRightMouseButton(e))) {
+        || (EditorRegistry.current().isDragWithRightButtonDisabled() && SwingUtilities.isRightMouseButton(e))) {
       return;
     }
 
@@ -3342,7 +3357,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 oldVisLeadSelectionStart = selectionModel.getSelectionEndPosition();
               }
             }
-            else if (EditorUtil.isBlockLikeCaret(getCaretModel().getPrimaryCaret()) && Registry.is("editor.block.caret.selection.vim-like")) {
+            else if (EditorUtil.isBlockLikeCaret(getCaretModel().getPrimaryCaret()) &&
+                     EditorRegistry.current().isVimLikeBlockCaretSelection()) {
               // adjust selection range, so that it covers caret location
               if (mySelectionModel.hasSelection() && oldVisLeadSelectionStart.equals(mySelectionModel.getSelectionEndPosition())) {
                 oldVisLeadSelectionStart = prevSelectionVisualPosition(oldVisLeadSelectionStart);
@@ -3401,7 +3417,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    */
   @ApiStatus.Internal
   public static int dragSensitivity() {
-    return Registry.intValue("editor.drag.sensitivity", 5, 0, 25);
+    return EditorRegistry.current().dragSensitivity();
   }
 
   private static @NotNull Point convertPoint(@NotNull Component from, @NotNull Point point, @NotNull Component to) {
@@ -3701,7 +3717,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
 
 
-      myTimer = TimerUtil.createNamedTimer("Editor scroll timer", Registry.intValue("editor.scrolling.animation.interval.ms"), _ -> {
+      myTimer = TimerUtil.createNamedTimer("Editor scroll timer", EditorRegistry.current().scrollingAnimationIntervalMs(), _ -> {
         if (isDisposed()) {
           stop();
           return;
@@ -4051,7 +4067,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (mouseSelectionStateResetRunnable == null) {
         mouseSelectionStateResetRunnable = () -> EditorThreading.runWritable(() -> resetMouseSelectionState(null, null));
       }
-      mouseSelectionStateAlarm.request(Registry.intValue("editor.mouseSelectionStateResetTimeout"),
+      mouseSelectionStateAlarm.request(EditorRegistry.current().mouseSelectionResetTimeoutMs(),
                                        ModalityState.stateForComponent(myEditorComponent),
                                        mouseSelectionStateResetRunnable);
     }
@@ -4448,9 +4464,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void replaceInputMethodText(@NotNull InputMethodEvent e) {
+      EditorRegistry registry = EditorRegistry.current();
       if (myNeedToSelectPreviousChar && SystemInfo.isMac &&
-          (Registry.is("ide.mac.pressAndHold.brute.workaround") || Registry.is("ide.mac.pressAndHold.workaround") &&
-                                                                   (hasRelevantCommittedText(e) || e.getCaret() == null))) {
+          (registry.isMacPressAndHoldBruteWorkaroundEnabled() || registry.isMacPressAndHoldWorkaroundEnabled() &&
+                                                                 (hasRelevantCommittedText(e) || e.getCaret() == null))) {
         // This is required to support input of accented characters using press-and-hold method (http://support.apple.com/kb/PH11264).
         // JDK currently properly supports this functionality only for TextComponent/JTextComponent descendants.
         // For our editor component, we need this workaround.
@@ -4531,7 +4548,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           int composedTextIndex = text.getIndex();
           if (composedTextIndex < text.getEndIndex()) {
             String composedString = createComposedString(composedTextIndex, text);
-            if (Registry.is("editor.input.method.inlay")) {
+            if (EditorRegistry.current().isInputMethodInlayEnabled()) {
               runUndoTransparent(() -> EditorModificationUtil.deleteSelectedTextForAllCarets(EditorImpl.this));
 
               var offset = getCaretModel().getCurrentCaret().getOffset();
@@ -4764,8 +4781,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private boolean processMousePressed(@NotNull MouseEvent e) {
       if (myMouseSelectionState != MOUSE_SELECTION_STATE_NONE &&
-          System.currentTimeMillis() - myMouseSelectionChangeTimestamp > Registry.intValue(
-            "editor.mouseSelectionStateResetTimeout")) {
+          System.currentTimeMillis() - myMouseSelectionChangeTimestamp > EditorRegistry.current().mouseSelectionResetTimeoutMs()) {
         resetMouseSelectionState(e, null);
       }
 
@@ -5250,7 +5266,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         if (myMousePressedEvent != null && myMousePressedEvent.getComponent() == e.getComponent()) {
           Point lastPoint = myMousePressedEvent.getPoint();
           Point point = e.getPoint();
-          int deadZone = Registry.intValue("editor.mouseSelectionStateResetDeadZone");
+          int deadZone = EditorRegistry.current().mouseSelectionResetDeadZone();
           if (Math.abs(lastPoint.x - point.x) >= deadZone || Math.abs(lastPoint.y - point.y) >= deadZone) {
             resetMouseSelectionState(e, event);
           }
@@ -5279,7 +5295,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   static boolean handleDrop(@NotNull EditorImpl editor, @NotNull Transferable t, int dropAction) {
     EditorDropHandler dropHandler = editor.getDropHandler();
 
-    if (Registry.is("debugger.click.disable.breakpoints")) {
+    if (EditorRegistry.current().isDebuggerClickDisablingBreakpoints()) {
       try {
         if (t.isDataFlavorSupported(GutterDraggableObject.flavor)) {
           Object attachedObject = t.getTransferData(GutterDraggableObject.flavor);
@@ -5537,7 +5553,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @ApiStatus.Internal
   public boolean shouldUseNewSelection() {
-    return !Registry.is("editor.old.full.horizontal.selection.enabled")
+    return shouldUseNewSelection(EditorRegistry.current());
+  }
+
+  @ApiStatus.Internal
+  public boolean shouldUseNewSelection(@NotNull EditorRegistry registry) {
+    return !registry.isOldFullHorizontalSelectionEnabled()
            && !isColumnMode()
            && IslandsState.Companion.isEnabled();
   }

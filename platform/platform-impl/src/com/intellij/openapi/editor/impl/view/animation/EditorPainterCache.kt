@@ -14,7 +14,7 @@ import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStati
 import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheStatistics.recordMiss
 import com.intellij.openapi.editor.impl.view.animation.EditorPainterCache.Companion.THRASH_COOLDOWN
 import com.intellij.openapi.editor.impl.view.animation.EditorPainterCache.Companion.THRASH_WINDOW
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.editor.registry.EditorRegistry
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.ui.paint.use
 import com.intellij.ui.paint.useCopy
@@ -39,7 +39,7 @@ internal class EditorPainterCache(
 ) : Disposable {
   private val coroutineScope: CoroutineScope = editor.coroutineScope
   private val lastCacheKey = AtomicReference<EditorAnimationCacheKey?>(null)
-  private val isCacheEnabled: Boolean = Registry.`is`("editor.animation.cache.enabled", true)
+  private val isCacheEnabled: Boolean = EditorRegistry.current().isAnimationCacheEnabled()
   private val debugWindow: EditorAnimationCacheDebugWindow?
 
   /**

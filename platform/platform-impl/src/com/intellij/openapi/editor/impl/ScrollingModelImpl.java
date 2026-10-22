@@ -22,9 +22,9 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
+import com.intellij.openapi.editor.registry.EditorRegistry;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.DirtyUI;
 import com.intellij.ui.components.Interpolable;
 import com.intellij.util.MathUtil;
@@ -429,7 +429,7 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
     }
 
     int getScrollDuration() {
-      var defaultDuration = Registry.intValue("idea.editor.smooth.scrolling.navigation.duration", 100);
+      var defaultDuration = EditorRegistry.current().navigationScrollDurationMs();
       if (defaultDuration < 0) {
         return 0;
       }

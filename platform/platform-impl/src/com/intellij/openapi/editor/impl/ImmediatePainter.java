@@ -26,8 +26,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
+import com.intellij.openapi.editor.registry.EditorRegistry;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
 import com.intellij.ui.IslandsState;
@@ -69,11 +68,6 @@ public final class ImmediatePainter {
   private static final Logger LOG = Logger.getInstance(ImmediatePainter.class);
   private static final int DEBUG_PAUSE_DURATION = 1000;
 
-  public static final RegistryValue ENABLED = Registry.get("editor.zero.latency.rendering");
-  public static final RegistryValue DOUBLE_BUFFERING = Registry.get("editor.zero.latency.rendering.double.buffering");
-  private static final RegistryValue PIPELINE_FLUSH = Registry.get("editor.zero.latency.rendering.pipeline.flush");
-  private static final RegistryValue DEBUG = Registry.get("editor.zero.latency.rendering.debug");
-
   private final EditorImpl myEditor;
   private Image myImage;
 
@@ -90,7 +84,7 @@ public final class ImmediatePainter {
   }
 
   boolean paint(final Graphics g, final EditorActionPlan plan) {
-    if (ENABLED.asBoolean() && canPaintImmediately(myEditor)) {
+    if (EditorRegistry.current().isZeroLatencyRenderingEnabled() && canPaintImmediately(myEditor)) {
       if (plan.getCaretShift() != 1) return false;
 
       final List<EditorActionPlan.Replacement> replacements = plan.getReplacements();
@@ -239,9 +233,10 @@ public final class ImmediatePainter {
     }
 
     g.setClip(new Rectangle2D.Float(clipStartX, p2y, clipEndX - clipStartX, lineHeight));
+    EditorRegistry registry = EditorRegistry.current();
     // at the moment, lines in editor are not aligned to dev pixel grid along Y axis, when fractional scale is used,
     // so double buffering is disabled (as it might not produce the same result as direct painting, and will case text jitter)
-    if (DOUBLE_BUFFERING.asBoolean() && !PaintUtil.isFractionalScale(g.getTransform())) {
+    if (registry.isZeroLatencyDoubleBufferingEnabled() && !PaintUtil.isFractionalScale(g.getTransform())) {
       paintWithDoubleBuffering(g, painter);
     }
     else {
@@ -250,11 +245,11 @@ public final class ImmediatePainter {
 
     g.setClip(originalClip);
 
-    if (PIPELINE_FLUSH.asBoolean()) {
+    if (registry.isZeroLatencyPipelineFlushEnabled()) {
       Toolkit.getDefaultToolkit().sync();
     }
 
-    if (DEBUG.asBoolean()) {
+    if (registry.isZeroLatencyDebugEnabled()) {
       pause();
     }
   }

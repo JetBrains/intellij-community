@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
@@ -229,11 +230,11 @@ public abstract class ImmediatePainterTestCase {
   }
 
   protected static void setZeroLatencyRenderingEnabled(boolean enabled) {
-    ImmediatePainter.ENABLED.setValue(enabled);
+    Registry.get("editor.zero.latency.rendering").setValue(enabled);
   }
 
   protected static void setDoubleBufferingEnabled(boolean enabled) {
-    ImmediatePainter.DOUBLE_BUFFERING.setValue(enabled);
+    Registry.get("editor.zero.latency.rendering.double.buffering").setValue(enabled);
   }
 
   protected void setBlockCursor(boolean blockCursor) {

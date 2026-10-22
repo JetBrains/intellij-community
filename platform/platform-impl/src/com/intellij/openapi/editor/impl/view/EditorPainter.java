@@ -53,11 +53,11 @@ import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder;
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder.EffectDescriptor;
+import com.intellij.openapi.editor.registry.EditorRegistry;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.CachingPainter;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
@@ -123,9 +123,25 @@ public final class EditorPainter implements TextDrawingCallback {
 
   @ApiStatus.Internal
   public static boolean isMarginShown(@NotNull Editor editor) {
+    return isMarginShown(editor, EditorRegistry.current());
+  }
+
+  private static boolean isMarginShown(@NotNull Editor editor, @NotNull EditorRegistry registry) {
     return editor.getSettings().isRightMarginShown() &&
            editor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR) != null &&
-           (Registry.is("editor.show.right.margin.in.read.only.files") || editor.getDocument().isWritable());
+           (registry.isRightMarginShownInReadOnlyFiles() || editor.getDocument().isWritable());
+  }
+
+  /**
+   * Returns {@code true} when a registry value that the painter uses differs between the two snapshots.
+   */
+  @ApiStatus.Internal
+  public static boolean needsRepaint(@NotNull EditorRegistry oldRegistry, @NotNull EditorRegistry newRegistry) {
+    return oldRegistry.isRightMarginShownInReadOnlyFiles() != newRegistry.isRightMarginShownInReadOnlyFiles() ||
+           oldRegistry.isRightMarginAdjusted() != newRegistry.isRightMarginAdjusted() ||
+           oldRegistry.isFoldingHighlighted() != newRegistry.isFoldingHighlighted() ||
+           oldRegistry.isOldFullHorizontalSelectionEnabled() != newRegistry.isOldFullHorizontalSelectionEnabled() ||
+           oldRegistry.isCaretLineHighlightedAtCustomFold() != newRegistry.isCaretLineHighlightedAtCustomFold();
   }
 
   @ApiStatus.Internal
@@ -219,6 +235,7 @@ public final class EditorPainter implements TextDrawingCallback {
     private final EditorPainterCache myCache;
     private final EditorCaretPainter myCaretPainter ;
     private final EditorImpl myEditor;
+    private final EditorRegistry myRegistry;
     private final Document myDocument;
     private final CharSequence myText;
     private final MarkupModelEx myDocMarkup;
@@ -265,6 +282,7 @@ public final class EditorPainter implements TextDrawingCallback {
       myCache = cache;
       myCaretPainter = caretPainter;
       myEditor = myView.getEditor();
+      myRegistry = EditorRegistry.current();
       myDocument = myView.getDocument();
       myText = myDocument.getImmutableCharSequence();
       myDocMarkup = myView.getFilteredDocumentMarkupModel();
@@ -451,7 +469,7 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private boolean isMarginShown() {
-      return EditorPainter.isMarginShown(myEditor);
+      return EditorPainter.isMarginShown(myEditor, myRegistry);
     }
 
     private float visualLineEnd(int visualLine) {
@@ -472,7 +490,7 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private boolean shouldUseNewSelection() {
-      return myEditor.shouldUseNewSelection();
+      return myEditor.shouldUseNewSelection(myRegistry);
     }
 
     private Color selectionBackgroundColor() {
@@ -488,7 +506,7 @@ public final class EditorPainter implements TextDrawingCallback {
       mySelectionModelView.invalidateArea(new Rectangle2D.Double(myClip.x, myClip.y + myYShift, myClip.width, myClip.height));
 
       int lineCount = myView.getVisibleLineCount();
-      boolean calculateMarginWidths = Registry.is("editor.adjust.right.margin") && isMarginShown() && myStartVisualLine < lineCount;
+      boolean calculateMarginWidths = myRegistry.isRightMarginAdjusted() && isMarginShown() && myStartVisualLine < lineCount;
       myMarginPositions = calculateMarginWidths ? new MarginPositions(Math.min(myEndVisualLine, lineCount - 1) - myStartVisualLine + 2)
                                                 : null;
       final LineWhitespacePaintingStrategy whitespacePaintingStrategy = new LineWhitespacePaintingStrategy(myEditor.getSettings());
@@ -577,7 +595,7 @@ public final class EditorPainter implements TextDrawingCallback {
             }
             FoldRegion foldRegion = fragment.getCurrentFoldRegion();
             TextAttributes foldRegionInnerAttributes =
-              foldRegion == null || !Registry.is("editor.highlight.foldings") ? null : getInnerHighlighterAttributes(foldRegion);
+              foldRegion == null || !myRegistry.isFoldingHighlighted() ? null : getInnerHighlighterAttributes(foldRegion);
             if (foldRegionInnerAttributes == null ||
                 !paintFoldingBackground(foldRegionInnerAttributes, xStart, y, xEnd - xStart, foldRegion)) {
               paintBackground(attributes, xStart, y, xEnd - xStart);
@@ -1655,7 +1673,7 @@ public final class EditorPainter implements TextDrawingCallback {
                                                               : DocumentUtil.getPreviousCodePointOffset(myDocument, visualLineEndOffset),
                                 visualLineEndOffset,
                                 CaretData.copyOf(myCaretData, visLineIterator.isCustomFoldRegionLine() &&
-                                                                             !Registry.is("highlight.caret.line.at.custom.fold")),
+                                                                             !myRegistry.isCaretLineHighlightedAtCustomFold()),
                                 false, false, false, false);
       }
       if (!it.atEnd()) {
@@ -1782,7 +1800,7 @@ public final class EditorPainter implements TextDrawingCallback {
     // to avoid circular dependency.
     private static final Key<Boolean> FRONTEND_CREATED = Key.create("FRONTEND_CREATED");
     private static TextAttributes debugZombieFoldRegion(@NotNull FoldRegion region, @NotNull TextAttributes foldAttributes) {
-      if (Registry.is("cache.markup.debug") && region.getUserData(FoldingKeys.ZOMBIE_REGION_KEY) != null) {
+      if (EditorRegistry.current().isMarkupCacheDebugEnabled() && region.getUserData(FoldingKeys.ZOMBIE_REGION_KEY) != null) {
         TextAttributes zombieAttr = foldAttributes.clone();
         zombieAttr.copyFrom(foldAttributes);
         zombieAttr.setEffectType(EffectType.STRIKEOUT);

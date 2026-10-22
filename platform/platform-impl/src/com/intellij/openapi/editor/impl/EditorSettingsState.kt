@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl.CODE_STYLE_SETTINGS
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
 import com.intellij.openapi.editor.impl.stickyLines.StickyLinesLanguageSupport
+import com.intellij.openapi.editor.registry.EditorRegistry
 import com.intellij.openapi.editor.state.CustomOutValueModifier
 import com.intellij.openapi.editor.state.ObservableState
 import com.intellij.openapi.editor.state.ObservableStateListener
@@ -29,7 +30,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectLocator
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.codeStyle.CodeStyleConstraints
 import com.intellij.psi.codeStyle.CodeStyleSettings
@@ -68,7 +68,7 @@ class EditorSettingsState(
 ) : ObservableState() {
 
   // Per-editor settings with a fixed default. Only a setter of SettingsImpl changes them.
-  var myAdditionalLinesCount: Int by property(Registry.intValue("editor.virtual.lines", 5))
+  var myAdditionalLinesCount: Int by property(EditorRegistry.current().virtualLines())
   var myAdditionalColumnsCount: Int by property(3)
   var myLineCursorWidth: Int by property(EditorUtil.getDefaultCaretWidth())
   var myLineMarkerAreaShown: Boolean by property(true)
@@ -78,7 +78,7 @@ class EditorSettingsState(
   var myCaretRowShown: Boolean by property(true)
   var myPaintSoftWraps: Boolean by property(true)
   var characterGridWidth: Float? by property(null)
-  var rtlEnabled: Boolean by property(!Registry.`is`("editor.disable.rtl", false))
+  var rtlEnabled: Boolean by property(!EditorRegistry.current().isRtlDisabled())
 
   // Settings from the code style.
 

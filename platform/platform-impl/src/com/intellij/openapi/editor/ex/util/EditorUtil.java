@@ -67,6 +67,7 @@ import com.intellij.openapi.editor.impl.ScrollingModelImpl;
 import com.intellij.openapi.editor.impl.TextRangeInterval;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.registry.EditorRegistry;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -80,7 +81,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.ui.ExperimentalUI;
@@ -389,7 +389,7 @@ public final class EditorUtil {
   }
 
   public static Icon scaleIconAccordingEditorFont(Icon icon, Editor editor) {
-    if (Registry.is("editor.scale.gutter.icons") && editor instanceof EditorImpl impl && icon instanceof ScalableIcon scalable) {
+    if (EditorRegistry.current().isGutterIconScaled() && editor instanceof EditorImpl impl && icon instanceof ScalableIcon scalable) {
       float scale = impl.getScale();
       if (Math.abs(1f - scale) > 0.1f) {
         return scalable.scale(scale);
@@ -1073,7 +1073,7 @@ public final class EditorUtil {
   }
 
   public static int getDefaultCaretWidth() {
-    return Registry.intValue("editor.caret.width", 2);
+    return EditorRegistry.current().caretWidth();
   }
 
   /**

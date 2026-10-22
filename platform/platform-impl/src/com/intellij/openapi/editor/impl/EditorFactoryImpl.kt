@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
 import com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl
 import com.intellij.openapi.editor.impl.view.EditorPainter
 import com.intellij.openapi.editor.impl.zombie.Necropolis
+import com.intellij.openapi.editor.registry.EditorRegistryService
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.fileTypes.FileType
@@ -60,6 +61,7 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
   private val editorFactoryEventDispatcher: EventDispatcher<EditorFactoryListener?> = EventDispatcher.create(EditorFactoryListener::class.java)
 
   init {
+    EditorRegistryService.ensureCreated()
     val connection = ApplicationManager.getApplication().messageBus.simpleConnect()
     connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosed(project: Project) {

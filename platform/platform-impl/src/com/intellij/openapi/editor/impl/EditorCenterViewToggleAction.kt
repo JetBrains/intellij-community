@@ -5,13 +5,14 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.registry.EditorRegistry
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.registry.Registry
 
 internal class EditorCenterViewToggleAction : ToggleAction(), DumbAware {
 
   override fun isSelected(event: AnActionEvent): Boolean {
-    return Registry.`is`("editor.distraction.free.mode")
+    return EditorRegistry.current().isDistractionFreeMode()
   }
 
   override fun setSelected(event: AnActionEvent, isSelected: Boolean) {

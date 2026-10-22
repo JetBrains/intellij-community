@@ -83,6 +83,8 @@
     <applicationSettings service="com.intellij.ide.ui.NotRoamableUiSettings"/>
     <applicationService serviceImplementation="com.intellij.openapi.editor.EditorCoroutineScopeService"/>
     <projectService serviceImplementation="com.intellij.openapi.editor.EditorCoroutineScopeService"/>
+    <applicationService serviceInterface="com.intellij.openapi.editor.registry.EditorRegistryService"
+                        serviceImplementation="com.intellij.openapi.editor.registry.EditorRegistryServiceImpl"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.openapi.vcs.FileStatusCleaner"

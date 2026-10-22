@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.impl.caret.model.CaretRepaintMetrics
 import com.intellij.openapi.editor.impl.caret.model.CaretTick
 import com.intellij.openapi.editor.impl.view.animation.AnimationClock
 import com.intellij.openapi.editor.impl.view.animation.AnimationTimeMark
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.editor.registry.EditorRegistry
 import com.intellij.ui.DrawUtil.isSimplifiedUI
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
@@ -344,7 +344,7 @@ internal class EditorCaretMutator internal constructor(
     val configuredBlinkPeriod = settings.caretBlinkPeriod.milliseconds
     val blinkPeriod = configuredBlinkPeriod.coerceAtLeast(MIN_BLINK_PERIOD)
     val blinksSmoothly = !shouldDisableAnimations() && settings.isSmoothCaretBlinking
-    val configuredMoveDuration = Registry.intValue("editor.smooth.caret.duration", 120)
+    val configuredMoveDuration = EditorRegistry.current().smoothCaretDurationMs()
     val moveDurationMs = configuredMoveDuration.coerceAtLeast(1)
     return CaretSettings(
       blinkPeriod = blinkPeriod,

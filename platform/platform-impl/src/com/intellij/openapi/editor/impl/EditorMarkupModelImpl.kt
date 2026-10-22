@@ -87,6 +87,7 @@ import com.intellij.openapi.editor.markup.ErrorStripeRenderer
 import com.intellij.openapi.editor.markup.InspectionWidgetActionProvider
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.StatusItem
+import com.intellij.openapi.editor.registry.EditorRegistry
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
@@ -101,7 +102,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
@@ -1007,7 +1007,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     override fun isThumbTranslucent(): Boolean = true
 
     override fun getThumbOffset(value: Int): Int {
-      if (SystemInfoRt.isMac || Registry.`is`("editor.full.width.scrollbar")) {
+      if (SystemInfoRt.isMac || EditorRegistry.current().isScrollBarFullWidth()) {
         return getMinMarkHeight() + scale(2)
       }
       @Suppress("DEPRECATION")

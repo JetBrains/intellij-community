@@ -3,7 +3,7 @@ package com.intellij.openapi.editor.impl.stickyLines.ui
 
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsScheme
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.editor.registry.EditorRegistry
 import com.intellij.ui.ColorUtil
 import java.awt.Color
 
@@ -59,7 +59,7 @@ internal class StickyLineColors(private var scheme: EditorColorsScheme) {
   }
 
   private fun isDebugEnabled(): Boolean {
-    return Registry.`is`("editor.show.sticky.lines.shadow.debug", false)
+    return EditorRegistry.current().isStickyLinesShadowDebugEnabled()
   }
 
   companion object {

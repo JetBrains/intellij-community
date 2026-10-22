@@ -2,7 +2,7 @@
 package com.intellij.openapi.editor.impl.stickyLines.ui
 
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.editor.registry.EditorRegistry
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
@@ -57,6 +57,6 @@ internal class StickyLineShadowBorder(
   }
 
   private fun isShadowEnabled(): Boolean {
-    return Registry.`is`("editor.show.sticky.lines.shadow", true)
+    return EditorRegistry.current().isStickyLinesShadowShown()
   }
 }

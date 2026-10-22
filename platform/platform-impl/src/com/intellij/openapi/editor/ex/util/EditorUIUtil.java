@@ -5,7 +5,7 @@ import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.editor.registry.EditorRegistry;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -63,7 +63,7 @@ public final class EditorUIUtil {
   }
 
   private static float getEditorScaleFactor(@NotNull EditorImpl editor) {
-    if (Registry.is("editor.scale.gutter.icons")) {
+    if (EditorRegistry.current().isGutterIconScaled()) {
       float scale = editor.getScale();
       if (Math.abs(1f - scale) > 0.10f) {
         return scale;

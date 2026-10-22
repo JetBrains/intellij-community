@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.editor.registry.EditorRegistry
 import com.intellij.platform.jbr.JdkEx
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.launchOnShow
@@ -180,7 +180,7 @@ internal class EditorAnimationCacheDebugWindow(
      * only the borders.
      */
     fun createIfSupported(editor: EditorImpl, entries: CacheEntryList): EditorAnimationCacheDebugWindow? {
-      if (!Registry.`is`("editor.animation.cache.debug.enabled", false)) {
+      if (!EditorRegistry.current().isAnimationCacheDebugEnabled()) {
         return null
       }
       val device = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice
