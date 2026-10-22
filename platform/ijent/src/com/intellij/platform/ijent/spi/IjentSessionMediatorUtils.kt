@@ -43,8 +43,9 @@ object IjentSessionMediatorUtils {
     errorStream: EelReceiveChannel,
     ijentLabel: String,
     lastStderrMessages: MutableSharedFlow<String?>,
+    foreignStderrLog: IjentForeignStderrLog = IjentForeignStderrLog.Default,
   ) {
-    val lineConsumer = createIjentStderrLineConsumer(ijentLabel, lastStderrMessages)
+    val lineConsumer = createIjentStderrLineConsumer(ijentLabel, lastStderrMessages, foreignStderrLog)
     try {
       // `useLines` reads the stderr stream with a blocking call that parks its thread for the whole IJent
       // session. Keep that thread on `IjentThreadPool` instead of the default `Dispatchers.IO`, otherwise a
@@ -60,6 +61,7 @@ object IjentSessionMediatorUtils {
       IjentLogger.LIFETIME_LOG.debug { "$ijentLabel bootstrap got an error: $err" }
     }
     finally {
+      foreignStderrLog.stderrEnded()
       lineConsumer.complete()
     }
   }
@@ -67,8 +69,9 @@ object IjentSessionMediatorUtils {
   fun createIjentStderrLineConsumer(
     ijentLabel: String,
     lastStderrMessages: MutableSharedFlow<String?>,
+    foreignStderrLog: IjentForeignStderrLog = IjentForeignStderrLog.Default,
   ): IjentStderrLineConsumer {
-    val logIjentStderr = LogIjentStderr()
+    val logIjentStderr = LogIjentStderr(foreignStderrLog)
     return IjentStderrLineConsumer(lastStderrMessages) { line ->
       logIjentStderr(ijentLabel, line)
     }
@@ -108,7 +111,7 @@ object IjentSessionMediatorUtils {
     }
   }
 
-  private class LogIjentStderr {
+  private class LogIjentStderr(private val foreignStderrLog: IjentForeignStderrLog) {
     private var lastLoggingHandler: ((String) -> Unit)? = null
 
     operator fun invoke(ijentLabel: String, line: String) {
@@ -128,7 +131,7 @@ object IjentSessionMediatorUtils {
           if (opensshHandler != null) {
             lastLoggingHandler = opensshHandler
           }
-          val logger = opensshHandler ?: lastLoggingHandler ?: IjentLogger.OTHER_LOG::info
+          val logger = opensshHandler ?: lastLoggingHandler ?: foreignStderrLog::info
           logger(message)
           return
         }
@@ -189,9 +192,10 @@ object IjentSessionMediatorUtils {
      */
     private fun opensshLevelHandler(line: String): ((String) -> Unit)? =
       when (classifyOpensshStderrLine(line)) {
-        OpensshStderrLevel.DEBUG -> IjentLogger.LIFETIME_LOG::debug
-        OpensshStderrLevel.WARN -> IjentLogger.LIFETIME_LOG::warn
-        OpensshStderrLevel.ERROR -> IjentLogger.LIFETIME_LOG::error
+        OpensshStderrLevel.TRACE -> foreignStderrLog::trace
+        OpensshStderrLevel.DEBUG -> foreignStderrLog::debug
+        OpensshStderrLevel.WARN -> foreignStderrLog::warn
+        OpensshStderrLevel.ERROR -> foreignStderrLog::error
         null -> null
       }
   }
@@ -322,7 +326,7 @@ object IjentSessionMediatorUtils {
  * OpenSSH stderr log levels that [IjentSessionMediatorUtils]'s stderr handler recognizes and re-maps onto
  * IJent log levels.
  */
-internal enum class OpensshStderrLevel { DEBUG, WARN, ERROR }
+internal enum class OpensshStderrLevel { TRACE, DEBUG, WARN, ERROR }
 
 /**
  * Best-effort classification of a raw OpenSSH client stderr line into an [OpensshStderrLevel].
@@ -330,7 +334,7 @@ internal enum class OpensshStderrLevel { DEBUG, WARN, ERROR }
  * OpenSSH's `do_log` (log.c) prefixes stderr output with a lowercase level tag: `debug1:`, `debug2:` and
  * `debug3:` are always present, while `error:`/`fatal:` are added when OpenSSH logs through a handler rather
  * than bare stderr. The client additionally emits human-facing `Warning:` notices. Recognizing these tags
- * lets the mediator log OpenSSH's own chatter at DEBUG and its problems at WARN/ERROR instead of dumping
+ * lets the mediator log OpenSSH's own chatter at DEBUG/TRACE and its problems at WARN/ERROR instead of dumping
  * everything at INFO.
  *
  * The tag must be a single whitespace-free token ending at the first `": "`, so ordinary sentences that
@@ -342,7 +346,8 @@ internal fun classifyOpensshStderrLine(line: String): OpensshStderrLevel? {
   val tag = line.substringBefore(": ", missingDelimiterValue = "")
   if (tag.isEmpty() || tag.any(Char::isWhitespace)) return null
   return when (tag.lowercase()) {
-    "debug1", "debug2", "debug3" -> OpensshStderrLevel.DEBUG
+    "debug1" -> OpensshStderrLevel.DEBUG
+    "debug2", "debug3" -> OpensshStderrLevel.TRACE
     "error", "fatal" -> OpensshStderrLevel.ERROR
     "warning", "warn" -> OpensshStderrLevel.WARN
     else -> null

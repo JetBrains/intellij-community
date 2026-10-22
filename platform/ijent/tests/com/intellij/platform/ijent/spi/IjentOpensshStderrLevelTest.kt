@@ -6,15 +6,19 @@ import org.junit.jupiter.api.Test
 
 /**
  * Unit tests for [classifyOpensshStderrLine] — the OpenSSH stderr level classification used by
- * [IjentSessionMediatorUtils] so that OpenSSH's own `debug1/2/3` chatter is logged at DEBUG and its
- * problems at WARN/ERROR instead of everything landing at INFO (IJPL-253080).
+ * [IjentSessionMediatorUtils] so that OpenSSH's own `debug1` chatter is logged at DEBUG, `debug2/3` at TRACE,
+ * and its problems at WARN/ERROR instead of everything landing at INFO (IJPL-253080, IJPL-259089).
  */
 class IjentOpensshStderrLevelTest {
   @Test
-  fun `debug1, debug2 and debug3 all map to DEBUG`() {
+  fun `debug1 maps to DEBUG`() {
     classifyOpensshStderrLine("debug1: Reading configuration data /etc/ssh/ssh_config") shouldBe OpensshStderrLevel.DEBUG
-    classifyOpensshStderrLine("debug2: resolve_addr: could not resolve name fakebox as address") shouldBe OpensshStderrLevel.DEBUG
-    classifyOpensshStderrLine("debug3: send packet: type 5") shouldBe OpensshStderrLevel.DEBUG
+  }
+
+  @Test
+  fun `debug2 and debug3 map to TRACE`() {
+    classifyOpensshStderrLine("debug2: resolve_addr: could not resolve name fakebox as address") shouldBe OpensshStderrLevel.TRACE
+    classifyOpensshStderrLine("debug3: send packet: type 5") shouldBe OpensshStderrLevel.TRACE
   }
 
   @Test

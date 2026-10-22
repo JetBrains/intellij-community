@@ -292,6 +292,7 @@ class IjentSessionProcessMediator private constructor(
       ijentLabel: String,
       isExpectedProcessExit: suspend (exitCode: Int) -> Boolean = { it == 0 },
       exitsOnStdinEof: Boolean = true,
+      foreignStderrLog: IjentForeignStderrLog = IjentForeignStderrLog.Default,
     ): IjentSessionProcessMediator {
       val context = IjentThreadPool.coroutineContext
 
@@ -305,7 +306,7 @@ class IjentSessionProcessMediator private constructor(
       // intention of the stderr logger is to write logs of the remote process, which come from the remote machine to the local one with
       // a delay.
       GlobalScope.launch(IjentThreadPool.coroutineContext + ijentProcessScope.s.coroutineNameAppended("stderr logger")) {
-        IjentSessionMediatorUtils.ijentProcessStderrLogger(process.stderr, ijentLabel, lastStderrMessages)
+        IjentSessionMediatorUtils.ijentProcessStderrLogger(process.stderr, ijentLabel, lastStderrMessages, foreignStderrLog)
       }
 
       val mediator = IjentSessionProcessMediator(ijentProcessScope, process, exitsOnStdinEof)
