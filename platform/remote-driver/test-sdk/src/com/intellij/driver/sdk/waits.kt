@@ -18,6 +18,9 @@ private val LOG get() = fileLogger()
 /**
  * Waits for a condition to be met within a specified timeout period.
  *
+ * To report the actual value on failure, use the `waitFor` overload with `getter` and `checker`.
+ * It adds the last value to the error, so you do not need [errorMessage].
+ *
  * @throws WaitForException if the condition is not met within the specified timeout
  *
  * @see WaitForException
