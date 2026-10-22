@@ -6,7 +6,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.impl.PyAnnotationImpl;
@@ -25,7 +25,7 @@ public class PyAnnotationElementType extends PyStubElementFactory<PyAnnotationSt
 
   @Override
   public @NotNull PyAnnotationStub createStub(final @NotNull PyAnnotation psi, final StubElement parentStub) {
-    return new PyAnnotationStubImpl(parentStub, PyStubElementTypes.ANNOTATION);
+    return new PyAnnotationStubImpl(parentStub, PyElementTypes.ANNOTATION);
   }
 
   @Override
@@ -36,7 +36,7 @@ public class PyAnnotationElementType extends PyStubElementFactory<PyAnnotationSt
   @Override
   public @NotNull PyAnnotationStub deserialize(final @NotNull StubInputStream dataStream, final StubElement parentStub)
     throws IOException {
-    return new PyAnnotationStubImpl(parentStub, PyStubElementTypes.ANNOTATION);
+    return new PyAnnotationStubImpl(parentStub, PyElementTypes.ANNOTATION);
   }
 
   @Override
@@ -48,6 +48,6 @@ public class PyAnnotationElementType extends PyStubElementFactory<PyAnnotationSt
 
   @Override
   protected @NotNull IElementType getStubElementType() {
-    return PyStubElementTypes.ANNOTATION;
+    return PyElementTypes.ANNOTATION;
   }
 }

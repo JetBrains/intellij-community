@@ -694,7 +694,7 @@ public class PyStubsTest extends PyTestCase {
     final PyFile file = getTestFile();
     final PyFunction function = file.findTopLevelFunction("f");
     assertNotNull(function);
-    final PyTargetExpressionStub targetExpressionStub = (PyTargetExpressionStub)function.getStub().findChildStubByElementType(PyStubElementTypes.TARGET_EXPRESSION);
+    final PyTargetExpressionStub targetExpressionStub = (PyTargetExpressionStub)function.getStub().findChildStubByElementType(PyElementTypes.TARGET_EXPRESSION);
     assertNotNull(targetExpressionStub);
     assertEquals("number", targetExpressionStub.getName());
   }
@@ -1215,7 +1215,7 @@ public class PyStubsTest extends PyTestCase {
     final PyFile file = getTestFile();
     final PyFunction func = file.findTopLevelFunction("func");
     final PyFunctionStub funcStub = func.getStub();
-    assertNull(funcStub.findChildStubByElementType(PyStubElementTypes.ANNOTATION));
+    assertNull(funcStub.findChildStubByElementType(PyElementTypes.ANNOTATION));
   }
 
   // PY-26163

@@ -12,7 +12,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFileElementType;
@@ -195,7 +195,7 @@ public class PyClassElementType extends PyStubElementFactory<PyClassStub, PyClas
 
   @Override
   protected @NotNull IElementType getStubElementType() {
-    return PyStubElementTypes.CLASS_DECLARATION;
+    return PyElementTypes.CLASS_DECLARATION;
   }
 
   @Override

@@ -2,7 +2,7 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.psi.tree.IElementType;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.stubs.StubElement;
@@ -38,6 +38,6 @@ public class PyStarImportElementElementType extends PyStubElementFactory<PyStarI
 
   @Override
   protected @NotNull IElementType getStubElementType() {
-    return PyStubElementTypes.STAR_IMPORT_ELEMENT;
+    return PyElementTypes.STAR_IMPORT_ELEMENT;
   }
 }

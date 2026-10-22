@@ -7,7 +7,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElementVisitor;
@@ -39,7 +39,7 @@ public class PyStarImportElementImpl extends PyBaseElementImpl<PyStarImportEleme
   }
 
   public PyStarImportElementImpl(final PyStarImportElementStub stub) {
-    super(stub, PyStubElementTypes.STAR_IMPORT_ELEMENT);
+    super(stub, PyElementTypes.STAR_IMPORT_ELEMENT);
   }
 
   @Override

@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyImportElement;
@@ -12,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 
 @ApiStatus.Internal
-public class PyImportElementStubImpl extends StubBase<PyImportElement> implements PyImportElementStub {
+public class PyImportElementStubImpl extends PyStubBase<PyImportElement> implements PyImportElementStub {
   private final QualifiedName myImportedQName;
   private final String myAsName;
 

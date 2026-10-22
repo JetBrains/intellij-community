@@ -2,8 +2,9 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyTypeParameter;
 import com.jetbrains.python.psi.PyTypeParameterList;
@@ -20,11 +21,17 @@ public class PyTypeParameterListImpl extends PyBaseElementImpl<PyTypeParameterLi
   }
 
   public PyTypeParameterListImpl(PyTypeParameterListStub stub) {
-    this(stub, PyStubElementTypes.TYPE_PARAMETER_LIST);
+    this(stub, PyElementTypes.TYPE_PARAMETER_LIST);
   }
 
   public PyTypeParameterListImpl(PyTypeParameterListStub stub, IElementType nodeType) {
     super(stub, nodeType);
+  }
+
+  /** @deprecated use {@link #PyTypeParameterListImpl(PyTypeParameterListStub, IElementType)}. */
+  @Deprecated(forRemoval = true)
+  public PyTypeParameterListImpl(PyTypeParameterListStub stub, IStubElementType<?, ?> nodeType) {
+    this(stub, (IElementType)nodeType);
   }
 
   @Override
@@ -35,6 +42,6 @@ public class PyTypeParameterListImpl extends PyBaseElementImpl<PyTypeParameterLi
 
   @Override
   public @NotNull List<PyTypeParameter> getTypeParameters() {
-    return List.of(getStubOrPsiChildren(PyStubElementTypes.TYPE_PARAMETER, new PyTypeParameter[0]));
+    return List.of(getStubOrPsiChildren(PyElementTypes.TYPE_PARAMETER, new PyTypeParameter[0]));
   }
 }

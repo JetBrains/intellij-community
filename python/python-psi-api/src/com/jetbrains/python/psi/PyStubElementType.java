@@ -13,8 +13,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * The legacy base of a stub element type of a Python dialect. The Python PSI itself binds its stubs to the plain element types of
  * {@code PyElementTypes} through {@code com.jetbrains.python.psi.impl.stubs.PyStubElementFactory} and the stub registry extension.
+ * The deprecated constants of {@code PyStubElementTypes} adapt those factories to this class for an external plugin.
  */
-public abstract class PyStubElementType<StubT extends StubElement<?>, PsiT extends PyElement> extends IStubElementType<StubT, PsiT> {
+public abstract class PyStubElementType<StubT extends StubElement<?>, PsiT extends PyElement> extends IStubElementType<StubT, PsiT>
+  implements PyPsiCreatingElementType {
   public PyStubElementType(@NotNull @NonNls String debugName) {
     super(debugName, PythonFileType.INSTANCE.getLanguage());
   }
@@ -24,6 +26,7 @@ public abstract class PyStubElementType<StubT extends StubElement<?>, PsiT exten
     return "Py:" + super.toString();
   }
 
+  @Override
   public abstract @NotNull PsiElement createElement(final @NotNull ASTNode node);
 
   @Override

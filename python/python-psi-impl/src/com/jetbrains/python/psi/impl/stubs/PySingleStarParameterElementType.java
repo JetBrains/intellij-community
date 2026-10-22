@@ -2,7 +2,7 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.psi.tree.IElementType;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.stubs.StubElement;
@@ -38,6 +38,6 @@ public class PySingleStarParameterElementType extends PyStubElementFactory<PySin
 
   @Override
   protected @NotNull IElementType getStubElementType() {
-    return PyStubElementTypes.SINGLE_STAR_PARAMETER;
+    return PyElementTypes.SINGLE_STAR_PARAMETER;
   }
 }

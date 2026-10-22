@@ -6,7 +6,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyTypeParameter;
 import com.jetbrains.python.psi.impl.PyTypeParameterImpl;
 import com.jetbrains.python.psi.stubs.PyTypeParameterStub;
@@ -54,6 +54,6 @@ public class PyTypeParameterElementType extends PyStubElementFactory<PyTypeParam
 
   @Override
   protected @NotNull IElementType getStubElementType() {
-    return PyStubElementTypes.TYPE_PARAMETER;
+    return PyElementTypes.TYPE_PARAMETER;
   }
 }

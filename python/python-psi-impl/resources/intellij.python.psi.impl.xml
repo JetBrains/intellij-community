@@ -100,6 +100,8 @@
     <definitionsSearch implementation="com.jetbrains.python.psi.search.PyDefinitionsSearch"/>
 
     <stubElementRegistryExtension implementation="com.jetbrains.python.psi.impl.stubs.PyStubRegistryExtension"/>
+    <!-- The deprecated PyStubElementType constants for an external plugin. The prefix must match PyLegacyStubElementType.EXTERNAL_ID_PREFIX. -->
+    <stubElementTypeHolder class="com.jetbrains.python.PyStubElementTypes" externalIdPrefix="py.legacy."/>
     <languageStubDefinition language="Python" implementationClass="com.jetbrains.python.psi.impl.stubs.PyLanguageStubDefinition"/>
     <languageStubDefinition language="PythonStub" implementationClass="com.jetbrains.python.psi.impl.stubs.PyLanguageStubDefinition"/>
     <indexPatternBuilder implementation="com.jetbrains.python.PyIndexPatternBuilder"/>

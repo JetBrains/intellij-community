@@ -9,7 +9,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyUtil;
@@ -100,6 +100,6 @@ public class PyFunctionElementType extends PyStubElementFactory<PyFunctionStub, 
 
   @Override
   protected @NotNull IElementType getStubElementType() {
-    return PyStubElementTypes.FUNCTION_DECLARATION;
+    return PyElementTypes.FUNCTION_DECLARATION;
   }
 }

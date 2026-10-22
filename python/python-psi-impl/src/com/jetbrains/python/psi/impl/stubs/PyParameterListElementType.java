@@ -7,7 +7,6 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.impl.PyParameterListImpl;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
@@ -41,7 +40,7 @@ public class PyParameterListElementType extends PyStubElementFactory<PyParameter
 
   @Override
   protected @NotNull IElementType getStubElementType() {
-    return PyStubElementTypes.PARAMETER_LIST;
+    return PyElementTypes.PARAMETER_LIST;
   }
 
   @Override

@@ -1,10 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.impl.stubs;
 
-import com.intellij.psi.tree.IElementType;
-import com.jetbrains.python.PyStubElementTypes;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 import com.google.common.collect.RangeSet;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Ref;
@@ -14,6 +10,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -33,6 +30,8 @@ import com.jetbrains.python.psi.stubs.PyFileStub;
 import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.List;
@@ -189,6 +188,6 @@ public class PyTargetExpressionElementType extends PyStubElementFactory<PyTarget
 
   @Override
   protected @NotNull IElementType getStubElementType() {
-    return PyStubElementTypes.TARGET_EXPRESSION;
+    return PyElementTypes.TARGET_EXPRESSION;
   }
 }

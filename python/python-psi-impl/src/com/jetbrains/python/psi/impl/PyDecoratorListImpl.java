@@ -3,7 +3,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyDecoratorList;
 import com.jetbrains.python.psi.PyElementVisitor;
@@ -24,13 +24,13 @@ public class PyDecoratorListImpl extends PyBaseElementImpl<PyDecoratorListStub> 
   }
 
   public PyDecoratorListImpl(final PyDecoratorListStub stub) {
-    super(stub, PyStubElementTypes.DECORATOR_LIST);
+    super(stub, PyElementTypes.DECORATOR_LIST);
   }
 
   @Override
   public PyDecorator @NotNull [] getDecorators() {
     final PyDecorator[] decoarray = new PyDecorator[0];
-    return getStubOrPsiChildren(PyStubElementTypes.DECORATOR_CALL, decoarray);
+    return getStubOrPsiChildren(PyElementTypes.DECORATOR_CALL, decoarray);
     //return decoarray;
   }
 

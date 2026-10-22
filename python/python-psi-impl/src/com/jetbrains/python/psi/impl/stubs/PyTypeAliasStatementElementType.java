@@ -9,7 +9,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyTypeAliasStatement;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyTypeAliasStatementImpl;
@@ -63,6 +63,6 @@ public class PyTypeAliasStatementElementType extends PyStubElementFactory<PyType
 
   @Override
   protected @NotNull IElementType getStubElementType() {
-    return PyStubElementTypes.TYPE_ALIAS_STATEMENT;
+    return PyElementTypes.TYPE_ALIAS_STATEMENT;
   }
 }

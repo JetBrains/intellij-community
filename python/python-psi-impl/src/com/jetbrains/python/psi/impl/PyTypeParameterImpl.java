@@ -3,9 +3,10 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElementVisitor;
@@ -30,11 +31,17 @@ public class PyTypeParameterImpl extends PyBaseElementImpl<PyTypeParameterStub> 
   }
 
   public PyTypeParameterImpl(PyTypeParameterStub stub) {
-    this(stub, PyStubElementTypes.TYPE_PARAMETER);
+    this(stub, PyElementTypes.TYPE_PARAMETER);
   }
 
   public PyTypeParameterImpl(PyTypeParameterStub stub, IElementType nodeType) {
     super(stub, nodeType);
+  }
+
+  /** @deprecated use {@link #PyTypeParameterImpl(PyTypeParameterStub, IElementType)}. */
+  @Deprecated(forRemoval = true)
+  public PyTypeParameterImpl(PyTypeParameterStub stub, IStubElementType<?, ?> nodeType) {
+    this(stub, (IElementType)nodeType);
   }
 
   @Override

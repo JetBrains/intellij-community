@@ -11,7 +11,6 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.impl.PyNamedParameterImpl;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
@@ -81,6 +80,6 @@ public class PyNamedParameterElementType extends PyStubElementFactory<PyNamedPar
 
   @Override
   protected @NotNull IElementType getStubElementType() {
-    return PyStubElementTypes.NAMED_PARAMETER;
+    return PyElementTypes.NAMED_PARAMETER;
   }
 }

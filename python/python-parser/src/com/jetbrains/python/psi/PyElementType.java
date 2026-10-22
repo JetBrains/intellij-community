@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Function;
 
-public class PyElementType extends IElementType {
+public class PyElementType extends IElementType implements PyPsiCreatingElementType {
   private final @NotNull Function<? super ASTNode, ? extends PsiElement> myPsiCreator;
 
   private final String mySpecialMethodName;
@@ -46,6 +46,7 @@ public class PyElementType extends IElementType {
     return new PyElementType(debugName, node -> constructor.apply(PyPsiElementFactory.current()).apply(node));
   }
 
+  @Override
   public @NotNull PsiElement createElement(@NotNull ASTNode node) {
     return myPsiCreator.apply(node);
   }

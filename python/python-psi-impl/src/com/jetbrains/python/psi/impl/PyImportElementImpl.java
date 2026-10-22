@@ -6,10 +6,11 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.ast.impl.ValueHolder;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyElementVisitor;
@@ -44,11 +45,17 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   }
 
   public PyImportElementImpl(PyImportElementStub stub) {
-    this(stub, PyStubElementTypes.IMPORT_ELEMENT);
+    this(stub, PyElementTypes.IMPORT_ELEMENT);
   }
 
   public PyImportElementImpl(PyImportElementStub stub, IElementType nodeType) {
     super(stub, nodeType);
+  }
+
+  /** @deprecated use {@link #PyImportElementImpl(PyImportElementStub, IElementType)}. */
+  @Deprecated(forRemoval = true)
+  public PyImportElementImpl(PyImportElementStub stub, IStubElementType<?, ?> nodeType) {
+    this(stub, (IElementType)nodeType);
   }
 
   @Override

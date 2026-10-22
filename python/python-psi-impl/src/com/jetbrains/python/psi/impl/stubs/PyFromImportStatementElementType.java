@@ -8,7 +8,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.impl.PyFromImportStatementImpl;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
@@ -52,6 +52,6 @@ public class PyFromImportStatementElementType extends PyStubElementFactory<PyFro
 
   @Override
   protected @NotNull IElementType getStubElementType() {
-    return PyStubElementTypes.FROM_IMPORT_STATEMENT;
+    return PyElementTypes.FROM_IMPORT_STATEMENT;
   }
 }

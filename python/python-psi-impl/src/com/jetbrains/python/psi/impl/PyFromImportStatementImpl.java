@@ -13,13 +13,12 @@ import com.intellij.psi.PsiListLikeElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.impl.ValueHolder;
 import com.jetbrains.python.psi.PyElement;
@@ -56,11 +55,17 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   public PyFromImportStatementImpl(PyFromImportStatementStub stub) {
-    this(stub, PyStubElementTypes.FROM_IMPORT_STATEMENT);
+    this(stub, PyElementTypes.FROM_IMPORT_STATEMENT);
   }
 
   public PyFromImportStatementImpl(PyFromImportStatementStub stub, IElementType nodeType) {
     super(stub, nodeType);
+  }
+
+  /** @deprecated use {@link #PyFromImportStatementImpl(PyFromImportStatementStub, IElementType)}. */
+  @Deprecated(forRemoval = true)
+  public PyFromImportStatementImpl(PyFromImportStatementStub stub, IStubElementType<?, ?> nodeType) {
+    this(stub, (IElementType)nodeType);
   }
 
   @Override
@@ -220,7 +225,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
 
   @Override
   public @Nullable PyStarImportElement getStarImportElement() {
-    return getStubOrPsiChild(PyStubElementTypes.STAR_IMPORT_ELEMENT, PyStarImportElement.class);
+    return getStubOrPsiChild(PyElementTypes.STAR_IMPORT_ELEMENT, PyStarImportElement.class);
   }
 
   @Override

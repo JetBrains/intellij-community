@@ -5,9 +5,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.PyClass;
@@ -36,11 +37,17 @@ public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasState
   }
 
   public PyTypeAliasStatementImpl(PyTypeAliasStatementStub stub) {
-    this(stub, PyStubElementTypes.TYPE_ALIAS_STATEMENT);
+    this(stub, PyElementTypes.TYPE_ALIAS_STATEMENT);
   }
 
   public PyTypeAliasStatementImpl(PyTypeAliasStatementStub stub, IElementType nodeType) {
     super(stub, nodeType);
+  }
+
+  /** @deprecated use {@link #PyTypeAliasStatementImpl(PyTypeAliasStatementStub, IElementType)}. */
+  @Deprecated(forRemoval = true)
+  public PyTypeAliasStatementImpl(PyTypeAliasStatementStub stub, IStubElementType<?, ?> nodeType) {
+    this(stub, (IElementType)nodeType);
   }
 
 
@@ -64,7 +71,7 @@ public class PyTypeAliasStatementImpl extends PyBaseElementImpl<PyTypeAliasState
 
   @Override
   public @Nullable PyTypeParameterList getTypeParameterList() {
-    return getStubOrPsiChild(PyStubElementTypes.TYPE_PARAMETER_LIST, PyTypeParameterList.class);
+    return getStubOrPsiChild(PyElementTypes.TYPE_PARAMETER_LIST, PyTypeParameterList.class);
   }
 
   @Override

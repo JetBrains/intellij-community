@@ -16,7 +16,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.ast.impl.PyAstFileElementType;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
 import com.jetbrains.python.parsing.PyParser;
-import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyPsiCreatingElementType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -59,8 +59,8 @@ public class PythonParserDefinition implements ParserDefinition {
   @Override
   public @NotNull PsiElement createElement(@NotNull ASTNode node) {
     final IElementType type = node.getElementType();
-    if (type instanceof PyElementType pyElType) {
-      return pyElType.createElement(node);
+    if (type instanceof PyPsiCreatingElementType creator) {
+      return creator.createElement(node);
     }
     return new ASTWrapperPsiElement(node);
   }

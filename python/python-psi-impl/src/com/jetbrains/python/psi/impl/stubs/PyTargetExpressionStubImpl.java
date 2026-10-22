@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
@@ -40,7 +40,7 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
                                     CustomTargetExpressionStub customStub,
                                     StubElement parent,
                                     @NotNull RangeSet<Version> versions) {
-    super(parent, PyStubElementTypes.TARGET_EXPRESSION, versions);
+    super(parent, PyElementTypes.TARGET_EXPRESSION, versions);
     myName = name;
     myTypeComment = typeComment;
     myAnnotation = annotation;
@@ -68,7 +68,7 @@ public class PyTargetExpressionStubImpl extends PyVersionSpecificStubBase<PyTarg
                                     boolean hasAssignedValue,
                                     final StubElement parentStub,
                                     @NotNull RangeSet<Version> versions) {
-    super(parentStub, PyStubElementTypes.TARGET_EXPRESSION, versions);
+    super(parentStub, PyElementTypes.TARGET_EXPRESSION, versions);
     myName = name;
     myTypeComment = typeComment;
     myAnnotation = annotation;

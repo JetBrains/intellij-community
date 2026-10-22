@@ -14,9 +14,10 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.ast.PyAstElementVisitor;
@@ -26,6 +27,7 @@ import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyReferenceOwner;
 import com.jetbrains.python.psi.PyTypeCommentOwner;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.stubs.PyLegacyStubElementType;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyTypeCommentOwnerStub;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -41,6 +43,12 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     super(stub, nodeType);
   }
 
+  /** @deprecated use {@link #PyBaseElementImpl(StubElement, IElementType)}. */
+  @Deprecated(forRemoval = true)
+  public PyBaseElementImpl(final T stub, IStubElementType<?, ?> nodeType) {
+    this(stub, (IElementType)nodeType);
+  }
+
   public PyBaseElementImpl(final ASTNode node) {
     super(node);
   }
@@ -51,6 +59,18 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
    */
   public @NotNull IElementType getIElementType() {
     return getElementTypeImpl();
+  }
+
+  /**
+   * @deprecated use {@link #getIElementType()}. The method returns the {@code PyStubElementTypes} adapter of the node type,
+   * so a plugin on the old API gets the object it compares with.
+   */
+  @Deprecated
+  @Override
+  @SuppressWarnings("deprecation")
+  public @NotNull IStubElementType<?, ?> getElementType() {
+    PyLegacyStubElementType<?, ?> adapter = PyLegacyStubElementType.forElementType(getElementTypeImpl());
+    return adapter != null ? adapter : super.getElementType();
   }
 
   @Override

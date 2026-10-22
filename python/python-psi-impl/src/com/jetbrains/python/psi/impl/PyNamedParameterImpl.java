@@ -12,6 +12,7 @@ import com.intellij.psi.PsiReferenceService;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
@@ -19,7 +20,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.ast.PyAstFunction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -88,11 +89,17 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   }
 
   public PyNamedParameterImpl(final PyNamedParameterStub stub) {
-    this(stub, PyStubElementTypes.NAMED_PARAMETER);
+    this(stub, PyElementTypes.NAMED_PARAMETER);
   }
 
   public PyNamedParameterImpl(final PyNamedParameterStub stub, IElementType nodeType) {
     super(stub, nodeType);
+  }
+
+  /** @deprecated use {@link #PyNamedParameterImpl(PyNamedParameterStub, IElementType)}. */
+  @Deprecated(forRemoval = true)
+  public PyNamedParameterImpl(final PyNamedParameterStub stub, IStubElementType<?, ?> nodeType) {
+    this(stub, (IElementType)nodeType);
   }
 
   @Override
@@ -187,7 +194,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
   @Override
   public @Nullable PyAnnotation getAnnotation() {
-    return getStubOrPsiChild(PyStubElementTypes.ANNOTATION, PyAnnotation.class);
+    return getStubOrPsiChild(PyElementTypes.ANNOTATION, PyAnnotation.class);
   }
 
   @Override

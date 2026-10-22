@@ -6,14 +6,13 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
-public class PyParameterListStubImpl extends StubBase<PyParameterList> implements PyParameterListStub {
+public class PyParameterListStubImpl extends PyStubBase<PyParameterList> implements PyParameterListStub {
   public PyParameterListStubImpl(final StubElement parent, IElementType stubElementType) {
     super(parent, stubElementType);
   }

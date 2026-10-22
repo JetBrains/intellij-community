@@ -15,8 +15,9 @@ import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
@@ -36,7 +37,6 @@ import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyLanguageFacadeKt;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyStubElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.ast.PyAstFunction.Modifier;
 import com.jetbrains.python.ast.impl.PyUtilCore;
@@ -164,13 +164,18 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   public PyClassImpl(final @NotNull PyClassStub stub) {
-    this(stub, PyStubElementTypes.CLASS_DECLARATION);
+    this(stub, PyElementTypes.CLASS_DECLARATION);
   }
 
   public PyClassImpl(final @NotNull PyClassStub stub, @NotNull IElementType nodeType) {
     super(stub, nodeType);
   }
 
+  /** @deprecated use {@link #PyClassImpl(PyClassStub, IElementType)}. */
+  @Deprecated(forRemoval = true)
+  public PyClassImpl(final @NotNull PyClassStub stub, @NotNull IStubElementType<?, ?> nodeType) {
+    this(stub, (IElementType)nodeType);
+  }
 
   @Override
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
@@ -1954,12 +1959,12 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Override
   public @Nullable PyTypeParameterList getTypeParameterList() {
-    return getStubOrPsiChild(PyStubElementTypes.TYPE_PARAMETER_LIST, PyTypeParameterList.class);
+    return getStubOrPsiChild(PyElementTypes.TYPE_PARAMETER_LIST, PyTypeParameterList.class);
   }
 
   @Override
   public @Nullable PyDecoratorList getDecoratorList() {
-    return getStubOrPsiChild(PyStubElementTypes.DECORATOR_LIST, PyDecoratorList.class);
+    return getStubOrPsiChild(PyElementTypes.DECORATOR_LIST, PyDecoratorList.class);
   }
 
   @ApiStatus.Experimental

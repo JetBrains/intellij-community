@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
@@ -10,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
-public class PyNamedParameterStubImpl extends StubBase<PyNamedParameter> implements PyNamedParameterStub {
+public class PyNamedParameterStubImpl extends PyStubBase<PyNamedParameter> implements PyNamedParameterStub {
   private final String myName;
   private final boolean myPositionalContainer;
   private final boolean myKeywordContainer;

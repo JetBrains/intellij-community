@@ -1,16 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.impl.stubs;
 
-import com.intellij.psi.tree.IElementType;
-import com.jetbrains.python.PyStubElementTypes;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.tree.IElementType;
+import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.impl.PyTupleParameterImpl;
 import com.jetbrains.python.psi.stubs.PyTupleParameterStub;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -42,6 +42,6 @@ public class PyTupleParameterElementType extends PyStubElementFactory<PyTuplePar
 
   @Override
   protected @NotNull IElementType getStubElementType() {
-    return PyStubElementTypes.TUPLE_PARAMETER;
+    return PyElementTypes.TUPLE_PARAMETER;
   }
 }

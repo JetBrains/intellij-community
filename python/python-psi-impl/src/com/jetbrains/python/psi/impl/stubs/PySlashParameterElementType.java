@@ -2,7 +2,7 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.psi.tree.IElementType;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
@@ -38,6 +38,6 @@ public class PySlashParameterElementType extends PyStubElementFactory<PySlashPar
 
   @Override
   protected @NotNull IElementType getStubElementType() {
-    return PyStubElementTypes.SLASH_PARAMETER;
+    return PyElementTypes.SLASH_PARAMETER;
   }
 }

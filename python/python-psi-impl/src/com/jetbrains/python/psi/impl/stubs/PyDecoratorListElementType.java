@@ -2,7 +2,7 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.psi.tree.IElementType;
-import com.jetbrains.python.PyStubElementTypes;
+import com.jetbrains.python.PyElementTypes;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.psi.stubs.StubElement;
@@ -40,6 +40,6 @@ public class PyDecoratorListElementType extends PyStubElementFactory<PyDecorator
 
   @Override
   protected @NotNull IElementType getStubElementType() {
-    return PyStubElementTypes.DECORATOR_LIST;
+    return PyElementTypes.DECORATOR_LIST;
   }
 }

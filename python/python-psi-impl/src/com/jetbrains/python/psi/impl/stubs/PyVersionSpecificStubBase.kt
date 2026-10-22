@@ -9,7 +9,6 @@ import com.google.common.collect.TreeRangeSet
 import com.intellij.openapi.util.Version
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.stubs.StubBase
 import com.intellij.psi.stubs.StubBuildCachedValuesManager.StubBuildCachedValueProvider
 import com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueStubBuildOptimized
 import com.intellij.psi.stubs.StubElement
@@ -31,7 +30,7 @@ internal abstract class PyVersionSpecificStubBase<T : PsiElement>(
   parent: StubElement<*>?,
   elementType: IElementType?,
   override val versions: RangeSet<Version>,
-) : StubBase<T>(parent, elementType), PyVersionSpecificStub {
+) : PyStubBase<T>(parent, elementType), PyVersionSpecificStub {
   /** True for an element outside every `if sys.version_info` block, which is almost every element. */
   private val allVersions: Boolean = versions.encloses(Range.all())
 
