@@ -9,16 +9,21 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-private const val EDITOR_IMPL_PACKAGE = "com.intellij.openapi.editor.impl"
+/** The packages of the editor settings and of the code style that the settings read. */
+private val SETTINGS_PACKAGES = listOf(
+  "com.intellij.openapi.editor.impl.",
+  "com.intellij.application.options.",
+  "com.intellij.psi.codeStyle.",
+)
 
 /** The prefixes of the lock machinery itself, which every reported stack trace starts with. */
 private val LOCK_MACHINERY_PACKAGES = listOf(
@@ -35,8 +40,8 @@ private fun Throwable.acquisitionSite(): String? =
 
 /**
  * An editor can be built on `Dispatchers.UI`, which forbids the RW lock. So the platform must take no lock
- * while the editor is built. See IJPL-243574. `EditorSettingsState` computes the tab size and the tab character
- * in a background read action instead, so these tests also cover where these values come from.
+ * while the editor is built. See IJPL-243574. `EditorSettingsState` computes its inputs in a background read action
+ * instead, so these tests also cover where these values come from.
  */
 @TestApplication
 class EditorSettingsLockFreeCreationTest {
@@ -55,29 +60,47 @@ class EditorSettingsLockFreeCreationTest {
    * so it reports no acquisition to a caller that still holds the lock. Only a released lock sends it through
    * `runReadAction`, where `NestedLocksThreadingSupport.handleLockAccess` reports it.
    *
-   * The test watches the platform. A lock that a plugin `EditorFactoryListener` takes belongs to that plugin,
-   * and Ultimate loads about 40 listeners that Community does not.
+   * The test watches the editor settings and the code style that they read. A lock that a plugin
+   * `EditorFactoryListener` takes belongs to that plugin, and Ultimate loads about 40 listeners that Community does not.
+   *
+   * The inputs compute in the background, as in production. In unit-test mode they compute at once, and that takes
+   * the lock on purpose.
    */
   @Test
   fun testTheEditorIsBuiltWithoutTheRwLock(): Unit = fixture.runTest {
+    EditorSettingsState.computeInputsInBackgroundInTests(testRootDisposable)
     initText("abc")
-    // Only the file branch of the indent options reads the PSI, so the test needs a document with a file.
-    assertNotNull(editor.virtualFile)
-    val document = editor.document
+    // Only the file branch of the indent options reads the PSI, so the test needs a document with a file. Nobody asked
+    // for the code style of this file yet, so the code style cache cannot hide a computation.
+    val freshFile = this.fixture.addFileToProject("fresh.txt", "abc")
+    val document = requireNotNull(PsiDocumentManager.getInstance(project).getDocument(freshFile))
 
     val reported = ArrayList<Throwable>()
-    // `Dispatchers.UI` holds no lock, so the test must release the one it holds.
-    TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
-      val editorFactory = EditorFactory.getInstance()
-      // This is what `Dispatchers.UI` does. It reports every lock, and it lets the lock proceed.
-      val created = ApplicationManagerEx.getApplicationEx().withLocksSoftlyProhibited(
-        "an editor must be built without the RW lock", { reported.add(it) }) {
-        editorFactory.createEditor(document, project)
+    // The fixture uses temporary code style settings, and they skip the code style cache. A file computes its settings
+    // in that cache, under the lock, so the test drops them while the editor is built.
+    val temporarySettings = CodeStyleSettingsManager.getInstance(project).temporarySettings
+    CodeStyle.dropTemporarySettings(project)
+    try {
+      // `Dispatchers.UI` holds no lock, so the test must release the one it holds.
+      TestOnlyThreading.releaseTheAcquiredWriteIntentLockThenExecuteActionAndTakeWriteIntentLockBack {
+        val editorFactory = EditorFactory.getInstance()
+        // This is what `Dispatchers.UI` does. It reports every lock, and it lets the lock proceed.
+        val created = ApplicationManagerEx.getApplicationEx().withLocksSoftlyProhibited(
+          "an editor must be built without the RW lock", { reported.add(it) }) {
+          editorFactory.createEditor(document, project)
+        }
+        editorFactory.releaseEditor(created)
       }
-      editorFactory.releaseEditor(created)
+    } finally {
+      if (temporarySettings != null) {
+        CodeStyle.setTemporarySettings(project, temporarySettings)
+      }
     }
 
-    val platformLocks = reported.filter { it.acquisitionSite()?.startsWith("$EDITOR_IMPL_PACKAGE.") == true }
+    val platformLocks = reported.filter { error ->
+      val site = error.acquisitionSite()
+      site != null && SETTINGS_PACKAGES.any { site.startsWith(it) }
+    }
     assertTrue(platformLocks.isEmpty(),
                "the platform took a lock while the editor was built: ${platformLocks.map { it.stackTraceToString() }}")
   }

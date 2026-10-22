@@ -28,6 +28,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.codeStyle.CodeStyleConstraints
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener
@@ -84,29 +85,9 @@ class EditorSettingsState(
    */
   var tabSize: Int by codeStyleProperty(projectFileIndent().tabSize) { fileIndent.tabSize }
 
-  var myWrapWhenTypingReachesRightMargin: Boolean by codeStyleProperty {
-    val settings = if (editor == null) {
-      CodeStyle.getDefaultSettings()
-    } else {
-      getEditorCodeStyleSettingsOrDefaults(editor)
-    }
-    settings.isWrapOnTyping(language)
-  }
-  var softMargins: List<Int> by codeStyleProperty {
-    if (editor == null) {
-      mutableListOf()
-    } else {
-      getEditorCodeStyleSettingsOrDefaults(editor).getSoftMargins(language)
-    }
-  }
-  var rightMargin: Int by codeStyleProperty {
-    val settings = if (editor == null) {
-      CodeStyle.getProjectOrDefaultSettings(project)
-    } else {
-      getEditorCodeStyleSettingsOrDefaults(editor)
-    }
-    settings.getRightMargin(language)
-  }
+  var myWrapWhenTypingReachesRightMargin: Boolean by codeStyleProperty(initialMargins().wrapOnTyping) { margins.wrapOnTyping }
+  var softMargins: List<Int> by codeStyleProperty(initialMargins().softMargins) { margins.softMargins }
+  var rightMargin: Int by codeStyleProperty(initialMargins().rightMargin) { margins.rightMargin }
 
   // Settings from EditorSettingsExternalizable. [refreshFromEditorSettings] maps its change events to these properties.
   var myIsVirtualSpace: Boolean by modifiedProperty(trueInColumnMode()) { externalizable().isVirtualSpace }
@@ -208,7 +189,7 @@ class EditorSettingsState(
   }
 
   /**
-   * Computes the language and [fileIndent] again, and then refreshes the properties that read them.
+   * Computes the inputs again: the language, [margins], and [fileIndent]. Then it refreshes the properties that read them.
    *
    * [SettingsImpl] calls this when it is built, and [SettingsImpl.reinitSettings] calls this after each event that can
    * change the inputs. These events are a code style change, a new file, and a new highlighter. `EditorHighlighterUpdater`
@@ -218,6 +199,7 @@ class EditorSettingsState(
     if (languageSupplier != null) {
       languageInput.recalculate()
     }
+    marginsInput.recalculate()
     fileIndentInput.recalculate()
   }
 
@@ -227,16 +209,25 @@ class EditorSettingsState(
   @TestOnly
   internal suspend fun awaitInputsForTests() {
     languageInput.awaitForTests()
+    marginsInput.awaitForTests()
     fileIndentInput.awaitForTests()
   }
 
   /**
    * The language of the editor file, which [languageInput] computes.
    *
-   * The calculators of the margins read it while the state is built, before this field gets its value. They see `null`
-   * then, which is also the value before the first computation.
+   * [initialMargins] reads it while the state is built, before this field gets its value. It sees `null` then, which is
+   * also the value before the first computation.
    */
   private var language: Language? = null
+
+  /**
+   * The margins that the code style gives the editor file in its language. [myWrapWhenTypingReachesRightMargin],
+   * [softMargins], and [rightMargin] calculate their defaults from it.
+   *
+   * The code style settings of a file can need a read action, so [marginsInput] computes the value in the background.
+   */
+  private var margins: Margins = initialMargins()
 
   /**
    * The indent values that the code style gives the editor file. [myUseTabCharacter] and [tabSize] calculate their
@@ -257,6 +248,12 @@ class EditorSettingsState(
     update = ::updateLanguage,
   )
 
+  private val marginsInput: BackgroundStateInput<Margins> = BackgroundStateInput(
+    scope = EditorCoroutineScopes.settingsScope(editor, project),
+    compute = { computeMargins() },
+    update = ::updateMargins,
+  )
+
   private val fileIndentInput: BackgroundStateInput<FileIndent> = BackgroundStateInput(
     scope = EditorCoroutineScopes.settingsScope(editor, project),
     compute = { computeFileIndent(ignoreDocOptions = true) },
@@ -275,7 +272,9 @@ class EditorSettingsState(
   private fun subscribeToSources(editor: EditorImpl) {
     @Suppress("DEPRECATION")
     val disposable = editor.disposable
-    subscribeToCodeStyle(editor, disposable)
+    if (project == null) {
+      subscribeToCodeStyle(disposable)
+    }
     externalizable().addPropertyChangeListener(
       PropertyChangeListener { event: PropertyChangeEvent? ->
         if (event != null) {
@@ -297,15 +296,14 @@ class EditorSettingsState(
     )
   }
 
-  private fun subscribeToCodeStyle(editor: EditorImpl, disposable: Disposable) {
-    CodeStyleSettingsManager.getInstance(project).subscribe(
+  /**
+   * Follows the default code style, for an editor without a project. `EditorImpl.codeStyleSettingsChanged` handles an
+   * editor with a project: it first stores the new settings of the file, and then reinitializes the settings.
+   */
+  private fun subscribeToCodeStyle(disposable: Disposable) {
+    CodeStyleSettingsManager.getInstance(null).subscribe(
       CodeStyleSettingsListener {
-        if (it.project != project || it.virtualFile != null && it.virtualFile != editor.virtualFile) {
-          return@CodeStyleSettingsListener
-        }
-        refresh(::myWrapWhenTypingReachesRightMargin)
-        refresh(::softMargins)
-        refresh(::rightMargin)
+        recalculateInputs()
       },
       disposable,
     )
@@ -401,11 +399,64 @@ class EditorSettingsState(
   private fun updateLanguage(newLanguage: Language?) {
     if (language != newLanguage) {
       language = newLanguage
-      refresh(::softMargins)
-      refresh(::rightMargin)
       refresh(::myStickyLinesShownForLanguage)
-      refresh(::myWrapWhenTypingReachesRightMargin)
+      marginsInput.recalculate()
     }
+  }
+
+  private fun updateMargins(newMargins: Margins) {
+    margins = newMargins
+    refresh(::myWrapWhenTypingReachesRightMargin)
+    refresh(::softMargins)
+    refresh(::rightMargin)
+  }
+
+  /**
+   * The margins before the first computation.
+   *
+   * When the inputs compute in the background, the project settings give them, because those settings need no lock.
+   * Otherwise, as in unit-test mode, the margins are computed at once.
+   */
+  private fun initialMargins(): Margins {
+    if (BackgroundStateInput.computesInBackground()) {
+      return marginsOf(CodeStyle.getProjectOrDefaultSettings(project))
+    }
+    return computeMargins()
+  }
+
+  private fun computeMargins(): Margins {
+    return marginsOf(editorCodeStyleSettings())
+  }
+
+  private fun marginsOf(settings: CodeStyleSettings): Margins {
+    return Margins(
+      wrapOnTyping = settings.isWrapOnTyping(language),
+      softMargins = settings.getSoftMargins(language),
+      rightMargin = settings.getRightMargin(language),
+    )
+  }
+
+  /**
+   * The code style settings of the editor file. They are the settings that the editor holds, or else the settings of the
+   * file, or else the project settings.
+   */
+  private fun editorCodeStyleSettings(): CodeStyleSettings {
+    if (editor == null || project == null) {
+      return CodeStyle.getProjectOrDefaultSettings(project)
+    }
+    val heldSettings = editor.getUserData(CODE_STYLE_SETTINGS)
+    if (heldSettings != null) {
+      return heldSettings
+    }
+    val file = editorFile(editor)
+    if (file == null) {
+      return CodeStyle.getSettings(project)
+    }
+    return CodeStyle.getSettings(project, file)
+  }
+
+  private fun editorFile(editor: EditorImpl): VirtualFile? {
+    return editor.virtualFile ?: FileDocumentManager.getInstance().getFile(editor.document)
   }
 
   /**
@@ -447,7 +498,7 @@ class EditorSettingsState(
     if (editor == null || project == null) {
       return projectFileIndent()
     }
-    val file = editor.virtualFile ?: FileDocumentManager.getInstance().getFile(editor.document)
+    val file = editorFile(editor)
     if (file == null) {
       return projectFileIndent()
     }
@@ -478,17 +529,6 @@ class EditorSettingsState(
       useTabCharacter = options.USE_TAB_CHARACTER,
       fileOptions = null,
     )
-  }
-
-  private fun getEditorCodeStyleSettingsOrDefaults(editor: EditorImpl): CodeStyleSettings {
-    val editorSettings = editor.getUserData(CODE_STYLE_SETTINGS)
-    val project = editor.project
-    val file = editor.virtualFile
-    return if (project != null && file != null) {
-      editorSettings ?: CodeStyle.getSettings(project, file)
-    } else {
-      CodeStyle.getDefaultSettings()
-    }
   }
 
   /**
@@ -566,17 +606,11 @@ class EditorSettingsState(
   }
 
   /**
-   * A property whose default comes from the code style.
+   * A property whose default comes from the code style, through an input. [initialValue] is the value before the input is
+   * computed, because the calculator reads an input field that is not set while the state is built.
    *
    * The default can depend on data that only the Remote Development backend has, such as `.editorconfig` and
    * `.clang-format`. So the backend always sends the value, also without an override.
-   */
-  private inline fun <reified T> codeStyleProperty(noinline defaultValueCalculator: () -> T): StateProperty<T> {
-    return codeStyleProperty(defaultValueCalculator(), defaultValueCalculator)
-  }
-
-  /**
-   * A [codeStyleProperty] with an explicit [initialValue], for a calculator that must not run while the state is built.
    */
   private inline fun <reified T> codeStyleProperty(
     initialValue: T,
@@ -590,6 +624,15 @@ class EditorSettingsState(
   }
 
   /**
+   * The margins that the code style gives the editor file in its language.
+   */
+  private class Margins(
+    val wrapOnTyping: Boolean,
+    val softMargins: List<Int>,
+    val rightMargin: Int,
+  )
+
+  /**
    * The indent values that the code style gives the editor file.
    */
   private class FileIndent(
@@ -600,5 +643,14 @@ class EditorSettingsState(
 
   companion object {
     private val LOG: Logger = logger<EditorSettingsState>()
+
+    /**
+     * Makes the inputs of every state compute in the background, as in production, until [disposable] is disposed.
+     */
+    @TestOnly
+    @JvmStatic
+    fun computeInputsInBackgroundInTests(disposable: Disposable) {
+      BackgroundStateInput.computeInBackgroundInTests(disposable)
+    }
   }
 }

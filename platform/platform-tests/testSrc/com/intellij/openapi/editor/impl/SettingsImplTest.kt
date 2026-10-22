@@ -1,14 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightModuleFixture
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -58,6 +61,29 @@ class SettingsImplTest {
     assertEquals(codeStyleMargins, settings.softMargins)
     val state = settings.getState()
     assertFalse(state.isOverridden(state::softMargins))
+  }
+
+  /**
+   * `createEditor(document, project)` builds an editor without its own file. Its margins must come from the code style of
+   * the document file, and not from the IDE defaults.
+   */
+  @Test
+  fun testAnEditorWithoutItsOwnFileUsesTheCodeStyleOfTheDocumentFile(): Unit = fixture.runTest {
+    initText("abc")
+    val manager = CodeStyleSettingsManager.getInstance(project)
+    val temporary = manager.cloneSettings(CodeStyle.getSettings(project))
+    val projectMargin = CodeStyle.getDefaultSettings().defaultRightMargin + 7
+    temporary.defaultRightMargin = projectMargin
+
+    CodeStyle.doWithTemporarySettings(project, temporary, Runnable {
+      val editorFactory = EditorFactory.getInstance()
+      val created = editorFactory.createEditor(editor.document, project)
+      try {
+        assertEquals(projectMargin, created.settings.getRightMargin(project))
+      } finally {
+        editorFactory.releaseEditor(created)
+      }
+    })
   }
 
   /**

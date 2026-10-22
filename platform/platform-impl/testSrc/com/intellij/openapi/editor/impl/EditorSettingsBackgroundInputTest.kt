@@ -165,6 +165,42 @@ internal class EditorSettingsBackgroundInputTest {
   }
 
   /**
+   * A code style change must reach the margins, which the state also computes in the background.
+   */
+  @Test
+  fun testCodeStyleChangeReachesTheMargins(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    BackgroundStateInput.computeInBackgroundInTests(disposable)
+    val testProject = project.get()
+    val editor = createEditor(testProject, file.get().virtualFile)
+    try {
+      val state = (editor.settings as SettingsImpl).getState()
+      state.awaitInputsForTests()
+      val changed = state.rightMargin + 7
+
+      val manager = CodeStyleSettingsManager.getInstance(testProject)
+      val temporary = manager.cloneSettings(CodeStyle.getSettings(testProject))
+      temporary.defaultRightMargin = changed
+      CodeStyle.setTemporarySettings(testProject, temporary)
+      try {
+        withContext(Dispatchers.UiWithModelAccess) {
+          writeIntentReadAction {
+            manager.fireCodeStyleSettingsChanged()
+          }
+        }
+        state.awaitInputsForTests()
+
+        assertEquals(changed, state.rightMargin)
+      }
+      finally {
+        CodeStyle.dropTemporarySettings(testProject)
+      }
+    }
+    finally {
+      releaseEditor(editor)
+    }
+  }
+
+  /**
    * Builds an editor with `createEditor(document, project)`, which sets no highlighter after the build.
    */
   private suspend fun createEditor(project: Project, file: VirtualFile): EditorImpl {
