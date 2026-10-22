@@ -63,7 +63,10 @@ import javax.swing.SwingUtilities
 import kotlin.math.max
 
 @ApiStatus.Internal
-class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeAction: AnAction?) : Disposable {
+class CombinedDiffMainUI(
+  private val model: CombinedDiffModel,
+  goToChangeAction: AnAction?,
+) : Disposable {
   private val ourDisposable = Disposer.newCheckedDisposable().also { Disposer.register(this, it) }
 
   @OptIn(DelicateCoroutinesApi::class)
@@ -88,8 +91,13 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeAction:
     mainPanel,
     diffToolChooser,
     context,
-    goToChangeAction,
+    goToChangeAction ?: createGoToChangeAction(),
   )
+
+  private fun createGoToChangeAction(): AnAction {
+    return CombinedDiffGoToChangePopupProvider.EP_NAME.computeSafeIfAny { it.createGoToChangeAction(model) }
+           ?: CombinedGoToChangePopupAction(model)
+  }
 
   private val combinedViewer get() = context.getUserData(COMBINED_DIFF_VIEWER_KEY)
 
@@ -117,7 +125,9 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeAction:
 
     contentPanel.setContent(DiffUtil.createMessagePanel(CommonBundle.getLoadingTreeNodeText()))
 
-    DiffUsageTriggerCollector.logShowCombinedDiffTool(model.project, diffToolChooser.getActiveTool(), model.context.getUserData(DiffUserDataKeys.PLACE))
+    DiffUsageTriggerCollector.logShowCombinedDiffTool(model.project,
+                                                      diffToolChooser.getActiveTool(),
+                                                      model.context.getUserData(DiffUserDataKeys.PLACE))
   }
 
   @RequiresEdt
@@ -304,7 +314,7 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeAction:
 
 internal class ShowActionGroupPopupAction(
   private val parentComponent: JComponent,
-  private val popupActionGroup: DefaultActionGroup
+  private val popupActionGroup: DefaultActionGroup,
 ) : DumbAwareAction() {
   init {
     ActionUtil.copyFrom(this, "Diff.ShowSettingsPopup")

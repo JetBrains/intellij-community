@@ -116,9 +116,8 @@
 
     <vcsStartupActivity implementation="com.intellij.vcs.commit.CommitModeManager$MyStartupActivity"/>
 
-    <projectService serviceInterface="com.intellij.diff.tools.combined.CombinedDiffManager"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.actions.diff.VcsCombinedDiffManager"
-                    overrides="true"/>
+    <diff.combinedGoToChangePopupProvider implementation="com.intellij.openapi.vcs.changes.actions.diff.VcsCombinedDiffGoToChangePopupProvider"/>
+
     <intentionAction>
       <language/>
       <className>com.intellij.openapi.vcs.intentions.SelectedBlockHistoryIntention</className>

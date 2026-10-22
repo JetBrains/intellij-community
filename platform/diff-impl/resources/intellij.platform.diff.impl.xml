@@ -37,8 +37,7 @@
     <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedSideBySideDiffTool"/>
     <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedUnifiedDiffTool"/>
     <projectService serviceInterface="com.intellij.diff.tools.combined.CombinedDiffManager"
-                    serviceImplementation="com.intellij.diff.tools.combined.CombinedDiffManagerImpl"
-                    open="true"/>
+                    serviceImplementation="com.intellij.diff.tools.combined.CombinedDiffManagerImpl"/>
 
     <writingAccessProvider implementation="com.intellij.diff.DiffLightVirtualFileWritingAccessProvider"/>
 
@@ -173,6 +172,7 @@
     <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.diff.impl.DiffToolSubstitutor" interface="com.intellij.diff.impl.DiffToolSubstitutor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.diff.editor.diffRequestProcessorEditorCustomizer" interface="com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.diff.combinedGoToChangePopupProvider" interface="com.intellij.diff.tools.combined.CombinedDiffGoToChangePopupProvider" dynamic="true"/>
   </extensionPoints>
   <xi:include href="intellij.platform.diff.impl.actions.xml"/>
 </idea-plugin>

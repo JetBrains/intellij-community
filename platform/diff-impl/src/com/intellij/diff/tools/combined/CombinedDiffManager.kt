@@ -12,7 +12,7 @@ interface CombinedDiffManager {
   fun createProcessor(
     diffPlace: String? = null,
     contextActions: List<AnAction>? = null,
-    goToChangeToolbarActions: List<AnAction>? = null,
+    goToChangeAction: AnAction? = null,
   ): CombinedDiffComponentProcessor
 
   companion object {
@@ -24,11 +24,11 @@ internal class CombinedDiffManagerImpl(private val project: Project) : CombinedD
   override fun createProcessor(
     diffPlace: String?,
     contextActions: List<AnAction>?,
-    goToChangeToolbarActions: List<AnAction>?,
+    goToChangeAction: AnAction?,
   ): CombinedDiffComponentProcessor {
     val model = CombinedDiffModel(project)
     model.context.putUserData(DiffUserDataKeys.PLACE, diffPlace)
     model.context.putUserData(DiffUserDataKeys.CONTEXT_ACTIONS, contextActions)
-    return CombinedDiffComponentProcessorImpl(model, null)
+    return CombinedDiffComponentProcessorImpl(model, goToChangeAction)
   }
 }

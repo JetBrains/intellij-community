@@ -80,8 +80,8 @@ f:com.intellij.diff.tools.combined.CombinedDiffKeysKt
 - *sf:getDISABLE_LOADING_BLOCKS():com.intellij.openapi.util.Key
 *:com.intellij.diff.tools.combined.CombinedDiffManager
 - *sf:Companion:com.intellij.diff.tools.combined.CombinedDiffManager$Companion
-- a:createProcessor(java.lang.String,java.util.List,java.util.List):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
-- bs:createProcessor$default(com.intellij.diff.tools.combined.CombinedDiffManager,java.lang.String,java.util.List,java.util.List,I,java.lang.Object):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
+- a:createProcessor(java.lang.String,java.util.List,com.intellij.openapi.actionSystem.AnAction):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
+- bs:createProcessor$default(com.intellij.diff.tools.combined.CombinedDiffManager,java.lang.String,java.util.List,com.intellij.openapi.actionSystem.AnAction,I,java.lang.Object):com.intellij.diff.tools.combined.CombinedDiffComponentProcessor
 *f:com.intellij.diff.tools.combined.CombinedDiffManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.diff.tools.combined.CombinedDiffManager
 *:com.intellij.diff.tools.combined.CombinedDiffModelListener
