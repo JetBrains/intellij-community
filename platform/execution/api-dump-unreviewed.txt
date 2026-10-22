@@ -1,11 +1,3 @@
-a:com.intellij.diagnostic.logging.AdditionalTabComponent
-- a:getTabTitle():java.lang.String
-- getTooltip():java.lang.String
-a:com.intellij.diagnostic.logging.IndependentLogFilter
-- a:isSelected():Z
-- a:selectFilter():V
-com.intellij.diagnostic.logging.LogConsoleListener
-- a:loggingWillBeStopped():V
 f:com.intellij.diagnostic.logging.LogConsolePreferences
 - sf:CUSTOM:java.lang.String
 - CUSTOM_FILTER:java.lang.String
@@ -26,29 +18,6 @@ f:com.intellij.diagnostic.logging.LogConsolePreferences
 - loadState(org.jdom.Element):V
 - registerFilter(com.intellij.diagnostic.logging.LogFilter):V
 - setFilterSelected(com.intellij.diagnostic.logging.LogFilter,Z):V
-c:com.intellij.diagnostic.logging.LogFilter
-- myIconPath:java.lang.String
-- myName:java.lang.String
-- <init>():V
-- <init>(java.lang.String,java.lang.String):V
-- <init>(java.lang.String,javax.swing.Icon):V
-- getIcon():javax.swing.Icon
-- readExternal(org.jdom.Element):V
-- setIcon(javax.swing.Icon):V
-- writeExternal(org.jdom.Element):V
-a:com.intellij.diagnostic.logging.LogFilterModel
-- a:addFilterListener(com.intellij.diagnostic.logging.LogFilterListener):V
-- a:getLogFilters():java.util.List
-- a:isFilterSelected(com.intellij.diagnostic.logging.LogFilter):Z
-- a:processLine(java.lang.String):com.intellij.diagnostic.logging.LogFilterModel$MyProcessingResult
-- processingStarted():V
-- a:removeFilterListener(com.intellij.diagnostic.logging.LogFilterListener):V
-- a:selectFilter(com.intellij.diagnostic.logging.LogFilter):V
-c:com.intellij.diagnostic.logging.LogFilterModel$MyProcessingResult
-- <init>(com.intellij.openapi.util.Key,Z,java.lang.String):V
-- getKey():com.intellij.openapi.util.Key
-- getMessagePrefix():java.lang.String
-- isApplicable():Z
 a:com.intellij.diagnostic.logging.LogFilterRegistrar
 - com.intellij.openapi.components.PersistentStateComponent
 - <init>():V
@@ -56,10 +25,6 @@ a:com.intellij.diagnostic.logging.LogFilterRegistrar
 - a:isFilterSelected(com.intellij.diagnostic.logging.LogFilter):Z
 - a:registerFilter(com.intellij.diagnostic.logging.LogFilter):V
 - a:setFilterSelected(com.intellij.diagnostic.logging.LogFilter,Z):V
-c:com.intellij.diagnostic.logging.LogFragment
-- <init>(java.lang.String,com.intellij.openapi.util.Key):V
-- getOutputType():com.intellij.openapi.util.Key
-- getText():java.lang.String
 a:com.intellij.execution.BeforeRunTask
 - pf:myProviderId:com.intellij.openapi.util.Key
 - getItemsCount():I
