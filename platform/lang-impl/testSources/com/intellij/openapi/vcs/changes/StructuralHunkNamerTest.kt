@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.minutes
 
 @TestApplication
 internal class StructuralHunkNamerTest {
@@ -150,6 +151,28 @@ internal class StructuralHunkNamerTest {
 
     assertTrue(name.parts.none { it.previousText != null })
     assertEquals(setOf(FileStatus.ADDED, FileStatus.DELETED), name.parts.map { it.status }.toSet())
+  }
+
+  @Test
+  fun `a group above the rename pair limit shows added and removed members`(): Unit = timeoutRunBlocking {
+    val renamed = nameHunks(renamedMethods(100, "old"), renamedMethods(100, "new"), HunkLines(1, 101, 1, 101)).single()
+    assertEquals(100, renamed.parts.size)
+    assertEquals(Triple("new0(): void", FileStatus.MODIFIED, "old0(): void"),
+                 renamed.parts.first().let { Triple(it.text, it.status, it.previousText) })
+
+    val large = nameHunks(renamedMethods(1000, "old"), renamedMethods(1000, "new"), HunkLines(1, 1001, 1, 1001)).single()
+    assertEquals(2000, large.parts.size)
+    assertTrue(large.parts.none { it.previousText != null })
+    assertEquals(listOf("new0(): void" to FileStatus.ADDED, "old0(): void" to FileStatus.DELETED),
+                 large.parts.take(2).map { it.text to it.status })
+  }
+
+  @Test
+  fun `ten thousand renamed methods get a name in time`(): Unit = timeoutRunBlocking(timeout = 1.minutes) {
+    val name = nameHunks(renamedMethods(10_000, "old"), renamedMethods(10_000, "new"), HunkLines(1, 10_001, 1, 10_001)).single()
+
+    assertEquals(20_000, name.parts.size)
+    assertTrue(name.parts.none { it.previousText != null })
   }
 
   @Test
@@ -296,6 +319,13 @@ internal class StructuralHunkNamerTest {
   }
 
   private fun javaFileType() = FileTypeManager.getInstance().getFileTypeByFileName("Sample.java")
+
+  /** A class with the methods `prefix0()` and on, one on each line. Each method calls the same method. */
+  private fun renamedMethods(count: Int, prefix: String): String = buildString {
+    append("class Sample {\n")
+    for (i in 0 until count) append("  void $prefix$i() { log(); }\n")
+    append("  void log() {}\n}")
+  }
 
   /** A plain text file with a Java root, as a template language has. */
   private class JavaTemplateViewProvider(
