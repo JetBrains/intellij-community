@@ -5,6 +5,7 @@ import com.intellij.python.requirements.RequirementsFile
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.requirements.parser.psi.RequirementsTypes
@@ -20,6 +21,13 @@ class RequirementsPackageNameCompletionContributor : CompletionContributor() {
 
     val interpreter = parameters.originalFile.findEvoPyProjectIfReady(mainForOrphans = false)?.interpreter ?: return
 
-    completePackageNames(nameElement.project, interpreter, result)
+    val prefixed = result.withPrefixMatcher(packageNamePrefix(nameElement, parameters.offset))
+
+    completePackageNames(nameElement.project, interpreter, prefixed)
+  }
+
+  private fun packageNamePrefix(position: PsiElement, offsetInFile: Int): String {
+    val offsetInPosition = (offsetInFile - position.textRange.startOffset).coerceIn(0, position.textLength)
+    return position.text.take(offsetInPosition)
   }
 }
