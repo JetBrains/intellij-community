@@ -10,10 +10,11 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.extension.ExtensionContext
 
 /**
- * Definition of filtering for Eel tests. This class lets omitting running tests for specific eels,
- * i.e., without local Eel, without WSL, etc.
+ * Defines filtering for Eel tests through the `eel.test.fixtures` system property.
+ * Positive labels (`local`, `local-eel`, `local-ijent`, `docker`, `wsl`, `ssh`) include only the listed fixtures.
+ * Labels prefixed with `-` (for example, `-docker`) exclude those fixtures from the enabled set.
  *
- * `@TestApplicationWithEel` and `eelFixture` already use [instance] for filtering.
+ * `@TestApplicationWithEel` and `eelFixtures` already use [instance] for filtering.
  */
 @TestOnly
 class EelFixtureFilter(
@@ -103,29 +104,40 @@ class EelFixtureFilter(
 
     @TestOnly
     internal fun parse(value: String): EelFixtureFilter {
-      val labels: MutableSet<String> = value.split(",").map(String::trim).filter(String::isNotEmpty).toMutableSet()
+      val rawLabels: List<String> = value.split(",").map(String::trim).filter(String::isNotEmpty)
+      val (rawExclusions, rawInclusions) = rawLabels.partition { it.startsWith("-") }
+      val inclusions = rawInclusions.toMutableSet()
+      val exclusions = rawExclusions.toMutableSet()
 
-      var isLocalEelEnabled = labels.isEmpty()
-      var isLocalIjentEnabled = labels.isEmpty()
-      var isDockerEnabled = labels.isEmpty()
-      var isWslEnabled = labels.isEmpty()
-      var isSshEnabled = labels.isEmpty()
+      val defaultEnabled = inclusions.isEmpty()
+      var isLocalEelEnabled = defaultEnabled
+      var isLocalIjentEnabled = defaultEnabled
+      var isDockerEnabled = defaultEnabled
+      var isWslEnabled = defaultEnabled
+      var isSshEnabled = defaultEnabled
 
-      val setters: Map<String, () -> Unit> = mapOf(
-        "local" to { isLocalIjentEnabled = true; isLocalEelEnabled = true },
-        "local-eel" to { isLocalEelEnabled = true },
-        "local-ijent" to { isLocalIjentEnabled = true },
-        "docker" to { isDockerEnabled = true },
-        "wsl" to { isWslEnabled = true },
-        "ssh" to { isSshEnabled = true },
+      val setters: Map<String, (Boolean) -> Unit> = mapOf(
+        "local" to { enabled -> isLocalIjentEnabled = enabled; isLocalEelEnabled = enabled },
+        "local-eel" to { enabled -> isLocalEelEnabled = enabled },
+        "local-ijent" to { enabled -> isLocalIjentEnabled = enabled },
+        "docker" to { enabled -> isDockerEnabled = enabled },
+        "wsl" to { enabled -> isWslEnabled = enabled },
+        "ssh" to { enabled -> isSshEnabled = enabled },
       )
       for ((label, setter) in setters) {
-        if (labels.remove(label)) {
-          setter()
+        if (inclusions.remove(label)) {
+          setter(true)
         }
       }
-      if (labels.isNotEmpty()) {
-        error("Unknown labels: ${labels.joinToString()}. Possible labels are: ${setters.keys.sorted().joinToString()}")
+      for ((label, setter) in setters) {
+        if (exclusions.remove("-$label")) {
+          setter(false)
+        }
+      }
+      val unknownLabels = inclusions + exclusions
+      if (unknownLabels.isNotEmpty()) {
+        val possibleLabels = setters.keys.sorted().joinToString()
+        error("Unknown labels: ${unknownLabels.joinToString()}. Possible labels are: $possibleLabels (prefix with '-' to exclude)")
       }
 
       if (System.getProperty("ijent.test.skip.docker") != null) {

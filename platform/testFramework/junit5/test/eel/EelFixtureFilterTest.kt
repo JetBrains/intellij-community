@@ -2,6 +2,7 @@
 package com.intellij.testFramework.junit5.eel
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 
 class EelFixtureFilterTest {
@@ -80,5 +81,56 @@ class EelFixtureFilterTest {
       isWslEnabled = true,
       isSshEnabled = false,
     ))
+  }
+
+  @Test
+  fun `-docker`() {
+    assertEquals(EelFixtureFilter.parse("-docker"), EelFixtureFilter(
+      isLocalEelEnabled = true,
+      isLocalIjentEnabled = true,
+      isDockerEnabled = false,
+      isWslEnabled = true,
+      isSshEnabled = true,
+    ))
+  }
+
+  @Test
+  fun `-local`() {
+    assertEquals(EelFixtureFilter.parse("-local"), EelFixtureFilter(
+      isLocalEelEnabled = false,
+      isLocalIjentEnabled = false,
+      isDockerEnabled = true,
+      isWslEnabled = true,
+      isSshEnabled = true,
+    ))
+  }
+
+  @Test
+  fun `-wsl,-docker`() {
+    assertEquals(EelFixtureFilter.parse("-wsl,-docker"), EelFixtureFilter(
+      isLocalEelEnabled = true,
+      isLocalIjentEnabled = true,
+      isDockerEnabled = false,
+      isWslEnabled = false,
+      isSshEnabled = true,
+    ))
+  }
+
+  @Test
+  fun `local,-local-eel`() {
+    assertEquals(EelFixtureFilter.parse("local,-local-eel"), EelFixtureFilter(
+      isLocalEelEnabled = false,
+      isLocalIjentEnabled = true,
+      isDockerEnabled = false,
+      isWslEnabled = false,
+      isSshEnabled = false,
+    ))
+  }
+
+  @Test
+  fun `unknown negative label`() {
+    assertThrows(IllegalStateException::class.java) {
+      EelFixtureFilter.parse("-unknown")
+    }
   }
 }
