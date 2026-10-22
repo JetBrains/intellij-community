@@ -10,11 +10,11 @@ use jiff::tz::TimeZone;
 use super::arm::ArmKind;
 use super::profile::{FrameSamples, ProfileEvent, ProfileScope};
 use super::record::{
-    CLASS_ANCHORS, CLASS_EDT_TIME, CLASS_REQUESTS, CLASS_TIME, CLASSES_HIDDEN, CLASSES_JAR, CLASSES_JDK, CLASSES_NAMED, CLASSES_PLATFORM,
-    CLASSES_PLUGINS, CREATE_CONTENT_PREFIX, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT, EMPTY_STATE_PREFIX, EMPTY_STATE_SPANS, END_SPANS,
-    FRAME_BECAME_INTERACTIVE, FRAME_BECAME_VISIBLE, JVM_LOADING_TIME, JVM_PROCESS_START, MODAL_SPANS, OPEN_EDITOR_PAINT, OPEN_FRAME,
-    OPEN_HIGHLIGHTED, PLATFORM_SPANS, PLUGIN_CLASSES, PLUGIN_LOG_STACK_MS, PLUGIN_LOG_WRITE_MS, TOTAL_DURATION, WELCOME_BECAME_VISIBLE,
-    WELCOME_SPANS, edt_at, named_at, span_end,
+    CARGO_SYNC_LOG_MS, CARGO_SYNC_STARTED, CLASS_ANCHORS, CLASS_EDT_TIME, CLASS_REQUESTS, CLASS_TIME, CLASSES_HIDDEN, CLASSES_JAR,
+    CLASSES_JDK, CLASSES_NAMED, CLASSES_PLATFORM, CLASSES_PLUGINS, CREATE_CONTENT_PREFIX, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT,
+    EMPTY_STATE_PREFIX, EMPTY_STATE_SPANS, END_SPANS, FRAME_BECAME_INTERACTIVE, FRAME_BECAME_VISIBLE, JVM_LOADING_TIME, JVM_PROCESS_START,
+    MODAL_SPANS, OPEN_EDITOR_PAINT, OPEN_FRAME, OPEN_HIGHLIGHTED, PLATFORM_SPANS, PLUGIN_CLASSES, PLUGIN_LOG_STACK_MS, PLUGIN_LOG_WRITE_MS,
+    TOTAL_DURATION, WELCOME_BECAME_VISIBLE, WELCOME_SPANS, edt_at, named_at, span_end,
 };
 use super::session::SUMMARY_FILE;
 use super::summary::{ArmSummary, Summary};
@@ -166,6 +166,9 @@ pub(crate) fn metric_groups(arms: &[&ArmSummary]) -> Vec<(&'static str, Vec<Stri
     }
     if arms.iter().any(|arm| arm.arm.kind == ArmKind::EmptyEditor) {
         groups.push(("empty-state composer", empty_state_rows(arms)));
+    }
+    if arms.iter().any(|arm| arm.arm.kind == ArmKind::CargoSync) {
+        groups.push(("cargo sync", vec![CARGO_SYNC_STARTED.to_owned(), CARGO_SYNC_LOG_MS.to_owned()]));
     }
     groups.push(("platform spans", PLATFORM_SPANS.map(str::to_owned).to_vec()));
     if arms

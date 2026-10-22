@@ -62,6 +62,10 @@ pub(crate) enum BenchVerb {
     /// In the empty-editor arm, every run opens the project directory, and the IDE opens no README. The IDE restores no
     /// editor, so the empty editor area builds the Air composer, and the gate is the end of its
     /// air.emptyState.createComponent span. --cold starts each run of this arm from the unprimed template.
+    ///
+    /// In the cargo-sync arm, every run opens the project directory, and the gate is the first line `CargoSyncTask
+    /// started` of idea.log. Its metric cargoSyncStarted is in ms from the process start, and cargoSyncStarted.ideaLog is
+    /// the ms of the log, the value of rust_duration_from_start_to_cargo_sync of the RustRover perf test.
     Project(ProjectArgs),
     /// Removes the old generations: all except the --keep newest and those a session of the last 24 hours names.
     Gc(GcArgs),
@@ -401,7 +405,8 @@ pub(crate) struct ProjectArgs {
     /// The measured runs per arm.
     #[arg(long, value_name = "N", default_value_t = DEFAULT_OPEN_PROJECT_RUNS, value_parser = clap::value_parser!(u32).range(1..=50))]
     pub(crate) runs: u32,
-    /// The arms of the session. `both` interleaves the project arm and the empty-editor arm.
+    /// The arms of the session. `both` interleaves the project arm and the empty-editor arm. `cargo-sync` needs an IDE
+    /// with the Rust plugin, such as --target //build:rustrover_dist, and a Cargo project.
     #[arg(long, value_enum, default_value_t = ProjectArmChoice::Project)]
     pub(crate) arm: ProjectArmChoice,
     /// Starts each measured run from a fresh copy of the unprimed template, with empty caches, and skips the prime
@@ -489,6 +494,7 @@ pub(crate) enum ProjectArmChoice {
     Project,
     EmptyEditor,
     Both,
+    CargoSync,
 }
 
 impl ProjectArmChoice {
@@ -498,6 +504,7 @@ impl ProjectArmChoice {
             Self::Project => vec![Arm::PROJECT],
             Self::EmptyEditor => vec![Arm::EMPTY_EDITOR],
             Self::Both => vec![Arm::PROJECT, Arm::EMPTY_EDITOR],
+            Self::CargoSync => vec![Arm::CARGO_SYNC],
         }
     }
 }

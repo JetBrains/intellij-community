@@ -37,6 +37,7 @@ mod digest;
 mod files;
 mod fus;
 mod gc;
+mod idealog;
 mod launch;
 mod load;
 mod ls;

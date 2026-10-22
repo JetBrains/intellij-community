@@ -54,7 +54,7 @@ fn every_arm_is_an_integration_test_and_a_project_start_trusts_its_project() {
         );
         assert_eq!(
             options.contains(&trust),
-            matches!(arm.kind, ArmKind::Project | ArmKind::EmptyEditor),
+            matches!(arm.kind, ArmKind::Project | ArmKind::EmptyEditor | ArmKind::CargoSync),
             "{arm:?}: {options:?}"
         );
     }

@@ -244,6 +244,20 @@ fn project_takes_the_empty_editor_arm_and_cold_for_it_alone() {
     assert_eq!((args.arm, args.cold), (ProjectArmChoice::Project, false));
     assert_eq!(arms(&["project", "markdown"]), Ok(vec![Arm::PROJECT]));
     assert_eq!(arms(&["project", "markdown", "--arm", "empty-editor"]), Ok(vec![Arm::EMPTY_EDITOR]));
+    assert_eq!(arms(&["project", "markdown", "--arm", "cargo-sync"]), Ok(vec![Arm::CARGO_SYNC]));
+    assert_eq!(
+        arms(&[
+            "project",
+            "markdown",
+            "--arm",
+            "cargo-sync",
+            "--cold",
+            "--suppress-plugin",
+            "com.intellij.air"
+        ]),
+        Ok(vec![Arm::CARGO_SYNC, Arm::CARGO_SYNC.without("com.intellij.air")]),
+        "a cold session and a twin without Air are valid: the gate is a line of the Rust plugin"
+    );
     assert_eq!(
         arms(&["project", "markdown", "--arm", "both"]),
         Ok(vec![Arm::PROJECT, Arm::EMPTY_EDITOR])

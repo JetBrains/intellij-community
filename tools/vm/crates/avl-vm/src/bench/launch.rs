@@ -154,7 +154,7 @@ pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: &Arm, prof
     options.extend(MEASURE_PROPERTIES.iter().map(|property| format!("-D{property}")));
     match arm.kind {
         ArmKind::Modal => options.push(format!("-D{FORCE_MODAL_PROPERTY}")),
-        ArmKind::Project | ArmKind::EmptyEditor => options.push(format!("-D{TRUST_PROPERTY}")),
+        ArmKind::Project | ArmKind::EmptyEditor | ArmKind::CargoSync => options.push(format!("-D{TRUST_PROPERTY}")),
         ArmKind::NonModal | ArmKind::OpenProject => {}
     }
     if let Some(plugin) = &arm.suppressed {
@@ -568,6 +568,7 @@ impl Launcher {
             Gate::Welcome { .. } => wait_for_welcome(ctx, &mut ide, run_dir, &fus_dir, &mut collector, &mut facts).await,
             Gate::Highlighted => wait_for_highlighted(ctx, &mut ide, run_dir, plan.kind == RunKind::Prime, &mut facts).await,
             Gate::Span { name, missing } => wait_for_span(ctx, &mut ide, run_dir, name, missing, &mut facts).await,
+            Gate::LogLine { line, missing, .. } => wait_for_log_line(ctx, &mut ide, run_dir, line, missing, &mut facts).await,
         };
         facts.waited_ms = u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX);
         if exited.is_none() && facts.failure.is_none() {
@@ -914,6 +915,40 @@ where
         if now >= deadline {
             facts.failure = Some(format!(
                 "no {name} span and no startup-stats.json within {} s: {missing}",
+                EVENT_TIMEOUT.as_secs()
+            ));
+            return None;
+        }
+    }
+}
+
+/// Waits for the first line of `log/idea.log` that holds `line`, an exit of the IDE, an interrupt or the timeout. An
+/// exit, an interrupt and the timeout set the failure.
+async fn wait_for_log_line<F>(ctx: &Ctx, ide: &mut F, run_dir: &Path, line: &str, missing: &str, facts: &mut LaunchFacts) -> Option<Ended>
+where
+    F: Future<Output = Result<String, ProcError>> + Unpin,
+{
+    let deadline = Instant::now() + EVENT_TIMEOUT;
+    let log = run_dir.join("log").join("idea.log");
+    loop {
+        tokio::select! {
+            result = &mut *ide => {
+                facts.failure = Some(format!("the IDE exited ({}) before the line \"{line}\" of log/idea.log", describe(&result)));
+                return Some(ended(&result));
+            }
+            alive = ctx.sleep(POLL) => {
+                if !alive {
+                    facts.failure = Some(interrupted_text());
+                    return None;
+                }
+            }
+        }
+        if files::read_optional(&log).ok().flatten().is_some_and(|text| text.contains(line)) {
+            return None;
+        }
+        if Instant::now() >= deadline {
+            facts.failure = Some(format!(
+                "no line \"{line}\" in log/idea.log within {} s: {missing}",
                 EVENT_TIMEOUT.as_secs()
             ));
             return None;

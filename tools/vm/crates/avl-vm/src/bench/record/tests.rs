@@ -866,3 +866,67 @@ fn the_thread_of_a_plugin_class_comes_from_the_jvm_log_and_the_dump() {
         record.notes
     );
 }
+
+/// A run of the cargo-sync arm in `session`: a copy of the fixture `project-run-01` whose `idea.log` gets the line
+/// `CargoSyncTask started` at `after_ms` from the process start, in the local time of the trace (`+0200`), with the
+/// column `[log_ms]`. Answers the run directory.
+fn cargo_sync_run(session: &Path, after_ms: i64, log_ms: i64) -> std::path::PathBuf {
+    let run = session.join("cargo-sync-run-01");
+    avl_testkit::traces::copy_tree(&session.join("project-run-01"), &run);
+    let trace = crate::bench::trace::parse(&std::fs::read_to_string(run.join("opentelemetry.json")).expect("a trace")).expect("a trace");
+    assert_eq!(trace.utc_offset_s, Some(7200), "the fixture names +0200");
+    let origin_us = trace.origin_us().expect("a process start");
+    let offset = jiff::tz::Offset::from_seconds(7200).expect("an offset");
+    let local = jiff::Timestamp::from_microsecond(origin_us + after_ms * 1000)
+        .expect("a time")
+        .to_zoned(jiff::tz::TimeZone::fixed(offset))
+        .datetime();
+    let line = format!(
+        "{:04}-{:02}-{:02} {:02}:{:02}:{:02},{:03} [{log_ms:>7}]   INFO - #o.r.c.p.m.i.CargoSyncTask - CargoSyncTask started\n",
+        local.year(),
+        local.month(),
+        local.day(),
+        local.hour(),
+        local.minute(),
+        local.second(),
+        local.subsec_nanosecond() / 1_000_000
+    );
+    let log = run.join("log").join("idea.log");
+    let text = std::fs::read_to_string(&log).expect("a log");
+    std::fs::write(&log, format!("{text}{line}")).expect("a log");
+    run
+}
+
+/// A cargo-sync run ends at the first `CargoSyncTask started` line of `idea.log`. Its local time and the UTC offset of
+/// the trace give the ms from the process start, the clock of the anchors, and the column gives the ms of the log. The
+/// end is an anchor of the class counts.
+#[test]
+fn a_cargo_sync_run_ends_at_the_first_cargo_sync_line() {
+    use super::{CARGO_SYNC_LOG_MS, CARGO_SYNC_STARTED};
+    let (_dir, session) = fixture_session();
+    let run = cargo_sync_run(&session, 2500, 2400);
+    let record = collect(&run, &id(Arm::CARGO_SYNC), LaunchFacts::default());
+    assert_eq!(record.reason, None);
+    let started = record.metrics.get(CARGO_SYNC_STARTED).copied().expect("the gate metric");
+    assert!((started - 2500.0).abs() < 1.0, "the line has a resolution of 1 ms: {started}");
+    assert_eq!(record.metrics.get(CARGO_SYNC_LOG_MS), Some(&2400.0));
+    assert_eq!(
+        record.metrics.get(&named_at(CARGO_SYNC_STARTED)),
+        Some(&18.0),
+        "the bound is 2500 ms, before the highlighted editor of the fixture at 2950 ms"
+    );
+}
+
+/// A cargo-sync run without the line is not valid, and the reason says why a run can lack it.
+#[test]
+fn a_cargo_sync_run_without_the_line_is_invalid() {
+    let (_dir, session) = fixture_session();
+    let run = session.join("cargo-sync-run-01");
+    avl_testkit::traces::copy_tree(&session.join("project-run-01"), &run);
+    let record = collect(&run, &id(Arm::CARGO_SYNC), LaunchFacts::default());
+    assert!(!record.valid);
+    assert_eq!(
+        record.reason.as_deref(),
+        Some("no line \"CargoSyncTask started\" in log/idea.log: the IDE has no Rust plugin, or the project has no Cargo.toml")
+    );
+}

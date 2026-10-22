@@ -11,6 +11,7 @@ use super::arm::{Arm, ArmKind, Gate};
 use super::classload::{self, ClassLoadLog, ClockAnchor, MAIN_CLASS, ProcessStart};
 use super::files;
 use super::fus;
+use super::idealog;
 use super::load::HostLoad;
 use super::pluginlog::{self, Owner, PluginLog, Tally};
 use super::profile::{self, EdtProfile, ExcludedSamples, FrameSamples, GATE_PROFILE, ProfileScope, WHOLE_PROFILE};
@@ -69,11 +70,12 @@ pub(crate) const QUIT_ANCHOR: &str = "quit";
 
 /// The anchors of the class counts, in the order of the start-up. Each one except [`QUIT_ANCHOR`] is a metric in
 /// milliseconds from the process start. A run has the metric [`named_at`] for each anchor that it has.
-pub(crate) const CLASS_ANCHORS: [&str; 6] = [
+pub(crate) const CLASS_ANCHORS: [&str; 7] = [
     FRAME_BECAME_VISIBLE,
     EMPTY_STATE_BUILT,
     WELCOME_BECAME_VISIBLE,
     WELCOME_SCREEN_PAINTED,
+    CARGO_SYNC_STARTED,
     EDITOR_HIGHLIGHTED,
     QUIT_ANCHOR,
 ];
@@ -190,6 +192,18 @@ const ERROR_TAG: &str = "error";
 /// The metric key of the empty-editor arm: the milliseconds from the process start to the end of
 /// [`EMPTY_STATE_SPAN`].
 pub(crate) const EMPTY_STATE_BUILT: &str = "emptyStateBuilt";
+
+/// The line of `idea.log` that the Rust plugin writes when the first Cargo sync starts. The gate of the cargo-sync arm.
+/// The perf test of RustRover measures `rust_duration_from_start_to_cargo_sync` to the first such line.
+pub(crate) const CARGO_SYNC_LOG_LINE: &str = "CargoSyncTask started";
+
+/// The metric key of the cargo-sync arm: the milliseconds from the process start to the first
+/// [`CARGO_SYNC_LOG_LINE`], on the clock of the anchors.
+pub(crate) const CARGO_SYNC_STARTED: &str = "cargoSyncStarted";
+
+/// The same line on the clock of `idea.log`: the milliseconds in its `[...]` column, from the creation of the log. It
+/// is the value of `rust_duration_from_start_to_cargo_sync` of the perf test.
+pub(crate) const CARGO_SYNC_LOG_MS: &str = "cargoSyncStarted.ideaLog";
 
 /// The prefix of the spans of the Air empty-state composer. Each span is a metric with its duration, and the digest
 /// shows each one.
@@ -530,6 +544,17 @@ fn measure(run_dir: &Path, record: &mut RunRecord) -> Result<(), String> {
     if let Gate::Span { name, missing } = gate {
         span_gate(trace.as_ref(), name, missing)?;
     }
+    if let Gate::LogLine {
+        line,
+        metric,
+        log_metric,
+        missing,
+    } = gate
+    {
+        let (process_ms, log_ms) = log_line_gate(run_dir, trace.as_ref(), line, missing)?;
+        metrics.insert(metric.to_owned(), process_ms);
+        metrics.insert(log_metric.to_owned(), log_ms);
+    }
     if record.arm.kind == ArmKind::OpenProject {
         open_project_metrics(record.launch.open_request_us, trace.as_ref(), stats.as_ref(), metrics)?;
     }
@@ -810,6 +835,26 @@ fn span_gate(trace: Option<&Trace>, name: &str, missing: &str) -> Result<(), Str
         ));
     }
     Ok(())
+}
+
+/// The log-line gate: the first line of `log/idea.log` that holds `line`. Answers its milliseconds from the process
+/// start, on the clock of the anchors, and its milliseconds on the clock of the log. The local time of the line and the
+/// UTC offset of the trace give its time since the epoch, and the origin of the trace is the process start. A run
+/// without the line, without the trace or without its offset is not valid.
+fn log_line_gate(run_dir: &Path, trace: Option<&Trace>, line: &str, missing: &str) -> Result<(f64, f64), String> {
+    let log = files::read_optional(&run_dir.join("log").join("idea.log"))
+        .map_err(|error| format!("{error:#}"))?
+        .ok_or_else(|| "no log/idea.log".to_owned())?;
+    let found = idealog::first_line(&log, line)
+        .map_err(|error| format!("log/idea.log: {error:#}"))?
+        .ok_or_else(|| format!("no line \"{line}\" in log/idea.log: {missing}"))?;
+    let Some((origin_us, offset_s)) = trace.and_then(|trace| Some((trace.origin_us()?, trace.utc_offset_s?))) else {
+        return Err(format!(
+            "{TRACE_FILE} has no process start or no UTC offset, so the line \"{line}\" has no time from the process start"
+        ));
+    };
+    let epoch_ms = found.epoch_ms(offset_s).map_err(|error| format!("log/idea.log: {error:#}"))?;
+    Ok((tenth(as_f64(epoch_ms) - as_f64(origin_us) / 1000.0), as_f64(found.log_ms)))
 }
 
 /// The metrics of the second project, measured from the open request.
