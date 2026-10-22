@@ -89,6 +89,10 @@ class GitGpgConfigDialog(
           comboBox = comboBox(listOf(), MyComboboxRenderer())
             .columns(COLUMNS_MEDIUM)
             .applyToComponent { addItemListener { updatePresentation() } }
+            .validationOnApply {
+              if (checkBox.isSelected && it.item == null) error(message("settings.configure.sign.gpg.for.repo.dialog.keys.validation.text"))
+              else null
+            }
             .component
           loadingIcon = icon(AnimatedIcon.Default())
             .visible(false)
@@ -140,7 +144,7 @@ class GitGpgConfigDialog(
     loadingIcon.visible(isLoading)
     checkBox.isEnabled = !isLoading
     comboBox.isEnabled = !isLoading && checkBox.isSelected
-    isOKActionEnabled = !isLoading && (hasLoadedKeys || !checkBox.isSelected)
+    isOKActionEnabled = !isLoading && (hasLoadedKeys && comboBox.item != null || !checkBox.isSelected)
     updateModifiedWarning()
   }
 

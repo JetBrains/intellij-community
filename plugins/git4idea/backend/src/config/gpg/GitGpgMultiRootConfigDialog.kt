@@ -152,7 +152,8 @@ class GitGpgMultiRootConfigDialog(val project: Project,
           !config.isEnabled -> append(message("settings.configure.sign.gpg.do.not.sign.table.text"))
           availableKeys != null && availableKeys.keys.isEmpty() ->
             append(message("settings.configure.sign.gpg.no.available.keys.table.text"), SimpleTextAttributes.ERROR_ATTRIBUTES)
-          config.key == null -> append(message("settings.configure.sign.gpg.no.key.table.text"))
+          config.key == null -> append(message("settings.configure.sign.gpg.no.key.selected.table.text"),
+                                       SimpleTextAttributes.ERROR_ATTRIBUTES)
           else -> {
             append(config.key.id)
             val description = availableKeys?.descriptions[config.key] ?: return
