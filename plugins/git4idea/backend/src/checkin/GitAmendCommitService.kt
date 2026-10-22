@@ -5,6 +5,7 @@ import com.intellij.dvcs.commit.AmendCommitService
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.commit.CommitToAmend
@@ -26,7 +27,7 @@ internal class GitAmendCommitService(project: Project, scope: CoroutineScope) : 
   private val recentCommitsProvider = scope.async(Dispatchers.Default) {
     GitRecentCommitsProvider(
       project, scope,
-      limit = COMMITS_LIMIT,
+      limit = RegistryManager.getInstanceAsync().intValue("git.commit.recent.commits.limit", 20),
       userScope = GitRecentCommitsProvider.UserScope.ALL_USERS,
       stopAtFirstMergeCommit = true,
       unpublishedOnly = true,
@@ -70,8 +71,4 @@ internal class GitAmendCommitService(project: Project, scope: CoroutineScope) : 
       // %s strips newlines from subject; there is no way to work around it before 1.7.2 with %B (unless parsing some fixed format)
       "%s%n%n%-b"
     }
-
-  companion object {
-    private const val COMMITS_LIMIT: Int = 20
-  }
 }

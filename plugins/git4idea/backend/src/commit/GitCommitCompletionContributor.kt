@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -59,9 +60,10 @@ class GitCommitCompletionContributor : CompletionContributor(), DumbAware {
     }
   }
 
-  private fun getLastCommits(repository: GitRepository, n: Int = 20): List<String> {
+  private fun getLastCommits(repository: GitRepository): List<String> {
     val future = ApplicationManager.getApplication().executeOnPooledThread<List<String>> {
-      GitLogUtil.collectMetadata(repository.project, repository.root, "-n $n").commits.map { it.subject }
+      val limit = RegistryManager.getInstance().intValue("git.commit.recent.commits.limit", 20)
+      GitLogUtil.collectMetadata(repository.project, repository.root, "-n $limit").commits.map { it.subject }
     }
     return ApplicationUtil.runWithCheckCanceled(future, ProgressIndicatorProvider.getInstance().progressIndicator)
   }

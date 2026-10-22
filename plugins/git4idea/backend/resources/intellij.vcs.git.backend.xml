@@ -922,6 +922,10 @@
     <registryKey key="git.commit.completion.fixup.squash" defaultValue="true"
                  description="Provide completion for fixup, squash and amend prefixes in commit message field" restartRequired="false"/>
 
+    <registryKey key="git.commit.recent.commits.limit" defaultValue="20"
+                 description="Maximum number of recent commits shown for Amend and completion of fixup, squash, and amend commit messages"
+                 restartRequired="true"/>
+
     <registryKey key="git.interactive.rebase.collect.entries.using.log" defaultValue="true"
                  description="Use Log to collect Rebase Entries"/>
 
