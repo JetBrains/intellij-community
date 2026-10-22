@@ -59,6 +59,10 @@ internal class LightServiceInstanceSupport(
       initializeComponentOrLightService(instance, PluginUtil.getPluginId(instanceClass.classLoader), componentManager)
       return instance
     }
+
+    override fun prepare(instanceClass: Class<*>) {
+      prefetchComponentState(instanceClass, componentManager)
+    }
   }
 }
 

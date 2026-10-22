@@ -53,6 +53,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
@@ -1730,12 +1731,44 @@ internal fun getOrCreateInstanceBlocking(holder: InstanceHolder, debugString: St
   // if guiltyClassName is not null, it means that we are inside class initializer,
   // and so, we should execute it in a non-cancellable section
   if (inNonCancelableSection || guiltyClassName == null) {
+    prepareInitialization(holder, keyClass)
     return doGetOrCreateInstanceBlocking(holder, keyClass)
   }
   else {
     Cancellation.withNonCancelableSection().use {
+      prepareInitialization(holder, keyClass)
       return doGetOrCreateInstanceBlocking(holder, keyClass)
     }
+  }
+}
+
+private val isPreparingInitialization: ThreadLocal<Boolean> = ThreadLocal.withInitial { false }
+
+/**
+ * Runs the slow part of the initialization, for example, the read of the settings file, in the caller thread.
+ * Then it does not run inside the non-cancellable initialization, while other callers wait for the instance.
+ */
+private fun prepareInitialization(holder: InstanceHolder, keyClass: Class<*>?) {
+  // the preparation can request other instances; do not prepare them, to prevent an endless recursion
+  if (isPreparingInitialization.get()) {
+    return
+  }
+
+  isPreparingInitialization.set(true)
+  try {
+    rethrowCEasPCE(keyClass ?: holder) {
+      holder.prepareInitialization(keyClass)
+    }
+  }
+  catch (e: Throwable) {
+    if (e is ControlFlowException || e is CancellationException) {
+      throw e
+    }
+    // the initialization does the same work again and reports the error
+    LOG.debug(e) { "Cannot prepare initialization of $holder" }
+  }
+  finally {
+    isPreparingInitialization.set(false)
   }
 }
 

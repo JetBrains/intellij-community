@@ -80,6 +80,10 @@ internal abstract class ServiceInstanceInitializer(
     return instance
   }
 
+  override fun prepare(instanceClass: Class<*>) {
+    prefetchComponentState(instanceClass, componentManager)
+  }
+
   private fun wrapIfDynamicOverrideSupported(instance: Any): Any {
     val keyClassName = serviceDescriptor.serviceInterface ?: serviceDescriptor.implementation!!
     return if (canBeDynamicallyOverridden(keyClassName)) {

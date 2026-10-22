@@ -88,6 +88,16 @@ internal suspend fun initializeComponentOrLightService(component: Any, pluginId:
 }
 
 /**
+ * Loads the storage data of a [PersistentStateComponent] before the container creates it.
+ */
+internal fun prefetchComponentState(instanceClass: Class<*>, componentManager: ComponentManagerImpl) {
+  if (PersistentStateComponent::class.java.isAssignableFrom(instanceClass)) {
+    @Suppress("UNCHECKED_CAST")
+    componentManager.componentStore.prefetchComponentState(instanceClass as Class<out PersistentStateComponent<*>>)
+  }
+}
+
+/**
  * @see com.intellij.serviceContainer.ServiceProxyGenerator
  */
 @get:Internal
