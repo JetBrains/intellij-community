@@ -1,0 +1,71 @@
+load("@rules_java//java:defs.bzl", "java_library", "java_plugin", "java_test")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")
+
+pkg_files(
+    name = "files_to_zip",
+    srcs = glob(
+        ["**"],
+        exclude = ["*.iml"],
+    ),
+    prefix = "instrumentation-javac-plugin",
+    strip_prefix = strip_prefix.from_pkg(),
+    visibility = ["//visibility:public"],
+)
+
+# The plugin takes the file manager of the compile session from the javac context. No public API gives it, so the
+# compile of the plugin needs these two javac packages.
+JAVAC_INTERNAL_API_EXPORTS = [
+    "--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+    "--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+]
+
+# A javac plugin that applies the bytecode instrumentation of the jvm-inc-builder worker to the classes of the running
+# compile. javac starts it from the annotation processor path.
+java_library(
+    name = "instrumentation-javac-plugin",
+    srcs = glob(["src/**/*.java"]),
+    javacopts = JAVAC_INTERNAL_API_EXPORTS,
+    resource_strip_prefix = package_name() + "/resources",
+    resources = glob(["resources/**"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        "//:annotations_import",
+        "//:asm-all_import",
+        "//instrumentation-core",
+    ],
+)
+
+# The plugin jar is data, not a dependency: on the test class path the service loader would start the plugin also in
+# the compiles without the plugin.
+java_test(
+    name = "instrumentation-javac-plugin-tests",
+    srcs = glob(["testSrc/**/*.java"]),
+    data = [":instrumentation-javac-plugin"],
+    jvm_flags = ["-Dinstrumentation.javac.plugin.jar=$(rlocationpath :instrumentation-javac-plugin)"],
+    test_class = "com.intellij.tools.build.bazel.instrumentationJavacPlugin.InstrumentationJavacPluginTest",
+    deps = [
+        "//:annotations_import",
+        "//:asm-all_import",
+        "//:junit4",
+        "//instrumentation-core",
+        "//jvm-inc-builder:jvm-inc-builder-lib",
+        "@bazel_tools//tools/java/runfiles",
+    ],
+)
+
+# The plugin for the annotation processor path of a javac compile. The Bazel flag --plugin gives it to every Java
+# compile, in rules_java and in rules_kotlin alike. The target has no processor class, so JavaBuilder puts the jars on
+# the processor path and starts no annotation processor. The toolchain of the compile gives the plugin its two switches,
+# see bytecode_instrumentation_java_toolchain in the root BUILD file.
+java_plugin(
+    name = "plugin",
+    visibility = ["//visibility:public"],
+    deps = [":instrumentation-javac-plugin"],
+)
+
+exports_files(
+    ["instrumentation-javac-plugin.iml"],
+    visibility = ["//visibility:public"],
+)
+
+### skip generation section `build instrumentation-javac-plugin`

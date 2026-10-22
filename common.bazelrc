@@ -72,6 +72,18 @@ common:bta --javacopt=-XDcompilePolicy=bytodo
 common:jps --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=0
 common:bta --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=1
 
+# The bytecode instrumentation of the Java output on the rules_kotlin backend. On the JPS backend the jvm-inc-builder
+# worker instruments the Java classes itself. On the rules_kotlin backend the javac plugin of rules_jvm does it inside
+# each compile. The Bazel flag --plugin puts the plugin on the annotation processor path of every Java compile. The
+# rules_jvm flag selects the Java toolchain that gives the plugin its two switches. The rules_jvm flag stays out of
+# --experimental_propagate_custom_flag below: a tool of the build compiles without the plugin.
+common:bta --@rules_jvm//:bytecode_instrumentation=true
+common:bta --plugin=@rules_jvm//instrumentation-javac-plugin:plugin
+
+# The Java toolchain of the bytecode instrumentation applies only when the flag above is true, so every config registers
+# it. A registration under one config would change the exec configuration and build a second copy of every tool.
+common --extra_toolchains=@rules_jvm//:bytecode_instrumentation_java_toolchain_definition
+
 # Every target that compiles through the rules_kotlin rules uses the rules_jvm toolchain (the
 # Build Tools API with the embeddable compiler), which MODULE.bazel registers. A standalone module
 # such as @jps_to_bazel takes the compiler plugin that matches this toolchain's compiler through its

@@ -10,7 +10,6 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.zip.ZipEntry;
@@ -23,18 +22,13 @@ public class InstrumentationClassFinder {
   private final Map<String, PseudoClass> myLoaded = new HashMap<>(); // className -> class object
   private final ClassFinderClasspath myPlatformClasspath;
   private final ClassFinderClasspath myClasspath;
-  private final URL[] myPlatformUrls;
-  private final URL[] myClasspathUrls;
   private ClassLoader myLoader;
-  private byte[] myBuffer;
 
   public InstrumentationClassFinder(final URL[] cp) {
     this(URL_EMPTY_ARRAY, cp);
   }
 
   public InstrumentationClassFinder(final URL[] platformUrls, final URL[] classpathUrls) {
-    myPlatformUrls = platformUrls;
-    myClasspathUrls = classpathUrls;
     myPlatformClasspath = new ClassFinderClasspath(platformUrls);
     myClasspath = new ClassFinderClasspath(classpathUrls);
   }
@@ -43,57 +37,10 @@ public class InstrumentationClassFinder {
     return new URL(ClassFinderClasspath.Loader.JRT_PROTOCOL, null, jdkHomePath.replace(File.separatorChar, '/'));
   }
 
-  // compatibility with legacy code requiring ClassLoader
-  public ClassLoader getLoader() {
-    ClassLoader loader = myLoader;
-    if (loader != null) {
-      return loader;
-    }
-    final URLClassLoader platformLoader = myPlatformUrls.length > 0 ? new URLClassLoader(myPlatformUrls, null) : null;
-    final ClassLoader cpLoader = new URLClassLoader(myClasspathUrls, platformLoader);
-    loader = new ClassLoader(cpLoader) {
-
-      @Override
-      public InputStream getResourceAsStream(String name) {
-        InputStream is = super.getResourceAsStream(name);
-        if (is == null) {
-          try {
-            is = InstrumentationClassFinder.this.getResourceAsStream(name);
-          }
-          catch (IOException ignored) {
-          }
-        }
-        return is;
-      }
-
-      @Override
-      protected Class findClass(String name) throws ClassNotFoundException {
-        final InputStream is = lookupClassBeforeClasspath(name.replace('.', '/'));
-        if (is == null) {
-          throw new ClassNotFoundException("Class not found: " + name.replace('/', '.'));  // ensure presentable class name in error message
-        }
-        try {
-          final byte[] bytes = loadBytes(is);
-          return defineClass(name.replace('/', '.'), bytes, 0, bytes.length);
-        }
-        finally {
-          try {
-            is.close();
-          }
-          catch (IOException ignored) {
-          }
-        }
-      }
-    };
-    myLoader = loader;
-    return loader;
-  }
-
   public void releaseResources() {
     myPlatformClasspath.releaseResources();
     myClasspath.releaseResources();
     myLoaded.clear();
-    myBuffer = null;
 
     for (ClassLoader loader = myLoader; loader != null; loader = loader.getParent()) {
       if (loader instanceof Closeable) {
@@ -144,24 +91,6 @@ public class InstrumentationClassFinder {
     myLoaded.remove(className.replace('.', '/'));
   }
 
-  public InputStream getClassBytesAsStream(String className) throws IOException {
-    final String internalName = className.replace('.', '/'); // normalize
-    final PseudoClass aClass = myLoaded.get(internalName);
-    if (aClass == PseudoClass.NULL_OBJ) {
-      return null;
-    }
-    InputStream bytes = null;
-    try {
-      bytes = getClassBytesStream(internalName);
-    }
-    finally {
-      if (aClass == null && bytes == null) {
-        myLoaded.put(internalName, PseudoClass.NULL_OBJ);
-      }
-    }
-    return bytes;
-  }
-
   private InputStream getClassBytesStream(String internalName) throws IOException {
     InputStream is = null;
     // first look into platformCp
@@ -185,24 +114,6 @@ public class InstrumentationClassFinder {
     if (is == null) {
       is = lookupClassAfterClasspath(internalName);
     }
-    return is;
-  }
-
-  public InputStream getResourceAsStream(String resourceName) throws IOException {
-    InputStream is = null;
-
-    Resource resource = myPlatformClasspath.getResource(resourceName);
-    if (resource != null) {
-      is = resource.getInputStream();
-    }
-
-    if (is == null) {
-      resource = myClasspath.getResource(resourceName);
-      if (resource != null) {
-        is = resource.getInputStream();
-      }
-    }
-
     return is;
   }
 
@@ -706,7 +617,6 @@ public class InstrumentationClassFinder {
     }
   }
 
-
   private static String unescapePercentSequences(String s) {
     if (s.indexOf('%') == -1) {
       return s;
@@ -756,29 +666,6 @@ public class InstrumentationClassFinder {
       return c - 'A' + 10;
     }
     return -1;
-  }
-
-  public byte[] loadBytes(InputStream stream) {
-    byte[] buf = myBuffer;
-    if (buf == null) {
-      buf = new byte[512];
-      myBuffer = buf;
-    }
-
-    final ByteArrayOutputStream result = new ByteArrayOutputStream();
-    try {
-      while (true) {
-        int n = stream.read(buf, 0, buf.length);
-        if (n <= 0) {
-          break;
-        }
-        result.write(buf, 0, n);
-      }
-      result.close();
-    }
-    catch (IOException ignored) {
-    }
-    return result.toByteArray();
   }
 
 }

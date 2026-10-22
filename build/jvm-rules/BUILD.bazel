@@ -1,6 +1,7 @@
 load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load("@protobuf//bazel/toolchains:proto_lang_toolchain.bzl", "proto_lang_toolchain")
 load("@rules_java//java:defs.bzl", "java_import", "java_library")
+load("@rules_java//toolchains:default_java_toolchain.bzl", "DEFAULT_TOOLCHAIN_CONFIGURATION", "default_java_toolchain")
 load("@rules_kotlin//kotlin:core.bzl", "define_kt_toolchain", "kt_btapi_runtime")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_filegroup", "pkg_files", "strip_prefix")
@@ -64,6 +65,15 @@ kt_kotlinc_options(
 # Disabled by default to avoid stale compiler-plugin bytecode across backend switches.
 bool_flag(
     name = "rules_kotlin_incremental_compilation",
+    build_setting_default = False,
+    visibility = ["//visibility:public"],
+)
+
+# The bytecode instrumentation of the Java output on the rules_kotlin backend, see --config=bta in
+# community/common.bazelrc. True selects the Java toolchain below, which gives the javac plugin its two switches. The
+# flag stays out of the exec configuration, so a tool of the build compiles without the plugin.
+bool_flag(
+    name = "bytecode_instrumentation",
     build_setting_default = False,
     visibility = ["//visibility:public"],
 )
@@ -144,6 +154,36 @@ define_kt_toolchain(
     # rules take too. A root build points the flag to the generated module defaults (community/common.bazelrc).
     kotlinc_options = ":default-kotlinc-opts",
     language_version = "2.4",
+)
+
+# The Java toolchain of --config=bta. It is toolchain_jdk_25 of rules_java plus the two switches of the javac
+# instrumentation plugin, as system properties of JavaBuilder. The Bazel flag --plugin puts the plugin on the annotation
+# processor path of every javac compile. The switches turn its threading model instrumentation on, as the jvm-inc-builder
+# worker does in its own process. Every config registers the toolchain. It applies only when bytecode_instrumentation is
+# true. So the exec configuration keeps the default toolchain and its tools.
+default_java_toolchain(
+    name = "bytecode_instrumentation_java_toolchain",
+    configuration = DEFAULT_TOOLCHAIN_CONFIGURATION | {"java_runtime": "@rules_java//toolchains:remotejdk_25"},
+    javabuilder_jvm_opts = [
+        "-Dtmh.instrument.annotations=true",
+        "-Dtmh.generate.line.numbers=true",
+    ],
+    source_version = "25",
+    target_version = "25",
+    toolchain_definition = False,
+)
+
+config_setting(
+    name = "bytecode_instrumentation_java_25",
+    flag_values = {":bytecode_instrumentation": "true"},
+    values = {"java_language_version": "25"},
+)
+
+toolchain(
+    name = "bytecode_instrumentation_java_toolchain_definition",
+    target_settings = [":bytecode_instrumentation_java_25"],
+    toolchain = ":bytecode_instrumentation_java_toolchain",
+    toolchain_type = "@bazel_tools//tools/jdk:toolchain_type",
 )
 
 # --@rules_jvm//:trace
@@ -692,6 +732,7 @@ pkg_zip(
         ":rules_to_zip",
         "//dependency-graph:files_to_zip",
         "//instrumentation-core:files_to_zip",
+        "//instrumentation-javac-plugin:files_to_zip",
         "//jps-builders-6:files_to_zip",
         "//jvm-inc-builder:files_to_zip",
         "//rules/impl/platforms:files_to_zip",
