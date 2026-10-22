@@ -133,6 +133,9 @@ abstract class IjentDeployingOverShellProcessStrategy(
 
   protected open val executionStrategy: ExecutionStrategy = ExecutionStrategy.Default
 
+  /** Logs the stderr lines of the shell process that IJent did not write. */
+  protected open val foreignStderrLog: IjentForeignStderrLog get() = IjentForeignStderrLog.Default
+
   final override val noShutdownOnDisconnect: Boolean
     get() = when (val strategy = executionStrategy) {
       ExecutionStrategy.Default -> false
@@ -180,6 +183,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
         ExecutionStrategy.Default -> true
         is ExecutionStrategy.Tcp -> false
       },
+      foreignStderrLog = foreignStderrLog,
     )
     val shell = ShellProcessWrapper(processFacade, mediator)
     check(createdShellProcess == null) { "The deployment shell process was already created" }
