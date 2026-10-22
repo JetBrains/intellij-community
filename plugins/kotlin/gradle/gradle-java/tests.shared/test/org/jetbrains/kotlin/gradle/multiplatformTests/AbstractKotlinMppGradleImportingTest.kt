@@ -159,6 +159,9 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
     final override val agpVersion: TestVersion<String>?
         get() = context.testProperties.agpVersion
 
+    override val isWarningsAllowed: Boolean
+        get() = true
+
     // Temporary hack allowing to reuse new test runner in selected smoke tests for runs on linux-hosts
     open val allowOnNonMac: Boolean = false
 
