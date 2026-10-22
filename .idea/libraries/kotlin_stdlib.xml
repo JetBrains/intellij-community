@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="kotlin-stdlib" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-stdlib:2.5.0-Beta1">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-stdlib:2.5.0-Beta2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.5.0-Beta1/kotlin-stdlib-2.5.0-Beta1.jar">
-          <sha256sum>f8130e1c56e38cb895b738cc49615e568f51f7a26bbca771a5ec80629535f8ed</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.5.0-Beta2/kotlin-stdlib-2.5.0-Beta2.jar">
+          <sha256sum>bcc8380470f1b4ff3795d9083ce6b9aa299e74e32f655fc9248f1801b63d36ef</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -11,11 +11,11 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.5.0-Beta1/kotlin-stdlib-2.5.0-Beta1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.5.0-Beta2/kotlin-stdlib-2.5.0-Beta2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.5.0-Beta1/kotlin-stdlib-2.5.0-Beta1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-stdlib/2.5.0-Beta2/kotlin-stdlib-2.5.0-Beta2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

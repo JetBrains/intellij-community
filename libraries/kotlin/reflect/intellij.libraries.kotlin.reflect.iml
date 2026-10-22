@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlin-reflect" type="repository">
-        <properties maven-id="org.jetbrains.kotlin:kotlin-reflect:2.5.0-Beta1">
+        <properties maven-id="org.jetbrains.kotlin:kotlin-reflect:2.5.0-Beta2">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.5.0-Beta1/kotlin-reflect-2.5.0-Beta1.jar">
-              <sha256sum>83859abb720a2ed3e85ae50737731c79bb15d00f0311dca1a098c1e5cfc4f4e1</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.5.0-Beta2/kotlin-reflect-2.5.0-Beta2.jar">
+              <sha256sum>0c3d4738b8c6554b51cc3e54e6a9987b076c1a83364b9def219a83d9325f8dfc</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -20,11 +20,11 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.5.0-Beta1/kotlin-reflect-2.5.0-Beta1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.5.0-Beta2/kotlin-reflect-2.5.0-Beta2.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.5.0-Beta1/kotlin-reflect-2.5.0-Beta1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-reflect/2.5.0-Beta2/kotlin-reflect-2.5.0-Beta2-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
