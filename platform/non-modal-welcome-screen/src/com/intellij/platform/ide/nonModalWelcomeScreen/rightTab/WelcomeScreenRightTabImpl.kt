@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboButton
@@ -741,7 +742,7 @@ private class ComboBoxInfoPanelAction(
 
   override fun update(e: AnActionEvent) {
     val selectedItem = model.itemNames().getOrNull(model.currentItemIndex()) ?: ""
-    e.presentation.setText(comboModel.itemPrefix + selectedItem, false)
+    e.presentation.setText(comboModel.itemPrefix + StringUtil.trimMiddle(selectedItem, 35), false)
     e.presentation.icon = if (model is ThemeModel) ThemeModel.getIcon() else comboModel.icon
   }
 
