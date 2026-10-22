@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.state.ObservableStateListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Supplier
 import kotlin.math.max
@@ -206,15 +207,14 @@ class SettingsImpl internal constructor(
   }
 
   override fun isUseTabCharacter(project: Project?): Boolean {
-    // A project-less editor gives `null` here, and the value of the editor is the answer then.
-    if (project != null && project != state.project) {
-      // getting here when `state.project` is `null` is expected case (e.g. in fleet)
-      if (state.project != null) {
-        LOG.error("called isUseTabCharacter with foreign project")  // investigating such cases
-      }
-      return isUseTabCharacterForForeignProject(project)
+    if (project == null || project == state.project || state.isOverridden(state::myUseTabCharacter)) {
+      return state.currentUseTabCharacter()
     }
-    return state.currentUseTabCharacter()
+    // A project-less editor can get a caller with a project, for example in Fleet (IJPL-26876).
+    if (state.project != null) {
+      LOG.error("called isUseTabCharacter with foreign project")  // investigating such cases
+    }
+    return foreignIndentOptions(project).USE_TAB_CHARACTER
   }
 
   override fun setUseTabCharacter(value: Boolean) {
@@ -222,12 +222,10 @@ class SettingsImpl internal constructor(
   }
 
   override fun getTabSize(project: Project?): Int {
-    // Settings without an editor have no file, so the project of the caller gives the value, and no lock is needed.
-    // The settings of an editor give the value of that editor, for any project of the caller.
-    if (editor == null && project != null && !state.isOverridden(state::tabSize)) {
-      return max(1, CodeStyle.getSettings(project).getTabSize(null))
+    if (project == null || project == state.project || state.isOverridden(state::tabSize)) {
+      return state.currentTabSize()
     }
-    return state.currentTabSize()
+    return max(1, foreignIndentOptions(project).TAB_SIZE)
   }
 
   override fun setTabSize(tabSize: Int) {
@@ -502,13 +500,16 @@ class SettingsImpl internal constructor(
     }
   }
 
-  private fun isUseTabCharacterForForeignProject(project: Project): Boolean {
+  /**
+   * The indent options for a caller whose project is not the project of these settings. Without a file, the project
+   * settings of the caller answer, and they need no lock.
+   */
+  private fun foreignIndentOptions(project: Project): IndentOptions {
     val file = getVirtualFile()
     if (file == null) {
-      return CodeStyle.getProjectOrDefaultSettings(project).getIndentOptions(null).USE_TAB_CHARACTER
-    } else {
-      return CodeStyle.getIndentOptions(project, file).USE_TAB_CHARACTER
+      return CodeStyle.getSettings(project).indentOptions
     }
+    return CodeStyle.getIndentOptions(project, file)
   }
 
   private fun getVirtualFile(): VirtualFile? {

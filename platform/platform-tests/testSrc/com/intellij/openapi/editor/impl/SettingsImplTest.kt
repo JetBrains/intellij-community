@@ -44,6 +44,23 @@ class SettingsImplTest {
   }
 
   /**
+   * An explicit value overrides the code style also for a caller with another project. Settings without an editor have
+   * no project, so each caller with a project is such a caller.
+   */
+  @Test
+  fun testAnExplicitIndentValueWinsForAForeignProject(): Unit = fixture.runTest {
+    val settings = SettingsImpl()
+    val useTabCharacter = !settings.isUseTabCharacter(project)
+    val tabSize = settings.getTabSize(project) + 5
+
+    settings.setUseTabCharacter(useTabCharacter)
+    settings.setTabSize(tabSize)
+
+    assertEquals(useTabCharacter, settings.isUseTabCharacter(project))
+    assertEquals(tabSize, settings.getTabSize(project))
+  }
+
+  /**
    * `null` restores the soft margins of the code style, and an empty list means no soft margins.
    */
   @Test
