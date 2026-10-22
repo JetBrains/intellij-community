@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.dsl
 
+import com.intellij.ide.util.gotoByName.QuickSearchComponent
 import com.intellij.ide.util.treeView.NodeRenderer
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -117,6 +118,16 @@ class TaskTestContext(rt: TaskRuntimeContext) : TaskRuntimeContext(rt) {
     LearningUiUtil.waitUntilFound(robot, typeMatcher(componentClass) {
       (if (partOfName != null) it.javaClass.name.contains(partOfName)
       else true) && it.isShowing
+    }, defaultTimeout) { LearningUiUtil.getUiRootsForProject(project) }
+  }
+
+  /**
+   * Waits until the Search Everywhere popup is shown.
+   * It finds both the old popup (`SearchEverywhereUI`) and the new popup (`SePopupContentPane`).
+   */
+  fun waitSearchEverywhere() {
+    LearningUiUtil.waitUntilFound(robot, typeMatcher(JComponent::class.java) {
+      it is QuickSearchComponent && it.isShowing
     }, defaultTimeout) { LearningUiUtil.getUiRootsForProject(project) }
   }
 

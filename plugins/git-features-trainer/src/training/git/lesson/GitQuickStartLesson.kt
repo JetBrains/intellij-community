@@ -4,7 +4,6 @@ package training.git.lesson
 import com.intellij.CommonBundle
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.ex.EditorEx
@@ -106,7 +105,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
       triggerStart(it)
       restoreByUi(delayMillis = defaultRestoreDelay)
       test {
-        waitComponent(SearchEverywhereUI::class.java)
+        waitSearchEverywhere()
         type("clone")
         waitAndUsePreviouslyFoundListItem { jListItemFixture ->  jListItemFixture.click() }
       }

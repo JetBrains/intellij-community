@@ -2,7 +2,6 @@
 package training.learn.lesson.general
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.client.ClientSystemInfo
@@ -89,7 +88,7 @@ class GotoActionLesson(private val sample: LessonSample,
 
         restoreState { !checkInsideSearchEverywhere() }
         test {
-          waitComponent(SearchEverywhereUI::class.java)
+          waitSearchEverywhere()
           type(prefix)
         }
       }
