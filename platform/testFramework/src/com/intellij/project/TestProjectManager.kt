@@ -137,8 +137,8 @@ open class TestProjectManager : ProjectManagerImpl() {
   }
 
   // method is not used and will be deprecated soon but still have to ensure that every created Project instance is tracked
-  override fun loadProject(path: Path): Project {
-    val project = super.loadProject(path)
+  override fun loadProject(path: Path, beforeInit: ((Project) -> Unit)?): Project {
+    val project = super.loadProject(path, beforeInit)
     trackProject(project)
     return project
   }

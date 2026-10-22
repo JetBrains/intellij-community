@@ -79,8 +79,13 @@ abstract class ProjectManagerEx : ProjectManager() {
 
   abstract suspend fun openProjectAsync(projectIdentityFile: Path, options: OpenProjectTask = OpenProjectTask()): Project?
 
+  /**
+   * Loads the project at [path] without opening it.
+   *
+   * [beforeInit] runs on the new project before the project registers its components and reads its settings.
+   */
   @Internal
-  abstract fun loadProject(path: Path): Project
+  abstract fun loadProject(path: Path, beforeInit: ((Project) -> Unit)? = null): Project
 
   @get:TestOnly
   abstract val isDefaultProjectInitialized: Boolean

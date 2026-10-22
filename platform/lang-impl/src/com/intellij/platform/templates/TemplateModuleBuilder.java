@@ -403,7 +403,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         try {
           myProjectMode = true;
           unzip(name, path, false, indicator, false);
-          return ProjectManagerEx.getInstanceEx().loadProject(baseDir);
+          return ProjectManagerEx.getInstanceEx().loadProject(baseDir, null);
         }
         finally {
           cleanup();

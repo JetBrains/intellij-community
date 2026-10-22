@@ -274,10 +274,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     Disposer.dispose(defaultProject)
   }
 
-  override fun loadProject(path: Path): Project = loadProject(path = path, preloadServices = true)
+  override fun loadProject(path: Path, beforeInit: ((Project) -> Unit)?): Project =
+    loadProject(path = path, preloadServices = true, beforeInit = beforeInit)
 
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  fun loadProject(path: Path, preloadServices: Boolean): Project {
+  fun loadProject(path: Path, preloadServices: Boolean, beforeInit: ((Project) -> Unit)? = null): Project {
     @Suppress("DEPRECATION")
     val modalityState = CoreProgressManager.getCurrentThreadProgressModality()
     return runBlockingCancellable {
@@ -285,7 +286,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         prepareProject(
           projectIdentityFile = path,
           projectName = null,
-          beforeInit = null,
+          beforeInit = beforeInit,
           projectInitHelper = null,
           runConversionBeforeOpen = false,
           preloadServices = preloadServices,
