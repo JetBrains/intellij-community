@@ -1,0 +1,12 @@
+<idea-plugin>
+  <dependencies>
+    <plugin id="com.intellij.modules.pycharm"/>
+    <module name="intellij.platform.scratch"/>
+  </dependencies>
+
+  <actions>
+    <reference ref="NewScratchFile">
+      <add-to-group group-id="PlatformOpenProjectGroup" anchor="after" relative-to-action="NewElement"/>
+    </reference>
+  </actions>
+</idea-plugin>

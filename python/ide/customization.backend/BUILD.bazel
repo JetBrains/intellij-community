@@ -17,7 +17,6 @@ jvm_library(
         # do not sort,
         "//platform/backend",
         "//platform/vcs-impl",
-        "//platform/scratch",
     ],
 )
 
@@ -35,7 +34,6 @@ jvm_library(
         ":customization.backend",
         "//platform/backend:backend_test_lib",
         "//platform/vcs-impl:vcs-impl_test_lib",
-        "//platform/scratch:scratch_test_lib",
     ],
 )
 ### auto-generated section `build intellij.pycharm.community.customization.backend` end

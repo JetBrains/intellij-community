@@ -20,6 +20,7 @@ jvm_library(
         "//platform/whatsNew",
         "//platform/platform-impl:ide-impl",
         "//python/ide/customization.backend",
+        "//python/ide/customization.scratch",
     ],
 )
 
@@ -40,6 +41,7 @@ jvm_library(
         "//platform/whatsNew:whatsNew_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//python/ide/customization.backend:customization.backend_test_lib",
+        "//python/ide/customization.scratch:customization.scratch_test_lib",
     ],
 )
 ### auto-generated section `build intellij.pycharm.community.customization.shared` end
