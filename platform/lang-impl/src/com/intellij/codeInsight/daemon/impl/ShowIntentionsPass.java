@@ -25,6 +25,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -35,6 +36,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -59,7 +61,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
+
 public final class ShowIntentionsPass extends TextEditorHighlightingPass implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(ShowIntentionsPass.class);
+
   private final Editor myEditor;
 
   private final PsiFile myPsiFile;
@@ -423,6 +429,12 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
       }
       catch (IntentionPreviewUnsupportedOperationException e) {
         //can collect action on a mock memory editor and produce exceptions - ignore
+      }
+      catch (IndexNotReadyException _) {
+      }
+      catch (Throwable e) {
+        rethrowControlFlowException(e);
+        LOG.error(e);
       }
     }
   }
