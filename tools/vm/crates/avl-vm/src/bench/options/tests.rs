@@ -128,6 +128,31 @@ fn the_span_window_of_classes_takes_its_options() {
     }
 }
 
+/// `project` takes `--profile` and `--profile-event` as `welcome` does, also for the empty-editor arm.
+#[test]
+fn the_project_verb_takes_the_profile() {
+    let BenchVerb::Project(args) = verb(&[
+        "project",
+        "markdown",
+        "--arm",
+        "empty-editor",
+        "--profile",
+        "--profile-event",
+        "wall",
+    ]) else {
+        panic!("expected project");
+    };
+    assert_eq!((args.profile, args.profile_event), (true, ProfileEvent::Wall));
+    let BenchVerb::Project(args) = verb(&["project", "markdown"]) else {
+        panic!("expected project");
+    };
+    assert_eq!((args.profile, args.profile_event), (false, ProfileEvent::Cpu));
+    match parsed(&["project", "markdown", "--profile-event", "wall"]) {
+        Parsed::Refused { refusal, .. } => assert_eq!(refusal.code, "usage"),
+        other => panic!("--profile-event without --profile parsed: {other:?}"),
+    }
+}
+
 #[test]
 fn welcome_takes_every_option_and_the_global_form() {
     let argv = [

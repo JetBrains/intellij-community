@@ -408,6 +408,16 @@ pub(crate) struct ProjectArgs {
     /// run. Only the empty-editor arm takes it: the project arm restores the editor of its prime run.
     #[arg(long)]
     pub(crate) cold: bool,
+    /// Samples with async-profiler from the JVM start to the gate of each run, and reports the top frames of the EDT. The
+    /// gate of the empty-editor arm is the end of air.emptyState.createComponent. The profile has no time of a sample,
+    /// so it covers the whole start-up to the gate, not one span. A run whose JBR has no jcmd keeps the profile of the
+    /// whole run.
+    #[arg(long)]
+    pub(crate) profile: bool,
+    /// The event of --profile: `cpu`, the CPU time of each thread, or `wall`, the wall clock, which samples a waiting
+    /// thread too.
+    #[arg(long, value_name = "EVENT", value_enum, default_value_t = ProfileEvent::Cpu, requires = "profile")]
+    pub(crate) profile_event: ProfileEvent,
     #[command(flatten)]
     pub(crate) suppress: SuppressArgs,
     #[command(flatten)]

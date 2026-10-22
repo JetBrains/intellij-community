@@ -137,8 +137,8 @@ impl Bench<'_> {
                     arms: args.arms().map_err(Refusal::usage)?,
                     runs: args.runs,
                     cold: args.cold,
-                    profile: false,
-                    profile_event: ProfileEvent::Cpu,
+                    profile: args.profile,
+                    profile_event: args.profile_event,
                     project: Some(PlannedProject::Start(project_source(&args.project, &working_dir()?)?)),
                     suppressed_plugin: args.suppress.plugin.clone(),
                 };
