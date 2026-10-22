@@ -36,7 +36,6 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
 import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.editor.registry.EditorRegistry;
@@ -1503,24 +1502,6 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     LOG.assertTrue(!DocumentUtil.isInsideSurrogatePair(myDocument, getSelectionEnd()));
   }
 
-  void beforeSnapshotMarkerChange() {
-    PositionMarker marker = myPositionMarker;
-    if (marker instanceof SnapshotPositionMarker snapshotMarker) {
-      snapshotMarker.beforeDocumentChange();
-    }
-  }
-
-  void snapshotMarkersChanged(@NotNull DocumentEvent event) {
-    PositionMarker positionMarker = myPositionMarker;
-    if (positionMarker instanceof SnapshotPositionMarker snapshotMarker) {
-      snapshotMarker.documentChanged(event);
-    }
-    SelectionMarker selectionMarker = mySelectionMarker;
-    if (selectionMarker instanceof SnapshotSelectionMarker snapshotMarker) {
-      snapshotMarker.documentChanged(event);
-    }
-  }
-
   private @NotNull PositionMarker createPositionMarker(int offset) {
     SnapshotCaretMarkerStorage storage = myCaretModel.getSnapshotMarkerStorage();
     return storage == null ? new LegacyPositionMarker(offset) : new SnapshotPositionMarker(storage, offset);
@@ -1737,28 +1718,15 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     }
   }
 
-  private final class SnapshotPositionMarker extends SnapshotRangeMarkerImpl implements PositionMarker {
-    private final SnapshotCaretMarkerStorage storage;
-    private int offsetBeforeChange;
-
+  private final class SnapshotPositionMarker extends SnapshotCaretMarker implements PositionMarker {
     private SnapshotPositionMarker(@NotNull SnapshotCaretMarkerStorage storage, int offset) {
-      super(myDocument, storage.getRootStore(), storage.nextMarkerId(), storage.positionSpec(),
-            TextRangeScalarUtil.toScalarRange(offset, offset), storage.positionPolicy());
-      this.storage = storage;
-      offsetBeforeChange = offset;
-      storage.add(this, offset, offset, storage.positionSpec());
+      super(storage, offset, offset, storage.positionSpec(), storage.positionPolicy());
     }
 
-    private void beforeDocumentChange() {
-      offsetBeforeChange = getStartOffset();
-    }
-
-    private void documentChanged(@NotNull DocumentEvent event) {
-      int oldOffset = offsetBeforeChange;
-      if (oldOffset < event.getOffset()) {
-        return;
-      }
-      int newOffset = getStartOffset();
+    @Override
+    public void documentChanged(@NotNull DocumentEvent event, int oldOffset) {
+      int offsetAfterChange = getStartOffset();
+      int newOffset = offsetAfterChange;
       boolean replacedPoint = event.getOffset() < oldOffset && oldOffset < event.getOffset() + event.getOldLength();
       if (replacedPoint && !event.getDocument().isInBulkUpdate() && event.isWholeTextReplaced()) {
         try {
@@ -1775,8 +1743,8 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
         newOffset = event.getOffset() + event.getNewLength();
       }
       newOffset = DocumentUtil.alignToCodePointBoundary(event.getDocument(), newOffset);
-      if (newOffset != getStartOffset()) {
-        storage.relocate(this, newOffset, storage.positionSpec());
+      if (newOffset != offsetAfterChange) {
+        getStorage().relocate(this, newOffset, getStorage().positionSpec());
       }
 
       myLogicalColumnAdjustment = 0;
@@ -1796,22 +1764,12 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     }
   }
 
-  final class SnapshotSelectionMarker extends SnapshotRangeMarkerImpl implements SelectionMarker {
+  final class SnapshotSelectionMarker extends SnapshotCaretMarker implements SelectionMarker {
     private int startVirtualOffset;
     private int endVirtualOffset;
 
     private SnapshotSelectionMarker(@NotNull SnapshotCaretMarkerStorage storage, int startOffset, int endOffset) {
-      this(storage, startOffset, endOffset, storage.nextMarkerId(), storage.selectionSpec());
-    }
-
-    private SnapshotSelectionMarker(@NotNull SnapshotCaretMarkerStorage storage,
-                                    int startOffset,
-                                    int endOffset,
-                                    long markerId,
-                                    byte spec) {
-      super(myDocument, storage.getRootStore(), markerId, spec, TextRangeScalarUtil.toScalarRange(startOffset, endOffset),
-            storage.selectionPolicy());
-      storage.add(this, startOffset, endOffset, spec);
+      super(storage, startOffset, endOffset, storage.selectionSpec(), storage.selectionPolicy());
     }
 
     @Override
@@ -1851,7 +1809,8 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
       endVirtualOffset = endOffset;
     }
 
-    private void documentChanged(@NotNull DocumentEvent event) {
+    @Override
+    public void documentChanged(@NotNull DocumentEvent event, int oldOffset) {
       if (endVirtualOffset > 0 && isValid()) {
         Document document = event.getDocument();
         int startAfter = getStartOffset();

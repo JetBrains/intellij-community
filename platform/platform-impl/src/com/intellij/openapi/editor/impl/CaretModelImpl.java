@@ -72,7 +72,7 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
     this.caretListeners = EventDispatcher.create(CaretListener.class);
     this.caretActionListeners = EventDispatcher.create(CaretActionListener.class);
     this.snapshotMarkerStorage = document instanceof DocumentImpl documentImpl && RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION
-                                 ? new SnapshotCaretMarkerStorage(documentImpl, this::snapshotMarkersChanged)
+                                 ? new SnapshotCaretMarkerStorage(documentImpl)
                                  : null;
     this.positionMarkerTree = snapshotMarkerStorage == null ? new RangeMarkerTree<>(document) : null;
     this.selectionMarkerTree = snapshotMarkerStorage == null ? new RangeMarkerTree<>(document) : null;
@@ -375,16 +375,14 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
 
   @Override
   public void beforeDocumentChange(@NotNull DocumentEvent e) {
+    if (snapshotMarkerStorage != null) {
+      snapshotMarkerStorage.beforeDocumentChange();
+    }
     boolean cacheLogicalPosition = !isInBulkUpdate() && e.isWholeTextReplaced();
-    if (cacheLogicalPosition || snapshotMarkerStorage != null) {
+    if (cacheLogicalPosition) {
       for (CaretImpl caret : allCarets) {
-        if (cacheLogicalPosition) {
-          // logical position will be needed to restore caret position via diff
-          caret.updateCachedStateIfNeeded();
-        }
-        if (snapshotMarkerStorage != null) {
-          caret.beforeSnapshotMarkerChange();
-        }
+        // logical position will be needed to restore caret position via diff
+        caret.updateCachedStateIfNeeded();
       }
     }
     documentInUpdate = true;
@@ -596,12 +594,6 @@ public final class CaretModelImpl implements CaretModel, PrioritizedDocumentList
   @TestOnly
   boolean isUsingSnapshotMarkerStorage() {
     return snapshotMarkerStorage != null;
-  }
-
-  private void snapshotMarkersChanged(@NotNull DocumentEvent event) {
-    for (CaretImpl caret : allCarets) {
-      caret.snapshotMarkersChanged(event);
-    }
   }
 
   private void mergeOverlappingCaretsAndSelections() {

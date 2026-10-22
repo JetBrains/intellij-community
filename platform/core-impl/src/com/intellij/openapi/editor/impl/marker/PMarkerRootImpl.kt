@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.marker
 
-import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentPatch
-import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
+import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerDeltaProcessor
+import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.editor.impl.marker.PMarkerRootImpl.Companion.NULL_NODE
 import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.util.Processor
@@ -708,7 +708,7 @@ open class PMarkerRootImpl private constructor(
     fun state(markerId: Long): StoredNode? = builder.getUnchecked(markerId)
 
     fun valid(markerId: Long): ValidNode = builder.getUnchecked(markerId) as? ValidNode
-                                            ?: throw IllegalStateException("Marker $markerId is not a valid tree node")
+                                            ?: throw IllegalStateException("Marker $markerId is not a valid tree node: ${builder.getUnchecked(markerId)}")
 
     fun insert(rootId: Long, entry: MarkerEntry): Long {
       val markerId = entry.markerId

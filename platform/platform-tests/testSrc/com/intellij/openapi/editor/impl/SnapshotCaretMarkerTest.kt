@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
+@Suppress("SuspiciousPackagePrivateAccess")
 @TestApplication
 @UsePMarkerImplementation
 class SnapshotCaretMarkerTest {
@@ -80,6 +81,69 @@ class SnapshotCaretMarkerTest {
     }
 
     assertThat(position).isEqualTo(VisualPosition(0, 4))
+  }
+
+  @Test
+  fun `edit before a virtual caret keeps its virtual column`(): Unit = timeoutRunBlocking {
+    val position = withEditor("abc\nccccc") { editor ->
+      editor.isColumnMode = true
+      val caret = editor.caretModel.primaryCaret
+      caret.moveToVisualPosition(VisualPosition(1, 7))
+
+      editor.document.insertString(0, "x\n")
+
+      caret.visualPosition
+    }
+
+    assertThat(position).isEqualTo(VisualPosition(2, 7))
+  }
+
+  @Test
+  fun `successive whitespace insertions move only the affected caret`(): Unit = timeoutRunBlocking {
+    val offsets = withEditor("a b\nc d") { editor ->
+      val firstCaret = editor.caretModel.primaryCaret
+      firstCaret.moveToOffset(2)
+      val secondCaret = checkNotNull(editor.caretModel.addCaret(VisualPosition(1, 2)))
+
+      editor.document.insertString(2, "  ")
+      val firstOffsets = listOf(firstCaret.offset, secondCaret.offset)
+      editor.document.insertString(8, "  ")
+
+      firstOffsets + listOf(firstCaret.offset, secondCaret.offset)
+    }
+
+    assertThat(offsets).containsExactly(4, 8, 4, 10)
+  }
+
+  @Test
+  fun `moving a line keeps the virtual caret column`(): Unit = timeoutRunBlocking {
+    val position = withEditor("abc\nxyz\n") { editor ->
+      editor.isColumnMode = true
+      val caret = editor.caretModel.primaryCaret
+      caret.moveToVisualPosition(VisualPosition(0, 5))
+
+      editor.document.moveText(0, 4, 8)
+
+      caret.visualPosition
+    }
+
+    assertThat(position).isEqualTo(VisualPosition(1, 5))
+  }
+
+  @Test
+  fun `insertion at the selection end removes its virtual columns`(): Unit = timeoutRunBlocking {
+    val position = withEditor("abc") { editor ->
+      editor.isColumnMode = true
+      val caret = editor.caretModel.primaryCaret
+      caret.moveToVisualPosition(VisualPosition(0, 5))
+      caret.setSelection(VisualPosition(0, 1), 1, VisualPosition(0, 5), 3)
+
+      editor.document.insertString(3, "x")
+
+      caret.selectionEndPosition
+    }
+
+    assertThat(position).isEqualTo(VisualPosition(0, 3))
   }
 
   private suspend fun <T> withEditor(text: String, action: suspend (EditorImpl) -> T): T {
