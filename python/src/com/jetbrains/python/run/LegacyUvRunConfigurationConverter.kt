@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run
 
+import com.intellij.openapi.util.JDOMExternalizerUtil
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.xmlb.XmlSerializer
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
@@ -17,6 +18,12 @@ internal const val LEGACY_UV_CONFIGURATION_ID: String = "UvRunConfigurationType"
  * element being loaded, and the attribute is consumed as soon as it is applied.
  */
 private const val LEGACY_UV_MIGRATION_ATTRIBUTE: String = "uvRunMigration"
+
+/**
+ * Marks the first serialization of a migrated configuration, written by [writeLegacyUvMigrationMarker].
+ * [PythonRunConfiguration.readExternal] ignores it.
+ */
+internal const val LEGACY_UV_MIGRATION_PENDING_OPTION: String = "LEGACY_UV_MIGRATION_PENDING"
 
 internal enum class LegacyUvRunType {
   SCRIPT,
@@ -88,6 +95,7 @@ internal fun applyLegacyUvRunConfiguration(element: Element, configuration: Pyth
   migrated.useRunTool = true
   // Cast pins the PythonRunConfigurationParams overload, which copies the script fields too, not just the base ones.
   PythonRunConfiguration.copyParams(migrated as PythonRunConfigurationParams, configuration)
+  configuration.myLegacyUvMigrationPending = true
 
   // Not made unique against the other configurations: the run manager is loading its own state here, so asking it for
   // them would re-enter the service being initialized. A name already taken shadows the configuration that holds it,
@@ -95,4 +103,18 @@ internal fun applyLegacyUvRunConfiguration(element: Element, configuration: Pyth
   if (configuration.name.isNotBlank()) {
     configuration.name = "uv run ${configuration.name}"
   }
+}
+
+/**
+ * Adds [LEGACY_UV_MIGRATION_PENDING_OPTION] to the first serialization of [configuration] after [applyLegacyUvRunConfiguration].
+ *
+ * The run manager serializes a configuration right after it reads it, and keeps the digest of the result as the file content.
+ * A save writes the file only when its digest is different. The marker makes the first serialization different, so the next save
+ * writes the migrated form back. Without it, a `*.run.xml` file keeps the removed type, because its path does not change with
+ * the name.
+ */
+internal fun writeLegacyUvMigrationMarker(element: Element, configuration: PythonRunConfiguration) {
+  if (!configuration.myLegacyUvMigrationPending) return
+  configuration.myLegacyUvMigrationPending = false
+  JDOMExternalizerUtil.writeField(element, LEGACY_UV_MIGRATION_PENDING_OPTION, true.toString())
 }
