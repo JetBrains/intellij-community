@@ -2,9 +2,11 @@ package com.intellij.driver.sdk.ui.components.common.toolwindows
 
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.step
+import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
+import com.intellij.driver.sdk.ui.components.common.currentIdeFrame
 import com.intellij.driver.sdk.ui.components.common.ideFrame
 import com.intellij.driver.sdk.ui.components.elements.ActionButtonUi
 import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
@@ -15,6 +17,7 @@ import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.components.elements.tree
 import com.intellij.driver.sdk.ui.ui
 import org.intellij.lang.annotations.Language
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class GradlePanelToolWindowUi(data: ComponentData) : UiComponent(data) {
@@ -56,4 +59,11 @@ fun IdeaFrameUI.gradlePanel(@Language("xpath") xpath: String? = null, action: Gr
     rightToolWindowToolbar.gradleButton.open()
   }
   x(xpath ?: "//div[@class='ExternalProjectsViewImpl']", GradlePanelToolWindowUi::class.java).action()
+}
+
+fun Finder.runGradleTask(vararg pathToTask: String) {
+  currentIdeFrame().gradlePanel {
+    tree.waitForNodesLoaded(1.minutes)
+    tree.doubleClickPath(*pathToTask, fullMatch = false)
+  }
 }
