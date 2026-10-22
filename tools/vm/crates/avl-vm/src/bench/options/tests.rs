@@ -258,6 +258,18 @@ fn project_takes_the_empty_editor_arm_and_cold_for_it_alone() {
         Ok(vec![Arm::CARGO_SYNC, Arm::CARGO_SYNC.without("com.intellij.air")]),
         "a cold session and a twin without Air are valid: the gate is a line of the Rust plugin"
     );
+    let cold = |argv: &[&str]| {
+        let BenchVerb::Project(args) = verb(argv) else {
+            panic!("expected project");
+        };
+        args.cold()
+    };
+    assert!(
+        cold(&["project", "markdown", "--arm", "cargo-sync"]),
+        "the cargo-sync arm is a first start"
+    );
+    assert!(!cold(&["project", "markdown", "--arm", "empty-editor"]));
+    assert!(cold(&["project", "markdown", "--arm", "empty-editor", "--cold"]));
     assert_eq!(
         arms(&["project", "markdown", "--arm", "both"]),
         Ok(vec![Arm::PROJECT, Arm::EMPTY_EDITOR])

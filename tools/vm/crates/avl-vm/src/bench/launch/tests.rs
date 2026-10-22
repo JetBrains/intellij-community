@@ -57,6 +57,11 @@ fn every_arm_is_an_integration_test_and_a_project_start_trusts_its_project() {
             matches!(arm.kind, ArmKind::Project | ArmKind::EmptyEditor | ArmKind::CargoSync),
             "{arm:?}: {options:?}"
         );
+        assert_eq!(
+            options.contains(&"-Dllm.show.ai.promotion.window.on.start=false".to_owned()),
+            arm.kind == ArmKind::CargoSync,
+            "the properties of RustRoverIndexingTest: {arm:?}"
+        );
     }
 }
 

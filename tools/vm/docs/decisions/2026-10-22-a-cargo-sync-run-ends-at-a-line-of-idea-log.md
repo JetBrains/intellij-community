@@ -35,11 +35,34 @@ the log. It also copied the license as `idea.key` for every product.
    The archive is unpacked once, beside the runs, under `<runtime root>/bench/inputs/100exercises`.
 4. **The license file takes the name of the product.** The license manager reads `<short name>.key`, and the short
    name equals the platform prefix: `rustrover.key` for RustRover, `idea.key` for IDEA.
+5. **Every run is a first start, as in CI.** Amended 2026-10-22. The CI metric is the first launch of
+   `RustRoverIndexingTest`, which starts from a fresh config and system directory and turns off the README with
+   `disableReadmeMdOnStartup`. So the arm is always cold: each run starts from the unprimed template with empty
+   caches, and the session has no prime run. The IDE opens no README. The arm also passes the two properties of
+   `rustRoverVmOptions` that act before the sync: `llm.show.ai.promotion.window.on.start=false` and
+   `org.rust.external.linter.on.the.fly=false`.
+
+   A warm run missed the Air cost. The prime run opened the README and saved the editor, so each later run restored
+   it, and the empty editor area never built the Air composer. In the warm session 3a0a646e, Air had 744 classes
+   before the gate. In the cold session 9c081401, `air.emptyState.createComponent` ended before the gate in each run.
+   Air then had 4095 classes before it, with 300 findClass ms on the EDT, and the stacks with an Air frame took about
+   330 ms of EDT CPU per run.
+
+## What still differs from CI
+
+- CI starts an installer build of RustRover through the IDE Starter on a Linux machine. The bench starts the dev
+  distribution `//build:rustrover_dist` with `java` on a macOS host, without the native launcher.
+- CI passes `-Xmx4096`, the debug loggers of the Cargo sync, `rust.internal.tracing=true` and the async-profiler
+  agent on every run. The bench keeps the heap of the distribution and runs the profiler only with `--profile`.
+- CI sets `CARGO_HOME` to an empty directory. The bench uses the `~/.cargo` of the host. This changes the work after
+  the gate, not before it.
+- The bench adds its own logs: `class-load.log`, `plugin-classes.txt` and the FUS test scheme.
 
 ## Consequences
 
 - A session needs a dist of a product with the Rust plugin, such as `//build:rustrover_dist`, and `rustup` on the
   host. The IDE finds the toolchain in `~/.cargo/bin`.
 - The trace must hold the `time` tag, so a run without it fails its gate with a reason.
+- `--cold` changes nothing for the arm, because every run is cold.
 - The wall time to the gate follows the host load closely. Under a load above the CPU count, the EDT CPU samples of
   `--profile` compare two arms better than `cargoSyncStarted`.

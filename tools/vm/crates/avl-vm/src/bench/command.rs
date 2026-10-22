@@ -136,7 +136,7 @@ impl Bench<'_> {
                     command: "project",
                     arms: args.arms().map_err(Refusal::usage)?,
                     runs: args.runs,
-                    cold: args.cold,
+                    cold: args.cold(),
                     profile: args.profile,
                     profile_event: args.profile_event,
                     project: Some(PlannedProject::Start(project_source(&args.project, &working_dir()?)?)),
@@ -410,7 +410,7 @@ impl Bench<'_> {
             let _ = std::fs::remove_dir_all(sandbox.root.join(stale));
         }
         session::own_welcome_project(&sandbox).map_err(failed)?;
-        if id.arm.kind == ArmKind::EmptyEditor {
+        if matches!(id.arm.kind, ArmKind::EmptyEditor | ArmKind::CargoSync) {
             session::open_no_readme(&sandbox).map_err(failed)?;
         }
         let name = match id.kind {

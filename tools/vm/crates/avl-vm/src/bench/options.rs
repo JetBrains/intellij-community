@@ -63,8 +63,9 @@ pub(crate) enum BenchVerb {
     /// editor, so the empty editor area builds the Air composer, and the gate is the end of its
     /// air.emptyState.createComponent span. --cold starts each run of this arm from the unprimed template.
     ///
-    /// In the cargo-sync arm, every run opens the project directory, and the gate is the first line `CargoSyncTask
-    /// started` of idea.log. Its metric cargoSyncStarted is in ms from the process start, and cargoSyncStarted.ideaLog is
+    /// In the cargo-sync arm, every run is a first start: it starts from the unprimed template, with empty caches and
+    /// no prime run, and the IDE opens no README, as RustRoverIndexingTest does. The gate is the first line
+    /// `CargoSyncTask started` of idea.log. Its metric cargoSyncStarted is in ms from the process start, and cargoSyncStarted.ideaLog is
     /// the ms of the log, the value of rust_duration_from_start_to_cargo_sync of the RustRover perf test.
     Project(ProjectArgs),
     /// Removes the old generations: all except the --keep newest and those a session of the last 24 hours names.
@@ -410,7 +411,8 @@ pub(crate) struct ProjectArgs {
     #[arg(long, value_enum, default_value_t = ProjectArmChoice::Project)]
     pub(crate) arm: ProjectArmChoice,
     /// Starts each measured run from a fresh copy of the unprimed template, with empty caches, and skips the prime
-    /// run. Only the empty-editor arm takes it: the project arm restores the editor of its prime run.
+    /// run. Only the empty-editor arm takes it: the project arm restores the editor of its prime run. The cargo-sync arm
+    /// is always cold.
     #[arg(long)]
     pub(crate) cold: bool,
     /// Samples with async-profiler from the JVM start to the gate of each run, and reports the top frames of the EDT. The
@@ -430,6 +432,12 @@ pub(crate) struct ProjectArgs {
 }
 
 impl ProjectArgs {
+    /// Tells whether each measured run starts from the unprimed template and the session has no prime run: `--cold`,
+    /// or the cargo-sync arm, whose metric in CI is a first start.
+    pub(crate) fn cold(&self) -> bool {
+        self.cold || self.arm == ProjectArmChoice::CargoSync
+    }
+
     /// The arms of the session, in the interleave order: each arm of --arm, and after it its twin of
     /// --suppress-plugin. A cold session of the project arm is refused: without a prime run, no editor state is there
     /// to restore. A twin of the empty-editor arm without Air is refused too: its gate is a span of the Air composer.

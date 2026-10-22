@@ -93,6 +93,13 @@ pub(crate) const FORCE_MODAL_PROPERTY: &str = "idea.force.disable.non.modal.welc
 /// dialog stops a run.
 pub(crate) const TRUST_PROPERTY: &str = "idea.trust.all.projects=true";
 
+/// The properties of the cargo-sync arm that the context of `RustRoverIndexingTest` sets (`rustRoverVmOptions`) and
+/// that act before the first Cargo sync: no AI promotion window, and no external linter on the fly.
+pub(crate) const CARGO_SYNC_PROPERTIES: [&str; 2] = [
+    "llm.show.ai.promotion.window.on.start=false",
+    "org.rust.external.linter.on.the.fly=false",
+];
+
 /// The property of a twin arm, see [`Arm::suppressed`]. The IDE reads it as a list of plugin ids at the start and loads
 /// none of them.
 pub(crate) const SUPPRESSED_PLUGINS_PROPERTY: &str = "idea.suppressed.plugins.id";
@@ -154,7 +161,11 @@ pub(crate) fn measure_options(run_dir: &Path, sandbox: &Sandbox, arm: &Arm, prof
     options.extend(MEASURE_PROPERTIES.iter().map(|property| format!("-D{property}")));
     match arm.kind {
         ArmKind::Modal => options.push(format!("-D{FORCE_MODAL_PROPERTY}")),
-        ArmKind::Project | ArmKind::EmptyEditor | ArmKind::CargoSync => options.push(format!("-D{TRUST_PROPERTY}")),
+        ArmKind::Project | ArmKind::EmptyEditor => options.push(format!("-D{TRUST_PROPERTY}")),
+        ArmKind::CargoSync => {
+            options.push(format!("-D{TRUST_PROPERTY}"));
+            options.extend(CARGO_SYNC_PROPERTIES.iter().map(|property| format!("-D{property}")));
+        }
         ArmKind::NonModal | ArmKind::OpenProject => {}
     }
     if let Some(plugin) = &arm.suppressed {
