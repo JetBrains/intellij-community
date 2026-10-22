@@ -38,12 +38,14 @@ internal class ModuleStoreImpl(module: Module, private val pathMacroManager: Pat
 
   override fun getPathMacroManagerForDefaults(): PathMacroManager = pathMacroManager
 
-  override fun <T : Any> getStorageSpecs(
-    component: PersistentStateComponent<T>,
+  override fun getStorageSpecs(
+    componentClass: Class<out PersistentStateComponent<*>>,
+    component: PersistentStateComponent<*>?,
     stateSpec: State,
     operation: StateStorageOperation,
   ): List<Storage> {
     return (project as ProjectStoreOwner).componentStore.storeDescriptor.getModuleStorageSpecs(
+      componentClass = componentClass,
       component = component,
       stateSpec = stateSpec,
       operation = operation,

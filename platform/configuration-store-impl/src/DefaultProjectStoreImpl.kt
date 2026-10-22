@@ -77,7 +77,12 @@ internal class DefaultProjectStoreImpl(override val project: Project) : Componen
 
   override fun getPathMacroManagerForDefaults(): PathMacroManager = PathMacroManager.getInstance(project)
 
-  override fun <T : Any> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<FileStorageAnnotation> {
+  override fun getStorageSpecs(
+    componentClass: Class<out PersistentStateComponent<*>>,
+    component: PersistentStateComponent<*>?,
+    stateSpec: State,
+    operation: StateStorageOperation,
+  ): List<FileStorageAnnotation> {
     return listOf(FileStorageAnnotation.PROJECT_FILE_STORAGE_ANNOTATION)
   }
 

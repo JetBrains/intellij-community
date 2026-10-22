@@ -124,7 +124,8 @@ private class DotIdeaProjectStoreDescriptor(
   }
 
   override fun getModuleStorageSpecs(
-    component: PersistentStateComponent<*>,
+    componentClass: Class<out PersistentStateComponent<*>>,
+    component: PersistentStateComponent<*>?,
     stateSpec: State,
     operation: StateStorageOperation,
     storageManager: StateStorageManager,
@@ -134,12 +135,13 @@ private class DotIdeaProjectStoreDescriptor(
       listOf(FileStorageAnnotation.MODULE_FILE_STORAGE_ANNOTATION)
     }
     else {
-      getStorageSpecGenericImpl(component = component, stateSpec = stateSpec)
+      getStorageSpecGenericImpl(stateSpec = stateSpec, componentClass = componentClass)
     }
 
     for (provider in StreamProviderFactory.EP_NAME.getExtensions(project)) {
       runCatching {
         provider.customizeStorageSpecs(
+          componentClass = componentClass,
           component = component,
           storageManager = storageManager,
           stateSpec = stateSpec,
@@ -154,8 +156,9 @@ private class DotIdeaProjectStoreDescriptor(
     return result
   }
 
-  override fun <T : Any> getStorageSpecs(
-    component: PersistentStateComponent<T>,
+  override fun getStorageSpecs(
+    componentClass: Class<out PersistentStateComponent<*>>,
+    component: PersistentStateComponent<*>?,
     stateSpec: State,
     operation: StateStorageOperation,
     storageManager: StateStorageManager,
@@ -184,7 +187,14 @@ private class DotIdeaProjectStoreDescriptor(
     for (providerFactory in StreamProviderFactory.EP_NAME.asSequence(project)) {
       val customizedSpecs = runCatching {
         // yes, DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION is not added in this case
-        providerFactory.customizeStorageSpecs(component = component, storageManager = storageManager, stateSpec = stateSpec, storages = result, operation = operation)
+        providerFactory.customizeStorageSpecs(
+          componentClass = componentClass,
+          component = component,
+          storageManager = storageManager,
+          stateSpec = stateSpec,
+          storages = result,
+          operation = operation,
+        )
       }.getOrLogException(LOG)
       if (customizedSpecs != null) {
         return customizedSpecs

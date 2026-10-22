@@ -420,7 +420,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val stateSpec = getStateSpec(component)
     LOG.debug { "saveComponent is called for ${stateSpec.name}" }
     val saveManager = createSaveSessionProducerManager()
-    val storages = getStorageSpecs(component, stateSpec, StateStorageOperation.WRITE)
+    val storages = getStorageSpecs(component.javaClass, component, stateSpec, StateStorageOperation.WRITE)
     val storage = storages.firstOrNull { !it.deprecated } ?: throw AssertionError("All storages are deprecated")
     val absolutePath = storageManager.expandMacro(storage.path).toString()
     val componentInfo = components[stateSpec.name]
@@ -465,8 +465,8 @@ abstract class ComponentStoreImpl : IComponentStore {
     val effectiveComponentName = componentName ?: stateSpec.name
     val stateStorageChooser = component as? StateStorageChooserEx
 
-    @Suppress("UNCHECKED_CAST")
-    val storageSpecs = getStorageSpecs(component as PersistentStateComponent<Any>, stateSpec, StateStorageOperation.WRITE)
+    component as PersistentStateComponent<*>
+    val storageSpecs = getStorageSpecs(component.javaClass, component, stateSpec, StateStorageOperation.WRITE)
     for (storageSpec in storageSpecs) {
       var resolution = stateStorageChooser?.getResolution(storageSpec, StateStorageOperation.WRITE) ?: Resolution.DO
       if (resolution == Resolution.SKIP) {
@@ -593,7 +593,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val defaultState = if (stateSpec.defaultStateAsResource) getDefaultState(component, name, stateClass) else null
     if (loadPolicy == StateLoadPolicy.LOAD || info.stateSpec?.allowLoadInTests == true) {
       val storageChooser = component as? StateStorageChooserEx
-      for (storageSpec in getStorageSpecs(component, stateSpec, StateStorageOperation.READ)) {
+      for (storageSpec in getStorageSpecs(component.javaClass, component, stateSpec, StateStorageOperation.READ)) {
         if (storageChooser?.getResolution(storageSpec, StateStorageOperation.READ) == Resolution.SKIP) {
           continue
         }
@@ -713,11 +713,19 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  protected open fun <T : Any> getStorageSpecs(
-    component: PersistentStateComponent<T>,
+  /**
+   * Returns the storage specs of a component of [componentClass].
+   * For [StateStorageOperation.READ], the result must depend only on [componentClass].
+   *
+   * [component] is `null` if the specs are requested before the component is created.
+   * It is possible only for [StateStorageOperation.READ].
+   */
+  protected open fun getStorageSpecs(
+    componentClass: Class<out PersistentStateComponent<*>>,
+    component: PersistentStateComponent<*>?,
     stateSpec: State,
     operation: StateStorageOperation,
-  ): List<Storage> = getStorageSpecGenericImpl(stateSpec, component)
+  ): List<Storage> = getStorageSpecGenericImpl(stateSpec, componentClass)
 
   final override fun isReloadPossible(componentNames: Set<String>): Boolean = !componentNames.any { isNotReloadable(it) }
 
@@ -917,7 +925,7 @@ internal suspend fun getStateForComponent(component: PersistentStateComponent<*>
   else -> readAction { component.state }
 }
 
-internal fun <T : Any> getStorageSpecGenericImpl(stateSpec: State, component: PersistentStateComponent<T>): List<Storage> {
+internal fun getStorageSpecGenericImpl(stateSpec: State, componentClass: Class<*>): List<Storage> {
   val storages = mutableListOf<Storage>()
   for (storage in stateSpec.storages) {
     if (storage.roamingType == RoamingType.PER_OS) {
@@ -929,7 +937,7 @@ internal fun <T : Any> getStorageSpecGenericImpl(stateSpec: State, component: Pe
     }
   }
 
-  if (storages.size == 1 || component is StateStorageChooserEx) {
+  if (storages.size == 1 || StateStorageChooserEx::class.java.isAssignableFrom(componentClass)) {
     return storages
   }
 
@@ -937,7 +945,7 @@ internal fun <T : Any> getStorageSpecGenericImpl(stateSpec: State, component: Pe
     if (stateSpec.defaultStateAsResource) {
       return emptyList()
     }
-    throw AssertionError("No storage specified for $component")
+    throw AssertionError("No storage specified for ${componentClass.name}")
   }
 
   return sortStoragesByDeprecated(storages)

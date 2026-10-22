@@ -246,8 +246,19 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
   override val projectWorkspaceId: String?
     get() = project.service<ProjectIdManager>().id?.value
 
-  final override fun <T : Any> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
-    return storeDescriptor.getStorageSpecs(component = component, stateSpec = stateSpec, operation = operation, storageManager = storageManager)
+  final override fun getStorageSpecs(
+    componentClass: Class<out PersistentStateComponent<*>>,
+    component: PersistentStateComponent<*>?,
+    stateSpec: State,
+    operation: StateStorageOperation,
+  ): List<Storage> {
+    return storeDescriptor.getStorageSpecs(
+      componentClass = componentClass,
+      component = component,
+      stateSpec = stateSpec,
+      operation = operation,
+      storageManager = storageManager,
+    )
   }
 
   final override fun isProjectFile(file: VirtualFile): Boolean {

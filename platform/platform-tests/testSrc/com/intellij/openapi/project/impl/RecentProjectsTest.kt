@@ -320,15 +320,17 @@ private class CustomDotIdeaProjectStoreDescriptor(
     FileStorageAnnotation.PROJECT_FILE_STORAGE_ANNOTATION
 
   override fun getModuleStorageSpecs(
-    component: PersistentStateComponent<*>,
+    componentClass: Class<out PersistentStateComponent<*>>,
+    component: PersistentStateComponent<*>?,
     stateSpec: State,
     operation: StateStorageOperation,
     storageManager: StateStorageManager,
     project: Project,
   ): List<Storage> = listOf(FileStorageAnnotation.MODULE_FILE_STORAGE_ANNOTATION)
 
-  override fun <T : Any> getStorageSpecs(
-    component: PersistentStateComponent<T>,
+  override fun getStorageSpecs(
+    componentClass: Class<out PersistentStateComponent<*>>,
+    component: PersistentStateComponent<*>?,
     stateSpec: State,
     operation: StateStorageOperation,
     storageManager: StateStorageManager,

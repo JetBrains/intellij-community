@@ -26,10 +26,16 @@ interface StreamProviderFactory {
 
   /**
    * `storages` are preprocessed by component store - not raw from state spec.
+   *
+   * For [StateStorageOperation.READ], the result must depend only on [componentClass].
+   * [component] is `null` if the specs are requested before the component is created.
+   * It is possible only for [StateStorageOperation.READ].
+   *
    * @return null if not applicable
    */
   fun customizeStorageSpecs(
-    component: PersistentStateComponent<*>,
+    componentClass: Class<out PersistentStateComponent<*>>,
+    component: PersistentStateComponent<*>?,
     storageManager: StateStorageManager,
     stateSpec: State,
     storages: List<Storage>,

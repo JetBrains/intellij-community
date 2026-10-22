@@ -54,16 +54,28 @@ interface ProjectStoreDescriptor {
 
   fun getJpsBridgeAwareStorageSpec(filePath: String, project: Project): Storage
 
+  /**
+   * For [StateStorageOperation.READ], the result must depend only on [componentClass].
+   * [component] is `null` if the specs are requested before the component is created.
+   * It is possible only for [StateStorageOperation.READ].
+   */
   fun getModuleStorageSpecs(
-    component: PersistentStateComponent<*>,
+    componentClass: Class<out PersistentStateComponent<*>>,
+    component: PersistentStateComponent<*>?,
     stateSpec: State,
     operation: StateStorageOperation,
     storageManager: StateStorageManager,
     project: Project,
   ): List<Storage>
 
-  fun <T : Any> getStorageSpecs(
-    component: PersistentStateComponent<T>,
+  /**
+   * For [StateStorageOperation.READ], the result must depend only on [componentClass].
+   * [component] is `null` if the specs are requested before the component is created.
+   * It is possible only for [StateStorageOperation.READ].
+   */
+  fun getStorageSpecs(
+    componentClass: Class<out PersistentStateComponent<*>>,
+    component: PersistentStateComponent<*>?,
     stateSpec: State,
     operation: StateStorageOperation,
     storageManager: StateStorageManager,

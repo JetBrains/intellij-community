@@ -45,7 +45,8 @@ internal class IprProjectStoreDescriptor(
   }
 
   override fun getModuleStorageSpecs(
-    component: PersistentStateComponent<*>,
+    componentClass: Class<out PersistentStateComponent<*>>,
+    component: PersistentStateComponent<*>?,
     stateSpec: State,
     operation: StateStorageOperation,
     storageManager: StateStorageManager,
@@ -55,12 +56,13 @@ internal class IprProjectStoreDescriptor(
       return listOf(FileStorageAnnotation.MODULE_FILE_STORAGE_ANNOTATION)
     }
     else {
-      return getStorageSpecGenericImpl(component = component, stateSpec = stateSpec)
+      return getStorageSpecGenericImpl(stateSpec = stateSpec, componentClass = componentClass)
     }
   }
 
-  override fun <T : Any> getStorageSpecs(
-    component: PersistentStateComponent<T>,
+  override fun getStorageSpecs(
+    componentClass: Class<out PersistentStateComponent<*>>,
+    component: PersistentStateComponent<*>?,
     stateSpec: State,
     operation: StateStorageOperation,
     storageManager: StateStorageManager,

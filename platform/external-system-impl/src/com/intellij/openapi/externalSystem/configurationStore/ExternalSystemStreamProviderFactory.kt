@@ -51,7 +51,8 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
   }
 
   override fun customizeStorageSpecs(
-    component: PersistentStateComponent<*>,
+    componentClass: Class<out PersistentStateComponent<*>>,
+    component: PersistentStateComponent<*>?,
     storageManager: StateStorageManager,
     stateSpec: State,
     storages: List<Storage>,
@@ -88,14 +89,15 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
       }
     }
 
-    if (component !is ProjectModelElement) {
+    if (!ProjectModelElement::class.java.isAssignableFrom(componentClass)) {
       return null
     }
     val externalStorageOnly = stateSpec.externalStorageOnly
 
     // Keep in mind - this call will require storage for module because module option values are used.
     // We cannot just check that module name exists in the nameToData - new external system module will be not in the nameToData because not yet saved.
-    if (operation == StateStorageOperation.WRITE && component.externalSource == null && !externalStorageOnly) {
+    // a write always has the component instance
+    if (operation == StateStorageOperation.WRITE && (component as ProjectModelElement).externalSource == null && !externalStorageOnly) {
       return null
     }
 
