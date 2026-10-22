@@ -276,6 +276,18 @@ waitFor("text to appear", 10.seconds) {
 }
 ```
 
+To show the actual value on failure, use the `waitFor` overload with `getter` and `checker`. It adds the last value to the error, so do not build `errorMessage` yourself:
+
+```kotlin
+// BAD - errorMessage repeats the getter
+waitFor("the filter field holds '$query'", errorMessage = { "the filter field holds '${filterField.text}'" }) {
+    filterField.text == query
+}
+
+// GOOD - the error shows the last filterField.text
+waitFor("the filter field holds '$query'", getter = { filterField.text }, checker = { it == query })
+```
+
 ## Reading IDE state via `@Remote`
 
 To read state from a service or model in the IDE under test, declare a `@Remote` interface and call it via `driver.service(...)` / `driver.utility(...)`.
