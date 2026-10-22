@@ -28,6 +28,12 @@
       "description": "A jetCheck property suite under tests/property. `BT --lane property` and a CI configuration of its own run it."
     },
     {
+      "name": "air-slow",
+      "axis": "category",
+      "excludedFromBroadRuns": "fast-lane",
+      "description": "An IDE-free target that sweeps many cases through the platform editor of an open project. Only `BT --lane fast` leaves it out. A directory run, `BT --lane all`, and the CI configurations run it."
+    },
+    {
       "name": "air-integration-ui-flow",
       "axis": "lane",
       "category": "air-integration-ui",
@@ -65,6 +71,7 @@
     }
   ],
   "excludedTestLibs": [
+    "//plugins/air/backend/workflows:air-backend-workflows-tests_test_lib",
     "//plugins/air/frontend/llm:air-frontend-llm-tests_test_lib",
     "//plugins/air/tests/integration/headless/acp:acp_test_lib",
     "//plugins/air/tests/integration/headless/acp/installed-process:installed-process_test_lib",
@@ -107,7 +114,7 @@
   "lanes": [
     {
       "name": "fast",
-      "description": "all Air unit tests, excluding UI, GUI-chat, and headless integration (the default loop)",
+      "description": "all Air unit tests, excluding UI, GUI-chat, headless integration, and the slow editor sweeps (the default loop)",
       "target": [
         "//plugins/air/...",
         "@community//tools/bt/...",
@@ -115,7 +122,7 @@
       ],
       "extra": [
         "--build_tests_only",
-        "--test_tag_filters=-air-integration-ui,-air-integration-headless,-air-property"
+        "--test_tag_filters=-air-integration-ui,-air-integration-headless,-air-property,-air-slow"
       ],
       "buildsExcludedTestLibs": true
     },

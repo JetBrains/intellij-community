@@ -22,7 +22,8 @@ use crate::selector::Resolution;
 ///   UI-lane controller and its trace planner read instead of a table of their own.
 /// - `tags`: every Bazel tag a test target of the area may carry, each a [`TagSpec`]. It is the one description of
 ///   them. The area's own tests hold the BUILD files to it, and [`Lanes::parse`] refuses a table whose lanes and
-///   tags disagree. The categories with an exclusion reason, in table order, are what a broad run excludes. The CI
+///   tags disagree. The categories with an exclusion reason, in table order, are what a lane with all of them
+///   excludes. A multi-target run that the caller spelled out excludes them except the `fast-lane` ones. The CI
 ///   exclusion of the area should be the `ci` ones, so it stays correct when a lane is added. Adding a
 ///   `dedicated-suite` category before its build configuration exists would leave the suite running nowhere.
 /// - `integrationRoot`: the target pattern prefix of the integration tree. A multi-target run the caller spelled
@@ -145,6 +146,9 @@ pub enum BroadRunExclusion {
     Ci,
     /// A lane and a CI configuration of its own run the targets.
     DedicatedSuite,
+    /// Only the lanes that name the tag exclude the targets, for their cost. A multi-target run that the caller spelled
+    /// out and the CI configurations run them, so a directory selector still runs what the default loop leaves out.
+    FastLane,
 }
 
 /// A string or an array of strings, as a list.
@@ -384,6 +388,17 @@ impl Lanes {
             .map(|tag| &tag.name)
     }
 
+    /// The tags [`wildcard_guards`] excludes: the categories with an exclusion reason other than
+    /// [`BroadRunExclusion::FastLane`], in table order.
+    fn wildcard_excluded_tags(&self) -> impl Iterator<Item = &String> {
+        self.category_tags()
+            .filter(|tag| {
+                tag.excluded_from_broad_runs
+                    .is_some_and(|exclusion| exclusion != BroadRunExclusion::FastLane)
+            })
+            .map(|tag| &tag.name)
+    }
+
     /// The one `--test_tag_filters` value a broad local run carries.
     ///
     /// One value rather than one flag per axis: bazel's `--test_tag_filters` is last-wins, so a second occurrence
@@ -437,7 +452,8 @@ impl LaneSpec {
 /// Without it a pattern over an area builds every non-test target in the subtree and then launches real IDEs
 /// through IDE Starter, which also wants the network: one keystroke from the safe command.
 ///
-/// Every area adds the tags its broad runs exclude, joined into one `--test_tag_filters`. A pattern rooted inside
+/// Every area adds the tags its broad runs exclude, joined into one `--test_tag_filters`. A `fast-lane` category is not
+/// one of them: a directory run is how a caller runs the targets that the fast lane leaves out. A pattern rooted inside
 /// an area's integration tree is asking for exactly those tests, so that area keeps its tags. Either way
 /// `-- --test_tag_filters=…` still wins, because passthrough args land last. An empty list is guarded, which is the
 /// safe reading.
@@ -452,7 +468,7 @@ pub fn wildcard_guards(areas: &Areas, labels: &[String]) -> Vec<String> {
         if in_integration {
             continue;
         }
-        for tag in lanes.broad_run_excluded_tags() {
+        for tag in lanes.wildcard_excluded_tags() {
             if !tags.contains(&tag) {
                 tags.push(tag);
             }
