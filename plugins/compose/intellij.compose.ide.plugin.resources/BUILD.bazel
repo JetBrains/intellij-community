@@ -156,6 +156,7 @@ jvm_library(
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
+        "//android/android-plugin/descriptor",
         "//plugins/kotlin:kotlin-plugin-community-main",
     ],
 )
@@ -182,6 +183,7 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//android/android-plugin/descriptor:descriptor_test_lib",
         "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
     ],
     deps = [
