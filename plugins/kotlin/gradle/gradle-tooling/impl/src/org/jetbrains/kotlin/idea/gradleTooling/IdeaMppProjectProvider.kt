@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.tooling.core.Extras
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider.GradleModelConsumer
 
-class IdeaMppProjectProvider(
+data class IdeaMppProjectProvider(
     private val executionMode: GradleModelController.GradleModelFetchRequest.GradleExecutionMode,
 ) : ProjectImportModelProvider {
 
