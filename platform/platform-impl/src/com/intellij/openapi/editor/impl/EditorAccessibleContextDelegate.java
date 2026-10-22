@@ -30,58 +30,62 @@ final class EditorAccessibleContextDelegate extends AccessibleContextDelegateWit
     return component.getParent();
   }
 
+  private @NotNull AccessibleText getTextDelegate() {
+    return (AccessibleText)getDelegate();
+  }
+
   @Override
   public int getIndexAtPoint(Point point) {
-    return ((AccessibleText) getDelegate()).getIndexAtPoint(point);
+    return getTextDelegate().getIndexAtPoint(point);
   }
 
   @Override
   public Rectangle getCharacterBounds(int i) {
-    return ((AccessibleText) getDelegate()).getCharacterBounds(i);
+    return getTextDelegate().getCharacterBounds(i);
   }
 
   @Override
   public int getCharCount() {
-    return ((AccessibleText) getDelegate()).getCharCount();
+    return getTextDelegate().getCharCount();
   }
 
   @Override
   public int getCaretPosition() {
-    return ((AccessibleText) getDelegate()).getCaretPosition();
+    return getTextDelegate().getCaretPosition();
   }
 
   @Override
   public String getAtIndex(int part, int index) {
-    return ((AccessibleText) getDelegate()).getAtIndex(part, index);
+    return getTextDelegate().getAtIndex(part, index);
   }
 
   @Override
   public String getAfterIndex(int part, int index) {
-    return ((AccessibleText) getDelegate()).getAfterIndex(part, index);
+    return getTextDelegate().getAfterIndex(part, index);
   }
 
   @Override
   public String getBeforeIndex(int part, int index) {
-    return ((AccessibleText) getDelegate()).getBeforeIndex(part, index);
+    return getTextDelegate().getBeforeIndex(part, index);
   }
 
   @Override
   public AttributeSet getCharacterAttribute(int i) {
-    return ((AccessibleText) getDelegate()).getCharacterAttribute(i);
+    return getTextDelegate().getCharacterAttribute(i);
   }
 
   @Override
   public int getSelectionStart() {
-    return ((AccessibleText) getDelegate()).getSelectionStart();
+    return getTextDelegate().getSelectionStart();
   }
 
   @Override
   public int getSelectionEnd() {
-    return ((AccessibleText) getDelegate()).getSelectionEnd();
+    return getTextDelegate().getSelectionEnd();
   }
 
   @Override
   public String getSelectedText() {
-    return ((AccessibleText) getDelegate()).getSelectedText();
+    return getTextDelegate().getSelectedText();
   }
 }
