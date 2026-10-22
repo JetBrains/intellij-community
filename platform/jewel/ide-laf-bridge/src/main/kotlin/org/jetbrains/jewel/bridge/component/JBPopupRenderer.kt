@@ -20,6 +20,8 @@ import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
@@ -50,6 +52,7 @@ import com.intellij.ui.popup.AbstractPopup
 import com.intellij.ui.scale.JBUIScale
 import java.awt.Component
 import java.awt.Dimension
+import java.awt.GraphicsEnvironment
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.KeyEvent.KEY_LOCATION_STANDARD
@@ -60,6 +63,8 @@ import org.jetbrains.jewel.bridge.JewelComposePanelWrapper
 import org.jetbrains.jewel.bridge.compose
 import org.jetbrains.jewel.foundation.LocalComponent
 import org.jetbrains.jewel.ui.component.PopupRenderer
+
+private const val ATTACH_CONTENT_BEFORE_MEASURING = "AttachContentBeforeMeasuring"
 
 internal object JBPopupRenderer : PopupRenderer {
     @Suppress("OVERRIDE_DEPRECATION")
@@ -129,6 +134,8 @@ private fun JBPopup(
 
     val parentBoundsInRoot = remember { mutableStateOf<IntRect?>(null) }
     val popupRectangle = remember { mutableStateOf<Rectangle?>(null) }
+    var lastAppliedRectangle by remember { mutableStateOf<Rectangle?>(null) }
+    var isPopupShown by remember { mutableStateOf(false) }
     var isVisible by remember { mutableStateOf<Boolean?>(null) }
     var dismissedWith by remember { mutableStateOf(InputMode.Touch) }
     LaunchedEffect(isVisible) {
@@ -137,8 +144,14 @@ private fun JBPopup(
         }
     }
 
+    var useHostLayoutFallback by remember { mutableStateOf(GraphicsEnvironment.isHeadless()) }
+    val currentParentBounds = parentBoundsInRoot.value
     Layout(
-        content = {},
+        content = {
+            if (useHostLayoutFallback && currentParentBounds != null) {
+                ProvideValuesFromOtherContext(compositionLocalContext) { currentContent.value() }
+            }
+        },
         modifier =
             Modifier.onGloballyPositioned { childCoordinates ->
                 childCoordinates.parentCoordinates?.let {
@@ -147,17 +160,30 @@ private fun JBPopup(
                     }
                 }
             },
-        measurePolicy = { _, _ -> layout(0, 0) {} },
+        measurePolicy =
+            remember(useHostLayoutFallback, currentPopupPositionProvider, currentParentBounds, owner) {
+                if (!useHostLayoutFallback || currentParentBounds == null) {
+                    MeasurePolicy { _, _ -> layout(0, 0) {} }
+                } else {
+                    JBPopupMeasurePolicy(
+                        popupPositionProvider = currentPopupPositionProvider,
+                        screenSize = IntSize.fromScreenSize(owner),
+                        parentBoundsInWindow = currentParentBounds,
+                        placeContent = false,
+                        onMeasure = { position, size ->
+                            popupRectangle.value = Rectangle(position.x, position.y, size.width, size.height)
+                        },
+                    )
+                }
+            },
     )
 
-    val popup: JBPopup = remember {
-        val jewelComposePanelWrapper =
-            compose(
-                config = {
-                    // Setting initial dimensions as 1x1 to calculate the size
-                    preferredSize = Dimension(1, 1)
-                },
-                content = {
+    val (jewelComposePanelWrapper, popup) =
+        remember {
+            lateinit var wrapper: JewelComposePanelWrapper
+            lateinit var jbPopup: JBPopup
+            wrapper =
+                compose {
                     val parentBounds = parentBoundsInRoot.value ?: return@compose
 
                     Layout(
@@ -170,61 +196,67 @@ private fun JBPopup(
                                     screenSize = IntSize.fromScreenSize(owner),
                                     parentBoundsInWindow = parentBounds,
                                     onMeasure = { position, size ->
-                                        popupRectangle.value =
-                                            Rectangle(position.x, position.y, size.width, size.height)
+                                        val rectangle = Rectangle(position.x, position.y, size.width, size.height)
+                                        popupRectangle.value = rectangle
+                                        if (!jbPopup.isVisible && !jbPopup.isDisposed && owner.isShowing) {
+                                            applyPopupBounds(jbPopup, wrapper, owner, rectangle)
+                                            lastAppliedRectangle = rectangle
+                                        }
                                     },
                                 )
                             },
                     )
-                },
-            )
-                as JewelComposePanelWrapper
-
-        JBPopupFactory.getInstance()
-            .createComponentPopupBuilder(jewelComposePanelWrapper, jewelComposePanelWrapper.composePanel)
-            .setFocusable(currentProperties.focusable)
-            .setRequestFocus(currentProperties.focusable)
-            .setCancelOnClickOutside(currentProperties.dismissOnClickOutside)
-            .setCancelOnWindowDeactivation(currentProperties.dismissOnClickOutside)
-            .setLocateWithinScreenBounds(false)
-            // AbstractPopup cancels itself on Escape whenever the handler below declines the event, which would
-            // close the popup behind Compose's back and leave the two out of sync. Take sole ownership instead.
-            .setCancelKeyEnabled(false)
-            .setKeyEventHandler { event ->
-                val composeEvent = event.toComposeKeyEvent()
-                val consumed =
-                    currentOnPreviewKeyEvent?.invoke(composeEvent) == true ||
-                        currentOnKeyEvent?.invoke(composeEvent) == true
-                // Whether Escape dismisses is the popup's declared policy, not something inferred from the shape
-                // of its callbacks. A null callback means we have no way to dismiss, so we must not claim the key.
-                val dismissed =
-                    !consumed &&
-                        composeEvent.isDismissRequest() &&
-                        currentProperties.dismissOnBackPress &&
-                        currentOnDismissRequest != null
-
-                if (dismissed) {
-                    dismissedWith = InputMode.Keyboard
-                    isVisible = false
                 }
-                // A focusable popup swallows Escape whether or not it dismissed, matching Compose. A
-                // non-focusable one must let a key it did not act on reach whatever owns it.
-                val claimsDismissRequest = composeEvent.isDismissRequest() && currentProperties.focusable
-                consumed || dismissed || claimsDismissRequest
-            }
-            .addListener(
-                object : JBPopupListener {
-                    override fun beforeShown(event: LightweightWindowEvent) {
-                        isVisible = true
-                    }
+                    as JewelComposePanelWrapper
+            wrapper.putClientProperty(ATTACH_CONTENT_BEFORE_MEASURING, true)
+            jbPopup =
+                JBPopupFactory.getInstance()
+                    .createComponentPopupBuilder(wrapper, wrapper.composePanel)
+                    .setFocusable(currentProperties.focusable)
+                    .setRequestFocus(currentProperties.focusable)
+                    .setCancelOnClickOutside(currentProperties.dismissOnClickOutside)
+                    .setCancelOnWindowDeactivation(currentProperties.dismissOnClickOutside)
+                    .setLocateWithinScreenBounds(false)
+                    // AbstractPopup cancels itself on Escape whenever the handler below declines the event, which would
+                    // close the popup behind Compose's back and leave the two out of sync. Take sole ownership instead.
+                    .setCancelKeyEnabled(false)
+                    .setKeyEventHandler { event ->
+                        val composeEvent = event.toComposeKeyEvent()
+                        val consumed =
+                            currentOnPreviewKeyEvent?.invoke(composeEvent) == true ||
+                                currentOnKeyEvent?.invoke(composeEvent) == true
+                        // Whether Escape dismisses is the popup's declared policy, not something inferred from the
+                        // shape of its callbacks. A null callback means we have no way to dismiss, so we must not
+                        // claim the key.
+                        val dismissed =
+                            !consumed &&
+                                composeEvent.isDismissRequest() &&
+                                currentProperties.dismissOnBackPress &&
+                                currentOnDismissRequest != null
 
-                    override fun onClosed(event: LightweightWindowEvent) {
-                        isVisible = false
+                        if (dismissed) {
+                            dismissedWith = InputMode.Keyboard
+                            isVisible = false
+                        }
+                        // A focusable popup swallows Escape whether or not it dismissed, matching Compose. A
+                        // non-focusable one must let a key it did not act on reach whatever owns it.
+                        val claimsDismissRequest = composeEvent.isDismissRequest() && currentProperties.focusable
+                        consumed || dismissed || claimsDismissRequest
                     }
-                }
-            )
-            .createPopup()
-    }
+                    .addListener(
+                        object : JBPopupListener {
+                            override fun beforeShown(event: LightweightWindowEvent) {
+                                isVisible = true
+                            }
+
+                            override fun onClosed(event: LightweightWindowEvent) {
+                                isVisible = false
+                            }
+                        }
+                    )
+                    .createPopup()
+            wrapper to jbPopup
+        }
 
     // The builder above only captures the properties as they were on first composition. AbstractPopup reads these
     // flags live on every event, so pushing changes keeps a popup whose properties vary (a ComboBox suppressing
@@ -236,25 +268,63 @@ private fun JBPopup(
     }
 
     val rectValue = popupRectangle.value
-    LaunchedEffect(rectValue) {
-        val rectangle = rectValue ?: return@LaunchedEffect
-        popup.setSize(rectangle.location.fromCurrentScreenToGlobal(owner), rectangle.size.withSystemDensity(owner))
+    LaunchedEffect(currentParentBounds, rectValue, useHostLayoutFallback) {
+        if (popup.isDisposed || !owner.isShowing) return@LaunchedEffect
+        if (!useHostLayoutFallback && !isPopupShown && currentParentBounds != null) {
+            isPopupShown = true
+            popup.showInScreenCoordinates(owner, owner.locationOnScreen)
+            if (popupRectangle.value == null) {
+                isPopupShown = false
+                useHostLayoutFallback = true
+                return@LaunchedEffect
+            }
+        }
+        val rectangle = popupRectangle.value ?: return@LaunchedEffect
+        if (rectangle != lastAppliedRectangle) {
+            applyPopupBounds(popup, jewelComposePanelWrapper, owner, rectangle)
+            lastAppliedRectangle = rectangle
+        }
+        if (!isPopupShown) {
+            isPopupShown = true
+            popup.showInScreenCoordinates(owner, rectangle.location.fromCurrentScreenToGlobal(owner))
+        }
     }
 
-    DisposableEffect(Unit) {
-        // Showing in the top-left corner of the owner component so we can measure and show it correctly
-        popup.showInScreenCoordinates(owner, Point(0, 0))
-        onDispose { popup.cancel() }
+    DisposableEffect(popup) {
+        onDispose {
+            popup.cancel()
+            if (!jewelComposePanelWrapper.composePanel.isDisplayable) {
+                jewelComposePanelWrapper.composePanel.dispose()
+            }
+        }
     }
+}
+
+private fun applyPopupBounds(
+    popup: JBPopup,
+    wrapper: JewelComposePanelWrapper,
+    owner: Component,
+    rectangle: Rectangle,
+) {
+    val globalLocation = rectangle.location.fromCurrentScreenToGlobal(owner)
+    val globalSize = rectangle.size.withSystemDensity(owner)
+    wrapper.preferredSize = globalSize
+    wrapper.composePanel.preferredSize = globalSize
+    popup.setSize(globalLocation, globalSize)
 }
 
 private class JBPopupMeasurePolicy(
     private val popupPositionProvider: PopupPositionProvider,
     private val screenSize: IntSize,
     private val parentBoundsInWindow: IntRect,
+    private val placeContent: Boolean = true,
     private val onMeasure: (IntOffset, IntSize) -> Unit,
 ) : MeasurePolicy {
     override fun MeasureScope.measure(measurables: List<Measurable>, constraints: Constraints): MeasureResult {
+        if (!placeContent && measurables.isEmpty()) {
+            return layout(0, 0) {}
+        }
+
         val relaxedConstraints =
             constraints.copy(minWidth = 0, minHeight = 0, maxWidth = screenSize.width, maxHeight = screenSize.height)
 
@@ -275,8 +345,20 @@ private class JBPopupMeasurePolicy(
 
         onMeasure(position, contentSize)
 
-        return layout(constraints.maxWidth, constraints.maxHeight) { placeables.fastForEach { it.place(0, 0) } }
+        if (!placeContent) {
+            return layout(0, 0) {}
+        }
+
+        return layout(contentSize.width, contentSize.height) { placeables.fastForEach { it.place(0, 0) } }
     }
+
+    override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int = 0
 }
 
 /** Update the sizes of the popup to match the system scale factor. */

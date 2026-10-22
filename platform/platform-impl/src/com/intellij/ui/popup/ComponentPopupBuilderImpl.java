@@ -91,6 +91,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private Color myBorderColor;
   private boolean myNormalWindowLevel;
   private @Nullable Runnable myOkHandler;
+  private boolean myAttachContentBeforeMeasuring;
 
   public ComponentPopupBuilderImpl(@NotNull JComponent component, JComponent preferredFocusedComponent) {
     myComponent = component;
@@ -238,6 +239,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
 
     popup.setNormalWindowLevel(myNormalWindowLevel);
     popup.setOkHandler(myOkHandler);
+    popup.setAttachContentBeforeMeasuring(myAttachContentBeforeMeasuring);
     if (myAdvertiser != null) {
       popup.setFooterComponent(myAdvertiser);
     }
@@ -390,6 +392,12 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @Override
   public @NotNull ComponentPopupBuilder setOkHandler(@Nullable Runnable okHandler) {
     myOkHandler = okHandler;
+    return this;
+  }
+
+  @Override
+  public @NotNull ComponentPopupBuilder setAttachContentBeforeMeasuring(boolean attach) {
+    myAttachContentBeforeMeasuring = attach;
     return this;
   }
 }
