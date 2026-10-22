@@ -201,6 +201,7 @@
     "intellij.android.streaming",
     "intellij.android.whats-new-assistant",
     "intellij.android.newProjectWizard",
-    "intellij.angular"
+    "intellij.angular",
+    "intellij.tbe.common"
   ],
 }
