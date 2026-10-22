@@ -43,35 +43,29 @@ class ClassFinderTest {
   }
 
   private static void checkJUnitClasses(Path root) {
-    String[] conventionallyNamed = {
+    String[] allNamed = {
+      // conventionally named
       org.junit.jupiter.api.DynamicTest.class.getName(),
       org.junit.jupiter.api.RepeatedTest.class.getName(),
       org.junit.jupiter.api.Test.class.getName(),
-    };
-    String[] unconventionallyNamed = {
+      // unconventionally named
       org.junit.jupiter.api.TestMethodOrder.class.getName(),
       org.junit.jupiter.api.TestReporter.class.getName(),
       org.junit.jupiter.api.TestTemplate.class.getName(),
     };
     ClassFinder finder;
-    finder = new ClassFinder(root, "", false);
-    then(finder.getClasses())
-      .contains(conventionallyNamed)
-      .doesNotContain(unconventionallyNamed);
+    finder = new ClassFinder(root, "");
+    then(finder.getClasses()).contains(allNamed);
 
-    finder = new ClassFinder(root, "org", false);
-    then(finder.getClasses())
-      .contains(conventionallyNamed)
-      .doesNotContain(unconventionallyNamed);
+    finder = new ClassFinder(root, "org");
+    then(finder.getClasses()).contains(allNamed);
 
-    finder = new ClassFinder(root, "org.junit.jupiter", false);
-    then(finder.getClasses())
-      .contains(conventionallyNamed)
-      .doesNotContain(unconventionallyNamed);
+    finder = new ClassFinder(root, "org.junit.jupiter");
+    then(finder.getClasses()).contains(allNamed);
 
-    finder = new ClassFinder(root, "", true);
+    finder = new ClassFinder(root, "org.junit.jupiter.api.extension");
     then(finder.getClasses())
-      .contains(conventionallyNamed)
-      .contains(unconventionallyNamed);
+      .isNotEmpty()
+      .doesNotContain(allNamed);
   }
 }

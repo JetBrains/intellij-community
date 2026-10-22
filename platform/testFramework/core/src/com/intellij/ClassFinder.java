@@ -2,10 +2,7 @@
 
 package com.intellij;
 
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.text.NameUtilCore;
-import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +12,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -24,17 +20,9 @@ import java.util.stream.Stream;
 public class ClassFinder {
   private final List<String> classNameList;
   private final Path classPathRoot;
-  private final boolean includeUnconventionallyNamedTests;
-  private final boolean includeEverything;
 
-  public ClassFinder(final Path classPathRoot, final String rootPackage, boolean includeUnconventionallyNamedTests) {
-    this(classPathRoot, rootPackage, includeUnconventionallyNamedTests, false);
-  }
-
-  public ClassFinder(final Path classPathRoot, final String rootPackage, boolean includeUnconventionallyNamedTests, boolean includeEverything) {
+  public ClassFinder(final Path classPathRoot, final String rootPackage) {
     this.classPathRoot = classPathRoot;
-    this.includeUnconventionallyNamedTests = includeUnconventionallyNamedTests;
-    this.includeEverything = includeEverything;
     String directoryOffset = rootPackage.replace(".", classPathRoot.getFileSystem().getSeparator());
     if (Files.isRegularFile(classPathRoot)) {
       classNameList = findAndStoreTestClassesFromJar(directoryOffset);
@@ -44,55 +32,16 @@ public class ClassFinder {
     }
   }
 
-  private @Nullable String computeClassName(final @NotNull Path path, final @NotNull Path root) {
+  private static @Nullable String computeClassName(final @NotNull Path path, final @NotNull Path root) {
     Path absPath = path.toAbsolutePath();
     String fileName = absPath.getFileName().toString();
-    if (includeEverything) {
-      if (fileName.endsWith(".class")) {
-        return getClassFQN(absPath, root);
-      }
-      return null;
-    }
-    if (!includeUnconventionallyNamedTests) {
-      // It's faster and easier to check for `endsWith` rather than `extensionEquals` (see below) which does `endsWith`
-      if (fileName.endsWith("Test.class")) {
-        return getClassFQN(absPath, root);
-      }
-      return null;
-    }
-    if (!FileUtilRt.extensionEquals(fileName, "class")) {
-      return null;
-    }
-    if (isSuitableTestClassName(FileUtilRt.getNameWithoutExtension(fileName), includeUnconventionallyNamedTests)) {
+    if (fileName.endsWith(".class")) {
       return getClassFQN(absPath, root);
     }
     return null;
   }
 
-  static boolean isSuitableTestClassName(@NotNull String className, boolean includeUnconventionallyNamedTests) {
-    if (!includeUnconventionallyNamedTests) {
-      return className.endsWith("Test");
-    }
-    if (!className.contains("Test") && !className.contains("Suite")) return false;
-    className = StringsKt.substringAfterLast(className, '.', className);
-    List<String> names = Arrays.asList(className.split("\\$"));
-    Collections.reverse(names);
-    for (String name : names) {
-      // most likely something like RecursionManagerTest$_testMayCache_closure5 or other anonymous class
-      // may cause https://issues.apache.org/jira/browse/GROOVY-5351
-      if (!Character.isUpperCase(name.charAt(0))) return false;
-
-      // A test may be named Test*, *Test, *Tests*, *TestCase, *TestSuite, *Suite, etc
-      List<String> words = NameUtilCore.nameToWordList(name);
-
-      if (words.contains("Test") || words.contains("Tests") || words.contains("Suite")) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static @Nullable String getClassFQN(final @NotNull Path path, final @NotNull Path root) {
+  private static @NotNull String getClassFQN(final @NotNull Path path, final @NotNull Path root) {
     String fqn = StringUtil
       .trimEnd(root.relativize(path).toString(), ".class")
       .replace(path.getFileSystem().getSeparator(), ".");

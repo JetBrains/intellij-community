@@ -362,7 +362,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
     "test.group.roots".let { systemProperties[it]?.run { System.setProperty(it, this) } }  // from systemProperties
     testPatternSystemPropertyKey.let { options.testPatterns?.run { System.setProperty(it, this) } }  // from options, e.g. TestingTasksImpl#runTestsSkippedInHeadlessEnvironment
     testGroupSystemPropertyKey.let { options.testGroups?.run { System.setProperty(it, this) } }  // from options, e.g. RunAnyTestTheSameWayTeamCityDoes#run
-    setPropertyFromPass(TestCaseLoader.INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG)
 
     // configure TestCaseLoader#matchesCurrentBucket with the properties from the test process
     listOf(
@@ -923,7 +922,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       val outputRoots = context.outputProvider.getModuleOutputRoots(module, forTests = true)
       if (outputRoots.isEmpty()) return@mapConcurrent emptyList()
       val root = requireNotNull(outputRoots.singleOrNull()) { "More than one output root for module '${module.name}': ${outputRoots.joinToString()}" }
-      ClassFinder(root, "", false).classes
+      ClassFinder(root, "").classes
         .filter(finder::isSkippedInHeadlessEnvironment)
         .map { Pair(it, module.name) }
     }.flatten()

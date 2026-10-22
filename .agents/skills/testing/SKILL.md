@@ -240,7 +240,6 @@ Extra `-D...` arguments are passed through as JVM flags to `org.jetbrains.intell
 **Tests not found:**
 - Verify `--test` uses FQN or wildcard, not simple class name: `--test com.example.MyTest`
 - Check that `--module` is the module that actually contains the test class (look at the .iml file location)
-- Check that class name ends with `Test` (or use `-Dpass.idea.include.unconventionally.named.tests=true`)
 - Before troubleshooting further, check whether the test lives in a separate Bazel module such as `community/platform/build-scripts/bazel`; those tests must be run with module-local `../../../../bazel.cmd test`, not `tests.cmd`
 - If `tests.cmd` refuses the module and names a pattern from `bazel-migrated-test-modules.txt`, the tests are Bazel-only. Run them with `./community/tools/bt.cmd --module <module> --filter <FQN>`, as in [Separate Bazel Modules](#separate-bazel-modules)
 

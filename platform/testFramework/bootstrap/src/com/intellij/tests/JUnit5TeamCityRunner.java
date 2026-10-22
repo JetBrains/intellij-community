@@ -971,7 +971,7 @@ public final class JUnit5TeamCityRunner {
         isClassNameIncluded = MethodHandles.publicLookup()
           .findStatic(Class.forName("com.intellij.TestCaseLoader", true, classLoader),
                       "isClassNameIncluded", MethodType.methodType(boolean.class, String.class));
-        boolean ignored = (boolean)isClassNameIncluded.invokeExact(Object.class.getName() + "Test");  // force load test classes filter, *Test matches ClassFinder#isSuitableTestClassName
+        boolean ignored = (boolean)isClassNameIncluded.invokeExact(Object.class.getName() + "Test");  // force load test classes filter
       }
       catch (Throwable e) {
         throw new RuntimeException(e);

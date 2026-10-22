@@ -47,7 +47,7 @@ Key components:
 
 2. **Test not in classpath** - The test class must be in a module that's part of the test classpath. Check if the module is included in the build.
 
-3. **Test class not recognized** - Ensure class name ends with `Test` or has JUnit annotations.
+3. **Test class not recognized** - Ensure class has JUnit annotations.
 
 ### OutOfMemoryError
 
