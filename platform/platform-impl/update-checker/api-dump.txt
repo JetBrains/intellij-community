@@ -1,7 +1,3 @@
-f:com.intellij.openapi.updateSettings.impl.IdeUpdateUsageTriggerCollector
-- <init>():V
-- getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
-- s:majorUpdateHappened(Z):V
 f:com.intellij.openapi.updateSettings.impl.PluginUpdateFacadeKt
 - sf:getPendingUpdates():java.util.Collection
 - sf:installUpdates(java.util.Collection,javax.swing.JComponent,java.util.function.Consumer):V

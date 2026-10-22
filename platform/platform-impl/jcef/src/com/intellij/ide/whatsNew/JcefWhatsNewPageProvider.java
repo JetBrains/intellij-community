@@ -1,8 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.actions;
+package com.intellij.ide.whatsNew;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.whatsNew.WhatsNewPageProvider;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
-public final class JcefWhatsNewPageProvider implements WhatsNewPageProvider {
+final class JcefWhatsNewPageProvider implements WhatsNewPageProvider {
   private static final Logger LOG = Logger.getInstance(JcefWhatsNewPageProvider.class);
 
   @Override
@@ -33,24 +32,27 @@ public final class JcefWhatsNewPageProvider implements WhatsNewPageProvider {
   }
 
   @Override
-  public void openWhatsNewPage(@NotNull Project project,
-                               @NotNull String url,
-                               boolean includePlatformData,
-                               @Nullable HTMLEditorProvider.JsQueryHandler queryHandler) {
-    if (!isAvailable()) {
-      throw new IllegalStateException("JCEF is not supported on this system");
-    }
-
-    var darkTheme = StartupUiUtil.INSTANCE.isDarkTheme();
-    var request = HTMLEditorProvider.Request.url(Urls.newFromEncoded(url).addParameters(getRequestParameters(includePlatformData)).toExternalForm());
+  public void openWhatsNewPage(
+    @NotNull Project project,
+    @NotNull String url,
+    boolean includePlatformData,
+    @Nullable HTMLEditorProvider.JsQueryHandler queryHandler
+  ) {
+    var request = HTMLEditorProvider.Request.url(
+      Urls.newFromEncoded(url)
+        .addParameters(getRequestParameters(includePlatformData))
+        .toExternalForm()
+    );
 
     try (var stream = JcefWhatsNewPageProvider.class.getResourceAsStream("whatsNewTimeoutText.html")) {
       if (stream != null) {
+        var darkTheme = StartupUiUtil.INSTANCE.isDarkTheme();
         request.withTimeoutHtml(new String(stream.readAllBytes(), StandardCharsets.UTF_8)
-                                  .replace("__THEME__", darkTheme ? "theme-dark" : "")
-                                  .replace("__TITLE__", IdeBundle.message("whats.new.timeout.title"))
-                                  .replace("__MESSAGE__", IdeBundle.message("whats.new.timeout.message"))
-                                  .replace("__ACTION__", IdeBundle.message("whats.new.timeout.action", url)));
+          .replace("__THEME__", darkTheme ? "theme-dark" : "")
+          .replace("__TITLE__", IdeBundle.message("whats.new.timeout.title"))
+          .replace("__MESSAGE__", IdeBundle.message("whats.new.timeout.message"))
+          .replace("__ACTION__", IdeBundle.message("whats.new.timeout.action", url))
+        );
       }
     }
     catch (IOException e) {
@@ -61,6 +63,8 @@ public final class JcefWhatsNewPageProvider implements WhatsNewPageProvider {
 
     var title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().getFullProductName());
     HTMLEditorProvider.openEditorWithoutBlocking(project, title, request);
+
+    WhatsNewUsagesCollector.pageDisplayed(project);
   }
 
   private static Map<String, String> getRequestParameters(boolean includePlatformData) {
