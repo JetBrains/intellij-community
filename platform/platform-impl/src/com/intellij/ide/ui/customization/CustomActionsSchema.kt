@@ -502,6 +502,9 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     LOG.assertTrue(anAction !is ActionStub)
     val presentation = anAction.templatePresentation
     val originalIcon = presentation.icon
+    // Read before the icon is assigned below: under the experimental icons pipeline, assigning the icon also replaces
+    // the descriptor with one bridged from that icon.
+    val originalIconDescriptor = if (ExperimentalIcons.isEnabled) presentation.iconDescriptor else null
     if (presentation.getClientProperty(PROP_ORIGINAL_ICON) == null && anAction.isDefaultIcon && originalIcon != null) {
       presentation.putClientProperty(PROP_ORIGINAL_ICON, originalIcon)
     }
@@ -515,7 +518,11 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     // Keep the experimental icons pipeline in sync so a user customization is honored under the new API as well.
     // Must run before isDefaultIcon is recomputed below, mirroring the original-icon bookkeeping above.
     if (ExperimentalIcons.isEnabled) {
-      initActionIconDescriptor(presentation = presentation, anAction = anAction, customIconPath = customIconPath, resolvedIcon = icon)
+      initActionIconDescriptor(presentation = presentation,
+                               anAction = anAction,
+                               originalIconDescriptor = originalIconDescriptor,
+                               customIconPath = customIconPath,
+                               resolvedIcon = icon)
     }
 
     anAction.isDefaultIcon = icon == originalIcon
@@ -527,8 +534,13 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
    * descriptor via [IconManager.toIconDescriptor]. When there is no customization, the originally declared descriptor is
    * restored from [PROP_ORIGINAL_ICON_DESCRIPTOR].
    */
-  private fun initActionIconDescriptor(presentation: Presentation, anAction: AnAction, customIconPath: String?, resolvedIcon: Icon?) {
-    val originalIconDescriptor = presentation.iconDescriptor
+  private fun initActionIconDescriptor(
+    presentation: Presentation,
+    anAction: AnAction,
+    originalIconDescriptor: IconDescriptor?,
+    customIconPath: String?,
+    resolvedIcon: Icon?,
+  ) {
     if (presentation.getClientProperty(PROP_ORIGINAL_ICON_DESCRIPTOR) == null && anAction.isDefaultIcon && originalIconDescriptor != null) {
       presentation.putClientProperty(PROP_ORIGINAL_ICON_DESCRIPTOR, originalIconDescriptor)
     }
