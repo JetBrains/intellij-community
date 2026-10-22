@@ -28,14 +28,12 @@ import java.nio.charset.StandardCharsets
 private val LOG: Logger = logger<Sdks>()
 
 
-/**
- * Currently only CPython is supported
- */
 @ApiStatus.Internal
 enum class Product(val title: String) {
   CPython("Python"),
   Miniconda("Miniconda"),
-  Anaconda("Anaconda");
+  Anaconda("Anaconda"),
+  Pixi("Pixi");
 }
 
 /**
@@ -43,10 +41,11 @@ enum class Product(val title: String) {
  */
 @ApiStatus.Internal
 enum class ResourceType(vararg val extensions: String) {
-  MICROSOFT_WINDOWS_EXECUTABLE("exe"),
+  WINDOWS_EXE_INSTALLER("exe"),
   MICROSOFT_SOFTWARE_INSTALLER("msi"),
   APPLE_SOFTWARE_PACKAGE("pkg"),
   SHELL_SCRIPT("sh"),
+  STANDALONE_EXECUTABLE,
   COMPRESSED("zip", "xz", "tgz", "bz2");
 
   companion object {
@@ -116,6 +115,7 @@ data class Release(
 data class Sdks(
   val python: List<Release> = listOf(),
   val conda: List<Release> = listOf(),
+  val pixi: List<Release> = listOf(),
 )
 
 
@@ -160,6 +160,8 @@ object SdksKeeper {
   fun condaReleases(vararg products: Product = arrayOf(Product.Miniconda, Product.Anaconda)): List<Release> {
     return sdks.conda.filter { it.product in products }
   }
+
+  fun pixiReleases(): List<Release> = sdks.pixi
 
 
   private fun deserialize(content: String?): Sdks = try {

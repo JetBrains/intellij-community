@@ -1,0 +1,21 @@
+<idea-plugin>
+  <id>com.intellij.python.pixi</id>
+  <name>Pixi</name>
+  <vendor>JetBrains</vendor>
+  <category>Build Tools</category>
+  <description><![CDATA[
+    Provides Pixi environment and package manager support for Python.
+  ]]></description>
+
+
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="PythonCore"/>
+  </dependencies>
+  <!-- endregion -->
+  <content namespace="jetbrains">
+    <module name="intellij.python.pixi.common" loading="required"/>
+    <module name="intellij.python.pixi.backend" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.python.pixi.frontend" required-if-available="intellij.platform.frontend"/>
+  </content>
+</idea-plugin>

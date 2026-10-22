@@ -69,7 +69,7 @@ fun uvEnvironment(uvVersion: String, block: UvPyEnvironmentSpec.() -> Unit): UvP
  *
  */
 @ApiStatus.Internal
-class UvPyEnvironmentProvider : PyEnvironmentProvider<UvPyEnvironmentSpec>("uv") {
+class UvPyEnvironmentProvider : PyEnvironmentProvider<UvPyEnvironmentSpec>("uv", UvPyEnvironmentSpec::class.java) {
 
   override suspend fun setupEnvironment(context: Context, spec: UvPyEnvironmentSpec): PyEnvironment {
     val logger = thisLogger()

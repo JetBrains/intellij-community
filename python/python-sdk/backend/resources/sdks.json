@@ -29,7 +29,7 @@
               "size": 33258168,
               "sha256": "9d9eb2709ef81bf5cd30db3c2096bdbc4ea10087c22e62f27d356b36f6ae9649",
               "fileName": "python-3.14.7-amd64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ]
         },
@@ -42,7 +42,7 @@
               "size": 31696736,
               "sha256": "097fc03d4ac2de66ee1d73a0c5d2d323b5c0f14923f7207686ce93149a80f0a6",
               "fileName": "python-3.14.7.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ]
         },
@@ -55,7 +55,7 @@
               "size": 32570072,
               "sha256": "9a3fe120cc81bc2cb099550f794d8356811f96a86c7f438519243c3485db928d",
               "fileName": "python-3.14.7-arm64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ]
         },
@@ -103,7 +103,7 @@
               "size": 29452944,
               "sha256": "edec09c4853aeae9ac36efb8c9f95b6b8e2fee65eee56d9767a8b7c69c574403",
               "fileName": "python-3.13.15-amd64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ]
         },
@@ -116,7 +116,7 @@
               "size": 28098408,
               "sha256": "741c07276eb2d57e7ee012d643f021c58cb38d11c5389be46c15d41d1a10b447",
               "fileName": "python-3.13.15.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ]
         },
@@ -129,7 +129,7 @@
               "size": 28799152,
               "sha256": "c252c676087c49e6b94e95a273536b78921c28a5fc9f86d15d25392328247249",
               "fileName": "python-3.13.15-arm64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ]
         },
@@ -182,7 +182,7 @@
               "size": 26964224,
               "sha256": "67b5635e80ea51072b87941312d00ec8927c4db9ba18938f7ad2d27b328b95fb",
               "fileName": "python-3.12.10-amd64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ]
         },
@@ -195,7 +195,7 @@
               "size": 25648336,
               "sha256": "fdfe385b94f5b8785a0226a886979527fd26eb65defdbf29992fd22cc4b0e31e",
               "fileName": "python-3.12.10.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ]
         },
@@ -208,7 +208,7 @@
               "size": 26202936,
               "sha256": "377ac8fd478987940088e879441e702a71b53164d2a1e6f1d51ff77a7e470258",
               "fileName": "python-3.12.10-arm64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ]
         },
@@ -261,7 +261,7 @@
               "size": 26216840,
               "sha256": "5ee42c4eee1e6b4464bb23722f90b45303f79442df63083f05322f1785f5fdde",
               "fileName": "python-3.11.9-amd64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ]
         },
@@ -274,7 +274,7 @@
               "size": 24933192,
               "sha256": "af19e5e2f03e715a822181f2cb7d4efef4eda13fa4a2db6da12e998e46f5cbf9",
               "fileName": "python-3.11.9.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ]
         },
@@ -287,7 +287,7 @@
               "size": 25483288,
               "sha256": "58f3a4e91b63d5a680ecc77c1db4565a1e3966e8656d4c8b89200d58c1f5c4f3",
               "fileName": "python-3.11.9-arm64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ]
         },
@@ -340,7 +340,7 @@
               "size": 29037240,
               "sha256": "d8dede5005564b408ba50317108b765ed9c3c510342a598f9fd42681cbe0648b",
               "fileName": "python-3.10.11-amd64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ]
         },
@@ -353,7 +353,7 @@
               "size": 27865760,
               "sha256": "bd115a575e86e61cea9136c5a2c47e090ba484dc2dee8b51a34111bb094266d5",
               "fileName": "python-3.10.11.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ]
         },
@@ -406,7 +406,7 @@
               "size": 29235432,
               "sha256": "fb3d0466f3754752ca7fd839a09ffe53375ff2c981279fd4bc23a005458f7f5d",
               "fileName": "python-3.9.13-amd64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ]
         },
@@ -419,7 +419,7 @@
               "size": 28096840,
               "sha256": "f363935897bf32adf6822ba15ed1bfed7ae2ae96477f0262650055b6e9637c35",
               "fileName": "python-3.9.13.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ]
         },
@@ -472,7 +472,7 @@
               "size": 28296784,
               "sha256": "7628244cb53408b50639d2c1287c659f4e29d3dfdb9084b11aed5870c0c6a48a",
               "fileName": "python-3.8.10-amd64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ]
         },
@@ -485,7 +485,7 @@
               "size": 27204536,
               "sha256": "ad07633a1f0cd795f3bf9da33729f662281df196b4567fa795829f3bb38a30ac",
               "fileName": "python-3.8.10.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ]
         },
@@ -519,7 +519,7 @@
               "size": 132526808,
               "sha256": "27f1f8ae8c27bc22bbc383b84bf08c63a20a6e190f3975f3502625b1045330b2",
               "fileName": "Miniconda3-py314_26.7.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -599,7 +599,7 @@
               "size": 130502080,
               "sha256": "ff485c617e0e15addc111aa1caa206679e214d223624297bf8aa0bc726ed67bd",
               "fileName": "Miniconda3-py313_26.7.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -679,7 +679,7 @@
               "size": 129405448,
               "sha256": "8ae918681b0830314d85207f7a244352762b543bb83d53e0fcf77fbf270f8331",
               "fileName": "Miniconda3-py312_26.7.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -759,7 +759,7 @@
               "size": 132200000,
               "sha256": "9022c76c3907b19131107c76c2beaae04e737d1c4c260e50b9398b655bfd28c5",
               "fileName": "Miniconda3-py311_26.7.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -839,7 +839,7 @@
               "size": 127357304,
               "sha256": "1f0df3ddbb963e5bd2746be55bae774940da009f7948ca873cbbbc58683e197b",
               "fileName": "Miniconda3-py310_26.7.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -926,7 +926,7 @@
               "size": 132522624,
               "sha256": "d444063c42ca9c3d7948a7b9e612bd25a2e8dcbd985715a95d58cff6edf9a27f",
               "fileName": "Miniconda3-py314_26.7.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -1006,7 +1006,7 @@
               "size": 130515544,
               "sha256": "1a261a1901d34ee90c49cac3d801fe2621bb5a4a05ed6f3443ea411e2dab75fe",
               "fileName": "Miniconda3-py313_26.7.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -1086,7 +1086,7 @@
               "size": 129410328,
               "sha256": "741c068509955d6fe0171613e3cdb76e12e74c87ed8236672197f01f227cd022",
               "fileName": "Miniconda3-py312_26.7.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -1166,7 +1166,7 @@
               "size": 133071768,
               "sha256": "d67a8b1381bc160477b91138a41d26db2b2ba33063b4ee22d1efa269ba0dffa3",
               "fileName": "Miniconda3-py311_26.7.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -1246,7 +1246,7 @@
               "size": 127915584,
               "sha256": "f9e727956db0e44abbef627c14bbcd692189151636bee1ea363a97040a11b0c9",
               "fileName": "Miniconda3-py310_26.7.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -1333,7 +1333,7 @@
               "size": 1112492048,
               "sha256": "b545f4bd8ab3bf32d99002a0779a887668ebfe479ee32ecbf060375670d5ee09",
               "fileName": "Anaconda3-2026.07-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -1420,7 +1420,7 @@
               "size": 130748344,
               "sha256": "4441b50816f866f4e6e774e90f90a71bde756f06c94144407a6d93677c539e46",
               "fileName": "Miniconda3-py314_26.5.3-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -1500,7 +1500,7 @@
               "size": 130256640,
               "sha256": "1576271a14c35af8d830799c8524b13595196d5ba235c0916908fe2cca3caf72",
               "fileName": "Miniconda3-py313_26.5.3-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -1580,7 +1580,7 @@
               "size": 129189408,
               "sha256": "75e829b26bd7b33b1dce118639b8f39e561a6ebaa3b593b633d7445dd1a2d65a",
               "fileName": "Miniconda3-py312_26.5.3-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -1660,7 +1660,7 @@
               "size": 132849304,
               "sha256": "28414524f5ba072d6062b03ac6339e8a8bd6d034963a0c2aaeccf1a99178282c",
               "fileName": "Miniconda3-py311_26.5.3-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -1740,7 +1740,7 @@
               "size": 127675160,
               "sha256": "2e38dff0ee541fa35e713de40e108cfd612419aa231ff04acb235fca59614f99",
               "fileName": "Miniconda3-py310_26.5.3-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -1827,7 +1827,7 @@
               "size": 130747768,
               "sha256": "2d4a6cdcaa60f5a3c67be17cdd8cc53c835ee00b7973d0e3d6ab5e0a8177524e",
               "fileName": "Miniconda3-py314_26.5.3-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -1907,7 +1907,7 @@
               "size": 131007048,
               "sha256": "c229a161e9fad48fd7d2c701da363e6a307b233eba379cd967bc26aa2cb3fa68",
               "fileName": "Miniconda3-py313_26.5.3-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -1987,7 +1987,7 @@
               "size": 129720424,
               "sha256": "60ab6c430d19ca822841ecfc101d465f3c826ee2d2a3d6c028ffab0f3bcde57a",
               "fileName": "Miniconda3-py312_26.5.3-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -2067,7 +2067,7 @@
               "size": 132851184,
               "sha256": "1b19bc888b60099ae3352d7dad0c680726657f1990262a3adc9585eb5fc2bd3d",
               "fileName": "Miniconda3-py311_26.5.3-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -2147,7 +2147,7 @@
               "size": 127700240,
               "sha256": "4f06762e55cb2901364d9999bac4489e5fd23f7f1c8d7d3e02fa354d95fe4de0",
               "fileName": "Miniconda3-py310_26.5.3-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -2234,7 +2234,7 @@
               "size": 99155816,
               "sha256": "fe980247dfd30af229a55d9505b57e7c8dfbdb9d24c5bc66fb6078b6a2d53414",
               "fileName": "Miniconda3-py313_26.3.2-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -2314,7 +2314,7 @@
               "size": 97999336,
               "sha256": "a6640d1602392aeb5e1a3436f1825069ae7ed8f6f3e9ab14629fd20dec20a7b1",
               "fileName": "Miniconda3-py312_26.3.2-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -2394,7 +2394,7 @@
               "size": 100999136,
               "sha256": "dc28be4a289e65086572395aa36df12e944b6944f642a342ed7be593d13c866c",
               "fileName": "Miniconda3-py311_26.3.2-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -2474,7 +2474,7 @@
               "size": 96385208,
               "sha256": "37add271dac551127b9862f922f8231f006f1a7d0639735ae284f5981ef1dbac",
               "fileName": "Miniconda3-py310_26.3.2-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -2561,7 +2561,7 @@
               "size": 98611128,
               "sha256": "c76f35d66f8a19a3b33786abb86dacf0bf8d892a55d9dde38eccb0da0820ae99",
               "fileName": "Miniconda3-py313_26.1.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -2641,7 +2641,7 @@
               "size": 97462904,
               "sha256": "6d5c7bd0f832e76d1a0395b9cba7c792c47e86a4af48a41f95202ead46cb8333",
               "fileName": "Miniconda3-py312_26.1.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -2721,7 +2721,7 @@
               "size": 100535104,
               "sha256": "f4393fe90cf9c016bbde33c984d5dbc77e53386ec3bb5066aae56e0615eef8be",
               "fileName": "Miniconda3-py311_26.1.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -2801,7 +2801,7 @@
               "size": 95703608,
               "sha256": "5f43fbc0a7030ad09c077f15ac23ac572793de683cbe36c33eab310f38928e82",
               "fileName": "Miniconda3-py310_26.1.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -2888,7 +2888,7 @@
               "size": 1199641816,
               "sha256": "09c8a69e7a717a963a9f251697473f4ea887878696c3ec4e7e454f5eabb75afe",
               "fileName": "Anaconda3-2025.12-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -2975,7 +2975,7 @@
               "size": 1200681984,
               "sha256": "2e0b8e40ec7600793f116250f5c1775c866833bac32d184ad575ecc0d360a88f",
               "fileName": "Anaconda3-2025.12-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -3062,7 +3062,7 @@
               "size": 94369048,
               "sha256": "19d90d5587eaa61b3899f1ad6b78ed3eb90b8e8d359cc07595c6cb76a90201bf",
               "fileName": "Miniconda3-py313_25.11.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -3142,7 +3142,7 @@
               "size": 93447088,
               "sha256": "1f10de1cacfb8dfc1be6e8b90214c60b69ba5e50c47e8f70cb412a980be62198",
               "fileName": "Miniconda3-py312_25.11.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -3222,7 +3222,7 @@
               "size": 97911824,
               "sha256": "3ae7c49e0bd40dbbcfa4b672bb51815652d60c3053a36e652348d419f0f8d3c5",
               "fileName": "Miniconda3-py311_25.11.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -3302,7 +3302,7 @@
               "size": 91754080,
               "sha256": "31c091bc55847c00d2d127154b5d748c272ab018e7724986cd6076c568eb3a5a",
               "fileName": "Miniconda3-py310_25.11.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -3389,7 +3389,7 @@
               "size": 89241440,
               "sha256": "d2c7dc0cb900b8838f262c08bf3e0c1e537b638cddf63a696dc3db9cb3d75a95",
               "fileName": "Miniconda3-py39_25.9.1-3-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -3469,7 +3469,7 @@
               "size": 93135224,
               "sha256": "1ff9042360900be894efb7c11d6b2348b7a7a58c4ad4415c6ac2b60c58fff1c2",
               "fileName": "Miniconda3-py313_25.9.1-3-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -3549,7 +3549,7 @@
               "size": 92184856,
               "sha256": "1e393218887ce628279e6b1b3344c56db2f2c52286109b4a35c668d89b7663de",
               "fileName": "Miniconda3-py312_25.9.1-3-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -3629,7 +3629,7 @@
               "size": 96635976,
               "sha256": "ba5ca0f021c79f4417e8f7a56b0fc7a467e7d54f7d28fdcb66ef61eafd490982",
               "fileName": "Miniconda3-py311_25.9.1-3-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -3709,7 +3709,7 @@
               "size": 90512112,
               "sha256": "3725e58cb93e93f4431e14a7ea72c318c4a04f59542576629046b057fb3e48ee",
               "fileName": "Miniconda3-py310_25.9.1-3-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -3796,7 +3796,7 @@
               "size": 91189080,
               "sha256": "d1e4fffc154e53b85ca35d11453807e3264074c31f8d5a93f20adaf5ef04ffc8",
               "fileName": "Miniconda3-py39_25.9.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -3876,7 +3876,7 @@
               "size": 92149504,
               "sha256": "d1dd9013ad2ffe460fb7cb80875dca2274e03cc34b3ceae491f28452f1acea9f",
               "fileName": "Miniconda3-py313_25.9.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -3956,7 +3956,7 @@
               "size": 91207272,
               "sha256": "f6041971c28bf802734ea1ae9aa2cbb6c58fd8fbb4a5a49f8d7ea54e37d6760c",
               "fileName": "Miniconda3-py312_25.9.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -4036,7 +4036,7 @@
               "size": 95709552,
               "sha256": "1a3ce9df0155ba348b209ca32fe8e1293a080c59d951c2889867b2e00245fb9e",
               "fileName": "Miniconda3-py311_25.9.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -4116,7 +4116,7 @@
               "size": 89530856,
               "sha256": "737413594b892da8e5d4bf4bc620f8b91db95292eff4017a5d371ef30b70e2d7",
               "fileName": "Miniconda3-py310_25.9.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -4203,7 +4203,7 @@
               "size": 92712976,
               "sha256": "c1594a692e2518110ef49ffdb66b446c334ed0e137f11cff0998761e6ad22a4f",
               "fileName": "Miniconda3-py39_25.7.0-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -4315,7 +4315,7 @@
               "size": 94318840,
               "sha256": "0505a3d4a7dab58ca621208e89efede4b6b8d817858b60d6eccc9303f2f3ebb0",
               "fileName": "Miniconda3-py313_25.7.0-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -4427,7 +4427,7 @@
               "size": 93706080,
               "sha256": "97a750503cf1ef57c8a7cc79e7cff04b3d4a566091c631f665eb91eae3a6fde0",
               "fileName": "Miniconda3-py312_25.7.0-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -4539,7 +4539,7 @@
               "size": 96408904,
               "sha256": "95030b3bbdbabf23dea1f7332dc1b03d9860fd240887c15b10f3ad469cbce9dc",
               "fileName": "Miniconda3-py311_25.7.0-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -4651,7 +4651,7 @@
               "size": 91400096,
               "sha256": "3f5b24e9873bf12a72b7a639e7d59d3cc1015f4cd552dbaf981cc0518be271ed",
               "fileName": "Miniconda3-py310_25.7.0-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -4770,7 +4770,7 @@
               "size": 958742216,
               "sha256": "00ec02d3db9a9a890002f005f5200c6557a2e72860cc9aaf00525433be30ef21",
               "fileName": "Anaconda3-2025.06-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -4889,7 +4889,7 @@
               "size": 958975712,
               "sha256": "36ba946abeb6bb7ba3235e0ccb67660e0b545235ca467f3aa964cd4b307c14ed",
               "fileName": "Anaconda3-2025.06-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -5008,7 +5008,7 @@
               "size": 90042696,
               "sha256": "7cce4d92689d5349ecffb5e5e550c65ae918d85c770263ba799ba2a3cd9f77c9",
               "fileName": "Miniconda3-py39_25.5.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -5120,7 +5120,7 @@
               "size": 92478432,
               "sha256": "fe74721e1d17211a2d14acd9c6889948897dabaddcef7802196bb29c136d59e7",
               "fileName": "Miniconda3-py313_25.5.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -5232,7 +5232,7 @@
               "size": 91893616,
               "sha256": "0905638dcd7bb214261fe0ac6136d4dbbb9c4266fa3cf4c5bf4ffce834ae5357",
               "fileName": "Miniconda3-py312_25.5.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -5344,7 +5344,7 @@
               "size": 94367112,
               "sha256": "e90c1ebbdc788e1839fe7f2ab60278af8791ada6a42a24b9ee92c20c5a2475b7",
               "fileName": "Miniconda3-py311_25.5.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -5456,7 +5456,7 @@
               "size": 89639528,
               "sha256": "266234ede24f78f1b7846369bdc38eeb2be47d02dc688481decf0577235c1251",
               "fileName": "Miniconda3-py310_25.5.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -5575,7 +5575,7 @@
               "size": 89373176,
               "sha256": "3e2da71722a4a6ea03e341a9b5a165beef8744c4bd97bb1fc2126d8798431041",
               "fileName": "Miniconda3-py39_25.5.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -5687,7 +5687,7 @@
               "size": 91713000,
               "sha256": "faaca26e9c233fb7d17e638395e4fa32d29c2c70c714ff3f57f434e9d0dbb238",
               "fileName": "Miniconda3-py313_25.5.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -5799,7 +5799,7 @@
               "size": 91218584,
               "sha256": "82cf1382eaa2c92d4f0cbd826a8888fac25080fe8ff3370bae8d0732b80006fb",
               "fileName": "Miniconda3-py312_25.5.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -5911,7 +5911,7 @@
               "size": 93684488,
               "sha256": "ff8ef7ea1b6aa1518bdbaca8298c07dbd8b7dd1853c41dba7f379fd7bc9c2599",
               "fileName": "Miniconda3-py311_25.5.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -6023,7 +6023,7 @@
               "size": 88955832,
               "sha256": "f7643f2cb4f4c951ae817ff2ef06f231b885bf5f6bc985d519ed4411f6fdfb0a",
               "fileName": "Miniconda3-py310_25.5.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -6142,7 +6142,7 @@
               "size": 89523632,
               "sha256": "4b2d9d0cf604df4046fb479c0a629b767936724958728d89991c321dac1c17e8",
               "fileName": "Miniconda3-py39_25.3.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -6254,7 +6254,7 @@
               "size": 92952216,
               "sha256": "ea482f35b4861f047dc525c1e8dc645cc761a5460a121caf726dec098c5804de",
               "fileName": "Miniconda3-py313_25.3.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -6366,7 +6366,7 @@
               "size": 92878344,
               "sha256": "4498a808856e01b291adbe56044ebabebcdaa8df7499d60d758169ad3cb83e68",
               "fileName": "Miniconda3-py312_25.3.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -6478,7 +6478,7 @@
               "size": 95196160,
               "sha256": "0f80d64224b4df1aa4ecb657b689e10566284b77bf729639ca1b9e741095a0f7",
               "fileName": "Miniconda3-py311_25.3.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -6590,7 +6590,7 @@
               "size": 89928856,
               "sha256": "d6654be1867f64da8971692817f1857fa394a76755cc02268c8372461e1f4bcf",
               "fileName": "Miniconda3-py310_25.3.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -6709,7 +6709,7 @@
               "size": 90231504,
               "sha256": "c30f1701dd5b54774112fec2d15cd84bb6e34347d6c5f61120e1b77c789559e8",
               "fileName": "Miniconda3-py39_25.1.1-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -6837,7 +6837,7 @@
               "size": 93297552,
               "sha256": "fb936987b769759fc852af1b2a0e359ac14620c2b7bea8a90c6d920f2b754c4a",
               "fileName": "Miniconda3-py312_25.1.1-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -6965,7 +6965,7 @@
               "size": 95807280,
               "sha256": "08bae491cef4f3b060774f661337ac4c8be51ccefac0e26e1fe78b14588301e6",
               "fileName": "Miniconda3-py311_25.1.1-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -7093,7 +7093,7 @@
               "size": 90623048,
               "sha256": "80ff6cb7cef57be6ff1c7997fad96de3783934e9cea5c46769f840b8bd5b921f",
               "fileName": "Miniconda3-py310_25.1.1-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -7228,7 +7228,7 @@
               "size": 90231352,
               "sha256": "5ee0a8a30d0713215006e67e06c335f0f0ba1934f94cedae55b55cfee9624ec9",
               "fileName": "Miniconda3-py39_25.1.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -7356,7 +7356,7 @@
               "size": 93297416,
               "sha256": "68e06302a5b16b337a32663f0268f071e76e685b1be715042bd98cb59640be5d",
               "fileName": "Miniconda3-py312_25.1.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -7484,7 +7484,7 @@
               "size": 95807168,
               "sha256": "36802500245b6f10eb65d706891f23950bac721aaf5d023dab0c9681cf8cd261",
               "fileName": "Miniconda3-py311_25.1.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -7612,7 +7612,7 @@
               "size": 90622824,
               "sha256": "84917fa1f5790140cb4f71cb7aa37e696798e51fce13703c28380893b0d093a6",
               "fileName": "Miniconda3-py310_25.1.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -7747,7 +7747,7 @@
               "size": 90217600,
               "sha256": "737e4b91dafb1ae4fae9f1acf45c4fb66cbe9d7a345491cf5675b55a06921b5c",
               "fileName": "Miniconda3-py39_25.1.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -7875,7 +7875,7 @@
               "size": 93251336,
               "sha256": "39c39848c1ad93b0e938c8732effb449f1c4be07b50b1b2e37c16f355f510f70",
               "fileName": "Miniconda3-py312_25.1.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -8003,7 +8003,7 @@
               "size": 95794032,
               "sha256": "33f2fd263d23fe927c3176b49c8abf6f5f4f2db653bac1897d88388bdc49ac91",
               "fileName": "Miniconda3-py311_25.1.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -8131,7 +8131,7 @@
               "size": 90609544,
               "sha256": "25259c18b41548655a2988b84ba445ba1f15242b0df248ccd37eeafaa6aad7b6",
               "fileName": "Miniconda3-py310_25.1.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -8266,7 +8266,7 @@
               "size": 82993624,
               "sha256": "cfeef39b1d2dc50d68c5d267fd7579ee0d6d311704e344072374c46af11edc62",
               "fileName": "Miniconda3-py39_24.11.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -8394,7 +8394,7 @@
               "size": 85689568,
               "sha256": "be382fc02742c734fd3c399c5e5d322bc9b43292117827ab9aa6f7446351e45c",
               "fileName": "Miniconda3-py312_24.11.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -8522,7 +8522,7 @@
               "size": 87996360,
               "sha256": "43dcbcc315ff91edf959e002cd2f1ede38c64b999fefcc951bccf2ed69c9e8bb",
               "fileName": "Miniconda3-py311_24.11.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -8650,7 +8650,7 @@
               "size": 83379008,
               "sha256": "9e900898955f213bf59926fdfa0235f750ffaa58960648557f85abf5a7cbd676",
               "fileName": "Miniconda3-py310_24.11.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -8785,7 +8785,7 @@
               "size": 996695888,
               "sha256": "c1cb433e23997c84ade4ff7241b61b2f9b10a616c230da34e641e9c96dada49d",
               "fileName": "Anaconda3-2024.10-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -8920,7 +8920,7 @@
               "size": 87116480,
               "sha256": "15604f0162a4eda6e0cce24ab554568150103ce94615612fd7fec1ea4d5948f2",
               "fileName": "Miniconda3-py39_24.9.2-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -9048,7 +9048,7 @@
               "size": 89853256,
               "sha256": "3a8897cc5d27236ade8659f0e119f3a3ccaad68a45de45bfdd3102d8bec412ab",
               "fileName": "Miniconda3-py312_24.9.2-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -9176,7 +9176,7 @@
               "size": 92235400,
               "sha256": "a39456dcd57ec37a9cef15ad960ff20b211b086884b2e332afdbd73db245252b",
               "fileName": "Miniconda3-py311_24.9.2-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -9304,7 +9304,7 @@
               "size": 87328872,
               "sha256": "0b204516a8f73cde36c1715ca2193c557181a323ef0f2048697e0ddc73798524",
               "fileName": "Miniconda3-py310_24.9.2-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -9439,7 +9439,7 @@
               "size": 87161784,
               "sha256": "ec83f12a8e863cc3497ad9b50d2d759abbf3de9db56491166e6a476171bf02da",
               "fileName": "Miniconda3-py39_24.7.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -9567,7 +9567,7 @@
               "size": 89728352,
               "sha256": "ff8ab50f0303c7b9097387967ac2a721016d020069187eff4e172fc14930ebb7",
               "fileName": "Miniconda3-py312_24.7.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -9695,7 +9695,7 @@
               "size": 91607616,
               "sha256": "305d1c57ece6a6405663a0fb493e2581cd14c30382a5f49fd44110be30ad49c9",
               "fileName": "Miniconda3-py311_24.7.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -9823,7 +9823,7 @@
               "size": 87149544,
               "sha256": "a62953541da3e18138ba1d8d5adb04ba65751a8e6e0a83191d218f56e66654aa",
               "fileName": "Miniconda3-py310_24.7.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -9958,7 +9958,7 @@
               "size": 956650896,
               "sha256": "45eef9132b70e3d5a493c26429ddb4e2c9278a32097fd4bc729f860685633a3b",
               "fileName": "Anaconda3-2024.06-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -10093,7 +10093,7 @@
               "size": 84664400,
               "sha256": "56fbc4f02ef17ae468c23dc3fa8e48f26aeb49b9d4ebc77d8ab6c9d954982a5a",
               "fileName": "Miniconda3-py39_24.5.0-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -10221,7 +10221,7 @@
               "size": 87147104,
               "sha256": "b1ce11a339c8246010e898065f6fa6feb1940a55fefd550b57a8039c7d4b6200",
               "fileName": "Miniconda3-py312_24.5.0-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -10349,7 +10349,7 @@
               "size": 89034408,
               "sha256": "b0cc3e41f42e6cf491fd63ea9e87dccd7160e5328d542602873c69217179bc3b",
               "fileName": "Miniconda3-py311_24.5.0-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -10477,7 +10477,7 @@
               "size": 84658808,
               "sha256": "978114c55284286957be2341ad0090eb5287222183e895bab437c4d1041a0284",
               "fileName": "Miniconda3-py310_24.5.0-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -10612,7 +10612,7 @@
               "size": 81315512,
               "sha256": "d461f4f5cc3351092882cc14e0448280136846f64863ff94c9833d046dd1176c",
               "fileName": "Miniconda3-py39_24.4.0-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -10740,7 +10740,7 @@
               "size": 83401936,
               "sha256": "f4d6147b40ea6822255c2dcec8bb0d357c09e230976213f70d7b8c4a10d86bb0",
               "fileName": "Miniconda3-py312_24.4.0-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -10868,7 +10868,7 @@
               "size": 85690400,
               "sha256": "fb6aaeaf92907b8e7598aac0f7b29793a00b27641dc074a961eeb86ff86d0268",
               "fileName": "Miniconda3-py311_24.4.0-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -10996,7 +10996,7 @@
               "size": 81313704,
               "sha256": "4a0d2352f87b0b9207352fd683f9642b44e6886ff36b4b83020c26482f176292",
               "fileName": "Miniconda3-py310_24.4.0-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -11131,7 +11131,7 @@
               "size": 80056744,
               "sha256": "2789122e1d978a4bd74dfe4f8154fe82ab575ed3b4880a3295e1c9e2d0864c95",
               "fileName": "Miniconda3-py39_24.3.0-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -11259,7 +11259,7 @@
               "size": 81274240,
               "sha256": "21b56b75861573ec8ab146d555b20e1ed4462a06aa286d7e92a1cd31acc64dba",
               "fileName": "Miniconda3-py312_24.3.0-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -11387,7 +11387,7 @@
               "size": 83663592,
               "sha256": "de2e3f93137f8162b224abd2c3e545229ef7718c31922e816d686d8024d95e4b",
               "fileName": "Miniconda3-py311_24.3.0-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -11515,7 +11515,7 @@
               "size": 79884560,
               "sha256": "5c683a007e5383b1a566c15c25972b35f33bc2c9252333c82dbd94513173321e",
               "fileName": "Miniconda3-py310_24.3.0-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -11650,7 +11650,7 @@
               "size": 948300296,
               "sha256": "087c633e355bc709222ad9e0dbad77abeed84f7e06dbdbecae84ba8b3660429e",
               "fileName": "Anaconda3-2024.02-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -11785,7 +11785,7 @@
               "size": 81035632,
               "sha256": "6128825cdcde8ec0c0a5a9ed3dc021cc920040905dee39e58e827bc27fea0bee",
               "fileName": "Miniconda3-py39_24.1.2-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -11913,7 +11913,7 @@
               "size": 81940440,
               "sha256": "ff53a36b7024f8398cbfd043020f1f662cd4c5c2095c0007ddb4348aa5459375",
               "fileName": "Miniconda3-py312_24.1.2-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -12041,7 +12041,7 @@
               "size": 84931744,
               "sha256": "45901852fd1e0dd63c7d2553d0535a1eb1fc6df948ae1eea6c7546b4e58ab547",
               "fileName": "Miniconda3-py311_24.1.2-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -12169,7 +12169,7 @@
               "size": 80539192,
               "sha256": "1435134c414dd70ff17c108e967f90706040b69567ef86c9965f91059202485e",
               "fileName": "Miniconda3-py310_24.1.2-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -12304,7 +12304,7 @@
               "size": 80852760,
               "sha256": "3bffceaf97f2945d6ff38d51c946b5e4ad161096e7734c34e98a9b38092a0ab5",
               "fileName": "Miniconda3-py39_23.11.0-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -12432,7 +12432,7 @@
               "size": 81850504,
               "sha256": "74dff3c5e867dffa74a34eca1c4daac550ba42f9229547b37ae4a706c58ca775",
               "fileName": "Miniconda3-py38_23.11.0-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -12560,7 +12560,7 @@
               "size": 84375104,
               "sha256": "c9b32faa9262828702334b16bcb5b53556e630d54e5127f5c36c7ba7ed43179a",
               "fileName": "Miniconda3-py311_23.11.0-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -12688,7 +12688,7 @@
               "size": 80281312,
               "sha256": "f242f98378691496851f78beaf466797fb20251ba5092840c794503594d37726",
               "fileName": "Miniconda3-py310_23.11.0-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -12823,7 +12823,7 @@
               "size": 82735688,
               "sha256": "9659706eb1a4ded50592e7d03a9cae5036e8160305acc38c3e8021b4866a61d4",
               "fileName": "Miniconda3-py39_23.11.0-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -12951,7 +12951,7 @@
               "size": 83733456,
               "sha256": "39d08ed873f40ffcbe02a2a221e02e5b5f0605e441458334f1dd8106a097cf1c",
               "fileName": "Miniconda3-py38_23.11.0-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -13079,7 +13079,7 @@
               "size": 86282888,
               "sha256": "ab9328b6a0c44b01af29d629405f0e7029c5fef320f3633be417459efd9b0e4c",
               "fileName": "Miniconda3-py311_23.11.0-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -13207,7 +13207,7 @@
               "size": 82164800,
               "sha256": "919e2945578615d8e6a1367a7cf1d8a3aa49fbdf71913dc0b443cdd8948e3d60",
               "fileName": "Miniconda3-py310_23.11.0-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -13342,7 +13342,7 @@
               "size": 74108184,
               "sha256": "66bb6a179e0973247e7bdeb1a99b853e089379b6a8207d6caaa55f354722e499",
               "fileName": "Miniconda3-py39_23.10.0-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -13486,7 +13486,7 @@
               "size": 75108440,
               "sha256": "126cda8fd680553cf13b79b0fc4f23f089f11ba03d3fc9c1927ae8af0c5bed3a",
               "fileName": "Miniconda3-py38_23.10.0-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -13630,7 +13630,7 @@
               "size": 77606504,
               "sha256": "e841557c27d438b96e09126a2b0656154a3a34bdb9d87d59ceaea67515713515",
               "fileName": "Miniconda3-py311_23.10.0-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -13774,7 +13774,7 @@
               "size": 73537232,
               "sha256": "82f9f3079d979fd48ddc2b8f6f6c192f4b4f438578d3ccf56221eec956501f25",
               "fileName": "Miniconda3-py310_23.10.0-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -13925,7 +13925,7 @@
               "size": 1095571496,
               "sha256": "810da8bff79c10a708b7af9e8f21e6bb47467261a31741240f27bd807f155cb9",
               "fileName": "Anaconda3-2023.09-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -14076,7 +14076,7 @@
               "size": 73865408,
               "sha256": "9d030e8bb1c9951f988aada463c8fa2fc32f4aaef9f6db06b12dcb33fb0875df",
               "fileName": "Miniconda3-py39_23.9.0-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -14220,7 +14220,7 @@
               "size": 74972224,
               "sha256": "2b677d5c4e83fb648c4f5ec437c434ce11ab724c16d519704b9104b905f3b5d8",
               "fileName": "Miniconda3-py38_23.9.0-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -14364,7 +14364,7 @@
               "size": 77445248,
               "sha256": "29e008bcaa3970bdf4f21362e545533d55a0f04c7ae99b93f20cb2b42f9250b1",
               "fileName": "Miniconda3-py311_23.9.0-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -14508,7 +14508,7 @@
               "size": 73492056,
               "sha256": "ad677dd6441ebd6037bbc713e5da37db88d936705b76a260d31797990e302316",
               "fileName": "Miniconda3-py310_23.9.0-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -14659,7 +14659,7 @@
               "size": 937278376,
               "sha256": "fc75a8843169366e47a54c58ddd28ff95f4edb6a088731dd62acfc8f955439f9",
               "fileName": "Anaconda3-2023.07-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -14826,7 +14826,7 @@
               "size": 937260904,
               "sha256": "f52d9d658e49d62754266e4e38e0dfc46fabda485de7139cef263187472f7445",
               "fileName": "Anaconda3-2023.07-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -14961,7 +14961,7 @@
               "size": 942216640,
               "sha256": "b48e103546742b2fcb77c4099660a28901476932472d16eef6c5a63de8b6a7ce",
               "fileName": "Anaconda3-2023.07-2-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -15112,7 +15112,7 @@
               "size": 73443872,
               "sha256": "f5738ced68d9ed82996575202dea9375c51fa6419a8e0f3456398c6557a87dc2",
               "fileName": "Miniconda3-py39_23.5.2-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -15256,7 +15256,7 @@
               "size": 74451120,
               "sha256": "585befbcd3a3b532d34bba8ab63818d6bc7cfde975b5d6a7fc49483b6a84f371",
               "fileName": "Miniconda3-py38_23.5.2-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -15400,7 +15400,7 @@
               "size": 76708568,
               "sha256": "00e8370542836862d4c790aa8966f1d7344a8addd4b766004febcb23f40e2914",
               "fileName": "Miniconda3-py311_23.5.2-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -15544,7 +15544,7 @@
               "size": 72827888,
               "sha256": "e15638645b34921098a3f760fd8af07e53a427f59b99a0f049420a7751cbbc05",
               "fileName": "Miniconda3-py310_23.5.2-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -15759,7 +15759,7 @@
               "size": 76727608,
               "sha256": "0e1b4b02e8c814cfa2b522a377902233a393582c301fd24e6b45434be515e271",
               "fileName": "Miniconda3-py311_23.5.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -15839,7 +15839,7 @@
               "size": 73458400,
               "sha256": "be50a503cb7d33e4d68a249f1e805ea457980f32ff2cfd71679ddd04740cfeac",
               "fileName": "Miniconda3-py39_23.5.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -15983,7 +15983,7 @@
               "size": 74465800,
               "sha256": "679e951a61d903c24c715d4662c204871d05997f3fe1fc1c32b94de86e8df313",
               "fileName": "Miniconda3-py38_23.5.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -16127,7 +16127,7 @@
               "size": 72842768,
               "sha256": "c9945c5530c2632fc4af6ce03bc355d2ce52fd05c30d720dea5cb2cac52d8d50",
               "fileName": "Miniconda3-py310_23.5.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -16278,7 +16278,7 @@
               "size": 73441992,
               "sha256": "0b457f3279409325eb95939a69a2cbd81d3cfb8d5df672b85315c14eb0ee9544",
               "fileName": "Miniconda3-py39_23.5.0-3-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -16422,7 +16422,7 @@
               "size": 74449144,
               "sha256": "a643675ca68f7c0577864e20f73615a52aeb9c07663576411a86964326fe4288",
               "fileName": "Miniconda3-py38_23.5.0-3-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -16566,7 +16566,7 @@
               "size": 76705016,
               "sha256": "51a50e2997bc4ec9361733f90cb1ed343910fbc73e8a2b01b86e514921f1c026",
               "fileName": "Miniconda3-py311_23.5.0-3-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -16710,7 +16710,7 @@
               "size": 72826280,
               "sha256": "cb4e61bc59068a5e3732a2a58b0414c970848d3499c64c725ccd7d0000964335",
               "fileName": "Miniconda3-py310_23.5.0-3-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -16861,7 +16861,7 @@
               "size": 56295176,
               "sha256": "155958e7922d8b7aa6cb3115aeb66d2efcdae1237a6f1c11e23ca75ea96d291a",
               "fileName": "Miniconda3-py39_23.3.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -17005,7 +17005,7 @@
               "size": 55700480,
               "sha256": "f567b46b2312af5e60ec8f45daf9be626295b7716651e6e7434c447feea9123a",
               "fileName": "Miniconda3-py38_23.3.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -17149,7 +17149,7 @@
               "size": 56506304,
               "sha256": "307194e1f12bbeb52b083634e89cc67db4f7980bd542254b43d3309eaf7cb358",
               "fileName": "Miniconda3-py310_23.3.1-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -17300,7 +17300,7 @@
               "size": 824175688,
               "sha256": "849daee6c1926bb43306d0e4ce0cc50719b5bb5e43e085fc5092513ef8bf1fd5",
               "fileName": "Anaconda3-2023.03-0-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -17451,7 +17451,7 @@
               "size": 824774840,
               "sha256": "f13a2ae812d2069654521e7b1d897227ea4af52bff7cd8b3d80e7b2271fc79e4",
               "fileName": "Anaconda3-2023.03-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -17602,7 +17602,7 @@
               "size": 55516784,
               "sha256": "a2e7ec485e5412673fad31e6a5a79f9de73792e7c966764f92eabf25ec37557f",
               "fileName": "Miniconda3-py39_23.1.0-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -17746,7 +17746,7 @@
               "size": 54904280,
               "sha256": "4178df2a15284fd07b10c5fad592e5c15e6be5bfc37ee90d8e02bbde7792f6f9",
               "fileName": "Miniconda3-py38_23.1.0-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -17890,7 +17890,7 @@
               "size": 53091592,
               "sha256": "2319e6ab37215daf08f47b0da35a53f6a648121029113ae2ba53917d777b84bd",
               "fileName": "Miniconda3-py37_23.1.0-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -18002,7 +18002,7 @@
               "size": 55780192,
               "sha256": "d4517212c8ac44fd8b5ccc2d4d9f38c2dd924c77a81c2be92c3a72e70dd3e907",
               "fileName": "Miniconda3-py310_23.1.0-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -18153,7 +18153,7 @@
               "size": 55567608,
               "sha256": "4b92942fbd70e84a221306a801b3e4c06dd46e894f949a3eb19b4b150ec19171",
               "fileName": "Miniconda3-py39_22.11.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -18297,7 +18297,7 @@
               "size": 55004184,
               "sha256": "9f6ce5307db5da4e391ced4a6a73159234c3fc64ab4c1d6621dd0b64b0c24b5f",
               "fileName": "Miniconda3-py38_22.11.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -18441,7 +18441,7 @@
               "size": 53156368,
               "sha256": "4d48f78d7edbf4db0660f3b3e28b6fa17fa469cdc98c76b94e08662b92a308bd",
               "fileName": "Miniconda3-py37_22.11.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -18553,7 +18553,7 @@
               "size": 55508040,
               "sha256": "2e3086630fa3fae7636432a954be530c88d0705fce497120d56e0f5d865b0d51",
               "fileName": "Miniconda3-py310_22.11.1-1-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -18720,7 +18720,7 @@
               "size": 651399256,
               "sha256": "38b9d53a579843fe41fd05fd3c4f9ac3887f580e7bd9b43f220bbc3aea2367eb",
               "fileName": "Anaconda3-2022.10-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -18887,7 +18887,7 @@
               "size": 622731992,
               "sha256": "2766eb102f9d65da36d262b651777358de39fbe5f1a74f9854a2e5e29caeeeec",
               "fileName": "Anaconda3-2022.05-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -18999,7 +18999,7 @@
               "size": 511528600,
               "sha256": "cd8c688349bcd1f429e3b383620fb0d19f52be0f765b2eae78d63b41aefb2e73",
               "fileName": "Anaconda3-2022.05-Windows-x86.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -19022,7 +19022,7 @@
               "size": 423733040,
               "sha256": "dc0746dded06cc480328c20b73369803ce98df1971bda669d93859e02c1c0664",
               "fileName": "Anaconda3-2021.11-Windows-x86.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -19038,7 +19038,7 @@
               "size": 535052832,
               "sha256": "1b3d593d1deb22b835be5c68897075e0fc9dea240ab4191c55674aba259a78ff",
               "fileName": "Anaconda3-2021.11-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -19157,7 +19157,7 @@
               "size": 500375944,
               "sha256": "93db42390444019e98b442ab281e1091671b6dce64daf08928d337ffc83cf3d2",
               "fileName": "Anaconda3-2021.05-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -19189,7 +19189,7 @@
               "size": 428292816,
               "sha256": "b95b6ada0a54fe1df06f6cde84f8fa586501ac86eeb86f760106cf87b87168e2",
               "fileName": "Anaconda3-2021.05-Windows-x86.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -19324,7 +19324,7 @@
               "size": 424628208,
               "sha256": "61a4e246098886acc1b3cbb977d58ca6dd1aeb7a1cd67f4e4f11b12cf6670f87",
               "fileName": "Anaconda3-2021.04-Windows-x86.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -19340,7 +19340,7 @@
               "size": 496672144,
               "sha256": "65fd8be6ab9aed8106bd1c9a228ecd7fd3e23d0d15b9d72415e3a884a69a8462",
               "fileName": "Anaconda3-2021.04-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -19491,7 +19491,7 @@
               "size": 422586464,
               "sha256": "362de9bc1e9e368dcbcdee1a175a523983c48dd8c04f83caf8d7ceaf7956bddc",
               "fileName": "Anaconda3-2020.11-Windows-x86.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -19507,7 +19507,7 @@
               "size": 479396152,
               "sha256": "aa523115daf31c431bb392faf75e70d35ada935e36dc7b1dd8902baee240bcc1",
               "fileName": "Anaconda3-2020.11-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -19530,7 +19530,7 @@
               "size": 416619544,
               "sha256": "19803e5ccc357b57051cf7fa272e6b499dfedf13790778dc24af302f894e3281",
               "fileName": "Anaconda3-2020.07-Windows-x86.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -19578,7 +19578,7 @@
               "size": 490200880,
               "sha256": "66acb9bdf7d2d5925df8762311a85ad72f57dfd340447bf00636d35a28454244",
               "fileName": "Anaconda3-2020.07-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -19633,7 +19633,7 @@
               "size": 443796296,
               "sha256": "d13381d6145c47755b198662af8a5f412836adecdb68627bc297be6738a3bdac",
               "fileName": "Anaconda3-2020.02-Windows-x86.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -19681,7 +19681,7 @@
               "size": 488908696,
               "sha256": "83c2f53c7174253adcc2de7d1293a7408c37b295abbbb8feca32cb8428a26158",
               "fileName": "Anaconda3-2020.02-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -19768,7 +19768,7 @@
               "size": 483964816,
               "sha256": "9e632439ed40620b8518f11469ded7316eccb489d0dfc41770f72ca2b2202dd9",
               "fileName": "Anaconda3-2019.10-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -19800,7 +19800,7 @@
               "size": 429475496,
               "sha256": "05e6738919673a6d57b5895b8b4df0b7e3f4d7ed0e30faf9c9f1b7d3399e9f52",
               "fileName": "Anaconda3-2019.10-Windows-x86.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -19855,7 +19855,7 @@
               "size": 509439656,
               "sha256": "37e753801a881649ceb608449b66ff9daa35a393409c6e651e56a60c5043bd46",
               "fileName": "Anaconda3-2019.07-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -19871,7 +19871,7 @@
               "size": 438674400,
               "sha256": "3d26ddf9ddb2287822a14ac1da3359a0db6ceb302b57edb9fcc69061f39276a3",
               "fileName": "Anaconda3-2019.07-Windows-x86.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -19990,7 +19990,7 @@
               "size": 693800272,
               "sha256": "d2c90169879f40816eac91bec585a1f9f788016fe0a8215ca066299e4b6531b9",
               "fileName": "Anaconda3-2019.03-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -20006,7 +20006,7 @@
               "size": 572204080,
               "sha256": "03d94f55c4c5e1187382ff414c78e66244893170fa7aacd0deb71536b7a925e5",
               "fileName": "Anaconda3-2019.03-Windows-x86.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -20045,7 +20045,7 @@
               "size": 644094168,
               "sha256": "09d84a789013d5e2bfb0148bdd9f5d69a6baa2127edabb9a8e50e77c6fc57ecc",
               "fileName": "Anaconda3-2018.12-Windows-x86_64.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -20109,7 +20109,7 @@
               "size": 534439744,
               "sha256": "3f2955c1874ca452b985627a10859f6906eb21d4f6a4c055b78049cf6822b46d",
               "fileName": "Anaconda3-2018.12-Windows-x86.exe",
-              "type": "MICROSOFT_WINDOWS_EXECUTABLE"
+              "type": "WINDOWS_EXE_INSTALLER"
             }
           ],
           "tags": [
@@ -20150,6 +20150,93 @@
         }
       ],
       "title": "Anaconda 2018.12"
+    }
+  ],
+  "pixi": [
+    {
+      "version": "0.81.0",
+      "product": "Pixi",
+      "binaries": [
+        {
+          "os": "macOS",
+          "cpuArch": "ARM64",
+          "resources": [
+            {
+              "url": "https://cache-redirector.jetbrains.com/github.com/prefix-dev/pixi/releases/download/v0.81.0/pixi-aarch64-apple-darwin",
+              "size": 66273456,
+              "sha256": "f389557fc5de929cc33a042f6ae5abbaeb087ffa1affd55aa6ab8da3222d1122",
+              "fileName": "pixi-aarch64-apple-darwin",
+              "type": "STANDALONE_EXECUTABLE"
+            }
+          ]
+        },
+        {
+          "os": "macOS",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://cache-redirector.jetbrains.com/github.com/prefix-dev/pixi/releases/download/v0.81.0/pixi-x86_64-apple-darwin",
+              "size": 75332064,
+              "sha256": "80b60db15a769c4144a5fae4bbc0afa1b3ede9a608ec0396377f9ab6c0594da0",
+              "fileName": "pixi-x86_64-apple-darwin",
+              "type": "STANDALONE_EXECUTABLE"
+            }
+          ]
+        },
+        {
+          "os": "Linux",
+          "cpuArch": "ARM64",
+          "resources": [
+            {
+              "url": "https://cache-redirector.jetbrains.com/github.com/prefix-dev/pixi/releases/download/v0.81.0/pixi-aarch64-unknown-linux-musl",
+              "size": 68698776,
+              "sha256": "7fcd20f7c18339f13552a6767ab146ce6b439ce29db46cc03ece005ca9696bb1",
+              "fileName": "pixi-aarch64-unknown-linux-musl",
+              "type": "STANDALONE_EXECUTABLE"
+            }
+          ]
+        },
+        {
+          "os": "Linux",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://cache-redirector.jetbrains.com/github.com/prefix-dev/pixi/releases/download/v0.81.0/pixi-x86_64-unknown-linux-musl",
+              "size": 80335584,
+              "sha256": "248510f5f75460a2ae4ec62d761e15c0191dc35db3b1da6f82d9f17c6017051d",
+              "fileName": "pixi-x86_64-unknown-linux-musl",
+              "type": "STANDALONE_EXECUTABLE"
+            }
+          ]
+        },
+        {
+          "os": "Windows",
+          "cpuArch": "ARM64",
+          "resources": [
+            {
+              "url": "https://cache-redirector.jetbrains.com/github.com/prefix-dev/pixi/releases/download/v0.81.0/pixi-aarch64-pc-windows-msvc.exe",
+              "size": 76869560,
+              "sha256": "ce56e09c63300b7baa8dbeb148f08c837162fde11d7645af404f02a832ae9a5e",
+              "fileName": "pixi-aarch64-pc-windows-msvc.exe",
+              "type": "STANDALONE_EXECUTABLE"
+            }
+          ]
+        },
+        {
+          "os": "Windows",
+          "cpuArch": "X86_64",
+          "resources": [
+            {
+              "url": "https://cache-redirector.jetbrains.com/github.com/prefix-dev/pixi/releases/download/v0.81.0/pixi-x86_64-pc-windows-msvc.exe",
+              "size": 95921592,
+              "sha256": "1b989b152ea13e881a641a112c7ea59c51818fd5ba84924c763b40b9b157dab9",
+              "fileName": "pixi-x86_64-pc-windows-msvc.exe",
+              "type": "STANDALONE_EXECUTABLE"
+            }
+          ]
+        }
+      ],
+      "title": "Pixi 0.81.0"
     }
   ]
 }

@@ -2,19 +2,36 @@
 package com.intellij.python.test.env.junit5
 
 import com.intellij.python.test.env.uv.getUvArchivePrefixToStrip
+import com.intellij.python.test.env.uv.getUvInstallationDirectory
 import com.intellij.util.system.OS
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNull
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
 
+@Subsystems.Interpreters
+@Layers.Functional
 internal class UvExecutableProviderTest {
   @Test
   fun `Windows uv archive is extracted without prefix stripping`() {
-    assertNull(getUvArchivePrefixToStrip(OS.Windows, "uv-x86_64-pc-windows-msvc.zip"))
+    assertThat(getUvArchivePrefixToStrip(OS.Windows, "uv-x86_64-pc-windows-msvc.zip")).isNull()
   }
 
   @Test
   fun `Unix uv archive is extracted from its root directory`() {
-    assertEquals("uv-x86_64-unknown-linux-gnu", getUvArchivePrefixToStrip(OS.Linux, "uv-x86_64-unknown-linux-gnu.tar.gz"))
+    assertThat(getUvArchivePrefixToStrip(OS.Linux, "uv-x86_64-unknown-linux-gnu.tar.gz"))
+      .isEqualTo("uv-x86_64-unknown-linux-gnu")
+  }
+
+  @Test
+  fun `different uv versions use different installation directories`(@TempDir cacheDirectory: Path) {
+    val first = getUvInstallationDirectory(cacheDirectory, "0.8.0", "uv-x86_64-unknown-linux-gnu")
+    val second = getUvInstallationDirectory(cacheDirectory, "0.9.0", "uv-x86_64-unknown-linux-gnu")
+
+    assertThat(first).isNotEqualTo(second)
+    assertThat(first).isEqualTo(cacheDirectory.resolve("uv/0.8.0/uv-x86_64-unknown-linux-gnu"))
+    assertThat(second).isEqualTo(cacheDirectory.resolve("uv/0.9.0/uv-x86_64-unknown-linux-gnu"))
   }
 }

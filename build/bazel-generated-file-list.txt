@@ -1931,6 +1931,12 @@ python/python-markdown
 python/python-minimap
 python/python-packaging
 python/python-parser
+python/python-pixi/backend
+python/python-pixi/common
+python/python-pixi/frontend
+python/python-pixi/plugin
+python/python-pixi/test-env
+python/python-pixi/tests
 python/python-poetry/backend
 python/python-poetry/common
 python/python-poetry/frontend

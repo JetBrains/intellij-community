@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
+import java.util.UUID
 
 /**
  * Represents a configured Python environment with operations for managing libraries and SDK creation.
@@ -98,15 +99,14 @@ abstract class PyEnvironmentProvider<S : PyEnvironmentSpec<S>>(
    * Prefix for environment directories (e.g., "plain", "uv", "conda")
    */
   private val envPrefix: String,
+  val supportedSpecType: Class<S>,
 ) {
-  private var envCounter = 0
-
   /**
    * Generate next environment directory path within the working directory.
    * Uses provider-specific prefix to avoid conflicts between different provider types.
    */
   protected fun nextEnvPath(workingDir: Path): Path {
-    return workingDir.resolve("${envPrefix}_${++envCounter}")
+    return workingDir.resolve("${envPrefix}_${UUID.randomUUID()}")
   }
 
   /**

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.sdk.Product
+import com.jetbrains.python.sdk.Release
 import com.jetbrains.python.sdk.Resource
 import com.jetbrains.python.sdk.ResourceType
 import com.jetbrains.python.sdk.SdksKeeper
@@ -14,11 +15,12 @@ import com.jetbrains.python.sdk.installer.installBinary
 import com.jetbrains.python.sdk.installer.selectInstallations
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
+import org.jetbrains.annotations.ApiStatus
 
 object CondaInstallManager {
 
   internal class WindowsInstaller(private val installPath: String) : ResourceTypeBinaryInstaller(
-    ResourceType.MICROSOFT_WINDOWS_EXECUTABLE) {
+    ResourceType.WINDOWS_EXE_INSTALLER) {
     /**
      * Miniconda3-{version}-Windows-x86_64.exe {options}
      *
@@ -86,8 +88,14 @@ object CondaInstallManager {
   fun installLatest(project: Project?, product: Product = Product.Miniconda) {
     val latestRelease = SdksKeeper.condaReleases(product).firstOrNull()
                         ?: error("There is no available conda releases of the product $product")
-    val installers = productInstallers.getOrElse(latestRelease.product) { emptyList() }
-    val installations = latestRelease.selectInstallations(installers)
+    install(project, latestRelease)
+  }
+
+  @RequiresEdt
+  @ApiStatus.Internal
+  fun install(project: Project?, release: Release): Result<Unit> {
+    val installers = productInstallers.getOrElse(release.product) { emptyList() }
+    val installations = release.selectInstallations(installers)
 
     val unknownLevel = LanguageLevel.SUPPORTED_LEVELS.first()
     val installationWithHighestPython = installations.maxByOrNull { bi ->
@@ -97,10 +105,10 @@ object CondaInstallManager {
     }
 
     if (installationWithHighestPython != null) {
-      installBinary<Nothing>(installationWithHighestPython, project)
+      return installBinary(installationWithHighestPython, project) { Unit }
     }
     else {
-      error("There is no supported conda installation for the release $latestRelease")
+      error("There is no supported conda installation for the release $release")
     }
   }
 }

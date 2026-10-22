@@ -11,10 +11,10 @@ import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.test.env.core.CacheKey
-import com.intellij.python.test.env.core.PyEnvDownloadCache
 import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.core.PyEnvironmentProvider
 import com.intellij.python.test.env.core.PyEnvironmentSpec
+import com.intellij.python.test.env.core.defaultPyEnvDownloadCache
 import com.intellij.python.test.env.core.executeProcess
 import com.intellij.python.test.env.core.extractIfNecessary
 import com.intellij.python.test.env.core.markExecutable
@@ -89,7 +89,7 @@ fun condaEnvironment(condaVersion: String, block: CondaPyEnvironmentSpec.() -> U
  *
  */
 @ApiStatus.Internal
-class CondaPyEnvironmentProvider : PyEnvironmentProvider<CondaPyEnvironmentSpec>("conda") {
+class CondaPyEnvironmentProvider : PyEnvironmentProvider<CondaPyEnvironmentSpec>("conda", CondaPyEnvironmentSpec::class.java) {
 
   private companion object {
     const val MINICONDA_BASE_URL = "https://cache-redirector.jetbrains.com/repo.anaconda.com/miniconda"
@@ -145,13 +145,13 @@ class CondaPyEnvironmentProvider : PyEnvironmentProvider<CondaPyEnvironmentSpec>
     val logger = thisLogger()
     val installerName = getMinicondaInstallerName(condaVersion)
     val installerBaseName = installerName.substringBeforeLast('.')
-    val condaDir = PyEnvDownloadCache.cacheDirectory().resolve("conda").resolve(installerBaseName)
+    val condaDir = defaultPyEnvDownloadCache.cacheDirectory().resolve("conda").resolve(installerBaseName)
     val condaExecutable = getCondaExecutablePath(condaDir)
 
     extractIfNecessary(condaDir, logger) {
       val downloadUrl = "$MINICONDA_BASE_URL/$installerName"
       logger.info("Downloading Miniconda installer: $installerName")
-      val cachedInstaller = PyEnvDownloadCache.getOrDownload(downloadUrl, installerName)
+      val cachedInstaller = defaultPyEnvDownloadCache.getOrDownload(downloadUrl, installerName)
       logger.info("Miniconda installer downloaded: $cachedInstaller")
 
       logger.info("Installing Miniconda to: $condaDir")

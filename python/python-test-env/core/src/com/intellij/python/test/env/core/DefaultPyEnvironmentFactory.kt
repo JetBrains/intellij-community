@@ -2,30 +2,27 @@
 package com.intellij.python.test.env.core
 
 import java.nio.file.Path
+import java.util.ServiceLoader
 
 /**
  * Default implementation of [PyEnvironmentFactory] that delegates to registered providers.
  * 
- * Each provider is registered with a predicate that determines if it can handle a given spec.
- * When creating an environment, the factory iterates through providers and uses the first
- * matching one.
+ * Java SPI supplies the providers. The factory uses the first provider that supports the specification.
  */
 class DefaultPyEnvironmentFactory(
   override val workingDir: Path,
-  private val providers: List<Pair<(PyEnvironmentSpec<*>) -> Boolean, PyEnvironmentProvider<*>>>
+  private val providerClassLoader: ClassLoader,
 ): PyEnvironmentFactory {
 
   override suspend fun createEnvironment(factory: PyEnvironmentFactory, spec: PyEnvironmentSpec<*>): PyEnvironment {
-    for ((predicate, provider) in providers) {
-      if (predicate(spec)) {
+    for (provider in ServiceLoader.load(PyEnvironmentProvider::class.java, providerClassLoader)) {
+      if (provider.supportedSpecType.isAssignableFrom(spec::class.java)) {
         val context = object : PyEnvironmentProvider.Context {
           override val factory: PyEnvironmentFactory = factory
           override val workingDir: Path = this@DefaultPyEnvironmentFactory.workingDir
-          override val cacheDir: Path = PyEnvDownloadCache.cacheDirectory()
+          override val cacheDir: Path = defaultPyEnvDownloadCache.cacheDirectory()
         }
-        @Suppress("UNCHECKED_CAST")
-        val setupEnv = provider::setupEnvironment as suspend (PyEnvironmentProvider.Context, PyEnvironmentSpec<*>) -> PyEnvironment
-        return setupEnv(context, spec)
+        return setupEnvironment(provider, context, spec)
       }
     }
     error("No provider found for environment specification: $spec")
@@ -33,3 +30,9 @@ class DefaultPyEnvironmentFactory(
 
   override fun close() {}
 }
+
+private suspend fun <S : PyEnvironmentSpec<S>> setupEnvironment(
+  provider: PyEnvironmentProvider<S>,
+  context: PyEnvironmentProvider.Context,
+  spec: PyEnvironmentSpec<*>,
+): PyEnvironment = provider.setupEnvironment(context, provider.supportedSpecType.cast(spec))

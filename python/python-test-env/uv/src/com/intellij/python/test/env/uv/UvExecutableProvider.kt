@@ -2,7 +2,8 @@
 package com.intellij.python.test.env.uv
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.python.test.env.core.PyEnvDownloadCache
+import com.intellij.python.test.env.core.GitHubReleaseAssetDownloader
+import com.intellij.python.test.env.core.defaultPyEnvDownloadCache
 import com.intellij.python.test.env.core.extractIfNecessary
 import com.intellij.python.test.env.core.markExecutable
 import com.intellij.python.test.env.core.unpackArchive
@@ -12,8 +13,8 @@ import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
-private const val UV_RELEASES_URL = "https://cache-redirector.jetbrains.com/github.com/astral-sh/uv/releases/download"
 private val LOG = Logger.getInstance("com.intellij.python.test.env.uv")
+private val UV_RELEASE_DOWNLOADER = GitHubReleaseAssetDownloader("astral-sh/uv")
 
 /**
  * Downloads and sets up UV binary for the specified version.
@@ -27,16 +28,15 @@ private val LOG = Logger.getInstance("com.intellij.python.test.env.uv")
 suspend fun getOrDownloadUvExecutable(uvVersion: String): Path {
   val logger = LOG
 
-  val downloadUrl = getUvDownloadUrl(uvVersion)
-  val archiveFileName = downloadUrl.substringAfterLast('/')
+  val archiveFileName = getUvArchiveFileName()
   val archiveBaseName = archiveFileName.substringBeforeLast(".tar.gz").substringBeforeLast(".zip")
   val prefixToStrip = getUvArchivePrefixToStrip(OS.CURRENT, archiveFileName)
-  val uvDir = PyEnvDownloadCache.cacheDirectory().resolve("uv").resolve(archiveBaseName)
+  val uvDir = getUvInstallationDirectory(defaultPyEnvDownloadCache.cacheDirectory(), uvVersion, archiveBaseName)
   val uvExecutable = uvDir.resolve(if (OS.CURRENT == OS.Windows) "uv.exe" else "uv")
 
   extractIfNecessary(uvDir, logger) { target ->
     logger.info("Downloading UV archive: $archiveFileName")
-    val cachedArchive = PyEnvDownloadCache.getOrDownload(downloadUrl, archiveFileName)
+    val cachedArchive = UV_RELEASE_DOWNLOADER.download(uvVersion, archiveFileName)
     logger.info("UV archive downloaded: $cachedArchive")
     logger.info("Extracting UV binary (stripping prefix: $prefixToStrip)")
     unpackArchive(cachedArchive, target, prefixToStrip = prefixToStrip)
@@ -48,11 +48,18 @@ suspend fun getOrDownloadUvExecutable(uvVersion: String): Path {
 
 @ApiStatus.Internal
 fun getUvArchivePrefixToStrip(os: OS, archiveFileName: String): String? {
-  return if (os == OS.Windows) null else archiveFileName.substringBeforeLast(".tar.gz").substringBeforeLast(".zip")
+  return when (os) {
+    OS.Windows -> null
+    OS.macOS, OS.Linux, OS.FreeBSD, OS.OHOS, OS.Other -> archiveFileName.substringBeforeLast(".tar.gz").substringBeforeLast(".zip")
+  }
 }
 
+@ApiStatus.Internal
+fun getUvInstallationDirectory(cacheDirectory: Path, uvVersion: String, archiveBaseName: String): Path =
+  cacheDirectory.resolve("uv").resolve(uvVersion).resolve(archiveBaseName)
+
 @OptIn(LowLevelLocalMachineAccess::class)
-private fun getUvDownloadUrl(version: String): String {
+private fun getUvArchiveFileName(): String {
   val arch = when {
     CpuArch.isArm64() -> "aarch64"
     CpuArch.isIntel64() -> "x86_64"
@@ -64,9 +71,13 @@ private fun getUvDownloadUrl(version: String): String {
     OS.Windows -> "$arch-pc-windows-msvc"
     OS.macOS -> "$arch-apple-darwin"
     OS.Linux -> "$arch-unknown-linux-gnu"
-    else -> throw IllegalStateException("Unsupported OS: $os")
+    OS.FreeBSD, OS.OHOS, OS.Other -> throw IllegalStateException("Unsupported OS: $os")
   }
-  val extension = if (os == OS.Windows) "zip" else "tar.gz"
+  val extension = when (os) {
+    OS.Windows -> "zip"
+    OS.macOS, OS.Linux -> "tar.gz"
+    OS.FreeBSD, OS.OHOS, OS.Other -> throw IllegalStateException("Unsupported OS: $os")
+  }
 
-  return "$UV_RELEASES_URL/$version/uv-$platform.$extension"
+  return "uv-$platform.$extension"
 }

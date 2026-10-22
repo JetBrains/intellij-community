@@ -6,6 +6,7 @@ import com.jetbrains.python.sdk.Release
 import com.jetbrains.python.sdk.Sdks
 import com.jetbrains.python.sdk.SdksKeeper
 import org.jetbrains.intellij.build.pycharm.sdks.CondaUpdater
+import org.jetbrains.intellij.build.pycharm.sdks.PixiUpdater
 import org.jetbrains.intellij.build.pycharm.sdks.PythonUpdater
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.Path
@@ -14,7 +15,7 @@ import kotlin.io.path.writeText
 val SUPPORTED_LEVELS = LanguageLevel.SUPPORTED_LEVELS.filter { it.isAtLeast(LanguageLevel.PYTHON38) }
 val SDKS_JSON_PATH = Path(".", "community", "python", "python-sdk", "backend", "resources", "sdks.json")
 
-fun Sdks.releases(): List<Release> = this.python + this.conda
+fun Sdks.releases(): List<Release> = this.python + this.conda + this.pixi
 
 /**
  * All resources from sdks.json (there is no need to load and count hashes / sizes again)
@@ -40,6 +41,7 @@ fun main() {
   val sdks = Sdks(
     python = PythonUpdater().getReleases(),
     conda = CondaUpdater().getReleases(),
+    pixi = PixiUpdater().getReleases(),
   )
   val sdksJson = SdksKeeper.serialize(sdks)
   SDKS_JSON_PATH.writeText(sdksJson)

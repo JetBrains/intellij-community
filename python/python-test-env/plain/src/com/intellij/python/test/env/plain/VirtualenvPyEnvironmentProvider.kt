@@ -29,7 +29,8 @@ import kotlin.io.path.deleteRecursively
  * 
  */
 @ApiStatus.Internal
-class VirtualenvPyEnvironmentProvider : PyEnvironmentProvider<VirtualenvPyEnvironmentSpec>("venv") {
+class VirtualenvPyEnvironmentProvider :
+  PyEnvironmentProvider<VirtualenvPyEnvironmentSpec>("venv", VirtualenvPyEnvironmentSpec::class.java) {
 
   override suspend fun setupEnvironment(context: Context, spec: VirtualenvPyEnvironmentSpec): PyEnvironment {
     val logger = thisLogger()

@@ -2,10 +2,10 @@
 package com.intellij.python.test.env.plain
 
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.python.test.env.core.PyEnvDownloadCache
 import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.core.PyEnvironmentProvider
 import com.intellij.python.test.env.core.PyVersionMapping
+import com.intellij.python.test.env.core.defaultPyEnvDownloadCache
 import com.intellij.python.test.env.core.extractIfNecessary
 import com.intellij.python.test.env.core.installPipPackages
 import com.intellij.python.test.env.core.markExecutable
@@ -34,7 +34,7 @@ import kotlin.io.path.fileSize
  * 
  */
 @ApiStatus.Internal
-class PlainPyEnvironmentProvider : PyEnvironmentProvider<PlainPyEnvironmentSpec>("plain") {
+class PlainPyEnvironmentProvider : PyEnvironmentProvider<PlainPyEnvironmentSpec>("plain", PlainPyEnvironmentSpec::class.java) {
 
   override suspend fun setupEnvironment(context: Context, spec: PlainPyEnvironmentSpec): PyEnvironment {
     val logger = thisLogger()
@@ -71,7 +71,7 @@ class PlainPyEnvironmentProvider : PyEnvironmentProvider<PlainPyEnvironmentSpec>
     val sanitizedFileName = sanitizeFileName(decodedFileName, replacement = "_", truncateIfNeeded = false)
     
     logger.info("Downloading Python archive: $sanitizedFileName (from URL: $archiveFileName)")
-    val archive = PyEnvDownloadCache.getOrDownload(downloadInfo.url, sanitizedFileName)
+    val archive = defaultPyEnvDownloadCache.getOrDownload(downloadInfo.url, sanitizedFileName)
     logger.info("Python archive downloaded: $archive")
     
     // Verify size and SHA256
@@ -103,7 +103,7 @@ class PlainPyEnvironmentProvider : PyEnvironmentProvider<PlainPyEnvironmentSpec>
       fileName.endsWith(".zip", ignoreCase = true) -> fileName.substringBeforeLast(".zip")
       else -> fileName
     }
-    return PyEnvDownloadCache.cacheDirectory().resolve("python").resolve(archiveBaseName)
+    return defaultPyEnvDownloadCache.cacheDirectory().resolve("python").resolve(archiveBaseName)
   }
 
   private suspend fun installLibraries(pythonPath: Path, libraries: List<String>) {

@@ -1,0 +1,8 @@
+<idea-plugin visibility="internal">
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.python.pytools.common"/>
+    <!-- endregion -->
+  </dependencies>
+</idea-plugin>

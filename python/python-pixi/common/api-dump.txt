@@ -1,0 +1,3 @@
+f:com.intellij.python.pixi.common.icons.PythonPixiCommonIcons
+- sf:Pixi:javax.swing.Icon
+- <init>():V

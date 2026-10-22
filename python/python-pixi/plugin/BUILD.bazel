@@ -1,0 +1,64 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.python.pixi.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.python.pixi.common",
+        "intellij.python.pixi.backend",
+        "intellij.python.pixi.frontend",
+    ],
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/python-pixi-plugin.jar": ["intellij.python.pixi.plugin"],
+    },
+    main_module = "intellij.python.pixi.plugin",
+    mode_refused_content_modules = {
+        "frontend": ["intellij.python.pixi.backend"],
+    },
+)
+### auto-generated section `dev intellij.python.pixi.plugin` end
+
+### auto-generated section `build intellij.python.pixi.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.pixi.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    runtime_deps = ["//python/pluginCore:community-plugin"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.pixi.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":plugin",
+        "//python/pluginCore:community-plugin_test_lib",
+    ],
+)
+### auto-generated section `build intellij.python.pixi.plugin` end
+
+### auto-generated section `iml intellij.python.pixi.plugin` start
+exports_files(
+    [
+        "intellij.python.pixi.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.pixi.plugin` end

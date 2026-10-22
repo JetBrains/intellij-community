@@ -3,13 +3,10 @@ package com.intellij.python.community.impl.conda
 
 import com.intellij.execution.Platform
 import com.intellij.openapi.application.EDT
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.python.community.impl.installer.CondaInstallManager
 import com.intellij.python.pytools.backend.PackageManagerPyTool
-import com.intellij.python.pytools.backend.PyExecutableCache
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.PyToolManager
 import com.intellij.python.pytools.backend.PyToolSupport
@@ -18,19 +15,38 @@ import com.intellij.python.pytools.backend.ToolSearchPath
 import com.intellij.python.pytools.backend.pyExecutableSpec
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.sdk.BinaryPyToolManager
+import com.jetbrains.python.sdk.SdksKeeper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.nio.file.Path
 
 /**
  * Conda as a [PyTool] + [PackageManagerPyTool], so it appears on the Package Managers settings page and
  * reuses the per-Eel-machine custom-path store / detection cache the same way other tools do. Unlike
  * pip/uv-installable tools it is not a Python package: it installs via its own [CondaInstallManager]
- * (see [CondaPyToolManager]), and shows only on the Package Managers page (it is not a `ProjectLevelPyTool`).
+ * through [BinaryPyToolManager], and shows only on the Package Managers page (it is not a `ProjectLevelPyTool`).
  */
 class CondaPyTool internal constructor() : PackageManagerPyTool {
   override val packageName: PyPackageName = PyPackageName.from("conda")
-  override val manager: PyToolManager = CondaPyToolManager(this)
+  override val manager: PyToolManager = BinaryPyToolManager(
+    tool = this,
+    releases = { SdksKeeper.condaReleases() },
+    installBinary = { _, release, _ ->
+      val result = withContext(Dispatchers.EDT) {
+        CondaInstallManager.install(project = null, release)
+      }
+      result.fold(
+        onSuccess = { PyResult.success(Unit) },
+        onFailure = { PyResult.localizedError(PyCondaBundle.message("python.conda.install.failed")) },
+      )
+    },
+    upgradeBinary = { _, _, _ ->
+      PyResult.localizedError(PyCondaBundle.message("python.conda.update.not.supported"))
+    },
+    binarySupport = { eelDescriptor ->
+      if (eelDescriptor.getResolvedEelMachine() is LocalEelMachine) PyToolSupport.INSTALL_ONLY else PyToolSupport.NONE
+    },
+  )
 
   override val toolCommandSpec: ToolCommandSpec = pyExecutableSpec(fusId, listOf(
     ToolSearchPath.RelativePathFromHome(listOf("anaconda3", "bin"), Platform.UNIX),
@@ -52,31 +68,4 @@ class CondaPyTool internal constructor() : PackageManagerPyTool {
   companion object {
     fun getInstance(): CondaPyTool = PyTool.EP_NAME.findExtensionOrFail(CondaPyTool::class.java)
   }
-}
-
-/**
- * Conda's install strategy. Conda is not a Python package, so install reuses the Miniconda installer
- * ([CondaInstallManager]) — which is local-only and runs its own modal on the EDT — then resolves the
- * freshly installed executable through [PyExecutableCache]. Updating conda from the IDE is not supported.
- */
-private class CondaPyToolManager(private val tool: CondaPyTool) : PyToolManager {
-  override suspend fun install(eel: EelApi): PyResult<Path> {
-    withContext(Dispatchers.EDT) {
-      CondaInstallManager.installLatest(project = null)
-    }
-    val cache = PyExecutableCache.getInstance()
-    cache.invalidate(eel.descriptor, tool)
-    return cache.get(eel.descriptor, tool)?.let { PyResult.success(it) }
-           ?: PyResult.localizedError(PyCondaBundle.message("python.conda.install.not.detected"))
-  }
-
-  override suspend fun upgrade(eel: EelApi): PyResult<Path> =
-    PyResult.localizedError(PyCondaBundle.message("python.conda.update.not.supported"))
-
-  /**
-   * The Miniconda installer only targets the local machine, so nothing is offered for a remote one. Updating the
-   * conda distribution is not something the IDE does anywhere, so an upgrade is never offered.
-   */
-  override fun support(eelDescriptor: EelDescriptor): PyToolSupport =
-    if (eelDescriptor.getResolvedEelMachine() is LocalEelMachine) PyToolSupport.INSTALL_ONLY else PyToolSupport.NONE
 }

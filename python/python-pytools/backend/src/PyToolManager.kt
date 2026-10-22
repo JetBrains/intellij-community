@@ -33,7 +33,7 @@ interface PyToolManager {
    * An installer that only works locally — conda's Miniconda installer — reports [PyToolSupport.NONE] for a remote
    * machine, so the settings row there offers no action and only lets the user point at an executable.
    */
-  fun support(eelDescriptor: EelDescriptor): PyToolSupport = PyToolSupport.INSTALL_AND_UPGRADE
+  suspend fun support(eelDescriptor: EelDescriptor): PyToolSupport = PyToolSupport.INSTALL_AND_UPGRADE
 }
 
 /**
