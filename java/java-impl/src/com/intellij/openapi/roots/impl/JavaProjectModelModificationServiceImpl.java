@@ -2,7 +2,6 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -23,16 +22,24 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiJavaModule;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 public final class JavaProjectModelModificationServiceImpl extends JavaProjectModelModificationService {
   private final Project myProject;
@@ -50,8 +57,7 @@ public final class JavaProjectModelModificationServiceImpl extends JavaProjectMo
     }
 
     promise = promise == null ? Promises.rejectedPromise() : promise;
-    return promise.onSuccess(
-      _ -> ApplicationManager.getApplication().invokeLater(() -> addJigsawModule(from, to, scope), ModalityState.nonModal()));
+    return promise.thenAsync(_ -> addJigsawModule(from, to, scope));
   }
 
   @Override
@@ -63,8 +69,7 @@ public final class JavaProjectModelModificationServiceImpl extends JavaProjectMo
     }
 
     promise = promise == null ? Promises.rejectedPromise() : promise;
-    return promise.onSuccess(
-      _ -> ApplicationManager.getApplication().invokeLater(() -> addJigsawModule(from, library, scope), ModalityState.nonModal()));
+    return promise.thenAsync(_ -> addJigsawModule(from, library, scope));
   }
 
   @Override
@@ -78,11 +83,12 @@ public final class JavaProjectModelModificationServiceImpl extends JavaProjectMo
     }
 
     promise = promise == null ? Promises.rejectedPromise() : promise;
-    return promise.onSuccess(_ -> ApplicationManager.getApplication().invokeLater(() -> {
+    return promise.thenAsync(_ -> {
       Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject)
         .getLibraryByName(libraryDescriptor.getPresentableName());
-      from.forEach(m -> addJigsawModule(m, library, scope));
-    }, ModalityState.nonModal()));
+      List<Promise<?>> jigsawPromises = ContainerUtil.map(from, m -> addJigsawModule(m, library, scope));
+      return Promises.all(jigsawPromises, null);
+    });
   }
 
   @Override
@@ -116,31 +122,51 @@ public final class JavaProjectModelModificationServiceImpl extends JavaProjectMo
     return JavaProjectModelModifier.EP_NAME.getExtensionList(myProject);
   }
 
-  private static void addJigsawModule(@NotNull Module from,
-                                      @NotNull Module to,
-                                      @NotNull DependencyScope scope) {
-    PsiJavaModule toModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByModule(to, scope == DependencyScope.TEST));
-    addJigsawModule(from, toModule, scope);
+  private static Promise<Void> addJigsawModule(@NotNull Module from,
+                                               @NotNull Module to,
+                                               @NotNull DependencyScope scope) {
+    return addJigsawModule(from, () -> JavaModuleGraphUtil.findDescriptorByModule(to, scope == DependencyScope.TEST), scope);
   }
 
-  private static void addJigsawModule(@NotNull Module from,
-                                      @Nullable Library library,
-                                      @NotNull DependencyScope scope) {
-    if (library == null) return;
-    PsiJavaModule toModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByLibrary(library, from.getProject()));
-    addJigsawModule(from, toModule, scope);
+  private static Promise<Void> addJigsawModule(@NotNull Module from,
+                                               @Nullable Library library,
+                                               @NotNull DependencyScope scope) {
+    if (library == null) return Promises.resolvedPromise();
+    return addJigsawModule(from, () -> JavaModuleGraphUtil.findDescriptorByLibrary(library, from.getProject()), scope);
   }
 
-  private static void addJigsawModule(@NotNull Module from,
-                                      @Nullable PsiJavaModule to,
-                                      @NotNull DependencyScope scope) {
-    if (to == null) return;
-    PsiJavaModule fromModule = ReadAction.compute(() -> JavaModuleGraphUtil.findDescriptorByModule(from, scope == DependencyScope.TEST));
-    if (fromModule == null) return;
-    CommandProcessor.getInstance().runUndoTransparentAction(() -> {
-      WriteAction.run(() -> {
-        JavaModuleGraphUtil.addDependency(fromModule, to, scope);
-      });
-    });
+  private static Promise<Void> addJigsawModule(@NotNull Module from,
+                                               @NotNull Callable<@Nullable PsiJavaModule> findTo,
+                                               @NotNull DependencyScope scope) {
+    JavaSourceRootType rootType = scope == DependencyScope.TEST ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
+    VirtualFile moduleInfo = ReadAction.computeBlocking(
+      () -> from.isDisposed() ? null : JBIterable.from(ModuleRootManager.getInstance(from).getSourceRoots(rootType))
+        .filterMap(root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE))
+        .first());
+    if (moduleInfo == null) return Promises.resolvedPromise();
+    AsyncPromise<Void> result = new AsyncPromise<>();
+    ReadAction.nonBlocking(() -> {
+        PsiJavaModule to = findTo.call();
+        if (to == null) return null;
+        PsiJavaModule fromModule = JavaModuleGraphUtil.findDescriptorByModule(from, scope == DependencyScope.TEST);
+        return fromModule == null ? null : Couple.of(fromModule, to);
+      })
+      .expireWhen(from::isDisposed)
+      .finishOnUiThread(ModalityState.nonModal(), modules -> {
+        try {
+          if (modules == null) return;
+          CommandProcessor.getInstance().runUndoTransparentAction(() -> {
+            WriteAction.run(() -> {
+              JavaModuleGraphUtil.addDependency(modules.first, modules.second, scope);
+            });
+          });
+        }
+        finally {
+          result.setResult(null);
+        }
+      })
+      .submit(AppExecutorUtil.getAppExecutorService())
+      .onError(result::setError);
+    return result;
   }
 }
