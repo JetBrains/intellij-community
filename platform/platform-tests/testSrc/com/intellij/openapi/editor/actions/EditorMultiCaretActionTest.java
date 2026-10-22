@@ -24,12 +24,15 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import java.awt.Font;
+
 @RunWith(com.intellij.testFramework.Parameterized.class)
 @TestDataPath("/testData/../../../platform/platform-tests/testData/editor/multiCaret/")
 public class EditorMultiCaretActionTest extends LightPlatformCodeInsightTestCase implements FileBasedTestCaseHelper {
   @Test
   public void testAction() {
     configureByFile(getBeforeFileName());
+    getEditor().getColorsScheme().setEditorFontName(Font.MONOSPACED);
     EditorTestUtil.setEditorVisibleSize(getEditor(), 120, 20); // some actions require visible area to be defined, like EditorPageUp
     executeAction(getActionName());
     checkResultByFile(getAfterFileName());
