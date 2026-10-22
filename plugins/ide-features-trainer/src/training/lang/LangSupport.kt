@@ -56,6 +56,10 @@ interface LangSupport {
   val sdkConfigurationTasks: LessonContext.(lesson: KLesson) -> Unit
     get() = {}
 
+  /** True means that each lesson waits until all background tasks in the status bar finish before the lesson content starts */
+  val waitForBackgroundTasksBeforeLesson: Boolean
+    get() = false
+
   /** Check that the project has needed SDK configured */
   fun isSdkConfigured(project: Project): Boolean
 
