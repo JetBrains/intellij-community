@@ -33,6 +33,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.ex.LocalRange
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
+import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -68,7 +69,9 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
         val baseContent = beforeRevision.content ?: continue
         if (baseContent.length > MAX_CONTENT_LENGTH) continue
         val changeListId = (change as? ChangeListChange)?.changeListId
-        val hunks = ReadAction.nonBlocking(Callable { collectHunks(file, baseContent, changeListId) }).expireWith(project).executeSynchronously()
+        val baseRevision = beforeRevision.revisionNumber
+        val hunks = ReadAction.nonBlocking(Callable { collectHunks(file, baseContent, baseRevision, changeListId) })
+          .expireWith(project).executeSynchronously()
         for (hunk in hunks) {
           node.add(HunkNode(project, file, path, changeListId, hunk))
         }
@@ -80,7 +83,7 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
     }
   }
 
-  private fun collectHunks(file: VirtualFile, baseContent: String, changeListId: String?): List<Hunk> {
+  private fun collectHunks(file: VirtualFile, baseContent: String, baseRevision: VcsRevisionNumber, changeListId: String?): List<Hunk> {
     if (DumbService.isDumb(project) || !file.isValid) return emptyList()
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return emptyList()
     val documentModificationStamp = document.modificationStamp
@@ -92,13 +95,16 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
     val before = StructuralHunkNamer.createSnapshot(original, diff.baseText) ?: return emptyList()
     val after = StructuralHunkNamer.createSnapshot(original, diff.currentText) ?: return emptyList()
     val names = StructuralHunkNamer.name(before, after, diff.hunks)
-    return diff.hunks.zip(names) { lines, name -> Hunk(lines, name, documentModificationStamp) }
+    val version = FileVersion(documentModificationStamp, baseRevision.asString(), diff.trackerBaseHash)
+    return diff.hunks.zip(names) { lines, name -> Hunk(lines, name, version) }
   }
 
   private fun readTracker(tracker: PartialLocalLineStatusTracker, changeListId: String?): FileDiff? = tracker.readLock {
     val ranges = tracker.getRanges() ?: return@readLock null
-    FileDiff(tracker.vcsDocument.immutableCharSequence.toString(), tracker.document.immutableCharSequence.toString(),
-             ranges.filter { changeListId == null || it.changelistId == changeListId }.map { HunkLines(it.vcsLine1, it.vcsLine2, it.line1, it.line2) })
+    val baseText = tracker.vcsDocument.immutableCharSequence.toString()
+    FileDiff(baseText, tracker.document.immutableCharSequence.toString(),
+             ranges.filter { changeListId == null || it.changelistId == changeListId }.map { HunkLines(it.vcsLine1, it.vcsLine2, it.line1, it.line2) },
+             StringUtil.stringHashCode(baseText))
   }
 
   private fun compareLines(file: VirtualFile, document: Document, baseContent: String): FileDiff {
@@ -106,17 +112,24 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
     val currentText = document.immutableCharSequence.toString()
     val indicator = ProgressManager.getInstance().progressIndicator ?: DumbProgressIndicator.INSTANCE
     val fragments = ComparisonManager.getInstance().compareLines(baseText, currentText, ComparisonPolicy.DEFAULT, indicator)
-    return FileDiff(baseText, currentText, fragments.map { HunkLines(it.startLine1, it.endLine1, it.startLine2, it.endLine2) })
+    return FileDiff(baseText, currentText, fragments.map { HunkLines(it.startLine1, it.endLine1, it.startLine2, it.endLine2) }, null)
   }
 
-  private class FileDiff(val baseText: String, val currentText: String, val hunks: List<HunkLines>)
+  /** The hunks of a file. A diff of a tracker has the hash of the tracker base text. */
+  private class FileDiff(val baseText: String, val currentText: String, val hunks: List<HunkLines>, val trackerBaseHash: Int?)
 
   private companion object {
     const val MAX_CONTENT_LENGTH = 1_000_000
   }
 }
 
-private class Hunk(val lines: HunkLines, val name: HunkName, val documentModificationStamp: Long)
+private class Hunk(val lines: HunkLines, val name: HunkName, val version: FileVersion)
+
+/**
+ * The document version and the base that the hunks of a file describe. The tracker base text identifies the base of the hunks of a tracker.
+ * Other hunks use the base revision, because a new tracker loads the base of the current change.
+ */
+private class FileVersion(val documentModificationStamp: Long, val baseRevision: String, val trackerBaseHash: Int?)
 
 /** Identifies a hunk across tree rebuilds, so that the tree keeps the selection while the lines stay the same. */
 private data class HunkKey(val path: FilePath, val changeListId: String?, val lines: HunkLines)
@@ -140,7 +153,7 @@ private class HunkNode(
 
   override fun getPreviewHighlightRange(): TextRange? {
     val document = FileDocumentManager.getInstance().getCachedDocument(file) ?: return null
-    if (document.modificationStamp != hunk.documentModificationStamp || lines.line1 == lines.line2) return null
+    if (document.modificationStamp != hunk.version.documentModificationStamp || lines.line1 == lines.line2) return null
     if (lines.line2 > document.lineCount) return null
     return TextRange(document.getLineStartOffset(lines.line1), document.getLineEndOffset(lines.line2 - 1))
   }
@@ -149,6 +162,7 @@ private class HunkNode(
 
   override fun getInclusionState(fileState: ThreeStateCheckBox.State): ThreeStateCheckBox.State {
     val tracker = validTracker() ?: return fileState
+    if (tracker.document.modificationStamp != hunk.version.documentModificationStamp) return fileState
     val range = findRanges(tracker).singleOrNull() ?: return fileState
     val exclusion = range.exclusionState
     return when {
@@ -168,9 +182,12 @@ private class HunkNode(
     // A file has a tracker only while an editor shows it. The partial state keeps the new tracker after the release.
     val manager = LineStatusTrackerManager.getInstanceImpl(project)
     val requester = Any()
-    val document = ReadAction.computeBlocking<Document?, RuntimeException> {
-      FileDocumentManager.getInstance().getDocument(file)?.also { manager.requestTrackerFor(it, requester) }
-    } ?: return
+    val document = ReadAction.computeBlocking<Document?, RuntimeException> { FileDocumentManager.getInstance().getDocument(file) } ?: return
+    if (document.modificationStamp != hunk.version.documentModificationStamp) {
+      refreshTree()
+      return
+    }
+    ReadAction.computeBlocking<Unit, RuntimeException> { manager.requestTrackerFor(document, requester) }
     manager.invokeAfterUpdate {
       try {
         validTracker()?.let { setExcluded(it, !included) }
@@ -181,10 +198,28 @@ private class HunkNode(
     }
   }
 
+  /** Changes the ranges of the hunk. A stale hunk changes nothing and refreshes the tree, so that the new nodes show the current hunks. */
   private fun setExcluded(tracker: PartialLocalLineStatusTracker, excluded: Boolean) {
+    if (!describes(tracker)) {
+      refreshTree()
+      return
+    }
     for (range in findRanges(tracker)) {
       tracker.setExcludedFromCommit(range, excluded)
     }
+  }
+
+  /** True while the tracker compares the document version of the hunk with the base of the hunk. */
+  private fun describes(tracker: PartialLocalLineStatusTracker): Boolean {
+    val version = hunk.version
+    if (tracker.document.modificationStamp != version.documentModificationStamp) return false
+    val trackerBaseHash = version.trackerBaseHash
+    if (trackerBaseHash != null) return StringUtil.stringHashCode(tracker.vcsDocument.immutableCharSequence) == trackerBaseHash
+    return ChangeListManager.getInstance(project).getChange(file)?.beforeRevision?.revisionNumber?.asString() == version.baseRevision
+  }
+
+  private fun refreshTree() {
+    project.messageBus.syncPublisher(ChangesViewModifier.TOPIC).updated()
   }
 
   private fun validTracker(): PartialLocalLineStatusTracker? = PartialChangesUtil.getPartialTracker(project, file)?.takeIf { it.isValid() }
