@@ -5,6 +5,7 @@ import com.intellij.find.findUsages.similarity.UsageCodeSnippetComponent.calcula
 import com.intellij.find.findUsages.similarity.UsagePreviewComponent.Companion.create
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -240,9 +241,11 @@ internal class MostCommonUsagePatternsComponent(
       myRefreshAction
     )
     if (Registry.`is`("similarity.import.clustering.results.action.enabled")) {
-      add(ExportClusteringResultActionLink(
-        project, session, StringUtilRt.notNullize(usageView.targets[0].name, "features")
-      ))
+      if (ScratchUtil.findScratchesRootType() != null) {
+        add(ExportClusteringResultActionLink(
+          project, session, StringUtilRt.notNullize(usageView.targets[0].name, "features")
+        ))
+      }
       add(ImportClusteringResultActionLink(project, session, myRefreshAction))
     }
     this.toolbar = null

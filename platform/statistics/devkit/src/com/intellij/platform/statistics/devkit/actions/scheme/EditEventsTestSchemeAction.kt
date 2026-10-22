@@ -2,6 +2,7 @@
 package com.intellij.platform.statistics.devkit.actions.scheme
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.platform.statistics.devkit.StatisticsDevKitUtil
@@ -94,7 +95,7 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled(recorderId)
+    e.presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled(recorderId) && ScratchUtil.findScratchesRootType() != null
     val testSchemeSize = ValidationTestRulesPersistedStorage.getTestStorage(recorderId, true)?.size() ?: 0
     val text = if (testSchemeSize < 100) testSchemeSize.toString() else "99+"
     val sizeCountIcon = TextIcon(text, JBColor.DARK_GRAY, UIUtil.getLabelBackground(), 1)

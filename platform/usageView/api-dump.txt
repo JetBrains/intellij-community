@@ -635,6 +635,7 @@ c:com.intellij.usages.similarity.internal.ShowUsageFeaturesInternalAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.usages.similarity.usageAdapter.SimilarReadWriteUsageInfo2UsageAdapter
 - com.intellij.usages.ReadWriteAccessUsageInfo2UsageAdapter
 - com.intellij.usages.similarity.usageAdapter.SimilarUsage

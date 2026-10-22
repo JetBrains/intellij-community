@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.statistics.devkit.actions;
 
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -39,6 +40,6 @@ final class TestParseEventsSchemeAction extends DumbAwareAction {
   }
 
   private static boolean isEnabled(@Nullable Project project) {
-    return project != null && ApplicationManager.getApplication().isInternal();
+    return project != null && ApplicationManager.getApplication().isInternal() && ScratchUtil.findScratchesRootType() != null;
   }
 }

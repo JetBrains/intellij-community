@@ -2,8 +2,8 @@
 package com.intellij.microservices.client.generator
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.scratch.RootType
 import com.intellij.ide.scratch.ScratchFileService
+import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.microservices.MicroservicesBundle
 import com.intellij.microservices.endpoints.EndpointsChangeTracker
 import com.intellij.microservices.oas.OasSpecificationProvider.Companion.getOasSpecification
@@ -52,7 +52,7 @@ internal class OpenInScratchClientGeneratorInlayAction : UrlPathInlayAction {
 
   override fun isAvailable(file: PsiFile, urlPathInlayHint: UrlPathInlayHint): Boolean {
     val available = urlPathInlayHint.context.schemes.run { isNotEmpty() && all { it in HTTP_SCHEMES } }
-    return Registry.`is`("client.generator.inlay.action") && available
+    return Registry.`is`("client.generator.inlay.action") && available && ScratchUtil.findScratchesRootType() != null
   }
 
   override fun actionPerformed(file: PsiFile, editor: Editor, urlPathContext: UrlPathContext, mouseEvent: MouseEvent) {
@@ -124,16 +124,15 @@ class ClientGeneratorOpenInScratchService(private val project: Project, private 
     val fileName = extension?.let { ext -> "$CLIENT_EXAMPLE_SCRATCH_PREFIX.$ext" } ?: CLIENT_EXAMPLE_SCRATCH_PREFIX
     val language = (fileType as? LanguageFileType)?.language
 
+    val scratchesRoot = ScratchUtil.findScratchesRootType() ?: return
     val fileService = ScratchFileService.getInstance()
     val scratchFile = edtWriteAction {
-      runCatching {
-        fileService.findFile(RootType.findById("scratches"), fileName, ScratchFileService.Option.create_new_always)
-      }.getOrNull()
-        ?.also { scratchFile ->
+      fileService.findFile(scratchesRoot, fileName, ScratchFileService.Option.create_new_always)
+        .also { scratchFile ->
           fileService.scratchesMapping.setMapping(scratchFile, language)
           scratchFile.writeText(text)
         }
-    } ?: return
+    }
 
     val pointer = readAction { scratchFile.findPsiFile(project)?.createSmartPointer() }
 

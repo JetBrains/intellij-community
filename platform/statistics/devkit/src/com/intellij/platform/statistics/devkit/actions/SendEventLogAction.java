@@ -3,6 +3,7 @@ package com.intellij.platform.statistics.devkit.actions;
 
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.internal.statistic.StatisticsBundle;
 import com.intellij.internal.statistic.config.eventLog.EventLogBuildType;
 import com.intellij.internal.statistic.eventLog.EventLogInternalApplicationInfo;
@@ -189,11 +190,13 @@ final class SendEventLogAction extends AnAction {
 
   private static boolean tryToOpenInScratch(@NotNull Project project, @NotNull String request) {
     final String fileName = "fus-event-log.json";
+    final RootType scratchesRoot = ScratchUtil.findScratchesRootType();
+    if (scratchesRoot == null) return false;
     try {
       final ThrowableComputable<NavigatablePsiElement, Exception> computable = () -> {
         final ScratchFileService fileService = ScratchFileService.getInstance();
         final VirtualFile file =
-          fileService.findFile(RootType.findById("scratches"), fileName, ScratchFileService.Option.create_new_always);
+          fileService.findFile(scratchesRoot, fileName, ScratchFileService.Option.create_new_always);
 
         fileService.getScratchesMapping().setMapping(file, Language.findLanguageByID("JSON"));
         final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);

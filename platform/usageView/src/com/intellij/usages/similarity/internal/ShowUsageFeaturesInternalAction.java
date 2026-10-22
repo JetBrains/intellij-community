@@ -3,6 +3,7 @@ package com.intellij.usages.similarity.internal;
 
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -58,6 +59,11 @@ public class ShowUsageFeaturesInternalAction extends AnAction {
     return ActionUpdateThread.BGT;
   }
 
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(e.getProject() != null && ScratchUtil.findScratchesRootType() != null);
+  }
+
   private static void calculateFeaturesForUsage(@NotNull Editor editor,
                                                 @NotNull PsiFile file,
                                                 @NotNull Project project,
@@ -82,9 +88,11 @@ public class ShowUsageFeaturesInternalAction extends AnAction {
           return;
         }
         writeCommandAction(project).compute(() -> {
+          RootType scratchesRoot = ScratchUtil.findScratchesRootType();
+          if (scratchesRoot == null) return false;
           ScratchFileService fileService = ScratchFileService.getInstance();
           try {
-            VirtualFile scratchFile = fileService.findFile(RootType.findById("scratches"), getFeaturesFileName(file, element.get(), editor),
+            VirtualFile scratchFile = fileService.findFile(scratchesRoot, getFeaturesFileName(file, element.get(), editor),
                                                            ScratchFileService.Option.create_new_always);
             PsiFile psiFile = PsiManager.getInstance(project).findFile(scratchFile);
             featuresDump.set(psiFile);

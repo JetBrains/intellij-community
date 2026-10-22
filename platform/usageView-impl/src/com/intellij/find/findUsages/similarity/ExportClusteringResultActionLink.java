@@ -3,6 +3,7 @@ package com.intellij.find.findUsages.similarity;
 
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -68,9 +69,11 @@ class ExportClusteringResultActionLink extends ActionLink {
   }
 
   private static void createScratchFile(@NotNull String fileContent, @NotNull String fileName) throws IOException {
+    RootType scratchesRoot = ScratchUtil.findScratchesRootType();
+    if (scratchesRoot == null) return;
     ScratchFileService fileService = ScratchFileService.getInstance();
     VirtualFile scratchFile =
-      fileService.findFile(RootType.findById("scratches"), fileName + ".json", ScratchFileService.Option.create_new_always);
+      fileService.findFile(scratchesRoot, fileName + ".json", ScratchFileService.Option.create_new_always);
     VfsUtil.saveText(scratchFile, fileContent);
   }
 

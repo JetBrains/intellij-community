@@ -3,6 +3,7 @@ package com.intellij.platform.statistics.devkit.actions;
 
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.internal.statistic.StatisticsBundle;
 import com.intellij.internal.statistic.eventLog.DataCollectorDebugLogger;
 import com.intellij.internal.statistic.eventLog.EventLogBuild;
@@ -176,11 +177,13 @@ public class TestParseEventsSchemeDialog extends DialogWrapper {
 
   public static @Nullable PsiFile createTempFile(@NotNull Project project, @NotNull String filename, @NotNull String request) {
     final String fileName = PathUtil.makeFileName(filename, "json");
+    final RootType scratchesRoot = ScratchUtil.findScratchesRootType();
+    if (scratchesRoot == null) return null;
     try {
       final ThrowableComputable<PsiFile, Exception> computable = () -> {
         final ScratchFileService fileService = ScratchFileService.getInstance();
         final VirtualFile file =
-          fileService.findFile(RootType.findById("scratches"), fileName, ScratchFileService.Option.create_if_missing);
+          fileService.findFile(scratchesRoot, fileName, ScratchFileService.Option.create_if_missing);
 
         fileService.getScratchesMapping().setMapping(file, Language.findLanguageByID("JSON"));
         final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);

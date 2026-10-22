@@ -2,6 +2,7 @@
 package com.intellij.platform.statistics.devkit.actions.scheme
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.idea.ActionsBundle
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.platform.statistics.devkit.StatisticsDevKitUtil
@@ -37,7 +38,7 @@ internal class AddGroupToTestSchemeAction(private val recorderId: String = Stati
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled(recorderId)
+    event.presentation.isEnabled = StatisticsRecorderUtil.isTestModeEnabled(recorderId) && ScratchUtil.findScratchesRootType() != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {
