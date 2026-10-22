@@ -17,6 +17,9 @@ import java.util.function.Supplier;
  * <p>
  * A setting with a setter can have its own value in this editor. A setting with only a getter always has the value of
  * the global setting in {@code EditorSettingsExternalizable}, and only that class changes it.
+ * <p>
+ * A {@code reset} method, such as {@link #resetCamelWords()}, removes the value of this editor. The setting then follows
+ * its default again. Such a method exists only for a setting that a caller resets.
  */
 @ApiStatus.NonExtendable
 public interface EditorSettings {
@@ -206,6 +209,11 @@ public interface EditorSettings {
 
   boolean isRefrainFromScrolling();
   void setRefrainFromScrolling(boolean b);
+
+  /**
+   * Removes the value of this editor, so that the setting follows the global setting again.
+   */
+  void resetRefrainFromScrolling();
 
   boolean isIndentGuidesShown();
   void setIndentGuidesShown(boolean val);

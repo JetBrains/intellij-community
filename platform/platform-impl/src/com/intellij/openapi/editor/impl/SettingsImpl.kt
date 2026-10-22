@@ -390,6 +390,10 @@ class SettingsImpl internal constructor(
     state.myIsRefrainFromScrolling = value
   }
 
+  override fun resetRefrainFromScrolling() {
+    state.clearOverriding(state::myIsRefrainFromScrolling)
+  }
+
   override fun isIndentGuidesShown(): Boolean = state.myIndentGuidesShown
 
   override fun setIndentGuidesShown(value: Boolean) {

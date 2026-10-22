@@ -220,6 +220,27 @@ class SettingsImplTest {
   }
 
   /**
+   * After a reset, the editor follows the global setting again, also after a later change of that setting.
+   */
+  @Test
+  fun testResetRefrainFromScrollingFollowsTheGlobalSettingAgain(): Unit = fixture.runTest {
+    initText("abc")
+    val global = EditorSettingsExternalizable.getInstance()
+    val original = global.isRefrainFromScrolling
+    val settings = editor.settings
+    try {
+      settings.isRefrainFromScrolling = !original
+      settings.resetRefrainFromScrolling()
+      assertEquals(original, settings.isRefrainFromScrolling)
+
+      global.isRefrainFromScrolling = !original
+      assertEquals(!original, settings.isRefrainFromScrolling)
+    } finally {
+      global.isRefrainFromScrolling = original
+    }
+  }
+
+  /**
    * A reload of the stored options, for example by Settings Sync, can run on any thread. Open editors must follow it
    * without a refresh of all editors.
    */
