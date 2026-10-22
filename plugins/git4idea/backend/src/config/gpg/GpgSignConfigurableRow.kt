@@ -176,7 +176,7 @@ class GpgSignConfigurableRow(val project: Project, val disposable: Disposable) {
         return message("settings.label.sign.gpg.commits.enabled.n.roots.of.m.text", configuredRepos.size, totalRepos)
       }
       configuredKeys.isEmpty() -> {
-        return message("settings.label.sign.gpg.commits.enabled.default.key.text")
+        return message("settings.label.sign.gpg.commits.enabled.no.key.selected.text")
       }
       configuredKeys.size > 1 || hasNullKeyRepos -> {
         return message("settings.label.sign.gpg.commits.enabled.different.keys.text")
