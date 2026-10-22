@@ -60,7 +60,6 @@ public class TestCaseLoader {
   public static final String PERFORMANCE_TESTS_ONLY_FLAG = "idea.performance.tests";
   public static final String INCLUDE_PERFORMANCE_TESTS_FLAG = "idea.include.performance.tests";
   public static final String INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG = "idea.include.unconventionally.named.tests";
-  public static final String INCLUDE_ALL_UNCONVENTIONALLY_NAMED_TESTS_FLAG = "idea.include.all.unconventionally.named.tests";
   public static final String TEST_RUNNERS_COUNT_FLAG = "idea.test.runners.count";
   public static final String TEST_RUNNER_INDEX_FLAG = "idea.test.runner.index";
   public static final String VERBOSE_LOG_ENABLED_FLAG = "idea.test.log.verbose";
@@ -69,7 +68,6 @@ public class TestCaseLoader {
   private static final boolean PERFORMANCE_TESTS_ONLY = Boolean.getBoolean(PERFORMANCE_TESTS_ONLY_FLAG);
   private static final boolean INCLUDE_PERFORMANCE_TESTS = Boolean.getBoolean(INCLUDE_PERFORMANCE_TESTS_FLAG);
   private static final boolean INCLUDE_UNCONVENTIONALLY_NAMED_TESTS = Boolean.getBoolean(INCLUDE_UNCONVENTIONALLY_NAMED_TESTS_FLAG);
-  private static final boolean INCLUDE_ALL_UNCONVENTIONALLY_NAMED_TESTS = Boolean.getBoolean(INCLUDE_ALL_UNCONVENTIONALLY_NAMED_TESTS_FLAG);
   private static final boolean RUN_WITH_TEST_DISCOVERY = System.getProperty("test.discovery.listener") != null;
   public static final boolean IS_VERBOSE_LOG_ENABLED = Boolean.getBoolean(VERBOSE_LOG_ENABLED_FLAG);
 
@@ -415,7 +413,7 @@ public class TestCaseLoader {
         }
       }
       int count = getClassesCount();
-      ClassFinder classFinder = new ClassFinder(classesRoot, rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS, INCLUDE_ALL_UNCONVENTIONALLY_NAMED_TESTS);
+      ClassFinder classFinder = new ClassFinder(classesRoot, rootPackage, INCLUDE_UNCONVENTIONALLY_NAMED_TESTS);
       loadTestCases(moduleName, classFinder.getClasses());
       count = getClassesCount() - count;
       if (count > 0) {
