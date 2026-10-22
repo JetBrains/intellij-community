@@ -7,7 +7,7 @@ use serde_json::json;
 use super::{ClassRow, ModuleRow, report as classes};
 use crate::bench::arm::Arm;
 use crate::bench::command::replay;
-use crate::bench::options::{ClassesArgs, DEFAULT_TOP};
+use crate::bench::options::{ClassesArgs, DEFAULT_TOP, SpanThread};
 use crate::bench::record;
 use crate::bench::session::SUMMARY_FILE;
 use crate::bench::testing::{assert_golden, fixture_session, project_session, summarize};
@@ -20,6 +20,10 @@ fn args() -> ClassesArgs {
         plugins: Vec::new(),
         at: None,
         entries: None,
+        span: None,
+        thread: SpanThread::Edt,
+        run: None,
+        timeline: None,
     }
 }
 

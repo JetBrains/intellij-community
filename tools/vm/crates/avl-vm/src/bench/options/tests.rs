@@ -5,7 +5,7 @@ use std::time::Duration;
 use avl_base::Exit;
 use pretty_assertions::assert_eq;
 
-use super::{ArmChoice, BenchVerb, DEFAULT_TARGET, ProjectArmChoice, ReplayArgs, parse_hold, parse_load};
+use super::{ArmChoice, BenchVerb, DEFAULT_TARGET, ProjectArmChoice, ReplayArgs, SpanThread, parse_hold, parse_load};
 use crate::bench::arm::Arm;
 use crate::bench::profile::ProfileEvent;
 use crate::cli::{Cmd, Parsed, parse};
@@ -78,6 +78,53 @@ fn the_profile_samples_the_cpu_or_the_wall_clock() {
     match parsed(&["welcome", "--profile-event", "wall"]) {
         Parsed::Refused { refusal, .. } => assert_eq!(refusal.code, "usage"),
         other => panic!("--profile-event without --profile parsed: {other:?}"),
+    }
+}
+
+/// `classes --span` takes the thread, the run and the timeline. `--at`, `--entries` and `--plugin` refuse it, and the
+/// options of the window need it.
+#[test]
+fn the_span_window_of_classes_takes_its_options() {
+    let BenchVerb::Classes(args) = verb(&[
+        "classes",
+        "latest",
+        "--span",
+        "air.emptyState.createContent",
+        "--thread",
+        "all",
+        "--run",
+        "empty-editor-run-05",
+        "--timeline",
+        "20",
+    ]) else {
+        panic!("expected classes");
+    };
+    assert_eq!(
+        (args.span.as_deref(), args.thread, args.run.as_deref(), args.timeline),
+        (
+            Some("air.emptyState.createContent"),
+            SpanThread::All,
+            Some("empty-editor-run-05"),
+            Some(20)
+        )
+    );
+    let BenchVerb::Classes(args) = verb(&["classes", "latest", "--span", "x"]) else {
+        panic!("expected classes");
+    };
+    assert_eq!(args.thread, SpanThread::Edt);
+    for argv in [
+        &["classes", "latest", "--span", "x", "--at", "quit"][..],
+        &["classes", "latest", "--span", "x", "--entries", "3"],
+        &["classes", "latest", "--span", "x", "--plugin", "com.intellij.air"],
+        &["classes", "latest", "--thread", "all"],
+        &["classes", "latest", "--timeline", "20"],
+        &["classes", "latest", "--run", "empty-editor-run-05"],
+        &["classes", "latest", "--span", "x", "--timeline", "0"],
+    ] {
+        match parsed(argv) {
+            Parsed::Refused { refusal, .. } => assert_eq!(refusal.code, "usage", "{argv:?}"),
+            other => panic!("{argv:?} parsed: {other:?}"),
+        }
     }
 }
 

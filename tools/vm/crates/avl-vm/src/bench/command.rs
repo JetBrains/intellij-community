@@ -33,6 +33,7 @@ use super::session::{
     self, BENCH_DIR, GenerationRef, GitInfo, MARKDOWN_PROJECT, MeasureModel, Project, ProjectSource, RESULT_FILE, SESSION_FILE,
     SUMMARY_FILE, Sandbox, SessionInfo, TEMPLATE_DIR,
 };
+use super::spanclasses;
 use super::spans;
 use super::stage::{self, Generation};
 use super::summary::Summary;
@@ -150,6 +151,10 @@ impl Bench<'_> {
             }
             BenchVerb::Activities(args) => {
                 let report = activities::report(&self.locate(&args.selection.session)?, &args)?;
+                Outcome::new(&report, report.text())
+            }
+            BenchVerb::Classes(args) if args.span.is_some() => {
+                let report = spanclasses::report(&self.locate(&args.session)?, &args)?;
                 Outcome::new(&report, report.text())
             }
             BenchVerb::Classes(args) => {

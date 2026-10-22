@@ -46,6 +46,7 @@ mod profile;
 mod record;
 mod resolve;
 mod session;
+mod spanclasses;
 mod spans;
 mod stage;
 mod stats;

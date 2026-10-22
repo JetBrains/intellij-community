@@ -93,6 +93,8 @@ pub(crate) enum BenchVerb {
     ///
     /// The process clock starts at the load of com.intellij.idea.Main in class-load.log. A log without that class takes
     /// jvm.loadingTime of startup-stats.json, which puts the start about 100 ms too early, with a note.
+    ///
+    /// --span counts the class loads in the window of one span instead of before an anchor, on the EDT by default.
     Classes(ClassesArgs),
     /// Prints the plugin loaders of one run by the frame that triggered each one. No IDE starts.
     ///
@@ -208,6 +210,36 @@ pub(crate) struct ClassesArgs {
     /// anchor, with their ms from the process start. The run needs class-load.log and plugin-classes.txt.
     #[arg(long, value_name = "N", value_parser = clap::value_parser!(u32).range(1..))]
     pub(crate) entries: Option<u32>,
+    /// Counts the class loads in the window of the span NAME instead: from the start to the end of the first span NAME
+    /// of each run, such as air.emptyState.createContent. The tables hold the loads by plugin, by module, and by
+    /// package for a class without a plugin, with the findClass ms of the plugin classes. A hidden class counts with
+    /// the class that defines it. A run needs class-load.log, plugin-classes.txt, opentelemetry.json and, for the EDT,
+    /// threads.txt.
+    #[arg(long, value_name = "NAME", conflicts_with_all = ["at", "entries", "plugins"])]
+    pub(crate) span: Option<String>,
+    /// The thread of the loads of --span: `edt`, the EDT, or `all`, every thread. With `edt`, the BG columns give the
+    /// loads of the other threads.
+    #[arg(long, value_name = "THREAD", value_enum, default_value_t = SpanThread::Edt, requires = "span")]
+    pub(crate) thread: SpanThread,
+    /// The run directory of --span, such as `empty-editor-run-05`. The default is every valid run of the arm, and a
+    /// number is the median over the runs with the span.
+    #[arg(long, value_name = "DIR", requires = "span")]
+    pub(crate) run: Option<String>,
+    /// Adds a timeline of the window of --span in buckets of MS: the loads of each bucket and its first classes. The
+    /// run is the run of --run, else the median run of the arm.
+    #[arg(long, value_name = "MS", value_parser = clap::value_parser!(u32).range(1..), requires = "span")]
+    pub(crate) timeline: Option<u32>,
+}
+
+/// The `--thread` value of `bench classes --span`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, ValueEnum, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) enum SpanThread {
+    /// The EDT, `AWT-EventQueue-0`.
+    #[default]
+    Edt,
+    /// Every thread.
+    All,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
