@@ -33,7 +33,8 @@ final class BrowseWebAction extends AnAction implements DumbAware {
           .withQueryHandler((id, jsRequest, _) -> {
             new Notification("System Messages", "JS request", "[" + id + "] " + jsRequest, NotificationType.INFORMATION).notify(project);
             return "true";
-          }));
+          })
+        );
       }
     }
   }

@@ -16,7 +16,6 @@ import com.intellij.util.Urls;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.system.OS;
 import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +30,7 @@ final class JcefWhatsNewPageProvider implements WhatsNewPageProvider {
 
   @Override
   public boolean isAvailable() {
-    return JBCefApp.isSupported() && !ScreenReader.isActive();
+    return JBCefApp.isSupported();
   }
 
   @Override

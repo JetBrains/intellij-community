@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification
 
 import com.intellij.ide.plugins.PluginUtil
@@ -17,22 +17,20 @@ import javax.swing.Icon
 
 /**
  * Notification groups allow controlling display options in settings.
- * <p>
+ *
  * The class is no longer as important in client code as it used to be: nowadays, notification groups have to be registered in XML,
  * so a group ID is enough to show a [notification][Notification].
  */
-class NotificationGroup private constructor(val displayId: String,
-                                            val displayType: NotificationDisplayType,
-                                            val isLogByDefault: Boolean = true,
-                                            val toolWindowId: String? = null,
-                                            @NotificationTitle private var title: String? = null,
-                                            pluginId: PluginId? = null,
-                                            registerGroup: Boolean = false) {
+class NotificationGroup private constructor(
+  val displayId: String,
+  val displayType: NotificationDisplayType,
+  val isLogByDefault: Boolean = true,
+  val toolWindowId: String? = null,
+  private var title: @NotificationTitle String? = null,
+  pluginId: PluginId? = null,
+  registerGroup: Boolean = false
+) {
   //<editor-fold desc="Deprecated stuff.">
-  @Deprecated("Not used in the UI. For notifications, please use `Notification#setIcon` instead.")
-  @ApiStatus.ScheduledForRemoval
-  val icon: Icon? = null
-
   @Deprecated("Use `com.intellij.notification.impl.NotificationGroupEP` and `com.intellij.notification.NotificationGroupManager`")
   @ApiStatus.ScheduledForRemoval
   constructor(displayId: String,
@@ -61,7 +59,7 @@ class NotificationGroup private constructor(val displayId: String,
   var isHideFromSettings: Boolean = false
 
   val pluginId: PluginId? = pluginId ?: ApplicationManager.getApplication()?.let {
-    Cancellation.forceNonCancellableSectionInClassInitializer {
+    Cancellation.computeInNonCancelableSection<PluginId?, RuntimeException> {
       PluginUtil.getInstance().findPluginId(Throwable())
     }
   }
@@ -100,13 +98,14 @@ class NotificationGroup private constructor(val displayId: String,
 
     @ApiStatus.Internal
     @JvmStatic
-    fun create(displayId: String,
-               displayType: NotificationDisplayType,
-               isLogByDefault: Boolean,
-               toolWindowId: String?,
-               @NotificationTitle title: String?,
-               pluginId: PluginId?): NotificationGroup =
-      NotificationGroup(displayId, displayType, isLogByDefault, toolWindowId, title, pluginId, false)
+    fun create(
+      displayId: String,
+      displayType: NotificationDisplayType,
+      isLogByDefault: Boolean,
+      toolWindowId: String?,
+      title: @NotificationTitle String?,
+      pluginId: PluginId?
+    ): NotificationGroup = NotificationGroup(displayId, displayType, isLogByDefault, toolWindowId, title, pluginId, registerGroup = false)
 
     //<editor-fold desc="Deprecated stuff.">
     @JvmStatic
@@ -189,7 +188,7 @@ class NotificationGroup private constructor(val displayId: String,
     Notification(displayId, title, content, type)
 
   //<editor-fold desc="Deprecated stuff.">
-  @Deprecated("Use `createNotification(String, String, NotificationType)` along with `Notification#addAction(AnAction)`")
+  @Deprecated("Use `createNotification(String, String, NotificationType)` along with `Notification#addAction(AnAction)`", level = DeprecationLevel.ERROR)
   @ApiStatus.ScheduledForRemoval
   @Suppress("DeprecatedCallableAddReplaceWith", "DEPRECATION")
   fun createNotification(@NotificationTitle title: String,
@@ -199,8 +198,11 @@ class NotificationGroup private constructor(val displayId: String,
     createNotification(title, content, type)
       .also { if (listener != null) it.setListener(listener) }
 
-  @Deprecated("Use `createNotification(String, NotificationType)` or `createNotification(String, String, NotificationType)`" +
-              " along with `Notification#setSubtitle` and `Notification#addAction(AnAction)`")
+  @Deprecated(
+    "Use `createNotification(String, NotificationType)` or `createNotification(String, String, NotificationType)`" +
+    " along with `Notification#setSubtitle` and `Notification#addAction(AnAction)`",
+    level = DeprecationLevel.ERROR
+  )
   @ApiStatus.ScheduledForRemoval
   @Suppress("DeprecatedCallableAddReplaceWith", "DEPRECATION")
   @JvmOverloads

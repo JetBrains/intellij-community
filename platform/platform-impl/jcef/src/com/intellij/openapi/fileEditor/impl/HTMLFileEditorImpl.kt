@@ -33,11 +33,13 @@ import com.intellij.ui.jcef.JBCefBrowserBase.ErrorPage
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.cef.browser.CefBrowser
@@ -155,17 +157,21 @@ internal class HTMLFileEditorImpl(
     val queryHandler = request.queryHandler
     if (queryHandler != null) {
       val config = CefMessageRouter.CefMessageRouterConfig(HTMLEditorProvider.JS_FUNCTION_NAME, "${HTMLEditorProvider.JS_FUNCTION_NAME}Cancel")
-      jsRouter = JBCefApp.getInstance().createMessageRouter(config)
-      jsRouter!!.addHandler(object : CefMessageRouterHandlerAdapter() {
-        override fun onQuery(browser: CefBrowser, frame: CefFrame, id: Long, request: String?, persistent: Boolean, callback: CefQueryCallback): Boolean {
-          htmlTabScope.launch {
-            runCatching { queryHandler.query(id, request ?: "") }
-              .onSuccess { callback.success(it) }
-              .onFailure { callback.failure(-1, "${it.javaClass}: ${it.message}") }
+      jsRouter = JBCefApp.getInstance().createMessageRouter(config).apply {
+        addHandler(object : CefMessageRouterHandlerAdapter() {
+          override fun onQuery(browser: CefBrowser, frame: CefFrame, id: Long, request: String?, persistent: Boolean, callback: CefQueryCallback): Boolean {
+            htmlTabScope.launch {
+              runCatching { queryHandler.query(id, request ?: "") }
+                .onSuccess { callback.success(it) }
+                .onFailure {
+                  if (it is CancellationException) ensureActive()
+                  callback.failure(-1, "${it.javaClass}: ${it.message}")
+                }
+            }
+            return true
           }
-          return true
-        }
-      }, true)
+        }, true)
+      }
       contentPanel.jbCefClient.cefClient.addMessageRouter(jsRouter)
     }
 
@@ -188,11 +194,8 @@ internal class HTMLFileEditorImpl(
           requestInitiator: String?,
           disableDefaultHandling: BoolRef?,
         ): CefResourceRequestHandler? {
-          val uri = request?.url?.toURIOrNull() ?: return null
-          if (!handler.shouldInterceptRequest(ResourceRequest(uri)))
-            return null
-
-          return REQUEST_HANDLER
+          val uri = request?.url?.toURIOrNull()
+          return if (uri != null && handler.shouldInterceptRequest(ResourceRequest(uri))) REQUEST_HANDLER else null
         }
       }
 
@@ -244,18 +247,15 @@ internal class HTMLFileEditorImpl(
 
   override fun getName(): String = IdeBundle.message("tab.title.html.preview")
 
-  override fun setState(state: FileEditorState) {
-  }
+  override fun setState(state: FileEditorState) {}
 
   override fun isModified(): Boolean = false
 
   override fun isValid(): Boolean = true
 
-  override fun addPropertyChangeListener(listener: PropertyChangeListener) {
-  }
+  override fun addPropertyChangeListener(listener: PropertyChangeListener) {}
 
-  override fun removePropertyChangeListener(listener: PropertyChangeListener) {
-  }
+  override fun removePropertyChangeListener(listener: PropertyChangeListener) {}
 
   override fun dispose() {
     htmlTabScope.cancel()
@@ -263,7 +263,6 @@ internal class HTMLFileEditorImpl(
       contentPanel.jbCefClient.cefClient.removeMessageRouter(router)
       router.dispose()
     }
-
     requestHandler?.let { handler ->
       contentPanel.jbCefClient.removeRequestHandler(handler, contentPanel.cefBrowser)
     }
@@ -273,12 +272,10 @@ internal class HTMLFileEditorImpl(
 }
 
 internal class HTMLFileEditorResourceHandler(val handler: HTMLEditorProvider.ResourceHandler, parentCoroutineScope: CoroutineScope) : CefResourceHandlerAdapter() {
-
-  lateinit var uri: URI
-  var myStream: InputStream? = null
-  val coroutineScope: CoroutineScope = parentCoroutineScope.childScope("HTMLFileEditorResourceHandler")
-  lateinit var resourceResponse: ResourceResponse
-  lateinit var resource: Resource
+  private var myStream: InputStream? = null
+  private val coroutineScope: CoroutineScope = parentCoroutineScope.childScope("HTMLFileEditorResourceHandler")
+  private lateinit var resourceResponse: ResourceResponse
+  private lateinit var resource: Resource
 
   override fun processRequest(request: CefRequest, callback: CefCallback): Boolean {
     val uri = request.url.toURIOrNull() ?: return false.also { callback.cancel() }

@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.RegionSettings.RegionSettingsListener
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.assertRunBlockingBackgroundThreadAndNoWriteAction
 import com.intellij.openapi.progress.util.runWithCheckCanceled
@@ -38,7 +38,6 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @Service(Service.Level.APP)
 class RegionSettingsService(coroutineScope: CoroutineScope) {
-
   companion object {
     /**
      * Note that obtaining the service instance does not guarantee that the region is already cached,
@@ -107,8 +106,8 @@ class RegionSettingsService(coroutineScope: CoroutineScope) {
     return runWithCheckCanceled { computeRegion() }
   }
 
-  private suspend fun computeRegion(): Region {
-    return withContext(Dispatchers.IO) { RegionSettings.getRegion() }
+  private suspend fun computeRegion(): Region = withContext(Dispatchers.IO) {
+    RegionSettings.getRegion()
   }
 
   /**
@@ -118,7 +117,5 @@ class RegionSettingsService(coroutineScope: CoroutineScope) {
    * The caller has to handle the `null` case, normally by falling back to [Region.NOT_SET] or by postponing
    * the region-dependent work.
    */
-  fun getCurrentRegionIfKnown(): Region? {
-    return cachedRegion.value
-  }
+  fun getCurrentRegionIfKnown(): Region? = cachedRegion.value
 }

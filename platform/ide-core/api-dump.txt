@@ -293,7 +293,6 @@ f:com.intellij.notification.NotificationGroup
 - sf:findRegisteredGroup(java.lang.String):com.intellij.notification.NotificationGroup
 - f:getDisplayId():java.lang.String
 - f:getDisplayType():com.intellij.notification.NotificationDisplayType
-- f:getIcon():javax.swing.Icon
 - f:getToolWindowId():java.lang.String
 - sf:logOnlyGroup(java.lang.String):com.intellij.notification.NotificationGroup
 - f:setHideFromSettings(Z):V

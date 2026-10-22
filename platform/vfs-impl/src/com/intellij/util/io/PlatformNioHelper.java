@@ -75,7 +75,7 @@ public final class PlatformNioHelper {
       return;
     }
 
-    try (var dirStream = directory.getFileSystem().provider().newDirectoryStream(directory, FetchAttributesFilter.ACCEPT_ALL)) {
+    try (var dirStream = Files.newDirectoryStream(directory, FetchAttributesFilter.ACCEPT_ALL)) {
       for (var path : dirStream) {
         if (filter != null && !filter.contains(path.getFileName().toString())) {
           continue;

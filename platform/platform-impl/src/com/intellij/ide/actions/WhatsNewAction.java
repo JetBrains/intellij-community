@@ -33,8 +33,8 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
     var available = ExternalProductResourceUrls.getInstance().getWhatIsNewPageUrl() != null;
     e.getPresentation().setEnabledAndVisible(available);
     if (available) {
-      e.getPresentation().setText(IdeBundle.messagePointer("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName()));
-      e.getPresentation().setDescription(IdeBundle.messagePointer("whats.new.action.custom.description", ApplicationNamesInfo.getInstance().getFullProductName()));
+      e.getPresentation().setText(IdeBundle.message("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName()));
+      e.getPresentation().setDescription(IdeBundle.message("whats.new.action.custom.description", ApplicationNamesInfo.getInstance().getFullProductName()));
     }
   }
 
@@ -53,6 +53,7 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
     if (ApplicationManager.getApplication().isInternal() && (e.getModifiers() & ActionEvent.SHIFT_MASK) != 0) {
       var title = IdeBundle.message("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName());
       var prompt = IdeBundle.message("browser.url.popup");
+      //noinspection DataFlowIssue
       url = Messages.showInputDialog(e.getProject(), prompt, title, null, url, null);
       if (url == null) return;
       includePlatformData = true;
