@@ -8,21 +8,24 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.emulator.CellPixelSize
 import com.intellij.terminal.emulator.ColorScheme
 import com.intellij.terminal.emulator.CursorShape
 import com.intellij.terminal.emulator.ScreenChange
 import com.intellij.terminal.emulator.TerminalColor
 import com.intellij.terminal.emulator.TerminalCustomCommandListener
 import com.intellij.terminal.emulator.TerminalEmulator
+import com.intellij.terminal.emulator.TerminalGridGeometry
 import com.intellij.terminal.emulator.TerminalListener
-import com.intellij.terminal.emulator.TerminalSize
 import com.intellij.terminal.emulator.createTerminalEmulator
 import com.intellij.terminal.frontend.session.ObservableTtyConnector
 import com.intellij.terminal.frontend.session.TerminalShellIntegrationController
 import com.intellij.terminal.frontend.session.addWorkingDirectoryListener
+import com.intellij.terminal.frontend.session.toCellPixelSize
+import com.intellij.terminal.frontend.session.toTerminalGridGeometry
+import com.intellij.terminal.frontend.session.toTerminalSize
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
-import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -64,6 +67,7 @@ import org.jetbrains.plugins.terminal.session.impl.dto.TerminalColorSchemeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalRgbColorDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalStateDto
 import org.jetbrains.plugins.terminal.session.impl.dto.toCursorShape
+import org.jetbrains.plugins.terminal.session.toTermSize
 import org.jetbrains.plugins.terminal.startup.TerminalProcessType
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
@@ -116,7 +120,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @VisibleForTesting
 class GhosttyTerminalSession internal constructor(
   private val ttyConnector: TtyConnector,
-  initialSize: TerminalSize,
+  initialGeometry: TerminalGridGeometry,
   initialWorkingDirectory: String?,
   /** The `TERM` of the started process, which the emulator reports for the `XTGETTCAP` query `TN`; null if not set. */
   private val terminfoName: String?,
@@ -126,7 +130,7 @@ class GhosttyTerminalSession internal constructor(
 ) : TerminalSession {
 
   private val emulator: TerminalEmulator = createTerminalEmulator(
-    initialSize,
+    initialGeometry,
     // Ghostty's scrollback is measured in bytes, not characters.
     // Taking into account that a single cell is ~9 bytes, then, to occupy `defaultMaxOutputLength` chars,
     // we need `9 x defaultMaxOutputLength`, in the case of very dense output.
@@ -469,15 +473,16 @@ class GhosttyTerminalSession internal constructor(
         var responses: List<ByteArray> = emptyList()
         emulatorLock.withLock {
           if (disposed) return
-          emulator.resize(TerminalSize(event.newSize.columns, event.newSize.rows))
+          emulator.resize(event.newGeometry.toTerminalGridGeometry())
           changedSinceLastProjection = true
           responses = takeResponsesLocked()
         }
         flushResponses(responses)
         // PTY resize must be called outside the lock: it is a blocking operation.
         // Especially in the case of remote connection to IJent - it can be stuck indefinitely if the connection is lost.
-        runCatching { ttyConnector.resize(TermSize(event.newSize.columns, event.newSize.rows)) }
-          .onFailure { if (!disposed) LOG.warn("Failed to resize the PTY to ${event.newSize}", it) }
+        val newSize = event.newGeometry.gridSize
+        runCatching { ttyConnector.resize(newSize.toTermSize()) }
+          .onFailure { if (!disposed) LOG.warn("Failed to resize the PTY to $newSize", it) }
         // The reflowed frame is picked up by the next projection tick.
       }
       is TerminalClearBufferEvent -> handleClearBuffer()
@@ -830,7 +835,10 @@ internal fun createGhosttyTerminalSession(
   val observableTtyConnector = ttyConnector as? ObservableTtyConnector ?: ObservableTtyConnector(ttyConnector)
   val session = GhosttyTerminalSession(
     ttyConnector = observableTtyConnector,
-    initialSize = TerminalSize(initialTermSize.columns, initialTermSize.rows),
+    initialGeometry = TerminalGridGeometry(
+      gridSize = initialTermSize.toTerminalSize(),
+      cellSize = options.initialCellPixelSize?.toCellPixelSize() ?: CellPixelSize.UNKNOWN,
+    ),
     initialWorkingDirectory = options.workingDirectory,
     terminfoName = options.envVariables["TERM"],
     shellIntegrationController = shellIntegrationController,

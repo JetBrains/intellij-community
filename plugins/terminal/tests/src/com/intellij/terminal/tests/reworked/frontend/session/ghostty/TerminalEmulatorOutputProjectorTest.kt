@@ -4,6 +4,7 @@ package com.intellij.terminal.tests.reworked.frontend.session.ghostty
 import com.intellij.terminal.emulator.ScreenChange
 import com.intellij.terminal.emulator.TerminalCustomCommandListener
 import com.intellij.terminal.emulator.TerminalEmulator
+import com.intellij.terminal.emulator.TerminalGridGeometry
 import com.intellij.terminal.emulator.TerminalRow
 import com.intellij.terminal.emulator.TerminalSize
 import com.intellij.terminal.emulator.createTerminalEmulator
@@ -1447,7 +1448,7 @@ internal class TerminalEmulatorOutputProjectorTest {
     maxScrollbackBytes: Int = 1024 * 1024,
     body: Fixture.() -> Unit,
   ) {
-    val emulator = RowReadCounter(createTerminalEmulator(TerminalSize(columns, rows), maxScrollbackBytes))
+    val emulator = RowReadCounter(createTerminalEmulator(TerminalGridGeometry(TerminalSize(columns, rows)), maxScrollbackBytes))
     val projector = TerminalEmulatorOutputProjector(emulator)
     try {
       Fixture(emulator, projector).body()
@@ -1472,3 +1473,6 @@ internal class TerminalEmulatorOutputProjectorTest {
     return Char(27) + "]8;;" + uri + st + text + Char(27) + "]8;;" + st
   }
 }
+
+/** Resizes with an unknown cell pixel size: these cases check the reflow, not the size reports. */
+private fun TerminalEmulator.resize(size: TerminalSize): Unit = resize(TerminalGridGeometry(size))

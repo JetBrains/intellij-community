@@ -3,6 +3,7 @@ package com.intellij.terminal.tests.reworked.frontend.session.ghostty
 
 import com.intellij.openapi.Disposable
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.emulator.TerminalGridGeometry
 import com.intellij.terminal.tests.reworked.frontend.session.setDefault
 import com.intellij.terminal.tests.reworked.util.LoopbackTtyConnector
 import com.intellij.terminal.tests.reworked.util.TerminalOutputEventCollector
@@ -53,10 +54,13 @@ internal abstract class GhosttyTerminalSessionTestCase {
    * when the test's own point is the production, `StateAwareTerminalSession`-wrapped session's behavior.
    *
    * [envVariables] is the environment of the process that the session reports to have started.
+   *
+   * [initialGridGeometry] is the grid geometry the session starts with.
    */
   protected fun runSessionTest(
     isLowLevelSession: Boolean = true,
     envVariables: Map<String, String> = emptyMap(),
+    initialGridGeometry: TerminalGridGeometry = TerminalSessionTestUtil.DEFAULT_GRID_GEOMETRY,
     test: suspend (session: TerminalSession, connector: LoopbackTtyConnector, collector: TerminalOutputEventCollector) -> Unit,
   ) {
     TerminalEmulatorType.Ghostty.setDefault(disposableRule.disposable)
@@ -68,6 +72,7 @@ internal abstract class GhosttyTerminalSessionTestCase {
           coroutineScope = sessionScope,
           isLowLevelSession = isLowLevelSession,
           envVariables = envVariables,
+          initialGridGeometry = initialGridGeometry,
         )
         val collector = TerminalOutputEventCollector(session, sessionScope)
         test(session, connector, collector)

@@ -12,6 +12,7 @@ import com.intellij.util.containers.CollectionFactory
 import com.jediterm.core.util.TermSize
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.runner.InitialShellCommand
+import org.jetbrains.plugins.terminal.session.impl.dto.CellPixelSizeDto
 import org.jetbrains.plugins.terminal.startup.ShellExecCommandImpl
 import org.jetbrains.plugins.terminal.startup.ShellExecOptions
 import org.jetbrains.plugins.terminal.startup.ShellExecOptionsImpl
@@ -29,6 +30,10 @@ class ShellStartupOptions private constructor(builder: Builder) {
   val processType: TerminalProcessType = builder.processType
   val commandHistoryFileProvider: (() -> Path?)? = builder.commandHistoryFileProvider
   val initialTermSize: TermSize? = builder.initialTermSize
+
+  @ApiStatus.Internal
+  val initialCellPixelSize: CellPixelSizeDto? = builder.initialCellPixelSize
+
   val widget: TerminalWidget? = builder.widget
   val shellIntegration: ShellIntegration? = builder.shellIntegration
   val envVariables: Map<String, String> = builder.envVariables
@@ -63,6 +68,7 @@ class ShellStartupOptions private constructor(builder: Builder) {
       processType,
       commandHistoryFileProvider,
       initialTermSize,
+      initialCellPixelSize,
       widget,
       shellIntegration,
       envVariables,
@@ -77,6 +83,7 @@ class ShellStartupOptions private constructor(builder: Builder) {
            ", shellCommand=$shellCommand" +
            ", commandHistoryFileProvider=${commandHistoryFileProvider != null}" +
            ", initialTermSize=[$initialTermSize]" +
+           ", initialCellPixelSize=$initialCellPixelSize" +
            ", shellIntegration=$shellIntegration" +
            ", envVariables=$envVariables" +
            ", removedEnvVariables=$removedEnvVariables" +
@@ -103,6 +110,8 @@ class ShellStartupOptions private constructor(builder: Builder) {
     var processType: TerminalProcessType = TerminalProcessType.SHELL,
     var commandHistoryFileProvider: (() -> Path?)?,
     var initialTermSize: TermSize?,
+    @get:ApiStatus.Internal
+    var initialCellPixelSize: CellPixelSizeDto?,
     var widget: TerminalWidget?,
     var shellIntegration: ShellIntegration? = null,
     var envVariables: Map<String, String> = emptyMap(),
@@ -132,7 +141,7 @@ class ShellStartupOptions private constructor(builder: Builder) {
       this.finalWorkingDirectoryEelPath = finalWorkingDirectoryEelPath
     }
 
-    constructor() : this(null, null, null, null, TerminalProcessType.SHELL, null, null, null)
+    constructor() : this(null, null, null, null, TerminalProcessType.SHELL, null, null, null, null)
 
     fun workingDirectory(workingDirectory: @NioPath String?) = also { this.workingDirectory = workingDirectory }
     fun shellCommand(shellCommand: List<String>?) = also { this.shellCommand = shellCommand }
@@ -146,6 +155,10 @@ class ShellStartupOptions private constructor(builder: Builder) {
       also { this.commandHistoryFileProvider = commandHistoryFileProvider }
 
     fun initialTermSize(initialTermSize: TermSize?) = also { this.initialTermSize = initialTermSize }
+
+    @ApiStatus.Internal
+    fun initialCellPixelSize(initialCellPixelSize: CellPixelSizeDto?): Builder = also { this.initialCellPixelSize = initialCellPixelSize }
+
     fun widget(widget: TerminalWidget?) = also { this.widget = widget }
     fun shellIntegration(shellIntegration: ShellIntegration?) = also { this.shellIntegration = shellIntegration }
 

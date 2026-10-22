@@ -5,9 +5,13 @@ import org.jetbrains.annotations.ApiStatus
 
 // The grid an embedder reads back: its size, what a cell holds (text, width, appearance, OSC8 hyperlinks).
 
-/** Screen size in character cells. */
+/** The grid size in character cells. */
 @ApiStatus.Internal
-data class TerminalSize(val columns: Int, val rows: Int) {
+data class TerminalSize(
+  val columns: Int,
+  /** The rows of the active screen. The scrollback is separate: [TerminalEmulator.scrollbackRows]. */
+  val rows: Int,
+) {
   init {
     require(columns in 1..MAX_DIMENSION) { "columns must be in 1..$MAX_DIMENSION, was $columns" }
     require(rows in 1..MAX_DIMENSION) { "rows must be in 1..$MAX_DIMENSION, was $rows" }
@@ -18,6 +22,53 @@ data class TerminalSize(val columns: Int, val rows: Int) {
     const val MAX_DIMENSION: Int = 0xFFFF
   }
 }
+
+/**
+ * The size of one grid cell in device pixels, the pixels the display draws.
+ *
+ * The reply to `CSI 16 t` reports this size. The in-band size report (mode 2048) and
+ * the reply to `CSI 14 t` carry the text area size:
+ * ([height] * [TerminalSize.rows], [width] * [TerminalSize.columns]).
+ *
+ * A program needs the pixel size to show images:
+ * - With the Kitty graphics protocol, it maps image pixels to cells.
+ * - With block characters, it keeps the image proportions, for example `chafa`.
+ *
+ * It does not affect the reflow when resizing.
+ */
+@ApiStatus.Internal
+data class CellPixelSize(val width: Int, val height: Int) {
+  init {
+    require(width >= 0) { "width must be non-negative, was $width" }
+    require(height >= 0) { "height must be non-negative, was $height" }
+  }
+
+  companion object {
+    /**
+     * No pixel geometry: each pixel field of a report is 0.
+     *
+     * The in-band size report spec requires this:
+     * "If a terminal is not capable of reporting pixel sizes, it must report them as 0."
+     * https://gist.github.com/rockorager/e695fb2924d36b2bcf1fff4a3704bd83
+     *
+     * `XTWINOPS` doesn't define this case: https://invisible-island.net/xterm/ctlseqs/ctlseqs.html
+     *
+     * Also, the `winsize` struct declares the `ws_xpixel` and `ws_ypixel` fields as unused.
+     * A terminal that knows no pixel size leaves the two fields untouched, and they are 0 of a zero-initialized struct.
+     * https://man7.org/linux/man-pages/man2/TIOCSWINSZ.2const.html
+     */
+    val UNKNOWN: CellPixelSize = CellPixelSize(0, 0)
+  }
+}
+
+/**
+ * The grid size with the pixel size of one of its cells.
+ */
+@ApiStatus.Internal
+data class TerminalGridGeometry(
+  val gridSize: TerminalSize,
+  val cellSize: CellPixelSize = CellPixelSize.UNKNOWN,
+)
 
 /** A foreground or background color. */
 @ApiStatus.Internal

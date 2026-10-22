@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.emulator.impl.ghostty.bindings
 
+import com.intellij.terminal.emulator.impl.ghostty.GhosttySizeHandler
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
@@ -12,13 +13,15 @@ import java.lang.foreign.MemoryLayout
 import java.lang.foreign.MemoryLayout.PathElement.groupElement
 
 /**
- * Verifies the hand-written struct geometry in [GhosttyLayouts] against
- * `ghostty_type_json()` — the layout description compiled into the bundled library
- * itself. The C API is pre-1.0 and free to reorder or resize fields; without this
- * check, a library upgrade whose layouts drifted would not fail anywhere — the
- * bridge would silently read garbage.
+ * Verifies every hand-written struct layout against `ghostty_type_json()`, the layout
+ * description compiled into the bundled library: the layouts in [GhosttyLayouts] and
+ * the ones a feature class owns, such as [GhosttySizeHandler.SIZE_REPORT_SIZE].
+ *
+ * The C API is pre-1.0 and free to reorder or resize fields. Without this check, a
+ * library upgrade whose layouts drifted would not fail anywhere, and the bridge
+ * would silently read garbage.
  */
-internal class GhosttyLayoutsTest {
+internal class GhosttyStructLayoutsTest {
 
   // schema 1: struct/union/enum/... descriptors sit under "types"; the root also carries
   // "schema", "abi", "library_version", "commit", "dirty".
@@ -62,6 +65,16 @@ internal class GhosttyLayoutsTest {
     // `progress` is the last field the bridge reads, so the minimum size is its end
     assertThat(GhosttyLayouts.PROGRESS_REPORT_MIN_SIZE)
       .isEqualTo(report.offset("progress") + report.sizeOf("progress"))
+  }
+
+  @Test
+  fun sizeReportSize() {
+    val size = struct("GhosttySizeReportSize")
+    assertLayoutMatches(GhosttySizeHandler.SIZE_REPORT_SIZE, size, "rows", "columns", "cell_width", "cell_height")
+    assertThat(GhosttySizeHandler.OFF_ROWS).isEqualTo(size.offset("rows"))
+    assertThat(GhosttySizeHandler.OFF_COLUMNS).isEqualTo(size.offset("columns"))
+    assertThat(GhosttySizeHandler.OFF_CELL_WIDTH).isEqualTo(size.offset("cell_width"))
+    assertThat(GhosttySizeHandler.OFF_CELL_HEIGHT).isEqualTo(size.offset("cell_height"))
   }
 
   @Test

@@ -7,11 +7,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.terminal.emulator.TerminalGridGeometry
+import com.intellij.terminal.emulator.TerminalSize
 import com.intellij.terminal.frontend.session.TerminalSessionsManager
 import com.intellij.terminal.frontend.session.createStandardStateAwareTerminalSession
 import com.intellij.terminal.frontend.session.createTerminalSession
 import com.intellij.terminal.frontend.session.startStandardTerminalSession
 import com.intellij.terminal.frontend.session.startTerminalProcess
+import com.intellij.terminal.frontend.session.toDto
+import com.intellij.terminal.frontend.view.impl.initialGridGeometry
 import com.intellij.util.PathUtil
 import com.intellij.util.asDisposable
 import com.jediterm.core.util.TermSize
@@ -133,6 +137,8 @@ object TerminalSessionTestUtil {
    * cases, and always when driving a real view (see `TerminalViewFixture`).
    *
    * [envVariables] is the environment of the process that the session reports to have started.
+   *
+   * [initialGridGeometry] is the grid geometry the session starts with.
    */
   fun createLoopbackTerminalSession(
     project: Project,
@@ -140,11 +146,12 @@ object TerminalSessionTestUtil {
     emulatorType: TerminalEmulatorType? = null,
     isLowLevelSession: Boolean = false,
     envVariables: Map<String, String> = emptyMap(),
+    initialGridGeometry: TerminalGridGeometry = DEFAULT_GRID_GEOMETRY,
   ): Pair<TerminalSession, LoopbackTtyConnector> {
     val connector = LoopbackTtyConnector()
     val workingDirectory = System.getProperty("user.home")
     val options = ShellStartupOptions.Builder()
-      .initialTermSize(TermSize(80, 24))
+      .initialGridGeometry(initialGridGeometry.toDto())
       .processType(TerminalProcessType.SHELL)
       .workingDirectory(workingDirectory)
       .emulatorType(emulatorType)
@@ -165,6 +172,9 @@ object TerminalSessionTestUtil {
     val session = createStandardStateAwareTerminalSession(delegate, startupOptions, coroutineScope)
     return session to connector
   }
+
+  /** The geometry of [createLoopbackTerminalSession]: an 80x24 grid without a cell pixel size. */
+  val DEFAULT_GRID_GEOMETRY: TerminalGridGeometry = TerminalGridGeometry(TerminalSize(80, 24))
 
   suspend fun TerminalSession.awaitOutputEvent(targetEvent: TerminalOutputEvent) {
     return coroutineScope {

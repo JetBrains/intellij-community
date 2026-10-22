@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.emulator.impl.ghostty
 
+import com.intellij.terminal.emulator.TerminalGridGeometry
 import com.intellij.terminal.emulator.TerminalSize
 import com.intellij.terminal.emulator.createTerminalEmulator
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttySysLogLevel
@@ -26,7 +27,7 @@ class GhosttyLogTest {
     GhosttyLog.doWithHandler(GhosttyLog.Handler { level, scope, message ->
       recorded.add(RecordedLog(level, GhosttyLog.formatMessage(scope, message)))
     }) {
-      createTerminalEmulator(TerminalSize(20, 5)).use { terminal ->
+      createTerminalEmulator(TerminalGridGeometry(TerminalSize(20, 5))).use { terminal ->
         // a zero-width character with no base character
         terminal.write(byteArrayOf(0xCC.toByte(), 0x81.toByte()))
       }

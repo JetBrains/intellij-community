@@ -4,8 +4,10 @@ package org.jetbrains.plugins.terminal.session.impl
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
+import org.jetbrains.plugins.terminal.session.impl.dto.CellPixelSizeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.CursorShapeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.TerminalColorSchemeDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalGridGeometryDto
 import java.util.concurrent.atomic.AtomicInteger
 
 @ApiStatus.Internal
@@ -39,7 +41,11 @@ sealed class TerminalInputEventBase : TerminalInputEvent {
 
 @ApiStatus.Internal
 @Serializable
-data class TerminalResizeEvent(val newSize: TerminalGridSize) : TerminalInputEventBase()
+data class TerminalResizeEvent(val newGeometry: TerminalGridGeometryDto) : TerminalInputEventBase() {
+  /** A resize with an unknown cell pixel size: the size reports then carry no pixels. */
+  @Deprecated("Pass the grid geometry, so the size reports carry the cell pixel size.")
+  constructor(newSize: TerminalGridSize) : this(TerminalGridGeometryDto(newSize, CellPixelSizeDto(0, 0)))
+}
 
 @ApiStatus.Internal
 @Serializable

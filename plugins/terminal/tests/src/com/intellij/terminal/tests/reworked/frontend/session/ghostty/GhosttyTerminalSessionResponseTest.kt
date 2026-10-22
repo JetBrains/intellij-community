@@ -1,6 +1,9 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.tests.reworked.frontend.session.ghostty
 
+import com.intellij.terminal.emulator.CellPixelSize
+import com.intellij.terminal.emulator.TerminalGridGeometry
+import com.intellij.terminal.emulator.TerminalSize
 import com.intellij.terminal.tests.reworked.util.awaitEvent
 import com.jediterm.core.util.TermSize
 import org.assertj.core.api.Assertions.assertThat
@@ -9,8 +12,11 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalClearBufferEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalContentUpdatedEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
+import org.jetbrains.plugins.terminal.session.impl.dto.CellPixelSizeDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalGridGeometryDto
 import org.junit.Test
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 
 /**
@@ -42,7 +48,10 @@ internal class GhosttyTerminalSessionResponseTest : GhosttyTerminalSessionTestCa
 
       // The read thread is now parked inside the reply write. If it were still holding the session lock,
       // this resize could never be serviced.
-      session.getInputChannel().send(TerminalResizeEvent(TerminalGridSize(columns = 100, rows = 30)))
+      session.getInputChannel().send(TerminalResizeEvent(TerminalGridGeometryDto(
+        TerminalGridSize(columns = 100, rows = 30),
+        CellPixelSizeDto(width = 8, height = 16),
+      )))
 
       assertThat(connector.awaitResize(AWAIT_TIMEOUT_MS))
         .describedAs("resize never reached the pty: it is stuck behind the stalled reply write")
@@ -70,6 +79,41 @@ internal class GhosttyTerminalSessionResponseTest : GhosttyTerminalSessionTestCa
       .isTrue()
     // Fresh 80x24 screen, cursor still home: CSI 1 ; 1 R.
     assertThat(synchronized(replies) { replies.toList() }).containsExactly(csi("1;1R"))
+  }
+
+  @Test
+  fun `resize reports the cell pixel size in band`() = runSessionTest { session, connector, _ ->
+    val replies = LinkedBlockingQueue<String>()
+    connector.responseHandler = { bytes -> replies.add(String(bytes, Charsets.UTF_8)) }
+
+    // CSI 48 ; rows ; columns ; height_px ; width_px t
+    connector.feed(csi("?2048h"))
+    assertThat(replies.poll(AWAIT_TIMEOUT_MS, TimeUnit.MILLISECONDS))
+      .describedAs("enabling mode 2048 reports the current size; a fresh 80x24 screen has no cell pixel size yet")
+      .isEqualTo(csi("48;24;80;0;0t"))
+
+    val resize = TerminalResizeEvent(TerminalGridGeometryDto(
+      TerminalGridSize(columns = 100, rows = 30),
+      CellPixelSizeDto(width = 8, height = 16),
+    ))
+    session.getInputChannel().send(resize)
+    assertThat(replies.poll(AWAIT_TIMEOUT_MS, TimeUnit.MILLISECONDS))
+      .describedAs("a resize while mode 2048 is on reports the new size with its pixel size")
+      .isEqualTo(csi("48;30;100;480;800t"))
+  }
+
+  @Test
+  fun `initial cell pixel size is reported in band before any resize`() = runSessionTest(
+    initialGridGeometry = TerminalGridGeometry(TerminalSize(80, 24), CellPixelSize(8, 16)),
+  ) { _, connector, _ ->
+    val replies = LinkedBlockingQueue<String>()
+    connector.responseHandler = { bytes -> replies.add(String(bytes, Charsets.UTF_8)) }
+
+    // CSI 48 ; rows ; columns ; height_px ; width_px t, with 24 * 16 and 80 * 8 pixels
+    connector.feed(csi("?2048h"))
+    assertThat(replies.poll(AWAIT_TIMEOUT_MS, TimeUnit.MILLISECONDS))
+      .describedAs("enabling mode 2048 reports the 80x24 screen with the cell pixel size the session started with")
+      .isEqualTo(csi("48;24;80;384;640t"))
   }
 
   @Test

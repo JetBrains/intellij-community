@@ -12,7 +12,8 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
-import com.intellij.terminal.frontend.view.impl.awaitLaidOutTermSize
+import com.intellij.terminal.frontend.view.impl.awaitLaidOutGridGeometry
+import com.intellij.terminal.frontend.view.impl.initialGridGeometry
 import com.intellij.terminal.frontend.view.portForwarding.installPortForwarding
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.initOnShow
@@ -374,7 +375,7 @@ private class TransferableTerminalSessionImpl(
       // Launched on the runtime scope so the start survives the component being hidden again.
       coroutineScope.launch(CoroutineName(SESSION_START_NAME)) {
         try {
-          startSession(project, options.builder().initialTermSize(view.awaitLaidOutTermSize()).build())
+          startSession(project, options.builder().initialGridGeometry(view.awaitLaidOutGridGeometry()).build())
           transitionToRunning()
         }
         catch (e: CancellationException) {

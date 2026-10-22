@@ -12,9 +12,10 @@ import org.jetbrains.annotations.ApiStatus
 // package is part of that API:
 //
 //   TerminalEmulator.kt      the interface below — the only entry point
-//   TerminalGrid.kt          the grid to read back: TerminalSize, Cell (+ CellStyle, CellWidth,
-//                            TerminalColor, Underline), TerminalRow and its StyledText projection
-//                            (+ StyleRange, HyperlinkRange)
+//   TerminalGrid.kt          the grid to read back: TerminalSize, CellPixelSize,
+//                            TerminalGridGeometry, Cell (+ CellStyle, CellWidth,
+//                            TerminalColor, Underline), TerminalRow and its StyledText
+//                            projection (+ StyleRange, HyperlinkRange)
 //   TerminalCursor.kt        Cursor, CursorShape
 //   TerminalMouseModes.kt    MouseProtocol, MouseEncoding
 //   TerminalKeyboardModes.kt KittyKeyboardFlag — the Kitty keyboard protocol flags
@@ -55,8 +56,16 @@ interface TerminalEmulator : AutoCloseable {
 
   fun write(text: String): Unit = write(text.encodeToByteArray())
 
-  /** Change the screen size; the primary screen reflows if wraparound is enabled. */
-  fun resize(size: TerminalSize)
+  /**
+   * Changes the grid size. The primary screen and its scrollback reflow if auto-wrap
+   * (DECAWM) is on. See also [setResizePullScrollback].
+   *
+   * If mode 2048 is on, each call sends the in-band size report of [geometry] through
+   * [TerminalListener.onRespondToHost], even when the geometry did not change.
+   * The replies to the `XTWINOPS` size queries (`CSI 14/16/18/19 t`) use the cell pixel
+   * size of the last `resize` call, or of the initial geometry before the first call.
+   */
+  fun resize(geometry: TerminalGridGeometry)
 
   /**
    * Sets whether [resize] may pull rows from scrollback back onto the screen. The default is `true`.

@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
+import com.intellij.openapi.editor.impl.view.CharacterGrid
 import com.intellij.openapi.editor.impl.view.DoubleWidthCharacterStrategy
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.editor.markup.EffectType
@@ -50,6 +51,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalColorPalette
 import com.intellij.ui.ColorUtil
+import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
@@ -80,6 +82,8 @@ import org.jetbrains.plugins.terminal.block.output.TextAttributesProvider
 import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
 import org.jetbrains.plugins.terminal.block.session.TerminalModel
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
+import org.jetbrains.plugins.terminal.session.impl.dto.CellPixelSizeDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalGridGeometryDto
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalCursorOffsetChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
@@ -105,6 +109,7 @@ import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 import kotlin.math.ceil
 import kotlin.math.max
+import kotlin.math.roundToInt
 
 @ApiStatus.Internal
 object TerminalUiUtils {
@@ -538,10 +543,29 @@ internal fun Editor.getCharSize(): Dimension2D {
   return Dimension2DDouble(width.toDouble() * columnSpacing, lineHeight.toDouble())
 }
 
-fun Editor.calculateTerminalSize(): TerminalGridSize? {
+/** Measures the grid and one cell in device pixels; null before the editor has a size. */
+@ApiStatus.Internal
+fun Editor.calculateGridGeometry(): TerminalGridGeometryDto? {
   val grid = (this as? EditorImpl)?.characterGrid ?: return null
-  return if (grid.rows > 0 && grid.columns > 0) {
-    ensureTermMinimumSize(TerminalGridSize(grid.columns, grid.rows))
+  val gridSize = grid.calculateGridSize() ?: return null
+  val scale = deviceScale(contentComponent)
+  val cellSize = CellPixelSizeDto((grid.charWidth * scale).roundToInt(), (lineHeight * scale).roundToInt())
+  return TerminalGridGeometryDto(gridSize, cellSize)
+}
+
+/** Device pixels per user-space pixel on the display of [component]; 1 when the JRE does not scale. */
+private fun deviceScale(component: Component): Float {
+  val gc = component.graphicsConfiguration
+  return if (JreHiDpiUtil.isJreHiDPI(gc)) JBUIScale.sysScale(gc) else 1f
+}
+
+fun Editor.calculateTerminalSize(): TerminalGridSize? {
+  return (this as? EditorImpl)?.characterGrid?.calculateGridSize()
+}
+
+private fun CharacterGrid.calculateGridSize(): TerminalGridSize? {
+  return if (rows > 0 && columns > 0) {
+    ensureTermMinimumSize(TerminalGridSize(columns, rows))
   } else {
     null
   }

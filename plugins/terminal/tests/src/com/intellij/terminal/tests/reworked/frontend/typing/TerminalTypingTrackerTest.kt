@@ -41,6 +41,7 @@ import org.jetbrains.plugins.terminal.session.ShellName
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalGridGeometryDto
 import org.jetbrains.plugins.terminal.util.terminalProjectScope
 import org.jetbrains.plugins.terminal.view.TerminalOffset
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
@@ -499,6 +500,7 @@ internal class TerminalTypingTrackerTest : BasePlatformTestCase() {
     override val component: JComponent get() = notUsedInTest()
     override val preferredFocusableComponent: JComponent get() = notUsedInTest()
     override val gridSize: TerminalGridSize get() = notUsedInTest()
+    override val gridGeometry: TerminalGridGeometryDto get() = notUsedInTest()
     override val title: TerminalTitle get() = notUsedInTest()
     override val outputModels: TerminalOutputModelsSet get() = notUsedInTest()
     override val textSelectionModel: TerminalTextSelectionModel get() = notUsedInTest()
