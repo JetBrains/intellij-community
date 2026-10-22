@@ -31,6 +31,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.io.Writer
+import java.util.concurrent.CancellationException
 import javax.xml.stream.XMLStreamException
 import kotlin.math.min
 
@@ -99,6 +100,10 @@ abstract class XmlElementStorage protected constructor(
       }
     }
     catch (e: FileNotFoundException) {
+      throw e
+    }
+    catch (e: CancellationException) {
+      // the caller of the read is canceled, so the storage must not keep the empty data
       throw e
     }
     catch (e: Throwable) {
