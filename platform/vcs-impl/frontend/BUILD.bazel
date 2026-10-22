@@ -63,6 +63,8 @@ jvm_library(
         "//platform/lang-impl",
         "//platform/remote-topics/shared:rpc-topics",
         "//platform/platform-impl/rpc",
+        "//platform/diff-api:diff",
+        "//platform/util/diff",
     ],
 )
 
@@ -107,6 +109,8 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/remote-topics/shared:rpc-topics_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/diff-api:diff_test_lib",
+        "//platform/util/diff:diff_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.vcs.impl.frontend` end

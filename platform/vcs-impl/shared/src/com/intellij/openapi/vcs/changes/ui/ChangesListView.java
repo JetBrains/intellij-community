@@ -106,7 +106,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
 
   @Override
   protected boolean isInclusionVisible(@NotNull ChangesBrowserNode<?> node) {
-    if (node instanceof ChangesBrowserStructuralNode<?>) return false;
+    if (node instanceof ChangesBrowserStructuralNode<?> structuralNode) return structuralNode.getHasInclusion();
     ChangesBrowserNode<?> subtreeRoot = getSubtreeRoot(node);
     Object subtreeRootObject = subtreeRoot != null ? subtreeRoot.getUserObject() : null;
 
@@ -117,7 +117,7 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
 
   @Override
   protected boolean isIncludable(@NotNull ChangesBrowserNode<?> node) {
-    if (node instanceof ChangesBrowserStructuralNode<?>) return false;
+    if (node instanceof ChangesBrowserStructuralNode<?> structuralNode) return structuralNode.getHasInclusion();
     if (VcsTreeModelDataExKt.isUnderTag(node, RESOLVED_CONFLICTS_NODE_TAG)) return true;
 
     return super.isIncludable(node);

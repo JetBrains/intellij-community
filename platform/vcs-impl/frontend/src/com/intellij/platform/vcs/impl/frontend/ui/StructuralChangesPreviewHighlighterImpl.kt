@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.vcs.impl.frontend.ui
 
+import com.intellij.diff.editor.DiffEditorViewerFileEditor
+import com.intellij.diff.impl.DiffRequestProcessor
+import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
@@ -29,6 +32,7 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserStructuralNode
 import com.intellij.openapi.vcs.changes.ui.StructuralChangesPreviewHighlighter
 import com.intellij.openapi.vcs.changes.ui.highlightStructuralPreview
 import com.intellij.openapi.vfs.VirtualFile
@@ -104,6 +108,16 @@ internal class StructuralChangesPreviewHighlighterImpl(private val project: Proj
     })
     return lifetime
   }
+
+  @RequiresEdt
+  override fun findDiffViewer(diffFile: VirtualFile): DiffViewerBase? =
+    FileEditorManager.getInstance(project).getAllEditors(diffFile)
+      .filterIsInstance<DiffEditorViewerFileEditor>()
+      .firstNotNullOfOrNull { (it.editorViewer as? DiffRequestProcessor)?.activeViewer as? DiffViewerBase }
+
+  @RequiresEdt
+  override fun highlightDiff(viewer: DiffViewerBase, lines: ChangesBrowserStructuralNode.DiffLines): Disposable =
+    StructuralDiffPreviewHighlight(viewer, lines).also { it.apply(scroll = true) }
 
   override fun dispose() {}
 }

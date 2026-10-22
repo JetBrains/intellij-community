@@ -2,7 +2,10 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.FrameDiffTool
+import com.intellij.diff.impl.DiffSettingsHolder
+import com.intellij.diff.tools.fragmented.UnifiedDiffTool
 import com.intellij.diff.util.DiffPlaces
+import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.application.EDT
@@ -97,6 +100,19 @@ class ChangesViewDiffPreviewProcessor(
 
   override fun forceKeepCurrentFileWhileFocused(): Boolean = true
 
+  /**
+   * With structural changes, the editor tab starts with the unified viewer. The tab keeps its own viewer order, so the viewer switch
+   * still works and other diff tabs keep their choice. The superclass constructor calls this method, so it reads the place from the context.
+   */
+  override fun getSettings(): DiffSettingsHolder.DiffSettings {
+    if (getContextUserData(DiffUserDataKeys.PLACE) != DiffPlaces.DEFAULT || !StructuralChangesViewSettings.isEnabled(project)) {
+      return super.getSettings()
+    }
+    val settings = DiffSettingsHolder.DiffSettings.getSettings(STRUCTURAL_PREVIEW_PLACE)
+    if (settings.diffToolsOrder.isEmpty()) settings.diffToolsOrder = listOf(UnifiedDiffTool::class.java.canonicalName)
+    return settings
+  }
+
   fun setAllowExcludeFromCommit(value: Boolean) {
     if (DiffUtil.isUserDataFlagSet(ALLOW_EXCLUDE_FROM_COMMIT, context) == value) return
     context.putUserData(ALLOW_EXCLUDE_FROM_COMMIT, value)
@@ -114,6 +130,9 @@ class ChangesViewDiffPreviewProcessor(
     }
   }
 }
+
+/** The viewer order of the Commit diff tab while structural changes are on. */
+private const val STRUCTURAL_PREVIEW_PLACE = "ChangesView.StructuralPreview"
 
 internal object ChangesViewDiffPreviewHandler : ChangesTreeDiffPreviewHandler() {
   override val isShowAllChangesForEmptySelection: Boolean get() = false

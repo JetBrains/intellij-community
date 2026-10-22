@@ -85,7 +85,7 @@ open class ChangesTreeCellRenderer(protected val textRenderer: ChangesBrowserNod
     }
 
     updateScaleHelper.saveScaleAndUpdateUIIfChanged(checkBox)
-    checkBoxPlaceholder.isVisible = tree.isShowCheckboxes && value is ChangesBrowserStructuralNode<*>
+    checkBoxPlaceholder.isVisible = tree.isShowCheckboxes && value is ChangesBrowserStructuralNode<*> && !checkBox.isVisible
 
     return this
   }
