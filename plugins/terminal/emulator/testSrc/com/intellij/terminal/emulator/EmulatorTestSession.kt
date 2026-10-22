@@ -16,8 +16,15 @@ import java.nio.charset.StandardCharsets
  * }
  * ```
  */
-internal fun session(width: Int, height: Int, maxScrollbackBytes: Int = 1024 * 1024, block: (EmulatorTestSession) -> Unit) {
-  EmulatorTestSession(width, height, maxScrollbackBytes).use(block)
+internal fun session(
+  initialColumns: Int,
+  initialRows: Int,
+  initialCellPixelSize: CellPixelSize = CellPixelSize.UNKNOWN,
+  maxScrollbackBytes: Int = 1024 * 1024,
+  block: (EmulatorTestSession) -> Unit,
+) {
+  val geometry = TerminalGridGeometry(TerminalSize(initialColumns, initialRows), initialCellPixelSize)
+  EmulatorTestSession(geometry, maxScrollbackBytes).use(block)
 }
 
 /**
@@ -25,9 +32,12 @@ internal fun session(width: Int, height: Int, maxScrollbackBytes: Int = 1024 * 1
  * the resulting screen + scrollback back through the public emulator API only. The high-level methods
  * mirror the VT operations to keep tests readable.
  */
-internal class EmulatorTestSession(width: Int, height: Int, maxScrollbackBytes: Int) : AutoCloseable {
+internal class EmulatorTestSession(
+  initialGridGeometry: TerminalGridGeometry,
+  maxScrollbackBytes: Int,
+) : AutoCloseable {
 
-  val emulator: TerminalEmulator = createTerminalEmulator(TerminalSize(width, height), maxScrollbackBytes)
+  val emulator: TerminalEmulator = createTerminalEmulator(initialGridGeometry, maxScrollbackBytes)
 
   // Records everything the terminal writes back to the host (query replies such as DSR / DA, OSC
   // reports, etc.), decoded as UTF-8, so tests can assert them via assertResponses().
@@ -105,12 +115,12 @@ internal class EmulatorTestSession(width: Int, height: Int, maxScrollbackBytes: 
 
   fun useAlternateBuffer(enabled: Boolean) = emulator.write(csi("?1049${if (enabled) "h" else "l"}"))
 
-  fun resize(columns: Int, rows: Int) {
+  fun resize(columns: Int, rows: Int, cellSize: CellPixelSize = CellPixelSize.UNKNOWN) {
     incrementalBuffer.onResize()
     // A resize always reflows into a full rebuild, so approve it here — resize tests need no explicit
     // expectFullRebuild() before the following assertion.
     incrementalBuffer.expectFullRebuild()
-    emulator.resize(TerminalSize(columns, rows))
+    emulator.resize(TerminalGridGeometry(TerminalSize(columns, rows), cellSize))
   }
 
   /**

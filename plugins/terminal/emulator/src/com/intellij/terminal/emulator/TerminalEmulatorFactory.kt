@@ -9,14 +9,15 @@ import org.jetbrains.annotations.ApiStatus
  *
  * Kept out of `TerminalEmulator.kt` so the API file itself has no dependency on a concrete engine.
  *
- * @param initialSize the initial screen size; the emulator can be resized later via [TerminalEmulator.resize].
+ * @param initialGeometry the grid size and the cell pixel size at start.
+ *   Each [TerminalEmulator.resize] replaces it.
  * @param maxScrollbackBytes see [GhosttyTerminalEmulator] docs.
  */
 @ApiStatus.Internal
 fun createTerminalEmulator(
-  initialSize: TerminalSize,
+  initialGeometry: TerminalGridGeometry,
   maxScrollbackBytes: Int = 10 * 1024 * 1024,
 ): TerminalEmulator {
   require(maxScrollbackBytes >= 0) { "maxScrollbackBytes must be non-negative, was $maxScrollbackBytes" }
-  return GhosttyTerminalEmulator(initialSize, maxScrollbackBytes.toLong())
+  return GhosttyTerminalEmulator(initialGeometry, maxScrollbackBytes.toLong())
 }

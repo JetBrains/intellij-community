@@ -3,7 +3,6 @@ package com.intellij.terminal.frontend.session.jediterm
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.terminal.frontend.session.TerminalActivityTracker
-import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.RequestOrigin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -18,6 +17,7 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSetColorSchemeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSetDefaultCursorShapeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
+import org.jetbrains.plugins.terminal.session.toTermSize
 import org.jetbrains.plugins.terminal.util.closeConnectorAndStopEmulation
 import java.util.concurrent.CancellationException
 
@@ -65,8 +65,7 @@ private suspend fun handleInputEvent(event: TerminalInputEvent, services: JediTe
       terminalStarter.sendBytes(event.bytes, false)
     }
     is TerminalResizeEvent -> {
-      val termSize = TermSize(event.newSize.columns, event.newSize.rows)
-      terminalStarter.postResize(termSize, RequestOrigin.User)
+      terminalStarter.postResize(event.newGeometry.gridSize.toTermSize(), RequestOrigin.User)
     }
     is TerminalCloseEvent -> {
       terminalStarter.closeConnectorAndStopEmulation()

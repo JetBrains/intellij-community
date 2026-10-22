@@ -22,6 +22,8 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalGridGeometryDto
+import org.jetbrains.plugins.terminal.session.toTermSize
 
 /**
  * Creates the [TerminalView], starts the terminal process according to [options],
@@ -91,7 +93,7 @@ private suspend fun prepareStartupOptions(
     .emulatorType(processOptions.emulatorType)
 
   return if (calculateSizeFromComponent) {
-    baseOptions.initialTermSize(terminal.awaitLaidOutTermSize()).build()
+    baseOptions.initialGridGeometry(terminal.awaitLaidOutGridGeometry()).build()
   }
   else {
     baseOptions.initialTermSize(TermSize(80, 20)).build()
@@ -99,15 +101,21 @@ private suspend fun prepareStartupOptions(
 }
 
 /**
- * Waits until the view's component has been laid out and returns the grid size it actually has.
+ * Waits until the view's component has been laid out and returns the grid geometry it actually has.
  *
  * Starting a process with a guessed size makes a full-screen TUI paint its first frame at the wrong width and
  * reflow on the following resize, so every path that can wait for the UI should take the size from here instead.
- * Returns null when the grid size is still unknown; the caller then falls back to a default and logs it.
+ * Returns null when the grid is unknown; the caller then falls back to a default and logs it.
  */
-internal suspend fun TerminalView.awaitLaidOutTermSize(): TermSize? {
+internal suspend fun TerminalView.awaitLaidOutGridGeometry(): TerminalGridGeometryDto? {
   return withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
     TerminalUiUtils.getComponentSizeInitializedFuture(component).await()
-    gridSize?.let { TermSize(it.columns, it.rows) }
+    gridGeometry
   }
+}
+
+/** Sets the initial term size and the initial cell pixel size from [geometry]; null clears both. */
+internal fun ShellStartupOptions.Builder.initialGridGeometry(geometry: TerminalGridGeometryDto?): ShellStartupOptions.Builder {
+  return initialTermSize(geometry?.gridSize?.toTermSize())
+    .initialCellPixelSize(geometry?.cellSize)
 }

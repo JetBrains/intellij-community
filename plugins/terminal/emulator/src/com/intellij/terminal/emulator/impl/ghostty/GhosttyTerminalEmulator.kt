@@ -10,15 +10,16 @@ import com.intellij.terminal.emulator.ColorScheme
 import com.intellij.terminal.emulator.Cursor
 import com.intellij.terminal.emulator.CursorShape
 import com.intellij.terminal.emulator.HistoryMark
+import com.intellij.terminal.emulator.KittyKeyboardFlag
 import com.intellij.terminal.emulator.MouseEncoding
 import com.intellij.terminal.emulator.MouseProtocol
 import com.intellij.terminal.emulator.ScreenChange
 import com.intellij.terminal.emulator.TerminalColor
 import com.intellij.terminal.emulator.TerminalCustomCommandListener
 import com.intellij.terminal.emulator.TerminalEmulator
+import com.intellij.terminal.emulator.TerminalGridGeometry
 import com.intellij.terminal.emulator.TerminalInputModifier
 import com.intellij.terminal.emulator.TerminalKeyAction
-import com.intellij.terminal.emulator.KittyKeyboardFlag
 import com.intellij.terminal.emulator.TerminalKeyEvent
 import com.intellij.terminal.emulator.TerminalListener
 import com.intellij.terminal.emulator.TerminalMouseAction
@@ -35,6 +36,7 @@ import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyCellWide
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyColorScheme
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyCursorVisualStyle
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyKeyAction
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyKeyEncoderOption
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.C_BYTE
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.C_FLOAT
@@ -53,6 +55,8 @@ import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.POINT
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.PROGRESS_REPORT_MIN_SIZE
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.PROGRESS_REPORT_OFF_PROGRESS
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.PROGRESS_REPORT_OFF_STATE
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STRING
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STRING_OFF_LEN
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_BG_TAG
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_BG_VAL
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_BLINK
@@ -64,16 +68,13 @@ import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_INVISIBLE
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_ITALIC
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_OFF_UNDERLINE
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STRING
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STRING_OFF_LEN
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyLayouts.STYLE_SIZE
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyKeyEncoderOption
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyMode
-import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyOptionAsAlt
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyMods
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyMouseAction
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyMouseButton
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyMouseEncoderOption
+import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyOptionAsAlt
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyPointTag
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyRenderStateData
 import com.intellij.terminal.emulator.impl.ghostty.bindings.GhosttyRenderStateDirty
@@ -136,7 +137,7 @@ import java.nio.charset.StandardCharsets
  *   far fewer real characters per byte than dense output (lines that fill the width).
  */
 internal class GhosttyTerminalEmulator(
-  initialSize: TerminalSize,
+  initialGeometry: TerminalGridGeometry,
   maxScrollbackBytes: Long,
 ) : TerminalEmulator {
 
@@ -171,6 +172,8 @@ internal class GhosttyTerminalEmulator(
 
   // The color scheme that the color-scheme callback reports (see [setColorScheme]); null leaves the query unanswered.
   private var colorScheme: ColorScheme? = null
+
+  private val sizeHandler: GhosttySizeHandler = GhosttySizeHandler(initialGeometry.cellSize, ::terminalGetU16)
 
   // Reusable scratch buffers + cell holder (this instance is single-threaded).
   private val scratchPoint: MemorySegment = scratchArena.allocate(POINT)
@@ -256,7 +259,8 @@ internal class GhosttyTerminalEmulator(
     try {
       val outTerminal = arena.allocate(C_PTR)
       val result = try {
-        LibGhosttyVt.terminalNew(MemorySegment.NULL, outTerminal, initialSize.columns.toShort(), initialSize.rows.toShort())
+        val (columns, rows) = initialGeometry.gridSize
+        LibGhosttyVt.terminalNew(MemorySegment.NULL, outTerminal, columns.toShort(), rows.toShort())
       } catch (t: Throwable) {
         throw RuntimeException("ghostty_terminal_new failed", t)
       }
@@ -357,6 +361,8 @@ internal class GhosttyTerminalEmulator(
         throw RuntimeException("installing color-scheme callback failed", t)
       }
 
+      sizeHandler.install(terminalHandle, arena)
+
       keyEncoderHandle = createInputHandle("ghostty_key_encoder_new", LibGhosttyVt::keyEncoderNew)
       keyEventHandle = createInputHandle("ghostty_key_event_new", LibGhosttyVt::keyEventNew)
       mouseEncoderHandle = createInputHandle("ghostty_mouse_encoder_new", LibGhosttyVt::mouseEncoderNew)
@@ -420,7 +426,7 @@ internal class GhosttyTerminalEmulator(
   // ---- geometry / state ----
 
   override val size: TerminalSize
-    get() = TerminalSize(terminalGetU16(GhosttyTerminalData.COLS), terminalGetU16(GhosttyTerminalData.ROWS))
+    get() = TerminalSize(sizeHandler.columns, sizeHandler.rows)
 
   // The native count is a size_t, but the row count is bounded by the scrollback size limit (see
   // createTerminalEmulator): even the largest possible limit holds only a few hundred million rows,
@@ -635,17 +641,9 @@ internal class GhosttyTerminalEmulator(
     while (written < length)
   }
 
-  override fun resize(size: TerminalSize) {
+  override fun resize(geometry: TerminalGridGeometry) {
     ensureOpen()
-    try {
-      // cell pixel size is irrelevant for grid reflow; pass 1x1.
-      val r = LibGhosttyVt.terminalResize(terminal, size.columns.toShort(), size.rows.toShort(), 1, 1)
-      if (r != GhosttyResult.SUCCESS) {
-        throw IllegalStateException("ghostty_terminal_resize returned $r")
-      }
-    } catch (t: Throwable) {
-      throw RuntimeException("ghostty_terminal_resize failed", t)
-    }
+    sizeHandler.resize(terminal, geometry)
   }
 
   override fun setResizePullScrollback(pull: Boolean) {
@@ -698,8 +696,9 @@ internal class GhosttyTerminalEmulator(
       // is the best this cell-based API can do.
       scratchMouseSize.fill(0)
       scratchMouseSize.set(C_LONG, 0L, GhosttyLayouts.MOUSE_ENCODER_SIZE_BYTES)
-      scratchMouseSize.set(C_INT, GhosttyLayouts.MOUSE_ENCODER_SIZE_OFF_SCREEN_WIDTH, terminalGetU16(GhosttyTerminalData.COLS))
-      scratchMouseSize.set(C_INT, GhosttyLayouts.MOUSE_ENCODER_SIZE_OFF_SCREEN_HEIGHT, terminalGetU16(GhosttyTerminalData.ROWS))
+      val (columns, rows) = size
+      scratchMouseSize.set(C_INT, GhosttyLayouts.MOUSE_ENCODER_SIZE_OFF_SCREEN_WIDTH, columns)
+      scratchMouseSize.set(C_INT, GhosttyLayouts.MOUSE_ENCODER_SIZE_OFF_SCREEN_HEIGHT, rows)
       scratchMouseSize.set(C_INT, GhosttyLayouts.MOUSE_ENCODER_SIZE_OFF_CELL_WIDTH, 1)
       scratchMouseSize.set(C_INT, GhosttyLayouts.MOUSE_ENCODER_SIZE_OFF_CELL_HEIGHT, 1)
       LibGhosttyVt.mouseEncoderSetopt(mouseEncoder, GhosttyMouseEncoderOption.SIZE.code, scratchMouseSize)
@@ -810,7 +809,7 @@ internal class GhosttyTerminalEmulator(
   private fun buildRow(pointTag: GhosttyPointTag, y: Int): TerminalRow {
     ensureOpen()
     rowStyleCache.clear() // style ids are only comparable within one page; a row never spans pages
-    val width = terminalGetU16(GhosttyTerminalData.COLS)
+    val width = sizeHandler.columns
     val cells = ArrayList<Cell>(width)
     for (x in 0 until width) {
       cells.add(if (readCell(pointTag, x, y, scratchCellData)) scratchCellData.toCell() else Cell.Empty)
@@ -935,8 +934,8 @@ internal class GhosttyTerminalEmulator(
    * Invoked from native code (the upcall stub) when the program reports progress via OSC 9;4; [report]
    * points at a borrowed `GhosttyTerminalProgressReport` valid only for this call.
    *
-   * Deliberately total: an unmodeled state or an out-of-range percentage is dropped or coerced rather than
-   * raised, because an exception thrown out of an FFM upcall unwinds into ghostty's own stack frames.
+   * Never throws: an unmodeled state or an out-of-range percentage is dropped or coerced
+   * rather than raised. An exception thrown out of an FFM upcall terminates the JVM.
    */
   @Suppress("unused", "UNUSED_PARAMETER")
   private fun onProgressReport(terminal: MemorySegment, userdata: MemorySegment, report: MemorySegment) {
@@ -1392,13 +1391,14 @@ internal class GhosttyTerminalEmulator(
   private fun terminalGetU16(dataKind: GhosttyTerminalData): Int {
     ensureOpen()
     scratchOut.set(C_SHORT, 0L, 0.toShort())
-    try {
-      val r = LibGhosttyVt.terminalGet(terminal, dataKind.code, scratchOut)
-      if (r != GhosttyResult.SUCCESS) {
-        throw IllegalStateException("ghostty_terminal_get($dataKind) returned $r")
-      }
-    } catch (t: Throwable) {
-      throw RuntimeException("ghostty_terminal_get failed", t)
+    val result = try {
+      LibGhosttyVt.terminalGet(terminal, dataKind.code, scratchOut)
+    }
+    catch (t: Throwable) {
+      throw RuntimeException("ghostty_terminal_get($dataKind) failed", t)
+    }
+    if (result != GhosttyResult.SUCCESS) {
+      throw IllegalStateException("ghostty_terminal_get($dataKind) returned $result")
     }
     return scratchOut.get(C_SHORT, 0L).toInt() and 0xFFFF
   }

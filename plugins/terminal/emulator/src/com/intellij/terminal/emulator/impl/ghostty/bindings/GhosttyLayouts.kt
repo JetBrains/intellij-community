@@ -14,8 +14,7 @@ import java.lang.foreign.ValueLayout
  * the (pre-1.0, still-moving) C API. `GhosttyStyle` in particular is read via raw offsets rather
  * than layout var-handles, so the offsets live here alongside the layouts.
  *
- * Every size and offset here is checked against `ghostty_type_json()` — the layout
- * description compiled into the bundled library — by `GhosttyLayoutsTest`.
+ * Every size and offset here is checked against `ghostty_type_json()` by `GhosttyStructLayoutsTest`.
  */
 internal object GhosttyLayouts {
 

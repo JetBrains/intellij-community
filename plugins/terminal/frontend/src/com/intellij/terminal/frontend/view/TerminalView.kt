@@ -13,6 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalGridGeometryDto
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelsSet
 import org.jetbrains.plugins.terminal.view.TerminalSendTextBuilder
@@ -51,6 +52,10 @@ interface TerminalView {
    * This property represents the current size of the grid.
    */
   val gridSize: TerminalGridSize?
+
+  /** [gridSize] with the pixel size of one cell, or null if it cannot be measured. */
+  @get:ApiStatus.Internal
+  val gridGeometry: TerminalGridGeometryDto?
 
   /**
    * The name of the terminal session.

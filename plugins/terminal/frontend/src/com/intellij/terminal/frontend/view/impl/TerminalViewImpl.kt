@@ -91,6 +91,7 @@ import org.jetbrains.plugins.terminal.block.reworked.TerminalSessionModelImpl
 import org.jetbrains.plugins.terminal.block.reworked.lang.TerminalOutputPsiFile
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 import org.jetbrains.plugins.terminal.block.ui.addToLayer
+import org.jetbrains.plugins.terminal.block.ui.calculateGridGeometry
 import org.jetbrains.plugins.terminal.block.ui.calculateTerminalSize
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import org.jetbrains.plugins.terminal.hyperlinks.TerminalHyperlinkDataKeys
@@ -99,6 +100,7 @@ import org.jetbrains.plugins.terminal.hyperlinks.TerminalSourceNavigationProject
 import org.jetbrains.plugins.terminal.session.TerminalGridSize
 import org.jetbrains.plugins.terminal.session.TerminalStartupOptions
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalGridGeometryDto
 import org.jetbrains.plugins.terminal.util.convertNativePathToNioPath
 import org.jetbrains.plugins.terminal.util.getNow
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
@@ -184,6 +186,8 @@ class TerminalViewImpl(
     get() = terminalPanel.preferredFocusableComponent
   override val gridSize: TerminalGridSize?
     get() = getCurEditor()?.calculateTerminalSize()
+  override val gridGeometry: TerminalGridGeometryDto?
+    get() = getCurEditor()?.calculateGridGeometry()
   override val title: TerminalTitle = TerminalTitle()
 
   private val mutableOutputModels: TerminalOutputModelsSetImpl
@@ -492,11 +496,15 @@ class TerminalViewImpl(
         sendResizeEvent()
       }
     })
+    // Moving terminal between different displays changes the cell size in device pixels.
+    terminalPanel.layeredPane.addPropertyChangeListener("graphicsConfiguration") {
+      sendResizeEvent()
+    }
   }
 
   private fun sendResizeEvent() {
-    val newSize = gridSize ?: return
-    terminalInput.sendResize(newSize)
+    val geometry = gridGeometry ?: return
+    terminalInput.sendResize(geometry)
   }
 
   private fun listenAlternateBufferSwitch() {

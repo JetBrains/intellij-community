@@ -176,6 +176,7 @@ internal enum class GhosttyRowData(val code: Int) {
 internal enum class GhosttyTerminalOption(val code: Int) {
   WRITE_PTY(1),
   BELL(2),
+  SIZE(6),
   COLOR_SCHEME(7),
   COLOR_FOREGROUND(11),
   COLOR_BACKGROUND(12),

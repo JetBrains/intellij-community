@@ -20,8 +20,9 @@ import java.lang.invoke.MethodHandle
  * entry point, taking [MemorySegment]s and primitives that map 1:1 onto the C signatures. Functions
  * whose C return type is `GhosttyResult` surface it as the [GhosttyResult] enum (the only typing the
  * raw layer does); everything else stays primitive. It owns the [SymbolLookup] and the downcall
- * [MethodHandle]s but holds **no per-call state** — every function is allocation-free and the caller
- * supplies all memory.
+ * [MethodHandle]s of the shared entry points but holds **no per-call state** — every function is
+ * allocation-free and the caller supplies all memory. A feature class owns the entry points of its
+ * feature and resolves them with [downcall].
  *
  * The shared library file is resolved by [LibGhosttyVtLocator].
  *
@@ -47,10 +48,6 @@ internal object LibGhosttyVt {
   fun terminalVtWrite(terminal: MemorySegment, data: MemorySegment, len: Long) {
     TERMINAL_VT_WRITE.invokeExact(terminal, data, len)
   }
-
-  /** `ghostty_terminal_resize`: resize to [cols]x[rows]; cell pixel size is irrelevant for reflow. */
-  fun terminalResize(terminal: MemorySegment, cols: Short, rows: Short, cellWidthPx: Int, cellHeightPx: Int): GhosttyResult =
-    GhosttyResult.of(TERMINAL_RESIZE.invokeExact(terminal, cols, rows, cellWidthPx, cellHeightPx) as Int)
 
   /** `ghostty_terminal_get`: read a [GhosttyTerminalData] scalar/string into [out]. */
   fun terminalGet(terminal: MemorySegment, dataKind: Int, out: MemorySegment): GhosttyResult =
@@ -335,8 +332,9 @@ internal object LibGhosttyVt {
   /**
    * `ghostty_type_json`: the JSON description of every C API struct's size and field
    * offsets, as compiled into the loaded library. This is what the hand-written geometry
-   * in [GhosttyLayouts] must match; `GhosttyLayoutsTest` checks it. Cold diagnostic call —
-   * unlike the rest of this binding it allocates, decoding the returned static C string.
+   * in [GhosttyLayouts] must match; `GhosttyStructLayoutsTest` checks it. Cold
+   * diagnostic call — unlike the rest of this binding it allocates, decoding the
+   * returned static C string.
    */
   fun typeJson(): String {
     val ptr = TYPE_JSON.invokeExact() as MemorySegment
@@ -417,8 +415,6 @@ internal object LibGhosttyVt {
     FunctionDescriptor.ofVoid(C_PTR)) }
   private val TERMINAL_VT_WRITE: MethodHandle by lazy { downcall("ghostty_terminal_vt_write",
     FunctionDescriptor.ofVoid(C_PTR, C_PTR, C_LONG)) }
-  private val TERMINAL_RESIZE: MethodHandle by lazy { downcall("ghostty_terminal_resize",
-    FunctionDescriptor.of(C_INT, C_PTR, C_SHORT, C_SHORT, C_INT, C_INT)) }
   private val TERMINAL_GET: MethodHandle by lazy { downcall("ghostty_terminal_get",
     FunctionDescriptor.of(C_INT, C_PTR, C_INT, C_PTR)) }
   private val TERMINAL_GRID_REF: MethodHandle by lazy { downcall("ghostty_terminal_grid_ref",
@@ -533,7 +529,13 @@ internal object LibGhosttyVt {
   private fun openLibrary(): SymbolLookup =
     SymbolLookup.libraryLookup(LibGhosttyVtLocator.findLibraryFile(), LIB_ARENA)
 
-  private fun downcall(symbol: String, descriptor: FunctionDescriptor): MethodHandle {
+  /**
+   * Links the C function [symbol] with [descriptor]. A feature class keeps the returned handle
+   * in a lazy property, so a missing library fails at first use and not in a class initializer.
+   *
+   * @throws IllegalStateException if the library has no such symbol.
+   */
+  internal fun downcall(symbol: String, descriptor: FunctionDescriptor): MethodHandle {
     val address = LOOKUP.find(symbol)
       .orElseThrow { IllegalStateException("libghostty-vt symbol not found: $symbol") }
     return LINKER.downcallHandle(address, descriptor)

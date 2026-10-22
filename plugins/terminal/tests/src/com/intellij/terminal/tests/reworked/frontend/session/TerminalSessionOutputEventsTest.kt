@@ -36,6 +36,8 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalShellIntegrationEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalStateChangedEvent
+import org.jetbrains.plugins.terminal.session.impl.dto.CellPixelSizeDto
+import org.jetbrains.plugins.terminal.session.impl.dto.TerminalGridGeometryDto
 import org.jetbrains.plugins.terminal.session.impl.dto.MouseFormatDto
 import org.jetbrains.plugins.terminal.session.impl.dto.MouseModeDto
 import org.jetbrains.plugins.terminal.session.impl.dto.CursorShapeDto
@@ -486,7 +488,10 @@ internal class TerminalSessionOutputEventsTest(emulatorType: TerminalEmulatorTyp
     // A resize re-reports the (unchanged) buffer content. Skip the events collected before the resize,
     // because that earlier "hello" content event looks identical to the re-reported one.
     val skip = collector.currentEventCount()
-    session.getInputChannel().send(TerminalResizeEvent(TerminalGridSize(columns = 40, rows = 10)))
+    session.getInputChannel().send(TerminalResizeEvent(TerminalGridGeometryDto(
+      TerminalGridSize(columns = 40, rows = 10),
+      CellPixelSizeDto(width = 8, height = 16),
+    )))
 
     val event = collector.awaitEventAfter<TerminalContentUpdatedEvent>(skip) { it.text.contains("hello") }
     assertThat(event.text).contains("hello")
@@ -499,7 +504,10 @@ internal class TerminalSessionOutputEventsTest(emulatorType: TerminalEmulatorTyp
 
     // Resize to a smaller grid; every line must still be present in the re-reported content.
     val skip = collector.currentEventCount()
-    session.getInputChannel().send(TerminalResizeEvent(TerminalGridSize(columns = 20, rows = 10)))
+    session.getInputChannel().send(TerminalResizeEvent(TerminalGridGeometryDto(
+      TerminalGridSize(columns = 20, rows = 10),
+      CellPixelSizeDto(width = 8, height = 16),
+    )))
 
     val event = collector.awaitEventAfter<TerminalContentUpdatedEvent>(skip) { it.text.contains("third") }
     assertThat(event.text).contains("first").contains("second").contains("third")

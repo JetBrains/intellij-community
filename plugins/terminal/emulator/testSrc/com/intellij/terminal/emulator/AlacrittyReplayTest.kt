@@ -61,7 +61,7 @@ class AlacrittyReplayTest {
 
   /** Feeds [bytes] to a fresh emulator in [chunkSize] slices and renders the result as the golden text. */
   private fun replay(recording: Recording, bytes: ByteArray, chunkSize: Int): String {
-    createTerminalEmulator(TerminalSize(recording.columns, recording.rows)).use { emulator ->
+    createTerminalEmulator(TerminalGridGeometry(TerminalSize(recording.columns, recording.rows))).use { emulator ->
       var offset = 0
       while (offset < bytes.size) {
         val end = minOf(offset + chunkSize, bytes.size)
