@@ -420,6 +420,7 @@ abstract class LspClientDescriptor protected constructor(
    * Return `true` if the server reports a problem with `window/showMessage` and writes the details only to its stderr.
    * Then an error or a warning notification from `window/showMessage` or `window/showMessageRequest` gets a "Show server log" action.
    * The action selects the console of the server in the Services tool window. The console shows the stderr of the server.
+   * Without the Services tool window plugin, the action opens the last part of the stderr in an editor tab.
    */
   @get:ApiStatus.Experimental
   open val offerServerLogInNotifications: Boolean = false

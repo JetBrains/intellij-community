@@ -136,11 +136,11 @@ internal class LspShowServerLogTest {
       serverSession.sendNotification(serverSession.SHOW_MESSAGE) { MessageParams(MessageType.Error, "error-marker") }
       val notification = awaitNotification(notifications, "error-marker")
       val action = notification.actions.filterIsInstance<ShowLspServerLogAction>().single()
-      assertEquals(ShowLspServerLogAction.ServerLog.Console(oldClient), action.findServerLog(),
+      assertEquals(ShowLspServerLogAction.ServerLog.Console(oldClient), action.findServerLog(servicesViewAvailable = true),
                    "The action should find the console of the live client")
 
       stopFakeServers(project, fakeLspIntegration.providerClass)
-      assertEquals(ShowLspServerLogAction.ServerLog.NotAvailable, action.findServerLog(),
+      assertEquals(ShowLspServerLogAction.ServerLog.NotAvailable, action.findServerLog(servicesViewAvailable = true),
                    "Without the server error output and without a new client, the server log should not be available")
       val statusBarTexts = ConcurrentLinkedQueue<String>()
       val connection = project.messageBus.connect()
@@ -166,10 +166,39 @@ internal class LspShowServerLogTest {
       fakeLspIntegration.serverSession(otherFile)
       val newClient = LspServiceViewContributor().getServices(project).single() as LspClientImpl
       assertFalse(newClient === oldClient, "The second file should start a new client")
-      assertEquals(ShowLspServerLogAction.ServerLog.Console(newClient), action.findServerLog(),
+      assertEquals(ShowLspServerLogAction.ServerLog.Console(newClient), action.findServerLog(servicesViewAvailable = true),
                    "The action should find the console of the restarted client")
 
       stopFakeServers(project, fakeLspIntegration.providerClass)
     }
   }
+
+  @Test
+  @TestFor(issues = ["IJPL-257420"])
+  fun `show server log without the Services tool window finds the error output of the live client, then of the restarted client`() =
+    timeoutRunBlocking {
+      collectNotifications(project) { notifications ->
+        val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
+        val serverSession = fakeLspIntegration.serverSession(virtualFile)
+        val oldClient = LspServiceViewContributor().getServices(project).single() as LspClientImpl
+        serverSession.sendNotification(serverSession.SHOW_MESSAGE) { MessageParams(MessageType.Error, "error-marker") }
+        val notification = awaitNotification(notifications, "error-marker")
+        val action = notification.actions.filterIsInstance<ShowLspServerLogAction>().single()
+        assertEquals(ShowLspServerLogAction.ServerLog.ErrorOutput(oldClient), action.findServerLog(servicesViewAvailable = false),
+                     "Without the Services tool window, the action should find the error output of the live client")
+
+        stopFakeServers(project, fakeLspIntegration.providerClass)
+        assertEquals(ShowLspServerLogAction.ServerLog.NotAvailable, action.findServerLog(servicesViewAvailable = false),
+                     "Without the server error output and without a new client, the server log should not be available")
+
+        val otherFile = codeInsightFixture.configureByText("other.txt", "hello again").virtualFile
+        fakeLspIntegration.serverSession(otherFile)
+        val newClient = LspServiceViewContributor().getServices(project).single() as LspClientImpl
+        assertFalse(newClient === oldClient, "The second file should start a new client")
+        assertEquals(ShowLspServerLogAction.ServerLog.ErrorOutput(newClient), action.findServerLog(servicesViewAvailable = false),
+                     "Without the Services tool window, the action should find the error output of the restarted client")
+
+        stopFakeServers(project, fakeLspIntegration.providerClass)
+      }
+    }
 }
