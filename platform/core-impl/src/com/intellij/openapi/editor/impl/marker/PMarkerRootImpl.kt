@@ -6,8 +6,7 @@ import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerDeltaProcessor
 import com.intellij.openapi.editor.impl.marker.PMarkerRootImpl.Companion.NULL_NODE
-import com.intellij.openapi.util.TextRangeScalarUtil.startOffset
-import com.intellij.openapi.util.TextRangeScalarUtil.toScalarRange
+import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentLongLongMap
 import com.intellij.util.containers.Java11Shim
@@ -33,6 +32,7 @@ open class PMarkerRootImpl private constructor(
   private val states: PersistentLongMap<StoredNode>,
   /** Number of valid markers that use a persistent policy in the entire tree represented by this root. */
   private val persistentMarkerCount: Int,
+  /** markerId -> absolute textRange */
   @Volatile
   private var cachedOffsets: ConcurrentLongLongMap? = null,
   /**
@@ -79,7 +79,7 @@ open class PMarkerRootImpl private constructor(
       endOffset < update.unchangedPrefixEnd -> resolution
       startOffset > update.editEnd -> {
         if (update.delta == 0) resolution
-        else PMarkerResolution.valid(startOffset + update.delta, endOffset + update.delta)
+        else PMarkerResolution.valid(TextRangeScalarUtil.shift(resolution, update.delta))
       }
       else -> PMarkerResolution.UNRESOLVED
     }
@@ -98,7 +98,7 @@ open class PMarkerRootImpl private constructor(
     }
     return when (val state = states.getUnchecked(markerId)) {
       null, AbsentNode -> PMarkerResolution.ABSENT
-      is InvalidNode -> PMarkerResolution.invalid(state.startOffset, state.endOffset)
+      is InvalidNode -> PMarkerResolution.invalid(state.range)
       is ValidNode -> absoluteOffsets(state, markerId)
     }
   }
@@ -191,7 +191,7 @@ open class PMarkerRootImpl private constructor(
       )
       is ValidNode -> {
         val offsets = absoluteOffsets(state, markerId)
-        val startOffset = startOffset(offsets)
+        val startOffset = TextRangeScalarUtil.startOffset(offsets)
         val key = PositionKey(startOffset, markerId)
         val editor = MapBatchEditor(states, persistentMarkerCount)
         val newRoot = removeByKey(editor, rootId, key)
@@ -538,7 +538,7 @@ open class PMarkerRootImpl private constructor(
       val parentId = node.parentId
       if (parentId == NULL_NODE) {
         result = 0
-        cachedOffsets.putIfAbsent(nodeId, toScalarRange(node.entry.nodeStart, node.entry.nodeEnd))
+        cachedOffsets.putIfAbsent(nodeId, TextRangeScalarUtil.toScalarRange(node.entry.nodeStart, node.entry.nodeEnd))
         break
       }
 
@@ -549,7 +549,7 @@ open class PMarkerRootImpl private constructor(
       nodeId = parentId
       val cached = cachedOffsets[nodeId]
       if (cached != UNCACHED_OFFSETS) {
-        result = startOffset(cached) - node.entry.nodeStart
+        result = TextRangeScalarUtil.startOffset(cached) - node.entry.nodeStart
         break
       }
     }
@@ -558,9 +558,9 @@ open class PMarkerRootImpl private constructor(
       result += node.lazyOffsetDelta
       i--
       node = path[i]!!
-      //cachedOffsets.putIfAbsent(node.entry.markerId, toScalarRange(node.entry.nodeStart + result, node.entry.nodeEnd + result))
+      cachedOffsets.putIfAbsent(node.entry.markerId, TextRangeScalarUtil.toScalarRange(node.entry.nodeStart + result, node.entry.nodeEnd + result))
     }
-    return toScalarRange(state.entry.nodeStart + result, state.entry.nodeEnd + result)
+    return TextRangeScalarUtil.toScalarRange(state.entry.nodeStart + result, state.entry.nodeEnd + result)
   }
 
   private fun guessMaximumHeight(): Int {
@@ -668,8 +668,7 @@ open class PMarkerRootImpl private constructor(
 
   private data class InvalidNode(
     val reason: String,
-    val startOffset: Int,
-    val endOffset: Int,
+    val range: Long,
   ) : StoredNode
 
   private object AbsentNode : StoredNode
@@ -758,7 +757,7 @@ open class PMarkerRootImpl private constructor(
       persistentMarkerCount = decrementPersistentMarkerCount(persistentMarkerCount, entry.policy)
       builder.put(
         entry.markerId,
-        InvalidNode(reason, entry.nodeStart, entry.nodeEnd)
+        InvalidNode(reason, TextRangeScalarUtil.toScalarRange(entry.nodeStart, entry.nodeEnd))
       )
     }
 

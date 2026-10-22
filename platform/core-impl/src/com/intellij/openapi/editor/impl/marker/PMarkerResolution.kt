@@ -19,19 +19,19 @@ object PMarkerResolution {
   private const val INVALID_FLAG: Long = 0x80000000L
   private const val STATE_MASK: Long = INVALID_FLAG or Long.MIN_VALUE
 
-  /** Returns a valid marker with the half-open range `[startOffset, endOffset)`. */
-  fun valid(startOffset: Int, endOffset: Int): Long = TextRangeScalarUtil.toScalarRange(startOffset, endOffset)
+  /** Returns a packed range for a valid marker with the half-open range `[startOffset, endOffset)`. */
+  fun valid(range:Long): Long = range
 
-  /** Returns an invalid marker with its offsets immediately before invalidation. */
-  fun invalid(startOffset: Int, endOffset: Int): Long = valid(startOffset, endOffset) or INVALID_FLAG
+  /** Returns a packed range for an invalid marker with its offsets immediately before invalidation. */
+  fun invalid(range: Long): Long = range or INVALID_FLAG
 
-  fun isValid(resolution: Long): Boolean = resolution and STATE_MASK == 0L
+  fun isValid(range: Long): Boolean = range and STATE_MASK == 0L
 
-  fun isAbsent(resolution: Long): Boolean = resolution == ABSENT
+  fun isAbsent(range: Long): Boolean = range == ABSENT
 
-  fun startOffset(resolution: Long): Int = TextRangeScalarUtil.startOffset(resolution)
+  fun startOffset(range: Long): Int = TextRangeScalarUtil.startOffset(range)
 
-  fun endOffset(resolution: Long): Int = TextRangeScalarUtil.endOffset(resolution)
+  fun endOffset(range: Long): Int = TextRangeScalarUtil.endOffset(range)
 
-  fun toTextRange(resolution: Long): TextRange = TextRangeScalarUtil.create(resolution and INVALID_FLAG.inv())
+  fun toTextRange(range: Long): TextRange = TextRangeScalarUtil.create(range and INVALID_FLAG.inv())
 }

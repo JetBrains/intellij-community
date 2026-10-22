@@ -29,6 +29,9 @@ public final class TextRangeScalarUtil {
 
     return toScalarRange(newStart, newEnd);
   }
+  public static long shift(long range, int delta) {
+    return shift(range, delta, delta);
+  }
 
   public static long union(long range1, long range2) {
     if (range1 == range2) return range1;

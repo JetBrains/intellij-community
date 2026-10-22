@@ -1110,7 +1110,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
       root.setCachedValues(true, getModCount());
     }
     else {
-      root.setRange(TextRangeScalarUtil.shift(root.toScalarRange(), delta, delta));
+      root.setRange(TextRangeScalarUtil.shift(root.toScalarRange(), delta));
       root.maxEnd += delta;
       root.delta = 0;
       incDelta(root.getLeft(), delta);

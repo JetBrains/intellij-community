@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Segment
+import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test
 @TestApplication
 @UsePMarkerImplementation
 @RunInEdt(writeIntent = true)
+@Suppress("SuspiciousPackagePrivateAccess")
 class SnapshotFocusModeModelTest {
   @Test
   fun `focus region resolves in snapshot branches`(): Unit = withEditor("abcdef") { editor ->
@@ -28,13 +30,13 @@ class SnapshotFocusModeModelTest {
 
     assertThat(region).isInstanceOf(SnapshotRangeMarkerImpl::class.java)
     assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotRegion, rootStore.rootReference(initialSnapshot).get()))
-      .isEqualTo(PMarkerResolution.valid(2, 4))
+      .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(2, 4)))
 
     val branch = document.snapshotMarkerStores.applyPatch(initialSnapshot, textPatch(0, 0, "x"))
     assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotRegion, rootStore.rootReference(branch).get()))
-      .isEqualTo(PMarkerResolution.valid(3, 5))
+      .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(3, 5)))
     assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotRegion, rootStore.rootReference(initialSnapshot).get()))
-      .isEqualTo(PMarkerResolution.valid(2, 4))
+      .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(2, 4)))
   }
 
   @Test

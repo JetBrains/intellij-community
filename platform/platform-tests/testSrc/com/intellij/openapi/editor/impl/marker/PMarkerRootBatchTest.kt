@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl.marker
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
+import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.testFramework.junit5.TestApplication
 import it.unimi.dsi.fastutil.longs.LongArrayList
 import it.unimi.dsi.fastutil.longs.LongLists
@@ -33,14 +34,14 @@ class PMarkerRootBatchTest {
           val entry = expected.getValue(id)
           val resolution = root.resolve(id)
           assertTrue(PMarkerResolution.isValid(resolution))
-          assertEquals(PMarkerResolution.valid(entry.nodeStart, entry.nodeEnd), resolution)
+          assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(entry.nodeStart, entry.nodeEnd)), resolution)
         }
       }
       val entry = expected.getValue(12)
       val removed = root.remove(12)
       assertTrue(PMarkerResolution.isAbsent(removed.resolve(12)))
       assertEquals(PMarkerResolution.ABSENT, removed.resolve(12))
-      assertEquals(PMarkerResolution.valid(entry.nodeStart, entry.nodeEnd), root.resolve(12))
+      assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(entry.nodeStart, entry.nodeEnd)), root.resolve(12))
     }
   }
 
@@ -49,8 +50,8 @@ class PMarkerRootBatchTest {
     val root = PMarkerRootImpl.empty().insertMany(listOf(entry(1, 0, 0), entry(2, Int.MAX_VALUE - 1, Int.MAX_VALUE)))
 
     repeat(2) {
-      assertEquals(PMarkerResolution.valid(0, 0), root.resolve(1))
-      assertEquals(PMarkerResolution.valid(Int.MAX_VALUE - 1, Int.MAX_VALUE), root.resolve(2))
+      assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(0, 0)), root.resolve(1))
+      assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(Int.MAX_VALUE - 1, Int.MAX_VALUE)), root.resolve(2))
     }
   }
 

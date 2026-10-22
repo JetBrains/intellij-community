@@ -160,7 +160,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
       return TextRangeScalarUtil.create(myId);
     }
     int delta = node.computeDeltaUpToRoot();
-    return TextRangeScalarUtil.create(TextRangeScalarUtil.shift(node.toScalarRange(), delta, delta));
+    return TextRangeScalarUtil.create(TextRangeScalarUtil.shift(node.toScalarRange(), delta));
   }
 
   @ApiStatus.Internal
@@ -471,7 +471,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     }
     long range = node.toScalarRange();
     int delta = node.computeDeltaUpToRoot();
-    return TextRangeScalarUtil.shift(range, delta, delta);
+    return TextRangeScalarUtil.shift(range, delta);
   }
 
   // return intrinsic range belonging to that node (without delta-up-to-the-root correction)
@@ -492,7 +492,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   void storeOffsetsBeforeDying(@NotNull IntervalTreeImpl.IntervalNode<?> node) {
     // store current offsets to give async listeners the ability to get offsets
     int delta = node.computeDeltaUpToRoot();
-    long range = TextRangeScalarUtil.shift(node.toScalarRange(), delta, delta);
+    long range = TextRangeScalarUtil.shift(node.toScalarRange(), delta);
     int startOffset = Math.max(0, TextRangeScalarUtil.startOffset(range));
     int endOffset = Math.max(startOffset, TextRangeScalarUtil.endOffset(range));
     // piggyback myId to store offsets, to conserve memory

@@ -99,7 +99,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     }
     val rootStorage = fileRoot ?: documentImpl.rangeMarkers.rootStore()
     val insertedRoot = checkNotNull(rootStorage.updateRootAtomically(rootReference, update))
-    marker.cacheResolution(insertedRoot, PMarkerResolution.valid(startOffset, endOffset))
+    marker.cacheResolution(insertedRoot, PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(startOffset, endOffset)))
     return marker
   }
 
@@ -137,7 +137,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     val insertedRoot = checkNotNull(fileRoot.updateRootAtomically(null) { it: PMarkerRoot ->
       it.insert(markerId, startOffset, startOffset, spec, marker.flavorFlags, markerReference, policy = marker.policy)
     })
-    marker.cacheResolution(insertedRoot, PMarkerResolution.valid(startOffset, startOffset))
+    marker.cacheResolution(insertedRoot, PMarkerResolution.valid(initialRange))
     return marker
   }
 
@@ -251,7 +251,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     val resolution = root.resolve(marker.markerId)
     return if (marker.isDisposed()) {
       val range = if (PMarkerResolution.isAbsent(resolution)) marker.initialRange else resolution
-      PMarkerResolution.invalid(PMarkerResolution.startOffset(range), PMarkerResolution.endOffset(range))
+      PMarkerResolution.invalid(range)
     }
     else {
       resolution

@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
+import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ref.GCUtil
 import org.assertj.core.api.Assertions
@@ -33,15 +34,15 @@ class SnapshotGuardedBlockTest {
     val markerStores = document.snapshotMarkerStores
     val rootStore = document.rangeMarkers.rootStore()
     Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotGuard, rootStore.rootReference(initialSnapshot).get()))
-      .isEqualTo(PMarkerResolution.valid(4, 10))
+      .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(4, 10)))
 
     val insertedBefore = markerStores.applyPatch(initialSnapshot, textPatch(0, 0, "x\n"))
     Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotGuard, rootStore.rootReference(insertedBefore).get()))
-      .isEqualTo(PMarkerResolution.valid(6, 12))
+      .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(6, 12)))
 
     val replaced = markerStores.applyPatch(initialSnapshot, textPatch(0, initialSnapshot.text().length(), "prefix\none\ntarget\nlast"))
     Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotGuard, rootStore.rootReference(replaced).get()))
-      .isEqualTo(PMarkerResolution.valid(11, 17))
+      .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(11, 17)))
 
     val deleted = markerStores.applyPatch(initialSnapshot, textPatch(3, 11, ""))
     val deletedResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(snapshotGuard, rootStore.rootReference(deleted).get())

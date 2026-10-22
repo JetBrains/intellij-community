@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl.marker
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.RangeMarkersImpl
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.TextRangeScalarUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertSame
@@ -41,12 +42,12 @@ internal class SnapshotRangeMarkerImplTest {
   @Test
   fun `root insertion does not resolve the marker reference for its policy`() {
     val reference = object : SnapshotMarkerReference {
-      override fun get(): SnapshotRangeMarkerImpl? = error("Insertion must not resolve the marker reference")
+      override fun get(): SnapshotRangeMarkerImpl = error("Insertion must not resolve the marker reference")
     }
     val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
     val root = PMarkerRootImpl.empty().insert(1, 2, 4, spec, flavorFlags = 0, markerReference = reference)
 
-    assertEquals(PMarkerResolution.valid(2, 4), root.resolve(1))
+    assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(2, 4)), root.resolve(1))
   }
 
   @Test
@@ -79,7 +80,7 @@ internal class SnapshotRangeMarkerImplTest {
     RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
       val document = DocumentImpl("abcdefgh", true)
       val marker = document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
-      assertEquals(PMarkerResolution.valid(2, 4), marker.initialRange)
+      assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(2, 4)), marker.initialRange)
       val reference = marker.currentRootReference()
       val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
       val shifted = reference.get().remove(marker.id).insert(marker.id, 4, 6, spec, flavorFlags = 0)
@@ -102,7 +103,7 @@ internal class SnapshotRangeMarkerImplTest {
       marker.dispose()
       assertFalse(marker.isValid)
       assertEquals(TextRange(2, 4), marker.textRange)
-      assertEquals(PMarkerResolution.invalid(2, 4), SnapshotMarkerEngineImpl.resolveRangeMarker(marker, reference.get()))
+      assertEquals(PMarkerResolution.invalid(TextRangeScalarUtil.toScalarRange(2, 4)), SnapshotMarkerEngineImpl.resolveRangeMarker(marker, reference.get()))
     }
   }
 

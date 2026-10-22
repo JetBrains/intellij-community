@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -42,6 +43,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.LongConsumer
 import javax.swing.Icon
 
+@Suppress("SuspiciousPackagePrivateAccess")
 @TestApplication
 @UsePMarkerImplementation
 class SnapshotRangeHighlighterImplTest {
@@ -338,22 +340,22 @@ class SnapshotRangeHighlighterImplTest {
       val lineMarker = lineHighlighter as SnapshotRangeMarkerImpl
       val rootStore = model.rootStore()
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(exactMarker, rootStore.rootReference(initialSnapshot).get()))
-        .isEqualTo(PMarkerResolution.valid(4, 12))
+        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(4, 12)))
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(lineMarker, rootStore.rootReference(initialSnapshot).get()))
-        .isEqualTo(PMarkerResolution.valid(6, 12))
+        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(6, 12)))
 
       val insertedBefore = markerStores.applyPatch(initialSnapshot, textPatch(0, 0, "x\n"))
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(exactMarker, rootStore.rootReference(insertedBefore).get()))
-        .isEqualTo(PMarkerResolution.valid(6, 14))
+        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(6, 14)))
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(lineMarker, rootStore.rootReference(insertedBefore).get()))
-        .isEqualTo(PMarkerResolution.valid(8, 14))
+        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(8, 14)))
 
       val replacedText = "prefix\none\n  target\nlast"
       val replaced = markerStores.applyPatch(initialSnapshot, textPatch(0, initialSnapshot.text().length(), replacedText))
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(exactMarker, rootStore.rootReference(replaced).get()))
-        .isEqualTo(PMarkerResolution.valid(11, 19))
+        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(11, 19)))
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(lineMarker, rootStore.rootReference(replaced).get()))
-        .isEqualTo(PMarkerResolution.valid(13, 19))
+        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(13, 19)))
 
       val deleted = markerStores.applyPatch(initialSnapshot, textPatch(4, 13, ""))
       val deletedExactResolution = SnapshotMarkerEngineImpl.resolveRangeMarker(exactMarker, rootStore.rootReference(deleted).get())
@@ -410,11 +412,11 @@ class SnapshotRangeHighlighterImplTest {
       val secondBranch = markerStores.applyPatch(initialSnapshot, textPatch(0, 0, "YYYY"))
 
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(highlighter, rootStore.rootReference(initialSnapshot).get()))
-        .isEqualTo(PMarkerResolution.valid(2, 4))
+        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(2, 4)))
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(highlighter, rootStore.rootReference(firstBranch).get()))
-        .isEqualTo(PMarkerResolution.valid(3, 5))
+        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(3, 5)))
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(highlighter, rootStore.rootReference(secondBranch).get()))
-        .isEqualTo(PMarkerResolution.valid(6, 8))
+        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(6, 8)))
     }
     finally {
       model.dispose()
@@ -436,9 +438,9 @@ class SnapshotRangeHighlighterImplTest {
       val secondRootStore = secondModel.rootStore()
 
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(first, firstRootStore.rootReference(snapshot).get()))
-        .isEqualTo(PMarkerResolution.valid(1, 2))
+        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(1, 2)))
       Assertions.assertThat(SnapshotMarkerEngineImpl.resolveRangeMarker(second, secondRootStore.rootReference(snapshot).get()))
-        .isEqualTo(PMarkerResolution.valid(4, 5))
+        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(4, 5)))
       Assertions.assertThat(firstModel.allHighlighters).containsExactly(firstHighlighter)
       Assertions.assertThat(secondModel.allHighlighters).containsExactly(secondHighlighter)
     }
