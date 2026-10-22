@@ -2976,6 +2976,25 @@ public final class ContainerUtil {
   }
 
   /**
+   * @return read-only set consisting of not null results of {@code mapper.fun} for each element in {@code array}
+   */
+  @Contract(pure = true)
+  public static @Unmodifiable @NotNull <T, V> Set<@NotNull V> map2SetNotNull(T @NotNull [] array,
+                                                                             @NotNull Function<? super T, ? extends @Nullable V> mapper) {
+    if (array.length == 0) {
+      return Collections.emptySet();
+    }
+    Set<V> set = new HashSet<>(array.length);
+    for (T t : array) {
+      V value = mapper.fun(t);
+      if (value != null) {
+        set.add(value);
+      }
+    }
+    return emptyOrUnmodifiableSet(set);
+  }
+
+  /**
    * @return read-only set consisting of not null results of {@code mapper.fun} for each element in {@code collection}
    */
   @Contract(pure = true)

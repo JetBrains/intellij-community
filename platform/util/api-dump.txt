@@ -1441,6 +1441,7 @@ f:com.intellij.util.containers.ContainerUtil
 - s:iterateAndGetLastItem(java.lang.Iterable):java.lang.Object
 - s:iterateBackward(java.util.List):java.lang.Iterable
 - s:list(java.lang.Object[]):java.util.List
+- s:map2SetNotNull(java.lang.Object[],com.intellij.util.Function):java.util.Set
 - s:newArrayList():java.util.ArrayList
 - s:newArrayList(java.lang.Iterable):java.util.ArrayList
 - s:newArrayList(java.util.Collection):java.util.ArrayList
