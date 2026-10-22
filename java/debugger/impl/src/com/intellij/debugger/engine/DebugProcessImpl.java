@@ -1965,11 +1965,14 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   /**
    * Loads and initializes a class by its qualified name in the given evaluation context and using the specified class loader.
+   * The evaluation context must allow class loading.
    */
   public ReferenceType loadClass(@NotNull EvaluationContextImpl evaluationContext, String qName, ClassLoaderReference classLoader)
     throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException, EvaluateException {
 
     DebuggerManagerThreadImpl.assertIsManagerThread();
+    LOG.assertTrue(evaluationContext.isAutoLoadClasses(), "Class loading is disabled: " + qName);
+
     qName = reformatArrayName(qName);
     VirtualMachineProxyImpl virtualMachine = getCurrentVm(evaluationContext.getSuspendContext());
     ClassType classClassType = (ClassType)ContainerUtil.getFirstItem(virtualMachine.classesByName(CommonClassNames.JAVA_LANG_CLASS));

@@ -5,20 +5,15 @@ package org.jetbrains.kotlin.idea.debugger.base.util.evaluate
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
-import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.openapi.project.Project
 import com.sun.jdi.ArrayReference
 import com.sun.jdi.ClassLoaderReference
-import com.sun.jdi.ClassNotLoadedException
 import com.sun.jdi.ClassType
-import com.sun.jdi.IncompatibleThreadStateException
 import com.sun.jdi.IntegerValue
 import com.sun.jdi.InterfaceType
-import com.sun.jdi.InvalidTypeException
-import com.sun.jdi.InvocationException
 import com.sun.jdi.Method
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.ReferenceType
@@ -106,24 +101,7 @@ sealed class BaseExecutionContext(val evaluationContext: EvaluationContextImpl) 
 
     @Throws(EvaluateException::class)
     fun findClass(name: String, classLoader: ClassLoaderReference? = null): ReferenceType? {
-        debugProcess.findClass(evaluationContext, name, classLoader)?.let { return it }
-
-        // If 'isAutoLoadClasses' is true, `findClass()` already did this
-        if (!evaluationContext.isAutoLoadClasses) {
-            try {
-                debugProcess.loadClass(evaluationContext, name, classLoader)
-            } catch (e: InvocationException) {
-                throw EvaluateExceptionUtil.createEvaluateException(e)
-            } catch (e: ClassNotLoadedException) {
-                throw EvaluateExceptionUtil.createEvaluateException(e)
-            } catch (e: IncompatibleThreadStateException) {
-                throw EvaluateExceptionUtil.createEvaluateException(e)
-            } catch (e: InvalidTypeException) {
-                throw EvaluateExceptionUtil.createEvaluateException(e)
-            }
-        }
-
-        return null
+        return debugProcess.findClass(evaluationContext.withAutoLoadClasses(true), name, classLoader)
     }
 
     @Throws(EvaluateException::class)

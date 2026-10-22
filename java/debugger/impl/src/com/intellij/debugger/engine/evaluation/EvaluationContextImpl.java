@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class EvaluationContextImpl extends UserDataHolderBase implements EvaluationContext {
+  // WARNING: When adding a new field, check whether withAutoLoadClasses() must copy it.
+
   private final DebuggerComputableValue myThisObject;
   private final @NotNull SuspendContextImpl mySuspendContext;
   private final StackFrameProxyImpl myFrameProxy;
@@ -113,6 +115,13 @@ public final class EvaluationContextImpl extends UserDataHolderBase implements E
     return myAutoLoadClasses;
   }
 
+  /**
+   * Sets whether the debugger may load classes using this context.
+   * Use this method to configure a new context before sharing it.
+   * For a temporary change, use {@link #withAutoLoadClasses(boolean)} and pass the returned context to the operation.
+   *
+   * @param autoLoadClasses {@code false} to forbid class loading by the debugger; {@code true} to allow it
+   */
   public void setAutoLoadClasses(final boolean autoLoadClasses) {
     myAutoLoadClasses = autoLoadClasses;
   }
@@ -144,12 +153,22 @@ public final class EvaluationContextImpl extends UserDataHolderBase implements E
     }
   }
 
+  /**
+   * Returns a new context with the requested class loading permission for the debugger without changing this context.
+   * Use the returned context for operations that need a different setting.
+   * A copy retains the settings and user data, but does not copy the active evaluation state.
+   *
+   * @param autoLoadClasses {@code false} to forbid class loading by the debugger; {@code true} to allow it
+   * @return this context if the setting already matches; otherwise, a copy with the new setting
+   */
   public EvaluationContextImpl withAutoLoadClasses(boolean autoLoadClasses) {
     if (myAutoLoadClasses == autoLoadClasses) {
       return this;
     }
     EvaluationContextImpl copy = new EvaluationContextImpl(mySuspendContext, myFrameProxy, myThisObject);
     copy.setAutoLoadClasses(autoLoadClasses);
+    copy.myClassLoader = myClassLoader;
+    copy.myMayRetryEvaluation = myMayRetryEvaluation;
     copyUserDataTo(copy);
     return copy;
   }

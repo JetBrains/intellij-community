@@ -277,13 +277,7 @@ public class IdeaNativeAgentProxyMirror {
 
   private @NotNull ClassType getProxyType(@NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
     if (myProxyType == null) {
-      boolean valueBefore = evaluationContext.isAutoLoadClasses();
-      try {
-        return getOrLoadProxyType(evaluationContext);
-      }
-      finally {
-        evaluationContext.setAutoLoadClasses(valueBefore);
-      }
+      return getOrLoadProxyType(evaluationContext.withAutoLoadClasses(true));
     }
     return myProxyType;
   }
@@ -413,7 +407,7 @@ public class IdeaNativeAgentProxyMirror {
   private static @Nullable ReferenceType loadUtilityClass(@NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
     DebugProcessImpl debugProcess = evaluationContext.getDebugProcess();
     byte[] bytes = readUtilityClass();
-    evaluationContext.setAutoLoadClasses(true);
+    LOG.assertTrue(evaluationContext.isAutoLoadClasses());
     ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(evaluationContext, debugProcess);
     ClassLoadingUtils.defineClass(PROXY_CLASS_NAME, bytes, evaluationContext, classLoader);
 

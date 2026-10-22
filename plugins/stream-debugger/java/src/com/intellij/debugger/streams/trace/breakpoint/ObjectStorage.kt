@@ -39,14 +39,7 @@ class ObjectStorage {
    */
   fun <T> watch(evaluationContext: EvaluationContextImpl, block: ValueContext.() -> T): T {
     DebuggerManagerThreadImpl.assertIsManagerThread()
-    val valueBefore = evaluationContext.isAutoLoadClasses
-    try {
-      evaluationContext.isAutoLoadClasses = true
-      return ValueContextImpl(this, evaluationContext).block()
-    }
-    finally {
-      evaluationContext.isAutoLoadClasses = valueBefore
-    }
+    return ValueContextImpl(this, evaluationContext.withAutoLoadClasses(true)).block()
   }
 
   fun store(obj: ObjectReference) {
