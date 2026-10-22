@@ -277,8 +277,9 @@ def _native_launch(ctx, os, dist, placement, flags, program_args):
     ctx.actions.write(vm_options_file, "".join([line + "\n" for line in _vm_options_lines(ctx, placement, home_path, flags)]))
     vm_options_path = _execroot_path(ctx, vm_options_file.path)
 
+    vm_options_variable = ctx.attr.env_var_base_name + "_VM_OPTIONS"
     launch_environment = {
-        ctx.attr.env_var_base_name + "_VM_OPTIONS": vm_options_path,
+        vm_options_variable: vm_options_path,
     }
 
     # The stub sets the variable itself, so a start of the stub outside `bazel run` never reads the user vmoptions file
@@ -297,6 +298,7 @@ def _native_launch(ctx, os, dist, placement, flags, program_args):
 
         # `bazel run` starts the stub in `<name>.cmd.runfiles`.
         working_directory = runfiles_directory
+        launcher_source = None
     else:
         launcher_source = _execroot_path(ctx, home[launcher].path) if os == "linux" else None
         ctx.actions.write(executable, _sh_stub(launch_environment, launcher_path, program_args, launcher_source), is_executable = True)
@@ -310,16 +312,20 @@ def _native_launch(ctx, os, dist, placement, flags, program_args):
     environment.update(launch_environment)
     runfiles = _merge_data(ctx, runfiles)
 
-    launch = ctx.actions.declare_file(ctx.label.name + ".launch.json")
-    ctx.actions.write(launch, json.encode_indent({
+    launch_content = {
         "version": 3,
         "launcher": launcher_path,
         "vmOptionsFile": vm_options_path,
+        "vmOptionsVariable": vm_options_variable,
         "programArguments": program_args,
         "runfilesDirectory": runfiles_directory,
         "workingDirectory": working_directory,
         "env": environment,
-    }) + "\n")
+    }
+    if launcher_source:
+        launch_content["launcherSource"] = launcher_source
+    launch = ctx.actions.declare_file(ctx.label.name + ".launch.json")
+    ctx.actions.write(launch, json.encode_indent(launch_content) + "\n")
     return [
         DefaultInfo(executable = executable, files = depset([executable, vm_options_file, launch]), runfiles = runfiles),
         RunEnvironmentInfo(environment = environment),
@@ -385,7 +391,10 @@ Windows builds no runfiles tree, so the stub is `<name>.cmd` and the home is the
 executable in `<name>.runfiles/_main`, or in `<name>.cmd.runfiles` on Windows, so every path is absolute. On macOS and
 Windows no process runs before the native launcher, and a launch writes no file. On Linux the stub runs `cmp`, and it
 writes the launcher copy after a change of the runfiles manifest. `<name>.launch.json` has version 3. It states the
-launcher, the vmoptions file, the program arguments, the working directory and the environment of a launch.""",
+launcher, the vmoptions file, the variable that names it, the program arguments, the working directory and the
+environment of a launch. On Linux it also states `launcherSource`, the launcher file that the stub copies. An IDE run
+handler starts the launcher itself. It names a copy of the vmoptions file with its debug options in the variable, and on
+Linux it copies the launcher as the stub does.""",
     implementation = _intellij_dev_java_launcher_impl,
     executable = True,
     fragments = ["java"],
