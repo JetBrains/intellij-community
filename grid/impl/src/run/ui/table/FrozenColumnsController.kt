@@ -5,14 +5,15 @@ import com.intellij.database.datagrid.DataGrid
 import com.intellij.database.datagrid.GridColumn
 import com.intellij.database.datagrid.GridUtil
 import com.intellij.database.datagrid.ModelIndex
-import com.intellij.database.datagrid.ModelIndexSet
 import com.intellij.database.run.ui.grid.GridRowHeader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.JBAutoScroller
 import com.intellij.ui.components.JBScrollBar
+import com.intellij.ui.components.Magnificator
 import com.intellij.ui.scroll.LatchingScroll
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
@@ -25,7 +26,6 @@ import java.awt.event.ActionEvent
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
-import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import java.awt.event.MouseWheelEvent
@@ -80,6 +80,14 @@ internal class FrozenColumnsController(
   private var dragAnchorColumn = -1
   private val componentMouseListeners = mutableListOf<MouseListener>()
   private var frozenColumnResizeHandle: MouseInputAdapter? = null
+
+  /** Zooms the grid on a pinch over the pinned part, keeping the pinched row and the main table's left edge in place. */
+  private val pinnedPartMagnificator = Magnificator { scale, at ->
+    val anchor = Point(primaryView.visibleRect.x, at.y)
+    val zoomed = ClientProperty.get(primaryView, Magnificator.CLIENT_PROPERTY_KEY)?.magnify(scale, anchor) ?: anchor
+    // The zoom scrolls to the returned point minus the pointer, so adding at.x puts zoomed.x at the main table's left edge.
+    Point(zoomed.x + at.x, zoomed.y)
+  }
   private var showRowNumbers = false
 
 
@@ -338,13 +346,9 @@ internal class FrozenColumnsController(
     originalLowerCorner = parent.getCorner(ScrollPaneConstants.LOWER_LEADING_CORNER)
     val frozen = FrozenStripTable(resultPanel, columnHeaderPopupActions, rowHeaderPopupActions)
       .also { it.installHost(hostFactory(it)) }
-    frozen.autoResizeMode = GridTable.AUTO_RESIZE_OFF
-    frozen.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION)
-    frozen.cellSelectionEnabled = true
     // Rows share one model; columns use separate models mirrored below so selection paints correctly in both tables.
     frozen.selectionModel = primaryView.selectionModel
     TableSelectionModel.install(frozen, resultPanel)
-    installRightButtonCellSelect(frozen)
     floatingToolbar.attach(frozen)
     componentMouseListeners.forEach(frozen::addMouseListener)
 
@@ -488,6 +492,8 @@ internal class FrozenColumnsController(
     viewport.applyComponentOrientation(orientation)
     headerViewport.applyComponentOrientation(orientation)
     scrolling.scrollBar.applyComponentOrientation(orientation)
+    // A pinch takes the magnificator of the view of the viewport under the pointer; over the pinned part that is this row header.
+    ClientProperty.put(rowHeader, Magnificator.CLIENT_PROPERTY_KEY, pinnedPartMagnificator)
     // Reuse installed components to avoid relayout and flicker when pinning another column.
     if (parent.rowHeader?.view !== rowHeader) parent.setRowHeaderView(rowHeader)
     if (parent.getCorner(ScrollPaneConstants.UPPER_LEADING_CORNER) !== corner) {
@@ -1252,34 +1258,9 @@ internal class FrozenColumnsController(
     findScrollPane()?.let { updateFrozenViewport(it, anchorNewOverflowAtTrailingEdge = anchorAtTrailingEdge) }
   }
 
-  fun syncRowHeight(view: GridTable, row: Int, rowHeight: Int) {
-    if (view !== primaryView && view !== frozenView) return
-    val sibling = if (view === primaryView) frozenView else primaryView
-    if (sibling != null && row < sibling.rowCount && sibling.getRowHeight(row) != rowHeight) {
-      sibling.setRowHeight(row, rowHeight)
-    }
-  }
-
   fun addMouseListenerToComponents(listener: MouseListener) {
     componentMouseListeners.add(listener)
     frozenView?.addMouseListener(listener)
-  }
-
-  private fun installRightButtonCellSelect(view: GridTable) {
-    view.addMouseListener(object : MouseAdapter() {
-      override fun mousePressed(event: MouseEvent) {
-        if (!SwingUtilities.isRightMouseButton(event)) return
-        val row = view.rowAtPoint(event.point)
-        val column = view.columnAtPoint(event.point)
-        if (row < 0 || column < 0 || view.isCellSelected(row, column)) return
-        val modelRow = view.rawIndexConverter.row2Model().applyAsInt(row)
-        val modelColumn = view.rawIndexConverter.column2Model().applyAsInt(column)
-        resultPanel.selectionModel.setSelection(
-          ModelIndexSet.forRows(resultPanel, modelRow),
-          ModelIndexSet.forColumns(resultPanel, modelColumn),
-        )
-      }
-    })
   }
 
   private fun findScrollPane(): TableScrollPane? = ComponentUtil.getParentOfType(TableScrollPane::class.java, primaryView)

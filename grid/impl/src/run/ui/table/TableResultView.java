@@ -57,19 +57,20 @@ import javax.swing.ActionMap;
 import javax.swing.CellRendererPane;
 import javax.swing.JComponent;
 import javax.swing.JScrollBar;
+import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
-import javax.swing.RowSorter;
+import javax.swing.SwingUtilities;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import javax.swing.table.TableModel;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
 import java.awt.Font;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
@@ -100,10 +101,9 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     myPrimary = new GridTable(grid, columnActions, rowActions);
     myFloatingToolbar = new TableFloatingToolbarController(myPrimary, grid, grid.getCoroutineScope());
     myFrozenColumnsController = new FrozenColumnsController(myPrimary, grid, columnActions, rowActions,
-                                                            this::createHost, myFloatingToolbar);
-    myPrimary.installHost(createHost(myPrimary));
+                                                            this::adoptTable, myFloatingToolbar);
+    myPrimary.installHost(adoptTable(myPrimary));
     myPrimary.installGridIntegration();
-    TableResultViewFactory.configureTable(myPrimary, grid);
     myScrollPane = TableResultViewFactory.createScrollPane(grid, myPrimary, this);
     TableAggregatorWidgetHelper.install(this, grid);
     TableGoToRowHelper.install(this, grid);
@@ -130,8 +130,29 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     initializeColumnLayout();
   }
 
-  private GridTableHost createHost(GridTable source) {
-    return new TableHost(source);
+  /** Sets up a table of this view, the main or the pinned one, and creates the host it reports to. */
+  private GridTableHost adoptTable(GridTable table) {
+    table.getEmptyText().setText(""); //DatabaseMessages.message("table.result.data.loading"));
+    table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+    table.setCellSelectionEnabled(true);
+    table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+    table.setBackground(myResultPanel.getColorsScheme().getDefaultBackground());
+    // fixes missing (or plain white) grid on mac
+    table.setShowGrid(true);
+    table.addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(@NotNull MouseEvent e) {
+        if (!SwingUtilities.isRightMouseButton(e)) return;
+        int rowIndex = table.isTransposed() ? table.columnAtPoint(e.getPoint()) : table.rowAtPoint(e.getPoint());
+        int columnIndex = table.isTransposed() ? table.rowAtPoint(e.getPoint()) : table.columnAtPoint(e.getPoint());
+        if (rowIndex < 0 || columnIndex < 0 || table.isCellSelected(rowIndex, columnIndex)) return;
+        int modelRow = table.getRawIndexConverter().row2Model().applyAsInt(rowIndex);
+        int modelColumn = table.getRawIndexConverter().column2Model().applyAsInt(columnIndex);
+        myResultPanel.getSelectionModel().setSelection(ModelIndexSet.forRows(myResultPanel, modelRow),
+                                                       ModelIndexSet.forColumns(myResultPanel, modelColumn));
+      }
+    });
+    return new TableHost(table);
   }
 
   private @Nullable GridTable getFrozenView() {
@@ -418,7 +439,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   }
 
   public void setRowHeight(int row, int rowHeight) {
-    myPrimary.setRowHeight(row, rowHeight);
+    forEachTable(table -> table.setRowHeight(row, rowHeight));
   }
 
   @Override
@@ -527,10 +548,6 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     forEachTable(table -> table.reinitSettings());
   }
 
-  public boolean isCellEditable(int row, int column) {
-    return myPrimary.isCellEditable(row, column);
-  }
-
   public boolean editCellAt(int row, int column, EventObject e) {
     return myPrimary.editCellAt(row, column, e);
   }
@@ -563,16 +580,8 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     return myPrimary.getRowHeight();
   }
 
-  public Color getForeground() {
-    return myPrimary.getForeground();
-  }
-
   public Color getBackground() {
     return myPrimary.getBackground();
-  }
-
-  public void setBackground(@NotNull Color bg) {
-    myPrimary.setBackground(bg);
   }
 
   public Color getGridColor() {
@@ -681,10 +690,6 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   @Override
   public boolean isMultiEditingAllowed() {
     return myPrimary.isMultiEditingAllowed();
-  }
-
-  public TableCellRenderer getCellRenderer(int row, int column) {
-    return myPrimary.getCellRenderer(row, column);
   }
 
   public void setValueAt(Object value, int viewRowIdx, int viewColumnIdx) {
@@ -880,7 +885,13 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     public void columnMarginChanged() { myFrozenColumnsController.columnMarginChanged(myTable); }
 
     @Override
-    public void syncRowHeight(int row, int height) { myFrozenColumnsController.syncRowHeight(myTable, row, height); }
+    public void syncRowHeight(int row, int height) {
+      // A table changes a row height by itself on a cell resize or for multiline rows; the other table follows.
+      GridTable frozen = getFrozenView();
+      if (myTable != myPrimary && myTable != frozen) return;
+      GridTable other = isPrimary() ? frozen : myPrimary;
+      if (other != null && row < other.getRowCount() && other.getRowHeight(row) != height) other.setRowHeight(row, height);
+    }
 
     @Override
     public void changeFontSize(int increment, double scale) { TableResultView.this.changeFontSize(increment, scale); }
@@ -1039,8 +1050,6 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   public int getWidth() { return myPrimary.getWidth(); }
 
-  public int getHeight() { return myPrimary.getHeight(); }
-
   public int getRowCount() { return myPrimary.getRowCount(); }
 
   public int getColumnCount() { return myPrimary.getColumnCount(); }
@@ -1059,8 +1068,6 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   public ListSelectionModel getSelectionModel() { return myPrimary.getSelectionModel(); }
 
-  public RowSorter<? extends TableModel> getRowSorter() { return myPrimary.getRowSorter(); }
-
   public void moveColumn(int from, int to) { myPrimary.moveColumn(from, to); }
 
   public void setRowSelectionInterval(int from, int to) { myPrimary.setRowSelectionInterval(from, to); }
@@ -1068,10 +1075,6 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   public void setColumnSelectionInterval(int from, int to) { myPrimary.setColumnSelectionInterval(from, to); }
 
   public void clearSelection() { myPrimary.clearSelection(); }
-
-  public int convertRowIndexToModel(int row) { return myPrimary.convertRowIndexToModel(row); }
-
-  public int convertRowIndexToView(int row) { return myPrimary.convertRowIndexToView(row); }
 
   public int convertColumnIndexToModel(int column) { return myPrimary.convertColumnIndexToModel(column); }
 
