@@ -8,8 +8,8 @@ import org.jetbrains.annotations.NotNull;
 final class FileBasedIndexFileTypeListener implements FileTypeListener {
   @Override
   public void fileTypesChanged(final @NotNull FileTypeEvent event) {
-    FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
-    if (fileBasedIndex.getRegisteredIndexes() == null) {
+    FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstanceIfDefined();
+    if (fileBasedIndex == null || fileBasedIndex.getRegisteredIndexes() == null) {
       return;
     }
 

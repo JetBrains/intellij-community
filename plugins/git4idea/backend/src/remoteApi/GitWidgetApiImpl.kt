@@ -103,6 +103,8 @@ internal class GitWidgetApiImpl : GitWidgetApi {
     fun getWidgetState(project: Project, selectedFile: VirtualFile?): GitWidgetState {
       val vcsManager = ProjectLevelVcsManager.getInstance(project)
       if (!vcsManager.areVcsesActivated()) return GitWidgetState.DoNotShow
+      // the Git modules can unload while the flow still handles a VCS event
+      if (vcsManager.findVcsByName(GitVcs.NAME) == null) return GitWidgetState.DoNotShow
 
       val gitRepository = GitBranchUtil.guessWidgetRepository(project, selectedFile)
       if (gitRepository != null) {

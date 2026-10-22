@@ -249,6 +249,24 @@ class DynamicPluginsTest {
   }
 
   @Test
+  fun unloadActionReferenceDeclaredBeforeAction() {
+    val disposable = loadPluginWithText(plugin {
+      dependsIntellijModulesLang()
+      actions = """
+          <reference ref="foo.bar">
+            <add-to-group group-id="ListActions" anchor="last"/>
+          </reference>
+          <action id="foo.bar" class="${MyAction::class.java.name}"/>"""
+    })
+    val actionManager = ActionManager.getInstance()
+    val group = actionManager.getAction("ListActions") as DefaultActionGroup
+    assertThat(group.getChildren(actionManager).any { it is MyAction }).isTrue()
+    Disposer.dispose(disposable)
+    assertThat(actionManager.getAction("foo.bar")).isNull()
+    assertThat(group.getChildren(actionManager).any { it is MyAction }).isFalse()
+  }
+
+  @Test
   fun unloadGroupWithActions() {
     val disposable = loadPluginWithText(plugin {
       dependsIntellijModulesLang()

@@ -57,8 +57,7 @@ internal class ActionPluginRegistrar {
     unregisterAction: (String) -> Unit,
     replaceAction: (String, AnAction) -> Unit,
   ) {
-    unloadActionsImpl(state = state,
-                      module = module,
+    unloadActionsImpl(module = module,
                       actionRegistrar = actionRegistrar,
                       unregisterAction = unregisterAction,
                       replaceAction = replaceAction)
@@ -962,7 +961,6 @@ private fun processReferenceElement(
 }
 
 private fun unloadActionsImpl(
-  state: ActionPluginRegistrarState,
   module: IdeaPluginDescriptorImpl,
   actionRegistrar: PostInitActionRegistrar,
   unregisterAction: (String) -> Unit,
@@ -976,12 +974,9 @@ private fun unloadActionsImpl(
       ActionElementName.action -> unloadActionElement(element, actionRegistrar, unregisterAction, replaceAction)
       ActionElementName.group -> unloadGroupElement(element, actionRegistrar, unregisterAction, replaceAction)
       ActionElementName.reference -> {
-        val action = processReferenceElement(state = state,
-                                             element = element,
-                                             module = module,
-                                             actionRegistrar = actionRegistrar,
-                                             deferred = null) ?: return
         val actionId = getReferenceActionId(element)
+        // the reversed walk unregisters an action of this module, and removes it from its groups, before an earlier reference to it
+        val action = actionId?.let { getAction(id = it, canReturnStub = true, actionRegistrar = actionRegistrar) } ?: continue
         for ((name, attributes) in element.children) {
           if (name != ADD_TO_GROUP_ELEMENT_NAME) {
             continue

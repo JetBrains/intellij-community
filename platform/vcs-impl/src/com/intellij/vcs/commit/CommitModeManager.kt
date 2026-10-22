@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -74,7 +75,9 @@ class CommitModeManager(private val project: Project, private val coroutineScope
   val commitModeState: StateFlow<CommitMode> = _commitModeState.asStateFlow()
 
   private fun scheduleUpdateCommitMode() {
-    getApplication().invokeLater(::updateCommitMode, ModalityState.nonModal(), project.disposed)
+    coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+      writeIntentReadAction { updateCommitMode() }
+    }
   }
 
   @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
