@@ -26,11 +26,13 @@ import com.intellij.util.ui.launchOnShow
 import git4idea.i18n.GitBundle
 import git4idea.ui.branch.GitBranchReviewPresenter
 import git4idea.workingTrees.GitCreateWorkingTreeService
+import git4idea.workingTrees.GitWorkingTreesService
 import git4idea.workingTrees.ui.GitWorkingTreesContentProvider.Companion.GIT_WORKING_TREE_TOOLWINDOW_TAB_EMPTY_LIST
 import git4idea.workingTrees.ui.GitWorkingTreesContentProvider.Companion.TOOLWINDOW_CONTENT_HELP_ID
 import git4idea.workingTrees.ui.actions.GitWorkingTreeTabActionsDataKeys
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Component
 import java.awt.Point
@@ -78,6 +80,13 @@ internal class GitWorktreesTabPanel(private val project: Project, cs: CoroutineS
         withContext(Dispatchers.UI) {
           applyEntries(entries)
         }
+      }
+    }
+
+    // Not tied to showing: a request arriving while the tab is hidden must still reset the selection kept by applyEntries.
+    cs.launch(Dispatchers.UI) {
+      GitWorkingTreesService.getInstance(project).focusedFromOtherFrameRequests.collect {
+        selectDefaultEntry()
       }
     }
 
