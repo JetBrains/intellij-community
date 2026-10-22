@@ -11,6 +11,7 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.sanitizeFileName
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -33,10 +34,13 @@ object EelServerDeploymentUtils {
    * If the plugin cannot be identified, uses a cached temporary destination via [EelPathUtils.transferLocalContentToRemote].
    *
    * [pathToCopy] must point to a local file or directory.
+   *
+   * @throws IOException if the transfer or a file operation fails.
    */
   @Suppress("unused")
   @JvmStatic
   @RequiresBackgroundThread(generateAssertion = false)
+  @Throws(IOException::class)
   fun findOrDeployServer(target: EelDescriptor, pathToCopy: Path): Path {
     require(Files.exists(pathToCopy)) { "Server path must exist: $pathToCopy" }
 

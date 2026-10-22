@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
@@ -151,7 +152,7 @@ public final class ShExternalFormatter extends AsyncDocumentFormattingService {
         }
       };
     }
-    catch (ExecutionException e) {
+    catch (ExecutionException | IOException e) {
       request.onError(message("sh.shell.script"), e.getMessage());
       return null;
     }

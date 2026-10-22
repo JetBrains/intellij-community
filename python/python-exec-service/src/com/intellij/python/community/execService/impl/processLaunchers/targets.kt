@@ -156,13 +156,13 @@ internal suspend fun createProcessLauncherOnTarget(
   }
 
   val (args, env) = launchRequest.args.getArgsAndEnv(object : Uploader {
-    override suspend fun uploadFile(localFile: Path): FullPathOnTarget =
-      getRemotePath(localFile)
+    override suspend fun uploadFile(localFile: Path): Result<FullPathOnTarget, MessageError> =
+      Result.success(getRemotePath(localFile))
 
-    override suspend fun uploadDir(localDir: Directory): PathMapper = PathMapper { entry ->
+    override suspend fun uploadDir(localDir: Directory): Result<PathMapper, MessageError> = Result.success(PathMapper { entry ->
       getRemotePath(entry.resolveAgainst(localDir))
-    }
-  })
+    })
+  }).getOr { return@withContext Result.failure(ExecuteGetProcessError.EnvironmentError(it.error)) }
 
   val exePath: FullPathOnTarget
   val cmdLine = TargetedCommandLineBuilder(request).also { commandLineBuilder ->

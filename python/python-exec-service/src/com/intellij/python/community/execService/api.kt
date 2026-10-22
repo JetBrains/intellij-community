@@ -30,6 +30,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.ExecError
+import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.venvReader.Directory
 import org.jetbrains.annotations.ApiStatus
@@ -493,7 +494,7 @@ class Args(vararg initialArgs: String) {
   /**
    * An eel or a target implementation calls this function. It must supply an [Uploader].
    */
-  internal suspend fun getArgsAndEnv(uploader: Uploader): ArgsAndEnv = ArgsAndEnv.create(_args, uploader)
+  internal suspend fun getArgsAndEnv(uploader: Uploader): Result<ArgsAndEnv, MessageError> = ArgsAndEnv.create(_args, uploader)
 }
 
 

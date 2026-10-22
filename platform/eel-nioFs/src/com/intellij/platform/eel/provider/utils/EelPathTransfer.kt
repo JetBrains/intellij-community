@@ -19,7 +19,6 @@ import com.intellij.platform.eel.fs.WalkDirectoryEntryWindows
 import com.intellij.platform.eel.fs.WalkDirectoryOptionsBuilder
 import com.intellij.platform.eel.fs.WriteOptionsBuilder
 import com.intellij.platform.eel.fs.listDirectoryWithAttrs
-import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.path.EelPath
@@ -75,11 +74,13 @@ import kotlin.math.min
 object EelPathTransfer {
   private val LOG = Logger.getLogger(EelPathTransfer::class.java.name)
 
+  @Throws(IOException::class)
   fun walkingTransfer(sourceRoot: Path, targetRoot: Path, removeSource: Boolean, copyAttributes: Boolean) {
     val fileAttributesStrategy = if (copyAttributes) EelFileTransferAttributesStrategy.Copy else EelFileTransferAttributesStrategy.Skip
     return walkingTransfer(sourceRoot, targetRoot, removeSource, fileAttributesStrategy)
   }
 
+  @Throws(IOException::class)
   fun walkingTransfer(
     sourceRoot: Path,
     targetRoot: Path,
@@ -95,7 +96,7 @@ object EelPathTransfer {
       if (removeSource) {
         val sourceEel = sourceRoot.asEelPath()
         val sourceEelApi = sourceEel.descriptor.toEelApi()
-        sourceEelApi.fs.delete(sourceEel, true).getOrThrow()
+        sourceEelApi.fs.delete(sourceEel, true).getOrThrowFileSystemException()
       }
     }
   }
@@ -635,12 +636,14 @@ object EelPathTransfer {
    * [filter] Lambda that checks whether a given directory is supposed to be transferred. Returns true if the directory should be transferred.
    */
   @VisibleForTesting
+  @Throws(IOException::class)
   suspend fun directoryOnlySync(
     sourceRoot: EelPath,
     targetRoot: EelPath,
     ignoreCase: Boolean,
     filter: ((Path) -> Boolean)?,
   ) {
+    @Throws(IOException::class)
     suspend fun listDirectories(
       path: Path,
       isLocal: Boolean,
@@ -652,7 +655,7 @@ object EelPathTransfer {
       }
       else {
         eelApi.fs.listDirectoryWithAttrs(path.asEelPath())
-          .getOrThrow()
+          .getOrThrowFileSystemException()
           .filter {
             when (it.second.type) {
               is EelFileInfo.Type.Directory -> true
@@ -719,7 +722,7 @@ object EelPathTransfer {
         }
         // the source directory was deleted
         else if (comparison < 0) {
-          targetEelApi.fs.delete(targetCurrentLayerQ.removeFirst().asEelPath(), true).getOrThrow()
+          targetEelApi.fs.delete(targetCurrentLayerQ.removeFirst().asEelPath(), true).getOrThrowFileSystemException()
         }
         else {
           val shouldTransfer = filter?.invoke(sourceRelativeDirPath) ?: true
@@ -730,7 +733,7 @@ object EelPathTransfer {
           else {
             // if the filter dictates that a source directory should not be transferred and the target directory exists, it should be deleted
             // to maintain the proper directory structure on the target side
-            targetEelApi.fs.delete(targetCurrentLayerQ.removeFirst().asEelPath(), true).getOrThrow()
+            targetEelApi.fs.delete(targetCurrentLayerQ.removeFirst().asEelPath(), true).getOrThrowFileSystemException()
             sourceCurrentLayerQ.removeFirst()
           }
         }
@@ -801,7 +804,10 @@ object EelPathTransfer {
    * |  |- d ("2")
    * |- e ("3")
    * ```
+   *
+   * @throws IOException if a file operation fails, for example when [sourceRoot] does not exist.
    */
+  @Throws(IOException::class)
   suspend fun incrementalWalkingTransfer(
     sourceRoot: Path,
     targetRoot: Path,
@@ -835,7 +841,7 @@ object EelPathTransfer {
             Files.createDirectory(targetRoot)
           }
           else if (!targetAttrs.isDirectory) {
-            targetEelApi.fs.delete(targetRootEel, true).getOrThrow()
+            targetEelApi.fs.delete(targetRootEel, true).getOrThrowFileSystemException()
             Files.createDirectory(targetRoot)
           }
           withContext(Dispatchers.IO) {
@@ -847,7 +853,7 @@ object EelPathTransfer {
             Files.createFile(targetRoot)
           }
           else if (!targetAttrs.isRegularFile) {
-            targetEelApi.fs.delete(targetRootEel, true).getOrThrow()
+            targetEelApi.fs.delete(targetRootEel, true).getOrThrowFileSystemException()
             Files.createFile(targetRoot)
           }
         }
@@ -858,7 +864,7 @@ object EelPathTransfer {
           }
           // if targetRoot is a directory, it should be deleted to prevent it from being traversed
           else if (targetAttrs.isDirectory) {
-            targetEelApi.fs.delete(targetRootEel, true).getOrThrow()
+            targetEelApi.fs.delete(targetRootEel, true).getOrThrowFileSystemException()
             // a placeholder file is created so that, in the case of an absolute symlink, the user lambda receives the expected target path (where the absolute symlink should be)
             Files.createFile(targetRoot)
           }

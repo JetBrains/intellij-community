@@ -165,6 +165,7 @@ object EelPathUtils {
   @ApiStatus.Obsolete
   @JvmStatic
   @JvmOverloads
+  @Throws(IOException::class)
   fun transferContentsIfNonLocal(
     eel: EelApi,
     source: Path,
@@ -193,6 +194,7 @@ object EelPathUtils {
    */
   @JvmStatic
   @JvmOverloads
+  @Throws(IOException::class)
   fun transferLocalContentToRemote(
     source: Path,
     target: TransferTarget,
@@ -204,6 +206,7 @@ object EelPathUtils {
   @ApiStatus.Internal
   @JvmStatic
   @JvmOverloads
+  @Throws(IOException::class)
   fun transferLocalContentToRemote(
     source: Path,
     target: TransferTarget,
@@ -259,6 +262,7 @@ object EelPathUtils {
     private val caches = CollectionFactory.createConcurrentWeakIdentityMap<EelApi, Cache>()
 
     @OptIn(ExperimentalCoroutinesApi::class)
+    @Throws(IOException::class)
     suspend fun transferIfNeeded(
       eel: EelApi,
       source: Path,

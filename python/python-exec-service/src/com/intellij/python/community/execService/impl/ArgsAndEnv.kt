@@ -5,6 +5,8 @@ import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.python.community.execService.FileReporter
 import com.intellij.python.community.execService.HowToReportFile
 import com.intellij.python.community.execService.resolveAgainst
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.venvReader.Directory
 import java.nio.file.Path
 
@@ -14,27 +16,28 @@ import java.nio.file.Path
 @ConsistentCopyVisibility
 internal data class ArgsAndEnv private constructor(val commandArgs: List<String>, val env: Map<String, String>) {
   companion object {
-    suspend fun create(args: List<Arg>, fileMapper: Uploader): ArgsAndEnv {
+    suspend fun create(args: List<Arg>, fileMapper: Uploader): Result<ArgsAndEnv, MessageError> {
       val commandArgs = mutableListOf<String>()
       val env = mutableMapOf<String, String>()
       for (arg in args) {
         when (arg) {
           is Arg.FileArg -> {
-            addFileArgument(arg.fileReporter, fileMapper.uploadFile(arg.file), commandArgs, env)
+            val fileOnRemoteMachine = fileMapper.uploadFile(arg.file).getOr { return it }
+            addFileArgument(arg.fileReporter, fileOnRemoteMachine, commandArgs, env)
           }
           is Arg.StringArg -> {
             commandArgs.add(arg.arg)
           }
           is Arg.DirArg -> {
             // Upload the full root directory
-            val mapper = fileMapper.uploadDir(arg.root)
+            val mapper = fileMapper.uploadDir(arg.root).getOr { return it }
             for ((entry, fileReporter) in arg.filesToReport) {
               addFileArgument(fileReporter, mapper.getRemotePath(entry), commandArgs, env)
             }
           }
         }
       }
-      return ArgsAndEnv(commandArgs, env)
+      return Result.success(ArgsAndEnv(commandArgs, env))
     }
 
     private fun addFileArgument(
@@ -58,14 +61,14 @@ internal data class ArgsAndEnv private constructor(val commandArgs: List<String>
 
 internal interface Uploader {
   /**
-   * Upload [localFile] and return its [FullPathOnTarget].
+   * Upload [localFile] and return its [FullPathOnTarget], or an error if the upload fails.
    */
-  suspend fun uploadFile(localFile: Path): FullPathOnTarget
+  suspend fun uploadFile(localFile: Path): Result<FullPathOnTarget, MessageError>
 
   /**
-   * Upload the full [localDir] and return a [PathMapper] for the files in it.
+   * Upload the full [localDir] and return a [PathMapper] for the files in it, or an error if the upload fails.
    */
-  suspend fun uploadDir(localDir: Directory): PathMapper
+  suspend fun uploadDir(localDir: Directory): Result<PathMapper, MessageError>
 }
 
 internal fun interface PathMapper {

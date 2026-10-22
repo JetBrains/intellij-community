@@ -20,6 +20,7 @@ import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
+import java.io.IOException
 import java.net.URI
 import java.nio.channels.AsynchronousFileChannel
 import java.nio.file.CopyOption
@@ -354,6 +355,7 @@ class IjentEphemeralRootAwareFileSystemProvider(
     }
   }
 
+  @Throws(IOException::class)
   override fun copy(source: Path, target: Path, vararg options: CopyOption?) {
     // Equal file systems wrap one IJent file system, whatever the notation of their roots, so IJent can do the work natively.
     if (source.fileSystem == target.fileSystem) {
@@ -371,6 +373,7 @@ class IjentEphemeralRootAwareFileSystemProvider(
     }
   }
 
+  @Throws(IOException::class)
   override fun move(source: Path, target: Path, vararg options: CopyOption?) {
     // Equal file systems wrap one IJent file system, whatever the notation of their roots, so IJent can do the work natively.
     if (source.fileSystem == target.fileSystem) {

@@ -124,7 +124,7 @@ public class ShShellcheckExternalAnnotator
       }
       return response.get();
     }
-    catch (ExecutionException e) {
+    catch (ExecutionException | IOException e) {
       LOG.error(e);
       return null;
     }

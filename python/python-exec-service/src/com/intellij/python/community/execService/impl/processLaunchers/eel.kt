@@ -90,30 +90,39 @@ internal suspend fun createProcessLauncherOnEel(
   // Local directory to its copy on the remote eel. There is no copy for a directory on the same eel.
   val remoteCopies = mutableMapOf<Directory, Path>()
 
-  val (args, env) = launchRequest.args.getArgsAndEnv(object : Uploader {
-    override suspend fun uploadFile(localFile: Path): FullPathOnTarget = withContext(Dispatchers.IO) {
-      EelPathUtils.transferLocalContentToRemote(
-        source = localFile,
-        target = EelPathUtils.TransferTarget.Temporary(eel.descriptor)
-      ).asEelPath().toString()
+  val uploader = object : Uploader {
+    override suspend fun uploadFile(localFile: Path): Result<FullPathOnTarget, MessageError> = withContext(Dispatchers.IO) {
+      try {
+        val remoteFile = EelPathUtils.transferLocalContentToRemote(
+          source = localFile,
+          target = EelPathUtils.TransferTarget.Temporary(eel.descriptor)
+        )
+        Result.success(remoteFile.asEelPath().toString())
+      }
+      catch (e: IOException) {
+        uploadError(localFile, eel, e)
+      }
     }
 
 
-    override suspend fun uploadDir(localDir: Directory): PathMapper {
+    override suspend fun uploadDir(localDir: Directory): Result<PathMapper, MessageError> {
       val remoteDir = if (eel.descriptor.equalsMayBeUsingMachine(localDir.getEelDescriptor())) {
         // In persistent mode, `transferLocalContentToRemote` copies the files also when the eel is local.
         // Do this check to prevent a copy from local to local.
         localDir
       }
       else {
-        uploadToEelOnce(eel, localDir).also { remoteCopies[localDir] = it }
+        uploadToEelOnce(eel, localDir).getOr { return it }.also { remoteCopies[localDir] = it }
       }
       log.debug { "$localDir mapped to $remoteDir" }
-      return PathMapper {
+      return Result.success(PathMapper {
         it.resolveAgainst(remoteDir).asEelPath().toString()
-      }
+      })
     }
-  })
+  }
+  val (args, env) = launchRequest.args.getArgsAndEnv(uploader).getOr {
+    return Result.failure(ExecuteGetProcessError.EnvironmentError(it.error))
+  }
   val dirsToDownload = launchRequest.args.localArgs.mapNotNullTo(mutableSetOf()) { localArg ->
     when (localArg) {
       is Arg.FileArg -> null
@@ -295,16 +304,23 @@ private suspend fun getProhibitedPaths(): List<Path> = withContext(Dispatchers.D
  * Returns the copy of [helpersRoot] on [eel]. Helpers run from this copy in the eel native mode.
  * Use it for a process that [com.intellij.python.community.execService.ExecService] does not start, for example the debugger.
  * The copy is uploaded once and then reused. A helpers root that is already on [eel] is returned as is.
+ * Returns an error if the upload fails.
  */
 @ApiStatus.Internal
+@Throws(IOException::class)
 suspend fun getHelpersRootOnEel(eel: EelApi, helpersRoot: Path = PythonHelpersLocator.getCommunityHelpersRoot()): EelPath =
-  if (eel.descriptor.equalsMayBeUsingMachine(helpersRoot.getEelDescriptor())) helpersRoot.asEelPath() else uploadToEelOnce(eel, helpersRoot).asEelPath()
+  if (eel.descriptor.equalsMayBeUsingMachine(helpersRoot.getEelDescriptor())) {
+   helpersRoot.asEelPath()
+  }
+  else {
+    uploadToEelOnce(eel, helpersRoot).mapSuccess { it.asEelPath() }.getOr { throw IOException(it.error.message) }
+  }
 
 /**
  * Uploads [localDir] to `~/.pycharm/<build>/<hash>` on [eel] and returns the copy.
  * The upload runs once after startup, and again when the entry in [remoteDirCheck] expires.
  */
-private suspend fun uploadToEelOnce(eel: EelApi, localDir: Directory): Path {
+private suspend fun uploadToEelOnce(eel: EelApi, localDir: Directory): Result<Path, MessageError> {
   val build = ApplicationInfo.getInstance().build.toString()
   val home = eel.userInfo.home.resolve(".pycharm").resolve(build)
   val remoteDir = home.resolve(localDir.toHash()).asNioPath()
@@ -314,20 +330,28 @@ private suspend fun uploadToEelOnce(eel: EelApi, localDir: Directory): Path {
     uploadMutex.withLock {
       val pathDirKey = remoteDir.pathString
       if (pathDirKey !in remoteDirCheck || !remoteDir.exists()) {
-        remoteDir.createDirectories()
-        val time = measureTime {
-          EelPathUtils.transferLocalContentToRemote(
-            source = localDir,
-            target = EelPathUtils.TransferTarget.Explicit(remoteDir)
-          )
+        try {
+          remoteDir.createDirectories()
+          val time = measureTime {
+            EelPathUtils.transferLocalContentToRemote(
+              source = localDir,
+              target = EelPathUtils.TransferTarget.Explicit(remoteDir)
+            )
+          }
+          log.debug { "Uploaded $localDir to $remoteDir in $time" }
         }
-        log.debug { "Uploaded $localDir to $remoteDir in $time" }
+        catch (e: IOException) {
+          return@withLock uploadError(localDir, eel, e)
+        }
         remoteDirCheck.add(pathDirKey)
       }
-      remoteDir
+      Result.success(remoteDir)
     }
   }
 }
+
+private fun uploadError(localPath: Path, eel: EelApi, e: IOException): Result.Failure<MessageError> =
+  Result.localizedError(PyExecBundle.message("py.exec.upload.error", localPath, eel.descriptor.name, e.toString()))
 
 private suspend fun Directory.toHash(): String = withContext(Dispatchers.Default) {
   val digest = MessageDigest.getInstance("SHA-256")
