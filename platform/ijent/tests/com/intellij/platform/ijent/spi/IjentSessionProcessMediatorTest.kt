@@ -1,15 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelUnavailableException.CommunicationFailure
 import com.intellij.platform.eel.EelUnavailableException.IntendedExit
 import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.channels.EelReceiveChannel
+import com.intellij.platform.eel.channels.EelReceiveChannelException
 import com.intellij.platform.eel.channels.EelSendChannel
 import com.intellij.platform.eel.channels.PeekableEelReceiveChannel
 import com.intellij.platform.eel.channels.peekable
+import com.intellij.platform.eel.channels.sendWholeBuffer
 import com.intellij.platform.eel.provider.utils.EelPipe
+import com.intellij.platform.eel.provider.utils.readWholeText
 import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.ParentOfIjentScopes
 import com.intellij.platform.util.coroutines.childScope
@@ -24,18 +28,25 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.Test
+import java.io.FileInputStream
+import java.io.FilterInputStream
 import java.nio.ByteBuffer
+import java.nio.channels.ClosedChannelException
 import java.util.Collections
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
  * Tests how [IjentSessionProcessMediator] classifies an expected exit of IJent that comes while the session waits for a root cause.
  */
+@Suppress("checkedExceptions") // An unexpected error of a channel or of an exit code fails the test, and the test does not handle it.
 class IjentSessionProcessMediatorTest {
   @Test
   fun `an expected exit after IJent closed its stdout wins over a later symptom`(): Unit = runBlocking {
@@ -183,6 +194,113 @@ class IjentSessionProcessMediatorTest {
     }
   }
 
+  @Test
+  fun `a failed read of the stdout after the exit of IJent wins over a later symptom`(): Unit = runBlocking {
+    withParentScope { parent, uncaught ->
+      val ijentScope = ParentOfIjentScopes(parent).createIjentScope("test-session")
+      val process = FakeIjentProcess()
+      val mediator = IjentSessionProcessMediator.create(
+        ParentOfIjentScopes(parent), ijentScope, process, "test-session", isExpectedProcessExit = { it == 137 },
+      )
+      mediator.useStdoutAsTransport()
+      val transportRead = ijentScope.s.async { runCatching { mediator.process.stdout.receive(ByteBuffer.allocate(1)) } }
+
+      // The container of IJent stops. The read of the stdout fails instead of EOF, before the IDE gets the exit code.
+      process.exitWithBrokenStdout()
+      transportRead.await().exceptionOrNull().shouldBeInstanceOf<EelReceiveChannelException>()
+
+      // The gRPC client sees the broken transport only after that.
+      ijentScope.destroy(IllegalStateException("IJent session ended for no known reason: gRPC UNAVAILABLE"))
+      process.exitWithoutClosingStdout(137)
+
+      // The exit is a root cause, so it must not wait for DEAD_SESSION_RESOLVE_TIMEOUT.
+      withTimeout(IjentScope.DEAD_SESSION_RESOLVE_TIMEOUT - 1.seconds) {
+        ijentScope.resolveExitReason().shouldBeInstanceOf<IntendedExit>()
+      }
+      parent.coroutineContext.job.children.toList().joinAll()
+      uncaught.shouldBeEmpty()
+    }
+  }
+
+  @Test
+  fun `a failed read of the stdout after the exit of IJent wins over an earlier symptom`(): Unit = runBlocking {
+    withParentScope { parent, uncaught ->
+      val ijentScope = ParentOfIjentScopes(parent).createIjentScope("test-session")
+      val process = FakeIjentProcess()
+      val mediator = IjentSessionProcessMediator.create(
+        ParentOfIjentScopes(parent), ijentScope, process, "test-session", isExpectedProcessExit = { it == 137 },
+      )
+      mediator.useStdoutAsTransport()
+      // The read outlives the failed IJent scope, as a transport read in the IJent thread pool does.
+      val transportRead = parent.async { runCatching { mediator.process.stdout.receive(ByteBuffer.allocate(1)) } }
+
+      // A write to the stdin of the ending IJent fails before the IDE reads the stdout.
+      ijentScope.destroy(IllegalStateException("IJent session ended for no known reason: broken pipe"))
+      process.exitWithBrokenStdout()
+      transportRead.await().exceptionOrNull().shouldBeInstanceOf<EelReceiveChannelException>()
+      process.exitWithoutClosingStdout(137)
+
+      withTimeout(IjentScope.DEAD_SESSION_RESOLVE_TIMEOUT - 1.seconds) {
+        ijentScope.resolveExitReason().shouldBeInstanceOf<IntendedExit>()
+      }
+      parent.coroutineContext.job.children.toList().joinAll()
+      uncaught.shouldBeEmpty()
+    }
+  }
+
+  @Test
+  fun `a failed read of the stdout while IJent is alive is not a close by IJent`(): Unit = runBlocking {
+    withParentScope { parent, uncaught ->
+      val ijentScope = ParentOfIjentScopes(parent).createIjentScope("test-session")
+      val process = FakeIjentProcess()
+      val mediator = IjentSessionProcessMediator.create(ParentOfIjentScopes(parent), ijentScope, process, "test-session")
+      mediator.useStdoutAsTransport()
+      val transportRead = parent.async { runCatching { mediator.process.stdout.receive(ByteBuffer.allocate(1)) } }
+
+      // The session fails first. It breaks its side of the transport, and IJent exits normally because of it.
+      val bug = IllegalStateException("A bug in the session")
+      ijentScope.destroy(bug)
+      process.breakStdout()
+      transportRead.await().exceptionOrNull().shouldBeInstanceOf<EelReceiveChannelException>()
+      process.exitWithoutClosingStdout(0)
+
+      val resolved = withTimeout(IjentScope.DEAD_SESSION_RESOLVE_TIMEOUT + 5.seconds) {
+        ijentScope.resolveExitReason(IjentScope.DEAD_SESSION_RESOLVE_TIMEOUT + 5.seconds)
+      }
+      resolved.shouldBeInstanceOf<CommunicationFailure>().cause shouldBeSameInstanceAs bug
+      parent.coroutineContext.job.children.toList().joinAll()
+      uncaught.map { it.message }.shouldContainExactly(bug.message)
+    }
+  }
+
+  @Test
+  fun `the stdout and the stderr of a killed process end with their last bytes and EOF`(): Unit = runBlocking {
+    assumeFalse(SystemInfoRt.isWindows, "Only the JDK on Unix closes the pipes of an exited process")
+    withParentScope { parent, _ ->
+      val ijentScope = ParentOfIjentScopes(parent).createIjentScope("test-session")
+      val process = ProcessBuilder("/bin/sh", "-c", "printf out; printf err >&2; read _; kill -9 $$").start()
+      val facade = IjentSessionProcessMediator.JavaProcessFacade(ijentScope, process)
+
+      // The process kills itself, as IJent is killed when its container stops.
+      facade.stdin.sendWholeBuffer(ByteBuffer.wrap("\n".toByteArray()))
+      facade.exitCode.await() shouldBe 137
+      awaitPipesClosedByJdk(process)
+
+      facade.stdout.readWholeText() shouldBe "out"
+      facade.stderr.readWholeText() shouldBe "err"
+    }
+  }
+
+  /** Waits until the JDK moves the unread bytes of the pipes of the exited [process] into its own streams. */
+  private suspend fun awaitPipesClosedByJdk(process: Process) {
+    val inField = FilterInputStream::class.java.getDeclaredField("in").apply { isAccessible = true }
+    withTimeout(10.seconds) {
+      while (inField.get(process.inputStream) is FileInputStream || inField.get(process.errorStream) is FileInputStream) {
+        delay(10.milliseconds)
+      }
+    }
+  }
+
   /** Runs [body] with a supervisor scope that collects the errors that the IJent scope reports to the application. */
   private suspend fun withParentScope(body: suspend (CoroutineScope, List<Throwable>) -> Unit): Unit = coroutineScope {
     val uncaught = Collections.synchronizedList(mutableListOf<Throwable>())
@@ -208,8 +326,28 @@ private class FakeIjentProcess : IjentSessionProcessMediator.ProcessFacade {
   override val exitCode: SafeDeferred<Int> = SafeDeferred(exitCodeImpl)
   override val destroyIsGraceful: Boolean = true
 
+  @Volatile
+  private var exitedWithoutExitCode = false
+
+  override val isAlive: Boolean
+    get() = !exitedWithoutExitCode && super.isAlive
+
   suspend fun closeStdout() {
     stdoutPipe.sink.close(null)
+  }
+
+  /** The read of the stdout fails instead of EOF. */
+  suspend fun breakStdout() {
+    stdoutPipe.sink.close(ClosedChannelException())
+  }
+
+  /**
+   * The process exits, and the read of its stdout fails instead of EOF. The exit code comes later, see [exitWithoutClosingStdout].
+   * The JDK on Unix does so: it marks the process as exited, and then closes the pipe of the stdout.
+   */
+  suspend fun exitWithBrokenStdout() {
+    exitedWithoutExitCode = true
+    breakStdout()
   }
 
   suspend fun exit(code: Int) {

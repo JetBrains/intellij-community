@@ -75,8 +75,10 @@ class IjentSessionProcessMediator private constructor(
   /**
    * The mediator notices the end of the stdout of this facade, and calls [onTransportClosedByIjent] after [useStdoutAsTransport].
    * Before that call, the end of the stdout is a failure of the start, not a close of the transport by IJent.
+   *
+   * A failed read of the stdout after the exit of the process is also the end of the stdout, see [onStdoutFailure].
    */
-  val process: ProcessFacade = StdoutEndTrackingFacade(rawProcess, ::onStdoutEnd)
+  val process: ProcessFacade = StdoutEndTrackingFacade(rawProcess, ::onStdoutEnd, ::onStdoutFailure)
 
   @Volatile
   private var stdoutIsTransport: Boolean = false
@@ -95,6 +97,16 @@ class IjentSessionProcessMediator private constructor(
   private fun onStdoutEnd() {
     if (stdoutIsTransport) {
       onTransportClosedByIjent()
+    }
+  }
+
+  /**
+   * A read of the stdout can fail instead of EOF when the process has exited, because the exit closed the stdout.
+   * A failure while the process is alive is not the end of the stdout. The IDE side can cause it.
+   */
+  private fun onStdoutFailure() {
+    if (!process.isAlive) {
+      onStdoutEnd()
     }
   }
 
@@ -120,6 +132,7 @@ class IjentSessionProcessMediator private constructor(
     "com.intellij.platform.ijent.spi.IjentBinaryCacheTest",
     "com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategy",
     "com.intellij.platform.ijent.spi.IjentJavaProcessFacadeTest",
+    "com.intellij.platform.ijent.spi.IjentSessionProcessMediatorTest",
     "com.intellij.platform.ijent.spi.IjentShellBootstrapTest",
   )
   internal class JavaProcessFacade(ijentProcessScope: IjentScope, private val process: Process) : ProcessFacade {
@@ -135,27 +148,26 @@ class IjentSessionProcessMediator private constructor(
     override val stdout: PeekableEelReceiveChannel =
       rawReceiveChannel(process.inputStream).peekable()
 
-    /**
-     * A process that writes to stderr and exits at once is common: `ssh` that cannot connect does it.
-     * So the bytes that the JDK takes from the pipe at the exit are read too. See [ExitDrainedReceiveChannel].
-     */
-    override val stderr: EelReceiveChannel = run {
-      val stream = process.errorStream
-      val raw = rawPipeOrNull(stream)
-      when {
-        raw == null -> stream.consumeAsEelChannel(IjentThreadPool.coroutineContext)
-        SystemInfoRt.isWindows -> raw.consumeAsEelChannel(IjentThreadPool.coroutineContext)
-        else -> ExitDrainedReceiveChannel(raw.consumeAsEelChannel(IjentThreadPool.coroutineContext), process, stream)
-      }
-    }
+    override val stderr: EelReceiveChannel =
+      rawReceiveChannel(process.errorStream)
 
     private fun rawSendChannel(stream: OutputStream): EelSendChannel =
       rawPipeOrNull(stream)?.asEelChannel(IjentThreadPool.coroutineContext)
       ?: stream.asEelChannel(IjentThreadPool.coroutineContext)
 
-    private fun rawReceiveChannel(stream: InputStream): EelReceiveChannel =
-      rawPipeOrNull(stream)?.consumeAsEelChannel(IjentThreadPool.coroutineContext)
-      ?: stream.consumeAsEelChannel(IjentThreadPool.coroutineContext)
+    /**
+     * On Unix, the JDK moves the unread bytes of an exited process into [stream] and closes the pipe.
+     * This facade reads those bytes from [stream] after the pipe ends, and then returns EOF.
+     * See [ExitDrainedReceiveChannel].
+     */
+    private fun rawReceiveChannel(stream: InputStream): EelReceiveChannel {
+      val raw = rawPipeOrNull(stream)
+      return when {
+        raw == null -> stream.consumeAsEelChannel(IjentThreadPool.coroutineContext)
+        SystemInfoRt.isWindows -> raw.consumeAsEelChannel(IjentThreadPool.coroutineContext)
+        else -> ExitDrainedReceiveChannel(raw.consumeAsEelChannel(IjentThreadPool.coroutineContext), process, stream)
+      }
+    }
 
     /** The raw pipe under [stream], or `null` if the facade must use [stream] itself. See [extractRawProcessStream]. */
     private fun rawPipeOrNull(stream: InputStream): ReadableByteChannel? =
@@ -424,17 +436,25 @@ private suspend fun ijentProcessFinalizer(ijentLabel: String, mediator: IjentSes
 private class StdoutEndTrackingFacade(
   private val delegate: IjentSessionProcessMediator.ProcessFacade,
   onStdoutEnd: () -> Unit,
+  onStdoutFailure: () -> Unit,
 ) : IjentSessionProcessMediator.ProcessFacade by delegate {
-  override val stdout: PeekableEelReceiveChannel = EndListeningReceiveChannel(delegate.stdout, onStdoutEnd).peekable()
+  override val stdout: PeekableEelReceiveChannel = EndListeningReceiveChannel(delegate.stdout, onStdoutEnd, onStdoutFailure).peekable()
 }
 
 private class EndListeningReceiveChannel(
   private val delegate: EelReceiveChannel,
   private val onEnd: () -> Unit,
+  private val onFailure: () -> Unit,
 ) : EelReceiveChannel {
   @ThrowsChecked(EelReceiveChannelException::class)
   override suspend fun receive(dst: ByteBuffer): ReadResult {
-    val result = delegate.receive(dst)
+    val result = try {
+      delegate.receive(dst)
+    }
+    catch (err: EelReceiveChannelException) {
+      onFailure()
+      throw err
+    }
     when (result) {
       ReadResult.EOF -> onEnd()
       ReadResult.NOT_EOF -> Unit
