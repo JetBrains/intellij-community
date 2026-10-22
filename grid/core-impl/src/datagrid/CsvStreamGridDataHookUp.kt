@@ -198,10 +198,7 @@ class CsvStreamGridDataHookUp(
       }
 
     private fun determineColumnType(records: List<Array<CsvToken>>, columnIndex: Int): TypeMerger {
-      val values = records.asSequence()
-        .take(TYPE_SAMPLE_RECORDS)
-        .map { record -> record.getOrNull(columnIndex)?.value }
-        .asIterable()
+      val values = records.map { record -> record.getOrNull(columnIndex)?.value }
       return CsvImportUtil.getPreferredTypeMergerBasedOnContent(
         values, STRING_MERGER, INTEGER_MERGER, BIG_INTEGER_MERGER, DOUBLE_MERGER, BOOLEAN_MERGER)
     }
@@ -300,9 +297,6 @@ class CsvStreamGridDataHookUp(
   companion object {
     /** Chars one parser batch may consume; the loader pulls as many batches as one page needs. */
     private const val DEFAULT_BATCH_CHARS: Int = 64 * 1024
-
-    /** How many records feed the type merger, matching what the document-based CSV hookup samples. */
-    private const val TYPE_SAMPLE_RECORDS: Int = 200
 
     private val LOG = logger<CsvStreamGridDataHookUp>()
   }
