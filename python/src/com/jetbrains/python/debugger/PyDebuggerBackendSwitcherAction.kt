@@ -119,7 +119,7 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
     e.presentation.isEnabledAndVisible = true
 
     val storedBackend = PyDebuggerOptionsProvider.getInstance(project).selectedBackend
-    val availableBackends = getAvailableBackends(e)
+    val availableBackends = getHandlersAvailableBackends(e)
     val effectiveBackend = if (availableBackends != null) resolveEffectiveBackend(storedBackend, availableBackends)
     else resolveEffectiveBackend(storedBackend, isDebugpyAvailableInProject(project))
 
@@ -164,7 +164,7 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
     override fun update(e: AnActionEvent) {
       val project = e.project ?: return
       val storedBackend = PyDebuggerOptionsProvider.getInstance(project).selectedBackend
-      val availableBackends = getAvailableBackends(e)
+      val availableBackends = getHandlersAvailableBackends(e)
       val pydevdAvailable = availableBackends?.contains(PyDebuggerBackend.PYDEVD) != false
       val debugpyAvailable = availableBackends?.contains(PyDebuggerBackend.DEBUGPY) ?: isDebugpyAvailableInProject(project)
       val effectiveBackend = if (availableBackends != null) resolveEffectiveBackend(storedBackend, availableBackends)
@@ -189,7 +189,7 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-      val availableBackends = getAvailableBackends(e)
+      val availableBackends = getHandlersAvailableBackends(e)
       if (availableBackends != null && (backend !in availableBackends || availableBackends.size == 1)) return
       if (backend == PyDebuggerBackend.DEBUGPY && !isPythonDapPluginInstalledAndEnabled()) return
       e.project?.let { switchBackend(it, backend) }
@@ -259,9 +259,14 @@ internal class PyDebuggerBackendSwitcherAction : ComboBoxAction(), DumbAware {
 
 }
 
-/** Only the handler that owns the context of [e] answers. Without an owner, the result is null. */
-internal fun getAvailableBackends(e: AnActionEvent): Set<PyDebuggerBackend>? =
-  PyDebuggerBackendSwitchHandler.EP_NAME.extensionList.firstOrNull { it.ownsRunProfile(e) }?.getAvailableBackends(e)
+/**
+ * Only the handler that owns the context of [e] answers. A null result means the SDK defaults.
+ * The result is also null when no handler owns the context.
+ */
+internal fun getHandlersAvailableBackends(e: AnActionEvent): Set<PyDebuggerBackend>? {
+  val owner = PyDebuggerBackendSwitchHandler.EP_NAME.extensionList.firstOrNull { it.ownsRunProfile(e) } ?: return null
+  return owner.getAvailableBackends(e)
+}
 
 private fun resolveEffectiveBackend(storedBackend: PyDebuggerBackend, availableBackends: Set<PyDebuggerBackend>): PyDebuggerBackend =
   storedBackend.takeIf { it in availableBackends } ?: availableBackends.first()
