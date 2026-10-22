@@ -558,7 +558,7 @@ open class PMarkerRootImpl private constructor(
       result += node.lazyOffsetDelta
       i--
       node = path[i]!!
-      cachedOffsets.putIfAbsent(node.entry.markerId, toScalarRange(node.entry.nodeStart + result, node.entry.nodeEnd + result))
+      //cachedOffsets.putIfAbsent(node.entry.markerId, toScalarRange(node.entry.nodeStart + result, node.entry.nodeEnd + result))
     }
     return toScalarRange(state.entry.nodeStart + result, state.entry.nodeEnd + result)
   }
