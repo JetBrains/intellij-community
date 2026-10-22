@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.editor.fonts
 
 import com.intellij.application.options.colors.FontGlyphHashCache
@@ -20,6 +20,8 @@ import com.jetbrains.JBR
 import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.awt.Point
+import java.awt.event.FocusAdapter
+import java.awt.event.FocusEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
@@ -92,6 +94,18 @@ internal class FontDiffPopup private constructor(
         }
       }
     }
+
+    owner.addFocusListener(object: FocusAdapter() {
+      override fun focusGained(e: FocusEvent?) {
+        super.focusGained(e)
+        if (!initialShowScheduled) {
+          showPopup(owner, RelativePoint.getCenterOf(owner).originalPoint)
+        }
+      }
+      override fun focusLost(e: FocusEvent) {
+        hidePopup()
+      }
+    })
 
     owner.addMouseListener(mouseListener)
     owner.addMouseMotionListener(mouseListener)
