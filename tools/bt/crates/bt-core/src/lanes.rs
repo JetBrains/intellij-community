@@ -18,8 +18,8 @@ use crate::selector::Resolution;
 /// One lane table, a flat object. Only `lanes` is required:
 ///
 /// - `lanes`: every lane in declared order, which is the order a caller sees in the "Known lanes" refusal. Each
-///   is a [`LaneSpec`]. An IDE-launching lane also carries its catalog name, its test label and its JUnit tag,
-///   which the Air UI-lane controller and its trace planner read instead of a table of their own.
+///   is a [`LaneSpec`]. An IDE-launching lane also carries its catalog name and its test label, which the Air
+///   UI-lane controller and its trace planner read instead of a table of their own.
 /// - `tags`: every Bazel tag a test target of the area may carry, each a [`TagSpec`]. It is the one description of
 ///   them. The area's own tests hold the BUILD files to it, and [`Lanes::parse`] refuses a table whose lanes and
 ///   tags disagree. The categories with an exclusion reason, in table order, are what a broad run excludes. The CI
@@ -31,13 +31,13 @@ use crate::selector::Resolution;
 ///   `buildsExcludedTestLibs` compiles in a second spawn. The library and not the `*_test` rule: an IDE-launching
 ///   rule declares the assembled dev distribution as `data`, and building the rule recomposes it. A tag filter
 ///   cannot select a library, so the area's own test keeps this list equal to the tagged targets.
-/// - The suite catalog, all three or none ([`Catalog`]): `flowProfileDir`, where the flow catalog generator writes
+/// - The suite catalog, both or none ([`Catalog`]): `flowProfileDir`, where the flow catalog generator writes
 ///   one document per generated suite; `flowTextDir`, where the flow text generator writes one plain-text rendering
-///   per story flow; `authoredSuitesFile`, the committed copy of the authored suites.
+///   per story flow.
 /// - `specDir`, `laneWideModules` and `laneWidePaths`: what the Air UI-lane controller joins a changed path
 ///   through. `specDir` is where the specs live. `laneWideModules` names every JPS module that holds the lane
-///   harness, with the lanes it serves (`[]` is every lane). `laneWidePaths` names every harness directory that no
-///   module of the area holds, by its repo-relative path, in the same shape. This crate reads none of them.
+///   harness, with the lanes it serves (`[]` is every lane). `laneWidePaths` names every harness file or directory
+///   that no module of the area holds, by its repo-relative path, in the same shape. This crate reads none of them.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Lanes {
@@ -45,8 +45,6 @@ pub struct Lanes {
     flow_profile_dir: Option<String>,
     #[serde(default)]
     flow_text_dir: Option<String>,
-    #[serde(default)]
-    authored_suites_file: Option<String>,
     #[serde(default)]
     spec_dir: Option<String>,
     #[serde(default)]
@@ -62,12 +60,11 @@ pub struct Lanes {
     lanes: Vec<LaneSpec>,
 }
 
-/// The suite catalog of a lane table: the three paths the suite join reads, all repo-relative.
+/// The suite catalog of a lane table: the two paths the suite join reads, both repo-relative.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Catalog<'a> {
     pub flow_profile_dir: &'a str,
     pub flow_text_dir: &'a str,
-    pub authored_suites_file: &'a str,
 }
 
 /// One lane: the targets it runs and the flags that are its definition.
@@ -98,14 +95,15 @@ pub struct LaneSpec {
     /// The flow catalog's name for this lane (`UI_REAL`), for an IDE-launching lane.
     #[serde(default)]
     pub catalog_lane: Option<String>,
+    /// The flow catalog's name for the suites of an explicit-only lane (`UI_PERF`). A suite document of this lane
+    /// belongs to the lane, and no changed path, flow or suite id reaches it (ADR 0200). A lane states this or
+    /// [`LaneSpec::catalog_lane`], never both.
+    #[serde(default)]
+    pub document_lane: Option<String>,
     /// The one test target of an IDE-launching lane, for a caller that has a resolved label and asks whose lane
     /// it is.
     #[serde(default)]
     pub test_label: Option<String>,
-    /// The JUnit tag an IDE-launching lane's suites carry, which is how a daemon that holds every lane's classpath
-    /// selects a lane. A Bazel run has no use for it, because the lane's Bazel tag already selects its one module.
-    #[serde(default)]
-    pub junit_tag: Option<String>,
     /// Whether the lane compiles `excludedTestLibs` in a second spawn; see [`LaneSpec::build_only`].
     #[serde(default)]
     builds_excluded_test_libs: bool,
@@ -171,12 +169,40 @@ impl Lanes {
     /// Parses a lane table, and answers why it is not one otherwise.
     pub fn parse(text: &str) -> Result<Self, String> {
         let lanes: Self = serde_json::from_str(text).map_err(|error| error.to_string())?;
-        let catalog = [&lanes.flow_profile_dir, &lanes.flow_text_dir, &lanes.authored_suites_file];
-        if catalog.iter().any(|path| path.is_some()) && catalog.iter().any(|path| path.is_none()) {
-            return Err("a suite catalog names flowProfileDir, flowTextDir and authoredSuitesFile together".to_owned());
+        if lanes.flow_profile_dir.is_some() != lanes.flow_text_dir.is_some() {
+            return Err("a suite catalog names flowProfileDir and flowTextDir together".to_owned());
         }
         lanes.check_tags()?;
+        lanes.check_document_lanes()?;
         Ok(lanes)
+    }
+
+    /// Refuses a lane that is reached and explicit-only at once, a document lane of a lane that launches no IDE, and a
+    /// suite lane that two lanes name.
+    fn check_document_lanes(&self) -> Result<(), String> {
+        let mut named = BTreeSet::new();
+        for lane in &self.lanes {
+            if let Some(document_lane) = &lane.document_lane {
+                if lane.catalog_lane.is_some() {
+                    return Err(format!(
+                        "the lane {} states catalogLane and documentLane; a lane is reached or explicit-only, never both",
+                        lane.name
+                    ));
+                }
+                if lane.integration_tag.is_none() {
+                    return Err(format!(
+                        "the lane {} states the documentLane {document_lane} and launches no IDE",
+                        lane.name
+                    ));
+                }
+            }
+            for suite_lane in lane.catalog_lane.iter().chain(&lane.document_lane) {
+                if !named.insert(suite_lane.as_str()) {
+                    return Err(format!("two lanes name the suite lane {suite_lane}"));
+                }
+            }
+        }
+        Ok(())
     }
 
     /// The tags and the lanes agree: each tag is described once, a lane tag names a described category and a lane
@@ -265,6 +291,14 @@ impl Lanes {
         self.lanes.iter().find(|lane| lane.catalog_lane.as_deref() == Some(catalog_lane))
     }
 
+    /// The lane of a suite document whose lane is `suite_lane`: a catalog lane, or the document lane of an
+    /// explicit-only lane.
+    pub fn by_suite_lane(&self, suite_lane: &str) -> Option<&LaneSpec> {
+        self.lanes
+            .iter()
+            .find(|lane| lane.catalog_lane.as_deref() == Some(suite_lane) || lane.document_lane.as_deref() == Some(suite_lane))
+    }
+
     /// Every catalog lane name, sorted.
     pub fn catalog_lane_names(&self) -> Vec<&str> {
         let mut names: Vec<&str> = self.lanes.iter().filter_map(|lane| lane.catalog_lane.as_deref()).collect();
@@ -277,7 +311,6 @@ impl Lanes {
         Some(Catalog {
             flow_profile_dir: self.flow_profile_dir.as_deref()?,
             flow_text_dir: self.flow_text_dir.as_deref()?,
-            authored_suites_file: self.authored_suites_file.as_deref()?,
         })
     }
 

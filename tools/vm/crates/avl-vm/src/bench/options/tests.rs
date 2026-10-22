@@ -41,7 +41,7 @@ fn welcome_takes_the_defaults_of_the_plan() {
     assert_eq!(args.launch.generation, None);
     assert!(!args.cold && !args.profile);
     assert_eq!(args.profile_event, ProfileEvent::Cpu);
-    assert_eq!(args.arm.arms(), vec![Arm::Modal, Arm::NonModal]);
+    assert_eq!(args.arm.arms(), vec![Arm::MODAL, Arm::NON_MODAL]);
 }
 
 /// `--generation` takes the start of a digest on every session verb. It names the distribution, so it conflicts with
@@ -105,7 +105,7 @@ fn welcome_takes_every_option_and_the_global_form() {
         panic!("expected welcome");
     };
     assert_eq!(args.runs, 2);
-    assert_eq!(args.arm.arms(), vec![Arm::NonModal]);
+    assert_eq!(args.arm.arms(), vec![Arm::NON_MODAL]);
     assert!(args.cold && args.profile);
     assert_eq!(args.launch.hold, Duration::from_millis(500));
     assert_eq!(args.launch.target, "//build:idea_air_dist");
@@ -170,19 +170,87 @@ fn project_takes_the_empty_editor_arm_and_cold_for_it_alone() {
         panic!("expected project");
     };
     assert_eq!((args.arm, args.cold), (ProjectArmChoice::Project, false));
-    assert_eq!(arms(&["project", "markdown"]), Ok(vec![Arm::Project]));
-    assert_eq!(arms(&["project", "markdown", "--arm", "empty-editor"]), Ok(vec![Arm::EmptyEditor]));
+    assert_eq!(arms(&["project", "markdown"]), Ok(vec![Arm::PROJECT]));
+    assert_eq!(arms(&["project", "markdown", "--arm", "empty-editor"]), Ok(vec![Arm::EMPTY_EDITOR]));
     assert_eq!(
         arms(&["project", "markdown", "--arm", "both"]),
-        Ok(vec![Arm::Project, Arm::EmptyEditor])
+        Ok(vec![Arm::PROJECT, Arm::EMPTY_EDITOR])
     );
     assert_eq!(
         arms(&["project", "markdown", "--arm", "empty-editor", "--cold"]),
-        Ok(vec![Arm::EmptyEditor])
+        Ok(vec![Arm::EMPTY_EDITOR])
     );
     let refused = "--cold needs --arm empty-editor: the project arm restores the editor that its prime run saved, and a cold session has no prime run";
     assert_eq!(arms(&["project", "markdown", "--cold"]), Err(refused.to_owned()));
     assert_eq!(arms(&["project", "markdown", "--arm", "both", "--cold"]), Err(refused.to_owned()));
+
+    let refused = "--suppress-plugin com.intellij.air needs --arm project: the gate of the empty-editor arm is the span of the Air composer, so a run without Air never passes it";
+    for arm in ["both", "empty-editor"] {
+        assert_eq!(
+            arms(&["project", "markdown", "--arm", arm, "--suppress-plugin", "com.intellij.air"]),
+            Err(refused.to_owned())
+        );
+    }
+    assert_eq!(
+        arms(&["project", "markdown", "--suppress-plugin", "com.intellij.air"]),
+        Ok(vec![Arm::PROJECT, Arm::PROJECT.without("com.intellij.air")])
+    );
+    assert_eq!(
+        arms(&[
+            "project",
+            "markdown",
+            "--arm",
+            "empty-editor",
+            "--suppress-plugin",
+            "org.jetbrains.kotlin"
+        ]),
+        Ok(vec![Arm::EMPTY_EDITOR, Arm::EMPTY_EDITOR.without("org.jetbrains.kotlin")])
+    );
+}
+
+/// `--suppress-plugin` adds a twin right after each arm of a welcome or a project session. `--arm` of a verb that reads
+/// a session takes the label of a twin.
+#[test]
+fn suppress_plugin_adds_an_interleaved_twin_to_each_arm() {
+    let air = "com.intellij.air";
+    let BenchVerb::Welcome(args) = verb(&["welcome", "--suppress-plugin", air]) else {
+        panic!("expected welcome");
+    };
+    assert_eq!(
+        args.arms(),
+        vec![Arm::MODAL, Arm::MODAL.without(air), Arm::NON_MODAL, Arm::NON_MODAL.without(air)]
+    );
+    let BenchVerb::Welcome(args) = verb(&["welcome"]) else {
+        panic!("expected welcome");
+    };
+    assert_eq!(
+        (args.suppress.plugin.clone(), args.arms()),
+        (None, vec![Arm::MODAL, Arm::NON_MODAL])
+    );
+    let kotlin = "org.jetbrains.kotlin";
+    let BenchVerb::Project(args) = verb(&["project", "markdown", "--arm", "both", "--suppress-plugin", kotlin]) else {
+        panic!("expected project");
+    };
+    assert_eq!(
+        args.arms(),
+        Ok(vec![
+            Arm::PROJECT,
+            Arm::PROJECT.without(kotlin),
+            Arm::EMPTY_EDITOR,
+            Arm::EMPTY_EDITOR.without(kotlin)
+        ])
+    );
+    let BenchVerb::Classes(args) = verb(&["classes", "s", "--arm", "project-without-com.intellij.air"]) else {
+        panic!("expected classes");
+    };
+    assert_eq!(args.arm, Some(Arm::PROJECT.without(air)));
+    let BenchVerb::Triggers(args) = verb(&["triggers", "s", "--arm", "empty-editor", "--plugin", air, "--top", "3"]) else {
+        panic!("expected triggers");
+    };
+    assert_eq!(
+        (args.selection.arm, args.plugins, args.at, args.top),
+        (Some(Arm::EMPTY_EDITOR), vec![air.to_owned()], None, 3)
+    );
 }
 
 #[test]
@@ -198,6 +266,14 @@ fn a_bad_option_is_a_usage_refusal() {
         &["project"],
         &["project", "markdown", "--runs", "0"],
         &["project", "markdown", "--arm", "modal"],
+        &["welcome", "--suppress-plugin", "a,b"],
+        &["welcome", "--suppress-plugin", ""],
+        &["project", "markdown", "--suppress-plugin", "a:b"],
+        &["open-project", "p", "--suppress-plugin", "a"],
+        &["classes", "s", "--arm", "project-with-a"],
+        &["trace", "s", "--arm", "nonModal"],
+        &["triggers"],
+        &["triggers", "s", "--top", "0"],
         &["ls", "--limit", "0"],
         &["ls", "latest"],
         &["welcome", "--bogus"],

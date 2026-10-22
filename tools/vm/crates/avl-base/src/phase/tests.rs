@@ -91,7 +91,7 @@ fn the_slowest_guest_call_names_the_dearest_of_two() {
     let timeline = Timeline::collecting();
     timeline.declare_guest_head("tart");
 
-    let dear = timeline.begin("prepare-launch");
+    let dear = timeline.begin("install-agent");
     let open = dear.handle();
     open.record_subprocess(&["tart", "exec", "air-linux-1", "mkdir"], 200 * MS);
     open.record_subprocess(&["tart", "exec", "air-linux-1", "tee"], 10_600 * MS);
@@ -106,7 +106,7 @@ fn the_slowest_guest_call_names_the_dearest_of_two() {
         .record_subprocess(&["tart", "exec", "air-linux-1", "test"], Duration::ZERO);
     drop(instant);
 
-    drop(timeline.begin("gc-runtimes"));
+    drop(timeline.begin("stop-daemon"));
 
     let timings = timeline.take();
     assert_eq!(timings[0].slowest_guest_call_ms, Some(10_600));
@@ -172,7 +172,7 @@ fn an_inner_phase_wins_for_its_body_only() {
     let outer = timeline.begin("start-daemon");
     outer.handle().record_subprocess(&["tart", "before"], MS);
     {
-        let inner = timeline.begin("stage-runtime");
+        let inner = timeline.begin("install-agent");
         inner.handle().record_subprocess(&["tart", "inside"], MS);
     }
     outer.handle().record_subprocess(&["tart", "after"], MS);
@@ -181,7 +181,7 @@ fn an_inner_phase_wins_for_its_body_only() {
     let timings = timeline.take();
     assert_eq!(timings.len(), 2);
     assert_eq!((timings[0].name.as_str(), timings[0].guest_calls), ("start-daemon", 2));
-    assert_eq!((timings[1].name.as_str(), timings[1].guest_calls), ("stage-runtime", 1));
+    assert_eq!((timings[1].name.as_str(), timings[1].guest_calls), ("install-agent", 1));
 }
 
 // Several workers at once: every call lands on the phase of the worker that made it.

@@ -77,17 +77,51 @@ impl ProcessGroup {
     }
 }
 
+/// The process group of a child that a caller spawns itself, outside the runner, and that ends with the guard.
+///
+/// [`ChildGroup::prepare`] makes the command start its child as the leader of a group of its own, and
+/// [`ChildGroup::attach`] takes the group of the spawned child. Dropping the guard kills every member of the group that
+/// still runs: SIGKILL to the group on Unix, the end of the job on Windows. So a dropped future, such as one at its
+/// timeout, stops the child and every process that the child started. Drop the guard before the child, so the
+/// unreaped leader still holds the group id. A group without a member is left alone, because on Unix its id can
+/// belong to another process by then.
+#[derive(Debug)]
+pub struct ChildGroup(Option<ProcessGroup>);
+
+impl ChildGroup {
+    /// Makes `command` start its child as the leader of a group of its own.
+    pub fn prepare(command: &mut Command) {
+        ProcessGroup::prepare(command);
+    }
+
+    /// The group of a child that [`ChildGroup::prepare`] made. A child that has already ended has no group to reach.
+    /// An error is a running child that the group could not take, and the caller must not keep that child.
+    pub fn attach(child: &Child) -> io::Result<Self> {
+        Ok(Self(ProcessGroup::attach(child)?))
+    }
+}
+
+impl Drop for ChildGroup {
+    fn drop(&mut self) {
+        if let Some(group) = &self.0
+            && !group.is_empty()
+        {
+            group.kill();
+        }
+    }
+}
+
 /// Starts `command` in a session of its own, detached from the controller, for [`crate::proc::Runner::spawn_session`].
 ///
 /// On Unix the child calls `setsid` before it runs the program, so it leads a new session and a new process group.
 /// On Windows the child has no console and leads a console process group of its own, and it breaks away from the
 /// job of the controller when that job permits it. A job that forbids the breakaway refuses the spawn with "access
-/// denied", and then the child starts in that job.
+/// denied", and then the child starts in that job. The child runs in `directory`.
 pub(crate) fn spawn_session(
     program: &OsStr,
     arguments: &[impl AsRef<OsStr>],
     environment: &[(String, String)],
-    directory: Option<&Path>,
+    directory: &Path,
     stdout: File,
     stderr: File,
 ) -> io::Result<std::process::Child> {
@@ -96,12 +130,10 @@ pub(crate) fn spawn_session(
         .args(arguments)
         .env_clear()
         .envs(environment.iter().map(|(name, value)| (name, value)))
+        .current_dir(directory)
         .stdin(Stdio::null())
         .stdout(stdout)
         .stderr(stderr);
-    if let Some(directory) = directory {
-        command.current_dir(directory);
-    }
     imp::spawn_session(command)
 }
 

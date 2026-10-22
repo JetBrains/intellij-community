@@ -392,3 +392,117 @@ fn a_result_written_during_the_walk_leaves_with_its_bundle() {
         assert_eq!(skipped, []);
     }
 }
+
+/// One bundle of a zip whose entries are all deflated, as Bazel zips a test's outputs, becomes one zip with the bundle
+/// at its top: media stored again, the other bundle left out, and the same bytes on each pack.
+#[test]
+fn one_bundle_of_a_zip_is_packed_with_its_media_stored() {
+    let (root, bundle) = example_root();
+    copy_tree(&example_bundle(), &bundle_file(root.path(), "other-run/AirOtherTest/other"));
+    let out = tempfile::tempdir().unwrap();
+    let outputs = out.path().join("outputs.zip");
+    let mut writer = ZipWriter::new(File::create(&outputs).unwrap());
+    let deflated = SimpleFileOptions::default().compression_method(CompressionMethod::Deflated);
+    for entry in walkdir::WalkDir::new(root.path()).sort_by_file_name() {
+        let entry = entry.unwrap();
+        if entry.file_type().is_file() {
+            let name = slash_name(entry.path().strip_prefix(root.path()).unwrap()).unwrap();
+            writer.start_file(format!("air-traces/{name}"), deflated).unwrap();
+            io::copy(&mut File::open(entry.path()).unwrap(), &mut writer).unwrap();
+        }
+    }
+    writer.finish().unwrap();
+    let prefix = format!("air-traces/{bundle}/");
+
+    let first = out.path().join("one.zip");
+    let report = pack_zip_bundle(&outputs, &prefix, &first).unwrap();
+    let second = out.path().join("two.zip");
+    pack_zip_bundle(&outputs, &prefix, &second).unwrap();
+    assert!(
+        fs::read(&first).unwrap() == fs::read(&second).unwrap(),
+        "two packs of one bundle differ"
+    );
+    assert_eq!((report.bundles, report.packed.clone()), (1, vec![format!("air-traces/{bundle}")]));
+
+    let mut archive = ZipArchive::new(File::open(&first).unwrap()).unwrap();
+    assert_eq!(archive.len(), report.entries);
+    let image = snap_image_path(1);
+    let mut entry = archive.by_name(&image).unwrap();
+    assert_eq!(entry.compression(), CompressionMethod::Stored);
+    let mut content = Vec::new();
+    entry.read_to_end(&mut content).unwrap();
+    drop(entry);
+    assert_eq!(content, fs::read(bundle_file(root.path(), &bundle).join(&image)).unwrap());
+    assert_eq!(archive.by_name(SPANS_FILE).unwrap().compression(), CompressionMethod::Deflated);
+    assert!(archive.file_names().all(|name| !name.contains("AirOtherTest")));
+
+    let refused = pack_zip_bundle(&outputs, "air-traces/missing/", &out.path().join("none.zip")).unwrap_err();
+    assert!(
+        refused.to_string().contains("holds no bundle at \"air-traces/missing/\""),
+        "{refused}"
+    );
+
+    let hostile = out.path().join("hostile.zip");
+    let mut writer = ZipWriter::new(File::create(&hostile).unwrap());
+    for name in ["b/spans.jsonl", "b/../../escape.txt"] {
+        writer.start_file(name, deflated).unwrap();
+        writer.write_all(b"{}").unwrap();
+    }
+    writer.finish().unwrap();
+    let refused = pack_zip_bundle(&hostile, "b/", &out.path().join("hostile-out.zip")).unwrap_err();
+    assert!(
+        refused.to_string().contains("\"b/../../escape.txt\", which is not a clean path"),
+        "{refused}"
+    );
+    assert!(!out.path().join("hostile-out.zip").exists());
+}
+
+/// An archive keeps the names and the order it is given. It stores a zip and deflates JSON and HTML, and two archives
+/// of the same files are one zip. A name with `..` refuses the archive.
+#[test]
+fn an_archive_keeps_its_order_and_stores_its_zips() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = |name: &str, content: &str| {
+        let path = dir.path().join(name);
+        fs::write(&path, content).unwrap();
+        path
+    };
+    let entries = vec![
+        ("index.html".to_owned(), file("page.html", "<!doctype html>")),
+        ("runs.json".to_owned(), file("runs.json", "{\"runs\": []}")),
+        ("lane/iter-1/T/b.zip".to_owned(), file("b.zip", "PK")),
+        ("lane/iter-1/T/a.zip".to_owned(), file("a.zip", "PK")),
+    ];
+    let first = dir.path().join("first.zip");
+    let bytes = archive(&first, &entries).unwrap();
+    assert_eq!(bytes, fs::metadata(&first).unwrap().len());
+    let second = dir.path().join("second.zip");
+    archive(&second, &entries).unwrap();
+    assert!(
+        fs::read(&first).unwrap() == fs::read(&second).unwrap(),
+        "two archives of one set differ"
+    );
+
+    let mut zip = ZipArchive::new(File::open(&first).unwrap()).unwrap();
+    let listing: Vec<(String, CompressionMethod)> = (0..zip.len())
+        .map(|index| {
+            let entry = zip.by_index(index).unwrap();
+            (entry.name().to_owned(), entry.compression())
+        })
+        .collect();
+    assert_eq!(
+        listing,
+        [
+            ("index.html".to_owned(), CompressionMethod::Deflated),
+            ("runs.json".to_owned(), CompressionMethod::Deflated),
+            ("lane/iter-1/T/b.zip".to_owned(), CompressionMethod::Stored),
+            ("lane/iter-1/T/a.zip".to_owned(), CompressionMethod::Stored),
+        ]
+    );
+
+    let refused = archive(&dir.path().join("hostile.zip"), &[("../x.json".to_owned(), entries[1].1.clone())]).unwrap_err();
+    assert!(
+        refused.to_string().contains("\"../x.json\" is not a clean relative path"),
+        "{refused}"
+    );
+}

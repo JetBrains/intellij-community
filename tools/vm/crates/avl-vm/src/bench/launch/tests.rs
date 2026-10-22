@@ -3,11 +3,12 @@ use std::path::Path;
 use pretty_assertions::assert_eq;
 
 use super::{
-    DYNAMIC_AGENT_OPTION, FORCE_MODAL_PROPERTY, INTEGRATION_TEST_PROPERTY, PRODUCT_INFO_FILE, Profiler, RunPlan, TRUST_PROPERTY,
-    argfile_text, class_load_option, dist_options, entry_options, idea_log_pid, measure_options, product_info_file, profile_stop_argv,
-    quote_argument, sandbox_options, scheme_arguments, span_ended, vm_options_file,
+    DYNAMIC_AGENT_OPTION, FORCE_MODAL_PROPERTY, INTEGRATION_TEST_PROPERTY, PRODUCT_INFO_FILE, Profiler, RunPlan,
+    SUPPRESSED_PLUGINS_PROPERTY, TRUST_PROPERTY, argfile_text, class_load_option, dist_options, entry_options, idea_log_pid,
+    measure_options, product_info_file, profile_stop_argv, quote_argument, sandbox_options, scheme_arguments, span_ended, thread_dump_argv,
+    vm_options_file,
 };
-use crate::bench::arm::Arm;
+use crate::bench::arm::{Arm, ArmKind};
 use crate::bench::profile::ProfileEvent;
 use crate::bench::record::RunKind;
 use crate::bench::session::{Project, Sandbox};
@@ -16,7 +17,7 @@ use crate::bench::stage::DistConfig;
 #[test]
 fn the_measure_options_select_the_sandbox_and_the_files_of_the_run() {
     let sandbox = Sandbox::new("/s/sandbox");
-    let options = measure_options(Path::new("/s/run"), &sandbox, Arm::NonModal, None).expect("the options");
+    let options = measure_options(Path::new("/s/run"), &sandbox, &Arm::NON_MODAL, None).expect("the options");
     assert_eq!(options[..3], sandbox_options(&sandbox)[..]);
     assert_eq!(options[0], "-Didea.config.path=/s/sandbox/config");
     for expected in [
@@ -25,7 +26,7 @@ fn the_measure_options_select_the_sandbox_and_the_files_of_the_run() {
         "-Didea.diagnostic.opentelemetry.file=/s/run/opentelemetry.json",
         "-Didea.log.class.list.file=/s/run/class-report.txt",
         "-Dplugin.classloader.debug=/s/run/plugin-classes.txt",
-        "-Xlog:class+load:file=/s/run/class-load.log:uptime,tags",
+        "-Xlog:class+load,os+thread:file=/s/run/class-load.log:uptime,tid,tags",
         "-Dfus.internal.test.mode=true",
         "-Dnosplash=true",
         "-Didea.is.integration.test=true",
@@ -45,7 +46,7 @@ fn every_arm_is_an_integration_test_and_a_project_start_trusts_its_project() {
     let integration_test = format!("-D{INTEGRATION_TEST_PROPERTY}");
     let trust = format!("-D{TRUST_PROPERTY}");
     for arm in Arm::ALL {
-        let options = measure_options(Path::new("/s/run"), &sandbox, arm, None).expect("the options");
+        let options = measure_options(Path::new("/s/run"), &sandbox, &arm, None).expect("the options");
         assert_eq!(
             options.iter().filter(|option| **option == integration_test).count(),
             1,
@@ -53,10 +54,26 @@ fn every_arm_is_an_integration_test_and_a_project_start_trusts_its_project() {
         );
         assert_eq!(
             options.contains(&trust),
-            matches!(arm, Arm::Project | Arm::EmptyEditor),
+            matches!(arm.kind, ArmKind::Project | ArmKind::EmptyEditor),
             "{arm:?}: {options:?}"
         );
     }
+}
+
+/// A twin starts as the arm of its kind and adds the suppressed plugin. A plain arm suppresses none.
+#[test]
+fn a_twin_arm_suppresses_its_plugin_and_keeps_the_options_of_its_kind() {
+    let sandbox = Sandbox::new("/s/sandbox");
+    let suppressed = format!("-D{SUPPRESSED_PLUGINS_PROPERTY}=com.intellij.air");
+    let plain = measure_options(Path::new("/s/run"), &sandbox, &Arm::PROJECT, None).expect("the options");
+    let twin = measure_options(Path::new("/s/run"), &sandbox, &Arm::PROJECT.without("com.intellij.air"), None).expect("the options");
+    assert!(
+        !plain.iter().any(|option| option.contains(SUPPRESSED_PLUGINS_PROPERTY)),
+        "{plain:?}"
+    );
+    let mut expected = plain;
+    expected.push(suppressed);
+    assert_eq!(twin, expected);
 }
 
 /// Every arm writes the class-load log, from the thread of the asynchronous log, which stalls on a full buffer and
@@ -66,10 +83,10 @@ fn every_arm_is_an_integration_test_and_a_project_start_trusts_its_project() {
 fn every_arm_writes_the_class_load_log_and_a_colon_in_the_run_directory_is_a_failure() {
     let sandbox = Sandbox::new("/s/sandbox");
     for arm in Arm::ALL {
-        let options = measure_options(Path::new("/s/Application Support/run"), &sandbox, arm, None).expect("the options");
+        let options = measure_options(Path::new("/s/Application Support/run"), &sandbox, &arm, None).expect("the options");
         let class_log = options
             .iter()
-            .position(|option| *option == "-Xlog:class+load:file=/s/Application Support/run/class-load.log:uptime,tags")
+            .position(|option| *option == "-Xlog:class+load,os+thread:file=/s/Application Support/run/class-load.log:uptime,tid,tags")
             .unwrap_or_else(|| panic!("{arm:?}: {options:?}"));
         assert_eq!(
             options[class_log - 2..class_log],
@@ -79,10 +96,10 @@ fn every_arm_writes_the_class_load_log_and_a_colon_in_the_run_directory_is_a_fai
     }
     assert_eq!(
         argfile_text(&[class_load_option(Path::new("/s/a b")).expect("an option")]),
-        "-Xlog:class+load:file=/s/a\" \"b/class-load.log:uptime,tags\n"
+        "-Xlog:class+load,os+thread:file=/s/a\" \"b/class-load.log:uptime,tid,tags\n"
     );
     assert_eq!(
-        measure_options(Path::new("/s/a:b/run"), &sandbox, Arm::NonModal, None),
+        measure_options(Path::new("/s/a:b/run"), &sandbox, &Arm::NON_MODAL, None),
         Err(
             "the run directory /s/a:b/run holds a `:`, which ends the file name of -Xlog:class+load; use a session directory without one"
                 .to_owned()
@@ -98,8 +115,13 @@ fn the_modal_arm_forces_the_modal_screen_and_the_profile_adds_the_agent() {
         library: "/lib/libasyncProfiler.dylib".into(),
         event,
     };
-    let options =
-        measure_options(Path::new("/r"), &Sandbox::new("/b"), Arm::Modal, Some(&profiler(ProfileEvent::Cpu))).expect("the options");
+    let options = measure_options(
+        Path::new("/r"),
+        &Sandbox::new("/b"),
+        &Arm::MODAL,
+        Some(&profiler(ProfileEvent::Cpu)),
+    )
+    .expect("the options");
     assert!(options.contains(&format!("-D{FORCE_MODAL_PROPERTY}")));
     assert_eq!(
         options[options.len() - 2..],
@@ -111,7 +133,7 @@ fn the_modal_arm_forces_the_modal_screen_and_the_profile_adds_the_agent() {
     let wall = measure_options(
         Path::new("/r"),
         &Sandbox::new("/b"),
-        Arm::NonModal,
+        &Arm::NON_MODAL,
         Some(&profiler(ProfileEvent::Wall)),
     )
     .expect("the options");
@@ -119,7 +141,7 @@ fn the_modal_arm_forces_the_modal_screen_and_the_profile_adds_the_agent() {
         wall.last().map(String::as_str),
         Some("-agentpath:/lib/libasyncProfiler.dylib=start,event=wall,interval=1ms,threads,collapsed,file=/r/cpu.collapsed")
     );
-    let plain = measure_options(Path::new("/r"), &Sandbox::new("/b"), Arm::NonModal, None).expect("the options");
+    let plain = measure_options(Path::new("/r"), &Sandbox::new("/b"), &Arm::NON_MODAL, None).expect("the options");
     assert!(
         !plain.contains(&DYNAMIC_AGENT_OPTION.to_owned()),
         "a run without a profile loads no agent"
@@ -170,7 +192,7 @@ fn the_prime_run_of_a_project_opens_its_first_file_and_a_measured_run_restores_i
         file: "README.md".into(),
     };
     let plan = |kind| RunPlan {
-        arm: Arm::Project,
+        arm: Arm::PROJECT,
         kind,
         project: Some(project.paths(&sandbox)),
         open_project: None,
@@ -187,7 +209,7 @@ fn the_prime_run_of_a_project_opens_its_first_file_and_a_measured_run_restores_i
         vec!["/s/project-sandbox/projects/markdown"]
     );
     let welcome = RunPlan {
-        arm: Arm::OpenProject,
+        arm: Arm::OPEN_PROJECT,
         kind: RunKind::Measured,
         project: None,
         open_project: Some(Path::new("/p")),
@@ -197,10 +219,10 @@ fn the_prime_run_of_a_project_opens_its_first_file_and_a_measured_run_restores_i
         "open-project starts the IDE without a project"
     );
 
-    let options = measure_options(Path::new("/r"), &sandbox, Arm::Project, None).expect("the options");
+    let options = measure_options(Path::new("/r"), &sandbox, &Arm::PROJECT, None).expect("the options");
     assert!(options.contains(&format!("-D{TRUST_PROPERTY}")), "{options:?}");
     assert!(!options.contains(&format!("-D{FORCE_MODAL_PROPERTY}")));
-    let welcome_options = measure_options(Path::new("/r"), &sandbox, Arm::NonModal, None).expect("the options");
+    let welcome_options = measure_options(Path::new("/r"), &sandbox, &Arm::NON_MODAL, None).expect("the options");
     assert!(!welcome_options.contains(&format!("-D{TRUST_PROPERTY}")), "{welcome_options:?}");
 }
 
@@ -215,7 +237,7 @@ fn every_run_of_the_empty_editor_arm_opens_the_project_without_a_file() {
     };
     for kind in [RunKind::Prime, RunKind::Measured] {
         let plan = RunPlan {
-            arm: Arm::EmptyEditor,
+            arm: Arm::EMPTY_EDITOR,
             kind,
             project: Some(project.paths(&sandbox)),
             open_project: None,
@@ -226,7 +248,7 @@ fn every_run_of_the_empty_editor_arm_opens_the_project_without_a_file() {
             "{kind:?}"
         );
     }
-    let options = measure_options(Path::new("/r"), &sandbox, Arm::EmptyEditor, None).expect("the options");
+    let options = measure_options(Path::new("/r"), &sandbox, &Arm::EMPTY_EDITOR, None).expect("the options");
     assert!(options.contains(&format!("-D{TRUST_PROPERTY}")), "{options:?}");
     assert!(!options.contains(&format!("-D{FORCE_MODAL_PROPERTY}")));
 }
@@ -403,4 +425,13 @@ fn the_entry_resolves_the_class_path_in_the_distribution() {
     }
     let error = entry_options(dist, "", "\n", "Main").expect_err("an empty class path");
     assert!(format!("{error:#}").ends_with("is empty"), "{error:#}");
+}
+
+/// The thread dump after the gate is `jcmd <pid> Thread.print`.
+#[test]
+fn the_thread_dump_is_jcmd_thread_print() {
+    assert_eq!(
+        thread_dump_argv(Path::new("/jbr/bin/jcmd"), 51234),
+        ["/jbr/bin/jcmd", "51234", "Thread.print"]
+    );
 }

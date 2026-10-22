@@ -16,8 +16,10 @@ serde.workspace = true
 serde_json.workspace = true
 serde_path_to_error.workspace = true
 sha2.workspace = true
+zip.workspace = true
 
 [dev-dependencies]
 pretty_assertions.workspace = true
 proptest.workspace = true
 regex.workspace = true
+tempfile.workspace = true

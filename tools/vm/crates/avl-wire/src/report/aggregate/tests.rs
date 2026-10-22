@@ -26,12 +26,8 @@ fn valid_shard_verdict() -> ShardVerdict {
             containers_skipped: 1,
             ..ExecutionCounts::default()
         },
-        xml: XmlCounts {
-            tests: 23,
-            ..XmlCounts::default()
-        },
         ordering: crate::report::ORDERING.to_owned(),
-        suites: Vec::new(),
+        cases: Vec::new(),
         failures: Vec::new(),
         skipped_containers: Vec::new(),
         coverage: Vec::new(),
@@ -348,7 +344,7 @@ fn declared_aggregate_arrays_are_never_null() {
     let verdict = String::from_utf8(encode(&verdict)).unwrap();
     for field in [
         "entries",
-        "suites",
+        "cases",
         "failures",
         "skippedContainers",
         "coverage",

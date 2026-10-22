@@ -17,8 +17,8 @@ GOTO :CMDSCRIPT
 #    `vm/docs/decisions/0105-the-ui-lane-controller-is-go.md` (superseded by ADR 0059, the port to Rust)
 #    records the same trap already paid for once - an `lstat`-based freshness check on a `go_cross_binary`
 #    degraded to "always reinstall", passed its whole suite, and failed on hardware. So every invocation runs
-#    `bazel build`, and the build's event file names the binary: the build *is* the freshness guarantee. The sh
-#    half runs no `bazel run`, because on 2026-10-10 each `bazel run` of this label ended with a deletion of
+#    `bazel build`, and the build's event file names the binary: the build *is* the freshness guarantee. Neither
+#    half runs a `bazel run`, because on 2026-10-10 each `bazel run` of this label ended with a deletion of
 #    about 487,000 Skyframe nodes, and the next lane build analyzed the whole graph again (7.5 to 23 s).
 #
 #    The cost is ~1.3 s of analysis, warm. A lane iteration is ~196 s, and even `status` reaches a
@@ -57,11 +57,13 @@ GOTO :CMDSCRIPT
 # 7. **The CMD half runs the controller natively.** A Windows host drives only the Docker backend, through
 #    `docker.exe`, and the controller refuses a Tart or a Parallels selection there. The CMD half follows the
 #    sh half step for step, with the shapes of the CMD half of bt.cmd: the root from `%~dp0`, the arguments
-#    collected one at a time, and the binary from the first token of the launcher's last line. It has no
-#    `readlink -f`, because the launcher of a Windows `bazel run` names the binary itself.
+#    collected one at a time, and the binary from the build event file, which `polyglot-built-file.ps1` reads
+#    as a Windows path. It has no `readlink -f`, because the event file of a Windows build names the binary
+#    itself.
 #
-# Everything else is bt.cmd's, for bt.cmd's reasons: the bash pinning, reading the launcher's last line,
-# the `readlink -f` fallback, and exporting BUILD_WORKSPACE_DIRECTORY while unsetting any leaked RUNFILES_*.
+# Everything else is bt.cmd's, for bt.cmd's reasons: the bash pinning, the shared build step of
+# polyglot-wrapper.sh, the `readlink -f` fallback, and exporting BUILD_WORKSPACE_DIRECTORY while unsetting any
+# leaked RUNFILES_*.
 
 # A .cmd file has no shebang, so an ENOEXEC fallback picks the interpreter - dash on Ubuntu, bash on
 # macOS. Pin it, as tests.cmd and bt.cmd do, rather than leaving the wrapper's behaviour to the caller.
@@ -103,9 +105,8 @@ exec "$resolved" "$@"
 
 setlocal
 
-REM The same steps as the sh half, see note 7. The launcher is only read for its last line and never run.
-REM This half still runs `bazel run --script_path`: CMD has no JSON reader for the build event file without
-REM PowerShell, and no Windows host has measured the `bazel build` of the sh half.
+REM The same steps as the sh half, see note 7. The `build` step of polyglot-wrapper.cmd runs the `bazel build` and
+REM reads the build event file through PowerShell.
 
 call "%~dp0polyglot-wrapper.cmd"
 set "TARGET=%LABEL_PREFIX%tools/vm:vm"
@@ -135,35 +136,10 @@ if defined AIR_VM_BIN (
   exit /B %ERRORLEVEL%
 )
 
-if not exist "%ROOT%\out\air" mkdir "%ROOT%\out\air"
-REM One %RANDOM% read, reused: two reads would produce two different names.
-set "STAMP=%RANDOM%"
-set "LAUNCHER=%ROOT%\out\air\vm.launcher.%STAMP%"
-set "BUILD_LOG=%ROOT%\out\air\vm.build.%STAMP%.log"
-REM The pipe path of note 6: the build output reaches stderr only when the build fails.
-pushd "%ROOT%"
-call bazel.cmd run --config=bt --script_path="%LAUNCHER%" "%TARGET%" >"%BUILD_LOG%" 2>&1
-set "STATUS=%ERRORLEVEL%"
-popd
-if not "%STATUS%"=="0" (
-  type "%BUILD_LOG%" 1>&2
-  if exist "%LAUNCHER%" del /q "%LAUNCHER%"
-  del /q "%BUILD_LOG%"
-  echo vm: could not build %TARGET%; see the bazel output above 1>&2
-  exit /B 78
-)
-del /q "%BUILD_LOG%"
-
-REM Only the last line is wanted - `<binary> <args> %*` - so the loop deliberately overwrites.
-set "RESOLVED="
-for /f "usebackq tokens=1" %%b in ("%LAUNCHER%") do set "RESOLVED=%%~b"
-del /q "%LAUNCHER%"
-if not defined RESOLVED goto :RESOLVEFAILED
-if not exist "%RESOLVED%" goto :RESOLVEFAILED
+REM The pipe path of note 6 (`log`): the build output reaches stderr only when the build fails. A failure exits 78,
+REM for the reason of note 4.
+call "%POLYGLOT_WRAPPER%" build vm "%TARGET%" 78 vm.exe log
+if not "%ERRORLEVEL%"=="0" exit /B %ERRORLEVEL%
 
 "%RESOLVED%"%ARGS%
 exit /B %ERRORLEVEL%
-
-:RESOLVEFAILED
-echo vm: could not resolve the controller from %TARGET% ^(got '%RESOLVED%'^) 1>&2
-exit /B 78

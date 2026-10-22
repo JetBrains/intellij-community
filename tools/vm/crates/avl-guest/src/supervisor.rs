@@ -15,7 +15,7 @@ mod launch;
 mod log;
 mod state;
 mod supervise;
-mod thread_dump;
+pub(crate) mod thread_dump;
 
 #[cfg(test)]
 mod tests;
@@ -41,7 +41,7 @@ use crate::cli::{CancelArgs, LogArgs, RootArgs, StartArgs};
 use crate::clock::stamp;
 use crate::reply::{self, AgentRefusal, Streams};
 
-pub(crate) use launch::LaunchHost;
+pub(crate) use launch::{LaunchHost, reap_ended};
 pub(crate) use supervise::supervise;
 #[cfg(test)]
 pub(crate) use supervise::{CONTEXT_UTF8_LOCALE, ENVIRONMENT_ALLOWLIST, child_path, has_utf8_locale};
@@ -56,6 +56,13 @@ pub(crate) const FINISH_TIMEOUT: Duration = Duration::from_secs(10);
 /// The cancel client and the detached supervisor are scheduled independently. Leave time for the supervisor's
 /// final fsync and rename after its own grace and process-group deadlines expire.
 pub(crate) const CANCEL_HANDOFF_TIMEOUT: Duration = Duration::from_secs(5);
+
+/// The logs of the run `run_id` in the run slot `root`: `run.log`, the standard output and error of its process, and
+/// `supervisor.log`, the log of its supervisor.
+pub(crate) fn run_logs(root: &Path, run_id: &str) -> [PathBuf; 2] {
+    let paths = RunPaths::new(root, run_id);
+    [paths.log, paths.supervisor_log]
+}
 
 /// The processes and the clock the supervisor observes, as one seam, so the reconciler's branches are tested
 /// against a scripted world instead of real processes and real sleeps.
@@ -130,10 +137,26 @@ pub(crate) struct Launcher {
 impl Launcher {
     pub(crate) fn current() -> Self {
         Self {
-            // An unreadable executable path surfaces as a spawn failure naming the empty path.
-            self_exe: std::env::current_exe().unwrap_or_default(),
+            self_exe: own_image(cfg!(target_os = "linux"), std::env::current_exe()),
             host: LaunchHost::current(),
         }
+    }
+}
+
+/// The path of the image of this process on Linux, which a spawn executes also after its file is gone.
+pub(crate) const LINUX_OWN_IMAGE: &str = "/proc/self/exe";
+
+/// The binary that this process spawns as a supervisor.
+///
+/// On Linux it is [`LINUX_OWN_IMAGE`]. A lane daemon is a process of the installed agent, and an install renames a new
+/// binary onto the agent path while the daemon runs. `current` reads the link of [`LINUX_OWN_IMAGE`], which then names
+/// `<path> (deleted)`, and a spawn of that finds no file. Elsewhere it is `current`, the path of the binary: a rename
+/// there gives the new build, which still starts. An unreadable path surfaces as a spawn failure naming the empty path.
+pub(crate) fn own_image(linux: bool, current: io::Result<PathBuf>) -> PathBuf {
+    if linux {
+        PathBuf::from(LINUX_OWN_IMAGE)
+    } else {
+        current.unwrap_or_default()
     }
 }
 

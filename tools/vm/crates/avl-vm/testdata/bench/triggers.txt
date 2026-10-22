@@ -1,0 +1,31 @@
+vm bench triggers session project-run-01 (the median run by editor highlighting completed)
+anchors: editor highlighting completed, quit; 9 loaders with a class at quit, 8 of 8 triggers
+loaders classes  EDT ms first ms  trigger frame
+      2       2       0     3842  (no frame of another owner)
+      1       2     0.2     2022  com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl.instantiateFileTypeBean(FileTypeManagerImpl.kt:510)
+      1       2     0.1     1122  com.intellij.platform.settings.SettingsControllerKt.createSettingsController(SettingsController.kt:41)
+      1       1     0.3     3292  (no activation stack)
+      1       1       0     1762  com.intellij.ide.ApplicationLoadListenerKt.callAppInitialized(ApplicationLoadListener.kt:58)
+      1       1       0     4942  com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl.getAdditionalExporters(TelemetryManagerImpl.kt:90)
+      1       1       0     3042  javax.imageio.spi.IIORegistry.registerApplicationClasspathSpis(IIORegistry.java:211)
+      1       1     0.1     2932  org.intellij.plugins.markdown.lang.MarkdownLanguage.getParser(MarkdownLanguage.kt:18)
+the loaders of each trigger, by their first load (ms from the process start):
+  classes  EDT ms first ms  loader, first class
+  (no frame of another owner):
+        1       0     3842  intellij.gateway.daemon.bridge (com.jetbrains.gateway), com.intellij.gateway.daemon.bridge.GatewayConnectorBridgeActivity
+        1       0     4442  com.intellij.dfa.analysis (main), com.intellij.dfa.analysis.rml.utils.RmlServiceResolver
+  com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl.instantiateFileTypeBean(FileTypeManagerImpl.kt:510):
+        2     0.2     2022  org.intellij.plugins.markdown (main), org.intellij.plugins.markdown.lang.MarkdownFileType
+  com.intellij.platform.settings.SettingsControllerKt.createSettingsController(SettingsController.kt:41):
+        2     0.1     1122  intellij.platform.settings.local (com.intellij), com.intellij.platform.settings.local.SettingsControllerMediator
+  (no activation stack):
+        1     0.3     3292  intellij.station.core (com.jetbrains.station), com.intellij.station.core.services.IdeStationServiceInitializedListener
+  com.intellij.ide.ApplicationLoadListenerKt.callAppInitialized(ApplicationLoadListener.kt:58):
+        1       0     1762  com.jetbrains.performancePlugin (main), com.jetbrains.performancePlugin.ProjectLoaded
+  com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl.getAdditionalExporters(TelemetryManagerImpl.kt:90):
+        1       0     4942  intellij.platform.vcs.log.impl (com.intellij.platform.vcs), com.intellij.vcs.log.statistics.VcsLogTelemetryExporter
+  javax.imageio.spi.IIORegistry.registerApplicationClasspathSpis(IIORegistry.java:211):
+        1       0     3042  intellij.webp (main), com.android.tools.adtui.webp.WebpImageReaderSpi
+  org.intellij.plugins.markdown.lang.MarkdownLanguage.getParser(MarkdownLanguage.kt:18):
+        1     0.1     2932  intellij.markdown.core (org.intellij.plugins.markdown), org.intellij.plugins.markdown.lang.parser.MarkdownParserAdapter
+note: a trigger woke its loaders; their classes up to the anchor can come from later code, so read the classes of a loader in bench classes

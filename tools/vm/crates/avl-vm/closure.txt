@@ -10,6 +10,7 @@ atomic_waker
 avl_affected
 avl_base
 avl_host_sys
+avl_junit
 avl_report
 avl_trace
 avl_trace_tools

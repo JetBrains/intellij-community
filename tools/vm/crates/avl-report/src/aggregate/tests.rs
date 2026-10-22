@@ -4,8 +4,7 @@
 )]
 
 use avl_wire::report::{
-    Case, Failure, FailureKind, FailureSource, RUN_REPORT_SCHEMA_VERSION, Retrieval, SkippedContainer, Source, Suite, Watchdog,
-    decode_flake_summary, decode_shard_verdict,
+    Case, Failure, FailureKind, RUN_REPORT_SCHEMA_VERSION, SkippedContainer, Watchdog, decode_flake_summary, decode_shard_verdict,
 };
 use pretty_assertions::assert_eq;
 
@@ -27,14 +26,7 @@ pub(super) fn document(status: Status) -> RunReport {
         duration_ms: 60_000.0,
         ordering: ORDERING.to_owned(),
         execution: ExecutionCounts::default(),
-        xml: XmlCounts::default(),
-        source: Source {
-            guest_path: "/Users/air/out/junit.xml".to_owned(),
-            retrieval: Retrieval::DaemonHttp,
-            integrity: Integrity::Complete,
-            diagnostic: None,
-        },
-        suites: Vec::new(),
+        cases: Vec::new(),
         failures: Vec::new(),
         skipped_containers: Vec::new(),
         active_tests: Vec::new(),
@@ -59,19 +51,16 @@ fn failed(class_name: &str) -> (&str, CaseStatus) {
     (class_name, CaseStatus::Failed)
 }
 
-/// Adds one document's worth of cases, and one failure entry per failed case - which is what a complete XML
-/// produces.
+/// Adds cases named `name` that started at `timestamp`, and one failure entry per failed case - which is what the
+/// stream of a scenario produces.
 fn with_suite(mut report: RunReport, name: &str, timestamp: Option<&str>, cases: &[(&str, CaseStatus)]) -> RunReport {
     let failures = cases.iter().filter(|(_, status)| *status == CaseStatus::Failed).count();
     let failures = u32::try_from(failures).unwrap();
     for (class_name, _) in cases.iter().filter(|(_, status)| *status == CaseStatus::Failed) {
         report.failures.push(Failure {
-            source: FailureSource::JunitXml,
-            suite: Some(name.to_owned()),
-            suite_timestamp: timestamp.map(str::to_owned),
             class_name: Some((*class_name).to_owned()),
-            test_name: "t".to_owned(),
-            kind: FailureKind::Failure,
+            test_name: name.to_owned(),
+            kind: FailureKind::Test,
             r#type: None,
             message: "boom".to_owned(),
             detail: None,
@@ -81,27 +70,15 @@ fn with_suite(mut report: RunReport, name: &str, timestamp: Option<&str>, cases:
         });
     }
     let tests = u32::try_from(cases.len()).unwrap();
-    report.suites.push(Suite {
+    report.cases.extend(cases.iter().map(|(class_name, status)| Case {
+        class_name: (*class_name).to_owned(),
         name: name.to_owned(),
-        timestamp: timestamp.map(str::to_owned),
+        status: *status,
         duration_ms: 0.0,
-        document_index: report.suites.len(),
-        tests,
-        failures,
-        errors: 0,
-        skipped: 0,
-        cases: cases
-            .iter()
-            .map(|(class_name, status)| Case {
-                class_name: (*class_name).to_owned(),
-                name: "t".to_owned(),
-                status: *status,
-                duration_ms: 0.0,
-            })
-            .collect(),
-    });
-    report.xml.tests += tests;
-    report.xml.failures += failures;
+        started_at: timestamp.unwrap_or_default().to_owned(),
+        recorded: None,
+        reason: None,
+    }));
     report.execution.tests_started += tests;
     report.execution.tests_failed += failures;
     report
@@ -311,21 +288,6 @@ fn a_dead_shard_outranks_every_other_diagnosis() {
     assert_eq!(read_back(&verdict).entries[0].entry.status, EntryStatus::NoReport);
 }
 
-/// Rule 3 is unreachable through the report builder; this builds the impossible report by hand so that its
-/// becoming reachable is visible.
-#[test]
-fn an_incomplete_source_is_caught_even_if_the_single_run_guard_ever_misses_it() {
-    let mut impossible = with_suite(document(Status::Passed), "A", None, &[passed("com.intellij.air.A")]);
-    impossible.source.integrity = Integrity::Truncated;
-    let verdict = merge_shard_verdict(&[shard(1, "air-linux-1", impossible)]);
-    assert_eq!(verdict.code, Some(ShardDiagnosticCode::IncompleteSource));
-    assert!(
-        text(verdict.diagnostic.as_deref()).contains("shard 1 (air-linux-1): truncated"),
-        "{}",
-        text(verdict.diagnostic.as_deref())
-    );
-}
-
 /// Every shard finding nothing is a selection that matched nothing; *one* is lost coverage wearing a green hat.
 #[test]
 fn discovering_nothing_is_two_different_verdicts() {
@@ -463,9 +425,9 @@ fn a_plain_red_lane_needs_no_diagnostic_code() {
     assert!(!decoded.failures.is_empty());
 }
 
-/// Suites are merged by instant and by global position, never by timestamp text.
+/// Cases are merged by instant and by global position, never by timestamp text.
 #[test]
-fn merged_suites_are_ordered_by_instant_across_shards() {
+fn merged_cases_are_ordered_by_instant_across_shards() {
     let first = with_suite(
         with_suite(
             document(Status::Passed),
@@ -489,12 +451,17 @@ fn merged_suites_are_ordered_by_instant_across_shards() {
         &[passed("com.intellij.air.UntimedB")],
     );
     let verdict = merge_shard_verdict(&[shard(1, "air-linux-1", first), shard(2, "air-linux-2", second)]);
-    let names: Vec<&str> = verdict.suites.iter().map(|suite| suite.name.as_str()).collect();
-    // `late` is 10:00:30Z once the offset is read as an offset; the untimed suites keep their position, last.
-    assert_eq!(names, ["early", "late", "untimed-a", "untimed-b"]);
-    // Each suite keeps its own document index, the only pointer back into its XML.
-    let untimed = verdict.suites.iter().find(|suite| suite.name == "untimed-a").unwrap();
-    assert_eq!(untimed.document_index, 1);
+    let names: Vec<&str> = verdict.cases.iter().map(|case| case.class_name.as_str()).collect();
+    // `late` is 10:00:30Z once the offset is read as an offset; the untimed cases keep their position, last.
+    assert_eq!(
+        names,
+        [
+            "com.intellij.air.Early",
+            "com.intellij.air.Late",
+            "com.intellij.air.UntimedA",
+            "com.intellij.air.UntimedB"
+        ]
+    );
 }
 
 /// The wall clock is what the lane cost and the sum is the machine time it took.
@@ -511,7 +478,7 @@ fn the_merge_reports_both_wall_and_machine_time() {
         (Some("2026-08-22T10:00:00Z"), Some("2026-08-22T10:02:00Z"))
     );
     assert_eq!((verdict.wall_duration_ms, verdict.total_duration_ms), (120_000.0, 150_000.0));
-    assert_eq!((verdict.execution.tests_started, verdict.xml.tests), (2, 2));
+    assert_eq!((verdict.execution.tests_started, verdict.cases.len()), (2, 2));
     assert_eq!(verdict.executed_classes, ["com.intellij.air.A", "com.intellij.air.B"]);
     assert_eq!((verdict.status, verdict.code), (Status::Passed, None));
     read_back(&verdict);
@@ -525,8 +492,6 @@ fn guest_counts_saturate_instead_of_overflowing() {
         let mut report = with_suite(document(Status::Passed), "A", None, &[passed(class_name)]);
         report.execution.tests_started = u32::MAX;
         report.execution.tests_skipped = u32::MAX;
-        report.xml.tests = u32::MAX;
-        report.xml.skipped = u32::MAX;
         report
     };
     let verdict = merge_shard_verdict(&[
@@ -534,13 +499,8 @@ fn guest_counts_saturate_instead_of_overflowing() {
         shard(2, "air-linux-2", huge("com.intellij.air.B")),
     ]);
     assert_eq!(
-        (
-            verdict.execution.tests_started,
-            verdict.execution.tests_skipped,
-            verdict.xml.tests,
-            verdict.xml.skipped
-        ),
-        (u32::MAX, u32::MAX, u32::MAX, u32::MAX)
+        (verdict.execution.tests_started, verdict.execution.tests_skipped),
+        (u32::MAX, u32::MAX)
     );
 }
 
@@ -661,11 +621,9 @@ fn a_trial_that_discovered_nothing_does_not_vote() {
     assert_eq!(class_of(&summary, "com.intellij.air.A").executed_trials, 1);
 }
 
-/// The four ways a trial is thrown out, each with the code that threw it out.
+/// The three ways a trial is thrown out, each with the code that threw it out.
 #[test]
 fn every_excluded_trial_names_why() {
-    let mut truncated = document(Status::Passed);
-    truncated.source.integrity = Integrity::Truncated;
     let summary = flake_summary(&[
         dead_trial(1, "lease_unavailable"),
         trial(
@@ -673,7 +631,6 @@ fn every_excluded_trial_names_why() {
             with_diagnostic(document(Status::InfrastructureError), "daemon watchdog expired: progress gap"),
         ),
         trial(3, document(Status::NoTests)),
-        trial(4, truncated),
     ]);
     let codes: Vec<&str> = summary
         .infrastructure_trials
@@ -682,12 +639,7 @@ fn every_excluded_trial_names_why() {
         .collect();
     assert_eq!(
         codes,
-        [
-            "lease_unavailable",
-            "trial_infrastructure_error",
-            "trial_discovered_nothing",
-            "trial_incomplete_source"
-        ]
+        ["lease_unavailable", "trial_infrastructure_error", "trial_discovered_nothing"]
     );
     assert_eq!(summary.infrastructure_trials[1].message, "daemon watchdog expired: progress gap");
     // Nothing was measured, and the summary says so rather than publishing zero as a clean lane.
@@ -728,15 +680,12 @@ fn the_exclusion_fraction_withholds_the_headline_and_keeps_the_evidence() {
     assert_eq!(reportability(0, 0, 0, 0).as_deref(), Some("no trials were attempted"));
 }
 
-/// `f > n` is arithmetic that cannot have happened. A container that died before writing its XML is how it used to
-/// happen: the class was failed and not executed.
+/// `f > n` is arithmetic that cannot have happened. A failure whose class has no case is how it used to happen: the
+/// class was failed and not executed.
 #[test]
-fn a_failure_whose_class_never_reached_the_xml_is_still_executed() {
+fn a_failure_whose_class_has_no_case_is_still_executed() {
     let mut report = document(Status::Failed);
     report.failures.push(Failure {
-        source: FailureSource::Progress,
-        suite: None,
-        suite_timestamp: None,
         class_name: Some("com.intellij.air.NoXml".to_owned()),
         test_name: "Before all".to_owned(),
         kind: FailureKind::Container,

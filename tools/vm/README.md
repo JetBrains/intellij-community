@@ -22,11 +22,11 @@ follows [`AGENTS.md`](AGENTS.md).
 | wrapper | label | crate | what it is |
 | --- | --- | --- | --- |
 | `./community/tools/vm.cmd` | `:vm` | `avl-vm` | the lane controller |
-| `./community/tools/trace.cmd` | `:air-trace` | `air-trace` | `serve`, `plan` and `pack` |
-| (none; `ui_lane_ide.bzl`) | `:air-trace-record` | `avl-record` | the scenario recorder a lane JVM starts from its runfiles |
+| `./community/tools/trace.cmd` | `:air-trace` | `air-trace` | `serve`, `plan`, `pack` and `teamcity-publish` |
+| (none; `ui_lane_ide.bzl`) | `:air-trace-record` | `avl-record` | the scenario recorder that the lane daemon starts for each iteration |
 
-Each wrapper builds its binary on every call, so the binary is always built from the working copy. The sh half runs
-`bazel build` and reads the path of the binary from the build event file. The CMD half runs `bazel run --script_path`.
+Each wrapper builds its binary on every call, so the binary is always built from the working copy. Both halves run
+`bazel build` and read the path of the binary from the build event file.
 `AIR_VM_BIN` and `AIR_TRACE_BIN` name a built binary instead and skip Bazel. BT, `./community/tools/bt.cmd`, is
 the community workspace `community/tools/bt`; its README is its crate map. A UI lane takes the
 recorder from its runfiles: `ui_lane_ide.bzl` names `:air-trace-record` for a lane on the host,
@@ -45,8 +45,8 @@ checkout at its start. In a community checkout no `bt.json` names the Air area, 
 `air_area_missing`.
 
 Every one of these labels is an `avl_binary` at the workspace root: one file, and always `compilation_mode=opt`,
-whatever the command line says. One file, because the build event file of a wrapper, `--script_path`, `$(rlocationpath)` and
-the controller's `cquery ... [0]` for the agent each need exactly one. Optimized, because fastbuild Rust is `-Copt-level=0` for every
+whatever the command line says. The wrapper, `$(rlocationpath)` and the controller's `cquery ... [0]` for the agent each
+need one output file. Optimized, because fastbuild Rust is `-Copt-level=0` for every
 dependency, and the WebP stills, the X11 frame copies and the zip deflate would run ten times slower or worse
 inside a lane that measures time. The rule is `optimized_binary` of `community/build/rust-tools/defs.bzl`, which
 `avl.bzl` binds as `avl_binary`. On a Unix host, what `bazel test` runs for Windows is
@@ -76,16 +76,20 @@ arguments after the program name and the streams it uses.
 
 A crate exists when two binaries share it, or when it is the frozen-bytes engine of one binary with its own goldens:
 `avl-report` writes the bytes an agent reads. Code that one binary uses is a module of that binary. So the `vm`
-controller holds the modules `bench`, `console`, `daemon`, `lane`, `report` and `worker`, and `air-trace` holds `serve`
-and `plan`.
+controller holds the modules `bench`, `console`, `daemon`, `lane`, `report` and `worker`, and `air-trace` holds `serve`,
+`plan` and `publish`.
 `build/docs/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md` states the same rule for the dev-dist tools.
 The crates form a DAG with the contracts at the bottom. `avl-wire`,
-`avl-trace` and `avl-testkit` depend on no sibling, and `avl-trace-tools` stands on `avl-trace` alone. `avl-record`
-links `avl-trace` and no other sibling, so the recorder links no packer, no discovery and no URL code. `avl-base`
-stands on `avl-wire`, and on `avl-trace-tools` for the viewer links its renderer prints. Of the siblings, `avl-guest`
-depends on `avl-wire` and `avl-trace-tools` alone and never on `avl-base`, so the agent links no controller code.
-`bt-junit` of BT's workspace, the JUnit XML reader, is linked by the three crates that read a `test.xml`: `avl-report`,
-`avl-vm` and `air-trace`. The agent links no crate of BT. `bt-core` is linked by `avl-affected` and by the
+`avl-trace` and `avl-testkit` depend on no sibling, and `avl-trace-tools` and `avl-bridge` stand on `avl-trace` alone.
+`avl-junit` stands on `avl-wire` alone, so the guest agent can write the JUnit XML.
+`avl-record` links `avl-trace` and `avl-bridge` and no other sibling, so the recorder links no packer, no discovery and
+no URL code. `avl-base` stands on `avl-wire`, and on `avl-trace-tools` for the viewer links its renderer prints. Of the
+siblings, `avl-guest` depends on `avl-wire`, `avl-junit`, `avl-trace`, `avl-trace-tools` and `avl-bridge` alone and
+never on `avl-base`, so the agent links no controller code. The recorder and the agent link one client of the bridge,
+so they send one token header and follow one deadline rule.
+`bt-junit` of BT's workspace, the JUnit XML reader, is linked by `air-trace`, which reads a `test.xml`, and by `avl-vm`,
+which takes the class pattern of BT from it. The tests of `avl-junit` read back its XML with it. The agent links no
+crate of BT. `bt-core` is linked by `avl-affected` and by the
 two crates that resolve a lane or a selector, `avl-vm` and `air-trace`.
 `avl-host-sys`, `avl-trace-tools`, `air-trace` and `avl-vm` link `fscopy` of the dev-dist tools for the
 real path. `refusal` of BT's workspace holds the refusal type, and `avl-base`, `avl-affected`, `air-trace` and
@@ -132,23 +136,25 @@ and copy `<bin>_closure.txt` from `out/bazel-bin` over `closure.txt`.
 
 | concern | crate | owns |
 | --- | --- | --- |
-| contracts | `avl-wire` | the documents that cross a boundary: the run supervisor and every guest verb's name, staging and the generation layout, the Bazel runtime descriptor and the daemon's JVM @-file, the daemon control channel, the documents of the lane IDE (the context document of `ide-prepare`, the launch document of `ide-launch`, their answers, the launch record and the answer of `ide-gc`), progress records and the run journal, the agent-facing report, the runfiles MANIFEST reader, the host-to-guest path table `PathMap`, and the receipt of a raw pull. Each is declared once for both ends |
-| | `avl-trace` | the scenario traces that the recorder writes: the lane protocol, OTLP, the bundle with its manifest encoder and decoder and its file names, the Allure result document, and the bridge's trace routes. The golden transcript and bundles are its `testdata`, a public filegroup the Kotlin contract tests read. The transcript of the routes of `air-trace serve` is there too, and the docs site's test reads it |
+| contracts | `avl-wire` | the documents that cross a boundary: the run supervisor and every guest verb's name, the shape of a digest, the Bazel runtime descriptor, the daemon control channel, the documents of the lane IDE (the context document and the launch document with their checks, the launch record and the answer of `ide-gc`), progress records and the run journal, the agent-facing report, the runfiles MANIFEST reader, the host-to-guest path table `PathMap`, and the receipt of a raw pull. Each is declared once for both ends |
+| | `avl-trace` | the scenario traces that the recorder writes: the lane protocol, OTLP, the bundle with its manifest encoder and decoder and its file names, the Allure result document, and the bridge's trace routes. The golden transcript and bundles are its `testdata`, a public filegroup. The transcript of the routes of `air-trace serve` is there too, and the docs site's test reads it |
 | | `avl-trace-tools` | the tools over the traces, which the recorder does not run: the deterministic zips with the media stored (`air-trace pack` and the guest's `trace-pack-ready`), the discovery of bundles in directories and zips, and the viewer URLs with the default port of `air-trace serve` |
+| | `avl-bridge` | the client of the IDE's bridge, which the recorder and the guest agent share: one HTTP/1.1 call over loopback with the launch's token, a deadline whose time left goes to the IDE, the typed error, in which a refused connect, a passed deadline and a bridge that unloads are transient and a refused token is final, the bridge failure with its cause chain, the readers of the trace routes, and the lifecycle reader with the wait for a phase over the long poll |
 | base | `avl-base` | the exit vocabulary `Exit` and the controller's refusal, `refusal::Refusal<Exit>` with the constructors of `RefusalExt`, the `{ok,…}` envelope, the `AIR_VM_*` settings and their per-guest defaults (`src/config.rs`), phase timing, ids, the journal and history, atomic file publication. The image pins are read from `community/tools/vm/provision/versions.env` at compile time |
-| guest | `avl-guest` | the guest half and the agent binary: the run supervisor, the runtime stager, the Linux boot and macOS image verbs, the lane IDE contexts (`ide-prepare` lays out the directories of one context, `ide-launch` writes the argument file and the launch record and starts the IDE run in the closed environment of its context, `ide-gc` stops IDE runs and removes old logs, and `cancel --thread-dump` writes a thread dump before the kill), `trace-pack-ready`, the `relay` verb that bridges its stdin and stdout to a loopback port inside the guest, the `runfiles-tree` verb that builds the runfiles tree of the host's MANIFEST with the copies of the staged runfiles, and the `read-file` verb that writes one file on stdout unchanged for a pull |
+| guest | `avl-guest` | the guest half and the agent binary: the run supervisor, the Linux boot and macOS image verbs, the lane IDE contexts (the preparation checks its document and lays out the directories of one context, the launch checks its document, writes the argument file and the launch record, and starts the IDE run in the closed environment of its context, `ide-gc` stops IDE runs and removes old logs, and `cancel --thread-dump` writes a thread dump before the kill), `trace-pack-ready`, the `relay` verb that bridges its stdin and stdout to a loopback port inside the guest, the `runfiles-tree` verb that builds the runfiles tree of the host's MANIFEST with the copies of the staged runfiles, the `read-file` verb that writes one file on stdout unchanged for a pull, and the `lane-daemon` verb (`src/lane`): the control channel of the lane daemon, the owner of the lane IDE and its readiness, the lane services with the fake agent package, and the context files |
 | host system | `avl-host-sys` | subprocesses, each with its timeout, and the byte stream of an exec channel child, the one wait loop with its budget and backoff (`Poll`), the batched lookup of the pinned files (`external_files`), the process-wide interrupt service and the operation context, locks and the one host-process identity that the Tart pid receipt, the lock record and the run marker share (`ProcessIdentity`), private files, the one mapping of host paths to guest paths (`GuestPaths`), the choice of a runfiles tree or a MANIFEST and the plan of the guest tree with its staged runfiles (`HostRunfiles`); what a guest must be to run host-built outputs (the read-only share set and its mount, the parity layout, TCC admission, the agent install, the run supervisor, the Linux guest's packages); the detached trace viewer: its probe and the one start of a detached server, which `air-trace serve --detach` and the controller share (`viewer`) |
 | workers | `avl-vm` (`worker`) | the four backends, Tart, Parallels, Docker and `container-linux`, of which a Windows host has Docker and `container-linux` (the binaries, the share grammars, the sealed golden, worker provenance, the Docker image and its containers), the Apple `container` engine and its CLI dialect, one dispatch for each lifecycle operation, the one resolver of the pinned tools (`PinnedTools`), readiness gates and the `pool` commands, lease ownership, receipts, the run marker that names the run in flight on each worker (`run.json`) and the `lease` commands |
-| reports | `avl-report` | the content digests that decide whether a staged generation is reused, report assembly, the shard merge ladder and the flake arithmetic |
+| reports | `avl-report` | the content digests that decide whether a warm iteration reuses the lane daemon, its IDE and its shares, report assembly, the TeamCity service messages and the IJ Perf file of a scenario from the run stream, the shard merge ladder and the flake arithmetic |
+| | `avl-junit` | the JUnit XML of a run from its run stream, and the fold of the stream into cases that the report and the TeamCity messages read too. The controller and the guest agent both write the XML, so the crate stands on `avl-wire` alone and does no file I/O. The recorded stream and the golden of its XML are its `testdata` |
 | lanes | `avl-vm` (`lane`) | lane and selector resolution for the controller, the `suites` command, the host Bazel build, the guest launch environment, the lane IDEs that the controller stops or keeps and the check that no IDE runs from the shares (`ide`), and `exec`, `peekaboo`, `pull`, `ls`, `vnc`, `status` |
-| runs | `avl-vm` (`daemon`) | `run`, `shard`, `flake` and `daemon`: the HTTP client that reaches the guest daemon through the relay, staging, the hot-jar push, iterations, the verdict, the pull of each iteration's traces beside its report, the shard split and the flake trial chains, and the leased-run driver the three share: build first, lease, one body per worker, release, and the interrupt policy |
+| runs | `avl-vm` (`daemon`) | `run`, `shard`, `flake` and `daemon`: the HTTP client that reaches the guest daemon through the relay, the daemon start, the push of the files of the build, iterations, the verdict, the pull of each iteration's traces beside its report, the shard split and the flake trial chains, and the leased-run driver the three share: build first, lease, one body per worker, release, and the interrupt policy |
 | run time | `avl-vm` (`report`) | `report time`: where the time of a run went, from its journal, its iteration reports and the spans of its trace bundles, with no worker; `--baseline` adds the ratio of each test class |
 | bench | `avl-vm` (`bench`) | `vm bench`, the start-up measurement of the IDE on this host: the generation of a dev distribution, the Starter-shaped IDE launch and its supervision, the session, the readers of the files the IDE writes (the start-up report, the trace, the FUS log, the class log, the CPU profile), the gate, the summary and the digest |
 | | `avl-vm` | the `vm` binary: the clap command tree, which renders the help, the global arguments and the dispatch, the output form and renderer the descriptors allow, the live terminal dashboard of `run`, `shard` and `flake` (`console`), `image validate\|build`, and the viewer a prose run starts (`ensure_viewer`, through `avl_host_sys::viewer`) |
-| suites | `avl-affected` | which suites a changed path reaches (the suite's own files, the lane harness, the flow tags, the specs' `[@test]` links, the JPS modules), the UI lanes a VM worker runs with their test labels and JUnit tags (`lanes`, which the controller and the planner share), and the bridge: the Air area that `bt.json` of the checkout names, read at the start of each program (`plugins/air/tests/integration/lanes.json`, with each UI lane's test label and JUnit tag, which `AirIntegrationTagTest`, `AirTestTargetDeclarationTest`, `AirArchitectureModelTest` and the flow generator `docs/scripts/flowCatalog.ts` read too), and a BT refusal as the controller's |
-| traces | `avl-record` | the recorder a lane JVM starts, the `air-trace-record` binary: the protocol's state machine, the bundle writer, the Allure result of each bundle, the snapshots, the `idea.log` slice, retention of the IDE root; where the pixels come from (X11 over MIT-SHM, else the IDE's paint route), the lossless WebP stills, the H.264 video the recorder encodes itself, its fragmented MP4 and frame index; ffmpeg only for a Mac's screen; the client of the IDE's trace routes |
-| | `air-trace` | the `air-trace` binary: dispatch to `pack`, which is `avl-trace-tools`', and the modules `serve` and `plan`. `air-trace serve`: the bundles discovery finds, by byte range and live, the planner route, and the docs site; `air-trace plan`: from a bundle, a flow text, a profile, a `test.xml`, a report, a path or a name to the scenarios, the bundles the input names, the bundles of those scenarios on disk, and the commands |
-| tests | `avl-testkit` | test helpers: repository files under cargo and under Bazel, the paths of the scenario-trace goldens (`traces`), fake executables, the Tart fake with its fake `docker` and fake Apple `container`. On Windows, which runs no shell script, the fake `docker` and the fake `git` are the Rust program `avl-fake` (`src/fakebin.rs`), linked under the tool's name and found through `AVL_FAKE`. A test compares it with the script, call by call, on Unix. The fakes are hard links to one file each, which all test processes share and which is named by its content (`src/shared.rs`), so only the first process after a change of a fake writes a new executable that macOS scans at its first exec |
+| suites | `avl-affected` | which suites a changed path reaches (the suite's own files, the lane harness, the flow tags, the specs' `[@test]` links, the JPS modules), the UI lanes a VM worker runs with their test labels (`lanes`, which the controller and the planner share), and the bridge: the Air area that `bt.json` of the checkout names, read at the start of each program (`plugins/air/tests/integration/lanes.json`, with each UI lane's test label, which `AirIntegrationTagTest`, `AirTestTargetDeclarationTest`, `AirArchitectureModelTest` and the flow generator `docs/scripts/flowCatalog.ts` read too), and a BT refusal as the controller's |
+| traces | `avl-record` | the recorder that the lane daemon starts, the `air-trace-record` binary: the protocol's state machine, the bundle writer, the Allure result of each bundle when a run asks for it, the snapshots, the `idea.log` slice; where the pixels come from (X11 over MIT-SHM, else the IDE's paint route), the lossless WebP stills, the H.264 video the recorder encodes itself, its fragmented MP4 and frame index; ffmpeg only for a Mac's screen |
+| | `air-trace` | the `air-trace` binary: dispatch to `pack`, which is `avl-trace-tools`', and the modules `serve` and `plan`. `air-trace serve`: the bundles discovery finds, by byte range and live, the planner route, the bundles of a TeamCity build (`--teamcity`), and the docs site; `air-trace teamcity-publish`: after a Bazel test on TeamCity, the one archive artifact `air-traces.zip` with the viewer page, `runs.json` in the listing form of `serve` and one zip for each bundle, the messages that publish it and link each test to its trace, which `avl-report` writes, the viewer, which it builds as `serve` builds the site when `--viewer` is absent, and the build from the agent's property files; `air-trace plan`: from a bundle, a flow text, a profile, a `test.xml`, a report, a path or a name to the scenarios, the bundles the input names, the bundles of those scenarios on disk, and the commands |
+| tests | `avl-testkit` | test helpers: repository files under cargo and under Bazel, the paths of the scenario-trace goldens (`traces`), fake executables, the Tart fake with its fake `docker` and fake Apple `container`, and the loopback HTTP server that stands in for the IDE's bridge (`src/http.rs`). On Windows, which runs no shell script, the fake `docker` and the fake `git` are the Rust program `avl-fake` (`src/fakebin.rs`), linked under the tool's name and found through `AVL_FAKE`. A test compares it with the script, call by call, on Unix. The fakes are hard links to one file each, which all test processes share and which is named by its content (`src/shared.rs`), so only the first process after a change of a fake writes a new executable that macOS scans at its first exec |
 | | `avl-host-testkit` | the host-side fixtures the controller crates' suites share, a dev-dependency only: the fake guest channels and their answers, the pool environment over the Tart fake, the fake host `git`, the Bazel that resolves the pinned Tart, Docker CLI and `docker-buildx` to the fakes, the parked-daemon probe, the fake process table of the `ps` probe. It stands below `avl-vm`, so each module's suite assembles its own `Manager` over it; `avl-host-sys`'s own suite keeps a fake channel of its own |
 
 ## The bench
@@ -158,14 +164,41 @@ and copy `<bin>_closure.txt` from `out/bazel-bin` over `closure.txt`.
 and the defaults of the verb.
 
 Every run is an integration test, as every run of the IDE Starter is, so a welcome run measures what the perf test of
-the welcome screen measures. `session.json` names this measurement model, and ADR 0234 records it. A metric of a
-welcome span or of a modal span is the sum of the spans of its name, as the perf test sums them, and a name that
+the welcome screen measures. `session.json` names this measurement model, and
+[a welcome run measures what the perf test measures](docs/decisions/2026-10-12-a-welcome-run-measures-what-the-perf-test-measures.md)
+records it. A metric of a welcome span or of a modal span is the sum of the spans of its name, as the perf test sums them, and a name that
 repeats is a note of the run. The digest shows these sums in the groups `welcome spans` and `modal spans`. The group
 `span ends (ms from the process start)` holds the end of the first span of each start-up step, on the clock of the
 anchors such as `welcomeBecameVisible`. The report's `jvm.loadingTime`, the time of the JVM before that clock starts,
 is a metric of the first group. A modal run opens no project, so the IDE writes its start-up report at the exit, and
 the record reads it after the quit. Its `totalDuration` is negative or missing, so it is a note of the run and no
 metric.
+
+`--suppress-plugin <id>` of `welcome` and `project` adds a twin after each arm, such as `project-without-<id>`. A
+run of a twin passes `-Didea.suppressed.plugins.id=<id>`, so the IDE loads no plugin of that id. The twin has its own
+prime run and sandbox, and its runs interleave with the runs of its arm. Every verb that reads a session takes the
+twin as an arm, and the noise check of `compare` uses the plain arms only.
+
+A module is the main module or a content module of a plugin, and each module has its own class loader. The debug log
+`plugin-classes.txt` names the module and the `findClass` nanos of each class. With the first class of a module, it
+writes the stack that loaded the class. The spec [Plugin Class Log](../../platform/core-impl/spec/plugin-class-log.spec.md)
+is the contract of its format. Its trailer `#cost` states the time that the IDE spent on the writes and on the stacks.
+The run has these two times as the metrics `pluginLog.writeMs` and `pluginLog.stackMs`. A log without the trailer,
+such as the log of a killed IDE, has neither metric. The reader also takes the legacy shape without a header.
+
+The thread of a class comes from the JVM. `class-load.log` names the tid of each class and the start of each thread.
+The JVM names a Java thread only when the thread ends, so each run writes the thread dump `threads.txt` with `jcmd`
+after its gate. The dump runs before the stop of the profile, and both take their time from the hold. It names the tid
+of the EDT, the thread `AWT-EventQueue-0`. A failed or late dump is a note of the run. A run without the dump has no
+thread, so its EDT and BG times print `-`. With the dump, `classes.edt@<anchor>` counts the named classes that the EDT
+loaded before the anchor.
+
+The trigger frame of a module is the frame nearest to the top of its stack whose class has another owner. The search
+skips the frames of the runtime, the language libraries, the service container, the extension points and the message
+bus. A class without an owner in the log is a platform class. A log from a distribution before this shape has no time
+and no stack, so the tables print `-` and say so. The decision record
+[The bench names the trigger of each plugin loader](docs/decisions/2026-10-19-the-bench-names-the-trigger-of-each-plugin-loader.md)
+states the rule.
 
 `--profile` samples the CPU with async-profiler from the JVM start to the gate of each run. When the gate passes, the
 run reads the PID of the IDE from `idea.log` and stops the profiler with `jcmd` of the generation, which writes
@@ -186,7 +219,8 @@ that the JVM loads, and the digest notes how many samples it left out.
 | `replay <session>` | What does a finished session give when the controller parses it again? | A new `summary.json` and the digest, without an IDE. |
 | `trace <session>` | What runs between the frame and the welcome paint? | The anchors of one run, and one line per span in the window. |
 | `activities <session>` | Which post-startup activities run while the welcome panel paints? | One table by class and one table by plugin for one run. |
-| `classes <session>` | Which classes did the JVM load before an anchor, and which plugin owns them? | The class totals of one arm, and one table by plugin and one by module. |
+| `classes <session>` | Which classes did the JVM load before an anchor, and which plugin and module own them? | The class totals of one arm, one table by plugin with its modules and its EDT and BG ms, and one table by module. `--plugin` adds the rank of a plugin. |
+| `triggers <session>` | Which code pulled each module of a plugin? | One row per trigger frame of one run, with its modules, their classes, their EDT ms and the first load, then the modules of each trigger. |
 | `compare <session> <session>...` | Did the change move the medians by more than the noise of the host? | The medians per arm with the delta to A, and one noise check per session. |
 | `ls` | Which sessions does this host have? | One line per session, newest first, with a name that the other verbs accept. |
 | `gc` | Which generations can go? | One line per removed generation, with its size. |
@@ -217,9 +251,9 @@ A session directory holds:
 | file | what it holds |
 | --- | --- |
 | `events.ndjson` | the run journal |
-| `session.json` | the inputs, with the generation, its digest and the measurement model `measureModel`, which `compare` notes when two sessions differ in it |
+| `session.json` | the inputs, with the generation, its digest, the measurement model `measureModel`, which `compare` notes when two sessions differ in it, and the `suppressedPlugin` of the twin arms |
 | `build.log`, `template/`, `template-log/` | the host build, the sandbox template with the FUS test scheme, and its headless run |
-| `<arm>-prime/`, `<arm>-run-NN/` | one run: `sandbox/`, `log/`, `launch.args`, `launch.log`, the files the IDE writes, `class-load.log` of the JVM, `fus.jsonl`, `result.json`, and with `--profile` the profile `cpu-gate.collapsed` and the log `profile-stop.log` of its stop |
+| `<arm>-prime/`, `<arm>-run-NN/` | one run, by the label of its arm, such as `project-without-<id>-run-01` for a twin: `sandbox/`, `log/`, `launch.args`, `launch.log`, the files the IDE writes, `class-load.log` of the JVM, `threads.txt`, `plugin-classes.txt`, `fus.jsonl`, `result.json` with the class maps by plugin and by module and the activation of each module, and with `--profile` the profile `cpu-gate.collapsed` and the log `profile-stop.log` of its stop |
 | `<arm>-sandbox/` | the sandbox of the run that is running now, at one path per arm |
 | `summary.json` | `distDigest`, `measureModel`, `maxLoad`, `warnings`, the runs and the median, min and max of each metric per arm, and the non-modal minus modal `delta` |
 

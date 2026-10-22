@@ -5,7 +5,9 @@ anstyle
 anstyle_parse
 anstyle_query
 anyhow
+avl_bridge
 avl_guest
+avl_junit
 avl_trace
 avl_trace_tools
 avl_wire

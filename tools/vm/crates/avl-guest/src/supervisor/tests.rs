@@ -534,6 +534,72 @@ fn cancelling_a_finished_run_signals_nothing() {
     assert!(!RunPaths::new(root.path(), "run-a").cancel.exists());
 }
 
+// --- a supervisor that ended and that nobody reaped ---------------------------------------------------------------
+
+/// A supervisor that ended stays a zombie until its parent reaps it. A zombie keeps its pid, its group and its start
+/// time, and KILL does not end it.
+fn zombie_supervisor(system: &FakeSystem) -> ProcessIdentity {
+    let zombie = system.process(10, 10, "Sat Sep 26 10:00:00 2026");
+    system.survives_kill.borrow_mut().insert(10);
+    zombie
+}
+
+fn with_supervisor(mut state: RunState, supervisor: &ProcessIdentity) -> RunState {
+    state.supervisor_pid = Some(supervisor.pid);
+    state.supervisor_pgid = Some(supervisor.pgid);
+    state.supervisor_start = Some(supervisor.process_start.clone());
+    state
+}
+
+// The identity check reads a zombie supervisor as a live one. A run whose supervisor published its end is finished
+// at once anyway, because every wait reads the state file first. That is why a parent that never reaps keeps working.
+// Only a run that its supervisor left running reads as running while the zombie lasts. A cancel still ends that run
+// within the deadline of the cancel, so no wait is unbounded. The reap repairs the run at the next status.
+#[test]
+fn a_zombie_supervisor_reads_as_alive_and_only_its_reap_repairs_a_run_it_left_running() {
+    let system = FakeSystem::new();
+    let zombie = zombie_supervisor(&system);
+    let mut finished = with_supervisor(run_state("run-a", Phase::Finished, &system), &zombie);
+    finished.outcome = Some(Outcome::Succeeded);
+    let root = seeded(&finished, false);
+    let before = system.now();
+    assert_eq!(status(&system, root.path(), "run-a").unwrap().phase, Phase::Finished);
+    assert_eq!(
+        cancel(&system, &cancel_args(root.path(), 0)).unwrap().outcome,
+        Some(Outcome::Succeeded)
+    );
+    assert_eq!(system.now(), before, "a finished run with a zombie supervisor waits for nothing");
+
+    let mut left = with_supervisor(run_state("run-a", Phase::Running, &system), &zombie);
+    left.pid = Some(700);
+    left.pgid = Some(700);
+    left.process_start = Some("gone".to_owned());
+    let root = seeded(&left, true);
+    assert_eq!(
+        status(&system, root.path(), "run-a").unwrap().phase,
+        Phase::Running,
+        "the zombie reads as a live supervisor"
+    );
+    let before = system.now();
+    let end = cancel_to_end(&system, &cancel_args(root.path(), 0)).unwrap();
+    let waited = system.now().duration_since(before);
+    let CancelEnd::Killed(canceled) = end else {
+        panic!("not killed: {end:?}")
+    };
+    assert_eq!(canceled.outcome, Some(Outcome::CanceledOrphan));
+    let bound = jiff::SignedDuration::try_from(FINISH_TIMEOUT + CANCEL_HANDOFF_TIMEOUT + POLL_INTERVAL).unwrap();
+    assert!(waited <= bound, "the cancel waited {waited} for a zombie");
+
+    let root = seeded(&left, true);
+    system.end_group(10);
+    let lost = status(&system, root.path(), "run-a").unwrap();
+    assert_eq!(
+        lost.outcome,
+        Some(Outcome::SupervisorLost),
+        "the reaped supervisor still reads as alive"
+    );
+}
+
 // --- the active pointer --------------------------------------------------------------------------------------
 
 /// The slot is claimed with a link, so of two claims exactly one wins and the loser sees the winner's pointer.
@@ -1062,4 +1128,90 @@ fn a_real_run_whose_child_leaves_a_member_finishes() {
         "{supervisor_log}"
     );
     assert_eq!(active(&LiveSystem, &run.root).unwrap().active, None);
+}
+
+/// The `ps` state of `pid`, such as `Z` for a zombie, or `None` when no process has the pid.
+fn process_state(pid: i32) -> Option<String> {
+    let output = Command::new("/bin/ps")
+        .args(["-o", "stat=", "-p", &pid.to_string()])
+        .output()
+        .ok()?;
+    let state = String::from_utf8_lossy(&output.stdout).trim().to_owned();
+    (output.status.success() && !state.is_empty()).then_some(state)
+}
+
+// lane-run and the lane daemon are the parent of each supervisor that they spawn, so an ended supervisor stays their
+// zombie until they reap it. reap_ended reaps it, and then no process has its pid. Another test of this process can
+// reap it first, through a quit of the IDE owner, and that is a reap too.
+#[test]
+fn an_ended_supervisor_stays_a_zombie_until_its_parent_reaps_it() {
+    if !Path::new("/bin/ps").is_file() {
+        eprintln!("skipped: /bin/ps is not on this host");
+        return;
+    }
+    let directory = tempfile::tempdir().unwrap();
+    let root = directory.path().join("ui-runs");
+    let launcher = Launcher {
+        self_exe: agent_launcher(directory.path()),
+        host: LaunchHost::Macos,
+    };
+    let args = StartArgs {
+        run: RunArgs {
+            root: RootArgs { root: root.clone() },
+            run_id: "run-reaped".to_owned(),
+        },
+        cwd: directory.path().to_path_buf(),
+        snapshot_id: None,
+        argv: vec!["/bin/sh".into(), "-c".into(), "exec /bin/sleep 1".into()],
+    };
+    start(&LiveSystem, &launcher, &args).unwrap();
+    let until = std::time::Instant::now() + Duration::from_secs(20);
+    let mut state = status(&LiveSystem, &root, "run-reaped").unwrap();
+    while state.phase != Phase::Finished && std::time::Instant::now() < until {
+        thread::sleep(POLL_INTERVAL);
+        state = status(&LiveSystem, &root, "run-reaped").unwrap();
+    }
+    assert_eq!(state.phase, Phase::Finished, "{state:?}");
+    let pid = state.supervisor_pid.unwrap();
+    let mut ended = process_state(pid);
+    while ended.as_deref().is_some_and(|state| !state.starts_with('Z')) && std::time::Instant::now() < until {
+        thread::sleep(POLL_INTERVAL);
+        ended = process_state(pid);
+    }
+    assert!(
+        ended.as_deref().is_none_or(|state| state.starts_with('Z')),
+        "the supervisor did not end: {ended:?}"
+    );
+    let reaped = reap_ended();
+    assert!(
+        reaped.contains(&u32::try_from(pid).unwrap()) || ended.is_none(),
+        "reap_ended did not reap the zombie supervisor {pid}: {reaped:?}"
+    );
+    assert_eq!(process_state(pid), None, "the supervisor stayed after its reap");
+}
+
+// A lane daemon spawns its supervisors from its own image on Linux. An install renames a new agent onto the path of the
+// running daemon, and `current_exe` then names `<path> (deleted)`, which no spawn finds. Elsewhere the path stays, and
+// a rename there gives the new build.
+#[test]
+fn a_supervisor_is_spawned_from_the_image_of_this_process_on_linux() {
+    let current = || Ok(PathBuf::from("/home/admin/WorkerData/state/vm-guest-agent (deleted)"));
+    assert_eq!(own_image(true, current()), PathBuf::from(LINUX_OWN_IMAGE));
+    assert_eq!(
+        own_image(false, Ok(PathBuf::from("/Users/admin/WorkerData/state/vm-guest-agent"))),
+        PathBuf::from("/Users/admin/WorkerData/state/vm-guest-agent")
+    );
+    assert_eq!(own_image(false, Err(io::Error::other("unreadable"))), PathBuf::new());
+}
+
+// A spawn of the link of the image runs this binary: the test binary starts itself through it and lists its tests.
+#[cfg(target_os = "linux")]
+#[test]
+fn the_image_of_this_process_starts_through_its_link() {
+    let status = Command::new(LINUX_OWN_IMAGE)
+        .args(["--list", "--format", "terse"])
+        .stdout(std::process::Stdio::null())
+        .status()
+        .unwrap();
+    assert!(status.success(), "{status}");
 }

@@ -1,7 +1,8 @@
 use std::collections::BTreeSet;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, Condvar, Mutex};
 use std::time::{Duration, SystemTime};
 
 use ::http::{HeaderMap, Method, Request, StatusCode, header};
@@ -17,6 +18,7 @@ use avl_trace_tools::pack::{PackOptions, pack};
 use axum::body::Body;
 use clap::Parser;
 use futures::StreamExt;
+use notify::event::{CreateKind, EventKind};
 use pretty_assertions::assert_eq;
 use serde_json::{Value, json};
 use tempfile::TempDir;
@@ -165,6 +167,141 @@ fn no_watch() -> state::Watch {
     Arc::new(|_| Ok(Box::new(notify::NullWatcher)))
 }
 
+/// A file watcher that the test drives. It keeps the directories that the server watches, and it delivers an event
+/// the way a platform watcher that is not recursive does: only for a path in a watched directory. The test can hold
+/// each change of the watched directories, the way a slow restart of an FSEvents stream holds it, and it can make the
+/// watcher refuse a directory.
+#[derive(Clone, Default)]
+struct DrivenWatch {
+    events: Arc<Mutex<Option<state::WatchEvents>>>,
+    state: Arc<DrivenState>,
+}
+
+#[derive(Default)]
+struct DrivenState {
+    watched: Mutex<BTreeSet<PathBuf>>,
+    refused: Mutex<BTreeSet<PathBuf>>,
+    /// Each directory the server asked to watch, once for each time it asked.
+    asked: Mutex<Vec<PathBuf>>,
+    held: Mutex<bool>,
+    released: Condvar,
+    /// The changes that wait for the release.
+    waiting: AtomicUsize,
+}
+
+impl DrivenWatch {
+    fn watch(&self) -> state::Watch {
+        let driven = self.clone();
+        Arc::new(move |events| {
+            *driven.events.lock().expect("the events lock") = Some(events);
+            Ok(Box::new(DrivenWatcher(Arc::clone(&driven.state))))
+        })
+    }
+
+    /// Delivers an event and answers true, or answers false when a path of the event is in no watched directory. A
+    /// rescan notice names no path, so it is always delivered.
+    fn send(&self, event: notify::Event) -> bool {
+        let covered = {
+            let watched = self.state.watched.lock().expect("the watched lock");
+            event
+                .paths
+                .iter()
+                .all(|path| path.parent().is_some_and(|parent| watched.contains(parent)))
+        };
+        if covered {
+            let events = self.events.lock().expect("the events lock");
+            let events = events.as_ref().expect("the server started its watcher");
+            events.send(Ok(event)).expect("the watch loop receives");
+        }
+        covered
+    }
+
+    fn watches(&self, dir: &Path) -> bool {
+        self.state.watched.lock().expect("the watched lock").contains(dir)
+    }
+
+    /// Makes the watcher refuse the directory from now on.
+    fn refuse(&self, dir: &Path) {
+        self.state.refused.lock().expect("the refused lock").insert(dir.to_path_buf());
+    }
+
+    /// How many times the server asked to watch the directory.
+    fn asked(&self, dir: &Path) -> usize {
+        self.state
+            .asked
+            .lock()
+            .expect("the asked lock")
+            .iter()
+            .filter(|asked| *asked == dir)
+            .count()
+    }
+
+    /// Holds each later change of the watched directories until [DrivenWatch::release].
+    fn hold(&self) {
+        *self.state.held.lock().expect("the held lock") = true;
+    }
+
+    fn release(&self) {
+        *self.state.held.lock().expect("the held lock") = false;
+        self.state.released.notify_all();
+    }
+
+    /// Returns once a change of the watched directories waits for the release.
+    async fn held_change(&self) {
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(15);
+        while self.state.waiting.load(Ordering::SeqCst) == 0 {
+            assert!(
+                tokio::time::Instant::now() < deadline,
+                "no change of the watched directories within 15 s"
+            );
+            tokio::time::sleep(Duration::from_millis(5)).await;
+        }
+    }
+}
+
+impl DrivenState {
+    fn wait_while_held(&self) {
+        let mut held = self.held.lock().expect("the held lock");
+        if !*held {
+            return;
+        }
+        self.waiting.fetch_add(1, Ordering::SeqCst);
+        while *held {
+            held = self.released.wait(held).expect("the held lock");
+        }
+        self.waiting.fetch_sub(1, Ordering::SeqCst);
+    }
+}
+
+/// The watcher that [DrivenWatch] hands to the server.
+struct DrivenWatcher(Arc<DrivenState>);
+
+impl notify::Watcher for DrivenWatcher {
+    fn new<F: notify::EventHandler>(_: F, _: notify::Config) -> notify::Result<Self> {
+        Err(notify::Error::generic("a driven watcher is made by its test"))
+    }
+
+    fn watch(&mut self, path: &Path, _: notify::RecursiveMode) -> notify::Result<()> {
+        self.0.wait_while_held();
+        self.0.asked.lock().expect("the asked lock").push(path.to_path_buf());
+        if self.0.refused.lock().expect("the refused lock").contains(path) {
+            return Err(notify::Error::generic("the test refuses this directory"));
+        }
+        self.0.watched.lock().expect("the watched lock").insert(path.to_path_buf());
+        Ok(())
+    }
+
+    fn unwatch(&mut self, path: &Path) -> notify::Result<()> {
+        self.0.wait_while_held();
+        self.0.watched.lock().expect("the watched lock").remove(path);
+        Ok(())
+    }
+
+    fn kind() -> notify::WatcherKind {
+        notify::WatcherKind::NullWatcher
+    }
+}
+
 fn test_settings(scratch: &Scratch, roots: Vec<Root>) -> Settings {
     let mut settings = Settings::new(scratch.dir(), roots);
     settings.watch = no_watch();
@@ -195,10 +332,9 @@ async fn start_server(settings: Settings) -> TestServer {
     let server = Server::new(settings);
     let cancel = CancellationToken::new();
     tokio::spawn(Arc::clone(&server).watch_loop(cancel.clone()));
-    while !server.watches_settled() {
-        tokio::time::sleep(Duration::from_millis(5)).await;
-    }
-    TestServer { server, cancel }
+    let served = TestServer { server, cancel };
+    served.settle().await;
+    served
 }
 
 struct Answer {
@@ -258,9 +394,15 @@ impl TestServer {
         answer.json()
     }
 
-    #[cfg(unix)]
     async fn scan(&self) {
         self.server.blocking(Server::scan).await;
+    }
+
+    /// Returns once the watcher thread watches what the last scan asked for and owes no scan.
+    async fn settle(&self) {
+        while !self.server.watches_settled() {
+            tokio::time::sleep(Duration::from_millis(5)).await;
+        }
     }
 
     /// Opens the event stream and answers its events, after `ready`.
@@ -350,6 +492,13 @@ impl Events {
         tokio::time::timeout(Duration::from_secs(15), next)
             .await
             .unwrap_or_else(|_| panic!("none of {names:?} within 15 s"))
+    }
+
+    /// The next `run-appended` that names the run. A journal can grow in several writes, so the announcements of
+    /// other runs are skipped.
+    async fn wait_for_run(&mut self, run_id: &str) {
+        let want = format!(r#"{{"runId":"{run_id}"}}"#);
+        while self.wait_for(&["run-appended"]).await.data != want {}
     }
 }
 
@@ -546,6 +695,42 @@ async fn a_deflated_zip_entry_is_served_whole_and_in_ranges_through_the_cache() 
     assert_eq!(cached(), 1, "a ranged read leaves the zip's one cache directory");
 }
 
+/// TeamCity's `bazel.logs.zip` holds Bazel's `outputs.zip`, deflated. The inner zip is extracted into the cache once,
+/// and its entries are served from there: a stored one in place, a deflated one through the inflate cache.
+#[tokio::test(flavor = "multi_thread")]
+async fn a_zip_inside_a_zip_is_served_from_its_extraction() {
+    let fixture = new_fixture();
+    let outer = fixture.scratch.dir().join("bazel.logs.zip");
+    let mut writer = zip::ZipWriter::new(File::create(&outer).expect("create the outer zip"));
+    let inner_entry = "abc/execroot/_main/bazel-out/k8-fastbuild/testlogs/ui/ui_lane_test/test.outputs/outputs.zip";
+    writer
+        .start_file(inner_entry, zip::write::SimpleFileOptions::default())
+        .expect("start the inner zip");
+    io::copy(&mut File::open(&fixture.zip_path).expect("open outputs.zip"), &mut writer).expect("copy outputs.zip");
+    writer.finish().expect("finish the outer zip");
+    let settings = test_settings(&fixture.scratch, vec![Root::new(RootKind::Flag, &outer)]);
+    let cache = settings.cache_dir.clone();
+    let served = start_server(settings).await;
+
+    let listed = served.list_runs().await;
+    let scenario = scenario_by(&listed, is_zip);
+    assert_eq!(
+        scenario["source"]["path"],
+        format!("{}!/{inner_entry}", real(&outer).to_string_lossy())
+    );
+    assert_eq!(fs::read_dir(&cache).map_or(0, Iterator::count), 1, "the extraction is in the cache");
+    let base = str_of(&scenario["url"]).to_owned();
+    let original = example_file(&snap_image_path(1));
+    let image = served
+        .get(&format!("{base}{}", snap_image_path(1)), &[("range", "bytes=0-11")])
+        .await;
+    assert_eq!(image.status, StatusCode::PARTIAL_CONTENT, "{}", image.text());
+    assert_eq!(image.body, original[..12]);
+    let logs = served.get(&format!("{base}{LOGS_FILE}"), &[("range", "bytes=10-19")]).await;
+    assert_eq!(logs.status, StatusCode::PARTIAL_CONTENT, "{}", logs.text());
+    assert_eq!(logs.body, example_file(LOGS_FILE)[10..20]);
+}
+
 #[tokio::test(flavor = "multi_thread")]
 async fn a_directory_bundle_file_is_served() {
     let fixture = new_fixture();
@@ -609,39 +794,71 @@ async fn traversal_is_refused() {
 // --- events --------------------------------------------------------------------------------------------------
 
 /// A bundle appearing under a root is announced by the watcher alone: the periodic rescan is an hour away. It is
-/// created the way a recorder creates one, a directory at a time and then its files, so the watch has to follow it
-/// down levels that did not exist when the scan before it ran.
+/// created the way a recorder creates one, a directory at a time and then its files. Only the first directory raises
+/// an event, and its file is written while the watch of the new directories is still in progress. So the scan that
+/// follows the new watch must find the bundle.
 #[tokio::test(flavor = "multi_thread")]
 async fn runs_changed_is_sent_when_a_bundle_appears() {
     let fixture = new_fixture();
+    let driven = DrivenWatch::default();
     let mut settings = test_settings(&fixture.scratch, fixture_roots(&fixture));
-    settings.watch = native_watch();
+    settings.watch = driven.watch();
     let served = start_server(settings).await;
     let before = served.list_runs().await["generation"].as_u64().expect("a generation");
     let mut events = served.subscribe().await;
 
-    let fresh = fixture.dir_root.join("run-new").join("AirNewTest").join("new-scenario");
+    // The scan watches the real paths of a root, as the platform's watcher reports them.
+    let run_dir = real(&fixture.dir_root).join("run-new");
+    let fresh = run_dir.join("AirNewTest").join("new-scenario");
+    driven.hold();
     fs::create_dir_all(&fresh).expect("create the bundle's directories");
-    tokio::time::sleep(Duration::from_millis(100)).await;
+    assert!(
+        driven.send(notify::Event::new(EventKind::Create(CreateKind::Folder)).add_path(run_dir.clone())),
+        "the root is watched"
+    );
+    driven.held_change().await;
     write_file(&fresh.join(SPANS_FILE), b"");
+    driven.release();
     let id = bundle_id(SourceKind::Dir, &real(&fresh).to_string_lossy(), "");
 
-    let deadline = tokio::time::Instant::now() + Duration::from_secs(15);
     loop {
         let event = events.wait_for(&["runs-changed"]).await;
         let payload: Value = serde_json::from_str(&event.data).expect("runs-changed carries JSON");
-        let found = served.server.current().is_some_and(|current| current.found.by_id.contains_key(&id));
-        if found {
+        if served.server.current().is_some_and(|current| current.found.by_id.contains_key(&id)) {
             assert!(
                 payload["generation"].as_u64() > Some(before),
                 "runs-changed carried {payload}, not past {before}"
             );
+            break;
+        }
+    }
+    served.settle().await;
+    for dir in [&run_dir, &run_dir.join("AirNewTest")] {
+        assert!(driven.watches(dir), "{} is watched", dir.display());
+    }
+}
+
+/// The platform's file watcher reports a directory created in a watched root, and the server announces the bundle in
+/// it. FSEvents can deliver an event a minute late, or not at all, when much else changes files on the machine, so the
+/// test is left out of the gate. Run it with `cargo test -p air-trace --lib serve:: -- --ignored`.
+#[tokio::test(flavor = "multi_thread")]
+#[ignore = "it waits for the platform's file watcher, which falls behind under file churn"]
+async fn the_platform_watcher_announces_a_new_bundle() {
+    let fixture = new_fixture();
+    let mut settings = test_settings(&fixture.scratch, fixture_roots(&fixture));
+    settings.watch = native_watch();
+    let served = start_server(settings).await;
+    let mut events = served.subscribe().await;
+
+    let fresh = fixture.dir_root.join("run-new").join("AirNewTest").join("new-scenario");
+    fs::create_dir_all(&fresh).expect("create the bundle's directories");
+    write_file(&fresh.join(SPANS_FILE), b"");
+    let id = bundle_id(SourceKind::Dir, &real(&fresh).to_string_lossy(), "");
+    loop {
+        events.wait_for(&["runs-changed"]).await;
+        if served.server.current().is_some_and(|current| current.found.by_id.contains_key(&id)) {
             return;
         }
-        assert!(
-            tokio::time::Instant::now() < deadline,
-            "runs-changed never announced the new bundle"
-        );
     }
 }
 

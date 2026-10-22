@@ -1,6 +1,6 @@
 # The shared bash half of a polyglot `.cmd` wrapper in this directory: `bt.cmd`, `vm.cmd`, `trace.cmd`,
 # `bazel-build-run.cmd` and `jscpd.cmd`. Each wrapper starts a binary that Bazel provides, and each file holds a bash
-# half and a CMD half. This file holds the five steps the bash halves share. `polyglot-wrapper.cmd` holds the one step
+# half and a CMD half. This file holds the five steps the bash halves share. `polyglot-wrapper.cmd` holds the two steps
 # the CMD halves share. A wrapper sources this file after its bash pin:
 #
 #   case "$0" in */*) self_dir="${0%/*}" ;; *) self_dir="." ;; esac
@@ -74,6 +74,7 @@ polyglot_real_path() {
 # The local file with the base name `$2` that the build event file `$1` names. The build names its top-level outputs
 # in `namedSetOfFiles` records, one JSON record per line, and `--nobuild_event_json_file_path_conversion` makes every
 # URI `file://<path>`. An event file that names no such file answers the empty string.
+# `polyglot-built-file.ps1` is the same reader for the CMD halves.
 polyglot_built_file() {
   awk -v name="$2" '{
     line = $0

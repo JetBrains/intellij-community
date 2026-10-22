@@ -97,25 +97,15 @@ pub fn parity_marker_content(settings: &Config, worker: &str) -> String {
 /// The guest script that builds the layout making the paths of the Bazel outputs valid inside the VM, at their
 /// [`GuestPaths`] root. On a Unix host this is the host's own absolute path.
 ///
-/// Bazel's output user root becomes one symlink onto its read-only mount. The writable roots of a run are real
-/// directories on the guest disk: the output tree, where IDE Starter and the dev-mode build server write, the temp
-/// directory and the download cache. Build-dependency downloads divert through the test JVM
-/// (`-Dintellij.build.download.cache.dir`), with the manifests resolving from pinned runfiles. The marker records
-/// what the layout was built for.
+/// Bazel's output user root becomes one symlink onto its read-only mount. The writable root of a run is a real
+/// directory on the guest disk: the temp directory. The marker records what the layout was built for.
 pub fn parity_script(settings: &Config, worker: &str, bazel_mount: &str) -> Result<String, Refusal> {
     let paths = GuestPaths::of(settings)?;
     let bazel_user_root = paths.bazel_user_root();
     // `ln -sfh` on a BSD guest, `-sfn` on a GNU one: both replace the link rather than following it into the
     // directory it points at, and getting that wrong creates the new link *inside* the old target.
     let link = format!("/bin/ln {}", settings.guest.link_flags);
-    let owned_directories = [
-        &settings.vm_data,
-        &settings.vm_runs_root,
-        &settings.vm_out,
-        &settings.vm_tmp,
-        &settings.vm_download_cache,
-    ]
-    .map(String::as_str);
+    let owned_directories = [&settings.vm_data, &settings.vm_runs_root, &settings.vm_tmp].map(String::as_str);
     let owned = owned_directories.map(posix_shell_quote).join(" ");
 
     let mut lines = vec![
@@ -222,13 +212,13 @@ impl Guest<'_> {
         write_init_receipt(self.settings, self.worker())
     }
 
-    /// The directories a run writes into, for a guest whose shares sit at their host paths and so has no parity
-    /// script to make them: the output tree, the temp directory and the download cache, made by the account that uses
-    /// them. The receipt still records the roots the guest was provisioned for.
+    /// The directory a run writes into, for a guest whose shares sit at their host paths and so has no parity script to
+    /// make it: the temp directory, made by the account that uses it. The receipt still records the roots the guest was
+    /// provisioned for.
     async fn make_writable_roots(&self) -> Result<(), Refusal> {
         let settings = self.settings;
         let mut mkdir = words(["/bin/mkdir", "-p"]);
-        mkdir.extend([settings.vm_out.clone(), settings.vm_tmp.clone(), settings.vm_download_cache.clone()]);
+        mkdir.push(settings.vm_tmp.clone());
         self.as_root(&mkdir, &SpawnOptions::within(GUEST_COMMAND_TIMEOUT)).await.map(drop)
     }
 
@@ -293,12 +283,7 @@ impl Guest<'_> {
         }
         // One `/bin/test` per probe. A guest exec carries one shell string, and nesting a quoted compound command
         // inside that string is exactly where the quoting breaks.
-        let mut probes = vec![
-            ("-w", settings.vm_out.clone()),
-            ("-w", settings.vm_tmp.clone()),
-            ("-w", settings.vm_download_cache.clone()),
-            ("-d", paths.bazel_user_root().to_owned()),
-        ];
+        let mut probes = vec![("-w", settings.vm_tmp.clone()), ("-d", paths.bazel_user_root().to_owned())];
         // The marker is the layout's own bookkeeping; shares at their host paths have no layout to mark.
         if !settings.guest.shares_at_host_paths {
             probes.insert(0, ("-f", parity_marker_path(settings)));

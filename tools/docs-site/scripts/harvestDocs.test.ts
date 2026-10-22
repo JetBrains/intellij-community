@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
+import { type CheckRun, createCheckRun } from './checkRun.ts'
 import { harvestDocs } from './harvestDocs.ts'
 import type { ModelProvider } from './modelProvider.ts'
 import { temporaryTree } from './tempTree.ts'
@@ -101,5 +102,38 @@ describe('the doc harvest', () => {
   it('names the guide groups of the config for a guide with an unknown group', () => {
     const root = temporaryTree('harvest-docs-', { ...FILES, 'docs/guides/g.md': '---\ngroup: misc\n---\n\n# A guide\n' })
     assert.throws(() => harvestDocs(testSiteConfig(), provider(), { root }), /docs\/guides\/g\.md: frontmatter "group:" is missing or unknown; use one of docs/)
+  })
+
+  it('takes each check from the check run of the caller, once', () => {
+    const root = temporaryTree('harvest-docs-', FILES)
+    const config = testSiteConfig()
+    const run = createCheckRun(config, root)
+    const records = run.decisions()
+    const calls: string[] = []
+    function spy<T>(name: string, check: () => T): () => T {
+      return () => {
+        calls.push(name)
+        return check()
+      }
+    }
+    const checks: CheckRun = {
+      ...run,
+      decisions: spy('decisions', run.decisions),
+      diagramFiles: spy('diagramFiles', run.diagramFiles),
+      prose: spy('prose', run.prose),
+      vocabulary: spy('vocabulary', run.vocabulary),
+      specRefs: spy('specRefs', run.specRefs),
+    }
+    harvestDocs(config, provider(), { root, checks })
+    assert.deepStrictEqual(calls, ['decisions', 'diagramFiles', 'prose', 'vocabulary'])
+    // the run keeps the result of the first call, so the harvest read no record again
+    assert.equal(run.decisions(), records)
+  })
+
+  it('refuses a check run of another tree', () => {
+    const root = temporaryTree('harvest-docs-', FILES)
+    const other = temporaryTree('harvest-docs-', FILES)
+    const config = testSiteConfig()
+    assert.throws(() => harvestDocs(config, provider(), { root, checks: createCheckRun(config, other) }), /the check run of .* does not belong to/)
   })
 })

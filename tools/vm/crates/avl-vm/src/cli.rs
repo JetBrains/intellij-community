@@ -65,11 +65,9 @@ pool stop, acts on the docker pool. A lease receipt records the selection, so la
 infer it.
 
 Global options, accepted before or after the command and anywhere before a literal --: --json and --text choose the \
-output form, --stream adds NDJSON progress, --backend selects the pool, and --lease-file passes the receipt. So \
-\"run --stream flow-x\" and \"--stream run flow-x\" are the same command. The value of a command option stays that \
-value: in \"lease acquire --holder --text\", --text is the holder. --help (-h), before the command, prints this text \
-- as JSON data under --json, as prose under --text; after the command it prints that command's own help the same \
-way.
+output form, --stream adds NDJSON progress, --backend selects the pool, and --lease-file passes the receipt. So \"run --stream flow-x\" and \"--stream run flow-x\" are the same command. The value of a command option stays that \
+value: in \"lease acquire --holder --text\", --text is the holder. --help (-h), before the command, prints this text - \
+as JSON data under --json, as prose under --text; after the command it prints that command's own help the same way.
 
 The form follows the reader: text when stdout is a terminal, JSON when it is not. --json and --text choose it. In \
 JSON, success writes one envelope to stdout and failure writes one to stderr; --stream additionally emits NDJSON \
@@ -94,7 +92,7 @@ Test-code changes are pushed over HTTP and need no remount, and the IDE relaunch
 
 The selection is a flow id, a suite id, --changed PATH..., a TestClass or FQN[#method], or --lane {lanes}. A flow id \
 selects every generated suite whose scenarios tell or walk the flow, and a suite id selects that one suite, as one \
-lane's tag and one class filter per suite. An unknown id names the nearest ids, and a flow no generated suite tests \
+lane and one class filter per suite. An unknown id names the nearest ids, and a flow no generated suite tests \
 is refused, because an iteration that runs nothing is not a passing run. With --changed, every argument that is not \
 an option is a changed path, so \"--changed A B\" and \"--changed A --changed B\" are the same run, and a change no \
 generated suite covers is refused, naming each path.
@@ -113,14 +111,15 @@ With --lease-file it runs on that receipt's worker: the warm inner loop.
 --filter narrows what the iteration runs, on top of whatever the lane or selector already asks for; it is \
 repeatable, and OPTION is one of {filters}.
 
---test-env NAME=@- hands the guest test JVM a secret read from a pipe, as in \"central login export | vm.cmd run \
---lane ui-live --test-env AIR_LIVE_CENTRAL_LOGIN=@-\", so no host file exists. --test-env NAME=@FILE reads a host \
-file instead. The guest gets a file, never a variable, because the daemon's environment is fixed at boot. The option \
-is repeatable and run's alone, and @- may appear once; stdin on a terminal is refused. Each source is read once before \
-any lease, and refused when it is missing, not a regular file, over 1 MiB, or holds fewer than 16 bytes. It travels \
-on the exec channel's stdin to AIR_VM_RUN_SECRETS/NAME, a 0600 file on the guest's tmpfs, and is removed when the \
-iteration ends or an interrupt abandons it. A fetched artifact that holds a value refuses the run with \
-secret_in_artifact and is moved aside."
+--test-env NAME=@- hands the guest a secret read from a pipe, as in \"central login export | vm.cmd run --lane \
+ui-live --test-env AIR_LIVE_CENTRAL_LOGIN=@-\", so no host file exists. A run of ui-live without that input is refused \
+with lane_live_input before any build or lease. --test-env NAME=@FILE reads a host file instead. The \
+guest gets a file, never a variable, because the daemon's environment is fixed at boot. The option is repeatable and \
+run's alone, and @- may appear once; stdin on a terminal is refused. Each source is read once before any lease, and \
+refused when it is missing, not a regular file, over 1 MiB, or holds fewer than 16 bytes. It travels on the exec \
+channel's stdin to AIR_VM_RUN_SECRETS/NAME, a 0600 file on the guest's tmpfs, and is removed when the iteration ends \
+or an interrupt abandons it. A fetched artifact that holds a value refuses the run with secret_in_artifact and is \
+moved aside."
     )
 }
 

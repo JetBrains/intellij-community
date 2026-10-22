@@ -35,7 +35,7 @@ That is the reason to care, and it is also the part this note does *not* propose
 None of this needed to be built; it was found.
 
 **The tests are not macOS-coupled.** Every flow lane pins
-`driver.robot.use.input.events=true` (`plugins/air/tests/integration/flow/src/flow/AirFlowLaneHost.kt`),
+`driver.robot.use.input.events=true` (the lane documents of `plugins/air/docs/scripts/flowFixtures.ts`),
 and the platform picks that same robot automatically on Wayland —
 `IdeRobot.useInputEvents()` is `System.getProperty("driver.robot.use.input.events").toBoolean() ||
 StartupUiUtil.isWaylandToolkit()`. Air's own input primitives run inside the IDE on that same robot
@@ -49,8 +49,8 @@ verifies it through EWMH `_NET_SUPPORTING_WM_CHECK`; `getRunningDisplays()` enum
 and `IdeFromCodeInstaller` — the dev-build path these lanes use — already selects the Linux command line
 when `SystemInfoRt.isLinux`.
 
-**The lanes do need a real display.** `AirIdeLaunch.kt` removes `java.awt.headless` on purpose, and JCEF
-needs a real X server. Xvfb satisfies both.
+**The lanes do need a real display.** The lane IDE runs headed on the display of the run, and JCEF needs a real X
+server. Xvfb satisfies both.
 
 **A Linux distribution cross-builds here, and does so today.**
 `//plugins/air/tests/integration/ide:idea_air_lane_dist_linux`
@@ -178,7 +178,7 @@ all — how many IDEs one VM can actually drive before they contend — does not
    fails with `ENOENT`. The remount is the only cure there too, and it carries the same constraint, since
    `umount` answers "target is busy" while anything in the guest still holds the mount. The controller
    brackets it either way: `startDaemon` remounts between two daemons, and a product-input change
-   quiesces the live daemon and stops its IDE first.
+   stops every lane IDE of the live daemon first.
 
 Two things a reader of the screenshot should not misread. "Native file watcher executable is not found"
 was not a Linux gap: no dev distribution shipped `fsnotifier` at the time, the macOS one included, so
@@ -197,9 +197,9 @@ A hand-derived launch was attempted first and is not evidence either way. It rea
 `java_binary` stub that started `PreBuiltDevMain`. That class path holds the launcher module, not the IDE, so
 `com.intellij.idea.Main` cannot start from it. The IDE starts from the `core-classpath.txt` of the distribution,
 as IDE Starter and every dev row do. The hand-assembled command line also failed to resolve `PathClassLoader` at VM
-init. That is a defect of the command line, not a finding about Linux. The supported path is IDE Starter's
-`PrebuiltDevDistRunner` inside the lane's own test JVM, reached through the daemon the controller already starts. The
-stub is gone.
+init. That is a defect of the command line, not a finding about Linux. The supported path is the launch of
+the lane daemon. It composes the argument file of the IDE from the distribution and starts the IDE on the JBR of the
+distribution. The stub is gone.
 
 ## What the run cost to get to
 
@@ -275,10 +275,10 @@ platform hides that splash only once an editor or a tool window is shown. It is 
 same 3-minute timeout. That coroutine is where the frame allocator sits during *any* project open, not the
 thing holding it.
 
-`AirFlowLaneHost.constantLaunchProperties` carries `nosplash` regardless, because a test IDE showing a
-splash it never asked for is worth removing on its own — just do not read that change as this fix. It sits
-in that map rather than in the shared starter, so it describes Air's own lane launches and no other team's,
-and so the lane's `configKey` covers it.
+`LANE_CONSTANT_PROPERTIES` in `plugins/air/docs/scripts/flowFixtures.ts` carries `nosplash` regardless. A test IDE
+that shows a splash it never asked for is worth a fix of its own. Do not read that change as this fix. The property
+sits in the lane documents, not in a shared starter. So it describes the lane launches of Air and of no other team,
+and the config key of the lane covers it.
 
 ## What a wrong diagnosis cost, and what names it now
 
@@ -366,11 +366,13 @@ each refusal names what it looked at and what it found:
 - the Node the run supervisor will be started with runs at the path the controller configured, not whatever
   is first on PATH — `linux_node_not_runnable`, which says why it matters: the supervisor's children are Node
   programs, so a guest without that binary fails as a bare `exit 127` from the only command that mattered;
-- and `ldd` finds nothing missing under the staged IDE root, which is where the JBR, JCEF and Skiko `.so`
-  files live, since `skiko.library.path` points inside the distribution. `linux_shared_object_unresolved`
-  names each object with the sonames it wanted, caps the list with a count of what it did not show, and says
-  where to add the package that carries them. A root that exists and cannot be *read* is
-  `linux_ide_root_unreadable` — the one distinction the script's `2>/dev/null || true` threw away.
+- and `ldd` found nothing missing under a root of shared objects. That sweep is not part of the boot now. The
+  lane daemon runs it at its own boot on a Linux guest, over the distribution that it launches. The JBR, JCEF
+  and Skiko `.so` files are there, because `skiko.library.path` points inside the distribution.
+  `linux_shared_object_unresolved` names each object with the sonames it wanted. It caps the list with a count
+  of what it did not show, and it says where to add the package that carries them. A distribution that exists and
+  cannot be *read* is `linux_distribution_unreadable`. That is the one distinction that the script's
+  `2>/dev/null || true` threw away.
 
 **Where the exit codes went.** The script answered its five failure classes with a numeric vocabulary of its
 own, because a guest *script* has no envelope to speak in and the host withholds every non-envelope shape of
@@ -380,13 +382,13 @@ manager's two say which of its two repairs an operator has, where one integer ha
 [ADR 0108](decisions/0108-the-guest-half-of-the-image-pipeline-is-go.md) owns that argument, names the five
 numbers, and says why the history of them stays there.
 
-The validator holds no package list and no soname-to-package mapping — it is passed a display, a Node path
-and an IDE root, and none of the three is the list. `GUEST_PACKAGES` in
+The validator holds no package list and no soname-to-package mapping. It gets the display alone, and the
+display is not the list. `GUEST_PACKAGES` in
 `crates/avl-host-sys/src/guest/linux.rs` stays the single list; the validator reads what the guest *has*, so a package added there is covered here without
 being named here twice, and the mapping from `libEGL.so.1` to `libegl1` — the third copy that using the list
-would need — never exists. A fresh worker is provisioned before anything is staged into the IDE root, so a
-first boot's sweep finds nothing to read and says so in its report rather than passing quietly; it runs again
-on every boot, and a warm worker is checked against the IDE it actually holds.
+would need — never exists. The boot of a worker does not know the distribution of a run, so the
+lane daemon sweeps the shared objects at its own boot. Each boot of the lane daemon checks the distribution that
+its lane IDE loads.
 
 Established on the host, not in a VM, and the port widened that rather than replacing it. Where the script
 was exercised against stubbed `xdpyinfo`, `xprop`, `node`, `ldd` and `find`, the two verbs are exercised

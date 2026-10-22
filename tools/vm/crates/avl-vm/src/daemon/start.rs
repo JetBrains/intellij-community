@@ -1,18 +1,14 @@
 //! The daemon's boot and retirement: a fixed phase sequence from agent install to a healthy `/status`, each step
 //! timed so `daemon start`'s table can say where a slow boot went.
 
-use std::path::Path;
 use std::time::Duration;
 
 use avl_base::format::{clip, words};
-use avl_base::{Backend, Exit, OrRefuse, Refusal, Scope};
-use avl_host_sys::guest::{AgentAccount, GUEST_COMMAND_TIMEOUT, Guest, ShareMount, SupervisorOptions, guest_join, user_argv};
+use avl_base::{Backend, Config, Exit, Refusal, Scope};
+use avl_host_sys::guest::{GUEST_COMMAND_TIMEOUT, Guest, ShareMount, SupervisorOptions, guest_join, user_argv};
 use avl_host_sys::{Backoff, Channel, Ctx, Poll, SpawnOptions};
-use avl_report::digest;
 use avl_wire::daemon::{self as wire, StateFile};
 use avl_wire::progress::Phase;
-use avl_wire::runtime::{self, LaunchOptions};
-use avl_wire::stage::{self as stage_wire, ArgFileRequest, LaunchPrep, LaunchPrepResult};
 use avl_wire::supervisor::{Command, Phase as RunPhase, RunState};
 use avl_wire::verb::AgentVerb;
 use serde_json::{Value, json};
@@ -20,8 +16,7 @@ use serde_json::{Value, json};
 use crate::daemon::build::PreparedBuild;
 use crate::daemon::host::Host;
 use crate::daemon::http::{StatusProbe, protocol_refusal, require_supported_protocol};
-use crate::daemon::stage::{GuestRuntime, guest_daemon_directories, guest_home, short};
-use crate::daemon::state::{HostState, guest_state_dir};
+use crate::daemon::state::{HostState, guest_home, guest_state_dir, guest_state_file};
 use crate::lane::ide::{IdeRetention, gc_guest_ides, gc_note, guest_ide_root};
 use avl_base::RefusalExt;
 use avl_wire::ide::IdeGcResult;
@@ -47,9 +42,6 @@ const LOG_TIMEOUT: Duration = Duration::from_secs(10);
 const SUPERVISOR_START_TIMEOUT: Duration = Duration::from_mins(2);
 /// The timeout of one supervisor status probe of the boot poll: a read of the state file of the run.
 const STATUS_TIMEOUT: Duration = Duration::from_secs(15);
-/// The timeout of `launch-prep`. It makes the directories of one daemon, removes the old state file and writes the
-/// JVM @-file, seconds of work.
-const LAUNCH_PREP_TIMEOUT: Duration = Duration::from_secs(120);
 
 /// The daemon's own runtime descriptor as the guest sees it: the label's package path and name under the guest
 /// runfiles root. The leading `//` and the first `:` are replaced once; a label cannot legally carry a second `:`.
@@ -101,8 +93,7 @@ impl Host {
     ///
     /// Two digests rather than one. The mount digest is the share-backed data and the product identity; the launch
     /// digest is added because a start can be reached *because* the build moved, and a new build means new Bazel
-    /// outputs the guest is about to read through the same share to stage them. It subsumes the runtime digest, so
-    /// the stable classpath and the JBR are covered by comparing it alone.
+    /// outputs that the guest is about to read through the same share.
     ///
     /// No prior state means refresh. A fresh daemon's worker may have been rebuilt against by another controller,
     /// may have rebooted since its mount was made, or may be one whose `daemon stop` deleted the only record of what
@@ -283,7 +274,7 @@ impl Host {
     ) -> Result<(HostState, IdeGcResult), Refusal> {
         let phase = self.reporter.start_phase(
             Phase::DaemonStart,
-            "stage the guest runtime, then launch the daemon",
+            "check the guest, then launch the daemon",
             Some(&Scope::worker(worker)),
         );
         let started = self.boot_daemon(ctx, worker, prep, retention).await;
@@ -305,10 +296,10 @@ impl Host {
         let settings = &self.settings;
         // Every step runs under a named phase of the context's timeline, so the `daemon start` table can attribute
         // its cost. Each block's guard closes its phase.
-        {
+        let agent_digest = {
             let (step, _phase) = ctx.begin("install-agent");
-            self.guest(&step, channel).install_agent(self.bazel.as_ref()).await?;
-        }
+            self.guest(&step, channel).install_agent(self.bazel.as_ref()).await?
+        };
         let previous = HostState::read(settings, worker);
         {
             let (step, _phase) = ctx.begin("stop-daemon");
@@ -368,50 +359,54 @@ impl Host {
                 ),
             ));
         }
-        let staged = {
-            let (step, _phase) = ctx.begin("stage-runtime");
-            self.ensure_guest_runtime(&self.guest(&step, channel), prep).await?
-        };
+        {
+            // This is the free-space check of a start. It comes before the lane daemon and its IDE write anything. The
+            // removal of the retired roots comes first, so the check counts the space that they held. It
+            // is inside this phase, because the phase table is a contract.
+            let (step, _phase) = ctx.begin("free-space");
+            let guest = self.guest(&step, channel);
+            let scope = Scope::worker(worker);
+            self.remove_retired_roots(&guest, Some(&scope)).await;
+            self.require_guest_free_space(&guest).await?;
+        }
 
         let run_id = wire::run_id(&avl_base::new_id());
         let state_dir = guest_state_dir(settings);
-        let run_tmp = guest_join(&settings.vm_tmp, &run_id);
-        let launch = self.launch_request(prep, &staged, &state_dir, &run_tmp)?;
-        {
-            let (step, _phase) = ctx.begin("prepare-launch");
-            self.prepare_guest_launch(&self.guest(&step, channel), &launch).await?;
-        }
-
-        let provenance = if staged.reused { "cached" } else { "new" };
-        self.reporter.note(
-            format!(
-                "starting the daemon from {provenance} guest runtime {}",
-                short(&prep.runtime_digest)
-            ),
-            Some(&Scope::worker(worker)),
-        );
         let mut arguments = words([
             "--root",
             &settings.vm_runs_root,
             "--run",
             &run_id,
             "--cwd",
-            &staged.root,
+            &state_dir,
             "--",
             "/usr/bin/env",
         ]);
-        arguments.extend(crate::lane::guest_run_environment(
-            settings,
-            &prep.daemon_environment,
-            &run_id,
-            &prep.guest_runfiles_root,
-            &location,
-        ));
-        arguments.push(staged.java_binary.clone());
-        arguments.push(format!("@{}", launch.arg_file.destination));
+        arguments.extend(crate::lane::guest_run_environment(settings, &prep.daemon_environment));
+        arguments.extend(daemon_command(settings, prep, &state_dir, &location));
         let started = {
             let (step, _phase) = ctx.begin("supervisor-start");
-            self.guest(&step, channel)
+            let guest = self.guest(&step, channel);
+            // The state directory is the working directory of the run, so it must exist before the supervisor starts
+            // the run. The mkdir also makes `<vmData>/state`, where the agent lives. A worker without that directory
+            // is a worker that nothing else here can reach either.
+            let agent_state = guest_join(&settings.vm_data, "state");
+            guest
+                .as_user(
+                    &words(["/bin/mkdir", "-p", &state_dir, &agent_state]),
+                    &SpawnOptions::within(GUEST_COMMAND_TIMEOUT),
+                )
+                .await?;
+            // The previous daemon leaves its state file, and the new daemon removes it only late in its boot. The
+            // phases before this one proved that no daemon holds the slot, so from here only the daemon of this run
+            // writes the file that the boot poll reads.
+            guest
+                .as_user(
+                    &words(["/bin/rm", "-f", &guest_state_file(settings)]),
+                    &SpawnOptions::within(GUEST_COMMAND_TIMEOUT),
+                )
+                .await?;
+            guest
                 .supervisor_run_state_reply(
                     Command::Start,
                     &arguments,
@@ -425,7 +420,17 @@ impl Host {
         };
         // From here the guest may hold a run this start launched, so every refusal retires it.
         let state = match self
-            .await_healthy_daemon(ctx, worker, channel, &run_id, &state_dir, prep, started, boot_budget, health_budget)
+            .await_healthy_daemon(
+                ctx,
+                worker,
+                channel,
+                &run_id,
+                prep,
+                &agent_digest,
+                started,
+                boot_budget,
+                health_budget,
+            )
             .await
         {
             Ok(state) => state,
@@ -433,14 +438,6 @@ impl Host {
                 return Err(self.retire_failed_boot(ctx, worker, &run_id, refusal).await);
             }
         };
-        {
-            let (step, _phase) = ctx.begin("gc-runtimes");
-            let mut keep = vec![prep.runtime_digest.clone()];
-            if let Some(previous) = previous.filter(|previous| !previous.runtime_digest.is_empty()) {
-                keep.push(previous.runtime_digest);
-            }
-            self.gc_guest_runtimes(&self.guest(&step, channel), &keep).await;
-        }
         self.reporter.note(
             format!("daemon is up on {worker} port {} (run {run_id})", state.port),
             Some(&Scope::worker(worker)),
@@ -449,15 +446,15 @@ impl Host {
     }
 
     /// The part of a start between the supervisor's answer and a healthy `/status`: every step that can fail while
-    /// the guest holds the run this start launched.
+    /// the guest holds the run this start launched. `agent_digest` is the guest agent that the start installed.
     async fn await_healthy_daemon(
         &self,
         ctx: &Ctx,
         worker: &str,
         channel: &dyn Channel,
         run_id: &str,
-        state_dir: &str,
         prep: &PreparedBuild,
+        agent_digest: &str,
         started: Result<RunState, Refusal>,
         boot_budget: Duration,
         health_budget: Duration,
@@ -472,7 +469,7 @@ impl Host {
         }
         let published = {
             let (step, _phase) = ctx.begin("boot-poll");
-            let state_file = guest_join(state_dir, "daemon.json");
+            let state_file = guest_state_file(&self.settings);
             self.boot_poll(&self.guest(&step, channel), worker, run_id, &state_file, boot_budget)
                 .await?
         };
@@ -486,11 +483,11 @@ impl Host {
             token: published.token,
             worker: worker.to_owned(),
             daemon_boot_stamp: published.daemon_boot_stamp,
-            runtime_digest: prep.runtime_digest.clone(),
             launch_digest: prep.launch_digest.clone(),
             last_product_digest: prep.product_digest.clone(),
             last_mount_digest: prep.mount_digest.clone(),
             last_plugins_digest: prep.plugins_digest.clone(),
+            agent_digest: agent_digest.to_owned(),
         };
         // From here a failed poll leaves a record, so `daemon log` reads the boot, and `daemon stop` and the next
         // start retire it.
@@ -554,132 +551,11 @@ impl Host {
         merge_details(refusal, extra)
     }
 
-    /// The launch-prep document: everything the guest does between a staged generation and a supervisor start.
-    ///
-    /// The @-file is rendered here and not sent: these bytes are what the guest's reply is held against. Every
-    /// refusal the @-file builder makes - a staged classpath of the wrong length, a static flag whose
-    /// `${RUNFILES_ROOT}` nothing substituted - is therefore still made on the host, before a guest is asked for
-    /// anything.
-    ///
-    /// The home of the daemon JVM is an empty directory of the generation, and its config, system, log and IDE
-    /// Starter output directories are on the guest disk, each named by its own flag. So no path of the JVM derives from
-    /// a home that holds the checkout. Two flags tell the daemon how to launch the lane IDE: the installed guest agent
-    /// and the directory of the IDE contexts. The IDE runs on the JBR of its distribution. The flags come after the
-    /// static flags of the descriptor, so they win over a runfiles agent that a lane flag names.
-    fn launch_request(&self, prep: &PreparedBuild, staged: &GuestRuntime, state_dir: &str, run_tmp: &str) -> Result<LaunchPrep, Refusal> {
-        let settings = &self.settings;
-        let home = guest_home(settings, &prep.runtime_digest);
-        let directories = guest_daemon_directories(settings);
-        let mut extra_flags = vec![format!("-Didea.home.path={home}")];
-        for (name, directory) in &directories {
-            extra_flags.push(format!("-Didea.{name}.path={directory}"));
-        }
-        extra_flags.extend([
-            // IDE Starter keeps its output tree on the guest disk instead of under the home.
-            format!("-Dide.starter.out.dir={}", settings.vm_out),
-            format!("-Dintellij.build.download.cache.dir={}", settings.vm_download_cache),
-            format!("-Dair.ui.daemon.state.dir={state_dir}"),
-            format!("-Dair.ui.daemon.port={}", self.settings.daemon.port),
-            format!("-Dair.ui.daemon.controller.launch.digest={}", prep.launch_digest),
-            format!("-Dair.ui.daemon.expected.classpath.file={}", staged.classpath_file),
-            format!("-Dair.ui.daemon.runtime.root={}", staged.root),
-            format!("-Dair.lane.agent={}", settings.vm_agent),
-            format!("-Dair.lane.ide.root={}", guest_ide_root(settings)),
-        ]);
-        if settings.backend == Backend::ContainerLinux {
-            // A published port forwards to the container's address, not to its loopback, so the daemon binds every
-            // interface of the container. Its network is its own, and the token guards each request.
-            extra_flags.push("-Dair.ui.daemon.bind=0.0.0.0".to_owned());
-        }
-        let options = LaunchOptions {
-            test_tmp_dir: run_tmp.to_owned(),
-            extra_flags,
-        };
-        // `${RUNFILES_ROOT}` names the tree the guest JVM opens, so it is the guest root.
-        let runfiles_root = Path::new(&prep.guest_runfiles_root);
-        let arg_file = runtime::daemon_launch_arg_file(&prep.descriptor, runfiles_root, &staged.classpath, &options)
-            .map_err(avl_base::descriptor_refusal)?;
-        let prefix = runtime::daemon_launch_prefix(&prep.descriptor, runfiles_root, &options).map_err(avl_base::descriptor_refusal)?;
-        Ok(LaunchPrep {
-            schema_version: stage_wire::SCHEMA_VERSION,
-            runtime_digest: prep.runtime_digest.clone(),
-            stable_count: u32::try_from(prep.descriptor.classpath.stable.len()).unwrap_or(u32::MAX),
-            directories: [state_dir.to_owned(), guest_join(run_tmp, "outputs"), home]
-                .into_iter()
-                .chain(directories.into_iter().map(|(_, directory)| directory))
-                .collect(),
-            remove_files: vec![guest_join(state_dir, "daemon.json")],
-            arg_file: ArgFileRequest {
-                destination: guest_join(state_dir, "daemon-jvm.args"),
-                prefix,
-                main_class: prep.descriptor.main_class.clone(),
-                sha256: digest::sha256_text(&arg_file),
-            },
-        })
-    }
-
-    /// Makes the guest ready for one daemon in one call, and refuses a reply that is not the @-file this controller
-    /// computed.
-    ///
-    /// It replaces three round-trips - a `mkdir`, an `rm -f` and a `tee` of the whole @-file - which were 5.4 s and
-    /// 10.6 s of a warm restart's phase table between them. The `tee` was the expensive one, and its cost was a
-    /// single token: a `-cp` of ~1000 absolute guest paths, pushed to the guest that had staged those files itself.
-    /// Now the guest joins its own list and the controller sends the flags, the main class and the digest it
-    /// expects.
-    ///
-    /// The three comparisons below keep that from being trust. A reply naming another path, another entry count, or
-    /// bytes whose digest is not the one computed from the staged classpath is a refused start, so the only file a
-    /// daemon can launch from is still one this controller knows byte for byte.
-    async fn prepare_guest_launch(&self, guest: &Guest<'_>, request: &LaunchPrep) -> Result<(), Refusal> {
-        // Over stdin rather than argv, because the prefix carries every `-D` property of the launch - a bridge
-        // token among them - and an argv is readable in the guest's process table by every account on the worker.
-        let mut encoded =
-            serde_json::to_vec(request).or_refuse("internal_error", Exit::FAILURE, || "cannot encode launch-prep".to_owned())?;
-        encoded.push(b'\n');
-        let options = SpawnOptions {
-            stdin: Some(encoded),
-            ..SpawnOptions::timeout(LAUNCH_PREP_TIMEOUT, "daemon_launch_prep_failed")
-        };
-        let stdout = guest
-            .invoke_agent(
-                AgentAccount::Worker,
-                AgentVerb::LaunchPrep,
-                &[self.settings.guest_runtime_root()],
-                &options,
-            )
-            .await?;
-        let answer: LaunchPrepResult = serde_json::from_str(&stdout).map_err(|error| {
-            Refusal::new(
-                "daemon_launch_prep_failed",
-                Exit::SOFTWARE,
-                format!(
-                    "launch preparation returned invalid JSON: {} ({error})",
-                    clip(&stdout, QUOTED_BYTES)
-                ),
-            )
-        })?;
-        let expected = &request.arg_file;
-        if answer.arg_file != expected.destination || answer.entries != request.stable_count || answer.sha256 != expected.sha256 {
-            return Err(Refusal::new(
-                "daemon_launch_prep_failed",
-                Exit::SOFTWARE,
-                format!(
-                    "the guest published {} from {} classpath entries as {} bytes of {}; this controller expected \
-                     {} from {} entries with digest {}",
-                    answer.arg_file,
-                    answer.entries,
-                    answer.bytes,
-                    answer.sha256,
-                    expected.destination,
-                    request.stable_count,
-                    expected.sha256
-                ),
-            ));
-        }
-        Ok(())
-    }
-
     /// Waits for the daemon to publish its state file, or for its supervisor to say it died.
+    ///
+    /// The poll accepts only a file that names the pid of the run. The supervisor names the pid of its child, and the
+    /// lane daemon is that child. A file of another pid is not the file of this run, so the poll goes on. A budget that
+    /// ends on such a file refuses `daemon_state_file_foreign` and names both pids.
     ///
     /// Counted, not just timed. Two exec round-trips and a 3 s sleep per turn, so this loop's elapsed is the JVM's
     /// boot *plus* up to 3 s of quantization plus the round-trips - three costs with three different fixes.
@@ -697,6 +573,8 @@ impl Host {
             probes: 0,
             last_unsuccessful: None,
         };
+        // The pid that the last file of another process named, and the pid of the run then.
+        let mut foreign: Option<(i64, i32)> = None;
         loop {
             record.probes += 1;
             let probe = guest
@@ -728,7 +606,13 @@ impl Host {
             if !published.trim_ascii().is_empty() {
                 // The daemon writes this file to a temporary path and moves it with ATOMIC_MOVE, so a reader sees a
                 // whole document or no file at all. That makes every failure below a fault rather than a race.
-                return read_state_file(state_file, &published);
+                let state = read_state_file(state_file, &published)?;
+                match probe.pid {
+                    Some(pid) if i64::from(pid) == state.pid => return Ok(state),
+                    // A run that is still starting names no pid, so its own file and another file look the same.
+                    None => {}
+                    Some(pid) => foreign = Some((state.pid, pid)),
+                }
             }
             record.last_unsuccessful = Some(wait.elapsed());
             if !wait.pause(guest.ctx).await {
@@ -737,6 +621,17 @@ impl Host {
                 }
                 break;
             }
+        }
+        if let Some((file_pid, run_pid)) = foreign {
+            return Err(Refusal::new(
+                "daemon_state_file_foreign",
+                Exit::SOFTWARE,
+                format!(
+                    "the state file at {state_file} names pid {file_pid}, but run {run_id} is pid {run_pid}: another \
+                     process wrote it, and the daemon of this run published none in time"
+                ),
+            )
+            .with_details(json!({ "runId": run_id, "filePid": file_pid, "runPid": run_pid })));
         }
         Err(Refusal::new(
             "daemon_boot_timeout",
@@ -779,6 +674,39 @@ impl Host {
     }
 }
 
+/// The command of the daemon in the run slot, after the environment: the `lane-daemon` verb of the installed guest
+/// agent.
+///
+/// The verb reads the runtime descriptor at `location` itself, and the lane IDE inputs from it. Its arguments name the
+/// state directory, the port, the launch digest, the IDE root and the home in the state directory, which the IDE gets
+/// as `idea.dev.project.root`. The boot of the verb makes those directories and removes the state file of the previous
+/// daemon.
+pub(crate) fn daemon_command(settings: &Config, prep: &PreparedBuild, state_dir: &str, location: &str) -> Vec<String> {
+    let mut command = words([
+        &settings.vm_agent,
+        AgentVerb::LaneDaemon.as_str(),
+        "--state-dir",
+        state_dir,
+        "--port",
+        &settings.daemon.port.to_string(),
+        "--launch-digest",
+        &prep.launch_digest,
+        "--descriptor",
+        location,
+        "--runfiles-root",
+        &prep.guest_runfiles_root,
+        "--ide-root",
+        &guest_ide_root(settings),
+        "--home",
+        &guest_home(settings),
+    ]);
+    if settings.backend == Backend::ContainerLinux {
+        // A published port forwards to the address of the container, not to its loopback.
+        command.extend(words(["--bind", "0.0.0.0"]));
+    }
+    command
+}
+
 /// The refusal of a daemon the health poll never reached, naming what the last probe saw. Only a relay that never
 /// opened blames the path to the daemon: once the state file exists the daemon's listener is bound, so anything else
 /// is a starved guest or a daemon that is not this start's.
@@ -795,7 +723,7 @@ fn never_healthy(state: &HostState, budget: Duration, probes: u32, last: &Status
         StatusProbe::NotAStatus(_) => {
             format!("{address} answered /status with {detail} ({probes} probes in {seconds} s); read `daemon log`")
         }
-        StatusProbe::OtherDaemon(_) | StatusProbe::Quiesced => {
+        StatusProbe::OtherDaemon(_) => {
             format!("{address} answered for another daemon ({detail}); read `daemon log`")
         }
         // No reply, a broken exchange, and the two a failed poll cannot end on.

@@ -1,5 +1,5 @@
-//! The UI lanes a VM worker may run: the integration lanes of the Air lane table, each with its test label and its
-//! JUnit tag. The controller and the trace planner both read them here.
+//! The UI lanes a VM worker may run: the integration lanes of the Air lane table, each with its test label. The
+//! controller and the trace planner both read them here.
 
 use std::sync::LazyLock;
 
@@ -19,13 +19,6 @@ pub struct UiLane {
     /// The IDE target the lane selects. Every one is in the daemon's classpath, so the label identifies the lane's
     /// *content* rather than a target to launch.
     pub label: &'static str,
-    /// The JUnit tag the lane's suites carry, which is how the *daemon* selects a lane.
-    ///
-    /// A one-shot Bazel run has no need of this: one module per lane means the lane's Bazel tag already selects
-    /// it, and `bt`'s lane table carries no JUnit filter at all. The daemon is the exception it was built to be - a
-    /// single warm JVM holding the union of every lane's classpath - so an iteration can only name its lane by
-    /// filter.
-    pub junit_tag: &'static str,
     /// Whether the lane runs only when a caller names it: a lane with no `catalogLane`.
     ///
     /// No flow, suite or changed path reaches such a lane, because the suite join maps lanes through the catalog.
@@ -34,10 +27,9 @@ pub struct UiLane {
     pub explicit_only: bool,
 }
 
-/// The UI lanes are `bt`'s integration lanes, in `bt`'s declared order, each with its test label and its JUnit
-/// tag from the same lane table: nothing about a lane is spelled here. An integration lane missing either fact is
-/// not runnable, and a test in `bt` pins that there is none. An integration lane without a catalog lane is
-/// explicit-only.
+/// The UI lanes are `bt`'s integration lanes, in `bt`'s declared order, each with its test label from the same lane
+/// table: nothing about a lane is spelled here. An integration lane without a test label is not runnable, and a test
+/// in `bt` pins that there is none. An integration lane without a catalog lane is explicit-only.
 static UI_LANES: LazyLock<Vec<UiLane>> = LazyLock::new(|| {
     air_area()
         .lanes()
@@ -47,7 +39,6 @@ static UI_LANES: LazyLock<Vec<UiLane>> = LazyLock::new(|| {
             Some(UiLane {
                 name: lane.name.as_str(),
                 label: lane.test_label.as_deref()?,
-                junit_tag: lane.junit_tag.as_deref()?,
                 explicit_only: lane.catalog_lane.is_none(),
             })
         })

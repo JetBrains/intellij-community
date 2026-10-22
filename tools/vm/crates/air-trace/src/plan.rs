@@ -486,16 +486,7 @@ impl<'r> Planner<'r> {
                 detail: None,
             });
         }
-        let mut authored = Vec::new();
         for reached in &affected.suites {
-            if reached.authored {
-                // An authored suite has no scenario document, so it is planned as a class, the way a name that
-                // reaches an authored journey is. Its command is its own `run <Class>`, because the class is left
-                // out of what the `run --changed` line covers.
-                self.add_class(&reached.class, &reached.lane);
-                authored.push(reached.class.clone());
-                continue;
-            }
             let Some(owner) = loaded.suite_by_id(&reached.suite) else {
                 // `bt` read the same directory a moment ago, so this is a document that changed in between.
                 anyhow::bail!(
@@ -511,13 +502,6 @@ impl<'r> Planner<'r> {
                 .entry(reached.lane.clone())
                 .or_default()
                 .insert(reached.class.clone());
-        }
-        if !authored.is_empty() {
-            self.note(format!(
-                "the paths also reach the authored suite class(es) {}, which have no generated profile; each one is \
-                 planned as a class with its own run",
-                authored.join(", ")
-            ));
         }
         self.changed_lanes = affected.lanes.len();
         for path in &self.paths {
@@ -562,7 +546,8 @@ impl<'r> Planner<'r> {
             .collect();
         self.result.classes = classes;
         self.note_wider_classes();
-        self.result.commands = self.commands();
+        let inputs = self.guest_inputs();
+        self.result.commands = self.commands(&inputs);
         for line in self.bt_notes.lines() {
             self.note(line);
         }

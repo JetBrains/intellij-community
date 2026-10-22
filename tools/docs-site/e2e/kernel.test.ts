@@ -193,6 +193,8 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
       // the figure walks its own steps and links the explainer chapter
       await figures.first().locator('button[aria-label="Next step"]').click()
       await expect(figures.first().locator('.react-flow__node.step-active')).not.toHaveCount(0)
+      // the chapter walk belongs to the explainer canvas, not to a figure
+      assert.strictEqual(await figures.first().locator('.diagram-step-chapter, .diagram-next-chapter, .hand-off').count(), 0)
       assert.ok((await figures.first().locator('figcaption a').getAttribute('href'))?.includes(app('/explain/')))
     })
   })
@@ -248,6 +250,76 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
       await expect(page.locator('.explainer-canvas-pane .react-flow__node.step-trail')).not.toHaveCount(0)
       await page.locator('.diagram-step-bar .diagram-overview').click()
       await expect.poll(() => page.url()).not.toContain('step=')
+    })
+
+    const stepsOf = (chapter: { diagram: string | null }): number =>
+      harvest.diagrams.find(diagram => diagram.id === chapter.diagram)?.steps.length ?? 0
+    // two chapters in a row that both have steps: the walk from the last step of one to the next one
+    const handOffIndex = chapters.findIndex((chapter, index) => stepsOf(chapter) > 0 && index + 1 < chapters.length && stepsOf(chapters[index + 1]) > 0)
+    const proseTop = (page: Page) => page.locator('.explainer-prose').evaluate(element => element.scrollTop)
+
+    test('the last step hands off to the next chapter, and Previous walks back', async ({ page }) => {
+      test.skip(handOffIndex < 0, 'no two chapters in a row have steps')
+      const from = chapters[handOffIndex]
+      const to = chapters[handOffIndex + 1]
+      const last = stepsOf(from)
+      await openChapter(page, from.id, `?step=${last}`)
+      const bar = page.locator('.diagram-step-bar')
+      await expect(bar.locator('.diagram-step-chapter')).toContainText(`Chapter ${handOffIndex + 1} of ${chapters.length}`)
+      await expect(bar.locator('[data-hand-off="chapter"]')).toContainText(to.title)
+      await expect(page.locator('.chapter-rail a', { hasText: to.title }).locator('.chapter-up-next')).toHaveCount(1)
+      await expect(bar.locator('.diagram-overview')).toBeEnabled()
+      // a new chapter starts at the top of its text
+      const scrolled = await page.locator('.explainer-prose').evaluate((element) => {
+        element.scrollTop = element.scrollHeight
+        return element.scrollTop > 0
+      })
+      await bar.locator('.diagram-next-chapter').click()
+      await expectUrlContains(page, chapterUrl(to.id))
+      await expect.poll(() => page.url()).not.toContain('step=')
+      await expect(page.locator('.explainer-chapter-title')).toContainText(to.title)
+      if (scrolled) {
+        await expect.poll(() => proseTop(page)).toBe(0)
+      }
+      await expect(page.locator('.chapter-rail a', { hasText: from.title })).toHaveAttribute('data-state', 'done')
+      await bar.locator('button[aria-label="Previous step"]').click()
+      await expectUrlContains(page, `${chapterUrl(from.id)}?step=${last}`)
+    })
+
+    test('the last chapter ends the explainer, and its text scrolls', async ({ page }) => {
+      const last = chapters[chapters.length - 1]
+      await open(page, chapterUrl(last.id), 'none')
+      const end = page.locator('.explainer-pager [data-hand-off="end"]')
+      await expect(end).toBeVisible()
+      assert.strictEqual(await page.locator('.explainer-pager [data-hand-off="chapter"]').count(), 0)
+      if (last.diagram === null) {
+        const pane = page.locator('.explainer-page-scroll')
+        const scrollable = await pane.evaluate(element => element.scrollHeight > element.clientHeight)
+        if (scrollable) {
+          await pane.evaluate((element) => {
+            element.scrollTop = element.scrollHeight
+          })
+          await expect.poll(() => pane.evaluate(element => element.scrollTop)).toBeGreaterThan(0)
+        }
+      }
+    })
+
+    test('on a phone the step bar stays small and the current chapter chip is in view', async ({ page }) => {
+      test.skip(handOffIndex < 0, 'no two chapters in a row have steps')
+      await page.setViewportSize({ width: 390, height: 844 })
+      const target = chapters.findLast(chapter => stepsOf(chapter) > 0)!
+      await openChapter(page, target.id, `?step=${stepsOf(target)}`)
+      const pane = await page.locator('.explainer-canvas-pane').boundingBox()
+      const bar = await page.locator('.diagram-step-bar').boundingBox()
+      assert.ok(pane !== null && bar !== null)
+      assert.ok(bar.height < pane.height / 2, `the step bar is ${bar.height}px of a ${pane.height}px canvas`)
+      await expect(page.locator('.diagram-step-chapter')).toBeHidden()
+      const rail = page.locator('.chapter-rail')
+      await expect.poll(async () => {
+        const railBox = await rail.boundingBox()
+        const chipBox = await rail.locator('a[aria-current="page"]').boundingBox()
+        return railBox !== null && chipBox !== null && chipBox.x >= railBox.x - 1 && chipBox.x + chipBox.width <= railBox.x + railBox.width + 1
+      }).toBe(true)
     })
 
     test('a clicked card opens its detail with a source link, and Escape closes it', async ({ page }) => {

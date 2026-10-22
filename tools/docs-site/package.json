@@ -7,7 +7,7 @@
     "node": ">=26.0.0"
   },
   "scripts": {
-    "test:scripts": "node --test scripts/*.test.ts src/*.test.ts",
+    "test:scripts": "node scripts/scriptTests.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

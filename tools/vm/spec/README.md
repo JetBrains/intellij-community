@@ -7,8 +7,10 @@ planner. Each spec follows the shared format of [`SPEC_GUIDE.md`](../../../.ai/s
   server and the planner.
 - [The UI-lane Controller](lane-controller.spec.md): the suites a change reaches, the run output and the verdict, the
   daemon start, the guest agent and the worker lease.
+- [The Lane Services](lane-services.spec.md): the fake ACP registry, the JetBrains Cloud emulator, the feedback capture,
+  the Codex mock model, and the control route of each one.
 
-The Kotlin side of a UI lane has its own specs under `plugins/air/spec/docs`. Each spec here links its Air partner.
+The IDE side of a UI lane has its own specs under `plugins/air/spec/docs`. Each spec here links its Air partner.
 
 ## Path conventions
 

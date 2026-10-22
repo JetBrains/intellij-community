@@ -356,6 +356,19 @@ fn a_global_option_after_the_command_is_the_same_option() {
     );
 }
 
+// The controller runs the lane daemon alone, so `--runner` is no option any more: a command line that still names it is
+// a usage refusal before any command runs.
+#[test]
+fn a_command_line_with_the_retired_runner_option_is_refused() {
+    let pipe = TerminalFacts::default();
+    for argv in [&["--runner", "daemon", "status"][..], &["daemon", "status", "--runner", "jvm"][..]] {
+        let Parsed::Refused { refusal, .. } = parse_argv(argv, &pipe) else {
+            panic!("{argv:?} was accepted");
+        };
+        assert_eq!(refusal.exit, Exit::USAGE, "{argv:?}: {}", refusal.message);
+    }
+}
+
 // An acquisition that names no holder takes the invoking user's, in the shape a self-leased run uses, so a caller
 // needs no uuid of its own; a named holder is kept as it is.
 #[test]
@@ -730,14 +743,12 @@ fn the_help_names_the_wrapper_and_interpolates_the_lists_it_does_not_own() {
     // Each of these has exactly one owner; the help text reads it rather than restating it.
     let text = every_long_help().join("\n");
     for expected in [
-        // 263 only: master's lane table makes `jcp` an integration lane with a test label and no catalog lane, so the
-        // help names it as a UI lane and as an explicit-only lane. See `plugins/air/BRANCH-263-DIVERGENCE.md` section 3.16.
         "ui|ui-real|ui-live|ui-perf|jcp|gui-chat",
         "explicit-only lane (ui-live, ui-perf, jcp)",
         "none|fresh-ide|daemon",
         "capped at 5",
         "default --reset fresh-ide",
-        "include-tag, exclude-tag",
+        "include-classname, exclude-classname",
     ] {
         assert!(text.contains(expected), "the help text does not carry {expected:?}");
     }

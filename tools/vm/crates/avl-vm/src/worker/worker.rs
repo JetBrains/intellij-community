@@ -72,7 +72,7 @@ mod tests;
 #[cfg(test)]
 pub(crate) use idle_stop::IdleStopRequest;
 #[cfg(all(test, unix))]
-pub(crate) use idle_stop::IdleStopVerdict;
+pub(crate) use idle_stop::{IdleStopRecord, IdleStopVerdict};
 pub(crate) use idle_stop::{read_idle_stop_record, remove_idle_stop_record};
 pub(crate) use lifecycle::{StartState, StopState, Timings};
 pub(crate) use pool::{PoolCommand, PoolTarget};

@@ -10,11 +10,12 @@
 //!
 //! - [`options`]: the verbs and their options;
 //! - [`command`]: a `welcome`, an `open-project` or a `project` session from the build to the summary, `replay`, `gc`,
-//!   `trace`, `activities`, `classes`, `compare` and `ls`;
+//!   `trace`, `activities`, `classes`, `triggers`, `compare` and `ls`;
 //! - [`timeline`], [`spans`], [`activities`]: the spans of one run in milliseconds from the process start, `trace`,
 //!   which prints the spans of a window, and `activities`, which groups the activities of a window by class and by
 //!   plugin;
 //! - [`classes`]: the loaded classes of one arm by plugin and by module, at an anchor of the run;
+//! - [`triggers`]: the plugin loaders of one run by the frame that triggered each one;
 //! - [`resolve`], [`stage`], [`gc`]: what Bazel built, the generation, and the removal of old generations;
 //! - [`launch`], [`load`]: the Starter-shaped IDE process and its supervision, and the host load at each run start;
 //! - [`binary`]: the age of the controller binary that `AIR_VM_BIN` names, against its sources;
@@ -53,6 +54,7 @@ mod summary;
 mod testing;
 mod timeline;
 mod trace;
+mod triggers;
 
 pub(crate) use command::Bench;
 pub(crate) use options::{BenchVerb, EXIT_CODES, LONG_ABOUT};

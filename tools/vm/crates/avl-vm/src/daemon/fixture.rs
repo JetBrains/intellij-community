@@ -13,7 +13,7 @@ use avl_wire::report::RunReport;
 use serde_json::{Value, json};
 
 use crate::daemon::PreparedBuild;
-use crate::daemon::testing::{DaemonFixture, FakeDaemon, PASSING_XML, PLENTIFUL_DF, ndjson_line, run_started_record, summary_record};
+use crate::daemon::testing::{DaemonFixture, FakeDaemon, PLENTIFUL_DF, ndjson_line, run_started_record, summary_record};
 
 /// A [`DaemonFixture`], with the fake `tart` of its pool named `tart`.
 pub(crate) struct Fixture {
@@ -113,7 +113,6 @@ impl Fixture {
         };
         daemon.script().boot_stamp = format!("boot-{worker}");
         let mut state = daemon.host_state(&format!("run-{worker}"), &prep.launch_digest);
-        state.runtime_digest = prep.runtime_digest.clone();
         state.last_product_digest = prep.product_digest.clone();
         state.last_mount_digest = prep.mount_digest.clone();
         state.last_plugins_digest = prep.plugins_digest.clone();
@@ -127,9 +126,9 @@ impl Fixture {
     }
 }
 
-/// One green iteration's stream on a class of its own, and the XML that agrees with it.
-pub(crate) fn passing_run(iteration_id: &str, class_name: &str) -> (Vec<String>, String) {
-    let lines = vec![
+/// One green iteration's stream on a class of its own.
+pub(crate) fn passing_run(iteration_id: &str, class_name: &str) -> Vec<String> {
+    vec![
         ndjson_line(&run_started_record(iteration_id)),
         ndjson_line(&json!({"event": "testStarted", "timestamp": "2026-08-23T12:00:01.000Z",
             "displayName": "scenario", "id": "t1", "className": class_name, "methodName": "scenario"})),
@@ -137,32 +136,19 @@ pub(crate) fn passing_run(iteration_id: &str, class_name: &str) -> (Vec<String>,
             "displayName": "scenario", "id": "t1", "className": class_name, "methodName": "scenario",
             "status": "SUCCESSFUL", "durationMs": 1000})),
         ndjson_line(&summary_record(iteration_id, 1, 0, 0, 0, 0, false)),
-    ];
-    let xml = PASSING_XML
-        .replace("com.example.MyTest", class_name)
-        .replace("name=\"works\"", "name=\"scenario\"");
-    (lines, xml)
+    ]
 }
 
 // --- finished reports ---------------------------------------------------------------------------------------------
 
-/// A finished report of the shape the controller persists, as JSON: one suite per class, each suite's own duration
-/// the class's and its one case half of it, the way a `@BeforeAll` IDE relaunch lives in the suite rather than in any
-/// case.
+/// A finished report of the shape the controller persists, as JSON: one case per class, with the class's duration.
 pub(crate) fn baseline_report(classes: &[(&str, f64)]) -> Value {
-    let suites: Vec<Value> = classes
+    let cases: Vec<Value> = classes
         .iter()
         .enumerate()
         .map(|(index, (class_name, duration_ms))| {
-            json!({
-                "name": class_name,
-                "timestamp": format!("2026-08-21T12:00:0{}Z", index % 10),
-                "durationMs": duration_ms,
-                "documentIndex": index,
-                "tests": 1, "failures": 0, "errors": 0, "skipped": 0,
-                "cases": [{"className": class_name, "name": "scenario", "status": "passed",
-                    "durationMs": duration_ms / 2.0}],
-            })
+            json!({"className": class_name, "name": "scenario", "status": "passed", "durationMs": duration_ms,
+                "startedAt": format!("2026-08-21T12:00:0{}Z", index % 10)})
         })
         .collect();
     json!({
@@ -178,9 +164,7 @@ pub(crate) fn baseline_report(classes: &[(&str, f64)]) -> Value {
         "ordering": avl_wire::report::ORDERING,
         "execution": {"testsStarted": classes.len(), "testsFailed": 0, "testsSkipped": 0,
             "containersSkipped": 0, "containerFailures": 0},
-        "xml": {"tests": classes.len(), "failures": 0, "errors": 0, "skipped": 0},
-        "source": {"guestPath": "/worker/daemon/test.xml", "retrieval": "daemon_http", "integrity": "complete"},
-        "suites": suites,
+        "cases": cases,
         "failures": [],
         "watchdog": {},
     })

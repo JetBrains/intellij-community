@@ -1,7 +1,6 @@
 //! Helpers the verbs' tests share: running the agent in memory and reading what it answered.
 
 use std::path::{Path, PathBuf};
-use std::process::{Child, Command};
 
 use serde_json::Value;
 
@@ -43,33 +42,6 @@ pub(crate) fn run_agent<S: AsRef<std::ffi::OsStr>>(args: &[S], stdin: &[u8]) -> 
         exit,
         stdout: String::from_utf8_lossy(&stdout).into_owned(),
         stderr: String::from_utf8_lossy(&stderr).into_owned(),
-    }
-}
-
-/// The pid of a process that ran and was reaped, so no process holds it until the kernel reuses it.
-pub(crate) fn finished_pid() -> u32 {
-    let mut child = Command::new("/bin/sh").args(["-c", "exit 0"]).spawn().unwrap();
-    child.wait().unwrap();
-    child.id()
-}
-
-/// A process that runs until the drop kills it.
-pub(crate) struct RunningProcess(Child);
-
-impl RunningProcess {
-    pub(crate) fn start() -> Self {
-        Self(Command::new("/bin/sleep").arg("600").spawn().unwrap())
-    }
-
-    pub(crate) fn pid(&self) -> u32 {
-        self.0.id()
-    }
-}
-
-impl Drop for RunningProcess {
-    fn drop(&mut self) {
-        let _ = self.0.kill();
-        let _ = self.0.wait();
     }
 }
 

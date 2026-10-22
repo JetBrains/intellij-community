@@ -4,9 +4,9 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use avl_bridge::Client;
 use avl_trace::protocol::{CaptureSource, VideoCodec};
 
-use crate::bridge::Client;
 use crate::capture::ide::IdePaint;
 use crate::capture::{Frame, Source};
 use crate::video::{self, Recording};
@@ -70,7 +70,9 @@ pub(crate) trait Videographer: Send {
     fn start(&self, dir: &Path, plan: &VideoPlan, first: Option<&Frame>) -> anyhow::Result<Box<dyn Recording>>;
 }
 
-/// How a person running a lane on their own machine lets the recorder read its screen.
+/// The lane flag that lets the recorder read the screen. The descriptor of a Linux guest sets it, because the guest's
+/// display belongs to the lane. `lane-run` lets the recorder read the screen of a TeamCity build on Linux too, because
+/// no person works on the display of a TeamCity agent. A direct lane on a developer's machine never gets it.
 pub(crate) const SCREEN_OPT_IN: &str = "-Dair.flow.trace.screen=on";
 
 /// How long a display that failed to open is not tried again, in milliseconds.
@@ -123,7 +125,9 @@ impl SystemLadder {
             screen.display.clone()
         };
         if !screen.allowed {
-            return Err(format!("the lane did not let the recorder read the screen ({SCREEN_OPT_IN} does)"));
+            return Err(format!(
+                "the lane did not let the recorder read the screen ({SCREEN_OPT_IN} or a TeamCity build on Linux does)"
+            ));
         }
         if os != "linux" {
             return Err(format!("the IDE draws through the window system of {os}, not through X"));

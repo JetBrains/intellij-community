@@ -4,12 +4,11 @@
 use std::path::{Path, PathBuf};
 
 use avl_trace::vocabulary;
+use serde::Serialize;
 
 vocabulary! {
     /// Why a root is looked in, for the listing and the startup lines.
     pub enum RootKind {
-        /// `<repo>/out/air-traces`, where a lane run from the IDE writes.
-        AirTraces = "air-traces",
         /// The AIR lanes' `bazel-testlogs`, whose `test.outputs` hold a Bazel run's bundles: zipped into
         /// `outputs.zip`, or as directories while the test runs and under `--nozip_undeclared_test_outputs`.
         BazelTestlogs = "bazel-testlogs",
@@ -20,7 +19,22 @@ vocabulary! {
         VmRuns = "vm-runs",
         /// A `--root`.
         Flag = "flag",
+        /// The `bazel.logs.zip` of a TeamCity build, which `--teamcity` downloaded.
+        TeamCity = "teamcity",
     }
+}
+
+/// Where the bundles of a root come from, when that is not this machine: a CI build. Each bundle of the root carries
+/// it, so the viewer can say which build and which shard ran a scenario.
+#[derive(Serialize, Clone, PartialEq, Eq, Debug)]
+pub struct Origin {
+    /// The name of the build's configuration, such as `Air Plugin UI Tests / 1`.
+    pub name: String,
+    /// The build's id.
+    pub id: String,
+    /// The build's page.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
 }
 
 /// One place to look.
@@ -32,6 +46,8 @@ pub struct Root {
     /// When set, the only thing looked at under the path, `/`-separated; the path is then not walked.
     pub glob: Option<&'static str>,
     pub error: Option<String>,
+    /// Where the root's bundles come from, when it is not this machine.
+    pub origin: Option<Origin>,
 }
 
 impl Root {
@@ -42,6 +58,7 @@ impl Root {
             path: path.into(),
             glob: None,
             error: None,
+            origin: None,
         }
     }
 }
@@ -62,16 +79,12 @@ pub const VM_RUN_TRACES_DIR: &str = "traces";
 /// pins the two together.
 pub const VM_RUNS_GLOB: &str = "*/traces/*/*.zip";
 
-/// The four places a trace is left on this machine: the checkout's own two, when there is a checkout, and the
-/// controller's two under its runtime root. A runtime root that could not be resolved gives the controller's two
-/// roots its error instead of a path.
+/// The three places a trace is left on this machine: the Air lanes' `bazel-testlogs` of the checkout, when there is
+/// a checkout, and the controller's two roots under its runtime root. A runtime root that could not be resolved gives
+/// the controller's two roots its error instead of a path.
 pub fn default_roots(repo: Option<&Path>, runtime_root: Result<&Path, &str>) -> Vec<Root> {
     let mut roots = Vec::new();
     if let Some(repo) = repo {
-        roots.push(Root::new(
-            RootKind::AirTraces,
-            repo.join("out").join(avl_trace::bundle::ROOT_DIR_NAME),
-        ));
         let testlogs = ["bazel-testlogs", "plugins", "air", "tests", "integration"];
         roots.push(Root::new(
             RootKind::BazelTestlogs,

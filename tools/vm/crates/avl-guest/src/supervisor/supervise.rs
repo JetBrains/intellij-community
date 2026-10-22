@@ -38,7 +38,7 @@ const LEFTOVER_COMMAND_CHARS: usize = 200;
 
 /// The PATH a supervised child starts with: the system directories of the guest OS, and Homebrew's only on macOS.
 ///
-/// It names no Node. For the UI daemon the controller resolves the pinned Node of this guest and puts its directory
+/// It names no Node. For the lane daemon the controller resolves the pinned Node of this guest and puts its directory
 /// first in the PATH that the start argv sets through `/usr/bin/env`. For the lane IDE the caller puts its launchers into
 /// the `bin` directory of the context. So a Node directory here would be a second answer.
 pub(crate) const fn child_path(host: LaunchHost) -> &'static str {

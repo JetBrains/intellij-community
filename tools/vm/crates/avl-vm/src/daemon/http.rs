@@ -196,7 +196,7 @@ impl DaemonClient {
     /// One request on the control channel, whole body in and whole body out.
     ///
     /// The endpoint carries its own method and budget, so no call site can give `/status` a full-IDE-stop timeout
-    /// or `/mount/quiesce` a five-second one. The one route with no budget - `/run` - is streamed and never comes
+    /// or `/ide/stop` a five-second one. The one route with no budget - `/run` - is streamed and never comes
     /// through here; its deadline belongs to the transport watchdog.
     ///
     /// A transport failure is `daemon_http_failed` at 69: the daemon did not answer, which is a fact about the
@@ -216,9 +216,10 @@ impl DaemonClient {
     /// One `/status` probe, classified.
     ///
     /// Every answer but [`StatusProbe::Healthy`] means "start a fresh one" to a caller that only asks whether a
-    /// daemon is usable. A protocol mismatch is *not* one of them: a daemon speaking another protocol version would
-    /// be restarted forever by a controller that is itself the stale half - so it refuses instead, naming both
-    /// versions.
+    /// daemon is usable. A protocol that this controller does not speak is *not* one of them: a daemon speaking another
+    /// protocol version would be restarted forever by a controller that is itself the stale half - so it refuses
+    /// instead, naming both versions. The protocol of the JVM daemon of an older controller is
+    /// [`StatusProbe::OtherDaemon`], so a run retires it ([`RETIRED_JVM_PROTOCOL_VERSION`]).
     pub(crate) async fn probe_status(&self, ctx: &Ctx, state: &HostState) -> Result<StatusProbe, Refusal> {
         let (status, body) = match self.exchange(ctx, state, &wire::STATUS, None).await {
             Ok(answered) => answered,
@@ -241,6 +242,12 @@ impl DaemonClient {
         // An unusable daemon is an answer, but one that answers with a body this controller cannot read is a
         // protocol failure, and folding the two together is what would restart a mismatched daemon forever.
         let decoded = wire::decode_status(&body).map_err(protocol_refusal)?;
+        if decoded.protocol_version == RETIRED_JVM_PROTOCOL_VERSION {
+            return Ok(StatusProbe::OtherDaemon(format!(
+                "a JVM daemon of an older controller (protocol {RETIRED_JVM_PROTOCOL_VERSION}), and this controller \
+                 runs the lane daemon"
+            )));
+        }
         require_supported_protocol(decoded.protocol_version)?;
         // A rebooted daemon has a fresh token, so a matching boot stamp is implied by the 200; still verified.
         if decoded.daemon_boot_stamp != state.daemon_boot_stamp {
@@ -254,9 +261,6 @@ impl DaemonClient {
                 "launch digest {}, expected {}",
                 decoded.controller_launch_digest, state.launch_digest
             )));
-        }
-        if decoded.mount_quiesced {
-            return Ok(StatusProbe::Quiesced);
         }
         Ok(StatusProbe::Healthy(decoded))
     }
@@ -293,7 +297,7 @@ pub(crate) fn transport_refusal(state: &HostState, endpoint: &Endpoint, failure:
 /// What one `/status` probe saw: the daemon this controller launched, or the reason it is not one it can use.
 #[derive(Debug)]
 pub(crate) enum StatusProbe {
-    /// The daemon this controller launched, unquiesced.
+    /// The daemon this controller launched.
     Healthy(Status),
     /// No relay to the daemon's guest port opened.
     NoConnection(String),
@@ -305,8 +309,6 @@ pub(crate) enum StatusProbe {
     NotAStatus(String),
     /// A daemon answered, and not the one this controller launched: another boot or another launch.
     OtherDaemon(String),
-    /// This controller's daemon, quiesced for a remount.
-    Quiesced,
     /// The operation was interrupted before the probe answered.
     Interrupted,
 }
@@ -329,7 +331,6 @@ impl StatusProbe {
             Self::Broken(_) => "broken",
             Self::NotAStatus(_) => "not_a_status",
             Self::OtherDaemon(_) => "other_daemon",
-            Self::Quiesced => "quiesced",
             Self::Interrupted => "interrupted",
         }
     }
@@ -345,31 +346,33 @@ impl StatusProbe {
             ),
             Self::Broken(detail) => format!("failed after connecting: {detail}"),
             Self::NotAStatus(detail) | Self::OtherDaemon(detail) => detail.clone(),
-            Self::Quiesced => "quiesced for a remount".to_owned(),
             Self::Interrupted => "interrupted".to_owned(),
         }
     }
 }
 
+/// The protocol of the JVM daemon of a controller before this one. A guest can still hold such a daemon in its run
+/// slot. It is no skew: this controller starts no JVM daemon, so it retires that daemon as one of another launch.
+pub(crate) const RETIRED_JVM_PROTOCOL_VERSION: u32 = 5;
+
 /// Refuses a daemon this controller cannot read, by name and at boot.
 ///
-/// The daemon jar is stable-tier, so the launch digest already restarts a daemon built from another build. What
-/// this catches is the other skew: this controller lives outside the Bazel graph, so a Kotlin protocol change and a
-/// controller one can be committed apart. Without the check the first symptom is a decode failure mid-run, after a
-/// build and an IDE launch.
+/// The launch digest already restarts a daemon built from another build. What this catches is the other skew: a guest
+/// can hold an agent of another tree than this controller. Without the check the first symptom is a decode failure
+/// mid-run, after a build and an IDE launch.
 pub(crate) fn require_supported_protocol(reported: u32) -> Result<(), Refusal> {
-    if reported == wire::PROTOCOL_VERSION {
+    let expected = wire::PROTOCOL_VERSION;
+    if reported == expected {
         return Ok(());
     }
     Err(Refusal::new(
         "daemon_protocol_unsupported",
         Exit::SOFTWARE,
         format!(
-            "the guest daemon speaks run protocol {reported} and this controller speaks {}. One half of \
-             `plugins/air/tests/integration/uiDaemon/testSrc/AirUiDaemonProtocol.kt` and \
-             `community/tools/vm/crates/avl-wire` was updated without the other — or both are \
-             current and this guest still holds a daemon from before the change, which `daemon stop` retires.",
-            wire::PROTOCOL_VERSION
+            "the guest daemon speaks run protocol {reported}, and this controller speaks {expected}. One half of the \
+             lane-daemon verb of `community/tools/vm/crates/avl-guest` and `community/tools/vm/crates/avl-wire` was \
+             updated without the other, or the guest still holds a daemon from before the change, which `daemon stop` \
+             retires."
         ),
     ))
 }

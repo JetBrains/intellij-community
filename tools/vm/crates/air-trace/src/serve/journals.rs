@@ -4,7 +4,7 @@
 //! gives the records of one run from a byte offset. `run-appended` tells the viewer that a journal grew, so a run
 //! page reads only the new records.
 
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::fs::{self, File};
 use std::io::{self, BufRead, BufReader};
 use std::path::{Path, PathBuf};
@@ -124,6 +124,10 @@ struct JournalsState {
     facts: HashMap<String, JournalFacts>,
     /// The journal size of each run that `run-appended` last named.
     announced: HashMap<String, u64>,
+    /// The run directories that the last listing read.
+    listed: BTreeSet<String>,
+    /// The listed run directories that had no journal yet.
+    without_journal: BTreeSet<String>,
 }
 
 /// The journals under one directory, each read again only when its file changed.
@@ -159,39 +163,58 @@ impl Journals {
         Some(self.dir.as_ref()?.join(run_id).join(JOURNAL_FILE))
     }
 
-    /// A summary of every journal, newest run first, and the directories to watch: the runs directory, and the
-    /// directory of each run still running, for its journal's writes.
+    /// A run's journal and its metadata, or `None` when the run has no journal file.
+    fn journal(&self, run_id: &str) -> Option<(PathBuf, fs::Metadata)> {
+        let path = self.journal_path(run_id)?;
+        let info = fs::metadata(&path).ok().filter(fs::Metadata::is_file)?;
+        Some((path, info))
+    }
+
+    /// A summary of every journal, newest run first, and the directories to watch: the runs directory, the
+    /// directory of each run still running, for its journal's writes, and each run directory without a journal, for
+    /// the journal's creation.
     pub(crate) fn list(&self, now: SystemTime) -> (Vec<ControllerRun>, Vec<PathBuf>) {
         let Some(dir) = &self.dir else {
             return (Vec::new(), Vec::new());
         };
-        let Ok(entries) = fs::read_dir(dir) else {
-            return (Vec::new(), Vec::new());
-        };
+        let names = run_dirs(dir);
+        // The runs directory itself, so a new run is seen when its directory appears.
+        let mut watch = if names.is_some() { vec![dir.clone()] } else { Vec::new() };
+        let listed = names.unwrap_or_default();
         let mut state = self.lock();
         let mut runs = Vec::new();
-        // The runs directory itself, so a new run is seen when its directory appears.
-        let mut watch = vec![dir.clone()];
-        let mut seen = std::collections::HashSet::new();
-        for entry in entries.filter_map(Result::ok) {
-            let Ok(name) = entry.file_name().into_string() else {
-                continue;
-            };
-            if !entry.file_type().is_ok_and(|kind| kind.is_dir()) || !valid_run_id(&name) {
-                continue;
-            }
-            let Some(run) = self.summary_locked(&mut state, &name, now) else {
+        let mut without_journal = BTreeSet::new();
+        for name in &listed {
+            let Some(run) = self.summary_locked(&mut state, name, now) else {
+                // A run creates its directory before its journal.
+                watch.push(dir.join(name));
+                without_journal.insert(name.clone());
                 continue;
             };
             if run.status == RunStatus::Running {
-                watch.push(dir.join(&name));
+                watch.push(dir.join(name));
             }
-            seen.insert(name);
             runs.push(run);
         }
-        state.facts.retain(|run_id, _| seen.contains(run_id));
+        state
+            .facts
+            .retain(|run_id, _| listed.contains(run_id) && !without_journal.contains(run_id));
+        state.listed = listed;
+        state.without_journal = without_journal;
         runs.sort_by(|left, right| right.started_at.cmp(&left.started_at).then_with(|| left.run_id.cmp(&right.run_id)));
         (runs, watch)
+    }
+
+    /// Whether the runs directory differs from what the last listing read: a run directory came or went, or a
+    /// run directory that had no journal has one now. A file event can come late or not at all, and this check reads
+    /// the directory itself.
+    pub(crate) fn listing_is_stale(&self) -> bool {
+        let Some(dir) = &self.dir else {
+            return false;
+        };
+        let names = run_dirs(dir).unwrap_or_default();
+        let state = self.lock();
+        names != state.listed || state.without_journal.iter().any(|run_id| self.journal(run_id).is_some())
     }
 
     /// One run's summary, or `None` when the run has no journal.
@@ -201,8 +224,7 @@ impl Journals {
     }
 
     fn summary_locked(&self, state: &mut JournalsState, run_id: &str, now: SystemTime) -> Option<ControllerRun> {
-        let path = self.journal_path(run_id)?;
-        let info = fs::metadata(&path).ok().filter(fs::Metadata::is_file)?;
+        let (path, info) = self.journal(run_id)?;
         let modified = info.modified().unwrap_or(SystemTime::UNIX_EPOCH);
         let current = state
             .facts
@@ -253,6 +275,19 @@ impl Journals {
         let real = fscopy::resolve_links(&path)?;
         Ok(real.starts_with(&real_dir).then_some(real))
     }
+}
+
+/// The run directories under the runs directory, or `None` when it cannot be read. A run directory is a directory
+/// whose name is a valid run id.
+fn run_dirs(dir: &Path) -> Option<BTreeSet<String>> {
+    let entries = fs::read_dir(dir).ok()?;
+    let names = entries
+        .filter_map(Result::ok)
+        .filter(|entry| entry.file_type().is_ok_and(|kind| kind.is_dir()))
+        .filter_map(|entry| entry.file_name().into_string().ok())
+        .filter(|name| valid_run_id(name))
+        .collect();
+    Some(names)
 }
 
 /// Reads one journal whole. A line that does not decode is skipped: it is the last line, still being written, or

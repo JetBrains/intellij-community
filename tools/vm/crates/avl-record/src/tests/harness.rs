@@ -8,6 +8,8 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
+use avl_bridge::Client;
+use avl_testkit::http::{FakeHttp, Response};
 use avl_trace::bridge::{
     FACTS_ROUTE, FLUSHED_SPANS_ROUTE, Facts, GESTURE_PRESS, IdeAttribute, IdeSpan, IdeSpans, Input, InputTarget, PAINT_CONTENT_TYPE,
     PAINT_ROUTE, Point, Rect, SPANS_ROUTE, TOKEN_HEADER, TREE_ROUTE, Tree, decode_tree,
@@ -16,11 +18,10 @@ use avl_trace::bundle::{IDEA_LOG_FILE, LOGS_FILE, MANIFEST_FILE, Manifest, SPANS
 use avl_trace::otlp::{LogRecord, Span, decode_logs_line, decode_traces_line};
 use avl_trace::protocol::{Bridge, CaptureSource, Command, HelloCommand, Launcher, VideoCodec, decode_command, encode_command};
 
-use crate::bridge::Client;
 use crate::capture::{Frame, Source};
 use crate::ladder::{CaptureLadder, ScreenAccess, VideoPlan, Videographer};
 use crate::session::Session;
-use crate::testing::{FakeHttp, Response, ScriptedClock, SharedBuffer};
+use crate::testing::{ScriptedClock, SharedBuffer};
 use crate::video::Recording;
 use crate::{Diagnostics, Options, lock};
 
@@ -336,11 +337,21 @@ impl Harness {
     }
 
     pub(crate) fn hello(&self, bridge: bool) -> String {
+        self.hello_line(bridge, false)
+    }
+
+    /// The hello without a bridge that asks for the Allure results.
+    pub(crate) fn allure_hello(&self) -> String {
+        self.hello_line(false, true)
+    }
+
+    fn hello_line(&self, bridge: bool, allure: bool) -> String {
         let hello = HelloCommand {
             root: self.root.to_string_lossy().into_owned(),
             run_id: "run-1".to_owned(),
             launcher: Launcher::Bazel,
             screen: false,
+            allure,
             bridge: bridge.then(|| Bridge {
                 port: 1,
                 token: GOLDEN_TOKEN.to_owned(),
@@ -361,6 +372,17 @@ impl Harness {
         };
         hello.root = self.root.to_string_lossy().into_owned();
         encode_command(&Command::Hello(hello)).unwrap()
+    }
+
+    /// A transcript whose hello asks for the Allure results, which the golden hello does not.
+    pub(crate) fn with_allure(lines: &[Vec<u8>]) -> Vec<Vec<u8>> {
+        let mut lines = lines.to_vec();
+        let Command::Hello(mut hello) = decode_command(&lines[0]).unwrap() else {
+            panic!("the first line is not a hello");
+        };
+        hello.allure = true;
+        lines[0] = encode_command(&Command::Hello(hello)).unwrap();
+        lines
     }
 
     /// Feeds a golden transcript to a session line by line at the golden receipt times, playing the IDE's part in

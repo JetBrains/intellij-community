@@ -311,33 +311,46 @@ struct SelfDigest {
 }
 
 impl Guest<'_> {
-    /// What the installed agent says its own bytes hash to, or `None` when it cannot answer at all.
+    /// What the installed agent says its own bytes hash to. `None` is an agent too old to report a digest, or a reply
+    /// that is not JSON. The refusal is the `contract` exec that failed.
     ///
     /// Asked through the `contract` verb, which exists to publish the wire this controller and that binary have to
-    /// agree on. `None` covers every way of not knowing - an agent too old to report a digest, a reply that is not
-    /// JSON, an exec that failed - and every one of them means "install it".
+    /// agree on. A new exec of the agent path answers, so the answer is the digest of the bytes on disk, also while a
+    /// lane daemon runs from an older image.
+    pub async fn installed_agent_digest(&self) -> Result<Option<String>, Refusal> {
+        let options = SpawnOptions::timeout(CONTRACT_TIMEOUT, "guest_agent_timeout");
+        let reply = self.invoke_agent(AgentAccount::Worker, AgentVerb::Contract, &[], &options).await?;
+        let Ok(declared) = serde_json::from_str::<SelfDigest>(&reply) else {
+            return Ok(None);
+        };
+        Ok(is_hex_digest(&declared.self_digest).then_some(declared.self_digest))
+    }
+
+    /// [`Guest::installed_agent_digest`] for the install, where every way of not knowing means "install it".
     ///
     /// The refusal is noted even though it is not returned. This is asked only when a receipt already says this
     /// controller installed an agent here, so a failing `contract` is not the ordinary "nothing here yet": it is
     /// the agent this controller put there refusing to say what it is, and answering silently made the reason
     /// invisible.
-    pub async fn agent_self_digest(&self) -> Option<String> {
-        let options = SpawnOptions::timeout(CONTRACT_TIMEOUT, "guest_agent_timeout");
-        let reply = match self.invoke_agent(AgentAccount::Worker, AgentVerb::Contract, &[], &options).await {
-            Ok(reply) => reply,
-            Err(refusal) => {
-                self.reporter.note(
-                    format!("reinstalling the guest agent: it could not say what it is: {}", refusal.message),
-                    Some(&self.scope()),
-                );
-                return None;
-            }
-        };
-        let declared: SelfDigest = serde_json::from_str(&reply).ok()?;
-        is_hex_digest(&declared.self_digest).then_some(declared.self_digest)
+    async fn agent_self_digest(&self) -> Option<String> {
+        self.installed_agent_digest().await.unwrap_or_else(|refusal| {
+            self.reporter.note(
+                format!("reinstalling the guest agent: it could not say what it is: {}", refusal.message),
+                Some(&self.scope()),
+            );
+            None
+        })
     }
 
-    /// Puts the guest agent in the guest, unless the guest already runs exactly these bytes.
+    /// The digest of the guest agent that the host build of this checkout made: the bytes that [`Self::install_agent`]
+    /// pushes. It reads the binary on the host and asks the guest nothing.
+    pub async fn built_agent_digest(&self, bazel: &dyn BazelHost) -> Result<String, Refusal> {
+        let source = resolve_agent_binary(self.ctx, self.settings, bazel).await?;
+        read_agent_source(&source).map(|content| agent_digest(&content))
+    }
+
+    /// Puts the guest agent in the guest, unless the guest already runs exactly these bytes. Answers the digest of
+    /// the agent that the guest holds after the call. A daemon start records it, because a lane daemon is that agent.
     ///
     /// Called once per lease operation, once per observation and again on every daemon start. Measured on a warm
     /// `daemon restart`, an unconditional push was the single largest phase: 21.0 s, of which 15.4 s pushed a
@@ -355,22 +368,21 @@ impl Guest<'_> {
     /// The staging path is fixed rather than unique: a failed push leaves it behind, and the next install
     /// overwrites it. Two installs never race - every caller holds the worker's lease-operation lock, which is
     /// the same file a lifecycle operation locks.
-    pub async fn install_agent(&self, bazel: &dyn BazelHost) -> Result<(), Refusal> {
+    pub async fn install_agent(&self, bazel: &dyn BazelHost) -> Result<String, Refusal> {
         let settings = self.settings;
         let worker = self.worker();
         if let Some(installed) = installed_agent_receipt(settings, worker, self.reporter)
             && self.agent_self_digest().await.as_deref() == Some(installed.sha256.as_str())
         {
-            return Ok(());
+            return Ok(installed.sha256);
         }
         let source = resolve_agent_binary(self.ctx, settings, bazel).await?;
         // Read between two identical signatures. A source rewritten while it was being read would otherwise be
         // recorded with the new file's identity and the old file's digest, and every later start would skip an
         // install it needed. An unstable source simply gets no receipt, so the next start installs again.
         let before = host_file_signature(&source);
-        let content = std::fs::read(&source).or_refuse("guest_agent_missing", Exit::SOFTWARE, || {
-            format!("cannot read the guest agent {}", source.display())
-        })?;
+        let content = read_agent_source(&source)?;
+        let digest = agent_digest(&content);
         let incoming = format!("{}.incoming", settings.vm_agent);
         self.write_file(&incoming, &content, "700").await?;
         self.as_user(
@@ -394,9 +406,10 @@ impl Guest<'_> {
                     host_repo: path_text(repo),
                     source: path_text(&source),
                     source_signature: before,
-                    sha256: agent_digest(&content),
+                    sha256: digest.clone(),
                 },
-            );
+            )
+            .map(|()| digest);
         }
         // No receipt rather than a wrong one: the next start reinstalls, which is only ever a cost.
         match std::fs::remove_file(agent_receipt_path(settings, worker)) {
@@ -405,9 +418,16 @@ impl Guest<'_> {
                 Exit::FAILURE,
                 format!("cannot discard {worker}'s agent receipt: {error}"),
             )),
-            _ => Ok(()),
+            _ => Ok(digest),
         }
     }
+}
+
+/// The bytes of the guest agent binary `source` on the host.
+fn read_agent_source(source: &Path) -> Result<Vec<u8>, Refusal> {
+    std::fs::read(source).or_refuse("guest_agent_missing", Exit::SOFTWARE, || {
+        format!("cannot read the guest agent {}", source.display())
+    })
 }
 
 /// Where on the host the guest agent for this guest's platform is, or a refusal naming the build to run.

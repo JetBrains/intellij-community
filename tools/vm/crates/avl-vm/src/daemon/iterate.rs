@@ -1,4 +1,4 @@
-//! One iteration as a value: the daemon decision, the push, the run, the JUnit retrieval and the report.
+//! One iteration as a value: the daemon decision, the push, the run, the evidence and the report.
 
 use std::path::PathBuf;
 use std::time::Instant;
@@ -7,27 +7,24 @@ use crate::worker::worker::Lease;
 use avl_base::clock::stamp;
 use avl_base::format::{clip, seconds};
 use avl_base::fs::create_private_dir;
-use avl_base::{Exit, OrRefuse, Refusal, Scope};
+use avl_base::{Exit, Refusal, Scope};
 use avl_host_sys::Ctx;
-use avl_host_sys::guest::guest_join;
 use avl_report::report::{self as run_report, Input};
-use avl_wire::daemon::{self as wire, RunEvent};
+use avl_wire::daemon::{self as wire, RunEvent, RunEventKind};
 use avl_wire::progress::{Decision, Event, IterationReported, Phase, Subject};
-use avl_wire::report::{
-    EvidenceArtifact, MAX_JUNIT_XML_BYTES, Retrieval, RetrievedIntegrity, RetrievedXml, RunReport, safe_evidence_paths,
-};
+use avl_wire::report::{EvidenceArtifact, RunReport, safe_evidence_paths};
 use jiff::Timestamp;
 use serde::Serialize;
 use serde_json::json;
-use tempfile::TempPath;
 use tokio_util::sync::CancellationToken;
 
-use crate::daemon::build::PreparedBuild;
+use crate::daemon::build::{PreparedBuild, lane_inputs_note, plugin_directories_note};
 use crate::daemon::host::{Host, WatchdogPolicy};
 use crate::daemon::run::{RunExecution, RunSelection, push_jars};
-use crate::daemon::state::{HostState, guest_state_dir};
+use crate::daemon::session_logs;
+use crate::daemon::state::HostState;
 use crate::daemon::traces::TraceSync;
-use crate::lane::ide::{IdeRetention, running_guest_ides};
+use crate::lane::ide::{IdeRetention, gc_guest_ides, gc_note, running_guest_ides};
 use crate::lane::secrets::{RunSecrets, remove_run_secrets, scan_artifacts, stage_run_secrets, withhold};
 use avl_base::RefusalExt;
 use avl_base::journal;
@@ -35,6 +32,9 @@ use avl_base::journal;
 #[cfg(test)]
 #[cfg(unix)]
 mod tests;
+
+/// The refusal of a remount while a lane IDE of the worker still runs, or while its runs cannot be read.
+pub(crate) const REMOUNT_IDE_RUNNING: &str = "daemon_remount_ide_running";
 
 /// Bounds the diagnostic a report carries from the stream: a run that failed with a megabyte of stack trace still
 /// has a one-screen explanation.
@@ -52,12 +52,18 @@ pub(crate) enum IdeAction {
     /// The daemon restarted, and the IDE of this product outlived it: the new daemon attaches to it.
     #[serde(rename = "keep")]
     Keep,
-    /// The shares were refreshed around a quiesced daemon: a remount on Tart and Parallels, a settle on Docker. The
-    /// label is `remount` on every backend.
+    /// The shares were refreshed while no lane IDE ran: a remount on Tart and Parallels, a settle on Docker. The label is
+    /// `remount` on every backend.
     #[serde(rename = "remount")]
     Remount,
     #[serde(rename = "relaunch")]
     Relaunch,
+    /// The lane daemon reloaded the bridge plugin in the running IDE.
+    #[serde(rename = "reload")]
+    Reload,
+    /// The lane daemon launched the IDE on a fresh context.
+    #[serde(rename = "fresh")]
+    Fresh,
 }
 
 impl IdeAction {
@@ -68,7 +74,24 @@ impl IdeAction {
             Self::Keep => "keep",
             Self::Remount => "remount",
             Self::Relaunch => "relaunch",
+            Self::Reload => "reload",
+            Self::Fresh => "fresh",
         }
+    }
+
+    /// The action that the last `decision` record of the lane daemon about the IDE names, or `None` without one. The
+    /// lane daemon decides the IDE of each iteration by the context plugin directories, so its word is the action.
+    pub(crate) fn of_lane_daemon(events: &[RunEvent]) -> Option<Self> {
+        events.iter().rev().find_map(|event| match &event.kind {
+            RunEventKind::Decision(decision) if decision.subject == Subject::Ide => match decision.action.as_str() {
+                "reuse" => Some(Self::Reuse),
+                "reload" => Some(Self::Reload),
+                "relaunch" => Some(Self::Relaunch),
+                "fresh" => Some(Self::Fresh),
+                _ => None,
+            },
+            _ => None,
+        })
     }
 }
 
@@ -78,7 +101,6 @@ impl IdeAction {
 pub(crate) struct DaemonDigests<'a> {
     pub launch: &'a str,
     pub mount: &'a str,
-    pub runtime: &'a str,
     /// The context plugin identity. Empty in a record that predates it, which reads as unknown.
     pub plugins: &'a str,
 }
@@ -88,7 +110,37 @@ pub(crate) struct DaemonDigests<'a> {
 pub(crate) struct HealthyDaemon<'a> {
     pub recorded: DaemonDigests<'a>,
     pub ide_running: bool,
+    /// The guest agent of a lane daemon, or `None` when the run does not know it: the record of the daemon names no agent.
+    pub agent: Option<AgentDigests<'a>>,
 }
+
+/// The guest agent of a healthy lane daemon: the digest that its record names from its start, the digest of the agent
+/// that the guest holds now, and the digest of the agent that the build of this checkout made. The installed agent
+/// differs after an install of another build under the daemon, such as the release of a lease from another checkout.
+/// The built agent differs after a change of the guest agent code in this checkout. `None` is a digest that the run does
+/// not know.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct AgentDigests<'a> {
+    pub started: &'a str,
+    pub installed: Option<&'a str>,
+    pub built: Option<&'a str>,
+}
+
+impl AgentDigests<'_> {
+    fn moved(&self, digest: Option<&str>) -> bool {
+        digest.is_some_and(|digest| digest != self.started)
+    }
+}
+
+/// The reason of the restart of a lane daemon whose guest agent was reinstalled under it.
+pub(crate) const AGENT_REINSTALLED: &str = "the guest agent was reinstalled under the lane daemon";
+
+/// The reason of the restart of a lane daemon whose start agent is not the guest agent that the build made.
+pub(crate) const AGENT_BUILT: &str = "the guest agent of the build changed";
+
+/// The reason of the restart of a daemon of another launch digest. A static flag of the runtime descriptor, a boot
+/// setting of the controller or the daemon environment changed.
+pub(crate) const LAUNCH_CHANGED: &str = "the launch of the daemon changed";
 
 /// What an iteration does with the daemon before it runs: the answer of [`decide_daemon_action`].
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -100,9 +152,6 @@ pub(crate) enum DaemonAction {
     /// `--fresh-ide`, or a healthy daemon whose IDE is not running: the run launches the IDE again, after a stop of the
     /// running one when there is one.
     Relaunch { stop_ide: bool },
-    /// Only the context plugins changed. The controller pushes their files with the hot tier, and the run relaunches
-    /// the IDE on the same context. No share is refreshed and no context is made again.
-    RelaunchForPlugins,
     /// A daemon is started: `verb` is `restart` or `start`, and `reason` names the axis that moved. `keep_ide` is true
     /// for a restart: the healthy daemon had an IDE that the new one can attach to.
     Start {
@@ -115,50 +164,56 @@ pub(crate) enum DaemonAction {
 /// The daemon decision of one iteration: values in, a decision out, no I/O.
 ///
 /// A healthy daemon of this launch serves the iteration: after a refresh of the shares when the mount digest moved,
-/// after an IDE stop for `--fresh-ide`, after a launch of the IDE when the daemon holds none, after a relaunch on the
-/// same context when only the context plugins moved, or as it is. Any other
-/// daemon is started, and the decision names which axis moved, because "restart the daemon" alone cannot say whether
-/// the next start will restage gigabytes or only re-exec a JVM. A restart keeps the IDE of the build's product. A start
-/// without a healthy daemon keeps no IDE, because no daemon can show that the IDE still answers.
+/// after an IDE stop for `--fresh-ide`, after a launch of the IDE when the daemon holds none, or as it is. The lane
+/// daemon compares the digest of each context plugin directory itself, and it reloads the bridge plugin when only that
+/// directory changed. A lane daemon whose guest agent was reinstalled under it is restarted instead, so the code of the daemon is the code of the install.
+/// Any other daemon is started, and the decision names which axis moved, because "restart the daemon" alone cannot
+/// say which input of the daemon changed. A restart keeps the IDE of the build's product. A start without a healthy
+/// daemon keeps no IDE, because no daemon can show that the IDE still answers.
+///
+/// A lane daemon whose start agent is not the agent of the build is restarted, and that restart keeps no IDE. The
+/// context writer is part of the guest agent, so the new daemon makes a fresh context and writes its files.
 pub(crate) fn decide_daemon_action(healthy: Option<HealthyDaemon<'_>>, build: DaemonDigests<'_>, fresh_ide: bool) -> DaemonAction {
-    let Some(HealthyDaemon { recorded, ide_running }) = healthy else {
+    let Some(HealthyDaemon {
+        recorded,
+        ide_running,
+        agent,
+    }) = healthy
+    else {
         return DaemonAction::Start {
             verb: "start",
             reason: "no healthy daemon",
             keep_ide: false,
         };
     };
+    let built_moved = agent.is_some_and(|agent| agent.moved(agent.built));
     if recorded.launch == build.launch {
-        return if recorded.mount != build.mount {
+        return if built_moved {
+            DaemonAction::Start {
+                verb: "restart",
+                reason: AGENT_BUILT,
+                keep_ide: false,
+            }
+        } else if agent.is_some_and(|agent| agent.moved(agent.installed)) {
+            DaemonAction::Start {
+                verb: "restart",
+                reason: AGENT_REINSTALLED,
+                keep_ide: true,
+            }
+        } else if recorded.mount != build.mount {
             DaemonAction::Remount
         } else if fresh_ide {
             DaemonAction::Relaunch { stop_ide: ide_running }
         } else if !ide_running {
             DaemonAction::Relaunch { stop_ide: false }
-        } else if !recorded.plugins.is_empty() && recorded.plugins != build.plugins {
-            DaemonAction::RelaunchForPlugins
         } else {
             DaemonAction::Reuse
         };
     }
-    let reason = if recorded.runtime == build.runtime {
-        "the controller boot settings changed"
-    } else {
-        "the stable runtime or JBR changed"
-    };
     DaemonAction::Start {
         verb: "restart",
-        reason,
-        keep_ide: true,
-    }
-}
-
-/// The note of an iteration that reuses the IDE, which says whether a test jar changed.
-pub(crate) const fn reuse_reason(pushed: usize) -> &'static str {
-    if pushed == 0 {
-        "no daemon input and no test jar changed"
-    } else {
-        "the daemon inputs did not change"
+        reason: LAUNCH_CHANGED,
+        keep_ide: !built_moved,
     }
 }
 
@@ -225,7 +280,6 @@ impl HostState {
         DaemonDigests {
             launch: &self.launch_digest,
             mount: &self.last_mount_digest,
-            runtime: &self.runtime_digest,
             plugins: &self.last_plugins_digest,
         }
     }
@@ -237,7 +291,6 @@ impl PreparedBuild {
         DaemonDigests {
             launch: &self.launch_digest,
             mount: &self.mount_digest,
-            runtime: &self.runtime_digest,
             plugins: &self.plugins_digest,
         }
     }
@@ -408,23 +461,30 @@ impl Host {
         let (mut state, ide_action) = self.prepare_daemon(ctx, lease, prep, fresh_ide, recreated, &scope).await?;
         attempt.ide_action = ide_action;
 
-        // A worker that never needed a restart would otherwise run unbounded until a lane died of `ENOSPC`
-        // mid-staging: the free-space check is reached through the stager, which only a start calls. One `df`
-        // against a 200 s lane is free, and this is also where per-iteration retention lands - before the run,
-        // never after it, because the evidence pull below reads out of exactly these trees and the current launch is
-        // the newest thing in them.
+        // A worker that never needed a restart would otherwise run unbounded until a lane died of `ENOSPC`. The
+        // `free-space` phase of a start is the only other free-space check, and a warm iteration starts no daemon.
+        // One `df` against a 200 s lane is free.
         let channel = self.channel(worker);
-        self.require_guest_free_space(&self.guest(ctx, channel.as_ref()), Some(&scope))
-            .await?;
+        self.require_guest_free_space(&self.guest(ctx, channel.as_ref())).await?;
 
+        // The lane daemon decides about its IDE itself, and its `decision` record reaches the journal as one.
+        let packed = session_logs::pack(&self.environment, &self.settings.runtime_root)?;
         let push_started = Instant::now();
-        let pushed = push_jars(ctx, &self.daemon, &state, prep).await?;
+        let pushed = push_jars(ctx, &self.daemon, &state, prep, &packed.files).await?;
         let push_ms = push_started.elapsed().as_secs_f64() * 1000.0;
-        if ide_action == IdeAction::Reuse {
-            self.decide(Subject::Ide, "reuse", reuse_reason(pushed), &scope);
+        let session_logs = packed.into_logs();
+        if !session_logs.is_empty() {
+            let labels: Vec<&str> = session_logs.iter().map(|log| log.label.as_str()).collect();
+            self.reporter
+                .note(format!("recorded sessions: {}", labels.join(", ")), Some(&scope));
         }
         if let Some(reason) = jar_push_reason(pushed) {
             self.decide(Subject::Jars, "push", &reason, &scope);
+        }
+        self.reporter.note(lane_inputs_note(&prep.lane_inputs), Some(&scope));
+        self.reporter.note(plugin_directories_note(&prep.plugin_directories), Some(&scope));
+        if let Some(lane) = &selection.lane {
+            self.publish_performance_plan(prep, lane, &scope);
         }
         if !secrets.is_empty() {
             // The names and never the files: a path a caller made with `mktemp` says nothing a reader needs.
@@ -445,7 +505,7 @@ impl Host {
             async {
                 let _halt = stop.clone().drop_guard();
                 let execution = self
-                    .execute_run(ctx, worker, &state, prep, selection, policy, &mut |event| {
+                    .execute_run(ctx, worker, &state, prep, selection, policy, &session_logs, &mut |event| {
                         traces.observe(event);
                     })
                     .await;
@@ -459,7 +519,12 @@ impl Host {
                 }
                 let execution = execution?;
                 let run_ms = run_started.elapsed().as_secs_f64() * 1000.0;
-                attempt.timing = timing_line(prep, pushed, push_ms, ide_action, run_ms);
+                if ide_action == IdeAction::Reuse
+                    && let Some(decided) = IdeAction::of_lane_daemon(&execution.events)
+                {
+                    attempt.ide_action = decided;
+                }
+                attempt.timing = timing_line(prep, pushed, push_ms, attempt.ide_action, run_ms);
                 // Kept on the attempt from here on: the events are its evidence whatever fails next.
                 let execution = attempt.execution.insert(execution);
                 state.last_product_digest = prep.product_digest.clone();
@@ -469,7 +534,6 @@ impl Host {
                 let Some(iteration_id) = execution.iteration_id.clone() else {
                     return Err(unaddressed_iteration(execution, &attempt.timing));
                 };
-                let source = self.retrieve_iteration_junit_xml(ctx, worker, &state, &iteration_id).await?;
                 let evidence = self
                     .pull_run_evidence(ctx, worker, &state.run_id, &iteration_id, &execution.events)
                     .await?;
@@ -477,16 +541,16 @@ impl Host {
                 // and a shard's wall time built from it, is the run's, and the evidence that explains a run must not
                 // lengthen it.
                 let completed_at = stamp(Timestamp::now());
-                Ok::<_, Refusal>((iteration_id, source, evidence, completed_at))
+                Ok::<_, Refusal>((iteration_id, evidence, completed_at))
             },
             traces.run(self, ctx, &stop),
         );
-        let (iteration_id, source, evidence, completed_at) = collected?;
+        let (iteration_id, evidence, completed_at) = collected?;
         let Some(execution) = attempt.execution.as_ref() else {
             return Err(Refusal::internal("an iteration was reported without its stream"));
         };
         let (archives, traces_error) = traces.finish(self, ctx, pulls).await;
-        let drift = prep.hot_jar_drift();
+        let drift = prep.pushed_file_drift();
         if let Some(drift) = &drift {
             self.reporter.note(drift.clone(), Some(&scope));
         }
@@ -503,7 +567,6 @@ impl Host {
             completed_at,
             summary: execution.summary.clone(),
             events: execution.events.clone(),
-            source,
             evidence,
             protocol_diagnostic: protocol_diagnostic(execution),
             notes: drift.into_iter().collect(),
@@ -511,7 +574,7 @@ impl Host {
             traces_error,
             tree: prep.tree.clone().ok(),
             tree_error: prep.tree.as_ref().err().map(|refusal| refusal.message.clone()),
-        })?;
+        });
         attempt.report = Some(self.publish_report(worker, &scope, selection, document)?);
         Ok(())
     }
@@ -553,9 +616,21 @@ impl Host {
             Some(state) => self.daemon.status(ctx, state).await?,
             None => None,
         };
+        let (installed_agent, built_agent) = match (&recorded, &status) {
+            (Some(state), Some(_)) => (
+                self.installed_agent(ctx, state, scope).await,
+                self.built_agent(ctx, state, scope).await,
+            ),
+            _ => (None, None),
+        };
         let healthy = recorded.as_ref().zip(status.as_ref()).map(|(state, status)| HealthyDaemon {
             recorded: state.daemon_digests(),
             ide_running: status.ide_running,
+            agent: (!state.agent_digest.is_empty()).then(|| AgentDigests {
+                started: &state.agent_digest,
+                installed: installed_agent.as_deref(),
+                built: built_agent.as_deref(),
+            }),
         });
         if status.is_none() && !recreated {
             self.manager.require_ready(ctx, lease).await?;
@@ -603,13 +678,101 @@ impl Host {
                 }
                 IdeAction::Relaunch
             }
-            DaemonAction::RelaunchForPlugins => {
-                self.decide(Subject::Ide, "relaunch", "the bridge plugin changed", scope);
-                IdeAction::Relaunch
-            }
             DaemonAction::Reuse | DaemonAction::Start { .. } => IdeAction::Reuse,
         };
         Ok((state, ide_action))
+    }
+
+    /// The digest of the guest agent that the guest of the healthy daemon `state` holds, when the record names the agent
+    /// of its start. Otherwise the run does not ask the guest. One `contract` exec of the
+    /// agent path answers, about 0.1 s. A digest that moved is a note of the run stream with both digests, and so is a
+    /// guest that does not say: then the daemon stays.
+    pub(crate) async fn installed_agent(&self, ctx: &Ctx, state: &HostState, scope: &Scope) -> Option<String> {
+        if state.agent_digest.is_empty() {
+            return None;
+        }
+        let channel = self.channel(&state.worker);
+        let stays = |why: String| format!("the lane daemon stays, because {why}");
+        match self.guest(ctx, channel.as_ref()).installed_agent_digest().await {
+            Ok(Some(installed)) => {
+                if installed != state.agent_digest {
+                    self.reporter.note(
+                        format!(
+                            "the lane daemon runs the guest agent {} of its start, and the guest holds {} now",
+                            short(&state.agent_digest),
+                            short(&installed)
+                        ),
+                        Some(scope),
+                    );
+                }
+                Some(installed)
+            }
+            Ok(None) => {
+                self.reporter
+                    .note(stays("the guest agent names no digest of its own".to_owned()), Some(scope));
+                None
+            }
+            Err(refusal) => {
+                self.reporter.note(
+                    stays(format!("the guest agent did not say which build it is: {}", refusal.message)),
+                    Some(scope),
+                );
+                None
+            }
+        }
+    }
+
+    /// The digest of the guest agent that the build of this checkout made, when the record of the healthy daemon `state`
+    /// names the agent of its start. Otherwise the run reads nothing. A digest that
+    /// moved is a note of the run stream with both digests, and so is an agent that cannot be read: then the daemon stays.
+    pub(crate) async fn built_agent(&self, ctx: &Ctx, state: &HostState, scope: &Scope) -> Option<String> {
+        if state.agent_digest.is_empty() {
+            return None;
+        }
+        let channel = self.channel(&state.worker);
+        match self.guest(ctx, channel.as_ref()).built_agent_digest(self.bazel.as_ref()).await {
+            Ok(built) => {
+                if built != state.agent_digest {
+                    self.reporter.note(
+                        format!(
+                            "the lane daemon runs the guest agent {} of its start, and the build made {}",
+                            short(&state.agent_digest),
+                            short(&built)
+                        ),
+                        Some(scope),
+                    );
+                }
+                Some(built)
+            }
+            Err(refusal) => {
+                self.reporter.note(
+                    format!(
+                        "the lane daemon stays, because the guest agent of the build cannot be read: {}",
+                        refusal.message
+                    ),
+                    Some(scope),
+                );
+                None
+            }
+        }
+    }
+
+    /// Publishes the IJ Perf plan of an iteration of `lane`, which the results read. A plan that cannot be made is a note,
+    /// because a metric never decides a verdict.
+    fn publish_performance_plan(&self, prep: &PreparedBuild, lane: &str, scope: &Scope) {
+        match crate::daemon::performance::plan(prep, lane) {
+            Ok(Some(plan)) => self.reporter.publish(
+                Event::Structured {
+                    data: plan.record(),
+                    line: String::new(),
+                },
+                Some(scope),
+            ),
+            Ok(None) => {}
+            Err(reason) => self
+                .reporter
+                .note(format!("no IJ Perf file for this iteration: {reason}"), Some(scope)),
+        }
     }
 
     /// Persists the report of an iteration and announces it; answers the report and its path.
@@ -636,15 +799,17 @@ impl Host {
         Ok((document, path))
     }
 
-    /// Quiesces the daemon around a refresh of the shares, and resumes it: a share-backed change never restarts
-    /// the daemon.
+    /// Stops every lane IDE around a refresh of the shares: a share-backed change never restarts the daemon.
     ///
     /// The refresh is [`Manager::refresh_shares`]: the VirtioFS remount sweep on Tart and Parallels, a settle for
     /// the bind mounts on Docker. The decision and the timing line say `remount` on every backend, because both are
     /// a contract with the docs and the suites; the note of the refresh says what it did.
     ///
-    /// The quiesce quits the lane IDE through the daemon, and the guest agent owns its process. So the refresh starts
+    /// `/ide/stop` makes the daemon quit and forget its IDE, and `ide-gc --stop-all` cancels every other IDE run of the
+    /// worker, such as one that outlived an earlier daemon. The guest agent owns each IDE process. So the refresh starts
     /// only when the supervisor reports every IDE run finished: an IDE that runs from a share makes its unmount busy.
+    /// The controller holds the lease, so no run starts in between, and the next run launches the IDE again. The lane
+    /// daemon serves `/ide/stop`, so the remount needs no route of its own.
     ///
     /// [`Manager::refresh_shares`]: crate::worker::worker::Manager::refresh_shares
     async fn remount_around(&self, ctx: &Ctx, worker: &str, scope: &Scope, state: &HostState, prep: &PreparedBuild) -> Result<(), Refusal> {
@@ -654,24 +819,23 @@ impl Host {
             "the product inputs changed"
         };
         self.decide(Subject::Shares, "remount", reason, scope);
-        let (quiesced, _) = self.daemon.http(ctx, state, &wire::MOUNT_QUIESCE, None).await?;
-        if !quiesced.is_success() {
+        let (stopped, _) = self.daemon.http(ctx, state, &wire::IDE_STOP, None).await?;
+        if !stopped.is_success() {
             return Err(Refusal::new(
-                "daemon_mount_quiesce_failed",
+                "daemon_ide_stop_failed",
                 Exit::SOFTWARE,
-                format!("/mount/quiesce returned {}", quiesced.as_u16()),
+                format!("/ide/stop returned {} before the remount", stopped.as_u16()),
             ));
+        }
+        {
+            let channel = self.channel(worker);
+            let ides = gc_guest_ides(&self.guest(ctx, channel.as_ref()), IdeRetention::StopAll).await?;
+            if let Some(note) = gc_note(&ides) {
+                self.reporter.note(format!("{note} on {worker} before the remount"), Some(scope));
+            }
         }
         self.require_no_running_ide(ctx, worker).await?;
         self.manager.refresh_shares(ctx, worker).await?;
-        let (resumed, _) = self.daemon.http(ctx, state, &wire::MOUNT_RESUME, None).await?;
-        if !resumed.is_success() {
-            return Err(Refusal::new(
-                "daemon_mount_resume_failed",
-                Exit::SOFTWARE,
-                format!("/mount/resume returned {}", resumed.as_u16()),
-            ));
-        }
         if self.daemon.status(ctx, state).await?.is_none() {
             return Err(Refusal::new(
                 "daemon_unhealthy_after_remount",
@@ -682,17 +846,16 @@ impl Host {
         Ok(())
     }
 
-    /// Refuses `daemon_mount_quiesce_failed` while a lane IDE run of the worker is not finished, and when the
-    /// supervisor cannot say. It fails closed, because a refresh under a live IDE unmounts the share that the IDE runs
-    /// from.
+    /// Refuses [`REMOUNT_IDE_RUNNING`] while a lane IDE run of the worker is not finished, and when the supervisor cannot
+    /// say. It fails closed, because a refresh under a live IDE unmounts the share that the IDE runs from.
     async fn require_no_running_ide(&self, ctx: &Ctx, worker: &str) -> Result<(), Refusal> {
         let channel = self.channel(worker);
         let running = running_guest_ides(&self.guest(ctx, channel.as_ref())).await.map_err(|refusal| {
             Refusal::new(
-                "daemon_mount_quiesce_failed",
+                REMOUNT_IDE_RUNNING,
                 Exit::SOFTWARE,
                 format!(
-                    "the daemon quiesced, but the lane IDE runs of {worker} cannot be read ({}: {})",
+                    "the lane IDEs of {worker} were stopped, but their runs cannot be read ({}: {})",
                     refusal.code, refusal.message
                 ),
             )
@@ -705,10 +868,10 @@ impl Host {
             .map(|(root, state)| format!("{} in {root} ({})", state.run_id, state.phase))
             .collect();
         Err(Refusal::new(
-            "daemon_mount_quiesce_failed",
+            REMOUNT_IDE_RUNNING,
             Exit::SOFTWARE,
             format!(
-                "the daemon quiesced, but a lane IDE still runs on {worker}: {}; the share refresh would unmount the \
+                "the lane IDEs of {worker} were stopped, but one still runs: {}; the share refresh would unmount the \
                  share it runs from",
                 runs.join(", ")
             ),
@@ -726,90 +889,6 @@ impl Host {
             }),
             Some(scope),
         );
-    }
-
-    /// One iteration's JUnit XML: the daemon's own `/results` route first, the guest-file pull as the fallback, and
-    /// an honest account of both when neither worked.
-    ///
-    /// The HTTP diagnostic is carried into the fallback's answer rather than dropped, because a report that says
-    /// only "guest pull failed" hides the first half of the story. [`MAX_JUNIT_XML_BYTES`] is enforced on both
-    /// paths - an oversized document is a producer bug, and parsing it would spend the report's memory budget
-    /// proving so.
-    pub(crate) async fn retrieve_iteration_junit_xml(
-        &self,
-        ctx: &Ctx,
-        worker: &str,
-        state: &HostState,
-        iteration_id: &str,
-    ) -> Result<RetrievedXml, Refusal> {
-        let guest_path = guest_join(
-            &guest_join(&guest_join(&guest_state_dir(&self.settings), "iterations"), iteration_id),
-            "test.xml",
-        );
-        let retrieved = |retrieval, integrity, xml: Option<String>, diagnostic: Option<String>| RetrievedXml {
-            guest_path: guest_path.clone(),
-            retrieval,
-            integrity,
-            xml,
-            diagnostic,
-        };
-        let oversized = |bytes: u64| format!("JUnit XML is {bytes} bytes; limit is {MAX_JUNIT_XML_BYTES}");
-        let http_diagnostic = match self.daemon.http(ctx, state, &wire::iteration_result(iteration_id), None).await {
-            Err(refusal) => format!("daemon result endpoint unavailable: {}", refusal.message),
-            Ok((status, content)) if status.is_success() => {
-                if content.len() > MAX_JUNIT_XML_BYTES {
-                    return Ok(retrieved(
-                        Retrieval::DaemonHttp,
-                        RetrievedIntegrity::Oversized,
-                        None,
-                        Some(oversized(content.len() as u64)),
-                    ));
-                }
-                return Ok(retrieved(
-                    Retrieval::DaemonHttp,
-                    RetrievedIntegrity::Available,
-                    Some(String::from_utf8_lossy(&content).into_owned()),
-                    None,
-                ));
-            }
-            Ok((status, _)) => format!("/results returned HTTP {}", status.as_u16()),
-        };
-
-        let incoming = self.settings.worker_dir(worker).join("reports").join(".incoming");
-        create_private_dir(&incoming)?;
-        // Removed when it goes out of scope, pulled or not.
-        let temporary = TempPath::try_from_path(incoming.join(format!("{}-{iteration_id}-{}.xml", state.run_id, avl_base::new_id())))
-            .or_refuse("state_write_failed", Exit::FAILURE, || {
-                format!("cannot name a temporary under {}", incoming.display())
-            })?;
-        let pulled = match crate::lane::pull_guest_file(ctx, &self.manager, worker, &guest_path, &temporary).await {
-            Ok(pulled) => pulled,
-            Err(refusal) => {
-                return Ok(retrieved(
-                    Retrieval::Unavailable,
-                    RetrievedIntegrity::Missing,
-                    None,
-                    Some(format!("{http_diagnostic}; guest pull failed: {}", refusal.message)),
-                ));
-            }
-        };
-        if pulled > MAX_JUNIT_XML_BYTES as u64 {
-            return Ok(retrieved(
-                Retrieval::GuestPull,
-                RetrievedIntegrity::Oversized,
-                None,
-                Some(oversized(pulled)),
-            ));
-        }
-        let xml = std::fs::read(&temporary).or_refuse("state_read_failed", Exit::FAILURE, || {
-            format!("cannot read the pulled JUnit XML {}", temporary.display())
-        })?;
-        Ok(retrieved(
-            Retrieval::GuestPull,
-            RetrievedIntegrity::Available,
-            Some(String::from_utf8_lossy(&xml).into_owned()),
-            Some(http_diagnostic),
-        ))
     }
 
     /// Fetches whatever the daemon named as evidence for an expiry, next to the report it belongs to.
@@ -869,4 +948,9 @@ pub(crate) fn evidence_name(guest_path: &str) -> String {
             }
         })
         .collect()
+}
+
+/// The first twelve characters of a digest, the way notes name a guest agent.
+fn short(digest: &str) -> &str {
+    digest.get(..12).unwrap_or(digest)
 }

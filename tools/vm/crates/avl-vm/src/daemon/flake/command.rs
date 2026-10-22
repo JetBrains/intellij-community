@@ -22,6 +22,7 @@ use avl_wire::report::{FlakeSummary, ResetPolicy};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+use crate::daemon::build::DaemonTarget;
 use crate::daemon::flake::plan::{MAX_CONSECUTIVE_TRIAL_FAILURES, ResetIo, apply_reset, trial_was_usable};
 use crate::daemon::flake::{
     FLAKE_ORDER_PROBE_NOTE, FlakeArgs, TrialAssignment, TrialOutcome, plan_flake_trials, render_flake_text, reset_steps, summarize_trials,
@@ -149,6 +150,7 @@ async fn measure<I: ResetIo>(
             run_id,
             "flake",
             request,
+            DaemonTarget::Lanes,
             |held: &[HeldWorker]| Ok(plan_flake_trials(&names_of(held), usize::from(args.trials))),
             async |plan: &Vec<TrialAssignment>, _: usize, current: Lease, built: &Arc<PreparedBuild>| {
                 let assignments: Vec<TrialAssignment> = plan

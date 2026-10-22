@@ -1,7 +1,6 @@
 {
   "flowProfileDir": "plugins/air/tests/integration/flow-profiles/resources/flow-profiles",
   "flowTextDir": "plugins/air/docs/flows",
-  "authoredSuitesFile": "plugins/air/tests/integration/flow-profiles/resources/authored-suites.json",
   "specDir": "plugins/air/spec",
   "integrationRoot": "//plugins/air/tests/integration",
   "tags": [
@@ -32,31 +31,31 @@
       "name": "air-integration-ui-flow",
       "axis": "lane",
       "category": "air-integration-ui",
-      "description": "The generated UI-flow suites, `ui_test`. `BT --lane ui` selects it."
+      "description": "The generated UI-flow suites, `ui_lane_test`. `BT --lane ui` selects it."
     },
     {
       "name": "air-integration-gui-chat",
       "axis": "lane",
       "category": "air-integration-ui",
-      "description": "The ACP GUI-chat suites, `gui-chat_test`. `BT --lane gui-chat` selects it."
+      "description": "The ACP GUI-chat suites, `gui-chat_lane_test`. `BT --lane gui-chat` selects it."
     },
     {
       "name": "air-integration-ui-real",
       "axis": "lane",
       "category": "air-integration-ui",
-      "description": "The real-CLI flow suites, `ui-real_test`. `BT --lane ui-real` selects it."
+      "description": "The real-CLI flow suites, `ui-real_lane_test`. `BT --lane ui-real` selects it."
     },
     {
       "name": "air-integration-ui-live",
       "axis": "lane",
       "category": "air-integration-ui",
-      "description": "The live suites with real agents and real accounts, `ui-live_test`. `BT --lane ui-live` selects it."
+      "description": "The live suites with real agents and real accounts, `ui-live_lane_test`. `BT --lane ui-live` selects it."
     },
     {
       "name": "air-integration-ui-perf",
       "axis": "lane",
       "category": "air-integration-ui",
-      "description": "The performance tests on the product heap, `ui-perf_test`. `BT --lane ui-perf` selects it."
+      "description": "The performance tests on the product heap, `ui-perf_lane_test`. `BT --lane ui-perf` selects it."
     },
     {
       "name": "air-integration-jcp",
@@ -67,7 +66,6 @@
   ],
   "excludedTestLibs": [
     "//plugins/air/frontend/llm:air-frontend-llm-tests_test_lib",
-    "//plugins/air/tests/integration/gui-chat:gui-chat_test_lib",
     "//plugins/air/tests/integration/headless/acp:acp_test_lib",
     "//plugins/air/tests/integration/headless/acp/installed-process:installed-process_test_lib",
     "//plugins/air/tests/integration/headless/acp/runtime-installation:runtime-installation_test_lib",
@@ -77,28 +75,34 @@
     "//plugins/air/tests/integration/headless/opencode:opencode_test_lib",
     "//plugins/air/tests/integration/headless/pi:pi_test_lib",
     "//plugins/air/tests/integration/jcp:jcp_test_lib",
-    "//plugins/air/tests/integration/ui-live:ui-live_test_lib",
-    "//plugins/air/tests/integration/ui-perf:ui-perf_test_lib",
-    "//plugins/air/tests/integration/ui-real:ui-real_test_lib",
-    "//plugins/air/tests/integration/ui:ui_test_lib",
     "//plugins/air/tests/property/acp:air-backend-acp-property-tests_test_lib",
     "//plugins/air/tests/property/gui:air-frontend-session-view-gui-property-tests_test_lib"
   ],
   "laneWideModules": {
-    "intellij.air.integrationTests": [],
-    "intellij.air.integrationTests.flow": [],
-    "intellij.air.integrationTests.uiDaemon": [],
     "intellij.air.integrationTests.bridge": [],
     "intellij.air.integrationTests.bridge.plugin": [],
     "intellij.air.integrationTests.bridge.resident": [],
     "intellij.air.integrationTests.bridge.resident.plugin": [],
-    "intellij.air.integrationTests.testSupport": [],
-    "intellij.air.integrationTests.ui": ["ui"],
-    "intellij.air.integrationTests.uiReal": ["ui-real"],
-    "intellij.air.integrationTests.guiChat": ["gui-chat"]
+    "intellij.air.integrationTests.bridge.acpControl": [],
+    "intellij.air.integrationTests.testSupport": []
   },
   "laneWidePaths": {
-    "community/tools/vm": []
+    "community/tools/vm": [],
+    "plugins/air/tests/integration/BUILD.bazel": [],
+    "plugins/air/tests/integration/air_lane_test.bzl": [],
+    "plugins/air/tests/integration/air_test_dependencies.bzl": [],
+    "plugins/air/tests/integration/air_ui_daemon_runtime.bzl": [],
+    "plugins/air/tests/integration/bridge_plugin_dir_test.bzl": [],
+    "plugins/air/tests/integration/gui-chat": [],
+    "plugins/air/tests/integration/ide": [],
+    "plugins/air/tests/integration/lanes.json": [],
+    "plugins/air/tests/integration/testData": [],
+    "plugins/air/tests/integration/ui": [],
+    "plugins/air/tests/integration/ui-live": [],
+    "plugins/air/tests/integration/ui-perf": [],
+    "plugins/air/tests/integration/ui-real": [],
+    "plugins/air/tests/integration/ui_lane_ide.bzl": [],
+    "plugins/air/tests/integration/vm-contract": []
   },
   "lanes": [
     {
@@ -127,84 +131,61 @@
     {
       "name": "ui",
       "description": "deterministic UI-flow scenarios (launches a real IDE through the guest agent)",
-      "target": "//plugins/air/tests/integration/ui/...",
-      "extra": [
-        "--build_tests_only",
-        "--test_tag_filters=air-integration-ui-flow"
-      ],
+      "target": "//plugins/air/tests/integration/ui:ui_lane_test",
+      "extra": [],
       "shards": 1,
       "integrationTag": "air-integration-ui-flow",
       "catalogLane": "UI",
-      "testLabel": "//plugins/air/tests/integration/ui:ui_test",
-      "junitTag": "air-flow-ui"
+      "testLabel": "//plugins/air/tests/integration/ui:ui_lane_test"
     },
     {
       "name": "ui-real",
       "description": "only the real-CLI flow scenarios (a real pi can open an interactive auth callback, so no unattended lane run should ever trigger one)",
-      "target": "//plugins/air/tests/integration/ui-real:ui-real_test",
+      "target": "//plugins/air/tests/integration/ui-real:ui-real_lane_test",
       "extra": [],
       "shards": 1,
       "integrationTag": "air-integration-ui-real",
       "catalogLane": "UI_REAL",
-      "testLabel": "//plugins/air/tests/integration/ui-real:ui-real_test",
-      "junitTag": "air-flow-ui-real"
+      "testLabel": "//plugins/air/tests/integration/ui-real:ui-real_lane_test"
     },
     {
       "name": "ui-live",
-      "description": "real agents on real accounts, explicit-only (spends billed turns; the target is manual, and no --changed, suites, shard or flake picks it; a guest run is vm.cmd run --lane ui-live)",
-      "target": "//plugins/air/tests/integration/ui-live:ui-live_test",
-      "extra": [
-        "--test_env=AIR_LIVE_CREDENTIALS",
-        "--test_env=AIR_LIVE_REUSE_HOST_HOMES",
-        "--test_env=ANTHROPIC_API_KEY",
-        "--test_env=CLAUDE_BIN",
-        "--test_env=JUNIE_API_KEY",
-        "--test_env=JUNIE_BIN",
-        "--test_env=NODE_BIN",
-        "--test_env=NPM_BIN",
-        "--test_env=OPENAI_API_KEY"
-      ],
+      "description": "real agents on real accounts, explicit-only (spends billed turns; the target is manual, and no --changed, suites, shard or flake picks it; it runs only as vm.cmd run --lane ui-live in a Linux guest)",
+      "target": "//plugins/air/tests/integration/ui-live:ui-live_lane_test",
+      "extra": [],
       "shards": 1,
       "integrationTag": "air-integration-ui-live",
-      "testLabel": "//plugins/air/tests/integration/ui-live:ui-live_test",
-      "junitTag": "air-flow-ui-live"
+      "documentLane": "UI_LIVE",
+      "testLabel": "//plugins/air/tests/integration/ui-live:ui-live_lane_test"
     },
     {
       "name": "ui-perf",
       "description": "the Air performance tests on the product heap, explicit-only (each takes up to 90 min; the target is manual, and no --changed, suites, shard or flake picks it; a guest run is vm.cmd run --lane ui-perf)",
-      "target": "//plugins/air/tests/integration/ui-perf:ui-perf_test",
+      "target": "//plugins/air/tests/integration/ui-perf:ui-perf_lane_test",
       "extra": [],
       "shards": 1,
       "integrationTag": "air-integration-ui-perf",
-      "testLabel": "//plugins/air/tests/integration/ui-perf:ui-perf_test",
-      "junitTag": "air-ui-perf"
+      "documentLane": "UI_PERF",
+      "testLabel": "//plugins/air/tests/integration/ui-perf:ui-perf_lane_test"
     },
     {
       "name": "jcp",
-      "description": "the JCP cloud-task e2e on a real preprod account, explicit-only (the target is manual, and no --changed, suites, shard or flake picks it; the test launches its own IDE through IDE Starter, so run it on the host: BT --lane jcp)",
+      "description": "the JCP cloud-task e2e on the local Docker stack with the AIP mock; IDE Starter launches its own IDE on the host: BT --lane jcp",
       "target": "//plugins/air/tests/integration/jcp:jcp_test",
-      "extra": [
-        "--test_env=AIR_CLOUD_TASK_ACCOUNT_PASSWORD",
-        "--test_env=AIR_CLOUD_TASK_ACCOUNT_USERNAME"
-      ],
+      "extra": [],
       "shards": 1,
       "integrationTag": "air-integration-jcp",
-      "testLabel": "//plugins/air/tests/integration/jcp:jcp_test",
-      "junitTag": "air-jcp"
+      "testLabel": "//plugins/air/tests/integration/jcp:jcp_test"
     },
     {
       "name": "gui-chat",
       "description": "ACP chat-flow, local-agent, and debug-tool-window scenarios",
-      "target": "//plugins/air/tests/integration/gui-chat/...",
-      "extra": [
-        "--build_tests_only",
-        "--test_tag_filters=air-integration-gui-chat"
-      ],
+      "target": "//plugins/air/tests/integration/gui-chat:gui-chat_lane_test",
+      "extra": [],
       "shards": 1,
       "integrationTag": "air-integration-gui-chat",
       "catalogLane": "GUI_CHAT",
-      "testLabel": "//plugins/air/tests/integration/gui-chat:gui-chat_test",
-      "junitTag": "air-gui-chat"
+      "testLabel": "//plugins/air/tests/integration/gui-chat:gui-chat_lane_test"
     },
     {
       "name": "headless",

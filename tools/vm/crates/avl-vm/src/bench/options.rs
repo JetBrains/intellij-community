@@ -5,10 +5,13 @@ use std::time::Duration;
 
 use clap::{Subcommand, ValueEnum};
 
-use super::arm::Arm;
+use super::arm::{Arm, ArmKind, check_plugin_id, parse_arm};
 use super::gc::DEFAULT_KEEP;
 use super::profile::ProfileEvent;
 use super::record::CLASS_ANCHORS;
+
+/// The plugin id of Air, which owns the gate span of the empty-editor arm.
+const AIR_PLUGIN_ID: &str = "com.intellij.air";
 
 /// The default distribution: the self-contained `.dist` of the `idea` row.
 pub(crate) const DEFAULT_TARGET: &str = "//build:idea_dist";
@@ -82,10 +85,23 @@ pub(crate) enum BenchVerb {
     ///
     /// A count is the median over the valid runs of the arm. The totals hold the named classes of the run by their
     /// source, and the named classes before the anchor. The plugin table holds the classes of each plugin before the
-    /// anchor. The module table holds the classes of each content module over the whole run. A run needs
-    /// class-load.log, plugin-classes.txt and startup-stats.json for an anchor. --entries lists the first classes of
-    /// each plugin of the plugin table before the anchor, from the median run of the arm.
+    /// anchor, its modules with a class, and the EDT and BG ms that its loaders spent in findClass. The module table
+    /// holds the same for each main module and content module, with its plugin. A main module is `<plugin id> (main)`.
+    /// A plugin-classes.txt of the old shape has no time, so a time is `-`. A run needs class-load.log,
+    /// plugin-classes.txt and startup-stats.json for an anchor. --entries lists the first classes of each plugin of
+    /// the plugin table before the anchor, from the median run of the arm.
     Classes(ClassesArgs),
+    /// Prints the plugin loaders of one run by the frame that triggered each one. No IDE starts.
+    ///
+    /// A loader is the main module or a content module of a plugin. The debug log of the plugin class loaders writes the
+    /// stack of the first class of each loader. The trigger frame is the frame nearest to the top of that stack whose
+    /// class has another owner than the loader. The search skips the frames of the runtime, the language libraries,
+    /// the service container, the extension points and the message bus: java., jdk., sun., kotlin., kotlinx.,
+    /// com.intellij.serviceContainer., com.intellij.openapi.extensions. and com.intellij.util.messages. A class without
+    /// an owner in plugin-classes.txt is a platform class. A row holds a trigger frame, its loaders, their classes and
+    /// EDT ms before the anchor, and the first load of its earliest loader. The loaders of each trigger follow the
+    /// table. A loader without a stack is in the row `(no activation stack)`.
+    Triggers(TriggersArgs),
     /// Prints the medians of several sessions per arm, with the delta of each session to the first one. No IDE starts.
     ///
     /// The first session is A. A line tells whether the noise arm, the first arm both sessions have, moved from A by
@@ -112,8 +128,9 @@ pub(crate) struct RunSelection {
     /// of the first arm that is not modal, else of the modal arm.
     #[arg(long, value_name = "DIR")]
     pub(crate) run: Option<String>,
-    /// The arm whose median run the verb reads. A run that --run names must be a run of this arm.
-    #[arg(long, value_name = "ARM", value_enum)]
+    /// The arm whose median run the verb reads. A run that --run names must be a run of this arm. An arm is modal,
+    /// non-modal, open-project, project or empty-editor, or the twin `<arm>-without-<plugin id>` of --suppress-plugin.
+    #[arg(long, value_name = "ARM", value_parser = parse_arm)]
     pub(crate) arm: Option<Arm>,
 }
 
@@ -160,23 +177,26 @@ pub(crate) struct ActivitiesArgs {
     pub(crate) top: u32,
 }
 
-/// The rows of each table of `bench activities` and `bench classes` by default.
+/// The rows of each table of `bench activities`, `bench classes` and `bench triggers` by default.
 pub(crate) const DEFAULT_TOP: u32 = 25;
 
 #[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
 pub(crate) struct ClassesArgs {
     #[arg(value_name = "SESSION", help = format!("The session: {SESSION_FORMS}"))]
     pub(crate) session: String,
-    /// The arm. The default is the first arm that is not modal and has a valid run, else the modal arm.
-    #[arg(long, value_name = "ARM", value_enum)]
+    /// The arm. The default is the first arm that is not modal and has a valid run, else the modal arm. An arm is
+    /// modal, non-modal, open-project, project or empty-editor, or the twin `<arm>-without-<plugin id>` of
+    /// --suppress-plugin.
+    #[arg(long, value_name = "ARM", value_parser = parse_arm)]
     pub(crate) arm: Option<Arm>,
     /// The rows of each table at most. With --plugin, the plugin table holds each named plugin.
     #[arg(long, value_name = "N", default_value_t = DEFAULT_TOP, value_parser = clap::value_parser!(u32).range(1..))]
     pub(crate) top: u32,
-    /// Keeps only this plugin id in the plugin table, with 0 when it has no class. Repeat it for more plugins.
+    /// Keeps only this plugin id in the plugin table and its modules in the module table, with 0 when it has no class,
+    /// and prints its rank among all plugins. Repeat it for more plugins.
     #[arg(long = "plugin", value_name = "ID")]
     pub(crate) plugins: Vec<String>,
-    /// The anchor of the plugin table and of the last total. The default is the main anchor of the arm:
+    /// The anchor of the plugin table, of the module table and of the last total. The default is the main anchor of the arm:
     /// welcomeBecameVisible for a welcome arm, `editor highlighting completed` for the project arm and emptyStateBuilt
     /// for the empty-editor arm. An arm without it takes its last anchor. `quit` is the start of application.exit.
     #[arg(long, value_name = "ANCHOR", value_parser = clap::builder::PossibleValuesParser::new(CLASS_ANCHORS))]
@@ -186,6 +206,22 @@ pub(crate) struct ClassesArgs {
     /// startup-stats.json.
     #[arg(long, value_name = "N", value_parser = clap::value_parser!(u32).range(1..))]
     pub(crate) entries: Option<u32>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
+pub(crate) struct TriggersArgs {
+    #[command(flatten)]
+    pub(crate) selection: RunSelection,
+    /// Keeps only the loaders of this plugin id. Repeat it for more plugins.
+    #[arg(long = "plugin", value_name = "ID")]
+    pub(crate) plugins: Vec<String>,
+    /// The anchor: a loader counts when it has a class before it, and its classes and EDT ms are those before it. The
+    /// default is the main anchor of the arm, as for `classes`. `quit` is the start of application.exit.
+    #[arg(long, value_name = "ANCHOR", value_parser = clap::builder::PossibleValuesParser::new(CLASS_ANCHORS))]
+    pub(crate) at: Option<String>,
+    /// The rows of the trigger table at most, and the loaders of each trigger at most.
+    #[arg(long, value_name = "N", default_value_t = DEFAULT_TOP, value_parser = clap::value_parser!(u32).range(1..))]
+    pub(crate) top: u32,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
@@ -267,7 +303,48 @@ pub(crate) struct WelcomeArgs {
     #[arg(long, value_name = "EVENT", value_enum, default_value_t = ProfileEvent::Cpu, requires = "profile")]
     pub(crate) profile_event: ProfileEvent,
     #[command(flatten)]
+    pub(crate) suppress: SuppressArgs,
+    #[command(flatten)]
     pub(crate) launch: LaunchArgs,
+}
+
+impl WelcomeArgs {
+    /// The arms of the session, in the interleave order: each arm of --arm, and after it its twin of
+    /// --suppress-plugin.
+    pub(crate) fn arms(&self) -> Vec<Arm> {
+        self.suppress.with_twins(self.arm.arms())
+    }
+}
+
+/// The plugin that the twin arms of a session suppress.
+#[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
+pub(crate) struct SuppressArgs {
+    /// Adds a twin to each arm: the arm `<arm>-without-<ID>`, whose runs pass `-Didea.suppressed.plugins.id=<ID>`, so the
+    /// IDE loads no plugin of that id. A twin has its own prime run and its own sandbox, and its runs interleave with
+    /// the runs of its arm.
+    #[arg(long = "suppress-plugin", value_name = "ID", value_parser = plugin_id)]
+    pub(crate) plugin: Option<String>,
+}
+
+impl SuppressArgs {
+    /// The arms, each one followed by its twin when a plugin is suppressed.
+    pub(crate) fn with_twins(&self, arms: Vec<Arm>) -> Vec<Arm> {
+        let Some(plugin) = &self.plugin else {
+            return arms;
+        };
+        arms.into_iter()
+            .flat_map(|arm| {
+                let twin = arm.without(plugin);
+                [arm, twin]
+            })
+            .collect()
+    }
+}
+
+/// Parses `--suppress-plugin`: a plugin id that [`check_plugin_id`] accepts.
+fn plugin_id(value: &str) -> Result<String, String> {
+    check_plugin_id(value)?;
+    Ok(value.to_owned())
 }
 
 #[derive(Clone, Debug, PartialEq, clap::Args)]
@@ -298,19 +375,30 @@ pub(crate) struct ProjectArgs {
     #[arg(long)]
     pub(crate) cold: bool,
     #[command(flatten)]
+    pub(crate) suppress: SuppressArgs,
+    #[command(flatten)]
     pub(crate) launch: LaunchArgs,
 }
 
 impl ProjectArgs {
-    /// The arms of the session, in the interleave order. A cold session of the project arm is refused: without a
-    /// prime run, no editor state is there to restore.
+    /// The arms of the session, in the interleave order: each arm of --arm, and after it its twin of
+    /// --suppress-plugin. A cold session of the project arm is refused: without a prime run, no editor state is there
+    /// to restore. A twin of the empty-editor arm without Air is refused too: its gate is a span of the Air composer.
     pub(crate) fn arms(&self) -> Result<Vec<Arm>, String> {
-        let arms = self.arm.arms();
-        if self.cold && arms.contains(&Arm::Project) {
+        let arms = self.suppress.with_twins(self.arm.arms());
+        if self.cold && arms.iter().any(|arm| arm.kind == ArmKind::Project) {
             return Err(
                 "--cold needs --arm empty-editor: the project arm restores the editor that its prime run saved, and a cold session has no prime run"
                     .to_owned(),
             );
+        }
+        if arms
+            .iter()
+            .any(|arm| arm.kind == ArmKind::EmptyEditor && arm.suppressed.as_deref() == Some(AIR_PLUGIN_ID))
+        {
+            return Err(format!(
+                "--suppress-plugin {AIR_PLUGIN_ID} needs --arm project: the gate of the empty-editor arm is the span of the Air composer, so a run without Air never passes it"
+            ));
         }
         Ok(arms)
     }
@@ -344,9 +432,9 @@ impl ArmChoice {
     /// The arms in the interleave order.
     pub(crate) fn arms(self) -> Vec<Arm> {
         match self {
-            Self::Both => vec![Arm::Modal, Arm::NonModal],
-            Self::Modal => vec![Arm::Modal],
-            Self::NonModal => vec![Arm::NonModal],
+            Self::Both => vec![Arm::MODAL, Arm::NON_MODAL],
+            Self::Modal => vec![Arm::MODAL],
+            Self::NonModal => vec![Arm::NON_MODAL],
         }
     }
 }
@@ -363,9 +451,9 @@ impl ProjectArmChoice {
     /// The arms in the interleave order.
     pub(crate) fn arms(self) -> Vec<Arm> {
         match self {
-            Self::Project => vec![Arm::Project],
-            Self::EmptyEditor => vec![Arm::EmptyEditor],
-            Self::Both => vec![Arm::Project, Arm::EmptyEditor],
+            Self::Project => vec![Arm::PROJECT],
+            Self::EmptyEditor => vec![Arm::EMPTY_EDITOR],
+            Self::Both => vec![Arm::PROJECT, Arm::EMPTY_EDITOR],
         }
     }
 }

@@ -8,15 +8,15 @@ fn lanes() -> &'static Lanes {
     air_area().lanes()
 }
 
-/// `bt` declares the integration lanes with the label and the JUnit tag of each. A lane `bt` declares without
-/// them would silently be one a VM worker cannot run.
+/// `bt` declares the integration lanes with the label of each. A lane `bt` declares without it would silently be one
+/// a VM worker cannot run.
 #[test]
 fn every_integration_lane_bt_declares_is_runnable() {
     crate::bridge::install_fixture();
     assert_eq!(
         ui_lane_names(),
         lanes().integration_lane_names(),
-        "an integration lane of bt has no testLabel or junitTag in plugins/air/tests/integration/lanes.json"
+        "an integration lane of bt has no testLabel in plugins/air/tests/integration/lanes.json"
     );
 }
 

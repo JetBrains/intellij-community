@@ -6,7 +6,9 @@
 //! bundle: a finished one never changes, and a running one changes only in its own files. The watcher is an
 //! accelerator, never the source of truth. A periodic scan still runs, because a watch can be refused (kqueue holds
 //! a descriptor per file of every watched directory and inotify has a per-user budget, so the count is capped) and
-//! because a bundle going stale is only the clock moving.
+//! because a bundle going stale is only the clock moving. The server also reads the runs directory at each tail
+//! interval. An event can come late or not at all, and a new run must not wait for the periodic scan. A rescan
+//! notice of the watcher says that it dropped events, and it starts a scan.
 //!
 //! The watcher lives on a thread of its own, and no scan, request or shutdown waits for it. On macOS every change
 //! of the watched set stops and restarts the FSEvents stream, and both are synchronous calls to the system's
@@ -60,7 +62,9 @@ type WatchRequest = (u64, Vec<PathBuf>);
 pub(crate) struct Watches {
     sender: Mutex<Option<std::sync::mpsc::Sender<WatchRequest>>>,
     requested: AtomicU64,
-    applied: AtomicU64,
+    /// The number of the last request that the watcher thread applied without a change of the watcher. A change asks
+    /// for one more scan, so after this request the watcher owes no scan.
+    settled: AtomicU64,
 }
 
 /// The platform's own file watcher: FSEvents on macOS, inotify on Linux.
@@ -91,11 +95,11 @@ const MAX_APPEND_BYTES: usize = 1 << 20;
 const MAX_POLL_BYTES: u64 = 16 << 20;
 
 impl Server {
-    /// Whether the watcher thread runs and has applied the last directories a scan sent it.
+    /// Whether the watcher thread runs, watches the last directories a scan sent it, and owes no scan.
     #[cfg(test)]
     pub(crate) fn watches_settled(&self) -> bool {
         let requested = self.watches.requested.load(Ordering::SeqCst);
-        lock(&self.watches.sender).is_some() && requested > 0 && self.watches.applied.load(Ordering::SeqCst) == requested
+        lock(&self.watches.sender).is_some() && requested > 0 && self.watches.settled.load(Ordering::SeqCst) == requested
     }
 
     /// Hands the directories a scan wants watched to the watcher thread, and does not wait for it; nothing when
@@ -224,6 +228,14 @@ impl Server {
         }
     }
 
+    /// Scans when the runs directory differs from the last listing: a new run, or a journal in a run directory that
+    /// had none, whose file event came late or not at all. The scan announces the new run.
+    pub(crate) fn poll_runs(&self) {
+        if self.journals.listing_is_stale() {
+            self.scan();
+        }
+    }
+
     /// Scans on file events, debounced, and on a timer, until cancel ends.
     pub(crate) async fn watch_loop(self: Arc<Self>, cancel: CancellationToken) {
         let (sender, mut events) = mpsc::unbounded_channel();
@@ -283,6 +295,7 @@ impl Server {
                     self.blocking(|server| {
                         server.poll_tails();
                         server.poll_journals();
+                        server.poll_runs();
                     })
                     .await;
                 }
@@ -310,56 +323,75 @@ fn keep_watching(
     requests: &std::sync::mpsc::Receiver<WatchRequest>,
     max_watches: usize,
 ) {
-    let mut watched = HashSet::new();
+    let mut watched = WatchedSet::default();
     while let Ok(mut request) = requests.recv() {
         // Lists queued behind a slow commit are stale; only the newest counts.
         while let Ok(newer) = requests.try_recv() {
             request = newer;
         }
         let (number, wanted) = request;
-        let added = apply_watches(watcher, &mut watched, &wanted, max_watches);
+        let changed = watched.apply(watcher, &wanted, max_watches);
         let Some(server) = server.upgrade() else {
             return;
         };
-        // A directory is watched only after the scan that found it, so whatever was created in it between the two
-        // raised no event. One more scan sees it; that scan adds no watch unless something new appeared again.
-        if added {
+        // A new directory is watched only after the scan that found it, so whatever was created in it between the two
+        // raised no event. On macOS every change of the set also restarts the stream, and a change in any watched
+        // directory during the restart raises no event. One more scan sees both; that scan changes nothing unless the
+        // directories changed again.
+        if changed {
             server.rescan_soon.notify_one();
+        } else {
+            server.watches.settled.store(number, Ordering::SeqCst);
         }
-        server.watches.applied.store(number, Ordering::SeqCst);
     }
 }
 
-/// Makes the watched directories the first `max_watches` of `wanted`, in one commit, and answers whether it added
-/// one.
-fn apply_watches(watcher: &mut dyn notify::Watcher, watched: &mut HashSet<PathBuf>, wanted: &[PathBuf], max_watches: usize) -> bool {
-    let mut next = HashSet::new();
-    for dir in wanted {
-        if next.len() >= max_watches {
-            break;
+/// The directories the watcher watches, and the ones it refused.
+#[derive(Default)]
+struct WatchedSet {
+    watched: HashSet<PathBuf>,
+    /// The directories the watcher refused while the scans still want them. A refused directory is not tried again
+    /// until a scan no longer wants it, so a refusal does not restart the stream at every scan.
+    refused: HashSet<PathBuf>,
+}
+
+impl WatchedSet {
+    /// Makes the watched directories the first `max_watches` of `wanted`, in one commit, and answers whether it changed
+    /// the watcher.
+    fn apply(&mut self, watcher: &mut dyn notify::Watcher, wanted: &[PathBuf], max_watches: usize) -> bool {
+        let mut next = HashSet::new();
+        for dir in wanted {
+            if next.len() >= max_watches {
+                break;
+            }
+            next.insert(dir.clone());
         }
-        next.insert(dir.clone());
-    }
-    let removed: Vec<PathBuf> = watched.difference(&next).cloned().collect();
-    let added: Vec<PathBuf> = next.difference(watched).cloned().collect();
-    if removed.is_empty() && added.is_empty() {
-        return false;
-    }
-    // One batch: the FSEvents watcher restarts its stream once for the batch rather than once per path.
-    let mut paths = watcher.paths_mut();
-    for dir in &removed {
-        let _ = paths.remove(dir);
-        watched.remove(dir);
-    }
-    let mut any_added = false;
-    for dir in added {
-        if paths.add(&dir, RecursiveMode::NonRecursive).is_ok() {
-            watched.insert(dir);
-            any_added = true;
+        self.refused.retain(|dir| next.contains(dir));
+        let removed: Vec<PathBuf> = self.watched.difference(&next).cloned().collect();
+        let added: Vec<PathBuf> = next
+            .iter()
+            .filter(|dir| !self.watched.contains(*dir) && !self.refused.contains(*dir))
+            .cloned()
+            .collect();
+        if removed.is_empty() && added.is_empty() {
+            return false;
         }
+        // One batch: the FSEvents watcher restarts its stream once for the batch rather than once per path.
+        let mut paths = watcher.paths_mut();
+        for dir in &removed {
+            let _ = paths.remove(dir);
+            self.watched.remove(dir);
+        }
+        for dir in added {
+            if paths.add(&dir, RecursiveMode::NonRecursive).is_ok() {
+                self.watched.insert(dir);
+            } else {
+                self.refused.insert(dir);
+            }
+        }
+        let _ = paths.commit();
+        true
     }
-    let _ = paths.commit();
-    any_added
 }
 
 /// What a file event may have changed.
@@ -369,13 +401,18 @@ enum Change {
     Tail,
     /// A running run's journal grew.
     Journal,
-    /// The listing may differ: anything created, removed or renamed, and a write to a manifest or a zip.
+    /// The listing may differ: anything created, removed or renamed, a write to a manifest or a zip, and a rescan
+    /// notice of the watcher.
     Listing,
     /// Every other write, a `test.log` or a worker's `tart.log`, is noise here.
     None,
 }
 
 fn classify(event: &notify::Event) -> Change {
+    // A rescan notice: FSEvents sends one when it or the kernel dropped events, and inotify when its queue overflowed.
+    if event.need_rescan() {
+        return Change::Listing;
+    }
     let write = matches!(
         event.kind,
         EventKind::Modify(ModifyKind::Data(_) | ModifyKind::Any) | EventKind::Access(AccessKind::Close(AccessMode::Write))

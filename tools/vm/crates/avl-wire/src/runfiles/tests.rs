@@ -218,7 +218,7 @@ fn the_tree_digest_names_the_manifest_the_table_the_staged_runfiles_and_the_copy
     let table = PathMap::new(vec![PathPrefix::new("C:/b", "/mnt/b")]);
     let base = request("_main/a C:/b/a\n", table.clone());
     let digest = tree_digest(&base);
-    assert!(crate::stage::is_sha256_hex(&digest), "{digest}");
+    assert!(crate::digest::is_sha256_hex(&digest), "{digest}");
     assert_eq!(digest, tree_digest(&base));
     assert_eq!(
         digest,

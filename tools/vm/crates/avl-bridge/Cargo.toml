@@ -1,0 +1,20 @@
+[package]
+name = "avl-bridge"
+description = "The client of the IDE's bridge: one loopback call with the token and a deadline, the bridge failure, the trace routes and the lifecycle reader."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+avl-trace.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+avl-testkit.workspace = true
+expect-test.workspace = true
+pretty_assertions.workspace = true

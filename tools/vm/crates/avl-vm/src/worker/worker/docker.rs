@@ -27,7 +27,7 @@ impl Manager {
     /// A container that is not current, because its record declares other shares or another image or the engine
     /// gives the name another id, is made again by the start. The caller's own lease authorizes the stop, as for
     /// [`Manager::share_declaration_stale`]: a second checkout on the same host is the ordinary way to get here. The
-    /// volume keeps `WorkerData`, so the recreate costs a start, not a staging.
+    /// volume keeps `WorkerData`, so the recreate costs a start and no new guest-local state.
     pub(super) async fn require_docker_ready(&self, ctx: &Ctx, docker: &Docker, lease: &Lease) -> Result<(), Refusal> {
         let worker = lease.worker.as_str();
         docker.require_available(ctx, worker).await?;
@@ -268,7 +268,7 @@ impl Manager {
     // --- stop ------------------------------------------------------------------------------------------------
 
     /// Stops a Docker worker's container. No suspend: the container keeps its volume, so the next start keeps the
-    /// staging, and only the daemon starts cold.
+    /// guest-local state, and only the daemon starts cold.
     ///
     /// The engine is reached and never started ([`Docker::reach_engine`]): an Apple `container` server that does not
     /// run holds no running container, so the stop is done.
@@ -359,8 +359,8 @@ impl Manager {
 
     /// Removes the stopped, unleased containers of a Docker pool and keeps their volumes.
     ///
-    /// The volume is what makes the next start cheap: the staged daemon runtime, the download cache and the guest
-    /// agent survive, so a slot that gc removed starts again warm. `pool recycle` is the command that drops a volume.
+    /// The volume is what makes the next start cheap: the runfiles trees, the download cache and the guest agent
+    /// survive, so a slot that gc removed starts again warm. `pool recycle` is the command that drops a volume.
     ///
     /// The state is read under the slot's lifecycle lock, after the lease check, and not before the lock. A
     /// `pool start` that ends between an earlier read and the lock would otherwise leave a running container that gc

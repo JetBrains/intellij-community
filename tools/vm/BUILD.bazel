@@ -7,11 +7,16 @@
 # its own goldens (`avl-report`); code that one binary uses is a module of that binary:
 #
 #   avl-wire, avl-trace          the documents that cross a boundary, each declared once; they depend on no sibling
+#   avl-junit                    the JUnit XML of a run stream, over `avl-wire`, which the controller and the guest
+#                                agent share
 #   avl-trace-tools              the packer, the discovery of bundles and the viewer's URLs, over `avl-trace`
+#   avl-bridge                   the client of the IDE's bridge, over `avl-trace`, which the recorder and the guest
+#                                agent share
 #   avl-base                     refusals, the envelope, the settings and the journal: what every host program
 #                                stands on
 #   avl-guest                    what runs inside a worker VM, and the one binary the controller installs; it stands
-#                                on avl-wire and avl-trace-tools alone, never on avl-base
+#                                on avl-wire, avl-junit, avl-trace, avl-trace-tools and avl-bridge alone, never on
+#                                avl-base
 #   avl-host-sys, avl-report, avl-vm
 #                                the controller itself, which runs on the host; `avl-vm` is the `vm` binary, run
 #                                through `community/tools/vm.cmd`, with the console, the runs, the lanes and
@@ -19,17 +24,18 @@
 #   avl-affected                 the changed-path join of the Air suites over BT's catalog, the UI lanes, and the
 #                                bridge from BT's crates to the controller: the Air area and a BT refusal as the
 #                                controller's
-#   avl-record                   the scenario recorder a lane starts from its runfiles, `air-trace-record`
+#   avl-record                   the scenario recorder a lane starts from its runfiles, `air-trace-record`; it
+#                                stands on avl-trace and avl-bridge alone
 #   air-trace                    the viewer's server and the planner, run through `community/tools/trace.cmd`
 #   avl-testkit, avl-host-testkit
 #                                test helpers, never a dependency of shipped code
 #
 # The boundaries are of different kinds, which is worth knowing before adding another: `avl_wire::supervisor`,
-# `avl_wire::stage` and `avl_wire::verb` are shared by the controller and the guest agent and exist to stop them
+# `avl_wire::runfiles` and `avl_wire::verb` are shared by the controller and the guest agent and exist to stop them
 # declaring the contract twice, and `avl-trace-tools`' pack report crosses between them the same way;
-# `avl_wire::runtime` is the Rust half of the descriptor `air_ui_daemon_runtime.bzl` writes; `avl_wire::daemon`,
-# `avl-trace` and `avl_trace_tools::viewer` are the Rust half of a contract whose far end is Kotlin or the docs
-# site's TypeScript;
+# `avl_wire::runtime` is the Rust half of the descriptor `air_ui_daemon_runtime.bzl` writes; `avl_wire::daemon` and
+# `avl-trace` have Rust at both ends; `avl_trace_tools::viewer` is the Rust half of a contract whose far end is the
+# docs site's TypeScript;
 # `avl_wire::report` is what leaves for an *agent*, so its far end is a reader nobody can recompile.
 #
 # These binaries replaced the Go ones in one commit: the wrappers switched and the Go was deleted together, so

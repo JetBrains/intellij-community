@@ -53,7 +53,7 @@ fn a_flow_selector_runs_its_lane_narrowed_to_its_suites_classes() {
         &ResolutionInputs::new(&fake, areas()),
     )
     .expect("resolves");
-    assert_eq!(resolution.labels, ["//plugins/air/tests/integration/ui-real:ui-real_test"]);
+    assert_eq!(resolution.labels, ["//plugins/air/tests/integration/ui-real:ui-real_lane_test"]);
     assert_eq!(
         suites_of(&resolution),
         ["AirNewSessionTerminalGeneratedFlowUiTest (new-session-terminal, lane ui-real)"]
@@ -98,8 +98,8 @@ fn a_flow_of_two_lanes_is_refused_until_lane_settles_it() {
     );
 
     let settled = resolve_suite_run(&catalog(), area(), &flow, Some("ui")).expect("--lane settles it");
-    assert_eq!(settled.labels, ["//plugins/air/tests/integration/ui/..."]);
-    assert!(argv_of(&settled).contains(&"--test_tag_filters=air-integration-ui-flow".to_owned()));
+    assert_eq!(settled.labels, ["//plugins/air/tests/integration/ui:ui_lane_test"]);
+    assert!(!settled.multi_target);
     assert_eq!(
         settled.junit5_filters,
         [r"include-classname=(^|.*\.)AirManageLaunchPresetQuickStartGeneratedFlowUiTest$"]
@@ -120,13 +120,49 @@ fn a_flow_of_two_lanes_is_refused_until_lane_settles_it() {
 #[test]
 fn a_suite_selector_runs_its_one_suite() {
     let resolution = resolve_suite_run(&catalog(), area(), &selector("manage-launch-preset"), None).expect("resolves");
-    assert_eq!(resolution.labels, ["//plugins/air/tests/integration/gui-chat/..."]);
+    assert_eq!(resolution.labels, ["//plugins/air/tests/integration/gui-chat:gui-chat_lane_test"]);
     assert_eq!(
         suites_of(&resolution),
         ["AirManageLaunchPresetGeneratedFlowUiTest (manage-launch-preset, lane gui-chat)"]
     );
-    assert!(argv_of(&resolution).contains(&"--test_tag_filters=air-integration-gui-chat".to_owned()));
-    assert!(resolution.multi_target);
+    assert!(!resolution.multi_target);
+}
+
+/// The flow catalog tree with a suite of the explicit-only lane `ui-perf`, which walks the launch-preset flow and
+/// lives in the module of the launch-preset suites.
+fn catalog_with_a_perf_suite() -> FakeRuntime {
+    let mut tree = flow_catalog_tree();
+    let perf = crate::fake::SuiteFixture {
+        suite: "long-session-performance",
+        lane: "UI_PERF",
+        class_name: "AirLongSessionPerformanceUiTest",
+        flow: "flow-manage-launch-preset",
+        modules: vec!["intellij.air.session"],
+        implementation_flows: vec![],
+    };
+    tree.insert(crate::fake::document_path(perf.suite), perf.text());
+    FakeRuntime::with_tree(&tree)
+}
+
+// A flow never reaches a suite of an explicit-only lane, though one of its scenarios walks the flow (ADR 0200). A
+// suite id of that lane is refused, and the refusal names the lane that runs it.
+#[test]
+fn no_flow_or_suite_id_reaches_a_suite_of_an_explicit_only_lane() {
+    let fake = catalog_with_a_perf_suite();
+    let flow = named_suites(&fake, area(), &selector("flow-manage-launch-preset")).expect("the flow names suites");
+    assert!(
+        flow.suites.iter().all(|suite| suite.suite != "long-session-performance"),
+        "{:?}",
+        flow.suites
+    );
+    assert!(!flow.lanes.iter().any(|lane| lane == "ui-perf"), "{:?}", flow.lanes);
+    let refused = refusal(named_suites(&fake, area(), &selector("long-session-performance")));
+    assert_eq!(refused.code, "explicit_only_lane");
+    assert_eq!(
+        refused.message,
+        "the suite long-session-performance belongs to the explicit-only lane ui-perf, which no suite id, flow or changed \
+         path reaches; run it with --lane ui-perf"
+    );
 }
 
 fn classes_of(affected: &Affected) -> String {

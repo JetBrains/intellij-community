@@ -74,14 +74,14 @@ fn a_decision_carries_its_line_as_the_message() {
     let decision = Decision {
         subject: Subject::Daemon,
         action: "restart".to_owned(),
-        reason: Some("the stable runtime or JBR changed".to_owned()),
+        reason: Some("the launch of the daemon changed".to_owned()),
     };
     let fields = encode(&Event::Decision(decision), Some("air-linux-1"));
     assert_eq!(fields["event"], "decision");
-    assert_eq!(fields["message"], "daemon restart: the stable runtime or JBR changed");
+    assert_eq!(fields["message"], "daemon restart: the launch of the daemon changed");
     assert_eq!(
         fields["data"],
-        json!({"subject": "daemon", "action": "restart", "reason": "the stable runtime or JBR changed"})
+        json!({"subject": "daemon", "action": "restart", "reason": "the launch of the daemon changed"})
     );
     assert_eq!(
         Decision {

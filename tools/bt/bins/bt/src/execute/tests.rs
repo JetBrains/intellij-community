@@ -113,7 +113,10 @@ fn the_fast_lane_builds_the_excluded_targets_before_it_runs_anything() {
     assert_eq!(spawned.len(), 2, "{spawned:?}");
     let first = spawned[0].join(" ");
     assert!(first.contains(" build "), "{first}");
-    assert!(first.contains("//plugins/air/tests/integration/ui:ui_test_lib"), "{first}");
+    assert!(
+        first.contains("//plugins/air/frontend/llm:air-frontend-llm-tests_test_lib"),
+        "{first}"
+    );
     assert!(spawned[1].join(" ").contains(" test "), "{:?}", spawned[1]);
 }
 
@@ -221,7 +224,7 @@ fn a_flow_selector_dry_runs_as_its_lane_and_lane_settles_it() {
     assert_mentions(
         &settled.text,
         &[
-            "label   //plugins/air/tests/integration/ui/...",
+            "label   //plugins/air/tests/integration/ui:ui_lane_test",
             "suite   AirManageLaunchPresetQuickStartGeneratedFlowUiTest (manage-launch-preset-quick-start, lane ui)",
             r"filter  include-classname=(^|.*\.)AirManageLaunchPresetQuickStartGeneratedFlowUiTest$",
             "--test_sharding_strategy=forced=1",
