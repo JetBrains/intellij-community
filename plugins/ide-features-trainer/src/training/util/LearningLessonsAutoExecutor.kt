@@ -80,8 +80,13 @@ class LearningLessonsAutoExecutor(val project: Project, private val progress: Pr
   companion object {
     private val autoExecutorTasks: MutableSet<TaskInfo> = ConcurrentHashMap.newKeySet()
 
-    /** True means that [taskInfo] is a background task that runs the lessons in test mode */
-    fun isAutoExecutorTask(taskInfo: TaskInfo): Boolean = autoExecutorTasks.contains(taskInfo)
+    /**
+     * True means that [taskInfo] is a background task that runs the lessons in test mode.
+     * The status bar can get a copy of the task info instead of the task itself, so the check also compares the titles.
+     */
+    fun isAutoExecutorTask(taskInfo: TaskInfo): Boolean {
+      return autoExecutorTasks.any { it === taskInfo || it.title == taskInfo.title }
+    }
 
     private fun runAutoExecutorTask(title: String, project: Project, action: (ProgressIndicator) -> Unit) {
       val task = object : Task.Backgroundable(project, title) {
