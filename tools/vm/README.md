@@ -169,8 +169,11 @@ the welcome screen measures. `session.json` names this measurement model, and
 records it. A metric of a welcome span or of a modal span is the sum of the spans of its name, as the perf test sums them, and a name that
 repeats is a note of the run. The digest shows these sums in the groups `welcome spans` and `modal spans`. The group
 `span ends (ms from the process start)` holds the end of the first span of each start-up step, on the clock of the
-anchors such as `welcomeBecameVisible`. The report's `jvm.loadingTime`, the time of the JVM before that clock starts,
-is a metric of the first group. A modal run opens no project, so the IDE writes its start-up report at the exit, and
+anchors such as `welcomeBecameVisible`. That clock starts at the load of `com.intellij.idea.Main` in `class-load.log`,
+the metric `jvm.processStart`. The report's `jvm.loadingTime` starts it about 100 ms too early, and only a log without
+the main class uses it. The record
+[The bench clock starts at the load of the main class](docs/decisions/2026-10-22-the-bench-clock-starts-at-the-load-of-the-main-class.md)
+states why. A modal run opens no project, so the IDE writes its start-up report at the exit, and
 the record reads it after the quit. Its `totalDuration` is negative or missing, so it is a note of the run and no
 metric.
 
@@ -200,7 +203,7 @@ and no stack, so the tables print `-` and say so. The decision record
 [The bench names the trigger of each plugin loader](docs/decisions/2026-10-19-the-bench-names-the-trigger-of-each-plugin-loader.md)
 states the rule.
 
-`--profile` samples the CPU with async-profiler from the JVM start to the gate of each run. When the gate passes, the
+`--profile` of `welcome` and `project` samples the CPU with async-profiler from the JVM start to the gate of each run. When the gate passes, the
 run reads the PID of the IDE from `idea.log` and stops the profiler with `jcmd` of the generation, which writes
 `cpu-gate.collapsed`. `--profile-event wall` samples the wall clock in place of the CPU. A run that cannot stop the
 profiler keeps the whole-run profile `cpu.collapsed`, with a note that names why. The digest says which profile it read.
@@ -220,6 +223,7 @@ that the JVM loads, and the digest notes how many samples it left out.
 | `trace <session>` | What runs between the frame and the welcome paint? | The anchors of one run, and one line per span in the window. |
 | `activities <session>` | Which post-startup activities run while the welcome panel paints? | One table by class and one table by plugin for one run. |
 | `classes <session>` | Which classes did the JVM load before an anchor, and which plugin and module own them? | The class totals of one arm, one table by plugin with its modules and its EDT and BG ms, and one table by module. `--plugin` adds the rank of a plugin. |
+| `classes <session> --span <name>` | Which classes did the EDT load inside a span? | The window of each run, the loads by plugin, by module and by package, and with `--timeline` the loads of each bucket. |
 | `triggers <session>` | Which code pulled each module of a plugin? | One row per trigger frame of one run, with its modules, their classes, their EDT ms and the first load, then the modules of each trigger. |
 | `compare <session> <session>...` | Did the change move the medians by more than the noise of the host? | The medians per arm with the delta to A, and one noise check per session. |
 | `ls` | Which sessions does this host have? | One line per session, newest first, with a name that the other verbs accept. |
