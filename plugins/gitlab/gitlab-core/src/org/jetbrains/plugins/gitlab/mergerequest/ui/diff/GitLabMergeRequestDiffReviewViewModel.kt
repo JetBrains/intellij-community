@@ -37,6 +37,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.util.toLocations
 interface GitLabMergeRequestDiffReviewViewModel {
   val isCumulativeChange: Boolean
   val canAddMultilinePositionalNotes: Boolean
+  val canAddMultilineNotesInThisChange: Boolean
 
   val discussions: StateFlow<ComputedResult<Collection<GitLabMergeRequestDiffDiscussionViewModel>>>
   val draftDiscussions: StateFlow<ComputedResult<Collection<GitLabMergeRequestDiffDraftNoteViewModel>>>
@@ -79,6 +80,7 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
 
   override val isCumulativeChange: Boolean = diffData.isCumulative
   override val canAddMultilinePositionalNotes: Boolean = mergeRequest.canAddMultilinePositionalNotes
+  override val canAddMultilineNotesInThisChange: Boolean = isCumulativeChange || mergeRequest.canAddMultilinePositionalNotesInCommits
 
   override val discussions: StateFlow<ComputedResult<Collection<GitLabMergeRequestDiffDiscussionViewModel>>> =
     diffVm.discussions

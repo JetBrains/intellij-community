@@ -208,7 +208,7 @@ private class DiffEditorModel(
 
   override fun canCreateComment(lineRange: LineRange): Boolean {
     if (!diffReviewVm.canAddMultilinePositionalNotes) return false
-    if (!diffReviewVm.isCumulativeChange) return false
+    if (!diffReviewVm.canAddMultilineNotesInThisChange) return false
     val gutterControls = gutterControlsState.value ?: return false
     return gutterControls.isLineCommentable(lineRange.start) &&
            gutterControls.isLineCommentable(lineRange.end)
@@ -280,7 +280,7 @@ private class DiffEditorModel(
     override val line: StateFlow<Int?> = range.mapState { it?.end }
     override val adjustmentDisabledReason =
       MutableStateFlow(AdjustmentDisabledReason.UNSUPPORTED_VERSION.takeIf { !vm.isMultilinePositionSupported }
-                       ?: AdjustmentDisabledReason.SINGLE_COMMIT_REVIEW.takeIf { !diffReviewVm.isCumulativeChange })
+                       ?: AdjustmentDisabledReason.SINGLE_COMMIT_REVIEW.takeIf { !diffReviewVm.canAddMultilineNotesInThisChange })
 
     override fun adjustRange(newStart: Int?, newEnd: Int?) {
       if (newStart == null && newEnd == null) return

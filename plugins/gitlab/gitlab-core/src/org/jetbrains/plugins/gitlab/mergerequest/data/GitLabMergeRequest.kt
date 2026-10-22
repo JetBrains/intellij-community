@@ -433,6 +433,7 @@ internal class LoadedGitLabMergeRequest(
   override val canAddDraftNotes: Boolean = discussionsContainer.canAddDraftNotes
   override val canAddPositionalDraftNotes: Boolean = discussionsContainer.canAddPositionalDraftNotes
   override val canAddMultilinePositionalNotes: Boolean = discussionsContainer.canAddMultilinePositionalNotes
+  override val canAddMultilinePositionalNotesInCommits: Boolean = discussionsContainer.canAddMultilinePositionalNotesInCommits
 
   override suspend fun addNote(body: String) =
     discussionsContainer.addNote(body)

@@ -61,6 +61,11 @@ interface GitLabMergeRequestDiscussionsContainer {
    */
   val canAddMultilinePositionalNotes: Boolean
 
+  /**
+   * if the position of a note can be multiline in a single commit review
+   */
+  val canAddMultilinePositionalNotesInCommits: Boolean
+
   suspend fun addNote(body: String)
 
   suspend fun addNote(position: GitLabMergeRequestNewDiscussionPosition, body: String)
@@ -98,6 +103,8 @@ class GitLabMergeRequestDiscussionsContainerImpl(
   // since one messages can be posted either as a comment or as a draft, we need them both to work with multiline correctly
   override val canAddMultilinePositionalNotes: Boolean =
     canAddNotes && (glMetadata != null && GitLabVersion(18, 6) <= glMetadata.version)
+  override val canAddMultilinePositionalNotesInCommits: Boolean =
+    canAddMultilinePositionalNotes && (glMetadata != null && GitLabVersion(19, 6) <= glMetadata.version)
 
   private val reloadRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val refreshRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
