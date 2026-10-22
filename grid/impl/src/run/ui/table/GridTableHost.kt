@@ -44,7 +44,4 @@ internal interface GridTableHost {
   fun rowToModel(row: Int): Int
   fun getAvailableColumnsWidth(): Int
   fun getColumnForPersistence(column: ModelIndex<*>): ResultViewColumn?
-  fun editSelectedCell()
-  fun editSelectedCellWithValue(value: Any?, shouldMoveFocus: Boolean)
-  fun fitColumnsToViewport()
 }

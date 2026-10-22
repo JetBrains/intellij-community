@@ -35,6 +35,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -43,8 +44,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.table.AdditionalTableHeader;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import kotlin.Pair;
@@ -58,6 +59,7 @@ import javax.swing.CellRendererPane;
 import javax.swing.JComponent;
 import javax.swing.JScrollBar;
 import javax.swing.JTable;
+import javax.swing.JViewport;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableCellEditor;
@@ -79,7 +81,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 /** The complete table view, including any pinned columns. */
 public final class TableResultView implements ResultView, ResultViewWithCells, ResultViewWithColumns, ResultViewWithRows,
@@ -94,6 +95,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   private StatisticsHeaderHost myStatisticsHeaderHost;
   private Ref<Object> myCommonValue;
   private ModelIndex<GridColumn> myContextColumn;
+  private final GridSelectionGrower myGrower;
 
   public TableResultView(@NotNull DataGrid grid, @NotNull ActionGroup columnActions, @NotNull ActionGroup rowActions) {
     myResultPanel = grid;
@@ -105,6 +107,9 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     myPrimary.installHost(adoptTable(myPrimary));
     myPrimary.installGridIntegration();
     myScrollPane = TableResultViewFactory.createScrollPane(grid, myPrimary, this);
+    myGrower = new GridSelectionGrower(grid, this);
+    // The pinned table's column selection is mirrored into the main table's, so this covers both tables.
+    myPrimary.getColumnModel().getSelectionModel().addListSelectionListener(e -> myGrower.reset());
     TableAggregatorWidgetHelper.install(this, grid);
     TableGoToRowHelper.install(this, grid);
     TablePositionWidgetHelper.install(this, grid);
@@ -170,14 +175,6 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   /** The scroll pane that holds both tables. {@link TableResultViewFactory#wrap} places it in the grid layout. */
   @NotNull TableScrollPane getScrollPane() { return myScrollPane; }
-
-  @Override
-  @RequiresEdt
-  public @NotNull Predicate<Component> captureCellComponentMatcher() {
-    Component primary = myPrimary;
-    Component frozen = getFrozenView();
-    return component -> component != null && (component == primary || component == frozen);
-  }
 
   @Override
   public void registerEscapeAction(@NotNull AbstractAction action) {
@@ -316,12 +313,35 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   @Override
   public void growSelection() {
-    myPrimary.growSelection();
+    myGrower.growSelection();
   }
 
   @Override
   public void shrinkSelection() {
-    myPrimary.shrinkSelection();
+    myGrower.shrinkSelection();
+  }
+
+  /** The cell at the top left of the visible area, in the grid's view indices: in the pinned strip while columns are pinned. */
+  @NotNull Pair<ViewIndex<GridRow>, ViewIndex<GridColumn>> firstVisibleCell() {
+    Point position = myScrollPane.getViewport().getViewPosition();
+    int row = indexOrZero(myPrimary.rowAtPoint(position), myPrimary.getRowCount());
+    int column = indexOrZero(myPrimary.columnAtPoint(position), myPrimary.getColumnCount());
+    GridTable frozen = getFrozenView();
+    boolean transposed = isTransposed();
+    if (frozen != null && frozen.getColumnCount() > 0 && !transposed) {
+      // The strip scrolls sideways on its own when it overflows, so take its column at the left edge of its viewport.
+      JViewport strip = ObjectUtils.tryCast(frozen.getParent(), JViewport.class);
+      int stripX = strip == null ? 0 : strip.getViewPosition().x;
+      int stripColumn = indexOrZero(frozen.columnAtPoint(new Point(stripX, 0)), frozen.getColumnCount());
+      int mainColumn = myPrimary.viewColumnOf(frozen.getRawIndexConverter().column2Model().applyAsInt(stripColumn));
+      if (mainColumn >= 0) column = mainColumn;
+    }
+    return new Pair<>(ViewIndex.forRow(myResultPanel, transposed ? column : row),
+                      ViewIndex.forColumn(myResultPanel, transposed ? row : column));
+  }
+
+  private static int indexOrZero(int index, int count) {
+    return index < 0 || index >= count ? 0 : index;
   }
 
   @Override
@@ -747,7 +767,18 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     return modelColumn < 0 ? -1 : target.viewColumnOf(modelColumn);
   }
 
-  GridTable primaryTable() { return myPrimary; }
+  /** The table whose rows the row-number gutter follows, for row geometry, paint settings and the Swing row selection. */
+  @NotNull JBTable rowHeaderTable() { return myPrimary; }
+
+  void toggleSortOrder(@NotNull ModelIndex<GridColumn> column, boolean additive) { myPrimary.toggleSortOrder(column, additive); }
+
+  void invokeColumnPopup(@NotNull ModelIndex<GridColumn> column, @NotNull Component component, @NotNull Point point) {
+    myPrimary.invokeColumnPopup(column, component, point);
+  }
+
+  void invokeRowPopup(@NotNull Component component, int x, int y) { myPrimary.invokeRowPopup(component, x, y); }
+
+  int getTextLineHeight() { return myPrimary.getTextLineHeight(); }
 
   private GridTable renderingTable(int primaryColumn) {
     GridTable frozen = getFrozenView();
@@ -945,17 +976,6 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     }
 
     @Override
-    public void editSelectedCell() { TableResultView.this.editSelectedCell(); }
-
-    @Override
-    public void editSelectedCellWithValue(Object value, boolean shouldMoveFocus) {
-      TableResultView.this.editSelectedCellWithValue(value, shouldMoveFocus);
-    }
-
-    @Override
-    public void fitColumnsToViewport() { TableResultView.this.fitColumnsToViewport(); }
-
-    @Override
     public int @NotNull [] getSelectedRows() { return myPrimary.getSelectedRows(); }
 
     @Override
@@ -1010,6 +1030,12 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   @TestOnly
   @Nullable Pair<JComponent, Point> getRequestedToolbarDisplay() {
     return myFloatingToolbar.getRequestedDisplay();
+  }
+
+  /** The data context the actions of the floating toolbar get. */
+  @TestOnly
+  @NotNull DataContext getToolbarActionDataContext() {
+    return myFloatingToolbar.getActionDataContext();
   }
 
   public void setStatisticsHeaderPosition(AdditionalTableHeader.Position position) {

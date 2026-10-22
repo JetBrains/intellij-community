@@ -71,10 +71,12 @@ It renders the scrollable columns in a [GridTable](src/run/ui/table/GridTable.ja
 While columns are pinned, [FrozenStripTable](src/run/ui/table/FrozenStripTable.kt), a `GridTable` subclass, renders them as the pinned table.
 [FrozenColumnsController](src/run/ui/table/FrozenColumnsController.kt) creates and removes the pinned table and keeps selection, dimensions, and model updates in step.
 Both tables send requests to the view through [GridTableHost](src/run/ui/table/GridTableHost.kt).
-`GridTable` is package-private, so code outside the table package works with `TableResultView` or `DataGrid`.
+`GridTable` is package-private and implements none of the `ResultView*` interfaces, so code outside the table package works with `TableResultView` or `DataGrid`.
 
 [TableFloatingToolbarController](src/run/ui/table/TableFloatingToolbarController.kt) offers the floating toolbar for a clicked cell in either table.
-[TableFloatingToolbar](src/run/ui/table/TableFloatingToolbar.kt) shows the toolbar actions at the point the controller gives it.
+[TableFloatingToolbar](src/run/ui/table/TableFloatingToolbar.kt) shows the toolbar actions above the cell the controller gives it.
+It is built from the grid alone: its actions run in the grid panel's data context, as those of the grid's other toolbars do, and open their popups below that cell.
+`TableResultView` owns the [GridSelectionGrower](src/run/ui/table/GridSelectionGrower.java), which grows and shrinks the grid's selection; from an empty selection it starts at the view's top-left visible cell.
 [ColumnLayoutContext](src/run/ui/grid/ColumnLayoutContext.kt) gives layout extensions measurements and column widths.
 
 [TextResultView](src/run/ui/text/TextResultView.java) formats rows into an editor document.

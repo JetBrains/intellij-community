@@ -10,7 +10,6 @@ import com.intellij.database.util.GridActionUiState;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +44,7 @@ public class ShowAggregateViewAction extends DumbAwareAction {
       e.getPresentation().setText(DataGridBundle.message("action.Console.TableResult.AggregateView.text"));
     }
     var state = GridActionUiState.getForGrid(grid, e.getDataContext());
-    boolean inCell = state != null && state.isCellComponent(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
+    boolean inCell = state != null && state.isInCell();
     boolean forceShow = inCell || ActionPlaces.STATUS_BAR_PLACE.equals(e.getPlace());
     boolean visible = findEditMaximized(e.getDataContext()) != null;
     e.getPresentation().setEnabledAndVisible(forceShow || !visible);

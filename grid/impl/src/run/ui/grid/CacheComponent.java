@@ -10,4 +10,5 @@ public interface CacheComponent {
   @NotNull JComponent getComponent();
   @Nullable JScrollBar getVerticalScrollBar();
   @Nullable JScrollBar getHorizontalScrollBar();
+  int getRowHeight();
 }

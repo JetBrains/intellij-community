@@ -8,7 +8,6 @@ import com.intellij.find.FindModel;
 import com.intellij.find.SearchSession;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
-import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +20,6 @@ import java.awt.event.MouseListener;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, GridColumn>, GridSearchSession.Listener, Disposable,
                                     LocalFilterState.Listener, ColumnHierarchyListener {
@@ -62,13 +60,6 @@ public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, 
 
   /** Whether the view has an active editor in any component that renders its cells. */
   boolean isEditing();
-
-  /** Captures a component identity check for background action updates. */
-  @RequiresEdt
-  default @NotNull Predicate<Component> captureCellComponentMatcher() {
-    Component cellComponent = getComponent();
-    return component -> component != null && component == cellComponent;
-  }
 
   boolean isMultiEditingAllowed();
 

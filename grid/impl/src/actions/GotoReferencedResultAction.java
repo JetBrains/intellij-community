@@ -5,7 +5,6 @@ import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.run.ResultReference;
 import com.intellij.database.util.GridActionUiState;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +30,7 @@ public class GotoReferencedResultAction extends GotoResultAction {
 
   private static @Nullable ResultReference getOutResultReference(@NotNull DataGrid grid, @NotNull AnActionEvent e) {
     var state = GridActionUiState.getForGrid(grid, e.getDataContext());
-    if (state == null || !state.isCellComponent(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))) return null;
+    if (state == null || !state.isInCell()) return null;
     Object value = state.getLeadSelectionCellValue(true);
     return value instanceof ResultReference reference ? reference : null;
   }

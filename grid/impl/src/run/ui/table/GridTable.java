@@ -1,6 +1,7 @@
 package com.intellij.database.run.ui.table;
 
 import com.intellij.application.options.EditorFontsConstants;
+import com.intellij.database.DatabaseDataKeys;
 import com.intellij.database.actions.ShowEditMaximizedAction;
 import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.DataGridWithNestedTables;
@@ -38,9 +39,8 @@ import com.intellij.database.run.ui.DataGridRequestPlace;
 import com.intellij.database.run.ui.EditMaximizedView;
 import com.intellij.database.run.ui.GridTableCellEditor;
 import com.intellij.database.run.ui.ResultViewWithCells;
-import com.intellij.database.run.ui.ResultViewWithColumns;
-import com.intellij.database.run.ui.ResultViewWithRows;
 import com.intellij.database.run.ui.ValueTabInfoProvider;
+import com.intellij.database.run.ui.grid.CacheComponent;
 import com.intellij.database.run.ui.grid.CellAttributes;
 import com.intellij.database.run.ui.grid.CellRenderingUtils;
 import com.intellij.database.run.ui.grid.DataGridSearchSession;
@@ -59,6 +59,7 @@ import com.intellij.database.run.ui.table.statisticsPanel.StatisticsPanelMode;
 import com.intellij.database.run.ui.table.statisticsPanel.StatisticsTableHeader;
 import com.intellij.database.settings.DataGridSettings;
 import com.intellij.database.settings.DataGridSettings.AutoTransposeMode;
+import com.intellij.database.util.GridActionUiState;
 import com.intellij.find.FindModel;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -228,8 +229,7 @@ import static java.awt.event.InputEvent.ALT_DOWN_MASK;
  * @author gregsh
  */
 class GridTable extends JBTableWithResizableCells
-  implements Disposable, ResultViewWithCells, ResultViewWithColumns, ResultViewWithRows,
-             EditorColorsListener, UISettingsListener, UiDataProvider {
+  implements Disposable, CacheComponent, EditorColorsListener, UISettingsListener, UiDataProvider {
 
   private final DataGrid myResultPanel;
   private final MyTableColumnCache myColumnCache;
@@ -239,7 +239,6 @@ class GridTable extends JBTableWithResizableCells
   private final ActionGroup myColumnHeaderPopupActions;
   private final ActionGroup myRowHeaderPopupActions;
   private GridColumnLayout<GridRow, GridColumn> myColumnLayout = new DummyGridColumnLayout();
-  private final GridSelectionGrower myGrower;
   private final List<Consumer<Boolean>> mySelectionListeners = new ArrayList<>();
 
   private final ModelIndex<GridColumn> myClickedHeaderColumnIdx;
@@ -296,7 +295,6 @@ class GridTable extends JBTableWithResizableCells
     myColumnCache = new MyTableColumnCache();
     myRenderers = new Renderers(myResultPanel, this);
     myClickedHeaderColumnIdx = ModelIndex.forColumn(myResultPanel, -1);
-    myGrower = new GridSelectionGrower(myResultPanel, this);
     getTableHeader().setDefaultRenderer(createHeaderRenderer());
     ComponentWithExpandableItems<?> tableHeader = ObjectUtils.tryCast(getTableHeader(), ComponentWithExpandableItems.class);
     if (tableHeader != null) tableHeader.setExpandableItemsEnabled(false);
@@ -314,7 +312,6 @@ class GridTable extends JBTableWithResizableCells
 
     adjustDefaultActions();
     addPropertyChangeListener(TABLE_CELL_EDITOR_PROPERTY, e -> GridUtil.activeGridChanged(resultPanel));
-    getColumnModel().getSelectionModel().addListSelectionListener(e -> myGrower.reset());
 
     addSelectionChangedListener(isAdjusting -> {
       JScrollPane scrollPane = getScrollPane();
@@ -387,6 +384,8 @@ class GridTable extends JBTableWithResizableCells
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
     sink.set(PlatformDataKeys.CONTEXT_MENU_POINT, myClickedHeaderPoint);
+    // An open cell editor is a child of this table, and its own shortcuts must win over cell actions bound to F2 or Alt+Enter.
+    sink.set(DatabaseDataKeys.DATA_GRID_ACTION_UI_STATE_KEY, GridActionUiState.capture(myResultPanel, !isEditing()));
   }
 
   @Override
@@ -600,14 +599,6 @@ class GridTable extends JBTableWithResizableCells
 
   public void resetLayout() {
     myColumnLayout.resetLayout();
-  }
-
-  public void growSelection() {
-    myGrower.growSelection();
-  }
-
-  public void shrinkSelection() {
-    myGrower.shrinkSelection();
   }
 
   public void addSelectionChangedListener(@NotNull Consumer<Boolean> listener) {
@@ -1228,7 +1219,6 @@ class GridTable extends JBTableWithResizableCells
     removeEditor();
   }
 
-  @Override
   public void changeSelectedColumnsWidth(int delta) {
     int[] selectedColumns = getSelectedColumns();
     int constrainedDelta = myHost == null
@@ -1240,11 +1230,6 @@ class GridTable extends JBTableWithResizableCells
       if (tableColumn == null) continue;
       tableColumn.setColumnWidthByUser(Math.max(0, tableColumn.getColumnWidth() + constrainedDelta));
     }
-  }
-
-  @Override
-  public void fitColumnsToViewport() {
-    myHost.fitColumnsToViewport();
   }
 
   /** The main table returns the width of the complete view, including the strip. The strip returns its viewport width. */
@@ -1327,14 +1312,12 @@ class GridTable extends JBTableWithResizableCells
     return myHost == null ? localColumnAt(viewColumn) : myHost.renderedColumnAt(viewColumn);
   }
 
-  @Override
   public void resetColumnWidths() {
     for (TableResultViewColumn column : myColumnCache) {
       column.clearWidthSetByUser();
     }
   }
 
-  @Override
   public void resetRowHeights() {
     int defaultRowHeight = getRowHeight();
     for (int i = 0; i < getRowCount(); i++) {
@@ -1678,7 +1661,9 @@ class GridTable extends JBTableWithResizableCells
 
     ViewIndex<GridRow> rowIdx = ViewIndex.forRow(myResultPanel, isTransposed() ? column : row);
     ViewIndex<GridColumn> columnIdx = ViewIndex.forColumn(myResultPanel, isTransposed() ? row : column);
-    return ResultViewWithCells.prepareComponent(component, myResultPanel, this, gridSelectionModel(), this, rowIdx, columnIdx);
+    boolean selected = gridSelectionModel().isSelected(rowIdx, columnIdx);
+    return ResultViewWithCells.prepareComponent(component, myResultPanel, selected, getCellBackground(rowIdx, columnIdx, selected),
+                                                getCellForeground(selected), this, rowIdx, columnIdx);
   }
 
   /** The grid selection as this table reads it, with view indices of this table, which differ from the grid's in the pinned table. */
@@ -1693,7 +1678,6 @@ class GridTable extends JBTableWithResizableCells
     getActionMap().put(actionId, action);
   }
 
-  @Override
   public @Nullable Color getCellBackground(@NotNull ViewIndex<GridRow> row, @NotNull ViewIndex<GridColumn> column, boolean selected) {
     return selected ?
            getSelectionBackground() :
@@ -1715,7 +1699,6 @@ class GridTable extends JBTableWithResizableCells
     return myHost == null ? viewColumn : myHost.toGridViewColumn(viewColumn);
   }
 
-  @Override
   public @NotNull Color getCellForeground(boolean selected) {
     return selected ? getSelectionForeground() : getForeground();
   }
@@ -2277,12 +2260,10 @@ class GridTable extends JBTableWithResizableCells
     myHost.selectHeaderColumn(viewColumn, e);
   }
 
-  @Override
   public @Nullable ResultViewColumn getLayoutColumn(@NotNull ModelIndex<?> column) {
     return getLayoutColumn(column, column.toView(myResultPanel));
   }
 
-  @Override
   public @Nullable ResultViewColumn getColumnForPersistence(@NotNull ModelIndex<?> column) {
     return myHost == null ? getLayoutColumn(column) : myHost.getColumnForPersistence(column);
   }
@@ -2291,7 +2272,6 @@ class GridTable extends JBTableWithResizableCells
     return viewColumnIdx.asInteger() != -1 ? getColumnCache().getOrCreateColumn(column.asInteger()) : null;
   }
 
-  @Override
   public @Nullable ResultViewColumn getLayoutColumnForDataColumn(@NotNull ModelIndex<GridColumn> column) {
     // Layout columns of a transposed table are backed by rows, so a data column has no layout column of its own.
     return isTransposed() ? null : getLayoutColumn(column);
@@ -2364,23 +2344,8 @@ class GridTable extends JBTableWithResizableCells
     }
   }
 
-  @Override
   public boolean isCellEditingAllowed() {
     return true;
-  }
-
-  @Override
-  public void editSelectedCell() {
-    myHost.editSelectedCell();
-  }
-
-  @Override
-  public void editSelectedCellWithValue(Object value) {
-    editSelectedCellWithValue(value, true);
-  }
-
-  public void editSelectedCellWithValue(Object value, boolean shouldMoveFocus) {
-    myHost.editSelectedCellWithValue(value, shouldMoveFocus);
   }
 
   boolean isColumnFrozenHidden(int viewColumn) {
@@ -3254,9 +3219,9 @@ class GridTable extends JBTableWithResizableCells
   }
 
   static class LabelWithFallbackFont extends JBLabel {
-    private final GridTable myTable;
+    private final JTable myTable;
 
-    LabelWithFallbackFont(@NotNull GridTable table) {
+    LabelWithFallbackFont(@NotNull JTable table) {
       myTable = table;
     }
 

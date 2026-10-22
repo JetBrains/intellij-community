@@ -2,6 +2,7 @@ package com.intellij.database.run.ui.table
 
 import com.intellij.database.datagrid.DataGrid
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.ui.scale.JBUIScale
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.TestOnly
@@ -22,7 +23,7 @@ import javax.swing.SwingUtilities
  * Hides it on a mouse press, when the pointer moves away, when a table loses focus or moves, or when the table it is shown in goes away.
  */
 internal class TableFloatingToolbarController(private val primary: JTable, grid: DataGrid, cs: CoroutineScope) : Disposable {
-  private val toolbar = TableFloatingToolbar(primary, grid, cs)
+  private val toolbar = TableFloatingToolbar(grid, cs)
 
   /** The table and the cell the toolbar was last offered for, as view indices of that table. */
   private var offeredTable: JTable = primary
@@ -46,11 +47,10 @@ internal class TableFloatingToolbarController(private val primary: JTable, grid:
         return
       }
 
-      val cell = table.getCellRect(row, column, true)
       offeredTable = table
       offeredRow = row
       offeredColumn = column
-      toolbar.show(table, Point(cell.x + cell.width, cell.y))
+      toolbar.show(table, table.getCellRect(row, column, true))
     }
 
     override fun mouseMoved(e: MouseEvent) {
@@ -118,6 +118,10 @@ internal class TableFloatingToolbarController(private val primary: JTable, grid:
   /** The component and the point the toolbar is requested at, or null while none is requested. */
   @TestOnly
   fun getRequestedDisplay(): Pair<JComponent, Point>? = toolbar.getRequestedDisplay()
+
+  /** The data context the actions of the toolbar get. */
+  @TestOnly
+  fun getActionDataContext(): DataContext = toolbar.getActionDataContext()
 
   private companion object {
     val hidingDistanceSq by lazy { JBUIScale.scale(100) * JBUIScale.scale(100) }

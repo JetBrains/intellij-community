@@ -1,6 +1,5 @@
 package com.intellij.database.run.ui.grid;
 
-import com.intellij.database.run.ui.ResultViewWithRows;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.impl.InternalUICustomization;
@@ -50,13 +49,13 @@ public final class TableCellImageCache {
   private CacheImpl myImageCache;
   private Map<TableCellRenderer, CachingCellRendererWrapper> myCellRendererWrappers;
 
-  private final ResultViewWithRows myTable;
+  private final CacheComponent myTable;
   private int myCacheLevel;
   private boolean myWrappedGraphics;
   private final Random myRandom = new Random();
   private final boolean myCacheEnabled;
 
-  public TableCellImageCache(@NotNull ResultViewWithRows table, @NotNull Disposable disposable) {
+  public TableCellImageCache(@NotNull CacheComponent table, @NotNull Disposable disposable) {
     myTable = table;
     myCacheEnabled = Registry.is("database.grid.render.cache");
     reset();

@@ -7,5 +7,4 @@ import com.intellij.database.run.ui.grid.CacheComponent;
  **/
 public interface ResultViewWithRows extends CacheComponent {
   void resetRowHeights();
-  int getRowHeight();
 }

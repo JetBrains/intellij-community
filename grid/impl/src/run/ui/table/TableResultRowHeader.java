@@ -25,6 +25,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.hover.TableHoverListener;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.BorderFactory;
 import javax.swing.Icon;
 import javax.swing.JLabel;
+import javax.swing.JComponent;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.table.TableCellRenderer;
@@ -59,18 +61,17 @@ import static javax.swing.SwingUtilities.isLeftMouseButton;
  */
 public class TableResultRowHeader extends GridRowHeader {
   private final DataGrid myResultPanel;
-  private final GridTable myTable;
+  private final TableResultView myView;
+  /** The main table, for row geometry, paint settings and its Swing row selection; grid operations go through {@link #myView}. */
+  private final JBTable myTable;
   private final ActionGroup myPopupActions;
   private final RowHeaderCellRenderer myRenderer;
 
   public TableResultRowHeader(@NotNull DataGrid grid, @NotNull TableResultView view, @Nullable ActionGroup popupActions) {
-    this(grid, view.primaryTable(), popupActions);
-  }
-
-  TableResultRowHeader(@NotNull DataGrid resultPanel, @NotNull GridTable view, @Nullable ActionGroup popupActions) {
-    super(view, () -> view.getShowHorizontalLines(), () -> view.getShowLastHorizontalLine());
-    myResultPanel = resultPanel;
-    myTable = view;
+    super(view.rowHeaderTable(), () -> view.getShowHorizontalLines(), () -> view.rowHeaderTable().getShowLastHorizontalLine());
+    myResultPanel = grid;
+    myView = view;
+    myTable = view.rowHeaderTable();
     myPopupActions = popupActions;
     myRenderer = new MyRowHeaderCellRenderer(createTransposedRenderer(), createRegularRenderer());
 
@@ -105,7 +106,7 @@ public class TableResultRowHeader extends GridRowHeader {
   }
 
   private boolean isTransposed() {
-    return myTable.isTransposed();
+    return myView.isTransposed();
   }
 
   public int rowForPoint(@Nullable Point point) {
@@ -171,7 +172,7 @@ public class TableResultRowHeader extends GridRowHeader {
         int viewRow = myTable.rowAtPoint(e.getPoint());
         int modelColumn = myResultPanel.getRawIndexConverter().column2Model().applyAsInt(viewRow);
         DataGridSettings settings = GridUtil.getSettings(myResultPanel);
-        myTable.toggleSortOrder(ModelIndex.forColumn(myResultPanel, modelColumn), settings == null || settings.isAddToSortViaAltClick());
+        myView.toggleSortOrder(ModelIndex.forColumn(myResultPanel, modelColumn), settings == null || settings.isAddToSortViaAltClick());
         return;
       }
       if (isLeftMouseButton(e) && e.getClickCount() % 2 == 0) {
@@ -189,7 +190,7 @@ public class TableResultRowHeader extends GridRowHeader {
       if (isTransposed()) {
         int modelColumn = myResultPanel.getRawIndexConverter().column2Model().applyAsInt(viewRow);
         if (modelColumn >= 0) {
-          myTable.invokeColumnPopup(ModelIndex.forColumn(myResultPanel, modelColumn), comp, point);
+          myView.invokeColumnPopup(ModelIndex.forColumn(myResultPanel, modelColumn), comp, point);
         }
       }
       else if (myPopupActions != null) {
@@ -199,7 +200,7 @@ public class TableResultRowHeader extends GridRowHeader {
       else {
         int modelRow = myResultPanel.getRawIndexConverter().row2Model().applyAsInt(viewRow);
         if (modelRow >= 0) {
-          myTable.invokeRowPopup(comp, x, y);
+          myView.invokeRowPopup(comp, x, y);
         }
       }
     }
@@ -222,7 +223,7 @@ public class TableResultRowHeader extends GridRowHeader {
     }
 
     private boolean shouldResizeColumn(MouseEvent e) {
-      return myTable.isTransposed() && e.getX() >= (getWidth() - 5) && e.getX() <= getWidth();
+      return isTransposed() && e.getX() >= (getWidth() - 5) && e.getX() <= getWidth();
     }
 
     @Override
@@ -261,7 +262,7 @@ public class TableResultRowHeader extends GridRowHeader {
         int oldRowHeight = myTable.getRowHeight(myResizingRow);
         int newRowHeight = Math.max(myTable.getRowHeight(), e.getY() - cellRect.y);
         if (oldRowHeight != newRowHeight) {
-          myTable.setRowHeight(myResizingRow, newRowHeight);
+          myView.setRowHeight(myResizingRow, newRowHeight);
         }
       }
       else {
@@ -286,7 +287,8 @@ public class TableResultRowHeader extends GridRowHeader {
         e.consume();
         return;
       }
-      if (!myTable.hasFocus()) IdeFocusManager.getInstance(myResultPanel.getProject()).requestFocus(myTable, true);
+      JComponent focusTarget = myResultPanel.getPreferredFocusedComponent();
+      if (!focusTarget.hasFocus()) IdeFocusManager.getInstance(myResultPanel.getProject()).requestFocus(focusTarget, true);
       boolean selected = processSelectionEventInternal(e, isDragEvent, currentRow);
       myResultPanel.getHiddenColumnSelectionHolder().setWholeRowSelected(!isTransposed() && selected);
       e.consume();
@@ -295,7 +297,7 @@ public class TableResultRowHeader extends GridRowHeader {
     private boolean processSelectionEventInternal(MouseEvent e, boolean isDragEvent, int currentRow) {
       boolean interval = GridUtil.isIntervalModifierSet(e);
       boolean exclusive = GridUtil.isExclusiveModifierSet(e);
-      TableSelectionModel selectionModel = ObjectUtils.tryCast(myTable.gridSelectionModel(), TableSelectionModel.class);
+      TableSelectionModel selectionModel = ObjectUtils.tryCast(myResultPanel.getSelectionModel(), TableSelectionModel.class);
       if (selectionModel == null) return false;
       if (interval) {
         int lead = myTable.getSelectionModel().getLeadSelectionIndex();
@@ -347,7 +349,7 @@ public class TableResultRowHeader extends GridRowHeader {
       int expandedHeight = getExpandedRowHeight(rowToResize);
       int newHeight = myTable.getRowHeight(rowToResize) >= expandedHeight ? myTable.getRowHeight() : expandedHeight;
 
-      myTable.setRowHeight(rowToResize, newHeight);
+      myView.setRowHeight(rowToResize, newHeight);
     }
 
     private int getExpandedRowHeight(int row) {
@@ -389,7 +391,7 @@ public class TableResultRowHeader extends GridRowHeader {
 
     @Override
     public Color getBackground() {
-      Color background = myTable.isTransposed() ?
+      Color background = isTransposed() ?
                          myResultPanel.getColorModel().getColumnHeaderBackground(getColumnModelIndex()) :
                          myResultPanel.getColorModel().getRowHeaderBackground(getRowModelIndex());
       if (background != null) {
@@ -406,7 +408,7 @@ public class TableResultRowHeader extends GridRowHeader {
 
     @Override
     public Color getForeground() {
-      return myTable.isTransposed() ?
+      return isTransposed() ?
              myResultPanel.getColorModel().getColumnHeaderForeground(getColumnModelIndex()) :
              myResultPanel.getColorModel().getRowHeaderForeground(getRowModelIndex());
     }
@@ -472,7 +474,7 @@ public class TableResultRowHeader extends GridRowHeader {
 
     private int getBaseline() {
       FontMetrics metrics = myTable.getFontMetrics(myTable.getFont());
-      return (myTable.getTextLineHeight() + metrics.getAscent() - metrics.getDescent() + JBUI.scale(4)) / 2;
+      return (myView.getTextLineHeight() + metrics.getAscent() - metrics.getDescent() + JBUI.scale(4)) / 2;
     }
 
     private int preferredWidthOf(String text) {

@@ -7,22 +7,16 @@ import com.intellij.database.run.ui.EDIT_MAXIMIZED_GRID_KEY
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Component
-import java.util.function.Predicate
 
-/**
- * Stores the grid state captured on the EDT for background action updates.
- * The component references support identity checks without reading Swing state.
- */
+/** Stores the grid state captured on the EDT for background action updates. */
 @ApiStatus.Internal
 class GridActionUiState private constructor(
   private val grid: DataGrid,
   private val leadCell: LeadCell?,
-  private val cellComponentMatcher: Predicate<Component?>,
+  /** Whether the action runs in one of the grid's tables, rather than on the grid panel, a grid toolbar, or an open cell editor. */
+  val isInCell: Boolean,
   val isValueTabSelected: Boolean,
 ) {
-  fun isCellComponent(component: Component?): Boolean = cellComponentMatcher.test(component)
-
   fun getLeadSelectionCellValue(singleCellOnly: Boolean): Any? {
     val cell = leadCell ?: return null
     return if (singleCellOnly && !cell.isSingleCell) null else cell.value
@@ -36,14 +30,16 @@ class GridActionUiState private constructor(
     fun getForGrid(grid: DataGrid, context: DataContext): GridActionUiState? =
       context.getData(DatabaseDataKeys.DATA_GRID_ACTION_UI_STATE_KEY)?.takeIf { it.grid === grid }
 
+    /** Captures the state; [inCell] is true only for the components that show the cells. */
     @JvmStatic
+    @JvmOverloads
     @RequiresEdt
-    fun capture(grid: DataGrid): GridActionUiState {
+    fun capture(grid: DataGrid, inCell: Boolean = false): GridActionUiState {
       val view = grid.getUserData(EDIT_MAXIMIZED_GRID_KEY)
       return GridActionUiState(
         grid,
         captureLeadCell(grid),
-        grid.resultView.captureCellComponentMatcher(),
+        inCell,
         view != null && !view.isDisposed && view.isValueTabSelected(),
       )
     }

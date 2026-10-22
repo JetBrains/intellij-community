@@ -45,25 +45,25 @@ public interface ResultViewWithCells {
                                              boolean forDisplay) {
     if (!forDisplay) return component;
     ResultView view = (ResultView)resultView;
-    return prepareComponent(component, grid, resultView, SelectionModelUtil.get(grid, view), view.getComponent(), row, column);
+    SelectionModel<GridRow, GridColumn> selectionModel = SelectionModelUtil.get(grid, view);
+    boolean selected = selectionModel.isSelected(row, column);
+    return prepareComponent(component, grid, selected, resultView.getCellBackground(row, column, selected),
+                            resultView.getCellForeground(selected), view.getComponent(), row, column);
   }
 
   /**
-   * Prepares a displayed cell of {@code cells}, which can be one table of a view rather than a view.
-   * {@code selectionModel} reads {@code row} and {@code column} as indices of {@code cells}, and {@code cellComponent} shows them.
+   * Prepares a displayed cell that {@code cellComponent} shows, such as one table of a view, with colors already resolved.
+   * A null {@code background} gives the cell the background of {@code cellComponent}, unless the table paints the row background.
    */
   static @NotNull Component prepareComponent(@NotNull Component component,
                                              @NotNull DataGrid grid,
-                                             @NotNull ResultViewWithCells cells,
-                                             @NotNull SelectionModel<GridRow, GridColumn> selectionModel,
+                                             boolean selected,
+                                             @Nullable Color background,
+                                             @NotNull Color foreground,
                                              @NotNull JComponent cellComponent,
                                              @NotNull ViewIndex<GridRow> row,
                                              @NotNull ViewIndex<GridColumn> column) {
     JComponent unwrapped = (JComponent)ExpandedItemRendererComponentWrapper.unwrap(component);
-
-    boolean selected = selectionModel.isSelected(row, column);
-    Color background = cells.getCellBackground(row, column, selected);
-    Color foreground = cells.getCellForeground(selected);
 
     if (background != null) {
       unwrapped.setBackground(background);

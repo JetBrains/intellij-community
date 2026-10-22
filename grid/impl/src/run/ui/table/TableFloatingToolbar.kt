@@ -2,14 +2,19 @@ package com.intellij.database.run.ui.table
 
 import com.intellij.codeInsight.hint.HintUtil.getHintBorderColor
 import com.intellij.database.DataGridBundle
+import com.intellij.database.DatabaseDataKeys
 import com.intellij.database.datagrid.DataGrid
 import com.intellij.database.datagrid.GridUtil
+import com.intellij.database.util.GridActionUiState
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.customization.CustomizableActionGroupProvider
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.SeparatorAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.MoreActionGroup
@@ -36,13 +41,14 @@ import java.awt.Rectangle
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.BorderFactory
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
 /**
- * Shows the floating actions of a grid in a popup at a point it is given.
+ * Shows the floating actions of a grid in a popup above a cell it is given.
+ * The actions run in the grid's data context, like those of the grid's other toolbars, and act on the grid's selection.
  * [TableFloatingToolbarController] decides when and where, from the input the tables receive.
  */
 class TableFloatingToolbar internal constructor(
-  private val actionTarget: JComponent,
   private val grid: DataGrid,
   private val cs: CoroutineScope,
 ) {
@@ -62,15 +68,27 @@ class TableFloatingToolbar internal constructor(
     }
   )
 
+  private val gridComponent = grid.panel.component
+
   private val actionToolbar = object : ActionToolbarImpl(ACTION_PLACE, actionGroup, true) {
     override fun actionsUpdated(forced: Boolean, newVisibleActions: List<AnAction>) {
       super.actionsUpdated(forced, newVisibleActions)
       hintUpdate()
     }
+
+    // The toolbar is offered for a cell, so its actions run in a cell, and their popups open below that cell.
+    override fun getDataContext(): DataContext {
+      val state = GridActionUiState.capture(grid, inCell = true)
+      val popupPoint = popupPoint()
+      return CustomizedDataContext.withSnapshot(super.getDataContext()) { sink ->
+        sink[DatabaseDataKeys.DATA_GRID_ACTION_UI_STATE_KEY] = state
+        sink[PlatformDataKeys.CONTEXT_MENU_POINT] = popupPoint
+      }
+    }
   }.apply {
     layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
     component.border = JBUI.Borders.empty()
-    targetComponent = actionTarget
+    targetComponent = gridComponent
     isReservePlaceAutoPopupIcon = false
     ClientProperty.put(this, ActionToolbarImpl.SUPPRESS_FAST_TRACK, true)
   }
@@ -90,8 +108,13 @@ class TableFloatingToolbar internal constructor(
   /** The component the popup is requested in, or null while no popup is requested. */
   private var shownIn: JComponent? = null
 
-  /** Where the bottom-right corner of the popup goes, in [shownIn] coordinates. */
-  private var shownAt = Point(0, 0)
+  /** The cell the popup is shown for, in [shownIn] coordinates. */
+  private var shownFor = Rectangle()
+
+  /** Where the bottom-right corner of the popup goes, in [shownIn] coordinates: the top-right corner of the cell. */
+  private val shownAt: Point
+    get() = Point(shownFor.x + shownFor.width, shownFor.y)
+
   private val showingJob: AtomicReference<Job?> = AtomicReference(null)
 
   internal val isShowing: Boolean
@@ -116,14 +139,14 @@ class TableFloatingToolbar internal constructor(
 
   private fun isDisabled(): Boolean = GridUtil.getSettings(grid)?.isDisableGridFloatingToolbar ?: true
 
-  /** Shows the popup in [anchor], with its bottom-right corner at [corner], once the actions are updated. */
-  internal fun show(anchor: JComponent, corner: Point) {
+  /** Shows the popup above [cell], given in [anchor] coordinates, once the actions are updated. */
+  internal fun show(anchor: JComponent, cell: Rectangle) {
     if (isDisabled()) {
       return
     }
 
     shownIn = anchor
-    shownAt = corner
+    shownFor = Rectangle(cell)
     val job = cs.launch(Dispatchers.EDT) {
       ComponentUtil.markAsShowing(actionToolbar.component, true)
       val future = actionToolbar.updateActionsAsync()
@@ -159,9 +182,19 @@ class TableFloatingToolbar internal constructor(
     hint.hide()
   }
 
+  /** Where popups of the actions open: below the cell, in the coordinates of the grid's component. */
+  private fun popupPoint(): Point? {
+    val anchor = shownIn ?: return null
+    return SwingUtilities.convertPoint(anchor, Point(shownFor.x, shownFor.y + shownFor.height), gridComponent)
+  }
+
   /** The component and the point the popup is requested at, or null while none is requested. */
   @TestOnly
-  internal fun getRequestedDisplay(): Pair<JComponent, Point>? = shownIn?.let { it to Point(shownAt) }
+  internal fun getRequestedDisplay(): Pair<JComponent, Point>? = shownIn?.let { it to shownAt }
+
+  /** The data context the actions of the toolbar get. */
+  @TestOnly
+  internal fun getActionDataContext(): DataContext = actionToolbar.toolbarDataContext
 
   companion object {
     const val ACTION_PLACE = "TableFloatingToolbar"

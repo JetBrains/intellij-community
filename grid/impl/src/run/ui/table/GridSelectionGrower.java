@@ -11,17 +11,17 @@ import java.util.List;
 
 class GridSelectionGrower {
   private final DataGrid myPanel;
-  private final GridTable myTable;
+  private final TableResultView myView;
 
   private boolean myAdjusting;
   private GridSelection<GridRow, GridColumn> myPrevious;
   private final List<GridSelection<GridRow, GridColumn>> myGrowthHistory = new ArrayList<>();
 
-  GridSelectionGrower(@NotNull DataGrid panel, @NotNull GridTable table) {
+  GridSelectionGrower(@NotNull DataGrid panel, @NotNull TableResultView view) {
     myPanel = panel;
-    myTable = table;
+    myView = view;
 
-    myTable.addSelectionChangedListener(isAdjusting -> {
+    myView.addSelectionChangedListener(isAdjusting -> {
       if (!myAdjusting && !isAdjusting) myGrowthHistory.clear();
     });
   }
@@ -54,12 +54,12 @@ class GridSelectionGrower {
   }
 
   private void growSelectionInternal() {
-    GridSelectionGrowerStrategy grower = GridSelectionGrowerStrategy.of(myPanel, myTable);
+    GridSelectionGrowerStrategy grower = GridSelectionGrowerStrategy.of(myPanel, myView);
     if (grower == null) return;
     myGrowthHistory.add(myPanel.getSelectionModel().store());
     if (grower.isNeedRestore() && myPrevious != null) restore();
     myPrevious = grower.isNeedStore() ? myPanel.getSelectionModel().store() : myPrevious;
-    grower.changeSelection(myPanel, myTable);
+    grower.changeSelection(myPanel, myView);
   }
 
   private void shrinkSelectionInternal() {
