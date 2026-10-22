@@ -59,10 +59,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   @ApiStatus.Internal
   public static final String DEFAULT_SHOW_INTENTION_BULB = "ide.default.intention.bulb.shown";
 
-  //Q: make it interface?
   public static final class OptionSet {
-    // todo: unused? schedule for removal?
-    public String LINE_SEPARATOR;
     public String USE_SOFT_WRAPS;
     public String SOFT_WRAP_FILE_MASKS = SOFT_WRAP_FILE_MASKS_DEFAULT;
     public boolean USE_CUSTOM_SOFT_WRAP_INDENT = true;
@@ -139,9 +136,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     @ApiStatus.Internal
     public BidiTextDirection BIDI_TEXT_DIRECTION = BidiTextDirection.CONTENT_BASED;
 
-    // todo: useful? schedule for removal?
-    public boolean SHOW_PARAMETER_NAME_HINTS = true;
-
     public boolean KEEP_TRAILING_SPACE_ON_CARET_LINE = true;
 
     public boolean INSERT_PARENTHESES_AUTOMATICALLY = true;
@@ -213,8 +207,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   private OptionSet myOptions = new OptionSet();
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private final Map<String, Boolean> myDefaultBreadcrumbVisibility = new HashMap<>();
-
-  private int myBlockIndent;
 
   public static final @NonNls String STRIP_TRAILING_SPACES_NONE = "None";
   public static final @NonNls String STRIP_TRAILING_SPACES_CHANGED = "Changed";
@@ -562,11 +554,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setDocCommentRenderingEnabled(boolean value) {
-    boolean oldValue = myOptions.ENABLE_RENDERED_DOC;
+    boolean old = myOptions.ENABLE_RENDERED_DOC;
+    if (old == value) return;
     myOptions.ENABLE_RENDERED_DOC = value;
-    if (oldValue != value) {
-      myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ENABLE_RENDERED_DOC, oldValue, value);
-    }
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ENABLE_RENDERED_DOC, old, value);
   }
 
   public boolean isBlockCursor() {
@@ -636,14 +627,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   @Deprecated
   public boolean isCaretRowShown() {
     return true;
-  }
-
-  public int getBlockIndent() {
-    return myBlockIndent;
-  }
-
-  public void setBlockIndent(int blockIndent) {
-    myBlockIndent = blockIndent;
   }
 
   public boolean isSmartHome() {
@@ -1231,7 +1214,10 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     @ApiStatus.Experimental public static final @NonNls String PROP_IS_SMOOTH_CARET_BLINKING = "isSmoothCaretBlinking";
     public static final @NonNls String PROP_IS_RIGHT_MARGIN_SHOWN = "isRightMarginShown";
     public static final @NonNls String PROP_ARE_LINE_NUMBERS_SHOWN = "areLineNumbersShown";
-    public static final @NonNls String PROP_ARE_LINE_NUMBERS_AFTER_ICONS = "areLineNumbersAfterIcons";
+    /**
+     * @deprecated No setting sends this event. Line numbers after icons are a setting of one editor.
+     */
+    @Deprecated public static final @NonNls String PROP_ARE_LINE_NUMBERS_AFTER_ICONS = "areLineNumbersAfterIcons";
     public static final @NonNls String PROP_LINE_NUMERATION = "lineNumeration";
     public static final @NonNls String PROP_ARE_GUTTER_ICONS_SHOWN = "areGutterIconsShown";
     public static final @NonNls String PROP_IS_FOLDING_OUTLINE_SHOWN = "isFoldingOutlineShown";

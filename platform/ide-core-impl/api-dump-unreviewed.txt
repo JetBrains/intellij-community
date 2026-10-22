@@ -143,7 +143,6 @@ c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 - areStickyLinesShown():Z
 - areStickyLinesShownFor(java.lang.String):Z
 - p:firePropertyChange(java.lang.String,Z,Z):V
-- getBlockIndent():I
 - getCustomSoftWrapIndent():I
 - getOptions():com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OptionSet
 - getState():com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OptionSet
@@ -180,7 +179,6 @@ c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 - setBlinkCaret(Z):V
 - setBlinkPeriod(I):V
 - setBlockCursor(Z):V
-- setBlockIndent(I):V
 - setBreadcrumbsAbove(Z):Z
 - setBreadcrumbsShownFor(java.lang.String,Z):Z
 - setCamelWords(Z):V
@@ -266,7 +264,6 @@ f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OptionSet
 - IS_WHITESPACES_SHOWN:Z
 - KEEP_TRAILING_SPACE_ON_CARET_LINE:Z
 - LINE_NUMERATION:com.intellij.openapi.editor.EditorSettings$LineNumerationType
-- LINE_SEPARATOR:java.lang.String
 - PRESELECT_RENAME:Z
 - REFRAIN_FROM_SCROLLING:Z
 - REMOVE_TRAILING_BLANK_LINES:Z
@@ -277,7 +274,6 @@ f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OptionSet
 - SHOW_INSPECTION_WIDGET:Z
 - SHOW_INTENTION_BULB:Z
 - SHOW_INTENTION_PREVIEW:Z
-- SHOW_PARAMETER_NAME_HINTS:Z
 - SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT:Z
 - SHOW_STICKY_LINES:Z
 - SMART_HOME:Z
