@@ -17,6 +17,25 @@ class RequirementsCompletionTest : PythonDependencyTestCase() {
     checkCompletionResults("mypy", "mypy-extensions")
   }
 
+  // PY-72776: a hyphenated repository name matches the user's underscore prefix.
+  fun testPackageNameCompletionUnderscoreMatchesHyphen() {
+    mockPackageNames(listOf("factory-boy", "factory-bot"))
+
+    completeInRequirementsFile()
+    // The user typed `factory_`, so suggestions preserve the underscore style.
+    checkCompletionResults("factory_boy", "factory_bot")
+  }
+
+  // The hyphen/underscore collapse must leave dotted names alone — `zope.interface` is a legit pip name,
+  // whereas `zope-interface` is not and would make pip fail to install.
+  fun testPackageNameCompletionPreservesDots() {
+    mockPackageNames(listOf("zope.interface", "zope.event"))
+
+    completeInRequirementsFile()
+    checkCompletionResults("zope.interface", "zope.event")
+  }
+
+
   fun testPackageNameInProjectTablePyProjectToml() {
     mockPackageNames(listOf("mypy", "mypy-extensions"))
 
