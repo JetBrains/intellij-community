@@ -18,6 +18,7 @@ class QueryBuilder {
    * Otherwise, it's a short name of the parent class.
    * Example: `byClass("JBList")`
    */
+  @Deprecated("Use byJavaClass or byType. They take a full class name, so the IDE resolves it and updates it on rename.")
   fun byClass(cls: String) = byAttribute("class", cls)
 
   /**
