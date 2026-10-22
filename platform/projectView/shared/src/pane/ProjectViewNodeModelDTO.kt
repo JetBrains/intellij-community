@@ -3,8 +3,6 @@ package com.intellij.platform.projectView.pane
 
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
-import com.intellij.ide.vfs.virtualFile
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.treeStructure.TreeNodePresentationImpl
 import kotlinx.serialization.Serializable
 
@@ -20,11 +18,9 @@ internal data class ProjectViewNodeModelDTO(
 
 @Serializable
 internal data class ProjectViewNodeUserObjectDTO(
-  override val name: String, // not used on the frontend currently, but is useful for debugging
+  val name: String, // not used on the frontend currently, but is useful for debugging
   val virtualFileId: VirtualFileId?,
-) : ProjectViewNodeUserObject {
-  override fun getVirtualFile(): VirtualFile? = virtualFileId?.virtualFile()
-}
+)
 
 internal fun ProjectViewNodeModelImpl<*>.toDTO(): ProjectViewNodeModelDTO = ProjectViewNodeModelDTO(
   id = id,
@@ -42,8 +38,15 @@ private fun ProjectViewNodeUserObject.toDTO(): ProjectViewNodeUserObjectDTO {
   )
 }
 
+private fun ProjectViewNodeUserObjectDTO.toFrontendUserObject(): ProjectViewNodeUserObject {
+  return FrontendProjectViewNodeUserObject(
+    name = name,
+    virtualFileId = virtualFileId,
+  )
+}
+
 internal fun ProjectViewNodeModelDTO.toModel(): ProjectViewNodeModelImpl<ProjectViewNodeUserObject> = ProjectViewNodeModelImpl(
-  userObject = userObjectDTO,
+  userObject = userObjectDTO.toFrontendUserObject(),
   id = id,
   presentation = presentationDTO.toPresentation() as TreeNodePresentationImpl,
   pathElementType = pathElementType,
