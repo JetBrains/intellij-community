@@ -348,6 +348,15 @@ public final class ComponentUtil {
     component.putClientProperty(IS_SHOWING, value ? Boolean.TRUE : null);
   }
 
+  /**
+   * Tells if {@link #markAsShowing} or {@link #forceMarkAsShowing} marked the {@code component} itself as showing.
+   * Unlike {@link #isShowing(Component, boolean)}, it ignores the real showing state and the parents.
+   */
+  @ApiStatus.Internal
+  public static boolean isMarkedAsShowing(@NotNull JComponent component) {
+    return Boolean.TRUE.equals(component.getClientProperty(IS_SHOWING));
+  }
+
   public static void decorateWindowHeader(@Nullable JRootPane pane) {
     if (pane != null && OS.CURRENT == OS.macOS) {
       pane.putClientProperty(
