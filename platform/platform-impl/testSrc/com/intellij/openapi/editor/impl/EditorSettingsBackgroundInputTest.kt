@@ -25,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * The tab size of an editor through the background branch of [BackgroundStateInput], which production uses.
@@ -72,6 +73,47 @@ internal class EditorSettingsBackgroundInputTest {
         editor.view.tabSize
       }
       assertEquals(fileTabSize, viewTabSize)
+    }
+    finally {
+      releaseEditor(editor)
+    }
+  }
+
+  /**
+   * A change of a state property refreshes the editor, and the state already holds the new value. So the change must
+   * not compute the inputs again.
+   */
+  @Test
+  fun testAPropertyChangeComputesNoInput(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    BackgroundStateInput.computeInBackgroundInTests(disposable)
+    val testProject = project.get()
+    val testFile = file.get().virtualFile
+    val computations = AtomicInteger()
+    val provider = object : FileIndentOptionsProvider() {
+      override fun getIndentOptions(project: Project, settings: CodeStyleSettings, file: VirtualFile): IndentOptions? {
+        if (file == testFile) {
+          computations.incrementAndGet()
+        }
+        return null
+      }
+    }
+    ExtensionTestUtil.maskExtensions(FileIndentOptionsProvider.EP_NAME, listOf(provider), disposable)
+
+    val editor = createEditor(testProject, testFile)
+    try {
+      val settings = editor.settings
+      val state = (settings as SettingsImpl).getState()
+      state.awaitInputsForTests()
+      val computationsAfterBuild = computations.get()
+
+      withContext(Dispatchers.UiWithModelAccess) {
+        writeIntentReadAction {
+          settings.isLineNumbersShown = !settings.isLineNumbersShown
+        }
+      }
+      state.awaitInputsForTests()
+
+      assertEquals(computationsAfterBuild, computations.get())
     }
     finally {
       releaseEditor(editor)

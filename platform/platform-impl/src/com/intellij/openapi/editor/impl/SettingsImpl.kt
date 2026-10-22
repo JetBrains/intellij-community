@@ -471,13 +471,10 @@ class SettingsImpl internal constructor(
    */
   private fun onStatePropertyChanged(event: ObservableStateListener.PropertyChangeEvent) {
     val propertyName = event.propertyName
-    if (!doNotRefreshEditorFlag) {
-      when (propertyName) {
-        // A reinit of the settings computes the indent values again, and a tab size change does not need that.
-        EditorSettingsState::tabSize.name -> fireEditorRefresh(reinitSettings = false)
-        in PROPERTIES_WITHOUT_EDITOR_REFRESH -> {}
-        else -> fireEditorRefresh()
-      }
+    if (!doNotRefreshEditorFlag && propertyName !in PROPERTIES_WITHOUT_EDITOR_REFRESH) {
+      // The state holds the new value already, so the editor needs no reinit of the settings. That reinit would
+      // recalculate every default and compute the inputs again.
+      editor?.reinitSettings(true, false)
     }
     when (propertyName) {
       EditorSettingsState::myIsBlockCursor.name, EditorSettingsState::myIsSmoothCaretMovement.name -> {
@@ -491,10 +488,6 @@ class SettingsImpl internal constructor(
         editor?.stickyLinesForLangChanged(event)
       }
     }
-  }
-
-  private fun fireEditorRefresh(reinitSettings: Boolean = true) {
-    editor?.reinitSettings(true, reinitSettings)
   }
 
   /**
@@ -525,8 +518,7 @@ class SettingsImpl internal constructor(
 }
 
 /**
- * The state properties whose change needs no editor refresh. `myUseTabCharacter` does not change the view, and
- * [SettingsImpl.onStatePropertyChanged] refreshes the editor for `tabSize` in its own way.
+ * The state properties whose change needs no editor refresh. For example, `myUseTabCharacter` does not change the view.
  */
 private val PROPERTIES_WITHOUT_EDITOR_REFRESH: Set<String> = setOf(
   EditorSettingsState::myLineCursorWidth.name,
