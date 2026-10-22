@@ -419,9 +419,14 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       systemProperties.put("test.group.roots", testGroupRoots.joinToString(File.pathSeparator, transform = Path::absolutePathString))
     }
 
-    //filter out only for community (ALL_EXCLUDE_DEFINED)
+    //filter out for:
+    // - community (ALL_EXCLUDE_DEFINED)
+    // - community java tests (COMMUNITY_JAVA_TESTS)
     val isBazelMigratedGroup =
-      options.testGroups?.contains(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED) == true && mainModule.name == "intellij.idea.community.main.tests"
+      mainModule.name == "intellij.idea.community.main.tests" && (
+        options.testGroups?.contains(GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED) == true ||
+        options.testGroups?.contains("COMMUNITY_JAVA_TESTS") == true
+      )
 
     val searchForTestsAcrossModuleDependencies = options.searchScope == JUnitRunConfigurationProperties.TestSearchScope.MODULE_WITH_DEPENDENCIES.serialized
     val testModules = let {
