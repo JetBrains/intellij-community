@@ -39,11 +39,21 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
+ * The global editor settings of the IDE, stored in {@code editor.xml}.
+ * <p>
+ * An editor reads its settings only through {@link EditorSettings}. Each setting here is one of two kinds:
+ * <ul>
+ *   <li>The default of an {@link EditorSettings} property. Each editor follows it, unless the editor has its own value.</li>
+ *   <li>An IDE option, such as a save action or the breadcrumbs. No editor reads it.</li>
+ * </ul>
+ * A setter sends a property change event with a name from {@link PropNames}, and the editor settings follow these
+ * events. A direct write to {@link OptionSet} and {@link #loadState} send no event. Open editors see such a change only
+ * after {@code EditorFactory.refreshAllEditors()}.
+ *
  * @see EditorSettingsRefactoringOptionsProvider
  */
 @State(name = "EditorSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE, perClient = true)
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
-
   public static final UINumericRange BLINKING_RANGE = new UINumericRange(500, 10, 1500);
   public static final UINumericRange TOOLTIPS_DELAY_RANGE = new UINumericRange(500, 1, 5000);
 
@@ -55,9 +65,1026 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   @ApiStatus.Internal
   public static final String DEFAULT_SMOOTH_CARET_MOVEMENT = "ide.default.smooth.caret.enabled";
+
   /** A product sets this system property to {@code false} to hide the intention bulb by default. */
   @ApiStatus.Internal
   public static final String DEFAULT_SHOW_INTENTION_BULB = "ide.default.intention.bulb.shown";
+
+  public static final @NonNls String STRIP_TRAILING_SPACES_NONE = "None";
+  public static final @NonNls String STRIP_TRAILING_SPACES_CHANGED = "Changed";
+  public static final @NonNls String STRIP_TRAILING_SPACES_WHOLE = "Whole";
+
+  @MagicConstant(stringValues = {STRIP_TRAILING_SPACES_NONE, STRIP_TRAILING_SPACES_CHANGED, STRIP_TRAILING_SPACES_WHOLE})
+  public @interface StripTrailingSpaces {}
+
+  private static final String COMPOSITE_PROPERTY_SEPARATOR = ":";
+  private final @NotNull OsSpecificState myOsSpecificState;
+  private final Set<SoftWrapAppliancePlaces> myPlacesToUseSoftWraps = EnumSet.noneOf(SoftWrapAppliancePlaces.class);
+  private OptionSet myOptions = new OptionSet();
+  private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
+  private final Map<String, Boolean> myDefaultBreadcrumbVisibility = new HashMap<>();
+
+  public EditorSettingsExternalizable() {
+    this(ApplicationManager.getApplication().getService(OsSpecificState.class));
+  }
+
+  @ApiStatus.Internal
+  @NonInjectable
+  public EditorSettingsExternalizable(@NotNull OsSpecificState state) {
+    myOsSpecificState = state;
+    // A fresh instance must carry the defaults before `loadState` runs, or without it.
+    parseRawSoftWraps();
+  }
+
+  public static EditorSettingsExternalizable getInstance() {
+    return ApplicationManager.getApplication().getService(EditorSettingsExternalizable.class);
+  }
+
+  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable disposable) {
+    myPropertyChangeSupport.addPropertyChangeListener(listener);
+    Disposer.register(disposable, () -> myPropertyChangeSupport.removePropertyChangeListener(listener));
+  }
+
+  protected void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
+    myPropertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+  }
+
+  @Override
+  public @NotNull OptionSet getState() {
+    return myOptions;
+  }
+
+  @Override
+  public void loadState(@NotNull OptionSet state) {
+    // xmlb writes null into an enum field when the stored `<option>` carries no `value` attribute
+    // (converter path, see TagBinding) or an unknown constant name (plain enum path, see ClassUtil.stringToEnum).
+    // Heal it right after loading so that the broken value is not written back on the next save.
+    state.CARET_EASING = Objects.requireNonNullElse(state.CARET_EASING, DEFAULT_CARET_EASING);
+    state.LINE_NUMERATION = Objects.requireNonNullElse(state.LINE_NUMERATION, DEFAULT_LINE_NUMERATION);
+    myOptions = state;
+    parseRawSoftWraps();
+  }
+
+  @Override
+  public void noStateLoaded() {
+    loadState(new OptionSet());
+  }
+
+  public OptionSet getOptions() {
+    return myOptions;
+  }
+
+  // Defaults of EditorSettings properties: the gutter.
+
+  public boolean isLineNumbersShown() {
+    return myOptions.ARE_LINE_NUMBERS_SHOWN;
+  }
+
+  public void setLineNumbersShown(boolean val) {
+    boolean old = myOptions.ARE_LINE_NUMBERS_SHOWN;
+    if (old == val) return;
+    myOptions.ARE_LINE_NUMBERS_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ARE_LINE_NUMBERS_SHOWN, old, val);
+  }
+
+  public @NotNull EditorSettings.LineNumerationType getLineNumeration() {
+    return Objects.requireNonNullElse(myOptions.LINE_NUMERATION, DEFAULT_LINE_NUMERATION);
+  }
+
+  public void setLineNumeration(@Nullable EditorSettings.LineNumerationType val) {
+    EditorSettings.LineNumerationType newValue = Objects.requireNonNullElse(val, DEFAULT_LINE_NUMERATION);
+    EditorSettings.LineNumerationType old = myOptions.LINE_NUMERATION;
+    if (old == newValue) return;
+    myOptions.LINE_NUMERATION = newValue;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_LINE_NUMERATION, old, newValue);
+  }
+
+  public boolean areGutterIconsShown() {
+    return myOptions.ARE_GUTTER_ICONS_SHOWN;
+  }
+
+  public void setGutterIconsShown(boolean val) {
+    boolean old = myOptions.ARE_GUTTER_ICONS_SHOWN;
+    if (old == val) return;
+    myOptions.ARE_GUTTER_ICONS_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ARE_GUTTER_ICONS_SHOWN, old, val);
+  }
+
+  public boolean isFoldingOutlineShown() {
+    return myOptions.IS_FOLDING_OUTLINE_SHOWN;
+  }
+
+  public void setFoldingOutlineShown(boolean val) {
+    boolean old = myOptions.IS_FOLDING_OUTLINE_SHOWN;
+    if (old == val) return;
+    myOptions.IS_FOLDING_OUTLINE_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_FOLDING_OUTLINE_SHOWN, old, val);
+  }
+
+  public boolean isFoldingOutlineShownOnlyOnHover() {
+    return myOptions.IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER;
+  }
+
+  public void setFoldingOutlineShownOnlyOnHover(boolean val) {
+    boolean old = myOptions.IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER;
+    if (old == val) return;
+    myOptions.IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER, old, val);
+  }
+
+  public boolean isFoldingEndingsShown() {
+    return myOptions.IS_FOLDING_ENDINGS_SHOWN;
+  }
+
+  public void setFoldingEndingsShown(boolean val) {
+    boolean old = myOptions.IS_FOLDING_ENDINGS_SHOWN;
+    if (old == val) return;
+    myOptions.IS_FOLDING_ENDINGS_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_FOLDING_ENDINGS_SHOWN, old, val);
+  }
+
+  // Defaults of EditorSettings properties: the view.
+
+  public boolean isRightMarginShown() {
+    return myOptions.IS_RIGHT_MARGIN_SHOWN;
+  }
+
+  public void setRightMarginShown(boolean val) {
+    boolean old = myOptions.IS_RIGHT_MARGIN_SHOWN;
+    if (old == val) return;
+    myOptions.IS_RIGHT_MARGIN_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_RIGHT_MARGIN_SHOWN, old, val);
+  }
+
+  
+  public boolean isHighlightSelectionOccurrences() {
+    return myOptions.IS_HIGHLIGHT_SELECTION_OCCURRENCES;
+  }
+
+  
+  public void setHighlightSelectionOccurrences(boolean val) {
+    boolean old = myOptions.IS_HIGHLIGHT_SELECTION_OCCURRENCES;
+    if (old == val) return;
+    myOptions.IS_HIGHLIGHT_SELECTION_OCCURRENCES = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_HIGHLIGHT_SELECTION_OCCURRENCES, old, val);
+  }
+
+  public boolean isWhitespacesShown() {
+    return myOptions.IS_WHITESPACES_SHOWN;
+  }
+
+  public void setWhitespacesShown(boolean val) {
+    boolean old = myOptions.IS_WHITESPACES_SHOWN;
+    if (old == val) return;
+    myOptions.IS_WHITESPACES_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_WHITESPACES_SHOWN, old, val);
+  }
+
+  public boolean isLeadingWhitespacesShown() {
+    return myOptions.IS_LEADING_WHITESPACES_SHOWN;
+  }
+
+  public void setLeadingWhitespacesShown(boolean val) {
+    boolean old = myOptions.IS_LEADING_WHITESPACES_SHOWN;
+    if (old == val) return;
+    myOptions.IS_LEADING_WHITESPACES_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_LEADING_WHITESPACES_SHOWN, old, val);
+  }
+
+  public boolean isInnerWhitespacesShown() {
+    return myOptions.IS_INNER_WHITESPACES_SHOWN;
+  }
+
+  public void setInnerWhitespacesShown(boolean val) {
+    boolean old = myOptions.IS_INNER_WHITESPACES_SHOWN;
+    if (old == val) return;
+    myOptions.IS_INNER_WHITESPACES_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_INNER_WHITESPACES_SHOWN, old, val);
+  }
+
+  public boolean isTrailingWhitespacesShown() {
+    return myOptions.IS_TRAILING_WHITESPACES_SHOWN;
+  }
+
+  public void setTrailingWhitespacesShown(boolean val) {
+    boolean old = myOptions.IS_TRAILING_WHITESPACES_SHOWN;
+    if (old == val) return;
+    myOptions.IS_TRAILING_WHITESPACES_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_TRAILING_WHITESPACES_SHOWN, old, val);
+  }
+
+  public boolean isSelectionWhitespacesShown() {
+    return myOptions.IS_SELECTION_WHITESPACES_SHOWN;
+  }
+
+  public void setSelectionWhitespacesShown(boolean val) {
+    boolean old = myOptions.IS_SELECTION_WHITESPACES_SHOWN;
+    if (old == val) return;
+    myOptions.IS_SELECTION_WHITESPACES_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_SELECTION_WHITESPACES_SHOWN, old, val);
+  }
+
+  public boolean isIndentGuidesShown() {
+    return myOptions.IS_INDENT_GUIDES_SHOWN;
+  }
+
+  public void setIndentGuidesShown(boolean val) {
+    boolean old = myOptions.IS_INDENT_GUIDES_SHOWN;
+    if (old == val) return;
+    myOptions.IS_INDENT_GUIDES_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_INDENT_GUIDES_SHOWN, old, val);
+  }
+
+  /**
+   * @deprecated There is no global setting for the caret row, so this method always returns {@code true}. Use
+   * {@link EditorSettings#isCaretRowShown()} to read the setting of one editor.
+   */
+  @Deprecated
+  public boolean isCaretRowShown() {
+    return true;
+  }
+
+  public boolean isShowIntentionBulb() {
+    return myOptions.SHOW_INTENTION_BULB;
+  }
+
+  public void setShowIntentionBulb(boolean show) {
+    boolean old = myOptions.SHOW_INTENTION_BULB;
+    if (old == show) return;
+    myOptions.SHOW_INTENTION_BULB = show;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_INTENTION_BULB, old, show);
+  }
+
+  public boolean isShowInspectionWidget() {
+    return myOptions.SHOW_INSPECTION_WIDGET;
+  }
+
+  public void setShowInspectionWidget(boolean show) {
+    boolean old = myOptions.SHOW_INSPECTION_WIDGET;
+    if (old == show) return;
+    myOptions.SHOW_INSPECTION_WIDGET = show;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_INSPECTION_WIDGET, old, show);
+  }
+
+  public boolean isUseEditorFontInInlays() {
+    return myOptions.USE_EDITOR_FONT_IN_INLAYS;
+  }
+
+  public void setUseEditorFontInInlays(boolean value) {
+    boolean old = myOptions.USE_EDITOR_FONT_IN_INLAYS;
+    if (old == value) return;
+    myOptions.USE_EDITOR_FONT_IN_INLAYS = value;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_USE_EDITOR_FONT_IN_INLAYS, old, value);
+  }
+
+  @ApiStatus.Internal
+  public BidiTextDirection getBidiTextDirection() {
+    return myOptions.BIDI_TEXT_DIRECTION;
+  }
+
+  @ApiStatus.Internal
+  public void setBidiTextDirection(BidiTextDirection direction) {
+    BidiTextDirection old = myOptions.BIDI_TEXT_DIRECTION;
+    if (old == direction) return;
+    myOptions.BIDI_TEXT_DIRECTION = direction;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_BIDI_TEXT_DIRECTION, old, direction);
+  }
+
+  public boolean areStickyLinesShown() {
+    return myOptions.SHOW_STICKY_LINES;
+  }
+
+  public boolean setStickyLinesShown(boolean value) {
+    boolean old = myOptions.SHOW_STICKY_LINES;
+    if (old == value) return false;
+    myOptions.SHOW_STICKY_LINES = value;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_STICKY_LINES, old, value);
+    return true;
+  }
+
+  public boolean areStickyLinesShownFor(String languageID) {
+    Boolean visible = myOptions.mapLanguageStickyLines.get(languageID);
+    if (visible == null) {
+      // enabled for all languages by default
+      return true;
+    }
+    return visible;
+  }
+
+  @ApiStatus.Internal
+  public List<String> getDisabledStickyLines() {
+    return myOptions.mapLanguageStickyLines.entrySet().stream()
+      .filter(entry -> !entry.getValue())
+      .map(Map.Entry::getKey)
+      .collect(Collectors.toList());
+  }
+
+  public boolean setStickyLinesShownFor(String languageID, boolean value) {
+    Boolean visible = myOptions.mapLanguageStickyLines.put(languageID, value);
+    boolean newValue = (visible == null || visible) != value;
+    if (newValue) {
+      myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_STICKY_LINES_PER_LANGUAGE, visible, (Boolean)value);
+    }
+    return newValue;
+  }
+
+  public int getStickyLineLimit() {
+    return myOptions.STICKY_LINES_LIMIT;
+  }
+
+  public void setStickyLineLimit(int limit) {
+    int old = myOptions.STICKY_LINES_LIMIT;
+    if (old == limit) return;
+    myOptions.STICKY_LINES_LIMIT = limit;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_STICKY_LINES_LIMIT, old, limit);
+  }
+
+  // Defaults of EditorSettings properties: the caret.
+
+  public boolean isBlockCursor() {
+    return myOptions.IS_BLOCK_CURSOR;
+  }
+
+  public void setBlockCursor(boolean val) {
+    boolean old = myOptions.IS_BLOCK_CURSOR;
+    if (old == val) return;
+    myOptions.IS_BLOCK_CURSOR = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_BLOCK_CURSOR, old, val);
+  }
+
+  public boolean isFullLineHeightCursor() {
+    return myOptions.IS_FULL_LINE_HEIGHT_CURSOR;
+  }
+
+  public void setFullLineHeightCursor(boolean val) {
+    boolean old = myOptions.IS_FULL_LINE_HEIGHT_CURSOR;
+    if (old == val) return;
+    myOptions.IS_FULL_LINE_HEIGHT_CURSOR = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_FULL_LINE_HEIGHT_CURSOR, old, val);
+  }
+
+  @ApiStatus.Experimental
+  public boolean isSmoothCaretMovement() {
+    return myOptions.IS_SMOOTH_CARET_MOVEMENT;
+  }
+
+  @ApiStatus.Experimental
+  public void setSmoothCaretMovement(boolean val) {
+    boolean old = myOptions.IS_SMOOTH_CARET_MOVEMENT;
+    if (old == val) return;
+    myOptions.IS_SMOOTH_CARET_MOVEMENT = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_ANIMATED_CARET, old, val);
+  }
+
+  @ApiStatus.Experimental
+  public @NotNull EditorSettings.CaretEasing getCaretEasing() {
+    return Objects.requireNonNullElse(myOptions.CARET_EASING, DEFAULT_CARET_EASING);
+  }
+
+  @ApiStatus.Experimental
+  public void setCaretEasing(@Nullable EditorSettings.CaretEasing val) {
+    EditorSettings.CaretEasing newValue = Objects.requireNonNullElse(val, DEFAULT_CARET_EASING);
+    EditorSettings.CaretEasing old = myOptions.CARET_EASING;
+    if (old == newValue) return;
+    myOptions.CARET_EASING = newValue;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_CARET_EASING, old, newValue);
+  }
+
+  public boolean isBlinkCaret() {
+    return myOptions.IS_CARET_BLINKING;
+  }
+
+  public void setBlinkCaret(boolean blinkCaret) {
+    boolean old = myOptions.IS_CARET_BLINKING;
+    if (old == blinkCaret) return;
+    myOptions.IS_CARET_BLINKING = blinkCaret;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_CARET_BLINKING, old, blinkCaret);
+  }
+
+  public int getBlinkPeriod() {
+    return BLINKING_RANGE.fit(myOptions.CARET_BLINKING_PERIOD);
+  }
+
+  public void setBlinkPeriod(int blinkInterval) {
+    int newValue = BLINKING_RANGE.fit(blinkInterval);
+    int old = myOptions.CARET_BLINKING_PERIOD;
+    if (old == newValue) return;
+    myOptions.CARET_BLINKING_PERIOD = newValue;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_CARET_BLINKING_PERIOD, old, newValue);
+  }
+
+  @ApiStatus.Experimental
+  public boolean isSmoothBlinkCaret() {
+    return myOptions.IS_SMOOTH_CARET_BLINKING;
+  }
+
+  @ApiStatus.Experimental
+  public void setSmoothBlinkCaret(boolean smoothBlinkCaret) {
+    boolean old = myOptions.IS_SMOOTH_CARET_BLINKING;
+    if (old == smoothBlinkCaret) return;
+    myOptions.IS_SMOOTH_CARET_BLINKING = smoothBlinkCaret;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_SMOOTH_CARET_BLINKING, old, smoothBlinkCaret);
+  }
+
+  public boolean isVirtualSpace() {
+    return myOptions.IS_VIRTUAL_SPACE;
+  }
+
+  public void setVirtualSpace(boolean val) {
+    boolean oldValue = myOptions.IS_VIRTUAL_SPACE;
+    if (oldValue == val) return;
+
+    myOptions.IS_VIRTUAL_SPACE = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_VIRTUAL_SPACE, oldValue, val);
+  }
+
+  public boolean isCaretInsideTabs() {
+    return myOptions.IS_CARET_INSIDE_TABS;
+  }
+
+  public void setCaretInsideTabs(boolean val) {
+    boolean old = myOptions.IS_CARET_INSIDE_TABS;
+    if (old == val) return;
+    myOptions.IS_CARET_INSIDE_TABS = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_CARET_INSIDE_TABS, old, val);
+  }
+
+  public boolean isSmartHome() {
+    return myOptions.SMART_HOME;
+  }
+
+  public void setSmartHome(boolean val) {
+    boolean old = myOptions.SMART_HOME;
+    if (old == val) return;
+    myOptions.SMART_HOME = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SMART_HOME, old, val);
+  }
+
+  public boolean isCamelWords() {
+    return myOptions.IS_CAMEL_WORDS;
+  }
+
+  public void setCamelWords(boolean val) {
+    boolean old = myOptions.IS_CAMEL_WORDS;
+    if (old == val) return;
+    myOptions.IS_CAMEL_WORDS = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_CAMEL_WORDS, old, val);
+  }
+
+  public boolean isMouseClickSelectionHonorsCamelWords() {
+    return myOptions.IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS;
+  }
+
+  public void setMouseClickSelectionHonorsCamelWords(boolean val) {
+    boolean old = myOptions.IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS;
+    if (old == val) return;
+    myOptions.IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS, old, val);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull CaretStopOptions getCaretStopOptions() {
+    return myOsSpecificState.CARET_STOP_OPTIONS;
+  }
+
+  @ApiStatus.Internal
+  public void setCaretStopOptions(@NotNull CaretStopOptions options) {
+    CaretStopOptions old = myOsSpecificState.CARET_STOP_OPTIONS;
+    if (old.equals(options)) return;
+    myOsSpecificState.CARET_STOP_OPTIONS = options;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_CARET_STOP_OPTIONS, old, options);
+  }
+
+  public boolean addCaretsOnDoubleCtrl() {
+    return myOptions.ADD_CARETS_ON_DOUBLE_CTRL;
+  }
+
+  public void setAddCaretsOnDoubleCtrl(boolean val) {
+    boolean old = myOptions.ADD_CARETS_ON_DOUBLE_CTRL;
+    if (old == val) return;
+    myOptions.ADD_CARETS_ON_DOUBLE_CTRL = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ADD_CARETS_ON_DOUBLE_CTRL, old, val);
+  }
+
+  // Defaults of EditorSettings properties: soft wraps.
+
+  public boolean isUseSoftWraps() {
+    return isUseSoftWraps(SoftWrapAppliancePlaces.MAIN_EDITOR);
+  }
+
+  public boolean isUseSoftWraps(@NotNull SoftWrapAppliancePlaces place) {
+    return myPlacesToUseSoftWraps.contains(place);
+  }
+
+  public void setUseSoftWraps(boolean use) {
+    setUseSoftWraps(use, SoftWrapAppliancePlaces.MAIN_EDITOR);
+  }
+
+  public void setUseSoftWraps(boolean use, @NotNull SoftWrapAppliancePlaces place) {
+    boolean update = use ^ myPlacesToUseSoftWraps.contains(place);
+    if (!update) {
+      return;
+    }
+
+    if (use) {
+      myPlacesToUseSoftWraps.add(place);
+    }
+    else {
+      myPlacesToUseSoftWraps.remove(place);
+    }
+    storeRawSoftWraps();
+  }
+
+  /**
+   * Soft wraps are on in the main editor by default.
+   * Unit tests keep the old default, so that the editor tests stay deterministic.
+   */
+  @ApiStatus.Internal
+  @VisibleForTesting
+  public static @NotNull Set<SoftWrapAppliancePlaces> defaultSoftWrapPlaces(boolean unitTestMode) {
+    return unitTestMode ? EnumSet.noneOf(SoftWrapAppliancePlaces.class) : EnumSet.of(SoftWrapAppliancePlaces.MAIN_EDITOR);
+  }
+
+  public @NotNull String getSoftWrapFileMasks() {
+    // xmlb writes null into the field when the stored option carries no `value` attribute.
+    return Objects.requireNonNullElse(myOptions.SOFT_WRAP_FILE_MASKS, SOFT_WRAP_FILE_MASKS_DEFAULT);
+  }
+
+  public void setSoftWrapFileMasks(@NotNull String value) {
+    String old = myOptions.SOFT_WRAP_FILE_MASKS;
+    if (value.equals(old)) return;  // `value` is not null
+    myOptions.SOFT_WRAP_FILE_MASKS = value;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SOFT_WRAP_FILE_MASKS, old, value);
+  }
+
+  public boolean isAllSoftWrapsShown() {
+    return myOptions.IS_ALL_SOFTWRAPS_SHOWN;
+  }
+
+  public void setAllSoftwrapsShown(boolean val) {
+    boolean old = myOptions.IS_ALL_SOFTWRAPS_SHOWN;
+    if (old == val) return;
+    myOptions.IS_ALL_SOFTWRAPS_SHOWN = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_ALL_SOFTWRAPS_SHOWN, old, val);
+  }
+
+  public boolean isUseCustomSoftWrapIndent() {
+    return myOptions.USE_CUSTOM_SOFT_WRAP_INDENT;
+  }
+
+  public void setUseCustomSoftWrapIndent(boolean use) {
+    boolean old = myOptions.USE_CUSTOM_SOFT_WRAP_INDENT;
+    if (old == use) return;
+    myOptions.USE_CUSTOM_SOFT_WRAP_INDENT = use;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_USE_CUSTOM_SOFT_WRAP_INDENT, old, use);
+  }
+
+  public int getCustomSoftWrapIndent() {
+    return myOptions.CUSTOM_SOFT_WRAP_INDENT;
+  }
+
+  public void setCustomSoftWrapIndent(int indent) {
+    int old = myOptions.CUSTOM_SOFT_WRAP_INDENT;
+    if (old == indent) return;
+    myOptions.CUSTOM_SOFT_WRAP_INDENT = indent;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_CUSTOM_SOFT_WRAP_INDENT, old, indent);
+  }
+
+  // Defaults of EditorSettings properties: scrolling.
+
+  public int getVerticalScrollOffset() {
+    return myOptions.VERTICAL_SCROLL_OFFSET;
+  }
+
+  public void setVerticalScrollOffset(int offset) {
+    int old = myOptions.VERTICAL_SCROLL_OFFSET;
+    if (old == offset) return;
+    myOptions.VERTICAL_SCROLL_OFFSET = offset;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_VERTICAL_SCROLL_OFFSET, old, offset);
+  }
+
+  public int getVerticalScrollJump() {
+    return myOptions.VERTICAL_SCROLL_JUMP;
+  }
+
+  public void setVerticalScrollJump(int jump) {
+    int old = myOptions.VERTICAL_SCROLL_JUMP;
+    if (old == jump) return;
+    myOptions.VERTICAL_SCROLL_JUMP = jump;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_VERTICAL_SCROLL_JUMP, old, jump);
+  }
+
+  public int getHorizontalScrollOffset() {
+    return myOptions.HORIZONTAL_SCROLL_OFFSET;
+  }
+
+  public void setHorizontalScrollOffset(int offset) {
+    int old = myOptions.HORIZONTAL_SCROLL_OFFSET;
+    if (old == offset) return;
+    myOptions.HORIZONTAL_SCROLL_OFFSET = offset;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_HORIZONTAL_SCROLL_OFFSET, old, offset);
+  }
+
+  public int getHorizontalScrollJump() {
+    return myOptions.HORIZONTAL_SCROLL_JUMP;
+  }
+
+  public void setHorizontalScrollJump(int jump) {
+    int old = myOptions.HORIZONTAL_SCROLL_JUMP;
+    if (old == jump) return;
+    myOptions.HORIZONTAL_SCROLL_JUMP = jump;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_HORIZONTAL_SCROLL_JUMP, old, jump);
+  }
+
+  public boolean isSmoothScrolling() {
+    return myOptions.IS_ANIMATED_SCROLLING;
+  }
+
+  public void setSmoothScrolling(boolean val) {
+    boolean old = myOptions.IS_ANIMATED_SCROLLING;
+    if (old == val) return;
+    myOptions.IS_ANIMATED_SCROLLING = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_ANIMATED_SCROLLING, old, val);
+  }
+
+  public boolean isRefrainFromScrolling() {
+    return myOptions.REFRAIN_FROM_SCROLLING;
+  }
+
+  public void setRefrainFromScrolling(boolean b) {
+    boolean old = myOptions.REFRAIN_FROM_SCROLLING;
+    if (old == b) return;
+    myOptions.REFRAIN_FROM_SCROLLING = b;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_REFRAIN_FROM_SCROLLING, old, b);
+  }
+
+  public boolean isAdditionalPageAtBottom() {
+    return myOptions.ADDITIONAL_PAGE_AT_BOTTOM;
+  }
+
+  public void setAdditionalPageAtBottom(boolean val) {
+    boolean old = myOptions.ADDITIONAL_PAGE_AT_BOTTOM;
+    if (old == val) return;
+    myOptions.ADDITIONAL_PAGE_AT_BOTTOM = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ADDITIONAL_PAGE_AT_BOTTOM, old, val);
+  }
+
+  // Defaults of EditorSettings properties: the mouse.
+
+  public boolean isDndEnabled() {
+    return myOptions.IS_DND_ENABLED;
+  }
+
+  public void setDndEnabled(boolean val) {
+    boolean old = myOptions.IS_DND_ENABLED;
+    if (old == val) return;
+    myOptions.IS_DND_ENABLED = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_DND_ENABLED, old, val);
+  }
+
+  public boolean isWheelFontChangeEnabled() {
+    return myOptions.IS_WHEEL_FONTCHANGE_ENABLED;
+  }
+
+  public void setWheelFontChangeEnabled(boolean val) {
+    boolean old = myOptions.IS_WHEEL_FONTCHANGE_ENABLED;
+    if (old == val) return;
+    myOptions.IS_WHEEL_FONTCHANGE_ENABLED = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_WHEEL_FONTCHANGE_ENABLED, old, val);
+  }
+
+  public boolean isWheelFontChangePersistent() {
+    return myOptions.IS_WHEEL_FONTCHANGE_PERSISTENT;
+  }
+
+  public void setWheelFontChangePersistent(boolean val) {
+    boolean old = myOptions.IS_WHEEL_FONTCHANGE_PERSISTENT;
+    if (old == val) return;
+    myOptions.IS_WHEEL_FONTCHANGE_PERSISTENT = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_WHEEL_FONTCHANGE_PERSISTENT, old, val);
+  }
+
+  // Defaults of EditorSettings properties: editing.
+
+  public boolean isVariableInplaceRenameEnabled() {
+    return myOptions.RENAME_VARIABLES_INPLACE;
+  }
+
+  public void setVariableInplaceRenameEnabled(final boolean val) {
+    boolean old = myOptions.RENAME_VARIABLES_INPLACE;
+    if (old == val) return;
+    myOptions.RENAME_VARIABLES_INPLACE = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_RENAME_VARIABLES_INPLACE, old, val);
+  }
+
+  public boolean isPreselectRename() {
+    return myOptions.PRESELECT_RENAME;
+  }
+
+  public void setPreselectRename(final boolean val) {
+    boolean old = myOptions.PRESELECT_RENAME;
+    if (old == val) return;
+    myOptions.PRESELECT_RENAME = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_PRESELECT_RENAME, old, val);
+  }
+
+  public boolean isInsertParenthesesAutomatically() {
+    return myOptions.INSERT_PARENTHESES_AUTOMATICALLY;
+  }
+
+  public void setInsertParenthesesAutomatically(boolean value) {
+    boolean old = myOptions.INSERT_PARENTHESES_AUTOMATICALLY;
+    if (old == value) return;
+    myOptions.INSERT_PARENTHESES_AUTOMATICALLY = value;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_INSERT_PARENTHESES_AUTOMATICALLY, old, value);
+  }
+
+  // IDE options that no editor reads: breadcrumbs.
+
+  /**
+   * @return {@code true} if breadcrumbs should be shown above the editor, {@code false} otherwise
+   */
+  public boolean isBreadcrumbsAbove() {
+    return myOptions.SHOW_BREADCRUMBS_ABOVE;
+  }
+
+  /**
+   * @param value {@code true} if breadcrumbs should be shown above the editor, {@code false} otherwise
+   * @return {@code true} if an option was modified, {@code false} otherwise
+   */
+  public boolean setBreadcrumbsAbove(boolean value) {
+    boolean old = myOptions.SHOW_BREADCRUMBS_ABOVE;
+    if (old == value) return false;
+    myOptions.SHOW_BREADCRUMBS_ABOVE = value;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_BREADCRUMBS_ABOVE, old, value);
+    return true;
+  }
+
+  /**
+   * @return {@code true} if breadcrumbs should be shown, {@code false} otherwise
+   */
+  public boolean isBreadcrumbsShown() {
+    return myOptions.SHOW_BREADCRUMBS;
+  }
+
+  /**
+   * @param value {@code true} if breadcrumbs should be shown, {@code false} otherwise
+   * @return {@code true} if an option was modified, {@code false} otherwise
+   */
+  public boolean setBreadcrumbsShown(boolean value) {
+    boolean old = myOptions.SHOW_BREADCRUMBS;
+    if (old == value) return false;
+    myOptions.SHOW_BREADCRUMBS = value;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_BREADCRUMBS, old, value);
+    return true;
+  }
+
+  /**
+   * @param languageID the language identifier to configure
+   * @return {@code true} if breadcrumbs should be shown for the specified language, {@code false} otherwise
+   */
+  public boolean isBreadcrumbsShownFor(String languageID) {
+    Boolean visible = myOptions.mapLanguageBreadcrumbs.get(languageID);
+    if (visible == null) {
+      Boolean defaultVisible = getDefaultBreadcrumbVisibility(languageID);
+      return defaultVisible == null || defaultVisible;
+    }
+    return visible;
+  }
+
+  /**
+   * @param languageID the language identifier to configure
+   * @param value      {@code true} if breadcrumbs should be shown for the specified language, {@code false} otherwise
+   * @return {@code true} if an option was modified, {@code false} otherwise
+   */
+  public boolean setBreadcrumbsShownFor(String languageID, boolean value) {
+    Boolean visible = myOptions.mapLanguageBreadcrumbs.put(languageID, value);
+    boolean newValue = (visible == null || visible) != value;
+    if (newValue) {
+      myPropertyChangeSupport.firePropertyChange(PropNames.PROP_BREADCRUMBS_PER_LANGUAGE, visible, (Boolean)value);
+    }
+    return newValue;
+  }
+
+  public boolean hasBreadcrumbSettings(String languageID) {
+    return myOptions.mapLanguageBreadcrumbs.containsKey(languageID);
+  }
+
+  @ApiStatus.Internal
+  public boolean hasDefaultBreadcrumbSettings(String languageID) {
+    return getDefaultBreadcrumbVisibility(languageID) != null;
+  }
+
+  public void resetDefaultBreadcrumbVisibility() {
+    myDefaultBreadcrumbVisibility.clear();
+  }
+
+  // IDE options that no editor reads: documentation, tooltips, and notifications.
+
+  public boolean isDocCommentRenderingEnabled() {
+    return myOptions.ENABLE_RENDERED_DOC;
+  }
+
+  public void setDocCommentRenderingEnabled(boolean value) {
+    boolean old = myOptions.ENABLE_RENDERED_DOC;
+    if (old == value) return;
+    myOptions.ENABLE_RENDERED_DOC = value;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ENABLE_RENDERED_DOC, old, value);
+  }
+
+  public boolean isShowQuickDocOnMouseOverElement() {
+    return myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT && !GeneralSettings.getInstance().isSupportScreenReaders();
+  }
+
+  public void setShowQuickDocOnMouseOverElement(boolean show) {
+    boolean old = myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT;
+    if (old == show) return;
+    myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = show;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT, old, show);
+  }
+
+  /**
+   * @deprecated Use {@link #getTooltipsDelay()} instead
+   */
+  @Deprecated
+  public int getQuickDocOnMouseOverElementDelayMillis() {
+    return getTooltipsDelay();
+  }
+
+  public int getTooltipsDelay() {
+    return TOOLTIPS_DELAY_RANGE.fit(myOptions.TOOLTIPS_DELAY_MS);
+  }
+
+  public void setTooltipsDelay(int delay) {
+    int newValue = TOOLTIPS_DELAY_RANGE.fit(delay);
+    int old = myOptions.TOOLTIPS_DELAY_MS;
+    if (old == newValue) return;
+    myOptions.TOOLTIPS_DELAY_MS = newValue;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_TOOLTIPS_DELAY_MS, old, newValue);
+  }
+
+  public boolean isShowIntentionPreview() {
+    return myOptions.SHOW_INTENTION_PREVIEW;
+  }
+
+  public void setShowIntentionPreview(boolean show) {
+    boolean old = myOptions.SHOW_INTENTION_PREVIEW;
+    if (old == show) return;
+    myOptions.SHOW_INTENTION_PREVIEW = show;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_INTENTION_PREVIEW, old, show);
+  }
+
+  public boolean isShowNotificationAfterReformat() {
+    return Registry.is("editor.show.notification.after.reformat");
+  }
+
+  public boolean isShowNotificationAfterOptimizeImports() {
+    return Registry.is("editor.show.notification.after.optimize.imports");
+  }
+
+  // IDE options that no editor reads: save actions.
+
+  @StripTrailingSpaces
+  public String getStripTrailingSpaces() {
+    return myOptions.STRIP_TRAILING_SPACES;
+  }
+
+ // TODO: move to CodeEditorManager or something else
+
+  public void setStripTrailingSpaces(@StripTrailingSpaces String stripTrailingSpaces) {
+    String old = myOptions.STRIP_TRAILING_SPACES;
+    if (Objects.equals(old, stripTrailingSpaces)) return;
+    myOptions.STRIP_TRAILING_SPACES = stripTrailingSpaces;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_STRIP_TRAILING_SPACES, old, stripTrailingSpaces);
+  }
+
+  public boolean isKeepTrailingSpacesOnCaretLine() {
+    return myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE;
+  }
+
+  public void setKeepTrailingSpacesOnCaretLine(boolean keep) {
+    boolean old = myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE;
+    if (old == keep) return;
+    myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE = keep;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_KEEP_TRAILING_SPACE_ON_CARET_LINE, old, keep);
+  }
+
+  public boolean isEnsureNewLineAtEOF() {
+    return myOptions.IS_ENSURE_NEWLINE_AT_EOF;
+  }
+
+  public void setEnsureNewLineAtEOF(boolean ensure) {
+    boolean old = myOptions.IS_ENSURE_NEWLINE_AT_EOF;
+    if (old == ensure) return;
+    myOptions.IS_ENSURE_NEWLINE_AT_EOF = ensure;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_ENSURE_NEWLINE_AT_EOF, old, ensure);
+  }
+
+  public boolean isRemoveTrailingBlankLines() {
+    return myOptions.REMOVE_TRAILING_BLANK_LINES;
+  }
+
+  public void setRemoveTrailingBlankLines(boolean remove) {
+    boolean old = myOptions.REMOVE_TRAILING_BLANK_LINES;
+    if (old == remove) return;
+    myOptions.REMOVE_TRAILING_BLANK_LINES = remove;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_REMOVE_TRAILING_BLANK_LINES, old, remove);
+  }
+
+  // IDE options that no editor reads: other features.
+
+  public boolean isFocusMode() {
+    return myOptions.IS_FOCUS_MODE;
+  }
+
+  public void setFocusMode(boolean val) {
+    boolean old = myOptions.IS_FOCUS_MODE;
+    if (old == val) return;
+    myOptions.IS_FOCUS_MODE = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_FOCUS_MODE, old, val);
+  }
+
+  public boolean isShowInlineLocalDialog() {
+    return myOptions.SHOW_INLINE_DIALOG;
+  }
+
+  public void setShowInlineLocalDialog(final boolean val) {
+    boolean old = myOptions.SHOW_INLINE_DIALOG;
+    if (old == val) return;
+    myOptions.SHOW_INLINE_DIALOG = val;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_INLINE_DIALOG, old, val);
+  }
+
+  // Private details.
+
+  private void parseRawSoftWraps() {
+    myPlacesToUseSoftWraps.clear();
+
+    String rawValue = myOptions.USE_SOFT_WRAPS;
+    if (rawValue == null) {
+      // The user made no choice yet: apply the default.
+      Application application = ApplicationManager.getApplication();
+      boolean unitTestMode = application != null && application.isUnitTestMode();
+      myPlacesToUseSoftWraps.addAll(defaultSoftWrapPlaces(unitTestMode));
+      return;
+    }
+    if (rawValue.isEmpty()) {
+      // An empty stored value records an explicit "off" choice.
+      return;
+    }
+
+    String[] placeNames = rawValue.split(COMPOSITE_PROPERTY_SEPARATOR);
+    for (String placeName : placeNames) {
+      try {
+        SoftWrapAppliancePlaces place = SoftWrapAppliancePlaces.valueOf(placeName);
+        myPlacesToUseSoftWraps.add(place);
+      }
+      catch (IllegalArgumentException e) {
+        // Ignore bad value
+      }
+    }
+
+    // There is a possible case that there were invalid/old format values. We want to replace them by up-to-date data.
+    storeRawSoftWraps();
+  }
+
+  private void storeRawSoftWraps() {
+    String newValue;
+    if (myPlacesToUseSoftWraps.equals(defaultSoftWrapPlaces(false))) {
+      // The stored value records a deviation from the default. The default state itself stays unstored,
+      // so a future default applies to a user who returns to it.
+      // Compare with the semantic default, not with the test-mode default: storage is mode-independent.
+      newValue = null;
+    }
+    else {
+      StringBuilder buffer = new StringBuilder();
+      for (SoftWrapAppliancePlaces placeToStore : myPlacesToUseSoftWraps) {
+        buffer.append(placeToStore).append(COMPOSITE_PROPERTY_SEPARATOR);
+      }
+      if (!buffer.isEmpty()) {
+        buffer.setLength(buffer.length() - 1);
+      }
+      newValue = buffer.toString();
+    }
+
+    String old = myOptions.USE_SOFT_WRAPS;
+    if (Objects.equals(newValue, old)) return;
+    myOptions.USE_SOFT_WRAPS = newValue;
+    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_USE_SOFT_WRAPS, old, newValue);
+  }
+
+  private @Nullable Boolean getDefaultBreadcrumbVisibility(@NotNull String languageID) {
+    Boolean defaultVisible = myDefaultBreadcrumbVisibility.get(languageID);
+    if (defaultVisible == null) {
+      for (BreadcrumbsProvider provider : BreadcrumbsProvider.EP_NAME.getExtensionList()) {
+        for (Language language : provider.getLanguages()) {
+          myDefaultBreadcrumbVisibility.put(language.getID(), provider.isShownByDefault());
+        }
+      }
+      defaultVisible = myDefaultBreadcrumbVisibility.get(languageID);
+    }
+    return defaultVisible;
+  }
 
   public static final class OptionSet {
     public String USE_SOFT_WRAPS;
@@ -197,997 +1224,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public void loadState(@NotNull OsSpecificState state) {
       CARET_STOP_OPTIONS = state.CARET_STOP_OPTIONS;
     }
-  }
-
-  private static final String COMPOSITE_PROPERTY_SEPARATOR = ":";
-
-  private final @NotNull OsSpecificState myOsSpecificState;
-
-  private final Set<SoftWrapAppliancePlaces> myPlacesToUseSoftWraps = EnumSet.noneOf(SoftWrapAppliancePlaces.class);
-  private OptionSet myOptions = new OptionSet();
-  private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
-  private final Map<String, Boolean> myDefaultBreadcrumbVisibility = new HashMap<>();
-
-  public static final @NonNls String STRIP_TRAILING_SPACES_NONE = "None";
-  public static final @NonNls String STRIP_TRAILING_SPACES_CHANGED = "Changed";
-  public static final @NonNls String STRIP_TRAILING_SPACES_WHOLE = "Whole";
-
-  @MagicConstant(stringValues = {STRIP_TRAILING_SPACES_NONE, STRIP_TRAILING_SPACES_CHANGED, STRIP_TRAILING_SPACES_WHOLE})
-  public @interface StripTrailingSpaces {}
-
-  public EditorSettingsExternalizable() {
-    this(ApplicationManager.getApplication().getService(OsSpecificState.class));
-  }
-
-  @ApiStatus.Internal
-  @NonInjectable
-  public EditorSettingsExternalizable(@NotNull OsSpecificState state) {
-    myOsSpecificState = state;
-    // A fresh instance must carry the defaults before `loadState` runs, or without it.
-    parseRawSoftWraps();
-  }
-
-  public static EditorSettingsExternalizable getInstance() {
-    return ApplicationManager.getApplication().getService(EditorSettingsExternalizable.class);
-  }
-
-  public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable disposable) {
-    myPropertyChangeSupport.addPropertyChangeListener(listener);
-    Disposer.register(disposable, () -> myPropertyChangeSupport.removePropertyChangeListener(listener));
-  }
-
-  protected void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
-    myPropertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
-  }
-
-  @Override
-  public @NotNull OptionSet getState() {
-    return myOptions;
-  }
-
-  @Override
-  public void loadState(@NotNull OptionSet state) {
-    // xmlb writes null into an enum field when the stored `<option>` carries no `value` attribute
-    // (converter path, see TagBinding) or an unknown constant name (plain enum path, see ClassUtil.stringToEnum).
-    // Heal it right after loading so that the broken value is not written back on the next save.
-    state.CARET_EASING = Objects.requireNonNullElse(state.CARET_EASING, DEFAULT_CARET_EASING);
-    state.LINE_NUMERATION = Objects.requireNonNullElse(state.LINE_NUMERATION, DEFAULT_LINE_NUMERATION);
-    myOptions = state;
-    parseRawSoftWraps();
-  }
-
-  @Override
-  public void noStateLoaded() {
-    loadState(new OptionSet());
-  }
-
-  private void parseRawSoftWraps() {
-    myPlacesToUseSoftWraps.clear();
-
-    String rawValue = myOptions.USE_SOFT_WRAPS;
-    if (rawValue == null) {
-      // The user made no choice yet: apply the default.
-      Application application = ApplicationManager.getApplication();
-      boolean unitTestMode = application != null && application.isUnitTestMode();
-      myPlacesToUseSoftWraps.addAll(defaultSoftWrapPlaces(unitTestMode));
-      return;
-    }
-    if (rawValue.isEmpty()) {
-      // An empty stored value records an explicit "off" choice.
-      return;
-    }
-
-    String[] placeNames = rawValue.split(COMPOSITE_PROPERTY_SEPARATOR);
-    for (String placeName : placeNames) {
-      try {
-        SoftWrapAppliancePlaces place = SoftWrapAppliancePlaces.valueOf(placeName);
-        myPlacesToUseSoftWraps.add(place);
-      }
-      catch (IllegalArgumentException e) {
-        // Ignore bad value
-      }
-    }
-
-    // There is a possible case that there were invalid/old format values. We want to replace them by up-to-date data.
-    storeRawSoftWraps();
-  }
-
-  /**
-   * Soft wraps are on in the main editor by default.
-   * Unit tests keep the old default, so that the editor tests stay deterministic.
-   */
-  @ApiStatus.Internal
-  @VisibleForTesting
-  public static @NotNull Set<SoftWrapAppliancePlaces> defaultSoftWrapPlaces(boolean unitTestMode) {
-    return unitTestMode ? EnumSet.noneOf(SoftWrapAppliancePlaces.class) : EnumSet.of(SoftWrapAppliancePlaces.MAIN_EDITOR);
-  }
-
-  private void storeRawSoftWraps() {
-    String newValue;
-    if (myPlacesToUseSoftWraps.equals(defaultSoftWrapPlaces(false))) {
-      // The stored value records a deviation from the default. The default state itself stays unstored,
-      // so a future default applies to a user who returns to it.
-      // Compare with the semantic default, not with the test-mode default: storage is mode-independent.
-      newValue = null;
-    }
-    else {
-      StringBuilder buffer = new StringBuilder();
-      for (SoftWrapAppliancePlaces placeToStore : myPlacesToUseSoftWraps) {
-        buffer.append(placeToStore).append(COMPOSITE_PROPERTY_SEPARATOR);
-      }
-      if (!buffer.isEmpty()) {
-        buffer.setLength(buffer.length() - 1);
-      }
-      newValue = buffer.toString();
-    }
-
-    String old = myOptions.USE_SOFT_WRAPS;
-    if (Objects.equals(newValue, old)) return;
-    myOptions.USE_SOFT_WRAPS = newValue;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_USE_SOFT_WRAPS, old, newValue);
-  }
-
-  public OptionSet getOptions() {
-    return myOptions;
-  }
-
-  public boolean isRightMarginShown() {
-    return myOptions.IS_RIGHT_MARGIN_SHOWN;
-  }
-
-  public void setRightMarginShown(boolean val) {
-    boolean old = myOptions.IS_RIGHT_MARGIN_SHOWN;
-    if (old == val) return;
-    myOptions.IS_RIGHT_MARGIN_SHOWN = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_RIGHT_MARGIN_SHOWN, old, val);
-  }
-
-  public boolean isLineNumbersShown() {
-    return myOptions.ARE_LINE_NUMBERS_SHOWN;
-  }
-
-  public void setLineNumbersShown(boolean val) {
-    boolean old = myOptions.ARE_LINE_NUMBERS_SHOWN;
-    if (old == val) return;
-    myOptions.ARE_LINE_NUMBERS_SHOWN = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ARE_LINE_NUMBERS_SHOWN, old, val);
-  }
-
-  public @NotNull EditorSettings.LineNumerationType getLineNumeration() {
-    return Objects.requireNonNullElse(myOptions.LINE_NUMERATION, DEFAULT_LINE_NUMERATION);
-  }
-
-  public void setLineNumeration(@Nullable EditorSettings.LineNumerationType val) {
-    EditorSettings.LineNumerationType newValue = Objects.requireNonNullElse(val, DEFAULT_LINE_NUMERATION);
-    EditorSettings.LineNumerationType old = myOptions.LINE_NUMERATION;
-    if (old == newValue) return;
-    myOptions.LINE_NUMERATION = newValue;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_LINE_NUMERATION, old, newValue);
-  }
-
-  public boolean areGutterIconsShown() {
-    return myOptions.ARE_GUTTER_ICONS_SHOWN;
-  }
-
-  public void setGutterIconsShown(boolean val) {
-    boolean old = myOptions.ARE_GUTTER_ICONS_SHOWN;
-    if (old == val) return;
-    myOptions.ARE_GUTTER_ICONS_SHOWN = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ARE_GUTTER_ICONS_SHOWN, old, val);
-  }
-
-  public boolean isFoldingOutlineShown() {
-    return myOptions.IS_FOLDING_OUTLINE_SHOWN;
-  }
-
-  public void setFoldingOutlineShown(boolean val) {
-    boolean old = myOptions.IS_FOLDING_OUTLINE_SHOWN;
-    if (old == val) return;
-    myOptions.IS_FOLDING_OUTLINE_SHOWN = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_FOLDING_OUTLINE_SHOWN, old, val);
-  }
-
-  public boolean isFoldingOutlineShownOnlyOnHover() {
-    return myOptions.IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER;
-  }
-
-  public void setFoldingOutlineShownOnlyOnHover(boolean val) {
-    boolean old = myOptions.IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER;
-    if (old == val) return;
-    myOptions.IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER, old, val);
-  }
-
-  public boolean isFoldingEndingsShown() {
-    return myOptions.IS_FOLDING_ENDINGS_SHOWN;
-  }
-
-  public void setFoldingEndingsShown(boolean val) {
-    boolean old = myOptions.IS_FOLDING_ENDINGS_SHOWN;
-    if (old == val) return;
-    myOptions.IS_FOLDING_ENDINGS_SHOWN = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_FOLDING_ENDINGS_SHOWN, old, val);
-  }
-
-  /**
-   * @return {@code true} if breadcrumbs should be shown above the editor, {@code false} otherwise
-   */
-  public boolean isBreadcrumbsAbove() {
-    return myOptions.SHOW_BREADCRUMBS_ABOVE;
-  }
-
-  /**
-   * @param value {@code true} if breadcrumbs should be shown above the editor, {@code false} otherwise
-   * @return {@code true} if an option was modified, {@code false} otherwise
-   */
-  public boolean setBreadcrumbsAbove(boolean value) {
-    boolean old = myOptions.SHOW_BREADCRUMBS_ABOVE;
-    if (old == value) return false;
-    myOptions.SHOW_BREADCRUMBS_ABOVE = value;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_BREADCRUMBS_ABOVE, old, value);
-    return true;
-  }
-
-  /**
-   * @return {@code true} if breadcrumbs should be shown, {@code false} otherwise
-   */
-  public boolean isBreadcrumbsShown() {
-    return myOptions.SHOW_BREADCRUMBS;
-  }
-
-  /**
-   * @param value {@code true} if breadcrumbs should be shown, {@code false} otherwise
-   * @return {@code true} if an option was modified, {@code false} otherwise
-   */
-  public boolean setBreadcrumbsShown(boolean value) {
-    boolean old = myOptions.SHOW_BREADCRUMBS;
-    if (old == value) return false;
-    myOptions.SHOW_BREADCRUMBS = value;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_BREADCRUMBS, old, value);
-    return true;
-  }
-
-  /**
-   * @param languageID the language identifier to configure
-   * @return {@code true} if breadcrumbs should be shown for the specified language, {@code false} otherwise
-   */
-  public boolean isBreadcrumbsShownFor(String languageID) {
-    Boolean visible = myOptions.mapLanguageBreadcrumbs.get(languageID);
-    if (visible == null) {
-      Boolean defaultVisible = getDefaultBreadcrumbVisibility(languageID);
-      return defaultVisible == null || defaultVisible;
-    }
-    return visible;
-  }
-
-  private @Nullable Boolean getDefaultBreadcrumbVisibility(@NotNull String languageID) {
-    Boolean defaultVisible = myDefaultBreadcrumbVisibility.get(languageID);
-    if (defaultVisible == null) {
-      for (BreadcrumbsProvider provider : BreadcrumbsProvider.EP_NAME.getExtensionList()) {
-        for (Language language : provider.getLanguages()) {
-          myDefaultBreadcrumbVisibility.put(language.getID(), provider.isShownByDefault());
-        }
-      }
-      defaultVisible = myDefaultBreadcrumbVisibility.get(languageID);
-    }
-    return defaultVisible;
-  }
-
-  public void resetDefaultBreadcrumbVisibility() {
-    myDefaultBreadcrumbVisibility.clear();
-  }
-
-  public boolean hasBreadcrumbSettings(String languageID) {
-    return myOptions.mapLanguageBreadcrumbs.containsKey(languageID);
-  }
-
-  @ApiStatus.Internal
-  public boolean hasDefaultBreadcrumbSettings(String languageID) {
-    return getDefaultBreadcrumbVisibility(languageID) != null;
-  }
-
-  /**
-   * @param languageID the language identifier to configure
-   * @param value      {@code true} if breadcrumbs should be shown for the specified language, {@code false} otherwise
-   * @return {@code true} if an option was modified, {@code false} otherwise
-   */
-  public boolean setBreadcrumbsShownFor(String languageID, boolean value) {
-    Boolean visible = myOptions.mapLanguageBreadcrumbs.put(languageID, value);
-    boolean newValue = (visible == null || visible) != value;
-    if (newValue) {
-      myPropertyChangeSupport.firePropertyChange(PropNames.PROP_BREADCRUMBS_PER_LANGUAGE, visible, (Boolean)value);
-    }
-    return newValue;
-  }
-
-  public boolean areStickyLinesShown() {
-    return myOptions.SHOW_STICKY_LINES;
-  }
-
-  public boolean setStickyLinesShown(boolean value) {
-    boolean old = myOptions.SHOW_STICKY_LINES;
-    if (old == value) return false;
-    myOptions.SHOW_STICKY_LINES = value;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_STICKY_LINES, old, value);
-    return true;
-  }
-
-  public boolean areStickyLinesShownFor(String languageID) {
-    Boolean visible = myOptions.mapLanguageStickyLines.get(languageID);
-    if (visible == null) {
-      // enabled for all languages by default
-      return true;
-    }
-    return visible;
-  }
-
-  @ApiStatus.Internal
-  public List<String> getDisabledStickyLines() {
-    return myOptions.mapLanguageStickyLines.entrySet().stream()
-      .filter(entry -> !entry.getValue())
-      .map(Map.Entry::getKey)
-      .collect(Collectors.toList());
-  }
-
-  public boolean setStickyLinesShownFor(String languageID, boolean value) {
-    Boolean visible = myOptions.mapLanguageStickyLines.put(languageID, value);
-    boolean newValue = (visible == null || visible) != value;
-    if (newValue) {
-      myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_STICKY_LINES_PER_LANGUAGE, visible, (Boolean)value);
-    }
-    return newValue;
-  }
-
-  public int getStickyLineLimit() {
-    return myOptions.STICKY_LINES_LIMIT;
-  }
-
-  public void setStickyLineLimit(int limit) {
-    int old = myOptions.STICKY_LINES_LIMIT;
-    if (old == limit) return;
-    myOptions.STICKY_LINES_LIMIT = limit;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_STICKY_LINES_LIMIT, old, limit);
-  }
-
-  public boolean isDocCommentRenderingEnabled() {
-    return myOptions.ENABLE_RENDERED_DOC;
-  }
-
-  public void setDocCommentRenderingEnabled(boolean value) {
-    boolean old = myOptions.ENABLE_RENDERED_DOC;
-    if (old == value) return;
-    myOptions.ENABLE_RENDERED_DOC = value;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ENABLE_RENDERED_DOC, old, value);
-  }
-
-  public boolean isBlockCursor() {
-    return myOptions.IS_BLOCK_CURSOR;
-  }
-
-  public void setBlockCursor(boolean val) {
-    boolean old = myOptions.IS_BLOCK_CURSOR;
-    if (old == val) return;
-    myOptions.IS_BLOCK_CURSOR = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_BLOCK_CURSOR, old, val);
-  }
-
-  public boolean isFullLineHeightCursor() {
-    return myOptions.IS_FULL_LINE_HEIGHT_CURSOR;
-  }
-
-  public void setFullLineHeightCursor(boolean val) {
-    boolean old = myOptions.IS_FULL_LINE_HEIGHT_CURSOR;
-    if (old == val) return;
-    myOptions.IS_FULL_LINE_HEIGHT_CURSOR = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_FULL_LINE_HEIGHT_CURSOR, old, val);
-  }
-
-  @ApiStatus.Experimental
-  public boolean isSmoothCaretMovement() {
-    return myOptions.IS_SMOOTH_CARET_MOVEMENT;
-  }
-
-  @ApiStatus.Experimental
-  public void setSmoothCaretMovement(boolean val) {
-    boolean old = myOptions.IS_SMOOTH_CARET_MOVEMENT;
-    if (old == val) return;
-    myOptions.IS_SMOOTH_CARET_MOVEMENT = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_ANIMATED_CARET, old, val);
-  }
-
-  @ApiStatus.Experimental
-  public @NotNull EditorSettings.CaretEasing getCaretEasing() {
-    return Objects.requireNonNullElse(myOptions.CARET_EASING, DEFAULT_CARET_EASING);
-  }
-
-  @ApiStatus.Experimental
-  public void setCaretEasing(@Nullable EditorSettings.CaretEasing val) {
-    EditorSettings.CaretEasing newValue = Objects.requireNonNullElse(val, DEFAULT_CARET_EASING);
-    EditorSettings.CaretEasing old = myOptions.CARET_EASING;
-    if (old == newValue) return;
-    myOptions.CARET_EASING = newValue;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_CARET_EASING, old, newValue);
-  }
-  
-  public boolean isHighlightSelectionOccurrences() {
-    return myOptions.IS_HIGHLIGHT_SELECTION_OCCURRENCES;
-  }
-  
-  public void setHighlightSelectionOccurrences(boolean val) {
-    boolean old = myOptions.IS_HIGHLIGHT_SELECTION_OCCURRENCES;
-    if (old == val) return;
-    myOptions.IS_HIGHLIGHT_SELECTION_OCCURRENCES = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_HIGHLIGHT_SELECTION_OCCURRENCES, old, val);
-  }
-
-  /**
-   * @deprecated There is no global setting for the caret row, so this method always returns {@code true}. Use
-   * {@link EditorSettings#isCaretRowShown()} to read the setting of one editor.
-   */
-  @Deprecated
-  public boolean isCaretRowShown() {
-    return true;
-  }
-
-  public boolean isSmartHome() {
-    return myOptions.SMART_HOME;
-  }
-
-  public void setSmartHome(boolean val) {
-    boolean old = myOptions.SMART_HOME;
-    if (old == val) return;
-    myOptions.SMART_HOME = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SMART_HOME, old, val);
-  }
-
-  public boolean isUseSoftWraps() {
-    return isUseSoftWraps(SoftWrapAppliancePlaces.MAIN_EDITOR);
-  }
-
-  public boolean isUseSoftWraps(@NotNull SoftWrapAppliancePlaces place) {
-    return myPlacesToUseSoftWraps.contains(place);
-  }
-
-  public void setUseSoftWraps(boolean use) {
-    setUseSoftWraps(use, SoftWrapAppliancePlaces.MAIN_EDITOR);
-  }
-
-  public void setUseSoftWraps(boolean use, @NotNull SoftWrapAppliancePlaces place) {
-    boolean update = use ^ myPlacesToUseSoftWraps.contains(place);
-    if (!update) {
-      return;
-    }
-
-    if (use) {
-      myPlacesToUseSoftWraps.add(place);
-    }
-    else {
-      myPlacesToUseSoftWraps.remove(place);
-    }
-    storeRawSoftWraps();
-  }
-
-  public boolean isUseCustomSoftWrapIndent() {
-    return myOptions.USE_CUSTOM_SOFT_WRAP_INDENT;
-  }
-
-  public void setUseCustomSoftWrapIndent(boolean use) {
-    boolean old = myOptions.USE_CUSTOM_SOFT_WRAP_INDENT;
-    if (old == use) return;
-    myOptions.USE_CUSTOM_SOFT_WRAP_INDENT = use;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_USE_CUSTOM_SOFT_WRAP_INDENT, old, use);
-  }
-
-  public int getCustomSoftWrapIndent() {
-    return myOptions.CUSTOM_SOFT_WRAP_INDENT;
-  }
-
-  public void setCustomSoftWrapIndent(int indent) {
-    int old = myOptions.CUSTOM_SOFT_WRAP_INDENT;
-    if (old == indent) return;
-    myOptions.CUSTOM_SOFT_WRAP_INDENT = indent;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_CUSTOM_SOFT_WRAP_INDENT, old, indent);
-  }
-
-  public int getVerticalScrollOffset() {
-    return myOptions.VERTICAL_SCROLL_OFFSET;
-  }
-
-  public void setVerticalScrollOffset(int offset) {
-    int old = myOptions.VERTICAL_SCROLL_OFFSET;
-    if (old == offset) return;
-    myOptions.VERTICAL_SCROLL_OFFSET = offset;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_VERTICAL_SCROLL_OFFSET, old, offset);
-  }
-
-  public int getHorizontalScrollOffset() {
-    return myOptions.HORIZONTAL_SCROLL_OFFSET;
-  }
-
-  public void setHorizontalScrollOffset(int offset) {
-    int old = myOptions.HORIZONTAL_SCROLL_OFFSET;
-    if (old == offset) return;
-    myOptions.HORIZONTAL_SCROLL_OFFSET = offset;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_HORIZONTAL_SCROLL_OFFSET, old, offset);
-  }
-
-  public int getVerticalScrollJump() {
-    return myOptions.VERTICAL_SCROLL_JUMP;
-  }
-
-  public void setVerticalScrollJump(int jump) {
-    int old = myOptions.VERTICAL_SCROLL_JUMP;
-    if (old == jump) return;
-    myOptions.VERTICAL_SCROLL_JUMP = jump;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_VERTICAL_SCROLL_JUMP, old, jump);
-  }
-
-  public int getHorizontalScrollJump() {
-    return myOptions.HORIZONTAL_SCROLL_JUMP;
-  }
-
-  public void setHorizontalScrollJump(int jump) {
-    int old = myOptions.HORIZONTAL_SCROLL_JUMP;
-    if (old == jump) return;
-    myOptions.HORIZONTAL_SCROLL_JUMP = jump;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_HORIZONTAL_SCROLL_JUMP, old, jump);
-  }
-
-  public boolean isVirtualSpace() {
-    return myOptions.IS_VIRTUAL_SPACE;
-  }
-
-  public void setVirtualSpace(boolean val) {
-    boolean oldValue = myOptions.IS_VIRTUAL_SPACE;
-    if (oldValue == val) return;
-
-    myOptions.IS_VIRTUAL_SPACE = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_VIRTUAL_SPACE, oldValue, val);
-  }
-
-  public boolean isCaretInsideTabs() {
-    return myOptions.IS_CARET_INSIDE_TABS;
-  }
-
-  public void setCaretInsideTabs(boolean val) {
-    boolean old = myOptions.IS_CARET_INSIDE_TABS;
-    if (old == val) return;
-    myOptions.IS_CARET_INSIDE_TABS = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_CARET_INSIDE_TABS, old, val);
-  }
-
-  public boolean isBlinkCaret() {
-    return myOptions.IS_CARET_BLINKING;
-  }
-
-  public void setBlinkCaret(boolean blinkCaret) {
-    boolean old = myOptions.IS_CARET_BLINKING;
-    if (old == blinkCaret) return;
-    myOptions.IS_CARET_BLINKING = blinkCaret;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_CARET_BLINKING, old, blinkCaret);
-  }
-
-  public int getBlinkPeriod() {
-    return BLINKING_RANGE.fit(myOptions.CARET_BLINKING_PERIOD);
-  }
-
-  public void setBlinkPeriod(int blinkInterval) {
-    int newValue = BLINKING_RANGE.fit(blinkInterval);
-    int old = myOptions.CARET_BLINKING_PERIOD;
-    if (old == newValue) return;
-    myOptions.CARET_BLINKING_PERIOD = newValue;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_CARET_BLINKING_PERIOD, old, newValue);
-  }
-
-  @ApiStatus.Experimental
-  public boolean isSmoothBlinkCaret() {
-    return myOptions.IS_SMOOTH_CARET_BLINKING;
-  }
-
-  @ApiStatus.Experimental
-  public void setSmoothBlinkCaret(boolean smoothBlinkCaret) {
-    boolean old = myOptions.IS_SMOOTH_CARET_BLINKING;
-    if (old == smoothBlinkCaret) return;
-    myOptions.IS_SMOOTH_CARET_BLINKING = smoothBlinkCaret;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_SMOOTH_CARET_BLINKING, old, smoothBlinkCaret);
-  }
-
-  public boolean isEnsureNewLineAtEOF() {
-    return myOptions.IS_ENSURE_NEWLINE_AT_EOF;
-  }
-
-  public void setEnsureNewLineAtEOF(boolean ensure) {
-    boolean old = myOptions.IS_ENSURE_NEWLINE_AT_EOF;
-    if (old == ensure) return;
-    myOptions.IS_ENSURE_NEWLINE_AT_EOF = ensure;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_ENSURE_NEWLINE_AT_EOF, old, ensure);
-  }
-
-  public boolean isRemoveTrailingBlankLines() {
-    return myOptions.REMOVE_TRAILING_BLANK_LINES;
-  }
-
-  public void setRemoveTrailingBlankLines(boolean remove) {
-    boolean old = myOptions.REMOVE_TRAILING_BLANK_LINES;
-    if (old == remove) return;
-    myOptions.REMOVE_TRAILING_BLANK_LINES = remove;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_REMOVE_TRAILING_BLANK_LINES, old, remove);
-  }
-
-  @StripTrailingSpaces
-  public String getStripTrailingSpaces() {
-    return myOptions.STRIP_TRAILING_SPACES;
-  } // TODO: move to CodeEditorManager or something else
-
-  public void setStripTrailingSpaces(@StripTrailingSpaces String stripTrailingSpaces) {
-    String old = myOptions.STRIP_TRAILING_SPACES;
-    if (Objects.equals(old, stripTrailingSpaces)) return;
-    myOptions.STRIP_TRAILING_SPACES = stripTrailingSpaces;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_STRIP_TRAILING_SPACES, old, stripTrailingSpaces);
-  }
-
-  public boolean isShowQuickDocOnMouseOverElement() {
-    return myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT && !GeneralSettings.getInstance().isSupportScreenReaders();
-  }
-
-  public void setShowQuickDocOnMouseOverElement(boolean show) {
-    boolean old = myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT;
-    if (old == show) return;
-    myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = show;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT, old, show);
-  }
-
-
-  public boolean isShowInspectionWidget() {
-    return myOptions.SHOW_INSPECTION_WIDGET;
-  }
-
-  public void setShowInspectionWidget(boolean show) {
-    boolean old = myOptions.SHOW_INSPECTION_WIDGET;
-    if (old == show) return;
-    myOptions.SHOW_INSPECTION_WIDGET = show;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_INSPECTION_WIDGET, old, show);
-  }
-
-  /**
-   * @deprecated Use {@link #getTooltipsDelay()} instead
-   */
-  @Deprecated
-  public int getQuickDocOnMouseOverElementDelayMillis() {
-    return getTooltipsDelay();
-  }
-
-  public int getTooltipsDelay() {
-    return TOOLTIPS_DELAY_RANGE.fit(myOptions.TOOLTIPS_DELAY_MS);
-  }
-
-  public void setTooltipsDelay(int delay) {
-    int newValue = TOOLTIPS_DELAY_RANGE.fit(delay);
-    int old = myOptions.TOOLTIPS_DELAY_MS;
-    if (old == newValue) return;
-    myOptions.TOOLTIPS_DELAY_MS = newValue;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_TOOLTIPS_DELAY_MS, old, newValue);
-  }
-
-  public boolean isShowIntentionBulb() {
-    return myOptions.SHOW_INTENTION_BULB;
-  }
-
-  public void setShowIntentionBulb(boolean show) {
-    boolean old = myOptions.SHOW_INTENTION_BULB;
-    if (old == show) return;
-    myOptions.SHOW_INTENTION_BULB = show;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_INTENTION_BULB, old, show);
-  }
-
-  public boolean isRefrainFromScrolling() {
-    return myOptions.REFRAIN_FROM_SCROLLING;
-  }
-
-  public void setRefrainFromScrolling(boolean b) {
-    boolean old = myOptions.REFRAIN_FROM_SCROLLING;
-    if (old == b) return;
-    myOptions.REFRAIN_FROM_SCROLLING = b;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_REFRAIN_FROM_SCROLLING, old, b);
-  }
-
-  public boolean isShowNotificationAfterReformat() {
-    return Registry.is("editor.show.notification.after.reformat");
-  }
-
-  public boolean isShowNotificationAfterOptimizeImports() {
-    return Registry.is("editor.show.notification.after.optimize.imports");
-  }
-
-  public boolean isWhitespacesShown() {
-    return myOptions.IS_WHITESPACES_SHOWN;
-  }
-
-  public void setWhitespacesShown(boolean val) {
-    boolean old = myOptions.IS_WHITESPACES_SHOWN;
-    if (old == val) return;
-    myOptions.IS_WHITESPACES_SHOWN = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_WHITESPACES_SHOWN, old, val);
-  }
-
-  public boolean isLeadingWhitespacesShown() {
-    return myOptions.IS_LEADING_WHITESPACES_SHOWN;
-  }
-
-  public void setLeadingWhitespacesShown(boolean val) {
-    boolean old = myOptions.IS_LEADING_WHITESPACES_SHOWN;
-    if (old == val) return;
-    myOptions.IS_LEADING_WHITESPACES_SHOWN = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_LEADING_WHITESPACES_SHOWN, old, val);
-  }
-
-  public boolean isInnerWhitespacesShown() {
-    return myOptions.IS_INNER_WHITESPACES_SHOWN;
-  }
-
-  public void setInnerWhitespacesShown(boolean val) {
-    boolean old = myOptions.IS_INNER_WHITESPACES_SHOWN;
-    if (old == val) return;
-    myOptions.IS_INNER_WHITESPACES_SHOWN = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_INNER_WHITESPACES_SHOWN, old, val);
-  }
-
-  public boolean isTrailingWhitespacesShown() {
-    return myOptions.IS_TRAILING_WHITESPACES_SHOWN;
-  }
-
-  public void setTrailingWhitespacesShown(boolean val) {
-    boolean old = myOptions.IS_TRAILING_WHITESPACES_SHOWN;
-    if (old == val) return;
-    myOptions.IS_TRAILING_WHITESPACES_SHOWN = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_TRAILING_WHITESPACES_SHOWN, old, val);
-  }
-
-  public boolean isSelectionWhitespacesShown() {
-    return myOptions.IS_SELECTION_WHITESPACES_SHOWN;
-  }
-
-  public void setSelectionWhitespacesShown(boolean val) {
-    boolean old = myOptions.IS_SELECTION_WHITESPACES_SHOWN;
-    if (old == val) return;
-    myOptions.IS_SELECTION_WHITESPACES_SHOWN = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_SELECTION_WHITESPACES_SHOWN, old, val);
-  }
-
-  public boolean isAllSoftWrapsShown() {
-    return myOptions.IS_ALL_SOFTWRAPS_SHOWN;
-  }
-
-  public void setAllSoftwrapsShown(boolean val) {
-    boolean old = myOptions.IS_ALL_SOFTWRAPS_SHOWN;
-    if (old == val) return;
-    myOptions.IS_ALL_SOFTWRAPS_SHOWN = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_ALL_SOFTWRAPS_SHOWN, old, val);
-  }
-
-  public boolean isIndentGuidesShown() {
-    return myOptions.IS_INDENT_GUIDES_SHOWN;
-  }
-
-  public void setIndentGuidesShown(boolean val) {
-    boolean old = myOptions.IS_INDENT_GUIDES_SHOWN;
-    if (old == val) return;
-    myOptions.IS_INDENT_GUIDES_SHOWN = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_INDENT_GUIDES_SHOWN, old, val);
-  }
-
-  public boolean isFocusMode() {
-    return myOptions.IS_FOCUS_MODE;
-  }
-
-  public void setFocusMode(boolean val) {
-    boolean old = myOptions.IS_FOCUS_MODE;
-    if (old == val) return;
-    myOptions.IS_FOCUS_MODE = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_FOCUS_MODE, old, val);
-  }
-
-  public boolean isSmoothScrolling() {
-    return myOptions.IS_ANIMATED_SCROLLING;
-  }
-
-  public void setSmoothScrolling(boolean val) {
-    boolean old = myOptions.IS_ANIMATED_SCROLLING;
-    if (old == val) return;
-    myOptions.IS_ANIMATED_SCROLLING = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_ANIMATED_SCROLLING, old, val);
-  }
-
-  public boolean isCamelWords() {
-    return myOptions.IS_CAMEL_WORDS;
-  }
-
-  public void setCamelWords(boolean val) {
-    boolean old = myOptions.IS_CAMEL_WORDS;
-    if (old == val) return;
-    myOptions.IS_CAMEL_WORDS = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_CAMEL_WORDS, old, val);
-  }
-
-  public boolean isAdditionalPageAtBottom() {
-    return myOptions.ADDITIONAL_PAGE_AT_BOTTOM;
-  }
-
-  public void setAdditionalPageAtBottom(boolean val) {
-    boolean old = myOptions.ADDITIONAL_PAGE_AT_BOTTOM;
-    if (old == val) return;
-    myOptions.ADDITIONAL_PAGE_AT_BOTTOM = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ADDITIONAL_PAGE_AT_BOTTOM, old, val);
-  }
-
-  public boolean isDndEnabled() {
-    return myOptions.IS_DND_ENABLED;
-  }
-
-  public void setDndEnabled(boolean val) {
-    boolean old = myOptions.IS_DND_ENABLED;
-    if (old == val) return;
-    myOptions.IS_DND_ENABLED = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_DND_ENABLED, old, val);
-  }
-
-  public boolean isWheelFontChangeEnabled() {
-    return myOptions.IS_WHEEL_FONTCHANGE_ENABLED;
-  }
-
-  public void setWheelFontChangeEnabled(boolean val) {
-    boolean old = myOptions.IS_WHEEL_FONTCHANGE_ENABLED;
-    if (old == val) return;
-    myOptions.IS_WHEEL_FONTCHANGE_ENABLED = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_WHEEL_FONTCHANGE_ENABLED, old, val);
-  }
-
-  public boolean isWheelFontChangePersistent() {
-    return myOptions.IS_WHEEL_FONTCHANGE_PERSISTENT;
-  }
-
-  public void setWheelFontChangePersistent(boolean val) {
-    boolean old = myOptions.IS_WHEEL_FONTCHANGE_PERSISTENT;
-    if (old == val) return;
-    myOptions.IS_WHEEL_FONTCHANGE_PERSISTENT = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_WHEEL_FONTCHANGE_PERSISTENT, old, val);
-  }
-
-  public boolean isMouseClickSelectionHonorsCamelWords() {
-    return myOptions.IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS;
-  }
-
-  public void setMouseClickSelectionHonorsCamelWords(boolean val) {
-    boolean old = myOptions.IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS;
-    if (old == val) return;
-    myOptions.IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_MOUSE_CLICK_SELECTION_HONORS_CAMEL_WORDS, old, val);
-  }
-
-  public boolean isVariableInplaceRenameEnabled() {
-    return myOptions.RENAME_VARIABLES_INPLACE;
-  }
-
-  public void setVariableInplaceRenameEnabled(final boolean val) {
-    boolean old = myOptions.RENAME_VARIABLES_INPLACE;
-    if (old == val) return;
-    myOptions.RENAME_VARIABLES_INPLACE = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_RENAME_VARIABLES_INPLACE, old, val);
-  }
-
-  public boolean isPreselectRename() {
-    return myOptions.PRESELECT_RENAME;
-  }
-
-  public void setPreselectRename(final boolean val) {
-    boolean old = myOptions.PRESELECT_RENAME;
-    if (old == val) return;
-    myOptions.PRESELECT_RENAME = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_PRESELECT_RENAME, old, val);
-  }
-
-  public boolean isShowInlineLocalDialog() {
-    return myOptions.SHOW_INLINE_DIALOG;
-  }
-
-  public void setShowInlineLocalDialog(final boolean val) {
-    boolean old = myOptions.SHOW_INLINE_DIALOG;
-    if (old == val) return;
-    myOptions.SHOW_INLINE_DIALOG = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_INLINE_DIALOG, old, val);
-  }
-
-  public boolean addCaretsOnDoubleCtrl() {
-    return myOptions.ADD_CARETS_ON_DOUBLE_CTRL;
-  }
-
-  public void setAddCaretsOnDoubleCtrl(boolean val) {
-    boolean old = myOptions.ADD_CARETS_ON_DOUBLE_CTRL;
-    if (old == val) return;
-    myOptions.ADD_CARETS_ON_DOUBLE_CTRL = val;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ADD_CARETS_ON_DOUBLE_CTRL, old, val);
-  }
-
-  @ApiStatus.Internal
-  public BidiTextDirection getBidiTextDirection() {
-    return myOptions.BIDI_TEXT_DIRECTION;
-  }
-
-  @ApiStatus.Internal
-  public void setBidiTextDirection(BidiTextDirection direction) {
-    BidiTextDirection old = myOptions.BIDI_TEXT_DIRECTION;
-    if (old == direction) return;
-    myOptions.BIDI_TEXT_DIRECTION = direction;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_BIDI_TEXT_DIRECTION, old, direction);
-  }
-
-  public boolean isShowIntentionPreview() {
-    return myOptions.SHOW_INTENTION_PREVIEW;
-  }
-
-  public void setShowIntentionPreview(boolean show) {
-    boolean old = myOptions.SHOW_INTENTION_PREVIEW;
-    if (old == show) return;
-    myOptions.SHOW_INTENTION_PREVIEW = show;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SHOW_INTENTION_PREVIEW, old, show);
-  }
-
-  public boolean isKeepTrailingSpacesOnCaretLine() {
-    return myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE;
-  }
-
-  public void setKeepTrailingSpacesOnCaretLine(boolean keep) {
-    boolean old = myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE;
-    if (old == keep) return;
-    myOptions.KEEP_TRAILING_SPACE_ON_CARET_LINE = keep;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_KEEP_TRAILING_SPACE_ON_CARET_LINE, old, keep);
-  }
-
-  public @NotNull String getSoftWrapFileMasks() {
-    // xmlb writes null into the field when the stored option carries no `value` attribute.
-    return Objects.requireNonNullElse(myOptions.SOFT_WRAP_FILE_MASKS, SOFT_WRAP_FILE_MASKS_DEFAULT);
-  }
-
-  public void setSoftWrapFileMasks(@NotNull String value) {
-    String old = myOptions.SOFT_WRAP_FILE_MASKS;
-    if (value.equals(old)) return;  // `value` is not null
-    myOptions.SOFT_WRAP_FILE_MASKS = value;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SOFT_WRAP_FILE_MASKS, old, value);
-  }
-
-  @ApiStatus.Internal
-  public @NotNull CaretStopOptions getCaretStopOptions() {
-    return myOsSpecificState.CARET_STOP_OPTIONS;
-  }
-
-  @ApiStatus.Internal
-  public void setCaretStopOptions(@NotNull CaretStopOptions options) {
-    CaretStopOptions old = myOsSpecificState.CARET_STOP_OPTIONS;
-    if (old.equals(options)) return;
-    myOsSpecificState.CARET_STOP_OPTIONS = options;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_CARET_STOP_OPTIONS, old, options);
-  }
-
-  public boolean isUseEditorFontInInlays() {
-    return myOptions.USE_EDITOR_FONT_IN_INLAYS;
-  }
-
-  public void setUseEditorFontInInlays(boolean value) {
-    boolean old = myOptions.USE_EDITOR_FONT_IN_INLAYS;
-    if (old == value) return;
-    myOptions.USE_EDITOR_FONT_IN_INLAYS = value;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_USE_EDITOR_FONT_IN_INLAYS, old, value);
-  }
-
-  public boolean isInsertParenthesesAutomatically() {
-    return myOptions.INSERT_PARENTHESES_AUTOMATICALLY;
-  }
-
-  public void setInsertParenthesesAutomatically(boolean value) {
-    boolean old = myOptions.INSERT_PARENTHESES_AUTOMATICALLY;
-    if (old == value) return;
-    myOptions.INSERT_PARENTHESES_AUTOMATICALLY = value;
-    myPropertyChangeSupport.firePropertyChange(PropNames.PROP_INSERT_PARENTHESES_AUTOMATICALLY, old, value);
   }
 
   public static final class PropNames {
