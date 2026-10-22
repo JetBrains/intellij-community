@@ -110,6 +110,7 @@
     <httpRequestHandler implementation="org.jetbrains.idea.devkit.requestHandlers.BuildHttpRequestHandler"/>
 
     <junitPatcher implementation="org.jetbrains.idea.devkit.run.JUnitDevKitPatcher"/>
+    <junitRunnerSelectionPolicy implementation="org.jetbrains.idea.devkit.run.DevKitJUnitRunnerSelectionPolicy"/>
     <runConfigurationExtension implementation="org.jetbrains.idea.devkit.run.DevKitApplicationPatcher"/>
     <runConfigurationExtension implementation="org.jetbrains.idea.devkit.run.IdeStarterRunConfigurationExtension"/>
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.idea.devkit.build.PluginModuleBuildScopeProvider"/>

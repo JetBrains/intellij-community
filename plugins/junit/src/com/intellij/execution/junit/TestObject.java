@@ -754,16 +754,22 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     }
   }
 
+  private static boolean isPackageRunnerPreferred(@NotNull Project project, @Nullable Module module) {
+    return ContainerUtil.exists(JUnitRunnerSelectionPolicy.EP_NAME.getExtensionList(),
+                                policy -> policy.isPackageRunnerPreferred(project, module));
+  }
+
   @RequiresBackgroundThread
   private @NotNull String getRunnerInner() {
     Project project = myConfiguration.getProject();
     LOG.assertTrue(!DumbService.getInstance(project).isAlternativeResolveEnabled());
-    final GlobalSearchScope globalSearchScope = JUnitUtil.getScope(myConfiguration.getConfigurationModule().getModule(), myConfiguration.getProject());
+    Module module = myConfiguration.getConfigurationModule().getModule();
+    final GlobalSearchScope globalSearchScope = JUnitUtil.getScope(module, project);
     JUnitConfiguration.Data data = myConfiguration.getPersistentData();
     if (JUnitConfiguration.TEST_CATEGORY.equals(data.TEST_OBJECT)) {
       return JUnitStarter.JUNIT4_PARAMETER;
     }
-    if (JUnitConfiguration.TEST_TAGS.equals(data.TEST_OBJECT)) {
+    if (JUnitConfiguration.TEST_TAGS.equals(data.TEST_OBJECT) || isPackageRunnerPreferred(project, module)) {
       return getRunner(globalSearchScope, project);
     }
 

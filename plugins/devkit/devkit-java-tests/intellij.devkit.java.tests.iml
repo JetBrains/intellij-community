@@ -30,6 +30,7 @@
     <orderEntry type="module" module-name="intellij.devkit" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.scaffolding" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.execution" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.consoleView" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.ui" scope="TEST" />

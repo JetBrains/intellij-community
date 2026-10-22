@@ -22,6 +22,7 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.AllInPackageConfigurationProducer;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.junit.JUnitRunnerSelectionPolicy;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestInClassConfigurationProducer;
 import com.intellij.execution.junit.TestPackage;
@@ -254,6 +255,27 @@ public class JUnitConfigurationTest extends JUnitConfigurationTestCase {
     JavaParameters parameters = checkCanRun(configuration);
     ParametersList parametersList = parameters.getProgramParametersList();
     assertTrue("Expected to run as junit4 but program parameters are: " + parametersList.getParametersString(), parametersList.getList().contains("-junit4"));
+  }
+
+  public void testPackageRunnerPreferredForJUnit3Class() throws ExecutionException {
+    createModule(findFile("moduleWithBothVersions"), true, "JUnit6",
+                 IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit6", "JUnit6"));
+    Module module = getModule(3);
+    IntelliJProjectConfiguration.LibraryRoots junit4Library =
+      IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4");
+    ModuleRootModificationUtil.addModuleLibrary(module, "JUnit4", junit4Library.getClassesUrls(), junit4Library.getSourcesUrls());
+    PsiClass testClass = findClass(module, "with4.TestCaseInheritor");
+    assertNotNull(testClass);
+    JUnitConfiguration configuration = createConfiguration(testClass);
+    assertNotNull(configuration);
+
+    List<String> parameters = checkCanRun(configuration).getProgramParametersList().getList();
+    assertTrue("Expected to run as junit4 but program parameters are: " + parameters, parameters.contains("-junit4"));
+
+    JUnitRunnerSelectionPolicy.EP_NAME.getPoint().registerExtension((project, testModule) -> true, getTestRootDisposable());
+
+    parameters = checkCanRun(configuration).getProgramParametersList().getList();
+    assertTrue("Expected to run as junit6 but program parameters are: " + parameters, parameters.contains("-junit6"));
   }
 
   public void testRunningAllInPackage() throws IOException, ExecutionException {
