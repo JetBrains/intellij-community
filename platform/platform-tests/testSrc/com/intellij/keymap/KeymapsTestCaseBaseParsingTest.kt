@@ -3,18 +3,15 @@ package com.intellij.keymap
 
 import com.intellij.openapi.actionSystem.KeyboardGestureAction
 import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortcut
-import com.intellij.openapi.actionSystem.Shortcut
 import com.intellij.ui.KeyStrokeAdapter
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.InstanceOfAssertFactories
 import org.junit.jupiter.api.Test
 
 internal class KeymapsTestCaseBaseParsingTest {
-  private val testCase = ExposedKeymapsTestCase()
-
   @Test
   fun `parses keyboard modifier gesture shortcut duplicate key`() {
-    val shortcut = testCase.parseShortcutForTest("ctrl control dblClick")
+    val shortcut = KeymapsTestCaseBase.parseShortcut("ctrl control dblClick")
 
     assertThat(shortcut)
       .asInstanceOf(InstanceOfAssertFactories.type(KeyboardModifierGestureShortcut::class.java))
@@ -29,22 +26,6 @@ internal class KeymapsTestCaseBaseParsingTest {
       KeyStrokeAdapter.getKeyStroke("ctrl control"),
     )
 
-    assertThat(testCase.getTextForTest(shortcut)).isEqualTo("ctrl control dblClick")
-  }
-
-  private class ExposedKeymapsTestCase : KeymapsTestCaseBase() {
-    fun parseShortcutForTest(shortcut: String): Shortcut = parseShortcut(shortcut)
-
-    fun getTextForTest(shortcut: Shortcut): String = getText(shortcut)
-
-    override fun getKnownDuplicates(): Map<String, Map<String, List<String>>> = emptyMap()
-
-    override fun getUnknownActions(): Set<String> = emptySet()
-
-    override fun getBoundActions(): Set<String> = emptySet()
-
-    override fun getConflictSafeGroups(): Set<String> = emptySet()
-
-    override fun getGroupForUnknownAction(actionId: String): String? = null
+    assertThat(KeymapsTestCaseBase.getText(shortcut)).isEqualTo("ctrl control dblClick")
   }
 }
