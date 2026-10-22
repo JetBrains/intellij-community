@@ -10,6 +10,7 @@ import com.intellij.ide.projectView.impl.ProjectViewPane
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory
@@ -24,6 +25,7 @@ import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabC
 import com.intellij.platform.ide.nonModalWelcomeScreen.welcomeScreenStartupSpanTracer
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.IconManager
+import com.intellij.ui.JBColor
 import com.intellij.ui.PlatformIcons
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.SearchTextField
@@ -34,6 +36,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -120,6 +123,8 @@ class WelcomeScreenLeftPanel(private val project: Project, private val scope: Co
     mainPanel.add(createScrollPane(projectFilteringTree.component, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER),
                   BorderLayout.CENTER)
 
+    updatePanelColors(mainPanel)
+
     return mainPanel
   }
 
@@ -177,7 +182,7 @@ class WelcomeScreenLeftPanel(private val project: Project, private val scope: Co
     }
 
   private fun separator(customize: Row.() -> Unit = {}) = panel {
-    separator().customize()
+    separator(WelcomeScreenUIManager.getSeparatorColor()).customize()
   }
 
   override fun uiDataSnapshot(sink: DataSink) {
@@ -187,6 +192,14 @@ class WelcomeScreenLeftPanel(private val project: Project, private val scope: Co
 
   companion object {
     const val ID: String = "NonModalWelcomeScreenProjectPane"
+  }
+}
+
+internal fun updatePanelColors(mainPanel: JBPanel<JBPanel<*>>) {
+  UIUtil.forEachComponentInHierarchy(mainPanel) {
+    if (it.background == JBColor.PanelBackground) {
+      it.background = JBUI.CurrentTheme.ToolWindow.background()
+    }
   }
 }
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory
@@ -147,6 +148,8 @@ private class WelcomeScreenLeftPanelContent(
       }
     }
 
+    updatePanelColors(mainPanel)
+
     return mainPanel
   }
 
@@ -178,7 +181,7 @@ private class WelcomeScreenLeftPanelContent(
     }
 
   private fun separator(customize: Row.() -> Unit = {}) = panel {
-    separator().customize()
+    separator(WelcomeScreenUIManager.getSeparatorColor()).customize()
   }
 
   private class MyMainPanel : JBPanel<JBPanel<*>>(BorderLayout()), UiDataProvider {
