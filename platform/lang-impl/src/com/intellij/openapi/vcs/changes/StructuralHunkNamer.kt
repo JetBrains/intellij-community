@@ -118,6 +118,7 @@ object StructuralHunkNamer {
       val node = Element(
         kind = element.javaClass.name,
         key = element.javaClass.name + ":" + name,
+        presentation = text,
         text = structureElement.presentableTextForComparison ?: text,
         source = lines.text.subSequence(range.startOffset, range.endOffset).toString(),
         icon = presentation.getIcon(false),
@@ -143,7 +144,10 @@ object StructuralHunkNamer {
     return name.isNotEmpty() && WORD.matches(name) && text.startsWith(name)
   }
 
-  /** Matches elements by kind and name. Duplicate names fall back to the presentation and the position among the duplicates. */
+  /**
+   * Matches elements by kind and name. Duplicate names fall back to the presentation and the position among the duplicates. The
+   * presentation leaves out the compared value, so a duplicate property keeps its identity when its value changes.
+   */
   private fun assignIds(before: List<Element>, after: List<Element>, parentId: String) {
     val oldGroups = before.groupBy { it.key }
     val groups = after.groupBy { it.key }
@@ -154,7 +158,7 @@ object StructuralHunkNamer {
       for (siblings in listOf(oldGroup, group)) {
         val occurrences = HashMap<String, Int>()
         for (element in siblings) {
-          val identity = if (usePresentation) key + ":" + element.text else key
+          val identity = if (usePresentation) key + ":" + element.presentation else key
           val occurrence = occurrences.getOrDefault(identity, 0)
           occurrences[identity] = occurrence + 1
           element.id = "$parentId/${identity.length}:$identity:$occurrence"
@@ -387,10 +391,11 @@ object StructuralHunkNamer {
 
   private class Entry(val line: Int, val name: HunkNamePart, val part: Part?)
 
-  /** A Structure View element with its lines. It holds no PSI. */
+  /** A Structure View element with its lines. It holds no PSI. The text adds the compared value to the presentation. */
   private class Element(
     val kind: String,
     val key: String,
+    val presentation: @NlsSafe String,
     val text: @NlsSafe String,
     val source: String,
     val icon: Icon?,
