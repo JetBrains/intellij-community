@@ -714,7 +714,11 @@ private class CoroutineDispatcherWatcher(
           val beforeSleep = System.nanoTime()
           delay(pooledSamplingInterval.milliseconds)
           val oversleptMs = (TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - beforeSleep) - pooledSamplingInterval).coerceAtLeast(0)
-          threadDumper.dumpThreadsIfNeeded(lastSampleNs, oversleptMs)
+          // Skip the check if the thread overslept too much to avoid false positives when the host is overloaded.
+          // This check provides an estimate, not 100% accuracy.
+          if (oversleptMs <= pooledSamplingInterval / 2) {
+            threadDumper.dumpThreadsIfNeeded(lastSampleNs, oversleptMs)
+          }
         }
       }
       finally {
@@ -752,7 +756,7 @@ internal class PooledThreadDumper(
   private var lastReportedNs = clock.nanoTime()
 
   fun dumpThreadsIfNeeded(lastSampleNs: Long, oversleptMs: Long) {
-    // Overslept time is not counted to detect unresponsiveness to mitigate problem with stalled process
+    // Add the overslept time to the unresponsiveness threshold to handle stalled processes.
     val unresponsiveIntervalMs = getUnresponsiveIntervalMs(reportedDumpsCount) + oversleptMs
     val unresponsiveMs = TimeUnit.NANOSECONDS.toMillis(clock.nanoTime() - lastSampleNs)
     if (unresponsiveMs <= unresponsiveIntervalMs ||
@@ -875,12 +879,19 @@ internal class DefaultCompensatablePool(
     // Cancelling a coroutine before it starts does not remove it from the queue; it is removed only when a worker dequeues it.
     // When the pool is starved, no worker is available to drain these canceled probes.
 
-    val beforeSleep = clock.nanoTime()
-    clock.sleep(timeMs)
-    val now = clock.nanoTime()
-    val overslept = (TimeUnit.NANOSECONDS.toMillis(now - beforeSleep) - timeMs).coerceAtLeast(0)
-    // Overslept time is not counted to detect unresponsiveness to mitigate problem with stalled process
-    return TimeUnit.NANOSECONDS.toMillis(now - getLastSampleNs()) < unresponsiveIntervalMs + overslept
+    while (true) {
+      val beforeSleep = clock.nanoTime()
+      clock.sleep(timeMs)
+      val now = clock.nanoTime()
+      val overslept = (TimeUnit.NANOSECONDS.toMillis(now - beforeSleep) - timeMs).coerceAtLeast(0)
+      if (overslept <= timeMs / 2) {
+        // Avoid granting parallelism when the host is overloaded:
+        // * Skip the check if the thread overslept too much.
+        // * Add the overslept time to the unresponsiveness threshold to handle stalled processes.
+        // This check provides an estimate, not 100% accuracy.
+        return TimeUnit.NANOSECONDS.toMillis(now - getLastSampleNs()) < unresponsiveIntervalMs + overslept
+      }
+    }
   }
 
   override fun withGrantedParallelism(block: () -> Unit) {

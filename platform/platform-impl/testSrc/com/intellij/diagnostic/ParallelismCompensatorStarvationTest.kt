@@ -59,7 +59,7 @@ internal class ParallelismCompensatorStarvationTest {
       maxGrantsAllowed = 100,
       baseChecksForRevoke = 5,
       minConsecutiveChecksToConfirmRevoke = 3,
-      samplingIntervalMs = 15,
+      samplingIntervalMs = 50,
     )
 
     try {
