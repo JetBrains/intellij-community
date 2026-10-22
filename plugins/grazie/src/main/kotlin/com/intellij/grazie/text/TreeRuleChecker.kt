@@ -413,14 +413,13 @@ class TreeRuleChecker private constructor() {
 
       val suppressedRanges = suppressedRanges()
       val problems = ArrayList<TreeProblem>()
-      val doc = ArrayList<SentenceWithContent>()
-      var offset = 0
+      val documents = LinkedHashMap<TextStyleDomain, MutableList<SentenceWithContent>>()
       for ((content, sentences) in textToSentences.entries) {
         if (sentences.isEmpty()) continue
 
         val contentLanguage = sentences.firstNotNullOfOrNull { it.tree }?.treeSupport()?.grazieLanguage ?: continue
-
-        var offsetInContent = 0
+        val doc = documents.getOrPut(content.getTextDomain()) { ArrayList() }
+        val offset = doc.lastOrNull()?.let { it.docSentenceOffset + it.sentence.text.length } ?: 0
 
         val matches = doCheck(content, sentences)
         val matchProblems = checkPlainProblems(content, matches)
@@ -446,13 +445,13 @@ class TreeRuleChecker private constructor() {
             .withTree(parsed.tree?.withStartOffset(offset))
             .withMetadata(matches[i].metadata)
           doc.add(SentenceWithContent(sentence, content, offset, offset + untrimmedRange.startOffset))
-          offsetInContent += sentence.text.length
         }
-        offset += offsetInContent
       }
 
       val file = textToSentences.keys.first().containingFile
-      problems.addAll(checkDocumentProblems(file, doc))
+      for (doc in documents.values) {
+        problems.addAll(checkDocumentProblems(file, doc))
+      }
 
       return problems
     }
