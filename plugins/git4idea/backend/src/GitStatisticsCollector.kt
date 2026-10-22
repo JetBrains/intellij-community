@@ -59,7 +59,7 @@ import kotlin.io.path.isDirectory
 import kotlin.io.path.isRegularFile
 
 internal class GitStatisticsCollector : ProjectUsagesCollector() {
-  private val GROUP = EventLogGroup("git.configuration", 28)
+  private val GROUP = EventLogGroup("git.configuration", 29)
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -89,6 +89,8 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
 
     addBoolIfDiffers(set, settings, defaultSettings, { it.filterByActionInPopup() }, FILTER_BY_ACTION_IN_POPUP)
     addBoolIfDiffers(set, settings, defaultSettings, { it.filterByRepositoryInPopup() }, FILTER_BY_REPOSITORY_IN_POPUP)
+
+    addBoolIfDiffers(set, settings, defaultSettings, { it.pathToGit != null }, EXECUTABLE_PATH_OVERRIDDEN)
 
     val appSettings = GitVcsApplicationSettings.getInstance()
     val defaultAppSettings = GitVcsApplicationSettings()
@@ -275,6 +277,8 @@ internal class GitStatisticsCollector : ProjectUsagesCollector() {
 
   private val TYPE = EventFields.Enum("type", GitVersion.Type::class.java) { it.name }
   private val EXECUTABLE = GROUP.registerVarargEvent("executable", EventFields.Version, TYPE)
+
+  private val EXECUTABLE_PATH_OVERRIDDEN = GROUP.registerVarargEvent("executable.path.overridden", EventFields.Enabled)
 
   private val COMMON_LOCAL_BRANCHES = EventFields.RoundedInt("common_local_branches")
   private val COMMON_REMOTE_BRANCHES = EventFields.RoundedInt("common_remote_branches")
