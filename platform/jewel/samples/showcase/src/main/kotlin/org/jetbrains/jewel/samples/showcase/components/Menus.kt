@@ -14,8 +14,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.samples.showcase.ShowcaseTestTags
 import org.jetbrains.jewel.ui.component.DefaultButton
 import org.jetbrains.jewel.ui.component.GroupHeader
 import org.jetbrains.jewel.ui.component.PopupMenu
@@ -50,7 +52,12 @@ private fun BasicMenus() {
         var selectedItem by remember { mutableStateOf("Item 1") }
 
         Box {
-            DefaultButton(onClick = { showMenu = true }) { Text("Show Menu") }
+            DefaultButton(
+                onClick = { showMenu = true },
+                modifier = Modifier.testTag(ShowcaseTestTags.BASIC_MENU_BUTTON),
+            ) {
+                Text("Show Menu")
+            }
 
             if (showMenu) {
                 PopupMenu(
@@ -59,6 +66,7 @@ private fun BasicMenus() {
                         true
                     },
                     horizontalAlignment = Alignment.Start,
+                    modifier = Modifier.testTag(ShowcaseTestTags.BASIC_MENU_POPUP),
                 ) {
                     selectableItem(selected = selectedItem == "Item 1", onClick = { selectedItem = "Item 1" }) {
                         Text("Item 1")
@@ -139,7 +147,12 @@ private fun MenusWithSubmenus() {
         var selectedItem by remember { mutableStateOf("None") }
 
         Box {
-            DefaultButton(onClick = { showMenu = true }) { Text("Show Menu with Submenus") }
+            DefaultButton(
+                onClick = { showMenu = true },
+                modifier = Modifier.testTag(ShowcaseTestTags.SUBMENU_MENU_BUTTON),
+            ) {
+                Text("Show Menu with Submenus")
+            }
 
             if (showMenu) {
                 PopupMenu(
@@ -148,6 +161,7 @@ private fun MenusWithSubmenus() {
                         true
                     },
                     horizontalAlignment = Alignment.Start,
+                    modifier = Modifier.testTag(ShowcaseTestTags.SUBMENU_MENU_POPUP),
                 ) {
                     selectableItem(
                         selected = selectedItem == "Direct Item",

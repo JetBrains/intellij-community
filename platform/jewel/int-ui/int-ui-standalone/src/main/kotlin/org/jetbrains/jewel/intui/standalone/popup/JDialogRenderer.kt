@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.intui.standalone.popup
 
 import androidx.compose.foundation.shape.CornerSize
@@ -24,7 +24,10 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.layout.IntrinsicMeasurable
+import androidx.compose.ui.layout.IntrinsicMeasureScope
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.MeasurePolicy
@@ -32,6 +35,7 @@ import androidx.compose.ui.layout.MeasureResult
 import androidx.compose.ui.layout.MeasureScope
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.popup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Constraints
@@ -49,12 +53,14 @@ import androidx.compose.ui.window.Popup as ComposePopup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import com.jetbrains.JBR
+import java.awt.AWTError
 import java.awt.AWTEvent
 import java.awt.Color
 import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
 import java.awt.FocusTraversalPolicy
+import java.awt.HeadlessException
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.Toolkit
@@ -67,7 +73,10 @@ import java.awt.event.KeyEvent.KEY_PRESSED
 import java.awt.event.KeyEvent.KEY_RELEASED
 import java.awt.event.MouseEvent
 import java.awt.event.WindowEvent
+import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JDialog
+import javax.swing.JWindow
+import javax.swing.RootPaneContainer
 import javax.swing.SwingUtilities
 import javax.swing.UIManager
 import kotlin.math.floor
@@ -77,11 +86,82 @@ import org.jetbrains.jewel.foundation.util.myLogger
 import org.jetbrains.jewel.ui.component.PopupRenderer
 import org.jetbrains.skiko.hostOs
 
+private val focusablePopupKeyRoutingOrder = CopyOnWriteArrayList<Window>()
+
 /**
- * A popup renderer implementation that uses [JDialog] to display popups in a Compose UI.
+ * Selects the Swing window class that [JDialogRenderer] creates for a popup.
+ * - [Dialog]: Created for focusable popups (`PopupProperties.focusable = true`). A [JDialog] has a macOS `NSWindow`
+ *   peer that can become the key window and receive keyboard focus.
+ * - [Window]: Created for non-focusable popups (`PopupProperties.focusable = false`). A [JWindow] has a non-activating
+ *   macOS `NSWindow` peer. Showing a [JWindow] does not cause macOS to re-evaluate the key window or steal focus from
+ *   another open focusable popup.
+ */
+internal enum class PopupWindowKind {
+    Dialog,
+    Window,
+}
+
+internal fun popupWindowKind(properties: PopupProperties): PopupWindowKind =
+    if (properties.focusable) PopupWindowKind.Dialog else PopupWindowKind.Window
+
+private sealed interface PopupWindow {
+    val awtWindow: Window
+    val rootPaneContainer: RootPaneContainer
+
+    fun show(properties: PopupProperties, onAfterShow: () -> Unit)
+
+    fun dispose() {
+        awtWindow.isVisible = false
+        awtWindow.dispose()
+    }
+}
+
+private class JDialogPopupWindow(private val dialog: JDialog) : PopupWindow {
+    override val awtWindow: Window
+        get() = dialog
+
+    override val rootPaneContainer: RootPaneContainer
+        get() = dialog
+
+    override fun show(properties: PopupProperties, onAfterShow: () -> Unit) {
+        // Keep the popup dialog non-focusable at the native window level so showing or clicking inside the popup
+        // never steals active/key-window status from the owner window. Keyboard events for focusable popups are
+        // routed from the active owner window to the popup's ComposeScene by the AWTEventListener below.
+        dialog.focusableWindowState = false
+        dialog.isAutoRequestFocus = false
+        dialog.isVisible = true
+        onAfterShow()
+    }
+}
+
+private class JWindowPopupWindow(private val window: JWindow) : PopupWindow {
+    override val awtWindow: Window
+        get() = window
+
+    override val rootPaneContainer: RootPaneContainer
+        get() = window
+
+    override fun show(properties: PopupProperties, onAfterShow: () -> Unit) {
+        window.isVisible = true
+        onAfterShow()
+    }
+}
+
+private fun <T> T.applyTransparentPopupChrome() where T : Window, T : RootPaneContainer {
+    rootPane.isOpaque = false
+    background = TRANSPARENT_WITH_WINDOWS_HACK
+    contentPane.background = TRANSPARENT_WITH_WINDOWS_HACK
+    if (hostOs.isMacOS) {
+        rootPane.putClientProperty("Window.shadow", true)
+    }
+}
+
+/**
+ * A popup renderer implementation that uses heavyweight Swing windows ([JDialog] and [JWindow]) to display popups in a
+ * Compose UI.
  *
- * This renderer creates a [JDialog] that hosts Compose content, allowing for integration between Swing and Compose UI
- * hierarchies.
+ * This renderer creates a [JDialog] for focusable popups and a [JWindow] for non-focusable popups to host Compose
+ * content, allowing integration between Swing and Compose UI hierarchies.
  *
  * Note that this renderer requires you to meet at least one of the following conditions:
  * - Be running on JBR (JetBrains Runtime);
@@ -181,24 +261,6 @@ internal object JDialogRenderer : PopupRenderer {
     }
 }
 
-/**
- * One open popup, as a key-event target.
- *
- * `IdePopupManager` keeps the same kind of stack for the IDE popups. It gives a key to the top of the stack first, in
- * the listener call itself.
- */
-private class PopupKeyTarget(
-    val ownsKeyEvent: (AWTKeyEvent) -> Boolean,
-    val claimsDismissRequest: (AWTKeyEvent) -> Boolean,
-    val handleKeyEvent: (AWTKeyEvent) -> Unit,
-)
-
-/** The open popups, in the order they opened. The last one is the nearest to the user. Read and written on the EDT. */
-private val openPopups = mutableListOf<PopupKeyTarget>()
-
-/** Set while a key goes into a popup's own scene, so that no listener acts on the forwarded copy. */
-private var forwardingKeyEvent = false
-
 @Composable
 private fun JPopupImpl(
     window: Window,
@@ -212,6 +274,7 @@ private fun JPopupImpl(
     windowShape: ((IntSize) -> java.awt.Shape)?,
     content: @Composable () -> Unit,
 ) {
+    val popupDensity = LocalDensity.current
     val component = LocalComponent.current
 
     val currentContent by rememberUpdatedState(content)
@@ -220,13 +283,144 @@ private fun JPopupImpl(
     val currentOnKeyEvent by rememberUpdatedState(onKeyEvent)
     val currentOnPreviewKeyEvent by rememberUpdatedState(onPreviewKeyEvent)
     val currentProperties by rememberUpdatedState(properties)
-    val windowShapeState = rememberUpdatedState(windowShape)
+    val currentCornerSize by rememberUpdatedState(cornerSize)
+    val currentWindowShape by rememberUpdatedState(windowShape)
 
     val compositionLocalContext by rememberUpdatedState(currentCompositionLocalContext)
 
     var parentBoundsInRoot by remember { mutableStateOf<IntRect?>(null) }
-    var popupRectangle by remember { mutableStateOf<Rectangle?>(null) }
 
+    val popupWindow: PopupWindow =
+        remember(window, properties.focusable) {
+            when (popupWindowKind(properties)) {
+                PopupWindowKind.Dialog ->
+                    JDialogPopupWindow(
+                        JDialog(window).apply {
+                            isUndecorated = true
+                            applyTransparentPopupChrome()
+                        }
+                    )
+
+                PopupWindowKind.Window ->
+                    JWindowPopupWindow(
+                        JWindow(window).apply {
+                            type = Window.Type.POPUP
+                            if (isWaylandToolkit) {
+                                rootPane.putClientProperty("wlawt.popup_position_unconstrained", true)
+                            }
+                            applyTransparentPopupChrome()
+                            isFocusable = false
+                            focusableWindowState = false
+                            isAlwaysOnTop = false
+                            isAutoRequestFocus = false
+                        }
+                    )
+            }
+        }
+    var popupRectangle by remember(popupWindow) { mutableStateOf<Rectangle?>(null) }
+    val outsidePressTracker = remember(popupWindow) { PopupOutsidePressTracker() }
+    var dispatchedToPopupScene by remember(popupWindow) { mutableStateOf(false) }
+    var unconsumedByPopupScene by remember(popupWindow) { mutableStateOf(false) }
+
+    fun updateWindowShape(size: IntSize) {
+        val awtWindow = popupWindow.awtWindow
+        val shapeProvider = currentWindowShape
+        if (shapeProvider != null) {
+            if (blendingEnabled) {
+                // When blending is active, the window is already in
+                // java.awt.GraphicsDevice.WindowTranslucency.PERPIXEL_TRANSLUCENT mode
+                // (per-pixel alpha). Calling Window.setShape() would switch it to
+                // PERPIXEL_TRANSPARENT (hard pixel clip), breaking antialiasing at the edges.
+                // Compose's own drawing + transparent background is sufficient.
+                return
+            }
+            // Without blending, fall back to Window.setShape() to at least
+            // clip the rectangular window boundary to the custom shape outline.
+            // Note: this uses PERPIXEL_TRANSPARENT mode, which has known
+            // antialiasing limitations at concave corners (e.g. arrow junction).
+            val logicalSize =
+                IntSize(
+                    floor(size.width / awtWindow.density()).toInt(),
+                    floor(size.height / awtWindow.density()).toInt(),
+                )
+            try {
+                awtWindow.shape = shapeProvider(logicalSize)
+            } catch (_: UnsupportedOperationException) {
+                applyRoundedCorners(awtWindow, currentCornerSize, size)
+            }
+            return
+        }
+
+        awtWindow.shape = null
+        if (blendingEnabled) {
+            // If any of the blending logic is enabled, we don't need to use JBR APIs
+            // to set the rounded corners and fix the background.
+            return
+        }
+
+        applyRoundedCorners(awtWindow, currentCornerSize, size)
+    }
+
+    fun onPopupMeasured(position: IntOffset, size: IntSize) {
+        val newRectangle = Rectangle(position.x, position.y, size.width, size.height)
+        if (popupRectangle != newRectangle) {
+            outsidePressTracker.onPopupRepositioned()
+        }
+        popupRectangle = newRectangle
+        updateWindowShape(size)
+    }
+
+    val composePanel =
+        remember(popupWindow) {
+            val awtWindow = popupWindow.awtWindow
+            ComposePanel(renderSettings = DEFAULT_RENDER_SETTINGS).apply {
+                isClearFocusOnMouseDownEnabled = false
+                layout = null
+                isOpaque = false
+                background = TRANSPARENT_WITH_WINDOWS_HACK
+                preferredSize = Dimension(1, 1)
+                focusTraversalPolicy = NoFocusTraversalPolicy
+
+                setContent {
+                    val parentBounds = parentBoundsInRoot ?: return@setContent
+
+                    Layout(
+                        content = {
+                            ProvideValuesFromOtherContext(compositionLocalContext) {
+                                CompositionLocalProvider(
+                                    LocalComponent provides this@apply,
+                                    LocalDensity provides popupDensity,
+                                ) {
+                                    currentContent()
+                                }
+                            }
+                        },
+                        modifier =
+                            Modifier.semantics { popup() }
+                                .onPreviewKeyEvent {
+                                    dispatchedToPopupScene = true
+                                    unconsumedByPopupScene = false
+                                    false
+                                }
+                                .onKeyEvent {
+                                    unconsumedByPopupScene = true
+                                    false
+                                },
+                        measurePolicy =
+                            remember(currentPopupPositionProvider, parentBounds, awtWindow) {
+                                JPopupMeasurePolicy(
+                                    window = awtWindow,
+                                    popupPositionProvider = currentPopupPositionProvider,
+                                    parentBoundsInRoot = parentBounds,
+                                    onMeasure = ::onPopupMeasured,
+                                )
+                            },
+                    )
+                }
+            }
+        }
+
+    val currentParentBounds = parentBoundsInRoot
     Layout(
         content = {},
         modifier =
@@ -240,115 +434,45 @@ private fun JPopupImpl(
         measurePolicy = { _, _ -> layout(0, 0) {} },
     )
 
-    val dialog = remember {
-        JDialog(window).apply {
-            isUndecorated = true
-            rootPane.isOpaque = false
-            background = TRANSPARENT_WITH_WINDOWS_HACK
-            contentPane.background = TRANSPARENT_WITH_WINDOWS_HACK
-            if (hostOs.isMacOS) {
-                rootPane.putClientProperty("Window.shadow", true)
-            }
+    LaunchedEffect(popupWindow, properties) {
+        if (popupWindow is JDialogPopupWindow) {
+            popupWindow.awtWindow.isFocusable = false
+            popupWindow.awtWindow.focusableWindowState = false
+            popupWindow.awtWindow.isAlwaysOnTop = properties.dismissOnClickOutside
         }
     }
 
-    val composePanel = remember {
-        ComposePanel(renderSettings = DEFAULT_RENDER_SETTINGS).apply {
-            isClearFocusOnMouseDownEnabled = false
-            layout = null
-            isOpaque = false
-            background = TRANSPARENT_WITH_WINDOWS_HACK
-            preferredSize = Dimension(1, 1)
-
-            // Prevent focus from moving outside the popup
-            focusTraversalPolicy =
-                object : FocusTraversalPolicy() {
-                    override fun getFirstComponent(aContainer: Container?) = null
-
-                    override fun getLastComponent(aContainer: Container?) = null
-
-                    override fun getDefaultComponent(aContainer: Container?) = null
-
-                    override fun getComponentAfter(aContainer: Container?, aComponent: Component?): Component? = null
-
-                    override fun getComponentBefore(aContainer: Container?, aComponent: Component?): Component? = null
-                }
-
-            setContent {
-                val parentBounds = parentBoundsInRoot ?: return@setContent
-
-                Layout(
-                    content = {
-                        ProvideValuesFromOtherContext(compositionLocalContext) {
-                            CompositionLocalProvider(LocalComponent provides this@apply) { currentContent() }
-                        }
-                    },
-                    modifier = Modifier.semantics { popup() },
-                    measurePolicy =
-                        remember(currentPopupPositionProvider, parentBounds) {
-                            JPopupMeasurePolicy(dialog, currentPopupPositionProvider, parentBounds) { position, size ->
-                                popupRectangle = Rectangle(position.x, position.y, size.width, size.height)
-
-                                val currentWindowShape = windowShapeState.value
-                                if (currentWindowShape != null) {
-                                    if (blendingEnabled) {
-                                        // When blending is active, the window is already in
-                                        // java.awt.GraphicsDevice.WindowTranslucency.PERPIXEL_TRANSLUCENT mode
-                                        // (per-pixel alpha). Calling Window.setShape() would switch it to
-                                        // PERPIXEL_TRANSPARENT (hard pixel clip), breaking antialiasing at the edges.
-                                        // Compose's own drawing + transparent background is sufficient.
-                                        return@JPopupMeasurePolicy
-                                    }
-                                    // Without blending, fall back to Window.setShape() to at least
-                                    // clip the rectangular window boundary to the custom shape outline.
-                                    // Note: this uses PERPIXEL_TRANSPARENT mode, which has known
-                                    // antialiasing limitations at concave corners (e.g. arrow junction).
-                                    val logicalSize =
-                                        IntSize(
-                                            floor(size.width / dialog.density()).toInt(),
-                                            floor(size.height / dialog.density()).toInt(),
-                                        )
-                                    try {
-                                        dialog.shape = currentWindowShape(logicalSize)
-                                    } catch (_: UnsupportedOperationException) {
-                                        applyRoundedCorners(dialog, cornerSize, size)
-                                    }
-                                    return@JPopupMeasurePolicy
-                                }
-
-                                dialog.shape = null
-                                if (blendingEnabled) {
-                                    // If any of the blending logic is enabled, we don't need to use JBR APIs
-                                    // to set the rounded corners and fix the background.
-                                    return@JPopupMeasurePolicy
-                                }
-
-                                if (cornerSize != ZeroCornerSize) {
-                                    JBR.getRoundedCornersManager()
-                                        .setRoundedCorners(
-                                            dialog,
-                                            cornerSize.toPx(size.toSize(), Density(dialog.density())) / dialog.density(),
-                                        )
-                                }
-                                applyRoundedCorners(dialog, cornerSize, size)
-                            }
-                        },
-                )
-            }
-        }
-    }
-
-    LaunchedEffect(properties) {
-        dialog.isFocusable = properties.focusable
-        dialog.focusableWindowState = properties.focusable
-        dialog.isAlwaysOnTop = properties.dismissOnClickOutside
+    LaunchedEffect(popupWindow, windowShape, cornerSize) {
+        val currentRect = popupRectangle ?: return@LaunchedEffect
+        updateWindowShape(IntSize(currentRect.width, currentRect.height))
     }
 
     val rectValue = popupRectangle
-    LaunchedEffect(rectValue) {
-        val rectangle = rectValue?.withDensity(dialog.density()) ?: return@LaunchedEffect
-        dialog.size = rectangle.size
-        dialog.location = rectangle.location.fromCurrentScreenToGlobal(window)
+    var keyboardFocusRequested by remember(popupWindow) { mutableStateOf(false) }
+    LaunchedEffect(popupWindow, currentParentBounds, rectValue) {
+        val awtWindow = popupWindow.awtWindow
+        if (currentParentBounds != null && popupRectangle == null) {
+            if (!awtWindow.isDisplayable) {
+                awtWindow.addNotify()
+            }
+            composePanel.preferredSize = null
+            composePanel.preferredSize
+        }
+        val rectangle = popupRectangle?.withDensity(awtWindow.density()) ?: return@LaunchedEffect
+        val location = rectangle.location.fromCurrentScreenToGlobal(window)
+        composePanel.preferredSize = rectangle.size
+        awtWindow.bounds = Rectangle(location, rectangle.size)
+        if (!awtWindow.isVisible) {
+            val shouldRequestFocus = currentProperties.focusable && !keyboardFocusRequested
+            if (shouldRequestFocus) {
+                keyboardFocusRequested = true
+            }
+            popupWindow.show(currentProperties) {
+                if (shouldRequestFocus) {
+                    composePanel.requestFocusInWindow()
+                }
+            }
+        }
     }
 
     LaunchedEffect(blendingEnabled, windowShape) {
@@ -361,198 +485,277 @@ private fun JPopupImpl(
         }
     }
 
-    DisposableEffect(composePanel) {
-        // The following conditions should be considered for mouse events to dismiss the popup:
-        // - The current properties allow for the popup to be dismissed on click outside;
-        // - The popup is not focusable (focusable case is handled by the `window lost focus` event when clicking
-        // outside);
-        // - The click event is a down event (other events like "mouse up" should be ignored to prevent
-        //   auto-dismissal from the event that triggered this popup);
-        // - The event is not triggered in a child component (like menus/submenus);
-        // - The mouse position is outside the popup bounds;
-        fun shouldDismissPopup(event: MouseEvent, dialog: Window, currentProperties: PopupProperties): Boolean =
-            currentProperties.dismissOnClickOutside &&
-                !currentProperties.focusable &&
-                event.id == MouseEvent.MOUSE_PRESSED &&
-                !dialog.isAncestorOf(event.component) &&
-                !dialog.bounds.contains(event.locationOnScreen)
-
-        // The following conditions should be considered for the "window lost focus" event to dismiss the popup:
-        // - The event must be targeting the dialog rendering this popup (This listener get events for all windows in
-        // the running application);
-        // - The current window must be focusable;
-        // - The current properties allow for the popup to be dismissed on click outside;
-        // - The event must be a "WINDOW_LOST_FOCUS" event;
-        // - The window receiving the focus should not be a child of this dialog;
-        // - The window receiving the focus must not be the parent window: when the user clicks back in the parent
-        //   window, WINDOW_LOST_FOCUS fires during MOUSE_PRESSED (before Compose processes the event). Dismissing
-        //   here would cause the popup to close and immediately reopen when a toggle button (e.g., chevron) is
-        //   clicked. Instead, we handle this case on MOUSE_RELEASED via invokeLater (see below), which ensures
-        //   Compose has already processed the click before the dismiss runs.
-        fun shouldDismissPopup(event: WindowEvent, dialog: Window, currentProperties: PopupProperties): Boolean =
-            event.window == dialog &&
-                currentProperties.focusable &&
-                currentProperties.dismissOnClickOutside &&
-                event.id == WindowEvent.WINDOW_LOST_FOCUS &&
-                !dialog.isAncestorOf(event.oppositeWindow) &&
-                event.oppositeWindow != window
-
-        // The following conditions should be considered for dismissing the popup when the application is left:
-        // - The current properties allow for the popup to be dismissed on click outside. This applies whether or not
-        //   the popup is focusable. No mouse event is involved in an application switch, so the non-focusable path
-        //   cannot handle it either;
-        // - The event must be a "WINDOW_LOST_FOCUS" event. WINDOW_DEACTIVATED reports the same transition, so
-        //   accepting both would request the dismissal twice;
-        // - There must be no window receiving the focus, meaning it left the application. A null window cannot be
-        //   this dialog, its owner, or one of its submenus, so none of the exceptions above can apply here;
-        // - The window losing the focus must be this dialog or one of its owners. A submenu is composed inside its
-        //   parent popup, so its owner is the parent dialog rather than the window hosting the whole chain.
-        fun shouldDismissOnApplicationSwitch(
-            event: WindowEvent,
-            dialog: Window,
-            currentProperties: PopupProperties,
-        ): Boolean =
-            currentProperties.dismissOnClickOutside &&
-                event.id == WindowEvent.WINDOW_LOST_FOCUS &&
-                event.oppositeWindow == null &&
-                (event.window == dialog || dialog.isOwnedBy(event.window))
-
-        // The following conditions should be considered for deferring the dismiss on MOUSE_RELEASED:
-        // - The popup is focusable (non-focusable case is handled by shouldDismissPopup(MouseEvent) above);
-        // - The current properties allow for the popup to be dismissed on click outside;
-        // - The event must be a MOUSE_RELEASED event — we defer to after release so that Compose has already
-        //   processed the full click gesture (press + release) before the dismiss runs;
-        // - The event is not triggered in a child component (like menus/submenus);
-        // - The mouse position is outside the popup bounds;
-        // - The click originates from the parent window: other windows are handled by shouldDismissPopup(WindowEvent)
-        //   via WINDOW_LOST_FOCUS, so we restrict this path to avoid double-dismissal.
-        fun shouldDeferDismissOnMouseReleased(
-            event: MouseEvent,
-            dialog: Window,
-            currentProperties: PopupProperties,
-        ): Boolean =
-            currentProperties.focusable &&
-                currentProperties.dismissOnClickOutside &&
-                event.id == MouseEvent.MOUSE_RELEASED &&
-                !dialog.isAncestorOf(event.component) &&
-                !dialog.bounds.contains(event.locationOnScreen) &&
-                SwingUtilities.getWindowAncestor(event.component) == window
-
-        fun ownsKeyEvent(event: AWTKeyEvent): Boolean {
-            val eventWindow = SwingUtilities.getWindowAncestor(event.component) ?: event.component as? Window
-            // Focusable popups do not necessarily own native focus immediately (see the JEWEL-1276 focus-stealing
-            // workaround below). Their key events can arrive at any window that owns them.
-            return dialog.isVisible &&
-                (eventWindow == dialog || (currentProperties.focusable && dialog.isOwnedBy(eventWindow)))
-        }
-
-        // AWT can deliver a key to a window that owns no popup at all. A focusable popup must still close on a
-        // dismiss request, because a dropped Escape leaves it on screen with no way to close it.
-        fun claimsDismissRequest(event: AWTKeyEvent): Boolean =
-            dialog.isVisible && currentProperties.focusable && event.toComposeKeyEvent().isDismissRequest()
-
-        fun handleKeyEvent(event: AWTKeyEvent) {
-            val composeEvent = event.toComposeKeyEvent()
-
-            val consumed =
-                currentOnPreviewKeyEvent?.invoke(composeEvent) == true ||
-                    currentOnKeyEvent?.invoke(composeEvent) == true
-            val dismissRequest = currentOnDismissRequest
-            // Whether Escape dismisses is the popup's declared policy; a null callback just means we have
-            // no way to act on it, so we must not claim the key either.
-            val dismissed =
-                !consumed &&
-                    composeEvent.isDismissRequest() &&
-                    currentProperties.dismissOnBackPress &&
-                    dismissRequest != null
-
-            if (dismissed) {
-                dismissRequest.invoke(InputMode.Keyboard)
-            }
-            // A focusable popup swallows Escape whether or not it dismissed, matching Compose. A
-            // non-focusable one must let a key it did not act on reach whatever owns it.
-            val claimsDismissRequest = composeEvent.isDismissRequest() && currentProperties.focusable
-            if (consumed || dismissed || claimsDismissRequest) {
-                event.consume()
-            } else if (forwardToPopupScene(composePanel, event) { forwardingKeyEvent = it }) {
-                // The popup's own content handled the key, so the owner window must not see it too.
-                event.consume()
-            }
-        }
-
-        val keyTarget = PopupKeyTarget(::ownsKeyEvent, ::claimsDismissRequest, ::handleKeyEvent)
-
+    DisposableEffect(popupWindow, composePanel) {
+        val awtWindow = popupWindow.awtWindow
         val listener = AWTEventListener { event ->
             when (event) {
                 is MouseEvent -> {
-                    if (shouldDismissPopup(event, dialog, currentProperties)) {
-                        currentOnDismissRequest?.invoke(InputMode.Touch)
+                    if (event.id == MouseEvent.MOUSE_PRESSED) {
+                        val eventWindow = SwingUtilities.getWindowAncestor(event.component)
+                        outsidePressTracker.onPress(
+                            button = event.button,
+                            isOwnerOutsidePress =
+                                currentProperties.focusable &&
+                                    currentProperties.dismissOnClickOutside &&
+                                    !awtWindow.isAncestorOf(event.component) &&
+                                    !awtWindow.isInWindowOwnerChainOf(eventWindow) &&
+                                    !awtWindow.bounds.contains(event.locationOnScreen) &&
+                                    (eventWindow == window || eventWindow?.isInWindowOwnerChainOf(awtWindow) == true),
+                        )
                     }
-                    // For focusable popups, WINDOW_LOST_FOCUS is skipped when the user clicks in the parent window
-                    // (see shouldDismissPopup(WindowEvent) above). We handle dismissal on MOUSE_RELEASED instead.
-                    // invokeLater queues after the current event finishes dispatching, so Compose has already
-                    // processed the click (e.g., a toggle button's onClick) by the time the dismiss runs.
-                    if (shouldDeferDismissOnMouseReleased(event, dialog, currentProperties)) {
+                    val matchingOwnerOutsidePressObserved =
+                        event.id == MouseEvent.MOUSE_RELEASED && outsidePressTracker.onRelease(event.button)
+                    if (shouldDismissOnClick(event, awtWindow, currentProperties, ownerWindow = window)) {
+                        currentOnDismissRequest?.invoke(InputMode.Touch)
+                    } else if (
+                        shouldDeferDismissOnMouseReleased(
+                            event = event,
+                            dialog = awtWindow,
+                            properties = currentProperties,
+                            ownerWindow = window,
+                            matchingOwnerOutsidePressObserved = matchingOwnerOutsidePressObserved,
+                        )
+                    ) {
+                        // For focusable popups, WINDOW_LOST_FOCUS is skipped when the user clicks in the parent window.
+                        // Deferring dismissal to MOUSE_RELEASED via invokeLater lets Compose process the click first.
                         SwingUtilities.invokeLater { currentOnDismissRequest?.invoke(InputMode.Touch) }
                     }
                 }
+
                 is WindowEvent -> {
                     // Both predicates accept the same event when the popup holds the focus and the user leaves
                     // the application. The application switch must win. Touch lets a hovered submenu item veto
                     // the dismissal through the guard in MenuSubmenuItem. That guard settles the hover and click
                     // race on an item. It must not keep a popup open after the application goes away.
-                    if (shouldDismissOnApplicationSwitch(event, dialog, currentProperties)) {
+                    if (shouldDismissOnApplicationSwitch(event, awtWindow, currentProperties)) {
                         currentOnDismissRequest?.invoke(InputMode.Keyboard)
-                    } else if (shouldDismissPopup(event, dialog, currentProperties)) {
+                    } else if (shouldDismissOnFocusLoss(event, awtWindow, currentProperties, ownerWindow = window)) {
                         currentOnDismissRequest?.invoke(InputMode.Touch)
                     }
                 }
-                is AWTKeyEvent -> {
-                    if (forwardingKeyEvent || event.isConsumed) return@AWTEventListener
-                    // AWT notifies the toolkit listeners in registration order, so an outer popup always hears a
-                    // key before the popup it opened. The innermost popup that owns the key must answer it. Every
-                    // listener finds the same popup in the stack, and only that one acts.
-                    val target =
-                        openPopups.lastOrNull { it.ownsKeyEvent(event) }
-                            ?: openPopups.lastOrNull { it.claimsDismissRequest(event) }
-                    if (target !== keyTarget) return@AWTEventListener
 
-                    handleKeyEvent(event)
+                is AWTKeyEvent -> {
+                    if (event.isConsumed) return@AWTEventListener
+
+                    val composeEvent = event.toComposeKeyEvent()
+                    val eventWindow = SwingUtilities.getWindowAncestor(event.component) ?: event.component as? Window
+                    // Focusable popups do not necessarily own native focus immediately (see the JEWEL-1276
+                    // focus-stealing workaround above), so their key events can arrive from an ancestor owner window.
+                    // AWT can also deliver Escape to a window that owns no popup at all; in that case, the topmost
+                    // visible focusable popup still claims the dismiss request.
+                    val topOwnedFocusableTarget =
+                        focusablePopupKeyRoutingOrder.lastOrNull { candidate ->
+                            candidate.isVisible &&
+                                (eventWindow == candidate || eventWindow?.isInWindowOwnerChainOf(candidate) == true)
+                        }
+                    val isTopFocusableTarget =
+                        currentProperties.focusable &&
+                            (topOwnedFocusableTarget
+                                ?: focusablePopupKeyRoutingOrder.lastOrNull {
+                                    it.isVisible && composeEvent.isDismissRequest()
+                                }) == awtWindow
+                    val eventOnPopup =
+                        eventWindow == awtWindow && (!currentProperties.focusable || isTopFocusableTarget)
+                    val eventOnOwner =
+                        eventWindow != awtWindow &&
+                            isTopFocusableTarget &&
+                            (eventWindow?.isInWindowOwnerChainOf(awtWindow) == true ||
+                                (topOwnedFocusableTarget == null && composeEvent.isDismissRequest()))
+                    if (
+                        !PopupEventRouting.shouldDispatchKeyEventToPopup(
+                            popupFocusable = currentProperties.focusable,
+                            popupVisible = awtWindow.isVisible,
+                            popupActive = eventOnPopup,
+                            ownerActive = eventOnOwner,
+                        )
+                    ) {
+                        return@AWTEventListener
+                    }
+
+                    val consumedByPreviewCallback = currentOnPreviewKeyEvent?.invoke(composeEvent) == true
+                    val keyEventTarget = composePanel.findPopupKeyEventTarget()
+                    val consumedByTarget =
+                        if (
+                            !consumedByPreviewCallback &&
+                                (event.component !== keyEventTarget || composeEvent.isDismissRequest())
+                        ) {
+                            dispatchedToPopupScene = false
+                            unconsumedByPopupScene = false
+                            val routedEvent =
+                                AWTKeyEvent(
+                                    keyEventTarget,
+                                    event.id,
+                                    event.`when`,
+                                    event.modifiersEx,
+                                    event.keyCode,
+                                    event.keyChar,
+                                    event.keyLocation,
+                                )
+                            keyEventTarget.dispatchPopupKeyEventToTargetListeners(routedEvent)
+                            if (composeEvent.key == Key.Escape) {
+                                // ComposeSceneMediator's BackNavigationEventInput consumes every Escape KeyDown
+                                // even when nothing in the popup's ComposeScene handled the event.
+                                dispatchedToPopupScene && !unconsumedByPopupScene
+                            } else {
+                                routedEvent.isConsumed
+                            }
+                        } else {
+                            false
+                        }
+                    val consumedByKeyCallback =
+                        !consumedByPreviewCallback &&
+                            !consumedByTarget &&
+                            currentOnKeyEvent?.invoke(composeEvent) == true
+
+                    val consumed = consumedByPreviewCallback || consumedByTarget || consumedByKeyCallback
+                    val dismissRequest = currentOnDismissRequest
+                    // Whether Escape dismisses is the popup's declared policy; a null callback just means we have
+                    // no way to act on it, so we must not claim the key either.
+                    val dismissed =
+                        !consumed &&
+                            composeEvent.isDismissRequest() &&
+                            currentProperties.dismissOnBackPress &&
+                            dismissRequest != null
+
+                    if (dismissed) {
+                        dismissRequest.invoke(InputMode.Keyboard)
+                    }
+                    // A focusable popup swallows Escape whether or not it dismissed, matching Compose. A
+                    // non-focusable one must let a key it did not act on reach whatever owns it.
+                    val claimsDismissRequest = composeEvent.isDismissRequest() && currentProperties.focusable
+                    val handledDismissRequest = dismissed || claimsDismissRequest
+                    val claimsOwnerRoutedKey =
+                        eventOnOwner &&
+                            PopupEventRouting.shouldConsumeOwnerActiveKeyAfterRedispatch(
+                                redispatchedEventConsumed = consumed,
+                                isDismissRequest = handledDismissRequest,
+                                isModifiedDismissRequest = composeEvent.isModifiedDismissRequest(),
+                            )
+                    if (consumed || handledDismissRequest || claimsOwnerRoutedKey) {
+                        event.consume()
+                    }
                 }
             }
         }
 
-        openPopups.add(keyTarget)
         Toolkit.getDefaultToolkit()
             .addAWTEventListener(
                 listener,
                 AWTEvent.MOUSE_EVENT_MASK or AWTEvent.WINDOW_EVENT_MASK or AWTEvent.KEY_EVENT_MASK,
             )
-        onDispose {
-            openPopups.remove(keyTarget)
-            Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
-        }
+        onDispose { Toolkit.getDefaultToolkit().removeAWTEventListener(listener) }
     }
 
-    DisposableEffect(dialog) {
-        dialog.contentPane = composePanel
-
-        // JEWEL-1276 this weird code duplicates the JBPopup/AbstractPopup logic to avoid focus stealing on macOS.
-        // The actual hack is implemented in LocalPopupComponentFactory and uses the fact that macOS only sets the
-        // "key window" when a new window/popup is created. We don't want our popups to do it by default, so we
-        // start them as non-focusable, and then make them focusable a short while later.
-        dialog.focusableWindowState = false
-        dialog.isAutoRequestFocus = false
-        dialog.isVisible = true
-        dialog.size = composePanel.preferredSize
-        SwingUtilities.invokeLater { dialog.focusableWindowState = true }
+    DisposableEffect(popupWindow, composePanel) {
+        popupWindow.rootPaneContainer.contentPane = composePanel
+        if (currentProperties.focusable) {
+            focusablePopupKeyRoutingOrder.remove(popupWindow.awtWindow)
+            focusablePopupKeyRoutingOrder.add(popupWindow.awtWindow)
+        }
 
         onDispose {
-            dialog.isVisible = false
-            dialog.dispose()
+            focusablePopupKeyRoutingOrder.remove(popupWindow.awtWindow)
+            popupWindow.dispose()
             composePanel.dispose()
         }
     }
+}
+
+private fun shouldDismissOnClick(
+    event: MouseEvent,
+    dialog: Window,
+    properties: PopupProperties,
+    ownerWindow: Window,
+): Boolean {
+    if (!properties.dismissOnClickOutside || event.id != MouseEvent.MOUSE_PRESSED) return false
+
+    val eventWindow = SwingUtilities.getWindowAncestor(event.component)
+    return PopupEventRouting.shouldDismissOnMousePress(
+        popupFocusable = properties.focusable,
+        popupActive = dialog.isActive,
+        eventInPopupOrOwnedChild = dialog.isAncestorOf(event.component) || dialog.isInWindowOwnerChainOf(eventWindow),
+        eventInsidePopupBounds = dialog.bounds.contains(event.locationOnScreen),
+        eventComponentInOwnerWindow = eventWindow == ownerWindow || eventWindow?.isInWindowOwnerChainOf(dialog) == true,
+    )
+}
+
+private fun shouldDeferDismissOnMouseReleased(
+    event: MouseEvent,
+    dialog: Window,
+    properties: PopupProperties,
+    ownerWindow: Window,
+    matchingOwnerOutsidePressObserved: Boolean,
+): Boolean {
+    if (event.id != MouseEvent.MOUSE_RELEASED || !properties.focusable || !properties.dismissOnClickOutside) {
+        return false
+    }
+    val eventWindow = SwingUtilities.getWindowAncestor(event.component)
+    return PopupEventRouting.shouldDeferDismissOnMouseReleased(
+        popupFocusable = properties.focusable,
+        dismissOnClickOutside = properties.dismissOnClickOutside,
+        isMouseReleasedEvent = true,
+        matchingOwnerOutsidePressObserved = matchingOwnerOutsidePressObserved,
+        eventComponentIsPopupDescendant =
+            dialog.isAncestorOf(event.component) || dialog.isInWindowOwnerChainOf(eventWindow),
+        eventInsidePopupBounds = dialog.bounds.contains(event.locationOnScreen),
+        eventComponentInOwnerWindow = eventWindow == ownerWindow || eventWindow?.isInWindowOwnerChainOf(dialog) == true,
+    )
+}
+
+private fun shouldDismissOnApplicationSwitch(event: WindowEvent, dialog: Window, properties: PopupProperties): Boolean =
+    properties.dismissOnClickOutside &&
+        event.id == WindowEvent.WINDOW_LOST_FOCUS &&
+        event.oppositeWindow == null &&
+        (event.window == dialog || event.window?.isInWindowOwnerChainOf(dialog) == true)
+
+private fun shouldDismissOnFocusLoss(
+    event: WindowEvent,
+    dialog: Window,
+    properties: PopupProperties,
+    ownerWindow: Window,
+): Boolean {
+    val eventWindow = event.window ?: return false
+    if (event.id != WindowEvent.WINDOW_LOST_FOCUS || !properties.focusable || !properties.dismissOnClickOutside) {
+        return false
+    }
+    if (eventWindow != dialog && !eventWindow.isInWindowOwnerChainOf(dialog)) {
+        return false
+    }
+    return PopupEventRouting.shouldDismissOnFocusLoss(
+        dismissOnClickOutside = true,
+        popupFocusable = true,
+        isFocusLostEvent = true,
+        focusLostWindowIsPopup = true,
+        oppositeWindowInPopupOrOwnedChild =
+            event.oppositeWindow == dialog ||
+                dialog.isAncestorOf(event.oppositeWindow) ||
+                dialog.isInWindowOwnerChainOf(event.oppositeWindow),
+        oppositeWindowIsPopupOwner =
+            event.oppositeWindow == ownerWindow || event.oppositeWindow?.isInWindowOwnerChainOf(dialog) == true,
+    )
+}
+
+/** Returns true when this window is a direct or transitive owner of [other] in the AWT window owner chain. */
+internal fun Window.isInWindowOwnerChainOf(other: Window?): Boolean {
+    var current: Window? = other?.owner
+    while (current != null) {
+        if (current == this) return true
+        current = current.owner
+    }
+    return false
+}
+
+/** Prevents focus from moving outside the popup via focus traversal keys. */
+private object NoFocusTraversalPolicy : FocusTraversalPolicy() {
+    override fun getFirstComponent(aContainer: Container?): Component? = null
+
+    override fun getLastComponent(aContainer: Container?): Component? = null
+
+    override fun getDefaultComponent(aContainer: Container?): Component? = null
+
+    override fun getComponentAfter(aContainer: Container?, aComponent: Component?): Component? = null
+
+    override fun getComponentBefore(aContainer: Container?, aComponent: Component?): Component? = null
 }
 
 private class JPopupMeasurePolicy(
@@ -587,6 +790,14 @@ private class JPopupMeasurePolicy(
 
         return layout(contentSize.width, contentSize.height) { placeables.fastForEach { it.place(0, 0) } }
     }
+
+    override fun IntrinsicMeasureScope.minIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.minIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.maxIntrinsicWidth(measurables: List<IntrinsicMeasurable>, height: Int): Int = 0
+
+    override fun IntrinsicMeasureScope.maxIntrinsicHeight(measurables: List<IntrinsicMeasurable>, width: Int): Int = 0
 }
 
 private fun applyRoundedCorners(dialog: Window, cornerSize: CornerSize, size: IntSize) {
@@ -675,64 +886,15 @@ private fun Point.fromCurrentScreenToGlobal(window: Window): Point {
     return point
 }
 
-/** Returns `true` when [candidate] owns this window, directly or through a chain of owned windows. */
-private fun Window.isOwnedBy(candidate: Window?): Boolean {
-    if (candidate == null) return false
-    var owner = this.owner
-    while (owner != null) {
-        if (owner == candidate) return true
-        owner = owner.owner
-    }
-    return false
-}
-
-/**
- * Sends [event] to the Compose scene inside [panel]. Returns `true` when that scene consumed the event.
- *
- * The popup does not always own native focus, so a key can arrive at an owner window instead. The popup's callbacks run
- * first. A key that no callback consumed must still reach the content, because a handler on a focused node can use it.
- *
- * A popup key callback must therefore have no side effect when it returns `false`. The callback applies the effect, and
- * then the content applies it again.
- */
-private fun forwardToPopupScene(panel: Component, event: AWTKeyEvent, setForwarding: (Boolean) -> Unit): Boolean {
-    val target = panel.findKeyEventTarget() ?: return false
-    // AWT calls the toolkit listeners before it gives the event to its own component. When that component is
-    // already this popup's key target, AWT delivers the key itself. A forwarded copy would arrive first and the
-    // original would follow, so the scene would act on the key twice.
-    if (event.component === target) return false
-    val forwarded =
-        AWTKeyEvent(
-            target,
-            event.id,
-            event.getWhen(),
-            event.modifiersEx,
-            event.keyCode,
-            event.keyChar,
-            event.keyLocation,
-        )
-    setForwarding(true)
+private val isWaylandToolkit: Boolean by lazy {
     try {
-        target.dispatchEvent(forwarded)
-    } finally {
-        setForwarding(false)
+        Toolkit.getDefaultToolkit().javaClass.name == "sun.awt.wl.WLToolkit"
+    } catch (_: HeadlessException) {
+        false
+    } catch (_: AWTError) {
+        false
     }
-    return forwarded.isConsumed
 }
-
-/** Finds the component that carries the Compose scene's key listener, which is a descendant of the panel. */
-private fun Component.findKeyEventTarget(): Component? {
-    if (keyListeners.isNotEmpty()) return this
-    if (this !is Container) return null
-    for (child in components) {
-        child.findKeyEventTarget()?.let {
-            return it
-        }
-    }
-    return null
-}
-
-private fun KeyEvent.isDismissRequest() = type == KeyEventType.KeyDown && key == Key.Escape
 
 private val <T> CompositionLocal<T>.currentOrNull
     @Composable get() = customRunCatching { current }.getOrNull()
