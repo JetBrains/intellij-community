@@ -63,6 +63,10 @@ private val addText: Boolean by lazy {
   HotSwapUiExtension.computeSafeIfAvailable { it.shouldAddText } != false
 }
 
+private val showReloadModifiedFilesInEditorPopup: Boolean by lazy {
+  HotSwapUiExtension.computeSafeIfAvailable { it.showReloadModifiedFilesInEditorPopup } != false
+}
+
 private fun showFloatingToolbar(project: Project): Boolean = HotSwapUiExtension.computeSafeIfAvailable { it.showFloatingToolbar(project) } != false
 
 private fun collectPopupMenuActions(): DefaultActionGroup? = HotSwapUiExtension.computeSafeIfAvailable { it.popupMenuActions() }
@@ -78,6 +82,10 @@ internal class HotSwapModifiedFilesAction : AnAction(), DumbAware {
 
   override fun update(e: AnActionEvent) {
     val project = e.project ?: return
+    if (e.place == ActionPlaces.EDITOR_POPUP && !showReloadModifiedFilesInEditorPopup) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
     val status = getCurrentStatus(project)
     e.presentation.isEnabled = status?.hasChanges == true
     e.presentation.isVisible = Registry.`is`("debugger.hotswap.floating.toolbar")
