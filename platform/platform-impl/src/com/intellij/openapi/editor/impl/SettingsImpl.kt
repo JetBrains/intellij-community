@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.EditorSettings.LineNumerationType
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
 import com.intellij.openapi.editor.state.ObservableStateListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -201,6 +200,10 @@ class SettingsImpl internal constructor(
     state.myIsFoldingOutlineShown = value
   }
 
+  override fun isFoldingOutlineShownOnlyOnHover(): Boolean = state.foldingOutlineShownOnlyOnHover
+
+  override fun isFoldingEndingsShown(): Boolean = state.foldingEndingsShown
+
   override fun isAutoCodeFoldingEnabled(): Boolean = state.myAutoCodeFoldingEnabled
 
   override fun setAutoCodeFoldingEnabled(value: Boolean) {
@@ -363,11 +366,15 @@ class SettingsImpl internal constructor(
     state.clearOverriding(state::myIsWheelFontChangeEnabled)
   }
 
+  override fun isWheelFontChangePersistent(): Boolean = state.wheelFontChangePersistent
+
   override fun isMouseClickSelectionHonorsCamelWords(): Boolean = state.myIsMouseClickSelectionHonorsCamelWords
 
   override fun setMouseClickSelectionHonorsCamelWords(value: Boolean) {
     state.myIsMouseClickSelectionHonorsCamelWords = value
   }
+
+  override fun addCaretsOnDoubleCtrl(): Boolean = state.addCaretsOnDoubleCtrl
 
   override fun isVariableInplaceRenameEnabled(): Boolean = state.myIsRenameVariablesInplace
 
@@ -393,7 +400,7 @@ class SettingsImpl internal constructor(
     state.myUseSoftWraps = use
   }
 
-  override fun isAllSoftWrapsShown(): Boolean = EditorSettingsExternalizable.getInstance().isAllSoftWrapsShown
+  override fun isAllSoftWrapsShown(): Boolean = state.allSoftWrapsShown
 
   override fun isPaintSoftWraps(): Boolean = state.myPaintSoftWraps
 
@@ -431,6 +438,8 @@ class SettingsImpl internal constructor(
     state.myShowIntentionBulb = show
   }
 
+  override fun isShowInspectionWidget(): Boolean = state.showInspectionWidget
+
   override fun setLanguageSupplier(languageSupplier: Supplier<out Language?>?) {
     if (languageSupplier == null) {
       state.languageSupplier = null
@@ -445,15 +454,15 @@ class SettingsImpl internal constructor(
     state.showingSpecialCharacters = value
   }
 
+  override fun isUseEditorFontInInlays(): Boolean = state.useEditorFontInInlays
+
   override fun getLineNumerationType(): LineNumerationType = state.myLineNumeration
 
   override fun setLineNumerationType(value: LineNumerationType) {
     state.myLineNumeration = value
   }
 
-  override fun isInsertParenthesesAutomatically(): Boolean {
-    return EditorSettingsExternalizable.getInstance().isInsertParenthesesAutomatically
-  }
+  override fun isInsertParenthesesAutomatically(): Boolean = state.insertParenthesesAutomatically
 
   override fun areStickyLinesShown(): Boolean = state.myStickyLinesShown && state.myStickyLinesShownForLanguage
 
@@ -550,6 +559,10 @@ private val PROPERTIES_WITHOUT_EDITOR_REFRESH: Set<String> = setOf(
   EditorSettingsState::myShowIntentionBulb.name,
   EditorSettingsState::myLineNumeration.name,
   EditorSettingsState::myUseTabCharacter.name,
+  EditorSettingsState::wheelFontChangePersistent.name,
+  EditorSettingsState::addCaretsOnDoubleCtrl.name,
+  EditorSettingsState::insertParenthesesAutomatically.name,
+  EditorSettingsState::showInspectionWidget.name,
 )
 
 private fun softWrapAppliancePlaceOf(kind: EditorKind?): SoftWrapAppliancePlaces {

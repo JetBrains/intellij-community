@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.ide.ui.AntialiasingType
@@ -6,7 +6,6 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
@@ -115,7 +114,7 @@ class InlayTextMetricsStorage(val editor: Editor) {
   }
 
   private fun getFontFamilyName() : String {
-    return if (EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays) {
+    return if (editor.settings.isUseEditorFontInInlays) {
       EditorColorsManager.getInstance().globalScheme.editorFontName
     } else {
       StartupUiUtil.labelFont.family
@@ -163,7 +162,7 @@ class InlayTextMetrics(
     }
 
     internal fun create(editor: Editor, size: Float, fontType: Int, context: FontRenderContext) : InlayTextMetrics {
-      return create(editor, size, fontType, context, EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays)
+      return create(editor, size, fontType, context, editor.settings.isUseEditorFontInInlays)
     }
   }
 

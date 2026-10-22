@@ -222,7 +222,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
   private var myKeepHint: Boolean = false
 
   val statusToolbar: ActionToolbarImpl
-  private var showToolbar: Boolean = EditorSettingsExternalizable.getInstance().isShowInspectionWidget
+  private var showToolbar: Boolean = editor.settings.isShowInspectionWidget
   private var trafficLightVisible: Boolean = mayRenderTrafficLight
   private val toolbarComponentListener: ComponentListener
   private var cachedToolbarBounds: Rectangle = Rectangle()
@@ -337,7 +337,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun selectionChanged(event: FileEditorManagerEvent) {
         if (isErrorStripeVisible) {
-          showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget && analyzerStatus.controller.isToolbarEnabled
+          showToolbar = editor.settings.isShowInspectionWidget && analyzerStatus.controller.isToolbarEnabled
 
           updateTrafficLightVisibility()
         }
@@ -632,7 +632,7 @@ class EditorMarkupModelImpl internal constructor(private val editor: EditorImpl)
     smallIconLabel.setIcon(analyzerStatus.icon)
 
     if (showToolbar != analyzerStatus.controller.isToolbarEnabled) {
-      showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget && analyzerStatus.controller.isToolbarEnabled
+      showToolbar = editor.settings.isShowInspectionWidget && analyzerStatus.controller.isToolbarEnabled
       updateTrafficLightVisibility()
     }
 

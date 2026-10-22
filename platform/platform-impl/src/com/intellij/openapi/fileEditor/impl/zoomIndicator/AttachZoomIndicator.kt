@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.zoomIndicator
 
 import com.intellij.openapi.application.invokeLater
@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
@@ -58,7 +57,7 @@ internal class AttachZoomIndicator : EditorFactoryListener {
   }
 
   private fun getComponentToUse(project: Project, editorEx: EditorEx): JComponent {
-    return if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent) {
+    return if (editorEx.settings.isWheelFontChangePersistent) {
       (FileEditorManager.getInstance(project) as? FileEditorManagerImpl)?.component ?: editorEx.component
     }
     else {

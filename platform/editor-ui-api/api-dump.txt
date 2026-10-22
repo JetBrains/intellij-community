@@ -1471,6 +1471,7 @@ e:com.intellij.openapi.editor.EditorKind
 - s:valueOf(java.lang.String):com.intellij.openapi.editor.EditorKind
 - s:values():com.intellij.openapi.editor.EditorKind[]
 com.intellij.openapi.editor.EditorSettings
+- a:addCaretsOnDoubleCtrl():Z
 - a:areGutterIconsShown():Z
 - a:areStickyLinesShown():Z
 - a:getAdditionalColumnsCount():I
@@ -1498,7 +1499,9 @@ com.intellij.openapi.editor.EditorSettings
 - a:isCaretInsideTabs():Z
 - a:isCaretRowShown():Z
 - a:isDndEnabled():Z
+- a:isFoldingEndingsShown():Z
 - a:isFoldingOutlineShown():Z
+- a:isFoldingOutlineShownOnlyOnHover():Z
 - a:isFullLineHeightCursor():Z
 - a:isHighlightSelectionOccurrences():Z
 - a:isIndentGuidesShown():Z
@@ -1514,16 +1517,19 @@ com.intellij.openapi.editor.EditorSettings
 - a:isRefrainFromScrolling():Z
 - a:isRightMarginShown():Z
 - a:isSelectionWhitespaceShown():Z
+- a:isShowInspectionWidget():Z
 - a:isShowIntentionBulb():Z
 - a:isShowingSpecialChars():Z
 - a:isSmartHome():Z
 - a:isTrailingWhitespaceShown():Z
 - a:isUseCustomSoftWrapIndent():Z
+- a:isUseEditorFontInInlays():Z
 - a:isUseSoftWraps():Z
 - a:isUseTabCharacter(com.intellij.openapi.project.Project):Z
 - a:isVariableInplaceRenameEnabled():Z
 - a:isVirtualSpace():Z
 - a:isWheelFontChangeEnabled():Z
+- a:isWheelFontChangePersistent():Z
 - a:isWhitespacesShown():Z
 - a:isWrapWhenTypingReachesRightMargin(com.intellij.openapi.project.Project):Z
 - a:resetCamelWords():V

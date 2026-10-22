@@ -102,7 +102,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorModel;
 import com.intellij.openapi.editor.ex.EditorPopupHandler;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.ErrorStripeEvent;
 import com.intellij.openapi.editor.ex.ErrorStripeListener;
 import com.intellij.openapi.editor.ex.FocusChangeListener;
@@ -5619,7 +5618,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       if (mySettings.isWheelFontChangeEnabled()) {
         if (EditorUtil.isChangeFontSize(e)) {
-          boolean isWheelFontChangePersistent = EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()
+          boolean isWheelFontChangePersistent = mySettings.isWheelFontChangePersistent()
                                                 && !UISettings.getInstance().getPresentationMode();
           float shift = e.getWheelRotation();
 

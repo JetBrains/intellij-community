@@ -143,6 +143,16 @@ class EditorSettingsState(
   var myStickyLinesLimit: Int by property { externalizable().stickyLineLimit }
   var characterGridWidth: Float? by property(null)
 
+  // Global-only settings from EditorSettingsExternalizable. A `val` has no override, so it always holds the global value.
+  val foldingOutlineShownOnlyOnHover: Boolean by property { externalizable().isFoldingOutlineShownOnlyOnHover }
+  val foldingEndingsShown: Boolean by property { externalizable().isFoldingEndingsShown }
+  val wheelFontChangePersistent: Boolean by property { externalizable().isWheelFontChangePersistent }
+  val addCaretsOnDoubleCtrl: Boolean by property { externalizable().addCaretsOnDoubleCtrl() }
+  val allSoftWrapsShown: Boolean by property { externalizable().isAllSoftWrapsShown }
+  val insertParenthesesAutomatically: Boolean by property { externalizable().isInsertParenthesesAutomatically }
+  val showInspectionWidget: Boolean by property { externalizable().isShowInspectionWidget }
+  val useEditorFontInInlays: Boolean by property { externalizable().isUseEditorFontInInlays }
+
   // Settings from AdvancedSettings. `EditorFactoryImpl` refreshes all editors when this setting changes.
   var showingSpecialCharacters: Boolean by property { AdvancedSettings.getBoolean(EDITOR_SHOW_SPECIAL_CHARS) }
 
@@ -393,6 +403,15 @@ class EditorSettingsState(
       EditorSettingsExternalizable.PropNames.PROP_SHOW_STICKY_LINES -> refresh(::myStickyLinesShown)
       EditorSettingsExternalizable.PropNames.PROP_SHOW_STICKY_LINES_PER_LANGUAGE -> refresh(::myStickyLinesShownForLanguage)
       EditorSettingsExternalizable.PropNames.PROP_STICKY_LINES_LIMIT -> refresh(::myStickyLinesLimit)
+
+      EditorSettingsExternalizable.PropNames.PROP_IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER -> refresh(::foldingOutlineShownOnlyOnHover)
+      EditorSettingsExternalizable.PropNames.PROP_IS_FOLDING_ENDINGS_SHOWN -> refresh(::foldingEndingsShown)
+      EditorSettingsExternalizable.PropNames.PROP_IS_WHEEL_FONTCHANGE_PERSISTENT -> refresh(::wheelFontChangePersistent)
+      EditorSettingsExternalizable.PropNames.PROP_ADD_CARETS_ON_DOUBLE_CTRL -> refresh(::addCaretsOnDoubleCtrl)
+      EditorSettingsExternalizable.PropNames.PROP_IS_ALL_SOFTWRAPS_SHOWN -> refresh(::allSoftWrapsShown)
+      EditorSettingsExternalizable.PropNames.PROP_INSERT_PARENTHESES_AUTOMATICALLY -> refresh(::insertParenthesesAutomatically)
+      EditorSettingsExternalizable.PropNames.PROP_SHOW_INSPECTION_WIDGET -> refresh(::showInspectionWidget)
+      EditorSettingsExternalizable.PropNames.PROP_USE_EDITOR_FONT_IN_INLAYS -> refresh(::useEditorFontInInlays)
     }
   }
 

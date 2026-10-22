@@ -77,7 +77,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorGutterFreePainterAreaState;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
@@ -486,8 +485,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
   }
 
   private void updateFoldingOutlineVisibility() {
-    var service = EditorSettingsExternalizable.getInstance();
-    var isFoldingOutlineShownOnlyOnHover = service != null && service.isFoldingOutlineShownOnlyOnHover();
+    var isFoldingOutlineShownOnlyOnHover = myEditor.getSettings().isFoldingOutlineShownOnlyOnHover();
 
     myAlphaContext.setVisible(
       !ExperimentalUI.isNewUI() ||
@@ -1890,7 +1888,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
     double[] dyPoints = {y + baseHeight, y, y, y + baseHeight, y + height + (height < 0 ? 1 : 0)};
 
     if (ExperimentalUI.isNewUI()) {
-      if (height <= 0 && !EditorSettingsExternalizable.getInstance().isFoldingEndingsShown()) {
+      if (height <= 0 && !myEditor.getSettings().isFoldingEndingsShown()) {
         //do not paint folding endings in the new UI by default
         return;
       }

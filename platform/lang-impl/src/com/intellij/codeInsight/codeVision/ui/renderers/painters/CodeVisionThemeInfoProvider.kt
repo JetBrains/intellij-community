@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.codeVision.ui.renderers.painters
 
 import com.intellij.codeInsight.daemon.impl.HintUtil
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
@@ -23,7 +22,7 @@ open class CodeVisionThemeInfoProvider {
 
   open fun font(editor: Editor, style: Int = Font.PLAIN): Font {
     val size = lensFontSize(editor)
-    return if (EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays) {
+    return if (editor.settings.isUseEditorFontInInlays) {
       val editorFont = EditorUtil.getEditorFont()
       editorFont.deriveFont(style, size)
 

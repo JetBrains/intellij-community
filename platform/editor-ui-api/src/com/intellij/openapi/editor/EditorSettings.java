@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.lang.Language;
@@ -10,6 +10,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.function.Supplier;
 
+/**
+ * The settings of one editor.
+ * <p>
+ * A setting with a setter can have its own value in this editor. A setting with only a getter always has the value of
+ * the global setting in {@code EditorSettingsExternalizable}, and only that class changes it.
+ */
 @ApiStatus.NonExtendable
 public interface EditorSettings {
   boolean isRightMarginShown();
@@ -75,6 +81,16 @@ public interface EditorSettings {
 
   boolean isFoldingOutlineShown();
   void setFoldingOutlineShown(boolean val);
+
+  /**
+   * Returns {@code true} if the new UI shows the folding outline only while the mouse is over the gutter.
+   */
+  boolean isFoldingOutlineShownOnlyOnHover();
+
+  /**
+   * Returns {@code true} if the new UI shows an arrow at the end of each folding region.
+   */
+  boolean isFoldingEndingsShown();
 
   boolean isAutoCodeFoldingEnabled();
   void setAutoCodeFoldingEnabled(boolean val);
@@ -169,8 +185,18 @@ public interface EditorSettings {
   void setWheelFontChangeEnabled(boolean val);
   void resetWheelFontChangeEnabled();
 
+  /**
+   * Returns {@code true} if a font size change with the mouse wheel applies to all editors, and not only to this one.
+   */
+  boolean isWheelFontChangePersistent();
+
   boolean isMouseClickSelectionHonorsCamelWords();
   void setMouseClickSelectionHonorsCamelWords(boolean val);
+
+  /**
+   * Returns {@code true} if a double press of the multi-caret modifier key, followed by an arrow key, adds carets.
+   */
+  boolean addCaretsOnDoubleCtrl();
 
 
   boolean isVariableInplaceRenameEnabled();
@@ -216,6 +242,11 @@ public interface EditorSettings {
   void setShowIntentionBulb(boolean show);
 
   /**
+   * Returns {@code true} if the error stripe shows the inspection widget.
+   */
+  boolean isShowInspectionWidget();
+
+  /**
    * Sets the language which determines certain editor settings (right margin and soft margins, 'wrap on reaching right margin').
    *
    * @see #getRightMargin(Project)
@@ -226,6 +257,11 @@ public interface EditorSettings {
 
   boolean isShowingSpecialChars();
   void setShowingSpecialChars(boolean value);
+
+  /**
+   * Returns {@code true} if inlays use the editor font, and not the UI font.
+   */
+  boolean isUseEditorFontInInlays();
 
   LineNumerationType getLineNumerationType();
   void setLineNumerationType(LineNumerationType value);

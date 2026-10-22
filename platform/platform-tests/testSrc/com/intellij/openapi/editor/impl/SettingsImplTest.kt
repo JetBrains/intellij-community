@@ -174,6 +174,66 @@ class SettingsImplTest {
   }
 
   /**
+   * A global-only setting has no setter in [com.intellij.openapi.editor.EditorSettings]. A change of the global setting
+   * reaches an open editor at once.
+   */
+  @Test
+  fun testGlobalOnlySettingsFollowTheGlobalSetting(): Unit = fixture.runTest {
+    initText("abc")
+    val global = EditorSettingsExternalizable.getInstance()
+    val settings = editor.settings
+
+    assertFollowsTheGlobalSetting(global::isFoldingOutlineShownOnlyOnHover, global::setFoldingOutlineShownOnlyOnHover,
+                                  settings::isFoldingOutlineShownOnlyOnHover)
+    assertFollowsTheGlobalSetting(global::isFoldingEndingsShown, global::setFoldingEndingsShown, settings::isFoldingEndingsShown)
+    assertFollowsTheGlobalSetting(global::isWheelFontChangePersistent, global::setWheelFontChangePersistent,
+                                  settings::isWheelFontChangePersistent)
+    assertFollowsTheGlobalSetting(global::addCaretsOnDoubleCtrl, global::setAddCaretsOnDoubleCtrl, settings::addCaretsOnDoubleCtrl)
+    assertFollowsTheGlobalSetting(global::isAllSoftWrapsShown, global::setAllSoftwrapsShown, settings::isAllSoftWrapsShown)
+    assertFollowsTheGlobalSetting(global::isInsertParenthesesAutomatically, global::setInsertParenthesesAutomatically,
+                                  settings::isInsertParenthesesAutomatically)
+    assertFollowsTheGlobalSetting(global::isShowInspectionWidget, global::setShowInspectionWidget, settings::isShowInspectionWidget)
+    assertFollowsTheGlobalSetting(global::isUseEditorFontInInlays, global::setUseEditorFontInInlays, settings::isUseEditorFontInInlays)
+  }
+
+  /**
+   * A direct write to the stored options sends no event. `ToggleDistractionFreeModeAction` writes them so, and then
+   * `refreshAllEditors` must compute the editor values again.
+   */
+  @Test
+  fun testRefreshAllEditorsReadsADirectWriteOfTheOptions(): Unit = fixture.runTest {
+    initText("abc")
+    val options = EditorSettingsExternalizable.getInstance().options
+    val original = options.IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER
+    try {
+      options.IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER = !original
+      EditorFactory.getInstance().refreshAllEditors()
+      assertEquals(!original, editor.settings.isFoldingOutlineShownOnlyOnHover)
+    } finally {
+      options.IS_FOLDING_OUTLINE_SHOWN_ONLY_ON_HOVER = original
+      EditorFactory.getInstance().refreshAllEditors()
+    }
+  }
+
+  /**
+   * Inverts the global setting, checks that [editorValue] follows it, and then restores the global setting.
+   */
+  private fun assertFollowsTheGlobalSetting(
+    globalValue: () -> Boolean,
+    setGlobalValue: (Boolean) -> Unit,
+    editorValue: () -> Boolean,
+  ) {
+    val original = globalValue()
+    try {
+      setGlobalValue(!original)
+      assertEquals(!original, editorValue())
+    } finally {
+      setGlobalValue(original)
+    }
+    assertEquals(original, editorValue())
+  }
+
+  /**
    * A language that the test can switch. The state reads it only when it computes the language.
    */
   private class SwitchableLanguage(var current: Language)

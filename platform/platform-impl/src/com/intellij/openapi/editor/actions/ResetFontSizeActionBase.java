@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.ApiStatus;
@@ -168,7 +167,7 @@ class ResetFontSizeActionBase extends EditorAction implements ActionRemoteBehavi
       if (UISettings.getInstance().getPresentationMode()) {
         return new PresentationModeStrategy();
       }
-      if (EditorSettingsExternalizable.getInstance().isWheelFontChangePersistent()) {
+      if (editor.getSettings().isWheelFontChangePersistent()) {
         return new AllEditorsStrategy(editor);
       }
     }
