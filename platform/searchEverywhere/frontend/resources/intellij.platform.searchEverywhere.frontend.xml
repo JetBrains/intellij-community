@@ -5,6 +5,8 @@
     <module name="fleet.rpc"/>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
@@ -56,6 +58,9 @@
     <extensionPoint name="searchEverywhere.actionsRanker"
                     interface="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeActionsRanker"
                     dynamic="true"/>
+    <extensionPoint name="searchEverywhere.decisionsEndpointProvider"
+                    interface="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeDecisionsEndpointProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -66,12 +71,17 @@
     <registryKey key="search.everywhere.actions.ranker"
                  defaultValue=""
                  restartRequired="false"
-                 description="The id of the ranker that finds actions for natural-language queries in the Actions tab of Search Everywhere. An empty value turns the ranker off. The value 'mock' selects a local ranker for development."/>
+                 description="The id of the ranker that finds actions for natural-language queries in the Actions tab of Search Everywhere. An empty value turns the ranker off. The value 'decisions' selects the OpenAI Decision API. The value 'mock' selects a local ranker for development."/>
     <registryKey key="search.everywhere.actions.ranker.candidates"
                  defaultValue="[popularity*|splitAndMerge|unlimited]"
                  restartRequired="false"
                  description="How the actions ranker of Search Everywhere gets the candidates when there are more candidates than the ranker accepts. 'popularity' sends only the most popular actions. 'splitAndMerge' ranks all actions in parts, then ranks the best actions of all parts again. 'unlimited' sends all actions in one call."/>
-    <searchEverywhere.actionsRanker implementation="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeMockActionsRanker"/>
+    <registryKey key="search.everywhere.actions.ranker.decisions.model"
+                 defaultValue="gpt-6-luna"
+                 restartRequired="false"
+                 description="The model of the Decision API ranker of Search Everywhere. An empty value selects gpt-6-luna."/>
+    <searchEverywhere.actionsRanker implementation="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeDecisionsActionsRanker"/>
+    <!--<searchEverywhere.actionsRanker implementation="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeMockActionsRanker"/>-->
 
     <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTabFactory"/>
     <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.classes.SeClassesTabFactory"/>

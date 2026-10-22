@@ -81,7 +81,8 @@ interface SeActionsRankerSession : Disposable {
 /**
  * The data that [SeActionsRanker] sends to a remote model for one action.
  *
- * It holds only the action id, name and description.
+ * It holds only the action id, and the name and the description of the action template.
+ * [SeRankerActionsProvider] takes them only from actions that plugin descriptors declare, thus they are the same in each project and context.
  * It holds no code, paths, project names or user identifiers.
  *
  * @property id the action id in `ActionManager`.

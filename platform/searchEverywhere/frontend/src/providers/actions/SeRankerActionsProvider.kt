@@ -7,6 +7,7 @@ import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValueType
 import com.intellij.ide.util.gotoByName.MatchMode
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -109,7 +110,7 @@ class SeRankerActionsProvider internal constructor(
   }
 
   /**
-   * Returns all searchable actions that have a name, with their presentations in the current context.
+   * Returns all actions that can be candidates, with their presentations in the current context. See [createCandidate].
    *
    * The provider collects the list on the first query and reuses it, because the context does not change while the popup is open.
    * When the first query is cancelled, the next query collects the list again.
@@ -129,20 +130,32 @@ class SeRankerActionsProvider internal constructor(
     }.await()
   }
 
+  /**
+   * Creates the candidate of [actionId], or returns `null` when the action has no name or can hold user data.
+   *
+   * The ranker gets the template texts of the action. The presentation in the context can name a project, a file or a run configuration.
+   * Only an action that the usage statistics can report is a candidate, see [ActionsCollectorImpl.canReportActionId].
+   * Such an action comes from the descriptor of the platform, a JetBrains plugin or a Marketplace plugin, thus its template has no user data.
+   * An action that a plugin registers at runtime can hold user data, such as the name of an external tool.
+   */
   private suspend fun createCandidate(
     actionManager: ActionManager,
     actionId: String,
     presentationProvider: suspend (AnAction) -> Presentation,
   ): Candidate? {
+    if (!ActionsCollectorImpl.canReportActionId(actionId)) return null
     val action = actionManager.getAction(actionId) ?: return null
     if (action is ActionGroup && !action.isSearchable) return null
+
+    val template = action.templatePresentation
+    val name = template.text?.takeIf { it.isNotBlank() } ?: return null
 
     val groupMapping = actionModel.getGroupMapping(action)
     groupMapping?.updateBeforeShowSuspend(presentationProvider)
     val presentation = presentationProvider(action)
-    val name = presentation.text?.takeIf { it.isNotBlank() } ?: return null
+    if (presentation.text.isNullOrBlank()) return null
 
-    return Candidate(SeActionsRankerCandidate(actionId, name, presentation.description),
+    return Candidate(SeActionsRankerCandidate(actionId, name, template.description),
                      ActionWrapper(action, groupMapping, MatchMode.NAME, presentation))
   }
 

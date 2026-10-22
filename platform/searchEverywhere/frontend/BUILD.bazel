@@ -63,6 +63,8 @@ jvm_library(
         "//platform/statistics",
         "//platform/welcome-screen",
         "//fleet/rpc",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
     ],
 )
 
@@ -110,6 +112,8 @@ jvm_library(
         "//platform/statistics:statistics_test_lib",
         "//platform/welcome-screen:welcome-screen_test_lib",
         "//fleet/rpc:rpc_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.searchEverywhere.frontend` end
