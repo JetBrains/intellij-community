@@ -221,8 +221,7 @@ title `Recent Files`. The user interface keeps one popup per project and closes 
 
 - The popup must show the files in the right column.
   [@test] ../../../../tests/remote-driver-tests/test/com/intellij/driver/tests/idea/platform/ui/switcher/SwitcherUiTest.kt
-  [@test] ../../../../tests/remote-driver-tests/test/com/intellij/driver/tests/idea/platform/ui/popupsOpening/SwitcherPopupUiTest.kt
-  [@test] ../../../../tests/remote-driver-tests/test/com/intellij/driver/tests/idea/platform/ui/popupsOpening/RecentFilesPopupUiTest.kt
+  [@test] ../../../../tests/remote-driver-tests/test/com/intellij/driver/tests/idea/platform/ui/popupsOpening/PopupsOpeningUiTest.kt
   [@test] ../../../../tests/remote-driver-tests/test/com/intellij/driver/tests/idea/platform/ui/RecentFilesUiTest.kt
 - The popup must show the available tool windows in the left column.
 - The popup must hide the left column when the list of tool windows is empty.
