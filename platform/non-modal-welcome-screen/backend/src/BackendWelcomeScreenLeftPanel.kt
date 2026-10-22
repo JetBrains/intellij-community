@@ -19,6 +19,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectFilteringTree
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectPanelComponentFactory
@@ -27,6 +28,7 @@ import com.intellij.platform.ide.nonModalWelcomeScreen.NonModalWelcomeScreenBund
 import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WELCOME_SCREEN_IS_SHOWN
 import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelActions
 import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.WelcomeScreenLeftPanelRpc
+import com.intellij.platform.ide.nonModalWelcomeScreen.leftPanel.updatePanelColors
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
@@ -154,6 +156,8 @@ internal class BackendWelcomeScreenLeftPanel(
       }
     }
 
+    updatePanelColors(mainPanel)
+
     return mainPanel
   }
 
@@ -185,7 +189,7 @@ internal class BackendWelcomeScreenLeftPanel(
     }
 
   private fun separator(customize: Row.() -> Unit = {}) = panel {
-    separator().customize()
+    separator(WelcomeScreenUIManager.getSeparatorColor()).customize()
   }
 
   private class MyMainPanel : JBPanel<JBPanel<*>>(BorderLayout()), UiDataProvider {
