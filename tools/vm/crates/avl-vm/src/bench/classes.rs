@@ -15,20 +15,19 @@ use avl_base::{Refusal, RefusalExt};
 use serde::Serialize;
 
 use super::arm::Arm;
-use super::classload;
+use super::classload::{self, MAIN_CLASS};
 use super::digest::{NAME_WIDTH, clip, number, table_line, write_group};
 use super::files;
 use super::options::ClassesArgs;
 use super::pluginlog::{self, Owner};
 use super::record::{
-    CLASS_ANCHORS, CLASSES_HIDDEN, CLASSES_JAR, CLASSES_JDK, CLASSES_NAMED, CLASSES_PLATFORM, CLASSES_PLUGINS, LoaderClasses,
+    self, CLASS_ANCHORS, CLASSES_HIDDEN, CLASSES_JAR, CLASSES_JDK, CLASSES_NAMED, CLASSES_PLATFORM, CLASSES_PLUGINS, LoaderClasses,
     PLUGIN_CLASSES_FILE, QUIT_ANCHOR, RunRecord, named_at,
 };
 use super::session::{self, CLASS_LOAD_LOG, RESULT_FILE};
-use super::stats;
 use super::summary::{ArmSummary, Stat};
 use super::timeline::Timeline;
-use super::trace::{as_f64, tenth};
+use super::trace::tenth;
 
 /// The totals of the report before the row of the anchor, in order.
 const TOTALS: [&str; 6] = [
@@ -415,8 +414,8 @@ fn default_anchor(arm: &Arm, anchors: &[&'static str]) -> Option<String> {
 }
 
 /// The first `limit` classes of each plugin of `rows` that the median run of `arm` loaded before the anchor `at`, or
-/// over the whole run without one. The run needs its class-load log, its plugin log and the `jvm.loadingTime` of its
-/// report, which turns the JVM clock of the log into the process clock. A run without one is a usage refusal.
+/// over the whole run without one. The run needs its class-load log, its plugin log and the start of the process clock
+/// on the JVM clock, see [`record::process_start_of`]. A run without one is a usage refusal.
 fn entries(session: &Path, arm: &ArmSummary, at: Option<&str>, rows: &[ClassRow], limit: usize) -> Result<ClassEntries, Refusal> {
     let run = arm.median_run().ok_or_else(|| {
         Refusal::usage(format!(
@@ -434,16 +433,15 @@ fn entries(session: &Path, arm: &ArmSummary, at: Option<&str>, rows: &[ClassRow]
     let refuse = |name: &'static str| move |error: anyhow::Error| Refusal::usage(format!("{name} of {}: {error:#}", run.dir));
     let log = classload::parse(&read(CLASS_LOAD_LOG)?).map_err(refuse(CLASS_LOAD_LOG))?;
     let owners = pluginlog::parse(&read(PLUGIN_CLASSES_FILE)?).map_err(refuse(PLUGIN_CLASSES_FILE))?;
-    let offset_ms = stats::parse(&read("startup-stats.json")?)
+    let offset_ms = record::process_start_of(&dir, &log)
         .map_err(refuse("startup-stats.json"))?
-        .jvm_loading_ms()
-        .map(as_f64)
         .ok_or_else(|| {
             Refusal::usage(format!(
-                "--entries needs jvm.loadingTime of startup-stats.json of {}, and it has none",
+                "--entries needs {MAIN_CLASS} in {CLASS_LOAD_LOG} or jvm.loadingTime in startup-stats.json of {}, and it has neither",
                 run.dir
             ))
-        })?;
+        })?
+        .uptime_ms;
     let anchor_ms = match at {
         None => None,
         Some(QUIT_ANCHOR) => Timeline::read(&dir).map_err(refuse("the trace"))?.quit_ms(),

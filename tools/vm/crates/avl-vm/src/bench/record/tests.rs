@@ -1,11 +1,12 @@
 use std::collections::BTreeMap;
+use std::path::Path;
 
 use pretty_assertions::assert_eq;
 
 use super::{
     CLASSES_HIDDEN, CLASSES_JAR, CLASSES_JDK, CLASSES_NAMED, CLASSES_PLATFORM, CLASSES_PLUGINS, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT,
-    EMPTY_STATE_PREFIX, EMPTY_STATE_SPAN, JVM_LOADING_TIME, LaunchFacts, RunId, RunKind, RunRecord, TOTAL_DURATION, WELCOME_BECAME_VISIBLE,
-    collect, named_at,
+    EMPTY_STATE_PREFIX, EMPTY_STATE_SPAN, JVM_LOADING_TIME, JVM_PROCESS_START, LaunchFacts, RunId, RunKind, RunRecord, TOTAL_DURATION,
+    WELCOME_BECAME_VISIBLE, collect, named_at,
 };
 use crate::bench::arm::Arm;
 use crate::bench::testing::{EMPTY_STATE_FIXTURE_SPANS, append_spans, empty_editor_run, fixture_session};
@@ -398,50 +399,98 @@ fn a_project_run_counts_the_classes_of_the_jvm_log_before_each_anchor() {
     );
 }
 
-/// A bound moves with `jvm.loadingTime`, the offset of the JVM clock to the process clock.
+/// The log of `run` without the line of the main class.
+fn remove_main_class(run: &Path) {
+    let log = std::fs::read_to_string(run.join("class-load.log")).expect("a log");
+    let kept: String = log
+        .lines()
+        .filter(|line| !line.contains("com.intellij.idea.Main "))
+        .map(|line| format!("{line}\n"))
+        .collect();
+    std::fs::write(run.join("class-load.log"), kept).expect("a log");
+}
+
+/// A bound moves with the load of the main class, the start of the process clock on the JVM clock. `jvm.loadingTime`
+/// does not move it while the log has the main class.
 #[test]
-fn the_anchor_counts_move_with_the_jvm_clock() {
+fn the_anchor_counts_move_with_the_main_class() {
     let (_dir, session) = fixture_session();
     let run = session.join("project-run-01");
+    let log = std::fs::read_to_string(run.join("class-load.log")).expect("a log");
     let report = std::fs::read_to_string(run.join("startup-stats.json")).expect("a report");
-    let at_highlighting = |loading_time: &str| {
-        let shifted = report.replace(r#""loadingTime":358"#, &format!(r#""loadingTime":{loading_time}"#));
-        std::fs::write(run.join("startup-stats.json"), shifted).expect("a report");
+    let at_highlighting = |main_uptime: &str, loading_time: &str| {
+        let main = "[class,load] com.intellij.idea.Main ";
+        let shifted = log.replace(&format!("[0.358s][4355 ]{main}"), &format!("[{main_uptime}][4355 ]{main}"));
+        std::fs::write(run.join("class-load.log"), shifted).expect("a log");
+        let report = report.replace(r#""loadingTime":358"#, &format!(r#""loadingTime":{loading_time}"#));
+        std::fs::write(run.join("startup-stats.json"), report).expect("a report");
         let record = collect(&run, &id(Arm::PROJECT), LaunchFacts::default());
         let markdown = record
             .class_maps
             .classes_by_plugin_at
             .get(EDITOR_HIGHLIGHTED)
             .and_then(|counts| counts.get(MARKDOWN).copied());
-        (record.metrics.get("classes.named@editor highlighting completed").copied(), markdown)
+        (
+            record.metrics.get("classes.named@editor highlighting completed").copied(),
+            markdown,
+            record.metrics.get(JVM_PROCESS_START).copied(),
+        )
     };
-    assert_eq!(at_highlighting("358"), (Some(20.0), Some(3)));
-    assert_eq!(at_highlighting("0"), (Some(18.0), Some(2)), "the bound is 2950 ms on the JVM clock");
+    assert_eq!(at_highlighting("0.358s", "358"), (Some(20.0), Some(3), Some(358.0)));
     assert_eq!(
-        at_highlighting("1000"),
-        (Some(22.0), Some(3)),
+        at_highlighting("0.358s", "0"),
+        (Some(20.0), Some(3), Some(358.0)),
+        "jvm.loadingTime is no anchor while the log has the main class"
+    );
+    assert_eq!(
+        at_highlighting("0.000s", "358"),
+        (Some(18.0), Some(2), Some(0.0)),
+        "the bound is 2950 ms on the JVM clock"
+    );
+    assert_eq!(
+        at_highlighting("1.000s", "358"),
+        (Some(22.0), Some(3), Some(1000.0)),
         "the bound is 3950 ms on the JVM clock"
     );
 }
 
-/// A missing class-load log is a note, and so is a log of another shape. Neither fails the run. A report without
-/// `jvm.loadingTime` leaves the counts without anchors.
+/// A log without the main class takes `jvm.loadingTime` of the report as the start of the process clock, with a note.
 #[test]
-fn a_missing_or_bad_class_log_is_a_note_and_a_report_without_the_jvm_offset_has_no_anchors() {
+fn a_log_without_the_main_class_takes_the_loading_time_with_a_note() {
+    let (_dir, session) = fixture_session();
+    let run = session.join("project-run-01");
+    remove_main_class(&run);
+    let record = collect(&run, &id(Arm::PROJECT), LaunchFacts::default());
+    assert_eq!(
+        record.notes,
+        [
+            "no fus.jsonl",
+            "class-load.log has no com.intellij.idea.Main, so the class anchors start the process clock at jvm.loadingTime, about 100 ms too early"
+        ]
+    );
+    assert_eq!(record.metrics.get("classes.named@editor highlighting completed"), Some(&19.0));
+    assert_eq!(record.metrics.get(JVM_PROCESS_START), None);
+}
+
+/// A missing class-load log is a note, and so is a log of another shape. Neither fails the run. A log without the main
+/// class and a report without `jvm.loadingTime` leave the counts without anchors.
+#[test]
+fn a_missing_or_bad_class_log_is_a_note_and_a_run_without_a_clock_start_has_no_anchors() {
     let (_dir, session) = fixture_session();
     let run = session.join("project-run-01");
     let report = std::fs::read_to_string(run.join("startup-stats.json")).expect("a report");
     std::fs::write(run.join("startup-stats.json"), report.replace(r#""jvm":{"loadingTime":358},"#, "")).expect("a report");
+    remove_main_class(&run);
     let record = collect(&run, &id(Arm::PROJECT), LaunchFacts::default());
     assert!(record.valid, "{:?}", record.reason);
     assert_eq!(
         record.notes,
         [
             "no fus.jsonl",
-            "startup-stats.json has no jvm.loadingTime, so the class counts have no anchors"
+            "class-load.log has no com.intellij.idea.Main and startup-stats.json has no jvm.loadingTime, so the class counts have no anchors"
         ]
     );
-    assert_eq!(record.metrics.get(CLASSES_NAMED), Some(&26.0));
+    assert_eq!(record.metrics.get(CLASSES_NAMED), Some(&25.0));
     assert!(!record.metrics.keys().any(|metric| metric.contains('@')), "{:?}", record.metrics);
     assert!(record.class_maps.classes_by_plugin_at.is_empty());
     assert_eq!(record.metrics.get(JVM_LOADING_TIME), None, "the report has no JVM part");

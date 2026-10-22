@@ -8,7 +8,7 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 
 use super::arm::{Arm, ArmKind, Gate};
-use super::classload::{self, ClassLoadLog};
+use super::classload::{self, ClassLoadLog, ClockAnchor, MAIN_CLASS, ProcessStart};
 use super::files;
 use super::fus;
 use super::load::HostLoad;
@@ -31,8 +31,11 @@ pub(crate) const FRAME_BECAME_INTERACTIVE: &str = "frameBecameInteractive";
 /// The metric keys of the report. A start without a project has no end of its start-up, so its report, which the IDE
 /// writes at the exit, can lack [`TOTAL_DURATION`] or hold a negative one. The record keeps neither, with a note.
 pub(crate) const TOTAL_DURATION: &str = "totalDuration";
-/// The milliseconds from the JVM start to the start of the process clock, `jvm.loadingTime` of the report.
+/// `jvm.loadingTime` of the report: the start of the process clock minus the start time of `RuntimeMXBean`.
 pub(crate) const JVM_LOADING_TIME: &str = "jvm.loadingTime";
+/// The start of the process clock on the JVM clock of the class-load log, in ms: the load of
+/// [`classload::MAIN_CLASS`]. The class anchors use it, see [`classload::process_start`].
+pub(crate) const JVM_PROCESS_START: &str = "jvm.processStart";
 /// The class requests of `ClassPath`, which the report writes as `classLoading.count`. A request is not a class: one
 /// class can need many requests.
 pub(crate) const CLASS_REQUESTS: &str = "classLoading.requests";
@@ -607,8 +610,8 @@ fn profile_metrics(run_dir: &Path, record: &mut RunRecord) {
 
 /// The class metrics and the class maps of a run. The plugin log alone gives `pluginClasses`, the maps and the
 /// activations. The class-load log gives the counts by source, and with the plugin log the owners of its classes. With
-/// the report too, it gives the counts before each anchor and the first load of each loader: a bound on the process
-/// clock plus `jvm.loadingTime` is a bound on the JVM clock of the log.
+/// the start of the process clock, see [`classload::process_start`], it gives the counts before each anchor and the
+/// first load of each loader: a bound on the process clock plus that start is a bound on the JVM clock of the log.
 fn class_metrics(
     record: &mut RunRecord,
     plugin_log: Option<&PluginLog>,
@@ -648,21 +651,24 @@ fn class_metrics(
         record.metrics.insert(CLASSES_PLATFORM.to_owned(), count(platform));
         record.metrics.insert(CLASSES_PLUGINS.to_owned(), count(plugins));
     }
-    let offset_ms = match stats.map(StartupStats::jvm_loading_ms) {
-        Some(Some(offset_ms)) => Some(as_f64(offset_ms)),
-        Some(None) => {
-            record
-                .notes
-                .push("startup-stats.json has no jvm.loadingTime, so the class counts have no anchors".to_owned());
-            None
-        }
-        None => {
-            record
-                .notes
-                .push("no startup-stats.json, so the class counts have no anchors".to_owned());
-            None
-        }
-    };
+    let start = classload::process_start(log, stats.and_then(StartupStats::jvm_loading_ms));
+    match start.map(|start| start.anchor) {
+        Some(ClockAnchor::MainClass) => {}
+        Some(ClockAnchor::LoadingTime) => record.notes.push(format!(
+            "class-load.log has no {MAIN_CLASS}, so the class anchors start the process clock at {}",
+            ClockAnchor::LoadingTime.text()
+        )),
+        None if stats.is_some() => record.notes.push(format!(
+            "class-load.log has no {MAIN_CLASS} and startup-stats.json has no jvm.loadingTime, so the class counts have no anchors"
+        )),
+        None => record.notes.push(format!(
+            "class-load.log has no {MAIN_CLASS} and the run has no startup-stats.json, so the class counts have no anchors"
+        )),
+    }
+    if let Some(start) = start.filter(|start| start.anchor == ClockAnchor::MainClass) {
+        record.metrics.insert(JVM_PROCESS_START.to_owned(), start.uptime_ms);
+    }
+    let offset_ms = start.map(|start| start.uptime_ms);
     maps.activations = plugin_log
         .map(|owners| {
             let first_loads = offset_ms.map(|offset_ms| (classload::first_loads(log, owners), offset_ms));
@@ -693,6 +699,20 @@ fn class_metrics(
                 .insert(anchor.to_owned(), loader_rows(&classload::by_loader(log, owners, Some(bound))));
         }
     }
+}
+
+/// The start of the process clock on the JVM clock of `log`, the class-load log of the run directory `run_dir`, see
+/// [`classload::process_start`]. It reads `startup-stats.json` of the run only when the log has no [`MAIN_CLASS`]. A
+/// report of another shape is an error.
+pub(crate) fn process_start_of(run_dir: &Path, log: &ClassLoadLog) -> anyhow::Result<Option<ProcessStart>> {
+    if let Some(start) = classload::process_start(log, None) {
+        return Ok(Some(start));
+    }
+    let loading_ms = match files::read_optional(&run_dir.join("startup-stats.json"))? {
+        Some(text) => stats::parse(&text)?.jvm_loading_ms(),
+        None => None,
+    };
+    Ok(classload::process_start(log, loading_ms))
 }
 
 /// The activation of each loader of the plugin log, with its trigger frame. With the first loads on the JVM clock

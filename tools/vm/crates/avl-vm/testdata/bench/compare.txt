@@ -6,6 +6,7 @@ modal arm (median ms, or a count)                                  A       B    
 events and report:
   welcomeBecameVisible                                          2336    2341    +4.7
   jvm.loadingTime                                                352     353    +0.7
+  jvm.processStart                                               352     353    +0.7
   classLoading.requests                                       191566  191949    +383
   classLoading.time                                             5240    5250     +10
   classLoading.edtTime                                            26      26    +0.1
@@ -41,6 +42,7 @@ events and report:
   frameBecameInteractive                                        2528    2275    -253
   totalDuration                                                 3195    2876    -320
   jvm.loadingTime                                                358     322     -36
+  jvm.processStart                                               358     322     -36
   classLoading.requests                                       267427  240684  -26743
   classLoading.time                                             8317    7485    -832
   classLoading.edtTime                                            42      38    -4.2

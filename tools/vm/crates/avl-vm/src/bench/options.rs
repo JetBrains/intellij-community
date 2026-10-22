@@ -87,9 +87,12 @@ pub(crate) enum BenchVerb {
     /// source, and the named classes before the anchor. The plugin table holds the classes of each plugin before the
     /// anchor, its modules with a class, and the EDT and BG ms that its loaders spent in findClass. The module table
     /// holds the same for each main module and content module, with its plugin. A main module is `<plugin id> (main)`.
-    /// A plugin-classes.txt of the old shape has no time, so a time is `-`. A run needs class-load.log,
-    /// plugin-classes.txt and startup-stats.json for an anchor. --entries lists the first classes of each plugin of
-    /// the plugin table before the anchor, from the median run of the arm.
+    /// A plugin-classes.txt of the old shape has no time, so a time is `-`. A run needs class-load.log and
+    /// plugin-classes.txt for an anchor. --entries lists the first classes of each plugin of the plugin table before
+    /// the anchor, from the median run of the arm.
+    ///
+    /// The process clock starts at the load of com.intellij.idea.Main in class-load.log. A log without that class takes
+    /// jvm.loadingTime of startup-stats.json, which puts the start about 100 ms too early, with a note.
     Classes(ClassesArgs),
     /// Prints the plugin loaders of one run by the frame that triggered each one. No IDE starts.
     ///
@@ -202,8 +205,7 @@ pub(crate) struct ClassesArgs {
     #[arg(long, value_name = "ANCHOR", value_parser = clap::builder::PossibleValuesParser::new(CLASS_ANCHORS))]
     pub(crate) at: Option<String>,
     /// Lists the first N classes of each plugin of the plugin table that the median run of the arm loaded before the
-    /// anchor, with their ms from the process start. The run needs class-load.log, plugin-classes.txt and
-    /// startup-stats.json.
+    /// anchor, with their ms from the process start. The run needs class-load.log and plugin-classes.txt.
     #[arg(long, value_name = "N", value_parser = clap::value_parser!(u32).range(1..))]
     pub(crate) entries: Option<u32>,
 }

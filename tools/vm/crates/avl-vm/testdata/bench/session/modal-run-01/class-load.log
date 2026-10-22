@@ -8,8 +8,8 @@
 [0.079s][info][class,load] java.lang.Thread source: shared objects file
 [0.098s][class,load] jdk.internal.module.ModuleBootstrap source: jrt:/java.base
 [0.131s][class,load] java.awt.Toolkit source: jrt:/java.desktop
-[0.295s][class,load] com.intellij.idea.Main source: file:/Applications/IDEA.app/Contents/lib/util-8.jar
-[0.305s][class,load] com.intellij.util.lang.PathClassLoader source: file:/Applications/IDEA.app/Contents/lib/util-8.jar
+[0.295s][class,load] com.intellij.util.lang.PathClassLoader source: file:/Applications/IDEA.app/Contents/lib/util-8.jar
+[0.352s][class,load] com.intellij.idea.Main source: file:/Applications/IDEA.app/Contents/lib/util-8.jar
 [0.398s][class,load] java.lang.invoke.LambdaForm$MH/0x0000000801001000 source: __JVM_LookupDefineClass__
 [0.905s][class,load] org.jetbrains.annotations.NotNull source: jar:file:/Applications/IDEA.app/Contents/lib/annotations.jar!/
 [0.948s][class,load] com.intellij.idea.MainImpl source: com.intellij.util.lang.PathClassLoader
