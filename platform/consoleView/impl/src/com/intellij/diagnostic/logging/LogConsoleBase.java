@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.logging;
 
-import com.intellij.execution.ExecutionBundle;
+import com.intellij.execution.ConsoleViewBundle;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleBuffer;
@@ -128,7 +128,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   };
 
   public static @NlsContexts.ProgressTitle @NotNull String getApplyingFilterTitle() {
-    return ExecutionBundle.message("progress.title.applying.filter");
+    return ConsoleViewBundle.message("progress.title.applying.filter");
   }
 
   public LogConsoleBase(@NotNull Project project, @Nullable Reader reader, @NlsContexts.TabTitle String title, final boolean buildInActions, LogFilterModel model) {
@@ -321,7 +321,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   private abstract static class ToggleSearchFilterAction extends ToggleAction implements CustomComponentAction {
     ToggleSearchFilterAction() {
-      super(() -> ExecutionBundle.message("log.toggle.filter.component"), new LayeredIcon(AllIcons.General.Filter, null));
+      super(() -> ConsoleViewBundle.message("log.toggle.filter.component"), new LayeredIcon(AllIcons.General.Filter, null));
     }
 
     protected abstract @NotNull JComponent getSearchFilterComponent();
@@ -674,7 +674,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
         ProgressManager.getInstance().run(task);
       }
     });
-    AccessibleContextUtil.setName(myLogFilterCombo, ExecutionBundle.message("log.filter.combo.accessible.name"));
+    AccessibleContextUtil.setName(myLogFilterCombo, ConsoleViewBundle.message("log.filter.combo.accessible.name"));
     myTextFilterWrapper.removeAll();
     myTextFilterWrapper.add(getTextFilterComponent());
     return mySearchComponent;

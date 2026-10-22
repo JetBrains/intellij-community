@@ -8,24 +8,8 @@ c:com.intellij.diagnostic.logging.DefaultLogFilterModel
 - processLine(java.lang.String):com.intellij.diagnostic.logging.LogFilterModel$MyProcessingResult
 - removeFilterListener(com.intellij.diagnostic.logging.LogFilterListener):V
 - updateCustomFilter(java.lang.String):V
-c:com.intellij.diagnostic.logging.DefaultLogFormatter
-- formatMessage(java.lang.String):java.lang.String
-- formatPrefix(java.lang.String):java.lang.String
 f:com.intellij.diagnostic.logging.LogConfigurationPanel
 - refreshPredefinedLogFiles(com.intellij.execution.configurations.RunConfigurationBase):V
-a:com.intellij.diagnostic.logging.LogConsoleBase
-- <init>(com.intellij.openapi.project.Project,java.io.Reader,java.lang.String,Z,com.intellij.diagnostic.logging.LogFilterModel):V
-- <init>(com.intellij.openapi.project.Project,java.io.Reader,java.lang.String,Z,com.intellij.diagnostic.logging.LogFilterModel,com.intellij.psi.search.GlobalSearchScope):V
-- <init>(com.intellij.openapi.project.Project,java.io.Reader,java.lang.String,Z,com.intellij.diagnostic.logging.LogFilterModel,com.intellij.psi.search.GlobalSearchScope,com.intellij.diagnostic.logging.LogFormatter):V
-- addListener(com.intellij.diagnostic.logging.LogConsoleListener):V
-- p:filterConsoleOutput():V
-- s:getApplyingFilterTitle():java.lang.String
-- getTabTitle():java.lang.String
-- getToolbarPlace():java.lang.String
-- a:isActive():Z
-- onFilterStateChange(com.intellij.diagnostic.logging.LogFilter):V
-- p:updateReaderIfNeeded(java.io.BufferedReader):java.io.BufferedReader
-- writeToConsole(java.lang.String,com.intellij.openapi.util.Key):V
 a:com.intellij.diagnostic.logging.LogConsoleImpl
 - com.intellij.diagnostic.logging.LogConsoleBase
 - <init>(com.intellij.openapi.project.Project,java.io.File,java.nio.charset.Charset,J,java.lang.String,Z,com.intellij.psi.search.GlobalSearchScope):V

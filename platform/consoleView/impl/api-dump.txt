@@ -1,3 +1,30 @@
+c:com.intellij.diagnostic.logging.DefaultLogFormatter
+- com.intellij.diagnostic.logging.LogFormatter
+- <init>():V
+a:com.intellij.diagnostic.logging.LogConsoleBase
+- com.intellij.diagnostic.logging.AdditionalTabComponent
+- com.intellij.diagnostic.logging.LogConsole
+- com.intellij.diagnostic.logging.LogFilterListener
+- activate():V
+- p:addMessage(java.lang.String):V
+- attachStopLogConsoleTrackingListener(com.intellij.execution.process.ProcessHandler):V
+- clear():V
+- dispose():V
+- getComponent():javax.swing.JComponent
+- getConsole():com.intellij.execution.ui.ConsoleView
+- getConsoleNotNull():com.intellij.execution.ui.ConsoleView
+- getFilterModel():com.intellij.diagnostic.logging.LogFilterModel
+- getOrCreateActions():com.intellij.openapi.actionSystem.ActionGroup
+- getOriginalDocument():java.lang.StringBuffer
+- getPreferredFocusableComponent():javax.swing.JComponent
+- getSearchComponent():javax.swing.JComponent
+- p:getTextFilterComponent():java.awt.Component
+- getTitle():java.lang.String
+- getToolbarActions():com.intellij.openapi.actionSystem.ActionGroup
+- getToolbarContextComponent():javax.swing.JComponent
+- isContentBuiltIn():Z
+- onTextFilterChange():V
+- setFilterModel(com.intellij.diagnostic.logging.LogFilterModel):V
 c:com.intellij.execution.actions.ClearConsoleAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
