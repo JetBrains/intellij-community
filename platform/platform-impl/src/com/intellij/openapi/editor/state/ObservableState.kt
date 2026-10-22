@@ -169,6 +169,15 @@ abstract class ObservableState {
   }
 
   /**
+   * Tells the listeners that the property with [propertyName] got an override, or that it lost its override.
+   */
+  fun overridingChanged(propertyName: String?) {
+    if (propertyName != null) {
+      dispatcher?.multicaster?.overridingChanged(this, propertyName)
+    }
+  }
+
+  /**
    * All properties, in the declaration order. The Remote Development code sends them between the backend and the
    * frontend.
    */

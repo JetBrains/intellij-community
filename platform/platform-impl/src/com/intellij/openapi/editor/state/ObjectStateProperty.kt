@@ -7,7 +7,8 @@ import com.intellij.openapi.util.Ref
  * A [StateProperty] that holds its value in memory.
  *
  * The value is the override, or else the result of [defaultValueCalculator]. Then [customOutValueModifier] can change
- * it. A change of the value notifies the [ObservableState].
+ * it. A change of the value notifies the [ObservableState], and so does a change of the override, also without a change
+ * of the value.
  */
 open class ObjectStateProperty<T>(
   initialValue: T,
@@ -37,9 +38,13 @@ open class ObjectStateProperty<T>(
     if (isValueOverridden && overriddenValue == value) {
       return
     }
+    val wasOverridden = isValueOverridden
     overriddenValue = value
     isValueOverridden = true
     recalculate(thisRef)
+    if (!wasOverridden) {
+      thisRef.overridingChanged(name)
+    }
   }
 
   override fun clearOverriding(thisRef: ObservableState) {
@@ -48,6 +53,7 @@ open class ObjectStateProperty<T>(
       // Drop the reference, so that the old value can be collected.
       overriddenValue = null
       recalculate(thisRef)
+      thisRef.overridingChanged(name)
     }
   }
 
