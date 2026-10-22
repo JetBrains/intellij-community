@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
@@ -80,9 +81,6 @@ class DeclarativeInlayHintsPass(
     for ((sink, collector, providerClass) in ownCollectors) {
       runProviderOrLogError(providerClass) {
         collector.collectHintsForFile(myFile, sink)
-      }.onFailure {
-        // provider threw: ignore its results and continue
-        sinks.remove(sink)
       }
     }
     val traverser = SyntaxTraverser.psiTraverser(rootElement)
@@ -93,9 +91,8 @@ class DeclarativeInlayHintsPass(
         runProviderOrLogError(providerClass) {
           collector.collectFromElement(element, sink)
         }.onFailure {
-          // provider threw: don't call it again in this pass, ignore its results and continue
+          // provider threw: don't call it again in this pass
           iterator.remove()
-          sinks.remove(sink)
         }
       }
     }
@@ -264,7 +261,9 @@ class DeclarativeInlayHintsPass(
     }
     catch (e: Throwable) {
       rethrowControlFlowException(e)
-      LOG.error(PluginException.createByClass(e, providerClass))
+      if (e !is IndexNotReadyException) {
+        LOG.error(PluginException.createByClass(e, providerClass))
+      }
       return Result.failure(e)
     }
   }
