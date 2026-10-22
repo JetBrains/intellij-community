@@ -19,7 +19,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import org.jetbrains.annotations.ApiStatus
 
-internal class CombinedDiffManagerImpl(private val project: Project) : CombinedDiffManager {
+internal class VcsCombinedDiffManager(private val project: Project) : CombinedDiffManager {
   override fun createProcessor(
     diffPlace: String?,
     contextActions: List<AnAction>?,

@@ -36,6 +36,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedSideBySideDiffTool"/>
     <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedUnifiedDiffTool"/>
+    <projectService serviceInterface="com.intellij.diff.tools.combined.CombinedDiffManager"
+                    serviceImplementation="com.intellij.diff.tools.combined.CombinedDiffManagerImpl"
+                    open="true"/>
 
     <writingAccessProvider implementation="com.intellij.diff.DiffLightVirtualFileWritingAccessProvider"/>
 

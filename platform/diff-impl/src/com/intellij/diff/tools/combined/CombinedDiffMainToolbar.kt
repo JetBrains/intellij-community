@@ -46,7 +46,7 @@ internal class CombinedDiffMainToolbar(
   private val targetComponent: JComponent,
   private val diffToolChooser: DiffToolChooser,
   private val context: DiffContext,
-  private val goToChangeAction: AnAction,
+  private val goToChangeAction: AnAction?,
 ) {
   private val searchPanel = Wrapper()
   private val diffInfoPanel = DiffInfoComponent()

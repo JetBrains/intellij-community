@@ -20,7 +20,6 @@ import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorState
@@ -29,7 +28,6 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorStateWithPreferredOpenMode
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileEditor.impl.text.TextEditorState
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
@@ -40,23 +38,10 @@ import javax.swing.JComponent
 
 private val LOG = logger<CombinedDiffComponentProcessor>()
 
-@ApiStatus.Experimental
-interface CombinedDiffManager {
-  fun createProcessor(
-    diffPlace: String? = null,
-    contextActions: List<AnAction>? = null,
-    goToChangeToolbarActions: List<AnAction>? = null,
-  ): CombinedDiffComponentProcessor
-
-  companion object {
-    fun getInstance(project: Project): CombinedDiffManager = project.service()
-  }
-}
-
 @ApiStatus.Internal
 class CombinedDiffComponentProcessorImpl(
   val model: CombinedDiffModel,
-  goToChangeAction: AnAction,
+  goToChangeAction: AnAction?,
 ) : CombinedDiffComponentProcessor {
 
   override val disposable = Disposer.newCheckedDisposable()

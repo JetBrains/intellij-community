@@ -63,7 +63,7 @@ import javax.swing.SwingUtilities
 import kotlin.math.max
 
 @ApiStatus.Internal
-class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeAction: AnAction) : Disposable {
+class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeAction: AnAction?) : Disposable {
   private val ourDisposable = Disposer.newCheckedDisposable().also { Disposer.register(this, it) }
 
   @OptIn(DelicateCoroutinesApi::class)
