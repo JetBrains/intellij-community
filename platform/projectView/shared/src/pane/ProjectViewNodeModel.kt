@@ -3,6 +3,8 @@
 package com.intellij.platform.projectView.pane
 
 import com.intellij.ide.util.treeView.ExpandOnDoubleClickSupport
+import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.treeStructure.TreeNodePresentationBuilder
@@ -80,4 +82,23 @@ interface ProjectViewNodeUserObject {
    * The virtual file associated with the node, if any.
    */
   fun getVirtualFile(): VirtualFile? = null
+}
+
+/**
+ * A frontend-only representation of the backend's user object.
+ *
+ * The DTO class is not used directly because it's a data class (easier to serialize),
+ * but we don't want any data class functions here.
+ * Especially not `equals` and `hashCode`, as we can't make them work properly.
+ * We simply don't have enough data on the frontend for that, as the real user object is gone.
+ */
+internal class FrontendProjectViewNodeUserObject(
+  override val name: String, // not used on the frontend currently, but is useful for debugging
+  val virtualFileId: VirtualFileId?,
+) : ProjectViewNodeUserObject {
+  override fun getVirtualFile(): VirtualFile? = virtualFileId?.virtualFile()
+
+  override fun toString(): String {
+    return "FrontendProjectViewNodeUserObject(name='$name', virtualFileId=$virtualFileId)"
+  }
 }
