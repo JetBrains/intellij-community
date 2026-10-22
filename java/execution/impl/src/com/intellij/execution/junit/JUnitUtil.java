@@ -423,14 +423,24 @@ public final class JUnitUtil {
       .anyMatch(override -> isJupiterTestAnnotated(override, true));
   }
 
+  /**
+   * Checks whether the element's resolve scope contains the Jupiter API, including JUnit 6.
+   */
   public static boolean isJUnit5(@NotNull PsiElement element) {
     return isJUnit5(element.getResolveScope(), element.getProject());
   }
 
+  /**
+   * Checks whether the scope contains the Jupiter API, including JUnit 6, regardless of library order.
+   */
   public static boolean isJUnit5(@NotNull GlobalSearchScope scope, @NotNull Project project) {
     return hasPackageWithDirectories(JavaPsiFacade.getInstance(project), TEST5_PACKAGE_FQN, scope);
   }
 
+  /**
+   * Checks whether the scope resolves the Jupiter API to JUnit 6.
+   * Uses the scope's library order when both JUnit 5 and JUnit 6 are present.
+   */
   public static boolean isJUnit6(@NotNull GlobalSearchScope scope, @NotNull Project project) {
     return ReadAction.nonBlocking(() -> {
       DumbService dumbService = DumbService.getInstance(project);
