@@ -9,12 +9,16 @@ import com.intellij.codeInsight.codeVision.CodeVisionProviderFactory
 import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.concurrency.JobLauncher
+import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.TextRange
@@ -44,6 +48,7 @@ class CodeVisionPass(
 ) : EditorBoundHighlightingPass(editor, rootElement.containingFile, true), DumbAware {
   companion object {
     private val tracer by lazy { TelemetryManager.getTracer(CodeVision) }
+    private val LOG = logger<CodeVisionPass>()
 
     @Internal
     fun collectData(editor: Editor, file: PsiFile, providers: List<DaemonBoundCodeVisionProvider>): CodeVisionData {
@@ -76,7 +81,16 @@ class CodeVisionPass(
           tracer.spanBuilder(provider.javaClass.simpleName).use {
             val results: List<Pair<TextRange, CodeVisionEntry>>
             val duration = measureTimeMillis {
-              results = provider.computeForEditor(editor, file)
+              results = try {
+                provider.computeForEditor(editor, file)
+              }
+              catch (e: Throwable) {
+                rethrowControlFlowException(e)
+                if (e !is IndexNotReadyException) {
+                  LOG.error(PluginException.createByClass(e, provider.javaClass))
+                }
+                emptyList()
+              }
             }
             CodeVisionFusCollector.reportCodeVisionProviderDuration(editor, file.language, duration, provider::class.java)
             providerIdToLenses[provider.id] = DaemonBoundCodeVisionCacheService.CodeVisionWithStamp(results,
