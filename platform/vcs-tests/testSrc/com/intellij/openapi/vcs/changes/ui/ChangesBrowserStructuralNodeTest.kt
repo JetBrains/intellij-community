@@ -224,7 +224,7 @@ internal class ChangesBrowserStructuralNodeTest {
     }
 
   @Test
-  fun `test preview highlight clears on escape and focus loss`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+  fun `test preview highlight clears on escape and survives focus loss`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
     val highlights = recordHighlights(disposable)
     val file = LightVirtualFile("highlight-cleanup.txt", "first\nsecond\n")
     val fixture = createHighlightFixture(file)
@@ -252,6 +252,13 @@ internal class ChangesBrowserStructuralNodeTest {
           fixture.view.previewFocus = false
           val event = FocusEvent(fixture.view, FocusEvent.FOCUS_LOST)
           fixture.view.focusListeners.forEach { it.focusLost(event) }
+        }
+        // One round trip through the event thread runs the work that the focus loss scheduled.
+        withContext(Dispatchers.EDT) { }
+        assertFalse(second.disposed.isCompleted, "The dim follows the selection, not the focus")
+        withContext(Dispatchers.EDT) {
+          val escape = KeyEvent(fixture.view, KeyEvent.KEY_PRESSED, 0, 0, KeyEvent.VK_ESCAPE, '\u001b')
+          fixture.view.keyListeners.forEach { it.keyPressed(escape) }
         }
         second.disposed.await()
       }

@@ -50,6 +50,7 @@ import com.intellij.testFramework.junit5.fixture.virtualFileFixture
 import com.intellij.ui.icons.HiDPIImage
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.util.IconUtil
+import com.intellij.util.ui.ThreeStateCheckBox
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.AfterEach
@@ -104,19 +105,19 @@ internal class StructuralChangesViewModifierTest {
 
     assertFalse(StructuralChangesViewSettings.isEnabled(project))
     assertToggleVisible(false)
-    assertTrue(build(change(null, "first=1\nsecond=2")).isEmpty())
+    assertTrue(build(change("first=0", "first=1\nsecond=2")).isEmpty())
     assertTrue(PropertiesComponent.getInstance(project).getBoolean(OPTION_ID))
   }
 
   @Test
   @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
-  fun `toggle controls the structural children`(): Unit = timeoutRunBlocking {
+  fun `toggle controls the hunk children`(): Unit = timeoutRunBlocking {
     assertToggleVisible(true)
-    val change = change(null, "first=1\nsecond=2")
+    val change = change("first=1\nsecond=2", "first=1\nsecond=3")
     assertTrue(build(change).isEmpty())
 
     setSelected(true)
-    assertEquals(listOf("first", "second"), build(change).map { it.textPresentation })
+    assertEquals(listOf("second=3"), build(change).map { it.textPresentation })
 
     setSelected(false)
     assertTrue(build(change).isEmpty())
@@ -126,7 +127,7 @@ internal class StructuralChangesViewModifierTest {
   @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
   fun `registry changes refresh the tree and retain the saved option`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
     setSelected(true)
-    val change = change(null, "first=1")
+    val change = change("first=0", "first=1")
     assertEquals(1, build(change).size)
     val updates = AtomicInteger()
     project.messageBus.connect(disposable).subscribe(ChangesViewModifier.TOPIC, ChangesViewModifier.ChangesViewModifierListener {
@@ -148,15 +149,34 @@ internal class StructuralChangesViewModifierTest {
 
   @Test
   @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
-  fun `added files show their complete structure with navigation`(): Unit = timeoutRunBlocking {
+  fun `added files have no hunk children`(): Unit = timeoutRunBlocking {
     setSelected(true)
-    val text = "first=1\nsecond=2"
-    val nodes = build(change(null, text))
 
-    assertEquals(listOf("first", "second"), nodes.map { it.textPresentation })
-    val descriptor = nodes.last().getNavigatable() as OpenFileDescriptor
+    assertTrue(build(change(null, "first=1\nsecond=2")).isEmpty())
+  }
+
+  @Test
+  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
+  fun `hunks navigate to their first line`(): Unit = timeoutRunBlocking {
+    setSelected(true)
+    val node = build(change("first=1\nsecond=2\nthird=3", "first=1\nsecond=4\nthird=3")).single()
+
+    val descriptor = node.getNavigatable() as OpenFileDescriptor
     assertEquals(fileFixture.get(), descriptor.file)
-    assertEquals(text.indexOf("second"), descriptor.offset)
+    assertEquals(1, descriptor.line)
+  }
+
+  @Test
+  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
+  fun `hunks follow the file inclusion until the file has a tracker`(): Unit = timeoutRunBlocking {
+    setSelected(true)
+    val node = build(change("first=1", "first=2")).single()
+
+    assertTrue(node.hasInclusion)
+    withContext(Dispatchers.EDT) {
+      assertEquals(ThreeStateCheckBox.State.SELECTED, node.getInclusionState(ThreeStateCheckBox.State.SELECTED))
+      assertEquals(ThreeStateCheckBox.State.NOT_SELECTED, node.getInclusionState(ThreeStateCheckBox.State.NOT_SELECTED))
+    }
   }
 
   @Test
@@ -164,14 +184,13 @@ internal class StructuralChangesViewModifierTest {
   fun `preview navigation keeps explicit navigation separate`(): Unit = timeoutRunBlocking {
     setSelected(true)
     val text = "first=1\nsecond=2"
-    val node = build(change(null, text)).last()
+    val node = build(change("first=1\nsecond=0", text)).single()
     val explicit = node.getNavigatable() as OpenFileDescriptor
     val preview = readAction { node.getPreviewNavigationRequest() as SourceNavigationRequest }
 
     assertFalse(explicit.isUsePreviewTab)
     assertEquals(fileFixture.get(), preview.file)
     assertEquals(text.indexOf("second"), preview.offsetMarker?.startOffset)
-    assertEquals(explicit.offset, preview.offsetMarker?.startOffset)
     assertEquals(TextRange(text.indexOf("second"), text.length), node.getPreviewHighlightRange())
   }
 
@@ -180,8 +199,8 @@ internal class StructuralChangesViewModifierTest {
   fun `preview ranges reject document edits after the model is built`(): Unit = timeoutRunBlocking {
     setSelected(true)
     val text = "first=1\nsecond=2"
-    val change = change(null, text)
-    val node = build(change).last()
+    val change = change("first=1\nsecond=0", text)
+    val node = build(change).single()
     assertEquals(TextRange(text.indexOf("second"), text.length), node.getPreviewHighlightRange())
 
     val prefix = "inserted=0\n"
@@ -192,23 +211,20 @@ internal class StructuralChangesViewModifierTest {
     }
 
     assertNull(node.getPreviewHighlightRange())
-    val current = build(change).last()
+    val current = build(change).single { it.textPresentation == "second=2" }
     assertEquals(TextRange(prefix.length + text.indexOf("second"), prefix.length + text.length), current.getPreviewHighlightRange())
   }
 
   @Test
   @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
-  fun `modified files omit unchanged structure elements`(): Unit = timeoutRunBlocking {
+  fun `modified files name each hunk by its changed elements`(): Unit = timeoutRunBlocking {
     setSelected(true)
     val before = "changed=1\nunchanged=2\nremoved=3"
     val after = "changed=4\nunchanged=2\nadded=5"
     val nodes = build(change(before, after))
 
-    assertEquals(listOf("changed", "added", "removed"), nodes.map { it.textPresentation })
-    assertNull(nodes.last().getNavigatable())
-    assertNull(readAction { nodes.last().getPreviewNavigationRequest() })
-    assertNull(nodes.last().getPreviewHighlightRange())
-    assertEquals(after.indexOf("added"), (nodes[1].getNavigatable() as OpenFileDescriptor).offset)
+    assertEquals(listOf("changed=4", "added=5, removed=3"), nodes.map { it.textPresentation })
+    assertEquals(2, (nodes.last().getNavigatable() as OpenFileDescriptor).line)
   }
 
   @Test
@@ -223,7 +239,7 @@ internal class StructuralChangesViewModifierTest {
 
   @Test
   @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
-  fun `structure uses the unsaved document text`(): Unit = timeoutRunBlocking {
+  fun `hunks use the unsaved document text`(): Unit = timeoutRunBlocking {
     setSelected(true)
     val change = change("first=1\nsecond=2", "first=1\nsecond=2")
     val text = "first=1\nsecond=3\nunsaved=4"
@@ -232,15 +248,15 @@ internal class StructuralChangesViewModifierTest {
     }
     val nodes = build(change)
 
-    assertEquals(listOf("second", "unsaved"), nodes.map { it.textPresentation })
-    assertEquals(text.indexOf("unsaved"), (nodes.last().getNavigatable() as OpenFileDescriptor).offset)
+    assertEquals(listOf("second=3, unsaved=4"), nodes.map { it.textPresentation })
+    assertEquals(1, (nodes.single().getNavigatable() as OpenFileDescriptor).line)
   }
 
   @Test
   @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
-  fun `structural icons keep their logical size and full paint at device scales`(): Unit = timeoutRunBlocking {
+  fun `hunk icons keep their logical size and full paint at device scales`(): Unit = timeoutRunBlocking {
     setSelected(true)
-    val change = change(null, "element=1")
+    val change = change("element=0", "element=1")
     for (width in listOf(16, 32)) {
       var referenceSize: Dimension? = null
       for (scale in listOf(1, 2)) {
