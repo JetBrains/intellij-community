@@ -7,6 +7,7 @@ import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.pixi.test.env.PixiPyEnvironment
+import com.intellij.python.pixi.test.env.PixiPyEnvironmentSpec
 import com.intellij.python.pixi.test.env.pixiEnvironment
 import com.intellij.python.pytools.backend.getToolVersion
 import com.intellij.python.test.env.core.PyEnvironmentFactory
@@ -21,34 +22,37 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.extension.ExtendWith
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 /** Verifies a pinned Pixi executable and environment. */
 @Subsystems.Interpreters
 @Layers.Functional
 @TestApplication
 @TestFor(issues = ["PY-91711"])
-@Timeout(value = 10, unit = TimeUnit.MINUTES)
+@Timeout(value = 11, unit = TimeUnit.MINUTES)
 @ExtendWith(PythonFactoryExtension::class)
-internal class PixiPyToolEnvTest {
+internal class PixiPyToolEnvTest(private val factory: PyEnvironmentFactory) {
   @Test
-  fun `the pinned Pixi executable reports its version`(factory: PyEnvironmentFactory): Unit = timeoutRunBlocking {
-    val environment = factory.createPixiEnvironment()
-    val executable = environment.pixiExecutable
-    val executableVersion = BinOnEel(executable).getToolVersion("pixi").getOrThrow().value
+  fun `the pinned Pixi executable reports its version`() =
+    factory.testWithEnv(environmentSpec) { environment ->
+      val executable = environment.pixiExecutable
+      val executableVersion = BinOnEel(executable).getToolVersion("pixi").getOrThrow().value
 
-    assertThat(executableVersion).isEqualTo(PIXI_TEST_VERSION)
-  }
+      assertThat(executableVersion).isEqualTo(PIXI_TEST_VERSION)
+    }
 
   @Test
-  fun `the Pixi environment provides Python and installs PyPI libraries`(factory: PyEnvironmentFactory): Unit = timeoutRunBlocking {
-    val environment = factory.createPixiEnvironment()
-    val requestsVersion = ExecService().execGetStdout(
-      environment.pythonPath,
-      Args("-c", "import requests; print(requests.__version__)"),
-    ).getOrThrow().trim()
+  fun `the Pixi environment provides Python and installs PyPI libraries`() =
+    factory.testWithEnv(environmentSpec) { environment ->
+      val requestsVersion = ExecService().execGetStdout(
+        environment.pythonPath,
+        Args("-c", "import requests; print(requests.__version__)"),
+      ).getOrThrow().trim()
 
-    assertThat(requestsVersion).isEqualTo("2.32.3")
-  }
+      assertThat(requestsVersion).isEqualTo("2.32.3")
+    }
 
   companion object {
     private val environmentSpec = pixiEnvironment(PIXI_TEST_VERSION) {
@@ -58,13 +62,21 @@ internal class PixiPyToolEnvTest {
       }
     }
 
-    private suspend fun PyEnvironmentFactory.createPixiEnvironment(): PixiPyEnvironment {
-      val environment = createEnvironment(environmentSpec)
+    private fun PyEnvironmentFactory.testWithEnv(
+      spec: PixiPyEnvironmentSpec,
+      timeout: Duration = 10.seconds,
+      test: suspend (PixiPyEnvironment) -> Unit,
+    ) {
+      val environment = timeoutRunBlocking(10.minutes) {
+        createEnvironment(spec)
+      }
       val pixiEnvironment = environment.unwrap<PixiPyEnvironment>()
       if (pixiEnvironment == null) {
         error("The Pixi specification did not create a Pixi environment")
       }
-      return pixiEnvironment
+      timeoutRunBlocking(timeout) {
+        test(pixiEnvironment)
+      }
     }
   }
 }
