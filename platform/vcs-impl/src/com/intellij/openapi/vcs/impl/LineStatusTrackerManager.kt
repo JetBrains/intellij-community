@@ -178,7 +178,7 @@ class LineStatusTrackerManager(
     ApplicationManager.getApplication().messageBus.connect(coroutineScope)
       .subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
 
-    LocalLineStatusTrackerProvider.EP_NAME.addChangeListener(Runnable { updateTrackingSettings() }, this)
+    LocalLineStatusTrackerProvider.EP_NAME.addChangeListener(coroutineScope) { updateTrackingSettings() }
     VcsBaseContentProvider.EP_NAME.addChangeListener(project, { onEverythingChanged() }, this)
 
     updatePartialChangeListsAvailability()
