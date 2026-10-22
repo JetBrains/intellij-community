@@ -8,8 +8,8 @@ object GradleVersionTestsProperty : org.jetbrains.kotlin.gradle.multiplatformTes
 
     enum class Value(override val versionAlias: String, override val version: String) : ValueFromEnvironment {
         ForMinAgp("REQUIRED_FOR_MIN_AGP", "7.5.1"),
-        ForStableAgp("REQUIRED_FOR_STABLE_AGP", "9.5.1"),
-        ForAlphaAgp("REQUIRED_FOR_ALPHA_AGP", "9.6.1")
+        ForStableAgp("REQUIRED_FOR_STABLE_AGP", "9.7.1"),
+        ForAlphaAgp("REQUIRED_FOR_ALPHA_AGP", "9.7.1")
     }
 
     override val versionByAlias: Map<Value, String> = Value.entries.associateWith { it.version }
