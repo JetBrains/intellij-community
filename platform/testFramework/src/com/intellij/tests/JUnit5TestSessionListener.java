@@ -14,7 +14,6 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.testFramework.Timings;
 import com.intellij.testFramework.UITestUtil;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,8 +44,7 @@ import java.util.prefs.Preferences;
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "JavadocReference"})
 public class JUnit5TestSessionListener implements LauncherSessionListener {
-  private final boolean includeFirstLast = !"true".equals(System.getProperty("intellij.build.test.ignoreFirstAndLastTests")) &&
-                                           UsefulTestCase.IS_UNDER_TEAMCITY;
+  private final boolean includeFirstLast = !"true".equals(System.getProperty("intellij.build.test.ignoreFirstAndLastTests"));
 
   private final List<Throwable> caughtExceptions = new ArrayList<>();
 
@@ -186,7 +184,12 @@ public class JUnit5TestSessionListener implements LauncherSessionListener {
           long testSuiteDuration = System.nanoTime() - suiteStarted;
           System.out.printf("##teamcity[buildStatisticValue key='ideaTests.totalTimeMs' value='%d']%n", testSuiteDuration / 1_000_000);
         }
-        LightPlatformTestCase.reportTestExecutionStatistics();
+
+        // TODO: use the same logic for tests, remove junit34Test
+        boolean junit34Test = ContainerUtil.exists(testPlan.getRoots(), root -> root.getUniqueId().equals(VINTAGE_UNIQUE_ID) && !testPlan.getChildren(root).isEmpty());
+        if (junit34Test) {
+          LightPlatformTestCase.reportTestExecutionStatistics();
+        }
       });
     }
 
