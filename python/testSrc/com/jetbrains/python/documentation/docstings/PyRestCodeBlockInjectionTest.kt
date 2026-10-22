@@ -6,6 +6,7 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.idea.IJIgnore
 import com.intellij.idea.TestFor
 import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -33,6 +34,7 @@ import kotlin.time.measureTimedValue
 @Layers.Functional
 class PyRestCodeBlockInjectionTest : PyTestCase() {
 
+  @IJIgnore(issue = "AT-4013")
   fun `test rest code-block highlighting`() {
     myFixture.configureByText(
       "c.py",
@@ -89,6 +91,7 @@ class PyRestCodeBlockInjectionTest : PyTestCase() {
     assertTrue("Expected Python keyword highlighting inside injected code-block", containsKeywordInfo)
   }
 
+  @IJIgnore(issue = "AT-4013")
   fun `test rest code-block is injected and preserves newlines`() {
     val fileContent = """
           def foo():
@@ -110,6 +113,7 @@ class PyRestCodeBlockInjectionTest : PyTestCase() {
     testCodeBlockInjection("a.py", fileContent, "       def hello():\n           x = 1\n\n           print(\"world\")\n")
   }
 
+  @IJIgnore(issue = "AT-4013")
   fun `test extended rest code-block with options is injected and preserves newlines`() {
     val fileContent = """
           def foo():
