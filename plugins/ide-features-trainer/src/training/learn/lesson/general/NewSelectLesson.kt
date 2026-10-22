@@ -8,6 +8,7 @@ import training.dsl.LessonUtil.checkPositionOfEditor
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.TaskContext
 import training.dsl.TaskRuntimeContext
+import training.dsl.TaskTestContext
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
@@ -38,6 +39,20 @@ abstract class NewSelectLesson : KLesson("Select", LessonsBundle.message("select
     trigger(actionId, checkState)
   }
 
+  /**
+   * Set it to `false` when the editor highlighting can take more than the test timeout.
+   * Then the test actions do not wait for the highlighting.
+   */
+  protected open val waitEditorToBeReadyInTests: Boolean = true
+
+  /**
+   * Runs [actionId] [times] times in the test mode.
+   * Override it when the selection action is asynchronous.
+   */
+  protected open fun TaskTestContext.selectWordInTest(actionId: String, times: Int = 1) {
+    repeat(times) { actions(actionId) }
+  }
+
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
     caret(startCaretText)
@@ -48,7 +63,7 @@ abstract class NewSelectLesson : KLesson("Select", LessonsBundle.message("select
       thisTrigger(it) {
         checkSelection(selectWord)
       }
-      test { actions(it) }
+      test(waitEditorToBeReadyInTests) { selectWordInTest(it) }
     }
 
     task("EditorSelectWord") {
@@ -57,7 +72,7 @@ abstract class NewSelectLesson : KLesson("Select", LessonsBundle.message("select
       thisTrigger(it) {
         checkSelection(selectString)
       }
-      test { actions(it) }
+      test(waitEditorToBeReadyInTests) { selectWordInTest(it) }
     }
 
     task("EditorSelectWord") {
@@ -66,7 +81,7 @@ abstract class NewSelectLesson : KLesson("Select", LessonsBundle.message("select
       thisTrigger(it) {
         checkSelection(selectArgument)
       }
-      test { actions(it) }
+      test(waitEditorToBeReadyInTests) { selectWordInTest(it) }
     }
 
     continueLesson()
@@ -79,7 +94,7 @@ abstract class NewSelectLesson : KLesson("Select", LessonsBundle.message("select
       thisTrigger(it) {
         checkSelection(selectCall)
       }
-      test { for (i in 1..numberOfSelectsForWholeCall) actions(it) }
+      test(waitEditorToBeReadyInTests) { selectWordInTest(it, numberOfSelectsForWholeCall) }
     }
 
     actionTask("EditorUnSelectWord") {
@@ -100,7 +115,7 @@ abstract class NewSelectLesson : KLesson("Select", LessonsBundle.message("select
       thisTrigger(it) {
         checkSelection(selectIf)
       }
-      test { for (i in 1..2) actions(it) }
+      test(waitEditorToBeReadyInTests) { selectWordInTest(it, 2) }
     }
   }
 
