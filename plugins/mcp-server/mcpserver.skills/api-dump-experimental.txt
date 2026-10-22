@@ -1,0 +1,39 @@
+*e:com.intellij.mcpserver.skills.AgentSkillTarget
+- java.lang.Enum
+- sf:CLAUDE:com.intellij.mcpserver.skills.AgentSkillTarget
+- sf:CODEX:com.intellij.mcpserver.skills.AgentSkillTarget
+- *sf:Companion:com.intellij.mcpserver.skills.AgentSkillTarget$Companion
+- sf:JUNIE:com.intellij.mcpserver.skills.AgentSkillTarget
+- sf:OTHER:com.intellij.mcpserver.skills.AgentSkillTarget
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.mcpserver.skills.AgentSkillTarget
+- s:values():com.intellij.mcpserver.skills.AgentSkillTarget[]
+*f:com.intellij.mcpserver.skills.AgentSkillTarget$Companion
+- f:getALL():java.util.Set
+*f:com.intellij.mcpserver.skills.BundledSkill
+- *sf:Companion:com.intellij.mcpserver.skills.BundledSkill$Companion
+- sf:DEFAULT_RESOURCE_ROOT:java.lang.String
+- <init>(java.lang.String,java.util.Set,java.util.Set,java.lang.String,java.lang.String,java.util.Set):V
+- b:<init>(java.lang.String,java.util.Set,java.util.Set,java.lang.String,java.lang.String,java.util.Set,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- equals(java.lang.Object):Z
+- f:getEnabledRegistryKey():java.lang.String
+- f:getRequiredTools():java.util.Set
+- f:getResourcePath():java.lang.String
+- f:getSkillId():java.lang.String
+- f:getTargets():java.util.Set
+- f:getTools():java.util.Set
+- hashCode():I
+*f:com.intellij.mcpserver.skills.BundledSkill$Companion
+*:com.intellij.mcpserver.skills.BundledSkillsProvider
+- *sf:Companion:com.intellij.mcpserver.skills.BundledSkillsProvider$Companion
+- isProviderAvailable(com.intellij.mcpserver.skills.SkillWorkspaceContext,kotlin.coroutines.Continuation):java.lang.Object
+- isSkillAvailable(com.intellij.mcpserver.skills.SkillWorkspaceContext,com.intellij.mcpserver.skills.BundledSkill,kotlin.coroutines.Continuation):java.lang.Object
+- prepareSkillDirectory(com.intellij.mcpserver.skills.BundledSkill,java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
+- a:registeredSkills():java.util.List
+*f:com.intellij.mcpserver.skills.BundledSkillsProvider$Companion
+*f:com.intellij.mcpserver.skills.SkillWorkspaceContext
+- *sf:Companion:com.intellij.mcpserver.skills.SkillWorkspaceContext$Companion
+- f:getProject():com.intellij.openapi.project.Project
+- f:getWorkingDirectory():java.nio.file.Path
+*f:com.intellij.mcpserver.skills.SkillWorkspaceContext$Companion
+- f:create(java.nio.file.Path,com.intellij.openapi.project.Project):com.intellij.mcpserver.skills.SkillWorkspaceContext

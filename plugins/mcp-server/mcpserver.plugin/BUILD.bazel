@@ -9,6 +9,7 @@ dev_dist_plugin(
         "intellij.mcpserver.toolsets",
         "intellij.mcpserver.stdio",
         "intellij.mcpserver.vcs",
+        "intellij.mcpserver.skills",
         "intellij.mcpserver.terminal",
         "intellij.mcpserver.terminal.frontend",
         "intellij.mcpserver.frontend",
@@ -80,6 +81,7 @@ jvm_library(
         "//plugins/mcp-server/mcpserver.frontend",
         "//plugins/mcp-server/mcpserver.stdio",
         "//plugins/mcp-server/mcpserver.vcs",
+        "//plugins/mcp-server/mcpserver.skills",
     ],
 )
 
@@ -100,6 +102,7 @@ jvm_library(
         "//plugins/mcp-server/mcpserver.frontend:mcpserver.frontend_test_lib",
         "//plugins/mcp-server/mcpserver.stdio:mcpserver.stdio_test_lib",
         "//plugins/mcp-server/mcpserver.vcs:mcpserver.vcs_test_lib",
+        "//plugins/mcp-server/mcpserver.skills:mcpserver.skills_test_lib",
     ],
 )
 ### auto-generated section `build intellij.mcpserver.plugin` end
