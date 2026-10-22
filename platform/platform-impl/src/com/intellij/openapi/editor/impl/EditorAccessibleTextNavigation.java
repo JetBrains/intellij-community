@@ -22,6 +22,8 @@ import static javax.accessibility.AccessibleText.WORD;
 /**
  * Finds the text of a character, a word, or a line at an index of the {@link EditorAccessibleText}.
  * It can also find the text before or after that index.
+ * <p>
+ * An {@code offset} is an offset in the {@link EditorAccessibleText}, and a {@code documentOffset} is an offset in the document.
  */
 final class EditorAccessibleTextNavigation {
   /** Looking for text before the given offset */
@@ -113,15 +115,6 @@ final class EditorAccessibleTextNavigation {
     return null;
   }
 
-  private int getLineAtOffsetStart(int offset) {
-    Document document = editor.getDocument();
-    if (offset == 0) {
-      return 0;
-    }
-    int lineNumber = editor.offsetToLogicalPosition(offset).line;
-    return document.getLineStartOffset(lineNumber);
-  }
-
   private int moveLineOffset(int offset, @MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction) {
     if (direction == AFTER) {
       int lineNumber = myAccessibleText.getLineNumber(offset);
@@ -186,13 +179,12 @@ final class EditorAccessibleTextNavigation {
         return new AccessibleTextSequence(start, end, myAccessibleText.getText(start, end));
       }
     }
-    // the word helpers below use document offsets
     boolean isCamel = editor.getSettings().isCamelWords();
     var caretStopPolicy = resolveCaretStopPolicy(direction);
-    offset = moveWordOffset(myAccessibleText.toDocumentOffset(offset), direction, caretStopPolicy, isCamel);
+    int documentOffset = moveWordOffset(myAccessibleText.toDocumentOffset(offset), direction, caretStopPolicy, isCamel);
     var wordStop = caretStopPolicy.getWordStop();
-    int wordStart = getWordAtOffsetStart(offset, wordStop, isCamel);
-    int wordEnd = getWordAtOffsetEnd(offset, wordStop, isCamel);
+    int wordStart = getWordAtOffsetStart(documentOffset, wordStop, isCamel);
+    int wordEnd = getWordAtOffsetEnd(documentOffset, wordStop, isCamel);
     if (wordStart == -1 || wordEnd == -1 || wordStart > wordEnd) {
       return null;
     }
@@ -202,7 +194,7 @@ final class EditorAccessibleTextNavigation {
   }
 
 
-  private int moveWordOffset(int offset,
+  private int moveWordOffset(int documentOffset,
                              @MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction,
                              CaretStopPolicy stopPolicy,
                              boolean isCamel) {
@@ -212,35 +204,44 @@ final class EditorAccessibleTextNavigation {
     if (direction == BEFORE) {
       return EditorActionUtil.getPreviousCaretStopOffset(editor, stopPolicy, isCamel);
     }
-    return offset;
+    return documentOffset;
   }
 
-  private int getWordAtOffsetStart(int offset, CaretStop wordStop, boolean isCamel) {
-    if (offset == 0) {
+  private int getDocumentLineStart(int documentOffset) {
+    Document document = editor.getDocument();
+    if (documentOffset == 0) {
+      return 0;
+    }
+    int lineNumber = editor.offsetToLogicalPosition(documentOffset).line;
+    return document.getLineStartOffset(lineNumber);
+  }
+
+  private int getWordAtOffsetStart(int documentOffset, CaretStop wordStop, boolean isCamel) {
+    if (documentOffset == 0) {
       return 0;
     }
     if (wordStop.isAtEnd() && !wordStop.isAtStart()) {
-      if (EditorActionUtil.isWordOrLexemeEnd(editor, offset, isCamel)) {
-        return getWordAtOffsetStart(offset - 1, isCamel);
+      if (EditorActionUtil.isWordOrLexemeEnd(editor, documentOffset, isCamel)) {
+        return getWordAtOffsetStart(documentOffset - 1, isCamel);
       }
-      if (offset == getLineAtOffsetStart(offset)) {
-        return offset - 1;
+      if (documentOffset == getDocumentLineStart(documentOffset)) {
+        return documentOffset - 1;
       }
     }
-    if (Character.isWhitespace(editor.getDocument().getText().charAt(offset))) {
-      return offset;
+    if (Character.isWhitespace(editor.getDocument().getText().charAt(documentOffset))) {
+      return documentOffset;
     }
-    return getWordAtOffsetStart(offset, isCamel);
+    return getWordAtOffsetStart(documentOffset, isCamel);
   }
 
   // Based on CaretImpl#getWordAtCaretStart
-  private int getWordAtOffsetStart(int offset, boolean isCamel) {
+  private int getWordAtOffsetStart(int documentOffset, boolean isCamel) {
     Document document = editor.getDocument();
-    if (offset == 0) {
+    if (documentOffset == 0) {
       return 0;
     }
-    int lineNumber = editor.offsetToLogicalPosition(offset).line;
-    int newOffset = offset;
+    int lineNumber = editor.offsetToLogicalPosition(documentOffset).line;
+    int newOffset = documentOffset;
     int minOffset = lineNumber > 0 ? document.getLineEndOffset(lineNumber - 1) : 0;
     for (; newOffset > minOffset; newOffset--) {
       if (EditorActionUtil.isWordOrLexemeStart(editor, newOffset, isCamel)) {
@@ -251,32 +252,32 @@ final class EditorAccessibleTextNavigation {
     return newOffset;
   }
 
-  private int getWordAtOffsetEnd(int offset, CaretStop stopWord, boolean isCamel) {
+  private int getWordAtOffsetEnd(int documentOffset, CaretStop stopWord, boolean isCamel) {
     if (stopWord.isAtStart()) {
-      if (Character.isWhitespace(editor.getDocument().getText().charAt(offset))) {
-        return offset + 1;
+      if (Character.isWhitespace(editor.getDocument().getText().charAt(documentOffset))) {
+        return documentOffset + 1;
       }
-      return getWordAtOffsetEnd(offset + 1, isCamel);
+      return getWordAtOffsetEnd(documentOffset + 1, isCamel);
     }
-    if (offset == getLineAtOffsetStart(offset)) {
-      return offset;
+    if (documentOffset == getDocumentLineStart(documentOffset)) {
+      return documentOffset;
     }
-    return getWordAtOffsetEnd(offset, isCamel);
+    return getWordAtOffsetEnd(documentOffset, isCamel);
   }
 
 
   // Based on CaretImpl#getWordAtCaretEnd
-  private int getWordAtOffsetEnd(int offset, boolean isCamel) {
+  private int getWordAtOffsetEnd(int documentOffset, boolean isCamel) {
     Document document = editor.getDocument();
-    if (offset >= document.getTextLength() - 1 || document.getLineCount() == 0) {
-      return offset;
+    if (documentOffset >= document.getTextLength() - 1 || document.getLineCount() == 0) {
+      return documentOffset;
     }
-    int newOffset = offset;
-    int lineNumber = editor.offsetToLogicalPosition(offset).line;
+    int newOffset = documentOffset;
+    int lineNumber = editor.offsetToLogicalPosition(documentOffset).line;
     int maxOffset = document.getLineEndOffset(lineNumber);
     if (newOffset > maxOffset) {
       if (lineNumber + 1 >= document.getLineCount()) {
-        return offset;
+        return documentOffset;
       }
       maxOffset = document.getLineEndOffset(lineNumber + 1);
     }
