@@ -91,12 +91,15 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @DirtyUI
-public final class EditorComponentImpl extends JTextComponent implements Scrollable, UiCompatibleDataProvider, Queryable, TypingTarget, Accessible,
-                                                                         UISettingsListener, UiInspectorPreciseContextProvider,
-                                                                         UiInspectorContextProvider {
+public final class EditorComponentImpl extends JTextComponent
+  implements Scrollable, UiCompatibleDataProvider, Queryable, TypingTarget, Accessible, UISettingsListener,
+             UiInspectorPreciseContextProvider, UiInspectorContextProvider {
   private static final Logger LOG = Logger.getInstance(EditorComponentImpl.class);
   private static final ThrottledLogger THROTTLED_LOGGER = new ThrottledLogger(LOG, TimeUnit.HOURS.toMillis(1));
-  private static final ThreadLocal<PluginDescriptor> currentDescriptor = ThreadLocal.withInitial(() -> null);
+  private static final ThreadLocal<PluginDescriptor> currentDescriptor = new ThreadLocal<>();
+  private static final String LOCK_IN_PAINT_ADVICE =
+    "The Read/Write lock is disallowed during paint. Usage of the R/W lock can lead to UI freezes.\n" +
+    "Consider using `PsiVersioningService.freezePsiVersion` for accessing PSI trees";
 
   private final EditorImpl editor;
   private final EditorAccessibleText myAccessibleText;
@@ -117,43 +120,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     }
     setOpaque(true);
 
-    putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, new Magnificator() {
-      @Override
-      public Point magnify(double scale, Point at) {
-        if (EditorComponentImpl.this.editor.isDisposed()) return at;
-        VisualPosition magnificationPosition = EditorComponentImpl.this.editor.xyToVisualPosition(at);
-        float currentSize = EditorComponentImpl.this.editor.getColorsScheme().getEditorFontSize2D();
-        boolean isChangePersistent = EditorComponentImpl.this.editor.getSettings().isWheelFontChangePersistent();
-        float defaultFontSize;
-        if (isChangePersistent) {
-          defaultFontSize = UISettings.getInstance().getFontSize();
-        }
-        else {
-          defaultFontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
-        }
-
-        float size = Math.max((float)(currentSize * scale), defaultFontSize);
-
-        var strategy = EditorComponentImpl.this.editor.getUserData(ChangeEditorFontSizeStrategy.KEY);
-        if (strategy != null) {
-          strategy.setFontSize(size);
-          var zoomPoint = strategy.preferredZoomPointRelative(EditorComponentImpl.this.editor);
-          var area = EditorComponentImpl.this.editor.getScrollingModel().getVisibleArea();
-          return new Point(area.x + zoomPoint.x, area.y + zoomPoint.y);
-        }
-
-        EditorComponentImpl.this.editor.setFontSize(size);
-        if (isChangePersistent) {
-          // Has to be performed with the correct modality because there's an
-          // EditorColorsManagerImpl.dropPsiCaches call inside, and it requires a write-safe context.
-          ApplicationManager.getApplication().invokeLater(() -> {
-            EditorComponentImpl.this.editor.adjustGlobalFontSize(UISettingsUtils.scaleFontSize(size, 1 / UISettingsUtils.getInstance().getCurrentIdeScale()));
-          }, ModalityState.stateForComponent(EditorComponentImpl.this));
-        }
-
-        return EditorComponentImpl.this.editor.visualPositionToXY(magnificationPosition);
-      }
-    });
+    putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, (Magnificator)this::magnify);
     putClientProperty(UndoRedoAction.IGNORE_SWING_UNDO_MANAGER, Boolean.TRUE);
 
     // This editor extends JTextComponent rather than JComponent *only* for accessibility
@@ -170,6 +137,41 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     for (FocusListener l : getFocusListeners()) removeFocusListener(l);
 
     setupEditorSwingCaretUpdatesCourierIfRequired();
+  }
+
+  private Point magnify(double scale, Point at) {
+    if (editor.isDisposed()) return at;
+    VisualPosition magnificationPosition = editor.xyToVisualPosition(at);
+    float currentSize = editor.getColorsScheme().getEditorFontSize2D();
+    boolean isChangePersistent = editor.getSettings().isWheelFontChangePersistent();
+    float defaultFontSize;
+    if (isChangePersistent) {
+      defaultFontSize = UISettings.getInstance().getFontSize();
+    }
+    else {
+      defaultFontSize = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize2D();
+    }
+
+    float size = Math.max((float)(currentSize * scale), defaultFontSize);
+
+    ChangeEditorFontSizeStrategy strategy = editor.getUserData(ChangeEditorFontSizeStrategy.KEY);
+    if (strategy != null) {
+      strategy.setFontSize(size);
+      var zoomPoint = strategy.preferredZoomPointRelative(editor);
+      var area = editor.getScrollingModel().getVisibleArea();
+      return new Point(area.x + zoomPoint.x, area.y + zoomPoint.y);
+    }
+
+    editor.setFontSize(size);
+    if (isChangePersistent) {
+      // Has to be performed with the correct modality because there's an
+      // EditorColorsManagerImpl.dropPsiCaches call inside, and it requires a write-safe context.
+      ApplicationManager.getApplication().invokeLater(() -> {
+        editor.adjustGlobalFontSize(UISettingsUtils.scaleFontSize(size, 1 / UISettingsUtils.getInstance().getCurrentIdeScale()));
+      }, ModalityState.stateForComponent(this));
+    }
+
+    return editor.visualPositionToXY(magnificationPosition);
   }
 
   @Override
@@ -204,18 +206,25 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     LogicalPosition pressedLocation = editor.myLastMousePressedLocation;
     LogicalPosition location = pressedLocation != null ? pressedLocation : editor.getCaretModel().getLogicalPosition();
     boolean virtualSpace = EditorCoreUtil.inVirtualSpace(editor, location);
-    // IJPL-52267: log whenever EDITOR_VIRTUAL_SPACE is derived from a retained mouse-press location instead
-    // of the caret. When the press location is virtual but the caret is not, this is precisely the value that
-    // wrongly disables keyboard Go To Declaration / Find Usages — correlate the "press #N" with the
-    // GotoDeclarationAction:trace "reason=virtualSpace" line and the focusLost trace for the same press.
-    if (pressedLocation != null && EditorImpl.MOUSE_PRESS_LOG.isTraceEnabled()) {
-      LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
-      EditorImpl.MOUSE_PRESS_LOG.trace("[press #" + editor.myMousePressSeq + "] EDITOR_VIRTUAL_SPACE served from press location=" +
-                                       pressedLocation + " virtualSpace=" + virtualSpace +
-                                       " caret=" + caret + " caretVirtualSpace=" + EditorCoreUtil.inVirtualSpace(editor, caret) +
-                                       " ageMs=" + (System.nanoTime() - editor.myMousePressTimestampNanos) / 1_000_000);
+    if (pressedLocation != null) {
+      traceVirtualSpaceFromPress(pressedLocation, virtualSpace);
     }
     sink.set(CommonDataKeys.EDITOR_VIRTUAL_SPACE, virtualSpace);
+  }
+
+  /**
+   * IJPL-52267: log whenever EDITOR_VIRTUAL_SPACE is derived from a retained mouse-press location instead
+   * of the caret. When the press location is virtual but the caret is not, this is precisely the value that
+   * wrongly disables keyboard Go To Declaration / Find Usages — correlate the "press #N" with the
+   * GotoDeclarationAction:trace "reason=virtualSpace" line and the focusLost trace for the same press.
+   */
+  private void traceVirtualSpaceFromPress(@NotNull LogicalPosition pressedLocation, boolean virtualSpace) {
+    if (!EditorImpl.MOUSE_PRESS_LOG.isTraceEnabled()) return;
+    LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
+    EditorImpl.MOUSE_PRESS_LOG.trace("[press #" + editor.myMousePressSeq + "] EDITOR_VIRTUAL_SPACE served from press location=" +
+                                     pressedLocation + " virtualSpace=" + virtualSpace +
+                                     " caret=" + caret + " caretVirtualSpace=" + EditorCoreUtil.inVirtualSpace(editor, caret) +
+                                     " ageMs=" + (System.nanoTime() - editor.myMousePressTimestampNanos) / 1_000_000);
   }
 
   @DirtyUI
@@ -256,17 +265,12 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
       // First try to handle the event using the default editor logic, then dispatch to
       // `super.processInputMethodEvent(e)`, which in turn will call the listeners and
       // if still not consumed, handle the event by the default JTextComponent logic.
-      //    super.processInputMethodEvent(e);
 
       if (!e.isConsumed() && !editor.isDisposed()) {
         InputMethodListener listener = editor.getInputMethodSupport().getListener();
         switch (e.getID()) {
-          case InputMethodEvent.INPUT_METHOD_TEXT_CHANGED:
-            listener.inputMethodTextChanged(e);
-            break;
-          case InputMethodEvent.CARET_POSITION_CHANGED:
-            listener.caretPositionChanged(e);
-            break;
+          case InputMethodEvent.INPUT_METHOD_TEXT_CHANGED -> listener.inputMethodTextChanged(e);
+          case InputMethodEvent.CARET_POSITION_CHANGED -> listener.caretPositionChanged(e);
         }
       }
     });
@@ -307,23 +311,12 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     Graphics2D gg = (Graphics2D)g;
     EditorUIUtil.setupEditorPainting(gg, editor.useEditorAntialiasing());
     AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, PaintUtil.RoundingMode.FLOOR);
-    if (!editor.isStickyLinePainting() && !editor.isPaintingDumbBuffer()) { // sticky lines and the offscreen dumb buffer might have a different alignment from the main area
+    // sticky lines and the offscreen dumb buffer might have a different alignment from the main area
+    if (!editor.isStickyLinePainting() && !editor.isPaintingDumbBuffer()) {
       alignment = ObjectUtils.notNull(PaintUtil.getUserSpacePixelOffset(gg), Point2D.Double::new);
     }
 
-    ApplicationManagerEx.getApplicationEx().withLocksSoftlyProhibited(
-      "The Read/Write lock is disallowed during paint. Usage of the R/W lock can lead to UI freezes.\n" +
-      "Consider using `PsiVersioningService.freezePsiVersion` for accessing PSI trees"
-      , t -> {
-        PluginDescriptor violatingDescriptor = currentDescriptor.get();
-        Throwable exception;
-        if (violatingDescriptor != null) {
-          exception = new PluginException(t, violatingDescriptor.getPluginId());
-        } else {
-          exception = t;
-        }
-        THROTTLED_LOGGER.error(exception);
-      }, () -> {
+    ApplicationManagerEx.getApplicationEx().withLocksSoftlyProhibited(LOCK_IN_PAINT_ADVICE, EditorComponentImpl::reportLockInPaint, () -> {
       editor.paint(gg);
       return null;
     });
@@ -336,6 +329,11 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     if (project != null) {
       EditorsSplittersKt.stopOpenFilesActivity(project);
     }
+  }
+
+  private static void reportLockInPaint(@NotNull Throwable t) {
+    PluginDescriptor violatingDescriptor = currentDescriptor.get();
+    THROTTLED_LOGGER.error(violatingDescriptor != null ? new PluginException(t, violatingDescriptor.getPluginId()) : t);
   }
 
   @ApiStatus.Internal
@@ -405,12 +403,12 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
 
   @Override
   public boolean getScrollableTracksViewportWidth() {
-    return getParent() instanceof JViewport && getParent().getWidth() > getPreferredSize().width;
+    return getParent() instanceof JViewport viewport && viewport.getWidth() > getPreferredSize().width;
   }
 
   @Override
   public boolean getScrollableTracksViewportHeight() {
-    return getParent() instanceof JViewport && getParent().getHeight() > getPreferredSize().height;
+    return getParent() instanceof JViewport viewport && viewport.getHeight() > getPreferredSize().height;
   }
 
   @Override
@@ -432,20 +430,17 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   // -----------------------------------------------------------------------------------------------
   private EditorSwingCaretUpdatesCourier myEditorSwingCaretUpdatesCourier = null;
 
-  @SuppressWarnings("UnusedReturnValue")
   @RequiresEdt
-  private boolean setupEditorSwingCaretUpdatesCourierIfRequired() {
-    if ((myEditorSwingCaretUpdatesCourier != null) || (editor == null) || (editor.isDisposed()) ) {
-      return false;
+  private void setupEditorSwingCaretUpdatesCourierIfRequired() {
+    if (myEditorSwingCaretUpdatesCourier != null || editor == null || editor.isDisposed()) {
+      return;
     }
 
     if (ArrayUtil.isEmpty(getCaretListeners())) {
-      return false;
+      return;
     }
 
     myEditorSwingCaretUpdatesCourier = new EditorSwingCaretUpdatesCourier(this);
-
-    return true;
   }
 
   @Override
@@ -564,9 +559,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     boolean allCaretsHaveTheSameText = true;
 
     for (var caret : editor.getCaretModel().getAllCarets()) {
-      var caretStart = offsetRelativeToCurrentCaret + caret.getOffset();
-      var caretEnd = caretStart + length;
-      String caretText = editor.getDocument().getText(new TextRange(caretStart, caretEnd));
+      String caretText = editor.getDocument().getText(TextRange.from(offsetRelativeToCurrentCaret + caret.getOffset(), length));
       if (!selectedText.equals(caretText)) {
         allCaretsHaveTheSameText = false;
         break;
@@ -576,8 +569,7 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
     if (allCaretsHaveTheSameText) {
       for (var caret : editor.getCaretModel().getAllCarets()) {
         var caretStart = offsetRelativeToCurrentCaret + caret.getOffset();
-        var caretEnd = caretStart + length;
-        caret.setSelection(caretStart, caretEnd);
+        caret.setSelection(caretStart, caretStart + length);
       }
     } else {
       // Fallback to the default implementation
