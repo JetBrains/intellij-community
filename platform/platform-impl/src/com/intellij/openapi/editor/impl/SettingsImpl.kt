@@ -94,7 +94,63 @@ class SettingsImpl internal constructor(
     }
   }
 
-  // EditorSettings, in the order of the interface.
+  // EditorSettings, in the sections of the interface.
+
+  // The gutter.
+
+  override fun isLineNumbersShown(): Boolean = state.myAreLineNumbersShown
+
+  override fun setLineNumbersShown(value: Boolean) {
+    state.myAreLineNumbersShown = value
+  }
+
+  override fun isLineNumbersAfterIcons(): Boolean = state.myAreLineNumbersAfterIcons
+
+  override fun setLineNumbersAfterIcons(value: Boolean) {
+    state.myAreLineNumbersAfterIcons = value
+  }
+
+  override fun getLineNumerationType(): LineNumerationType = state.myLineNumeration
+
+  override fun setLineNumerationType(value: LineNumerationType) {
+    state.myLineNumeration = value
+  }
+
+  override fun isLineMarkerAreaShown(): Boolean = state.myLineMarkerAreaShown
+
+  override fun setLineMarkerAreaShown(lineMarkerAreaShown: Boolean) {
+    state.myLineMarkerAreaShown = lineMarkerAreaShown
+  }
+
+  override fun areGutterIconsShown(): Boolean = state.myGutterIconsShown
+
+  override fun setGutterIconsShown(value: Boolean) {
+    state.myGutterIconsShown = value
+  }
+
+  override fun isFoldingOutlineShown(): Boolean = state.myIsFoldingOutlineShown
+
+  override fun setFoldingOutlineShown(value: Boolean) {
+    state.myIsFoldingOutlineShown = value
+  }
+
+  override fun isFoldingOutlineShownOnlyOnHover(): Boolean = state.foldingOutlineShownOnlyOnHover
+
+  override fun isFoldingEndingsShown(): Boolean = state.foldingEndingsShown
+
+  override fun isAutoCodeFoldingEnabled(): Boolean = state.myAutoCodeFoldingEnabled
+
+  override fun setAutoCodeFoldingEnabled(value: Boolean) {
+    state.myAutoCodeFoldingEnabled = value
+  }
+
+  override fun isAllowSingleLogicalLineFolding(): Boolean = state.myAllowSingleLogicalLineFolding
+
+  override fun setAllowSingleLogicalLineFolding(allow: Boolean) {
+    state.myAllowSingleLogicalLineFolding = allow
+  }
+
+  // The view.
 
   override fun isRightMarginShown(): Boolean = state.myIsRightMarginShown
 
@@ -138,6 +194,262 @@ class SettingsImpl internal constructor(
     state.myIsSelectionWhitespacesShown = value
   }
 
+  override fun isIndentGuidesShown(): Boolean = state.myIndentGuidesShown
+
+  override fun setIndentGuidesShown(value: Boolean) {
+    state.myIndentGuidesShown = value
+  }
+
+  override fun isCaretRowShown(): Boolean = state.myCaretRowShown
+
+  override fun setCaretRowShown(value: Boolean) {
+    state.myCaretRowShown = value
+  }
+
+  override fun isShowIntentionBulb(): Boolean = state.myShowIntentionBulb
+
+  override fun setShowIntentionBulb(show: Boolean) {
+    state.myShowIntentionBulb = show
+  }
+
+  override fun isShowInspectionWidget(): Boolean = state.showInspectionWidget
+
+  override fun isUseEditorFontInInlays(): Boolean = state.useEditorFontInInlays
+
+  override fun getBidiTextDirection(): BidiTextDirection = state.bidiTextDirection
+
+  override fun isRtlEnabled(): Boolean = state.rtlEnabled
+
+  override fun setRtlEnabled(value: Boolean) {
+    state.rtlEnabled = value
+  }
+
+  override fun areStickyLinesShown(): Boolean = state.myStickyLinesShown && state.myStickyLinesShownForLanguage
+
+  override fun getStickyLinesLimit(): Int = state.myStickyLinesLimit
+
+  override fun isShowingSpecialChars(): Boolean = state.showingSpecialCharacters
+
+  override fun setShowingSpecialChars(value: Boolean) {
+    state.showingSpecialCharacters = value
+  }
+
+  override fun getAdditionalLinesCount(): Int = state.myAdditionalLinesCount
+
+  override fun setAdditionalLinesCount(additionalLinesCount: Int) {
+    state.myAdditionalLinesCount = additionalLinesCount
+  }
+
+  override fun getAdditionalColumnsCount(): Int = state.myAdditionalColumnsCount
+
+  override fun setAdditionalColumnsCount(additionalColumnsCount: Int) {
+    state.myAdditionalColumnsCount = additionalColumnsCount
+  }
+
+  override fun getCharacterGridWidthMultiplier(): Float? = state.characterGridWidth
+
+  override fun setCharacterGridWidthMultiplier(value: Float?) {
+    state.characterGridWidth = value
+  }
+
+  // The caret.
+
+  override fun isBlockCursor(): Boolean = state.myIsBlockCursor
+
+  override fun setBlockCursor(value: Boolean) {
+    state.myIsBlockCursor = value
+  }
+
+  override fun isFullLineHeightCursor(): Boolean = state.myIsFullLineHeightCursor
+
+  override fun setFullLineHeightCursor(value: Boolean) {
+    state.myIsFullLineHeightCursor = value
+  }
+
+  override fun getLineCursorWidth(): Int = state.myLineCursorWidth
+
+  override fun setLineCursorWidth(width: Int) {
+    state.myLineCursorWidth = width
+  }
+
+  override fun isSmoothCaretMovement(): Boolean = state.myIsSmoothCaretMovement
+
+  override fun setSmoothCaretMovement(useSmoothCaretMovement: Boolean) {
+    state.myIsSmoothCaretMovement = useSmoothCaretMovement
+  }
+
+  override fun getCaretEasing(): EditorSettings.CaretEasing = state.myCaretEasing
+
+  override fun isBlinkCaret(): Boolean = state.myIsCaretBlinking
+
+  override fun setBlinkCaret(value: Boolean) {
+    state.myIsCaretBlinking = value
+  }
+
+  override fun getCaretBlinkPeriod(): Int = state.myCaretBlinkingPeriod
+
+  override fun setCaretBlinkPeriod(blinkPeriod: Int) {
+    state.myCaretBlinkingPeriod = blinkPeriod
+  }
+
+  override fun isSmoothCaretBlinking(): Boolean = state.myIsSmoothCaretBlinking
+
+  override fun setSmoothCaretBlinking(value: Boolean) {
+    state.myIsSmoothCaretBlinking = value
+  }
+
+  override fun isVirtualSpace(): Boolean = state.myIsVirtualSpace
+
+  override fun setVirtualSpace(allow: Boolean) {
+    state.myIsVirtualSpace = allow
+  }
+
+  override fun isCaretInsideTabs(): Boolean = state.myIsCaretInsideTabs
+
+  override fun setCaretInsideTabs(allow: Boolean) {
+    state.myIsCaretInsideTabs = allow
+  }
+
+  override fun isSmartHome(): Boolean = state.myIsSmartHome
+
+  override fun setSmartHome(value: Boolean) {
+    state.myIsSmartHome = value
+  }
+
+  override fun isCamelWords(): Boolean = state.myIsCamelWords
+
+  override fun setCamelWords(value: Boolean) {
+    state.myIsCamelWords = value
+  }
+
+  override fun resetCamelWords() {
+    state.clearOverriding(state::myIsCamelWords)
+  }
+
+  override fun isMouseClickSelectionHonorsCamelWords(): Boolean = state.myIsMouseClickSelectionHonorsCamelWords
+
+  override fun setMouseClickSelectionHonorsCamelWords(value: Boolean) {
+    state.myIsMouseClickSelectionHonorsCamelWords = value
+  }
+
+  override fun getCaretStopOptions(): CaretStopOptions = state.caretStopOptions
+
+  override fun addCaretsOnDoubleCtrl(): Boolean = state.addCaretsOnDoubleCtrl
+
+  // Soft wraps.
+
+  override fun isUseSoftWraps(): Boolean = state.myUseSoftWraps
+
+  override fun setUseSoftWraps(use: Boolean) {
+    state.myUseSoftWraps = use
+  }
+
+  override fun isAllSoftWrapsShown(): Boolean = state.allSoftWrapsShown
+
+  override fun isPaintSoftWraps(): Boolean = state.myPaintSoftWraps
+
+  override fun setPaintSoftWraps(value: Boolean) {
+    state.myPaintSoftWraps = value
+  }
+
+  override fun isUseCustomSoftWrapIndent(): Boolean = state.myUseCustomSoftWrapIndent
+
+  override fun setUseCustomSoftWrapIndent(useCustomSoftWrapIndent: Boolean) {
+    state.myUseCustomSoftWrapIndent = useCustomSoftWrapIndent
+  }
+
+  override fun getCustomSoftWrapIndent(): Int = state.myCustomSoftWrapIndent
+
+  override fun setCustomSoftWrapIndent(indent: Int) {
+    state.myCustomSoftWrapIndent = indent
+  }
+
+  // Scrolling.
+
+  override fun getVerticalScrollOffset(): Int = state.myVerticalScrollOffset
+
+  override fun setVerticalScrollOffset(value: Int) {
+    setOrClearScrollValue(state::myVerticalScrollOffset, value)
+  }
+
+  override fun getVerticalScrollJump(): Int = state.myVerticalScrollJump
+
+  override fun setVerticalScrollJump(value: Int) {
+    setOrClearScrollValue(state::myVerticalScrollJump, value)
+  }
+
+  override fun getHorizontalScrollOffset(): Int = state.myHorizontalScrollOffset
+
+  override fun setHorizontalScrollOffset(value: Int) {
+    setOrClearScrollValue(state::myHorizontalScrollOffset, value)
+  }
+
+  override fun getHorizontalScrollJump(): Int = state.myHorizontalScrollJump
+
+  override fun setHorizontalScrollJump(value: Int) {
+    setOrClearScrollValue(state::myHorizontalScrollJump, value)
+  }
+
+  override fun isAnimatedScrolling(): Boolean = state.myIsAnimatedScrolling
+
+  override fun setAnimatedScrolling(value: Boolean) {
+    state.myIsAnimatedScrolling = value
+  }
+
+  override fun isRefrainFromScrolling(): Boolean = state.myIsRefrainFromScrolling
+
+  override fun setRefrainFromScrolling(value: Boolean) {
+    state.myIsRefrainFromScrolling = value
+  }
+
+  override fun resetRefrainFromScrolling() {
+    state.clearOverriding(state::myIsRefrainFromScrolling)
+  }
+
+  override fun isAdditionalPageAtBottom(): Boolean = state.myIsAdditionalPageAtBottom
+
+  override fun setAdditionalPageAtBottom(value: Boolean) {
+    state.myIsAdditionalPageAtBottom = value
+  }
+
+  // The mouse.
+
+  override fun isDndEnabled(): Boolean = state.myIsDndEnabled
+
+  override fun setDndEnabled(value: Boolean) {
+    state.myIsDndEnabled = value
+  }
+
+  override fun isWheelFontChangeEnabled(): Boolean = state.myIsWheelFontChangeEnabled
+
+  override fun setWheelFontChangeEnabled(value: Boolean) {
+    state.myIsWheelFontChangeEnabled = value
+  }
+
+  override fun resetWheelFontChangeEnabled() {
+    state.clearOverriding(state::myIsWheelFontChangeEnabled)
+  }
+
+  override fun isWheelFontChangePersistent(): Boolean = state.wheelFontChangePersistent
+
+  // Editing.
+
+  override fun isVariableInplaceRenameEnabled(): Boolean = state.myIsRenameVariablesInplace
+
+  override fun setVariableInplaceRenameEnabled(value: Boolean) {
+    state.myIsRenameVariablesInplace = value
+  }
+
+  override fun isPreselectRename(): Boolean = state.myRenamePreselect
+
+  override fun setPreselectRename(value: Boolean) {
+    state.myRenamePreselect = value
+  }
+
+  override fun isInsertParenthesesAutomatically(): Boolean = state.insertParenthesesAutomatically
+
+  // The code style.
+
   override fun getRightMargin(project: Project?): Int = state.rightMargin
 
   override fun setRightMargin(rightMargin: Int) {
@@ -158,58 +470,6 @@ class SettingsImpl internal constructor(
 
   override fun setWrapWhenTypingReachesRightMargin(value: Boolean) {
     state.myWrapWhenTypingReachesRightMargin = value
-  }
-
-  override fun isLineNumbersShown(): Boolean = state.myAreLineNumbersShown
-
-  override fun setLineNumbersShown(value: Boolean) {
-    state.myAreLineNumbersShown = value
-  }
-
-  override fun isLineNumbersAfterIcons(): Boolean = state.myAreLineNumbersAfterIcons
-
-  override fun setLineNumbersAfterIcons(value: Boolean) {
-    state.myAreLineNumbersAfterIcons = value
-  }
-
-  override fun getAdditionalLinesCount(): Int = state.myAdditionalLinesCount
-
-  override fun setAdditionalLinesCount(additionalLinesCount: Int) {
-    state.myAdditionalLinesCount = additionalLinesCount
-  }
-
-  override fun getAdditionalColumnsCount(): Int = state.myAdditionalColumnsCount
-
-  override fun setAdditionalColumnsCount(additionalColumnsCount: Int) {
-    state.myAdditionalColumnsCount = additionalColumnsCount
-  }
-
-  override fun isLineMarkerAreaShown(): Boolean = state.myLineMarkerAreaShown
-
-  override fun setLineMarkerAreaShown(lineMarkerAreaShown: Boolean) {
-    state.myLineMarkerAreaShown = lineMarkerAreaShown
-  }
-
-  override fun areGutterIconsShown(): Boolean = state.myGutterIconsShown
-
-  override fun setGutterIconsShown(value: Boolean) {
-    state.myGutterIconsShown = value
-  }
-
-  override fun isFoldingOutlineShown(): Boolean = state.myIsFoldingOutlineShown
-
-  override fun setFoldingOutlineShown(value: Boolean) {
-    state.myIsFoldingOutlineShown = value
-  }
-
-  override fun isFoldingOutlineShownOnlyOnHover(): Boolean = state.foldingOutlineShownOnlyOnHover
-
-  override fun isFoldingEndingsShown(): Boolean = state.foldingEndingsShown
-
-  override fun isAutoCodeFoldingEnabled(): Boolean = state.myAutoCodeFoldingEnabled
-
-  override fun setAutoCodeFoldingEnabled(value: Boolean) {
-    state.myAutoCodeFoldingEnabled = value
   }
 
   override fun isUseTabCharacter(project: Project?): Boolean {
@@ -238,214 +498,6 @@ class SettingsImpl internal constructor(
     state.tabSize = tabSize
   }
 
-  override fun isSmartHome(): Boolean = state.myIsSmartHome
-
-  override fun setSmartHome(value: Boolean) {
-    state.myIsSmartHome = value
-  }
-
-  override fun isVirtualSpace(): Boolean = state.myIsVirtualSpace
-
-  override fun setVirtualSpace(allow: Boolean) {
-    state.myIsVirtualSpace = allow
-  }
-
-  override fun getVerticalScrollOffset(): Int = state.myVerticalScrollOffset
-
-  override fun setVerticalScrollOffset(value: Int) {
-    setOrClearScrollValue(state::myVerticalScrollOffset, value)
-  }
-
-  override fun getVerticalScrollJump(): Int = state.myVerticalScrollJump
-
-  override fun setVerticalScrollJump(value: Int) {
-    setOrClearScrollValue(state::myVerticalScrollJump, value)
-  }
-
-  override fun getHorizontalScrollOffset(): Int = state.myHorizontalScrollOffset
-
-  override fun setHorizontalScrollOffset(value: Int) {
-    setOrClearScrollValue(state::myHorizontalScrollOffset, value)
-  }
-
-  override fun getHorizontalScrollJump(): Int = state.myHorizontalScrollJump
-
-  override fun setHorizontalScrollJump(value: Int) {
-    setOrClearScrollValue(state::myHorizontalScrollJump, value)
-  }
-
-  override fun isCaretInsideTabs(): Boolean = state.myIsCaretInsideTabs
-
-  override fun setCaretInsideTabs(allow: Boolean) {
-    state.myIsCaretInsideTabs = allow
-  }
-
-  override fun isBlinkCaret(): Boolean = state.myIsCaretBlinking
-
-  override fun setBlinkCaret(value: Boolean) {
-    state.myIsCaretBlinking = value
-  }
-
-  override fun getCaretBlinkPeriod(): Int = state.myCaretBlinkingPeriod
-
-  override fun setCaretBlinkPeriod(blinkPeriod: Int) {
-    state.myCaretBlinkingPeriod = blinkPeriod
-  }
-
-  override fun isSmoothCaretBlinking(): Boolean = state.myIsSmoothCaretBlinking
-
-  override fun setSmoothCaretBlinking(value: Boolean) {
-    state.myIsSmoothCaretBlinking = value
-  }
-
-  override fun isBlockCursor(): Boolean = state.myIsBlockCursor
-
-  override fun setBlockCursor(value: Boolean) {
-    state.myIsBlockCursor = value
-  }
-
-  override fun isFullLineHeightCursor(): Boolean = state.myIsFullLineHeightCursor
-
-  override fun setFullLineHeightCursor(value: Boolean) {
-    state.myIsFullLineHeightCursor = value
-  }
-
-  override fun isSmoothCaretMovement(): Boolean = state.myIsSmoothCaretMovement
-
-  override fun setSmoothCaretMovement(useSmoothCaretMovement: Boolean) {
-    state.myIsSmoothCaretMovement = useSmoothCaretMovement
-  }
-
-  override fun getCaretEasing(): EditorSettings.CaretEasing = state.myCaretEasing
-
-  override fun isCaretRowShown(): Boolean = state.myCaretRowShown
-
-  override fun setCaretRowShown(value: Boolean) {
-    state.myCaretRowShown = value
-  }
-
-  override fun getLineCursorWidth(): Int = state.myLineCursorWidth
-
-  override fun setLineCursorWidth(width: Int) {
-    state.myLineCursorWidth = width
-  }
-
-  override fun isAnimatedScrolling(): Boolean = state.myIsAnimatedScrolling
-
-  override fun setAnimatedScrolling(value: Boolean) {
-    state.myIsAnimatedScrolling = value
-  }
-
-  override fun isCamelWords(): Boolean = state.myIsCamelWords
-
-  override fun setCamelWords(value: Boolean) {
-    state.myIsCamelWords = value
-  }
-
-  override fun resetCamelWords() {
-    state.clearOverriding(state::myIsCamelWords)
-  }
-
-  override fun isAdditionalPageAtBottom(): Boolean = state.myIsAdditionalPageAtBottom
-
-  override fun setAdditionalPageAtBottom(value: Boolean) {
-    state.myIsAdditionalPageAtBottom = value
-  }
-
-  override fun isDndEnabled(): Boolean = state.myIsDndEnabled
-
-  override fun setDndEnabled(value: Boolean) {
-    state.myIsDndEnabled = value
-  }
-
-  override fun isWheelFontChangeEnabled(): Boolean = state.myIsWheelFontChangeEnabled
-
-  override fun setWheelFontChangeEnabled(value: Boolean) {
-    state.myIsWheelFontChangeEnabled = value
-  }
-
-  override fun resetWheelFontChangeEnabled() {
-    state.clearOverriding(state::myIsWheelFontChangeEnabled)
-  }
-
-  override fun isWheelFontChangePersistent(): Boolean = state.wheelFontChangePersistent
-
-  override fun isMouseClickSelectionHonorsCamelWords(): Boolean = state.myIsMouseClickSelectionHonorsCamelWords
-
-  override fun setMouseClickSelectionHonorsCamelWords(value: Boolean) {
-    state.myIsMouseClickSelectionHonorsCamelWords = value
-  }
-
-  override fun addCaretsOnDoubleCtrl(): Boolean = state.addCaretsOnDoubleCtrl
-
-  override fun isVariableInplaceRenameEnabled(): Boolean = state.myIsRenameVariablesInplace
-
-  override fun setVariableInplaceRenameEnabled(value: Boolean) {
-    state.myIsRenameVariablesInplace = value
-  }
-
-  override fun isRefrainFromScrolling(): Boolean = state.myIsRefrainFromScrolling
-
-  override fun setRefrainFromScrolling(value: Boolean) {
-    state.myIsRefrainFromScrolling = value
-  }
-
-  override fun resetRefrainFromScrolling() {
-    state.clearOverriding(state::myIsRefrainFromScrolling)
-  }
-
-  override fun isIndentGuidesShown(): Boolean = state.myIndentGuidesShown
-
-  override fun setIndentGuidesShown(value: Boolean) {
-    state.myIndentGuidesShown = value
-  }
-
-  override fun isUseSoftWraps(): Boolean = state.myUseSoftWraps
-
-  override fun setUseSoftWraps(use: Boolean) {
-    state.myUseSoftWraps = use
-  }
-
-  override fun isAllSoftWrapsShown(): Boolean = state.allSoftWrapsShown
-
-  override fun isPaintSoftWraps(): Boolean = state.myPaintSoftWraps
-
-  override fun setPaintSoftWraps(value: Boolean) {
-    state.myPaintSoftWraps = value
-  }
-
-  override fun isUseCustomSoftWrapIndent(): Boolean = state.myUseCustomSoftWrapIndent
-
-  override fun setUseCustomSoftWrapIndent(useCustomSoftWrapIndent: Boolean) {
-    state.myUseCustomSoftWrapIndent = useCustomSoftWrapIndent
-  }
-
-  override fun getCustomSoftWrapIndent(): Int = state.myCustomSoftWrapIndent
-
-  override fun setCustomSoftWrapIndent(indent: Int) {
-    state.myCustomSoftWrapIndent = indent
-  }
-
-  override fun isAllowSingleLogicalLineFolding(): Boolean = state.myAllowSingleLogicalLineFolding
-
-  override fun setAllowSingleLogicalLineFolding(allow: Boolean) {
-    state.myAllowSingleLogicalLineFolding = allow
-  }
-
-  override fun isPreselectRename(): Boolean = state.myRenamePreselect
-
-  override fun setPreselectRename(value: Boolean) {
-    state.myRenamePreselect = value
-  }
-
-  override fun isShowIntentionBulb(): Boolean = state.myShowIntentionBulb
-
-  override fun setShowIntentionBulb(show: Boolean) {
-    state.myShowIntentionBulb = show
-  }
-
-  override fun isShowInspectionWidget(): Boolean = state.showInspectionWidget
-
   override fun setLanguageSupplier(languageSupplier: Supplier<out Language?>?) {
     if (languageSupplier == null) {
       state.languageSupplier = null
@@ -453,42 +505,6 @@ class SettingsImpl internal constructor(
       state.languageSupplier = languageSupplier::get
     }
   }
-
-  override fun isShowingSpecialChars(): Boolean = state.showingSpecialCharacters
-
-  override fun setShowingSpecialChars(value: Boolean) {
-    state.showingSpecialCharacters = value
-  }
-
-  override fun isUseEditorFontInInlays(): Boolean = state.useEditorFontInInlays
-
-  override fun getLineNumerationType(): LineNumerationType = state.myLineNumeration
-
-  override fun setLineNumerationType(value: LineNumerationType) {
-    state.myLineNumeration = value
-  }
-
-  override fun isInsertParenthesesAutomatically(): Boolean = state.insertParenthesesAutomatically
-
-  override fun areStickyLinesShown(): Boolean = state.myStickyLinesShown && state.myStickyLinesShownForLanguage
-
-  override fun getStickyLinesLimit(): Int = state.myStickyLinesLimit
-
-  override fun getCharacterGridWidthMultiplier(): Float? = state.characterGridWidth
-
-  override fun setCharacterGridWidthMultiplier(value: Float?) {
-    state.characterGridWidth = value
-  }
-
-  override fun getBidiTextDirection(): BidiTextDirection = state.bidiTextDirection
-
-  override fun isRtlEnabled(): Boolean = state.rtlEnabled
-
-  override fun setRtlEnabled(value: Boolean) {
-    state.rtlEnabled = value
-  }
-
-  override fun getCaretStopOptions(): CaretStopOptions = state.caretStopOptions
 
   /**
    * Refreshes the editor after a change of a state property, unless the property is in [PROPERTIES_WITHOUT_EDITOR_REFRESH].

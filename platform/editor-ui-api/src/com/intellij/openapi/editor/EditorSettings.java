@@ -23,48 +23,7 @@ import java.util.function.Supplier;
  */
 @ApiStatus.NonExtendable
 public interface EditorSettings {
-  boolean isRightMarginShown();
-  void setRightMarginShown(boolean val);
-  
-  boolean isHighlightSelectionOccurrences();
-  void setHighlightSelectionOccurrences(boolean val);
-
-  boolean isWhitespacesShown();
-  void setWhitespacesShown(boolean val);
-
-  boolean isLeadingWhitespaceShown();
-  void setLeadingWhitespaceShown(boolean val);
-
-  boolean isInnerWhitespaceShown();
-  void setInnerWhitespaceShown(boolean val);
-
-  boolean isTrailingWhitespaceShown();
-  void setTrailingWhitespaceShown(boolean val);
-
-  boolean isSelectionWhitespaceShown();
-  void setSelectionWhitespaceShown(boolean val);
-
-  int getRightMargin(@Nullable Project project);
-  void setRightMargin(int myRightMargin);
-
-  /**
-   * Retrieves a list of soft margins (visual indent guides) to be used in the editor. If soft margins haven't been explicitly set
-   * with {@link #setSoftMargins(List)} method, they are obtained from code style settings: {@code CodeStyleSettings.getSoftMargins()}.
-   * @return A list of current editor soft margins. The list may be empty if no soft margins are defined.
-   */
-  @NotNull
-  List<Integer> getSoftMargins();
-
-  /**
-   * Explicitly sets soft margins (visual indent guides) to be used in the editor instead of obtaining them from code style settings via
-   * {@code CodeStyleSettings.getSoftMargins()} method. It is important to distinguish and empty list from {@code null} value: the first
-   * will define no soft margins for the editor while the latter will restore the default behavior of using them from code style settings.
-   * @param softMargins A list of soft margins or {@code null} to use margins from code style settings.
-   */
-  void setSoftMargins(@Nullable List<Integer> softMargins);
-
-  boolean isWrapWhenTypingReachesRightMargin(Project project);
-  void setWrapWhenTypingReachesRightMargin(boolean val);
+  // The gutter.
 
   boolean isLineNumbersShown();
   void setLineNumbersShown(boolean val);
@@ -72,11 +31,8 @@ public interface EditorSettings {
   boolean isLineNumbersAfterIcons();
   void setLineNumbersAfterIcons(boolean val);
 
-  int getAdditionalLinesCount();
-  void setAdditionalLinesCount(int additionalLinesCount);
-
-  int getAdditionalColumnsCount();
-  void setAdditionalColumnsCount(int additionalColumnsCount);
+  LineNumerationType getLineNumerationType();
+  void setLineNumerationType(LineNumerationType value);
 
   boolean isLineMarkerAreaShown();
   void setLineMarkerAreaShown(boolean lineMarkerAreaShown);
@@ -100,138 +56,6 @@ public interface EditorSettings {
   boolean isAutoCodeFoldingEnabled();
   void setAutoCodeFoldingEnabled(boolean val);
 
-  boolean isUseTabCharacter(Project project);
-  void setUseTabCharacter(boolean useTabCharacter);
-
-  int getTabSize(@Nullable Project project);
-  void setTabSize(int tabSize);
-
-  boolean isSmartHome();
-  void setSmartHome(boolean val);
-
-  boolean isVirtualSpace();
-  void setVirtualSpace(boolean allow);
-
-  /**
-   * Vertical scroll offset - number of lines to keep above and below the caret.
-   * If the number is too big for the editor height, the caret will be centered.
-   */
-  int getVerticalScrollOffset();
-  void setVerticalScrollOffset(int val);
-
-  /**
-   * Vertical scroll jump - minimum number of lines to scroll at a time.
-   */
-  int getVerticalScrollJump();
-  void setVerticalScrollJump(int val);
-
-  /**
-   * Horizontal scroll offset - number of characters to keep to the left and right of the caret.
-   * If the number is too big for the editor width, the caret will be centered.
-   */
-  int getHorizontalScrollOffset();
-  void setHorizontalScrollOffset(int val);
-
-  /**
-   * Horizontal scroll jump - minimum number of characters to scroll horizontally at a time.
-   */
-  int getHorizontalScrollJump();
-  void setHorizontalScrollJump(int val);
-
-  boolean isCaretInsideTabs();
-  void setCaretInsideTabs(boolean allow);
-
-  boolean isBlinkCaret();
-  void setBlinkCaret(boolean blinkCaret);
-
-  int getCaretBlinkPeriod();
-  void setCaretBlinkPeriod(int blinkPeriod);
-
-  @ApiStatus.Experimental
-  boolean isSmoothCaretBlinking();
-  @ApiStatus.Experimental
-  void setSmoothCaretBlinking(boolean smoothCaretBlinking);
-
-  boolean isBlockCursor();
-  void setBlockCursor(boolean blockCursor);
-
-  boolean isFullLineHeightCursor();
-  void setFullLineHeightCursor(boolean fullLineHeightCursor);
-
-  @ApiStatus.Experimental
-  boolean isSmoothCaretMovement();
-  @ApiStatus.Experimental
-  void setSmoothCaretMovement(boolean useSmoothCaretMovement);
-
-  @ApiStatus.Experimental
-  EditorSettings.CaretEasing getCaretEasing();
-
-  boolean isCaretRowShown();
-  void setCaretRowShown(boolean caretRowShown);
-
-  int getLineCursorWidth();
-  void setLineCursorWidth(int width);
-
-  boolean isAnimatedScrolling();
-  void setAnimatedScrolling(boolean val);
-
-  boolean isCamelWords();
-  void setCamelWords(boolean val);
-  /** Allows to remove 'use camel words' setup specific to the current settings object (if any) and use the shared one. */
-  void resetCamelWords();
-
-  boolean isAdditionalPageAtBottom();
-  void setAdditionalPageAtBottom(boolean val);
-
-  boolean isDndEnabled();
-  void setDndEnabled(boolean val);
-
-  boolean isWheelFontChangeEnabled();
-  void setWheelFontChangeEnabled(boolean val);
-  void resetWheelFontChangeEnabled();
-
-  /**
-   * Returns {@code true} if a font size change with the mouse wheel applies to all editors, and not only to this one.
-   */
-  boolean isWheelFontChangePersistent();
-
-  boolean isMouseClickSelectionHonorsCamelWords();
-  void setMouseClickSelectionHonorsCamelWords(boolean val);
-
-  /**
-   * Returns {@code true} if a double press of the multi-caret modifier key, followed by an arrow key, adds carets.
-   */
-  boolean addCaretsOnDoubleCtrl();
-
-
-  boolean isVariableInplaceRenameEnabled();
-  void setVariableInplaceRenameEnabled(boolean val);
-
-  boolean isRefrainFromScrolling();
-  void setRefrainFromScrolling(boolean b);
-
-  /**
-   * Removes the value of this editor, so that the setting follows the global setting again.
-   */
-  void resetRefrainFromScrolling();
-
-  boolean isIndentGuidesShown();
-  void setIndentGuidesShown(boolean val);
-
-  boolean isUseSoftWraps();
-  void setUseSoftWraps(boolean use);
-  boolean isAllSoftWrapsShown();
-
-  default boolean isPaintSoftWraps() {
-    return true;
-  }
-  default void setPaintSoftWraps(boolean val) {}
-
-  boolean isUseCustomSoftWrapIndent();
-  void setUseCustomSoftWrapIndent(boolean useCustomSoftWrapIndent);
-  int getCustomSoftWrapIndent();
-  void setCustomSoftWrapIndent(int indent);
-
   /**
    * @see #setAllowSingleLogicalLineFolding(boolean)
    */
@@ -245,8 +69,34 @@ public interface EditorSettings {
    */
   void setAllowSingleLogicalLineFolding(boolean allow);
 
-  boolean isPreselectRename();
-  void setPreselectRename(final boolean val);
+  // The view.
+
+  boolean isRightMarginShown();
+  void setRightMarginShown(boolean val);
+  
+  boolean isHighlightSelectionOccurrences();
+  void setHighlightSelectionOccurrences(boolean val);
+
+  boolean isWhitespacesShown();
+  void setWhitespacesShown(boolean val);
+
+  boolean isLeadingWhitespaceShown();
+  void setLeadingWhitespaceShown(boolean val);
+
+  boolean isInnerWhitespaceShown();
+  void setInnerWhitespaceShown(boolean val);
+
+  boolean isTrailingWhitespaceShown();
+  void setTrailingWhitespaceShown(boolean val);
+
+  boolean isSelectionWhitespaceShown();
+  void setSelectionWhitespaceShown(boolean val);
+
+  boolean isIndentGuidesShown();
+  void setIndentGuidesShown(boolean val);
+
+  boolean isCaretRowShown();
+  void setCaretRowShown(boolean caretRowShown);
 
   boolean isShowIntentionBulb();
   void setShowIntentionBulb(boolean show);
@@ -257,29 +107,37 @@ public interface EditorSettings {
   boolean isShowInspectionWidget();
 
   /**
-   * Sets the language which determines certain editor settings (right margin and soft margins, 'wrap on reaching right margin').
-   *
-   * @see #getRightMargin(Project)
-   * @see #getSoftMargins()
-   * @see #isWrapWhenTypingReachesRightMargin(Project)
-   */
-  void setLanguageSupplier(@Nullable Supplier<? extends Language> languageSupplier);
-
-  boolean isShowingSpecialChars();
-  void setShowingSpecialChars(boolean value);
-
-  /**
    * Returns {@code true} if inlays use the editor font, and not the UI font.
    */
   boolean isUseEditorFontInInlays();
 
-  LineNumerationType getLineNumerationType();
-  void setLineNumerationType(LineNumerationType value);
+  /**
+   * Returns the base direction of a line that mixes left-to-right and right-to-left text.
+   */
+  @ApiStatus.Internal
+  @NotNull BidiTextDirection getBidiTextDirection();
 
-  boolean isInsertParenthesesAutomatically();
+  /**
+   * Returns {@code true} if the editor shows right-to-left text in its natural order. With {@code false}, the editor shows
+   * all characters in left-to-right order. The default comes from the registry key {@code editor.disable.rtl}.
+   */
+  @ApiStatus.Internal
+  boolean isRtlEnabled();
+
+  @ApiStatus.Internal
+  void setRtlEnabled(boolean value);
 
   boolean areStickyLinesShown();
   int getStickyLinesLimit();
+
+  boolean isShowingSpecialChars();
+  void setShowingSpecialChars(boolean value);
+
+  int getAdditionalLinesCount();
+  void setAdditionalLinesCount(int additionalLinesCount);
+
+  int getAdditionalColumnsCount();
+  void setAdditionalColumnsCount(int additionalColumnsCount);
 
   /**
    * Returns the width of single-width characters
@@ -307,27 +165,184 @@ public interface EditorSettings {
   @ApiStatus.Internal
   void setCharacterGridWidthMultiplier(@Nullable Float value);
 
-  /**
-   * Returns the base direction of a line that mixes left-to-right and right-to-left text.
-   */
-  @ApiStatus.Internal
-  @NotNull BidiTextDirection getBidiTextDirection();
+  // The caret.
 
-  /**
-   * Returns {@code true} if the editor shows right-to-left text in its natural order. With {@code false}, the editor shows
-   * all characters in left-to-right order. The default comes from the registry key {@code editor.disable.rtl}.
-   */
-  @ApiStatus.Internal
-  boolean isRtlEnabled();
+  boolean isBlockCursor();
+  void setBlockCursor(boolean blockCursor);
 
-  @ApiStatus.Internal
-  void setRtlEnabled(boolean value);
+  boolean isFullLineHeightCursor();
+  void setFullLineHeightCursor(boolean fullLineHeightCursor);
+
+  int getLineCursorWidth();
+  void setLineCursorWidth(int width);
+
+  @ApiStatus.Experimental
+  boolean isSmoothCaretMovement();
+  @ApiStatus.Experimental
+  void setSmoothCaretMovement(boolean useSmoothCaretMovement);
+
+  @ApiStatus.Experimental
+  EditorSettings.CaretEasing getCaretEasing();
+
+  boolean isBlinkCaret();
+  void setBlinkCaret(boolean blinkCaret);
+
+  int getCaretBlinkPeriod();
+  void setCaretBlinkPeriod(int blinkPeriod);
+
+  @ApiStatus.Experimental
+  boolean isSmoothCaretBlinking();
+  @ApiStatus.Experimental
+  void setSmoothCaretBlinking(boolean smoothCaretBlinking);
+
+  boolean isVirtualSpace();
+  void setVirtualSpace(boolean allow);
+
+  boolean isCaretInsideTabs();
+  void setCaretInsideTabs(boolean allow);
+
+  boolean isSmartHome();
+  void setSmartHome(boolean val);
+
+  boolean isCamelWords();
+  void setCamelWords(boolean val);
+  /** Allows to remove 'use camel words' setup specific to the current settings object (if any) and use the shared one. */
+  void resetCamelWords();
+
+  boolean isMouseClickSelectionHonorsCamelWords();
+  void setMouseClickSelectionHonorsCamelWords(boolean val);
 
   /**
    * Returns the places where a caret stops when it moves to the next or the previous word.
    */
   @ApiStatus.Internal
   @NotNull CaretStopOptions getCaretStopOptions();
+
+  /**
+   * Returns {@code true} if a double press of the multi-caret modifier key, followed by an arrow key, adds carets.
+   */
+  boolean addCaretsOnDoubleCtrl();
+
+  // Soft wraps.
+
+  boolean isUseSoftWraps();
+  void setUseSoftWraps(boolean use);
+  boolean isAllSoftWrapsShown();
+
+  default boolean isPaintSoftWraps() {
+    return true;
+  }
+  default void setPaintSoftWraps(boolean val) {}
+
+  boolean isUseCustomSoftWrapIndent();
+  void setUseCustomSoftWrapIndent(boolean useCustomSoftWrapIndent);
+  int getCustomSoftWrapIndent();
+  void setCustomSoftWrapIndent(int indent);
+
+  // Scrolling.
+
+  /**
+   * Vertical scroll offset - number of lines to keep above and below the caret.
+   * If the number is too big for the editor height, the caret will be centered.
+   */
+  int getVerticalScrollOffset();
+  void setVerticalScrollOffset(int val);
+
+  /**
+   * Vertical scroll jump - minimum number of lines to scroll at a time.
+   */
+  int getVerticalScrollJump();
+  void setVerticalScrollJump(int val);
+
+  /**
+   * Horizontal scroll offset - number of characters to keep to the left and right of the caret.
+   * If the number is too big for the editor width, the caret will be centered.
+   */
+  int getHorizontalScrollOffset();
+  void setHorizontalScrollOffset(int val);
+
+  /**
+   * Horizontal scroll jump - minimum number of characters to scroll horizontally at a time.
+   */
+  int getHorizontalScrollJump();
+  void setHorizontalScrollJump(int val);
+
+  boolean isAnimatedScrolling();
+  void setAnimatedScrolling(boolean val);
+
+  boolean isRefrainFromScrolling();
+  void setRefrainFromScrolling(boolean b);
+
+  /**
+   * Removes the value of this editor, so that the setting follows the global setting again.
+   */
+  void resetRefrainFromScrolling();
+
+  boolean isAdditionalPageAtBottom();
+  void setAdditionalPageAtBottom(boolean val);
+
+  // The mouse.
+
+  boolean isDndEnabled();
+  void setDndEnabled(boolean val);
+
+  boolean isWheelFontChangeEnabled();
+  void setWheelFontChangeEnabled(boolean val);
+  void resetWheelFontChangeEnabled();
+
+  /**
+   * Returns {@code true} if a font size change with the mouse wheel applies to all editors, and not only to this one.
+   */
+  boolean isWheelFontChangePersistent();
+
+  // Editing.
+
+  boolean isVariableInplaceRenameEnabled();
+  void setVariableInplaceRenameEnabled(boolean val);
+
+  boolean isPreselectRename();
+  void setPreselectRename(final boolean val);
+
+  boolean isInsertParenthesesAutomatically();
+
+  // The code style.
+
+  int getRightMargin(@Nullable Project project);
+  void setRightMargin(int myRightMargin);
+
+  /**
+   * Retrieves a list of soft margins (visual indent guides) to be used in the editor. If soft margins haven't been explicitly set
+   * with {@link #setSoftMargins(List)} method, they are obtained from code style settings: {@code CodeStyleSettings.getSoftMargins()}.
+   * @return A list of current editor soft margins. The list may be empty if no soft margins are defined.
+   */
+  @NotNull
+  List<Integer> getSoftMargins();
+
+  /**
+   * Explicitly sets soft margins (visual indent guides) to be used in the editor instead of obtaining them from code style settings via
+   * {@code CodeStyleSettings.getSoftMargins()} method. It is important to distinguish and empty list from {@code null} value: the first
+   * will define no soft margins for the editor while the latter will restore the default behavior of using them from code style settings.
+   * @param softMargins A list of soft margins or {@code null} to use margins from code style settings.
+   */
+  void setSoftMargins(@Nullable List<Integer> softMargins);
+
+  boolean isWrapWhenTypingReachesRightMargin(Project project);
+  void setWrapWhenTypingReachesRightMargin(boolean val);
+
+  boolean isUseTabCharacter(Project project);
+  void setUseTabCharacter(boolean useTabCharacter);
+
+  int getTabSize(@Nullable Project project);
+  void setTabSize(int tabSize);
+
+  /**
+   * Sets the language which determines certain editor settings (right margin and soft margins, 'wrap on reaching right margin').
+   *
+   * @see #getRightMargin(Project)
+   * @see #getSoftMargins()
+   * @see #isWrapWhenTypingReachesRightMargin(Project)
+   */
+  void setLanguageSupplier(@Nullable Supplier<? extends Language> languageSupplier);
 
   enum LineNumerationType {
     ABSOLUTE,
