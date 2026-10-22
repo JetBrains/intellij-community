@@ -5,9 +5,11 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsTestUtil.assertEqualCollections
+import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.utils.io.createFile
 import org.jetbrains.jps.model.serialization.PathMacroUtil
@@ -26,6 +28,32 @@ class VcsRootDetectorTest : VcsRootBaseTest() {
 
   fun `test root under project`() {
     val roots = createVcsRoots(listOf("src"))
+    expect(roots)
+  }
+
+  fun `test root policy restricts repository scanning`() {
+    val roots = createVcsRoots("src", "generated/nested", registerContentRoot = false)
+    PsiTestUtil.addContentRoot(rootModule, projectRoot)
+    val originalPolicy = DefaultVcsRootPolicy.getInstance(project)
+    project.replaceService(DefaultVcsRootPolicy::class.java, object : DefaultVcsRootPolicy(project) {
+      override fun getDefaultVcsRoots(): Collection<VirtualFile> = originalPolicy.getDefaultVcsRoots()
+
+      override fun shouldScanDirectory(directory: VirtualFile): Boolean {
+        return super.shouldScanDirectory(directory) && directory.name != "generated"
+      }
+    }, testRootDisposable)
+
+    expect(roots[0])
+  }
+
+  fun `test root policy permits scanning outside module content`() {
+    val roots = createVcsRoots("src", registerContentRoot = false)
+    project.replaceService(DefaultVcsRootPolicy::class.java, object : DefaultVcsRootPolicy(project) {
+      override fun getDefaultVcsRoots(): Collection<VirtualFile> = listOf(projectRoot)
+
+      override fun shouldScanDirectory(directory: VirtualFile): Boolean = true
+    }, testRootDisposable)
+
     expect(roots)
   }
 
