@@ -15,6 +15,30 @@ import java.util.concurrent.TimeUnit
 
 internal class SnapshotRangeMarkerImplTest {
   @Test
+  fun `validity checks do not resolve offsets`() {
+    RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
+      val document = DocumentImpl("abcdefgh", true)
+      val marker = document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
+      val point = document.createRangeMarker(3, 3)
+      val reference = marker.currentRootReference()
+      val original = reference.get()
+      val removed = original.remove(marker.id)
+      for (root in listOf(original, removed, original)) {
+        reference.set(object : PMarkerRoot by root {
+          override fun resolve(markerId: Long): Long = error("Validity checks must not resolve offsets")
+        })
+
+        assertEquals(root === original, marker.isValid)
+        assertTrue(point.isValid)
+      }
+
+      marker.dispose()
+      assertFalse(marker.isValid)
+      assertTrue(point.isValid)
+    }
+  }
+
+  @Test
   fun `root insertion does not resolve the marker reference for its policy`() {
     val reference = object : SnapshotMarkerReference {
       override fun get(): SnapshotRangeMarkerImpl? = error("Insertion must not resolve the marker reference")

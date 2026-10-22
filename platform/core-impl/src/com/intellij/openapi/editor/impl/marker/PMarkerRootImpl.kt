@@ -89,6 +89,8 @@ open class PMarkerRootImpl private constructor(
 
   override fun isEmpty(): Boolean = rootId == NULL_NODE
 
+  override fun isValid(markerId: Long): Boolean = states.getUnchecked(markerId) is ValidNode
+
   override fun resolve(markerId: Long): Long {
     val cached = cachedOffsets?.get(markerId) ?: UNCACHED_OFFSETS
     if (cached != UNCACHED_OFFSETS) {

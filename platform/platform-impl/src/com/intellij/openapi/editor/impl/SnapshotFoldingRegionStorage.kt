@@ -359,8 +359,9 @@ internal open class SnapshotFoldRegion(
     this.expanded = expanded
   }
 
-  override fun isValidResolution(resolution: Long): Boolean {
-    return super.isValidResolution(resolution) && PMarkerResolution.startOffset(resolution) != PMarkerResolution.endOffset(resolution)
+  override fun isValidInRoot(root: PMarkerRoot): Boolean {
+    val resolution = root.resolve(id)
+    return PMarkerResolution.isValid(resolution) && PMarkerResolution.startOffset(resolution) != PMarkerResolution.endOffset(resolution)
   }
 
   override fun getPlaceholderText(): String = placeholder

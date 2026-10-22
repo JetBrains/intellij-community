@@ -27,6 +27,9 @@ interface PMarkerRoot {
    */
   fun isEmpty(): Boolean
 
+  /** Returns whether [markerId] is valid in this root without resolving its offsets. */
+  fun isValid(markerId: Long): Boolean
+
   /**
    * Resolves [markerId] in this root.
    *

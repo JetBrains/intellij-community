@@ -27,6 +27,8 @@ open class CompoundPMarkerRoot private constructor(
 
   override fun isEmpty(): Boolean = exactRangeRoot.isEmpty() && linesInRangeRoot.isEmpty()
 
+  override fun isValid(markerId: Long): Boolean = exactRangeRoot.isValid(markerId) || linesInRangeRoot.isValid(markerId)
+
   override fun resolve(markerId: Long): Long {
     val exactResolution = exactRangeRoot.resolve(markerId)
     if (!PMarkerResolution.isAbsent(exactResolution)) return exactResolution

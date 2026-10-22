@@ -49,6 +49,7 @@ internal class PMarkerResolutionTest {
     assertTrue(PMarkerResolution.isAbsent(PMarkerResolution.ABSENT))
     assertFalse(PMarkerResolution.isValid(PMarkerResolution.ABSENT))
     assertEquals(PMarkerResolution.ABSENT, PMarkerRootImpl.empty().resolve(1))
+    assertFalse(PMarkerRootImpl.empty().isValid(1))
   }
 
   @Test
@@ -65,6 +66,8 @@ internal class PMarkerResolutionTest {
     val root = PMarkerRootImpl.empty().insert(1, 2, 4, spec, flavorFlags = 0)
     val removed = root.remove(1)
 
+    assertTrue(root.isValid(1))
+    assertFalse(removed.isValid(1))
     assertEquals(PMarkerResolution.ABSENT, removed.resolve(1))
     assertEquals(PMarkerResolution.valid(2, 4), root.resolve(1))
     assertSame(removed, removed.remove(1))
@@ -86,6 +89,9 @@ internal class PMarkerResolutionTest {
     val after = patch.ops().fold(before) { current, op -> current.applyOp(op) }
     val edited = root.applyPatch(patch, before, after)
 
+    assertTrue(root.isValid(1))
+    assertFalse(edited.isValid(1))
+    assertFalse(edited.isValid(2))
     assertEquals(PMarkerResolution.invalid(2, 4), edited.resolve(1))
     assertEquals(reason, edited.invalidationReason(1))
     assertNull(root.invalidationReason(1))

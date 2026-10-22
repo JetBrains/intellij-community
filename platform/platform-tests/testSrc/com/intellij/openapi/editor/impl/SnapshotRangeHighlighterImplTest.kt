@@ -93,6 +93,11 @@ class SnapshotRangeHighlighterImplTest {
       val line = model.addRangeHighlighter(5, 6, 1, null, HighlighterTargetArea.LINES_IN_RANGE) as SnapshotRangeMarkerImpl
       val root = exact.currentRootReference().get()
 
+      Assertions.assertThat(root.isValid(exact.id)).isTrue()
+      Assertions.assertThat(root.isValid(line.id)).isTrue()
+      Assertions.assertThat(root.isValid(Long.MAX_VALUE)).isFalse()
+      Assertions.assertThat(root.remove(exact.id).isValid(exact.id)).isFalse()
+      Assertions.assertThat(root.remove(line.id).isValid(line.id)).isFalse()
       Assertions.assertThat(root.isEmpty()).isFalse()
       Assertions.assertThat(root.remove(exact.id).isEmpty()).isFalse()
       Assertions.assertThat(root.remove(line.id).isEmpty()).isFalse()
