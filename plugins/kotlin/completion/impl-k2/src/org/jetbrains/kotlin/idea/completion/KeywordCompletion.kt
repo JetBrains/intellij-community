@@ -60,6 +60,7 @@ import org.jetbrains.kotlin.lexer.KtTokens.ABSTRACT_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.ACTUAL_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.ALL_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.ANNOTATION_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.AS_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.AT
 import org.jetbrains.kotlin.lexer.KtTokens.BREAK_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.CATCH_KEYWORD
@@ -84,6 +85,7 @@ import org.jetbrains.kotlin.lexer.KtTokens.FOR_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.FUN_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.GET_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.IF_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.IMPORT_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.INIT_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.INNER_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.INTERFACE_KEYWORD
@@ -97,6 +99,7 @@ import org.jetbrains.kotlin.lexer.KtTokens.NULL_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.OBJECT_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.OPEN_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.OVERRIDE_KEYWORD
+import org.jetbrains.kotlin.lexer.KtTokens.PACKAGE_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.RBRACE
 import org.jetbrains.kotlin.lexer.KtTokens.RETURN_KEYWORD
 import org.jetbrains.kotlin.lexer.KtTokens.SEALED_KEYWORD
@@ -201,6 +204,13 @@ class KeywordCompletion() {
             ABSTRACT_KEYWORD
         ).mapTo(HashSet()) { it.value }
 
+        private val KEYWORDS_ALLOWED_BEFORE_IMPORT_DIRECTIVE = setOf(
+            IMPORT_KEYWORD,
+            PACKAGE_KEYWORD,
+            AS_KEYWORD,
+            FILE_KEYWORD
+        )
+
         private val KEYWORDS_ALLOWED_INSIDE_ANNOTATION_ENTRY: Set<KtKeywordToken> = setOf(
             IF_KEYWORD,
             ELSE_KEYWORD,
@@ -264,12 +274,26 @@ class KeywordCompletion() {
         ).map { it.value } + "companion object"
     }
 
+    private fun PsiElement.isFollowedByImportDirective(): Boolean {
+        val topLevelElement = parentsWithSelf.firstOrNull { it.parent is KtFile } ?: return false
+        if (topLevelElement is KtDeclaration) return false
+
+        // There might be a stray import directive somewhere in the file where it is not allowed.
+        // We do not want such an occurrence to block other keywords everywhere in the file.
+        if (topLevelElement.siblings(forward = false, withItself = false).any { it is KtDeclaration }) return false
+
+        return topLevelElement.siblings(withItself = false).any { it is KtImportList && it.imports.isNotEmpty() }
+    }
+
     fun complete(position: PsiElement, prefixMatcher: PrefixMatcher, isJvmModule: Boolean, consumer: (LookupElement) -> Unit) {
         if (!GENERAL_FILTER.isAcceptable(position, position)) return
         val sealedInterfacesEnabled = position.languageVersionSettings.supportsFeature(LanguageFeature.SealedInterfaces)
+        val isFollowedByImportDirective = position.isFollowedByImportDirective()
 
         val parserFilter = buildFilter(position)
         for (keywordToken in ALL_KEYWORDS) {
+            // Filter out keywords in the sections where only packages/imports are expected
+            if (isFollowedByImportDirective && keywordToken !in KEYWORDS_ALLOWED_BEFORE_IMPORT_DIRECTIVE) continue
             val nextKeywords = keywordToken.getNextPossibleKeywords(position) ?: setOf(null)
             nextKeywords.forEach {
                 if (keywordToken == SEALED_KEYWORD && it == INTERFACE_KEYWORD && !sealedInterfacesEnabled) return@forEach
@@ -648,7 +672,6 @@ class KeywordCompletion() {
         return computeKeywordApplications(prefixText, keywordTokenType)
             .map { application -> psiFactory.createFile(prefixText + application) }
     }
-
 
     private fun buildFilterByText(prefixText: String, position: PsiElement): (KtKeywordToken) -> Boolean {
         val psiFactory = KtPsiFactory(position.project)

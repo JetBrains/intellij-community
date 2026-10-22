@@ -98,6 +98,11 @@ public class FirKeywordCompletionTestGenerated extends AbstractFirKeywordComplet
         runTest("../../completion/testData/keywords/AllowValInWhen.kt");
     }
 
+    @TestMetadata("AsBetweenImportDirectives.kt")
+    public void testAsBetweenImportDirectives() throws Exception {
+        runTest("../../completion/testData/keywords/AsBetweenImportDirectives.kt");
+    }
+
     @TestMetadata("BeforeClass.kt")
     public void testBeforeClass() throws Exception {
         runTest("../../completion/testData/keywords/BeforeClass.kt");
@@ -106,6 +111,21 @@ public class FirKeywordCompletionTestGenerated extends AbstractFirKeywordComplet
     @TestMetadata("BeforeDelegationCall.kt")
     public void testBeforeDelegationCall() throws Exception {
         runTest("../../completion/testData/keywords/BeforeDelegationCall.kt");
+    }
+
+    @TestMetadata("BeforeImportDirectiveWithoutPackage.kt")
+    public void testBeforeImportDirectiveWithoutPackage() throws Exception {
+        runTest("../../completion/testData/keywords/BeforeImportDirectiveWithoutPackage.kt");
+    }
+
+    @TestMetadata("BeforeMisplacedImportDirective.kt")
+    public void testBeforeMisplacedImportDirective() throws Exception {
+        runTest("../../completion/testData/keywords/BeforeMisplacedImportDirective.kt");
+    }
+
+    @TestMetadata("BetweenImportDirectives.kt")
+    public void testBetweenImportDirectives() throws Exception {
+        runTest("../../completion/testData/keywords/BetweenImportDirectives.kt");
     }
 
     @TestMetadata("BreakContinue.kt")
@@ -181,6 +201,11 @@ public class FirKeywordCompletionTestGenerated extends AbstractFirKeywordComplet
     @TestMetadata("FileKeyword.kt")
     public void testFileKeyword() throws Exception {
         runTest("../../completion/testData/keywords/FileKeyword.kt");
+    }
+
+    @TestMetadata("FileUseSiteTargetBeforeImportDirective.kt")
+    public void testFileUseSiteTargetBeforeImportDirective() throws Exception {
+        runTest("../../completion/testData/keywords/FileUseSiteTargetBeforeImportDirective.kt");
     }
 
     @TestMetadata("FixingLayoutAndReturn.kt")
