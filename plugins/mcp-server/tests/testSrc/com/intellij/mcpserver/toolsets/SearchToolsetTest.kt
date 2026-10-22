@@ -36,6 +36,7 @@ import com.intellij.util.indexing.testEntities.ExcludedKindFileSetTestContributo
 import com.intellij.util.indexing.testEntities.ExcludedTestEntity
 import com.intellij.util.indexing.testEntities.NonIndexableKindFileSetTestContributor
 import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.Dispatchers
@@ -191,6 +192,14 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
     }
   }
 
+  /**
+   * Registers [contributor] after its entity is in the workspace model. The registration resets the file index, and a thread
+   * without a read lock may rebuild it from an older snapshot and overwrite the incremental update of an entity added later.
+   */
+  private fun registerFileIndexContributor(contributor: WorkspaceFileIndexContributor<*>) {
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(contributor, testDisposable)
+  }
+
   private fun assertChildrenNotCached(directory: VirtualFile) {
     assertThat((directory as NewVirtualFile).allChildrenCached())
       .describedAs("children of %s must not be cached, otherwise the excluded walk reads the cache instead of the disk", directory.path)
@@ -208,7 +217,6 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
    * The file is visible to content iteration but absent from [com.intellij.psi.search.FilenameIndex].
    */
   private suspend fun createNonIndexableFile(): VirtualFile {
-    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonIndexableKindFileSetTestContributor(), testDisposable)
     val nonIndexableDir = edtWriteAction {
       val projectRoot = sourceRootFixture.get().virtualFile.parent
       projectRoot.findChild(nonIndexableDirName) ?: projectRoot.createChildDirectory(this, nonIndexableDirName)
@@ -218,6 +226,7 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
     workspaceModel.update("add non-indexable root") { storage ->
       storage.addEntity(NonIndexableTestEntity(nonIndexableDirUrl, NonPersistentEntitySource))
     }
+    registerFileIndexContributor(NonIndexableKindFileSetTestContributor())
     return edtWriteAction {
       nonIndexableDir.findChild(nonIndexableFileName) ?: nonIndexableDir.createChildData(this, nonIndexableFileName).also {
         it.setBinaryContent("Non-indexable file content".toByteArray())
@@ -506,7 +515,6 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
   @Test
   fun search_file_excluded_walk_covers_workspace_index_excluded_roots() = runBlocking(Dispatchers.Default) {
     // IDEs without modules exclude folders through a WorkspaceFileIndexContributor, not through module exclude folders.
-    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(ExcludedKindFileSetTestContributor(), testDisposable)
     val excludedDirName = "se_wsm_excluded_dir_9a2c"
     val fileName = "se_wsm_excluded_file_9a2c.txt"
     val rootDir = sourceRootFixture.get().virtualFile
@@ -518,6 +526,7 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
     workspaceModel.update("add workspace-index excluded root") { storage ->
       storage.addEntity(ExcludedTestEntity(excludedUrl, NonPersistentEntitySource))
     }
+    registerFileIndexContributor(ExcludedKindFileSetTestContributor())
     val excludedDir = edtWriteAction {
       LocalFileSystem.getInstance().refreshAndFindFileByNioFile(excludedDirPath)
       ?: error("Excluded directory is not visible to the VFS: $excludedDirPath")
