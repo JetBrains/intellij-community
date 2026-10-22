@@ -375,3 +375,4 @@ The `ui-hierarchy/ui.html` and `full-screen.png` written on failure are captured
 - **Verify assertions actually fail** – Comment out the action being tested and confirm the test fails. If it still passes, your assertion is too weak.
 - **Use common UI components** – create new if necessary
 - **Always check UI hierarchy** to understand the UI state when a test fails
+- **Keep a helper for a specific test scenario `private`** – keep it in its test class. Put a reusable helper into a common UI component
