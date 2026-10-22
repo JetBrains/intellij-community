@@ -249,6 +249,14 @@ fun <T> waitForOne(
   }
 }
 
+/**
+ * Calls [f] up to [times] times until it completes without an exception.
+ *
+ * A retry can hide a real problem. Find the cause of the failure first, and wait for the correct UI state instead.
+ * Do not add a retry to a test-sdk helper. If a test really needs a retry, keep it in the test module.
+ *
+ * @throws RetryException if all attempts fail
+ */
 fun <T> withRetries(message: String? = null, times: Int, onError: () -> Unit = {}, f: () -> T): T {
   message?.let { LOG.info("With $times attempts: $it") }
   require(times > 0)
