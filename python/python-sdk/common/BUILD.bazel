@@ -31,6 +31,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    exports = ["//platform/platform-impl/rpc"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -61,6 +62,11 @@ jvm_library(
     kotlinc_opts = ":custom_common",
     module_name = "intellij.python.sdk.common",
     visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/platform-impl/rpc",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":common",

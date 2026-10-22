@@ -44,6 +44,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    exports = ["//platform/eel"],
     deps = [
         # do not sort,
         "//libraries/caffeine",
@@ -82,6 +83,11 @@ jvm_library(
     kotlinc_opts = ":custom_community-execService",
     module_name = "intellij.python.community.execService",
     visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/eel",
+        "//platform/eel:eel_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":community-execService",

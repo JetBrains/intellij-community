@@ -33,6 +33,7 @@ jvm_library(
     kotlinc_opts = ":custom_product-dsl",
     module_name = "intellij.platform.buildScripts.productDsl",
     visibility = ["//visibility:public"],
+    exports = ["//platform/pluginSystem/parser/impl"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -65,6 +66,11 @@ jvm_library(
     kotlinc_opts = ":custom_product-dsl",
     module_name = "intellij.platform.buildScripts.productDsl",
     visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/pluginSystem/parser/impl",
+        "//platform/pluginSystem/parser/impl:impl_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":product-dsl",

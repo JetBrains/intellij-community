@@ -28,8 +28,10 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
+        "//python/python-process-output/common",
         "//python/python-psi-api:psi",
         "//platform/platform-util-io:ide-util-io",
+        "//platform/eel",
     ],
     deps = [
         # do not sort,
@@ -67,10 +69,14 @@ jvm_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
+        "//python/python-process-output/common",
+        "//python/python-process-output/common:common_test_lib",
         "//python/python-psi-api:psi",
         "//python/python-psi-api:psi_test_lib",
         "//platform/platform-util-io:ide-util-io",
         "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/eel",
+        "//platform/eel:eel_test_lib",
     ],
     runtime_deps = [
         # do not sort,

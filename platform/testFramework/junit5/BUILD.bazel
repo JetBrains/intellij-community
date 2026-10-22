@@ -42,6 +42,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    exports = ["//platform/ide-core-impl"],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
@@ -82,6 +83,11 @@ jvm_library(
     ),
     module_name = "intellij.platform.testFramework.junit5",
     visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//platform/ide-core-impl",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":junit5",
