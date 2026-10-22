@@ -10,7 +10,7 @@ import com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener
 import com.intellij.platform.rpc.topics.ProjectRemoteTopic
 import com.intellij.platform.rpc.topics.ProjectRemoteTopicListener
 import com.intellij.platform.rpc.topics.broadcast
-import com.intellij.platform.rpc.topics.impl.ApplicationRemoteTopicListenerBean
+import com.intellij.platform.rpc.topics.ApplicationRemoteTopicListenerBean
 import com.intellij.platform.rpc.topics.impl.RemoteTopicListenerIndex
 import com.intellij.platform.testFramework.loadPluginWithText
 import com.intellij.platform.testFramework.plugins.dependsIntellijModulesLang

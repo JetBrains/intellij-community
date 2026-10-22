@@ -8,6 +8,8 @@
 - a:getTopic():com.intellij.platform.rpc.topics.ApplicationRemoteTopic
 - a:handleEvent(java.lang.Object):V
 *f:com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener$Companion
+*f:com.intellij.platform.rpc.topics.ApplicationRemoteTopicListenerBean
+- com.intellij.platform.rpc.topics.RemoteTopicListenerBean
 *:com.intellij.platform.rpc.topics.ProjectRemoteTopic
 - com.intellij.platform.rpc.topics.RemoteTopic
 *f:com.intellij.platform.rpc.topics.ProjectRemoteTopicKt
@@ -18,6 +20,14 @@
 - a:getTopic():com.intellij.platform.rpc.topics.ProjectRemoteTopic
 - a:handleEvent(com.intellij.openapi.project.Project,java.lang.Object):V
 *f:com.intellij.platform.rpc.topics.ProjectRemoteTopicListener$Companion
+*f:com.intellij.platform.rpc.topics.ProjectRemoteTopicListenerBean
+- com.intellij.platform.rpc.topics.RemoteTopicListenerBean
 *:com.intellij.platform.rpc.topics.RemoteTopic
 - a:getId():java.lang.String
 - a:getSerializer():kotlinx.serialization.KSerializer
+*a:com.intellij.platform.rpc.topics.RemoteTopicListenerBean
+- com.intellij.serviceContainer.BaseKeyedLazyInstance
+- implementation:java.lang.String
+- topicId:java.lang.String
+- f:getImplementation():java.lang.String
+- f:setImplementation(java.lang.String):V

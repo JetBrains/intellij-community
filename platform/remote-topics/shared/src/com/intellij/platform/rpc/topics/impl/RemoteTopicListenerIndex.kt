@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener
 import com.intellij.platform.rpc.topics.ProjectRemoteTopicListener
+import com.intellij.platform.rpc.topics.RemoteTopicListenerBean
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
@@ -18,7 +19,7 @@ private val LOG = logger<RemoteTopicListenerIndex>()
 /**
  * Finds the listeners of a remote topic by its id.
  *
- * A listener declaration carries the topic id in [RemoteTopicListenerBean.topicId], so the index reads it from the plugin descriptor.
+ * A listener declaration carries the topic id in [com.intellij.platform.rpc.topics.RemoteTopicListenerBean.topicId], so the index reads it from the plugin descriptor.
  * The listener class is loaded and the listener is constructed on the first event of its topic.
  * A listener declared without the attribute is constructed on the first event of any topic, because only the instance knows its topic.
  */

@@ -4,3 +4,9 @@ com.intellij.platform.rpc.backend.RemoteApiProvider
 f:com.intellij.platform.rpc.backend.RemoteApiProvider$Companion
 com.intellij.platform.rpc.backend.RemoteApiProvider$Sink
 - a:remoteApi(fleet.rpc.RemoteApiDescriptor,kotlin.jvm.functions.Function0):V
+f:com.intellij.platform.rpc.backend.RemoteApiProviderBean
+- com.intellij.serviceContainer.BaseKeyedLazyInstance
+- apiInterfaces:java.lang.String
+- implementation:java.lang.String
+- f:getImplementation():java.lang.String
+- f:setImplementation(java.lang.String):V

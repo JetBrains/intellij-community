@@ -12,11 +12,11 @@
   <!-- endregion -->
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.platform.rpc.applicationRemoteTopicListener"
-                    beanClass="com.intellij.platform.rpc.topics.impl.ApplicationRemoteTopicListenerBean" dynamic="true">
+                    beanClass="com.intellij.platform.rpc.topics.ApplicationRemoteTopicListenerBean" dynamic="true">
       <with attribute="implementation" implements="com.intellij.platform.rpc.topics.ApplicationRemoteTopicListener"/>
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.platform.rpc.projectRemoteTopicListener"
-                    beanClass="com.intellij.platform.rpc.topics.impl.ProjectRemoteTopicListenerBean" dynamic="true">
+                    beanClass="com.intellij.platform.rpc.topics.ProjectRemoteTopicListenerBean" dynamic="true">
       <with attribute="implementation" implements="com.intellij.platform.rpc.topics.ProjectRemoteTopicListener"/>
     </extensionPoint>
   </extensionPoints>

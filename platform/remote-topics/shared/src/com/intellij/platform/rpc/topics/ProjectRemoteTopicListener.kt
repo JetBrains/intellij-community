@@ -3,7 +3,6 @@ package com.intellij.platform.rpc.topics
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.platform.rpc.topics.impl.ProjectRemoteTopicListenerBean
 import org.jetbrains.annotations.ApiStatus
 
 /**

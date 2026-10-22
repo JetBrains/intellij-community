@@ -15,7 +15,6 @@ import org.jetbrains.annotations.TestOnly
  * The bean is read from the plugin descriptor without loading [implementation],
  * so the registry routes a call by [apiInterfaces] and constructs the provider on the first call to one of its APIs.
  */
-@ApiStatus.Internal
 class RemoteApiProviderBean : BaseKeyedLazyInstance<RemoteApiProvider> {
   @RequiredElement
   @Attribute("implementation")
@@ -28,15 +27,18 @@ class RemoteApiProviderBean : BaseKeyedLazyInstance<RemoteApiProvider> {
   var apiInterfaces: String? = null
 
   @Suppress("unused") // Platform creates bean via reflection.
+  @ApiStatus.Internal
   constructor()
 
   /** Registers [provider] without a declaration. The registry knows its APIs only after it runs `remoteApis()`. */
   @TestOnly
+  @ApiStatus.Internal
   constructor(provider: RemoteApiProvider) : super(provider) {
     implementation = provider.javaClass.name
     // a programmatic registration has no declaring plugin, so the bean names the platform, as the extension point does for an object
     setPluginDescriptor(DefaultPluginDescriptor(PluginId.getId("com.intellij"), provider.javaClass.classLoader))
   }
 
+  @ApiStatus.Internal
   override fun getImplementationClassName(): String = implementation
 }
