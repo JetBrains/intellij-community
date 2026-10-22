@@ -57,8 +57,12 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -87,6 +91,14 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
    */
   private val rootsUnderDeletion = ContainerUtil.newConcurrentSet<FilePath>()
   private val rootsAwaitingRemovalFromModel = ConcurrentHashMap<FilePath, RepositoryId>()
+
+  /**
+   * Fires when this project's already-open window is brought to front by opening its worktree from another window,
+   * so, for example, the Worktrees tab drops a stale selection (e.g. the row the user opened from here before) for the current worktree.
+   */
+  private val _focusedFromOtherFrameRequests =
+    MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  internal val focusedFromOtherFrameRequests: SharedFlow<Unit> = _focusedFromOtherFrameRequests.asSharedFlow()
 
   init {
     project.messageBus.connect(coroutineScope).subscribe(GitRepositoryFrontendSynchronizer.TOPIC, WorkingTreesLoadedListener())
@@ -648,6 +660,7 @@ class GitWorkingTreesService(private val project: Project, val coroutineScope: C
       withContext(Dispatchers.UI) {
         ProjectUtil.focusProjectWindow(existingProject)
       }
+      getInstance(existingProject)._focusedFromOtherFrameRequests.tryEmit(Unit)
       return existingProject
     }
 
