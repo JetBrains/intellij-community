@@ -11,7 +11,6 @@ import com.intellij.platform.icons.swing.createSwingIcon
 import com.intellij.testFramework.junit5.TestApplication
 import java.awt.image.BufferedImage
 import kotlin.math.roundToInt
-import javax.swing.UIManager
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -64,7 +63,7 @@ class StrokeRenderTest {
     val path = "expui/codeInsight/inlaySettings.svg"
     val light = render(path, IconModifier)
 
-    withDarkTheme {
+    withDarkIcons {
       // Guard: without this the theme override could silently not reach the loader and the test would prove nothing.
       val dark = render(path, IconModifier)
       assertTrue(!sameImage(light, dark)) { "$path rendered identically in both themes, so the dark theme never applied" }
@@ -177,39 +176,14 @@ class StrokeRenderTest {
         if (r > 140 && g < 110 && b < 110) red++
         // Strongly green: the icon's own patcher took over the glyph.
         if (g > 140 && r < 110 && b < 110) green++
-        // The authored New UI gray (#6C707E ~ 108,112,126): near-equal channels in the mid range.
+        // The authored New UI gray (#6C707E ~ 108,112,126): near-equal channels in the mid-range.
         if (r in 70..190 && kotlin.math.abs(r - g) < 24 && kotlin.math.abs(g - b) < 28) gray++
       }
     }
     return Counts(red, green, gray, opaque)
   }
 
-  private fun withDarkTheme(action: () -> Unit) {
-    val defaults = UIManager.getLookAndFeelDefaults()
-    val previous = defaults.get(DARK_THEME_KEY)
-    defaults.put(DARK_THEME_KEY, true)
-    try {
-      action()
-    } finally {
-      defaults.put(DARK_THEME_KEY, previous)
-    }
-  }
-
-  private fun sameImage(a: BufferedImage, b: BufferedImage): Boolean {
-    if (a.width != b.width || a.height != b.height) return false
-    for (y in 0 until a.height) {
-      for (x in 0 until a.width) {
-        if (a.getRGB(x, y) != b.getRGB(x, y)) return false
-      }
-    }
-    return true
-  }
-
   private class Counts(val red: Int, val green: Int, val gray: Int, val opaque: Int) {
     override fun toString(): String = "red=$red green=$green gray=$gray opaque=$opaque"
-  }
-
-  private companion object {
-    private const val DARK_THEME_KEY = "ui.theme.is.dark"
   }
 }

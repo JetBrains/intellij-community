@@ -49,6 +49,7 @@ jvm_library(
         "//platform/icons",
         "//platform/testFramework",
         "//libraries/junit6",
+        "//platform/util:util-ui",
     ],
 )
 ### auto-generated section `build intellij.platform.icons.impl.intellij.tests` end

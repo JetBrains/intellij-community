@@ -20,8 +20,8 @@ internal class DataLoaderImageResourceHolder(
     )?.image
   }
 
-  override fun getExpectedDimensions(): Dimensions {
-    val img = getImage(ScaleContext.create(), null) ?: return Dimensions(0, 0)
+  override fun getExpectedDimensions(imageModifiers: ImageModifiers?): Dimensions {
+    val img = getImage(ScaleContext.create(), imageModifiers) ?: return Dimensions(0, 0)
     return Dimensions(img.getWidth(null), img.getHeight(null))
   }
 }
