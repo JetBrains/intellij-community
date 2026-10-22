@@ -54,6 +54,7 @@ interface HotSwapUiExtension {
 
   val shouldAddHideButton: Boolean get() = true
   val shouldAddText: Boolean get() = true
+  val showReloadModifiedFilesInEditorPopup: Boolean get() = true
 
   fun hotSwapButtonAccessibleName(status: HotSwapVisibleStatus): @Nls String {
     return if (status is HotSwapVisibleStatus.ChangesNotHotSwappable) {
