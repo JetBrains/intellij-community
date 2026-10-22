@@ -59,7 +59,7 @@ Page objects extend `UiComponent` with `ComponentData` constructor:
 ```kotlin
 class MyPageObject(data: ComponentData) : UiComponent(data) {
     val myButton = x { byAccessibleName("Button Name") }
-    val myPanel = x { byClass("PanelClassName") }
+    val myPanel = x { byType("com.example.MyPanel") }
 
     fun clickMyButton() {
         myButton.click()
@@ -82,8 +82,21 @@ fun AnotherPageObject.myPageObject(): MyPageObject = x(
 | Selector | Usage |
 |----------|-------|
 | `byAccessibleName("name")` | Find by accessible name attribute |
-| `byClass("ClassName")` | Find by Swing/AWT class name |
+| `byJavaClass("com.example.MyPanel")` | Find by the full class name |
+| `byType("javax.swing.JTree")` | Find by the full class name or a supertype |
 | `byVisibleText("text")` | Find by visible text content |
+
+Use `byJavaClass` or `byType`. Do not use `byClass`, which is deprecated. A full class name has `@Language("jvm-class-name")`, so the IDE resolves it and updates it on rename.
+
+Write the class name inside the query. Do not put it, or a full XPath, into a separate constant: the IDE cannot resolve or rename a class name in a plain string.
+
+```kotlin
+// BAD - a short class name in a separate constant
+private const val POPUP_LIST_XPATH = "//div[@class='HeavyWeightWindow']//div[@class='MyList']"
+
+// GOOD - a private helper with a resolvable class name
+private fun Finder.optionPopup() = x { byType("com.intellij.ui.components.JBList") }
+```
 
 
 ## UI test examples
@@ -101,21 +114,21 @@ When multiple elements match a selector, scope to a parent element:
 
 ```kotlin
 // BAD - will fail if multiple InstallButtons exist
-ui.x { byClass("InstallButton") }.click()
+ui.x { byJavaClass("com.intellij.ide.plugins.newui.InstallButton") }.click()
 
 // GOOD - scope to a parent element first
-val detailPane = ui.x { byClass("PluginDetailsPageComponent") }
-detailPane.x { byClass("InstallButton") }.click()
+val detailPane = ui.x { byJavaClass("com.intellij.ide.plugins.newui.PluginDetailsPageComponent") }
+detailPane.x { byJavaClass("com.intellij.ide.plugins.newui.InstallButton") }.click()
 ```
 
 ## Finding toolbar / title-bar actions
 
-Toolbar and tool-window title actions that show their text (`presentation.putClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR, true)`) render as **`ActionButtonWithText`**, not `ActionButton`. The SDK `actionButton(text)` helper searches `@class='ActionButton'` only, so it silently never matches them. Match by visible text across both variants:
+Toolbar and tool-window title actions that show their text (`presentation.putClientProperty(ActionUtil.SHOW_TEXT_IN_TOOLBAR, true)`) render as **`ActionButtonWithText`**, not `ActionButton`. The SDK `actionButton(text)` helper searches `@class='ActionButton'` only, so it silently never matches them. `ActionButtonWithText` extends `ActionButton`, so `byType` matches both variants:
 
 ```kotlin
 // Matches both icon-only and text-bearing action buttons
 fun Finder.statusButton(text: String) =
-  x("//div[(@class='ActionButtonWithText' or @class='ActionButton') and @visible_text='$text']")
+  x { byType("com.intellij.openapi.actionSystem.impl.ActionButton") and byVisibleText(text) }
 ```
 
 The visible text is itself a reliable assertion signal — you usually do not need to read the backing service/state.
@@ -242,7 +255,7 @@ ui.keyboard { key(KeyEvent.VK_1) }  // This input goes to the bookmark dialog
 
 // now = false: Returns immediately (use when waiting for UI to appear)
 invokeAction("ShowSettings", now = false)
-ui.x { byClass("SettingsDialog") }.shouldBe { present() }
+ui.x { byJavaClass("com.intellij.openapi.options.newEditor.SettingsEditor") }.shouldBe { present() }
 ```
 
 **Rule**: Use `now = true` when the next step is keyboard input to prevent input going to the wrong component.
@@ -254,11 +267,11 @@ Use `waitFor` to wait for specific conditions:
 
 ```kotlin
 waitFor("description of what we're waiting for", 30.seconds) {
-    ui.x { byClass("MyComponent") }.present()
+    ui.x { byJavaClass("com.example.MyComponent") }.present()
 }
 
 waitFor("text to appear", 10.seconds) {
-    ui.x { byClass("Tree") }.hasText("expected text")
+    ui.x { byType("javax.swing.JTree") }.hasText("expected text")
 }
 ```
 
