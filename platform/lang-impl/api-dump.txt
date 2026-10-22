@@ -3661,9 +3661,17 @@ com.intellij.ide.util.scopeChooser.ScopeChooserCombo$BrowseListener
 - a:onAfterBrowseFinished():V
 - a:onBeforeBrowseStarted():V
 f:com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable
-- com.intellij.openapi.ui.MasterDetailsComponent
+- com.intellij.openapi.options.MasterDetails
 - com.intellij.openapi.options.SearchableConfigurable
 - <init>(com.intellij.openapi.project.Project):V
+- createComponent():javax.swing.JComponent
+- disposeUIResources():V
+- getDetails():com.intellij.openapi.ui.DetailsComponent
+- getMaster():javax.swing.JComponent
+- getSelectedObject():java.lang.Object
+- getToolbar():javax.swing.JComponent
+- initUi():V
+- selectNodeInTree(java.lang.String):V
 com.intellij.ide.util.scopeChooser.ScopeDescriptorProvider
 - sf:Companion:com.intellij.ide.util.scopeChooser.ScopeDescriptorProvider$Companion
 - sf:EMPTY:com.intellij.ide.util.scopeChooser.ScopeDescriptor[]
