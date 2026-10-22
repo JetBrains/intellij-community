@@ -38,5 +38,14 @@ sealed interface InstanceHolder {
 
   suspend fun getInstanceInCallerContext(keyClass: Class<*>?): Any
 
+  /**
+   * Calls [InstanceInitializer.prepare] if the initialization was not started.
+   * Otherwise, does nothing.
+   * Call it before [getInstance] to do the slow work outside the initialization.
+   *
+   * @throws Throwable any error occurred during class loading or preparation
+   */
+  fun prepareInitialization(keyClass: Class<*>?) {}
+
   val overridable: Boolean
 }

@@ -16,4 +16,15 @@ interface InstanceInitializer {
   fun loadInstanceClass(keyClass: Class<*>?): Class<*>
 
   suspend fun createInstance(parentScope: CoroutineScope, instanceClass: Class<*>): Any
+
+  /**
+   * Does the slow work that [createInstance] needs, for example, file IO, before the initialization starts.
+   * It runs in the thread of the caller, outside the non-cancellable initialization coroutine.
+   * Thus, other callers do not wait for this work, and the work can be canceled.
+   *
+   * It can run more than once, and in more than one thread at the same time.
+   * It must not create the instance.
+   */
+  fun prepare(instanceClass: Class<*>) {
+  }
 }

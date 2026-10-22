@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -102,6 +103,16 @@ internal abstract class LazyInstanceHolder(
 
   override suspend fun getInstanceInCallerContext(keyClass: Class<*>?): Any {
     return getInstance(keyClass, useCallerContext = true)
+  }
+
+  override fun prepareInitialization(keyClass: Class<*>?) {
+    val state = state() as? Initial ?: return
+    if (!state.parentScope.isActive) {
+      // the container is disposed, so the preparation must not touch its resources
+      return
+    }
+    val initializer = state.initializer
+    initializer.prepare(initializer.loadInstanceClass(keyClass = keyClass))
   }
 
   private suspend fun getInstance(keyClass: Class<*>?, useCallerContext: Boolean): Any {

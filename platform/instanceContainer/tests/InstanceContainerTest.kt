@@ -419,4 +419,30 @@ class InstanceContainerTest {
       assertSame(instance, container.instance(AService::class.java))
     }
   }
+
+  @Test
+  fun `preparation runs only before initialization`(testInfo: TestInfo): Unit = timeoutRunBlocking {
+    withContainer(testInfo.displayName) { container ->
+      val instance = AService()
+      val preparedClasses = mutableListOf<Class<*>>()
+      container.registerInitializer(AService::class.java, object : InstanceInitializer {
+        override val overridable: Boolean = false
+        override val instanceClassName: String get() = AService::class.java.name
+        override fun loadInstanceClass(keyClass: Class<*>?): Class<*> = AService::class.java
+        override suspend fun createInstance(parentScope: CoroutineScope, instanceClass: Class<*>): Any = instance
+        override fun prepare(instanceClass: Class<*>) {
+          preparedClasses.add(instanceClass)
+        }
+      }, override = false)
+      val holder = assertNotNull(container.getInstanceHolder(AService::class.java))
+
+      holder.prepareInitialization(keyClass = null)
+      assertContentEquals(listOf(AService::class.java), preparedClasses)
+      assertNull(holder.tryGetInstance())
+
+      assertSame(instance, container.instance(AService::class.java))
+      holder.prepareInitialization(keyClass = null)
+      assertContentEquals(listOf(AService::class.java), preparedClasses)
+    }
+  }
 }
