@@ -8,9 +8,9 @@ import com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher
 import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
 import com.intellij.platform.icons.rendering.ImageModifiers
 import com.intellij.platform.icons.rendering.ThemeContext
-import com.intellij.ui.icons.pathTransform
 import com.intellij.ui.icons.pathTransformGlobalModCount
 import com.intellij.util.SVGLoader
+import com.intellij.util.ui.StartupUiUtil
 
 /**
  * This is currently implemented in a naive way that just forces reloads based on LaF ID.
@@ -25,7 +25,7 @@ internal class IntelliJThemeContext: ThemeContext {
     return IntelliJImageModifiers(
       null,
       null,
-      pathTransform.get().isDark,
+      StartupUiUtil.isDarkTheme,
       null,
       SVGLoader.colorPatcherProvider
     )
