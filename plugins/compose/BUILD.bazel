@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -59,6 +60,21 @@ jvm_library(
     module_name = "intellij.compose.ide.plugin",
     visibility = ["//visibility:public"],
     runtime_deps = [":compose-ide-plugin"],
+)
+
+ij_plugin(
+    name = "compose-ide-plugin_plugin",
+    descriptor_module = ":compose-ide-plugin",
+    content_modules = [
+        # do not sort,
+        "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared",
+        "//plugins/compose/intellij.compose.ide.plugin.shared.android:ide-plugin-shared-android",
+        "//plugins/compose/intellij.compose.ide.plugin.codeInsight:ide-plugin-codeInsight",
+        "//plugins/compose/intellij.compose.ide.plugin.gradleTooling:ide-plugin-gradleTooling-rt",
+        "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources",
+        "//plugins/compose/intellij.compose.ide.plugin.resources.android:ide-plugin-resources-android",
+    ],
+    visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.compose.ide.plugin` end
 
