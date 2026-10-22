@@ -219,6 +219,7 @@ internal object LegacyIcons {
             rows.add(InspectorProperty("class loader", safeToString(coords.second), GROUP_LEGACY))
           }
           icon.localFilterSupplier?.let { rows.add(filterRow(it.getFilter())) }
+          rows.addAll(ThemeInspection.legacyRows(icon))
         }
         is ColorIcon -> {
           rows.add(InspectorProperty("color", awtColor(icon.iconColor), GROUP_LEGACY))

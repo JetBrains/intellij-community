@@ -30,4 +30,6 @@ interface ModifiersFactory {
     fun patchSvg(svgPatcher: SvgPatcher): IconModifier
 
     fun sizeVariants(policy: SizeVariantPolicy): IconModifier
+
+    fun dark(dark: Boolean): IconModifier
 }

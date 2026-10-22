@@ -36,6 +36,8 @@ object DefaultModifiersFactory : ModifiersFactory {
 
     override fun sizeVariants(policy: SizeVariantPolicy): IconModifier = SizeVariantModifier(policy)
 
+    override fun dark(dark: Boolean): IconModifier = DarkModifier(dark)
+
     override fun patchSvg(svgPatcher: SvgPatcher): IconModifier =
         SvgPatcherModifier(svgPatcher as? DefaultSvgPatcher ?: error("Unsupported svgPatcher: $svgPatcher"))
 }

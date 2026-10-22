@@ -16,6 +16,10 @@ import com.intellij.platform.icons.rendering.ScalingContext
 
 class DefaultIconRenderer(val iconInstance: DefaultLayeredIconDescriptor, private val context: RenderingContext) : IconRenderer {
     override val iconDescriptor: IconDescriptor = iconInstance
+
+    /** The rendering context of this renderer: the caller modifiers and the theme. Debugging tools read it. */
+    val renderingContext: RenderingContext
+        get() = context
     private var layerRenderers = createRenderers()
     private var lastThemeDigest: String = context.theme.digest()
 
@@ -25,8 +29,10 @@ class DefaultIconRenderer(val iconInstance: DefaultLayeredIconDescriptor, privat
     }
 
     override fun render(paintingContext: LayerPaintingContext) {
-        if (lastThemeDigest != context.theme.digest()) {
-          layerRenderers = createRenderers()
+        val themeDigest = context.theme.digest()
+        if (lastThemeDigest != themeDigest) {
+            layerRenderers = createRenderers()
+            lastThemeDigest = themeDigest
         }
         val usedDimensions = calculateUsedDimensions(paintingContext.scaling)
         if (IconRenderDebugger.isActive) {

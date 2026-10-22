@@ -172,6 +172,8 @@ f:com.intellij.platform.icons.modifiers.ColorFilterModifierKt
 - sf:tintColor(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.design.Color,com.intellij.platform.icons.design.BlendMode):com.intellij.platform.icons.modifiers.IconModifier
 f:com.intellij.platform.icons.modifiers.CutoutMarginModifierKt
 - sf:cutoutMargin(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.design.IconUnit):com.intellij.platform.icons.modifiers.IconModifier
+f:com.intellij.platform.icons.modifiers.DarkModifierKt
+- sf:dark(com.intellij.platform.icons.modifiers.IconModifier,Z):com.intellij.platform.icons.modifiers.IconModifier
 com.intellij.platform.icons.modifiers.IconModifier
 - sf:Companion:com.intellij.platform.icons.modifiers.IconModifier$Companion
 f:com.intellij.platform.icons.modifiers.IconModifier$Companion

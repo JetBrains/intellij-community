@@ -39,7 +39,10 @@ internal object RenderingSnapshots {
     if (icon != null) {
       rows.add(InspectorProperty("class", className(icon), GROUP_SWING))
       rows.add(InspectorProperty("size (logical)", InspectorFormatting.iconSize(icon), GROUP_SWING))
-      if (icon is SwingIcon) rows.add(InspectorProperty("icon scale", InspectorFormatting.scale(icon.scale), GROUP_SWING))
+      if (icon is SwingIcon) {
+        rows.add(InspectorProperty("icon scale", InspectorFormatting.scale(icon.scale), GROUP_SWING))
+        rows.add(InspectorProperty("icon dark", icon.dark?.toString() ?: "theme", GROUP_SWING))
+      }
     }
 
     if (capture != null) {
@@ -69,12 +72,13 @@ internal object RenderingSnapshots {
           rows.add(InspectorProperty("scale factor @${number(density)}", number(resolved.context.contextScale), GROUP_RESOLVED))
         }
         rows.add(InspectorProperty("renderer", InspectorFormatting.identity(renderer), GROUP_RESOLVED))
-        val theme = context.theme
-        rows.add(InspectorProperty("theme context", className(theme), GROUP_THEME))
-        rows.add(InspectorProperty("theme digest", runCatching { theme.digest() }.getOrElse { "failed: $it" }, GROUP_THEME))
-        rows.add(InspectorProperty("theme image modifiers", runCatching { safeToString(theme.imageModifiers()) }.getOrElse { "failed: $it" },
+        // the theme and the caller modifiers of the paint, if captured, else of a fresh context of the icon
+        val scope = ThemeInspection.rootScope(icon, capture?.iconRenderer)
+        val paintContext = scope?.context
+        rows.addAll(ThemeInspection.themeRows(paintContext?.theme ?: context.theme, paintContext))
+        scope?.darkSource?.let { rows.add(InspectorProperty("caller dark source", it, GROUP_THEME)) }
+        rows.add(InspectorProperty("default image modifiers", safeToString(paintContext?.defaultImageModifiers ?: context.defaultImageModifiers),
                                    GROUP_THEME))
-        rows.add(InspectorProperty("default image modifiers", safeToString(context.defaultImageModifiers), GROUP_THEME))
       }
       catch (t: Throwable) {
         LOG.debug(t)

@@ -100,7 +100,7 @@ internal data class IconSizes(
 
 /** Modifier types the inspector knows how to edit (new icons API). */
 internal enum class EditableModifierKind {
-  SCALE, MARGIN, ALPHA, ALIGN, COLOR_FILTER, STROKE, CUTOUT_MARGIN, SIZE_VARIANTS,
+  SCALE, MARGIN, ALPHA, ALIGN, COLOR_FILTER, STROKE, CUTOUT_MARGIN, SIZE_VARIANTS, DARK,
   /** Shown but not editable (e.g. SVG patcher, unknown modifier classes). */
   READ_ONLY,
 }

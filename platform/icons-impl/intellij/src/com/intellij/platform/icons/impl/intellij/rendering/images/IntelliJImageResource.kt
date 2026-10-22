@@ -11,11 +11,14 @@ import com.intellij.platform.icons.rendering.Bounds
 import com.intellij.platform.icons.rendering.EmptyBitmapImageResource
 import com.intellij.platform.icons.rendering.ImageModifiers
 import com.intellij.platform.icons.rendering.RescalableImageResource
+import com.intellij.platform.icons.rendering.ThemeContext
 import com.intellij.platform.icons.scale.IconScale
 
 internal class IntelliJImageResource(
   private val holder: SwingImageResourceHolder,
-  private val imageModifiers: ImageModifiers? = null
+  private val imageModifiers: ImageModifiers? = null,
+  /** The theme whose inputs the image takes. [holder] reads them on each [scale]. */
+  private val theme: ThemeContext,
 ): RescalableImageResource, CachedGPUImageResourceHolder() {
   private val expectedDimensions by lazy { holder.getExpectedDimensions() }
 
@@ -32,7 +35,7 @@ internal class IntelliJImageResource(
       ScaleType.USR_SCALE.of(usrScale),
       ScaleType.SYS_SCALE.of(sysScale),
     ))
-    val rawImage = holder.getImage(scaleContext, imageModifiers) ?: return EmptyBitmapImageResource
+    val rawImage = holder.getImage(scaleContext, imageModifiers, theme) ?: return EmptyBitmapImageResource
     val awtImage = (rawImage as? JBHiDPIScaledImage)?.delegate ?: rawImage
     return AwtImageResource(awtImage)
   }

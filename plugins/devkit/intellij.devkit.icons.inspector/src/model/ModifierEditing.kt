@@ -33,6 +33,7 @@ import com.intellij.platform.icons.impl.modifiers.AlignIconModifier
 import com.intellij.platform.icons.impl.modifiers.AlphaIconModifier
 import com.intellij.platform.icons.impl.modifiers.ColorFilterModifier
 import com.intellij.platform.icons.impl.modifiers.CutoutMarginModifier
+import com.intellij.platform.icons.impl.modifiers.DarkModifier
 import com.intellij.platform.icons.impl.modifiers.MarginIconModifier
 import com.intellij.platform.icons.impl.modifiers.ScaleModifier
 import com.intellij.platform.icons.impl.modifiers.SizeVariantModifier
@@ -44,6 +45,7 @@ import com.intellij.platform.icons.modifiers.align
 import com.intellij.platform.icons.modifiers.alpha
 import com.intellij.platform.icons.modifiers.colorFilter
 import com.intellij.platform.icons.modifiers.cutoutMargin
+import com.intellij.platform.icons.modifiers.dark
 import com.intellij.platform.icons.modifiers.margin
 import com.intellij.platform.icons.modifiers.scale
 import com.intellij.platform.icons.modifiers.sizeVariants
@@ -74,7 +76,8 @@ internal typealias LayerAddress = List<LayerStep>
 /**
  * Inspecting and editing the modifiers of new-API layers. Edits never mutate: they produce an edited copy of the descriptor
  * that rebuilds only the path from the root to the edited layer; the modifier chain is rebuilt with the public icons-API
- * modifier functions (`scale`, `margin`, `alpha`, `align`, `colorFilter`, `stroke`, `cutoutMargin`, `sizeVariants`) combined
+ * modifier functions (`scale`, `margin`, `alpha`, `align`, `colorFilter`, `stroke`, `cutoutMargin`, `sizeVariants`, `dark`)
+ * combined
  * with `then`. Unchanged modifiers keep their original instances.
  */
 internal object ModifierEditing {
@@ -110,6 +113,8 @@ internal object ModifierEditing {
       is CutoutMarginModifier -> EditableModifier(id, EditableModifierKind.CUTOUT_MARGIN, title, listOf(unitField("size", modifier.size)))
       is SizeVariantModifier -> EditableModifier(id, EditableModifierKind.SIZE_VARIANTS, title, listOf(
         ModifierField("policy", "policy", ModifierFieldType.CHOICE, modifier.policy.name, SizeVariantPolicy.entries.map { it.name })))
+      is DarkModifier -> EditableModifier(id, EditableModifierKind.DARK, title, listOf(
+        ModifierField("dark", "dark", ModifierFieldType.CHOICE, modifier.dark.toString(), listOf("true", "false"))))
       else -> readOnly(id, title, safeToString(modifier))
     }
   }
@@ -173,6 +178,10 @@ internal object ModifierEditing {
     return Result.success(sRGB(red = channel(2), green = channel(4), blue = channel(6), alpha = channel(0)))
   }
 
+  private fun parseBoolean(text: String): Result<Boolean> =
+    text.trim().toBooleanStrictOrNull()?.let { Result.success(it) }
+    ?: Result.failure(IllegalArgumentException("Invalid value \"$text\": use true or false"))
+
   private fun parseNumber(text: String, what: String): Result<Double> =
     text.trim().toDoubleOrNull()?.let { Result.success(it) } ?: Result.failure(IllegalArgumentException("Invalid $what \"$text\""))
 
@@ -214,6 +223,7 @@ internal object ModifierEditing {
       EditableModifierKind.STROKE -> IconModifier.stroke(Color.Black)
       EditableModifierKind.CUTOUT_MARGIN -> IconModifier.cutoutMargin(1.dp)
       EditableModifierKind.SIZE_VARIANTS -> IconModifier.sizeVariants(SizeVariantPolicy.Exact)
+      EditableModifierKind.DARK -> IconModifier.dark(true)
       EditableModifierKind.READ_ONLY -> error("Read-only modifiers cannot be added")
     }.let(::single)
   }
@@ -258,6 +268,7 @@ internal object ModifierEditing {
       is StrokeModifier -> if (key == "color") IconModifier.stroke(parseColor(value).getOrThrow()) else unknown()
       is CutoutMarginModifier -> if (key == "size") IconModifier.cutoutMargin(parseUnit(value).getOrThrow()) else unknown()
       is SizeVariantModifier -> if (key == "policy") IconModifier.sizeVariants(enumValue<SizeVariantPolicy>(value)) else unknown()
+      is DarkModifier -> if (key == "dark") IconModifier.dark(parseBoolean(value).getOrThrow()) else unknown()
       else -> error("${simpleClassName(modifier)} is read-only")
     }
     single(result)

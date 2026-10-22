@@ -15,6 +15,7 @@ import com.intellij.platform.icons.impl.intellij.rendering.SwingIcon
 import com.intellij.platform.icons.impl.intellij.testIcons
 import com.intellij.platform.icons.impl.layers.ImageIconLayer
 import com.intellij.platform.icons.impl.layers.NestedIconLayer
+import com.intellij.platform.icons.impl.modifiers.DarkModifier
 import com.intellij.platform.icons.impl.modifiers.ScaleModifier
 import com.intellij.platform.icons.impl.rendering.debug.IconRenderDebugger
 import com.intellij.platform.icons.modifiers.IconModifier
@@ -23,6 +24,7 @@ import com.intellij.platform.icons.modifiers.align
 import com.intellij.platform.icons.modifiers.alpha
 import com.intellij.platform.icons.modifiers.colorFilter
 import com.intellij.platform.icons.modifiers.cutoutMargin
+import com.intellij.platform.icons.modifiers.dark
 import com.intellij.platform.icons.modifiers.margin
 import com.intellij.platform.icons.modifiers.patchSvg
 import com.intellij.platform.icons.modifiers.scale
@@ -63,12 +65,13 @@ class ModifierEditingTest {
   fun `every modifier kind is described with typed fields`() = testIcons {
     val modifier = IconModifier.scale(factor(1.25)).margin(1.dp, 2.dp, 3.dp, 4.px).alpha(0.5f).align(IconAlign.TopRight)
       .colorFilter(ColorFilter.tint(Color.White)).stroke(Color.Black).cutoutMargin(1.5.dp).sizeVariants(SizeVariantPolicy.Fitting)
-      .patchSvg { }
+      .dark(false).patchSvg { }
     val described = ModifierEditing.describe(modifier)
     assertEquals(listOf(EditableModifierKind.SCALE, EditableModifierKind.MARGIN, EditableModifierKind.ALPHA, EditableModifierKind.ALIGN,
                         EditableModifierKind.COLOR_FILTER, EditableModifierKind.STROKE, EditableModifierKind.CUTOUT_MARGIN,
-                        EditableModifierKind.SIZE_VARIANTS, EditableModifierKind.READ_ONLY), described.map { it.kind })
-    assertEquals((0 until 9).map { "m$it" }, described.map { it.id })
+                        EditableModifierKind.SIZE_VARIANTS, EditableModifierKind.DARK, EditableModifierKind.READ_ONLY),
+                 described.map { it.kind })
+    assertEquals((0 until 10).map { "m$it" }, described.map { it.id })
     fun field(index: Int, key: String) = described[index].fields.single { it.key == key }
     assertEquals("1.25", field(0, "factor").value)
     assertEquals(listOf("1.0dp", "2.0dp", "3.0dp", "4px"), listOf("left", "top", "right", "bottom").map { field(1, it).value })
@@ -79,7 +82,22 @@ class ModifierEditingTest {
     assertEquals("#FF000000", field(5, "color").value)
     assertEquals("1.5dp", field(6, "size").value)
     assertEquals("Fitting", field(7, "policy").value)
-    assertTrue(described[8].fields.none { it.editable })
+    assertEquals("false", field(8, "dark").value)
+    assertEquals(listOf("true", "false"), field(8, "dark").options)
+    assertTrue(described[9].fields.none { it.editable })
+  }
+
+  @Test
+  fun `the dark modifier is added and edited`() = testIcons {
+    val original = iconDescriptor { image(testImage(16, 16)) }
+    val address = listOf(LayerStep.Layer(0))
+    fun darkStates(descriptor: IconDescriptor) =
+      InspectorTreeBuilder.flattenModifiers(ModifierEditing.layerAt(descriptor, address)!!.modifier).map { (it as DarkModifier).dark }
+    val added = ModifierEditing.apply(original, address, ModifierEdit.Add("n", EditableModifierKind.DARK)).getOrThrow()
+    assertEquals(listOf(true), darkStates(added))
+    val edited = ModifierEditing.apply(added, address, ModifierEdit.SetField("n", "m0", "dark", "false")).getOrThrow()
+    assertEquals(listOf(false), darkStates(edited))
+    assertNotNull(ModifierEditing.apply(added, address, ModifierEdit.SetField("n", "m0", "dark", "maybe")).exceptionOrNull())
   }
 
   @Test

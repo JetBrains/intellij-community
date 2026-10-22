@@ -707,7 +707,7 @@ internal class IconInspectorControllerImpl(
       return null
     }
 
-    private fun editedIcon(copy: IconDescriptor): SwingIcon = SwingIcon(copy, (icon as? SwingIcon)?.scale)
+    private fun editedIcon(copy: IconDescriptor): SwingIcon = SwingIcon(copy, (icon as? SwingIcon)?.scale, (icon as? SwingIcon)?.dark)
 
     /** Shows the edited copy (static tree, previews, sources); live paints take over once it is installed and painted. */
     private fun publishEdited() {

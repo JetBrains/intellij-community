@@ -80,7 +80,9 @@ internal class InspectorTreeBuilder private constructor(private val sizing: Sizi
       val builder = InspectorTreeBuilder(sizing)
       val rootId = idPrefix + "root"
       val children = if (descriptor == null) emptyList()
-      else listOf(builder.withRoot(icon) { builder.iconNode(descriptor, null, "$rootId/0", 1, false, emptyList()) })
+      else listOf(builder.withRoot(icon) {
+        builder.withThemeScope(ThemeInspection.rootScope(icon, null)) { builder.iconNode(descriptor, null, "$rootId/0", 1, false, emptyList()) }
+      })
       val root = if (icon == null && compose != null) builder.composeIconNode(rootId, compose, compose.capture, children)
       else builder.swingIconNode(rootId, icon, null, children)
       return InspectorTree(root, builder.renderers.toMap(), builder.layerAddresses.toMap())
@@ -115,7 +117,11 @@ internal class InspectorTreeBuilder private constructor(private val sizing: Sizi
       val children = ArrayList<InspectorNode>()
       val main = pool.firstOrNull { it.subject === capture.descriptor } ?: pool.firstOrNull()
       if (main != null) pool.remove(main)
-      children.add(builder.withRoot(icon) { builder.iconNode(capture.descriptor, main, "$rootId/0", 1, false, emptyList()) })
+      children.add(builder.withRoot(icon) {
+        builder.withThemeScope(ThemeInspection.rootScope(icon, capture.iconRenderer)) {
+          builder.iconNode(capture.descriptor, main, "$rootId/0", 1, false, emptyList())
+        }
+      })
       for (extra in pool) {
         children.add(builder.genericNode(extra, "$rootId/${children.size}", 1))
       }
@@ -146,7 +152,9 @@ internal class InspectorTreeBuilder private constructor(private val sizing: Sizi
           title = DevkitIconsInspectorBundle.message("model.node.bridged.conversion"),
           subtitle = simpleClassName(bridgedDescriptor),
           properties = listOf(InspectorProperty("class", className(bridgedDescriptor))),
-          children = listOf(builder.withVisiting(icon) { builder.iconNode(bridgedDescriptor, null, "$bridgeId/0", 1, false) }),
+          children = listOf(builder.withVisiting(icon) {
+            builder.withThemeScope(ThemeInspection.rootScope(null, null)) { builder.iconNode(bridgedDescriptor, null, "$bridgeId/0", 1, false) }
+          }),
           origin = InspectorNodeOrigin.BRIDGE,
         ))
       }
@@ -367,6 +375,7 @@ internal class InspectorTreeBuilder private constructor(private val sizing: Sizi
         val fields = describeLocation(layer.loader)
         subtitle = fields.firstOrNull { it.first == "path" }?.second ?: simpleClassName(layer.loader)
         children.add(resourceNode(layer.loader, fields, childId(id, children)))
+        themeScope?.let { properties.addAll(ThemeInspection.imageLayerRows(layer, it)) }
       }
       is NestedIconLayer -> {
         val nested = layer.iconDescriptor
@@ -377,15 +386,19 @@ internal class InspectorTreeBuilder private constructor(private val sizing: Sizi
           properties.add(InspectorProperty("nested wrapper chain", chainLength.toString()))
         }
         val childRender = take(pool, nested) ?: pool?.firstOrNull { it.isIconRenderer }?.also { pool.remove(it) }
-        children.add(iconNode(nested, childRender, childId(id, children), depth + 1, chainLink = true, address?.plus(LayerStep.Nested)))
+        children.add(withThemeScope(themeScope?.adjustTo(layer, themeLabel(layer, id))) {
+          iconNode(nested, childRender, childId(id, children), depth + 1, chainLink = true, address?.plus(LayerStep.Nested))
+        })
       }
       is LayoutIconLayer -> {
         subtitle = "${layer.direction} · ${layer.nestedLayers.size}"
         properties.add(InspectorProperty("direction", layer.direction.toString()))
         properties.add(InspectorProperty("nested layers", layer.nestedLayers.size.toString()))
-        layer.nestedLayers.forEachIndexed { index, nestedLayer ->
-          children.add(layerNode(nestedLayer, take(pool, nestedLayer), childId(id, children), depth + 1, false,
-                                 address?.plus(LayerStep.LayoutChild(index))))
+        withThemeScope(themeScope?.adjustTo(layer, themeLabel(layer, id))) {
+          layer.nestedLayers.forEachIndexed { index, nestedLayer ->
+            children.add(layerNode(nestedLayer, take(pool, nestedLayer), childId(id, children), depth + 1, false,
+                                   address?.plus(LayerStep.LayoutChild(index))))
+          }
         }
       }
       is SwingIconLayer -> {
@@ -395,6 +408,7 @@ internal class InspectorTreeBuilder private constructor(private val sizing: Sizi
         properties.add(InspectorProperty("legacy icon size", InspectorFormatting.iconSize(legacy)))
         properties.add(InspectorProperty("legacy icon", InspectorFormatting.identity(legacy)))
         properties.add(InspectorProperty("legacy toString", safeToString(legacy)))
+        themeScope?.let { properties.addAll(ThemeInspection.swingLayerRows(layer, it)) }
         // the legacy icon is painted (rasterized) by this layer's renderer: SwingIcons inside it render below it
         children.add(legacyNode(legacy, pool, childId(id, children), depth + 1, isRoot = false))
       }
@@ -407,12 +421,15 @@ internal class InspectorTreeBuilder private constructor(private val sizing: Sizi
         subtitle = if (layer.frames.size == 1) "1 frame" else "${layer.frames.size} frames"
         properties.add(InspectorProperty("frames", layer.frames.size.toString()))
         properties.add(InspectorProperty("total duration", "${layer.frames.sumOf { it.duration + it.fadeIn + it.fadeOut }} ms"))
+        val frameScope = themeScope?.adjustTo(layer, themeLabel(layer, id))
         layer.frames.forEachIndexed { index, frame ->
           val frameId = childId(id, children)
           val frameChildren = ArrayList<InspectorNode>()
-          frame.layers.forEachIndexed { layerIndex, frameLayer ->
-            frameChildren.add(layerNode(frameLayer, take(pool, frameLayer), childId(frameId, frameChildren), depth + 2, false,
-                                        address?.plus(LayerStep.Frame(index, layerIndex))))
+          withThemeScope(frameScope) {
+            frame.layers.forEachIndexed { layerIndex, frameLayer ->
+              frameChildren.add(layerNode(frameLayer, take(pool, frameLayer), childId(frameId, frameChildren), depth + 2, false,
+                                          address?.plus(LayerStep.Frame(index, layerIndex))))
+            }
           }
           children.add(InspectorNode(
             id = frameId,
@@ -448,6 +465,24 @@ internal class InspectorTreeBuilder private constructor(private val sizing: Sizi
       modifiers = runCatching { ModifierEditing.describe(layer.modifier) }.getOrDefault(emptyList()),
     )
   }
+
+  // ---- theme ----
+
+  /** The theme scope of the layers being built (see [ThemeInspection.ThemeScope]); null if it cannot be determined. */
+  private var themeScope: ThemeInspection.ThemeScope? = null
+
+  private fun <T> withThemeScope(scope: ThemeInspection.ThemeScope?, block: () -> T): T {
+    val previous = themeScope
+    themeScope = scope
+    try {
+      return block()
+    }
+    finally {
+      themeScope = previous
+    }
+  }
+
+  private fun themeLabel(layer: IconLayer, id: String): String = "${simpleClassName(layer)} [$id]"
 
   // ---- legacy Swing icons ----
 
@@ -531,7 +566,9 @@ internal class InspectorTreeBuilder private constructor(private val sizing: Sizi
     if (pool != null && renderNode == null) {
       properties.add(InspectorProperty("render capture", DevkitIconsInspectorBundle.message("model.node.not.rendered.in.capture")))
     }
-    val child = withVisiting(icon) { iconNode(descriptor, renderNode, "$id/0", depth + 1, false) }
+    val child = withVisiting(icon) {
+      withThemeScope(ThemeInspection.rootScope(icon, renderNode?.renderer)) { iconNode(descriptor, renderNode, "$id/0", depth + 1, false) }
+    }
     return InspectorNode(
       id = id,
       kind = InspectorNodeKind.SWING_ICON,

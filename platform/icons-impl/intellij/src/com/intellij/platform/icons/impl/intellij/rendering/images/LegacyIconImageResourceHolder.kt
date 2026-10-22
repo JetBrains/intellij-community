@@ -6,6 +6,7 @@ import com.intellij.openapi.util.findIconUsingNewImplementation
 import com.intellij.ui.RetrievableIcon
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleType
+import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
 import com.intellij.platform.icons.modifiers.SizeVariantPolicy
 import kotlin.math.roundToInt
 import com.intellij.ui.icons.CachedImageIcon
@@ -13,6 +14,7 @@ import com.intellij.ui.icons.RgbImageFilterSupplier
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.platform.icons.rendering.Dimensions
 import com.intellij.platform.icons.rendering.ImageModifiers
+import com.intellij.platform.icons.rendering.ThemeContext
 import java.awt.Image
 import java.awt.image.RGBImageFilter
 import javax.swing.Icon
@@ -24,13 +26,27 @@ internal class LegacyIconImageResourceHolder(
     return Dimensions(backingLegacyIcon.iconWidth, backingLegacyIcon.iconHeight)
   }
 
-  override fun getImage(scale: ScaleContext, imageModifiers: ImageModifiers?): Image? {
-    val params = imageModifiers.toLoadParameters()
-    val svgPatcher = params.colorPatcher
+  /**
+   * The legacy icon applies its own color patcher (the theme palette, as a rule) and the global filter itself. They come
+   * from the global theme state of the legacy icons, not from [theme]. So [theme] does not change the colors of a legacy
+   * icon. Only the dark state of the theme applies, through the dark state of [imageModifiers].
+   */
+  override fun getImage(scale: ScaleContext, imageModifiers: ImageModifiers?, theme: ThemeContext): Image? {
     val (source, sourceScale) = sizeVariant(scale, imageModifiers.sizeVariantPolicy()) ?: (backingLegacyIcon to scale)
-    val icon = if (source is CachedImageIcon && svgPatcher != null) {
-      source.createWithPatcher(svgPatcher, isDark = params.isDark, useStroke = params.isStroke)
-    } else source
+    // `createWithPatcher` replaces the own patcher of the legacy icon, so our patches run on top of it.
+    val rootPatcher = (source as? CachedImageIcon)?.svgColorPatcher
+    val params = imageModifiers.toLoadParameters(rootPatcher = rootPatcher, globalFilter = null)
+    val svgPatcher = imageModifiers.ownColorPatcher(rootPatcher = rootPatcher)
+    // Without an explicit dark state, the legacy icon keeps its own one. It follows the theme unless it is set.
+    // A stroked icon loads the light artwork, see `toLoadParameters`.
+    val darkOverride = (imageModifiers as? DefaultImageModifiers)?.darkOverride?.takeUnless { params.isStroke }
+    val icon = when {
+      source is CachedImageIcon && svgPatcher != null -> {
+        source.createWithPatcher(svgPatcher, isDark = if (params.isStroke) false else darkOverride, useStroke = params.isStroke)
+      }
+      darkOverride != null -> IconLoader.getDarkIcon(source, darkOverride)
+      else -> source
+    }
     val filtered = if (params.filters.isNotEmpty()) {
         IconLoader.filterIcon(icon = icon, filterSupplier = object : RgbImageFilterSupplier {
             override fun getFilter() = params.filters.first() as RGBImageFilter

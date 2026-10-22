@@ -90,6 +90,8 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//platform/util",
         "//platform/util:util_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.icons.impl.intellij.tests` end

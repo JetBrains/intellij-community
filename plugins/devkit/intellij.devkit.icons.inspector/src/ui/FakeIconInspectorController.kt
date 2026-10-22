@@ -251,6 +251,13 @@ private fun buildSampleTarget(): InspectionTarget {
     properties = listOf(
       InspectorProperty("class", "ImageIconLayer", "Layer"),
       InspectorProperty("modifiers", "2", "Layer"),
+      InspectorProperty("effective dark", "true", "Theme"),
+      InspectorProperty("dark source", "theme (dark=true)", "Theme"),
+      InspectorProperty("color palette", "UITheme\$colorPatcher (digest 1234,7)", "Theme"),
+      InspectorProperty("palette recolors this image", "yes: 212 of 1024 pixels at 2×", "Theme"),
+      InspectorProperty("global filter", "none", "Theme"),
+      InspectorProperty("color filter modifier", "none", "Theme"),
+      InspectorProperty("theme digest", "ExperimentalDark;42;palette=1234,7;filter=none;dark=true", "Theme"),
     ),
     children = listOf(resource, scale, alpha),
     debuggable = true,
@@ -525,6 +532,7 @@ private fun newModifier(kind: EditableModifierKind, id: String): EditableModifie
     EditableModifierKind.STROKE -> "StrokeModifier" to listOf(field("color", "Color", ModifierFieldType.COLOR, "#FFFFFFFF"))
     EditableModifierKind.CUTOUT_MARGIN -> "CutoutMarginModifier" to listOf(field("margin", "Margin", ModifierFieldType.UNIT, "2dp"))
     EditableModifierKind.SIZE_VARIANTS -> "SizeVariantsModifier" to listOf(field("sizes", "Sizes", ModifierFieldType.TEXT, "16,20"))
+    EditableModifierKind.DARK -> "DarkModifier" to listOf(field("dark", "Dark", ModifierFieldType.CHOICE, "true", listOf("true", "false")))
     EditableModifierKind.READ_ONLY -> "Unknown" to emptyList()
   }
   return EditableModifier(id, kind, title, fields)
