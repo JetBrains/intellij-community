@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.compilation.charts">
+<idea-plugin>
   <id>intellij.compilation.charts</id>
   <name>Compilation Charts</name>
   <vendor>JetBrains</vendor>
