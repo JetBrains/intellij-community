@@ -2,7 +2,6 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder.tmh;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
-import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputOrigin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;
@@ -96,37 +95,44 @@ public final class TMHAssertionGenerator2 implements TMHAssertionGenerator {
     }
   }
 
+  /**
+   * The compiler that produced the class. The Kotlin output takes the soft assertion methods.
+   */
+  public enum OriginKind {
+    JAVA, KOTLIN
+  }
+
   // TODO avoid hardcoding annotation names
-  public static @NotNull Set<TMHAssertionGenerator2> generators(@NotNull OutputOrigin.Kind originKind) {
-    return originKind == OutputOrigin.Kind.kotlin ? GENERATORS_KOTLIN : GENERATORS_JAVA;
+  public static @NotNull Set<TMHAssertionGenerator2> generators(@NotNull OriginKind originKind) {
+    return originKind == OriginKind.KOTLIN ? GENERATORS_KOTLIN : GENERATORS_JAVA;
 
   }
 
   private static final Set<TMHAssertionGenerator2> GENERATORS_JAVA = generators(
     THREAD_ASSERTIONS_CLASS_NAME,
     "com/intellij/util/concurrency/annotations",
-    OutputOrigin.Kind.java
+    OriginKind.JAVA
   );
 
   private static final Set<TMHAssertionGenerator2> GENERATORS_KOTLIN = generators(
     THREAD_ASSERTIONS_CLASS_NAME,
     "com/intellij/util/concurrency/annotations",
-    OutputOrigin.Kind.kotlin
+    OriginKind.KOTLIN
   );
 
   public static @NotNull Set<TMHAssertionGenerator2> generators(
     @NotNull String threadAssertionsClassName,
     @NotNull String packageString
   ) {
-    return generators(threadAssertionsClassName, packageString, OutputOrigin.Kind.java);
+    return generators(threadAssertionsClassName, packageString, OriginKind.JAVA);
   }
 
   public static @NotNull Set<TMHAssertionGenerator2> generators(
     @NotNull String threadAssertionsClassName,
     @NotNull String packageString,
-    @NotNull OutputOrigin.Kind originKind
+    @NotNull OriginKind originKind
   ) {
-    if (originKind == OutputOrigin.Kind.kotlin) {
+    if (originKind == OriginKind.KOTLIN) {
       return Set.of(
         generator(threadAssertionsClassName, packageString + "/RequiresEdt", "softAssertEventDispatchThread"),
         generator(threadAssertionsClassName, packageString + "/RequiresBackgroundThread", "softAssertBackgroundThread"),

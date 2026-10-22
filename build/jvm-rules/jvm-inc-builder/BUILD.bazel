@@ -67,6 +67,7 @@ kt_jvm_library(
         "//:opentelemetry-api_import",
         "//:qdox_import",
         "//dependency-graph",
+        "//instrumentation-core",
         "//jps-builders-6:build-javac-rt",
         "//worker-framework",
         "//zip",

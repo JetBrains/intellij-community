@@ -6,6 +6,7 @@ import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputOrigin;
 import com.intellij.tools.build.bazel.jvmIncBuilder.tmh.TMHAssertionGenerator;
 import com.intellij.tools.build.bazel.jvmIncBuilder.tmh.TMHAssertionGenerator1;
 import com.intellij.tools.build.bazel.jvmIncBuilder.tmh.TMHAssertionGenerator2;
+import com.intellij.tools.build.bazel.jvmIncBuilder.tmh.TMHAssertionGenerator2.OriginKind;
 import com.intellij.tools.build.bazel.jvmIncBuilder.tmh.TMHInstrumenter;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.ClassReader;
@@ -60,7 +61,7 @@ public class ThreadingModelInstrumenter implements BytecodeInstrumenter {
    */
   private Set<? extends TMHAssertionGenerator> getGenerators(InstrumentationClassFinder finder) {
     if (hasThreadingAssertions(finder)) {
-      return TMHAssertionGenerator2.generators(myOriginKind)
+      return TMHAssertionGenerator2.generators(myOriginKind == OutputOrigin.Kind.kotlin ? OriginKind.KOTLIN : OriginKind.JAVA)
         .stream()
         .filter(generator -> generator.hasAssertionMethod(finder))
         .collect(Collectors.toSet());

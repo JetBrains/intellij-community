@@ -691,6 +691,7 @@ pkg_zip(
     ]) + [
         ":rules_to_zip",
         "//dependency-graph:files_to_zip",
+        "//instrumentation-core:files_to_zip",
         "//jps-builders-6:files_to_zip",
         "//jvm-inc-builder:files_to_zip",
         "//rules/impl/platforms:files_to_zip",

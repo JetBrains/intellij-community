@@ -145,6 +145,16 @@ internal val DEFAULT_CUSTOM_MODULES: Map<String, CustomModuleDescription> = list
 ).associateBy { it.moduleName }
 
 /**
+ * The rules_jvm modules of the bytecode instrumentation. Their BUILD files are hand-written. The converter lists
+ * their .iml files in the project model and generates no targets for them, as for the jvm-inc-builder modules.
+ * The `imls` attribute of each `jps_modules` call names the .iml file of each of them that .idea/modules.xml
+ * registers, see [checkJpsModulesCall].
+ */
+internal val RULES_JVM_INSTRUMENTATION_MODULES: Set<String> = setOf(
+  "instrumentation-core",
+)
+
+/**
  * The modules whose jar holds a gzip member of each `.xml` entry of their provided module libraries, see
  * `gzip_resources.bzl`. A provided library stays off the runtime class path, and no packer merges it.
  */
@@ -460,6 +470,11 @@ internal class BazelBuildFileGenerator(
 
       if (module.name == "intellij.tools.build.bazel.jvmIncBuilder" || module.name == "intellij.tools.build.bazel.jvmIncBuilderTests") {
         // Skip bazel generator itself since it's a standalone Bazel project
+        skippedModules.add(descriptor)
+        continue
+      }
+
+      if (module.name in RULES_JVM_INSTRUMENTATION_MODULES) {
         skippedModules.add(descriptor)
         continue
       }
