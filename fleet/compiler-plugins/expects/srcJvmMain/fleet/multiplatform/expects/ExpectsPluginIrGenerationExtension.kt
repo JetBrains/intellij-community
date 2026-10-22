@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.wasm.WasmPlatformWithTarget
 import org.jetbrains.kotlin.utils.addToStdlib.assignFrom
 import org.jetbrains.kotlin.utils.addToStdlib.zipWithNulls
 import java.util.Locale
@@ -261,7 +262,7 @@ private val TargetPlatform?.specifier: String
     // TODO check this doesn't hurt in KMP or use "Impl"
     return when (val single = this?.singleOrNull()) {
       null -> "Impl"
-      else -> single.platformName.split("-").joinToString("") {
+      else -> (if (single is WasmPlatformWithTarget) single.target.alias else single.platformName).split("-").joinToString("") {
         it.lowercase().replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
       }
     }
