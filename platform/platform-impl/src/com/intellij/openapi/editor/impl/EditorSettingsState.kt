@@ -52,6 +52,9 @@ import kotlin.math.max
  * runs again when a source of the default changes, and [subscribeToSources] subscribes to those sources. A
  * [CustomOutValueModifier] can change the value in both cases.
  *
+ * A `val` property has no setter, so it has no override. It holds a global-only setting, which only
+ * [EditorSettingsExternalizable] changes.
+ *
  * A calculator must not take the RW lock, because an editor can be built on `Dispatchers.UI`, which forbids that lock
  * (IJPL-243574). A default that needs the PSI is an input instead, and a [BackgroundStateInput] computes it.
  *
@@ -64,7 +67,7 @@ class EditorSettingsState(
   private val softWrapAppliancePlace: SoftWrapAppliancePlaces,
 ) : ObservableState() {
 
-  // Settings without a UI. Each default is fixed when the state is built.
+  // Per-editor settings with a fixed default. Only a setter of SettingsImpl changes them.
   var myAdditionalLinesCount: Int by property(Registry.intValue("editor.virtual.lines", 5))
   var myAdditionalColumnsCount: Int by property(3)
   var myLineCursorWidth: Int by property(EditorUtil.getDefaultCaretWidth())
@@ -72,6 +75,9 @@ class EditorSettingsState(
   var myAllowSingleLogicalLineFolding: Boolean by property(false)
   var myAutoCodeFoldingEnabled: Boolean by property(true)
   var myAreLineNumbersAfterIcons: Boolean by property(false)
+  var myCaretRowShown: Boolean by property(true)
+  var myPaintSoftWraps: Boolean by property(true)
+  var characterGridWidth: Float? by property(null)
   var rtlEnabled: Boolean by property(!Registry.`is`("editor.disable.rtl", false))
 
   // Settings from the code style.
@@ -92,7 +98,8 @@ class EditorSettingsState(
   var softMargins: List<Int> by codeStyleProperty(initialMargins().softMargins) { margins.softMargins }
   var rightMargin: Int by codeStyleProperty(initialMargins().rightMargin) { margins.rightMargin }
 
-  // Settings from EditorSettingsExternalizable. [refreshFromEditorSettings] maps its change events to these properties.
+  // Defaults from EditorSettingsExternalizable. A setter of SettingsImpl overrides a default for this editor.
+  // [refreshFromEditorSettings] maps the change events of EditorSettingsExternalizable to these properties.
   var myIsVirtualSpace: Boolean by modifiedProperty(trueInColumnMode()) { externalizable().isVirtualSpace }
   var myIsCaretInsideTabs: Boolean by modifiedProperty(trueInColumnMode()) { externalizable().isCaretInsideTabs }
   var myIsCaretBlinking: Boolean by property { externalizable().isBlinkCaret }
@@ -118,8 +125,6 @@ class EditorSettingsState(
   var myIsBlockCursor: Boolean by property { externalizable().isBlockCursor }
   var myIsFullLineHeightCursor: Boolean by property { externalizable().isFullLineHeightCursor }
   var myIsSmoothCaretMovement: Boolean by property { externalizable().isSmoothCaretMovement }
-  var myCaretEasing: EditorSettings.CaretEasing by property { externalizable().caretEasing }
-  var myCaretRowShown: Boolean by property { externalizable().isCaretRowShown }
   var myIsWhitespacesShown: Boolean by property { externalizable().isWhitespacesShown }
   var myIsLeadingWhitespacesShown: Boolean by property { externalizable().isLeadingWhitespacesShown }
   var myIsInnerWhitespacesShown: Boolean by property { externalizable().isInnerWhitespacesShown }
@@ -134,19 +139,19 @@ class EditorSettingsState(
   var myIsRenameVariablesInplace: Boolean by property { externalizable().isVariableInplaceRenameEnabled }
   var myIsRefrainFromScrolling: Boolean by property { externalizable().isRefrainFromScrolling }
   var myUseSoftWraps: Boolean by property { computeUseSoftWraps() }
-  var myPaintSoftWraps: Boolean by property(true)
   var myUseCustomSoftWrapIndent: Boolean by property { externalizable().isUseCustomSoftWrapIndent }
   var myCustomSoftWrapIndent: Int by property { externalizable().customSoftWrapIndent }
   var myRenamePreselect: Boolean by property { externalizable().isPreselectRename }
   var myShowIntentionBulb: Boolean by property { externalizable().isShowIntentionBulb }
   var myIsCamelWords: Boolean by property { externalizable().isCamelWords }
   var myLineNumeration: EditorSettings.LineNumerationType by property { externalizable().lineNumeration }
-  var myStickyLinesShown: Boolean by property { externalizable().areStickyLinesShown() }
-  var myStickyLinesShownForLanguage: Boolean by property { computeStickyLinesShownForLanguage() }
-  var myStickyLinesLimit: Int by property { externalizable().stickyLineLimit }
-  var characterGridWidth: Float? by property(null)
 
-  // Global-only settings from EditorSettingsExternalizable. A `val` has no override, so it always holds the global value.
+  // Global-only settings from EditorSettingsExternalizable. A `val` has no override, so it always follows the
+  // global setting.
+  val myCaretEasing: EditorSettings.CaretEasing by property { externalizable().caretEasing }
+  val myStickyLinesShown: Boolean by property { externalizable().areStickyLinesShown() }
+  val myStickyLinesShownForLanguage: Boolean by property { computeStickyLinesShownForLanguage() }
+  val myStickyLinesLimit: Int by property { externalizable().stickyLineLimit }
   val foldingOutlineShownOnlyOnHover: Boolean by property { externalizable().isFoldingOutlineShownOnlyOnHover }
   val foldingEndingsShown: Boolean by property { externalizable().isFoldingEndingsShown }
   val wheelFontChangePersistent: Boolean by property { externalizable().isWheelFontChangePersistent }

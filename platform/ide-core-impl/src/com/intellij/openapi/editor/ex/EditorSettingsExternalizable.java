@@ -629,6 +629,11 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_IS_HIGHLIGHT_SELECTION_OCCURRENCES, old, val);
   }
 
+  /**
+   * @deprecated There is no global setting for the caret row, so this method always returns {@code true}. Use
+   * {@link EditorSettings#isCaretRowShown()} to read the setting of one editor.
+   */
+  @Deprecated
   public boolean isCaretRowShown() {
     return true;
   }
