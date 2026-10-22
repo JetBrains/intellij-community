@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="intellij.mcpserver.terminal" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.mcpserver.terminal.frontend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.mcpserver.vcs" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.mcpserver.skills" scope="RUNTIME" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>
