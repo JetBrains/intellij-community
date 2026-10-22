@@ -47,7 +47,6 @@ import com.intellij.ui.table.AdditionalTableHeader;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
-import it.unimi.dsi.fastutil.ints.IntSet;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,6 +76,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
 import java.util.EventObject;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -190,6 +190,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     return frozen != null && frozen.isEditing() ? frozen : null;
   }
 
+  @Override
   public @Nullable Component getEditorComponent() {
     GridTable editing = editingTable();
     return editing == null ? null : editing.getEditorComponent();
@@ -219,7 +220,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     myCommonValue = null;
   }
 
-  public int getAvailableColumnsWidth() { return myFrozenColumnsController.getAvailableColumnsWidth(); }
+  private int getAvailableColumnsWidth() { return myFrozenColumnsController.getAvailableColumnsWidth(); }
 
   @Override
   public @NotNull ModelIndex<GridColumn> getContextColumn() { return myContextColumn; }
@@ -256,10 +257,6 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   @Override
   public void setStriped(boolean striped) {
     forEachTable(table -> table.setStriped(striped));
-  }
-
-  public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
-    myPrimary.changeSelection(rowIndex, columnIndex, toggle, extend);
   }
 
   @Override
@@ -354,11 +351,11 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     myPrimary.restoreColumnsOrder(expectedToModel);
   }
 
-  public @NotNull ModelIndex<GridColumn> uiColumn(int uiColumn) {
+  @NotNull ModelIndex<GridColumn> uiColumn(int uiColumn) {
     return myPrimary.uiColumn(uiColumn);
   }
 
-  public int fromRealRowIdx(int uiRow) {
+  int fromRealRowIdx(int uiRow) {
     return myPrimary.fromRealRowIdx(uiRow);
   }
 
@@ -373,6 +370,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     myScrollPane.repaint();
   }
 
+  @TestOnly
   public @Nullable JComponent getCellRendererComponent(@NotNull ViewIndex<GridRow> viewRow,
                                                        @NotNull ViewIndex<GridColumn> viewColumn,
                                                        boolean forDisplay) {
@@ -394,11 +392,11 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     myPrimary.setRowEnabled(rowIdx, state);
   }
 
-  public void startPaintingSession() {
+  void startPaintingSession() {
     forEachTable(table -> table.startPaintingSession());
   }
 
-  public void endPaintingSession() {
+  void endPaintingSession() {
     forEachTable(table -> table.endPaintingSession());
   }
 
@@ -458,7 +456,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     forEachTable(table -> table.displayTypeUpdated(columnIdx, displayType));
   }
 
-  public void setRowHeight(int row, int rowHeight) {
+  void setRowHeight(int row, int rowHeight) {
     forEachTable(table -> table.setRowHeight(row, rowHeight));
   }
 
@@ -526,8 +524,11 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     myPrimary.scrollColumnsIntoView(columns);
   }
 
-  public @NotNull IntSet columnsThatCanBePinned(@NotNull Set<ModelIndex<GridColumn>> pinnedColumns) {
-    return myPrimary.columnsThatCanBePinned(pinnedColumns);
+  @Override
+  public @NotNull Set<ModelIndex<GridColumn>> columnsThatCanBePinned(@NotNull Set<ModelIndex<GridColumn>> pinnedColumns) {
+    Set<ModelIndex<GridColumn>> result = new HashSet<>();
+    for (int modelIndex : myPrimary.columnsThatCanBePinned(pinnedColumns)) result.add(ModelIndex.forColumn(myResultPanel, modelIndex));
+    return result;
   }
 
   @Override
@@ -568,6 +569,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     forEachTable(table -> table.reinitSettings());
   }
 
+  @TestOnly
   public boolean editCellAt(int row, int column, EventObject e) {
     return myPrimary.editCellAt(row, column, e);
   }
@@ -586,7 +588,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     forEachTable(table -> table.globalSchemeChange(scheme));
   }
 
-  public void changeFontSize(int increment, double scale) {
+  void changeFontSize(int increment, double scale) {
     forEachTable(table -> table.changeFontSize(increment, scale));
   }
 
@@ -608,16 +610,8 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     return myPrimary.getGridColor();
   }
 
-  public void scrollRectToVisible(@NotNull Rectangle rect) {
-    myPrimary.scrollRectToVisible(rect);
-  }
-
   public GridTableModel getModel() {
     return myPrimary.getModel();
-  }
-
-  public Object getValueAt(int row, int column) {
-    return myPrimary.getValueAt(row, column);
   }
 
   @Override
@@ -712,6 +706,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     return myPrimary.isMultiEditingAllowed();
   }
 
+  @TestOnly
   public void setValueAt(Object value, int viewRowIdx, int viewColumnIdx) {
     myPrimary.setValueAt(value, viewRowIdx, viewColumnIdx);
   }
@@ -1060,15 +1055,21 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   public int columnAtPoint(@NotNull Point point) { return myPrimary.columnAtPoint(point); }
 
+  @Override
   public int getHoveredRow() {
     GridTable frozen = getFrozenView();
     int row = frozen == null ? -1 : TableHoverListener.getHoveredRow(frozen);
     return row >= 0 ? row : TableHoverListener.getHoveredRow(myPrimary);
   }
 
+  @TestOnly
   public void removeEditor() { forEachTable(GridTable::removeEditor); }
 
-  public void setAutoResizeMode(int mode) { myPrimary.setAutoResizeMode(mode); }
+  @Override
+  public void setFitColumnsToWidth(boolean v) {
+    // The pinned table keeps its own widths: the columns that fit are the ones the main table shows.
+    myPrimary.setAutoResizeMode(v ? JTable.AUTO_RESIZE_ALL_COLUMNS : JTable.AUTO_RESIZE_OFF);
+  }
 
   public TableColumnModel getColumnModel() { return myPrimary.getColumnModel(); }
 
@@ -1080,33 +1081,8 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   public int getColumnCount() { return myPrimary.getColumnCount(); }
 
-  public int[] getSelectedRows() { return myPrimary.getSelectedRows(); }
-
-  public int[] getSelectedColumns() { return myPrimary.getSelectedColumns(); }
-
-  public int getSelectedRow() { return myPrimary.getSelectedRow(); }
-
-  public int getSelectedColumn() { return myPrimary.getSelectedColumn(); }
-
-  public int getSelectedRowCount() { return myPrimary.getSelectedRowCount(); }
-
-  public int getSelectedColumnCount() { return myPrimary.getSelectedColumnCount(); }
-
-  public ListSelectionModel getSelectionModel() { return myPrimary.getSelectionModel(); }
-
+  @TestOnly
   public void moveColumn(int from, int to) { myPrimary.moveColumn(from, to); }
-
-  public void setRowSelectionInterval(int from, int to) { myPrimary.setRowSelectionInterval(from, to); }
-
-  public void setColumnSelectionInterval(int from, int to) { myPrimary.setColumnSelectionInterval(from, to); }
-
-  public void clearSelection() { myPrimary.clearSelection(); }
-
-  public int convertColumnIndexToModel(int column) { return myPrimary.convertColumnIndexToModel(column); }
-
-  public int convertColumnIndexToView(int column) { return myPrimary.convertColumnIndexToView(column); }
-
-  public boolean editCellAt(int row, int column) { return editCellAt(row, column, null); }
 
   public int getRowHeight(int row) { return myPrimary.getRowHeight(row); }
 

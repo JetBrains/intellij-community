@@ -6,7 +6,6 @@ import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.editor.DataGridColors;
-import com.intellij.database.run.ui.table.TableResultView;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -58,8 +57,7 @@ public class SelectionColorLayer implements ColorLayer {
   }
 
   private static boolean isHoveredRow(@NotNull ViewIndex<?> viewRow, @NotNull DataGrid grid) {
-    return grid.getResultView().isHoveredRowBgHighlightingEnabled() && grid.getResultView() instanceof TableResultView table &&
-           table.getHoveredRow() == viewRow.asInteger();
+    return grid.getResultView().isHoveredRowBgHighlightingEnabled() && grid.getResultView().getHoveredRow() == viewRow.asInteger();
   }
 
   private static boolean isStripedRow(@NotNull ViewIndex<?> viewRow, @NotNull DataGrid grid) {

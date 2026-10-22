@@ -37,15 +37,15 @@ class ColumnLocalFilterWithCellAction : ColumnHeaderActionBase(true) {
       return
 
     val rows = GridUtil.getSelectedGridRows(grid)
-    resultView.localFilterState.clearFilterForColumn(columnIdx)
+    grid.localFilterState.clearFilterForColumn(columnIdx)
     rows.forEach { row ->
       val rowIdx = GridRow.toRealIdx(row)
       val text = GridUtil.getText(grid, ModelIndex.forRow(grid, rowIdx), columnIdx, DataAccessType.DATA_WITH_MUTATIONS)
-      resultView.localFilterState.enableForColumn(columnIdx, LocalFilterState.Value(column.getValue(row), text))
+      grid.localFilterState.enableForColumn(columnIdx, LocalFilterState.Value(column.getValue(row), text))
     }
 
-    resultView.localFilterState.isEnabled = true
-    resultView.updateRowFilter()
+    grid.localFilterState.isEnabled = true
+    resultView.onLocalFilterStateChanged()
     grid.panel.component.repaint()
   }
 }

@@ -52,8 +52,8 @@ class ColumnLocalFilterAction : ColumnHeaderActionBase(true) {
       val formatterConfig = GridUtil.createFormatterConfig(grid, columnIdx)
 
       val rowsToShow = gridModel.getRowIndices().asIterable()
-        .asSequence().filter { resultView.localFilterState.include(grid, it, columnIdx) }
-      val allowedValuesForColumn = resultView.localFilterState.allowedValues(columnIdx)
+        .asSequence().filter { grid.localFilterState.include(grid, it, columnIdx) }
+      val allowedValuesForColumn = grid.localFilterState.allowedValues(columnIdx)
 
       val itemGroups = rowsToShow
         .map { rowIdx ->
@@ -89,9 +89,9 @@ class ColumnLocalFilterAction : ColumnHeaderActionBase(true) {
         return o1.value.text.compareTo(o2.value.text)
       })
 
-      resultView.localFilterState.isEnabled = true
-      resultView.updateRowFilter()
-      return LocalFilterPopup(grid, resultView, columnIdx, items, column.name).popup
+      grid.localFilterState.isEnabled = true
+      resultView.onLocalFilterStateChanged()
+      return LocalFilterPopup(grid, columnIdx, items, column.name).popup
     }
   }
 }

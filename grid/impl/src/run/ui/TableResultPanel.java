@@ -383,6 +383,12 @@ public class TableResultPanel extends UserDataHolderBase
   }
 
   @Override
+  public void setResultViewFitColumnsToWidth(boolean v) {
+    myResultViewSettings.myFitColumnsToWidth = v;
+    if (myResultView != null) myResultView.setFitColumnsToWidth(v);
+  }
+
+  @Override
   public void setResultViewShowRowNumbers(boolean v) {
     myResultViewSettings.myShowRowNumbers = v;
     if (myResultView != null) myResultView.showRowNumbers(v);
@@ -498,6 +504,7 @@ public class TableResultPanel extends UserDataHolderBase
       myResultView.getComponent().addMouseListener(myResultViewSettings.myMouseListener);
     }
     if (myResultViewSettings.myVisibleRowCount > 0) myResultView.setVisibleRowCount(myResultViewSettings.myVisibleRowCount);
+    if (myResultViewSettings.myFitColumnsToWidth) myResultView.setFitColumnsToWidth(true);
     myResultView.showRowNumbers(myResultViewSettings.myShowRowNumbers);
     myResultView.setTransparentColumnHeaderBackground(myResultViewSettings.myTransparentColumnHeaderBg);
     myResultView.setAdditionalRowsCount(myResultViewSettings.myAdditionalRowsCount);
@@ -775,8 +782,8 @@ public class TableResultPanel extends UserDataHolderBase
   @Override
   public @NotNull Set<ModelIndex<GridColumn>> columnsThatCanTogglePin() {
     Set<ModelIndex<GridColumn>> result = new HashSet<>(myColumnPinModel.pinnedColumns());
-    if (!(myResultView instanceof TableResultView view)) return result;
-    for (int modelIndex : view.columnsThatCanBePinned(myColumnPinModel.pinnedColumns())) result.add(ModelIndex.forColumn(this, modelIndex));
+    if (!(myResultView instanceof ResultViewWithFrozenColumns view)) return result;
+    result.addAll(view.columnsThatCanBePinned(myColumnPinModel.pinnedColumns()));
     if (view.canFitPinnedColumns(myColumnPinModel.pinnedColumns())) {
       for (var column : getDataModel(DATA_WITH_MUTATIONS).getColumnIndices().asIterable()) {
         if (!isColumnEnabled(column)) result.add(column);
@@ -2557,6 +2564,7 @@ public class TableResultPanel extends UserDataHolderBase
   private static class ResultViewSettings {
     MouseListener myMouseListener;
     int myVisibleRowCount;
+    boolean myFitColumnsToWidth;
     boolean myShowRowNumbers;
     boolean myTransparentRowHeaderBg;
     boolean myTransparentColumnHeaderBg;

@@ -52,7 +52,7 @@ class TableHeatmapColorLayer private constructor(private val dataGrid: DataGrid,
         if (useOldColors) {
           tableResultView.showHorizontalLines = value != ColoringMode.OFF
         }
-        tableResultView.repaint()
+        dataGrid.mainResultViewComponent.repaint()
       }
     }
 
@@ -61,7 +61,7 @@ class TableHeatmapColorLayer private constructor(private val dataGrid: DataGrid,
     set(value) {
       if (field != value) {
         field = value
-        tableResultView.repaint()
+        dataGrid.mainResultViewComponent.repaint()
       }
     }
 
@@ -69,7 +69,7 @@ class TableHeatmapColorLayer private constructor(private val dataGrid: DataGrid,
     set(value) {
       if (field != value) {
         field = value
-        tableResultView.repaint()
+        dataGrid.mainResultViewComponent.repaint()
       }
     }
 
@@ -272,7 +272,7 @@ class TableHeatmapColorLayer private constructor(private val dataGrid: DataGrid,
       val tableHeatmapColorLayer = TableHeatmapColorLayer(dataGrid, tableResultView, useOldColors)
       Disposer.register(dataGrid, tableHeatmapColorLayer)
       gridColorModel.addLayer(tableHeatmapColorLayer)
-      tableResultView.repaint()
+      dataGrid.mainResultViewComponent.repaint()
 
       if (useOldColors) {
         tableResultView.showHorizontalLines = true

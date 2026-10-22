@@ -3,12 +3,12 @@ package com.intellij.database.run.ui.grid.renderers;
 import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.GridCellRequest;
 import com.intellij.database.datagrid.GridColumn;
+import com.intellij.database.datagrid.GridPresentationMode;
 import com.intellij.database.datagrid.GridRow;
 import com.intellij.database.datagrid.HierarchicalColumnsDataGridModel.ColumnNamesHierarchyNode;
 import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.datagrid.NestedTable;
 import com.intellij.database.datagrid.ViewIndex;
-import com.intellij.database.run.ui.table.TableResultView;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.EditorTextFieldCellRenderer.AbbreviatingRendererComponent;
 import com.intellij.util.ui.JBEmptyBorder;
@@ -55,11 +55,11 @@ public class NestedTableCellRendererFactory implements GridCellRendererFactory {
       AbbreviatingRendererComponent component =
         (AbbreviatingRendererComponent) super.getComponent(rowIdx, columnIdx, value, modelColumn);
 
-      if (!(myGrid.getResultView() instanceof TableResultView tableView)) {
+      if (myGrid.getPresentationMode() != GridPresentationMode.TABLE) {
         return component;
       }
 
-      int hoveredRowIdx = tableView.getHoveredRow();
+      int hoveredRowIdx = myGrid.getResultView().getHoveredRow();
       boolean isHoveredRow = (hoveredRowIdx == rowIdx.asInteger());
       component.setText(getValueText(value, isHoveredRow));
 

@@ -31,4 +31,7 @@ public interface DataGridAppearance {
   void expandMultilineRows(boolean v);
 
   default void setHoveredRowBgHighlightingEnabled(boolean v) {}
+
+  /** Whether the columns share the width of the view, as a read-only preview needs, instead of keeping their own widths. */
+  default void setResultViewFitColumnsToWidth(boolean v) {}
 }

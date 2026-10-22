@@ -53,7 +53,6 @@ import kotlin.math.min
 
 class LocalFilterPopup(
     private val grid: DataGrid,
-    private val resultView: TableResultView,
     private val columnIdx: ModelIndex<GridColumn>,
     private val items: List<ColumnItem>,
     columnName: @NlsSafe String
@@ -256,13 +255,13 @@ class LocalFilterPopup(
     items.forEach { item ->
       item.isSelected = f(item.isSelected)
       if (item.isSelected) {
-        resultView.localFilterState.enableForColumn(columnIdx, item.value)
+        grid.localFilterState.enableForColumn(columnIdx, item.value)
       }
       else {
-        resultView.localFilterState.disableForColumn(columnIdx, item.value)
+        grid.localFilterState.disableForColumn(columnIdx, item.value)
       }
     }
-    resultView.updateRowFilter()
+    grid.resultView.onLocalFilterStateChanged()
     grid.panel.component.repaint()
 
     updateStatusText()
@@ -364,7 +363,7 @@ class LocalFilterPopup(
   }
 
   private fun updateStatusText() {
-    if (resultView.localFilterState.columnFilterEnabled(columnIdx)) {
+    if (grid.localFilterState.columnFilterEnabled(columnIdx)) {
       statusLabel.text = DataGridBundle.message("action.Console.TableResult.ColumnLocalFilter.LocalFilterPopup.Status.WhenSelected",
                                                 grid.visibleRowsCount)
     }

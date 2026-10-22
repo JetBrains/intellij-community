@@ -22,9 +22,9 @@ class ColumnLocalFilterClearAllAction : DumbAwareAction(), GridAction, ActionRem
     val grid = e.getData(DatabaseDataKeys.DATA_GRID_KEY) ?: return
     val resultView = grid.resultView as? TableResultView ?: return
 
-    resultView.localFilterState.reset()
-    resultView.localFilterState.isEnabled = true
-    resultView.updateRowFilter()
+    grid.localFilterState.reset()
+    grid.localFilterState.isEnabled = true
+    resultView.onLocalFilterStateChanged()
     grid.panel.component.repaint()
   }
 }

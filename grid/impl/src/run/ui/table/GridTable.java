@@ -1240,7 +1240,7 @@ class GridTable extends JBTableWithResizableCells
 
   /**
    * Aligns the leftmost requested column with the visible area in an untransposed table.
-   * Keeps the current vertical scroll position.
+   * Skips pinned columns, which are always in view in the pinned table, and keeps the current vertical scroll position.
    */
   public void scrollColumnsIntoView(@NotNull List<ModelIndex<GridColumn>> columns) {
     if (isTransposed()) return;
@@ -1248,10 +1248,10 @@ class GridTable extends JBTableWithResizableCells
     int target = -1;
     for (ModelIndex<GridColumn> column : columns) {
       int viewColumn = column2View.applyAsInt(column.value);
-      if (viewColumn >= 0 && (target < 0 || viewColumn < target)) target = viewColumn;
+      if (viewColumn >= 0 && !isColumnFrozenHidden(viewColumn) && (target < 0 || viewColumn < target)) target = viewColumn;
     }
     if (target < 0) return;
-    Rectangle visible = getVisibleRect();
+    Rectangle visible = getParent() instanceof JViewport viewport ? viewport.getViewRect() : getVisibleRect();
     Rectangle cell = getCellRect(Math.max(0, getSelectionModel().getLeadSelectionIndex()), target, true);
     // Use the viewport width to show the start of a column wider than the viewport.
     cell.setBounds(cell.x, visible.y, visible.width, visible.height);

@@ -13,6 +13,9 @@ interface ResultViewWithFrozenColumns {
   /** Whether freezing exactly [pinnedColumns] would leave the rest of the view usable. */
   fun canFitPinnedColumns(pinnedColumns: Set<ModelIndex<GridColumn>>): Boolean
 
+  /** The unpinned columns that could each be frozen next to [pinnedColumns] and still leave the rest of the view usable. */
+  fun columnsThatCanBePinned(pinnedColumns: Set<ModelIndex<GridColumn>>): Set<ModelIndex<GridColumn>>
+
   /** Scrolls the leftmost of [columns] into view and leaves the rows where they are. */
   fun scrollColumnsIntoView(columns: List<ModelIndex<GridColumn>>)
 }

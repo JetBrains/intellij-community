@@ -24,15 +24,17 @@ class ColumnLocalFilterToggleAction : ToggleAction(), DumbAware, GridAction,
 
   override fun isSelected(e: AnActionEvent): Boolean {
     val grid: DataGrid? = e.getData(DatabaseDataKeys.DATA_GRID_KEY)
-    return (grid?.resultView as? TableResultView)?.localFilterState?.isEnabled ?: false
+    return grid != null && grid.resultView is TableResultView && grid.localFilterState.isEnabled
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val grid: DataGrid? = e.getData(DatabaseDataKeys.DATA_GRID_KEY)
-    val view = (grid?.resultView as? TableResultView)
-    view?.localFilterState?.isEnabled = state
-    view?.updateRowFilter()
-    grid?.panel?.component?.repaint()
+    val grid: DataGrid = e.getData(DatabaseDataKeys.DATA_GRID_KEY) ?: return
+    val view = grid.resultView as? TableResultView
+    if (view != null) {
+      grid.localFilterState.isEnabled = state
+      view.onLocalFilterStateChanged()
+    }
+    grid.panel.component.repaint()
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {

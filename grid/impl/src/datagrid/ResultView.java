@@ -61,6 +61,11 @@ public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, 
   /** Whether the view has an active editor in any component that renders its cells. */
   boolean isEditing();
 
+  /** The row under the mouse pointer, as a row of the view (a grid column while transposed), or -1 when there is none. */
+  default int getHoveredRow() {
+    return -1;
+  }
+
   boolean isMultiEditingAllowed();
 
   @NotNull
@@ -131,6 +136,10 @@ public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, 
   void reinitSettings();
 
   default void setVisibleRowCount(int v) {
+  }
+
+  /** Whether the columns share the width of the view instead of keeping their own widths. */
+  default void setFitColumnsToWidth(boolean v) {
   }
 
   default void showRowNumbers(boolean v) {

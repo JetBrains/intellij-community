@@ -30,6 +30,11 @@ public interface ResultViewWithCells {
   @Nullable
   TableCellEditor getCellEditor();
 
+  /** The component of the active cell editor, or null when no cell is being edited. */
+  default @Nullable Component getEditorComponent() {
+    return null;
+  }
+
   @Nullable
   Color getCellBackground(@NotNull ViewIndex<GridRow> row, @NotNull ViewIndex<GridColumn> column, boolean selected);
 
