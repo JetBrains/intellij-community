@@ -523,6 +523,9 @@
     <registryKey key="maven.server.use.custom.dependencies.resolver" defaultValue="true"
                  description="Use custom maven dependencies resolver to speed up dependency resolution"/>
 
+    <registryKey key="maven.server.rmi.parallelism" defaultValue="8"
+                 description="Maximal number of concurrent blocking RMI calls to one Maven server"/>
+
     <registryKey key="maven.server.generate.sources.for.aggregator.projects" defaultValue="true"
                  description="Generate sources for aggregator projects (instead of all projects) for better performance"/>
 
