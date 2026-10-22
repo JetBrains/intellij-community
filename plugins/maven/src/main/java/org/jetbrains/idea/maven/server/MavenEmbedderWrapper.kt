@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext
@@ -34,6 +35,11 @@ import java.util.concurrent.TimeUnit
 // FIXME: still some missing transforms?
 abstract class MavenEmbedderWrapper internal constructor(private val project: Project) :
   MavenRemoteObjectWrapper<MavenServerEmbedder?>() {
+
+  private val rmiDispatcher = Dispatchers.IO.limitedParallelism(
+    Registry.intValue("maven.server.rmi.parallelism", 8).coerceAtLeast(1),
+    "Maven RMI"
+  )
 
   @Throws(RemoteException::class)
   override suspend fun getOrCreateWrappee(): MavenServerEmbedder {
@@ -365,7 +371,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       }
 
       try {
-        withContext(Dispatchers.IO) {
+        withContext(rmiDispatcher) {
           tracer.spanBuilder("runMavenExecution").useWithScope { span ->
             val longRunningTaskInput = LongRunningTaskInput(longRunningTaskId, TelemetryContext.current())
             val response = task.run(embedder, longRunningTaskInput)

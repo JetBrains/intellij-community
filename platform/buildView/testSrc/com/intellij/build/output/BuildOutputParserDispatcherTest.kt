@@ -4,9 +4,14 @@ package com.intellij.build.output
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.StartId
 import com.intellij.testFramework.common.timeoutRunBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
+import kotlin.time.Duration.Companion.seconds
 
 class BuildOutputParserDispatcherTest {
 
@@ -127,6 +132,46 @@ class BuildOutputParserDispatcherTest {
 
     multicaster.assertEvents(event)
   }
+
+  /**
+   * The producer of the build output blocks a process output reader thread, and that thread drains a
+   * pipe the producing process writes to. The parser coroutine must therefore never wait for a shared
+   * [Dispatchers.IO] permit, or the whole chain deadlocks. See IDEA-395143.
+   */
+  @Test
+  fun `test lines are parsed while Dispatchers IO is exhausted`(): Unit = timeoutRunBlocking(30.seconds) {
+    val parser = RecordingBuildOutputParser()
+    val permits = ioParallelism()
+    val occupied = CountDownLatch(permits)
+    val release = CountDownLatch(1)
+    try {
+      repeat(permits) {
+        launch(Dispatchers.IO) {
+          occupied.countDown()
+          release.await() // blocks the thread on purpose, so the permit is not released
+        }
+      }
+      // Wait for the hogs to take every permit. The wait is bounded on purpose: another permit holder
+      // in the test JVM keeps some hogs queued, yet it exhausts the pool just as well, so a partial
+      // countdown is still a valid precondition. The test thread is not a Dispatchers.IO worker, so
+      // blocking it here is safe.
+      occupied.await(10, TimeUnit.SECONDS)
+
+      val dispatcher = BuildOutputParserDispatcherImpl(StartId(), listOf(parser), NoopBuildOutputMulticaster)
+      dispatcher.notifyTextAvailable("a\n")
+      dispatcher.close()
+    }
+    finally {
+      release.countDown()
+    }
+
+    parser.assertLines("a")
+  }
+
+  /** The number of permits of [Dispatchers.IO], as `DefaultIoScheduler` computes it. */
+  private fun ioParallelism(): Int =
+    System.getProperty("kotlinx.coroutines.io.parallelism")?.toIntOrNull()
+    ?: 64.coerceAtLeast(Runtime.getRuntime().availableProcessors())
 
   private object NoopBuildOutputMulticaster : BuildOutputMulticaster {
     override fun notifyBuildEvent(event: BuildEvent): Unit = Unit

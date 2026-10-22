@@ -15,15 +15,9 @@ import com.intellij.build.events.StartId
 import com.intellij.build.events.impl.SuccessResultImpl
 import com.intellij.build.output.BuildOutputInstantReader
 import com.intellij.build.output.BuildOutputParser
-import com.intellij.build.output.BuildOutputParserDispatcherImpl
-import com.intellij.openapi.Disposable
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsOrdered
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEqualsUnordered
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.TestDisposable
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.internal.intellij.IntellijCoroutines.softLimitedParallelism
 import org.jetbrains.plugins.gradle.execution.build.output.GradleOutputDispatcherFactory.GradleOutputMessageDispatcher
 import org.jetbrains.plugins.gradle.execution.build.output.GradleOutputDispatcherFactory.TaskNameId
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -391,17 +385,14 @@ class GradleOutputMessageDispatcherTest {
     )
   }
 
-  @OptIn(InternalCoroutinesApi::class)
+  // `10 builds x 10 tasks` creates 110 dispatchers, one hanging parser each. That is above the 64
+  // permits of Dispatchers.IO, so the test fails if the parser consumer waits for a shared permit.
   @Timeout(value = 10, unit = TimeUnit.SECONDS)
   @CartesianTest(name = "{0} builds x {1} tasks")
   fun `test hanging parsers do not exhaust the parser dispatcher`(
     @CartesianTest.Values(ints = [1, 10]) numBuilds: Int,
     @CartesianTest.Values(ints = [1, 10]) numTasks: Int,
-    @TestDisposable disposable: Disposable,
   ) {
-    val coroutineContext = Dispatchers.IO.softLimitedParallelism(1, "Context for ${javaClass.simpleName}")
-    BuildOutputParserDispatcherImpl.setCoroutineContext(coroutineContext, disposable)
-
     val eooCounter = AtomicInteger()
     val parser = BuildOutputParser { _, reader, _ ->
       reader.readAllLines() // hangs until EOO (End of Output)

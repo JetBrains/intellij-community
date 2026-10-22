@@ -4,9 +4,7 @@ package com.intellij.build.output
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.StartId
 import com.intellij.diagnostic.rethrowControlFlowException
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.observable.util.setKotlinProperty
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -14,9 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.CoroutineContext
 
 @Internal
 class BuildOutputParserDispatcherImpl(
@@ -29,8 +25,12 @@ class BuildOutputParserDispatcherImpl(
 
   internal val reader = BuildOutputReplayableLineReaderImpl(linesBufferSize, pushBackBufferSize)
 
+
   @OptIn(DelicateCoroutinesApi::class)
-  private val coroutineScope = GlobalScope.childScope(BuildOutputParserDispatcherImpl::class.java.name, COROUTINE_CONTEXT ?: Dispatchers.IO)
+  private val coroutineScope = GlobalScope.childScope(
+    BuildOutputParserDispatcherImpl::class.java.name,
+    Dispatchers.IO.limitedParallelism(Int.MAX_VALUE, "BuildOutputParserDispatcher")
+  )
 
   private val parserAction = coroutineScope.launch {
     try {
@@ -105,13 +105,6 @@ class BuildOutputParserDispatcherImpl(
   companion object {
 
     private val LOG = logger<BuildOutputInstantReader>()
-
-    private var COROUTINE_CONTEXT: CoroutineContext? = null
-
-    @TestOnly
-    fun setCoroutineContext(coroutineContext: CoroutineContext, parentDisposable: Disposable) {
-      setKotlinProperty(::COROUTINE_CONTEXT, coroutineContext, parentDisposable)
-    }
 
     private fun logException(message: String, exception: Exception) {
       when {
