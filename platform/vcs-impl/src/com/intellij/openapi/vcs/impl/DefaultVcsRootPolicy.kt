@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
@@ -19,6 +20,14 @@ abstract class DefaultVcsRootPolicy protected constructor(protected val myProjec
    * If 'Project' mapping is configured, all vcs roots for these roots will be put to the mappings.
    */
   abstract fun getDefaultVcsRoots(): Collection<VirtualFile>
+
+  /**
+   * Returns whether VCS detection can descend into the directory.
+   * Called under a read action. Non-indexable content is included by default.
+   */
+  open fun shouldScanDirectory(directory: VirtualFile): Boolean {
+    return ProjectFileIndex.getInstance(myProject).isInContent(directory)
+  }
 
   /**
    * A message describing the <Project> mapping in the settings view

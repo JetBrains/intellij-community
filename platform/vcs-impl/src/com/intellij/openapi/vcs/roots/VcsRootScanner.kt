@@ -14,11 +14,11 @@ import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.InitialVfsRefreshService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
+import com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vcs.impl.VcsEP
 import com.intellij.openapi.vcs.impl.VcsInitObject
@@ -94,7 +94,7 @@ class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScop
       visitIgnoredFoldersThemselves: Boolean,
       processor: (VirtualFile) -> VirtualFileVisitor.Result,
     ) {
-      val fileIndex = ProjectRootManager.getInstance(project).fileIndex
+      val rootPolicy = DefaultVcsRootPolicy.getInstance(project)
       val depthLimit = VirtualFileVisitor.limit(Registry.intValue("vcs.root.detector.folder.depth"))
       val ignorePattern = parseDirIgnorePattern()
       // we don't want to load the whole world into VFS during scanning
@@ -120,7 +120,7 @@ class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScop
             return SKIP_CHILDREN
           }
 
-          if (runReadActionBlocking { project.isDisposed || !fileIndex.isInContent(file) }) {
+          if (runReadActionBlocking { project.isDisposed || !rootPolicy.shouldScanDirectory(file) }) {
             return SKIP_CHILDREN
           }
 
