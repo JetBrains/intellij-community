@@ -1,4 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -25,7 +27,7 @@ dev_dist_plugin(
 ### auto-generated section `dev intellij.filePrediction` end
 
 ### auto-generated section `build intellij.filePrediction` start
-jvm_library(
+ij_plugin_module(
     name = "filePrediction",
     srcs = glob(
         [
@@ -36,6 +38,7 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.filePrediction",
+    packed_deps = ["@lib//:file_prediction-file-prediction-model"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -63,6 +66,19 @@ jvm_library(
     ],
 )
 ### auto-generated section `build intellij.filePrediction` end
+
+### auto-generated section `plugin intellij.filePrediction` start
+ij_plugin(
+    name = "filePrediction_plugin",
+    descriptor_module = ":filePrediction_plugin_module",
+    content_modules = [
+        # do not sort,
+        "//plugins/filePrediction/java",
+        "//plugins/filePrediction/vcs",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.filePrediction` end
 
 ### auto-generated section `iml intellij.filePrediction` start
 exports_files(

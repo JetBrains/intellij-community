@@ -1,4 +1,6 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -22,7 +24,7 @@ dev_dist_plugin(
 ### auto-generated section `dev intellij.statsCollector` end
 
 ### auto-generated section `build intellij.statsCollector` start
-jvm_library(
+ij_plugin_module(
     name = "stats-collector",
     srcs = glob(
         [
@@ -33,6 +35,7 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.statsCollector",
+    packed_deps = ["@lib//:stats_collector-completion-log-events"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -61,6 +64,14 @@ jvm_library(
     ],
 )
 ### auto-generated section `build intellij.statsCollector` end
+
+### auto-generated section `plugin intellij.statsCollector` start
+ij_plugin(
+    name = "stats-collector_plugin",
+    descriptor_module = ":stats-collector_plugin_module",
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.statsCollector` end
 
 ### auto-generated section `iml intellij.statsCollector` start
 exports_files(

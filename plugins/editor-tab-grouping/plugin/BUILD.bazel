@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -27,6 +28,15 @@ jvm_library(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.platform.editorTabGrouping` end
+
+### auto-generated section `plugin intellij.platform.editorTabGrouping` start
+ij_plugin(
+    name = "editorTabGrouping_plugin",
+    descriptor_module = ":editorTabGrouping",
+    content_modules = ["//plugins/editor-tab-grouping:editorTabGrouping-impl"],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.platform.editorTabGrouping` end
 
 ### auto-generated section `iml intellij.platform.editorTabGrouping` start
 exports_files(

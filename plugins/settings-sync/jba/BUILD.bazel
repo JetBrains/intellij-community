@@ -1,4 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 jps_test(
@@ -48,6 +49,19 @@ jvm_library(
     ],
 )
 ### auto-generated section `build intellij.settingsSync` end
+
+### auto-generated section `plugin intellij.settingsSync` start
+ij_plugin(
+    name = "settingsSync_plugin",
+    descriptor_module = ":settingsSync",
+    content_modules = [
+        # do not sort,
+        "//plugins/settings-sync/settingsSync.performanceTesting",
+        "//libraries/cloud-config-client:cloud-config-client_plugin_module",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.settingsSync` end
 
 ### auto-generated section `iml intellij.settingsSync` start
 exports_files(
