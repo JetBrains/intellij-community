@@ -23,7 +23,6 @@ import java.net.URI
 
 @Suppress("DEPRECATION")
 class HTMLEditorProvider : FileEditorProvider, DumbAware {
-  @Suppress("CompanionObjectInExtension")
   companion object {
     const val JS_FUNCTION_NAME: String = "jbCefQuery"
 
@@ -100,10 +99,10 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
   @ApiStatus.Internal
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     require(file is HTMLVirtualFile) {
-      "cannot create html editor for non-html file, actual $file"
+      "cannot create an HTML editor for a non-HTML file $file"
     }
     require(!file.isDisposed()) {
-      "html request is already disposed"
+      "HTML request is already disposed"
     }
     return HTMLFileEditorMock(file)
   }
@@ -128,23 +127,24 @@ class HTMLEditorProvider : FileEditorProvider, DumbAware {
     var queryHandler: JsQueryHandler? = null
       private set
     @ApiStatus.Internal
-    var requestHandler: ResourceHandler? = null; private set
+    var requestHandler: ResourceHandler? = null
+      private set
     @ApiStatus.Internal
     var onUrlChanged: (String?, String) -> Unit = { _, _ -> }
       private set
 
     companion object {
+      /**
+       * Creates a Request object with the provided HTML content.
+       *
+       * @param html The HTML content to display in the editor.
+       * @param url A synthetic URL that will be observable from inside the page's JavaScript.
+       *            This is not the actual URL where content will be loaded from, but rather
+       *            a value that can be accessed by scripts running in the page.
+       *            It can be used for routing or state management within the HTML.
+       * @return A new Request instance configured with the provided HTML content and URL.
+       */
       @JvmOverloads
-        /**
-         * Creates a Request object with the provided HTML content.
-         *
-         * @param html The HTML content to display in the editor.
-         * @param url A synthetic URL that will be observable from inside the page's JavaScript.
-         *            This is not the actual URL where content will be loaded from, but rather
-         *            a value that can be accessed by scripts running in the page.
-         *            It can be used for routing or state management within the HTML.
-         * @return A new Request instance configured with the provided HTML content and URL.
-         */
       fun html(html: String, url: String? = null): Request = Request(html = html, url = url)
 
       @JvmStatic
