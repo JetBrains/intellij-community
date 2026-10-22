@@ -69,7 +69,6 @@ val existingPackageAttributesInCommunity: Map<String, Set<String>> = mapOf(
   "intellij.javaFX.properties" to setOf("plugins/javaFX/properties/resources/intellij.javaFX.properties.xml"),
   "intellij.jsonpath" to setOf("plugins/jsonpath/resources/META-INF/plugin.xml"),
   "intellij.kotlin.dev" to setOf("plugins/dev/intellij.kotlin.dev/resources/intellij.kotlin.dev.xml"),
-  "intellij.laf.win10" to setOf("plugins/laf/win10/resources/META-INF/plugin.xml"),
   "intellij.lsp.client.playground" to setOf("plugins/lsp.client.playground/resources/META-INF/plugin.xml"),
   "intellij.marketplaceMl" to setOf("plugins/marketplace-ml/resources/META-INF/plugin.xml"),
   "intellij.mcpserver.plugin" to setOf("plugins/mcp-server/mcpserver.plugin/resources/META-INF/plugin.xml"),
