@@ -49,42 +49,19 @@ final class EditorAccessibleTextNavigation {
     int offset,
     @MagicConstant(intValues = {BEFORE, HERE, AFTER})
     int direction) {
-    int length = myAccessibleText.getLength();
-    if (offset < 0 || offset >= length) {
+    if (offset < 0 || offset >= myAccessibleText.getLength()) {
       return null;
     }
     switch (type) {
-      case CHARACTER: {
-        if (offset + direction < length && offset + direction >= 0) {
-          int startOffset = offset + direction;
-          return myAccessibleText.getText(startOffset, startOffset + 1);
-        }
-        break;
+      case CHARACTER, WORD, SENTENCE -> {
+        AccessibleTextSequence sequence = getSequenceAtIndex(type, offset, direction);
+        return sequence == null ? null : sequence.text;
       }
-
-      case WORD: {
-        var word = getWordOrLexeme(offset, direction);
-        return word == null ? null : word.text;
-      }
-
-      case SENTENCE: {
-        int lineStart = getLineAtOffsetStart(offset, direction);
-        int lineEnd = getLineAtOffsetEnd(offset, direction);
-        if (lineStart == -1 || lineEnd == -1) {
-          return null;
-        }
-        return myAccessibleText.getText(lineStart, lineEnd);
-      }
-
-      case LINE:
-      case ATTRIBUTE_RUN:
+      case LINE, ATTRIBUTE_RUN -> {
         // Not expected to be called in this method!
         assert false : type;
-
-      default:
-        break;
+      }
     }
-
     return null;
   }
 
