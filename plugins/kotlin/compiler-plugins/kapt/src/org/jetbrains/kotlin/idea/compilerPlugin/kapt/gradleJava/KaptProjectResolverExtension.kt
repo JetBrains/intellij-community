@@ -28,17 +28,18 @@ class KaptProjectResolverExtension : AbstractProjectResolverExtension() {
         private val LOG = Logger.getInstance(KaptProjectResolverExtension::class.java)
     }
 
-    override fun getModelProvider(): ProjectImportModelProvider = KaptGradleModelProvider(
-        KotlinGradleModelFetchProperties.getExecutionMode()
-    )
+    override fun getModelProvider(): ProjectImportModelProvider? {
+        if (isAndroidPluginRequestingKaptModel()) return null
+        return KaptGradleModelProvider(KotlinGradleModelFetchProperties.getExecutionMode())
+    }
 
     override fun getToolingExtensionsClasses(): Set<Class<*>> {
-        val isAndroidPluginRequestingKotlinGradleModelKey = Key.findKeyByName("IS_ANDROID_PLUGIN_REQUESTING_KAPT_GRADLE_MODEL_KEY")
-        return if (isAndroidPluginRequestingKotlinGradleModelKey != null && resolverCtx.getUserData(isAndroidPluginRequestingKotlinGradleModelKey) != null) {
-            emptySet()
-        } else {
-            KaptGradleModelProvider.MODELS
-        }
+        return if (isAndroidPluginRequestingKaptModel()) emptySet() else KaptGradleModelProvider.MODELS
+    }
+
+    private fun isAndroidPluginRequestingKaptModel(): Boolean {
+        val key = Key.findKeyByName("IS_ANDROID_PLUGIN_REQUESTING_KAPT_GRADLE_MODEL_KEY") ?: return false
+        return resolverCtx.getUserData(key) != null
     }
 
     override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {
