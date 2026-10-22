@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.messages.Topic
 import kotlinx.coroutines.CompletableDeferred
@@ -170,18 +171,55 @@ class VcsRepositoryManager @ApiStatus.Internal constructor(
     waiter.join()
   }
 
+  /**
+   * Looks up the repository for the given file.
+   * If the repository list does not contain the repository, the method updates the list and looks up the repository again.
+   *
+   * Do not call this method under a read action. The update can be slow and can need a read lock in a different thread.
+   * Under a read action, the method logs an error and does not update the list.
+   *
+   * @see getRepositoryForFileQuick
+   */
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false)
   fun getRepositoryForFile(file: VirtualFile?): Repository? = getRepositoryForFile(file = file, quick = false)
 
+  /**
+   * Looks up the repository for the given file from the current repository list.
+   */
   @CalledInAny
   fun getRepositoryForFileQuick(file: VirtualFile?): Repository? = getRepositoryForFile(file = file, quick = true)
 
+  /**
+   * Use [getRepositoryForFile] or [getRepositoryForFileQuick] instead.
+   * If [quick] is `false`, the method can update the repository list. Then do not call it under a read action.
+   */
+  @ApiStatus.Internal
   fun getRepositoryForFile(file: VirtualFile?, quick: Boolean): Repository? {
     val vcsRoot = vcsManager.getVcsRootObjectFor(file) ?: return getExternalRepositoryForFile(file)
     return if (quick) getRepositoryForRootQuick(vcsRoot.path) else getRepositoryForRoot(vcsRoot.path)
   }
 
-  fun getRepositoryForFile(file: FilePath?, quick: Boolean): Repository? {
+  /**
+   * Looks up the repository for the given file.
+   * If the repository list does not contain the repository, the method updates the list and looks up the repository again.
+   *
+   * Do not call this method under a read action. The update can be slow and can need a read lock in a different thread.
+   * Under a read action, the method logs an error and does not update the list.
+   *
+   * @see getRepositoryForFileQuick
+   */
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false)
+  fun getRepositoryForFile(file: FilePath?): Repository? = getRepositoryForFile(file = file, quick = false)
+
+  /**
+   * Looks up the repository for the given file from the current repository list.
+   */
+  @CalledInAny
+  fun getRepositoryForFileQuick(file: FilePath?): Repository? = getRepositoryForFile(file = file, quick = true)
+
+  private fun getRepositoryForFile(file: FilePath?, quick: Boolean): Repository? {
     val vcsRoot = vcsManager.getVcsRootObjectFor(file) ?: return getExternalRepositoryForFile(file)
     return if (quick) getRepositoryForRootQuick(vcsRoot.path) else getRepositoryForRoot(vcsRoot.path)
   }
@@ -214,6 +252,11 @@ class VcsRepositoryManager @ApiStatus.Internal constructor(
     return null
   }
 
+  /**
+   * Returns the repository for the given root from the current repository list.
+   * The method does not update the list, so you can call it on any thread and under a read action.
+   */
+  @CalledInAny
   fun getRepositoryForRootQuick(rootPath: FilePath?): Repository? {
     return getRepositoryForRoot(root = getVirtualFileForRoot(rootPath) ?: return null, updateIfNeeded = false)
   }
@@ -242,8 +285,23 @@ class VcsRepositoryManager @ApiStatus.Internal constructor(
     }
   }
 
+  /**
+   * Returns the repository for the given root from the current repository list.
+   */
+  @CalledInAny
   fun getRepositoryForRootQuick(root: VirtualFile?): Repository? = getRepositoryForRoot(root = root, updateIfNeeded = false)
 
+  /**
+   * Looks up the [Repository] by the given root directory.
+   * If the current repository list does not contain the root, the method updates the list and looks up the repository again.
+   *
+   * Do not call this method under a read action. The update can be slow and can need a read lock in a different thread.
+   * Under a read action, the method logs an error and does not update the list.
+   *
+   * @see getRepositoryForRootQuick
+   */
+  @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
+  @RequiresReadLockAbsence(generateAssertion = false)
   fun getRepositoryForRoot(root: VirtualFile?): Repository? = getRepositoryForRoot(root = root, updateIfNeeded = true)
 
   private fun getRepositoryForRoot(root: VirtualFile?, updateIfNeeded: Boolean): Repository? {
@@ -257,6 +315,11 @@ class VcsRepositoryManager @ApiStatus.Internal constructor(
     if (updateIfNeeded && app.isDispatchThread && !app.isUnitTestMode && !app.isHeadlessEnvironment) {
       updateIfNeeded = false
       LOG.error("Do not call synchronous repository update in EDT")
+    }
+
+    if (updateIfNeeded && app.isReadAccessAllowed && !app.isUnitTestMode && !app.isHeadlessEnvironment) {
+      updateIfNeeded = false
+      LOG.error("Do not call synchronous repository update under a Read Action")
     }
 
     REPO_LOCK.readLock().lock()

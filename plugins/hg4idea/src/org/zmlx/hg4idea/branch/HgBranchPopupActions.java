@@ -22,6 +22,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -194,8 +195,12 @@ public final class HgBranchPopupActions {
       assert vcs != null;
       final HgRepositoryManager repositoryManager = HgUtil.getRepositoryManager(project);
       List<Change> changesForRepositories = ContainerUtil.filter(activeChangeList.getChanges(),
-                                                                 change -> myRepositories.contains(repositoryManager.getRepositoryForFile(
-                                                                   ChangesUtil.getFilePath(change))));
+                                                                 change -> {
+                                                                   FilePath filePath = ChangesUtil.getFilePath(change);
+                                                                   HgRepository repository =
+                                                                     repositoryManager.getRepositoryForFileQuick(filePath);
+                                                                   return myRepositories.contains(repository);
+                                                                 });
       Set<AbstractVcs> affectedVcses = Collections.singleton(vcs);
       List<HgCloseBranchExecutor> executors = Collections.singletonList(new HgCloseBranchExecutor(myRepositories));
       String commitMessage = "Close Branch"; //NON-NLS

@@ -17,7 +17,7 @@ internal class HgBranchStateProvider(val project: Project) : BranchStateProvider
       return null
     }
 
-    val repository = VcsRepositoryManager.getInstance(project).getRepositoryForFile(path, true) as? HgRepository
+    val repository = VcsRepositoryManager.getInstance(project).getRepositoryForFileQuick(path) as? HgRepository
     return repository?.let { BranchDataImpl(it.root.presentableName, it.currentBranchName) }
   }
 }

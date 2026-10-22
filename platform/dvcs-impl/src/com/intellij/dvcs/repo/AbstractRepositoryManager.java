@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NonNls;
@@ -41,6 +42,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
 
   @Override
   @RequiresBackgroundThread(generateAssertion = false)
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @Nullable T getRepositoryForRoot(@Nullable VirtualFile root) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForRoot(root));
   }
@@ -74,10 +76,16 @@ public abstract class AbstractRepositoryManager<T extends Repository>
 
   @Override
   @RequiresBackgroundThread(generateAssertion = false)
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @Nullable T getRepositoryForFile(@Nullable VirtualFile file) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file));
   }
 
+  /**
+   * Returns the {@link Repository} which the given file belongs to, from the current repository list.
+   *
+   * @see #getRepositoryForFile(VirtualFile)
+   */
   @CalledInAny
   public @Nullable T getRepositoryForFileQuick(@Nullable VirtualFile file) {
     return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFileQuick(file));
@@ -85,14 +93,15 @@ public abstract class AbstractRepositoryManager<T extends Repository>
 
   @Override
   @RequiresBackgroundThread(generateAssertion = false)
+  @RequiresReadLockAbsence(generateAssertion = false)
   public @Nullable T getRepositoryForFile(@Nullable FilePath file) {
-    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file, false));
+    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file));
   }
 
   @Override
   @CalledInAny
   public @Nullable T getRepositoryForFileQuick(@Nullable FilePath file) {
-    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFile(file, true));
+    return validateAndGetRepository(myGlobalRepositoryManager.getRepositoryForFileQuick(file));
   }
 
   protected @Unmodifiable @NotNull List<T> getRepositories(Class<T> type) {
@@ -109,6 +118,7 @@ public abstract class AbstractRepositoryManager<T extends Repository>
 
   @Override
   @RequiresBackgroundThread
+  @RequiresReadLockAbsence(generateAssertion = false)
   public void updateRepository(@Nullable VirtualFile root) {
     T repo = getRepositoryForRoot(root);
     if (repo != null) {

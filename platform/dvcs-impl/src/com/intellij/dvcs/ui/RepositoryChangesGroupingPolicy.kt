@@ -33,14 +33,14 @@ internal class RepositoryChangesGroupingPolicy(val project: Project, model: Defa
   }
 
   private fun getRepositoryFor(filePath: FilePath): Repository? {
-    val repository = repositoryManager.getRepositoryForFile(filePath, true)
+    val repository = repositoryManager.getRepositoryForFileQuick(filePath)
 
     // Assign submodule change to the parent repository.
     // We can't check for 'FilePath.isDirectory' here, as git4idea is passing 'false' for submodule changes.
     if (repository != null &&
         !repository.vcs.areDirectoriesVersionedItems() &&
         repositoryManager.getRepositoryForRootQuick(filePath) == repository) {
-      val parentRepo = repositoryManager.getRepositoryForFile(repository.root.parent, true)
+      val parentRepo = repositoryManager.getRepositoryForFileQuick(repository.root.parent)
       if (parentRepo != null) return parentRepo
     }
 

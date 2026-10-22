@@ -5,6 +5,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,35 +28,66 @@ public interface RepositoryManager<T extends Repository> {
    * <p/>
    * The method checks both project roots and external roots previously registered
    * via {@link #addExternalRepository(VirtualFile, Repository)}.
+   * <p/>
+   * If the repository list does not contain the root, the method updates the list and looks up the repository again.
+   * Do not call this method under a read action. The update can be slow and can need a read lock in a different thread.
+   * Use {@link #getRepositoryForRootQuick(VirtualFile)} when you hold a read action.
    */
   @Nullable
   @RequiresBackgroundThread
+  @RequiresReadLockAbsence
   T getRepositoryForRoot(@Nullable VirtualFile root);
 
   boolean isExternal(@NotNull T repository);
 
   /**
    * Returns the {@link Repository} which the given file belongs to, or {@code null} if the file is not under any Git or Hg repository.
+   * <p/>
+   * If the repository list does not contain the repository, the method updates the list and looks up the repository again.
+   * Do not call this method under a read action. The update can be slow and can need a read lock in a different thread.
+   * Use {@link #getRepositoryForFileQuick(FilePath)} when you hold a read action.
    */
   @Nullable
   @RequiresBackgroundThread
+  @RequiresReadLockAbsence
   T getRepositoryForFile(@NotNull VirtualFile file);
 
   /**
-   * Returns the {@link Repository} which the given file belongs to, or {@code null} if the file is not under any Git ot Hg repository.
+   * Returns the {@link Repository} which the given file belongs to, or {@code null} if the file is not under any Git or Hg repository.
+   * <p/>
+   * If the current repository list does not contain the repository, the method updates the list and looks up the repository again.
+   * NB: Do not call this method under a read action. The update can be slow and can need a read lock in a different thread.
+   *
+   * @see #getRepositoryForFileQuick(FilePath)
    */
   @Nullable
   @RequiresBackgroundThread
+  @RequiresReadLockAbsence
   T getRepositoryForFile(@NotNull FilePath file);
 
+  /**
+   * Returns the {@link Repository} which the given file belongs to, or {@code null} if the file is not under any Git or Hg repository.
+   *
+   * @see #getRepositoryForFile(FilePath)
+   */
   @Nullable
   @CalledInAny
   T getRepositoryForFileQuick(@NotNull FilePath file);
 
+  /**
+   * Looks up the {@link Repository} by the given root directory, from the current repository list.
+   *
+   * @see #getRepositoryForRoot(VirtualFile)
+   */
   @Nullable
   @CalledInAny
   T getRepositoryForRootQuick(@Nullable VirtualFile root);
 
+  /**
+   * Looks up the {@link Repository} by the given root directory, from the current repository list.
+   *
+   * @see #getRepositoryForRoot(VirtualFile)
+   */
   @Nullable
   @CalledInAny
   T getRepositoryForRootQuick(@Nullable FilePath rootPath);

@@ -451,9 +451,9 @@ f:com.intellij.dvcs.repo.VcsRepositoryManager
 - f:getExternalRepositoryForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
 - sf:getInstance(com.intellij.openapi.project.Project):com.intellij.dvcs.repo.VcsRepositoryManager
 - f:getRepositories():java.util.Collection
-- f:getRepositoryForFile(com.intellij.openapi.vcs.FilePath,Z):com.intellij.dvcs.repo.Repository
+- f:getRepositoryForFile(com.intellij.openapi.vcs.FilePath):com.intellij.dvcs.repo.Repository
 - f:getRepositoryForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
-- f:getRepositoryForFile(com.intellij.openapi.vfs.VirtualFile,Z):com.intellij.dvcs.repo.Repository
+- f:getRepositoryForFileQuick(com.intellij.openapi.vcs.FilePath):com.intellij.dvcs.repo.Repository
 - f:getRepositoryForFileQuick(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
 - f:getRepositoryForRoot(com.intellij.openapi.vfs.VirtualFile):com.intellij.dvcs.repo.Repository
 - f:getRepositoryForRootQuick(com.intellij.openapi.vcs.FilePath):com.intellij.dvcs.repo.Repository
