@@ -3,8 +3,8 @@ use pretty_assertions::assert_eq;
 use std::path::Path;
 
 use super::{
-    GENERAL_SETTINGS, NO_README_SETTINGS, Project, ProjectSource, RESULT_FILE, Sandbox, first_file, live_sandbox, open_no_readme,
-    own_welcome_project, run_dirs, write_project, write_template,
+    GENERAL_SETTINGS, NO_README_SETTINGS, Project, ProjectSource, RESULT_FILE, Sandbox, first_file, license_file_name, live_sandbox,
+    open_no_readme, own_welcome_project, run_dirs, write_project, write_template,
 };
 use crate::bench::arm::Arm;
 use crate::bench::record::{RunId, RunKind};
@@ -15,7 +15,7 @@ fn the_template_has_the_settings_and_the_license() {
     let license = dir.path().join("idea.key");
     std::fs::write(&license, "key").expect("a license");
     let template = Sandbox::new(dir.path().join("template"));
-    write_template(&template, &license).expect("a template");
+    write_template(&template, &license, None).expect("a template");
     assert_eq!(
         std::fs::read_to_string(template.config().join("options/ide.general.xml")).expect("the settings"),
         GENERAL_SETTINGS
@@ -25,8 +25,24 @@ fn the_template_has_the_settings_and_the_license() {
         "key"
     );
     assert!(template.system().is_dir() && template.plugins().is_dir());
-    let error = write_template(&template, &dir.path().join("absent")).expect_err("no license");
+    let error = write_template(&template, &dir.path().join("absent"), None).expect_err("no license");
     assert!(format!("{error:#}").starts_with("cannot copy the license "), "{error:#}");
+}
+
+/// The license file takes the short name of the product: IDEA without a prefix, and RustRover by its prefix.
+#[test]
+fn the_license_file_is_named_by_the_platform_prefix() {
+    assert_eq!(license_file_name(None), "idea.key");
+    assert_eq!(license_file_name(Some("RustRover")), "rustrover.key");
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let license = dir.path().join("idea.key");
+    std::fs::write(&license, "key").expect("a license");
+    let template = Sandbox::new(dir.path().join("template"));
+    write_template(&template, &license, Some("RustRover")).expect("a template");
+    assert_eq!(
+        std::fs::read_to_string(template.config().join("rustrover.key")).expect("the license"),
+        "key"
+    );
 }
 
 #[test]

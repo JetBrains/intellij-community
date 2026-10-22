@@ -240,10 +240,19 @@ impl Sandbox {
     }
 }
 
-/// Writes the sandbox template: the general settings and the license. The FUS test scheme comes from a headless run.
-pub(crate) fn write_template(template: &Sandbox, license: &Path) -> anyhow::Result<()> {
+/// The name of the license file of a product in its config directory: the short name of its product descriptor in
+/// lower case, then `.key`. The short name equals the platform prefix, such as `RustRover`, and a distribution without
+/// a prefix is IDEA, whose file is `idea.key`.
+pub(crate) fn license_file_name(platform_prefix: Option<&str>) -> String {
+    format!("{}.key", platform_prefix.unwrap_or("idea").to_lowercase())
+}
+
+/// Writes the sandbox template: the general settings and the license, see [`license_file_name`]. The FUS test scheme
+/// comes from a headless run.
+pub(crate) fn write_template(template: &Sandbox, license: &Path, platform_prefix: Option<&str>) -> anyhow::Result<()> {
     files::write_text(&template.config().join("options").join("ide.general.xml"), GENERAL_SETTINGS)?;
-    std::fs::copy(license, template.config().join("idea.key")).with_context(|| format!("cannot copy the license {}", license.display()))?;
+    let target = template.config().join(license_file_name(platform_prefix));
+    std::fs::copy(license, &target).with_context(|| format!("cannot copy the license {}", license.display()))?;
     for dir in [template.system(), template.plugins()] {
         std::fs::create_dir_all(&dir).with_context(|| format!("cannot create {}", dir.display()))?;
     }

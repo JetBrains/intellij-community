@@ -304,7 +304,8 @@ impl Bench<'_> {
         let launcher = Launcher::of(&generation, self.runner.clone(), repo, profiler, args.hold)?;
 
         let template = Sandbox::new(session.join(TEMPLATE_DIR));
-        session::write_template(&template, license).map_err(|error| session_failed(format!("{error:#}")))?;
+        session::write_template(&template, license, generation.config.platform_prefix.as_deref())
+            .map_err(|error| session_failed(format!("{error:#}")))?;
         let project = match &plan.project {
             Some(PlannedProject::Start(source)) => {
                 Some(session::write_project(&template, source).map_err(|error| session_failed(format!("{error:#}")))?)
