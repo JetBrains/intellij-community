@@ -2,11 +2,14 @@
 package com.intellij.ide.whatsNew;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.util.Urls;
@@ -40,7 +43,7 @@ final class JcefWhatsNewPageProvider implements WhatsNewPageProvider {
   ) {
     var request = HTMLEditorProvider.Request.url(
       Urls.newFromEncoded(url)
-        .addParameters(getRequestParameters(includePlatformData))
+        .addParameters(getRequestParameters(includePlatformData, project))
         .toExternalForm()
     );
 
@@ -67,7 +70,7 @@ final class JcefWhatsNewPageProvider implements WhatsNewPageProvider {
     WhatsNewUsagesCollector.pageDisplayed(project);
   }
 
-  private static Map<String, String> getRequestParameters(boolean includePlatformData) {
+  private static Map<String, String> getRequestParameters(boolean includePlatformData, Project project) {
     var parameters = new LinkedHashMap<String, String>();
 
     parameters.put("var", "embed");
@@ -83,7 +86,12 @@ final class JcefWhatsNewPageProvider implements WhatsNewPageProvider {
       var arch = CpuArch.CURRENT == CpuArch.X86_64 ? "" : CpuArch.CURRENT == CpuArch.ARM64 ? "ARM64" : null;
       if (os != null && arch != null) {
         parameters.put("platform", os + arch);
-        parameters.put("product", ApplicationInfo.getInstance().getBuild().getProductCode());
+      }
+
+      parameters.put("product", ApplicationInfo.getInstance().getBuild().getProductCode());
+
+      if (PluginManagerCore.isLoaded(PluginId.getId("com.intellij.air"))) {
+        parameters.put("code", WelcomeScreenProjectProvider.isWelcomeScreenProject(project) ? "welcome-plugin" : "standard-plugin");
       }
     }
 

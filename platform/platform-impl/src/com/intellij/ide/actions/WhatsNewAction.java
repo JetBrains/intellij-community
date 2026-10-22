@@ -48,16 +48,18 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
     var whatsNewUrl = ExternalProductResourceUrls.getInstance().getWhatIsNewPageUrl();
     if (whatsNewUrl == null) throw new IllegalStateException();
     var url = whatsNewUrl.toExternalForm();
+    var includePlatformData = false;
 
     if (ApplicationManager.getApplication().isInternal() && (e.getModifiers() & ActionEvent.SHIFT_MASK) != 0) {
       var title = IdeBundle.message("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName());
       var prompt = IdeBundle.message("browser.url.popup");
       url = Messages.showInputDialog(e.getProject(), prompt, title, null, url, null);
       if (url == null) return;
+      includePlatformData = true;
     }
 
     var project = e.getProject();
-    if (project == null || !openEmbeddedWhatsNewPage(project, url, /*includePlatformData:*/ false)) {
+    if (project == null || !openEmbeddedWhatsNewPage(project, url, includePlatformData)) {
       BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url));
     }
   }
