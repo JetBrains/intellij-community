@@ -63,8 +63,8 @@ public final class WhatsNewAction extends AnAction implements DumbAware {
   }
 
   @ApiStatus.Internal
-  public static void openWhatsNewPage(@NotNull Project project, @NotNull String url, boolean onUpgrade) {
-    if (openEmbeddedWhatsNewPage(project, url, /*includePlatformData:*/ onUpgrade)) {
+  public static void openWhatsNewPage(@NotNull Project project, @NotNull String url) {
+    if (openEmbeddedWhatsNewPage(project, url, /*includePlatformData:*/ true)) {
       return;
     }
 

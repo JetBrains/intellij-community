@@ -67,6 +67,7 @@ class DefaultWhatsNewQueryHandler(private val project: Project) : HTMLEditorProv
     else if (!performAction("AgentThreads.MainToolbar.NewThread")) {
       notifyAirMissing(project)
     }
+    WhatsNewUsagesCollector.airPromoButtonClicked(project)
   }
 
   private suspend fun performAction(actionId: String): Boolean {

@@ -31,16 +31,11 @@ internal class JcefWhatsNewProjectActivity : ProjectActivity {
     if (
       url != null &&
       WhatsNewUtil.isWhatsNewEnabled() &&
-      UpdateCheckerService.shouldShowWhatsNew(appInfo.build, appInfo.isMajorEAP)
+      UpdateCheckerService.shouldShowWhatsNew(appInfo.build, appInfo.isMajorEAP) &&
+      UpdateSettings.getInstance().isShowWhatsNewEditor
     ) {
-      if (UpdateSettings.getInstance().isShowWhatsNewEditor) {
-        withContext(Dispatchers.EDT) {
-          WhatsNewAction.openWhatsNewPage(project, url.toExternalForm(), true)
-        }
-        IdeUpdateUsageTriggerCollector.majorUpdateHappened(true)
-      }
-      else {
-        IdeUpdateUsageTriggerCollector.majorUpdateHappened(false)
+      withContext(Dispatchers.EDT) {
+        WhatsNewAction.openWhatsNewPage(project, url.toExternalForm())
       }
     }
   }

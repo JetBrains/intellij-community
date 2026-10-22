@@ -1,7 +1,3 @@
-f:com.intellij.ide.actions.JcefWhatsNewPageProvider
-- <init>():V
-- isAvailable():Z
-- openWhatsNewPage(com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.openapi.fileEditor.impl.HTMLEditorProvider$JsQueryHandler):V
 f:com.intellij.ide.browsers.actions.OpenHtmlInEmbeddedBrowserAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V

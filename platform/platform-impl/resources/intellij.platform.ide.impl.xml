@@ -1402,6 +1402,7 @@
       implementationClass="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.WelcomeScreenPerformanceCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.HotProjectReopenStartUpPerformanceCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.whatsNew.WhatsNewUsagesCollector"/>
     <postStartupActivity implementation="com.intellij.ide.startup.CheckProjectActivity"/>
     <postStartupActivity implementation="com.intellij.ide.startup.CheckKeysStartupActivity"/>
     <postStartupActivity implementation="com.intellij.openapi.editor.impl.SmoothCaretAutoEnableActivity"/>

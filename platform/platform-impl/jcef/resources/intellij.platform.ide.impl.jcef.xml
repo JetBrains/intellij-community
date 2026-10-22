@@ -29,7 +29,7 @@
     <fileEditorProvider id="html-editor" implementation="com.intellij.openapi.fileEditor.impl.JcefHtmlEditorProvider"/>
     <fileEditorProvider implementation="com.intellij.ide.browsers.actions.WebPreviewEditorProvider"/>
     <aboutPopupDescriptionProvider implementation="com.intellij.platform.ide.impl.jcef.JcefAboutPopupDescriptionProvider"/>
-    <whatsNewPageProvider implementation="com.intellij.ide.actions.JcefWhatsNewPageProvider"/>
+    <whatsNewPageProvider implementation="com.intellij.ide.whatsNew.JcefWhatsNewPageProvider"/>
   </extensions>
 
   <actions resource-bundle="messages.ActionsBundle">
