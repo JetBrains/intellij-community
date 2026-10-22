@@ -16,8 +16,8 @@ import java.util.concurrent.atomic.AtomicReference
  * The initial mode comes from the `intellij.platform.product.mode` system property.
  * A process may then move to another mode without a restart. The JetBrains Client light session moves
  * `LIGHT_REMOTE -> LIGHT_WITH_RD_CONNECTION -> FRONTEND`, and the standalone JetBrains Light product
- * moves `LIGHT_MONOLITH -> MONOLITH`.
- * [transitionTo] performs the move, and [TRANSITIONS] declares which moves are legal.
+ * moves `LIGHT_MONOLITH -> MONOLITH` and back.
+ * [transitionTo] performs the move, and [allowedTargets] declares which moves are legal.
  *
  * Read the mode from product code through [com.intellij.platform.ide.productMode.IdeProductMode].
  * That service needs no application, but it does need the platform. Use this object directly only
@@ -28,11 +28,22 @@ object CurrentProductMode {
   val value: ProductMode
     get() = state.get()
 
-  private val state = AtomicReference(computeInitialProductMode())
+  private val initialMode = computeInitialProductMode()
+  private val state = AtomicReference(initialMode)
 
-  /** The modes that [from] may move to in one step. */
+  /**
+   * The modes that [from] may move to in one step, in a process that started in [initial].
+   * [TRANSITIONS] holds the forward moves. The standalone JetBrains Light product also returns from
+   * [ProductMode.MONOLITH] to [ProductMode.LIGHT_MONOLITH], the mode it started in. A process that
+   * started in another mode has no light mode to return to.
+   */
   @VisibleForTesting
-  fun allowedTargets(from: ProductMode): Set<ProductMode> = TRANSITIONS[from].orEmpty()
+  fun allowedTargets(from: ProductMode, initial: ProductMode = initialMode): Set<ProductMode> {
+    if (from == ProductMode.MONOLITH && initial == ProductMode.LIGHT_MONOLITH) {
+      return setOf(ProductMode.LIGHT_MONOLITH)
+    }
+    return TRANSITIONS[from].orEmpty()
+  }
 
   /**
    * Moves the process into [target] and loads no plugin module.
@@ -41,7 +52,7 @@ object CurrentProductMode {
    * so call `DynamicPlugins.reconfigure(targetProductMode = target)` instead. It performs this move
    * and brings the plugin set with it.
    *
-   * @return `false` when [TRANSITIONS] does not allow the move from the current mode. A second call
+   * @return `false` when [allowedTargets] does not allow the move from the current mode. A second call
    * with the same target therefore returns `false`, because the first call already moved the mode.
    */
   @VisibleForTesting

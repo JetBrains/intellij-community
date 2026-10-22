@@ -37,6 +37,17 @@ class CurrentProductModeTest {
   }
 
   @Test
+  fun `a process that started light returns from the monolith mode`() {
+    assertThat(CurrentProductMode.allowedTargets(ProductMode.MONOLITH, initial = ProductMode.LIGHT_MONOLITH))
+      .containsExactly(ProductMode.LIGHT_MONOLITH)
+    for (initial in ProductMode.entries - ProductMode.LIGHT_MONOLITH) {
+      assertThat(CurrentProductMode.allowedTargets(ProductMode.MONOLITH, initial))
+        .describedAs("targets of 'monolith' in a process that started in '${initial.id}'")
+        .isEmpty()
+    }
+  }
+
+  @Test
   fun `a mode with no declared target cannot move`() {
     for (mode in listOf(ProductMode.MONOLITH, ProductMode.FRONTEND, ProductMode.BACKEND, ProductMode.LANGUAGE_SERVER)) {
       assertThat(CurrentProductMode.allowedTargets(mode))
