@@ -4,6 +4,10 @@ package training.learn.lesson.general.assistance
 import com.intellij.codeInsight.documentation.DocumentationEditorPane
 import com.intellij.codeInsight.documentation.DocumentationHintEditorPane
 import com.intellij.codeInsight.hint.ImplementationViewComponent
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.KeyboardShortcut
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.util.ui.UIUtil
 import org.assertj.swing.timing.Timeout
@@ -11,6 +15,7 @@ import training.dsl.LessonContext
 import training.dsl.LessonSample
 import training.dsl.LessonUtil
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.TaskTestContext
 import training.dsl.triggerOnQuickDocumentationPopup
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
@@ -41,7 +46,7 @@ class QuickPopupsLesson(
         UIUtil.getParentOfType(InternalDecoratorImpl::class.java, pane) != null
       }
       restoreIfModifiedOrMoved(sample)
-      test { actions(it) }
+      test { pressShortcutInDocumentationPopup(it) }
     }
 
     task("QuickJavaDoc") {
@@ -60,7 +65,7 @@ class QuickPopupsLesson(
       }
       trigger(it)
       restoreIfModifiedOrMoved()
-      test { action(it) }
+      test { actions(it) }
     }
 
     task("QuickImplementations") {
@@ -77,9 +82,36 @@ class QuickPopupsLesson(
     }
   }
 
+  /**
+   * The documentation popup opens the tool window only by its own action, which has the [actionId] shortcut.
+   * The global [actionId] action only focuses the popup, so press the shortcut in the focused popup.
+   */
+  private fun TaskTestContext.pressShortcutInDocumentationPopup(actionId: String) {
+    val deadline = System.currentTimeMillis() + POPUP_FOCUS_TIMEOUT_MS
+    while (!isDocumentationPopupFocused() && System.currentTimeMillis() < deadline) {
+      Thread.sleep(50)
+    }
+    val keyStroke = ActionManager.getInstance().getAction(actionId).shortcutSet.shortcuts
+      .filterIsInstance<KeyboardShortcut>()
+      .firstOrNull { it.secondKeyStroke == null }
+      ?.firstKeyStroke
+    if (keyStroke == null) {
+      actions(actionId)
+      return
+    }
+    robot.pressAndReleaseKey(keyStroke.keyCode, keyStroke.modifiers)
+  }
+
+  private fun TaskTestContext.isDocumentationPopupFocused(): Boolean = invokeAndWaitIfNeeded {
+    val focusOwner = IdeFocusManager.getInstance(project).focusOwner
+    focusOwner is DocumentationHintEditorPane && UIUtil.getParentOfType(InternalDecoratorImpl::class.java, focusOwner) == null
+  }
+
   override val helpLinks: Map<String, String>
     get() = mapOf(
       Pair(LessonsBundle.message("quick.popups.help.link"),
            LessonUtil.getHelpLink(helpUrl)),
     )
 }
+
+private const val POPUP_FOCUS_TIMEOUT_MS = 3000L
