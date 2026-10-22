@@ -33,6 +33,15 @@ final class EditorAccessibleTextNavigation {
   /** Looking for text after the given offset */
   static final int AFTER = 1;
 
+  @MagicConstant(intValues = {BEFORE, HERE, AFTER})
+  @interface Direction {}
+
+  @MagicConstant(intValues = {CHARACTER, WORD, SENTENCE})
+  @interface TextPart {}
+
+  @MagicConstant(intValues = {CHARACTER, WORD, SENTENCE, LINE, ATTRIBUTE_RUN})
+  @interface ExtendedTextPart {}
+
   private final EditorImpl editor;
   private final EditorAccessibleText myAccessibleText;
   private final BooleanSupplier isLastCaretMoveForward;
@@ -45,12 +54,7 @@ final class EditorAccessibleTextNavigation {
     this.isLastCaretMoveForward = isLastCaretMoveForward;
   }
 
-  @Nullable String getTextAtOffset(
-    @MagicConstant(intValues = {CHARACTER, WORD, SENTENCE})
-    int type,
-    int offset,
-    @MagicConstant(intValues = {BEFORE, HERE, AFTER})
-    int direction) {
+  @Nullable String getTextAtOffset(@TextPart int type, int offset, @Direction int direction) {
     if (offset < 0 || offset >= myAccessibleText.getLength()) {
       return null;
     }
@@ -70,17 +74,7 @@ final class EditorAccessibleTextNavigation {
   /**
    * Similar to {@link #getTextAtOffset} but returns an {@link AccessibleTextSequence} and can accept a few more types.
    */
-  @Nullable AccessibleTextSequence getSequenceAtIndex(
-      @MagicConstant(intValues = {
-        CHARACTER,
-        WORD,
-        SENTENCE,
-        LINE,
-        ATTRIBUTE_RUN})
-      int type,
-      int offset,
-      @MagicConstant(intValues = {BEFORE, HERE, AFTER})
-      int direction) {
+  @Nullable AccessibleTextSequence getSequenceAtIndex(@ExtendedTextPart int type, int offset, @Direction int direction) {
     assert direction == BEFORE || direction == HERE || direction == AFTER;
 
     int length = myAccessibleText.getLength();
@@ -115,7 +109,7 @@ final class EditorAccessibleTextNavigation {
     return null;
   }
 
-  private int moveLineOffset(int offset, @MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction) {
+  private int moveLineOffset(int offset, @Direction int direction) {
     if (direction == AFTER) {
       int lineNumber = myAccessibleText.getLineNumber(offset);
       lineNumber++;
@@ -136,7 +130,7 @@ final class EditorAccessibleTextNavigation {
     }
   }
 
-  private int getLineAtOffsetStart(int offset, @MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction) {
+  private int getLineAtOffsetStart(int offset, @Direction int direction) {
     offset = moveLineOffset(offset, direction);
     if (offset == -1) {
       return -1;
@@ -145,7 +139,7 @@ final class EditorAccessibleTextNavigation {
     return myAccessibleText.getLineStartOffset(myAccessibleText.getLineNumber(offset));
   }
 
-  private int getLineAtOffsetEnd(int offset, @MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction) {
+  private int getLineAtOffsetEnd(int offset, @Direction int direction) {
     offset = moveLineOffset(offset, direction);
     if (offset == -1) {
       return -1;
@@ -154,7 +148,7 @@ final class EditorAccessibleTextNavigation {
     return myAccessibleText.getLineEndOffset(myAccessibleText.getLineNumber(offset));
   }
 
-  private CaretStopPolicy resolveCaretStopPolicy(@MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction) {
+  private CaretStopPolicy resolveCaretStopPolicy(@Direction int direction) {
     var caretStopOptions = editor.getSettings().getCaretStopOptions();
     switch (direction) {
       case AFTER -> {
@@ -170,7 +164,7 @@ final class EditorAccessibleTextNavigation {
     return caretStopOptions.getForwardPolicy();
   }
 
-  private AccessibleTextSequence getWordOrLexeme(int offset, @MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction) {
+  private AccessibleTextSequence getWordOrLexeme(int offset, @Direction int direction) {
     if (direction == HERE) {
       TextRange placeholder = myAccessibleText.getPlaceholderRange(offset);
       if (placeholder != null) {
@@ -195,7 +189,7 @@ final class EditorAccessibleTextNavigation {
 
 
   private int moveWordOffset(int documentOffset,
-                             @MagicConstant(intValues = {BEFORE, HERE, AFTER}) int direction,
+                             @Direction int direction,
                              CaretStopPolicy stopPolicy,
                              boolean isCamel) {
     if (direction == AFTER) {

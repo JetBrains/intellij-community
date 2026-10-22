@@ -16,13 +16,14 @@ import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorAccessibleTextNavigation.ExtendedTextPart;
+import com.intellij.openapi.editor.impl.EditorAccessibleTextNavigation.TextPart;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -219,29 +220,17 @@ final class AccessibleEditorComponentImpl extends JComponent.AccessibleJComponen
   }
 
   @Override
-  public @Nullable String getAtIndex(
-    @MagicConstant(intValues = {
-      CHARACTER,
-      WORD,
-      SENTENCE})
-    int part,
-    int index) {
+  public @Nullable String getAtIndex(@TextPart int part, int index) {
     return navigation.getTextAtOffset(part, index, HERE);
   }
 
   @Override
-  public @Nullable String getAfterIndex(
-    @MagicConstant(intValues = {CHARACTER, WORD, SENTENCE})
-    int part,
-    int index) {
+  public @Nullable String getAfterIndex(@TextPart int part, int index) {
     return navigation.getTextAtOffset(part, index, AFTER);
   }
 
   @Override
-  public @Nullable String getBeforeIndex(
-    @MagicConstant(intValues = {CHARACTER, WORD, SENTENCE})
-    int part,
-    int index) {
+  public @Nullable String getBeforeIndex(@TextPart int part, int index) {
     return navigation.getTextAtOffset(part, index, BEFORE);
   }
 
@@ -338,41 +327,17 @@ final class AccessibleEditorComponentImpl extends JComponent.AccessibleJComponen
   // ---- Implements AccessibleExtendedText ----
 
   @Override
-  public @Nullable AccessibleTextSequence getTextSequenceAt(
-    @MagicConstant(intValues = {
-      CHARACTER,
-      WORD,
-      SENTENCE,
-      LINE,
-      ATTRIBUTE_RUN})
-    int part,
-    int index) {
+  public @Nullable AccessibleTextSequence getTextSequenceAt(@ExtendedTextPart int part, int index) {
     return navigation.getSequenceAtIndex(part, index, HERE);
   }
 
   @Override
-  public @Nullable AccessibleTextSequence getTextSequenceAfter(
-    @MagicConstant(intValues = {
-      CHARACTER,
-      WORD,
-      SENTENCE,
-      LINE,
-      ATTRIBUTE_RUN})
-    int part,
-    int index) {
+  public @Nullable AccessibleTextSequence getTextSequenceAfter(@ExtendedTextPart int part, int index) {
     return navigation.getSequenceAtIndex(part, index, AFTER);
   }
 
   @Override
-  public @Nullable AccessibleTextSequence getTextSequenceBefore(
-    @MagicConstant(intValues = {
-      CHARACTER,
-      WORD,
-      SENTENCE,
-      LINE,
-      ATTRIBUTE_RUN})
-    int part,
-    int index) {
+  public @Nullable AccessibleTextSequence getTextSequenceBefore(@ExtendedTextPart int part, int index) {
     return navigation.getSequenceAtIndex(part, index, BEFORE);
   }
 
