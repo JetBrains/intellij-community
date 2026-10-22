@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.frontend.providers.actions
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.RegistryManager
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -13,7 +14,7 @@ private const val DEFAULT_MAX_CANDIDATES: Int = 256
  * A remote model that orders IDE actions by how well they match a natural-language query.
  *
  * The `search.everywhere.actions.ranker` registry key selects one ranker by its [id].
- * [SeRankerActionsProvider] calls the selected ranker.
+ * [SeRankerActionsProvider] opens a [SeActionsRankerSession] of the selected ranker for each Search Everywhere popup.
  */
 @Internal
 interface SeActionsRanker {
@@ -22,6 +23,40 @@ interface SeActionsRanker {
    */
   val id: String
 
+  /**
+   * Opens a session for one Search Everywhere popup, or returns `null` when the ranker cannot rank now.
+   * For example, a ranker cannot rank while the user is signed out.
+   *
+   * [SeRankerActionsProvider] opens the session on the first query and disposes it when the popup closes.
+   * While this function returns `null`, the provider calls it again on each query, thus a `null` answer must be cheap.
+   *
+   * The call must be cancellable. Search Everywhere cancels it when the query changes.
+   */
+  suspend fun openSession(): SeActionsRankerSession?
+
+  companion object {
+    val EP_NAME: ExtensionPointName<SeActionsRanker> = ExtensionPointName("com.intellij.searchEverywhere.actionsRanker")
+
+    /**
+     * Returns the ranker that the registry key selects, or `null` when the key is empty or no ranker has this id.
+     */
+    internal suspend fun findSelected(): SeActionsRanker? {
+      val rankerId = RegistryManager.getInstanceAsync().stringValue(RANKER_REGISTRY_KEY)
+      if (rankerId.isNullOrEmpty()) return null
+
+      return EP_NAME.extensionList.firstOrNull { it.id == rankerId }
+    }
+  }
+}
+
+/**
+ * The ranking of one [SeActionsRanker] for one Search Everywhere popup.
+ *
+ * The session holds the resources that the ranking needs while the popup is open, such as a lease of a proxy route.
+ * [dispose] releases them. [SeRankerActionsProvider] disposes the session when the popup closes.
+ */
+@Internal
+interface SeActionsRankerSession : Disposable {
   /**
    * The maximum number of candidates that one [rank] call accepts. The value must be at least 2.
    *
@@ -40,19 +75,7 @@ interface SeActionsRanker {
    */
   suspend fun rank(query: String, candidates: List<SeActionsRankerCandidate>): List<String>
 
-  companion object {
-    val EP_NAME: ExtensionPointName<SeActionsRanker> = ExtensionPointName("com.intellij.searchEverywhere.actionsRanker")
-
-    /**
-     * Returns the ranker that the registry key selects, or `null` when the key is empty or no ranker has this id.
-     */
-    internal suspend fun findSelected(): SeActionsRanker? {
-      val rankerId = RegistryManager.getInstanceAsync().stringValue(RANKER_REGISTRY_KEY)
-      if (rankerId.isNullOrEmpty()) return null
-
-      return EP_NAME.extensionList.firstOrNull { it.id == rankerId }
-    }
-  }
+  override fun dispose() {}
 }
 
 /**

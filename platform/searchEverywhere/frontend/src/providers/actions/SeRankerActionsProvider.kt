@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeExtendedInfoProvider
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeParams
@@ -33,6 +34,7 @@ private val RANKER_TIMEOUT: Duration = 3.seconds
 
 /**
  * Finds actions for a natural-language query with the selected [SeActionsRanker].
+ * It opens one [SeActionsRankerSession] of the ranker for the popup.
  *
  * This provider is not a part of the ML ranking of the Search Everywhere results.
  * The standard actions provider runs in parallel and does not depend on this provider.
@@ -52,6 +54,9 @@ class SeRankerActionsProvider internal constructor(
   private val allCandidatesMutex = Mutex()
   private var allCandidates: List<Candidate>? = null
 
+  private val sessionMutex = Mutex()
+  private var session: SeActionsRankerSession? = null
+
   override val id: String get() = SeProviderIdUtils.RANKER_ACTIONS_ID
   override val displayName: @Nls String get() = actionsProvider.displayName
 
@@ -59,12 +64,14 @@ class SeRankerActionsProvider internal constructor(
     val query = params.inputQuery.trim().take(MAX_QUERY_LENGTH)
     if (query.isEmpty()) return
 
+    // Do not use withTimeout: SeLocalItemDataProvider retries a search that throws CancellationException.
+    val session = withTimeoutOrNull(RANKER_TIMEOUT) { getSession() } ?: return
+
     val candidates = selectCandidates(SeActionsFilter.from(params.filter).includeDisabled)
     if (candidates.isEmpty()) return
 
-    // Do not use withTimeout: SeLocalItemDataProvider retries a search that throws CancellationException.
     val rankedIds = withTimeoutOrNull(RANKER_TIMEOUT) {
-      candidatesStrategy.rank(ranker, query, candidates.map { it.rankerCandidate })
+      candidatesStrategy.rank(session, query, candidates.map { it.rankerCandidate })
     } ?: return
 
     val candidatesById = candidates.associateBy { it.rankerCandidate.id }
@@ -72,6 +79,25 @@ class SeRankerActionsProvider internal constructor(
       val candidate = candidatesById[rankedId] ?: continue
       if (!collector.put(createItem(candidate.actionWrapper, rankedIds.size - index, params.inputQuery))) return
     }
+  }
+
+  /**
+   * Returns the session of [ranker] for this popup, or `null` when the ranker cannot rank now.
+   *
+   * The provider opens the session on the first query and keeps it until the popup closes.
+   * The session is a child of this provider, thus Search Everywhere disposes it together with the provider.
+   */
+  private suspend fun getSession(): SeActionsRankerSession? = sessionMutex.withLock {
+    session?.let { return@withLock it }
+
+    val opened = ranker.openSession() ?: return@withLock null
+    if (!Disposer.tryRegister(this, opened)) {
+      // The popup closed while the session opened.
+      Disposer.dispose(opened)
+      return@withLock null
+    }
+    session = opened
+    opened
   }
 
   /**

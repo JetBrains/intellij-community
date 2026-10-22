@@ -17,7 +17,8 @@ private const val STRATEGY_REGISTRY_KEY: String = "search.everywhere.actions.ran
 private const val RECIPROCAL_RANK_OFFSET: Int = 60
 
 /**
- * Decides which candidates each [SeActionsRanker.rank] call gets when there are more candidates than [SeActionsRanker.maxCandidates].
+ * Decides which candidates each [SeActionsRankerSession.rank] call gets
+ * when there are more candidates than [SeActionsRankerSession.maxCandidates].
  *
  * The `search.everywhere.actions.ranker.candidates` registry key selects the strategy by its [registryOption].
  */
@@ -29,8 +30,12 @@ internal enum class SeActionsCandidatesStrategy(val registryOption: String) {
    * the share of all users who use the action, and the number of times the current user used it.
    */
   POPULARITY("popularity") {
-    override suspend fun rankOverLimit(ranker: SeActionsRanker, query: String, candidates: List<SeActionsRankerCandidate>): List<String> {
-      return ranker.rank(query, selectPopular(candidates, ranker.maxCandidates))
+    override suspend fun rankOverLimit(
+      session: SeActionsRankerSession,
+      query: String,
+      candidates: List<SeActionsRankerCandidate>,
+    ): List<String> {
+      return session.rank(query, selectPopular(candidates, session.maxCandidates))
     }
   },
 
@@ -39,12 +44,16 @@ internal enum class SeActionsCandidatesStrategy(val registryOption: String) {
    * Then it ranks the best candidates of all parts again in one more round.
    */
   SPLIT_AND_MERGE("splitAndMerge") {
-    override suspend fun rankOverLimit(ranker: SeActionsRanker, query: String, candidates: List<SeActionsRankerCandidate>): List<String> {
-      val limit = maxCandidates(ranker)
+    override suspend fun rankOverLimit(
+      session: SeActionsRankerSession,
+      query: String,
+      candidates: List<SeActionsRankerCandidate>,
+    ): List<String> {
+      val limit = maxCandidates(session)
       val partCount = Math.ceilDiv(candidates.size, limit)
       val partSize = Math.ceilDiv(candidates.size, partCount)
       val partResults = coroutineScope {
-        candidates.chunked(partSize).map { part -> async { ranker.rank(query, part) } }.awaitAll()
+        candidates.chunked(partSize).map { part -> async { session.rank(query, part) } }.awaitAll()
       }
 
       val finalistsPerPart = (limit / partCount).coerceAtLeast(1)
@@ -52,36 +61,40 @@ internal enum class SeActionsCandidatesStrategy(val registryOption: String) {
       if (finalistIds.isEmpty()) return emptyList()
 
       // The next round has fewer candidates. When they are still more than the limit, it splits them again.
-      return rank(ranker, query, candidates.filter { it.id in finalistIds })
+      return rank(session, query, candidates.filter { it.id in finalistIds })
     }
   },
 
   /**
-   * Sends all candidates to the ranker in one call and ignores [SeActionsRanker.maxCandidates].
+   * Sends all candidates to the ranker in one call and ignores [SeActionsRankerSession.maxCandidates].
    * Use it to find the real limit of a ranker.
    */
   UNLIMITED("unlimited") {
-    override suspend fun rankOverLimit(ranker: SeActionsRanker, query: String, candidates: List<SeActionsRankerCandidate>): List<String> {
-      return ranker.rank(query, candidates)
+    override suspend fun rankOverLimit(
+      session: SeActionsRankerSession,
+      query: String,
+      candidates: List<SeActionsRankerCandidate>,
+    ): List<String> {
+      return session.rank(query, candidates)
     }
   };
 
   /**
-   * Orders [candidates] by how well they match [query] with [ranker].
+   * Orders [candidates] by how well they match [query] with [session].
    *
    * @return the ids of the matching candidates, the best match first.
    */
-  suspend fun rank(ranker: SeActionsRanker, query: String, candidates: List<SeActionsRankerCandidate>): List<String> {
-    if (candidates.size <= maxCandidates(ranker)) return ranker.rank(query, candidates)
+  suspend fun rank(session: SeActionsRankerSession, query: String, candidates: List<SeActionsRankerCandidate>): List<String> {
+    if (candidates.size <= maxCandidates(session)) return session.rank(query, candidates)
 
-    return rankOverLimit(ranker, query, candidates)
+    return rankOverLimit(session, query, candidates)
   }
 
   /**
-   * Orders [candidates] when there are more of them than [SeActionsRanker.maxCandidates]. Call [rank] instead.
+   * Orders [candidates] when there are more of them than [SeActionsRankerSession.maxCandidates]. Call [rank] instead.
    */
   abstract suspend fun rankOverLimit(
-    ranker: SeActionsRanker,
+    session: SeActionsRankerSession,
     query: String,
     candidates: List<SeActionsRankerCandidate>,
   ): List<String>
@@ -97,7 +110,7 @@ internal enum class SeActionsCandidatesStrategy(val registryOption: String) {
   }
 }
 
-private fun maxCandidates(ranker: SeActionsRanker): Int = ranker.maxCandidates.coerceAtLeast(2)
+private fun maxCandidates(session: SeActionsRankerSession): Int = session.maxCandidates.coerceAtLeast(2)
 
 private suspend fun selectPopular(candidates: List<SeActionsRankerCandidate>, limit: Int): List<SeActionsRankerCandidate> {
   val globalSummary = serviceAsync<ActionsGlobalSummaryManager>()

@@ -19,14 +19,28 @@ private val LOG = logger<SeMockActionsRanker>()
 /**
  * A local [SeActionsRanker] for the development of [SeRankerActionsProvider]. It sends no data to a remote model.
  *
- * It waits for [SIMULATED_LATENCY] to imitate a remote call.
+ * Its session waits for [SIMULATED_LATENCY] to imitate a remote call.
  * Then it orders the candidates by the query words that their names and descriptions contain.
- * It logs each call, its result and its cancellation.
+ * It logs the opening and the disposal of each session, and each call, its result and its cancellation.
  *
  * To select this ranker, set the `search.everywhere.actions.ranker` registry key to `mock`.
  */
 internal class SeMockActionsRanker : SeActionsRanker {
   override val id: String get() = "mock"
+
+  override suspend fun openSession(): SeActionsRankerSession {
+    val session = SeMockActionsRankerSession()
+    LOG.info("Opened $session")
+    return session
+  }
+}
+
+private class SeMockActionsRankerSession : SeActionsRankerSession {
+  private val opened = TimeSource.Monotonic.markNow()
+
+  override fun dispose() {
+    LOG.info("Disposed $this after ${opened.elapsedNow()}")
+  }
 
   override suspend fun rank(query: String, candidates: List<SeActionsRankerCandidate>): List<String> {
     LOG.info("Rank ${candidates.size} candidates for the query '$query'")
@@ -71,4 +85,6 @@ internal class SeMockActionsRanker : SeActionsRanker {
       }
     }
   }
+
+  override fun toString(): String = "mock ranker session ${System.identityHashCode(this)}"
 }
