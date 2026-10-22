@@ -90,6 +90,44 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * The content component of {@link EditorImpl}.
+ * <p>
+ * This editor extends {@link JTextComponent} rather than {@link javax.swing.JComponent} <i>only</i> for accessibility
+ * purposes, and the JTextComponent is not fully supported: it does not reflect the
+ * true contents of the document, it doesn't paint, it doesn't have a proper UI delegate,
+ * etc.
+ * <p>
+ * Swing supports accessibility via the AccessibleText interface, as well as AccessibleEditableText
+ * and some other accessibility interfaces. In theory, all we would need to do to support
+ * accessibility for the IDE editor is to implement these in the accessible context for
+ * the editor component.
+ * <p>
+ * However, it turns out that on some platforms, such as on MacOSX, the accessibility integration
+ * for Java is hardcoded to only work with JTextComponents! Not only does the code ignore
+ * property change events announcing caret motion and document changes; it performs specific
+ * instanceof checks, and the way it adds listeners is to directly add caret and document
+ * listeners on the JTextComponent. It also performs other JTextComponent operations such
+ * as looking up the TextUI delegate and performing viewToModel calls, it asks for the Swing
+ * document's root element and uses it to compute line numbers (and line offset ranges),
+ * etc.
+ * <p>
+ * Therefore, in order to support accessibility for the source editor, we have to make the source
+ * editor actually extend JTextComponent. However, we don't want to use any of the editor functionality,
+ * so we use very simple stub implementations for:
+ * <ul>
+ *   <li>the caret, {@link EditorAccessibilityCaret}</li>
+ *   <li>the document, {@link EditorAccessibilityDocument}</li>
+ *   <li>the UI delegate, {@link EditorAccessibilityTextUI}</li>
+ * </ul>
+ * and we override various JTextComponent to disable their normal operation. This leaves us with
+ * <ol>
+ *   <li>an accessible component which extends JTextComponent, and which provides a document and
+ *   a caret instance that the accessibility infrastructure will register listeners with</li>
+ *   <li>the ability to translate real IDE editor events (caret motion, editing events) into
+ *   corresponding Swing events and dispatch these to the caret/document listeners</li>
+ * </ol>
+ */
 @DirtyUI
 public final class EditorComponentImpl extends JTextComponent
   implements Scrollable, UiCompatibleDataProvider, Queryable, TypingTarget, Accessible, UISettingsListener,
@@ -123,13 +161,6 @@ public final class EditorComponentImpl extends JTextComponent
     putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, (Magnificator)this::magnify);
     putClientProperty(UndoRedoAction.IGNORE_SWING_UNDO_MANAGER, Boolean.TRUE);
 
-    // This editor extends JTextComponent rather than JComponent *only* for accessibility
-    // purposes, and the JTextComponent is not fully supported: it does not reflect the
-    // true contents of the document, it doesn't paint, it doesn't have a proper UI delegate,
-    // etc. It simply extends JTextComponent and accepts document and caret listeners (and
-    // dispatches editing events to them) because on some platforms, the accessibility
-    // support is hardcoded to only work for JTextComponent rather than AccessibleText in
-    // general.
     setupJTextComponentContext();
 
     // Remove JTextComponent's mouse/focus listeners added in its ctor.
@@ -353,7 +384,8 @@ public final class EditorComponentImpl extends JTextComponent
    *   Note that the current implementation always aligns X to an integer coordinate, so only the Y can be non-zero.
    *   But as this can change at any moment, it's best to use both coordinates.
    * </p>
-   * @return the unscaled (user space) offset used for the last painting operation, zero if no painting was performed yet or no fractional scaling is used
+   * @return the unscaled (user space) offset used for the last painting operation,
+   * zero if no painting was performed yet or no fractional scaling is used
    * @see PaintUtil#getUserSpacePixelOffset(Graphics2D)
    */
   @ApiStatus.Internal
@@ -453,36 +485,6 @@ public final class EditorComponentImpl extends JTextComponent
     fireCaretUpdate(event);
   }
 
-
-  // -----------------------------------------------------------------------------------------------
-  // Accessibility/screen reader support for the editor
-  // -----------------------------------------------------------------------------------------------
-  // Swing supports accessibility via the AccessibleText interface, as well as AccessibleEditableText
-  // and some other accessibility interfaces. In theory, all we would need to do to support
-  // accessibility for the IDE editor is to implement these in the accessible context for
-  // the editor component.
-  //
-  // However, it turns out that on some platforms, such as on MacOSX, the accessibility integration
-  // for Java is hardcoded to only work with JTextComponents! Not only does the code ignore
-  // property change events announcing caret motion and document changes; it performs specific
-  // instanceof checks, and the way it adds listeners is to directly add caret and document
-  // listeners on the JTextComponent. It also performs other JTextComponent operations such
-  // as looking up the TextUI delegate and performing viewToModel calls, it asks for the Swing
-  // document's root element and uses it to compute line numbers (and line offset ranges),
-  // etc.
-  //
-  // Therefore, in order to support accessibility for the source editor, we have to make the source
-  // editor actually extend JTextComponent. However, we don't want to use any of the editor functionality,
-  // so we use very simple stub implementations for:
-  //   - the caret
-  //   - the document
-  //   - the UI delegate
-  // and we override various JTextComponent to disable their normal operation. This leaves us with
-  // (1) an accessible component which extends JTextComponent, and which provides a document and
-  //     a caret instance that the accessibility infrastructure will register listeners with
-  // (2) the ability to translate real IDE editor events (caret motion, editing events) into
-  //     corresponding Swing events and dispatch these to the caret/document listeners
-
   @Override
   public AccessibleContext getAccessibleContext() {
     if (accessibleContext == null) {
@@ -529,7 +531,6 @@ public final class EditorComponentImpl extends JTextComponent
       // screen reader support code will invoke it
       setUI(new EditorAccessibilityTextUI(this));
       UISettings.setupEditorAntialiasing(this);
-      // myEditor is null when updateUI() is called from parent's constructor
       putClientProperty(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
       invalidate();
     });
