@@ -5558,17 +5558,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "ai.grazie/grazie-rules-llm-0.4.31.jar_copy",
-    src = "@ai_grazie-grazie-rules-llm-0_4_31_http//file",
-    out = "ai.grazie/grazie-rules-llm-0.4.31.jar",
+    name = "ai.grazie/grazie-rules-llm-0.4.58.jar_copy",
+    src = "@ai_grazie-grazie-rules-llm-0_4_58_http//file",
+    out = "ai.grazie/grazie-rules-llm-0.4.58.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-ai-grazie-semantic-engine-ai-grazie-semantic-engine",
-    jar = "@ai_grazie-grazie-rules-llm-0_4_31_http//file",
-    source_jar = "@ai_grazie-grazie-rules-llm-0_4_31-sources_http//file",
+    jar = "@ai_grazie-grazie-rules-llm-0_4_58_http//file",
+    source_jar = "@ai_grazie-grazie-rules-llm-0_4_58-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
