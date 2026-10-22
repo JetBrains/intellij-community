@@ -49,11 +49,11 @@ project.consumer.linuxX64Main
 project.consumer.linuxX64Test
     org.jetbrains.kotlin.mpp.tests:producer-linuxx64:1.0 (TEST)
 
-project.consumer.macosX64Main
-    org.jetbrains.kotlin.mpp.tests:producer-macosx64:1.0 (COMPILE)
+project.consumer.macosArm64Main
+    org.jetbrains.kotlin.mpp.tests:producer-macosarm64:1.0 (COMPILE)
 
-project.consumer.macosX64Test
-    org.jetbrains.kotlin.mpp.tests:producer-macosx64:1.0 (TEST)
+project.consumer.macosArm64Test
+    org.jetbrains.kotlin.mpp.tests:producer-macosarm64:1.0 (TEST)
 
 project.consumer.nativeMain
     org.jetbrains.kotlin.mpp.tests:producer:commonMain:1.0 (COMPILE)

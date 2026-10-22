@@ -22,17 +22,17 @@ project.linuxX64Test
     commonTest (refines, TEST)
     linuxX64Main (friend, TEST)
 
-project.macosX64Main
+project.macosArm64Main
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
     Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
     commonMain (refines, COMPILE)
 
-project.macosX64Test
+project.macosArm64Test
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
     Kotlin/Native {{KGP_VERSION}} - stdlib (PROVIDED)
     commonMain (friend, TEST)
     commonTest (refines, TEST)
-    macosX64Main (friend, TEST)
+    macosArm64Main (friend, TEST)
 
 
 Test configuration:

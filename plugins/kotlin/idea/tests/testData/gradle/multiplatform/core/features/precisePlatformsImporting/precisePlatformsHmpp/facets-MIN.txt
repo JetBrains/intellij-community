@@ -25,31 +25,11 @@ my-app.linuxX64Main
 my-app.linuxX64Test
     targetPlatform = Native (linux_x64)
 
-my-app.macosX64Main
-    targetPlatform = Native (macos_x64)
+my-app.macosArm64Main
+    targetPlatform = Native (macos_arm64)
 
-my-app.macosX64Test
-    targetPlatform = Native (macos_x64)
-
-my-app.submodule
-
-my-app.submodule.commonMain
-    targetPlatform = JS/JVM (1.8)
-
-my-app.submodule.commonTest
-    targetPlatform = JS/JVM (1.8)
-
-my-app.submodule.jsMain
-    targetPlatform = JS
-
-my-app.submodule.jsTest
-    targetPlatform = JS
-
-my-app.submodule.jvmMain
-    targetPlatform = JVM (1.8)
-
-my-app.submodule.jvmTest
-    targetPlatform = JVM (1.8)
+my-app.macosArm64Test
+    targetPlatform = Native (macos_arm64)
 
 
 Test configuration:

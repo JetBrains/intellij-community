@@ -17,13 +17,13 @@ project.linuxX64Main
 
 project.linuxX64Test
 
+project.macosArm64Main
+
+project.macosArm64Test
+
 project.macosMain
 
 project.macosTest
-
-project.macosX64Main
-
-project.macosX64Test
 
 project.nativeMain
 

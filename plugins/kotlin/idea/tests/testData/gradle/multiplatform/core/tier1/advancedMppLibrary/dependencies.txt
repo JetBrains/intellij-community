@@ -123,7 +123,7 @@ project.linuxX64Test
     nativeMain (friend, TEST)
     nativeTest (refines, TEST)
 
-project.macosX64Main
+project.macosArm64Main
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
     Kotlin/Native: stdlib (COMPILE)
     appleMain (refines, COMPILE)
@@ -131,7 +131,7 @@ project.macosX64Main
     jvmAndNativeMain (refines, COMPILE)
     nativeMain (refines, COMPILE)
 
-project.macosX64Test
+project.macosArm64Test
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
     Kotlin/Native: stdlib (TEST)
     appleMain (friend, TEST)
@@ -140,7 +140,7 @@ project.macosX64Test
     commonTest (refines, TEST)
     jvmAndNativeMain (friend, TEST)
     jvmAndNativeTest (refines, TEST)
-    macosX64Main (friend, TEST)
+    macosArm64Main (friend, TEST)
     nativeMain (friend, TEST)
     nativeTest (refines, TEST)
 

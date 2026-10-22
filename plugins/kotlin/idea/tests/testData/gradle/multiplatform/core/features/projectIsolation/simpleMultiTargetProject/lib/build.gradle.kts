@@ -5,5 +5,4 @@ plugins {
 kotlin {
     jvm()
     macosArm64()
-    macosX64()
 }

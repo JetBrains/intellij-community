@@ -3,12 +3,12 @@ plugins {
 }
 
 kotlin {
-    js(IR)
+    js()
     jvm()
     linuxX64()
-    macosX64() // TODO: switch later when M1 agents arrive
+    macosArm64()
     iosArm64()
-    iosX64() // TODO: switch later when M1 agents arrive
+    iosX64()
 
     sourceSets {
         listOf("Main", "Test").forEach { classifier ->
@@ -34,7 +34,7 @@ kotlin {
                 dependsOn(native)
             }
 
-            val macosX64 = getByName("macosX64$classifier") {
+            val macosArm64 = getByName("macosArm64$classifier") {
                 dependsOn(apple)
             }
 

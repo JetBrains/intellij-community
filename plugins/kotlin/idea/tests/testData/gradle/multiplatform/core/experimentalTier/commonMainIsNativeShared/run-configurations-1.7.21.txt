@@ -9,9 +9,9 @@ project.linuxX64Main
 
 project.linuxX64Test
 
-project.macosX64Main
+project.macosArm64Main
 
-project.macosX64Test
+project.macosArm64Test
 
 
 Test configuration:

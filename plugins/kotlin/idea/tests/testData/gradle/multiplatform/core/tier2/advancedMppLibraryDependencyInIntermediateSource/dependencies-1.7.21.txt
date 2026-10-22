@@ -75,18 +75,18 @@ project.consumer.linuxX64Test
     producer.linuxX64Main (TEST)
     producer.nativeMain (TEST)
 
-project.consumer.macosX64Main
+project.consumer.macosArm64Main
     producer.appleMain (COMPILE)
     producer.commonMain (COMPILE)
     producer.jvmAndNativeMain (COMPILE)
-    producer.macosX64Main (COMPILE)
+    producer.macosArm64Main (COMPILE)
     producer.nativeMain (COMPILE)
 
-project.consumer.macosX64Test
+project.consumer.macosArm64Test
     producer.appleMain (TEST)
     producer.commonMain (TEST)
     producer.jvmAndNativeMain (TEST)
-    producer.macosX64Main (TEST)
+    producer.macosArm64Main (TEST)
     producer.nativeMain (TEST)
 
 project.consumer.nativeMain

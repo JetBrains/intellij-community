@@ -13,11 +13,11 @@ project.linuxX64Main
 project.linuxX64Test
     src/linuxX64Test/kotlin (Test)
 
-project.macosX64Main
-    src/macosX64Main/kotlin
+project.macosArm64Main
+    src/macosArm64Main/kotlin
 
-project.macosX64Test
-    src/macosX64Test/kotlin (Test)
+project.macosArm64Test
+    src/macosArm64Test/kotlin (Test)
 
 
 Test configuration:

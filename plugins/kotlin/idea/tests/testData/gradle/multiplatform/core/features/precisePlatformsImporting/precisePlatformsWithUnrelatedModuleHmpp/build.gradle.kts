@@ -3,7 +3,7 @@
  *         /             \
  *     jvmAndLinuxMain    \
  *     /           \       \
- *  jvm          linuxX64  macosX64
+ *  jvm          linuxX64  macosArm64
  *
  *  (the tests structure is the same)
  */
@@ -28,7 +28,7 @@ version = "1.0"
 kotlin {
     jvm()
     linuxX64()
-    macosX64()
+    macosArm64()
 
     sourceSets {
         val commonMain by getting {

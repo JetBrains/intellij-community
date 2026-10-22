@@ -13,8 +13,8 @@ project.appleTest
     appleMain (friend, TEST)
     commonMain (friend, TEST)
     commonTest (refines, TEST)
+    macosArm64Main (friend, TEST)
     macosMain (friend, TEST)
-    macosX64Main (friend, TEST)
     nativeMain (friend, TEST)
     nativeTest (refines, TEST)
 
@@ -62,6 +62,27 @@ project.linuxX64Test
     nativeMain (friend, TEST)
     nativeTest (refines, TEST)
 
+project.macosArm64Main
+    Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
+    Kotlin/Native: stdlib (COMPILE)
+    appleMain (refines, COMPILE)
+    commonMain (refines, COMPILE)
+    macosMain (refines, COMPILE)
+    nativeMain (refines, COMPILE)
+
+project.macosArm64Test
+    Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
+    Kotlin/Native: stdlib (TEST)
+    appleMain (friend, TEST)
+    appleTest (refines, TEST)
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
+    macosArm64Main (friend, TEST)
+    macosMain (friend, TEST)
+    macosTest (refines, TEST)
+    nativeMain (friend, TEST)
+    nativeTest (refines, TEST)
+
 project.macosMain
     Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
     Kotlin/Native: stdlib (COMPILE)
@@ -76,29 +97,8 @@ project.macosTest
     appleTest (refines, TEST)
     commonMain (friend, TEST)
     commonTest (refines, TEST)
+    macosArm64Main (friend, TEST)
     macosMain (friend, TEST)
-    macosX64Main (friend, TEST)
-    nativeMain (friend, TEST)
-    nativeTest (refines, TEST)
-
-project.macosX64Main
-    Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
-    Kotlin/Native: stdlib (COMPILE)
-    appleMain (refines, COMPILE)
-    commonMain (refines, COMPILE)
-    macosMain (refines, COMPILE)
-    nativeMain (refines, COMPILE)
-
-project.macosX64Test
-    Kotlin/Native {{KGP_VERSION}} - DISTRIBUTION STUB
-    Kotlin/Native: stdlib (TEST)
-    appleMain (friend, TEST)
-    appleTest (refines, TEST)
-    commonMain (friend, TEST)
-    commonTest (refines, TEST)
-    macosMain (friend, TEST)
-    macosTest (refines, TEST)
-    macosX64Main (friend, TEST)
     nativeMain (friend, TEST)
     nativeTest (refines, TEST)
 

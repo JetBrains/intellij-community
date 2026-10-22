@@ -25,11 +25,11 @@ my-app.linuxX64Main
 my-app.linuxX64Test
     targetPlatform = Native (linux_x64)
 
-my-app.macosX64Main
-    targetPlatform = Native (macos_x64)
+my-app.macosArm64Main
+    targetPlatform = Native (macos_arm64)
 
-my-app.macosX64Test
-    targetPlatform = Native (macos_x64)
+my-app.macosArm64Test
+    targetPlatform = Native (macos_arm64)
 
 my-app.submodule
 

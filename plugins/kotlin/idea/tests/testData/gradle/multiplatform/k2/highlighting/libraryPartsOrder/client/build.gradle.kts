@@ -5,8 +5,7 @@ plugins {
 kotlin {
     linuxX64("lin1")
     linuxArm64("lin2")
-    macosX64("mac1")
-    macosArm64("mac2") {
+    macosArm64("mac1") {
         binaries {
             executable()
         }
