@@ -16,6 +16,7 @@ import training.dsl.LessonContext
 import training.dsl.waitSmartModeStep
 import training.learn.LearnBundle
 import training.ui.LearningUiHighlightingManager
+import training.util.LearningLessonsAutoExecutor
 import java.awt.Component
 
 abstract class KLesson(@NonNls id: String, @Nls name: String) : Lesson(id, name) {
@@ -86,7 +87,7 @@ abstract class KLesson(@NonNls id: String, @Nls name: String) : Lesson(id, name)
 
   private fun hasBackgroundTasks(project: Project): Boolean {
     val statusBar = WindowManager.getInstance().getStatusBar(project) as? StatusBarEx ?: return false
-    return statusBar.backgroundProcessModels.isNotEmpty()
+    return statusBar.backgroundProcessModels.any { !LearningLessonsAutoExecutor.isAutoExecutorTask(it.first) }
   }
 
   /** Highlights the progress panel in the status bar. Returns the highlighted panel, or `null` if the panel is not shown. */

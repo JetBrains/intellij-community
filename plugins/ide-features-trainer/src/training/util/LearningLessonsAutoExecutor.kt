@@ -4,7 +4,8 @@ package training.util
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.project.Project
 import com.intellij.util.TimeoutUtil
 import org.jetbrains.concurrency.AsyncPromise
@@ -15,6 +16,7 @@ import training.learn.course.KLesson
 import training.learn.course.Lesson
 import training.learn.lesson.LessonListener
 import training.statistic.LessonStartingWay
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -76,8 +78,25 @@ class LearningLessonsAutoExecutor(val project: Project, private val progress: Pr
   }
 
   companion object {
+    private val autoExecutorTasks: MutableSet<TaskInfo> = ConcurrentHashMap.newKeySet()
+
+    /** True means that [taskInfo] is a background task that runs the lessons in test mode */
+    fun isAutoExecutorTask(taskInfo: TaskInfo): Boolean = autoExecutorTasks.contains(taskInfo)
+
+    private fun runAutoExecutorTask(title: String, project: Project, action: (ProgressIndicator) -> Unit) {
+      val task = object : Task.Backgroundable(project, title) {
+        override fun run(indicator: ProgressIndicator) = action(indicator)
+
+        override fun onFinished() {
+          autoExecutorTasks.remove(this)
+        }
+      }
+      autoExecutorTasks.add(task)
+      task.queue()
+    }
+
     fun runAllLessons(project: Project) {
-      runBackgroundableTask("Running All Lessons", project) {
+      runAutoExecutorTask("Running All Lessons", project) {
         try {
           val learningLessonsAutoExecutor = LearningLessonsAutoExecutor(project, it)
           val durations = learningLessonsAutoExecutor.runAllLessons()
@@ -90,7 +109,7 @@ class LearningLessonsAutoExecutor(val project: Project, private val progress: Pr
     }
 
     fun runSingleLesson(project: Project, lesson: Lesson) {
-      runBackgroundableTask("Running lesson ${lesson.name}", project) {
+      runAutoExecutorTask("Running lesson ${lesson.name}", project) {
         TaskTestContext.inTestMode = true
         try {
           val learningLessonsAutoExecutor = LearningLessonsAutoExecutor(project, it)
