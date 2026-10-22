@@ -10,7 +10,7 @@ repositories {
 
 kotlin {
     when {
-        HostManager.hostIsMac -> macosX64("supported")
+        HostManager.hostIsMac -> macosArm64("supported")
         HostManager.hostIsMingw -> mingwX64("supported")
         HostManager.hostIsLinux -> linuxX64("supported")
         else -> throw UnsupportedOperationException("Test is not supported on host ${HostManager.host}")
@@ -18,8 +18,8 @@ kotlin {
 
     when {
         HostManager.hostIsMac -> null
-        HostManager.hostIsLinux -> macosX64("unsupported")
-        HostManager.hostIsMingw -> macosX64("unsupported")
+        HostManager.hostIsLinux -> macosArm64("unsupported")
+        HostManager.hostIsMingw -> macosArm64("unsupported")
         else -> throw UnsupportedOperationException("Test is not supported on host ${HostManager.host}")
     }
 

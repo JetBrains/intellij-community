@@ -10,7 +10,6 @@ repositories {
 
 kotlin {
     jvm {
-        withJava()
         compilations.getByName("main") {
             compileTaskProvider.configure {
                 compilerOptions.apply {

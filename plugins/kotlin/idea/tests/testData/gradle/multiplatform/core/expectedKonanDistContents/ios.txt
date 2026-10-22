@@ -176,3 +176,8 @@ Kotlin/Native: objc
 Kotlin/Native: posix
 Kotlin/Native: zlib
 Kotlin/Native: ServicesAccountLinking
+Kotlin/Native: ComputeGraph
+Kotlin/Native: LinkSecurity
+Kotlin/Native: ScreenCaptureKit
+Kotlin/Native: StateReporting
+Kotlin/Native: AVSystemRouting

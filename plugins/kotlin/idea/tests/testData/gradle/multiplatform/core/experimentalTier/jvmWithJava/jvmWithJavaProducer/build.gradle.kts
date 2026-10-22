@@ -3,6 +3,6 @@ plugins {
 }
 
 kotlin {
-    jvm { withJava() }
+    jvm()
     {{iosTargetPlaceholder}}
 }

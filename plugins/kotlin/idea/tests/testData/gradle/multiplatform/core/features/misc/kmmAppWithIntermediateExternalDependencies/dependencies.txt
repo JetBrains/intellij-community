@@ -13,7 +13,6 @@ rootProject.androidHostTest
     io.reactivex.rxjava3:rxjava:3.1.5 (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.4 (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4 (TEST)
-    org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:1.6.4 (RUNTIME)
     org.reactivestreams:reactive-streams:1.0.4 (TEST)
     org.slf4j:slf4j-api:1.7.36 (TEST)
 
@@ -29,7 +28,6 @@ rootProject.androidMain
     io.reactivex.rxjava3:rxjava:3.1.5 (COMPILE)
     org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.6.4 (COMPILE)
     org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:1.6.4 (COMPILE)
-    org.jetbrains.kotlinx:kotlinx-coroutines-slf4j:1.6.4 (RUNTIME)
     org.reactivestreams:reactive-streams:1.0.4 (COMPILE)
     org.slf4j:slf4j-api:1.7.36 (COMPILE)
 

@@ -174,3 +174,7 @@ Kotlin/Native: osx
 Kotlin/Native: posix
 Kotlin/Native: vmnet
 Kotlin/Native: zlib
+Kotlin/Native: ComputeGraph
+Kotlin/Native: LinkSecurity
+Kotlin/Native: StateReporting
+Kotlin/Native: AccessoryAccess

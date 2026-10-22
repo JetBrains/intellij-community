@@ -64,8 +64,6 @@ project.jvmTest
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
 
-project.main
-
 project.nativeMain
     languageLevel = {{MINIMAL_SUPPORTED}}
     apiLevel = {{MINIMAL_SUPPORTED}}
@@ -73,8 +71,6 @@ project.nativeMain
 project.nativeTest
     languageLevel = {{LATEST_STABLE}}
     apiLevel = {{LATEST_STABLE}}
-
-project.test
 
 project.webMain
     languageLevel = {{LATEST_STABLE}}
