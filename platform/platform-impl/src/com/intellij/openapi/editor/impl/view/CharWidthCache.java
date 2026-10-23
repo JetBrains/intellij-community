@@ -2,6 +2,8 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.util.ui.JdkConstants.FontStyle;
 import it.unimi.dsi.fastutil.ints.Int2FloatOpenHashMap;
@@ -68,11 +70,14 @@ final class CharWidthCache {
 
   private float calcValue(int codePoint, @FontStyle int fontStyle) {
     Editor editor = myView.getEditor();
+    EditorViewSnapshot view = myView.getSnapshot();
+    EditorColorsScheme colorsScheme = editor.getColorsScheme();
     if (editor.getSettings().isShowingSpecialChars()) {
       // This is a simplification - we don't account for special characters not rendered in certain circumstances(based on surrounding
       // characters), so a premature wrapping can occur sometimes (as the representation using Unicode name is most certainly wider than the
       // original character).
-      SpecialCharacterFragment specialCharacterFragment = SpecialCharacterFragment.create(myView, codePoint, null, 0);
+      Font font = colorsScheme.getFont(EditorFontType.PLAIN);
+      var specialCharacterFragment = SpecialCharacterFragment.create(view, font, codePoint, null, 0);
       if (specialCharacterFragment != null) {
         return specialCharacterFragment.visualColumnToX(0, 1);
       }
@@ -80,8 +85,8 @@ final class CharWidthCache {
     return ComplementaryFontsRegistry.getFontAbleToDisplay(
       codePoint,
       fontStyle,
-      editor.getColorsScheme().getFontPreferences(),
-      myView.getFontRenderContext()
+      colorsScheme.getFontPreferences(),
+      view.fontRenderContext()
     ).charWidth2D(codePoint);
   }
 

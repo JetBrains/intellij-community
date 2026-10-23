@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
-import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.ui.paint.LinePainter2D;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -55,9 +54,17 @@ final class SpecialCharacterFragment implements LineFragment {
   private static final int BRACKETS_SIZE = 2;
   private static final int BRACKETS_THICKNESS = 1;
 
-  static @Nullable SpecialCharacterFragment create(@NotNull EditorView view, int c,  char @Nullable [] text, int pos) {
+  static @Nullable SpecialCharacterFragment create(
+    @NotNull EditorViewSnapshot view,
+    @NotNull Font font,
+    int c,
+    char @Nullable [] text,
+    int pos
+  ) {
     String code = SPECIAL_CHAR_CODES.get(c);
-    if (code == null) return null;
+    if (code == null) {
+      return null;
+    }
     if (text != null) {
       // special cases when we shouldn't render special characters explicitly, as they can impact the rendering of surrounding characters
       if (c == 0xA0 || c >= 0x2000 && c <= 0x200A || c == 0x202F || c == 0x205F) { // 'special' space characters (having non-zero width)
@@ -65,8 +72,7 @@ final class SpecialCharacterFragment implements LineFragment {
           // space characters (NBSP in particular) can be used to display combining marks in isolation
           return null;
         }
-      }
-      else if (c == 0x200C /*ZWNJ*/ || c == 0x200D /*ZWJ*/) {
+      } else if (c == 0x200C /*ZWNJ*/ || c == 0x200D /*ZWJ*/) {
         // we don't display ZWNJ/ZWJ surrounded by non-ASCII characters, to avoid breaking complex scripts and emoji display
         if (pos > 0 && hideJoiningCharactersAround(text[pos - 1])) {
           return null;
@@ -76,22 +82,19 @@ final class SpecialCharacterFragment implements LineFragment {
         }
       }
     }
-    return new SpecialCharacterFragment(view, code);
+    return new SpecialCharacterFragment(view, font, code);
   }
 
-  private static boolean hideJoiningCharactersAround(char c) {
-    return c >= 128 && Character.getType(c) != Character.FORMAT;
-  }
+  private final EditorViewSnapshot view;
+  private final Font font;
+  private final String code;
+  private final float width;
 
-  private final EditorView myView;
-  private final String myCode;
-  private final float myWidth;
-
-  SpecialCharacterFragment(@NotNull EditorView view, @NotNull String code) {
-    myView = view;
-    myCode = code;
-    FontMetrics fontMetrics = FontInfo.getFontMetrics(getFont(), view.getFontRenderContext());
-    myWidth = FontLayoutService.getInstance().stringWidth(fontMetrics, code);
+  SpecialCharacterFragment(@NotNull EditorViewSnapshot view, @NotNull Font font, @NotNull String code) {
+    this.view = view;
+    this.font = font;
+    this.code = code;
+    this.width = calculateCodeWidth(view, font, code);
   }
 
   @Override
@@ -126,7 +129,7 @@ final class SpecialCharacterFragment implements LineFragment {
 
   @Override
   public float visualColumnToX(float startX, int column) {
-    return startX + (column <= 0 ? 0 : myWidth);
+    return startX + (column <= 0 ? 0 : width);
   }
 
   @Override
@@ -134,36 +137,38 @@ final class SpecialCharacterFragment implements LineFragment {
     if (x <= startX) {
       return new VisualColumn(0, false);
     }
-    if (x > startX + myWidth) {
+    if (x > startX + width) {
       return new VisualColumn(1, true);
     }
-    boolean leansRight = x <= (startX + myWidth / 2);
+    boolean leansRight = x <= (startX + width / 2);
     int column = leansRight ? 0 : 1;
     return new VisualColumn(column, leansRight);
   }
 
   @Override
   public float offsetToX(float startX, int startOffset, int offset) {
-    return startX + (startOffset >= offset ? 0 : myWidth);
+    return startX + (startOffset >= offset ? 0 : width);
   }
 
   @Override
   public @NotNull Consumer<Graphics2D> draw(float x, float y, int startOffset, int endOffset) {
     return g -> {
-      g.setFont(getFont());
-      g.drawString(myCode, x, y);
-
-      // draw brackets around the character code
-      float xEnd = x + myWidth - 1;
-      float yTop = y - Math.min(myView.getAscent(), myView.getCapHeight() + BRACKETS_DISTANCE_TO_TEXT);
-      float yBottom = y + Math.min(myView.getDescent(), BRACKETS_DISTANCE_TO_TEXT) - 1;
-      LinePainter2D.paint(g, x, yTop, xEnd, yTop, LinePainter2D.StrokeType.INSIDE, BRACKETS_THICKNESS);
-      LinePainter2D.paint(g, x, yTop + BRACKETS_SIZE, x, yTop, LinePainter2D.StrokeType.INSIDE, BRACKETS_THICKNESS);
-      LinePainter2D.paint(g, xEnd, yTop + BRACKETS_SIZE, xEnd, yTop, LinePainter2D.StrokeType.INSIDE, BRACKETS_THICKNESS);
-      LinePainter2D.paint(g, x, yBottom, xEnd, yBottom, LinePainter2D.StrokeType.INSIDE, BRACKETS_THICKNESS);
-      LinePainter2D.paint(g, x, yBottom - BRACKETS_SIZE, x, yBottom, LinePainter2D.StrokeType.INSIDE, BRACKETS_THICKNESS);
-      LinePainter2D.paint(g, xEnd, yBottom - BRACKETS_SIZE, xEnd, yBottom, LinePainter2D.StrokeType.INSIDE, BRACKETS_THICKNESS);
+      g.setFont(font);
+      g.drawString(code, x, y);
+      drawBrackets(g, x, y);
     };
+  }
+
+  private void drawBrackets(Graphics2D g, float x, float y) {
+    float xEnd = x + width - 1;
+    float yTop = y - Math.min(view.ascent(), view.capHeight() + BRACKETS_DISTANCE_TO_TEXT);
+    float yBottom = y + Math.min(view.descent(), BRACKETS_DISTANCE_TO_TEXT) - 1;
+    LinePainter2D.paint(g, x, yTop, xEnd, yTop, LinePainter2D.StrokeType.INSIDE, BRACKETS_THICKNESS);
+    LinePainter2D.paint(g, x, yTop + BRACKETS_SIZE, x, yTop, LinePainter2D.StrokeType.INSIDE, BRACKETS_THICKNESS);
+    LinePainter2D.paint(g, xEnd, yTop + BRACKETS_SIZE, xEnd, yTop, LinePainter2D.StrokeType.INSIDE, BRACKETS_THICKNESS);
+    LinePainter2D.paint(g, x, yBottom, xEnd, yBottom, LinePainter2D.StrokeType.INSIDE, BRACKETS_THICKNESS);
+    LinePainter2D.paint(g, x, yBottom - BRACKETS_SIZE, x, yBottom, LinePainter2D.StrokeType.INSIDE, BRACKETS_THICKNESS);
+    LinePainter2D.paint(g, xEnd, yBottom - BRACKETS_SIZE, xEnd, yBottom, LinePainter2D.StrokeType.INSIDE, BRACKETS_THICKNESS);
   }
 
   @Override
@@ -171,7 +176,12 @@ final class SpecialCharacterFragment implements LineFragment {
     return this;
   }
 
-  private Font getFont() {
-    return myView.getEditor().getColorsScheme().getFont(EditorFontType.PLAIN);
+  private static int calculateCodeWidth(@NotNull EditorViewSnapshot view, @NotNull Font font, @NotNull String code) {
+    FontMetrics fontMetrics = FontInfo.getFontMetrics(font, view.fontRenderContext());
+    return FontLayoutService.getInstance().stringWidth(fontMetrics, code);
+  }
+
+  private static boolean hideJoiningCharactersAround(char c) {
+    return c >= 128 && Character.getType(c) != Character.FORMAT;
   }
 }

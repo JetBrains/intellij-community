@@ -720,10 +720,6 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     return getSnapshotWithMetrics().maxCharWidth();
   }
 
-  int getCapHeight() {
-    return getSnapshotWithMetrics().capHeight();
-  }
-
   public int getBidiFlags() {
     return mySnapshot.bidiFlags();
   }

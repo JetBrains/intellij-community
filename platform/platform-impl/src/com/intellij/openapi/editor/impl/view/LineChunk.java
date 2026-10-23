@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontFallbackIterator;
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -194,6 +195,8 @@ class LineChunk {
     @NotNull FontFallbackIterator ffi,
     @NotNull EditorView view
   ) {
+    EditorViewSnapshot viewSnapshot = null;
+    Font font = null;
     assert start < end;
     boolean isRtl = BitUtil.isSet(level, 1);
     int last = start;
@@ -204,8 +207,12 @@ class LineChunk {
         assert level == 0;
         specialFragment = tabFragment;
       } else if (showSpecialChars) {
+        if (viewSnapshot == null) {
+          viewSnapshot = view.getSnapshot();
+          font = view.getEditor().getColorsScheme().getFont(EditorFontType.PLAIN);
+        }
         // only BMP special chars are supported currently, so there's no need to check for surrogate pairs
-        specialFragment = SpecialCharacterFragment.create(view, c, text, i);
+        specialFragment = SpecialCharacterFragment.create(viewSnapshot, font, c, text, i);
       }
       if (specialFragment != null) {
         addFragmentsNoTabs(text, last, i, isRtl, ffi, view);
