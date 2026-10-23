@@ -95,8 +95,7 @@ internal class SquareStripeButtonLookVerticalText(button: SquareStripeButton) :
     val f = getTextFont()
     val fm = button.getFontMetrics(f)
     val text = getStripeText()
-    val verticalOffset = JBUIScale.scale(if (UISettings.getInstance().compactMode) 1 else 2)
-    val leftStripeVerticalOffset = JBUIScale.scale(1)
+    val verticalOffset = JBUIScale.scale(1)
 
     g!!.useCopy { g2 ->
       g2.color = getForegroundColor()
@@ -114,7 +113,7 @@ internal class SquareStripeButtonLookVerticalText(button: SquareStripeButton) :
         ToolWindowAnchorEnum.RIGHT -> {
           g2.rotate(Math.PI / 2)
           val iconCenterX = labelIconPosition.x + labelIconSize / 2
-          val baselineX = iconCenterX - (fm.ascent - fm.descent) / 2 - leftStripeVerticalOffset
+          val baselineX = iconCenterX - (fm.ascent - fm.descent) / 2
           val textTopY = labelIconPosition.y + labelIconSize + scaledInsets.iconLabelInset
           g2.drawString(text, textTopY, -baselineX)
         }
