@@ -17,42 +17,34 @@
 use std::ops::Deref;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
-#[cfg(unix)]
-use std::time::Duration;
 
-#[cfg(unix)]
-use avl_base::Reporter;
-#[cfg(unix)]
-use avl_base::config::MacosHost;
-#[cfg(unix)]
-use avl_base::phase::Timeline;
-#[cfg(unix)]
-use avl_base::report::SinkGuard;
 use avl_base::{Backend, Config, GuestArch, GuestOs, Outcome, Refusal, SCHEMA_VERSION};
 use avl_host_sys::Ctx;
 use avl_host_sys::Runner;
 use avl_host_sys::guest::BazelHost;
-#[cfg(unix)]
-use avl_host_sys::interrupt::Interrupts;
 use avl_host_sys::lock::LockManager;
-#[cfg(unix)]
-use avl_host_sys::{ProcessIdentity, ProcessTable};
 use avl_host_testkit::{ChannelFactory, FakeGuests, HostPool, HostPoolBuilder, quiet};
-#[cfg(unix)]
-use avl_host_testkit::{FakeProcesses, PinnedBazel};
 use avl_testkit::tartfake::{Answer, Fake};
-#[cfg(unix)]
-use avl_wire::progress::{Kind, Record};
-#[cfg(unix)]
-use nix::sys::signal::{Signal, killpg};
-#[cfg(unix)]
-use nix::unistd::Pid;
 
 use crate::worker::docker::Docker;
+
 #[cfg(unix)]
-use crate::worker::run_marker::{RunMarker, write_marker_by_hand};
-#[cfg(unix)]
-use crate::worker::tart::{MINIMUM_VERSION, PidReceipt};
+use {
+    crate::worker::run_marker::{RunMarker, write_marker_by_hand},
+    crate::worker::tart::{MINIMUM_VERSION, PidReceipt},
+    avl_base::Reporter,
+    avl_base::config::MacosHost,
+    avl_base::phase::Timeline,
+    avl_base::report::SinkGuard,
+    avl_host_sys::interrupt::Interrupts,
+    avl_host_sys::{ProcessIdentity, ProcessTable},
+    avl_host_testkit::{FakeProcesses, PinnedBazel},
+    avl_wire::progress::{Kind, Record},
+    nix::sys::signal::{Signal, killpg},
+    nix::unistd::Pid,
+    std::time::Duration,
+};
+
 use crate::worker::worker::{
     Dependencies, GuestBootBuilder, IdleStopRequest, Lease, Manager, PoolCommand, PoolTarget, StartState, Timings, builds_nothing,
 };
