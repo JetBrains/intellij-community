@@ -82,3 +82,27 @@ fn a_missing_program_is_a_spawn_error() {
     let error = run(&mut Command::new("/nonexistent/yonder-test"), Duration::from_secs(1), &never).expect_err("refused");
     assert!(matches!(error, ChildError::Spawn { .. }), "{error:?}");
 }
+
+#[test]
+fn a_stop_kills_the_children_of_the_child_too() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let pid_file = dir.path().join("grandchild.pid");
+    let script = format!("sleep 30 & echo $! >'{}'; wait", pid_file.display());
+    let stop = AtomicBool::new(false);
+    let stopper = || {
+        if pid_file.exists() {
+            stop.store(true, Ordering::SeqCst);
+        }
+        stop.load(Ordering::SeqCst)
+    };
+    let started = Instant::now();
+    let error = run(&mut sh(&script), Duration::from_secs(60), &stopper).expect_err("stopped");
+    assert!(matches!(error, ChildError::Stopped { .. }), "{error:?}");
+    let grandchild: libc::pid_t = std::fs::read_to_string(&pid_file).expect("the pid").trim().parse().expect("a pid");
+    // The system reaps the killed grandchild a moment later, as its parent has ended.
+    // SAFETY: kill with signal 0 only checks that the process exists.
+    while unsafe { libc::kill(grandchild, 0) } == 0 {
+        assert!(started.elapsed() < Duration::from_secs(10), "the grandchild {grandchild} lives on");
+        thread::sleep(Duration::from_millis(20));
+    }
+}

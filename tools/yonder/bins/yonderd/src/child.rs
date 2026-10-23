@@ -1,9 +1,12 @@
 //! Child processes with a deadline: git, bd and launchctl. A watchdog kills a child at its deadline, also while the
 //! caller writes to its stdin, so no call waits for ever. A caller can also stop a child early through a [`Stop`].
+//!
+//! Each child runs in a process group of its own, and a kill reaches the whole group: a `bd lease get` that a cancel
+//! stops leaves no clone or git of its own behind.
 
 use std::fmt;
 use std::io::{self, Read, Write};
-use std::os::unix::process::ExitStatusExt;
+use std::os::unix::process::{CommandExt, ExitStatusExt};
 use std::process::{Child, ChildStdin, Command, ExitStatus, Stdio};
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
 use std::sync::{Arc, Mutex, PoisonError};
@@ -97,7 +100,8 @@ pub(crate) fn spawn(command: &mut Command, piped_stdin: bool, deadline: Duration
     command
         .stdin(if piped_stdin { Stdio::piped() } else { Stdio::null() })
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
+        .stderr(Stdio::piped())
+        .process_group(0);
     let mut child = command.spawn().map_err(|error| ChildError::Spawn { what: what.clone(), error })?;
     let stdout = collect(child.stdout.take());
     let stderr = collect(child.stderr.take());
@@ -107,8 +111,7 @@ pub(crate) fn spawn(command: &mut Command, piped_stdin: bool, deadline: Duration
     let watched = Arc::clone(&child);
     thread::spawn(move || {
         if ended.recv_timeout(deadline) == Err(RecvTimeoutError::Timeout) {
-            // std does not signal a child that it has reaped, so the pid of another process is never hit.
-            let _ = watched.lock().unwrap_or_else(PoisonError::into_inner).kill();
+            kill_group(&mut watched.lock().unwrap_or_else(PoisonError::into_inner));
         }
     });
     Ok(Running {
@@ -168,7 +171,7 @@ impl Running {
                         None
                     };
                     if let Some(failure) = failure {
-                        let _ = child.kill();
+                        kill_group(&mut child);
                         let _ = child.wait();
                         return Err(failure);
                     }
@@ -196,6 +199,22 @@ impl Running {
             deadline: self.deadline,
         }
     }
+}
+
+/// Kills a child that has not been reaped, and each process of its group. A child that has ended keeps its pid as a
+/// zombie until it is reaped, so the group id is still its own. std does not signal a child that it has reaped, so the
+/// pid of another process is never hit.
+fn kill_group(child: &mut Child) {
+    if !matches!(child.try_wait(), Ok(None)) {
+        return;
+    }
+    if let Ok(group) = libc::pid_t::try_from(child.id()) {
+        // SAFETY: killpg takes plain integers and touches no memory of this process.
+        unsafe {
+            libc::killpg(group, libc::SIGKILL);
+        }
+    }
+    let _ = child.kill();
 }
 
 /// The output of one pipe of a child, which a thread collects as it comes.

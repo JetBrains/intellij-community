@@ -46,6 +46,8 @@ file of that holder.
 | A prepare step of `.yonder.toml` that exits with a code other than 0 | `prepare_failed`, as the end of the run, before the command |
 | A port variable of `.yonder.toml` without a free port among its 100 | `agent_error`, as the end of the run, before the command |
 
+- Each git, bd and launchctl child of the agent runs in a process group of its own. A deadline or a cancel kills the
+  whole group, so a stopped `bd lease get` leaves no clone behind.
 - A `Lease` or `Release` waits up to 50 s for a run of the same holder, then refuses with `lock_timeout`. A run waits
   up to an hour.
 - `Lease` makes no idle sweep, because the request has no idle hours. Only a run returns the idle leases of other
