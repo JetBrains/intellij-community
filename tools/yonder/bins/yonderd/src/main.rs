@@ -4,17 +4,22 @@
 //! - `supervise <run dir>`: one run, in a session of its own, started by `serve`.
 //! - `setup`: adds a client to the allow list and starts `serve` under launchd.
 //! - `version`: the version and the protocol schema.
+//! - `dump-env <file>`: the last command of the login shell that `login_env` starts.
 
 mod bd;
 mod child;
 mod cleanup;
 mod cli;
+mod config;
 mod files;
 mod git;
 mod home;
 mod lease;
+mod login_env;
+mod prepare;
 mod refused;
 mod run;
+mod run_env;
 mod run_requests;
 mod serve;
 mod setup;

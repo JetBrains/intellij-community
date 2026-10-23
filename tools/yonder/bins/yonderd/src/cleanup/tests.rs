@@ -26,6 +26,7 @@ fn spec(run: &str) -> RunSpec {
         command: vec!["true".to_owned()],
         fetch: vec![],
         idle_hours: 8,
+        ..RunSpec::default()
     }
 }
 

@@ -23,6 +23,10 @@ pub(crate) const LEASE_FAILED: &str = "lease_failed";
 pub(crate) const CHECKOUT_FAILED: &str = "checkout_failed";
 pub(crate) const SPAWN_FAILED: &str = "spawn_failed";
 pub(crate) const AGENT_ERROR: &str = "agent_error";
+/// `.yonder.toml` of the commit cannot be read, or it has an unknown key or a value of the wrong shape.
+pub(crate) const BAD_CONFIG: &str = "bad_config";
+/// A prepare step of `.yonder.toml` failed, so the command did not run.
+pub(crate) const PREPARE_FAILED: &str = "prepare_failed";
 
 /// `setup` cannot start the agent under launchd.
 pub(crate) const LAUNCHD_FAILED: &str = "launchd_failed";

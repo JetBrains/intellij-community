@@ -44,6 +44,8 @@ pub struct Call {
     /// The bytes on the stdin of the child. An empty input is a stdin of `/dev/null`.
     pub input: Vec<u8>,
     pub limit: Limit,
+    /// Variables that the child gets on top of the environment of this process.
+    pub env: Vec<(String, String)>,
 }
 
 /// When the watch of a child stops it.
@@ -64,6 +66,7 @@ impl Call {
             dir: None,
             input: Vec::new(),
             limit: Limit::Deadline(deadline),
+            env: Vec::new(),
         }
     }
 
@@ -85,7 +88,14 @@ impl Call {
         self
     }
 
-    /// The program and its arguments, joined by spaces, for a message and for the scripts of the tests.
+    #[must_use]
+    pub fn with_env(mut self, name: &str, value: &str) -> Self {
+        self.env.push((name.to_owned(), value.to_owned()));
+        self
+    }
+
+    /// The program and its arguments, joined by spaces, for a message and for the scripts of the tests. The text has no
+    /// variables of `env`.
     pub fn text(&self) -> String {
         std::iter::once(self.program.as_str())
             .chain(self.args.iter().map(String::as_str))
@@ -212,6 +222,7 @@ fn spawn(call: &Call, stdout: Stdout, stop: Stop<'_>) -> Ran {
     if let Some(dir) = &call.dir {
         command.current_dir(dir);
     }
+    command.envs(call.env.iter().map(|(name, value)| (name, value)));
     #[cfg(unix)]
     std::os::unix::process::CommandExt::process_group(&mut command, 0);
     let mut child = match command.spawn() {

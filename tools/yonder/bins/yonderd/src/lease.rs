@@ -11,7 +11,11 @@
 //! A lease file names the repository of its lease. A request of the holder for another repository refuses, and the
 //! file stays. A file without `repo=`, such as one that `setup` moved from `remote.sh`, belongs to the repository of
 //! the next request.
+//!
+//! A lease file also keeps the fingerprint of each prepare step of `.yonder.toml` that succeeded in the slot, as
+//! `prepared.<key>=<fingerprint>` lines, so the next run of the lease skips a step whose inputs did not change.
 
+use std::collections::BTreeMap;
 use std::fs::{self, File};
 use std::io;
 use std::path::{Path, PathBuf};
@@ -40,9 +44,11 @@ pub(crate) struct Lease {
     pub(crate) slot: PathBuf,
     /// `false` when the holder had the lease already.
     pub(crate) fresh: bool,
+    /// The fingerprint of each prepare step that succeeded in the slot, by the key of the step.
+    pub(crate) prepared: BTreeMap<String, String>,
 }
 
-/// The content of a lease file: `lease_id=`, `slot=`, `used=` and `repo=` lines.
+/// The content of a lease file: `lease_id=`, `slot=`, `used=`, `repo=` and `prepared.<key>=` lines.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct LeaseFile {
     pub(crate) lease_id: String,
@@ -51,6 +57,8 @@ pub(crate) struct LeaseFile {
     pub(crate) used: u64,
     /// The main repository of the lease. `None` in a file of `remote.sh`.
     pub(crate) repo: Option<PathBuf>,
+    /// The fingerprint of each prepare step that succeeded in the slot, by the key of the step.
+    pub(crate) prepared: BTreeMap<String, String>,
 }
 
 /// The flock of a holder. Dropping it unlocks.
@@ -71,6 +79,12 @@ impl LeaseFile {
             slot: PathBuf::from(field("slot")?),
             used: field("used").and_then(|value| value.parse().ok()).unwrap_or(0),
             repo: field("repo").map(PathBuf::from),
+            prepared: text
+                .lines()
+                .filter_map(|line| line.strip_prefix("prepared.")?.split_once('='))
+                .filter(|(key, value)| !key.is_empty() && !value.is_empty())
+                .map(|(key, value)| (key.to_owned(), value.to_owned()))
+                .collect(),
         })
     }
 
@@ -78,6 +92,9 @@ impl LeaseFile {
         let mut text = format!("lease_id={}\nslot={}\nused={}\n", self.lease_id, self.slot.display(), self.used);
         if let Some(repo) = &self.repo {
             text.push_str(&format!("repo={}\n", repo.display()));
+        }
+        for (key, fingerprint) in &self.prepared {
+            text.push_str(&format!("prepared.{key}={fingerprint}\n"));
         }
         text
     }
@@ -231,6 +248,7 @@ impl Leases {
                     lease_id: file.lease_id,
                     slot: file.slot,
                     fresh: false,
+                    prepared: file.prepared,
                 });
             }
             if stop() {
@@ -246,6 +264,7 @@ impl Leases {
             lease_id: leased.lease_id,
             slot: leased.path,
             fresh: true,
+            prepared: BTreeMap::new(),
         })
     }
 
@@ -256,6 +275,7 @@ impl Leases {
             slot: lease.slot.clone(),
             used: now,
             repo: Some(self.repo.clone()),
+            prepared: lease.prepared.clone(),
         };
         private_dir(&self.dir)?;
         write_private(&self.file(holder), file.text().as_bytes())

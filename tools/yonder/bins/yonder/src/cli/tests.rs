@@ -65,11 +65,38 @@ fn a_run_takes_its_command_after_the_separator() {
 }
 
 #[test]
-fn a_run_without_a_command_is_refused_with_255() {
+fn a_run_without_a_command_is_a_usage_error() {
     let (code, stdout, said) = invoke(&["run", "studio"]);
-    assert_eq!(code, 255);
+    assert_eq!(code, 2);
     assert_eq!(stdout, "");
     assert!(said.join("\n").contains("<COMMAND>"), "{said:?}");
+}
+
+#[test]
+fn a_run_ships_the_working_tree_at_niceness_10_unless_told_otherwise() {
+    let parse = |args: &[&str]| {
+        let cli = Cli::try_parse_from(std::iter::once("yonder").chain(args.iter().copied())).expect("parsed");
+        let Command::Run { head, nice, apply, .. } = cli.command else {
+            panic!("{cli:?}")
+        };
+        (head, nice, apply)
+    };
+    assert_eq!(parse(&["run", "studio", "--", "true"]), (false, 10, false));
+    assert_eq!(
+        parse(&["run", "studio", "--head", "--nice", "0", "--apply", "--", "true"]),
+        (true, 0, true)
+    );
+    let (code, _, said) = invoke(&["run", "studio", "--nice", "20", "--", "true"]);
+    assert_eq!(code, 2);
+    assert!(said.join("\n").contains("20"), "{said:?}");
+}
+
+#[test]
+fn a_run_that_the_host_did_not_take_leaves_by_75() {
+    let (code, stdout, said) = invoke(&["run", "studio", "--", "true"]);
+    assert_eq!(code, 75);
+    assert_eq!(stdout, "");
+    assert!(said[0].starts_with("yonder: no_host: "), "{said:?}");
 }
 
 #[test]
@@ -98,11 +125,8 @@ fn an_exit_code_outside_a_byte_leaves_by_255() {
 
 #[test]
 fn the_default_holder_is_the_one_of_the_checkout() {
-    assert_eq!(
-        holder_of(None, &Checkout).expect("a holder"),
-        holder(HOLDER_PREFIX, Path::new("/c"))
-    );
-    assert_eq!(holder_of(Some("h".to_owned()), &Checkout).expect("a holder"), "h");
+    assert_eq!(holder_of(None, Path::new("/c")), holder(HOLDER_PREFIX, Path::new("/c")));
+    assert_eq!(holder_of(Some("h".to_owned()), Path::new("/c")), "h");
 }
 
 /// A run of `yonder runs` shows its steps in the short form, and a run without long steps shows none.

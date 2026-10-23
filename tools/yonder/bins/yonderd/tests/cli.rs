@@ -18,7 +18,7 @@ use std::thread;
 use std::time::{Duration, Instant, SystemTime};
 
 use pretty_assertions::assert_eq;
-use yonder_link::proto::{Phase, Reply, Request, RunSpec, SCHEMA_VERSION, Stream};
+use yonder_link::proto::{FileKind, Phase, Reply, Request, RunSpec, SCHEMA_VERSION, Stream};
 use yonder_link::{AllowList, Channel, ClientTls, Fingerprint, Identity, LinkError};
 
 /// The deadline of each connect and read of the test client.
@@ -27,7 +27,10 @@ const DEADLINE: Duration = Duration::from_secs(30);
 const HOLDER: &str = "yonder-0123456789ab";
 
 /// The phases of a run that ran its command, in their order.
-const ALL_PHASES: [&str; 6] = ["lock", "lease", "pack_wait", "checkout", "command", "stage"];
+const ALL_PHASES: [&str; 7] = ["lock", "lease", "pack_wait", "checkout", "prepare", "command", "stage"];
+
+/// The start of the line that the agent writes right before the command.
+const START_LINE: &str = "yonder: running in ";
 
 fn agent_binary() -> PathBuf {
     let path = std::env::var_os("CARGO_BIN_EXE_yonderd")
@@ -187,7 +190,9 @@ impl World {
             .env("HOME", self.home())
             .env("PATH", format!("{}:/usr/bin:/bin", self.bin().display()))
             .env("FAKE_BD_DIR", self.bd_dir())
-            .env("GIT_CONFIG_NOSYSTEM", "1");
+            .env("GIT_CONFIG_NOSYSTEM", "1")
+            // The login shell of the developer stays out of the tests; a test that needs one names its own.
+            .env("YONDERD_TEST_SHELL", "none");
         command
     }
 
@@ -201,6 +206,7 @@ impl World {
             command: vec!["/bin/sh".to_owned(), "-c".to_owned(), script.to_owned()],
             fetch: vec!["out/bt-runs".to_owned()],
             idle_hours: 8,
+            ..RunSpec::default()
         }
     }
 
@@ -281,16 +287,32 @@ impl Followed {
             .ms
     }
 
+    /// The lines of the run, less the start line of its command, which [`Followed::start_line`] answers.
     fn texts(&self) -> Vec<&str> {
-        self.lines.iter().map(|(_, text, _)| text.as_str()).collect()
+        self.lines
+            .iter()
+            .map(|(_, text, _)| text.as_str())
+            .filter(|text| !text.starts_with(START_LINE))
+            .collect()
     }
 
+    /// The lines of one stream, less the start line of the command.
     fn of(&self, stream: Stream) -> Vec<&str> {
         self.lines
             .iter()
             .filter(|(of, _, _)| *of == stream)
             .map(|(_, text, _)| text.as_str())
+            .filter(|text| !text.starts_with(START_LINE))
             .collect()
+    }
+
+    /// The line that the agent writes right before the command.
+    fn start_line(&self) -> &str {
+        self.lines
+            .iter()
+            .map(|(_, text, _)| text.as_str())
+            .find(|text| text.starts_with(START_LINE))
+            .unwrap_or_else(|| panic!("no start line: {self:?}"))
     }
 }
 
@@ -421,6 +443,10 @@ fn hello_answers_the_schema_and_another_schema_or_request_is_refused() {
     assert_eq!(hello, Reply::hello(env!("CARGO_PKG_VERSION")));
     assert!(
         matches!(&hello, Reply::Hello { schema_version, os, .. } if *schema_version == SCHEMA_VERSION && os == std::env::consts::OS),
+        "{hello:?}"
+    );
+    assert!(
+        matches!(&hello, Reply::Hello { features, .. } if *features == ["config", "login_env", "nice", "changes"]),
         "{hello:?}"
     );
 
@@ -602,13 +628,25 @@ fn a_run_streams_its_output_to_the_exit_code_stages_its_files_and_is_forgotten()
         "{lease}"
     );
     assert!(world.bd_calls().lines().all(|call| call.starts_with("/|")), "{}", world.bd_calls());
+    let start = followed.start_line();
+    assert!(start.starts_with(&format!("{START_LINE}{} (slot ", slot.display())), "{start}");
+    assert!(
+        start.contains(", nice 0, ") && start.contains(" open files, the environment of the agent"),
+        "{start}"
+    );
 
     // The staged files come with their paths, sizes and modes; the slot keeps none of them.
     let mut channel = agent.ask(&Request::Fetch { run: "1-1".to_owned() });
     let mut files = Vec::new();
     loop {
         match channel.recv::<Reply>().expect("a reply") {
-            Reply::File { path, size, executable } => {
+            Reply::File {
+                path,
+                size,
+                executable,
+                kind,
+            } => {
+                assert_eq!(kind, FileKind::Staged);
                 let mut bytes = Vec::new();
                 channel.recv_stream(&mut bytes).expect("the bytes");
                 assert_eq!(bytes.len() as u64, size);
@@ -731,7 +769,7 @@ fn a_follow_from_an_offset_in_the_middle_of_a_run_goes_on_from_there() {
         panic!("not runs");
     };
     let names: Vec<&str> = runs[0].phases.iter().map(|phase| phase.name.as_str()).collect();
-    assert_eq!(names, ALL_PHASES[..4]);
+    assert_eq!(names, ALL_PHASES[..5]);
     assert_eq!(runs[0].exit, None);
 
     fs::write(&gate, "").expect("the gate");
@@ -955,6 +993,7 @@ fn version_prints_the_version_and_the_schema() {
     let line: serde_json::Value = serde_json::from_slice(&output.stdout).expect("json");
     assert_eq!(line["schema_version"], SCHEMA_VERSION);
     assert_eq!(line["version"], env!("CARGO_PKG_VERSION"));
+    assert_eq!(line["features"], serde_json::json!(["config", "login_env", "nice", "changes"]));
 }
 
 #[test]
@@ -1581,4 +1620,263 @@ fn a_have_sends_heartbeats_while_git_works() {
         }
     );
     assert!(heartbeats >= 3, "{heartbeats} heartbeats");
+}
+
+/// A login shell for the tests: it sets `FROM_PROFILE` and puts `/profile/bin` first on `PATH`, then runs the script
+/// of `-c`, its last argument, as a real login shell would after its profile.
+const LOGIN_SHELL: &str = r#"#!/bin/sh
+for script; do :; done
+FROM_PROFILE=yes PATH="/profile/bin:$PATH"
+export FROM_PROFILE PATH
+exec /bin/sh -c "$script"
+"#;
+
+/// Commits `files` in the main repository of the world, and answers the commit.
+fn commit_files(world: &World, files: &[(&str, &str)]) -> String {
+    let repo = world.repo();
+    for (path, text) in files {
+        let path = repo.join(path);
+        fs::create_dir_all(path.parent().expect("a parent")).expect("the parent directory");
+        fs::write(path, text).expect("a file");
+    }
+    git(&repo, &["add", "--all"]);
+    git(&repo, &["commit", "-q", "-m", "files"]);
+    git(&repo, &["rev-parse", "HEAD"])
+}
+
+/// The files of a fetch: path, kind and text.
+fn fetch_files(agent: &Agent, run: &str) -> Vec<(String, FileKind, String)> {
+    let mut channel = agent.ask(&Request::Fetch { run: run.to_owned() });
+    let mut files = Vec::new();
+    loop {
+        match channel.recv::<Reply>().expect("a reply") {
+            Reply::File { path, kind, .. } => {
+                let mut bytes = Vec::new();
+                channel.recv_stream(&mut bytes).expect("the bytes");
+                files.push((path, kind, String::from_utf8(bytes).expect("text")));
+            }
+            Reply::Fetched { .. } => return files,
+            other => panic!("{other:?}"),
+        }
+    }
+}
+
+#[test]
+fn a_run_gets_the_login_environment_a_raised_open_files_limit_and_its_niceness() {
+    let world = World::new();
+    let shell = world.dir.path().join("login-shell");
+    write_script(&shell, LOGIN_SHELL);
+    let agent = world.serve_with(&[("YONDERD_TEST_SHELL", &shell.to_string_lossy())]);
+    let world = &agent.world;
+    agent.start(RunSpec {
+        nice: Some(7),
+        ..world.spec(
+            "20-1",
+            HOLDER,
+            r#"echo "$FROM_PROFILE"; echo "$PATH" | cut -d: -f1; ulimit -n; ps -o nice= -p $$"#,
+        )
+    });
+    let followed = agent.follow("20-1", 0);
+    assert_eq!(followed.end, Reply::Exit { code: 0 }, "{}", agent.dump("20-1"));
+    let stdout = followed.of(Stream::Stdout);
+    assert_eq!(stdout[..2], ["yes", "/profile/bin"], "{followed:?}");
+    let limit: u64 = stdout[2].trim().parse().expect("a limit");
+    assert!(limit >= 4096, "{limit}");
+    assert_eq!(stdout[3].trim(), "7");
+    let start = followed.start_line();
+    assert!(start.contains(", nice 7, "), "{start}");
+    assert!(
+        start.contains(&format!("the login environment of {} -l -i from ", shell.display())),
+        "{start}"
+    );
+    let kept = fs::read_to_string(world.home().join(".cache/yonderd/login-env.json")).expect("the capture");
+    assert!(kept.contains("FROM_PROFILE") && !kept.contains("\"PWD\""), "{kept}");
+}
+
+#[test]
+fn the_config_of_the_commit_sets_the_environment_and_runs_a_prepare_step_only_when_its_inputs_change() {
+    let agent = World::new().serve();
+    let world = &agent.world;
+    let config = r#"
+[env]
+GREETING = "hi"
+PATH = { prepend = ["~/tools"] }
+PORT = { port = 24000 }
+FAKE_BD_DIR = { unset = true }
+DIR = { prepend = ["~/a"], append = ["/b"] }
+
+[[prepare]]
+name = "deps"
+run = ["/bin/sh", "-c", "echo preparing >&1; echo once >>prepared.log; mkdir -p deps"]
+inputs = ["lock.txt"]
+creates = ["deps"]
+"#;
+    let first = commit_files(world, &[(".yonder.toml", config), ("lock.txt", "1")]);
+    let script = r#"echo "$GREETING $DIR $FAKE_BD_DIR"; echo "$PATH" | cut -d: -f1; echo "$PORT"; echo "$YONDER_RUN""#;
+    let run = |id: &str, commit: &str| {
+        agent.start(RunSpec {
+            commit: commit.to_owned(),
+            ..world.spec(id, HOLDER, script)
+        });
+        agent.follow(id, 0)
+    };
+    let slot = world.slot(HOLDER);
+    let prepared = || fs::read_to_string(slot.join("prepared.log")).unwrap_or_default().lines().count();
+
+    let followed = run("21-1", &first);
+    assert_eq!(followed.end, Reply::Exit { code: 0 }, "{}", agent.dump("21-1"));
+    assert_eq!(followed.phase_names(), ALL_PHASES);
+    let home = world.home();
+    let stdout = followed.of(Stream::Stdout);
+    assert_eq!(stdout[0], format!("hi {}/a:/b ", home.display()), "{followed:?}");
+    assert_eq!(stdout[1], format!("{}/tools", home.display()));
+    let port: u16 = stdout[2].parse().expect("a port");
+    assert!((24_000..24_200).contains(&port), "{port}");
+    assert_eq!(stdout[3], "21-1");
+    // The output of a prepare step goes to the stderr of the run, so the stdout holds only the command.
+    let stderr = followed.of(Stream::Stderr);
+    assert!(stderr.contains(&"yonder: prepare: deps (deps is missing)"), "{stderr:?}");
+    assert!(stderr.contains(&"preparing"), "{stderr:?}");
+    assert_eq!(prepared(), 1);
+    let lease = fs::read_to_string(world.lease_file(HOLDER)).expect("the lease file");
+    assert!(lease.contains("\nprepared."), "{lease}");
+
+    assert_eq!(run("21-2", &first).end, Reply::Exit { code: 0 });
+    assert_eq!(prepared(), 1, "the inputs did not change");
+
+    let second = commit_files(world, &[("lock.txt", "2")]);
+    let followed = run("21-3", &second);
+    assert!(
+        followed.texts().contains(&"yonder: prepare: deps (lock.txt changed)"),
+        "{followed:?}"
+    );
+    assert_eq!(prepared(), 2);
+
+    fs::remove_dir_all(slot.join("deps")).expect("deps removed");
+    assert_eq!(run("21-4", &second).end, Reply::Exit { code: 0 });
+    assert_eq!(prepared(), 3, "a missing created path runs the step again");
+
+    let failing = commit_files(
+        world,
+        &[(
+            ".yonder.toml",
+            "[[prepare]]\nname = \"broken\"\nrun = [\"/bin/sh\", \"-c\", \"echo cannot; exit 4\"]\n",
+        )],
+    );
+    let followed = run("21-5", &failing);
+    assert!(
+        matches!(&followed.end, Reply::Refused { code, message } if code == "prepare_failed" && message.contains("exited with 4")),
+        "{followed:?}"
+    );
+    assert_eq!(followed.phase_names(), ALL_PHASES[..5]);
+    assert!(followed.texts().contains(&"cannot"), "{followed:?}");
+    assert!(followed.of(Stream::Stdout).is_empty(), "the command did not run: {followed:?}");
+
+    let typo = commit_files(world, &[(".yonder.toml", "[[prepar]]\nrun = [\"true\"]\n")]);
+    let followed = run("21-6", &typo);
+    assert!(
+        matches!(&followed.end, Reply::Refused { code, message } if code == "bad_config" && message.contains("prepar")),
+        "{followed:?}"
+    );
+}
+
+#[test]
+fn the_outputs_of_the_config_come_back_only_to_a_client_that_asks_for_them() {
+    let agent = World::new().serve();
+    let world = &agent.world;
+    let commit = commit_files(
+        world,
+        &[
+            (".gitignore", "results/\nci/\n"),
+            (".yonder.toml", "outputs = [\"results\", \"ci/junit.xml\"]\n"),
+        ],
+    );
+    let script = "mkdir -p results ci; echo new >results/new.txt; echo '<x/>' >ci/junit.xml";
+    agent.start(RunSpec {
+        commit: commit.clone(),
+        outputs: true,
+        ..world.spec("22-1", HOLDER, script)
+    });
+    assert_eq!(agent.follow("22-1", 0).end, Reply::Exit { code: 0 }, "{}", agent.dump("22-1"));
+    let results = FileKind::Output {
+        root: "results".to_owned(),
+    };
+    let junit = FileKind::Output {
+        root: "ci/junit.xml".to_owned(),
+    };
+    assert_eq!(
+        fetch_files(&agent, "22-1"),
+        vec![
+            ("results/new.txt".to_owned(), results.clone(), "new\n".to_owned()),
+            ("ci/junit.xml".to_owned(), junit, "<x/>\n".to_owned()),
+        ]
+    );
+
+    // An output of an earlier run is gone before the command, so it never comes back.
+    let slot = world.slot(HOLDER);
+    fs::create_dir_all(slot.join("results")).expect("results");
+    fs::write(slot.join("results/stale.txt"), "stale").expect("a stale output");
+    agent.start(RunSpec {
+        commit: commit.clone(),
+        outputs: true,
+        ..world.spec("22-2", HOLDER, "mkdir -p results; echo fresh >results/fresh.txt")
+    });
+    assert_eq!(agent.follow("22-2", 0).end, Reply::Exit { code: 0 });
+    assert_eq!(
+        fetch_files(&agent, "22-2"),
+        vec![("results/fresh.txt".to_owned(), results, "fresh\n".to_owned())]
+    );
+
+    // An older client asks for no outputs: the agent leaves them alone and sends none.
+    fs::create_dir_all(slot.join("results")).expect("results");
+    fs::write(slot.join("results/kept.txt"), "kept").expect("an output of the slot");
+    agent.start(RunSpec {
+        commit,
+        ..world.spec("22-3", HOLDER, "echo '<y/>' >ci/junit.xml")
+    });
+    assert_eq!(agent.follow("22-3", 0).end, Reply::Exit { code: 0 });
+    assert_eq!(fetch_files(&agent, "22-3"), Vec::new());
+    assert!(slot.join("results/kept.txt").is_file());
+    assert!(slot.join("ci/junit.xml").is_file());
+}
+
+#[test]
+fn the_changes_of_the_command_come_back_as_a_patch_without_the_files_it_found() {
+    let agent = World::new().serve();
+    let world = &agent.world;
+    // The first run makes the slot; a file that no commit has stays there for the next run.
+    agent.start(world.spec("23-1", HOLDER, "echo junk >junk.txt"));
+    assert_eq!(agent.follow("23-1", 0).end, Reply::Exit { code: 0 });
+    agent.start(RunSpec {
+        changes: true,
+        ..world.spec("23-2", HOLDER, "echo changed >a.txt; echo new >new.txt; chmod +x new.txt")
+    });
+    let followed = agent.follow("23-2", 0);
+    assert_eq!(followed.end, Reply::Exit { code: 0 }, "{}", agent.dump("23-2"));
+    let files = fetch_files(&agent, "23-2");
+    assert_eq!(files.len(), 1, "{files:?}");
+    let (path, kind, patch) = &files[0];
+    assert_eq!((path.as_str(), kind), ("changes.patch", &FileKind::Changes));
+    assert!(!patch.contains("junk"), "{patch}");
+
+    // The patch applies to a clone at the commit of the run.
+    let clone = world.dir.path().join("clone");
+    git(
+        world.dir.path(),
+        &["clone", "-q", &world.repo().to_string_lossy(), &clone.to_string_lossy()],
+    );
+    fs::write(world.dir.path().join("changes.patch"), patch).expect("the patch");
+    git(&clone, &["apply", &world.dir.path().join("changes.patch").to_string_lossy()]);
+    assert_eq!(fs::read_to_string(clone.join("a.txt")).expect("a.txt"), "changed\n");
+    assert_eq!(fs::read_to_string(clone.join("new.txt")).expect("new.txt"), "new\n");
+    let mode = fs::metadata(clone.join("new.txt")).expect("the metadata").permissions().mode();
+    assert_eq!(mode & 0o111, 0o111, "the executable bit comes along");
+
+    // A command that changes nothing brings no patch.
+    agent.start(RunSpec {
+        changes: true,
+        ..world.spec("23-3", HOLDER, "true")
+    });
+    assert_eq!(agent.follow("23-3", 0).end, Reply::Exit { code: 0 });
+    assert_eq!(fetch_files(&agent, "23-3"), Vec::new());
 }

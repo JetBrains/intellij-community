@@ -8,7 +8,7 @@ use std::sync::{Arc, Mutex, PoisonError};
 use std::thread;
 use std::time::Duration;
 
-use yonder_link::proto::{Reply, Request, SCHEMA_VERSION};
+use yonder_link::proto::{FEATURES, Reply, Request, SCHEMA_VERSION};
 use yonder_link::{AllowList, Channel, Identity, ServerTls};
 
 use crate::config::{Config, HostFile};
@@ -120,8 +120,15 @@ pub(crate) struct FakeAgent {
 }
 
 impl FakeAgent {
-    /// An agent that accepts `client`, speaks `schema`, and answers each request with `script`.
-    pub(crate) fn start(client: &Identity, schema: u32, script: impl Fn(&Request, &mut Channel) + Send + Sync + 'static) -> Self {
+    /// An agent that accepts `client`, speaks `schema`, has the features `features` (none for an agent older than the
+    /// features), and answers each request with `script`.
+    pub(crate) fn start_with(
+        client: &Identity,
+        schema: u32,
+        features: &[&str],
+        script: impl Fn(&Request, &mut Channel) + Send + Sync + 'static,
+    ) -> Self {
+        let features: Vec<String> = features.iter().map(|feature| (*feature).to_owned()).collect();
         let dir = tempfile::tempdir().expect("a temporary directory");
         let allow = dir.path().join("clients");
         let mut list = AllowList::default();
@@ -144,7 +151,8 @@ impl FakeAgent {
                     }
                     let Ok(socket) = socket else { continue };
                     let (tls, requests, script) = (tls.clone(), Arc::clone(&requests), Arc::clone(&script));
-                    thread::spawn(move || serve(socket, &tls, schema, &requests, &*script));
+                    let features = features.clone();
+                    thread::spawn(move || serve(socket, &tls, (schema, features), &requests, &*script));
                 }
             });
         }
@@ -176,7 +184,7 @@ impl Drop for FakeAgent {
     }
 }
 
-fn serve(socket: TcpStream, tls: &ServerTls, schema: u32, requests: &Mutex<Vec<Request>>, script: &Script) {
+fn serve(socket: TcpStream, tls: &ServerTls, (schema, features): (u32, Vec<String>), requests: &Mutex<Vec<Request>>, script: &Script) {
     let Ok(mut channel) = Channel::accept(socket, tls, Duration::from_secs(5)) else {
         return;
     };
@@ -188,6 +196,7 @@ fn serve(socket: TcpStream, tls: &ServerTls, schema: u32, requests: &Mutex<Vec<R
         agent_version: "0.1.0".to_owned(),
         os: "macos".to_owned(),
         arch: "aarch64".to_owned(),
+        features,
     };
     if channel.send(&hello).is_err() || schema != SCHEMA_VERSION {
         return;
@@ -213,10 +222,19 @@ impl Setup {
     }
 
     pub(crate) fn with_schema(schema: u32, script: impl Fn(&Request, &mut Channel) + Send + Sync + 'static) -> Self {
+        Self::with_agent(schema, &FEATURES, script)
+    }
+
+    /// A setup whose agent has only `features`: none for an agent older than the features.
+    pub(crate) fn with_features(features: &[&str], script: impl Fn(&Request, &mut Channel) + Send + Sync + 'static) -> Self {
+        Self::with_agent(SCHEMA_VERSION, features, script)
+    }
+
+    fn with_agent(schema: u32, features: &[&str], script: impl Fn(&Request, &mut Channel) + Send + Sync + 'static) -> Self {
         let dir = tempfile::tempdir().expect("a temporary directory");
         let config = Config::new(dir.path().join("config"));
         let client = config.identity().expect("the client identity");
-        let agent = FakeAgent::start(&client, schema, script);
+        let agent = FakeAgent::start_with(&client, schema, features, script);
         config.write_host(&host_file(&agent, vec![agent.address])).expect("the host file");
         Self { dir, config, agent }
     }

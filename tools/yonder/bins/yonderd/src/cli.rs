@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use clap::{Parser, Subcommand};
-use yonder_link::proto::SCHEMA_VERSION;
+use yonder_link::proto::{FEATURES, SCHEMA_VERSION};
 use yonder_link::{DEFAULT_PORT, Fingerprint};
 
 use crate::home::Home;
@@ -66,6 +66,13 @@ enum Commands {
     },
     /// Prints the version and the protocol schema as one JSON line.
     Version,
+    /// Writes the environment of this process into a file as JSON. The login shell of the user runs it, see
+    /// `login_env.rs`.
+    #[command(hide = true)]
+    DumpEnv {
+        /// The file to write.
+        file: PathBuf,
+    },
 }
 
 /// Runs the command of `args`, the first of which is the program name. Answers the exit code.
@@ -122,8 +129,11 @@ fn execute(command: Commands, stdout: &mut dyn Write) -> Result<(), Refusal> {
             crate::setup::setup(&Home::from_env()?, &setup, stdout)
         }
         Commands::Version => {
-            let line = serde_json::json!({"version": env!("CARGO_PKG_VERSION"), "schema_version": SCHEMA_VERSION});
+            let line = serde_json::json!({"version": env!("CARGO_PKG_VERSION"), "schema_version": SCHEMA_VERSION, "features": FEATURES});
             writeln!(stdout, "{line}").map_err(|error| refused(AGENT_ERROR, format!("cannot write stdout: {error}")))
+        }
+        Commands::DumpEnv { file } => {
+            crate::login_env::dump_env(&file).map_err(|error| refused(AGENT_ERROR, format!("cannot write {}: {error}", file.display())))
         }
     }
 }

@@ -7,16 +7,20 @@
 //! The host chooses the paths, so the client takes only a path below a `fetch` directory of the run, and never one
 //! inside a `.git` directory: a hook or a `core.fsmonitor` there would run code here. A file system that ignores the
 //! case, such as APFS, reads `.GIT` as `.git`, and Windows drops a trailing dot or space, so these spellings count too.
+//!
+//! A file of an output replaces the local copy of the output: the first file of an output removes the local file or
+//! directory of its path. The patch of the changes goes to the file that the run names, outside the working tree.
 
+use std::collections::BTreeSet;
 use std::fs;
 use std::io::{self, BufWriter, Write as _};
 use std::path::{Path, PathBuf};
 
-use yonder_link::proto::{Reply, Request};
+use yonder_link::proto::{FileKind, Reply, Request};
 use yonder_link::{Channel, LinkError};
 
 use crate::host::Host;
-use crate::run::done;
+use crate::run::{Fetched, done, patch_path};
 use crate::{Client, Refusal, code, refused};
 
 /// The suffix of a file that is not complete yet.
@@ -33,7 +37,14 @@ impl Client<'_> {
         } else {
             fetch.to_vec()
         };
-        self.fetch_from(&mut host, run, checkout, &fetch)
+        let fetched = self.fetch_run(&mut host, run, checkout, &fetch, None)?;
+        if let Some(changes) = &fetched.changes {
+            (self.say)(&format!(
+                "yonder: the changes of the run {run} are in {}: `git apply` applies them",
+                changes.display()
+            ));
+        }
+        Ok(fetched.files)
     }
 
     /// The `fetch` directories of a kept run, as the agent lists it.
@@ -43,15 +54,9 @@ impl Client<'_> {
             (_, Reply::Refused { code, message }) => return Err(host.agent_refusal(code, &message)),
             (_, reply) => return Err(host.unexpected(&reply)),
         };
+        // A run without fetch directories can still have outputs and changes, which need none.
         match listed.into_iter().find(|info| info.run == run) {
-            Some(info) if !info.fetch.is_empty() => Ok(info.fetch),
-            Some(_) => Err(refused(
-                code::USAGE,
-                format!(
-                    "{} names no fetch directory of the run {run}; name each with `--fetch <dir>`",
-                    host.alias()
-                ),
-            )),
+            Some(info) => Ok(info.fetch),
             None => Err(refused(code::USAGE, format!("{} keeps no run {run}", host.alias()))),
         }
     }
@@ -66,27 +71,62 @@ impl Client<'_> {
         done(host, &Request::Forget { run: run.to_owned() }, self.timing.read)
     }
 
-    pub(crate) fn fetch_from(&self, host: &mut Host, run: &str, checkout: &Path, fetch: &[String]) -> Result<Vec<String>, Refusal> {
+    /// Copies the files of a run: the staged files below `checkout`, the outputs in place of their local copies, and
+    /// the patch of the changes to `changes`, or to the patch file of the run in the git directory of the checkout.
+    pub(crate) fn fetch_run(
+        &self,
+        host: &mut Host,
+        run: &str,
+        checkout: &Path,
+        fetch: &[String],
+        changes: Option<&Path>,
+    ) -> Result<Fetched, Refusal> {
         let (mut channel, mut reply) = host.request(&Request::Fetch { run: run.to_owned() }, self.timing.read)?;
-        let mut fetched = Vec::new();
+        let mut fetched = Fetched {
+            complete: true,
+            ..Fetched::default()
+        };
         let mut missed = Vec::new();
+        let mut replaced = BTreeSet::new();
         loop {
             match reply {
-                Reply::File { path, size, executable } => match local_target(checkout, &path, fetch) {
-                    Ok(target) => match receive_file(&mut channel, &target, size, executable) {
-                        Ok(()) => fetched.push(path),
-                        Err(Received::Link(error)) => return Err(host.link_refusal(&error)),
-                        Err(Received::Local(said)) => {
-                            (self.say)(&format!("yonder: cannot write {}: {said}", target.display()));
+                Reply::File {
+                    path,
+                    size,
+                    executable,
+                    kind,
+                } => {
+                    let target = match &kind {
+                        FileKind::Staged => local_target(checkout, &path, fetch),
+                        FileKind::Output { root } => output_target(checkout, root, &path).inspect(|_| {
+                            if replaced.insert(root.clone())
+                                && let Err(error) = remove_local(&checkout.join(root))
+                            {
+                                (self.say)(&format!("yonder: cannot remove the local output {root}: {error}"));
+                            }
+                        }),
+                        FileKind::Changes => changes
+                            .map(Path::to_path_buf)
+                            .or_else(|| patch_path(self.processes, checkout, run))
+                            .ok_or_else(|| "git names no directory for the patch".to_owned()),
+                    };
+                    match target {
+                        Ok(target) => match receive_file(&mut channel, &target, size, executable) {
+                            Ok(()) if kind == FileKind::Changes => fetched.changes = Some(target),
+                            Ok(()) => fetched.files.push(path),
+                            Err(Received::Link(error)) => return Err(host.link_refusal(&error)),
+                            Err(Received::Local(said)) => {
+                                (self.say)(&format!("yonder: cannot write {}: {said}", target.display()));
+                                missed.push(path);
+                            }
+                        },
+                        Err(said) => {
+                            channel.recv_stream(&mut io::sink()).map_err(|error| host.link_refusal(&error))?;
+                            (self.say)(&format!("yonder: skipped {path:?} of the run {run}: {said}"));
                             missed.push(path);
                         }
-                    },
-                    Err(said) => {
-                        channel.recv_stream(&mut io::sink()).map_err(|error| host.link_refusal(&error))?;
-                        (self.say)(&format!("yonder: skipped {path:?} of the run {run}: {said}"));
-                        missed.push(path);
                     }
-                },
+                }
                 Reply::Fetched { .. } => {
                     channel.close();
                     if missed.is_empty() {
@@ -97,7 +137,7 @@ impl Client<'_> {
                         format!(
                             "{} of {} files of the run {run} did not come: {}",
                             missed.len(),
-                            missed.len() + fetched.len(),
+                            missed.len() + fetched.files.len() + usize::from(fetched.changes.is_some()),
                             missed.join(", ")
                         ),
                     ));
@@ -107,6 +147,29 @@ impl Client<'_> {
             }
             reply = host.recv(&mut channel, self.timing.read)?;
         }
+    }
+}
+
+/// The local file of a file of the output `root`: `root` itself or a path below it, below the checkout.
+pub(crate) fn output_target(checkout: &Path, root: &str, path: &str) -> Result<PathBuf, String> {
+    plain_target(checkout, root)?;
+    let below = path == root || path.strip_prefix(root).is_some_and(|rest| rest.starts_with('/'));
+    if !below {
+        return Err(format!("the path is not in its output {root}"));
+    }
+    plain_target(checkout, path)
+}
+
+/// Removes a local file, link or directory. A missing one is no failure.
+fn remove_local(path: &Path) -> io::Result<()> {
+    let removed = match fs::symlink_metadata(path) {
+        Ok(metadata) if metadata.is_dir() => fs::remove_dir_all(path),
+        Ok(_) => fs::remove_file(path),
+        Err(error) => Err(error),
+    };
+    match removed {
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(()),
+        other => other,
     }
 }
 
@@ -180,6 +243,20 @@ fn part_path(target: &Path) -> PathBuf {
 /// The local file of a staged path: below the checkout, below one of the `fetch` directories, and outside each `.git`
 /// directory. Answers why else.
 pub(crate) fn local_target(checkout: &Path, path: &str, fetch: &[String]) -> Result<PathBuf, String> {
+    let target = plain_target(checkout, path)?;
+    let below_fetch = fetch.iter().any(|dir| {
+        path.strip_prefix(dir.trim_end_matches('/'))
+            .is_some_and(|rest| rest.starts_with('/'))
+    });
+    if !below_fetch {
+        return Err(format!("the path is in none of the fetch directories {}", fetch.join(", ")));
+    }
+    Ok(target)
+}
+
+/// The local file of a path that the host chose: a plain relative path below the checkout, outside each `.git`
+/// directory. Answers why else.
+fn plain_target(checkout: &Path, path: &str) -> Result<PathBuf, String> {
     let parts: Vec<&str> = path.split('/').collect();
     let plain = |part: &&str| !part.is_empty() && *part != "." && *part != ".." && !part.contains(['\\', ':']);
     if !parts.iter().all(plain) || path.ends_with(PART_SUFFIX) {
@@ -187,13 +264,6 @@ pub(crate) fn local_target(checkout: &Path, path: &str, fetch: &[String]) -> Res
     }
     if parts.iter().any(|part| is_git_dir(part)) {
         return Err("the path is inside a .git directory".to_owned());
-    }
-    let below_fetch = fetch.iter().any(|dir| {
-        path.strip_prefix(dir.trim_end_matches('/'))
-            .is_some_and(|rest| rest.starts_with('/'))
-    });
-    if !below_fetch {
-        return Err(format!("the path is in none of the fetch directories {}", fetch.join(", ")));
     }
     Ok(parts.iter().fold(checkout.to_path_buf(), |target, part| target.join(part)))
 }

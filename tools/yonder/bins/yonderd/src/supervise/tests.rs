@@ -87,6 +87,7 @@ fn spec_of(commit: &str) -> RunSpec {
         command: vec!["true".to_owned()],
         fetch: vec![],
         idle_hours: 8,
+        ..RunSpec::default()
     }
 }
 

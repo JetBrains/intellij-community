@@ -3,7 +3,8 @@
 //! - [`config`]: the identity of the client and one host file per alias, under `~/.config/yonder/`.
 //! - [`host`]: the address choice and the hello of each connection to an agent.
 //! - [`process`]: the seam of the local git and ssh calls.
-//! - [`run`]: a run of a command of the committed HEAD on a host, the sync of its base, and the requests of one reply.
+//! - [`run`]: a run of a command of the committed HEAD or of the working tree on a host, the sync of its base, the
+//!   outputs and the changes that come back, and the requests of one reply.
 //! - [`phases_line`]: the durations of the steps of a run.
 //! - [`prepare`]: makes a host ready over ssh.
 //! - [`Client::build_agent`]: builds the agent with Bazel in a checkout of the monorepo, for `prepare`.
@@ -37,20 +38,28 @@ pub use host::{AgentInfo, Host};
 pub use phases::{duration_text, phases_line, phases_short};
 pub use prepare::{PrepareRequest, Prepared};
 pub use process::{Call, Limit, OsProcesses, Processes, Ran, Stop, Stopped, never};
-pub use run::{Followed, Leased, RunOutcome, RunRequest};
+pub use run::{Followed, Leased, RunOptions, RunOutcome, RunRequest};
 pub use yonder_link::DEFAULT_PORT;
 pub use yonder_link::proto::{Phase, RunInfo};
 
-/// The exit vocabulary of yonder. A refusal leaves by 255. A run leaves by the exit code of its command, which is no
-/// refusal.
+/// The exit vocabulary of yonder. A run leaves by the exit code of its command, which is no refusal. A refusal of a run
+/// tells whether the command ran.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Exit {
+    /// The host did not run the command: the caller can run it locally instead. 75, `EX_TEMPFAIL` of `sysexits.h`.
+    NotRun,
+    /// Ctrl+C stopped the run before its command, or a second Ctrl+C stopped the follow. 130.
+    Interrupted,
+    /// Any other refusal: the run can go on on the host after a lost link, its changes did not apply, or a request other
+    /// than a run failed. 255.
     Refused,
 }
 
 impl Exit {
     pub const fn code(self) -> u8 {
         match self {
+            Self::NotRun => 75,
+            Self::Interrupted => 130,
             Self::Refused => 255,
         }
     }
@@ -94,6 +103,10 @@ pub mod code {
     pub const INTERRUPTED: &str = "interrupted";
     /// Fetch did not copy every staged file of a run, so the run stays on the host.
     pub const FETCH_FAILED: &str = "fetch_failed";
+    /// The agent lacks a feature that the run needs, such as the changes of `--apply`: it is older than the client.
+    pub const OLD_AGENT: &str = "old_agent";
+    /// The changes of the command did not apply to the working tree. The patch stays in a file.
+    pub const APPLY_FAILED: &str = "apply_failed";
 }
 
 pub(crate) fn refused(code: &'static str, message: impl Into<String>) -> Refusal {
@@ -151,6 +164,8 @@ pub struct Client<'a> {
     config: Config,
     processes: &'a dyn Processes,
     say: &'a (dyn Fn(&str) + Sync),
+    /// The sink of the stdout lines of a run, or `None` to collect them into [`RunOutcome::stdout`].
+    stdout: Option<&'a (dyn Fn(&str) + Sync)>,
     presses: &'a (dyn Fn() -> u32 + Sync),
     timing: Timing,
 }
@@ -168,9 +183,17 @@ impl<'a> Client<'a> {
             config,
             processes,
             say,
+            stdout: None,
             presses,
             timing: Timing::DEFAULT,
         }
+    }
+
+    /// Sends each stdout line of a run to `stdout` as it comes, instead of [`RunOutcome::stdout`] at the end.
+    #[must_use]
+    pub const fn with_stdout(mut self, stdout: &'a (dyn Fn(&str) + Sync)) -> Self {
+        self.stdout = Some(stdout);
+        self
     }
 
     /// Whether the person pressed Ctrl+C.

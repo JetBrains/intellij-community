@@ -42,6 +42,8 @@ pub struct Host {
     timing: Timing,
     /// Where each new connection leaves its closer, for a thread that ends the work of this host.
     latest: Option<Arc<Latest>>,
+    /// The features of the agent from its last hello, see `yonder_link::proto::feature`.
+    features: Vec<String>,
 }
 
 /// The latest connection of a [`Host`], which another thread can close, see [`Host::watched`].
@@ -101,6 +103,7 @@ impl Host {
             tls,
             timing,
             latest: None,
+            features: Vec::new(),
         })
     }
 
@@ -110,6 +113,12 @@ impl Host {
             latest: Some(latest),
             ..self.clone()
         }
+    }
+
+    /// The features of the agent of the last connection, see `yonder_link::proto::feature`. An agent older than the
+    /// features has none.
+    pub fn features(&self) -> &[String] {
+        &self.features
     }
 
     pub fn alias(&self) -> &str {
@@ -249,7 +258,7 @@ impl Host {
         None
     }
 
-    fn attempt(&self, address: SocketAddr) -> Result<(Channel, AgentInfo), Attempt> {
+    fn attempt(&mut self, address: SocketAddr) -> Result<(Channel, AgentInfo), Attempt> {
         let mut channel = match Channel::connect(address, &self.tls, self.timing.connect) {
             Ok(channel) => channel,
             Err(LinkError::Untrusted(said)) => return Err(Attempt::Untrusted(said)),
@@ -265,15 +274,19 @@ impl Host {
                 agent_version,
                 os,
                 arch,
-            }) if schema_version == SCHEMA_VERSION => Ok((
-                channel,
-                AgentInfo {
-                    version: agent_version,
-                    os,
-                    arch,
-                    address,
-                },
-            )),
+                features,
+            }) if schema_version == SCHEMA_VERSION => {
+                self.features = features;
+                Ok((
+                    channel,
+                    AgentInfo {
+                        version: agent_version,
+                        os,
+                        arch,
+                        address,
+                    },
+                ))
+            }
             Ok(Reply::Hello {
                 schema_version,
                 agent_version,

@@ -12,12 +12,23 @@ fn a_lease_file_keeps_the_format_of_remote_sh_and_adds_the_repository() {
         slot: PathBuf::from("/pool/15/idea-1"),
         used: 1_792_836_308,
         repo: Some(PathBuf::from("/home/me/projects/idea-1")),
+        prepared: BTreeMap::new(),
     };
     assert_eq!(
         file.text(),
         "lease_id=208e\nslot=/pool/15/idea-1\nused=1792836308\nrepo=/home/me/projects/idea-1\n"
     );
-    assert_eq!(LeaseFile::parse(&file.text()), Some(file));
+    assert_eq!(LeaseFile::parse(&file.text()), Some(file.clone()));
+    let prepared = LeaseFile {
+        prepared: BTreeMap::from([("00aa".to_owned(), "f1".to_owned()), ("00bb".to_owned(), "f2".to_owned())]),
+        ..file
+    };
+    assert!(
+        prepared
+            .text()
+            .ends_with("repo=/home/me/projects/idea-1\nprepared.00aa=f1\nprepared.00bb=f2\n")
+    );
+    assert_eq!(LeaseFile::parse(&prepared.text()), Some(prepared));
     let old = LeaseFile::parse("lease_id=a\nslot=/s\n").expect("a file of remote.sh");
     assert_eq!((old.used, old.repo), (0, None), "a file without `used` is idle");
     assert_eq!(LeaseFile::parse("slot=/s\nused=1\n"), None);
@@ -63,6 +74,7 @@ fn a_recorded_lease_is_private_and_names_its_repository() {
         lease_id: "id".to_owned(),
         slot: PathBuf::from("/slot"),
         fresh: true,
+        prepared: BTreeMap::from([("k".to_owned(), "f".to_owned())]),
     };
     leases.record("h", &lease, 42).expect("recorded");
     assert_eq!(
@@ -72,6 +84,7 @@ fn a_recorded_lease_is_private_and_names_its_repository() {
             slot: PathBuf::from("/slot"),
             used: 42,
             repo: Some(dir.path().join("repo")),
+            prepared: BTreeMap::from([("k".to_owned(), "f".to_owned())]),
         })
     );
     let mode = |path: &Path| fs::metadata(path).expect("the metadata").permissions().mode() & 0o777;
@@ -87,6 +100,7 @@ fn a_request_for_another_repository_refuses_and_keeps_the_file() {
         lease_id: "id".to_owned(),
         slot: PathBuf::from("/slot"),
         fresh: true,
+        prepared: BTreeMap::new(),
     };
     mine.record("h", &lease, 42).expect("recorded");
     let other = Leases::new(dir.path().join("leases"), dir.path().join("repo-b"));

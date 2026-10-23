@@ -30,6 +30,24 @@ pub const PACK_STALL_SECONDS: u64 = 120;
 /// The prefix of the refs that a client keeps on the host as bases of its packs, see [`Request::Pack`].
 pub const BASE_REFS: &str = "refs/yonder/base/";
 
+/// What an agent does beyond the base of [`SCHEMA_VERSION`]. [`Reply::Hello`] lists the features of the agent. An agent
+/// ignores a field of a request that it does not know, so a client checks a feature before it relies on its field.
+pub mod feature {
+    /// The agent reads `.yonder.toml` in the root of the commit: its prepare steps, its environment and its outputs, see
+    /// [`RunSpec::outputs`](super::RunSpec::outputs).
+    pub const CONFIG: &str = "config";
+    /// The agent gives the prepare steps and the command the login environment of its user and a raised limit of open
+    /// files.
+    pub const LOGIN_ENV: &str = "login_env";
+    /// [`RunSpec::nice`](super::RunSpec::nice).
+    pub const NICE: &str = "nice";
+    /// [`RunSpec::changes`](super::RunSpec::changes).
+    pub const CHANGES: &str = "changes";
+}
+
+/// The features of an agent of this build, for its [`Reply::Hello`].
+pub const FEATURES: [&str; 4] = [feature::CONFIG, feature::LOGIN_ENV, feature::NICE, feature::CHANGES];
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "request", rename_all = "snake_case")]
 pub enum Request {
@@ -70,8 +88,9 @@ pub enum Request {
     Release { repo: String, holder: String },
 }
 
-/// What one run does.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+/// What one run does. A field after `idle_hours` is optional: an older client does not send it, and an older agent
+/// ignores it.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RunSpec {
     /// The id that the client chose: `<epoch ms>-<pid>`. It names the run directory, so it is `[0-9A-Za-z._-]+`.
     pub run: String,
@@ -90,6 +109,19 @@ pub struct RunSpec {
     pub fetch: Vec<String>,
     /// A lease of another holder that no run used for this many hours goes back to the pool after the run.
     pub idle_hours: u32,
+    /// The niceness of the prepare steps and the command, 0 to 19. `None` keeps the niceness of the agent. Feature
+    /// [`feature::NICE`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub nice: Option<u8>,
+    /// Stage the outputs that `.yonder.toml` of the commit names, for [`Request::Fetch`]. The agent removes each output
+    /// before the command, so only the outputs of this run come back. Without it the agent leaves the outputs alone.
+    /// Feature [`feature::CONFIG`].
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub outputs: bool,
+    /// Stage the changes that the command made to the files of the slot, as a patch for `git apply`, for
+    /// [`Request::Fetch`]. Feature [`feature::CHANGES`].
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub changes: bool,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -101,6 +133,9 @@ pub enum Reply {
         /// `std::env::consts::OS` and `ARCH` of the agent.
         os: String,
         arch: String,
+        /// The features of the agent, see [`feature`]. An older agent sends none.
+        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        features: Vec<String>,
     },
     Have {
         commits: Vec<String>,
@@ -132,6 +167,10 @@ pub enum Reply {
         path: String,
         size: u64,
         executable: bool,
+        /// What the file is. An older agent sends only [`FileKind::Staged`], and a client that set neither
+        /// [`RunSpec::outputs`] nor [`RunSpec::changes`] gets only those.
+        #[serde(default, skip_serializing_if = "FileKind::is_staged")]
+        kind: FileKind,
     },
     Fetched {
         files: u64,
@@ -154,6 +193,27 @@ pub enum Reply {
         code: String,
         message: String,
     },
+}
+
+/// What a fetched file is.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum FileKind {
+    /// A new entry of a `fetch` directory of the run.
+    #[default]
+    Staged,
+    /// A file of the output `root`, a path that `.yonder.toml` names. The path of the file is `root` or below it. The
+    /// client replaces its own copy of `root` with the one of the run.
+    Output { root: String },
+    /// The changes that the command made to the files of the slot, as a patch for `git apply` in the root of a
+    /// checkout. The path of the file is a name, not a path of the slot.
+    Changes,
+}
+
+impl FileKind {
+    pub const fn is_staged(&self) -> bool {
+        matches!(self, Self::Staged)
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -181,8 +241,8 @@ pub struct RunInfo {
     pub fetch: Vec<String>,
 }
 
-/// One step of a run and its duration: `lock`, `lease`, `pack_wait`, `checkout`, `command`, `stage`. A client
-/// adds its own steps, such as `pack`, `upload` and `fetch`, when it reports a run.
+/// One step of a run and its duration: `lock`, `lease`, `pack_wait`, `checkout`, `prepare`, `command`, `stage`. An older
+/// agent has no `prepare`. A client adds its own steps, such as `pack`, `upload` and `fetch`, when it reports a run.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Phase {
     pub name: String,
@@ -200,13 +260,14 @@ impl Request {
 }
 
 impl Reply {
-    /// The hello of an agent of `agent_version` on the platform of this build.
+    /// The hello of an agent of `agent_version` on the platform of this build, with the features of this build.
     pub fn hello(agent_version: &str) -> Self {
         Self::Hello {
             schema_version: SCHEMA_VERSION,
             agent_version: agent_version.to_owned(),
             os: std::env::consts::OS.to_owned(),
             arch: std::env::consts::ARCH.to_owned(),
+            features: FEATURES.iter().map(|feature| (*feature).to_owned()).collect(),
         }
     }
 
@@ -216,6 +277,11 @@ impl Reply {
             message: message.into(),
         }
     }
+}
+
+/// serde calls `skip_serializing_if` with a reference.
+const fn is_false(value: &bool) -> bool {
+    !*value
 }
 
 /// Whether `run` can name a run directory, a lease file and the last part of a git ref. A run id names the ref

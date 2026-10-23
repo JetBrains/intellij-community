@@ -12,6 +12,10 @@
 //! | `packed` | written once the pack of the run has landed and its ref points at the commit |
 //! | `pid` | the pid of the supervisor, as information only |
 //! | `stage/` | the staged entries, under their paths relative to the slot root |
+//! | `outputs/` | the staged outputs of `.yonder.toml`, under their paths relative to the slot root |
+//! | `outputs.json` | the outputs in `outputs/`, as a JSON array of their paths |
+//! | `changes.patch` | the changes that the command made to the files of the slot, for `git apply` |
+//! | `before.index`, `after.index` | the index copies of the scans of the slot, while they run |
 //! | `supervisor.log` | the stderr of the supervisor, such as a panic |
 //!
 //! The supervisor writes the last event before `exit.json`, so a reader that sees `exit.json` and then reads the log to
@@ -41,6 +45,9 @@ const CANCEL: &str = "cancel";
 const PACKING: &str = "packing";
 const PACKED: &str = "packed";
 const STAGE: &str = "stage";
+const OUTPUTS: &str = "outputs";
+const OUTPUT_ROOTS: &str = "outputs.json";
+const CHANGES: &str = "changes.patch";
 pub(crate) const SUPERVISOR_LOG: &str = "supervisor.log";
 
 /// The largest text of one event. A longer line becomes several events, so each reply stays far below the message
@@ -123,6 +130,32 @@ impl RunDir {
 
     pub(crate) fn stage_path(&self) -> PathBuf {
         self.path.join(STAGE)
+    }
+
+    pub(crate) fn outputs_path(&self) -> PathBuf {
+        self.path.join(OUTPUTS)
+    }
+
+    pub(crate) fn changes_path(&self) -> PathBuf {
+        self.path.join(CHANGES)
+    }
+
+    /// Records the outputs that the run staged.
+    pub(crate) fn write_output_roots(&self, roots: &[String]) -> io::Result<()> {
+        if roots.is_empty() {
+            return Ok(());
+        }
+        let json = serde_json::to_vec(roots).map_err(io::Error::other)?;
+        write_private(&self.path.join(OUTPUT_ROOTS), &json)
+    }
+
+    /// The outputs that the run staged. A run without outputs has none.
+    pub(crate) fn output_roots(&self) -> io::Result<Vec<String>> {
+        match fs::read(self.path.join(OUTPUT_ROOTS)) {
+            Ok(json) => serde_json::from_slice(&json).map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error)),
+            Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(Vec::new()),
+            Err(error) => Err(error),
+        }
     }
 
     pub(crate) fn spec(&self) -> io::Result<RunSpec> {

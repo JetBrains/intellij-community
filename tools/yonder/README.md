@@ -1,7 +1,11 @@
 # yonder: run a commit on another machine
 
-yonder runs a command of the committed HEAD on another machine of the user, in a warm Branch Deck lease there. `bt
---host` is its first client. This Cargo workspace holds the client, the agent and the link that they share. Bazel builds
+yonder runs a command of a checkout on another machine of the user, in a warm Branch Deck lease there. `bt --host` runs
+the committed HEAD. `yonder run <alias> -- <command>` runs the working tree, committed or not, in any repository: the
+output streams back, and the exit code is the one of the command, or 75 when the host did not run it. A repository asks
+the host for prepare steps, an environment and outputs with `.yonder.toml` in its root, and `--apply` brings the changes
+of the command back into the working tree. The agent gives each command the login environment of the user and a raised
+open-files limit. This Cargo workspace holds the client, the agent and the link that they share. Bazel builds
 every crate through `rules_rs` (repository `@yonder`, declared in `community/MODULE.bazel`). `cargo` serves the
 edit-test loop.
 
@@ -14,7 +18,14 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `crates/yonder-link` | The identity files, the TLS 1.3 channel with pinned certificates, the frames, and the protocol. `API.md` lists the refusal codes. | `@community//tools/yonder/crates/yonder-link:yonder-link_test` |
 | `crates/yonder-client` | The client: the host files, the address choice, a run with its thin pack, its output and its fetch, and `prepare` over ssh. `bt --host` links it. `API.md` lists the refusal codes. | `@community//tools/yonder/crates/yonder-client:yonder-client_test` |
 | `bins/yonder` | The client CLI: `run`, `attach`, `cancel`, `runs`, `fetch`, `forget`, `lease`, `release` and `prepare`. `:yonder` in `BUILD.bazel` is its optimized binary. | `@community//tools/yonder/bins/yonder:yonder_test` |
-| `bins/yonderd` | The agent on a host: macOS and Linux. `serve` answers the requests, `supervise` runs one run in a warm lease, `setup` starts the agent under launchd. `API.md` lists the commands and the refusals. | `@community//tools/yonder/bins/yonderd:yonderd_test`, `:yonderd_cli_test` |
+| `bins/yonderd` | The agent on a host: macOS and Linux. `serve` answers the requests, `supervise` runs one run in a warm lease, `setup` starts the agent under launchd. `API.md` lists the commands, the refusals, the environment of a run and the format of `.yonder.toml`. | `@community//tools/yonder/bins/yonderd:yonderd_test`, `:yonderd_cli_test` |
+
+## The warm lease
+
+The lease holder of a run is one per local checkout path (`yonder-<hash>`, or `--holder`), so the runs of a checkout
+follow each other in the same warm slot on the host, with its build outputs. The lease stays after a run.
+`yonder release <alias>` returns it at once. A run of another holder returns a lease that no run used for
+`--idle-hours` (8 by default).
 
 ## The link
 

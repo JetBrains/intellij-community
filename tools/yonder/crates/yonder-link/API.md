@@ -35,3 +35,13 @@ completes a byte stream.
 | `checkout_failed` | The commit cannot be checked out in the slot. |
 | `spawn_failed` | The command cannot start. |
 | `agent_error` | The agent cannot read or write its own files. |
+| `bad_config` | `.yonder.toml` of the commit cannot be read, or it has an unknown key or a value of the wrong shape. |
+| `prepare_failed` | A prepare step of `.yonder.toml` exited with a code other than 0, so the command did not run. |
+
+## Compatibility
+
+A change that an older end cannot read raises `SCHEMA_VERSION`. Each field after the first fields of schema 2 is
+optional: `RunSpec::nice`, `outputs` and `changes`, `Reply::Hello::features`, and `Reply::File::kind`. An older client
+does not send them, and an older agent ignores them. So an agent lists its features in its hello (`proto::feature`), and
+a client checks a feature before it relies on its field. An agent sends a file of another kind than
+`FileKind::Staged` only to a client that asked for outputs or changes, so an older client never gets one.

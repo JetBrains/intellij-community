@@ -3,7 +3,9 @@
 //! at most [`MAX_HANDSHAKES_PER_PEER`] of one address, so one host of the network cannot hold all of them. A socket
 //! over a cap is closed at once. A request that waits for a lock, bd or git sends a heartbeat while it
 //! waits: `Have`, the end of `Pack`, `Lease` and `Release`. The requests of a repository and of a lease are here; the
-//! requests of a run are in `run_requests`. A thread runs the cleanup of `cleanup` every hour.
+//! requests of a run are in `run_requests`. A thread runs the cleanup of `cleanup` every hour. At its start `serve`
+//! raises its open-files limit, which each run inherits, and a thread captures the login environment of the user
+//! (`login_env`).
 
 use std::collections::{HashMap, HashSet};
 use std::io::{self, Write};
@@ -24,7 +26,7 @@ use crate::home::Home;
 use crate::lease::{Leases, now_seconds};
 use crate::refused::{AGENT_ERROR, BAD_REQUEST, LOCK_TIMEOUT, PACK_FAILED, REPO_MISSING, Refusal, SCHEMA, refused, reply};
 use crate::run::{RunDir, Runs};
-use crate::{cleanup, git, tuning};
+use crate::{cleanup, git, login_env, run_env, tuning};
 
 /// The deadline of each read of the handshake and of a request.
 const READ_DEADLINE: Duration = Duration::from_secs(10);
@@ -81,12 +83,25 @@ pub(crate) fn serve(home: Home, bind: IpAddr, port: u16, out: &mut dyn Write) ->
     let address = listener.local_addr().map_err(|error| refused(AGENT_ERROR, error.to_string()))?;
     let line = serde_json::json!({"listening": address.to_string(), "fingerprint": identity.fingerprint().to_string()});
     let _ = writeln!(out, "{line}").and_then(|()| out.flush());
+    match run_env::raise_open_files() {
+        Ok(limit) => log(&format!("the open-files limit is {limit}")),
+        Err(error) => log(&format!("cannot raise the open-files limit: {error}")),
+    }
     let tls = ServerTls::new(&identity, home.allow_file()).map_err(|error| refused(AGENT_ERROR, format!("cannot set up TLS: {error}")))?;
     let agent = Arc::new(Agent {
         home,
         tls,
         exe,
         repos: Mutex::default(),
+    });
+
+    // The login environment of the user, for the runs. A shell profile can take seconds, so it does not hold the
+    // listener.
+    let (home, exe) = (agent.home.clone(), agent.exe.clone());
+    thread::spawn(move || {
+        if let Err(error) = login_env::refresh(&home, &exe) {
+            log(&format!("cannot read the login environment: {error}"));
+        }
     });
 
     let home = agent.home.clone();

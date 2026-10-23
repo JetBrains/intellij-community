@@ -4,6 +4,7 @@ use std::sync::atomic::{AtomicBool, AtomicU32};
 use std::sync::{Mutex, PoisonError};
 
 use pretty_assertions::assert_eq;
+use yonder_link::proto::FileKind;
 use yonder_link::{Channel, Frame};
 
 use super::*;
@@ -190,10 +191,15 @@ fn output(channel: &mut Channel, stream: Stream, text: &str, end: u64) {
 }
 
 fn send_file(channel: &mut Channel, path: &str, bytes: &[u8]) {
+    send_kind(channel, path, bytes, FileKind::Staged);
+}
+
+fn send_kind(channel: &mut Channel, path: &str, bytes: &[u8], kind: FileKind) {
     let _ = channel.send(&Reply::File {
         path: path.to_owned(),
         size: bytes.len() as u64,
         executable: false,
+        kind,
     });
     let _ = channel.send_bytes(bytes);
     let _ = channel.send_end();
@@ -881,6 +887,7 @@ fn a_cut_fetch_leaves_no_part_and_keeps_the_run() {
                 path: "out/bt-runs/1/big.log".to_owned(),
                 size: 10,
                 executable: false,
+                kind: FileKind::Staged,
             });
             let _ = channel.send_bytes(b"four");
             true
@@ -986,4 +993,445 @@ fn ctrl_c_during_the_build_of_the_pack_cancels_the_run_on_the_host() {
         "the build was not stopped: {:?}",
         started.elapsed()
     );
+}
+
+/// A checkout with a tracked change and an untracked file on [`COMMIT`], whose commit of the working tree is `SNAP`. Its
+/// main checkout is `~/projects/branch-deck` here. `index` is the file that stands for its index.
+fn dirty_checkout(index: &Path) -> FakeProcesses {
+    FakeProcesses::new(&[
+        ("status --porcelain", ok(" M a.txt\0?? b.txt\0")),
+        ("--verify HEAD", ok(&format!("{COMMIT}\n"))),
+        ("--git-path index", ok(&format!("{}\n", index.display()))),
+        ("write-tree", ok("t1\n")),
+        ("^{tree}", ok("t0\n")),
+        ("cat-file commit", ok("tree t0\ncommitter t <t@t> 1700000000 +0200\n\nm\n")),
+        ("commit-tree", ok(&format!("{SNAP}\n"))),
+        ("--git-common-dir", ok("/u/projects/branch-deck/.git\n")),
+        ("rev-list --count", ok("1\n")),
+        ("rev-list", ok(&format!("{SNAP}\n{COMMIT}\n"))),
+        ("merge-base", ok("m0\n")),
+        ("pack-objects", ok("PACK")),
+    ])
+}
+
+const SNAP: &str = "5555555555555555555555555555555555555555";
+
+/// The options of the yonder CLI: the working tree, niceness 10, the outputs, the repository by its name.
+const CLI: RunOptions = RunOptions {
+    working_tree: true,
+    nice: Some(10),
+    outputs: true,
+    apply: false,
+    repo_by_name: true,
+};
+
+#[test]
+fn a_run_of_the_working_tree_sends_its_commit_and_options_and_falls_back_to_the_repository_of_the_host_file() {
+    let packed = Arc::new(Mutex::new(Vec::new()));
+    let setup = Setup::new({
+        let packed = Arc::clone(&packed);
+        move |request, channel| match request {
+            Request::Have { repo, .. } if repo == "~/projects/branch-deck" => {
+                let _ = channel.send(&Reply::refused("repo_missing", "~/projects/branch-deck is not a git repository"));
+            }
+            Request::Follow { .. } => {
+                output(channel, Stream::Stdout, "line 1", 10);
+                output(channel, Stream::Stdout, "line 2", 20);
+                let _ = channel.send(&Reply::Exit { code: 0 });
+            }
+            _ => answer_besides_follow(request, channel, &packed, &[COMMIT]),
+        }
+    });
+    let index = setup.dir.path().join("index");
+    fs::write(&index, "an index").expect("the index");
+    let processes = dirty_checkout(&index);
+    let said = Said::default();
+    let say = |line: &str| said.push(line);
+    let streamed = Said::default();
+    let stdout = |line: &str| streamed.push(line);
+    let checkout_root = setup.checkout();
+    let (command, fetch) = (command(), fetch());
+    let outcome = client(&setup, &processes, &say, &calm)
+        .with_stdout(&stdout)
+        .run_with(ALIAS, &request(&checkout_root, &command, &fetch), &CLI)
+        .expect("the run");
+    assert_eq!(outcome.commit, SNAP);
+    assert_eq!(outcome.stdout, "", "the lines went to the sink");
+    assert_eq!(streamed.lines(), ["line 1", "line 2"]);
+
+    let requests = setup.agent.requests();
+    let mut kinds = kinds(&setup);
+    assert_eq!(kinds[..3], ["have", "have", "start"]);
+    kinds.sort_unstable();
+    assert_eq!(
+        kinds,
+        ["fetch", "follow", "forget", "have", "have", "pack", "start"],
+        "the outputs need a fetch"
+    );
+    let repos: Vec<&str> = requests
+        .iter()
+        .filter_map(|request| match request {
+            Request::Have { repo, .. } => Some(repo.as_str()),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(repos, ["~/projects/branch-deck", "~/projects/idea-1"]);
+    let Request::Start(spec) = &requests[2] else {
+        panic!("{requests:?}")
+    };
+    assert_eq!(
+        (spec.commit.as_str(), spec.repo.as_str(), spec.nice, spec.outputs, spec.changes),
+        (SNAP, "~/projects/idea-1", Some(10), true, false)
+    );
+    let lines = said.lines();
+    assert!(
+        lines.contains(&format!(
+            "yonder: run {} of 555555555555 on studio: the working tree, HEAD 0123456789ab and 2 changed paths",
+            outcome.run
+        )),
+        "{lines:#?}"
+    );
+    assert!(
+        lines
+            .iter()
+            .any(|line| line.starts_with("yonder: studio has no ~/projects/branch-deck; the run goes to ~/projects/idea-1")),
+        "{lines:#?}"
+    );
+    assert!(fs::read_to_string(&index).expect("the index") == "an index", "the index stays");
+}
+
+#[test]
+fn a_repository_of_the_local_name_on_the_host_takes_the_run() {
+    let packed = Arc::new(Mutex::new(Vec::new()));
+    let setup = Setup::new({
+        let packed = Arc::clone(&packed);
+        move |request, channel| match request {
+            Request::Follow { .. } => {
+                let _ = channel.send(&Reply::Exit { code: 0 });
+            }
+            _ => answer_besides_follow(request, channel, &packed, &[COMMIT]),
+        }
+    });
+    let index = setup.dir.path().join("index");
+    fs::write(&index, "an index").expect("the index");
+    let processes = dirty_checkout(&index);
+    let said = Said::default();
+    let say = |line: &str| said.push(line);
+    let checkout_root = setup.checkout();
+    let (command, fetch) = (command(), Vec::new());
+    let outcome = client(&setup, &processes, &say, &calm)
+        .run_with(ALIAS, &request(&checkout_root, &command, &fetch), &CLI)
+        .expect("the run");
+    let requests = setup.agent.requests();
+    let Request::Start(spec) = &requests[1] else {
+        panic!("{requests:?}")
+    };
+    assert_eq!(spec.repo, "~/projects/branch-deck");
+    assert!(
+        said.lines().iter().any(|line| line.starts_with(&format!(
+            "yonder: run {} of 555555555555 on studio in ~/projects/branch-deck: the working tree",
+            outcome.run
+        ))),
+        "{:#?}",
+        said.lines()
+    );
+}
+
+#[test]
+fn an_agent_older_than_the_features_refuses_apply_before_the_run_and_warns_about_the_rest() {
+    let setup = Setup::with_features(&[], |request, channel| {
+        let _ = match request {
+            Request::Have { commits, .. } => channel.send(&Reply::Have { commits: commits.clone() }),
+            Request::Start(spec) => channel.send(&Reply::Started { run: spec.run.clone() }),
+            Request::Follow { .. } => channel.send(&Reply::Exit { code: 0 }),
+            _ => channel.send(&Reply::Done {
+                message: "done".to_owned(),
+            }),
+        };
+    });
+    let processes = checkout();
+    let said = Said::default();
+    let say = |line: &str| said.push(line);
+    let checkout_root = setup.checkout();
+    fs::create_dir_all(&checkout_root).expect("the checkout");
+    fs::write(checkout_root.join(".yonder.toml"), "outputs = []\n").expect("the config");
+    let (command, fetch) = (command(), Vec::new());
+    let apply = RunOptions {
+        apply: true,
+        ..RunOptions::default()
+    };
+    let refusal = client(&setup, &processes, &say, &calm)
+        .run_with(ALIAS, &request(&checkout_root, &command, &fetch), &apply)
+        .expect_err("refused");
+    assert_eq!((refusal.code.as_ref(), refusal.exit), (code::OLD_AGENT, Exit::NotRun));
+    assert!(refusal.message.contains("`yonder prepare studio`"), "{}", refusal.message);
+    assert!(!setup.agent.requests().iter().any(|request| kind(request) == "start"));
+
+    let nice = RunOptions {
+        nice: Some(10),
+        ..RunOptions::default()
+    };
+    client(&setup, &processes, &say, &calm)
+        .run_with(ALIAS, &request(&checkout_root, &command, &fetch), &nice)
+        .expect("the run");
+    assert!(
+        said.lines().contains(
+            &"yonder: warning: the agent on studio is older than this client and ignores --nice, .yonder.toml, the login environment. `yonder prepare studio` updates it"
+                .to_owned()
+        ),
+        "{:#?}",
+        said.lines()
+    );
+}
+
+#[test]
+fn a_refusal_before_the_command_is_not_run_and_one_after_it_is_not() {
+    let refused_after = |phases: Vec<Phase>| {
+        let packed = Arc::new(Mutex::new(Vec::new()));
+        let setup = Setup::new({
+            let packed = Arc::clone(&packed);
+            move |request, channel| match request {
+                Request::Follow { .. } => {
+                    let _ = channel.send(&Reply::Phases { phases: phases.clone() });
+                    let _ = channel.send(&Reply::refused("prepare_failed", "the prepare step \"deps\" exited with 4"));
+                }
+                _ => answer_besides_follow(request, channel, &packed, &[COMMIT]),
+            }
+        });
+        let processes = checkout();
+        let say = |_: &str| {};
+        let checkout_root = setup.checkout();
+        let (command, fetch) = (command(), fetch());
+        client(&setup, &processes, &say, &calm)
+            .run(ALIAS, &request(&checkout_root, &command, &fetch))
+            .expect_err("refused")
+    };
+    let before = refused_after(vec![step("lock", 0), step("prepare", 10)]);
+    assert_eq!((before.code.as_ref(), before.exit), ("prepare_failed", Exit::NotRun));
+    let after = refused_after(vec![step("prepare", 10), step("command", 10)]);
+    assert_eq!(after.exit, Exit::Refused);
+    let no_host = Client::new(
+        crate::Config::new(tempfile::tempdir().expect("a directory").path().to_path_buf()),
+        &crate::OsProcesses,
+        &|_| {},
+        &calm,
+    )
+    .run(ALIAS, &request(Path::new("/c"), &command(), &fetch()))
+    .expect_err("no host");
+    assert_eq!((no_host.code.as_ref(), no_host.exit.code()), (code::NO_HOST, 75));
+}
+
+/// Runs real git in `dir`.
+fn real_git(dir: &Path, args: &[&str]) -> String {
+    let output = std::process::Command::new("git")
+        .arg("-C")
+        .arg(dir)
+        .args(args)
+        .env("GIT_CONFIG_NOSYSTEM", "1")
+        .env("GIT_AUTHOR_NAME", "t")
+        .env("GIT_AUTHOR_EMAIL", "t@t")
+        .env("GIT_COMMITTER_NAME", "t")
+        .env("GIT_COMMITTER_EMAIL", "t@t")
+        .output()
+        .expect("git");
+    assert!(output.status.success(), "git {args:?}: {}", String::from_utf8_lossy(&output.stderr));
+    String::from_utf8_lossy(&output.stdout).trim_end().to_owned()
+}
+
+/// An agent that has every commit, ends the run with 0, and sends `files` in the fetch.
+fn fetching_agent(files: Vec<(String, FileKind, Vec<u8>)>) -> Setup {
+    Setup::new(move |request, channel| {
+        let _ = match request {
+            Request::Have { commits, .. } => channel.send(&Reply::Have { commits: commits.clone() }),
+            Request::Start(spec) => channel.send(&Reply::Started { run: spec.run.clone() }),
+            Request::Follow { .. } => channel.send(&Reply::Exit { code: 0 }),
+            Request::Fetch { .. } => {
+                for (path, kind, bytes) in &files {
+                    send_kind(channel, path, bytes, kind.clone());
+                }
+                channel.send(&Reply::Fetched { files: 0, bytes: 0 })
+            }
+            _ => channel.send(&Reply::Done {
+                message: "done".to_owned(),
+            }),
+        };
+    })
+}
+
+/// A checkout with a commit of `a.txt`, in the directory of the setup.
+fn real_checkout(setup: &Setup) -> PathBuf {
+    let root = setup.checkout();
+    fs::create_dir_all(&root).expect("the checkout");
+    real_git(&root, &["init", "-q"]);
+    fs::write(root.join("a.txt"), "a\n").expect("a file");
+    fs::write(root.join(".gitignore"), "results/\n").expect("the ignore file");
+    real_git(&root, &["add", "--all"]);
+    real_git(&root, &["commit", "-q", "-m", "first"]);
+    root
+}
+
+const PATCH: &str = "diff --git a/a.txt b/a.txt\n--- a/a.txt\n+++ b/a.txt\n@@ -1 +1 @@\n-a\n+a formatted\n";
+
+#[test]
+fn the_outputs_replace_their_local_copies_and_the_changes_apply_to_the_working_tree() {
+    let results = FileKind::Output {
+        root: "results".to_owned(),
+    };
+    let setup = fetching_agent(vec![
+        ("results/new.txt".to_owned(), results.clone(), b"new".to_vec()),
+        ("results/sub/deep.txt".to_owned(), results, b"deep".to_vec()),
+        ("changes.patch".to_owned(), FileKind::Changes, PATCH.as_bytes().to_vec()),
+    ]);
+    let root = real_checkout(&setup);
+    fs::create_dir_all(root.join("results")).expect("results");
+    fs::write(root.join("results/old.txt"), "old").expect("an old local output");
+    let said = Said::default();
+    let say = |line: &str| said.push(line);
+    let command = command();
+    let options = RunOptions {
+        working_tree: true,
+        outputs: true,
+        apply: true,
+        ..RunOptions::default()
+    };
+    let outcome = client(&setup, &crate::OsProcesses, &say, &calm)
+        .run_with(ALIAS, &request(&root, &command, &[]), &options)
+        .expect("the run");
+    assert_eq!(outcome.fetched, ["results/new.txt", "results/sub/deep.txt"]);
+    assert!(
+        !root.join("results/old.txt").exists(),
+        "the output of the run replaced the local one"
+    );
+    assert_eq!(fs::read_to_string(root.join("results/sub/deep.txt")).expect("deep"), "deep");
+    assert_eq!(fs::read_to_string(root.join("a.txt")).expect("a.txt"), "a formatted\n");
+    assert_eq!(real_git(&root, &["diff", "--cached", "--name-only"]), "", "the index stays");
+    let patch = format!(".git/yonder/{}.patch", outcome.run);
+    assert_eq!(fs::read_to_string(root.join(&patch)).expect("the kept patch"), PATCH);
+    // git names the patch by the real path of the checkout, which can differ from the temporary one by a link.
+    assert!(
+        said.lines().iter().any(|line| line
+            .starts_with("yonder: applied the changes of the command to 1 files of this working tree; `git apply -R ")
+            && line.ends_with(&format!("/checkout/{patch}` undoes them"))),
+        "{:#?}",
+        said.lines()
+    );
+}
+
+#[test]
+fn changes_that_do_not_apply_refuse_and_keep_the_patch() {
+    let setup = fetching_agent(vec![(
+        "changes.patch".to_owned(),
+        FileKind::Changes,
+        PATCH.replace("-a\n", "-something else\n").into_bytes(),
+    )]);
+    let root = real_checkout(&setup);
+    let say = |_: &str| {};
+    let command = command();
+    let options = RunOptions {
+        apply: true,
+        ..RunOptions::default()
+    };
+    let refusal = client(&setup, &crate::OsProcesses, &say, &calm)
+        .run_with(ALIAS, &request(&root, &command, &[]), &options)
+        .expect_err("refused");
+    assert_eq!((refusal.code.as_ref(), refusal.exit), (code::APPLY_FAILED, Exit::Refused));
+    assert!(refusal.message.contains("exited with 0"), "{}", refusal.message);
+    assert!(refusal.message.contains(".git/yonder/"), "{}", refusal.message);
+    assert_eq!(fs::read_to_string(root.join("a.txt")).expect("a.txt"), "a\n");
+
+    let quiet = fetching_agent(Vec::new());
+    let root = real_checkout(&quiet);
+    let said = Said::default();
+    let say = |line: &str| said.push(line);
+    client(&quiet, &crate::OsProcesses, &say, &calm)
+        .run_with(ALIAS, &request(&root, &command, &[]), &options)
+        .expect("the run");
+    assert!(
+        said.lines().contains(&"yonder: the command changed no file".to_owned()),
+        "{:#?}",
+        said.lines()
+    );
+}
+
+#[test]
+fn changes_that_did_not_come_refuse_with_the_fetch_that_copies_them() {
+    let setup = Setup::new(|request, channel| {
+        let _ = match request {
+            Request::Have { commits, .. } => channel.send(&Reply::Have { commits: commits.clone() }),
+            Request::Start(spec) => channel.send(&Reply::Started { run: spec.run.clone() }),
+            Request::Follow { .. } => channel.send(&Reply::Exit { code: 0 }),
+            Request::Fetch { .. } => {
+                let _ = channel.send(&Reply::File {
+                    path: "changes.patch".to_owned(),
+                    size: 10,
+                    executable: false,
+                    kind: FileKind::Changes,
+                });
+                channel.send_bytes(b"four")
+            }
+            _ => channel.send(&Reply::Done {
+                message: "done".to_owned(),
+            }),
+        };
+    });
+    let root = real_checkout(&setup);
+    let say = |_: &str| {};
+    let command = command();
+    let options = RunOptions {
+        apply: true,
+        ..RunOptions::default()
+    };
+    let refusal = client(&setup, &crate::OsProcesses, &say, &calm)
+        .run_with(ALIAS, &request(&root, &command, &[]), &options)
+        .expect_err("refused");
+    assert_eq!((refusal.code.as_ref(), refusal.exit), (code::APPLY_FAILED, Exit::Refused));
+    assert!(
+        refusal.message.contains("did not come: `yonder fetch studio "),
+        "{}",
+        refusal.message
+    );
+}
+
+#[test]
+fn a_release_goes_to_the_repository_of_the_local_name_or_to_the_one_of_the_host_file() {
+    let setup = Setup::new(|request, channel| {
+        let _ = match request {
+            Request::Release { repo, .. } if repo == "~/projects/branch-deck" => {
+                channel.send(&Reply::refused("repo_missing", "~/projects/branch-deck is not a git repository"))
+            }
+            Request::Release { repo, .. } => channel.send(&Reply::Done {
+                message: format!("released in {repo}"),
+            }),
+            _ => channel.send(&Reply::refused("bad_request", "not in this script")),
+        };
+    });
+    let processes = FakeProcesses::new(&[("--git-common-dir", ok("/u/projects/branch-deck/.git\n"))]);
+    let said = Said::default();
+    let say = |line: &str| said.push(line);
+    let checkout = setup.checkout();
+    let released = client(&setup, &processes, &say, &calm)
+        .release_for(ALIAS, &checkout, None, "yonder-h")
+        .expect("released");
+    assert_eq!(released, "released in ~/projects/idea-1");
+    let repos: Vec<String> = setup
+        .agent
+        .requests()
+        .into_iter()
+        .filter_map(|request| match request {
+            Request::Release { repo, .. } => Some(repo),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(repos, ["~/projects/branch-deck", "~/projects/idea-1"]);
+    assert!(
+        said.lines()
+            .iter()
+            .any(|line| line.starts_with("yonder: studio has no ~/projects/branch-deck; the request goes to")),
+        "{:#?}",
+        said.lines()
+    );
+    let named = client(&setup, &processes, &say, &calm)
+        .release_for(ALIAS, &checkout, Some("~/projects/other"), "yonder-h")
+        .expect("released");
+    assert_eq!(named, "released in ~/projects/other");
 }

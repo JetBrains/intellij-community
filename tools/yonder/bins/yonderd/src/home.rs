@@ -60,6 +60,11 @@ impl Home {
         self.dir.join(".cache/yonderd/repos")
     }
 
+    /// The last capture of the login environment of the user: `~/.cache/yonderd/login-env.json`.
+    pub(crate) fn login_env_file(&self) -> PathBuf {
+        self.dir.join(".cache/yonderd/login-env.json")
+    }
+
     /// The lease file and the lock of each holder: `~/.cache/yonderd/leases/`.
     pub(crate) fn leases_dir(&self) -> PathBuf {
         self.dir.join(".cache/yonderd/leases")

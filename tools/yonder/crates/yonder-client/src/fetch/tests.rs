@@ -27,6 +27,7 @@ fn agent_of_one_run(fetch: Vec<String>) -> Setup {
                         path: path.to_owned(),
                         size: 1,
                         executable: false,
+                        kind: FileKind::Staged,
                     });
                     let _ = channel.send_bytes(b"x");
                     let _ = channel.send_end();
@@ -39,7 +40,8 @@ fn agent_of_one_run(fetch: Vec<String>) -> Setup {
 }
 
 /// `yonder fetch` without `--fetch` takes the fetch directories of the run, so a staged file outside them stays on the
-/// host. An agent that names none gets a usage refusal, and nothing comes.
+/// host. A run that names none can still have outputs and changes, which need no directory, but a staged file of it is
+/// skipped, and nothing comes.
 #[test]
 fn a_fetch_without_directories_takes_the_ones_of_the_run() {
     let processes = FakeProcesses::default();
@@ -58,8 +60,8 @@ fn a_fetch_without_directories_takes_the_ones_of_the_run() {
     let refusal = client(&setup, &processes, &|_| {}, &calm)
         .fetch(ALIAS, "1-1", &checkout, &[])
         .expect_err("no directories");
-    assert_eq!(refusal.code, code::USAGE);
-    assert!(refusal.message.contains("--fetch"), "{}", refusal.message);
+    assert_eq!(refusal.code, code::FETCH_FAILED);
+    assert!(refusal.message.contains("2 of 2 files"), "{}", refusal.message);
     assert!(!checkout.exists());
 }
 
