@@ -765,7 +765,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       if (!smart) {
         items.addAll(StreamConversion.addToStreamConversion((PsiReferenceExpression)parent, parameters));
       }
-      items.addAll(ArgumentSuggester.suggestArgument((PsiReferenceExpression)parent, smart ? expected : Collections.emptyList()));
     }
 
     addExpressionVariants(parameters, position, items::add);

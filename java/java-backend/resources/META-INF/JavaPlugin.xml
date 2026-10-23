@@ -717,6 +717,7 @@
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.NonImportedClassProvider"/>
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.InnerScopeVariableItemProvider"/>
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.MainStringArgsItemProvider"/>
+    <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.ArgumentItemProvider"/>
     <modcompletion.completionItemProvider language="JAVA" implementationClass="com.intellij.java.completion.modcommand.ImportOnDemandItemProvider"/>
 
     <completion.skip implementation="com.intellij.codeInsight.completion.AbstractExpectedTypeSkipper" id="skipAbstract"/>
