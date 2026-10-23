@@ -780,6 +780,7 @@
       <keyboard-shortcut keymap="Xcode" first-keystroke="alt PAGE_DOWN" remove="true"/>
     </action>
     <action id="ToolWindowShowNamesAction" class="com.intellij.ide.actions.ToolWindowShowNamesAction"/>
+    <action id="HideToolWindowStripeButton" class="com.intellij.ide.actions.HideToolWindowStripeButtonAction"/>
     <!-- copy of CheckVfsSanityInMenu: !internal so could be invoked via 'search everywhere' -->
     <action id="CheckVfsSanity" class="com.intellij.openapi.vfs.newvfs.persistent.CheckVFSHealthAction"/>
     <action id="CustomizeMainToolbarAction" class="com.intellij.ide.actions.CustomizeMainToolbarAction"/>

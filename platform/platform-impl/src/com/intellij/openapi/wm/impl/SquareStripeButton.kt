@@ -15,15 +15,15 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindowAnchor
-import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
 import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.toolWindow.ToolWindowEventSource
@@ -37,7 +37,6 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.RelativeFont
-import com.intellij.ui.UIBundle
 import com.intellij.ui.icons.HoledIcon
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
@@ -86,18 +85,24 @@ internal abstract class AbstractSquareStripeButton(
  * and the look reads the state of the tool window when it paints, so the full update would only build a data context for nothing.
  */
 internal class SquareStripeButton(val toolWindow: ToolWindowImpl, private var syncsOnFirstUpdate: Boolean = false) :
-  AbstractSquareStripeButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), null), UISettingsListener {
+  AbstractSquareStripeButton(SquareAnActionButton(toolWindow), createPresentation(toolWindow), null), UISettingsListener, UiDataProvider {
 
   companion object {
+    private const val POPUP_GROUP_ID = "ToolWindowStripeButtonPopup"
+
     fun createMoveGroup(): ToolWindowMoveAction.Group = ToolWindowMoveAction.Group()
   }
 
   private var myShowName = false
 
   init {
-    doInit { createPopupGroup(toolWindow) }
+    doInit { ActionManager.getInstance().getAction(POPUP_GROUP_ID) as ActionGroup }
     MouseDragHelper.setComponentDraggable(this, true)
     setLook(createSquareStripeButtonLook())
+  }
+
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[PlatformDataKeys.TOOL_WINDOW] = toolWindow
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
@@ -375,27 +380,6 @@ private fun scaleIcon(icon: ScalableIcon): Icon {
   }
   else {
     loadIconCustomVersionOrScale(icon = icon, size = iconSize)
-  }
-}
-
-private fun createPopupGroup(toolWindow: ToolWindowImpl): DefaultActionGroup {
-  val group = DefaultActionGroup()
-  group.add(HideAction(toolWindow))
-  group.addSeparator()
-  group.add(createMoveGroup())
-  group.addSeparator()
-  group.add(ActionManager.getInstance().getAction("ToolWindowShowNamesAction")!!)
-  return group
-}
-
-private class HideAction(private val toolWindow: ToolWindowImpl)
-  : AnAction(UIBundle.messagePointer("tool.window.new.stripe.hide.action.name")), DumbAware {
-  override fun actionPerformed(e: AnActionEvent) {
-    toolWindow.toolWindowManager.hideToolWindow(id = toolWindow.id,
-                                                hideSide = false,
-                                                moveFocus = true,
-                                                removeFromStripe = true,
-                                                source = ToolWindowEventSource.SquareStripeButton)
   }
 }
 

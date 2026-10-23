@@ -19,7 +19,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowInfo;
-import com.intellij.openapi.wm.impl.SquareStripeButton;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.toolWindow.ToolWindowDragHelper;
 import com.intellij.toolWindow.extendedToolWindowsUi.ToolWindowStripeExtension;
@@ -139,9 +138,6 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
     }
 
     Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-    if (component instanceof SquareStripeButton) {
-      return ((SquareStripeButton)component).getToolWindow();
-    }
     if (component instanceof ToolWindowDragHelper.ToolWindowProvider twp) {
       return twp.getToolWindow();
     }

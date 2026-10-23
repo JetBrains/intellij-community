@@ -1303,6 +1303,13 @@
     <reference ref="FocusMainToolbar"/>
     <reference ref="FocusStatusBar"/>
     <reference ref="ToolWindowShowNamesAction"/>
+    <group id="ToolWindowStripeButtonPopup" searchable="false">
+      <reference ref="HideToolWindowStripeButton"/>
+      <separator/>
+      <reference ref="TW.MoveToGroup"/>
+      <separator/>
+      <reference ref="ToolWindowShowNamesAction"/>
+    </group>
     <reference ref="ShowUsageFeatures"/>
     <reference ref="CheckVfsSanity"/>
 
