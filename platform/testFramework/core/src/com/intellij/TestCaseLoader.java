@@ -230,7 +230,7 @@ public class TestCaseLoader {
       if (shouldExcludeTestClass(moduleName, testCaseClass)) return false;
     }
 
-    if (TestCase.class.isAssignableFrom(testCaseClass) || TestSuite.class.isAssignableFrom(testCaseClass)) {
+    if (TestCase.class.isAssignableFrom(testCaseClass) && Modifier.isPublic(testCaseClass.getModifiers()) || TestSuite.class.isAssignableFrom(testCaseClass)) {
       return true;
     }
 

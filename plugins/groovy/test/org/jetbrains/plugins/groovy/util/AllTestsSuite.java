@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.TestCaseLoader;
 import com.intellij.util.ArrayUtil;
+import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.RunnerBuilder;
@@ -30,7 +31,9 @@ public class AllTestsSuite extends Suite {
     loader.fillTestCases(testPackage, TestCaseLoader.getClassRoots());
 
     List<Class<?>> result = new ArrayList<>();
-    for (Class aClass : loader.getClasses()) {
+    for (Class<?> aClass : loader.getClasses()) {
+      RunWith runWith = aClass.getAnnotation(RunWith.class);
+      if (runWith != null && runWith.value() == AllTestsSuite.class) continue;
       if (policy == SlowPolicy.ALL) {
         result.add(aClass);
       }
