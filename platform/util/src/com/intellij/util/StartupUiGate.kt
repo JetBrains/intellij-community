@@ -29,6 +29,11 @@ object StartupUiGate {
     editorsShown.complete(Unit)
   }
 
+  /**
+   * Waits until the gate opens. Do not call it on a path that the project opening waits for, such as
+   * `ApplicationInitializedListener.execute`, because the gate opens only after the project frame paints.
+   * Launch the gated work in a coroutine scope there.
+   */
   suspend fun awaitEditorsShown() {
     if (!isReady) {
       withTimeoutOrNull(5.seconds) { editorsShown.await() }
