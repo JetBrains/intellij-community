@@ -65,13 +65,12 @@ host environment.
 
 ## libaom
 
-The recorder encodes a lossy still with libaom 3.11.0, the AV1 encoder. The sources are the `vendor` directory of the
-`libaom-sys` crate. Cargo builds them with the cmake of the crate's build script. Bazel builds the same sources with
-`aom/aom.BUILD.bazel` and replaces that build script. The repository is `@avl_aom` of `avl.MODULE.bazel`, and its
-x86_64 assembly takes nasm of the Bazel Central Registry. `aom/config/` holds the config headers of cmake for arm64 and
-x86_64, and `aom/sources.bzl` the source lists. A change of the `libaom-sys` version in `Cargo.lock` needs three
-steps: change the version and the checksum of `avl_aom`, extract the crate, and run
-`bun community/tools/vm/aom/update.mjs --vendor <crate>/vendor --nasm <nasm>`.
+The recorder encodes a lossy still with libaom 3.15.2, the AV1 encoder. The source is the release tarball on the Space
+file mirror. The crate `avl-aom-sys` holds the bindings of the encoder. Under cargo, its `build.rs` downloads the
+release, checks its SHA-256 and builds it with cmake, which needs nasm on an x86_64 host. Bazel builds the same
+release with `aom/aom.BUILD.bazel` and runs no build script. The repository is `@avl_aom` of `avl.MODULE.bazel`, and
+its x86_64 assembly takes nasm of the Bazel Central Registry. `aom/config/` holds the config headers of cmake for arm64
+and x86_64, and `aom/sources.bzl` the source lists. `avl.MODULE.bazel` states the steps of a version change.
 
 ## Crates
 

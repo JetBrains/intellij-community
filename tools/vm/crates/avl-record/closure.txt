@@ -2,6 +2,7 @@ adler2
 anyhow
 arrayvec
 avif_serialize
+avl_aom_sys
 avl_bridge
 avl_trace
 block_buffer
@@ -24,7 +25,6 @@ image_webp
 itoa
 jiff
 jiff_core
-libaom_sys
 memchr
 miniz_oxide
 monostate

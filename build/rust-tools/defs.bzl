@@ -237,6 +237,7 @@ def rust_tool_crate(
         cross_module_crates = {},
         test_data = [],
         compile_data = [],
+        native_deps = [],
         test_sharding = False,
         testdata_env = None,
         closure = False,
@@ -293,6 +294,8 @@ def rust_tool_crate(
       test_data: more run-time data of the unit test, such as the `<name>_testdata` filegroup of another crate.
       compile_data: the files that the crate reads at compile time (`include_str!`). Its unit test gets them as
         run-time data too.
+      native_deps: the C libraries that the crate links, which a `build.rs` of the crate builds under cargo. Bazel runs
+        no build script of a crate of the workspace.
       test_sharding: lets the rules_rust wrapper split the libtest cases across the shards of the unit test.
       testdata_env: the environment variable that gives a test the path of `testdata/`. The test also gets
         `testdata/` as compile data and as run-time data.
@@ -341,6 +344,9 @@ def rust_tool_crate(
         deps = hub.all_crate_deps(normal = True)
         test_deps = hub.all_crate_deps(normal_dev = True)
         integration_test_deps = hub.all_crate_deps(normal = True, normal_dev = True)
+    if native_deps:
+        deps = deps + native_deps
+        integration_test_deps = integration_test_deps + native_deps
 
     is_binary = bins_prefix != None and package.startswith(bins_prefix)
     binaries = {}

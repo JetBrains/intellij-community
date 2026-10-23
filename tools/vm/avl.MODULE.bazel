@@ -42,29 +42,28 @@ crate.annotation(
     gen_build_script = "off",
     deps = ["@avl//:openh264_native"],
 )
-crate.annotation(
-    # The build script runs cmake over the vendored libaom. `@avl_aom//:aom` builds the same sources with Bazel, so no
-    # build script runs on any host, and a Linux host needs no cmake and no nasm of its own.
-    crate = "libaom-sys",
-    gen_build_script = "off",
-    deps = ["@avl_aom//:aom"],
-)
 
 # The x86_64 assembly of libaom. The archive comes from `mirror.bazel.build`, which the downloader config allows.
 bazel_dep(name = "nasm", version = "2.16.03.bcr.2")
 
-# libaom 3.11.0, the encoder of the recorder's AVIF stills: the `vendor` directory of the crate that `Cargo.lock` pins.
-# The BCR module `aom` downloads from `storage.googleapis.com`, which the downloader config refuses, and it builds
-# with rules_perl. The crate reaches Bazel through the crates.io mirror, and `aom/config/` holds what rules_perl would
-# generate. Keep the version and the checksum equal to the `libaom-sys` entry of `Cargo.lock`, and run
-# `aom/update.mjs` after a change of the version.
+# libaom, the AV1 encoder of the recorder's AVIF stills: the release tarball of `storage.googleapis.com/aom-releases`,
+# byte-identical, on the Space file mirror. The downloader config refuses `storage.googleapis.com`, so the BCR module
+# `aom` cannot download it. The release matches the git tag of upstream file by file. `aom/config/` holds the headers
+# that the BCR module generates with rules_perl.
+#
+# To bump the release:
+#   1. Download `libaom-<version>.tar.gz` and compare its files with the tag `v<version>` of
+#      https://aomedia.googlesource.com/aom, because the bucket has no checksum file.
+#   2. Upload it to `libaom/<version>/` in https://jetbrains.team/p/ij/packages/files/intellij-build-dependencies.
+#   3. Change the URL and `sha256` below and `VERSION`, `SHA256` and `URL` of `crates/avl-aom-sys/build.rs`. The test
+#      `the_cargo_build_takes_the_libaom_of_bazel` holds the two equal.
+#   4. Run `aom/update.mjs` over the extracted release, with `--bindgen`.
 avl_aom_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 
 avl_aom_archive(
     name = "avl_aom",
     build_file = "//tools/vm/aom:aom.BUILD.bazel",
-    sha256 = "7c4fce8aaf0c2d8534529b0698ed98ec1da8d35319588d20b0d79ce6446e4194",
-    strip_prefix = "libaom-sys-0.17.2+libaom.3.11.0/vendor",
-    type = "tar.gz",
-    url = "https://static.crates.io/crates/libaom-sys/libaom-sys-0.17.2+libaom.3.11.0.crate",
+    sha256 = "67bb54b245f33ed98600e08269e6139986e48114e14042474ddd8885801dfddc",
+    strip_prefix = "libaom-3.15.2",
+    url = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/libaom/3.15.2/libaom-3.15.2.tar.gz",
 )

@@ -114,10 +114,10 @@ pin the viewer to it.
   [@test] ../crates/avl-trace-tools/src/discover/tests.rs (`the_thumbnail_of_a_lossy_bundle_is_its_last_avif_still`)
 
 - The pictures of a scenario that starts a video are lossy AVIF, because the video also shows each moment. They are
-  8-bit 4:4:4 at the quality 60 of `avifenc` and at the speed 8. The pictures of a scenario without a video are
-  lossless WebP. The scenario picks the encoding after it starts the video, so a video that fails later leaves the
-  pictures lossy. The comparison with the previous picture reads the grabbed frames, so it is the same for both
-  encodings.
+  8-bit 4:4:4 at the quality 50 of `avifenc`, at the speed 6 and with the `iq` tuning. The pictures of a scenario
+  without a video are lossless WebP. The scenario picks the encoding after it starts the video, so a video that fails
+  later leaves the pictures lossy. The comparison with the previous picture reads the grabbed frames, so it is the
+  same for both encodings.
   [@test] ../crates/avl-record/src/session/tests.rs (`a_scenario_with_a_video_takes_lossy_pictures`)
   [@test] ../crates/avl-record/src/session/tests.rs (`an_encoder_that_never_reads_does_not_hold_the_scenario_ack`)
   [@test] ../crates/avl-record/src/avif/tests.rs (`a_lossy_picture_is_a_close_444_avif_still_of_the_frame`)

@@ -1042,7 +1042,7 @@ decoder:
 
 - Spans and events are OTLP JSON Lines, so generic OpenTelemetry tools read a bundle as it is.
 - A scenario with a video takes lossy AVIF stills from libaom, because a lossless still of the CI desktop is about
-  900 KB. An AVIF still is about half the size of the lossy WebP still before it, at a better quality. A
+  900 KB. An AVIF still is less than half the size of the lossy WebP still before it, at a better quality. A
   scenario without a video takes lossless WebP stills, pixel-exact UI evidence with crisp text. The manifest names
   lossy stills ([A scenario with a video takes lossy stills](decisions/2026-10-21-a-scenario-with-a-video-takes-lossy-stills.md),
   [A lossy still is AVIF from libaom](decisions/2026-10-23-a-lossy-still-is-avif-from-libaom.md)).

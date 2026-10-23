@@ -30,7 +30,7 @@ xxhash-rust.workspace = true
 # tested. A scenario without a video takes lossless stills. Windows has no X11 source and is spared the C and C++
 # builds.
 avif-serialize.workspace = true
-libaom-sys.workspace = true
+avl-aom-sys.workspace = true
 openh264.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]

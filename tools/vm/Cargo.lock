@@ -177,6 +177,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "avl-aom-sys"
+version = "0.1.0"
+dependencies = [
+ "cmake",
+ "sha2",
+]
+
+[[package]]
 name = "avl-base"
 version = "0.1.0"
 dependencies = [
@@ -293,6 +301,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "avif-serialize",
+ "avl-aom-sys",
  "avl-bridge",
  "avl-testkit",
  "avl-trace",
@@ -300,7 +309,6 @@ dependencies = [
  "expect-test",
  "image-webp",
  "jiff",
- "libaom-sys",
  "libc",
  "openh264",
  "png",
@@ -1312,15 +1320,6 @@ name = "lazy_static"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "20870f649af7073d53e38067b2a84312175d56ea15217e1b15bc83506ec50afb"
-
-[[package]]
-name = "libaom-sys"
-version = "0.17.2+libaom.3.11.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c4fce8aaf0c2d8534529b0698ed98ec1da8d35319588d20b0d79ce6446e4194"
-dependencies = [
- "cmake",
-]
 
 [[package]]
 name = "libc"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026, Alliance for Open Media. All rights reserved.
+ * Copyright (c) 2017, Alliance for Open Media. All rights reserved.
  *
  * This source code is subject to the terms of the BSD 2 Clause License and
  * the Alliance for Open Media Patent License 1.0. If the BSD 2 Clause License
@@ -13,6 +13,7 @@
 #define AOM_ARCH_AARCH64 1
 #define AOM_ARCH_ARM 1
 #define AOM_ARCH_PPC 0
+#define AOM_ARCH_RISCV 0
 #define AOM_ARCH_X86 0
 #define AOM_ARCH_X86_64 0
 #define CONFIG_ACCOUNTING 0
@@ -30,6 +31,7 @@
 #define CONFIG_COLLECT_PARTITION_STATS 0
 #define CONFIG_COLLECT_RD_STATS 0
 #define CONFIG_CWG_C013 0
+#define CONFIG_CWG_E050 0
 #define CONFIG_DEBUG 0
 #define CONFIG_DENOISE 1
 #define CONFIG_DISABLE_FULL_PIXEL_SPLIT_8X8 1
@@ -39,6 +41,7 @@
 #define CONFIG_GCC 1
 #define CONFIG_GCOV 0
 #define CONFIG_GPROF 0
+#define CONFIG_HIGHWAY 0
 #define CONFIG_INSPECTION 0
 #define CONFIG_INTERNAL_STATS 0
 #define CONFIG_INTER_STATS_ONLY 0
@@ -65,7 +68,6 @@
 #define CONFIG_SHARED 0
 #define CONFIG_SIZE_LIMIT 0
 #define CONFIG_SPEED_STATS 0
-#define CONFIG_SVT_AV1 0
 #define CONFIG_TFLITE 0
 #define CONFIG_THREE_PASS 0
 #define CONFIG_TUNE_BUTTERAUGLI 0
@@ -77,12 +79,15 @@
 #define HAVE_ARM_CRC32 1
 #define HAVE_AVX 0
 #define HAVE_AVX2 0
+#define HAVE_AVX512 0
 #define HAVE_FEXCEPT 0
 #define HAVE_MMX 0
 #define HAVE_NEON 1
 #define HAVE_NEON_DOTPROD 1
 #define HAVE_NEON_I8MM 1
 #define HAVE_PTHREAD_H 1
+#define HAVE_PTHREAD_SETNAME_NP 1
+#define HAVE_RVV 0
 #define HAVE_SSE 0
 #define HAVE_SSE2 0
 #define HAVE_SSE3 0

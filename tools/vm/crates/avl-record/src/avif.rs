@@ -6,8 +6,8 @@
 //! header.
 //!
 //! The encoder settings are those of `avifenc` for a still at one thread: the all-intra usage, a fixed quantizer, and
-//! speed [SPEED]. The tuning is SSIM, because libaom 3.11 has no `iq` tuning, and SSIM matched `iq` on the step
-//! pictures of a CI build. The decision record `2026-10-23-a-lossy-still-is-avif-from-libaom.md` has the measurement.
+//! speed [SPEED]. The tuning is `iq`, the default of `avifenc` for a still. The decision record
+//! `2026-10-23-a-lossy-still-is-avif-from-libaom.md` has the measurement.
 
 use std::ffi::{CStr, c_int, c_uint};
 use std::mem::MaybeUninit;
@@ -17,14 +17,14 @@ use std::slice;
 use anyhow::{Context, bail, ensure};
 use avif_serialize::Aviffy;
 use avif_serialize::constants::{ColorPrimaries, MatrixCoefficients, TransferCharacteristics};
-use libaom_sys as aom;
+use avl_aom_sys as aom;
 
 #[cfg(test)]
 mod tests;
 
-/// The libaom speed, from 0 (the slowest) to 9. In libaom 3.11, speed 6 takes 16 times the CPU of speed 8 on a step
-/// picture, for a quarter fewer bytes at the same quality. Speed 9 loses 10 points of SSIMULACRA2.
-pub(crate) const SPEED: u8 = 8;
+/// The libaom speed, from 0 (the slowest) to 9. In libaom 3.15, speed 6 takes 4 times the CPU of speed 8 on a step
+/// picture, for a quarter fewer bytes at about the same quality.
+pub(crate) const SPEED: u8 = 6;
 
 /// What one encode writes.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -255,7 +255,7 @@ fn encode_av1(
     match loss {
         Loss::Lossy { .. } => {
             encoder.control(aom::AOME_SET_CQ_LEVEL, c_int::try_from(quantizer)?)?;
-            encoder.control(aom::AOME_SET_TUNING, c_int::try_from(aom::AOM_TUNE_SSIM)?)?;
+            encoder.control(aom::AOME_SET_TUNING, c_int::try_from(aom::AOM_TUNE_IQ)?)?;
         }
         Loss::Lossless => encoder.control(aom::AV1E_SET_LOSSLESS, 1)?,
     }

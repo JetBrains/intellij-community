@@ -1,6 +1,6 @@
-# The BUILD file of the repository `avl_aom` (`avl.MODULE.bazel`): libaom 3.11.0 from the `vendor` directory of the
-# `libaom-sys` crate. It replaces the cmake build of the crate's build script, so the recorder builds the AV1 encoder of
-# its AVIF stills on every host without cmake.
+# The BUILD file of the repository `avl_aom` (`avl.MODULE.bazel`): the libaom release that `avl.MODULE.bazel` pins. It
+# replaces the cmake build of `crates/avl-aom-sys/build.rs`, so the recorder builds the AV1 encoder of its AVIF stills
+# on every host without cmake. Highway, which the release carries, stays out.
 #
 # The source lists and the config headers are this directory's `sources.bzl` and `config/<arch>/`, which `update.mjs`
 # generates with cmake. A C source with a SIMD flag compiles in a library of its own with that flag, as in the cmake
@@ -17,7 +17,7 @@ _X86_64 = "@platforms//cpu:x86_64"
 
 # The flags of the cmake build. `-O3` is upstream's optimization level, also in a test build of the recorder.
 _COPTS = [
-    "-std=c99",
+    "-std=c11",
     "-O3",
     "-DNDEBUG",
     "-D_FILE_OFFSET_BITS=64",

@@ -7,8 +7,8 @@
 //! [LOSSY_QUALITY], because its video also shows each moment. The scenario picks the [StillEncoding] after it starts
 //! the video, and the manifest names it. A lossy encode that fails or panics leaves that one still lossless.
 //!
-//! A lossless still is WebP from `image-webp`, in pure Rust. A lossy still is AVIF from libaom, 4:4:4 at speed 8. It is
-//! half the size of the lossy WebP that it replaces, at a better quality and about the same CPU. Its lossless fallback
+//! A lossless still is WebP from `image-webp`, in pure Rust. A lossy still is AVIF from libaom, 4:4:4 at speed 6. It is
+//! less than half the size of the lossy WebP that it replaces, at a better quality. Its lossless fallback
 //! is AVIF too, so the file keeps the name and the format that its snapshot record already gave it. Every browser that
 //! the viewer runs in decodes both formats natively. Bazel builds libaom into the static musl guest binary.
 //!
@@ -19,7 +19,7 @@
 //! ack goes back as soon as the frame is queued. The manifest is written only once the writer has drained, so a
 //! finished bundle never names a picture that is not on disk.
 //!
-//! A lossy picture of a 1920x1200 screen costs about 80 ms of CPU on an M1 Ultra core, and a lossless WebP one about
+//! A lossy picture of a 1920x1200 screen costs about 0.36 s of CPU on an M1 Ultra core, and a lossless WebP one about
 //! 10 ms. So a burst of changed screens outruns one thread. The writer runs [worker_count] encoders over one queue: half the cores, at most
 //! [MAX_WORKERS]. The other half stays with the frame loop of the video and with the IDE. A name is fixed when the
 //! still is submitted, so the order in which the workers finish does not matter.
@@ -63,11 +63,11 @@ use crate::lock;
 #[cfg(test)]
 mod tests;
 
-/// The quality of a lossy picture, on the scale of 0 to 100 that `avifenc -q` takes. At 60 the step pictures of a CI
-/// build take 30% of the size of their PNG and half of the lossy WebP that they replace. Their SSIMULACRA2 is better in
-/// the mean, in the worst tenth and in the worst picture. At 55 the worst tenth is lower than that of the WebP.
+/// The quality of a lossy picture, on the scale of 0 to 100 that `avifenc -q` takes. At 50 the step pictures of a CI
+/// build take 25% of the size of their PNG and 41% of the lossy WebP that they replace. Their SSIMULACRA2 is better in
+/// the mean, in the worst tenth and in the worst picture.
 #[cfg(unix)]
-pub(crate) const LOSSY_QUALITY: u8 = 60;
+pub(crate) const LOSSY_QUALITY: u8 = 50;
 
 /// What one encode of a still writes.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -129,7 +129,7 @@ type Encoder = Arc<EncodeFn>;
 /// How many grabbed frames may wait for the encoders. Four 1080p frames are 33 MB. Each worker also holds a frame while
 /// it encodes it, with the RGB copy of the frame, its planes and the buffers of libaom: about 50 MB at 1920x1200. A
 /// scenario that snaps faster than the encoders keep up with waits at [Writer::submit] instead of growing without
-/// bound. An encoder of 1.2 s per picture, libaom at speed 6, overflowed the queue of a lane on a loaded host.
+/// bound. An encoder of 1.2 s per picture, libaom 3.11 at speed 6, overflowed the queue of a lane on a loaded host.
 pub(crate) const QUEUE_DEPTH: usize = 4;
 
 /// The most encoders one writer runs.
