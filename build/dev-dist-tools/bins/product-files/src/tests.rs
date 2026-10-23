@@ -998,6 +998,26 @@ impl ToolRun {
         self.dir.path().join(name).display().to_string()
     }
 
+    /// Runs the tool with the base arguments, `options`, the build number of `testdata/build.txt` and the pinned build
+    /// date.
+    fn run(&self, options: &[String]) -> Run {
+        let mut args = self.base_args();
+        args.extend_from_slice(options);
+        args.extend([
+            format!("--build-number={}", testdata("build.txt").display()),
+            format!("--build-date-seconds={PINNED_BUILD_DATE_SECONDS}"),
+        ]);
+        run_tool(&args)
+    }
+
+    /// Runs the tool as [`ToolRun::run`] does, requires a success and returns `product-info.json`.
+    #[track_caller]
+    fn product_info_of(&self, options: &[String]) -> Value {
+        let result = self.run(options);
+        assert_eq!(result.code, 0, "{}", result.errors);
+        self.product_info()
+    }
+
     /// The model, the platform, the base files and the outputs, without the application info options.
     fn base_args(&self) -> Vec<String> {
         vec![
@@ -1023,17 +1043,10 @@ impl ToolRun {
 /// comes from the frontend.
 #[test]
 fn the_tool_reads_the_host_of_a_frontend() {
-    let tool = ToolRun::new();
-    let mut args = tool.base_args();
-    args.extend([
+    let info = ToolRun::new().product_info_of(&[
         format!("--application-info={}", testdata("application-info/client.xml").display()),
         format!("--host-application-info={}", testdata("application-info/host.xml").display()),
-        format!("--build-number={}", testdata("build.txt").display()),
-        format!("--build-date-seconds={PINNED_BUILD_DATE_SECONDS}"),
     ]);
-    let result = run_tool(&args);
-    assert_eq!(result.code, 0, "{}", result.errors);
-    let info = tool.product_info();
     assert_eq!(
         (
             &info["name"],
@@ -1059,18 +1072,13 @@ fn the_tool_reads_the_host_of_a_frontend() {
 fn the_tool_applies_the_replacements() {
     let tool = ToolRun::new();
     let xml = read_text(testdata("application-info/server.xml")).replace("__BUNDLE_EAP__", "__FIRST__");
-    let mut args = tool.base_args();
-    args.extend([
+    let info = tool.product_info_of(&[
         format!("--application-info={}", tool.write("server.xml", &xml)),
-        format!("--build-number={}", testdata("build.txt").display()),
-        format!("--build-date-seconds={PINNED_BUILD_DATE_SECONDS}"),
         "--replacement=FIRST=__SECOND__".to_owned(),
         "--replacement=SECOND=true".to_owned(),
         "--replacement=BUNDLE_NAME=".to_owned(),
     ]);
-    let result = run_tool(&args);
-    assert_eq!(result.code, 0, "{}", result.errors);
-    assert_eq!(tool.product_info()["versionSuffix"], "EAP");
+    assert_eq!(info["versionSuffix"], "EAP");
 }
 
 /// A release product without a release date takes the pinned build date, as an EAP product does. A release build
@@ -1079,15 +1087,7 @@ fn the_tool_applies_the_replacements() {
 fn the_tool_accepts_a_release_without_a_release_date() {
     let tool = ToolRun::new();
     let xml = read_text(testdata("application-info/idea.xml")).replace(r#"eap="true""#, r#"eap="false""#);
-    let mut args = tool.base_args();
-    args.extend([
-        format!("--application-info={}", tool.write("idea.xml", &xml)),
-        format!("--build-number={}", testdata("build.txt").display()),
-        format!("--build-date-seconds={PINNED_BUILD_DATE_SECONDS}"),
-    ]);
-    let result = run_tool(&args);
-    assert_eq!(result.code, 0, "{}", result.errors);
-    let info = tool.product_info();
+    let info = tool.product_info_of(&[format!("--application-info={}", tool.write("idea.xml", &xml))]);
     assert_eq!(
         (&info["versionSuffix"], &info["majorVersionReleaseDate"]),
         (&Value::Null, &Value::from("20260101"))
@@ -1113,13 +1113,7 @@ fn the_tool_refuses_an_application_info_it_cannot_read() {
     ] {
         let tool = ToolRun::new();
         let file = tool.write("idea.xml", &content);
-        let mut args = tool.base_args();
-        args.extend([
-            format!("--application-info={file}"),
-            format!("--build-number={}", testdata("build.txt").display()),
-            format!("--build-date-seconds={PINNED_BUILD_DATE_SECONDS}"),
-        ]);
-        let result = run_tool(&args);
+        let result = tool.run(&[format!("--application-info={file}")]);
         if want.is_empty() {
             // A marker without a replacement stays in the text, as `BuildUtils.replaceAll` leaves it.
             assert_eq!(result.code, 0, "{name}: {}", result.errors);
