@@ -4,14 +4,21 @@ package com.intellij.ide
 import com.intellij.DynamicBundle
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.l10n.LocalizationUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.util.text.DateTimeFormatManager
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 
-private class LanguageBundleListener : AppLifecycleListener {
+@ApiStatus.Internal
+@VisibleForTesting
+class LanguageBundleListener : AppLifecycleListener {
   override fun appStarted() {
     LocalizationStateService.getInstance()?.let {
       (it as PersistentStateComponent<*>).initializeComponent()
@@ -22,10 +29,9 @@ private class LanguageBundleListener : AppLifecycleListener {
     DateTimeFormatManager.getInstance().resetFormats()
   }
 
-  
   /**
    * Reads the early access registry file and updates the registry settings related to localization.
-   * This ensures that any changes made externally (e.g., via Toolbox) to the localization settings are accurately reflected. 
+   * This ensures that any changes made externally (e.g., via Toolbox) to the localization settings are accurately reflected.
    * */
   override fun appClosing() {
     val earlyAccessRegistryFile = PathManager.getOriginalConfigDir().resolve(EarlyAccessRegistryManager.fileName)
@@ -44,7 +50,11 @@ private class LanguageBundleListener : AppLifecycleListener {
         }
         val value = iterator.next()
         if (key == LocalizationUtil.LOCALIZATION_KEY) {
-          EarlyAccessRegistryManager.setString(LocalizationUtil.LOCALIZATION_KEY, value)
+          // skip the write when the value is the same, because a registry write notifies every registry listener
+          val currentValue = ApplicationManager.getApplication().serviceIfCreated<RegistryManager>()?.stringValue(key, "")
+          if (currentValue != value) {
+            EarlyAccessRegistryManager.setString(LocalizationUtil.LOCALIZATION_KEY, value)
+          }
           break
         }
       }
