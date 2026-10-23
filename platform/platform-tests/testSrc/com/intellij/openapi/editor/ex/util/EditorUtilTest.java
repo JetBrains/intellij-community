@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
@@ -48,6 +49,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseEvent;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -61,6 +63,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestApplication
 public class EditorUtilTest {
+  private static final ExtensionPointName<InterLineBreakpointConfigurationProvider> INTER_LINE_CONFIGURATION_PROVIDERS =
+    ExtensionPointName.create("com.intellij.editor.interLineBreakpointConfigurationProvider");
+
   @SuppressWarnings("deprecation")
   private static final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
 
@@ -179,8 +184,7 @@ public class EditorUtilTest {
   @Test
   public void testInterLineBreakpointHitAreaLarge() {
     myFixture.runTest(() -> {
-      createEditor("line0\nline1\nline2\nline3\n", 2.2f, 22);
-      InterLineBreakpointConfiguration configuration = registerInterLineConfigurationProvider(InterLineBreakpointHitArea.LARGE, 1, 2, 3);
+      InterLineBreakpointConfiguration configuration = createInterLineBreakpointEditor(InterLineBreakpointHitArea.LARGE, 1, 2, 3);
 
       assertBreakpointAreas(Map.ofEntries(
         Map.entry(17, new BreakpointArea.OnLine(0)),
@@ -214,8 +218,7 @@ public class EditorUtilTest {
   @Test
   public void testInterLineBreakpointHitAreaMedium() {
     myFixture.runTest(() -> {
-      createEditor("line0\nline1\nline2\nline3\n", 2.2f, 22);
-      InterLineBreakpointConfiguration configuration = registerInterLineConfigurationProvider(InterLineBreakpointHitArea.MEDIUM, 1, 2, 3);
+      InterLineBreakpointConfiguration configuration = createInterLineBreakpointEditor(InterLineBreakpointHitArea.MEDIUM, 1, 2, 3);
 
       assertBreakpointAreas(Map.ofEntries(
         Map.entry(18, new BreakpointArea.OnLine(0)),
@@ -245,6 +248,7 @@ public class EditorUtilTest {
   @Test
   public void testInterLineBreakpointHitAreaNone() {
     myFixture.runTest(() -> {
+      ExtensionTestUtil.maskExtensions(INTER_LINE_CONFIGURATION_PROVIDERS, List.of(), myFixture.getTestRootDisposable());
       createEditor("line0\nline1\nline2\nline3\n", 2.2f, 22);
 
       assertBreakpointAreas(Map.ofEntries(
@@ -374,15 +378,14 @@ public class EditorUtilTest {
   }
 
   @SuppressWarnings("SameParameterValue")
-  private @NotNull InterLineBreakpointConfiguration registerInterLineConfigurationProvider(@NotNull InterLineBreakpointHitArea hitArea,
-                                                                                           int @NotNull ... lines) {
-    TestInterLineBreakpointConfigurationProvider provider = new TestInterLineBreakpointConfigurationProvider(hitArea, lines);
-    ExtensionPointName.<InterLineBreakpointConfigurationProvider>create("com.intellij.editor.interLineBreakpointConfigurationProvider")
-      .getPoint()
-      .registerExtension(provider, myFixture.getTestRootDisposable());
+  private @NotNull InterLineBreakpointConfiguration createInterLineBreakpointEditor(@NotNull InterLineBreakpointHitArea hitArea,
+                                                                                   int @NotNull ... lines) {
+    var provider = new TestInterLineBreakpointConfigurationProvider(hitArea, lines);
+    ExtensionTestUtil.maskExtensions(INTER_LINE_CONFIGURATION_PROVIDERS, List.of(provider), myFixture.getTestRootDisposable());
+    createEditor("line0\nline1\nline2\nline3\n", 2.2f, 22);
     PlatformTestUtil.waitWithEventsDispatching("Inter-line configuration wasn't initialized",
                                                () -> InterLineBreakpointConfigurationProvider.findConfigurationForLine(
-                                                 myFixture.getEditor(), lines[0]) != null,
+                                                 myFixture.getEditor(), lines[0]) == provider.getConfiguration(),
                                                10);
     return provider.getConfiguration();
   }
