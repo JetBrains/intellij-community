@@ -18,9 +18,4 @@
     <module name="intellij.sh.core"/>
   </dependencies>
   <!-- endregion -->
-  <resource-bundle>messages.ShBundle</resource-bundle>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <runLineMarkerContributor language="" implementationClass="com.intellij.sh.run.ShRunLineMarkerContributor"/>
-  </extensions>
 </idea-plugin>

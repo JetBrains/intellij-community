@@ -59,6 +59,8 @@
     <highlightErrorFilter implementation="com.intellij.sh.ShErrorFilter"/>
     <daemon.highlightInfoFilter implementation="com.intellij.sh.ShErrorFilter"/>
 
+    <runLineMarkerContributor language="" implementationClass="com.intellij.sh.run.ShRunLineMarkerContributor"/>
+
     <statistics.counterUsagesCollector implementationClass="com.intellij.sh.statistics.ShCounterUsagesCollector"/>
 
     <notificationGroup id="Shell Script" displayType="BALLOON" bundle="messages.ShBundle" key="notification.group.shell.script"/>
