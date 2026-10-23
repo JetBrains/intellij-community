@@ -3,7 +3,6 @@
   <dependencies>
     <module name="intellij.kotlin.base.compilerConfiguration"/>
     <module name="intellij.kotlin.base.facet"/>
-    <module name="intellij.kotlin.base.jps"/>
     <module name="intellij.kotlin.base.plugin"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
     <module name="intellij.libraries.kotlinc.kotlin.jps.common"/>

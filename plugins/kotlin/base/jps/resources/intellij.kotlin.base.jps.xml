@@ -18,13 +18,6 @@
   </dependencies>
   <!-- endregion -->
 
-  <extensionPoints>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.idePlatformKind"
-            interface="org.jetbrains.kotlin.platform.IdePlatformKind"/>
-  </extensionPoints>
-
-
   <extensions defaultExtensionNs="com.intellij">
     <jps.plugin/>
     <projectFacetListener facet-type="kotlin-language" implementation="org.jetbrains.kotlin.idea.jps.KotlinFacetListener"/>
@@ -46,15 +39,6 @@
     <listener class="org.jetbrains.kotlin.idea.jps.KotlinGlobalSettingsChangeListener"
               topic="org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener"/>
   </projectListeners>
-
-  <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind"/>
-    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.JsIdePlatformKind"/>
-    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.WasmJsIdePlatformKind"/>
-    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.WasmWasiIdePlatformKind"/>
-    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind"/>
-    <idePlatformKind implementation="org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind"/>
-  </extensions>
 
   <resource-bundle>messages.KotlinBundle</resource-bundle>
 </idea-plugin>
