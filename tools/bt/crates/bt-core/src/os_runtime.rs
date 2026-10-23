@@ -255,12 +255,14 @@ pub fn spawn_child_watched(dir: Option<&Path>, command: &[OsString], idle: Durat
 ///
 /// The child gets a process group of its own on Unix, because the stall is often in a grandchild: git waits for the
 /// ssh it started, and the ssh holds the pipe. Stopping the group closes the pipe, so the read ends too.
-fn watch_to_end(mut child: Command, idle: Duration) -> SpawnResult {
+fn watch_to_end(child: Command, idle: Duration) -> SpawnResult {
     #[cfg(unix)]
-    {
+    let child = {
         use std::os::unix::process::CommandExt;
+        let mut child = child;
         child.process_group(0);
-    }
+        child
+    };
     let (mut process, mut reader, program) = match spawn_on_pipe(child) {
         Ok(spawned) => spawned,
         Err(refusal) => return refusal,
