@@ -30,9 +30,7 @@ Each kind of text has one home. Rationale and evidence for a change go in the co
 
 ## Workspace Isolation
 
-This repository is too large for an ad hoc Git worktree or clone. Do not create one, and do not install, configure or run a workspace manager, on your own initiative. If the user explicitly asks for a Git worktree, create exactly one for the task.
-
-Isolation comes from the `branch-deck` skill of [Branch Deck](https://github.com/develar/branch-deck), which its Help → Install Agent CLI puts in place. Follow the skill before the first edit. Without it, work in the current checkout.
+This repository is too large for an ad hoc Git worktree or clone. Create one only on an explicit user request, and never install a workspace manager. Isolation comes from the `branch-deck` skill: follow it before the first edit. Without it, work in the current checkout.
 
 {{PARTIAL:module-specific}}
 
