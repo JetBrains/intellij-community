@@ -11,7 +11,7 @@ use std::ffi::OsString;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::{Command, ExitStatus, Stdio};
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
@@ -147,11 +147,12 @@ pub(crate) fn write_line(out: &mut dyn Write, text: &str) {
 pub fn refuse_spawn(command: &[OsString]) -> SpawnResult {
     SpawnResult {
         exit_code: 127,
-        output: format!("selector resolution must not spawn subprocesses: {}", joined(command)),
+        output: format!("selector resolution must not spawn subprocesses: {}", command_line(command)),
     }
 }
 
-fn joined(command: &[OsString]) -> String {
+/// The argv as one line, each part separated by a space.
+pub fn command_line(command: &[OsString]) -> String {
     command.iter().map(|part| part.to_string_lossy()).collect::<Vec<_>>().join(" ")
 }
 
@@ -161,13 +162,7 @@ fn joined(command: &[OsString]) -> String {
 /// than an error every caller would have to re-classify. A child killed by a signal has no code and answers -1,
 /// which classifies as infrastructure too.
 pub fn spawn_child(dir: Option<&Path>, command: &[OsString], heartbeat: Option<Heartbeat<'_>>) -> SpawnResult {
-    match command_for(dir, command) {
-        Some(child) => run_to_end(child, HEARTBEAT_INTERVAL, heartbeat),
-        None => SpawnResult {
-            exit_code: 127,
-            output: "nothing to spawn: the command line is empty".to_owned(),
-        },
-    }
+    command_for(dir, command).map_or_else(nothing_to_spawn, |child| run_to_end(child, HEARTBEAT_INTERVAL, heartbeat))
 }
 
 /// Runs a child to completion, in `dir` when one is given, with the stdin and the streams of
@@ -175,21 +170,14 @@ pub fn spawn_child(dir: Option<&Path>, command: &[OsString], heartbeat: Option<H
 ///
 /// Never fails, as [`spawn_child`].
 pub fn spawn_streaming_child(dir: Option<&Path>, command: &[OsString], error_line: &(dyn Fn(&str) + Sync)) -> SpawnResult {
-    match command_for(dir, command) {
-        Some(child) => stream_to_end(child, error_line),
-        None => SpawnResult {
-            exit_code: 127,
-            output: "nothing to spawn: the command line is empty".to_owned(),
-        },
-    }
+    command_for(dir, command).map_or_else(nothing_to_spawn, |child| stream_to_end(child, error_line))
 }
 
 /// Runs a prepared command to completion, with the stdin and the streams of [`spawn_streaming_child`].
 fn stream_to_end(mut child: Command, error_line: &(dyn Fn(&str) + Sync)) -> SpawnResult {
-    child.stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
-    let mut process = match child.spawn() {
+    let mut process = match spawn_piped(&mut child) {
         Ok(process) => process,
-        Err(error) => return could_not_start(&child, &error),
+        Err(refusal) => return refusal,
     };
     // Held, never written, and dropped only after the child is reaped: the end of the stdin is the signal that this
     // process is gone.
@@ -217,31 +205,18 @@ fn stream_to_end(mut child: Command, error_line: &(dyn Fn(&str) + Sync)) -> Spaw
     });
     let waited = process.wait();
     drop(stdin);
-    match waited {
-        Ok(status) => SpawnResult {
-            exit_code: status.code().unwrap_or(-1),
-            output,
-        },
-        Err(error) => SpawnResult {
-            exit_code: 127,
-            output: format!("{output}\n{error}"),
-        },
-    }
+    reaped(waited, output)
 }
 
 /// Runs a child to completion, in `dir` when one is given, with `input` on its stdin; see
 /// [`Runtime::spawn_with_input`]. Never fails, as [`spawn_child`].
 pub fn spawn_child_with_input(dir: Option<&Path>, command: &[OsString], input: &str) -> SpawnResult {
     let Some(mut child) = command_for(dir, command) else {
-        return SpawnResult {
-            exit_code: 127,
-            output: "nothing to spawn: the command line is empty".to_owned(),
-        };
+        return nothing_to_spawn();
     };
-    child.stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
-    let mut process = match child.spawn() {
+    let mut process = match spawn_piped(&mut child) {
         Ok(process) => process,
-        Err(error) => return could_not_start(&child, &error),
+        Err(refusal) => return refusal,
     };
     let stdin = process.stdin.take();
     // From a thread, so a child that writes before it reads to the end cannot block on a full pipe.
@@ -273,13 +248,7 @@ pub fn spawn_child_with_input(dir: Option<&Path>, command: &[OsString], input: &
 /// Runs a child to completion, in `dir` when one is given, and stops it with its process group when it writes nothing
 /// for `idle`; see [`Runtime::spawn_watched`]. Never fails, as [`spawn_child`].
 pub fn spawn_child_watched(dir: Option<&Path>, command: &[OsString], idle: Duration) -> SpawnResult {
-    match command_for(dir, command) {
-        Some(child) => watch_to_end(child, idle),
-        None => SpawnResult {
-            exit_code: 127,
-            output: "nothing to spawn: the command line is empty".to_owned(),
-        },
-    }
+    command_for(dir, command).map_or_else(nothing_to_spawn, |child| watch_to_end(child, idle))
 }
 
 /// Runs a prepared command to completion, as [`run_to_end`] does, and stops it when it writes nothing for `idle`.
@@ -292,23 +261,9 @@ fn watch_to_end(mut child: Command, idle: Duration) -> SpawnResult {
         use std::os::unix::process::CommandExt;
         child.process_group(0);
     }
-    let pipe = io::pipe().and_then(|(reader, writer)| Ok((reader, writer.try_clone()?, writer)));
-    let (mut reader, stdout, stderr) = match pipe {
-        Ok(pipe) => pipe,
-        Err(error) => return could_not_start(&child, &error),
-    };
-    child.stdout(stdout).stderr(stderr);
-    let spawned = child.spawn();
-    let program = child.get_program().to_owned();
-    drop(child);
-    let mut process = match spawned {
-        Ok(process) => process,
-        Err(error) => {
-            return SpawnResult {
-                exit_code: 127,
-                output: format!("{}: {error}", program.to_string_lossy()),
-            };
-        }
+    let (mut process, mut reader, program) = match spawn_on_pipe(child) {
+        Ok(spawned) => spawned,
+        Err(refusal) => return refusal,
     };
     let last_output = std::sync::Mutex::new(Instant::now());
     let tail = std::sync::Mutex::new(Tail::new(MAX_RETAINED_OUTPUT));
@@ -356,16 +311,7 @@ fn watch_to_end(mut child: Command, idle: Duration) -> SpawnResult {
             ),
         };
     }
-    match waited {
-        Ok(status) => SpawnResult {
-            exit_code: status.code().unwrap_or(-1),
-            output,
-        },
-        Err(error) => SpawnResult {
-            exit_code: 127,
-            output: format!("{output}\n{error}"),
-        },
-    }
+    reaped(waited, output)
 }
 
 /// Stops a child and, on Unix, every process of its group.
@@ -393,6 +339,60 @@ fn command_for(dir: Option<&Path>, command: &[OsString]) -> Option<Command> {
     Some(child)
 }
 
+fn nothing_to_spawn() -> SpawnResult {
+    SpawnResult {
+        exit_code: 127,
+        output: "nothing to spawn: the command line is empty".to_owned(),
+    }
+}
+
+/// Starts a prepared command with a pipe on each of its three descriptors.
+fn spawn_piped(child: &mut Command) -> Result<std::process::Child, SpawnResult> {
+    child.stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    child.spawn().map_err(|error| could_not_start(child, &error))
+}
+
+/// Starts a prepared command with stdout and stderr on one pipe, and answers the child, the read end and the program.
+fn spawn_on_pipe(mut child: Command) -> Result<(std::process::Child, io::PipeReader, OsString), SpawnResult> {
+    let pipe = io::pipe().and_then(|(reader, writer)| Ok((reader, writer.try_clone()?, writer)));
+    let (reader, stdout, stderr) = match pipe {
+        Ok(pipe) => pipe,
+        Err(error) => return Err(could_not_start(&child, &error)),
+    };
+    child.stdout(stdout).stderr(stderr);
+    let spawned = child.spawn();
+    // The command holds the pipe's write ends; until it is gone the read never sees the end of the stream.
+    let program = child.get_program().to_owned();
+    drop(child);
+    match spawned {
+        Ok(process) => Ok((process, reader, program)),
+        Err(error) => Err(SpawnResult {
+            exit_code: 127,
+            output: format!("{}: {error}", program.to_string_lossy()),
+        }),
+    }
+}
+
+/// The result of a reaped child with the output it wrote.
+fn reaped(waited: io::Result<ExitStatus>, output: String) -> SpawnResult {
+    match waited {
+        Ok(status) => SpawnResult {
+            exit_code: status.code().unwrap_or(-1),
+            output,
+        },
+        // The child started but could not be reaped, so there is no exit status to report. Reading it as green
+        // would report a run nobody observed the end of.
+        Err(error) => SpawnResult {
+            exit_code: 127,
+            output: if output.is_empty() {
+                error.to_string()
+            } else {
+                format!("{output}\n{error}")
+            },
+        },
+    }
+}
+
 fn could_not_start(child: &Command, error: &io::Error) -> SpawnResult {
     SpawnResult {
         exit_code: 127,
@@ -405,25 +405,10 @@ fn could_not_start(child: &Command, error: &io::Error) -> SpawnResult {
 /// One pipe for both descriptors, so the tail keeps the order the child wrote in: bazel puts its progress on stderr
 /// and its results on stdout, and a tail that has lost which came first is the one a human reads when a run went
 /// wrong.
-fn run_to_end(mut child: Command, interval: Duration, heartbeat: Option<Heartbeat<'_>>) -> SpawnResult {
-    let pipe = io::pipe().and_then(|(reader, writer)| Ok((reader, writer.try_clone()?, writer)));
-    let (mut reader, stdout, stderr) = match pipe {
-        Ok(pipe) => pipe,
-        Err(error) => return could_not_start(&child, &error),
-    };
-    child.stdout(stdout).stderr(stderr);
-    let spawned = child.spawn();
-    // The command holds the pipe's write ends; until it is gone the read below never sees the end of the stream.
-    let program = child.get_program().to_owned();
-    drop(child);
-    let mut process = match spawned {
-        Ok(process) => process,
-        Err(error) => {
-            return SpawnResult {
-                exit_code: 127,
-                output: format!("{}: {error}", program.to_string_lossy()),
-            };
-        }
+fn run_to_end(child: Command, interval: Duration, heartbeat: Option<Heartbeat<'_>>) -> SpawnResult {
+    let (mut process, mut reader, _) = match spawn_on_pipe(child) {
+        Ok(spawned) => spawned,
+        Err(refusal) => return refusal,
     };
 
     let started = Instant::now();
@@ -454,22 +439,7 @@ fn run_to_end(mut child: Command, interval: Duration, heartbeat: Option<Heartbea
         let output = tail.text();
         let waited = process.wait();
         drop(stop);
-        match waited {
-            Ok(status) => SpawnResult {
-                exit_code: status.code().unwrap_or(-1),
-                output,
-            },
-            // The child started but could not be reaped, so there is no exit status to report. Reading it as green
-            // would report a run nobody observed the end of.
-            Err(error) => SpawnResult {
-                exit_code: 127,
-                output: if output.is_empty() {
-                    error.to_string()
-                } else {
-                    format!("{output}\n{error}")
-                },
-            },
-        }
+        reaped(waited, output)
     })
 }
 

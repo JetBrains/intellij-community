@@ -182,7 +182,7 @@ impl FakeRuntime {
             .spawned
             .push(command.iter().map(|part| part.to_string_lossy().into_owned()).collect());
         state.clock += 5000;
-        let joined = command.iter().map(|part| part.to_string_lossy()).collect::<Vec<_>>().join(" ");
+        let joined = crate::os_runtime::command_line(command);
         if let Some((_, result)) = state.spawn_rules.iter().find(|(text, _)| joined.contains(text.as_str())) {
             return result.clone();
         }

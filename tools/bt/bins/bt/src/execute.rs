@@ -19,6 +19,7 @@ use bt_core::evidence::keep_failed_evidence;
 use bt_core::lanes::{
     BEP_FLAG, LaneSpec, RunPlan, bazel_command, bep_override, build_bazel_args, default_shards, uses_shard_plan, wildcard_guards,
 };
+use bt_core::os_runtime::command_line;
 use bt_core::result::{FlakyRun, RunResult, RunStatus, TargetResult, TargetTiming, collect_results};
 use bt_core::runtime::{Runtime, repo_file};
 use bt_core::scan::{ResolutionInputs, derive_package, read_text};
@@ -437,10 +438,6 @@ impl Drop for BepFile<'_> {
     }
 }
 
-fn joined(command: &[OsString]) -> String {
-    command.iter().map(|part| part.to_string_lossy()).collect::<Vec<_>>().join(" ")
-}
-
 fn dry_run_text(runtime: &dyn Runtime, resolution: &Resolution, command: &[OsString], build_only: Option<&[String]>) -> String {
     let first = resolution.labels.first().map_or("", String::as_str);
     let suffix = match resolution.labels.len() {
@@ -461,11 +458,11 @@ fn dry_run_text(runtime: &dyn Runtime, resolution: &Resolution, command: &[OsStr
             .map(|suite| format!("suite   {} ({}, lane {})", suite.class, suite.suite, suite.lane)),
     );
     lines.push(format!("filter  {filter}"));
-    lines.push(format!("argv    {}", joined(command)));
+    lines.push(format!("argv    {}", command_line(command)));
     if let Some(build_only) = build_only {
         lines.push(format!(
             "build   {}",
-            joined(&bazel_command(runtime.repo_root(), runtime.platform(), build_only))
+            command_line(&bazel_command(runtime.repo_root(), runtime.platform(), build_only))
         ));
     }
     lines.join("\n")
