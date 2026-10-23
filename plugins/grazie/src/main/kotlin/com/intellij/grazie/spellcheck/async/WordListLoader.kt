@@ -2,6 +2,7 @@
 package com.intellij.grazie.spellcheck.async
 
 import ai.grazie.spell.lists.WordList
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.grazie.spellcheck.dictionary.SimpleWordList
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -66,7 +67,9 @@ internal class WordListLoader(private val project: Project, private val coroutin
         isLoadingList.set(false)
 
         withContext(Dispatchers.EDT) {
-          AsyncUtils.restartInspection(ApplicationManager.getApplication(), "WordListLoader.load")
+          DaemonCodeAnalyzerSettings.getInstance().forceUseZeroAutoReparseDelayIn<RuntimeException> {
+            AsyncUtils.restartInspection(ApplicationManager.getApplication(), "WordListLoader.load")
+          }
         }
       }
     }
