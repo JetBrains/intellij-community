@@ -15,7 +15,6 @@
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
     <module name="intellij.libraries.kotlinc.kotlin.jps.common"/>
     <module name="intellij.libraries.kotlinc.symbol.light.classes"/>
-    <module name="intellij.maven"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
@@ -57,20 +56,16 @@
 
     <languageCompilerRefAdapter.directInheritorProvider
             implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinDirectInheritorProvider"/>
-
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.search.refIndex.bta.CriMavenStartupActivity"
-                         order="after org.jetbrains.idea.maven.project.MavenProjectsManagerProjectActivity"/>
   </extensions>
-
-  <projectListeners>
-    <listener class="org.jetbrains.kotlin.idea.search.refIndex.bta.CriMavenImportListener"
-              topic="org.jetbrains.idea.maven.project.MavenImportListener"/>
-  </projectListeners>
 
   <extensionPoints>
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.kotlinCompilerReferenceIndexStorageProvider"
             interface="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorageProvider"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.btaKotlinCompilerReferenceIndexApplicabilityProvider"
+            interface="org.jetbrains.kotlin.idea.search.refIndex.bta.BtaKotlinCompilerReferenceIndexApplicabilityProvider"
             dynamic="true"/>
   </extensionPoints>
 
@@ -83,6 +78,8 @@
             implementation="org.jetbrains.kotlin.idea.search.refIndex.jps.JpsKotlinCompilerReferenceIndexStorageProvider"
             id="JpsKotlinCompilerReferenceIndexStorageProvider"
             order="last"/>
+    <btaKotlinCompilerReferenceIndexApplicabilityProvider
+            implementation="org.jetbrains.kotlin.idea.search.refIndex.bta.GradleKotlinCompilerReferenceIndexApplicability"/>
   </extensions>
 
   <actions>
