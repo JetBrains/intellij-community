@@ -81,11 +81,16 @@ class HeadlessSkippedTestFinderTest {
   }
 
   @SkipInHeadlessEnvironment
-  @Suppress("JUnitTestCaseWithNoTests")
-  class MarkedCase
+  class MarkedCase {
+    @Test
+    fun testDummy() = Unit
+  }
 
   @SkipInHeadlessEnvironment
-  abstract class MarkedBaseCase
+  abstract class MarkedBaseCase {
+    @Test
+    fun testDummy() = Unit
+  }
 
   open class InheritingCase : MarkedBaseCase()
 
@@ -121,8 +126,10 @@ class HeadlessSkippedTestFinderTest {
  */
 @SkipInHeadlessEnvironment
 @WithAnEnumDefault
-@Suppress("JUnitTestCaseWithNoTests")
-internal class MarkedCaseWithAnEnumDefault
+internal class MarkedCaseWithAnEnumDefault {
+  @Test
+  fun testDummy() = Unit
+}
 
 /** Records whether the JVM has run the initializer of [EnvironmentFixture]. */
 internal object EnumDefaultInitialization {
