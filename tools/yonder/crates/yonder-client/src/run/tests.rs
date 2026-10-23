@@ -7,20 +7,116 @@ use pretty_assertions::assert_eq;
 use yonder_link::{Channel, Frame};
 
 use super::*;
+use crate::process::{Processes, Ran};
 use crate::testkit::{ALIAS, FakeProcesses, Said, Setup, calm, client, ok};
 
 const COMMIT: &str = "0123456789abcdef0123456789abcdef01234567";
 
 /// A clean checkout at [`COMMIT`], whose first-parent ancestors are `c1`, and whose pack is `PACK`.
 fn checkout() -> FakeProcesses {
-    FakeProcesses::new(&[
+    checkout_with(&[])
+}
+
+/// The checkout of [`checkout`], whose calls answer the rules of `first` before its own.
+fn checkout_with(first: &[(&str, Ran)]) -> FakeProcesses {
+    let head = format!("{COMMIT}\n");
+    let line = format!("{COMMIT}\nc1\n");
+    let rules = [
         ("status --porcelain", ok("")),
-        ("rev-parse", ok(&format!("{COMMIT}\n"))),
+        ("rev-parse", ok(&head)),
         ("rev-list --count", ok("7\n")),
-        ("rev-list", ok(&format!("{COMMIT}\nc1\n"))),
+        ("rev-list", ok(&line)),
         ("merge-base", ok("m0\n")),
         ("pack-objects", ok("PACK")),
-    ])
+    ];
+    FakeProcesses::new(&[first, &rules].concat())
+}
+
+/// The bytes of the last pack that reached the agent of [`agent`].
+type Packed = Arc<Mutex<Vec<u8>>>;
+
+/// An agent for a whole run. `script` answers each request first, and answers `true` when it did. Each other request
+/// gets the replies of [`answer_besides_follow`], with `have` as the reply of `Have`.
+fn agent(have: &'static [&'static str], script: impl Fn(&Request, &mut Channel) -> bool + Send + Sync + 'static) -> (Setup, Packed) {
+    let packed = Packed::default();
+    let setup = Setup::new({
+        let packed = Arc::clone(&packed);
+        move |request, channel| {
+            if !script(request, channel) {
+                answer_besides_follow(request, channel, &packed, have);
+            }
+        }
+    });
+    (setup, packed)
+}
+
+/// An agent for a whole run whose `Follow` runs `follow` with the offset of the request.
+fn agent_following(have: &'static [&'static str], follow: impl Fn(u64, &mut Channel) + Send + Sync + 'static) -> (Setup, Packed) {
+    agent(have, move |request, channel| match request {
+        Request::Follow { offset, .. } => {
+            follow(*offset, channel);
+            true
+        }
+        _ => false,
+    })
+}
+
+/// Runs the command of the tests in the checkout of `setup`, with `fetch` and the short deadlines.
+fn run_in(
+    setup: &Setup,
+    processes: &dyn Processes,
+    say: &(dyn Fn(&str) + Sync),
+    presses: &(dyn Fn() -> u32 + Sync),
+    fetch: &[String],
+) -> Result<RunOutcome, Refusal> {
+    let (command, checkout) = (command(), setup.checkout());
+    client(setup, processes, say, presses).run(ALIAS, &request(&checkout, &command, fetch))
+}
+
+/// The kinds of the requests that reached the agent, in their order.
+fn kinds(setup: &Setup) -> Vec<&'static str> {
+    setup.agent.requests().iter().map(kind).collect()
+}
+
+/// The candidates of each `Have` that reached the agent.
+fn haves(setup: &Setup) -> Vec<Vec<String>> {
+    setup
+        .agent
+        .requests()
+        .into_iter()
+        .filter_map(|request| match request {
+            Request::Have { commits, .. } => Some(commits),
+            _ => None,
+        })
+        .collect()
+}
+
+/// The input of each `git pack-objects`: the commit and the commits that the host has.
+fn pack_inputs(processes: &FakeProcesses) -> Vec<String> {
+    processes
+        .calls()
+        .into_iter()
+        .filter(|call| call.text().contains("pack-objects"))
+        .map(|call| String::from_utf8_lossy(&call.input).into_owned())
+        .collect()
+}
+
+/// Waits until `flag` is set, up to 5 s, as a command of the host that waits for an event.
+fn wait_for(flag: &AtomicBool) {
+    let started = Instant::now();
+    while !flag.load(Ordering::SeqCst) && started.elapsed() < Duration::from_secs(5) {
+        thread::sleep(Duration::from_millis(20));
+    }
+}
+
+fn exit(channel: &mut Channel, code: i32) {
+    let _ = channel.send(&Reply::Exit { code });
+}
+
+fn done(channel: &mut Channel, message: &str) {
+    let _ = channel.send(&Reply::Done {
+        message: message.to_owned(),
+    });
 }
 
 fn step(name: &str, ms: u64) -> Phase {
@@ -129,44 +225,33 @@ fn answer_besides_follow(request: &Request, channel: &mut Channel, packed: &Mute
 
 #[test]
 fn a_run_packs_the_missing_objects_streams_the_stderr_and_fetches_the_staged_files() {
-    let packed = Arc::new(Mutex::new(Vec::new()));
-    let setup = Setup::new({
-        let packed = Arc::clone(&packed);
-        move |request, channel| match request {
-            Request::Follow { .. } => {
-                output(channel, Stream::Stderr, "progress", 30);
-                let _ = channel.send(&Reply::Heartbeat { elapsed_ms: 15_000 });
-                output(channel, Stream::Stdout, "the digest", 60);
-                let _ = channel.send(&Reply::Phases {
-                    phases: vec![step("lock", 0), step("command", 25_100)],
-                });
-                let _ = channel.send(&Reply::Exit { code: 3 });
-            }
-            _ => answer_besides_follow(request, channel, &packed, &["c1"]),
-        }
+    let (setup, packed) = agent_following(&["c1"], |_, channel| {
+        output(channel, Stream::Stderr, "progress", 30);
+        let _ = channel.send(&Reply::Heartbeat { elapsed_ms: 15_000 });
+        output(channel, Stream::Stdout, "the digest", 60);
+        let _ = channel.send(&Reply::Phases {
+            phases: vec![step("lock", 0), step("command", 25_100)],
+        });
+        exit(channel, 3);
     });
     let processes = checkout();
     let said = Said::default();
     let say = |line: &str| said.push(line);
-    let checkout_root = setup.checkout();
-    let (command, fetch) = (command(), fetch());
-    let outcome = client(&setup, &processes, &say, &calm)
-        .run(ALIAS, &request(&checkout_root, &command, &fetch))
-        .expect("the run");
+    let outcome = run_in(&setup, &processes, &say, &calm, &fetch()).expect("the run");
 
     assert_eq!(outcome.code, 3);
     assert_eq!(outcome.stdout, "the digest\n");
     assert_eq!(outcome.commit, COMMIT);
     assert_eq!(outcome.fetched, ["out/bt-runs/0000000002000/test.log"]);
     assert_eq!(
-        fs::read_to_string(checkout_root.join("out/bt-runs/0000000002000/test.log")).expect("the fetched file"),
+        fs::read_to_string(setup.checkout().join("out/bt-runs/0000000002000/test.log")).expect("the fetched file"),
         "hello"
     );
 
     // The start comes before the pack, so the host takes the lease while the pack travels, and the follow goes on
     // beside the pack.
     let requests = setup.agent.requests();
-    let mut kinds = requests.iter().map(kind).collect::<Vec<_>>();
+    let mut kinds = kinds(&setup);
     assert_eq!(kinds[..2], ["have", "start"]);
     kinds.sort_unstable();
     assert_eq!(kinds, ["fetch", "follow", "forget", "have", "pack", "start"]);
@@ -182,27 +267,27 @@ fn a_run_packs_the_missing_objects_streams_the_stderr_and_fetches_the_staged_fil
     };
     assert_eq!(spec.reference, format!("refs/yonder/{}", outcome.run));
     assert_eq!((spec.holder.as_str(), spec.idle_hours), ("bt-remote-0123456789ab", 8));
-    assert_eq!((spec.command.clone(), spec.fetch.clone()), (command, fetch));
+    assert_eq!((spec.command.clone(), spec.fetch.clone()), (command(), fetch()));
     assert!(yonder_link::proto::is_run_id(&outcome.run), "{}", outcome.run);
 
     assert_eq!(*packed.lock().unwrap_or_else(PoisonError::into_inner), b"PACK");
+    assert_eq!(pack_inputs(&processes), [format!("{COMMIT}\n^c1\n")]);
     let pack = processes
         .calls()
         .into_iter()
         .find(|call| call.text().contains("pack-objects"))
         .expect("the pack");
-    assert_eq!(String::from_utf8_lossy(&pack.input), format!("{COMMIT}\n^c1\n"));
+    assert_eq!(
+        pack.text(),
+        "git pack-objects --revs --thin --stdout --progress",
+        "the pack writes progress, which its quiet limit watches"
+    );
 
     let lines = said.lines();
     assert!(lines.contains(&"progress".to_owned()), "{lines:#?}");
     for line in ["> studio: pack 7 commits", "> studio: pack of 4 B ready", "> studio: sent 4 B"] {
         assert!(lines.contains(&line.to_owned()), "{line} in {lines:#?}");
     }
-    assert_eq!(
-        pack.text(),
-        "git pack-objects --revs --thin --stdout --progress",
-        "the pack writes progress, which its quiet limit watches"
-    );
     assert_eq!(
         outcome.phases.iter().map(|phase| phase.name.as_str()).collect::<Vec<_>>(),
         ["pack", "upload", "lock", "command", "fetch", "total"],
@@ -213,54 +298,28 @@ fn a_run_packs_the_missing_objects_streams_the_stderr_and_fetches_the_staged_fil
 
 #[test]
 fn a_host_that_has_the_commit_gets_no_pack() {
-    let packed = Arc::new(Mutex::new(Vec::new()));
-    let setup = Setup::new({
-        let packed = Arc::clone(&packed);
-        move |request, channel| match request {
-            Request::Follow { .. } => {
-                let _ = channel.send(&Reply::Exit { code: 0 });
-            }
-            _ => answer_besides_follow(request, channel, &packed, &[COMMIT]),
-        }
-    });
+    let (setup, _) = agent_following(&[COMMIT], |_, channel| exit(channel, 0));
     let processes = checkout();
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
-    let outcome = client(&setup, &processes, &|_| {}, &calm)
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect("the run");
+    let outcome = run_in(&setup, &processes, &|_| {}, &calm, &[]).expect("the run");
     assert_eq!(outcome.code, 0);
-    assert_eq!(
-        setup.agent.requests().iter().map(kind).collect::<Vec<_>>(),
-        ["have", "start", "follow", "forget"]
-    );
-    assert!(!processes.texts().iter().any(|text| text.contains("pack-objects")));
+    assert_eq!(kinds(&setup), ["have", "start", "follow", "forget"]);
+    assert!(pack_inputs(&processes).is_empty());
 }
 
 /// A lost connection follows again from the last offset, and a record that came twice shows once.
 #[test]
 fn a_lost_connection_follows_again_from_the_last_offset() {
-    let packed = Arc::new(Mutex::new(Vec::new()));
-    let setup = Setup::new({
-        let packed = Arc::clone(&packed);
-        move |request, channel| match request {
-            Request::Follow { offset: 0, .. } => output(channel, Stream::Stderr, "first", 10),
-            Request::Follow { .. } => {
-                output(channel, Stream::Stderr, "first", 10);
-                output(channel, Stream::Stdout, "done", 20);
-                let _ = channel.send(&Reply::Exit { code: 0 });
-            }
-            _ => answer_besides_follow(request, channel, &packed, &[COMMIT]),
+    let (setup, _) = agent_following(&[COMMIT], |offset, channel| {
+        output(channel, Stream::Stderr, "first", 10);
+        if offset > 0 {
+            output(channel, Stream::Stdout, "done", 20);
+            exit(channel, 0);
         }
     });
     let processes = checkout();
     let said = Said::default();
     let say = |line: &str| said.push(line);
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
-    let outcome = client(&setup, &processes, &say, &calm)
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect("the run");
+    let outcome = run_in(&setup, &processes, &say, &calm, &[]).expect("the run");
     assert_eq!(outcome.stdout, "done\n");
     let lines = said.lines();
     assert_eq!(lines.iter().filter(|line| *line == "first").count(), 1, "{lines:#?}");
@@ -285,64 +344,51 @@ fn a_lost_connection_follows_again_from_the_last_offset() {
 /// An agent that stops answering ends the run after the reconnect window, and the refusal says how to follow again.
 #[test]
 fn a_silent_agent_times_out_after_the_reconnect_window() {
-    let packed = Arc::new(Mutex::new(Vec::new()));
-    let setup = Setup::new({
-        let packed = Arc::clone(&packed);
-        move |request, channel| match request {
-            Request::Follow { .. } => thread::sleep(Duration::from_secs(4)),
-            _ => answer_besides_follow(request, channel, &packed, &[COMMIT]),
-        }
-    });
-    let processes = checkout();
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
-    let refusal = client(&setup, &processes, &|_| {}, &calm)
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect_err("no reply");
+    let (setup, _) = agent_following(&[COMMIT], |_, _| thread::sleep(Duration::from_secs(4)));
+    let refusal = run_in(&setup, &checkout(), &|_| {}, &calm, &[]).expect_err("no reply");
     assert_eq!(refusal.code, code::TIMED_OUT);
     assert!(refusal.message.contains("`yonder attach studio "), "{}", refusal.message);
     assert!(
-        !setup.agent.requests().iter().any(|request| kind(request) == "forget"),
+        !kinds(&setup).contains(&"forget"),
         "a run whose end the client did not see stays on the host"
     );
+}
+
+/// An agent whose `Follow` waits for the cancel of the run, up to 5 s, then ends the run with 130 and the line `said`.
+/// The answer is the flag of the cancel.
+fn agent_that_waits_for_the_cancel(have: &'static [&'static str], said: &'static str) -> (Setup, Arc<AtomicBool>) {
+    let cancelled = Arc::new(AtomicBool::new(false));
+    let (setup, _) = agent(have, {
+        let cancelled = Arc::clone(&cancelled);
+        move |request, channel| match request {
+            Request::Follow { .. } => {
+                wait_for(&cancelled);
+                output(channel, Stream::Stderr, said, 20);
+                exit(channel, 130);
+                true
+            }
+            Request::Cancel { .. } => {
+                cancelled.store(true, Ordering::SeqCst);
+                done(channel, "the supervisor has the cancel request");
+                true
+            }
+            _ => false,
+        }
+    });
+    (setup, cancelled)
 }
 
 /// Ctrl+C sends `Cancel` on its own connection, and the output follows up to the exit.
 #[test]
 fn ctrl_c_cancels_the_run_and_follows_it_to_its_end() {
-    let packed = Arc::new(Mutex::new(Vec::new()));
-    let pressed = Arc::new(AtomicBool::new(false));
-    let cancelled = Arc::new(AtomicBool::new(false));
-    let setup = Setup::new({
-        let (packed, pressed, cancelled) = (Arc::clone(&packed), Arc::clone(&pressed), Arc::clone(&cancelled));
-        move |request, channel| match request {
-            Request::Follow { .. } => {
-                pressed.store(true, Ordering::SeqCst);
-                let started = Instant::now();
-                while !cancelled.load(Ordering::SeqCst) && started.elapsed() < Duration::from_secs(5) {
-                    thread::sleep(Duration::from_millis(50));
-                }
-                output(channel, Stream::Stderr, "interrupted", 20);
-                let _ = channel.send(&Reply::Exit { code: 130 });
-            }
-            Request::Cancel { .. } => {
-                cancelled.store(true, Ordering::SeqCst);
-                let _ = channel.send(&Reply::Done {
-                    message: "the run ended".to_owned(),
-                });
-            }
-            _ => answer_besides_follow(request, channel, &packed, &[COMMIT]),
-        }
-    });
+    let (setup, cancelled) = agent_that_waits_for_the_cancel(&[COMMIT], "interrupted");
     let processes = checkout();
     let said = Said::default();
     let say = |line: &str| said.push(line);
-    let interrupted = || u32::from(pressed.load(Ordering::SeqCst));
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
-    let outcome = client(&setup, &processes, &say, &interrupted)
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect("the run");
+    let (count, watcher) = press_after(&setup, "follow", 1);
+    let presses = || count.load(Ordering::SeqCst);
+    let outcome = run_in(&setup, &processes, &say, &presses, &[]).expect("the run");
+    watcher.join().expect("the watcher");
     assert_eq!(outcome.code, 130);
     assert!(cancelled.load(Ordering::SeqCst));
     let lines = said.lines();
@@ -358,30 +404,18 @@ fn ctrl_c_cancels_the_run_and_follows_it_to_its_end() {
 /// carries the steps of the host, so the client says them itself.
 #[test]
 fn a_refusal_of_the_agent_keeps_its_code() {
-    let packed = Arc::new(Mutex::new(Vec::new()));
-    let setup = Setup::new({
-        let packed = Arc::clone(&packed);
-        move |request, channel| match request {
-            Request::Follow { .. } => {
-                let _ = channel.send(&Reply::Phases {
-                    phases: vec![step("lock", 0), step("lease", 3_909_000)],
-                });
-                let _ = channel.send(&Reply::refused("lease_failed", "bd lease get failed: no free slot"));
-            }
-            _ => answer_besides_follow(request, channel, &packed, &[COMMIT]),
-        }
+    let (setup, _) = agent_following(&[COMMIT], |_, channel| {
+        let _ = channel.send(&Reply::Phases {
+            phases: vec![step("lock", 0), step("lease", 3_909_000)],
+        });
+        let _ = channel.send(&Reply::refused("lease_failed", "bd lease get failed: no free slot"));
     });
-    let processes = checkout();
     let said = Said::default();
     let say = |line: &str| said.push(line);
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
-    let refusal = client(&setup, &processes, &say, &calm)
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect_err("the lease failed");
+    let refusal = run_in(&setup, &checkout(), &say, &calm, &[]).expect_err("the lease failed");
     assert_eq!(refusal.code, "lease_failed");
     assert_eq!(refusal.message, "studio: bd lease get failed: no free slot");
-    assert_eq!(kind(setup.agent.requests().last().expect("a request")), "forget");
+    assert_eq!(kinds(&setup).last(), Some(&"forget"));
     let lines = said.lines();
     assert!(
         lines.contains(&"yonder: phases: lock 0.0s, lease 1h05m09s".to_owned()),
@@ -406,15 +440,7 @@ const BASE: &str = "fedcba9876543210fedcba9876543210fedcba98";
 
 /// A clean checkout at [`COMMIT`] whose `origin/master` is [`BASE`].
 fn checkout_with_base() -> FakeProcesses {
-    FakeProcesses::new(&[
-        ("status --porcelain", ok("")),
-        ("origin/master^{commit}", ok(&format!("{BASE}\n"))),
-        ("rev-parse", ok(&format!("{COMMIT}\n"))),
-        ("rev-list --count", ok("7\n")),
-        ("rev-list", ok(&format!("{COMMIT}\nc1\n"))),
-        ("merge-base", ok("m0\n")),
-        ("pack-objects", ok("PACK")),
-    ])
+    checkout_with(&[("origin/master^{commit}", ok(&format!("{BASE}\n")))])
 }
 
 /// The packs that reached the agent, as their references.
@@ -430,84 +456,88 @@ fn pack_refs(setup: &Setup) -> Vec<String> {
         .collect()
 }
 
+/// An agent whose `Have` answers `c1`, and whose `Pack` to a base ref runs `base` once the stream came. `base` answers
+/// the reply. A run pack gets `Packed`.
+fn agent_of_bases(
+    have: impl Fn() -> Vec<String> + Send + Sync + 'static,
+    follow: impl Fn(&mut Channel) + Send + Sync + 'static,
+    base: impl Fn(&mut Channel) -> Reply + Send + Sync + 'static,
+) -> Setup {
+    agent(&[], move |request, channel| {
+        let _ = match request {
+            Request::Have { .. } => channel.send(&Reply::Have { commits: have() }),
+            Request::Pack { reference, .. } => {
+                let _ = channel.recv_stream(&mut Vec::new());
+                let reply = if reference.starts_with(yonder_link::proto::BASE_REFS) {
+                    base(channel)
+                } else {
+                    Reply::Packed
+                };
+                channel.send(&reply)
+            }
+            Request::Follow { .. } => {
+                follow(channel);
+                Ok(())
+            }
+            _ => return false,
+        };
+        true
+    })
+    .0
+}
+
 /// While the command goes on, the base goes once to `refs/yonder/base/<holder>`, after the run pack. The next run names
 /// the base in its `Have`, so its pack leaves out the base, and its sync skips the base that the host has.
 #[test]
 fn the_base_goes_once_and_the_next_run_builds_on_it() {
     let based = Arc::new(AtomicBool::new(false));
-    let setup = Setup::new({
-        let based = Arc::clone(&based);
-        move |request, channel| {
-            let _ = match request {
-                Request::Have { .. } => {
-                    let mut commits = vec!["c1".to_owned()];
-                    if based.load(Ordering::SeqCst) {
-                        commits.push(BASE.to_owned());
-                    }
-                    channel.send(&Reply::Have { commits })
+    let setup = agent_of_bases(
+        {
+            let based = Arc::clone(&based);
+            move || {
+                let mut commits = vec!["c1".to_owned()];
+                if based.load(Ordering::SeqCst) {
+                    commits.push(BASE.to_owned());
                 }
-                Request::Pack { reference, .. } => {
-                    let _ = channel.recv_stream(&mut Vec::new());
-                    if reference.starts_with(yonder_link::proto::BASE_REFS) {
-                        based.store(true, Ordering::SeqCst);
-                    }
-                    channel.send(&Reply::Packed)
-                }
-                // A long command: it ends after the base came, or after 5 s.
-                Request::Follow { .. } => {
-                    let started = Instant::now();
-                    while !based.load(Ordering::SeqCst) && started.elapsed() < Duration::from_secs(5) {
-                        thread::sleep(Duration::from_millis(20));
-                    }
-                    channel.send(&Reply::Exit { code: 0 })
-                }
-                Request::Start(spec) => channel.send(&Reply::Started { run: spec.run.clone() }),
-                _ => channel.send(&Reply::Done {
-                    message: "removed".to_owned(),
-                }),
-            };
-        }
-    });
+                commits
+            }
+        },
+        // A long command: it ends after the base came, or after 5 s.
+        {
+            let based = Arc::clone(&based);
+            move |channel| {
+                wait_for(&based);
+                exit(channel, 0);
+            }
+        },
+        {
+            let based = Arc::clone(&based);
+            move |_| {
+                based.store(true, Ordering::SeqCst);
+                Reply::Packed
+            }
+        },
+    );
     let processes = checkout_with_base();
     let said = Said::default();
     let say = |line: &str| said.push(line);
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
     let holder = "bt-remote-0123456789ab";
-    let client = client(&setup, &processes, &say, &calm);
-    client
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect("the first run");
+    run_in(&setup, &processes, &say, &calm, &[]).expect("the first run");
     let first = pack_refs(&setup);
     assert_eq!(first.len(), 2, "{first:?}");
     assert!(first[0].starts_with("refs/yonder/") && !first[0].contains("/base/"), "{first:?}");
     assert_eq!(first[1], format!("refs/yonder/base/{holder}"));
     assert_eq!(setup.config.base(ALIAS, holder).as_deref(), Some(BASE));
 
-    client
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect("the second run");
+    run_in(&setup, &processes, &say, &calm, &[]).expect("the second run");
     assert_eq!(pack_refs(&setup).len(), 3, "the second run sends its own pack only");
-    let haves: Vec<Vec<String>> = setup
-        .agent
-        .requests()
-        .into_iter()
-        .filter_map(|request| match request {
-            Request::Have { commits, .. } => Some(commits),
-            _ => None,
-        })
-        .collect();
+    let haves = haves(&setup);
     assert_eq!(haves.len(), 4, "{haves:#?}");
     assert!(
         haves[2].contains(&BASE.to_owned()),
         "the second run asks about the base: {haves:#?}"
     );
-    let packs: Vec<String> = processes
-        .calls()
-        .into_iter()
-        .filter(|call| call.text().contains("pack-objects"))
-        .map(|call| String::from_utf8_lossy(&call.input).into_owned())
-        .collect();
+    let packs = pack_inputs(&processes);
     assert_eq!(packs.len(), 3, "{packs:#?}");
     assert_eq!(packs[2], format!("{COMMIT}\n^c1\n^{BASE}\n"));
     let lines = said.lines();
@@ -518,37 +548,17 @@ fn the_base_goes_once_and_the_next_run_builds_on_it() {
 /// the code of its command.
 #[test]
 fn a_failed_base_sync_only_warns() {
-    let setup = Setup::new(|request, channel| {
-        let _ = match request {
-            Request::Have { .. } => channel.send(&Reply::Have {
-                commits: vec!["c1".to_owned()],
-            }),
-            Request::Pack { reference, .. } if reference.starts_with(yonder_link::proto::BASE_REFS) => {
-                let _ = channel.recv_stream(&mut Vec::new());
-                channel.send(&Reply::refused("bad_request", "a pack ref that is not refs/yonder/<run id>"))
-            }
-            Request::Pack { .. } => {
-                let _ = channel.recv_stream(&mut Vec::new());
-                channel.send(&Reply::Packed)
-            }
-            Request::Start(spec) => channel.send(&Reply::Started { run: spec.run.clone() }),
-            Request::Follow { .. } => {
-                thread::sleep(Duration::from_millis(300));
-                channel.send(&Reply::Exit { code: 4 })
-            }
-            _ => channel.send(&Reply::Done {
-                message: "removed".to_owned(),
-            }),
-        };
-    });
-    let processes = checkout_with_base();
+    let setup = agent_of_bases(
+        || vec!["c1".to_owned()],
+        |channel| {
+            thread::sleep(Duration::from_millis(300));
+            exit(channel, 4);
+        },
+        |_| Reply::refused("bad_request", "a pack ref that is not refs/yonder/<run id>"),
+    );
     let said = Said::default();
     let say = |line: &str| said.push(line);
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
-    let outcome = client(&setup, &processes, &say, &calm)
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect("the run");
+    let outcome = run_in(&setup, &checkout_with_base(), &say, &calm, &[]).expect("the run");
     assert_eq!(outcome.code, 4);
     let warnings: Vec<String> = said.lines().into_iter().filter(|line| line.contains("warning")).collect();
     assert_eq!(warnings.len(), 1, "{warnings:#?}");
@@ -560,25 +570,49 @@ fn a_failed_base_sync_only_warns() {
     assert_eq!(setup.config.base(ALIAS, "bt-remote-0123456789ab"), None);
 }
 
+/// Ctrl+C after the end of the run closes the connection of the base sync, also while the host indexes the base.
+#[test]
+fn ctrl_c_stops_the_base_sync_while_the_host_indexes_it() {
+    let indexing = Arc::new(AtomicBool::new(false));
+    let setup = agent_of_bases(|| vec!["c1".to_owned()], |channel| exit(channel, 0), {
+        let indexing = Arc::clone(&indexing);
+        move |channel| {
+            indexing.store(true, Ordering::SeqCst);
+            for _ in 0..50 {
+                thread::sleep(Duration::from_millis(200));
+                if channel.send(&Reply::Heartbeat { elapsed_ms: 200 }).is_err() {
+                    break;
+                }
+            }
+            Reply::Packed
+        }
+    });
+    let presses = || u32::from(indexing.load(Ordering::SeqCst));
+    let said = Said::default();
+    let say = |line: &str| said.push(line);
+    let started = Instant::now();
+    let outcome = run_in(&setup, &checkout_with_base(), &say, &presses, &[]).expect("the run");
+    assert_eq!(outcome.code, 0);
+    assert!(
+        started.elapsed() < Duration::from_secs(5),
+        "the sync held the end: {:?}",
+        started.elapsed()
+    );
+    let lines = said.lines();
+    assert!(!lines.iter().any(|line| line.contains("warning")), "{lines:#?}");
+}
+
 /// A checkout with local changes starts no run. Its refusal closes the `Have` that goes on meanwhile, so the refusal
 /// comes at once even from a host that does not answer.
 #[test]
 fn local_changes_start_no_run_and_refuse_at_once() {
     let setup = Setup::new(|_, _| thread::sleep(Duration::from_secs(5)));
-    let processes = FakeProcesses::new(&[("status --porcelain", ok(" M a.txt\n")), ("rev-parse", ok(&format!("{COMMIT}\n")))]);
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
+    let processes = checkout_with(&[("status --porcelain", ok(" M a.txt\n"))]);
     let started = Instant::now();
-    let refusal = client(&setup, &processes, &|_| {}, &calm)
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect_err("local changes");
+    let refusal = run_in(&setup, &processes, &|_| {}, &calm, &[]).expect_err("local changes");
     assert_eq!(refusal.code, code::LOCAL_CHANGES);
     assert!(started.elapsed() < Duration::from_secs(1), "{:?}", started.elapsed());
-    assert!(
-        setup.agent.requests().iter().all(|request| kind(request) == "have"),
-        "{:?}",
-        setup.agent.requests()
-    );
+    assert!(kinds(&setup).iter().all(|kind| *kind == "have"), "{:?}", kinds(&setup));
 }
 
 #[test]
@@ -641,137 +675,84 @@ fn heartbeats_keep_a_waiting_request_alive() {
 /// and builds no pack.
 #[test]
 fn a_host_without_any_candidate_is_behind_and_gets_no_pack() {
-    let packed = Arc::new(Mutex::new(Vec::new()));
-    let setup = Setup::new({
-        let packed = Arc::clone(&packed);
-        move |request, channel| answer_besides_follow(request, channel, &packed, &[])
-    });
+    let (setup, _) = agent(&[], |_, _| false);
     let processes = checkout();
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
-    let refusal = client(&setup, &processes, &|_| {}, &calm)
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect_err("behind");
+    let refusal = run_in(&setup, &processes, &|_| {}, &calm, &[]).expect_err("behind");
     assert_eq!(refusal.code, code::BEHIND);
     assert!(refusal.message.contains("all 7 commits of the history"), "{}", refusal.message);
     assert!(refusal.message.contains("`bt --host studio --prepare`"), "{}", refusal.message);
-    assert_eq!(
-        setup.agent.requests().iter().map(kind).collect::<Vec<_>>(),
-        ["have", "have"],
-        "the near candidates, then the long walk"
-    );
-    assert!(!processes.texts().iter().any(|text| text.contains("pack-objects")));
+    assert_eq!(kinds(&setup), ["have", "have"], "the near candidates, then the long walk");
+    assert!(pack_inputs(&processes).is_empty());
 }
 
 /// A host that has none of the near candidates gets a second `Have` with the long first-parent walk, and the pack
 /// builds on the commit that it has from there.
 #[test]
 fn a_host_without_a_near_candidate_gets_the_long_walk() {
-    let packed = Arc::new(Mutex::new(Vec::new()));
-    let setup = Setup::new({
-        let packed = Arc::clone(&packed);
-        move |request, channel| match request {
-            Request::Have { commits, .. } => {
-                let has: Vec<String> = commits.iter().filter(|commit| *commit == "far").cloned().collect();
-                let _ = channel.send(&Reply::Have { commits: has });
-            }
-            Request::Follow { .. } => {
-                let _ = channel.send(&Reply::Exit { code: 0 });
-            }
-            _ => answer_besides_follow(request, channel, &packed, &[]),
+    let (setup, _) = agent(&[], |request, channel| match request {
+        Request::Have { commits, .. } => {
+            let has: Vec<String> = commits.iter().filter(|commit| *commit == "far").cloned().collect();
+            let _ = channel.send(&Reply::Have { commits: has });
+            true
         }
+        Request::Follow { .. } => {
+            exit(channel, 0);
+            true
+        }
+        _ => false,
     });
-    let processes = FakeProcesses::new(&[
-        ("status --porcelain", ok("")),
-        ("rev-parse", ok(&format!("{COMMIT}\n"))),
-        ("rev-list --count", ok("40\n")),
-        ("--max-count=17", ok(&format!("{COMMIT}\nc1\n"))),
-        ("--max-count=65537", ok(&format!("{COMMIT}\nc1\nfar\n"))),
-        ("pack-objects", ok("PACK")),
-    ]);
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
-    let outcome = client(&setup, &processes, &|_| {}, &calm)
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect("the run");
+    let near = format!("{COMMIT}\nc1\n");
+    let far = format!("{COMMIT}\nc1\nfar\n");
+    let processes = checkout_with(&[("--max-count=17", ok(&near)), ("--max-count=65537", ok(&far))]);
+    let outcome = run_in(&setup, &processes, &|_| {}, &calm, &[]).expect("the run");
     assert_eq!(outcome.code, 0);
-    let haves: Vec<Vec<String>> = setup
-        .agent
-        .requests()
-        .into_iter()
-        .filter_map(|request| match request {
-            Request::Have { commits, .. } => Some(commits),
-            _ => None,
-        })
-        .collect();
     assert_eq!(
-        haves,
+        haves(&setup),
         [
-            vec![COMMIT.to_owned(), "c1".to_owned()],
-            vec![COMMIT.to_owned(), "c1".to_owned(), "far".to_owned()]
+            vec![COMMIT.to_owned(), "c1".to_owned(), "m0".to_owned()],
+            vec![COMMIT.to_owned(), "c1".to_owned(), "far".to_owned(), "m0".to_owned()]
         ]
     );
-    let pack = processes
-        .calls()
-        .into_iter()
-        .find(|call| call.text().contains("pack-objects"))
-        .expect("the pack");
-    assert_eq!(String::from_utf8_lossy(&pack.input), format!("{COMMIT}\n^far\n"));
+    assert_eq!(pack_inputs(&processes), [format!("{COMMIT}\n^far\n")]);
 }
 
 /// Ctrl+C after `Have` stops the pack, and nothing more reaches the host.
 #[test]
 fn ctrl_c_before_the_start_stops_the_pack_and_reaches_no_host() {
-    let packed = Arc::new(Mutex::new(Vec::new()));
     let pressed = Arc::new(AtomicBool::new(false));
-    let setup = Setup::new({
-        let (packed, pressed) = (Arc::clone(&packed), Arc::clone(&pressed));
-        move |request, channel| {
+    let (setup, _) = agent(&["c1"], {
+        let pressed = Arc::clone(&pressed);
+        move |request, _| {
             if let Request::Have { .. } = request {
                 pressed.store(true, Ordering::SeqCst);
             }
-            answer_besides_follow(request, channel, &packed, &["c1"]);
+            false
         }
     });
-    let processes = checkout();
     let presses = || u32::from(pressed.load(Ordering::SeqCst));
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
-    let refusal = client(&setup, &processes, &|_| {}, &presses)
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect_err("interrupted");
+    let refusal = run_in(&setup, &checkout(), &|_| {}, &presses, &[]).expect_err("interrupted");
     assert_eq!(refusal.code, code::INTERRUPTED);
-    assert_eq!(setup.agent.requests().iter().map(kind).collect::<Vec<_>>(), ["have"]);
+    assert_eq!(kinds(&setup), ["have"]);
 }
 
 /// A pack that the agent reads late: each write waits up to the read deadline, not the short connect deadline.
 #[test]
 fn a_slow_agent_reader_takes_a_large_pack() {
-    let packed = Arc::new(Mutex::new(Vec::new()));
-    let setup = Setup::new({
-        let packed = Arc::clone(&packed);
-        move |request, channel| {
-            if let Request::Pack { .. } = request {
-                thread::sleep(Duration::from_millis(2500));
-            }
-            if let Request::Follow { .. } = request {
-                let _ = channel.send(&Reply::Exit { code: 0 });
-            } else {
-                answer_besides_follow(request, channel, &packed, &["c1"]);
-            }
+    let (setup, packed) = agent(&["c1"], |request, channel| match request {
+        Request::Pack { .. } => {
+            thread::sleep(Duration::from_millis(2500));
+            false
         }
+        Request::Follow { .. } => {
+            exit(channel, 0);
+            true
+        }
+        _ => false,
     });
     // Larger than the socket buffers of the loopback, so the writes wait for the reader.
     let pack = "x".repeat(4 * 1024 * 1024);
-    let processes = FakeProcesses::new(&[
-        ("status --porcelain", ok("")),
-        ("rev-parse", ok(&format!("{COMMIT}\n"))),
-        ("rev-list --count", ok("1\n")),
-        ("rev-list", ok(&format!("{COMMIT}\nc1\n"))),
-        ("pack-objects", ok(&pack)),
-    ]);
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
+    let processes = checkout_with(&[("pack-objects", ok(&pack))]);
+    let (command, checkout_root) = (command(), setup.checkout());
     let timing = Timing {
         connect: Duration::from_secs(1),
         read: Duration::from_secs(5),
@@ -779,7 +760,7 @@ fn a_slow_agent_reader_takes_a_large_pack() {
     };
     let outcome = Client::new(setup.config, &processes, &|_| {}, &calm)
         .with_timing(timing)
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
+        .run(ALIAS, &request(&checkout_root, &command, &[]))
         .expect("the run");
     assert_eq!(outcome.code, 0);
     assert_eq!(packed.lock().unwrap_or_else(PoisonError::into_inner).len(), pack.len());
@@ -789,38 +770,21 @@ fn a_slow_agent_reader_takes_a_large_pack() {
 /// already, so the client cancels it, and nothing follows it.
 #[test]
 fn a_link_lost_during_the_pack_cancels_the_started_run_with_a_link_refusal() {
-    let setup = Setup::new(|request, channel| match request {
-        Request::Have { .. } => {
-            let _ = channel.send(&Reply::Have {
-                commits: vec!["c1".to_owned()],
-            });
-        }
-        Request::Start(spec) => {
-            let _ = channel.send(&Reply::Started { run: spec.run.clone() });
-        }
+    let (setup, _) = agent(&["c1"], |request, channel| match request {
         // One chunk, then the connection closes.
         Request::Pack { .. } => {
             let _ = channel.recv_frame();
+            true
         }
         Request::Cancel { .. } => {
-            let _ = channel.send(&Reply::Done {
-                message: "the host has the cancel".to_owned(),
-            });
+            done(channel, "the host has the cancel");
+            true
         }
-        _ => {}
+        Request::Follow { .. } => true,
+        _ => false,
     });
-    let processes = FakeProcesses::new(&[
-        ("status --porcelain", ok("")),
-        ("rev-parse", ok(&format!("{COMMIT}\n"))),
-        ("rev-list --count", ok("1\n")),
-        ("rev-list", ok(&format!("{COMMIT}\nc1\n"))),
-        ("pack-objects", ok(&"y".repeat(4 * 1024 * 1024))),
-    ]);
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
-    let refusal = client(&setup, &processes, &|_| {}, &calm)
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect_err("the link broke");
+    let processes = checkout_with(&[("pack-objects", ok(&"y".repeat(4 * 1024 * 1024)))]);
+    let refusal = run_in(&setup, &processes, &|_| {}, &calm, &[]).expect_err("the link broke");
     assert!(matches!(refusal.code.as_ref(), code::LINK | code::TIMED_OUT), "{refusal:?}");
     assert!(
         refusal.message.starts_with("the pack did not reach studio: "),
@@ -833,25 +797,16 @@ fn a_link_lost_during_the_pack_cancels_the_started_run_with_a_link_refusal() {
         refusal.message
     );
     // The follow starts with the run, beside the pack, so its requests come in any order.
-    assert_eq!(
-        setup
-            .agent
-            .requests()
-            .iter()
-            .map(kind)
-            .filter(|kind| *kind != "follow")
-            .collect::<Vec<_>>(),
-        ["have", "start", "pack", "cancel"]
-    );
+    let kinds: Vec<&str> = kinds(&setup).into_iter().filter(|kind| *kind != "follow").collect();
+    assert_eq!(kinds, ["have", "start", "pack", "cancel"]);
 }
 
 /// A cancel whose first connection fails connects again, and the run still ends with its own exit.
 #[test]
 fn a_failed_cancel_connects_again() {
-    let packed = Arc::new(Mutex::new(Vec::new()));
     let cancels = Arc::new(AtomicU32::new(0));
-    let setup = Setup::new({
-        let (packed, cancels) = (Arc::clone(&packed), Arc::clone(&cancels));
+    let (setup, _) = agent(&[COMMIT], {
+        let cancels = Arc::clone(&cancels);
         move |request, channel| match request {
             Request::Follow { .. } => {
                 let started = Instant::now();
@@ -859,30 +814,25 @@ fn a_failed_cancel_connects_again() {
                     thread::sleep(Duration::from_millis(200));
                     let _ = channel.send(&Reply::Heartbeat { elapsed_ms: 200 });
                 }
-                let _ = channel.send(&Reply::Exit { code: 130 });
+                exit(channel, 130);
+                true
             }
             // The first cancel gets no reply: the connection closes.
             Request::Cancel { .. } => {
                 if cancels.fetch_add(1, Ordering::SeqCst) > 0 {
-                    let _ = channel.send(&Reply::Done {
-                        message: "the host has the cancel".to_owned(),
-                    });
+                    done(channel, "the host has the cancel");
                 }
+                true
             }
-            _ => answer_besides_follow(request, channel, &packed, &[COMMIT]),
+            _ => false,
         }
     });
-    let processes = checkout();
     let said = Said::default();
     let say = |line: &str| said.push(line);
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
     // Ctrl+C before the start would refuse the run, so the presses count from the first Follow only.
     let (count, watcher) = press_after(&setup, "follow", 1);
     let counted = || count.load(Ordering::SeqCst);
-    let outcome = client(&setup, &processes, &say, &counted)
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect("the run");
+    let outcome = run_in(&setup, &checkout(), &say, &counted, &[]).expect("the run");
     watcher.join().expect("the watcher");
     assert_eq!(outcome.code, 130);
     assert_eq!(cancels.load(Ordering::SeqCst), 2);
@@ -899,77 +849,58 @@ fn a_failed_cancel_connects_again() {
 /// A second Ctrl+C stops the follow at once, while the agent only sends heartbeats. The run stays on the host.
 #[test]
 fn a_second_ctrl_c_stops_the_follow_at_once() {
-    let packed = Arc::new(Mutex::new(Vec::new()));
-    let setup = Setup::new({
-        let packed = Arc::clone(&packed);
-        move |request, channel| match request {
-            Request::Follow { .. } => {
-                for _ in 0..50 {
-                    thread::sleep(Duration::from_millis(200));
-                    if channel.send(&Reply::Heartbeat { elapsed_ms: 200 }).is_err() {
-                        return;
-                    }
-                }
+    let (setup, _) = agent_following(&[COMMIT], |_, channel| {
+        for _ in 0..50 {
+            thread::sleep(Duration::from_millis(200));
+            if channel.send(&Reply::Heartbeat { elapsed_ms: 200 }).is_err() {
+                return;
             }
-            _ => answer_besides_follow(request, channel, &packed, &[COMMIT]),
         }
     });
-    let processes = checkout();
     let (count, watcher) = press_after(&setup, "follow", 2);
     let presses = || count.load(Ordering::SeqCst);
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
     let started = Instant::now();
-    let refusal = client(&setup, &processes, &|_| {}, &presses)
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect_err("stopped");
+    let refusal = run_in(&setup, &checkout(), &|_| {}, &presses, &[]).expect_err("stopped");
     watcher.join().expect("the watcher");
     assert_eq!(refusal.code, code::INTERRUPTED);
     assert!(started.elapsed() < Duration::from_secs(4), "{:?}", started.elapsed());
     assert!(refusal.message.contains("`yonder attach studio "), "{}", refusal.message);
-    assert!(!setup.agent.requests().iter().any(|request| kind(request) == "forget"));
+    assert!(!kinds(&setup).contains(&"forget"));
 }
 
 /// A fetch that the connection cuts leaves no part file and no forget, and the client names `yonder fetch`.
 #[test]
 fn a_cut_fetch_leaves_no_part_and_keeps_the_run() {
-    let packed = Arc::new(Mutex::new(Vec::new()));
-    let setup = Setup::new({
-        let packed = Arc::clone(&packed);
-        move |request, channel| match request {
-            Request::Follow { .. } => {
-                let _ = channel.send(&Reply::Exit { code: 3 });
-            }
-            Request::Fetch { .. } => {
-                let _ = channel.send(&Reply::File {
-                    path: "out/bt-runs/1/big.log".to_owned(),
-                    size: 10,
-                    executable: false,
-                });
-                let _ = channel.send_bytes(b"four");
-            }
-            _ => answer_besides_follow(request, channel, &packed, &[COMMIT]),
+    let (setup, _) = agent(&[COMMIT], |request, channel| match request {
+        Request::Follow { .. } => {
+            exit(channel, 3);
+            true
         }
+        Request::Fetch { .. } => {
+            let _ = channel.send(&Reply::File {
+                path: "out/bt-runs/1/big.log".to_owned(),
+                size: 10,
+                executable: false,
+            });
+            let _ = channel.send_bytes(b"four");
+            true
+        }
+        _ => false,
     });
-    let processes = checkout();
     let said = Said::default();
     let say = |line: &str| said.push(line);
-    let (command, fetch) = (command(), fetch());
-    let checkout_root = setup.checkout();
-    let outcome = client(&setup, &processes, &say, &calm)
-        .run(ALIAS, &request(&checkout_root, &command, &fetch))
-        .expect("the run");
+    let outcome = run_in(&setup, &checkout(), &say, &calm, &fetch()).expect("the run");
     assert_eq!(outcome.code, 3);
     assert!(outcome.fetched.is_empty());
-    let target = checkout_root.join("out/bt-runs/1/big.log");
-    assert!(!target.exists());
+    let checkout_root = setup.checkout();
+    assert!(!checkout_root.join("out/bt-runs/1/big.log").exists());
     assert!(!checkout_root.join("out/bt-runs/1/big.log.yonder-part").exists());
-    assert!(!setup.agent.requests().iter().any(|request| kind(request) == "forget"));
+    assert!(!kinds(&setup).contains(&"forget"));
     let lines = said.lines();
     assert!(
-        lines
-            .iter()
-            .any(|line| line.contains("`yonder fetch studio ") && line.contains("`yonder forget studio ")),
+        lines.iter().any(|line| line.contains("`yonder fetch studio ")
+            && line.contains(" --fetch out/bt-runs`")
+            && line.contains("`yonder forget studio ")),
         "{lines:#?}"
     );
 }
@@ -977,24 +908,8 @@ fn a_cut_fetch_leaves_no_part_and_keeps_the_run() {
 /// A start whose reply does not come can leave a run on the agent, which would wait for its pack. The client cancels it.
 #[test]
 fn a_start_without_its_reply_is_cancelled() {
-    let setup = Setup::new(|request, channel| {
-        let _ = match request {
-            Request::Have { .. } => channel.send(&Reply::Have {
-                commits: vec![COMMIT.to_owned()],
-            }),
-            Request::Cancel { .. } => channel.send(&Reply::Done {
-                message: "the host has the cancel".to_owned(),
-            }),
-            // The start closes its connection without a reply.
-            _ => Ok(()),
-        };
-    });
-    let processes = checkout();
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
-    let refusal = client(&setup, &processes, &|_| {}, &calm)
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect_err("no reply");
+    let (setup, _) = agent(&[COMMIT], |request, _| matches!(request, Request::Start(_)));
+    let refusal = run_in(&setup, &checkout(), &|_| {}, &calm, &[]).expect_err("no reply");
     assert!(matches!(refusal.code.as_ref(), code::LINK | code::TIMED_OUT), "{refusal:?}");
     assert!(refusal.message.starts_with("the start of the run "), "{}", refusal.message);
     assert!(
@@ -1002,10 +917,7 @@ fn a_start_without_its_reply_is_cancelled() {
         "{}",
         refusal.message
     );
-    assert_eq!(
-        setup.agent.requests().iter().map(kind).collect::<Vec<_>>(),
-        ["have", "start", "cancel"]
-    );
+    assert_eq!(kinds(&setup), ["have", "start", "cancel"]);
 }
 
 /// The host takes the lock and the lease while git builds the pack, and empty chunks keep the connection of the pack
@@ -1013,9 +925,8 @@ fn a_start_without_its_reply_is_cancelled() {
 #[test]
 fn the_pack_builds_after_the_start_and_keeps_its_connection_alive() {
     let keepalives = Arc::new(AtomicU32::new(0));
-    let setup = Setup::new({
+    let (setup, _) = agent(&["c1"], {
         let keepalives = Arc::clone(&keepalives);
-        let packed = Arc::new(Mutex::new(Vec::new()));
         move |request, channel| match request {
             Request::Pack { .. } => {
                 let mut bytes = Vec::new();
@@ -1027,28 +938,23 @@ fn the_pack_builds_after_the_start_and_keeps_its_connection_alive() {
                 }
                 assert_eq!(bytes, b"PACK");
                 let _ = channel.send(&Reply::Packed);
+                true
             }
             Request::Follow { .. } => {
                 output(channel, Stream::Stderr, "yonder: lease /pool/1 (warm)", 30);
-                let _ = channel.send(&Reply::Exit { code: 0 });
+                exit(channel, 0);
+                true
             }
-            _ => answer_besides_follow(request, channel, &packed, &["c1"]),
+            _ => false,
         }
     });
     let processes = checkout().with_pack_time(Duration::from_millis(400));
     let said = Said::default();
     let say = |line: &str| said.push(line);
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
-    let outcome = client(&setup, &processes, &say, &calm)
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect("the run");
+    let outcome = run_in(&setup, &processes, &say, &calm, &[]).expect("the run");
     assert_eq!(outcome.code, 0);
-    assert!(
-        keepalives.load(Ordering::SeqCst) >= 3,
-        "{} empty chunks",
-        keepalives.load(Ordering::SeqCst)
-    );
+    let sent = keepalives.load(Ordering::SeqCst);
+    assert!(sent >= 3, "{sent} empty chunks");
     let lines = said.lines();
     let at = |text: &str| {
         lines
@@ -1066,37 +972,12 @@ fn the_pack_builds_after_the_start_and_keeps_its_connection_alive() {
 /// Ctrl+C while git builds the pack cancels the run on the host, and the output follows up to its end.
 #[test]
 fn ctrl_c_during_the_build_of_the_pack_cancels_the_run_on_the_host() {
-    let cancelled = Arc::new(AtomicBool::new(false));
-    let setup = Setup::new({
-        let cancelled = Arc::clone(&cancelled);
-        let packed = Arc::new(Mutex::new(Vec::new()));
-        move |request, channel| match request {
-            Request::Follow { .. } => {
-                let started = Instant::now();
-                while !cancelled.load(Ordering::SeqCst) && started.elapsed() < Duration::from_secs(5) {
-                    thread::sleep(Duration::from_millis(20));
-                }
-                output(channel, Stream::Stderr, "yonder: the run was cancelled before its command", 20);
-                let _ = channel.send(&Reply::Exit { code: 130 });
-            }
-            Request::Cancel { .. } => {
-                cancelled.store(true, Ordering::SeqCst);
-                let _ = channel.send(&Reply::Done {
-                    message: "the supervisor has the cancel request".to_owned(),
-                });
-            }
-            _ => answer_besides_follow(request, channel, &packed, &["c1"]),
-        }
-    });
+    let (setup, cancelled) = agent_that_waits_for_the_cancel(&["c1"], "yonder: the run was cancelled before its command");
     let processes = checkout().with_pack_time(Duration::from_secs(5));
     let (count, watcher) = press_after(&setup, "pack", 1);
     let presses = || count.load(Ordering::SeqCst);
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
     let started = Instant::now();
-    let outcome = client(&setup, &processes, &|_| {}, &presses)
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect("the run ends with its own code");
+    let outcome = run_in(&setup, &processes, &|_| {}, &presses, &[]).expect("the run ends with its own code");
     watcher.join().expect("the watcher");
     assert_eq!(outcome.code, 130);
     assert!(cancelled.load(Ordering::SeqCst));
@@ -1105,56 +986,4 @@ fn ctrl_c_during_the_build_of_the_pack_cancels_the_run_on_the_host() {
         "the build was not stopped: {:?}",
         started.elapsed()
     );
-}
-
-/// Ctrl+C after the end of the run closes the connection of the base sync, also while the host indexes the base.
-#[test]
-fn ctrl_c_stops_the_base_sync_while_the_host_indexes_it() {
-    let indexing = Arc::new(AtomicBool::new(false));
-    let setup = Setup::new({
-        let indexing = Arc::clone(&indexing);
-        move |request, channel| {
-            let _ = match request {
-                Request::Have { .. } => channel.send(&Reply::Have {
-                    commits: vec!["c1".to_owned()],
-                }),
-                Request::Pack { reference, .. } => {
-                    let _ = channel.recv_stream(&mut Vec::new());
-                    if reference.starts_with(yonder_link::proto::BASE_REFS) {
-                        indexing.store(true, Ordering::SeqCst);
-                        for _ in 0..50 {
-                            thread::sleep(Duration::from_millis(200));
-                            if channel.send(&Reply::Heartbeat { elapsed_ms: 200 }).is_err() {
-                                return;
-                            }
-                        }
-                    }
-                    channel.send(&Reply::Packed)
-                }
-                Request::Start(spec) => channel.send(&Reply::Started { run: spec.run.clone() }),
-                Request::Follow { .. } => channel.send(&Reply::Exit { code: 0 }),
-                _ => channel.send(&Reply::Done {
-                    message: "removed".to_owned(),
-                }),
-            };
-        }
-    });
-    let processes = checkout_with_base();
-    let presses = || u32::from(indexing.load(Ordering::SeqCst));
-    let said = Said::default();
-    let say = |line: &str| said.push(line);
-    let (command, no_fetch) = (command(), Vec::new());
-    let checkout_root = setup.checkout();
-    let started = Instant::now();
-    let outcome = client(&setup, &processes, &say, &presses)
-        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
-        .expect("the run");
-    assert_eq!(outcome.code, 0);
-    assert!(
-        started.elapsed() < Duration::from_secs(5),
-        "the sync held the end: {:?}",
-        started.elapsed()
-    );
-    let lines = said.lines();
-    assert!(!lines.iter().any(|line| line.contains("warning")), "{lines:#?}");
 }
