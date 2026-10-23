@@ -1,10 +1,11 @@
 # jscpd, the copy-paste detector that `community/tools/jscpd.cmd` runs. The pin replaces the tool-wrapper download.
 #
 # Three readers fetch the archive of the host. The wrapper asks for the binary with `bazel cquery` at its first run of a
-# version. The Air test target `//plugins/air:air-plugin-tests_test` and the Code Findings test target
-# `//plugins/code-findings/plugin:code-findings-plugin-tests_test` have `@community//tools:jscpd` in `data`, so
-# `AirDuplicateCodeTest` and `CodeFindingsDuplicateCodeTest` run the pinned binary. A build of either target fetches the
-# archive of the host only. Put `@jscpd_*` or `//tools:jscpd` in no other `data` or `deps`.
+# version. The `jscpd_test` rule of `//tools/jscpd-test:defs.bzl` runs it for the copy-paste tests of the repository,
+# such as `//plugins/air:air-duplicate-code_test`. The Code Findings test
+# target `//plugins/code-findings/plugin:code-findings-plugin-tests_test` has `@community//tools:jscpd` in `data`, so
+# `CodeFindingsDuplicateCodeTest` runs the pinned binary. A build of any of them fetches the archive of the host only.
+# Put `@jscpd_*` or `//tools:jscpd` in no other `data` or `deps`.
 #
 # The archives are the GitHub release archives. `build/bazel_downloader.cfg` rewrites `github.com/` to the cache
 # redirector, and the redirector serves `github.com/kucherenko/jscpd`. jscpd ships only `.tar.gz` archives for
@@ -12,8 +13,8 @@
 #
 # To bump the pin:
 #   1. Change `JSCPD_VERSION` and copy the six `sha256` below from the `checksums.txt` of the release.
-#   2. Run `AirDuplicateCodeTest` and `CodeFindingsDuplicateCodeTest`. A new version can find a clone that the old one did
-#      not.
+#   2. Run every `jscpd_test` target and `CodeFindingsDuplicateCodeTest`. A new version can find a clone that the old one
+#      did not.
 # `jscpd.cmd` reads `JSCPD_VERSION` from this file, so the line keeps the shape `JSCPD_VERSION = "<version>"`.
 JSCPD_VERSION = "5.4.1"
 

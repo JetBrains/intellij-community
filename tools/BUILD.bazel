@@ -1,7 +1,7 @@
 # The pinned jscpd of the host, from the repositories of `jscpd.MODULE.bazel`. A repository of this module has no
 # name that the ultimate root can see, so `jscpd.cmd` asks Bazel for `//tools:jscpd`, and the `select` picks the
-# repository of the host. The alias is `manual`, so `//...` of the community root downloads no archive. The Air and the
-# Code Findings test targets are the other readers: `jscpd.MODULE.bazel` says why. A host without a `config_setting`
+# repository of the host. The alias is `manual`, so `//...` of the community root downloads no archive. The
+# `jscpd_test` targets and the Code Findings test target are the other readers: `jscpd.MODULE.bazel` says why. A host without a `config_setting`
 # fails the `select`.
 alias(
     name = "jscpd",
