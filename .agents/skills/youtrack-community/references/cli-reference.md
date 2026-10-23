@@ -1,19 +1,11 @@
-# yt.py command reference
+# youtrack command reference
 
-Full command surface of [`../scripts/yt.py`](../scripts/yt.py). Read this before composing any
-invocation not already shown in [`../SKILL.md`](../SKILL.md).
+The commands of the official YouTrack CLI that this skill uses. Read this page before you write a
+command that [`../SKILL.md`](../SKILL.md) does not show. The page covers `youtrack` 0.7.0. For a
+flag that is not here, run `youtrack <group> <command> --help`. Do not guess a flag.
 
-All examples assume `YT` points at the CLI. Read-only commands work without a token on public
-issues and projects; mutating commands, `auth check`, `user me`, `command apply --dry-run`,
-`link add --dry-run`, and restricted resources need a token source set. Use the **absolute** path
-to this skill's `scripts/yt.py` so it works from any working directory — replace `<SKILL-DIR>` with
-this skill's own directory (or a harness-provided variable such as `$CLAUDE_SKILL_DIR` under Claude
-Code):
-
-```bash
-YT="<SKILL-DIR>/scripts/yt.py"
-export YOUTRACK_TOKEN_OP_PATH="op://VAULT/ITEM/FIELD"   # only needed for writes or restricted data
-```
+The rules for writes in [`../SKILL.md`](../SKILL.md#rules-for-writes) apply to every write on this
+page. Show the user the command, get a confirmation, and read the result back.
 
 ## Contents
 
@@ -21,222 +13,234 @@ export YOUTRACK_TOKEN_OP_PATH="op://VAULT/ITEM/FIELD"   # only needed for writes
 - [Environment variables](#environment-variables)
 - [auth](#auth)
 - [issue](#issue)
-- [command](#command)
-- [comment](#comment)
-- [tag](#tag)
+- [issue command](#issue-command)
+- [issue field](#issue-field)
+- [issue comment](#issue-comment)
+- [issue tag and tag](#issue-tag-and-tag)
 <!-- "link" below is the subcommand name, not vague link text -->
 <!-- rumdl-disable-next-line MD059 -->
-- [link](#link)
-- [work](#work)
-- [attach](#attach)
-- [user, project, saved-queries](#user-project-saved-queries)
-- [Field selection](#field-selection)
+- [issue link](#issue-link)
+- [issue workitem](#issue-workitem)
+- [issue attachment](#issue-attachment)
+- [user, project, search](#user-project-search)
+- [raw](#raw)
 
 ## Global flags
 
-Available on every subcommand:
+All commands accept these flags:
 
 | Flag | Effect |
 |---|---|
-| `--token-op-path op://V/I/F` | Read the token from 1Password. Beats both env vars. |
-| `--format json\|table\|ids` | Output format. Default `json`. |
-| `--verbose` | Log method, URL, and request body to stderr. Never logs headers. |
+| `--json`, `-j` | JSON output. The CLI uses JSON when stdout is not a terminal. |
+| `--plain` | Tab-separated rows with no header. |
+| `--fields`, `-f` | Comma-separated field projection, for example `idReadable,summary,reporter.login`. It selects the table and plain columns. It does not trim the JSON output. |
+| `--quiet` | No tips and hints. |
+| `--verbose` | Prints the HTTP requests and responses to stderr. |
+| `--base-url URL` | Overrides `YOUTRACK_BASE_URL`. |
+| `--token TOKEN` | Overrides `YOUTRACK_TOKEN`. Do not use it. The token then shows in the process list and in the shell history. |
 
-These work either side of the subcommand: `yt.py --verbose issue get X` and
-`yt.py issue get X --verbose` are equivalent.
+The CLI exits 0 on success and 1 on an error. The error is a JSON object on stderr.
 
-`--dry-run` exists on **every** mutating command, destructive ones included — use it to see the
-exact endpoint and payload without sending anything. Local and `GET`-backed `--dry-run` previews
-work without a token on public resources; `command apply --dry-run` and `link add --dry-run` call
-`POST /api/commands/assist` and require a token. `--yes` is additionally required to actually
-perform a destructive action (`comment delete`, `tag remove`, `attach delete`).
-
-Only `GET` requests are retried on 429/5xx. A `POST` or `DELETE` that fails is reported rather
-than replayed, since YouTrack may already have applied it.
+A delete asks for a confirmation. `--force` skips the confirmation. Use `--force` only with the
+user's agreement.
 
 ## Environment variables
 
-The CLI reads exactly two, both for authentication. There are no others — everything else is a
-flag.
+| Variable | Value |
+|---|---|
+| `YOUTRACK_BASE_URL` | The instance URL, `https://youtrack.jetbrains.com` |
+| `YOUTRACK_TOKEN` | The permanent token |
+| `YOUTRACK_RO` | `1` makes the CLI refuse every write. Set it on reads. |
 
-| Variable | Value | Notes |
-|---|---|---|
-| `YOUTRACK_TOKEN` | The permanent token itself | Works without the 1Password CLI |
-| `YOUTRACK_TOKEN_OP_PATH` | An `op://VAULT/ITEM/FIELD` secret reference | Needs the 1Password CLI (`op`) |
-
-Precedence, most explicit first — the first one set wins:
-
-1. `--token-op-path` (flag)
-2. `$YOUTRACK_TOKEN`
-3. `$YOUTRACK_TOKEN_OP_PATH`
-
-A blank or whitespace-only `$YOUTRACK_TOKEN` is ignored rather than treated as set, so it falls
-through to the next source.
-
-- **Commands that require authentication** (`auth check`, `user me`, all mutating commands,
-  `command apply --dry-run`, and `link add --dry-run`) check all three sources and exit 3 if none
-  resolves.
-- **Read-only commands and other `--dry-run` previews** use `--token-op-path` or `$YOUTRACK_TOKEN`
-  when provided, and run without an `Authorization` header (`guest`) otherwise. They skip
-  `$YOUTRACK_TOKEN_OP_PATH` so public reads do not trigger an interactive 1Password approval
-  prompt. When an unauthenticated request fails with HTTP 401, 403, or 404, the error message notes
-  that a token may be needed if the resource has restricted visibility.
-
-See [Provide the token](../SKILL.md#provide-the-token) for choosing between them, and note that
-`op://` paths are user-specific: never hardcode a real one into a file or commit.
+A saved sign-in from `youtrack auth login` needs no variable. Without a saved sign-in, the CLI needs
+both `YOUTRACK_BASE_URL` and `YOUTRACK_TOKEN`. See [Sign in](../SKILL.md#sign-in).
 
 ## auth
 
 ```bash
-python3 $YT auth check
-# {"login": "sebp", "url": "https://youtrack.jetbrains.com", "authenticated": true}
-python3 $YT auth check --format table
+youtrack auth status                                              # always exits 0; read "status"
+youtrack auth login https://youtrack.jetbrains.com                # browser sign-in
+youtrack auth login https://youtrack.jetbrains.com --no-browser   # paste a permanent token
+youtrack auth logout
 ```
 
-Reports the resolved login only — never the token. Honours `--format` like every other command.
-Exit 3 if no token resolves or the token is rejected.
+`auth status` shows the instance URL, the login and the status. It does not show the token. Never
+pass `--show-token`. The user runs
+`auth login` in an interactive terminal.
 
 ## issue
 
 ```bash
-# Fetch
-python3 $YT issue get JEWEL-1367
-python3 $YT issue get JEWEL-1367 --fields idReadable,summary,description --format table
+# Read
+youtrack issue view JEWEL-1367 --plain
+youtrack issue view JEWEL-1367 --comments 5                       # with the 5 latest comments
+youtrack issue view JEWEL-1367 --json -f idReadable,summary,description,reporter.login
 
 # Search
-python3 $YT issue search 'project: JEWEL #Unresolved' --top 20
-python3 $YT issue search 'project: JEWEL assignee: me' --format ids
-python3 $YT issue search 'project: JEWEL' --top 100 --skip 100      # paginate
+youtrack issue list --query 'project: JEWEL #Unresolved' --limit 20 --plain --fields idReadable,summary
+youtrack issue list --query 'project: JEWEL #Unresolved' --plain --fields idReadable,summary,State,Type,Assignee
+youtrack issue list --query 'project: JEWEL' --limit 100 --offset 100   # the next page
+youtrack issue count --query 'project: JEWEL #Unresolved'
 
-# Create — always preview with --dry-run and get user confirmation first
-python3 $YT issue create --project JEWEL --summary 'Title' \
-  --description-file /tmp/body.md --field Type=Task --field State=Open --dry-run
-python3 $YT issue create --project JEWEL --summary 'Title' \
-  --description-file /tmp/body.md --field Type=Task --field State=Open
+# Create: preview first, then get a confirmation
+youtrack issue create --project JEWEL --summary 'Tooltip flickers on a disabled button' \
+  --description-file /tmp/body.md --custom-fields '{"Type":"Bug","State":"Open"}'
 
-# Update
-python3 $YT issue update JEWEL-1367 --summary 'New title'
-python3 $YT issue update JEWEL-1367 --description-file /tmp/body.md
-
-# Custom fields
-python3 $YT issue field list JEWEL-1367 --format table
-python3 $YT issue field set JEWEL-1367 State 'In Progress'
-python3 $YT issue field set JEWEL-1367 Assignee sebp
+# Update the summary or the description
+youtrack issue update JEWEL-1367 --summary 'New title'
+youtrack issue update JEWEL-1367 --description "$(cat /tmp/body.md)"
 ```
 
-`--field Name=Value` is repeatable. The `$type` is inferred from the field name — `State` →
-`StateIssueCustomField`, `Assignee` → `SingleUserIssueCustomField` (keyed on `login`), everything
-else → `SingleEnumIssueCustomField` (keyed on `name`). Override with `--type` on `field set`; the
-key inside `value` follows the type you give, so `--type SingleUserIssueCustomField` sends
-`{"login": …}` rather than `{"name": …}`.
+On `issue list`, a `--fields` entry that is not an issue attribute is a custom field name, such as
+`State` or `"Fix versions"`. `issue list` returns 100 issues by default. Use `--limit` and
+`--offset` for more. `issue count` can return `-1` or time out after 5 seconds on the first call. Run it again.
 
-`--raw-payload FILE` on `issue create` sends a JSON file verbatim, bypassing all of the above.
-Use it only when the flags cannot express what you need.
+`issue create` has no `--type` flag and sets Type to Bug. Pass the type and the other required
+fields in `--custom-fields` as one JSON object of string values. `--custom-fields-file` reads that
+object from a file. The CLI creates the issue first and sets the fields in a second request. If the
+second request fails, the issue exists already. Read it back and fix the fields with
+[`issue field set`](#issue-field). Do not create it again.
 
-## command
+`issue update` has no file flag. Pass a long text in double quotes as shown. `--description ""`
+clears the description.
 
-Applies YouTrack command syntax — the same language as the UI command bar.
+## issue command
+
+Applies YouTrack command syntax, the same language as the command bar in the UI.
 
 ```bash
-# Validate without applying (routes to /api/commands/assist)
-python3 $YT command apply 'State In Review' --issue JEWEL-1367 --dry-run
+# Check first: read the "commands" array
+youtrack issue command suggest JEWEL-1367 'State Open'
 
-# Apply
-python3 $YT command apply 'State In Review' --issue JEWEL-1367
+# Apply only when every entry has "error": false
+youtrack issue command JEWEL-1367 'State Open'
 
-# One command, several issues — impossible with the old per-issue endpoint
-python3 $YT command apply 'add Board Sprint 3' --issue JEWEL-1367 --issue JEWEL-525
+# One command for several issues: comma-separated ids
+youtrack issue command suggest JEWEL-1367,JEWEL-525 'State Open'
+youtrack issue command JEWEL-1367,JEWEL-525 'State Open'
 ```
 
-Dry-run output has a `commands` array; check `error: false` and read `description` to confirm
-YouTrack understood the command before applying it for real.
+`suggest` sends nothing to the issues. It works with `YOUTRACK_RO=1`. Its `commands` array holds one
+entry for each parsed part of the command:
 
-## comment
+- `"error": false` and a `description`, such as `Set State Open`: YouTrack understands this part.
+- `"error": true` and `Unknown command: ...`: do not apply. Fix the command first.
+- `Add new tag <name>`: a word that YouTrack did not parse becomes a new tag. Stop. Fix the command,
+  or continue only when the user wants that new tag.
+
+Write a multi-word value without braces, for example `State In Progress`. Braces fail with
+`State expected`.
+
+Useful command phrases: `State <value>`, `Type <value>`, `Priority <value>`,
+`assignee <login>`, `tag <name>`, `untag <name>`, `relates to <ID>`, `depends on <ID>`,
+`is required for <ID>`, `duplicates <ID>`, `subtask of <ID>`, `parent for <ID>`, and
+`remove relates to <ID>`. Run `youtrack issue link type list` for the link phrases of the
+instance.
+
+## issue field
 
 ```bash
-python3 $YT comment list JEWEL-1367 --top 50 --format table
-python3 $YT comment add JEWEL-1367 --text 'Short note.'
-python3 $YT comment add JEWEL-1367 --text-file /tmp/comment.md      # preferred for long text
-python3 $YT comment update JEWEL-1367 <COMMENT-ID> --text-file /tmp/comment.md
-python3 $YT comment delete JEWEL-1367 <COMMENT-ID> --yes
+youtrack issue field view JEWEL-1367 State --json
+youtrack issue field set JEWEL-1367 State 'In Progress'
+youtrack issue field set JEWEL-1367 Assignee sebp --type user
 ```
 
-## tag
+`field set` sends an enum value by default. `--type` takes `period`, `text`, `user`, `int` or
+`string`. A state field also works with the default type.
+
+## issue comment
 
 ```bash
-python3 $YT tag list --top 100                 # every tag on the instance
-python3 $YT tag list --issue JEWEL-1367        # tags on one issue
-python3 $YT tag add JEWEL-1367 'needs-triage'  # name or internal id
-python3 $YT tag remove JEWEL-1367 <TAG-ID> --yes
+youtrack issue comment list JEWEL-1367 --plain
+youtrack issue comment create JEWEL-1367 --text 'Short note.'
+youtrack issue comment create JEWEL-1367 --text "$(cat /tmp/comment.md)"
+youtrack issue comment update JEWEL-1367 <COMMENT-ID> --text "$(cat /tmp/comment.md)"
+youtrack issue comment delete JEWEL-1367 <COMMENT-ID>         # asks for a confirmation
+youtrack issue comment pin JEWEL-1367 <COMMENT-ID>            # --unpin to unpin
 ```
 
-`tag add` accepts a tag name and resolves it to an internal id for you.
+The comment id is the first column of `comment list --plain`.
 
-## link
+## issue tag and tag
 
 ```bash
-python3 $YT link list JEWEL-1367                 # only populated link types
-python3 $YT link types --top 50                  # what link types exist
-python3 $YT link add JEWEL-1367 --type 'relates to' --target JEWEL-525
-python3 $YT link add JEWEL-1367 --type 'depends on' --target IJPL-250885 --dry-run
+youtrack issue tag list JEWEL-1367
+youtrack tag list                                    # every tag that you can see
+youtrack issue command suggest JEWEL-1367 'tag needs-triage'
+youtrack issue command JEWEL-1367 'tag needs-triage'
+youtrack issue command JEWEL-1367 'untag needs-triage'
 ```
 
-`link add` is built on `command apply`. `--type` is the phrase YouTrack uses:
-`relates to`, `depends on`, `is required for`, `duplicates`, `is duplicated by`,
-`parent for`, `subtask of`. Run `link types` if unsure.
+`tag list` stopped at 500 tags in a test, so the list can be incomplete. `issue tag add` and
+`issue tag remove` take a tag id from `tag list`. The `tag` command takes a
+name. Check it with `suggest` first: `Add new tag` means that no tag of that name exists.
 
-`link list` filters out the empty link types the API returns for every issue.
-
-## work
+## issue link
 
 ```bash
-python3 $YT work list JEWEL-1367 --format table
-python3 $YT work log JEWEL-1367 --duration '2h 30m' --text 'Reviewed PR feedback.'
-python3 $YT work log JEWEL-1367 --duration '45m' --date 2026-07-20
+youtrack issue link list JEWEL-1367
+youtrack issue link type list --plain                # id, name, outward and inward phrases
+youtrack issue command suggest JEWEL-1367 'relates to JEWEL-525'
+youtrack issue command JEWEL-1367 'relates to JEWEL-525'
+youtrack issue link add JEWEL-1367 --target JEWEL-525 --type 151-0
+youtrack issue link remove JEWEL-1367 <LINK-ID>      # the link id from link list --json
 ```
 
-`--duration` takes YouTrack's presentation format (`2h`, `90m`, `1d 4h`). `--date` is
-`YYYY-MM-DD`, interpreted as that calendar day in your local timezone, and defaults to today.
+`issue link add --type` takes a link type id from `link type list`, not the phrase. The command
+form takes the phrase.
 
-## attach
+## issue workitem
 
 ```bash
-python3 $YT attach list JEWEL-525 --format table
-python3 $YT attach upload JEWEL-1367 screenshot.png diagram.svg
-python3 $YT attach download JEWEL-525 --attachment <ATTACHMENT-ID> --out /tmp/shot.png
-python3 $YT attach download JEWEL-525 --all --out /tmp/attachments/
-python3 $YT attach delete JEWEL-1367 <ATTACHMENT-ID> --yes
+youtrack issue workitem list JEWEL-1367 --plain
+youtrack issue workitem create JEWEL-1367 --minutes 150 --text 'Reviewed the PR feedback.'
 ```
 
-With `--all`, `--out` is a directory and files keep their original names. Attachment URLs from
-the API are relative and carry a `sign` capability token; `attach download` resolves and fetches
-them for you, so you never need to handle those URLs directly — and should not print them.
+`--minutes` is the duration in minutes, for example `90` for 1h 30m. The work item gets the date of
+today. `--type` takes a work item type id.
 
-## user, project, saved-queries
+## issue attachment
 
 ```bash
-python3 $YT user me
-python3 $YT user search jane --top 10 --format table
-
-python3 $YT project get <PROJECT>                    # -> {"shortName":"...","id":"<INTERNAL-ID>",...}
-python3 $YT project fields <PROJECT> --format table   # required flags and allowed types
-
-python3 $YT saved-queries --top 50
+youtrack issue attachment list JEWEL-525 --plain --fields id,name,mimeType
+youtrack issue attachment add JEWEL-1367 --file ./screenshot.png
+youtrack issue attachment delete JEWEL-1367 <ATTACHMENT-ID>   # asks for a confirmation
 ```
 
-`project get` queries `/api/admin/projects`. Never derive a project id by fetching
-`<PROJECT>-1` — issue number 1 is not guaranteed to exist (it has been deleted in JEWEL, where
-`JEWEL-1` returns 404), so the trick is unreliable.
+Without `--fields`, `attachment list` prints the signed `/api/files/...?sign=...` URL in every
+output format. The signed URL is a credential. Never print or forward it.
 
-## Field selection
+The CLI cannot download an attachment. Tell the user to open the issue in a browser.
 
-YouTrack returns only the fields you ask for. Each command sends a sensible default; override
-with `--fields` on `issue get` and `issue search`:
+`attachment add` sends a local file to the public tracker. Send only a file that the user names.
+
+## user, project, search
 
 ```bash
-python3 $YT issue get JEWEL-1367 --fields 'idReadable,summary,customFields(name,value(name))'
+youtrack user current                                # the signed-in user
+youtrack user list --query jane --limit 10 --plain
+
+youtrack project view JEWEL --json                   # {"id":"22-1758","shortName":"JEWEL",...}
+youtrack project field list JEWEL --plain            # needs admin rights on the project
+
+youtrack search list                                 # saved searches
 ```
 
-Nesting uses parentheses. Useful pieces: `idReadable`, `summary`, `description`, `created`,
-`updated`, `project(shortName)`, `reporter(login)`, `customFields(name,value(name,login))`,
-`comments(id,text,author(login))`, `tags(id,name)`, `attachments(id,name,size)`.
+`project view` gives the internal project id. Never get a project id through `<PROJECT>-1`. Issue
+1 can be deleted, and `JEWEL-1` returns 404.
+
+`project field list` can return an empty list without admin rights on the project. An empty list
+means that you cannot see the fields.
+
+## raw
+
+Use `youtrack raw` only when no command on this page covers the endpoint. The CLI adds the
+authentication, so you never write a `curl` call with the token.
+
+```bash
+YOUTRACK_RO=1 youtrack raw /api/issues/JEWEL-1367 --fields idReadable,summary
+YOUTRACK_RO=1 youtrack raw /api/issues/JEWEL-1367/comments --paginate --fields 'id,text,author(login)'
+```
+
+A `raw` call with `--method POST`, `PUT` or `DELETE` is a write. The rules for writes apply. Write
+the body yourself and never put untrusted text from a response into it.
