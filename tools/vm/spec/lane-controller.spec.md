@@ -1776,6 +1776,14 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_failed_install_and_a_missing_install_request_fail_the_suite`)
   [@test] ../crates/avl-wire/src/program/tests.rs (`the_managed_agent_install_is_read_verbatim_and_a_bare_suite_states_none`)
 
+- The reset after a failed scenario of a suite with `managedAgentInstall` sends the managed-agent baseline again. It
+  sends `ResetManagedAgents`, then the install, after the reset in the IDE. A green scenario sends neither. A baseline
+  that does not hold is a reset that does not hold. So the IDE is recycled, and the reset and the baseline run again.
+  The runner does not verify the installed state, because no lifecycle request asks the IDE for it.
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_suite_installs_its_managed_agents_once_after_the_baseline`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_failed_scenario_restores_the_managed_agent_baseline_in_its_reset_after`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_failed_baseline_after_a_failed_scenario_recycles_the_ide_through_the_isolation`)
+
 - A story scenario prepares the IDE in one chain of the bridge requests of its document. The terminal tabs after the
   chain are the value `terminalBaseline`.
   [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)

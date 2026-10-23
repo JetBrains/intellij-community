@@ -86,6 +86,8 @@ impl ServiceControl for FakeServices {
 struct Script {
     /// The answers of the successive `Reset` requests; a reset past the list holds.
     resets: VecDeque<Value>,
+    /// The answers of the successive `ResetManagedAgents` requests; a request past the list holds.
+    managed_agent_resets: VecDeque<Value>,
     /// The failure of each request type that fails.
     failures: BTreeMap<String, Value>,
     /// The value of each request type that answers one; any other answers `{}`.
@@ -212,7 +214,7 @@ fn answer(script: &mut Script, kind: &str, body: &Value) -> Value {
     }
     let value = match kind.trim_start_matches(BRIDGE) {
         "Reset" => script.resets.pop_front().unwrap_or(Value::Null),
-        "ResetManagedAgents" => Value::Null,
+        "ResetManagedAgents" => script.managed_agent_resets.pop_front().unwrap_or(Value::Null),
         "StepSequence" => {
             let mut stopped = false;
             let outcomes: Vec<Value> = body["steps"]
@@ -1745,9 +1747,119 @@ fn a_suite_installs_its_managed_agents_once_after_the_baseline() {
     });
     let ran = run(&fake, &[installing_suite(Some(&install))], None);
     assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL");
-    let order: Vec<String> = fake.requests().into_iter().map(|(_, kind)| kind).take(3).collect();
-    assert_eq!(order, ["ResetManagedAgents", "InstallManagedAgents", "Reset"]);
+    let order: Vec<String> = fake.requests().into_iter().map(|(_, kind)| kind).collect();
+    assert_eq!(
+        order,
+        [
+            "ResetManagedAgents",
+            "InstallManagedAgents",
+            "Reset",
+            "StepSequence",
+            "action/rename-session-select",
+            "Reset"
+        ],
+        "a green scenario sends no baseline in its reset after"
+    );
     assert_eq!(fake.bodies(INSTALL), [install]);
+}
+
+/// The install request of Codex, as the generator writes it.
+fn codex_install() -> Value {
+    json!({"type": INSTALL, "agents": [{"displayName": "Codex", "fullAgentId": "acp.registry.codex-acp"}], "timeoutMs": 300_000})
+}
+
+/// The failure of the one action of [`installing_suite`].
+fn failed_select() -> (String, Value) {
+    (
+        "action/rename-session-select".to_owned(),
+        json!({"type": "java.lang.AssertionError", "message": "the registry agent is not launchable", "stack": []}),
+    )
+}
+
+// A failed scenario can stop before it puts back an agent that it removed. So its reset after sends the managed-agent
+// baseline again, after the reset in the IDE: the reset of the managed agents, then the install of the suite.
+#[test]
+fn a_failed_scenario_restores_the_managed_agent_baseline_in_its_reset_after() {
+    let install = codex_install();
+    let fake = Fake::new(Script {
+        answers: BTreeMap::from([(INSTALL.to_owned(), Value::Null)]),
+        failures: BTreeMap::from([failed_select()]),
+        ..Script::default()
+    });
+    let ran = run(&fake, &[installing_suite(Some(&install))], None);
+    let finished = ran.events("testFinished");
+    assert_eq!(
+        (finished[0]["status"].as_str(), finished[0]["message"].as_str()),
+        (Some("FAILED"), Some("the registry agent is not launchable")),
+        "a baseline that holds adds nothing to the failure of the scenario"
+    );
+    let order: Vec<String> = fake
+        .requests()
+        .into_iter()
+        .map(|(_, kind)| kind)
+        .filter(|kind| !kind.starts_with("GET "))
+        .collect();
+    assert_eq!(
+        order,
+        [
+            "ResetManagedAgents",
+            "InstallManagedAgents",
+            "Reset",
+            "StepSequence",
+            "action/rename-session-select",
+            "Reset",
+            "ResetManagedAgents",
+            "InstallManagedAgents"
+        ]
+    );
+    assert_eq!(fake.bodies(INSTALL), [install.clone(), install]);
+    let baselines = fake.bodies(&format!("{BRIDGE}ResetManagedAgents"));
+    assert_eq!(baselines[0], baselines[1], "both baselines reset the same registry agents");
+    assert!(fake.relaunches.lock().unwrap().is_empty());
+}
+
+// A baseline that does not hold after a failed scenario is a reset that does not hold. The isolation recycles the IDE,
+// and the reset and the baseline run again on the new pid. The recycle names the scenario that broke the state.
+#[test]
+fn a_failed_baseline_after_a_failed_scenario_recycles_the_ide_through_the_isolation() {
+    let install = codex_install();
+    let fake = Fake::new(Script {
+        answers: BTreeMap::from([(INSTALL.to_owned(), Value::Null)]),
+        failures: BTreeMap::from([failed_select()]),
+        managed_agent_resets: VecDeque::from([Value::Null, json!("a pending install did not stop")]),
+        ..Script::default()
+    });
+    let ran = run(&fake, &[installing_suite(Some(&install))], None);
+    assert_eq!(*fake.relaunches.lock().unwrap(), [Relaunch::Recycle]);
+    assert_eq!(ran.events("testFinished")[0]["status"], "FAILED");
+    let after: Vec<(u32, String)> = fake
+        .requests()
+        .into_iter()
+        .skip_while(|(_, kind)| kind != "action/rename-session-select")
+        .skip(1)
+        .filter(|(_, kind)| !kind.starts_with("GET "))
+        .collect();
+    let on = |pid: u32, kind: &str| (pid, kind.to_owned());
+    assert_eq!(
+        after,
+        [
+            on(1, "Reset"),
+            on(1, "ResetManagedAgents"),
+            on(2, "Reset"),
+            on(2, "ResetManagedAgents"),
+            on(2, "InstallManagedAgents")
+        ]
+    );
+    assert!(
+        ran.events("output")
+            .iter()
+            .any(|record| record["text"].as_str().unwrap().starts_with(
+                "The IDE was recycled 1 time(s): after 'renames': restoring the managed-agent baseline failed: Air \
+             managed-agent baseline failed: a pending install did not stop"
+            )),
+        "{:#?}",
+        ran.events("output")
+    );
 }
 
 // An install that answers a text fails the suite as one reset failure that names the text. A fixture that starts with
