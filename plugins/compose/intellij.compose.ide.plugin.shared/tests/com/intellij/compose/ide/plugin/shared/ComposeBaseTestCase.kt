@@ -108,12 +108,10 @@ abstract class ComposeBaseTestCase : GradleCodeInsightBaseTestCase() {
   }
 
   /**
-   * The inverse of [canonicalProjectFile]. The Gradle model path can already be canonical, hence the real-path
-   * normalization on both sides.
+   * The inverse of [canonicalProjectFile]. The project root is already a real path.
    */
   protected fun projectRelativePath(file: VirtualFile): String =
     projectRoot.toNioPath()
-      .toRealPath()
       .relativize(file.toNioPath().toRealPath())
       .invariantSeparatorsPathString
 
