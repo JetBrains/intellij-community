@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 use avl_base::format::words;
 use avl_base::{Backend, Exit, GuestOs, Refusal, SCHEMA_VERSION};
 use avl_host_sys::interrupt::Interrupts;
-use avl_host_sys::{Ctx, Runner, SpawnOptions};
+use avl_host_sys::{Runner, SpawnOptions};
 use avl_host_testkit::{answer_guest, load_settings, said};
 use avl_testkit::tartfake::Answer;
 use futures::FutureExt;
@@ -19,12 +19,8 @@ use pretty_assertions::assert_eq;
 use super::tart::SuspendedState;
 use super::*;
 use crate::worker::tart::PidReceipt;
-use crate::worker::testing::{CONSOLE_LOGIN, Fixture, find_step, manager_over};
+use crate::worker::testing::{CONSOLE_LOGIN, Fixture, ctx, find_step, manager_over, start_again};
 use avl_base::RefusalExt;
-
-fn ctx() -> Ctx {
-    Ctx::background()
-}
 
 fn lease_of(worker: &str, token: &str) -> Lease {
     Lease {
@@ -798,13 +794,9 @@ async fn a_start_spawns_identifies_and_provisions() {
     // A second start over the same live process is `already-running`, and spawns nothing. Tart lists the VM the first
     // start cloned; a run process whose VM is not listed is an orphan the start ends first.
     fixture.fake.answer(Answer::ListQuiet, format!("{worker}\n"));
-    let before = fixture.fake.calls().len();
-    assert_eq!(
-        fixture.manager.start_without_lifecycle_lock(&ctx(), worker).await.unwrap(),
-        StartState::AlreadyRunning
-    );
+    let after = start_again(&fixture, worker).await;
     assert!(
-        !fixture.fake.calls()[before..].iter().any(|call| call.starts_with("run ")),
+        !after.iter().any(|call| call.starts_with("run ")),
         "a live worker must not be spawned a second time"
     );
 }

@@ -6,18 +6,10 @@ use avl_testkit::tartfake::Answer;
 use pretty_assertions::assert_eq;
 
 use super::*;
-use crate::worker::testing::{Fixture, find_step};
+use crate::worker::testing::{Fixture, ctx, docker, find_step, position, start_again, start_first};
 #[cfg(unix)]
 use crate::worker::worker::{IdleStopRecord, IdleStopRequest, IdleStopVerdict, read_idle_stop_record, remove_idle_stop_record};
 use crate::worker::worker::{PoolCommand, PoolTarget};
-
-fn ctx() -> Ctx {
-    Ctx::background()
-}
-
-fn docker(fixture: &Fixture) -> &Docker {
-    fixture.manager.machine().docker().expect("a Docker pool")
-}
 
 /// The whole Docker start over the fake: the image is built, the container is created and recorded, started, and
 /// the guest runs the Linux boot: the agent install, `validate-guest`, the parity layout and the readiness. The image
@@ -26,22 +18,12 @@ fn docker(fixture: &Fixture) -> &Docker {
 #[tokio::test]
 async fn a_docker_start_builds_creates_starts_and_validates_without_provisioning() {
     let fixture = Fixture::docker();
-    let worker = fixture.worker(0);
-    assert_eq!(
-        fixture.manager.start_without_lifecycle_lock(&ctx(), worker).await.unwrap(),
-        StartState::Started
-    );
+    let worker = start_first(&fixture).await;
     let calls = fixture.fake.calls();
-    let position = |prefix: &str| {
-        calls
-            .iter()
-            .position(|call| call.starts_with(prefix))
-            .unwrap_or_else(|| panic!("no {prefix:?} call in {calls:#?}"))
-    };
-    assert!(position("version ") < position("pull "));
-    assert!(position("pull ") < position("build "));
-    assert!(position("build ") < position("create "));
-    assert!(position("create ") < position(&format!("start {worker}")));
+    assert!(position(&calls, "version ") < position(&calls, "pull "));
+    assert!(position(&calls, "pull ") < position(&calls, "build "));
+    assert!(position(&calls, "build ") < position(&calls, "create "));
+    assert!(position(&calls, "create ") < position(&calls, &format!("start {worker}")));
     assert!(docker(&fixture).create_record_is_current(worker).unwrap());
 
     let argvs = fixture.guest.lines();
@@ -54,12 +36,7 @@ async fn a_docker_start_builds_creates_starts_and_validates_without_provisioning
     }
 
     // A second start over the running container creates nothing and starts nothing.
-    let before = fixture.fake.calls().len();
-    assert_eq!(
-        fixture.manager.start_without_lifecycle_lock(&ctx(), worker).await.unwrap(),
-        StartState::AlreadyRunning
-    );
-    let after = &fixture.fake.calls()[before..];
+    let after = start_again(&fixture, worker).await;
     assert!(
         !after.iter().any(|call| call.starts_with("create ")
             || call.starts_with("start ")
@@ -91,14 +68,8 @@ async fn a_pool_start_recreates_an_unleased_container_of_another_declaration() {
     // The container ran, so the start is `started` again only after it was made again.
     assert_eq!(fixture.manager.start(&ctx(), worker).await.unwrap(), StartState::Started);
     let after: Vec<String> = fixture.fake.calls()[before..].to_vec();
-    let position = |prefix: &str| {
-        after
-            .iter()
-            .position(|call| call.starts_with(prefix))
-            .unwrap_or_else(|| panic!("no {prefix:?} call in {after:#?}"))
-    };
-    assert!(position("stop ") < position(&format!("rm {worker}")));
-    assert!(position(&format!("rm {worker}")) < position("create "));
+    assert!(position(&after, "stop ") < position(&after, &format!("rm {worker}")));
+    assert!(position(&after, &format!("rm {worker}")) < position(&after, "create "));
     assert!(
         !after
             .iter()
@@ -493,17 +464,11 @@ async fn pool_recycle_on_docker_drops_the_volume_and_starts_again() {
         .await
         .unwrap();
     let after: Vec<String> = fixture.fake.calls()[before..].to_vec();
-    let position = |prefix: &str| {
-        after
-            .iter()
-            .position(|call| call.starts_with(prefix))
-            .unwrap_or_else(|| panic!("no {prefix:?} call in {after:#?}"))
-    };
     // No stop: a recycle removes the container in any state, with `--force`, once the lease guard passed.
     assert!(!after.iter().any(|call| call.starts_with("stop ")), "{after:#?}");
-    assert!(position("rm --force ") < position(&format!("volume rm --force air-{worker}-data")));
-    assert!(position("volume rm ") < position("create "));
-    assert!(position("create ") < position(&format!("start {worker}")));
+    assert!(position(&after, "rm --force ") < position(&after, &format!("volume rm --force air-{worker}-data")));
+    assert!(position(&after, "volume rm ") < position(&after, "create "));
+    assert!(position(&after, "create ") < position(&after, &format!("start {worker}")));
     assert!(!receipt.exists(), "a receipt of the dropped volume survived");
     assert!(fixture.manager.lifecycle_lock_path(&worker).exists());
 }

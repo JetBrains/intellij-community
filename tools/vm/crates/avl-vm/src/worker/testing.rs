@@ -24,13 +24,14 @@ use avl_base::config::MacosHost;
 #[cfg(unix)]
 use avl_base::report::SinkGuard;
 use avl_base::{Backend, Config, GuestArch, GuestOs, SCHEMA_VERSION};
+use avl_host_sys::Ctx;
 use avl_host_sys::Runner;
 use avl_host_sys::guest::BazelHost;
 #[cfg(unix)]
 use avl_host_sys::interrupt::Interrupts;
 use avl_host_sys::lock::LockManager;
 #[cfg(unix)]
-use avl_host_sys::{Ctx, ProcessIdentity, ProcessTable};
+use avl_host_sys::{ProcessIdentity, ProcessTable};
 use avl_host_testkit::{ChannelFactory, FakeGuests, HostPool, HostPoolBuilder, quiet};
 #[cfg(unix)]
 use avl_host_testkit::{FakeProcesses, PinnedBazel};
@@ -43,11 +44,52 @@ use nix::sys::signal::{Signal, killpg};
 #[cfg(unix)]
 use nix::unistd::Pid;
 
+use crate::worker::docker::Docker;
 #[cfg(unix)]
 use crate::worker::run_marker::{RunMarker, write_marker_by_hand};
 #[cfg(unix)]
 use crate::worker::tart::{MINIMUM_VERSION, PidReceipt};
-use crate::worker::worker::{Dependencies, GuestBootBuilder, IdleStopRequest, Lease, Manager, Timings, builds_nothing};
+use crate::worker::worker::{Dependencies, GuestBootBuilder, IdleStopRequest, Lease, Manager, StartState, Timings, builds_nothing};
+
+/// The context of a suite step: the background one, which nothing cancels.
+pub(crate) fn ctx() -> Ctx {
+    Ctx::background()
+}
+
+/// The Docker backend of a Docker pool.
+pub(crate) fn docker(fixture: &Fixture) -> &Docker {
+    fixture.manager.machine().docker().expect("a Docker pool")
+}
+
+/// The index of the first of the hypervisor `calls` that starts with `prefix`. The test fails with the calls when none
+/// does.
+pub(crate) fn position(calls: &[String], prefix: &str) -> usize {
+    calls
+        .iter()
+        .position(|call| call.starts_with(prefix))
+        .unwrap_or_else(|| panic!("no {prefix:?} call in {calls:#?}"))
+}
+
+/// Starts the first worker of `fixture`, asserts that the start started it, and answers the worker.
+pub(crate) async fn start_first(fixture: &Fixture) -> &str {
+    let worker = fixture.worker(0);
+    assert_eq!(
+        fixture.manager.start_without_lifecycle_lock(&ctx(), worker).await.unwrap(),
+        StartState::Started
+    );
+    worker
+}
+
+/// Starts `worker` of `fixture` again, asserts that it was already running, and answers the hypervisor calls of this
+/// second start.
+pub(crate) async fn start_again(fixture: &Fixture, worker: &str) -> Vec<String> {
+    let before = fixture.fake.calls().len();
+    assert_eq!(
+        fixture.manager.start_without_lifecycle_lock(&ctx(), worker).await.unwrap(),
+        StartState::AlreadyRunning
+    );
+    fixture.fake.calls()[before..].to_vec()
+}
 
 /// The version the fake `tart` answers. A Windows host has no fake `tart`, and its fake `docker` reads no version.
 #[cfg(unix)]

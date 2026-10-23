@@ -4,16 +4,11 @@
 use std::os::unix::fs::PermissionsExt;
 
 use avl_base::Exit;
-use avl_host_sys::Ctx;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 
 use super::*;
-use crate::worker::testing::{Fixture, Notes};
-
-fn ctx() -> Ctx {
-    Ctx::background()
-}
+use crate::worker::testing::{Fixture, Notes, ctx};
 
 /// A Tart pool and the lease of its first worker.
 fn leased() -> (Fixture, Lease) {

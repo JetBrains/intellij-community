@@ -9,12 +9,8 @@ use pretty_assertions::assert_eq;
 use serde_json::json;
 
 use super::*;
-use crate::worker::testing::{Fixture, find_step};
+use crate::worker::testing::{Fixture, ctx, find_step, start_again, start_first};
 use crate::worker::worker::{PoolCommand, PoolTarget};
-
-fn ctx() -> Ctx {
-    Ctx::background()
-}
 
 /// The verb of every call of the fake script, in order.
 fn verbs(fixture: &Fixture) -> Vec<String> {
@@ -57,11 +53,7 @@ fn expected_start(fixture: &Fixture, worker: &str) -> Vec<String> {
 #[tokio::test]
 async fn a_container_linux_start_runs_the_script_then_the_linux_boot_through_the_control_port() {
     let fixture = Fixture::container_linux();
-    let worker = fixture.worker(0);
-    assert_eq!(
-        fixture.manager.start_without_lifecycle_lock(&ctx(), worker).await.unwrap(),
-        StartState::Started
-    );
+    let worker = start_first(&fixture).await;
     assert_eq!(start_calls(&fixture), [expected_start(&fixture, worker)]);
     assert_eq!(
         fixture.fake.container_linux_start_environment(),
@@ -78,10 +70,7 @@ async fn a_container_linux_start_runs_the_script_then_the_linux_boot_through_the
     assert!(!argvs.iter().any(|argv| argv.contains(" provision-guest ")), "{argvs:#?}");
     find_step(&argvs, " validate-guest ", 0);
 
-    assert_eq!(
-        fixture.manager.start_without_lifecycle_lock(&ctx(), worker).await.unwrap(),
-        StartState::AlreadyRunning
-    );
+    start_again(&fixture, worker).await;
     assert_eq!(start_calls(&fixture).len(), 2, "{:?}", fixture.fake.calls());
 }
 

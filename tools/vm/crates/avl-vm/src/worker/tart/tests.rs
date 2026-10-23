@@ -11,15 +11,15 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use avl_base::format::words;
 use avl_base::{Exit, GuestOs, SCHEMA_VERSION};
+use avl_host_sys::PsField;
 use avl_host_sys::share::{SHARE_MODE, SharedFolder};
-use avl_host_sys::{Ctx, PsField};
 use avl_host_testkit::path_runner;
 use avl_testkit::tartfake::Answer;
 use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::worker::hypervisor::is_unsupported;
-use crate::worker::testing::Fixture;
+use crate::worker::testing::{Fixture, ctx};
 
 const BASE_DIGEST: &str = "sha256:fa96c198dd980ae41914db6dd8621e6120d01ba0cd66754dcb4238e072a87444";
 const MACOS_VERSION: &str = "26.6.2";
@@ -27,10 +27,6 @@ const GOLDEN: &str = "air-macos-26.6.2-golden";
 
 fn tart(fixture: &Fixture) -> &Tart {
     fixture.manager.tart().expect("a Tart pool")
-}
-
-fn ctx() -> Ctx {
-    Ctx::background()
 }
 
 /// Puts one file of a VM in place and answers its path.
@@ -184,7 +180,9 @@ fn a_share_is_declared_by_name_never_by_tag() {
 #[tokio::test]
 async fn the_guest_command_line_is_tart_exec() {
     let fixture = Fixture::macos();
-    let line = tart(&fixture)
+    let line = fixture
+        .manager
+        .machine()
         .guest_argv(&ctx(), "air-macos-1", &words(["/bin/echo", "one two"]), true)
         .await
         .unwrap();

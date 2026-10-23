@@ -7,22 +7,13 @@
 use std::path::PathBuf;
 
 use avl_base::{GuestArch, GuestOs, SCHEMA_VERSION};
-use avl_host_sys::Ctx;
 use avl_host_sys::share::SHARE_MODE;
 use avl_testkit::tartfake::Answer;
 use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::worker::hypervisor::is_unsupported;
-use crate::worker::testing::Fixture;
-
-fn ctx() -> Ctx {
-    Ctx::background()
-}
-
-fn docker(fixture: &Fixture) -> &Docker {
-    fixture.manager.machine().docker().expect("a Docker pool")
-}
+use crate::worker::testing::{Fixture, ctx, docker};
 
 fn strings(words: &[&str]) -> Vec<String> {
     words.iter().map(|word| (*word).to_owned()).collect()
@@ -170,11 +161,21 @@ async fn the_guest_argv_asks_for_stdin_only_when_there_is_stdin() {
     let program = docker(&fixture).program();
     let argv = strings(&["/usr/bin/true"]);
     assert_eq!(
-        docker(&fixture).guest_argv(&ctx(), "air-docker-1", &argv, false).await.unwrap(),
+        fixture
+            .manager
+            .machine()
+            .guest_argv(&ctx(), "air-docker-1", &argv, false)
+            .await
+            .unwrap(),
         [program.as_str(), "exec", "air-docker-1", "/usr/bin/true"]
     );
     assert_eq!(
-        docker(&fixture).guest_argv(&ctx(), "air-docker-1", &argv, true).await.unwrap(),
+        fixture
+            .manager
+            .machine()
+            .guest_argv(&ctx(), "air-docker-1", &argv, true)
+            .await
+            .unwrap(),
         [program.as_str(), "exec", "-i", "air-docker-1", "/usr/bin/true"]
     );
 }

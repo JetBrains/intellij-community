@@ -24,6 +24,13 @@ async fn listener_and_channel(root: &Path) -> (TcpListener, ControlPortChannel) 
     (listener, channel(root, port))
 }
 
+/// Runs `program` without arguments through `channel`, within five seconds.
+async fn run(channel: &ControlPortChannel, program: &str) -> Result<Captured, Refusal> {
+    channel
+        .exec(&Ctx::background(), &words([program]), &SpawnOptions::within(Duration::from_secs(5)))
+        .await
+}
+
 fn channel(root: &Path, port: u16) -> ControlPortChannel {
     channel_with(root, port, &[])
 }
@@ -177,14 +184,7 @@ async fn a_502_is_the_answer_of_a_program_that_failed() {
     let root = tempfile::tempdir().expect("a temporary directory");
     let (listener, channel) = listener_and_channel(root.path()).await;
     let served = answer_once(listener, response("502 Bad Gateway", &[], &frames("no newline", "", 3)));
-    let captured = channel
-        .exec(
-            &Ctx::background(),
-            &words(["/usr/bin/false"]),
-            &SpawnOptions::within(Duration::from_secs(5)),
-        )
-        .await
-        .expect("the program ran");
+    let captured = run(&channel, "/usr/bin/false").await.expect("the program ran");
     assert_eq!(
         (captured.exit_code, captured.stdout.as_str(), captured.stderr.as_str()),
         (3, "no newline", "")
@@ -198,14 +198,7 @@ async fn a_body_of_another_shape_is_a_bad_answer() {
     let root = tempfile::tempdir().expect("a temporary directory");
     let (listener, channel) = listener_and_channel(root.path()).await;
     let served = answer_once(listener, response("200 OK", &[], "hello\n"));
-    let refusal = channel
-        .exec(
-            &Ctx::background(),
-            &words(["/bin/echo"]),
-            &SpawnOptions::within(Duration::from_secs(5)),
-        )
-        .await
-        .unwrap_err();
+    let refusal = run(&channel, "/bin/echo").await.unwrap_err();
     assert_eq!(
         (refusal.code.as_ref(), refusal.exit),
         ("container_linux_bad_answer", Exit::SOFTWARE)
@@ -263,10 +256,7 @@ async fn a_missing_guest_program_is_guest_program_missing() {
             "exec \"/nope\": executable file not found in $PATH\n",
         ),
     );
-    let refusal = channel
-        .exec(&Ctx::background(), &words(["/nope"]), &SpawnOptions::within(Duration::from_secs(5)))
-        .await
-        .unwrap_err();
+    let refusal = run(&channel, "/nope").await.unwrap_err();
     assert_eq!((refusal.code.as_ref(), refusal.exit), ("guest_program_missing", Exit::UNAVAILABLE));
     assert!(refusal.message.contains("executable file not found"), "{}", refusal.message);
     served.await.expect("the listener answered");
@@ -278,14 +268,7 @@ async fn a_rejected_bearer_is_its_own_refusal() {
     let root = tempfile::tempdir().expect("a temporary directory");
     let (listener, channel) = listener_and_channel(root.path()).await;
     let served = answer_once(listener, response("401 Unauthorized", &[], "unauthorized\n"));
-    let refusal = channel
-        .exec(
-            &Ctx::background(),
-            &words(["/usr/bin/true"]),
-            &SpawnOptions::within(Duration::from_secs(5)),
-        )
-        .await
-        .unwrap_err();
+    let refusal = run(&channel, "/usr/bin/true").await.unwrap_err();
     assert_eq!(
         (refusal.code.as_ref(), refusal.exit),
         ("container_linux_bearer_rejected", Exit::NO_PERM)
@@ -299,14 +282,7 @@ async fn a_control_port_that_does_not_answer_is_unreachable() {
     let root = tempfile::tempdir().expect("a temporary directory");
     let (listener, channel) = listener_and_channel(root.path()).await;
     drop(listener);
-    let refusal = channel
-        .exec(
-            &Ctx::background(),
-            &words(["/usr/bin/true"]),
-            &SpawnOptions::within(Duration::from_secs(5)),
-        )
-        .await
-        .unwrap_err();
+    let refusal = run(&channel, "/usr/bin/true").await.unwrap_err();
     assert_eq!(
         (refusal.code.as_ref(), refusal.exit),
         ("container_linux_unreachable", Exit::UNAVAILABLE)
