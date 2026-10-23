@@ -26,6 +26,6 @@ internal class NotificationsLogToolWindowController(private val project: Project
   }
 
   private fun findToolWindow(project: Project): ToolWindow? {
-    return ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
+    return ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)?.takeIf { it.isAvailable }
   }
 }

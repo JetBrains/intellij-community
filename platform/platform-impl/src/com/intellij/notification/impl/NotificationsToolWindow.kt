@@ -3,6 +3,7 @@
 
 package com.intellij.notification.impl
 
+import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.notification.impl.ui.NotificationsPanel
 import com.intellij.notification.impl.widget.IdeNotificationArea
 import com.intellij.openapi.Disposable
@@ -17,6 +18,7 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.ui.content.ContentFactory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
@@ -28,6 +30,12 @@ internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     const val ID: String = "Notifications"
   }
 
+  /**
+   * A light process shows a notification as a balloon only, and the tool window stays hidden.
+   * The move out of the light mode makes it available, see [manage].
+   */
+  override fun shouldBeAvailable(project: Project): Boolean = !IdeProductMode.isLight
+
   override suspend fun manage(toolWindow: ToolWindow, toolWindowManager: ToolWindowManager) {
     fun updateIcon() {
       val notifications = ApplicationNotificationsModel.getStateNotifications(toolWindow.project)
@@ -36,11 +44,20 @@ internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().getMessageBus()
-        .connect(this)
-        .subscribe(ApplicationNotificationsModel.STATE_CHANGED, ApplicationNotificationsModel.StateEventListener {
-          updateIcon()
-        })
+      val connection = ApplicationManager.getApplication().getMessageBus().connect(this)
+      connection.subscribe(ApplicationNotificationsModel.STATE_CHANGED, ApplicationNotificationsModel.StateEventListener {
+        updateIcon()
+      })
+      // a move between the light mode and the smart mode is a plugin set change
+      connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+        override fun pluginsLoaded() {
+          toolWindow.isAvailable = !IdeProductMode.isLight
+        }
+
+        override fun pluginsUnloaded() {
+          toolWindow.isAvailable = !IdeProductMode.isLight
+        }
+      })
       updateIcon()
       awaitCancellation()
     }
