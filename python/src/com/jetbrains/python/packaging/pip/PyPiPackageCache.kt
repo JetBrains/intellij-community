@@ -56,11 +56,15 @@ class PyPiPackageCache : PythonPackageCache {
       }
     }
   
-  @RequiresBackgroundThread
-  fun containsBlocking(name: String): Boolean =
-    containsCache.get(name) {
-      name in packageCache
+  fun tryContains(name: String): Boolean? {
+    containsCache.getIfPresent(name)?.also { 
+      return it
     }
+    
+    return packageCache.tryContains(name)?.also { 
+      containsCache.put(name, it)
+    }
+  }
 
   override suspend fun search(prefix: String, pageSize: Int): PythonPackageSearchResult =
     withContext(Dispatchers.IO) {

@@ -66,6 +66,25 @@ internal class MappedPackedAsciiStringSetCacheFile<TReloadError>(
       packageName in set
     }
 
+  /**
+   * Tries to perform the contains operation. Doesn't block when cache is being reloaded, instead returning null. Safe to execute on EDT.
+   * 
+   * @return contains result, or null if the cache is currently being reloaded.
+   */
+  fun tryContains(packageName: String): Boolean? {
+    val readLock = cacheReadWriteLock.readLock()
+
+    if (!readLock.tryLock()) {
+      return null
+    }
+
+    try {
+      return packageName in set
+    } finally {
+      readLock.unlock()
+    }
+  }
+
   @RequiresBackgroundThread
   fun search(prefix: String, pageSize: Int): PythonPackageSearchResult =
     cacheReadWriteLock.read {
