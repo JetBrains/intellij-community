@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use avl_testkit::environment_lookup;
 use avl_wire::daemon::{ExecutionIdentity, PlanStarted, RunEvent, RunEventKind, TestStarted};
 use pretty_assertions::assert_eq;
 
@@ -123,16 +122,10 @@ fn two_iterations_of_one_class_share_its_suite() {
 
 #[test]
 fn the_named_file_wins_over_the_bazel_file_and_a_blank_name_is_none() {
-    let environment = |pairs: &[(&str, &str)]| -> HashMap<String, String> {
-        pairs
-            .iter()
-            .map(|(name, value)| ((*name).to_owned(), (*value).to_owned()))
-            .collect()
-    };
-    let both = environment(&[(XML_OUTPUT_FILE, "/bazel/test.xml"), (JB_XML_OUTPUT_FILE, "/jb/test.xml")]);
-    assert_eq!(destination(|name| both.get(name).cloned()).as_deref(), Some("/jb/test.xml"));
-    let blank = environment(&[(XML_OUTPUT_FILE, "/bazel/test.xml"), (JB_XML_OUTPUT_FILE, " ")]);
-    assert_eq!(destination(|name| blank.get(name).cloned()).as_deref(), Some("/bazel/test.xml"));
+    let both = environment_lookup(&[(XML_OUTPUT_FILE, "/bazel/test.xml"), (JB_XML_OUTPUT_FILE, "/jb/test.xml")]);
+    assert_eq!(destination(both).as_deref(), Some("/jb/test.xml"));
+    let blank = environment_lookup(&[(XML_OUTPUT_FILE, "/bazel/test.xml"), (JB_XML_OUTPUT_FILE, " ")]);
+    assert_eq!(destination(blank).as_deref(), Some("/bazel/test.xml"));
     assert_eq!(destination(|_| None), None);
 }
 

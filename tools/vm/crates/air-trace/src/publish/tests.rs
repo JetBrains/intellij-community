@@ -17,21 +17,29 @@ fn real(path: &Path) -> PathBuf {
 }
 
 fn testdata(name: &str) -> PathBuf {
-    let path = avl_testkit::crate_path!(&format!("testdata/{name}"));
-    std::path::absolute(&path).unwrap_or_else(|error| panic!("{}: {error}", path.display()))
+    avl_testkit::testdata_path!(name)
+}
+
+/// The publish of `testlogs` into `out` with the links to [CI_SITE]: off TeamCity, with no start, into an output of its
+/// own, and with the packed bundles kept.
+fn default_job<'a>(testlogs: &'a [PathBuf], out: &'a Path) -> Publish<'a> {
+    Publish {
+        testlogs,
+        out,
+        site: CI_SITE,
+        build: None,
+        since: None,
+        out_owned: true,
+        remove_packed: false,
+        affected: None,
+    }
 }
 
 /// Publishes the testlogs `root` into `out` with the links to [CI_SITE], with the stdout and the stderr of the step.
 fn run(root: &Path, out: &Path, build: Option<&Build>) -> (String, String) {
     run_job(&Publish {
-        testlogs: &[root.to_path_buf()],
-        out,
-        site: CI_SITE,
         build,
-        since: None,
-        out_owned: true,
-        remove_packed: false,
-        affected: None,
+        ..default_job(&[root.to_path_buf()], out)
     })
 }
 
@@ -291,16 +299,7 @@ fn testlogs_without_bundles_print_nothing() {
     let missing = root.path().join("missing");
     let bundles = testlogs();
     let testlogs = [missing.clone(), bundles.path().to_path_buf()];
-    let (stdout, stderr) = run_job(&Publish {
-        testlogs: &testlogs,
-        out: out.path(),
-        site: CI_SITE,
-        build: None,
-        since: None,
-        out_owned: true,
-        remove_packed: false,
-        affected: None,
-    });
+    let (stdout, stderr) = run_job(&default_job(&testlogs, out.path()));
     let problem = format!("no testlogs: {}: not a directory", missing.display());
     assert!(
         stdout.starts_with(&format!(
@@ -409,14 +408,9 @@ fn the_archive_holds_what_the_changed_files_reach_after_the_listing() {
         commits: Vec::new(),
     };
     run_job(&Publish {
-        testlogs: &[root.path().to_path_buf()],
-        out: out.path(),
-        site: CI_SITE,
         build: Some(&build()),
-        since: None,
-        out_owned: true,
-        remove_packed: false,
         affected: Some(&document),
+        ..default_job(&[root.path().to_path_buf()], out.path())
     });
     let archived = out.path().join(ARCHIVE);
     assert!(
@@ -437,14 +431,9 @@ fn the_links_open_the_site_that_the_step_names() {
     let root = testlogs();
     let out = tempfile::tempdir().unwrap();
     let (stdout, _) = run_job(&Publish {
-        testlogs: &[root.path().to_path_buf()],
-        out: out.path(),
         site: "https://staging.example/air/",
         build: Some(&build()),
-        since: None,
-        out_owned: true,
-        remove_packed: false,
-        affected: None,
+        ..default_job(&[root.path().to_path_buf()], out.path())
     });
     let links: Vec<&str> = stdout.lines().filter(|line| line.contains("type='link'")).collect();
     assert_eq!(links.len(), 4, "{stdout}");
@@ -470,14 +459,8 @@ fn the_tests_of_an_earlier_build_are_skipped() {
     set_modified(&stale.join(TEST_XML), SystemTime::now() - Duration::from_hours(2));
     let out = tempfile::tempdir().unwrap();
     let (stdout, stderr) = run_job(&Publish {
-        testlogs: &[root.path().to_path_buf()],
-        out: out.path(),
-        site: CI_SITE,
-        build: None,
         since: Some(SystemTime::now() - Duration::from_hours(1)),
-        out_owned: true,
-        remove_packed: false,
-        affected: None,
+        ..default_job(&[root.path().to_path_buf()], out.path())
     });
     assert_eq!(
         stdout.matches(TRACE_METADATA).count(),
@@ -496,14 +479,8 @@ fn the_tests_of_an_earlier_build_are_skipped() {
     assert!(stdout.starts_with(warning), "a warning counts the skipped tests: {stdout}");
 
     let (stdout, _) = run_job(&Publish {
-        testlogs: &[root.path().to_path_buf()],
-        out: out.path(),
-        site: CI_SITE,
-        build: None,
         since: Some(SystemTime::now() + Duration::from_hours(1)),
-        out_owned: true,
-        remove_packed: false,
-        affected: None,
+        ..default_job(&[root.path().to_path_buf()], out.path())
     });
     assert!(
         stdout.starts_with("##teamcity[message text='air-trace teamcity-publish: 3 test(s) skipped, because their test.xml")
@@ -524,14 +501,8 @@ fn the_output_holds_the_files_of_this_run_only() {
     fs::write(&old, "").unwrap();
     let testlogs = [root.path().to_path_buf()];
     let job = |out_owned| Publish {
-        testlogs: &testlogs,
-        out: out.path(),
-        site: CI_SITE,
-        build: None,
-        since: None,
         out_owned,
-        remove_packed: false,
-        affected: None,
+        ..default_job(&testlogs, out.path())
     };
     let (stdout, _) = run_job(&job(true));
     assert!(
@@ -658,14 +629,8 @@ fn the_packed_bundles_leave_the_testlogs_once_the_archive_is_published() {
     let job = |remove_packed, out: &Path| {
         let testlogs = [root.path().to_path_buf()];
         run_job(&Publish {
-            testlogs: &testlogs,
-            out,
-            site: CI_SITE,
-            build: None,
-            since: None,
-            out_owned: true,
             remove_packed,
-            affected: None,
+            ..default_job(&testlogs, out)
         })
     };
 
@@ -755,14 +720,8 @@ fn a_bundle_that_its_zip_does_not_hold_whole_stays_in_the_testlogs() {
     let out = tempfile::tempdir().unwrap();
     let testlogs = [root.path().to_path_buf()];
     let (stdout, stderr) = run_job(&Publish {
-        testlogs: &testlogs,
-        out: out.path(),
-        site: CI_SITE,
-        build: None,
-        since: None,
-        out_owned: true,
         remove_packed: true,
-        affected: None,
+        ..default_job(&testlogs, out.path())
     });
 
     assert!(stderr.contains("removed 1 packed bundle(s) with "), "{stderr}");

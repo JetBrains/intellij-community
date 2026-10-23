@@ -5,7 +5,6 @@
 
 use std::path::Path;
 
-use avl_base::{Environment, Selection};
 use avl_wire::daemon::{
     ContainerFailed, ExecutionIdentity, PlanStarted, Skipped, TestFinished, TestStarted, TypedFailure, WatchdogExpired,
 };
@@ -13,6 +12,7 @@ use avl_wire::report::{ScenarioReport, decode_run_report};
 use pretty_assertions::assert_eq;
 
 use super::*;
+use crate::testing::settings;
 
 // --- fixtures -------------------------------------------------------------------------------------------------
 
@@ -723,23 +723,6 @@ fn durations_are_measured_by_instant_and_not_by_text() {
 }
 
 // --- persistence ----------------------------------------------------------------------------------------------
-
-fn settings(root: &Path) -> Config {
-    let home = root.join("home");
-    let runtime = root.join("runtime");
-    let environment = Environment::from_pairs([
-        ("HOME", home.to_str().unwrap()),
-        ("TART_BIN", "tart"),
-        ("AIR_VM_RUNTIME_ROOT", runtime.to_str().unwrap()),
-    ]);
-    Config::load(
-        avl_base::HostFacts::without_memory(),
-        Selection::DEFAULT,
-        &environment,
-        Path::new("/repo/scripts"),
-    )
-    .unwrap_or_else(|refusal| panic!("the environment was refused: {refusal:?}"))
-}
 
 #[cfg(unix)]
 fn mode(path: &Path) -> u32 {

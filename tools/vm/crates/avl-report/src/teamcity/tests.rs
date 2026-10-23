@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use avl_testkit::environment_lookup;
 use avl_wire::daemon::{ExecutionIdentity, RunEvent, RunEventKind, TestStarted};
 use avl_wire::progress::TraceReady;
 use pretty_assertions::assert_eq;
@@ -81,18 +80,12 @@ fn each_worker_is_its_own_flow() {
 
 #[test]
 fn the_build_step_is_a_teamcity_agent_outside_a_bazel_test() {
-    let environment = |pairs: &[(&str, &str)]| -> HashMap<String, String> {
-        pairs
-            .iter()
-            .map(|(name, value)| ((*name).to_owned(), (*value).to_owned()))
-            .collect()
-    };
-    let step = environment(&[(TEAMCITY_VERSION, "2026.1")]);
-    assert!(is_build_step(|name| step.get(name).cloned()));
-    let bazel = environment(&[(TEAMCITY_VERSION, "2026.1"), (XML_OUTPUT_FILE, "/x/test.xml")]);
-    assert!(!is_build_step(|name| bazel.get(name).cloned()));
-    let blank = environment(&[(TEAMCITY_VERSION, "")]);
-    assert!(!is_build_step(|name| blank.get(name).cloned()));
+    assert!(is_build_step(environment_lookup(&[(TEAMCITY_VERSION, "2026.1")])));
+    assert!(!is_build_step(environment_lookup(&[
+        (TEAMCITY_VERSION, "2026.1"),
+        (XML_OUTPUT_FILE, "/x/test.xml")
+    ])));
+    assert!(!is_build_step(environment_lookup(&[(TEAMCITY_VERSION, "")])));
 }
 
 /// A plan of simple names and records of FQNs name one class, so the end of the iteration fails no class of the plan.

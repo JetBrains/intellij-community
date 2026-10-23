@@ -47,6 +47,37 @@ macro_rules! crate_path {
     };
 }
 
+/// The absolute path of `testdata/<name>` of the calling crate. `expect_file!` reads a relative path from the source
+/// file, so a golden needs the absolute one.
+#[macro_export]
+macro_rules! testdata_path {
+    ($name:expr) => {
+        $crate::absolute(&$crate::crate_path!(&format!("testdata/{}", $name)))
+    };
+}
+
+/// The absolute form of `path`.
+pub fn absolute(path: &Path) -> PathBuf {
+    std::path::absolute(path).unwrap_or_else(|error| panic!("{}: {error}", path.display()))
+}
+
+/// Each line of the fixture file `path`, decoded. A line that does not decode fails the test and names the line.
+pub fn decode_lines<T, E: std::fmt::Display>(path: &Path, decode: impl Fn(&[u8]) -> Result<T, E>) -> Vec<T> {
+    let text = fs::read_to_string(path).unwrap_or_else(|error| panic!("{}: {error}", path.display()));
+    text.lines()
+        .map(|line| decode(line.as_bytes()).unwrap_or_else(|error| panic!("the fixture line {line} reads: {error}")))
+        .collect()
+}
+
+/// A lookup of environment variables that answers the value of each pair, and `None` for every other name.
+pub fn environment_lookup(pairs: &[(&str, &str)]) -> impl Fn(&str) -> Option<String> + use<> {
+    let variables: std::collections::HashMap<String, String> = pairs
+        .iter()
+        .map(|(name, value)| ((*name).to_owned(), (*value).to_owned()))
+        .collect();
+    move |name| variables.get(name).cloned()
+}
+
 #[doc(hidden)]
 pub fn resolve_crate_path(package: Option<&str>, relative: &str) -> PathBuf {
     match package {

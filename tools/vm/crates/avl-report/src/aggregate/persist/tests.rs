@@ -1,29 +1,13 @@
 use std::fs;
 use std::path::Path;
 
-use avl_base::{Environment, Selection};
 use avl_wire::report::{decode_flake_summary, decode_shard_verdict};
 use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::aggregate::tests::dead_shard;
 use crate::aggregate::{flake_summary, merge_shard_verdict};
-
-/// Settings whose runtime root is a fresh directory; the publish reads nothing else.
-fn settings(root: &Path) -> Config {
-    let environment = Environment::from_pairs([
-        ("HOME", root.join("home").to_str().unwrap()),
-        ("TART_BIN", "tart"),
-        ("AIR_VM_RUNTIME_ROOT", root.join("runtime").to_str().unwrap()),
-    ]);
-    Config::load(
-        avl_base::HostFacts::without_memory(),
-        Selection::DEFAULT,
-        &environment,
-        Path::new("/repo/scripts"),
-    )
-    .unwrap_or_else(|refusal| panic!("the environment was refused: {refusal:?}"))
-}
+use crate::testing::settings;
 
 fn dead_verdict(message: &str) -> ShardVerdict {
     merge_shard_verdict(&[dead_shard(1, "air-linux-1", message)])
