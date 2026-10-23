@@ -37,6 +37,7 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +62,7 @@ public final class CreateAnnotationMethodFromUsageFix extends PsiUpdateModComman
     String name = getMethodName(pair);
     if (!PsiNameHelper.getInstance(context.project()).isIdentifier(name, PsiUtil.getLanguageLevel(pair))) return null;
     if (getAnnotationValueType(pair.getValue()) == null) return null;
-    if (getTargetClasses(pair, context.project()).isEmpty()) return null;
+    if (getTargetClass(pair, context.project()) == null) return null;
     return Presentation.of(JavaBundle.message("intention.create.annotation.method.from.usage", name));
   }
 
@@ -70,9 +71,9 @@ public final class CreateAnnotationMethodFromUsageFix extends PsiUpdateModComman
     if (isResolved(pair)) return;
     PsiType type = getAnnotationValueType(pair.getValue());
     if (type == null) return;
-    List<PsiClass> targetClasses = getTargetClasses(pair, context.project());
-    if (targetClasses.isEmpty()) return;
-    PsiClass targetClass = updater.getWritable(targetClasses.getFirst());
+    PsiClass targetClass = getTargetClass(pair, context.project());
+    if (targetClass == null) return;
+    targetClass = updater.getWritable(targetClass);
     Project project = context.project();
 
     PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethod(getMethodName(pair), PsiTypes.voidType());
@@ -119,9 +120,10 @@ public final class CreateAnnotationMethodFromUsageFix extends PsiUpdateModComman
   /**
    * @return the annotation type which can get the new method, as a list with one element, or an empty list
    */
-  private static @NotNull List<PsiClass> getTargetClasses(@NotNull PsiNameValuePair pair, @NotNull Project project) {
-    return CreateFromUsageUtils.filterTargetClasses(
-      CreateFromUsageUtils.getTargetClasses(pair, true, BaseIntentionAction::canModify), project);
+  private static @Nullable PsiClass getTargetClass(@NotNull PsiNameValuePair pair, @NotNull Project project) {
+    PsiClass psiClass = ContainerUtil.getOnlyItem(CreateFromUsageUtils.getTargetClasses(pair, true, BaseIntentionAction::canModify));
+    if (psiClass == null || !BaseIntentionAction.canModify(psiClass)) return null;
+    return psiClass;
   }
 
   public static @Nullable PsiType getAnnotationValueType(PsiAnnotationMemberValue value) {
