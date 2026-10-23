@@ -1,0 +1,26 @@
+load("//build/rust-tools:defs.bzl", "optimized_binary", "rust_tool_binary")
+
+# The runner of the `jscpd_test` rule of `defs.bzl`. The targets are the binary, its unit test `jscpd-test_test` and
+# its clippy test.
+rust_tool_binary(
+    name = "jscpd-test",
+    edition = "2024",
+    lints = "//build/dev-dist-tools:lints",
+    test_deps = ["@ddt//:tempfile"],
+    deps = [
+        "//build/dev-dist-tools/crates/fscopy",
+        "@ddt//:regex",
+        "@ddt//:serde",
+        "@ddt//:serde_json",
+        "@ddt//:walkdir",
+        "@rules_rust//tools/runfiles",
+    ],
+)
+
+# The runner that `jscpd_test` runs, always optimized: a debug build spends seconds in the path filter of the marker
+# case over the 30 000 files of a checkout.
+optimized_binary(
+    name = "runner",
+    binary = ":jscpd-test",
+    visibility = ["//visibility:public"],
+)
