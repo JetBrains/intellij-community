@@ -1,8 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.backend.rpc
 
+import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.resolveFromRootOrRelative
 import com.intellij.platform.project.ProjectId
@@ -18,6 +20,9 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEventDTO
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
 import com.intellij.platform.projectView.rpc.ProjectViewRpc
+import com.intellij.platform.projectView.settings.MigratedFrontendSettingsDTO
+import com.intellij.platform.projectView.settings.ProjectViewPaneOption
+import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.channels.SendChannel
@@ -77,6 +82,19 @@ internal class ProjectViewRpcImpl : ProjectViewRpc {
     return ProjectViewUpdateRequestsService.getInstance(projectId.findProject()).createRpcChannel()
   }
 
+  override suspend fun migrateFrontendSettingsToBackend(
+    projectId: ProjectId,
+    settings: MigratedFrontendSettingsDTO,
+  ) {
+    val project = projectId.findProject()
+    val service = ProjectViewPaneSettingsService.getInstance(project = project)
+    service.setOptionSelected(ProjectViewPaneOption.AutoscrollToSource, settings.autoscrollToSource)
+    service.setOptionSelected(ProjectViewPaneOption.OpenDirectoriesWithSingleClick, settings.openDirectoriesWithSingleClick)
+    service.setOptionSelected(ProjectViewPaneOption.AutoscrollFromSource, settings.autoscrollFromSource)
+    SaveAndSyncHandler.getInstance().scheduleProjectSave(project) // this should sync the settings back to the frontend
+    LOG.info("Project view frontend settings migrated from the legacy implementation: $settings")
+  }
+
   override suspend fun getFileInFirstContentRoot(projectId: ProjectId, relativePath: String): VirtualFileId {
     return ProjectRootManager.getInstance(projectId.findProject()).contentRoots
       .firstNotNullOf { it }
@@ -84,3 +102,5 @@ internal class ProjectViewRpcImpl : ProjectViewRpc {
       .rpcId()
   }
 }
+
+private val LOG = logger<ProjectViewRpcImpl>()
