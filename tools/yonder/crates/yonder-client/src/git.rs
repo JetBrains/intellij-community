@@ -14,9 +14,14 @@ const GIT_DEADLINE: Duration = Duration::from_secs(300);
 /// a minute without one is a stuck child. A large pack takes as long as it needs.
 pub(crate) const PACK_QUIET: Duration = Duration::from_secs(60);
 
-/// The largest first-parent distance from HEAD that the client asks the host about. The distances are the powers of
-/// two up to it, so a host that is some thousand commits behind still has one of them.
-const FARTHEST: usize = 65_536;
+/// The largest first-parent distance from HEAD of the first `Have` of a run. git walks 17 commits for it, and a host
+/// that ran a recent commit of the checkout has one of them.
+pub(crate) const NEAR: usize = 16;
+
+/// The largest first-parent distance from HEAD that the client asks the host about, when the host has none of the near
+/// candidates. The distances are the powers of two up to it, so a host that is some thousand commits behind still has
+/// one of them.
+pub(crate) const FARTHEST: usize = 65_536;
 
 /// How many changed paths a refusal shows.
 const SHOWN_CHANGES: usize = 5;
@@ -51,9 +56,9 @@ pub(crate) fn clean_head(processes: &dyn Processes, checkout: &Path, stop: Stop<
     Ok(commit)
 }
 
-/// The commits that the host may have: HEAD and its first-parent ancestors at the distances 1, 2, 4 … 65536, then the
-/// merge bases of HEAD with `master` and `origin/master`. A ref that this checkout lacks adds nothing.
-pub(crate) fn candidates(processes: &dyn Processes, checkout: &Path, commit: &str, stop: Stop<'_>) -> Vec<String> {
+/// The commits that the host may have: HEAD and its first-parent ancestors at the distances 1, 2, 4 … `farthest`, then
+/// the merge bases of HEAD with `master` and `origin/master`. A ref that this checkout lacks adds nothing.
+pub(crate) fn candidates(processes: &dyn Processes, checkout: &Path, commit: &str, farthest: usize, stop: Stop<'_>) -> Vec<String> {
     let mut found: Vec<String> = Vec::new();
     let mut add = |line: &str| {
         if !line.is_empty() && !found.iter().any(|known| known == line) {
@@ -63,13 +68,13 @@ pub(crate) fn candidates(processes: &dyn Processes, checkout: &Path, commit: &st
     let ancestors = git(
         processes,
         checkout,
-        &["rev-list", "--first-parent", &format!("--max-count={}", FARTHEST + 1), commit],
+        &["rev-list", "--first-parent", &format!("--max-count={}", farthest + 1), commit],
         stop,
     );
     if ancestors.ok() {
         let text = ancestors.stdout_text();
         let lines: Vec<&str> = text.lines().map(str::trim).collect();
-        for distance in std::iter::once(0).chain((0..=FARTHEST.ilog2()).map(|power| 1 << power)) {
+        for distance in std::iter::once(0).chain((0..=farthest.ilog2()).map(|power| 1 << power)) {
             if let Some(line) = lines.get(distance) {
                 add(line);
             }

@@ -29,7 +29,7 @@ lists those codes. The client adds these:
 | `timed_out` | No reply within the deadline of the request. For `Follow`: no reply for 10 min, over all reconnects. |
 | `link` | The connection closed, or a reply came that the protocol does not allow there, such as `Phases` outside a `Follow`. |
 | `local_changes` | The checkout has tracked or untracked changes. |
-| `behind` | The host has none of the candidate commits: HEAD, its first-parent ancestors at the distances 1, 2, 4 … 65536, and the merge bases with `master` and `origin/master`. The message gives the commit count of the history and names `bt --host <alias> --prepare`. |
+| `behind` | The host has none of the candidate commits: HEAD, its first-parent ancestors at the distances 1, 2, 4 … 65536, and the merge bases with `master` and `origin/master`. The first `Have` names the distances up to 16, and only a host that has none of them gets the rest in a second `Have`. The message gives the commit count of the history and names `bt --host <alias> --prepare`. |
 | `fetch_failed` | Fetch did not copy every staged file. The run stays on the host for `yonder fetch` and `yonder forget`. |
 | `git_failed` | A local git call failed or ran past its deadline. |
 | `ssh_failed` | An ssh call of `prepare` failed or ran past its deadline of 30 s (120 s for the copy). |

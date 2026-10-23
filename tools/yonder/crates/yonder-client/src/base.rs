@@ -11,7 +11,7 @@ use std::path::Path;
 
 use yonder_link::proto::BASE_REFS;
 
-use crate::git::{add_candidate, base_commit, candidates};
+use crate::git::base_commit;
 use crate::host::Host;
 use crate::pack::PackTarget;
 use crate::{Client, Refusal, code};
@@ -52,11 +52,7 @@ impl Client<'_> {
         if base == sync.commit {
             return Ok(Some(base));
         }
-        let mut candidates = candidates(self.processes, sync.checkout, &base, &|| self.interrupted());
-        add_candidate(&mut candidates, Some(&base));
-        add_candidate(&mut candidates, Some(sync.commit));
-        add_candidate(&mut candidates, sync.recorded);
-        let present = self.have(host, sync.repo, candidates)?;
+        let present = self.present(host, sync.repo, sync.checkout, &base, &[Some(sync.commit), sync.recorded])?;
         if present.contains(&base) {
             return Ok(Some(base));
         }

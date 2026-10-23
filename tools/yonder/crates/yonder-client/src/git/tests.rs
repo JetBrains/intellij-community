@@ -49,7 +49,7 @@ fn the_candidates_sample_the_ancestors_in_powers_of_two_then_the_merge_bases() {
         .chain((0..=16).map(|power| 1 << power))
         .map(|distance: usize| format!("a{distance}"))
         .collect();
-    assert_eq!(candidates(&processes, Path::new("/c"), COMMIT, &never), expected);
+    assert_eq!(candidates(&processes, Path::new("/c"), COMMIT, FARTHEST, &never), expected);
     assert_eq!(expected.last().map(String::as_str), Some("a65536"));
     assert_eq!(
         processes.texts()[0],
@@ -60,7 +60,10 @@ fn the_candidates_sample_the_ancestors_in_powers_of_two_then_the_merge_bases() {
 #[test]
 fn a_short_history_gives_what_it_has() {
     let processes = FakeProcesses::new(&[("rev-list", ok("c3\nc2\nc1\n")), ("merge-base", ok("c1\n"))]);
-    assert_eq!(candidates(&processes, Path::new("/c"), COMMIT, &never), ["c3", "c2", "c1"]);
+    assert_eq!(
+        candidates(&processes, Path::new("/c"), COMMIT, FARTHEST, &never),
+        ["c3", "c2", "c1"]
+    );
 }
 
 /// The base is `origin/master`, or `master` in a checkout without `origin/master`, or none.

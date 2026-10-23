@@ -29,7 +29,7 @@ use yonder_link::Closer;
 use yonder_link::proto::{Phase, Reply, Request, RunInfo, RunSpec, Stream};
 
 use crate::base::BaseSync;
-use crate::git::{add_candidate, candidates, clean_head};
+use crate::git::{FARTHEST, NEAR, add_candidate, candidates, clean_head};
 use crate::host::{AgentInfo, Host};
 use crate::pack::PackTarget;
 use crate::phases::{phase, phases_line};
@@ -141,9 +141,7 @@ impl Client<'_> {
         let reference = format!("refs/yonder/{run}");
 
         let recorded = self.config.base(alias, request.holder);
-        let mut candidates = candidates(self.processes, request.checkout, &commit, &|| self.interrupted());
-        add_candidate(&mut candidates, recorded.as_deref());
-        let present = self.have(&mut host, &repo, candidates)?;
+        let present = self.present(&mut host, &repo, request.checkout, &commit, &[recorded.as_deref()])?;
         self.refuse_interrupt()?;
         let target = PackTarget {
             checkout: request.checkout,
@@ -352,6 +350,29 @@ impl Client<'_> {
         let (channel, info) = host.connect()?;
         channel.close();
         Ok(info)
+    }
+
+    /// The candidates of `commit` that the host has, with the commits of `extra`. The first `Have` names the near
+    /// candidates, which git finds at once. Only a host that has none of them gets a second `Have` with the first-parent
+    /// walk up to [`FARTHEST`], which reads up to 65537 commits.
+    pub(crate) fn present(
+        &self,
+        host: &mut Host,
+        repo: &str,
+        checkout: &Path,
+        commit: &str,
+        extra: &[Option<&str>],
+    ) -> Result<Vec<String>, Refusal> {
+        let stop = || self.interrupted();
+        let ask = |farthest: usize, host: &mut Host| {
+            let mut found = candidates(self.processes, checkout, commit, farthest, &stop);
+            for extra in extra {
+                add_candidate(&mut found, *extra);
+            }
+            self.have(host, repo, found)
+        };
+        let present = ask(NEAR, host)?;
+        if present.is_empty() { ask(FARTHEST, host) } else { Ok(present) }
     }
 
     /// The commits of `candidates` that the host has.

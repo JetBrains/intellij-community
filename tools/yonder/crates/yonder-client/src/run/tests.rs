@@ -623,8 +623,68 @@ fn a_host_without_any_candidate_is_behind_and_gets_no_pack() {
     assert_eq!(refusal.code, code::BEHIND);
     assert!(refusal.message.contains("all 7 commits of the history"), "{}", refusal.message);
     assert!(refusal.message.contains("`bt --host studio --prepare`"), "{}", refusal.message);
-    assert_eq!(setup.agent.requests().iter().map(kind).collect::<Vec<_>>(), ["have"]);
+    assert_eq!(
+        setup.agent.requests().iter().map(kind).collect::<Vec<_>>(),
+        ["have", "have"],
+        "the near candidates, then the long walk"
+    );
     assert!(!processes.texts().iter().any(|text| text.contains("pack-objects")));
+}
+
+/// A host that has none of the near candidates gets a second `Have` with the long first-parent walk, and the pack
+/// builds on the commit that it has from there.
+#[test]
+fn a_host_without_a_near_candidate_gets_the_long_walk() {
+    let packed = Arc::new(Mutex::new(Vec::new()));
+    let setup = Setup::new({
+        let packed = Arc::clone(&packed);
+        move |request, channel| match request {
+            Request::Have { commits, .. } => {
+                let has: Vec<String> = commits.iter().filter(|commit| *commit == "far").cloned().collect();
+                let _ = channel.send(&Reply::Have { commits: has });
+            }
+            Request::Follow { .. } => {
+                let _ = channel.send(&Reply::Exit { code: 0 });
+            }
+            _ => answer_besides_follow(request, channel, &packed, &[]),
+        }
+    });
+    let processes = FakeProcesses::new(&[
+        ("status --porcelain", ok("")),
+        ("rev-parse", ok(&format!("{COMMIT}\n"))),
+        ("rev-list --count", ok("40\n")),
+        ("--max-count=17", ok(&format!("{COMMIT}\nc1\n"))),
+        ("--max-count=65537", ok(&format!("{COMMIT}\nc1\nfar\n"))),
+        ("pack-objects", ok("PACK")),
+    ]);
+    let (command, no_fetch) = (command(), Vec::new());
+    let checkout_root = setup.checkout();
+    let outcome = client(&setup, &processes, &|_| {}, &calm)
+        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
+        .expect("the run");
+    assert_eq!(outcome.code, 0);
+    let haves: Vec<Vec<String>> = setup
+        .agent
+        .requests()
+        .into_iter()
+        .filter_map(|request| match request {
+            Request::Have { commits, .. } => Some(commits),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(
+        haves,
+        [
+            vec![COMMIT.to_owned(), "c1".to_owned()],
+            vec![COMMIT.to_owned(), "c1".to_owned(), "far".to_owned()]
+        ]
+    );
+    let pack = processes
+        .calls()
+        .into_iter()
+        .find(|call| call.text().contains("pack-objects"))
+        .expect("the pack");
+    assert_eq!(String::from_utf8_lossy(&pack.input), format!("{COMMIT}\n^far\n"));
 }
 
 /// Ctrl+C after `Have` stops the pack, and nothing more reaches the host.
