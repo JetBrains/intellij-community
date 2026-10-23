@@ -10,7 +10,6 @@ import com.intellij.codeInsight.completion.scope.CompletionElement;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
@@ -75,7 +74,6 @@ import com.intellij.psi.PsiForeachStatement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiImplicitClass;
 import com.intellij.psi.PsiImportStatement;
-import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.PsiInstanceOfExpression;
 import com.intellij.psi.PsiJavaCodeReferenceCodeFragment;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -203,8 +201,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   static final PsiJavaElementPattern.Capture<PsiElement> IN_CASE_LABEL_ELEMENT_LIST =
     psiElement().withSuperParent(2, psiElement(PsiCaseLabelElementList.class));
 
-  private static final ElementPattern<PsiElement> IMPORT_REFERENCE =
-    psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).withParent(PsiImportStatementBase.class));
   private static final ElementPattern<PsiElement> CATCH_OR_FINALLY = psiElement().afterLeaf(
     psiElement().withText("}").withParent(
       psiElement(PsiCodeBlock.class).afterLeaf(JavaKeywords.TRY)));
@@ -770,10 +766,6 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         items.addAll(StreamConversion.addToStreamConversion((PsiReferenceExpression)parent, parameters));
       }
       items.addAll(ArgumentSuggester.suggestArgument((PsiReferenceExpression)parent, smart ? expected : Collections.emptyList()));
-    }
-
-    if (IMPORT_REFERENCE.accepts(position)) {
-      items.add(LookupElementBuilder.create("*"));
     }
 
     addExpressionVariants(parameters, position, items::add);
