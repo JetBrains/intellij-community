@@ -6,6 +6,7 @@ import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.UnsupportedFormatException;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
+import com.intellij.platform.util.io.storages.database.storages.BlockSizingPolicy;
 import com.intellij.platform.util.io.storages.database.storages.appenablerecords.RecordStorageOverBlocks;
 import com.intellij.platform.util.io.storages.database.spi.housekeeping.HousekeeperInstaller;
 import com.intellij.platform.util.io.storages.database.storages.extendiblehashmap.ExtendibleHashMapStorageOverLookupBlocks;
@@ -94,7 +95,17 @@ public class DurableMapWithKeyCatalogOverBlocks<K, V> implements DurableMap<K, V
     @Nullable EqualityPolicy<? super V> valueEquality,
     @NotNull DataExternalizerEx<V> valueExternalizer
   ) throws IOException {
-    return open(blocksStore, preferredBlockContentLength, keyDescriptor, valueEquality, valueExternalizer, null);
+    return open(blocksStore, new BlockSizingPolicy.FixedSize(preferredBlockContentLength), keyDescriptor, valueEquality, valueExternalizer);
+  }
+
+  public static <K, V> @NotNull DurableMapWithKeyCatalogOverBlocks<K, V> open(
+    @NotNull BlocksStore blocksStore,
+    @NotNull BlockSizingPolicy blockSizePolicy,
+    @NotNull KeyDescriptorEx<K> keyDescriptor,
+    @Nullable EqualityPolicy<? super V> valueEquality,
+    @NotNull DataExternalizerEx<V> valueExternalizer
+  ) throws IOException {
+    return open(blocksStore, blockSizePolicy, keyDescriptor, valueEquality, valueExternalizer, /*patchExternalizer: */ null);
   }
 
   public static <K, V, P> @NotNull PatchableDurableMap<K, V, P> openPatchable(
@@ -104,9 +115,19 @@ public class DurableMapWithKeyCatalogOverBlocks<K, V> implements DurableMap<K, V
     @Nullable EqualityPolicy<? super V> valueEquality,
     @NotNull PatchableDurableMap.PatchableValueExternalizer<V, P> valueExternalizer
   ) throws IOException {
+    return openPatchable(blocksStore, new BlockSizingPolicy.FixedSize(preferredBlockContentLength), keyDescriptor, valueEquality, valueExternalizer);
+  }
+
+  public static <K, V, P> @NotNull PatchableDurableMap<K, V, P> openPatchable(
+    @NotNull BlocksStore blocksStore,
+    @NotNull BlockSizingPolicy blockSizePolicy,
+    @NotNull KeyDescriptorEx<K> keyDescriptor,
+    @Nullable EqualityPolicy<? super V> valueEquality,
+    @NotNull PatchableDurableMap.PatchableValueExternalizer<V, P> valueExternalizer
+  ) throws IOException {
     return asPatchable(
       open(
-        blocksStore, preferredBlockContentLength,
+        blocksStore, blockSizePolicy,
         keyDescriptor, valueEquality, valueExternalizer, valueExternalizer
       )
     );
@@ -114,7 +135,7 @@ public class DurableMapWithKeyCatalogOverBlocks<K, V> implements DurableMap<K, V
 
   private static <K, V> @NotNull DurableMapWithKeyCatalogOverBlocks<K, V> open(
     @NotNull BlocksStore blocksStore,
-    int preferredBlockContentLength,
+    @NotNull BlockSizingPolicy blockSizePolicy,
     @NotNull KeyDescriptorEx<K> keyDescriptor,
     @Nullable EqualityPolicy<? super V> valueEquality,
     @NotNull DataExternalizerEx<V> valueExternalizer,
@@ -168,11 +189,11 @@ public class DurableMapWithKeyCatalogOverBlocks<K, V> implements DurableMap<K, V
 
     var requiresRecovery = !freshLookup && !recordRefIndex.wasProperlyClosed();
     try {
-      var keyCatalog = KeyCatalogOverBlocks.open(blockCatalog, preferredBlockContentLength, recordRefIndex, keyDescriptor);
+      var keyCatalog = KeyCatalogOverBlocks.open(blockCatalog, blockSizePolicy, recordRefIndex, keyDescriptor);
       var values = RecordStorageOverBlocks.open(
         blockCatalog.appendableRecordBlocks(VALUES),
         /*appendOnly: */ true,
-        preferredBlockContentLength
+        blockSizePolicy
       );
       DurableMapWithKeyCatalogOverBlocks<K, V> map;
       if (patchExternalizer == null) {
@@ -681,7 +702,7 @@ public class DurableMapWithKeyCatalogOverBlocks<K, V> implements DurableMap<K, V
       }
       if (!liveBlockIds.contains(block.id())
           && block.state() == BlocksStore.Block.LifecycleState.SEALED) {
-        block.retire();
+        values.retireSealedBlock(block);
       }
     }
   }

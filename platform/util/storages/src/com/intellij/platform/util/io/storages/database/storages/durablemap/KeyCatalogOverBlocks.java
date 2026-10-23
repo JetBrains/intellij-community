@@ -2,6 +2,7 @@
 package com.intellij.platform.util.io.storages.database.storages.durablemap;
 
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
+import com.intellij.platform.util.io.storages.database.storages.BlockSizingPolicy;
 import com.intellij.platform.util.io.storages.database.storages.appenablerecords.RecordStorageOverBlocks;
 import com.intellij.platform.util.io.storages.intmultimaps.HashUtils;
 import com.intellij.platform.util.io.storages.intmultimaps.RecordRefIndex;
@@ -40,10 +41,17 @@ public final class KeyCatalogOverBlocks<K> {
                                                           int preferredBlockContentLength,
                                                           @NotNull RecordRefIndex keyHashToRecordRefIndex,
                                                           @NotNull KeyDescriptorEx<K> keyDescriptor) throws IOException {
+    return open(blockCatalog, new BlockSizingPolicy.FixedSize(preferredBlockContentLength), keyHashToRecordRefIndex, keyDescriptor);
+  }
+
+  public static <K> @NotNull KeyCatalogOverBlocks<K> open(@NotNull DurableMapBlockCatalog blockCatalog,
+                                                          @NotNull BlockSizingPolicy blockSizePolicy,
+                                                          @NotNull RecordRefIndex keyHashToRecordRefIndex,
+                                                          @NotNull KeyDescriptorEx<K> keyDescriptor) throws IOException {
     var keys = RecordStorageOverBlocks.open(
       blockCatalog.appendableRecordBlocks(KEYS),
       /*appendOnly: */ false,
-      preferredBlockContentLength
+      blockSizePolicy
     );
     return new KeyCatalogOverBlocks<>(keys, keyHashToRecordRefIndex, keyDescriptor);
   }

@@ -15,6 +15,7 @@ import com.intellij.platform.util.io.storages.database.spi.BlocksDatabase;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
 import com.intellij.platform.util.io.storages.database.spi.StoreMetadata;
 import com.intellij.platform.util.io.storages.database.spi.metrics.DatabaseMetrics;
+import com.intellij.platform.util.io.storages.database.storages.appenablerecords.RecordStorageOverBlocks;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapMetadata;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapOverBlocks;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapWithKeyCatalogOverBlocks;
@@ -96,13 +97,13 @@ public final class DurableDatabaseImpl implements DurableDatabase {
           var entryExternalizer = new DefaultEntryExternalizer<>(keyDescriptor, valueExternalizer);
           if (valueExternalizer instanceof PatchableDurableMap.PatchableValueExternalizer<V, ?> patchExternalizer) {
             yield DurableMapOverBlocks.openPatchable(
-              blocksStore, DurableMapOverBlocks.DEFAULT_ENTRIES_BLOCK_CONTENT_LENGTH, keyDescriptor,
+              blocksStore, RecordStorageOverBlocks.ADAPTIVE_BLOCK_SIZE_POLICY, keyDescriptor,
               valueEquality, entryExternalizer, patchExternalizer
             );
           }
           else {
             yield DurableMapOverBlocks.open(
-              blocksStore, DurableMapOverBlocks.DEFAULT_ENTRIES_BLOCK_CONTENT_LENGTH, keyDescriptor,
+              blocksStore, RecordStorageOverBlocks.ADAPTIVE_BLOCK_SIZE_POLICY, keyDescriptor,
               valueEquality, entryExternalizer
             );
           }
@@ -110,13 +111,13 @@ public final class DurableDatabaseImpl implements DurableDatabase {
         case KEY_VALUE_SEPARATELY -> {
           if (valueExternalizer instanceof PatchableDurableMap.PatchableValueExternalizer<V, ?> patchExternalizer) {
             yield DurableMapWithKeyCatalogOverBlocks.openPatchable(
-              blocksStore, DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH,
+              blocksStore, RecordStorageOverBlocks.ADAPTIVE_BLOCK_SIZE_POLICY,
               keyDescriptor, valueEquality, patchExternalizer
             );
           }
           else {
             yield DurableMapWithKeyCatalogOverBlocks.open(
-              blocksStore, DurableMapWithKeyCatalogOverBlocks.DEFAULT_RECORD_BLOCK_CONTENT_LENGTH,
+              blocksStore, RecordStorageOverBlocks.ADAPTIVE_BLOCK_SIZE_POLICY,
               keyDescriptor, valueEquality, valueExternalizer
             );
           }

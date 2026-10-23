@@ -3,6 +3,7 @@ package com.intellij.platform.util.io.storages.database.storages.appenablerecord
 
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore.Block.LifecycleState;
+import com.intellij.platform.util.io.storages.database.storages.BlockSizingPolicy;
 import com.intellij.platform.util.io.storages.database.storages.appenablerecords.AppendableRecordsOverBlock.RecordWriter;
 import com.intellij.util.io.CorruptedException;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -12,6 +13,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static com.intellij.util.io.IOUtil.KiB;
 
 /// Appendable record storage over **multiple** blocks from one [AppendableRecordBlocks] scope.
 /// Uses [AppendableRecordsOverBlock] for each block, allocates new block as current one gets exhausted,
@@ -26,10 +30,26 @@ import java.lang.foreign.MemorySegment;
 /// The appendOnly/modifiable mode is defined at runtime, and does NOT persist.
 @ApiStatus.Internal
 public final class RecordStorageOverBlocks {
+  private static final int DEFAULT_BLOCK_CONTENT_LENGTH = 64 * KiB;
+
+  /// Allocates larger blocks as more total live blocks allocated
+  public static final BlockSizingPolicy ADAPTIVE_BLOCK_SIZE_POLICY = liveCapacityBytes -> {
+    // Heuristics, the gist is:
+    // when total size reaches 128 * (blocks with current size X)  =>  start allocating blocks of size 2*X
+
+    if (liveCapacityBytes >= 128L * 4 * DEFAULT_BLOCK_CONTENT_LENGTH) return 8 * DEFAULT_BLOCK_CONTENT_LENGTH;
+    if (liveCapacityBytes >= 128L * 2 * DEFAULT_BLOCK_CONTENT_LENGTH) return 4 * DEFAULT_BLOCK_CONTENT_LENGTH;
+    if (liveCapacityBytes >= 128L * DEFAULT_BLOCK_CONTENT_LENGTH) return 2 * DEFAULT_BLOCK_CONTENT_LENGTH;
+
+    return DEFAULT_BLOCK_CONTENT_LENGTH;
+  };
+
   private final @NotNull AppendableRecordBlocks blocks;
   private final boolean appendOnly;
 
-  private final int preferredBlockContentLength;
+  private final @NotNull BlockSizingPolicy blockSizePolicy;
+  /// Not general `sum(block.contentSize)` over live blocks, but specifically a sum of (capped) capacity for [#blockSizePolicy]
+  private final AtomicLong liveCapacityForSizingPolicyBytes = new AtomicLong();
 
   private final transient Object recordsByBlockIdLock = new Object();
   private final Int2ObjectMap<AppendableRecordsOverBlock> recordsByBlockId = new Int2ObjectOpenHashMap<>();
@@ -40,25 +60,33 @@ public final class RecordStorageOverBlocks {
 
   private RecordStorageOverBlocks(@NotNull AppendableRecordBlocks blocks,
                                   boolean appendOnly,
-                                  int preferredBlockContentLength) {
+                                  @NotNull BlockSizingPolicy blockSizePolicy) {
     this.blocks = blocks;
     this.appendOnly = appendOnly;
-    this.preferredBlockContentLength = preferredBlockContentLength;
+    this.blockSizePolicy = blockSizePolicy;
   }
 
   /// Opens the storage and validates the committed record prefix in each non-retired block.
   public static @NotNull RecordStorageOverBlocks open(@NotNull AppendableRecordBlocks blocks,
                                                       boolean appendOnly,
                                                       int preferredBlockContentLength) throws IOException {
+    return open(blocks, appendOnly, new BlockSizingPolicy.FixedSize(preferredBlockContentLength));
+  }
+
+  /// Opens the storage with a size policy for blocks allocated after this call.
+  public static @NotNull RecordStorageOverBlocks open(@NotNull AppendableRecordBlocks blocks,
+                                                      boolean appendOnly,
+                                                      @NotNull BlockSizingPolicy blockSizePolicy) throws IOException {
     var minimumContentLength = AppendableRecordsOverBlock.minimumBlockContentLengthFor(0);
-    if (preferredBlockContentLength < minimumContentLength) {
+    var preferredContentLength = blockSizePolicy.preferredBlockSize(0);
+    if (preferredContentLength < minimumContentLength) {
       throw new IllegalArgumentException(
-        "preferredBlockContentLength(=" + preferredBlockContentLength + ") must be at least " +
+        "preferredBlockContentLength(=" + preferredContentLength + ") must be at least " +
         minimumContentLength
       );
     }
 
-    var storage = new RecordStorageOverBlocks(blocks, appendOnly, preferredBlockContentLength);
+    var storage = new RecordStorageOverBlocks(blocks, appendOnly, blockSizePolicy);
 
     //restore filled-up and currently appendable blocks:
     var blocksInAllocationOrder = blocks.blocksInAllocationOrder();
@@ -73,8 +101,12 @@ public final class RecordStorageOverBlocks {
       if (previous != null) {
         throw new CorruptedException("Duplicate block id [" + block.id() + "]: " + previous + " vs " + block);
       }
+      var state = block.state();
+      if (state == LifecycleState.ACTIVE || state == LifecycleState.SEALED) {
+        storage.liveCapacityForSizingPolicyBytes.addAndGet(blockCapacityContribution(block));
+      }
 
-      if (block.state() == LifecycleState.ACTIVE) {
+      if (state == LifecycleState.ACTIVE) {
         activeBlocksCount++;
         lastActiveBlock = recordsBlock;
       }
@@ -207,13 +239,34 @@ public final class RecordStorageOverBlocks {
 
   private @NotNull AppendableRecordsOverBlock allocateLog(int payloadLength, boolean hasLink) throws IOException {
     var minimumContentLength = AppendableRecordsOverBlock.minimumBlockContentLengthFor(payloadLength, hasLink);
-    var contentLength = Math.max(preferredBlockContentLength, minimumContentLength);
+    var preferredContentLength = blockSizePolicy.preferredBlockSize(liveCapacityForSizingPolicyBytes.get());
+    if (preferredContentLength < AppendableRecordsOverBlock.minimumBlockContentLengthFor(0)) {
+      throw new IllegalArgumentException("preferredBlockContentLength(=" + preferredContentLength + ") is too small");
+    }
+    var contentLength = Math.max(preferredContentLength, minimumContentLength);
     var block = blocks.allocateBlock(contentLength);
     var records = AppendableRecordsOverBlock.create(block);
     synchronized (recordsByBlockIdLock) {
       recordsByBlockId.put(block.id(), records);
     }
+    liveCapacityForSizingPolicyBytes.addAndGet(blockCapacityContribution(block));
     return records;
+  }
+
+  /// Retires a sealed block and removes its capacity from total live size
+  public void retireSealedBlock(@NotNull BlocksStore.Block block) {
+    if (block.state() != LifecycleState.SEALED) {
+      return;
+    }
+    var capacityContribution = blockCapacityContribution(block);
+    block.retire();
+    liveCapacityForSizingPolicyBytes.addAndGet(-capacityContribution);
+  }
+
+  private static long blockCapacityContribution(@NotNull BlocksStore.Block block) {
+    // One oversized record must not make all following blocks large
+    var inDefaultBlockUnits = (block.content().byteSize() + DEFAULT_BLOCK_CONTENT_LENGTH - 1) / DEFAULT_BLOCK_CONTENT_LENGTH;
+    return Math.min(8, inDefaultBlockUnits) * DEFAULT_BLOCK_CONTENT_LENGTH;
   }
 
   /// Packs a stable block identifier and a block-relative offset into one record reference.

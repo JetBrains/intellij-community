@@ -3,6 +3,7 @@ package com.intellij.platform.util.io.storages.database.storages.appenablerecord
 
 import com.intellij.platform.util.io.storages.database.spi.BlocksDatabaseFactory;
 import com.intellij.platform.util.io.storages.database.spi.BlocksStore;
+import com.intellij.platform.util.io.storages.database.storages.BlockSizingPolicy;
 import com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog;
 import com.intellij.util.io.CorruptedException;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executors;
 
 import static com.intellij.platform.util.io.storages.database.storages.durablemap.DurableMapBlockCatalog.DurableMapBlockRole.ENTRIES;
+import static com.intellij.util.io.IOUtil.KiB;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -32,6 +34,81 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class RecordStorageOverBlocksTest {
   private static final int CHUNK_SIZE = 1024 * 1024;
   private static final int ENTRIES_BLOCK_CONTENT_LENGTH = 64;
+
+  @Test
+  public void adaptivePolicyChangesSizeAtEachCapacityThreshold() {
+    var policy = RecordStorageOverBlocks.ADAPTIVE_BLOCK_SIZE_POLICY;
+    var defaultBlockSize = 64 * KiB;
+
+    assertEquals(defaultBlockSize, policy.preferredBlockSize(128L * defaultBlockSize - 1));
+    assertEquals(2 * defaultBlockSize, policy.preferredBlockSize(128L * defaultBlockSize));
+    assertEquals(2 * defaultBlockSize, policy.preferredBlockSize(256L * defaultBlockSize - 1));
+    assertEquals(4 * defaultBlockSize, policy.preferredBlockSize(256L * defaultBlockSize));
+    assertEquals(4 * defaultBlockSize, policy.preferredBlockSize(512L * defaultBlockSize - 1));
+    assertEquals(8 * defaultBlockSize, policy.preferredBlockSize(512L * defaultBlockSize));
+  }
+
+  @Test
+  public void adaptiveSizeUsesSealedBlocksAfterReopen(@TempDir Path databaseDirectory) throws Exception {
+    var factory = new BlocksDatabaseFactory(CHUNK_SIZE);
+    long firstRecordRef;
+    var policy = (BlockSizingPolicy)(liveCapacityBytes -> liveCapacityBytes >= 64 * KiB ? 128 * KiB : 64 * KiB);
+    try (var database = factory.open(databaseDirectory)) {
+      var catalog = DurableMapBlockCatalog.open(database.openStore("map", 1));
+      var records = RecordStorageOverBlocks.open(catalog.appendableRecordBlocks(ENTRIES), true, policy);
+      firstRecordRef = append(records, new byte[64 * KiB - 100]);
+      append(records, new byte[128 * KiB - 100]);
+      assertEquals(BlocksStore.Block.LifecycleState.SEALED, catalog.blocks(ENTRIES).getFirst().state());
+    }
+
+    try (var database = factory.open(databaseDirectory)) {
+      var catalog = DurableMapBlockCatalog.open(database.findStore("map"));
+      var records = RecordStorageOverBlocks.open(catalog.appendableRecordBlocks(ENTRIES), true, policy);
+      assertEquals(64 * KiB - 100, records.read(firstRecordRef).byteSize(), "The small block must remain readable");
+      append(records, new byte[128 * KiB - 100]);
+      assertEquals(128 * KiB, catalog.blocks(ENTRIES).getLast().content().byteSize(),
+                   "The reopened storage must count the sealed block");
+    }
+  }
+
+  @Test
+  public void retirementReducesThePreferredSize(@TempDir Path databaseDirectory) throws Exception {
+    try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
+      var catalog = DurableMapBlockCatalog.open(database.openStore("map", 1));
+      var policy = (BlockSizingPolicy)(liveCapacityBytes -> liveCapacityBytes >= 3 * 64 * KiB ? 128 * KiB : 64 * KiB);
+      var records = RecordStorageOverBlocks.open(catalog.appendableRecordBlocks(ENTRIES), true, policy);
+      for (int i = 0; i < 3; i++) {
+        append(records, new byte[64 * KiB - 100]);
+      }
+      append(records, new byte[128 * KiB - 100]);
+      assertEquals(128 * KiB, catalog.blocks(ENTRIES).getLast().content().byteSize());
+
+      var blocksToRetire = catalog.blocks(ENTRIES).subList(0, 3);
+      for (var block : blocksToRetire) {
+        records.retireSealedBlock(block);
+      }
+      append(records, new byte[64 * KiB - 100]);
+      assertEquals(64 * KiB, catalog.blocks(ENTRIES).getLast().content().byteSize(),
+                   "The next block must use the lower step after retirement");
+    }
+  }
+
+  @Test
+  public void oversizedRecordContributesAtMost512KiB(@TempDir Path databaseDirectory) throws Exception {
+    try (var database = new BlocksDatabaseFactory(CHUNK_SIZE).open(databaseDirectory)) {
+      var catalog = DurableMapBlockCatalog.open(database.openStore("map", 1));
+      var policy = (BlockSizingPolicy)(liveCapacityBytes -> liveCapacityBytes == 512 * KiB ? 128 * KiB : 64 * KiB);
+      var records = RecordStorageOverBlocks.open(catalog.appendableRecordBlocks(ENTRIES), true, policy);
+
+      append(records, new byte[600 * KiB]);
+      append(records, new byte[128 * KiB - 100]);
+
+      assertTrue(catalog.blocks(ENTRIES).getFirst().content().byteSize() > 512 * KiB,
+                 "The large record must get enough space");
+      assertEquals(128 * KiB, catalog.blocks(ENTRIES).getLast().content().byteSize(),
+                   "One oversized record must contribute at most 512 KiB");
+    }
+  }
 
   @Test
   public void appendReturnsReadablePayload(@TempDir Path databaseDirectory) throws Exception {
