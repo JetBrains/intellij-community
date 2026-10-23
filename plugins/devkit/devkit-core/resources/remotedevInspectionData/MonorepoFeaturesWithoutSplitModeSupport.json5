@@ -185,7 +185,6 @@
     "intellij.datagrip.frontend.split",
     "intellij.datagrip.impl",
     "intellij.datagrip.impl.tests",
-    "intellij.datagrip.llmInstaller",
     "intellij.datagrip.main",
     "intellij.datagrip.performanceTests",
     "intellij.dev.core",
