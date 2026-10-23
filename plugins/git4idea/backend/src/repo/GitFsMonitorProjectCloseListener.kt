@@ -3,6 +3,7 @@ package git4idea.repo
 
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -93,6 +94,10 @@ private suspend fun stopDaemons(roots: List<VirtualFile>) {
           coroutineToIndicator {
             val executableManager = serviceIfCreated<GitExecutableManager>() ?: return@coroutineToIndicator
             val rootPath = root.toNioPath()
+            if (!TrustedProjects.isProjectTrusted(rootPath)) {
+              LOG.debug("Skipped the fsmonitor daemon in the untrusted location $rootPath")
+              return@coroutineToIndicator
+            }
             val executable = executableManager.getExecutable(null, rootPath)
 
             val handler = GitLineHandler(null, rootPath, executable, GitCommand.FSMONITOR_DAEMON, emptyList()).apply {
