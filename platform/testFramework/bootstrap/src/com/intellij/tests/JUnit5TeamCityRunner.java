@@ -721,7 +721,7 @@ public final class JUnit5TeamCityRunner {
      *
      * <p>Package-private for {@code JUnit5TeamCityRunnerForTestAllSuiteTest}; {@code testPlan} may be {@code null}.
      */
-    static String getName(TestIdentifier testIdentifier, TestPlan testPlan) {
+    public static String getName(TestIdentifier testIdentifier, TestPlan testPlan) {
       String displayName = testIdentifier.getDisplayName();
       String invocations = invocationQualifier(testIdentifier, testPlan);
       return testIdentifier.getSource()
