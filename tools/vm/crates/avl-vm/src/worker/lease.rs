@@ -24,9 +24,9 @@
 //!
 //! Each shape re-reads the lease under the lifecycle lock of the worker. They differ in how long the lock is held:
 //!
-//! - [`with_lease_operation`] holds the lock for the whole action, and refuses while a run of another live process
-//!   is in flight. `lease release`, `exec`, `peekaboo` and the `daemon` verbs that change the daemon take it.
-//! - [`with_lease_read`] drops the lock before the action, so the action answers during a run. `lease show`,
+//! - [`with_lease`] with [`LeaseUse::LockedAction`] holds the lock for the whole action, and refuses while a run of
+//!   another live process is in flight. `lease release`, `exec`, `peekaboo` and the `daemon` verbs that change the daemon take it.
+//! - [`with_lease`] with [`LeaseUse::LockedReread`] drops the lock before the action, so the action answers during a run. `lease show`,
 //!   `daemon status`, `daemon log`, `ls`, `pull` and `vnc` take it.
 //! - [`with_run_marker`] holds the lock only at the two ends of a run. The run marker on the worker names the run
 //!   for the length of the action.
@@ -235,48 +235,52 @@ fn reread_lease(settings: &Config, expected: &Lease) -> Result<Lease, Refusal> {
         })
 }
 
-/// Runs `action` holding the worker's lifecycle lock, having re-read the lease under it ([`reread_lease`]).
-///
-/// A run of another live process refuses the operation as `lease_busy` ([`Manager::require_no_run`]). That run does
-/// not hold the lock, and its run marker is what keeps an operation from changing the worker under it.
-pub(crate) async fn with_lease_operation<T>(
-    ctx: &Ctx,
-    manager: &Manager,
-    expected: &Lease,
-    operation: &str,
-    action: impl AsyncFnOnce(Lease) -> Result<T, Refusal>,
-) -> Result<T, Refusal> {
-    let settings = manager.settings();
-    manager
-        .with_lifecycle_lock(ctx, &expected.worker, operation, async {
-            let current = reread_lease(settings, expected)?;
-            manager.require_no_run(ctx, &expected.worker, operation).await?;
-            action(current).await
-        })
-        .await
+/// What a command does with a leased worker, by what its lifecycle lock covers. Each use re-reads the lease under the
+/// lock ([`reread_lease`]).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum LeaseUse {
+    /// It acts on the worker. The lock covers the whole action. A run of another live process refuses the command as
+    /// `lease_busy` ([`Manager::require_no_run`]). That run does not hold the lock, and its run marker is what keeps an
+    /// operation from changing the worker under it.
+    LockedAction,
+    /// It reads the worker. The lock covers only the re-read, and the action runs without it, so it answers while a
+    /// run is in flight. The sequence, not the lock, is what makes a stale receipt refuse instead of reading somebody
+    /// else's worker. Such an action ignores the run marker, and it changes nothing of the worker's lifecycle. A read
+    /// that may start the worker first passes [`require_ready_for_read`].
+    LockedReread,
 }
 
-/// Runs `action` without the worker's lifecycle lock, once the lease was re-read under it ([`reread_lease`]).
-///
-/// For a command that reads the worker, so it answers while a run is in flight. Such an action ignores the run marker,
-/// and it changes nothing of the worker's lifecycle. A read that may start the worker first passes
-/// [`require_ready_for_read`].
-pub(crate) async fn with_lease_read<T>(
+/// Runs `action` with the lease re-read under the lifecycle lock of the worker, as `lease_use` says.
+pub(crate) async fn with_lease<T>(
     ctx: &Ctx,
     manager: &Manager,
     expected: &Lease,
     operation: &str,
+    lease_use: LeaseUse,
     action: impl AsyncFnOnce(Lease) -> Result<T, Refusal>,
 ) -> Result<T, Refusal> {
     let settings = manager.settings();
-    let current = manager
-        .with_lifecycle_lock(ctx, &expected.worker, operation, async { reread_lease(settings, expected) })
-        .await?;
-    action(current).await
+    match lease_use {
+        LeaseUse::LockedAction => {
+            manager
+                .with_lifecycle_lock(ctx, &expected.worker, operation, async {
+                    let current = reread_lease(settings, expected)?;
+                    manager.require_no_run(ctx, &expected.worker, operation).await?;
+                    action(current).await
+                })
+                .await
+        }
+        LeaseUse::LockedReread => {
+            let current = manager
+                .with_lifecycle_lock(ctx, &expected.worker, operation, async { reread_lease(settings, expected) })
+                .await?;
+            action(current).await
+        }
+    }
 }
 
 /// Brings the worker of `lease` into the state a read needs, as [`Manager::require_ready`] does, for an action of
-/// [`with_lease_read`].
+/// [`with_lease`] with [`LeaseUse::LockedReread`].
 ///
 /// The gate can start or restart the worker, so it runs under the lifecycle lock with the lease re-read. A run of
 /// another live process keeps its worker ready, so the gate only resolves the host paths while that run is in flight.
@@ -589,7 +593,7 @@ pub(crate) async fn command_lease_show(ctx: &Ctx, manager: &Manager, lease_file:
         return lease_show_outcome(settings, None, None);
     };
     let (_, receipt) = receipt_for_path(settings, lease_file)?;
-    with_lease_read(ctx, manager, &receipt, "lease-show", async |current| {
+    with_lease(ctx, manager, &receipt, "lease-show", LeaseUse::LockedReread, async |current| {
         let run = run_of_lease(ctx, manager, &current).await?;
         lease_show_outcome(settings, Some(&current), run.as_deref())
     })
@@ -614,7 +618,7 @@ pub(crate) async fn release_by_receipt(
     probe: &dyn ParkedDaemonProbe,
 ) -> Result<Outcome, Refusal> {
     let (_, receipt) = receipt_for_path(manager.settings(), lease_file)?;
-    with_lease_operation(ctx, manager, &receipt, "release", async |lease| {
+    with_lease(ctx, manager, &receipt, "release", LeaseUse::LockedAction, async |lease| {
         release_one_lease(ctx, manager, &lease, probe).await
     })
     .await

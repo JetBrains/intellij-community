@@ -69,7 +69,7 @@ pub(crate) async fn command_exec(
         )));
     }
     let settings = manager.settings();
-    let data = on_leased_worker(ctx, manager, lease_file, "exec", LeaseUse::Act, async |current| {
+    let data = on_leased_worker(ctx, manager, lease_file, "exec", LeaseUse::LockedAction, async |current| {
         manager.require_ready(ctx, &current).await?;
         let worker = current.worker;
         let channel = manager.channel(&worker);

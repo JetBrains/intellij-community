@@ -781,16 +781,28 @@ async fn a_lease_that_changed_under_the_operation_refuses() {
     let successor = fixture.new_lease(worker, "somebody-elses", "another-holder");
     assert!(try_atomic_lease(&fixture.settings, worker, &successor).unwrap());
 
-    let refusal = with_lease_operation(&ctx(), &fixture.manager, &lease, "suite", async |_| -> Result<(), Refusal> {
-        panic!("the operation must not run against a lease that changed")
-    })
+    let refusal = with_lease(
+        &ctx(),
+        &fixture.manager,
+        &lease,
+        "suite",
+        LeaseUse::LockedAction,
+        async |_| -> Result<(), Refusal> { panic!("the operation must not run against a lease that changed") },
+    )
     .await
     .unwrap_err();
     assert_eq!((refusal.code.as_ref(), refusal.exit), ("lease_changed", Exit::NO_PERM));
 
-    let ran = with_lease_operation(&ctx(), &fixture.manager, &successor, "suite", async |current| Ok(current))
-        .await
-        .unwrap();
+    let ran = with_lease(
+        &ctx(),
+        &fixture.manager,
+        &successor,
+        "suite",
+        LeaseUse::LockedAction,
+        async |current| Ok(current),
+    )
+    .await
+    .unwrap();
     assert_eq!(ran, successor);
 }
 

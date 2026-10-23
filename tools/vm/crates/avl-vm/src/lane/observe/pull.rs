@@ -294,7 +294,7 @@ pub(crate) async fn command_pull(
     lease_file: Option<&Path>,
 ) -> Result<Outcome, Refusal> {
     let settings = manager.settings();
-    let data = on_leased_worker(ctx, manager, lease_file, "pull", LeaseUse::Observe, async |current| {
+    let data = on_leased_worker(ctx, manager, lease_file, "pull", LeaseUse::LockedReread, async |current| {
         // Resolved before the readiness gate: a destination that would be refused must not cost a worker boot first.
         let resolved = resolve_pull_destination(&settings.runtime_root, &settings.worker_key(&current.worker), &destination)?;
         require_ready_for_read(ctx, manager, &current, "pull").await?;

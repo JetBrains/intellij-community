@@ -222,7 +222,7 @@ pub(crate) async fn command_peekaboo(
         return Err(unsupported("Peekaboo control is currently available only on the Parallels backend"));
     }
     args.validate(output)?;
-    let data = on_leased_worker(ctx, manager, lease_file, "peekaboo", LeaseUse::Act, async |current| {
+    let data = on_leased_worker(ctx, manager, lease_file, "peekaboo", LeaseUse::LockedAction, async |current| {
         manager.require_ready(ctx, &current).await?;
         let worker = current.worker;
         let mut requests = Vec::new();

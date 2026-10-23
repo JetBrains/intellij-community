@@ -59,7 +59,7 @@ pub(crate) async fn command_vnc(ctx: &Ctx, manager: &Manager, lease_file: Option
              exposes; a run's traces carry its screenshots",
         ));
     }
-    let data = on_leased_worker(ctx, manager, lease_file, "vnc", LeaseUse::Observe, async |current| {
+    let data = on_leased_worker(ctx, manager, lease_file, "vnc", LeaseUse::LockedReread, async |current| {
         let worker = current.worker;
         if !manager.machine().running(ctx, &worker).await? {
             return Err(Refusal::new("worker_stopped", Exit::FAILURE, format!("worker {worker} is stopped")));
@@ -117,7 +117,7 @@ async fn container_linux_vnc(
 ) -> Result<Outcome, Refusal> {
     let worker = match lease_file {
         Some(_) => {
-            on_leased_worker(ctx, manager, lease_file, "vnc", LeaseUse::Observe, async |current| {
+            on_leased_worker(ctx, manager, lease_file, "vnc", LeaseUse::LockedReread, async |current| {
                 Ok(current.worker)
             })
             .await?

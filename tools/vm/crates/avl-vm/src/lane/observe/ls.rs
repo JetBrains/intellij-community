@@ -83,7 +83,7 @@ struct LsData {
 pub(crate) async fn command_ls(ctx: &Ctx, manager: &Manager, args: LsArgs, lease_file: Option<&Path>) -> Result<Outcome, Refusal> {
     let LsArgs { directory, depth } = args;
     let settings = manager.settings();
-    let data = on_leased_worker(ctx, manager, lease_file, "ls", LeaseUse::Observe, async |current| {
+    let data = on_leased_worker(ctx, manager, lease_file, "ls", LeaseUse::LockedReread, async |current| {
         require_ready_for_read(ctx, manager, &current, "ls").await?;
         let find = [
             "/usr/bin/find".to_owned(),
