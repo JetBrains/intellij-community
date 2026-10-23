@@ -88,7 +88,6 @@ pub(crate) struct Record {
 /// The handler of the cloud service.
 pub(crate) struct Cloud {
     base_url: String,
-    token: String,
     organization: Organization,
     record: Mutex<Record>,
     spawner: Spawner,
@@ -105,9 +104,8 @@ struct FailDials {
 
 /// Starts the emulator on `127.0.0.1:<port>`. The AI access discovery answers `organization`.
 pub(crate) fn start(port: u16, token: &str, organization: Organization) -> Result<Service<Cloud>, AgentRefusal> {
-    Service::start(NAME, port, |address| Cloud {
+    Service::start(NAME, port, token, |address| Cloud {
         base_url: format!("http://{address}"),
-        token: token.to_owned(),
         organization,
         record: Mutex::new(Record::default()),
         spawner: Spawner::default(),
@@ -115,10 +113,6 @@ pub(crate) fn start(port: u16, token: &str, organization: Organization) -> Resul
 }
 
 impl Handler for Cloud {
-    fn control_route(&self) -> Option<(&'static str, &str)> {
-        Some((NAME, &self.token))
-    }
-
     fn control(&self, request: &Request, route: &str) -> Response {
         match (route, request.method.as_str()) {
             ("record", "GET") => control::answer(&*self.lock()),

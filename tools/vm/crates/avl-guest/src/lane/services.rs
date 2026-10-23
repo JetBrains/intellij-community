@@ -46,13 +46,8 @@ pub(crate) trait Handler: Send + Sync + 'static {
     /// Answers one request of the IDE. A request of the control route goes to [`Handler::control`].
     fn handle(&self, request: &Request) -> Response;
 
-    /// The control route of the service: its name in `/_lane/<name>/`, and the lane-service token that a control
-    /// request carries. A service without a control route answers `None`, and [`Handler::handle`] gets every request.
-    fn control_route(&self) -> Option<(&'static str, &str)> {
-        None
-    }
-
-    /// Answers the request of the control route `route`, the path after `/_lane/<name>/`.
+    /// Answers the request of the control route `route`, the path after `/_lane/<name>/`. Only a service that
+    /// [`Service::start`] started has a control route.
     fn control(&self, request: &Request, _route: &str) -> Response {
         control::unknown_route(request)
     }
@@ -71,14 +66,26 @@ pub(crate) struct Service<H: Handler> {
 
 impl<H: Handler> Service<H> {
     /// Binds `127.0.0.1:<port>` and serves the handler that `handler` builds for the bound address. The port 0 binds
-    /// any free port. `name` names the threads and a refusal.
-    pub(crate) fn start(name: &'static str, port: u16, handler: impl FnOnce(SocketAddr) -> H) -> Result<Self, AgentRefusal> {
-        Self::bind(name, SocketAddr::from((Ipv4Addr::LOCALHOST, port)), handler)
+    /// any free port. `name` names the threads, a refusal and the control route `/_lane/<name>/`, whose requests carry
+    /// the lane-service token `token`.
+    pub(crate) fn start(name: &'static str, port: u16, token: &str, handler: impl FnOnce(SocketAddr) -> H) -> Result<Self, AgentRefusal> {
+        Self::listen(name, SocketAddr::from((Ipv4Addr::LOCALHOST, port)), Some(Arc::from(token)), handler)
     }
 
-    /// Binds `address` and serves the handler that `handler` builds for the bound address. The port 0 binds any free
-    /// port. `name` names the threads and a refusal.
+    /// Binds `address` and serves the handler that `handler` builds for the bound address, without a control route. The
+    /// port 0 binds any free port. `name` names the threads and a refusal.
     pub(crate) fn bind(name: &'static str, address: SocketAddr, handler: impl FnOnce(SocketAddr) -> H) -> Result<Self, AgentRefusal> {
+        Self::listen(name, address, None, handler)
+    }
+
+    /// Binds `address` and serves the handler that `handler` builds for the bound address. A service with a `token`
+    /// has the control route `/_lane/<name>/`.
+    fn listen(
+        name: &'static str,
+        address: SocketAddr,
+        token: Option<Arc<str>>,
+        handler: impl FnOnce(SocketAddr) -> H,
+    ) -> Result<Self, AgentRefusal> {
         let listener = TcpListener::bind(address)
             .map_err(|error| AgentRefusal::failure(BIND_CODE, format!("the lane {name} cannot bind {address}: {error}")))?;
         let address = listener
@@ -90,7 +97,7 @@ impl<H: Handler> Service<H> {
             let (handler, stopping) = (handler.clone(), stopping.clone());
             thread::Builder::new()
                 .name(format!("lane-{name}-accept"))
-                .spawn(move || accept(name, &listener, &handler, &stopping))
+                .spawn(move || accept(name, token.as_ref(), &listener, &handler, &stopping))
                 .map_err(|error| AgentRefusal::failure(BIND_CODE, format!("the lane {name} cannot start its thread: {error}")))?
         };
         Ok(Self {
@@ -133,38 +140,36 @@ impl<H: Handler> Drop for Service<H> {
     }
 }
 
-fn accept<H: Handler>(name: &'static str, listener: &TcpListener, handler: &Arc<H>, stopping: &AtomicBool) {
+fn accept<H: Handler>(name: &'static str, token: Option<&Arc<str>>, listener: &TcpListener, handler: &Arc<H>, stopping: &AtomicBool) {
     for stream in listener.incoming() {
         if stopping.load(Ordering::SeqCst) {
             return;
         }
         let Ok(stream) = stream else { continue };
         let handler = handler.clone();
+        let token = token.cloned();
         // A connection without a thread gets no answer, and its client sees the end of the connection.
         let _ = thread::Builder::new()
             .name(format!("lane-{name}-connection"))
-            .spawn(move || serve(stream, &*handler));
+            .spawn(move || serve(stream, &*handler, token.as_deref().map(|token| (name, token))));
     }
 }
 
-/// Answers `request`: a request of the control route with [`Handler::control`] or its refusal, and any other request
-/// with [`Handler::handle`].
-fn answer<H: Handler>(handler: &H, request: &Request) -> Response {
-    match handler
-        .control_route()
-        .and_then(|(name, token)| control::route(request, name, token))
-    {
+/// Answers `request`: a request of the control route `route`, a name and a token, with [`Handler::control`] or its
+/// refusal, and any other request with [`Handler::handle`].
+fn answer<H: Handler>(handler: &H, route: Option<(&str, &str)>, request: &Request) -> Response {
+    match route.and_then(|(name, token)| control::route(request, name, token)) {
         Some(Ok(route)) => handler.control(request, route),
         Some(Err(refusal)) => refusal,
         None => handler.handle(request),
     }
 }
 
-fn serve<H: Handler>(mut stream: TcpStream, handler: &H) {
+fn serve<H: Handler>(mut stream: TcpStream, handler: &H, route: Option<(&str, &str)>) {
     let _ = stream.set_read_timeout(Some(SOCKET_TIMEOUT));
     let _ = stream.set_write_timeout(Some(SOCKET_TIMEOUT));
     let (response, head_only) = match http::read_request(&stream, H::MAX_BODY_BYTES) {
-        Ok(request) => (answer(handler, &request), request.method == "HEAD"),
+        Ok(request) => (answer(handler, route, &request), request.method == "HEAD"),
         Err(RequestError::Closed) => return,
         Err(RequestError::Malformed(message)) => (control::refuse(400, "bad_request", &message), false),
         Err(RequestError::TooLarge) => (

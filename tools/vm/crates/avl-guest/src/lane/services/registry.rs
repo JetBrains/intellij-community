@@ -156,7 +156,6 @@ struct State {
 /// The handler of the registry service.
 pub(crate) struct Registry {
     base_url: String,
-    token: String,
     packages: Packages,
     agents: Vec<RegistryAgent>,
     state: Mutex<State>,
@@ -165,9 +164,8 @@ pub(crate) struct Registry {
 
 /// Starts the registry on `127.0.0.1:<port>` with the archives of `packages` and the agents `agents`.
 pub(crate) fn start(port: u16, token: &str, packages: Packages, agents: Vec<RegistryAgent>) -> Result<Service<Registry>, AgentRefusal> {
-    Service::start(NAME, port, |address| Registry {
+    Service::start(NAME, port, token, |address| Registry {
         base_url: format!("http://{address}/"),
-        token: token.to_owned(),
         packages,
         agents,
         state: Mutex::new(State {
@@ -182,10 +180,6 @@ pub(crate) fn start(port: u16, token: &str, packages: Packages, agents: Vec<Regi
 }
 
 impl Handler for Registry {
-    fn control_route(&self) -> Option<(&'static str, &str)> {
-        Some((NAME, &self.token))
-    }
-
     fn control(&self, request: &Request, route: &str) -> Response {
         match (route, request.method.as_str()) {
             ("mark", "GET") => control::answer(&serde_json::json!({ "mark": self.mark() })),

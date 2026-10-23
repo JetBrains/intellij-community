@@ -32,16 +32,14 @@ struct State {
 /// The handler of the feedback service.
 pub(crate) struct Feedback {
     base_url: String,
-    token: String,
     state: Mutex<State>,
     submitted: Condvar,
 }
 
 /// Starts the feedback capture on `127.0.0.1:<port>`.
 pub(crate) fn start(port: u16, token: &str) -> Result<Service<Feedback>, AgentRefusal> {
-    Service::start(NAME, port, |address| Feedback {
+    Service::start(NAME, port, token, |address| Feedback {
         base_url: format!("http://{address}"),
-        token: token.to_owned(),
         state: Mutex::new(State {
             submissions: VecDeque::new(),
             stopped: false,
@@ -51,10 +49,6 @@ pub(crate) fn start(port: u16, token: &str) -> Result<Service<Feedback>, AgentRe
 }
 
 impl Handler for Feedback {
-    fn control_route(&self) -> Option<(&'static str, &str)> {
-        Some((NAME, &self.token))
-    }
-
     fn control(&self, request: &Request, route: &str) -> Response {
         match (route, request.method.as_str()) {
             ("submissions", "GET") => control::answer(&json!({ "submissions": &self.lock().submissions })),

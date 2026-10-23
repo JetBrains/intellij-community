@@ -43,23 +43,17 @@ pub(crate) struct Turn {
 
 /// The handler of the Codex service.
 pub(crate) struct Codex {
-    token: String,
     requests: Mutex<Vec<String>>,
 }
 
 /// Starts the model on `127.0.0.1:<port>`. A lane passes [PORT].
 pub(crate) fn start(port: u16, token: &str) -> Result<Service<Codex>, AgentRefusal> {
-    Service::start(NAME, port, |_| Codex {
-        token: token.to_owned(),
+    Service::start(NAME, port, token, |_| Codex {
         requests: Mutex::new(Vec::new()),
     })
 }
 
 impl Handler for Codex {
-    fn control_route(&self) -> Option<(&'static str, &str)> {
-        Some((NAME, &self.token))
-    }
-
     fn control(&self, request: &Request, route: &str) -> Response {
         match (route, request.method.as_str()) {
             ("mark", "GET") => control::answer(&json!({ "mark": self.lock().len() })),
