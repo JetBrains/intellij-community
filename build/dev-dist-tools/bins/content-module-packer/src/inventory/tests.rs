@@ -97,17 +97,22 @@ fn natives_spec(base: &Path, layout: &Layout, family: Family, arch: Arch) -> Mer
     }
 }
 
+/// The recipe of `out/example.jar` with the metadata file `example.metadata.json`, from the one module jar `module`.
+fn example_spec(base: &Path, module: &Path) -> MergeSpec {
+    MergeSpec {
+        output: base.join("out/example.jar"),
+        metadata_file: Some(base.join("example.metadata.json")),
+        sources: vec![Source::module(module)],
+        ..MergeSpec::default()
+    }
+}
+
 #[test]
 fn packing_produces_metadata_outside_the_payload() {
     let scratch = scratch();
     let base = scratch.path();
     let module = write_module_jar(base, "module.jar", &[("com/example/Packed.class", b"not really a class")]);
-    let spec = MergeSpec {
-        output: base.join("out/example.jar"),
-        metadata_file: Some(base.join("example.metadata.json")),
-        sources: vec![Source::module(&module)],
-        ..MergeSpec::default()
-    };
+    let spec = example_spec(base, &module);
     let report = pack(&spec).unwrap();
     let entries = filemeta::read(&base.join("example.metadata.json")).unwrap();
     let expected = filemeta::inspect(&base.join("out/example.jar"), "example.jar").unwrap();
@@ -137,12 +142,7 @@ fn the_inventory_refuses_a_jar_output_that_is_a_link() {
     fs::create_dir(base.join("out")).unwrap();
     fs::write(base.join("elsewhere.jar"), b"").unwrap();
     std::os::unix::fs::symlink(base.join("elsewhere.jar"), base.join("out/example.jar")).unwrap();
-    let spec = MergeSpec {
-        output: base.join("out/example.jar"),
-        metadata_file: Some(base.join("example.metadata.json")),
-        sources: vec![Source::module(&module)],
-        ..MergeSpec::default()
-    };
+    let spec = example_spec(base, &module);
     let error = format!("{:#}", pack(&spec).unwrap_err());
     assert!(error.contains("the packed jar is not a regular file: "), "{error}");
     assert!(!base.join("example.metadata.json").exists());

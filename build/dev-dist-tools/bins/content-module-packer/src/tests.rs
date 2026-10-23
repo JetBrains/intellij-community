@@ -536,25 +536,36 @@ fn the_duplicate_report_comes_before_the_error_of_a_failed_inventory() {
     assert!(!jar.contains_key("bytes"), "{jar:?}");
 }
 
-#[test]
-fn a_one_shot_run_packs_each_group_and_reports_in_group_order() {
-    // A whole tranche in one flag file. Each jar merges two copies of one module, so each jar reports one duplicate.
-    let dir = pack_one_jar("");
-    let base = dir.path();
+/// Writes a recipe of `count` jars. Each jar merges `module.jar` and a copy of it, so each jar reports one duplicate. It
+/// returns the jar names in the order of the recipe.
+fn write_duplicate_recipe(base: &Path, count: usize) -> Vec<String> {
     fs::copy(base.join("module.jar"), base.join("copy.jar")).expect("a second module jar");
-    let names: Vec<String> = (0..24).map(|index| format!("jar{index:02}.jar")).collect();
+    let names: Vec<String> = (0..count).map(|index| format!("jar{index:02}.jar")).collect();
     let recipe: String = names
         .iter()
         .map(|name| format!("output=out/{name}\nmodule=module.jar\nmodule=copy.jar\n"))
         .collect();
     write_recipe(base, &recipe);
-    let outcome = run_in(base, &[flag_file_argument(base), "--trace-file=one-shot.spans.json".into()]);
-    assert_eq!(outcome.code, 0, "{}", outcome.stderr);
-    let want: String = names
+    names
+}
+
+/// The duplicate report of each jar of [`write_duplicate_recipe`], in the order of `names`.
+fn duplicate_reports(names: &[String]) -> String {
+    names
         .iter()
         .map(|name| format!("{name}: 1 duplicate entry, first source wins: com/example/Packed.class\n"))
-        .collect();
-    assert_eq!(outcome.stderr, want);
+        .collect()
+}
+
+#[test]
+fn a_one_shot_run_packs_each_group_and_reports_in_group_order() {
+    // A whole tranche in one flag file. Each jar merges two copies of one module, so each jar reports one duplicate.
+    let dir = pack_one_jar("");
+    let base = dir.path();
+    let names = write_duplicate_recipe(base, 24);
+    let outcome = run_in(base, &[flag_file_argument(base), "--trace-file=one-shot.spans.json".into()]);
+    assert_eq!(outcome.code, 0, "{}", outcome.stderr);
+    assert_eq!(outcome.stderr, duplicate_reports(&names));
     assert_eq!(file_names(&base.join("out")), names);
 
     // The workers record into the tracer of the run, and each jar span is a child of the root.
@@ -614,20 +625,10 @@ fn pack_on_workers(base: &Path, workers: usize) -> (anyhow::Result<()>, String, 
 fn a_one_shot_run_with_more_groups_than_workers_packs_every_group_in_order() {
     let dir = pack_one_jar("");
     let base = dir.path();
-    fs::copy(base.join("module.jar"), base.join("copy.jar")).expect("a second module jar");
-    let names: Vec<String> = (0..11).map(|index| format!("jar{index:02}.jar")).collect();
-    let recipe: String = names
-        .iter()
-        .map(|name| format!("output=out/{name}\nmodule=module.jar\nmodule=copy.jar\n"))
-        .collect();
-    write_recipe(base, &recipe);
+    let names = write_duplicate_recipe(base, 11);
     let (result, stderr, packed) = pack_on_workers(base, 3);
     result.expect("every group packs");
-    let want: String = names
-        .iter()
-        .map(|name| format!("{name}: 1 duplicate entry, first source wins: com/example/Packed.class\n"))
-        .collect();
-    assert_eq!(stderr, want);
+    assert_eq!(stderr, duplicate_reports(&names));
     assert_eq!(packed, names);
 }
 
