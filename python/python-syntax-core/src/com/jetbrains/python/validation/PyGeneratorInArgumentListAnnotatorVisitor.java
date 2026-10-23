@@ -2,28 +2,28 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PySyntaxCoreBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.psi.PyArgumentList;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyGeneratorExpression;
+import com.jetbrains.python.ast.PyAstArgumentList;
+import com.jetbrains.python.ast.PyAstElementVisitor;
+import com.jetbrains.python.ast.PyAstExpression;
+import com.jetbrains.python.ast.PyAstGeneratorExpression;
 import org.jetbrains.annotations.NotNull;
 
 
-final class PyGeneratorInArgumentListAnnotatorVisitor extends PyElementVisitor {
+final class PyGeneratorInArgumentListAnnotatorVisitor extends PyAstElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
 
   PyGeneratorInArgumentListAnnotatorVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
 
   @Override
-  public void visitPyArgumentList(@NotNull PyArgumentList node) {
+  public void visitPyArgumentList(@NotNull PyAstArgumentList node) {
     if (node.getArguments().length > 1) {
-      for (PyExpression expression : node.getArguments()) {
-        if (expression instanceof PyGeneratorExpression) {
+      for (PyAstExpression expression : node.getArguments()) {
+        if (expression instanceof PyAstGeneratorExpression) {
           ASTNode firstChildNode = expression.getNode().getFirstChildNode();
           if (firstChildNode.getElementType() != PyTokenTypes.LPAR) {
-            myHolder.markError(expression, PyPsiBundle.message("ANN.generator.expression.must.be.parenthesized.if.not.sole.argument"));
+            myHolder.markError(expression, PySyntaxCoreBundle.message("ANN.generator.expression.must.be.parenthesized.if.not.sole.argument"));
           }
         }
       }

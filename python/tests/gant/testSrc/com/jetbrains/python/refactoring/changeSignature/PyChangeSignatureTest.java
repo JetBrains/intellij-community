@@ -9,7 +9,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.refactoring.PyRefactoringBundle;
-import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PySyntaxCoreBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -250,25 +250,25 @@ public class PyChangeSignatureTest extends PyTestCase {
   public void testNewParameterWithoutSignatureDefaultAfterExistingWithSignatureDefault() {
     doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "b", "1", true),
                                          new PyParameterInfo(NEW_PARAMETER, "a", "2", false)),
-                     PyPsiBundle.message("ANN.non.default.param.after.default"));
+                     PySyntaxCoreBundle.message("ANN.non.default.param.after.default"));
   }
 
   public void testNewParameterWithSignatureDefaultBeforeExistingWithoutSignatureDefault() {
     doValidationTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "a", "2", true),
                                          new PyParameterInfo(0, "b", null, false)),
-                     PyPsiBundle.message("ANN.non.default.param.after.default"));
+                     PySyntaxCoreBundle.message("ANN.non.default.param.after.default"));
   }
 
   public void testNewParameterWithSignatureDefaultBeforeNewWithoutSignatureDefault() {
     doValidationTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, "a", "2", true),
                                          new PyParameterInfo(NEW_PARAMETER, "b", null, false)),
-                     PyPsiBundle.message("ANN.non.default.param.after.default"));
+                     PySyntaxCoreBundle.message("ANN.non.default.param.after.default"));
   }
 
   public void testMovingExistingParameterWithSignatureDefaultBeforeExistingWithoutSignatureDefault() {
     doValidationTest(null, Arrays.asList(new PyParameterInfo(1, "b", "1", true),
                                          new PyParameterInfo(0, "a", null, false)),
-                     PyPsiBundle.message("ANN.non.default.param.after.default"));
+                     PySyntaxCoreBundle.message("ANN.non.default.param.after.default"));
   }
 
   // PY-14774
@@ -288,7 +288,7 @@ public class PyChangeSignatureTest extends PyTestCase {
     final PyParameterInfo firstParam = new PyParameterInfo(0, "*foo", null, false);
     firstParam.setName("*bar");
     doValidationTest(null, Arrays.asList(firstParam, new PyParameterInfo(1, "**bar", null, false)),
-                     PyPsiBundle.message("ANN.duplicate.param.name"));
+                     PySyntaxCoreBundle.message("ANN.duplicate.param.name"));
   }
 
   public void testMultipleSingleStarredParameters() {
@@ -495,7 +495,7 @@ public class PyChangeSignatureTest extends PyTestCase {
   public void testPositionalOnlyMarkerAsFirstParameter() {
     doValidationTest(null, Arrays.asList(new PyParameterInfo(NEW_PARAMETER, PySlashParameter.TEXT, null, false),
                                          new PyParameterInfo(0, "a", null, false)),
-                     PyPsiBundle.message("ANN.named.parameters.before.slash"));
+                     PySyntaxCoreBundle.message("ANN.named.parameters.before.slash"));
   }
 
   public void testDuplicatedPositionalOnlyMarker() {
@@ -503,13 +503,13 @@ public class PyChangeSignatureTest extends PyTestCase {
                                          new PyParameterInfo(1, PySlashParameter.TEXT, null, false),
                                          new PyParameterInfo(2, "b", null, false),
                                          new PyParameterInfo(NEW_PARAMETER, PySlashParameter.TEXT, null, false)),
-                     PyPsiBundle.message("ANN.multiple.slash"));
+                     PySyntaxCoreBundle.message("ANN.multiple.slash"));
   }
 
   public void testPositionalOnlyMarkerAfterPositionalVararg() {
     doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "*args", null, false),
                                          new PyParameterInfo(NEW_PARAMETER, PySlashParameter.TEXT, null, false)),
-                     PyPsiBundle.message("ANN.slash.param.after.vararg"));
+                     PySyntaxCoreBundle.message("ANN.slash.param.after.vararg"));
   }
 
   public void testPositionalOnlyMarkerAfterKeywordOnlyMarker() {
@@ -517,13 +517,13 @@ public class PyChangeSignatureTest extends PyTestCase {
                                          new PyParameterInfo(1, PySingleStarParameter.TEXT, null, false),
                                          new PyParameterInfo(2, "b", null, false),
                                          new PyParameterInfo(NEW_PARAMETER, PySlashParameter.TEXT, null, false)),
-                     PyPsiBundle.message("ANN.slash.param.after.vararg"));
+                     PySyntaxCoreBundle.message("ANN.slash.param.after.vararg"));
   }
 
   public void testPositionalOnlyMarkerAfterKeywordVararg() {
     doValidationTest(null, Arrays.asList(new PyParameterInfo(0, "**kwargs", null, false),
                                          new PyParameterInfo(NEW_PARAMETER, PySlashParameter.TEXT, null, false)),
-                     PyPsiBundle.message("ANN.slash.param.after.keyword"));
+                     PySyntaxCoreBundle.message("ANN.slash.param.after.keyword"));
   }
 
   public void testDuplicatedKeywordOnlyMarker() {

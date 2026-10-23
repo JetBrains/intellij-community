@@ -33,7 +33,7 @@ import com.intellij.util.ui.table.EditorTextFieldJBTableRowRenderer;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
 import com.intellij.util.ui.table.JBTableRowRenderer;
-import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PySyntaxCoreBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.ast.PyAstSingleStarParameter;
@@ -141,7 +141,7 @@ public class PyChangeSignatureDialog extends
       if (!isMarkerParameter) {
         final String nameWithoutStars = StringUtil.trimLeading(name, '*').trim();
         if (parameterNames.contains(nameWithoutStars)) {
-          return PyPsiBundle.message("ANN.duplicate.param.name");
+          return PySyntaxCoreBundle.message("ANN.duplicate.param.name");
         }
         parameterNames.add(nameWithoutStars);
       }
@@ -152,27 +152,27 @@ public class PyChangeSignatureDialog extends
         }
         hadSingleStar = true;
         if (index == parametersLength - 1) {
-          return PyPsiBundle.message("ANN.named.parameters.after.star");
+          return PySyntaxCoreBundle.message("ANN.named.parameters.after.star");
         }
       }
       else if (name.equals(PyAstSlashParameter.TEXT)) {
         if (hadSlash) {
-          return PyPsiBundle.message("ANN.multiple.slash");
+          return PySyntaxCoreBundle.message("ANN.multiple.slash");
         }
         hadSlash = true;
         if (hadPositionalContainer || hadSingleStar) {
-          return PyPsiBundle.message("ANN.slash.param.after.vararg");
+          return PySyntaxCoreBundle.message("ANN.slash.param.after.vararg");
         }
         else if (hadKeywordContainer) {
-          return PyPsiBundle.message("ANN.slash.param.after.keyword");
+          return PySyntaxCoreBundle.message("ANN.slash.param.after.keyword");
         }
         if (index == 0) {
-          return PyPsiBundle.message("ANN.named.parameters.before.slash");
+          return PySyntaxCoreBundle.message("ANN.named.parameters.before.slash");
         }
       }
       else if (name.startsWith(PyAstSingleStarParameter.TEXT) && !name.startsWith("**")) {
         if (hadKeywordContainer) {
-          return PyPsiBundle.message("ANN.starred.param.after.kwparam");
+          return PySyntaxCoreBundle.message("ANN.starred.param.after.kwparam");
         }
         if (hadSingleStar || hadPositionalContainer) {
           return PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.multiple.star");
@@ -184,7 +184,7 @@ public class PyChangeSignatureDialog extends
       }
       else if (name.startsWith("**")) {
         if (hadSingleStar && !hadParamsAfterSingleStar) {
-          return PyPsiBundle.message("ANN.named.parameters.after.star");
+          return PySyntaxCoreBundle.message("ANN.named.parameters.after.star");
         }
         if (hadKeywordContainer) {
           return PyRefactoringBundle.message("refactoring.change.signature.dialog.validation.multiple.double.star");
@@ -202,10 +202,10 @@ public class PyChangeSignatureDialog extends
           hadParamsAfterSingleStar = true;
         }
         if (hadPositionalContainer && languageLevel.isPython2()) {
-          return PyPsiBundle.message("ANN.regular.param.after.vararg");
+          return PySyntaxCoreBundle.message("ANN.regular.param.after.vararg");
         }
         else if (hadKeywordContainer) {
-          return PyPsiBundle.message("ANN.regular.param.after.keyword");
+          return PySyntaxCoreBundle.message("ANN.regular.param.after.keyword");
         }
         final String defaultValue = info.getDefaultValue();
         if (defaultValue != null && !StringUtil.isEmptyOrSpaces(defaultValue) && parameter.getDefaultInSignature()) {
@@ -213,7 +213,7 @@ public class PyChangeSignatureDialog extends
         }
         else {
           if (hadDefaultValue && !hadSingleStar && (languageLevel.isPython2() || !hadPositionalContainer)) {
-            return PyPsiBundle.message("ANN.non.default.param.after.default");
+            return PySyntaxCoreBundle.message("ANN.non.default.param.after.default");
           }
         }
       }

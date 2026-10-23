@@ -8,6 +8,7 @@ import com.jetbrains.python.documentation.doctest.PyDocstringCodeBlockLanguageDi
 import com.jetbrains.python.psi.PyElementVisitor
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PythonVisitorFilter
+import com.jetbrains.python.validation.PyAstSyntaxAnnotator
 import com.jetbrains.python.validation.PySyntaxAnnotator
 import com.jetbrains.python.validation.UnsupportedFeatures
 
@@ -20,6 +21,7 @@ import com.jetbrains.python.validation.UnsupportedFeatures
  */
 internal class PyDocstringCodeBlockVisitorFilter : PythonVisitorFilter {
   private val disabledAnnotators: Set<Class<*>> = PyInjectedPythonCodeVisitors.disabledAnnotators + setOf(
+    PyAstSyntaxAnnotator::class.java,
     PySyntaxAnnotator::class.java,
     UnsupportedFeatures::class.java,
   )

@@ -65,7 +65,9 @@ public interface PyAstTupleParameter extends PyAstParameter {
   /**
    * @return the nested parameters within this tuple parameter.
    */
-  PyAstParameter @NotNull [] getContents();
+  default PyAstParameter @NotNull [] getContents() {
+    return childrenToPsi(PythonDialectsTokenSetProvider.getInstance().getParameterTokens(), PyAstParameter.EMPTY_ARRAY);
+  }
 
   @Override
   default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {

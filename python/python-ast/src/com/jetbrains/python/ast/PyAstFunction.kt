@@ -99,6 +99,24 @@ interface PyAstFunction : PsiNameIdentifierOwner, PyAstCompoundStatement,
       return functionName !in builtinMethods
     }
 
+  /** Whether this function holds a `yield` in its own body. A nested function, lambda or class does not count. */
+  val isGenerator: Boolean
+    get() {
+      var containsYield = false
+      statementList.accept(object : PyAstRecursiveElementVisitor() {
+        override fun visitPyYieldExpression(node: PyAstYieldExpression) {
+          containsYield = true
+        }
+
+        override fun visitPyFunction(node: PyAstFunction) {}
+
+        override fun visitPyLambdaExpression(node: PyAstLambdaExpression) {}
+
+        override fun visitPyClass(node: PyAstClass) {}
+      })
+      return containsYield
+    }
+
   fun onlyRaisesNotImplementedError(): Boolean {
     val statements = statementList.statements
     return statements.size == 1 && isRaiseNotImplementedError(statements[0]) ||

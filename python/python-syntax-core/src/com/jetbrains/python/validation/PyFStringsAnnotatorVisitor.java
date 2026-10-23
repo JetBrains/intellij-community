@@ -6,36 +6,36 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyFStringFragment;
-import com.jetbrains.python.psi.PyFormattedStringElement;
+import com.jetbrains.python.PySyntaxCoreBundle;
+import com.jetbrains.python.ast.PyAstElementVisitor;
+import com.jetbrains.python.ast.PyAstFStringFragment;
+import com.jetbrains.python.ast.PyAstFormattedStringElement;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Mikhail Golubev
  */
-final class PyFStringsAnnotatorVisitor extends PyElementVisitor {
+final class PyFStringsAnnotatorVisitor extends PyAstElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
 
   PyFStringsAnnotatorVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
 
   @Override
-  public void visitPyFStringFragment(@NotNull PyFStringFragment node) {
+  public void visitPyFStringFragment(@NotNull PyAstFStringFragment node) {
     final PsiElement typeConversion = node.getTypeConversion();
     if (typeConversion != null) {
       final String conversionChar = typeConversion.getText().substring(1);
       if (conversionChar.isEmpty()) {
-        report(typeConversion, PyPsiBundle.message("ANN.fstrings.missing.conversion.character"));
+        report(typeConversion, PySyntaxCoreBundle.message("ANN.fstrings.missing.conversion.character"));
       }
       else if (conversionChar.length() > 1 || "sra".indexOf(conversionChar.charAt(0)) < 0) {
-        report(typeConversion, PyPsiBundle.message("ANN.fstrings.illegal.conversion.character", conversionChar));
+        report(typeConversion, PySyntaxCoreBundle.message("ANN.fstrings.illegal.conversion.character", conversionChar));
       }
     }
   }
 
   @Override
-  public void visitPyFormattedStringElement(@NotNull PyFormattedStringElement node) {
+  public void visitPyFormattedStringElement(@NotNull PyAstFormattedStringElement node) {
     final String wholeNodeText = node.getText();
     for (TextRange textRange : node.getLiteralPartRanges()) {
       int i = textRange.getStartOffset();
@@ -51,7 +51,7 @@ final class PyFStringsAnnotatorVisitor extends PyElementVisitor {
             i += 2;
             continue;
           }
-          reportCharacter(node, i, PyPsiBundle.message("ANN.fstrings.single.right.brace.not.allowed.inside.fstrings"));
+          reportCharacter(node, i, PySyntaxCoreBundle.message("ANN.fstrings.single.right.brace.not.allowed.inside.fstrings"));
         }
         i++;
       }

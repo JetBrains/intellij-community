@@ -10,29 +10,20 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 
-// AST-based syntax annotator that does not rely on resolve.
-// Planned to move to thin-client (visitors are to be converted to `PyAstElementVisitor`).
+/**
+ * The syntax checks that still need the stub-based PSI: a quick fix, an injected type hint file, or the console context.
+ * The AST-only checks run in {@code PyAstSyntaxAnnotator} of {@code intellij.python.syntax.core}.
+ */
 @ApiStatus.Internal
 public final class PySyntaxAnnotator extends PyAnnotatorBase implements DumbAware {
   @Override
   public void annotate(@NotNull PsiElement psiElement, @NotNull PyAnnotationHolder holder) {
     List<@NotNull PsiElementVisitor> visitors = List.of(
       new PyAssignTargetAnnotatorVisitor(holder),
-      new PyTypeAnnotationTargetAnnotatorVisitor(holder),
-      new PyParameterListAnnotatorVisitor(holder),
-      new PyReturnYieldAnnotatorVisitor(holder),
-      new PyBreakContinueAnnotatorVisitor(holder),
-      new PyGlobalAnnotatorVisitor(holder),
-      new PyImportAnnotatorVisitor(holder),
       new PyAsyncAwaitAnnotatorVisitor(holder),
-      new PyAstNumericLiteralAnnotatorVisitor(holder),
-      new PyGeneratorInArgumentListAnnotatorVisitor(holder),
       new PyStarAnnotatorVisitor(holder),
-      new PyStringLiteralQuotesAnnotatorVisitor(holder),
-      new PyFStringsAnnotatorVisitor(holder),
       new PyPatternAnnotatorVisitor(holder),
-      new PyTryExceptAnnotatorVisitor(holder),
-      new PyTypeParameterListAnnotatorVisitor(holder)
+      new PyTryExceptAnnotatorVisitor(holder)
     );
     for (PsiElementVisitor visitor : visitors) {
       psiElement.accept(visitor);

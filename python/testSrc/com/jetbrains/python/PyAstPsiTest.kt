@@ -16,6 +16,7 @@ import com.jetbrains.python.ast.PyAstIfStatement
 import com.jetbrains.python.ast.PyAstImportStatement
 import com.jetbrains.python.ast.PyAstImportStatementBase
 import com.jetbrains.python.ast.PyAstNamedParameter
+import com.jetbrains.python.ast.PyAstSlashParameter
 import com.jetbrains.python.ast.impl.PyAstFileImpl
 import com.jetbrains.python.ast.impl.PyAstPsiElementFactory
 import com.jetbrains.python.fixtures.PyTestCase
@@ -75,6 +76,15 @@ class PyAstPsiTest : PyTestCase() {
     assertNull(function.typeParameterList)
   }
 
+  fun testASlashParameterIsAParameter() {
+    val (method, function) = PsiTreeUtil.findChildrenOfType(myFixture.file, PyAstFunction::class.java).toList()
+    val parameters = method.parameterList.parameters
+    assertEquals(listOf("self", "a: int", "/"), parameters.map { it.text })
+    assertInstanceOf(parameters[2], PyAstSlashParameter::class.java)
+    assertFalse(function.isGenerator)
+    assertTrue(method.isGenerator)
+  }
+
   fun testTheAnnotationFollowsAnEdit() {
     val parameter = parameterA()
     assertEquals("int", parameter.annotation?.value?.text)
@@ -87,19 +97,35 @@ class PyAstPsiTest : PyTestCase() {
     assertNull(current.annotation)
   }
 
+  fun testIsGeneratorFollowsAnEdit() {
+    val method = methodM()
+    assertTrue(method.isGenerator)
+    val document = myFixture.editor.document
+    val offset = document.text.indexOf(YIELD)
+    WriteCommandAction.runWriteCommandAction(myFixture.project) { document.replaceString(offset, offset + YIELD.length, "pass") }
+    PsiDocumentManager.getInstance(myFixture.project).commitAllDocuments()
+    // The reparse keeps the function element when it can. Then a cached flag would be stale.
+    val current = if (method.isValid) method else methodM()
+    assertFalse(current.isGenerator)
+  }
+
+  private fun methodM(): PyAstFunction =
+    PsiTreeUtil.findChildrenOfType(myFixture.file, PyAstFunction::class.java).first { it.name == "m" }
+
   private fun parameterA(): PyAstNamedParameter =
     PsiTreeUtil.findChildrenOfType(myFixture.file, PyAstNamedParameter::class.java).first { it.name == "a" }
 
   private companion object {
     const val ANNOTATION = ": int"
+    const val YIELD = "yield"
 
     val SOURCE = """
       import os
       from os import path
 
       class C:
-          def m[T](self, a$ANNOTATION) -> None:
-              pass
+          def m[T](self, a$ANNOTATION, /) -> None:
+              $YIELD
 
       @dec
       def f():

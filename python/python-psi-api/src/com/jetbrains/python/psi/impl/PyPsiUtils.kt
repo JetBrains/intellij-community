@@ -601,13 +601,7 @@ object PyPsiUtils {
    */
   @JvmStatic
   fun getElementTextWithoutHostEscaping(element: PsiElement): String {
-    val manager = InjectedLanguageManager.getInstance(element.project)
-    if (manager.isInjectedFragment(element.containingFile)) {
-      return manager.getUnescapedText(element)
-    }
-    else {
-      return element.text
-    }
+    return PyPsiUtilsCore.getElementTextWithoutHostEscaping(element)
   }
 
   @JvmStatic

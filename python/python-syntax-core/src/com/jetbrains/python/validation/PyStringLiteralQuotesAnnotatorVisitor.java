@@ -6,11 +6,12 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.PySyntaxCoreBundle;
+import com.jetbrains.python.ast.PyAstElementVisitor;
+import com.jetbrains.python.ast.PyAstStringLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -18,7 +19,8 @@ import java.util.List;
 /**
  * Looks for well-formedness of string constants.
  */
-final class PyStringLiteralQuotesAnnotatorVisitor extends PyElementVisitor {
+@ApiStatus.Internal
+public final class PyStringLiteralQuotesAnnotatorVisitor extends PyAstElementVisitor {
   private final @NotNull PyAnnotationHolder myHolder;
 
   PyStringLiteralQuotesAnnotatorVisitor(@NotNull PyAnnotationHolder holder) { myHolder = holder; }
@@ -27,14 +29,14 @@ final class PyStringLiteralQuotesAnnotatorVisitor extends PyElementVisitor {
   private static final String TRIPLE_APOS = "'''";
 
   @Override
-  public void visitPyStringLiteralExpression(final @NotNull PyStringLiteralExpression node) {
+  public void visitPyStringLiteralExpression(final @NotNull PyAstStringLiteralExpression node) {
     final List<ASTNode> stringNodes = node.getStringNodes();
     for (ASTNode stringNode : stringNodes) {
       // TODO Migrate to newer PyStringElement API
       if (stringNode.getElementType() == PyElementTypes.FSTRING_NODE) {
         continue;
       }
-      final String nodeText = PyPsiUtils.getElementTextWithoutHostEscaping(stringNode.getPsi());
+      final String nodeText = PyPsiUtilsCore.getElementTextWithoutHostEscaping(stringNode.getPsi());
       final int index = PyStringLiteralUtil.getPrefixLength(nodeText);
       final String unprefixed = nodeText.substring(index);
       final boolean foundError;
@@ -66,7 +68,7 @@ final class PyStringLiteralQuotesAnnotatorVisitor extends PyElementVisitor {
       }
     }
     if (nodeText.length() == 1 || lastChar != firstQuote || precedingBackslashCount % 2 != 0) {
-      myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.missing.closing.quote", firstQuote)).range(stringNode)
+      myHolder.newAnnotation(HighlightSeverity.ERROR, PySyntaxCoreBundle.message("ANN.missing.closing.quote", firstQuote)).range(stringNode)
         .create();
       return true;
     }
@@ -83,7 +85,7 @@ final class PyStringLiteralQuotesAnnotatorVisitor extends PyElementVisitor {
         startOffset = stringNode.getTextRange().getStartOffset() + startOffset + 1;
       }
       final TextRange highlightRange = new TextRange(startOffset, stringNode.getTextRange().getEndOffset());
-      myHolder.newAnnotation(HighlightSeverity.ERROR, PyPsiBundle.message("ANN.missing.closing.triple.quotes")).range(highlightRange)
+      myHolder.newAnnotation(HighlightSeverity.ERROR, PySyntaxCoreBundle.message("ANN.missing.closing.triple.quotes")).range(highlightRange)
         .create();
       return true;
     }

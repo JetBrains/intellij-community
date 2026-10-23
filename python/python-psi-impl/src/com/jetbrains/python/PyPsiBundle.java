@@ -18,12 +18,22 @@ public final class PyPsiBundle extends DynamicBundle {
   private PyPsiBundle() { super(BUNDLE); }
 
   public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    if (isMovedToSyntaxCore(key)) {
+      return PySyntaxCoreBundle.message(key, params);
+    }
     return INSTANCE.getMessage(key, params);
   }
 
   public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
                                                               Object @NotNull ... params) {
+    if (isMovedToSyntaxCore(key)) {
+      return PySyntaxCoreBundle.messagePointer(key, params);
+    }
     return INSTANCE.getLazyMessage(key, params);
+  }
+
+  private static boolean isMovedToSyntaxCore(@NotNull String key) {
+    return !INSTANCE.containsKey(key) && PySyntaxCoreBundle.INSTANCE.containsKey(key);
   }
 
   /**
