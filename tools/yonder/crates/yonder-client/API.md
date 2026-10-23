@@ -21,7 +21,9 @@ new connection per request: `run`, `run_with`, `attach`, `cancel`, `runs`, `leas
 
 `git status --porcelain -z` first: a checkout without changes ships HEAD. Else the client copies the index of the
 checkout to the temporary directory, runs `git add --all` of the paths that the status named and `git write-tree` on the
-copy (`GIT_INDEX_FILE`), and writes a commit on HEAD with `git commit-tree --no-gpg-sign`. So the cost is one status and
+copy (`GIT_INDEX_FILE`), and writes a commit on HEAD with `git commit-tree --no-gpg-sign`. A staged deletion and the old
+path of a staged rename are no paths to add: the index copy has them already, and git refuses a path that neither the
+index nor the files have. An intent-to-add, a deletion in the files and a gitlink go in as `git add --all` takes them. So the cost is one status and
 the changed files: about 4 s in a checkout of the monorepo with 1.4M files, where a second scan of every file took 30 s. Its author and committer are `yonder <yonder@yonder.invalid>` at the date of
 the committer of HEAD, and its message is `yonder: the working tree on <HEAD>`. So the same tree on the same HEAD is the
 same commit, and a second run of it sends no pack. The index, the files and the refs of the checkout stay as they are,

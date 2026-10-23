@@ -141,23 +141,27 @@ pub(crate) fn working_tree_commit(processes: &dyn Processes, checkout: &Path, st
             ));
         }
     }
-    let mut pathspec = Vec::new();
-    for path in &paths {
-        pathspec.extend_from_slice(path.as_bytes());
-        pathspec.push(0);
-    }
-    let added = with_index(
-        &[
-            "--literal-pathspecs",
-            "add",
-            "--all",
-            "--pathspec-from-file=-",
-            "--pathspec-file-nul",
-        ],
-        pathspec,
-    );
-    if !added.ok() {
-        return Err(git_refusal("git add --all", &added));
+    // Only staged deletions leave no path, and the index copy holds them already. An empty pathspec file would make
+    // `git add --all` take every file of the checkout.
+    if !paths.is_empty() {
+        let mut pathspec = Vec::new();
+        for path in &paths {
+            pathspec.extend_from_slice(path.as_bytes());
+            pathspec.push(0);
+        }
+        let added = with_index(
+            &[
+                "--literal-pathspecs",
+                "add",
+                "--all",
+                "--pathspec-from-file=-",
+                "--pathspec-file-nul",
+            ],
+            pathspec,
+        );
+        if !added.ok() {
+            return Err(git_refusal("git add --all", &added));
+        }
     }
     let tree = with_index(&["write-tree"], Vec::new());
     let tree_id = tree.stdout_text().trim().to_owned();
@@ -197,9 +201,10 @@ pub(crate) fn working_tree_commit(processes: &dyn Processes, checkout: &Path, st
     Ok(Snapshot { commit, head, changed })
 }
 
-/// The entries of `git status --porcelain -z` as lines for a person (`XY path`), and the path of each one. The old path
-/// of a staged rename or copy is not one of them: the index has the rename already, and a file at the old path is an
-/// entry of its own. An untracked directory is one path.
+/// The entries of `git status --porcelain -z` as lines for a person (`XY path`), and the paths that `git add --all`
+/// must take for the tree of the working tree. A path that neither the index nor the files have is not one of them,
+/// because git refuses it: the old path of a staged rename or copy, and a staged deletion (`D `). The index copy has
+/// them already, and a file at such a path is an untracked entry of its own. An untracked directory is one path.
 pub(crate) fn status_entries(stdout: &[u8]) -> (Vec<String>, Vec<String>) {
     let mut lines = Vec::new();
     let mut paths = Vec::new();
@@ -212,8 +217,10 @@ pub(crate) fn status_entries(stdout: &[u8]) -> (Vec<String>, Vec<String>) {
         if code.contains(['R', 'C']) {
             fields.next();
         }
+        if code != "D " {
+            paths.push(path.to_owned());
+        }
         lines.push(field.to_string());
-        paths.push(path.to_owned());
     }
     (lines, paths)
 }

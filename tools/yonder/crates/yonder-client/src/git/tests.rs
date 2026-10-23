@@ -196,10 +196,21 @@ fn the_commit_of_the_working_tree_holds_every_change_and_leaves_the_checkout_as_
 }
 
 #[test]
-fn the_entries_of_a_status_name_each_path_but_the_old_path_of_a_rename() {
-    let (lines, paths) = status_entries(b" M a.txt\0R  new name.txt\0old name.txt\0?? dir/\0 D gone.txt\0");
-    assert_eq!(lines, [" M a.txt", "R  new name.txt", "?? dir/", " D gone.txt"]);
-    assert_eq!(paths, ["a.txt", "new name.txt", "dir/", "gone.txt"]);
+fn the_entries_of_a_status_name_each_path_but_the_old_path_of_a_rename_and_a_staged_deletion() {
+    let status = b" M a.txt\0R  new name.txt\0old name.txt\0?? dir/\0 D gone.txt\0D  staged.txt\0?? staged.txt\0";
+    let (lines, paths) = status_entries(status);
+    assert_eq!(
+        lines,
+        [
+            " M a.txt",
+            "R  new name.txt",
+            "?? dir/",
+            " D gone.txt",
+            "D  staged.txt",
+            "?? staged.txt"
+        ]
+    );
+    assert_eq!(paths, ["a.txt", "new name.txt", "dir/", "gone.txt", "staged.txt"]);
     assert_eq!(status_entries(b""), (Vec::new(), Vec::new()));
 }
 
@@ -269,4 +280,107 @@ fn the_name_of_a_repository_is_the_directory_of_its_main_checkout() {
         ),
         None
     );
+}
+
+/// The tree that `git add --all` stages in a copy of the index of `repo`: what a commit of the working tree must hold.
+fn tree_of_add_all(repo: &Path) -> String {
+    let index = repo.join(".git/oracle.index");
+    fs::copy(repo.join(".git/index"), &index).expect("a copy of the index");
+    let with_copy = |args: &[&str]| {
+        let ran = std::process::Command::new("git")
+            .arg("-C")
+            .arg(repo)
+            .args(args)
+            .env("GIT_INDEX_FILE", &index)
+            .output()
+            .expect("git");
+        assert!(ran.status.success(), "{args:?}: {}", String::from_utf8_lossy(&ran.stderr));
+        String::from_utf8_lossy(&ran.stdout).trim().to_owned()
+    };
+    with_copy(&["-c", "advice.addEmbeddedRepo=false", "add", "--all"]);
+    let tree = with_copy(&["write-tree"]);
+    fs::remove_file(&index).expect("the copy removed");
+    tree
+}
+
+/// A repository with `a.txt`, `b.txt`, `c.txt` and the gitlink `sub`, a repository of its own, all committed. `change`
+/// changes it; then the commit of the working tree holds what `git add --all` would stage, and the checkout stays as
+/// it was.
+fn ships_the_working_tree(change: impl FnOnce(&Path)) {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let repo = dir.path();
+    real_git(repo, &["init", "-q"]);
+    for name in ["a.txt", "b.txt", "c.txt"] {
+        fs::write(repo.join(name), format!("{name}\n")).expect("a file");
+    }
+    let sub = repo.join("sub");
+    fs::create_dir(&sub).expect("the sub repository");
+    real_git(&sub, &["init", "-q"]);
+    real_git(&sub, &["commit", "-q", "--allow-empty", "-m", "sub"]);
+    real_git(repo, &["-c", "advice.addEmbeddedRepo=false", "add", "--all"]);
+    real_git(repo, &["commit", "-q", "-m", "first"]);
+    let head = real_git(repo, &["rev-parse", "HEAD"]);
+    change(repo);
+    let expected = tree_of_add_all(repo);
+    let before = checkout_state(repo);
+    let snapshot = working_tree_commit(&crate::OsProcesses, repo, &never).expect("a snapshot");
+    assert_eq!(checkout_state(repo), before, "the checkout is as it was");
+    assert_eq!(real_git(repo, &["rev-parse", &format!("{}^{{tree}}", snapshot.commit)]), expected);
+    // A working tree whose files are the ones of HEAD ships HEAD itself.
+    let same = expected == real_git(repo, &["rev-parse", "HEAD^{tree}"]);
+    assert_eq!(snapshot.commit == head, same, "{snapshot:?}");
+}
+
+#[test]
+fn a_staged_deletion_ships_as_the_tree_is() {
+    ships_the_working_tree(|repo| {
+        real_git(repo, &["rm", "-q", "a.txt"]);
+    });
+}
+
+#[test]
+fn a_staged_deletion_of_a_file_that_came_back_ships_the_new_file() {
+    ships_the_working_tree(|repo| {
+        real_git(repo, &["rm", "-q", "a.txt"]);
+        fs::write(repo.join("a.txt"), "a again\n").expect("a new file");
+    });
+}
+
+#[test]
+fn a_deletion_in_the_working_tree_ships_as_the_tree_is() {
+    ships_the_working_tree(|repo| fs::remove_file(repo.join("b.txt")).expect("a deleted file"));
+}
+
+/// The file is the one of HEAD, so the commit of the working tree is HEAD.
+#[test]
+fn a_file_that_the_index_dropped_ships_as_an_untracked_file() {
+    ships_the_working_tree(|repo| {
+        real_git(repo, &["rm", "-q", "--cached", "a.txt"]);
+    });
+}
+
+#[test]
+fn a_rename_ships_as_the_tree_is_also_when_the_new_file_changed_again() {
+    ships_the_working_tree(|repo| {
+        real_git(repo, &["mv", "c.txt", "d.txt"]);
+        fs::write(repo.join("d.txt"), "d\n").expect("a change of the renamed file");
+    });
+}
+
+#[test]
+fn an_intent_to_add_ships_its_file_and_a_gone_one_ships_nothing() {
+    ships_the_working_tree(|repo| {
+        fs::write(repo.join("e.txt"), "e\n").expect("a new file");
+        real_git(repo, &["add", "-N", "e.txt"]);
+        fs::write(repo.join("f.txt"), "f\n").expect("a new file");
+        real_git(repo, &["add", "-N", "f.txt"]);
+        fs::remove_file(repo.join("f.txt")).expect("a gone file");
+    });
+}
+
+#[test]
+fn a_gitlink_ships_the_new_commit_of_its_repository() {
+    ships_the_working_tree(|repo| {
+        real_git(&repo.join("sub"), &["commit", "-q", "--allow-empty", "-m", "next"]);
+    });
 }
