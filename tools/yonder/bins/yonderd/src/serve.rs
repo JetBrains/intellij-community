@@ -204,12 +204,9 @@ impl Agent {
 
     fn converse(&self, channel: &mut Channel) -> Result<(), LinkError> {
         match channel.recv::<Request>()? {
-            Request::Hello { schema_version, .. } if schema_version == SCHEMA_VERSION => channel.send(&Reply::Hello {
-                schema_version: SCHEMA_VERSION,
-                agent_version: env!("CARGO_PKG_VERSION").to_owned(),
-                os: std::env::consts::OS.to_owned(),
-                arch: std::env::consts::ARCH.to_owned(),
-            })?,
+            Request::Hello { schema_version, .. } if schema_version == SCHEMA_VERSION => {
+                channel.send(&Reply::hello(env!("CARGO_PKG_VERSION")))?;
+            }
             Request::Hello { schema_version, .. } => {
                 return channel.send(&Reply::refused(
                     SCHEMA,

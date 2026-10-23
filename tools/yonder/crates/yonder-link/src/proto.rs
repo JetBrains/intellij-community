@@ -200,6 +200,16 @@ impl Request {
 }
 
 impl Reply {
+    /// The hello of an agent of `agent_version` on the platform of this build.
+    pub fn hello(agent_version: &str) -> Self {
+        Self::Hello {
+            schema_version: SCHEMA_VERSION,
+            agent_version: agent_version.to_owned(),
+            os: std::env::consts::OS.to_owned(),
+            arch: std::env::consts::ARCH.to_owned(),
+        }
+    }
+
     pub fn refused(code: &str, message: impl Into<String>) -> Self {
         Self::Refused {
             code: code.to_owned(),

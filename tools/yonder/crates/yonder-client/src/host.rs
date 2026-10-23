@@ -69,6 +69,16 @@ impl Latest {
     }
 }
 
+/// The failures of the addresses that one connection tried.
+#[derive(Default)]
+struct Tries {
+    /// Each address with what it said.
+    tried: Vec<String>,
+    /// What the first address with another certificate said.
+    untrusted: Option<String>,
+    failed: Vec<SocketAddr>,
+}
+
 /// Why one address gave no channel.
 enum Attempt {
     /// Try the next address.
@@ -120,34 +130,9 @@ impl Host {
     }
 
     fn connect_once(&mut self) -> Result<(Channel, AgentInfo), Refusal> {
-        let mut tried: Vec<String> = Vec::new();
-        let mut untrusted: Option<String> = None;
-        let mut note = |address: SocketAddr, attempt: Attempt| match attempt {
-            Attempt::Failed(said) => {
-                tried.push(format!("{address} ({said})"));
-                None
-            }
-            Attempt::Untrusted(said) => {
-                tried.push(format!("{address} (untrusted)"));
-                untrusted.get_or_insert(said);
-                None
-            }
-            Attempt::Refused(refusal) => Some(refusal),
-        };
-        let mut failed: Vec<SocketAddr> = Vec::new();
-        for address in self.file.addresses.clone() {
-            match self.attempt(address) {
-                Ok(connected) => {
-                    self.remember(address, &failed);
-                    return Ok(connected);
-                }
-                Err(attempt) => {
-                    if let Some(refusal) = note(address, attempt) {
-                        return Err(refusal);
-                    }
-                    failed.push(address);
-                }
-            }
+        let mut tries = Tries::default();
+        if let Some(answered) = self.try_each(self.file.addresses.clone(), &mut tries) {
+            return answered;
         }
         let resolved = resolve(&self.file.hostname, self.file.port, self.timing.resolve);
         let lookup = match &resolved {
@@ -159,22 +144,15 @@ impl Host {
             ),
             Err(said) => format!("{} did not resolve: {said}", self.file.hostname),
         };
-        for address in resolved.unwrap_or_default() {
-            if self.file.addresses.contains(&address) {
-                continue;
-            }
-            match self.attempt(address) {
-                Ok(connected) => {
-                    self.remember(address, &failed);
-                    return Ok(connected);
-                }
-                Err(attempt) => {
-                    if let Some(refusal) = note(address, attempt) {
-                        return Err(refusal);
-                    }
-                }
-            }
+        let fresh: Vec<SocketAddr> = resolved
+            .unwrap_or_default()
+            .into_iter()
+            .filter(|address| !self.file.addresses.contains(address))
+            .collect();
+        if let Some(answered) = self.try_each(fresh, &mut tries) {
+            return answered;
         }
+        let Tries { tried, untrusted, .. } = tries;
         let alias = self.alias().to_owned();
         if let Some(said) = untrusted {
             return Err(refused(
@@ -250,13 +228,34 @@ impl Host {
         Refusal::new(code, crate::Exit::Refused, format!("{}: {message}", self.alias()))
     }
 
+    /// Tries each of `addresses` in turn, and notes each failure in `tries`. Answers the first channel, the refusal of
+    /// an agent that answered and refused, or `None` when no address answered.
+    fn try_each(&mut self, addresses: Vec<SocketAddr>, tries: &mut Tries) -> Option<Result<(Channel, AgentInfo), Refusal>> {
+        for address in addresses {
+            match self.attempt(address) {
+                Ok(connected) => {
+                    self.remember(address, &tries.failed);
+                    return Some(Ok(connected));
+                }
+                Err(Attempt::Refused(refusal)) => return Some(Err(refusal)),
+                Err(Attempt::Failed(said)) => tries.tried.push(format!("{address} ({said})")),
+                Err(Attempt::Untrusted(said)) => {
+                    tries.tried.push(format!("{address} (untrusted)"));
+                    tries.untrusted.get_or_insert(said);
+                }
+            }
+            tries.failed.push(address);
+        }
+        None
+    }
+
     fn attempt(&self, address: SocketAddr) -> Result<(Channel, AgentInfo), Attempt> {
         let mut channel = match Channel::connect(address, &self.tls, self.timing.connect) {
             Ok(channel) => channel,
             Err(LinkError::Untrusted(said)) => return Err(Attempt::Untrusted(said)),
             Err(error) => return Err(Attempt::Failed(error.to_string())),
         };
-        let hello = channel.send(&Request::hello(VERSION)).and_then(|()| channel.recv::<Reply>());
+        let hello = channel.exchange::<_, Reply>(&Request::hello(VERSION));
         // The connect deadline is short, for a dead address. A write of a large pack to a slow link takes longer, so
         // each later write has the read deadline of a reply.
         let hello = hello.and_then(|reply| channel.set_write_deadline(self.timing.read).map(|()| reply));

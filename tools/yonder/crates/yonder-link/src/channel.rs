@@ -380,6 +380,12 @@ impl Channel {
         }
     }
 
+    /// Sends one message and answers the next one, such as a hello and its reply.
+    pub fn exchange<T: Serialize, R: DeserializeOwned>(&mut self, message: &T) -> Result<R, LinkError> {
+        self.send(message)?;
+        self.recv()
+    }
+
     /// Copies the byte stream that comes next into `writer`, up to its end. Answers the count of bytes.
     pub fn recv_stream(&mut self, writer: &mut dyn Write) -> Result<u64, LinkError> {
         let mut total = 0u64;

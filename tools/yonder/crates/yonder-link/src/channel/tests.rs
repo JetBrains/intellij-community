@@ -59,13 +59,24 @@ impl Agent {
     }
 }
 
+/// Reads the hello of a test client.
+fn expect_hello(channel: &mut Channel) {
+    let hello: Request = channel.recv().expect("the hello");
+    assert_eq!(hello, Request::hello("test"));
+}
+
+/// Reads the hello of a test client and answers `Packed`.
+fn answer_hello(channel: &mut Channel) {
+    expect_hello(channel);
+    channel.send(&Reply::Packed).expect("the reply");
+}
+
 #[test]
 fn a_pinned_client_and_an_allowed_client_exchange_messages_and_bytes() {
     let client = Identity::generate().expect("the client identity");
     let agent = agent(&[&client]);
     let served = agent.serve(|channel| {
-        let hello: Request = channel.recv().expect("the hello");
-        assert_eq!(hello, Request::hello("test"));
+        expect_hello(channel);
         let mut received = Vec::new();
         assert_eq!(channel.recv_stream(&mut received).expect("the bytes"), 200_000);
         assert!(
@@ -104,22 +115,13 @@ fn a_kept_configuration_resumes_no_session_and_a_removed_client_is_refused() {
     let client = Identity::generate().expect("the client identity");
     let agent = agent(&[&client]);
     let tls = ClientTls::new(agent.identity.fingerprint(), &client).expect("the client TLS");
-    let echo = |channel: &mut Channel| {
-        let hello: Request = channel.recv().expect("the hello");
-        channel.send(&Reply::Packed).expect("the reply");
-        assert_eq!(hello, Request::hello("test"));
-    };
-    let exchange = || {
-        let mut channel = Channel::connect(agent.address, &tls, DEADLINE)?;
-        channel.send(&Request::hello("test"))?;
-        channel.recv::<Reply>()
-    };
-    let served = agent.serve(echo);
+    let exchange = || Channel::connect(agent.address, &tls, DEADLINE)?.exchange::<_, Reply>(&Request::hello("test"));
+    let served = agent.serve(answer_hello);
     assert_eq!(exchange().expect("the first connection"), Reply::Packed);
     assert_eq!(served.join().expect("the agent thread"), Ok(client.fingerprint()));
 
     std::fs::write(&agent.allow, AllowList::default().text()).expect("an empty allow list");
-    let served = agent.serve(echo);
+    let served = agent.serve(answer_hello);
     let refused = exchange();
     assert!(
         matches!(refused, Err(LinkError::Untrusted(_) | LinkError::Protocol(_))),
@@ -147,10 +149,8 @@ fn a_client_outside_the_allow_list_gets_no_reply() {
     let served = agent.serve(|_| panic!("the agent served a stranger"));
     // TLS 1.3 ends the handshake of the client before the agent checks its certificate, so the refusal arrives at the
     // first read.
-    let outcome = connect(agent.address, agent.identity.fingerprint(), &stranger, DEADLINE).and_then(|mut channel| {
-        channel.send(&Request::hello("test"))?;
-        channel.recv::<Reply>()
-    });
+    let outcome = connect(agent.address, agent.identity.fingerprint(), &stranger, DEADLINE)
+        .and_then(|mut channel| channel.exchange::<_, Reply>(&Request::hello("test")));
     assert!(
         matches!(outcome, Err(LinkError::Untrusted(_) | LinkError::Protocol(_))),
         "{outcome:?}"
@@ -223,15 +223,13 @@ fn a_closer_ends_a_waiting_read_from_another_thread() {
 fn a_relayed_connection_carries_the_handshake_and_the_frames() {
     let client = Identity::generate().expect("the client identity");
     let agent = agent(&[&client]);
-    let served = agent.serve(|channel| {
-        let hello: Request = channel.recv().expect("the hello");
-        assert_eq!(hello, Request::hello("test"));
-        channel.send(&Reply::Packed).expect("the reply");
-    });
+    let served = agent.serve(answer_hello);
     let socket = relay::connect(agent.address, DEADLINE).expect("relayed");
     let tls = ClientTls::new(agent.identity.fingerprint(), &client).expect("the client TLS");
     let mut channel = Channel::connect_over(socket, &tls, DEADLINE).expect("connected");
-    channel.send(&Request::hello("test")).expect("sent");
-    assert_eq!(channel.recv::<Reply>().expect("the reply"), Reply::Packed);
+    assert_eq!(
+        channel.exchange::<_, Reply>(&Request::hello("test")).expect("the reply"),
+        Reply::Packed
+    );
     assert_eq!(served.join().expect("the agent thread"), Ok(client.fingerprint()));
 }
