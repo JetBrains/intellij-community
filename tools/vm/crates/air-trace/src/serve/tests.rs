@@ -153,6 +153,21 @@ fn new_fixture() -> Fixture {
     }
 }
 
+/// The plan of the scenario of `manifest` in the lane `UI`.
+fn plan_of(manifest: &Manifest) -> PlanResult {
+    PlanResult {
+        lanes: vec!["UI".to_owned()],
+        classes: vec![manifest.test_class.clone()],
+        scenarios: vec![ScenarioRef {
+            test_class: manifest.test_class.clone(),
+            scenario: manifest.scenario.clone(),
+            flow: manifest.flow.clone(),
+            lane: "UI".to_owned(),
+        }],
+        ..PlanResult::default()
+    }
+}
+
 fn fixture_roots(fixture: &Fixture) -> Vec<Root> {
     vec![
         Root::new(RootKind::Flag, &fixture.dir_root),
@@ -914,17 +929,7 @@ async fn plan_joins_the_resolved_scenarios_with_the_bundles_on_disk() {
             if broken {
                 anyhow::bail!("nothing maps broken");
             }
-            Ok(PlanResult {
-                lanes: vec!["UI".to_owned()],
-                classes: vec![manifest.test_class.clone()],
-                scenarios: vec![ScenarioRef {
-                    test_class: manifest.test_class.clone(),
-                    scenario: manifest.scenario.clone(),
-                    flow: manifest.flow.clone(),
-                    lane: "UI".to_owned(),
-                }],
-                ..PlanResult::default()
-            })
+            Ok(plan_of(&manifest))
         })
     };
     let served = start_server(settings).await;

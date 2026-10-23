@@ -166,14 +166,7 @@ fn testlogs() -> tempfile::TempDir {
         .join("plugins/air/tests/integration/ui-real/ui-real_lane_test/shard_1_of_2");
     let other_package = format!("com.intellij.air.integration.real.{}", manifest.test_class);
     write_xml(&sharded, &[(&other_package, &manifest.scenario)]);
-    let outputs = tempfile::tempdir().unwrap();
-    copy_tree(&example_bundle(), &bundle_file(&outputs.path().join(ROOT_DIR_NAME), &placed));
-    pack(
-        outputs.path(),
-        &sharded.join(TEST_OUTPUTS).join(OUTPUTS_ZIP),
-        &PackOptions::default(),
-    )
-    .unwrap();
+    pack_example_outputs(&sharded, &placed);
 
     write_xml(&root.path().join("plugins/other/plain_test"), &[("com.example.PlainTest", "works")]);
     root
@@ -260,6 +253,14 @@ fn names_of(out: &Path) -> Vec<(&Path, &'static str)> {
     vec![(out, "<out>")]
 }
 
+/// Packs the golden bundle at `placed` into the `outputs.zip` of the test directory `test`, as Bazel zips the
+/// undeclared outputs of a test.
+fn pack_example_outputs(test: &Path, placed: &str) {
+    let outputs = tempfile::tempdir().unwrap();
+    copy_tree(&example_bundle(), &bundle_file(&outputs.path().join(ROOT_DIR_NAME), placed));
+    pack(outputs.path(), &test.join(TEST_OUTPUTS).join(OUTPUTS_ZIP), &PackOptions::default()).unwrap();
+}
+
 /// The picture of the last snapshot of the golden bundle, a path inside it.
 fn manifest_thumbnail() -> String {
     let scanned = Scanner::new(Options::default()).scan(&[Root::new(RootKind::Flag, example_bundle())]);
@@ -276,9 +277,7 @@ fn a_bundle_in_both_the_directory_and_the_zip_is_published_once() {
     write_xml(&lane, &[(&manifest.test_class, &manifest.scenario)]);
     let traces = lane.join(TEST_OUTPUTS).join(ROOT_DIR_NAME);
     copy_tree(&example_bundle(), &bundle_file(&traces, &placed));
-    let outputs = tempfile::tempdir().unwrap();
-    copy_tree(&example_bundle(), &bundle_file(&outputs.path().join(ROOT_DIR_NAME), &placed));
-    pack(outputs.path(), &lane.join(TEST_OUTPUTS).join(OUTPUTS_ZIP), &PackOptions::default()).unwrap();
+    pack_example_outputs(&lane, &placed);
     let out = tempfile::tempdir().unwrap();
     let (stdout, stderr) = run(root.path(), out.path(), None);
     assert_eq!(stdout.matches(TRACE_METADATA).count(), 1, "{stdout}");

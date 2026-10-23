@@ -153,9 +153,7 @@ async fn controller_runs_are_listed_from_their_journals() {
     write_file(&runs_dir.join("stray.txt"), b"");
     fs::create_dir_all(runs_dir.join("run-empty")).expect("create a directory");
 
-    let mut settings = test_settings(&scratch, vec![Root::new(RootKind::Flag, scratch.dir())]);
-    settings.runs_dir = Some(runs_dir);
-    let served = start_server(settings).await;
+    let served = start_server(runs_settings(&scratch, &runs_dir)).await;
     let runs = served.list_runs().await;
     let controller_runs = runs["controllerRuns"].as_array().expect("controllerRuns is a list");
     assert_eq!(controller_runs.len(), 3, "the three with a journal: {runs}");
@@ -197,9 +195,7 @@ async fn the_run_route_answers_the_journal_from_an_offset() {
         "run-1",
         &[run_started("run-1", "run", &[]), Progress::Note("leasing".to_owned())],
     );
-    let mut settings = test_settings(&scratch, vec![Root::new(RootKind::Flag, scratch.dir())]);
-    settings.runs_dir = Some(runs_dir.clone());
-    let served = start_server(settings).await;
+    let served = start_server(runs_settings(&scratch, &runs_dir)).await;
 
     let answer = served.get("/__air/run/run-1", &[]).await;
     assert_eq!(answer.status, StatusCode::OK, "{}", answer.text());
@@ -297,9 +293,25 @@ async fn run_appended_is_sent_when_a_journal_grows() {
 
 /// The settings of a server over one runs directory whose watcher the test drives, with no poll and no periodic
 /// scan: only an event that the test sends can make the server read the runs directory again.
-fn driven_settings(scratch: &Scratch, runs_dir: &Path, driven: &DrivenWatch) -> Settings {
+/// The settings of a server that reads the runs of `runs_dir`, with the scratch as its one root.
+fn runs_settings(scratch: &Scratch, runs_dir: &Path) -> Settings {
     let mut settings = test_settings(scratch, vec![Root::new(RootKind::Flag, scratch.dir())]);
     settings.runs_dir = Some(runs_dir.to_path_buf());
+    settings
+}
+
+/// A server over the runs directory of a new scratch, which a driven watch observes, and a subscription to its events.
+async fn driven_runs() -> (Scratch, PathBuf, DrivenWatch, TestServer, Events) {
+    let scratch = Scratch::default();
+    let runs_dir = scratch.dir();
+    let driven = DrivenWatch::default();
+    let served = start_server(driven_settings(&scratch, &runs_dir, &driven)).await;
+    let events = served.subscribe().await;
+    (scratch, runs_dir, driven, served, events)
+}
+
+fn driven_settings(scratch: &Scratch, runs_dir: &Path, driven: &DrivenWatch) -> Settings {
+    let mut settings = runs_settings(scratch, runs_dir);
     settings.watch = driven.watch();
     settings.tail_interval = Duration::from_hours(1);
     settings
@@ -309,11 +321,7 @@ fn driven_settings(scratch: &Scratch, runs_dir: &Path, driven: &DrivenWatch) -> 
 /// is then watched: the creation of the journal raises an event, and the run is announced.
 #[tokio::test(flavor = "multi_thread")]
 async fn a_run_directory_seen_before_its_journal_is_watched() {
-    let scratch = Scratch::default();
-    let runs_dir = scratch.dir();
-    let driven = DrivenWatch::default();
-    let served = start_server(driven_settings(&scratch, &runs_dir, &driven)).await;
-    let mut events = served.subscribe().await;
+    let (_scratch, runs_dir, driven, served, mut events) = driven_runs().await;
 
     fs::create_dir_all(runs_dir.join("run-2")).expect("create the run's directory");
     served.scan().await;
@@ -330,11 +338,7 @@ async fn a_run_directory_seen_before_its_journal_is_watched() {
 /// announces a run whose own event was lost.
 #[tokio::test(flavor = "multi_thread")]
 async fn a_rescan_notice_of_the_watcher_starts_a_scan() {
-    let scratch = Scratch::default();
-    let runs_dir = scratch.dir();
-    let driven = DrivenWatch::default();
-    let served = start_server(driven_settings(&scratch, &runs_dir, &driven)).await;
-    let mut events = served.subscribe().await;
+    let (_scratch, runs_dir, driven, _served, mut events) = driven_runs().await;
 
     write_journal(&runs_dir, "run-2", &[run_started("run-2", "run", &[])]);
     assert!(driven.send(notify::Event::new(EventKind::Other).set_flag(Flag::Rescan)));
@@ -347,9 +351,7 @@ async fn a_rescan_notice_of_the_watcher_starts_a_scan() {
 async fn a_new_run_is_announced_without_a_file_event() {
     let scratch = Scratch::default();
     let runs_dir = scratch.dir();
-    let mut settings = test_settings(&scratch, vec![Root::new(RootKind::Flag, scratch.dir())]);
-    settings.runs_dir = Some(runs_dir.clone());
-    let served = start_server(settings).await;
+    let served = start_server(runs_settings(&scratch, &runs_dir)).await;
     let mut events = served.subscribe().await;
 
     write_journal(&runs_dir, "run-2", &[run_started("run-2", "run", &[])]);
@@ -1222,17 +1224,7 @@ async fn the_routes_answer_what_the_site_reads() {
         if input.text == "nothing" {
             anyhow::bail!("nothing maps nothing");
         }
-        Ok(PlanResult {
-            lanes: vec!["UI".to_owned()],
-            classes: vec![manifest.test_class.clone()],
-            scenarios: vec![ScenarioRef {
-                test_class: manifest.test_class.clone(),
-                scenario: manifest.scenario.clone(),
-                flow: manifest.flow.clone(),
-                lane: "UI".to_owned(),
-            }],
-            ..PlanResult::default()
-        })
+        Ok(plan_of(&manifest))
     });
     let served = start_server(settings).await;
     let runs = served.list_runs().await;
