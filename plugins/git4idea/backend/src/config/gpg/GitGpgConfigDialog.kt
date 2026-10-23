@@ -128,7 +128,7 @@ class GitGpgConfigDialog(
       initialConfig = config
       updatePresentation()
 
-      val keys = secretKeys.load()
+      val keys = secretKeys.reload()
       comboBoxModel.addAll(keys.keys)
 
       if (keys.keys.isEmpty()) {
