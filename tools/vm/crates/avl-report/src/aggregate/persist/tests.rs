@@ -1,5 +1,4 @@
 use std::fs;
-use std::path::Path;
 
 use avl_wire::report::{decode_flake_summary, decode_shard_verdict};
 use pretty_assertions::assert_eq;
@@ -70,6 +69,7 @@ fn an_aggregate_is_private_and_outside_every_workers_reports() {
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
+        use std::path::Path;
         let mode = |path: &Path| fs::metadata(path).unwrap().permissions().mode() & 0o777;
         assert_eq!(mode(&path), 0o600);
         assert_eq!(mode(path.parent().unwrap()), 0o700);
