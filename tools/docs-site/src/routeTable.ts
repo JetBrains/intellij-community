@@ -69,11 +69,13 @@ export interface RouteParent {
 
 /**
  * How the shell lays out a page on the window (Air ADR "The docs site lays out a page as islands on the window").
- * - `reading`: the section tree, the document, and the table of contents, each an island. The outlet scrolls.
+ * - `reading`: the section tree, the document, and the table of contents, each an island. The document has the measure
+ *   of prose, 70ch. The outlet scrolls.
+ * - `catalog`: the reading layout with a wide document, about 960px, for a page of cards, tiles and chip rows.
  * - `tool`: one island across the window, at the density of the IDE. The outlet scrolls.
  * - `canvas`: the page fills the outlet with its own islands, and the outlet does not scroll. The page owns its trail.
  */
-export type PageLayout = 'reading' | 'tool' | 'canvas'
+export type PageLayout = 'reading' | 'catalog' | 'tool' | 'canvas'
 
 /** The canonical entry that builds a route. */
 export interface RouteEntryInfo {
@@ -408,9 +410,9 @@ export function kernelRouteEntries(config: Pick<SiteConfig, 'docs' | 'launchPick
   const { isDecisionPath, decisionSlug } = decisionPaths(config.docs.decisions)
   return [
     route('home', '/', { section: null, layout: 'tool' }),
-    route('guides', '/guides/:anchor?', { when: ({ anchor }) => anchor === null || isCatalogAnchor(anchor), section: 'guides', layout: 'reading' }),
+    route('guides', '/guides/:anchor?', { when: ({ anchor }) => anchor === null || isCatalogAnchor(anchor), section: 'guides', layout: 'catalog' }),
     route('guide', '/guides/:slug/:anchor?', { when: ({ slug }) => !isCatalogAnchor(slug), section: 'guides', parent: GUIDES, layout: 'reading' }),
-    route('explainers', '/explain/:anchor?', { when: ({ anchor }) => anchor === null || isCatalogAnchor(anchor), section: 'explainers', layout: 'reading' }),
+    route('explainers', '/explain/:anchor?', { when: ({ anchor }) => anchor === null || isCatalogAnchor(anchor), section: 'explainers', layout: 'catalog' }),
     route('explainer', '/explain/:slug/:chapter?', {
       query: { step: int, node: text },
       when: ({ slug }) => !isCatalogAnchor(slug),
@@ -422,7 +424,7 @@ export function kernelRouteEntries(config: Pick<SiteConfig, 'docs' | 'launchPick
       query: { status: oneOf<DecisionStatusFilter>('accepted', 'proposed', 'partly-superseded', 'superseded'), topic: text },
       when: ({ anchor }) => anchor === null || isCatalogAnchor(anchor),
       section: 'decisions',
-      layout: 'reading',
+      layout: 'catalog',
     }),
     route('decision', '/decisions/:slug/:anchor?', { when: ({ slug }) => !isCatalogAnchor(slug), section: 'decisions', parent: DECISIONS, layout: 'reading' }),
     route('source', '/source/*path', { query: { selection: lineRange('line') }, section: null, parent: { label: 'Source' }, layout: 'tool' }),

@@ -94,15 +94,16 @@ window, and the route table gives each page one of three layouts (`PageLayout` o
 
 | Layout | The islands | Pages of the kernel |
 | --- | --- | --- |
-| `reading` | The section tree, the document with its crumb row, and the table of contents. | Guides, decisions, docs, the explainers index. |
+| `reading` | The section tree, the document with its crumb row (742px, 70ch of prose), and the table of contents. | A guide, a decision record, a doc. |
+| `catalog` | The reading layout with a 960px document, for cards, tiles and chip rows. | The indexes of the guides, the explainers and the decisions. |
 | `tool` | One island across the window. | Home, the source viewer, the launch picker. |
 | `canvas` | The page fills the outlet and draws its own islands. The page owns its trail. | One explainer. |
 
 A canonical route entry without a `layout` does not compile. `src/pageLayout.tsx` draws the layouts, and `Island` of
 `src/components/Island.tsx` is one island. `sectionTrees` gives the trees of the site sections by route page, for
 example the specs of a spec page. The kernel gives the trees of the guides and the decision records. A reading page
-without a tree keeps the empty column, so the left edge of the document stays put. Below the `section-nav:` breakpoint
-the tree opens in a Sheet from the crumb row.
+without a tree or a table of contents has no empty column for it, and its islands stay in the middle of the window.
+Below the `section-nav:` breakpoint the tree opens in a Sheet from the crumb row.
 
 The kernel imports each shadcn component by a relative path, for example `./ui/button`. The files under
 `src/components/ui/` are stock shadcn. The Air site resolves a kernel import of a GenUI catalog name to the catalog

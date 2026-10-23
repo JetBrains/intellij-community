@@ -17,9 +17,14 @@ import { cn } from './lib/utils'
 import type { PageLayout } from './routeTable.ts'
 import type { SectionTree } from './sectionTree'
 
+/** The measure of a reading document: `prose` is 70ch, `wide` about 960px for a page of cards. */
+export type PageMeasure = 'prose' | 'wide'
+
 /** What the shell knows about the page that a page part draws. */
 export interface PageChrome {
-  layout: PageLayout
+  /** The layout of the page. A `catalog` route is the reading layout with the wide measure. */
+  layout: Exclude<PageLayout, 'catalog'>
+  measure: PageMeasure
   /** The in-page crumb trail. A canvas page owns its trail, so it gets none. */
   crumbs: RouteCrumb[]
   /** The section tree of a reading page, or null. */
@@ -28,7 +33,7 @@ export interface PageChrome {
   href: string
 }
 
-const PageChromeContext = createContext<PageChrome>({ layout: 'tool', crumbs: [], tree: null, href: '' })
+const PageChromeContext = createContext<PageChrome>({ layout: 'tool', measure: 'prose', crumbs: [], tree: null, href: '' })
 
 export const PageChromeProvider = PageChromeContext.Provider
 
@@ -55,19 +60,21 @@ export function PageCrumbRow({ className }: { className?: string }) {
 }
 
 /**
- * The reading layout: the section tree, then the page. The shell keeps it mounted across the pages of one section, so
- * the tree does not blink and keeps its state. The column of the tree is reserved on a page without a tree, so the left
- * edge of the document stays put between the reading pages.
+ * The reading layout: the section tree, then the page, as one group in the middle of the window. The shell keeps it
+ * mounted across the pages of one section, so the tree does not blink and keeps its state. A page without a tree has
+ * no tree column, so the document and the table of contents take the room. The page (DocPage) gives the width of the
+ * group: its measure and its table of contents.
  */
 export function ReadingLayout({ children }: { children: ReactNode }) {
   const { tree, href } = usePageChrome()
   return (
     <div className="reading-layout flex items-start justify-center gap-2 px-2 pb-2">
-      <div className="hidden w-[240px] flex-none self-stretch section-nav:block">
-        {tree !== null && <SectionNav key={tree.id} tree={tree} currentHref={href} />}
-      </div>
-      {/* the document column (70ch and its padding), and the table of contents with its gap at the toc breakpoint */}
-      <div className="reading-column min-w-0 flex-1 max-w-[calc(70ch+80px)] toc:max-w-[calc(70ch+80px+228px)]">
+      {tree !== null && (
+        <div className="hidden w-[240px] flex-none self-stretch section-nav:block">
+          <SectionNav key={tree.id} tree={tree} currentHref={href} />
+        </div>
+      )}
+      <div className="reading-column min-w-0 flex-[0_1_auto]">
         {children}
       </div>
     </div>

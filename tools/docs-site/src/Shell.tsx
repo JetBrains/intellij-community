@@ -173,10 +173,13 @@ export function Shell({ config, parts }: { config: SiteConfig, parts: ShellParts
   const route = useBrowserRoute(identity)
   const [paletteOpen, setPaletteOpen] = usePalette()
   const Home = parts.home
-  const layout = layoutOf(route)
+  const entryLayout = layoutOf(route)
+  // a catalog page is a reading page with the wide measure
+  const layout = entryLayout === 'catalog' ? 'reading' : entryLayout
   const treeSource = layout === 'reading' ? parts.sectionTrees?.[route.page] ?? KERNEL_SECTION_TREES[route.page] : undefined
   const chrome: PageChrome = {
     layout,
+    measure: entryLayout === 'catalog' ? 'wide' : 'prose',
     crumbs: layout === 'canvas' ? [] : crumbsForRoute(route),
     tree: treeSource === undefined ? null : sectionTreeOf(treeSource),
     href: hrefForRoute(route),

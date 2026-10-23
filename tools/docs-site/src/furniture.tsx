@@ -16,29 +16,41 @@ import {Separator} from './components/ui/separator'
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from './components/ui/select'
 import {ToggleGroup, ToggleGroupItem} from './components/ui/toggle-group'
 import {cn} from './lib/utils'
-import {PageCrumbRow, usePageChrome} from './pageLayout'
+import {PageCrumbRow, usePageChrome, type PageMeasure} from './pageLayout'
 import {ADR_STATUSES, type AdrStatus} from '../scripts/docMeta'
 import {repoPathOf} from '../scripts/sourcePaths'
 import {site} from './site'
 import {sourceHref} from './sourceRef'
 
 /**
+ * The width of a reading page: the document and, at the toc breakpoint, the 220px table of contents with its 8px gap.
+ * The prose document is 742px: 70ch of the 15px prose (662px) and its padding. It is in px, because the page box has
+ * the 13px of the chrome, where 70ch would be narrower. The wide document is 960px. The literal classes let Tailwind
+ * see each width.
+ */
+const READING_WIDTH: Record<PageMeasure, { alone: string, withToc: string }> = {
+  prose: { alone: 'w-[742px]', withToc: 'w-[742px] toc:w-[970px]' },
+  wide: { alone: 'w-[960px]', withToc: 'w-[960px] toc:w-[1188px]' },
+}
+
+/**
  * The page box of a doc page; `toc` gives the table of contents its column (content first child, TocAside second).
- * In the reading layout the page draws two islands: the document with the crumb row, and the table of contents; a page
- * without a table of contents keeps its column, so the document edge stays put. In the tool and the canvas layout the
- * page is a centered box inside the island of the layout.
+ * In the reading layout the page draws two islands: the document with the crumb row, and the table of contents. The
+ * measure of the route gives the width of the document. In the tool and the canvas layout the page is a centered box
+ * inside the island of the layout.
  */
 export function DocPage({ toc = false, className, children }: { toc?: boolean, className?: string, children: ReactNode }) {
-  const { layout } = usePageChrome()
+  const { layout, measure } = usePageChrome()
   if (layout === 'reading') {
     const [content, ...aside] = toc ? Children.toArray(children) : [children]
+    const width = READING_WIDTH[measure]
     return (
-      <div className={cn('doc-page flex items-start gap-2 **:scroll-mt-3', toc && 'has-toc', className)}>
+      <div className={cn('doc-page flex max-w-full items-start gap-2 **:scroll-mt-3', toc ? width.withToc : width.alone, toc && 'has-toc', className)} data-measure={measure}>
         <Island as="article" className="doc-island min-w-0 flex-1 text-base px-10 pt-5 pb-20 max-md:px-4 max-md:pt-3 max-md:pb-15">
           <PageCrumbRow />
           {content}
         </Island>
-        {toc ? aside : <div className="toc-column hidden w-[220px] flex-none toc:block" aria-hidden="true" />}
+        {aside}
       </div>
     )
   }
