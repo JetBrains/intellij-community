@@ -101,8 +101,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.rpc" />
     <orderEntry type="module" module-name="fleet.rpc" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
-    <orderEntry type="module" module-name="intellij.platform.polySymbols" />
-    <orderEntry type="module" module-name="intellij.platform.polySymbols.backend" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.consoleView" />

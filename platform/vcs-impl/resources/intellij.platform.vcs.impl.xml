@@ -52,8 +52,6 @@
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.lvcs"/>
-    <module name="intellij.platform.polySymbols"/>
-    <module name="intellij.platform.polySymbols.backend"/>
     <module name="intellij.platform.project"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>

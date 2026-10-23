@@ -31,6 +31,15 @@ jvm_library(
         "//platform/platform-impl/rpc",
         "//platform/backend",
         "//platform/dvcs-impl/shared",
+        "//platform/vcs-impl",
+        "//platform/polySymbols/shared:polySymbols",
+        "//platform/polySymbols/backend",
+        "//platform/platform-api:ide",
+        "//platform/lang-impl",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/vcs-api:vcs",
+        "//platform/projectModel-api:projectModel",
+        "//platform/core-ui",
     ],
 )
 
@@ -52,6 +61,15 @@ jvm_library(
         "//platform/platform-impl/rpc:rpc_test_lib",
         "//platform/backend:backend_test_lib",
         "//platform/dvcs-impl/shared:shared_test_lib",
+        "//platform/vcs-impl:vcs-impl_test_lib",
+        "//platform/polySymbols/shared:polySymbols_test_lib",
+        "//platform/polySymbols/backend:backend_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/vcs-api:vcs_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.vcs.impl.backend` end

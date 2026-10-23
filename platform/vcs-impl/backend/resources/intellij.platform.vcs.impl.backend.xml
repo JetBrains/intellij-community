@@ -3,13 +3,27 @@
   <dependencies>
     <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.rpc"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.polySymbols"/>
+    <module name="intellij.platform.polySymbols.backend"/>
+    <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.vcs.dvcs.impl.shared"/>
+    <module name="intellij.platform.vcs.impl"/>
     <module name="intellij.platform.vcs.impl.shared"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
+    <polySymbols.psiReferenceProvider hostElementClass="com.intellij.psi.PsiPlainTextFile"
+                                      hostLanguage="TEXT"
+                                      implementationClass="com.intellij.platform.vcs.impl.backend.CommitMessageReferenceProvider"/>
+    <polySymbols.enableInLanguage language="TEXT"/>
+
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.vcs.impl.backend.VcsRemoteApiProvider"
                                             apiInterfaces="com.intellij.platform.vcs.impl.shared.rpc.ChangeListsApi,
                                                            com.intellij.platform.vcs.impl.shared.rpc.VcsMappingsApi,
