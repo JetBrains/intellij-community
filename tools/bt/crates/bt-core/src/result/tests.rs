@@ -192,6 +192,22 @@ fn at(label: &'static str, xml: &'static str) -> AttemptSpec {
     AttemptSpec { xml, ..attempt(label) }
 }
 
+/// A failed attempt of `//p:t` with its test.xml.
+fn failed_attempt() -> AttemptSpec {
+    AttemptSpec {
+        status: "FAILED",
+        ..at("//p:t", "/exec/testlogs/p/t/test.xml")
+    }
+}
+
+/// Collects one attempt with `xml` as its test.xml. Bazel ends the run with 3, its code for a failed test.
+fn collect_failed(xml: &str, attempt: &AttemptSpec) -> RunResult {
+    let fake = FakeRuntime::new([]);
+    fake.put_absolute(attempt.xml, xml);
+    let bep = bep_of(&fake, &[test_result_event(attempt)]);
+    collect_results(&fake, &bep, 5000, 3, "")
+}
+
 fn target_completed_failure(label: &str) -> serde_json::Value {
     json!({
         "id": {"targetCompleted": {"label": label}},
@@ -263,9 +279,7 @@ fn an_all_bucketing_run_is_no_tests() {
 
 #[test]
 fn failures_are_collected_and_the_log_path_is_relativized() {
-    let fake = FakeRuntime::new([]);
-    fake.put_absolute(
-        "/exec/testlogs/p/t/test.xml",
+    let result = collect_failed(
         &suite_xml(&crate::fake::SuiteSpec {
             // The body the digest must never read: 50 KB of captured platform log.
             system_out: "x".repeat(50_000),
@@ -274,16 +288,11 @@ fn failures_are_collected_and_the_log_path_is_relativized() {
                 vec![case("a"), failing("b", "E", "boom", "at com.intellij.air.F.m(F.kt:1)")],
             )
         }),
-    );
-    let bep = bep_of(
-        &fake,
-        &[test_result_event(&AttemptSpec {
-            status: "FAILED",
+        &AttemptSpec {
             log: "/cache/execroot/_main/bazel-out/darwin_arm64-fastbuild/testlogs/plugins/air/x/t/test.log",
-            ..at("//p:t", "/exec/testlogs/p/t/test.xml")
-        })],
+            ..failed_attempt()
+        },
     );
-    let result = collect_results(&fake, &bep, 5000, 3, "");
     assert_eq!((result.status, result.exit_code), (RunStatus::Fail, exit::TEST_FAILED));
     assert_eq!(
         result.failures.iter().map(|failure| failure.name.as_str()).collect::<Vec<_>>(),
@@ -399,23 +408,14 @@ fn a_cached_replay_still_reports_the_real_test_count() {
 /// a test failure would print the runner's stack dump instead of naming the real cause.
 #[test]
 fn the_synthesized_wrapper_suite_becomes_no_tests() {
-    let fake = FakeRuntime::new([]);
-    fake.put_absolute(
-        "/exec/testlogs/p/t/test.xml",
+    let result = collect_failed(
         &wrapper_xml(
             "plugins/air/shared/core/ai-agent-core-tests_test",
             42,
             &format!("No tests found\n{}", "noise ".repeat(5000)),
         ),
+        &failed_attempt(),
     );
-    let bep = bep_of(
-        &fake,
-        &[test_result_event(&AttemptSpec {
-            status: "FAILED",
-            ..at("//p:t", "/exec/testlogs/p/t/test.xml")
-        })],
-    );
-    let result = collect_results(&fake, &bep, 5000, 3, "");
     assert_eq!((result.status, result.exit_code), (RunStatus::NoTests, exit::NO_TESTS));
     assert!(result.failures.is_empty(), "{:?}", result.failures);
     assert_eq!(result.targets[0].wrapper_exit_code, Some(42));
@@ -427,24 +427,15 @@ fn the_synthesized_wrapper_suite_becomes_no_tests() {
 #[test]
 fn a_discovery_failure_is_no_tests_rather_than_green() {
     for wrapper_code in [2, 1, 255] {
-        let fake = FakeRuntime::new([]);
-        fake.put_absolute(
-            "/exec/testlogs/p/t/test.xml",
+        // The bazel exit 3 of a failed test is how the runner's own code reaches the result.
+        let result = collect_failed(
             &wrapper_xml(
                 "plugins/air/shared/session/air-shared-session-tests_test",
                 wrapper_code,
                 "Could not find method with name [no such method]",
             ),
+            &failed_attempt(),
         );
-        let bep = bep_of(
-            &fake,
-            &[test_result_event(&AttemptSpec {
-                status: "FAILED",
-                ..at("//p:t", "/exec/testlogs/p/t/test.xml")
-            })],
-        );
-        // 3 is what bazel reports for a test that failed, which is how the runner's own code reaches it.
-        let result = collect_results(&fake, &bep, 5000, 3, "");
         assert_eq!(
             (result.status, result.exit_code),
             (RunStatus::NoTests, exit::NO_TESTS),
@@ -528,19 +519,10 @@ fn a_target_that_failed_to_build_still_appears() {
 /// A runner that reported counts in the suite header without per-case failure elements still failed.
 #[test]
 fn the_suite_header_is_trusted_when_there_are_no_per_case_failures() {
-    let fake = FakeRuntime::new([]);
-    fake.put_absolute(
-        "/exec/testlogs/p/t/test.xml",
+    let result = collect_failed(
         r#"<testsuites><testsuite name="FooTest" tests="2" failures="1" errors="1" skipped="0"><testcase name="a" classname="FooTest"/></testsuite></testsuites>"#,
+        &failed_attempt(),
     );
-    let bep = bep_of(
-        &fake,
-        &[test_result_event(&AttemptSpec {
-            status: "FAILED",
-            ..at("//p:t", "/exec/testlogs/p/t/test.xml")
-        })],
-    );
-    let result = collect_results(&fake, &bep, 5000, 3, "");
     assert_eq!((result.targets[0].failed, result.status), (2, RunStatus::Fail));
 }
 
