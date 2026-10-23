@@ -105,7 +105,7 @@ public class ComplexTextFragmentTest {
     FontLayoutService.setInstance(new MockFontLayoutService(TEST_CHAR_WIDTH, TEST_LINE_HEIGHT, TEST_DESCENT));
     var graphics = new BufferedImage(20, 20, BufferedImage.TYPE_INT_RGB).createGraphics();
     try {
-      var fontInfo = new FontInfo(Font.MONOSPACED, 1, Font.PLAIN, false, new FontRenderContext(null, false, false));
+      var fontInfo = createFontInfo();
       var fragment = new ComplexTextFragment(new char[]{'a'}, 0, 1, false, fontInfo, null);
       var failingGraphics = new Graphics2DDelegate(graphics) {
         @Override
