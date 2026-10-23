@@ -97,6 +97,14 @@ abstract class WelcomeScreenProjectProvider {
       return getWelcomeScreenProjectProvider()?.getWelcomeScreenProjectPath()
     }
 
+    /**
+     * Tells if the welcome project of the registered provider opens as a welcome-experience frame, see
+     * [doOwnsWelcomeExperienceProject]. Returns `false` when no provider is registered.
+     */
+    fun ownsWelcomeExperienceProject(): Boolean {
+      return getWelcomeScreenProjectProvider()?.doOwnsWelcomeExperienceProject() ?: false
+    }
+
     @Suppress("unused")
     fun canOpenFilesFromSystemFileManager(filePath: Path): Boolean {
       return getWelcomeScreenProjectProvider()?.canOpenFilesFromSystemFileManager(filePath) ?: false
@@ -195,6 +203,20 @@ abstract class WelcomeScreenProjectProvider {
     val name = project.name
     return name == getWelcomeScreenProjectName() || name == getWelcomeScreenProjectDirName()
   }
+
+  /**
+   * Return true if the welcome project opens as a welcome-experience frame.
+   *
+   * Such a frame is the project that [doIsWelcomeScreenProject] recognizes, and the platform gives it the
+   * [ProjectFrameCapability.WELCOME_EXPERIENCE] capability. A feature that puts a window of its own into that frame
+   * reads this fact before the welcome project opens, for example the Agent Sessions window.
+   *
+   * Return false if the project at the welcome-project path opens as an ordinary project frame, as the DataGrip
+   * default project does. A provider that returns false must also return false from [doIsWelcomeScreenProject].
+   *
+   * [doIsEditableProject] is a separate fact. An editable welcome project, such as the PyCharm one, still returns true.
+   */
+  protected open fun doOwnsWelcomeExperienceProject(): Boolean = true
 
   open fun showHomeActionInProjectWidget(): Boolean = true
 
