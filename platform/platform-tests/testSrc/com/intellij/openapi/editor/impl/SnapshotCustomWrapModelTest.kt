@@ -20,6 +20,7 @@ import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.lang.ref.WeakReference
+import kotlin.time.Duration.Companion.minutes
 
 @TestApplication
 @UsePMarkerImplementation
@@ -175,7 +176,7 @@ class SnapshotCustomWrapModelTest {
   }
 
   @Test
-  fun `snapshot root retains a custom wrap`(): Unit = timeoutRunBlocking {
+  fun `snapshot root retains a custom wrap`(): Unit = timeoutRunBlocking(timeout = 1.minutes) {
     val state = withEditor("abcdef") { editor ->
       val wrapReference = createWeakWrap(editor)
 
