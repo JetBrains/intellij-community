@@ -57,6 +57,13 @@ fn the_listen_wait_ends_when_the_port_takes_connections_and_refuses_after_its_ti
     let port = listener.local_addr().expect("the address").port();
     assert_eq!(wait_for_listen(port, Duration::from_secs(5)), Ok(()));
     drop(listener);
+    // On macOS a child of another test thread can get the listening socket before its close-on-exec flag is set, and
+    // the socket then lives as long as that child. The check starts once the port refuses.
+    let closed = Instant::now();
+    while TcpStream::connect(("127.0.0.1", port)).is_ok() {
+        assert!(closed.elapsed() < Duration::from_secs(60), "the port still takes connections");
+        std::thread::sleep(Duration::from_millis(50));
+    }
     let started = Instant::now();
     let refused = wait_for_listen(port, Duration::from_millis(300)).expect_err("nothing listens");
     assert!(refused.contains("nothing listens on 127.0.0.1"), "{refused}");

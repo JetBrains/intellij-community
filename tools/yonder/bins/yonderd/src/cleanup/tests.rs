@@ -26,7 +26,10 @@ fn git_in(repo: &Path, args: &[&str]) -> String {
 fn repo_with_commit(repo: &Path) -> String {
     fs::create_dir_all(repo).expect("the repository directory");
     git_in(repo, &["init", "-q"]);
-    git_in(repo, &["commit", "-q", "--allow-empty", "-m", "first"]);
+    git_in(
+        repo,
+        &["-c", "maintenance.auto=false", "commit", "-q", "--allow-empty", "-m", "first"],
+    );
     git_in(repo, &["rev-parse", "HEAD"])
 }
 
@@ -104,12 +107,23 @@ fn the_cleanup_repacks_a_listed_repository_whose_packs_piled_up() {
     let home = Home::new(dir.path().to_path_buf());
     let repo = dir.path().join("repo");
     repo_with_commit(&repo);
-    git_in(&repo, &["config", "gc.autoPackLimit", "2"]);
-    git_in(&repo, &["config", "maintenance.auto", "true"]);
     for index in 0..3 {
-        git_in(&repo, &["commit", "-q", "--allow-empty", "-m", &format!("run {index}")]);
+        git_in(
+            &repo,
+            &[
+                "-c",
+                "maintenance.auto=false",
+                "commit",
+                "-q",
+                "--allow-empty",
+                "-m",
+                &format!("run {index}"),
+            ],
+        );
         git_in(&repo, &["repack", "-q"]);
     }
+    // A commit starts a maintenance of its own in the background, and its lock would make the cleanup skip the run.
+    git_in(&repo, &["config", "gc.autoPackLimit", "2"]);
     let packs = || {
         fs::read_dir(repo.join(".git/objects/pack"))
             .expect("the pack directory")
