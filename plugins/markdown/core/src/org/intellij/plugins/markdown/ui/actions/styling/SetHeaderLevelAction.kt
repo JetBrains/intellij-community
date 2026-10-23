@@ -48,7 +48,7 @@ internal class SetHeaderLevelAction: AnAction(), CustomComponentAction, DumbAwar
     }
     updateWithChildren(event)
     val editor = event.getData(CommonDataKeys.EDITOR)
-    if (editor?.let(this::isMultilineSelection) == true) {
+    if (editor != null && isMultilineSelection(event, editor)) {
       event.presentation.isEnabled = false
       return
     }
@@ -76,12 +76,11 @@ internal class SetHeaderLevelAction: AnAction(), CustomComponentAction, DumbAwar
     return MyActionButton(group, presentation, place)
   }
 
-  private fun isMultilineSelection(editor: Editor): Boolean {
+  private fun isMultilineSelection(event: AnActionEvent, editor: Editor): Boolean {
     val document = editor.document
-    val selectionModel = editor.selectionModel
-    val start = document.getLineNumber(selectionModel.selectionStart)
-    val end = document.getLineNumber(selectionModel.selectionEnd)
-    return start != end
+    return SelectionUtil.obtainCaretSnapshots(this, event, editor).any { caret ->
+      document.getLineNumber(caret.selectionStart) != document.getLineNumber(caret.selectionEnd)
+    }
   }
 
   internal class SetHeaderLevelGroup: DefaultActionGroup(

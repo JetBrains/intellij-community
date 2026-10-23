@@ -8,6 +8,7 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.TokenSet
@@ -17,6 +18,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.startOffset
 import com.intellij.util.DocumentUtil
 import org.intellij.plugins.markdown.MarkdownBundle.messagePointer
+import org.intellij.plugins.markdown.editor.runForEachCaret
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
@@ -60,13 +62,18 @@ abstract class SetHeaderLevelImpl(
   override fun isSelected(event: AnActionEvent): Boolean {
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return false
     val editor = event.getData(CommonDataKeys.EDITOR) ?: return false
-    val caret = SelectionUtil.obtainPrimaryCaretSnapshot(this, event) ?: return false
-    val element = findParent(file, editor.document, caret.selectionStart, caret.selectionEnd)
-    val header = element?.parentOfType<MarkdownHeader>(withSelf = true)
-    return when {
-      header == null && level == 0 -> true
-      header != null -> header.level == level
-      else -> false
+    val carets = SelectionUtil.obtainCaretSnapshots(this, event, editor)
+    if (carets.isEmpty()) {
+      return false
+    }
+    return carets.all { caret ->
+      val element = findParent(file, editor.document, caret.selectionStart, caret.selectionEnd)
+      val header = element?.parentOfType<MarkdownHeader>(withSelf = true)
+      when {
+        header == null && level == 0 -> true
+        header != null -> header.level == level
+        else -> false
+      }
     }
   }
 
@@ -80,20 +87,23 @@ abstract class SetHeaderLevelImpl(
     }
     val file = event.getData(CommonDataKeys.PSI_FILE) ?: return
     val editor = event.getData(CommonDataKeys.EDITOR) ?: return
-    val caret = event.getData(CommonDataKeys.CARET) ?: return
-    val element = findParent(file, editor.document, caret.selectionStart, caret.selectionEnd)
-    if (element == null) {
-      tryToCreateHeaderFromRawLine(file, editor, caret)
-      return
-    }
-    val header = PsiTreeUtil.getParentOfType(element, MarkdownHeader::class.java, false)
     val project = file.project
     WriteCommandAction.writeCommandAction(project, file)
       .withName(templatePresentation.text)
       .run<RuntimeException> {
-        when {
-          header != null -> handleExistingHeader(header, editor)
-          level != 0 -> element.replace(MarkdownPsiElementFactory.createHeader(project, level, element.text))
+        editor.caretModel.runForEachCaret(reverseOrder = true) { caret ->
+          PsiDocumentManager.getInstance(project).commitDocument(editor.document)
+          val element = findParent(file, editor.document, caret.selectionStart, caret.selectionEnd)
+          if (element == null) {
+            tryToCreateHeaderFromRawLine(editor, caret)
+          }
+          else {
+            val header = PsiTreeUtil.getParentOfType(element, MarkdownHeader::class.java, false)
+            when {
+              header != null -> handleExistingHeader(header, editor)
+              level != 0 -> element.replace(MarkdownPsiElementFactory.createHeader(project, level, element.text))
+            }
+          }
         }
       }
   }
@@ -101,7 +111,7 @@ abstract class SetHeaderLevelImpl(
   /**
    * Simply adds `#` at the line start. If there are no empty lines around new header, new lines will be added them.
    */
-  private fun tryToCreateHeaderFromRawLine(file: PsiFile, editor: Editor, caret: Caret) {
+  private fun tryToCreateHeaderFromRawLine(editor: Editor, caret: Caret) {
     val document = editor.document
     val selectionStart = caret.selectionStart
     val selectionEnd = caret.selectionEnd
@@ -110,20 +120,16 @@ abstract class SetHeaderLevelImpl(
       return
     }
     val lineStartOffset = document.getLineStartOffset(line)
-    WriteCommandAction.writeCommandAction(file.project, file)
-      .withName(templatePresentation.text)
-      .run<RuntimeException> {
-        val nextLine = line + 1
-        if (nextLine < document.lineCount && !DocumentUtil.isLineEmpty(document, nextLine)) {
-          val lineEndOffset = document.getLineEndOffset(line)
-          document.insertString(lineEndOffset, "\n")
-        }
-        document.insertString(lineStartOffset, "${"#".repeat(level)} ")
-        val previousLine = line - 1
-        if (previousLine >= 0 && !DocumentUtil.isLineEmpty(document, previousLine)) {
-          document.insertString(lineStartOffset, "\n")
-        }
-      }
+    val nextLine = line + 1
+    if (nextLine < document.lineCount && !DocumentUtil.isLineEmpty(document, nextLine)) {
+      val lineEndOffset = document.getLineEndOffset(line)
+      document.insertString(lineEndOffset, "\n")
+    }
+    document.insertString(lineStartOffset, "${"#".repeat(level)} ")
+    val previousLine = line - 1
+    if (previousLine >= 0 && !DocumentUtil.isLineEmpty(document, previousLine)) {
+      document.insertString(lineStartOffset, "\n")
+    }
   }
 
   private fun handleExistingHeader(header: MarkdownHeader, editor: Editor) {

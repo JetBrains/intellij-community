@@ -12,12 +12,14 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.siblings
 import com.intellij.util.application
 import org.intellij.plugins.markdown.MarkdownBundle.messagePointer
 import org.intellij.plugins.markdown.MarkdownIcons
+import org.intellij.plugins.markdown.editor.runForEachCaret
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAt
 import org.intellij.plugins.markdown.editor.lists.ListUtils.items
 import org.intellij.plugins.markdown.editor.lists.ListUtils.list
@@ -111,18 +113,19 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
     override fun setSelected(event: AnActionEvent, state: Boolean) {
       val project = event.project ?: return
       val editor = event.getData(CommonDataKeys.EDITOR) ?: return
-      val caret = event.getData(CommonDataKeys.CARET) ?: return
       val file = event.getData(CommonDataKeys.PSI_FILE) ?: return
-      val caretOffset = caret.selectionStart
       val document = editor.document
-      val list = findList(file, document, caretOffset)
       WriteCommandAction.writeCommandAction(project, file)
         .withName(templatePresentation.text)
         .run<RuntimeException> {
-          when {
-            state && list == null -> createListFromText(project, document, caret)
-            state && list != null -> replaceList(list)
-            !state && list != null -> replaceListWithText(document, list)
+          editor.caretModel.runForEachCaret(reverseOrder = true) { caret ->
+            PsiDocumentManager.getInstance(project).commitDocument(document)
+            val list = findList(file, document, caret.selectionStart)
+            when {
+              state && list == null -> createListFromText(project, document, caret)
+              state && list != null -> replaceList(list)
+              !state && list != null -> replaceListWithText(document, list)
+            }
           }
         }
     }
@@ -130,11 +133,16 @@ internal class CreateOrChangeListActionGroup: DefaultActionGroup(
     override fun isSelected(event: AnActionEvent): Boolean {
       val file = event.getData(CommonDataKeys.PSI_FILE) ?: return false
       val editor = event.getData(CommonDataKeys.EDITOR) ?: return false
-      val caretOffset = event.getData(CommonDataKeys.CARET)?.offset ?: return false
       val document = editor.document
-      val list = findList(file, document, caretOffset) ?: return false
-      val marker = list.items.firstOrNull()?.markerElement ?: return false
-      return isSameMarker(marker)
+      val carets = SelectionUtil.obtainCaretSnapshots(this, event, editor)
+      if (carets.isEmpty()) {
+        return false
+      }
+      return carets.all { caret ->
+        val list = findList(file, document, caret.offset) ?: return@all false
+        val marker = list.items.firstOrNull()?.markerElement ?: return@all false
+        isSameMarker(marker)
+      }
     }
 
     abstract fun isSameMarker(markerElement: PsiElement): Boolean

@@ -88,12 +88,56 @@ class SetHeaderLevelActionTest: LightPlatformCodeInsightTestCase() {
     doTest(content, expected, SetHeaderLevelImpl.Heading(level = 3))
   }
 
+  fun `test applies header level to multiple carets`() {
+    val content = "First line\n\nSecond line"
+    val firstLineEnd = content.indexOf('\n')
+    val secondLineStart = content.lastIndexOf('\n') + 1
+    doMultiCaretTest(
+      content,
+      "# First line\n\n# Second line",
+      SetHeaderLevelImpl.Title(),
+      firstSelection = 0 until firstLineEnd,
+      secondSelection = secondLineStart until content.length,
+    )
+  }
+
+  fun `test removes header level from multiple carets`() {
+    val content = "# First line\n\n# Second line"
+    val firstLineStart = 2
+    val firstLineEnd = content.indexOf('\n')
+    val secondLineStart = content.lastIndexOf('\n') + 3
+    doMultiCaretTest(
+      content,
+      "First line\n\nSecond line",
+      SetHeaderLevelImpl.Normal(),
+      firstSelection = firstLineStart until firstLineEnd,
+      secondSelection = secondLineStart until content.length,
+    )
+  }
+
   private fun doTest(content: String, expected: String, action: AnAction) {
     configureFromFileText("some.md", content, true)
     executeCommand(project, editor.document) {
       EditorTestUtil.executeAction(editor, true, action)
     }
     checkResultByText(expected)
+  }
+
+  private fun doMultiCaretTest(
+    content: String,
+    expected: String,
+    action: AnAction,
+    firstSelection: IntRange,
+    secondSelection: IntRange,
+  ) {
+    configureFromFileText("some.md", content)
+    editor.caretModel.primaryCaret.setSelection(firstSelection.first, firstSelection.last + 1)
+    val secondCaret = editor.caretModel.addCaret(editor.offsetToVisualPosition(secondSelection.first))!!
+    secondCaret.setSelection(secondSelection.first, secondSelection.last + 1)
+    executeCommand(project, editor.document) {
+      EditorTestUtil.executeAction(editor, true, action)
+    }
+    assertEquals(expected, editor.document.text)
   }
 
   companion object {
