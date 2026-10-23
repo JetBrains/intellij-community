@@ -461,8 +461,13 @@ internal class DynamicPluginsSupportImpl(
 
           if (System.getProperty("revert.IJPL233642", "false") != "true") {
             listenerCallbacks.sortBy {
-              // put all registryKey EP listeners before anything else FIXME IJPL-233642
-              if (it.ep.name == "com.intellij.registryKey") -1 else 0
+              when (it.ep.name) {
+                // put all registryKey EP listeners before anything else FIXME IJPL-233642
+                "com.intellij.registryKey" -> -1
+                // a startup activity runs in its own coroutine, so the other extensions of the batch must be registered first
+                "com.intellij.postStartupActivity", "com.intellij.backgroundPostStartupActivity" -> 1
+                else -> 0
+              }
             }
           }
           val runListeners = {
