@@ -1,0 +1,16 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="com.intellij.configurationScript"/>
+    <module name="intellij.json"/>
+    <module name="intellij.json.backend"/>
+    <module name="intellij.platform.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <!-- The schema provider needs the intellij.json.backend content module, which JetBrains Light does not load.
+       A product without it skips this module and keeps the rest of the plugin. -->
+  <extensions defaultExtensionNs="JavaScript.JsonSchema">
+    <ProviderFactory implementation="com.intellij.configurationScript.backend.IntellijConfigurationJsonSchemaProviderFactory"/>
+  </extensions>
+</idea-plugin>

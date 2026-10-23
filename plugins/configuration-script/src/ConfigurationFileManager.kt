@@ -125,7 +125,8 @@ internal fun doRead(reader: Reader): MappingNode? {
 }
 
 // todo check parent?
-internal fun isConfigurationFile(file: VirtualFile) = isConfigurationFile(file.nameSequence)
+@ApiStatus.Internal
+fun isConfigurationFile(file: VirtualFile): Boolean = isConfigurationFile(file.nameSequence)
 
 private const val filePrefix = "intellij."
 private val fileExtensions = listOf("yaml", "yml", "json")

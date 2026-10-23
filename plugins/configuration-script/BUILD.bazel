@@ -21,11 +21,15 @@ jps_test(
 
 ### auto-generated section `dev intellij.configurationScript` start
 dev_dist_plugin(
+    content_modules = ["intellij.configurationScript.backend"],
     descriptor = "resources/META-INF/plugin.xml",
     jars = {
         "lib/configurationScript.jar": ["intellij.configurationScript"],
     },
     main_module = "intellij.configurationScript",
+    mode_refused_content_modules = {
+        "frontend": ["intellij.configurationScript.backend"],
+    },
 )
 ### auto-generated section `dev intellij.configurationScript` end
 
@@ -57,7 +61,6 @@ jvm_library(
         "//platform/util-ex",
         "//platform/analysis-impl",
         "//platform/core-impl",
-        "//json/backend",
         "//platform/lang-api:lang",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
@@ -92,7 +95,6 @@ jvm_library(
         "//platform/util-ex:util-ex_test_lib",
         "//platform/analysis-impl:analysis-impl_test_lib",
         "//platform/core-impl:core-impl_test_lib",
-        "//json/backend:backend_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
@@ -110,6 +112,7 @@ jvm_library(
 ij_plugin(
     name = "configuration-script_plugin",
     descriptor_module = ":configuration-script",
+    content_modules = ["//plugins/configuration-script/backend"],
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `build intellij.configurationScript` end

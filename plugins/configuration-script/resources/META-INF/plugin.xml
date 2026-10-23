@@ -13,7 +13,6 @@
 
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <module name="intellij.json.backend"/>
     <module name="intellij.libraries.kotlin.reflect"/>
     <module name="intellij.libraries.snakeyaml.engine"/>
     <module name="intellij.platform.analysis"/>
@@ -33,11 +32,10 @@
     <module name="intellij.platform.workspace.jps"/>
     <!-- endregion -->
   </dependencies>
-  <content namespace="jetbrains"/>
+  <content namespace="jetbrains">
+    <module name="intellij.configurationScript.backend"/>
+  </content>
 
-  <extensions defaultExtensionNs="JavaScript.JsonSchema">
-    <ProviderFactory implementation="com.intellij.configurationScript.IntellijConfigurationJsonSchemaProviderFactory"/>
-  </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.profile.codeInspection.InspectionProjectProfileManager"
                     serviceImplementation="com.intellij.configurationScript.inspection.ExternallyConfigurableProjectInspectionProfileManager"

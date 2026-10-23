@@ -8,7 +8,7 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-final class ConfigurationScriptBundle {
+public final class ConfigurationScriptBundle {
   private static final @NonNls String BUNDLE = "messages.ConfigurationScriptBundle";
   private static final DynamicBundle INSTANCE = new DynamicBundle(ConfigurationScriptBundle.class, BUNDLE);
 
