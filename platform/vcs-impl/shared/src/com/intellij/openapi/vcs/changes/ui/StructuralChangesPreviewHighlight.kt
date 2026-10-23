@@ -18,14 +18,18 @@ import java.awt.Rectangle
 import java.awt.geom.Area
 import java.text.Bidi
 
+/**
+ * Dims the editor outside [range]. With [wholeLines], the range keeps the full width of its lines, as a diff hunk does, and an empty
+ * range keeps one blank line.
+ */
 @ApiStatus.Internal
 @RequiresEdt
-fun highlightStructuralPreview(editor: Editor, range: TextRange): Disposable? {
-  if (editor.isDisposed || range.isEmpty || range.startOffset < 0 || range.endOffset > editor.document.textLength) return null
-  if (hasBidirectionalBoundary(editor, range)) return null
+fun highlightStructuralPreview(editor: Editor, range: TextRange, wholeLines: Boolean = false): Disposable? {
+  if (editor.isDisposed || range.startOffset < 0 || range.endOffset > editor.document.textLength) return null
+  if (!wholeLines && (range.isEmpty || hasBidirectionalBoundary(editor, range))) return null
   val highlighter = editor.markupModel
     .addRangeHighlighter(0, editor.document.textLength, HighlighterLayer.LAST, null, HighlighterTargetArea.EXACT_RANGE)
-    .apply { customRenderer = StructuralPreviewDimRenderer(range) }
+    .apply { customRenderer = StructuralPreviewDimRenderer(range, wholeLines) }
   return Disposable { if (highlighter.isValid) highlighter.dispose() }
 }
 
@@ -44,7 +48,7 @@ private fun hasBidirectionalBoundary(editor: Editor, range: TextRange): Boolean 
   }
 }
 
-private class StructuralPreviewDimRenderer(private val selectedRange: TextRange) : CustomHighlighterRenderer {
+private class StructuralPreviewDimRenderer(private val selectedRange: TextRange, private val wholeLines: Boolean) : CustomHighlighterRenderer {
   override fun getOrder(): CustomHighlighterOrder = CustomHighlighterOrder.AFTER_TEXT
 
   override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
@@ -55,12 +59,16 @@ private class StructuralPreviewDimRenderer(private val selectedRange: TextRange)
       val dimmedArea = Area(clip)
       val folding = editor.foldingModel
       val startOffset = folding.getCollapsedRegionAtOffset(selectedRange.startOffset)?.startOffset ?: selectedRange.startOffset
-      val endOffset = folding.getCollapsedRegionAtOffset(selectedRange.endOffset - 1)?.endOffset ?: selectedRange.endOffset
+      val lastOffset = maxOf(selectedRange.startOffset, selectedRange.endOffset - 1)
+      val endOffset = folding.getCollapsedRegionAtOffset(lastOffset)?.endOffset ?: selectedRange.endOffset
       val start = editor.offsetToXY(startOffset, true, false)
       val end = editor.offsetToXY(endOffset, false, true)
       val lineHeight = editor.lineHeight
 
-      if (start.y == end.y) {
+      if (wholeLines) {
+        dimmedArea.subtract(Area(Rectangle(clip.x, start.y, clip.width, end.y - start.y + lineHeight)))
+      }
+      else if (start.y == end.y) {
         dimmedArea.subtract(Area(Rectangle(minOf(start.x, end.x), start.y, kotlin.math.abs(end.x - start.x), lineHeight)))
       }
       else {

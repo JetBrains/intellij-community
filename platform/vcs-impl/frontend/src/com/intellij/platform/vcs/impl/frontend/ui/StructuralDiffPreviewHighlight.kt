@@ -83,7 +83,7 @@ internal class StructuralDiffPreviewHighlight(
 
   private fun dim(editor: Editor, range: LineRange): Disposable? {
     if (range.isEmpty || range.end > editor.document.lineCount) return null
-    return highlightStructuralPreview(editor, DiffUtil.getLinesRange(editor.document, range.start, range.end))
+    return highlightStructuralPreview(editor, DiffUtil.getLinesRange(editor.document, range.start, range.end), wholeLines = true)
   }
 
   /** Centers a hunk that fits the viewport. A longer hunk starts near the top. */
