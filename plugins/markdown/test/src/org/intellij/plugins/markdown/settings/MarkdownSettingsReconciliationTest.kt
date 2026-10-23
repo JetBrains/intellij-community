@@ -7,9 +7,11 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.createTestOpenProjectOptions
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
@@ -25,6 +27,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
@@ -72,8 +75,8 @@ class MarkdownSettingsReconciliationTest {
     }
     initialized(path) {}
   }
-  private val project by projectFixture(projectWithSettings, createTestOpenProjectOptions(runPostStartUpActivities = false))
-  private val newProject by projectFixture(openProjectTask = createTestOpenProjectOptions(runPostStartUpActivities = false))
+  private val project by indexedProjectFixture(projectWithSettings)
+  private val newProject by indexedProjectFixture(tempPathFixture())
   private val otherProject by projectWithState(MarkdownSettingsState().apply {
     areInjectionsEnabled = true
     showProblemsInCodeBlocks = true
@@ -87,7 +90,7 @@ class MarkdownSettingsReconciliationTest {
     showProblemsInCodeBlocks = true
   })
 
-  private fun projectWithState(state: MarkdownSettingsState) = projectFixture(
+  private fun projectWithState(state: MarkdownSettingsState) = indexedProjectFixture(
     testFixture {
       settingsSnapshot.init()
       val path = tempPathFixture().init()
@@ -99,9 +102,14 @@ class MarkdownSettingsReconciliationTest {
         path.resolve(".idea").createDirectories().resolve("markdown.xml").writeText(JDOMUtil.write(xml))
       }
       initialized(path) {}
-    },
-    createTestOpenProjectOptions(runPostStartUpActivities = false)
+    }
   )
+
+  private fun indexedProjectFixture(pathFixture: TestFixture<Path>) = testFixture {
+    val project = projectFixture(pathFixture, createTestOpenProjectOptions(runPostStartUpActivities = false)).init()
+    IndexingTestUtil.suspendUntilIndexesAreReady(project)
+    initialized(project) {}
+  }
 
   @BeforeEach
   fun resetSettings() {
