@@ -106,6 +106,8 @@ interface CaretVisualAttributes {
 interface ScrollingModel {
   fun scrollToCaret(type: ScrollType)
   fun scrollTo(pos: LogicalPosition, scrollType: ScrollType)
+  fun getVisibleArea(): Rectangle
+  fun getVisibleAreaOnScrollingFinished(): Rectangle
 }
 
 @Remote("com.intellij.openapi.editor.ScrollType")

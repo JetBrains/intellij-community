@@ -35,7 +35,6 @@ import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.rdTarget
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.shouldContainText
-import com.intellij.driver.sdk.wait
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitNotNull
 import org.intellij.lang.annotations.Language
@@ -45,6 +44,7 @@ import java.awt.Point
 import java.awt.Rectangle
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 private const val FOLDING_ANCHOR_SEARCH_WIDTH = 40
 
@@ -345,13 +345,22 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     val position = driver.logicalPosition(line, column, component.rdTarget)
     val scrollType = driver.scrollType()
     interact { editor.getScrollingModel().scrollTo(position, scrollType) }
-    wait(200.milliseconds) // wait for scroll to finish
+    waitForScrollingToFinish()
   }
 
   fun scrollToCaret() {
     val scrollType = driver.scrollType()
     interact { editor.getScrollingModel().scrollToCaret(scrollType) }
-    wait(200.milliseconds) // wait for scroll to finish
+    waitForScrollingToFinish()
+  }
+
+  private fun waitForScrollingToFinish() {
+    waitFor("the editor stops scrolling", timeout = 10.seconds, interval = 50.milliseconds) {
+      interact {
+        val scrollingModel = editor.getScrollingModel()
+        scrollingModel.getVisibleArea() == scrollingModel.getVisibleAreaOnScrollingFinished()
+      }
+    }
   }
 
   data class TextAttributes(val startOffset: Int, val endOffset: Int, val effectType: EffectTypeValues, val effectColor: Color?)
