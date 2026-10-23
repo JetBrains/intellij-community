@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -63,11 +64,14 @@ import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.InputEvent;
 import java.awt.event.InputMethodEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.awt.font.TextHitInfo;
 import java.text.AttributedString;
 import java.util.Collections;
+import java.util.stream.IntStream;
 
 import static com.intellij.openapi.editor.impl.EditorModelFixture.HIGH_SURROGATE;
 import static com.intellij.openapi.editor.impl.EditorModelFixture.LOW_SURROGATE;
@@ -1496,6 +1500,40 @@ public class EditorImplTest {
       assertErrorLoggedTwice(NullPointerException.class, () -> myFixture.type('c'));
       myFixture.checkResultByText("abc<caret>");
     });
+  }
+
+  // IJPL-251200
+  @Test
+  public void testAltClickOnFoldingAnchorTogglesNestedRegions() {
+    myFixture.runTest(() -> {
+      myFixture.initText("a{\nb{\nc\n}\nd{\ne\n}\n}");
+      FoldRegion outer = myFixture.addCollapsedFoldRegion(1, 18, "...");
+      FoldRegion first = myFixture.addCollapsedFoldRegion(4, 9, "...");
+      FoldRegion second = myFixture.addCollapsedFoldRegion(11, 16, "...");
+
+      altClickFoldingAnchor(outer);
+      assertTrue(outer.isExpanded());
+      assertTrue(first.isExpanded());
+      assertTrue(second.isExpanded());
+
+      altClickFoldingAnchor(outer);
+      assertFalse(outer.isExpanded());
+      assertFalse(first.isExpanded());
+      assertFalse(second.isExpanded());
+    });
+  }
+
+  private void altClickFoldingAnchor(@NotNull FoldRegion region) {
+    EditorEx editor = (EditorEx)myFixture.getEditor();
+    EditorGutterComponentEx gutter = editor.getGutterComponentEx();
+    int x = gutter.getFoldingAreaOffset() + 1; // the anchor hit area excludes its left edge
+    int[] lineYRange = editor.visualLineToYRange(editor.offsetToVisualPosition(region.getStartOffset()).line);
+    int y = IntStream.range(lineYRange[0], lineYRange[1])
+      .filter(lineY -> gutter.findFoldingAnchorAt(x, lineY) == region)
+      .findFirst()
+      .orElseThrow();
+    gutter.dispatchEvent(new MouseEvent(gutter, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(),
+                                        InputEvent.ALT_DOWN_MASK | InputEvent.BUTTON1_DOWN_MASK, x, y, 1, false, MouseEvent.BUTTON1));
   }
 
   private void dispatchEventToEditor(AWTEvent event) {
