@@ -15,15 +15,21 @@
  */
 package com.intellij.openapi.editor.colors;
 
+import com.intellij.application.options.colors.ColorSettingsPageEP;
 import com.intellij.codeHighlighting.RainbowHighlighter;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.options.colors.pages.DefaultLanguageColorsPage;
+import com.intellij.openapi.options.colors.pages.GeneralColorsPage;
+import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Color;
 import java.util.Collection;
+import java.util.List;
 
 @SuppressWarnings("SameParameterValue")
 public class EditorColorPaletteTest extends LightPlatformTestCase {
@@ -39,6 +45,9 @@ public class EditorColorPaletteTest extends LightPlatformTestCase {
   }
 
   public void testResolveConflictingColor() {
+    ExtensionTestUtil.maskExtensions(ColorSettingsPage.EP_NAME,
+                                     List.of(new GeneralColorsPage(), new DefaultLanguageColorsPage()), getTestRootDisposable());
+    ExtensionTestUtil.maskExtensions(ColorSettingsPageEP.EP_NAME, List.of(), getTestRootDisposable());
     final EditorColorsScheme colorsScheme = (EditorColorsScheme)EditorColorsManager.getInstance().getScheme("Default").clone();
     final Color newColorInPalette = EditorColorPaletteFactory.getInstance().getPalette(colorsScheme, Language.ANY)
       .withBackgroundColors()
