@@ -5,6 +5,7 @@ import com.intellij.compose.ide.plugin.shared.COMMON_MAIN
 import com.intellij.compose.ide.plugin.shared.ComposeBaseTestCase
 import com.intellij.compose.ide.plugin.shared.DESKTOP_MAIN
 import com.intellij.compose.ide.plugin.shared.WASM_JS_MAIN
+import com.intellij.openapi.application.ex.PathManagerEx
 import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path
 
@@ -23,5 +24,5 @@ annotation class ComposeCodeInsightAllSourceSets
  */
 abstract class ComposeCodeInsightTestCase : ComposeBaseTestCase() {
   override val testDataProjectRoot: Path
-    get() = super.testDataProjectRoot.resolve(COMPOSE_CODE_INSIGHT_TEST_DATA_RELATIVE_PATH)
+    get() = Path.of(PathManagerEx.getCommunityHomePath(), COMPOSE_CODE_INSIGHT_TEST_DATA_RELATIVE_PATH)
 }
