@@ -3,9 +3,7 @@
     reason = "the rates and interval bounds compared are exact by construction, so an epsilon would hide a wrong formula"
 )]
 
-use avl_wire::report::{
-    Case, Failure, FailureKind, RUN_REPORT_SCHEMA_VERSION, SkippedContainer, Watchdog, decode_flake_summary, decode_shard_verdict,
-};
+use avl_wire::report::{Case, Failure, FailureKind, SkippedContainer, decode_flake_summary, decode_shard_verdict};
 use pretty_assertions::assert_eq;
 
 use super::*;
@@ -15,7 +13,6 @@ use super::*;
 /// A healthy single-run report, which every fixture below spoils in exactly one way.
 pub(super) fn document(status: Status) -> RunReport {
     RunReport {
-        report_schema_version: RUN_REPORT_SCHEMA_VERSION,
         iteration_id: "iteration-1".to_owned(),
         daemon_run_id: "run-ui-daemon-0001".to_owned(),
         daemon_boot_stamp: "2026-08-22T09:59:00Z".to_owned(),
@@ -24,22 +21,7 @@ pub(super) fn document(status: Status) -> RunReport {
         started_at: "2026-08-22T10:00:00Z".to_owned(),
         completed_at: "2026-08-22T10:01:00Z".to_owned(),
         duration_ms: 60_000.0,
-        ordering: ORDERING.to_owned(),
-        execution: ExecutionCounts::default(),
-        cases: Vec::new(),
-        failures: Vec::new(),
-        skipped_containers: Vec::new(),
-        active_tests: Vec::new(),
-        unreported_classes: Vec::new(),
-        watchdog: Watchdog::default(),
-        evidence: Vec::new(),
-        trace_archives: Vec::new(),
-        traces_error: None,
-        tree: None,
-        tree_error: None,
-        notes: Vec::new(),
-        protocol_diagnostic: None,
-        verdict_diagnostic: None,
+        ..RunReport::default()
     }
 }
 

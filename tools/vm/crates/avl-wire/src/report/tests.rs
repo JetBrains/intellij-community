@@ -9,7 +9,6 @@ use crate::daemon::{Skipped, SlowStep, WatchdogExpired};
 /// silently describing the old shape.
 pub(super) fn valid_report() -> RunReport {
     RunReport {
-        report_schema_version: RUN_REPORT_SCHEMA_VERSION,
         iteration_id: "iteration-1".to_owned(),
         daemon_run_id: "run-ui-daemon-015546b8-bd1e-4dec-8b20-f9627a770f68".to_owned(),
         daemon_boot_stamp: "boot-1".to_owned(),
@@ -18,26 +17,12 @@ pub(super) fn valid_report() -> RunReport {
         started_at: "2026-08-23T08:08:56.000200831Z".to_owned(),
         completed_at: "2026-08-23T08:13:05.364Z".to_owned(),
         duration_ms: 249_364.0,
-        ordering: ORDERING.to_owned(),
         execution: ExecutionCounts {
             tests_started: 23,
             containers_skipped: 1,
             ..ExecutionCounts::default()
         },
-        cases: Vec::new(),
-        failures: Vec::new(),
-        skipped_containers: Vec::new(),
-        active_tests: Vec::new(),
-        unreported_classes: Vec::new(),
-        watchdog: Watchdog::default(),
-        evidence: Vec::new(),
-        trace_archives: Vec::new(),
-        traces_error: None,
-        tree: None,
-        tree_error: None,
-        notes: Vec::new(),
-        protocol_diagnostic: None,
-        verdict_diagnostic: None,
+        ..RunReport::default()
     }
 }
 

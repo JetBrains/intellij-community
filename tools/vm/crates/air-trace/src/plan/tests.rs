@@ -4,9 +4,7 @@ use std::path::Path;
 use avl_testkit::traces::{example_bundle, example_file};
 use avl_trace::bundle::{BundleStatus, MANIFEST_FILE, Manifest, ROOT_DIR_NAME, SPANS_FILE, bundle_path, decode_manifest};
 use avl_trace_tools::discover::{SourceKind, Status};
-use avl_wire::report::{
-    self, ExecutionCounts, Failure, FailureKind, ORDERING, RUN_REPORT_SCHEMA_VERSION, RunReport, TraceArchive, Watchdog,
-};
+use avl_wire::report::{self, Failure, FailureKind, RunReport, TraceArchive};
 use bt_core::ResolutionInputs;
 use bt_core::catalog::SuiteDocument;
 use clap::Parser;
@@ -593,7 +591,6 @@ fn a_junit_document_plans_what_failed() {
 fn failed_report(document: &SuiteDocument, scenario: &str, traces: Vec<TraceArchive>) -> RunReport {
     let class_name = format!("com.intellij.air.tests.flow.generated.{}", document.test_class_name);
     RunReport {
-        report_schema_version: RUN_REPORT_SCHEMA_VERSION,
         iteration_id: "iter-plan-1".to_owned(),
         daemon_run_id: "run-ui-daemon-plan".to_owned(),
         daemon_boot_stamp: "boot-1".to_owned(),
@@ -602,9 +599,6 @@ fn failed_report(document: &SuiteDocument, scenario: &str, traces: Vec<TraceArch
         started_at: "2026-09-23T10:00:00Z".to_owned(),
         completed_at: "2026-09-23T10:05:00Z".to_owned(),
         duration_ms: 300_000.0,
-        ordering: ORDERING.to_owned(),
-        execution: ExecutionCounts::default(),
-        cases: Vec::new(),
         failures: vec![Failure {
             class_name: Some(class_name),
             test_name: scenario.to_owned(),
@@ -616,18 +610,8 @@ fn failed_report(document: &SuiteDocument, scenario: &str, traces: Vec<TraceArch
             message_truncated: false,
             detail_truncated: false,
         }],
-        skipped_containers: Vec::new(),
-        active_tests: Vec::new(),
-        unreported_classes: Vec::new(),
-        watchdog: Watchdog::default(),
-        evidence: Vec::new(),
         trace_archives: traces,
-        traces_error: None,
-        tree: None,
-        tree_error: None,
-        notes: Vec::new(),
-        protocol_diagnostic: None,
-        verdict_diagnostic: None,
+        ..RunReport::default()
     }
 }
 
