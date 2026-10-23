@@ -2,7 +2,7 @@
 <idea-plugin>
   <resource-bundle>messages.VcsBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceInterface="com.intellij.openapi.vcs.actions.VcsContextFactory"
+    <applicationService serviceInterface="com.intellij.openapi.vcs.actions.VcsContextFactory" open="true"
                         serviceImplementation="com.intellij.peer.impl.VcsContextFactoryImpl"/>
     <applicationService serviceImplementation="com.intellij.openapi.vcs.actions.AnnotationsSettings"/>
     <applicationService serviceInterface="com.intellij.vfs.AsyncVfsEventsPostProcessor"
@@ -392,7 +392,7 @@
                         serviceImplementation="com.intellij.vcs.changes.ChangesViewInclusionModelApiImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.vcs.changes.ui.BackendChangesTreeCompatibilityProvider"
-                        serviceInterface="com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider"/>
+                        serviceInterface="com.intellij.openapi.vcs.changes.ChangesTreeCompatibilityProvider" open="true"/>
 
     <projectService
       serviceInterface="com.intellij.platform.vcs.impl.shared.changes.TreeModelBuilderEx"
