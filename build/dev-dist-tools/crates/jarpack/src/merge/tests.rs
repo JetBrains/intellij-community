@@ -5,8 +5,9 @@ use std::path::{Path, PathBuf};
 use crate::merge::{is_rule_manifest, main_attribute_values, trim_entity_list};
 use crate::tests::golden::*;
 use crate::tests::testjar::{
-    AGENT_MANIFEST, RawEntry, Scratch, SourceEntry, agent_sources, digest, entry, entry_names, index_pointer, module_source,
-    module_source_with_manifest, module_source_with_manifest_text, pack, raw, read_entry, rule_manifest, write_raw_jar, write_zip_jar,
+    AGENT_MANIFEST, Scratch, SourceEntry, agent_sources, asymmetric, digest, entry, entry_names, index_pointer, module_source,
+    module_source_with_manifest, module_source_with_manifest_text, pack, pack_error, raw, read_entry, rule_manifest, write_raw_jar,
+    write_zip_jar,
 };
 use crate::{EntryFilter, MANIFEST_ENTRY_NAME, ManifestMode, MergeOptions, MergeSpec, Source, duplicate_line};
 
@@ -15,13 +16,6 @@ fn spec(output: &str, sources: Vec<Source>) -> MergeSpec {
         output: output.into(),
         sources,
         ..MergeSpec::default()
-    }
-}
-
-fn pack_error(spec: &MergeSpec) -> String {
-    match spec.pack(&MergeOptions::default()) {
-        Ok(_) => panic!("the recipe for {} was accepted", spec.output.display()),
-        Err(error) => format!("{error:#}"),
     }
 }
 
@@ -515,11 +509,7 @@ fn pack_reads_the_local_extra_field_rather_than_the_central_one() {
         &scratch,
         "asymmetric.jar",
         &[
-            RawEntry {
-                local_extra: &[0x55, 0x54, 5, 0, 1, 1, 2, 3, 4],
-                central_extra: &[0x55, 0x54, 1, 0, 1],
-                ..raw("org/example/Wide.class", "the real bytes")
-            },
+            asymmetric("org/example/Wide.class", "the real bytes"),
             raw("org/example/Plain.class", "plain bytes"),
         ],
     );
@@ -547,25 +537,27 @@ fn residual_packing_rejects_native_entries() {
         "bin/pty4j-unix-spawn-helper",
         "lib/icudtl.dat",
     ] {
-        let source = write_zip_jar(&scratch, "native.jar", &[entry(name, "native")]);
-        let output = scratch.dir().join("result.jar");
-        let recipe = MergeSpec {
-            reject_native_entries: true,
-            ..spec(output.to_str().unwrap(), vec![Source::module(&source)])
-        };
+        let (recipe, output) = residual_recipe(&scratch, "native.jar", name);
         let error = pack_error(&recipe);
         assert!(error.contains("Kotlin packer"), "{name}: expected a native holdout, got {error}");
         // The writer drops its buffer on a failure, so the output holds no plausible part of a jar.
         assert_eq!(std::fs::metadata(&output).unwrap().len(), 0, "{name}: a failed pack wrote bytes");
     }
     // `.tbd` is a native only for natives mode, not for the residual check.
-    let source = write_zip_jar(&scratch, "stub.jar", &[entry("lib/native.tbd", "stub")]);
+    let (recipe, _) = residual_recipe(&scratch, "stub.jar", "lib/native.tbd");
+    recipe.pack(&MergeOptions::default()).unwrap();
+}
+
+/// The residual recipe of `result.jar` from the module jar `jar` with the one entry `name`. It returns the recipe and the
+/// path of its output.
+fn residual_recipe(scratch: &Scratch, jar: &str, name: &str) -> (MergeSpec, PathBuf) {
+    let source = write_zip_jar(scratch, jar, &[entry(name, "native")]);
     let output = scratch.dir().join("result.jar");
     let recipe = MergeSpec {
         reject_native_entries: true,
         ..spec(output.to_str().unwrap(), vec![Source::module(&source)])
     };
-    recipe.pack(&MergeOptions::default()).unwrap();
+    (recipe, output)
 }
 
 #[test]

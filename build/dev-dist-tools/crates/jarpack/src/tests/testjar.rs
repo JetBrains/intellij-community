@@ -110,6 +110,26 @@ pub(crate) fn raw<'a>(name: &'a str, data: &'a str) -> RawEntry<'a> {
     }
 }
 
+/// An entry whose local extra field is longer than its central one, so its data starts after the local field.
+pub(crate) fn asymmetric<'a>(name: &'a str, data: &'a str) -> RawEntry<'a> {
+    RawEntry {
+        local_extra: &[0x55, 0x54, 5, 0, 1, 1, 2, 3, 4],
+        central_extra: &[0x55, 0x54, 1, 0, 1],
+        ..raw(name, data)
+    }
+}
+
+/// Writes the fields that the local and the central header of a STORED entry share, in their order: the CRC, the
+/// compressed and the uncompressed size, the length of the name and the length of the extra field `extra`.
+fn put_entry_fields(out: &mut Vec<u8>, crc: u32, entry: &RawEntry<'_>, extra: &[u8]) {
+    let size = (entry.data.len() as u32).to_le_bytes();
+    out.extend_from_slice(&crc.to_le_bytes());
+    out.extend_from_slice(&size);
+    out.extend_from_slice(&size);
+    out.extend_from_slice(&(entry.name.len() as u16).to_le_bytes());
+    out.extend_from_slice(&(extra.len() as u16).to_le_bytes());
+}
+
 /// Writes a STORED-only jar by hand, so that a local extra field can differ from the central one. Jars from other
 /// tools do that, and the data of an entry starts after the *local* field.
 pub(crate) fn write_raw_jar(scratch: &Scratch, name: &str, entries: &[RawEntry<'_>]) -> PathBuf {
@@ -121,25 +141,16 @@ pub(crate) fn write_raw_jar(scratch: &Scratch, name: &str, entries: &[RawEntry<'
         records.push((entry, crc, out.len() as u32));
         out.extend_from_slice(&0x0403_4b50u32.to_le_bytes());
         out.extend_from_slice(&[20, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-        out.extend_from_slice(&crc.to_le_bytes());
-        out.extend_from_slice(&(data.len() as u32).to_le_bytes());
-        out.extend_from_slice(&(data.len() as u32).to_le_bytes());
-        out.extend_from_slice(&(entry.name.len() as u16).to_le_bytes());
-        out.extend_from_slice(&(entry.local_extra.len() as u16).to_le_bytes());
+        put_entry_fields(&mut out, crc, entry, entry.local_extra);
         out.extend_from_slice(entry.name);
         out.extend_from_slice(entry.local_extra);
         out.extend_from_slice(data);
     }
     let central_offset = out.len() as u32;
     for (entry, crc, offset) in &records {
-        let data = entry.data.as_bytes();
         out.extend_from_slice(&0x0201_4b50u32.to_le_bytes());
         out.extend_from_slice(&[20, 0, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
-        out.extend_from_slice(&crc.to_le_bytes());
-        out.extend_from_slice(&(data.len() as u32).to_le_bytes());
-        out.extend_from_slice(&(data.len() as u32).to_le_bytes());
-        out.extend_from_slice(&(entry.name.len() as u16).to_le_bytes());
-        out.extend_from_slice(&(entry.central_extra.len() as u16).to_le_bytes());
+        put_entry_fields(&mut out, *crc, entry, entry.central_extra);
         out.extend_from_slice(&[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
         out.extend_from_slice(&offset.to_le_bytes());
         out.extend_from_slice(entry.name);
@@ -154,6 +165,14 @@ pub(crate) fn write_raw_jar(scratch: &Scratch, name: &str, entries: &[RawEntry<'
     out.extend_from_slice(&central_offset.to_le_bytes());
     out.extend_from_slice(&0u16.to_le_bytes());
     scratch.file(name, &out)
+}
+
+/// Packs the recipe, fails if it packs, and returns the text of the error with its causes.
+pub(crate) fn pack_error(spec: &MergeSpec) -> String {
+    match spec.pack(&MergeOptions::default()) {
+        Ok(_) => panic!("the recipe for {} was accepted", spec.output.display()),
+        Err(error) => format!("{error:#}"),
+    }
 }
 
 /// Runs a recipe and returns the bytes of the packed jar. Every case checks the CRCs: a carried CRC is sound only while

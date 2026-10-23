@@ -5,7 +5,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::nativelib::{self, Arch, Family};
-use crate::tests::testjar::{Scratch, entry, entry_names, is_library, module_source, pack, parse_recipe, read_entry, write_zip_jar};
+use crate::tests::testjar::{self, Scratch, entry, entry_names, is_library, module_source, pack, parse_recipe, read_entry, write_zip_jar};
 use crate::{INDEX_FILE_NAME, MergeOptions, MergeSpec, NativeSpec, NativeTree, Source};
 
 /// A presigned library as `JarPackager` sees one. It is a jar with a Maven name and one native per platform under a
@@ -96,10 +96,7 @@ fn pack_error(spec: &MergeSpec) -> String {
     if let Some(tree) = spec.native.as_ref().and_then(|native| native.tree.as_ref()) {
         fs::create_dir_all(&tree.dir).unwrap();
     }
-    match spec.pack(&MergeOptions::default()) {
-        Ok(_) => panic!("the recipe for {} was accepted", spec.output.display()),
-        Err(error) => format!("{error:#}"),
-    }
+    testjar::pack_error(spec)
 }
 
 #[test]
@@ -302,7 +299,7 @@ fn natives_mode_moves_the_platform_natives_out_of_the_jar() {
 
 fn read_index_bytes(data: &[u8]) -> Vec<u8> {
     use std::io::Read;
-    let mut archive = crate::tests::testjar::open_packed(data);
+    let mut archive = testjar::open_packed(data);
     let mut file = archive.by_name(INDEX_FILE_NAME).unwrap();
     let mut content = Vec::new();
     file.read_to_end(&mut content).unwrap();

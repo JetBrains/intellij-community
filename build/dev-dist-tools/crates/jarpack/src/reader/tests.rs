@@ -3,7 +3,7 @@
 use std::fs;
 use std::path::Path;
 
-use crate::tests::testjar::{RawEntry, Scratch, entry, pack, raw, read_entry, write_raw_jar, write_zip_jar};
+use crate::tests::testjar::{RawEntry, Scratch, asymmetric, entry, pack, raw, read_entry, write_raw_jar, write_zip_jar};
 use crate::{INDEX_FILE_NAME, Jar, MergeSpec, Source};
 
 fn opened_names(path: &Path) -> Vec<String> {
@@ -79,15 +79,7 @@ fn data_refuses_a_truncated_deflate_stream() {
 #[test]
 fn open_jar_takes_the_data_offset_from_the_local_header() {
     let scratch = Scratch::new();
-    let path = write_raw_jar(
-        &scratch,
-        "asymmetric.jar",
-        &[RawEntry {
-            local_extra: &[0x55, 0x54, 5, 0, 1, 1, 2, 3, 4],
-            central_extra: &[0x55, 0x54, 1, 0, 1],
-            ..raw("org/Wide.class", "the real bytes")
-        }],
-    );
+    let path = write_raw_jar(&scratch, "asymmetric.jar", &[asymmetric("org/Wide.class", "the real bytes")]);
     let jar = Jar::open(&path).unwrap();
     let first = jar.entries().next().unwrap();
     assert_eq!(
