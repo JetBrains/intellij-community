@@ -260,6 +260,14 @@ impl Reporter {
         (Self::new(stdout.clone(), stderr.clone(), program), stdout, stderr)
     }
 
+    /// A reporter in human mode over a [`Buffer`] for stderr, which the test reads back: `(reporter, stderr)`. Human
+    /// mode and not `--stream`, because prose is the rendering a person reads.
+    pub fn in_memory_prose(program: impl Into<String>) -> (Self, Buffer) {
+        let (reporter, _, stderr) = Self::in_memory(program);
+        reporter.set_mode(Mode::Human(Terminal::default()));
+        (reporter, stderr)
+    }
+
     /// Replaces the clock that stamps each record and times each phase. Before [`Reporter::set_mode`], so the
     /// plain renderer reads the same clock.
     #[must_use]
