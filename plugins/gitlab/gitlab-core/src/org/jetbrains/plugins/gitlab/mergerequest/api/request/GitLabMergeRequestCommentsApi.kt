@@ -19,8 +19,8 @@ import org.jetbrains.plugins.gitlab.api.SinceGitLab
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionRestDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteRestDTO
-import org.jetbrains.plugins.gitlab.api.loadList
 import org.jetbrains.plugins.gitlab.api.getJsonListConditional
+import org.jetbrains.plugins.gitlab.api.loadList
 import org.jetbrains.plugins.gitlab.api.loadValue
 import org.jetbrains.plugins.gitlab.api.projectApiUrl
 import org.jetbrains.plugins.gitlab.api.runQuery
@@ -182,6 +182,7 @@ internal fun GitLabApiUriQueryBuilder.addDiffPositionParameters(
   position: GitLabDiffPositionInput,
   canPostPositionLineRange: Boolean,
 ) {
+  "commit_id" eq position.commitSha
   "position" {
     "base_sha" eq position.baseSha
     "head_sha" eq position.headSha

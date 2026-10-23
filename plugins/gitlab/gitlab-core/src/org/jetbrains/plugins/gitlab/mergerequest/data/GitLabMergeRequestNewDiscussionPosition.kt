@@ -16,6 +16,10 @@ data class GitLabMergeRequestNewDiscussionPosition(
   val headSha: String,
   val paths: DiffPathsInputDTO,
   val lineRange: NewDiscussionLineRange,
+  /**
+   * SHA of the commit when the position is in a single commit diff, `null` for the cumulative diff
+   */
+  val commitSha: String? = null,
 ) : GitLabNotePosition.WithLine {
   override val parentSha: String get() = baseSha
   override val sha: String get() = headSha
@@ -61,7 +65,8 @@ data class GitLabMergeRequestNewDiscussionPosition(
         startSha,
         headSha,
         DiffPathsInputDTO(pathBefore, pathAfter),
-        lineRange
+        lineRange,
+        commitSha = headSha.takeIf { !diffData.isCumulative }
       )
       return positionInput
     }
