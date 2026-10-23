@@ -233,9 +233,13 @@ public final class ComplexTextFragment extends TextFragment {
 
   public static void flushDrawingCache(Graphics2D g) {
     if (lastFragment != null) {
-      g.setColor(lastColor);
-      lastFragment.doDraw(g, lastStartX, lastY, lastStartColumn, lastEndColumn);
-      lastFragment = null;
+      try {
+        g.setColor(lastColor);
+        lastFragment.doDraw(g, lastStartX, lastY, lastStartColumn, lastEndColumn);
+      }
+      finally {
+        lastFragment = null;
+      }
     }
   }
 

@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.editor.NullGraphics2D;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.testFramework.AbstractMockGlyphVector;
 import com.intellij.testFramework.MockFontLayoutService;
+import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -15,6 +17,7 @@ import java.awt.Shape;
 import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.Point2D;
+import java.awt.image.BufferedImage;
 import java.util.Objects;
 import java.util.stream.Stream;
 
@@ -23,6 +26,7 @@ import static com.intellij.openapi.editor.impl.EditorModelFixture.TEST_DESCENT;
 import static com.intellij.openapi.editor.impl.EditorModelFixture.TEST_LINE_HEIGHT;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 public class ComplexTextFragmentTest {
   @Test
@@ -92,6 +96,31 @@ public class ComplexTextFragmentTest {
     assertSubFragmentOffsetMapping(glyph(0, 10).glyph(10, 20).noGlyph().glyph(20, 30));
     // in RTL, the sub-fragment's character is the first visual character
     assertSubFragmentOffsetMapping(rtl().glyph(0, 10).noGlyph().glyph(10, 20).glyph(20, 30));
+  }
+
+  @Test
+  public void testDrawingCacheClearedAfterFailure() {
+    var fontLayoutService = FontLayoutService.getInstance();
+    FontLayoutService.setInstance(new MockFontLayoutService(TEST_CHAR_WIDTH, TEST_LINE_HEIGHT, TEST_DESCENT));
+    var graphics = new BufferedImage(20, 20, BufferedImage.TYPE_INT_RGB).createGraphics();
+    try {
+      var fontInfo = new FontInfo(Font.MONOSPACED, 1, Font.PLAIN, false, new FontRenderContext(null, false, false));
+      var fragment = new ComplexTextFragment(new char[]{'a'}, 0, 1, false, fontInfo, null);
+      var failingGraphics = new Graphics2DDelegate(graphics) {
+        @Override
+        public void drawGlyphVector(GlyphVector glyphVector, float x, float y) {
+          throw new IllegalStateException("Cannot draw the glyph vector");
+        }
+      };
+      fragment.draw(0, 0, 0, 1).accept(failingGraphics);
+      assertThrows(IllegalStateException.class, () -> ComplexTextFragment.flushDrawingCache(failingGraphics));
+      ComplexTextFragment.flushDrawingCache(graphics);
+    }
+    finally {
+      ComplexTextFragment.flushDrawingCache(new NullGraphics2D(new Rectangle(20, 20)));
+      graphics.dispose();
+      FontLayoutService.setInstance(fontLayoutService);
+    }
   }
 
   private static void assertCaretPositionsForGlyphVector(MyGlyphVector gv, int... expectedPositions) {
