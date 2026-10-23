@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager.DEFAULT_EXT
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -19,9 +18,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.workspace.jps.serialization.impl.JpsGlobalEntitiesSerializers
 import com.intellij.platform.workspace.storage.InternalEnvironmentName
-import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.impl.getInternalEnvironmentName
-import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDelegate
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -39,9 +36,6 @@ open class ProjectJdkTableImpl: ProjectJdkTable(), EnvironmentScopedSdkTableOps 
   private val cachedProjectJdks: MutableMap<String, Sdk> = HashMap()
 
   init {
-    val componentManager = ApplicationManager.getApplication() as ComponentManagerEx
-    componentManager.registerService(SdkTableImplementationDelegate::class.java, SdkTableBridgeImpl::class.java,
-                                     ComponentManagerImpl.fakeCorePluginDescriptor, false)
     delegate = SdkTableImplementationDelegate.getInstance()
 
     SdkType.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<SdkType> {

@@ -1827,6 +1827,8 @@
     <projectStructure.sourceRootEditHandler implementation="com.intellij.openapi.roots.ui.configuration.JavaTestSourceRootEditHandler"/>
     <applicationService serviceInterface="com.intellij.openapi.projectRoots.ProjectJdkTable" open="true"
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
+    <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDelegate"
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl"/>
     <projectService serviceInterface="com.intellij.openapi.projectRoots.SdkTableProjectViewProvider"
                     serviceImplementation="com.intellij.openapi.projectRoots.impl.SdkTableProjectViewProviderImpl"/>
     <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridgeRegistry"

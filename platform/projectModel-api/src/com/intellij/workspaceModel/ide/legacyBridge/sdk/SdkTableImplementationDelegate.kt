@@ -28,7 +28,6 @@ interface SdkTableImplementationDelegate {
   fun saveOnDisk()
 
   companion object {
-    @Suppress("IncorrectServiceRetrieving") // registered programmatically
     fun getInstance(): SdkTableImplementationDelegate {
       return ApplicationManager.getApplication().service()
     }
