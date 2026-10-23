@@ -246,6 +246,7 @@ pub struct ShardVerdict {
     pub execution: ExecutionCounts,
     /// Always [`super::ORDERING`].
     pub ordering: String,
+    // jscpd:ignore-start the shard verdict and the run report are two wire documents with the same case lists
     /// The cases of every shard in [`super::ORDERING`].
     #[serde(default)]
     pub cases: Vec<Case>,
@@ -253,6 +254,7 @@ pub struct ShardVerdict {
     pub failures: Vec<Failure>,
     #[serde(default)]
     pub skipped_containers: Vec<SkippedContainer>,
+    // jscpd:ignore-end
     #[serde(default)]
     pub coverage: Vec<ShardCoverage>,
     /// The union of every shard's executed classes: what this verdict actually speaks for, which is narrower

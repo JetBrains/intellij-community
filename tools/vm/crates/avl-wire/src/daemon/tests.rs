@@ -661,25 +661,19 @@ fn a_trace_failure_of_the_lane_daemon_decodes_and_keeps_its_bytes() {
 // the order of the files does not move it, and a file of another directory does not either.
 #[test]
 fn the_digest_of_a_plugin_directory_is_over_its_own_files_in_destination_order() {
-    let by_hand = |files: &[(&str, &str)]| {
-        let mut hash = Sha256::new();
-        for (destination, sha256) in files {
-            hash.update(destination.as_bytes());
-            hash.update([0]);
-            hash.update(sha256.as_bytes());
-            hash.update([0]);
-        }
-        hex::encode(hash.finalize())
-    };
+    // The shell gives the same values: `printf '%s\0' bridge/lib/a.jar 1 bridge/lib/b.jar 2 | shasum -a 256`.
     let digests = plugin_directory_digests([("bridge/lib/b.jar", "2"), ("resident/lib/r.jar", "3"), ("bridge/lib/a.jar", "1")]);
     assert_eq!(
         digests,
         BTreeMap::from([
             (
                 "bridge".to_owned(),
-                by_hand(&[("bridge/lib/a.jar", "1"), ("bridge/lib/b.jar", "2")])
+                "98304173ed18c6e9fc65d9987c2b28cef126c89959d35914fa7862204d2796b2".to_owned()
             ),
-            ("resident".to_owned(), by_hand(&[("resident/lib/r.jar", "3")])),
+            (
+                "resident".to_owned(),
+                "2495ce34ed1483690fb99314c174c7db5d6e52fb0a305c8629ea9a4529f6ebbd".to_owned()
+            ),
         ])
     );
     assert_eq!(
