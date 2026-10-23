@@ -401,7 +401,7 @@ private suspend fun startProcessImpl(
     val process = when (val p = pty) {
       is EelExecApi.Pty -> {
         if (platform == Platform.UNIX && "TERM" !in environment) {
-          environment.getOrPut("TERM") { "xterm" }
+          environment["TERM"] = "xterm"
         }
         LocalProcessService.getInstance().startPtyProcess(
           escapedCommandLine,

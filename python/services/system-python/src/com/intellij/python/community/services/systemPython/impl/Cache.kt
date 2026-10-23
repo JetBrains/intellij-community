@@ -76,7 +76,7 @@ internal class Cache<K : Any, V>(
    * Starts cache-in-background-updating process (does nothing if started already)
    */
   fun startUpdate() {
-    cacheUpdateJob.value
+    val _ = cacheUpdateJob.value
   }
 
   /**

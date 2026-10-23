@@ -54,9 +54,9 @@ class PyPseudoKeywordPatternInlayHintsProvider : InlayHintsProvider {
       val classPattern = element as? PyClassPattern ?: return
       val classType = typeEvalContext.getType(classPattern) as? PyClassType ?: return
       val matchArgs = PyClassPatternImpl.getMatchArgs(classType, typeEvalContext) ?: return
-      classPattern.argumentList.patterns.mapIndexed { idx, pattern ->
+      classPattern.argumentList.patterns.forEachIndexed { idx, pattern ->
         if (pattern is PyKeywordPattern) return // positional patterns can only be before keyword patterns
-        val name = matchArgs.getOrNull(idx)?.nullize() ?: return@mapIndexed
+        val name = matchArgs.getOrNull(idx)?.nullize() ?: return@forEachIndexed
         sink.addPresentation(position = InlineInlayPosition(pattern.textRange.startOffset, false), hintFormat = hintFormat) {
           val navigationData = InlayActionData(
             PyPseudoKeywordPatternInlayActionHandler.Payload(SmartPointerManager.createPointer(classPattern), name),

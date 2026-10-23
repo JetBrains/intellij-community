@@ -91,7 +91,9 @@ class PrefetchCache private constructor(
         val parent = path.parent ?: return@collect
         listings.getOrPut(parent) { HashMap() }[path.fileName] = info
         when (info.type) {
-          is EelFileInfo.Type.Directory -> listings.getOrPut(path) { HashMap() }
+          is EelFileInfo.Type.Directory -> {
+            val _ = listings.getOrPut(path) { HashMap() }
+          }
           is EelFileInfo.Type.Regular, is EelFileInfo.Type.Other, is EelPosixFileInfo.Type.Symlink -> Unit
         }
       }

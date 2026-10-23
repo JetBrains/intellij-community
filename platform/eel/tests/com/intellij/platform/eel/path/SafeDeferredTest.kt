@@ -238,7 +238,7 @@ class SafeDeferredTest {
   fun `state of cancelled with a cause agrees with await`(): Unit = runBlocking {
     val deferred = async { awaitCancellation() }
     deferred.cancel(CancellationException("hello").apply { initCause(IOException("boom")) })
-    runCatching { deferred.await() }
+    deferred.join()
 
     val safeDeferred = SafeDeferred(deferred)
     val state = safeDeferred.state
@@ -406,10 +406,8 @@ class SafeDeferredTest {
     }
     deferred.cancel(CancellationException("hello"))
 
-    runCatching {
-      runBlocking {
-        deferred.await()
-      }
+    runBlocking {
+      deferred.join()
     }
 
     val safeDeferred = SafeDeferred(deferred)

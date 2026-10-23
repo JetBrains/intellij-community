@@ -98,7 +98,7 @@ class PyCompositeTypeEqualityPerformanceTest : PyCodeInsightTestCase() {
     assertTimeoutPreemptively(Duration.ofSeconds(60)) {
       for ((name, make) in composites) {
         counter.set(0)
-        buildSharedDag(DEPTH, CountingLeaf("A"), CountingLeaf("B"), make).hashCode()
+        val _ = buildSharedDag(DEPTH, CountingLeaf("A"), CountingLeaf("B"), make).hashCode()
         assertTrue(counter.get() < LINEAR_BOUND) { "$name: hashCode blew up: ${counter.get()} (want < $LINEAR_BOUND at depth $DEPTH)" }
       }
     }

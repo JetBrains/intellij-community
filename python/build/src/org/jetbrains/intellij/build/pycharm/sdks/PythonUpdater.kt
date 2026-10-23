@@ -21,6 +21,7 @@ import org.jetbrains.intellij.build.pycharm.runCommand
 import org.jetbrains.jps.util.JpsChecksumUtil
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import java.io.IOException
 import java.net.HttpURLConnection
 import java.nio.file.Paths
 import kotlin.io.path.exists
@@ -114,7 +115,13 @@ class PythonUpdater {
       return Resource(resUrl, file.fileSize(), sha256)
     }
     finally {
-      files.values.forEach { runCatching { NioFiles.deleteRecursively(it) } }
+      for (file in files.values) {
+        try {
+          NioFiles.deleteRecursively(file)
+        }
+        catch (_: IOException) {
+        }
+      }
     }
   }
 

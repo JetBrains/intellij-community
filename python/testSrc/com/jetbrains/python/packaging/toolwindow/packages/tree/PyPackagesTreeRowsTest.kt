@@ -120,7 +120,9 @@ class PyPackagesTreeExpandTest {
   /** Five nodes, each the only child of the one above, so each row appears only after the last is expanded. */
   private fun chain(): DefaultMutableTreeNode {
     val nodes = (0 until CHAIN_DEPTH).map { DefaultMutableTreeNode("node-$it") }
-    nodes.zipWithNext { parent, child -> parent.add(child) }
+    for ([parent, child] in nodes.zipWithNext()) {
+      parent.add(child)
+    }
     return nodes.first()
   }
 

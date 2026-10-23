@@ -25,7 +25,7 @@ internal class MeasuringFileSystemListener : FileSystemTracingListener<Measuring
 
   init {
     // ensure the class is loaded to avoid recursion
-    Measurer.Operation::class to Measurer to TracingSeekableByteChannel::class to TracingFileChannel::class to TracingDirectoryStream::class
+    val _ = Measurer.Operation::class to Measurer to TracingSeekableByteChannel::class to TracingFileChannel::class to TracingDirectoryStream::class
   }
 
   private class State {

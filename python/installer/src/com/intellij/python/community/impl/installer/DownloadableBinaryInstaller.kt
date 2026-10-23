@@ -21,6 +21,7 @@ import com.jetbrains.python.sdk.installer.ProcessException
 import com.jetbrains.python.sdk.installer.ResourcePreview
 import com.jetbrains.python.sdk.installer.WrongChecksumPrepareException
 import com.jetbrains.python.sdk.installer.WrongSizePrepareException
+import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.fileSize
@@ -64,7 +65,13 @@ internal abstract class DownloadableBinaryInstaller : BinaryInstaller {
       process(files, indicator)
     }
     finally {
-      files.values.forEach { runCatching { EelFileUtils.deleteRecursively(it) } }
+      for (file in files.values) {
+        try {
+          EelFileUtils.deleteRecursively(file)
+        }
+        catch (_: IOException) {
+        }
+      }
     }
   }
 

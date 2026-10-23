@@ -105,8 +105,8 @@ internal class PyCondaTest {
     val envName = "myNewEnvForTests"
     PyCondaEnv.createEnv(condaRule.condaCommand,
                          EmptyNamedEnv(LanguageLevel.PYTHON39, envName)).getOrThrow()
-    PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec())
-      .getOrThrow().first { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == envName }
+    val envs = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec()).getOrThrow()
+    Assert.assertTrue("Env $envName not found", envs.any { (it.envIdentity as? PyCondaEnvIdentity.NamedEnv)?.envName == envName })
   }
 
   @Test

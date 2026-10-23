@@ -96,7 +96,7 @@ private fun KClass<*>.memberPropertiesCached(): Collection<KProperty<*>> = membe
 @ApiStatus.Internal
 fun preloadProperties(type: Class<*>) {
   for (property in membersCache.get(type)) {
-    property.annotations
+    val _ = property.annotations
     property.returnType.javaType
   }
 }
