@@ -331,14 +331,23 @@ public class JavaDocRenderTest {
                     int a;
                   }""", true);
       EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 100, 1);
-      // a headless EditorImpl reports a hidden cursor until the first mouse event, and the icon update skips a hidden cursor
-      new EditorMouseFixture((EditorImpl)myFixture.getEditor()).moveToXY(0, 0);
-      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-      try (MockedStatic<MouseInfo> mouseInfo = Mockito.mockStatic(MouseInfo.class)) {
-        mouseInfo.when(MouseInfo::getPointerInfo).thenThrow(new ArrayIndexOutOfBoundsException("Index 1 out of bounds for length 1"));
-        EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 100, 2);
+      EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
+      boolean storedQuickDocOnMouseHover = editorSettings.isShowQuickDocOnMouseOverElement();
+      // the mouse move below would schedule a hover documentation popup, which can outlive the test and its PSI
+      editorSettings.setShowQuickDocOnMouseOverElement(false);
+      try {
+        // a headless EditorImpl reports a hidden cursor until the first mouse event, and the icon update skips a hidden cursor
+        new EditorMouseFixture((EditorImpl)myFixture.getEditor()).moveToXY(0, 0);
         PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-        mouseInfo.verify(MouseInfo::getPointerInfo, Mockito.atLeastOnce());
+        try (MockedStatic<MouseInfo> mouseInfo = Mockito.mockStatic(MouseInfo.class)) {
+          mouseInfo.when(MouseInfo::getPointerInfo).thenThrow(new ArrayIndexOutOfBoundsException("Index 1 out of bounds for length 1"));
+          EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 100, 2);
+          PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+          mouseInfo.verify(MouseInfo::getPointerInfo, Mockito.atLeastOnce());
+        }
+      }
+      finally {
+        editorSettings.setShowQuickDocOnMouseOverElement(storedQuickDocOnMouseHover);
       }
     });
   }
