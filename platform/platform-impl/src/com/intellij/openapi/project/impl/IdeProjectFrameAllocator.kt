@@ -799,13 +799,18 @@ private suspend fun restoreEditors(
       return@coroutineScope
     }
 
-    // the editor area opens the startup UI gate with its first paint, see EditorsSplitters.paintChildren
-    span("editor restoring") {
-      editorComponent.createEditors(state = editorState)
-    }
+    try {
+      span("editor restoring") {
+        editorComponent.createEditors(state = editorState)
+      }
 
-    span("editor reopening post-processing", Dispatchers.UI) {
-      focusSelectedEditor(editorComponent)
+      span("editor reopening post-processing", Dispatchers.UI) {
+        focusSelectedEditor(editorComponent)
+      }
+    }
+    finally {
+      // the rest of the frame UI waits for the restored editor, its focus included
+      StartupUiGate.markEditorsShown()
     }
   }
 }

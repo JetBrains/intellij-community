@@ -10,7 +10,7 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * Holds the startup work that the first project frame does not need before its editors are shown.
  * The application start arms the gate when the property `ide.startup.ui.gate` is true. The gate opens when the
- * editor area of the first project has painted its restored editors, or when the IDE opens no project, or after a timeout.
+ * first project has restored and focused its editors, or when the IDE opens no project, or after a timeout.
  */
 @ApiStatus.Internal
 @ApiStatus.Experimental

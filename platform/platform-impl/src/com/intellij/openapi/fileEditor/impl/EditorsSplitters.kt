@@ -6,7 +6,6 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.util.StartupUiGate
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
 import com.intellij.frontend.FrontendApplicationInfo
@@ -235,7 +234,7 @@ open class EditorsSplitters internal constructor(
 
   private var emptyStatePresentationReady: Boolean = true
 
-  // the first paint after the startup restore opens the startup UI gate
+  // the first paint after the startup restore is reported to the startup timeline
   private var reportStartupPaint = false
 
   /**
@@ -610,7 +609,6 @@ open class EditorsSplitters internal constructor(
     if (reportStartupPaint && (windows.isEmpty() || hasShowingEditorComponent())) {
       reportStartupPaint = false
       StartUpMeasurer.addInstantEvent("editor area painted")
-      StartupUiGate.markEditorsShown()
     }
   }
 
