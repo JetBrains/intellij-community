@@ -17,7 +17,7 @@
 //! user profile, whose inherited list is exactly that set, is private too.
 
 use std::fs::{File, Metadata};
-use std::io;
+use std::io::{self, Write};
 use std::path::Path;
 
 #[cfg(unix)]
@@ -58,6 +58,16 @@ pub const PRIVATE_FILE_RULE: &str = "access list must grant only the current use
 /// mode is asked for at the `open`, and on Windows the access list is part of the creation.
 pub fn open_private_file(path: &Path, how: PrivateOpen) -> io::Result<File> {
     imp::open_private_file(path, how)
+}
+
+/// Opens the private log of a detached session at `path` for an append, and writes the `header` line of this start.
+/// The answer is the stdout and the stderr of the session, two handles of the one file. A header that the log cannot
+/// take costs only the header.
+pub fn open_session_log(path: &Path, header: &str) -> io::Result<(File, File)> {
+    let mut log = open_private_file(path, PrivateOpen::Append)?;
+    let log_err = log.try_clone()?;
+    let _ = writeln!(log, "\n--- {header}");
+    Ok((log, log_err))
 }
 
 /// Creates one directory, private. The parent must exist, and an existing directory is `AlreadyExists`.
