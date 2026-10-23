@@ -35,11 +35,13 @@ fn expand_platform(text: &str) -> String {
     result
 }
 
+// jscpd:ignore-start The planfile corpus test makes the same choice, and its unit test cannot share a fake with a crate that links planfile.
 /// A reused natives jar or its native tree. Every other asset stays in the remainder, as in the `planfile` corpus test.
 fn is_independent(asset: &planfile::Asset) -> bool {
     asset.recipe.as_ref().is_some_and(|recipe| !recipe.writer.native_lib.is_empty())
         || asset.inputs.iter().any(|input| input.starts_with("native-tree:"))
 }
+// jscpd:ignore-end
 
 /// The layout inputs that Starlark declares as directories. They are an input with a path and the source of a plain
 /// copy at the output root.
@@ -71,6 +73,7 @@ fn catalogue(file: &PlanFile) -> Catalogue {
     let layout_inputs = (file.operations.iter())
         .flat_map(|operation| &operation.inputs)
         .map(|input| input.artifact.as_str());
+    // jscpd:ignore-start The planfile corpus test names the same libraries, and its unit test cannot share a fake with this crate.
     let libraries: HashSet<&str> = (file.assets.iter())
         .filter_map(|asset| asset.recipe.as_ref())
         .flat_map(|recipe| &recipe.sources)
@@ -78,6 +81,7 @@ fn catalogue(file: &PlanFile) -> Catalogue {
         .map(|source| source.input.as_str())
         .chain(layout_inputs.filter(|input| input.starts_with('@') && input.split_once("//:").is_some_and(|(_, name)| !name.contains('/'))))
         .collect();
+    // jscpd:ignore-end
     let directories = directory_inputs(file);
     let mut catalogue = Catalogue {
         version: VERSION,

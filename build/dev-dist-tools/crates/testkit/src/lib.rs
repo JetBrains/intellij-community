@@ -146,6 +146,19 @@ pub fn require_error<T: Debug, E: Display>(result: Result<T, E>, message: &str) 
     }
 }
 
+/// Fails unless `result` is an error whose text with its causes contains `message`, as [`require_error`] does. A failure
+/// names the case `case` of a table.
+#[track_caller]
+pub fn require_case_error<T, E: Display>(case: &str, result: Result<T, E>, message: &str) {
+    match result {
+        Ok(_) => panic!("{case}: expected an error with {message:?}"),
+        Err(error) => {
+            let text = format!("{error:#}");
+            assert!(text.contains(message), "{case}: expected {message:?}, got {text:?}");
+        }
+    }
+}
+
 /// Sets the permission bits of a file. It does nothing on Windows, where the tools set no bits.
 pub fn set_mode(path: impl AsRef<Path>, mode: u32) {
     #[cfg(unix)]
@@ -167,6 +180,18 @@ pub fn file_symlink(target: impl AsRef<Path>, link: impl AsRef<Path>) {
 /// Creates a symbolic link to a directory.
 pub fn directory_symlink(target: impl AsRef<Path>, link: impl AsRef<Path>) {
     fscopy::symlink(target.as_ref(), link.as_ref(), true).unwrap_or_else(|error| panic!("{error}"));
+}
+
+/// The text of a plan file of the plugin `demo` with the default variant. `assets` is the text of the asset list, and
+/// each of `sections` is one more top-level member, such as `"operations": []`.
+pub fn plan_text(version: u32, assets: &str, sections: &[&str]) -> String {
+    let mut text = format!(r#"{{"version": {version}, "plugin": "demo", "variant": "", "assets": [{assets}]"#);
+    for section in sections {
+        text.push_str(", ");
+        text.push_str(section);
+    }
+    text.push('}');
+    text
 }
 
 /// The bytes of the reference vectors of the Kotlin content hash: byte `i` is the low byte of `31 * i + 7`.

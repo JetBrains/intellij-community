@@ -2,6 +2,7 @@
 //! `planfile_test.go`. The binary half of the derivation test is in `bins/plugin-remainder-packer/tests`.
 
 use planfile::contract::{Artifact, Catalogue, Library, Reference, TREE_VERSION, VERSION};
+use testkit::plan_text;
 
 use super::kotlin::{
     KotlinJarRecipe, KotlinJarSource, KotlinJarWriter, KotlinPlanAsset, KotlinPlanFile, KotlinPreparedManifest,
@@ -299,16 +300,6 @@ fn plan_derivation_refuses_every_kotlin_preparer_fixture() {
         }
     }
     assert_eq!(golden.fixture_names().len(), refused.len());
-}
-
-fn plan_text(version: u32, assets: &str, sections: &[&str]) -> String {
-    let mut text = format!(r#"{{"version": {version}, "plugin": "demo", "variant": "", "assets": [{assets}]"#);
-    for section in sections {
-        text.push_str(", ");
-        text.push_str(section);
-    }
-    text.push('}');
-    text
 }
 
 fn inputs_artifact(id: &str) -> Artifact {

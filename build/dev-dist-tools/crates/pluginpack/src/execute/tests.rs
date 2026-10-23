@@ -14,7 +14,7 @@ fn tree_plan(root: &Path) -> (Recipe, Catalogue) {
     let recipe = Recipe {
         version: TREE_VERSION,
         plugin: "tree".to_owned(),
-        assets: vec![tree_asset("kotlinc"), independent("lib/independent.jar", "independent")],
+        assets: vec![tree_asset("kotlinc"), Asset::independent("lib/independent.jar", "independent")],
         operations: vec![Operation::CopyTree {
             destination: "kotlinc".to_owned(),
             input: Reference::artifact("tree"),
@@ -64,7 +64,7 @@ fn independent_destinations_collide_with_remainder_tree_entries() {
         let recipe = Recipe {
             version: TREE_VERSION,
             plugin: "tree".to_owned(),
-            assets: vec![tree_asset("lib"), independent(destination, "independent")],
+            assets: vec![tree_asset("lib"), Asset::independent(destination, "independent")],
             operations: vec![Operation::CopyTree {
                 destination: "lib".to_owned(),
                 input: Reference::artifact("tree"),
@@ -105,11 +105,11 @@ fn plugin_native_tree_collides_with_remainder_tree_entries() {
             plugin: "natives".to_owned(),
             assets: vec![
                 tree_asset("lib"),
-                independent("lib/modules/demo.natives.jar", "demo.natives"),
+                Asset::independent("lib/modules/demo.natives.jar", "demo.natives"),
                 Asset {
                     kind: AssetKind::Tree,
                     class_path: Some(false),
-                    ..independent("lib/native", "demo.natives")
+                    ..Asset::independent("lib/native", "demo.natives")
                 },
             ],
             operations: vec![Operation::CopyTree {
@@ -148,7 +148,7 @@ fn version_three_is_refused() {
         plugin: "scoped".to_owned(),
         assets: vec![Asset {
             class_path: Some(false),
-            ..remainder("lib/native.bin")
+            ..Asset::remainder("lib/native.bin")
         }],
         operations: vec![Operation::Copy {
             destination: "lib/native.bin".to_owned(),
@@ -167,7 +167,7 @@ fn copy_recipe(mode: u32) -> Recipe {
     Recipe {
         version: VERSION,
         plugin: "resource".to_owned(),
-        assets: vec![remainder("resource.txt")],
+        assets: vec![Asset::remainder("resource.txt")],
         operations: vec![Operation::Copy {
             destination: "resource.txt".to_owned(),
             mode,
@@ -453,7 +453,7 @@ fn copy_tree_rejects_declared_descendant_collision_before_writing() {
     let source = root.path().join("source");
     write_file(source.join("lib/compiler.jar"), b"tree content");
     let (mut recipe, catalogue) = tree_plan(&source);
-    recipe.assets[1] = remainder("kotlinc/lib/compiler.jar");
+    recipe.assets[1] = Asset::remainder("kotlinc/lib/compiler.jar");
     recipe.operations.push(jar("kotlinc/lib/compiler.jar", Vec::new()));
     let execution = plan(&recipe, &catalogue).unwrap();
     let error = execution
@@ -653,9 +653,9 @@ fn batch_writes_only_its_assets_in_layout_order() {
         module,
     ];
     recipe.assets.extend([
-        remainder("lib/nested/custom.jar"),
-        remainder("lib/first-library.jar"),
-        remainder("bin/native"),
+        Asset::remainder("lib/nested/custom.jar"),
+        Asset::remainder("lib/first-library.jar"),
+        Asset::remainder("bin/native"),
     ]);
     recipe.operations.extend([
         Operation::Copy {
@@ -882,7 +882,7 @@ fn write_rejects_aliases_before_opening_jar_inputs() {
         recipe.assets.clear();
         recipe.operations.clear();
         for destination in destinations {
-            recipe.assets.push(remainder(destination));
+            recipe.assets.push(Asset::remainder(*destination));
             let mut operation = operation.clone();
             if let Operation::Jar { destination: value, .. } = &mut operation {
                 *value = (*destination).to_owned();
@@ -1046,7 +1046,7 @@ fn default_field_recipe_plans_and_writes() {
     let recipe = Recipe {
         version: VERSION,
         plugin: "example".to_owned(),
-        assets: vec![remainder("lib/plugin.jar")],
+        assets: vec![Asset::remainder("lib/plugin.jar")],
         operations: vec![jar("lib/plugin.jar", Vec::new())],
     };
     let written = write_execution(&recipe, &catalogue(Vec::new()));

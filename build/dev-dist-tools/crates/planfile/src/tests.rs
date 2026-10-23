@@ -3,6 +3,8 @@
 
 mod corpus;
 
+use testkit::{plan_text, require_case_error};
+
 use crate::contract::{
     self, Artifact, ArtifactKind, AssetKind, Catalogue, Filter, LayoutAsset, LayoutAssets, LayoutTransform, LayoutTransformKind, Library,
     Manifest, Producer, Reference, Source,
@@ -21,17 +23,6 @@ fn read_plan(text: &str) -> anyhow::Result<PlanFile> {
 
 fn must_read_plan(text: &str) -> PlanFile {
     read_plan(text).unwrap_or_else(|error| panic!("{error}"))
-}
-
-/// Wraps the assets and the optional sections into one neutral plan file text.
-fn plan(version: u32, assets: &str, sections: &[&str]) -> String {
-    let mut text = format!(r#"{{"version": {version}, "plugin": "demo", "variant": "", "assets": [{assets}]"#);
-    for section in sections {
-        text.push_str(", ");
-        text.push_str(section);
-    }
-    text.push('}');
-    text
 }
 
 fn file_artifact(id: &str) -> Artifact {
@@ -181,7 +172,7 @@ fn transform(kind: LayoutTransformKind) -> LayoutTransform {
 
 #[test]
 fn read_expands_the_compact_forms() {
-    let file = must_read_plan(&plan(
+    let file = must_read_plan(&plan_text(
         2,
         r#"{"module": "demo.content"},
     {"destination": "lib/demo.jar", "recipe": {"sources": [{"input": "demo.main", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true}}},
@@ -227,16 +218,16 @@ fn read_expands_the_compact_forms() {
 #[test]
 fn read_refuses_malformed_forms() {
     let one_module = r#"{"module": "m"}"#;
-    let asset = |text: &str| plan(1, text, &[]);
+    let asset = |text: &str| plan_text(1, text, &[]);
     let source = |text: &str| {
-        plan(
+        plan_text(
             1,
             &format!(r#"{{"destination": "lib/x.jar", "recipe": {{"sources": [{text}]}}}}"#),
             &[],
         )
     };
     let writer = |text: &str| {
-        plan(
+        plan_text(
             1,
             &format!(
                 r#"{{"destination": "lib/x.jar", "recipe": {{"sources": [{{"input": "m", "kind": "module", "filter": "module-v1"}}], "writer": {text}}}}}"#
@@ -244,7 +235,7 @@ fn read_refuses_malformed_forms() {
             &[],
         )
     };
-    let operation = |text: &str| plan(1, one_module, &[&format!(r#""operations": [{text}]"#)]);
+    let operation = |text: &str| plan_text(1, one_module, &[&format!(r#""operations": [{text}]"#)]);
     for (name, text, message) in [
         (
             "a module asset with another field",
@@ -310,12 +301,12 @@ fn read_refuses_malformed_forms() {
         ),
         (
             "a reusable artifact",
-            plan(1, one_module, &[r#""reusableArtifacts": [{"label": "l", "module": "m"}]"#]),
+            plan_text(1, one_module, &[r#""reusableArtifacts": [{"label": "l", "module": "m"}]"#]),
             "unknown field `reusableArtifacts`",
         ),
         (
             "preparation roots",
-            plan(1, one_module, &[r#""preparationRoots": ["x"]"#]),
+            plan_text(1, one_module, &[r#""preparationRoots": ["x"]"#]),
             "unknown field `preparationRoots`",
         ),
         (
@@ -465,7 +456,7 @@ fn read_refuses_malformed_forms() {
         ),
         (
             "preparations",
-            plan(1, one_module, &[r#""preparations": []"#]),
+            plan_text(1, one_module, &[r#""preparations": []"#]),
             "unknown field `preparations`",
         ),
         (
@@ -490,28 +481,22 @@ fn read_refuses_malformed_forms() {
         ),
         (
             "a second document",
-            format!("{} {{}}", plan(1, one_module, &[])),
+            format!("{} {{}}", plan_text(1, one_module, &[])),
             "trailing characters",
         ),
         (
             "null for a list",
-            plan(1, one_module, &[r#""operations": null"#]),
+            plan_text(1, one_module, &[r#""operations": null"#]),
             "invalid type: null, expected a sequence",
         ),
     ] {
-        match read_plan(&text) {
-            Ok(_) => panic!("{name}: accepted {text}"),
-            Err(error) => assert!(
-                format!("{error:#}").contains(message),
-                "{name}: expected {message:?}, got {error:#}"
-            ),
-        }
+        require_case_error(name, read_plan(&text), message);
     }
 }
 
 #[test]
 fn read_names_the_file_and_the_operation() {
-    let error = read_plan(&plan(
+    let error = read_plan(&plan_text(
         1,
         r#"{"module": "m"}"#,
         &[r#""operations": [{"id": "n", "kind": "native-presigned", "inputs": [{"artifact": "a"}], "output": "o", "manifest": "keep"}]"#],
@@ -526,7 +511,7 @@ fn read_names_the_file_and_the_operation() {
 /// A `null` for an `Option` field is an absent key.
 #[test]
 fn read_treats_null_as_absent_for_an_optional_field() {
-    let file = must_read_plan(&plan(
+    let file = must_read_plan(&plan_text(
         1,
         r#"{"module": null, "destination": "bin/tool", "inputs": null,
       "recipe": {"sources": [{"input": "x", "kind": "module", "filter": "module-v1", "entry": null}], "writer": null},
@@ -559,7 +544,7 @@ fn derive_reuses_a_module_jar_that_merges_libraries() {
     {{"destination": "lib/rt-first.jar", "recipe": {{"sources": [{library}, {module}], "writer": {{"mergeEntities": true}}}}}},
     {{"destination": "lib/rt-kept.jar", "recipe": {{"sources": [{module}, {library}], "writer": {{"manifest": "keep", "mergeEntities": true}}}}}}"#
     );
-    let derivation = must_derive(&plan(1, &assets, &[]), &reused_library_catalogue(), 1, &["demo.rt"]);
+    let derivation = must_derive(&plan_text(1, &assets, &[]), &reused_library_catalogue(), 1, &["demo.rt"]);
     assert_eq!(
         derivation.assets,
         [
@@ -591,7 +576,7 @@ fn derive_matches_ownership_by_recipe_and_mode() {
     {{"destination": "lib/rt-kept.jar", "recipe": {{"sources": [{{"input": "demo.rt", "kind": "module", "filter": "module-v1"}}], "writer": {{"manifest": "keep", "mergeEntities": true}}}}}}"#
     );
     let derivation = must_derive(
-        &plan(1, &assets, &[]),
+        &plan_text(1, &assets, &[]),
         &catalogue(vec![file_artifact("demo.rt")]),
         1,
         &["demo.content", "demo.rt"],
@@ -615,40 +600,33 @@ fn derive_matches_ownership_by_recipe_and_mode() {
     );
 
     let module_at_another_mode = format!(r#"{{"destination": "lib/rt.jar", "recipe": {RT_RECIPE}, "mode": 493}}"#);
-    for (name, assets, modules, message) in [
-        (
-            "a module at another mode",
-            module_at_another_mode.as_str(),
-            &["demo.rt"][..],
-            r#"independent module "demo.rt" matches no module jar asset"#,
-        ),
-        (
-            "a module without an asset",
-            r#"{"module": "demo.content"}"#,
-            &["demo.rt"][..],
-            r#"independent module "demo.rt" matches no module jar asset"#,
-        ),
-        (
-            "a module named twice",
-            r#"{"module": "demo.content"}"#,
-            &["demo.content", "demo.content"][..],
-            r#"independent module "demo.content" is named twice"#,
-        ),
-        (
-            "an empty module",
-            r#"{"module": "demo.content"}"#,
-            &[""][..],
-            "an independent module requires a name",
-        ),
-    ] {
-        let result = derive_plan(&plan(1, assets, &[]), &catalogue(vec![file_artifact("demo.rt")]), 1, modules);
-        match result {
-            Ok(_) => panic!("{name}: expected {message:?}"),
-            Err(error) => assert!(
-                format!("{error:#}").contains(message),
-                "{name}: expected {message:?}, got {error:#}"
+    let no_rt_jar = r#"independent module "demo.rt" matches no module jar asset"#;
+    let inputs = catalogue(vec![file_artifact("demo.rt")]);
+    require_case_error(
+        "a module at another mode",
+        derive_plan(&plan_text(1, &module_at_another_mode, &[]), &inputs, 1, &["demo.rt"]),
+        no_rt_jar,
+    );
+    let text = plan_text(1, r#"{"module": "demo.content"}"#, &[]);
+    require_module_list_errors(
+        &[
+            ("a module without an asset", &["demo.rt"], no_rt_jar),
+            (
+                "a module named twice",
+                &["demo.content", "demo.content"],
+                r#"independent module "demo.content" is named twice"#,
             ),
-        }
+            ("an empty module", &[""], "an independent module requires a name"),
+        ],
+        |modules| derive_plan(&text, &inputs, 1, modules),
+    );
+}
+
+/// Fails unless `derive` refuses the module list of each case with the message of the case.
+#[track_caller]
+fn require_module_list_errors(cases: &[(&str, &[&str], &str)], derive: impl Fn(&[&str]) -> anyhow::Result<Derivation>) {
+    for (name, modules, message) in cases {
+        require_case_error(name, derive(modules), message);
     }
 }
 
@@ -658,21 +636,21 @@ fn derive_requires_the_execution_version_of_the_assets() {
     for (name, text, inputs, version, independent) in [
         (
             "files",
-            plan(1, r#"{"destination": "bin/tool", "inputs": ["tool"]}"#, &[]),
+            plan_text(1, r#"{"destination": "bin/tool", "inputs": ["tool"]}"#, &[]),
             catalogue(vec![file_artifact("tool")]),
             1,
             &[][..],
         ),
         (
             "a tree",
-            plan(2, excluded_tree, &[]),
+            plan_text(2, excluded_tree, &[]),
             catalogue(vec![directory_artifact("tree")]),
             2,
             &[][..],
         ),
         (
             "a native tree",
-            plan(2, NATIVES, &[]),
+            plan_text(2, NATIVES, &[]),
             catalogue(Vec::new()),
             2,
             &["demo.natives"][..],
@@ -685,7 +663,7 @@ fn derive_requires_the_execution_version_of_the_assets() {
     }
     expect_error(
         derive_plan(
-            &plan(2, r#"{"destination": "bin/tool", "inputs": ["tool"]}"#, &[]),
+            &plan_text(2, r#"{"destination": "bin/tool", "inputs": ["tool"]}"#, &[]),
             &catalogue(vec![file_artifact("tool")]),
             2,
             &[],
@@ -694,11 +672,11 @@ fn derive_requires_the_execution_version_of_the_assets() {
     );
     // Version 3 is retired. A plan file of version 3 and a chain that declares it are stale.
     expect_error(
-        derive_plan(&plan(3, NATIVES, &[]), &catalogue(Vec::new()), 3, &["demo.natives"]),
+        derive_plan(&plan_text(3, NATIVES, &[]), &catalogue(Vec::new()), 3, &["demo.natives"]),
         "stale execution version: file=3 declared=3 required=2",
     );
 
-    let derivation = must_derive(&plan(2, NATIVES, &[]), &catalogue(Vec::new()), 2, &["demo.natives"]);
+    let derivation = must_derive(&plan_text(2, NATIVES, &[]), &catalogue(Vec::new()), 2, &["demo.natives"]);
     assert_eq!(
         derivation.assets,
         [
@@ -714,7 +692,7 @@ fn derive_requires_the_execution_version_of_the_assets() {
   {{"destination": "lib/native", "inputs": ["native-tree:demo.rt"], "kind": "tree", "classPath": false}}"#
     );
     expect_error(
-        derive_plan(&plan(2, &not_native, &[]), &catalogue(Vec::new()), 2, &["demo.rt"]),
+        derive_plan(&plan_text(2, &not_native, &[]), &catalogue(Vec::new()), 2, &["demo.rt"]),
         r#"lib/native: the native tree of "demo.rt" requires its reused natives jar"#,
     );
 }
@@ -761,7 +739,7 @@ fn derive_counts_meaningful_sources_for_the_manifest() {
     {{"destination": "lib/patched.jar", "recipe": {{"sources": [{main}, {patch}]}}}},
     {{"destination": "lib/kept.jar", "recipe": {{"sources": [{main}, {two}], "writer": {{"manifest": "keep"}}}}}}"#
     );
-    let derivation = must_derive(&plan(1, &assets, &[]), &inputs, 1, &[]);
+    let derivation = must_derive(&plan_text(1, &assets, &[]), &inputs, 1, &[]);
     for (destination, want) in [
         ("lib/one.jar", &[Manifest::Keep][..]),
         ("lib/library.jar", &[Manifest::Drop, Manifest::Drop][..]),
@@ -837,7 +815,7 @@ fn derive_resolves_a_library_input_to_its_members() {
     ] {
         let mut catalogue = library_catalogue(&[("@lib//:one", members)]);
         catalogue.artifacts.push(file_artifact("raw"));
-        let derivation = must_derive(&plan(1, jar_asset, &[entries]), &catalogue, 1, &[]);
+        let derivation = must_derive(&plan_text(1, jar_asset, &[entries]), &catalogue, 1, &[]);
         let want = vec![jar(
             "lib/x.jar",
             vec![layout_source(
@@ -867,7 +845,7 @@ fn derive_compiles_every_operation_kind() {
     "layoutAssets": {"format": "entries", "assets": [{"destination": "", "sources": [0]}]}}"#;
     let operations = format!(r#""operations": [{ENTRIES_OPERATION}, {tree}, {entries}]"#);
     let derivation = must_derive(
-        &plan(
+        &plan_text(
             2,
             r#"{"destination": "lib/main.jar", "recipe": {"sources": [{"input": "filtered", "kind": "prepared", "filter": "prepared"},
         {"input": "descriptor", "kind": "file", "filter": "none", "entry": "META-INF/plugin.xml", "options": ["patch"]}], "writer": {"manifest": "drop"}}},
@@ -949,7 +927,7 @@ fn derive_compiles_every_operation_kind() {
 fn derive_writes_the_plan_scope_class_path() {
     let inputs = catalogue(vec![file_artifact("demo.main"), file_artifact("run")]);
     let derivation = must_derive(
-        &plan(
+        &plan_text(
             1,
             r#"{"destination": "lib/util.jar", "recipe": {"sources": [{"input": "demo.main", "kind": "module", "filter": "module-v1"}]}},
       {"destination": "lib/demo.jar", "recipe": {"sources": [{"input": "demo.main", "kind": "module", "filter": "module-v1"}]}},
@@ -979,37 +957,37 @@ fn derive_refuses_what_the_packer_does_not_execute() {
     let scenarios = [
         (
             "a prepared source without a producer",
-            plan(1, FILTERED_JAR, &[]),
+            plan_text(1, FILTERED_JAR, &[]),
             filter_inputs(),
             "has no producer in the plan file",
         ),
         (
             "a copy of a Go-executed output",
-            plan(1, r#"{"destination": "lib/x.jar", "inputs": ["filtered"]}"#, &[ENTRIES_SECTION]),
+            plan_text(1, r#"{"destination": "lib/x.jar", "inputs": ["filtered"]}"#, &[ENTRIES_SECTION]),
             filter_inputs(),
             "requires a prepared jar source",
         ),
         (
             "an operation no asset needs",
-            plan(1, r#"{"destination": "bin/tool", "inputs": ["raw"]}"#, &[ENTRIES_SECTION]),
+            plan_text(1, r#"{"destination": "bin/tool", "inputs": ["raw"]}"#, &[ENTRIES_SECTION]),
             filter_inputs(),
             "unexpected operation",
         ),
         (
             "stale preparation inputs",
-            plan(1, FILTERED_JAR, &[ENTRIES_SECTION]),
+            plan_text(1, FILTERED_JAR, &[ENTRIES_SECTION]),
             catalogue(vec![file_artifact("raw"), file_artifact("extra")]),
             "stale preparation inputs",
         ),
         (
             "a missing catalogue input",
-            plan(1, FILTERED_JAR, &[ENTRIES_SECTION]),
+            plan_text(1, FILTERED_JAR, &[ENTRIES_SECTION]),
             catalogue(Vec::new()),
             "stale preparation inputs",
         ),
         (
             "a tree with another root",
-            plan(
+            plan_text(
                 2,
                 r#"{"destination": "other", "inputs": ["layout:output"], "kind": "tree", "classPath": false}"#,
                 &[
@@ -1022,7 +1000,7 @@ fn derive_refuses_what_the_packer_does_not_execute() {
         ),
         (
             "a tree of a file input",
-            plan(
+            plan_text(
                 2,
                 r#"{"destination": "tree", "inputs": ["source"], "kind": "tree", "classPath": false}"#,
                 &[],
@@ -1032,7 +1010,7 @@ fn derive_refuses_what_the_packer_does_not_execute() {
         ),
         (
             "a prepared source under the default manifest",
-            plan(
+            plan_text(
                 1,
                 r#"{"destination": "lib/main.jar", "recipe": {"sources": [{"input": "filtered", "kind": "prepared", "filter": "prepared"}]}}"#,
                 &[ENTRIES_SECTION],
@@ -1042,7 +1020,7 @@ fn derive_refuses_what_the_packer_does_not_execute() {
         ),
         (
             "a tree at another mode",
-            plan(
+            plan_text(
                 2,
                 r#"{"destination": "tree", "inputs": ["source"], "kind": "tree", "classPath": false, "mode": 493}"#,
                 &[],
@@ -1053,7 +1031,7 @@ fn derive_refuses_what_the_packer_does_not_execute() {
         // The table of the former tool had none of the refusals below.
         (
             "a layout input the operation lacks",
-            plan(
+            plan_text(
                 1,
                 layout_jar,
                 &[
@@ -1066,7 +1044,7 @@ fn derive_refuses_what_the_packer_does_not_execute() {
         ),
         (
             "a native library outside a reused jar",
-            plan(
+            plan_text(
                 1,
                 r#"{"destination": "lib/x.jar", "recipe": {"sources": [{"input": "raw", "kind": "module", "filter": "module-v1"}], "writer": {"mergeEntities": true, "nativeLib": "libx.so"}}}"#,
                 &[],
@@ -1076,7 +1054,7 @@ fn derive_refuses_what_the_packer_does_not_execute() {
         ),
         (
             "an operation chain",
-            plan(
+            plan_text(
                 1,
                 FILTERED_JAR,
                 &[
@@ -1088,7 +1066,7 @@ fn derive_refuses_what_the_packer_does_not_execute() {
         ),
         (
             "a repeated operation",
-            plan(
+            plan_text(
                 1,
                 FILTERED_JAR,
                 &[&format!(r#""operations": [{ENTRIES_OPERATION}, {ENTRIES_OPERATION}]"#)],
@@ -1098,7 +1076,7 @@ fn derive_refuses_what_the_packer_does_not_execute() {
         ),
         (
             "a conflicting operation output",
-            plan(
+            plan_text(
                 1,
                 FILTERED_JAR,
                 &[&format!(
@@ -1111,26 +1089,20 @@ fn derive_refuses_what_the_packer_does_not_execute() {
         ),
         (
             "a native tree without its jar",
-            plan(2, &format!("{native_tree}}}"), &[]),
+            plan_text(2, &format!("{native_tree}}}"), &[]),
             catalogue(Vec::new()),
             "requires its reused natives jar",
         ),
     ];
     for (name, text, inputs, message) in scenarios {
         let version = must_read_plan(&text).version;
-        match derive_plan(&text, &inputs, version, &[]) {
-            Ok(_) => panic!("{name}: expected {message:?}"),
-            Err(error) => assert!(
-                format!("{error:#}").contains(message),
-                "{name}: expected {message:?}, got {error:#}"
-            ),
-        }
+        require_case_error(name, derive_plan(&text, &inputs, version, &[]), message);
     }
 }
 
 #[test]
 fn derive_refuses_an_invalid_plugin_directory() {
-    let text = plan(1, r#"{"destination": "bin/tool", "inputs": ["tool"]}"#, &[]);
+    let text = plan_text(1, r#"{"destination": "bin/tool", "inputs": ["tool"]}"#, &[]);
     for directory in [
         "",
         ".",
@@ -1188,7 +1160,7 @@ fn derive_omits_an_asset_whose_every_module_is_refused() {
         id: "@lib//:demo-lib".to_owned(),
         files: vec![Reference::artifact("@lib//:demo-lib/a.jar")],
     }];
-    let text = plan(1, &assets, &[ENTRIES_SECTION]);
+    let text = plan_text(1, &assets, &[ENTRIES_SECTION]);
     let refused = ["demo.backend", "demo.only", "demo.content"];
     let derivation =
         derive_refusing(&text, &inputs, 1, &["demo.content", "demo.shared"], &refused).unwrap_or_else(|error| panic!("{error}"));
@@ -1229,26 +1201,20 @@ fn derive_omits_an_asset_whose_every_module_is_refused() {
     assert_eq!(complete.assets.len(), 6);
     assert_eq!(complete.catalogue.artifacts.len(), 5);
 
-    for (name, refused, message) in [
-        (
-            "a module without an asset",
-            &["demo.other"][..],
-            r#"refused module "demo.other" matches no asset of the plan"#,
-        ),
-        (
-            "a module named twice",
-            &["demo.backend", "demo.backend"][..],
-            r#"refused module "demo.backend" is named twice"#,
-        ),
-        ("an empty module", &[""][..], "a refused module requires a name"),
-    ] {
-        let result = derive_refusing(&text, &inputs, 1, &["demo.content", "demo.shared"], refused);
-        match result {
-            Ok(_) => panic!("{name}: expected {message:?}"),
-            Err(error) => assert!(
-                format!("{error:#}").contains(message),
-                "{name}: expected {message:?}, got {error:#}"
+    require_module_list_errors(
+        &[
+            (
+                "a module without an asset",
+                &["demo.other"],
+                r#"refused module "demo.other" matches no asset of the plan"#,
             ),
-        }
-    }
+            (
+                "a module named twice",
+                &["demo.backend", "demo.backend"],
+                r#"refused module "demo.backend" is named twice"#,
+            ),
+            ("an empty module", &[""], "a refused module requires a name"),
+        ],
+        |refused| derive_refusing(&text, &inputs, 1, &["demo.content", "demo.shared"], refused),
+    );
 }

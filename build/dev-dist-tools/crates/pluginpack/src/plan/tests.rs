@@ -7,6 +7,8 @@ use planfile::contract::{
     ArtifactKind, Asset, AssetKind, Catalogue, Library, Manifest, Operation, Producer, Recipe, Reference, Source, TREE_VERSION, VERSION,
 };
 
+use testkit::require_case_error;
+
 use super::{plan, validate_plugin_links};
 use crate::tests::*;
 
@@ -14,7 +16,7 @@ fn tree_plan(root: &Path) -> (Recipe, Catalogue) {
     let recipe = Recipe {
         version: TREE_VERSION,
         plugin: "tree".to_owned(),
-        assets: vec![tree_asset("kotlinc"), independent("lib/independent.jar", "independent")],
+        assets: vec![tree_asset("kotlinc"), Asset::independent("lib/independent.jar", "independent")],
         operations: vec![Operation::CopyTree {
             destination: "kotlinc".to_owned(),
             input: Reference::artifact("tree"),
@@ -124,7 +126,7 @@ fn plan_accepts_a_reused_native_tree_next_to_its_jar() {
     let native_tree = Asset {
         kind: AssetKind::Tree,
         class_path: Some(false),
-        ..independent("lib/native", "demo.natives")
+        ..Asset::independent("lib/native", "demo.natives")
     };
     let recipe = |version: u32, assets: Vec<Asset>| Recipe {
         version,
@@ -132,7 +134,7 @@ fn plan_accepts_a_reused_native_tree_next_to_its_jar() {
         assets,
         operations: Vec::new(),
     };
-    let jar = independent("lib/modules/demo.natives.jar", "demo.natives");
+    let jar = Asset::independent("lib/modules/demo.natives.jar", "demo.natives");
     plan(
         &recipe(TREE_VERSION, vec![native_tree.clone(), jar.clone()]),
         &catalogue(Vec::new()),
@@ -156,7 +158,7 @@ fn plan_accepts_a_reused_native_tree_next_to_its_jar() {
     expect_plan_error(
         &recipe(
             TREE_VERSION,
-            vec![independent("lib/modules/other.jar", "other"), native_tree.clone()],
+            vec![Asset::independent("lib/modules/other.jar", "other"), native_tree.clone()],
         ),
         &catalogue(Vec::new()),
         "remainder or native tree ownership",
@@ -305,10 +307,7 @@ fn plan_rejects_invalid_contracts() {
         let root = temp();
         let (mut recipe, mut catalogue) = sample_plan(root.path());
         change(&mut recipe, &mut catalogue);
-        match plan(&recipe, &catalogue) {
-            Ok(_) => panic!("{name}: expected {want:?}"),
-            Err(error) => assert!(format!("{error:#}").contains(want), "{name}: expected {want:?}, got {error:#}"),
-        }
+        require_case_error(name, plan(&recipe, &catalogue), want);
     }
 }
 

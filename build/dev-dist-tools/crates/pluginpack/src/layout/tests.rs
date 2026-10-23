@@ -4,7 +4,8 @@ use std::fs;
 use std::io::Write;
 use std::path::Path;
 
-use planfile::contract::{Artifact, Catalogue, LayoutAsset, LayoutAssets, LayoutTransform, Recipe, Reference, VERSION};
+use planfile::contract::{Artifact, Asset, Catalogue, LayoutAsset, LayoutAssets, LayoutTransform, Recipe, Reference, VERSION};
+use testkit::require_case_error;
 
 use crate::layout_archive::{EntryKind, LayoutArchive};
 use crate::plan;
@@ -994,13 +995,7 @@ fn layout_includes_and_executables_validation() {
             &[Reference::artifact(artifact.id.clone())],
             vec![layout_asset("out", &[0], Some(transform))],
         );
-        match plan(&layout_jar_recipe(layout), &catalogue(vec![artifact.clone()])) {
-            Ok(_) => panic!("{name}: expected {message:?}"),
-            Err(error) => assert!(
-                format!("{error:#}").contains(message),
-                "{name}: expected {message:?}, got {error:#}"
-            ),
-        }
+        require_case_error(name, plan(&layout_jar_recipe(layout), &catalogue(vec![artifact.clone()])), message);
     }
 }
 
@@ -1013,7 +1008,7 @@ fn layout_plan_rejects_invalid_payloads() {
     let file = || catalogue(vec![file_artifact("archive", "archive.zip")]);
     let plain_copy = |input: &str| layout(&[Reference::artifact(input)], vec![layout_asset("copy", &[0], None)]);
     let mut file_asset = layout_tree_recipe("payload", plain_copy("tree"));
-    file_asset.assets[0] = remainder("payload");
+    file_asset.assets[0] = Asset::remainder("payload");
     let mut version_one = layout_tree_recipe("payload", plain_copy("tree"));
     version_one.version = VERSION;
     let tests: Vec<(&str, Recipe, Catalogue, &str)> = vec![
@@ -1105,13 +1100,7 @@ fn layout_plan_rejects_invalid_payloads() {
         ),
     ];
     for (name, recipe, catalogue, message) in tests {
-        match plan(&recipe, &catalogue) {
-            Ok(_) => panic!("{name}: expected {message:?}"),
-            Err(error) => assert!(
-                format!("{error:#}").contains(message),
-                "{name}: expected {message:?}, got {error:#}"
-            ),
-        }
+        require_case_error(name, plan(&recipe, &catalogue), message);
     }
 }
 

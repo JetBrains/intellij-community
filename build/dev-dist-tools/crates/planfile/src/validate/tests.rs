@@ -6,23 +6,6 @@ use std::collections::BTreeMap;
 use super::*;
 use crate::contract::VERSION;
 
-fn remainder(destination: &str) -> Asset {
-    Asset {
-        destination: destination.to_owned(),
-        producer: Producer::Remainder,
-        ..Asset::default()
-    }
-}
-
-fn independent(destination: &str, artifact: &str) -> Asset {
-    Asset {
-        destination: destination.to_owned(),
-        producer: Producer::Independent,
-        artifact: artifact.to_owned(),
-        ..Asset::default()
-    }
-}
-
 fn tree(asset: Asset) -> Asset {
     Asset {
         kind: AssetKind::Tree,
@@ -46,11 +29,11 @@ fn graph(directories: &[(&str, bool)], links: &[(&str, &str)]) -> Result<()> {
 #[test]
 fn validate_assets_accepts_files_and_owned_trees() {
     let assets = [
-        remainder("lib/plugin.jar"),
-        independent("lib/modules/demo.natives.jar", "demo.natives"),
-        tree(independent("lib/native", "demo.natives")),
-        tree(remainder("kotlinc")),
-        tree(remainder("")),
+        Asset::remainder("lib/plugin.jar"),
+        Asset::independent("lib/modules/demo.natives.jar", "demo.natives"),
+        tree(Asset::independent("lib/native", "demo.natives")),
+        tree(Asset::remainder("kotlinc")),
+        tree(Asset::remainder("")),
     ];
     let validated = validated_assets(TREE_VERSION, &assets, true).unwrap();
     assert_eq!(
@@ -62,43 +45,43 @@ fn validate_assets_accepts_files_and_owned_trees() {
 
 #[test]
 fn validate_assets_refuses_each_broken_rule() {
-    let jar = independent("lib/modules/demo.natives.jar", "demo.natives");
-    let native_tree = tree(independent("lib/native", "demo.natives"));
+    let jar = Asset::independent("lib/modules/demo.natives.jar", "demo.natives");
+    let native_tree = tree(Asset::independent("lib/native", "demo.natives"));
     for (name, version, assets, message) in [
         (
             "a file at the plugin root",
             VERSION,
-            vec![remainder("")],
+            vec![Asset::remainder("")],
             "only a declared tree can target the plugin root",
         ),
         (
             "an unsafe destination",
             VERSION,
-            vec![remainder("../lib/a.jar")],
+            vec![Asset::remainder("../lib/a.jar")],
             "unsafe relative path",
         ),
         (
             "a reserved component",
             VERSION,
-            vec![remainder("lib/con.jar")],
+            vec![Asset::remainder("lib/con.jar")],
             "reserved path component",
         ),
         (
             "a non-ASCII destination",
             VERSION,
-            vec![remainder("lib/caf\u{e9}.jar")],
+            vec![Asset::remainder("lib/caf\u{e9}.jar")],
             "unsupported character",
         ),
         (
             "one destination twice",
             VERSION,
-            vec![remainder("lib/a.jar"), independent("lib/a.jar", "a")],
+            vec![Asset::remainder("lib/a.jar"), Asset::independent("lib/a.jar", "a")],
             r#"destination collision at "lib/a.jar""#,
         ),
         (
             "a case alias",
             VERSION,
-            vec![remainder("lib/a.jar"), remainder("lib/A.jar")],
+            vec![Asset::remainder("lib/a.jar"), Asset::remainder("lib/A.jar")],
             r#"destination collision at "lib/A.jar""#,
         ),
         (
@@ -116,7 +99,7 @@ fn validate_assets_refuses_each_broken_rule() {
         (
             "an independent tree of another jar",
             TREE_VERSION,
-            vec![independent("lib/modules/other.jar", "other"), native_tree.clone()],
+            vec![Asset::independent("lib/modules/other.jar", "other"), native_tree.clone()],
             "remainder or native tree ownership",
         ),
         (
@@ -139,7 +122,7 @@ fn validate_assets_refuses_each_broken_rule() {
 
 #[test]
 fn directory_spellings_are_checked_on_request() {
-    let assets = [remainder("Lib/a.jar"), remainder("lib/b.jar")];
+    let assets = [Asset::remainder("Lib/a.jar"), Asset::remainder("lib/b.jar")];
     let error = validate_assets(VERSION, &assets, true).unwrap_err();
     assert_eq!(format!("{error:#}"), r#"conflicting directory spellings "Lib" and "lib""#);
     validate_assets(VERSION, &assets, false).unwrap();

@@ -510,7 +510,7 @@ fn kotlin_layout_materialization_matches_the_transforms() {
             Recipe {
                 version: VERSION,
                 plugin: plan_file.plugin,
-                assets: vec![remainder(&jar)],
+                assets: vec![Asset::remainder(&jar)],
                 operations: vec![Operation::Jar {
                     destination: jar,
                     mode: 0o644,

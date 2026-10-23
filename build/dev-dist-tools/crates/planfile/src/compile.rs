@@ -7,8 +7,8 @@ use anyhow::{Context as _, Result, bail};
 
 use crate::classpath;
 use crate::contract::{
-    self, Artifact, ArtifactKind, AssetKind, Catalogue, Filter, LayoutAssets, Library, Manifest, Producer, Recipe, Reference, Source,
-    TREE_VERSION, VERSION,
+    self, Artifact, ArtifactKind, AssetKind, Catalogue, Filter, LayoutAssets, Library, Manifest, Recipe, Reference, Source, TREE_VERSION,
+    VERSION,
 };
 use crate::plan::{Asset, DEFAULT_MODE, JarRecipe, LayoutFormat, ManifestPolicy, Operation, PlanFile, SourceKind, module_jar_recipe};
 
@@ -596,17 +596,14 @@ impl<'a> Compiler<'a> {
             .filter(|planned| !planned.omitted)
             .map(|planned| {
                 let asset = planned.asset;
-                let producer = if planned.artifact.is_some() {
-                    Producer::Independent
-                } else {
-                    Producer::Remainder
+                let row = match planned.artifact {
+                    Some(artifact) => contract::Asset::independent(&asset.destination, artifact),
+                    None => contract::Asset::remainder(&asset.destination),
                 };
                 contract::Asset {
-                    destination: asset.destination.clone(),
-                    producer,
-                    artifact: planned.artifact.unwrap_or_default().to_owned(),
                     kind: asset.kind,
                     class_path: (!asset.class_path).then_some(false),
+                    ..row
                 }
             })
             .collect()

@@ -21,7 +21,7 @@ use std::path::{Path, PathBuf};
 
 use planfile::contract::{
     Artifact, ArtifactKind, Asset, AssetKind, Catalogue, Filter, LayoutAsset, LayoutAssets, LayoutMapping, LayoutTransform,
-    LayoutTransformKind, Manifest, Operation, Producer, Recipe, Reference, Source, TREE_VERSION, VERSION,
+    LayoutTransformKind, Manifest, Operation, Recipe, Reference, Source, TREE_VERSION, VERSION,
 };
 use sha2::Digest;
 pub(crate) use testkit::{read_bytes, require_absent, testdata_dir, write_file};
@@ -57,28 +57,11 @@ pub(crate) fn exists(path: &Path) -> bool {
 
 // The contract values of the tests.
 
-pub(crate) fn remainder(destination: &str) -> Asset {
-    Asset {
-        destination: destination.to_owned(),
-        producer: Producer::Remainder,
-        ..Asset::default()
-    }
-}
-
-pub(crate) fn independent(destination: &str, artifact: &str) -> Asset {
-    Asset {
-        destination: destination.to_owned(),
-        producer: Producer::Independent,
-        artifact: artifact.to_owned(),
-        ..Asset::default()
-    }
-}
-
 pub(crate) fn tree_asset(destination: &str) -> Asset {
     Asset {
         kind: AssetKind::Tree,
         class_path: Some(false),
-        ..remainder(destination)
+        ..Asset::remainder(destination)
     }
 }
 
@@ -185,7 +168,7 @@ pub(crate) fn layout_jar_recipe(layout: LayoutAssets) -> Recipe {
     Recipe {
         version: VERSION,
         plugin: "layout".to_owned(),
-        assets: vec![remainder("lib/layout.jar")],
+        assets: vec![Asset::remainder("lib/layout.jar")],
         operations: vec![jar("lib/layout.jar", vec![Source::Layout(layout)])],
     }
 }
@@ -197,8 +180,8 @@ pub(crate) fn sample_plan(root: &Path) -> (Recipe, Catalogue) {
         version: VERSION,
         plugin: "example".to_owned(),
         assets: vec![
-            independent("lib/modules/separate.jar", "packed-separate"),
-            remainder("lib/plugin.jar"),
+            Asset::independent("lib/modules/separate.jar", "packed-separate"),
+            Asset::remainder("lib/plugin.jar"),
         ],
         operations: vec![Operation::Jar {
             destination: "lib/plugin.jar".to_owned(),

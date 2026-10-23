@@ -40,6 +40,27 @@ pub struct Asset {
     pub class_path: Option<bool>,
 }
 
+impl Asset {
+    /// The row of an asset that the remainder packer writes.
+    pub fn remainder(destination: impl Into<String>) -> Self {
+        Self {
+            destination: destination.into(),
+            producer: Producer::Remainder,
+            ..Self::default()
+        }
+    }
+
+    /// The row of an asset that another action writes. `artifact` names the module of its reused jar.
+    pub fn independent(destination: impl Into<String>, artifact: impl Into<String>) -> Self {
+        Self {
+            destination: destination.into(),
+            producer: Producer::Independent,
+            artifact: artifact.into(),
+            ..Self::default()
+        }
+    }
+}
+
 /// The producer of an asset. The reader refuses every other text by name.
 #[derive(Serialize, Deserialize, Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
 #[serde(rename_all = "kebab-case", try_from = "String")]
