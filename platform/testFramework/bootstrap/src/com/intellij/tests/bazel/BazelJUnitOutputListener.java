@@ -41,7 +41,14 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class BazelJUnitOutputListener implements TestExecutionListener, Closeable {
   public static final Logger LOG = Logger.getLogger(BazelJUnitOutputListener.class.getName());
+  /**
+   * The attribute of the `testsuites` root that names the digest of the shard plan this shard read.
+   * See {@link com.intellij.tests.ShardFilter#getPlanDigest()}.
+   */
+  public static final String SHARD_PLAN_ATTRIBUTE = "shardPlan";
+
   private final XMLStreamWriter xml;
+  private final String shardPlanDigest;
 
   // When grouping test cases in matchTestCasesToSuites_locked, we want to group by the
   // closes parent that is a class or nested-class if there is one.
@@ -66,6 +73,14 @@ public class BazelJUnitOutputListener implements TestExecutionListener, Closeabl
   private final AtomicBoolean wasInterrupted = new AtomicBoolean();
 
   public BazelJUnitOutputListener(Path xmlOut) {
+    this(xmlOut, null);
+  }
+
+  /**
+   * @param shardPlanDigest the digest of the shard plan, written as {@link #SHARD_PLAN_ATTRIBUTE}, or null for none
+   */
+  public BazelJUnitOutputListener(Path xmlOut, String shardPlanDigest) {
+    this.shardPlanDigest = shardPlanDigest;
     try {
       Files.createDirectories(xmlOut.getParent());
       // Use LazyFileWriter to defer file creation until the first write operation.
@@ -89,6 +104,9 @@ public class BazelJUnitOutputListener implements TestExecutionListener, Closeabl
     try {
       // Closed when we call `testPlanExecutionFinished`
       xml.writeStartElement("testsuites");
+      if (shardPlanDigest != null) {
+        xml.writeAttribute(SHARD_PLAN_ATTRIBUTE, shardPlanDigest);
+      }
     } catch (XMLStreamException e) {
       throw new RuntimeException(e);
     }

@@ -107,7 +107,7 @@ public final class JUnit5BazelRunner {
   private static final PostDiscoveryFilter performancePostDiscoveryFilter = new JUnit5TeamCityRunner.PerformancePostDiscoveryFilter();
   private static final PostDiscoveryFilter ignorePostDiscoveryFilter = new JUnit5TeamCityRunner.IgnorePostDiscoveryFilter();
   private static final PostDiscoveryFilter headlessPostDiscoveryFilter = new JUnit5TeamCityRunner.HeadlessPostDiscoveryFilter();
-  private static final PostDiscoveryFilter shardFilter = ShardFilter.create();
+  private static final ShardFilter shardFilter = ShardFilter.create();
 
   private static JUnit5TeamCityRunner.BucketingClassNameFilter getBucketingClassNameFilter() {
     if (bucketingClassNameFilter == null) {
@@ -210,6 +210,13 @@ public final class JUnit5BazelRunner {
 
       ShardFilter.writeShardStatus();
 
+      // before the sandbox setup and the discovery, so a shard the plan leaves idle costs only the JVM start
+      if (shardFilter != null && shardFilter.isIdle()) {
+        System.err.println("No tests executed: the shard plan gives this target fewer shards.");
+        xmlReportShardWithoutTests(getXmlOutputFile(), shardFilter.getPlanDigest());
+        System.exit(EXIT_CODE_SUCCESS);
+      }
+
       String jbEnvSandboxValue = System.getenv(jbEnvSandbox);
       if (jbEnvSandboxValue == null) {
         throw new RuntimeException("Missing " + jbEnvSandbox + " env variable in bazel test environment");
@@ -255,6 +262,11 @@ public final class JUnit5BazelRunner {
       // See: com.intellij.tests.JUnit5BazelRunner.xmlReportBucketingTestsFilteringOut
       TestPlan testPlan = getTestPlan();
       if (!testPlan.containsTests()) {
+        if (shardFilter != null && shardFilter.hasExcludedTests()) {
+          System.err.println("No tests executed: all tests of this target are in other shards.");
+          xmlReportShardWithoutTests(xmlOutputFile, shardFilter.getPlanDigest());
+          System.exit(EXIT_CODE_SUCCESS);
+        }
         if (!bucketingClassNameFilter.hasExcludedClasses() && !bucketingClassNameFilter.hasIncludedClasses()) {
           //see org.jetbrains.intellij.build.impl.TestingTasksImpl.NO_TESTS_ERROR
           System.err.println("No tests found");
@@ -282,7 +294,7 @@ public final class JUnit5BazelRunner {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> finalSmListener.closeForInterrupt(), "IjSmTestExecutionListenerShutdownHook"));
       }
 
-      try (var bazelJUnitOutputListener = new BazelJUnitOutputListener(xmlOutputFile)) {
+      try (var bazelJUnitOutputListener = new BazelJUnitOutputListener(xmlOutputFile, shardFilter == null ? null : shardFilter.getPlanDigest())) {
         Runtime.getRuntime()
           .addShutdownHook(
             new Thread(() -> bazelJUnitOutputListener.closeForInterrupt(), "BazelJUnitOutputListenerShutdownHook")
@@ -1044,6 +1056,30 @@ public final class JUnit5BazelRunner {
     catch (IOException t) {
       // Non-fatal: we still exit successfully, but log the problem to stderr
       System.err.println("Failed to write XML_OUTPUT_FILE for bucketing-empty plan: " + t.getMessage());
+    }
+  }
+
+  /**
+   * Writes a JUnit XML with a single testsuite named `Sharding` and zero tests, for a shard that runs no test while
+   * other shards of the target run them. Like the `Bucketing` report, it is not "no tests found". The root names the
+   * digest of the shard plan, because the plan decided that this shard runs no test.
+   */
+  private static void xmlReportShardWithoutTests(Path xmlOutputFile, String shardPlanDigest) {
+    try {
+      String root = shardPlanDigest == null
+                    ? "<testsuites>"
+                    : "<testsuites " + BazelJUnitOutputListener.SHARD_PLAN_ATTRIBUTE + "=\"" + shardPlanDigest + "\">";
+      String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+                   root +
+                   "<testsuite name=\"Sharding\" tests=\"0\" failures=\"0\" errors=\"0\" skipped=\"0\">" +
+                   "<system-out>No tests executed: other shards run the tests of this target.</system-out>" +
+                   "</testsuite>" +
+                   "</testsuites>";
+      Files.writeString(xmlOutputFile, xml);
+    }
+    catch (IOException t) {
+      // Non-fatal: we still exit successfully, but log the problem to stderr
+      System.err.println("Failed to write XML_OUTPUT_FILE for a shard without tests: " + t.getMessage());
     }
   }
 
