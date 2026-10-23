@@ -77,6 +77,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.instanceContainer.internal.ContainerDisposedException
 import com.intellij.platform.instanceContainer.internal.InstanceContainerImpl
 import com.intellij.platform.instanceContainer.internal.InstanceContainerInternal
@@ -1747,10 +1748,12 @@ private val isPreparingInitialization: ThreadLocal<Boolean> = ThreadLocal.withIn
 /**
  * Runs the slow part of the initialization, for example, the read of the settings file, in the caller thread.
  * Then it does not run inside the non-cancellable initialization, while other callers wait for the instance.
+ *
+ * The registry key `ide.service.preload.state` disables this step.
  */
 private fun prepareInitialization(holder: InstanceHolder, keyClass: Class<*>?) {
   // the preparation can request other instances; do not prepare them, to prevent an endless recursion
-  if (isPreparingInitialization.get()) {
+  if (isPreparingInitialization.get() || !Registry.`is`("ide.service.preload.state", true)) {
     return
   }
 

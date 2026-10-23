@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.settings.SettingsController
 import com.intellij.platform.settings.local.clearCacheStore
 import com.intellij.testFramework.ApplicationRule
@@ -58,6 +59,7 @@ import java.io.InputStream
 import java.nio.file.Path
 import java.util.EnumMap
 import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import java.util.zip.ZipInputStream
@@ -411,6 +413,28 @@ class ApplicationStoreTest {
     }
     finally {
       storageManager.removeStreamProvider(SlowStreamProvider::class.java)
+    }
+  }
+
+  @Test
+  fun `registry key disables the preload of the service state`() = runBlocking<Unit>(Dispatchers.Default) {
+    val app = ApplicationManager.getApplication()
+    val storageManager = app.stateStore.storageManager
+    val streamProvider = PreparationRecordingStreamProvider()
+    storageManager.addStreamProvider(streamProvider)
+    try {
+      app.service<PreloadedService>()
+      assertThat(streamProvider.readsInPreparation).containsExactly(MapEntry.entry(PRELOADED_FILE_SPEC, true))
+
+      Registry.get("ide.service.preload.state").setValue(false, disposableRule.disposable)
+      app.service<NotPreloadedService>()
+      assertThat(streamProvider.readsInPreparation).containsExactly(
+        MapEntry.entry(PRELOADED_FILE_SPEC, true),
+        MapEntry.entry(NOT_PRELOADED_FILE_SPEC, false),
+      )
+    }
+    finally {
+      storageManager.removeStreamProvider(PreparationRecordingStreamProvider::class.java)
     }
   }
 
@@ -808,6 +832,41 @@ class ApplicationStoreTest {
   }
 
   /**
+   * Records if the container reads [PRELOADED_FILE_SPEC] and [NOT_PRELOADED_FILE_SPEC] in the preparation of the initialization.
+   * It does not serve any data.
+   */
+  private class PreparationRecordingStreamProvider : StreamProvider {
+    val readsInPreparation: MutableMap<String, Boolean> = ConcurrentHashMap()
+
+    override val isExclusive: Boolean = false
+
+    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean {
+      return fileSpec == PRELOADED_FILE_SPEC || fileSpec == NOT_PRELOADED_FILE_SPEC
+    }
+
+    override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
+    }
+
+    override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
+      if (isApplicable(fileSpec, roamingType)) {
+        readsInPreparation[fileSpec] = StackWalker.getInstance().walk { frames ->
+          frames.anyMatch { it.methodName == "prepareInitialization" }
+        }
+      }
+      return false
+    }
+
+    override fun processChildren(
+      path: String,
+      roamingType: RoamingType,
+      filter: (String) -> Boolean,
+      processor: (String, InputStream, Boolean) -> Boolean,
+    ): Boolean = false
+
+    override fun delete(fileSpec: String, roamingType: RoamingType): Boolean = false
+  }
+
+  /**
    * Records the file specs of all reads.
    * It does not serve any data, so the storage reads the local file.
    */
@@ -922,9 +981,19 @@ class ApplicationStoreTest {
       this.state = state
     }
   }
+
+  @Service
+  @State(name = "PreloadedService", storages = [Storage(PRELOADED_FILE_SPEC)], allowLoadInTests = true)
+  private class PreloadedService : A()
+
+  @Service
+  @State(name = "NotPreloadedService", storages = [Storage(NOT_PRELOADED_FILE_SPEC)], allowLoadInTests = true)
+  private class NotPreloadedService : A()
 }
 
 private const val SLOW_READ_FILE_SPEC = "slow-read.xml"
+private const val PRELOADED_FILE_SPEC = "preloaded.xml"
+private const val NOT_PRELOADED_FILE_SPEC = "not-preloaded.xml"
 
 internal data class TestState(@JvmField @Attribute var foo: String = "", @JvmField @Attribute var bar: String = "")
 
