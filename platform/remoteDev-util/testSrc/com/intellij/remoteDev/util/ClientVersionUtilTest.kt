@@ -3,7 +3,6 @@ package com.intellij.remoteDev.util
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.remoteDev.util.ClientVersionUtil.computeSeparateConfigEnvVariableValue
 import com.intellij.remoteDev.util.ClientVersionUtil.isSeparateConfigSupported
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -11,7 +10,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 
-@TestApplication
 class ClientVersionUtilTest {
   @ValueSource(strings = ["232.9552", "232.9559.2", "232.SNAPSHOT", "233.2350", "233.SNAPSHOT", "241.1", "241.SNAPSHOT"])
   @ParameterizedTest
