@@ -3,7 +3,7 @@
 
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { createRouteTable, kernelRouteEntries, type LaunchRoute, routeBuilder, siteRouteTable, text, type KernelRoute } from './routeTable.ts'
+import { createRouteTable, kernelRouteEntries, type LaunchRoute, pathText, routeBuilder, siteRouteTable, text, type KernelRoute } from './routeTable.ts'
 
 const CONFIG = { docs: { decisions: ['docs/decisions'] }, launchPicker: { defaultName: 'IDEA', explainChapter: null } } as Parameters<typeof kernelRouteEntries>[0]
 const table = createRouteTable(kernelRouteEntries(CONFIG))
@@ -121,4 +121,14 @@ test('the launch route exists only when the site has a launch picker', () => {
   assert.deepEqual(parse('/launch'), { page: 'launch', q: null })
   const launch: LaunchRoute = { page: 'launch', q: null }
   assert.equal(table.entryFor(launch).section, 'launch')
+})
+
+test('a path value keeps its slashes in the build, and any value parses back', () => {
+  type ZipRoute = { page: 'zip', zip: string | null, note: string | null }
+  const route = routeBuilder<ZipRoute>()
+  const zips = createRouteTable([route('zip', '/zip', { query: { zip: pathText, note: text } })])
+  const zip: ZipRoute = { page: 'zip', zip: 'ui_lane_test/iter-1/A Test/b c.zip', note: 'x/y' }
+  assert.equal(zips.build(zip), '/zip?zip=ui_lane_test/iter-1/A+Test/b+c.zip&note=x%2Fy')
+  assert.deepEqual(zips.parse('/zip?zip=ui_lane_test/iter-1/A+Test/b+c.zip&note=x%2Fy'), zip)
+  assert.deepEqual(zips.parse('/zip?zip=ui_lane_test%2Fiter-1%2FA%20Test%2Fb%20c.zip&note=x/y'), zip)
 })

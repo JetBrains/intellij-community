@@ -111,12 +111,21 @@ export function decisionPaths(dirs: readonly string[]): DecisionPaths {
 export interface QueryCodec<T> {
   /** The URL key, when it is not the route field name. */
   readonly key?: string
+  /** True for a value that is a path: the build keeps each `/` of it, so the link reads as the path it names. */
+  readonly path?: boolean
   parse(raw: string | null): T | null
   /** Null drops the key from the URL. */
   format(value: T | null): string | null
 }
 
 export const text: QueryCodec<string> = {
+  parse: raw => raw,
+  format: value => value,
+}
+
+/** A text value that is a path, such as `a/b/c.zip`: its `/` stays a `/` in the URL. */
+export const pathText: QueryCodec<string> = {
+  path: true,
   parse: raw => raw,
   format: value => value,
 }
@@ -351,15 +360,16 @@ function fillPattern(pattern: readonly PatternPart[], values: Values): string | 
   return path === '' ? '/' : path
 }
 
-function withQuery(path: string, params: Record<string, string | null>): string {
-  const search = new URLSearchParams()
+/** The path with its query. A key in `paths` keeps each `/` of its value; a `/` needs no escape in a query. */
+function withQuery(path: string, params: Record<string, string | null>, paths: ReadonlySet<string>): string {
+  const pairs: string[] = []
   for (const [key, value] of Object.entries(params)) {
     if (value !== null) {
-      search.set(key, value)
+      const pair = new URLSearchParams({ [key]: value }).toString()
+      pairs.push(paths.has(key) ? pair.replaceAll('%2F', '/') : pair)
     }
   }
-  const query = search.toString()
-  return `${path}${query ? `?${query}` : ''}`
+  return `${path}${pairs.length > 0 ? `?${pairs.join('&')}` : ''}`
 }
 
 // --- the kernel routes ---------------------------------------------------------------------------
@@ -530,7 +540,8 @@ export function createRouteTable(entries: readonly RouteEntry[]): RouteTable {
     build(route, basePrefix = '') {
       const { entry, path, values } = buildEntry(route)
       const query = Object.fromEntries(entry.query.map(([field, codec]) => [codec.key ?? field, codec.format(values[field] ?? null)]))
-      return `${basePrefix}${withQuery(path, query)}`
+      const paths = new Set(entry.query.flatMap(([field, codec]) => codec.path === true ? [codec.key ?? field] : []))
+      return `${basePrefix}${withQuery(path, query, paths)}`
     },
     entryFor(route) {
       const { entry } = buildEntry(route)
