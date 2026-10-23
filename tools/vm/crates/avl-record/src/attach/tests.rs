@@ -3,16 +3,14 @@ use std::path::Path;
 
 use avl_trace::bundle::{PARTIAL_SUFFIX, attach_path, bundle_file};
 use avl_trace::otlp::{LogRecord, attr, event, lookup_str, span_id};
-use avl_trace::protocol::{Command, VideoCodec, encode_command};
+use avl_trace::protocol::{Command, encode_command};
 use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::Options;
-use crate::capture::Source;
-use crate::ladder::{VideoPlan, Videographer};
 use crate::stills::{QUEUE_DEPTH, Writer};
 use crate::tests::harness::*;
-use crate::video::{FrameSink, Recording, Stopped};
+use crate::video::Recording;
 
 const SCENARIO: &str = r#"{"op":"scenario","name":"example","testClass":"AirExampleUiTest","lane":"UI"}"#;
 const SPAN: &str = r#"{"op":"span","id":1,"kind":"journey","key":"journey:open","title":"Open the chat"}"#;
@@ -44,20 +42,6 @@ fn attachments(dir: &Path) -> Vec<(String, String, String, String)> {
                 text(attr::ATTACHMENT_NAME),
                 text(attr::ATTACHMENT_MIME),
                 text(attr::ATTACHMENT_FILE),
-            )
-        })
-        .collect()
-}
-
-/// Each `air.trace.error` record as `<source>: <message>`.
-fn trace_errors(dir: &Path) -> Vec<String> {
-    events(dir, event::TRACE_ERROR)
-        .iter()
-        .map(|record| {
-            format!(
-                "{}: {}",
-                lookup_str(&record.attributes, attr::TRACE_ERROR_SOURCE).unwrap_or_default(),
-                lookup_str(&record.attributes, attr::TRACE_ERROR_MESSAGE).unwrap_or_default()
             )
         })
         .collect()
@@ -98,44 +82,15 @@ fn attach_files(bundle: &Path) -> Vec<String> {
     names
 }
 
-/// A raw video that the recorder starts and stops, and that takes no frame. A scenario with it has lossy stills.
-struct SilentVideo;
-
-impl Videographer for SilentVideo {
-    fn plan(&self, _: Option<&dyn Source>, _: bool) -> VideoPlan {
-        VideoPlan {
-            codec: VideoCodec::H264,
-            reason: String::new(),
-            raw: false,
-        }
-    }
-
-    fn start(&self, _: &Path, _: &VideoPlan, _: Option<&Frame>) -> anyhow::Result<Box<dyn Recording>> {
-        Ok(Box::new(Self))
-    }
-}
-
-impl Recording for SilentVideo {
-    fn raw(&self) -> bool {
-        false
-    }
-
-    fn take_sink(&mut self) -> Option<Box<dyn FrameSink>> {
-        None
-    }
-
-    fn stop(&mut self) -> anyhow::Result<Stopped> {
-        Ok(Stopped {
-            frames: 0,
-            first_frame_ms: 0,
-        })
-    }
-}
-
-/// The options of the harness with a video, so the stills are lossy.
+/// The options of the harness with a video that takes no frame, so the stills are lossy.
 fn options_with_video(h: &Harness) -> Options {
     let mut options = h.options();
-    options.video = Box::new(SilentVideo);
+    options.video = Box::new(ScreenVideo(|_: &Path| -> anyhow::Result<Box<dyn Recording>> {
+        Ok(Box::new(ScreenRecording {
+            frames: 0,
+            first_frame_ms: 0,
+        }))
+    }));
     options
 }
 
@@ -353,16 +308,7 @@ fn an_attachment_outside_the_root_or_its_scenario_is_refused_and_a_lost_one_is_r
     let bundle = h.example_bundle();
     assert_eq!(events(&bundle, event::ATTACHMENT), Vec::<LogRecord>::new());
     assert!(!bundle.join(ATTACH_DIR).join("0001.txt").exists());
-    let errors: Vec<String> = events(&bundle, event::TRACE_ERROR)
-        .iter()
-        .map(|record| {
-            format!(
-                "{}: {}",
-                lookup_str(&record.attributes, attr::TRACE_ERROR_SOURCE).unwrap_or_default(),
-                lookup_str(&record.attributes, attr::TRACE_ERROR_MESSAGE).unwrap_or_default()
-            )
-        })
-        .collect();
+    let errors = trace_errors(&bundle);
     assert_eq!(errors.len(), 4, "{errors:#?}");
     assert!(
         errors[0].starts_with("protocol: line 3: ") && errors[0].contains("not under the trace root"),

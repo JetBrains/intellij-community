@@ -15,16 +15,14 @@ use avl_trace::bridge::{
     PAINT_ROUTE, Point, Rect, SPANS_ROUTE, TOKEN_HEADER, TREE_ROUTE, Tree, decode_tree,
 };
 use avl_trace::bundle::{IDEA_LOG_FILE, LOGS_FILE, MANIFEST_FILE, Manifest, SPANS_FILE, bundle_dir, decode_manifest};
-use avl_trace::otlp::{LogRecord, Span, decode_logs_line, decode_traces_line};
-use avl_trace::protocol::{
-    Bridge, CaptureSource, Command, HelloCommand, Launcher, VideoCodec, VideoRetention, decode_command, encode_command,
-};
+use avl_trace::otlp::{LogRecord, Span, attr, decode_logs_line, decode_traces_line, event, lookup_str};
+use avl_trace::protocol::{Bridge, CaptureSource, Command, HelloCommand, Launcher, VideoRetention, decode_command, encode_command};
 
 use crate::capture::{Frame, Source};
 use crate::ladder::{CaptureLadder, ScreenAccess, VideoPlan, Videographer};
 use crate::session::Session;
 use crate::testing::{ScriptedClock, SharedBuffer};
-use crate::video::Recording;
+use crate::video::{FrameSink, Recording, Stopped};
 use crate::{Diagnostics, Options, lock};
 
 pub(crate) const GOLDEN_ACKS: &str = "lane-transcript.acks.ndjson";
@@ -274,11 +272,7 @@ pub(crate) struct NoVideo;
 
 impl Videographer for NoVideo {
     fn plan(&self, _: Option<&dyn Source>, _: bool) -> VideoPlan {
-        VideoPlan {
-            codec: VideoCodec::None,
-            reason: GOLDEN_VIDEO_REASON.to_owned(),
-            raw: false,
-        }
+        VideoPlan::none(GOLDEN_VIDEO_REASON)
     }
 
     fn start(&self, _: &Path, _: &VideoPlan, _: Option<&Frame>) -> anyhow::Result<Box<dyn Recording>> {
@@ -596,6 +590,57 @@ fn golden_rename_read() -> IdeSpan {
             ("air.bytes", "18390"),
         ],
     )
+}
+
+/// A screen video that the closure starts in the bundle directory. The recorder feeds it no frame.
+pub(crate) struct ScreenVideo<F>(pub(crate) F);
+
+impl<F: Fn(&Path) -> anyhow::Result<Box<dyn Recording>> + Send> Videographer for ScreenVideo<F> {
+    fn plan(&self, _: Option<&dyn Source>, _: bool) -> VideoPlan {
+        VideoPlan::h264(false)
+    }
+
+    fn start(&self, dir: &Path, _: &VideoPlan, _: Option<&Frame>) -> anyhow::Result<Box<dyn Recording>> {
+        (self.0)(dir)
+    }
+}
+
+/// A screen video that takes no frame from the recorder and stops with the given numbers.
+pub(crate) struct ScreenRecording {
+    pub(crate) frames: usize,
+    pub(crate) first_frame_ms: i64,
+}
+
+impl Recording for ScreenRecording {
+    fn raw(&self) -> bool {
+        false
+    }
+
+    fn take_sink(&mut self) -> Option<Box<dyn FrameSink>> {
+        None
+    }
+
+    fn stop(&mut self) -> anyhow::Result<Stopped> {
+        Ok(Stopped {
+            frames: self.frames,
+            first_frame_ms: self.first_frame_ms,
+        })
+    }
+}
+
+/// Each `air.trace.error` record of a bundle as `<source>: <message>`.
+pub(crate) fn trace_errors(dir: &Path) -> Vec<String> {
+    records(dir)
+        .iter()
+        .filter(|record| record.event_name == event::TRACE_ERROR)
+        .map(|record| {
+            format!(
+                "{}: {}",
+                lookup_str(&record.attributes, attr::TRACE_ERROR_SOURCE).unwrap_or_default(),
+                lookup_str(&record.attributes, attr::TRACE_ERROR_MESSAGE).unwrap_or_default()
+            )
+        })
+        .collect()
 }
 
 /// Every log record of a bundle, in order, each line checked against the contract.
