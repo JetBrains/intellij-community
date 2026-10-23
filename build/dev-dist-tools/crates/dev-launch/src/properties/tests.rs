@@ -1,13 +1,7 @@
-use std::path::Path;
-
 use serde_json::json;
+use testkit::write_file;
 
 use super::*;
-
-fn write_file(path: &Path, content: &str) {
-    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-    std::fs::write(path, content).unwrap();
-}
 
 /// The macro of `product-info.json` for the IDE home on the host OS.
 fn ide_home_macro() -> &'static str {
@@ -44,7 +38,7 @@ fn distribution_properties_follow_get_ide_system_properties() {
     let product_info = directory.path().join("product-info.json");
     write_file(
         &product_info,
-        &json!({"launch": [{
+        json!({"launch": [{
             "additionalJvmArguments": [
                 format!("-Xbootclasspath/a:{home_macro}/lib/nio-fs.jar"),
                 format!("-Djna.boot.library.path={home_macro}/lib/jna"),
