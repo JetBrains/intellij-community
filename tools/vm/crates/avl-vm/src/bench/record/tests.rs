@@ -472,6 +472,14 @@ fn a_log_without_the_main_class_takes_the_loading_time_with_a_note() {
     assert_eq!(record.metrics.get(JVM_PROCESS_START), None);
 }
 
+/// Collects the project run `run`, asserts that it is valid with the notes `notes`, and answers its record.
+fn valid_project_record(run: &Path, notes: &[&str]) -> RunRecord {
+    let record = collect(run, &id(Arm::PROJECT), LaunchFacts::default());
+    assert!(record.valid, "{:?}", record.reason);
+    assert_eq!(record.notes, notes);
+    record
+}
+
 /// A missing class-load log is a note, and so is a log of another shape. Neither fails the run. A log without the main
 /// class and a report without `jvm.loadingTime` leave the counts without anchors.
 #[test]
@@ -481,14 +489,12 @@ fn a_missing_or_bad_class_log_is_a_note_and_a_run_without_a_clock_start_has_no_a
     let report = std::fs::read_to_string(run.join("startup-stats.json")).expect("a report");
     std::fs::write(run.join("startup-stats.json"), report.replace(r#""jvm":{"loadingTime":358},"#, "")).expect("a report");
     remove_main_class(&run);
-    let record = collect(&run, &id(Arm::PROJECT), LaunchFacts::default());
-    assert!(record.valid, "{:?}", record.reason);
-    assert_eq!(
-        record.notes,
-        [
+    let record = valid_project_record(
+        &run,
+        &[
             "no fus.jsonl",
-            "class-load.log has no com.intellij.idea.Main and startup-stats.json has no jvm.loadingTime, so the class counts have no anchors"
-        ]
+            "class-load.log has no com.intellij.idea.Main and startup-stats.json has no jvm.loadingTime, so the class counts have no anchors",
+        ],
     );
     assert_eq!(record.metrics.get(CLASSES_NAMED), Some(&25.0));
     assert!(!record.metrics.keys().any(|metric| metric.contains('@')), "{:?}", record.metrics);
@@ -496,14 +502,12 @@ fn a_missing_or_bad_class_log_is_a_note_and_a_run_without_a_clock_start_has_no_a
     assert_eq!(record.metrics.get(JVM_LOADING_TIME), None, "the report has no JVM part");
 
     std::fs::write(run.join("class-load.log"), "[0.1s][class,load] a.A\n").expect("a log");
-    let record = collect(&run, &id(Arm::PROJECT), LaunchFacts::default());
-    assert!(record.valid, "{:?}", record.reason);
-    assert_eq!(
-        record.notes,
-        [
+    let record = valid_project_record(
+        &run,
+        &[
             "no fus.jsonl",
             "class-load.log: line 1: [0.1s][class,load] a.A: no ` source: ` after the class name",
-        ]
+        ],
     );
     assert_eq!(record.metrics.get(CLASSES_NAMED), None);
     assert_eq!(

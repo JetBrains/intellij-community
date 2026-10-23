@@ -1,14 +1,15 @@
-use avl_base::Reporter;
+use std::path::Path;
 
-use crate::bench::command::replay;
-use crate::bench::testing::{assert_golden, fixture_session};
+use crate::bench::record::{self, LaunchFacts, RunId};
+use crate::bench::session::{self, SessionInfo};
+use crate::bench::summary::Summary;
+use crate::bench::testing::{assert_golden, fixture_session, replay};
 
 /// The digest of a replay of the fixture session equals `testdata/bench/replay-digest.txt`.
 #[test]
 fn the_replay_digest_matches_the_golden() {
     let (_dir, session) = fixture_session();
-    let (reporter, _, _) = Reporter::in_memory("vm");
-    let mut summary = replay(&session, &reporter).expect("a summary");
+    let mut summary = replay(&session);
     summary.session = "<session>".to_owned();
     let digest = format!("{}\n", super::render(&summary));
     assert_golden("replay-digest.txt", &digest);
@@ -39,9 +40,8 @@ fn a_number_has_one_decimal_below_ten_and_a_clip_ends_with_an_ellipsis() {
 #[test]
 fn the_header_names_the_max_load_of_the_session() {
     let (_dir, session) = fixture_session();
-    let (reporter, _, _) = Reporter::in_memory("vm");
-    let mut summary = replay(&session, &reporter).expect("a summary");
-    let first = |summary: &crate::bench::summary::Summary| super::render(summary).lines().next().map(str::to_owned);
+    let mut summary = replay(&session);
+    let first = |summary: &Summary| super::render(summary).lines().next().map(str::to_owned);
     assert!(
         first(&summary).is_some_and(|line| line.ends_with(", hold 3000 ms")),
         "{:?}",
@@ -55,24 +55,27 @@ fn the_header_names_the_max_load_of_the_session() {
     );
 }
 
+/// Renders the digest of a project session over the run directory `run` of `session`. The only arm of the session is
+/// the arm of the run, and its project is a markdown project of the template. `edit` changes the other inputs.
+fn project_digest(session: &Path, run: &str, edit: impl FnOnce(&mut SessionInfo)) -> String {
+    let id = RunId::parse(run).expect("a run");
+    let mut info = session::read_info(session).expect("the session");
+    info.command = "project".to_owned();
+    info.arms = vec![id.arm.clone()];
+    info.project = Some("<template>/projects/markdown".to_owned());
+    edit(&mut info);
+    let record = record::collect(&session.join(run), &id, LaunchFacts::default());
+    super::render(&Summary::build(&info, "<session>", &[record]))
+}
+
 /// A project session renders the editor group and the additional modules of the distribution.
 #[test]
 fn a_project_session_shows_the_editor_and_the_additional_modules() {
-    use crate::bench::arm::Arm;
-    use crate::bench::record::{self, LaunchFacts, RunId};
-    use crate::bench::session;
-    use crate::bench::summary::Summary;
     let (_dir, session_dir) = fixture_session();
-    let mut info = session::read_info(&session_dir).expect("the session");
-    info.command = "project".to_owned();
-    info.arms = vec![Arm::PROJECT];
-    info.project = Some("<template>/projects/markdown".to_owned());
-    info.project_file = Some("README.md".to_owned());
-    info.additional_modules = vec!["intellij.markdown".to_owned(), "intellij.json".to_owned()];
-    let id = RunId::parse("project-run-01").expect("a run");
-    let run = record::collect(&session_dir.join("project-run-01"), &id, LaunchFacts::default());
-    let summary = Summary::build(&info, "<session>", &[run]);
-    let text = super::render(&summary);
+    let text = project_digest(&session_dir, "project-run-01", |info| {
+        info.project_file = Some("README.md".to_owned());
+        info.additional_modules = vec!["intellij.markdown".to_owned(), "intellij.json".to_owned()];
+    });
     let lines: Vec<&str> = text.lines().collect();
     assert!(lines[0].ends_with(", hold 3000 ms, with 2 additional modules"), "{}", lines[0]);
     assert_eq!(lines[2], "project: <template>/projects/markdown, prime file README.md");
@@ -91,27 +94,15 @@ fn a_project_session_shows_the_editor_and_the_additional_modules() {
 /// names no prime file, because that arm opens none.
 #[test]
 fn an_empty_editor_session_shows_the_composer() {
-    use crate::bench::arm::Arm;
-    use crate::bench::record::{self, LaunchFacts, RunId};
-    use crate::bench::session;
-    use crate::bench::summary::Summary;
     use crate::bench::testing::{EMPTY_STATE_FIXTURE_SPANS, empty_editor_run};
     let (_dir, session_dir) = fixture_session();
-    let mut info = session::read_info(&session_dir).expect("the session");
-    info.command = "project".to_owned();
-    info.arms = vec![Arm::EMPTY_EDITOR];
-    info.cold = true;
-    info.project = Some("<template>/projects/markdown".to_owned());
     let mut spans = EMPTY_STATE_FIXTURE_SPANS.to_vec();
     spans.extend([
         ("air.emptyState.content.toolbar", 2400, 100),
         ("air.emptyState.content.editor", 2180, 200),
     ]);
-    let run_dir = empty_editor_run(&session_dir, &spans);
-    let id = RunId::parse("empty-editor-run-01").expect("a run");
-    let run = record::collect(&run_dir, &id, LaunchFacts::default());
-    let summary = Summary::build(&info, "<session>", &[run]);
-    let text = super::render(&summary);
+    empty_editor_run(&session_dir, &spans);
+    let text = project_digest(&session_dir, "empty-editor-run-01", |info| info.cold = true);
     let lines: Vec<&str> = text.lines().collect();
     assert!(lines[0].contains(", cold, "), "{}", lines[0]);
     assert_eq!(lines[2], "project: <template>/projects/markdown");

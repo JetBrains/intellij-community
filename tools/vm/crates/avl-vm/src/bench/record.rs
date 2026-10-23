@@ -435,28 +435,35 @@ impl RunId {
     }
 }
 
+impl RunRecord {
+    /// The record of the run `id` before its measure: not valid, without a reason, a note, a metric or a profile.
+    pub(crate) fn new(id: &RunId, launch: LaunchFacts) -> Self {
+        Self {
+            arm: id.arm.clone(),
+            kind: id.kind,
+            index: id.index,
+            dir: id.dir_name(),
+            launch,
+            valid: false,
+            reason: None,
+            notes: Vec::new(),
+            metrics: BTreeMap::new(),
+            empty_state_order: Vec::new(),
+            class_maps: ClassMaps::default(),
+            profile_scope: None,
+            excluded_samples: None,
+            edt_samples: None,
+            edt_frames: Vec::new(),
+            triggers: Vec::new(),
+            define_share: None,
+            profile: None,
+        }
+    }
+}
+
 /// Reads one run directory and applies the gate.
 pub(crate) fn collect(run_dir: &Path, id: &RunId, launch: LaunchFacts) -> RunRecord {
-    let mut record = RunRecord {
-        arm: id.arm.clone(),
-        kind: id.kind,
-        index: id.index,
-        dir: id.dir_name(),
-        launch,
-        valid: false,
-        reason: None,
-        notes: Vec::new(),
-        metrics: BTreeMap::new(),
-        empty_state_order: Vec::new(),
-        class_maps: ClassMaps::default(),
-        profile_scope: None,
-        excluded_samples: None,
-        edt_samples: None,
-        edt_frames: Vec::new(),
-        triggers: Vec::new(),
-        define_share: None,
-        profile: None,
-    };
+    let mut record = RunRecord::new(id, launch);
     match measure(run_dir, &mut record) {
         Ok(()) => record.valid = true,
         Err(reason) => {

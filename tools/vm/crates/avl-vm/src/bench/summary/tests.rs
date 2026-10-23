@@ -4,52 +4,16 @@ use pretty_assertions::assert_eq;
 
 use super::{MIN_RUNS_FOR_DELTA, Stat, Summary};
 use crate::bench::arm::Arm;
-use crate::bench::record::{LaunchFacts, RunKind, RunRecord};
-use crate::bench::session::{GenerationRef, GitInfo, SessionInfo};
+use crate::bench::record::{RunKind, RunRecord};
+use crate::bench::session::SessionInfo;
+use crate::bench::testing::{run_record, session_info};
 
 fn info(arms: Vec<Arm>) -> SessionInfo {
-    SessionInfo {
-        command: "welcome".to_owned(),
-        target: "//build:idea".to_owned(),
-        git: GitInfo::default(),
-        generation: GenerationRef::default(),
-        measure_model: None,
-        arms,
-        runs: 3,
-        cold: false,
-        hold_ms: 0,
-        profile: false,
-        profile_event: crate::bench::profile::ProfileEvent::Cpu,
-        project: None,
-        project_file: None,
-        suppressed_plugin: None,
-        additional_modules: Vec::new(),
-        max_load: None,
-        warnings: Vec::new(),
-    }
+    session_info(arms, 3)
 }
 
 fn run(arm: Arm, kind: RunKind, index: u32, value: Option<f64>) -> RunRecord {
-    RunRecord {
-        arm,
-        kind,
-        index,
-        dir: String::new(),
-        launch: LaunchFacts::default(),
-        valid: value.is_some(),
-        reason: value.is_none().then(|| "no event".to_owned()),
-        notes: Vec::new(),
-        metrics: value.map(|value| BTreeMap::from([("m".to_owned(), value)])).unwrap_or_default(),
-        empty_state_order: Vec::new(),
-        class_maps: crate::bench::record::ClassMaps::default(),
-        profile_scope: None,
-        excluded_samples: None,
-        edt_samples: None,
-        edt_frames: Vec::new(),
-        triggers: Vec::new(),
-        define_share: None,
-        profile: None,
-    }
+    run_record(arm, kind, index, "m", value)
 }
 
 #[test]
@@ -164,15 +128,12 @@ fn the_values_of_a_metric_are_those_of_the_valid_runs_in_run_order() {
 /// shows its column after the arm of its kind, `compare` gives it a table, and `ls` lists it after its arm.
 #[test]
 fn a_twin_arm_is_an_arm_of_the_summary_the_digest_compare_and_ls() {
-    use avl_base::Reporter;
-
     use crate::bench::arm::in_arm_order;
-    use crate::bench::command::replay;
     use crate::bench::compare::{self, Compared};
     use crate::bench::digest;
     use crate::bench::files;
     use crate::bench::session::{SESSION_FILE, read_info};
-    use crate::bench::testing::fixture_session;
+    use crate::bench::testing::{fixture_session, replay};
 
     let air = "com.intellij.air";
     let twin = Arm::PROJECT.without(air);
@@ -190,8 +151,7 @@ fn a_twin_arm_is_an_arm_of_the_summary_the_digest_compare_and_ls() {
     assert!(session_json.contains(r#""suppressedPlugin": "com.intellij.air""#), "{session_json}");
     assert!(session_json.contains(r#""project-without-com.intellij.air""#), "{session_json}");
 
-    let (reporter, _, _) = Reporter::in_memory("vm");
-    let summary = replay(&session, &reporter).expect("a summary");
+    let summary = replay(&session);
     assert_eq!(
         summary.arms.keys().map(String::as_str).collect::<Vec<_>>(),
         ["project", "project-without-com.intellij.air"]

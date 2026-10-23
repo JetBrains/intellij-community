@@ -8,6 +8,7 @@ use super::{
 };
 use crate::bench::arm::Arm;
 use crate::bench::record::{RunId, RunKind};
+use crate::bench::testing::{run_record, session_info};
 
 #[test]
 fn the_template_has_the_settings_and_the_license() {
@@ -131,28 +132,13 @@ fn a_session_over_a_generation_names_the_commit_of_its_bytes() {
 
 #[test]
 fn a_run_of_another_distribution_is_refused() {
-    use super::{GenerationRef, GitInfo, SessionInfo, check_digest};
+    use super::{GenerationRef, SessionInfo, check_digest};
     let info = SessionInfo {
-        command: "welcome".to_owned(),
-        target: "//build:idea_dist".to_owned(),
-        git: GitInfo::default(),
         generation: GenerationRef {
             path: "/g/abc".to_owned(),
             dist_digest: "abc".to_owned(),
         },
-        measure_model: None,
-        arms: vec![Arm::MODAL],
-        runs: 1,
-        cold: false,
-        hold_ms: 0,
-        profile: false,
-        profile_event: crate::bench::profile::ProfileEvent::Cpu,
-        project: None,
-        project_file: None,
-        suppressed_plugin: None,
-        additional_modules: Vec::new(),
-        max_load: None,
-        warnings: Vec::new(),
+        ..session_info(vec![Arm::MODAL], 1)
     };
     assert_eq!(check_digest(&info, Some("abc")), Ok(()));
     assert_eq!(check_digest(&info, None), Ok(()), "a run before the generation names no digest");
@@ -258,55 +244,11 @@ fn the_runs_root_is_below_the_bench_directory() {
 
 #[test]
 fn the_default_run_is_the_median_of_the_non_modal_arm_else_of_the_modal_arm() {
-    use super::{GenerationRef, GitInfo, SessionInfo, select_run};
-    use crate::bench::record::{LaunchFacts, RunRecord, WELCOME_BECAME_VISIBLE};
+    use super::select_run;
+    use crate::bench::record::WELCOME_BECAME_VISIBLE;
     use crate::bench::summary::Summary;
-    let run = |arm: Arm, index: u32, value: Option<f64>| RunRecord {
-        arm: arm.clone(),
-        kind: RunKind::Measured,
-        index,
-        dir: RunId {
-            arm,
-            kind: RunKind::Measured,
-            index,
-        }
-        .dir_name(),
-        launch: LaunchFacts::default(),
-        valid: value.is_some(),
-        reason: None,
-        notes: Vec::new(),
-        metrics: value
-            .map(|value| std::collections::BTreeMap::from([(WELCOME_BECAME_VISIBLE.to_owned(), value)]))
-            .unwrap_or_default(),
-        empty_state_order: Vec::new(),
-        class_maps: crate::bench::record::ClassMaps::default(),
-        profile_scope: None,
-        excluded_samples: None,
-        edt_samples: None,
-        edt_frames: Vec::new(),
-        triggers: Vec::new(),
-        define_share: None,
-        profile: None,
-    };
-    let info = SessionInfo {
-        command: "welcome".to_owned(),
-        target: "//build:idea_dist".to_owned(),
-        git: GitInfo::default(),
-        generation: GenerationRef::default(),
-        measure_model: None,
-        arms: vec![Arm::MODAL, Arm::NON_MODAL],
-        runs: 3,
-        cold: false,
-        hold_ms: 0,
-        profile: false,
-        profile_event: crate::bench::profile::ProfileEvent::Cpu,
-        project: None,
-        project_file: None,
-        suppressed_plugin: None,
-        additional_modules: Vec::new(),
-        max_load: None,
-        warnings: Vec::new(),
-    };
+    let run = |arm: Arm, index: u32, value: Option<f64>| run_record(arm, RunKind::Measured, index, WELCOME_BECAME_VISIBLE, value);
+    let info = session_info(vec![Arm::MODAL, Arm::NON_MODAL], 3);
     let session = Path::new("/s");
     let records = [
         run(Arm::MODAL, 1, Some(1200.0)),
@@ -346,28 +288,10 @@ fn the_default_run_is_the_median_of_the_non_modal_arm_else_of_the_modal_arm() {
 
 #[test]
 fn a_named_run_of_a_session_without_runs_says_that_it_has_none() {
-    use super::{GenerationRef, GitInfo, SessionInfo, select_run};
+    use super::select_run;
     use crate::bench::summary::Summary;
     let dir = tempfile::tempdir().expect("a temporary directory");
-    let info = SessionInfo {
-        command: "welcome".to_owned(),
-        target: "//build:idea_dist".to_owned(),
-        git: GitInfo::default(),
-        generation: GenerationRef::default(),
-        measure_model: None,
-        arms: vec![Arm::MODAL],
-        runs: 1,
-        cold: false,
-        hold_ms: 0,
-        profile: false,
-        profile_event: crate::bench::profile::ProfileEvent::Cpu,
-        project: None,
-        project_file: None,
-        suppressed_plugin: None,
-        additional_modules: Vec::new(),
-        max_load: None,
-        warnings: Vec::new(),
-    };
+    let info = session_info(vec![Arm::MODAL], 1);
     let summary = Summary::build(&info, "s", &[]);
     let refusal = select_run(dir.path(), &summary, Some("modal-run-01"), None).expect_err("no run");
     assert_eq!(
@@ -388,27 +312,13 @@ fn a_named_run_of_a_session_without_runs_says_that_it_has_none() {
 /// as the fixture, has neither.
 #[test]
 fn the_max_load_and_the_measure_model_go_through_session_json_and_summary_json() {
-    use super::{GenerationRef, GitInfo, MeasureModel, SessionInfo, read_info};
+    use super::{MeasureModel, SessionInfo, read_info};
     use crate::bench::summary::Summary;
     use crate::bench::testing::testdata_dir;
     let info = SessionInfo {
-        command: "welcome".to_owned(),
-        target: "//build:idea_dist".to_owned(),
-        git: GitInfo::default(),
-        generation: GenerationRef::default(),
         measure_model: Some(MeasureModel::current()),
-        arms: vec![Arm::MODAL],
-        runs: 1,
-        cold: false,
-        hold_ms: 0,
-        profile: false,
-        profile_event: crate::bench::profile::ProfileEvent::Cpu,
-        project: None,
-        project_file: None,
-        suppressed_plugin: None,
-        additional_modules: Vec::new(),
         max_load: Some(10.0),
-        warnings: Vec::new(),
+        ..session_info(vec![Arm::MODAL], 1)
     };
     let text = serde_json::to_string(&info).expect("JSON");
     assert!(text.contains(r#""maxLoad":10.0"#), "{text}");
