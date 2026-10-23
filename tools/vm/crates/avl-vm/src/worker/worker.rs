@@ -45,7 +45,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::worker::channel::ControlPortChannel;
 use crate::worker::container_linux::ContainerLinux;
-use crate::worker::docker::Docker;
+use crate::worker::docker::{Docker, validate_argv};
 use crate::worker::hypervisor::Machine;
 #[cfg(unix)]
 use crate::worker::parallels::Parallels;
@@ -487,6 +487,50 @@ impl Manager {
             Exit::FAILURE,
             format!("{} guest execution is not ready in {worker}", self.settings.backend),
         )
+    }
+
+    /// The refusals of a release readiness gate: `worker_stopped` when the backend says that `worker` does not run,
+    /// and `guest_agent_unavailable` when its guest does not answer.
+    async fn require_running_guest(&self, ctx: &Ctx, worker: &str, running: bool) -> Result<(), Refusal> {
+        if !running {
+            return Err(Refusal::new(
+                "worker_stopped",
+                Exit::FAILURE,
+                format!("worker {worker} is stopped; run pool start {worker}"),
+            ));
+        }
+        if !self.guest_answers(ctx, worker, GUEST_PROBE_TIMEOUT).await {
+            return Err(self.guest_agent_unavailable(worker));
+        }
+        Ok(())
+    }
+
+    /// The `worker_interrupted` refusal of an operation that a signal or a cancellation ended. `message` makes the
+    /// message from the name of the cause.
+    fn interrupted_by(&self, message: impl FnOnce(&str) -> String) -> Refusal {
+        let cause = self.runner.interrupts().received().map_or("a cancellation", |signal| signal.name());
+        Refusal::new("worker_interrupted", Exit::SOFTWARE, message(cause))
+    }
+
+    /// Makes a running guest ready for a run: the parity layout over the two read-only shares again when it broke,
+    /// then the readiness that a run needs.
+    async fn ready_guest(&self, guest: &Guest<'_>) -> Result<(), Refusal> {
+        if guest.parity_broken().await? {
+            guest.provision_worker(self.share_mount()).await?;
+        }
+        guest.ensure_ready(self).await
+    }
+
+    /// The guest half of a Linux boot: the agent install and `validate-guest`, then [`Manager::ready_guest`].
+    ///
+    /// A Linux guest has no console login to wait for, so there is no "poll again" answer here: every refusal means
+    /// the start failed. The image installs the packages and the pinned Node, and its entrypoint starts the display,
+    /// so the boot has no provisioning verb.
+    async fn boot_linux_guest(&self, ctx: &Ctx, worker: &str) -> Result<(), Refusal> {
+        let channel = self.channel(worker);
+        let guest = self.guest(ctx, channel.as_ref());
+        guest.provision_linux(self.bazel(), &validate_argv(&self.settings)).await?;
+        self.ready_guest(&guest).await
     }
 }
 

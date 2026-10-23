@@ -19,6 +19,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use super::{Manager, StopState, read_lease};
+use crate::worker::docker::remove_if_present;
 use crate::worker::secure::read_json_record;
 
 /// How often a waiting `pool idle-stop` process reads the record again. A record that a later operation removed or
@@ -59,16 +60,7 @@ pub(crate) fn read_idle_stop_record(settings: &Config, worker: &str) -> Option<I
 
 /// Removes the record of the worker, so a waiting process stops nothing. A missing record is no error.
 pub(crate) fn remove_idle_stop_record(settings: &Config, worker: &str) -> Result<(), Refusal> {
-    let path = settings.idle_stop_record_path(worker);
-    match std::fs::remove_file(&path) {
-        Ok(()) => Ok(()),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(error) => Err(Refusal::new(
-            "state_write_failed",
-            Exit::FAILURE,
-            format!("cannot remove {}: {error}", path.display()),
-        )),
-    }
+    remove_if_present(&settings.idle_stop_record_path(worker))
 }
 
 /// What one decision of an idle stop did.
