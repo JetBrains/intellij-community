@@ -112,6 +112,7 @@ intellij.platform.collaborationTools.tests
 intellij.platform.completion.common.tests
 intellij.platform.compose.swing.tests
 intellij.platform.compose.tests
+intellij.platform.concurrency.tests
 intellij.platform.configurationStore.tests
 intellij.platform.core.impl.tests
 intellij.platform.core.nio.fs.tests
