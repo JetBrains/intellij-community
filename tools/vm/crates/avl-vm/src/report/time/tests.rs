@@ -7,9 +7,7 @@ use avl_trace::otlp::{
     InstrumentationScope, KeyValue, Resource, ResourceSpans, SERVICE_NAME, ScopeSpans, Span, TracesData, UnixNano, attr, span_id,
 };
 use avl_wire::progress::{Event, IterationReported, Record, RunStarted, TraceReady};
-use avl_wire::report::{
-    Case, CaseStatus, ExecutionCounts, ORDERING, RUN_REPORT_SCHEMA_VERSION, RunReport, Status, TraceArchive, TraceBundle, Watchdog,
-};
+use avl_wire::report::{Case, CaseStatus, RunReport, Status, TraceArchive, TraceBundle};
 use expect_test::expect;
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
@@ -125,7 +123,6 @@ fn report(
     bundles: &[(String, Vec<TracesData>)],
 ) -> RunReport {
     RunReport {
-        report_schema_version: RUN_REPORT_SCHEMA_VERSION,
         iteration_id: iteration_id.to_owned(),
         daemon_run_id: "run-ui-daemon-1".to_owned(),
         daemon_boot_stamp: "b".to_owned(),
@@ -134,8 +131,6 @@ fn report(
         started_at: "2026-10-09T12:00:00Z".to_owned(),
         completed_at: "2026-10-09T12:25:31Z".to_owned(),
         duration_ms,
-        ordering: ORDERING.to_owned(),
-        execution: ExecutionCounts::default(),
         cases: cases
             .iter()
             .map(|(class_name, name, duration_ms)| Case {
@@ -148,12 +143,6 @@ fn report(
                 reason: None,
             })
             .collect(),
-        failures: Vec::new(),
-        skipped_containers: Vec::new(),
-        active_tests: Vec::new(),
-        unreported_classes: Vec::new(),
-        watchdog: Watchdog::default(),
-        evidence: Vec::new(),
         trace_archives: vec![TraceArchive {
             path: zip.to_string_lossy().into_owned(),
             bytes: 1,
@@ -170,12 +159,7 @@ fn report(
                 })
                 .collect(),
         }],
-        traces_error: None,
-        tree: None,
-        tree_error: None,
-        notes: Vec::new(),
-        protocol_diagnostic: None,
-        verdict_diagnostic: None,
+        ..RunReport::default()
     }
 }
 

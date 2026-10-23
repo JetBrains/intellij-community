@@ -168,23 +168,7 @@ pub(crate) fn conclude(
 /// The verdict of a run of two or more lanes, from the verdict of each lane: the worst lane's status and code, its
 /// summary under the lane's name, and the counts, failures and rerun commands of all lanes.
 pub(crate) fn lanes_verdict(lanes: &[String], verdicts: &[Verdict]) -> Verdict {
-    let mut merged = Verdict {
-        status: Status::Passed,
-        code: None,
-        summary: String::new(),
-        counts: VerdictCounts::default(),
-        failures: Vec::new(),
-        rerun: Vec::new(),
-        skipped: Vec::new(),
-        unreported: Vec::new(),
-        lanes: Vec::new(),
-        shards: None,
-        lease: None,
-        checkout: None,
-        traces: None,
-        timing: None,
-        report: None,
-    };
+    let mut merged = Verdict::new(Status::Passed, String::new());
     let mut worst: Option<usize> = None;
     for (index, (lane, verdict)) in lanes.iter().zip(verdicts).enumerate() {
         merged.lanes.push(LaneVerdict {

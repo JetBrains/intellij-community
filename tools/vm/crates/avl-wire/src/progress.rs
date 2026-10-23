@@ -215,6 +215,19 @@ pub struct RunStarted {
     pub process_started_at: Option<String>,
 }
 
+impl RunStarted {
+    /// A run of `command` with `args`, and no checkout or process start.
+    pub fn new(run_id: impl Into<String>, command: impl Into<String>, args: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        Self {
+            run_id: run_id.into(),
+            command: command.into(),
+            args: args.into_iter().map(Into::into).collect(),
+            checkout: None,
+            process_started_at: None,
+        }
+    }
+}
+
 /// One iteration a run will execute. `lane` is absent for a class, an FQN or a whole lane.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlannedIteration {

@@ -109,13 +109,7 @@ fn phase(state: PhaseState, which: Phase, detail: &str, elapsed_seconds: u64) ->
 }
 
 fn run_started(args: &[&str]) -> Event {
-    Event::RunStarted(RunStarted {
-        run_id: "me-run-1".to_owned(),
-        command: "run".to_owned(),
-        args: args.iter().map(|arg| (*arg).to_owned()).collect(),
-        checkout: None,
-        process_started_at: None,
-    })
+    Event::RunStarted(RunStarted::new("me-run-1", "run", args.iter().copied()))
 }
 
 fn typical(seconds: u64) -> Typical {
@@ -190,21 +184,8 @@ fn trace_ready(scenario: &str, bundle: &str) -> Event {
 /// A verdict with `status`, `code` and `summary`, and nothing else.
 pub(crate) fn verdict(status: Status, code: Option<&str>, summary: &str) -> Verdict {
     Verdict {
-        status,
         code: code.map(str::to_owned),
-        summary: summary.to_owned(),
-        counts: VerdictCounts::default(),
-        failures: Vec::new(),
-        rerun: Vec::new(),
-        skipped: Vec::new(),
-        unreported: Vec::new(),
-        lanes: Vec::new(),
-        shards: None,
-        lease: None,
-        checkout: None,
-        traces: None,
-        timing: None,
-        report: None,
+        ..Verdict::new(status, summary)
     }
 }
 
