@@ -1421,6 +1421,12 @@ private fun computeKotlincOptions(buildFile: BuildFile, module: ModuleDescriptor
       options.put("x_inline_classes", true)
     }
   }
+  //x_jsr305
+  handleArgument(K2JVMCompilerArguments::jsr305) { jsr305 ->
+    if (!jsr305.isNullOrEmpty()) {
+      options.put("x_jsr305", jsr305.asList())
+    }
+  }
   //x_jvm_default
   handleArgument(K2JVMCompilerArguments::jvmDefault) { xJvmDefault ->
     if (xJvmDefault != null) {
