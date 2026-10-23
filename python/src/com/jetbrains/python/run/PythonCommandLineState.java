@@ -608,8 +608,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
     }
     final boolean isMostlySilentProcess = false;
     PyTargetPathMapper consolidatedPathMappings = new PyTargetPathMapper(targetEnvironment, pathMappingSettings);
-    return PyCustomProcessHandlerProvider.createProcessHandler(process, targetEnvironment, commandLineString, commandLine.getCharset(),
-                                                               consolidatedPathMappings, isMostlySilentProcess, myRunWithPty);
+    return ProcessHandlerWithPyPositionConverterKt.createPyProcessHandler(process, targetEnvironment, commandLineString,
+                                                                          commandLine.getCharset(), consolidatedPathMappings,
+                                                                          isMostlySilentProcess);
   }
 
   /**

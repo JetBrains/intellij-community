@@ -1044,10 +1044,6 @@
                     interface="com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider"
                     dynamic="true"/>
 
-    <extensionPoint qualifiedName="Pythonid.customProcessHandlerProvider"
-                    interface="com.jetbrains.python.run.PyCustomProcessHandlerProvider"
-                    dynamic="true"/>
-
     <extensionPoint qualifiedName="com.jetbrains.python.testing.pyTestLineMarkerContributorCustomizer"
                     interface="com.jetbrains.python.testing.PyTestLineMarkerContributorCustomizer"
                     dynamic="true"/>

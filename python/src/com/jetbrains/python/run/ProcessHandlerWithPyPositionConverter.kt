@@ -4,6 +4,9 @@ package com.jetbrains.python.run
 import com.intellij.execution.process.AnsiEscapeDecoder
 import com.intellij.execution.process.AnsiEscapeDecoder.ColoredTextAcceptor
 import com.intellij.execution.process.KillableProcessHandler
+import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.target.TargetEnvironment
+import com.intellij.execution.target.targetEnvironment
 import com.intellij.openapi.util.Key
 import com.intellij.remote.ProcessControlWithMappings
 import com.intellij.util.PathMapper
@@ -15,6 +18,26 @@ import com.jetbrains.python.debugger.PyPositionConverter
 import com.jetbrains.python.debugger.createTargetedPositionConverter
 import com.jetbrains.python.remote.PyRemotePathMapper
 import java.nio.charset.Charset
+
+/**
+ * Returns a process handler for the [process]. The process is usually a Python script execution.
+ *
+ * The returned [ProcessHandler] implements:
+ * - [PositionConverterProvider] to map the positions of the Python scripts of the debugged process to the local paths,
+ * - [ProcessControlWithMappings] to map the paths in the Python tracebacks in the run, debug and stacktrace tool windows.
+ */
+internal fun createPyProcessHandler(
+  process: Process,
+  targetEnvironment: TargetEnvironment,
+  commandLine: String,
+  charset: Charset,
+  pathMapper: PyRemotePathMapper,
+  isMostlySilentProcess: Boolean,
+): ProcessHandler {
+  val processHandler = ProcessHandlerWithPyPositionConverter(process, commandLine, charset, pathMapper, isMostlySilentProcess)
+  processHandler.targetEnvironment = targetEnvironment
+  return processHandler
+}
 
 /**
  * @param isMostlySilentProcess if the parameter is `true` then [BaseOutputReader.Options.BLOCKING] reader policy is used by default, which

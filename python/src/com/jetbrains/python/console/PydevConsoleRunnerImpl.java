@@ -101,7 +101,7 @@ import com.jetbrains.python.debugger.PyVariableViewSettings;
 import com.jetbrains.python.debugger.ValuesPolicy;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
-import com.jetbrains.python.run.PyCustomProcessHandlerProvider;
+import com.jetbrains.python.run.ProcessHandlerWithPyPositionConverterKt;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonExecution;
 import com.jetbrains.python.run.PythonImportErrorFilter;
@@ -573,9 +573,10 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     var pathMapper =
       PydevConsoleRunnerUtil.createTargetEnvironmentPathMapper(myProject, sdk, myConsoleSettings, targetEnvironment);
     boolean isMostlySilentProcess = true;
-    ProcessHandler processHandler = PyCustomProcessHandlerProvider.createProcessHandler(process, targetEnvironment, commandLineString,
-                                                                                        targetedCommandLine.getCharset(), pathMapper,
-                                                                                        isMostlySilentProcess);
+    ProcessHandler processHandler = ProcessHandlerWithPyPositionConverterKt.createPyProcessHandler(process, targetEnvironment,
+                                                                                                   commandLineString,
+                                                                                                   targetedCommandLine.getCharset(),
+                                                                                                   pathMapper, isMostlySilentProcess);
     return new TargetProcessHandlerFactory(processHandler, process, commandLineString, communicationServer, targetEnvironment);
   }
 
