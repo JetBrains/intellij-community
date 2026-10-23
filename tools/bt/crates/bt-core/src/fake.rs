@@ -187,6 +187,11 @@ impl Runtime for FakeRuntime {
         self.state().files.get(&path).cloned().ok_or_else(|| not_found(&path))
     }
 
+    fn write_text_file(&self, path: &Path, text: &str) -> io::Result<()> {
+        self.state().files.insert(key(path), text.to_owned());
+        Ok(())
+    }
+
     fn read_lines(&self, path: &Path) -> Box<dyn Iterator<Item = String> + '_> {
         let text = self.state().files.get(&key(path)).cloned().unwrap_or_default();
         Box::new(text.split('\n').map(str::to_owned).collect::<Vec<_>>().into_iter())

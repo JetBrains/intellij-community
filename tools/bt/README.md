@@ -10,7 +10,7 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 
 | Crate | Content | Bazel test target |
 |---|---|---|
-| `crates/bt-core` | The areas of `bt.json` and their lane tables, selector resolution, the suite catalog, the bazel command line, BEP and `test.xml` reading, and the exit codes of `bt`. `fake` is the in-memory runtime the tests share. | `@community//tools/bt/crates/bt-core:bt-core_test` |
+| `crates/bt-core` | The areas of `bt.json` and their lane tables, selector resolution, the suite catalog, the bazel command line, the shard plan, BEP and `test.xml` reading, and the exit codes of `bt`. `fake` is the in-memory runtime the tests share. | `@community//tools/bt/crates/bt-core:bt-core_test` |
 | `crates/bt-junit` | The JUnit XML reader: a scanner that keeps the cases of a truncated `test.xml`, and the simple-name class pattern. | `@community//tools/bt/crates/bt-junit:bt-junit_test` |
 | `crates/refusal` | The refusal of a person- or agent-facing CLI: a stable code, a message, the exit code, and the details as JSON text. It has no dependency, and each tool keeps its own exit codes. | `@community//tools/bt/crates/refusal:refusal_test` |
 | `bins/bt` | The binary: the command line and the help, one invocation end to end, the text digest, the `--json` payload, and the process boundary. | `@community//tools/bt/bins/bt:bt_test` |
@@ -35,6 +35,13 @@ the Air UI-lane workspace. The spec of a Rust tool workspace is `community/build
 of that directory. `crates/bt-core/src/areas.rs` and `crates/bt-core/src/lanes.rs` give the two shapes. A checkout
 without `bt.json` has no area: a label and a pattern resolve, and a name, a package, a flow or a suite selector
 refuses. The ultimate checkout names `plugins/air`, with its lane table `plugins/air/tests/integration/lanes.json`.
+
+## Shards
+
+A run over many targets forces two shards on each target and passes the shard plan `out/bt/shard-plan.tsv` to the
+tests. The JUnit runner gives each target its planned count and splits the classes of the target by their recorded
+seconds. bt records the class times of each run in the plan. `crates/bt-core/src/shard_plan.rs` gives the rules. The
+same run writes the Bazel profile to `out/bt/profile.json.gz`.
 
 ## Modules
 

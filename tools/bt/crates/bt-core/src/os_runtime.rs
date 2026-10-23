@@ -350,6 +350,18 @@ impl Runtime for OsRuntime {
         std::fs::read_to_string(path)
     }
 
+    /// A temporary file beside the target, renamed over it: a rename within one directory replaces the file at once.
+    fn write_text_file(&self, path: &Path, text: &str) -> io::Result<()> {
+        let dir = path.parent().unwrap_or_else(|| Path::new("."));
+        std::fs::create_dir_all(dir)?;
+        let mut file = tempfile::NamedTempFile::new_in(dir)?;
+        file.write_all(text.as_bytes())?;
+        let mut temp = file.into_temp_path();
+        std::fs::rename(&temp, path)?;
+        temp.disable_cleanup(true);
+        Ok(())
+    }
+
     /// Nothing for a file that is not there, which is the runtime's contract rather than a swallowed failure: bazel
     /// never wrote that file when it died during option parsing.
     fn read_lines(&self, path: &Path) -> Box<dyn Iterator<Item = String> + '_> {

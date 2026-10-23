@@ -1,7 +1,7 @@
 //! One invocation end to end: resolve, spawn bazel, read the BEP and test.xml, answer the digest and the payload.
 
 use std::ffi::OsString;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use bt_core::areas::{Area, Areas};
 use bt_core::{Refusal, affected_text, exit, fail_usage, resolve_module};
@@ -14,13 +14,16 @@ use crate::digest::{
 use crate::options::{Args, Invocation, parse_args};
 use bt_core::bep::parse_bep;
 use bt_core::evidence::keep_failed_evidence;
-use bt_core::lanes::{BEP_FLAG, LaneSpec, RunPlan, bazel_command, bep_override, build_bazel_args, default_shards, wildcard_guards};
-use bt_core::result::{FlakyRun, RunResult, RunStatus, TargetResult, collect_results};
-use bt_core::runtime::Runtime;
+use bt_core::lanes::{
+    BEP_FLAG, LaneSpec, RunPlan, bazel_command, bep_override, build_bazel_args, default_shards, uses_shard_plan, wildcard_guards,
+};
+use bt_core::result::{FlakyRun, RunResult, RunStatus, TargetResult, TargetTiming, collect_results};
+use bt_core::runtime::{Runtime, repo_file};
 use bt_core::scan::{ResolutionInputs, derive_package, read_text};
 use bt_core::selector::{
     Resolution, Selector, SelectorKind, as_filter_or_package, repo_relative_dir, resolve_selector, suggest_names, wanted_simple_name,
 };
+use bt_core::shard_plan::{PROFILE_FILE, SHARD_PLAN_FILE, ShardPlan};
 use bt_core::suites::{named_suites, resolve_suite_run};
 
 /// What one invocation answers.
@@ -236,9 +239,12 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
     };
 
     let overridden_bep = bep_override(&args.passthrough);
-    let shards = args
-        .shards
-        .unwrap_or_else(|| default_shards(&resolution, lane.map(|(_, spec)| spec)));
+    let lane_spec = lane.map(|(_, spec)| spec);
+    let shards = args.shards.unwrap_or_else(|| default_shards(&resolution, lane_spec));
+    let planned = args.shards.is_none() && uses_shard_plan(&resolution, lane_spec);
+    let shard_plan_path = repo_file(runtime, SHARD_PLAN_FILE);
+    let path_text = |path: &PathBuf| path.to_string_lossy().into_owned();
+    let profile = resolution.multi_target.then(|| path_text(&repo_file(runtime, PROFILE_FILE)));
     let owns_bep_file = overridden_bep.is_none();
     let bep_path = overridden_bep.unwrap_or_else(|| runtime.temp_file("air-bazel-test-bep").to_string_lossy().into_owned());
     // The file is ours from the moment it is named, because the OS runtime creates it to reserve the name: it goes
@@ -258,6 +264,9 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         no_cache: args.no_cache,
         test_env: args.test_env.clone(),
         passthrough: args.passthrough.clone(),
+        // Relative to the checkout: the value is a part of the key of each test action, and the checkouts share a cache.
+        shard_plan: planned.then(|| SHARD_PLAN_FILE.to_owned()),
+        profile,
     };
     let bazel_args = build_bazel_args(&plan);
     let command = bazel_command(runtime.repo_root(), runtime.platform(), &bazel_args);
@@ -277,6 +286,12 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         && let Some(failed) = build_excluded_targets(runtime, build_only)
     {
         return Ok(failed);
+    }
+
+    // The directory of the profile, and the plan the tests read. A run before the first record splits each target
+    // into the default count, by class.
+    if plan.profile.is_some() && !runtime.exists(&shard_plan_path) {
+        update_shard_plan(runtime, &shard_plan_path, &[]);
     }
 
     // The BEP path is stripped from the echo: it is a temporary file nobody can act on, and it would make every
@@ -303,6 +318,12 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
 
     // Before anything else reads the run: the next run of a failed target overwrites its logs.
     let kept_run = keep_failed_evidence(runtime, &bep);
+
+    if planned {
+        // A filtered run times only some classes of a target, and they must not replace its record.
+        let timings = if runs_all_classes(&plan) { &result.timings[..] } else { &[] };
+        update_shard_plan(runtime, &shard_plan_path, timings);
+    }
 
     if args.verbose {
         runtime.write_error(&spawned.output);
@@ -332,6 +353,33 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         json: args.json.then(|| to_json(&result)),
         text,
     })
+}
+
+/// Whether the run gives each target all its classes: no test filter of bt, of a suite or of the passthrough.
+fn runs_all_classes(plan: &RunPlan) -> bool {
+    let resolution = &plan.resolution;
+    resolution.filter.is_none()
+        && resolution.include_package.is_none()
+        && resolution.junit5_filters.is_empty()
+        && !plan.test_env.iter().any(|name| name.starts_with("JB_TEST_JUNIT5_FILTERS"))
+        && !plan
+            .passthrough
+            .iter()
+            .any(|argument| argument.starts_with("--test_filter") || argument.contains("JB_TEST_JUNIT5_FILTERS"))
+}
+
+/// Records the class times of a run in the shard plan file.
+///
+/// A plan that cannot be written is a warning, not a refusal: the plan steers the speed of the next run, and the
+/// verdict of this one is already decided.
+fn update_shard_plan(runtime: &dyn Runtime, path: &Path, timings: &[TargetTiming]) {
+    let mut plan = runtime.read_text_file(path).map(|text| ShardPlan::parse(&text)).unwrap_or_default();
+    for timing in timings {
+        plan.record(timing);
+    }
+    if let Err(error) = runtime.write_text_file(path, &plan.render()) {
+        runtime.write_error(&format!("cannot write the shard plan {}: {error}", path.display()));
+    }
 }
 
 /// A value quoted for a POSIX shell, so a rerun hint can be pasted as it stands.

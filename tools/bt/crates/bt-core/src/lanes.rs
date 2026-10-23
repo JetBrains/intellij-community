@@ -14,6 +14,7 @@ use crate::areas::Areas;
 use crate::exit::fail_infra;
 use crate::runtime::{Platform, Runtime, repo_file};
 use crate::selector::Resolution;
+use crate::shard_plan::{PLANNED_SHARDS, SHARD_PLAN_ENV};
 
 /// One lane table, a flat object. Only `lanes` is required:
 ///
@@ -520,6 +521,10 @@ pub struct RunPlan {
     pub no_cache: bool,
     pub test_env: Vec<String>,
     pub passthrough: Vec<String>,
+    /// The shard plan file of a planned run; see [`uses_shard_plan`].
+    pub shard_plan: Option<String>,
+    /// Where bazel writes its profile, for a multi-target run.
+    pub profile: Option<String>,
 }
 
 /// The shard count for a run.
@@ -528,15 +533,22 @@ pub struct RunPlan {
 /// before it runs anything, so shards are only worth buying where they are the sole source of parallelism.
 ///
 /// A run covering many targets already saturates the machine across targets, and there the fixed cost dominates:
-/// measured on `--lane fast` (63 targets, 6221 tests, warm server, nothing to compile), forced=6 spends 3m24s
-/// against 1m55s for forced=2. Below 2 it regresses again, because the lane becomes bound by its heaviest target.
+/// measured on `--lane fast` (63 targets, 6221 tests, warm server, nothing to compile), forced=6 by test spends 3m24s
+/// against 1m55s for forced=2. One count for all targets is still wrong for most of them, so such a run forces
+/// [`PLANNED_SHARDS`] and the shard plan gives each target its own count; see [`crate::shard_plan`].
 pub fn default_shards(resolution: &Resolution, lane: Option<&LaneSpec>) -> u32 {
     // A lane that names its own count owns the decision: for IDE-launching lanes the cost and isolation unit is
     // the IDE, not JVM bootstrap, and the flow lanes rely on one shared instance.
     if let Some(shards) = lane.and_then(|lane| lane.shards) {
         return shards;
     }
-    if resolution.multi_target { 2 } else { 6 }
+    if uses_shard_plan(resolution, lane) { PLANNED_SHARDS } else { 6 }
+}
+
+/// Whether a run without an explicit shard count takes the shard plan: a run over many targets, unless its lane names
+/// its own count.
+pub fn uses_shard_plan(resolution: &Resolution, lane: Option<&LaneSpec>) -> bool {
+    resolution.multi_target && lane.and_then(|lane| lane.shards).is_none()
 }
 
 pub const BEP_FLAG: &str = "--build_event_json_file";
@@ -609,6 +621,12 @@ pub fn build_bazel_args(plan: &RunPlan) -> Vec<String> {
         .collect();
     if !junit_filters.is_empty() {
         args.push(format!("--test_env=JB_TEST_JUNIT5_FILTERS={}", junit_filters.join(";")));
+    }
+    if let Some(shard_plan) = &plan.shard_plan {
+        args.push(format!("--test_env={SHARD_PLAN_ENV}={shard_plan}"));
+    }
+    if let Some(profile) = &plan.profile {
+        args.push(format!("--profile={profile}"));
     }
     if plan.no_cache {
         args.push("--cache_test_results=no".to_owned());

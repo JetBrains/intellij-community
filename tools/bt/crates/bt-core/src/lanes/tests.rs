@@ -84,15 +84,37 @@ fn an_ide_launching_lane_pins_one_shard() {
 }
 
 #[test]
-fn a_lane_without_its_own_count_keeps_the_throughput_default() {
+fn a_lane_without_its_own_count_forces_the_planned_count() {
     let fast = lane("fast");
     assert_eq!(fast.shards, None);
     let broad = Resolution {
         multi_target: true,
         ..labelled(&fast.targets[0])
     };
-    assert_eq!(default_shards(&broad, Some(fast)), 2);
+    assert_eq!(default_shards(&broad, Some(fast)), PLANNED_SHARDS);
+    assert!(uses_shard_plan(&broad, Some(fast)));
     assert_eq!(default_shards(&labelled("//p:t"), None), 6);
+    assert!(!uses_shard_plan(&labelled("//p:t"), None));
+    assert!(!uses_shard_plan(&broad, Some(lane("ui"))));
+}
+
+#[test]
+fn a_planned_run_names_the_plan_file_and_the_profile() {
+    let planned = build_bazel_args(&RunPlan {
+        shard_plan: Some("out/bt/shard-plan.tsv".to_owned()),
+        profile: Some("/repo/out/bt/profile.json.gz".to_owned()),
+        ..base_plan(labelled("//p/..."))
+    });
+    assert!(has(&planned, "--test_env=JB_TEST_SHARD_PLAN=out/bt/shard-plan.tsv"), "{planned:?}");
+    assert!(has(&planned, "--profile=/repo/out/bt/profile.json.gz"), "{planned:?}");
+
+    let plain = build_bazel_args(&base_plan(labelled("//p:t")));
+    assert!(
+        !plain
+            .iter()
+            .any(|argument| argument.contains(SHARD_PLAN_ENV) || argument.starts_with("--profile")),
+        "{plain:?}"
+    );
 }
 
 #[test]

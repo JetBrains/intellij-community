@@ -36,6 +36,7 @@ pub mod result;
 pub mod runtime;
 pub mod scan;
 pub mod selector;
+pub mod shard_plan;
 pub mod suites;
 
 /// A `&'static Regex` compiled once, on first use.

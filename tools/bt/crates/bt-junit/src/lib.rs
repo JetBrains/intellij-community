@@ -83,8 +83,9 @@ pub struct Suite {
     pub errors: u32,
     pub skipped: u32,
     pub cases: Vec<TestCase>,
-    /// The "all tests filtered out by bucketing" stub a non-matching shard writes.
-    pub bucketing_stub: bool,
+    /// The stub a shard without tests writes: `Bucketing` when bucketing filtered out all its tests, `Sharding` when
+    /// other shards run the tests of the target.
+    pub empty_stub: bool,
     /// Bazel's synthesized wrapper suite carries the runner's raw exit code. Exit code 0 from a wrapper that did
     /// report one is not the same as no wrapper suite at all, and the second is the common case.
     pub wrapper_exit_code: Option<i32>,
@@ -140,6 +141,18 @@ pub fn parse(xml: &str) -> Vec<Suite> {
     scan(xml).0
 }
 
+/// The `shardPlan` attribute of the `<testsuites>` root: the digest of the shard plan that the JUnit runner of one
+/// shard read. `None` for a report without it.
+pub fn shard_plan_digest(xml: &str) -> Option<String> {
+    let start = xml.find("<testsuites")?;
+    let tag = Tag::parse(&xml[start..=find_tag_end(xml, start)?]);
+    if tag.opens("testsuites") {
+        tag.attribute("shardPlan")
+    } else {
+        None
+    }
+}
+
 /// Integrity metadata plus suites in stable timestamp order ([`compare_suites_by_timestamp`]).
 pub fn parse_report(xml: &str) -> Report {
     let (mut suites, integrity) = scan(xml);
@@ -191,7 +204,7 @@ impl Scanner {
 
     fn finish_suite(&mut self) {
         if let Some(mut suite) = self.current.take() {
-            suite.bucketing_stub = suite.name == "Bucketing" && suite.tests == 0;
+            suite.empty_stub = matches!(suite.name.as_str(), "Bucketing" | "Sharding") && suite.tests == 0;
             self.suites.push(suite);
         }
     }
@@ -373,7 +386,7 @@ fn scan(xml: &str) -> (Vec<Suite>, Integrity) {
                 errors: tag.count("errors"),
                 skipped: tag.count("skipped"),
                 cases: Vec::new(),
-                bucketing_stub: false,
+                empty_stub: false,
                 wrapper_exit_code: None,
             });
             if tag.self_closing {

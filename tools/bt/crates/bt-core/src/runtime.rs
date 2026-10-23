@@ -63,6 +63,10 @@ pub trait Runtime: Sync {
 
     fn read_text_file(&self, path: &Path) -> io::Result<String>;
 
+    /// Replaces a file in one step, so a concurrent reader sees the old text or the new, never a part. Creates the
+    /// directory of the file when it is missing.
+    fn write_text_file(&self, path: &Path, text: &str) -> io::Result<()>;
+
     /// Streams a file that may not exist and may end mid-line.
     ///
     /// No error: bazel never wrote the BEP file when it died during startup or option parsing, and a truncated

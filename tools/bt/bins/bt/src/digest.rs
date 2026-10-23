@@ -365,6 +365,12 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
         }
         RunStatus::Infra => {
             out.push(format!("INFRA  the bazel run did not produce usable results{single}"));
+            for label in &result.mixed_shard_plans {
+                out.push(format!(
+                    "cause  the shards of {label} read different shard plans, so a class can have run in no shard; \
+                     rerun with --no-cache"
+                ));
+            }
         }
     }
 

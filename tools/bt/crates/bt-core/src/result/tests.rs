@@ -64,6 +64,7 @@ fn classified(bazel_exit: i32, bep: &BepSummary, targets: &[TargetResult], build
         targets,
         build_errors,
         degraded,
+        mixed_shard_plans: &[],
     })
 }
 
@@ -578,4 +579,69 @@ fn parse_compile_errors_reads_the_worker_and_the_inline_forms() {
     );
 
     assert!(parse_compile_errors("INFO: Build completed successfully, 2 total actions\n").is_empty());
+}
+
+/// Two shards that read different plans can have split the classes differently, so a class can have run in no shard.
+/// A cached shard keeps the report of the run that cached it, which is how two plans meet in one run.
+#[test]
+fn the_shards_of_a_target_that_read_different_shard_plans_make_the_run_infra() {
+    let fake = FakeRuntime::new([]);
+    let report = |digest: &str, name: &str| {
+        format!(r#"<testsuites shardPlan="{digest}"><testsuite name="{name}" tests="1" time="5"/></testsuites>"#)
+    };
+    fake.put_absolute("/exec/mixed/shard_1/test.xml", &report("aaaa", "com.A"));
+    fake.put_absolute("/exec/mixed/shard_2/test.xml", &report("bbbb", "com.B"));
+    fake.put_absolute("/exec/same/shard_1/test.xml", &report("cccc", "com.C"));
+    fake.put_absolute("/exec/same/shard_2/test.xml", &report("cccc", "com.D"));
+    let shard = |label: &'static str, shard: i64, xml: &'static str| test_result_event(&AttemptSpec { shard, ..at(label, xml) });
+    let bep = bep_of(
+        &fake,
+        &[
+            shard("//p:mixed", 1, "/exec/mixed/shard_1/test.xml"),
+            test_result_event(&AttemptSpec {
+                shard: 2,
+                cached: true,
+                ..at("//p:mixed", "/exec/mixed/shard_2/test.xml")
+            }),
+            shard("//p:same", 1, "/exec/same/shard_1/test.xml"),
+            shard("//p:same", 2, "/exec/same/shard_2/test.xml"),
+        ],
+    );
+    let result = collect_results(&fake, &bep, 5000, 0, "");
+
+    assert_eq!(result.mixed_shard_plans, ["//p:mixed"]);
+    assert_eq!((result.status, result.exit_code), (RunStatus::Infra, exit::INFRA));
+    assert_eq!(
+        result.timings.iter().map(|timing| timing.label.as_str()).collect::<Vec<_>>(),
+        ["//p:same"]
+    );
+}
+
+/// A report without the digest and one with it differ too: a shard that read no plan hashed its tests.
+#[test]
+fn a_shard_without_a_plan_digest_differs_from_a_shard_with_one() {
+    let fake = FakeRuntime::new([]);
+    fake.put_absolute(
+        "/exec/t/shard_1/test.xml",
+        r#"<testsuites shardPlan="aaaa"><testsuite name="com.A" tests="1"/></testsuites>"#,
+    );
+    fake.put_absolute(
+        "/exec/t/shard_2/test.xml",
+        r#"<testsuites><testsuite name="com.B" tests="1"/></testsuites>"#,
+    );
+    let bep = bep_of(
+        &fake,
+        &[
+            test_result_event(&AttemptSpec {
+                shard: 1,
+                ..at("//p:t", "/exec/t/shard_1/test.xml")
+            }),
+            test_result_event(&AttemptSpec {
+                shard: 2,
+                ..at("//p:t", "/exec/t/shard_2/test.xml")
+            }),
+        ],
+    );
+
+    assert_eq!(collect_results(&fake, &bep, 5000, 0, "").mixed_shard_plans, ["//p:t"]);
 }
