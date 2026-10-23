@@ -17,6 +17,7 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginConflictException
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.plugins.ContainerDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
@@ -674,8 +675,17 @@ abstract class ComponentManagerImpl(
     }
     val result = registrar.complete()
     if (result != null) {
+      unloadShadowedComponents(result.shadowedInstances)
       setForwarding(result.shadowedInstances)
       pluginServicesStore.putServicesUnregisterHandle(pluginDescriptor, result.unregisterHandle)
+    }
+  }
+
+  private fun unloadShadowedComponents(shadowedInstances: Map<String, InstanceHolder>) {
+    for ((keyClassName, holder) in shadowedInstances) {
+      val instance = holder.createdInstanceOrNull() ?: continue
+      LOG.info("$keyClassName: ${instance.javaClass.name} is overridden after its creation, the store drops it")
+      componentStore.unloadComponent(instance)
     }
   }
 
@@ -1111,6 +1121,10 @@ abstract class ComponentManagerImpl(
 
     val unshadowedInstances = unregisterResult?.unshadowedInstances
     if (unshadowedInstances != null) {
+      for (holder in unshadowedInstances.values) {
+        val instance = holder.createdInstanceOrNull() ?: continue
+        store.reregisterComponent(instance, PluginUtil.getPluginId(instance.javaClass.classLoader))
+      }
       resetForwarding(unshadowedInstances)
     }
   }
@@ -1921,5 +1935,16 @@ private suspend fun preloadAllInstances(container: InstanceContainerInternal) {
     catch (e: Throwable) {
       LOG.error("Cannot create ${holder.instanceClassName()}", e)
     }
+  }
+}
+
+private fun InstanceHolder.createdInstanceOrNull(): Any? {
+  return try {
+    tryGetInstance()
+  }
+  catch (e: Throwable) {
+    rethrowControlFlowException(e)
+    LOG.warn(e)
+    null
   }
 }

@@ -292,6 +292,14 @@ abstract class ComponentStoreImpl : IComponentStore {
     removeComponent(name)
   }
 
+  override fun reregisterComponent(component: Any, pluginId: PluginId) {
+    if (component !is PersistentStateComponent<*>) {
+      return
+    }
+    val stateSpec = getStateSpec(component.javaClass) ?: return
+    registerComponent(stateSpec.name, createComponentInfo(component, stateSpec, serviceDescriptor = null, pluginId))
+  }
+
   final override fun initPersistencePlainComponent(component: Any, key: String, pluginId: PluginId) {
     val stateSpec = StateAnnotation(key, FileStorageAnnotation(StoragePathMacros.WORKSPACE_FILE, false))
     val componentInfo = createComponentInfo(PersistenceStateAdapter(component), stateSpec, serviceDescriptor = null, pluginId)

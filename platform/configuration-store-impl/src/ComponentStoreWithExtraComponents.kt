@@ -55,6 +55,13 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
     super.unloadComponent(component)
   }
 
+  override fun reregisterComponent(component: Any, pluginId: PluginId) {
+    if (component is SettingsSavingComponent) {
+      asyncSettingsSavingComponents.drop()
+    }
+    super.reregisterComponent(component, pluginId)
+  }
+
   override suspend fun doSave(saveResult: SaveResult, forceSavingAllSettings: Boolean) {
     val sessionManager = createSaveSessionProducerManager()
     saveSettingsAndCommitComponents(saveResult = saveResult, forceSavingAllSettings = forceSavingAllSettings, sessionManager = sessionManager)

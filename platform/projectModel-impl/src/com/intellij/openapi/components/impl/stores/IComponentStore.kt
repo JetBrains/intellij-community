@@ -28,6 +28,10 @@ interface IComponentStore {
 
   fun unloadComponent(component: Any)
 
+  /** Tracks [component] again after [unloadComponent]. The component keeps its state. */
+  fun reregisterComponent(component: Any, pluginId: PluginId) {
+  }
+
   fun initPersistencePlainComponent(component: Any, @NlsSafe key: String, pluginId: PluginId)
 
   suspend fun reloadStates(componentNames: Set<String>)
