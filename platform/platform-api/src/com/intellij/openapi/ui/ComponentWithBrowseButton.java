@@ -157,6 +157,26 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     setPreferredSize(preferredSize);
   }
 
+  /**
+   * Returns the baseline of the child component, so a layout can align this panel by it.
+   */
+  @Override
+  public int getBaseline(int width, int height) {
+    Insets insets = getInsets();
+    int componentWidth = width - insets.left - insets.right;
+    int componentHeight = height - insets.top - insets.bottom;
+    if (componentWidth < 0 || componentHeight < 0) {
+      return -1;
+    }
+    int baseline = myComponent.getBaseline(componentWidth, componentHeight);
+    return baseline < 0 ? -1 : insets.top + baseline;
+  }
+
+  @Override
+  public BaselineResizeBehavior getBaselineResizeBehavior() {
+    return myComponent.getBaselineResizeBehavior();
+  }
+
   @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);

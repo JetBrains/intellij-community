@@ -3326,6 +3326,8 @@ c:com.intellij.openapi.ui.ComponentWithBrowseButton
 - addBrowseFolderListener(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.ui.TextComponentAccessor,Z):V
 - addFileSaverDialog(com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileSaverDescriptor,com.intellij.openapi.ui.TextComponentAccessor):V
 - dispose():V
+- getBaseline(I,I):I
+- getBaselineResizeBehavior():java.awt.Component$BaselineResizeBehavior
 - getButton():com.intellij.openapi.ui.FixedSizeButton
 - f:getChildComponent():javax.swing.JComponent
 - p:getDefaultIcon():javax.swing.Icon
