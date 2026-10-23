@@ -19,7 +19,7 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::worker::hypervisor::is_unsupported;
-use crate::worker::testing::{Fixture, ctx};
+use crate::worker::testing::{Fixture, assert_probe_unanswered, ctx};
 
 const BASE_DIGEST: &str = "sha256:fa96c198dd980ae41914db6dd8621e6120d01ba0cd66754dcb4238e072a87444";
 const MACOS_VERSION: &str = "26.6.2";
@@ -129,13 +129,10 @@ async fn the_version_gate_refuses_an_old_tart_and_names_the_way_past() {
 #[tokio::test]
 async fn a_version_without_an_answer_is_refused_and_not_a_missing_tart() {
     let fixture = Fixture::macos();
-    for (answer, code) in [(Answer::KilledVerb, 137), (Answer::SilentVerb, 0)] {
-        fixture.fake.answer(answer, "--version");
-        let refusal = tart(&fixture).require_available(&ctx(), "air-macos-1").await.unwrap_err();
-        assert_eq!(refusal.code, "probe_unanswered", "{refusal:?}");
-        assert!(refusal.message.contains(&format!("exited with {code}")), "{}", refusal.message);
-        fixture.fake.forget(answer);
-    }
+    assert_probe_unanswered(&fixture.fake, "--version", async || {
+        tart(&fixture).require_available(&ctx(), "air-macos-1").await
+    })
+    .await;
     tart(&fixture).require_available(&ctx(), "air-macos-1").await.unwrap();
 }
 
@@ -493,24 +490,25 @@ async fn liveness_needs_the_whole_identity_triple() {
     assert!(tart.running(&ctx, worker).await.unwrap());
 
     // Each leg of the triple on its own is enough to disqualify it.
-    let stale = PidReceipt {
-        process: ProcessIdentity {
-            process_start: "Sat Jan 1 00:00:00 2000".to_owned(),
-            ..live.process.clone()
-        },
-        ..live.clone()
-    };
-    write_identity(&fixture, worker, &stale);
-    assert!(!tart.running(&ctx, worker).await.unwrap());
-    let stale = PidReceipt {
-        process: ProcessIdentity {
-            process_command: "/opt/homebrew/bin/tart run something-else".to_owned(),
-            ..live.process.clone()
-        },
-        ..live.clone()
-    };
-    write_identity(&fixture, worker, &stale);
-    assert!(!tart.running(&ctx, worker).await.unwrap());
+    for (leg, process) in [
+        (
+            "another start time",
+            ProcessIdentity {
+                process_start: "Sat Jan 1 00:00:00 2000".to_owned(),
+                ..live.process.clone()
+            },
+        ),
+        (
+            "another command",
+            ProcessIdentity {
+                process_command: "/opt/homebrew/bin/tart run something-else".to_owned(),
+                ..live.process.clone()
+            },
+        ),
+    ] {
+        write_identity(&fixture, worker, &PidReceipt { process, ..live.clone() });
+        assert!(!tart.running(&ctx, worker).await.unwrap(), "a run process of {leg} is running");
+    }
 
     // A zombie is the one dead process `ps` still answers for: the spawn releases the run process without reaping it,
     // so an identity recorded after a boot-time death carries the zombie's own answers and matches them

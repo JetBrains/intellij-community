@@ -546,7 +546,7 @@ mod lifecycle {
         let fixture = Fixture::docker_container();
         start_first(&fixture).await;
         fixture.fake.forget_calls();
-        fixture.manager.pool(&ctx(), command, None).await.unwrap();
+        fixture.run_pool(command).await.unwrap();
         let calls = fixture.fake.calls();
         (fixture, calls)
     }
@@ -569,7 +569,7 @@ mod lifecycle {
     #[tokio::test]
     async fn a_pool_gc_on_a_stopped_server_starts_nothing() {
         let fixture = Fixture::docker_container();
-        let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
+        let outcome = fixture.run_pool(PoolCommand::Gc).await.unwrap();
         assert_eq!(outcome.data["kept"][fixture.worker(0)], "engine-stopped");
         assert_eq!(outcome.text, "removed=(none)");
         let calls = fixture.fake.calls();

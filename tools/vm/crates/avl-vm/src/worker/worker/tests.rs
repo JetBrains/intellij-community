@@ -338,8 +338,7 @@ async fn pool_start_and_stop_refuse_a_worker_with_a_run_in_flight() {
     let lease = fixture.write_lease(&worker, "the-holders-token");
     fixture.write_run_marker(&lease, "suite-user-run-1", fixture.another_process().await);
     let refusal = fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Start(PoolTarget::Worker(worker.clone())), None)
+        .run_pool(PoolCommand::Start(PoolTarget::Worker(worker.clone())))
         .await
         .unwrap_err();
     assert_eq!((refusal.code.as_ref(), refusal.exit), ("lease_busy", Exit::TEMP_FAIL));
@@ -348,8 +347,7 @@ async fn pool_start_and_stop_refuse_a_worker_with_a_run_in_flight() {
     // `pool stop` meets the run guard before the lease guard, so it names the run too. A stop that the holder's own
     // lease authorizes refuses as well.
     let refusal = fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Stop(PoolTarget::Worker(worker.clone())), None)
+        .run_pool(PoolCommand::Stop(PoolTarget::Worker(worker.clone())))
         .await
         .unwrap_err();
     assert_eq!((refusal.code.as_ref(), refusal.exit), ("lease_busy", Exit::TEMP_FAIL));
@@ -370,7 +368,7 @@ async fn pool_gc_keeps_the_worker_of_a_run() {
     let worker = fixture.worker(0).to_owned();
     let lease = fixture.write_lease(&worker, "the-holders-token");
     fixture.write_run_marker(&lease, "suite-user-run-1", fixture.another_process().await);
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
+    let outcome = fixture.run_pool(PoolCommand::Gc).await.unwrap();
     assert_eq!(outcome.data["kept"][&worker], "leased", "{}", outcome.data);
     assert!(fixture.settings.run_marker_path(&worker).exists());
 }
@@ -404,11 +402,7 @@ async fn forgetting_a_guest_keeps_the_lease_and_the_run_marker() {
 async fn pool_init_refuses_a_leased_worker() {
     let fixture = Fixture::macos();
     fixture.write_lease(fixture.worker(0), "held");
-    let refusal = fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Init { golden: None }, None)
-        .await
-        .unwrap_err();
+    let refusal = fixture.run_pool(PoolCommand::Init { golden: None }).await.unwrap_err();
     assert_eq!(refusal.code, "worker_leased");
     assert!(!fixture.fake.saw_call_containing("clone"));
 }
@@ -848,8 +842,7 @@ async fn recycle_refuses_a_leased_worker_and_deletes_nothing() {
     let lease = fixture.write_lease(&worker, "another-holders-token");
 
     let refusal = fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Recycle(PoolTarget::Worker(worker.clone())), None)
+        .run_pool(PoolCommand::Recycle(PoolTarget::Worker(worker.clone())))
         .await
         .unwrap_err();
     assert_eq!(refusal.code, "worker_leased", "{refusal:?}");
@@ -904,8 +897,7 @@ async fn recycle_deletes_the_guests_records_and_keeps_the_lifecycle_lock() {
     std::fs::create_dir_all(directory.join("reports/run-1")).unwrap();
 
     let outcome = fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Recycle(PoolTarget::Worker(worker.clone())), None)
+        .run_pool(PoolCommand::Recycle(PoolTarget::Worker(worker.clone())))
         .await
         .unwrap();
     let calls = fixture.fake.calls();
@@ -949,8 +941,7 @@ async fn recycle_that_cannot_stop_the_worker_deletes_nothing() {
     fixture.fake.answer(Answer::Exit, "1");
 
     let refusal = fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Recycle(PoolTarget::Worker(worker.clone())), None)
+        .run_pool(PoolCommand::Recycle(PoolTarget::Worker(worker.clone())))
         .await
         .unwrap_err();
     assert_eq!(refusal.code, "subprocess_failed", "{refusal:?}");
@@ -968,8 +959,7 @@ async fn recycle_leaves_no_half_state_when_the_clone_fails() {
     // The slot has no VM, so the delete is a no-op and the clone is the first verb that can fail.
     fixture.fake.answer(Answer::Exit, "1");
     let refusal = fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Recycle(PoolTarget::Worker(worker.clone())), None)
+        .run_pool(PoolCommand::Recycle(PoolTarget::Worker(worker.clone())))
         .await
         .unwrap_err();
     assert_eq!(refusal.code, "subprocess_failed", "{refusal:?}");
@@ -990,11 +980,7 @@ async fn recycle_all_recycles_what_it_can_and_names_the_rest() {
     let _reaper = fixture.kill_run_processes_on_drop();
     fixture.write_lease(&leased, "another-holders-token");
 
-    let refusal = fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Recycle(PoolTarget::All), None)
-        .await
-        .unwrap_err();
+    let refusal = fixture.run_pool(PoolCommand::Recycle(PoolTarget::All)).await.unwrap_err();
     assert_eq!(
         (refusal.code.as_ref(), refusal.exit),
         ("recycle_incomplete", Exit::TEMP_FAIL),
@@ -1022,11 +1008,7 @@ async fn recycle_all_recycles_what_it_can_and_names_the_rest() {
     // A refusal that does not go away on its own makes the aggregate a failure.
     let broken = Fixture::builder(GuestOs::Macos).build();
     broken.fake.answer(Answer::Exit, "1");
-    let refusal = broken
-        .manager
-        .pool(&ctx(), PoolCommand::Recycle(PoolTarget::All), None)
-        .await
-        .unwrap_err();
+    let refusal = broken.run_pool(PoolCommand::Recycle(PoolTarget::All)).await.unwrap_err();
     assert_eq!((refusal.code.as_ref(), refusal.exit), ("recycle_incomplete", Exit::FAILURE));
 }
 
@@ -1037,8 +1019,7 @@ async fn recycle_all_recycles_what_it_can_and_names_the_rest() {
 async fn recycle_refuses_a_worker_this_pool_does_not_contain() {
     let fixture = Fixture::macos();
     let refusal = fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Recycle(PoolTarget::Worker("air-docker-1".to_owned())), None)
+        .run_pool(PoolCommand::Recycle(PoolTarget::Worker("air-docker-1".to_owned())))
         .await
         .unwrap_err();
     assert_eq!(refusal.code, "unknown_worker", "{refusal:?}");
@@ -1058,11 +1039,7 @@ async fn stop_all_stops_what_it_can_and_names_the_rest() {
     // Tart lists no VM for this run process, so the stop ends the process itself.
     let stale = fixture.run_stale_tart_process(&running).await;
 
-    let refusal = fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Stop(PoolTarget::All), None)
-        .await
-        .unwrap_err();
+    let refusal = fixture.run_pool(PoolCommand::Stop(PoolTarget::All)).await.unwrap_err();
     assert_eq!(
         (refusal.code.as_ref(), refusal.exit),
         ("stop_incomplete", Exit::TEMP_FAIL),
@@ -1088,8 +1065,7 @@ async fn stop_all_stops_what_it_can_and_names_the_rest() {
     assert!(fixture.settings.lease_path(&leased).exists());
 
     let refusal = fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Stop(PoolTarget::Worker(leased.clone())), None)
+        .run_pool(PoolCommand::Stop(PoolTarget::Worker(leased.clone())))
         .await
         .unwrap_err();
     assert_eq!(
@@ -1113,11 +1089,7 @@ async fn stop_all_that_cannot_stop_a_worker_fails() {
     fixture.run_as_fake_process(&broken).await;
     fixture.fake.answer(Answer::Exit, "1");
 
-    let refusal = fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Stop(PoolTarget::All), None)
-        .await
-        .unwrap_err();
+    let refusal = fixture.run_pool(PoolCommand::Stop(PoolTarget::All)).await.unwrap_err();
     assert_eq!(
         (refusal.code.as_ref(), refusal.exit),
         ("stop_incomplete", Exit::FAILURE),
@@ -1154,7 +1126,7 @@ async fn start_all_and_stop_all_name_a_busy_worker_lease_busy() {
         (PoolCommand::Start(PoolTarget::All), "start_incomplete", "started"),
         (PoolCommand::Stop(PoolTarget::All), "stop_incomplete", "stopped"),
     ] {
-        let refusal = fixture.manager.pool(&ctx(), command, None).await.unwrap_err();
+        let refusal = fixture.run_pool(command).await.unwrap_err();
         assert_eq!((refusal.code.as_ref(), refusal.exit), (code, Exit::TEMP_FAIL), "{refusal:?}");
         assert_eq!(
             refusal.message,
@@ -1227,8 +1199,7 @@ async fn recycle_after_a_missing_vm_release_stops_the_stale_run_process_and_clon
     let _reaper = fixture.kill_run_processes_on_drop();
     let stale = fixture.run_stale_tart_process(&worker).await;
     fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Recycle(PoolTarget::Worker(worker.clone())), None)
+        .run_pool(PoolCommand::Recycle(PoolTarget::Worker(worker.clone())))
         .await
         .unwrap();
     assert!(!tart(&fixture).process_alive(&ctx(), Some(&stale.identity)).await.unwrap());

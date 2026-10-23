@@ -9,8 +9,10 @@ use pretty_assertions::assert_eq;
 use serde_json::json;
 
 use super::*;
-use crate::worker::testing::{Fixture, ctx, find_step, start_again, start_first};
-use crate::worker::worker::{PoolCommand, PoolTarget};
+use crate::worker::testing::{
+    Fixture, assert_init_refuses_a_golden, ctx, find_step, recycle_with_a_stale_receipt, start_again, start_first,
+};
+use crate::worker::worker::PoolCommand;
 
 /// The verb of every call of the fake script, in order.
 fn verbs(fixture: &Fixture) -> Vec<String> {
@@ -74,14 +76,20 @@ async fn a_container_linux_start_runs_the_script_then_the_linux_boot_through_the
     assert_eq!(start_calls(&fixture).len(), 2, "{:?}", fixture.fake.calls());
 }
 
+/// Leases the first worker of `fixture` and passes its readiness gate once. Answers the worker and the lease.
+async fn ready_under_a_lease(fixture: &Fixture) -> (&str, Lease) {
+    let worker = fixture.worker(0);
+    let lease = fixture.write_lease(worker, "token-1");
+    fixture.manager.require_ready(&ctx(), &lease).await.unwrap();
+    (worker, lease)
+}
+
 /// The readiness gate is lazy, as on Docker: a stopped container is started under the caller's own lease, and a
 /// running one whose guest answers is left as it is.
 #[tokio::test]
 async fn the_container_linux_readiness_gate_starts_a_stopped_worker_and_keeps_a_running_one() {
     let fixture = Fixture::container_linux();
-    let worker = fixture.worker(0);
-    let lease = fixture.write_lease(worker, "token-1");
-    fixture.manager.require_ready(&ctx(), &lease).await.unwrap();
+    let (worker, lease) = ready_under_a_lease(&fixture).await;
     assert_eq!(start_calls(&fixture), [expected_start(&fixture, worker)]);
 
     fixture.manager.require_ready(&ctx(), &lease).await.unwrap();
@@ -134,32 +142,13 @@ async fn a_stopped_container_linux_worker_is_not_release_ready() {
 #[tokio::test]
 async fn pool_init_on_container_linux_starts_the_one_slot_and_takes_no_golden() {
     let fixture = Fixture::container_linux();
-    let refusal = fixture
-        .manager
-        .pool(
-            &ctx(),
-            PoolCommand::Init {
-                golden: Some("air-macos-golden".to_owned()),
-            },
-            None,
-        )
-        .await
-        .unwrap_err();
-    assert_eq!(refusal.code, "usage");
+    assert_init_refuses_a_golden(&fixture).await;
     assert!(start_calls(&fixture).is_empty());
 
-    let outcome = fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Init { golden: None }, None)
-        .await
-        .unwrap();
+    let outcome = fixture.run_pool(PoolCommand::Init { golden: None }).await.unwrap();
     assert_eq!(outcome.data["started"], json!(["container-linux-1"]));
     assert_eq!(start_calls(&fixture).len(), 1);
-    let outcome = fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Init { golden: None }, None)
-        .await
-        .unwrap();
+    let outcome = fixture.run_pool(PoolCommand::Init { golden: None }).await.unwrap();
     assert_eq!(outcome.data["started"], json!([]));
 }
 
@@ -168,13 +157,13 @@ async fn pool_init_on_container_linux_starts_the_one_slot_and_takes_no_golden() 
 async fn pool_gc_on_container_linux_stops_an_unleased_container_and_keeps_a_leased_one() {
     let fixture = Fixture::container_linux();
     let worker = fixture.worker(0).to_owned();
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
+    let outcome = fixture.run_pool(PoolCommand::Gc).await.unwrap();
     assert_eq!(outcome.data["kept"], json!({ worker.as_str(): "stopped" }));
     assert!(!verbs(&fixture).iter().any(|verb| verb == "stop"), "{:?}", fixture.fake.calls());
 
     fixture.manager.start(&ctx(), &worker).await.unwrap();
     fixture.fake.forget_calls();
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
+    let outcome = fixture.run_pool(PoolCommand::Gc).await.unwrap();
     assert_eq!(outcome.data["removed"], json!([worker.as_str()]));
     assert_eq!(verbs(&fixture).iter().filter(|verb| *verb == "stop").count(), 1);
     assert_eq!(control_port_files(&fixture), [false, false, false]);
@@ -182,7 +171,7 @@ async fn pool_gc_on_container_linux_stops_an_unleased_container_and_keeps_a_leas
     fixture.manager.start(&ctx(), &worker).await.unwrap();
     fixture.write_lease(&worker, "token");
     fixture.fake.forget_calls();
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
+    let outcome = fixture.run_pool(PoolCommand::Gc).await.unwrap();
     assert_eq!(outcome.data["kept"], json!({ worker.as_str(): "leased" }));
     assert!(!verbs(&fixture).iter().any(|verb| verb == "stop"), "{:?}", fixture.fake.calls());
     assert_eq!(control_port_files(&fixture), [true, true, true]);
@@ -192,16 +181,7 @@ async fn pool_gc_on_container_linux_stops_an_unleased_container_and_keeps_a_leas
 #[tokio::test]
 async fn pool_recycle_on_container_linux_stops_the_container_clears_the_slot_and_starts_again() {
     let fixture = Fixture::container_linux();
-    let worker = fixture.worker(0).to_owned();
-    fixture.manager.start_without_lifecycle_lock(&ctx(), &worker).await.unwrap();
-    let receipt = fixture.settings.worker_dir(&worker).join("stale-receipt.json");
-    std::fs::write(&receipt, "{}").unwrap();
-    fixture.fake.forget_calls();
-    fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Recycle(PoolTarget::Worker(worker.clone())), None)
-        .await
-        .unwrap();
+    let (worker, receipt, _) = recycle_with_a_stale_receipt(&fixture).await;
     let verbs = verbs(&fixture);
     let position = |verb: &str| {
         verbs
@@ -246,9 +226,7 @@ async fn a_start_of_a_stopped_worker_forgets_the_previous_guest_and_records_the_
 #[tokio::test]
 async fn the_readiness_gate_makes_a_running_container_again_when_its_start_record_is_stale() {
     let fixture = Fixture::container_linux();
-    let worker = fixture.worker(0);
-    let lease = fixture.write_lease(worker, "token-1");
-    fixture.manager.require_ready(&ctx(), &lease).await.unwrap();
+    let (worker, lease) = ready_under_a_lease(&fixture).await;
     assert_eq!(start_calls(&fixture).len(), 1);
     assert!(!verbs(&fixture).iter().any(|verb| verb == "stop"), "{:?}", fixture.fake.calls());
 

@@ -15,15 +15,20 @@
 //! real exit and a real zombie.
 
 use std::ops::Deref;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
+#[cfg(unix)]
+use std::time::Duration;
 
 #[cfg(unix)]
 use avl_base::Reporter;
 #[cfg(unix)]
 use avl_base::config::MacosHost;
 #[cfg(unix)]
+use avl_base::phase::Timeline;
+#[cfg(unix)]
 use avl_base::report::SinkGuard;
-use avl_base::{Backend, Config, GuestArch, GuestOs, SCHEMA_VERSION};
+use avl_base::{Backend, Config, GuestArch, GuestOs, Outcome, Refusal, SCHEMA_VERSION};
 use avl_host_sys::Ctx;
 use avl_host_sys::Runner;
 use avl_host_sys::guest::BazelHost;
@@ -35,8 +40,7 @@ use avl_host_sys::{ProcessIdentity, ProcessTable};
 use avl_host_testkit::{ChannelFactory, FakeGuests, HostPool, HostPoolBuilder, quiet};
 #[cfg(unix)]
 use avl_host_testkit::{FakeProcesses, PinnedBazel};
-#[cfg(unix)]
-use avl_testkit::tartfake::Answer;
+use avl_testkit::tartfake::{Answer, Fake};
 #[cfg(unix)]
 use avl_wire::progress::{Kind, Record};
 #[cfg(unix)]
@@ -49,7 +53,9 @@ use crate::worker::docker::Docker;
 use crate::worker::run_marker::{RunMarker, write_marker_by_hand};
 #[cfg(unix)]
 use crate::worker::tart::{MINIMUM_VERSION, PidReceipt};
-use crate::worker::worker::{Dependencies, GuestBootBuilder, IdleStopRequest, Lease, Manager, StartState, Timings, builds_nothing};
+use crate::worker::worker::{
+    Dependencies, GuestBootBuilder, IdleStopRequest, Lease, Manager, PoolCommand, PoolTarget, StartState, Timings, builds_nothing,
+};
 
 /// The context of a suite step: the background one, which nothing cancels.
 pub(crate) fn ctx() -> Ctx {
@@ -59,6 +65,52 @@ pub(crate) fn ctx() -> Ctx {
 /// The Docker backend of a Docker pool.
 pub(crate) fn docker(fixture: &Fixture) -> &Docker {
     fixture.manager.machine().docker().expect("a Docker pool")
+}
+
+/// Spawns `guest_line` and a `git rev-parse` in one phase of `ctx`, and asserts that `timeline`, the timeline of
+/// `ctx`, counts one guest call and one host call. The guest line was built with `ctx`, so its head is declared.
+#[cfg(unix)]
+pub(crate) fn assert_counts_one_guest_call(ctx: &Ctx, timeline: &Timeline, guest_line: &[String]) {
+    let (inner, phase) = ctx.begin("probe");
+    inner.phase().record_subprocess(guest_line, Duration::from_secs(1));
+    inner.phase().record_subprocess(&["git", "rev-parse"], Duration::from_secs(1));
+    drop(phase);
+    let timing = &timeline.take()[0];
+    assert_eq!((timing.guest_calls, timing.host_calls), (1, 1), "{timing:?}");
+}
+
+/// Asserts that `pool init` of `fixture` refuses a golden as `usage`: only a Tart pool clones its workers from one.
+pub(crate) async fn assert_init_refuses_a_golden(fixture: &Fixture) {
+    let golden = Some("air-macos-golden".to_owned());
+    let refusal = fixture.run_pool(PoolCommand::Init { golden }).await.unwrap_err();
+    assert_eq!(refusal.code, "usage");
+}
+
+/// Starts the first worker of `fixture`, writes a stale receipt into its directory, and runs `pool recycle` of the
+/// worker. Answers the worker, the receipt and the hypervisor calls of the recycle.
+pub(crate) async fn recycle_with_a_stale_receipt(fixture: &Fixture) -> (String, PathBuf, Vec<String>) {
+    let worker = fixture.worker(0).to_owned();
+    fixture.manager.start_without_lifecycle_lock(&ctx(), &worker).await.unwrap();
+    let receipt = fixture.settings.worker_dir(&worker).join("stale-receipt.json");
+    std::fs::write(&receipt, "{}").unwrap();
+    fixture.fake.forget_calls();
+    fixture
+        .run_pool(PoolCommand::Recycle(PoolTarget::Worker(worker.clone())))
+        .await
+        .unwrap();
+    (worker, receipt, fixture.fake.calls())
+}
+
+/// Asserts that `probe` refuses `probe_unanswered` with the exit status while `fake` answers `verb` as a process that a
+/// signal ended, and then as one that exited 0 and printed nothing. Neither of them is an answer.
+pub(crate) async fn assert_probe_unanswered<T: std::fmt::Debug>(fake: &Fake, verb: &str, probe: impl AsyncFn() -> Result<T, Refusal>) {
+    for (answer, code) in [(Answer::KilledVerb, 137), (Answer::SilentVerb, 0)] {
+        fake.answer(answer, verb);
+        let refusal = probe().await.unwrap_err();
+        assert_eq!(refusal.code, "probe_unanswered", "{verb} answered as {answer:?}: {refusal:?}");
+        assert!(refusal.message.contains(&format!("exited with {code}")), "{}", refusal.message);
+        fake.forget(answer);
+    }
 }
 
 /// The index of the first of the hypervisor `calls` that starts with `prefix`. The test fails with the calls when none
@@ -178,6 +230,11 @@ impl Fixture {
 
     pub(crate) fn worker(&self, index: usize) -> &str {
         &self.settings.workers[index]
+    }
+
+    /// Runs the pool `command` of `vm pool` without a lease file.
+    pub(crate) async fn run_pool(&self, command: PoolCommand) -> Result<Outcome, Refusal> {
+        self.manager.pool(&ctx(), command, None).await
     }
 
     /// A lease of this pool for one worker, the way an acquisition would build it.
