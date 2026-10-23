@@ -30,7 +30,7 @@ class ClassFinderTest {
     Path directory = tempDir.newDirectoryPath("extracted-jar");
     new Decompressor.Zip(jar).extract(directory);
 
-    checkJUnitClasses(jar);
+    checkJUnitClasses(directory);
   }
 
   @SuppressWarnings("SameParameterValue")
