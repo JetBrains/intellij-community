@@ -399,8 +399,19 @@ object PluginInstaller {
         return
       }
 
+      // TODO: drop this early load of the dependencies once IJPL-260375 is resolved.
+      // the plugin can load without a restart only after the plugins that it requires are loaded
+      var areDependenciesLoaded = true
+      for ((installFile, pluginDesc) in operation.pendingDynamicPluginInstalls) {
+        val installed = installAndLoadDynamicPlugin(installFile, parent, pluginDesc)
+        if (!installed) {
+          areDependenciesLoaded = false
+        }
+      }
+
       val oldFile = if (installedPlugin != null && !installedPlugin.isBundled) installedPlugin.getPluginPath() else null
-      var isRestartRequired =
+      val isRestartRequired =
+        !areDependenciesLoaded ||
         oldFile != null ||
         operation.isRestartRequired ||
         runWithModalProgressBlocking( // FIXME this is an ad-hoc fix for accessing BGT-method from EDT
@@ -411,12 +422,6 @@ object PluginInstaller {
         ) {
           !DynamicPlugins.checkCanLoadWithoutRestart(pluginDescriptor)
         }
-      for (dynamicPluginInstall in operation.pendingDynamicPluginInstalls) {
-        val installed = installAndLoadDynamicPlugin(dynamicPluginInstall.file, parent, dynamicPluginInstall.pluginDescriptor)
-        if (!installed) {
-          isRestartRequired = true
-        }
-      }
 
       if (isRestartRequired) {
         installAfterRestart(pluginDescriptor, file, oldFile, false)
