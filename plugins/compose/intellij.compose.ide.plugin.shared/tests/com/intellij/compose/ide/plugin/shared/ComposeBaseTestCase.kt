@@ -91,7 +91,7 @@ abstract class ComposeBaseTestCase : GradleCodeInsightBaseTestCase() {
   }
 
   protected fun testComposeProject(test: () -> Unit) {
-    test(GradleVersion.version(targetGradleVersion), composeProject, test)
+    test(GradleVersion.version(targetGradleVersion), composeProjectBuilder, test)
   }
 
   /**
@@ -131,28 +131,28 @@ abstract class ComposeBaseTestCase : GradleCodeInsightBaseTestCase() {
     }
   }
 
-  /** The builder is lazy, because a subclass initializes its properties after this class. */
-  private val composeProject: GradleTestFixtureBuilder by lazy {
-    val testDataRootPath = testDataProjectRoot
-    val projectName = testDataRootPath.name
-    GradleTestFixtureBuilder.create(projectName) {
-      excludeFilePatterns(*excludedFilePatterns, *additionalSyntaxAndPatterns)
-      withFile(".gradle/testDataFingerprint", testDataFingerprint(testDataRootPath))
-      configureProject()
-      withFiles { projectRoot ->
-        val testDataRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(testDataRootPath)
-                           ?: error("Cannot find $projectName test data")
-        edtWriteAction {
-          VfsUtil.copyDirectory(this, testDataRoot, projectRoot) { file ->
-            val relativePath = requireNotNull(VfsUtil.getRelativePath(file, testDataRoot)) {
-              "$file is not under $testDataRoot"
+  private val composeProjectBuilder: GradleTestFixtureBuilder
+    get() {
+      val testDataRootPath = testDataProjectRoot
+      val projectName = testDataRootPath.name
+      return GradleTestFixtureBuilder.create(projectName) {
+        excludeFilePatterns(*excludedFilePatterns, *additionalSyntaxAndPatterns)
+        withFile(".gradle/testDataFingerprint", testDataFingerprint(testDataRootPath))
+        configureProject()
+        withFiles { projectRoot ->
+          val testDataRoot = VirtualFileManager.getInstance().refreshAndFindFileByNioPath(testDataRootPath)
+                             ?: error("Cannot find $projectName test data")
+          edtWriteAction {
+            VfsUtil.copyDirectory(this, testDataRoot, projectRoot) { file ->
+              val relativePath = requireNotNull(VfsUtil.getRelativePath(file, testDataRoot)) {
+                "$file is not under $testDataRoot"
+              }
+              isStableTestDataPath(relativePath.split('/'))
             }
-            isStableTestDataPath(relativePath.split('/'))
           }
         }
       }
     }
-  }
 
   companion object {
     private var longRunningAndroidThreads: Disposable? = null
