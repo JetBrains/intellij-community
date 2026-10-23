@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources
 
-import com.intellij.compose.ide.plugin.shared.ANDROID_MAIN
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -29,7 +28,7 @@ internal class ComposeResourcesErrorsHighlightingTest : ComposeResourcesCodeInsi
 
     val kotlinFiles = mutableListOf<VirtualFile>()
     VfsUtilCore.iterateChildrenRecursively(sourceSetRoot, null) { file ->
-      if (!file.isDirectory && file.extension == "kt" && file.isTestableSourceFile()) {
+      if (!file.isDirectory && file.extension == "kt") {
         kotlinFiles.add(file)
       }
       true
@@ -62,11 +61,5 @@ internal class ComposeResourcesErrorsHighlightingTest : ComposeResourcesCodeInsi
         "$fileName:\n${errors.joinToString("\n") { "  - $it" }}"
       }
     )
-  }
-
-  private fun VirtualFile.isTestableSourceFile(): Boolean {
-    // Android SDK is not configured in tests, so we can only verify files
-    // that don't depend on Android APIs.
-    return sourceSetName != ANDROID_MAIN || this.name == "test.$ANDROID_MAIN.kt"
   }
 }
