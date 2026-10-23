@@ -1,14 +1,18 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.ide.DeleteProvider
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -60,6 +64,7 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.AfterEach
@@ -144,6 +149,30 @@ internal class ChangesBrowserStructuralNodeTest {
     assertEquals(listOf(fixture.change), snapshot[VcsSharedDataKeys.CHANGE_LEAD_SELECTION]?.toList())
     assertSame(fixture.first.getNavigatable(), snapshot[CommonDataKeys.NAVIGATABLE])
     assertEquals(listOf(fixture.first.getNavigatable()), snapshot[CommonDataKeys.NAVIGATABLE_ARRAY]?.toList())
+  }
+
+  @Test
+  fun `test delete on structural nodes reverts their changes and keeps the file`(): Unit = timeoutRunBlocking {
+    val reverted = ArrayList<List<ChangesBrowserStructuralNode<*>>>()
+    val fixture = withContext(Dispatchers.EDT) {
+      val file = LightVirtualFile("changed.txt", "first\nsecond\n")
+      createFixture(StructuralNode("first", OpenFileDescriptor(project, file, 0), rollback = { reverted.add(it) }),
+                    StructuralNode("second", OpenFileDescriptor(project, file, 6)))
+    }
+
+    withContext(Dispatchers.UI) {
+      fixture.view.selectionPath = TreePath(fixture.first.path)
+      val provider = deleteProvider(fixture.view)
+      assertTrue(provider is StructuralRollbackDeleteProvider)
+      provider!!.deleteElement(DataContext.EMPTY_CONTEXT)
+      assertEquals(listOf(listOf(fixture.first)), reverted)
+
+      fixture.view.selectionPaths = arrayOf(TreePath(fixture.first.path), TreePath(fixture.second.path))
+      assertNull(deleteProvider(fixture.view))
+
+      fixture.view.selectionPath = TreePath(fixture.fileNode.path)
+      assertTrue(deleteProvider(fixture.view) is VirtualFileDeleteProvider)
+    }
   }
 
   @Test
@@ -939,6 +968,12 @@ internal class ChangesBrowserStructuralNodeTest {
     }
   }
 
+  private fun deleteProvider(view: TestChangesView): DeleteProvider? {
+    val snapshot = Snapshot()
+    view.uiDataSnapshot(snapshot.sink)
+    return snapshot[PlatformDataKeys.DELETE_ELEMENT_PROVIDER]
+  }
+
   /** Waits until the previews that the scope launched end. Call it from the scope itself, outside of its child coroutines. */
   private suspend fun awaitPreviews(scope: CoroutineScope) {
     while (scope.coroutineContext.job.children.any()) delay(10.milliseconds)
@@ -1033,10 +1068,12 @@ internal class ChangesBrowserStructuralNodeTest {
     private val navigatable: Navigatable,
     preview: Navigatable? = null,
     private val highlightRange: TextRange? = null,
+    private val rollback: Rollback? = null,
   ) : ChangesBrowserStructuralNode<String>(name) {
     private val previewNavigatable = preview ?: navigatable
 
     override fun getTextPresentation(): String = name
+    override fun getRollback(): Rollback? = rollback
     override fun getNavigatable(): Navigatable = navigatable
     override fun getPreviewHighlightRange(): TextRange? = highlightRange
     override fun getPreviewFile(): VirtualFile? = (previewNavigatable as? OpenFileDescriptor)?.file

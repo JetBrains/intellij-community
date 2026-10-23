@@ -159,6 +159,66 @@ class StructuralHunkInclusionTest : BasePartiallyExcludedChangesTest() {
     }
   }
 
+  fun `test a rollback reverts its hunk`() {
+    val file = addLocalFile(FILE, text(LINES, 5 to "a-changed", 10 to "b-changed"), text(LINES))
+    refreshCLM()
+
+    file.withOpenedEditor {
+      lstm.waitUntilBaseContentsLoaded()
+      rollback(hunk(file, 10))
+      assertEquals(text(LINES, 5 to "a-changed"), file.document.text)
+      assertEquals(listOf("5-6 5-6 included"), ranges(file))
+    }
+  }
+
+  fun `test undo in the tree brings back the hunks of a rollback in one step`() {
+    val changed = text(LINES, 5 to "a-changed", 10 to "b-changed")
+    val file = addLocalFile(FILE, changed, text(LINES))
+    refreshCLM()
+
+    file.withOpenedEditor {
+      lstm.waitUntilBaseContentsLoaded()
+      rollback(hunk(file, 5), hunk(file, 10))
+      assertEquals(text(LINES), file.document.text)
+
+      // The tree has no file editor, so its Undo takes the global stack.
+      assertTrue(undoManager.isUndoAvailable(null))
+      undoManager.undo(null)
+      assertEquals(changed, file.document.text)
+    }
+  }
+
+  fun `test a rollback after an edit reverts nothing`() {
+    val file = addLocalFile(FILE, text(LINES, 5 to "a-changed", 10 to "b-changed"), text(LINES))
+    refreshCLM()
+
+    file.withOpenedEditor {
+      lstm.waitUntilBaseContentsLoaded()
+      val b = hunk(file, 10)
+      runCommand { file.document.insertString(0, PREFIX) }
+
+      rollback(b)
+      assertEquals(PREFIX + text(LINES, 5 to "a-changed", 10 to "b-changed"), file.document.text)
+    }
+  }
+
+  fun `test a rollback without a tracker reverts its hunk after the tracker loads`() {
+    val file = addLocalFile(FILE, text(LINES, 5 to "a-changed", 10 to "b-changed"), text(LINES))
+    refreshCLM()
+
+    rollback(hunk(file, 10))
+    waitForTracker()
+    assertEquals(text(LINES, 5 to "a-changed"), file.document.text)
+
+    releaseUnneededTrackers()
+    file.assertNullTracker()
+  }
+
+  /** Reverts the hunks as Delete in the tree does. */
+  private fun rollback(vararg hunks: ChangesBrowserStructuralNode<*>) {
+    requireNotNull(hunks.first().getRollback()).rollback(hunks.toList())
+  }
+
   private fun waitForTracker() {
     lstm.waitUntilBaseContentsLoaded()
     UIUtil.dispatchAllInvocationEvents()
