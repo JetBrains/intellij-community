@@ -5,14 +5,14 @@ project.buildSrc
 
 project.buildSrc.main
     externalProjectId =
-    languageLevel = 1.8
-    apiLevel = 1.8
+    languageLevel = 2.2
+    apiLevel = 2.2
     targetPlatform = JVM (17)
 
 project.buildSrc.test
     externalProjectId =
-    languageLevel = 1.8
-    apiLevel = 1.8
+    languageLevel = 2.2
+    apiLevel = 2.2
     additionalVisibleModuleNames = :buildSrc:main
     targetPlatform = JVM (17)
 

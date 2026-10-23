@@ -3,7 +3,9 @@ mpp-issue-bootstrap
 
 mpp-issue-bootstrap.p1
 
-mpp-issue-bootstrap.p1.androidTest
+mpp-issue-bootstrap.p1.androidHostTest
+
+mpp-issue-bootstrap.p1.androidMain
 
 mpp-issue-bootstrap.p1.commonMain
 
@@ -24,10 +26,6 @@ mpp-issue-bootstrap.p1.jvmAndAndroidMain
 mpp-issue-bootstrap.p1.jvmMain
 
 mpp-issue-bootstrap.p1.jvmTest
-
-mpp-issue-bootstrap.p1.main
-
-mpp-issue-bootstrap.p1.unitTest
 
 
 Test configuration:
