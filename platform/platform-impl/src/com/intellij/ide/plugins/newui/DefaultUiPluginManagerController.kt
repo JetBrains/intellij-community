@@ -497,19 +497,22 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
         session.pluginStates.remove(pluginId)
       }
     }
-
-    for (pendingPluginInstall in session.dynamicPluginsToInstall.values) {
-      val pluginId: PluginId = pendingPluginInstall.pluginDescriptor.getPluginId()
+    // Sort the plugins so that, if plugin x depends on plugin y, y loads before x.
+    // Otherwise, x can load without y, or x and all later plugins need a restart.
+    // TODO: drop the sorting and test without it once IJPL-260375 is resolved.
+    val sortedPendingInstalls = sortAccordingToDependencies(session.dynamicPluginsToInstall.values)
+    for ((file, pluginDescriptor) in sortedPendingInstalls) {
+      val pluginId: PluginId = pluginDescriptor.getPluginId()
       if (!needRestart && !uninstallsRequiringRestart.contains(pluginId)) {
         InstalledPluginsState.getInstance().trackPluginInstallation {
           needRestart =
-            !PluginInstaller.installAndLoadDynamicPlugin(pendingPluginInstall.file, parent, pendingPluginInstall.pluginDescriptor)
+            !PluginInstaller.installAndLoadDynamicPlugin(file, parent, pluginDescriptor)
         }
       }
 
       if (needRestart) {
         try {
-          PluginInstaller.installAfterRestartAndKeepIfNecessary(pendingPluginInstall.pluginDescriptor, pendingPluginInstall.file, null)
+          PluginInstaller.installAfterRestartAndKeepIfNecessary(pluginDescriptor, file, null)
         }
         catch (e: IOException) {
           LOG.error(e)
@@ -655,8 +658,12 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       var terminalState = InstallPluginTerminalState.FAILED
       try {
         operation.run()
+        val pendingPluginIds = operation.pendingDynamicPluginInstalls.mapTo(HashSet()) { install -> install.pluginDescriptor.getPluginId() }
+        pendingPluginIds.addAll(session.dynamicPluginsToInstall.keys)
         for (install in operation.pendingDynamicPluginInstalls) {
-          if (DynamicPlugins.allowLoadUnloadSynchronously(install.pluginDescriptor)) {
+          // A UI-only plugin loads now if it depends on no plugin that is not loaded yet.
+          // Otherwise, it loads with the dynamic update or on Apply.
+          if (DynamicPlugins.allowLoadUnloadSynchronously(install.pluginDescriptor) && !install.dependsOnAnyOf(pendingPluginIds)) {
             pluginsToInstallSynchronously.add(install)
             session.pluginsToRemoveOnCancel.add(install.pluginDescriptor)
           }
@@ -1588,6 +1595,37 @@ internal data class InstallPluginTerminalState(
       return InstallPluginTerminalState(success, cancel = false, showErrors, restartRequired)
     }
   }
+}
+
+private fun PendingDynamicPluginInstall.dependsOnAnyOf(pluginIds: Set<PluginId>): Boolean {
+  return pluginDescriptor.dependencyPluginIds().any { it in pluginIds }
+}
+
+private fun IdeaPluginDescriptorImpl.dependencyPluginIds(): Sequence<PluginId> {
+  return getDependencies().map { it.pluginId }.asSequence() + moduleDependencies.plugins
+}
+
+/**
+ * Orders [pluginInstalls] so that each plugin comes after the plugins in [pluginInstalls] that it depends on.
+ * The order includes optional dependencies and `<dependencies>` entries.
+ */
+internal fun sortAccordingToDependencies(pluginInstalls: Collection<PendingDynamicPluginInstall>): List<PendingDynamicPluginInstall> {
+  val installMap = pluginInstalls.associateBy { it.pluginDescriptor.getPluginId() }
+  val visited = HashSet<PluginId>()
+  val sortedInstalls = ArrayList<PendingDynamicPluginInstall>(pluginInstalls.size)
+
+  fun visit(pluginInstall: PendingDynamicPluginInstall) {
+    val plugin = pluginInstall.pluginDescriptor
+    if (visited.add(plugin.getPluginId())) {
+      for (pluginId in plugin.dependencyPluginIds()) {
+        installMap[pluginId]?.let(::visit)
+      }
+      sortedInstalls.add(pluginInstall)
+    }
+  }
+  pluginInstalls.forEach(::visit)
+
+  return sortedInstalls
 }
 
 internal fun InstallPluginResult.applyTerminalState(state: InstallPluginTerminalState) {
