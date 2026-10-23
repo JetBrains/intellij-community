@@ -16,6 +16,13 @@
     color: var(--foreground);
   }
 
+  /* The page modes set the size, and a ui primitive inherits it (base-mira without its text sizes). The chrome, a tool
+     page and a popup take the 13px of the IDE. A reading document and a prose island take 15px (text-base). The root
+     stays 15px, so the rem spacing does not change. */
+  body {
+    font-size: var(--text-sm);
+  }
+
   a {
     color: var(--primary);
     text-decoration: none;

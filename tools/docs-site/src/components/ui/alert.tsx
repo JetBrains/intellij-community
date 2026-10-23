@@ -2,14 +2,22 @@ import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 
+// deviation from upstream: no text size class (text-xs, text-xs/relaxed, text-sm). A primitive takes the text size
+// of its container: the IDE UI font size in the IDE, the prose size on a reading page.
+
 const alertVariants = cva(
-  "group/alert relative grid w-full gap-0.5 rounded-lg border px-2.5 py-2 text-left text-sm has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-2 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg]:text-current *:[svg:not([class*='size-'])]:size-4",
+  "group/alert relative grid w-full gap-0.5 rounded-lg border px-2 py-1.5 text-left has-data-[slot=alert-action]:relative has-data-[slot=alert-action]:pr-18 has-[>svg]:grid-cols-[auto_1fr] has-[>svg]:gap-x-1.5 *:[svg]:row-span-2 *:[svg]:translate-y-0.5 *:[svg]:text-current *:[svg:not([class*='size-'])]:size-3.5",
   {
     variants: {
       variant: {
         default: "bg-card text-card-foreground",
         destructive:
           "bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current",
+        // deviation from upstream: the Air status variants. The tokens come from the MCP Apps status variables.
+        info: "border-info-border bg-info-surface text-foreground *:[svg]:text-info",
+        success: "border-success-border bg-success-surface text-foreground *:[svg]:text-success",
+        warning: "border-warning-border bg-warning-surface text-foreground *:[svg]:text-warning",
+        danger: "border-destructive-border bg-destructive-surface text-foreground *:[svg]:text-destructive",
       },
     },
     defaultVariants: {
@@ -54,7 +62,7 @@ function AlertDescription({
     <div
       data-slot="alert-description"
       className={cn(
-        "text-sm text-balance text-muted-foreground md:text-pretty [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground [&_p:not(:last-child)]:mb-4",
+        "text-balance text-muted-foreground md:text-pretty [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground [&_p:not(:last-child)]:mb-4",
         className
       )}
       {...props}
@@ -66,7 +74,7 @@ function AlertAction({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="alert-action"
-      className={cn("absolute top-2 right-2", className)}
+      className={cn("absolute top-1.5 right-2", className)}
       {...props}
     />
   )

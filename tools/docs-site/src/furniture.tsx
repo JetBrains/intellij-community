@@ -34,7 +34,7 @@ export function DocPage({ toc = false, className, children }: { toc?: boolean, c
     const [content, ...aside] = toc ? Children.toArray(children) : [children]
     return (
       <div className={cn('doc-page flex items-start gap-2 **:scroll-mt-3', toc && 'has-toc', className)}>
-        <Island as="article" className="doc-island min-w-0 flex-1 px-10 pt-5 pb-20 max-md:px-4 max-md:pt-3 max-md:pb-15">
+        <Island as="article" className="doc-island min-w-0 flex-1 text-base px-10 pt-5 pb-20 max-md:px-4 max-md:pt-3 max-md:pb-15">
           <PageCrumbRow />
           {content}
         </Island>
@@ -200,10 +200,11 @@ export function ChipLink({ href, external = false, className, children }: {
   )
 }
 
-/** Sticky catalog filter bar; children compose Input / FilterChips / Select / FilterCount. */
+/** Sticky catalog filter bar; children compose Input / FilterChips / Select / FilterCount. The bar is the toolbar of
+ *  its island, so its controls take the 13px of the IDE on a reading page too. */
 export function FilterBar({ children }: { children: ReactNode }) {
   return (
-    <div className="ep-filters sticky top-0 z-10 mb-5.5 flex flex-wrap items-center gap-2 border-b border-border bg-background/85 py-2 backdrop-blur [&_[data-slot=input]]:min-w-55 [&_[data-slot=input]]:flex-1 [&_.filter-chips]:order-last [&_.filter-chips]:basis-full">
+    <div className="ep-filters sticky top-0 z-10 mb-5.5 flex flex-wrap items-center gap-2 border-b border-border bg-background/85 py-2 text-sm backdrop-blur [&_[data-slot=input]]:min-w-55 [&_[data-slot=input]]:flex-1 [&_.filter-chips]:order-last [&_.filter-chips]:basis-full">
       {children}
     </div>
   )
