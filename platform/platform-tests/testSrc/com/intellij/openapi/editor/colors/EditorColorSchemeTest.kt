@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.colors
 
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme
 import com.intellij.openapi.editor.colors.impl.AdditionalTextAttributesEP
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
@@ -110,10 +111,11 @@ class EditorColorSchemeTest {
 
   @Test
   fun loadAdditionalAttributesBeforeOptimization() {
+    val key = TextAttributesKey.createTextAttributesKey("TEST_ADDITIONAL_ATTRIBUTES", DefaultLanguageHighlighterColors.CLASS_NAME)
     val ep = AdditionalTextAttributesEP(DefaultPluginDescriptor(PluginId.getId("loadAdditionalAttributesBeforeOptimization"),
                                                                 EditorColorSchemeTest::class.java.classLoader))
     ep.scheme = "Darcula"
-    ep.file = "com/intellij/openapi/editor/colors/foregroundForGoBuiltinTypeReference.xml"
+    ep.file = "com/intellij/openapi/editor/colors/additionalTextAttributes.xml"
     EditorColorsManagerImpl.ADDITIONAL_TEXT_ATTRIBUTES_EP_NAME.point.registerExtension(ep, disposableRule.disposable)
 
     val schemeFile = fsRule.fs.getPath("colors/Foo.icls")
@@ -123,7 +125,7 @@ class EditorColorSchemeTest {
         <property name="forceOptimize">true</property>
       </metaInfo>
       <attributes>
-        <option baseAttributes="DEFAULT_CLASS_NAME" name="GO_BUILTIN_TYPE_REFERENCE" />
+        <option baseAttributes="DEFAULT_CLASS_NAME" name="${key.externalName}" />
       </attributes>
     </scheme>""".trimIndent()
     schemeFile.write(schemeData)
@@ -139,11 +141,11 @@ class EditorColorSchemeTest {
       schemeManagerFactory.save()
     }
 
-    // GO_BUILTIN_TYPE_REFERENCE should not be removed as it's not the same as defined in foregroundForGoBuiltinTypeReference
+    // Keep the inheritance override because the parent defines explicit attributes.
     assertThat(removeSchemeMetaInfo(schemeFile.readText())).isEqualTo("""
       <scheme name="Foo" version="142" parent_scheme="Darcula">
         <attributes>
-          <option name="GO_BUILTIN_TYPE_REFERENCE" baseAttributes="" />
+          <option name="${key.externalName}" baseAttributes="DEFAULT_CLASS_NAME" />
         </attributes>
       </scheme>""".trimIndent())
   }

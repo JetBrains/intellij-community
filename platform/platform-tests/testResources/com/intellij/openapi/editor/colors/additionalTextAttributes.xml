@@ -1,6 +1,6 @@
 <?xml version='1.0'?>
 <list>
-  <option name="GO_BUILTIN_TYPE_REFERENCE">
+  <option name="TEST_ADDITIONAL_ATTRIBUTES">
     <value>
       <option name="FOREGROUND" value="c7773e"/>
     </value>
