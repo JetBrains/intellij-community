@@ -74,11 +74,11 @@ export function ReadingLayout({ children }: { children: ReactNode }) {
   )
 }
 
-/** The tool layout: one island across the window, at least as tall as the outlet. */
+/** The tool layout: one island across the window, at least as tall as the outlet, at the 13px of the IDE. */
 export function ToolLayout({ children }: { children: ReactNode }) {
   return (
     <div className="tool-layout min-h-full px-2 pb-2">
-      <Island className="tool-island min-h-[calc(100svh-var(--topbar-height)-8px)]">
+      <Island className="tool-island min-h-[calc(100svh-var(--topbar-height)-8px)] text-sm">
         {children}
       </Island>
     </div>

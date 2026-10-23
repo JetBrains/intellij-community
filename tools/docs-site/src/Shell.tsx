@@ -235,7 +235,7 @@ export function Shell({ config, parts }: { config: SiteConfig, parts: ShellParts
 
         <PageChromeProvider value={chrome}>
           {layout === 'canvas'
-            ? <div className="route-outlet route-outlet-canvas flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-2">{routed}</div>
+            ? <div className="route-outlet route-outlet-canvas flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-2 text-sm">{routed}</div>
             : (
                 <div className="route-outlet min-h-0 flex-1 overflow-y-auto">
                   {layout === 'reading' ? <ReadingLayout>{routed}</ReadingLayout> : <ToolLayout>{routed}</ToolLayout>}
