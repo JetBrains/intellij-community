@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.xml
 
 import com.intellij.codeInspection.DefaultXmlSuppressionProvider
+import com.intellij.codeInspection.htmlInspections.XmlEntitiesInspection
 import com.intellij.psi.PsiElement
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider
 import com.intellij.psi.util.PsiTreeUtil
@@ -11,6 +12,8 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 
 internal class MarkdownSuppressionProvider: DefaultXmlSuppressionProvider() {
   override fun isSuppressedFor(element: PsiElement, inspectionId: String): Boolean =
+    inspectionId == XmlEntitiesInspection.TAG_SHORT_NAME ||
+    inspectionId == XmlEntitiesInspection.ATTRIBUTE_SHORT_NAME ||
     findFileSuppression(element, inspectionId, element) != null
 
   override fun suppressForFile(element: PsiElement, inspectionId: String) {

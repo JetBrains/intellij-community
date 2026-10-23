@@ -1,5 +1,6 @@
 package org.intellij.plugins.markdown.editor
 
+import com.intellij.codeInspection.htmlInspections.XmlInspectionToolProvider
 import com.intellij.grazie.GrazieTestBase
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import com.intellij.markdown.backend.inspections.MarkdownIncorrectTableFormattingInspection
@@ -11,6 +12,20 @@ internal class MarkdownSuppressionTest: GrazieTestBase() {
   fun `test multiple suppressions with table`() = doTest()
   fun `test suppressions with yaml header`() = doTest()
   fun `test multiple suppressions with toml header`() = doTest()
+
+  fun `test unknown html tags and attributes are suppressed`() {
+    myFixture.enableInspections(XmlInspectionToolProvider())
+    myFixture.configureByText(
+      "test.md",
+      """
+        <rule unknown-attribute="value">
+        Always use the Oxford comma.
+        </rule>
+        <div unknown-attribute="value"></div>
+      """.trimIndent()
+    )
+    myFixture.doHighlighting()
+  }
 
   private fun doTest() {
     val name = getTestName(true)
