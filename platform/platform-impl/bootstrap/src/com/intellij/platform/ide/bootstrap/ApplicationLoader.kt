@@ -4,6 +4,7 @@
 @file:OptIn(LowLevelLocalMachineAccess::class)
 package com.intellij.platform.ide.bootstrap
 
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.LocksActionsDumper
@@ -80,6 +81,7 @@ import com.intellij.ui.AppIcon
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.tabs.impl.UIThemeCustomization
 import com.intellij.util.PlatformUtils
+import com.intellij.util.StartupUiGate
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
 import com.intellij.util.system.LowLevelLocalMachineAccess
@@ -132,6 +134,11 @@ internal suspend fun loadApp(
   initAwtToolkitAndEventQueueJob: Job,
 ): ApplicationStarter {
   return span("app initialization") {
+    // JetBrains Light sets the property; the other products keep the old order of the frame initialization
+    if (!AppMode.isHeadless() && System.getProperty("ide.startup.ui.gate").toBoolean()) {
+      StartupUiGate.arm()
+      StartUpMeasurer.addInstantEvent("startup UI gate armed")
+    }
     val initServiceContainerJob = launch {
       val pluginSet = span("plugin descriptor init waiting") {
         pluginSetDeferred.await().await()

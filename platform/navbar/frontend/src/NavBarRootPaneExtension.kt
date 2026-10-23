@@ -36,6 +36,7 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBThinOverlappingScrollBar
 import com.intellij.ui.hover.HoverListener
 import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.util.StartupUiGate
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -461,6 +462,7 @@ private object TopNavBarMode : NavBarMode {
 
 private object BottomNavBarMode : NavBarMode {
   override suspend fun configure(project: Project, statusBar: StatusBar, uiSettings: UISettings): MyNavBarWrapperPanel? {
+    StartupUiGate.awaitEditorsShown()
     withContext(Dispatchers.UI) {
       setStatusBarCentralWidget(statusBar, MyNavBarWrapperPanel(project, useAsComponent = false).getNavBarPanel())
     }

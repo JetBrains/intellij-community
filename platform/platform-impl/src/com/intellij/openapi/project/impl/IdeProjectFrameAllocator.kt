@@ -91,6 +91,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.toolWindow.computeToolWindowBeans
 import com.intellij.ui.ScreenUtil
 import com.intellij.util.PlatformUtils
+import com.intellij.util.StartupUiGate
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.SimpleMessageBusConnection
@@ -366,6 +367,7 @@ internal class IdeProjectFrameAllocator(
           (project as ComponentManagerEx).getCoroutineScope().launch(startUpContextElementToPass + rootTask()) {
             val frameHelper = deferredProjectFrameHelper.await()
             launch {
+              StartupUiGate.awaitEditorsShown()
               installStatusBarWidgetsAndUpdateTitle(frameHelper = frameHelper, project = project, frameLoadingJob = job)
             }
 
@@ -412,6 +414,8 @@ internal class IdeProjectFrameAllocator(
             frameHelper.init()
           }
           frameHelper.setInitBounds(frameSettings.frameInfo.bounds)
+          // the frame is visible already, so the new root pane gets its bounds here and not with the first menu fill
+          frame.validate()
         }
         if (shownEarlyAt != 0L) {
           FUSProjectHotStartUpMeasurer.frameBecameVisible(shownEarlyAt)
@@ -789,10 +793,13 @@ private suspend fun restoreEditors(
       }
     }
     if (editorState == null) {
+      StartUpMeasurer.addInstantEvent("no editors to restore")
+      StartupUiGate.markEditorsShown()
       serviceAsync<StartUpPerformanceService>().editorRestoringTillHighlighted()
       return@coroutineScope
     }
 
+    // the editor area opens the startup UI gate with its first paint, see EditorsSplitters.paintChildren
     span("editor restoring") {
       editorComponent.createEditors(state = editorState)
     }

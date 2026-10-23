@@ -51,6 +51,13 @@ public final class WindowWatcher implements PropertyChangeListener {
 
   WindowWatcher() {}
 
+  private static @Nullable Project projectOf(@NotNull Window window) {
+    if (window instanceof IdeFrame frame) {
+      return frame.getProject();
+    }
+    return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(window));
+  }
+
   /**
    * This method should get notifications about changes of focused window.
    * Only {@code focusedWindow} property is acceptable.
@@ -75,11 +82,10 @@ public final class WindowWatcher implements PropertyChangeListener {
         windowToInfo.put(window, new WindowInfo(window, true));
       }
       myFocusedWindow = window;
-      final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myFocusedWindow));
+      final Project project = projectOf(myFocusedWindow);
       for (Iterator<Window> i = myFocusedWindows.iterator(); i.hasNext(); ) {
         final Window w = i.next();
-        final DataContext dataContext = DataManager.getInstance().getDataContext(w);
-        if (project == CommonDataKeys.PROJECT.getData(dataContext)) {
+        if (project == projectOf(w)) {
           i.remove();
         }
       }

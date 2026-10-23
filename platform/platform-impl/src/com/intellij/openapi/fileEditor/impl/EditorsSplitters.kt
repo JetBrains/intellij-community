@@ -6,6 +6,7 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.util.StartupUiGate
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
 import com.intellij.frontend.FrontendApplicationInfo
@@ -34,6 +35,7 @@ import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.ClientFileEditorManager
 import com.intellij.openapi.fileEditor.FileEditor
@@ -232,6 +234,9 @@ open class EditorsSplitters internal constructor(
   private val state = AtomicReference<EditorSplitterState?>()
 
   private var emptyStatePresentationReady: Boolean = true
+
+  // the first paint after the startup restore opens the startup UI gate
+  private var reportStartupPaint = false
 
   /**
    * How many times presentation of the empty state has been held back while project open is still opening editors of its own
@@ -438,6 +443,7 @@ open class EditorsSplitters internal constructor(
     if (!coroutineScope.isActive) {
       return
     }
+    reportStartupPaint = manager.initJob.isCompleted && this === manager.mainSplitters
     // `mainSplitters` is a lateinit assigned inside `initJob`, so it must not be touched before that job completes
     if (manager.initJob.isCompleted && this === manager.mainSplitters && shouldReopenEditorsOnStartup()) {
       enableRichEmptyStateComponents()
@@ -601,11 +607,23 @@ open class EditorsSplitters internal constructor(
     borderPainter.paintBeforeChildren(this, g)
     super.paintChildren(g)
     borderPainter.paintAfterChildren(this, g)
+    if (reportStartupPaint && (windows.isEmpty() || hasShowingEditorComponent())) {
+      reportStartupPaint = false
+      StartUpMeasurer.addInstantEvent("editor area painted")
+      StartupUiGate.markEditorsShown()
+    }
+  }
+
+  // the restored editor component is in the tree and sized, so this paint of the whole splitters includes its text
+  private fun hasShowingEditorComponent(): Boolean {
+    val editor = UIUtil.findComponentOfType(this, EditorComponentImpl::class.java) ?: return false
+    return editor.isShowing && editor.width > 0 && editor.height > 0
   }
 
   @Internal
   override fun isPaintingOrigin(): Boolean {
-    return borderPainter.isPaintingOrigin(this)
+    // a paint that starts at an opaque editor component must pass paintChildren once after the startup restore
+    return reportStartupPaint || borderPainter.isPaintingOrigin(this)
   }
 
   @Internal

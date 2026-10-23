@@ -14,6 +14,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.toolWindow.InternalDecoratorImpl
 import com.intellij.ui.ComponentUtil
+import com.intellij.util.StartupUiGate
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CancellationException
@@ -346,6 +347,13 @@ internal class EditorEmptyStateComponentController(
   }
 
   fun update() {
+    if (!StartupUiGate.isReady) {
+      coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        StartupUiGate.awaitEditorsShown()
+        update()
+      }
+      return
+    }
     if (showEmptyState()) {
       showComponents()
     }

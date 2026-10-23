@@ -41,6 +41,7 @@ import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjec
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.recordStartupSpan
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.mac.touchbar.TouchbarSupport
+import com.intellij.util.StartupUiGate
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
@@ -168,6 +169,8 @@ open class IdeStarter : ModernApplicationStarter() {
 
       val customHandler = findNoProjectStateHandler()
       if (customHandler == null) {
+        // the welcome frame has no editor area to open the gate
+        StartupUiGate.markEditorsShown()
         return@span showWelcomeFrame(publisher)
       }
       else {

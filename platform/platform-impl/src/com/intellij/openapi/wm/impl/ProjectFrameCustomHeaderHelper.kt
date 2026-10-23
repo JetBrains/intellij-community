@@ -47,6 +47,7 @@ import com.intellij.ui.ToolbarService
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.mac.MacMenuSettings
 import com.intellij.ui.mac.screenmenu.Menu
+import com.intellij.util.StartupUiGate
 import com.intellij.util.system.OS
 import com.intellij.util.ui.JBUI
 import com.jetbrains.WindowDecorations
@@ -106,6 +107,7 @@ internal class ProjectFrameCustomHeaderHelper(
     var toolbarInitJob: Job? = null
     if (toolbarHolder == null) {
       toolbarInitJob = coroutineScope.launch(rootTask() + ModalityState.any().asContextElement()) {
+        StartupUiGate.awaitEditorsShown()
         withContext(Dispatchers.UI) {
           toolbarCreator.getOrCreateToolbar().isVisible = isToolbarVisible(UISettings.shadowInstance, isInFullScreen) {
             computeMainActionGroups(projectFrameTypeId = rootPane.getProjectFrameTypeId())
