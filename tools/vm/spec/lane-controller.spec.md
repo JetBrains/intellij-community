@@ -1808,7 +1808,7 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
 - `lane-run` takes which scenarios keep their video from `AIR_LANE_VIDEO`. The value `failed` keeps the video of a
   scenario that did not pass only, and the hello says `keepVideo` `failed`. Unset, empty or `always`, every scenario
   keeps its video. Another value is refused with `lane_run_video`, and the refusal names the value. A TeamCity build
-  passes the variable with `--test_env`. It sets `failed` on a branch other than `master` and in a personal build, so a
+  passes the variable with `--test_env`. It sets `failed` on a branch other than `master` and in a personal build. So a
   passed scenario keeps its video only in a build of `master`. The lane daemon of a worker keeps every video.
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`air_lane_video_keeps_every_video_unless_it_says_failed`)
   [@test] ../crates/avl-guest/src/lane/trace/tests.rs (`the_hello_keeps_the_videos_that_the_inputs_keep`)

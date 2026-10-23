@@ -325,23 +325,23 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   [@test] ../crates/avl-trace/src/protocol/tests.rs (`labels_attachments_and_a_failed_done_are_canonical`)
 
 - In a scenario with a video, an `attach` of the media type `image/png` becomes the lossy WebP picture
-  `attach/NNNN.webp`, and the recorder removes the lane file. The record names `image/webp` and the picture's file.
-  The picture follows the rules of a snapshot's picture: the encode off the lane's path, the lossless fallback, and
-  the file of the previous picture for the same picture. The attachment pictures have a writer of their own, so a
-  picture and a still never name the file of the other.
+  `attach/NNNN.webp`. The recorder removes the lane file. The record names `image/webp` and the picture's file.
+  The picture follows the rules of a snapshot's picture. It is encoded off the lane's path, and it falls back to
+  lossless. The same picture as the previous one names the file of the previous one. The attachment pictures have a
+  writer of their own, so a picture and a still never name the file of the other.
   [@test] ../crates/avl-record/src/attach/tests.rs (`a_png_attachment_becomes_a_lossy_webp_picture_in_a_scenario_with_a_video`)
   [@test] ../crates/avl-record/src/attach/tests.rs (`equal_consecutive_png_attachments_name_one_file`)
 
-- In a scenario without a video, a PNG attachment stays a PNG, because a lossless WebP of the recorder is larger
-  than the PNG of the IDE. A PNG with the same bytes as the previous PNG attachment that the bundle keeps as a PNG
+- In a scenario without a video, a PNG attachment stays a PNG. A lossless WebP of the recorder is larger than the PNG
+  of the IDE. A PNG with the same bytes as the previous PNG attachment that the bundle keeps as a PNG
   gets no file of its own. The recorder removes the lane file, and the record names the file of the previous one.
   [@test] ../crates/avl-record/src/attach/tests.rs (`an_attachment_moves_into_the_bundle_and_is_recorded_on_its_span`)
   [@test] ../crates/avl-record/src/attach/tests.rs (`equal_consecutive_png_attachments_name_one_file`)
 
-- In a scenario with a video, a PNG that does not decode, or one that the queue cannot take within the 1.8 s bound
-  of a snapshot, moves into the bundle as it is, with its media type. An `air.trace.error` from `attach` says why it
-  is no WebP picture. A picture that the encoder cannot write is an `air.trace.error` from `webp` on the span of the
-  attachment.
+- In a scenario with a video, some PNG attachments move into the bundle as they are, with their media type. One is a
+  PNG that does not decode. The other is a PNG that the queue cannot take within the 1.8 s bound of a snapshot. An
+  `air.trace.error` from `attach` says why the PNG is no WebP picture. A picture that the encoder cannot write is an
+  `air.trace.error` from `webp` on the span of the attachment.
   [@test] ../crates/avl-record/src/attach/tests.rs (`a_png_that_does_not_decode_is_kept_as_it_is_and_recorded`)
   [@test] ../crates/avl-record/src/attach/tests.rs (`a_png_that_the_full_queue_cannot_take_is_kept_as_it_is_and_recorded`)
 

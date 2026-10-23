@@ -1029,7 +1029,7 @@ and, when a better one was missing, why.
 
 **Which videos a TeamCity build keeps.** A failed, an aborted or a truncated scenario always keeps its video. A passed
 scenario keeps its video only in a build of `master`, because that build is the baseline that a failure is compared
-with. A Safe Push check, a personal build and a build of another branch set `AIR_LANE_VIDEO=failed`, and the recorder
+with. A Safe Push check, a personal build and a build of another branch set `AIR_LANE_VIDEO=failed`. The recorder
 then deletes the video of each passed scenario at its end. Its manifest names the codec `none` and says why. Every
 other run keeps each video that it records. Pass `--test_env=AIR_LANE_VIDEO=failed` to `bazel test` to keep fewer.
 
