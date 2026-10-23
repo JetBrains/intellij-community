@@ -219,14 +219,14 @@ private class UvLowLevelImpl<P : PathHolder>(
   }
 
   override suspend fun installRequirements(requirementsFile: Path): PyResult<Unit> {
-    uvCli.runUv(cwd, venvPath, false, Args("pip", "install", "-r").addLocalFile(requirementsFile))
+    uvCli.runUv(cwd, venvPath, false, Args("pip", "install", "-r").addPath(requirementsFile))
       .getOr { return it }
 
     return PyExecResult.success(Unit)
   }
 
   override suspend fun syncRequirements(requirementsFile: Path): PyResult<Unit> {
-    uvCli.runUv(cwd, venvPath, false, Args("pip", "sync").addLocalFile(requirementsFile))
+    uvCli.runUv(cwd, venvPath, false, Args("pip", "sync").addPath(requirementsFile))
       .getOr { return it }
 
     return PyExecResult.success(Unit)
@@ -303,7 +303,7 @@ private class UvLowLevelImpl<P : PathHolder>(
   }
 
   override suspend fun isScriptSynced(inexact: Boolean, scriptPath: Path): PyResult<ScriptSyncCheckResult> {
-    val args = Args(*constructSyncArgs(inexact).toTypedArray(), "--script").addLocalFile(scriptPath)
+    val args = Args(*constructSyncArgs(inexact).toTypedArray(), "--script").addPath(scriptPath)
 
     uvCli.runUv(cwd, venvPath, false, args)
       .onFailure {
@@ -368,7 +368,7 @@ private class UvLowLevelImpl<P : PathHolder>(
   }
 
   override suspend fun syncScript(scriptPath: Path): PyResult<UvScriptEnvironment> {
-    val args = Args("sync", "--script").addLocalFile(scriptPath).addArgs("--output-format", "json")
+    val args = Args("sync", "--script").addPath(scriptPath).addArgs("--output-format", "json")
     val out = uvCli.runUv(cwd, venvPath, true, args)
       .getOr { return it }
 

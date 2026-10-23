@@ -94,12 +94,12 @@ private fun TargetFileSystem.prepareArgs(
   workingDir: Path?,
 ): Args {
   val args = Args()
-    .addLocalFile(helper)
+    .addPath(helper)
     .addArgs(PYTHON_PATH_OPTION, pythonPath?.pathString.orEmpty())
 
   if (workingDir != null) {
     // Target file arguments are mapped through their parent. The "." keeps workingDir itself as the mapping root.
-    args.addArgs(DETECT_ENVIRONMENTS_OPTION).addLocalFile(workingDir.resolve("."))
+    args.addArgs(DETECT_ENVIRONMENTS_OPTION).addPath(workingDir.resolve("."))
   }
 
   return args.addArgs(encodeToolProbeArgs(toolSpecs))

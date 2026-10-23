@@ -63,7 +63,7 @@ internal class PipPackageManagerEngine(
   suspend fun syncRequirementsTxt(file: VirtualFile): PyResult<Unit> {
     return runPackagingTool(
       operation = "install",
-      arguments = Args("-r").addLocalFile(file.toNioPath())
+      arguments = Args("-r").addPath(file.toNioPath())
     ).mapSuccess { }
   }
 
