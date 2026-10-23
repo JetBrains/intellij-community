@@ -12,13 +12,18 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.HTMLVirtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getOpenedProjects
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.openapi.wm.ex.getWelcomeScreenProjectProvider
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
+import java.nio.file.Path
 import javax.swing.Icon
+import kotlin.io.path.exists
+import kotlin.io.path.isSameFileAs
 
 @ApiStatus.Internal
 object WelcomeUtils {
@@ -97,5 +102,20 @@ object WelcomeUtils {
   fun isWelcomeProject(project: Project): Boolean {
     @Suppress("DEPRECATION")
     return ProjectFrameCapabilitiesService.getInstanceSync().has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)
+  }
+
+  @JvmStatic
+  fun isWelcomeProjectHome(path: Path): Boolean {
+    val home = WelcomeScreenProjectProvider.getWelcomeScreenProjectPath()?.toAbsolutePath()?.normalize() ?: return false
+    val target = path.toAbsolutePath().normalize()
+    if (FileUtil.pathsEqual(target.toString(), home.toString())) {
+      return true
+    }
+    return try {
+      target.exists() && home.exists() && target.isSameFileAs(home)
+    }
+    catch (_: IOException) {
+      false
+    }
   }
 }
