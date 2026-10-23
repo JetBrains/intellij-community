@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.EditorTestUtil;
@@ -332,7 +331,7 @@ public abstract class EditorPaintingTestCase {
     @Override
     public void drawGlyphVector(GlyphVector g, float x, float y) {
       for (int i = 0; i < g.getNumGlyphs(); i++) {
-        drawChar((char)g.getGlyphCode(i),(int)x, (int)y);
+        drawChar((char)g.getGlyphCode(i), (int)x, (int)y, g.getFont());
         x += BitmapFont.CHAR_WIDTH;
       }
     }
@@ -340,7 +339,7 @@ public abstract class EditorPaintingTestCase {
     @Override
     public void drawChars(char[] data, int offset, int length, int x, int y) {
       for (int i = offset; i < offset + length; i++) {
-        drawChar(data[i], x, y);
+        drawChar(data[i], x, y, getFont());
         x += BitmapFont.CHAR_WIDTH;
       }
     }
@@ -348,7 +347,7 @@ public abstract class EditorPaintingTestCase {
     @Override
     public void drawString(String str, float x, float y) {
       for (int i = 0; i < str.length(); i++) {
-        drawChar(str.charAt(i), (int)x, (int)y);
+        drawChar(str.charAt(i), (int)x, (int)y, getFont());
         x += BitmapFont.CHAR_WIDTH;
       }
     }
@@ -358,8 +357,8 @@ public abstract class EditorPaintingTestCase {
       drawString(str, (float)x, (float)y);
     }
 
-    private void drawChar(char c, int x, int y) {
-      (StringUtil.containsIgnoreCase(getFont().getFontName(), "bold") ? myBoldFont : myPlainFont).draw(myDelegate, c, x, y);
+    private void drawChar(char c, int x, int y, Font font) {
+      (font.isBold() ? myBoldFont : myPlainFont).draw(myDelegate, c, x, y);
     }
   }
 
@@ -511,7 +510,7 @@ public abstract class EditorPaintingTestCase {
   }
 
   // renders font characters to be used for text painting in tests (to make font rendering platform-independent)
-  public static void main(String[] args) throws Exception {
+  static void main() throws Exception {
     Font font = Font.createFont(Font.TRUETYPE_FONT, PathManagerEx.findFileUnderCommunityHome("platform/platform-tests/testData/fonts/Inconsolata.ttf"));
     BitmapFont plainFont = BitmapFont.createFromFont(font);
     plainFont.saveToFile(getFontFile(false));

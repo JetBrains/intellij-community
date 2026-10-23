@@ -41,7 +41,7 @@ public class MockFontLayoutService extends FontLayoutService {
                                                 int start,
                                                 int end,
                                                 boolean isRtl) {
-    return new MockGlyphVector(Arrays.copyOfRange(chars, start, end), isRtl);
+    return new MockGlyphVector(font, Arrays.copyOfRange(chars, start, end), isRtl);
   }
 
   private double getCharWidth(int codePoint) {
@@ -89,12 +89,19 @@ public class MockFontLayoutService extends FontLayoutService {
 
   // doesn't handle surrogate pairs currently
   private final class MockGlyphVector extends AbstractMockGlyphVector {
+    private final Font myFont;
     private final char[] myChars;
     private final boolean myIsRtl;
 
-    private MockGlyphVector(char[] chars, boolean isRtl) {
+    private MockGlyphVector(Font font, char[] chars, boolean isRtl) {
+      myFont = font;
       myChars = chars;
       myIsRtl = isRtl;
+    }
+
+    @Override
+    public @NotNull Font getFont() {
+      return myFont;
     }
 
     @Override
