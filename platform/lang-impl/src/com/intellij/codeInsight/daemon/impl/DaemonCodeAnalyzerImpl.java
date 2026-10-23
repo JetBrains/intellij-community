@@ -880,13 +880,14 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
    */
   private synchronized void scheduleIfNotRunning() {
     long delayMs = myAutoReparseDelayEnabled ? mySettings.getEffectiveAutoReparseDelay() : 0;
+    long previousTimestamp = myScheduledUpdateTimestamp;
     myScheduledUpdateTimestamp = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(delayMs);
     // optimization: this check is to avoid too many re-schedules in case of thousands of event spikes
     boolean isDone = myUpdateRunnableFuture.isDone();
     if (LOG.isDebugEnabled()) {
       LOG.debug("Rescheduling highlighting: isDone: ", isDone+"; delta="+Long.toHexString(getDelta())+"; delayMs="+delayMs);
     }
-    if (incrementQueuedRequests() || isDone) {
+    if (incrementQueuedRequests() || isDone || myScheduledUpdateTimestamp - previousTimestamp < 0) {
       scheduleUpdateRunnable();
     }
   }
