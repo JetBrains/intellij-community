@@ -448,12 +448,12 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   @Override
   public void contentLanguageUpdated(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull Language language) {
-    forEachTable(table -> table.contentLanguageUpdated(columnIdx, language));
+    forEachTable(table -> table.clearCache(columnIdx));
   }
 
   @Override
   public void displayTypeUpdated(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull DisplayType displayType) {
-    forEachTable(table -> table.displayTypeUpdated(columnIdx, displayType));
+    forEachTable(table -> table.clearCache(columnIdx));
   }
 
   void setRowHeight(int row, int rowHeight) {
@@ -755,7 +755,6 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   public void onLocalFilterStateChanged() {
     updateRowFilter();
   }
-
 
   private static int convertColumn(GridTable source, int column, GridTable target) {
     int modelColumn = source.getRawIndexConverter().column2Model().applyAsInt(column);

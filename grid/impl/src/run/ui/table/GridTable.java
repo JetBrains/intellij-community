@@ -29,7 +29,6 @@ import com.intellij.database.datagrid.SelectionModel;
 import com.intellij.database.datagrid.SelectionModelUtil;
 import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.datagrid.ViewIndexSet;
-import com.intellij.database.extractors.DisplayType;
 import com.intellij.database.remote.jdbc.LobInfo;
 import com.intellij.database.run.actions.ColumnLocalFilterAction;
 import com.intellij.database.run.ui.ColumnMove;
@@ -67,7 +66,6 @@ import com.intellij.ide.bookmark.BookmarksManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.ui.UISettingsUtils;
-import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -359,13 +357,13 @@ class GridTable extends JBTableWithResizableCells
     });
   }
 
-  /** Drops the frozen columns before a transpose. The strip has none of its own to drop. */
-  protected void dropFrozenColumns() {
+  /** Drops the pinned columns before a transpose. */
+  private void dropFrozenColumns() {
     if (myHost != null) myHost.dropFrozenColumns();
   }
 
   /** Runs after the model was swapped for a transpose, so the host can refresh the row numbers. */
-  protected void onTransposed() {
+  private void onTransposed() {
     if (myHost != null) myHost.onTransposed();
   }
 
@@ -429,8 +427,7 @@ class GridTable extends JBTableWithResizableCells
     return myHost.createRowHeader();
   }
 
-  /** A plain gesture in the frozen view collapses to one cell across both regions by reducing the main column
-   * selection to the clicked pinned column; Ctrl/Shift gestures stay additive. */
+  /** The host coordinates the selection with the other table before and after the change. */
   @Override
   public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
     if (!myHost.stopEditingBeforeSelectionChange(rowIndex, columnIndex)) return;
@@ -991,15 +988,8 @@ class GridTable extends JBTableWithResizableCells
     return false;
   }
 
-  public void contentLanguageUpdated(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull Language language) {
-    clearCache(columnIdx);
-  }
-
-  public void displayTypeUpdated(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull DisplayType displayType) {
-    clearCache(columnIdx);
-  }
-
-  private void clearCache(@NotNull ModelIndex<GridColumn> columnIdx) {
+  /** Drops the cached cell images of a column whose content language or display type changed. */
+  void clearCache(@NotNull ModelIndex<GridColumn> columnIdx) {
     if (isTransposed() ? getColumnCount() == 0 : getRowCount() == 0) return;
     int viewRow = isTransposed() ? columnIdx.toView(myResultPanel).asInteger() : 0;
     int viewColumn = isTransposed() ? 0 : viewColumnOf(columnIdx.value);
@@ -2601,23 +2591,23 @@ class GridTable extends JBTableWithResizableCells
 
   private static final class Renderers {
     private final DataGrid myGrid;
-    final GridTable myResultView;
+    final GridTable myTable;
     final Map<GridCellRenderer, TableCellRenderer> myTableCellRenderers = new Reference2ObjectOpenHashMap<>();
 
-    Renderers(DataGrid grid, GridTable resultView) {
+    Renderers(DataGrid grid, GridTable table) {
       myGrid = grid;
-      myResultView = resultView;
+      myTable = table;
     }
 
     public @NotNull TableCellRenderer getRenderer(int row, int column) {
-      ModelIndex<GridRow> rowIdx = ViewIndex.forRow(myGrid, myResultView.isTransposed() ? column : row).toModel(myGrid);
-      ModelIndex<GridColumn> columnIdx = myResultView.toModelColumn(myResultView.isTransposed() ? row : column);
+      ModelIndex<GridRow> rowIdx = ViewIndex.forRow(myGrid, myTable.isTransposed() ? column : row).toModel(myGrid);
+      ModelIndex<GridColumn> columnIdx = myTable.toModelColumn(myTable.isTransposed() ? row : column);
       GridCellRequest<GridRow, GridColumn> request = GridCellRequestKt.request(myGrid, rowIdx, columnIdx);
       GridCellRenderer gridCellRenderer = GridCellRenderer.getRenderer(request);
 
       TableCellRenderer renderer = myTableCellRenderers.get(gridCellRenderer);
       if (renderer == null) {
-        renderer = new GridCellRendererWrapper(gridCellRenderer, myResultView);
+        renderer = new GridCellRendererWrapper(gridCellRenderer, myTable);
         myTableCellRenderers.put(gridCellRenderer, renderer);
       }
       return renderer;
@@ -2626,20 +2616,20 @@ class GridTable extends JBTableWithResizableCells
 
   private static final class GridCellRendererWrapper implements TableCellRenderer {
     final GridCellRenderer delegate;
-    final GridTable myResultView;
+    final GridTable myTable;
 
-    private GridCellRendererWrapper(GridCellRenderer renderer, GridTable resultView) {
+    private GridCellRendererWrapper(GridCellRenderer renderer, GridTable table) {
       delegate = renderer;
-      myResultView = resultView;
+      myTable = table;
     }
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       DataGrid grid = delegate.myGrid;
-      ViewIndex<GridRow> rowIdx = ViewIndex.forRow(grid, myResultView.isTransposed() ? column : row);
+      ViewIndex<GridRow> rowIdx = ViewIndex.forRow(grid, myTable.isTransposed() ? column : row);
       // The renderer works in the grid's column space, which is the main table's, not the frozen strip's.
       ViewIndex<GridColumn> columnIdx =
-        ViewIndex.forColumn(grid, myResultView.toGridViewColumn(myResultView.isTransposed() ? row : column));
+        ViewIndex.forColumn(grid, myTable.toGridViewColumn(myTable.isTransposed() ? row : column));
       return delegate.getComponent(rowIdx, columnIdx, value);
     }
   }

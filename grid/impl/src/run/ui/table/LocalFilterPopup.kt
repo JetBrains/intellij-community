@@ -52,10 +52,10 @@ import javax.swing.table.TableRowSorter
 import kotlin.math.min
 
 class LocalFilterPopup(
-    private val grid: DataGrid,
-    private val columnIdx: ModelIndex<GridColumn>,
-    private val items: List<ColumnItem>,
-    columnName: @NlsSafe String
+  private val grid: DataGrid,
+  private val columnIdx: ModelIndex<GridColumn>,
+  private val items: List<ColumnItem>,
+  columnName: @NlsSafe String,
 ) {
 
   private val headerCheckbox = JCheckBox()

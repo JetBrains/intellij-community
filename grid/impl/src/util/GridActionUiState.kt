@@ -13,7 +13,8 @@ import org.jetbrains.annotations.ApiStatus
 class GridActionUiState private constructor(
   private val grid: DataGrid,
   private val leadCell: LeadCell?,
-  /** Whether the action runs in one of the grid's tables, rather than on the grid panel, a grid toolbar, or an open cell editor. */
+  /** Whether the action acts on a cell: it runs in one of the grid's tables or in the floating toolbar of a cell, not on the grid panel,
+   * another toolbar, or an open cell editor. */
   val isInCell: Boolean,
   val isValueTabSelected: Boolean,
 ) {
@@ -30,7 +31,7 @@ class GridActionUiState private constructor(
     fun getForGrid(grid: DataGrid, context: DataContext): GridActionUiState? =
       context.getData(DatabaseDataKeys.DATA_GRID_ACTION_UI_STATE_KEY)?.takeIf { it.grid === grid }
 
-    /** Captures the state; [inCell] is true only for the components that show the cells. */
+    /** Captures the state; [inCell] is true for the grid's tables and for the floating toolbar of a cell. */
     @JvmStatic
     @JvmOverloads
     @RequiresEdt

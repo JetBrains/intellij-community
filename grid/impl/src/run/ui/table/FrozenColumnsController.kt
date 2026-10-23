@@ -90,7 +90,6 @@ internal class FrozenColumnsController(
   }
   private var showRowNumbers = false
 
-
   /** The strip, or null while nothing is pinned. */
   val frozenView: GridTable? get() = region?.view
 

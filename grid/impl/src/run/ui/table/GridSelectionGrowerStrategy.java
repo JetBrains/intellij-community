@@ -3,11 +3,9 @@ package com.intellij.database.run.ui.table;
 import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.GridColumn;
 import com.intellij.database.datagrid.GridRow;
-import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.datagrid.ViewIndexSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 
 enum GridSelectionGrowerStrategy {
   CELL {

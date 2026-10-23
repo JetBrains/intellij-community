@@ -24,7 +24,7 @@ import java.util.function.Consumer;
 public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, GridColumn>, GridSearchSession.Listener, Disposable,
                                     LocalFilterState.Listener, ColumnHierarchyListener {
   /**
-   * The component that shows the cells of the view and receives its focus and input.
+   * The component that shows the view's main cells and receives its focus and input.
    * {@link ResultViewFactory#wrap} returns the component that goes into the grid layout.
    */
   @NotNull
