@@ -32,6 +32,7 @@ import com.intellij.ide.plugins.ThirdPartyPluginsPrivacyConsentState
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.plugins.saveBundledPluginsState
+import com.intellij.ide.startup.impl.preloadStartupUiClasses
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.NotRoamableUiSettings
@@ -138,6 +139,9 @@ internal suspend fun loadApp(
     if (!AppMode.isHeadless() && System.getProperty("ide.startup.ui.gate").toBoolean()) {
       StartupUiGate.arm()
       StartUpMeasurer.addInstantEvent("startup UI gate armed")
+      asyncScope.launch(CoroutineName("startup UI class preloading")) {
+        preloadStartupUiClasses()
+      }
     }
     val initServiceContainerJob = launch {
       val pluginSet = span("plugin descriptor init waiting") {

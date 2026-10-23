@@ -8,6 +8,7 @@ import com.intellij.util.EventDispatcher
 import kotlinx.serialization.serializer
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.reflect.Modifier
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
 import kotlin.reflect.KType
@@ -218,18 +219,21 @@ abstract class ObservableState {
   }
 
   /**
-   * Whether kotlinx can serialize a value of [type] without a custom serializer.
+   * Whether kotlinx can serialize a value of [type] without a custom serializer. The answer is cached per type.
    */
   private fun hasDefaultSerializer(type: KType): Boolean {
     if (isNotRecommendedForSerialization(type)) {
       return false
     }
-    try {
-      serializer(type)
-      return true
-    } catch (e: Exception) {
-      rethrowControlFlowException(e)
-      return false
+    return DEFAULT_SERIALIZER_PRESENCE.computeIfAbsent(type) {
+      try {
+        serializer(type)
+        true
+      }
+      catch (e: Exception) {
+        rethrowControlFlowException(e)
+        false
+      }
     }
   }
 
@@ -256,6 +260,8 @@ abstract class ObservableState {
     return Modifier.isAbstract(javaClass.modifiers)
   }
 }
+
+private val DEFAULT_SERIALIZER_PRESENCE = ConcurrentHashMap<KType, Boolean>()
 
 /**
  * `kotlin.collections.List` has no runtime class of its own: it is a mapped type erased to [java.util.List],
