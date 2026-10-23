@@ -7,9 +7,12 @@ import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.util.LineRange
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -46,6 +49,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ThreeStateCheckBox
+import java.util.BitSet
 import java.util.concurrent.Callable
 
 /** Adds a node for each change of a modified file. The structure of the file names the changes; the commit can include them one by one. */
@@ -134,9 +138,19 @@ private class FileVersion(val documentModificationStamp: Long, val baseRevision:
 /** Identifies a hunk across tree rebuilds, so that the tree keeps the selection while the lines stay the same. */
 private data class HunkKey(val path: FilePath, val changeListId: String?, val lines: HunkLines)
 
+/** Reverts the selected hunks file by file. */
+private object HunkRollback : ChangesBrowserStructuralNode.Rollback {
+  override fun rollback(nodes: List<ChangesBrowserStructuralNode<*>>) {
+    for (hunks in nodes.filterIsInstance<HunkNode>().groupBy { it.file }.values) {
+      val first = hunks.first()
+      first.withTracker { tracker -> first.rollback(tracker, hunks) }
+    }
+  }
+}
+
 private class HunkNode(
   private val project: Project,
-  private val file: VirtualFile,
+  val file: VirtualFile,
   path: FilePath,
   private val changeListId: String?,
   private val hunk: Hunk,
@@ -177,12 +191,14 @@ private class HunkNode(
     withTracker { setExcluded(it, !included) }
   }
 
+  override fun getRollback(): Rollback = HunkRollback
+
   /**
    * Runs the action with the tracker of the file. A file has a tracker only while an editor shows it, so a file without one gets a tracker
    * until the action ends. A partial state keeps the new tracker after the release.
    */
   @RequiresEdt
-  private fun withTracker(action: (PartialLocalLineStatusTracker) -> Unit) {
+  fun withTracker(action: (PartialLocalLineStatusTracker) -> Unit) {
     val tracker = validTracker()
     if (tracker != null) {
       action(tracker)
@@ -204,6 +220,28 @@ private class HunkNode(
         ReadAction.computeBlocking<Unit, RuntimeException> { manager.releaseTrackerFor(document, requester) }
       }
     }
+  }
+
+  /**
+   * Reverts the ranges of the hunks of this file in one global command, so that Undo in the tree brings them back with no question. A
+   * stale hunk reverts nothing and refreshes the tree.
+   */
+  @RequiresEdt
+  fun rollback(tracker: PartialLocalLineStatusTracker, hunks: List<HunkNode>) {
+    if (hunks.any { !it.describes(tracker) }) {
+      refreshTree()
+      return
+    }
+    val lines = BitSet()
+    for (range in hunks.flatMap { it.findRanges(tracker) }) {
+      if (range.line1 == range.line2) lines.set(range.line1) else lines.set(range.line1, range.line2)
+    }
+    if (lines.isEmpty) return
+    val commands = CommandProcessor.getInstance()
+    commands.executeCommand(project, {
+      commands.markCurrentCommandAsGlobal(project)
+      tracker.rollbackChanges(lines)
+    }, DiffBundle.message("rollback.change.command.name"), null, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION)
   }
 
   /** Changes the ranges of the hunk. A stale hunk changes nothing and refreshes the tree, so that the new nodes show the current hunks. */

@@ -51,6 +51,9 @@ abstract class ChangesBrowserStructuralNode<T>(userObject: T, val hasInclusion: 
   open fun setIncluded(included: Boolean) {
   }
 
+  /** Reverts the changes of this node and of the other selected nodes with the same rollback. Null when the node has no change to revert. */
+  open fun getRollback(): Rollback? = null
+
   final override fun getFileCount(): Int = 0
 
   final override fun getDirectoryCount(): Int = 0
@@ -66,4 +69,10 @@ abstract class ChangesBrowserStructuralNode<T>(userObject: T, val hasInclusion: 
 
   /** The lines of a diff hunk: [base] in the base revision and [current] in the current document. */
   data class DiffLines(val base: LineRange, val current: LineRange)
+
+  /** Reverts several nodes in one step, so that the first change does not move the lines of the other changes. */
+  fun interface Rollback {
+    @RequiresEdt
+    fun rollback(nodes: List<ChangesBrowserStructuralNode<*>>)
+  }
 }

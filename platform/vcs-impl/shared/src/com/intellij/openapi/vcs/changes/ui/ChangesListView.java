@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.FileSelectInContext;
 import com.intellij.ide.SelectInContext;
 import com.intellij.ide.dnd.DnDAware;
@@ -33,6 +34,7 @@ import com.intellij.platform.vcs.impl.shared.changes.ChangesViewSelection;
 import com.intellij.platform.vcs.impl.shared.commit.EditedCommitNode;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -161,7 +163,14 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
       .toList().toArray(ChangeList[]::new));
     JBIterable<FilePath> filePaths = VcsTreeModelData.mapToFilePath(VcsTreeModelData.selected(this));
     sink.set(VcsSharedDataKeys.FILE_PATHS, filePaths);
-    if (!IdeProductMode.isFrontend() && filePaths.isNotEmpty()) {
+    var navigationSelection = VcsTreeModelData.exactlySelected(this).iterateRawNodes().toList();
+    var hasStructuralSelection = ContainerUtil.exists(navigationSelection, node -> node instanceof ChangesBrowserStructuralNode<?>);
+    if (hasStructuralSelection) {
+      // A structural node belongs to its file, so Delete must not delete the file. It reverts the selected changes instead.
+      DeleteProvider rollback = StructuralRollbackDeleteProvider.create(navigationSelection);
+      if (rollback != null) sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, rollback);
+    }
+    else if (!IdeProductMode.isFrontend() && filePaths.isNotEmpty()) {
       sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new VirtualFileDeleteProvider());
     }
     sink.set(UNVERSIONED_FILE_PATHS_DATA_KEY, getSelectedUnversionedFiles());
@@ -175,8 +184,6 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
 
     VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
     VcsTreeModelData exactSelection = VcsTreeModelData.exactlySelectedForActions(this);
-    var navigationSelection = VcsTreeModelData.exactlySelected(this).iterateRawNodes().toList();
-    var hasStructuralSelection = navigationSelection.stream().anyMatch(node -> node instanceof ChangesBrowserStructuralNode<?>);
     sink.lazy(SelectInContext.DATA_KEY, () -> {
       VirtualFile file = VcsTreeModelData.mapObjectToVirtualFile(exactSelection.iterateRawUserObjects()).first();
       if (file == null) return null;
