@@ -16,6 +16,7 @@ use std::path::Path;
 use std::thread;
 use std::time::{Duration, Instant};
 
+use avl_testkit::ClosedPipe;
 use avl_testkit::traces::{self, EXAMPLE_BUNDLE, TRANSCRIPT, TRUNCATED_EXAMPLE_BUNDLE, TRUNCATED_TRANSCRIPT};
 use avl_trace::bundle::{
     ALLURE_RESULT_SUFFIX, BundleStatus, IDEA_LOG_FILE, SNAP_DIR, StillEncoding, allure_result_file, allure_results_dir, bundle_file,
@@ -299,15 +300,6 @@ fn a_cancelled_run_finishes_the_bundle_too() {
 /// the end and finishes the bundle.
 #[test]
 fn acks_to_a_closed_pipe_do_not_stop_the_session() {
-    struct ClosedPipe;
-    impl Write for ClosedPipe {
-        fn write(&mut self, _: &[u8]) -> io::Result<usize> {
-            Err(io::ErrorKind::BrokenPipe.into())
-        }
-        fn flush(&mut self) -> io::Result<()> {
-            Err(io::ErrorKind::BrokenPipe.into())
-        }
-    }
     let h = Harness::new();
     let mut lines = traces::file_lines(TRANSCRIPT);
     lines[0] = h.rooted(&lines[0]);

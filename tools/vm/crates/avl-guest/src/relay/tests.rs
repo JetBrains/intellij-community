@@ -6,6 +6,7 @@ use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
 use std::thread;
 use std::time::Duration;
 
+use avl_testkit::ClosedPipe;
 use nix::libc;
 use pretty_assertions::assert_eq;
 
@@ -165,15 +166,6 @@ fn relay_half_closes_on_input_eof() {
 /// A host that went away ends the relay at once, while the daemon keeps its connection open.
 #[test]
 fn relay_ends_when_the_output_is_gone() {
-    struct Gone;
-    impl Write for Gone {
-        fn write(&mut self, _: &[u8]) -> io::Result<usize> {
-            Err(io::ErrorKind::BrokenPipe.into())
-        }
-        fn flush(&mut self) -> io::Result<()> {
-            Ok(())
-        }
-    }
     let (listener, port) = daemon();
     let (input, _feed) = io::pipe().unwrap();
     let relay = thread::spawn(move || {
@@ -183,7 +175,7 @@ fn relay_ends_when_the_output_is_gone() {
             input,
             &mut Streams {
                 stdin: &mut io::empty(),
-                stdout: &mut Gone,
+                stdout: &mut ClosedPipe,
                 stderr: &mut stderr,
             },
         );

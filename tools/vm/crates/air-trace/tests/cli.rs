@@ -7,7 +7,7 @@
 
 use std::ffi::OsString;
 use std::path::PathBuf;
-use std::process::{Command, Stdio};
+use std::process::Command;
 
 fn air_trace() -> PathBuf {
     let path = std::env::var_os("CARGO_BIN_EXE_air-trace")
@@ -17,12 +17,9 @@ fn air_trace() -> PathBuf {
     std::path::absolute(path).unwrap()
 }
 
-/// Runs `air-trace` with `args` and no standard input, and answers the exit code, the standard output and the
-/// standard error.
+/// Runs `air-trace` with `args`, as [`avl_testkit::answer`] runs a command.
 fn answer(args: &[&str]) -> (Option<i32>, String, String) {
-    let output = Command::new(air_trace()).args(args).stdin(Stdio::null()).output().unwrap();
-    let text = |bytes: Vec<u8>| String::from_utf8(bytes).unwrap();
-    (output.status.code(), text(output.stdout), text(output.stderr))
+    avl_testkit::answer(Command::new(air_trace()).args(args))
 }
 
 /// No subcommand is a usage error on stderr with exit 2, and `--help` is the usage on stdout with exit 0. No
@@ -139,8 +136,7 @@ fn publish_with(fixture: &std::path::Path, variables: &[(&str, &str)]) -> (Optio
         .arg(fixture.join("testlogs"))
         .arg("--out")
         .arg(fixture.join("out"))
-        .env("BUILD_WORKSPACE_DIRECTORY", fixture.join("checkout"))
-        .stdin(Stdio::null());
+        .env("BUILD_WORKSPACE_DIRECTORY", fixture.join("checkout"));
     for name in [
         "TEAMCITY_VERSION",
         "TEAMCITY_BUILD_PROPERTIES_FILE",
@@ -153,8 +149,8 @@ fn publish_with(fixture: &std::path::Path, variables: &[(&str, &str)]) -> (Optio
         command.env_remove(name);
     }
     command.envs(variables.iter().copied());
-    let output = command.output().unwrap();
-    (output.status.code(), String::from_utf8(output.stderr).unwrap())
+    let (exit, _, stderr) = avl_testkit::answer(&mut command);
+    (exit, stderr)
 }
 
 /// The step builds no viewer and starts no Bazel, also in a checkout with the docs project and off TeamCity. The
@@ -199,19 +195,17 @@ fn teamcity_publish_removes_the_packed_bundles_on_team_city_or_when_asked() {
     assert!(!stderr.contains("removed "), "{stderr}");
 
     let asked = publish_fixture();
-    let output = Command::new(air_trace())
-        .args(["teamcity-publish", "--remove-packed", "--testlogs"])
-        .arg(asked.path().join("testlogs"))
-        .arg("--out")
-        .arg(asked.path().join("out"))
-        .env_remove("TEAMCITY_VERSION")
-        .env_remove("AIR_TRACE_SINCE")
-        .env_remove("BUILD_WORKSPACE_DIRECTORY")
-        .stdin(Stdio::null())
-        .output()
-        .unwrap();
-    let stderr = String::from_utf8(output.stderr).unwrap();
-    assert_eq!(output.status.code(), Some(0), "{stderr}");
+    let (exit, _, stderr) = avl_testkit::answer(
+        Command::new(air_trace())
+            .args(["teamcity-publish", "--remove-packed", "--testlogs"])
+            .arg(asked.path().join("testlogs"))
+            .arg("--out")
+            .arg(asked.path().join("out"))
+            .env_remove("TEAMCITY_VERSION")
+            .env_remove("AIR_TRACE_SINCE")
+            .env_remove("BUILD_WORKSPACE_DIRECTORY"),
+    );
+    assert_eq!(exit, Some(0), "{stderr}");
     assert!(stderr.contains("removed 1 packed bundle(s) with "), "{stderr}");
     assert!(!bundle(&asked).exists(), "{stderr}");
 

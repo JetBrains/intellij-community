@@ -53,6 +53,30 @@ pub async fn closed_port() -> (u16, impl Sized) {
     (holder.local_addr().unwrap().port(), (holder, accepted))
 }
 
+/// Runs `command` with no standard input, and answers what [`answer_of`] answers.
+pub fn answer(command: &mut std::process::Command) -> (Option<i32>, String, String) {
+    answer_of(command.stdin(std::process::Stdio::null()).output().unwrap())
+}
+
+/// The exit code, the standard output and the standard error of a process that ended.
+pub fn answer_of(output: std::process::Output) -> (Option<i32>, String, String) {
+    let text = |bytes: Vec<u8>| String::from_utf8(bytes).unwrap();
+    (output.status.code(), text(output.stdout), text(output.stderr))
+}
+
+/// A writer whose reader went away: each write and each flush fails with `BrokenPipe`.
+pub struct ClosedPipe;
+
+impl std::io::Write for ClosedPipe {
+    fn write(&mut self, _: &[u8]) -> std::io::Result<usize> {
+        Err(std::io::ErrorKind::BrokenPipe.into())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Err(std::io::ErrorKind::BrokenPipe.into())
+    }
+}
+
 /// A file of the calling crate, e.g. `crate_path!("testdata/lane-transcript.ndjson")`.
 ///
 /// A macro, because `AVL_PACKAGE` and `CARGO_MANIFEST_DIR` must be the caller's, not this crate's.

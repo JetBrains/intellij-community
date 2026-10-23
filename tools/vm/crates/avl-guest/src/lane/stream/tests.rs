@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use avl_testkit::ClosedPipe;
 use expect_test::expect;
 use pretty_assertions::assert_eq;
 
@@ -11,19 +12,6 @@ fn case(name: &str) -> CaseIdentity {
         class_name: "com.intellij.air.integration.flow.generated.ui.AirRenameSessionGeneratedFlowUiTest".to_owned(),
         method_name: Some("generatedFlowScenarios".to_owned()),
         name: name.to_owned(),
-    }
-}
-
-/// A writer whose reader is gone: each write fails with a broken pipe.
-struct Broken;
-
-impl Write for Broken {
-    fn write(&mut self, _: &[u8]) -> std::io::Result<usize> {
-        Err(std::io::ErrorKind::BrokenPipe.into())
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        Ok(())
     }
 }
 
@@ -54,7 +42,7 @@ fn write_three_cases(stream: &Stream<'_>) {
 // A stream that a client stopped reading takes no record more, and the iteration goes on.
 #[test]
 fn a_broken_stream_drops_the_later_records() {
-    let mut out = Broken;
+    let mut out = ClosedPipe;
     let stream = Stream::new(&mut out);
     stream.note("first");
     assert!(stream.lock().broken);
@@ -70,7 +58,7 @@ fn a_broken_stream_drops_the_later_records() {
 // named after its suite, and a skip is a skipped case.
 #[test]
 fn the_cases_of_a_broken_stream_still_render_the_junit_xml() {
-    let mut out = Broken;
+    let mut out = ClosedPipe;
     let stream = Stream::new(&mut out);
     stream.note("the reader is gone after this record");
     write_three_cases(&stream);

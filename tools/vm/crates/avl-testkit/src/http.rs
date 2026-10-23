@@ -14,6 +14,7 @@ pub struct Request {
     pub body: Vec<u8>,
 }
 
+// jscpd:ignore-start the guest agent has the same lookup, and shipped code never links a testkit
 impl Request {
     /// A header's value, by its case-insensitive name.
     pub fn header(&self, name: &str) -> Option<&str> {
@@ -23,6 +24,7 @@ impl Request {
             .map(|(_, value)| value.as_str())
     }
 }
+// jscpd:ignore-end
 
 /// What the fake server answers.
 pub struct Response {

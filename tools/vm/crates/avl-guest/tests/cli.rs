@@ -29,12 +29,9 @@ fn agent_command() -> Command {
     command
 }
 
-/// Runs the agent with `args` and no standard input, and answers the exit code, the standard output and the
-/// standard error.
+/// Runs the agent with `args`, as [`avl_testkit::answer`] runs a command.
 fn answer(args: &[&str]) -> (Option<i32>, String, String) {
-    let output = agent_command().args(args).stdin(Stdio::null()).output().unwrap();
-    let text = |bytes: Vec<u8>| String::from_utf8(bytes).unwrap();
-    (output.status.code(), text(output.stdout), text(output.stderr))
+    avl_testkit::answer(agent_command().args(args))
 }
 
 /// A verb the agent does not have is the `usage` envelope on stderr with exit 64, which the host reads as "this
