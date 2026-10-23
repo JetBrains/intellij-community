@@ -3,6 +3,10 @@
 //! Each file goes to `<name>.yonder-part` first, and only a file of the size that the agent named takes its name. So a
 //! cut connection leaves no file that looks whole. A fetch that did not copy every file is a failure, and the run then
 //! keeps its stage on the agent for another `yonder fetch`.
+//!
+//! The host chooses the paths, so the client takes only a path below a `fetch` directory of the run, and never one
+//! inside a `.git` directory: a hook or a `core.fsmonitor` there would run code here. A file system that ignores the
+//! case, such as APFS, reads `.GIT` as `.git`, and Windows drops a trailing dot or space, so these spellings count too.
 
 use std::fs;
 use std::io::{self, BufWriter, Write as _};
@@ -19,12 +23,37 @@ use crate::{Client, Refusal, code, refused};
 const PART_SUFFIX: &str = ".yonder-part";
 
 impl Client<'_> {
-    /// Copies the staged files of a run into `checkout`. With `fetch`, each path must be below one of those
-    /// directories; without, any plain relative path is accepted. Answers the copied paths, relative to the checkout
-    /// with `/` separators.
+    /// Copies the staged files of a run into `checkout`. Each path must be below one of the `fetch` directories, or,
+    /// without them, below one of the `fetch` directories of the run on the agent. Answers the copied paths, relative to
+    /// the checkout with `/` separators.
     pub fn fetch(&self, alias: &str, run: &str, checkout: &Path, fetch: &[String]) -> Result<Vec<String>, Refusal> {
         let mut host = self.host(alias)?;
-        self.fetch_from(&mut host, run, checkout, fetch)
+        let fetch = if fetch.is_empty() {
+            self.fetch_dirs_of(&mut host, run)?
+        } else {
+            fetch.to_vec()
+        };
+        self.fetch_from(&mut host, run, checkout, &fetch)
+    }
+
+    /// The `fetch` directories of a kept run, as the agent lists it.
+    fn fetch_dirs_of(&self, host: &mut Host, run: &str) -> Result<Vec<String>, Refusal> {
+        let listed = match host.request(&Request::Runs, self.timing.read)? {
+            (_, Reply::Runs { runs }) => runs,
+            (_, Reply::Refused { code, message }) => return Err(host.agent_refusal(code, &message)),
+            (_, reply) => return Err(host.unexpected(&reply)),
+        };
+        match listed.into_iter().find(|info| info.run == run) {
+            Some(info) if !info.fetch.is_empty() => Ok(info.fetch),
+            Some(_) => Err(refused(
+                code::USAGE,
+                format!(
+                    "{} names no fetch directory of the run {run}; name each with `--fetch <dir>`",
+                    host.alias()
+                ),
+            )),
+            None => Err(refused(code::USAGE, format!("{} keeps no run {run}", host.alias()))),
+        }
     }
 
     /// Removes a run and its stage on the agent.
@@ -148,23 +177,32 @@ fn part_path(target: &Path) -> PathBuf {
     PathBuf::from(name)
 }
 
-/// The local file of a staged path: below the checkout, and below one of the `fetch` directories when they are
-/// named. Answers why else.
+/// The local file of a staged path: below the checkout, below one of the `fetch` directories, and outside each `.git`
+/// directory. Answers why else.
 pub(crate) fn local_target(checkout: &Path, path: &str, fetch: &[String]) -> Result<PathBuf, String> {
     let parts: Vec<&str> = path.split('/').collect();
     let plain = |part: &&str| !part.is_empty() && *part != "." && *part != ".." && !part.contains(['\\', ':']);
     if !parts.iter().all(plain) || path.ends_with(PART_SUFFIX) {
         return Err("the path is not a plain relative path".to_owned());
     }
-    let below_fetch = fetch.is_empty()
-        || fetch.iter().any(|dir| {
-            path.strip_prefix(dir.trim_end_matches('/'))
-                .is_some_and(|rest| rest.starts_with('/'))
-        });
+    if parts.iter().any(|part| is_git_dir(part)) {
+        return Err("the path is inside a .git directory".to_owned());
+    }
+    let below_fetch = fetch.iter().any(|dir| {
+        path.strip_prefix(dir.trim_end_matches('/'))
+            .is_some_and(|rest| rest.starts_with('/'))
+    });
     if !below_fetch {
         return Err(format!("the path is in none of the fetch directories {}", fetch.join(", ")));
     }
     Ok(parts.iter().fold(checkout.to_path_buf(), |target, part| target.join(part)))
+}
+
+/// Whether a path part names a `.git` directory on some file system: any case, a trailing dot or space that Windows
+/// drops, and `git~1`, the short name of `.git` on NTFS.
+fn is_git_dir(part: &str) -> bool {
+    let name = part.trim_end_matches(['.', ' ']);
+    name.eq_ignore_ascii_case(".git") || name.eq_ignore_ascii_case("git~1")
 }
 
 #[cfg(test)]

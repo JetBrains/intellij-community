@@ -122,6 +122,7 @@ fn a_listed_run_shows_its_long_steps() {
             step("checkout", 41_000),
             step("command", 3_909_000),
         ],
+        fetch: Vec::new(),
     };
     assert_eq!(
         run_line(&run),

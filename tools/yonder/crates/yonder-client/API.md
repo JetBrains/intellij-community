@@ -36,8 +36,10 @@ lists those codes. The client adds these:
 | `agent_failed` | The agent binary cannot be read, its Bazel build failed or wrote nothing for 30 min, `cquery` named no `yonderd` file, `yonderd setup` failed on the host, or it printed no setup line. |
 | `interrupted` | Ctrl+C came before the run started, or a second Ctrl+C stopped the follow. A press after the start cancels the run, and the run then ends with the code of the host. |
 
-A fetched path that is absolute, has `..` or `\`, or is not below a `fetch` directory is skipped, and the fetch then
-fails. Each file goes to `<name>.yonder-part` first and takes its name only at the size that the agent named. The run
+A fetched path that is absolute, has `..` or `\`, is not below a `fetch` directory, or is inside a `.git` directory in
+any case (`.GIT`, `.git.`, `git~1`) is skipped, and the fetch then fails. `yonder fetch` without `--fetch` takes the
+`fetch` directories of the run from `Runs`. An agent before that field names none, and the fetch then refuses with
+`usage`. Each file goes to `<name>.yonder-part` first and takes its name only at the size that the agent named. The run
 removes itself on the host (`Forget`) only when the client saw its end and every file came.
 
 A pack goes to a temporary file first, under `git pack-objects --progress` with a quiet limit of 60 s and no limit on

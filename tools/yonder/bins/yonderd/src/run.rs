@@ -233,6 +233,7 @@ impl RunDir {
             holder: spec.holder,
             commit: spec.commit,
             command: spec.command,
+            fetch: spec.fetch,
             started_ms: self.started_ms(),
             exit: ended.as_ref().map(|(end, _)| end.code()),
             phases: ended.map_or_else(|| self.running_phases(), |(_, phases)| phases),

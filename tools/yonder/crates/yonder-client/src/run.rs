@@ -341,8 +341,9 @@ impl Client<'_> {
                 fetched
             }
             Err(refusal) => {
+                let dirs: String = request.fetch.iter().map(|dir| format!(" --fetch {dir}")).collect();
                 (self.say)(&format!(
-                    "yonder: cannot copy the files of the run {run} from {alias}: {}. The run stays on {alias}: `yonder fetch {alias} {run}` copies its files again, and `yonder forget {alias} {run}` removes it",
+                    "yonder: cannot copy the files of the run {run} from {alias}: {}. The run stays on {alias}: `yonder fetch {alias} {run}{dirs}` copies its files again, and `yonder forget {alias} {run}` removes it",
                     refusal.message
                 ));
                 Vec::new()

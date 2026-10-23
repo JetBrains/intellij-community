@@ -62,8 +62,8 @@ enum Command {
     Fetch {
         alias: String,
         run: String,
-        /// A directory relative to the slot root that each file must be below. Repeatable; without it, any plain
-        /// relative path is accepted.
+        /// A directory relative to the slot root that each file must be below. Repeatable; without it, the fetch
+        /// directories of the run on the host.
         #[arg(long = "fetch", value_name = "DIR")]
         fetch: Vec<String>,
     },

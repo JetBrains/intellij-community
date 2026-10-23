@@ -170,6 +170,9 @@ pub struct RunInfo {
     /// The steps that have ended so far.
     #[serde(default)]
     pub phases: Vec<Phase>,
+    /// The `fetch` directories of [`RunSpec`]. An agent before this field sends none.
+    #[serde(default)]
+    pub fetch: Vec<String>,
 }
 
 /// One step of a run and its duration: `lock`, `lease`, `pack_wait`, `checkout`, `command`, `stage`. A client
