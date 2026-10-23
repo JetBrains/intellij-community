@@ -11,7 +11,7 @@ use avl_host_sys::{Ctx, SpawnOptions};
 use serde::Serialize;
 use serde_json::json;
 
-use super::act_on_leased_worker;
+use super::{LeaseUse, on_leased_worker};
 use avl_base::RefusalExt;
 
 /// The timeout of a captured `exec`. An agent runs a diagnosis command there, and an hour is far above one. The bound
@@ -69,7 +69,7 @@ pub(crate) async fn command_exec(
         )));
     }
     let settings = manager.settings();
-    let data = act_on_leased_worker(ctx, manager, lease_file, "exec", async |current| {
+    let data = on_leased_worker(ctx, manager, lease_file, "exec", LeaseUse::Act, async |current| {
         manager.require_ready(ctx, &current).await?;
         let worker = current.worker;
         let channel = manager.channel(&worker);

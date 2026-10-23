@@ -24,7 +24,7 @@ use serde::Serialize;
 use serde_json::json;
 use tempfile::{NamedTempFile, TempPath};
 
-use super::observe_leased_worker;
+use super::{LeaseUse, on_leased_worker};
 use avl_base::RefusalExt;
 
 /// The timeout of the guest read of one pulled file. A trace zip can hold hundreds of MiB, and it crosses the exec
@@ -294,7 +294,7 @@ pub(crate) async fn command_pull(
     lease_file: Option<&Path>,
 ) -> Result<Outcome, Refusal> {
     let settings = manager.settings();
-    let data = observe_leased_worker(ctx, manager, lease_file, "pull", async |current| {
+    let data = on_leased_worker(ctx, manager, lease_file, "pull", LeaseUse::Observe, async |current| {
         // Resolved before the readiness gate: a destination that would be refused must not cost a worker boot first.
         let resolved = resolve_pull_destination(&settings.runtime_root, &settings.worker_key(&current.worker), &destination)?;
         require_ready_for_read(ctx, manager, &current, "pull").await?;

@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use avl_base::{Backend, Exit};
+use avl_base::{Backend, Exit, Outcome};
 use avl_host_sys::Ctx;
 use avl_host_testkit::agent::{agent_envelope, answer_pull};
 use avl_host_testkit::{outcome_of, refusal};
@@ -243,6 +243,20 @@ async fn pull_refuses_a_stream_that_is_not_base64() {
     assert_no_temporaries_left(directory.path());
 }
 
+/// `pull` of `/guest/log.txt` into `logs/log.txt` with the receipt of the suite, which must answer.
+async fn pull_log(fixture: &Fixture, receipt: &Path) -> Outcome {
+    outcome_of(
+        command_pull(
+            &Ctx::background(),
+            &fixture.manager,
+            "/guest/log.txt".to_owned(),
+            "logs/log.txt".to_owned(),
+            Some(receipt),
+        )
+        .await,
+    )
+}
+
 /// `pull` answers while a run of another process is in flight on the worker, and its gate starts nothing under that
 /// run. The container here does not even run, and the only engine call is the read of the file.
 #[tokio::test]
@@ -251,16 +265,7 @@ async fn the_pull_command_answers_during_a_run_of_another_process() {
     let receipt = fixture.lease_receipt("air-docker-1");
     fixture.run_of_another_process("air-docker-1").await;
     answer_pull(&fixture.fake, b"evidence");
-    let outcome = outcome_of(
-        command_pull(
-            &Ctx::background(),
-            &fixture.manager,
-            "/guest/log.txt".to_owned(),
-            "logs/log.txt".to_owned(),
-            Some(&receipt),
-        )
-        .await,
-    );
+    let outcome = pull_log(&fixture, &receipt).await;
     assert_eq!(outcome.data["bytes"], json!(8));
     let calls = fixture.fake.calls();
     assert!(calls.iter().all(|call| call.starts_with("exec ")), "{calls:#?}");
@@ -270,20 +275,9 @@ async fn the_pull_command_answers_during_a_run_of_another_process() {
 /// what landed where.
 #[tokio::test]
 async fn the_pull_command_publishes_into_the_workers_artifact_directory() {
-    let fixture = Fixture::docker();
-    fixture.mark_ready("air-docker-1").await;
-    let receipt = fixture.lease_receipt("air-docker-1");
+    let (fixture, receipt) = Fixture::leased_ready_docker().await;
     answer_pull(&fixture.fake, b"evidence");
-    let outcome = outcome_of(
-        command_pull(
-            &Ctx::background(),
-            &fixture.manager,
-            "/guest/log.txt".to_owned(),
-            "logs/log.txt".to_owned(),
-            Some(&receipt),
-        )
-        .await,
-    );
+    let outcome = pull_log(&fixture, &receipt).await;
     let destination = outcome.data["destination"].as_str().expect("a destination").to_owned();
     // A Docker worker keys its directory apart, so a container cannot share state with a Tart slot.
     assert!(destination.ends_with("artifacts/docker-air-docker-1/logs/log.txt"), "{destination}");

@@ -153,6 +153,23 @@ struct Layout {
 }
 
 impl Layout {
+    /// Asks the guest of a running container whether it answers, and then the layout questions. A guest that does not
+    /// answer has the default layout.
+    async fn probe_running(ctx: &Ctx, manager: &Manager, worker: &str, host_paths: &HostPaths) -> (bool, Self) {
+        let channel = manager.channel(worker);
+        let guest = Guest {
+            ctx,
+            settings: manager.settings(),
+            channel: channel.as_ref(),
+            reporter: manager.reporter(),
+        };
+        if guest.succeeds(&words(["/usr/bin/true"]), GUEST_COMMAND_TIMEOUT).await {
+            (true, Self::probe(&guest, host_paths).await)
+        } else {
+            (false, Self::default())
+        }
+    }
+
     async fn probe(guest: &Guest<'_>, host_paths: &HostPaths) -> Self {
         let worker_storage_ready = guest
             .succeeds(&words(["/bin/test", "-d", &guest.settings.vm_data]), GUEST_COMMAND_TIMEOUT)
@@ -475,18 +492,7 @@ async fn docker_worker_status(
         Verdict::default()
     };
     let (guest_agent, layout) = if state == ContainerState::Running {
-        let channel = manager.channel(worker);
-        let guest = Guest {
-            ctx,
-            settings,
-            channel: channel.as_ref(),
-            reporter: manager.reporter(),
-        };
-        if guest.succeeds(&words(["/usr/bin/true"]), GUEST_COMMAND_TIMEOUT).await {
-            (true, Layout::probe(&guest, host_paths).await)
-        } else {
-            (false, Layout::default())
-        }
+        Layout::probe_running(ctx, manager, worker, host_paths).await
     } else {
         (false, Layout::default())
     };
