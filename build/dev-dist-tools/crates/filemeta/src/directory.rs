@@ -32,6 +32,8 @@ pub fn create_dir_all_0755(path: &Path) -> io::Result<()> {
     Ok(())
 }
 
+// jscpd:ignore-start fscopy has the same helper, but filemeta links no fscopy: the crate would join the closure of the packer.
 fn with_path(error: &io::Error, path: &Path) -> io::Error {
     io::Error::new(error.kind(), format!("{}: {error}", path.display()))
 }
+// jscpd:ignore-end
