@@ -82,6 +82,11 @@ def _create_default_type_map():
         pass  # not available on all python versions
 
     try:
+        default_type_map.append((frozendict, pydevd_resolver.dictResolver))  # @UndefinedVariable
+    except:
+        pass  # not available on all python versions
+
+    try:
         from django.utils.datastructures import MultiValueDict
 
         default_type_map.insert(0, (MultiValueDict, pydevd_resolver.multiValueDictResolver))
@@ -271,8 +276,15 @@ def is_builtin(x):
     return getattr(x, "__module__", None) == BUILTINS_MODULE_NAME
 
 
+_LAZY_LOADED_COLLECTION_TYPES = (list, tuple, dict)
+try:
+    _LAZY_LOADED_COLLECTION_TYPES += (frozendict,)  # @UndefinedVariable
+except NameError:
+    pass  # frozendict is a builtin since Python 3.15
+
+
 def should_evaluate_full_value(val):
-    return not LOAD_VALUES_ASYNC or (is_builtin(type(val)) and not isinstance_checked(val, (list, tuple, dict)))
+    return not LOAD_VALUES_ASYNC or (is_builtin(type(val)) and not isinstance_checked(val, _LAZY_LOADED_COLLECTION_TYPES))
 
 
 def return_values_from_dict_to_xml(return_dict):

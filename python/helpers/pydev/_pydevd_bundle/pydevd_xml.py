@@ -80,6 +80,11 @@ def _create_default_type_map():
             pass  # not available on all python versions
 
         try:
+            default_type_map.append((frozendict, pydevd_resolver.dictResolver))  # @UndefinedVariable
+        except:
+            pass  # not available on all python versions
+
+        try:
             from django.utils.datastructures import MultiValueDict
             default_type_map.insert(0, (MultiValueDict, pydevd_resolver.multiValueDictResolver))
             # we should put it before dict
