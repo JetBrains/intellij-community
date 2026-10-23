@@ -464,60 +464,61 @@ fn kotlin_layout_materialization_matches_the_transforms() {
     for (name, build) in LAYOUT_PARITY_FIXTURES {
         let inputs = temp();
         let fixture = build(inputs.path());
-        let recipe = if fixture.format == "tree" {
-            let operation = kotlin_layout_assets_operation("layout", OUTPUT, "tree", fixture.root, &fixture.layout);
-            let plan_file = kotlin_plan(
+        // The Kotlin plan asset and operation, and the asset and operation of the recipe that the packer executes.
+        let (version, kotlin_asset, operation, asset, recipe_operation) = if fixture.format == "tree" {
+            let kotlin_asset = KotlinPlanAsset {
+                destination: fixture.root.to_owned(),
+                inputs: Some(strings(&[OUTPUT])),
+                kind: "tree".to_owned(),
+                class_path: Some(false),
+                ..KotlinPlanAsset::default()
+            };
+            let operation = Operation::LayoutTree {
+                destination: fixture.root.to_owned(),
+                layout: fixture.layout.clone(),
+            };
+            (
                 TREE_VERSION,
-                "layout-plugin",
-                vec![KotlinPlanAsset {
-                    destination: fixture.root.to_owned(),
-                    inputs: Some(strings(&[OUTPUT])),
-                    kind: "tree".to_owned(),
-                    class_path: Some(false),
-                    ..KotlinPlanAsset::default()
-                }],
-                &operation,
-            );
-            Recipe {
-                version: TREE_VERSION,
-                plugin: plan_file.plugin,
-                assets: vec![tree_asset(fixture.root)],
-                operations: vec![Operation::LayoutTree {
-                    destination: fixture.root.to_owned(),
-                    layout: fixture.layout.clone(),
-                }],
-            }
+                kotlin_asset,
+                kotlin_layout_assets_operation("layout", OUTPUT, "tree", fixture.root, &fixture.layout),
+                tree_asset(fixture.root),
+                operation,
+            )
         } else {
             let jar = format!("lib/{}", fixture.root);
-            let operation = kotlin_layout_assets_operation("layout", OUTPUT, "entries", "", &fixture.layout);
-            let plan_file = kotlin_plan(
+            let kotlin_asset = KotlinPlanAsset {
+                destination: jar.clone(),
+                inputs: Some(strings(&[OUTPUT])),
+                recipe: Some(KotlinJarRecipe {
+                    sources: vec![prepared_source(OUTPUT)],
+                    writer: KotlinJarWriter {
+                        manifest: "drop".to_owned(),
+                        merge_entities: true,
+                    },
+                }),
+                ..KotlinPlanAsset::default()
+            };
+            let asset = Asset::remainder(&jar);
+            let operation = Operation::Jar {
+                destination: jar,
+                mode: 0o644,
+                sources: vec![Source::Layout(fixture.layout.clone())],
+                merge_entities: true,
+            };
+            (
                 VERSION,
-                "layout-plugin",
-                vec![KotlinPlanAsset {
-                    destination: jar.clone(),
-                    inputs: Some(strings(&[OUTPUT])),
-                    recipe: Some(KotlinJarRecipe {
-                        sources: vec![prepared_source(OUTPUT)],
-                        writer: KotlinJarWriter {
-                            manifest: "drop".to_owned(),
-                            merge_entities: true,
-                        },
-                    }),
-                    ..KotlinPlanAsset::default()
-                }],
-                &operation,
-            );
-            Recipe {
-                version: VERSION,
-                plugin: plan_file.plugin,
-                assets: vec![Asset::remainder(&jar)],
-                operations: vec![Operation::Jar {
-                    destination: jar,
-                    mode: 0o644,
-                    sources: vec![Source::Layout(fixture.layout.clone())],
-                    merge_entities: true,
-                }],
-            }
+                kotlin_asset,
+                kotlin_layout_assets_operation("layout", OUTPUT, "entries", "", &fixture.layout),
+                asset,
+                operation,
+            )
+        };
+        let plan_file = kotlin_plan(version, "layout-plugin", vec![kotlin_asset], &operation);
+        let recipe = Recipe {
+            version,
+            plugin: plan_file.plugin,
+            assets: vec![asset],
+            operations: vec![recipe_operation],
         };
         let written = write_execution(&recipe, &fixture.inputs);
         let record = materialization_record(&written.output);

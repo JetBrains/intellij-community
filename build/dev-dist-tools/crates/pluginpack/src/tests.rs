@@ -24,6 +24,7 @@ use planfile::contract::{
     LayoutTransformKind, Manifest, Operation, Recipe, Reference, Source, TREE_VERSION, VERSION,
 };
 use sha2::Digest;
+use testkit::require_case_error;
 pub(crate) use testkit::{read_bytes, require_absent, testdata_dir, write_file};
 
 use crate::plan;
@@ -235,13 +236,41 @@ pub(crate) fn expect_plan_error(recipe: &Recipe, catalogue: &Catalogue, message:
 
 /// Plans the recipe, expects the write to fail with the message, and expects no published output.
 pub(crate) fn expect_write_failure(recipe: &Recipe, catalogue: &Catalogue, message: &str) {
-    let execution = plan(recipe, catalogue).unwrap_or_else(|error| panic!("plan: {error:#}"));
+    expect_case_write_failure("the recipe", recipe, catalogue, message);
+}
+
+/// Plans the recipe, fails unless its write fails with `message` and publishes nothing. A failure names the case `case`.
+#[track_caller]
+pub(crate) fn expect_case_write_failure(case: &str, recipe: &Recipe, catalogue: &Catalogue, message: &str) {
+    let execution = plan(recipe, catalogue).unwrap_or_else(|error| panic!("{case}: plan: {error:#}"));
     let root = temp();
-    match execution.write(&root.path().join("output"), &root.path().join("inventory.json")) {
-        Ok(()) => panic!("expected a write failure with {message:?}"),
-        Err(error) => assert!(format!("{error:#}").contains(message), "expected {message:?}, got {error:#}"),
-    }
+    let result = execution.write(&root.path().join("output"), &root.path().join("inventory.json"));
+    require_case_error(case, result, message);
     assert_no_published_outputs(root.path());
+}
+
+/// A tree recipe of the plugin `plugin` that copies the directory `tree` to `destination`, and its catalogue.
+pub(crate) fn copy_tree_plan(plugin: &str, destination: &str, assets: Vec<Asset>, tree: &Path) -> (Recipe, Catalogue) {
+    let recipe = Recipe {
+        version: TREE_VERSION,
+        plugin: plugin.to_owned(),
+        assets,
+        operations: vec![Operation::CopyTree {
+            destination: destination.to_owned(),
+            input: Reference::artifact("tree"),
+        }],
+    };
+    (recipe, catalogue(vec![directory_artifact("tree", tree)]))
+}
+
+/// The tree recipe that copies the directory `root` to `kotlinc`, beside the independent jar `lib/independent.jar`.
+pub(crate) fn tree_plan(root: &Path) -> (Recipe, Catalogue) {
+    copy_tree_plan(
+        "tree",
+        "kotlinc",
+        vec![tree_asset("kotlinc"), Asset::independent("lib/independent.jar", "independent")],
+        root,
+    )
 }
 
 pub(crate) fn assert_no_published_outputs(root: &Path) {

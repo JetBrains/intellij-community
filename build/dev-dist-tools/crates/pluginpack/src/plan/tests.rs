@@ -1,7 +1,6 @@
 //! The port of `plan_test.go`.
 
 use std::collections::BTreeMap;
-use std::path::Path;
 
 use planfile::contract::{
     ArtifactKind, Asset, AssetKind, Catalogue, Library, Manifest, Operation, Producer, Recipe, Reference, Source, TREE_VERSION, VERSION,
@@ -11,19 +10,6 @@ use testkit::require_case_error;
 
 use super::{plan, validate_plugin_links};
 use crate::tests::*;
-
-fn tree_plan(root: &Path) -> (Recipe, Catalogue) {
-    let recipe = Recipe {
-        version: TREE_VERSION,
-        plugin: "tree".to_owned(),
-        assets: vec![tree_asset("kotlinc"), Asset::independent("lib/independent.jar", "independent")],
-        operations: vec![Operation::CopyTree {
-            destination: "kotlinc".to_owned(),
-            input: Reference::artifact("tree"),
-        }],
-    };
-    (recipe, catalogue(vec![directory_artifact("tree", root)]))
-}
 
 /// The input of the first archive source of the first operation.
 fn first_input(recipe: &mut Recipe) -> &mut Reference {

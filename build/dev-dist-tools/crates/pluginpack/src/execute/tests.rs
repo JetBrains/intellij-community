@@ -3,25 +3,10 @@
 use std::fs;
 use std::path::Path;
 
-use planfile::contract::{
-    ArtifactKind, Asset, AssetKind, Catalogue, Filter, Manifest, Operation, Recipe, Reference, Source, TREE_VERSION, VERSION,
-};
+use planfile::contract::{ArtifactKind, Asset, AssetKind, Filter, Manifest, Operation, Recipe, Reference, Source, VERSION};
 
 use crate::plan;
 use crate::tests::*;
-
-fn tree_plan(root: &Path) -> (Recipe, Catalogue) {
-    let recipe = Recipe {
-        version: TREE_VERSION,
-        plugin: "tree".to_owned(),
-        assets: vec![tree_asset("kotlinc"), Asset::independent("lib/independent.jar", "independent")],
-        operations: vec![Operation::CopyTree {
-            destination: "kotlinc".to_owned(),
-            input: Reference::artifact("tree"),
-        }],
-    };
-    (recipe, catalogue(vec![directory_artifact("tree", root)]))
-}
 
 /// The former test `checkAssetNamespace` created the remainder entries and the independent files in a probe directory.
 /// This test compares the case identities, so each collision fails on every file system.
@@ -61,27 +46,18 @@ fn independent_destinations_collide_with_remainder_tree_entries() {
         for entry in entries {
             write_file(tree.join(entry), b"entry");
         }
-        let recipe = Recipe {
-            version: TREE_VERSION,
-            plugin: "tree".to_owned(),
-            assets: vec![tree_asset("lib"), Asset::independent(destination, "independent")],
-            operations: vec![Operation::CopyTree {
-                destination: "lib".to_owned(),
-                input: Reference::artifact("tree"),
-            }],
-        };
-        let catalogue = catalogue(vec![directory_artifact("tree", &tree)]);
+        let (recipe, catalogue) = copy_tree_plan(
+            "tree",
+            "lib",
+            vec![tree_asset("lib"), Asset::independent(destination, "independent")],
+            &tree,
+        );
         if want.is_empty() {
             let written = write_execution(&recipe, &catalogue);
             assert_content(&written.output.join("lib/modules/other.jar"), "entry");
             continue;
         }
-        let execution = plan(&recipe, &catalogue).unwrap_or_else(|error| panic!("{name}: plan: {error:#}"));
-        let error = execution
-            .write(&root.path().join("output"), &root.path().join("inventory.json"))
-            .unwrap_err();
-        assert!(format!("{error:#}").contains(want), "{name}: expected {want:?}, got {error:#}");
-        assert_no_published_outputs(root.path());
+        expect_case_write_failure(name, &recipe, &catalogue, want);
     }
 }
 
@@ -100,10 +76,10 @@ fn plugin_native_tree_collides_with_remainder_tree_entries() {
         let root = temp();
         let tree = root.path().join("tree");
         write_file(tree.join(entry), b"entry");
-        let recipe = Recipe {
-            version: TREE_VERSION,
-            plugin: "natives".to_owned(),
-            assets: vec![
+        let (recipe, catalogue) = copy_tree_plan(
+            "natives",
+            "lib",
+            vec![
                 tree_asset("lib"),
                 Asset::independent("lib/modules/demo.natives.jar", "demo.natives"),
                 Asset {
@@ -112,12 +88,8 @@ fn plugin_native_tree_collides_with_remainder_tree_entries() {
                     ..Asset::independent("lib/native", "demo.natives")
                 },
             ],
-            operations: vec![Operation::CopyTree {
-                destination: "lib".to_owned(),
-                input: Reference::artifact("tree"),
-            }],
-        };
-        let catalogue = catalogue(vec![directory_artifact("tree", &tree)]);
+            &tree,
+        );
         if want.is_empty() {
             let written = write_execution(&recipe, &catalogue);
             assert_content(&written.output.join("lib/other.txt"), "entry");
@@ -127,12 +99,7 @@ fn plugin_native_tree_collides_with_remainder_tree_entries() {
             );
             continue;
         }
-        let execution = plan(&recipe, &catalogue).unwrap_or_else(|error| panic!("{name}: plan: {error:#}"));
-        let error = execution
-            .write(&root.path().join("output"), &root.path().join("inventory.json"))
-            .unwrap_err();
-        assert!(format!("{error:#}").contains(want), "{name}: expected {want:?}, got {error:#}");
-        assert_no_published_outputs(root.path());
+        expect_case_write_failure(name, &recipe, &catalogue, want);
     }
 }
 
@@ -455,12 +422,7 @@ fn copy_tree_rejects_declared_descendant_collision_before_writing() {
     let (mut recipe, catalogue) = tree_plan(&source);
     recipe.assets[1] = Asset::remainder("kotlinc/lib/compiler.jar");
     recipe.operations.push(jar("kotlinc/lib/compiler.jar", Vec::new()));
-    let execution = plan(&recipe, &catalogue).unwrap();
-    let error = execution
-        .write(&root.path().join("output"), &root.path().join("inventory.json"))
-        .unwrap_err();
-    assert!(format!("{error:#}").contains("conflicting output destination"), "{error:#}");
-    assert_no_published_outputs(root.path());
+    expect_write_failure(&recipe, &catalogue, "conflicting output destination");
 }
 
 #[test]

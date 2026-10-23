@@ -2,7 +2,7 @@
 
 use std::fs;
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use planfile::contract::{Artifact, Asset, Catalogue, LayoutAsset, LayoutAssets, LayoutTransform, Recipe, Reference, VERSION};
 use testkit::require_case_error;
@@ -17,6 +17,45 @@ fn archive_catalogue(file: &Path) -> Catalogue {
 
 fn one_archive(transform: LayoutTransform) -> LayoutAssets {
     layout(&[Reference::artifact("archive")], vec![layout_asset("", &[0], Some(transform))])
+}
+
+/// Writes `gdb.tar.gz` with `entries` below `root` and returns its path.
+fn gdb_archive(root: &Path, entries: &[TarEntry]) -> PathBuf {
+    let archive = root.join("gdb.tar.gz");
+    write_tar_gz(&archive, entries);
+    archive
+}
+
+/// Writes the tree of the tar archive with `entries` to `payload`, as the layout of one archive does.
+fn write_tar_payload(entries: &[TarEntry]) -> Written {
+    let root = temp();
+    let archive = gdb_archive(root.path(), entries);
+    write_execution(
+        &layout_tree_recipe("payload", one_archive(archive_tree(0, Vec::new()))),
+        &archive_catalogue(&archive),
+    )
+}
+
+/// The file `bin/ld` and its hard link `bin/ld.bfd`, both with `mode`.
+fn ld_and_hard_link(mode: u32) -> [TarEntry; 2] {
+    [tar_file("bin/ld", "ld", mode), tar_hard_link("bin/ld.bfd", "bin/ld", mode)]
+}
+
+/// The layout tree recipe of the archive `assets.zip`, which the transport directory states as a link to the zip
+/// `backing/<backing_name>` with the entry `payload.txt`. It returns the recipe and its catalogue.
+fn transported_archive(root: &Path, backing_name: &str) -> (Recipe, Catalogue) {
+    let archive = root.join("backing").join(backing_name);
+    write_zip(&archive, &[zip_entry("payload.txt", "payload")]);
+    let transport = root.join("transport");
+    symlink(&archive, &transport.join("assets.zip"));
+    let layout = layout(
+        &[member("archive", "assets.zip")],
+        vec![layout_asset("", &[0], Some(archive_tree(0, Vec::new())))],
+    );
+    (
+        layout_tree_recipe("payload", layout),
+        catalogue(vec![directory_artifact("archive", &transport)]),
+    )
 }
 
 /// The shape of the native helper plans: a mapping strips two components, and an executable pattern names the entry
@@ -158,37 +197,16 @@ fn zip_zstd_archives_supply_selected_terminal_files() {
 #[test]
 fn archive_preparation_accepts_a_bazel_transport_link() {
     let root = temp();
-    let archive = root.path().join("backing/assets.zip");
-    write_zip(&archive, &[zip_entry("payload.txt", "payload")]);
-    let transport = root.path().join("transport");
-    symlink(&archive, &transport.join("assets.zip"));
-    let layout = layout(
-        &[member("archive", "assets.zip")],
-        vec![layout_asset("", &[0], Some(archive_tree(0, Vec::new())))],
-    );
-    let written = write_execution(
-        &layout_tree_recipe("payload", layout),
-        &catalogue(vec![directory_artifact("archive", &transport)]),
-    );
+    let (recipe, catalogue) = transported_archive(root.path(), "assets.zip");
+    let written = write_execution(&recipe, &catalogue);
     assert_content(&written.output.join("payload/payload.txt"), "payload");
 }
 
 #[test]
 fn archive_preparation_rejects_a_mismatched_transport_path() {
     let root = temp();
-    let archive = root.path().join("backing/other.zip");
-    write_zip(&archive, &[zip_entry("payload.txt", "payload")]);
-    let transport = root.path().join("transport");
-    symlink(&archive, &transport.join("assets.zip"));
-    let layout = layout(
-        &[member("archive", "assets.zip")],
-        vec![layout_asset("", &[0], Some(archive_tree(0, Vec::new())))],
-    );
-    expect_write_failure(
-        &layout_tree_recipe("payload", layout),
-        &catalogue(vec![directory_artifact("archive", &transport)]),
-        "path conflicts",
-    );
+    let (recipe, catalogue) = transported_archive(root.path(), "other.zip");
+    expect_write_failure(&recipe, &catalogue, "path conflicts");
 }
 
 #[test]
@@ -500,21 +518,12 @@ fn a_strip_count_drops_the_entries_above_it() {
 
 #[test]
 fn a_tar_of_the_current_directory_loses_its_dot_root_and_dot_slash_prefixes() {
-    let root = temp();
-    let archive = root.path().join("gdb.tar.gz");
-    write_tar_gz(
-        &archive,
-        &[
-            tar_directory("./", 0o755),
-            tar_directory("./bin/", 0o755),
-            tar_file("./bin/gdb", "gdb", 0o755),
-            tar_file("././share/doc.txt", "doc", 0o644),
-        ],
-    );
-    let written = write_execution(
-        &layout_tree_recipe("payload", one_archive(archive_tree(0, Vec::new()))),
-        &archive_catalogue(&archive),
-    );
+    let written = write_tar_payload(&[
+        tar_directory("./", 0o755),
+        tar_directory("./bin/", 0o755),
+        tar_file("./bin/gdb", "gdb", 0o755),
+        tar_file("././share/doc.txt", "doc", 0o644),
+    ]);
     assert_content(&written.output.join("payload/bin/gdb"), "gdb");
     assert_content(&written.output.join("payload/share/doc.txt"), "doc");
     assert_eq!(written.inventory.len(), 5, "{:?}", written.inventory);
@@ -539,21 +548,13 @@ fn an_unsupported_archive_name_fails() {
 /// a link, from `bin/ld.bfd` to `bin/ld`.
 #[test]
 fn a_hard_link_becomes_a_copy_of_its_target() {
-    let root = temp();
-    let archive = root.path().join("gdb.tar.gz");
-    write_tar_gz(
-        &archive,
-        &[
-            tar_file("bin/ld", "ld", 0o755),
-            tar_hard_link("bin/ld.bfd", "bin/ld", 0o755),
-            tar_hard_link("./x/bin/ld", "./bin/ld", 0o755),
-            tar_file("bin/gdb", "gdb", 0o755),
-        ],
-    );
-    let written = write_execution(
-        &layout_tree_recipe("payload", one_archive(archive_tree(0, Vec::new()))),
-        &archive_catalogue(&archive),
-    );
+    let [ld, ld_bfd] = ld_and_hard_link(0o755);
+    let written = write_tar_payload(&[
+        ld,
+        ld_bfd,
+        tar_hard_link("./x/bin/ld", "./bin/ld", 0o755),
+        tar_file("bin/gdb", "gdb", 0o755),
+    ]);
     for name in ["payload/bin/ld", "payload/bin/ld.bfd", "payload/x/bin/ld"] {
         assert_content(&written.output.join(name), "ld");
         assert_mode(&written.output.join(name), 0o755);
@@ -570,20 +571,8 @@ fn a_hard_link_becomes_a_copy_of_its_target() {
 
 #[test]
 fn a_hard_link_to_a_hard_link_reads_the_first_file() {
-    let root = temp();
-    let archive = root.path().join("gdb.tar.gz");
-    write_tar_gz(
-        &archive,
-        &[
-            tar_file("bin/ld", "ld", 0o755),
-            tar_hard_link("bin/ld.bfd", "bin/ld", 0o755),
-            tar_hard_link("bin/ld.gold", "bin/ld.bfd", 0o755),
-        ],
-    );
-    let written = write_execution(
-        &layout_tree_recipe("payload", one_archive(archive_tree(0, Vec::new()))),
-        &archive_catalogue(&archive),
-    );
+    let [ld, ld_bfd] = ld_and_hard_link(0o755);
+    let written = write_tar_payload(&[ld, ld_bfd, tar_hard_link("bin/ld.gold", "bin/ld.bfd", 0o755)]);
     assert_content(&written.output.join("payload/bin/ld.gold"), "ld");
     assert_mode(&written.output.join("payload/bin/ld.gold"), 0o755);
 }
@@ -617,11 +606,7 @@ fn a_hard_link_without_a_file_target_fails() {
 #[test]
 fn a_hard_link_keeps_its_bytes_when_the_includes_drop_its_target() {
     let root = temp();
-    let archive = root.path().join("gdb.tar.gz");
-    write_tar_gz(
-        &archive,
-        &[tar_file("bin/ld", "ld", 0o644), tar_hard_link("bin/ld.bfd", "bin/ld", 0o644)],
-    );
+    let archive = gdb_archive(root.path(), &ld_and_hard_link(0o644));
     let transform = LayoutTransform {
         includes: strings(&["!bin/ld"]),
         executables: strings(&["bin/*"]),
@@ -636,11 +621,7 @@ fn a_hard_link_keeps_its_bytes_when_the_includes_drop_its_target() {
 #[test]
 fn a_single_visit_reads_the_target_from_the_archive_again() {
     let root = temp();
-    let archive = root.path().join("gdb.tar.gz");
-    write_tar_gz(
-        &archive,
-        &[tar_file("bin/ld", "ld", 0o755), tar_hard_link("bin/ld.bfd", "bin/ld", 0o755)],
-    );
+    let archive = gdb_archive(root.path(), &ld_and_hard_link(0o755));
     let mut reader = LayoutArchive::Tar {
         file: archive,
         hard_link_targets: None,
