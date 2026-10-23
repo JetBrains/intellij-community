@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.ui;
 
+import com.intellij.ide.welcomeScreen.WelcomeUtils;
 import com.intellij.openapi.ui.ValidationInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +69,10 @@ public final class CloneDvcsValidationUtils {
 
     try {
       Path path = Paths.get(directoryPath);
-      if (!path.toFile().exists()) {
+      if (WelcomeUtils.isWelcomeProjectHome(path)) {
+        return new ValidationInfo(DvcsBundle.message("clone.destination.directory.error.home"), component);
+      }
+      else if (!path.toFile().exists()) {
         return null;
       }
       else if (!path.toFile().isDirectory()) {
