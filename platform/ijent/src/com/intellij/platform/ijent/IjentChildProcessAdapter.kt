@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
-import com.intellij.execution.process.SelfKiller
+import com.intellij.execution.process.ProcessTreeKiller
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelProcessManagementApi
 import kotlinx.coroutines.CoroutineScope
@@ -21,11 +21,16 @@ class IjentChildProcessAdapter(
   private val coroutineScope: CoroutineScope,
   private val ijentChildProcess: EelProcess,
   private val processManagement: EelProcessManagementApi? = null,
-) : Process(), SelfKiller {
+) : Process(), ProcessTreeKiller {
   private val delegate = IjentChildProcessAdapterDelegate(
     coroutineScope,
     ijentChildProcess,
   )
+
+  override fun killProcessTree(): Boolean {
+    destroy()
+    return true
+  }
 
   override fun toString(): String = "${javaClass.simpleName}($ijentChildProcess)"
 
@@ -64,7 +69,11 @@ class IjentChildProcessAdapter(
    */
   override fun toHandle(): ProcessHandle =
     if (processManagement != null)
-      IjentChildProcessHandlerAdapter(processManagement, coroutineScope, ijentChildProcess.pid.value, ownProcess = ijentChildProcess, cachedInfo = null)
+      IjentChildProcessHandlerAdapter(processManagement,
+                                      coroutineScope,
+                                      ijentChildProcess.pid.value,
+                                      ownProcess = ijentChildProcess,
+                                      cachedInfo = null)
     else
       super.toHandle()
 
