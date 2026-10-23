@@ -2,7 +2,7 @@
 #
 # Three readers fetch the archive of the host. The wrapper asks for the binary with `bazel cquery` at its first run of a
 # version. The `jscpd_test` rule of `//tools/jscpd-test:defs.bzl` runs it for the copy-paste tests of the repository,
-# such as `//plugins/air:air-duplicate-code_test`. The Code Findings test
+# such as `//plugins/air:air-duplicate-code_test` and `//build/rust-tools:duplicate-code_test`. The Code Findings test
 # target `//plugins/code-findings/plugin:code-findings-plugin-tests_test` has `@community//tools:jscpd` in `data`, so
 # `CodeFindingsDuplicateCodeTest` runs the pinned binary. A build of any of them fetches the archive of the host only.
 # Put `@jscpd_*` or `//tools:jscpd` in no other `data` or `deps`.

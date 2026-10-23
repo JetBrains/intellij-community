@@ -140,6 +140,7 @@ and takes no `regex::Regex` and no `serde_json::Value` from its caller.
 
 ```sh
 cd community && ./bazel.cmd test //tools/bt/...
+cd community && ./bazel.cmd test //build/rust-tools:duplicate-code_test   # no copy-paste clone in the Rust tools
 cd community/tools/bt && cargo test && cargo clippy --all-targets
 ./bazel.cmd test @community//tools/bt/... @community//tools/vm/...    # from the ultimate root
 ```

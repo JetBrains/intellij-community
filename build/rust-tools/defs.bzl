@@ -394,6 +394,17 @@ def rust_tool_crate(
         test_tags = test_tags,
     )
 
+def rust_tool_sources(*dep_data):
+    """The `<crate>_sources` filegroups of every crate of the given crate hubs, by the package keys of their `DEP_DATA`.
+
+    A crate that a hub lists gets into the copy-paste test by itself, and a crate that two hubs list counts once.
+
+    Args:
+      *dep_data: the `DEP_DATA` of each crate hub.
+    """
+    packages = {package: None for data in dep_data for package in data}
+    return [Label("//{}:{}_sources".format(package, package.rsplit("/", 1)[-1])) for package in sorted(packages)]
+
 def rust_tool_binary(name, deps, lints, edition, test_deps = [], testdata_env = None):
     """Declares one binary of a Rust tool workspace that Bazel builds without a crate hub, its unit test, and its clippy.
 
@@ -458,6 +469,14 @@ def _rust_tool_targets(
     package = native.package_name()
     repo = native.repo_name()
     crate_target = crate_target or name
+
+    # Every Rust file of the package, for the copy-paste test `//build/rust-tools:duplicate-code_test`. A glob stops at
+    # a subpackage, so each crate declares its own, and `rust_tool_sources` names them.
+    native.filegroup(
+        name = name + "_sources",
+        srcs = native.glob(["**/*.rs"], exclude = ["testdata/**"]),
+        visibility = ["//visibility:public"],
+    )
 
     # An argument that the caller left unset stays out of the call, so that a target renders as it did before the
     # argument existed.

@@ -282,7 +282,7 @@ What a session cannot measure yet:
 ## Verification
 
 ```bash
-(cd community && ./bazel.cmd test //tools/vm/... //tools/bt/...)
+(cd community && ./bazel.cmd test //tools/vm/... //tools/bt/... //build/rust-tools:duplicate-code_test)
 ./bazel.cmd test @community//tools/vm/... //plugins/air/tests/integration/vm-contract/...
 ./bazel.cmd build @community//tools/vm:vm-guest-agent-linux-arm64 @community//tools/vm:air-trace-record-linux-arm64
 ./bazel.cmd build @community//tools/vm:vm-guest-agent-linux-x86_64 @community//tools/vm:air-trace-record-linux-x86_64

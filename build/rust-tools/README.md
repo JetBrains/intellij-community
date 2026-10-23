@@ -30,6 +30,9 @@ follow it.
   `wrapper` argument names the binary. A workspace gives the rule to the macro core as its test rule.
 - `libtest-junit-wrapper/`: the default wrapper binary, a `rust_tool_binary` over the crates of `@ddt`. Its `e2e/`
   test runs a fixture with two failed tests and compares the report with `expected-report.xml`.
+- `.jscpd.json`: the jscpd configuration of the copy-paste gate over the community workspaces: BT, the Air UI-lane
+  tooling, yonder, the dev-dist tools, this directory and `community/tools/jscpd-test`. The thresholds are those of
+  the Air gate, 50 tokens and 5 lines, and there is no baseline.
 
 Cargo inherits `[lints]` inside one workspace only. There is no include across workspaces, and rules_rs reads the
 tables from the workspace `Cargo.toml`, not from `.cargo/config.toml`. rustfmt and clippy also find `rustfmt.toml` and
@@ -52,6 +55,12 @@ equal to the sources.
    `closure.txt`. `rust_tool_crate` declares it with `closure = True`.
 9. A `README.md` with the crate map and the gates.
 10. An `API.md` for each crate under the subset rule, with a table of the input that the crate refuses.
+11. No copy-paste clone. `//build/rust-tools:duplicate-code_test`, a `jscpd_test` of `community/tools/jscpd-test`,
+    scans every crate of a hub that `rust_tool_sources` names, through the `<crate>_sources` filegroup of the macro
+    core. Remove a clone by an extraction: a shared helper, a table test, a shared fake. A copy that must stay gets
+    the clone markers of jscpd, `// jscpd:ignore-start <reason>` and `// jscpd:ignore-end`, and the reason names the
+    kept copy and why it stays, in three words or more. A layout change that only hides a clone below the threshold
+    does not remove it.
 
 ### Where each workspace stands
 
@@ -61,7 +70,7 @@ equal to the sources.
 | BT | None. BT has no Bazel action tool, so it has no closure test. |
 | Air UI-lane tooling | None. |
 | yonder | Item 7: no Windows clippy yet, because the agent does not build on Windows and the client gets it with BT. Item 10: `bins/yonder` has no `API.md` yet. |
-| portal server | Items 4 to 8. The portal Dockerfile builds the server with cargo, and Bazel does not build it. The gates are `cargo fmt --check`, `cargo clippy --all-targets` and `cargo test` in its directory, and `sync.mjs --check`. |
+| portal server | Items 4 to 8, and item 11, because the gate scans only the community workspaces. The portal Dockerfile builds the server with cargo, and Bazel does not build it. The gates are `cargo fmt --check`, `cargo clippy --all-targets` and `cargo test` in its directory, and `sync.mjs --check`. |
 
 ## The Bazel macro core
 
@@ -101,7 +110,8 @@ Each workspace keeps a thin binding with its own signature:
 ```sh
 bun community/build/rust-tools/sync.mjs --check            # exit 1 when a copy differs or is missing
 node --test community/build/rust-tools/sync.test.mjs
-cd community && ./bazel.cmd test //build/rust-tools/...     # the tables of @ddt, @bt, @avl and @yonder are equal
+cd community && ./bazel.cmd test //build/rust-tools/...     # the equal tables of the hubs, and no copy-paste clone
+./community/tools/jscpd.cmd -c community/build/rust-tools/.jscpd.json --reporters ai --exit-code 1   # the same scan
 ./bazel.cmd test //build/dev-dist-tools:lints_equal_test     # the same tables from the ultimate root
 cargo fmt --check && cargo clippy --all-targets             # in each workspace directory of manifestPaths
 ```
@@ -147,6 +157,8 @@ workspaces, and under cargo to every workspace that has the copy.
    `COMMUNITY_WORKSPACE_LINTS` of `defs.bzl`. An ultimate hub goes into `//build/dev-dist-tools:lints_equal_check` of
    the ultimate root.
 7. Run `cargo fmt` once over the workspace, in a commit without other changes.
+8. Add the `DEP_DATA` of the hub to `rust_tool_sources` of `duplicate-code_test` in `BUILD.bazel`, and the workspace
+   directory to `path` of `.jscpd.json`. Remove the clones that the test then finds.
 
 ## The idioms
 

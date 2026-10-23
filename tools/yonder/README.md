@@ -31,4 +31,5 @@ connection follows the output again from the last offset it saw.
 ```sh
 cargo fmt --check && cargo clippy --all-targets && cargo test      # in this directory
 cd community && ./bazel.cmd test //tools/yonder/...
+cd community && ./bazel.cmd test //build/rust-tools:duplicate-code_test   # no copy-paste clone in the Rust tools
 ```
