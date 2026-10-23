@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -26,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Utility class which holds collection of font families and theirs sizes.
@@ -40,7 +42,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   private final @NotNull List<String> myRealFontFamilies = new ArrayList<>();
   private @Nullable String myRegularSubFamily;
   private @Nullable String myBoldSubFamily;
-  private final @NotNull HashSet<@NotNull String> myCharacterVariants = new HashSet<>();
+  private @Unmodifiable @NotNull Set<@NotNull String> myCharacterVariants = Set.of();
 
   private boolean myUseLigatures;
   private float myLineSpacing = DEFAULT_LINE_SPACING;
@@ -75,7 +77,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
     myUseLigatures = false;
     myRegularSubFamily = null;
     myBoldSubFamily = null;
-    myCharacterVariants.clear();
+    myCharacterVariants = Set.of();
     notifyStateChanged();
   }
 
@@ -125,7 +127,9 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   private void logSizeChangeIfNeeded(float size) {
     if (!LOG.isDebugEnabled()) return;
-    EditorColorsManager colorsManager = ApplicationManager.getApplication().getServiceIfCreated(EditorColorsManager.class);
+    Application application = ApplicationManager.getApplication();
+    if (application == null) return;
+    EditorColorsManager colorsManager = application.getServiceIfCreated(EditorColorsManager.class);
     if (colorsManager == null || colorsManager.getGlobalScheme().getFontPreferences() != this) return;
 
     LOG.debug("Will set size %s to global font (presentationMode=%b)".formatted(size, UISettings.getInstance().getPresentationMode()));
@@ -164,7 +168,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
    */
   @Override
   public @NotNull @NlsSafe String getFontFamily() {
-    return myEffectiveFontFamilies.isEmpty() ? DEFAULT_FONT_NAME : myEffectiveFontFamilies.get(0);
+    return myEffectiveFontFamilies.isEmpty() ? DEFAULT_FONT_NAME : myEffectiveFontFamilies.getFirst();
   }
 
   @Override
@@ -308,24 +312,27 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   }
 
   @Override
-  public @NotNull Set<@NotNull String> getCharacterVariants() {
+  public @Unmodifiable @NotNull Set<@NotNull String> getCharacterVariants() {
     return myCharacterVariants;
   }
 
   @Override
   public void setCharacterVariants(@Unmodifiable @NotNull Set<@NotNull String> variants) {
-    myCharacterVariants.clear();
-    myCharacterVariants.addAll(variants);
+    // A persisted state can hold a null element, for example after a manual edit of the settings file
+    //noinspection ConstantValue
+    myCharacterVariants = variants.stream().filter(Objects::nonNull).collect(Collectors.toUnmodifiableSet());
     notifyStateChanged();
   }
 
   @Override
   public void setCharacterVariant(@NotNull String variant, boolean enabled) {
+    Set<String> variants = new HashSet<>(myCharacterVariants);
     if (enabled) {
-      myCharacterVariants.add(variant);
+      variants.add(variant);
     } else {
-      myCharacterVariants.remove(variant);
+      variants.remove(variant);
     }
+    myCharacterVariants = Set.copyOf(variants);
     notifyStateChanged();
   }
 }

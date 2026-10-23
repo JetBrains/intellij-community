@@ -22,8 +22,11 @@ import org.junit.Test;
 import java.awt.GraphicsEnvironment;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 
 public class FontPreferencesTest {
@@ -88,6 +91,42 @@ public class FontPreferencesTest {
                Arrays.asList(fontName),
                fontName,
                fontName, null);
+  }
+
+  @Test
+  public void testCharacterVariantsAreUnmodifiableSnapshot() {
+    myPreferences.setCharacterVariant("zero", true);
+    Set<String> variants = myPreferences.getCharacterVariants();
+    myPreferences.setCharacterVariant("ss01", true);
+    assertEquals(Set.of("zero"), variants);
+    assertEquals(Set.of("zero", "ss01"), myPreferences.getCharacterVariants());
+    //noinspection DataFlowIssue
+    assertThrows(UnsupportedOperationException.class, () -> variants.add("cv01"));
+  }
+
+  @Test
+  public void testSetCharacterVariantsCopiesTheSet() {
+    Set<String> source = new HashSet<>(Set.of("zero"));
+    myPreferences.setCharacterVariants(source);
+    source.add("ss01");
+    assertEquals(Set.of("zero"), myPreferences.getCharacterVariants());
+  }
+
+  @Test
+  public void testSetCharacterVariantsDropsNullElement() {
+    Set<String> withNull = new HashSet<>();
+    withNull.add("zero");
+    withNull.add(null);
+    myPreferences.setCharacterVariants(withNull);
+    assertEquals(Set.of("zero"), myPreferences.getCharacterVariants());
+  }
+
+  @Test
+  public void testCopyToCopiesCharacterVariants() {
+    myPreferences.setCharacterVariants(Set.of("zero", "ss01"));
+    FontPreferencesImpl copy = new FontPreferencesImpl();
+    myPreferences.copyTo(copy);
+    assertEquals(Set.of("zero", "ss01"), copy.getCharacterVariants());
   }
 
   private void checkState(java.util.List<String> expectedRealFontFamilies,
