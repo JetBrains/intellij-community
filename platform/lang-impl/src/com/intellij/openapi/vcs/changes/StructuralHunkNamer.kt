@@ -255,6 +255,8 @@ object StructuralHunkNamer {
     /**
      * The innermost changed elements on lines `[from, to)`. A container counts when the hunk changes its header: the lines before its first
      * child. A comment between two children is not a change of the container.
+     *
+     * Each call visits all elements of the side. So the names of all hunks of a file cost the hunk count times the element count.
      */
     private fun changedElements(side: Side, elements: List<Element>, from: Int, to: Int): List<Element> {
       if (from >= to) return emptyList()
