@@ -1,18 +1,18 @@
 //! `air-trace teamcity-publish`: the trace bundles of a Bazel test run as one TeamCity archive artifact,
-//! `air-traces.zip`. It holds the trace viewer, a listing and one zip for each bundle, and each test links to its
-//! trace.
+//! `air-traces.zip`. It holds a listing and one zip for each bundle, and each test links to its trace on the hosted
+//! site.
 //!
 //! It runs as a build step after `bazel test`. A Bazel test reports through its JUnit XML, and a service message of a
 //! test does not reach TeamCity. The step reads every `test.xml` under the testlogs, and the bundles of the
 //! `test.outputs` beside it. These are the directory `air-traces/` and the zip `outputs.zip`, an inner zip included.
 //! Each bundle becomes the zip `<lane>/<runId>/<TestClass>/<scenario>.zip` of the archive, with the media stored. The
-//! step prints the `testMetadata` of its test: the trace and the viewer page of the trace. For a failed scenario they
+//! step prints the `testMetadata` of its test: the trace and the trace page of the site. For a failed scenario they
 //! also name the video and the failure picture. The test name is the one TeamCity took from the XML, `<classname>.<name>`.
 //!
 //! TeamCity redirects a loose artifact to a signed address where a sibling file is refused. An entry of an archive
-//! artifact is served by TeamCity itself, with byte ranges and beside its siblings. So the archive holds the viewer
-//! page `index.html`, the listing `runs.json` and the zips, and the step publishes it as one file. Only the video and
-//! the failure picture of a failed scenario are loose files in `air-traces-failed/`, so the Tests tab shows them.
+//! artifact is served by TeamCity itself, with byte ranges and beside its siblings. So the archive holds the listing
+//! `runs.json` and the zips, and the step publishes it as one file. Only the video and the failure picture of a failed
+//! scenario are loose files in `air-traces-failed/`, so the Tests tab shows them.
 //!
 //! The lane is the directory of the `test.xml`: the Bazel target's name, such as `ui_lane_test`. A shard or run
 //! directory below it keeps its target's name in front, such as `ui_lane_test/shard_1_of_2`.
@@ -20,14 +20,15 @@
 //! The listing `runs.json` lists the published bundles as `GET /__air/runs` of `air-trace serve` lists bundles, with
 //! the server's own types. Each scenario carries its `zip`, relative to the listing, and is a zip at that path in its
 //! `source` and its id. On TeamCity, each run names the build as its `origin`, from the agent's property files
-//! ([teamcity]). The viewer page is the one of `--viewer`, or one that the step builds in the checkout ([viewer]).
-//! Each test links to `air-traces.zip!/index.html#/trace?zip=<zip>`. The link needs both the viewer and the build.
+//! ([teamcity]). Each test links to the CI trace page of the site, `<site>/ci/<buildId>/trace?zip=<zip>`
+//! ([ci_trace_url]), and the build log names the CI page of the build. The portal of the site reads
+//! `air-traces.zip!/runs.json` and the zips of the build from TeamCity. The links need the build.
 //!
 //! A testlogs tree without bundles prints nothing and writes nothing. Each problem is a line on the standard error and
 //! a warning `message` on the standard output. A problem is no testlogs, a missing testlogs directory, or an output
-//! that does not read. A bundle that cannot be packed, a missing viewer, and build properties that do not read are
-//! problems too. The rest still publishes, and the step answers 0, so it never turns a build red. Only a usage error
-//! of the command line answers 2.
+//! that does not read. A bundle that cannot be packed and build properties that do not read are problems too. The rest
+//! still publishes, and the step answers 0, so it never turns a build red. Only a usage error of the command line
+//! answers 2.
 //!
 //! On TeamCity the step publishes only the tests of this build ([teamcity::Build::start]). It also empties its output
 //! first. So a test or a zip of an earlier build on the agent does not publish again.
@@ -38,21 +39,20 @@ use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use avl_report::teamcity::{Messages, PublishedTrace, TRACES_ARTIFACT_DIR, is_build_step, warning};
+use avl_report::teamcity::{Messages, PublishedTrace, TRACES_ARTIFACT_DIR, is_build_step, log_message, warning};
 use avl_trace::bundle::{PARTIAL_SUFFIX, ROOT_DIR_NAME, VIDEO_FILE, bundle_path};
 use avl_trace_tools::artifacts::{Stems, failed_target, failure_picture, testlogs_lane};
 use avl_trace_tools::discover::{
     Bundle, Location, Options, Origin, Root, RootKind, RootState, Scanner, Source, SourceKind, Status, Summary, bundle_id,
 };
 use avl_trace_tools::pack::{PackOptions, Skipped, archive, pack, pack_zip_bundle};
+use avl_trace_tools::viewer::{CI_SITE, ci_build_url, ci_trace_url};
 
 use crate::serve::{Runs, Scenario, group_runs, listed};
 use crate::{Exit, Refusal, report, usage};
 use teamcity::Build;
-use viewer::{Tools, VIEWER_PAGE, ViewerSource, copy_page, viewer_dir, viewer_source};
 
 mod teamcity;
-mod viewer;
 
 /// `air-trace teamcity-publish`'s command line.
 #[derive(clap::Args, Clone, Debug, PartialEq, Eq)]
@@ -64,22 +64,13 @@ pub(crate) struct PublishArgs {
     /// Where air-traces.zip, its parts and the loose files are written (default <workspace>/out/air-traces-publish).
     #[arg(long, value_name = "DIR")]
     pub out: Option<PathBuf>,
-    /// The built trace viewer, a directory with the one file index.html, which goes into air-traces.zip. Without it, the
-    /// step builds the viewer in the checkout with `pnpm run build:viewer`, within 10 minutes. Without a viewer, the
-    /// archive holds the bundles and runs.json alone, and the tests get no viewer link.
-    #[arg(long, value_name = "DIR")]
-    pub viewer: Option<PathBuf>,
+    /// The hosted site whose CI pages the links of the tests open, such as a staging portal.
+    #[arg(long, value_name = "URL", env = SITE_VARIABLE, default_value = CI_SITE)]
+    pub site: String,
     /// Publish only the tests whose test.xml was written at this time or later, such as 2026-10-21T08:00:00Z. The
     /// default is the variable AIR_TRACE_SINCE, which the first step of a TeamCity build sets.
     #[arg(long, value_name = "TIME", value_parser = parse_since)]
     pub since: Option<jiff::Timestamp>,
-    /// The node that builds the viewer, with --pnpm; `none` builds no viewer. Without the two, the step asks Bazel for
-    /// them, except on TeamCity, where it starts no Bazel and builds no viewer.
-    #[arg(long, value_name = "FILE", env = "AIR_TRACE_NODE")]
-    pub node: Option<PathBuf>,
-    /// The pnpm that builds the viewer, with --node; `none` builds no viewer.
-    #[arg(long, value_name = "FILE", env = "AIR_TRACE_PNPM")]
-    pub pnpm: Option<PathBuf>,
     /// Once air-traces.zip is published, remove the bundle directories that it holds from the testlogs. On TeamCity
     /// the step does so always, so the artifact bazel.logs.zip does not hold them a second time.
     #[arg(long)]
@@ -92,6 +83,9 @@ fn parse_since(value: &str) -> Result<jiff::Timestamp, String> {
         .parse()
         .map_err(|error| format!("{value} is not a time such as 2026-10-21T08:00:00Z: {error}"))
 }
+
+/// The variable that names the site when `--site` does not.
+const SITE_VARIABLE: &str = "AIR_TRACE_SITE";
 
 /// The variable that names the start of the build when `--since` does not. The first step of a TeamCity build sets it
 /// to the time of the agent, such as with `date -u +%Y-%m-%dT%H:%M:%SZ`. The test.xml files have the times of the
@@ -143,7 +137,8 @@ pub(crate) const ARCHIVE: &str = "air-traces.zip";
 pub(crate) struct Publish<'a> {
     pub testlogs: &'a [PathBuf],
     pub out: &'a Path,
-    pub viewer: &'a ViewerSource,
+    /// The hosted site of the links, such as [CI_SITE].
+    pub site: &'a str,
     /// The TeamCity build that the step runs in, or `None` off TeamCity.
     pub build: Option<&'a Build>,
     /// The time from which a `test.xml` counts, or `None` for all. An older one is a test of an earlier build.
@@ -179,7 +174,7 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
     }
     let out = match args.out.clone().map_or_else(
         || {
-            let base = workspace.clone().map_or_else(std::env::current_dir, Ok)?;
+            let base = workspace.map_or_else(std::env::current_dir, Ok)?;
             Ok(base.join("out").join("air-traces-publish"))
         },
         |out| given(&out),
@@ -187,16 +182,12 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
         Ok(out) => out,
         Err(error) => return report(stderr, "teamcity-publish", &usage(format!("--out: {error}"))),
     };
-    let viewer_dir = match args.viewer.as_deref().map(given).transpose() {
-        Ok(viewer) => viewer,
-        Err(error) => return report(stderr, "teamcity-publish", &usage(format!("--viewer: {error}"))),
-    };
     let variable = |name: &str| std::env::var(name).ok();
     let build = Build::of_step(&variable).unwrap_or_else(|reason| {
         let _ = warn(
             stdout,
             stderr,
-            &format!("{reason}; so the runs name no build and the tests get no viewer link"),
+            &format!("{reason}; so the runs name no build and the tests get no trace link"),
         );
         None
     });
@@ -215,16 +206,10 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
             None
         }
     };
-    let tools = Tools {
-        node: args.node.clone().filter(|node| !node.as_os_str().is_empty()),
-        pnpm: args.pnpm.clone().filter(|pnpm| !pnpm.as_os_str().is_empty()),
-        on_team_city,
-    };
-    let viewer = viewer_source(viewer_dir, workspace, tools);
     let job = Publish {
         testlogs: &testlogs,
         out: &out,
-        viewer: &viewer,
+        site: &args.site,
         build: build.as_ref(),
         since,
         out_owned: args.out.is_none(),
@@ -282,7 +267,7 @@ struct Beside {
     bundles: Vec<Bundle>,
 }
 
-/// Publishes the bundles under each testlogs directory into out, with runs.json and the viewer beside them.
+/// Publishes the bundles under each testlogs directory into out, with runs.json beside them.
 pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dyn Write) -> Result<(), Refusal> {
     let write_failed = |error: io::Error| Refusal::new("output_failed", Exit::Broken, error.to_string());
     let out = job.out;
@@ -375,21 +360,6 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
 
     // The archive is assembled in `<out>/air-traces/`, which holds its entries as they lie in it.
     let staging = out.join(TRACES_ARTIFACT_DIR);
-    let page = match viewer_dir(job.viewer, stderr)
-        .map_err(write_failed)?
-        .and_then(|dir| copy_page(&dir, &staging))
-    {
-        Ok(page) => Some(page),
-        Err(reason) => {
-            warn(
-                stdout,
-                stderr,
-                &format!("no viewer: {reason}; so {ARCHIVE} holds the bundles and {RUNS_FILE} only"),
-            )
-            .map_err(write_failed)?;
-            None
-        }
-    };
 
     let mut messages = Messages::default();
     let mut stems = Stems::default();
@@ -488,7 +458,7 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
                 (None, None)
             };
             let trace = format!("{ARCHIVE}!/{relative}");
-            let link = job.build.filter(|_| page.is_some()).map(|build| build.viewer_link(&relative));
+            let link = job.build.map(|build| ci_trace_url(job.site, &build.id, &relative));
             lines.extend(messages.published(&PublishedTrace {
                 trace: &trace,
                 test_class: &bundle.test_class,
@@ -527,8 +497,8 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
         .iter()
         .map(|root| root.problems.len() + usize::from(root.error.is_some()))
         .sum::<usize>();
-    // The page first, then the listing, then each bundle zip in the order it was published.
-    let mut entries: Vec<(String, PathBuf)> = page.into_iter().map(|page| (VIEWER_PAGE.to_owned(), page)).collect();
+    // The listing first, then each bundle zip in the order it was published.
+    let mut entries: Vec<(String, PathBuf)> = Vec::new();
     match write_listing(&listing, &staging) {
         Ok(file) => entries.push((RUNS_FILE.to_owned(), file)),
         Err(reason) => {
@@ -542,6 +512,10 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
         Ok(bytes) => {
             for line in messages.artifact_file(&archived.to_string_lossy()) {
                 writeln!(stdout, "{line}").map_err(write_failed)?;
+            }
+            if let Some(build) = job.build {
+                let page = ci_build_url(job.site, &build.id);
+                writeln!(stdout, "{}", log_message(&format!("The traces of this build: {page}"))).map_err(write_failed)?;
             }
             say(stderr, &format!("{ARCHIVE} holds {} entries in {bytes} bytes", entries.len())).map_err(write_failed)?;
             if job.remove_packed {

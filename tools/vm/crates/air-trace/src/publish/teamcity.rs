@@ -9,12 +9,8 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::Path;
 
-use super::ARCHIVE;
-use super::viewer::VIEWER_PAGE;
-
 use avl_report::teamcity::is_build_step;
 use avl_trace_tools::discover::Origin;
-use avl_trace_tools::viewer::static_trace_hash;
 
 /// The variable of the agent that names the file of the build's properties.
 const BUILD_PROPERTIES_FILE: &str = "TEAMCITY_BUILD_PROPERTIES_FILE";
@@ -62,7 +58,7 @@ impl Build {
     pub(crate) fn server_fallback(&self, variable: &dyn Fn(&str) -> Option<String>) -> Option<String> {
         build_url_root(variable, &self.id).is_none().then(|| {
             format!(
-                "{BUILD_URL} does not name the page of build {}, so the links and the origin use teamcity.serverUrl {}",
+                "{BUILD_URL} does not name the page of build {}, so the origin uses teamcity.serverUrl {}",
                 self.id, self.server
             )
         })
@@ -75,18 +71,6 @@ impl Build {
             id: self.id.clone(),
             url: Some(format!("{}/buildConfiguration/{}/{}", self.server, self.build_type_id, self.id)),
         }
-    }
-
-    /// The page of the published viewer that opens the zip `zip`: `index.html` with the [static_trace_hash] of the zip.
-    /// The zip is a path relative to the artifact directory of the traces.
-    pub(crate) fn viewer_link(&self, zip: &str) -> String {
-        format!(
-            "{}/repository/download/{}/{}:id/{ARCHIVE}!/{VIEWER_PAGE}{}",
-            self.server,
-            self.build_type_id,
-            self.id,
-            static_trace_hash(zip)
-        )
     }
 }
 

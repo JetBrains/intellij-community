@@ -94,14 +94,15 @@ fn teamcity_publish_answers_0_without_testlogs_and_2_for_a_usage_error() {
     for usage in [
         &["teamcity-publish", "--no-such-flag"][..],
         &["teamcity-publish", "--since", "yesterday"],
+        &["teamcity-publish", "--viewer", "out/air-trace-viewer"],
     ] {
         let (exit, _, stderr) = answer(usage);
         assert_eq!(exit, Some(2), "{usage:?}: {stderr}");
     }
 }
 
-/// A testlogs tree with one bundle, a checkout whose `bazel.cmd` writes its arguments into `bazel-calls`, and an
-/// output directory, under one temporary directory.
+/// A testlogs tree with one bundle, a checkout with the docs project and a `bazel.cmd` that writes its arguments into
+/// `bazel-calls`, and an output directory, under one temporary directory.
 #[cfg(unix)]
 fn publish_fixture() -> tempfile::TempDir {
     use std::os::unix::fs::PermissionsExt;
@@ -129,7 +130,7 @@ fn publish_fixture() -> tempfile::TempDir {
 }
 
 /// Runs `teamcity-publish` over the fixture with the variables given, and no other variable of TeamCity, Bazel or the
-/// viewer tools. Answers the exit and the standard error.
+/// step. Answers the exit and the standard error.
 #[cfg(unix)]
 fn publish_with(fixture: &std::path::Path, variables: &[(&str, &str)]) -> (Option<i32>, String) {
     let mut command = Command::new(air_trace());
@@ -145,8 +146,7 @@ fn publish_with(fixture: &std::path::Path, variables: &[(&str, &str)]) -> (Optio
         "TEAMCITY_BUILD_PROPERTIES_FILE",
         "BUILD_URL",
         "BUILD_WORKING_DIRECTORY",
-        "AIR_TRACE_NODE",
-        "AIR_TRACE_PNPM",
+        "AIR_TRACE_SITE",
         "AIR_TRACE_SINCE",
         "XML_OUTPUT_FILE",
     ] {
@@ -157,43 +157,25 @@ fn publish_with(fixture: &std::path::Path, variables: &[(&str, &str)]) -> (Optio
     (output.status.code(), String::from_utf8(output.stderr).unwrap())
 }
 
-/// The variables of the step before the publish name the tools of the viewer build, and `none` builds no viewer with
-/// one warning. On TeamCity without them, the step starts no Bazel and builds no viewer. A local step without them
-/// asks the Bazel of the checkout, as `serve` does.
+/// The step builds no viewer and starts no Bazel, also in a checkout with the docs project and off TeamCity. The
+/// archive holds `runs.json` and the zip of the bundle, and no viewer page.
 #[cfg(unix)]
 #[test]
-fn teamcity_publish_takes_its_tools_from_the_variables_and_starts_no_bazel_on_team_city() {
-    let fixture = publish_fixture();
-    let calls = fixture.path().join("bazel-calls");
-
-    let (exit, stderr) = publish_with(fixture.path(), &[("AIR_TRACE_NODE", "none"), ("AIR_TRACE_PNPM", "none")]);
-    assert_eq!(exit, Some(0), "{stderr}");
-    assert!(
-        stderr.contains("no viewer: AIR_TRACE_NODE or AIR_TRACE_PNPM is none, so no node and no pnpm build the viewer"),
-        "{stderr}"
-    );
-    assert!(!calls.exists(), "no Bazel runs: {stderr}");
-
-    let (exit, stderr) = publish_with(fixture.path(), &[]);
-    assert_eq!(exit, Some(0), "{stderr}");
-    assert!(
-        stderr.contains("1 bundle zip(s) from 1 test.xml"),
-        "the fixture has a bundle: {stderr}"
-    );
-    let asked = std::fs::read_to_string(&calls).unwrap_or_default();
-    assert!(
-        asked.starts_with("cquery "),
-        "a local step asks the Bazel of the checkout: {asked:?} {stderr}"
-    );
-    std::fs::remove_file(&calls).unwrap();
-
-    let (exit, stderr) = publish_with(fixture.path(), &[("TEAMCITY_VERSION", "2026.3 EAP (build 265562)")]);
-    assert_eq!(exit, Some(0), "{stderr}");
-    assert!(
-        stderr.contains("no viewer: on TeamCity the step starts no Bazel to find node and pnpm"),
-        "{stderr}"
-    );
-    assert!(!calls.exists(), "no Bazel runs on TeamCity: {stderr}");
+fn teamcity_publish_builds_no_viewer_and_starts_no_bazel() {
+    for variables in [&[][..], &[("TEAMCITY_VERSION", "2026.3 EAP (build 265562)")]] {
+        let fixture = publish_fixture();
+        let (exit, stderr) = publish_with(fixture.path(), variables);
+        assert_eq!(exit, Some(0), "{stderr}");
+        assert!(stderr.contains("1 bundle zip(s) from 1 test.xml"), "{stderr}");
+        assert!(!stderr.contains("viewer"), "{stderr}");
+        assert!(!fixture.path().join("bazel-calls").exists(), "no Bazel runs: {stderr}");
+        let archive = std::fs::File::open(fixture.path().join("out/air-traces.zip")).unwrap();
+        let archive = zip::ZipArchive::new(archive).unwrap();
+        let names: Vec<&str> = archive.file_names().collect();
+        assert_eq!(names.len(), 2, "{names:?}");
+        assert_eq!(names[0], "runs.json", "{names:?}");
+        assert!(names[1].ends_with(".zip"), "{names:?}");
+    }
 }
 
 /// Off TeamCity the testlogs keep their bundles, unless `--remove-packed` asks. On TeamCity the step removes the
@@ -207,10 +189,8 @@ fn teamcity_publish_removes_the_packed_bundles_on_team_city_or_when_asked() {
             &avl_trace::bundle::bundle_path("iter-1", "AirComposerUiTest", "sends a prompt"),
         )
     };
-    let none = [("AIR_TRACE_NODE", "none"), ("AIR_TRACE_PNPM", "none")];
-
     let local = publish_fixture();
-    let (exit, stderr) = publish_with(local.path(), &none);
+    let (exit, stderr) = publish_with(local.path(), &[]);
     assert_eq!(exit, Some(0), "{stderr}");
     assert!(
         bundle(&local).join(avl_trace::bundle::MANIFEST_FILE).is_file(),
@@ -224,7 +204,6 @@ fn teamcity_publish_removes_the_packed_bundles_on_team_city_or_when_asked() {
         .arg(asked.path().join("testlogs"))
         .arg("--out")
         .arg(asked.path().join("out"))
-        .envs(none)
         .env_remove("TEAMCITY_VERSION")
         .env_remove("AIR_TRACE_SINCE")
         .env_remove("BUILD_WORKSPACE_DIRECTORY")
@@ -237,7 +216,7 @@ fn teamcity_publish_removes_the_packed_bundles_on_team_city_or_when_asked() {
     assert!(!bundle(&asked).exists(), "{stderr}");
 
     let on_team_city = publish_fixture();
-    let (exit, stderr) = publish_with(on_team_city.path(), &[none[0], none[1], ("TEAMCITY_VERSION", "2026.3")]);
+    let (exit, stderr) = publish_with(on_team_city.path(), &[("TEAMCITY_VERSION", "2026.3")]);
     assert_eq!(exit, Some(0), "{stderr}");
     assert!(stderr.contains("removed 1 packed bundle(s) with "), "{stderr}");
     assert!(!bundle(&on_team_city).exists(), "{stderr}");
@@ -248,14 +227,10 @@ fn teamcity_publish_removes_the_packed_bundles_on_team_city_or_when_asked() {
 #[cfg(unix)]
 #[test]
 fn teamcity_publish_takes_the_start_of_the_build_from_air_trace_since() {
-    let none = [("AIR_TRACE_NODE", "none"), ("AIR_TRACE_PNPM", "none")];
     let on_team_city = ("TEAMCITY_VERSION", "2026.3");
 
     let later = publish_fixture();
-    let (exit, stderr) = publish_with(
-        later.path(),
-        &[none[0], none[1], on_team_city, ("AIR_TRACE_SINCE", "2999-01-01T00:00:00Z")],
-    );
+    let (exit, stderr) = publish_with(later.path(), &[on_team_city, ("AIR_TRACE_SINCE", "2999-01-01T00:00:00Z")]);
     assert_eq!(exit, Some(0), "{stderr}");
     assert!(
         stderr.contains("a test.xml from 2999-01-01T00:00:00Z on counts, as AIR_TRACE_SINCE says"),
@@ -268,7 +243,7 @@ fn teamcity_publish_takes_the_start_of_the_build_from_air_trace_since() {
     assert!(stderr.contains("0 bundle zip(s) from 1 test.xml file(s)"), "{stderr}");
 
     let unset = publish_fixture();
-    let (exit, stderr) = publish_with(unset.path(), &[none[0], none[1], on_team_city]);
+    let (exit, stderr) = publish_with(unset.path(), &[on_team_city]);
     assert_eq!(exit, Some(0), "{stderr}");
     assert_eq!(
         stderr

@@ -530,8 +530,8 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 - `air-trace teamcity-publish` is the step after `bazel test` on TeamCity. It reads each `test.xml` under the
   testlogs, and the bundles of `test.outputs/air-traces/` and `test.outputs/outputs.zip` beside it. Each bundle
   becomes the zip `<lane>/<runId>/<TestClass>/<scenario>.zip` of the archive `air-traces.zip`. The lane is the Bazel
-  target with its shard directory. The step prints the `testMetadata` of the test: the viewer link, and the
-  `artifact` named `trace`, `air-traces.zip!/<lane>/<runId>/<TestClass>/<scenario>.zip`. The test name is
+  target with its shard directory. The step prints the `testMetadata` of the test: the `link` named `trace viewer`,
+  and the `artifact` named `trace`, `air-traces.zip!/<lane>/<runId>/<TestClass>/<scenario>.zip`. The test name is
   `<classname>.<name>` of the XML beside the bundle, and the messages carry no flow. Two bundles whose names sanitize
   to one file get `<scenario>.zip` and `<scenario>.2.zip`, and stderr says so. Testlogs without bundles print nothing
   and write nothing.
@@ -541,9 +541,9 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 
 - The step publishes one archive artifact, `air-traces.zip`, with no target, so TeamCity keeps it as it is. TeamCity
   redirects a loose artifact to a signed address, where a sibling file is refused. It serves an entry of an archive
-  itself, with byte ranges. The archive holds `index.html`, the viewer page, then `runs.json`, then each bundle zip in
-  the order of the metadata. The page and the listing are deflated, and the zips are stored. Each entry has one time
-  and one mode, so two publishes of one testlogs tree write one archive. No bundle zip is a loose artifact.
+  itself, with byte ranges. The archive holds `runs.json`, then each bundle zip in the order of the metadata. It holds
+  no viewer page. The listing is deflated, and the zips are stored. Each entry has one time and one mode, so two
+  publishes of one testlogs tree write one archive. No bundle zip is a loose artifact.
   [@test] ../crates/air-trace/src/publish/tests.rs (`on_team_city_the_listing_names_the_build_and_each_test_links_its_trace`)
   [@test] ../crates/air-trace/src/publish/tests.rs (`the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests`)
   [@test] ../crates/avl-trace-tools/src/pack/tests.rs (`an_archive_keeps_its_order_and_stores_its_zips`)
@@ -571,7 +571,7 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 
 - The step never turns a build red. Each problem is a line on stderr and a `message` with the status `WARNING` on
   stdout. A problem is no testlogs, a missing testlogs directory, or an output that does not read. A bundle that does
-  not pack, no viewer, and build properties that do not read are problems too. The rest still publishes, and the exit
+  not pack and build properties that do not read are problems too. The rest still publishes, and the exit
   is 0. Only a usage error of the command line exits 2.
   [@test] ../crates/air-trace/src/publish/tests.rs (`testlogs_without_bundles_print_nothing`)
   [@test] ../crates/air-trace/tests/cli.rs (`teamcity_publish_answers_0_without_testlogs_and_2_for_a_usage_error`)
@@ -599,7 +599,7 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   holds files, and then publishes nothing.
   [@test] ../crates/air-trace/src/publish/tests.rs (`the_output_holds_the_files_of_this_run_only`)
 
-- A relative path of `--testlogs`, `--out` or `--viewer` is taken from `BUILD_WORKING_DIRECTORY`, the directory where
+- A relative path of `--testlogs` or `--out` is taken from `BUILD_WORKING_DIRECTORY`, the directory where
   `bazel run` ran. It is not taken from the runfiles tree that the program starts in.
   [@test] ../crates/air-trace/src/publish/tests.rs (`a_relative_path_is_taken_from_the_directory_where_bazel_run_ran`)
 
@@ -611,31 +611,10 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   its bundle at its top.
   [@test] ../crates/air-trace/src/publish/tests.rs (`on_team_city_the_listing_names_the_build_and_each_test_links_its_trace`)
 
-- The viewer is one file, `index.html`, with its scripts, styles and fonts inside. The step puts only that file into
-  the archive. A viewer that is missing, or that holds no `index.html`, is a warning. The archive then holds
-  `runs.json` and the zips.
-  [@test] ../crates/air-trace/src/publish/tests.rs (`without_a_viewer_the_bundles_and_the_listing_publish_alone`)
-
-- The viewer is the directory of `--viewer`. Without it, the step builds the viewer in the checkout that
-  `BUILD_WORKSPACE_DIRECTORY` names, with the node and the pnpm below. It runs `pnpm install
-  --frozen-lockfile` in the kernel and in `plugins/air/docs`, also over an existing `node_modules`, so a changed
-  lockfile takes effect. Then it runs `pnpm run build:viewer`, which writes `out/air-trace-viewer/index.html`. A
-  viewer there that is newer than its sources is not built again. Its sources are the sources of the site and the UI
-  primitives of the genui catalog. The configuration files and the lockfiles of the docs project and of the kernel
-  count too. The output of the build goes to stderr, and stderr says how long the build took. Each step runs in a
-  process group of its own. A build that fails, or that does not end within 10 minutes, is stopped with every process
-  that it started. It is then the reason for no viewer. Without a checkout, or in a checkout without the docs project,
-  there is no viewer.
-  [@test] ../crates/air-trace/src/publish/viewer/tests.rs
-  [@test] ../crates/air-trace/src/serve/tests/service.rs (`the_kernel_is_installed_before_the_project_that_links_it`)
-
-- The node and the pnpm of the viewer build are `--node` and `--pnpm`, or `AIR_TRACE_NODE` and `AIR_TRACE_PNPM`. A
-  step before the publish on TeamCity finds them with the startup options of the build and sets the two variables. A
-  value `none` builds no viewer, with one warning, and so does one tool alone. Without the two, a local step asks
-  `bazel.cmd cquery` of the checkout, as `serve` does. On TeamCity the step never starts a Bazel: without the two it
-  builds no viewer, with one warning.
-  [@test] ../crates/air-trace/src/publish/viewer/tests.rs (`the_viewer_comes_from_the_flag_the_named_tools_or_bazel_but_never_bazel_on_team_city`)
-  [@test] ../crates/air-trace/tests/cli.rs (`teamcity_publish_takes_its_tools_from_the_variables_and_starts_no_bazel_on_team_city`)
+- The step builds no viewer, and it needs no node and no pnpm. It never starts a Bazel, on TeamCity or elsewhere.
+  `--viewer` is a usage error.
+  [@test] ../crates/air-trace/tests/cli.rs (`teamcity_publish_builds_no_viewer_and_starts_no_bazel`)
+  [@test] ../crates/air-trace/tests/cli.rs (`teamcity_publish_answers_0_without_testlogs_and_2_for_a_usage_error`)
 
 - On TeamCity, the step reads the build from the agent's property files: `TEAMCITY_BUILD_PROPERTIES_FILE`, and
   the file of the configuration parameters that `teamcity.configuration.properties.file` names. The build gives each
@@ -644,13 +623,17 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   do not name the build are a line on stderr, and the listing then names no build.
   [@test] ../crates/air-trace/src/publish/teamcity/tests.rs
 
-- With the build and the viewer, each test gets a `link` named `trace viewer`:
-  `<server>/repository/download/<buildTypeId>/<buildId>:id/air-traces.zip!/index.html#/trace?zip=<zip>`. The zip path
-  is encoded as the viewer's `traceHash` writes it: as `URLSearchParams` writes a value, with each `/` kept. Without
-  the build or the viewer, no test gets a link.
-  [@test] ../crates/air-trace/src/publish/teamcity/tests.rs (`the_build_of_a_step_comes_from_the_agent_files`)
+- With the build, each test gets a `link` named `trace viewer` to the CI trace page of the hosted site:
+  `<site>/ci/<buildId>/trace?zip=<zip>`. The build id is the id of the build that runs the step, and the zip is the
+  path of the zip relative to `runs.json`. The zip path is written as `URLSearchParams` writes a value, with each `/`
+  kept. The portal of the site reads `air-traces.zip!/runs.json` and `air-traces.zip!/<zip>` of that build from
+  TeamCity. After the archive is published, one `message` of the build log names the CI page of the build,
+  `<site>/ci/<buildId>`. The site is `--site`, else `AIR_TRACE_SITE`, else `https://ij-void-docs.labs.jb.gg/air`. A
+  staging portal is another site. Without the build, no test gets a link, and the build log names no page.
+  [@test] ../crates/avl-trace-tools/src/viewer/tests.rs (`the_ci_urls_name_the_build_and_the_zip`)
   [@test] ../crates/air-trace/src/publish/tests.rs (`on_team_city_the_listing_names_the_build_and_each_test_links_its_trace`)
-  [@test] ../crates/air-trace/src/publish/tests.rs (`without_a_viewer_the_bundles_and_the_listing_publish_alone`)
+  [@test] ../crates/air-trace/src/publish/tests.rs (`the_links_open_the_site_that_the_step_names`)
+  [@test] ../crates/air-trace/src/publish/tests.rs (`the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests`)
 
 ### The server
 

@@ -10,7 +10,6 @@ use avl_trace_tools::pack::{PackOptions, pack};
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 
-use super::viewer::{NO_CHECKOUT, VIEWER_PAGE};
 use super::*;
 
 fn real(path: &Path) -> PathBuf {
@@ -22,15 +21,12 @@ fn testdata(name: &str) -> PathBuf {
     std::path::absolute(&path).unwrap_or_else(|error| panic!("{}: {error}", path.display()))
 }
 
-/// Publishes the testlogs `root` into `out`, with the stdout and the stderr of the step.
-fn run(root: &Path, out: &Path, viewer: Option<&Path>, build: Option<&Build>) -> (String, String) {
-    let viewer = viewer.map_or(ViewerSource::Missing(NO_CHECKOUT.to_owned()), |dir| {
-        ViewerSource::Built(dir.to_path_buf())
-    });
+/// Publishes the testlogs `root` into `out` with the links to [CI_SITE], with the stdout and the stderr of the step.
+fn run(root: &Path, out: &Path, build: Option<&Build>) -> (String, String) {
     run_job(&Publish {
         testlogs: &[root.to_path_buf()],
         out,
-        viewer: &viewer,
+        site: CI_SITE,
         build,
         since: None,
         out_owned: true,
@@ -50,7 +46,7 @@ fn set_modified(path: &Path, time: SystemTime) {
     fs::File::options().write(true).open(path).unwrap().set_modified(time).unwrap();
 }
 
-/// The output with the temporary directories named `<out>`, `<testlogs>` and `<viewer>`, and `/` for a separator.
+/// The output with the temporary directories named `<out>` and `<testlogs>`, and `/` for a separator.
 fn placeholders(text: &str, pairs: &[(&Path, &str)]) -> String {
     let mut text = text.to_owned();
     for (path, name) in pairs {
@@ -108,15 +104,6 @@ fn files_of(dir: &Path) -> Vec<String> {
         .filter(|entry| entry.file_type().is_file())
         .map(|entry| entry.path().strip_prefix(dir).unwrap().to_string_lossy().replace('\\', "/"))
         .collect()
-}
-
-/// A built viewer: its page, and an asset that the step leaves out, because the viewer is its page alone.
-fn viewer() -> tempfile::TempDir {
-    let viewer = tempfile::tempdir().unwrap();
-    fs::write(viewer.path().join(VIEWER_PAGE), "<!doctype html>").unwrap();
-    fs::create_dir_all(viewer.path().join("assets")).unwrap();
-    fs::write(viewer.path().join("assets/index.js"), "export {}").unwrap();
-    viewer
 }
 
 /// A `test.xml` with one case for each `(class, name)`.
@@ -183,12 +170,12 @@ fn testlogs() -> tempfile::TempDir {
 /// Each bundle is one zip under its lane, run and class in the one archive. It is named by the case of its own XML, so
 /// two lanes of one test class name two tests. A failed bundle links its video and its last picture, published as loose
 /// files. Two scenarios of one sanitized name get two zips, and the second is reported. A lane without outputs prints
-/// nothing. Off TeamCity and without a viewer, the archive holds runs.json and the zips, and no test gets a link.
+/// nothing. The archive holds runs.json first, then the zips. Off TeamCity, no test gets a link.
 #[test]
 fn the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests() {
     let root = testlogs();
     let out = tempfile::tempdir().unwrap();
-    let (stdout, stderr) = run(root.path(), out.path(), None, None);
+    let (stdout, stderr) = run(root.path(), out.path(), None);
     let scanned = Scanner::new(Options::default()).scan(&[Root::new(RootKind::Flag, root.path())]);
     let statuses: BTreeSet<Status> = scanned.bundles.iter().map(|bundle| bundle.status).collect();
     assert_eq!(
@@ -203,28 +190,24 @@ fn the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests() 
     let class_dir = format!("{}/{}", manifest.run_id, manifest.test_class);
     let lines: Vec<&str> = stderr.lines().collect();
     assert_eq!(
-        lines[..2],
-        [
-            "air-trace teamcity-publish: no viewer: no --viewer DIR, and no checkout to build one in; so air-traces.zip \
-             holds the bundles and runs.json only",
-            "air-trace teamcity-publish: <testlogs>/plugins/air/tests/integration/ui/ui_lane_test/test.outputs/air-traces/copies/1: \
-             another bundle has the name a_b.zip, so this one is a_b.2.zip",
-        ],
+        lines[0],
+        "air-trace teamcity-publish: <testlogs>/plugins/air/tests/integration/ui/ui_lane_test/test.outputs/air-traces/copies/1: \
+         another bundle has the name a_b.zip, so this one is a_b.2.zip",
         "{stderr}"
     );
     assert!(
-        lines[2].starts_with("air-trace teamcity-publish: air-traces.zip holds 5 entries in "),
+        lines[1].starts_with("air-trace teamcity-publish: air-traces.zip holds 5 entries in "),
         "{stderr}"
     );
     assert_eq!(
-        lines[3..],
+        lines[2..],
         ["air-trace teamcity-publish: 4 bundle zip(s) from 3 test.xml file(s) into <out>"]
     );
 
     let archived = out.path().join(ARCHIVE);
     assert!(
         listing_of(&archived).starts_with("deflated runs.json\nstored "),
-        "no page without a viewer"
+        "the listing comes first, then the zips"
     );
     let names: Vec<String> = listing_of(&archived)
         .lines()
@@ -250,9 +233,9 @@ fn the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests() 
     let loose: Vec<String> = files_of(&out.path().join(FAILED_DIR));
     assert_eq!(loose.len(), 2, "only the failed scenario has loose files: {loose:?}");
 
-    let (again, _) = run(root.path(), out.path(), None, None);
+    let (again, _) = run(root.path(), out.path(), None);
     let second = tempfile::tempdir().unwrap();
-    run(root.path(), second.path(), None, None);
+    run(root.path(), second.path(), None);
     assert!(
         fs::read(&archived).unwrap() == fs::read(second.path().join(ARCHIVE)).unwrap(),
         "two publishes of one testlogs tree write one archive"
@@ -285,20 +268,19 @@ fn a_bundle_in_both_the_directory_and_the_zip_is_published_once() {
     copy_tree(&example_bundle(), &bundle_file(&outputs.path().join(ROOT_DIR_NAME), &placed));
     pack(outputs.path(), &lane.join(TEST_OUTPUTS).join(OUTPUTS_ZIP), &PackOptions::default()).unwrap();
     let out = tempfile::tempdir().unwrap();
-    let (stdout, stderr) = run(root.path(), out.path(), None, None);
+    let (stdout, stderr) = run(root.path(), out.path(), None);
     assert_eq!(stdout.matches(TRACE_METADATA).count(), 1, "{stdout}");
     assert!(stderr.contains(": 1 bundle zip(s) from 1 test.xml"), "{stderr}");
 }
 
-/// A testlogs tree without bundles prints no message and writes nothing, not even the viewer. A missing testlogs
+/// A testlogs tree without bundles prints no message and writes nothing, not even the listing. A missing testlogs
 /// directory is a warning, and the other directories still publish.
 #[test]
 fn testlogs_without_bundles_print_nothing() {
     let root = tempfile::tempdir().unwrap();
     write_xml(&root.path().join("plugins/other/plain_test"), &[("com.example.PlainTest", "works")]);
     let out = tempfile::tempdir().unwrap();
-    let viewer = viewer();
-    let (stdout, _) = run(root.path(), out.path(), Some(viewer.path()), Some(&build()));
+    let (stdout, _) = run(root.path(), out.path(), Some(&build()));
     assert_eq!(stdout, "");
     assert_eq!(fs::read_dir(out.path()).unwrap().count(), 0);
 
@@ -308,7 +290,7 @@ fn testlogs_without_bundles_print_nothing() {
     let (stdout, stderr) = run_job(&Publish {
         testlogs: &testlogs,
         out: out.path(),
-        viewer: &ViewerSource::Missing(NO_CHECKOUT.to_owned()),
+        site: CI_SITE,
         build: None,
         since: None,
         out_owned: true,
@@ -369,23 +351,20 @@ fn real_path(path: &Path) -> PathBuf {
     real(path)
 }
 
-/// On TeamCity with a viewer, the listing names the build as the origin of each run. The archive holds the page first,
-/// then the listing and the zips. Each test links to the viewer page of its trace in the archive.
+/// On TeamCity, the listing names the build as the origin of each run. The archive holds the listing first, then the
+/// zips, and no viewer page. Each test links to the CI trace page of its zip on the site, and the build log names the
+/// CI page of the build.
 #[test]
 fn on_team_city_the_listing_names_the_build_and_each_test_links_its_trace() {
     let root = testlogs();
     let out = tempfile::tempdir().unwrap();
-    let viewer = viewer();
-    let (stdout, stderr) = run(root.path(), out.path(), Some(viewer.path()), Some(&build()));
+    let (stdout, _) = run(root.path(), out.path(), Some(&build()));
     let names = [(out.path(), "<out>"), (root.path(), "<testlogs>")];
     expect_test::expect_file![testdata("publish-on-team-city.teamcity.txt")].assert_eq(&placeholders(&stdout, &names));
-    assert!(!stderr.contains("no viewer"), "{stderr}");
 
     let archived = out.path().join(ARCHIVE);
     let listed = listing_of(&archived);
     expect_test::expect_file![testdata("publish.archive.txt")].assert_eq(&listed);
-    assert!(!listed.contains("assets"), "the viewer is its page alone: {listed}");
-    assert_eq!(entry_of(&archived, VIEWER_PAGE), b"<!doctype html>");
     let files: Vec<String> = listed.lines().map(|line| line.split_once(' ').unwrap().1.to_owned()).collect();
     // The path of the testlogs as JSON spells it, without its quotes.
     let json_path = serde_json::to_string(&root.path()).unwrap();
@@ -402,44 +381,44 @@ fn on_team_city_the_listing_names_the_build_and_each_test_links_its_trace() {
                     && zip
                         .split('/')
                         .all(|segment| !segment.is_empty() && segment != ".." && segment != "."),
-                "{zip} stays inside the directory of runs.json, as the viewer requires"
+                "{zip} stays inside the directory of runs.json, as the portal requires"
             );
             assert_eq!(scenario["source"]["path"], zip);
+            assert!(
+                stdout.contains(&format!("value='{}']", ci_trace_url(CI_SITE, &build().id, zip))),
+                "the test of {zip} links its trace: {stdout}"
+            );
         }
     }
 }
 
-/// A viewer that is missing, or a directory without its page, is a line on stderr. The bundles and the listing still
-/// publish, and no test gets a link to a page that is not there.
+/// The links open the site that the step names, such as a staging portal, and so does the page of the build.
 #[test]
-fn without_a_viewer_the_bundles_and_the_listing_publish_alone() {
+fn the_links_open_the_site_that_the_step_names() {
     let root = testlogs();
-    for given in [false, true] {
-        let out = tempfile::tempdir().unwrap();
-        let empty = tempfile::tempdir().unwrap();
-        let viewer = given.then_some(empty.path());
-        let (stdout, stderr) = run(root.path(), out.path(), viewer, Some(&build()));
-        let names = [(out.path(), "<out>"), (empty.path(), "<viewer>")];
-        let (stdout, stderr) = (placeholders(&stdout, &names), placeholders(&stderr, &names));
-        let reason = if given {
-            "<viewer> holds no index.html"
-        } else {
-            "no --viewer DIR, and no checkout to build one in"
-        };
+    let out = tempfile::tempdir().unwrap();
+    let (stdout, _) = run_job(&Publish {
+        testlogs: &[root.path().to_path_buf()],
+        out: out.path(),
+        site: "https://staging.example/air/",
+        build: Some(&build()),
+        since: None,
+        out_owned: true,
+        remove_packed: false,
+    });
+    let links: Vec<&str> = stdout.lines().filter(|line| line.contains("type='link'")).collect();
+    assert_eq!(links.len(), 4, "{stdout}");
+    for link in links {
         assert!(
-            stderr.starts_with(&format!(
-                "air-trace teamcity-publish: no viewer: {reason}; so air-traces.zip holds the bundles and runs.json only\n"
-            )),
-            "{stderr}"
+            link.contains("value='https://staging.example/air/ci/1100310296/trace?zip="),
+            "{link}"
         );
-        assert!(!stdout.contains("type='link'"), "{stdout}");
-        assert!(
-            stdout.ends_with("##teamcity[publishArtifacts '<out>/air-traces.zip']\n"),
-            "{stdout}"
-        );
-        assert_eq!(stdout.matches(TRACE_METADATA).count(), 4, "{stdout}");
-        assert!(listing_of(&out.path().join(ARCHIVE)).starts_with("deflated runs.json\nstored "));
     }
+    assert!(
+        stdout.contains("##teamcity[message text='The traces of this build: https://staging.example/air/ci/1100310296']\n"),
+        "{stdout}"
+    );
+    assert!(!stdout.contains(CI_SITE), "{stdout}");
 }
 
 /// With a start, a test whose `test.xml` is older is the test of an earlier build. It is one line on stderr, and nothing
@@ -453,7 +432,7 @@ fn the_tests_of_an_earlier_build_are_skipped() {
     let (stdout, stderr) = run_job(&Publish {
         testlogs: &[root.path().to_path_buf()],
         out: out.path(),
-        viewer: &ViewerSource::Missing(NO_CHECKOUT.to_owned()),
+        site: CI_SITE,
         build: None,
         since: Some(SystemTime::now() - Duration::from_hours(1)),
         out_owned: true,
@@ -478,7 +457,7 @@ fn the_tests_of_an_earlier_build_are_skipped() {
     let (stdout, _) = run_job(&Publish {
         testlogs: &[root.path().to_path_buf()],
         out: out.path(),
-        viewer: &ViewerSource::Missing(NO_CHECKOUT.to_owned()),
+        site: CI_SITE,
         build: None,
         since: Some(SystemTime::now() + Duration::from_hours(1)),
         out_owned: true,
@@ -502,11 +481,10 @@ fn the_output_holds_the_files_of_this_run_only() {
     fs::create_dir_all(old.parent().unwrap()).unwrap();
     fs::write(&old, "").unwrap();
     let testlogs = [root.path().to_path_buf()];
-    let no_viewer = ViewerSource::Missing(NO_CHECKOUT.to_owned());
     let job = |out_owned| Publish {
         testlogs: &testlogs,
         out: out.path(),
-        viewer: &no_viewer,
+        site: CI_SITE,
         build: None,
         since: None,
         out_owned,
@@ -551,14 +529,14 @@ fn a_relative_path_is_taken_from_the_directory_where_bazel_run_ran() {
     let checkout = tempfile::tempdir().unwrap();
     let working = checkout.path().join("plugins/air");
     assert_eq!(
-        given_path(Path::new("out/air-trace-viewer"), Some(&working)).unwrap(),
-        working.join("out/air-trace-viewer")
+        given_path(Path::new("out/air-traces-publish"), Some(&working)).unwrap(),
+        working.join("out/air-traces-publish")
     );
-    let absolute = checkout.path().join("viewer");
+    let absolute = checkout.path().join("testlogs");
     assert_eq!(given_path(&absolute, Some(&working)).unwrap(), absolute);
     assert_eq!(
-        given_path(Path::new("viewer"), None).unwrap(),
-        std::env::current_dir().unwrap().join("viewer")
+        given_path(Path::new("testlogs"), None).unwrap(),
+        std::env::current_dir().unwrap().join("testlogs")
     );
 }
 
@@ -636,11 +614,10 @@ fn the_packed_bundles_leave_the_testlogs_once_the_archive_is_published() {
         .join("plugins/air/tests/integration/ui-real/ui-real_lane_test/shard_1_of_2");
     let job = |remove_packed, out: &Path| {
         let testlogs = [root.path().to_path_buf()];
-        let no_viewer = ViewerSource::Missing(NO_CHECKOUT.to_owned());
         run_job(&Publish {
             testlogs: &testlogs,
             out,
-            viewer: &no_viewer,
+            site: CI_SITE,
             build: None,
             since: None,
             out_owned: true,
@@ -733,11 +710,10 @@ fn a_bundle_that_its_zip_does_not_hold_whole_stays_in_the_testlogs() {
     std::os::unix::fs::symlink(elsewhere.path().join("gone"), broken.join("gone")).unwrap();
     let out = tempfile::tempdir().unwrap();
     let testlogs = [root.path().to_path_buf()];
-    let no_viewer = ViewerSource::Missing(NO_CHECKOUT.to_owned());
     let (stdout, stderr) = run_job(&Publish {
         testlogs: &testlogs,
         out: out.path(),
-        viewer: &no_viewer,
+        site: CI_SITE,
         build: None,
         since: None,
         out_owned: true,

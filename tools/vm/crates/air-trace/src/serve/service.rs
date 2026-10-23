@@ -376,11 +376,11 @@ pub(crate) struct SiteStep {
 pub(crate) const PATH_PNPM: &str = if cfg!(windows) { "pnpm.cmd" } else { "pnpm" };
 
 /// The last step of the site build: `pnpm build`, which harvests the model and runs Vite.
-pub(crate) const SITE_BUILD: [&str; 1] = ["build"];
+const SITE_BUILD: [&str; 1] = ["build"];
 
 /// The steps that build a docs project. First `pnpm install --frozen-lockfile` runs in each directory of `installs`, in
-/// order. Then `pnpm <build>` runs in the project, such as [SITE_BUILD].
-pub(crate) fn site_steps(tools: &SiteTools, installs: &[&Path], project: &Path, build: &[&str]) -> Vec<SiteStep> {
+/// order. Then [SITE_BUILD] runs in the project.
+pub(crate) fn site_steps(tools: &SiteTools, installs: &[&Path], project: &Path) -> Vec<SiteStep> {
     let (program, path_prefix) = match tools {
         SiteTools::Pinned { node, pnpm } => (pnpm.clone(), node.parent().map(Path::to_path_buf)),
         SiteTools::Path => (PathBuf::from(PATH_PNPM), None),
@@ -397,7 +397,7 @@ pub(crate) fn site_steps(tools: &SiteTools, installs: &[&Path], project: &Path, 
     installs
         .iter()
         .map(|dir| step(dir, &["install", "--frozen-lockfile"]))
-        .chain([step(project, build)])
+        .chain([step(project, &SITE_BUILD)])
         .collect()
 }
 
@@ -423,7 +423,7 @@ pub(crate) async fn build_site(
     let tools = site_tools(&output, &cancel).await?;
     let installs = site_installs(&project, kernel.as_deref());
     output(&format!("air-trace serve: building the site {}\n", tools_text(&tools)));
-    build_site_with(&tools, &installs, &project, &SITE_BUILD, &output, &cancel).await
+    build_site_with(&tools, &installs, &project, &output, &cancel).await
 }
 
 /// The tools of a build as a log line names them: `with <node> and <pnpm>`, or `with the pnpm on the PATH`.
@@ -439,11 +439,10 @@ pub(crate) async fn build_site_with(
     tools: &SiteTools,
     installs: &[&Path],
     project: &Path,
-    build: &[&str],
     output: &BuildOutput,
     cancel: &CancellationToken,
 ) -> Result<(), Refusal> {
-    for step in site_steps(tools, installs, project, build) {
+    for step in site_steps(tools, installs, project) {
         output(&format!("$ {}\n", step.label));
         run_step(&step, output, cancel).await?;
     }

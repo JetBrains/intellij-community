@@ -40,6 +40,11 @@ pub fn is_build_step(variable: impl Fn(&str) -> Option<String>) -> bool {
     variable(XML_OUTPUT_FILE).is_none() && is_team_city(variable)
 }
 
+/// A `message` of the build log with the normal status. TeamCity shows a URL in it as a link.
+pub fn log_message(text: &str) -> String {
+    message("message", &[("text", text)], None)
+}
+
 /// A `message` of the build log with the status `WARNING`. TeamCity shows it as a warning, and the build stays green.
 pub fn warning(text: &str) -> String {
     message("message", &[("text", text), ("status", "WARNING")], None)

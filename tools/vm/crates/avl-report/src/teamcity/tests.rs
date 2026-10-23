@@ -196,3 +196,12 @@ fn a_warning_is_a_message_with_the_warning_status() {
         "##teamcity[message text='no viewer: |'x|' |[y|] || z' status='WARNING']"
     );
 }
+
+/// A log message has the normal status, so TeamCity shows it as a plain line of the build log.
+#[test]
+fn a_log_message_has_the_normal_status() {
+    assert_eq!(
+        log_message("see https://example.test/a?b=c [1]"),
+        "##teamcity[message text='see https://example.test/a?b=c |[1|]']"
+    );
+}

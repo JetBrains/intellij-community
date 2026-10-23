@@ -62,7 +62,7 @@ fn of_step(variables: &[(&str, &str)]) -> Result<Option<Build>, String> {
     Build::of_step(&|name: &str| variables.get(name).cloned())
 }
 
-/// The build names its origin and the viewer page of a zip. The server is the root of `BUILD_URL`, and
+/// The build names its origin with the page of the build. The server is the root of `BUILD_URL`, and
 /// `teamcity.serverUrl` without it.
 #[test]
 fn the_build_of_a_step_comes_from_the_agent_files() {
@@ -98,17 +98,6 @@ fn the_build_of_a_step_comes_from_the_agent_files() {
                 "https://buildserver.labs.intellij.net/buildConfiguration/ijplatform_master_AirPluginUiTests_1/1100310296".to_owned()
             ),
         }
-    );
-    let page = "https://buildserver.labs.intellij.net/repository/download/ijplatform_master_AirPluginUiTests_1/1100310296:id/\
-                air-traces.zip!/index.html";
-    assert_eq!(
-        build.viewer_link("ui_lane_test/iter-1/T/s.zip"),
-        format!("{page}#/trace?zip=ui_lane_test/iter-1/T/s.zip")
-    );
-    // As `traceHash` of the viewer writes it: `URLSearchParams`, with each slash kept.
-    assert_eq!(
-        build.viewer_link("ui_lane_test/shard_1_of_2/iter-1/T/a b+c~d&e=é.zip"),
-        format!("{page}#/trace?zip=ui_lane_test/shard_1_of_2/iter-1/T/a+b%2Bc%7Ed%26e%3D%C3%A9.zip")
     );
 
     let other_build_url = of_step(&[
@@ -164,7 +153,7 @@ fn the_build_page_may_end_in_a_slash() {
     );
 }
 
-/// A server that is not the root of `BUILD_URL` says so, with the server that the links use.
+/// A server that is not the root of `BUILD_URL` says so, with the server that the origin uses.
 #[test]
 fn a_server_that_is_not_the_root_of_the_build_page_says_so() {
     let dir = tempfile::tempdir().unwrap();
@@ -175,7 +164,7 @@ fn a_server_that_is_not_the_root_of_the_build_page_says_so() {
     assert_eq!(
         build.server_fallback(&|name: &str| variables.get(name).cloned()),
         Some(
-            "BUILD_URL does not name the page of build 1100310296, so the links and the origin use teamcity.serverUrl \
+            "BUILD_URL does not name the page of build 1100310296, so the origin uses teamcity.serverUrl \
              https://bs-proxy-eu-north-1.services.buildfarm.intellij.net"
                 .to_owned()
         )

@@ -15,10 +15,11 @@ use notify::event::{DataChange, Flag, ModifyKind};
 
 use super::super::journals::STOPPED_AFTER;
 use super::super::service::{
-    KERNEL_SOURCES_DIRS, PATH_PNPM, SITE_BUILD, SITE_SOURCES_DIR, SiteTools, site_installs, site_needs_build, site_source_dirs, site_steps,
+    KERNEL_SOURCES_DIRS, PATH_PNPM, SITE_SOURCES_DIR, SiteTools, site_installs, site_needs_build, site_source_dirs, site_steps,
 };
 #[cfg(unix)]
 use super::super::service::{build_site_with, detach};
+use super::super::state::BuildOutput;
 use super::*;
 use crate::{Exit, Refusal, code};
 use pretty_assertions::assert_eq;
@@ -879,7 +880,7 @@ fn the_site_is_installed_before_it_is_built_when_its_dependencies_are_missing() 
     };
     let project = Path::new("/repo/plugins/air/docs");
 
-    let steps = site_steps(&tools, &[project], project, &SITE_BUILD);
+    let steps = site_steps(&tools, &[project], project);
     assert_eq!(
         steps.iter().map(|step| step.label.as_str()).collect::<Vec<_>>(),
         [
@@ -900,7 +901,7 @@ fn the_site_is_installed_before_it_is_built_when_its_dependencies_are_missing() 
         ["--dir", "/repo/plugins/air/docs", "install", "--frozen-lockfile"].map(OsString::from)
     );
 
-    let built_only = site_steps(&tools, &[], project, &SITE_BUILD);
+    let built_only = site_steps(&tools, &[], project);
     assert_eq!(
         built_only.iter().map(|step| step.label.as_str()).collect::<Vec<_>>(),
         ["pnpm --dir /repo/plugins/air/docs build"],
@@ -917,23 +918,20 @@ fn the_kernel_is_installed_before_the_project_that_links_it() {
     let kernel = Path::new("/repo/community/tools/docs-site");
     let project = Path::new("/repo/plugins/air/docs");
 
-    let steps = site_steps(&tools, &[kernel, project], project, &["run", "build:viewer"]);
+    let steps = site_steps(&tools, &[kernel, project], project);
     assert_eq!(
         steps.iter().map(|step| step.label.as_str()).collect::<Vec<_>>(),
         [
             "pnpm --dir /repo/community/tools/docs-site install --frozen-lockfile",
             "pnpm --dir /repo/plugins/air/docs install --frozen-lockfile",
-            "pnpm --dir /repo/plugins/air/docs run build:viewer",
+            "pnpm --dir /repo/plugins/air/docs build",
         ]
     );
     assert_eq!(
         steps[0].args,
         ["--dir", "/repo/community/tools/docs-site", "install", "--frozen-lockfile"].map(OsString::from)
     );
-    assert_eq!(
-        steps[2].args,
-        ["--dir", "/repo/plugins/air/docs", "run", "build:viewer"].map(OsString::from)
-    );
+    assert_eq!(steps[2].args, ["--dir", "/repo/plugins/air/docs", "build"].map(OsString::from));
 }
 
 #[test]
@@ -1019,7 +1017,7 @@ fn a_kernel_edit_makes_the_site_stale() {
 
 #[test]
 fn outside_a_checkout_the_site_is_built_with_the_pnpm_on_the_path() {
-    let steps = site_steps(&SiteTools::Path, &[], Path::new("/docs"), &SITE_BUILD);
+    let steps = site_steps(&SiteTools::Path, &[], Path::new("/docs"));
     assert_eq!(steps.len(), 1);
     assert_eq!(steps[0].program, PathBuf::from(PATH_PNPM));
     assert_eq!(steps[0].path_prefix, None, "the PATH is left as it is");
@@ -1062,7 +1060,7 @@ async fn the_pinned_pnpm_runs_each_step_with_the_pinned_node_first_on_the_path()
     let (output, lines) = kept_output();
 
     let tools = SiteTools::Pinned { node: node.clone(), pnpm };
-    build_site_with(&tools, &[&project], &project, &SITE_BUILD, &output, &CancellationToken::new())
+    build_site_with(&tools, &[&project], &project, &output, &CancellationToken::new())
         .await
         .expect("both steps pass");
 
@@ -1106,7 +1104,7 @@ async fn a_failing_install_stops_the_build_and_names_the_step() {
     let (output, _lines) = kept_output();
 
     let tools = SiteTools::Pinned { node, pnpm };
-    let failed = build_site_with(&tools, &[&project], &project, &SITE_BUILD, &output, &CancellationToken::new())
+    let failed = build_site_with(&tools, &[&project], &project, &output, &CancellationToken::new())
         .await
         .expect_err("the install fails");
 
