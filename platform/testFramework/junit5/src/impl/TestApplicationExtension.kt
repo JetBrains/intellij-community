@@ -7,7 +7,6 @@ import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.testFramework.LeakHunter
-import com.intellij.testFramework.common.BazelTestUtil
 import com.intellij.testFramework.common.MockitoThreadLocalCleanup
 import com.intellij.testFramework.common.TheAiSlopToPerformMockKThreadLocalCleanup
 import com.intellij.testFramework.common.assertDisposerEmpty
@@ -72,11 +71,7 @@ private class TestApplicationResource(val initializationResult: Result<Unit>) : 
       return
     }
 
-    // In Bazel test environment, don't dispose the application.
-    // The JVM will terminate after all tests complete anyway, and
-    // disposing here would break JUnit 4 tests that run after JUnit 5 tests.
-    // See BAZEL-2843 for details.
-    if (BazelTestUtil.isUnderBazelTest || skipTestApplicationDispose()) {
+    if (skipTestApplicationDispose()) {
       return
     }
 
