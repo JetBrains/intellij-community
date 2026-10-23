@@ -31,3 +31,7 @@ fun TaskTestContext.waitAndUsePreviouslyFoundListItem(times: Int = 5, itemAction
     }
   }
 }
+
+fun TaskTestContext.clickPreviousUi() {
+  robot.click(previous.ui ?: error("No highlighted component"))
+}
