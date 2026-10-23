@@ -18,10 +18,7 @@ dev_dist_plugin(
     },
     main_module = "intellij.platform.todo.plugin",
     mode_refused_content_modules = {
-        "frontend": [
-            "intellij.platform.todo.backend",
-            "intellij.platform.vcs.impl.lang.todo",
-        ],
+        "frontend": ["intellij.platform.todo.backend"],
     },
 )
 ### auto-generated section `dev intellij.platform.todo.plugin` end

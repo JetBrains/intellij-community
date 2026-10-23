@@ -30,7 +30,6 @@ jvm_library(
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
-        "//platform/backend",
         "//platform/editor-ui-api:editor-ui",
         "//platform/platform-api:ide",
         "//platform/ide-core",
@@ -73,7 +72,6 @@ jvm_library(
         # do not sort,
         ":vcs",
         "//platform/analysis-api:analysis_test_lib",
-        "//platform/backend:backend_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/platform-api:ide_test_lib",
         "//platform/ide-core:ide-core_test_lib",

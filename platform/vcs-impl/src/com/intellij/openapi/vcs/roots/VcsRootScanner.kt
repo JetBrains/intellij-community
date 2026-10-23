@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
@@ -74,7 +75,10 @@ class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScop
         .debounce(1.seconds)
         .collectLatest {
           withContext(Dispatchers.IO) {
-            project.service<InitialVfsRefreshService>().awaitInitialVfsRefreshFinished()
+            // A light process never runs the indexing scan that completes this refresh, so waiting for it would hang forever.
+            if (!IdeProductMode.isLight) {
+              project.service<InitialVfsRefreshService>().awaitInitialVfsRefreshFinished()
+            }
 
             coroutineToIndicator {
               val errors = VcsRootErrorsFinder.getInstance(project).find()

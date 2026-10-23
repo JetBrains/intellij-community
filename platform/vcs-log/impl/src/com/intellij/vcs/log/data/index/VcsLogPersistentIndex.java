@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -286,7 +287,13 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
     return myRoots;
   }
 
+  /**
+   * A light process has no indexer, so its log works without the commit index.
+   */
   public static @NotNull Map<VirtualFile, VcsLogIndexer> getAvailableIndexers(@NotNull Map<VirtualFile, VcsLogProvider> providers) {
+    if (IdeProductMode.isLight()) {
+      return Collections.emptyMap();
+    }
     Map<VirtualFile, VcsLogIndexer> indexers = new LinkedHashMap<>();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : providers.entrySet()) {
       VirtualFile root = entry.getKey();

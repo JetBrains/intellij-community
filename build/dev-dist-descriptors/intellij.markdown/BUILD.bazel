@@ -53,7 +53,6 @@ dev_dist_plugin_descriptor(
             "intellij.markdown.spellchecker",
             "intellij.markdown.backend",
             "intellij.markdown.java",
-            "intellij.markdown.vcs",
         ],
     },
     refused_content_modules = [

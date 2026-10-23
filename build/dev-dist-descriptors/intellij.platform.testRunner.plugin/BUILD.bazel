@@ -27,10 +27,7 @@ dev_dist_plugin_descriptor(
     descriptor = "//platform/testRunner/plugin:resources/META-INF/plugin.xml",
     main_module = "intellij.platform.testRunner.plugin",
     mode_refused_content_modules = {
-        "frontend": [
-            "intellij.platform.smRunner.vcs",
-            "intellij.platform.smRunner.dashboard",
-        ],
+        "frontend": ["intellij.platform.smRunner.dashboard"],
     },
     refused_content_modules = [
         "intellij.platform.smRunner.frontend.split",

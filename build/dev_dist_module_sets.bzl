@@ -921,18 +921,15 @@ DEV_DIST_MODULE_SETS = {
         mode_refused = {
             "frontend": [
                 "intellij.platform.buildView.backend",
-                "intellij.platform.collaborationTools",
                 "intellij.platform.collaborationTools.auth",
                 "intellij.platform.collaborationTools.auth.base",
                 "intellij.platform.inspect",
-                "intellij.platform.lvcs.impl",
                 "intellij.platform.projectView.backend",
                 "intellij.platform.scriptDebugger.backend",
                 "intellij.platform.scriptDebugger.protocolReaderRuntime",
                 "intellij.platform.scriptDebugger.ui",
                 "intellij.platform.versionDownloadManager",
                 "intellij.platform.warmup",
-                "intellij.spellchecker.vcs",
             ],
         },
     ),
@@ -1696,11 +1693,6 @@ DEV_DIST_MODULE_SETS = {
             "intellij.libraries.jgit",
             "intellij.settingsSync.core",
         ],
-        mode_refused = {
-            "frontend": [
-                "intellij.settingsSync.core",
-            ],
-        },
     ),
     "intellij.moduleSets.spellchecker": struct(
         modules = [

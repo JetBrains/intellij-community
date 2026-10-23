@@ -19,9 +19,6 @@ dev_dist_plugin(
         "lib/copyright.jar": ["intellij.copyright"],
     },
     main_module = "intellij.copyright",
-    mode_refused_content_modules = {
-        "frontend": ["intellij.copyright.vcs"],
-    },
 )
 ### auto-generated section `dev intellij.copyright` end
 
