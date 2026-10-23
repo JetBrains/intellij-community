@@ -295,7 +295,7 @@ internal class StructuralChangesViewUpdates(private val project: Project) : Disp
     project.messageBus.connect(this).subscribe(PsiModificationTracker.TOPIC, PsiModificationTracker.Listener { refresh() })
     RegistryManager.getInstance().get(StructuralChangesViewSettings.REGISTRY_KEY).addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
-        project.messageBus.syncPublisher(ChangesViewModifier.TOPIC).updated()
+        if (!project.isDisposed) project.messageBus.syncPublisher(ChangesViewModifier.TOPIC).updated()
       }
     }, this)
   }
