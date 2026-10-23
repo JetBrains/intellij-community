@@ -55,6 +55,19 @@ impl Run {
         self.publish(&Event::Daemon(event), worker);
     }
 
+    /// Starts the iteration of `flow flow-new-session` on the worker `w`.
+    fn start_iteration(&mut self) {
+        self.publish(&phase(PhaseState::Started, Phase::Iteration, "flow flow-new-session", 0), "w");
+    }
+
+    /// Publishes the `runStarted` record of the daemon on the worker `w`.
+    fn daemon_run_started(&mut self) {
+        self.daemon(
+            r#"{"event":"runStarted","iterationId":"i","daemonBootStamp":"b","startedAt":"s"}"#,
+            "w",
+        );
+    }
+
     fn advance(&mut self, seconds: u64) {
         self.now += Duration::from_secs(seconds);
     }
@@ -174,7 +187,8 @@ fn trace_ready(scenario: &str, bundle: &str) -> Event {
     })
 }
 
-fn verdict(status: Status, code: Option<&str>, summary: &str) -> Verdict {
+/// A verdict with `status`, `code` and `summary`, and nothing else.
+pub(crate) fn verdict(status: Status, code: Option<&str>, summary: &str) -> Verdict {
     Verdict {
         status,
         code: code.map(str::to_owned),
@@ -282,11 +296,8 @@ fn a_decision_explains_its_row() {
 fn the_tests_line_counts_and_estimates() {
     let mut run = Run::new();
     run.publish(&expected_lane(), "");
-    run.publish(&phase(PhaseState::Started, Phase::Iteration, "flow flow-new-session", 0), "w");
-    run.daemon(
-        r#"{"event":"runStarted","iterationId":"i","daemonBootStamp":"b","startedAt":"s"}"#,
-        "w",
-    );
+    run.start_iteration();
+    run.daemon_run_started();
     run.daemon(
         r#"{"event":"planStarted","timestamp":"t","discoveredExecutions":4,"classNames":["com.example.AirNewSessionFlowUiTest","com.example.AirDraftFlowUiTest"]}"#,
         "w",
@@ -358,11 +369,8 @@ fn the_card_is_the_verdict() {
     run.publish(&phase(PhaseState::Started, Phase::HostBuild, "//a:b", 0), "");
     run.publish(&phase(PhaseState::Finished, Phase::HostBuild, "", 30), "");
     run.publish(&decision(Subject::Ide, "reuse", None), "w");
-    run.publish(&phase(PhaseState::Started, Phase::Iteration, "flow flow-new-session", 0), "w");
-    run.daemon(
-        r#"{"event":"runStarted","iterationId":"i","daemonBootStamp":"b","startedAt":"s"}"#,
-        "w",
-    );
+    run.start_iteration();
+    run.daemon_run_started();
     run.daemon(
         r#"{"event":"testStarted","timestamp":"t","id":"1","className":"com.example.AirNewSessionFlowUiTest","displayName":"restores the draft"}"#,
         "w",
@@ -679,7 +687,7 @@ fn no_color_and_a_dumb_terminal_are_honoured() {
 fn a_failed_test_shows_the_headline_of_its_typed_failure() {
     let mut run = Run::new();
     run.publish(&expected_lane(), "");
-    run.publish(&phase(PhaseState::Started, Phase::Iteration, "flow flow-new-session", 0), "w");
+    run.start_iteration();
     run.daemon(
         r#"{"event":"testFinished","timestamp":"t","id":"1","className":"com.example.AirNewSessionFlowUiTest","displayName":"restores the draft","status":"FAILED","durationMs":2000,"type":"java.lang.AssertionError","message":"no chip\nmore","detail":"at line 3"}"#,
         "w",

@@ -2,31 +2,16 @@ use std::sync::Arc;
 
 use avl_base::FakeClock;
 use avl_base::report::{Buffer, Renderer};
-use avl_wire::progress::{Event, RunFinished, RunStarted, Verdict, VerdictCounts};
+use avl_wire::progress::{Event, RunFinished, RunStarted, Verdict};
 use avl_wire::report::Status;
 use pretty_assertions::assert_eq;
 
 use super::{Canvas, Dashboard, Options};
 use crate::console::paint::ColorChoice;
+use crate::console::state::tests::verdict;
 
 fn passed() -> Verdict {
-    Verdict {
-        status: Status::Passed,
-        code: None,
-        summary: "0 test(s) passed".to_owned(),
-        counts: VerdictCounts::default(),
-        failures: Vec::new(),
-        rerun: Vec::new(),
-        skipped: Vec::new(),
-        unreported: Vec::new(),
-        lanes: Vec::new(),
-        shards: None,
-        lease: None,
-        checkout: None,
-        traces: None,
-        timing: None,
-        report: None,
-    }
+    verdict(Status::Passed, None, "0 test(s) passed")
 }
 
 /// Through the real drawing thread, the scrollback lines keep their order, the card is the last thing drawn, and

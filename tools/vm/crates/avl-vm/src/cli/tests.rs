@@ -929,6 +929,14 @@ fn parse_refusal(argv: &[&str]) -> Refusal {
     }
 }
 
+/// Checks that `verb` with `argv` is a usage refusal whose message contains `fragment`.
+fn assert_usage_refusal(verb: &str, argv: &[&str], fragment: &str) {
+    let argv: Vec<&str> = std::iter::once(verb).chain(argv.iter().copied()).collect();
+    let refusal = parse_refusal(&argv);
+    assert_eq!(refusal.exit, Exit::USAGE, "{argv:?}");
+    assert!(refusal.message.contains(fragment), "{argv:?}: {}", refusal.message);
+}
+
 // The command's own options refuse in the controller's words, before anything is leased: a count outside the useful
 // range, a count that is not a strict base-ten integer, and an option with no value.
 #[test]
@@ -943,10 +951,7 @@ fn a_shard_count_the_split_cannot_use_is_a_usage_refusal() {
         (&["--shards", "6", "--lane", "ui"], "--shards"),
         (&["--shards"], "--shards needs a value"),
     ] {
-        let argv: Vec<&str> = std::iter::once("shard").chain(argv.iter().copied()).collect();
-        let refusal = parse_refusal(&argv);
-        assert_eq!(refusal.exit, Exit::USAGE, "{argv:?}");
-        assert!(refusal.message.contains(fragment), "{argv:?}: {}", refusal.message);
+        assert_usage_refusal("shard", argv, fragment);
     }
 }
 
@@ -963,10 +968,7 @@ fn a_trial_count_or_reset_the_measurement_cannot_use_is_a_usage_refusal() {
         (&["--lane", "ui", "--trials", "2", "--reset", "reboot"], "none, fresh-ide, daemon"),
         (&["--lane", "ui", "--trials", "2", "--reset"], "--reset needs a value"),
     ] {
-        let argv: Vec<&str> = std::iter::once("flake").chain(argv.iter().copied()).collect();
-        let refusal = parse_refusal(&argv);
-        assert_eq!(refusal.exit, Exit::USAGE, "{argv:?}");
-        assert!(refusal.message.contains(fragment), "{argv:?}: {}", refusal.message);
+        assert_usage_refusal("flake", argv, fragment);
     }
 }
 

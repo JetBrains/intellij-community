@@ -430,37 +430,20 @@ fn a_baseline_adds_the_ratio_of_each_class_and_the_median_over_the_classes_above
         Some("1.6872")
     );
     assert_eq!(baseline.only_in_baseline, ["com.intellij.air.AirQuickGeneratedFlowUiTest"]);
+    // The text of the run is the one without a baseline, which the snapshot of the slow run pins. The baseline part
+    // follows it.
+    let text = answer.text();
+    let without_baseline = format!("{}\n", time(root.path(), "run-slow", None).text());
+    let baseline_part = text
+        .strip_prefix(&without_baseline)
+        .unwrap_or_else(|| panic!("the text does not start with the text of the run without a baseline:\n{text}"));
     expect![[r"
-        run run-slow: 1 iteration, 1531.0s
-          inside the test cases     1101.3s  72%
-          outside the test cases     429.7s  28%
-          IDE launches                    4  3 exits
-          relaunches                 125.0s  1 restart span in 2 bundles
-            restart:ide              125.0s  1
-        the parts of the relaunches
-          relaunch:quit                  120.0s  1 span, 120.0s each
-          relaunch:quit/exit             119.0s  1 span, 119.0s each
-          relaunch:ready                   5.0s  1 span, 5.0s each
-        the longest test cases
-             412.3s  AirSessionReadStateGeneratedFlowUiTest  keep-session-read-state
-             389.0s  AirRenameSessionGeneratedFlowUiTest  rename-closed-project-session
-             300.0s  AirSessionReadStateGeneratedFlowUiTest  mark-unread
-        the lane spans with the most self time
-             171.0s  [scenario] outside every lane span  keep-session-read-state  (300.0s in all)
-             119.0s  [relaunch] process exit  keep-session-read-state  (119.0s in all)
-               5.0s  [relaunch] ready  keep-session-read-state  (5.0s in all)
-               4.0s  [reset] before keep-session-read-state  keep-session-read-state  (4.0s in all)
-               2.2s  [reset] after rename-closed-project-session  rename-closed-project-session  (2.2s in all)
-               2.2s  [reset] before rename-closed-project-session  rename-closed-project-session  (2.2s in all)
-               1.9s  [action] prepare-closed-project-session  rename-closed-project-session  (1.9s in all)
-               1.2s  [action] rename-session-enter-name  rename-closed-project-session  (1.2s in all)
-               1.0s  [relaunch] quit  keep-session-read-state  (120.0s in all)
-               0.9s  [assertion] rename-session-offered: Rename is enabled in the popup of the closed project session row.  rename-closed-project-session  (0.9s in all)
         against run-fast: 760.0s
             2.37     712.3s /    300.0s  AirSessionReadStateGeneratedFlowUiTest
             1.00     389.0s /    389.0s  AirRenameSessionGeneratedFlowUiTest
           median ratio 1.69 over 2 classes above 5 s in the baseline
-          only in the baseline: com.intellij.air.AirQuickGeneratedFlowUiTest"]].assert_eq(&answer.text());
+          only in the baseline: com.intellij.air.AirQuickGeneratedFlowUiTest"]]
+    .assert_eq(baseline_part);
 }
 
 #[test]
