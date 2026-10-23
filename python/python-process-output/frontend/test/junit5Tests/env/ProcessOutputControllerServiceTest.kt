@@ -163,7 +163,7 @@ internal class ProcessOutputControllerServiceTest {
           binOnEel,
           args,
           GlobalScope,
-        ).orThrow() as LoggingProcess
+        ).orThrow()
 
         coroutineScope {
           listOf(
@@ -178,7 +178,7 @@ internal class ProcessOutputControllerServiceTest {
           process.awaitExit()
         }
 
-        process.loggedProcess
+        (process as LoggingProcess).loggedProcess
       }
 
     suspend fun BinOnEel.runTestScriptFile(

@@ -113,6 +113,7 @@ create_kotlinc_options(
     opt_in = [
         "kotlin.time.ExperimentalTime",
         "com.intellij.util.system.LowLevelLocalMachineAccess",
+        "com.jetbrains.python.PyInternalExecApi",
     ],
     warn = "error",
     x_context_parameters = True,

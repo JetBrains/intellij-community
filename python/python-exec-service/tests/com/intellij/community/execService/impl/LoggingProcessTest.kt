@@ -3,7 +3,7 @@ package com.intellij.community.execService.impl
 
 import com.intellij.python.community.execService.ConcurrentProcessWeight
 import com.intellij.python.community.execService.impl.LoggingInputStream
-import com.intellij.python.community.execService.impl.LoggingProcess
+import com.intellij.python.community.execService.impl.LoggingProcessImpl
 import com.intellij.python.processOutput.common.ExecErrorDto
 import com.intellij.python.processOutput.common.ExecutableDto
 import com.intellij.python.processOutput.common.LoggedProcessDto
@@ -31,7 +31,7 @@ import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import kotlin.time.Instant
 
-class LoggingProcessTest {
+internal class LoggingProcessTest {
   @Test
   fun `logging process gets created with expected overrides`() {
     val (_, backingProcess, loggingProcess) = createLoggingProcess()
@@ -241,7 +241,7 @@ class LoggingProcessTest {
   private data class CreationResult(
     val events: List<ProcessOutputEventDto>,
     val backingProcess: TestProcess,
-    val loggingProcess: LoggingProcess,
+    val loggingProcess: LoggingProcessImpl,
   )
 
   companion object {
@@ -267,7 +267,7 @@ class LoggingProcessTest {
           pid,
         )
       val loggingProcess =
-        LoggingProcess(
+        LoggingProcessImpl(
           backingProcess,
           weight,
           traceContext,

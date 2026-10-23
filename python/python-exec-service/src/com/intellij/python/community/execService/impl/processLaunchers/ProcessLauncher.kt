@@ -11,7 +11,7 @@ import com.intellij.python.community.execService.ConcurrentProcessWeight
 import com.intellij.python.community.execService.DownloadConfig
 import com.intellij.python.community.execService.TtySize
 import com.intellij.python.community.execService.UploadConfig
-import com.intellij.python.community.execService.impl.LoggingProcess
+import com.intellij.python.community.execService.impl.LoggingProcessImpl
 import com.intellij.python.processOutput.common.ProcessOutputTopic
 import com.jetbrains.python.Result
 import com.jetbrains.python.TraceContext
@@ -37,10 +37,10 @@ internal class ProcessLauncher(
    */
   val forwardedPorts: Map<UShort, HostPort> = emptyMap(),
 ) {
-  suspend fun start(weight: ConcurrentProcessWeight? = null): Result<LoggingProcess, ExecErrorReason.CantStart> =
+  suspend fun start(weight: ConcurrentProcessWeight? = null): Result<LoggingProcessImpl, ExecErrorReason.CantStart> =
     processCommands.start()
       .mapSuccess {
-        LoggingProcess(
+        LoggingProcessImpl(
           it,
           weight,
           processCommands.scopeToBind.coroutineContext[TraceContext.Key],

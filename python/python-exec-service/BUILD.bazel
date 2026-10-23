@@ -19,7 +19,10 @@ content_module_jar(module = ":community-execService")
 ### auto-generated section `build intellij.python.community.execService` start
 create_kotlinc_options(
     name = "custom_community-execService",
-    opt_in = ["kotlin.time.ExperimentalTime"],
+    opt_in = [
+        "kotlin.time.ExperimentalTime",
+        "com.jetbrains.python.PyInternalExecApi",
+    ],
     warn = "error",
     x_warning_level = ["DEPRECATION:warning"],
 )
