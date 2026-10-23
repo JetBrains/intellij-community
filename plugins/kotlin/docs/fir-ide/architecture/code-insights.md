@@ -39,6 +39,16 @@ The most important methods you need to implement:
       do NOT use the `HighPriorityAction` and `LowPriorityAction` marker interfaces for `ModCommandActions`,  
       as they have no effect on them.
 
+### Tests
+
+Put the test data in `idea/tests/testData/intentions/<intentionName>/`.
+Register the directory in `GenerateK2IntentionTests.kt` with a `model(...)` line, then run "Generate Kotlin Tests".
+- Add a `.intention` file with the fully qualified class name of the intention.
+- Add `<case>.kt` with `<caret>`, and `<case>.kt.after` for each case where the intention applies.
+- Use `// IS_APPLICABLE: false` for a negative case, and `// INTENTION_TEXT: <text>` for the expected text.
+
+Plan the cases before you write code. See [Test data coverage](#test-data-coverage).
+
 ### `SelfTargetingIntention` and `SelfTargetingRangeIntention`
 - `startInWriteAction()`
     - Indicates whether the action must be invoked inside a write action.
@@ -205,6 +215,8 @@ Raise the level in a separate commit after the inspection has users and no open 
 
 ### Tests
 
+Plan the cases before you write code. See [Test data coverage](#test-data-coverage).
+
 Put the test data in `code-insight/inspections-k2/tests/testData/inspectionsLocal/<inspectionName>/`.
 The generator model for this directory is recursive, so a new subdirectory needs no change in the generator.
 - Add a `.inspection` file with the fully qualified class name of the inspection.
@@ -225,7 +237,8 @@ Directives for a local inspection test:
 | `// COMPILER_ARGUMENTS: <args>` | Compiler arguments, for example `-XXLanguage:+Feature`. |
 | `// LANGUAGE_VERSION: <v>` / `// API_VERSION: <v>` | The language and API versions. |
 | `// WITH_COROUTINES`, `// RUNTIME_WITH_FULL_JDK`, `// JS` | Other project descriptors. The standard library is on by default. |
-| `// IGNORE_K2` | A known failure. The test fails if it starts to pass. |
+
+K1 is sunset. Do not add `// IGNORE_K2` or another K1 directive. Make the test pass instead.
 
 The `// "<fix text>" "true"` header and `// FUS_QUICKFIX_NAME:` are quick fix test directives.
 The local inspection test does not read them, so do not add them.
@@ -421,6 +434,9 @@ registerFactory(RemoveUnnamedPropertyFixFactory.unnamedPropertyWithImplicitIgnor
 
 ### Tests
 
+Plan the cases before you write code. Start from the compiler tests for the diagnostic.
+See [Test data coverage](#test-data-coverage).
+
 Put the test data in `idea/tests/testData/quickfix/<group>/`. Use an existing group if one fits.
 - Add `<case>.kt`. Put `<caret>` on the element that has the diagnostic.
 - Put the action hint on the first line: `// "<action text>" "true"`.
@@ -452,7 +468,8 @@ Directives for a quick fix test:
 | `// CHOSEN_OPTION: <regex>` | The option to select in a chooser. |
 | `// SHOULD_BE_AVAILABLE_AFTER_EXECUTION` | The action can stay available after it runs. |
 | `// LANGUAGE_VERSION: <v>`, `// COMPILER_ARGUMENTS: <args>` | The compiler settings. Pin the language version if the result depends on it. |
-| `// IGNORE_K2` | A known failure. Add a KTIJ issue in a comment. The test fails if it starts to pass. |
+
+K1 is sunset. Do not add `// IGNORE_K2` or another K1 directive. Make the test pass instead.
 
 To test Fix All, add a separate file with the platform text as the hint, for example
 `// "Apply all 'Change to star projection' fixes in file" "true"`.
@@ -507,7 +524,7 @@ For each category that applies, add a negative test, a fix, or both.
 | Multiplatform | Change the `expect` declaration and all the `actual` declarations. Check that types are visible from the common module. |
 | Broken code | Use `typeIfSafeToResolve`. Rethrow control-flow exceptions with `rethrowControlFlowException`. |
 | Performance | Exit early on an error type before you search an index. Call `ProgressManager.checkCanceled()` in loops. |
-| K1 port | Compare with all the diagnostics that the K1 fix was registered for. Remove `IGNORE_K2` from the tests that now pass. |
+| K1 port | Compare with all the diagnostics that the K1 fix was registered for. Make each test with `IGNORE_K2` pass, and remove the directive. |
 
 ### After the change
 
@@ -519,6 +536,125 @@ For each category that applies, add a negative test, a fix, or both.
 These rules apply to intentions and to quick fixes.
 - If the action priority is not `NORMAL`, add the `// PRIORITY` directive to the test data, for example `// PRIORITY: HIGH`.
 - If the action calls `updater.moveCaretTo()` or `editor.moveCaret()`, put `<caret>` in the `.after` file.
+
+## Test data coverage
+
+These rules apply to inspections, quick fixes, and intentions.
+Most defects in these actions come from a code form that no test covers.
+Plan the test cases before you write the action. Then write the action until all the cases pass.
+
+### Plan the cases
+
+Write a case list before the first line of code. Use these sources in this order:
+1. The quality checklist of the action kind. Add one case for each category that applies.
+2. The compiler test data for the same diagnostic or construct. See [Reuse the compiler test data](#reuse-the-compiler-test-data).
+3. The YouTrack issues for the action. Search KTIJ for the action name. Add one regression case for each fixed issue.
+4. The old test data of the same action. A case with `// IGNORE_K2` is a K2 gap.
+   Make it pass, and remove the directive.
+5. The test data of a similar action, for example the inverse intention.
+
+Each case is one of these kinds:
+
+| Kind | File | Meaning |
+|---|---|---|
+| Positive | `<case>.kt` and `<case>.kt.after` | The action is available, and the result is correct code. |
+| Negative | `<case>.kt` only | The action is not available. Use `PROBLEM: none`, `"false"`, or `IS_APPLICABLE: false`. |
+| Broken code | `<case>.kt` | The code has a syntax or resolve error. The action does not throw. |
+| Feature off | `<case>.kt` | A language feature or a compiler flag is off. The action is not available. |
+
+A good case list has more negative cases than positive cases.
+Each negative case states one reason in its name, for example `safeCallOnNullableNoWarn.kt`.
+
+### Reuse the compiler test data
+
+The Kotlin compiler has tests for every diagnostic in [JetBrains/kotlin](https://github.com/JetBrains/kotlin).
+These tests show the code forms where the compiler reports the diagnostic, and the forms where it does not.
+Use them for a quick fix, for a diagnostic-based inspection, and for an inspection or an intention that is close to a diagnostic.
+Both projects use the Apache 2.0 license.
+
+#### Get the test data
+
+Use a local checkout of JetBrains/kotlin next to this repository, at `../kotlin` from the repository root.
+Run `git -C ../kotlin pull` first if the checkout is older than the compiler version of the plugin.
+
+If there is no local checkout, make a sparse clone outside this repository. It takes about 15 seconds and 180 MB:
+
+```shell
+git clone -q --depth 1 --filter=blob:none --sparse https://github.com/JetBrains/kotlin.git /tmp/kotlin-compiler-testdata
+git -C /tmp/kotlin-compiler-testdata sparse-checkout set --no-cone \
+  'compiler/testData/diagnostics/' 'compiler/fir/analysis-tests/legacy-fir-tests/testData/' 'analysis/analysis-api/testData/'
+```
+
+To read one known file, use `https://raw.githubusercontent.com/JetBrains/kotlin/master/<path>`.
+
+Find the files that report a diagnostic. Run the command from the `community` directory:
+
+```shell
+./tools/rg.cmd -l '<!UNNECESSARY_SAFE_CALL[!:(,]' \
+  ../../kotlin/compiler/testData/diagnostics ../../kotlin/compiler/fir/analysis-tests/legacy-fir-tests/testData
+```
+
+The directory of a checker also holds tests without the diagnostic, for example `compiler/testData/diagnostics/tests/crv/`.
+Read these files too. They are the negative cases.
+
+#### Read the compiler format
+
+| Compiler test data | Meaning |
+|---|---|
+| `<!NAME!>code<!>` | The compiler reports `NAME` on `code`. |
+| `<!NAME("arg")!>code<!>` | The same, with the diagnostic arguments. |
+| `<!NAME1, NAME2!>code<!>` | Two diagnostics on one range. |
+| Code without markup | The compiler reports nothing. This is a negative case. |
+| `// LANGUAGE: +Feature` or `-Feature` | A language feature on or off. |
+| `// FILE: A.java` | The start of one more file in a multi-file test. |
+| `// WITH_STDLIB` | The standard library is on the classpath. |
+| `// RUN_PIPELINE_TILL`, `// ISSUE`, `// FIR_IDENTICAL` | Compiler test settings. |
+| `/* GENERATED_FIR_TAGS: ... */` | The construct kinds in the file, for example `safeCall`, `callableReference`, `whenWithSubject`. |
+| `<case>.fir.kt` | The K2 result, when it differs from `<case>.kt`. |
+| `<case>.ll.kt`, `<case>.latestLV.kt` | The result in the Analysis API or with the latest language version. |
+
+Use the `.fir.kt` file when it exists. The IDE uses K2.
+
+Use `GENERATED_FIR_TAGS` as a coverage checklist.
+Collect the tags of all the files for the diagnostic.
+Add an IDE case for each tag that changes the PSI that the action edits.
+
+#### Convert a case
+
+Do not copy a compiler file as it is. A compiler file has many diagnostics, and an IDE test checks one caret.
+For each case:
+1. Take the smallest part of the code that keeps the case. Keep the declarations that it needs.
+2. Remove all the `<!...!>` and `<!>` markup.
+3. Put `<caret>` inside the range of the diagnostic.
+4. Convert the directives with the table below.
+5. Name the file for the case, not for the compiler file. Write the compiler path in a comment only if it helps the reader.
+6. Run the test, and write the `.after` file. Check that the result compiles.
+
+| Compiler | IDE |
+|---|---|
+| `// LANGUAGE: +Feature` | `// COMPILER_ARGUMENTS: -XXLanguage:+Feature` |
+| `// WITH_STDLIB` | `// WITH_STDLIB` |
+| `// FILE: A.java` and `// FILE: B.kt` | A multi-file test, or a Java file next to the test |
+| Other errors in the code | `// K2_ERROR:` lines, or remove the code |
+| `// RUN_PIPELINE_TILL`, `// ISSUE`, `GENERATED_FIR_TAGS` | Remove |
+
+A compiler case can be wrong for the IDE action. The diagnostic can be correct, but the fix can make it worse.
+Then make it a negative case, or leave it out and write the reason in the commit message.
+
+### Review the test data
+
+The test accepts the current behavior, also a wrong one.
+Read each `.after` file as a reviewer.
+- The result compiles, or the `K2_AFTER_ERROR` lines name each error.
+- The result keeps all the comments and the formatting outside the changed range.
+- The result has the same behavior as the original code.
+- No negative case passes for a reason other than the reason in its name.
+  For example, a typo in the code can make the action unavailable.
+
+### Report the coverage
+
+In the commit message, list the checklist categories without a test, and give the reason for each.
+Do not add a test only to make the list complete.
 
 ## Completion
 

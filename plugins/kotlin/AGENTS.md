@@ -16,3 +16,8 @@ It covers the factory, the action, registration, tests, test data generation, an
 ## Other code insight
 
 For intentions, completion, and other code insight, read the other sections of [Code insight](docs/fir-ide/architecture/code-insights.md).
+
+## Test data
+
+Before you write test data for an inspection, a quick fix, or an intention, read [Test data coverage](docs/fir-ide/architecture/code-insights.md#test-data-coverage).
+Plan the cases first. Reuse the Kotlin compiler tests for the same diagnostic.
