@@ -402,7 +402,7 @@ internal class PyModuleDetailsPane(
     for (row in sdkComboModel.items) {
       when (row) {
         is SdkComboItem.Existing -> if (row.sdk.name == name) return row
-        SdkComboItem.NoInterpreter, SdkComboItem.ShowAll, -> Unit
+        SdkComboItem.NoInterpreter, SdkComboItem.ShowAll, null -> Unit
       }
     }
     return null

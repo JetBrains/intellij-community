@@ -319,7 +319,7 @@ internal class PyInstallPackageDialog(private val project: Project) : BigPopupUI
         balloon.size = shortSize
         collapsedSize = Dimension(shortSize)
       }
-      ViewType.FULL -> Unit
+      ViewType.FULL, null -> Unit
     }
     showPopup()
     // Render installed state for already-installed packages up front (no-op until the SDK is ready —
