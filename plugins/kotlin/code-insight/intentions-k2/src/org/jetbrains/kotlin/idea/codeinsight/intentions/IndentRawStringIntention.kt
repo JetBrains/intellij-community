@@ -10,12 +10,17 @@ import com.intellij.modcommand.ModCommand.nop
 import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiBasedModCommandAction
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -28,11 +33,25 @@ class IndentRawStringIntention : PsiBasedModCommandAction<KtStringTemplateExpres
 
     private fun isAvailable(element: KtStringTemplateExpression): Boolean {
         if (!element.text.startsWith(QTS)) return false
-        if (element.parents.any { it is KtAnnotationEntry || (it as? KtProperty)?.hasModifier(KtTokens.CONST_KEYWORD) == true }) return false
+        if (element.isInConstantContext() &&
+            !element.languageVersionSettings.supportsFeature(LanguageFeature.IntrinsicConstEvaluation)
+        ) return false
         if (element.getQualifiedExpressionForReceiver() != null) return false
         val entries = element.entries
         return !(entries.size <= 1 || entries.any { it.text.startsWith(" ") || it.text.startsWith("\t") })
     }
+
+    /**
+     * A constant context accepts `trimIndent()` only with [LanguageFeature.IntrinsicConstEvaluation].
+     */
+    private fun KtStringTemplateExpression.isInConstantContext(): Boolean = parents.any {
+        it is KtAnnotationEntry ||
+                (it as? KtProperty)?.hasModifier(KtTokens.CONST_KEYWORD) == true ||
+                (it as? KtParameter)?.isAnnotationParameter() == true
+    }
+
+    private fun KtParameter.isAnnotationParameter(): Boolean =
+        (ownerFunction as? KtPrimaryConstructor)?.containingClass()?.isAnnotation() == true
 
     override fun getPresentation(context: ActionContext, element: KtStringTemplateExpression): Presentation? =
         if (isAvailable(element)) {

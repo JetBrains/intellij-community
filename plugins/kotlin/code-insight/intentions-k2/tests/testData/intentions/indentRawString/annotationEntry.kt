@@ -1,4 +1,5 @@
-// IS_APPLICABLE: false
+// WITH_STDLIB
+// COMPILER_ARGUMENTS: -XXLanguage:+IntrinsicConstEvaluation
 @Ann("""foo
 bar
 baz"""<caret>)

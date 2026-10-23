@@ -1,0 +1,6 @@
+// WITH_STDLIB
+// COMPILER_ARGUMENTS: -XXLanguage:+IntrinsicConstEvaluation
+const val foo = "prefix" + """
+     foo
+     bar
+     """.trimIndent()

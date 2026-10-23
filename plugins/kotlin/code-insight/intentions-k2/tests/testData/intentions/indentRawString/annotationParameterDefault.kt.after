@@ -1,0 +1,8 @@
+// WITH_STDLIB
+// COMPILER_ARGUMENTS: -XXLanguage:+IntrinsicConstEvaluation
+annotation class Ann(val s: String = """
+    foo
+    bar
+    baz
+    """.trimIndent()
+)

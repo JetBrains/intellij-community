@@ -1,0 +1,7 @@
+// WITH_STDLIB
+// COMPILER_ARGUMENTS: -XXLanguage:+IntrinsicConstEvaluation
+const val name = "name"
+const val foo = """
+    foo
+    $name
+    """.trimIndent()

@@ -1455,9 +1455,49 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             runTest("testData/intentions/indentRawString/annotationEntry.kt");
         }
 
-        @TestMetadata("const.kt")
-        public void testConst() throws Exception {
-            runTest("testData/intentions/indentRawString/const.kt");
+        @TestMetadata("annotationEntryIntrinsicConstEvaluationDisabled.kt")
+        public void testAnnotationEntryIntrinsicConstEvaluationDisabled() throws Exception {
+            runTest("testData/intentions/indentRawString/annotationEntryIntrinsicConstEvaluationDisabled.kt");
+        }
+
+        @TestMetadata("annotationParameterDefault.kt")
+        public void testAnnotationParameterDefault() throws Exception {
+            runTest("testData/intentions/indentRawString/annotationParameterDefault.kt");
+        }
+
+        @TestMetadata("annotationParameterDefaultIntrinsicConstEvaluationDisabled.kt")
+        public void testAnnotationParameterDefaultIntrinsicConstEvaluationDisabled() throws Exception {
+            runTest("testData/intentions/indentRawString/annotationParameterDefaultIntrinsicConstEvaluationDisabled.kt");
+        }
+
+        @TestMetadata("constInBinaryExpression.kt")
+        public void testConstInBinaryExpression() throws Exception {
+            runTest("testData/intentions/indentRawString/constInBinaryExpression.kt");
+        }
+
+        @TestMetadata("constInObject.kt")
+        public void testConstInObject() throws Exception {
+            runTest("testData/intentions/indentRawString/constInObject.kt");
+        }
+
+        @TestMetadata("constIntrinsicConstEvaluationDisabled.kt")
+        public void testConstIntrinsicConstEvaluationDisabled() throws Exception {
+            runTest("testData/intentions/indentRawString/constIntrinsicConstEvaluationDisabled.kt");
+        }
+
+        @TestMetadata("constTopLevel.kt")
+        public void testConstTopLevel() throws Exception {
+            runTest("testData/intentions/indentRawString/constTopLevel.kt");
+        }
+
+        @TestMetadata("constWithReceiver.kt")
+        public void testConstWithReceiver() throws Exception {
+            runTest("testData/intentions/indentRawString/constWithReceiver.kt");
+        }
+
+        @TestMetadata("constWithTemplate.kt")
+        public void testConstWithTemplate() throws Exception {
+            runTest("testData/intentions/indentRawString/constWithTemplate.kt");
         }
 
         @TestMetadata("hasIndent.kt")
