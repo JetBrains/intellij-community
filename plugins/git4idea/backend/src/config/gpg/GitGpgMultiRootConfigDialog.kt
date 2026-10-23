@@ -96,7 +96,7 @@ class GitGpgMultiRootConfigDialog(val project: Project,
         }
         tableModel.fireTableDataChanged()
 
-        secretKeys.tryLoad()
+        secretKeys.tryReload()
         table.repaint()
       }
       finally {
