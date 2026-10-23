@@ -17,11 +17,12 @@ import { isNavGroup, isNavItemActive, type NavEntry, type NavGroup } from '../na
 import { hrefForRoute } from '../router'
 import type { AnyRoute as Route } from '../routeTable.ts'
 
+/* The nav lies on the window, and the dark --muted equals the dark window: a hover takes the translucent --hover
+   tint, and the active section takes the island color, so both read on the window in both themes. */
+const ON_WINDOW = 'text-muted-foreground hover:bg-hover hover:text-foreground focus:bg-hover data-active:bg-card data-active:text-foreground'
+
 /* prose.css themes bare <a> in --primary; nav links must stay neutral */
-const topLevelLink = cn(
-  navigationMenuTriggerStyle(),
-  'text-muted-foreground hover:text-foreground hover:no-underline data-active:bg-muted/50 data-active:text-foreground',
-)
+const topLevelLink = cn(navigationMenuTriggerStyle(), ON_WINDOW, 'hover:no-underline')
 
 function NavGroupMenu({ group, route }: { group: NavGroup, route: Route }) {
   const groupActive = group.items.some(item => isNavItemActive(item, route))
@@ -29,7 +30,7 @@ function NavGroupMenu({ group, route }: { group: NavGroup, route: Route }) {
     <NavigationMenuItem>
       <NavigationMenuTrigger
         data-active={groupActive || undefined}
-        className="text-muted-foreground hover:text-foreground data-active:bg-muted/50 data-active:text-foreground"
+        className={cn(ON_WINDOW, 'data-popup-open:bg-hover data-popup-open:hover:bg-hover data-open:bg-hover data-open:hover:bg-hover data-open:focus:bg-hover')}
       >
         {group.label}
       </NavigationMenuTrigger>

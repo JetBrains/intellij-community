@@ -4,6 +4,7 @@
 // The step bar walks the whole explainer: past the last step it hands off to the next chapter.
 
 import { lazy, Suspense, useEffect, useRef } from 'react'
+import { Island } from '../components/Island'
 import { PageBreadcrumb } from '../components/PageBreadcrumb'
 import { cn } from '../lib/utils'
 import type { HarvestedDiagramStep } from '../../scripts/diagram.ts'
@@ -137,19 +138,20 @@ export function ExplainerPage({ slug, chapter, step, node }: { slug: string, cha
   if (diagram === null) {
     // the route outlet of an explainer does not scroll, so this pane does
     return (
-      <div ref={proseRef} className="explainer-page-scroll min-h-0 flex-1 overflow-y-auto">
+      <Island ref={proseRef} className="explainer-page-scroll min-h-0 flex-1 overflow-y-auto">
         <DocPage className="explainer-page explainer-page-prose">
           {prose}
         </DocPage>
-      </div>
+      </Island>
     )
   }
+  // two islands, as a tool window beside the editor: the prose, and the diagram on its canvas
   return (
-    <div className="explainer-page grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,45%)_minmax(0,1fr)] gap-0 md:grid-cols-[minmax(360px,440px)_1fr] md:grid-rows-none">
-      <div ref={proseRef} className="explainer-prose row-start-2 overflow-y-auto border-t border-border p-3.5 md:row-start-auto md:border-t-0 md:border-r md:p-5.5">
+    <div className="explainer-page grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,45%)_minmax(0,1fr)] gap-2 md:grid-cols-[minmax(360px,440px)_1fr] md:grid-rows-none">
+      <Island ref={proseRef} className="explainer-prose row-start-2 overflow-y-auto p-3.5 md:row-start-auto md:p-5.5">
         {prose}
-      </div>
-      <div className="explainer-canvas-pane sticky top-0 row-start-1 flex h-full min-h-0 min-w-0 md:col-start-2 md:row-start-auto">
+      </Island>
+      <Island className="explainer-canvas-pane sticky top-0 row-start-1 flex h-full min-h-0 min-w-0 overflow-hidden md:col-start-2 md:row-start-auto">
         <div className="relative min-w-0 flex-1">
           <Suspense fallback={<div className="diagram-loading grid h-full place-items-center text-muted-foreground">Loading…</div>}>
             <HandLaidCanvas diagram={diagram} step={model.step} selected={model.node} onStep={model.goStep} onSelect={model.select} walk={stepBarWalk(model, atEnd)} />
@@ -166,7 +168,7 @@ export function ExplainerPage({ slug, chapter, step, node }: { slug: string, cha
             onClose={() => model.select(null)}
           />
         )}
-      </div>
+      </Island>
     </div>
   )
 }

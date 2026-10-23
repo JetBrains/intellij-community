@@ -5,7 +5,8 @@
 // Uniform children (the anchors inside actions/chip rows, `small` in link lists) are styled
 // with `[&_…]` descendant variants so call sites keep their natural markup.
 
-import type {ReactNode} from 'react'
+import {Children, type ReactNode} from 'react'
+import {Island} from './components/Island'
 import {Badge} from './components/ui/badge'
 import {Button} from './components/ui/button'
 import {Card} from './components/ui/card'
@@ -15,37 +16,51 @@ import {Separator} from './components/ui/separator'
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from './components/ui/select'
 import {ToggleGroup, ToggleGroupItem} from './components/ui/toggle-group'
 import {cn} from './lib/utils'
+import {PageCrumbRow, usePageChrome} from './pageLayout'
 import {ADR_STATUSES, type AdrStatus} from '../scripts/docMeta'
 import {repoPathOf} from '../scripts/sourcePaths'
 import {site} from './site'
 import {sourceHref} from './sourceRef'
 
-/** Centered doc page shell; `toc` enables the wide-viewport two-column layout (content + TocAside).
- *  Every page shares the same outer geometry at the `toc:` breakpoint — 1160px box, content column ending
- *  296px (right pad 40 + aside 220 + gap 36) from the right — so the content left edge never jumps
- *  between TOC and plain pages. */
+/**
+ * The page box of a doc page; `toc` gives the table of contents its column (content first child, TocAside second).
+ * In the reading layout the page draws two islands: the document with the crumb row, and the table of contents; a page
+ * without a table of contents keeps its column, so the document edge stays put. In the tool and the canvas layout the
+ * page is a centered box inside the island of the layout.
+ */
 export function DocPage({ toc = false, className, children }: { toc?: boolean, className?: string, children: ReactNode }) {
+  const { layout } = usePageChrome()
+  if (layout === 'reading') {
+    const [content, ...aside] = toc ? Children.toArray(children) : [children]
+    return (
+      <div className={cn('doc-page flex items-start gap-2 **:scroll-mt-3', toc && 'has-toc', className)}>
+        <Island as="article" className="doc-island min-w-0 flex-1 px-10 pt-5 pb-20 max-md:px-4 max-md:pt-3 max-md:pb-15">
+          <PageCrumbRow />
+          {content}
+        </Island>
+        {toc ? aside : <div className="toc-column hidden w-[220px] flex-none toc:block" aria-hidden="true" />}
+      </div>
+    )
+  }
   return (
-    <div
-      className={cn(
-        'doc-page mx-auto max-w-[900px] px-10 pt-8 pb-20 max-md:px-4 max-md:pt-5 max-md:pb-15 toc:max-w-[1160px]',
-        !toc && 'toc:pr-[296px]',
-        toc && 'has-toc toc:flex toc:gap-9 toc:[&>:first-child]:min-w-0 toc:[&>:first-child]:flex-1 **:scroll-mt-3',
-        className,
-      )}
-    >
-      {children}
+    <div className={cn('doc-page mx-auto max-w-[1160px] px-10 pt-6 pb-20 max-md:px-4 max-md:pt-4 max-md:pb-15', toc && 'has-toc **:scroll-mt-3', className)}>
+      <PageCrumbRow />
+      {toc
+        ? <div className="toc:flex toc:gap-9 toc:[&>:first-child]:min-w-0 toc:[&>:first-child]:flex-1">{children}</div>
+        : children}
     </div>
   )
 }
 
 /** The page for a route key that names nothing, with a link back to the index. */
 export function NotFoundPage({ kind, name, backHref, backLabel }: { kind: string, name: string, backHref: string, backLabel: string }) {
-  return (
+  const page = (
     <DocPage>
       <p>Unknown {kind}: <code>{name}</code>. <a href={backHref}>{backLabel}</a></p>
     </DocPage>
   )
+  // a canvas page draws its own islands, so its missing page needs one
+  return usePageChrome().layout === 'canvas' ? <Island className="min-h-0 flex-1">{page}</Island> : page
 }
 
 /** End-of-content reference to the markdown file behind a prose page (guides, ADRs, specs). */
@@ -292,10 +307,11 @@ export function LinkListItem({ detail, children }: { detail?: ReactNode, childre
 }
 
 /** Anchored entry card (features, concepts, glossary terms) — the `feature-entry` skin.
- *  `text-base` restores the root size that Card's own `text-sm` would shrink. */
+ *  `text-base` restores the root size that Card's own `text-sm` would shrink. A Card is a panel inside an island:
+ *  the stock ring of Card, no border and no shadow, and less round than the island. */
 export function EntryCard({ id, className, children }: { id?: string, className?: string, children: ReactNode }) {
   return (
-    <Card id={id} className={cn('grid gap-2 rounded-lg border border-border bg-muted px-3.5 py-3 text-base ring-edge-highlight', className)}>
+    <Card id={id} className={cn('grid gap-2 rounded-lg bg-muted px-3.5 py-3 text-base', className)}>
       {children}
     </Card>
   )
@@ -328,7 +344,7 @@ export function EntryCardLink({ href, title, description, meta, className }: {
 /** Bordered catalog entry card (extension points, state components, …). */
 export function KdocEntry({ id, children }: { id?: string, children: ReactNode }) {
   return (
-    <Card id={id} className="kdoc-entry mb-2.5 block rounded-lg px-3 py-2.5 ring-edge-highlight border border-border">
+    <Card id={id} className="kdoc-entry mb-2.5 block rounded-lg px-3 py-2.5">
       {children}
     </Card>
   )
@@ -365,7 +381,7 @@ export function StatTiles({ stats }: { stats: { label: string, value: number | s
   return (
     <dl className="catalog-stats m-0 mb-5.5 grid grid-cols-2 gap-3 sm:grid-cols-4">
       {stats.map(stat => (
-        <Card key={stat.label} className="block rounded-lg bg-muted px-4 py-3 ring-edge-highlight border border-border">
+        <Card key={stat.label} className="block rounded-lg bg-muted px-4 py-3">
           <dt className="text-2xs font-medium tracking-[0.05em] uppercase text-muted-foreground">{stat.label}</dt>
           <dd className="m-0 mt-0.5 text-xl font-semibold tracking-tight">{stat.value}</dd>
         </Card>

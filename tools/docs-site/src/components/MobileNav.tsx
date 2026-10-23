@@ -38,7 +38,7 @@ export function MobileNav({ nav, route }: { nav: readonly NavEntry[], route: Rou
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
-        render={<Button variant="ghost" size="icon-sm" className="lg:hidden" aria-label="Navigation" />}
+        render={<Button variant="ghost" size="icon-sm" className="hover:bg-hover lg:hidden" aria-label="Navigation" />}
       >
         <MenuIcon />
       </SheetTrigger>

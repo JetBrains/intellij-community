@@ -96,7 +96,7 @@ function HalfBadge({ entry }: { entry: LaunchEntry }) {
 
 function ChosenEntry({ entry, explain }: { entry: LaunchEntry, explain: string | null }) {
   return (
-    <section className="launch-chosen grid gap-3 rounded-xl border border-border bg-card p-4 ring-1 ring-edge-highlight md:p-5" aria-label="The chosen launch target">
+    <section className="launch-chosen grid gap-3 rounded-lg border border-border bg-card p-4 ring-1 ring-edge-highlight md:p-5" aria-label="The chosen launch target">
       <div className="flex min-w-0 flex-wrap items-center gap-2">
         <h2 className="launch-chosen-name m-0 text-lg font-semibold">{entry.name}</h2>
         <HalfBadge entry={entry} />
@@ -163,7 +163,7 @@ export function LaunchPage({ query }: { query: string | null }) {
         value={highlight}
         onValueChange={setHighlight}
         label="Launch targets"
-        className="launch-picker mt-6 h-auto rounded-xl border border-border bg-card ring-1 ring-edge-highlight"
+        className="launch-picker mt-6 h-auto rounded-lg border border-border bg-card ring-1 ring-edge-highlight"
       >
         <CommandInput
           placeholder="Search by name, target, or command…"

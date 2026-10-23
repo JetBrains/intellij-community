@@ -98,13 +98,24 @@ test('only home and source have no nav section, and the crumb head comes from th
   assert.equal(table.entryFor(guides).parent, null)
 })
 
+test('a canonical entry names the layout of its page, and a legacy entry names none', () => {
+  assert.deepEqual(table.rows().filter(row => row.legacy !== (row.layout === null)), [])
+  const layout = (route: KernelRoute) => table.entryFor(route).layout
+  assert.equal(layout({ page: 'guide', slug: 'a', anchor: null }), 'reading')
+  assert.equal(layout({ page: 'explainer', slug: 'a', chapter: null, step: null, node: null }), 'canvas')
+  assert.equal(layout({ page: 'home' }), 'tool')
+  const route = routeBuilder<{ page: 'x' }>()
+  // @ts-expect-error: a canonical entry without a layout does not compile
+  assert.throws(() => route('x', '/x', {}), /needs a layout/)
+})
+
 type SiteRoute = KernelRoute | { page: 'launch', q: string | null } | { page: 'legacy-home', sel: string | null }
 
 test('a route extension comes before the kernel routes, so it can claim a kernel URL', () => {
   const route = routeBuilder<SiteRoute, 'launch'>()
   const site = siteRouteTable({ ...CONFIG, launchPicker: null }, [
     route('legacy-home', '/', { legacy: true, query: { sel: text }, when: ({ sel }) => sel !== null }),
-    route('launch', '/launch', { query: { q: text }, section: 'launch' }),
+    route('launch', '/launch', { query: { q: text }, section: 'launch', layout: 'tool' }),
   ])
   const launch: SiteRoute = { page: 'launch', q: 'idea' }
   assert.deepEqual(site.parse('/?sel=x'), { page: 'legacy-home', sel: 'x' })
@@ -126,7 +137,7 @@ test('the launch route exists only when the site has a launch picker', () => {
 test('a path value keeps its slashes in the build, and any value parses back', () => {
   type ZipRoute = { page: 'zip', zip: string | null, note: string | null }
   const route = routeBuilder<ZipRoute>()
-  const zips = createRouteTable([route('zip', '/zip', { query: { zip: pathText, note: text } })])
+  const zips = createRouteTable([route('zip', '/zip', { query: { zip: pathText, note: text }, layout: 'tool' })])
   const zip: ZipRoute = { page: 'zip', zip: 'ui_lane_test/iter-1/A Test/b c.zip', note: 'x/y' }
   assert.equal(zips.build(zip), '/zip?zip=ui_lane_test/iter-1/A+Test/b+c.zip&note=x%2Fy')
   assert.deepEqual(zips.parse('/zip?zip=ui_lane_test/iter-1/A+Test/b+c.zip&note=x%2Fy'), zip)

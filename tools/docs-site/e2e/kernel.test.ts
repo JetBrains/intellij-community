@@ -199,6 +199,81 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
     })
   })
 
+  describe('page layout', () => {
+    const guides = harvest.docs.filter(doc => doc.kind === 'guide')
+    const group = config.guideGroups.find(entry => guides.filter(doc => doc.group === entry.id).length >= 2)
+    const [first, second] = group === undefined ? [] : guides.filter(doc => doc.group === group.id)
+    const guideRoute = (doc: HarvestedDoc) => app(`/guides/${slugOf(doc.path)}`)
+    const currentTreeLink = (page: Page) => page.locator('.section-nav a[aria-current="page"]')
+    const background = (page: Page, selector: string) => page.locator(selector).first().evaluate(element => getComputedStyle(element).backgroundColor)
+
+    test('a guide page lies in three islands on the window: the section tree, the document, and the table of contents', async ({ page }) => {
+      assert.ok(first, 'no guide group of the site has two guides')
+      await open(page, guideRoute(first))
+      await expect(page.locator('.section-nav')).toBeVisible()
+      await expect(currentTreeLink(page)).toHaveAttribute('href', guideRoute(first))
+      await expect(page.locator('.doc-island .page-breadcrumb')).toContainText('Guides')
+      const window = await background(page, '.app-shell')
+      assert.notStrictEqual(await background(page, '.doc-island'), window)
+      assert.notStrictEqual(await background(page, '.section-nav'), window)
+      // the top bar is the main toolbar of the IDE: it lies on the window and has no border
+      assert.strictEqual(await background(page, '.topbar'), 'rgba(0, 0, 0, 0)')
+      assert.strictEqual(await page.locator('.topbar').evaluate(element => getComputedStyle(element).borderBottomWidth), '0px')
+      const tree = await page.locator('.section-nav').boundingBox()
+      const doc = await page.locator('.doc-island').boundingBox()
+      assert.ok(tree && doc)
+      assert.ok(Math.abs(doc.x - (tree.x + tree.width) - 8) < 1, `the islands are ${doc.x - tree.x - tree.width}px apart, not 8px`)
+    })
+
+    test('the section tree sticks under the top bar and stays mounted within its section', async ({ page }) => {
+      assert.ok(first && second, 'no guide group of the site has two guides')
+      await open(page, guideRoute(first))
+      const tree = page.locator('.section-nav')
+      await tree.evaluate(element => element.setAttribute('data-probe', 'kept'))
+      const top = (await tree.boundingBox())!.y
+      await page.locator('.route-outlet').evaluate(outlet => outlet.scrollTo({ top: outlet.scrollHeight }))
+      await expect.poll(async () => Math.round((await tree.boundingBox())!.y)).toBe(Math.round(top))
+      await tree.locator(`a[href="${guideRoute(second)}"]`).click()
+      await expectUrlContains(page, guideRoute(second))
+      await expect(currentTreeLink(page)).toHaveAttribute('href', guideRoute(second))
+      await expect(page.locator('.section-nav[data-probe="kept"]')).toHaveCount(1)
+    })
+
+    test('a decision page marks its record in the tree of the topics', async ({ page }) => {
+      const record = harvest.docs.find(doc => doc.adr !== undefined)
+      assert.ok(record, 'no decision record is harvested')
+      await open(page, app(`/decisions/${slugOf(record.path)}`))
+      await expect(currentTreeLink(page)).toHaveAttribute('href', app(`/decisions/${slugOf(record.path)}`))
+      const topic = config.decisions.topics.find(entry => entry.id === record.adr!.topic)!
+      await expect(page.locator(`.section-tree-group[data-group="${topic.id}"] button`)).toHaveAttribute('aria-expanded', 'true')
+    })
+
+    test('a doc page has no section tree, and a tool page is one island across the window', async ({ page }) => {
+      const doc = harvest.docs.find(entry => !entry.path.startsWith(`${config.docs.root}/`) && entry.adr === undefined && entry.kind !== 'explainer')
+      if (doc !== undefined) {
+        await open(page, app(`/doc/${encodeURIComponent(doc.path)}`))
+        await expect(page.locator('.doc-island')).toBeVisible()
+        await expect(page.locator('.section-nav, .section-nav-trigger')).toHaveCount(0)
+      }
+      await open(page, app('/'))
+      await expect(page.locator('.tool-island')).toHaveCount(1)
+      await expect(page.locator('.section-nav, .doc-island')).toHaveCount(0)
+    })
+
+    test('below the section-nav breakpoint the tree opens in a sheet from the crumb row', async ({ page }) => {
+      assert.ok(first && second, 'no guide group of the site has two guides')
+      await page.setViewportSize({ width: 1000, height: 900 })
+      await open(page, guideRoute(first))
+      await expect(page.locator('.section-nav')).toBeHidden()
+      await page.locator('.doc-island .section-nav-trigger').click()
+      const sheet = page.locator('.section-nav-sheet')
+      await expect(sheet.locator('a[aria-current="page"]')).toHaveAttribute('href', guideRoute(first))
+      await sheet.locator(`a[href="${guideRoute(second)}"]`).click()
+      await expectUrlContains(page, guideRoute(second))
+      await expect(sheet).toHaveCount(0)
+    })
+  })
+
   describe('explainers (ADR 0204)', () => {
     const explainer = harvest.docs.find(doc => doc.kind === 'explainer' && (doc.chapters?.length ?? 0) >= 3)
     if (explainer === undefined) {

@@ -7,11 +7,12 @@
    imported after tailwind.css in main.tsx, so these rules win within the layer (load-bearing
    ordering) while utilities still override them all. */
 @layer base {
+  /* the main window of the IDE: the islands of a page lie on it */
   html,
   body,
   #root {
     height: 100%;
-    background: var(--background);
+    background: var(--window);
     color: var(--foreground);
   }
 
@@ -225,9 +226,27 @@ a.symbol-link:hover code {
     overflow: visible;
   }
 
+  /* paper is the island: the document fills the sheet, without the window and the empty columns around it */
+  html,
+  body,
+  #root,
+  .app-shell {
+    background: none;
+  }
+
+  .reading-layout,
+  .reading-column,
+  .tool-layout {
+    display: block;
+    max-width: none;
+    padding: 0;
+  }
+
   .topbar,
   .page-breadcrumb-bar,
+  .section-nav,
   .toc-aside,
+  .toc-column,
   .heading-anchor,
   .doc-figure-open {
     display: none;

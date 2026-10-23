@@ -12,6 +12,7 @@ import {
   type DecisionStatusFilter,
   type KernelRoute,
   type LaunchRoute,
+  type PageLayout,
   type RouteExtension,
   type RouteParent,
   type RouteTable,
@@ -19,7 +20,7 @@ import {
 } from './routeTable.ts'
 
 export { catalogAnchor, isCatalogAnchor } from './routeTable.ts'
-export type { AnyRoute, DecisionStatusFilter, KernelRoute, LaunchRoute, RouteParent, SourceLineSelection } from './routeTable.ts'
+export type { AnyRoute, DecisionStatusFilter, KernelRoute, LaunchRoute, PageLayout, RouteParent, SourceLineSelection } from './routeTable.ts'
 
 /** The event that `navigate` sends. The shell reads the new route on it. */
 export const ROUTE_CHANGE_EVENT = 'docs-site-route-change'
@@ -65,6 +66,11 @@ export function hrefForRoute(route: AnyRoute): string {
 /** The top-nav section that marks the route as active, or null when no nav item owns the page. */
 export function sectionOf(route: AnyRoute): string | null {
   return routes().table.entryFor(route).section
+}
+
+/** The layout of the page of the route. */
+export function layoutOf(route: AnyRoute): PageLayout {
+  return routes().table.entryFor(route).layout
 }
 
 /** The head crumb of the route, or null for a page with no section head. */

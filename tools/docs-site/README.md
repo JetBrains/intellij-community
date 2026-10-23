@@ -79,13 +79,30 @@ roots. The kernel knows no language and no build system.
 
 - `home`, `nav`, `pages`: the Home page, the nav table, and the renderers of the site pages.
 - `routes`: the route extensions, made with `routeBuilder`. They come before the kernel routes, so they can claim a
-  kernel URL.
+  kernel URL. Each canonical entry names the `layout` of its page; the next section lists the layouts.
 - `data`: the `SiteData` read model. It holds the harvested docs, diagrams, specs, and symbols, and the glob loaders
   of the harvested markdown, sources, and pictures. A site with a launch picker gives the `launch` entries too.
-- Optional: `crumbs`, `canvasPages`, `pageIdentity`, `fenceRenderers`, `refLinks`, `searchProviders`, `stepRef`,
-  and `palette`. `src/site.ts` documents each one.
+- Optional: `crumbs`, `sectionTrees`, `pageIdentity`, `fenceRenderers`, `refLinks`, `searchProviders`, `stepRef`,
+  and `palette`. `src/site.ts` and `src/Shell.tsx` document each one.
 
 A kernel module reads the installed parts through `site()` inside a function, never at module load.
+
+### The page layout
+
+The site lays out a page as islands on the window, as the Islands theme of the IDE does. The top bar lies on the
+window, and the route table gives each page one of three layouts (`PageLayout` of `src/routeTable.ts`):
+
+| Layout | The islands | Pages of the kernel |
+| --- | --- | --- |
+| `reading` | The section tree, the document with its crumb row, and the table of contents. | Guides, decisions, docs, the explainers index. |
+| `tool` | One island across the window. | Home, the source viewer, the launch picker. |
+| `canvas` | The page fills the outlet and draws its own islands. The page owns its trail. | One explainer. |
+
+A canonical route entry without a `layout` does not compile. `src/pageLayout.tsx` draws the layouts, and `Island` of
+`src/components/Island.tsx` is one island. `sectionTrees` gives the trees of the site sections by route page, for
+example the specs of a spec page. The kernel gives the trees of the guides and the decision records. A reading page
+without a tree keeps the empty column, so the left edge of the document stays put. Below the `section-nav:` breakpoint
+the tree opens in a Sheet from the crumb row.
 
 The kernel imports each shadcn component by a relative path, for example `./ui/button`. The files under
 `src/components/ui/` are stock shadcn. The Air site resolves a kernel import of a GenUI catalog name to the catalog

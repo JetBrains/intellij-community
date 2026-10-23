@@ -1,25 +1,13 @@
 // Guides index (ADR 0199 of Air): the guides in their topic groups (frontmatter `group:`), then the working
 // notes. A historical note folds away, and the decision records have their own page.
 
+import { routeForDoc } from '../docRoute'
 import { EntryCardLink, HeadingAnchor, LinkList, LinkListItem, PageHeader } from '../furniture'
 import { useAnchorScroll } from '../markdown'
-import { catalogAnchor, decisionRoute, decisionsRoute, docRoute, explainerRoute, guideRoute, guidesRoute, isDecisionPath } from '../router'
+import { catalogAnchor, decisionsRoute, guidesRoute } from '../router'
 import { site } from '../site.ts'
-import { guideSlug, type HarvestedDoc } from '../siteData.ts'
+import type { HarvestedDoc } from '../siteData.ts'
 import { TocDocPage } from './TocAside'
-
-/** Route for a bundled doc: a decision record has its own page, guides and notes under the docs root get pretty slugs, the rest use /doc. */
-export function routeForDoc(doc: HarvestedDoc): string {
-  if (isDecisionPath(doc.path)) {
-    return decisionRoute(doc.path)
-  }
-  if (doc.kind === 'explainer') {
-    return explainerRoute(guideSlug(doc.path))
-  }
-  return doc.path.startsWith(`${site().config.docs.root}/`)
-    ? guideRoute(guideSlug(doc.path))
-    : docRoute(doc.path)
-}
 
 function byOrderThenTitle(a: HarvestedDoc, b: HarvestedDoc): number {
   return a.order - b.order || a.title.localeCompare(b.title)

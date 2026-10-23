@@ -217,6 +217,9 @@
 
   /* the wide-viewport threshold where doc pages gain the TOC aside column (toc: variant) */
   --breakpoint-toc: 1150px;
+  /* the width that holds the three islands of a reading page: the 240px section tree, the 70ch document and the
+     220px table of contents, with the gaps and a classic scrollbar (section-nav: variant) */
+  --breakpoint-section-nav: 1260px;
 }
 
 @theme inline {

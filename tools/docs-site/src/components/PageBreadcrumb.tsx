@@ -1,5 +1,6 @@
-// The one in-page breadcrumb, rendered by the App shell above every detail page (FlowPage
-// mounts it inside its prose column instead — canvas layout). Trails come from crumbsForRoute.
+// The one in-page breadcrumb. DocPage shows it in the crumb row at the top of the document
+// (PageCrumbRow of pageLayout.tsx); a canvas page, such as a flow, mounts it in its prose island.
+// Trails come from crumbsForRoute.
 
 import { Fragment } from 'react'
 import {
