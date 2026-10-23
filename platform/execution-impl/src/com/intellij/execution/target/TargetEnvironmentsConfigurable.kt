@@ -18,28 +18,26 @@ class TargetEnvironmentsConfigurable(private val project: Project,
 
   constructor(project: Project) : this(project, null, null)
 
-  private val editor = TargetEnvironmentsMasterDetails(project, initialSelectedName, defaultLanguageRuntime)
+  private val editorDelegate = lazy { TargetEnvironmentsMasterDetails(project, initialSelectedName, defaultLanguageRuntime) }
 
-  override fun initUi() = editor.initUi()
+  private val editor by editorDelegate
 
+  override fun initUi(): Unit = editor.initUi()
   override fun getToolbar(): JComponent = editor.toolbar
-
   override fun getMaster(): JComponent = editor.master
-
   override fun getDetails(): DetailsComponent = editor.details
 
-  override fun isModified(): Boolean = editor.isModified
+  override fun isModified(): Boolean = editorDelegate.isInitialized() && editor.isModified
 
   override fun getId(): String = "Runtime.Targets.Configurable"
-
   override fun getDisplayName(): String = ExecutionBundle.message("configurable.name.runtime.targets")
-
   override fun createComponent(): JComponent = editor.createComponent()
-
   override fun getHelpTopic(): String = "reference.run.targets"
 
   override fun apply() {
-    editor.apply()
+    if (editorDelegate.isInitialized()) {
+      editor.apply()
+    }
   }
 
   override fun reset() {
@@ -47,7 +45,9 @@ class TargetEnvironmentsConfigurable(private val project: Project,
   }
 
   override fun disposeUIResources() {
-    editor.disposeUIResources()
+    if (editorDelegate.isInitialized()) {
+      editor.disposeUIResources()
+    }
     super.disposeUIResources()
   }
 
@@ -55,7 +55,7 @@ class TargetEnvironmentsConfigurable(private val project: Project,
     return ShowSettingsUtil.getInstance().editConfigurable(project, DIMENSION_KEY, this, true)
   }
 
-  val selectedTargetConfig: TargetEnvironmentConfiguration? get() = editor.selectedConfig
+  val selectedTargetConfig: TargetEnvironmentConfiguration? get() = if (editorDelegate.isInitialized()) editor.selectedConfig else null
 
   companion object {
     @JvmStatic
