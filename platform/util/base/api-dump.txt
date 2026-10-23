@@ -11,6 +11,10 @@ f:com.intellij.diagnostic.ThreadDump
 f:com.intellij.diagnostic.ThreadDumper
 - s:dumpEdtToString():java.lang.String
 - s:dumpThreadsToString():java.lang.String
+com.intellij.execution.process.ProcessTreeKiller
+- com.intellij.execution.process.SelfKiller
+- a:killProcessTree():Z
+com.intellij.execution.process.SelfKiller
 f:com.intellij.filename.UniqueNameBuilder
 - <init>(java.lang.String,java.lang.String):V
 - addPath(java.lang.Object,java.lang.String):V

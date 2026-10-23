@@ -294,7 +294,6 @@ f:com.intellij.platform.eel.EelPlatformKt
 - com.intellij.platform.eel.EelProcess
 - *a:sendSignal(com.intellij.platform.eel.UnixSignal,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.eel.EelProcess
-- convertToJavaProcess():java.lang.Process
 - *a:getExitCode():com.intellij.platform.eel.SafeDeferred
 - *a:getPid():com.intellij.platform.eel.EelApi$Pid
 - *a:getStderr():com.intellij.platform.eel.channels.EelReceiveChannel

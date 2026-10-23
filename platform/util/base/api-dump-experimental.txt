@@ -1,3 +1,5 @@
+com.intellij.execution.process.SelfKiller
+- *:tryDestroyGracefully():Z
 f:com.intellij.util.ExceptionUtilsKt
 - *sf:causeChain(java.lang.Throwable):kotlin.sequences.Sequence
 f:com.intellij.util.containers.CollectionFactory

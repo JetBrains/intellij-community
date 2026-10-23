@@ -1,4 +1,2 @@
-com.intellij.execution.process.SelfKiller
-- *:tryDestroyGracefully():Z
 f:com.intellij.util.ExceptionUtilRt
 - *s:causeChain(java.lang.Throwable):java.util.Iterator

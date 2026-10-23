@@ -1,4 +1,3 @@
-com.intellij.execution.process.SelfKiller
 com.intellij.execution.rmi.CastableArgument
 com.intellij.execution.rmi.IdeaWatchdog
 - java.rmi.Remote
