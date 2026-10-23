@@ -153,6 +153,9 @@ fn walk(scan: &Path, filter: &Filter, files: &mut Vec<PathBuf>) -> Result<(), Bo
 }
 
 /// The files of the checkout under `scan` that git tracks or that `.gitignore` keeps, relative to `scan`.
+///
+/// `listGitFiles` of `plugins/air/tests/plugin/testSrc/AirRepoScan.kt` and `list_git_files` of
+/// `plugins/air/tests/architecture-gate/src/repo.rs` in the ultimate root list a checkout with the same git command.
 fn git_files(scan: &Path) -> Result<Vec<String>, Box<dyn Error>> {
     let output = Command::new("git")
         .arg("-C")
