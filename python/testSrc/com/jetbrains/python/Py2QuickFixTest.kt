@@ -11,6 +11,7 @@ import com.intellij.testFramework.TestDataFile
 import com.intellij.testFramework.TestDataPath
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.documentation.docstrings.DocStringFormat
 import com.jetbrains.python.fixtures.PyTestCase
@@ -1163,7 +1164,7 @@ class Py2QuickFixTest : PyTestCase() {
     myFixture.configureByFile(fileName)
     myFixture.enableInspections(PyShadowingBuiltinsInspection::class.java)
     myFixture.checkHighlighting(true, false, true)
-    val intentionAction = myFixture.getAvailableIntention(PyBundle.message("QFIX.NAME.rename.element"))!!
+    val intentionAction = myFixture.getAvailableIntention(PyCodeInsightBundle.message("QFIX.NAME.rename.element"))!!
     assertNotNull(intentionAction)
     myFixture.launchAction(intentionAction)
     myFixture.checkResultByFile(graftBeforeExt(fileName, "_after"))
@@ -1175,7 +1176,7 @@ class Py2QuickFixTest : PyTestCase() {
     myFixture.configureByFile(fileName)
     myFixture.enableInspections(PyShadowingBuiltinsInspection::class.java)
     myFixture.checkHighlighting(true, false, true)
-    val intentionAction = myFixture.getAvailableIntention(PyBundle.message("QFIX.NAME.rename.element"))!!
+    val intentionAction = myFixture.getAvailableIntention(PyCodeInsightBundle.message("QFIX.NAME.rename.element"))!!
     assertNotNull(intentionAction)
     myFixture.launchAction(intentionAction)
     myFixture.checkResultByFile(graftBeforeExt(fileName, "_after"))
@@ -1194,7 +1195,7 @@ class Py2QuickFixTest : PyTestCase() {
     doInspectionTest(
       "ImplementAbstractProperty.py",
       PyAbstractClassInspection::class.java,
-      PyBundle.message("QFIX.NAME.implement.methods"),
+      PyCodeInsightBundle.message("QFIX.NAME.implement.methods"),
       true,
       true
     )
@@ -1204,7 +1205,7 @@ class Py2QuickFixTest : PyTestCase() {
     doInspectionTest(
       "ImplementAbstractProperty.py",
       PyAbstractClassInspection::class.java,
-      PyBundle.message("QFIX.NAME.implement.methods"),
+      PyCodeInsightBundle.message("QFIX.NAME.implement.methods"),
       true,
       true
     )
@@ -1214,7 +1215,7 @@ class Py2QuickFixTest : PyTestCase() {
     doInspectionTest(
       "ImplementAbstractOrder.py",
       PyAbstractClassInspection::class.java,
-      PyBundle.message("QFIX.NAME.implement.methods"),
+      PyCodeInsightBundle.message("QFIX.NAME.implement.methods"),
       true,
       true
     )
@@ -1223,14 +1224,14 @@ class Py2QuickFixTest : PyTestCase() {
   @TestFor(issues = ["PY-53074"])
   fun testImplementAbstractAsyncMethodsInEmptyClass() {
     runWithLanguageLevel(LanguageLevel.getLatest()) {
-      doInspectionTest(PyAbstractClassInspection::class.java, PyBundle.message("QFIX.NAME.implement.methods"), true, true)
+      doInspectionTest(PyAbstractClassInspection::class.java, PyCodeInsightBundle.message("QFIX.NAME.implement.methods"), true, true)
     }
   }
 
   @TestFor(issues = ["PY-53074"])
   fun testImplementAbstractAsyncMethodsInEmptyNestedClass() {
     runWithLanguageLevel(LanguageLevel.getLatest()) {
-      doInspectionTest(PyAbstractClassInspection::class.java, PyBundle.message("QFIX.NAME.implement.methods"), true, true)
+      doInspectionTest(PyAbstractClassInspection::class.java, PyCodeInsightBundle.message("QFIX.NAME.implement.methods"), true, true)
     }
   }
 

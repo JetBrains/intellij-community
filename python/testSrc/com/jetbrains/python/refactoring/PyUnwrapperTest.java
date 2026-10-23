@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +60,7 @@ public class PyUnwrapperTest extends PyTestCase {
   public void testEndOfStatementUnwrap() {doTest();}
   public void testEndOfStatementNextLineUnwrap() {doNegativeTest();}
 
-  public void testIfInElifBranchUnwrap() {doNegativeTest(PyBundle.message("unwrap.if"));}
+  public void testIfInElifBranchUnwrap() {doNegativeTest(PyCodeInsightBundle.message("unwrap.if"));}
 
   public void testWhitespaceAtCaretUnwrap() {doTest();}
   public void testEmptyLineAtCaretUnwrap() {doTest();}

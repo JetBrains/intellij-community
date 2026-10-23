@@ -17,8 +17,8 @@ import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.PreferrableNameSuggestionProvider;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.codeInsight.PyCodeInsightBundle;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.PythonLanguage;
@@ -78,7 +78,7 @@ public class PyRenameElementQuickFixTest extends PyQuickFixTestCase {
   }
 
   public void testProtectedMember() {
-    doQuickFixTest(PyProtectedMemberInspection.class, PyBundle.message("QFIX.NAME.rename.element"));
+    doQuickFixTest(PyProtectedMemberInspection.class, PyCodeInsightBundle.message("QFIX.NAME.rename.element"));
   }
 
   /**
@@ -86,61 +86,61 @@ public class PyRenameElementQuickFixTest extends PyQuickFixTestCase {
    * and therefore the result is different from {@link RENAME_RESULT_BY_RENAME_HANDLER}.
    */
   public void testPep8() {
-    doQuickFixTest(PyPep8NamingInspection.class, PyBundle.message("QFIX.NAME.rename.element"));
+    doQuickFixTest(PyPep8NamingInspection.class, PyCodeInsightBundle.message("QFIX.NAME.rename.element"));
   }
 
   public void testPep8Class() {
-    doQuickFixTest(PyPep8NamingInspection.class, PyBundle.message("QFIX.NAME.rename.element"));
+    doQuickFixTest(PyPep8NamingInspection.class, PyCodeInsightBundle.message("QFIX.NAME.rename.element"));
   }
 
   public void testPep8Function() {
-    doQuickFixTest(PyPep8NamingInspection.class, PyBundle.message("QFIX.NAME.rename.element"));
+    doQuickFixTest(PyPep8NamingInspection.class, PyCodeInsightBundle.message("QFIX.NAME.rename.element"));
   }
 
   public void testShadowingBuiltins() {
-    doQuickFixTest(PyShadowingBuiltinsInspection.class, PyBundle.message("QFIX.NAME.rename.element"));
+    doQuickFixTest(PyShadowingBuiltinsInspection.class, PyCodeInsightBundle.message("QFIX.NAME.rename.element"));
   }
 
   // PY-16098
   public void testRenameAsyncClassInPy36() {
     runWithLanguageLevel(LanguageLevel.PYTHON36,
-                         () -> doQuickFixTest(PyCompatibilityInspection.class, PyBundle.message("QFIX.NAME.rename.element")));
+                         () -> doQuickFixTest(PyCompatibilityInspection.class, PyCodeInsightBundle.message("QFIX.NAME.rename.element")));
   }
 
   // PY-16098
   public void testRenameAwaitClassInPy36() {
     runWithLanguageLevel(LanguageLevel.PYTHON36,
-                         () -> doQuickFixTest(PyCompatibilityInspection.class, PyBundle.message("QFIX.NAME.rename.element")));
+                         () -> doQuickFixTest(PyCompatibilityInspection.class, PyCodeInsightBundle.message("QFIX.NAME.rename.element")));
   }
 
   // PY-16098
   public void testRenameAsyncFunctionInPy36() {
     runWithLanguageLevel(LanguageLevel.PYTHON36,
-                         () -> doQuickFixTest(PyCompatibilityInspection.class, PyBundle.message("QFIX.NAME.rename.element")));
+                         () -> doQuickFixTest(PyCompatibilityInspection.class, PyCodeInsightBundle.message("QFIX.NAME.rename.element")));
   }
 
   // PY-16098
   public void testRenameAwaitFunctionInPy36() {
     runWithLanguageLevel(LanguageLevel.PYTHON36,
-                         () -> doQuickFixTest(PyCompatibilityInspection.class, PyBundle.message("QFIX.NAME.rename.element")));
+                         () -> doQuickFixTest(PyCompatibilityInspection.class, PyCodeInsightBundle.message("QFIX.NAME.rename.element")));
   }
 
   // PY-16098
   public void testRenameAsyncVariableInPy36() {
     runWithLanguageLevel(LanguageLevel.PYTHON36,
-                         () -> doQuickFixTest(PyCompatibilityInspection.class, PyBundle.message("QFIX.NAME.rename.element")));
+                         () -> doQuickFixTest(PyCompatibilityInspection.class, PyCodeInsightBundle.message("QFIX.NAME.rename.element")));
   }
 
   // PY-16098
   public void testRenameAwaitVariableInPy36() {
     runWithLanguageLevel(LanguageLevel.PYTHON36,
-                         () -> doQuickFixTest(PyCompatibilityInspection.class, PyBundle.message("QFIX.NAME.rename.element")));
+                         () -> doQuickFixTest(PyCompatibilityInspection.class, PyCodeInsightBundle.message("QFIX.NAME.rename.element")));
   }
 
   // PY-30827
   public void testRenameInInjectedFragment() {
     testInInjectedLanguageFragment(
-      () -> doQuickFixTest(PyPep8NamingInspection.class, PyBundle.message("QFIX.NAME.rename.element")));
+      () -> doQuickFixTest(PyPep8NamingInspection.class, PyCodeInsightBundle.message("QFIX.NAME.rename.element")));
   }
 
   /**
