@@ -22,7 +22,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.requestNavigate
+import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 import com.intellij.ui.ClickListener
+import com.intellij.ui.ComponentUtil
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -53,7 +55,8 @@ import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Shows the selected file or hunk while the Changes tree keeps the focus. The diff preview of the Commit tool window shows the file, scrolls
- * to the selected hunk, and dims the other lines. Without a diff preview, a source preview tab shows the hunk.
+ * to the selected hunk, and dims the other lines. Without a diff preview, a source preview tab shows the hunk. A diff next to the tree in
+ * the tool window replaces this preview.
  */
 @ApiStatus.Internal
 class StructuralChangesPreview(
@@ -200,7 +203,12 @@ class StructuralChangesPreview(
   @RequiresEdt
   private fun canPreviewSelection(): Boolean =
     !tree.project.isDisposed && StructuralChangesViewSettings.isEnabled(tree.project) &&
-    !tree.isModelUpdateInProgress && tree.selectionCount == 1 && tree.isShowing
+    !tree.isModelUpdateInProgress && tree.selectionCount == 1 && tree.isShowing && !hasSplitterPreview()
+
+  /** True when the tool window shows a diff next to the tree. That diff follows the selection, so this preview opens no tab. */
+  @RequiresEdt
+  private fun hasSplitterPreview(): Boolean =
+    ComponentUtil.getParentOfType(PreviewDiffSplitterComponent::class.java, tree)?.secondComponent != null
 
   @RequiresEdt
   private fun isCurrentSelection(model: TreeModel, node: ChangesBrowserNode<*>): Boolean =
