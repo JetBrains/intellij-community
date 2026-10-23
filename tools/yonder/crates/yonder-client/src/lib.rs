@@ -29,6 +29,8 @@ mod testkit;
 use std::path::Path;
 use std::time::Duration;
 
+use yonder_link::proto::HEARTBEAT_SECONDS;
+
 pub use agent::{AGENT_BUILD_QUIET, AGENT_TARGET, agent_label, no_monorepo};
 pub use config::{Config, HostFile};
 pub use host::{AgentInfo, Host};
@@ -115,8 +117,9 @@ pub(crate) struct Timing {
     pub(crate) connect: Duration,
     /// The lookup of the host name.
     pub(crate) resolve: Duration,
-    /// The wait for each frame of a reply. A request that waits gets a heartbeat every 15 s. A host that clones a new
-    /// slot can hold back its heartbeats for a minute, so only two quiet minutes are a lost link.
+    /// The wait for each frame of a reply, and the deadline of each write. A request that waits gets a heartbeat every
+    /// 15 s. A host that clones a new slot can hold back its heartbeats for a minute, so only two quiet minutes are a
+    /// lost link.
     pub(crate) read: Duration,
     /// How long `Follow` connects again after the last reply of the agent.
     pub(crate) reconnect_for: Duration,
@@ -125,6 +128,8 @@ pub(crate) struct Timing {
     pub(crate) max_backoff: Duration,
     /// How long `prepare` waits for the agent that `yonderd setup` started.
     pub(crate) agent_start: Duration,
+    /// How often the connection of a pack gets an empty chunk while git builds the pack.
+    pub(crate) keepalive: Duration,
 }
 
 impl Timing {
@@ -136,6 +141,7 @@ impl Timing {
         first_backoff: Duration::from_secs(1),
         max_backoff: Duration::from_secs(30),
         agent_start: Duration::from_secs(60),
+        keepalive: Duration::from_secs(HEARTBEAT_SECONDS),
     };
 }
 

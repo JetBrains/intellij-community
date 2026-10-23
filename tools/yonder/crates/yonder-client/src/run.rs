@@ -2,22 +2,28 @@
 //!
 //! A run:
 //!
-//! 1. Refuses a checkout with local changes, because only the commit reaches the host.
-//! 2. Asks the host which of the candidate commits it has (`Have`), and builds a thin pack of the rest into a file.
-//!    The candidates include the base that the last base sync of the holder recorded. `pack.rs` builds the pack.
-//! 3. Starts the run (`Start`). The run lives on the agent, not on the connection. Ctrl+C before this step stops the
-//!    local work, and nothing runs on the host.
-//! 4. Sends the pack (`Pack`) to `refs/yonder/<run>` on a connection of its own, while the host takes the lock and the
-//!    lease. When the upload fails, the client cancels the run and refuses with the code of the upload.
-//! 5. Follows the output (`Follow`). Each stderr line goes to the stderr sink as it comes, and the stdout lines are
-//!    collected. A connection that is quiet for 60 s is lost: the client connects again from the last offset, with a
-//!    backoff, for up to 10 min after the last reply of the agent. The first Ctrl+C sends `Cancel` on a thread of its
-//!    own, and the output follows up to its end. The second Ctrl+C stops the follow at once. `Reply::Phases` before
-//!    the end gives the steps of the host. Meanwhile a thread syncs the base of the next packs, see `base.rs`.
+//! 1. Reads the commit of HEAD. Then it refuses a checkout with local changes, because only the commit reaches the
+//!    host, and meanwhile it asks the host which of the candidate commits it has (`Have`). The candidates include the
+//!    base that the last base sync of the holder recorded. A host that has none of them refuses with `behind` here.
+//! 2. Starts the run (`Start`). The run lives on the agent, not on the connection. Ctrl+C before this step stops the
+//!    local work, and nothing runs on the host. A start whose reply does not come is cancelled, so the host does not
+//!    wait for its pack.
+//! 3. Follows the output (`Follow`) on a thread of its own from the start on, so the steps of the host show while the
+//!    pack builds. Each stderr line goes to the stderr sink as it comes, and the stdout lines are collected. A
+//!    connection that is quiet for 120 s is lost: the client connects again from the last offset, with a backoff, for
+//!    up to 10 min after the last reply of the agent. `Reply::Phases` before the end gives the steps of the host.
+//! 4. Meanwhile it builds the thin pack of the commits that the host lacks, while the host takes the lock and the
+//!    lease, and sends it (`Pack`) to `refs/yonder/<run>` on a connection of its own. `pack.rs` builds and sends it.
+//!    When the pack fails, the client cancels the run, stops the follow, and refuses with the code of the pack.
+//! 5. After the pack, a thread syncs the base of the next packs, see `base.rs`.
 //! 6. Copies the staged files of the `fetch` directories into the local checkout (`Fetch`), then removes the run on
 //!    the agent (`Forget`). The client removes the run only when it saw the end of the run and every file came.
 //!    Otherwise the run stays on the agent, and the client names `yonder fetch` and `yonder forget`.
 //! 7. Waits for the base sync, and answers the steps of the run with their durations.
+//!
+//! Ctrl+C after the start, the build of the pack included, cancels the run on the host. The first press sends `Cancel`
+//! on a thread of its own and stops the pack, and the output follows up to its end. The second press stops the follow
+//! at once. A press after the end of the run closes the connection of the base sync.
 
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -29,8 +35,8 @@ use yonder_link::Closer;
 use yonder_link::proto::{Phase, Reply, Request, RunInfo, RunSpec, Stream};
 
 use crate::base::BaseSync;
-use crate::git::{FARTHEST, NEAR, add_candidate, candidates, clean_head};
-use crate::host::{AgentInfo, Host};
+use crate::git::{FARTHEST, NEAR, add_candidate, candidates, check_clean, head_commit};
+use crate::host::{AgentInfo, Host, Latest};
 use crate::pack::PackTarget;
 use crate::phases::{phase, phases_line};
 use crate::{Client, Refusal, Timing, code, refused};
@@ -122,8 +128,35 @@ struct Watch {
     finished: Arc<AtomicBool>,
     /// The connection of the follow, which a second Ctrl+C closes.
     current: Mutex<Option<Closer>>,
-    /// A second Ctrl+C came: the follow stops.
+    /// A second Ctrl+C came, or the pack of the run failed: the follow stops.
     abandoned: AtomicBool,
+}
+
+impl Watch {
+    fn new() -> Self {
+        Self {
+            finished: Arc::new(AtomicBool::new(false)),
+            current: Mutex::new(None),
+            abandoned: AtomicBool::new(false),
+        }
+    }
+
+    /// Stops the follow at once: it closes the connection of the follow, and no new one comes.
+    fn stop_follow(&self) {
+        if !self.abandoned.swap(true, Ordering::AcqRel)
+            && let Some(closer) = self.current.lock().unwrap_or_else(PoisonError::into_inner).take()
+        {
+            closer.close();
+        }
+    }
+}
+
+/// A followed run whose files came.
+struct Finished {
+    followed: Followed,
+    fetched: Vec<String>,
+    /// The step `fetch`, when the run names fetch directories.
+    fetch: Option<Phase>,
 }
 
 impl Client<'_> {
@@ -135,28 +168,39 @@ impl Client<'_> {
         let started = Instant::now();
         let mut host = self.host(alias)?;
         let repo = request.repo.unwrap_or(&host.file().repo).to_owned();
-        let commit = clean_head(self.processes, request.checkout, &|| self.interrupted())?;
+        let stop = || self.interrupted();
+        let commit = head_commit(self.processes, request.checkout, &stop)?;
         self.refuse_interrupt()?;
         let run = run_id();
         let reference = format!("refs/yonder/{run}");
-
         let recorded = self.config.base(alias, request.holder);
-        let present = self.present(&mut host, &repo, request.checkout, &commit, &[recorded.as_deref()])?;
-        self.refuse_interrupt()?;
+        // A checkout with local changes refuses at once: its refusal closes the connection of the `Have`.
+        let asked = Arc::new(Latest::default());
+        let (clean, present) = thread::scope(|scope| {
+            let mut asking = host.watched(Arc::clone(&asked));
+            let (repo, commit, recorded) = (&repo, &commit, recorded.as_deref());
+            let present = scope.spawn(move || self.present(&mut asking, repo, request.checkout, commit, &[recorded]));
+            let clean = check_clean(self.processes, request.checkout, &stop);
+            if clean.is_err() {
+                asked.close();
+            }
+            let present = present
+                .join()
+                .unwrap_or_else(|_| Err(refused(code::LINK, "the question about the commits of the host failed")));
+            (clean, present)
+        });
+        clean?;
+        let present = present?;
         let target = PackTarget {
             checkout: request.checkout,
             repo: &repo,
             commit: &commit,
             reference: &reference,
         };
-        let mut phases = Vec::new();
-        let pack = if present.contains(&commit) {
+        let plan = if present.contains(&commit) {
             None
         } else {
-            let building = Instant::now();
-            let pack = self.build_pack(alias, &target, &present, self.say)?;
-            phases.push(phase("pack", building.elapsed()));
-            Some(pack)
+            Some(self.plan_pack(alias, &target, &present)?)
         };
         self.refuse_interrupt()?;
         let spec = RunSpec {
@@ -169,21 +213,8 @@ impl Client<'_> {
             fetch: request.fetch.to_vec(),
             idle_hours: request.idle_hours,
         };
-        match host.request(&Request::Start(spec), self.timing.read)? {
-            (_, Reply::Started { .. }) => {}
-            (_, Reply::Refused { code, message }) => return Err(host.agent_refusal(code, &message)),
-            (_, reply) => return Err(host.unexpected(&reply)),
-        }
+        self.start(&mut host, spec)?;
         (self.say)(&format!("yonder: run {run} of {} on {alias}", short(&commit)));
-
-        // The host takes the lock and the lease while the pack travels, and waits for the reference before the checkout.
-        if let Some(pack) = pack {
-            let sending = Instant::now();
-            if let Err(refusal) = self.upload(&mut host, &target, &pack, self.say) {
-                return Err(self.abandon(&mut host, &run, refusal));
-            }
-            phases.push(phase("upload", sending.elapsed()));
-        }
 
         let sync = BaseSync {
             checkout: request.checkout,
@@ -192,60 +223,118 @@ impl Client<'_> {
             commit: &commit,
             recorded: recorded.as_deref(),
         };
-        let (followed, fetched) = thread::scope(|scope| {
-            let mut synced = host.clone();
+        let watch = Watch::new();
+        let mut phases = Vec::new();
+        let ended = thread::scope(|scope| {
+            let mut followed = host.clone();
+            let (run, watch) = (&run, &watch);
+            let following = scope.spawn(move || self.follow_and_fetch(&mut followed, run, request, watch));
+            if let Some(plan) = &plan {
+                match self.send_pack(&mut host, &target, plan, self.say) {
+                    Ok(steps) => {
+                        phases.push(phase("pack", steps.build));
+                        phases.push(phase("upload", steps.upload));
+                    }
+                    // The watch of the follow sent the cancel of the press, and the output follows up to its end.
+                    Err(_) if self.interrupted() => {}
+                    Err(refusal) => {
+                        let refusal = self.abandon(&mut host, run, &format!("the pack did not reach {alias}"), refusal);
+                        watch.stop_follow();
+                        let _ = following.join();
+                        return Err((refusal, Vec::new()));
+                    }
+                }
+            }
+            let latest = Arc::new(Latest::default());
+            let mut synced = host.watched(Arc::clone(&latest));
             let syncing = scope.spawn(move || self.sync_base(&mut synced, &sync));
-            let ended = self.follow_and_fetch(&mut host, &run, request, &mut phases);
+            let finished = following
+                .join()
+                .unwrap_or_else(|_| Err((refused(code::LINK, "the follow of the run failed"), Vec::new())));
             if !syncing.is_finished() {
                 (self.say)(&format!(
                     "> {alias}: the sync of the base of the next packs goes on; Ctrl+C stops it"
                 ));
             }
+            while !syncing.is_finished() {
+                if self.interrupted() {
+                    latest.close();
+                }
+                thread::sleep(INTERRUPT_POLL);
+            }
             let _ = syncing.join();
-            ended
-        })?;
+            finished
+        });
+        let finished = match ended {
+            Ok(finished) => finished,
+            Err((refusal, steps)) => {
+                // A run that the agent refused has no outcome, so the client says its steps here.
+                if !steps.is_empty() {
+                    phases.extend(steps);
+                    (self.say)(&phases_line(&phases));
+                }
+                return Err(refusal);
+            }
+        };
+        phases.extend(finished.followed.phases.iter().cloned());
+        phases.extend(finished.fetch);
         phases.push(phase("total", started.elapsed()));
         Ok(RunOutcome {
             run,
             commit,
-            code: followed.code,
-            stdout: followed.stdout,
-            fetched,
+            code: finished.followed.code,
+            stdout: finished.followed.stdout,
+            fetched: finished.fetched,
             phases,
         })
     }
 
-    /// Follows a started run to its end, then copies its files and removes it on the host. Adds the steps of the host
-    /// and `fetch` to `phases`. A run that the agent refused says its steps here, because no outcome carries them.
+    /// Sends `Start`. A reply that does not come can still leave the run on the agent, so the client cancels it then.
+    fn start(&self, host: &mut Host, spec: RunSpec) -> Result<(), Refusal> {
+        let run = spec.run.clone();
+        let (mut channel, _) = host.connect()?;
+        channel.send(&Request::Start(spec)).map_err(|error| host.link_refusal(&error))?;
+        match host.recv(&mut channel, self.timing.read) {
+            Ok(Reply::Started { .. }) => Ok(()),
+            Ok(Reply::Refused { code, message }) => Err(host.agent_refusal(code, &message)),
+            Ok(reply) => Err(host.unexpected(&reply)),
+            Err(refusal) if is_link(&refusal) => {
+                let what = format!("the start of the run {run} got no reply from {}", host.alias());
+                Err(self.abandon(host, &run, &what, refusal))
+            }
+            Err(refusal) => Err(refusal),
+        }
+    }
+
+    /// Follows a started run to its end, then copies its files and removes it on the host. A run that the agent refused
+    /// is removed too, and its failure carries the steps of the host.
     fn follow_and_fetch(
         &self,
         host: &mut Host,
         run: &str,
         request: &RunRequest<'_>,
-        phases: &mut Vec<Phase>,
-    ) -> Result<(Followed, Vec<String>), Refusal> {
+        watch: &Watch,
+    ) -> Result<Finished, (Refusal, Vec<Phase>)> {
         let alias = host.alias().to_owned();
-        let followed = match self.follow(host, run, true) {
+        let followed = match self.follow(host, run, true, watch) {
             Ended::Exit(followed) => followed,
             Ended::Refused(refusal, steps) => {
-                if !steps.is_empty() {
-                    phases.extend(steps);
-                    (self.say)(&phases_line(phases));
-                }
                 self.forget_or_say(host, run);
-                return Err(refusal);
+                return Err((refusal, steps));
             }
-            Ended::Unseen(refusal) => return Err(refusal),
+            Ended::Unseen(refusal) => return Err((refusal, Vec::new())),
         };
-        phases.extend(followed.phases.iter().cloned());
-        let fetched = if request.fetch.is_empty() {
-            Ok(Vec::new())
-        } else {
-            let fetching = Instant::now();
-            let fetched = self.fetch_from(host, run, request.checkout, request.fetch);
-            phases.push(phase("fetch", fetching.elapsed()));
-            fetched
-        };
+        if request.fetch.is_empty() {
+            self.forget_or_say(host, run);
+            return Ok(Finished {
+                followed,
+                fetched: Vec::new(),
+                fetch: None,
+            });
+        }
+        let fetching = Instant::now();
+        let fetched = self.fetch_from(host, run, request.checkout, request.fetch);
+        let fetch = Some(phase("fetch", fetching.elapsed()));
         let fetched = match fetched {
             Ok(fetched) => {
                 self.forget_or_say(host, run);
@@ -259,12 +348,12 @@ impl Client<'_> {
                 Vec::new()
             }
         };
-        Ok((followed, fetched))
+        Ok(Finished { followed, fetched, fetch })
     }
 
-    /// Cancels a started run whose pack did not reach the host, so its supervisor does not wait for the pack. Answers
-    /// the refusal of the upload with its code, and with what became of the run.
-    fn abandon(&self, host: &mut Host, run: &str, refusal: Refusal) -> Refusal {
+    /// Cancels a started run whose start or pack failed, so its supervisor does not wait for the pack. Answers the
+    /// refusal with its code, the failed step `what`, and what became of the run.
+    fn abandon(&self, host: &mut Host, run: &str, what: &str, refusal: Refusal) -> Refusal {
         let alias = host.alias().to_owned();
         let mut backoff = self.timing.first_backoff;
         let mut tries = 1;
@@ -285,17 +374,13 @@ impl Client<'_> {
                 failed.message
             ),
         };
-        Refusal::new(
-            refusal.code,
-            crate::Exit::Refused,
-            format!("the pack did not reach {alias}: {}; {fate}", refusal.message),
-        )
+        Refusal::new(refusal.code, crate::Exit::Refused, format!("{what}: {}; {fate}", refusal.message))
     }
 
     /// Follows a run from its first line, as [`Client::run`] does. Ctrl+C here cancels nothing.
     pub fn attach(&self, alias: &str, run: &str) -> Result<Followed, Refusal> {
         let mut host = self.host(alias)?;
-        match self.follow(&mut host, run, false) {
+        match self.follow(&mut host, run, false, &Watch::new()) {
             Ended::Exit(followed) => Ok(followed),
             Ended::Refused(refusal, _) | Ended::Unseen(refusal) => Err(refusal),
         }
@@ -411,19 +496,14 @@ impl Client<'_> {
     }
 
     /// Follows the output of a run up to its end. With `cancel_on_interrupt`, the first Ctrl+C sends `Cancel`, and the
-    /// second one stops the follow.
-    fn follow(&self, host: &mut Host, run: &str, cancel_on_interrupt: bool) -> Ended {
-        let watch = Watch {
-            finished: Arc::new(AtomicBool::new(false)),
-            current: Mutex::new(None),
-            abandoned: AtomicBool::new(false),
-        };
+    /// second one stops the follow. [`Watch::stop_follow`] stops it from another thread.
+    fn follow(&self, host: &mut Host, run: &str, cancel_on_interrupt: bool, watch: &Watch) -> Ended {
         let watched = host.clone();
         thread::scope(|scope| {
             if cancel_on_interrupt {
-                scope.spawn(|| self.watch_interrupts(&watched, run, &watch));
+                scope.spawn(|| self.watch_interrupts(&watched, run, watch));
             }
-            let ended = self.follow_loop(host, run, &watch);
+            let ended = self.follow_loop(host, run, watch);
             watch.finished.store(true, Ordering::Release);
             ended
         })
@@ -442,11 +522,8 @@ impl Client<'_> {
                 ));
                 cancel = Some(start_cancel(host.clone(), run.to_owned(), self.timing, Arc::clone(&watch.finished)));
             }
-            if presses >= 2
-                && !watch.abandoned.swap(true, Ordering::AcqRel)
-                && let Some(closer) = watch.current.lock().unwrap_or_else(PoisonError::into_inner).take()
-            {
-                closer.close();
+            if presses >= 2 {
+                watch.stop_follow();
             }
             if let Some(said) = &cancel {
                 while let Ok(line) = said.try_recv() {

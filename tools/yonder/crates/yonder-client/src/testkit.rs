@@ -24,6 +24,7 @@ pub(crate) const FAST: Timing = Timing {
     first_backoff: Duration::from_millis(10),
     max_backoff: Duration::from_millis(50),
     agent_start: Duration::from_secs(1),
+    keepalive: Duration::from_millis(50),
 };
 
 pub(crate) const ALIAS: &str = "studio";
@@ -51,6 +52,8 @@ pub(crate) fn failed(code: i32, stderr: &str) -> Ran {
 pub(crate) struct FakeProcesses {
     rules: Vec<(String, Ran)>,
     calls: Mutex<Vec<Call>>,
+    /// How long `git pack-objects` works. The watch asks the stop every 10 ms meanwhile, as the real one does.
+    pack_time: Duration,
 }
 
 impl FakeProcesses {
@@ -58,7 +61,14 @@ impl FakeProcesses {
         Self {
             rules: rules.iter().map(|(text, ran)| ((*text).to_owned(), ran.clone())).collect(),
             calls: Mutex::default(),
+            pack_time: Duration::ZERO,
         }
+    }
+
+    /// The same processes with a `git pack-objects` that works for `time`.
+    pub(crate) const fn with_pack_time(mut self, time: Duration) -> Self {
+        self.pack_time = time;
+        self
     }
 
     pub(crate) fn calls(&self) -> Vec<Call> {
@@ -82,6 +92,10 @@ impl FakeProcesses {
 impl Processes for FakeProcesses {
     fn run(&self, call: &Call, stop: Stop<'_>) -> Ran {
         let ran = self.answer(call);
+        let working = std::time::Instant::now();
+        while call.text().contains("pack-objects") && working.elapsed() < self.pack_time && !stop() {
+            thread::sleep(Duration::from_millis(10));
+        }
         if stop() {
             return Ran {
                 stopped: Some(Stopped::Asked),

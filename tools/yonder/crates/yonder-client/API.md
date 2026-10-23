@@ -34,14 +34,14 @@ lists those codes. The client adds these:
 | `git_failed` | A local git call failed or ran past its deadline. |
 | `ssh_failed` | An ssh call of `prepare` failed or ran past its deadline of 30 s (120 s for the copy). |
 | `agent_failed` | The agent binary cannot be read, its Bazel build failed or wrote nothing for 30 min, `cquery` named no `yonderd` file, `yonderd setup` failed on the host, or it printed no setup line. |
-| `interrupted` | Ctrl+C came before the run started, or a second Ctrl+C stopped the follow. |
+| `interrupted` | Ctrl+C came before the run started, or a second Ctrl+C stopped the follow. A press after the start cancels the run, and the run then ends with the code of the host. |
 
 A fetched path that is absolute, has `..` or `\`, or is not below a `fetch` directory is skipped, and the fetch then
 fails. Each file goes to `<name>.yonder-part` first and takes its name only at the size that the agent named. The run
 removes itself on the host (`Forget`) only when the client saw its end and every file came.
 
 A pack goes to a temporary file first, under `git pack-objects --progress` with a quiet limit of 60 s and no limit on
-the whole pack. Each write to the agent then has a deadline of 60 s.
+the whole pack. Each write to the agent has a deadline of 120 s.
 
 ## The agent of `prepare`
 
@@ -53,16 +53,23 @@ root, and `./bazel.cmd info execution_root` names that root. The monorepo has no
 
 ## The order of a run
 
-1. `Have`, then the pack file of the commits that the host lacks. Ctrl+C up to here runs nothing on the host.
-2. `Start`. The host takes the lock and the lease at once.
-3. `Pack` on a connection of its own. When the upload fails, the client cancels the run and refuses with the code of
-   the upload: `link`, `timed_out`, `interrupted`, or the code of the agent. The message says whether the cancel came.
-4. `Follow`, up to `Phases` and `Exit`.
-5. Meanwhile a thread syncs the base: a thin pack of the local `origin/master`, or of `master`, to
-   `refs/yonder/base/<holder>`. It goes once per run, after the upload of step 3. It skips the pack when the host has
-   the commit. A failure is one `yonder: warning:` line on the stderr, and the run goes on. The end of the run waits
-   for the sync, and Ctrl+C stops it.
+1. `git rev-parse HEAD`, then `git status` and `Have` at the same time. Local changes refuse at once, and a host that
+   has none of the candidates refuses with `behind`. Ctrl+C up to here runs nothing on the host.
+2. `Start`. The host takes the lock and the lease at once. A start whose reply does not come is cancelled, and the
+   run refuses with `link` or `timed_out`.
+3. `Follow` on a thread of its own, up to `Phases` and `Exit`. The lines of the host show while the pack builds.
+4. `Pack` on a connection of its own: the client opens it, builds the pack file meanwhile with an empty chunk every
+   15 s, then sends the file. When the pack fails, the client cancels the run, stops the follow, and refuses with the
+   code of the pack: `link`, `timed_out`, `git_failed`, or the code of the agent. The message says whether the cancel
+   came.
+5. A thread syncs the base: a thin pack of the local `origin/master`, or of `master`, to `refs/yonder/base/<holder>`.
+   It goes once per run, after the pack of step 4. It skips the pack when the host has the commit. A failure is one
+   `yonder: warning:` line on the stderr, and the run goes on. The end of the run waits for the sync, and Ctrl+C
+   closes its connection.
 6. `Fetch` and `Forget`.
+
+Ctrl+C after the start, the build of the pack included, cancels the run on the host: the first press sends `Cancel`
+and stops the pack, and the output follows up to the end of the run. The second press stops the follow at once.
 
 ## The steps
 

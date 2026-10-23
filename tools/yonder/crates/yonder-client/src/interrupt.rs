@@ -1,9 +1,10 @@
 //! Ctrl+C of the person at the terminal, for a run.
 //!
 //! The handler only counts the presses; the client reads the count and acts on its own threads. The first Ctrl+C
-//! before the start stops the local git child and the pack, and nothing reaches the host. The first Ctrl+C after the
-//! start sends `Cancel` to the agent and follows the output up to its end. The second Ctrl+C stops the follow at once,
-//! and the run refuses with `interrupted`. The agent has the cancel already, so the run on the host stops anyway.
+//! before the start stops each local child, such as git, and nothing runs on the host. The first Ctrl+C after the
+//! start, the build of the pack included, sends `Cancel` to the agent, stops the pack, and follows the output up to
+//! its end. The second Ctrl+C stops the follow at once, and the run refuses with `interrupted`. The agent has the
+//! cancel already, so the run on the host stops anyway. A press after the end of the run stops the base sync.
 
 use std::sync::OnceLock;
 use std::sync::atomic::{AtomicU32, Ordering};

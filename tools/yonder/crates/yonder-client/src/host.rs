@@ -5,12 +5,13 @@
 //! goes first in the host file. No step waits without a deadline, so a `.local` name that does not resolve costs 5 s.
 
 use std::net::{SocketAddr, ToSocketAddrs};
-use std::sync::mpsc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex, PoisonError, mpsc};
 use std::thread;
 use std::time::Duration;
 
 use yonder_link::proto::{Reply, Request, SCHEMA_VERSION};
-use yonder_link::{Channel, ClientTls, LinkError};
+use yonder_link::{Channel, ClientTls, Closer, LinkError};
 
 use crate::config::{Config, HostFile};
 use crate::{Refusal, Timing, VERSION, code, prepare_hint, refused};
@@ -36,6 +37,33 @@ pub struct Host {
     /// The TLS configuration of the pin of the host and the identity of the client, built once for all connections.
     tls: ClientTls,
     timing: Timing,
+    /// Where each new connection leaves its closer, for a thread that ends the work of this host.
+    latest: Option<Arc<Latest>>,
+}
+
+/// The latest connection of a [`Host`], which another thread can close, see [`Host::watched`].
+#[derive(Debug, Default)]
+pub(crate) struct Latest {
+    closer: Mutex<Option<Closer>>,
+    closed: AtomicBool,
+}
+
+impl Latest {
+    /// Closes the latest connection, and each later one at once.
+    pub(crate) fn close(&self) {
+        self.closed.store(true, Ordering::SeqCst);
+        let closer = self.closer.lock().unwrap_or_else(PoisonError::into_inner).take();
+        if let Some(closer) = closer {
+            closer.close();
+        }
+    }
+
+    fn keep(&self, channel: &Channel) {
+        *self.closer.lock().unwrap_or_else(PoisonError::into_inner) = channel.closer().ok();
+        if self.closed.load(Ordering::SeqCst) {
+            self.close();
+        }
+    }
 }
 
 /// Why one address gave no channel.
@@ -59,7 +87,16 @@ impl Host {
             file,
             tls,
             timing,
+            latest: None,
         })
+    }
+
+    /// A copy whose connections leave their closer in `latest`, so another thread can end its work at once.
+    pub(crate) fn watched(&self, latest: Arc<Latest>) -> Self {
+        Self {
+            latest: Some(latest),
+            ..self.clone()
+        }
     }
 
     pub fn alias(&self) -> &str {
@@ -72,6 +109,14 @@ impl Host {
 
     /// A new connection after its hello.
     pub fn connect(&mut self) -> Result<(Channel, AgentInfo), Refusal> {
+        let connected = self.connect_once()?;
+        if let Some(latest) = &self.latest {
+            latest.keep(&connected.0);
+        }
+        Ok(connected)
+    }
+
+    fn connect_once(&mut self) -> Result<(Channel, AgentInfo), Refusal> {
         let mut tried: Vec<String> = Vec::new();
         let mut untrusted: Option<String> = None;
         let mut note = |address: SocketAddr, attempt: Attempt| match attempt {

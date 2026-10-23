@@ -34,8 +34,8 @@ pub(crate) const MAX_HANDSHAKES: usize = 32;
 /// The most handshakes of one peer address that go on at a time. A run opens a few connections at once.
 pub(crate) const MAX_HANDSHAKES_PER_PEER: usize = 8;
 
-/// The deadline of each chunk of a pack. The client builds the pack into a file before it sends it, so each chunk
-/// comes as fast as the link carries it.
+/// The deadline of each chunk of a pack. The client builds the pack into a file before it sends it, and sends an empty
+/// chunk every `HEARTBEAT_SECONDS` while it builds.
 const PACK_READ_DEADLINE: Duration = Duration::from_secs(60);
 
 /// How long a lease request waits for a run of the same holder.

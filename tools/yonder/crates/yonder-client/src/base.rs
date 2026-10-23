@@ -5,7 +5,8 @@
 //!
 //! The sync goes at most once per run, and only after the upload of the run pack. It skips the pack when the host has
 //! the commit already. It has the idle deadlines of the run pack. A failure says one warning line and never fails the
-//! run. Ctrl+C stops it without a line.
+//! run. Ctrl+C stops it without a line: the run closes the latest connection of the sync, also while the host indexes
+//! its pack.
 
 use std::path::Path;
 
@@ -36,6 +37,8 @@ impl Client<'_> {
             .and_then(|base| base.map_or(Ok(()), |base| self.config.write_base(&alias, sync.holder, &base)));
         match synced {
             Ok(()) => {}
+            // Ctrl+C closes the connection of the sync, so its failure is no news.
+            Err(_) if self.interrupted() => {}
             Err(refusal) if refusal.code == code::INTERRUPTED => {}
             Err(refusal) => (self.say)(&format!(
                 "yonder: warning: cannot sync the base of the next packs to {alias} ({}): {}. The next run can need a larger pack",
@@ -65,9 +68,8 @@ impl Client<'_> {
             reference: &reference,
         };
         // The lines of the command go on meanwhile, so the steps of the sync stay quiet.
-        let quiet = |_: &str| {};
-        let pack = self.build_pack(&alias, &target, &present, &quiet)?;
-        self.upload(host, &target, &pack, &quiet)?;
+        let plan = self.plan_pack(&alias, &target, &present)?;
+        self.send_pack(host, &target, &plan, &|_| {})?;
         Ok(Some(base))
     }
 }

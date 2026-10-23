@@ -26,8 +26,9 @@ pub(crate) const FARTHEST: usize = 65_536;
 /// How many changed paths a refusal shows.
 const SHOWN_CHANGES: usize = 5;
 
-/// The commit of HEAD, refused when the checkout has local changes: tracked or untracked files that differ from HEAD.
-pub(crate) fn clean_head(processes: &dyn Processes, checkout: &Path, stop: Stop<'_>) -> Result<String, Refusal> {
+/// Refuses a checkout with local changes: tracked or untracked files that differ from HEAD. `git status` of a large
+/// checkout reads every file, so a run asks the host meanwhile.
+pub(crate) fn check_clean(processes: &dyn Processes, checkout: &Path, stop: Stop<'_>) -> Result<(), Refusal> {
     let status = git(processes, checkout, &["status", "--porcelain"], stop);
     if !status.ok() {
         return Err(git_refusal("git status", &status));
@@ -47,6 +48,11 @@ pub(crate) fn clean_head(processes: &dyn Processes, checkout: &Path, stop: Stop<
             ),
         ));
     }
+    Ok(())
+}
+
+/// The commit of HEAD.
+pub(crate) fn head_commit(processes: &dyn Processes, checkout: &Path, stop: Stop<'_>) -> Result<String, Refusal> {
     #[expect(clippy::literal_string_with_formatting_args, reason = "`HEAD^{commit}` is the peel syntax of git")]
     let head = git(processes, checkout, &["rev-parse", "--verify", "HEAD^{commit}"], stop);
     let commit = head.stdout_text().trim().to_owned();

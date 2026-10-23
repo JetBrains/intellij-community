@@ -7,9 +7,10 @@ use crate::testkit::{FakeProcesses, failed, ok};
 const COMMIT: &str = "0123456789abcdef0123456789abcdef01234567";
 
 #[test]
-fn a_clean_checkout_answers_its_head() {
+fn a_clean_checkout_passes_and_answers_its_head() {
     let processes = FakeProcesses::new(&[("status --porcelain", ok("")), ("rev-parse", ok(&format!("{COMMIT}\n")))]);
-    assert_eq!(clean_head(&processes, Path::new("/c"), &never).expect("clean"), COMMIT);
+    check_clean(&processes, Path::new("/c"), &never).expect("clean");
+    assert_eq!(head_commit(&processes, Path::new("/c"), &never).expect("the head"), COMMIT);
     let calls = processes.calls();
     assert_eq!(calls[0].dir.as_deref(), Some(Path::new("/c")));
     assert_eq!(
@@ -22,7 +23,7 @@ fn a_clean_checkout_answers_its_head() {
 fn local_changes_are_refused_with_the_first_paths() {
     let status: String = (0..7).map(|index| format!("?? file{index}.txt\n")).collect();
     let processes = FakeProcesses::new(&[("status --porcelain", ok(&status))]);
-    let refusal = clean_head(&processes, Path::new("/c"), &never).expect_err("local changes");
+    let refusal = check_clean(&processes, Path::new("/c"), &never).expect_err("local changes");
     assert_eq!(refusal.code, code::LOCAL_CHANGES);
     assert!(refusal.message.contains("?? file4.txt\n  (+2 more)"), "{}", refusal.message);
     assert!(!refusal.message.contains("file5"), "{}", refusal.message);
@@ -31,7 +32,7 @@ fn local_changes_are_refused_with_the_first_paths() {
 #[test]
 fn a_failed_git_names_its_stderr() {
     let processes = FakeProcesses::new(&[("status", failed(128, "fatal: not a git repository\n"))]);
-    let refusal = clean_head(&processes, Path::new("/c"), &never).expect_err("no repository");
+    let refusal = check_clean(&processes, Path::new("/c"), &never).expect_err("no repository");
     assert_eq!(refusal.code, code::GIT_FAILED);
     assert_eq!(refusal.message, "git status failed: exit 128: fatal: not a git repository");
 }
