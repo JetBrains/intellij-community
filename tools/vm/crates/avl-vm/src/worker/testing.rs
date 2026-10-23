@@ -245,11 +245,16 @@ impl Fixture {
     /// Places a lease on a worker as a plain file, so the guards can be exercised without the lease policy.
     pub(crate) fn write_lease(&self, worker: &str, token: &str) -> Lease {
         let lease = self.new_lease(worker, token, "suite");
-        let mut encoded = serde_json::to_vec(&lease).expect("a lease encodes");
-        encoded.push(b'\n');
-        std::fs::write(self.settings.lease_path(worker), encoded).expect("the lease is written");
+        write_lease_file(&self.settings, &lease);
         lease
     }
+}
+
+/// Writes `lease` as the plain lease file of its worker, with no lease policy and no atomic move.
+pub(crate) fn write_lease_file(settings: &Config, lease: &Lease) {
+    let mut encoded = serde_json::to_vec(lease).expect("a lease encodes");
+    encoded.push(b'\n');
+    std::fs::write(settings.lease_path(&lease.worker), encoded).expect("the lease is written");
 }
 
 /// The Tart pool and the run process of a Tart worker.

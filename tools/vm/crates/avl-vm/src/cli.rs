@@ -48,6 +48,8 @@ use crate::terminal::{Form, Output, TerminalFacts};
 use avl_base::RefusalExt;
 
 #[cfg(test)]
+pub(crate) mod testing;
+#[cfg(test)]
 mod tests;
 
 /// How the help text spells this controller: the wrapper, by its repository-relative path.

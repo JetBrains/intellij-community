@@ -9,31 +9,20 @@ use std::path::{Path, PathBuf};
 
 use avl_base::config::{Presentation, THEME_VARIABLE};
 use avl_base::report::{Renderer, Terminal};
-use avl_base::{Backend, Environment, Exit, GuestOs, Reporter, SCHEMA_VERSION, Selection};
-use avl_host_sys::Interrupts;
+use avl_base::{Backend, Environment, Exit, GuestOs, SCHEMA_VERSION, Selection};
 use avl_wire::progress::{Event, Verdict};
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 use tempfile::TempDir;
 
 use super::*;
-use crate::controller::{resolve_selection, run};
+use crate::cli::testing::{Answer, invoke_under};
+use crate::controller::resolve_selection;
 use crate::terminal::{DEFAULT_TERMINAL_WIDTH, TerminalFacts, colors_for, screen_for, wants_dashboard};
 
 // --- fixtures ----------------------------------------------------------------------------------------------------
 
-/// One invocation's two streams and its exit status, which is the whole observable surface.
-#[derive(Debug)]
-struct Answer {
-    exit: Exit,
-    stdout: String,
-    stderr: String,
-}
-
-/// An environment whose every path is under a temporary root.
-///
-/// `BUILD_WORKSPACE_DIRECTORY` is what the skill directory resolves from, so the suite never searches upwards and
-/// never depends on where the test binary started - which under Bazel is a sandbox with no checkout above it.
+/// An environment whose every path is under a temporary root, as [`invoke_under`] builds it.
 struct Hermetic {
     root: TempDir,
 }
@@ -46,38 +35,9 @@ impl Hermetic {
         }
     }
 
-    fn pairs(&self) -> Vec<(String, String)> {
-        let root = self.root.path();
-        let path = |relative: &str| root.join(relative).to_string_lossy().into_owned();
-        [
-            ("HOME", path("")),
-            ("BUILD_WORKSPACE_DIRECTORY", path("")),
-            ("AIR_VM_RUNTIME_ROOT", path("runtime")),
-            ("AIR_VM_IMAGE_ROOT", path("image")),
-            ("AIR_VM_HOST_REPO", path("")),
-            ("AIR_VM_BAZEL_USER_ROOT", path("bazel-root")),
-        ]
-        .into_iter()
-        .map(|(name, value)| (name.to_owned(), value))
-        .collect()
-    }
-
     /// Runs the controller over in-memory writers, which is why `main` holds nothing but the process's facts.
     async fn invoke(&self, argv: &[&str]) -> Answer {
-        let (reporter, stdout, stderr) = Reporter::in_memory("vm");
-        let exit = run(
-            os(argv),
-            Environment::from_pairs(self.pairs()),
-            reporter,
-            TerminalFacts::default(),
-            Interrupts::detached(),
-        )
-        .await;
-        Answer {
-            exit,
-            stdout: stdout.text(),
-            stderr: stderr.text(),
-        }
+        invoke_under(self.root.path(), argv, &[]).await
     }
 }
 

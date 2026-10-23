@@ -41,4 +41,4 @@ pub(crate) mod worker;
 pub(crate) mod secure;
 
 #[cfg(test)]
-mod testing;
+pub(crate) mod testing;

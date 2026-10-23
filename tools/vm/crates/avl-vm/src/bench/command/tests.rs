@@ -1,10 +1,9 @@
 //! The bench verbs as a caller sees them: one invocation of the controller over in-memory writers, with no Bazel and
 //! no IDE. `replay` of the fixture session is the whole path from the argv to the envelope.
 
-use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
-use avl_base::{Environment, Exit, Reporter};
+use avl_base::Exit;
 use avl_host_sys::Interrupts;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -16,14 +15,7 @@ use crate::bench::options::{
 };
 use crate::bench::testing::fixture_session;
 use crate::cli::PROGRAM;
-use crate::controller::run;
-use crate::terminal::TerminalFacts;
-
-struct Answer {
-    exit: Exit,
-    stdout: String,
-    stderr: String,
-}
+use crate::cli::testing::{Answer, invoke_under};
 
 /// Runs the controller with every path of its environment under `root`.
 async fn invoke(root: &TempDir, argv: &[&str]) -> Answer {
@@ -32,34 +24,7 @@ async fn invoke(root: &TempDir, argv: &[&str]) -> Answer {
 
 /// Runs the controller as [`invoke`] does, with the variables `extra` added to its environment.
 async fn invoke_with(root: &TempDir, argv: &[&str], extra: &[(&str, &str)]) -> Answer {
-    avl_affected::bridge::install_fixture();
-    let path = |relative: &str| root.path().join(relative).to_string_lossy().into_owned();
-    let pairs: Vec<(String, String)> = [
-        ("HOME", path("")),
-        ("BUILD_WORKSPACE_DIRECTORY", path("")),
-        ("AIR_VM_RUNTIME_ROOT", path("runtime")),
-        ("AIR_VM_IMAGE_ROOT", path("image")),
-        ("AIR_VM_HOST_REPO", path("")),
-        ("AIR_VM_BAZEL_USER_ROOT", path("bazel-root")),
-    ]
-    .into_iter()
-    .chain(extra.iter().map(|(name, value)| (*name, (*value).to_owned())))
-    .map(|(name, value)| (name.to_owned(), value))
-    .collect();
-    let (reporter, stdout, stderr) = Reporter::in_memory("vm");
-    let exit = run(
-        argv.iter().map(OsString::from).collect(),
-        Environment::from_pairs(pairs),
-        reporter,
-        TerminalFacts::default(),
-        Interrupts::detached(),
-    )
-    .await;
-    Answer {
-        exit,
-        stdout: stdout.text(),
-        stderr: stderr.text(),
-    }
+    invoke_under(root.path(), argv, extra).await
 }
 
 fn envelope(text: &str) -> Value {

@@ -20,6 +20,7 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::Duration;
 
 use crate::worker::tart::MINIMUM_VERSION;
+use crate::worker::testing::write_lease_file;
 use crate::worker::worker::{Dependencies, Lease, Manager, Timings, builds_nothing};
 use async_trait::async_trait;
 use avl_base::report::{Buffer, Mode, SinkGuard};
@@ -1103,9 +1104,7 @@ impl DaemonFixture {
             holder: holder.to_owned(),
             acquired_at: "2026-08-23T00:00:00.000Z".to_owned(),
         };
-        let mut encoded = serde_json::to_vec(&lease).expect("a lease encodes");
-        encoded.push(b'\n');
-        std::fs::write(self.settings.lease_path(worker), encoded).expect("the lease is written");
+        write_lease_file(&self.settings, &lease);
         lease
     }
 
