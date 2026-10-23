@@ -12601,17 +12601,9 @@ copy_file(
 )
 
 copy_file(
-  name = "net.bytebuddy/byte-buddy-1.17.4.jar_copy",
-  src = "@net_bytebuddy-byte-buddy-1_17_4_http//file",
-  out = "net.bytebuddy/byte-buddy-1.17.4.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
-  name = "net.bytebuddy/byte-buddy-agent-1.17.4.jar_copy",
-  src = "@net_bytebuddy-byte-buddy-agent-1_17_4_http//file",
-  out = "net.bytebuddy/byte-buddy-agent-1.17.4.jar",
+  name = "net.bytebuddy/byte-buddy-agent-1.17.6.jar_copy",
+  src = "@net_bytebuddy-byte-buddy-agent-1_17_6_http//file",
+  out = "net.bytebuddy/byte-buddy-agent-1.17.6.jar",
   allow_symlink = True,
   visibility = ["//visibility:public"]
 )
@@ -12621,8 +12613,8 @@ java_library(
   exports = [
     ":uk_org_webcompere-system-stubs-jupiter-2_1_8_http_import",
     ":uk_org_webcompere-system-stubs-core-2_1_8_http_import",
-    ":net_bytebuddy-byte-buddy-1_17_4_http_import",
-    ":net_bytebuddy-byte-buddy-agent-1_17_4_http_import",
+    ":net_bytebuddy-byte-buddy-1_17_7_http_import",
+    ":net_bytebuddy-byte-buddy-agent-1_17_6_http_import",
   ],
   visibility = ["//visibility:public"]
 )
@@ -12640,15 +12632,15 @@ jvm_import(
 )
 
 jvm_import(
-  name = "net_bytebuddy-byte-buddy-1_17_4_http_import",
-  jar = "@net_bytebuddy-byte-buddy-1_17_4_http//file",
-  source_jar = "@net_bytebuddy-byte-buddy-1_17_4-sources_http//file"
+  name = "net_bytebuddy-byte-buddy-1_17_7_http_import",
+  jar = "@net_bytebuddy-byte-buddy-1_17_7_http//file",
+  source_jar = "@net_bytebuddy-byte-buddy-1_17_7-sources_http//file"
 )
 
 jvm_import(
-  name = "net_bytebuddy-byte-buddy-agent-1_17_4_http_import",
-  jar = "@net_bytebuddy-byte-buddy-agent-1_17_4_http//file",
-  source_jar = "@net_bytebuddy-byte-buddy-agent-1_17_4-sources_http//file"
+  name = "net_bytebuddy-byte-buddy-agent-1_17_6_http_import",
+  jar = "@net_bytebuddy-byte-buddy-agent-1_17_6_http//file",
+  source_jar = "@net_bytebuddy-byte-buddy-agent-1_17_6-sources_http//file"
 )
 
 copy_file(
@@ -16853,14 +16845,6 @@ copy_file(
 )
 
 copy_file(
-  name = "net.bytebuddy/byte-buddy-agent-1.17.6.jar_copy",
-  src = "@net_bytebuddy-byte-buddy-agent-1_17_6_http//file",
-  out = "net.bytebuddy/byte-buddy-agent-1.17.6.jar",
-  allow_symlink = True,
-  visibility = ["//visibility:public"]
-)
-
-copy_file(
   name = "org.objenesis/objenesis-3.3.jar_copy",
   src = "@org_objenesis-objenesis-3_3_http//file",
   out = "org.objenesis/objenesis-3.3.jar",
@@ -16882,12 +16866,6 @@ jvm_import(
   name = "org_mockito-mockito-core-5_19_0_http_import",
   jar = "@org_mockito-mockito-core-5_19_0_http//file",
   source_jar = "@org_mockito-mockito-core-5_19_0-sources_http//file"
-)
-
-jvm_import(
-  name = "net_bytebuddy-byte-buddy-agent-1_17_6_http_import",
-  jar = "@net_bytebuddy-byte-buddy-agent-1_17_6_http//file",
-  source_jar = "@net_bytebuddy-byte-buddy-agent-1_17_6-sources_http//file"
 )
 
 jvm_import(
