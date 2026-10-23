@@ -20,6 +20,13 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | `bins/yonder` | The client CLI: `run`, `attach`, `cancel`, `runs`, `fetch`, `forget`, `lease`, `release` and `prepare`. `:yonder` in `BUILD.bazel` is its optimized binary. | `@community//tools/yonder/bins/yonder:yonder_test` |
 | `bins/yonderd` | The agent on a host: macOS and Linux. `serve` answers the requests, `supervise` runs one run in a warm lease, `setup` starts the agent under launchd. `API.md` lists the commands, the refusals, the environment of a run and the format of `.yonder.toml`. | `@community//tools/yonder/bins/yonderd:yonderd_test`, `:yonderd_cli_test` |
 
+## The host
+
+A host has the agent (`yonder prepare <alias>`), Branch Deck (`bd` on the login `PATH`), a clone of each repository
+under the directory of the repository of its host file, such as `~/projects/branch-deck` beside `~/projects/idea-1`, and
+the tools that the commands of those repositories need on the login `PATH` of its user, such as pnpm. The agent gives
+each run the login environment of the user, so a tool that a terminal of the host finds, a run finds too.
+
 ## The warm lease
 
 The lease holder of a run is one per local checkout path (`yonder-<hash>`, or `--holder`), so the runs of a checkout

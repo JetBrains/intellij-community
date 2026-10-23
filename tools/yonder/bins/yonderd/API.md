@@ -133,6 +133,9 @@ creates = ["node_modules"]
   file is its blob, and a directory its tree. A path that the commit lacks counts as missing. A step without `inputs`
   runs once per lease. The lease file keeps the fingerprints, so a new lease runs each step once: the agent cannot know
   what an earlier holder did to the slot.
+- A step and the command use the tools of the login environment of the host. The host provides them, as its setup
+  does git and bd: a repository whose steps call pnpm needs a pnpm on the login `PATH` of the host (`brew install
+  pnpm`; pnpm itself switches to the version of `packageManager`). `.yonder.toml` installs no tool of the host.
 - A step runs in the slot root, in a process group of its own, with the environment of the run. Both of its streams go
   to the log as stderr events, so the stdout of a run holds only the command. A cancel interrupts it as it does the
   command.

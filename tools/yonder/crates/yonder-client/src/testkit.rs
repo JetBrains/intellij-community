@@ -2,7 +2,7 @@
 //! connection from a script.
 
 use std::net::{SocketAddr, TcpListener, TcpStream};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::thread;
@@ -255,6 +255,30 @@ pub(crate) fn host_file(agent: &FakeAgent, addresses: Vec<SocketAddr>) -> HostFi
         addresses,
         repo: "~/projects/idea-1".to_owned(),
     }
+}
+
+/// The variables of each real git of the tests: a test identity, and no configuration of the system or of the user.
+const TEST_GIT_ENV: [(&str, &str); 6] = [
+    ("GIT_CONFIG_NOSYSTEM", "1"),
+    ("GIT_CONFIG_GLOBAL", "/dev/null"),
+    ("GIT_AUTHOR_NAME", "t"),
+    ("GIT_AUTHOR_EMAIL", "t@t"),
+    ("GIT_COMMITTER_NAME", "t"),
+    ("GIT_COMMITTER_EMAIL", "t@t"),
+];
+
+/// Runs a real git in `dir` with [`TEST_GIT_ENV`], and answers its stdout without the trailing line end. A failed git
+/// fails the test.
+pub(crate) fn real_git(dir: &Path, args: &[&str]) -> String {
+    let ran = std::process::Command::new("git")
+        .arg("-C")
+        .arg(dir)
+        .args(args)
+        .envs(TEST_GIT_ENV)
+        .output();
+    let ran = ran.expect("git");
+    assert!(ran.status.success(), "git {args:?}: {}", String::from_utf8_lossy(&ran.stderr));
+    String::from_utf8_lossy(&ran.stdout).trim_end().to_owned()
 }
 
 /// The lines that a client said, collected for a test.

@@ -1,6 +1,7 @@
 use pretty_assertions::assert_eq;
 
 use super::*;
+use crate::testing::git;
 
 /// The example of `API.md`.
 const EXAMPLE: &str = r#"
@@ -63,36 +64,19 @@ fn the_example_parses_with_each_kind_of_value() {
     );
 }
 
-/// Runs git in `dir` and answers its stdout.
-fn git_in(dir: &Path, args: &[&str]) -> String {
-    let output = std::process::Command::new("git")
-        .arg("-C")
-        .arg(dir)
-        .args(args)
-        .env("GIT_CONFIG_NOSYSTEM", "1")
-        .env("GIT_AUTHOR_NAME", "t")
-        .env("GIT_AUTHOR_EMAIL", "t@t")
-        .env("GIT_COMMITTER_NAME", "t")
-        .env("GIT_COMMITTER_EMAIL", "t@t")
-        .output()
-        .expect("git");
-    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
-    String::from_utf8_lossy(&output.stdout).trim().to_owned()
-}
-
 #[test]
 fn the_config_comes_from_the_commit_and_a_file_beside_it_does_not_count() {
     assert_eq!(parse("").expect("an empty file"), RepoConfig::default());
     let dir = tempfile::tempdir().expect("a repository");
     let repo = dir.path();
-    git_in(repo, &["init", "-q"]);
-    git_in(repo, &["commit", "-q", "--allow-empty", "-m", "without"]);
-    let without = git_in(repo, &["rev-parse", "HEAD"]);
+    git(repo, &["init", "-q"]);
+    git(repo, &["commit", "-q", "--allow-empty", "-m", "without"]);
+    let without = git(repo, &["rev-parse", "HEAD"]);
     std::fs::write(repo.join(FILE), "outputs = [\"out\"]\n").expect("the file");
     assert_eq!(read(repo, &without).expect("no file in the commit"), RepoConfig::default());
-    git_in(repo, &["add", FILE]);
-    git_in(repo, &["commit", "-q", "-m", "with"]);
-    let with = git_in(repo, &["rev-parse", "HEAD"]);
+    git(repo, &["add", FILE]);
+    git(repo, &["commit", "-q", "-m", "with"]);
+    let with = git(repo, &["rev-parse", "HEAD"]);
     std::fs::write(repo.join(FILE), "not toml").expect("a changed file");
     assert_eq!(read(repo, &with).expect("the file of the commit").outputs, vec!["out".to_owned()]);
 }

@@ -448,16 +448,13 @@ fn stage_outputs(slot: &Path, outputs: &[String], run: &RunDir) -> Vec<String> {
     errors
 }
 
-/// Removes a file, a link or a directory. A missing one is no failure.
+/// Removes a file, a link or a directory of the slot. A missing one is no failure: the output was never made.
 fn remove_entry(path: &Path) -> io::Result<()> {
-    let removed = match fs::symlink_metadata(path) {
-        Ok(metadata) if metadata.is_dir() => fs::remove_dir_all(path),
-        Ok(_) => fs::remove_file(path),
-        Err(error) => Err(error),
-    };
-    match removed {
+    match fs::symlink_metadata(path) {
         Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(()),
-        other => other,
+        Err(error) => Err(error),
+        Ok(metadata) if metadata.file_type().is_dir() => fs::remove_dir_all(path),
+        Ok(_) => fs::remove_file(path),
     }
 }
 

@@ -2,7 +2,7 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::process::never;
-use crate::testkit::{FakeProcesses, failed, ok};
+use crate::testkit::{FakeProcesses, failed, ok, real_git};
 
 const COMMIT: &str = "0123456789abcdef0123456789abcdef01234567";
 
@@ -107,23 +107,6 @@ fn the_count_of_a_pack_excludes_the_present_commits() {
         Some(12)
     );
     assert_eq!(processes.texts(), ["git rev-list --count c3 ^c1"]);
-}
-
-/// Runs a real git in `dir` and answers its stdout.
-fn real_git(dir: &Path, args: &[&str]) -> String {
-    let output = std::process::Command::new("git")
-        .arg("-C")
-        .arg(dir)
-        .args(args)
-        .env("GIT_CONFIG_NOSYSTEM", "1")
-        .env("GIT_AUTHOR_NAME", "t")
-        .env("GIT_AUTHOR_EMAIL", "t@t")
-        .env("GIT_COMMITTER_NAME", "t")
-        .env("GIT_COMMITTER_EMAIL", "t@t")
-        .output()
-        .expect("git");
-    assert!(output.status.success(), "git {args:?}: {}", String::from_utf8_lossy(&output.stderr));
-    String::from_utf8_lossy(&output.stdout).trim_end().to_owned()
 }
 
 /// What a run must not change in a checkout: the status, the index, the refs, HEAD and the reflog.
