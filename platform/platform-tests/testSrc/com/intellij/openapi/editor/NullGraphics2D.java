@@ -291,7 +291,7 @@ public class NullGraphics2D extends Graphics2D {
 
   @Override
   public void setClip(Shape clip) {
-    throw new UnsupportedOperationException();
+    myResult += Objects.hashCode(clip);
   }
 
   @Override
@@ -429,7 +429,7 @@ public class NullGraphics2D extends Graphics2D {
 
   @Override
   public void clip(Shape s) {
-    throw new UnsupportedOperationException();
+    myResult += Objects.hashCode(s);
   }
 
   @Override
