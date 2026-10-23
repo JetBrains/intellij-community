@@ -9,7 +9,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.hints.DeclarativeInlayHintSettingsKey
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.InlayHintSettingsOverrider
-import com.intellij.codeInsight.hints.InlayHintSettingsRequest
 import com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import com.intellij.codeInsight.hints.declarative.InlayHintsProviderFactory
@@ -95,9 +94,7 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
     val passProviders = if (enabledGlobally) {
       getSuitableToFileProviders(psiFile)
         .filter {
-          InlayHintSettingsOverrider.isEnabledByOverriders(
-            InlayHintSettingsRequest(psiFile.project,
-                                     DeclarativeInlayHintSettingsKey(it.providerId, null)))
+          InlayHintSettingsOverrider.isEnabledByOverriders(DeclarativeInlayHintSettingsKey(it.providerId, null))
           ?: (declarativeInlayHintsSettings.isProviderEnabled(it.providerId) ?: it.isEnabledByDefault)
         }
         .map {

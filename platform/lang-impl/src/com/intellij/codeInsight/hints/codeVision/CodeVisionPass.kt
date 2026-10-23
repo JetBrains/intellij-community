@@ -10,7 +10,6 @@ import com.intellij.codeInsight.codeVision.settings.CodeVisionSettings
 import com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel
 import com.intellij.codeInsight.hints.CodeVisionInlayHintSettingsKey
 import com.intellij.codeInsight.hints.InlayHintSettingsOverrider
-import com.intellij.codeInsight.hints.InlayHintSettingsRequest
 import com.intellij.concurrency.JobLauncher
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.rethrowControlFlowException
@@ -132,9 +131,7 @@ class CodeVisionPass(
     if (!CodeVisionProjectSettings.getInstance(myProject).isEnabledForProject()) return
     val providers = DaemonBoundCodeVisionProvider.extensionPoint.extensionList
       .filter { provider ->
-        InlayHintSettingsOverrider.isEnabledByOverriders(
-          InlayHintSettingsRequest(project = project,
-                                   settingsKey = CodeVisionInlayHintSettingsKey(groupId = provider.groupId)))
+        InlayHintSettingsOverrider.isEnabledByOverriders(CodeVisionInlayHintSettingsKey(groupId = provider.groupId))
         ?: settings.isProviderEnabled(provider.groupId)
       }
     if (providers.isEmpty()) return

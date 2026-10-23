@@ -7,8 +7,8 @@ import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 import com.intellij.codeInsight.hints.HintInfoFilter
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
+import com.intellij.codeInsight.hints.InlayHintSettingsKey
 import com.intellij.codeInsight.hints.InlayParameterHintsProvider
-import com.intellij.codeInsight.hints.InlayHintSettingsRequest
 import com.intellij.codeInsight.hints.Option
 import com.intellij.codeInsight.hints.ParameterHintSettingsKey
 import com.intellij.codeInsight.hints.ParameterHintsPass
@@ -26,7 +26,6 @@ import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 
@@ -148,8 +147,7 @@ class ParameterInlayProviderSettingsModel(
     }
   }
 
-  override fun settingsRequest(project: Project, case: ImmediateConfigurable.Case?): InlayHintSettingsRequest {
-    return InlayHintSettingsRequest(project,
-                                    ParameterHintSettingsKey(getLanguageForSettingKey(language), case?.id))
+  override fun settingsKey(case: ImmediateConfigurable.Case?): InlayHintSettingsKey {
+    return ParameterHintSettingsKey(getLanguageForSettingKey(language), case?.id)
   }
 }

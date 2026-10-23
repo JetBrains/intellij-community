@@ -3,7 +3,6 @@ package com.intellij.codeInsight.hints
 
 import com.intellij.lang.Language
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -31,12 +30,6 @@ data class ParameterHintSettingsKey(
 ) : InlayHintSettingsKey
 
 @ApiStatus.Internal
-data class InlayHintSettingsRequest(
-  val project: Project,
-  val settingsKey: InlayHintSettingsKey
-)
-
-@ApiStatus.Internal
 interface InlayHintSettingsOverrider {
 
   /**
@@ -47,7 +40,7 @@ interface InlayHintSettingsOverrider {
    * - `false` - disables the inlay hint
    * - `true` - enables the inlay hint
    */
-  fun isEnabled(request: InlayHintSettingsRequest): Boolean?
+  fun isEnabled(key: InlayHintSettingsKey): Boolean?
 
   companion object {
     @JvmField
@@ -63,8 +56,8 @@ interface InlayHintSettingsOverrider {
      * - `true` if no overrider disables the inlay hint and at least one enables it.
      * - `null` if no overrider has a result for the inlay hint.
      */
-    @JvmStatic fun isEnabledByOverriders(request: InlayHintSettingsRequest): Boolean? {
-      val results = EP_NAME.extensionList.map { it.isEnabled(request) }
+    @JvmStatic fun isEnabledByOverriders(key: InlayHintSettingsKey): Boolean? {
+      val results = EP_NAME.extensionList.map { it.isEnabled(key) }
       if (results.contains(false)) return false
       if (results.contains(true)) return true
       return null

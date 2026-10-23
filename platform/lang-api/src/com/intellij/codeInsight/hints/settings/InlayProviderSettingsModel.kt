@@ -4,7 +4,7 @@ package com.intellij.codeInsight.hints.settings
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
-import com.intellij.codeInsight.hints.InlayHintSettingsRequest
+import com.intellij.codeInsight.hints.InlayHintSettingsKey
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -77,7 +77,7 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
   }
 
   @ApiStatus.Internal
-  open fun settingsRequest(project: Project, case: ImmediateConfigurable.Case?): InlayHintSettingsRequest? = null
+  open fun settingsKey(case: ImmediateConfigurable.Case?): InlayHintSettingsKey? = null
 
   /**
    * Short description to be displayed in the model's details

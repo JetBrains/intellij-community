@@ -12,7 +12,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.hints.CodeVisionInlayHintSettingsKey
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.InlayHintSettingsOverrider
-import com.intellij.codeInsight.hints.InlayHintSettingsRequest
 import com.intellij.codeInsight.hints.codeVision.CodeVisionProjectSettings
 import com.intellij.codeInsight.hints.codeVision.ModificationStampUtil
 import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
@@ -351,9 +350,7 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
     val placeholders = ArrayList<Pair<TextRange, CodeVisionEntry>>()
     val settings = CodeVisionSettings.getInstance()
     for (provider in providers) {
-      if (!(InlayHintSettingsOverrider.isEnabledByOverriders(
-          InlayHintSettingsRequest(project,
-                                   CodeVisionInlayHintSettingsKey(provider.groupId)))
+      if (!(InlayHintSettingsOverrider.isEnabledByOverriders(CodeVisionInlayHintSettingsKey(provider.groupId))
             ?: settings.isProviderEnabled(provider.groupId))) continue
       if (getAnchorForProvider(provider) != CodeVisionAnchorKind.Top) continue
       val placeholderCollector: CodeVisionPlaceholderCollector = provider.getPlaceholderCollector(editor, psiFile) ?: continue
@@ -540,9 +537,7 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
       for (p in providers) {
         val provider = p as CodeVisionProvider<Any?>
         val providerId = provider.id
-        val isGroupEnabled = InlayHintSettingsOverrider
-                               .isEnabledByOverriders(InlayHintSettingsRequest(project = project,
-                                                                               settingsKey = CodeVisionInlayHintSettingsKey(provider.groupId)))
+        val isGroupEnabled = InlayHintSettingsOverrider.isEnabledByOverriders(CodeVisionInlayHintSettingsKey(provider.groupId))
                              ?: !lifeSettingModel.disabledCodeVisionProviderIds.contains(provider.groupId)
 
         if (isGroupEnabled && !isEditorInsideSettingsPanel) {

@@ -8,7 +8,6 @@ import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
 
@@ -75,17 +74,16 @@ fun isParameterHintsEnabledForLanguage(language: Language): Boolean {
   return ParameterNameHintsSettings.getInstance().isEnabledForLanguage(getLanguageForSettingKey(language))
 }
 
-fun setShowParameterHintsForLanguage(value: Boolean, language: Language) {
-  ParameterNameHintsSettings.getInstance().setIsEnabledForLanguage(value, getLanguageForSettingKey(language))
-}
-
-fun isParameterHintsEnabledForLanguage(language: Language, project: Project): Boolean {
+@ApiStatus.Internal
+fun isParameterHintsEnabledForLanguageWithOverriders(language: Language): Boolean {
   @Suppress("DEPRECATION")
   if (!InlayHintsSettings.instance().hintsShouldBeShown(language)) return false
-  return InlayHintSettingsOverrider.isEnabledByOverriders(
-    InlayHintSettingsRequest(project,
-                             ParameterHintSettingsKey(getLanguageForSettingKey(language), null)))
+  return InlayHintSettingsOverrider.isEnabledByOverriders(ParameterHintSettingsKey(getLanguageForSettingKey(language), null))
          ?: ParameterNameHintsSettings.getInstance().isEnabledForLanguage(getLanguageForSettingKey(language))
+}
+
+fun setShowParameterHintsForLanguage(value: Boolean, language: Language) {
+  ParameterNameHintsSettings.getInstance().setIsEnabledForLanguage(value, getLanguageForSettingKey(language))
 }
 
 internal fun refreshParameterHintsOnNextPass() {

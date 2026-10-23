@@ -4,10 +4,9 @@ package com.intellij.codeInsight.codeVision.settings
 import com.intellij.codeInsight.hints.CodeVisionInlayHintSettingsKey
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
-import com.intellij.codeInsight.hints.InlayHintSettingsRequest
+import com.intellij.codeInsight.hints.InlayHintSettingsKey
 import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.lang.Language
-import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
 abstract class CodeVisionGroupSettingModel(isEnabled: Boolean, id: String) : InlayProviderSettingsModel(isEnabled, id, Language.ANY) {
@@ -38,7 +37,7 @@ abstract class CodeVisionGroupSettingModel(isEnabled: Boolean, id: String) : Inl
     get() = emptyList()
 
   @ApiStatus.Internal
-  final override fun settingsRequest(project: Project, case: ImmediateConfigurable.Case?): InlayHintSettingsRequest {
-    return InlayHintSettingsRequest(project, CodeVisionInlayHintSettingsKey(id))
+  final override fun settingsKey(case: ImmediateConfigurable.Case?): InlayHintSettingsKey {
+    return CodeVisionInlayHintSettingsKey(id)
   }
 }

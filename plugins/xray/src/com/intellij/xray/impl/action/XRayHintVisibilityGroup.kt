@@ -5,7 +5,6 @@ import com.intellij.codeInsight.hints.CodeVisionInlayHintSettingsKey
 import com.intellij.codeInsight.hints.DeclarativeInlayHintSettingsKey
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.InlayHintSettingsKey
-import com.intellij.codeInsight.hints.InlayHintSettingsRequest
 import com.intellij.codeInsight.hints.LegacyInlayHintSettingsKey
 import com.intellij.codeInsight.hints.ParameterHintSettingsKey
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider.Companion.OPTION_ID
@@ -90,12 +89,11 @@ internal class XRayHintVisibilityGroup(
     constructor(key: InlayHintSettingsKey, choice: XRayStageChoice) : this(key, choice.stage, choice.title)
   }
 
-  private fun resolveRequest(e: AnActionEvent?): InlayHintSettingsRequest? {
+  private fun resolveInlayHintKey(e: AnActionEvent?): InlayHintSettingsKey? {
     val event = e ?: return null
-    val project = event.project ?: return null
-    val language = e.getData(CommonDataKeys.PSI_FILE)?.language ?: return null
+    val language = event.getData(CommonDataKeys.PSI_FILE)?.language ?: return null
 
-    val resolved = when (key) {
+    return when (key) {
       null -> {
         val providerId = event.getData(PROVIDER_ID) ?: return null
         DeclarativeInlayHintSettingsKey(providerId, event.getData(OPTION_ID))
@@ -103,32 +101,30 @@ internal class XRayHintVisibilityGroup(
       is DeclarativeInlayHintSettingsKey -> key
       is LegacyInlayHintSettingsKey -> key.copy(language = key.language ?: language)
       is CodeVisionInlayHintSettingsKey -> key
-      is ParameterHintSettingsKey -> if (key.optionId == null) return null else key
+      is ParameterHintSettingsKey -> if (key.optionId == null) null else key
     }
-
-    return InlayHintSettingsRequest(project, resolved)
   }
 
   override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
-    val request = resolveRequest(e) ?: return emptyArray()
+    val key = resolveInlayHintKey(e) ?: return emptyArray()
     val store = XRayStageStore.getInstanceOrNull() ?: return emptyArray()
-    val currentStage = store.getStage(request.settingsKey)
+    val currentStage = store.getStage(key)
     // InlayHintStage.entries runs most-visible (ALWAYS) to least-visible (DISABLED), matching the menu order.
     val actions = xrayStageChoices(currentStage)
-      .map { XRaySetHintStageAction(request.settingsKey, it) }
+      .map { XRaySetHintStageAction(key, it) }
       .toMutableList<AnAction>()
     actions.add(Separator.getInstance())
-    actions.add(XRayNavigateToSettingsAction(request))
+    actions.add(XRayNavigateToSettingsAction(key))
     return actions.toTypedArray()
   }
 
   override fun update(e: AnActionEvent) {
-    val request = resolveRequest(e)
+    val key = resolveInlayHintKey(e)
     val store = XRayStageStore.getInstanceOrNull() ?: return
-    if (request != null) {
+    if (key != null) {
       e.presentation.isEnabledAndVisible = true
       e.presentation.text = XRayBundle.message("xray.inlay.menu.change")
-      e.presentation.putClientProperty(ActionUtil.POPUP_AD_TEXT, stageVisibilitySummary(store.getStage(request.settingsKey)))
+      e.presentation.putClientProperty(ActionUtil.POPUP_AD_TEXT, stageVisibilitySummary(store.getStage(key)))
     }
     else {
       e.presentation.isEnabledAndVisible = false

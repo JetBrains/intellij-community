@@ -6,10 +6,10 @@ import com.intellij.codeInsight.hints.HintsBuffer
 import com.intellij.codeInsight.hints.HorizontalConstrainedPresentation
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayGroup
+import com.intellij.codeInsight.hints.InlayHintSettingsKey
 import com.intellij.codeInsight.hints.InlayHintsProvider
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.InlayHintsSinkImpl
-import com.intellij.codeInsight.hints.InlayHintSettingsRequest
 import com.intellij.codeInsight.hints.LegacyInlayHintSettingsKey
 import com.intellij.codeInsight.hints.ProviderWithSettings
 import com.intellij.codeInsight.hints.addStrikeout
@@ -127,9 +127,9 @@ internal class NewInlayProviderSettingsModel<T : Any>(
     isEnabled = config.hintsEnabled(providerWithSettings.provider.key, providerWithSettings.language)
   }
 
-  override fun settingsRequest(project: Project, case: ImmediateConfigurable.Case?): InlayHintSettingsRequest? {
+  override fun settingsKey(case: ImmediateConfigurable.Case?): InlayHintSettingsKey? {
     if (case != null) return null
-    return InlayHintSettingsRequest(project, LegacyInlayHintSettingsKey(language, id))
+    return LegacyInlayHintSettingsKey(language, id)
   }
 }
 

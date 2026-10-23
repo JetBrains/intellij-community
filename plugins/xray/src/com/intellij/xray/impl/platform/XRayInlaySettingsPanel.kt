@@ -248,12 +248,12 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
           addDescription(item.description)
         }
 
-        val request = if (item.isMergedNode) null else item.settingsRequest(project, null)
+        val key = if (item.isMergedNode) null else item.settingsKey(null)
         val store = XRayStageStore.getInstanceOrNull()
-        if (request != null && store != null) {
+        if (key != null && store != null) {
           addStageControl(treeNode,
-                          { pendingStages[request.settingsKey] ?: store.getStage(request.settingsKey) },
-                          { stage -> pendingStages[request.settingsKey] = stage },
+                          { pendingStages[key] ?: store.getStage(key) },
+                          { stage -> pendingStages[key] = stage },
                           { item.onChangeListener?.settingsChanged() })
         }
 
@@ -274,12 +274,12 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
         val model = parent.userObject as InlayProviderSettingsModel
         addDescription(model.getCaseDescription(item))
 
-        val request = model.settingsRequest(project, item)
+        val key = model.settingsKey(item)
         val store = XRayStageStore.getInstanceOrNull()
-        if (request != null && store != null) {
+        if (key != null && store != null) {
           addStageControl(treeNode,
-                          { pendingStages[request.settingsKey] ?: store.getStage(request.settingsKey) },
-                          { stage -> pendingStages[request.settingsKey] = stage },
+                          { pendingStages[key] ?: store.getStage(key) },
+                          { stage -> pendingStages[key] = stage },
                           { model.onChangeListener?.settingsChanged() })
         }
 
@@ -535,15 +535,15 @@ internal class XRayInlaySettingsPanel(val project: Project) : JPanel(BorderLayou
         // the combo already wrote the fine stage; the checkbox only forces DISABLED / promotes a stale DISABLED
         val parent = node.parent as CheckedTreeNode
         val model = parent.userObject as InlayProviderSettingsModel
-        val request = model.settingsRequest(project, item)
-        request?.let {
+        val key = model.settingsKey(item)
+        key?.let {
           val store = XRayStageStore.getInstanceOrNull()
           store?.let {
             if (!node.isChecked) {
-              store.setStage(request.settingsKey, InlayHintStage.DISABLED)
+              store.setStage(key, InlayHintStage.DISABLED)
             }
-            else if (store.getStage(request.settingsKey) == InlayHintStage.DISABLED) {
-              store.setStage(request.settingsKey, InlayHintStage.ALWAYS)
+            else if (store.getStage(key) == InlayHintStage.DISABLED) {
+              store.setStage(key, InlayHintStage.ALWAYS)
             }
           }
           if (node.isChecked) {

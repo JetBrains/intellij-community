@@ -5,7 +5,6 @@ import com.intellij.codeHighlighting.EditorBoundHighlightingPass
 import com.intellij.codeInsight.hints.DeclarativeInlayHintSettingsKey
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.InlayHintSettingsOverrider
-import com.intellij.codeInsight.hints.InlayHintSettingsRequest
 import com.intellij.codeInsight.hints.declarative.AboveLineIndentedPosition
 import com.intellij.codeInsight.hints.declarative.EndOfLinePosition
 import com.intellij.codeInsight.hints.declarative.InlayProviderPassInfo
@@ -69,9 +68,7 @@ class DeclarativeInlayHintsPass(
       val optionToEnabled =
         if (!overridersActive) providerInfo.optionToEnabled
         else providerInfo.optionToEnabled.mapValues { (optionId, enabled) ->
-          InlayHintSettingsOverrider.isEnabledByOverriders(
-            InlayHintSettingsRequest(myProject,
-                                     DeclarativeInlayHintSettingsKey(providerInfo.providerId, optionId)))
+          InlayHintSettingsOverrider.isEnabledByOverriders(DeclarativeInlayHintSettingsKey(providerInfo.providerId, optionId))
           ?: enabled
         }
 

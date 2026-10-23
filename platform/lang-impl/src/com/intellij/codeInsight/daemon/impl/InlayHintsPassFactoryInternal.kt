@@ -12,7 +12,6 @@ import com.intellij.codeInsight.hints.InlayHintsPass
 import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.InlayHintsSinkImpl
 import com.intellij.codeInsight.hints.InlayHintSettingsOverrider
-import com.intellij.codeInsight.hints.InlayHintSettingsRequest
 import com.intellij.codeInsight.hints.LegacyInlayHintSettingsKey
 import com.intellij.codeInsight.hints.ProviderWithSettings
 import com.intellij.codeInsight.hints.SettingsKey
@@ -122,8 +121,7 @@ private fun getProviders(element: PsiElement, editor: Editor): List<ProviderWith
     // to avoid cases when old and new code vision UI are shown
     !(it.provider.group == InlayGroup.CODE_VISION_GROUP && Registry.`is`("editor.codeVision.new")) &&
     ((settings.hintsEnabledGlobally() && settings.hintsEnabled(language) &&
-      (InlayHintSettingsOverrider.isEnabledByOverriders(
-        InlayHintSettingsRequest(project, LegacyInlayHintSettingsKey(language, it.provider.key.id)))
+      (InlayHintSettingsOverrider.isEnabledByOverriders(LegacyInlayHintSettingsKey(language, it.provider.key.id))
        ?: settings.hintsEnabled(it.provider.key, language))) ||
      isProviderAlwaysEnabledForEditor(editor, it.provider.key))
   }

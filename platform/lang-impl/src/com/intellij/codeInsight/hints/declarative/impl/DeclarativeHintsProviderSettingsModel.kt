@@ -5,7 +5,7 @@ import com.intellij.codeInsight.hints.DeclarativeInlayHintSettingsKey
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.codeInsight.hints.InlayDumpUtil
 import com.intellij.codeInsight.hints.InlayGroup
-import com.intellij.codeInsight.hints.InlayHintSettingsRequest
+import com.intellij.codeInsight.hints.InlayHintSettingsKey
 import com.intellij.codeInsight.hints.declarative.DeclarativeInlayHintsSettings
 import com.intellij.codeInsight.hints.declarative.HintFormat
 import com.intellij.codeInsight.hints.declarative.InlayHintsCustomSettingsProvider
@@ -243,9 +243,8 @@ class DeclarativeHintsProviderSettingsModel(
     override fun persistSettings(project: Project, settings: Unit, language: Language) {}
   }
 
-  override fun settingsRequest(project: Project, case: ImmediateConfigurable.Case?): InlayHintSettingsRequest {
-    return InlayHintSettingsRequest(project,
-                                    DeclarativeInlayHintSettingsKey(id, case?.id))
+  override fun settingsKey(case: ImmediateConfigurable.Case?): InlayHintSettingsKey {
+    return DeclarativeInlayHintSettingsKey(id, case?.id)
   }
 }
 

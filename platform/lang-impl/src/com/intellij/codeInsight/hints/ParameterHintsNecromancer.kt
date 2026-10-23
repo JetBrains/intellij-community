@@ -108,7 +108,7 @@ private class ParameterHintsNecromancer(
     val language = readAction { psiManager.findFile(file)?.language }
     return language != null &&
            InlayParameterHintsExtension.forLanguage(language) != null &&
-           isParameterHintsEnabledForLanguage(language)
+           isParameterHintsEnabledForLanguageWithOverriders(language)
   }
 
   private fun isDebug(): Boolean {

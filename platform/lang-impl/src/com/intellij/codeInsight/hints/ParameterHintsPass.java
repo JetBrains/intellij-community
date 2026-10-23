@@ -121,14 +121,12 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
     if (provider == null || !provider.canShowHintsWhenDisabled() && !isEnabled(language) || DiffUtil.isDiffEditor(myEditor)) return;
     if (!HighlightingLevelManager.getInstance(myFile.getProject()).shouldHighlight(myFile)) return;
 
-    PluginExceptionUtil.computeOrLogPluginException(provider.getClass(), () -> {
-      Runnable traversal = () -> provider.createTraversal(myRootElement).forEach(element -> process(element, provider));
-      if (myApplySettingsOverriders && InlayHintSettingsOverrider.isActive()) {
-        Map<String, Boolean> optionOverrides = new HashMap<>();
-        Language settingsLanguage = HintUtilsKt.getLanguageForSettingKey(language);
-        for (Option option : provider.getSupportedOptions()) {
-          Boolean isEnabled = InlayHintSettingsOverrider.isEnabledByOverriders(
-            new InlayHintSettingsRequest(myProject, new ParameterHintSettingsKey(settingsLanguage, option.getId())));
+    PluginExceptionUtil.computeOrLogPluginException(provider.getClass(), () -> {Runnable traversal = () -> provider.createTraversal(myRootElement).forEach(element -> process(element, provider));
+    if (myApplySettingsOverriders && InlayHintSettingsOverrider.isActive()) {
+      Map<String, Boolean> optionOverrides = new HashMap<>();
+      Language settingsLanguage = HintUtilsKt.getLanguageForSettingKey(language);
+      for (Option option : provider.getSupportedOptions()) {
+        Boolean isEnabled = InlayHintSettingsOverrider.isEnabledByOverriders(new ParameterHintSettingsKey(settingsLanguage, option.getId()));
           if (isEnabled != null) {
             optionOverrides.put(option.getId(), isEnabled);
           }
@@ -146,7 +144,7 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
     if (!myApplySettingsOverriders) {
       return HintUtilsKt.isParameterHintsEnabledForLanguage(language);
     }
-    return HintUtilsKt.isParameterHintsEnabledForLanguage(language, myFile.getProject());
+    return HintUtilsKt.isParameterHintsEnabledForLanguageWithOverriders(language);
   }
 
   private void process(@NotNull PsiElement element, @NotNull InlayParameterHintsProvider provider) {
