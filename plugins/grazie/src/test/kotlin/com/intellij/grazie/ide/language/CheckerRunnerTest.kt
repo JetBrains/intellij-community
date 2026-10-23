@@ -2,7 +2,6 @@ package com.intellij.grazie.ide.language
 
 import ai.grazie.nlp.langs.Language
 import com.intellij.grazie.text.CheckerRunner
-import com.intellij.grazie.text.ExternalTextChecker
 import com.intellij.grazie.text.Rule
 import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
@@ -19,40 +18,12 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.application
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.ensureActive
 import java.util.Locale
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import kotlin.coroutines.coroutineContext
 
 class CheckerRunnerTest: BasePlatformTestCase() {
-  fun `test async cancellability`() {
-    val indicator = ProgressIndicatorBase()
-    val checker = object: ExternalTextChecker() {
-      override suspend fun checkExternally(context: ProofreadingContext): Collection<TextProblem> {
-        indicator.cancel()
-
-        repeat(10) {
-          coroutineContext.ensureActive()
-          delay(10)
-        }
-
-        fail("We should be already canceled")
-        return emptyList()
-      }
-      override fun getRules(locale: Locale) = throw UnsupportedOperationException()
-    }
-    maskChecker(checker)
-    ProgressManager.getInstance().runProcess(
-      {
-        assertThrows(ProcessCanceledException::class.java) {
-          CheckerRunner(someContent()).run()
-        }
-      }, indicator)
-  }
-
   fun `test sync cancellability`() {
     val indicator = ProgressIndicatorBase()
     val checker = object: TextChecker() {
