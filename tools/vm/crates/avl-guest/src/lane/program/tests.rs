@@ -401,6 +401,21 @@ fn story(vocabulary: &Value, profiles: &Value) -> Suite {
     suite_of(&story_document(vocabulary, profiles))
 }
 
+/// A story suite with one scenario for each of `names`, whose one instruction is the action `rename-session-select`.
+fn select_story(names: &[&str]) -> Suite {
+    let vocabulary = json!({"runnerAnswers": [], "actions": {"rename-session-select": ide(&[], &[], &[])}, "assertions": {}});
+    let instructions = json!([{"action": "rename-session-select"}]);
+    let profiles: Vec<Value> = names.iter().map(|name| scenario(name, &instructions)).collect();
+    story(&vocabulary, &Value::Array(profiles))
+}
+
+/// A story suite with the one scenario `renames`, whose one instruction is the assertion `rename-session-title`.
+fn title_story() -> Suite {
+    let vocabulary = json!({"runnerAnswers": [], "actions": {}, "assertions": {"rename-session-title": ide(&[], &[], &[])}});
+    let instructions = json!([{"assertion": "rename-session-title", "expectation": "The title shows."}]);
+    story(&vocabulary, &json!([scenario("renames", &instructions)]))
+}
+
 /// The document of [`story`].
 fn story_document(vocabulary: &Value, profiles: &Value) -> Value {
     json!({
@@ -436,11 +451,52 @@ fn suite_of_bytes(bytes: Vec<u8>) -> Suite {
     suites_of(vec![(program, bytes)]).unwrap().remove(0)
 }
 
+/// The vocabulary entry of the IDE part `authored-step` of the suite `suite`: the parts `parts` of the scenario
+/// `scenario`, each with a deadline of 180 s.
+fn authored_step(suite: &str, scenario: &str, parts: &[&str]) -> Value {
+    json!({"side": "ide", "timeoutMs": 180_000, "restarts": 0, "answers": [], "mayAnswer": [], "takes": [], "mayTake": [],
+        "params": {"part": {"type": "enum", "values": parts, "optional": false},
+            "scenario": {"type": "enum", "values": [scenario], "optional": false},
+            "suite": {"type": "enum", "values": [suite], "optional": false},
+            "timeoutMs": {"type": "int", "optional": false}}})
+}
+
+/// The authored suite document `suite` of the lane `UI`. Its test class is `class` in the package `package` of the
+/// integration tests, its vocabulary has `actions`, its one fixture `authored` is empty, and its profiles are
+/// `profiles`.
+fn authored_document(suite: &str, package: &str, class: &str, actions: &Value, profiles: &Value) -> Value {
+    json!({
+        "schemaVersion": 2, "suite": suite, "lane": "UI", "testClassName": class, "authored": true,
+        "labels": [{"name": "testClass", "value": format!("com.intellij.air.integration.{package}.{class}")}],
+        "restartsIde": false, "modules": [], "implementationFlows": [],
+        "vocabulary": {"runnerAnswers": [], "actions": actions, "assertions": {}},
+        "reset": {"flagKeys": [], "laneFlags": {}, "agentLoginAcpAgentIds": []},
+        "fixtures": {"authored": {}},
+        "profiles": profiles,
+    })
+}
+
 /// One story scenario `name` whose one step runs `instructions`.
 fn scenario(name: &str, instructions: &Value) -> Value {
     json!({"name": name, "fixture": "fixture", "flow": "flow-rename-session", "flags": {"air.inline.empty.state.prompt": "true"},
         "followsLastUsedPreset": false, "requiresPromptProbe": false, "setups": [],
         "steps": [{"flow": "flow-rename-session", "step": "rename", "operations": [{"operation": "rename", "instructions": instructions}]}]})
+}
+
+/// The routes of a fake IDE that queued the trace attachments of `list`: the list, and the bytes of each attachment of
+/// `files` by its id.
+fn attachment_routes<const N: usize>(list: &Value, files: [(&str, (String, Vec<u8>)); N]) -> BTreeMap<String, VecDeque<(String, Vec<u8>)>> {
+    let listed = (
+        ATTACHMENTS_ROUTE.to_owned(),
+        VecDeque::from([("application/json".to_owned(), list.to_string().into_bytes())]),
+    );
+    std::iter::once(listed)
+        .chain(
+            files
+                .into_iter()
+                .map(|(id, file)| (format!("{ATTACHMENTS_ROUTE}/{id}"), VecDeque::from([file]))),
+        )
+        .collect()
 }
 
 /// What one run of the runner wrote: the records of the stream, the lines of the trace, and the iteration directory.
@@ -455,6 +511,34 @@ struct Ran {
 impl Ran {
     fn events(&self, event: &str) -> Vec<&Value> {
         self.records.iter().filter(|record| record["event"] == event).collect()
+    }
+
+    /// The display name and the status of each finished case, in the order of the stream.
+    fn finished_statuses(&self) -> Vec<(String, String)> {
+        self.events("testFinished")
+            .iter()
+            .map(|record| {
+                (
+                    record["displayName"].as_str().unwrap().to_owned(),
+                    record["status"].as_str().unwrap().to_owned(),
+                )
+            })
+            .collect()
+    }
+
+    /// The attach commands of the trace: the name of each, the extension of its file, and its line.
+    fn attachments(&self) -> impl Iterator<Item = (String, String, &str)> {
+        self.trace.iter().filter(|line| line.starts_with(r#"{"op":"attach""#)).map(|line| {
+            let command: Value = serde_json::from_str(line).unwrap();
+            let extension = command["file"].as_str().unwrap().rsplit('.').next().unwrap().to_owned();
+            (command["name"].as_str().unwrap().to_owned(), extension, line.as_str())
+        })
+    }
+
+    /// Asserts that the trace closes the run with the status `aborted`.
+    fn assert_done_aborted(&self) {
+        let done = self.trace.iter().find(|line| line.starts_with(r#"{"op":"done""#)).unwrap();
+        assert!(done.starts_with(r#"{"op":"done","status":"aborted""#), "{done}");
     }
 
     /// The step and the subject of each `timing` record, in stream order. Each record also states its time.
@@ -671,25 +755,9 @@ fn a_recorder_that_refuses_the_scenarios_is_one_trace_failure_of_the_stream() {
 // arguments in camel case, the values it takes and its deadline, then the reset after. The trace is the golden.
 #[test]
 fn a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript() {
-    let fake = Fake::new(Script {
-        answers: BTreeMap::from([("action/rename-session-select".to_owned(), json!({"session": {"id": "s-1"}}))]),
-        ..Script::default()
-    });
-    let vocabulary = json!({"runnerAnswers": ["jetBrainsCloudUrl", "terminalBaseline"],
-        "actions": {"rename-session-select": ide(&["session"], &[], &["terminalBaseline"])},
-        "assertions": {"rename-session-title": ide(&[], &[], &["session", "jetBrainsCloudUrl"])}});
-    let instructions = json!([
-        {"action": "rename-session-select", "args": {"surface": "GLOBAL_PROMPT"}},
-        {"assertion": "rename-session-title", "expectation": "The session is listed under the new title."},
-    ]);
-    let ran = run(
-        &fake,
-        &[story(
-            &vocabulary,
-            &json!([scenario("rename-closed-project-session", &instructions)]),
-        )],
-        None,
-    );
+    let fake = green_fake();
+    let (vocabulary, profile) = green_story();
+    let ran = run(&fake, &[story(&vocabulary, &json!([profile]))], None);
 
     assert_eq!(
         fake.requests().into_iter().map(|(_, kind)| kind).collect::<Vec<_>>(),
@@ -767,13 +835,7 @@ fn a_failed_slow_instruction_is_typed_photographed_and_dumped() {
         delays: BTreeMap::from([("assertion/rename-session-title".to_owned(), Duration::from_millis(1_500))]),
         ..Script::default()
     });
-    let vocabulary = json!({"runnerAnswers": [], "actions": {}, "assertions": {"rename-session-title": ide(&[], &[], &[])}});
-    let instructions = json!([{"assertion": "rename-session-title", "expectation": "The title shows."}]);
-    let ran = run(
-        &fake,
-        &[story(&vocabulary, &json!([scenario("renames", &instructions)]))],
-        Some(Duration::from_millis(100)),
-    );
+    let ran = run(&fake, &[title_story()], Some(Duration::from_millis(100)));
     let finished = ran.events("testFinished");
     assert_eq!(finished[0]["status"], "FAILED");
     assert_eq!(finished[0]["type"], "java.lang.AssertionError");
@@ -827,21 +889,10 @@ fn a_failed_story_instruction_files_the_session_logs_that_the_ide_queued() {
     ], "dropped": 0});
     let fake = Fake::new(Script {
         failures: BTreeMap::from([("assertion/rename-session-title".to_owned(), failure)]),
-        routes: BTreeMap::from([
-            (
-                ATTACHMENTS_ROUTE.to_owned(),
-                VecDeque::from([("application/json".to_owned(), list.to_string().into_bytes())]),
-            ),
-            (
-                "/api/air/ui-test-trace/attachments/a1".to_owned(),
-                VecDeque::from([("text/plain".to_owned(), b"{\"seq\":0}\n".to_vec())]),
-            ),
-        ]),
+        routes: attachment_routes(&list, [("a1", ("text/plain".to_owned(), b"{\"seq\":0}\n".to_vec()))]),
         ..Script::default()
     });
-    let vocabulary = json!({"runnerAnswers": [], "actions": {}, "assertions": {"rename-session-title": ide(&[], &[], &[])}});
-    let instructions = json!([{"assertion": "rename-session-title", "expectation": "The title shows."}]);
-    let ran = run(&fake, &[story(&vocabulary, &json!([scenario("renames", &instructions)]))], None);
+    let ran = run(&fake, &[title_story()], None);
     assert_eq!(ran.events("testFinished")[0]["status"], "FAILED");
     let after_assertion: Vec<String> = fake
         .requests()
@@ -858,16 +909,7 @@ fn a_failed_story_instruction_files_the_session_logs_that_the_ide_queued() {
             "GET /api/air/ui-test-trace/attachments/a1"
         ]
     );
-    let attached: Vec<(String, String)> = ran
-        .trace
-        .iter()
-        .filter(|line| line.starts_with(r#"{"op":"attach""#))
-        .map(|line| {
-            let command: Value = serde_json::from_str(line).unwrap();
-            let extension = command["file"].as_str().unwrap().rsplit('.').next().unwrap().to_owned();
-            (command["name"].as_str().unwrap().to_owned(), extension)
-        })
-        .collect();
+    let attached: Vec<(String, String)> = ran.attachments().map(|(name, extension, _)| (name, extension)).collect();
     assert_eq!(attached, [("events.jsonl of acp:s-1".to_owned(), "txt".to_owned())]);
 }
 
@@ -901,9 +943,7 @@ fn a_recycle_that_does_not_get_ready_fails_its_ready_part_with_the_refusal_code(
         ..Script::default()
     });
     *fake.refused_part.lock().unwrap() = Some(RelaunchPart::Ready);
-    let vocabulary = json!({"runnerAnswers": [], "actions": {"rename-session-select": ide(&[], &[], &[])}, "assertions": {}});
-    let instructions = json!([{"action": "rename-session-select"}]);
-    let ran = run(&fake, &[story(&vocabulary, &json!([scenario("renames", &instructions)]))], None);
+    let ran = run(&fake, &[select_story(&["renames"])], None);
     assert_eq!(ran.events("testFinished")[0]["status"], "FAILED");
     let passed = |key: &str| (key.to_owned(), "passed".to_owned(), None);
     assert_eq!(
@@ -928,9 +968,7 @@ fn a_dirty_reset_recycles_once_and_the_scenario_passes_on_a_new_pid() {
         resets: VecDeque::from([json!("2 editor tabs remain open")]),
         ..Script::default()
     });
-    let vocabulary = json!({"runnerAnswers": [], "actions": {"rename-session-select": ide(&[], &[], &[])}, "assertions": {}});
-    let instructions = json!([{"action": "rename-session-select"}]);
-    let ran = run(&fake, &[story(&vocabulary, &json!([scenario("renames", &instructions)]))], None);
+    let ran = run(&fake, &[select_story(&["renames"])], None);
     assert_eq!(*fake.relaunches.lock().unwrap(), [Relaunch::Recycle]);
     assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL");
     let select = fake
@@ -961,25 +999,9 @@ fn resets_that_never_hold_spend_the_budget_and_skip_the_rest() {
         resets: (0..20).map(|_| json!("dirty")).collect(),
         ..Script::default()
     });
-    let vocabulary = json!({"runnerAnswers": [], "actions": {"rename-session-select": ide(&[], &[], &[])}, "assertions": {}});
-    let instructions = json!([{"action": "rename-session-select"}]);
-    let profiles = json!([
-        scenario("first", &instructions),
-        scenario("second", &instructions),
-        scenario("third", &instructions)
-    ]);
-    let ran = run(&fake, &[story(&vocabulary, &profiles)], None);
+    let ran = run(&fake, &[select_story(&["first", "second", "third"])], None);
     assert_eq!(fake.relaunches.lock().unwrap().len(), MAX_RECYCLES_IN_TEST);
-    let statuses: Vec<(String, String)> = ran
-        .events("testFinished")
-        .iter()
-        .map(|record| {
-            (
-                record["displayName"].as_str().unwrap().to_owned(),
-                record["status"].as_str().unwrap().to_owned(),
-            )
-        })
-        .collect();
+    let statuses = ran.finished_statuses();
     assert_eq!(
         statuses,
         [
@@ -1143,12 +1165,14 @@ fn a_suite_with_a_cloud_agent_attaches_the_spawner_to_its_key_and_runs() {
             ..Setup::default()
         },
     );
+    assert_green_with_spawner(&ran, &fake, &[Some("remote-scenarios".to_owned())]);
+}
+
+/// Asserts that the suite of `ran` passed without a container failure, and that it attached the spawner to `attaches`.
+fn assert_green_with_spawner(ran: &Ran, fake: &Fake, attaches: &[Option<String>]) {
     assert_eq!(ran.events("containerFailed"), Vec::<&Value>::new());
     assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL");
-    assert_eq!(
-        *fake.services.spawner_attaches.lock().unwrap(),
-        [Some("remote-scenarios".to_owned())]
-    );
+    assert_eq!(*fake.services.spawner_attaches.lock().unwrap(), attaches);
 }
 
 // A fixture with only a local agent of the lane is no Cloud suite: it detaches the spawner, and runs.
@@ -1156,9 +1180,7 @@ fn a_suite_with_a_cloud_agent_attaches_the_spawner_to_its_key_and_runs() {
 fn a_suite_with_a_local_agent_detaches_the_spawner_and_runs() {
     let fake = green_fake();
     let ran = run(&fake, &[story_with_agents(&["air-ui-flow-acp"])], None);
-    assert_eq!(ran.events("containerFailed"), Vec::<&Value>::new());
-    assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL");
-    assert_eq!(*fake.services.spawner_attaches.lock().unwrap(), [None]);
+    assert_green_with_spawner(&ran, &fake, &[None]);
 }
 
 // The spawner steers one key, and only a controlled agent has a credential of the control server. So a suite with two
@@ -1201,29 +1223,20 @@ fn a_suite_with_two_cloud_agents_or_an_uncontrolled_one_is_refused_before_any_re
 /// the Junie leftovers to the reset after it, as the Junie scenario of the live suite does. Its prologue hands them over
 /// once before the first scenario.
 fn live_suite(lane: &str) -> Suite {
-    let authored = json!({"side": "ide", "timeoutMs": 180_000, "restarts": 0, "answers": [], "mayAnswer": [], "takes": [],
-        "mayTake": [], "params": {"part": {"type": "enum", "values": ["open"], "optional": false},
-            "scenario": {"type": "enum", "values": ["generation"], "optional": false},
-            "suite": {"type": "enum", "values": ["live-launch"], "optional": false},
-            "timeoutMs": {"type": "int", "optional": false}}});
     let host = json!({"side": "host", "timeoutMs": 480_000, "restarts": 0, "answers": [], "mayAnswer": [], "takes": [],
         "mayTake": [], "params": {}});
-    suite_of(&json!({
-        "schemaVersion": 2, "suite": "live-launch", "lane": lane, "testClassName": "AirLiveLaunchUiTest", "authored": true,
-        "labels": [{"name": "testClass", "value": "com.intellij.air.integration.live.AirLiveLaunchUiTest"}],
-        "restartsIde": false, "modules": [], "implementationFlows": [],
-        "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored, "refresh-live-wiring": host,
-            "adopt-leftover-junie-sessions": host}, "assertions": {}},
-        "reset": {"flagKeys": [], "laneFlags": {}, "agentLoginAcpAgentIds": []},
-        "fixtures": {"authored": {}},
-        "prologueHostIds": ["adopt-leftover-junie-sessions"],
-        "profiles": [{"name": "the composer launches a live session", "key": "generation", "fixture": "authored", "flags": {},
-            "flagKeys": [], "requiredExecutables": ["claude"], "setups": [], "steps": [],
-            "program": [{"action": "refresh-live-wiring"},
-                {"action": "authored-step", "args": {"part": "open", "scenario": "generation", "suite": "live-launch",
-                    "timeoutMs": 180_000}, "uses": {"takes": [], "answers": []}},
-                {"action": "adopt-leftover-junie-sessions"}]}],
-    }))
+    let actions = json!({"authored-step": authored_step("live-launch", "generation", &["open"]), "refresh-live-wiring": host,
+        "adopt-leftover-junie-sessions": host});
+    let profiles = json!([{"name": "the composer launches a live session", "key": "generation", "fixture": "authored",
+        "flags": {}, "flagKeys": [], "requiredExecutables": ["claude"], "setups": [], "steps": [],
+        "program": [{"action": "refresh-live-wiring"},
+            {"action": "authored-step", "args": {"part": "open", "scenario": "generation", "suite": "live-launch",
+                "timeoutMs": 180_000}, "uses": {"takes": [], "answers": []}},
+            {"action": "adopt-leftover-junie-sessions"}]}]);
+    let mut document = authored_document("live-launch", "live", "AirLiveLaunchUiTest", &actions, &profiles);
+    document["lane"] = json!(lane);
+    document["prologueHostIds"] = json!(["adopt-leftover-junie-sessions"]);
+    suite_of(&document)
 }
 
 /// The fixture lane document as the lane `UI_LIVE`, whose live context declares the runtimes `claude` and `junie`.
@@ -1315,29 +1328,16 @@ fn an_authored_part_passes_its_values_and_reports_its_notes() {
         )]),
         ..Script::default()
     });
-    let authored = json!({"side": "ide", "timeoutMs": 180_000, "restarts": 0, "answers": [], "mayAnswer": [], "takes": [], "mayTake": [],
-        "params": {"part": {"type": "enum", "values": ["first", "second"], "optional": false},
-            "scenario": {"type": "enum", "values": ["commit"], "optional": false},
-            "suite": {"type": "enum", "values": ["workflow-git"], "optional": false},
-            "timeoutMs": {"type": "int", "optional": false}}});
     let part = |name: &str, takes: &[&str], answers: &[&str]| {
         json!({"action": "authored-step", "args": {"part": name, "scenario": "commit", "suite": "workflow-git", "timeoutMs": 300_000},
             "uses": {"takes": takes, "answers": answers}})
     };
-    let document = json!({
-        "schemaVersion": 2, "suite": "workflow-git", "lane": "UI", "testClassName": "AgentWorkflowGitUiTest", "authored": true,
-        "labels": [{"name": "testClass", "value": "com.intellij.air.integration.flow.workflows.AgentWorkflowGitUiTest"}],
-        "restartsIde": false, "modules": [], "implementationFlows": [],
-        "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored}, "assertions": {}},
-        "reset": {"flagKeys": [], "laneFlags": {}, "agentLoginAcpAgentIds": []},
-        "fixtures": {"authored": {}},
-        "profiles": [{"name": "a commit starts the workflow", "key": "commit", "method": "gitScenarios", "fixture": "authored",
-            "flags": {}, "flagKeys": [], "requiredExecutables": [], "setups": [], "steps": [],
-            "program": [part("first", &[], &["workflow"]), part("second", &["workflow"], &[])]}],
-    });
-    let bytes = document.to_string().into_bytes();
-    let suite = suites_of(vec![(parse_suite_program(&bytes).unwrap(), bytes)]).unwrap().remove(0);
-    let ran = run(&fake, &[suite], None);
+    let actions = json!({"authored-step": authored_step("workflow-git", "commit", &["first", "second"])});
+    let profiles = json!([{"name": "a commit starts the workflow", "key": "commit", "method": "gitScenarios", "fixture": "authored",
+        "flags": {}, "flagKeys": [], "requiredExecutables": [], "setups": [], "steps": [],
+        "program": [part("first", &[], &["workflow"]), part("second", &["workflow"], &[])]}]);
+    let document = authored_document("workflow-git", "flow.workflows", "AgentWorkflowGitUiTest", &actions, &profiles);
+    let ran = run(&fake, &[suite_of(&document)], None);
     let finished = ran.events("testFinished");
     assert_eq!(
         finished[0]["status"], "FAILED",
@@ -1369,34 +1369,21 @@ fn recycle_smoke() -> Suite {
         json!({"side": "host", "timeoutMs": 840_000, "restarts": restarts, "answers": [], "mayAnswer": [], "takes": [],
             "mayTake": [], "params": {}})
     };
-    let authored = json!({"side": "ide", "timeoutMs": 180_000, "restarts": 0, "answers": [], "mayAnswer": [], "takes": [],
-        "mayTake": [], "params": {"part": {"type": "enum", "values": ["driven-project-read"], "optional": false},
-            "scenario": {"type": "enum", "values": ["recycle"], "optional": false},
-            "suite": {"type": "enum", "values": ["lane-recycle-smoke"], "optional": false},
-            "timeoutMs": {"type": "int", "optional": false}}});
-    let document = json!({
-        "schemaVersion": 2, "suite": "lane-recycle-smoke", "lane": "UI", "testClassName": "AirFlowRecycleSmokeUiTest",
-        "authored": true,
-        "labels": [{"name": "testClass", "value": "com.intellij.air.integration.flow.AirFlowRecycleSmokeUiTest"}],
-        "restartsIde": true, "modules": [], "implementationFlows": [],
-        "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored,
-            "recycle-through-failed-reset": host(1), "restart-ide": host(1)}, "assertions": {}},
-        "reset": {"flagKeys": [], "laneFlags": {}, "agentLoginAcpAgentIds": []},
-        "fixtures": {"authored-lane-recycle-smoke": {}},
-        "profiles": [{"name": "failed reset recycles one warm IDE and retries on the replacement", "key": "recycle",
-            "method": "recycleSmokeScenarios", "fixture": "authored-lane-recycle-smoke", "flags": {}, "flagKeys": [],
-            "requiredExecutables": [], "setups": [], "steps": [],
-            "program": [
-                {"action": "recycle-through-failed-reset"},
-                {"action": "restart-ide"},
-                {"action": "authored-step", "args": {"part": "driven-project-read", "scenario": "recycle",
-                    "suite": "lane-recycle-smoke", "timeoutMs": 180_000}, "uses": {"answers": [], "takes": []}},
-            ]}],
-    });
-    let bytes = document.to_string().into_bytes();
-    let program = parse_suite_program(&bytes).unwrap();
-    assert_eq!(program.refusals(), Vec::<String>::new());
-    suites_of(vec![(program, bytes)]).unwrap().remove(0)
+    let actions = json!({"authored-step": authored_step("lane-recycle-smoke", "recycle", &["driven-project-read"]),
+        "recycle-through-failed-reset": host(1), "restart-ide": host(1)});
+    let profiles = json!([{"name": "failed reset recycles one warm IDE and retries on the replacement", "key": "recycle",
+    "method": "recycleSmokeScenarios", "fixture": "authored-lane-recycle-smoke", "flags": {}, "flagKeys": [],
+    "requiredExecutables": [], "setups": [], "steps": [],
+    "program": [
+        {"action": "recycle-through-failed-reset"},
+        {"action": "restart-ide"},
+        {"action": "authored-step", "args": {"part": "driven-project-read", "scenario": "recycle",
+            "suite": "lane-recycle-smoke", "timeoutMs": 180_000}, "uses": {"answers": [], "takes": []}},
+    ]}]);
+    let mut document = authored_document("lane-recycle-smoke", "flow", "AirFlowRecycleSmokeUiTest", &actions, &profiles);
+    document["restartsIde"] = json!(true);
+    document["fixtures"] = json!({"authored-lane-recycle-smoke": {}});
+    suite_of(&document)
 }
 
 // The proof of the recycle fails its first reset on purpose. The runner recycles the IDE once and resets the
@@ -1483,10 +1470,7 @@ fn startup_class_loading() -> Suite {
             "flags": {}, "flagKeys": [], "requiredExecutables": [], "setups": [], "steps": [],
             "program": [{"action": STARTUP}]}],
     });
-    let bytes = document.to_string().into_bytes();
-    let program = parse_suite_program(&bytes).unwrap();
-    assert_eq!(program.refusals(), Vec::<String>::new());
-    suites_of(vec![(program, bytes)]).unwrap().remove(0)
+    suite_of(&document)
 }
 
 // A suite of a bare IDE runs after the suites of the shared IDE, on an IDE of its own. The bare IDE gets no reset, no
@@ -1516,16 +1500,7 @@ fn a_bare_suite_runs_last_on_its_own_ide_and_its_one_request_is_its_instruction(
         .map(|(_, kind)| kind)
         .collect();
     assert_eq!(on_bare, [format!("action/{STARTUP}")]);
-    let finished: Vec<(String, String)> = ran
-        .events("testFinished")
-        .iter()
-        .map(|record| {
-            (
-                record["displayName"].as_str().unwrap().to_owned(),
-                record["status"].as_str().unwrap().to_owned(),
-            )
-        })
-        .collect();
+    let finished = ran.finished_statuses();
     assert_eq!(
         finished,
         [
@@ -1600,27 +1575,12 @@ fn a_bare_ide_that_does_not_get_ready_fails_its_suite_and_the_lane_takes_its_ide
 
 /// An authored suite of one part, `open`, which answers no value.
 fn one_part_suite() -> Suite {
-    let authored = json!({"side": "ide", "timeoutMs": 180_000, "restarts": 0, "answers": [], "mayAnswer": [], "takes": [],
-        "mayTake": [], "params": {"part": {"type": "enum", "values": ["open"], "optional": false},
-            "scenario": {"type": "enum", "values": ["theme"], "optional": false},
-            "suite": {"type": "enum", "values": ["genui-host"], "optional": false},
-            "timeoutMs": {"type": "int", "optional": false}}});
-    let document = json!({
-        "schemaVersion": 2, "suite": "genui-host", "lane": "UI", "testClassName": "AirGenUiHostUiTest", "authored": true,
-        "labels": [{"name": "testClass", "value": "com.intellij.air.integration.genui.AirGenUiHostUiTest"}],
-        "restartsIde": false, "modules": [], "implementationFlows": [],
-        "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored}, "assertions": {}},
-        "reset": {"flagKeys": [], "laneFlags": {}, "agentLoginAcpAgentIds": []},
-        "fixtures": {"authored": {}},
-        "profiles": [{"name": "the theme follows the IDE", "key": "theme", "fixture": "authored", "flags": {}, "flagKeys": [],
-            "requiredExecutables": [], "setups": [], "steps": [],
-            "program": [{"action": "authored-step", "args": {"part": "open", "scenario": "theme", "suite": "genui-host",
-                "timeoutMs": 180_000}, "uses": {"takes": [], "answers": []}}]}],
-    });
-    let bytes = document.to_string().into_bytes();
-    let program = parse_suite_program(&bytes).unwrap();
-    assert_eq!(program.refusals(), Vec::<String>::new());
-    suites_of(vec![(program, bytes)]).unwrap().remove(0)
+    let actions = json!({"authored-step": authored_step("genui-host", "theme", &["open"])});
+    let profiles = json!([{"name": "the theme follows the IDE", "key": "theme", "fixture": "authored", "flags": {}, "flagKeys": [],
+        "requiredExecutables": [], "setups": [], "steps": [],
+        "program": [{"action": "authored-step", "args": {"part": "open", "scenario": "theme", "suite": "genui-host",
+            "timeoutMs": 180_000}, "uses": {"takes": [], "answers": []}}]}]);
+    suite_of(&authored_document("genui-host", "genui", "AirGenUiHostUiTest", &actions, &profiles))
 }
 
 // A failed part answers no report. So the runner reads the metrics that a performance body wrote to
@@ -1680,8 +1640,7 @@ fn an_authored_part_that_aborts_its_scenario_finishes_as_aborted_and_counts_as_s
     assert_eq!((ran.counts.started, ran.counts.failed, ran.counts.skipped), (1, 0, 1));
     let requests = fake.requests();
     assert_eq!(requests.last().map(|(_, kind)| kind.as_str()), Some("Reset"), "{requests:?}");
-    let done = ran.trace.iter().find(|line| line.starts_with(r#"{"op":"done""#)).unwrap();
-    assert!(done.starts_with(r#"{"op":"done","status":"aborted""#), "{done}");
+    ran.assert_done_aborted();
 }
 
 // No instruction waits past the budget of the run: the deadline of a part is cut to the budget left, and the IDE gets
@@ -1725,24 +1684,14 @@ fn a_part_that_answered_reports_no_metric_of_its_performance_file() {
 
 /// An authored suite of one part, `stage`, which takes the recorded sessions, and whose scenario requires them.
 fn session_suite() -> Suite {
-    let authored = json!({"side": "ide", "timeoutMs": 180_000, "restarts": 0, "answers": [], "mayAnswer": [], "takes": [],
-        "mayTake": [], "params": {"part": {"type": "enum", "values": ["stage"], "optional": false},
-            "scenario": {"type": "enum", "values": ["cold-open"], "optional": false},
-            "suite": {"type": "enum", "values": ["real-session-cold-open"], "optional": false},
-            "timeoutMs": {"type": "int", "optional": false}}});
-    suite_of(&json!({
-        "schemaVersion": 2, "suite": "real-session-cold-open", "lane": "UI", "testClassName": "AirRealSessionColdOpenUiTest",
-        "authored": true,
-        "labels": [{"name": "testClass", "value": "com.intellij.air.integration.acp.AirRealSessionColdOpenUiTest"}],
-        "restartsIde": false, "modules": [], "implementationFlows": [],
-        "vocabulary": {"runnerAnswers": ["realSessionLogs"], "actions": {"authored-step": authored}, "assertions": {}},
-        "reset": {"flagKeys": [], "laneFlags": {}, "agentLoginAcpAgentIds": []},
-        "fixtures": {"authored": {}},
-        "profiles": [{"name": "every recorded session opens", "key": "cold-open", "fixture": "authored", "flags": {},
-            "flagKeys": [], "requiredExecutables": [], "requiresRunnerValues": ["realSessionLogs"], "setups": [], "steps": [],
-            "program": [{"action": "authored-step", "args": {"part": "stage", "scenario": "cold-open",
-                "suite": "real-session-cold-open", "timeoutMs": 180_000}, "uses": {"takes": ["realSessionLogs"], "answers": []}}]}],
-    }))
+    let actions = json!({"authored-step": authored_step("real-session-cold-open", "cold-open", &["stage"])});
+    let profiles = json!([{"name": "every recorded session opens", "key": "cold-open", "fixture": "authored", "flags": {},
+        "flagKeys": [], "requiredExecutables": [], "requiresRunnerValues": ["realSessionLogs"], "setups": [], "steps": [],
+        "program": [{"action": "authored-step", "args": {"part": "stage", "scenario": "cold-open",
+            "suite": "real-session-cold-open", "timeoutMs": 180_000}, "uses": {"takes": ["realSessionLogs"], "answers": []}}]}]);
+    let mut document = authored_document("real-session-cold-open", "acp", "AirRealSessionColdOpenUiTest", &actions, &profiles);
+    document["vocabulary"]["runnerAnswers"] = json!(["realSessionLogs"]);
+    suite_of(&document)
 }
 
 // A scenario that requires a runner value which the runner has not is skipped before its reset. No reset and no part
@@ -1805,14 +1754,7 @@ fn an_authored_part_files_the_stills_and_the_captures_that_the_ide_queued() {
     ], "dropped": 2});
     let png = |byte: u8| ("image/png".to_owned(), vec![0x89, byte, byte]);
     let fake = Fake::new(Script {
-        routes: BTreeMap::from([
-            (
-                ATTACHMENTS_ROUTE.to_owned(),
-                VecDeque::from([("application/json".to_owned(), list.to_string().into_bytes())]),
-            ),
-            ("/api/air/ui-test-trace/attachments/a1".to_owned(), VecDeque::from([png(1)])),
-            ("/api/air/ui-test-trace/attachments/a2".to_owned(), VecDeque::from([png(2)])),
-        ]),
+        routes: attachment_routes(&list, [("a1", png(1)), ("a2", png(2))]),
         ..Script::default()
     });
     let ran = run(&fake, &[one_part_suite()], None);
@@ -1842,14 +1784,8 @@ fn an_authored_part_files_the_stills_and_the_captures_that_the_ide_queued() {
         .map(|line| serde_json::from_str::<Value>(line).unwrap()["id"].clone())
         .unwrap();
     let attached: Vec<(String, String, Value)> = ran
-        .trace
-        .iter()
-        .filter(|line| line.starts_with(r#"{"op":"attach""#))
-        .map(|line| {
-            let command: Value = serde_json::from_str(line).unwrap();
-            let extension = command["file"].as_str().unwrap().rsplit('.').next().unwrap().to_owned();
-            (command["name"].as_str().unwrap().to_owned(), extension, span_of(line))
-        })
+        .attachments()
+        .map(|(name, extension, line)| (name, extension, span_of(line)))
         .collect();
     assert_eq!(
         attached,
@@ -1926,6 +1862,15 @@ fn codex_install() -> Value {
 }
 
 /// The failure of the one action of [`installing_suite`].
+/// A script whose install of the registry agent passes and whose action `rename-session-select` fails.
+fn failed_install_script() -> Script {
+    Script {
+        answers: BTreeMap::from([(INSTALL.to_owned(), Value::Null)]),
+        failures: BTreeMap::from([failed_select()]),
+        ..Script::default()
+    }
+}
+
 fn failed_select() -> (String, Value) {
     (
         "action/rename-session-select".to_owned(),
@@ -1938,11 +1883,7 @@ fn failed_select() -> (String, Value) {
 #[test]
 fn a_failed_scenario_restores_the_managed_agent_baseline_in_its_reset_after() {
     let install = codex_install();
-    let fake = Fake::new(Script {
-        answers: BTreeMap::from([(INSTALL.to_owned(), Value::Null)]),
-        failures: BTreeMap::from([failed_select()]),
-        ..Script::default()
-    });
+    let fake = Fake::new(failed_install_script());
     let ran = run(&fake, &[installing_suite(Some(&install))], None);
     let finished = ran.events("testFinished");
     assert_eq!(
@@ -1981,10 +1922,8 @@ fn a_failed_scenario_restores_the_managed_agent_baseline_in_its_reset_after() {
 fn a_failed_baseline_after_a_failed_scenario_recycles_the_ide_through_the_isolation() {
     let install = codex_install();
     let fake = Fake::new(Script {
-        answers: BTreeMap::from([(INSTALL.to_owned(), Value::Null)]),
-        failures: BTreeMap::from([failed_select()]),
         managed_agent_resets: VecDeque::from([Value::Null, json!("a pending install did not stop")]),
-        ..Script::default()
+        ..failed_install_script()
     });
     let ran = run(&fake, &[installing_suite(Some(&install))], None);
     assert_eq!(*fake.relaunches.lock().unwrap(), [Relaunch::Recycle]);
@@ -2056,26 +1995,14 @@ fn plugin_reload() -> Suite {
         json!({"action": "authored-step", "args": {"part": name, "scenario": "reload", "suite": "plugin-reload",
             "timeoutMs": 180_000}, "uses": {"takes": [], "answers": []}})
     };
-    let authored = json!({"side": "ide", "timeoutMs": 180_000, "restarts": 0, "answers": [], "mayAnswer": [], "takes": [],
-        "mayTake": [], "params": {"part": {"type": "enum", "values": ["open-session-and-count", "count-after-reload"],
-            "optional": false},
-            "scenario": {"type": "enum", "values": ["reload"], "optional": false},
-            "suite": {"type": "enum", "values": ["plugin-reload"], "optional": false},
-            "timeoutMs": {"type": "int", "optional": false}}});
-    let document = json!({
-        "schemaVersion": 2, "suite": "plugin-reload", "lane": "GUI_CHAT", "testClassName": "AirPluginUnloadLeakTest",
-        "authored": true,
-        "labels": [{"name": "testClass", "value": "com.intellij.air.integration.acp.AirPluginUnloadLeakTest"}],
-        "restartsIde": false, "modules": [], "implementationFlows": [],
-        "vocabulary": {"runnerAnswers": [], "actions": {"authored-step": authored,
-            "reload-air": {"side": "host", "timeoutMs": 420_000, "restarts": 0, "answers": [], "mayAnswer": [],
-                "takes": [], "mayTake": [], "params": {}}}, "assertions": {}},
-        "reset": {"flagKeys": [], "laneFlags": {}, "agentLoginAcpAgentIds": []},
-        "fixtures": {"authored": {}},
-        "profiles": [{"name": "Air reloads and leaves no class loader", "key": "reload", "fixture": "authored",
-            "flags": {}, "flagKeys": [], "requiredExecutables": [], "setups": [], "steps": [],
-            "program": [part("open-session-and-count"), {"action": "reload-air"}, part("count-after-reload")]}],
-    });
+    let actions = json!({"authored-step": authored_step("plugin-reload", "reload", &["open-session-and-count", "count-after-reload"]),
+        "reload-air": {"side": "host", "timeoutMs": 420_000, "restarts": 0, "answers": [], "mayAnswer": [],
+            "takes": [], "mayTake": [], "params": {}}});
+    let profiles = json!([{"name": "Air reloads and leaves no class loader", "key": "reload", "fixture": "authored",
+        "flags": {}, "flagKeys": [], "requiredExecutables": [], "setups": [], "steps": [],
+        "program": [part("open-session-and-count"), {"action": "reload-air"}, part("count-after-reload")]}]);
+    let mut document = authored_document("plugin-reload", "acp", "AirPluginUnloadLeakTest", &actions, &profiles);
+    document["lane"] = json!("GUI_CHAT");
     suite_of(&document)
 }
 
@@ -2171,12 +2098,9 @@ fn a_scenario_past_its_timeout_is_aborted_and_no_later_scenario_starts() {
         delays: BTreeMap::from([("action/rename-session-select".to_owned(), Duration::from_millis(2_500))]),
         ..Script::default()
     });
-    let vocabulary = json!({"runnerAnswers": [], "actions": {"rename-session-select": ide(&[], &[], &[])}, "assertions": {}});
-    let instructions = json!([{"action": "rename-session-select"}]);
-    let profiles = json!([scenario("hangs", &instructions), scenario("never", &instructions)]);
     let ran = run_with(
         &fake,
-        &[story(&vocabulary, &profiles)],
+        &[select_story(&["hangs", "never"])],
         Some(Duration::from_mins(1)),
         INSTRUCTION_MARGIN,
         Duration::from_millis(500),
@@ -2187,8 +2111,7 @@ fn a_scenario_past_its_timeout_is_aborted_and_no_later_scenario_starts() {
     assert_eq!(finished.len(), 1);
     assert_eq!(finished[0]["status"], "ABORTED");
     assert_eq!(ran.events("testStarted").len(), 1);
-    let done = ran.trace.iter().find(|line| line.starts_with(r#"{"op":"done""#)).unwrap();
-    assert!(done.starts_with(r#"{"op":"done","status":"aborted""#), "{done}");
+    ran.assert_done_aborted();
 }
 
 /// Writes the Codex daemon directory of the IDE of `fake`: the ledger, two daemon records, a record that is no JSON

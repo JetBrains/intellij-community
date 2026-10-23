@@ -697,6 +697,19 @@ impl<'r, 's> Runner<'r, 's> {
         ids
     }
 
+    /// Starts `case`, the case of `profile`, and answers its start. A case that needs a value that the run lacks is
+    /// skipped, and then the answer is `None`.
+    fn start_case(&self, suite: &SuiteProgram, profile: &ScenarioProgram, case: &CaseIdentity) -> Option<Instant> {
+        if let Some(reason) = self.missing_runner_value(suite, profile) {
+            self.stream.skipped(case, never_ran(&profile.name, &reason));
+            return None;
+        }
+        let started = Instant::now();
+        self.stream.started(case);
+        self.watch.execution_started(self.stream, case.execution());
+        Some(started)
+    }
+
     fn scenario(&self, suite: &SuiteProgram, profile: &ScenarioProgram, raw: &RawValue, reset: &ScenarioReset<'_>) {
         let case = case_identity(suite, profile);
         if self.isolation.borrow().exhausted() {
@@ -704,13 +717,9 @@ impl<'r, 's> Runner<'r, 's> {
             self.stream.skipped(&case, never_ran(&profile.name, &reason));
             return;
         }
-        if let Some(reason) = self.missing_runner_value(suite, profile) {
-            self.stream.skipped(&case, never_ran(&profile.name, &reason));
+        let Some(started) = self.start_case(suite, profile, &case) else {
             return;
-        }
-        let started = Instant::now();
-        self.stream.started(&case);
-        self.watch.execution_started(self.stream, case.execution());
+        };
         self.trace()
             .open_scenario(scenario_command(suite, profile, raw, self.lane.recorder_bridge()));
         let fixture = suite.fixtures.get(&profile.fixture).cloned().unwrap_or_default();
@@ -812,13 +821,9 @@ impl<'r, 's> Runner<'r, 's> {
     /// scenario.
     fn bare_scenario(&self, suite: &SuiteProgram, profile: &ScenarioProgram, raw: &RawValue) {
         let case = case_identity(suite, profile);
-        if let Some(reason) = self.missing_runner_value(suite, profile) {
-            self.stream.skipped(&case, never_ran(&profile.name, &reason));
+        let Some(started) = self.start_case(suite, profile, &case) else {
             return;
-        }
-        let started = Instant::now();
-        self.stream.started(&case);
-        self.watch.execution_started(self.stream, case.execution());
+        };
         let verdict = self.body(suite, profile, &SuiteFixture::default());
         self.stream.timing(TimedStep::BareProgram, started, Some(&profile.name));
         // A bare IDE runs on a fresh context, so its log holds its launch alone. The slice starts at its first byte and
