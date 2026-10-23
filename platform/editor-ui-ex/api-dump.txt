@@ -251,8 +251,6 @@ c:com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
 - setLineSpacing(F):V
 - setRealFontFamilies(java.util.List):V
 - setRegularSubFamily(java.lang.String):V
-- setSize(java.lang.String,F):V
-- setSize(java.lang.String,I):V
 - setTemplateFontSize(F):V
 - setTemplateFontSize(I):V
 - setUseLigatures(Z):V

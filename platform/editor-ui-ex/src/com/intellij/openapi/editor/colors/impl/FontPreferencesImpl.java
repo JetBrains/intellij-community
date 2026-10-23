@@ -37,6 +37,9 @@ import java.util.stream.Collectors;
  * only a single font family. Fallback fonts were chosen randomly when that font family was unable to display particular char then.
  */
 public class FontPreferencesImpl extends ModifiableFontPreferences {
+  private static final Logger LOG = Logger.getInstance(FontPreferencesImpl.class);
+
+  private final @NotNull EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
   private final @NotNull Object2FloatMap<String> myFontSizes = new Object2FloatOpenHashMap<>();
   private final @NotNull List<String> myEffectiveFontFamilies = new ArrayList<>();
   private final @NotNull List<String> myRealFontFamilies = new ArrayList<>();
@@ -47,14 +50,10 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   private boolean myUseLigatures;
   private float myLineSpacing = DEFAULT_LINE_SPACING;
 
-  private final @NotNull EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
-
   /**
    * Font size to use by default. Default value is {@link #DEFAULT_FONT_SIZE}.
    */
   private float myTemplateFontSize = DEFAULT_FONT_SIZE;
-
-  private static final Logger LOG = Logger.getInstance(FontPreferencesImpl.class);
 
   public void addChangeListener(@NotNull ChangeListener changeListener) {
     myEventDispatcher.addListener(changeListener);
@@ -79,10 +78,6 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
     myBoldSubFamily = null;
     myCharacterVariants = Set.of();
     notifyStateChanged();
-  }
-
-  private void notifyStateChanged() {
-    myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
   }
 
   @Override
@@ -112,28 +107,6 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
       result = myTemplateFontSize;
     }
     return result > 0 ? result : DEFAULT_FONT_SIZE;
-  }
-
-  public void setSize(@NotNull String fontFamily, int size) {
-    setSize(fontFamily, (float)size);
-  }
-
-  public void setSize(@NotNull String fontFamily, float size) {
-    logSizeChangeIfNeeded(size);
-    myFontSizes.put(fontFamily, size);
-    myTemplateFontSize = size;
-    notifyStateChanged();
-  }
-
-  private void logSizeChangeIfNeeded(float size) {
-    if (!LOG.isDebugEnabled()) return;
-    Application application = ApplicationManager.getApplication();
-    if (application == null) return;
-    EditorColorsManager colorsManager = application.getServiceIfCreated(EditorColorsManager.class);
-    if (colorsManager == null || colorsManager.getGlobalScheme().getFontPreferences() != this) return;
-
-    LOG.debug("Will set size %s to global font (presentationMode=%b)".formatted(size, UISettings.getInstance().getPresentationMode()));
-    LOG.debug(ExceptionUtil.currentStackTrace());
   }
 
   @Override
@@ -240,34 +213,6 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   }
 
   @Override
-  public int hashCode() {
-    return myRealFontFamilies.hashCode();
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    FontPreferencesImpl that = (FontPreferencesImpl)o;
-
-    if (!myRealFontFamilies.equals(that.myRealFontFamilies)) return false;
-    for (String fontFamily : myRealFontFamilies) {
-      if (myFontSizes.getFloat(fontFamily) != that.myFontSizes.getFloat(fontFamily)) {
-        return false;
-      }
-    }
-
-    if (myUseLigatures != that.myUseLigatures) return false;
-    if (myLineSpacing != that.myLineSpacing) return false;
-    if (!Objects.equals(myRegularSubFamily, that.myRegularSubFamily)) return false;
-    if (!Objects.equals(myBoldSubFamily, that.myBoldSubFamily)) return false;
-    if (!Objects.equals(myCharacterVariants, that.myCharacterVariants)) return false;
-
-    return true;
-  }
-
-  @Override
   public boolean useLigatures() {
     return myUseLigatures;
   }
@@ -307,11 +252,6 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   }
 
   @Override
-  public @NonNls String toString() {
-    return "Effective font families: " + myEffectiveFontFamilies;
-  }
-
-  @Override
   public @Unmodifiable @NotNull Set<@NotNull String> getCharacterVariants() {
     return myCharacterVariants;
   }
@@ -334,5 +274,61 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
     }
     myCharacterVariants = Set.copyOf(variants);
     notifyStateChanged();
+  }
+
+  @Override
+  public int hashCode() {
+    return myRealFontFamilies.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    FontPreferencesImpl that = (FontPreferencesImpl)o;
+    if (!myRealFontFamilies.equals(that.myRealFontFamilies)) return false;
+    for (String fontFamily : myRealFontFamilies) {
+      if (myFontSizes.getFloat(fontFamily) != that.myFontSizes.getFloat(fontFamily)) {
+        return false;
+      }
+    }
+    if (myUseLigatures != that.myUseLigatures) return false;
+    if (myLineSpacing != that.myLineSpacing) return false;
+    if (!Objects.equals(myRegularSubFamily, that.myRegularSubFamily)) return false;
+    if (!Objects.equals(myBoldSubFamily, that.myBoldSubFamily)) return false;
+    if (!Objects.equals(myCharacterVariants, that.myCharacterVariants)) return false;
+    return true;
+  }
+
+  @Override
+  public @NonNls String toString() {
+    return "Effective font families: " + myEffectiveFontFamilies;
+  }
+
+  private void setSize(@NotNull String fontFamily, float size) {
+    logSizeChangeIfNeeded(size);
+    myFontSizes.put(fontFamily, size);
+    myTemplateFontSize = size;
+    notifyStateChanged();
+  }
+
+  private void notifyStateChanged() {
+    myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
+  }
+
+  private void logSizeChangeIfNeeded(float size) {
+    if (!LOG.isDebugEnabled()) {
+      return;
+    }
+    Application application = ApplicationManager.getApplication();
+    if (application == null) {
+      return;
+    }
+    EditorColorsManager colorsManager = application.getServiceIfCreated(EditorColorsManager.class);
+    if (colorsManager == null || colorsManager.getGlobalScheme().getFontPreferences() != this) {
+      return;
+    }
+    LOG.debug("Will set size %s to global font (presentationMode=%b)".formatted(size, UISettings.getInstance().getPresentationMode()));
+    LOG.debug(ExceptionUtil.currentStackTrace());
   }
 }
