@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.ui.components.ultimate
 import com.intellij.driver.sdk.ManualWaitForIndicators
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.components.ComponentData
+import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.elements.JTreeUiComponent
 import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitFor
@@ -10,8 +11,6 @@ import com.intellij.driver.sdk.waitForIndicators
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-
-private const val DATABASE_VIEW_TREE_COMPONENT_CLASS = "com.intellij.database.view.DatabaseViewTreeComponent"
 
 class DatabaseViewTreeUiComponent(data: ComponentData) : JTreeUiComponent(data) {
 
@@ -38,4 +37,24 @@ class DatabaseViewTreeUiComponent(data: ComponentData) : JTreeUiComponent(data) 
 }
 
 fun Finder.databaseViewTree(): DatabaseViewTreeUiComponent =
-  x(xQuery { byType(DATABASE_VIEW_TREE_COMPONENT_CLASS) }, DatabaseViewTreeUiComponent::class.java)
+  x(xQuery { byType("com.intellij.database.view.DatabaseViewTreeComponent") }, DatabaseViewTreeUiComponent::class.java)
+
+/**
+ * The panel that replaces the Database view tree when the project has no data sources.
+ * The tree is not in the UI hierarchy while this panel is shown.
+ */
+fun Finder.databaseViewEmptyState(): UiComponent =
+  x(xQuery { byType("com.intellij.database.view.emptyState.DatabaseViewEmptyStateButtonComponent") })
+
+fun Finder.hasNoDataSources(): Boolean {
+  val emptyState = databaseViewEmptyState()
+  return emptyState.present() &&
+         emptyState.x(xQuery { byVisibleText("Create Data Source") }).present() &&
+         databaseViewTree().notPresent()
+}
+
+fun Finder.waitForNoDataSources(timeout: Duration = 30.seconds) {
+  waitFor("Database view to show the 'Create Data Source' empty state and no tree", timeout) {
+    hasNoDataSources()
+  }
+}
