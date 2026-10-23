@@ -80,11 +80,7 @@ jvm_library(
     ),
     module_name = "intellij.platform.concurrency.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/platform-tests:tests",
-        "//platform/core-impl:core-impl-tests",
-    ],
+    runtime_deps = ["//platform/platform-tests:tests"],
 )
 
 jvm_library(
@@ -108,7 +104,6 @@ jvm_library(
         # do not sort,
         ":concurrency-tests",
         "//platform/platform-tests:tests_test_lib",
-        "//platform/core-impl:core-impl-tests_test_lib",
     ],
     deps = [
         # do not sort,
