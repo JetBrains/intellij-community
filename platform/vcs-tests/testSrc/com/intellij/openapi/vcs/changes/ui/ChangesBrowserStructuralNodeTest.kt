@@ -32,6 +32,8 @@ import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.requestNavigate
 import com.intellij.platform.vcs.VcsSharedDataKeys
+import com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
+import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 import com.intellij.pom.Navigatable
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -68,6 +70,8 @@ import org.mockito.Mockito.mock
 import java.awt.event.FocusEvent
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import javax.swing.JComponent
+import javax.swing.JPanel
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 import kotlin.time.Duration.Companion.milliseconds
@@ -738,6 +742,27 @@ internal class ChangesBrowserStructuralNodeTest {
   }
 
   @Test
+  fun `test a diff next to the tree replaces the file preview until it closes`(): Unit = timeoutRunBlocking {
+    val file = LightVirtualFile("splitter.txt", "first\nsecond\n")
+    val fixture = createFilePreviewFixture(file)
+    val splitter = withContext(Dispatchers.EDT) {
+      PreviewDiffSplitterComponent(EmptyDiffPreview(), "ChangesBrowserStructuralNodeTest.splitter").apply {
+        firstComponent = fixture.view
+        openPreview(false)
+      }
+    }
+
+    withPreviewTabsDisabled { manager ->
+      previewSelection(fixture) { view.selectionPath = TreePath(fileNode.path) }
+      assertTrue(withContext(Dispatchers.EDT) { manager.selectedFiles.isEmpty() })
+
+      withContext(Dispatchers.EDT) { splitter.closePreview() }
+      previewSelection(fixture) { clickSelectedElement(view) }
+      assertEquals(listOf(file), withContext(Dispatchers.EDT) { manager.selectedFiles.toList() })
+    }
+  }
+
+  @Test
   fun `test model refresh after a finished preview keeps a closed file closed`(): Unit = timeoutRunBlocking {
     val file = LightVirtualFile("closed.txt", "first\nsecond\n")
     val fixture = createFilePreviewFixture(file)
@@ -1064,6 +1089,15 @@ internal class ChangesBrowserStructuralNodeTest {
     val range: TextRange,
     val disposed: CompletableDeferred<Unit> = CompletableDeferred(),
   )
+
+  /** The diff side of a splitter preview. It shows an empty panel. */
+  private class EmptyDiffPreview : DiffPreviewUpdateProcessor {
+    override val component: JComponent = JPanel()
+
+    override fun clear() {}
+
+    override fun refresh(fromModelRefresh: Boolean) {}
+  }
 
   companion object {
     private val projectFixture = projectFixture(openAfterCreation = true)
