@@ -9,10 +9,9 @@ import com.jetbrains.FontMetricsAccessor;
 import com.jetbrains.JBR;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
-import sun.font.CompositeGlyphMapper;
 
 import java.awt.Component;
 import java.awt.Font;
@@ -20,51 +19,67 @@ import java.awt.FontMetrics;
 import java.awt.font.FontRenderContext;
 import java.util.Set;
 
+/**
+ * Thread-safe
+ */
 public final class FontInfo {
   static final FontRenderContext DEFAULT_CONTEXT = new FontRenderContext(null, false, false);
 
+  // Removed in commit: https://github.com/JetBrains/JetBrainsRuntime/commit/e0219c19f4de062612965fb493e56c4077541204
+  private static final int SLOTMASK =  0xff000000;
+  private static final int GLYPHMASK = 0x00ffffff;
+
   private static final Font DUMMY_FONT = new Font(null);
-  private static final FontMetricsAccessor FONT_METRICS_ACCESSOR = JBR.getFontMetricsAccessor();
+  private static final @Nullable FontMetricsAccessor FONT_METRICS_ACCESSOR = JBR.getFontMetricsAccessor();
 
-  private final Font myFont;
+  public static @NotNull FontMetrics getFontMetrics(@NotNull Font font, @NotNull FontRenderContext fontRenderContext) {
+    if (FONT_METRICS_ACCESSOR == null) {
+      throw new UnsupportedOperationException("current runtime does not support FontMetricsAccessor");
+    }
+    return FONT_METRICS_ACCESSOR.getMetrics(font, fontRenderContext);
+  }
+
+  public static @NotNull FontRenderContext getFontRenderContext(@Nullable Component component) {
+    if (component == null) {
+      return DEFAULT_CONTEXT;
+    }
+    return component.getFontMetrics(DUMMY_FONT).getFontRenderContext();
+  }
+
+  public static boolean canDisplay(@NotNull Font font, int codePoint, boolean disableFontFallback) {
+    if (!Character.isValidCodePoint(codePoint)) {
+      return false;
+    }
+    if (disableFontFallback && SystemInfo.isMac) {
+      String codePointStr = Character.toString(codePoint);
+      int glyphCode = font.createGlyphVector(DEFAULT_CONTEXT, codePointStr).getGlyphCode(0);
+      return (glyphCode & GLYPHMASK) != 0 && (glyphCode & SLOTMASK) == 0;
+    } else {
+      return font.canDisplay(codePoint);
+    }
+  }
+
+  private final @NotNull Font myFont;
   private final float mySize;
-  private final IntSet mySafeCharacters = new IntOpenHashSet();
-  private final FontRenderContext myContext;
-  private FontMetrics myFontMetrics = null;
+  private final @Nullable FontRenderContext myContext;
+  private final @NotNull IntSet mySafeCharacters = new IntOpenHashSet();
+  private @Nullable FontMetrics myFontMetrics = null;
 
   /**
    * To get valid font metrics from this {@link FontInfo} instance, pass valid {@link FontRenderContext} here as a parameter.
    */
-  public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style, boolean useLigatures,
-                  FontRenderContext fontRenderContext) {
-    mySize = size;
-    myFont = EditorFontCacheImpl.deriveFontWithLigatures(new Font(familyName, style, size), useLigatures);
-    myContext = fontRenderContext;
-  }
-
-  /**
-   * To get valid font metrics from this {@link FontInfo} instance, pass valid {@link FontRenderContext} here as a parameter.
-   */
-  public FontInfo(Font font, int size, boolean useLigatures, FontRenderContext fontRenderContext) {
-    this(font, (float)size, useLigatures, fontRenderContext);
-  }
-
-  /**
-   * To get valid font metrics from this {@link FontInfo} instance, pass valid {@link FontRenderContext} here as a parameter.
-   */
-  public FontInfo(Font font, float size, boolean useLigatures, FontRenderContext fontRenderContext) {
-    mySize = size;
-    myFont = EditorFontCacheImpl.deriveFontWithLigatures(font.deriveFont(size), useLigatures);
-    myContext = fontRenderContext;
-  }
-
-  public FontInfo(Font font, float size, boolean useLigatures, @Unmodifiable @NotNull Set<@NotNull String> variants, FontRenderContext fontRenderContext) {
+  public FontInfo(
+    @NotNull Font font,
+    float size,
+    boolean useLigatures,
+    @Unmodifiable @NotNull Set<@NotNull String> variants,
+    @Nullable FontRenderContext fontRenderContext
+  ) {
     mySize = size;
     Font f = EditorFontCacheImpl.deriveFontWithLigatures(font.deriveFont(size), useLigatures);
     if (variants.isEmpty()) {
       myFont = f;
-    }
-    else {
+    } else {
       String[] features = ArrayUtil.toStringArray(variants);
       myFont = JBR.getFontExtensions().deriveFontWithFeatures(f, features);
     }
@@ -73,41 +88,33 @@ public final class FontInfo {
 
   public boolean canDisplay(int codePoint) {
     try {
-      if (codePoint < 128) return true;
-      if (mySafeCharacters.contains(codePoint)) return true;
+      if (codePoint < 128) {
+        return true;
+      }
+      synchronized (this) {
+        if (mySafeCharacters.contains(codePoint)) {
+          return true;
+        }
+      }
       if (canDisplay(myFont, codePoint, false)) {
-        mySafeCharacters.add(codePoint);
+        synchronized (this) {
+          mySafeCharacters.add(codePoint);
+        }
         return true;
       }
       return false;
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       // JRE has problems working with the font. Just skip.
       return false;
     }
   }
 
-  // Removed in commit: https://github.com/JetBrains/JetBrainsRuntime/commit/e0219c19f4de062612965fb493e56c4077541204
-  private static final int SLOTMASK =  0xff000000;
-  private static final int GLYPHMASK = 0x00ffffff;
-
-  public static boolean canDisplay(@NotNull Font font, int codePoint, boolean disableFontFallback) {
-    if (!Character.isValidCodePoint(codePoint)) return false;
-    if (disableFontFallback && SystemInfo.isMac) {
-      int glyphCode = font.createGlyphVector(DEFAULT_CONTEXT, new String(new int[]{codePoint}, 0, 1)).getGlyphCode(0);
-      return (glyphCode & GLYPHMASK) != 0 && (glyphCode & SLOTMASK) == 0;
-    }
-    else {
-      return font.canDisplay(codePoint);
-    }
-  }
-
-  public Font getFont() {
+  public @NotNull Font getFont() {
     return myFont;
   }
 
   public int charWidth(int codePoint) {
-    final FontMetrics metrics = fontMetrics();
+    FontMetrics metrics = fontMetrics();
     return FontLayoutService.getInstance().charWidth(metrics, codePoint);
   }
 
@@ -116,22 +123,12 @@ public final class FontInfo {
     return FontLayoutService.getInstance().charWidth2D(metrics, codePoint);
   }
 
-  public synchronized FontMetrics fontMetrics() {
+  public synchronized @NotNull FontMetrics fontMetrics() {
     if (myFontMetrics == null) {
-      myFontMetrics = getFontMetrics(myFont, myContext == null ? getFontRenderContext(null) : myContext);
+      FontRenderContext context = myContext != null ? myContext : getFontRenderContext(null);
+      myFontMetrics = getFontMetrics(myFont, context);
     }
     return myFontMetrics;
-  }
-
-  public static @NotNull FontMetrics getFontMetrics(@NotNull Font font, @NotNull FontRenderContext fontRenderContext) {
-    return FONT_METRICS_ACCESSOR.getMetrics(font, fontRenderContext);
-  }
-
-  public static FontRenderContext getFontRenderContext(Component component) {
-    if (component == null) {
-        return DEFAULT_CONTEXT;
-    }
-    return component.getFontMetrics(DUMMY_FONT).getFontRenderContext();
   }
 
   public int getSize() {
@@ -142,20 +139,16 @@ public final class FontInfo {
     return mySize;
   }
 
-  public FontRenderContext getFontRenderContext() {
+  public /* @Nullable */ FontRenderContext getFontRenderContext() {
     return myContext;
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    FontInfo fontInfo = (FontInfo)o;
-
-    if (!myFont.equals(fontInfo.myFont)) return false;
-
-    return true;
+    if (this == o) {
+      return true;
+    }
+    return o instanceof FontInfo other && myFont.equals(other.myFont);
   }
 
   @Override
@@ -164,7 +157,7 @@ public final class FontInfo {
   }
 
   @Override
-  public String toString() {
+  public synchronized String toString() {
     return "FontInfo{" +
            "myFont=" + myFont +
            ", mySize=" + mySize +

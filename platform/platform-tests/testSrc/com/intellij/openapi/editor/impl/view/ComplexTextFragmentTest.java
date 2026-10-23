@@ -19,6 +19,7 @@ import java.awt.font.GlyphVector;
 import java.awt.geom.Point2D;
 import java.awt.image.BufferedImage;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Stream;
 
 import static com.intellij.openapi.editor.impl.EditorModelFixture.TEST_CHAR_WIDTH;
@@ -135,7 +136,7 @@ public class ComplexTextFragmentTest {
     try {
       int length = gv.getNumChars();
       char[] text = new char[length];
-      FontInfo fontInfo = new FontInfo(Font.MONOSPACED, 1, Font.PLAIN, false, new FontRenderContext(null, false, false));
+      FontInfo fontInfo = createFontInfo();
       ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
                                                              fontInfo, null);
       int[] charPositions = new int[length];
@@ -147,6 +148,12 @@ public class ComplexTextFragmentTest {
     finally {
       FontLayoutService.setInstance(null);
     }
+  }
+
+  private static @NotNull FontInfo createFontInfo() {
+    Font font = new Font(Font.MONOSPACED, Font.PLAIN, 1);
+    FontRenderContext context = new FontRenderContext(null, false, false);
+    return new FontInfo(font, 1, false, Set.of(), context);
   }
 
   private static void assertEndVisualColumnForGlyphVector(MyGlyphVector gv, float x, boolean expectedLeansRight) {
@@ -161,7 +168,7 @@ public class ComplexTextFragmentTest {
     try {
       int length = gv.getNumChars();
       char[] text = new char[length];
-      FontInfo fontInfo = new FontInfo(Font.MONOSPACED, 1, Font.PLAIN, false, new FontRenderContext(null, false, false));
+      FontInfo fontInfo = createFontInfo();
       ComplexTextFragment fragment = new ComplexTextFragment(text, 0, length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
                                                              fontInfo, null);
       VisualColumn column = fragment.xToVisualColumn(0, x);
@@ -185,7 +192,7 @@ public class ComplexTextFragmentTest {
     try {
       // logical text "a<surrogate pair>b", one glyph per code point
       char[] text = {'a', '\uD83D', '\uDE00', 'b'};
-      FontInfo fontInfo = new FontInfo(Font.MONOSPACED, 1, Font.PLAIN, false, new FontRenderContext(null, false, false));
+      FontInfo fontInfo = createFontInfo();
       ComplexTextFragment fragment = new ComplexTextFragment(text, 0, text.length, (gv.getLayoutFlags() & GlyphVector.FLAG_RUN_RTL) != 0,
                                                              fontInfo, null);
       LineFragment window = fragment.subFragment(3, 4); // the trailing 'b'
@@ -203,6 +210,7 @@ public class ComplexTextFragmentTest {
     return new MyGlyphVector(true, new Integer[0], new Integer[0]);
   }
 
+  /// @noinspection SameParameterValue
   private static MyGlyphVector glyph(int xStart, int xEnd) {
     return new MyGlyphVector(false, new Integer[]{xStart}, new Integer[]{xEnd - xStart});
   }

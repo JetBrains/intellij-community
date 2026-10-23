@@ -3005,9 +3005,6 @@ f:com.intellij.openapi.editor.impl.FontFallbackIterator
 - start(java.lang.CharSequence,I,I):V
 - start(C[],I,I):V
 f:com.intellij.openapi.editor.impl.FontInfo
-- <init>(java.awt.Font,F,Z,java.awt.font.FontRenderContext):V
-- <init>(java.awt.Font,I,Z,java.awt.font.FontRenderContext):V
-- <init>(java.lang.String,I,I,Z,java.awt.font.FontRenderContext):V
 - canDisplay(I):Z
 - s:canDisplay(java.awt.Font,I,Z):Z
 - equals(java.lang.Object):Z

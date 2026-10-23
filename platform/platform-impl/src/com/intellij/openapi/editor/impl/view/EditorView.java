@@ -903,8 +903,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
    * keeps the default context until the component supplies a real one.
    */
   private @NotNull FontRenderContext readFontRenderContext() {
-    FontRenderContext context = FontInfo.getFontRenderContext(myEditor.getContentComponent());
-    return context != null ? context : FontInfo.getFontRenderContext(null);
+    return FontInfo.getFontRenderContext(myEditor.getContentComponent());
   }
 
   /**

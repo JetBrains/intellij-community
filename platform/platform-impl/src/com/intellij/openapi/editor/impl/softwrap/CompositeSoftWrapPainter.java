@@ -119,9 +119,7 @@ public final class CompositeSoftWrapPainter implements SoftWrapPainter {
       boolean canUse = true;
       for (char symbol : symbols.values()) {
         ComplementaryFontsRegistry.preloadGlyph(symbol, Font.PLAIN, preferences);
-        var font = ComplementaryFontsRegistry.getFontAbleToDisplay(symbol, Font.PLAIN, preferences, context).getFont();
-        // The registry shares FontInfo objects, and FontInfo.canDisplay(int) changes its cache without synchronization.
-        canUse &= FontInfo.canDisplay(font, symbol, false);
+        canUse &= ComplementaryFontsRegistry.getFontAbleToDisplay(symbol, Font.PLAIN, preferences, context).canDisplay(symbol);
       }
       if (canUse) {
         return;
