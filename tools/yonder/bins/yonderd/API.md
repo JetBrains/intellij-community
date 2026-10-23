@@ -38,7 +38,7 @@ file of that holder.
 | A follow offset that is not 0 or the offset after a line end of the log | `bad_request` |
 | A fetch or a forget of a run that goes on | `bad_request` |
 | A lease request for a holder whose lease file names another repository | `lease_failed`, and the file stays |
-| A run whose commit the repository lacks, and whose start ref does not come within 30 min | `pack_missing`, as the end of the run |
+| A run whose commit the repository lacks, and whose pack does not come within 30 min, or sends no chunk for 2 min | `pack_missing`, as the end of the run |
 
 - A `Lease` or `Release` waits up to 50 s for a run of the same holder, then refuses with `lock_timeout`. A run waits
   up to an hour.
@@ -46,9 +46,12 @@ file of that holder.
   holders, after its `exit.json`, so no run waits for the sweep. The lines of the sweep go to `supervisor.log`.
 - `Have`, `Lease`, `Release` and the end of `Pack` send `Reply::Heartbeat` while they wait.
 - A `Start` can come before the `Pack` of its ref. The run takes the lock and the lease, then waits for the pack
-  before the checkout. A commit that the repository has already needs no pack. Else the wait ends when the start ref
-  exists. A wait longer than 1 s writes the line `yonder: waiting for the pack of <commit>` to the log. A cancel ends
-  the wait too.
+  before the checkout. A commit that the repository has already needs no pack. Else the wait ends when the pack has
+  landed: the pack writes `packed` in the run directory after the start ref. Each chunk of the pack writes `packing`,
+  at most once a second, and a wait without a chunk for `PACK_STALL_SECONDS` ends the run, because its client is
+  gone. An empty chunk counts, so a client sends one while it builds its pack. A wait longer than 1 s writes the line
+  `yonder: waiting for the pack of <commit>` to the log. A cancel ends the wait too.
+- A pack that comes after the end of its run makes no ref. Its objects land.
 - A follow of an ended run sends `Reply::Phases` right before its `Reply::Exit` or its `Reply::Refused`. `Runs` shows
   the phases that have ended so far. The phases are `lock`, `lease`, `pack_wait`, `checkout`, `command` and
   `stage`, in this order. A run that ends early has only the phases up to its last step.
@@ -85,6 +88,7 @@ A process test shortens these durations through the environment of `serve`, in m
 | `YONDERD_TEST_HANDSHAKE_MS` | the total deadline of a TLS handshake | 10 s |
 | `YONDERD_TEST_HEARTBEAT_MS` | between two heartbeats | `HEARTBEAT_SECONDS` |
 | `YONDERD_TEST_PACK_WAIT_MS` | the wait of a run for its pack | `PACK_WAIT_SECONDS` |
+| `YONDERD_TEST_PACK_STALL_MS` | the wait of a run for the next chunk of its pack | `PACK_STALL_SECONDS` |
 
 `YONDERD_TEST_FOLLOW_HOLD` names a file. While the file exists, each follow waits before its next read of the run
 files. A test holds the follow thread with it, to check that the heartbeats go on.

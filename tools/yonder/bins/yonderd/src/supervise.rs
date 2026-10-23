@@ -7,9 +7,10 @@
 //!
 //! 1. Take the flock of the holder. A second run of the same holder waits for it, up to an hour.
 //! 2. Take the warm lease of the holder, or a new one from `bd lease get`.
-//! 3. Wait for the pack, up to `PACK_WAIT_SECONDS` of the protocol. A start can come before the pack of its reference,
-//!    so the lock and the lease go on while the pack travels. A commit that the main repository has already needs no
-//!    pack. Else the run waits for its reference, which the pack makes after its objects.
+//! 3. Wait for the pack, up to `PACK_WAIT_SECONDS` of the protocol, and up to `PACK_STALL_SECONDS` without a chunk
+//!    of it. A start can come before the pack of its reference, so the lock and the lease go on while the pack
+//!    travels. A commit that the main repository has already needs no pack. Else the run waits for the file `packed`,
+//!    which the pack writes after its ref. A watch of the run directory ends the wait at once.
 //! 4. Check out the commit in the slot. The slot belongs to the holder, so a file that the last run left changed is
 //!    discarded.
 //! 5. Run the command in the slot root, in its own process group, with stdin `/dev/null`. Its lines go to `events.log`.
@@ -40,7 +41,7 @@ use std::process::{Child, Command, ExitStatus, Stdio};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, mpsc};
 use std::thread;
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime};
 
 use yonder_link::proto::{Phase, RunSpec, Stream};
 
@@ -50,6 +51,7 @@ use crate::home::Home;
 use crate::lease::{HolderLock, Lease, Leases, now_seconds};
 use crate::refused::{AGENT_ERROR, CHECKOUT_FAILED, PACK_MISSING, Refusal, SPAWN_FAILED, refused};
 use crate::run::{EventLog, ExitRecord, MAX_EVENT_TEXT, RunDir};
+use crate::watch::Watch;
 use crate::{git, tuning};
 
 /// How long a run waits for the other run of its holder.
@@ -58,11 +60,9 @@ const LOCK_WAIT: Duration = Duration::from_secs(3600);
 /// How often the supervisor looks at the command and at the cancel request.
 const POLL: Duration = Duration::from_millis(100);
 
-/// The first pause between two looks for the reference of the run. Each pause doubles, up to [`PACK_POLL_MAX`].
-const PACK_POLL_FIRST: Duration = Duration::from_millis(50);
-
-/// The longest pause between two looks for the reference of the run.
-const PACK_POLL_MAX: Duration = Duration::from_secs(1);
+/// The longest wait of the pack wait for a change of the run directory. It bounds the time until the wait sees a stall
+/// or a stop.
+const PACK_RECHECK: Duration = Duration::from_secs(1);
 
 /// A wait for the pack that is longer than this gets a progress line.
 const PACK_WAIT_SAY: Duration = Duration::from_secs(1);
@@ -224,7 +224,11 @@ fn steps(
     if stop() {
         return Ok(INTERRUPTED);
     }
-    if !phases.time("pack_wait", || wait_for_pack(repo, spec, tuning::pack_wait(), stop, &mut say))? {
+    let limits = PackLimits {
+        deadline: tuning::pack_wait(),
+        stall: tuning::pack_stall(),
+    };
+    if !phases.time("pack_wait", || wait_for_pack(run, repo, spec, limits, stop, &mut say))? {
         return Ok(INTERRUPTED);
     }
     if let Err(error) = phases.time("checkout", || git::checkout(&slot, &spec.commit, stop)) {
@@ -272,11 +276,28 @@ impl Phases<'_> {
     }
 }
 
-/// Waits for the pack of the run, up to `deadline`. A commit that `repo` has already needs no pack, because the client
-/// sends none then. Else the wait ends when the reference of the run exists: the pack points it at the commit after
-/// the commit has landed, so the delete of the reference at the end of the run comes after it. Answers `false` when
-/// `stop` ended the wait. A wait longer than [`PACK_WAIT_SAY`] says so once.
-fn wait_for_pack(repo: &Path, spec: &RunSpec, deadline: Duration, stop: Stop<'_>, say: &mut dyn FnMut(&str)) -> Result<bool, Refusal> {
+/// The limits of the wait for a pack.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct PackLimits {
+    /// The whole wait.
+    pub(crate) deadline: Duration,
+    /// The wait for the first chunk, and from each chunk to the next.
+    pub(crate) stall: Duration,
+}
+
+/// Waits for the pack of the run. A commit that `repo` has already needs no pack, because the client sends none then.
+/// Else the wait ends when the pack wrote `packed` in the run directory, after the ref of the run: so the delete of the
+/// ref at the end of the run comes after it. The wait fails at the deadline of `limits`, or after its stall time
+/// without a chunk, which a client that is gone sends no more. Answers `false` when `stop` ended the wait. A wait
+/// longer than [`PACK_WAIT_SAY`] says so once.
+pub(crate) fn wait_for_pack(
+    run: &RunDir,
+    repo: &Path,
+    spec: &RunSpec,
+    limits: PackLimits,
+    stop: Stop<'_>,
+    say: &mut dyn FnMut(&str),
+) -> Result<bool, Refusal> {
     let look = |revision: &str| {
         git::has_commit(repo, revision)
             .map_err(|error| refused(AGENT_ERROR, format!("cannot look for {revision} in {}: {error}", repo.display())))
@@ -284,41 +305,50 @@ fn wait_for_pack(repo: &Path, spec: &RunSpec, deadline: Duration, stop: Stop<'_>
     if look(&spec.commit)? {
         return Ok(true);
     }
+    // The watch comes before the first look, so no change between a look and a wait is lost.
+    let mut watch = Watch::new(&[run.path()]);
     let started = Instant::now();
+    let started_at = SystemTime::now();
     let mut said = false;
-    let mut pause = PACK_POLL_FIRST;
     loop {
-        if look(&spec.reference)? {
+        if run.packed() {
             return Ok(true);
         }
-        if started.elapsed() >= deadline {
+        if stop() {
+            return Ok(false);
+        }
+        let quiet = run
+            .pack_progress()
+            .map_or(started_at, |noted| noted.max(started_at))
+            .elapsed()
+            .unwrap_or_default();
+        let failure = if started.elapsed() >= limits.deadline {
+            Some(format!("did not come in {} s", limits.deadline.as_secs_f64()))
+        } else if quiet >= limits.stall {
+            Some(format!("sent no chunk for {} s, so its client is gone", limits.stall.as_secs_f64()))
+        } else {
+            None
+        };
+        if let Some(failure) = failure {
+            // A pack whose mark could not be written leaves its commit and no mark.
+            if look(&spec.commit)? {
+                return Ok(true);
+            }
             return Err(refused(
                 PACK_MISSING,
                 format!(
-                    "the pack of {} did not come in {} s, and {} is missing in {}",
+                    "the pack of {} {failure}, and {} is missing in {}",
                     spec.reference,
-                    deadline.as_secs_f64(),
                     spec.commit,
                     repo.display()
                 ),
             ));
         }
-        let until = (Instant::now() + pause).min(started + deadline);
-        loop {
-            if stop() {
-                return Ok(false);
-            }
-            if !said && started.elapsed() > PACK_WAIT_SAY {
-                say(&format!("waiting for the pack of {}", spec.commit));
-                said = true;
-            }
-            let left = until.saturating_duration_since(Instant::now());
-            if left.is_zero() {
-                break;
-            }
-            thread::sleep(left.min(POLL));
+        if !said && started.elapsed() > PACK_WAIT_SAY {
+            say(&format!("waiting for the pack of {}", spec.commit));
+            said = true;
         }
-        pause = (pause * 2).min(PACK_POLL_MAX);
+        watch.wait(PACK_RECHECK.min(limits.stall).min(limits.deadline));
     }
 }
 

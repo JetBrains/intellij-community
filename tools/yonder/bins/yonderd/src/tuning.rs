@@ -4,7 +4,7 @@
 use std::path::PathBuf;
 use std::time::Duration;
 
-use yonder_link::proto::{HEARTBEAT_SECONDS, PACK_WAIT_SECONDS};
+use yonder_link::proto::{HEARTBEAT_SECONDS, PACK_STALL_SECONDS, PACK_WAIT_SECONDS};
 
 /// How long an interrupted command group has before SIGKILL: `YONDERD_TEST_GRACE_MS`, else 120 s.
 pub(crate) fn grace() -> Duration {
@@ -25,6 +25,11 @@ pub(crate) fn heartbeat() -> Duration {
 /// How long a run waits for the pack of its reference: `YONDERD_TEST_PACK_WAIT_MS`, else [`PACK_WAIT_SECONDS`].
 pub(crate) fn pack_wait() -> Duration {
     from_env("YONDERD_TEST_PACK_WAIT_MS", Duration::from_secs(PACK_WAIT_SECONDS))
+}
+
+/// How long a run waits for the next chunk of its pack: `YONDERD_TEST_PACK_STALL_MS`, else [`PACK_STALL_SECONDS`].
+pub(crate) fn pack_stall() -> Duration {
+    from_env("YONDERD_TEST_PACK_STALL_MS", Duration::from_secs(PACK_STALL_SECONDS))
 }
 
 /// A file that holds a follow before each read of the run files while it exists: `YONDERD_TEST_FOLLOW_HOLD`. A test

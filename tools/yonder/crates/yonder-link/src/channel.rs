@@ -309,6 +309,13 @@ impl Channel {
         Ok(())
     }
 
+    /// Sends an empty chunk of a byte stream and flushes it. It keeps the stream alive while its sender has no bytes
+    /// yet, such as a client that builds its pack, and the deadline of the reader starts again.
+    pub fn send_keepalive(&mut self) -> Result<(), LinkError> {
+        self.write_frame(KIND_BYTES, &[])?;
+        self.tls.flush().map_err(LinkError::from_io)
+    }
+
     /// Completes a byte stream.
     pub fn send_end(&mut self) -> Result<(), LinkError> {
         self.write_frame(KIND_END, &[])?;

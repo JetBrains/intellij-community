@@ -8,6 +8,8 @@
 //! | `exit.json` | the [`ExitRecord`] and all the phases, when the run has ended; its time of change is the end of the run |
 //! | `lock` | the flock of the supervisor, held for its whole life |
 //! | `cancel` | the cancel request of a client, which the supervisor polls |
+//! | `packing` | written at most once a second while the pack of the run arrives; its time of change is the last chunk |
+//! | `packed` | written once the pack of the run has landed and its ref points at the commit |
 //! | `pid` | the pid of the supervisor, as information only |
 //! | `stage/` | the staged entries, under their paths relative to the slot root |
 //! | `supervisor.log` | the stderr of the supervisor, such as a panic |
@@ -36,6 +38,8 @@ const PHASES: &str = "phases.json";
 const PID: &str = "pid";
 const LOCK: &str = "lock";
 const CANCEL: &str = "cancel";
+const PACKING: &str = "packing";
+const PACKED: &str = "packed";
 const STAGE: &str = "stage";
 pub(crate) const SUPERVISOR_LOG: &str = "supervisor.log";
 
@@ -197,6 +201,25 @@ impl RunDir {
 
     pub(crate) fn cancel_requested(&self) -> bool {
         self.path.join(CANCEL).exists()
+    }
+
+    /// Notes that a chunk of the pack of the run came.
+    pub(crate) fn note_pack_progress(&self) -> io::Result<()> {
+        write_private(&self.path.join(PACKING), b"")
+    }
+
+    /// The time of the last chunk of the pack of the run, or `None` before the first one.
+    pub(crate) fn pack_progress(&self) -> Option<SystemTime> {
+        fs::metadata(self.path.join(PACKING)).and_then(|metadata| metadata.modified()).ok()
+    }
+
+    /// Notes that the pack of the run has landed and its ref points at the commit.
+    pub(crate) fn mark_packed(&self) -> io::Result<()> {
+        write_private(&self.path.join(PACKED), b"")
+    }
+
+    pub(crate) fn packed(&self) -> bool {
+        self.path.join(PACKED).exists()
     }
 
     /// Writes the end of a run that lost its supervisor, such as after a kill or a reboot: no process holds its flock,

@@ -22,7 +22,7 @@ use crate::files::private_dir;
 use crate::home::Home;
 use crate::lease::{Leases, now_seconds};
 use crate::refused::{AGENT_ERROR, BAD_REQUEST, LOCK_TIMEOUT, PACK_FAILED, REPO_MISSING, Refusal, SCHEMA, refused, reply};
-use crate::run::Runs;
+use crate::run::{RunDir, Runs};
 use crate::{cleanup, git, tuning};
 
 /// The deadline of each read of the handshake and of a request.
@@ -37,6 +37,9 @@ pub(crate) const MAX_HANDSHAKES_PER_PEER: usize = 8;
 /// The deadline of each chunk of a pack. The client builds the pack into a file before it sends it, and sends an empty
 /// chunk every `HEARTBEAT_SECONDS` while it builds.
 const PACK_READ_DEADLINE: Duration = Duration::from_secs(60);
+
+/// The shortest time between two progress notes of a pack.
+const PACK_PROGRESS_EVERY: Duration = Duration::from_secs(1);
 
 /// How long a lease request waits for a run of the same holder.
 const LEASE_LOCK_WAIT: Duration = Duration::from_secs(50);
@@ -220,7 +223,7 @@ impl Agent {
             Request::Hello { .. } => answer(channel, Err(refused(BAD_REQUEST, "a connection carries one hello"))),
             Request::Have { repo, commits } => match self.repo(&repo) {
                 Ok(repo) => {
-                    let result = with_heartbeats(channel, move || have(&repo, &commits))?;
+                    let result = with_heartbeats(channel, &mut || {}, move || have(&repo, &commits))?;
                     answer(channel, result)
                 }
                 Err(refusal) => answer(channel, Err(refusal)),
@@ -261,6 +264,10 @@ impl Agent {
     /// Reads the pack that follows into `git index-pack`, then points `reference` at `commit`. A refused pack is read
     /// to its end too, so the client gets the refusal and not a broken connection. The watchdog of the child ends a
     /// write to a stalled `index-pack` at its deadline. Heartbeats go out while `index-pack` finishes.
+    ///
+    /// The pack of a kept run tells its supervisor how far it is: each chunk and each heartbeat writes `packing`, at
+    /// most once a second, and the landed pack writes `packed`. A pack that comes after the end of its run makes no ref,
+    /// because no run would delete it: its objects land, and the cleanup has nothing to do.
     fn pack(&self, channel: &mut Channel, repo: &str, commit: &str, reference: &str) -> Result<(), LinkError> {
         channel.set_read_deadline(PACK_READ_DEADLINE)?;
         let checked = self.repo(repo).and_then(|repo| {
@@ -293,10 +300,13 @@ impl Agent {
                 return channel.send(&Reply::refused(PACK_FAILED, error));
             }
         };
+        let run = reference.strip_prefix(git::REF_PREFIX).and_then(|run| self.runs().get(run).ok());
+        let progress = PackProgress::new(run.clone());
         let mut stdin = running.take_stdin();
         let received = loop {
             match channel.recv_frame() {
                 Ok(Frame::Bytes(chunk)) => {
+                    progress.note();
                     // index-pack can end early on a bad pack; the rest of the stream is read and dropped.
                     if stdin.as_mut().is_some_and(|pipe| pipe.write_all(&chunk).is_err()) {
                         stdin = None;
@@ -310,15 +320,12 @@ impl Agent {
         drop(stdin);
         let (reference, commit) = (reference.to_owned(), commit.to_owned());
         let home = self.home.clone();
-        let indexed = with_heartbeats(channel, move || {
+        let indexed = with_heartbeats(channel, &mut || progress.note(), move || {
             let indexed = git::finish_index_pack(running);
             received?;
             let result = indexed
                 .map_err(|error| format!("git index-pack failed in {}: {error}", repo.display()))
-                .and_then(|()| {
-                    git::update_ref(&repo, &reference, &commit)
-                        .map_err(|error| format!("git update-ref {reference} {commit} failed in {}: {error}", repo.display()))
-                });
+                .and_then(|()| point_ref(&repo, &reference, &commit, run.as_ref()));
             if result.is_ok()
                 && let Err(error) = cleanup::remember_repo(&home, &repo)
             {
@@ -342,7 +349,7 @@ impl Agent {
         };
         let leases = Leases::new(self.home.leases_dir(), repo);
         let holder = holder.to_owned();
-        let result = with_heartbeats(channel, move || {
+        let result = with_heartbeats(channel, &mut || {}, move || {
             let lock = leases
                 .lock(&holder, LEASE_LOCK_WAIT, &never, &mut |line| log(line))?
                 .ok_or_else(|| refused(LOCK_TIMEOUT, format!("the lock of {holder} is held")))?;
@@ -400,8 +407,63 @@ fn handshake(socket: TcpStream, tls: &ServerTls) -> Result<Channel, LinkError> {
     accepted
 }
 
-/// Runs `work` on a thread, and sends a heartbeat every [`tuning::heartbeat`] until it answers.
-fn with_heartbeats<T: Send + 'static>(channel: &mut Channel, work: impl FnOnce() -> T + Send + 'static) -> Result<T, LinkError> {
+/// Points `reference` at `commit` once the objects of a pack landed, and tells the supervisor of `run`. A run that has
+/// ended gets no ref, and a run that ends during the update gets its ref deleted, so no ref outlives its run.
+fn point_ref(repo: &Path, reference: &str, commit: &str, run: Option<&RunDir>) -> Result<(), String> {
+    let ended = |run: &RunDir| matches!(run.exit(), Ok(Some(_)));
+    if run.is_some_and(ended) {
+        return Ok(());
+    }
+    git::update_ref(repo, reference, commit)
+        .map_err(|error| format!("git update-ref {reference} {commit} failed in {}: {error}", repo.display()))?;
+    let Some(run) = run else {
+        return Ok(());
+    };
+    if ended(run) {
+        return git::delete_ref(repo, reference).map_err(|error| format!("cannot delete {reference} in {}: {error}", repo.display()));
+    }
+    if let Err(error) = run.mark_packed() {
+        log(&format!("cannot mark the pack of {} as landed: {error}", run.path().display()));
+    }
+    Ok(())
+}
+
+/// The progress notes of the pack of a run, at most one per [`PACK_PROGRESS_EVERY`].
+struct PackProgress {
+    run: Option<RunDir>,
+    noted: Mutex<Option<Instant>>,
+}
+
+impl PackProgress {
+    const fn new(run: Option<RunDir>) -> Self {
+        Self {
+            run,
+            noted: Mutex::new(None),
+        }
+    }
+
+    fn note(&self) {
+        let Some(run) = &self.run else {
+            return;
+        };
+        let mut noted = self.noted.lock().unwrap_or_else(PoisonError::into_inner);
+        if noted.is_some_and(|at| at.elapsed() < PACK_PROGRESS_EVERY) {
+            return;
+        }
+        *noted = Some(Instant::now());
+        if let Err(error) = run.note_pack_progress() {
+            log(&format!("cannot note the pack progress of {}: {error}", run.path().display()));
+        }
+    }
+}
+
+/// Runs `work` on a thread, and sends a heartbeat every [`tuning::heartbeat`] until it answers. `beat` runs at each
+/// heartbeat.
+fn with_heartbeats<T: Send + 'static>(
+    channel: &mut Channel,
+    beat: &mut dyn FnMut(),
+    work: impl FnOnce() -> T + Send + 'static,
+) -> Result<T, LinkError> {
     let (sender, receiver) = mpsc::channel();
     thread::spawn(move || {
         let _ = sender.send(work());
@@ -411,9 +473,12 @@ fn with_heartbeats<T: Send + 'static>(channel: &mut Channel, work: impl FnOnce()
     loop {
         match receiver.recv_timeout(heartbeat) {
             Ok(result) => return Ok(result),
-            Err(RecvTimeoutError::Timeout) => channel.send(&Reply::Heartbeat {
-                elapsed_ms: u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX),
-            })?,
+            Err(RecvTimeoutError::Timeout) => {
+                beat();
+                channel.send(&Reply::Heartbeat {
+                    elapsed_ms: u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX),
+                })?;
+            }
             Err(RecvTimeoutError::Disconnected) => return Err(LinkError::Protocol("the request failed inside the agent".to_owned())),
         }
     }

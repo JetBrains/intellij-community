@@ -22,6 +22,11 @@ pub const HEARTBEAT_SECONDS: u64 = 15;
 /// How long the supervisor of a run waits for the pack of its reference, see [`Request::Start`].
 pub const PACK_WAIT_SECONDS: u64 = 30 * 60;
 
+/// How long the supervisor of a run waits for the next chunk of the pack of its reference. A client sends a chunk at
+/// least every [`HEARTBEAT_SECONDS`] on the connection of the pack, an empty one while it builds the pack. So a client
+/// that is gone ends the wait of its run in this time, and the lock and the lease of the holder go.
+pub const PACK_STALL_SECONDS: u64 = 120;
+
 /// The prefix of the refs that a client keeps on the host as bases of its packs, see [`Request::Pack`].
 pub const BASE_REFS: &str = "refs/yonder/base/";
 
@@ -41,8 +46,9 @@ pub enum Request {
     /// Starts a run. Reply: [`Reply::Started`] as soon as the run has its directory.
     ///
     /// A start can come before the pack of its `reference`. The supervisor then takes the lock and the lease while the
-    /// pack travels, and waits for the reference before the checkout, up to [`PACK_WAIT_SECONDS`]. A cancel ends that
-    /// wait too. A commit that the host has already needs no pack, and the supervisor does not wait for it.
+    /// pack travels, and waits for the pack before the checkout, up to [`PACK_WAIT_SECONDS`], and up to
+    /// [`PACK_STALL_SECONDS`] without a chunk of it. A cancel ends that wait too. A commit that the host has already
+    /// needs no pack, and the supervisor does not wait for it.
     Start(RunSpec),
     /// The output of a run from the byte offset `offset` of its log. Replies: [`Reply::Output`] and
     /// [`Reply::Heartbeat`] while the run goes on, then [`Reply::Phases`], then [`Reply::Exit`], or [`Reply::Refused`]

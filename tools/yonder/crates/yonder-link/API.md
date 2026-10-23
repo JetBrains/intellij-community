@@ -3,7 +3,8 @@
 ## The frames
 
 A frame is a kind byte, a big-endian u32 length, and the payload. A message is one JSON value of at most 1 MiB. A byte
-chunk is at most 64 KiB. An end frame completes a byte stream.
+chunk is at most 64 KiB. An empty chunk keeps a byte stream alive while its sender has no bytes yet. An end frame
+completes a byte stream.
 
 | Input | Refusal |
 |---|---|

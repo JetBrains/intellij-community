@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use pretty_assertions::assert_eq;
 
 use super::*;
+use crate::run::Runs;
 
 fn lines(input: &[u8]) -> Vec<String> {
     let mut lines = Vec::new();
@@ -105,84 +106,101 @@ fn spec_of(commit: &str) -> RunSpec {
     }
 }
 
-#[test]
-fn the_pack_wait_ends_at_once_for_a_present_commit_at_its_deadline_or_at_a_stop() {
+/// A repository with one commit, and a later commit whose object is hidden, as if its pack still travelled. Answers
+/// the directory, the repository, the hidden commit, its object path and its hiding place.
+fn repo_with_a_travelling_commit() -> (tempfile::TempDir, PathBuf, String, PathBuf, PathBuf) {
     let dir = tempfile::tempdir().expect("a temporary directory");
     let repo = dir.path().join("repo");
     fs::create_dir(&repo).expect("the repository directory");
     git_in(&repo, &["init", "-q"]);
-    git_in(&repo, &["commit", "-q", "--allow-empty", "-m", "first"]);
-    let present = git_in(&repo, &["rev-parse", "HEAD"]);
-    let mut said = Vec::new();
-
-    // A commit that the host has already needs no pack.
-    let started = Instant::now();
-    let waited = wait_for_pack(&repo, &spec_of(&present), Duration::from_secs(30), &|| false, &mut |line| {
-        said.push(line.to_owned());
-    });
-    assert!(waited.expect("no refusal"));
-    assert!(started.elapsed() < Duration::from_secs(5), "{:?}", started.elapsed());
-
-    let missing = "1".repeat(40);
-    let refusal = wait_for_pack(&repo, &spec_of(&missing), Duration::from_millis(300), &|| false, &mut |line| {
-        said.push(line.to_owned());
-    })
-    .expect_err("a refusal");
-    assert_eq!(refusal.code, PACK_MISSING);
-    assert!(refusal.message.contains("refs/yonder/1-1"), "{}", refusal.message);
-
-    let waited = wait_for_pack(&repo, &spec_of(&missing), Duration::from_secs(30), &|| true, &mut |line| {
-        said.push(line.to_owned());
-    });
-    assert!(!waited.expect("no refusal"));
-    assert_eq!(said, Vec::<String>::new(), "a short wait says nothing");
-}
-
-#[test]
-fn the_pack_wait_of_a_missing_commit_ends_with_its_reference_and_says_so_after_a_second() {
-    let dir = tempfile::tempdir().expect("a temporary directory");
-    let repo = dir.path().join("repo");
-    fs::create_dir(&repo).expect("the repository directory");
-    git_in(&repo, &["init", "-q"]);
-    git_in(&repo, &["commit", "-q", "--allow-empty", "-m", "first"]);
+    git_in(
+        &repo,
+        &["-c", "maintenance.auto=false", "commit", "-q", "--allow-empty", "-m", "first"],
+    );
     let first = git_in(&repo, &["rev-parse", "HEAD"]);
     let tree = git_in(&repo, &["rev-parse", "HEAD:"]);
     let later = git_in(&repo, &["commit-tree", &tree, "-p", &first, "-m", "later"]);
-    // The commit object goes away for a while, as if its pack still travelled.
     let object = repo.join(".git/objects").join(&later[..2]).join(&later[2..]);
     let hidden = dir.path().join("hidden");
     fs::rename(&object, &hidden).expect("the object hidden");
+    (dir, repo, later, object, hidden)
+}
+
+fn limits(deadline_ms: u64, stall_ms: u64) -> PackLimits {
+    PackLimits {
+        deadline: Duration::from_millis(deadline_ms),
+        stall: Duration::from_millis(stall_ms),
+    }
+}
+
+#[test]
+fn the_pack_wait_ends_at_once_for_a_present_commit_at_its_deadline_at_a_stall_or_at_a_stop() {
+    let (dir, repo, missing, _, _) = repo_with_a_travelling_commit();
+    let present = git_in(&repo, &["rev-parse", "HEAD"]);
+    let (run, _lock) = Runs::new(dir.path().join("runs")).create(&spec_of(&missing)).expect("a run");
     let mut said = Vec::new();
-
-    // The commit alone does not end the wait: the pack points the reference at it a moment later.
-    let (back, ready) = (object.clone(), hidden.clone());
-    let restore = thread::spawn(move || {
-        thread::sleep(Duration::from_millis(200));
-        fs::rename(&ready, &back).expect("the object back");
-    });
-    let refusal = wait_for_pack(&repo, &spec_of(&later), Duration::from_millis(600), &|| false, &mut |line| {
-        said.push(line.to_owned());
-    })
-    .expect_err("a refusal");
-    restore.join().expect("the restore");
-    assert_eq!(refusal.code, PACK_MISSING);
-
-    fs::rename(&object, &hidden).expect("the object hidden again");
-    let pack = {
-        let repo = repo.clone();
-        let later = later.clone();
-        thread::spawn(move || {
-            thread::sleep(Duration::from_millis(1500));
-            fs::rename(&hidden, &object).expect("the object back");
-            git_in(&repo, &["update-ref", "refs/yonder/1-1", &later]);
-        })
+    let mut wait = |commit: &str, limits: PackLimits, stop: Stop<'_>| {
+        wait_for_pack(&run, &repo, &spec_of(commit), limits, stop, &mut |line| said.push(line.to_owned()))
     };
+
+    // A commit that the host has already needs no pack.
     let started = Instant::now();
-    let waited = wait_for_pack(&repo, &spec_of(&later), Duration::from_secs(30), &|| false, &mut |line| {
-        said.push(line.to_owned());
+    assert!(wait(&present, limits(30_000, 30_000), &|| false).expect("no refusal"));
+    assert!(started.elapsed() < Duration::from_secs(5), "{:?}", started.elapsed());
+
+    for (limits, failure) in [
+        (limits(300, 30_000), "did not come in 0.3 s"),
+        (limits(30_000, 300), "sent no chunk for 0.3 s, so its client is gone"),
+    ] {
+        let refusal = wait(&missing, limits, &|| false).expect_err(failure);
+        assert_eq!(refusal.code, PACK_MISSING, "{failure}");
+        assert!(
+            refusal.message.starts_with(&format!("the pack of refs/yonder/1-1 {failure}")),
+            "{failure}: {}",
+            refusal.message
+        );
+    }
+
+    assert!(!wait(&missing, limits(30_000, 30_000), &|| true).expect("no refusal"));
+    assert_eq!(said, Vec::<String>::new(), "a short wait says nothing");
+}
+
+/// The chunks of a pack keep the wait alive past its stall time, and the mark of the landed pack ends it. A commit that
+/// landed without its mark ends it at the stall too.
+#[test]
+fn the_chunks_of_a_pack_keep_the_wait_alive_and_its_mark_ends_it() {
+    let (dir, repo, later, object, hidden) = repo_with_a_travelling_commit();
+    let (run, _lock) = Runs::new(dir.path().join("runs")).create(&spec_of(&later)).expect("a run");
+    let mut said = Vec::new();
+    let started = Instant::now();
+    let waited = thread::scope(|scope| {
+        scope.spawn(|| {
+            while started.elapsed() < Duration::from_millis(1500) {
+                run.note_pack_progress().expect("a chunk noted");
+                thread::sleep(Duration::from_millis(100));
+            }
+            run.mark_packed().expect("the pack landed");
+        });
+        wait_for_pack(&run, &repo, &spec_of(&later), limits(30_000, 500), &|| false, &mut |line| {
+            said.push(line.to_owned());
+        })
     });
-    pack.join().expect("the pack");
     assert!(waited.expect("no refusal"));
-    assert!(started.elapsed() < Duration::from_secs(10), "{:?}", started.elapsed());
+    assert!(started.elapsed() >= Duration::from_millis(1500), "{:?}", started.elapsed());
     assert_eq!(said, vec![format!("waiting for the pack of {later}")]);
+
+    let (other, _lock) = Runs::new(dir.path().join("runs"))
+        .create(&RunSpec {
+            run: "1-2".to_owned(),
+            reference: "refs/yonder/1-2".to_owned(),
+            ..spec_of(&later)
+        })
+        .expect("another run");
+    let restore = thread::spawn(move || {
+        thread::sleep(Duration::from_millis(100));
+        fs::rename(&hidden, &object).expect("the object back");
+    });
+    let waited = wait_for_pack(&other, &repo, &spec_of(&later), limits(30_000, 400), &|| false, &mut |_| {});
+    restore.join().expect("the restore");
+    assert!(waited.expect("the commit came without a mark"));
 }

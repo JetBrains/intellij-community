@@ -1386,6 +1386,62 @@ fn a_start_whose_pack_never_comes_ends_with_pack_missing() {
     assert_eq!(runs[0].phases, followed.phases.expect("the phases"));
 }
 
+/// A client that builds its pack sends empty chunks, and they keep the wait of its run alive past the stall time. A
+/// start whose pack connection never comes ends with `pack_missing` after the stall time, long before the deadline.
+#[test]
+fn the_chunks_of_a_pack_keep_its_run_waiting_and_a_start_without_them_ends_at_the_stall() {
+    // The agent notes the chunks once a second, so the stall time is a few times that.
+    let agent = World::new().serve_with(&[("YONDERD_TEST_PACK_STALL_MS", "3000")]);
+    let world = &agent.world;
+    let (head, pack) = local_commit(world);
+    agent.start(RunSpec {
+        commit: head.clone(),
+        ..world.spec("25-1", HOLDER, "cat b.txt; echo")
+    });
+    let mut channel = agent.ask(&Request::Pack {
+        repo: "~/repo".to_owned(),
+        commit: head,
+        reference: "refs/yonder/25-1".to_owned(),
+    });
+    let building = Instant::now();
+    while building.elapsed() < Duration::from_millis(5000) {
+        channel.send_keepalive().expect("an empty chunk");
+        thread::sleep(Duration::from_millis(150));
+    }
+    channel.send_stream(&mut &pack[..], &mut |_| {}).expect("the pack sent");
+    assert_eq!(channel.recv::<Reply>().expect("the reply"), Reply::Packed);
+    let followed = agent.follow("25-1", 0);
+    assert_eq!(followed.end, Reply::Exit { code: 0 }, "{}", agent.dump("25-1"));
+    assert_eq!(followed.of(Stream::Stdout), vec!["b"]);
+    // The wait starts after the lease, and it outlived the stall time.
+    assert!(followed.phase_ms("pack_wait") >= 3000, "{followed:?}");
+
+    let started = Instant::now();
+    agent.start(RunSpec {
+        commit: "1".repeat(40),
+        ..world.spec("25-2", HOLDER, "true")
+    });
+    let stalled = agent.follow("25-2", 0);
+    assert!(
+        matches!(&stalled.end, Reply::Refused { code, message } if code == "pack_missing" && message.contains("sent no chunk")),
+        "{stalled:?}"
+    );
+    assert!(started.elapsed() < Duration::from_secs(20), "{:?}", started.elapsed());
+}
+
+/// A pack that comes after the end of its run makes no ref, because no run is left to delete it.
+#[test]
+fn a_pack_after_the_end_of_its_run_leaves_no_ref() {
+    let agent = World::new().serve();
+    let world = &agent.world;
+    agent.start(world.spec("26-1", HOLDER, "true"));
+    assert_eq!(agent.follow("26-1", 0).end, Reply::Exit { code: 0 });
+    let (head, pack) = local_commit(world);
+    assert_eq!(agent.pack(&head, "refs/yonder/26-1", &pack), Reply::Packed);
+    assert_eq!(git(&world.repo(), &["for-each-ref", "refs/yonder/"]), "");
+    assert_eq!(git(&world.repo(), &["cat-file", "-t", &head]), "commit", "the objects land");
+}
+
 #[test]
 fn a_cancel_during_the_pack_wait_ends_the_run_before_its_command() {
     let agent = World::new().serve();
