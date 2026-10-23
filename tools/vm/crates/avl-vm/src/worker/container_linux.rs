@@ -25,6 +25,7 @@ use avl_host_sys::{Captured, Ctx, ProcError, Runner, SpawnOptions};
 use serde::Deserialize;
 
 use crate::worker::docker::{log_options, remove_if_present};
+use crate::worker::hypervisor::host_argv;
 use crate::worker::secure::read_json_record;
 
 #[cfg(test)]
@@ -96,9 +97,7 @@ impl ContainerLinux {
     }
 
     fn command(&self, arguments: &[&str]) -> Vec<String> {
-        std::iter::once(self.program())
-            .chain(arguments.iter().map(|argument| (*argument).to_owned()))
-            .collect()
+        host_argv(self.program(), arguments)
     }
 
     fn note(&self, worker: &str, message: String) {
