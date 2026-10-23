@@ -160,9 +160,10 @@ class PyAstPsiElementFactory : PyPsiElementFactory() {
          override fun setName(name: String): PsiElement = throw IncorrectOperationException()
          override fun getDecoratorList(): PyAstDecoratorList? = childToPsi(PyElementTypes.DECORATOR_LIST)
          override fun getParameterList(): PyAstParameterList = childToPsiNotNull(PyElementTypes.PARAMETER_LIST)
-         override fun getTypeParameterList(): PyAstTypeParameterList? = childToPsi(PyElementTypes.TYPE_PARAMETER)
+         override fun getTypeParameterList(): PyAstTypeParameterList? = childToPsi(PyElementTypes.TYPE_PARAMETER_LIST)
          override val modifier: PyAstFunction.Modifier? = null
-         override val annotation: PyAstAnnotation? = childToPsi(PyElementTypes.ANNOTATION)
+         override val annotation: PyAstAnnotation?
+           get() = childToPsi(PyElementTypes.ANNOTATION)
        }
     }
   override val classDeclarationConstructor: Function<in ASTNode, out PsiElement> = F {
@@ -191,7 +192,8 @@ class PyAstPsiElementFactory : PyPsiElementFactory() {
         override fun getTextOffset(): Int = super<PyAstNamedParameter>.getTextOffset()
         override fun getName(): String? = super<PyAstNamedParameter>.getName()
         override fun setName(name: String): PsiElement = throw IncorrectOperationException()
-        override val annotation: PyAstAnnotation? = childToPsi(PyElementTypes.ANNOTATION)
+        override val annotation: PyAstAnnotation?
+          get() = childToPsi(PyElementTypes.ANNOTATION)
       }
     }
   override val tupleParameterConstructor: Function<in ASTNode, out PsiElement> = F {
@@ -271,6 +273,7 @@ class PyAstPsiElementFactory : PyPsiElementFactory() {
         @Volatile
         private var _importSourceQName: ValueHolder<QualifiedName?>? = null
         override fun subtreeChanged() {
+          super.subtreeChanged()
           _importSourceQName = null
         }
         override fun getImportSourceQName(): QualifiedName? {
@@ -295,7 +298,7 @@ class PyAstPsiElementFactory : PyPsiElementFactory() {
       object : PyAstBaseElementImpl(it), PyAstTargetExpression {
         override fun getTextOffset(): Int = super<PyAstTargetExpression>.getTextOffset()
         override fun getName(): String? = super<PyAstTargetExpression>.getName()
-        override fun asQualifiedName(): QualifiedName? = null
+        override fun asQualifiedName(): QualifiedName? = PyPsiUtilsCore.asQualifiedName(this)
       }
     }
   override val typeParameterConstructor: Function<in ASTNode, out PsiElement> = F {
@@ -379,7 +382,7 @@ class PyAstPsiElementFactory : PyPsiElementFactory() {
   override val emptyExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstEmptyExpression {} }
   override val referenceExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstReferenceExpression {
       override fun getName(): String? = super<PyAstReferenceExpression>.getName()
-      override fun asQualifiedName(): QualifiedName? = null
+      override fun asQualifiedName(): QualifiedName? = PyPsiUtilsCore.asQualifiedName(this)
     } }
   override val integerLiteralExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstNumericLiteralExpression {} }
   override val floatLiteralExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstNumericLiteralExpression {} }
@@ -420,6 +423,7 @@ class PyAstPsiElementFactory : PyPsiElementFactory() {
       }
 
       override fun subtreeChanged() {
+        super.subtreeChanged()
         stringValue = null
         valueTextRanges = null
         _decodedFragments = null
