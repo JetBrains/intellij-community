@@ -182,10 +182,37 @@ pub(crate) fn start(port: u16, token: &str, packages: Packages, agents: Vec<Regi
 }
 
 impl Handler for Registry {
-    fn handle(&self, request: &Request) -> Response {
-        if let Some(route) = control::route(request, NAME, &self.token) {
-            return route.map_or_else(|refusal| refusal, |route| self.control(request, route));
+    fn control_route(&self) -> Option<(&'static str, &str)> {
+        Some((NAME, &self.token))
+    }
+
+    fn control(&self, request: &Request, route: &str) -> Response {
+        match (route, request.method.as_str()) {
+            ("mark", "GET") => control::answer(&serde_json::json!({ "mark": self.mark() })),
+            ("events", "GET") => match control::since(request) {
+                Ok(since) => {
+                    let prefix = request.query_param("prefix").unwrap_or_default();
+                    let events = self.events_since(since, &prefix);
+                    control::answer(&serde_json::json!({ "mark": self.mark(), "events": events }))
+                }
+                Err(refusal) => refusal,
+            },
+            ("fault", "GET") => control::answer(&self.lock().armed),
+            ("fault", "POST") => match control::body::<ArmRequest>(request) {
+                Ok(arm) => match arm.armed() {
+                    Ok(armed) => control::answer(&self.set_armed(armed)),
+                    Err(refusal) => control::refuse(400, refusal.code, &refusal.message),
+                },
+                Err(refusal) => refusal,
+            },
+            ("fault", "DELETE") => control::answer(&self.set_armed(Armed::CLEAR)),
+            ("mark" | "events", _) => control::method_not_allowed(request, "GET"),
+            ("fault", _) => control::method_not_allowed(request, "GET, POST or DELETE"),
+            _ => control::unknown_route(request),
         }
+    }
+
+    fn handle(&self, request: &Request) -> Response {
         let received_at_ms = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .map_or(0, |elapsed| u64::try_from(elapsed.as_millis()).unwrap_or(u64::MAX));
@@ -354,32 +381,6 @@ impl Registry {
         state.hold = armed.fault.holds().then_some(state.generation);
         self.released.notify_all();
         state.armed
-    }
-
-    fn control(&self, request: &Request, route: &str) -> Response {
-        match (route, request.method.as_str()) {
-            ("mark", "GET") => control::answer(&serde_json::json!({ "mark": self.mark() })),
-            ("events", "GET") => match control::since(request) {
-                Ok(since) => {
-                    let prefix = request.query_param("prefix").unwrap_or_default();
-                    let events = self.events_since(since, &prefix);
-                    control::answer(&serde_json::json!({ "mark": self.mark(), "events": events }))
-                }
-                Err(refusal) => refusal,
-            },
-            ("fault", "GET") => control::answer(&self.lock().armed),
-            ("fault", "POST") => match control::body::<ArmRequest>(request) {
-                Ok(arm) => match arm.armed() {
-                    Ok(armed) => control::answer(&self.set_armed(armed)),
-                    Err(refusal) => control::refuse(400, refusal.code, &refusal.message),
-                },
-                Err(refusal) => refusal,
-            },
-            ("fault", "DELETE") => control::answer(&self.set_armed(Armed::CLEAR)),
-            ("mark" | "events", _) => control::method_not_allowed(request, "GET"),
-            ("fault", _) => control::method_not_allowed(request, "GET, POST or DELETE"),
-            _ => control::unknown_route(request),
-        }
     }
 }
 

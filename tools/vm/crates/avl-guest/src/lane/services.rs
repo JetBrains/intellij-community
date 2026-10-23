@@ -43,8 +43,19 @@ pub(crate) trait Handler: Send + Sync + 'static {
     /// The largest request body that the service reads. A larger one gets a 413.
     const MAX_BODY_BYTES: usize = http::MAX_BODY_BYTES;
 
-    /// Answers one request.
+    /// Answers one request of the IDE. A request of the control route goes to [`Handler::control`].
     fn handle(&self, request: &Request) -> Response;
+
+    /// The control route of the service: its name in `/_lane/<name>/`, and the lane-service token that a control
+    /// request carries. A service without a control route answers `None`, and [`Handler::handle`] gets every request.
+    fn control_route(&self) -> Option<(&'static str, &str)> {
+        None
+    }
+
+    /// Answers the request of the control route `route`, the path after `/_lane/<name>/`.
+    fn control(&self, request: &Request, _route: &str) -> Response {
+        control::unknown_route(request)
+    }
 
     /// Ends every wait of an answer in flight. The service calls it when it stops.
     fn stop(&self) {}
@@ -136,11 +147,24 @@ fn accept<H: Handler>(name: &'static str, listener: &TcpListener, handler: &Arc<
     }
 }
 
+/// Answers `request`: a request of the control route with [`Handler::control`] or its refusal, and any other request
+/// with [`Handler::handle`].
+fn answer<H: Handler>(handler: &H, request: &Request) -> Response {
+    match handler
+        .control_route()
+        .and_then(|(name, token)| control::route(request, name, token))
+    {
+        Some(Ok(route)) => handler.control(request, route),
+        Some(Err(refusal)) => refusal,
+        None => handler.handle(request),
+    }
+}
+
 fn serve<H: Handler>(mut stream: TcpStream, handler: &H) {
     let _ = stream.set_read_timeout(Some(SOCKET_TIMEOUT));
     let _ = stream.set_write_timeout(Some(SOCKET_TIMEOUT));
     let (response, head_only) = match http::read_request(&stream, H::MAX_BODY_BYTES) {
-        Ok(request) => (handler.handle(&request), request.method == "HEAD"),
+        Ok(request) => (answer(handler, &request), request.method == "HEAD"),
         Err(RequestError::Closed) => return,
         Err(RequestError::Malformed(message)) => (control::refuse(400, "bad_request", &message), false),
         Err(RequestError::TooLarge) => (

@@ -56,10 +56,31 @@ pub(crate) fn start(port: u16, token: &str) -> Result<Service<Codex>, AgentRefus
 }
 
 impl Handler for Codex {
-    fn handle(&self, request: &Request) -> Response {
-        if let Some(route) = control::route(request, NAME, &self.token) {
-            return route.map_or_else(|refusal| refusal, |route| self.control(request, route));
+    fn control_route(&self) -> Option<(&'static str, &str)> {
+        Some((NAME, &self.token))
+    }
+
+    fn control(&self, request: &Request, route: &str) -> Response {
+        match (route, request.method.as_str()) {
+            ("mark", "GET") => control::answer(&json!({ "mark": self.lock().len() })),
+            ("turns", "GET") => match control::since(request) {
+                Ok(since) => {
+                    let requests = self.lock();
+                    let turns: Vec<Turn> = control::after(&requests, since)
+                        .iter()
+                        .enumerate()
+                        .map(|(index, body)| turn(since + index + 1, body))
+                        .collect();
+                    control::answer(&json!({ "mark": requests.len(), "turns": turns }))
+                }
+                Err(refusal) => refusal,
+            },
+            ("mark" | "turns", _) => control::method_not_allowed(request, "GET"),
+            _ => control::unknown_route(request),
         }
+    }
+
+    fn handle(&self, request: &Request) -> Response {
         if request.path.starts_with("/v1/models") {
             if request.method != "GET" {
                 return method_not_allowed();
@@ -87,26 +108,6 @@ impl Handler for Codex {
 impl Codex {
     fn lock(&self) -> MutexGuard<'_, Vec<String>> {
         self.requests.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
-    }
-
-    fn control(&self, request: &Request, route: &str) -> Response {
-        match (route, request.method.as_str()) {
-            ("mark", "GET") => control::answer(&json!({ "mark": self.lock().len() })),
-            ("turns", "GET") => match control::since(request) {
-                Ok(since) => {
-                    let requests = self.lock();
-                    let turns: Vec<Turn> = control::after(&requests, since)
-                        .iter()
-                        .enumerate()
-                        .map(|(index, body)| turn(since + index + 1, body))
-                        .collect();
-                    control::answer(&json!({ "mark": requests.len(), "turns": turns }))
-                }
-                Err(refusal) => refusal,
-            },
-            ("mark" | "turns", _) => control::method_not_allowed(request, "GET"),
-            _ => control::unknown_route(request),
-        }
     }
 }
 

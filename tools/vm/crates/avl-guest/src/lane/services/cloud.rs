@@ -115,10 +115,24 @@ pub(crate) fn start(port: u16, token: &str, organization: Organization) -> Resul
 }
 
 impl Handler for Cloud {
-    fn handle(&self, request: &Request) -> Response {
-        if let Some(route) = control::route(request, NAME, &self.token) {
-            return route.map_or_else(|refusal| refusal, |route| self.control(request, route));
+    fn control_route(&self) -> Option<(&'static str, &str)> {
+        Some((NAME, &self.token))
+    }
+
+    fn control(&self, request: &Request, route: &str) -> Response {
+        match (route, request.method.as_str()) {
+            ("record", "GET") => control::answer(&*self.lock()),
+            ("record", "DELETE") => control::answer(&self.clear_record()),
+            ("spawner", "GET") => control::answer(&self.spawner.record()),
+            ("spawner", "DELETE") => control::answer(&self.spawner.clear()),
+            ("record" | "spawner", _) => control::method_not_allowed(request, "GET or DELETE"),
+            ("spawner/fail", "POST") => self.fail_dials(request),
+            ("spawner/fail", _) => control::method_not_allowed(request, "POST"),
+            _ => control::unknown_route(request),
         }
+    }
+
+    fn handle(&self, request: &Request) -> Response {
         let path = if request.path.len() > 1 {
             request.path.trim_end_matches('/')
         } else {
@@ -274,19 +288,6 @@ impl Cloud {
         }
         record.served.push(format!("{} {}", request.method, request.target()));
         Some(body.map_or_else(|| Response::empty(404), |body| Response::with_body(200, JSON, body)))
-    }
-
-    fn control(&self, request: &Request, route: &str) -> Response {
-        match (route, request.method.as_str()) {
-            ("record", "GET") => control::answer(&*self.lock()),
-            ("record", "DELETE") => control::answer(&self.clear_record()),
-            ("spawner", "GET") => control::answer(&self.spawner.record()),
-            ("spawner", "DELETE") => control::answer(&self.spawner.clear()),
-            ("record" | "spawner", _) => control::method_not_allowed(request, "GET or DELETE"),
-            ("spawner/fail", "POST") => self.fail_dials(request),
-            ("spawner/fail", _) => control::method_not_allowed(request, "POST"),
-            _ => control::unknown_route(request),
-        }
     }
 
     /// The route `spawner/fail`: the next dials answer a status instead of the upgrade.

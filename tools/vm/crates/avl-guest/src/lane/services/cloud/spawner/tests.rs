@@ -203,6 +203,14 @@ fn envelope(session: &Session, kind: &str, fields: &Value) -> Value {
     envelope
 }
 
+/// Asserts that the next message of the control server is the lifecycle event `kind` of `session` with `details`.
+fn assert_lifecycle(control: &FakeControl, session: &Session, kind: &str, details: &str) {
+    assert_eq!(
+        control.next(),
+        envelope(session, "lifecycle", &json!({ "kind": kind, "details": details }))
+    );
+}
+
 fn outcomes(service: &Service<Cloud>) -> Vec<String> {
     service
         .handler()
@@ -339,14 +347,7 @@ fn the_end_of_the_dial_reports_stdin_eof_and_closes_the_control_connection() {
     let (sender, mut receiver, session) = dial_through(&service, &control);
     assert!(sender.close(websocket::NORMAL_CLOSURE));
     assert_eq!(receiver.next(&sender).unwrap(), Message::Close(Some(websocket::NORMAL_CLOSURE)));
-    assert_eq!(
-        control.next(),
-        envelope(
-            &session,
-            "lifecycle",
-            &json!({ "kind": "stdin_eof", "details": "the WebSocket closed" })
-        )
-    );
+    assert_lifecycle(&control, &session, "stdin_eof", "the WebSocket closed");
     assert_eq!(control.next(), json!({ "type": "<close>", "code": 1000 }));
 }
 
@@ -394,14 +395,7 @@ fn close_stdout_reports_stdout_closed_acknowledges_and_closes_the_dial_normally(
     let (sender, mut receiver, session) = dial_through(&service, &control);
     session.command("closeStdout", &json!({ "commandId": "c3" }));
     assert_eq!(receiver.next(&sender).unwrap(), Message::Close(Some(websocket::NORMAL_CLOSURE)));
-    assert_eq!(
-        control.next(),
-        envelope(
-            &session,
-            "lifecycle",
-            &json!({ "kind": "stdout_closed", "details": "the WebSocket closed by control" })
-        )
-    );
+    assert_lifecycle(&control, &session, "stdout_closed", "the WebSocket closed by control");
     assert_eq!(control.next(), envelope(&session, "writeAck", &json!({ "commandId": "c3" })));
 }
 

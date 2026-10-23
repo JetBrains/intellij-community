@@ -1,3 +1,4 @@
+use expect_test::expect;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
@@ -17,28 +18,27 @@ fn the_configuration_names_this_emulator_for_every_url() {
         (answer.status, answer.header("Content-Type")),
         (200, Some("application/xml; charset=UTF-8"))
     );
-    let want = [
-        "<config>".to_owned(),
-        format!("  <url type=\"auth\" value=\"{base}/lservice/service-auth\" enabled=\"true\"/>"),
-        format!("  <url type=\"license\" value=\"{base}/lservice\" enabled=\"true\"/>"),
-        format!("  <url type=\"reset_password\" value=\"{base}/forgot-password\" enabled=\"true\"/>"),
-        format!("  <url type=\"oauth2\" value=\"{base}/oauth2\" enabled=\"true\"/>"),
-        format!("  <url type=\"account_info\" value=\"{base}/lservice/account/info\" enabled=\"true\"/>"),
-        format!("  <url type=\"signup\" value=\"{base}/signup\" enabled=\"true\"/>"),
-        format!("  <url type=\"manage_account\" value=\"{base}/\" enabled=\"true\"/>"),
-        format!("  <url type=\"account_payment_methods\" value=\"{base}/licenses/tokens\" enabled=\"true\"/>"),
-        format!("  <url type=\"jcp\" value=\"{base}/jcp\" enabled=\"true\"/>"),
-        "  <oauth>".to_owned(),
-        "    <clientId>ide</clientId>".to_owned(),
-        "    <scope>offline_access</scope>".to_owned(),
-        format!("    <authEndpoint>{base}/oauth2/auth</authEndpoint>"),
-        format!("    <tokenEndpoint>{base}/oauth2/token</tokenEndpoint>"),
-        format!("    <orgsUserInfoJwtEndpoint>{base}/oauth2/orgs-user-info</orgsUserInfoJwtEndpoint>"),
-        "    <providers/>".to_owned(),
-        "  </oauth>".to_owned(),
-        "</config>".to_owned(),
-    ];
-    assert_eq!(answer.text(), want.join("\n"));
+    expect![[r#"
+        <config>
+          <url type="auth" value="<base>/lservice/service-auth" enabled="true"/>
+          <url type="license" value="<base>/lservice" enabled="true"/>
+          <url type="reset_password" value="<base>/forgot-password" enabled="true"/>
+          <url type="oauth2" value="<base>/oauth2" enabled="true"/>
+          <url type="account_info" value="<base>/lservice/account/info" enabled="true"/>
+          <url type="signup" value="<base>/signup" enabled="true"/>
+          <url type="manage_account" value="<base>/" enabled="true"/>
+          <url type="account_payment_methods" value="<base>/licenses/tokens" enabled="true"/>
+          <url type="jcp" value="<base>/jcp" enabled="true"/>
+          <oauth>
+            <clientId>ide</clientId>
+            <scope>offline_access</scope>
+            <authEndpoint><base>/oauth2/auth</authEndpoint>
+            <tokenEndpoint><base>/oauth2/token</tokenEndpoint>
+            <orgsUserInfoJwtEndpoint><base>/oauth2/orgs-user-info</orgsUserInfoJwtEndpoint>
+            <providers/>
+          </oauth>
+        </config>"#]]
+    .assert_eq(&answer.text().replace(&base, "<base>"));
     let mapping = testing::get(service.address(), "/config/JetBrainsResourceMapping.json");
     assert_eq!((mapping.status, mapping.text()), (200, "[]".to_owned()));
     assert_eq!(
