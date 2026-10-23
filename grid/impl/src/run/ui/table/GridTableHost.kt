@@ -7,6 +7,8 @@ import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.datagrid.ResultViewColumn
 import com.intellij.database.run.ui.ColumnMove
 import com.intellij.database.run.ui.grid.GridRowHeader
+import com.intellij.database.run.ui.grid.TableCellImageCache
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.util.Ref
 import java.awt.event.MouseEvent
 import javax.swing.ActionMap
@@ -28,6 +30,14 @@ internal interface GridTableHost {
   fun columnMarginChanged()
   fun syncRowHeight(row: Int, height: Int)
   fun changeFontSize(increment: Int, scale: Double)
+  /** A click on a column header of the table sorts the grid by that column. */
+  fun toggleSortOrder(column: ModelIndex<GridColumn>, additive: Boolean)
+  /** The view's cell image cache, which every table of the view paints through. */
+  fun getCellImageCache(): TableCellImageCache
+  /** The table shows a different number of cells, so the view resizes its cache for all its tables. */
+  fun cellImageCacheSizeChanged()
+  /** Adds the grid's data for actions that run in the table. */
+  fun uiDataSnapshot(sink: DataSink)
   /** Writes a value committed by a cell editor of the table, to that cell or to every selected cell. */
   fun setValueAt(value: Any?, row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>, allowImmediateUpdate: Boolean,
                  source: GridRequestSource, metadata: Any?)

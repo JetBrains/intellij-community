@@ -22,11 +22,12 @@ import javax.swing.SwingUtilities
  * Offers the floating toolbar for a cell clicked in the main or the pinned table.
  * Hides it on a mouse press, when the pointer moves away, when a table loses focus or moves, or when the table it is shown in goes away.
  */
-internal class TableFloatingToolbarController(private val primary: JTable, grid: DataGrid, cs: CoroutineScope) : Disposable {
+internal class TableFloatingToolbarController(grid: DataGrid, cs: CoroutineScope) : Disposable {
   private val toolbar = TableFloatingToolbar(grid, cs)
+  private val tables = mutableListOf<JTable>()
 
-  /** The table and the cell the toolbar was last offered for, as view indices of that table. */
-  private var offeredTable: JTable = primary
+  /** The table and the cell the toolbar was last offered for, as view indices of that table, or null before the first offer. */
+  private var offeredTable: JTable? = null
   private var offeredRow = 0
   private var offeredColumn = 0
 
@@ -57,9 +58,10 @@ internal class TableFloatingToolbarController(private val primary: JTable, grid:
       if (!toolbar.isShowing) {
         return
       }
+      val offered = offeredTable ?: return
       // The pointer may already have crossed into the other table, while the toolbar stays where it was shown.
-      val point = if (e.component === offeredTable) e.point else SwingUtilities.convertPoint(e.component, e.point, offeredTable)
-      val cellArea = offeredTable.getCellRect(offeredRow, offeredColumn, true)
+      val point = if (e.component === offered) e.point else SwingUtilities.convertPoint(e.component, e.point, offered)
+      val cellArea = offered.getCellRect(offeredRow, offeredColumn, true)
       cellArea.grow(0, cellArea.height * 2)
       if (cellArea.contains(point)) {
         return
@@ -83,12 +85,9 @@ internal class TableFloatingToolbarController(private val primary: JTable, grid:
     }
   }
 
-  init {
-    attach(primary)
-  }
-
-  /** Offers the toolbar for the cells of [table] too, such as the pinned table. */
+  /** Offers the toolbar for the cells of [table], the main or the pinned one. */
   fun attach(table: JTable) {
+    tables.add(table)
     table.addMouseListener(mouseListener)
     table.addMouseMotionListener(mouseListener)
     table.addFocusListener(focusListener)
@@ -97,15 +96,17 @@ internal class TableFloatingToolbarController(private val primary: JTable, grid:
 
   /** Stops offering the toolbar in [table], which is about to be discarded, and hides it if it is shown there. */
   fun detach(table: JTable) {
+    tables.remove(table)
     removeListeners(table)
     if (offeredTable !== table) return
     toolbar.hide()
-    offeredTable = primary
+    offeredTable = null
   }
 
   override fun dispose() {
     toolbar.hide()
-    removeListeners(primary)
+    tables.forEach(::removeListeners)
+    tables.clear()
   }
 
   private fun removeListeners(table: JTable) {

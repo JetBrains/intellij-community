@@ -1,7 +1,6 @@
 package com.intellij.database.run.ui.table;
 
 import com.intellij.application.options.EditorFontsConstants;
-import com.intellij.database.DatabaseDataKeys;
 import com.intellij.database.actions.ShowEditMaximizedAction;
 import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.DataGridWithNestedTables;
@@ -54,10 +53,7 @@ import com.intellij.database.run.ui.grid.editors.GridCellEditorFactory;
 import com.intellij.database.run.ui.grid.editors.GridCellEditorFactoryProvider;
 import com.intellij.database.run.ui.grid.renderers.GridCellRenderer;
 import com.intellij.database.run.ui.grid.renderers.GridCellRendererFactories;
-import com.intellij.database.run.ui.table.statisticsPanel.StatisticsPanelMode;
-import com.intellij.database.run.ui.table.statisticsPanel.StatisticsTableHeader;
 import com.intellij.database.settings.DataGridSettings;
-import com.intellij.database.util.GridActionUiState;
 import com.intellij.find.FindModel;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -124,7 +120,6 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -183,7 +178,6 @@ import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.EventObject;
 import java.util.Iterator;
@@ -230,7 +224,6 @@ class GridTable extends JBTableWithResizableCells
   private final DataGrid myResultPanel;
   private final MyTableColumnCache myColumnCache;
   private final Renderers myRenderers;
-  private final TableCellImageCache myCellImageCache;
   private final TableRawIndexConverter myRawIndexConverter;
   private final ActionGroup myColumnHeaderPopupActions;
   private final ActionGroup myRowHeaderPopupActions;
@@ -254,8 +247,6 @@ class GridTable extends JBTableWithResizableCells
   private HoveredRowBgHighlightMode myHoveredRowMode = HoveredRowBgHighlightMode.AUTO;
   /** False once this table is disposed, after which it stops driving the column order of the grid. */
   private boolean myDrivesColumnOrder = true;
-
-  private StatisticsTableHeader myStatisticsHeader;
 
   private static final Logger LOG = Logger.getInstance(GridTable.class);
 
@@ -283,7 +274,6 @@ class GridTable extends JBTableWithResizableCells
                       @NotNull ActionGroup rowHeaderPopupActions) {
     super(new RegularGridTableModel(resultPanel), new MyTableColumnModel());
     myResultPanel = resultPanel;
-    myCellImageCache = new TableCellImageCache(this, this);
     myColumnHeaderPopupActions = columnHeaderPopupActions;
     myRowHeaderPopupActions = rowHeaderPopupActions;
     myRawIndexConverter = new TableRawIndexConverter(this, () -> isTransposed());
@@ -369,8 +359,7 @@ class GridTable extends JBTableWithResizableCells
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
     sink.set(PlatformDataKeys.CONTEXT_MENU_POINT, myClickedHeaderPoint);
-    // An open cell editor is a child of this table, and its own shortcuts must win over cell actions bound to F2 or Alt+Enter.
-    sink.set(DatabaseDataKeys.DATA_GRID_ACTION_UI_STATE_KEY, GridActionUiState.capture(myResultPanel, !isEditing()));
+    if (myHost != null) myHost.uiDataSnapshot(sink);
   }
 
   @Override
@@ -559,10 +548,6 @@ class GridTable extends JBTableWithResizableCells
     return scrollPane == null ? null : scrollPane.getHorizontalScrollBar();
   }
 
-  public void resetLayout() {
-    myColumnLayout.resetLayout();
-  }
-
   public void addSelectionChangedListener(@NotNull Consumer<Boolean> listener) {
     ListSelectionListener l = e -> {
       if (!myDisableSelectionListeners) {
@@ -721,7 +706,7 @@ class GridTable extends JBTableWithResizableCells
   }
 
   private void dropCaches() {
-    myCellImageCache.reset();
+    if (myHost != null) myHost.getCellImageCache().reset();
   }
 
   public MyTableColumnCache getColumnCache() {
@@ -730,12 +715,6 @@ class GridTable extends JBTableWithResizableCells
 
   public @NotNull ModelIndex<GridColumn> getContextColumn() {
     return myHost == null ? myClickedHeaderColumnIdx : myHost.getContextColumn();
-  }
-
-  /** Only the column popup sets this, and a test cannot show one. */
-  @TestOnly
-  public void setContextColumn(@NotNull ModelIndex<GridColumn> columnIdx) {
-    myHost.setContextColumn(columnIdx);
   }
 
   public void updateSortKeysFromColumnAttributes() {
@@ -853,12 +832,16 @@ class GridTable extends JBTableWithResizableCells
   }
 
   private void adjustCacheSize() {
-    if (!myCellImageCache.isCacheEnabled()) return;
+    if (myHost != null && myHost.getCellImageCache().isCacheEnabled()) myHost.cellImageCacheSizeChanged();
+  }
+
+  /** How many cell images this table shows at most, which the view's cache must hold for it; 0 while nothing is visible. */
+  int requestedCellImageCacheSize() {
     TableColumnModel columnModel = getColumnModel();
     int columnCount = columnModel == null ? 0 : columnModel.getColumnCount();
     int rowCount = getRowCount();
     Rectangle visibleRect = getVisibleRect();
-    if (columnCount == 0 || rowCount == 0 || visibleRect.isEmpty()) return;
+    if (columnCount == 0 || rowCount == 0 || visibleRect.isEmpty()) return 0;
 
     int minColumnWidth = Integer.MAX_VALUE;
     for (int i = 0; i < columnCount; i++) {
@@ -872,7 +855,7 @@ class GridTable extends JBTableWithResizableCells
     int colsMax = minColumnWidth == 0 ? columnCount : Math.min(columnCount, (int)Math.ceil(visibleRect.width / (float)minColumnWidth));
     colsMax = Math.min(MAX_COLUMNS, colsMax);
     int factor = Math.max(1, Registry.intValue("database.grid.cache.factor"));
-    myCellImageCache.adjustCacheSize(rowsMax * colsMax * factor);
+    return rowsMax * colsMax * factor;
   }
 
   @Override
@@ -2093,7 +2076,7 @@ class GridTable extends JBTableWithResizableCells
     DataGridSettings settings = GridUtil.getSettings(myResultPanel);
     GridSortingModel<GridRow, GridColumn> model = myResultPanel.getDataHookup().getSortingModel();
     boolean supportsAdditiveSorting = model == null || !model.isSortingEnabled() || model.supportsAdditiveSorting();
-    toggleSortOrder(columnIdx, supportsAdditiveSorting && (settings == null || settings.isAddToSortViaAltClick()) == alt);
+    myHost.toggleSortOrder(columnIdx, supportsAdditiveSorting && (settings == null || settings.isAddToSortViaAltClick()) == alt);
   }
 
   private OptionalInt getIndexOfClickedHeaderLine(@NotNull ModelIndex<GridColumn> columnIdx, @NotNull MouseEvent e) {
@@ -2285,10 +2268,6 @@ class GridTable extends JBTableWithResizableCells
     }
   }
 
-  public boolean isCellEditingAllowed() {
-    return true;
-  }
-
   boolean isColumnFrozenHidden(int viewColumn) {
     return viewColumn >= 0 && viewColumn < getColumnModel().getColumnCount() &&
            getColumnModel().getColumn(viewColumn) instanceof TableResultViewColumn column && column.isFrozenHidden();
@@ -2305,10 +2284,6 @@ class GridTable extends JBTableWithResizableCells
     return getSharedCommonValue() != null &&
            uniqueOk &&
            GridHelper.get(myResultPanel).canEditTogether(myResultPanel, columns);
-  }
-
-  void toggleSortOrder(@NotNull ModelIndex<GridColumn> idx, boolean additive) {
-    myResultPanel.getAutoscrollLocker().runWithLock(() -> myResultPanel.toggleSortColumns(Collections.singletonList(idx), additive));
   }
 
   @Override
@@ -2390,7 +2365,7 @@ class GridTable extends JBTableWithResizableCells
   @Override
   public TableCellRenderer getCellRenderer(int row, int column) {
     TableCellRenderer renderer = myRenderers.getRenderer(row, column);
-    return myCellImageCache.wrapCellRenderer(renderer);
+    return myHost == null ? renderer : myHost.getCellImageCache().wrapCellRenderer(renderer);
   }
 
   /** The value a cell editor of this table commits; the view writes it to the cell, or to every selected cell. */
@@ -3264,33 +3239,6 @@ class GridTable extends JBTableWithResizableCells
 
   public void setHoveredRowHighlightMode(HoveredRowBgHighlightMode mode) {
     myHoveredRowMode = mode;
-  }
-
-  public void setStatisticsHeader(StatisticsTableHeader statisticsHeader) {
-    myStatisticsHeader = statisticsHeader;
-  }
-
-  public StatisticsTableHeader getStatisticsHeader() {
-    return myStatisticsHeader;
-  }
-
-  public void setStatisticsPanelMode(StatisticsPanelMode newPanelMode) {
-    StatisticsPanelMode previousPanelMode = getStatisticsPanelMode();
-    if (previousPanelMode == newPanelMode) return;
-    if (myStatisticsHeader == null) return;
-
-    myStatisticsHeader.setStatisticsPanelMode(newPanelMode);
-
-    if (previousPanelMode != null) {
-      myColumnLayout.resetLayout();
-    }
-  }
-
-  public StatisticsPanelMode getStatisticsPanelMode() {
-    if (myStatisticsHeader != null) {
-      return myStatisticsHeader.getStatisticsPanelMode();
-    }
-    return null;
   }
 
   final void installHost(@NotNull GridTableHost host) {

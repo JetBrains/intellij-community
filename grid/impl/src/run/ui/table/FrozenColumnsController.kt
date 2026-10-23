@@ -63,7 +63,8 @@ internal class FrozenColumnsController(
   private val columnHeaderPopupActions: ActionGroup,
   private val rowHeaderPopupActions: ActionGroup,
   private val hostFactory: (GridTable) -> GridTableHost,
-  private val floatingToolbar: TableFloatingToolbarController,
+  /** Runs after the pinned table is dropped, so the view can let go of what it set up and cached for it. */
+  private val pinnedTableDropped: (GridTable) -> Unit,
 ) : Disposable {
   private var region: FrozenRegion? = null
   private var originalCorner: Component? = null
@@ -348,7 +349,6 @@ internal class FrozenColumnsController(
     // Rows share one model; columns use separate models mirrored below so selection paints correctly in both tables.
     frozen.selectionModel = primaryView.selectionModel
     TableSelectionModel.install(frozen, resultPanel)
-    floatingToolbar.attach(frozen)
     componentMouseListeners.forEach(frozen::addMouseListener)
 
     val mainColumns = primaryView.columnModel.selectionModel
@@ -391,8 +391,8 @@ internal class FrozenColumnsController(
     val region = region ?: return
     uninstallFrozenScrolling()
     this.region = null
-    floatingToolbar.detach(region.view)
     region.dispose(primaryView, componentMouseListeners)
+    pinnedTableDropped(region.view)
   }
 
   override fun dispose() {

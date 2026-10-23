@@ -71,9 +71,11 @@ It renders the scrollable columns in a [GridTable](src/run/ui/table/GridTable.ja
 While columns are pinned, [FrozenStripTable](src/run/ui/table/FrozenStripTable.kt), a `GridTable` subclass, renders them as the pinned table.
 [FrozenColumnsController](src/run/ui/table/FrozenColumnsController.kt) creates and removes the pinned table and keeps selection, dimensions, and model updates in step.
 Both tables send requests to the view through [GridTableHost](src/run/ui/table/GridTableHost.kt).
+The view sets up each table the same way, and owns the grid-level state they share: the cell image cache, the data for grid actions, sorting, transposing, the statistics header, and writing edited values.
 `GridTable` is package-private and implements none of the `ResultView*` interfaces, so code outside the table package works with `TableResultView` or `DataGrid`.
 
 [TableFloatingToolbarController](src/run/ui/table/TableFloatingToolbarController.kt) offers the floating toolbar for a clicked cell in either table.
+The view attaches it to every table and detaches it from a pinned table that goes away.
 [TableFloatingToolbar](src/run/ui/table/TableFloatingToolbar.kt) shows the toolbar actions above the cell the controller gives it.
 It is built from the grid alone: its actions run in the grid panel's data context, as those of the grid's other toolbars do, and open their popups below that cell.
 `TableResultView` owns the [GridSelectionGrower](src/run/ui/table/GridSelectionGrower.java), which grows and shrinks the grid's selection; from an empty selection it starts at the view's top-left visible cell.
@@ -102,6 +104,7 @@ The table and popup derive their displayed order from it.
 - Pin state is separate from column order; pin grouping changes only the presentation.
 - The pinned table uses its own index converter and selection model because it holds a subset of the columns.
 - Transpose swaps the table axes: table columns then represent data rows.
+- A transposed grid has no pinned columns: transposing drops the pinned table, and the pin actions are disabled.
 
 ## Embedding and editing
 
@@ -114,7 +117,7 @@ The panel selects `ResultViewFactory` from the presentation mode.
 [GridCellRendererFactory](src/run/ui/grid/renderers/GridCellRendererFactory.java) supplies cell renderers.
 [GridCellEditorFactoryProvider](src/run/ui/grid/editors/GridCellEditorFactoryProvider.java) selects cell editors.
 
-The cell editor sends its value through `DataGrid.setValueAt` to the hook's mutator.
+The cell editor of either table sends its value through `TableResultView` and `DataGrid.setValueAt` to the hook's mutator.
 For deferred updates, the `DATA_WITH_MUTATIONS` model exposes the pending value.
 `GridMutator.DatabaseMutator.submit` applies pending changes; `revert` discards them.
 Some hooks, including document hooks, apply edits immediately.

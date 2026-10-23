@@ -1,5 +1,6 @@
 package com.intellij.database.run.ui.table;
 
+import com.intellij.database.DatabaseDataKeys;
 import com.intellij.database.datagrid.DataGrid;
 import com.intellij.database.datagrid.DataGridListener;
 import com.intellij.database.datagrid.GridColumn;
@@ -29,10 +30,12 @@ import com.intellij.database.run.ui.grid.DataGridSearchSession;
 import com.intellij.database.run.ui.grid.DummyGridColumnLayout;
 import com.intellij.database.run.ui.grid.GridRowHeader;
 import com.intellij.database.run.ui.grid.GridSearchSession;
+import com.intellij.database.run.ui.grid.TableCellImageCache;
 import com.intellij.database.run.ui.table.statisticsPanel.StatisticsPanelMode;
 import com.intellij.database.run.ui.table.statisticsPanel.StatisticsTableHeader;
 import com.intellij.database.settings.DataGridSettings;
 import com.intellij.database.settings.DataGridSettings.AutoTransposeMode;
+import com.intellij.database.util.GridActionUiState;
 import com.intellij.find.FindModel;
 import com.intellij.find.SearchSession;
 import com.intellij.ide.ui.UISettings;
@@ -40,6 +43,7 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -55,6 +59,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import kotlin.Pair;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -82,6 +87,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EventObject;
 import java.util.HashSet;
 import java.util.List;
@@ -91,6 +97,9 @@ import java.util.function.Consumer;
 
 /**
  * The complete table view, including any pinned columns.
+ * <p>
+ * The view sets up every table the same way and owns the state they share: the cell image cache, the data for grid actions,
+ * sorting, transposing, the statistics header, and writing the values that cell editors commit.
  * <p>
  * A call that reaches only the main table is correct for one of two reasons. Either the pinned table follows it: it shares the
  * row selection and the data model events, mirrors the column selection and order, and is rebuilt from the main table's columns
@@ -111,14 +120,17 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   private ModelIndex<GridColumn> myContextColumn;
   private final GridSelectionGrower myGrower;
   private boolean myWasAutomaticallyTransposed;
+  private final TableCellImageCache myCellImageCache;
 
   public TableResultView(@NotNull DataGrid grid, @NotNull ActionGroup columnActions, @NotNull ActionGroup rowActions) {
     myResultPanel = grid;
     myContextColumn = ModelIndex.forColumn(grid, -1);
     myPrimary = new GridTable(grid, columnActions, rowActions);
-    myFloatingToolbar = new TableFloatingToolbarController(myPrimary, grid, grid.getCoroutineScope());
+    // One cache for the cell images of every table of the view.
+    myCellImageCache = new TableCellImageCache(this, this);
+    myFloatingToolbar = new TableFloatingToolbarController(grid, grid.getCoroutineScope());
     myFrozenColumnsController = new FrozenColumnsController(myPrimary, grid, columnActions, rowActions,
-                                                            this::adoptTable, myFloatingToolbar);
+                                                            this::adoptTable, this::pinnedTableDropped);
     myPrimary.installHost(adoptTable(myPrimary));
     myPrimary.installGridIntegration();
     myScrollPane = TableResultViewFactory.createScrollPane(grid, myPrimary, this);
@@ -152,6 +164,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   /** Sets up a table of this view, the main or the pinned one, and creates the host it reports to. */
   private GridTableHost adoptTable(GridTable table) {
+    myFloatingToolbar.attach(table);
     table.getEmptyText().setText(""); //DatabaseMessages.message("table.result.data.loading"));
     table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     table.setCellSelectionEnabled(true);
@@ -402,6 +415,23 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
                       ViewIndex.forColumn(myResultPanel, transposed ? row : column));
   }
 
+  /**
+   * Undoes {@link #adoptTable} for the dropped pinned table. The cache holds that table's renderers, so it starts over and is
+   * sized for the tables that are left.
+   */
+  private Unit pinnedTableDropped(@NotNull GridTable table) {
+    myFloatingToolbar.detach(table);
+    myCellImageCache.reset();
+    updateCellImageCacheSize();
+    return Unit.INSTANCE;
+  }
+
+  private void updateCellImageCacheSize() {
+    int[] size = {0};
+    forEachTable(table -> size[0] += table.requestedCellImageCacheSize());
+    myCellImageCache.adjustCacheSize(size[0]);
+  }
+
   private static int indexOrZero(int index, int count) {
     return index < 0 || index >= count ? 0 : index;
   }
@@ -506,6 +536,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     session.addListener(this, this);
   }
 
+  /** Takes a point in the main table's coordinates; the tables share their rows, so the row is the same in both. */
   public int rowAtPoint(@NotNull Point point) {
     return myPrimary.rowAtPoint(point);
   }
@@ -651,6 +682,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     forEachTable(table -> table.reinitSettings());
   }
 
+  /** Takes view indices of the main table. */
   @TestOnly
   public boolean editCellAt(int row, int column, EventObject e) {
     return myPrimary.editCellAt(row, column, e);
@@ -758,7 +790,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   @Override
   public boolean isCellEditingAllowed() {
-    return myPrimary.isCellEditingAllowed();
+    return true;
   }
 
   @Override
@@ -790,6 +822,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     return (editing != null ? editing : myPrimary).isMultiEditingAllowed();
   }
 
+  /** Takes view indices of the main table. */
   @TestOnly
   public void setValueAt(Object value, int viewRowIdx, int viewColumnIdx) {
     myPrimary.setValueAt(value, viewRowIdx, viewColumnIdx);
@@ -814,7 +847,6 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     if (myStatisticsHeaderHost != null) myStatisticsHeaderHost.installTable(null);
     if (myStatisticsHeader != null) myStatisticsHeader.installView(null);
     myStatisticsHeader = statisticsHeader;
-    myPrimary.setStatisticsHeader(statisticsHeader);
     if (statisticsHeader == null) {
       myStatisticsHeaderHost = null;
     }
@@ -824,15 +856,18 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   }
 
   public StatisticsTableHeader getStatisticsHeader() {
-    return myPrimary.getStatisticsHeader();
+    return myStatisticsHeader;
   }
 
   public void setStatisticsPanelMode(StatisticsPanelMode newPanelMode) {
-    myPrimary.setStatisticsPanelMode(newPanelMode);
+    StatisticsPanelMode previousPanelMode = getStatisticsPanelMode();
+    if (previousPanelMode == newPanelMode || myStatisticsHeader == null) return;
+    myStatisticsHeader.setStatisticsPanelMode(newPanelMode);
+    if (previousPanelMode != null) myColumnLayout.resetLayout();
   }
 
   public StatisticsPanelMode getStatisticsPanelMode() {
-    return myPrimary.getStatisticsPanelMode();
+    return myStatisticsHeader == null ? null : myStatisticsHeader.getStatisticsPanelMode();
   }
 
   @Override
@@ -848,7 +883,9 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   /** The table whose rows the row-number gutter follows, for row geometry, paint settings and the Swing row selection. */
   @NotNull JBTable rowHeaderTable() { return myPrimary; }
 
-  void toggleSortOrder(@NotNull ModelIndex<GridColumn> column, boolean additive) { myPrimary.toggleSortOrder(column, additive); }
+  void toggleSortOrder(@NotNull ModelIndex<GridColumn> column, boolean additive) {
+    myResultPanel.getAutoscrollLocker().runWithLock(() -> myResultPanel.toggleSortColumns(Collections.singletonList(column), additive));
+  }
 
   void invokeColumnPopup(@NotNull ModelIndex<GridColumn> column, @NotNull Component component, @NotNull Point point) {
     myPrimary.invokeColumnPopup(column, component, point);
@@ -1000,6 +1037,23 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     public void changeFontSize(int increment, double scale) { TableResultView.this.changeFontSize(increment, scale); }
 
     @Override
+    public void toggleSortOrder(@NotNull ModelIndex<GridColumn> column, boolean additive) {
+      TableResultView.this.toggleSortOrder(column, additive);
+    }
+
+    @Override
+    public @NotNull TableCellImageCache getCellImageCache() { return myCellImageCache; }
+
+    @Override
+    public void cellImageCacheSizeChanged() { updateCellImageCacheSize(); }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      // An open cell editor sits inside a table, and its own shortcuts must win over cell actions bound to F2 or Alt+Enter.
+      sink.set(DatabaseDataKeys.DATA_GRID_ACTION_UI_STATE_KEY, GridActionUiState.capture(myResultPanel, !isEditing()));
+    }
+
+    @Override
     public void setValueAt(@Nullable Object value, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column,
                            boolean allowImmediateUpdate, @NotNull GridRequestSource source, @Nullable Object metadata) {
       TableResultView.this.setValueAt(value, row, column, allowImmediateUpdate, source, metadata);
@@ -1124,18 +1178,21 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     forEachTable(table -> table.setColumnHeaderPainter(painter));
   }
 
+  /** Only the table diff uses it, and its grid cannot pin columns. */
   public void addColumnHeaderMouseListener(@NotNull MouseListener listener) {
     myPrimary.getTableHeader().addMouseListener(listener);
   }
 
   public int getColumnHeaderHeight() { return myPrimary.getTableHeader().getHeight(); }
 
+  /** The statistics header lies over the main table's columns only, so it follows a drag in that header. */
   public @Nullable TableColumn getDraggedColumn() { return myPrimary.getTableHeader().getDraggedColumn(); }
 
   public int getHeaderDraggedDistance() { return myPrimary.getTableHeader().getDraggedDistance(); }
 
   public void refreshCells() { forEachTable(table -> table.tableChanged(null)); }
 
+  /** Takes a point in the main table's coordinates. */
   public int columnAtPoint(@NotNull Point point) { return myPrimary.columnAtPoint(point); }
 
   @Override
