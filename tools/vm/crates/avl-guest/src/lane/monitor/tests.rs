@@ -1,5 +1,4 @@
 use std::cell::RefCell;
-use std::collections::BTreeSet;
 use std::fs;
 use std::os::unix::fs::symlink;
 use std::path::{Path, PathBuf};
@@ -14,7 +13,7 @@ use tempfile::TempDir;
 
 use super::*;
 use crate::lane::evidence::Evidence;
-use crate::lane::inputs::{LaunchInputs, TraceInputs};
+use crate::lane::testing::launch_inputs;
 use crate::lane::watchdog::{Policy, Watch};
 use crate::supervisor::thread_dump;
 
@@ -239,20 +238,7 @@ impl StopEffects for Recorded {
 }
 
 fn daemon(root: &Path) -> Daemon {
-    let inputs = LaunchInputs {
-        ide_root: root.join("ide"),
-        home: root.join("home"),
-        dist_home: root.join("dist"),
-        ide_config: root.join("dist.properties"),
-        java_home: root.join("dist/jbr"),
-        flags_file: root.join("flags.txt"),
-        project_archive: root.join("project.zip"),
-        project_root: "plain-project".to_owned(),
-        runtimes: Vec::new(),
-        distribution_plugins: BTreeSet::new(),
-        trace: TraceInputs::default(),
-    };
-    Daemon::new(root.join("state"), "lane-run".to_owned(), 0, inputs)
+    Daemon::new(root.join("state"), "lane-run".to_owned(), 0, launch_inputs(root))
 }
 
 // The hard stop writes the JUnit XML of the records so far to each file of the run, cancels the IDE run that the

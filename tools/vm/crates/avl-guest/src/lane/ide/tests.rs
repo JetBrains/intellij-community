@@ -5,20 +5,10 @@ use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
 use super::*;
+use crate::lane::testing::{context_plugin, guest_launch_inputs, launch_inputs};
 
 const BRIDGE: &str = "air-integrationTests-bridge-plugin";
 const RESIDENT: &str = "air-integrationTests-bridge-resident-plugin";
-
-/// A plugin file `destination` whose bytes are `content`, in `sources`.
-fn plugin(sources: &Path, destination: &str, content: &str) -> ContextPlugin {
-    let source = sources.join(destination.replace('/', "_"));
-    fs::write(&source, content).unwrap();
-    ContextPlugin {
-        destination: destination.to_owned(),
-        sha256: sha256(content),
-        source,
-    }
-}
 
 fn sha256(content: &str) -> String {
     super::super::package::sha256_hex(content.as_bytes())
@@ -42,8 +32,8 @@ fn tree(root: &Path) -> Vec<String> {
 fn the_manifest_lists_each_file_in_destination_order() {
     let sources = TempDir::new().unwrap();
     let files = [
-        plugin(sources.path(), &format!("{RESIDENT}/lib/r.jar"), "r"),
-        plugin(sources.path(), &format!("{BRIDGE}/lib/b.jar"), "b"),
+        context_plugin(sources.path(), &format!("{RESIDENT}/lib/r.jar"), "r"),
+        context_plugin(sources.path(), &format!("{BRIDGE}/lib/b.jar"), "b"),
     ];
     assert_eq!(
         manifest(&files),
@@ -59,9 +49,9 @@ fn an_install_replaces_the_plugin_directories_and_writes_the_manifest_last() {
     let sources = TempDir::new().unwrap();
     let plugins = TempDir::new().unwrap();
     let first = [
-        plugin(sources.path(), &format!("{BRIDGE}/lib/b.jar"), "b1"),
-        plugin(sources.path(), &format!("{RESIDENT}/lib/r.jar"), "r"),
-        plugin(sources.path(), "air-extra-plugin/lib/x.jar", "x"),
+        context_plugin(sources.path(), &format!("{BRIDGE}/lib/b.jar"), "b1"),
+        context_plugin(sources.path(), &format!("{RESIDENT}/lib/r.jar"), "r"),
+        context_plugin(sources.path(), "air-extra-plugin/lib/x.jar", "x"),
     ];
     install_plugins(plugins.path(), &first, &[]).unwrap();
     assert_eq!(
@@ -75,8 +65,8 @@ fn an_install_replaces_the_plugin_directories_and_writes_the_manifest_last() {
     );
     assert_eq!(installed_manifest(plugins.path()), manifest(&first));
     let second = [
-        plugin(sources.path(), &format!("{BRIDGE}/lib/b.jar"), "b2"),
-        plugin(sources.path(), &format!("{RESIDENT}/lib/r.jar"), "r"),
+        context_plugin(sources.path(), &format!("{BRIDGE}/lib/b.jar"), "b2"),
+        context_plugin(sources.path(), &format!("{RESIDENT}/lib/r.jar"), "r"),
     ];
     install_plugins(plugins.path(), &second, &[]).unwrap();
     assert_eq!(
@@ -100,12 +90,12 @@ fn an_install_replaces_the_plugin_directories_and_writes_the_manifest_last() {
 fn an_install_refuses_a_missing_bridge_and_a_doubled_plugin() {
     let sources = TempDir::new().unwrap();
     let plugins = TempDir::new().unwrap();
-    let bridge_only = [plugin(sources.path(), &format!("{BRIDGE}/lib/b.jar"), "b")];
+    let bridge_only = [context_plugin(sources.path(), &format!("{BRIDGE}/lib/b.jar"), "b")];
     let refusal = install_plugins(plugins.path(), &bridge_only, &[]).unwrap_err();
     assert!(refusal.message.contains(RESIDENT), "{}", refusal.message);
     let both = [
-        plugin(sources.path(), &format!("{BRIDGE}/lib/b.jar"), "b"),
-        plugin(sources.path(), &format!("{RESIDENT}/lib/r.jar"), "r"),
+        context_plugin(sources.path(), &format!("{BRIDGE}/lib/b.jar"), "b"),
+        context_plugin(sources.path(), &format!("{RESIDENT}/lib/r.jar"), "r"),
     ];
     let refusal = install_plugins(plugins.path(), &both, &[BRIDGE.to_owned()]).unwrap_err();
     assert!(refusal.message.contains("load them twice"), "{}", refusal.message);
@@ -130,19 +120,7 @@ fn a_launch_name_is_the_base_and_the_time_in_base_36() {
 fn a_bare_context_disables_no_plugin_and_a_lane_context_disables_those_of_the_document() {
     let bytes = fs::read(avl_testkit::crate_path!("testdata/lane-context/ui.json")).unwrap();
     let document = avl_wire::program::lane::parse_lane_document(&bytes).unwrap();
-    let inputs = LaunchInputs {
-        ide_root: "/vm/data/ide".into(),
-        home: "/vm/home".into(),
-        dist_home: "/d".into(),
-        ide_config: "/d.properties".into(),
-        java_home: "/d/jbr".into(),
-        flags_file: "/f".into(),
-        project_archive: "/p.zip".into(),
-        project_root: "plain-project".to_owned(),
-        runtimes: Vec::new(),
-        distribution_plugins: std::collections::BTreeSet::new(),
-        trace: crate::lane::inputs::TraceInputs::default(),
-    };
+    let inputs = guest_launch_inputs();
     let lane = fresh_context(&inputs, "air-ui-lane", &document, false);
     assert_eq!(lane.disabled_plugin_ids, ["com.intellij.ml.llm"]);
     let bare = fresh_context(&inputs, "air-startup", &document, true);
@@ -222,23 +200,6 @@ fn a_recycle_removes_the_restored_tabs_and_a_restart_keeps_them() {
     assert_eq!(fs::read_to_string(&file).unwrap(), "<project version=\"4\">\n</project>\n");
 }
 
-/// The inputs of an owner whose IDE root is `root`, with no file behind them.
-fn owner_inputs(root: &Path) -> LaunchInputs {
-    LaunchInputs {
-        ide_root: root.join("ide"),
-        home: root.join("home"),
-        dist_home: root.join("dist"),
-        ide_config: root.join("dist.properties"),
-        java_home: root.join("dist/jbr"),
-        flags_file: root.join("flags.txt"),
-        project_archive: root.join("project.zip"),
-        project_root: "plain-project".to_owned(),
-        runtimes: Vec::new(),
-        distribution_plugins: std::collections::BTreeSet::new(),
-        trace: crate::lane::inputs::TraceInputs::default(),
-    }
-}
-
 /// A held IDE of the context `context`, whose launch `launch_name` has no run on disk, so a quit finds it ended.
 fn held_ide(context: &Path, launch_name: &str) -> HeldIde {
     let path = |name: &str| context.join(name).display().to_string();
@@ -284,7 +245,7 @@ impl RelaunchParts for RecordedParts {
 #[test]
 fn a_restart_reports_each_part_that_it_ran_and_the_refusal_that_ended_one() {
     let root = TempDir::new().unwrap();
-    let mut owner = IdeOwner::new(owner_inputs(root.path()));
+    let mut owner = IdeOwner::new(launch_inputs(root.path()));
     owner.held = Some(held_ide(&root.path().join("ide/air-ui-lane"), "start-mve37si6"));
     let bytes = fs::read(avl_testkit::crate_path!("testdata/lane-context/ui.json")).unwrap();
     let document = avl_wire::program::lane::parse_lane_document(&bytes).unwrap();
@@ -332,7 +293,7 @@ fn a_restart_reports_each_part_that_it_ran_and_the_refusal_that_ended_one() {
 fn the_kill_target_is_the_run_of_the_last_launch_and_a_quit_clears_it() {
     let root = TempDir::new().unwrap();
     let context = root.path().join("ide/air-ui-lane");
-    let mut owner = IdeOwner::new(owner_inputs(root.path()));
+    let mut owner = IdeOwner::new(launch_inputs(root.path()));
     let target = owner.kill_target();
     assert_eq!(target.current(), None, "an owner with no IDE publishes no target");
 
@@ -356,7 +317,7 @@ fn the_kill_target_is_the_run_of_the_last_launch_and_a_quit_clears_it() {
 #[test]
 fn the_ready_record_names_the_launch_the_pid_and_the_wait() {
     let root = TempDir::new().unwrap();
-    let mut owner = IdeOwner::new(owner_inputs(root.path()));
+    let mut owner = IdeOwner::new(launch_inputs(root.path()));
     let ready = Ready {
         pid: 4242,
         after: Duration::from_millis(6949),

@@ -28,6 +28,8 @@ pub(crate) mod run_result;
 pub(crate) mod services;
 pub(crate) mod session_logs;
 pub(crate) mod stream;
+#[cfg(test)]
+pub(crate) mod testing;
 pub(crate) mod trace;
 pub(crate) mod values;
 pub(crate) mod watchdog;

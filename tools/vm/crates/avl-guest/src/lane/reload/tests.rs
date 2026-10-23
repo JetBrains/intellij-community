@@ -9,29 +9,18 @@ use serde_json::{Value, json};
 use tempfile::TempDir;
 
 use super::*;
-use crate::lane::package::sha256_hex;
+use crate::lane::testing::{context_plugin, token_refusal};
 
 const RESIDENT: &str = REQUIRED_CONTEXT_PLUGINS[1];
 const TOKEN: &str = "bridge-token";
 const LAUNCH: &str = "air-ui-0123456789abcdef";
 
-/// A context plugin file `destination` whose bytes are `content`, written into `sources`.
-fn plugin(sources: &Path, destination: &str, content: &str) -> ContextPlugin {
-    let source = sources.join(destination.replace('/', "_"));
-    fs::write(&source, content).unwrap();
-    ContextPlugin {
-        destination: destination.to_owned(),
-        sha256: sha256_hex(content.as_bytes()),
-        source,
-    }
-}
-
 /// The context plugins of a run: the bridge with `bridge` as its jar, and the resident part with `resident`.
 fn plugins(sources: &Path, bridge: &str, resident: &str) -> Vec<ContextPlugin> {
     vec![
-        plugin(sources, &format!("{BRIDGE_DIRECTORY}/lib/bridge.jar"), bridge),
-        plugin(sources, &format!("{BRIDGE_DIRECTORY}/lib/modules/frontend.jar"), "frontend"),
-        plugin(sources, &format!("{RESIDENT}/lib/resident.jar"), resident),
+        context_plugin(sources, &format!("{BRIDGE_DIRECTORY}/lib/bridge.jar"), bridge),
+        context_plugin(sources, &format!("{BRIDGE_DIRECTORY}/lib/modules/frontend.jar"), "frontend"),
+        context_plugin(sources, &format!("{RESIDENT}/lib/resident.jar"), resident),
     ]
 }
 
@@ -191,8 +180,8 @@ impl FakeResident {
         let seen = Arc::clone(&requests);
         let polls = AtomicUsize::new(0);
         let server = FakeHttp::start(move |request: &Request| {
-            if request.header("X-Air-Ui-Test-Token") != Some(TOKEN) {
-                return Response::json(401, r#"{"failure":{"type":"java.lang.SecurityException","message":"bad token"}}"#);
+            if let Some(refusal) = token_refusal(request, TOKEN) {
+                return refusal;
             }
             if request.path.starts_with("/api/air/ui-test-events") {
                 let poll = polls.fetch_add(1, Ordering::SeqCst);

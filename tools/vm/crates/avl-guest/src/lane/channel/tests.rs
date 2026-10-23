@@ -1,4 +1,3 @@
-use std::collections::BTreeSet;
 use std::fs;
 use std::net::{Ipv4Addr, SocketAddr};
 use std::os::unix::fs::PermissionsExt;
@@ -11,26 +10,11 @@ use tempfile::TempDir;
 
 use super::*;
 use crate::lane::services::testing::{Answer, call};
+use crate::lane::testing::launch_inputs;
 use crate::linux::validate::SHARED_OBJECT_UNRESOLVED_CODE;
 use crate::step::tests_support::Transcript;
 
 const LAUNCH_DIGEST: &str = "launch-1";
-
-fn inputs(root: &Path) -> LaunchInputs {
-    LaunchInputs {
-        ide_root: root.join("ide"),
-        home: root.join("home"),
-        dist_home: root.join("dist"),
-        ide_config: root.join("dist.properties"),
-        java_home: root.join("dist/jbr"),
-        flags_file: root.join("flags.txt"),
-        project_archive: root.join("project.zip"),
-        project_root: "plain-project".to_owned(),
-        runtimes: Vec::new(),
-        distribution_plugins: BTreeSet::new(),
-        trace: inputs::TraceInputs::default(),
-    }
-}
 
 /// A booted daemon on a free loopback port, its channel and its published state file.
 struct Booted {
@@ -60,7 +44,7 @@ fn booted() -> Booted {
     fs::write(state_dir.join("jars").join("stale"), "from the previous boot").unwrap();
     fs::write(state_dir.join(STATE_FILE), "{}").unwrap();
     let args = daemon_args(root.path());
-    let daemon = Arc::new(boot(&args, inputs(root.path()), &|_| None).unwrap());
+    let daemon = Arc::new(boot(&args, launch_inputs(root.path()), &|_| None).unwrap());
     assert!(
         !state_dir.join(STATE_FILE).exists(),
         "the boot removes the state file of the previous daemon"
@@ -94,7 +78,7 @@ fn the_boot_makes_the_directories_of_the_run_readable_only_by_its_account() {
     ];
     let variable = |name: &str| environment.iter().find(|(key, _)| *key == name).map(|(_, value)| value.clone());
     let args = daemon_args(root.path());
-    boot(&args, inputs(root.path()), &variable).unwrap();
+    boot(&args, launch_inputs(root.path()), &variable).unwrap();
 
     let mode = |path: &Path| fs::metadata(path).unwrap().permissions().mode() & 0o777;
     for directory in [&args.home, &args.ide_root, &outputs, &args.state_dir.join("jars")] {
@@ -109,7 +93,7 @@ fn the_boot_makes_the_directories_of_the_run_readable_only_by_its_account() {
 #[test]
 fn the_boot_on_a_linux_guest_refuses_a_distribution_whose_library_is_missing() {
     let root = TempDir::new().unwrap();
-    let inputs = inputs(root.path());
+    let inputs = launch_inputs(root.path());
     let skiko = inputs.dist_home.join("lib/libskiko-linux-arm64.so");
     fs::create_dir_all(skiko.parent().unwrap()).unwrap();
     fs::write(&skiko, "\x7fELF").unwrap();

@@ -6,6 +6,7 @@ use pretty_assertions::assert_eq;
 use serde_json::{Value, json};
 
 use super::*;
+use crate::lane::testing::token_refusal;
 
 const TOKEN: &str = "bridge-token";
 const LAUNCH: &str = "air-ui-0123456789abcdef";
@@ -60,8 +61,8 @@ fn fake_ide_in(phase: &'static str, vocabulary: Option<&'static str>, robot: &'s
     let log = Arc::new(Mutex::new(Vec::new()));
     let seen = Arc::clone(&log);
     let server = FakeHttp::start(move |request| {
-        if request.header("X-Air-Ui-Test-Token") != Some(TOKEN) {
-            return Response::json(401, r#"{"failure":{"type":"java.lang.SecurityException","message":"bad token"}}"#);
+        if let Some(refusal) = token_refusal(request, TOKEN) {
+            return refusal;
         }
         if request.path.starts_with("/api/air/ui-test-events") {
             return Response::ok("application/json", snapshot(phase, vocabulary));
