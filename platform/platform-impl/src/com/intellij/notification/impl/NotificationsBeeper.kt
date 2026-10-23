@@ -8,8 +8,8 @@ import com.intellij.ide.soundSignals.isSoundSignalOn
 import com.intellij.ide.soundSignals.isSoundSignalsFeatureEnabled
 import com.intellij.ide.soundSignals.notificationSound
 import com.intellij.notification.Notification
+import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
@@ -25,8 +25,7 @@ internal class NotificationsBeeper: Notifications {
   override fun notify(notification: Notification) {
     val settings = NotificationsConfigurationImpl.getSettings(notification.groupId)
     if (playsSound(settings)) {
-      service<NotificationSoundPlayer>().play(notification)
-      NotificationCollector.getInstance().logSoundPlayed(notification, settings.displayType)
+      service<NotificationSoundPlayer>().play(notification, settings.displayType)
       boundSoundSignal(notification.groupId)?.let { AccessibilityUsageTrackerCollector.SOUND_SIGNAL_PLAYED.log(it.id) }
     }
   }
@@ -38,13 +37,21 @@ internal fun playsSound(settings: NotificationSettings): Boolean =
 private fun boundSoundSignal(groupId: String): SoundSignal? =
   if (isSoundSignalsFeatureEnabled()) soundSignalIdOf(groupId)?.let(::findSoundSignal) else null
 
-@Service
-private class NotificationSoundPlayer(private val scope: CoroutineScope) {
-  fun play(notification: Notification) {
+internal abstract class NotificationSoundPlayer {
+  fun play(notification: Notification, displayType: NotificationDisplayType) {
     val ep = findNotificationSound(notification.groupId)
     val sound = ep?.sound
     val path = sound ?: notificationSound(notification.type)
-    val url = (if (sound == null) javaClass.classLoader else ep.pluginDescriptor?.pluginClassLoader)?.getResource(path)
+    playSoundResource(path, if (sound == null) NotificationSoundPlayer::class.java.classLoader else ep.pluginDescriptor?.pluginClassLoader)
+    NotificationCollector.getInstance().logSoundPlayed(notification, displayType)
+  }
+
+  protected abstract fun playSoundResource(path: String, loader: ClassLoader?)
+}
+
+internal class NotificationSoundPlayerImpl(private val scope: CoroutineScope) : NotificationSoundPlayer() {
+  override fun playSoundResource(path: String, loader: ClassLoader?) {
+    val url = loader?.getResource(path)
     scope.launch {
       runCatching {
         playSound { checkNotNull(url) { "Sound resource not found: $path" }.openStream() }

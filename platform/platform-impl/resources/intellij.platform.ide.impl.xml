@@ -1276,6 +1276,8 @@
                         preload="notHeadless"/>
     <applicationService serviceInterface="com.intellij.ide.soundSignals.SoundSignalPlayer"
                         serviceImplementation="com.intellij.ide.soundSignals.SoundSignalPlayerImpl"/>
+    <applicationService serviceInterface="com.intellij.notification.impl.NotificationSoundPlayer"
+                        serviceImplementation="com.intellij.notification.impl.NotificationSoundPlayerImpl"/>
     <statistics.validation.customValidationRule implementation="com.intellij.ide.soundSignals.SoundSignalIdValidationRule"/>
     <soundSignalProvider implementation="com.intellij.ide.soundSignals.IdeSoundSignalProvider"/>
     <editorSoundSignalDetector implementation="com.intellij.ide.soundSignals.ErrorWarningSoundSignalDetector"/>

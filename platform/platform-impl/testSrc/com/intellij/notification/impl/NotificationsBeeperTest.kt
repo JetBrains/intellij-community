@@ -6,6 +6,7 @@ import com.intellij.ide.soundSignals.IdeSoundSignals
 import com.intellij.ide.soundSignals.SOUND_SIGNALS_ENABLED_REGISTRY_KEY
 import com.intellij.ide.soundSignals.SoundSignalsSettingsState
 import com.intellij.ide.soundSignals.loadSoundSignals
+import com.intellij.ide.soundSignals.notificationSound
 import com.intellij.ide.soundSignals.setSupportScreenReaders
 import com.intellij.ide.soundSignals.withSoundSignalsSettings
 import com.intellij.internal.statistic.FUCollectorTestCase
@@ -13,6 +14,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
@@ -21,12 +23,11 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.replaceService
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.net.URL
-import java.util.concurrent.CopyOnWriteArrayList
 
 @TestApplication
 @RegistryKey(key = SOUND_SIGNALS_ENABLED_REGISTRY_KEY, value = "true")
@@ -34,17 +35,13 @@ class NotificationsBeeperTest {
   @TestDisposable
   lateinit var testDisposable: Disposable
 
-  private val pluginLoader = object : ClassLoader(null) {
-    val requested = CopyOnWriteArrayList<String>()
+  private val pluginLoader = object : ClassLoader(null) {}
 
-    override fun getResource(name: String): URL? {
-      requested.add(name)
-      return null
-    }
-  }
+  private val player = RecordingPlayer()
 
   @BeforeEach
   fun bindSound() {
+    ApplicationManager.getApplication().replaceService(NotificationSoundPlayer::class.java, player, testDisposable)
     val descriptor = DefaultPluginDescriptor(PluginId.getId("test.plugin"), pluginLoader)
     val soundBinding = NotificationSoundEP().apply {
       group = BOUND_GROUP
@@ -66,25 +63,23 @@ class NotificationsBeeperTest {
 
     NotificationsBeeper().notify(Notification(BOUND_GROUP, "title", NotificationType.ERROR))
 
-    assertThat(pluginLoader.requested).containsExactly("sounds/bound.wav")
+    assertThat(player.played).containsExactly(pluginLoader to "sounds/bound.wav")
   }
 
   @Test
   fun `a group with Play sound off plays nothing`() {
-    val events = soundPlayedEvents { NotificationsBeeper().notify(Notification(BOUND_GROUP, "title", NotificationType.ERROR)) }
+    NotificationsBeeper().notify(Notification(BOUND_GROUP, "title", NotificationType.ERROR))
 
-    assertThat(pluginLoader.requested).isEmpty()
-    assertThat(events).isEmpty()
+    assertThat(player.played).isEmpty()
   }
 
   @Test
   fun `a binding does not apply to another group`() {
     enablePlaySound(UNBOUND_GROUP)
 
-    val events = soundPlayedEvents { NotificationsBeeper().notify(Notification(UNBOUND_GROUP, "title", NotificationType.ERROR)) }
+    NotificationsBeeper().notify(Notification(UNBOUND_GROUP, "title", NotificationType.ERROR))
 
-    assertThat(pluginLoader.requested).isEmpty()
-    assertThat(events.map { it.event.data["notification_group"] }).containsExactly(UNBOUND_GROUP)
+    assertThat(player.played.map { it.second }).containsExactly(notificationSound(NotificationType.ERROR))
   }
 
   @Test
@@ -92,12 +87,12 @@ class NotificationsBeeperTest {
     enablePlaySound(SIGNAL_GROUP)
     settings.loadSoundSignals(SoundSignalsSettingsState(signals = mapOf(SIGNAL.id to false)))
     notifySignalGroup()
-    assertThat(pluginLoader.requested).isEmpty()
+    assertThat(player.played).isEmpty()
 
     NotificationsConfigurationImpl.remove(SIGNAL_GROUP)
     settings.loadSoundSignals(SoundSignalsSettingsState(signals = mapOf(SIGNAL.id to true)))
     notifySignalGroup()
-    assertThat(pluginLoader.requested).containsExactly("sounds/signal.wav")
+    assertThat(player.played).containsExactly(pluginLoader to "sounds/signal.wav")
   }
 
   @Test
@@ -106,7 +101,7 @@ class NotificationsBeeperTest {
 
     notifySignalGroup()
 
-    assertThat(pluginLoader.requested).containsExactly("sounds/signal.wav")
+    assertThat(player.played).containsExactly(pluginLoader to "sounds/signal.wav")
   }
 
   @Test
@@ -134,11 +129,11 @@ class NotificationsBeeperTest {
     Registry.get(SOUND_SIGNALS_ENABLED_REGISTRY_KEY).setValue(false, testDisposable)
     settings.loadSoundSignals(SoundSignalsSettingsState(signals = mapOf(SIGNAL.id to true)))
     notifySignalGroup()
-    assertThat(pluginLoader.requested).isEmpty()
+    assertThat(player.played).isEmpty()
 
     enablePlaySound(SIGNAL_GROUP)
     notifySignalGroup()
-    assertThat(pluginLoader.requested).containsExactly("sounds/signal.wav")
+    assertThat(player.played).containsExactly(pluginLoader to "sounds/signal.wav")
   }
 
   private fun signalTest(body: (AccessibilitySettings) -> Unit): Unit = withSoundSignalsSettings { settings ->
@@ -159,6 +154,14 @@ class NotificationsBeeperTest {
     NotificationsConfigurationImpl.getInstanceImpl()
       .changeSettings(NotificationSettings(groupId, displayType, false, false, true))
     Disposer.register(testDisposable) { NotificationsConfigurationImpl.remove(groupId) }
+  }
+
+  private class RecordingPlayer : NotificationSoundPlayer() {
+    val played = ArrayList<Pair<ClassLoader?, String>>()
+
+    override fun playSoundResource(path: String, loader: ClassLoader?) {
+      played += loader to path
+    }
   }
 
   private companion object {
