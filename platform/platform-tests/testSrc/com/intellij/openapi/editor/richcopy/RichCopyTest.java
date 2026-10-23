@@ -12,6 +12,7 @@ import junit.framework.AssertionFailedError;
 import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.Font;
 import java.awt.datatransfer.Transferable;
 import java.io.File;
 import java.io.IOException;
@@ -32,6 +33,7 @@ public class RichCopyTest extends BasePlatformTestCase {
 
   private void doTest(boolean columnMode) throws Exception {
     myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.getEditor().getColorsScheme().setEditorFontName(Font.MONOSPACED);
     if (columnMode) {
       myFixture.performEditorAction("EditorToggleColumnMode");
     }
