@@ -57,7 +57,6 @@ import com.intellij.database.run.ui.grid.renderers.GridCellRendererFactories;
 import com.intellij.database.run.ui.table.statisticsPanel.StatisticsPanelMode;
 import com.intellij.database.run.ui.table.statisticsPanel.StatisticsTableHeader;
 import com.intellij.database.settings.DataGridSettings;
-import com.intellij.database.settings.DataGridSettings.AutoTransposeMode;
 import com.intellij.database.util.GridActionUiState;
 import com.intellij.find.FindModel;
 import com.intellij.icons.AllIcons;
@@ -77,7 +76,6 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
@@ -248,7 +246,6 @@ class GridTable extends JBTableWithResizableCells
   private int myColumnsHashCode;
   private PaintingSession myPaintingSession;
 
-  private boolean myWasAutomaticallyTransposed = false;
   private boolean myDisableSelectionListeners = false;
   private Consumer<Boolean> myColumnHeaderBgListener;
   private Boolean myIsTransparentColumnHeaderBg;
@@ -355,16 +352,6 @@ class GridTable extends JBTableWithResizableCells
         }
       }
     });
-  }
-
-  /** Drops the pinned columns before a transpose. */
-  private void dropFrozenColumns() {
-    if (myHost != null) myHost.dropFrozenColumns();
-  }
-
-  /** Runs after the model was swapped for a transpose, so the host can refresh the row numbers. */
-  private void onTransposed() {
-    if (myHost != null) myHost.onTransposed();
   }
 
   /** Where the hint for an expanded cell may reach. The strip clips it to its own width; the grid's own table does not. */
@@ -502,32 +489,10 @@ class GridTable extends JBTableWithResizableCells
     };
   }
 
-  public void setValueAt(@Nullable Object v,
-                         @NotNull ModelIndex<GridRow> row,
-                         @NotNull ModelIndex<GridColumn> column,
-                         boolean allowImmediateUpdate,
-                         @NotNull GridRequestSource source) {
-    setValueAt(v, row, column, allowImmediateUpdate, source, null);
-  }
-
-  public void setValueAt(@Nullable Object v,
-                         @NotNull ModelIndex<GridRow> row,
-                         @NotNull ModelIndex<GridColumn> column,
-                         boolean allowImmediateUpdate,
-                         @NotNull GridRequestSource source,
-                         @Nullable Object metadata) {
-    int viewRowIdx = isTransposed() ? column.toView(myResultPanel).asInteger() : row.toView(myResultPanel).asInteger();
-    int viewColumnIdx = isTransposed() ? row.toView(myResultPanel).asInteger() : column.toView(myResultPanel).asInteger();
-    setValueAt(v, viewRowIdx, viewColumnIdx, allowImmediateUpdate, source, metadata);
-  }
-
-  public void setTransposed(boolean transposed) {
-    myWasAutomaticallyTransposed = false;
+  /** Swaps the model and the columns for a transpose; the view drops the pinned table first and refreshes the row numbers after. */
+  void transpose(boolean transposed) {
     if (isTransposed() == transposed) return;
-    if (transposed) {
-      dropFrozenColumns();
-      rememberUntransposedColumnWidths();
-    }
+    if (transposed) rememberUntransposedColumnWidths();
     GridUtil.saveAndRestoreSelection(myResultPanel, () -> {
       doTranspose();
       createDefaultColumnsFromModel();
@@ -826,7 +791,6 @@ class GridTable extends JBTableWithResizableCells
     myColumnCache.retainColumns(emptyList());
     myColumnLayout.invalidateCache();
     setModel(isTransposed() ? new RegularGridTableModel(myResultPanel) : new TransposedGridTableModel(myResultPanel));
-    onTransposed();
     myResultPanel.updateSortKeysFromColumnAttributes();
     getModel().fireTableDataChanged();
   }
@@ -1155,19 +1119,6 @@ class GridTable extends JBTableWithResizableCells
   }
 
   public void afterLastRowAdded() {
-    DataGridSettings settings = GridUtil.getSettings(myResultPanel);
-    if (!isTransposed() &&
-        getViewRowCount() == 1 &&
-        settings != null && settings.getAutoTransposeMode() == AutoTransposeMode.ONE_ROW) {
-      setTransposed(true);
-      myWasAutomaticallyTransposed = true;
-      return;
-    }
-    if (myWasAutomaticallyTransposed && isTransposed() && getViewRowCount() != 1) {
-      setTransposed(false);
-      return;
-    }
-
     SingleRowModeHelper.expandRowIfNeeded(myResultPanel);
 
     JComponent mainResultViewComponent = myResultPanel.getMainResultViewComponent();
@@ -2442,63 +2393,14 @@ class GridTable extends JBTableWithResizableCells
     return myCellImageCache.wrapCellRenderer(renderer);
   }
 
+  /** The value a cell editor of this table commits; the view writes it to the cell, or to every selected cell. */
   @Override
   public void setValueAt(Object value, int viewRowIdx, int viewColumnIdx) {
-    setValueAt(value, viewRowIdx, viewColumnIdx, true, new GridRequestSource(new DataGridRequestPlace(myResultPanel)), null);
-  }
-
-  private void setValueAt(Object value,
-                          int viewRowIdx,
-                          int viewColumnIdx,
-                          boolean allowImmediateUpdate,
-                          @NotNull GridRequestSource source,
-                          @Nullable Object metadata) {
-    boolean allowed = isMultiEditingAllowed();
-    // The grid selects in the main table, so a single cell of the strip is named by its column in the main table.
-    int gridColumn = allowed ? viewColumnIdx : toGridViewColumn(viewColumnIdx);
-    if (gridColumn < 0) return;
-    int[] rows = allowed ? myHost.getSelectedRows() : new int[]{viewRowIdx};
-    int[] columns = allowed ? myHost.getSelectedColumns() : new int[]{gridColumn};
-    ViewIndexSet<GridRow> rowsSet = ViewIndexSet.forRows(myResultPanel, isTransposed() ? columns : rows);
-    ViewIndexSet<GridColumn> columnsSet = ViewIndexSet.forColumns(myResultPanel, isTransposed() ? rows : columns);
-    GridTableCellEditor editor = ObjectUtils.tryCast(getCellEditor(), GridTableCellEditor.class);
-    Runnable moveToNextCellRunnable = editor != null && editor.shouldMoveFocus()
-                                      ? () -> IdeFocusManager.findInstanceByComponent(this).doWhenFocusSettlesDown(
-      // doWhenFocusSettlesDown causes "Write-unsafe context" so we need to call invokeLater
-      () -> ApplicationManager.getApplication().invokeLater(() -> moveToNextCell(rowsSet.last(), columnsSet.last())))
-                                      : null;
-    myResultPanel.setValueAt(rowsSet.toModel(myResultPanel),
-                             columnsSet.toModel(myResultPanel),
-                             value,
-                             allowImmediateUpdate,
-                             moveToNextCellRunnable,
-                             source,
-                             metadata);
-  }
-
-  private void moveToNextCell(@NotNull ViewIndex<GridRow> rowIndex, @NotNull ViewIndex<GridColumn> colIndex) {
-    SelectionModel<GridRow, GridColumn> selectionModel = myResultPanel.getSelectionModel();
-    if (selectionModel.getSelectedRowCount() != 1 || selectionModel.getSelectedColumnCount() != 1 ||
-        !ApplicationManager.getApplication().isUnitTestMode() && (!UIUtil.isFocusAncestor(this) || isEditing())) {
-      return;
-    }
-
-    // if selection has already been changed by Tab or Shift-Tab we don't need to change it
-    if (!Comparing.equal(selectionModel.getSelectedRow(), rowIndex.toModel(myResultPanel)) ||
-        !Comparing.equal(selectionModel.getSelectedColumn(), colIndex.toModel(myResultPanel))) {
-      return;
-    }
-
-    if (GridUtil.isInsertedRow(myResultPanel, rowIndex.toModel(myResultPanel))) {
-      ViewIndex<GridColumn> nextColumn = ViewIndex.forColumn(myResultPanel, colIndex.asInteger() + 1);
-      colIndex = nextColumn.isValid(myResultPanel) ? nextColumn : colIndex;
-    }
-    else {
-      ViewIndex<GridRow> nextRow = ViewIndex.forRow(myResultPanel, rowIndex.asInteger() + 1);
-      rowIndex = nextRow.isValid(myResultPanel) ? nextRow : rowIndex;
-    }
-
-    GridUtil.scrollToLocally(myResultPanel, rowIndex, colIndex);
+    int modelRow = myRawIndexConverter.row2Model().applyAsInt(isTransposed() ? viewColumnIdx : viewRowIdx);
+    int modelColumn = myRawIndexConverter.column2Model().applyAsInt(isTransposed() ? viewRowIdx : viewColumnIdx);
+    if (modelRow < 0 || modelColumn < 0) return;
+    myHost.setValueAt(value, ModelIndex.forRow(myResultPanel, modelRow), ModelIndex.forColumn(myResultPanel, modelColumn),
+                      true, new GridRequestSource(new DataGridRequestPlace(myResultPanel)), null);
   }
 
   private Font doGetFont() {

@@ -13,10 +13,12 @@ import com.intellij.database.datagrid.ModelIndexSet;
 import com.intellij.database.datagrid.RawIndexConverter;
 import com.intellij.database.datagrid.ResultView;
 import com.intellij.database.datagrid.ResultViewColumn;
+import com.intellij.database.datagrid.SelectionModel;
 import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.extractors.DisplayType;
 import com.intellij.database.run.ui.ColumnMove;
 import com.intellij.database.run.ui.ColumnOrderRestorer;
+import com.intellij.database.run.ui.GridTableCellEditor;
 import com.intellij.database.run.ui.ResultViewWithCells;
 import com.intellij.database.run.ui.ResultViewWithColumns;
 import com.intellij.database.run.ui.ResultViewWithFrozenColumns;
@@ -29,6 +31,8 @@ import com.intellij.database.run.ui.grid.GridRowHeader;
 import com.intellij.database.run.ui.grid.GridSearchSession;
 import com.intellij.database.run.ui.table.statisticsPanel.StatisticsPanelMode;
 import com.intellij.database.run.ui.table.statisticsPanel.StatisticsTableHeader;
+import com.intellij.database.settings.DataGridSettings;
+import com.intellij.database.settings.DataGridSettings.AutoTransposeMode;
 import com.intellij.find.FindModel;
 import com.intellij.find.SearchSession;
 import com.intellij.ide.ui.UISettings;
@@ -39,14 +43,17 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.table.AdditionalTableHeader;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,7 +89,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-/** The complete table view, including any pinned columns. */
+/**
+ * The complete table view, including any pinned columns.
+ * <p>
+ * A call that reaches only the main table is correct for one of two reasons. Either the pinned table follows it: it shares the
+ * row selection and the data model events, mirrors the column selection and order, and is rebuilt from the main table's columns
+ * whenever the layout is refreshed. Or the call reads geometry, appearance or indices that are the same in both tables, since the
+ * main table also holds every pinned column as a zero-width placeholder.
+ */
 public final class TableResultView implements ResultView, ResultViewWithCells, ResultViewWithColumns, ResultViewWithRows,
                                               ResultViewWithFrozenColumns, EditorColorsListener, UISettingsListener {
   private final DataGrid myResultPanel;
@@ -96,6 +110,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   private Ref<Object> myCommonValue;
   private ModelIndex<GridColumn> myContextColumn;
   private final GridSelectionGrower myGrower;
+  private boolean myWasAutomaticallyTransposed;
 
   public TableResultView(@NotNull DataGrid grid, @NotNull ActionGroup columnActions, @NotNull ActionGroup rowActions) {
     myResultPanel = grid;
@@ -275,7 +290,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
                          @NotNull ModelIndex<GridColumn> column,
                          boolean allowImmediateUpdate,
                          @NotNull GridRequestSource source) {
-    myPrimary.setValueAt(v, row, column, allowImmediateUpdate, source);
+    setValueAt(v, row, column, allowImmediateUpdate, source, null);
   }
 
   @Override
@@ -285,12 +300,62 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
                          boolean allowImmediateUpdate,
                          @NotNull GridRequestSource source,
                          @Nullable Object metadata) {
-    myPrimary.setValueAt(v, row, column, allowImmediateUpdate, source, metadata);
+    SelectionModel<GridRow, GridColumn> selection = myResultPanel.getSelectionModel();
+    boolean multi = isMultiEditingAllowed();
+    ModelIndexSet<GridRow> rows = multi ? selection.getSelectedRows() : ModelIndexSet.forRows(myResultPanel, row.asInteger());
+    ModelIndexSet<GridColumn> columns =
+      multi ? selection.getSelectedColumns() : ModelIndexSet.forColumns(myResultPanel, column.asInteger());
+    // The editor of whichever table edits decides whether the selection moves on after the write.
+    GridTableCellEditor editor = ObjectUtils.tryCast(getCellEditor(), GridTableCellEditor.class);
+    ViewIndex<GridRow> lastRow = rows.toView(myResultPanel).last();
+    ViewIndex<GridColumn> lastColumn = columns.toView(myResultPanel).last();
+    Runnable moveToNextCell = editor != null && editor.shouldMoveFocus() ? () -> moveToNextCellLater(lastRow, lastColumn) : null;
+    myResultPanel.setValueAt(rows, columns, v, allowImmediateUpdate, moveToNextCell, source, metadata);
+  }
+
+  private void moveToNextCellLater(@NotNull ViewIndex<GridRow> rowIndex, @NotNull ViewIndex<GridColumn> colIndex) {
+    IdeFocusManager.findInstanceByComponent(myScrollPane).doWhenFocusSettlesDown(
+      // doWhenFocusSettlesDown causes "Write-unsafe context" so we need to call invokeLater
+      () -> ApplicationManager.getApplication().invokeLater(() -> moveToNextCell(rowIndex, colIndex)));
+  }
+
+  private void moveToNextCell(@NotNull ViewIndex<GridRow> rowIndex, @NotNull ViewIndex<GridColumn> colIndex) {
+    SelectionModel<GridRow, GridColumn> selectionModel = myResultPanel.getSelectionModel();
+    if (selectionModel.getSelectedRowCount() != 1 || selectionModel.getSelectedColumnCount() != 1 ||
+        !ApplicationManager.getApplication().isUnitTestMode() && (!UIUtil.isFocusAncestor(myScrollPane) || isEditing())) {
+      return;
+    }
+
+    // if selection has already been changed by Tab or Shift-Tab we don't need to change it
+    if (!Comparing.equal(selectionModel.getSelectedRow(), rowIndex.toModel(myResultPanel)) ||
+        !Comparing.equal(selectionModel.getSelectedColumn(), colIndex.toModel(myResultPanel))) {
+      return;
+    }
+
+    if (GridUtil.isInsertedRow(myResultPanel, rowIndex.toModel(myResultPanel))) {
+      ViewIndex<GridColumn> nextColumn = ViewIndex.forColumn(myResultPanel, colIndex.asInteger() + 1);
+      colIndex = nextColumn.isValid(myResultPanel) ? nextColumn : colIndex;
+    }
+    else {
+      ViewIndex<GridRow> nextRow = ViewIndex.forRow(myResultPanel, rowIndex.asInteger() + 1);
+      rowIndex = nextRow.isValid(myResultPanel) ? nextRow : rowIndex;
+    }
+
+    GridUtil.scrollToLocally(myResultPanel, rowIndex, colIndex);
   }
 
   @Override
   public void setTransposed(boolean transposed) {
-    myPrimary.setTransposed(transposed);
+    myWasAutomaticallyTransposed = false;
+    transpose(transposed);
+  }
+
+  private void transpose(boolean transposed) {
+    if (isTransposed() == transposed) return;
+    // A transposed grid has no pinned columns by design: drop them first; the grid pins them again when its layout is refreshed.
+    if (transposed) setFrozenColumns(Set.of());
+    myPrimary.transpose(transposed);
+    myFrozenColumnsController.refreshRowNumbers();
   }
 
   @Override
@@ -348,6 +413,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   @Override
   public void restoreColumnsOrder(Map<Integer, ModelIndex<GridColumn>> expectedToModel) {
+    // The order lives in the main table: moves in the pinned table are mirrored into it, and the grid re-pins after a reorder.
     myPrimary.restoreColumnsOrder(expectedToModel);
   }
 
@@ -379,11 +445,14 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   @Override
   public void setColumnEnabled(@NotNull ModelIndex<GridColumn> columnIdx, boolean state) {
+    // TableResultPanel may call this for several columns and restores their widths after it, so the panel rebuilds the
+    // pinned table from the main table once the whole change is done.
     myPrimary.setColumnEnabled(columnIdx, state);
   }
 
   @Override
   public void setColumnsEnabled(@NotNull List<ModelIndex<GridColumn>> columns, boolean state) {
+    // TableResultPanel rebuilds the pinned table after this, as for a single column.
     myPrimary.setColumnsEnabled(columns, state);
   }
 
@@ -462,6 +531,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   @Override
   public void columnsAdded(ModelIndexSet<GridColumn> columnIndices) {
+    // The pinned table gets the model event through its model sync and is rebuilt when the grid refreshes the pins.
     myPrimary.columnsAdded(columnIndices);
   }
 
@@ -477,11 +547,23 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   @Override
   public void rowsAdded(ModelIndexSet<GridRow> rows) {
+    // The pinned table gets the model event through its model sync.
     myPrimary.rowsAdded(rows);
   }
 
   @Override
   public void afterLastRowAdded() {
+    DataGridSettings settings = GridUtil.getSettings(myResultPanel);
+    if (!isTransposed() && getViewRowCount() == 1 &&
+        settings != null && settings.getAutoTransposeMode() == AutoTransposeMode.ONE_ROW) {
+      transpose(true);
+      myWasAutomaticallyTransposed = true;
+      return;
+    }
+    if (myWasAutomaticallyTransposed && isTransposed() && getViewRowCount() != 1) {
+      setTransposed(false);
+      return;
+    }
     myPrimary.afterLastRowAdded();
   }
 
@@ -703,7 +785,9 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   @Override
   public boolean isMultiEditingAllowed() {
-    return myPrimary.isMultiEditingAllowed();
+    // The tables share the selection; only the table that holds the editor knows whether it may write a unique column.
+    GridTable editing = editingTable();
+    return (editing != null ? editing : myPrimary).isMultiEditingAllowed();
   }
 
   @TestOnly
@@ -856,12 +940,6 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     }
 
     @Override
-    public void dropFrozenColumns() { if (isPrimary()) setFrozenColumns(Set.of()); }
-
-    @Override
-    public void onTransposed() { if (isPrimary()) myFrozenColumnsController.refreshRowNumbers(); }
-
-    @Override
     public @NotNull GridRowHeader createRowHeader() {
       GridRowHeader header = myResultPanel.createRowHeader(TableResultView.this);
       header.updatePreferredSize();
@@ -920,6 +998,12 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
     @Override
     public void changeFontSize(int increment, double scale) { TableResultView.this.changeFontSize(increment, scale); }
+
+    @Override
+    public void setValueAt(@Nullable Object value, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column,
+                           boolean allowImmediateUpdate, @NotNull GridRequestSource source, @Nullable Object metadata) {
+      TableResultView.this.setValueAt(value, row, column, allowImmediateUpdate, source, metadata);
+    }
 
     @Override
     public int constrainSelectedColumnWidthDelta(int @NotNull [] columns, int delta) {

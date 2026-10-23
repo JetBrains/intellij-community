@@ -1,6 +1,8 @@
 package com.intellij.database.run.ui.table
 
 import com.intellij.database.datagrid.GridColumn
+import com.intellij.database.datagrid.GridRequestSource
+import com.intellij.database.datagrid.GridRow
 import com.intellij.database.datagrid.ModelIndex
 import com.intellij.database.datagrid.ResultViewColumn
 import com.intellij.database.run.ui.ColumnMove
@@ -14,8 +16,6 @@ internal interface GridTableHost {
   fun isPrimary(): Boolean
   fun applyColumnsDisplayOrder(): Boolean
   fun columnMoved(move: ColumnMove)
-  fun dropFrozenColumns()
-  fun onTransposed()
   fun createRowHeader(): GridRowHeader
   fun stopEditingBeforeSelectionChange(row: Int, column: Int): Boolean
   fun handleCellRangeSelection(row: Int, column: Int, toggle: Boolean): Boolean
@@ -28,6 +28,9 @@ internal interface GridTableHost {
   fun columnMarginChanged()
   fun syncRowHeight(row: Int, height: Int)
   fun changeFontSize(increment: Int, scale: Double)
+  /** Writes a value committed by a cell editor of the table, to that cell or to every selected cell. */
+  fun setValueAt(value: Any?, row: ModelIndex<GridRow>, column: ModelIndex<GridColumn>, allowImmediateUpdate: Boolean,
+                 source: GridRequestSource, metadata: Any?)
   fun constrainSelectedColumnWidthDelta(columns: IntArray, delta: Int): Int
   fun renderedColumnAt(column: Int): ResultViewColumn?
   fun toGridViewColumn(column: Int): Int
