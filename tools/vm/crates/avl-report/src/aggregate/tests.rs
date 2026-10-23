@@ -432,7 +432,7 @@ fn merged_cases_are_ordered_by_instant_across_shards() {
         None,
         &[passed("com.intellij.air.UntimedB")],
     );
-    let verdict = merge_shard_verdict(&[shard(1, "air-linux-1", first), shard(2, "air-linux-2", second)]);
+    let verdict = merge_two_shards(first, second);
     let names: Vec<&str> = verdict.cases.iter().map(|case| case.class_name.as_str()).collect();
     // `late` is 10:00:30Z once the offset is read as an offset; the untimed cases keep their position, last.
     assert_eq!(
@@ -446,6 +446,11 @@ fn merged_cases_are_ordered_by_instant_across_shards() {
     );
 }
 
+/// The verdict of two shards on two workers.
+fn merge_two_shards(first: RunReport, second: RunReport) -> ShardVerdict {
+    merge_shard_verdict(&[shard(1, "air-linux-1", first), shard(2, "air-linux-2", second)])
+}
+
 /// The wall clock is what the lane cost and the sum is the machine time it took.
 #[test]
 fn the_merge_reports_both_wall_and_machine_time() {
@@ -454,7 +459,7 @@ fn the_merge_reports_both_wall_and_machine_time() {
     second.started_at = "2026-08-22T10:00:30Z".to_owned();
     second.completed_at = "2026-08-22T10:02:00Z".to_owned();
     second.duration_ms = 90_000.0;
-    let verdict = merge_shard_verdict(&[shard(1, "air-linux-1", first), shard(2, "air-linux-2", second)]);
+    let verdict = merge_two_shards(first, second);
     assert_eq!(
         (verdict.started_at.as_deref(), verdict.completed_at.as_deref()),
         (Some("2026-08-22T10:00:00Z"), Some("2026-08-22T10:02:00Z"))
@@ -495,7 +500,7 @@ fn the_first_spelling_of_an_equal_instant_is_kept() {
     let mut second = with_suite(document(Status::Passed), "B", None, &[passed("com.intellij.air.B")]);
     second.started_at = "2026-08-22T12:00:00+02:00".to_owned();
     second.completed_at = "2026-08-22T12:02:00+02:00".to_owned();
-    let verdict = merge_shard_verdict(&[shard(1, "air-linux-1", first), shard(2, "air-linux-2", second)]);
+    let verdict = merge_two_shards(first, second);
     assert_eq!(
         (verdict.started_at.as_deref(), verdict.completed_at.as_deref()),
         (Some("2026-08-22T10:00:00Z"), Some("2026-08-22T10:02:00Z"))
