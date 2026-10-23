@@ -47,11 +47,14 @@ import com.intellij.util.Processor
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -67,6 +70,7 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
+import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
 @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
@@ -734,6 +738,35 @@ internal class ChangesBrowserStructuralNodeTest {
   }
 
   @Test
+  fun `test model refresh after a finished preview keeps a closed file closed`(): Unit = timeoutRunBlocking {
+    val file = LightVirtualFile("closed.txt", "first\nsecond\n")
+    val fixture = createFilePreviewFixture(file)
+
+    withPreviewTabsDisabled { manager ->
+      coroutineScope {
+        val previewScope = this
+        withContext(Dispatchers.EDT) {
+          fixture.view.previewShowing = true
+          fixture.view.previewFocus = true
+          StructuralChangesPreview(fixture.view, previewScope).install()
+          fixture.view.selectionPath = TreePath(fixture.fileNode.path)
+        }
+        awaitPreviews(previewScope)
+        withContext(Dispatchers.EDT) {
+          assertEquals(listOf(file), manager.selectedFiles.toList())
+          manager.closeFile(file)
+          fixture.view.updateTreeModel(DefaultTreeModel(fixture.root), ChangesTree.ALWAYS_KEEP)
+        }
+        // The model listener restarts a preview in a later event.
+        delay(100.milliseconds)
+        awaitPreviews(previewScope)
+
+        assertTrue(withContext(Dispatchers.EDT) { manager.selectedFiles.isEmpty() })
+      }
+    }
+  }
+
+  @Test
   fun `test model refresh does not preview restored structural selection`(): Unit = timeoutRunBlocking {
     val navigation = PreviewNavigatable()
     val fixture = createPreviewFixture(navigation)
@@ -879,6 +912,11 @@ internal class ChangesBrowserStructuralNodeTest {
         fixture.select()
       }
     }
+  }
+
+  /** Waits until the previews that the scope launched end. Call it from the scope itself, outside of its child coroutines. */
+  private suspend fun awaitPreviews(scope: CoroutineScope) {
+    while (scope.coroutineContext.job.children.any()) delay(10.milliseconds)
   }
 
   private fun clickSelectedElement(view: TestChangesView, button: Int = MouseEvent.BUTTON1, clickCount: Int = 1, x: Int? = null) {
