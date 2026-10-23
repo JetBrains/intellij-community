@@ -59,7 +59,8 @@ class PyPackageRequirementsInspection : PyInspection() {
 }
 
 /**
- * Disables [PyPackageRequirementsInspection] in type comments and type hints.
+ * Disables [PyPackageRequirementsInspection] in type comments, type hints,
+ * doctest fragments and docstring code blocks.
  */
 @ApiStatus.Internal
 class PyPackageRequirementsVisitorFilter : PythonVisitorFilter {

@@ -25,8 +25,7 @@ internal class PyDocstringCodeBlockVisitorFilter : PythonVisitorFilter {
   )
 
   override fun isSupported(visitorClass: Class<out PyElementVisitor?>, file: PsiFile): Boolean {
-    if (visitorClass in disabledAnnotators || PyInjectedPythonCodeVisitors.isDisabledInspection(visitorClass)) return false
-    if (PyInjectedPythonCodeVisitors.isUnresolvedReferenceOutsideTopLevelFile(visitorClass, file)) return false
+    if (visitorClass in disabledAnnotators || visitorClass in PyInjectedPythonCodeVisitors.disabledInspections) return false
 
     val isInspection = LocalInspectionTool::class.java.isAssignableFrom(visitorClass)
     if (!isInspection) return true

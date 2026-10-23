@@ -877,11 +877,19 @@
     <!-- Packaging -->
     <keywordArgumentProvider implementation="com.jetbrains.python.packaging.setupPy.SetupKeywordArgumentProvider"/>
 
-    <!-- PyFunctionTypeAnnotation and PyTypeHint -->
+    <!-- PyFunctionTypeAnnotation, PyTypeHint and Python injected into documentation -->
     <visitorFilter language="PyFunctionTypeComment"
                    implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsVisitorFilter"/>
     <visitorFilter language="PyTypeHint"
                    implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsVisitorFilter"/>
+    <visitorFilter language="Doctest"
+                   implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsVisitorFilter"/>
+    <visitorFilter language="PythonDocstringCodeBlock"
+                   implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsVisitorFilter"/>
+    <visitorFilter language="Doctest"
+                   implementationClass="com.jetbrains.python.inspections.unresolvedReference.PyInjectedUnresolvedReferencesVisitorFilter"/>
+    <visitorFilter language="PythonDocstringCodeBlock"
+                   implementationClass="com.jetbrains.python.inspections.unresolvedReference.PyInjectedUnresolvedReferencesVisitorFilter"/>
 
     <!-- Pipenv -->
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkFlavorProvider"/>
