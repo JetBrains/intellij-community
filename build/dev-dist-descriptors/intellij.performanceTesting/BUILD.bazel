@@ -45,10 +45,7 @@ dev_dist_plugin_descriptor(
     descriptor = "//plugins/performanceTesting/core:resources/META-INF/plugin.xml",
     main_module = "intellij.performanceTesting",
     mode_refused_content_modules = {
-        "frontend": [
-            "intellij.performanceTesting.vcs",
-            "intellij.performanceTesting.backend",
-        ],
+        "frontend": ["intellij.performanceTesting.backend"],
     },
     refused_content_modules = [
         "intellij.performanceTesting.frontend.split",
