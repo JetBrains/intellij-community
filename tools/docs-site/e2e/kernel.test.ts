@@ -447,7 +447,8 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
       await open(page, app('/guides'))
       await page.keyboard.press('ControlOrMeta+k')
       await expect(page.locator('.palette')).toHaveCount(1)
-      assert.strictEqual(await page.evaluate(() => document.activeElement?.tagName), 'INPUT')
+      // the dialog moves the focus after it mounts, as in the test below
+      await expect.poll(() => page.evaluate(() => document.activeElement?.tagName)).toBe('INPUT')
       await page.fill('.palette input', word)
       await expect.poll(() => paletteItems(page).count()).toBeGreaterThan(0)
       assert.ok(await page.locator('.palette-results [cmdk-group-heading]').count() > 0)
