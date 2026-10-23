@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.ExperimentalIconRendering
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -24,6 +25,13 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.impl.SquareStripeButton.Companion.createMoveGroup
+import com.intellij.platform.icons.IconDescriptor
+import com.intellij.platform.icons.design.sRGB
+import com.intellij.platform.icons.iconDescriptor
+import com.intellij.platform.icons.modifiers.IconModifier
+import com.intellij.platform.icons.modifiers.stroke
+import com.intellij.platform.icons.swing.createSwingIcon
+import com.intellij.platform.icons.swing.toIconDescriptor
 import com.intellij.toolWindow.ResizeStripeManager
 import com.intellij.toolWindow.StripeButtonUi
 import com.intellij.toolWindow.ToolWindowEventSource
@@ -41,13 +49,14 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.icons.HoledIcon
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
-import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.paint.use
 import com.intellij.ui.paint.useCopy
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
@@ -94,7 +103,15 @@ internal class SquareStripeButton(val toolWindow: ToolWindowImpl, private var sy
 
   private var myShowName = false
 
+  private var bridgedToolWindowIcon: Icon? = null
+  private var bridgedDescriptor: IconDescriptor? = null
+
+  private var strokeBase: IconDescriptor? = null
+  private var strokeColor: Color? = null
+  private var strokeIcon: Icon? = null
+
   init {
+    updateIconDescriptor()
     doInit { createPopupGroup(toolWindow) }
     MouseDragHelper.setComponentDraggable(this, true)
     setLook(createSquareStripeButtonLook())
@@ -118,6 +135,7 @@ internal class SquareStripeButton(val toolWindow: ToolWindowImpl, private var sy
     super.updateUI()
 
     myPresentation.icon = scaleIcon((toolWindow.icon ?: AllIcons.Toolbar.Unknown) as ScalableIcon)
+    updateIconDescriptor()
     myPresentation.isEnabledAndVisible = true
   }
 
@@ -125,6 +143,33 @@ internal class SquareStripeButton(val toolWindow: ToolWindowImpl, private var sy
     updateToolTipText()
 
     myPresentation.icon = scaleIcon((toolWindow.icon ?: AllIcons.Toolbar.Unknown) as ScalableIcon)
+    updateIconDescriptor()
+  }
+
+  /**
+   * The icon of the button while its tool window is active: the base icon with the strokes in [color].
+   * Returns `null` when the button has no icon descriptor.
+   */
+  fun activeIcon(color: Color): Icon? {
+    val base = myPresentation.iconDescriptor ?: return null
+    if (base !== strokeBase || color != strokeColor) {
+      strokeBase = base
+      strokeColor = color
+      strokeIcon = iconDescriptor {
+        icon(base, IconModifier.stroke(sRGB(color.red / 255f, color.green / 255f, color.blue / 255f, color.alpha / 255f)))
+      }.createSwingIcon()
+    }
+    return strokeIcon
+  }
+
+  private fun updateIconDescriptor() {
+    if (!ExperimentalIconRendering.isEnabled) return
+    val icon = toolWindow.icon
+    if (icon !== bridgedToolWindowIcon) {
+      bridgedToolWindowIcon = icon
+      bridgedDescriptor = icon?.toIconDescriptor()
+    }
+    myPresentation.iconDescriptor = bridgedDescriptor
   }
 
   override fun update() {
@@ -142,7 +187,19 @@ internal class SquareStripeButton(val toolWindow: ToolWindowImpl, private var sy
 
   fun isHovered(): Boolean = myRollover
 
-  fun isFocused(): Boolean = toolWindow.isActive
+  private var focusedForTest: Boolean? = null
+
+  fun isFocused(): Boolean = focusedForTest ?: toolWindow.isActive
+
+  @TestOnly
+  internal fun setFocusedForTest(focused: Boolean?) {
+    focusedForTest = focused
+  }
+
+  @TestOnly
+  internal fun paintIconForTest(g: Graphics) {
+    buttonLook.paintIcon(g, this, icon)
+  }
 
   fun resetDrop() {
     resetMouseState()
@@ -262,7 +319,7 @@ private class SquareStripeButtonLookHorizontalText(button: SquareStripeButton): 
       override fun getInsets() = actionButton!!.insets
     }
     val color = UIManager.getColor("ToolWindow.Button.selectedForeground")
-    val renderedIcon = if (!toolWindow.isActive || color == null) icon else toStrokeIcon(icon, color)
+    val renderedIcon = if (!button.isFocused() || color == null) icon else button.activeStripeIcon(icon, color)
     super.paintIcon(g, buttonWrapper, renderedIcon)
     val iconPosition = getIconPosition(buttonWrapper, renderedIcon)
     iconPosition.y += renderedIcon.iconHeight
@@ -465,4 +522,30 @@ internal fun ToolWindowAnchorEnum.isHorizontal(): Boolean {
 internal fun ToolWindowAnchor.toEnum(): ToolWindowAnchorEnum {
   return ToolWindowAnchorEnum.entries.find { it.toolWindowAnchor === this }
          ?: throw IllegalStateException("Unknown anchor: $this")
+}
+
+@TestOnly
+@ApiStatus.Internal
+fun createSquareStripeButtonForTest(toolWindow: ToolWindowImpl): ActionButton = SquareStripeButton(toolWindow)
+
+@TestOnly
+@ApiStatus.Internal
+fun updateSquareStripeButtonPresentationForTest(button: ActionButton) {
+  (button as SquareStripeButton).updatePresentation()
+}
+
+@TestOnly
+@ApiStatus.Internal
+fun activeStripeIconForTest(button: ActionButton, color: Color): Icon? = (button as SquareStripeButton).activeIcon(color)
+
+@TestOnly
+@ApiStatus.Internal
+fun setSquareStripeButtonFocusedForTest(button: ActionButton, focused: Boolean) {
+  (button as SquareStripeButton).setFocusedForTest(focused)
+}
+
+@TestOnly
+@ApiStatus.Internal
+fun paintSquareStripeButtonIconForTest(button: ActionButton, g: Graphics) {
+  (button as SquareStripeButton).paintIconForTest(g)
 }
