@@ -290,13 +290,19 @@ fn fetch_and_forget_name_a_run() {
 
 #[test]
 fn upgrade_takes_the_alias_an_agent_and_a_holder_and_refuses_an_unprepared_host() {
-    let cli = Cli::try_parse_from(["yonder", "upgrade", "studio", "--agent", "/tmp/yonderd"]).expect("parsed");
-    let Command::Upgrade { alias, agent, holder } = cli.command else {
+    let cli = Cli::try_parse_from(["yonder", "upgrade", "studio", "--agent", "/tmp/yonderd", "--force"]).expect("parsed");
+    let Command::Upgrade {
+        alias,
+        agent,
+        holder,
+        force,
+    } = cli.command
+    else {
         panic!("{cli:?}")
     };
     assert_eq!(
-        (alias.as_str(), agent, holder),
-        ("studio", Some(PathBuf::from("/tmp/yonderd")), None)
+        (alias.as_str(), agent, holder, force),
+        ("studio", Some(PathBuf::from("/tmp/yonderd")), None, true)
     );
     let (code, _, said) = invoke(&["upgrade", "studio"]);
     assert_eq!(code, 255);

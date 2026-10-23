@@ -70,6 +70,16 @@ impl Home {
         self.dir.join(".cache/yonderd/listening.json")
     }
 
+    /// The outcome of the last watchdog of an upgrade: `~/.cache/yonderd/upgrade.json`.
+    pub(crate) fn upgrade_file(&self) -> PathBuf {
+        self.dir.join(".cache/yonderd/upgrade.json")
+    }
+
+    /// The flock that a watchdog of an upgrade holds while it lives: `~/.cache/yonderd/upgrade.lock`.
+    pub(crate) fn upgrade_lock_file(&self) -> PathBuf {
+        self.dir.join(".cache/yonderd/upgrade.lock")
+    }
+
     /// The lease file and the lock of each holder: `~/.cache/yonderd/leases/`.
     pub(crate) fn leases_dir(&self) -> PathBuf {
         self.dir.join(".cache/yonderd/leases")

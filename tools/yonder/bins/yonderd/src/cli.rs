@@ -8,6 +8,7 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use clap::{Parser, Subcommand};
+use yonder_link::digest::sha256_file;
 use yonder_link::proto::{SCHEMA_VERSION, features};
 use yonder_link::{DEFAULT_PORT, Fingerprint};
 
@@ -78,9 +79,19 @@ enum Commands {
     Upgrade {
         /// The new binary.
         binary: PathBuf,
+        /// Take a binary of a lower version too.
+        #[arg(long)]
+        force: bool,
         /// The launchctl program. A test gives a fake one.
         #[arg(long, default_value = "launchctl", hide = true)]
         launchctl: PathBuf,
+    },
+    /// Prints the line of `version` with the state of the LaunchAgent `--plist` for this build: `same`, `changed` or
+    /// `unknown`. An upgrade runs it on the new binary before the swap.
+    #[command(hide = true)]
+    Check {
+        #[arg(long)]
+        plist: PathBuf,
     },
     /// Waits for a `serve` of the new binary to listen, and else restores the previous binary and restarts the agent.
     /// An upgrade starts it.
@@ -160,11 +171,12 @@ fn execute(command: Commands, stdout: &mut dyn Write) -> Result<(), Refusal> {
             crate::setup::setup(&Home::from_env()?, &setup, stdout)
         }
         Commands::Version => {
-            let line = serde_json::json!({"version": env!("CARGO_PKG_VERSION"), "schema_version": SCHEMA_VERSION, "features": features()});
-            writeln!(stdout, "{line}").map_err(|error| refused(AGENT_ERROR, format!("cannot write stdout: {error}")))
+            writeln!(stdout, "{}", version_line(None)).map_err(|error| refused(AGENT_ERROR, format!("cannot write stdout: {error}")))
         }
-        Commands::Upgrade { binary, launchctl } => {
-            let upgraded = upgrade::upgrade_from_file(&Home::from_env()?, &binary, &launchctl, tuning::upgrade_wait())?;
+        Commands::Check { plist } => writeln!(stdout, "{}", version_line(Some(upgrade::plist_state(&plist))))
+            .map_err(|error| refused(AGENT_ERROR, format!("cannot write stdout: {error}"))),
+        Commands::Upgrade { binary, force, launchctl } => {
+            let upgraded = upgrade::upgrade_from_file(&Home::from_env()?, &binary, &launchctl, tuning::upgrade_wait(), force)?;
             let line = serde_json::to_string(&upgraded).map_err(|error| refused(AGENT_ERROR, error.to_string()))?;
             writeln!(stdout, "{line}").map_err(|error| refused(AGENT_ERROR, format!("cannot write stdout: {error}")))
         }
@@ -179,11 +191,27 @@ fn execute(command: Commands, stdout: &mut dyn Write) -> Result<(), Refusal> {
                 log(line);
             })? {
                 Watched::Listened(_) => Ok(()),
-                Watched::RolledBack => Err(refused(UPGRADE_FAILED, format!("no serve of the binary {sha256} listened"))),
+                Watched::RolledBack { .. } => Err(refused(UPGRADE_FAILED, format!("no serve of the binary {sha256} listened"))),
             }
         }
         Commands::DumpEnv { file } => {
             crate::login_env::dump_env(&file).map_err(|error| refused(AGENT_ERROR, format!("cannot write {}: {error}", file.display())))
         }
     }
+}
+
+/// The line of `version`: the version, the schema, the features, and the SHA-256 of this binary as its build id, since
+/// the version is the same for each build. `check` adds the state of the LaunchAgent.
+fn version_line(plist: Option<&str>) -> serde_json::Value {
+    let sha256 = std::env::current_exe().and_then(|exe| sha256_file(&exe)).ok();
+    let mut line = serde_json::json!({
+        "version": env!("CARGO_PKG_VERSION"),
+        "schema_version": SCHEMA_VERSION,
+        "features": features(),
+        "sha256": sha256,
+    });
+    if let Some(plist) = plist {
+        line["plist"] = plist.into();
+    }
+    line
 }

@@ -277,8 +277,8 @@ impl Agent {
             }
         }
         let request = channel.recv::<Request>()?;
-        if let Request::Upgrade { size, sha256 } = &request {
-            return self.upgrade(channel, *size, sha256);
+        if let Request::Upgrade { size, sha256, force } = &request {
+            return self.upgrade(channel, *size, sha256, *force);
         }
         let _busy = (!matches!(request, Request::Follow { .. })).then(|| Busy::new(&self.busy));
         self.answer_request(channel, request).map(|()| false)
@@ -313,7 +313,7 @@ impl Agent {
     /// Stages the binary of the byte stream beside the binary of the LaunchAgent, checks it, installs it, and starts the
     /// watchdog. Heartbeats go out while the binary runs its check. Answers whether the binary changed: the connection
     /// then exits the agent.
-    fn upgrade(&self, channel: &mut Channel, size: u64, sha256: &str) -> Result<bool, LinkError> {
+    fn upgrade(&self, channel: &mut Channel, size: u64, sha256: &str, force: bool) -> Result<bool, LinkError> {
         channel.set_read_deadline(PACK_READ_DEADLINE)?;
         let checked = upgrade::check_launchd()
             .and_then(|()| {
@@ -323,7 +323,7 @@ impl Agent {
                         format!("an upgrade names at most {MAX_BINARY} bytes and a SHA-256 of 64 lower-case hex digits, not {size} and {sha256:?}"),
                     ));
                 }
-                upgrade::launchd_binary(&self.home)
+                upgrade::launch_agent(&self.home).map(|values| values.exe)
             })
             .and_then(|target| {
                 if self.upgrading.swap(true, Ordering::SeqCst) {
@@ -338,7 +338,7 @@ impl Agent {
                 return channel.send(&reply(&refusal)).map(|()| false);
             }
         };
-        let upgraded = self.receive_and_install(channel, target, size, sha256);
+        let upgraded = self.receive_and_install(channel, target, size, sha256, force);
         let upgraded = match upgraded {
             Ok(Ok(upgraded)) => upgraded,
             Ok(Err(refusal)) => {
@@ -374,6 +374,7 @@ impl Agent {
         target: PathBuf,
         size: u64,
         sha256: &str,
+        force: bool,
     ) -> Result<Result<upgrade::Upgraded, Refusal>, LinkError> {
         let mut staging = match Staging::create(&target, size) {
             Ok(staging) => staging,
@@ -395,6 +396,7 @@ impl Agent {
                 target: &target,
                 launchctl: &launchctl,
                 wait,
+                force,
             }
             .run(staged)
         })

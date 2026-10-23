@@ -245,13 +245,47 @@ fn xml_escape(text: &str) -> String {
     text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
 }
 
-/// The binary that a plist of [`plist_text`] names: the first string of its program arguments.
-pub(crate) fn plist_program(plist: &str) -> Option<PathBuf> {
-    let (_, arguments) = plist.split_once("<key>ProgramArguments</key>")?;
-    let (_, rest) = arguments.split_once("<string>")?;
-    let (program, _) = rest.split_once("</string>")?;
-    let program = program.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&");
-    (!program.is_empty()).then(|| PathBuf::from(program))
+/// The values of a plist of [`plist_text`]: what launchd runs, and how.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct PlistValues {
+    pub(crate) exe: PathBuf,
+    pub(crate) port: u16,
+    pub(crate) log: PathBuf,
+    pub(crate) path: String,
+}
+
+impl PlistValues {
+    /// The values of `plist`, or `None` when it is not of the shape of [`plist_text`]: the program, `serve`, `--port`
+    /// and the port as its arguments, a `PATH` and a log.
+    pub(crate) fn parse(plist: &str) -> Option<Self> {
+        let after = |key: &str| plist.split_once(&format!("<key>{key}</key>")).map(|(_, rest)| rest);
+        let (arguments, _) = after("ProgramArguments")?.split_once("</array>")?;
+        let arguments: Vec<String> = arguments.split("<string>").skip(1).filter_map(string_value).collect();
+        let [exe, serve, flag, port] = arguments.as_slice() else {
+            return None;
+        };
+        if exe.is_empty() || serve != "serve" || flag != "--port" {
+            return None;
+        }
+        let first_string = |key: &str| after(key)?.split_once("<string>").and_then(|(_, rest)| string_value(rest));
+        Some(Self {
+            exe: PathBuf::from(exe),
+            port: port.parse().ok()?,
+            log: PathBuf::from(first_string("StandardOutPath")?),
+            path: first_string("PATH")?,
+        })
+    }
+
+    /// The plist that `setup` writes for these values.
+    pub(crate) fn text(&self) -> String {
+        plist_text(&self.exe, self.port, &self.log, &self.path)
+    }
+}
+
+/// The text of a `<string>` element from its start up to `</string>`, unescaped.
+fn string_value(rest: &str) -> Option<String> {
+    let (value, _) = rest.split_once("</string>")?;
+    Some(value.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&"))
 }
 
 #[cfg(test)]

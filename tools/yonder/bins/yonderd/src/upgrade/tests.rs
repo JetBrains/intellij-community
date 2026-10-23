@@ -1,3 +1,4 @@
+use std::net::TcpListener;
 use std::os::unix::fs::PermissionsExt;
 use std::time::Instant;
 
@@ -6,10 +7,12 @@ use pretty_assertions::assert_eq;
 use super::*;
 use crate::setup::plist_text;
 
-/// A temporary home with a LaunchAgent whose binary is `bin/yonderd`, and a fake launchctl that writes its calls.
+/// A temporary home with a LaunchAgent whose binary is `bin/yonderd`, and a fake launchctl that writes its calls. The
+/// port of the LaunchAgent takes connections until [`World::close_port`].
 struct World {
     dir: tempfile::TempDir,
     home: Home,
+    port: Option<TcpListener>,
 }
 
 impl World {
@@ -17,13 +20,28 @@ impl World {
         let dir = tempfile::tempdir().expect("a temporary directory");
         let home = Home::new(dir.path().join("home"));
         fs::create_dir_all(dir.path().join("bin")).expect("the bin directory");
-        let world = Self { dir, home };
+        let listener = TcpListener::bind("127.0.0.1:0").expect("a port");
+        let port = listener.local_addr().expect("the address").port();
+        let world = Self {
+            dir,
+            home,
+            port: Some(listener),
+        };
         let plist = world.home.launch_agent_file();
         fs::create_dir_all(plist.parent().expect("a parent")).expect("the LaunchAgents directory");
-        let text = plist_text(&world.target(), 7741, &world.home.launchd_log_file(), "/usr/bin");
+        let text = plist_text(&world.target(), port, &world.home.launchd_log_file(), "/usr/bin");
         fs::write(&plist, text).expect("the plist");
         script(&world.launchctl(), &format!("echo \"$*\" >>{}\n", world.calls_file().display()));
         world
+    }
+
+    /// Stops the listener on the port of the LaunchAgent.
+    fn close_port(&mut self) {
+        self.port = None;
+    }
+
+    fn outcome(&self) -> Option<Outcome> {
+        serde_json::from_slice(&fs::read(self.home.upgrade_file()).ok()?).ok()
     }
 
     fn target(&self) -> PathBuf {
@@ -47,22 +65,34 @@ impl World {
         self.dir.path().join("watchdogs")
     }
 
-    /// The text of a fake agent binary `name`: its `version` line has `features`, and its `watchdog` notes its name.
+    /// The text of a fake agent binary of the version `name`: its `version` line has `features`, its `check` finds the
+    /// LaunchAgent the same, and its `watchdog` notes its name.
     fn agent_text(&self, name: &str, features: &str) -> String {
+        self.agent_text_with(name, features, "same")
+    }
+
+    /// [`World::agent_text`] whose `check` answers `plist` for the LaunchAgent.
+    fn agent_text_with(&self, name: &str, features: &str, plist: &str) -> String {
+        let line = format!(r#"{{"version":"{name}","schema_version":{SCHEMA_VERSION},"features":[{features}]"#);
         format!(
-            "#!/bin/sh\ncase $1 in\n  version) echo '{{\"version\":\"{name}\",\"schema_version\":{SCHEMA_VERSION},\"features\":[{features}]}}' ;;\n  watchdog) echo \"{name} $*\" >>{} ;;\nesac\n",
+            "#!/bin/sh\ncase $1 in\n  version) echo '{line}}}' ;;\n  check) echo '{line},\"plist\":\"{plist}\"}}' ;;\n  watchdog) echo \"{name} $*\" >>{} ;;\nesac\n",
             self.watchdogs_file().display()
         )
     }
 
     /// The install of `staged` over the target, with a watchdog that waits 5 s.
     fn install(&self, staged: Staged) -> Result<Upgraded, Refusal> {
+        self.install_forced(staged, false)
+    }
+
+    fn install_forced(&self, staged: Staged, force: bool) -> Result<Upgraded, Refusal> {
         let (target, launchctl) = (self.target(), self.launchctl());
         Install {
             home: &self.home,
             target: &target,
             launchctl: &launchctl,
             wait: Duration::from_secs(5),
+            force,
         }
         .run(staged)
     }
@@ -194,7 +224,7 @@ fn a_binary_that_does_not_run_here_as_an_upgradable_agent_is_refused_and_the_tar
     fs::write(world.target(), &old).expect("the target");
     let cases = [
         // macOS refuses the exec, or a shell runs the text and fails.
-        ("\u{7f}ELF not a binary\n".to_owned(), " version"),
+        ("\u{7f}ELF not a binary\n".to_owned(), " check --plist "),
         ("#!/bin/sh\necho broken >&2\nexit 3\n".to_owned(), "broken"),
         ("#!/bin/sh\necho no line\n".to_owned(), "printed no version line"),
         (
@@ -210,6 +240,68 @@ fn a_binary_that_does_not_run_here_as_an_upgradable_agent_is_refused_and_the_tar
         assert_eq!(fs::read_to_string(world.target()).expect("the target"), old);
         assert_eq!(world.bin_files(), ["yonderd"]);
     }
+    for plist in ["changed", "unknown"] {
+        let refusal = world
+            .install(world.stage(&world.agent_text_with("other", WITH_UPGRADE, plist)))
+            .expect_err("another LaunchAgent");
+        assert_eq!(refusal.code, PLIST_CHANGED, "{plist}");
+        assert!(refusal.message.ends_with("`yonder prepare` installs it"), "{}", refusal.message);
+        assert_eq!(world.bin_files(), ["yonderd"]);
+    }
+}
+
+#[test]
+fn a_lower_version_needs_force_and_a_living_watchdog_refuses_the_next_upgrade() {
+    let world = World::new();
+    write_executable(&world.target(), &world.agent_text("2.0.0", WITH_UPGRADE));
+    let older = world.agent_text("1.9.0", WITH_UPGRADE);
+    let refusal = world.install(world.stage(&older)).expect_err("a downgrade");
+    assert_eq!(refusal.code, DOWNGRADE);
+    assert_eq!(
+        refusal.message,
+        "the binary 1.9.0 is older than the agent 2.0.0; `--force` installs it"
+    );
+    assert_eq!(world.bin_files(), ["yonderd"]);
+
+    let lock = hold_watch_lock(&world.home).expect("the lock of a watchdog");
+    let refusal = world.install_forced(world.stage(&older), true).expect_err("a watchdog lives");
+    assert_eq!(refusal.code, UPGRADE_FAILED);
+    assert!(
+        refusal.message.starts_with("the watchdog of an earlier upgrade still waits"),
+        "{}",
+        refusal.message
+    );
+    drop(lock);
+    let upgraded = world.install_forced(world.stage(&older), true).expect("forced");
+    assert_eq!(upgraded.version, "1.9.0");
+}
+
+#[test]
+fn only_three_numbers_above_zero_order_two_versions() {
+    assert!(is_lower("1.9.0", "2.0.0"));
+    assert!(is_lower("0.1.0", "0.1.1"));
+    for (new, current) in [
+        ("2.0.0", "1.9.0"),
+        ("0.1.0", "0.1.0"),
+        ("0.0.0", "0.1.0"),
+        ("0.1.0", "0.0.0"),
+        ("1.0", "2.0"),
+        ("x", "1.0.0"),
+    ] {
+        assert!(!is_lower(new, current), "{new} {current}");
+    }
+}
+
+#[test]
+fn a_build_finds_the_launch_agent_of_its_setup_the_same() {
+    let world = World::new();
+    assert_eq!(plist_state(&world.home.launch_agent_file()), "same");
+    let text = fs::read_to_string(world.home.launch_agent_file()).expect("the plist");
+    fs::write(world.home.launch_agent_file(), text.replace("<true/>", "<false/>")).expect("another plist");
+    assert_eq!(plist_state(&world.home.launch_agent_file()), "changed");
+    fs::write(world.home.launch_agent_file(), "<plist/>").expect("a plist of another shape");
+    assert_eq!(plist_state(&world.home.launch_agent_file()), "unknown");
+    assert_eq!(plist_state(&world.dir.path().join("missing")), "unknown");
 }
 
 #[test]
@@ -236,6 +328,8 @@ fn the_watchdog_ends_when_a_live_serve_of_the_new_binary_listens() {
         &mut |line| said.push(line.to_owned()),
     );
     assert_eq!(watched.expect("watched"), Watched::Listened(std::process::id()));
+    let outcome = world.outcome().expect("the outcome");
+    assert_eq!((outcome.sha256, outcome.outcome.as_str()), (sha256.clone(), "listened"));
     assert_eq!(
         said.last().map(String::as_str),
         Some(format!("watchdog: the binary {} listens with the pid {}", &sha256[..12], std::process::id()).as_str())
@@ -245,7 +339,7 @@ fn the_watchdog_ends_when_a_live_serve_of_the_new_binary_listens() {
 
 #[test]
 fn the_watchdog_restores_the_previous_binary_and_restarts_the_agent_when_no_live_serve_of_the_new_binary_listens() {
-    let world = World::new();
+    let mut world = World::new();
     fs::create_dir_all(world.home.cache_dir()).expect("the cache");
     fs::write(world.target(), "new").expect("the new binary");
     fs::write(previous_of(&world.target()), "old").expect("the previous binary");
@@ -269,7 +363,8 @@ fn the_watchdog_restores_the_previous_binary_and_restarts_the_agent_when_no_live
         &world.launchctl(),
         &mut |line| said.push(line.to_owned()),
     );
-    assert_eq!(watched.expect("watched"), Watched::RolledBack);
+    assert_eq!(watched.expect("watched"), Watched::RolledBack { listens: true });
+    assert_eq!(world.outcome().expect("the outcome").outcome, "rolled_back");
     assert_eq!(fs::read_to_string(world.target()).expect("the target"), "old");
     assert_eq!(world.bin_files(), ["yonderd"]);
     let (_, service) = service();
@@ -278,14 +373,40 @@ fn the_watchdog_restores_the_previous_binary_and_restarts_the_agent_when_no_live
         said.iter().any(|line| line.contains("so the previous binary comes back")),
         "{said:?}"
     );
+
+    // A live serve of the new binary whose port takes no connection does not count either, and the previous agent
+    // that does not come back is in the outcome.
+    world.close_port();
+    fs::rename(world.target(), previous_of(&world.target())).expect("the previous binary");
+    fs::write(world.target(), "new").expect("the new binary");
+    write_listening(&world.home, &sha256_of("new")).expect("the listening file");
+    let watched = watchdog(
+        &world.home,
+        &world.target(),
+        &sha256_of("new"),
+        Duration::from_millis(300),
+        &world.launchctl(),
+        &mut |_| {},
+    );
+    assert_eq!(watched.expect("watched"), Watched::RolledBack { listens: false });
+    assert_eq!(world.outcome().expect("the outcome").outcome, "rolled_back_not_listening");
+    assert_eq!(fs::read_to_string(world.target()).expect("the target"), "old");
 }
 
 #[test]
 fn the_binary_of_the_launch_agent_is_the_program_of_its_plist() {
     let world = World::new();
-    assert_eq!(launchd_binary(&world.home).expect("the binary"), world.target());
+    assert_eq!(launch_agent(&world.home).expect("the LaunchAgent").exe, world.target());
+    fs::write(world.home.launch_agent_file(), "<plist/>").expect("a plist of another shape");
+    let refusal = launch_agent(&world.home).expect_err("another shape");
+    assert_eq!(refusal.code, UPGRADE_FAILED);
+    assert!(
+        refusal.message.contains("not of the shape that `setup` writes"),
+        "{}",
+        refusal.message
+    );
     fs::remove_file(world.home.launch_agent_file()).expect("no plist");
-    let refusal = launchd_binary(&world.home).expect_err("no LaunchAgent");
+    let refusal = launch_agent(&world.home).expect_err("no LaunchAgent");
     assert_eq!(refusal.code, UPGRADE_FAILED);
     assert!(refusal.message.contains("`yonder prepare` writes it"), "{}", refusal.message);
 }
@@ -297,7 +418,7 @@ fn the_command_installs_a_file_and_restarts_the_agent_under_launchd_only() {
     let new = world.agent_text("new", WITH_UPGRADE);
     let source = world.dir.path().join("built-yonderd");
     fs::write(&source, &new).expect("the built binary");
-    let upgraded = upgrade_from_file(&world.home, &source, &world.launchctl(), Duration::from_secs(5));
+    let upgraded = upgrade_from_file(&world.home, &source, &world.launchctl(), Duration::from_secs(5), false);
     if cfg!(target_os = "macos") {
         let upgraded = upgraded.expect("upgraded");
         assert_eq!((upgraded.sha256, upgraded.version), (sha256_of(&new), "new".to_owned()));

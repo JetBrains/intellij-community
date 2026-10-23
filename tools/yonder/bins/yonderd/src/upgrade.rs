@@ -2,43 +2,56 @@
 //!
 //! - [`Request::Upgrade`] of a client: `serve` stages the binary of the byte stream, installs it, answers, waits for its
 //!   other requests, and exits. launchd then starts the new binary, because the LaunchAgent has `KeepAlive`.
-//! - `yonderd upgrade <binary>`: a run of a client starts it as the user, with a binary that the host built. An agent
+//! - `yonderd upgrade <binary>`: a run of a client starts it as the user, with a binary that the run shipped. An agent
 //!   without [`feature::UPGRADE`] knows no upgrade request, so a client takes this way once. The command restarts the
 //!   agent with `launchctl kickstart -k`.
 //!
-//! The install stages the new binary beside the binary of the LaunchAgent, checks its `version` line, keeps the current
-//! binary as `<binary>.previous`, and renames the staged binary over the binary. Then it removes the listening file and
-//! starts `yonderd watchdog` in a session of its own. `serve` writes the listening file with its SHA-256 once it listens.
-//! When no `serve` of the new binary listens in time, the watchdog renames `<binary>.previous` back and restarts the
-//! agent. The watchdog runs from the previous binary when that binary has the feature, else from the new one, which
-//! passed its check.
+//! The install refuses while the watchdog of an earlier upgrade lives. It stages the new binary beside the binary of the
+//! LaunchAgent and checks it with `<staged> check --plist <plist>`: the schema, the feature, and the LaunchAgent that the
+//! new binary would write, which must be the one on the host. It refuses a lower version without `force`. It keeps the
+//! current binary as `<binary>.previous`, and renames the staged binary over the binary. Then it removes the listening
+//! file and starts `yonderd watchdog` in a session of its own. `serve` writes the listening file with its SHA-256 once it
+//! listens. When no `serve` of the new binary listens in time, the watchdog renames `<binary>.previous` back, restarts
+//! the agent, and checks that the port takes connections again. It writes its outcome to `upgrade.json`. The watchdog
+//! runs from the previous binary when that binary has the feature, else from the new one, which passed its check.
+//!
+//! The upgrade never changes the identity, the allow list or the LaunchAgent: those stay with `setup`.
 //!
 //! [`Request::Upgrade`]: yonder_link::proto::Request::Upgrade
 
+use std::ffi::OsStr;
 use std::fs::{self, File, OpenOptions, Permissions};
 use std::io::{self, Write};
+use std::net::{Ipv4Addr, SocketAddr, TcpStream};
 use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::thread;
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime};
 
 use serde::{Deserialize, Serialize};
 use yonder_link::digest::{Sha256, sha256_file};
 use yonder_link::proto::{MAX_BINARY, SCHEMA_VERSION, feature};
 
 use crate::child;
-use crate::files::write_private;
+use crate::files::{open_private, private_dir, try_flock, try_flock_shared, write_private};
 use crate::home::Home;
-use crate::refused::{BAD_BINARY, LAUNCHD_FAILED, Refusal, UPGRADE_FAILED, refused};
-use crate::setup::{launchctl, plist_program, service};
+use crate::refused::{BAD_BINARY, DOWNGRADE, LAUNCHD_FAILED, PLIST_CHANGED, Refusal, UPGRADE_FAILED, refused};
+use crate::run::epoch_ms;
+use crate::setup::{PlistValues, launchctl, service};
 
 /// The deadline of the `version` call of a binary.
 const SELF_CHECK: Duration = Duration::from_secs(10);
 
 /// How often the watchdog reads the listening file.
 const WATCH_EVERY: Duration = Duration::from_millis(200);
+
+/// How long a new watchdog waits for the flock of the one before it.
+const LOCK_WAIT: Duration = Duration::from_secs(5);
+
+/// The connect deadline of a check of the port of the agent.
+const CONNECT: Duration = Duration::from_secs(1);
 
 /// The mode of a staged binary: the agent user reads and runs it.
 const BINARY_MODE: u32 = 0o700;
@@ -90,8 +103,8 @@ pub(crate) fn check_launchd() -> Result<(), Refusal> {
     }
 }
 
-/// The binary that the LaunchAgent of `home` runs.
-pub(crate) fn launchd_binary(home: &Home) -> Result<PathBuf, Refusal> {
+/// The values of the LaunchAgent of `home`: the binary that launchd runs, and its port.
+pub(crate) fn launch_agent(home: &Home) -> Result<PlistValues, Refusal> {
     let plist = home.launch_agent_file();
     let text = fs::read_to_string(&plist).map_err(|error| {
         refused(
@@ -102,7 +115,28 @@ pub(crate) fn launchd_binary(home: &Home) -> Result<PathBuf, Refusal> {
             ),
         )
     })?;
-    plist_program(&text).ok_or_else(|| refused(UPGRADE_FAILED, format!("the LaunchAgent {} names no program", plist.display())))
+    PlistValues::parse(&text).ok_or_else(|| {
+        refused(
+            UPGRADE_FAILED,
+            format!(
+                "the LaunchAgent {} is not of the shape that `setup` writes; `yonder prepare` writes it",
+                plist.display()
+            ),
+        )
+    })
+}
+
+/// Whether this build writes the LaunchAgent `plist` as it is: `same`, `changed`, or `unknown` for a file that is missing
+/// or not of the shape of `setup`. `yonderd check` prints it for the install of a newer agent.
+pub(crate) fn plist_state(plist: &Path) -> &'static str {
+    match fs::read_to_string(plist)
+        .ok()
+        .and_then(|text| PlistValues::parse(&text).map(|values| (values, text)))
+    {
+        Some((values, text)) if values.text() == text => "same",
+        Some(_) => "changed",
+        None => "unknown",
+    }
 }
 
 /// The binary that an upgrade of `target` keeps, and that the watchdog restores.
@@ -224,33 +258,50 @@ impl Drop for Staged {
     }
 }
 
-/// The `version` line of an agent binary.
+/// The line of `yonderd version` or `yonderd check` of an agent binary.
 #[derive(Deserialize)]
 struct VersionLine {
     version: String,
     schema_version: u32,
     #[serde(default)]
     features: Vec<String>,
+    /// [`plist_state`], from `check` only.
+    #[serde(default)]
+    plist: Option<String>,
 }
 
-/// Runs `<binary> version` under its deadline, and answers the version. Refuses a binary that does not run here, that
-/// speaks another schema, or that lacks [`feature::UPGRADE`], because no later upgrade could replace it.
-pub(crate) fn self_check(binary: &Path) -> Result<String, Refusal> {
-    let shown = binary.display();
-    let output = child::run(Command::new(binary).arg("version"), SELF_CHECK, &child::never)
+/// Runs `<binary> <args>` under the deadline of a check, and answers its JSON line.
+fn version_line(binary: &Path, args: &[&OsStr]) -> Result<VersionLine, Refusal> {
+    let shown = format!(
+        "{} {}",
+        binary.display(),
+        args.iter().map(|arg| arg.to_string_lossy()).collect::<Vec<_>>().join(" ")
+    );
+    let output = child::run(Command::new(binary).args(args), SELF_CHECK, &child::never)
         .map_err(|error| refused(BAD_BINARY, format!("the binary does not run here: {error}")))?;
     if !output.status.success() {
         return Err(refused(
             BAD_BINARY,
-            format!("`{shown} version` failed: {} ({})", output.diagnostic(), output.status),
+            format!("`{shown}` failed: {} ({})", output.diagnostic(), output.status),
         ));
     }
     let text = output.stdout_text();
-    let line: VersionLine = text
-        .lines()
+    text.lines()
         .rev()
         .find_map(|line| serde_json::from_str(line).ok())
-        .ok_or_else(|| refused(BAD_BINARY, format!("`{shown} version` printed no version line: {text}")))?;
+        .ok_or_else(|| refused(BAD_BINARY, format!("`{shown}` printed no version line: {text}")))
+}
+
+/// Whether `binary` answers `version` with [`feature::UPGRADE`], so it can run the watchdog.
+fn can_watch(binary: &Path) -> bool {
+    version_line(binary, &[OsStr::new("version")]).is_ok_and(|line| line.features.iter().any(|known| known == feature::UPGRADE))
+}
+
+/// Checks a new binary with `<binary> check --plist <plist>`, and answers its version. Refuses a binary that does not run
+/// here, that speaks another schema, that lacks [`feature::UPGRADE`], because no later upgrade could replace it, or that
+/// would write another LaunchAgent.
+pub(crate) fn check_new(binary: &Path, plist: &Path) -> Result<String, Refusal> {
+    let line = version_line(binary, &[OsStr::new("check"), OsStr::new("--plist"), plist.as_os_str()])?;
     if line.schema_version != SCHEMA_VERSION {
         return Err(refused(
             BAD_BINARY,
@@ -270,7 +321,45 @@ pub(crate) fn self_check(binary: &Path) -> Result<String, Refusal> {
             ),
         ));
     }
+    if line.plist.as_deref() != Some("same") {
+        return Err(refused(
+            PLIST_CHANGED,
+            format!(
+                "the binary {} writes another LaunchAgent than {}; `yonder prepare` installs it",
+                line.version,
+                plist.display()
+            ),
+        ));
+    }
     Ok(line.version)
+}
+
+/// Whether the version `new` is lower than `current`. A version that is not three numbers, or `0.0.0` of a build that
+/// names no version, is not ordered.
+fn is_lower(new: &str, current: &str) -> bool {
+    let numbers = |version: &str| -> Option<Vec<u64>> {
+        let numbers: Option<Vec<u64>> = version.split('.').map(|part| part.parse().ok()).collect();
+        numbers.filter(|numbers| numbers.len() == 3 && numbers.iter().any(|number| *number > 0))
+    };
+    matches!((numbers(new), numbers(current)), (Some(new), Some(current)) if new < current)
+}
+
+/// Refuses while the watchdog of an earlier upgrade holds its flock.
+fn check_no_watchdog(home: &Home) -> Result<(), Refusal> {
+    let failed = |error: io::Error| refused(UPGRADE_FAILED, format!("cannot probe the watchdog lock: {error}"));
+    private_dir(&home.cache_dir()).map_err(failed)?;
+    let lock = open_private(&home.upgrade_lock_file()).map_err(failed)?;
+    if try_flock_shared(&lock).map_err(failed)? {
+        Ok(())
+    } else {
+        Err(refused(
+            UPGRADE_FAILED,
+            format!(
+                "the watchdog of an earlier upgrade still waits; {} has its outcome when it ends",
+                home.upgrade_file().display()
+            ),
+        ))
+    }
 }
 
 /// The install of a staged binary over `target`, and the watchdog that checks it.
@@ -281,13 +370,28 @@ pub(crate) struct Install<'a> {
     pub(crate) launchctl: &'a Path,
     /// How long the watchdog waits for a `serve` of the new binary.
     pub(crate) wait: Duration,
+    /// Take a binary of a lower version too.
+    pub(crate) force: bool,
 }
 
 impl Install<'_> {
     /// Checks the staged binary, keeps `target` as its previous binary, renames the staged binary over `target`, and
     /// starts the watchdog. A watchdog that cannot start undoes the swap.
     pub(crate) fn run(&self, staged: Staged) -> Result<Upgraded, Refusal> {
-        let version = self_check(&staged.path)?;
+        check_no_watchdog(self.home)?;
+        let version = check_new(&staged.path, &self.home.launch_agent_file())?;
+        if !self.force
+            && let Ok(current) = version_line(self.target, &[OsStr::new("version")])
+            && is_lower(&version, &current.version)
+        {
+            return Err(refused(
+                DOWNGRADE,
+                format!(
+                    "the binary {version} is older than the agent {}; `--force` installs it",
+                    current.version
+                ),
+            ));
+        }
         let sha256 = staged.sha256.clone();
         let previous_sha256 = swap(self.target, staged)?;
         if let Err(refusal) = self.start_watchdog(&sha256) {
@@ -315,7 +419,7 @@ impl Install<'_> {
         }
         let log = OpenOptions::new().create(true).append(true).open(&log_file).map_err(failed)?;
         let previous = previous_of(self.target);
-        let program = if self_check(&previous).is_ok() {
+        let program = if can_watch(&previous) {
             previous
         } else {
             self.target.to_path_buf()
@@ -374,13 +478,46 @@ fn restore(target: &Path) -> io::Result<()> {
 pub(crate) enum Watched {
     /// A `serve` of the new binary listens with this pid.
     Listened(u32),
-    /// No `serve` of the new binary listened in time, and the previous binary runs again.
-    RolledBack,
+    /// No `serve` of the new binary listened in time, and the previous binary is back. `listens` tells whether the port
+    /// took connections again within the wait.
+    RolledBack { listens: bool },
+}
+
+/// The outcome of a watchdog in `upgrade.json`.
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub(crate) struct Outcome {
+    pub(crate) sha256: String,
+    /// `listened`, `rolled_back`, or `rolled_back_not_listening`.
+    pub(crate) outcome: String,
+    pub(crate) at_ms: u64,
+}
+
+/// The flock that a watchdog holds while it lives, so a later upgrade refuses. The one of an earlier watchdog gets up
+/// to [`LOCK_WAIT`].
+fn hold_watch_lock(home: &Home) -> Result<File, Refusal> {
+    let failed = |error: io::Error| refused(UPGRADE_FAILED, format!("cannot take the watchdog lock: {error}"));
+    private_dir(&home.cache_dir()).map_err(failed)?;
+    let lock = open_private(&home.upgrade_lock_file()).map_err(failed)?;
+    let started = Instant::now();
+    while !try_flock(&lock).map_err(failed)? {
+        if started.elapsed() >= LOCK_WAIT {
+            return Err(refused(UPGRADE_FAILED, "the watchdog of an earlier upgrade still waits"));
+        }
+        thread::sleep(WATCH_EVERY);
+    }
+    Ok(lock)
+}
+
+/// Whether the agent takes a TCP connection on `port` of the loopback address. `None`, a LaunchAgent without a port,
+/// counts as yes.
+fn takes_connections(port: Option<u16>) -> bool {
+    port.is_none_or(|port| TcpStream::connect_timeout(&SocketAddr::from((Ipv4Addr::LOCALHOST, port)), CONNECT).is_ok())
 }
 
 /// The watchdog of an upgrade of `target` to the binary `sha256`: it waits up to `wait` for the listening file of a
-/// live `serve` of that binary. Else it restores the previous binary and restarts the agent through `launchctl`.
-/// `say` takes each line for the log.
+/// live `serve` of that binary whose port takes connections. Else it restores the previous binary, restarts the agent
+/// through `launchctl`, and waits up to `wait` for the port again. It writes its outcome to `upgrade.json`. `say` takes
+/// each line for the log.
 pub(crate) fn watchdog(
     home: &Home,
     target: &Path,
@@ -389,15 +526,31 @@ pub(crate) fn watchdog(
     launchctl_program: &Path,
     say: &mut dyn FnMut(&str),
 ) -> Result<Watched, Refusal> {
+    let _lock = hold_watch_lock(home)?;
+    let port = launch_agent(home).ok().map(|values| values.port);
     let short = sha256.get(..12).unwrap_or(sha256);
+    let outcome = |outcome: &str| {
+        let outcome = Outcome {
+            sha256: sha256.to_owned(),
+            outcome: outcome.to_owned(),
+            at_ms: epoch_ms(SystemTime::now()),
+        };
+        serde_json::to_vec(&outcome)
+            .map_err(io::Error::other)
+            .and_then(|json| write_private(&home.upgrade_file(), &json))
+    };
     say(&format!("watchdog: waits {} s for a serve of the binary {short}", wait.as_secs()));
     let started = Instant::now();
     loop {
         if let Some(listening) = read_listening(home)
             && listening.sha256 == sha256
             && is_alive(listening.pid)
+            && takes_connections(port)
         {
             say(&format!("watchdog: the binary {short} listens with the pid {}", listening.pid));
+            if let Err(error) = outcome("listened") {
+                say(&format!("watchdog: cannot write {}: {error}", home.upgrade_file().display()));
+            }
             return Ok(Watched::Listened(listening.pid));
         }
         if started.elapsed() >= wait {
@@ -418,7 +571,26 @@ pub(crate) fn watchdog(
     let (_, service) = service();
     launchctl(launchctl_program, &["kickstart", "-k", &service]).map_err(|message| refused(LAUNCHD_FAILED, message))?;
     say(&format!("watchdog: restored {} and restarted {service}", target.display()));
-    Ok(Watched::RolledBack)
+    let restarted = Instant::now();
+    let listens = loop {
+        if takes_connections(port) {
+            break true;
+        }
+        if restarted.elapsed() >= wait {
+            break false;
+        }
+        thread::sleep(WATCH_EVERY);
+    };
+    say(&if listens {
+        "watchdog: the previous agent takes connections again".to_owned()
+    } else {
+        format!("watchdog: the previous agent does not take connections after {} s", wait.as_secs())
+    });
+    let written = outcome(if listens { "rolled_back" } else { "rolled_back_not_listening" });
+    if let Err(error) = written {
+        say(&format!("watchdog: cannot write {}: {error}", home.upgrade_file().display()));
+    }
+    Ok(Watched::RolledBack { listens })
 }
 
 /// Whether a process of `pid` lives.
@@ -432,9 +604,15 @@ fn is_alive(pid: u32) -> bool {
 
 /// `yonderd upgrade <binary>`: installs `binary` over the binary of the LaunchAgent, starts the watchdog, and restarts
 /// the agent.
-pub(crate) fn upgrade_from_file(home: &Home, binary: &Path, launchctl_program: &Path, wait: Duration) -> Result<Upgraded, Refusal> {
+pub(crate) fn upgrade_from_file(
+    home: &Home,
+    binary: &Path,
+    launchctl_program: &Path,
+    wait: Duration,
+    force: bool,
+) -> Result<Upgraded, Refusal> {
     check_launchd()?;
-    let target = launchd_binary(home)?;
+    let target = launch_agent(home)?.exe;
     let unreadable = |error: io::Error| refused(BAD_BINARY, format!("cannot read {}: {error}", binary.display()));
     let mut source = File::open(binary).map_err(unreadable)?;
     let size = source.metadata().map_err(unreadable)?.len();
@@ -457,6 +635,7 @@ pub(crate) fn upgrade_from_file(home: &Home, binary: &Path, launchctl_program: &
         target: &target,
         launchctl: launchctl_program,
         wait,
+        force,
     }
     .run(staged)?;
     let (_, service) = service();

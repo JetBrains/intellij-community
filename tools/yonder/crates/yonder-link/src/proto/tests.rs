@@ -165,13 +165,23 @@ fn a_hello_of_an_older_agent_has_no_binary_and_a_new_hello_names_it() {
 
 #[test]
 fn an_upgrade_and_its_reply_have_a_tagged_json_shape() {
+    // The shape of an upgrade without `force` is the one of the first agents with the feature.
     let request = Request::Upgrade {
         size: 9,
         sha256: "cd".repeat(32),
+        force: false,
     };
     let json = serde_json::to_string(&request).expect("json");
     assert_eq!(json, format!(r#"{{"request":"upgrade","size":9,"sha256":"{}"}}"#, "cd".repeat(32)));
     assert_eq!(serde_json::from_str::<Request>(&json).expect("parsed"), request);
+    let forced = Request::Upgrade {
+        size: 9,
+        sha256: "cd".repeat(32),
+        force: true,
+    };
+    let json = serde_json::to_string(&forced).expect("json");
+    assert!(json.ends_with(r#","force":true}"#), "{json}");
+    assert_eq!(serde_json::from_str::<Request>(&json).expect("parsed"), forced);
 
     let reply = Reply::Upgraded {
         previous_sha256: "ab".repeat(32),

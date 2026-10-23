@@ -9,8 +9,9 @@ The agent of yonder on a host: macOS and Linux. `crates/yonder-link/API.md` list
 | `serve [--port 7741]` | One JSON line `{"listening": "<address>", "fingerprint": "<64 hex>"}`, then the log on stderr. |
 | `supervise <run dir> [--lock-fd <descriptor>]` | Nothing. `serve` starts it for each `Start` with the flock of the run, and it writes `exit.json` in the run directory. |
 | `setup --client <fingerprint> --name <name> [--port 7741]` | One JSON line `{"fingerprint": "<64 hex>", "port": 7741, "launchd": "bootstrapped" \| "restarted" \| "none"}`. |
-| `version` | One JSON line `{"version": "<cargo version>", "schema_version": 2, "features": [...]}`. |
-| `upgrade <binary> [--launchctl launchctl]` | One JSON line `{"previous_sha256": "<64 hex>", "sha256": "<64 hex>", "version": "<cargo version>"}`. It installs `binary` as the request does, then runs `launchctl kickstart -k gui/<uid>/com.jetbrains.yonderd`. A bootstrap run of `yonder upgrade` starts it. |
+| `version` | One JSON line `{"version": "<cargo version>", "schema_version": 2, "features": [...], "sha256": "<64 hex>"}`. The SHA-256 of the binary is its build id, because the version is the same for each build. |
+| `check --plist <plist>` | The line of `version` with `"plist": "same" \| "changed" \| "unknown"`: whether `setup` of this build writes the LaunchAgent `plist` as it is. An upgrade runs it on the new binary. |
+| `upgrade <binary> [--force] [--launchctl launchctl]` | One JSON line `{"previous_sha256": "<64 hex>", "sha256": "<64 hex>", "version": "<cargo version>"}`. It installs `binary` as the request does, then runs `launchctl kickstart -k gui/<uid>/com.jetbrains.yonderd`. The bootstrap run of `yonder upgrade` starts it. |
 | `watchdog <binary> --sha256 <64 hex> --wait-ms <ms> [--launchctl launchctl]` | Lines in the log of the agent. An upgrade starts it, see [The upgrade](#the-upgrade). |
 | `dump-env <file>` | Nothing. The login shell runs it to write its environment into the file, see [The environment of a run](#the-environment-of-a-run). |
 
@@ -23,7 +24,7 @@ exits with 1. A usage error exits with 2.
 | No `HOME` | `agent_error` |
 | An identity, an allow list, a plist, a lease file or a port that the agent cannot read or write | `agent_error` |
 | A failed `launchctl print`, `bootstrap`, `bootout` or `kickstart` | `launchd_failed` |
-| An `upgrade` or a `watchdog` that refuses, see [The upgrade](#the-upgrade) | `bad_binary`, `upgrade_failed` |
+| An `upgrade` or a `watchdog` that refuses, see [The upgrade](#the-upgrade) | `bad_binary`, `plist_changed`, `downgrade`, `upgrade_failed`, `launchd_failed` |
 
 `setup` moves each lease file of `~/.cache/bt-remote/leases/` into `~/.cache/yonderd/leases/` when the agent has no
 file of that holder.
@@ -49,8 +50,10 @@ file of that holder.
 | A prepare step of `.yonder.toml` that exits with a code other than 0 | `prepare_failed`, as the end of the run, before the command |
 | A port variable of `.yonder.toml` without a free port among its 100 | `agent_error`, as the end of the run, before the command |
 | An upgrade of more than `MAX_BINARY` bytes, or a SHA-256 that is not 64 lower-case hex digits | `bad_request` |
-| An upgrade whose binary has another size or SHA-256, or does not answer `version` as an agent of this schema with the feature `upgrade` | `bad_binary` |
-| An upgrade on Linux, without a LaunchAgent, during another upgrade, or with a failed file call | `upgrade_failed` |
+| An upgrade whose binary has another size or SHA-256, or does not answer `check` as an agent of this schema with the feature `upgrade` | `bad_binary` |
+| An upgrade whose binary writes another LaunchAgent than the one on the host | `plist_changed` |
+| An upgrade to a lower version without `force` | `downgrade` |
+| An upgrade on Linux, without a LaunchAgent of the shape of `setup`, while a watchdog lives, during another upgrade, or with a failed file call | `upgrade_failed` |
 
 - Each git, bd and launchctl child of the agent runs in a process group of its own. A deadline or a cancel kills the
   whole group, so a stopped `bd lease get` leaves no clone behind.
@@ -173,24 +176,34 @@ lease file adds a `prepared.<key>=<fingerprint>` line for each prepare step that
 ## The upgrade
 
 `Request::Upgrade` and `yonderd upgrade <binary>` replace the binary that the first program argument of the LaunchAgent
-names, usually `~/.local/bin/yonderd`:
+names, usually `~/.local/bin/yonderd`. They never change the identity, the allow list or the LaunchAgent: those stay
+with `setup`, so `yonder prepare`.
 
-1. The new binary goes to a staged file `.yonderd.upgrade-<pid>-<n>` beside it, with the mode 0700. The request checks
+1. A watchdog of an earlier upgrade that still lives, as its flock on `~/.cache/yonderd/upgrade.lock` shows, refuses
+   the upgrade.
+2. The new binary goes to a staged file `.yonderd.upgrade-<pid>-<n>` beside it, with the mode 0700. The request checks
    its size and its SHA-256.
-2. `<staged> version` must answer within 10 s with the schema of this agent and the feature `upgrade`, so a binary of
-   another platform, a broken one, or one that no later upgrade could replace never goes in.
-3. The current binary stays as `<binary>.previous`, a hard link or a copy. The staged file takes the name of the binary.
-4. `~/.cache/yonderd/listening.json` goes, and `yonderd watchdog` starts in a session of its own, with its lines in
+3. `<staged> check --plist <plist>` must answer within 10 s with the schema of this agent, the feature `upgrade`, and
+   `"plist": "same"`. So a binary of another platform, a broken one, one that no later upgrade could replace, or one
+   whose `setup` would write another LaunchAgent never goes in.
+4. A version below the one of `<binary> version` refuses without `force`. A version that is not three numbers, or
+   `0.0.0`, has no order: a Bazel build names no version.
+5. The current binary stays as `<binary>.previous`, a hard link or a copy. The staged file takes the name of the binary.
+6. `~/.cache/yonderd/listening.json` goes, and `yonderd watchdog` starts in a session of its own, with its lines in
    `~/Library/Logs/yonderd.log`. It runs from `<binary>.previous` when that binary has the feature `upgrade`, else from
    the new binary. A watchdog that cannot start undoes the swap.
-5. The request answers `Reply::Upgraded`, waits up to `UPGRADE_DRAIN_SECONDS` for the requests that go on, less the
+7. The request answers `Reply::Upgraded`, waits up to `UPGRADE_DRAIN_SECONDS` for the requests that go on, less the
    follows, and exits. launchd starts the new binary, because the LaunchAgent has `KeepAlive`. The command runs
    `launchctl kickstart -k` instead.
 
-Each `serve` writes `listening.json` once it listens: `{"sha256", "pid", "version"}` of its binary. The watchdog waits
-for the file of a live process of the new binary, `UPGRADE_DRAIN_SECONDS` plus `UPGRADE_WATCHDOG_SECONDS` for a request,
-`UPGRADE_WATCHDOG_SECONDS` for the command. Else it renames `<binary>.previous` back and runs `launchctl kickstart -k
-gui/<uid>/com.jetbrains.yonderd`. A run goes on through the restart, because its supervisor has a session of its own
+Each `serve` writes `listening.json` once it listens: `{"sha256", "pid", "version"}` of its binary. The watchdog holds
+the flock of `upgrade.lock` while it lives. It waits for the file of a live process of the new binary and a TCP
+connection to the port of the LaunchAgent on the loopback address: `UPGRADE_DRAIN_SECONDS` plus
+`UPGRADE_WATCHDOG_SECONDS` for a request, `UPGRADE_WATCHDOG_SECONDS` for the command. Else it renames
+`<binary>.previous` back, runs `launchctl kickstart -k gui/<uid>/com.jetbrains.yonderd`, and waits as long again for a
+TCP connection to the port. It writes `~/.cache/yonderd/upgrade.json`: `{"sha256", "outcome", "at_ms"}`, with the
+outcome `listened`, `rolled_back` or `rolled_back_not_listening`. The check is no TLS hello, because the watchdog is no
+client of the allow list, and the upgrade never changes that list. A run goes on through the restart, because its supervisor has a session of its own
 and the LaunchAgent has `AbandonProcessGroup`. Its client follows again from the new `serve`.
 
 On Linux the agent lists no feature `upgrade` and refuses the request. A host there needs `yonder prepare` and a restart

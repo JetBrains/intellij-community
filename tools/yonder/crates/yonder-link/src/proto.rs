@@ -114,7 +114,14 @@ pub enum Request {
     /// After the reply the agent waits up to [`UPGRADE_DRAIN_SECONDS`] for its other requests, and exits, so that
     /// launchd starts the new binary. A watchdog restores the previous binary when the new one does not listen within
     /// [`UPGRADE_WATCHDOG_SECONDS`] after that. A run goes on, because its supervisor has a session of its own.
-    Upgrade { size: u64, sha256: String },
+    ///
+    /// `force` takes a binary of a lower version too. An agent before the field ignores it.
+    Upgrade {
+        size: u64,
+        sha256: String,
+        #[serde(default, skip_serializing_if = "is_false")]
+        force: bool,
+    },
 }
 
 /// What one run does. A field after `idle_hours` is optional: an older client does not send it, and an older agent

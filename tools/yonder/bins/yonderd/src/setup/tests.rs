@@ -36,8 +36,20 @@ fn the_plist_runs_serve_on_the_port_and_escapes_its_strings() {
     assert!(plist.contains("<key>KeepAlive</key>\n  <true/>"), "{plist}");
     assert!(plist.contains("<key>RunAtLoad</key>\n  <true/>"), "{plist}");
     assert!(!plist.contains("a&b"), "{plist}");
-    assert_eq!(plist_program(&plist), Some(PathBuf::from("/Users/a&b/.local/bin/yonderd")));
-    assert_eq!(plist_program("<plist><dict></dict></plist>"), None);
+    let values = PlistValues::parse(&plist).expect("the values");
+    assert_eq!(
+        values,
+        PlistValues {
+            exe: PathBuf::from("/Users/a&b/.local/bin/yonderd"),
+            port: 7742,
+            log: PathBuf::from("/Users/a&b/Library/Logs/yonderd.log"),
+            path: "/usr/bin".to_owned(),
+        }
+    );
+    assert_eq!(values.text(), plist);
+    assert_eq!(PlistValues::parse("<plist><dict></dict></plist>"), None);
+    let other = plist.replace("<string>serve</string>", "<string>serve</string>\n    <string>--bind</string>");
+    assert_eq!(PlistValues::parse(&other), None, "another argument list");
 }
 
 #[test]

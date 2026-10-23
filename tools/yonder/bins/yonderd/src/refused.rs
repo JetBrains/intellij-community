@@ -34,6 +34,11 @@ pub(crate) const BAD_BINARY: &str = "bad_binary";
 /// The agent cannot stage, keep or swap its binary, or start the watchdog: no LaunchAgent, or a failed file call.
 pub(crate) const UPGRADE_FAILED: &str = "upgrade_failed";
 
+/// The new binary of an upgrade writes another LaunchAgent than the one on the host, so only `setup` can install it.
+pub(crate) const PLIST_CHANGED: &str = "plist_changed";
+/// The new binary of an upgrade has a lower version than the current one, and the request has no `force`.
+pub(crate) const DOWNGRADE: &str = "downgrade";
+
 /// `setup` cannot start the agent under launchd.
 pub(crate) const LAUNCHD_FAILED: &str = "launchd_failed";
 
