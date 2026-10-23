@@ -5,11 +5,9 @@ import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.compositeScope
-import org.jetbrains.kotlin.analysis.api.impl.base.types.KaBaseTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.session.canBeAnalysed
@@ -583,13 +581,8 @@ internal class K2TypeInstantiationContributor : K2CompletionContributor<KotlinNa
 private val KaClassLikeSymbol.expandedSymbolOrSelf: KaClassLikeSymbol
     get() = (this as? KaTypeAliasSymbol)?.expandedType?.symbol ?: this
 
-@OptIn(KaImplementationDetail::class)
 context(_: KaSession)
 private fun KaTypeProjection.upperBoundIfFlexible(): KaTypeProjection = when(this) {
     is KaStarTypeProjection -> this
-    is KaTypeArgumentWithVariance -> KaBaseTypeArgumentWithVariance(
-        type = type.upperBoundIfFlexible(),
-        variance = variance,
-        token = this.token
-    )
+    is KaTypeArgumentWithVariance -> typeCreator.typeProjection(variance, type.upperBoundIfFlexible())
 }

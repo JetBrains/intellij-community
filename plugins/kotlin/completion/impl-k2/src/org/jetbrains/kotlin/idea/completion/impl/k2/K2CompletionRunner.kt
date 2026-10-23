@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaCompletionExtensionCandidateChecker
 import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.impl.base.components.KaBaseIllegalPsiException
+import org.jetbrains.kotlin.analysis.api.fir.components.KaFirIllegalPsiException
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.projectStructure.copyOrigin
 import org.jetbrains.kotlin.analysis.api.renderer.render
@@ -156,7 +156,7 @@ internal interface K2CompletionRunner {
                         positionContext = KotlinExpressionNameReferencePositionContext(nameExpression, explicitReceiver = receiverExpression)
                     )
 
-                    // TODO: Remove once KT-79109 KaBaseIllegalPsiException is thrown incorrectly when using CodeFragments in KtCompletionExtensionCandidateChecker.create
+                    // TODO: Remove once KT-79109 KaFirIllegalPsiException is thrown incorrectly when using CodeFragments in KtCompletionExtensionCandidateChecker.create
                     val commonData = createCommonSectionData(newCompletionContext) ?: return@analyze
 
                     val sink = K2DelegatingLookupElementSink(completionResultSet)
@@ -258,7 +258,7 @@ internal fun createExtensionChecker(
     }
     // FIXME: KTIJ-34285
     @OptIn(KaImplementationDetail::class)
-    return KaBaseIllegalPsiException.allowIllegalPsiAccess {
+    return KaFirIllegalPsiException.allowIllegalPsiAccess {
         KtCompletionExtensionCandidateChecker.create(
             originalFile = originalFile,
             nameExpression = positionContext.nameExpression,
