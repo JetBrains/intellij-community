@@ -77,10 +77,10 @@ pin the viewer to it.
   [@test] ../crates/air-trace/src/plan/tests.rs
 
 - A bundle holds `spans.jsonl`, `logs.jsonl`, and `video.mp4` with `video.index.json`. It holds a
-  `snap/NNNN.tree.json` for each snapshot, and a `snap/NNNN.webp` for each snapshot whose screen changed. It
-  also holds an `attach/NNNN.<ext>` for each attachment, `idea.log` and `bundle.json`. In a scenario with a video, a
-  PNG attachment is an `attach/NNNN.webp`. A file the recorder could not produce is absent, and the manifest or a log
-  record says why.
+  `snap/NNNN.tree.json` for each snapshot, and a `snap/NNNN.webp` or `snap/NNNN.avif` for each snapshot whose screen
+  changed. It also holds an `attach/NNNN.<ext>` for each attachment, `idea.log` and `bundle.json`. In a scenario with a
+  video, a PNG attachment is an `attach/NNNN.avif`. A file the recorder could not produce is absent, and the manifest
+  or a log record says why.
   [@test] ../crates/avl-trace/src/bundle/tests.rs
 
 - `bundle.json` is written last. Its `schema` is `air-trace/1`, and a reader refuses any other value. It
@@ -106,31 +106,35 @@ pin the viewer to it.
   [@test] ../crates/avl-record/src/video/mp4/tests.rs
   [@test] ../crates/avl-record/src/frames/tests.rs
 
-- A snapshot's picture is WebP, and its tree is the bridge's tree document. A snapshot of an
-  unchanged screen gets no picture file. Its `air.snapshot.image` names the previous picture's file. So the
-  last picture file by name is the last snapshot's picture.
+- A snapshot's picture is WebP or AVIF, and its tree is the bridge's tree document. The extension of a picture names
+  its format and its media type. A snapshot of an unchanged screen gets no picture file. Its `air.snapshot.image`
+  names the previous picture's file. So the last picture file by name is the last snapshot's picture.
   [@test] ../crates/avl-record/src/stills/tests.rs
-  [@test] ../crates/avl-trace/src/bundle/tests.rs
+  [@test] ../crates/avl-trace/src/bundle/tests.rs (`a_picture_names_its_media_type_by_its_extension`)
+  [@test] ../crates/avl-trace-tools/src/discover/tests.rs (`the_thumbnail_of_a_lossy_bundle_is_its_last_avif_still`)
 
-- The pictures of a scenario that starts a video are lossy WebP at quality 90, because the video also shows each
-  moment. The pictures of a scenario without a video are lossless. The scenario picks the encoding after it starts
-  the video, so a video that fails later leaves the pictures lossy. The comparison with the previous picture reads the
-  grabbed frames, so it is the same for both encodings.
+- The pictures of a scenario that starts a video are lossy AVIF, because the video also shows each moment. They are
+  8-bit 4:4:4 at the quality 60 of `avifenc` and at the speed 8. The pictures of a scenario without a video are
+  lossless WebP. The scenario picks the encoding after it starts the video, so a video that fails later leaves the
+  pictures lossy. The comparison with the previous picture reads the grabbed frames, so it is the same for both
+  encodings.
   [@test] ../crates/avl-record/src/session/tests.rs (`a_scenario_with_a_video_takes_lossy_pictures`)
   [@test] ../crates/avl-record/src/session/tests.rs (`an_encoder_that_never_reads_does_not_hold_the_scenario_ack`)
-  [@test] ../crates/avl-record/src/stills/tests.rs (`a_lossy_still_is_a_close_picture_of_the_frame`)
+  [@test] ../crates/avl-record/src/avif/tests.rs (`a_lossy_picture_is_a_close_444_avif_still_of_the_frame`)
   [@test] ../crates/avl-record/src/stills/tests.rs (`a_still_of_an_unchanged_screen_names_the_previous_file`)
 
 - When the recorder cannot write a picture, the next snapshot of the same screen writes its own file. The
   `air.trace.error` of the failure names the file that is missing.
   [@test] ../crates/avl-record/src/stills/tests.rs
 
-- When the lossy encoder fails or panics on a picture, the recorder writes that picture lossless. An
-  `air.trace.error` from `webp` names the file. When the lossless picture cannot be written either, one record names
-  the file and both causes. A panic of an encoder costs one picture, and the pictures queued after it are still
-  written.
+- When the lossy encoder fails or panics on a picture, the recorder writes that picture as lossless AVIF. So the file
+  keeps the name and the format of its record. An `air.trace.error` from `still` names the file. When the lossless
+  picture cannot be written either, one record names the file and both causes. A panic of an encoder costs one
+  picture, and the pictures queued after it are still written. A lossless WebP picture has no fallback.
   [@test] ../crates/avl-record/src/stills/tests.rs (`a_still_whose_lossy_encoder_panics_is_written_lossless`)
   [@test] ../crates/avl-record/src/stills/tests.rs (`a_still_that_every_encoder_panics_on_is_reported_and_not_named_again`)
+  [@test] ../crates/avl-record/src/stills/tests.rs (`a_lossless_still_whose_encoder_panics_is_reported`)
+  [@test] ../crates/avl-record/src/avif/tests.rs (`a_lossless_picture_reconstructs_the_exact_frame`)
 
 - The recorder writes the Allure results only when the hello says `allure`. The lane says it when a person asks
   with `-Dair.flow.trace.allure=on`. That flag is a lane flag of the runtime descriptor, or a `--jvm_flag` of
@@ -161,7 +165,8 @@ pin the viewer to it.
   [@test] ../crates/avl-record/src/allure/tests.rs (`a_failed_scenario_becomes_a_result_with_its_steps_pictures_and_attachment`)
 
 - Each lane span is a step under the step of its parent, with the span's title and status. The IDE's spans are not
-  steps. A step has a Before and an After picture as `image/webp`, and the files that the lane attached to its span.
+  steps. A step has a Before and an After picture with the media type of its file. It also has the files that the lane
+  attached to its span.
   [@test] ../crates/avl-record/src/allure/tests.rs (`a_failed_scenario_becomes_a_result_with_its_steps_pictures_and_attachment`)
 
 - Before is the first picture in the span. After is the next picture of the scenario, or the last picture of the
@@ -324,12 +329,12 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   [@test] ../crates/avl-record/src/attach/tests.rs (`an_attachment_moves_into_the_bundle_and_is_recorded_on_its_span`)
   [@test] ../crates/avl-trace/src/protocol/tests.rs (`labels_attachments_and_a_failed_done_are_canonical`)
 
-- In a scenario with a video, an `attach` of the media type `image/png` becomes the lossy WebP picture
-  `attach/NNNN.webp`. The recorder removes the lane file. The record names `image/webp` and the picture's file.
+- In a scenario with a video, an `attach` of the media type `image/png` becomes the lossy AVIF picture
+  `attach/NNNN.avif`. The recorder removes the lane file. The record names `image/avif` and the picture's file.
   The picture follows the rules of a snapshot's picture. It is encoded off the lane's path, and it falls back to
   lossless. The same picture as the previous one names the file of the previous one. The attachment pictures have a
   writer of their own, so a picture and a still never name the file of the other.
-  [@test] ../crates/avl-record/src/attach/tests.rs (`a_png_attachment_becomes_a_lossy_webp_picture_in_a_scenario_with_a_video`)
+  [@test] ../crates/avl-record/src/attach/tests.rs (`a_png_attachment_becomes_a_lossy_avif_picture_in_a_scenario_with_a_video`)
   [@test] ../crates/avl-record/src/attach/tests.rs (`equal_consecutive_png_attachments_name_one_file`)
 
 - In a scenario without a video, a PNG attachment stays a PNG. A lossless WebP of the recorder is larger than the PNG
@@ -340,8 +345,8 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 
 - In a scenario with a video, some PNG attachments move into the bundle as they are, with their media type. One is a
   PNG that does not decode. The other is a PNG that the queue cannot take within the 1.8 s bound of a snapshot. An
-  `air.trace.error` from `attach` says why the PNG is no WebP picture. A picture that the encoder cannot write is an
-  `air.trace.error` from `webp` on the span of the attachment.
+  `air.trace.error` from `attach` says why the PNG is no AVIF picture. A picture that the encoder cannot write is an
+  `air.trace.error` from `still` on the span of the attachment.
   [@test] ../crates/avl-record/src/attach/tests.rs (`a_png_that_does_not_decode_is_kept_as_it_is_and_recorded`)
   [@test] ../crates/avl-record/src/attach/tests.rs (`a_png_that_the_full_queue_cannot_take_is_kept_as_it_is_and_recorded`)
 
@@ -474,13 +479,13 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   [@test] ../crates/avl-record/src/session/tests.rs (`a_snapshot_names_the_time_of_each_of_its_parts`)
   [@test] ../crates/avl-record/src/session/tests.rs (`a_session_without_a_bridge_still_takes_pictures`)
 
-- The WebP encoding runs after the ack, on a bounded writer. `done` waits for every still before it writes
+- The encoding of a picture runs after the ack, on a bounded writer. `done` waits for every still before it writes
   the manifest.
   [@test] ../crates/avl-record/src/stills/tests.rs
 
 - The writer runs one encoder per two cores, at least 1 and at most 4, over one queue. The encoders take the queued
   pictures at once. A picture's file name is fixed when the snapshot is taken, so the order of the writes does not
-  matter. An encoder that ends with a panic is an `air.trace.error` from `webp` at the end of the scenario.
+  matter. An encoder that ends with a panic is an `air.trace.error` from `still` at the end of the scenario.
   [@test] ../crates/avl-record/src/stills/tests.rs (`the_encoders_run_at_once_and_close_waits_for_every_still`)
   [@test] ../crates/avl-record/src/stills/tests.rs (`close_counts_an_encoder_that_ended_with_a_panic`)
   [@test] ../crates/avl-record/src/session/tests.rs (`a_still_encoder_that_ended_with_a_panic_is_recorded_at_the_end`)
@@ -599,9 +604,9 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   [@test] ../crates/air-trace/tests/cli.rs (`teamcity_publish_removes_the_packed_bundles_on_team_city_or_when_asked`)
 
 - For a failed scenario only, the step also publishes two loose files, so the Tests tab of TeamCity shows them. They
-  are `air-traces-failed/<lane>/<runId>/<TestClass>/<scenario>/failure.webp`, the last picture, and `…/video.mp4`,
-  when the bundle has a video. The `image` named `failure` and the `video` named `video` of the test name them. A file
-  that does not copy out of the bundle zip is a warning.
+  are `air-traces-failed/<lane>/<runId>/<TestClass>/<scenario>/failure.<ext>`, the last picture in its format, and
+  `…/video.mp4`, when the bundle has a video. The `image` named `failure` and the `video` named `video` of the test
+  name them. A file that does not copy out of the bundle zip is a warning.
   [@test] ../crates/air-trace/src/publish/tests.rs (`the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests`)
 
 - The step never turns a build red. Each problem is a line on stderr and a `message` with the status `WARNING` on

@@ -13,6 +13,9 @@ Accepted. Issue [IJAI-4382](https://youtrack.jetbrains.com/issue/IJAI-4382). It 
 lossless WebP. The behavior is stated in [the scenario trace spec](../../spec/scenario-trace.spec.md) under **The
 bundle**.
 
+Amended 2026-10-23: [A lossy still is AVIF from libaom](2026-10-23-a-lossy-still-is-avif-from-libaom.md) replaces
+the encoder of decision 1 and decision 3. A lossy still is AVIF now, and decision 2 stays.
+
 ## Context
 
 Since [A TeamCity lane run records video and keeps its evidence](2026-10-20-a-teamcity-lane-run-records-video-and-keeps-its-evidence.md),

@@ -63,6 +63,7 @@ pub(crate) fn content_type(file: &str) -> String {
         "jsonl" => "application/jsonl; charset=utf-8".to_owned(),
         "json" => "application/json; charset=utf-8".to_owned(),
         "log" => "text/plain; charset=utf-8".to_owned(),
+        "avif" => "image/avif".to_owned(),
         "webp" => "image/webp".to_owned(),
         "mp4" => "video/mp4".to_owned(),
         _ => mime_guess::from_ext(&extension)

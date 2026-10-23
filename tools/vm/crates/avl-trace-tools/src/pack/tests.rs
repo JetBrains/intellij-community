@@ -4,7 +4,7 @@ use std::path::Path;
 use std::time::{Duration, SystemTime};
 
 use avl_testkit::traces::{copy_tree, example_bundle};
-use avl_trace::bundle::{IDEA_LOG_FILE, LOGS_FILE, SNAP_DIR, bundle_file, bundle_path, snap_image_path, snap_tree_path};
+use avl_trace::bundle::{IDEA_LOG_FILE, LOGS_FILE, SNAP_DIR, StillEncoding, bundle_file, bundle_path, snap_image_path, snap_tree_path};
 use pretty_assertions::assert_eq;
 use zip::ZipArchive;
 use zip::read::HasZipMetadata;
@@ -108,7 +108,7 @@ fn pack_stores_media_and_deflates_text() {
         SPANS_FILE,
         LOGS_FILE,
         IDEA_LOG_FILE,
-        &snap_image_path(1),
+        &snap_image_path(1, StillEncoding::Lossless),
         &snap_tree_path(17),
     ] {
         assert!(names.contains(&format!("{bundle}/{want}")), "the zip has no {bundle}/{want}");
@@ -426,7 +426,7 @@ fn one_bundle_of_a_zip_is_packed_with_its_media_stored() {
 
     let mut archive = ZipArchive::new(File::open(&first).unwrap()).unwrap();
     assert_eq!(archive.len(), report.entries);
-    let image = snap_image_path(1);
+    let image = snap_image_path(1, StillEncoding::Lossless);
     let mut entry = archive.by_name(&image).unwrap();
     assert_eq!(entry.compression(), CompressionMethod::Stored);
     let mut content = Vec::new();

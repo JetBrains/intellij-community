@@ -2,8 +2,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use avl_trace::bundle::{
-    ALLURE_RESULT_SUFFIX, AllureResult, AllureStatus, allure_history_id, allure_results_dir, bundle_dir, decode_allure_result,
-    snap_image_path,
+    ALLURE_RESULT_SUFFIX, AllureResult, AllureStatus, StillEncoding, allure_history_id, allure_results_dir, bundle_dir,
+    decode_allure_result, snap_image_path,
 };
 use avl_trace::protocol::{AttachCommand, Command, encode_command};
 use pretty_assertions::assert_eq;
@@ -155,11 +155,11 @@ fn a_failed_scenario_becomes_a_result_with_its_steps_pictures_and_attachment() {
     let bytes = |name: &str| fs::read(dir.join(name)).unwrap();
     assert_eq!(
         bytes(&source(action, 0)),
-        fs::read(bundle_file(&bundle, &snap_image_path(1))).unwrap()
+        fs::read(bundle_file(&bundle, &snap_image_path(1, StillEncoding::Lossless))).unwrap()
     );
     assert_eq!(
         bytes(&source(action, 1)),
-        fs::read(bundle_file(&bundle, &snap_image_path(2))).unwrap()
+        fs::read(bundle_file(&bundle, &snap_image_path(2, StillEncoding::Lossless))).unwrap()
     );
     assert_eq!(bytes(&source(assertion, 1)), b"row name\nold\n");
     let files = fs::read_dir(dir).unwrap().count();
@@ -216,7 +216,7 @@ fn an_attachment_is_copied_when_the_link_fails() {
     let root = tempfile::tempdir().unwrap();
     let dir = root.path().join("bundle");
     let results = root.path().join(avl_trace::bundle::ALLURE_RESULTS_DIR);
-    let picture = snap_image_path(1);
+    let picture = snap_image_path(1, StillEncoding::Lossless);
     fs::create_dir_all(bundle_file(&dir, &picture).parent().unwrap()).unwrap();
     fs::create_dir_all(&results).unwrap();
     let links: [(&str, LinkFile, &[u8]); 2] = [
@@ -238,8 +238,8 @@ fn an_attachment_is_copied_when_the_link_fails() {
             problems: Vec::new(),
             link,
         };
-        let first = linker.required(BEFORE, MIME_WEBP, &picture).unwrap();
-        let second = linker.required(AFTER, MIME_WEBP, &picture).unwrap();
+        let first = linker.required(BEFORE, StillEncoding::Lossless.mime(), &picture).unwrap();
+        let second = linker.required(AFTER, StillEncoding::Lossless.mime(), &picture).unwrap();
         assert_eq!(first.source, second.source, "{how}: one bundle file is two attachments");
         assert_eq!(linker.problems, Vec::<String>::new(), "{how}");
         fs::write(bundle_file(&dir, &picture), "changed").unwrap();

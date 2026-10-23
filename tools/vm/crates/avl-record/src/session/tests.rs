@@ -130,7 +130,7 @@ fn a_session_without_a_bridge_still_takes_pictures() {
     assert_eq!(acks.len(), 4, "{}", h.acks.text());
     assert_eq!(acks[2]["ok"], true);
     let snapshot = snapshot_of(&h.example_bundle());
-    let image = snap_image_path(1);
+    let image = snap_image_path(1, StillEncoding::Lossless);
     assert_eq!(lookup_str(&snapshot.attributes, attr::SNAPSHOT_IMAGE), Some(image.as_str()));
     assert_eq!(lookup_str(&snapshot.attributes, attr::SNAPSHOT_TREE), None);
     let error = lookup_str(&snapshot.attributes, attr::SNAPSHOT_ERROR).unwrap_or_default();
@@ -330,12 +330,8 @@ fn a_scenario_with_a_video_takes_lossy_pictures() {
     let bundle = h.example_bundle();
     let manifest = manifest_of(&bundle);
     assert_eq!((manifest.video, manifest.stills.encoding), (Video::H264, StillEncoding::Lossy));
-    let picture = fs::read(bundle.join(snap_image_path(1))).unwrap();
-    assert_eq!(
-        &picture[8..16],
-        b"WEBPVP8 ",
-        "the picture of a scenario with a video is not lossy WebP"
-    );
+    let picture = fs::read(bundle.join(snap_image_path(1, StillEncoding::Lossy))).unwrap();
+    assert_eq!(&picture[4..12], b"ftypavif", "the picture of a scenario with a video is not AVIF");
 }
 
 /// A still encoder that ends with a panic is evidence loss, and the end of the scenario records it on the root.
@@ -349,7 +345,7 @@ fn a_still_encoder_that_ended_with_a_panic_is_recorded_at_the_end() {
     h.feed(&mut session, &[SNAP, DONE]);
     let errors = error_records(&h.example_bundle());
     assert!(
-        errors.contains(&"webp: 1 of the still encoders ended with a panic".to_owned()),
+        errors.contains(&"still: 1 of the still encoders ended with a panic".to_owned()),
         "the trace errors: {errors:?}"
     );
 }

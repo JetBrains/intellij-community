@@ -105,7 +105,7 @@ impl Scenario {
 
         let mut image = None;
         if let (Some(frame), Some(stills)) = (frame, &self.stills) {
-            let name = snap_image_path(ordinal);
+            let name = snap_image_path(ordinal, self.still_encoding);
             lock(&self.still_spans).insert(name.clone(), command.span);
             let started = (self.clock)();
             let submitted = stills.submit(deadline, name, frame);

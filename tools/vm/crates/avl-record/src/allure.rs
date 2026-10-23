@@ -13,13 +13,12 @@ use anyhow::Context;
 use avl_trace::bundle::{
     ALLURE_BUNDLE_LABEL, AllureAttachment, AllureResult, AllureStage, AllureStatusDetails, AllureStep, BundleStatus, IDEA_LOG_FILE,
     LOGS_FILE, Manifest, SPANS_FILE, VIDEO_FILE, Video, allure_attachment_file, allure_history_id, allure_result_file, bundle_file,
-    derived_uuid, encode_allure_result,
+    derived_uuid, encode_allure_result, picture_mime,
 };
 use avl_trace::otlp::{SERVICE_NAME, attr, decode_logs_line, decode_traces_line, event, lookup_int, lookup_str, span_id};
 use avl_trace::protocol::{Label, Status};
 
 use crate::bundle::{copy_into_place, write_file_atomically};
-use crate::stills::MIME_WEBP;
 
 // The titles of the attachments the recorder adds.
 pub(crate) const BEFORE: &str = "Before";
@@ -29,6 +28,8 @@ pub(crate) const BUNDLE: &str = "Trace bundle";
 
 const MIME_MP4: &str = "video/mp4";
 const MIME_TEXT: &str = "text/plain";
+/// The media type of a picture whose file has no extension of a picture format.
+const MIME_UNKNOWN: &str = "application/octet-stream";
 
 /// What the result needs beyond the bundle's files.
 pub(crate) struct ResultInput<'a> {
@@ -298,7 +299,8 @@ impl Tree {
             let mut attachments = Vec::new();
             for (title, picture) in [(BEFORE, before), (AFTER, after)] {
                 if let Some(picture) = picture {
-                    attachments.extend(linker.required(title, MIME_WEBP, &picture.image));
+                    let mime = picture_mime(&picture.image).unwrap_or(MIME_UNKNOWN);
+                    attachments.extend(linker.required(title, mime, &picture.image));
                 }
             }
             attachments.extend(self.attached(child, linker));

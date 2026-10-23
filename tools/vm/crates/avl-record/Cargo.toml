@@ -18,8 +18,6 @@ anyhow.workspace = true
 avl-bridge.workspace = true
 avl-trace.workspace = true
 crossbeam-channel.workspace = true
-gamut-core.workspace = true
-gamut-webp.workspace = true
 image-webp.workspace = true
 jiff.workspace = true
 png.workspace = true
@@ -28,8 +26,11 @@ signal-hook.workspace = true
 xxhash-rust.workspace = true
 
 [target.'cfg(unix)'.dependencies]
-# The encoder is built where a raw video can be recorded or its round trip tested. Windows has no X11 source and
-# is spared the C++ build.
+# The video encoder and the encoder of the lossy stills are built where a raw video can be recorded or its round trip
+# tested. A scenario without a video takes lossless stills. Windows has no X11 source and is spared the C and C++
+# builds.
+avif-serialize.workspace = true
+libaom-sys.workspace = true
 openh264.workspace = true
 
 [target.'cfg(target_os = "linux")'.dependencies]

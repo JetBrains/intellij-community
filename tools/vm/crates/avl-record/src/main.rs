@@ -35,6 +35,8 @@ macro_rules! say {
 
 mod allure;
 mod attach;
+#[cfg(unix)]
+mod avif;
 mod bundle;
 mod capture;
 mod dumps;

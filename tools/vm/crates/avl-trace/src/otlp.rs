@@ -607,8 +607,8 @@ pub mod attr {
 
     // [super::event::TRACE_ERROR].
     /// What failed: `x11`, `ide-paint`, `bridge.facts`, `bridge.tree`, `bridge.spans`, `video` (the video encoder or
-    /// the screen recording), `webp` (a still the encoder could not write), `idea.log`, `attach` (an attachment the recorder could not move into the
-    /// bundle) or `protocol`.
+    /// the screen recording), `still` (a picture that the recorder could not write, or a lossy picture that it wrote
+    /// lossless), `idea.log`, `attach` (an attachment the recorder could not move into the bundle) or `protocol`.
     pub const TRACE_ERROR_SOURCE: &str = "air.trace.error.source";
     pub const TRACE_ERROR_MESSAGE: &str = "air.trace.error.message";
 }

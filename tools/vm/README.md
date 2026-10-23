@@ -47,7 +47,7 @@ checkout at its start. In a community checkout no `bt.json` names the Air area, 
 Every one of these labels is an `avl_binary` at the workspace root: one file, and always `compilation_mode=opt`,
 whatever the command line says. The wrapper, `$(rlocationpath)` and the controller's `cquery ... [0]` for the agent each
 need one output file. Optimized, because fastbuild Rust is `-Copt-level=0` for every
-dependency, and the WebP stills, the X11 frame copies and the zip deflate would run ten times slower or worse
+dependency, and the still encoders, the X11 frame copies and the zip deflate would run ten times slower or worse
 inside a lane that measures time. The rule is `optimized_binary` of `community/build/rust-tools/defs.bzl`, which
 `avl.bzl` binds as `avl_binary`. On a Unix host, what `bazel test` runs for Windows is
 `:clippy-windows-x86_64` and `:clippy-windows-arm64`. On a Windows host `vm.cmd` and `trace.cmd` build and run `:vm`
@@ -62,6 +62,16 @@ builds the image; nobody builds it by hand. The base is `DOCKER_BASE_IMAGE` in `
 `container.MODULE.bazel` pins Apple `container`, the engine of a Mac on macOS 26 or newer ([Apple container is a second engine of the Docker backend](docs/decisions/2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend.md), ADR 0224).
 `docker.MODULE.bazel` pins the Docker CLI and its `docker-buildx` plugin, which a Mac runs against the engine of its
 host environment.
+
+## libaom
+
+The recorder encodes a lossy still with libaom 3.11.0, the AV1 encoder. The sources are the `vendor` directory of the
+`libaom-sys` crate. Cargo builds them with the cmake of the crate's build script. Bazel builds the same sources with
+`aom/aom.BUILD.bazel` and replaces that build script. The repository is `@avl_aom` of `avl.MODULE.bazel`, and its
+x86_64 assembly takes nasm of the Bazel Central Registry. `aom/config/` holds the config headers of cmake for arm64 and
+x86_64, and `aom/sources.bzl` the source lists. A change of the `libaom-sys` version in `Cargo.lock` needs three
+steps: change the version and the checksum of `avl_aom`, extract the crate, and run
+`bun community/tools/vm/aom/update.mjs --vendor <crate>/vendor --nasm <nasm>`.
 
 ## Crates
 
@@ -152,7 +162,7 @@ and copy `<bin>_closure.txt` from `out/bazel-bin` over `closure.txt`.
 | bench | `avl-vm` (`bench`) | `vm bench`, the start-up measurement of the IDE on this host: the generation of a dev distribution, the Starter-shaped IDE launch and its supervision, the session, the readers of the files the IDE writes (the start-up report, the trace, the FUS log, the class log, the CPU profile), the gate, the summary and the digest |
 | | `avl-vm` | the `vm` binary: the clap command tree, which renders the help, the global arguments and the dispatch, the output form and renderer the descriptors allow, the live terminal dashboard of `run`, `shard` and `flake` (`console`), `image validate\|build`, and the viewer a prose run starts (`ensure_viewer`, through `avl_host_sys::viewer`) |
 | suites | `avl-affected` | which suites a changed path reaches (the suite's own files, the lane harness, the flow tags, the specs' `[@test]` links, the JPS modules), the UI lanes a VM worker runs with their test labels (`lanes`, which the controller and the planner share), and the bridge: the Air area that `bt.json` of the checkout names, read at the start of each program (`plugins/air/tests/integration/lanes.json`, with each UI lane's test label, which `AirIntegrationTagTest`, `AirTestTargetDeclarationTest`, `AirArchitectureModelTest` and the flow generator `docs/scripts/flowCatalog.ts` read too), and a BT refusal as the controller's |
-| traces | `avl-record` | the recorder that the lane daemon starts, the `air-trace-record` binary: the protocol's state machine, the bundle writer, the Allure result of each bundle when a run asks for it, the snapshots, the `idea.log` slice; where the pixels come from (X11 over MIT-SHM, else the IDE's paint route), the WebP stills, lossy when the scenario has a video, the H.264 video the recorder encodes itself, its fragmented MP4 and frame index; ffmpeg only for a Mac's screen |
+| traces | `avl-record` | the recorder that the lane daemon starts, the `air-trace-record` binary: the protocol's state machine, the bundle writer, the Allure result of each bundle when a run asks for it, the snapshots, the `idea.log` slice; where the pixels come from (X11 over MIT-SHM, else the IDE's paint route), the stills, lossless WebP or, when the scenario has a video, lossy AVIF from libaom (`aom/`), the H.264 video the recorder encodes itself, its fragmented MP4 and frame index; ffmpeg only for a Mac's screen |
 | | `air-trace` | the `air-trace` binary: dispatch to `pack`, which is `avl-trace-tools`', and the modules `serve` and `plan`. `air-trace serve`: the bundles discovery finds, by byte range and live, the planner route, the bundles of a TeamCity build (`--teamcity`), and the docs site; `air-trace teamcity-publish`: after a Bazel test on TeamCity, the one archive artifact `air-traces.zip` with the viewer page, `runs.json` in the listing form of `serve` and one zip for each bundle, the messages that publish it and link each test to its trace, which `avl-report` writes, the viewer, which it builds as `serve` builds the site when `--viewer` is absent, and the build from the agent's property files; `air-trace plan`: from a bundle, a flow text, a profile, a `test.xml`, a report, a path or a name to the scenarios, the bundles the input names, the bundles of those scenarios on disk, and the commands |
 | tests | `avl-testkit` | test helpers: repository files under cargo and under Bazel, the paths of the scenario-trace goldens (`traces`), fake executables, the Tart fake with its fake `docker` and fake Apple `container`, and the loopback HTTP server that stands in for the IDE's bridge (`src/http.rs`). On Windows, which runs no shell script, the fake `docker` and the fake `git` are the Rust program `avl-fake` (`src/fakebin.rs`), linked under the tool's name and found through `AVL_FAKE`. A test compares it with the script, call by call, on Unix. The fakes are hard links to one file each, which all test processes share and which is named by its content (`src/shared.rs`), so only the first process after a change of a fake writes a new executable that macOS scans at its first exec |
 | | `avl-host-testkit` | the host-side fixtures the controller crates' suites share, a dev-dependency only: the fake guest channels and their answers, the pool environment over the Tart fake, the fake host `git`, the Bazel that resolves the pinned Tart, Docker CLI and `docker-buildx` to the fakes, the parked-daemon probe, the fake process table of the `ps` probe. It stands below `avl-vm`, so each module's suite assembles its own `Manager` over it; `avl-host-sys`'s own suite keeps a fake channel of its own |

@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use avl_testkit::traces::{copy_tree, example_bundle, example_file};
-use avl_trace::bundle::{ROOT_DIR_NAME, bundle_file, bundle_path};
+use avl_trace::bundle::{ROOT_DIR_NAME, SNAP_DIR, bundle_file, bundle_path};
 use pretty_assertions::assert_eq;
 use zip::ZipArchive;
 
@@ -423,6 +423,33 @@ fn a_bundle_without_a_manifest_is_named_by_its_logs_and_its_path() {
     };
     let stale = Scanner::new(later).scan(&[Root::new(RootKind::Flag, root.path())]);
     assert_eq!(stale.bundles[0].status, Status::Truncated);
+}
+
+/// The thumbnail is the last picture of `snap/` by name in either format, in a directory and in a zip. A lossy bundle
+/// holds AVIF stills, which a tree file of the same ordinal does not hide.
+#[test]
+fn the_thumbnail_of_a_lossy_bundle_is_its_last_avif_still() {
+    let manifest = example_manifest();
+    let outputs = tempfile::tempdir().unwrap();
+    let bundle = bundle_file(outputs.path(), &example_entry(&manifest));
+    copy_tree(&example_bundle(), &bundle);
+    let snap = bundle.join(SNAP_DIR);
+    for entry in fs::read_dir(&snap).unwrap() {
+        let path = entry.unwrap().path();
+        if path.extension().is_some_and(|extension| extension == "webp") {
+            fs::rename(&path, path.with_extension("avif")).unwrap();
+        }
+    }
+    let keep = tempfile::tempdir().unwrap();
+    let zip = keep.path().join("outputs.zip");
+    pack(outputs.path(), &zip, &PackOptions::default()).unwrap();
+
+    let found = Scanner::new(Options::default()).scan(&[
+        Root::new(RootKind::Flag, outputs.path()),
+        Root::new(RootKind::BazelTestlogs, keep.path()),
+    ]);
+    let thumbnails: Vec<Option<&str>> = found.bundles.iter().map(|bundle| bundle.summary.thumbnail.as_deref()).collect();
+    assert_eq!(thumbnails, [Some("snap/0012.avif"); 2]);
 }
 
 /// A walk never enters `.git` or `node_modules`, and one with a bound stops at it, keeps what it found, and says so.

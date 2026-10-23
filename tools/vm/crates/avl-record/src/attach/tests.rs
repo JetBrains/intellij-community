@@ -80,12 +80,12 @@ fn png_of(pixel: [u8; 3]) -> Vec<u8> {
     document
 }
 
-/// The width and the height of a WebP file, after a check that it is a lossy one without alpha.
-fn lossy_webp_size(document: &[u8]) -> (u32, u32) {
-    assert_eq!(&document[8..16], b"WEBPVP8 ", "the picture is not lossy WebP");
-    let decoder = image_webp::WebPDecoder::new(io::Cursor::new(document)).unwrap();
-    assert!(!decoder.has_alpha(), "a picture of an attachment has an alpha channel");
-    decoder.dimensions()
+/// The width and the height of an AVIF file, after a check of its brand. The `ispe` box names them.
+fn avif_size(document: &[u8]) -> (u32, u32) {
+    assert_eq!(&document[4..12], b"ftypavif", "the picture is not AVIF");
+    let at = document.windows(4).position(|window| window == b"ispe").expect("an ispe box");
+    let field = |offset: usize| u32::from_be_bytes(document[at + offset..at + offset + 4].try_into().unwrap());
+    (field(8), field(12))
 }
 
 /// The names of the files in the `attach/` directory of the bundle, sorted.
@@ -176,10 +176,10 @@ fn an_attachment_moves_into_the_bundle_and_is_recorded_on_its_span() {
     assert_eq!(trace_errors(&bundle), Vec::<String>::new());
 }
 
-/// In a scenario with a video, a PNG becomes a lossy WebP picture of the same size, and its record names `image/webp`.
+/// In a scenario with a video, a PNG becomes a lossy AVIF picture of the same size, and its record names `image/avif`.
 /// The lane file is removed, and the bundle keeps no PNG.
 #[test]
-fn a_png_attachment_becomes_a_lossy_webp_picture_in_a_scenario_with_a_video() {
+fn a_png_attachment_becomes_a_lossy_avif_picture_in_a_scenario_with_a_video() {
     let h = Harness::new();
     let lane_dir = h.root.join("run-1").join("attach");
     fs::create_dir_all(&lane_dir).unwrap();
@@ -193,19 +193,19 @@ fn a_png_attachment_becomes_a_lossy_webp_picture_in_a_scenario_with_a_video() {
     let bundle = h.example_bundle();
     let mut frame = Frame::default();
     frame.set_png(&paint, SystemTime::UNIX_EPOCH).unwrap();
-    let size = lossy_webp_size(&fs::read(bundle.join(ATTACH_DIR).join("0001.webp")).unwrap());
+    let size = avif_size(&fs::read(bundle.join(ATTACH_DIR).join("0001.avif")).unwrap());
     assert_eq!(size, (u32::try_from(frame.width).unwrap(), u32::try_from(frame.height).unwrap()));
-    assert_eq!(attach_files(&bundle), ["0001.webp"]);
+    assert_eq!(attach_files(&bundle), ["0001.avif"]);
     assert!(!picture.exists(), "the lane's file stays in the run's directory");
-    assert_eq!(attachments(&bundle), want(&[(1, "after open", "image/webp", "attach/0001.webp")]));
+    assert_eq!(attachments(&bundle), want(&[(1, "after open", "image/avif", "attach/0001.avif")]));
     assert_eq!(trace_errors(&bundle), Vec::<String>::new());
 }
 
 /// Two PNG attachments of the same picture, one after the other, are one file: both records name the file of the
-/// first. Another picture after them gets a file of its own. This holds for a WebP picture and for a kept PNG.
+/// first. Another picture after them gets a file of its own. This holds for an AVIF picture and for a kept PNG.
 #[test]
 fn equal_consecutive_png_attachments_name_one_file() {
-    for (video, extension, mime) in [(true, "webp", "image/webp"), (false, "png", "image/png")] {
+    for (video, extension, mime) in [(true, "avif", "image/avif"), (false, "png", "image/png")] {
         let h = Harness::new();
         let lane_dir = h.root.join("run-1").join("attach");
         fs::create_dir_all(&lane_dir).unwrap();
@@ -242,7 +242,7 @@ fn equal_consecutive_png_attachments_name_one_file() {
 }
 
 /// In a scenario with a video, a PNG that does not decode moves into the bundle as it is, with its media type. One
-/// `air.trace.error` says why it is no WebP picture.
+/// `air.trace.error` says why it is no AVIF picture.
 #[test]
 fn a_png_that_does_not_decode_is_kept_as_it_is_and_recorded() {
     let h = Harness::new();
@@ -266,14 +266,14 @@ fn a_png_that_does_not_decode_is_kept_as_it_is_and_recorded() {
     assert_eq!(errors[0].span_id, span_id(1));
     assert!(
         trace_errors(&bundle)[0]
-            .starts_with("attach: attach/0001.png: the attachment stays a PNG and is no WebP picture: the PNG does not decode: "),
+            .starts_with("attach: attach/0001.png: the attachment stays a PNG and is no AVIF picture: the PNG does not decode: "),
         "{:?}",
         trace_errors(&bundle)
     );
 }
 
 /// A PNG that the writer cannot queue before the budget of the command is spent moves into the bundle as it is. One
-/// `air.trace.error` says why it is no WebP picture.
+/// `air.trace.error` says why it is no AVIF picture.
 #[test]
 fn a_png_that_the_full_queue_cannot_take_is_kept_as_it_is_and_recorded() {
     let h = Harness::new();
@@ -301,7 +301,7 @@ fn a_png_that_the_full_queue_cannot_take_is_kept_as_it_is_and_recorded() {
         .into_iter()
         .map(|(_, _, mime, file)| format!("{mime} {file}"))
         .collect();
-    let mut want_files: Vec<String> = (1..last).map(|ordinal| format!("image/webp attach/{ordinal:04}.webp")).collect();
+    let mut want_files: Vec<String> = (1..last).map(|ordinal| format!("image/avif attach/{ordinal:04}.avif")).collect();
     want_files.push(format!("image/png attach/{last:04}.png"));
     assert_eq!(files, want_files);
     assert_eq!(
@@ -311,7 +311,7 @@ fn a_png_that_the_full_queue_cannot_take_is_kept_as_it_is_and_recorded() {
     assert_eq!(
         trace_errors(&bundle),
         [format!(
-            "attach: attach/{last:04}.png: the attachment stays a PNG and is no WebP picture: the WebP encoders are \
+            "attach: attach/{last:04}.png: the attachment stays a PNG and is no AVIF picture: the still encoders are \
              {QUEUE_DEPTH} pictures behind and the budget of the command is spent"
         )]
     );

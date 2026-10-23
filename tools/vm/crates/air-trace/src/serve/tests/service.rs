@@ -1270,9 +1270,15 @@ async fn the_routes_answer_what_the_site_reads() {
         ),
         transcribed(&format!("GET {BUNDLE_ROUTE}<zip id>/"), &served.get(&zipped, &[]).await),
         transcribed(
-            &format!("GET {BUNDLE_ROUTE}<zip id>/{} Range: bytes=0-3", snap_image_path(1)),
+            &format!(
+                "GET {BUNDLE_ROUTE}<zip id>/{} Range: bytes=0-3",
+                snap_image_path(1, StillEncoding::Lossless)
+            ),
             &served
-                .get(&format!("{zipped}{}", snap_image_path(1)), &[("range", "bytes=0-3")])
+                .get(
+                    &format!("{zipped}{}", snap_image_path(1, StillEncoding::Lossless)),
+                    &[("range", "bytes=0-3")],
+                )
                 .await,
         ),
         transcribed(

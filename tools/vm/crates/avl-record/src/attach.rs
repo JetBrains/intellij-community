@@ -3,10 +3,10 @@
 //! # A PNG
 //!
 //! The IDE attaches the paint of its windows after each step as a PNG. In a scenario with a video, the stills are
-//! lossy, and a PNG becomes a lossy WebP picture through a writer of its own, which is about half the size. In a
-//! scenario without a video, the stills are lossless, and the PNG stays a PNG: a lossless WebP of the encoders that
-//! the recorder links is larger than the PNG of the IDE. A PNG with the same bytes as the previous PNG attachment gets
-//! no file of its own, and its record names the file of the previous one.
+//! lossy, and a PNG becomes a lossy AVIF picture through a writer of its own, which is about a fifth of the size. In a
+//! scenario without a video, the stills are lossless, and the PNG stays a PNG: a lossless WebP of the encoder that the
+//! recorder links is larger than the PNG of the IDE. A PNG with the same bytes as the previous PNG attachment gets no
+//! file of its own, and its record names the file of the previous one.
 
 use std::ffi::OsStr;
 use std::fs;
@@ -15,14 +15,13 @@ use std::path::{Component, Path};
 use std::time::{Duration, Instant, SystemTime};
 
 use anyhow::Context;
-use avl_trace::bundle::{ATTACH_DIR, attach_path, bundle_file};
+use avl_trace::bundle::{ATTACH_DIR, StillEncoding, attach_path, bundle_file};
 use avl_trace::otlp::{KeyValue, attr, event};
 use avl_trace::protocol::AttachCommand;
 
 use crate::bundle::copy_into_place;
 use crate::capture::Frame;
 use crate::scenario::Scenario;
-use crate::stills::{MIME_WEBP, WEBP_EXTENSION};
 use crate::{lock, unix_ms};
 
 /// The source of an `air.trace.error` about an attachment the recorder could not keep.
@@ -34,14 +33,14 @@ const UNKNOWN_EXTENSION: &str = "bin";
 /// Bounds the extension the bundle keeps, so a lane file name cannot make the bundle path long.
 const MAX_EXTENSION_CHARS: usize = 16;
 
-/// The media type of a PNG attachment, which a scenario with a video keeps as a WebP picture.
+/// The media type of a PNG attachment, which a scenario with a video keeps as an AVIF picture.
 const MIME_PNG: &str = "image/png";
 
 impl Scenario {
     /// Moves the lane's file into the bundle as [attach_path] and records an [event::ATTACHMENT] on its span.
     ///
-    /// In a scenario with a video, a PNG becomes a WebP picture instead, see [Scenario::attach_picture]. The record then
-    /// names `image/webp` and the picture's file. A PNG with the same bytes as the previous PNG attachment that the
+    /// In a scenario with a video, a PNG becomes an AVIF picture instead, see [Scenario::attach_picture]. The record then
+    /// names `image/avif` and the picture's file. A PNG with the same bytes as the previous PNG attachment that the
     /// bundle keeps as a PNG is not moved, and the record names the file of the previous one.
     ///
     /// A span this scenario never opened, or a file outside `root`, is a lane mistake, and the answer says why. A file
@@ -70,7 +69,7 @@ impl Scenario {
         let png = is_png(&command.mime);
         if png && let Some(picture) = self.attach_picture(command, file, &name, Instant::now() + budget, at) {
             self.previous_png = None;
-            self.record_attachment(command, MIME_WEBP, &picture, at_ms);
+            self.record_attachment(command, StillEncoding::Lossy.mime(), &picture, at_ms);
             return Ok(());
         }
         let document = if png { read_regular_file(file).ok() } else { None };
@@ -107,7 +106,7 @@ impl Scenario {
         Ok(())
     }
 
-    /// Queues the PNG `file` for the attachment writer as the lossy WebP picture `attach/NNNN.webp`, and answers the
+    /// Queues the PNG `file` for the attachment writer as the lossy AVIF picture `attach/NNNN.avif`, and answers the
     /// file that holds the picture. The writer follows the rules of a snapshot's still: off the lane's path, the
     /// lossless fallback, and the previous picture's file for the same picture.
     ///
@@ -117,7 +116,7 @@ impl Scenario {
     fn attach_picture(&self, command: &AttachCommand, file: &Path, kept: &str, deadline: Instant, at: SystemTime) -> Option<String> {
         let pictures = self.attachment_pictures.as_ref()?;
         let document = read_regular_file(file).ok()?;
-        let name = attach_path(self.attachments, WEBP_EXTENSION);
+        let name = attach_path(self.attachments, StillEncoding::Lossy.extension());
         let mut frame = Frame::default();
         let directory = bundle_file(&self.dir, ATTACH_DIR);
         let queued = frame
@@ -139,7 +138,7 @@ impl Scenario {
             }
             Err(error) => {
                 lock(&self.still_spans).remove(&name);
-                let message = format!("{kept}: the attachment stays a PNG and is no WebP picture: {error:#}");
+                let message = format!("{kept}: the attachment stays a PNG and is no AVIF picture: {error:#}");
                 self.writer.trace_error_on(command.span, ERROR_SOURCE_ATTACH, &message, at_ms);
                 None
             }

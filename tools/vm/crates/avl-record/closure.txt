@@ -1,5 +1,7 @@
 adler2
 anyhow
+arrayvec
+avif_serialize
 avl_bridge
 avl_trace
 block_buffer
@@ -15,13 +17,6 @@ crypto_common
 digest
 fdeflate
 flate2
-gamut_bitstream
-gamut_codec_abi
-gamut_color
-gamut_core
-gamut_dsp
-gamut_riff
-gamut_webp
 gethostname
 hex
 hybrid_array
@@ -29,6 +24,7 @@ image_webp
 itoa
 jiff
 jiff_core
+libaom_sys
 memchr
 miniz_oxide
 monostate
@@ -46,7 +42,6 @@ sha2
 signal_hook
 signal_hook_registry
 simd_adler32
-thiserror
 typenum
 wide
 x11rb

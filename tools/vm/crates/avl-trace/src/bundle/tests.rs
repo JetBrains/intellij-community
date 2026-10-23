@@ -211,9 +211,25 @@ fn bundle_locations() {
     assert_eq!(dir, Path::new("/traces").join("iter-1").join("AirExampleUiTest").join("a_b"));
     assert_eq!(bundle_path("iter-1", "AirExampleUiTest", "a/b"), "iter-1/AirExampleUiTest/a_b");
     assert_eq!(
-        (snap_image_path(3).as_str(), snap_tree_path(12).as_str()),
+        (snap_image_path(3, StillEncoding::Lossless).as_str(), snap_tree_path(12).as_str()),
         ("snap/0003.webp", "snap/0012.tree.json")
     );
+    assert_eq!(snap_image_path(3, StillEncoding::Lossy), "snap/0003.avif");
+}
+
+/// The extension of a picture names its format, and the media type follows from it. A tree, a PNG attachment and a
+/// name without an extension are no picture of the recorder.
+#[test]
+fn a_picture_names_its_media_type_by_its_extension() {
+    let mimes = [
+        "snap/0003.webp",
+        "attach/0002.avif",
+        "snap/0003.tree.json",
+        "attach/0001.png",
+        "avif",
+    ]
+    .map(picture_mime);
+    assert_eq!(mimes, [Some("image/webp"), Some("image/avif"), None, None, None]);
 }
 
 #[test]
@@ -285,7 +301,7 @@ fn every_snapshot_has_its_picture_and_its_tree() {
         } else {
             assert_eq!(
                 image,
-                snap_image_path(ordinal),
+                snap_image_path(ordinal, StillEncoding::Lossless),
                 "snapshot {ordinal} names neither its own picture nor the previous one"
             );
         }

@@ -41,7 +41,7 @@ pub(crate) const ERROR_SOURCE_PROTOCOL: &str = "protocol";
 const ERROR_SOURCE_FACTS: &str = "bridge.facts";
 const ERROR_SOURCE_SPANS: &str = "bridge.spans";
 const ERROR_SOURCE_LOG: &str = "idea.log";
-const ERROR_SOURCE_WEBP: &str = "webp";
+const ERROR_SOURCE_STILL: &str = "still";
 pub(crate) const ERROR_SOURCE_VIDEO: &str = "video";
 const ERROR_SOURCE_CAPTURE: &str = "capture";
 
@@ -90,16 +90,16 @@ pub(crate) struct Scenario {
     /// The ordinal of the last attachment, 0 before the first.
     pub(crate) attachments: u32,
     pub(crate) stills: Option<stills::Writer>,
-    /// Writes the PNG attachments as lossy WebP pictures, only in a scenario with a video. It is a writer of its own, so
+    /// Writes the PNG attachments as lossy AVIF pictures, only in a scenario with a video. It is a writer of its own, so
     /// a picture never names the file of a snapshot's still, and the last file of `snap/` by name stays the last
     /// snapshot's picture.
     pub(crate) attachment_pictures: Option<stills::Writer>,
     /// The bytes and the bundle file of the previous PNG attachment that the bundle keeps as a PNG. `None` before the
-    /// first, and after a PNG attachment that became a WebP picture or that the recorder could not move.
+    /// first, and after a PNG attachment that became an AVIF picture or that the recorder could not move.
     pub(crate) previous_png: Option<(Vec<u8>, String)>,
     /// How the stills are encoded: lossy when the scenario started a video. The manifest names it, also when the video
     /// failed later.
-    still_encoding: StillEncoding,
+    pub(crate) still_encoding: StillEncoding,
     /// Maps a queued still's bundle path to its snapshot's span, and a queued attachment picture's path to the span
     /// of its attachment, for a failure that a writer reports from its own thread.
     pub(crate) still_spans: Arc<Mutex<HashMap<String, u32>>>,
@@ -548,7 +548,7 @@ impl Scenario {
         let (writer, clock, spans) = (self.writer.clone(), self.clock.clone(), self.still_spans.clone());
         Box::new(move |name, error| {
             let span = lock(&spans).get(name).copied().unwrap_or(0);
-            writer.trace_error_on(span, ERROR_SOURCE_WEBP, &format!("{name}: {error:#}"), unix_ms(clock()));
+            writer.trace_error_on(span, ERROR_SOURCE_STILL, &format!("{name}: {error:#}"), unix_ms(clock()));
         })
     }
 
@@ -765,7 +765,7 @@ impl Scenario {
         let closed = writer.close();
         if closed.panicked > 0 {
             self.trace_error(
-                ERROR_SOURCE_WEBP,
+                ERROR_SOURCE_STILL,
                 &format!("{} of the {encoders} ended with a panic", closed.panicked),
                 at_ms,
             );

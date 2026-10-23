@@ -4,24 +4,7 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use super::*;
-use crate::capture::BYTES_PER_PIXEL;
-
-/// Something with the texture of a UI: flat panels, hard edges and a few odd pixels, which is what the encoder's
-/// palette and predictor paths see on a real screen. The accent shows only below row 12.
-pub(crate) fn ui_frame(width: usize, height: usize, accent: u8) -> Frame {
-    let mut frame = Frame::default();
-    frame.resize(width, height);
-    for (index, pixel) in frame.pix.as_chunks_mut::<BYTES_PER_PIXEL>().0.iter_mut().enumerate() {
-        let (x, y) = (index % width, index / width);
-        let bgr = match (y, x) {
-            (0..12, _) => [0x30, 0x2d, 0x2b],
-            (_, x) if x < width / 3 => [0x22, 0x1f, 0x1e],
-            _ => [u8::try_from(x * 7 % 256).unwrap(), u8::try_from(y * 3 % 256).unwrap(), accent],
-        };
-        pixel[..3].copy_from_slice(&bgr);
-    }
-    frame
-}
+use crate::testing::ui_frame;
 
 /// Decodes a WebP to tightly packed RGB, whatever alpha its header claims.
 fn decode_rgb(document: &[u8]) -> (u32, u32, Vec<u8>) {
@@ -55,40 +38,28 @@ fn require_simple_webp(encoded: &[u8], chunk: &[u8; 4]) {
     assert_eq!(size as usize, encoded.len() - 8, "the RIFF size");
 }
 
-/// The peak signal-to-noise ratio of `decoded` against `original`, in decibels.
-fn psnr(original: &[u8], decoded: &[u8]) -> f64 {
-    assert_eq!(original.len(), decoded.len());
-    let squares: f64 = original
-        .iter()
-        .zip(decoded)
-        .map(|(&left, &right)| (f64::from(left) - f64::from(right)).powi(2))
-        .sum();
-    let mean = squares / original.len() as f64;
-    10.0 * (255.0 * 255.0 / mean).log10()
-}
-
 #[test]
 fn a_lossless_still_decodes_to_exactly_the_frames_pixels() {
     let frame = ui_frame(97, 61, 0x80);
-    let encoded = encode(&frame, StillEncoding::Lossless).unwrap();
+    let encoded = encode(&frame, Picture::LosslessWebp).unwrap();
     require_simple_webp(&encoded, b"VP8L");
     assert_eq!(decode_rgb(&encoded), (97, 61, frame.to_rgb()));
 }
 
-/// A lossy still is a VP8 picture of the frame's size, close to its pixels. The sizes are odd and below one macroblock
-/// too, because the encoder pads each side to 16 pixels and a decoder crops the padding again. The sawtooth of
-/// [ui_frame] costs a lossy picture about 29 dB, and a picture with its red and blue swapped is at 15 dB.
+/// A lossy still is an AVIF file. The tests of `avif` check the picture inside it.
+#[cfg(unix)]
 #[test]
-fn a_lossy_still_is_a_close_picture_of_the_frame() {
-    for (width, height) in [(97, 61), (1, 1), (15, 17), (640, 400)] {
-        let frame = ui_frame(width, height, 0x80);
-        let encoded = encode(&frame, StillEncoding::Lossy).unwrap();
-        require_simple_webp(&encoded, b"VP8 ");
-        let (decoded_width, decoded_height, decoded) = decode_rgb(&encoded);
-        assert_eq!((decoded_width as usize, decoded_height as usize), (width, height));
-        let ratio = psnr(&frame.to_rgb(), &decoded);
-        assert!(ratio > 25.0, "a {width}x{height} lossy still is {ratio:.1} dB from its frame");
-    }
+fn a_lossy_still_is_an_avif_file() {
+    let encoded = encode(&ui_frame(97, 61, 0x80), Picture::LossyAvif).unwrap();
+    assert_eq!(&encoded[4..12], b"ftypavif");
+}
+
+/// A build without libaom refuses an AVIF picture, so the writer reports the still instead of writing a wrong format.
+#[cfg(not(unix))]
+#[test]
+fn a_build_without_libaom_refuses_an_avif_picture() {
+    let refused = encode(&ui_frame(8, 8, 0x80), Picture::LossyAvif).unwrap_err();
+    assert_eq!(format!("{refused:#}"), "this build of the recorder has no AVIF encoder");
 }
 
 /// A snapshot whose grab and tree read used up its budget arrives with its deadline passed. A picture already
@@ -129,9 +100,9 @@ fn collecting() -> (Failed, Arc<Mutex<Vec<String>>>) {
 /// file in both encodings.
 #[test]
 fn a_still_of_an_unchanged_screen_names_the_previous_file() {
-    for encoding in StillEncoding::ALL.iter().copied() {
-        a_still_of_an_unchanged_screen_names_the_previous_file_in(encoding);
-    }
+    a_still_of_an_unchanged_screen_names_the_previous_file_in(StillEncoding::Lossless);
+    #[cfg(unix)]
+    a_still_of_an_unchanged_screen_names_the_previous_file_in(StillEncoding::Lossy);
 }
 
 fn a_still_of_an_unchanged_screen_names_the_previous_file_in(encoding: StillEncoding) {
@@ -145,22 +116,23 @@ fn a_still_of_an_unchanged_screen_names_the_previous_file_in(encoding: StillEnco
         .zip(["a", "b", "c", "d"])
         .map(|(frame, name)| {
             let deadline = Instant::now() + Duration::from_secs(10);
-            writer.submit(deadline, format!("{name}.webp"), frame).unwrap()
+            writer.submit(deadline, format!("{name}.{}", encoding.extension()), frame).unwrap()
         })
         .collect();
     let closed = writer.close();
     assert!(lock(&failures).is_empty(), "{encoding}: {:?}", lock(&failures));
-    assert_eq!(named, ["a.webp", "a.webp", "c.webp", "d.webp"], "{encoding}");
+    let file = |name: &str| format!("{name}.{}", encoding.extension());
+    assert_eq!(named, ["a", "a", "c", "d"].map(file), "{encoding}");
     assert_eq!((closed.files, closed.repeats), (3, 1), "{encoding}");
-    let read = |name: &str| fs::read(dir.path().join(name)).unwrap();
-    assert_eq!(read("a.webp"), read("d.webp"), "{encoding}: one screen, two files");
-    assert_ne!(read("a.webp"), read("c.webp"), "{encoding}: two screens, one file");
+    let read = |name: &str| fs::read(dir.path().join(file(name))).unwrap();
+    assert_eq!(read("a"), read("d"), "{encoding}: one screen, two files");
+    assert_ne!(read("a"), read("c"), "{encoding}: two screens, one file");
     let mut names: Vec<String> = fs::read_dir(dir.path())
         .unwrap()
         .map(|entry| entry.unwrap().file_name().into_string().unwrap())
         .collect();
     names.sort();
-    assert_eq!(names, ["a.webp", "c.webp", "d.webp"]);
+    assert_eq!(names, ["a", "c", "d"].map(file));
 }
 
 /// A still that could not be written is not on disk, so the next still of its screen gets a file of its own rather
@@ -188,18 +160,20 @@ fn a_still_that_could_not_be_written_is_not_named_again() {
 }
 
 /// A stand-in for a lossy encoder with a bug: it panics on a lossy picture and encodes a lossless one.
-fn lossy_panics(frame: &Frame, encoding: StillEncoding) -> anyhow::Result<Vec<u8>> {
-    assert!(encoding != StillEncoding::Lossy, "the lossy encoder broke");
-    encode(frame, encoding)
+#[cfg(unix)]
+fn lossy_panics(frame: &Frame, picture: Picture) -> anyhow::Result<Vec<u8>> {
+    assert!(picture != Picture::LossyAvif, "the lossy encoder broke");
+    encode(frame, picture)
 }
 
 /// A stand-in for an encoder that panics on every picture.
-fn every_encoding_panics(_: &Frame, encoding: StillEncoding) -> anyhow::Result<Vec<u8>> {
-    panic!("the {encoding} encoder broke")
+fn every_picture_panics(_: &Frame, picture: Picture) -> anyhow::Result<Vec<u8>> {
+    panic!("the {picture} encoder broke")
 }
 
-/// A panic of the lossy encoder costs a still its loss, not its file. The still is written lossless, the failure names
-/// the file, and the stills queued behind it are still written.
+/// A panic of the lossy encoder costs a still its loss, not its file. The still is a lossless AVIF picture under its own
+/// name, the failure names the file, and the stills queued behind it are still written.
+#[cfg(unix)]
 #[test]
 fn a_still_whose_lossy_encoder_panics_is_written_lossless() {
     let dir = tempfile::tempdir().unwrap();
@@ -207,8 +181,8 @@ fn a_still_whose_lossy_encoder_panics_is_written_lossless() {
     let writer = Writer::with_encoder(dir.path(), StillEncoding::Lossy, Arc::new(lossy_panics), 2, failed);
     let deadline = Instant::now() + Duration::from_secs(10);
     for (name, accent) in [("a", 0x10), ("b", 0x90)] {
-        let named = writer.submit(deadline, format!("{name}.webp"), ui_frame(32, 16, accent)).unwrap();
-        assert_eq!(named, format!("{name}.webp"));
+        let named = writer.submit(deadline, format!("{name}.avif"), ui_frame(32, 16, accent)).unwrap();
+        assert_eq!(named, format!("{name}.avif"));
     }
     assert_eq!(
         writer.close(),
@@ -222,11 +196,11 @@ fn a_still_whose_lossy_encoder_panics_is_written_lossless() {
     reported.sort();
     assert_eq!(
         reported,
-        ["a.webp", "b.webp"]
-            .map(|name| format!("{name}: the still is lossless instead: the lossy WebP encoder panicked: the lossy encoder broke"))
+        ["a.avif", "b.avif"]
+            .map(|name| format!("{name}: the still is lossless AVIF instead: the lossy AVIF encoder panicked: the lossy encoder broke"))
     );
-    for name in ["a.webp", "b.webp"] {
-        require_simple_webp(&fs::read(dir.path().join(name)).unwrap(), b"VP8L");
+    for name in ["a.avif", "b.avif"] {
+        assert_eq!(&fs::read(dir.path().join(name)).unwrap()[4..12], b"ftypavif", "{name}");
     }
 }
 
@@ -239,7 +213,7 @@ fn a_still_that_every_encoder_panics_on_is_reported_and_not_named_again() {
     let writer = Writer::with_encoder(
         dir.path(),
         StillEncoding::Lossy,
-        Arc::new(every_encoding_panics),
+        Arc::new(every_picture_panics),
         2,
         Box::new(move |name, error| {
             let _ = reported.send(format!("{name}: {error:#}"));
@@ -247,14 +221,14 @@ fn a_still_that_every_encoder_panics_on_is_reported_and_not_named_again() {
     );
     let frame = ui_frame(32, 16, 0x40);
     let deadline = Instant::now() + Duration::from_secs(10);
-    writer.submit(deadline, "a.webp".to_owned(), frame.clone()).unwrap();
+    writer.submit(deadline, "a.avif".to_owned(), frame.clone()).unwrap();
     assert_eq!(
         failures.recv_timeout(Duration::from_secs(10)).unwrap(),
-        "a.webp: the lossy WebP encoder panicked: the lossy encoder broke; \
-         the lossless WebP encoder panicked: the lossless encoder broke"
+        "a.avif: the lossy AVIF encoder panicked: the lossy AVIF encoder broke; \
+         the lossless AVIF encoder panicked: the lossless AVIF encoder broke"
     );
-    let named = writer.submit(deadline, "b.webp".to_owned(), frame);
-    assert_eq!(named.unwrap(), "b.webp", "a still of the screen of a missing file");
+    let named = writer.submit(deadline, "b.avif".to_owned(), frame);
+    assert_eq!(named.unwrap(), "b.avif", "a still of the screen of a missing file");
     assert_eq!(
         writer.close(),
         Closed {
@@ -265,8 +239,8 @@ fn a_still_that_every_encoder_panics_on_is_reported_and_not_named_again() {
     );
     assert_eq!(
         failures.try_iter().collect::<Vec<_>>(),
-        ["b.webp: the lossy WebP encoder panicked: the lossy encoder broke; \
-          the lossless WebP encoder panicked: the lossless encoder broke"],
+        ["b.avif: the lossy AVIF encoder panicked: the lossy AVIF encoder broke; \
+          the lossless AVIF encoder panicked: the lossless AVIF encoder broke"],
         "the encoder's thread did not take the still after the panics"
     );
     assert_eq!(
@@ -274,6 +248,29 @@ fn a_still_that_every_encoder_panics_on_is_reported_and_not_named_again() {
         0,
         "a file of a still that no encoder wrote"
     );
+}
+
+/// A lossless still has no fallback: a failure of its encoder is the failure of the still.
+#[test]
+fn a_lossless_still_whose_encoder_panics_is_reported() {
+    let dir = tempfile::tempdir().unwrap();
+    let (reported, failures) = bounded(1);
+    let writer = Writer::with_encoder(
+        dir.path(),
+        StillEncoding::Lossless,
+        Arc::new(every_picture_panics),
+        1,
+        Box::new(move |name, error| {
+            let _ = reported.send(format!("{name}: {error:#}"));
+        }),
+    );
+    let deadline = Instant::now() + Duration::from_secs(10);
+    writer.submit(deadline, "a.webp".to_owned(), ui_frame(32, 16, 0x40)).unwrap();
+    assert_eq!(
+        failures.recv_timeout(Duration::from_secs(10)).unwrap(),
+        "a.webp: the lossless WebP encoder panicked: the lossless WebP encoder broke"
+    );
+    assert_eq!(writer.close().files, 0);
 }
 
 /// The encoders of a writer hold stills at once, never more than there are encoders, and `close` waits for every
@@ -291,13 +288,13 @@ fn the_encoders_run_at_once_and_close_waits_for_every_still() {
     let (busy, most) = (Arc::new(AtomicUsize::new(0)), Arc::new(AtomicUsize::new(0)));
     let encoder: Encoder = {
         let (busy, most) = (busy.clone(), most.clone());
-        Arc::new(move |frame: &Frame, encoding: StillEncoding| {
+        Arc::new(move |frame: &Frame, picture: Picture| {
             let holding = busy.fetch_add(1, Ordering::SeqCst) + 1;
             most.fetch_max(holding, Ordering::SeqCst);
             let token = tokens.recv_timeout(Duration::from_secs(10));
             busy.fetch_sub(1, Ordering::SeqCst);
             token.context("no token within 10 s")?;
-            encode(frame, encoding)
+            encode(frame, picture)
         })
     };
     let (failed, failures) = collecting();
