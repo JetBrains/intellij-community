@@ -1,0 +1,27 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.kotlin.base.compilerConfiguration"/>
+    <module name="intellij.kotlin.base.plugin"/>
+    <module name="intellij.kotlin.compilerReferenceIndex"/>
+    <module name="intellij.maven"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.projectModel"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.search.refIndex.bta.maven.CriMavenStartupActivity"
+                         order="after org.jetbrains.idea.maven.project.MavenProjectsManagerProjectActivity"/>
+  </extensions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.search.refIndex.bta.maven.CriMavenImportListener"
+              topic="org.jetbrains.idea.maven.project.MavenImportListener"/>
+  </projectListeners>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <btaKotlinCompilerReferenceIndexApplicabilityProvider
+            implementation="org.jetbrains.kotlin.idea.search.refIndex.bta.maven.MavenKotlinCompilerReferenceIndexApplicability"/>
+  </extensions>
+</idea-plugin>

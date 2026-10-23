@@ -120,6 +120,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.mcp" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.uast.idea.base" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerReferenceIndex" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.compilerReferenceIndex.maven" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.coverage" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.git" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.testng" exported="" />

@@ -219,6 +219,9 @@
             "module": "intellij.kotlin.compilerReferenceIndex"
         },
         {
+            "module": "intellij.kotlin.compilerReferenceIndex.maven"
+        },
+        {
             "module": "intellij.kotlin.compilerPlugins.assignment.fixes"
         },
         {
