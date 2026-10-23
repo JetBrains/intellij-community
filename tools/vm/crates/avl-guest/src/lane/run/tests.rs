@@ -377,6 +377,28 @@ fn only_a_teamcity_build_on_linux_with_a_display_lets_the_recorder_read_the_scre
     assert!(!build_owns_screen(&developer, true));
 }
 
+// AIR_LANE_VIDEO=failed keeps the video of a scenario that did not pass only. Unset or empty, every scenario keeps its
+// video, so a TeamCity build keeps every video until its config sets the variable. Another value is refused by name.
+#[test]
+fn air_lane_video_keeps_every_video_unless_it_says_failed() {
+    let retention = |value: Option<&str>| {
+        let pairs: Vec<(&str, &str)> = value.map(|value| (VIDEO_VARIABLE, value)).into_iter().collect();
+        video_retention(&environment(&pairs))
+    };
+    assert_eq!(retention(None).unwrap(), VideoRetention::Always);
+    assert_eq!(retention(Some(" ")).unwrap(), VideoRetention::Always);
+    assert_eq!(retention(Some("always")).unwrap(), VideoRetention::Always);
+    assert_eq!(retention(Some("failed")).unwrap(), VideoRetention::Failed);
+    assert_eq!(retention(Some(" failed\n")).unwrap(), VideoRetention::Failed);
+
+    let refusal = retention(Some("passed")).unwrap_err();
+    assert_eq!(refusal.code, VIDEO_CODE);
+    assert_eq!(
+        refusal.message,
+        r#"$AIR_LANE_VIDEO is "passed", and it takes only always or failed"#
+    );
+}
+
 // The lane IDE opens its windows on an X display, so a host without DISPLAY is refused by name before the probe.
 #[test]
 fn a_host_without_a_display_is_refused_by_name() {

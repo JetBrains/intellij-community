@@ -45,6 +45,9 @@ const ERROR_SOURCE_WEBP: &str = "webp";
 pub(crate) const ERROR_SOURCE_VIDEO: &str = "video";
 const ERROR_SOURCE_CAPTURE: &str = "capture";
 
+/// Why a passed scenario has no video under a hello that keeps the video of a scenario that did not pass only.
+pub(crate) const PASSED_VIDEO_REASON: &str = "the lane keeps only the video of a scenario that did not pass, and this scenario passed";
+
 pub(crate) struct OpenSpan {
     command: SpanCommand,
     start_ms: i64,
@@ -71,6 +74,9 @@ pub(crate) struct Scenario {
     host_name: String,
     /// Whether the hello asked for the Allure result of the scenario.
     allure: bool,
+    /// Which video the scenario keeps at its end: the hello's, or every video for a scenario whose earlier attempt in
+    /// the session did not pass.
+    keep_video: avl_trace::protocol::VideoRetention,
     pub(crate) started_ms: i64,
 
     pub(crate) open: HashMap<u32, OpenSpan>,
@@ -164,6 +170,7 @@ impl<W: Write> Session<W> {
                 return self.ack(false, Some(format!("cannot create the bundle: {error}")));
             }
         };
+        let keep_video = self.keep_video_of(&hello, &command);
         let scenario = Scenario {
             dir,
             writer,
@@ -174,6 +181,7 @@ impl<W: Write> Session<W> {
             launcher: hello.launcher,
             host_name: self.options.host_name.clone(),
             allure: hello.allure,
+            keep_video,
             started_ms: at_ms,
             open: HashMap::new(),
             stack: Vec::new(),
@@ -694,6 +702,10 @@ impl Scenario {
             self.attach_thread_dumps(log_dir.into_iter().chain(latest_dir), at_ms);
         }
 
+        if status == BundleStatus::Passed && self.keep_video == avl_trace::protocol::VideoRetention::Failed {
+            self.drop_video(at_ms);
+        }
+
         let root_status = match status {
             BundleStatus::Passed => Status::Passed,
             BundleStatus::Failed => Status::Failed,
@@ -828,6 +840,25 @@ impl Scenario {
                 }
             }
         }
+    }
+
+    /// Deletes the video and its frame index, and records why the scenario has no video. The stills stay as they are
+    /// encoded. A video that cannot be deleted stays in the bundle and in the manifest, with an `air.trace.error`.
+    fn drop_video(&mut self, at_ms: i64) {
+        if self.video != Video::H264 {
+            return;
+        }
+        let remove = |name: &str| match std::fs::remove_file(self.dir.join(name)) {
+            Err(error) if error.kind() != std::io::ErrorKind::NotFound => Err(format!("cannot delete {name}: {error}")),
+            _ => Ok(()),
+        };
+        if let Err(error) = remove(avl_trace::bundle::VIDEO_FILE) {
+            return self.trace_error(ERROR_SOURCE_VIDEO, &error, at_ms);
+        }
+        if let Err(error) = remove(avl_trace::bundle::VIDEO_INDEX_FILE) {
+            self.trace_error(ERROR_SOURCE_VIDEO, &error, at_ms);
+        }
+        self.no_video(PASSED_VIDEO_REASON.to_owned(), at_ms);
     }
 
     fn root_attributes(&self, status: Status) -> Vec<KeyValue> {

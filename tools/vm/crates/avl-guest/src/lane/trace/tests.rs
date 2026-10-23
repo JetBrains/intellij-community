@@ -317,3 +317,22 @@ fn the_hello_asks_for_the_allure_results_only_when_the_inputs_do() {
     let line = String::from_utf8(protocol::encode_command(&protocol::Command::Hello(hello)).unwrap()).unwrap();
     assert!(line.contains(r#""allure":true"#), "{line}");
 }
+
+// The hello keeps every video unless the trace inputs keep the video of a scenario that did not pass only. The line of a
+// hello that keeps every video names no retention.
+#[test]
+fn the_hello_keeps_the_videos_that_the_inputs_keep() {
+    let iteration = Path::new("/state/iterations/iter-1");
+    let plain = Trace::hello(iteration, "iter-1", &TraceInputs::default(), None);
+    assert_eq!(plain.keep_video, protocol::VideoRetention::Always);
+    let line = String::from_utf8(protocol::encode_command(&protocol::Command::Hello(plain)).unwrap()).unwrap();
+    assert!(!line.contains("keepVideo"), "{line}");
+    let failed = TraceInputs {
+        keep_video: protocol::VideoRetention::Failed,
+        ..TraceInputs::default()
+    };
+    let hello = Trace::hello(iteration, "iter-1", &failed, None);
+    assert_eq!(hello.keep_video, protocol::VideoRetention::Failed);
+    let line = String::from_utf8(protocol::encode_command(&protocol::Command::Hello(hello)).unwrap()).unwrap();
+    assert!(line.contains(r#""keepVideo":"failed""#), "{line}");
+}

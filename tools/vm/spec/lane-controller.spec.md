@@ -1805,6 +1805,14 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`a_failed_write_to_the_build_log_keeps_the_run_file_whole_and_green`)
   [@test] ../crates/avl-guest/src/lane/build_log/tests.rs (`a_short_write_ends_its_line_and_turns_the_channel_off`)
 
+- `lane-run` takes which scenarios keep their video from `AIR_LANE_VIDEO`. The value `failed` keeps the video of a
+  scenario that did not pass only, and the hello says `keepVideo` `failed`. Unset, empty or `always`, every scenario
+  keeps its video. Another value is refused with `lane_run_video`, and the refusal names the value. A TeamCity build
+  passes the variable with `--test_env`. It sets `failed` on a branch other than `master` and in a personal build, so a
+  passed scenario keeps its video only in a build of `master`. The lane daemon of a worker keeps every video.
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`air_lane_video_keeps_every_video_unless_it_says_failed`)
+  [@test] ../crates/avl-guest/src/lane/trace/tests.rs (`the_hello_keeps_the_videos_that_the_inputs_keep`)
+
 - `lane-run --plan-only` stages the inputs and selects the documents as a run does. It then writes the plan on
   standard output: the key of the lane IDE, the digests of the inputs, and the suites in run order. It launches no IDE,
   and a plan of suites of a bare IDE alone names no lane key.

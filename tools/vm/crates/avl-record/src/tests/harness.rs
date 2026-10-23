@@ -16,7 +16,9 @@ use avl_trace::bridge::{
 };
 use avl_trace::bundle::{IDEA_LOG_FILE, LOGS_FILE, MANIFEST_FILE, Manifest, SPANS_FILE, bundle_dir, decode_manifest};
 use avl_trace::otlp::{LogRecord, Span, decode_logs_line, decode_traces_line};
-use avl_trace::protocol::{Bridge, CaptureSource, Command, HelloCommand, Launcher, VideoCodec, decode_command, encode_command};
+use avl_trace::protocol::{
+    Bridge, CaptureSource, Command, HelloCommand, Launcher, VideoCodec, VideoRetention, decode_command, encode_command,
+};
 
 use crate::capture::{Frame, Source};
 use crate::ladder::{CaptureLadder, ScreenAccess, VideoPlan, Videographer};
@@ -363,6 +365,15 @@ impl Harness {
         self.hello_line(false, true)
     }
 
+    /// The hello without a bridge that keeps the video of a scenario that did not pass only.
+    pub(crate) fn failed_video_hello(&self) -> String {
+        let Command::Hello(mut hello) = decode_command(self.hello(false).as_bytes()).unwrap() else {
+            panic!("the hello line is not a hello");
+        };
+        hello.keep_video = VideoRetention::Failed;
+        String::from_utf8(encode_command(&Command::Hello(hello)).unwrap()).unwrap()
+    }
+
     fn hello_line(&self, bridge: bool, allure: bool) -> String {
         let hello = HelloCommand {
             root: self.root.to_string_lossy().into_owned(),
@@ -370,6 +381,7 @@ impl Harness {
             launcher: Launcher::Bazel,
             screen: false,
             allure,
+            keep_video: VideoRetention::Always,
             bridge: bridge.then(|| Bridge {
                 port: 1,
                 token: GOLDEN_TOKEN.to_owned(),

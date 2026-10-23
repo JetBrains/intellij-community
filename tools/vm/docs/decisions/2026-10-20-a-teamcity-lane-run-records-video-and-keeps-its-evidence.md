@@ -19,6 +19,11 @@ which a step streams into the build log reaches it during the Bazel step. `lane-
 each scenario to the file of `AIR_LANE_LIVE_LOG`. It also publishes the video and the last picture of a failed scenario
 at the paths of `air-trace teamcity-publish`. The results still come from the JUnit XML only.
 
+Since 2026-10-23 a passed scenario keeps its video only in a build of `master`, and decision 2 states why. The shard
+build 1101705922 published 148 MiB, and 64.4 MB of it was the `video.mp4` of each scenario, the passed ones too. The composite
+`ijplatform_master_AirPluginUiTests` ran more than 500 builds in 7 days, with 2 shards each, and only 52 of them were
+builds of `master`. The other builds were Safe Push checks and personal builds.
+
 The behavior is stated in [the scenario trace spec](../../spec/scenario-trace.spec.md) under **Capture and video**, and
 in [the controller spec](../../spec/lane-controller.spec.md) under `lane-run`. How to find the files is
 [the VM guide](../vm-ui-tests.md#artifacts-and-diagnostics).
@@ -47,10 +52,20 @@ the other server, and its paint stills are 1920x1200.
 1. **`lane-run` lets the recorder read the screen of a TeamCity build on Linux.** The conditions are a set
    `TEAMCITY_VERSION`, Linux, and a `DISPLAY` that is not empty. A developer host has no `TEAMCITY_VERSION`, so
    `lane-run` still never reads the screen of a person. The refusal of the JVM flag stays.
-2. **Every scenario keeps its video.** The shard build 1100310296 ran 56 scenarios in 15.1 scenario minutes, with
-   stills only. Its `bazel.logs.zip` is 181 MiB: 89 MiB of bundles, 71 MiB of `allure-results` and 18 MiB of other
-   files. On the guest display of 1920x1080, 1952 bundles hold 3.07 MB of video per scenario minute. At the 1920x1200
-   of the CI frame, a shard then gets about 49 MiB of video. Since 2026-10-21 the recorder writes no Allure results
+2. **A failed scenario keeps its video, and a passed one keeps it only in a build of `master`.** This decision was
+   "every scenario keeps its video" until 2026-10-23. A passed scenario is the baseline that a failed one is compared
+   with, and the baseline comes from `master`. A Safe Push check, a personal build and a build of another branch set
+   `AIR_LANE_VIDEO=failed` and pass it with `--test_env`. The recorder then records each scenario as before, and at the
+   end of a passed scenario it deletes the video. The manifest says why. An unset variable keeps every video, so a
+   build keeps every video until its configuration sets the variable. The choice is a variable of the build, because
+   the build configuration knows the branch, and `lane-run` stays free of the branch names of TeamCity. A flaky scenario
+   keeps the video of its failed attempt, because each attempt is a bundle of its own. A later attempt in the same
+   session that passes keeps its video too.
+
+   The numbers of the first version of this decision follow. The shard build 1100310296 ran 56 scenarios in 15.1
+   scenario minutes, with stills only. Its `bazel.logs.zip` is 181 MiB: 89 MiB of bundles, 71 MiB of
+   `allure-results` and 18 MiB of other files. On the guest display of 1920x1080, 1952 bundles hold 3.07 MB of video
+   per scenario minute. At the 1920x1200 of the CI frame, a shard then gets about 49 MiB of video. Since 2026-10-21 the recorder writes no Allure results
    by default, as the amended [ADR 0231](../../../../plugins/air/docs/decisions/0231-the-recorder-writes-the-allure-results.md)
    states. So a shard holds each video once, and it goes from 181 MiB to about 159 MiB. With the Allure results
    asked for, it grows to about 280 MiB.
@@ -63,8 +78,10 @@ the other server, and its paint stills are 1920x1200.
 
 ## Consequences
 
-- A CI trace has a video. A red CI run has its full `idea.log`, the output of its IDE processes and its dumps in
-  `bazel.logs.zip`.
+- A CI trace of a failed scenario has a video, and so has each trace of a build of `master`. A red CI run has its full
+  `idea.log`, the output of its IDE processes and its dumps in `bazel.logs.zip`.
+- The configuration of the Air UI builds sets `AIR_LANE_VIDEO` and passes it with `--test_env`. Until it does, every
+  build keeps every video.
 - The recorder reads whatever X server answers on the `DISPLAY` of the build, which is not always the `Xvfb` of the
   build. When its pixels are not BGRX, the recorder says why in the manifest and keeps the paint stills.
 - The trace tools of IJAI-4382 add the step `air-trace teamcity-publish`, which packs each bundle into an artifact zip
@@ -74,9 +91,14 @@ the other server, and its paint stills are 1920x1200.
 
 ## Alternatives rejected
 
-- **Keep the video of a failed scenario only.** It saves about 49 MiB per shard. A passed scenario is the baseline
-  that a failed one is compared with. The copy of each attachment in `allure-results` cost more, 71 MiB of the
-  181 MiB, and it is off by default now.
+- **Keep the video of a failed scenario only, in every build.** It saves about 49 MiB per shard. A passed scenario is
+  the baseline that a failed one is compared with. The copy of each attachment in `allure-results` cost more, 71 MiB of
+  the 181 MiB, and it is off by default now. Since 2026-10-23 decision 2 takes this choice for each build that is not
+  a build of `master`. A build of `master` still keeps the baseline.
+- **Let `lane-run` read the branch from the property files of the TeamCity agent.** The Bazel step passes
+  `TEAMCITY_BUILD_PROPERTIES_FILE` already, so no configuration change would be necessary. But `lane-run` would then
+  know which branch is the baseline and how TeamCity names a personal build. One variable keeps that rule in the build
+  configuration, and a person can set it for a local `bazel test` too.
 - **Let a person pass the screen flag to a direct lane.** It brings back the risk that the rule exists for.
 - **Copy every launch of every run.** A green run needs no `idea.log`, and the copy would add the full logs of every
   launch to every shard.

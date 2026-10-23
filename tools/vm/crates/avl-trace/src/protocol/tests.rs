@@ -401,6 +401,10 @@ fn decode_command_refuses_what_the_contract_does_not_name() {
             "a screen that is no boolean",
             r#"{"op":"hello","root":"/r","runId":"r","launcher":"daemon","screen":"on"}"#,
         ),
+        (
+            "a video retention the contract does not name",
+            r#"{"op":"hello","root":"/r","runId":"r","launcher":"bazel","keepVideo":"passed"}"#,
+        ),
         ("a negative span", r#"{"op":"snap","span":-1,"phase":"check"}"#),
         ("a field on restart", r#"{"op":"restart","ide":"now"}"#),
         (
@@ -509,6 +513,36 @@ fn a_scenario_names_the_byte_where_its_log_slice_begins() {
     assert_eq!(decoded.log_from, Some(0));
 }
 
+// A hello without `keepVideo` keeps every video, so the line of an older lane means what it meant. The lane writes the
+// field only for `failed`, after the Allure flag.
+#[test]
+fn a_hello_keeps_every_video_unless_it_says_failed() {
+    let older = r#"{"op":"hello","root":"/r","runId":"r","launcher":"daemon","screen":true}"#;
+    let Command::Hello(hello) = decode_command(older.as_bytes()).unwrap() else {
+        panic!("{older} is no hello");
+    };
+    assert_eq!(hello.keep_video, VideoRetention::Always);
+    assert_eq!(
+        String::from_utf8(encode_command(&Command::Hello(hello.clone())).unwrap()).unwrap(),
+        older
+    );
+
+    let failed = HelloCommand {
+        keep_video: VideoRetention::Failed,
+        allure: true,
+        ..hello
+    };
+    let line = String::from_utf8(encode_command(&Command::Hello(failed.clone())).unwrap()).unwrap();
+    assert_eq!(
+        line,
+        r#"{"op":"hello","root":"/r","runId":"r","launcher":"daemon","screen":true,"allure":true,"keepVideo":"failed"}"#
+    );
+    let Command::Hello(decoded) = decode_command(line.as_bytes()).unwrap() else {
+        panic!("{line} is no hello");
+    };
+    assert_eq!(decoded, failed);
+}
+
 #[test]
 fn only_the_four_waiting_ops_are_acked() {
     let acked: Vec<&str> = Op::ALL.iter().filter(|op| op.is_acked()).map(|op| op.as_str()).collect();
@@ -545,6 +579,7 @@ fn every_vocabulary_declares_its_own_words_only() {
     assert!(refused::<Launcher>("gradle"));
     assert!(refused::<CaptureSource>("vnc"));
     assert!(refused::<VideoCodec>("av1"));
+    assert!(refused::<VideoRetention>("never"));
     assert!(refused::<crate::bundle::BundleStatus>("running"));
     for op in Op::ALL {
         assert_eq!(Op::from_word(op.as_str()), Some(*op));

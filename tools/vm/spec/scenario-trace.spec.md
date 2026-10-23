@@ -485,6 +485,19 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   [@test] ../crates/avl-record/src/stills/tests.rs (`close_counts_an_encoder_that_ended_with_a_panic`)
   [@test] ../crates/avl-record/src/session/tests.rs (`a_still_encoder_that_ended_with_a_panic_is_recorded_at_the_end`)
 
+- A hello with `keepVideo` `failed` keeps the video of a scenario that did not pass only. The recorder records a passed
+  scenario as it records every other scenario. At its end it deletes `video.mp4` and `video.index.json`. It writes an
+  `air.video` record with the codec `none` and the reason, and the manifest names the codec `none` with that reason.
+  The stills stay as they are encoded. A failed, an aborted and a truncated scenario keep their video. A later attempt
+  of a scenario that did not pass in the same session keeps its video too, because that scenario is flaky. A hello
+  without the field keeps every video. `lane-run` sends `failed` when `AIR_LANE_VIDEO` says so.
+  [@test] ../crates/avl-record/src/session/tests.rs (`a_passed_scenario_keeps_no_video_when_the_hello_keeps_the_failed_ones_only`)
+  [@test] ../crates/avl-trace/src/protocol/tests.rs (`a_hello_keeps_every_video_unless_it_says_failed`)
+
+- The viewer takes an `air.video` record with the codec `none` as a bundle without a video, also after a record that
+  started a video.
+  [@test] ../../../../plugins/air/docs/src/trace/model.test.ts (`a none video record after the start of a video leaves the bundle without a video`)
+
 - The `idea.log` slice is the bytes written between the scenario's start and its end. A rotated or replaced
   log adds the new file. A slice is capped at 32 MiB.
   [@test] ../crates/avl-record/src/idealog/tests.rs

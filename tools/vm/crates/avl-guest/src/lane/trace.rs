@@ -430,8 +430,8 @@ impl Trace {
 
     /// The `hello` of the iteration directory `iteration_dir`, whose run id is `run_id`. The root is the `air-traces` of
     /// the Bazel outputs of `inputs` with the launcher `bazel` when a Bazel test names its outputs directory, else the
-    /// `air-traces` of the iteration directory with the launcher `daemon`. The screen and the Allure results are the
-    /// ones of `inputs`.
+    /// `air-traces` of the iteration directory with the launcher `daemon`. The screen, the Allure results and the kept
+    /// videos are the ones of `inputs`.
     pub(crate) fn hello(iteration_dir: &Path, run_id: &str, inputs: &TraceInputs, bridge: Option<Bridge>) -> HelloCommand {
         let (parent, launcher) = inputs
             .bazel_outputs
@@ -443,6 +443,7 @@ impl Trace {
             launcher,
             screen: inputs.screen,
             allure: inputs.allure,
+            keep_video: inputs.keep_video,
             bridge,
         }
     }

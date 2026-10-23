@@ -7,7 +7,10 @@ use std::time::{Duration, Instant};
 use anyhow::bail;
 use avl_trace::bridge::IdeSpan;
 use avl_trace::bridge::{SPANS_ROUTE, TREE_ROUTE};
-use avl_trace::bundle::{BundleStatus, IDEA_LOG_FILE, SPANS_FILE, StillEncoding, Video, bundle_dir, snap_image_path, snap_tree_path};
+use avl_trace::bundle::{
+    BundleStatus, IDEA_LOG_FILE, SPANS_FILE, StillEncoding, VIDEO_FILE, VIDEO_INDEX_FILE, Video, bundle_dir, snap_image_path,
+    snap_tree_path,
+};
 use avl_trace::otlp::{
     AnyValue, I64String, IDE_SERVICE_NAME, IDE_SPAN_KIND, LogRecord, SCOPE_NAME, StatusCode, UnixNano, attr, decode_traces_line, event,
     lookup, lookup_int, lookup_str, span_id,
@@ -468,7 +471,7 @@ impl Videographer for ShellScreenVideographer {
 #[cfg(unix)]
 #[test]
 fn a_screen_video_is_recorded_at_its_stop_from_the_first_progress_report() {
-    use avl_trace::bundle::{VIDEO_FILE, VIDEO_INDEX_FILE, decode_video_index};
+    use avl_trace::bundle::decode_video_index;
     let h = Harness::new();
     let reported_ms = T0_MS + 60_000;
     let reported = std::time::UNIX_EPOCH + Duration::from_millis(u64::try_from(reported_ms).unwrap());
@@ -494,6 +497,96 @@ fn a_screen_video_is_recorded_at_its_stop_from_the_first_progress_report() {
     assert_eq!(video.time_unix_nano, UnixNano::from_ms(first_frame_ms));
     let index = decode_video_index(&fs::read(bundle.join(VIDEO_INDEX_FILE)).unwrap()).unwrap();
     assert_eq!(index.frames_ms, (0..5).map(|i| first_frame_ms + i * 100).collect::<Vec<_>>());
+}
+
+/// A screen video that is on disk as soon as it starts, the way ffmpeg writes one, and stops without a problem.
+struct WrittenVideographer;
+
+struct WrittenRecording;
+
+impl Recording for WrittenRecording {
+    fn raw(&self) -> bool {
+        false
+    }
+
+    fn take_sink(&mut self) -> Option<Box<dyn FrameSink>> {
+        None
+    }
+
+    fn stop(&mut self) -> anyhow::Result<Stopped> {
+        Ok(Stopped {
+            frames: 1,
+            first_frame_ms: T0_MS,
+        })
+    }
+}
+
+impl Videographer for WrittenVideographer {
+    fn plan(&self, _: Option<&dyn Source>, _: bool) -> VideoPlan {
+        VideoPlan {
+            codec: VideoCodec::H264,
+            reason: String::new(),
+            raw: false,
+        }
+    }
+
+    fn start(&self, dir: &Path, _: &VideoPlan, _: Option<&Frame>) -> anyhow::Result<Box<dyn Recording>> {
+        fs::write(dir.join(VIDEO_FILE), b"video")?;
+        fs::write(dir.join(VIDEO_INDEX_FILE), b"index")?;
+        Ok(Box::new(WrittenRecording))
+    }
+}
+
+/// Under a hello that keeps the video of a scenario that did not pass only, a passed scenario loses its video and its
+/// index at its end. Its manifest and a last `air.video` record say why, and its stills stay lossy. A failed scenario
+/// keeps its video, and so does a later attempt of it that passes, because that scenario is flaky.
+#[test]
+fn a_passed_scenario_keeps_no_video_when_the_hello_keeps_the_failed_ones_only() {
+    let h = Harness::new();
+    let mut options = h.options();
+    options.video = Box::new(WrittenVideographer);
+    let mut session = h.session(options);
+    let flaky = r#"{"op":"scenario","name":"flaky","testClass":"AirExampleUiTest","lane":"UI"}"#;
+    let failed = r#"{"op":"done","status":"failed"}"#;
+    h.feed(
+        &mut session,
+        &[&h.failed_video_hello(), MINIMAL_SCENARIO, SNAP, DONE, flaky, failed, flaky, DONE],
+    );
+
+    let passed = h.example_bundle();
+    let manifest = manifest_of(&passed);
+    assert_eq!(
+        (manifest.video, manifest.stills.encoding),
+        (
+            Video::None {
+                reason: crate::scenario::PASSED_VIDEO_REASON.to_owned()
+            },
+            StillEncoding::Lossy
+        )
+    );
+    assert!(!passed.join(VIDEO_FILE).exists() && !passed.join(VIDEO_INDEX_FILE).exists());
+    let videos: Vec<(Option<String>, Option<String>)> = records(&passed)
+        .into_iter()
+        .filter(|record| record.event_name == event::VIDEO)
+        .map(|record| {
+            let value = |key: &str| lookup_str(&record.attributes, key).map(str::to_owned);
+            (value(attr::VIDEO_CODEC), value(attr::VIDEO_REASON))
+        })
+        .collect();
+    assert_eq!(
+        videos.last(),
+        Some(&(Some("none".to_owned()), Some(crate::scenario::PASSED_VIDEO_REASON.to_owned())))
+    );
+    assert!(error_records(&passed).is_empty(), "{:?}", error_records(&passed));
+
+    let first = bundle_dir(&h.root, "run-1", "AirExampleUiTest", "flaky");
+    let mut retry = first.clone().into_os_string();
+    retry.push(".2");
+    for (bundle, status) in [(first, BundleStatus::Failed), (PathBuf::from(retry), BundleStatus::Passed)] {
+        let manifest = manifest_of(&bundle);
+        assert_eq!((manifest.status, manifest.video), (status, Video::H264), "{}", bundle.display());
+        assert!(bundle.join(VIDEO_FILE).exists(), "{}", bundle.display());
+    }
 }
 
 /// A scenario naming the endpoint published as it started.

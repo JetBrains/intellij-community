@@ -166,6 +166,25 @@ vocabulary! {
     }
 }
 
+vocabulary! {
+    /// Which scenarios keep their video after they end: the `keepVideo` field of the hello.
+    #[derive(Default)]
+    pub enum VideoRetention {
+        /// Every scenario keeps its video. A hello without the field means this.
+        #[default]
+        Always = "always",
+        /// Only a scenario that did not pass keeps its video: a failed, an aborted or a truncated one. The recorder
+        /// records the video of a passed scenario too, and deletes it at the end of the scenario.
+        Failed = "failed",
+    }
+}
+
+impl VideoRetention {
+    const fn is_always(&self) -> bool {
+        matches!(self, Self::Always)
+    }
+}
+
 // --- the commands --------------------------------------------------------------------------------------------
 
 /// Where the recorder reaches the IDE's trace routes: the UI-test bridge's port and token.
@@ -211,6 +230,11 @@ pub struct HelloCommand {
     /// person asks for it with `-Dair.flow.trace.allure=on`.
     #[serde(default, skip_serializing_if = "is_false")]
     pub allure: bool,
+    /// Which scenarios keep their video. `lane-run` takes it from `AIR_LANE_VIDEO`, which a TeamCity build sets to
+    /// `failed` on a branch other than `master` and in a personal build. A passed scenario of `master` is the baseline
+    /// that a failed scenario is compared with. Every other lane keeps every video.
+    #[serde(default, skip_serializing_if = "VideoRetention::is_always")]
+    pub keep_video: VideoRetention,
     /// Absent when the lane has no published endpoint yet. The recorder then captures pixels only, and says so in
     /// the hello ack's reason. Every scenario names the endpoint again; see [ScenarioCommand::bridge].
     #[serde(default, skip_serializing_if = "Option::is_none")]

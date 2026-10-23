@@ -1,5 +1,6 @@
 //! One recorder process's conversation with its lane.
 
+use std::collections::HashSet;
 use std::fs;
 use std::io::Write;
 use std::path::Path;
@@ -9,7 +10,9 @@ use std::time::{Duration, Instant, SystemTime};
 use avl_bridge::Client;
 use avl_trace::bridge::Facts;
 use avl_trace::bundle::{AllureStatusDetails, BundleStatus, sanitize_name};
-use avl_trace::protocol::{Ack, Bridge, CaptureSource, Command, HelloAck, HelloCommand, VideoCodec, decode_command};
+use avl_trace::protocol::{
+    Ack, Bridge, CaptureSource, Command, HelloAck, HelloCommand, ScenarioCommand, VideoCodec, VideoRetention, decode_command,
+};
 
 use crate::capture::Source;
 use crate::ladder::ScreenAccess;
@@ -42,6 +45,9 @@ pub(crate) struct Session<W: Write> {
     /// Why no better rung than the source was available.
     pub(crate) source_reason: String,
     pub(crate) scenario: Option<Scenario>,
+    /// The test class and the name of each scenario of the session that did not pass. A later attempt of one of them
+    /// keeps its video, because a scenario that passes on a retry is flaky.
+    unpassed: HashSet<(String, String)>,
 }
 
 impl<W: Write> Session<W> {
@@ -57,6 +63,7 @@ impl<W: Write> Session<W> {
             source: None,
             source_reason: String::new(),
             scenario: None,
+            unpassed: HashSet::new(),
         }
     }
 
@@ -278,11 +285,26 @@ impl<W: Write> Session<W> {
         }
     }
 
+    /// Which video the scenario `command` keeps: the hello's, and every video for a scenario that did not pass before in
+    /// this session.
+    pub(crate) fn keep_video_of(&self, hello: &HelloCommand, command: &ScenarioCommand) -> VideoRetention {
+        let key = (command.test_class.clone(), command.name.clone());
+        if self.unpassed.contains(&key) {
+            VideoRetention::Always
+        } else {
+            hello.keep_video
+        }
+    }
+
     /// Finishes the open scenario, reading the IDE's last spans and the facts at its end for the log slice.
     pub(crate) fn finish_scenario(&mut self, status: BundleStatus, details: AllureStatusDetails, at: SystemTime) {
         let Some(scenario) = self.scenario.take() else {
             return;
         };
+        if status != BundleStatus::Passed {
+            self.unpassed
+                .insert((scenario.command.test_class.clone(), scenario.command.name.clone()));
+        }
         scenario.finish(status, details, crate::unix_ms(at), self.client.as_ref(), &|| self.facts().ok());
     }
 

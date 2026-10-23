@@ -1027,6 +1027,12 @@ server can already hold `:0`. That `Xvfb` then exits, and the IDE draws on the o
 1920x1200. At 1920x1080 a video costs about 3 MB per scenario minute. Every bundle's manifest names its capture source
 and, when a better one was missing, why.
 
+**Which videos a TeamCity build keeps.** A failed, an aborted or a truncated scenario always keeps its video. A passed
+scenario keeps its video only in a build of `master`, because that build is the baseline that a failure is compared
+with. A Safe Push check, a personal build and a build of another branch set `AIR_LANE_VIDEO=failed`, and the recorder
+then deletes the video of each passed scenario at its end. Its manifest names the codec `none` and says why. Every
+other run keeps each video that it records. Pass `--test_env=AIR_LANE_VIDEO=failed` to `bazel test` to keep fewer.
+
 **What the IDE did.** A bundle also holds the OpenTelemetry spans that the IDE ended in the scenario, such as
 each `air.session.log.read`. The viewer shows each one as an `ide` row under the step it started in. The spans are
 evidence only: a check that counts them reads the IDE through the bridge, not the trace.

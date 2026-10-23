@@ -10,7 +10,8 @@
 //! states, and the result of the run, as [`super::run_result`] states. It quits the IDE, and exits 0 when the run is
 //! green. Under a Bazel test, a run that is not green keeps its evidence in the outputs directory of the test, as
 //! [`super::evidence`] states. On a TeamCity build that names a build log file, the run shows in the build log while it
-//! goes on, as [`super::build_log`] states.
+//! goes on, as [`super::build_log`] states. [`VIDEO_VARIABLE`] can keep the video of a scenario that did not pass only,
+//! as [`video_retention`] states.
 //!
 //! With `--plan-only` it stops before the IDE: it stages the inputs and selects the documents as a run does, and it
 //! writes the [`RunPlan`] on standard output. So a host proves a lane rule and its runfiles without a lane IDE.
@@ -25,6 +26,7 @@ use std::time::{Duration, Instant};
 use avl_junit::cases::simple_class_name;
 use avl_junit::performance::{Plan, rfc_1123};
 use avl_junit::teamcity;
+use avl_trace::protocol::VideoRetention;
 use avl_wire::daemon::{
     IdePlugin, LaneInputs, RUN_SECRETS_VARIABLE, RunEvent, RunEventKind, RunRequest, SessionLog, TimedStep, decode_run_event,
 };
@@ -88,6 +90,11 @@ const RUNNER_INDEX_PROPERTY: &str = "idea.test.runner.index";
 const RUNNERS_COUNT_PROPERTY: &str = "idea.test.runners.count";
 /// The JVM property that asks the recorder for the Allure results, with the value `on`: [`inputs::ALLURE_FLAG`].
 const ALLURE_PROPERTY: &str = "air.flow.trace.allure";
+/// The variable that names which scenarios keep their video, a word of [`VideoRetention`]. A TeamCity build passes it
+/// with `--test_env`.
+pub(crate) const VIDEO_VARIABLE: &str = "AIR_LANE_VIDEO";
+/// The refusal code of a value of [`VIDEO_VARIABLE`] that names no retention.
+pub(crate) const VIDEO_CODE: &str = "lane_run_video";
 /// Why lane-run ignores a bucketing property of the JUnit runner.
 const BUCKETING_IGNORED: &str = "lane-run splits the lane by the order of its suites, not by duration buckets";
 /// The JVM properties that lane-run ignores, each with the reason that its note gives.
@@ -209,6 +216,7 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
     let started = Instant::now();
     let flags = jvm_flags(&args.jvm_flags)?;
     refuse_shards(variable)?;
+    let keep_video = video_retention(variable)?;
     // A plan launches no IDE, so it spends no budget.
     let budget = if args.plan_only { None } else { run_budget(args, variable)? };
     let root = runtime_root(args, variable)?;
@@ -238,6 +246,7 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
     launch_inputs.trace.bazel_outputs = bazel_outputs(variable);
     launch_inputs.trace.screen |= build_owns_screen(variable, cfg!(target_os = "linux"));
     launch_inputs.trace.allure |= flags.allure;
+    launch_inputs.trace.keep_video = keep_video;
     let jcmd = launch_inputs.jcmd();
     let mut notes = flags.notes;
     if host_probe_applies(args, variable, cfg!(target_os = "linux")) {
@@ -535,6 +544,23 @@ pub(crate) fn host_probe_applies(args: &LaneRunArgs, variable: &dyn Fn(&str) -> 
 /// person. A host of a developer is no TeamCity build, so lane-run never reads the screen of a person.
 pub(crate) fn build_owns_screen(variable: &dyn Fn(&str) -> Option<String>, linux: bool) -> bool {
     linux && teamcity::is_team_city(variable) && variable("DISPLAY").is_some_and(|display| !display.trim().is_empty())
+}
+
+/// Which scenarios keep their video, as [`VIDEO_VARIABLE`] names it. `failed` keeps the video of a scenario that did not
+/// pass only. A TeamCity build sets it on a branch other than `master` and in a personal build, so a passed scenario
+/// keeps its video only in a build of `master`, the baseline. Unset or empty, every scenario keeps its video. Another
+/// value is refused by name.
+pub(crate) fn video_retention(variable: &dyn Fn(&str) -> Option<String>) -> Result<VideoRetention, AgentRefusal> {
+    let Some(value) = variable(VIDEO_VARIABLE).filter(|value| !value.trim().is_empty()) else {
+        return Ok(VideoRetention::Always);
+    };
+    VideoRetention::from_word(value.trim()).ok_or_else(|| {
+        let words: Vec<&str> = VideoRetention::ALL.iter().map(|retention| retention.as_str()).collect();
+        AgentRefusal::refused(
+            VIDEO_CODE,
+            format!("${VIDEO_VARIABLE} is {value:?}, and it takes only {}", words.join(" or ")),
+        )
+    })
 }
 
 /// The X display of the host, `DISPLAY`, refused by name when it is unset, because the lane IDE opens its windows on it.
