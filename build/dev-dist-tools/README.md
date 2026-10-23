@@ -140,7 +140,8 @@ JDK answer for every glob of the corpus. A plan author who needs a new shape cha
 ## Cargo beside Bazel
 
 - Run `cargo test`, `cargo clippy` and `cargo fmt` in this directory, or in `build/dev-dist-tools` for the ultimate
-  tools. Bazel does not read `Cargo.toml` of the ultimate workspace.
+  tools. Bazel does not read `Cargo.toml` of the ultimate workspace. Cargo finds `.cargo/config.toml` from the
+  current directory: `--manifest-path` from another directory builds into `target/` of the workspace.
 - `.cargo/config.toml` of both workspaces puts the cargo output in `community/out/cargo-target/dev-dist-tools`.
   Git and Bazel ignore that directory.
 - Two cargo runs on one target directory wait for its lock. Set `CARGO_TARGET_DIR` to another directory under `out/`

@@ -22,3 +22,7 @@ methods. These rules apply to both workspaces, this one and `build/dev-dist-tool
 - **Keep clippy clean in both workspaces.** `cargo clippy --all-targets` must print no warning in this directory and in
   `build/dev-dist-tools` before a commit. The policy is `community/build/rust-tools/lints.toml`. Change it there, run
   `bun community/build/rust-tools/sync.mjs`, then run it again with `--check`.
+- **Run cargo in the workspace directory, never with `--manifest-path` from elsewhere.** Cargo reads
+  `.cargo/config.toml` from the current directory, not from the manifest. Run from the ultimate root, it misses the
+  `target-dir` and writes `target/` into the workspace, and `git add -A` committed that once. `.gitignore` of both
+  workspaces now ignores `target/`.
