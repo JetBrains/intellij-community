@@ -30,6 +30,26 @@ export function contentPathOf(contentRoot: string, repoPath: string): string | n
   return repoPath.startsWith(prefix) ? repoPath.slice(prefix.length) : null
 }
 
+/**
+ * The `[@test] <relative-path>` lines of a spec body, resolved against the content-relative folder of the spec: the
+ * repo-root-relative paths, unique and sorted. `accept` filters a target, for example the harvest drops a missing file.
+ */
+export function specTestFiles(
+  contentRoot: string,
+  specDir: string,
+  body: string,
+  accept: (repoPath: string, target: string) => boolean = () => true,
+): string[] {
+  const files = new Set<string>()
+  for (const match of body.matchAll(/^[ \t]*\[@test][ \t]+(\S+)[ \t]*$/gm)) {
+    const repoPath = resolveRepoPath(contentRoot, specDir, match[1])
+    if (accept(repoPath, match[1])) {
+      files.add(repoPath)
+    }
+  }
+  return [...files].sort()
+}
+
 /** The repo-root-relative form of a content-relative path. A content root of `''` or `.` is the repository root. */
 export function repoPathOf(contentRoot: string, contentPath: string): string {
   return contentRoot === '' || contentRoot === '.' ? contentPath : `${contentRoot}/${contentPath}`

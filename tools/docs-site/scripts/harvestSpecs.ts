@@ -11,7 +11,7 @@ import { addCodeSpanPaths } from './codeSpans.ts'
 import { collectDocPictures, parseFrontmatter } from './harvestDocs.ts'
 import { contentDir, posixRelative, repoRoot, specFiles } from './paths.ts'
 import type { SiteConfig } from './siteConfig.ts'
-import { resolveRepoPath } from './sourcePaths.ts'
+import { specTestFiles } from './sourcePaths.ts'
 
 /** The part of the site config that the spec harvest reads. */
 export type SpecHarvestConfig = Pick<SiteConfig, 'contentRoot' | 'docs' | 'specs'>
@@ -67,15 +67,13 @@ export function harvestSpecs(config: SpecHarvestConfig, root: string = repoRoot)
     const path = posixRelative(content, file)
     const id = relative(specRoot, file).split(sep).join('/').slice(0, -config.specs.suffix.length)
     const specDir = dirname(path) === '.' ? '' : dirname(path)
-    const testFiles = new Set<string>()
-    for (const match of body.matchAll(/^[ \t]*\[@test][ \t]+(\S+)[ \t]*$/gm)) {
-      const repoPath = resolveRepoPath(config.contentRoot, specDir, match[1])
-      if (!existsSync(join(root, repoPath))) {
-        console.warn(`harvest: ${path}: [@test] target not found: ${match[1]}`)
-        continue
+    const testFiles = specTestFiles(config.contentRoot, specDir, body, (repoPath, target) => {
+      if (existsSync(join(root, repoPath))) {
+        return true
       }
-      testFiles.add(repoPath)
-    }
+      console.warn(`harvest: ${path}: [@test] target not found: ${target}`)
+      return false
+    })
     specs.push({
       id,
       path,
@@ -86,7 +84,7 @@ export function harvestSpecs(config: SpecHarvestConfig, root: string = repoRoot)
       date: /^Date:\s*(.+)$/m.exec(body)?.[1]?.trim() ?? null,
       style: typeof meta.style === 'string' ? meta.style : null,
       targets: Array.isArray(meta.targets) ? meta.targets : [],
-      testFiles: [...testFiles].sort(),
+      testFiles,
       headings: [...body.matchAll(/^##\s+(.+)$/gm)].map(match => match[1].trim()),
     })
     bodies.set(path, body)
