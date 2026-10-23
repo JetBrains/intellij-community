@@ -35,7 +35,7 @@ fn the_cached_address_answers_with_the_hello() {
 }
 
 /// A cached address that no longer answers costs one connect; the host name gives the new one, and the host file
-/// keeps it first.
+/// keeps the new one alone, because every cached address failed.
 #[test]
 fn a_dead_cached_address_falls_back_to_the_host_name_and_the_file_keeps_the_new_one() {
     let setup = Setup::new(runs_reply);
@@ -49,7 +49,28 @@ fn a_dead_cached_address_falls_back_to_the_host_name_and_the_file_keeps_the_new_
     channel.close();
     assert_eq!(info.address, setup.agent.address);
     let file = setup.config.read_host(ALIAS).expect("the host file");
-    assert_eq!(file.addresses, [setup.agent.address, dead]);
+    assert_eq!(file.addresses, [setup.agent.address]);
+}
+
+/// A cached address that answers after a dead one goes first, so the next connection does not try the dead one first.
+#[test]
+fn a_cached_address_that_answers_goes_before_a_cached_one_that_failed() {
+    let setup = Setup::new(runs_reply);
+    let (dead, other) = (dead_address(), dead_address());
+    setup
+        .config
+        .write_host(&host_file(&setup.agent, vec![dead, setup.agent.address, other]))
+        .expect("a host file with a dead address first");
+    let mut host = Host::open(&setup.config, ALIAS, FAST).expect("the host");
+    let (channel, info) = host.connect().expect("connected through the second address");
+    channel.close();
+    assert_eq!(info.address, setup.agent.address);
+    let file = setup.config.read_host(ALIAS).expect("the host file");
+    assert_eq!(
+        file.addresses,
+        [setup.agent.address, other, dead],
+        "the untried address keeps its place before the failed one"
+    );
 }
 
 #[test]

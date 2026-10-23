@@ -1,8 +1,11 @@
 //! The connection to the agent of one host: the address choice, and the hello of each connection.
 //!
-//! The client tries the cached addresses of the host file first, each with a connect deadline of 5 s. Then it resolves
-//! the host name on a thread under a deadline of 5 s, IPv4 first, and tries each new address. The address that answers
-//! goes first in the host file. No step waits without a deadline, so a `.local` name that does not resolve costs 5 s.
+//! The client tries the cached addresses of the host file first, in their order, each with a connect deadline of 5 s.
+//! Then it resolves the host name on a thread under a deadline of 5 s, IPv4 first, and tries each new address. The
+//! address that answers goes first in the host file. A cached address that failed goes after the ones that did not, so
+//! the next connection tries it last. When only an address of the host name answers, every cached address failed, and
+//! the host file keeps the new address alone. No step waits without a deadline, so a `.local` name that does not
+//! resolve costs 5 s.
 
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -131,13 +134,18 @@ impl Host {
             }
             Attempt::Refused(refusal) => Some(refusal),
         };
+        let mut failed: Vec<SocketAddr> = Vec::new();
         for address in self.file.addresses.clone() {
             match self.attempt(address) {
-                Ok(connected) => return Ok(connected),
+                Ok(connected) => {
+                    self.remember(address, &failed);
+                    return Ok(connected);
+                }
                 Err(attempt) => {
                     if let Some(refusal) = note(address, attempt) {
                         return Err(refusal);
                     }
+                    failed.push(address);
                 }
             }
         }
@@ -157,7 +165,7 @@ impl Host {
             }
             match self.attempt(address) {
                 Ok(connected) => {
-                    self.remember(address);
+                    self.remember(address, &failed);
                     return Ok(connected);
                 }
                 Err(attempt) => {
@@ -293,11 +301,22 @@ impl Host {
         )
     }
 
-    /// Puts the address that answered first in the host file. A host file that cannot be written keeps the old
-    /// addresses, and the next connection resolves the host name again.
-    fn remember(&mut self, address: SocketAddr) {
+    /// Puts the address that answered first in the host file, then the cached addresses that did not fail, then the
+    /// ones in `failed`. An address of the host name answers only after every cached address failed, and the cached
+    /// ones then go. A host file that cannot be written keeps the old addresses.
+    fn remember(&mut self, address: SocketAddr, failed: &[SocketAddr]) {
+        let cached = self.file.addresses.contains(&address);
         let mut addresses = vec![address];
-        addresses.extend(self.file.addresses.iter().copied().filter(|known| *known != address));
+        addresses.extend(
+            self.file
+                .addresses
+                .iter()
+                .copied()
+                .filter(|known| *known != address && !failed.contains(known)),
+        );
+        if cached {
+            addresses.extend(failed.iter().copied().filter(|known| *known != address));
+        }
         addresses.truncate(KEPT_ADDRESSES);
         if addresses != self.file.addresses {
             self.file.addresses = addresses;

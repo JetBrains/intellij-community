@@ -9,7 +9,7 @@ connection per request: `run`, `attach`, `cancel`, `runs`, `lease`, `release`, `
 | File | Content |
 |---|---|
 | `~/.config/yonder/identity.crt`, `identity.key` | The certificate and the key of the client, created on the first call. |
-| `~/.config/yonder/hosts/<alias>.json` | `{"alias", "fingerprint", "port", "hostname", "addresses", "repo"}`. `prepare` writes it. A connection puts the address that answered first. |
+| `~/.config/yonder/hosts/<alias>.json` | `{"alias", "fingerprint", "port", "hostname", "addresses", "repo"}`. `prepare` writes it. A connection puts the address that answered first, and a cached address that failed last. An address of the host name replaces the cached ones, which all failed. |
 | `~/.config/yonder/bases/<alias>/<holder>` | The commit of `refs/yonder/base/<holder>` on the host, after the last base sync. The next run adds it to the candidates of `Have`. |
 
 ## The refusals
