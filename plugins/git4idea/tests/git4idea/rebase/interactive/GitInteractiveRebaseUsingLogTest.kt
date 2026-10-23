@@ -1,10 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.rebase.interactive
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.platform.productMode.ProductMode
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.replaceService
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.test.assertErrorNotification
@@ -46,13 +53,20 @@ internal class GitInteractiveRebaseUsingLogTest {
   private val context: GitSingleRepoContext get() = contextFixture.get()
 
   private lateinit var testCs: CoroutineScope
+  private lateinit var logDataCs: CoroutineScope
   private lateinit var logData: VcsLogData
+
+  @TestDisposable
+  lateinit var testDisposable: Disposable
 
   @BeforeEach
   fun setUp() {
     @Suppress("RAW_SCOPE_CREATION")
     testCs = CoroutineScope(SupervisorJob())
-    logData = createLogDataIn(testCs, context.repo, context.logProvider)
+    // its own child scope, so a test can release logData's storage lock (VcsLogStorageLocker, keyed by
+    // project+root) early without cancelling testCs, e.g. before opening another VcsLogData for the same root
+    logDataCs = testCs.childScope("logData for test")
+    logData = createLogDataIn(logDataCs, context.repo, context.logProvider)
   }
 
   @AfterEach
@@ -276,6 +290,55 @@ internal class GitInteractiveRebaseUsingLogTest {
       .isNotNull()
     assertThat(freshEntries?.any { it.commit.startsWith(newHash) || newHash.startsWith(it.commit) })
       .describedAs("Entries must include the current HEAD $newHash (got ${freshEntries!!.map { it.commit }})").isTrue()
+  }
+
+  // JB Light (LIGHT_MONOLITH) makes VcsLogPersistentIndex.getAvailableIndexers() return no indexer, so its log
+  // always runs in this state: a real data pack, but a permanently empty commit index. This reproduces that
+  // exact state in a normal test run (no light product boot needed) and checks that log-based rebase entry
+  // generation still matches the git-native result, i.e. it doesn't quietly depend on the index being present.
+  // IdeProductMode.currentMode (which getAvailableIndexers() reads) comes from the actual loaded plugin set,
+  // not from CurrentProductMode, so the IdeProductMode service itself has to be faked for this to take effect.
+  // VcsLogStorageLocker only allows one live VcsLogData per (project, root): logData from setUp() must release
+  // its lock before another VcsLogData for the same root can be constructed, or the constructor hangs forever.
+  @Test
+  fun `test rebase entries generation without a commit index (simulated light mode)`(): Unit = with(context) {
+    val commit0 = file("firstFile.txt").create("").addCommit("0").details()
+    build {
+      1()
+      2()
+      3()
+      4()
+    }
+
+    runBlocking { logDataCs.coroutineContext.job.cancelAndJoin() }
+
+    val lightLogData = withFakeProductMode(ProductMode.LIGHT_MONOLITH) {
+      createLogDataIn(testCs, repo, logProvider)
+    }
+    lightLogData.refreshAndWait(repo, waitIndexFinishing = true)
+    repo.update()
+
+    val entriesGeneratedUsingLog = runBlocking {
+      repo.project.service<GitInteractiveRebaseEntriesProvider>()
+        .tryGetEntriesForDialog(repo, commit0, lightLogData)
+    } ?: error("Failed to get entries")
+    val entriesGeneratedUsingGit = getRebaseEntriesUsingGit(commit0)
+
+    assertThat(entriesGeneratedUsingGit).isNotEmpty()
+    assertThat(entriesGeneratedUsingLog).isNotEmpty()
+    entriesGeneratedUsingLog.forEachIndexed { i, generatedEntry ->
+      val realEntry = entriesGeneratedUsingGit[i]
+      assertThat(generatedEntry.equalsWithReal(realEntry))
+        .describedAs("Generated entry: $generatedEntry, Real entry: $realEntry")
+        .isTrue()
+    }
+  }
+
+  private fun <R> withFakeProductMode(mode: ProductMode, body: () -> R): R {
+    ApplicationManager.getApplication().replaceService(IdeProductMode::class.java, object : IdeProductMode {
+      override val currentMode: ProductMode = mode
+    }, testDisposable)
+    return body()
   }
 
   private fun GitSingleRepoContext.getRebaseEntriesUsingGit(commit: VcsCommitMetadata): List<GitRebaseEntry> {
