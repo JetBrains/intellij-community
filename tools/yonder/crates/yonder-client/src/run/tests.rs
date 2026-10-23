@@ -156,6 +156,7 @@ fn kind(request: &Request) -> &'static str {
         Request::Runs => "runs",
         Request::Lease { .. } => "lease",
         Request::Release { .. } => "release",
+        Request::Upgrade { .. } => "upgrade",
     }
 }
 
@@ -1184,7 +1185,7 @@ fn an_agent_older_than_the_features_refuses_apply_before_the_run_and_warns_about
     };
     let refusal = run_options(&setup, &processes, &said, &checkout, &apply).expect_err("refused");
     assert_eq!((refusal.code.as_ref(), refusal.exit), (code::OLD_AGENT, Exit::NotRun));
-    assert!(refusal.message.contains("`yonder prepare studio`"), "{}", refusal.message);
+    assert!(refusal.message.contains("`yonder upgrade studio`"), "{}", refusal.message);
     assert!(!kinds(&setup).contains(&"start"));
 
     let nice = RunOptions {
@@ -1194,7 +1195,7 @@ fn an_agent_older_than_the_features_refuses_apply_before_the_run_and_warns_about
     run_options(&setup, &processes, &said, &checkout, &nice).expect("the run");
     assert!(
         said.lines().contains(
-            &"yonder: warning: the agent on studio is older than this client and ignores --nice, .yonder.toml, the login environment. `yonder prepare studio` updates it"
+            &"yonder: warning: the agent on studio is older than this client and ignores --nice, .yonder.toml, the login environment. `yonder upgrade studio` updates it"
                 .to_owned()
         ),
         "{:#?}",

@@ -411,7 +411,7 @@ impl Client<'_> {
             return Err(refused(
                 code::OLD_AGENT,
                 format!(
-                    "the agent on {alias} cannot bring back the changes of a run (--apply): it is older than this client. `yonder prepare {alias}` updates it"
+                    "the agent on {alias} cannot bring back the changes of a run (--apply): it is older than this client. `yonder upgrade {alias}` updates it"
                 ),
             ));
         }
@@ -427,7 +427,7 @@ impl Client<'_> {
         }
         if !ignored.is_empty() {
             (self.say)(&format!(
-                "yonder: warning: the agent on {alias} is older than this client and ignores {}. `yonder prepare {alias}` updates it",
+                "yonder: warning: the agent on {alias} is older than this client and ignores {}. `yonder upgrade {alias}` updates it",
                 ignored.join(", ")
             ));
         }

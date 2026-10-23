@@ -28,6 +28,12 @@ pub(crate) const BAD_CONFIG: &str = "bad_config";
 /// A prepare step of `.yonder.toml` failed, so the command did not run.
 pub(crate) const PREPARE_FAILED: &str = "prepare_failed";
 
+/// The binary of an upgrade has another size or SHA-256 than the request names, or it does not run here as an agent
+/// of this schema that can be upgraded again.
+pub(crate) const BAD_BINARY: &str = "bad_binary";
+/// The agent cannot stage, keep or swap its binary, or start the watchdog: no LaunchAgent, or a failed file call.
+pub(crate) const UPGRADE_FAILED: &str = "upgrade_failed";
+
 /// `setup` cannot start the agent under launchd.
 pub(crate) const LAUNCHD_FAILED: &str = "launchd_failed";
 

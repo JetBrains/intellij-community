@@ -236,7 +236,7 @@ fn ssh_refusal(alias: &str, what: &str, ran: &Ran) -> Refusal {
     )
 }
 
-fn sha256_hex(bytes: &[u8]) -> String {
+pub(crate) fn sha256_hex(bytes: &[u8]) -> String {
     ring::digest::digest(&ring::digest::SHA256, bytes)
         .as_ref()
         .iter()

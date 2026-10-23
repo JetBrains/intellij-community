@@ -9,7 +9,6 @@ use std::fs::{self, File, OpenOptions};
 use std::io::{self, Read};
 use std::os::fd::{AsRawFd, RawFd};
 use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
-use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::sync::{Condvar, Mutex, MutexGuard, PoisonError};
@@ -24,7 +23,7 @@ use crate::refused::{AGENT_ERROR, BAD_REQUEST, BAD_RUN_ID, RUN_EXISTS, Refusal, 
 use crate::run::{ExitRecord, RunDir, SUPERVISOR_LOG, epoch_ms, is_line_start, read_events};
 use crate::serve::{Agent, check_holder, is_inner_path, log};
 use crate::watch::Watch;
-use crate::{git, tuning};
+use crate::{child, git, tuning};
 
 /// The longest wait of a follow for a change of the run files. A run that lost its supervisor changes no file, so this
 /// bounds the time until the follow ends it.
@@ -108,22 +107,7 @@ impl Agent {
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(stderr);
-        let prepare = move || {
-            // SAFETY: setsid takes no arguments and is async-signal-safe.
-            if unsafe { libc::setsid() } == -1 {
-                return Err(io::Error::last_os_error());
-            }
-            // SAFETY: fcntl takes plain integers and is async-signal-safe. The cleared flag keeps the lock open across
-            // the exec.
-            if unsafe { libc::fcntl(descriptor, libc::F_SETFD, 0) } == -1 {
-                return Err(io::Error::last_os_error());
-            }
-            Ok(())
-        };
-        // SAFETY: the closure runs in the child between fork and exec, and calls only setsid and fcntl.
-        unsafe {
-            command.pre_exec(prepare);
-        }
+        child::detach(&mut command, Some(descriptor));
         let mut child = command.spawn().map_err(spawn_failed)?;
         if let Err(error) = run.write_pid(child.id()) {
             log(&format!(

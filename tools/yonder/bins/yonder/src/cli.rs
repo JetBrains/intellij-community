@@ -12,8 +12,8 @@ use std::time::Duration;
 use clap::error::ErrorKind;
 use clap::{Parser, Subcommand};
 use yonder_client::{
-    Call, Client, Config, DEFAULT_PORT, Exit, PrepareRequest, Processes, Refusal, RunInfo, RunOptions, RunRequest, code, holder, interrupt,
-    never, no_monorepo, phases_line, phases_short,
+    Call, Client, Config, DEFAULT_PORT, Exit, PrepareRequest, Processes, Refusal, RunInfo, RunOptions, RunRequest, UpgradeRequest,
+    UpgradeWay, code, holder, interrupt, never, no_monorepo, phases_line, phases_short,
 };
 
 /// The holder prefix of a checkout when `--holder` names none.
@@ -125,6 +125,19 @@ enum Command {
         /// The name of this client in the allow list of the agent (default: `yonder on <host name>`).
         #[arg(long)]
         name: Option<String>,
+    },
+    /// Updates the agent on the host over the link, without ssh. The agent installs the new binary and restarts, and a
+    /// watchdog there brings back the previous binary when the new one does not start. An agent that knows no upgrade
+    /// request gets a run that builds the agent of this working tree on the host and installs it, once.
+    Upgrade {
+        alias: String,
+        /// A local `yonderd` binary for the host (default: the client builds `@community//tools/yonder:yonderd` with
+        /// `./bazel.cmd` in the root of this checkout of the monorepo).
+        #[arg(long)]
+        agent: Option<PathBuf>,
+        /// The lease holder of the run of an agent that knows no upgrade request.
+        #[arg(long)]
+        holder: Option<String>,
     },
 }
 
@@ -312,7 +325,50 @@ fn execute(
                 prepared.host_file.display()
             )))
         }
+        Command::Upgrade {
+            alias,
+            agent,
+            holder: named,
+        } => {
+            install_interrupt(say, "Ctrl+C ends this process, and a child such as the Bazel build goes on");
+            let checkout = checkout_root(processes).ok();
+            let holder = named.unwrap_or_else(|| {
+                checkout
+                    .as_deref()
+                    .map_or_else(|| HOLDER_PREFIX.to_owned(), |root| holder(HOLDER_PREFIX, root))
+            });
+            let upgraded = client.upgrade(&UpgradeRequest {
+                alias: &alias,
+                agent: agent.as_deref(),
+                checkout: checkout.as_deref(),
+                holder: &holder,
+            })?;
+            Ok(answer(&upgraded_text(&alias, &upgraded)))
+        }
     }
+}
+
+/// The answer of `yonder upgrade`.
+fn upgraded_text(alias: &str, upgraded: &yonder_client::Upgraded) -> String {
+    let short = |sha256: &str| sha256.get(..12).unwrap_or(sha256).to_owned();
+    let info = &upgraded.agent;
+    let answers = format!(
+        "yonderd {} answers on {} ({} {})",
+        upgraded.version, info.address, info.os, info.arch
+    );
+    let how = match &upgraded.way {
+        UpgradeWay::Current => return format!("yonderd {} on {alias} is current\n{answers}", short(&upgraded.sha256)),
+        UpgradeWay::Request => "over the link".to_owned(),
+        UpgradeWay::Bootstrap(run) => format!("through the run {run}"),
+    };
+    let previous = upgraded
+        .previous_sha256
+        .as_deref()
+        .map_or_else(|| "an older build".to_owned(), short);
+    format!(
+        "upgraded yonderd on {alias} from {previous} to {} {how}\n{answers}",
+        short(&upgraded.sha256)
+    )
 }
 
 /// One run of `yonder runs`: its id, its state, its holder, its commit, its command, and the steps that took 0.1 s or

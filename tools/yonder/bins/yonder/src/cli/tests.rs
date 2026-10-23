@@ -287,3 +287,47 @@ fn fetch_and_forget_name_a_run() {
     let cli = Cli::try_parse_from(["yonder", "forget", "studio", "1-2"]).expect("parsed");
     assert!(matches!(cli.command, Command::Forget { .. }), "{cli:?}");
 }
+
+#[test]
+fn upgrade_takes_the_alias_an_agent_and_a_holder_and_refuses_an_unprepared_host() {
+    let cli = Cli::try_parse_from(["yonder", "upgrade", "studio", "--agent", "/tmp/yonderd"]).expect("parsed");
+    let Command::Upgrade { alias, agent, holder } = cli.command else {
+        panic!("{cli:?}")
+    };
+    assert_eq!(
+        (alias.as_str(), agent, holder),
+        ("studio", Some(PathBuf::from("/tmp/yonderd")), None)
+    );
+    let (code, _, said) = invoke(&["upgrade", "studio"]);
+    assert_eq!(code, 255);
+    assert!(said[0].starts_with("yonder: no_host: "), "{said:?}");
+}
+
+#[test]
+fn an_upgrade_says_how_the_binary_came_and_which_agent_answers() {
+    let upgraded = |way| yonder_client::Upgraded {
+        way,
+        previous_sha256: Some("a".repeat(64)),
+        sha256: "b".repeat(64),
+        version: "0.1.0".to_owned(),
+        agent: yonder_client::AgentInfo {
+            version: "0.1.0".to_owned(),
+            os: "macos".to_owned(),
+            arch: "aarch64".to_owned(),
+            address: "192.168.1.24:7741".parse().expect("an address"),
+        },
+    };
+    let answers = "yonderd 0.1.0 answers on 192.168.1.24:7741 (macos aarch64)";
+    assert_eq!(
+        upgraded_text("studio", &upgraded(UpgradeWay::Request)),
+        format!("upgraded yonderd on studio from aaaaaaaaaaaa to bbbbbbbbbbbb over the link\n{answers}")
+    );
+    assert_eq!(
+        upgraded_text("studio", &upgraded(UpgradeWay::Bootstrap("1-2".to_owned()))),
+        format!("upgraded yonderd on studio from aaaaaaaaaaaa to bbbbbbbbbbbb through the run 1-2\n{answers}")
+    );
+    assert_eq!(
+        upgraded_text("studio", &upgraded(UpgradeWay::Current)),
+        format!("yonderd bbbbbbbbbbbb on studio is current\n{answers}")
+    );
+}

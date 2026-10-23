@@ -5,18 +5,22 @@
 //! waits: `Have`, the end of `Pack`, `Lease` and `Release`. The requests of a repository and of a lease are here; the
 //! requests of a run are in `run_requests`. A thread runs the cleanup of `cleanup` every hour. At its start `serve`
 //! raises its open-files limit, which each run inherits, and a thread captures the login environment of the user
-//! (`login_env`).
+//! (`login_env`). Once it listens, it writes the listening file with the SHA-256 of its binary, for the watchdog of an
+//! upgrade (`upgrade`). After an upgrade it waits for its other requests and exits, so that launchd starts the new
+//! binary.
 
 use std::collections::{HashMap, HashSet};
 use std::io::{self, Write};
 use std::net::{IpAddr, Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::mpsc::{self, RecvTimeoutError};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime};
 
-use yonder_link::proto::{Reply, Request, SCHEMA_VERSION};
+use yonder_link::digest::{is_sha256, sha256_file};
+use yonder_link::proto::{MAX_BINARY, Reply, Request, SCHEMA_VERSION};
 use yonder_link::{Channel, Frame, Identity, LinkError, ServerTls};
 
 use crate::child::never;
@@ -24,9 +28,10 @@ use crate::files::private_dir;
 use crate::git::NotRepo;
 use crate::home::Home;
 use crate::lease::{Leases, now_seconds};
-use crate::refused::{AGENT_ERROR, BAD_REQUEST, LOCK_TIMEOUT, PACK_FAILED, REPO_MISSING, Refusal, SCHEMA, refused, reply};
+use crate::refused::{AGENT_ERROR, BAD_REQUEST, LOCK_TIMEOUT, PACK_FAILED, REPO_MISSING, Refusal, SCHEMA, UPGRADE_FAILED, refused, reply};
 use crate::run::{RunDir, Runs};
-use crate::{cleanup, git, login_env, run_env, tuning};
+use crate::upgrade::{Install, Staging};
+use crate::{cleanup, git, login_env, run_env, tuning, upgrade};
 
 /// The deadline of each read of the handshake and of a request.
 const READ_DEADLINE: Duration = Duration::from_secs(10);
@@ -53,6 +58,9 @@ const MAX_HAVE: usize = 1024;
 /// How often the agent runs the cleanup.
 const CLEANUP_EVERY: Duration = Duration::from_secs(3600);
 
+/// How often an upgraded agent looks at its other requests before it exits.
+const DRAIN_EVERY: Duration = Duration::from_millis(100);
+
 /// The agent of one host.
 #[derive(Debug)]
 pub(crate) struct Agent {
@@ -63,11 +71,20 @@ pub(crate) struct Agent {
     pub(crate) exe: PathBuf,
     /// The repositories that a check found, so each later request of a run skips the `git rev-parse`.
     pub(crate) repos: Mutex<HashSet<PathBuf>>,
+    /// The SHA-256 of [`Agent::exe`] at the start, for the hello and the listening file.
+    pub(crate) sha256: Option<String>,
+    /// The launchctl program of the watchdog of an upgrade. A test gives a fake one.
+    pub(crate) launchctl: PathBuf,
+    /// The requests that go on, less the follows and the upgrades. An upgraded agent waits for them before it exits.
+    busy: AtomicUsize,
+    /// Set while an upgrade goes on, so a second one refuses.
+    upgrading: AtomicBool,
 }
 
 /// Listens on `bind:port` and serves each connection. Prints one JSON line with the address and the fingerprint on
-/// `out` once it listens. It answers only when it cannot listen.
-pub(crate) fn serve(home: Home, bind: IpAddr, port: u16, out: &mut dyn Write) -> Result<(), Refusal> {
+/// `out` once it listens. It answers only when it cannot listen. `launchctl` is the program of the watchdog of an
+/// upgrade.
+pub(crate) fn serve(home: Home, bind: IpAddr, port: u16, launchctl: PathBuf, out: &mut dyn Write) -> Result<(), Refusal> {
     let identity = Identity::load_or_create(&home.identity_dir()).map_err(|error| {
         refused(
             AGENT_ERROR,
@@ -88,12 +105,7 @@ pub(crate) fn serve(home: Home, bind: IpAddr, port: u16, out: &mut dyn Write) ->
         Err(error) => log(&format!("cannot raise the open-files limit: {error}")),
     }
     let tls = ServerTls::new(&identity, home.allow_file()).map_err(|error| refused(AGENT_ERROR, format!("cannot set up TLS: {error}")))?;
-    let agent = Arc::new(Agent {
-        home,
-        tls,
-        exe,
-        repos: Mutex::default(),
-    });
+    let agent = Arc::new(Agent::new(home, tls, exe, launchctl));
 
     // The login environment of the user, for the runs. A shell profile can take seconds, so it does not hold the
     // listener.
@@ -114,6 +126,11 @@ pub(crate) fn serve(home: Home, bind: IpAddr, port: u16, out: &mut dyn Write) ->
         }
     });
 
+    if let Some(sha256) = &agent.sha256
+        && let Err(error) = upgrade::write_listening(&agent.home, sha256)
+    {
+        log(&format!("cannot write {}: {error}", agent.home.listening_file().display()));
+    }
     let handshakes = Arc::new(Handshakes::default());
     for socket in listener.incoming() {
         match socket {
@@ -191,6 +208,23 @@ pub(crate) fn log(message: &str) {
 }
 
 impl Agent {
+    /// The agent of `home` that runs the binary `exe`, with the SHA-256 of that binary.
+    pub(crate) fn new(home: Home, tls: ServerTls, exe: PathBuf, launchctl: PathBuf) -> Self {
+        let sha256 = sha256_file(&exe)
+            .inspect_err(|error| log(&format!("cannot read the SHA-256 of {}: {error}", exe.display())))
+            .ok();
+        Self {
+            home,
+            tls,
+            exe,
+            repos: Mutex::default(),
+            sha256,
+            launchctl,
+            busy: AtomicUsize::new(0),
+            upgrading: AtomicBool::new(false),
+        }
+    }
+
     pub(crate) fn runs(&self) -> Runs {
         Runs::new(self.home.runs_dir())
     }
@@ -209,29 +243,48 @@ impl Agent {
                 return;
             }
         };
-        if let Err(error) = self.converse(&mut channel) {
+        let upgraded = self.converse(&mut channel).unwrap_or_else(|error| {
             log(&format!(
                 "the connection of {} from {address} failed: {error}",
                 channel.peer().short()
             ));
-        }
+            false
+        });
         channel.close();
+        if upgraded {
+            self.exit_after_upgrade();
+        }
     }
 
-    fn converse(&self, channel: &mut Channel) -> Result<(), LinkError> {
+    /// Serves the hello and the request of one connection. Answers whether the request upgraded the binary.
+    fn converse(&self, channel: &mut Channel) -> Result<bool, LinkError> {
         match channel.recv::<Request>()? {
             Request::Hello { schema_version, .. } if schema_version == SCHEMA_VERSION => {
-                channel.send(&Reply::hello(env!("CARGO_PKG_VERSION")))?;
+                channel.send(&Reply::hello(env!("CARGO_PKG_VERSION"), self.sha256.clone()))?;
             }
             Request::Hello { schema_version, .. } => {
-                return channel.send(&Reply::refused(
-                    SCHEMA,
-                    format!("the agent speaks the schema {SCHEMA_VERSION}, not {schema_version}"),
-                ));
+                return channel
+                    .send(&Reply::refused(
+                        SCHEMA,
+                        format!("the agent speaks the schema {SCHEMA_VERSION}, not {schema_version}"),
+                    ))
+                    .map(|()| false);
             }
-            _ => return channel.send(&Reply::refused(BAD_REQUEST, "the first request of a connection is a hello")),
+            _ => {
+                return channel
+                    .send(&Reply::refused(BAD_REQUEST, "the first request of a connection is a hello"))
+                    .map(|()| false);
+            }
         }
         let request = channel.recv::<Request>()?;
+        if let Request::Upgrade { size, sha256 } = &request {
+            return self.upgrade(channel, *size, sha256);
+        }
+        let _busy = (!matches!(request, Request::Follow { .. })).then(|| Busy::new(&self.busy));
+        self.answer_request(channel, request).map(|()| false)
+    }
+
+    fn answer_request(&self, channel: &mut Channel, request: Request) -> Result<(), LinkError> {
         match request {
             Request::Hello { .. } => answer(channel, Err(refused(BAD_REQUEST, "a connection carries one hello"))),
             Request::Have { repo, commits } => match self.repo(&repo) {
@@ -250,7 +303,116 @@ impl Agent {
             Request::Runs => answer(channel, Ok(self.list_runs())),
             Request::Lease { repo, holder } => self.lease(channel, &repo, &holder, false),
             Request::Release { repo, holder } => self.lease(channel, &repo, &holder, true),
+            Request::Upgrade { .. } => answer(
+                channel,
+                Err(refused(BAD_REQUEST, "an upgrade comes as the request of its connection")),
+            ),
         }
+    }
+
+    /// Stages the binary of the byte stream beside the binary of the LaunchAgent, checks it, installs it, and starts the
+    /// watchdog. Heartbeats go out while the binary runs its check. Answers whether the binary changed: the connection
+    /// then exits the agent.
+    fn upgrade(&self, channel: &mut Channel, size: u64, sha256: &str) -> Result<bool, LinkError> {
+        channel.set_read_deadline(PACK_READ_DEADLINE)?;
+        let checked = upgrade::check_launchd()
+            .and_then(|()| {
+                if size > MAX_BINARY || !is_sha256(sha256) {
+                    return Err(refused(
+                        BAD_REQUEST,
+                        format!("an upgrade names at most {MAX_BINARY} bytes and a SHA-256 of 64 lower-case hex digits, not {size} and {sha256:?}"),
+                    ));
+                }
+                upgrade::launchd_binary(&self.home)
+            })
+            .and_then(|target| {
+                if self.upgrading.swap(true, Ordering::SeqCst) {
+                    return Err(refused(UPGRADE_FAILED, "another upgrade of the agent goes on"));
+                }
+                Ok(target)
+            });
+        let target = match checked {
+            Ok(target) => target,
+            Err(refusal) => {
+                drain(channel)?;
+                return channel.send(&reply(&refusal)).map(|()| false);
+            }
+        };
+        let upgraded = self.receive_and_install(channel, target, size, sha256);
+        let upgraded = match upgraded {
+            Ok(Ok(upgraded)) => upgraded,
+            Ok(Err(refusal)) => {
+                self.upgrading.store(false, Ordering::SeqCst);
+                return channel.send(&reply(&refusal)).map(|()| false);
+            }
+            Err(error) => {
+                self.upgrading.store(false, Ordering::SeqCst);
+                return Err(error);
+            }
+        };
+        log(&format!(
+            "installed the binary {} of the version {}; the watchdog brings back {} when it does not listen",
+            upgraded.sha256, upgraded.version, upgraded.previous_sha256
+        ));
+        // The new binary is in place, so the agent exits even when the client is gone.
+        let answered = channel.send(&Reply::Upgraded {
+            previous_sha256: upgraded.previous_sha256,
+            sha256: upgraded.sha256,
+            version: upgraded.version,
+        });
+        if let Err(error) = answered {
+            log(&format!("cannot answer the upgrade: {error}"));
+        }
+        Ok(true)
+    }
+
+    /// Reads the byte stream into a staged file of `target`, and installs it. A refused binary is read to its end too,
+    /// so the client gets the refusal and not a broken connection.
+    fn receive_and_install(
+        &self,
+        channel: &mut Channel,
+        target: PathBuf,
+        size: u64,
+        sha256: &str,
+    ) -> Result<Result<upgrade::Upgraded, Refusal>, LinkError> {
+        let mut staging = match Staging::create(&target, size) {
+            Ok(staging) => staging,
+            Err(refusal) => {
+                drain(channel)?;
+                return Ok(Err(refusal));
+            }
+        };
+        channel.recv_stream(&mut staging)?;
+        let staged = match staging.finish().and_then(|staged| staged.check(size, sha256).map(|()| staged)) {
+            Ok(staged) => staged,
+            Err(refusal) => return Ok(Err(refusal)),
+        };
+        let (home, launchctl) = (self.home.clone(), self.launchctl.clone());
+        let wait = tuning::upgrade_drain() + tuning::upgrade_wait();
+        with_heartbeats(channel, &mut || {}, move || {
+            Install {
+                home: &home,
+                target: &target,
+                launchctl: &launchctl,
+                wait,
+            }
+            .run(staged)
+        })
+    }
+
+    /// Waits up to the drain time for the other requests, then exits, so that launchd starts the new binary. A run
+    /// goes on: its supervisor has a session of its own.
+    fn exit_after_upgrade(&self) -> ! {
+        let drain = tuning::upgrade_drain();
+        let started = Instant::now();
+        while self.busy.load(Ordering::SeqCst) > 0 && started.elapsed() < drain {
+            thread::sleep(DRAIN_EVERY);
+        }
+        log(&format!(
+            "exits after the upgrade, with {} requests still open, so that launchd starts the new binary",
+            self.busy.load(Ordering::SeqCst)
+        ));
+        std::process::exit(0)
     }
 
     /// The main repository `repo`, with `~/` expanded, when it is a git repository. A path that a check found stays
@@ -503,6 +665,22 @@ fn with_heartbeats<T: Send + 'static>(
             }
             Err(RecvTimeoutError::Disconnected) => return Err(LinkError::Protocol("the request failed inside the agent".to_owned())),
         }
+    }
+}
+
+/// One request that goes on, counted in [`Agent::busy`] until it drops.
+struct Busy<'a>(&'a AtomicUsize);
+
+impl<'a> Busy<'a> {
+    fn new(count: &'a AtomicUsize) -> Self {
+        count.fetch_add(1, Ordering::SeqCst);
+        Self(count)
+    }
+}
+
+impl Drop for Busy<'_> {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Ordering::SeqCst);
     }
 }
 

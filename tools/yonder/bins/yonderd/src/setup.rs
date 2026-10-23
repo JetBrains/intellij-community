@@ -141,23 +141,8 @@ fn start_launchd(home: &Home, setup: &Setup<'_>) -> Result<&'static str, Refusal
             .and_then(|()| write_private(&plist_file, plist.as_bytes()));
         written.map_err(|error| refused(AGENT_ERROR, format!("cannot write {}: {error}", plist_file.display())))?;
     }
-    // SAFETY: getuid has no preconditions and cannot fail.
-    let uid = unsafe { libc::getuid() };
-    let domain = format!("gui/{uid}");
-    let service = format!("{domain}/{LAUNCHD_LABEL}");
-    let launchctl = |args: &[&str]| -> Result<(), String> {
-        let output = child::run(Command::new(setup.launchctl).args(args), LAUNCHCTL, &child::never).map_err(|error| error.to_string())?;
-        if output.status.success() {
-            Ok(())
-        } else {
-            Err(format!(
-                "launchctl {} failed: {} ({})",
-                args.join(" "),
-                output.diagnostic(),
-                output.status
-            ))
-        }
-    };
+    let (domain, service) = service();
+    let launchctl = |args: &[&str]| launchctl(setup.launchctl, args);
     let plist_arg = plist_file.to_string_lossy();
     let loaded = || launchctl(&["print", &service]).is_ok();
     let step = LaunchdStep::of(loaded(), changed);
@@ -173,6 +158,30 @@ fn start_launchd(home: &Home, setup: &Setup<'_>) -> Result<&'static str, Refusal
         LaunchdStep::Bootstrap => launchctl(&["bootstrap", &domain, &plist_arg]).map(|()| "bootstrapped"),
     };
     started.map_err(|message| refused(LAUNCHD_FAILED, message))
+}
+
+/// The launchd domain of the user, `gui/<uid>`, and the service of the agent in it.
+pub(crate) fn service() -> (String, String) {
+    // SAFETY: getuid has no preconditions and cannot fail.
+    let uid = unsafe { libc::getuid() };
+    let domain = format!("gui/{uid}");
+    let service = format!("{domain}/{LAUNCHD_LABEL}");
+    (domain, service)
+}
+
+/// Runs `launchctl <args>` with the program `program` under the deadline of a launchctl call.
+pub(crate) fn launchctl(program: &Path, args: &[&str]) -> Result<(), String> {
+    let output = child::run(Command::new(program).args(args), LAUNCHCTL, &child::never).map_err(|error| error.to_string())?;
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(format!(
+            "launchctl {} failed: {} ({})",
+            args.join(" "),
+            output.diagnostic(),
+            output.status
+        ))
+    }
 }
 
 /// The `PATH` of the agent: the tool directories of the user and of Homebrew first, then `current`, then the system
@@ -234,6 +243,15 @@ pub(crate) fn plist_text(exe: &Path, port: u16, log: &Path, path: &str) -> Strin
 
 fn xml_escape(text: &str) -> String {
     text.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+}
+
+/// The binary that a plist of [`plist_text`] names: the first string of its program arguments.
+pub(crate) fn plist_program(plist: &str) -> Option<PathBuf> {
+    let (_, arguments) = plist.split_once("<key>ProgramArguments</key>")?;
+    let (_, rest) = arguments.split_once("<string>")?;
+    let (program, _) = rest.split_once("</string>")?;
+    let program = program.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&");
+    (!program.is_empty()).then(|| PathBuf::from(program))
 }
 
 #[cfg(test)]

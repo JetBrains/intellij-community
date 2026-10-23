@@ -6,12 +6,12 @@ use super::*;
 /// The agent of a temporary home, as `serve` makes it.
 fn agent(home: &Path) -> Agent {
     let identity = Identity::generate().expect("an identity");
-    Agent {
-        home: Home::new(home.to_path_buf()),
-        tls: ServerTls::new(&identity, home.join("clients")).expect("the TLS setup"),
-        exe: PathBuf::from("yonderd"),
-        repos: Mutex::default(),
-    }
+    Agent::new(
+        Home::new(home.to_path_buf()),
+        ServerTls::new(&identity, home.join("clients")).expect("the TLS setup"),
+        PathBuf::from("yonderd"),
+        PathBuf::from("launchctl"),
+    )
 }
 
 /// The agent checks a repository once: a path that a check found stays found while it is a directory, and a missing

@@ -4,6 +4,8 @@
 //! - `supervise <run dir>`: one run, in a session of its own, started by `serve`.
 //! - `setup`: adds a client to the allow list and starts `serve` under launchd.
 //! - `version`: the version and the protocol schema.
+//! - `upgrade <binary>`: installs a new binary over the one of the LaunchAgent and restarts the agent.
+//! - `watchdog <binary>`: restores the previous binary when the new one does not listen in time.
 //! - `dump-env <file>`: the last command of the login shell that `login_env` starts.
 
 mod bd;
@@ -27,6 +29,7 @@ mod supervise;
 #[cfg(test)]
 mod testing;
 mod tuning;
+mod upgrade;
 mod watch;
 
 use std::process::ExitCode;

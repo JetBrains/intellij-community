@@ -44,6 +44,8 @@ pub struct Host {
     latest: Option<Arc<Latest>>,
     /// The features of the agent from its last hello, see `yonder_link::proto::feature`.
     features: Vec<String>,
+    /// The SHA-256 of the agent binary from its last hello.
+    binary_sha256: Option<String>,
 }
 
 /// The latest connection of a [`Host`], which another thread can close, see [`Host::watched`].
@@ -104,6 +106,7 @@ impl Host {
             timing,
             latest: None,
             features: Vec::new(),
+            binary_sha256: None,
         })
     }
 
@@ -119,6 +122,11 @@ impl Host {
     /// features has none.
     pub fn features(&self) -> &[String] {
         &self.features
+    }
+
+    /// The SHA-256 of the agent binary of the last connection. An agent older than the upgrade names none.
+    pub fn binary_sha256(&self) -> Option<&str> {
+        self.binary_sha256.as_deref()
     }
 
     pub fn alias(&self) -> &str {
@@ -275,8 +283,10 @@ impl Host {
                 os,
                 arch,
                 features,
+                binary_sha256,
             }) if schema_version == SCHEMA_VERSION => {
                 self.features = features;
+                self.binary_sha256 = binary_sha256;
                 Ok((
                     channel,
                     AgentInfo {

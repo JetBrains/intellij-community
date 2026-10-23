@@ -36,6 +36,8 @@ fn the_plist_runs_serve_on_the_port_and_escapes_its_strings() {
     assert!(plist.contains("<key>KeepAlive</key>\n  <true/>"), "{plist}");
     assert!(plist.contains("<key>RunAtLoad</key>\n  <true/>"), "{plist}");
     assert!(!plist.contains("a&b"), "{plist}");
+    assert_eq!(plist_program(&plist), Some(PathBuf::from("/Users/a&b/.local/bin/yonderd")));
+    assert_eq!(plist_program("<plist><dict></dict></plist>"), None);
 }
 
 #[test]

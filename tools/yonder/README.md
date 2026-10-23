@@ -16,16 +16,25 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | Crate | Content | Bazel test target |
 |---|---|---|
 | `crates/yonder-link` | The identity files, the TLS 1.3 channel with pinned certificates, the frames, and the protocol. `API.md` lists the refusal codes. | `@community//tools/yonder/crates/yonder-link:yonder-link_test` |
-| `crates/yonder-client` | The client: the host files, the address choice, a run with its thin pack, its output and its fetch, and `prepare` over ssh. `bt --host` links it. `API.md` lists the refusal codes. | `@community//tools/yonder/crates/yonder-client:yonder-client_test` |
-| `bins/yonder` | The client CLI: `run`, `attach`, `cancel`, `runs`, `fetch`, `forget`, `lease`, `release` and `prepare`. `:yonder` in `BUILD.bazel` is its optimized binary. | `@community//tools/yonder/bins/yonder:yonder_test` |
-| `bins/yonderd` | The agent on a host: macOS and Linux. `serve` answers the requests, `supervise` runs one run in a warm lease, `setup` starts the agent under launchd. `API.md` lists the commands, the refusals, the environment of a run and the format of `.yonder.toml`. | `@community//tools/yonder/bins/yonderd:yonderd_test`, `:yonderd_cli_test` |
+| `crates/yonder-client` | The client: the host files, the address choice, a run with its thin pack, its output and its fetch, `prepare` over ssh, and `upgrade` over the link. `bt --host` links it. `API.md` lists the refusal codes. | `@community//tools/yonder/crates/yonder-client:yonder-client_test` |
+| `bins/yonder` | The client CLI: `run`, `attach`, `cancel`, `runs`, `fetch`, `forget`, `lease`, `release`, `prepare` and `upgrade`. `:yonder` in `BUILD.bazel` is its optimized binary. | `@community//tools/yonder/bins/yonder:yonder_test` |
+| `bins/yonderd` | The agent on a host: macOS and Linux. `serve` answers the requests, `supervise` runs one run in a warm lease, `setup` starts the agent under launchd, `upgrade` and `watchdog` replace its binary. `API.md` lists the commands, the refusals, the environment of a run and the format of `.yonder.toml`. | `@community//tools/yonder/bins/yonderd:yonderd_test`, `:yonderd_cli_test` |
 
 ## The host
 
-A host has the agent (`yonder prepare <alias>`), Branch Deck (`bd` on the login `PATH`), a clone of each repository
+A host has the agent (`yonder prepare <alias>` installs it over ssh), Branch Deck (`bd` on the login `PATH`), a clone of each repository
 under the directory of the repository of its host file, such as `~/projects/branch-deck` beside `~/projects/idea-1`, and
 the tools that the commands of those repositories need on the login `PATH` of its user, such as pnpm. The agent gives
 each run the login environment of the user, so a tool that a terminal of the host finds, a run finds too.
+
+## The upgrade
+
+`yonder upgrade <alias>` updates the agent of a macOS host over the link, without ssh, so a background session can do
+it. In a checkout of the monorepo it builds `@community//tools/yonder:yonderd` with Bazel, as `prepare` does, or it
+sends `--agent <path>`. The agent checks the binary, keeps the old one as `<binary>.previous`, and exits, so that
+launchd starts the new one. A watchdog there brings back the old binary when the new one does not listen in time. A run
+goes on. An agent that knows no upgrade request gets a run that builds the agent from the working tree on the host and
+installs it once. `bins/yonderd/API.md` has the steps, and `crates/yonder-client/API.md` the refusals.
 
 ## The warm lease
 

@@ -10,6 +10,8 @@ The agent of yonder on a host: macOS and Linux. `crates/yonder-link/API.md` list
 | `supervise <run dir> [--lock-fd <descriptor>]` | Nothing. `serve` starts it for each `Start` with the flock of the run, and it writes `exit.json` in the run directory. |
 | `setup --client <fingerprint> --name <name> [--port 7741]` | One JSON line `{"fingerprint": "<64 hex>", "port": 7741, "launchd": "bootstrapped" \| "restarted" \| "none"}`. |
 | `version` | One JSON line `{"version": "<cargo version>", "schema_version": 2, "features": [...]}`. |
+| `upgrade <binary> [--launchctl launchctl]` | One JSON line `{"previous_sha256": "<64 hex>", "sha256": "<64 hex>", "version": "<cargo version>"}`. It installs `binary` as the request does, then runs `launchctl kickstart -k gui/<uid>/com.jetbrains.yonderd`. A bootstrap run of `yonder upgrade` starts it. |
+| `watchdog <binary> --sha256 <64 hex> --wait-ms <ms> [--launchctl launchctl]` | Lines in the log of the agent. An upgrade starts it, see [The upgrade](#the-upgrade). |
 | `dump-env <file>` | Nothing. The login shell runs it to write its environment into the file, see [The environment of a run](#the-environment-of-a-run). |
 
 A command that refuses prints one JSON line `{"refused": {"code": "<code>", "message": "<text>"}}` on stderr and
@@ -21,6 +23,7 @@ exits with 1. A usage error exits with 2.
 | No `HOME` | `agent_error` |
 | An identity, an allow list, a plist, a lease file or a port that the agent cannot read or write | `agent_error` |
 | A failed `launchctl print`, `bootstrap`, `bootout` or `kickstart` | `launchd_failed` |
+| An `upgrade` or a `watchdog` that refuses, see [The upgrade](#the-upgrade) | `bad_binary`, `upgrade_failed` |
 
 `setup` moves each lease file of `~/.cache/bt-remote/leases/` into `~/.cache/yonderd/leases/` when the agent has no
 file of that holder.
@@ -45,6 +48,9 @@ file of that holder.
 | A `.yonder.toml` of the commit with an unknown key or a value of the wrong shape | `bad_config`, as the end of the run, before the command |
 | A prepare step of `.yonder.toml` that exits with a code other than 0 | `prepare_failed`, as the end of the run, before the command |
 | A port variable of `.yonder.toml` without a free port among its 100 | `agent_error`, as the end of the run, before the command |
+| An upgrade of more than `MAX_BINARY` bytes, or a SHA-256 that is not 64 lower-case hex digits | `bad_request` |
+| An upgrade whose binary has another size or SHA-256, or does not answer `version` as an agent of this schema with the feature `upgrade` | `bad_binary` |
+| An upgrade on Linux, without a LaunchAgent, during another upgrade, or with a failed file call | `upgrade_failed` |
 
 - Each git, bd and launchctl child of the agent runs in a process group of its own. A deadline or a cancel kills the
   whole group, so a stopped `bd lease get` leaves no clone behind.
@@ -63,7 +69,8 @@ file of that holder.
 - A follow of an ended run sends `Reply::Phases` right before its `Reply::Exit` or its `Reply::Refused`. `Runs` shows
   the phases that have ended so far. The phases are `lock`, `lease`, `pack_wait`, `checkout`, `prepare`, `command` and
   `stage`, in this order. A run that ends early has only the phases up to its last step.
-- The hello lists the features of the agent: `config`, `login_env`, `nice` and `changes` (`proto::feature`). An agent
+- The hello lists the features of the agent: `config`, `login_env`, `nice` and `changes`, and `upgrade` on macOS
+  (`proto::feature`). It names the SHA-256 of the binary of the agent too. An agent
   ignores a field of a start that it does not know, so a client checks the feature first.
 - Right before the command the run writes one line: `yonder: running in <slot> (slot <n>): load <l> on <c> cores, nice
   <n>, <limit> open files, the login environment of <shell> from <age> ago`.
@@ -163,10 +170,32 @@ the mode that it had in the slot. A copy across two file systems gives each stag
 executable. A run directory adds `outputs/` and `outputs.json` for the outputs and `changes.patch` for the changes. A
 lease file adds a `prepared.<key>=<fingerprint>` line for each prepare step that succeeded in its slot.
 
-## Upgrades
+## The upgrade
 
-On Linux, a host needs a restart of `serve` after an upgrade of the binary. `serve` starts each supervisor from its own
-executable, and Linux names a replaced executable `(deleted)`.
+`Request::Upgrade` and `yonderd upgrade <binary>` replace the binary that the first program argument of the LaunchAgent
+names, usually `~/.local/bin/yonderd`:
+
+1. The new binary goes to a staged file `.yonderd.upgrade-<pid>-<n>` beside it, with the mode 0700. The request checks
+   its size and its SHA-256.
+2. `<staged> version` must answer within 10 s with the schema of this agent and the feature `upgrade`, so a binary of
+   another platform, a broken one, or one that no later upgrade could replace never goes in.
+3. The current binary stays as `<binary>.previous`, a hard link or a copy. The staged file takes the name of the binary.
+4. `~/.cache/yonderd/listening.json` goes, and `yonderd watchdog` starts in a session of its own, with its lines in
+   `~/Library/Logs/yonderd.log`. It runs from `<binary>.previous` when that binary has the feature `upgrade`, else from
+   the new binary. A watchdog that cannot start undoes the swap.
+5. The request answers `Reply::Upgraded`, waits up to `UPGRADE_DRAIN_SECONDS` for the requests that go on, less the
+   follows, and exits. launchd starts the new binary, because the LaunchAgent has `KeepAlive`. The command runs
+   `launchctl kickstart -k` instead.
+
+Each `serve` writes `listening.json` once it listens: `{"sha256", "pid", "version"}` of its binary. The watchdog waits
+for the file of a live process of the new binary, `UPGRADE_DRAIN_SECONDS` plus `UPGRADE_WATCHDOG_SECONDS` for a request,
+`UPGRADE_WATCHDOG_SECONDS` for the command. Else it renames `<binary>.previous` back and runs `launchctl kickstart -k
+gui/<uid>/com.jetbrains.yonderd`. A run goes on through the restart, because its supervisor has a session of its own
+and the LaunchAgent has `AbandonProcessGroup`. Its client follows again from the new `serve`.
+
+On Linux the agent lists no feature `upgrade` and refuses the request. A host there needs `yonder prepare` and a restart
+of `serve` after a new binary. `serve` starts each supervisor from its own executable, and Linux names a replaced
+executable `(deleted)`.
 
 ## The test durations
 
@@ -180,6 +209,8 @@ off. A process test shortens these durations through the environment of `serve`,
 | `YONDERD_TEST_HEARTBEAT_MS` | between two heartbeats | `HEARTBEAT_SECONDS` |
 | `YONDERD_TEST_PACK_WAIT_MS` | the wait of a run for its pack | `PACK_WAIT_SECONDS` |
 | `YONDERD_TEST_PACK_STALL_MS` | the wait of a run for the next chunk of its pack | `PACK_STALL_SECONDS` |
+| `YONDERD_TEST_UPGRADE_DRAIN_MS` | the wait of an upgraded `serve` for its other requests | `UPGRADE_DRAIN_SECONDS` |
+| `YONDERD_TEST_UPGRADE_WAIT_MS` | the wait of the watchdog for the new binary, after the drain | `UPGRADE_WATCHDOG_SECONDS` |
 
 `YONDERD_TEST_FOLLOW_HOLD` names a file. While the file exists, each follow waits before its next read of the run
 files. A test holds the follow thread with it, to check that the heartbeats go on.

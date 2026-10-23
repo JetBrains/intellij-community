@@ -14,6 +14,7 @@ use std::net::{SocketAddr, TcpStream};
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
+use std::rc::Rc;
 use std::thread;
 use std::time::{Duration, Instant, SystemTime};
 
@@ -118,16 +119,18 @@ mod testing;
 
 use testing::git;
 
-/// A temporary home with a main repository, the fake bd, and the identity of a client in the allow list.
+/// A temporary home with a main repository, the fake bd, and the identity of a client in the allow list. A clone shares
+/// the directory, so a second `serve` of the same home can start.
+#[derive(Clone)]
 struct World {
-    dir: tempfile::TempDir,
+    dir: Rc<tempfile::TempDir>,
     client: Identity,
     commit: String,
 }
 
 impl World {
     fn new() -> Self {
-        let dir = tempfile::tempdir().expect("a temporary directory");
+        let dir = Rc::new(tempfile::tempdir().expect("a temporary directory"));
         let world = Self {
             dir,
             client: Identity::generate().expect("the client identity"),
@@ -184,7 +187,12 @@ impl World {
 
     /// The agent binary with the environment of the world only.
     fn command(&self) -> Command {
-        let mut command = Command::new(agent_binary());
+        self.command_of(&agent_binary())
+    }
+
+    /// The agent binary `program` with the environment of the world only.
+    fn command_of(&self, program: &Path) -> Command {
+        let mut command = Command::new(program);
         command
             .env_clear()
             .env("HOME", self.home())
@@ -217,13 +225,19 @@ impl World {
 
     /// Starts `serve` on a loopback port with more environment, such as a test duration of `tuning.rs`.
     fn serve_with(self, env: &[(&str, &str)]) -> Agent {
+        self.serve_program(&agent_binary(), &[], env)
+    }
+
+    /// Starts `serve` of the binary `program` with more arguments and more environment on a loopback port.
+    fn serve_program(self, program: &Path, args: &[&str], env: &[(&str, &str)]) -> Agent {
         let log = fs::File::create(self.dir.path().join("serve.log")).expect("the serve log");
-        let mut command = self.command();
+        let mut command = self.command_of(program);
         for (name, value) in env {
             command.env(name, value);
         }
         let mut child = command
             .args(["serve", "--bind", "127.0.0.1", "--port", "0"])
+            .args(args)
             .stdin(Stdio::null())
             .stdout(Stdio::piped())
             .stderr(log)
@@ -440,13 +454,14 @@ fn hello_answers_the_schema_and_another_schema_or_request_is_refused() {
     let mut channel = agent.connect_as(&agent.world.client).expect("connected");
     channel.send(&Request::hello("test")).expect("sent");
     let hello = channel.recv::<Reply>().expect("the reply");
-    assert_eq!(hello, Reply::hello(env!("CARGO_PKG_VERSION")));
+    let sha256 = yonder_link::digest::sha256_file(&agent_binary()).expect("the SHA-256 of the agent");
+    assert_eq!(hello, Reply::hello(env!("CARGO_PKG_VERSION"), Some(sha256)));
     assert!(
         matches!(&hello, Reply::Hello { schema_version, os, .. } if *schema_version == SCHEMA_VERSION && os == std::env::consts::OS),
         "{hello:?}"
     );
     assert!(
-        matches!(&hello, Reply::Hello { features, .. } if *features == ["config", "login_env", "nice", "changes"]),
+        matches!(&hello, Reply::Hello { features, .. } if *features == yonder_link::proto::features()),
         "{hello:?}"
     );
 
@@ -993,7 +1008,7 @@ fn version_prints_the_version_and_the_schema() {
     let line: serde_json::Value = serde_json::from_slice(&output.stdout).expect("json");
     assert_eq!(line["schema_version"], SCHEMA_VERSION);
     assert_eq!(line["version"], env!("CARGO_PKG_VERSION"));
-    assert_eq!(line["features"], serde_json::json!(["config", "login_env", "nice", "changes"]));
+    assert_eq!(line["features"], serde_json::json!(yonder_link::proto::features()));
 }
 
 #[test]
@@ -1879,4 +1894,182 @@ fn the_changes_of_the_command_come_back_as_a_patch_without_the_files_it_found() 
     });
     assert_eq!(agent.follow("23-3", 0).end, Reply::Exit { code: 0 });
     assert_eq!(fetch_files(&agent, "23-3"), Vec::new());
+}
+
+/// Copies the agent binary to the binary of a LaunchAgent of the world, and puts the fake launchctl beside it. Answers
+/// the binary of the LaunchAgent.
+fn launch_agent(world: &World) -> PathBuf {
+    let target = world.dir.path().join("agent/yonderd");
+    fs::create_dir_all(target.parent().expect("a parent")).expect("the agent directory");
+    fs::copy(agent_binary(), &target).expect("the binary of the LaunchAgent");
+    let plist = world.home().join("Library/LaunchAgents/com.jetbrains.yonderd.plist");
+    fs::create_dir_all(plist.parent().expect("a parent")).expect("the LaunchAgents directory");
+    let text = format!(
+        "<plist version=\"1.0\">\n<dict>\n  <key>ProgramArguments</key>\n  <array>\n    <string>{}</string>\n    <string>serve</string>\n  </array>\n</dict>\n</plist>\n",
+        target.display()
+    );
+    fs::write(&plist, text).expect("the plist");
+    write_script(&world.launchctl(), FAKE_LAUNCHCTL);
+    fs::create_dir_all(world.launchctl_dir()).expect("the launchctl directory");
+    target
+}
+
+impl World {
+    fn launchctl(&self) -> PathBuf {
+        self.bin().join("launchctl")
+    }
+
+    fn launchctl_dir(&self) -> PathBuf {
+        self.dir.path().join("launchctl")
+    }
+
+    fn launchctl_calls(&self) -> String {
+        fs::read_to_string(self.launchctl_dir().join("calls")).unwrap_or_default()
+    }
+
+    /// The log of the agent under launchd, which the watchdog writes.
+    fn agent_log(&self) -> String {
+        fs::read_to_string(self.home().join("Library/Logs/yonderd.log")).unwrap_or_default()
+    }
+
+    /// Starts `serve` of the binary of the LaunchAgent with no drain and a watchdog that waits `wait_ms`.
+    fn serve_upgradable(self, target: &Path, wait_ms: &str) -> Agent {
+        let (launchctl, launchctl_dir) = (self.launchctl(), self.launchctl_dir());
+        let launchctl_dir = launchctl_dir.to_string_lossy().into_owned();
+        let env = [
+            ("YONDERD_TEST_UPGRADE_DRAIN_MS", "0"),
+            ("YONDERD_TEST_UPGRADE_WAIT_MS", wait_ms),
+            ("FAKE_LAUNCHCTL_DIR", launchctl_dir.as_str()),
+        ];
+        self.serve_program(target, &["--launchctl", &launchctl.to_string_lossy()], &env)
+    }
+}
+
+impl Agent {
+    /// Sends `binary` as an upgrade of `size` bytes with `sha256`, and answers the last reply.
+    fn upgrade(&self, binary: &[u8], size: u64, sha256: &str) -> Reply {
+        let mut channel = self.ask(&Request::Upgrade {
+            size,
+            sha256: sha256.to_owned(),
+        });
+        channel.send_stream(&mut &binary[..], &mut |_| {}).expect("the binary");
+        loop {
+            match channel.recv().expect("the reply") {
+                Reply::Heartbeat { .. } => {}
+                reply => return reply,
+            }
+        }
+    }
+
+    /// Waits up to 30 s for the end of `serve`.
+    fn wait_for_exit(&mut self) -> std::process::ExitStatus {
+        let started = Instant::now();
+        loop {
+            if let Some(status) = self.child.try_wait().expect("the status of serve") {
+                return status;
+            }
+            assert!(started.elapsed() < Duration::from_secs(30), "serve did not exit in 30 s");
+            thread::sleep(Duration::from_millis(50));
+        }
+    }
+}
+
+fn inode(path: &Path) -> u64 {
+    std::os::unix::fs::MetadataExt::ino(&fs::metadata(path).expect("the metadata"))
+}
+
+#[test]
+#[cfg_attr(not(target_os = "macos"), ignore = "only an agent under launchd upgrades itself")]
+fn an_upgrade_swaps_the_binary_and_ends_serve_and_a_run_and_the_watchdog_see_the_next_serve() {
+    let world = World::new();
+    let target = launch_agent(&world);
+    let mut agent = world.clone().serve_upgradable(&target, "30000");
+    let binary = fs::read(agent_binary()).expect("the agent binary");
+    let sha256 = yonder_link::digest::sha256_file(&target).expect("the SHA-256");
+    let hello = agent.ask(&Request::Runs).recv::<Reply>().expect("the runs");
+    assert!(matches!(hello, Reply::Runs { .. }), "{hello:?}");
+
+    let refused = agent.upgrade(&binary, binary.len() as u64, &"0".repeat(64));
+    assert!(
+        matches!(&refused, Reply::Refused { code, .. } if code == "bad_binary"),
+        "{refused:?}"
+    );
+    let refused = agent.upgrade(b"short", 5, &sha256);
+    assert!(
+        matches!(&refused, Reply::Refused { code, .. } if code == "bad_binary"),
+        "{refused:?}"
+    );
+    let names = |dir: &Path| -> Vec<String> {
+        let mut names: Vec<String> = fs::read_dir(dir)
+            .expect("the directory")
+            .map(|entry| entry.expect("an entry").file_name().to_string_lossy().into_owned())
+            .collect();
+        names.sort();
+        names
+    };
+    let agent_dir = target.parent().expect("a parent").to_path_buf();
+    assert_eq!(names(&agent_dir), ["yonderd"], "a refused binary leaves no file");
+
+    let gate = world.dir.path().join("gate");
+    agent.start(world.spec("1-upgrade", HOLDER, &format!("echo before; {}; echo after", wait_for(&gate))));
+    agent.follow_until("1-upgrade", 0, "before");
+
+    let before = inode(&target);
+    let upgraded = agent.upgrade(&binary, binary.len() as u64, &sha256);
+    assert_eq!(
+        upgraded,
+        Reply::Upgraded {
+            previous_sha256: sha256.clone(),
+            sha256: sha256.clone(),
+            version: env!("CARGO_PKG_VERSION").to_owned(),
+        }
+    );
+    assert!(agent.wait_for_exit().success(), "{}", agent.dump("1-upgrade"));
+    assert_eq!(names(&agent_dir), ["yonderd", "yonderd.previous"]);
+    assert_eq!(inode(&previous_path(&target)), before);
+    assert_ne!(inode(&target), before);
+    assert!(!world.home().join(".cache/yonderd/listening.json").exists());
+
+    // launchd would start the binary again.
+    let renewed = world.clone().serve_upgradable(&target, "30000");
+    let short = &sha256[..12];
+    eventually("the watchdog sees the new serve", || {
+        world
+            .agent_log()
+            .contains(&format!("watchdog: the binary {short} listens with the pid"))
+    });
+    fs::write(&gate, "").expect("the gate");
+    let followed = renewed.follow("1-upgrade", 0);
+    assert_eq!(followed.end, Reply::Exit { code: 0 }, "{followed:?}");
+    assert_eq!(followed.of(Stream::Stdout), ["before", "after"]);
+    assert_eq!(world.launchctl_calls(), "");
+}
+
+#[test]
+#[cfg_attr(not(target_os = "macos"), ignore = "only an agent under launchd upgrades itself")]
+fn the_watchdog_restores_the_previous_binary_and_restarts_the_agent_when_no_serve_of_the_new_one_listens() {
+    let world = World::new();
+    let target = launch_agent(&world);
+    let mut agent = world.clone().serve_upgradable(&target, "500");
+    let binary = fs::read(agent_binary()).expect("the agent binary");
+    let sha256 = yonder_link::digest::sha256_file(&target).expect("the SHA-256");
+    let before = inode(&target);
+    let upgraded = agent.upgrade(&binary, binary.len() as u64, &sha256);
+    assert!(matches!(upgraded, Reply::Upgraded { .. }), "{upgraded:?}");
+    assert!(agent.wait_for_exit().success());
+
+    eventually("the watchdog restarts the agent", || world.launchctl_calls().contains("kickstart"));
+    let calls = world.launchctl_calls();
+    assert!(
+        calls.starts_with("kickstart -k gui/") && calls.ends_with("/com.jetbrains.yonderd\n"),
+        "{calls}"
+    );
+    assert_eq!(inode(&target), before, "the previous binary is back");
+    assert!(!previous_path(&target).exists());
+    let log = world.agent_log();
+    assert!(log.contains("so the previous binary comes back"), "{log}");
+}
+
+fn previous_path(target: &Path) -> PathBuf {
+    PathBuf::from(format!("{}.previous", target.display()))
 }

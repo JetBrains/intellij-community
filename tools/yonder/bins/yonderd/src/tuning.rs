@@ -4,7 +4,7 @@
 use std::path::PathBuf;
 use std::time::Duration;
 
-use yonder_link::proto::{HEARTBEAT_SECONDS, PACK_STALL_SECONDS, PACK_WAIT_SECONDS};
+use yonder_link::proto::{HEARTBEAT_SECONDS, PACK_STALL_SECONDS, PACK_WAIT_SECONDS, UPGRADE_DRAIN_SECONDS, UPGRADE_WATCHDOG_SECONDS};
 
 /// How long an interrupted command group has before SIGKILL: `YONDERD_TEST_GRACE_MS`, else 120 s.
 pub(crate) fn grace() -> Duration {
@@ -30,6 +30,18 @@ pub(crate) fn pack_wait() -> Duration {
 /// How long a run waits for the next chunk of its pack: `YONDERD_TEST_PACK_STALL_MS`, else [`PACK_STALL_SECONDS`].
 pub(crate) fn pack_stall() -> Duration {
     from_env("YONDERD_TEST_PACK_STALL_MS", Duration::from_secs(PACK_STALL_SECONDS))
+}
+
+/// How long an upgraded `serve` waits for its other requests before it exits: `YONDERD_TEST_UPGRADE_DRAIN_MS`, else
+/// [`UPGRADE_DRAIN_SECONDS`].
+pub(crate) fn upgrade_drain() -> Duration {
+    from_env("YONDERD_TEST_UPGRADE_DRAIN_MS", Duration::from_secs(UPGRADE_DRAIN_SECONDS))
+}
+
+/// How long the watchdog of an upgrade waits for the new binary to listen, after the drain:
+/// `YONDERD_TEST_UPGRADE_WAIT_MS`, else [`UPGRADE_WATCHDOG_SECONDS`].
+pub(crate) fn upgrade_wait() -> Duration {
+    from_env("YONDERD_TEST_UPGRADE_WAIT_MS", Duration::from_secs(UPGRADE_WATCHDOG_SECONDS))
 }
 
 /// A file that holds a follow before each read of the run files while it exists: `YONDERD_TEST_FOLLOW_HOLD`. A test

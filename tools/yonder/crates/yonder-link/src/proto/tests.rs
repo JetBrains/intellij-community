@@ -138,3 +138,47 @@ fn a_hello_without_features_and_a_file_without_a_kind_parse_as_an_older_agent_se
         }
     ));
 }
+
+#[test]
+fn a_hello_of_an_older_agent_has_no_binary_and_a_new_hello_names_it() {
+    let old = r#"{"reply":"hello","schema_version":2,"agent_version":"0.1.0","os":"macos","arch":"aarch64","features":["config"]}"#;
+    let hello: Reply = serde_json::from_str(old).expect("a hello of an agent before the upgrade");
+    assert!(
+        matches!(&hello, Reply::Hello { binary_sha256: None, features, .. } if *features == ["config"]),
+        "{hello:?}"
+    );
+    assert_eq!(serde_json::to_string(&hello).expect("json"), old);
+
+    let new = Reply::hello("0.1.0", Some("ab".repeat(32)));
+    let json = serde_json::to_string(&new).expect("json");
+    assert!(json.ends_with(&format!(r#""binary_sha256":"{}"}}"#, "ab".repeat(32))), "{json}");
+    assert_eq!(serde_json::from_str::<Reply>(&json).expect("parsed"), new);
+    let Reply::Hello { features, .. } = new else {
+        panic!("not a hello");
+    };
+    assert_eq!(
+        features.contains(&feature::UPGRADE.to_owned()),
+        cfg!(target_os = "macos"),
+        "{features:?}"
+    );
+}
+
+#[test]
+fn an_upgrade_and_its_reply_have_a_tagged_json_shape() {
+    let request = Request::Upgrade {
+        size: 9,
+        sha256: "cd".repeat(32),
+    };
+    let json = serde_json::to_string(&request).expect("json");
+    assert_eq!(json, format!(r#"{{"request":"upgrade","size":9,"sha256":"{}"}}"#, "cd".repeat(32)));
+    assert_eq!(serde_json::from_str::<Request>(&json).expect("parsed"), request);
+
+    let reply = Reply::Upgraded {
+        previous_sha256: "ab".repeat(32),
+        sha256: "cd".repeat(32),
+        version: "0.1.0".to_owned(),
+    };
+    let json = serde_json::to_string(&reply).expect("json");
+    assert!(json.starts_with(r#"{"reply":"upgraded","previous_sha256":"#), "{json}");
+    assert_eq!(serde_json::from_str::<Reply>(&json).expect("parsed"), reply);
+}

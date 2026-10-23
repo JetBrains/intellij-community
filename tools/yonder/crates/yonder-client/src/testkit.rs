@@ -25,6 +25,7 @@ pub(crate) const FAST: Timing = Timing {
     max_backoff: Duration::from_millis(50),
     agent_start: Duration::from_secs(1),
     keepalive: Duration::from_millis(50),
+    upgrade: Duration::from_millis(500),
 };
 
 pub(crate) const ALIAS: &str = "studio";
@@ -121,11 +122,12 @@ pub(crate) struct FakeAgent {
 
 impl FakeAgent {
     /// An agent that accepts `client`, speaks `schema`, has the features `features` (none for an agent older than the
-    /// features), and answers each request with `script`.
+    /// features), names the binary of `binary` in its hello, and answers each request with `script`.
     pub(crate) fn start_with(
         client: &Identity,
         schema: u32,
         features: &[&str],
+        binary: Arc<Mutex<Option<String>>>,
         script: impl Fn(&Request, &mut Channel) + Send + Sync + 'static,
     ) -> Self {
         let features: Vec<String> = features.iter().map(|feature| (*feature).to_owned()).collect();
@@ -151,8 +153,8 @@ impl FakeAgent {
                     }
                     let Ok(socket) = socket else { continue };
                     let (tls, requests, script) = (tls.clone(), Arc::clone(&requests), Arc::clone(&script));
-                    let features = features.clone();
-                    thread::spawn(move || serve(socket, &tls, (schema, features), &requests, &*script));
+                    let (features, binary) = (features.clone(), Arc::clone(&binary));
+                    thread::spawn(move || serve(socket, &tls, (schema, features, &binary), &requests, &*script));
                 }
             });
         }
@@ -184,7 +186,13 @@ impl Drop for FakeAgent {
     }
 }
 
-fn serve(socket: TcpStream, tls: &ServerTls, (schema, features): (u32, Vec<String>), requests: &Mutex<Vec<Request>>, script: &Script) {
+fn serve(
+    socket: TcpStream,
+    tls: &ServerTls,
+    (schema, features, binary): (u32, Vec<String>, &Mutex<Option<String>>),
+    requests: &Mutex<Vec<Request>>,
+    script: &Script,
+) {
     let Ok(mut channel) = Channel::accept(socket, tls, Duration::from_secs(5)) else {
         return;
     };
@@ -197,6 +205,7 @@ fn serve(socket: TcpStream, tls: &ServerTls, (schema, features): (u32, Vec<Strin
         os: "macos".to_owned(),
         arch: "aarch64".to_owned(),
         features,
+        binary_sha256: binary.lock().unwrap_or_else(PoisonError::into_inner).clone(),
     };
     if channel.send(&hello).is_err() || schema != SCHEMA_VERSION {
         return;
@@ -222,19 +231,34 @@ impl Setup {
     }
 
     pub(crate) fn with_schema(schema: u32, script: impl Fn(&Request, &mut Channel) + Send + Sync + 'static) -> Self {
-        Self::with_agent(schema, &FEATURES, script)
+        Self::with_agent(schema, &FEATURES, Arc::default(), script)
     }
 
     /// A setup whose agent has only `features`: none for an agent older than the features.
     pub(crate) fn with_features(features: &[&str], script: impl Fn(&Request, &mut Channel) + Send + Sync + 'static) -> Self {
-        Self::with_agent(SCHEMA_VERSION, features, script)
+        Self::with_agent(SCHEMA_VERSION, features, Arc::default(), script)
     }
 
-    fn with_agent(schema: u32, features: &[&str], script: impl Fn(&Request, &mut Channel) + Send + Sync + 'static) -> Self {
+    /// A setup whose agent has only `features`, and names the binary of `binary` in each hello. A script of an upgrade
+    /// changes it.
+    pub(crate) fn with_binary(
+        features: &[&str],
+        binary: Arc<Mutex<Option<String>>>,
+        script: impl Fn(&Request, &mut Channel) + Send + Sync + 'static,
+    ) -> Self {
+        Self::with_agent(SCHEMA_VERSION, features, binary, script)
+    }
+
+    fn with_agent(
+        schema: u32,
+        features: &[&str],
+        binary: Arc<Mutex<Option<String>>>,
+        script: impl Fn(&Request, &mut Channel) + Send + Sync + 'static,
+    ) -> Self {
         let dir = tempfile::tempdir().expect("a temporary directory");
         let config = Config::new(dir.path().join("config"));
         let client = config.identity().expect("the client identity");
-        let agent = FakeAgent::start_with(&client, schema, features, script);
+        let agent = FakeAgent::start_with(&client, schema, features, binary, script);
         config.write_host(&host_file(&agent, vec![agent.address])).expect("the host file");
         Self { dir, config, agent }
     }

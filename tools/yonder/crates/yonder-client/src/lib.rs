@@ -7,7 +7,8 @@
 //!   outputs and the changes that come back, and the requests of one reply.
 //! - [`phases_line`]: the durations of the steps of a run.
 //! - [`prepare`]: makes a host ready over ssh.
-//! - [`Client::build_agent`]: builds the agent with Bazel in a checkout of the monorepo, for `prepare`.
+//! - [`upgrade`]: updates the agent of a host over the link, without ssh.
+//! - [`Client::build_agent`]: builds the agent with Bazel in a checkout of the monorepo, for `prepare` and `upgrade`.
 //! - [`interrupt`]: Ctrl+C of the person at the terminal.
 //!
 //! Each failure is a [`Refusal`] with a stable code of [`code`], or the code of the agent. `API.md` lists them.
@@ -26,11 +27,12 @@ pub mod process;
 pub mod run;
 #[cfg(test)]
 mod testkit;
+pub mod upgrade;
 
 use std::path::Path;
 use std::time::Duration;
 
-use yonder_link::proto::HEARTBEAT_SECONDS;
+use yonder_link::proto::{HEARTBEAT_SECONDS, UPGRADE_DRAIN_SECONDS, UPGRADE_WATCHDOG_SECONDS};
 
 pub use agent::{AGENT_BUILD_QUIET, AGENT_TARGET, agent_label, no_monorepo};
 pub use config::{Config, HostFile};
@@ -39,6 +41,7 @@ pub use phases::{duration_text, phases_line, phases_short};
 pub use prepare::{PrepareRequest, Prepared};
 pub use process::{Call, Limit, OsProcesses, Processes, Ran, Stop, Stopped, never};
 pub use run::{Followed, Leased, RunOptions, RunOutcome, RunRequest};
+pub use upgrade::{UpgradeRequest, UpgradeWay, Upgraded};
 pub use yonder_link::DEFAULT_PORT;
 pub use yonder_link::proto::{Phase, RunInfo};
 
@@ -107,6 +110,8 @@ pub mod code {
     pub const OLD_AGENT: &str = "old_agent";
     /// The changes of the command did not apply to the working tree. The patch stays in a file.
     pub const APPLY_FAILED: &str = "apply_failed";
+    /// The new agent of an upgrade did not listen in time, and the watchdog brought back the previous agent.
+    pub const ROLLED_BACK: &str = "rolled_back";
 }
 
 pub(crate) fn refused(code: &'static str, message: impl Into<String>) -> Refusal {
@@ -143,6 +148,9 @@ pub(crate) struct Timing {
     pub(crate) agent_start: Duration,
     /// How often the connection of a pack gets an empty chunk while git builds the pack.
     pub(crate) keepalive: Duration,
+    /// How long `upgrade` waits for the hello of the new agent: the drain of the old agent, the wait of the watchdog,
+    /// and 30 s for launchd.
+    pub(crate) upgrade: Duration,
 }
 
 impl Timing {
@@ -155,6 +163,7 @@ impl Timing {
         max_backoff: Duration::from_secs(30),
         agent_start: Duration::from_secs(60),
         keepalive: Duration::from_secs(HEARTBEAT_SECONDS),
+        upgrade: Duration::from_secs(UPGRADE_DRAIN_SECONDS + UPGRADE_WATCHDOG_SECONDS + 30),
     };
 }
 

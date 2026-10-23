@@ -3,7 +3,7 @@
 The client of yonder, for `yonder` and `bt --host`. `Client` holds the configuration directory, the seam of the local
 git and ssh calls (`Processes`), the sink of the stderr lines, the sink of the stdout lines of a run
 (`Client::with_stdout`; without it they come in `RunOutcome::stdout`), and the Ctrl+C question. Each operation opens a
-new connection per request: `run`, `run_with`, `attach`, `cancel`, `runs`, `lease`, `release`, `hello` and `prepare`.
+new connection per request: `run`, `run_with`, `attach`, `cancel`, `runs`, `lease`, `release`, `hello`, `prepare` and `upgrade`.
 
 ## The options of a run
 
@@ -75,7 +75,8 @@ these:
 | `fetch_failed` | Fetch did not copy every staged file. The run stays on the host for `yonder fetch` and `yonder forget`. |
 | `git_failed` | A local git call failed or ran past its deadline. |
 | `ssh_failed` | An ssh call of `prepare` failed or ran past its deadline of 30 s (120 s for the copy). |
-| `agent_failed` | The agent binary cannot be read, its Bazel build failed or wrote nothing for 30 min, `cquery` named no `yonderd` file, `yonderd setup` failed on the host, or it printed no setup line. |
+| `agent_failed` | The agent binary cannot be read, its Bazel build failed or wrote nothing for 30 min, `cquery` named no `yonderd` file, `yonderd setup` failed on the host, or it printed no setup line. For `upgrade`: a host that is not macOS, a binary of another platform than the hello names, a bootstrap run that failed or printed no line of `yonderd upgrade`, or an agent that answers with a third binary at the end. |
+| `rolled_back` | The new agent of `upgrade` did not answer in time, and the previous binary answers: the watchdog brought it back. The message names the log of the agent. |
 | `interrupted` | Ctrl+C came before the run started, or a second Ctrl+C stopped the follow. A press after the start cancels the run, and the run then ends with the code of the host. |
 | `old_agent` | The run needs a feature that the agent lacks, such as the changes of `apply`. The message names `yonder prepare`. An option that an older agent would ignore, such as `nice`, `.yonder.toml` or the login environment, only gets a `yonder: warning:` line. |
 | `apply_failed` | The changes of the command do not apply to the working tree, or they did not come because the fetch failed. The message gives the exit code of the command and the patch file, or `yonder fetch`, which writes the patch into the git directory of the checkout. |
@@ -97,6 +98,25 @@ ultimate root, with `community/tools/yonder`, builds `@community//tools/yonder:y
 `//tools/yonder:yonderd`. The build is `./bazel.cmd build <label>` under a quiet limit of 30 min, as in
 `bt --host --prepare`. Then `./bazel.cmd cquery --output=files <label>` names the binary relative to the execution
 root, and `./bazel.cmd info execution_root` names that root. The monorepo has no `bazel-out` link in the checkout.
+
+## The upgrade
+
+`Client::upgrade` updates the agent of a macOS host over the link:
+
+1. The hello names the platform, the features and the SHA-256 of the binary of the agent. A host that is not macOS
+   refuses with `agent_failed` and names `yonder prepare`.
+2. An agent with the feature `upgrade` gets the local binary: `--agent`, or the build of `@community//tools/yonder:yonderd`
+   as for `prepare`. A binary of another platform than the hello refuses before it goes: the client reads the Mach-O or
+   ELF header. The binary that the agent runs already is current, and nothing goes. Else `Request::Upgrade` sends it.
+3. An agent without the feature gets a bootstrap run, once: `/bin/sh -c BOOTSTRAP` in a slot of the repository of the
+   host file, on the commit of the working tree. The script builds the agent with `./bazel.cmd` of the slot, finds the
+   binary through `cquery` and `info execution_root`, and runs `<binary> upgrade <binary>`. The new binary installs
+   itself with the watchdog and restarts the agent. The follow of the run connects again to the new agent. The line of
+   `yonderd upgrade` in the stdout of the run names the new binary. `--agent` has no effect here, because the host
+   builds the agent.
+4. The client connects again, every 1 s to 5 s, until the hello names the new binary, up to 110 s: the drain of the old
+   agent (20 s), the wait of the watchdog (60 s) and 30 s for launchd. The previous binary at the end refuses with
+   `rolled_back`, no answer with `unreachable`.
 
 ## The order of a run
 

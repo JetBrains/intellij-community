@@ -6,6 +6,7 @@
 
 use std::fmt;
 use std::io::{self, Read, Write};
+use std::os::fd::RawFd;
 use std::os::unix::process::{CommandExt, ExitStatusExt};
 use std::process::{Child, ChildStdin, Command, ExitStatus, Stdio};
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
@@ -257,6 +258,30 @@ fn collect(pipe: Option<impl Read + Send + 'static>) -> Collected {
         });
     }
     Collected { bytes, ended }
+}
+
+/// Makes the child of `command` start in a session of its own, so it outlives this process and each signal to its
+/// process group. The child keeps the descriptor `keep` across the exec.
+pub(crate) fn detach(command: &mut Command, keep: Option<RawFd>) {
+    let prepare = move || {
+        // SAFETY: setsid takes no arguments and is async-signal-safe.
+        if unsafe { libc::setsid() } == -1 {
+            return Err(io::Error::last_os_error());
+        }
+        if let Some(descriptor) = keep {
+            // SAFETY: fcntl takes plain integers and is async-signal-safe. The cleared flag keeps the descriptor open
+            // across the exec.
+            let cleared = unsafe { libc::fcntl(descriptor, libc::F_SETFD, 0) };
+            if cleared == -1 {
+                return Err(io::Error::last_os_error());
+            }
+        }
+        Ok(())
+    };
+    // SAFETY: the closure runs in the child between fork and exec, and calls only setsid and fcntl.
+    unsafe {
+        command.pre_exec(prepare);
+    }
 }
 
 /// The program and the arguments of `command`, for a message.

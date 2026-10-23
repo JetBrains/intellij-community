@@ -4,9 +4,11 @@
 //! - [`allow`]: the fingerprints of the clients that an agent accepts.
 //! - [`channel`]: TLS 1.3 over TCP, each end pinned by its fingerprint, and the frames on it.
 //! - [`proto`]: the requests and the replies.
+//! - [`digest`]: the SHA-256 that names a build of the agent.
 
 pub mod allow;
 pub mod channel;
+pub mod digest;
 pub mod identity;
 pub mod proto;
 mod relay;

@@ -86,7 +86,7 @@ pub fn no_monorepo(why: &str) -> Refusal {
     refused(
         code::USAGE,
         format!(
-            "{why}, so `yonder prepare` cannot build the agent: run it in a checkout of the monorepo, or name a yonderd binary with `--agent <yonderd>`"
+            "{why}, so yonder cannot build the agent: run it in a checkout of the monorepo, or name a yonderd binary with `--agent <yonderd>`"
         ),
     )
 }
