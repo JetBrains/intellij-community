@@ -36,7 +36,7 @@ function StepList({ steps, active, onGo }: { steps: HarvestedDiagramStep[], acti
               aria-current={current ? 'step' : undefined}
               className={cn(
                 'step-card flex w-full cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-xs leading-snug transition-colors',
-                current ? 'active border-primary bg-primary/8' : 'border-border bg-card hover:border-input',
+                current ? 'active border-primary bg-primary/8' : 'border-border bg-card hover:border-control-edge',
               )}
               onClick={() => onGo(number)}
             >

@@ -61,8 +61,12 @@
   --accent: var(--hover);
   --accent-foreground: var(--foreground);
   --border: var(--islands-tool-window-border-light);
-  /* a control border: gray-80, not control-border (gray-130), so it keeps 3:1 on the island and on the window */
-  --input: var(--islands-gray-80);
+  /* a field border: control-border, as the IDE draws a text field and an outline button. A field is found by its label
+     and its place, so WCAG 1.4.11 asks no 3:1 of its edge */
+  --input: var(--islands-control-border-light);
+  /* the edge of a toggle (a checkbox, a radio, a switch) and of a diagram mark: gray-80, so it keeps 3:1 on the island,
+     on a popup, on the window, and on a hover row */
+  --control-edge: var(--islands-gray-80);
   --ring: var(--islands-accent-brand-border-light);
   --disabled: var(--islands-text-disabled-light);
   /* the base radius of the shadcn formulas in the vendored components: the button arc */
@@ -148,7 +152,9 @@
   --muted-foreground: var(--islands-text-muted-dark);
   --hover: var(--islands-core-bg-transparent-hovered-dark);
   --border: var(--islands-tool-window-border-dark);
-  --input: var(--islands-gray-80);
+  --input: var(--islands-control-border-dark);
+  /* gray-90: gray-80 is 2.96:1 on a hover row of the dark island */
+  --control-edge: var(--islands-gray-90);
   --ring: var(--islands-accent-brand-border-dark);
   --disabled: var(--islands-text-disabled-dark);
 
@@ -258,6 +264,7 @@
   --color-success: var(--success);
   --color-border: var(--border);
   --color-input: var(--input);
+  --color-control-edge: var(--control-edge);
   --color-ring: var(--ring);
   /* the status surfaces of the GenUI catalog */
   --color-info: var(--info);

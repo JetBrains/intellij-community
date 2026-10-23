@@ -10,7 +10,7 @@ const styles = join(dirname(fileURLToPath(import.meta.url)), '../styles')
 const tokens = readFileSync(join(styles, 'islands.generated.css'), 'utf8') + readFileSync(join(styles, 'tailwind.css'), 'utf8')
 
 describe('the theme tokens', () => {
-  it('keep text at 4.5:1 and UI marks at 3:1 in the light and the dark block', () => {
+  it('keep text at 4.5:1, UI marks at 3:1 and field edges at 1.4:1 in the light and the dark block', () => {
     assert.deepEqual(themeContrastFindings(tokens), [])
   })
 

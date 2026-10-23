@@ -148,7 +148,7 @@
 }
 
 .flow-diagram .react-flow__node.flow-node-actionable:not(.step-active):hover .arch-node:not(.selected) {
-  border-color: color-mix(in srgb, var(--primary) 45%, var(--input));
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--control-edge));
   box-shadow: 0 2px 8px var(--shadow-tint);
 }
 
@@ -179,7 +179,7 @@
 
 /* walkthrough phases: past steps stay lit; future steps stay readable; excluded branches are dashed */
 .react-flow__node.step-dimmed .arch-node {
-  border-color: color-mix(in srgb, var(--input) 72%, var(--primary));
+  border-color: color-mix(in srgb, var(--control-edge) 72%, var(--primary));
   background: color-mix(in srgb, var(--primary) 4%, var(--muted));
 }
 
@@ -252,7 +252,7 @@
 
 /* peer branches keep full contrast but no accent — they are alternatives, not the current path */
 .react-flow__node.step-alt .flow-step-node {
-  border-left-color: color-mix(in srgb, var(--primary) 35%, var(--input));
+  border-left-color: color-mix(in srgb, var(--primary) 35%, var(--control-edge));
 }
 
 .flow-edge.step-unavailable .flow-edge-path {
@@ -269,13 +269,13 @@
 /* C4-dynamic interaction chip states (base chrome is utilities in FlowDiagram.tsx) */
 .step-edge-chip.step-alt {
   padding-left: 9px;
-  border-color: var(--input);
+  border-color: var(--control-edge);
 }
 
 .step-edge-chip.step-unavailable {
   padding-left: 9px;
   border-style: dashed;
-  border-color: var(--input);
+  border-color: var(--control-edge);
   background: color-mix(in srgb, var(--edge-stroke) 8%, var(--muted));
 }
 
@@ -292,26 +292,26 @@
 }
 
 .step-edge-chip.chip-yes {
-  border-color: color-mix(in srgb, var(--primary) 55%, var(--input));
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--control-edge));
   background: color-mix(in srgb, var(--primary) 10%, var(--muted));
 }
 
 .step-edge-chip.chip-no {
-  border-color: var(--input);
+  border-color: var(--control-edge);
 }
 
 /* diamond walkthrough phases (box-shadow cannot follow a diamond, so strokes carry them);
    var() does not resolve in SVG presentation attributes, so the polygon is styled here */
 .decision-shape polygon {
   fill: color-mix(in srgb, var(--primary) 7%, var(--muted));
-  stroke: color-mix(in srgb, var(--primary) 55%, var(--input));
+  stroke: color-mix(in srgb, var(--primary) 55%, var(--control-edge));
   stroke-width: 1.4;
   vector-effect: non-scaling-stroke;
 }
 
 .react-flow__node.step-dimmed .decision-shape polygon {
   fill: color-mix(in srgb, var(--primary) 4%, var(--muted));
-  stroke: color-mix(in srgb, var(--input) 72%, var(--primary));
+  stroke: color-mix(in srgb, var(--control-edge) 72%, var(--primary));
 }
 
 .react-flow__node.step-active .decision-shape polygon {
@@ -370,7 +370,7 @@
 
 /* the run never reached this step: the look of a future step */
 .react-flow__node.run-pending .flow-step-node {
-  border-color: color-mix(in srgb, var(--input) 72%, var(--primary));
+  border-color: color-mix(in srgb, var(--control-edge) 72%, var(--primary));
   background: color-mix(in srgb, var(--primary) 4%, var(--muted));
 }
 
@@ -386,7 +386,7 @@
 }
 
 .phase-mark .phase-index {
-  border-color: var(--input);
+  border-color: var(--control-edge);
 }
 
 .react-flow__node.phase-active .phase-mark {

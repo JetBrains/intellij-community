@@ -17,8 +17,11 @@ export interface Rgba {
 /** The custom properties of one token block, by name. */
 export type TokenBlock = Readonly<Record<string, string>>
 
-/** What a pair shows: text needs 4.5:1, a UI mark (a border, a focus ring, an edge) needs 3:1. */
-export type PairKind = 'text' | 'mark'
+/**
+ * What a pair shows: text needs 4.5:1, a UI mark (a toggle edge, a focus ring, a diagram edge) needs 3:1. A field edge
+ * needs the 1.4:1 floor of the IDE: its label and its place find a text field, so WCAG 1.4.11 asks no 3:1 of it.
+ */
+export type PairKind = 'text' | 'mark' | 'field'
 
 export interface TokenPair {
   kind: PairKind
@@ -28,7 +31,7 @@ export interface TokenPair {
   under?: string
 }
 
-export const MIN_RATIO: Readonly<Record<PairKind, number>> = { text: 4.5, mark: 3 }
+export const MIN_RATIO: Readonly<Record<PairKind, number>> = { text: 4.5, mark: 3, field: 1.4 }
 
 /** The lane colors. A lane names a node and colors a chip label, so each lane is checked as text. */
 export const LANE_TOKENS = ['indigo', 'sky', 'blue', 'green', 'amber', 'red', 'neutral'].map(lane => `--layer-${lane}`)
@@ -53,12 +56,15 @@ export const THEME_PAIRS: readonly TokenPair[] = [
   { kind: 'text', foreground: '--destructive', background: '--destructive-surface' },
   { kind: 'mark', foreground: '--ring', background: '--background' },
   { kind: 'mark', foreground: '--edge-stroke', background: '--canvas' },
-  { kind: 'mark', foreground: '--input', background: '--background' },
+  { kind: 'field', foreground: '--input', background: '--background' },
+  { kind: 'mark', foreground: '--control-edge', background: '--background' },
+  { kind: 'mark', foreground: '--control-edge', background: '--popover' },
+  { kind: 'mark', foreground: '--control-edge', background: '--hover', under: '--card' },
   // the window under the islands: the top bar, the crumbs, and the gaps between the islands
   { kind: 'text', foreground: '--foreground', background: '--window' },
   { kind: 'text', foreground: '--muted-foreground', background: '--window' },
   { kind: 'text', foreground: '--primary', background: '--window' },
-  { kind: 'mark', foreground: '--input', background: '--window' },
+  { kind: 'mark', foreground: '--control-edge', background: '--window' },
   // the translucent hover and secondary surfaces, on an island
   { kind: 'text', foreground: '--foreground', background: '--hover', under: '--card' },
   { kind: 'text', foreground: '--muted-foreground', background: '--hover', under: '--card' },
@@ -284,5 +290,5 @@ export function themeContrastFindings(css: string): string[] {
     .filter(result => result.ratio === null || result.ratio < MIN_RATIO[result.kind])
     .map(result => result.ratio === null
       ? `${result.scheme}: ${result.foreground} on ${result.background} does not resolve to a color`
-      : `${result.scheme}: ${result.foreground} on ${result.background} is ${result.ratio.toFixed(2)}:1, under ${MIN_RATIO[result.kind]}:1 for ${result.kind === 'text' ? 'text' : 'a UI mark'}`)
+      : `${result.scheme}: ${result.foreground} on ${result.background} is ${result.ratio.toFixed(2)}:1, under ${MIN_RATIO[result.kind]}:1 for ${result.kind === 'text' ? 'text' : result.kind === 'field' ? 'a field edge' : 'a UI mark'}`)
 }

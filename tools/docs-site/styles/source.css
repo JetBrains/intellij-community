@@ -89,7 +89,7 @@ a.test-chip {
   display: inline-block;
   margin: 1px 0;
   padding: 0 8px;
-  border: 1px solid var(--input);
+  border: 1px solid var(--control-edge);
   border-radius: 999px;
   background: var(--muted);
   font-family: var(--font-mono), monospace;
