@@ -21,6 +21,7 @@ import java.lang.reflect.InvocationTargetException
 /**
  * Instantiates [instanceClass] using [resolver] to find instances for constructor parameter types.
  * This function searches for a constructor which matches one of [supportedSignatures].
+ * It skips a constructor that [DependencyResolver.isNonInjectable] rejects.
  *
  * @param parentScope a scope which is used as a parent for instance scope
  * if [instanceClass] defines a constructor with a parameter of [CoroutineScope] type
@@ -34,7 +35,7 @@ suspend fun <T> instantiate(
   instanceClass: Class<T>,
   supportedSignatures: List<MethodType>,
 ): T {
-  val (signature, constructor) = findConstructor(instanceClass, supportedSignatures)
+  val (signature, constructor) = findConstructor(resolver, instanceClass, supportedSignatures)
   when (val result = resolveArguments(resolver, signature.parameterArray(), instanceClass, round = 0)) {
     is ResolutionResult.UnresolvedParameter -> {
       throw InstantiationException(
@@ -52,6 +53,7 @@ suspend fun <T> instantiate(
 
 /**
  * Finds the first constructor of [instanceClass] whose parameter list matches one of [signatures], in priority order.
+ * A constructor that [DependencyResolver.isNonInjectable] rejects never matches.
  *
  * Scans a single [Class.getDeclaredConstructors] snapshot and matches parameter types directly, instead of calling
  * [java.lang.invoke.MethodHandles.Lookup.findConstructor] per signature. That method throws (and fills a stack trace)
@@ -59,12 +61,20 @@ suspend fun <T> instantiate(
  * startup-hot service instantiation path. Fetching the constructor list once also avoids a [java.lang.invoke.MethodHandles.privateLookupIn]
  * per probed signature.
  */
-private fun findConstructor(instanceClass: Class<*>, signatures: List<MethodType>): Pair<MethodType, Constructor<*>> {
+private fun findConstructor(
+  resolver: DependencyResolver,
+  instanceClass: Class<*>,
+  signatures: List<MethodType>,
+): Pair<MethodType, Constructor<*>> {
   val constructors = instanceClass.declaredConstructors
   for (signature in signatures) {
     val parameterTypes = signature.parameterArray()
     for (constructor in constructors) {
       if (constructor.parameterCount == parameterTypes.size && constructor.parameterTypes.contentEquals(parameterTypes)) {
+        if (resolver.isNonInjectable(constructor)) {
+          // a class declares at most one constructor with these parameter types
+          break
+        }
         constructor.isAccessible = true
         return signature to constructor
       }

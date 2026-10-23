@@ -153,6 +153,7 @@ private val defaultSupportedSignaturesOfLightServiceConstructors: List<MethodTyp
 
 /**
  * Finds the declared constructor matching [type]'s parameter list, or `null` if none matches.
+ * A constructor annotated [NonInjectable] never matches, because the container never calls it.
  *
  * Unlike [java.lang.invoke.MethodHandles.Lookup.findConstructor], this does not throw (and thus does not fill in a stack
  * trace) when a signature is absent, which is the common case while probing the prioritized list of supported signatures.
@@ -164,7 +165,8 @@ fun Array<Constructor<*>>.findConstructorOrNull(type: MethodType): Constructor<*
   val parameterTypes = type.parameterArray()
   for (constructor in this) {
     if (constructor.parameterCount == parameterTypes.size && constructor.parameterTypes.contentEquals(parameterTypes)) {
-      return constructor
+      // a class declares at most one constructor with these parameter types
+      return if (constructor.isAnnotationPresent(NonInjectable::class.java)) null else constructor
     }
   }
   return null

@@ -355,7 +355,9 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
     this.componentManager = componentManager;
   }
 
-  @NonInjectable
+  /**
+   * The container calls this constructor for a bean in the project area.
+   */
   public ConfigurableEP(@NotNull Project project) {
     myProject = project;
     componentManager = project;

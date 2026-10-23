@@ -20,6 +20,8 @@ internal class ComponentManagerResolver(
 ) : DependencyResolver {
   override fun toString(): String = "Dependency resolver from $componentManager"
 
+  override fun isNonInjectable(constructor: Constructor<*>): Boolean = constructor.isAnnotationPresent(NonInjectable::class.java)
+
   override fun isApplicable(constructor: Constructor<*>): Boolean {
     return !constructor.isAnnotationPresent(NonInjectable::class.java) && !constructor.isAnnotationPresent(Deprecated::class.java)
   }
