@@ -22,24 +22,28 @@ import java.awt.Insets
 import javax.swing.UIDefaults
 import javax.swing.UIDefaults.LazyValue
 import javax.swing.plaf.ColorUIResource
+import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.metal.MetalLookAndFeel
 
 /**
  * @author Konstantin Bulenkov
  */
 @ApiStatus.Internal
-class IdeaLaf(private val customFontDefaults: Map<Any, Any?>?) : MetalLookAndFeel() {
+class IdeaLaf(private val customFontDefaults: Map<Any, Any?>?, private val systemFont: FontUIResource? = null) : MetalLookAndFeel() {
   public override fun initComponentDefaults(defaults: UIDefaults) {
     super.initComponentDefaults(defaults)
 
     initInputMapDefaults(defaults)
     initIdeaDefaults(defaults)
-    if (customFontDefaults == null) {
-      val systemFont = getSystemFontData(uiDefaults = { defaults })
-      initFontDefaults(defaults, StartupUiUtil.getFontWithFallback(familyName = systemFont.first, style = Font.PLAIN, size = systemFont.second.toFloat()))
+    if (customFontDefaults != null) {
+      defaults.putAll(customFontDefaults)
+    }
+    else if (systemFont != null) {
+      initFontDefaults(defaults, systemFont)
     }
     else {
-      defaults.putAll(customFontDefaults)
+      val systemFontData = getSystemFontData(uiDefaults = { defaults })
+      initFontDefaults(defaults, StartupUiUtil.getFontWithFallback(familyName = systemFontData.first, style = Font.PLAIN, size = systemFontData.second.toFloat()))
     }
   }
 }

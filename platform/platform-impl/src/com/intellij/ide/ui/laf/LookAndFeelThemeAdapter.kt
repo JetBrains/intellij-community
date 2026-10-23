@@ -290,7 +290,10 @@ fun setEarlyUiLaF() {
 
 // used by Rider
 @Internal
-fun createBaseLaF(): LookAndFeel {
+fun createBaseLaF(): LookAndFeel = createBaseLaF(linuxSystemFont = null)
+
+@Internal
+fun createBaseLaF(linuxSystemFont: FontUIResource?): LookAndFeel {
   if (SystemInfoRt.isMac) {
     if (AppMode.isRemoteDevHost()) {
       return IdeaLaf(customFontDefaults = null)
@@ -302,6 +305,13 @@ fun createBaseLaF(): LookAndFeel {
   }
   else if (!SystemInfoRt.isLinux || GraphicsEnvironment.isHeadless()) {
     return IdeaLaf(customFontDefaults = null)
+  }
+
+  if (isLinuxSystemFontWithoutGtkLaf) {
+    val systemFont = linuxSystemFont ?: readLinuxSystemFont()
+    if (systemFont != null) {
+      return IdeaLaf(customFontDefaults = null, systemFont = systemFont)
+    }
   }
 
   // Normally, GTK LaF is considered "system" when (1) a GNOME session is active, and (2) GTK library is available.
