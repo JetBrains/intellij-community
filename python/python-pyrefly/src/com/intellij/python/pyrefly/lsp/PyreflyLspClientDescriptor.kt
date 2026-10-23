@@ -8,6 +8,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.lsp.api.Lsp4jServer
 import com.intellij.platform.lsp.api.LspClient
@@ -226,7 +227,19 @@ class PyreflyLspClientDescriptor(
       error("Pyrefly is available only for native, non read-only interpreters. Current: $interpreter")
     }
 
-    return super.startServerProcess()
+    val handler = super.startServerProcess()
+    try {
+      PyreflyServerHeartbeat.getInstance(project).track(handler)
+    }
+    catch (e: Exception) {
+      // The server already runs. A failure here must not leave it without an owner.
+      if (e is ControlFlowException) {
+        handler.destroyProcess()
+        throw e
+      }
+      LOG.warn("The Pyrefly server runs without the resource heartbeat", e)
+    }
+    return handler
   }
 
   /** The Python binary of the interpreter that [pyProject] had when the server started, as pyrefly's `pythonPath`. */

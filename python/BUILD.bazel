@@ -1533,6 +1533,8 @@ jvm_library(
         "//platform/statistics:statistics_test_lib",
         "//platform/statistics/testFramework",
         "//platform/statistics/testFramework:testFramework_test_lib",
+        "//python/python-pyrefly:pyrefly",
+        "//python/python-pyrefly:pyrefly_test_lib",
         "//json/backend",
         "//json/backend:backend_test_lib",
         "//platform/progress/shared:ide-progress",
