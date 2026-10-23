@@ -1,4 +1,4 @@
-package de.plushnikov.intellij.plugin.activity;
+package com.intellij.lombok.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;

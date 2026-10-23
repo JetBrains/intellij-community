@@ -8,7 +8,6 @@
     <module name="intellij.java.backend"/>
     <module name="intellij.java.codeserver.highlighting"/>
     <module name="intellij.java.compiler"/>
-    <module name="intellij.java.compiler.impl"/>
     <module name="intellij.java.frontback.psi"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.impl.inspections"/>
@@ -281,7 +280,6 @@
                                                   implementationClass="de.plushnikov.intellij.plugin.extension.postfix.LombokPostfixTemplateProvider"/>
     <codeInsight.externalLibraryResolver implementation="de.plushnikov.intellij.plugin.resolver.LombokExternalLibraryResolver"/>
 
-    <buildProcess.parametersProvider implementation="de.plushnikov.intellij.plugin.jps.LombokBuildProcessParametersProvider"/>
     <notificationGroup id="Lombok plugin" displayType="BALLOON" bundle="messages.LombokBundle" key="notification.group.lombok"/>
 
     <jvm.logging implementation="de.plushnikov.intellij.plugin.logging.LombokSlf4jLogger"/>
@@ -296,11 +294,6 @@
     <registryKey key="lombok.slow.jar.detection.enabled" defaultValue="false" restartRequired="true"
                  description="Enable slow detection of Lombok JARs attached directly from disk"/>
   </extensions>
-
-  <projectListeners>
-    <listener class="de.plushnikov.intellij.plugin.activity.LombokBuildManagerListener"
-              topic="com.intellij.compiler.server.BuildManagerListener"/>
-  </projectListeners>
 
   <actions>
     <group id="LombokActionGroup" class="de.plushnikov.intellij.plugin.action.LombokMenuGroup" icon="LombokIcons.Lombok" popup="true">

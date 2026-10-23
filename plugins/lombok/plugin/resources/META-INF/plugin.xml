@@ -52,6 +52,7 @@
   <content namespace="jetbrains">
     <module name="intellij.lombok" loading="required"/>
     <module name="intellij.lombok.generated" loading="required"/>
+    <module name="intellij.lombok.compiler"/>
   </content>
 
   <extensions defaultExtensionNs="com.intellij">
