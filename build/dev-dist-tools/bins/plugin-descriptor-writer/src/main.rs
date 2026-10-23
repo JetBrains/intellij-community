@@ -521,6 +521,18 @@ fn read_text(path: &Path) -> Result<String> {
     String::from_utf8(read_file(path)?).with_context(|| format!("{} is not valid UTF-8", path.display()))
 }
 
+/// Writes the resolved `content` to `output` and returns the exit code. A failed resolve names `context` and exits with 1,
+/// and so does a failed write.
+fn write_resolved(output: &Path, content: Result<String>, context: impl FnOnce() -> String) -> i32 {
+    match content
+        .with_context(context)
+        .and_then(|content| write_output(output, content.as_bytes()))
+    {
+        Ok(()) => 0,
+        Err(error) => report(1, &error),
+    }
+}
+
 /// Writes one output, and creates its directory first.
 ///
 /// The directory gets the mode of [`std::fs::create_dir_all`] under the umask, because Bazel creates the directory of a

@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use anyhow::Result;
 use appinfo::{ApplicationInfoElements, Replacement, descriptorxml, merge_host_application_info, replace_markers};
 
-use crate::{read_text, report, write_output};
+use crate::{read_text, report, write_resolved};
 
 /// The declared inputs of `dev_dist_frontend_application_info`.
 ///
@@ -26,14 +26,9 @@ pub(crate) fn run(options: cli::Options) -> i32 {
         Ok(parsed) => parsed,
         Err(error) => return report(2, &error),
     };
-    let content = match resolve_application_info(&parsed) {
-        Ok(content) => content,
-        Err(error) => return report(1, &error.context("could not produce the frontend application info")),
-    };
-    match write_output(&parsed.output, content.as_bytes()) {
-        Ok(()) => 0,
-        Err(error) => report(1, &error),
-    }
+    write_resolved(&parsed.output, resolve_application_info(&parsed), || {
+        "could not produce the frontend application info".to_owned()
+    })
 }
 
 /// Applies the client markers, then copies the names, the version and the release date of the product.

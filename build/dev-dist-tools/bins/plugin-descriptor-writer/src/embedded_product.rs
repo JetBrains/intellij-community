@@ -10,7 +10,7 @@ use anyhow::{Result, anyhow};
 use crate::compose::{self, Composition};
 use crate::descriptorxml::{self, Element};
 use crate::structural::{self, Cache, ContentRequest};
-use crate::{Jars, append_descriptor_jar, put_descriptor, report, seed_cache, write_output};
+use crate::{Jars, append_descriptor_jar, put_descriptor, report, seed_cache, write_resolved};
 
 /// The declared inputs of `dev_dist_embedded_product_descriptor`.
 ///
@@ -31,20 +31,9 @@ pub(crate) fn run(options: cli::Options) -> i32 {
         Ok(parsed) => parsed,
         Err(error) => return report(2, &error),
     };
-    let content = match resolve_embedded_product(&parsed) {
-        Ok(content) => content,
-        Err(error) => {
-            let error = error.context(format!(
-                "could not resolve the embedded product descriptor {}",
-                parsed.output.display()
-            ));
-            return report(1, &error);
-        }
-    };
-    match write_output(&parsed.output, content.as_bytes()) {
-        Ok(()) => 0,
-        Err(error) => report(1, &error),
-    }
+    write_resolved(&parsed.output, resolve_embedded_product(&parsed), || {
+        format!("could not resolve the embedded product descriptor {}", parsed.output.display())
+    })
 }
 
 pub(crate) fn resolve_embedded_product(parsed: &EmbeddedProductRequest) -> Result<String> {

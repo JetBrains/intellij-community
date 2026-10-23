@@ -9,7 +9,7 @@ use appinfo::APPLICATION_INFO_NAMESPACE;
 use testkit::{TempDir, read_text, require_absent, write_file};
 
 use crate::application_info::{ApplicationInfoRequest, parse_application_info_request, resolve_application_info};
-use crate::test_support::{mode_request, path_string, run_request, testdata};
+use crate::test_support::{mode_request, path_string, require_refused_request, run_request, testdata};
 
 fn application_info_request(output: &Path, client: &str, product: &str) -> Vec<String> {
     vec![
@@ -95,12 +95,7 @@ fn application_info_requires_files() {
             } else {
                 format!("{option} is required")
             };
-            match mode_request(&values).and_then(parse_application_info_request) {
-                Ok(parsed) => panic!("{option}/{value}: accepted {parsed:?}"),
-                Err(error) => assert!(format!("{error:#}").contains(&want), "{option}/{value}: {error:#}"),
-            }
-            let dir = TempDir::new();
-            assert_eq!(run_request(dir.path(), &request), 2, "{option}/{value}");
+            require_refused_request(&format!("{option}/{value}"), &values, parse_application_info_request, &want);
         }
     }
 }
@@ -130,10 +125,7 @@ fn application_info_rejects_invalid_requests() {
         (with("--build-number-file=build.txt"), "unknown option: --build-number-file"),
         (with("--build-number=build.txt"), "unknown option: --build-number"),
     ] {
-        match mode_request(&request).and_then(parse_application_info_request) {
-            Ok(parsed) => panic!("{request:?}: accepted {parsed:?}"),
-            Err(error) => assert!(format!("{error:#}").contains(want), "{request:?}: {error:#}"),
-        }
+        require_refused_request(&format!("{request:?}"), &request, parse_application_info_request, want);
     }
 }
 

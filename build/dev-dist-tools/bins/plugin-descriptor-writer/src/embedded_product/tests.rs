@@ -7,12 +7,13 @@ use std::path::Path;
 
 use testkit::{TempDir, read_text, require_absent, write_file};
 
-use crate::compose::Composition;
 use crate::descriptorxml;
 use crate::embedded_product::{
     EmbeddedProductRequest, embedded_content_request, parse_embedded_product_request, resolve_embedded_product, resolve_root,
 };
-use crate::test_support::{descriptor_jar, lines, mode_request, path_string, run_request, testdata};
+use crate::test_support::{
+    alias_composition, descriptor_jar, lines, mode_request, path_string, require_refused_request, run_request, testdata,
+};
 
 /// The inputs of the `source.xml` case: three jars and the declared files. The first jar has neither entry, and the
 /// third one has wrong copies, so the second jar must answer.
@@ -171,12 +172,7 @@ fn embedded_product_request() {
         parsed,
         EmbeddedProductRequest {
             output: "out/product.xml".into(),
-            composition: Composition {
-                aliases: vec!["a.b".into()],
-                includes: vec![],
-                content_modules: vec![],
-                additional_modules: vec![],
-            },
+            composition: alias_composition("a.b"),
             descriptors: BTreeMap::from([("META-INF/extra.xml".into(), "a file=1.xml".into())]),
             descriptors_in_jar: BTreeMap::from([("a.b.xml".into(), vec!["first.jar".into(), "second.jar".into()])]),
             separate_jar: BTreeSet::from(["a.b".into()]),
@@ -263,12 +259,7 @@ fn embedded_product_rejects_invalid_requests() {
             "the row '--additional-module=intellij.embedded.existing;public' states 'public'",
         ),
     ] {
-        match mode_request(request).and_then(parse_embedded_product_request) {
-            Ok(parsed) => panic!("{name}: accepted {parsed:?}"),
-            Err(error) => assert!(format!("{error:#}").contains(want), "{name}: {error:#}"),
-        }
-        let dir = TempDir::new();
-        assert_eq!(run_request(dir.path(), &lines(request)), 2, "{name}");
+        require_refused_request(name, request, parse_embedded_product_request, want);
     }
 }
 

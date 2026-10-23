@@ -3,11 +3,14 @@
 //! The helpers that the tests of the modes share.
 
 use std::ffi::OsString;
+use std::fmt::Debug;
 use std::io::Write;
 use std::path::Path;
 
-use testkit::write_file;
+use testkit::{TempDir, write_file};
 use zip::write::SimpleFileOptions;
+
+use crate::compose::Composition;
 
 /// Returns the path of a file under `testdata/` as a string.
 pub(crate) fn testdata(relative: &str) -> String {
@@ -33,6 +36,33 @@ pub(crate) fn mode_request(values: &[&str]) -> anyhow::Result<cli::Options> {
     let mut options = cli::parse(values.iter().map(OsString::from))?;
     crate::take_mode(&mut options)?;
     Ok(options)
+}
+
+/// Fails unless `parse` refuses the mode request `request` with an error that holds `want`, and a run of the request
+/// exits with 2. A failure names the case `name`.
+#[track_caller]
+pub(crate) fn require_refused_request<T: Debug>(
+    name: &str,
+    request: &[&str],
+    parse: impl FnOnce(cli::Options) -> anyhow::Result<T>,
+    want: &str,
+) {
+    match mode_request(request).and_then(parse) {
+        Ok(parsed) => panic!("{name}: accepted {parsed:?}"),
+        Err(error) => assert!(format!("{error:#}").contains(want), "{name}: {error:#}"),
+    }
+    let dir = TempDir::new();
+    assert_eq!(run_request(dir.path(), &lines(request)), 2, "{name}");
+}
+
+/// The composition of one alias and nothing else.
+pub(crate) fn alias_composition(alias: &str) -> Composition {
+    Composition {
+        aliases: vec![alias.to_owned()],
+        includes: vec![],
+        content_modules: vec![],
+        additional_modules: vec![],
+    }
 }
 
 /// Runs the tool with these arguments.

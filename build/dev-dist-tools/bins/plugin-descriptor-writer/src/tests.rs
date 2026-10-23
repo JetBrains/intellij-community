@@ -7,7 +7,7 @@
 //! The curated cases of `descriptorxml`, `stamps` and `structural` gate the bytes. `./build/dev-dist.cmd snapshot diff`
 //! gates them over a composed distribution.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use testkit::{TempDir, read_text, require_absent, write_file};
 
@@ -79,27 +79,15 @@ fn the_whole_request_is_patched() {
 
 #[test]
 fn reserialization_precedes_content_embedding() {
-    let dir = TempDir::new();
-    let dir = dir.path();
-    let source = dir.join("plugin.xml");
-    let output = dir.join("out").join("plugin.xml");
-    let descriptor = dir.join("a.b.xml");
-    write_file(
-        &source,
+    let plugin = Plugin::new(
         "<idea-plugin><description><![CDATA[<b>x</b>]]></description>\
          <content><module name=\"a.b\"/></content></idea-plugin>",
     );
-    write_file(&descriptor, "<idea-plugin package=\"a.b\"/>");
+    let mut request = plugin.embedding_request("<idea-plugin package=\"a.b\"/>");
+    request.push("--reserialize-before-content-embedding=true".to_owned());
+    assert_eq!(plugin.run(&request), 0);
 
-    let mut request = minimal_request(dir, &source, &output, "263.100.5");
-    request.extend([
-        "--embed-content-modules=true".to_owned(),
-        "--reserialize-before-content-embedding=true".to_owned(),
-        format!("--plugin-descriptor=a.b.xml={}", path_string(&descriptor)),
-    ]);
-    assert_eq!(run_request(dir, &request), 0);
-
-    let got = read_text(&output);
+    let got = plugin.output_text();
     assert!(
         got.contains("<description>&lt;b&gt;x&lt;/b&gt;</description>"),
         "the source CDATA was not normalized before embedding:\n{got}"
@@ -114,30 +102,14 @@ fn reserialization_precedes_content_embedding() {
 /// (`generatePluginClassPathFromOrderedAssets` of `orderedAssets.kt`). The main output stays as it was.
 #[test]
 fn a_reserialized_output_is_written_next_to_the_descriptor() {
-    let dir = TempDir::new();
-    let dir = dir.path();
-    let source = dir.join("plugin.xml");
-    let output = dir.join("out").join("plugin.xml");
-    let reserialized = dir.join("reserialized").join("plugin.xml");
-    let descriptor = dir.join("a.b.xml");
-    write_file(
-        &source,
-        "<idea-plugin><id>a</id><content><module name=\"a.b\"/></content></idea-plugin>",
-    );
-    write_file(
-        &descriptor,
-        "<idea-plugin package=\"a.b\"><description><![CDATA[<b>x</b>]]></description></idea-plugin>",
-    );
+    let plugin = Plugin::new("<idea-plugin><id>a</id><content><module name=\"a.b\"/></content></idea-plugin>");
+    let reserialized = plugin.dir().join("reserialized").join("plugin.xml");
+    let mut request =
+        plugin.embedding_request("<idea-plugin package=\"a.b\"><description><![CDATA[<b>x</b>]]></description></idea-plugin>");
+    request.push(format!("--reserialized-output={}", path_string(&reserialized)));
+    assert_eq!(plugin.run(&request), 0);
 
-    let mut request = minimal_request(dir, &source, &output, "263.100.5");
-    request.extend([
-        format!("--reserialized-output={}", path_string(&reserialized)),
-        "--embed-content-modules=true".to_owned(),
-        format!("--plugin-descriptor=a.b.xml={}", path_string(&descriptor)),
-    ]);
-    assert_eq!(run_request(dir, &request), 0);
-
-    let got = read_text(&output);
+    let got = plugin.output_text();
     assert!(
         got.contains("<module name=\"a.b\"><![CDATA[<idea-plugin package=\"a.b\">"),
         "the main output lost its embedded CDATA:\n{got}"
@@ -155,6 +127,61 @@ fn a_reserialized_output_is_written_next_to_the_descriptor() {
   </content>
 </idea-plugin>"
     );
+}
+
+/// The descriptor of the plugin `a` with no other element.
+const PLUGIN_A: &str = "<idea-plugin><id>a</id></idea-plugin>";
+
+/// A temporary directory with the descriptor source `plugin.xml` and the output path `plugin.out.xml`.
+struct Plugin {
+    dir: TempDir,
+    source: PathBuf,
+    output: PathBuf,
+}
+
+impl Plugin {
+    fn new(descriptor: &str) -> Self {
+        let dir = TempDir::new();
+        let source = dir.path().join("plugin.xml");
+        let output = dir.path().join("plugin.out.xml");
+        write_file(&source, descriptor);
+        Self { dir, source, output }
+    }
+
+    fn dir(&self) -> &Path {
+        self.dir.path()
+    }
+
+    /// The request of a release product with the build number `263.100.5`.
+    fn request(&self) -> Vec<String> {
+        minimal_request(self.dir(), &self.source, &self.output, "263.100.5")
+    }
+
+    /// The request with the build number `263.100.5` and the application info `testdata/plugin_descriptor/<name>.xml`.
+    fn request_of(&self, application_info_name: &str) -> Vec<String> {
+        minimal_request_of(self.dir(), &self.source, &self.output, "263.100.5", application_info_name)
+    }
+
+    /// The request that embeds the content module `a.b`, whose descriptor holds `descriptor`.
+    fn embedding_request(&self, descriptor: &str) -> Vec<String> {
+        let path = self.dir().join("a.b.xml");
+        write_file(&path, descriptor);
+        let mut request = self.request();
+        request.extend([
+            "--embed-content-modules=true".to_owned(),
+            format!("--plugin-descriptor=a.b.xml={}", path_string(&path)),
+        ]);
+        request
+    }
+
+    /// Writes the request into a flag file of the directory, runs it and returns the exit code.
+    fn run(&self, request: &[String]) -> i32 {
+        run_request(self.dir(), request)
+    }
+
+    fn output_text(&self) -> String {
+        read_text(&self.output)
+    }
 }
 
 /// The request of a release product. The range of a release product is `NEWER_WITH_SAME_BASELINE`.
@@ -179,18 +206,13 @@ fn minimal_request_of(dir: &Path, source: &Path, output: &Path, build_number: &s
 /// baseline with a star.
 #[test]
 fn a_minimal_request_writes_one_descriptor() {
-    let dir = TempDir::new();
-    let dir = dir.path();
-    let source = dir.join("plugin.xml");
-    let output = dir.join("plugin.out.xml");
-    write_file(&source, "<idea-plugin><id>a</id></idea-plugin>");
-
-    assert_eq!(run_request(dir, &minimal_request(dir, &source, &output, "263.100.5")), 0);
+    let plugin = Plugin::new(PLUGIN_A);
+    assert_eq!(plugin.run(&plugin.request()), 0);
     assert_eq!(
-        read_text(&output),
+        plugin.output_text(),
         "<idea-plugin>\n  <id>a</id>\n  <version>263.100.5</version>\n  <idea-version since-build=\"263.100\" until-build=\"263.*\" />\n</idea-plugin>"
     );
-    let entries = std::fs::read_dir(dir).unwrap().count();
+    let entries = std::fs::read_dir(plugin.dir()).unwrap().count();
     assert_eq!(
         entries, 4,
         "the source, the build number, the flag file and the output are the only files"
@@ -200,22 +222,17 @@ fn a_minimal_request_writes_one_descriptor() {
 /// Every rule passes its options in one flag file, so direct arguments are refused.
 #[test]
 fn the_request_is_one_flag_file() {
-    let dir = TempDir::new();
-    let dir = dir.path();
-    let source = dir.join("plugin.xml");
-    let output = dir.join("plugin.out.xml");
-    write_file(&source, "<idea-plugin><id>a</id></idea-plugin>");
-
-    let flagfile = format!("--flagfile={}", crate::test_support::request_file(dir, &[]));
+    let plugin = Plugin::new(PLUGIN_A);
+    let flagfile = format!("--flagfile={}", crate::test_support::request_file(plugin.dir(), &[]));
     for arguments in [
         Vec::new(),
-        minimal_request(dir, &source, &output, "263.100.5"),
+        plugin.request(),
         vec![flagfile.clone(), flagfile],
         lines(&["--flagfile"]),
     ] {
         assert_eq!(run_arguments(&arguments), 2, "{arguments:?}");
     }
-    require_absent(&output);
+    require_absent(&plugin.output);
 }
 
 /// A flag file that does not exist fails the request.
@@ -229,16 +246,11 @@ fn a_missing_flag_file_is_refused() {
 /// `--exact-version` pins both ends to the build number (`CompatibleBuildRange.EXACT` of `PluginXmlPatcher.kt`).
 #[test]
 fn an_exact_version_pins_both_ends() {
-    let dir = TempDir::new();
-    let dir = dir.path();
-    let source = dir.join("plugin.xml");
-    let output = dir.join("plugin.out.xml");
-    write_file(&source, "<idea-plugin><id>a</id></idea-plugin>");
-
-    let mut request = minimal_request_of(dir, &source, &output, "263.100.5", "eap");
+    let plugin = Plugin::new(PLUGIN_A);
+    let mut request = plugin.request_of("eap");
     request.extend(lines(&["--exact-version=true"]));
-    assert_eq!(run_request(dir, &request), 0);
-    let got = read_text(&output);
+    assert_eq!(plugin.run(&request), 0);
+    let got = plugin.output_text();
     assert!(got.contains("since-build=\"263.100.5\" until-build=\"263.100.5\""), "{got}");
 }
 
@@ -246,19 +258,14 @@ fn an_exact_version_pins_both_ends() {
 /// It replaces the EAP fallback, so an EAP build keeps `NEWER_WITH_SAME_BASELINE` when the layout states it.
 #[test]
 fn a_stated_compatible_build_range_replaces_the_eap_fallback() {
-    let dir = TempDir::new();
-    let dir = dir.path();
-    let source = dir.join("plugin.xml");
-    let output = dir.join("plugin.out.xml");
-    write_file(&source, "<idea-plugin><id>a</id></idea-plugin>");
-
-    let mut request = minimal_request_of(dir, &source, &output, "263.100.5", "eap");
+    let plugin = Plugin::new(PLUGIN_A);
+    let mut request = plugin.request_of("eap");
     request.extend(lines(&[
         "--version-suffix=-IJ",
         "--compatible-build-range=NEWER_WITH_SAME_BASELINE",
     ]));
-    assert_eq!(run_request(dir, &request), 0);
-    let got = read_text(&output);
+    assert_eq!(plugin.run(&request), 0);
+    let got = plugin.output_text();
     assert!(got.contains("<version>263.100.5-IJ</version>"), "{got}");
     assert!(got.contains("since-build=\"263.100\" until-build=\"263.*\""), "{got}");
 }
@@ -266,15 +273,10 @@ fn a_stated_compatible_build_range_replaces_the_eap_fallback() {
 /// An EAP application info without a stated range restricts the range to the same release.
 #[test]
 fn an_eap_build_restricts_the_range_to_the_same_release() {
-    let dir = TempDir::new();
-    let dir = dir.path();
-    let source = dir.join("plugin.xml");
-    let output = dir.join("plugin.out.xml");
-    write_file(&source, "<idea-plugin><id>a</id></idea-plugin>");
-
-    let request = minimal_request_of(dir, &source, &output, "263.100.5", "eap");
-    assert_eq!(run_request(dir, &request), 0);
-    let got = read_text(&output);
+    let plugin = Plugin::new(PLUGIN_A);
+    let request = plugin.request_of("eap");
+    assert_eq!(plugin.run(&request), 0);
+    let got = plugin.output_text();
     assert!(got.contains("since-build=\"263.100\" until-build=\"263.100.*\""), "{got}");
 }
 
@@ -283,16 +285,11 @@ fn an_eap_build_restricts_the_range_to_the_same_release() {
 #[test]
 fn a_compatible_build_range_other_than_the_stated_one_is_refused() {
     for range in ["EXACT", "RESTRICTED_TO_SAME_RELEASE", "SAME_RELEASE"] {
-        let dir = TempDir::new();
-        let dir = dir.path();
-        let source = dir.join("plugin.xml");
-        let output = dir.join("plugin.out.xml");
-        write_file(&source, "<idea-plugin><id>a</id></idea-plugin>");
-
-        let mut request = minimal_request(dir, &source, &output, "263.100.5");
+        let plugin = Plugin::new(PLUGIN_A);
+        let mut request = plugin.request();
         request.push(format!("--compatible-build-range={range}"));
-        assert_eq!(run_request(dir, &request), 2, "{range}");
-        require_absent(&output);
+        assert_eq!(plugin.run(&request), 2, "{range}");
+        require_absent(&plugin.output);
     }
 }
 
@@ -301,8 +298,6 @@ fn a_compatible_build_range_other_than_the_stated_one_is_refused() {
 /// and `--platform-module`, which no rule states.
 #[test]
 fn an_unknown_option_is_refused() {
-    let dir = TempDir::new();
-    let dir = dir.path();
     for unknown in [
         "--not-an-option=1",
         "--platform-descriptor=META-INF/a.xml=a.xml",
@@ -315,21 +310,17 @@ fn an_unknown_option_is_refused() {
         "positional=1",
         "",
     ] {
-        let source = dir.join("plugin.xml");
-        let output = dir.join("plugin.out.xml");
-        write_file(&source, "<idea-plugin><id>a</id></idea-plugin>");
-        let mut request = minimal_request(dir, &source, &output, "263.100.5");
+        let plugin = Plugin::new(PLUGIN_A);
+        let mut request = plugin.request();
         request.push(unknown.to_owned());
-        assert_eq!(run_request(dir, &request), 2, "{unknown:?}");
-        require_absent(&output);
+        assert_eq!(plugin.run(&request), 2, "{unknown:?}");
+        require_absent(&plugin.output);
     }
 }
 
 /// A scalar option takes one value, as `--name=value`, and the rules state it once.
 #[test]
 fn a_valueless_or_repeated_option_is_refused() {
-    let dir = TempDir::new();
-    let dir = dir.path();
     for request in [
         &["--out"][..],
         &["--exact-version"][..],
@@ -340,15 +331,13 @@ fn a_valueless_or_repeated_option_is_refused() {
         &["--build-date-seconds=1", "--build-date-seconds=2"][..],
         &["--source=a.xml", "--source=b.xml"][..],
     ] {
-        let source = dir.join("plugin.xml");
-        let output = dir.join("plugin.out.xml");
-        write_file(&source, "<idea-plugin><id>a</id></idea-plugin>");
-        let mut lines = minimal_request(dir, &source, &output, "263.100.5");
+        let plugin = Plugin::new(PLUGIN_A);
+        let mut lines = plugin.request();
         let names: Vec<&str> = request.iter().map(|line| line.split('=').next().unwrap()).collect();
         lines.retain(|line| !names.contains(&line.split('=').next().unwrap()));
         lines.extend(request.iter().map(|line| (*line).to_owned()));
-        assert_eq!(run_request(dir, &lines), 2, "{request:?}");
-        require_absent(&output);
+        assert_eq!(plugin.run(&lines), 2, "{request:?}");
+        require_absent(&plugin.output);
     }
 }
 
@@ -470,23 +459,16 @@ fn a_plugin_descriptor_in_a_jar_is_read() {
 /// A marker row patches the raw text before the round trip.
 #[test]
 fn a_marker_row_patches_the_raw_text() {
-    let dir = TempDir::new();
-    let dir = dir.path();
-    let source = dir.join("plugin.xml");
-    let output = dir.join("plugin.out.xml");
-    write_file(
-        &source,
-        "<idea-plugin><id>a</id><dependencies><!-- OS/ARCH-DEPENDENCY-PLACEHOLDER --></dependencies></idea-plugin>",
-    );
-    let mut request = minimal_request(dir, &source, &output, "263.100.5");
+    let plugin = Plugin::new("<idea-plugin><id>a</id><dependencies><!-- OS/ARCH-DEPENDENCY-PLACEHOLDER --></dependencies></idea-plugin>");
+    let mut request = plugin.request();
     request.push("--marker=os-arch:linux:arm64".to_owned());
-    assert_eq!(run_request(dir, &request), 0);
+    assert_eq!(plugin.run(&request), 0);
     assert!(
-        read_text(&output).contains(
+        plugin.output_text().contains(
             "  <dependencies>\n    <plugin id=\"com.intellij.modules.os.linux\" />\n    <plugin id=\"com.intellij.modules.arch.arm64\" />\n  </dependencies>"
         ),
         "{}",
-        read_text(&output)
+        plugin.output_text()
     );
 }
 
@@ -506,13 +488,9 @@ fn a_failed_stage_writes_no_output() {
         ("a malformed descriptor", "<idea-plugin><id>a</id>"),
         ("an unsupported construct", "<!DOCTYPE idea-plugin><idea-plugin/>"),
     ] {
-        let dir = TempDir::new();
-        let dir = dir.path();
-        let source = dir.join("plugin.xml");
-        let output = dir.join("plugin.out.xml");
-        write_file(&source, descriptor);
-        assert_eq!(run_request(dir, &minimal_request(dir, &source, &output, "263.100.5")), 1, "{name}");
-        require_absent(&output);
+        let plugin = Plugin::new(descriptor);
+        assert_eq!(plugin.run(&plugin.request()), 1, "{name}");
+        require_absent(&plugin.output);
     }
 }
 
@@ -619,19 +597,14 @@ fn the_stamps_come_from_the_application_info() {
         ),
     ];
     for (name, options, descriptor, range) in cases {
-        let dir = TempDir::new();
-        let dir = dir.path();
-        let source = dir.join("plugin.xml");
-        let output = dir.join("plugin.out.xml");
-        write_file(
-            &source,
+        let plugin = Plugin::new(
             r#"<idea-plugin><id>a</id><product-descriptor code="X" release-date="__DATE__" release-version="__VERSION__"/></idea-plugin>"#,
         );
-        let mut request = minimal_request_of(dir, &source, &output, "263.100.5", name);
+        let mut request = plugin.request_of(name);
         request.push("--retain-product-descriptor=true".to_owned());
         request.extend(lines(options));
-        assert_eq!(run_request(dir, &request), 0, "{name}");
-        let got = read_text(&output);
+        assert_eq!(plugin.run(&request), 0, "{name}");
+        let got = plugin.output_text();
         assert!(got.contains(descriptor), "{name}:\n{got}");
         assert!(got.contains(range), "{name}:\n{got}");
     }
@@ -641,15 +614,11 @@ fn the_stamps_come_from_the_application_info() {
 #[test]
 fn the_old_stamp_options_are_refused() {
     for option in ["--eap=true", "--release-date=20260101", "--release-version=2026300"] {
-        let dir = TempDir::new();
-        let dir = dir.path();
-        let source = dir.join("plugin.xml");
-        let output = dir.join("plugin.out.xml");
-        write_file(&source, "<idea-plugin><id>a</id></idea-plugin>");
-        let mut request = minimal_request(dir, &source, &output, "263.100.5");
+        let plugin = Plugin::new(PLUGIN_A);
+        let mut request = plugin.request();
         request.push(option.to_owned());
-        assert_eq!(run_request(dir, &request), 2, "{option}");
-        require_absent(&output);
+        assert_eq!(plugin.run(&request), 2, "{option}");
+        require_absent(&plugin.output);
     }
 }
 
@@ -665,12 +634,8 @@ fn a_bad_application_info_is_refused() {
         (&["--host-application-info-source="][..], 2),
         (&["--application-info-source=absent.xml"][..], 1),
     ] {
-        let dir = TempDir::new();
-        let dir = dir.path();
-        let source = dir.join("plugin.xml");
-        let output = dir.join("plugin.out.xml");
-        write_file(&source, "<idea-plugin><id>a</id></idea-plugin>");
-        let mut request = minimal_request(dir, &source, &output, "263.100.5");
+        let plugin = Plugin::new(PLUGIN_A);
+        let mut request = plugin.request();
         let replaced: Vec<&str> = options.iter().map(|option| option.split('=').next().unwrap()).collect();
         request.retain(|line| {
             !replaced
@@ -678,8 +643,8 @@ fn a_bad_application_info_is_refused() {
                 .any(|name| *name != "--replacement" && line.starts_with(&format!("{name}=")))
         });
         request.extend(lines(options));
-        assert_eq!(run_request(dir, &request), code, "{options:?}");
-        require_absent(&output);
+        assert_eq!(plugin.run(&request), code, "{options:?}");
+        require_absent(&plugin.output);
     }
 }
 
@@ -687,23 +652,18 @@ fn a_bad_application_info_is_refused() {
 /// property, and a dev distribution sets none.
 #[test]
 fn a_release_without_a_release_date_takes_the_build_date() {
-    let dir = TempDir::new();
-    let dir = dir.path();
-    let source = dir.join("plugin.xml");
-    let output = dir.join("plugin.out.xml");
-    write_file(
-        &source,
+    let plugin = Plugin::new(
         r#"<idea-plugin><id>a</id><product-descriptor code="X" release-date="__DATE__" release-version="__VERSION__"/></idea-plugin>"#,
     );
-    let info = dir.join("dateless.xml");
+    let info = plugin.dir().join("dateless.xml");
     let release = read_text(Path::new(&testdata("plugin_descriptor/release.xml")));
     write_file(&info, release.replace(r#" majorReleaseDate="20261201""#, ""));
-    let mut request = minimal_request(dir, &source, &output, "263.100.5");
+    let mut request = plugin.request();
     request.retain(|line| !line.starts_with("--application-info-source="));
     request.push(format!("--application-info-source={}", path_string(&info)));
     request.push("--retain-product-descriptor=true".to_owned());
-    assert_eq!(run_request(dir, &request), 0);
-    let got = read_text(&output);
+    assert_eq!(plugin.run(&request), 0);
+    let got = plugin.output_text();
     assert!(
         got.contains(r#"<product-descriptor code="X" release-date="20260101" release-version="2026200" />"#),
         "{got}"

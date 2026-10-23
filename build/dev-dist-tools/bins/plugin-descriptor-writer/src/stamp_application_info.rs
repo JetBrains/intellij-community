@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use anyhow::{Result, bail};
 use appinfo::{Replacement, replace_markers};
 
-use crate::{read_text, report, write_output};
+use crate::{read_text, report, write_resolved};
 
 /// The declared inputs of the application info of a product. The application-info module ships it as
 /// `idea/<prefix>ApplicationInfo.xml`.
@@ -27,20 +27,12 @@ pub(crate) fn run(options: cli::Options) -> i32 {
         Ok(parsed) => parsed,
         Err(error) => return report(2, &error),
     };
-    let content = match stamp_application_info(&parsed) {
-        Ok(content) => content,
-        Err(error) => {
-            let error = error.context(format!(
-                "could not replace the markers of the application info ({})",
-                parsed.source.display()
-            ));
-            return report(1, &error);
-        }
-    };
-    match write_output(&parsed.output, content.as_bytes()) {
-        Ok(()) => 0,
-        Err(error) => report(1, &error),
-    }
+    write_resolved(&parsed.output, stamp_application_info(&parsed), || {
+        format!(
+            "could not replace the markers of the application info ({})",
+            parsed.source.display()
+        )
+    })
 }
 
 /// `computeAppInfoXml` (`ApplicationInfoPropertiesImpl.kt`) for a dev distribution.

@@ -7,13 +7,12 @@ use std::path::Path;
 
 use testkit::{TempDir, read_bytes, read_text, require_absent, write_file};
 
-use crate::compose::Composition;
 use crate::descriptorxml;
 use crate::embedded_product::EmbeddedProductRequest;
 use crate::product_descriptor::{
     PLUGIN_CLASS_PATH_FORMAT_VERSION, ProductDescriptorRequest, parse_product_descriptor_request, resolve_product_descriptor,
 };
-use crate::test_support::{lines, mode_request, path_string, run_request, testdata};
+use crate::test_support::{alias_composition, lines, mode_request, path_string, require_refused_request, run_request, testdata};
 
 /// The declared descriptors of the fixture.
 fn product_descriptor_inputs() -> Vec<String> {
@@ -55,6 +54,19 @@ fn plugin_class_path_prefix_matches_kotlin() {
     assert_eq!(String::from_utf8_lossy(&content[5..]), String::from_utf8_lossy(&descriptor));
 }
 
+/// Writes the descriptors of the modules `a.b` and `closed.source`. It returns the request lines of the main module, of
+/// both descriptors and of `closed.source` as a scrambled module.
+fn scrambled_module_request(dir: &Path) -> Vec<String> {
+    write_file(dir.join("a.b.xml"), "<idea-plugin package=\"a.b\"/>");
+    write_file(dir.join("closed.source.xml"), "<idea-plugin package=\"closed.source\"/>");
+    vec![
+        "--main-module=intellij.product".to_owned(),
+        format!("--descriptor=a.b.xml={}", path_string(&dir.join("a.b.xml"))),
+        format!("--descriptor=closed.source.xml={}", path_string(&dir.join("closed.source.xml"))),
+        "--scrambled-content-module=closed.source".to_owned(),
+    ]
+}
+
 /// The prefix embeds the descriptor of a scrambled module too, because `createCachedProductDescriptor` checks no
 /// scrambling. So the request declares the descriptor of every content module.
 #[test]
@@ -64,20 +76,15 @@ fn plugin_class_path_prefix_embeds_a_scrambled_module() {
     let prefix = dir.join("prefix");
     let classpath = dir.join("classpath.xml");
     let output = dir.join("plugin.xml");
-    write_file(dir.join("a.b.xml"), "<idea-plugin package=\"a.b\"/>");
-    write_file(dir.join("closed.source.xml"), "<idea-plugin package=\"closed.source\"/>");
-    let request = vec![
+    let mut request = vec![
         "--product-descriptor".to_owned(),
         format!("--out={}", path_string(&output)),
         "--additional-module=a.b;private".to_owned(),
         "--additional-module=closed.source;private;loading=embedded".to_owned(),
-        "--main-module=intellij.product".to_owned(),
-        format!("--descriptor=a.b.xml={}", path_string(&dir.join("a.b.xml"))),
-        format!("--descriptor=closed.source.xml={}", path_string(&dir.join("closed.source.xml"))),
-        "--scrambled-content-module=closed.source".to_owned(),
         format!("--plugin-classpath-prefix={}", path_string(&prefix)),
         format!("--classpath-descriptor={}", path_string(&classpath)),
     ];
+    request.extend(scrambled_module_request(dir));
     assert_eq!(run_request(dir, &request), 0);
     // The classpath descriptor is the descriptor of the prefix, with no header.
     assert_eq!(read_bytes(&classpath), read_bytes(&prefix)[5..]);
@@ -110,17 +117,12 @@ fn product_descriptor_keeps_a_scrambled_module_empty() {
     let dir = TempDir::new();
     let dir = dir.path();
     let output = dir.join("out").join("plugin.xml");
-    write_file(dir.join("a.b.xml"), "<idea-plugin package=\"a.b\"/>");
-    write_file(dir.join("closed.source.xml"), "<idea-plugin package=\"closed.source\"/>");
     let mut request = vec![
         "--product-descriptor".to_owned(),
         "--content-module=a.b".to_owned(),
         "--content-module=closed.source;loading=embedded".to_owned(),
-        "--main-module=intellij.product".to_owned(),
-        format!("--descriptor=a.b.xml={}", path_string(&dir.join("a.b.xml"))),
-        format!("--descriptor=closed.source.xml={}", path_string(&dir.join("closed.source.xml"))),
-        "--scrambled-content-module=closed.source".to_owned(),
     ];
+    request.extend(scrambled_module_request(dir));
     request.extend(outputs(dir));
     assert_eq!(run_request(dir, &request), 0);
     // The product descriptor takes no `separate-jar` attribute, although the embedded descriptor states a package.
@@ -159,12 +161,7 @@ fn product_descriptor_request_is_parsed() {
         ProductDescriptorRequest {
             content: EmbeddedProductRequest {
                 output: "out/plugin.xml".into(),
-                composition: Composition {
-                    aliases: vec!["a.b".into()],
-                    includes: vec![],
-                    content_modules: vec![],
-                    additional_modules: vec![],
-                },
+                composition: alias_composition("a.b"),
                 descriptors: BTreeMap::from([("a.b.xml".into(), "a file=1.xml".into())]),
                 descriptors_in_jar: BTreeMap::from([("META-INF/c.xml".into(), vec!["first.jar".into()])]),
                 separate_jar: BTreeSet::new(),
@@ -226,13 +223,8 @@ fn product_descriptor_rejects_invalid_requests() {
         ("file pair", with("--descriptor=missing-separator"), "a descriptor is"),
         ("jar pair", with("--descriptor-in-jar==file.jar"), "a descriptor is"),
     ] {
-        match mode_request(&request).and_then(parse_product_descriptor_request) {
-            Ok(parsed) => panic!("{name}: accepted {parsed:?}"),
-            Err(error) => assert!(format!("{error:#}").contains(want), "{name}: {error:#}"),
-        }
+        require_refused_request(name, &request, parse_product_descriptor_request, want);
     }
-    let dir = TempDir::new();
-    assert_eq!(run_request(dir.path(), &lines(&with("--unknown=1"))), 2);
 }
 
 #[test]

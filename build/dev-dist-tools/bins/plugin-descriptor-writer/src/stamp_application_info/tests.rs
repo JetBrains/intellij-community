@@ -9,7 +9,7 @@ use appinfo::Replacement;
 use testkit::{TempDir, read_text, require_absent, write_file};
 
 use crate::stamp_application_info::{StampApplicationInfoRequest, parse_stamp_application_info_request, stamp_application_info};
-use crate::test_support::{lines, mode_request, path_string, run_request, testdata};
+use crate::test_support::{lines, mode_request, path_string, require_refused_request, run_request, testdata};
 
 fn stamp_request(output: &Path, source: &str) -> Vec<String> {
     vec![
@@ -120,12 +120,7 @@ fn stamp_application_info_rejects_invalid_requests() {
         ),
         ("repeated source", with(&["--source=t"]), "--source must be specified at most once"),
     ] {
-        match mode_request(&request).and_then(parse_stamp_application_info_request) {
-            Ok(parsed) => panic!("{name}: accepted {parsed:?}"),
-            Err(error) => assert!(format!("{error:#}").contains(want), "{name}: {error:#}"),
-        }
-        let dir = TempDir::new();
-        assert_eq!(run_request(dir.path(), &lines(&request)), 2, "{name}");
+        require_refused_request(name, &request, parse_stamp_application_info_request, want);
     }
 }
 
