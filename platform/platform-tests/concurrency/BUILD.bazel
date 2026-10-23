@@ -1,6 +1,14 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
+jps_test(
+    name = "util-concurrency-tests_test",
+    timeout = "long",
+    tags = ["concurrency-tests"],
+    runtime_deps = [":util-concurrency-tests_test_lib"],
+)
+### skip generation section `test intellij.platform.util.concurrency.tests`
+
 ### auto-generated section `build intellij.platform.util.concurrency.tests` start
 jvm_library(
     name = "util-concurrency-tests",
@@ -103,10 +111,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.platform.util.concurrency.tests` end
-
-### auto-generated section `test intellij.platform.util.concurrency.tests` start
-jps_test(
-    name = "util-concurrency-tests_test",
-    runtime_deps = [":util-concurrency-tests_test_lib"],
-)
-### auto-generated section `test intellij.platform.util.concurrency.tests` end
