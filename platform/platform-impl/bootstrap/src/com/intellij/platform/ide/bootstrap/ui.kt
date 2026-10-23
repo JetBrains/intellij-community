@@ -11,6 +11,7 @@ import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter
 import com.intellij.ide.ui.laf.createBaseLaF
 import com.intellij.ide.ui.laf.isLinuxSystemFontWithoutGtkLaf
 import com.intellij.ide.ui.laf.readLinuxSystemFont
+import com.intellij.openapi.wm.impl.EarlyProjectFrame
 import com.intellij.idea.AppExitCodes
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.AWTExceptionHandler
@@ -43,6 +44,7 @@ import java.awt.Toolkit
 import java.lang.invoke.MethodHandles
 import javax.swing.JOptionPane
 import javax.swing.RepaintManager
+import javax.swing.SwingUtilities
 import javax.swing.UIManager
 import javax.swing.plaf.FontUIResource
 import kotlin.system.exitProcess
@@ -119,6 +121,10 @@ private suspend fun initLafAndScale(isHeadless: Boolean, preloadFontJob: Job?, s
     }
   }
 
+  if (systemFontDeferred != null && EarlyProjectFrame.isExpected) {
+    // the EDT idles while the system font is read: the early frame is created in that gap and shown once the scale is known
+    SwingUtilities.invokeLater { EarlyProjectFrame.create() }
+  }
   val baseLaF = span("base LaF creation") { createBaseLaF(linuxSystemFont = systemFontDeferred?.await()) }
   span("base LaF initialization") {
     // LaF is useless until initialized (`getDefaults` "should only be invoked ... after `initialize` has been invoked.")

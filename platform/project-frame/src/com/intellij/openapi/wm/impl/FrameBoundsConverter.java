@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
@@ -33,7 +34,8 @@ public final class FrameBoundsConverter {
    * @return the bounds in the user space
    */
   public static @Nullable Rectangle convertFromDeviceSpaceAndFitToScreen(@NotNull Rectangle bounds) {
-    int tolerance = Registry.intValue("ide.project.frame.screen.bounds.tolerance", 10);
+    // the early project frame is created before the registry loads
+    int tolerance = LoadingState.COMPONENTS_REGISTERED.isOccurred() ? Registry.intValue("ide.project.frame.screen.bounds.tolerance", 10) : 10;
     Rectangle b = bounds.getBounds();
     // Protect against incorrectly saved meaningless values.
     if (b.width < MIN_WIDTH) b.width = MIN_WIDTH;

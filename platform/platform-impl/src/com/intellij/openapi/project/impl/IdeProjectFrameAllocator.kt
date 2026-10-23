@@ -95,6 +95,7 @@ import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.ui.accessibility.ScreenReader
+import com.intellij.openapi.wm.impl.EarlyProjectFrame
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CompletableJob
@@ -400,16 +401,20 @@ internal class IdeProjectFrameAllocator(
         if (!frame.isVisible) {
           throw CancellationException("Pre-allocated frame was already closed")
         }
+        val shownEarlyAt = EarlyProjectFrame.shownAtOf(frame)
         val frameHelper =
           IdeProjectFrameHelper(frame = frame, loadingState = loadingState, projectFrameTypeId = frameSettings.projectFrameTypeId)
         completeFrameAndCloseOnCancel(frameHelper) {
-          if (options.forceOpenInNewFrame) {
+          if (options.forceOpenInNewFrame || shownEarlyAt != 0L) {
             frameHelper.updateFullScreenState(frameSettings.frameInfo.fullScreen)
           }
           span("ProjectFrameHelper.init") {
             frameHelper.init()
           }
           frameHelper.setInitBounds(frameSettings.frameInfo.bounds)
+        }
+        if (shownEarlyAt != 0L) {
+          FUSProjectHotStartUpMeasurer.frameBecameVisible(shownEarlyAt)
         }
       }
       else {
@@ -456,6 +461,7 @@ internal class IdeProjectFrameAllocator(
   private fun getFrame(): IdeFrameImpl? {
     return options.frame
            ?: (serviceIfCreated<WindowManager>() as? WindowManagerImpl)?.removeAndGetRootFrame()
+           ?: EarlyProjectFrame.take()
   }
 
   private suspend fun getRecentProjectMetaInfo(): RecentProjectMetaInfo? {

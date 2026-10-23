@@ -11,6 +11,7 @@ import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.CliResult
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.bootstrap.InitAppContext
+import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.idea.AppExitCodes
@@ -47,6 +48,9 @@ import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.singleProduct.migrateCommunityToSingleProductIfNeeded
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
+import com.intellij.openapi.wm.impl.EarlyProjectFrame
+import com.intellij.openapi.wm.impl.loadFrameClasses
+import com.intellij.util.ui.RawSwingDispatcher
 import com.jetbrains.JBR
 import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.CompletableDeferred
@@ -245,6 +249,31 @@ fun startApplication(
   )
 
   val euaDocumentDeferred = scope.async { loadEuaDocument(appInfoDeferred) }
+
+  if (!isHeadless && !AppMode.isRemoteDevHost() && EarlyProjectFrame.isEnabled) {
+    scope.launch(CoroutineName("early project frame")) {
+      if (!EarlyProjectFrame.isExpected(args) || configImportNeededDeferred.await()) {
+        return@launch
+      }
+      launch {
+        initAwtToolkitJob.join()
+        loadFrameClasses()
+      }
+      // the agreement and the consent dialogs come before any project; the frame must not stand behind them
+      if (euaDocumentDeferred.await() is EndUserAgreementStatus.Required) {
+        return@launch
+      }
+      appInfoDeferred.await()
+      if (ConsentOptions.needToShowUsageStatsConsent()) {
+        return@launch
+      }
+      lockSystemDirsJob.join()
+      initLafJob.join()
+      withContext(RawSwingDispatcher) {
+        EarlyProjectFrame.show()
+      }
+    }
+  }
 
   val configImportDeferred = scope.async {
     importConfigIfNeeded(

@@ -90,6 +90,9 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   @JvmField
   internal var isAboutToBeMaximized: Boolean = false
 
+  // the early project frame applies the saved title decoration before the settings are loaded
+  internal var nativeTitleDecided: Boolean = false
+
   private var lastInactiveMouseXAbs: Int = 0
   private var lastInactiveMouseYAbs: Int = 0
   private var mouseNotPressedYetSinceLastActivation: Boolean = false
@@ -277,7 +280,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, UiDataProvider, DisposableWindow {
   @Suppress("OVERRIDE_DEPRECATION")
   override fun show() {
     isDisposed = false
-    if (hideNativeLinuxTitle(UISettings.shadowInstance) && !isUndecorated) {
+    if (!nativeTitleDecided && hideNativeLinuxTitle(UISettings.shadowInstance) && !isUndecorated) {
       isUndecorated = true
     }
     @Suppress("DEPRECATION")

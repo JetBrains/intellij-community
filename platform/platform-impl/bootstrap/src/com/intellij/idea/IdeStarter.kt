@@ -44,6 +44,7 @@ import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
+import com.intellij.openapi.wm.impl.EarlyProjectFrame
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -104,6 +105,7 @@ open class IdeStarter : ModernApplicationStarter() {
         }
         withContext(starter, openProjectBlock)
       }
+      EarlyProjectFrame.disposeIfUnused()
 
       app.serviceAsync<PerformanceWatcher>()
       // cache it as IdeEventQueue should use loaded PerformanceWatcher service as soon as it is ready (getInstanceIfCreated is used)

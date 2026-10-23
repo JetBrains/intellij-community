@@ -142,9 +142,7 @@ object FUSProjectHotStartUpMeasurer {
 
     class ProjectTypeReportEvent(val projectsType: ProjectsType) : Event
     class ProjectPathReportEvent(override val projectId: ProjectId, val hasSettings: Boolean) : ProjectDependentEvent
-    class FrameBecameVisibleEvent(override val projectId: ProjectId) : FUSReportableEvent, ProjectDependentEvent {
-      val time: Long = System.nanoTime()
-    }
+    class FrameBecameVisibleEvent(override val projectId: ProjectId, val time: Long = System.nanoTime()) : FUSReportableEvent, ProjectDependentEvent
 
     class FrameBecameInteractiveEvent(override val projectId: ProjectId) : FUSReportableEvent, ProjectDependentEvent {
       val time: Long = System.nanoTime()
@@ -367,8 +365,12 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   fun frameBecameVisible() {
+    frameBecameVisible(System.nanoTime())
+  }
+
+  fun frameBecameVisible(time: Long) {
     withRequiredProjectMarker { projectId ->
-      sendEvent(Event.FrameBecameVisibleEvent(projectId))
+      sendEvent(Event.FrameBecameVisibleEvent(projectId, time))
       WelcomeScreenCollector.frameBecameVisible(projectId)
     }
   }

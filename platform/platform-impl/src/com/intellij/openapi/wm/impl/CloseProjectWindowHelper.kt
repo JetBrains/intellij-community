@@ -122,13 +122,13 @@ open class CloseProjectWindowHelper {
  * opens the welcome screen project, or `false` if no welcome screen project opens.
  */
 internal fun opensWelcomeScreenProjectAfterClose(projectToClose: Project): Boolean {
+  return opensWelcomeScreenProject() && !WelcomeScreenProjectProvider.isWelcomeScreenProject(projectToClose)
+}
+
+/** Returns `true` if the product opens the welcome screen project when no project is open. */
+internal fun opensWelcomeScreenProject(): Boolean {
   // JetBrains Client doesn't have its own non-modal welcome screen.
-  if (PlatformUtils.isJetBrainsClient() ||
-      !WelcomeAccessPoint.isAvailable() ||
-      WelcomeScreenProjectProvider.isWelcomeScreenProject(projectToClose)) {
-    return false
-  }
-  return getWelcomeScreenProjectProvider() != null
+  return !PlatformUtils.isJetBrainsClient() && WelcomeAccessPoint.isAvailable() && getWelcomeScreenProjectProvider() != null
 }
 
 /**

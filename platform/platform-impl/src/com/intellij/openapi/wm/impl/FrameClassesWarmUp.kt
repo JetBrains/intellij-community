@@ -37,6 +37,12 @@ fun initializeFrameClasses() {
   warmUpFrameClasses(initialize = true)
 }
 
+/** Loads the frame classes without initialization, for a frame that is shown before the look and feel is installed. */
+@Internal
+fun loadFrameClasses() {
+  warmUpFrameClasses(initialize = false)
+}
+
 @VisibleForTesting
 internal fun warmUpFrameClasses(initialize: Boolean) {
   val classLoader = FrameClassesWarmUp::class.java.classLoader

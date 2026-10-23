@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.impl.getOrCreateIdeFrameDeferred
@@ -37,6 +38,9 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ScreenUtil
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
+import com.intellij.ide.GeneralSettings
+import com.intellij.ide.ui.UISettings
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -335,6 +339,16 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       }
 
       application.messageBus.syncPublisher(WindowManagerListener.TOPIC).onFramesChanged()
+
+      if (!application.isHeadlessEnvironment) {
+        EarlyProjectFrame.saveState(
+          info = getFrameInfoByFrameHelper(releasedFrameHelper),
+          undecorated = CustomWindowHeaderUtil.hideNativeLinuxTitle(UISettings.getInstance()),
+          projectOpen = opensWelcomeScreenProject() ||
+                        application.isExitInProgress && project !is LightEditCompatible && GeneralSettings.getInstance().isReopenLastProject,
+          background = EditorColorsManager.getInstance().globalScheme.defaultBackground,
+        )
+      }
     }
 
     runCatching {
