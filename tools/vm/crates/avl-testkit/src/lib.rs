@@ -37,6 +37,22 @@ pub fn free_port_below_ephemeral_floor() -> u16 {
         .unwrap_or_else(|| panic!("no port of {FIXED_TEST_PORTS:?} is free on the loopback"))
 }
 
+/// A loopback port where nothing listens, and the sockets that hold it. While they live, the port refuses a connect,
+/// and no other socket of the host receives it from a `bind` to port 0 or as the source port of a `connect`.
+///
+/// The holder is the client end of a loopback connection, and it binds its port before it connects. A dropped
+/// listener frees its port for any process of the host. A bound socket that does not listen is not a refusal on
+/// macOS, because the kernel drops the SYN. The standard library cannot bind a client socket, so the sockets are
+/// tokio ones.
+pub async fn closed_port() -> (u16, impl Sized) {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let holder = tokio::net::TcpSocket::new_v4().unwrap();
+    holder.bind((std::net::Ipv4Addr::LOCALHOST, 0).into()).unwrap();
+    let holder = holder.connect(listener.local_addr().unwrap()).await.unwrap();
+    let (accepted, _) = listener.accept().await.unwrap();
+    (holder.local_addr().unwrap().port(), (holder, accepted))
+}
+
 /// A file of the calling crate, e.g. `crate_path!("testdata/lane-transcript.ndjson")`.
 ///
 /// A macro, because `AVL_PACKAGE` and `CARGO_MANIFEST_DIR` must be the caller's, not this crate's.

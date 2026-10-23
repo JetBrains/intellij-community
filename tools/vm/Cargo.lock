@@ -345,6 +345,7 @@ name = "avl-testkit"
 version = "0.1.0"
 dependencies = [
  "pretty_assertions",
+ "tokio",
 ]
 
 [[package]]
