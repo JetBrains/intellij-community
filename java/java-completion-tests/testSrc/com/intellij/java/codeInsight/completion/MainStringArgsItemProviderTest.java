@@ -11,7 +11,7 @@ import com.intellij.testFramework.NeedsIndex;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaMainStringArgsContributorTest extends NormalCompletionTestCase {
+public class MainStringArgsItemProviderTest extends NormalCompletionTestCase {
 
   @NotNull
   @Override
