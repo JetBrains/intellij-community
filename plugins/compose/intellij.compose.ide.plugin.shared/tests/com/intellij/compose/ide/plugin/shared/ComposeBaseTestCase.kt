@@ -3,7 +3,6 @@ package com.intellij.compose.ide.plugin.shared
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -17,7 +16,6 @@ import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.utils.editor.reloadFromDisk
 import com.intellij.util.io.DigestUtil
 import org.gradle.util.GradleVersion
-import org.jetbrains.kotlin.idea.base.test.AndroidStudioTestUtils
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightBaseTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
@@ -46,11 +44,8 @@ abstract class ComposeBaseTestCase : GradleCodeInsightBaseTestCase() {
   @Parameter
   protected lateinit var sourceSetName: String
 
-  /**
-   * The absolute root of the Gradle project in the test data. The directory name is also the name of the project.
-   * The default is the community home. Each subclass resolves its part of the path against the inherited root.
-   */
-  protected open val testDataProjectRoot: Path = Path.of(PathManagerEx.getCommunityHomePath())
+  /** The absolute root of the Gradle project in the test data. The directory name is also the name of the project. */
+  protected abstract val testDataProjectRoot: Path
 
   /** The Gradle version that imports the project. */
   protected open val targetGradleVersion: String = TARGET_GRADLE_VERSION
