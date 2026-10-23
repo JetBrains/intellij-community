@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use super::{crash_message, filters, is_jvm_flag, parse_shard, split_event, test_names, Shard};
+use super::{
+    check_case_names, crash_message, filters, is_jvm_flag, parse_shard, split_event, test_names,
+    Shard,
+};
 use crate::event::Event;
 use std::ffi::OsStr;
 
@@ -15,17 +18,48 @@ fn drops_the_options_of_the_java_launcher() {
 
 #[test]
 fn asks_for_no_filter_when_bazel_names_no_test() {
-    assert!(filters("").is_empty());
+    assert!(filters("", None).is_empty());
 }
 
 #[test]
 fn splits_the_test_names_bazel_asks_for() {
-    assert_eq!(filters("a::b,c"), vec!["a::b".to_owned(), "c".to_owned()]);
+    assert_eq!(filters("a::b,c", None), vec!["a::b".to_owned(), "c".to_owned()]);
 }
 
 #[test]
 fn drops_an_empty_name() {
-    assert_eq!(filters("a,,b,"), vec!["a".to_owned(), "b".to_owned()]);
+    assert_eq!(filters("a,,b,", None), vec!["a".to_owned(), "b".to_owned()]);
+}
+
+/// `bt` passes a JUnit filter: `<class>#<case>` for one case, and the class alone for every case.
+#[test]
+fn reads_a_junit_filter_of_the_class_of_the_report() {
+    let class = Some("com.example.ModelTest");
+
+    assert_eq!(
+        filters("com.example.ModelTest#authoredModelIsValid", class),
+        vec!["authoredModelIsValid".to_owned()]
+    );
+    assert!(filters("com.example.ModelTest", class).is_empty());
+    assert_eq!(filters("model::a,b", class), vec!["model::a".to_owned(), "b".to_owned()]);
+    assert_eq!(
+        filters("com.example.ModelTest#a", None),
+        vec!["com.example.ModelTest#a".to_owned()]
+    );
+}
+
+#[test]
+fn refuses_two_tests_of_one_case_name_under_one_class() {
+    let names = ["model::a".to_owned(), "descriptors::a".to_owned()];
+
+    let error = check_case_names(&names, "com.example.ModelTest").expect_err("a refusal");
+
+    assert_eq!(
+        error.to_string(),
+        "The tests model::a and descriptors::a have the one case name a under the class \
+         com.example.ModelTest. Rename one of them."
+    );
+    check_case_names(&["model::a".to_owned(), "model::b".to_owned()], "C").expect("no refusal");
 }
 
 #[test]
