@@ -167,7 +167,7 @@ public final class ImmediatePainter {
                                  document.getTextLength() + ", highlighter's last offset:" + highlighter.getSegments().getLastValidOffset(),
                                  e);
     }
-    updateAttributes(editor, offset, attributes);
+    final Color backgroundAfterLineEnd = updateAttributes(editor, offset, attributes);
 
     final TextAttributes attributes1 = attributes.get(0);
     final TextAttributes attributes2 = attributes.get(1);
@@ -195,10 +195,12 @@ public final class ImmediatePainter {
     final Rectangle2D caretRectangle = new Rectangle2D.Float(p2x + width2 - caretShift, p2y - topOverhang,
                                                              caretWidth, caretHeight);
 
-    final float rectangle2Start = (float)PaintUtil.alignToInt(p2x, g, PaintUtil.RoundingMode.FLOOR);
     final float rectangle2End = (float)PaintUtil.alignToInt(p2x + width2 + caretWidth - caretShift, g, PaintUtil.RoundingMode.CEIL);
     final Rectangle2D rectangle1 = new Rectangle2D.Float(p2x - width1, p2y, width1, lineHeight);
-    final Rectangle2D rectangle2 = new Rectangle2D.Float(rectangle2Start, p2y, rectangle2End - rectangle2Start, lineHeight);
+    final Rectangle2D rectangle2 = new Rectangle2D.Float(p2x, p2y, width2, lineHeight);
+    final Rectangle2D afterLineEndRectangle = new Rectangle2D.Float(p2x + width2, p2y, rectangle2End - p2x - width2, lineHeight);
+    final Rectangle2D backgroundRectangle = new Rectangle2D.Float(p2x - width1, p2y, rectangle2End - p2x + width1, lineHeight);
+    final Color defaultBackground = editor.getBackgroundColor();
 
     final Consumer<Graphics2D> paintCaret = graphics -> {
       if (isBlockCursor) {
@@ -212,13 +214,20 @@ public final class ImmediatePainter {
       EditorUIUtil.setupAntialiasing(graphics);
       graphics.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.getEditorFractionalMetricsHint());
 
-      EditorPainter.fillRectExact(graphics, rectangle2, attributes2.getBackgroundColor());
+      EditorPainter.fillRectExact(graphics, backgroundRectangle, defaultBackground);
+      if (!attributes1.getBackgroundColor().equals(defaultBackground)) {
+        EditorPainter.fillRectExact(graphics, rectangle1, attributes1.getBackgroundColor());
+      }
+      if (!attributes2.getBackgroundColor().equals(defaultBackground)) {
+        EditorPainter.fillRectExact(graphics, rectangle2, attributes2.getBackgroundColor());
+      }
+      if (!backgroundAfterLineEnd.equals(defaultBackground)) {
+        EditorPainter.fillRectExact(graphics, afterLineEndRectangle, backgroundAfterLineEnd);
+      }
+      drawChar(graphics, c1, p2x - width1, p2y + ascent, font1, attributes1.getForegroundColor());
       drawChar(graphics, c2, p2x, p2y + ascent, font2, attributes2.getForegroundColor());
 
       if (!isSmoothCaretMovement) paintCaret.accept(graphics);
-
-      EditorPainter.fillRectExact(graphics, rectangle1, attributes1.getBackgroundColor());
-      drawChar(graphics, c1, p2x - width1, p2y + ascent, font1, attributes1.getForegroundColor());
     };
 
     final Shape originalClip = g.getClip();
@@ -348,14 +357,19 @@ public final class ImmediatePainter {
     return caretColor == null ? new JBColor(Gray._0, Gray._255) : caretColor;
   }
 
-  private static void updateAttributes(final EditorImpl editor, final int offset, final List<? extends TextAttributes> attributes) {
+  private static Color updateAttributes(final EditorImpl editor, final int offset, final List<? extends TextAttributes> attributes) {
     final List<RangeHighlighterEx> list1 = new ArrayList<>();
     final List<RangeHighlighterEx> list2 = new ArrayList<>();
+    final List<RangeHighlighterEx> afterLineEndHighlighters = new ArrayList<>();
 
     final Processor<RangeHighlighterEx> processor = highlighter -> {
       if (!highlighter.isValid()) return true;
 
       final boolean isLineHighlighter = highlighter.getTargetArea() == HighlighterTargetArea.LINES_IN_RANGE;
+
+      if (isLineHighlighter || highlighter.getEndOffset() > offset) {
+        afterLineEndHighlighters.add(highlighter);
+      }
 
       if (isLineHighlighter || highlighter.getStartOffset() < offset) {
         list1.add(highlighter);
@@ -374,6 +388,9 @@ public final class ImmediatePainter {
 
     updateAttributes(editor, attributes.get(0), list1);
     updateAttributes(editor, attributes.get(1), list2);
+    var afterLineEndAttributes = new TextAttributes();
+    updateAttributes(editor, afterLineEndAttributes, afterLineEndHighlighters);
+    return afterLineEndAttributes.getBackgroundColor();
   }
 
   // TODO Unify with com.intellij.openapi.editor.impl.view.IterationState.setAttributes

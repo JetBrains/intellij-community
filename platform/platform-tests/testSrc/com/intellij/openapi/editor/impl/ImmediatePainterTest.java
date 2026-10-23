@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.testFramework.junit5.RegistryKey;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.ui.JBColor;
 import org.junit.jupiter.api.Test;
@@ -80,11 +81,28 @@ public class ImmediatePainterTest extends ImmediatePainterTestCase {
   }
 
   @Test
+  @RegistryKey(key = "editor.text.fractional.metrics", value = "Enabled")
   public void testHighlighterForeground() {
     myFixture.runTest(() -> {
       init("a");
       addLineHighlighter(0, 1, HighlighterLayer.ERROR, foreground(JBColor.GREEN));
       assertRenderedCorrectly(1, 'b');
+    });
+  }
+
+  @Test
+  @RegistryKey(key = "editor.text.fractional.metrics", value = "Enabled")
+  void testHighlighterForegroundWithoutDoubleBuffering() {
+    myFixture.runTest(() -> {
+      setDoubleBufferingEnabled(false);
+      try {
+        init("a");
+        addLineHighlighter(0, 1, HighlighterLayer.ERROR, foreground(JBColor.GREEN));
+        assertRenderedCorrectly(1, 'b');
+      }
+      finally {
+        setDoubleBufferingEnabled(true);
+      }
     });
   }
 
@@ -109,10 +127,42 @@ public class ImmediatePainterTest extends ImmediatePainterTestCase {
   }
 
   @Test
+  @RegistryKey(key = "editor.text.fractional.metrics", value = "Enabled")
   public void testRangeHighlighter() {
     myFixture.runTest(() -> {
       init("a");
       addRangeHighlighter(0, 1, HighlighterLayer.ERROR, background(JBColor.GREEN));
+      assertRenderedCorrectly(1, 'b');
+    });
+  }
+
+  @Test
+  @RegistryKey(key = "editor.text.fractional.metrics", value = "Enabled")
+  void testRangeHighlighterOnTypedChar() {
+    myFixture.runTest(() -> {
+      init("a");
+      addRangeHighlighter(1, 1, HighlighterLayer.ERROR, background(JBColor.GREEN)).setGreedyToRight(true);
+      assertRenderedCorrectly(1, 'b');
+    });
+  }
+
+  @Test
+  @RegistryKey(key = "editor.text.fractional.metrics", value = "Enabled")
+  void testRangeHighlighterOverLineEnd() {
+    myFixture.runTest(() -> {
+      init("a\n");
+      addRangeHighlighter(0, 2, HighlighterLayer.ERROR, background(JBColor.GREEN));
+      assertRenderedCorrectly(1, 'b');
+    });
+  }
+
+  @Test
+  @RegistryKey(key = "editor.text.fractional.metrics", value = "Enabled")
+  void testAdjacentRangeHighlighters() {
+    myFixture.runTest(() -> {
+      init("a");
+      addRangeHighlighter(0, 1, HighlighterLayer.ERROR, background(JBColor.GREEN));
+      addRangeHighlighter(1, 1, HighlighterLayer.ERROR, background(JBColor.RED)).setGreedyToRight(true);
       assertRenderedCorrectly(1, 'b');
     });
   }
