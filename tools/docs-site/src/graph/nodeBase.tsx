@@ -1,7 +1,7 @@
 // The node chrome that the cards of every diagram share: the base box, the small text line, and the step badges.
 // A card appends its own skin to `nodeBase`, and the two never set the same utility.
 
-export const nodeBase = 'flex size-full flex-col justify-center gap-0.5 rounded-lg border px-3.5 py-2 text-node'
+export const nodeBase = 'flex size-full flex-col justify-center gap-0.5 rounded-lg border px-3.5 py-2 text-sm'
 export const nodeSmall = 'text-2xs leading-[1.3] text-muted-foreground wrap-anywhere'
 
 /** Sequence overlay for flow walkthroughs: the step numbers this node participates in. */

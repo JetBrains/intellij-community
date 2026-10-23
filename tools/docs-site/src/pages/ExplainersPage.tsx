@@ -25,7 +25,7 @@ export function ExplainersPage({ anchor }: { anchor: string | null }) {
               description={doc.description || undefined}
               meta={`${doc.chapters.length} chapters`}
             />
-            <ol className="mt-1.5 mb-0 grid list-decimal gap-0.5 pl-6 text-detail">
+            <ol className="mt-1.5 mb-0 grid list-decimal gap-0.5 pl-6 text-xs">
               {doc.chapters.map(chapter => (
                 <li key={chapter.id}><a href={explainerRoute(guideSlug(doc.path), chapter.id)}>{chapter.title}</a></li>
               ))}

@@ -35,7 +35,7 @@ function StepList({ steps, active, onGo }: { steps: HarvestedDiagramStep[], acti
               type="button"
               aria-current={current ? 'step' : undefined}
               className={cn(
-                'step-card flex w-full cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-detail leading-snug transition-colors',
+                'step-card flex w-full cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-xs leading-snug transition-colors',
                 current ? 'active border-primary bg-primary/8' : 'border-border bg-card hover:border-input',
               )}
               onClick={() => onGo(number)}
@@ -58,7 +58,7 @@ function StepList({ steps, active, onGo }: { steps: HarvestedDiagramStep[], acti
 function ChapterPager({ model }: { model: ExplainerRouteModel }) {
   const { previous } = model
   return (
-    <nav aria-label="Chapter pager" className="explainer-pager mt-6 grid gap-2.5 border-t border-border pt-4 text-detail">
+    <nav aria-label="Chapter pager" className="explainer-pager mt-6 grid gap-2.5 border-t border-border pt-4 text-xs">
       <HandOff model={model} />
       {previous !== null && <a href={model.hrefOf(previous)} className="justify-self-start">← {previous.title}</a>}
     </nav>
@@ -114,7 +114,7 @@ export function ExplainerPage({ slug, chapter, step, node }: { slug: string, cha
     <>
       <PageBreadcrumb crumbs={crumbs} className="mb-3.5" />
       <h1 className="explainer-title mt-0 mb-1 text-xl tracking-[-0.02em]">{doc.title}</h1>
-      {doc.description !== '' && <p className="mt-0 mb-4 text-detail text-muted-foreground">{doc.description}</p>}
+      {doc.description !== '' && <p className="mt-0 mb-4 text-xs text-muted-foreground">{doc.description}</p>}
       <ChapterRail chapters={chapters} active={current.id} hrefOf={model.hrefOf} stepsOf={model.stepsOf} upNext={atEnd ? model.next?.id ?? null : null} />
       <h2 className="explainer-chapter-title mt-0 mb-2 text-lg">
         <span className="mr-1.5 text-muted-foreground">{model.index + 1}.</span>

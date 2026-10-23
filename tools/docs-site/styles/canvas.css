@@ -46,7 +46,7 @@
 
 /* the detail panel embeds markdown at node size (must beat .markdown-body's font-size: inherit) */
 .detail-panel .markdown-body {
-  font-size: var(--text-node);
+  font-size: var(--text-sm);
 }
 
 /* ---- edges ---------------------------------------------------------------------------------- */

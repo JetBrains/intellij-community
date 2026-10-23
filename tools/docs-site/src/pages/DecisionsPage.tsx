@@ -60,7 +60,7 @@ function DecisionRow({ doc }: { doc: DecisionDoc }) {
           {doc.title}
         </a>
         {successor !== undefined && successor.adr !== undefined && (
-          <span className="text-detail text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {doc.adr.status === 'superseded' ? 'Superseded by ' : 'In part superseded by '}
             <a href={decisionRoute(successor.path)}>{adrNumberedTitle(successor.adr, successor.title)}</a>
           </span>
@@ -135,7 +135,7 @@ export function DecisionsPage({ anchor, status, topic }: {
         />
       </FilterBar>
       {hiddenCount > 0 && (
-        <p className="decision-hidden-note -mt-2 mb-3 text-detail text-muted-foreground">
+        <p className="decision-hidden-note -mt-2 mb-3 text-xs text-muted-foreground">
           {hiddenCount} records about this docs site are hidden.{' '}
           <Button variant="link" size="sm" className="h-auto p-0 align-baseline" onClick={() => go({ topic: ALL_TOPICS })}>
             Show them

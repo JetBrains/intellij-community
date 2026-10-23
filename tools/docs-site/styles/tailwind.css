@@ -196,15 +196,21 @@
 /* static: the plain CSS files (canvas/prose/source) consume var(--text-*)/var(--font-*) outside
    the Tailwind pipeline, so every step must be emitted even when no utility uses it */
 @theme static {
-  /* dense IDE-like type ramp (px, deliberately finer-grained than Tailwind's default —
-     10–13.5px steps carry canvas/chip text); sizes only, line-height inherits the root 1.55 */
+  /* the dense type ramp of an IDE, one role per step, whole pixels; sizes only, line-height inherits the root 1.55.
+     Each step name is one that cn (tailwind-merge) knows as a size, so cn keeps a color next to it
+     (src/typeRamp.test.ts). */
   --text-*: initial;
+  /* a badge, a kicker, a step number */
   --text-3xs: 10px;
-  --text-2xs: 11.5px;
+  /* a chip, a meta line, a canvas subtitle */
+  --text-2xs: 11px;
+  /* a detail line, a table of contents, a crumb */
   --text-xs: 12px;
-  --text-detail: 12.5px;
+  /* a control, a tree row, a diagram node: the 13px of the IDE */
   --text-sm: 13px;
-  --text-node: 13.5px;
+  /* a lead line */
+  --text-md: 14px;
+  /* the prose */
   --text-base: 15px;
   --text-lg: 17px;
   --text-xl: 22px;

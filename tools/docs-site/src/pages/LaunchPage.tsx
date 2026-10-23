@@ -105,7 +105,7 @@ function ChosenEntry({ entry, explain }: { entry: LaunchEntry, explain: string |
         <code className="launch-command min-w-0 flex-1 bg-transparent p-0 font-mono text-sm wrap-break-word text-foreground">{entry.command}</code>
         <CopyCommandButton command={entry.command} label="Copy" className="launch-copy shrink-0" />
       </div>
-      <p className="m-0 text-detail text-muted-foreground">
+      <p className="m-0 text-xs text-muted-foreground">
         Run it from the repository root. The run configuration is <code>{entry.configurationFile}</code>.
       </p>
       {explain !== null && (

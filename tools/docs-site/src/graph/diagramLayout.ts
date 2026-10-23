@@ -23,10 +23,13 @@ export const BOTTOM_PAD = 20
 // the same estimate as src/graph/views.ts: the canvas never measures the DOM (ADR 0097)
 const CARD_VPAD = 18
 const CARD_ROW_GAP = 2
+// a 13px text-sm title
 const TITLE_LINE_H = 20
-const TITLE_CHAR_W = 7.2
+const TITLE_CHAR_W = 7
+// an 11px text-2xs text, line-height 1.3
 const TEXT_LINE_H = 15
-const TEXT_CHAR_W = 6
+const TEXT_CHAR_W = 5.8
+// a 10px text-3xs kicker
 const KICKER_LINE_H = 14
 /** Horizontal padding, borders, the accent stripe, and the kind glyph. */
 const CARD_INNER_INSET = 50

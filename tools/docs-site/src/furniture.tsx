@@ -67,7 +67,7 @@ export function NotFoundPage({ kind, name, backHref, backLabel }: { kind: string
 export function SourceFooter({ path }: { path: string }) {
   const { href, external } = sourceHref(path)
   return (
-    <footer className="source-footer mt-10 text-detail text-muted-foreground">
+    <footer className="source-footer mt-10 text-xs text-muted-foreground">
       <Separator className="mb-3" />
       Source:{' '}
       <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}>

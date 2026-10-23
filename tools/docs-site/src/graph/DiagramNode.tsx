@@ -51,7 +51,7 @@ export function createDiagramNode(diagram: SiteConfig['diagram']) {
         )}
         <span className="flex items-start gap-1.5">
           {style.glyph !== null && <i className="diagram-node-glyph flex-none not-italic text-muted-foreground" aria-hidden="true">{style.glyph}</i>}
-          <strong className={`wrap-anywhere ${style.mono === true ? 'font-mono text-detail' : 'leading-[1.2]'}`}>{node.title}</strong>
+          <strong className={`wrap-anywhere ${style.mono === true ? 'font-mono text-xs' : 'leading-[1.2]'}`}>{node.title}</strong>
         </span>
         {node.text !== null && <small className={nodeSmall}>{node.text}</small>}
       </div>

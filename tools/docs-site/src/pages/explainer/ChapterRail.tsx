@@ -55,7 +55,7 @@ export function ChapterRail({ chapters, active, hrefOf, stepsOf, upNext }: {
               aria-current={state === 'current' ? 'page' : undefined}
               data-state={state}
               className={cn(
-                'chapter-link relative flex flex-none items-center gap-2 rounded-md border px-2.5 py-1.5 text-detail leading-tight hover:no-underline md:flex-auto md:items-start md:border-0 md:px-1.5',
+                'chapter-link relative flex flex-none items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs leading-tight hover:no-underline md:flex-auto md:items-start md:border-0 md:px-1.5',
                 state === 'current'
                   ? 'border-primary bg-primary/8 font-medium text-foreground'
                   : 'border-border text-muted-foreground hover:text-foreground md:hover:bg-muted',

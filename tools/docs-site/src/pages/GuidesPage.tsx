@@ -85,7 +85,7 @@ export function GuidesPage({ anchor }: { anchor: string | null }) {
           <NoteList docs={activeNotes} />
           {historicalNotes.length > 0 && (
             <details className="historical-notes mt-3">
-              <summary className="cursor-pointer text-detail text-muted-foreground">
+              <summary className="cursor-pointer text-xs text-muted-foreground">
                 {historicalNotes.length} historical {historicalNotes.length === 1 ? 'note' : 'notes'}: finished or set aside
               </summary>
               <NoteList docs={historicalNotes} />

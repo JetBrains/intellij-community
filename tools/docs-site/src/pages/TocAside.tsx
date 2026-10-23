@@ -98,7 +98,7 @@ export function TocAside({ items }: { items: TocItem[] }) {
   }, [active])
 
   const links = (
-    <nav aria-label="On this page" className="grid text-detail leading-snug">
+    <nav aria-label="On this page" className="grid text-xs leading-snug">
       <div className="mb-1.5 text-3xs font-bold uppercase tracking-[0.08em] text-muted-foreground">On this page</div>
       {items.map((item, index) => (
         <Fragment key={item.href}>

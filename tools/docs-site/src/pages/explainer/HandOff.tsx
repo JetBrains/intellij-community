@@ -20,8 +20,8 @@ export function HandOff({ model, compact = false, className }: { model: Explaine
       <a href={model.hrefOf(next)} className={box} data-hand-off="chapter">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className={eyebrow}>{`Next · chapter ${model.index + 2} of ${model.chapters.length}`}</span>
-          <strong className={cn('text-foreground group-hover:text-primary', compact ? 'truncate text-detail' : 'text-sm')}>{next.title}</strong>
-          {next.question !== null && <span className={cn('text-muted-foreground', compact ? 'truncate text-2xs' : 'text-detail')}>{next.question}</span>}
+          <strong className={cn('text-foreground group-hover:text-primary', compact ? 'truncate text-xs' : 'text-sm')}>{next.title}</strong>
+          {next.question !== null && <span className={cn('text-muted-foreground', compact ? 'truncate text-2xs' : 'text-xs')}>{next.question}</span>}
         </span>
         <ArrowRightIcon className="size-4 flex-none text-muted-foreground group-hover:text-primary" aria-hidden="true" />
       </a>
@@ -32,7 +32,7 @@ export function HandOff({ model, compact = false, className }: { model: Explaine
     <a href={target.href} className={box} data-hand-off="end">
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className={eyebrow}>End of the explainer</span>
-        <strong className={cn('text-foreground group-hover:text-primary', compact ? 'truncate text-detail' : 'text-sm')}>
+        <strong className={cn('text-foreground group-hover:text-primary', compact ? 'truncate text-xs' : 'text-sm')}>
           {target.title === null ? 'Back to explainers' : `Next explainer: ${target.title}`}
         </strong>
       </span>
