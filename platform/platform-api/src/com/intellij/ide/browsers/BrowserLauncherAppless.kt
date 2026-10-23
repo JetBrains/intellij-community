@@ -1,12 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
-import com.intellij.execution.CommandLineUtil
+import com.intellij.diagnostic.LoadingState
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.execution.util.ExecUtil
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.GeneralLocalSettings
 import com.intellij.ide.IdeBundle
@@ -20,7 +19,6 @@ import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
@@ -45,8 +43,53 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     fun canUseSystemDefaultBrowserPolicy(): Boolean =
       isDesktopActionSupported(Desktop.Action.BROWSE) || OS.CURRENT == OS.Windows || OS.CURRENT == OS.macOS || PathEnvironmentVariableUtil.isOnPath("xdg-open")
 
-    private fun isDesktopActionSupported(action: Desktop.Action): Boolean =
+    internal fun isDesktopActionSupported(action: Desktop.Action): Boolean =
       Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(action)
+
+    /**
+     * Starts [command], which opens [url] in [browser], in the background.
+     * A failure goes to [showBrowserError]. A `null` [browser] means the system default browser.
+     */
+    @ApiStatus.Internal
+    @JvmStatic
+    fun runBrowserCommand(command: GeneralCommandLine, url: String, browser: WebBrowser?, project: Project?) {
+      LOG.debug { "starting [${command.commandLineString}]" }
+      runInBackground(project) {
+        try {
+          val output = CapturingProcessHandler.Silent(command).runProcess(10000, false)
+          if (!output.checkSuccess(LOG) && output.exitCode == 1) {
+            @NlsSafe val error = output.stderrLines.firstOrNull()
+            showBrowserError(error, url, browser, project)
+          }
+        }
+        catch (e: ExecutionException) {
+          LOG.warn(e)
+          showBrowserError(e.message, url, browser, project)
+        }
+      }
+    }
+
+    /**
+     * Reports that [url] did not open in [browser]. A `null` [browser] means the system default browser.
+     * In the running IDE, the notification offers to fix the settings and to open the link again.
+     * Before the components load, the launcher only logs the message.
+     */
+    @ApiStatus.Internal
+    @JvmStatic
+    fun showBrowserError(message: @NotificationContent String?, url: String, browser: WebBrowser?, project: Project?) {
+      val launcher = currentLauncher()
+      // a link of the system default browser opens again with the default browser, because the developer can pick another one
+      launcher.showError(message, project, browser) { launcher.browse(url, browser, project) }
+    }
+
+    internal fun runInBackground(project: Project?, action: suspend CoroutineScope.() -> Unit) {
+      @Suppress("UsagesOfObsoleteApi")
+      val scope = ((project ?: ApplicationManager.getApplication()) as? ComponentManagerEx)?.getCoroutineScope() ?: MainScope()
+      (scope + Dispatchers.IO).launch(block = action)
+    }
+
+    private fun currentLauncher(): BrowserLauncherAppless =
+      (if (LoadingState.COMPONENTS_LOADED.isOccurred) instance as? BrowserLauncherAppless else null) ?: BrowserLauncherAppless()
   }
 
   override fun open(url: String) {
@@ -68,7 +111,7 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   }
 
   private fun openWithDesktopApi(file: Path) {
-    getScope(null).launch {
+    runInBackground(null) {
       try {
         LOG.debug { "trying Desktop#open on [${file}]" }
         @Suppress("IO_FILE_USAGE")
@@ -120,41 +163,26 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       return
     }
 
+    val url = uri.toString()
     val effectiveBrowser = browser ?: getDefaultBrowser()
-    if (effectiveBrowser === SystemDefaultBrowser) {
-      openWithSystemDefaultBrowser(uri, project)
-      return
-    }
     if (effectiveBrowser != null) {
-      openWithBrowser(uri.toString(), effectiveBrowser, project)
+      effectiveBrowser.browse(url, project)
       return
     }
 
     // before the components load, the launcher knows only the settings of GeneralLocalSettings
     val settings = generalSettings
     if (settings.useDefaultBrowser) {
-      openWithSystemDefaultBrowser(uri, project)
+      SystemDefaultBrowser.browse(url, project)
     }
     else {
-      val browserPath = settings.browserPath
-      spawn(GeneralCommandLine(BrowserUtil.getOpenBrowserCommand(browserPath, uri.toString(), emptyList(), false)), project, retry = {
-        browse(uri, browser = null, project)
-      })
-    }
-  }
-
-  private fun openWithSystemDefaultBrowser(uri: URI, project: Project?) {
-    if (isDesktopActionSupported(Desktop.Action.BROWSE)) {
-      openWithDesktopApi(uri, project)
-    }
-    else {
-      openWithDefaultBrowserCommand(uri.toString(), project)
+      runBrowserCommand(GeneralCommandLine(BrowserUtil.getOpenBrowserCommand(settings.browserPath, url, emptyList(), false)), url, null, project)
     }
   }
 
   private fun openMailToUrl(uri: URI, project: Project?): Boolean {
     if (uri.scheme == "mailto" && isDesktopActionSupported(Desktop.Action.MAIL)) {
-      getScope(project).launch {
+      runInBackground(project) {
         try {
           LOG.debug("trying Desktop#mail")
           Desktop.getDesktop().mail(uri)
@@ -180,74 +208,13 @@ open class BrowserLauncherAppless : BrowserLauncher() {
           it.openUrl(effectiveBrowser, url, project)
         }
         if (!handled) {
-          openWithBrowser(url, effectiveBrowser, project)
+          effectiveBrowser.browse(url, project)
         }
         return true
       }
     }
 
     return false
-  }
-
-  private fun openWithDesktopApi(uri: URI, project: Project?) {
-    getScope(project).launch {
-      try {
-        LOG.debug("trying Desktop#browse")
-        Desktop.getDesktop().browse(uri)
-      }
-      catch (e: Exception) {
-        LOG.warn("[${uri}]", e)
-        if (OS.CURRENT == OS.macOS && e.message!!.contains("Error code: -10814")) {
-          // if "No application knows how to open" the URL, there is no sense in retrying with the 'open' command
-          return@launch
-        }
-        openWithDefaultBrowserCommand(uri.toString(), project)
-      }
-    }
-  }
-
-  private fun openWithDefaultBrowserCommand(url: String, project: Project?) {
-    val retry = { browse(url, browser = null, project) }
-
-    val command = defaultBrowserCommand
-    if (command == null) {
-      showError(IdeBundle.message("browser.default.not.supported"), project, browser = null, retry)
-      return
-    }
-
-    spawn(GeneralCommandLine(command).withParameters(url), project, browser = null, retry)
-  }
-
-  private fun openWithBrowser(url: String, browser: WebBrowser, project: Project?) {
-    val retry = { openWithBrowser(url, browser, project) }
-
-    val browserPath = PathUtil.toSystemDependentName(browser.path)
-    if (browserPath.isNullOrBlank()) {
-      showError(browser.browserNotFoundMessage, project, browser, retry)
-      return
-    }
-
-    val parameters = browser.specificSettings?.additionalParameters ?: emptyList()
-    val environment = browser.specificSettings?.environmentVariables ?: emptyMap()
-    val command = GeneralCommandLine(BrowserUtil.getOpenBrowserCommand(browserPath, url, parameters, false)).withEnvironment(environment)
-    spawn(command, project, browser, retry)
-  }
-
-  private fun spawn(command: GeneralCommandLine, project: Project?, browser: WebBrowser? = null, retry: (() -> Unit)? = null) {
-    LOG.debug { "starting [${command.commandLineString}]" }
-    getScope(project).launch {
-      try {
-        val output = CapturingProcessHandler.Silent(command).runProcess(10000, false)
-        if (!output.checkSuccess(LOG) && output.exitCode == 1) {
-          @NlsSafe val error = output.stderrLines.firstOrNull()
-          showError(error, project, browser, retry)
-        }
-      }
-      catch (e: ExecutionException) {
-        LOG.warn(e)
-        showError(e.message, project, browser, retry)
-      }
-    }
   }
 
   protected open fun signUrl(url: String): String = url
@@ -264,15 +231,4 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   private val generalSettings: GeneralLocalSettings
     get() = if (ApplicationManager.getApplication() != null) GeneralLocalSettings.getInstance() else GeneralLocalSettings()
 
-  private val defaultBrowserCommand: List<String>?
-    get() = when {
-      OS.CURRENT == OS.Windows -> listOf(CommandLineUtil.getWinShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""))
-      OS.CURRENT == OS.macOS -> listOf(ExecUtil.openCommandPath)
-      PathEnvironmentVariableUtil.isOnPath("xdg-open") -> listOf("xdg-open")
-      else -> null
-    }
-
-  private fun getScope(project: Project?): CoroutineScope =
-    @Suppress("UsagesOfObsoleteApi")
-    (((project ?: ApplicationManager.getApplication()) as? ComponentManagerEx)?.getCoroutineScope() ?: MainScope()) + Dispatchers.IO
 }
