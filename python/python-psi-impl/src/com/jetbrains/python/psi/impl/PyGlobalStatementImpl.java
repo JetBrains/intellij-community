@@ -5,7 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiListLikeElement;
 import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -23,8 +22,6 @@ import java.util.List;
 
 @ApiStatus.Internal
 public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStatement, PsiListLikeElement {
-  private static final TokenSet TARGET_EXPRESSION_SET = TokenSet.create(PyElementTypes.TARGET_EXPRESSION);
-
   public PyGlobalStatementImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -36,7 +33,7 @@ public class PyGlobalStatementImpl extends PyElementImpl implements PyGlobalStat
 
   @Override
   public PyTargetExpression @NotNull [] getGlobals() {
-    return childrenToPsi(TARGET_EXPRESSION_SET, PyTargetExpression.EMPTY_ARRAY);
+    return childrenToPsi(PyElementTypes.TARGET_EXPRESSIONS, PyTargetExpression.EMPTY_ARRAY);
   }
 
   public @Nullable PsiNamedElement getNamedElement(final @NotNull String the_name) {

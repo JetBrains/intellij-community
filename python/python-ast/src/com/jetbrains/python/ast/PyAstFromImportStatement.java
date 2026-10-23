@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.ast;
 
+import com.jetbrains.python.PyElementTypes;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
@@ -61,8 +62,9 @@ public interface PyAstFromImportStatement extends PyAstImportStatementBase,
   /**
    * @return the star in "from ... import *"
    */
-  @Nullable
-  PyAstStarImportElement getStarImportElement();
+  default @Nullable PyAstStarImportElement getStarImportElement() {
+    return childToPsi(PyElementTypes.STAR_IMPORT_ELEMENT);
+  }
 
   /**
    * @return number of dots in relative "from" clause, or 0 in absolute import.

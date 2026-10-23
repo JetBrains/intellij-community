@@ -2,7 +2,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExceptPart;
@@ -13,8 +12,6 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public class PyTryExceptStatementImpl extends PyElementImpl implements PyTryExceptStatement {
-  private static final TokenSet EXCEPT_BLOCKS = TokenSet.create(PyElementTypes.EXCEPT_PART);
-
   public PyTryExceptStatementImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -26,6 +23,6 @@ public class PyTryExceptStatementImpl extends PyElementImpl implements PyTryExce
 
   @Override
   public PyExceptPart @NotNull [] getExceptParts() {
-    return childrenToPsi(EXCEPT_BLOCKS, PyExceptPart.EMPTY_ARRAY);
+    return childrenToPsi(PyElementTypes.EXCEPT_PARTS, PyExceptPart.EMPTY_ARRAY);
   }
 }

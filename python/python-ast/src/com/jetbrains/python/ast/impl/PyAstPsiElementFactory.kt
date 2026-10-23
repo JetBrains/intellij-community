@@ -7,10 +7,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.QualifiedName
 import com.intellij.util.IncorrectOperationException
-import com.jetbrains.python.PyElementTypes
 import com.jetbrains.python.PyPsiElementFactory
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.PythonLanguage
@@ -19,7 +17,6 @@ import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.jetbrains.python.PythonDialectsTokenSetProvider
 import com.jetbrains.python.ast.PyAstAnnotation
 import com.jetbrains.python.ast.PyAstArgumentList
 import com.jetbrains.python.ast.PyAstAsPattern
@@ -84,7 +81,6 @@ import com.jetbrains.python.ast.PyAstNoneLiteralExpression
 import com.jetbrains.python.ast.PyAstNonlocalStatement
 import com.jetbrains.python.ast.PyAstNumericLiteralExpression
 import com.jetbrains.python.ast.PyAstOrPattern
-import com.jetbrains.python.ast.PyAstParameter
 import com.jetbrains.python.ast.PyAstParameterList
 import com.jetbrains.python.ast.PyAstParenthesizedExpression
 import com.jetbrains.python.ast.PyAstPassStatement
@@ -133,12 +129,6 @@ import kotlin.concurrent.Volatile
 
 private typealias F = Function<ASTNode, PsiElement>
 
-private val KEY_VALUE_EXPRESSIONS by lazy { TokenSet.create(PyElementTypes.KEY_VALUE_EXPRESSION) }
-private val TARGET_EXPRESSION_SET by lazy { TokenSet.create(PyElementTypes.TARGET_EXPRESSION) }
-private val EXCEPT_PART_SET by lazy { TokenSet.create(PyElementTypes.EXCEPT_PART) }
-private val DECORATOR_SET by lazy { TokenSet.create(PyElementTypes.DECORATOR) }
-private val IMPORT_ELEMENT_SET by lazy { TokenSet.create(PyElementTypes.IMPORT_ELEMENT) }
-private val TYPE_PARAMETER_SET by lazy { TokenSet.create(PyElementTypes.TYPE_PARAMETER) }
 
 private abstract class PyAstBaseElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), PyAstElement {
   override fun accept(visitor: PsiElementVisitor) {
@@ -158,42 +148,26 @@ class PyAstPsiElementFactory : PyPsiElementFactory() {
          override fun getTextOffset(): Int = super<PyAstFunction>.getTextOffset()
          override fun getName(): String? = super<PyAstFunction>.getName()
          override fun setName(name: String): PsiElement = throw IncorrectOperationException()
-         override fun getDecoratorList(): PyAstDecoratorList? = childToPsi(PyElementTypes.DECORATOR_LIST)
-         override fun getParameterList(): PyAstParameterList = childToPsiNotNull(PyElementTypes.PARAMETER_LIST)
-         override fun getTypeParameterList(): PyAstTypeParameterList? = childToPsi(PyElementTypes.TYPE_PARAMETER_LIST)
          override val modifier: PyAstFunction.Modifier? = null
-         override val annotation: PyAstAnnotation?
-           get() = childToPsi(PyElementTypes.ANNOTATION)
        }
     }
   override val classDeclarationConstructor: Function<in ASTNode, out PsiElement> = F {
       object : PyAstBaseElementImpl(it), PyAstClass {
         override fun getName(): String? = super<PyAstClass>.getName()
         override fun setName(name: String): PsiElement = throw IncorrectOperationException()
-        override fun getDecoratorList(): PyAstDecoratorList? = childToPsi(PyElementTypes.DECORATOR_LIST)
-        override fun getTypeParameterList(): PyAstTypeParameterList? = childToPsi(PyElementTypes.TYPE_PARAMETER_LIST)
-        override fun getSuperClassExpressions(): Array<PyAstExpression> = getSuperClassExpressionList()?.arguments
-                                                                          ?: PyAstExpression.EMPTY_ARRAY
       }
     }
   override val parameterListConstructor: Function<in ASTNode, out PsiElement> = F {
-      object : PyAstBaseElementImpl(it), PyAstParameterList {
-        override fun getParameters(): Array<PyAstParameter> = childrenToPsi(PythonDialectsTokenSetProvider.getInstance().parameterTokens,
-                                                                            emptyArray())
-      }
+      object : PyAstBaseElementImpl(it), PyAstParameterList {}
     }
   override val decoratorListConstructor: Function<in ASTNode, out PsiElement> = F {
-      object : PyAstBaseElementImpl(it), PyAstDecoratorList {
-        override fun getDecorators(): Array<PyAstDecorator> = childrenToPsi(DECORATOR_SET, emptyArray())
-      }
+      object : PyAstBaseElementImpl(it), PyAstDecoratorList {}
     }
   override val namedParameterConstructor: Function<in ASTNode, out PsiElement> = F {
       object : PyAstBaseElementImpl(it), PyAstNamedParameter {
         override fun getTextOffset(): Int = super<PyAstNamedParameter>.getTextOffset()
         override fun getName(): String? = super<PyAstNamedParameter>.getName()
         override fun setName(name: String): PsiElement = throw IncorrectOperationException()
-        override val annotation: PyAstAnnotation?
-          get() = childToPsi(PyElementTypes.ANNOTATION)
       }
     }
   override val tupleParameterConstructor: Function<in ASTNode, out PsiElement> = F {
@@ -284,15 +258,11 @@ class PyAstPsiElementFactory : PyPsiElementFactory() {
           }
           return result.value
         }
-        override fun getImportElements(): Array<PyAstImportElement> = childImports()
-        override fun getStarImportElement(): PyAstStarImportElement? = childToPsi(PyElementTypes.STAR_IMPORT_ELEMENT)
       }
     }
 
   override val importStatementConstructor: Function<in ASTNode, out PsiElement> = F {
-      object : PyAstBaseElementImpl(it), PyAstImportStatement {
-        override fun getImportElements(): Array<PyAstImportElement> = childrenToPsi(IMPORT_ELEMENT_SET, emptyArray())
-      }
+      object : PyAstBaseElementImpl(it), PyAstImportStatement {}
     }
   override val targetExpressionConstructor: Function<in ASTNode, out PsiElement> = F {
       object : PyAstBaseElementImpl(it), PyAstTargetExpression {
@@ -308,15 +278,11 @@ class PyAstPsiElementFactory : PyPsiElementFactory() {
       }
     }
   override val typeParameterListConstructor: Function<in ASTNode, out PsiElement> = F {
-      object : PyAstBaseElementImpl(it), PyAstTypeParameterList {
-        override fun getTypeParameters(): MutableList<out PyAstTypeParameter> =
-          childrenToPsi(TYPE_PARAMETER_SET, emptyArray<PyAstTypeParameter>()).toMutableList()
-      }
+      object : PyAstBaseElementImpl(it), PyAstTypeParameterList {}
     }
   override val typeAliasStatementConstructor: Function<in ASTNode, out PsiElement> = F {
       object : PyAstBaseElementImpl(it), PyAstTypeAliasStatement {
         override fun setName(name: String): PsiElement = throw IncorrectOperationException()
-        override fun getTypeParameterList(): PyAstTypeParameterList? = childToPsi(PyElementTypes.TYPE_PARAMETER_LIST)
       }
     }
   override val printTargetConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstPrintTarget {} }
@@ -337,47 +303,31 @@ class PyAstPsiElementFactory : PyPsiElementFactory() {
         return result
       }
 
-      override fun getRawTargets(): Array<PyAstExpression> = PyAstAssignmentStatement.calcTargets(this, true, PyAstExpression.EMPTY_ARRAY)
-
       override fun subtreeChanged() {
         super.subtreeChanged()
         _targets = null
       }
     } }
   override val augAssignmentStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstAugAssignmentStatement {} }
-  override val assertStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstAssertStatement {
-      override val arguments: Array<PyAstExpression>
-        get() = childExpressions()
-    } }
+  override val assertStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstAssertStatement {} }
   override val breakStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstBreakStatement {} }
   override val continueStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstContinueStatement {} }
-  override val delStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstDelStatement {
-      override fun getTargets(): Array<PyAstExpression> = childExpressions()
-    } }
+  override val delStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstDelStatement {} }
   override val execStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstExecStatement {} }
   override val forStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstForStatement {} }
   override val typeDeclarationStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstTypeDeclarationStatement {} }
-  override val globalStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstGlobalStatement {
-      override fun getGlobals(): Array<PyAstTargetExpression> = childTargetExpressions()
-    } }
+  override val globalStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstGlobalStatement {} }
 
   override val ifStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstIfStatement {} }
   override val passStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstPassStatement {} }
   override val printStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstPrintStatement {} }
-  override val raiseStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstRaiseStatement {
-      override fun getExpressions(): Array<PyAstExpression> = childExpressions()
-    } }
+  override val raiseStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstRaiseStatement {} }
 
   override val returnStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstReturnStatement {} }
-  override val tryExceptStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstTryExceptStatement {
-      override fun getExceptParts(): Array<PyAstExceptPart> = childrenToPsi(EXCEPT_PART_SET,
-                                                                            PyAstExceptPart.EMPTY_ARRAY)
-    } }
+  override val tryExceptStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstTryExceptStatement {} }
   override val withStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstWithStatement {} }
   override val whileStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstWhileStatement {} }
-  override val nonlocalStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstNonlocalStatement {
-      override fun getVariables(): Array<PyAstTargetExpression> = childTargetExpressions()
-    } }
+  override val nonlocalStatementConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstNonlocalStatement {} }
   override val withItemConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstWithItem {} }
   override val emptyExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstEmptyExpression {} }
   override val referenceExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstReferenceExpression {
@@ -438,12 +388,8 @@ class PyAstPsiElementFactory : PyPsiElementFactory() {
   override val binaryExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstBinaryExpression {} }
   override val prefixExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstPrefixExpression {} }
   override val callExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstCallExpression {} }
-  override val listLiteralExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstListLiteralExpression {
-      override fun getElements(): Array<PyAstExpression> = childExpressions()
-    } }
-  override val tupleExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstTupleExpression<PyAstExpression> {
-      override fun getElements(): Array<PyAstExpression> = childExpressions()
-    } }
+  override val listLiteralExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstListLiteralExpression {} }
+  override val tupleExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstTupleExpression<PyAstExpression> {} }
   override val keywordArgumentExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstKeywordArgument {
       override fun getName(): String? = super<PyAstKeywordArgument>.getName()
       override fun setName(name: String): PsiElement = throw IncorrectOperationException()
@@ -451,17 +397,13 @@ class PyAstPsiElementFactory : PyPsiElementFactory() {
   override val starArgumentExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstStarArgument {} }
   override val lambdaExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstLambdaExpression {} }
   override val listCompExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstListCompExpression {} }
-  override val dictLiteralExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstDictLiteralExpression {
-      override fun getElements(): Array<PyAstKeyValueExpression> = childrenToPsi(KEY_VALUE_EXPRESSIONS, PyAstKeyValueExpression.EMPTY_ARRAY)
-    } }
+  override val dictLiteralExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstDictLiteralExpression {} }
   override val keyValueExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstKeyValueExpression {} }
   override val reprExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstReprExpression {} }
   override val generatorExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstGeneratorExpression {} }
   override val conditionalExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstConditionalExpression {} }
   override val yieldExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstYieldExpression {} }
-  override val setLiteralExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstSetLiteralExpression {
-      override fun getElements(): Array<PyAstExpression> = childExpressions()
-    } }
+  override val setLiteralExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstSetLiteralExpression {} }
   override val dictCompExpressionConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstDictCompExpression {} }
   override val ifPartIfConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstIfPartIf {} }
   override val ifPartElifConstructor: Function<in ASTNode, out PsiElement> = F { object : PyAstBaseElementImpl(it), PyAstIfPartElif {} }
@@ -508,13 +450,4 @@ class PyAstPsiElementFactory : PyPsiElementFactory() {
 
   override fun createStringLeaf(type: IElementType, text: CharSequence): LeafElement =
     object : LeafPsiElement(type, text), PyAstPlainStringElement {}
-
-  private fun PyAstElement.childExpressions(): Array<PyAstExpression> =
-    childrenToPsi(PythonDialectsTokenSetProvider.getInstance().expressionTokens, PyAstExpression.EMPTY_ARRAY)
-
-  private fun PyAstElement.childTargetExpressions(): Array<PyAstTargetExpression> =
-    childrenToPsi(TARGET_EXPRESSION_SET, PyAstTargetExpression.EMPTY_ARRAY)
-
-  private fun PyAstFromImportStatement.childImports(): Array<PyAstImportElement> =
-    childrenToPsi(IMPORT_ELEMENT_SET, emptyArray())
 }

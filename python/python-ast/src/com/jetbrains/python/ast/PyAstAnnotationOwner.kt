@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.ast
 
+import com.jetbrains.python.PyElementTypes
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 interface PyAstAnnotationOwner : PyAstElement {
   val annotation: PyAstAnnotation?
+    get() = childToPsi(PyElementTypes.ANNOTATION)
 
   /**
    * Returns the text of the annotation with the leading colon and arrow stripped.

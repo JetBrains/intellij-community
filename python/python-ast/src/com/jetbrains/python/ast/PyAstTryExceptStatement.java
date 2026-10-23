@@ -29,7 +29,9 @@ public interface PyAstTryExceptStatement extends PyAstCompoundStatement, PyAstSt
     return childToPsiNotNull(PyElementTypes.TRY_PART);
   }
 
-  PyAstExceptPart @NotNull [] getExceptParts();
+  default PyAstExceptPart @NotNull [] getExceptParts() {
+    return childrenToPsi(PyElementTypes.EXCEPT_PARTS, PyAstExceptPart.EMPTY_ARRAY);
+  }
 
   default @Nullable PyAstFinallyPart getFinallyPart() {
     return childToPsi(PyElementTypes.FINALLY_PART);

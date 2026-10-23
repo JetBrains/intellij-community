@@ -4,7 +4,6 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiListLikeElement;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
@@ -19,8 +18,6 @@ import java.util.List;
 
 @ApiStatus.Internal
 public class PyNonlocalStatementImpl extends PyElementImpl implements PyNonlocalStatement, PsiListLikeElement {
-  private static final TokenSet TARGET_EXPRESSION_SET = TokenSet.create(PyElementTypes.TARGET_EXPRESSION);
-
   public PyNonlocalStatementImpl(ASTNode astNode) {
     super(astNode);
   }
@@ -32,7 +29,7 @@ public class PyNonlocalStatementImpl extends PyElementImpl implements PyNonlocal
 
   @Override
   public PyTargetExpression @NotNull [] getVariables() {
-    return childrenToPsi(TARGET_EXPRESSION_SET, PyTargetExpression.EMPTY_ARRAY);
+    return childrenToPsi(PyElementTypes.TARGET_EXPRESSIONS, PyTargetExpression.EMPTY_ARRAY);
   }
 
   @Override

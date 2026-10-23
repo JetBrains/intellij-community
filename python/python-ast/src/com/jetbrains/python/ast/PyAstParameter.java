@@ -10,6 +10,8 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.Experimental
 public interface PyAstParameter extends PyAstElement {
+  PyAstParameter[] EMPTY_ARRAY = new PyAstParameter[0];
+
 
   /**
    * @return the named parameter which is represented by this parameter, or null if the parameter is a tuple.

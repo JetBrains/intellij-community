@@ -79,7 +79,10 @@ public interface PyAstClass extends PsiNameIdentifierOwner, PyAstCompoundStateme
    * <p/>
    * Operates at the AST level.
    */
-  PyAstExpression @NotNull [] getSuperClassExpressions();
+  default PyAstExpression @NotNull [] getSuperClassExpressions() {
+    final PyAstArgumentList argumentList = getSuperClassExpressionList();
+    return argumentList != null ? argumentList.getArguments() : PyAstExpression.EMPTY_ARRAY;
+  }
 
   @Override
   default @Nullable String getDocStringValue() {

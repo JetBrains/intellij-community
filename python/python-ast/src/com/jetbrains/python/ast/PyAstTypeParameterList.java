@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.ast;
 
+import java.util.Arrays;
+import com.jetbrains.python.PyElementTypes;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,8 +17,9 @@ import java.util.List;
 @ApiStatus.Experimental
 public interface PyAstTypeParameterList extends PyAstElement {
 
-  @NotNull
-  List<? extends PyAstTypeParameter> getTypeParameters();
+  default @NotNull List<? extends PyAstTypeParameter> getTypeParameters() {
+    return Arrays.asList(childrenToPsi(PyElementTypes.TYPE_PARAMETERS, PyAstTypeParameter.EMPTY_ARRAY));
+  }
 
   @Override
   default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {

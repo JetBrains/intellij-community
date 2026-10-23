@@ -8,7 +8,9 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Experimental
 public interface PyAstSequenceExpression extends PyAstExpression {
-  PyAstExpression @NotNull [] getElements();
+  default PyAstExpression @NotNull [] getElements() {
+    return childrenToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), EMPTY_ARRAY);
+  }
 
   /**
    * Calling {@link #getElements()} may take too much time in case of large literals with thousands of elements. If you only need to

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.ast;
 
+import com.jetbrains.python.PyElementTypes;
 import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,9 @@ public interface PyAstDecoratorList extends PyAstElement {
   /**
    * @return decorators of function, in order of declaration (outermost first).
    */
-  PyAstDecorator @NotNull [] getDecorators();
+  default PyAstDecorator @NotNull [] getDecorators() {
+    return childrenToPsi(PyElementTypes.DECORATORS, PyAstDecorator.EMPTY_ARRAY);
+  }
 
   default @Nullable PyAstDecorator findDecorator(String name) {
     final PyAstDecorator[] decorators = getDecorators();

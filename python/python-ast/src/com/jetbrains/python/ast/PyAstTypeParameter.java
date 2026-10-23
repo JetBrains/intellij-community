@@ -17,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.Experimental
 public interface PyAstTypeParameter extends PyAstElement, PsiNameIdentifierOwner, PyAstTypedElement {
+  PyAstTypeParameter[] EMPTY_ARRAY = new PyAstTypeParameter[0];
+
 
   enum Kind {
     TypeVar(0),

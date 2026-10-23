@@ -23,10 +23,6 @@ public interface PyAstTypeAliasStatement extends PyAstStatement, PsiNameIdentifi
     return nameNode != null ? nameNode.getPsi() : null;
   }
 
-  @Override
-  @Nullable
-  PyAstTypeParameterList getTypeParameterList();
-
   default @Nullable PyAstExpression getTypeExpression() {
     PsiElement child = getLastChild();
     while (child != null && !(child instanceof PyAstExpression)) {

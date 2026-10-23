@@ -72,8 +72,6 @@ interface PyAstFunction : PsiNameIdentifierOwner, PyAstCompoundStatement,
   override fun getDocStringExpression(): PyAstStringLiteralExpression? =
     DocStringUtilCore.findDocStringExpression(statementList)
 
-  override fun getTypeParameterList(): PyAstTypeParameterList?
-
   /**
    * Looks for two standard decorators to a function, or a wrapping assignment that closely follows it.
    *

@@ -117,7 +117,9 @@ public interface PyAstAssignmentStatement extends PyAstStatement, PyAstNamedElem
    *
    * @return the array of assignment target expressions
    */
-  PyAstExpression @NotNull [] getRawTargets();
+  default PyAstExpression @NotNull [] getRawTargets() {
+    return calcTargets(this, true, PyAstExpression.EMPTY_ARRAY);
+  }
 
   /**
    * @return rightmost expression in statement, which is supposedly the assigned value, or null.

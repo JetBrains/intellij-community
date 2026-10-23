@@ -120,6 +120,12 @@ public interface PyElementTypes {
   TokenSet STAR_PARAMETERS = TokenSet.create(NAMED_PARAMETER, STAR_ARGUMENT_EXPRESSION, STAR_EXPRESSION, DOUBLE_STAR_EXPRESSION);
   TokenSet CLASS_OR_FUNCTION = TokenSet.create(CLASS_DECLARATION, FUNCTION_DECLARATION);
   TokenSet IMPORT_STATEMENTS = TokenSet.create(IMPORT_STATEMENT, FROM_IMPORT_STATEMENT);
+  TokenSet DECORATORS = TokenSet.create(DECORATOR_CALL);
+  TokenSet IMPORT_ELEMENTS = TokenSet.create(IMPORT_ELEMENT);
+  TokenSet TYPE_PARAMETERS = TokenSet.create(TYPE_PARAMETER);
+  TokenSet KEY_VALUE_EXPRESSIONS = TokenSet.create(KEY_VALUE_EXPRESSION);
+  TokenSet TARGET_EXPRESSIONS = TokenSet.create(TARGET_EXPRESSION);
+  TokenSet EXCEPT_PARTS = TokenSet.create(EXCEPT_PART);
 
   PyElementType FSTRING_NODE = PyElementType.viaFactory("FSTRING_NODE", PyPsiElementFactory::getFStringNodeConstructor);
   PyElementType FSTRING_FRAGMENT = PyElementType.viaFactory("FSTRING_FRAGMENT", PyPsiElementFactory::getFStringFragmentConstructor);

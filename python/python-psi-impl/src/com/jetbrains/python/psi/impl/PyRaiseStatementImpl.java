@@ -2,7 +2,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyRaiseStatement;
@@ -25,7 +25,6 @@ public class PyRaiseStatementImpl extends PyElementImpl implements PyRaiseStatem
 
   @Override
   public PyExpression @NotNull [] getExpressions() {
-    final PyExpression[] expressions = PsiTreeUtil.getChildrenOfType(this, PyExpression.class);
-    return expressions != null ? expressions : PyExpression.EMPTY_ARRAY;
+    return childrenToPsi(PythonDialectsTokenSetProvider.getInstance().getExpressionTokens(), PyExpression.EMPTY_ARRAY);
   }
 }

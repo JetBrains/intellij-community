@@ -57,6 +57,12 @@ class PyAstPsiTest : PyTestCase() {
     assertFalse(elifPart is PyAstElsePart)
   }
 
+  fun testADecoratorListHoldsItsDecorators() {
+    val (method, function) = PsiTreeUtil.findChildrenOfType(myFixture.file, PyAstFunction::class.java).toList()
+    assertNull(method.decoratorList)
+    assertEquals(listOf("dec"), requireNotNull(function.decoratorList).decorators.map { it.name })
+  }
+
   fun testAMethodKnowsItsClassAndItsTypeParameters() {
     val (method, function) = PsiTreeUtil.findChildrenOfType(myFixture.file, PyAstFunction::class.java).toList()
     assertEquals("m", method.name)
@@ -95,6 +101,7 @@ class PyAstPsiTest : PyTestCase() {
           def m[T](self, a$ANNOTATION) -> None:
               pass
 
+      @dec
       def f():
           pass
 

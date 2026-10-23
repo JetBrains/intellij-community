@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.ast;
 
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +29,9 @@ public interface PyAstParameterList extends PyAstElement {
    * Note that tuple parameters are flattened by this method.
    * @return a possibly empty array of named paramaters.
    */
-  PyAstParameter @NotNull [] getParameters();
+  default PyAstParameter @NotNull [] getParameters() {
+    return childrenToPsi(PythonDialectsTokenSetProvider.getInstance().getParameterTokens(), PyAstParameter.EMPTY_ARRAY);
+  }
 
   @Override
   default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {

@@ -33,6 +33,8 @@ import static com.jetbrains.python.ast.PyAstElementKt.findChildByClass;
  */
 @ApiStatus.Experimental
 public interface PyAstDecorator extends PyAstCallExpression {
+  PyAstDecorator[] EMPTY_ARRAY = new PyAstDecorator[0];
+
   /**
    * @return the name of decorator, without the "@". Stub is used if available.
    */

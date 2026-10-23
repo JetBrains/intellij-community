@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.ast;
 
+import com.jetbrains.python.PyElementTypes;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.Experimental
 public interface PyAstDecoratable extends PyAstElement {
-  @Nullable
-  PyAstDecoratorList getDecoratorList();
+  default @Nullable PyAstDecoratorList getDecoratorList() {
+    return childToPsi(PyElementTypes.DECORATOR_LIST);
+  }
 }

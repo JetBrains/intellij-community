@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.ast;
 
+import com.jetbrains.python.PyElementTypes;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +29,9 @@ public interface PyAstCallable extends PyAstTypedElement, PyAstQualifiedNameOwne
   /**
    * @return a list of parameters passed to this callable, possibly empty.
    */
-  @NotNull
-  PyAstParameterList getParameterList();
+  default @NotNull PyAstParameterList getParameterList() {
+    return childToPsiNotNull(PyElementTypes.PARAMETER_LIST);
+  }
 
   /**
    * @return a methods returns itself, non-method callables return null.

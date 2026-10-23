@@ -113,9 +113,6 @@ public interface PyAstNamedParameter extends PyAstParameter, PsiNamedElement, Ps
     return null; // we're not a tuple
   }
 
-  @Nullable
-  @Override
-  PyAstAnnotation getAnnotation();
   /**
    * Parameter is considered "keyword-only" if it appears after named or unnamed positional vararg parameter.
    * See PEP-3102 for more details.

@@ -14,6 +14,8 @@ import static com.jetbrains.python.ast.PyAstElementKt.findChildByType;
 
 @ApiStatus.Experimental
 public interface PyAstImportElement extends PyAstElement, PyAstImportedNameDefiner {
+  PyAstImportElement[] EMPTY_ARRAY = new PyAstImportElement[0];
+
   @Override
   default @Nullable String getName() {
     return getVisibleName();

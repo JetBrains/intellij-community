@@ -8,7 +8,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiListLikeElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.PyElementTypes;
@@ -57,7 +56,7 @@ public class PyImportStatementImpl extends PyBaseElementImpl<PyImportStatementSt
     if (stub != null) {
       return stub.getChildrenByType(PyElementTypes.IMPORT_ELEMENT, count -> new PyImportElement[count]);
     }
-    return childrenToPsi(TokenSet.create(PyElementTypes.IMPORT_ELEMENT), new PyImportElement[0]);
+    return childrenToPsi(PyElementTypes.IMPORT_ELEMENTS, new PyImportElement[0]);
   }
 
   @Override
