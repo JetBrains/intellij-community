@@ -76,6 +76,25 @@ pub(crate) fn directory_entry(relative_path: &str, mode: u32) -> Entry {
     }
 }
 
+/// The record of `plugins/plugin-classpath.txt` that the Java writer gives for the plugin `plugin` with the descriptor
+/// `<idea-plugin/>\n`. The names are ASCII, so their Java modified UTF-8 is their bytes.
+#[expect(clippy::cast_possible_truncation, reason = "a fixture writes small lengths into record fields")]
+pub(crate) fn class_path_fixture(plugin: &str, names: &[&str]) -> Vec<u8> {
+    fn append_name(data: &mut Vec<u8>, value: &str) {
+        data.extend_from_slice(&(value.len() as u16).to_be_bytes());
+        data.extend_from_slice(value.as_bytes());
+    }
+    let mut data = (names.len() as u16).to_be_bytes().to_vec();
+    append_name(&mut data, plugin);
+    let descriptor = b"<idea-plugin/>\n";
+    data.extend_from_slice(&(descriptor.len() as u32).to_be_bytes());
+    data.extend_from_slice(descriptor);
+    for name in names {
+        append_name(&mut data, name);
+    }
+    data
+}
+
 pub(crate) fn run_collector<S: AsRef<str>>(args: &[S]) -> Run {
     let args: Vec<&str> = args.iter().map(AsRef::as_ref).collect();
     testkit::run_tool(crate::run, &args)

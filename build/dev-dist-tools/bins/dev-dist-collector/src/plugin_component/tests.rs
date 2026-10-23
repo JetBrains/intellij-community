@@ -9,24 +9,6 @@ use testkit::{WorkingDirectory, write_file};
 
 use crate::test_support::*;
 
-/// The record of `plugins/plugin-classpath.txt` for the descriptor `<idea-plugin/>\n`. The names are ASCII, so
-/// their Java modified UTF-8 is their bytes.
-fn class_path_fixture(plugin: &str, names: &[&str]) -> Vec<u8> {
-    fn append_name(data: &mut Vec<u8>, value: &str) {
-        data.extend_from_slice(&(value.len() as u16).to_be_bytes());
-        data.extend_from_slice(value.as_bytes());
-    }
-    let mut data = (names.len() as u16).to_be_bytes().to_vec();
-    append_name(&mut data, plugin);
-    let descriptor = b"<idea-plugin/>\n";
-    data.extend_from_slice(&(descriptor.len() as u32).to_be_bytes());
-    data.extend_from_slice(descriptor);
-    for name in names {
-        append_name(&mut data, name);
-    }
-    data
-}
-
 #[cfg(unix)]
 fn asset(destination: &str, producer: &str) -> Value {
     json!({"destination": destination, "producer": producer})
@@ -143,6 +125,20 @@ fn assert_no_outputs() {
     for file in ["component.json", "component.plugin-classpath-part"] {
         assert!(!exists(file), "a refused component wrote {file}");
     }
+}
+
+/// Runs the plugin component mode and fails unless the case `name` fails with an error that holds each of `messages`
+/// and writes no output.
+#[track_caller]
+fn require_refused(name: &str, messages: &[&str]) {
+    let outcome = run_collector(&plugin_component_args());
+    assert!(
+        outcome.code != 0 && messages.iter().all(|message| outcome.errors.contains(message)),
+        "{name}: exit {}, error {:?}, expected {messages:?}",
+        outcome.code,
+        outcome.errors
+    );
+    assert_no_outputs();
 }
 
 #[track_caller]
@@ -607,14 +603,7 @@ fn prepared_component_refuses_a_stale_ownership() {
         let mut fixture = Prepared::new();
         change(&mut fixture);
         fixture.write();
-        let outcome = run_collector(&plugin_component_args());
-        assert!(
-            outcome.code != 0 && outcome.errors.contains(message),
-            "{name}: exit {}, error {:?}, expected {message:?}",
-            outcome.code,
-            outcome.errors
-        );
-        assert_no_outputs();
+        require_refused(name, &[message]);
     }
     let _directory = WorkingDirectory::enter();
     let mut fixture = Prepared::new();
@@ -955,14 +944,7 @@ fn packed_component_refuses_stale_inputs() {
         write_packed_fixture(&spec);
         change(&mut spec);
         write_json("component-spec.json", &spec);
-        let outcome = run_collector(&plugin_component_args());
-        assert!(
-            outcome.code != 0 && outcome.errors.contains(message),
-            "{name}: exit {}, error {:?}, expected {message:?}",
-            outcome.code,
-            outcome.errors
-        );
-        assert_no_outputs();
+        require_refused(name, &[message]);
     }
     let _directory = WorkingDirectory::enter();
     let mut spec = packed_spec(true);
@@ -1150,14 +1132,7 @@ fn packed_component_refuses_a_link_in_a_copied_tree() {
         write_file("output/elsewhere.html", "<html/>\n");
         std::fs::create_dir_all("output/tree/web/link.html").unwrap();
         std::os::unix::fs::symlink(link(&output), "tree/web/link.html").unwrap();
-        let outcome = run_collector(&plugin_component_args());
-        assert!(
-            outcome.code != 0 && outcome.errors.contains("copied tree plugins/json/web") && outcome.errors.contains(message),
-            "{name}: exit {}, error {:?}, expected {message:?}",
-            outcome.code,
-            outcome.errors
-        );
-        assert_no_outputs();
+        require_refused(name, &["copied tree plugins/json/web", message]);
     }
 }
 
@@ -1193,13 +1168,6 @@ fn packed_component_refuses_an_invalid_tree_copy() {
         std::fs::create_dir_all("tree/web").unwrap();
         change(&mut spec);
         write_json("component-spec.json", &spec);
-        let outcome = run_collector(&plugin_component_args());
-        assert!(
-            outcome.code != 0 && outcome.errors.contains(message),
-            "{name}: exit {}, error {:?}, expected {message:?}",
-            outcome.code,
-            outcome.errors
-        );
-        assert_no_outputs();
+        require_refused(name, &[message]);
     }
 }
