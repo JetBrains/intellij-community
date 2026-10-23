@@ -1,6 +1,6 @@
 # rust-tools
 
-The shared configuration of the Rust tool workspaces, and the spec of what each workspace has. All four Cargo workspaces
+The shared configuration of the Rust tool workspaces, and the spec of what each workspace has. All five Cargo workspaces
 follow it.
 
 | Workspace | Crate hub | Crate macro |
@@ -9,6 +9,7 @@ follow it.
 | `build/dev-dist-tools`: the ultimate dev-dist tools | the crates of `@ddt` | `dev_dist_rust_binary` |
 | `community/tools/bt`: BT | `@bt` | `bt_rust_crate` |
 | `community/tools/vm`: the Air UI-lane tooling | `@avl` | `avl_crate` |
+| `docs/ij-void/portal-server`: the server of the docs portal | none | none |
 
 ## The files here
 
@@ -58,6 +59,7 @@ equal to the sources.
 | dev-dist tools | None. |
 | BT | None. BT has no Bazel action tool, so it has no closure test. |
 | Air UI-lane tooling | None. |
+| portal server | Items 4 to 8. The portal Dockerfile builds the server with cargo, and Bazel does not build it. The gates are `cargo fmt --check`, `cargo clippy --all-targets` and `cargo test` in its directory, and `sync.mjs --check`. |
 
 ## The Bazel macro core
 
