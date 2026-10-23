@@ -5,18 +5,22 @@ use std::path::PathBuf;
 
 use planfile::contract::{Artifact, ArtifactKind, AssetKind, Catalogue, Library, Reference, VERSION};
 use planfile::validate::validate_assets;
-use planfile::{PlanFile, SourceKind, derive};
+use planfile::{PlanFile, derive};
 
 use super::testdata_dir;
 use crate::plan;
 
-/// `testdata/corpus` of the `planfile` crate. Bazel puts the `planfile_testdata` filegroup beside the test data of this
-/// crate in the runfiles.
-fn corpus_dir() -> PathBuf {
+/// `testdata/` of the `planfile` crate. Bazel puts the `planfile_testdata` filegroup beside the test data of this crate
+/// in the runfiles.
+fn planfile_testdata() -> PathBuf {
     let crates = testdata_dir().parent().and_then(|crate_dir| crate_dir.parent()).map(PathBuf::from);
-    crates
-        .expect("the test data is below crates/pluginpack")
-        .join("planfile/testdata/corpus")
+    crates.expect("the test data is below crates/pluginpack").join("planfile/testdata")
+}
+
+/// The inputs of the corpus that name a library. The corpus test of `planfile` checks the list against the corpus.
+fn read_library_list() -> HashSet<String> {
+    let text = std::fs::read_to_string(planfile_testdata().join("corpus-libraries.txt")).unwrap();
+    text.lines().map(str::to_owned).collect()
 }
 
 /// Replaces each `"{platform}"` and `"{platform:<name>}"` leaf, as the Starlark rule does before the packer runs.
@@ -65,23 +69,12 @@ fn directory_inputs(file: &PlanFile) -> HashSet<&str> {
 }
 
 /// The catalogue that Starlark writes for the remainder: the raw inputs of the remainder assets and of their
-/// operations. Each library has one member. A root is a clean relative path, as a Bazel path is.
-fn catalogue(file: &PlanFile) -> Catalogue {
+/// operations. An input of the library list names a library, which has one member. A root is a clean relative path,
+/// as a Bazel path is.
+fn catalogue(file: &PlanFile, libraries: &HashSet<String>) -> Catalogue {
     let producers: HashMap<&str, &[Reference]> = (file.operations.iter())
         .map(|operation| (operation.output.as_str(), operation.inputs.as_slice()))
         .collect();
-    let layout_inputs = (file.operations.iter())
-        .flat_map(|operation| &operation.inputs)
-        .map(|input| input.artifact.as_str());
-    // jscpd:ignore-start The planfile corpus test names the same libraries, and its unit test cannot share a fake with this crate.
-    let libraries: HashSet<&str> = (file.assets.iter())
-        .filter_map(|asset| asset.recipe.as_ref())
-        .flat_map(|recipe| &recipe.sources)
-        .filter(|source| source.kind == SourceKind::Library)
-        .map(|source| source.input.as_str())
-        .chain(layout_inputs.filter(|input| input.starts_with('@') && input.split_once("//:").is_some_and(|(_, name)| !name.contains('/'))))
-        .collect();
-    // jscpd:ignore-end
     let directories = directory_inputs(file);
     let mut catalogue = Catalogue {
         version: VERSION,
@@ -132,7 +125,8 @@ fn catalogue(file: &PlanFile) -> Catalogue {
 /// accepts every real shape, and a new shape in the corpus fails here before a build uses it.
 #[test]
 fn every_checked_in_plan_file_plans() {
-    let mut paths: Vec<PathBuf> = (std::fs::read_dir(corpus_dir()).unwrap())
+    let libraries = read_library_list();
+    let mut paths: Vec<PathBuf> = (std::fs::read_dir(planfile_testdata().join("corpus")).unwrap())
         .map(|entry| entry.unwrap().path())
         .filter(|path| path.to_string_lossy().ends_with(".dev-plan.json"))
         .collect();
@@ -148,7 +142,7 @@ fn every_checked_in_plan_file_plans() {
             .collect();
         let derivation = derive(
             &file,
-            &catalogue(&file),
+            &catalogue(&file, &libraries),
             "plugins/corpus",
             b"<idea-plugin/>",
             file.version,

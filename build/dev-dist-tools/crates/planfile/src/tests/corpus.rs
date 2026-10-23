@@ -38,19 +38,54 @@ fn layout_library_inputs(file: &PlanFile) -> impl Iterator<Item = &str> {
         .filter(|input| is_library_label(input))
 }
 
-/// The catalogue that Starlark writes for the remainder: the raw inputs of the remainder assets and of their
-/// operations. A library source and a library input of a layout-assets operation name a library. Each library has two
-/// member files, so the derivation expands the sources of a layout asset. A tree input is a directory.
-fn catalogue(file: &PlanFile) -> Catalogue {
-    let producers: HashMap<&str, &[Reference]> = (file.operations.iter())
-        .map(|operation| (operation.output.as_str(), operation.inputs.as_slice()))
-        .collect();
-    let libraries: HashSet<&str> = (file.assets.iter())
+/// The library list of the corpus: the inputs that name a library, one per line in byte order. The corpus test of
+/// `pluginpack` reads it too.
+const LIBRARY_LIST: &str = "corpus-libraries.txt";
+
+/// The libraries of a plan file: its library sources and the library inputs of its layout-assets operations.
+fn libraries_of(file: &PlanFile) -> impl Iterator<Item = &str> {
+    (file.assets.iter())
         .filter_map(|asset| asset.recipe.as_ref())
         .flat_map(|recipe| &recipe.sources)
         .filter(|source| source.kind == SourceKind::Library)
         .map(|source| source.input.as_str())
         .chain(layout_library_inputs(file))
+}
+
+fn read_library_list() -> HashSet<String> {
+    let text = std::fs::read_to_string(testdata_dir().join(LIBRARY_LIST)).unwrap();
+    text.lines().map(str::to_owned).collect()
+}
+
+/// The library list holds the libraries of every plan file of the corpus and nothing else. After a change of the
+/// corpus, `DDT_UPDATE_LIBRARY_LIST=1 cargo test -p planfile` writes the list again.
+#[test]
+fn the_library_list_holds_the_libraries_of_the_corpus() {
+    let mut libraries: Vec<String> = (corpus_paths().iter())
+        .map(|path| read(path).unwrap_or_else(|error| panic!("{error:#}")))
+        .flat_map(|file| libraries_of(&file).map(str::to_owned).collect::<Vec<_>>())
+        .collect();
+    libraries.sort();
+    libraries.dedup();
+    let text: String = libraries.iter().map(|library| format!("{library}\n")).collect();
+    let path = testdata_dir().join(LIBRARY_LIST);
+    if std::env::var_os("DDT_UPDATE_LIBRARY_LIST").is_some() {
+        std::fs::write(&path, &text).unwrap();
+    }
+    let stated = std::fs::read_to_string(&path).unwrap_or_default();
+    assert!(
+        stated == text,
+        "{} is stale; run DDT_UPDATE_LIBRARY_LIST=1 cargo test -p planfile",
+        path.display()
+    );
+}
+
+/// The catalogue that Starlark writes for the remainder: the raw inputs of the remainder assets and of their
+/// operations. An input of the library list names a library. Each library has two member files, so the derivation
+/// expands the sources of a layout asset. A tree input is a directory.
+fn catalogue(file: &PlanFile, libraries: &HashSet<String>) -> Catalogue {
+    let producers: HashMap<&str, &[Reference]> = (file.operations.iter())
+        .map(|operation| (operation.output.as_str(), operation.inputs.as_slice()))
         .collect();
     let mut raw: Vec<(&str, ArtifactKind)> = Vec::new();
     for asset in file.assets.iter().filter(|asset| !is_independent(asset)) {
@@ -98,16 +133,23 @@ fn catalogue(file: &PlanFile) -> Catalogue {
     catalogue
 }
 
-/// Every checked-in plan file reads and derives, and the files use every source kind and operation kind that the
-/// decoder accepts. The corpus proves that the repository uses no refused shape, so a plan author who needs a new shape
-/// updates `testdata/corpus/` and the contract together.
-#[test]
-fn every_checked_in_plan_file_reads_and_derives() {
+/// The plan files of `testdata/corpus`, in byte order.
+fn corpus_paths() -> Vec<PathBuf> {
     let mut paths: Vec<PathBuf> = std::fs::read_dir(testdata_dir().join("corpus"))
         .unwrap()
         .map(|entry| entry.unwrap().path())
         .collect();
     paths.sort();
+    paths
+}
+
+/// Every checked-in plan file reads and derives, and the files use every source kind and operation kind that the
+/// decoder accepts. The corpus proves that the repository uses no refused shape, so a plan author who needs a new shape
+/// updates `testdata/corpus/` and the contract together.
+#[test]
+fn every_checked_in_plan_file_reads_and_derives() {
+    let paths = corpus_paths();
+    let libraries = read_library_list();
     let mut source_kinds = HashSet::new();
     let mut operation_kinds = HashSet::new();
     let mut layout_libraries = 0;
@@ -115,7 +157,7 @@ fn every_checked_in_plan_file_reads_and_derives() {
         let file = read(path).unwrap_or_else(|error| panic!("{error:#}"));
         derive(
             &file,
-            &catalogue(&file),
+            &catalogue(&file, &libraries),
             "plugins/corpus",
             b"<idea-plugin/>",
             file.version,
