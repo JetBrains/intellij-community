@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -174,21 +173,19 @@ public abstract class WslDistributionManager implements Disposable {
     }
 
     // we assume that after "2004" Windows release wsl.exe and all required flags are available
-    if (Registry.is("wsl.list.prefer.verbose.output", true)) {
-      try {
-        final var result = loadInstalledDistributionsWithVersions();
-        return ContainerUtil.map(result, data -> {
-          final WSLDistribution distribution = getOrCreateDistributionByMsId(data.getDistributionName(), true);
-          distribution.setVersion(data.getVersion());
-          return distribution;
-        });
-      }
-      catch (IOException e) {
-        LOG.warn(e);
-      }
-      catch (IllegalStateException e) {
-        LOG.error(e);
-      }
+    try {
+      final var result = loadInstalledDistributionsWithVersions();
+      return ContainerUtil.map(result, data -> {
+        final WSLDistribution distribution = getOrCreateDistributionByMsId(data.getDistributionName(), true);
+        distribution.setVersion(data.getVersion());
+        return distribution;
+      });
+    }
+    catch (IOException e) {
+      LOG.warn(e);
+    }
+    catch (IllegalStateException e) {
+      LOG.error(e);
     }
     // fallback: using loadInstalledDistributionMsIds in case of execution exception or parsing error
     return ContainerUtil.map(loadInstalledDistributionMsIds(), (msId) -> {
