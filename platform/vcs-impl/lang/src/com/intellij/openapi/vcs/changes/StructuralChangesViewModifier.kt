@@ -174,12 +174,20 @@ private class HunkNode(
 
   @RequiresEdt
   override fun setIncluded(included: Boolean) {
+    withTracker { setExcluded(it, !included) }
+  }
+
+  /**
+   * Runs the action with the tracker of the file. A file has a tracker only while an editor shows it, so a file without one gets a tracker
+   * until the action ends. A partial state keeps the new tracker after the release.
+   */
+  @RequiresEdt
+  private fun withTracker(action: (PartialLocalLineStatusTracker) -> Unit) {
     val tracker = validTracker()
     if (tracker != null) {
-      setExcluded(tracker, !included)
+      action(tracker)
       return
     }
-    // A file has a tracker only while an editor shows it. The partial state keeps the new tracker after the release.
     val manager = LineStatusTrackerManager.getInstanceImpl(project)
     val requester = Any()
     val document = ReadAction.computeBlocking<Document?, RuntimeException> { FileDocumentManager.getInstance().getDocument(file) } ?: return
@@ -190,7 +198,7 @@ private class HunkNode(
     ReadAction.computeBlocking<Unit, RuntimeException> { manager.requestTrackerFor(document, requester) }
     manager.invokeAfterUpdate {
       try {
-        validTracker()?.let { setExcluded(it, !included) }
+        validTracker()?.let(action)
       }
       finally {
         ReadAction.computeBlocking<Unit, RuntimeException> { manager.releaseTrackerFor(document, requester) }
