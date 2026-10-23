@@ -5,9 +5,11 @@ import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.internal.statistic.TestStatisticsEventLoggerProvider
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.EventLogListenersManager
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogListener
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.internal.statistic.eventLog.StatisticsFileEventLogger
+import com.intellij.internal.statistic.eventLog.dispatcher.IntellijReportValidator
 import com.intellij.internal.statistic.eventLog.events.EnumEventField
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -497,6 +499,31 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     assertFalse(defaultProvider.createEventsMergeStrategy().shouldMerge(first, second))
   }
 
+  @Test
+  fun testValidatedEventDropsJcpPayload() {
+    // The JCP payload stays in the queued event for the raw data of a listener, so the validated event, which the
+    // record and the upload take, must leave without it.
+    registerTestRecorder()
+    try {
+      val event = newEvent("group.id", "dialog-id", groupVersion = "2",
+                           data = hashMapOf("type" to "close", FeatureUsageData.JCP_DATA_KEY to mapOf("loc" to "42")))
+      val validated = IntellijReportValidator(TEST_RECORDER).validateEvent(event)
+      assertNotNull(validated)
+      assertEquals(hashMapOf<String, Any>("type" to "close"), validated!!.event.data)
+    }
+    finally {
+      IntellijSensitiveDataValidator.clearInstances()
+    }
+  }
+
+  /** Registers a recording recorder, so createFusComponents builds a real (record-enabled) client for it. */
+  private fun registerTestRecorder() {
+    @Suppress("UNCHECKED_CAST")
+    (StatisticsEventLoggerProvider.EP_NAME.point as ExtensionPointImpl<StatisticsEventLoggerProvider>)
+      .maskAll(listOf(TestStatisticsEventLoggerProvider(TEST_RECORDER, escapeChars = true)), testRootDisposable, true)
+    IntellijSensitiveDataValidator.clearInstances()
+  }
+
   /**
    * Registers a test recorder, builds a real FusClient (mock HTTP) via [FusComponentProvider.createFusComponents],
    * wires [StatisticsFileEventLogger] to it, runs [action], flushes, and returns the events captured through an
@@ -510,11 +537,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
     expectedEventCount: Int,
     action: (StatisticsFileEventLogger) -> Unit,
   ): List<LogEvent> {
-    // A recording recorder so createFusComponents builds a real (record-enabled) client for it.
-    @Suppress("UNCHECKED_CAST")
-    (StatisticsEventLoggerProvider.EP_NAME.point as ExtensionPointImpl<StatisticsEventLoggerProvider>)
-      .maskAll(listOf(TestStatisticsEventLoggerProvider(TEST_RECORDER, escapeChars = true)), testRootDisposable, true)
-    IntellijSensitiveDataValidator.clearInstances()
+    registerTestRecorder()
 
     val client = FusComponentProvider.createFusComponents(TEST_RECORDER).fusClient
                  ?: error("FusComponents.fusClient must be built for '$TEST_RECORDER'")

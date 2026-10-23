@@ -67,7 +67,10 @@ open class StatisticsFileEventLogger(
           return@Runnable
         }
         val data = dataProvider() ?: return@Runnable
-        val eventData = HashMap(data).also { it.remove(FeatureUsageData.JCP_DATA_KEY) }
+        // The JCP payload travels in the raw data of a listener, which the dispatcher takes from the queued event.
+        // Without such a listener the payload leaves the event here. IntellijReportValidator drops it from the
+        // validated event, so the record and the upload never carry it.
+        val eventData = HashMap(data).also { if (!hasRawDataListener()) it.remove(FeatureUsageData.JCP_DATA_KEY) }
           .also { data -> initiator?.let { data["initiated_by"] = it.id } }
         val event = LogEvent(
           session = sessionId,
@@ -89,6 +92,9 @@ open class StatisticsFileEventLogger(
       CompletableFuture<Void>().also { it.completeExceptionally(e) }
     }
   }
+
+  private fun hasRawDataListener(): Boolean =
+    ApplicationManager.getApplication()?.getService(EventLogListenersManager::class.java)?.hasRawDataListener(recorderId) == true
 
   override fun computeAsync(computation: (backgroundThreadExecutor: Executor) -> Unit) {
     computation(logExecutor)
