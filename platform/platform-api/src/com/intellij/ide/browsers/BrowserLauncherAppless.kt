@@ -155,6 +155,10 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   }
 
   private fun browse(uri: URI, browser: WebBrowser?, project: Project?) {
+    if (BrowserUrlHandler.EP_NAME.findFirstSafe { it.handle(uri.toString(), project) } != null) {
+      return
+    }
+
     if (processWithUrlOpener(browser, uri.toString(), project)) {
       return
     }

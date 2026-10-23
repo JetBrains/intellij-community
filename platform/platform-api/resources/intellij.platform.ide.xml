@@ -118,6 +118,7 @@
     <extensionPoint qualifiedName="com.intellij.ui.suitableFontProvider" interface="com.intellij.ui.SuitableFontProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webBrowserUrlProvider" interface="com.intellij.ide.browsers.WebBrowserUrlProvider" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.urlOpener" interface="com.intellij.ide.browsers.UrlOpener" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.browserUrlHandler" interface="com.intellij.ide.browsers.BrowserUrlHandler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.actionFromOptionDescriptorProvider" interface="com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webHelpProvider" interface="com.intellij.openapi.help.WebHelpProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.smartSelectProvider" interface="com.intellij.openapi.ide.SmartSelectProvider" dynamic="true"/>
