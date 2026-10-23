@@ -12,6 +12,75 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
 
   override fun getConfigForModule(moduleName: String): IntellijIconClassGeneratorModuleConfig? {
     return when (moduleName) {
+      "intellij.aopCommon" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.aop",
+      )
+      "intellij.apiWatcher" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.apiwatcher",
+      )
+      "intellij.astro" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "org.jetbrains.astro",
+      )
+      "intellij.cloudFormation" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.aws.cloudformation",
+      )
+      "intellij.go.template" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.goide.template",
+      )
+      "intellij.graalvm" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.graalvm",
+      )
+      "intellij.haml" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "org.jetbrains.plugins.haml",
+      )
+      "intellij.javaee.beanValidation" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.beanValidation",
+      )
+      "intellij.javaee.cdi" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.cdi",
+      )
+      "intellij.javaee.jsf" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.jsf",
+      )
+      "intellij.javascript.bun" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.javascript.bun",
+      )
+      "intellij.jboss.drools" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.plugins.drools",
+      )
+      "intellij.microservices.debugger" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.microservices.debugger",
+      )
+      "intellij.phpspec" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.jetbrains.php.phpspec",
+      )
+      "intellij.profiler.lineProfiler" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.profiler.lineProfiler",
+      )
+      "intellij.rider.plugins.playStation" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.jetbrains.rider.plugins.playStation",
+      )
+      "intellij.safe.push" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.safepush",
+      )
+      "intellij.slim" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "org.jetbrains.plugins.slim",
+      )
+      "intellij.spring.modulith" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.spring.modulith",
+      )
+      "intellij.terraform" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "org.intellij.terraform",
+      )
+      "intellij.vitejs" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.vite",
+      )
+      "intellij.webassembly" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.webassembly",
+      )
+      "intellij.wechat.miniprogram" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.wechat.miniprogram",
+      )
       "intellij.devkit" -> IntellijIconClassGeneratorModuleConfig(
         className = "DevKitIcons",
         packageName = "org.jetbrains.idea.devkit",
