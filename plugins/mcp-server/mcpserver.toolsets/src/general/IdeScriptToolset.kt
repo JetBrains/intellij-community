@@ -74,7 +74,7 @@ class IdeScriptToolset : McpToolset {
   @McpTool
   @McpDescription("""
       |Runs Kotlin code in the running JetBrains IDE process, with the full IDE classpath and live project state.
-      |Works only when the user turns on Brave Mode in the MCP Server settings.
+      |Works only when the user turns on Brave Mode in the IDE as MCP Server settings.
       |The user confirms each script before it runs, unless the user allowed all scripts of the current MCP session.
       |If the IDE changed the script, a failed result holds the text that ran in `formattedScript`. The line numbers in `error` refer to that text.
       |Last resort. Use a dedicated tool when one covers the task.
@@ -175,7 +175,7 @@ suspend fun prepareIdeScript(
   if (isUnattended()) return PreparedIdeScript(trimmed, formattedScript = null)
   if (!McpServerSettings.getInstance().enableBraveMode) {
     mcpFail("Brave Mode is off, so the IDE runs no scripts. " +
-            "Only the user can turn on Brave Mode in the MCP Server settings. Do not retry before that.")
+            "Only the user can turn on Brave Mode in the IDE as MCP Server settings. Do not retry before that.")
   }
   // The user sees the same text that runs, so the line numbers in an error match the dialog.
   val source = formatScript(project, trimmed)
