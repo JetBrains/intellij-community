@@ -1,6 +1,7 @@
 use pretty_assertions::assert_eq;
 
 use super::*;
+use crate::process::never;
 use crate::testkit::{FakeProcesses, failed, ok};
 
 const COMMIT: &str = "0123456789abcdef0123456789abcdef01234567";
@@ -8,7 +9,7 @@ const COMMIT: &str = "0123456789abcdef0123456789abcdef01234567";
 #[test]
 fn a_clean_checkout_answers_its_head() {
     let processes = FakeProcesses::new(&[("status --porcelain", ok("")), ("rev-parse", ok(&format!("{COMMIT}\n")))]);
-    assert_eq!(clean_head(&processes, Path::new("/c")).expect("clean"), COMMIT);
+    assert_eq!(clean_head(&processes, Path::new("/c"), &never).expect("clean"), COMMIT);
     let calls = processes.calls();
     assert_eq!(calls[0].dir.as_deref(), Some(Path::new("/c")));
     assert_eq!(
@@ -21,7 +22,7 @@ fn a_clean_checkout_answers_its_head() {
 fn local_changes_are_refused_with_the_first_paths() {
     let status: String = (0..7).map(|index| format!("?? file{index}.txt\n")).collect();
     let processes = FakeProcesses::new(&[("status --porcelain", ok(&status))]);
-    let refusal = clean_head(&processes, Path::new("/c")).expect_err("local changes");
+    let refusal = clean_head(&processes, Path::new("/c"), &never).expect_err("local changes");
     assert_eq!(refusal.code, code::LOCAL_CHANGES);
     assert!(refusal.message.contains("?? file4.txt\n  (+2 more)"), "{}", refusal.message);
     assert!(!refusal.message.contains("file5"), "{}", refusal.message);
@@ -30,7 +31,7 @@ fn local_changes_are_refused_with_the_first_paths() {
 #[test]
 fn a_failed_git_names_its_stderr() {
     let processes = FakeProcesses::new(&[("status", failed(128, "fatal: not a git repository\n"))]);
-    let refusal = clean_head(&processes, Path::new("/c")).expect_err("no repository");
+    let refusal = clean_head(&processes, Path::new("/c"), &never).expect_err("no repository");
     assert_eq!(refusal.code, code::GIT_FAILED);
     assert_eq!(refusal.message, "git status failed: exit 128: fatal: not a git repository");
 }
@@ -48,7 +49,7 @@ fn the_candidates_sample_the_ancestors_in_powers_of_two_then_the_merge_bases() {
         .chain((0..=16).map(|power| 1 << power))
         .map(|distance: usize| format!("a{distance}"))
         .collect();
-    assert_eq!(candidates(&processes, Path::new("/c"), COMMIT), expected);
+    assert_eq!(candidates(&processes, Path::new("/c"), COMMIT, &never), expected);
     assert_eq!(expected.last().map(String::as_str), Some("a65536"));
     assert_eq!(
         processes.texts()[0],
@@ -59,21 +60,21 @@ fn the_candidates_sample_the_ancestors_in_powers_of_two_then_the_merge_bases() {
 #[test]
 fn a_short_history_gives_what_it_has() {
     let processes = FakeProcesses::new(&[("rev-list", ok("c3\nc2\nc1\n")), ("merge-base", ok("c1\n"))]);
-    assert_eq!(candidates(&processes, Path::new("/c"), COMMIT), ["c3", "c2", "c1"]);
+    assert_eq!(candidates(&processes, Path::new("/c"), COMMIT, &never), ["c3", "c2", "c1"]);
 }
 
 /// The base is `origin/master`, or `master` in a checkout without `origin/master`, or none.
 #[test]
 fn the_base_is_origin_master_then_master() {
     let both = FakeProcesses::new(&[("rev-parse", ok("b1\n"))]);
-    assert_eq!(base_commit(&both, Path::new("/c")).as_deref(), Some("b1"));
+    assert_eq!(base_commit(&both, Path::new("/c"), &never).as_deref(), Some("b1"));
     assert_eq!(both.texts(), ["git rev-parse --verify --quiet origin/master^{commit}"]);
 
     let local = FakeProcesses::new(&[("origin/master", failed(1, "")), ("master", ok("b2\n"))]);
-    assert_eq!(base_commit(&local, Path::new("/c")).as_deref(), Some("b2"));
+    assert_eq!(base_commit(&local, Path::new("/c"), &never).as_deref(), Some("b2"));
 
     let neither = FakeProcesses::new(&[("rev-parse", failed(1, ""))]);
-    assert_eq!(base_commit(&neither, Path::new("/c")), None);
+    assert_eq!(base_commit(&neither, Path::new("/c"), &never), None);
 }
 
 #[test]
@@ -97,6 +98,9 @@ fn the_pack_excludes_each_present_commit_and_writes_progress() {
 #[test]
 fn the_count_of_a_pack_excludes_the_present_commits() {
     let processes = FakeProcesses::new(&[("rev-list --count", ok("12\n"))]);
-    assert_eq!(commit_count(&processes, Path::new("/c"), "c3", &["c1".to_owned()]), Some(12));
+    assert_eq!(
+        commit_count(&processes, Path::new("/c"), "c3", &["c1".to_owned()], &never),
+        Some(12)
+    );
     assert_eq!(processes.texts(), ["git rev-list --count c3 ^c1"]);
 }

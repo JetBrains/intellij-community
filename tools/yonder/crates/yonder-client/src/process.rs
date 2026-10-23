@@ -3,13 +3,17 @@
 //!
 //! Every call has a limit: a deadline for the whole call, or a quiet limit on its output. A child that runs past its
 //! limit, or that the caller stops, is killed with its process group and answers no exit code. The group matters: a
-//! grandchild that holds a pipe, such as the `ProxyCommand` of ssh, would keep the read open.
+//! grandchild that holds a pipe, such as the `ProxyCommand` of ssh, would keep the read open. A child that exits while
+//! a grandchild still holds its pipes gets [`DRAIN`] for the rest of its output, then its group is killed too.
+//!
+//! Each child runs in a process group of its own, so the Ctrl+C of the terminal does not reach it. The caller stops
+//! it through the stop of the call, which the client answers from the count of the presses.
 
 use std::fs::File;
 use std::io::{self, Read, Write as _};
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, ExitStatus, Stdio};
-use std::sync::Mutex;
+use std::sync::{Mutex, mpsc};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -18,6 +22,17 @@ const POLL: Duration = Duration::from_millis(20);
 
 /// How much of the stderr a call keeps: the end, where git and ssh say why they failed.
 const KEPT_STDERR: usize = 64 * 1024;
+
+/// How long a call reads the pipes of a child that has exited.
+pub const DRAIN: Duration = Duration::from_secs(5);
+
+/// Answers `true` when the caller wants the child to stop now, such as after Ctrl+C.
+pub type Stop<'a> = &'a (dyn Fn() -> bool + Sync);
+
+/// The stop of a caller that never stops a child early.
+pub const fn never() -> bool {
+    false
+}
 
 /// One child process.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -128,12 +143,22 @@ impl Ran {
 
 /// The local child processes of the client.
 pub trait Processes: Sync {
-    /// Runs a child to its end or its limit, and answers its stdout and stderr.
-    fn run(&self, call: &Call) -> Ran;
+    /// Runs a child to its end or its limit, stops it as soon as `stop` answers `true`, and answers its stdout and
+    /// stderr.
+    fn run(&self, call: &Call, stop: Stop<'_>) -> Ran;
 
-    /// Runs a child with its stdout into the file `stdout`, to its end or its limit, and stops it as soon as `stop`
-    /// answers `true`. The answer holds no stdout.
-    fn run_to_file(&self, call: &Call, stdout: &Path, stop: &(dyn Fn() -> bool + Sync)) -> Ran;
+    /// Runs a child with its stdout into the file `stdout`, as [`Processes::run`] does. The answer holds no stdout. A
+    /// seam that answers from memory keeps this default, which writes the answered stdout into the file.
+    fn run_to_file(&self, call: &Call, stdout: &Path, stop: Stop<'_>) -> Ran {
+        let ran = self.run(call, stop);
+        if let Err(error) = std::fs::write(stdout, &ran.stdout) {
+            return Ran {
+                stderr: format!("cannot write {}: {error}", stdout.display()),
+                ..Ran::default()
+            };
+        }
+        Ran { stdout: Vec::new(), ..ran }
+    }
 }
 
 /// The child processes of the operating system.
@@ -141,11 +166,11 @@ pub trait Processes: Sync {
 pub struct OsProcesses;
 
 impl Processes for OsProcesses {
-    fn run(&self, call: &Call) -> Ran {
-        spawn(call, Stdout::Pipe, &|| false)
+    fn run(&self, call: &Call, stop: Stop<'_>) -> Ran {
+        spawn(call, Stdout::Pipe, stop)
     }
 
-    fn run_to_file(&self, call: &Call, stdout: &Path, stop: &(dyn Fn() -> bool + Sync)) -> Ran {
+    fn run_to_file(&self, call: &Call, stdout: &Path, stop: Stop<'_>) -> Ran {
         match File::create(stdout) {
             Ok(file) => spawn(call, Stdout::File(file), stop),
             Err(error) => Ran {
@@ -174,7 +199,7 @@ impl Activity {
     }
 }
 
-fn spawn(call: &Call, stdout: Stdout, stop: &(dyn Fn() -> bool + Sync)) -> Ran {
+fn spawn(call: &Call, stdout: Stdout, stop: Stop<'_>) -> Ran {
     let mut command = Command::new(&call.program);
     command
         .args(&call.args)
@@ -211,9 +236,25 @@ fn spawn(call: &Call, stdout: Stdout, stop: &(dyn Fn() -> bool + Sync)) -> Ran {
             });
         }
         let activity = &activity;
-        let errors = scope.spawn(move || read_all(child_stderr, activity, KEPT_STDERR));
-        let output = scope.spawn(move || read_all(child_stdout, activity, usize::MAX));
+        let (read, readers) = mpsc::channel::<()>();
+        let errors = {
+            let read = read.clone();
+            scope.spawn(move || {
+                let _read = read;
+                read_all(child_stderr, activity, KEPT_STDERR)
+            })
+        };
+        let output = scope.spawn(move || {
+            let _read = read;
+            read_all(child_stdout, activity, usize::MAX)
+        });
         let (status, stopped) = watch(&mut child, call.limit, activity, stop);
+        // A grandchild that holds a pipe after the exit gets the drain time; then its group ends, and the pipe with it.
+        let drained = Instant::now() + DRAIN;
+        let ended = (0..2).all(|_| readers.recv_timeout(drained.saturating_duration_since(Instant::now())).is_ok());
+        if !ended {
+            stop_group(&mut child);
+        }
         let stdout = output.join().unwrap_or_default();
         let mut stderr = String::from_utf8_lossy(&errors.join().unwrap_or_default()).into_owned();
         if let Some(stopped) = stopped {

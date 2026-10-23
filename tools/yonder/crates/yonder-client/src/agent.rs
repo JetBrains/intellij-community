@@ -46,19 +46,19 @@ impl Client<'_> {
             "> ./bazel.cmd build {label} in {}; its output shows only when it fails",
             root.display()
         ));
-        let built = self.processes.run(&build);
+        let built = self.child(&build);
         if !built.ok() {
             return Err(bazel_refusal(&format!("./bazel.cmd build {label}"), &built));
         }
         let query = bazel(root, &["cquery", "--output=files", &label]);
-        let queried = self.processes.run(&query);
+        let queried = self.child(&query);
         if !queried.ok() {
             return Err(bazel_refusal(&format!("./bazel.cmd cquery --output=files {label}"), &queried));
         }
         // cquery names each file relative to the execution root. The checkout has no `bazel-out` link, because the
         // monorepo turns the convenience links off.
         let info = bazel(root, &["info", "execution_root"]);
-        let answered = self.processes.run(&info);
+        let answered = self.child(&info);
         let execroot = PathBuf::from(answered.stdout_text().trim());
         if !answered.ok() || !execroot.is_absolute() {
             return Err(bazel_refusal("./bazel.cmd info execution_root", &answered));

@@ -46,7 +46,8 @@ impl Client<'_> {
         present: &[String],
         steps: &dyn Fn(&str),
     ) -> Result<BuiltPack, Refusal> {
-        let count = commit_count(self.processes, target.checkout, target.commit, present);
+        let stop = || self.interrupted();
+        let count = commit_count(self.processes, target.checkout, target.commit, present, &stop);
         if present.is_empty() {
             let history = count.map_or_else(|| "the whole history".to_owned(), |all| format!("all {all} commits of the history"));
             return Err(refused(
@@ -60,7 +61,6 @@ impl Client<'_> {
         steps(&format!("> {alias}: pack {commits} commits"));
 
         let file = PackFile::new();
-        let stop = || self.interrupted();
         let built = self
             .processes
             .run_to_file(&pack_call(target.checkout, target.commit, present), file.path(), &stop);

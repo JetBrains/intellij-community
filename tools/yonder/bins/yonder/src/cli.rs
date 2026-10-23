@@ -10,7 +10,7 @@ use std::time::Duration;
 use clap::error::ErrorKind;
 use clap::{Parser, Subcommand};
 use yonder_client::{
-    Call, Client, Config, DEFAULT_PORT, Exit, PrepareRequest, Processes, Refusal, RunInfo, RunRequest, code, holder, interrupt,
+    Call, Client, Config, DEFAULT_PORT, Exit, PrepareRequest, Processes, Refusal, RunInfo, RunRequest, code, holder, interrupt, never,
     no_monorepo, phases_line, phases_short,
 };
 
@@ -160,11 +160,7 @@ fn execute(
         } => {
             let checkout = checkout_root(processes)?;
             let holder = named.unwrap_or_else(|| holder(HOLDER_PREFIX, &checkout));
-            if let Err(said) = interrupt::install() {
-                say(&format!(
-                    "yonder: {said}; Ctrl+C ends this process, and the run goes on on the host"
-                ));
-            }
+            install_interrupt(say, "Ctrl+C ends this process, and the run goes on on the host");
             let request = RunRequest {
                 checkout: &checkout,
                 repo: repo.as_deref(),
@@ -242,6 +238,8 @@ fn execute(
             repo,
             name,
         } => {
+            // Each child runs in a group of its own, so only the client can stop the Bazel build and the ssh calls.
+            install_interrupt(say, "Ctrl+C ends this process, and a child such as the Bazel build goes on");
             let agent = if let Some(agent) = agent {
                 agent
             } else {
@@ -291,6 +289,13 @@ fn run_line(run: &RunInfo) -> String {
     line
 }
 
+/// Installs the Ctrl+C handler, and says `without` when it cannot.
+fn install_interrupt(say: &(dyn Fn(&str) + Sync), without: &str) {
+    if let Err(said) = interrupt::install() {
+        say(&format!("yonder: {said}; {without}"));
+    }
+}
+
 fn answer(stdout: &mut dyn Write, text: &str) -> u8 {
     let _ = writeln!(stdout, "{text}");
     0
@@ -310,7 +315,7 @@ fn holder_of(named: Option<String>, processes: &dyn Processes) -> Result<String,
 
 /// The root of the checkout of the working directory.
 fn checkout_root(processes: &dyn Processes) -> Result<PathBuf, Refusal> {
-    let ran = processes.run(&Call::new("git", &["rev-parse", "--show-toplevel"], GIT_DEADLINE));
+    let ran = processes.run(&Call::new("git", &["rev-parse", "--show-toplevel"], GIT_DEADLINE), &never);
     let root = ran.stdout_text().trim().to_owned();
     if !ran.ok() || root.is_empty() {
         return Err(Refusal::new(
@@ -324,7 +329,7 @@ fn checkout_root(processes: &dyn Processes) -> Result<PathBuf, Refusal> {
 
 /// The host name of this machine for the allow list of the agent, or `client`.
 fn local_name(processes: &dyn Processes) -> String {
-    let ran = processes.run(&Call::new("hostname", &[] as &[&str], GIT_DEADLINE));
+    let ran = processes.run(&Call::new("hostname", &[] as &[&str], GIT_DEADLINE), &never);
     let name = ran.stdout_text().trim().to_owned();
     if ran.ok() && !name.is_empty() { name } else { "client".to_owned() }
 }

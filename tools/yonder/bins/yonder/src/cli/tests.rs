@@ -1,7 +1,7 @@
 use std::sync::{Mutex, PoisonError};
 
 use pretty_assertions::assert_eq;
-use yonder_client::{Phase, Ran};
+use yonder_client::{Phase, Ran, Stop};
 
 use super::*;
 
@@ -9,7 +9,7 @@ use super::*;
 struct Checkout;
 
 impl Processes for Checkout {
-    fn run(&self, call: &Call) -> Ran {
+    fn run(&self, call: &Call, _: Stop<'_>) -> Ran {
         let stdout = if call.text().contains("--show-toplevel") {
             b"/c\n".to_vec()
         } else {
@@ -20,12 +20,6 @@ impl Processes for Checkout {
             stdout,
             ..Ran::default()
         }
-    }
-
-    fn run_to_file(&self, call: &Call, stdout: &Path, _: &(dyn Fn() -> bool + Sync)) -> Ran {
-        let ran = self.run(call);
-        std::fs::write(stdout, &ran.stdout).expect("the stdout file");
-        ran
     }
 }
 
@@ -152,7 +146,7 @@ struct Preparing {
 }
 
 impl Processes for Preparing {
-    fn run(&self, call: &Call) -> Ran {
+    fn run(&self, call: &Call, _: Stop<'_>) -> Ran {
         let text = call.text();
         self.calls.lock().unwrap_or_else(PoisonError::into_inner).push(text.clone());
         let answer = |code: i32, stdout: String, stderr: &str| Ran {
@@ -177,12 +171,6 @@ impl Processes for Preparing {
             return answer(255, String::new(), "ssh: connect to host studio port 22: Connection refused");
         }
         answer(0, String::new(), "")
-    }
-
-    fn run_to_file(&self, call: &Call, stdout: &Path, _: &(dyn Fn() -> bool + Sync)) -> Ran {
-        let ran = self.run(call);
-        std::fs::write(stdout, &ran.stdout).expect("the stdout file");
-        ran
     }
 }
 

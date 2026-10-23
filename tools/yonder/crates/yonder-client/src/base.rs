@@ -46,13 +46,13 @@ impl Client<'_> {
 
     /// Sends the base when the host lacks it. Answers the commit of the base, or `None` when the checkout has no base.
     fn send_base(&self, host: &mut Host, sync: &BaseSync<'_>) -> Result<Option<String>, Refusal> {
-        let Some(base) = base_commit(self.processes, sync.checkout) else {
+        let Some(base) = base_commit(self.processes, sync.checkout, &|| self.interrupted()) else {
             return Ok(None);
         };
         if base == sync.commit {
             return Ok(Some(base));
         }
-        let mut candidates = candidates(self.processes, sync.checkout, &base);
+        let mut candidates = candidates(self.processes, sync.checkout, &base, &|| self.interrupted());
         add_candidate(&mut candidates, Some(&base));
         add_candidate(&mut candidates, Some(sync.commit));
         add_candidate(&mut candidates, sync.recorded);

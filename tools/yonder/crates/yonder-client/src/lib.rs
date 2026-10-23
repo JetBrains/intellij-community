@@ -34,7 +34,7 @@ pub use config::{Config, HostFile};
 pub use host::{AgentInfo, Host};
 pub use phases::{duration_text, phases_line, phases_short};
 pub use prepare::{PrepareRequest, Prepared};
-pub use process::{Call, Limit, OsProcesses, Processes, Ran, Stopped};
+pub use process::{Call, Limit, OsProcesses, Processes, Ran, Stop, Stopped, never};
 pub use run::{Followed, Leased, RunOutcome, RunRequest};
 pub use yonder_link::DEFAULT_PORT;
 pub use yonder_link::proto::{Phase, RunInfo};
@@ -170,6 +170,11 @@ impl<'a> Client<'a> {
     /// Whether the person pressed Ctrl+C.
     fn interrupted(&self) -> bool {
         (self.presses)() > 0
+    }
+
+    /// Runs a local child, which Ctrl+C stops.
+    fn child(&self, call: &Call) -> Ran {
+        self.processes.run(call, &|| self.interrupted())
     }
 
     pub const fn config(&self) -> &Config {

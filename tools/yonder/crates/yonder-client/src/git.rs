@@ -4,7 +4,7 @@
 use std::path::Path;
 use std::time::Duration;
 
-use crate::process::{Call, Limit, Processes, Ran};
+use crate::process::{Call, Limit, Processes, Ran, Stop};
 use crate::{Refusal, code, refused};
 
 /// The deadline of a short git call. `git status` of a large checkout reads every file, so it gets minutes.
@@ -22,8 +22,8 @@ const FARTHEST: usize = 65_536;
 const SHOWN_CHANGES: usize = 5;
 
 /// The commit of HEAD, refused when the checkout has local changes: tracked or untracked files that differ from HEAD.
-pub(crate) fn clean_head(processes: &dyn Processes, checkout: &Path) -> Result<String, Refusal> {
-    let status = git(processes, checkout, &["status", "--porcelain"]);
+pub(crate) fn clean_head(processes: &dyn Processes, checkout: &Path, stop: Stop<'_>) -> Result<String, Refusal> {
+    let status = git(processes, checkout, &["status", "--porcelain"], stop);
     if !status.ok() {
         return Err(git_refusal("git status", &status));
     }
@@ -43,7 +43,7 @@ pub(crate) fn clean_head(processes: &dyn Processes, checkout: &Path) -> Result<S
         ));
     }
     #[expect(clippy::literal_string_with_formatting_args, reason = "`HEAD^{commit}` is the peel syntax of git")]
-    let head = git(processes, checkout, &["rev-parse", "--verify", "HEAD^{commit}"]);
+    let head = git(processes, checkout, &["rev-parse", "--verify", "HEAD^{commit}"], stop);
     let commit = head.stdout_text().trim().to_owned();
     if !head.ok() || commit.is_empty() {
         return Err(git_refusal("git rev-parse HEAD", &head));
@@ -53,7 +53,7 @@ pub(crate) fn clean_head(processes: &dyn Processes, checkout: &Path) -> Result<S
 
 /// The commits that the host may have: HEAD and its first-parent ancestors at the distances 1, 2, 4 … 65536, then the
 /// merge bases of HEAD with `master` and `origin/master`. A ref that this checkout lacks adds nothing.
-pub(crate) fn candidates(processes: &dyn Processes, checkout: &Path, commit: &str) -> Vec<String> {
+pub(crate) fn candidates(processes: &dyn Processes, checkout: &Path, commit: &str, stop: Stop<'_>) -> Vec<String> {
     let mut found: Vec<String> = Vec::new();
     let mut add = |line: &str| {
         if !line.is_empty() && !found.iter().any(|known| known == line) {
@@ -64,6 +64,7 @@ pub(crate) fn candidates(processes: &dyn Processes, checkout: &Path, commit: &st
         processes,
         checkout,
         &["rev-list", "--first-parent", &format!("--max-count={}", FARTHEST + 1), commit],
+        stop,
     );
     if ancestors.ok() {
         let text = ancestors.stdout_text();
@@ -75,7 +76,7 @@ pub(crate) fn candidates(processes: &dyn Processes, checkout: &Path, commit: &st
         }
     }
     for base in ["master", "origin/master"] {
-        let merged = git(processes, checkout, &["merge-base", commit, base]);
+        let merged = git(processes, checkout, &["merge-base", commit, base], stop);
         if merged.ok() {
             add(merged.stdout_text().trim());
         }
@@ -95,12 +96,13 @@ pub(crate) fn add_candidate(candidates: &mut Vec<String>, commit: Option<&str>) 
 
 /// The commit of the base of the later packs: `origin/master`, or `master` when the checkout has no `origin/master`.
 /// `None` when the checkout has neither.
-pub(crate) fn base_commit(processes: &dyn Processes, checkout: &Path) -> Option<String> {
+pub(crate) fn base_commit(processes: &dyn Processes, checkout: &Path, stop: Stop<'_>) -> Option<String> {
     ["origin/master", "master"].into_iter().find_map(|base| {
         let ran = git(
             processes,
             checkout,
             &["rev-parse", "--verify", "--quiet", &format!("{base}^{{commit}}")],
+            stop,
         );
         let commit = ran.stdout_text().trim().to_owned();
         (ran.ok() && !commit.is_empty()).then_some(commit)
@@ -108,10 +110,10 @@ pub(crate) fn base_commit(processes: &dyn Processes, checkout: &Path) -> Option<
 }
 
 /// The count of the commits of `commit` that are not in `present`, or `None` when git cannot count them.
-pub(crate) fn commit_count(processes: &dyn Processes, checkout: &Path, commit: &str, present: &[String]) -> Option<u64> {
+pub(crate) fn commit_count(processes: &dyn Processes, checkout: &Path, commit: &str, present: &[String], stop: Stop<'_>) -> Option<u64> {
     let mut args = vec!["rev-list".to_owned(), "--count".to_owned(), commit.to_owned()];
     args.extend(present.iter().map(|known| format!("^{known}")));
-    let counted = git(processes, checkout, &args);
+    let counted = git(processes, checkout, &args, stop);
     counted.stdout_text().trim().parse().ok().filter(|_| counted.ok())
 }
 
@@ -134,8 +136,8 @@ pub(crate) fn git_refusal(what: &str, ran: &Ran) -> Refusal {
     refused(code::GIT_FAILED, format!("{what} failed: {}", ran.said()))
 }
 
-fn git<S: AsRef<str>>(processes: &dyn Processes, checkout: &Path, args: &[S]) -> Ran {
-    processes.run(&Call::new("git", args, GIT_DEADLINE).in_dir(checkout.to_path_buf()))
+fn git<S: AsRef<str>>(processes: &dyn Processes, checkout: &Path, args: &[S], stop: Stop<'_>) -> Ran {
+    processes.run(&Call::new("git", args, GIT_DEADLINE).in_dir(checkout.to_path_buf()), stop)
 }
 
 #[cfg(test)]

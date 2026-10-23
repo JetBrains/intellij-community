@@ -135,13 +135,13 @@ impl Client<'_> {
         let started = Instant::now();
         let mut host = self.host(alias)?;
         let repo = request.repo.unwrap_or(&host.file().repo).to_owned();
-        let commit = clean_head(self.processes, request.checkout)?;
+        let commit = clean_head(self.processes, request.checkout, &|| self.interrupted())?;
         self.refuse_interrupt()?;
         let run = run_id();
         let reference = format!("refs/yonder/{run}");
 
         let recorded = self.config.base(alias, request.holder);
-        let mut candidates = candidates(self.processes, request.checkout, &commit);
+        let mut candidates = candidates(self.processes, request.checkout, &commit, &|| self.interrupted());
         add_candidate(&mut candidates, recorded.as_deref());
         let present = self.have(&mut host, &repo, candidates)?;
         self.refuse_interrupt()?;

@@ -211,7 +211,7 @@ impl Client<'_> {
 
     /// The host name of an alias from `ssh -G`, which reads only the local configuration. Without it, the alias.
     fn ssh_hostname(&self, alias: &str) -> String {
-        let config = self.processes.run(&Call::new("ssh", &["-G", alias], SSH_DEADLINE));
+        let config = self.child(&Call::new("ssh", &["-G", alias], SSH_DEADLINE));
         config
             .stdout_text()
             .lines()
@@ -222,7 +222,7 @@ impl Client<'_> {
 
     fn ssh(&self, alias: &str, command: &str, input: Vec<u8>, deadline: Duration) -> Ran {
         let args: Vec<&str> = SSH_OPTIONS.iter().copied().chain([alias, command]).collect();
-        self.processes.run(&Call::new("ssh", &args, deadline).with_input(input))
+        self.child(&Call::new("ssh", &args, deadline).with_input(input))
     }
 }
 

@@ -2,7 +2,7 @@
 //! connection from a script.
 
 use std::net::{SocketAddr, TcpListener, TcpStream};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::thread;
@@ -12,7 +12,7 @@ use yonder_link::proto::{Reply, Request, SCHEMA_VERSION};
 use yonder_link::{AllowList, Channel, Identity, ServerTls};
 
 use crate::config::{Config, HostFile};
-use crate::process::{Call, Processes, Ran, Stopped};
+use crate::process::{Call, Processes, Ran, Stop, Stopped};
 use crate::{Client, Timing};
 
 /// Short deadlines, so a test of a lost link ends in seconds.
@@ -80,11 +80,7 @@ impl FakeProcesses {
 }
 
 impl Processes for FakeProcesses {
-    fn run(&self, call: &Call) -> Ran {
-        self.answer(call)
-    }
-
-    fn run_to_file(&self, call: &Call, stdout: &Path, stop: &(dyn Fn() -> bool + Sync)) -> Ran {
+    fn run(&self, call: &Call, stop: Stop<'_>) -> Ran {
         let ran = self.answer(call);
         if stop() {
             return Ran {
@@ -93,8 +89,7 @@ impl Processes for FakeProcesses {
                 ..Ran::default()
             };
         }
-        std::fs::write(stdout, &ran.stdout).expect("the stdout file");
-        Ran { stdout: Vec::new(), ..ran }
+        ran
     }
 }
 
