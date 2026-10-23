@@ -5,13 +5,28 @@ use avl_base::phase::Timeline;
 use avl_base::sync::lock;
 use avl_host_sys::{Captured, Signal};
 use avl_host_testkit::agent::{agent_reply, argv_value, run_state};
-use avl_host_testkit::{answer_exit, answer_text, failed, handler, has, refusal, said};
+use avl_host_testkit::{Call, answer_exit, answer_text, failed, handler, has, refusal, said};
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
 use super::*;
 use crate::daemon::fixture::Fixture;
 use crate::daemon::testing::{DAEMON_PID, daemon_run_state, df_with_free_kib};
+
+/// The index of the first of `calls` whose line contains `fragment`.
+fn position_of(calls: &[Call], fragment: &str) -> usize {
+    calls
+        .iter()
+        .position(|call| call.line().contains(fragment))
+        .unwrap_or_else(|| panic!("no call contains {fragment:?}"))
+}
+
+/// Checks that a start kept the lane IDE of the product of `prep` and refreshed no share.
+fn assert_kept_the_ide_of_the_product(fixture: &Fixture, prep: &PreparedBuild, ides: &IdeGcResult) {
+    fixture.assert_one_ide_gc(&format!("--keep-product {}", prep.product_digest));
+    assert_eq!((ides.kept.len(), ides.stopped.len()), (1, 0));
+    assert_eq!(remounts(fixture), 0);
+}
 
 /// The remount script *executions* the scripted guest saw: writing and chmodding the script name it too, and they
 /// are not remounts.
@@ -541,12 +556,7 @@ async fn a_full_start_boots_polls_and_records_its_state() {
     // The start checks the free space of the guest once. Then it makes the state directory, which is the working
     // directory of the run, and the directory of the agent, before the supervisor starts the run.
     let calls = channel.calls();
-    let at = |fragment: &str| {
-        calls
-            .iter()
-            .position(|call| call.line().contains(fragment))
-            .unwrap_or_else(|| panic!("no call contains {fragment:?}"))
-    };
+    let at = |fragment: &str| position_of(&calls, fragment);
     assert_eq!(channel.calls_containing("/bin/df").len(), 1);
     let directories = at("/bin/mkdir -p /vm/data/daemon /vm/data/state");
     assert!(at("/bin/df") < directories && directories < at("vm-guest-agent start"));
@@ -571,9 +581,7 @@ async fn a_full_start_boots_polls_and_records_its_state() {
     );
 
     // A start with no record of the daemon keeps no lane IDE.
-    let gcs = channel.calls_containing("vm-guest-agent ide-gc");
-    assert_eq!(gcs.len(), 1, "{gcs:?}");
-    assert!(gcs[0].ends_with("ide-gc --root /vm/data/ide --stop-all"), "{}", gcs[0]);
+    fixture.assert_one_ide_gc("--stop-all");
 
     // A green start cancels nothing.
     assert!(cancels(&fixture).is_empty());
@@ -628,12 +636,7 @@ async fn the_start_removes_the_state_file_of_the_previous_daemon_before_the_supe
     );
     assert_eq!(reads.load(Ordering::SeqCst), 2, "the first read finds no file");
     let calls = fixture.channel().calls();
-    let at = |fragment: &str| {
-        calls
-            .iter()
-            .position(|call| call.line().contains(fragment))
-            .unwrap_or_else(|| panic!("no call contains {fragment:?}"))
-    };
+    let at = |fragment: &str| position_of(&calls, fragment);
     assert!(at("/bin/rm -f /vm/data/daemon/daemon.json") < at("vm-guest-agent start"));
 }
 
@@ -745,9 +748,7 @@ async fn a_start_keeps_the_ides_of_its_product_only_when_it_does_not_remount() {
 
     // No record: the start remounts, so it stops every IDE.
     let (_, ides) = fixture.host.start_daemon_keeping(&ctx, &fixture.worker, &prep, keep).await.unwrap();
-    let gcs = fixture.channel().calls_containing("vm-guest-agent ide-gc");
-    assert_eq!(gcs.len(), 1, "{gcs:?}");
-    assert!(gcs[0].ends_with("ide-gc --root /vm/data/ide --stop-all"), "{}", gcs[0]);
+    fixture.assert_one_ide_gc("--stop-all");
     assert_eq!((ides.kept.len(), ides.stopped.len()), (0, 1));
     assert_eq!(remounts(&fixture), 1);
 
@@ -758,15 +759,7 @@ async fn a_start_keeps_the_ides_of_its_product_only_when_it_does_not_remount() {
     previous.last_mount_digest = prep.mount_digest.clone();
     previous.write(&fixture.settings, &fixture.worker).unwrap();
     let (_, ides) = fixture.host.start_daemon_keeping(&ctx, &fixture.worker, &prep, keep).await.unwrap();
-    let gcs = fixture.channel().calls_containing("vm-guest-agent ide-gc");
-    assert_eq!(gcs.len(), 1, "{gcs:?}");
-    assert!(
-        gcs[0].ends_with(&format!("ide-gc --root /vm/data/ide --keep-product {}", prep.product_digest)),
-        "{}",
-        gcs[0]
-    );
-    assert_eq!((ides.kept.len(), ides.stopped.len()), (1, 0));
-    assert_eq!(remounts(&fixture), 0);
+    assert_kept_the_ide_of_the_product(&fixture, &prep, &ides);
 }
 
 // On Docker the refresh of the shares is a settle of the bind mounts and unmounts nothing. So a start without a record
@@ -781,15 +774,7 @@ async fn a_start_on_docker_keeps_the_ides_of_its_product_without_a_record() {
         .start_daemon_keeping(&Ctx::background(), &fixture.worker, &prep, keep)
         .await
         .unwrap();
-    let gcs = fixture.channel().calls_containing("vm-guest-agent ide-gc");
-    assert_eq!(gcs.len(), 1, "{gcs:?}");
-    assert!(
-        gcs[0].ends_with(&format!("ide-gc --root /vm/data/ide --keep-product {}", prep.product_digest)),
-        "{}",
-        gcs[0]
-    );
-    assert_eq!((ides.kept.len(), ides.stopped.len()), (1, 0));
-    assert_eq!(remounts(&fixture), 0);
+    assert_kept_the_ide_of_the_product(&fixture, &prep, &ides);
 }
 
 // An IDE that the gc could not stop holds the shares and the slot root of its context, so the start refuses before it
@@ -1006,12 +991,7 @@ async fn the_guest_builds_its_tree_before_the_probe_and_gets_the_bytes_when_it_h
         .filter(|index| calls[*index].line().contains(" runfiles-tree"))
         .collect();
     assert_eq!(trees.len(), 2, "{:?}", fixture.channel().lines());
-    let at = |fragment: &str| {
-        calls
-            .iter()
-            .position(|call| call.line().contains(fragment))
-            .unwrap_or_else(|| panic!("no call contains {fragment:?}"))
-    };
+    let at = |fragment: &str| position_of(&calls, fragment);
     assert!(trees[1] < at(&format!("/bin/test -f {}", self_location(&prep))));
     assert!(trees[1] < at("vm-guest-agent start"));
     let stdin = |index: usize| calls[index].options.stdin.clone().unwrap();

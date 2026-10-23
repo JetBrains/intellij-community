@@ -938,6 +938,13 @@ impl DaemonFixture {
         self.manager.prepare_runtime_dirs().expect("the runtime directories are created");
     }
 
+    /// Checks that the first worker got one `ide-gc`, and that `retention` ends it, such as `--stop-all`.
+    pub(crate) fn assert_one_ide_gc(&self, retention: &str) {
+        let gcs = self.channel().calls_containing("vm-guest-agent ide-gc");
+        assert_eq!(gcs.len(), 1, "{gcs:?}");
+        assert!(gcs[0].ends_with(&format!("ide-gc --root /vm/data/ide {retention}")), "{}", gcs[0]);
+    }
+
     /// The scripted channel into the first worker.
     pub(crate) fn channel(&self) -> Arc<FakeChannel> {
         self.channel_of(&self.worker)

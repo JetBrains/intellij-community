@@ -539,15 +539,21 @@ async fn parse_run_refuses_the_usage_ladder() {
         (&["--lane", "warp"], "not an IDE UI lane"),
         (&["--changed", ""], "--changed requires a path"),
     ] {
-        let failure = refusal(fixture.host.parse_run(&Ctx::background(), &parsed(argv)).await);
-        assert_eq!(
-            (failure.code.as_ref(), failure.exit),
-            ("usage", Exit::USAGE),
-            "{argv:?}: {:?}",
-            failure.message
-        );
+        let failure = refused_usage(&fixture, argv, "usage").await;
         assert!(failure.message.contains(fragment), "{argv:?}: {:?}", failure.message);
     }
+}
+
+/// The refusal of the parse of `run` with `argv`, which must have `code` and the usage exit.
+async fn refused_usage(fixture: &Fixture, argv: &[&str], code: &str) -> Refusal {
+    let failure = refusal(fixture.host.parse_run(&Ctx::background(), &parsed(argv)).await);
+    assert_eq!(
+        (failure.code.as_ref(), failure.exit),
+        (code, Exit::USAGE),
+        "{argv:?}: {:?}",
+        failure.message
+    );
+    failure
 }
 
 const FLOW_PROFILE_DIR: &str = "plugins/air/tests/integration/flow-profiles/resources/flow-profiles";
@@ -740,13 +746,7 @@ async fn shard_and_flake_refuse_an_explicit_only_lane_that_run_takes() {
         &["--lane", "ui-live"][..],
         &["//plugins/air/tests/integration/ui-live:ui-live_lane_test"][..],
     ] {
-        let failure = refusal(fixture.host.parse_run(&Ctx::background(), &parsed(argv)).await);
-        assert_eq!(
-            (failure.code.as_ref(), failure.exit),
-            ("explicit_only_lane", Exit::USAGE),
-            "{argv:?}: {:?}",
-            failure.message
-        );
+        let failure = refused_usage(&fixture, argv, "explicit_only_lane").await;
         assert!(
             failure.message.contains(" run --lane ui-live`") && !failure.message.contains("--runner"),
             "{argv:?}: {:?}",
@@ -754,8 +754,7 @@ async fn shard_and_flake_refuse_an_explicit_only_lane_that_run_takes() {
         );
     }
     // The lane daemon runs every lane, so no refusal names a runner.
-    let perf = refusal(fixture.host.parse_run(&Ctx::background(), &parsed(&["--lane", "ui-perf"])).await);
-    assert_eq!(perf.code, "explicit_only_lane", "{:?}", perf.message);
+    let perf = refused_usage(&fixture, &["--lane", "ui-perf"], "explicit_only_lane").await;
     assert!(
         perf.message.contains(" run --lane ui-perf`") && !perf.message.contains("--runner"),
         "{:?}",
@@ -917,13 +916,7 @@ async fn parse_run_refuses_a_flow_it_cannot_run() {
         ),
         ("a class beside --lane", vec!["SomeTest", "--lane", "gui-chat"], "usage", "usage:"),
     ] {
-        let failure = refusal(fixture.host.parse_run(&Ctx::background(), &parsed(&argv)).await);
-        assert_eq!(
-            (failure.code.as_ref(), failure.exit),
-            (code, Exit::USAGE),
-            "{name}: {:?}",
-            failure.message
-        );
+        let failure = refused_usage(&fixture, &argv, code).await;
         assert!(failure.message.contains(fragment), "{name}: {:?}", failure.message);
     }
     assert_eq!(fixture.bazel.build_calls(), 0, "a refused selection built");
