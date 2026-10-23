@@ -102,6 +102,8 @@ internal class ConvertLambdaToReferenceIntention :
     )
 
     override fun isApplicableByPsi(element: KtLambdaExpression): Boolean {
+        if (element.valueParameters.any { it.destructuringDeclaration != null }) return false
+
         val singleStatement = element.singleStatementOrNull() ?: return false
 
         return when (singleStatement) {

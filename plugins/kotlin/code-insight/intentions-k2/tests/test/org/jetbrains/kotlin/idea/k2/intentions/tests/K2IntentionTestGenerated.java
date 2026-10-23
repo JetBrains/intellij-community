@@ -2152,6 +2152,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
                 runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/defaultUnnamed3.kt");
             }
 
+            @TestMetadata("destructuringParameter.kt")
+            public void testDestructuringParameter() throws Exception {
+                runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/destructuringParameter.kt");
+            }
+
             @TestMetadata("differentReceiverType.kt")
             public void testDifferentReceiverType() throws Exception {
                 runTest("../../../idea/tests/testData/intentions/convertLambdaToReference/differentReceiverType.kt");
