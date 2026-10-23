@@ -19,6 +19,7 @@ use yonder_link::{Channel, Frame, Identity, LinkError, ServerTls};
 
 use crate::child::never;
 use crate::files::private_dir;
+use crate::git::NotRepo;
 use crate::home::Home;
 use crate::lease::{Leases, now_seconds};
 use crate::refused::{AGENT_ERROR, BAD_REQUEST, LOCK_TIMEOUT, PACK_FAILED, REPO_MISSING, Refusal, SCHEMA, refused, reply};
@@ -244,11 +245,20 @@ impl Agent {
         if self.known_repos().contains(&path) && path.is_dir() {
             return Ok(path);
         }
-        if !git::is_repo(&path) {
-            return Err(refused(
-                REPO_MISSING,
-                format!("{} is not a git repository on this host", path.display()),
-            ));
+        match git::check_repo(&path) {
+            Ok(()) => {}
+            Err(NotRepo::Missing(why)) => {
+                return Err(refused(
+                    REPO_MISSING,
+                    format!("{} is not a git repository on this host: {why}", path.display()),
+                ));
+            }
+            Err(NotRepo::Unchecked(why)) => {
+                return Err(refused(
+                    AGENT_ERROR,
+                    format!("cannot check the repository {} on this host: {why}", path.display()),
+                ));
+            }
         }
         self.known_repos().insert(path.clone());
         Ok(path)

@@ -37,6 +37,8 @@ file of that holder.
 | A start with no command, or a fetch directory with a root, `.` or `..` | `bad_request` |
 | A follow offset that is not 0 or the offset after a line end of the log | `bad_request` |
 | A fetch or a forget of a run that goes on | `bad_request` |
+| A repository path that is no directory, or that git says is no repository | `repo_missing`, with the words of git |
+| A repository check that cannot run, such as a git that cannot start | `agent_error`, with the error of the start |
 | A lease request for a holder whose lease file names another repository | `lease_failed`, and the file stays |
 | A run whose commit the repository lacks, and whose pack does not come within 30 min, or sends no chunk for 2 min | `pack_missing`, as the end of the run |
 

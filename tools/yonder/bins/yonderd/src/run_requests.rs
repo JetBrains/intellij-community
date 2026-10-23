@@ -51,7 +51,7 @@ impl Agent {
             && spec.reference == run_ref(&spec.run)
         {
             let repo = self.home.expand(&spec.repo);
-            if git::is_repo(&repo)
+            if git::check_repo(&repo).is_ok()
                 && let Err(error) = git::delete_ref(&repo, &spec.reference)
             {
                 log(&format!("cannot delete {} in {}: {error}", spec.reference, repo.display()));

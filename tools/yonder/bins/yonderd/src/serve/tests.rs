@@ -28,7 +28,7 @@ fn a_repository_that_a_check_found_needs_no_second_check() {
     assert_eq!(agent.repo("~/repo").expect("a repository"), repo);
     // Without its .git a fresh check refuses the directory; the agent answers from what it found.
     fs::rename(repo.join(".git"), home.path().join("moved.git")).expect("the .git moved away");
-    assert!(!git::is_repo(&repo));
+    assert!(git::check_repo(&repo).is_err());
     assert_eq!(agent.repo("~/repo").expect("a found repository"), repo);
     fs::remove_dir_all(&repo).expect("the directory removed");
     assert_eq!(agent.repo("~/repo").expect_err("no directory").code, REPO_MISSING);

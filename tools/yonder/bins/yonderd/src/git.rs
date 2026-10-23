@@ -33,9 +33,33 @@ fn checked(output: Result<Output, child::ChildError>) -> Result<Output, String> 
     }
 }
 
-/// Whether `repo` is a git repository.
-pub(crate) fn is_repo(repo: &Path) -> bool {
-    repo.is_dir() && child::run(git(repo).args(["rev-parse", "--git-dir"]), QUICK, &never).is_ok_and(|output| output.status.success())
+/// Why the agent cannot use a path as a repository.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum NotRepo {
+    /// The path is no directory, or git says that it is no repository. The text says which.
+    Missing(String),
+    /// The check itself failed, such as a git that cannot start on a host short of processes or descriptors.
+    Unchecked(String),
+}
+
+/// Checks that `repo` is a git repository. A checkout has `.git`, and a bare repository has `HEAD` and `objects`. A
+/// stat starts no child, so a loaded host answers too. Any other layout asks `git rev-parse --git-dir`.
+pub(crate) fn check_repo(repo: &Path) -> Result<(), NotRepo> {
+    if !repo.is_dir() {
+        return Err(NotRepo::Missing("it is no directory".to_owned()));
+    }
+    if repo.join(".git").exists() || (repo.join("HEAD").is_file() && repo.join("objects").is_dir()) {
+        return Ok(());
+    }
+    match child::run(git(repo).args(["rev-parse", "--git-dir"]), QUICK, &never) {
+        Ok(output) if output.status.success() => Ok(()),
+        Ok(output) => Err(NotRepo::Missing(format!(
+            "`git rev-parse --git-dir` says: {} ({})",
+            output.diagnostic(),
+            output.status
+        ))),
+        Err(error) => Err(NotRepo::Unchecked(error.to_string())),
+    }
 }
 
 /// Whether `text` is a full commit id: 40 or 64 lower-case hex digits.
