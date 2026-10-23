@@ -190,12 +190,9 @@ pub struct SkippedContainer {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ActiveTest {
-    pub id: String,
-    pub display_name: String,
-    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
-    pub class_name: Option<String>,
-    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
-    pub method_name: Option<String>,
+    /// The test, with the fields of the record that started it.
+    #[serde(flatten)]
+    pub execution: ExecutionIdentity,
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
     pub started_at: Option<String>,
 }

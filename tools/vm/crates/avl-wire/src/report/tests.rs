@@ -54,6 +54,26 @@ fn a_valid_report_round_trips() {
 
 // The arrays this document declares are declared unconditionally: a reader that saw `null` would have to decide
 // for itself whether that meant "none" or "the producer forgot".
+/// An active test is one flat object: the fields of the record that started it, and the start.
+#[test]
+fn an_active_test_is_one_flat_object() {
+    let test = ActiveTest {
+        execution: ExecutionIdentity {
+            id: "[engine:junit-jupiter]/[class:air.RenameTest]".to_owned(),
+            display_name: "renames".to_owned(),
+            class_name: Some("air.RenameTest".to_owned()),
+            method_name: None,
+        },
+        started_at: Some("2026-08-23T08:09:00Z".to_owned()),
+    };
+    let text = String::from_utf8(encode(&test)).unwrap();
+    assert_eq!(
+        text,
+        r#"{"id":"[engine:junit-jupiter]/[class:air.RenameTest]","displayName":"renames","className":"air.RenameTest","startedAt":"2026-08-23T08:09:00Z"}"#
+    );
+    assert_eq!(serde_json::from_str::<ActiveTest>(&text).unwrap(), test);
+}
+
 #[test]
 fn declared_arrays_are_never_null() {
     let document = String::from_utf8(encode(&valid_report())).unwrap();

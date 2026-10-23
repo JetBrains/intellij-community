@@ -450,7 +450,7 @@ fn the_stream_names_the_test_a_killed_run_died_on() {
             started("3", "third", None, "t3"),
         ],
     ));
-    let ids: Vec<&str> = document.active_tests.iter().map(|test| test.id.as_str()).collect();
+    let ids: Vec<&str> = document.active_tests.iter().map(|test| test.execution.id.as_str()).collect();
     assert_eq!(ids, ["2", "3"]);
     assert_eq!(document.active_tests[0].started_at.as_deref(), Some("t2"));
     let cases: Vec<&str> = document.cases.iter().map(|case| case.name.as_str()).collect();
@@ -549,7 +549,10 @@ fn the_active_set_keeps_insertion_order() {
         started("b", "b1", None, "t2"),
         started("a", "a2", None, "t3"),
     ]);
-    let shown: Vec<(&str, &str)> = active.iter().map(|test| (test.id.as_str(), test.display_name.as_str())).collect();
+    let shown: Vec<(&str, &str)> = active
+        .iter()
+        .map(|test| (test.execution.id.as_str(), test.execution.display_name.as_str()))
+        .collect();
     assert_eq!(shown, [("a", "a2"), ("b", "b1")]);
 
     let restarted = active_tests(&[
@@ -558,7 +561,7 @@ fn the_active_set_keeps_insertion_order() {
         finished("a", "a1", "SUCCESSFUL", None, None),
         started("a", "a3", None, "t4"),
     ]);
-    let ids: Vec<&str> = restarted.iter().map(|test| test.id.as_str()).collect();
+    let ids: Vec<&str> = restarted.iter().map(|test| test.execution.id.as_str()).collect();
     assert_eq!(ids, ["b", "a"]);
 }
 
