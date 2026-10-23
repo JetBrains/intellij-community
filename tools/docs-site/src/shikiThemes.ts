@@ -1,6 +1,7 @@
-// IntelliJ new-UI editor schemes as shiki TextMate themes, used as a dual light/dark pair by the
-// source viewer. Colors mirror the IDE's bundled schemes (community/platform/platform-resources/
-// src/themes/expUI/expUI_lightScheme.xml and expUI_darkScheme.xml); scopes without an entry
+// The editor schemes of the Islands themes as shiki TextMate themes, used as a dual light/dark pair by the
+// source viewer. Islands Light uses the Light scheme (community/platform/platform-resources/src/themes/expUI/
+// expUI_lightScheme.xml); Islands Dark uses islands/IslandSchemeDark.xml over Darcula, with the editor background
+// of the island (#191a1c, editor-bg of ManyIslandsDark.theme.json). Scopes without an entry
 // inherit the default foreground, matching IntelliJ (function calls, class names, parameters and
 // punctuation are plain text in both schemes).
 
@@ -76,7 +77,7 @@ export const intellijLight = intellijTheme('intellij-light', 'light', {
 
 export const intellijDark = intellijTheme('intellij-dark', 'dark', {
   text: '#bcbec4',
-  background: '#1e1f22',
+  background: '#191a1c',
   keyword: '#cf8e6d',
   string: '#6aab73',
   number: '#2aacb8',

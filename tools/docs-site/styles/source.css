@@ -5,13 +5,15 @@
    contrast matches the IDE. */
 
 :root {
-  --code-canvas: #ffffff;
-  --code-fg: #080808;
+  /* the editor of Islands Light: editor-bg and editor-text */
+  --code-canvas: var(--islands-editor-bg-light);
+  --code-fg: var(--islands-editor-text-light);
 }
 
 .dark {
-  --code-canvas: #1e1f22;
-  --code-fg: #bcbec4;
+  /* the editor of Islands Dark */
+  --code-canvas: var(--islands-editor-bg-dark);
+  --code-fg: var(--islands-editor-text-dark);
 }
 
 /* injected by shiki as inline styles on every token span (dual-theme output) */
