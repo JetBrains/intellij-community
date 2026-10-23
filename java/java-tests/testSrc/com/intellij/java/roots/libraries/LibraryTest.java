@@ -36,28 +36,23 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 public class LibraryTest extends ModuleRootManagerTestCase {
-  public void testLibrarySerialization() throws IOException {
+  public void testLibrarySerialization() {
     long moduleModificationCount = ModuleRootManagerEx.getInstanceEx(myModule).getModificationCountForTests();
 
-    File projectDir = new File(myProject.getBasePath());
-    File localFastUtilJar = new File(projectDir, "lib.jar");
-    Path sources = getLibSources();
-    File localSources = new File(projectDir, "lib-sources.zip");
-
-    FileUtil.copy(new File(getFastUtilJar().getPath().replace("!", "")), localFastUtilJar);
-    FileUtil.copy(sources.toFile(), localSources);
+    var projectDir = getOrCreateProjectBaseDir().toNioPath().toFile();
+    var localJar = IoTestUtil.createTestJar(new File(projectDir, "lib.jar"));
+    var localSources = IoTestUtil.createTestJar(new File(projectDir, "lib-sources.zip"));
 
     PsiTestUtil.addProjectLibrary(
       myModule,
       "junit",
-      Collections.singletonList(StandardFileSystems.local().refreshAndFindFileByPath(localFastUtilJar.getAbsolutePath())),
+      Collections.singletonList(StandardFileSystems.local().refreshAndFindFileByPath(localJar.getAbsolutePath())),
       Collections.singletonList(StandardFileSystems.local().refreshAndFindFileByPath(localSources.getAbsolutePath()))
     );
 

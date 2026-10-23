@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Path;
 
 public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
   protected static void assertRoots(PathsList pathsList, VirtualFile... files) {
@@ -75,10 +74,6 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
   protected static VirtualFile getFastUtilJar() {
     return IntelliJProjectConfiguration.getVirtualFile(
       IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.fastutil", "fastutil-min"));
-  }
-
-  protected static Path getLibSources() {
-    return IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.gson", "gson").getClasses().getFirst().toPath();
   }
 
   protected VirtualFile addSourceRoot(Module module, boolean testSource) throws IOException {
