@@ -26,6 +26,7 @@ enum class ABExperimentOption {
   NEW_USERS_ONBOARDING,
   CLION_WIZARD_REMOVAL,
   SEARCH_EVERYWHERE_NO_ML_SORTING,
+  CLION_DFA_DISABLE_COMPUTATION,
 
   /**
    * A group for users which are not assigned to any experiment.
@@ -85,6 +86,13 @@ val experimentsPartition: List<ExperimentAssignment> = listOf(
     // We run this experiment only on the pre-release builds (EAP, Beta, RC). See [isAllowed]
     majorVersion = "2026.3",
   ),
+  //ExperimentAssignment(
+  //  experiment = ABExperimentOption.CLION_DFA_DISABLE_COMPUTATION,
+  //  experimentBuckets = (0 until 256).toSet(),
+  //  controlBuckets = (256 until 512).toSet(),
+  //  majorVersion = "2026.3",
+  //  products = EnumSet.of(IntelliJPlatformProduct.CLION),
+  //),
   // the rest belongs to the "unassigned" experiment
 )
 
