@@ -14,6 +14,20 @@ fn listen<T>(listening: std::io::Result<T>, name: &str) -> Result<T, Refusal> {
     listening.or_refuse("internal_error", Exit::FAILURE, || format!("cannot listen for {name}"))
 }
 
+/// Defines the `recv` method of a listener over its receiver fields, each with the signal that it delivers.
+macro_rules! signal_recv {
+    ($($receiver:ident => $signal:expr),+ $(,)?) => {
+        /// The next signal, or `None` when the runtime that listens has ended. A receiver whose stream ended drops
+        /// out, and the answer is `None` when every stream ended.
+        pub(in crate::interrupt) async fn recv(&mut self) -> Option<Signal> {
+            tokio::select! {
+                $(Some(()) = self.$receiver.recv() => Some($signal),)+
+                else => None,
+            }
+        }
+    };
+}
+
 #[cfg(unix)]
 mod unix {
     use avl_base::Refusal;
@@ -35,14 +49,7 @@ mod unix {
             })
         }
 
-        /// The next signal, or `None` when the runtime that listens has ended.
-        pub(in crate::interrupt) async fn recv(&mut self) -> Option<Signal> {
-            tokio::select! {
-                Some(()) = self.interrupt.recv() => Some(Signal::Interrupt),
-                Some(()) = self.terminate.recv() => Some(Signal::Terminate),
-                else => None,
-            }
-        }
+        signal_recv!(interrupt => Signal::Interrupt, terminate => Signal::Terminate);
     }
 }
 
@@ -74,15 +81,11 @@ mod windows {
             })
         }
 
-        /// The next signal, or `None` when the runtime that listens has ended.
-        pub(in crate::interrupt) async fn recv(&mut self) -> Option<Signal> {
-            tokio::select! {
-                Some(()) = self.interrupt.recv() => Some(Signal::Interrupt),
-                Some(()) = self.terminate.recv() => Some(Signal::Terminate),
-                Some(()) = self.close.recv() => Some(Signal::Terminate),
-                Some(()) = self.shutdown.recv() => Some(Signal::Terminate),
-                else => None,
-            }
-        }
+        signal_recv!(
+            interrupt => Signal::Interrupt,
+            terminate => Signal::Terminate,
+            close => Signal::Terminate,
+            shutdown => Signal::Terminate,
+        );
     }
 }
