@@ -5,7 +5,10 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.VisualPosition
+import com.intellij.openapi.editor.impl.marker.PMarkerResolution
+import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
+import com.intellij.openapi.util.TextRange
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
@@ -52,6 +55,29 @@ class SnapshotCaretMarkerTest {
     }
 
     assertThat(offset).isEqualTo(4)
+  }
+
+  @Test
+  fun `whitespace insertion replaces the caret marker`(): Unit = timeoutRunBlocking {
+    val (beforeRoot, afterRoot) = withEditor("a b") { editor ->
+      val caret = editor.caretModel.primaryCaret
+      caret.moveToOffset(2)
+      val positionMarkerField = CaretImpl::class.java.getDeclaredField("myPositionMarker").apply { isAccessible = true }
+      val beforeMarker = positionMarkerField.get(caret) as SnapshotRangeMarkerImpl
+      val beforeRoot = beforeMarker.currentRootReference().get()
+
+      editor.document.insertString(2, "  ")
+
+      val afterMarker = positionMarkerField.get(caret) as SnapshotRangeMarkerImpl
+      beforeRoot to afterMarker.currentRootReference().get()
+    }
+
+    val beforeMarker = beforeRoot.overlappingIterator(0, 5, 0).asSequence().single()
+    val afterMarker = afterRoot.overlappingIterator(0, 5, 0).asSequence().single()
+    assertThat(afterMarker.markerId).isNotEqualTo(beforeMarker.markerId)
+    assertThat(PMarkerResolution.toTextRange(beforeRoot.resolve(beforeMarker.markerId))).isEqualTo(TextRange(2, 2))
+    assertThat(afterRoot.resolve(beforeMarker.markerId)).isEqualTo(PMarkerResolution.ABSENT)
+    assertThat(PMarkerResolution.toTextRange(afterRoot.resolve(afterMarker.markerId))).isEqualTo(TextRange(4, 4))
   }
 
   @Test

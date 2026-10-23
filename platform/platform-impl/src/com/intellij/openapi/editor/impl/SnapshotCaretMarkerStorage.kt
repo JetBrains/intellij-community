@@ -81,12 +81,6 @@ internal class SnapshotCaretMarkerStorage(
     markers.remove(marker.id)
   }
 
-  fun relocate(marker: SnapshotRangeMarkerImpl, offset: Int, spec: Byte) {
-    rootStore.updateRoot(currentSnapshot()) {
-      it.remove(marker.id).insert(marker.id, offset, offset, spec, marker.flavorFlags, policy = marker.policy)
-    }
-  }
-
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 
   companion object {

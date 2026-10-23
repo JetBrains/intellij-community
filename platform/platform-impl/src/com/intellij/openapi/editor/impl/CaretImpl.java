@@ -1744,7 +1744,8 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
       }
       newOffset = DocumentUtil.alignToCodePointBoundary(event.getDocument(), newOffset);
       if (newOffset != offsetAfterChange) {
-        getStorage().relocate(this, newOffset, getStorage().positionSpec());
+        myPositionMarker = createPositionMarker(newOffset);
+        dispose();
       }
 
       myLogicalColumnAdjustment = 0;
