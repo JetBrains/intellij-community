@@ -18,7 +18,7 @@ use super::*;
 use crate::reply::verb_refusal_code;
 use crate::step::StepError;
 use crate::step::tests_support::exited;
-use crate::testing::run_agent;
+use crate::testing::{ValidatorFixture, assert_damage_codes, assert_damage_mentions, assert_verb_usage_refused, run_agent};
 
 /// The window the healthy stub's fluxbox owns. Mixed case on purpose: the two hops are compared against each other
 /// and X tools are not consistent about hex case, which is why both lowercase.
@@ -121,7 +121,7 @@ struct Fixture {
     validator: GuestValidator<Worker>,
 }
 
-impl Fixture {
+impl ValidatorFixture for Fixture {
     /// A worker every check passes on, with a distribution of two shared objects that resolve. Every case is this,
     /// minus one thing. The loaders are real files in a temporary directory, because the check stats them.
     fn healthy() -> Self {
@@ -160,6 +160,12 @@ impl Fixture {
         fixture
     }
 
+    fn refusal(&mut self, case: &str) -> AgentRefusal {
+        self.validate().expect_err(case)
+    }
+}
+
+impl Fixture {
     fn worker(&mut self) -> &mut Worker {
         &mut self.validator.runner
     }
@@ -267,13 +273,7 @@ fn the_validate_argv_is_exactly_one_checked_value() {
         ("a display with no colon", &["88"]),
         ("a display with a trailing letter", &[":88x"]),
     ];
-    for (name, argv) in cases {
-        let args: Vec<&str> = std::iter::once(AgentVerb::ValidateGuest.as_str())
-            .chain(argv.iter().copied())
-            .collect();
-        let answered = run_agent(&args, b"");
-        assert_eq!((answered.exit, answered.code()), (64, "usage".to_owned()), "{name}");
-    }
+    assert_verb_usage_refused(AgentVerb::ValidateGuest, &cases);
 }
 
 /// **The validator holds no package list**, and a trailing argument is how one would arrive: it is refused, and
@@ -357,13 +357,7 @@ fn every_guest_check_refuses_with_its_own_code() {
             "linux_glibc_missing",
         ),
     ];
-    for (name, damage, code) in cases {
-        let mut fixture = Fixture::healthy();
-        damage(&mut fixture);
-        let refusal = fixture.validate().expect_err(name);
-        assert_eq!(refusal.code, code, "{name}: {}", refusal.message);
-        assert_eq!(refusal.exit, AgentExit::Refused, "{name}");
-    }
+    assert_damage_codes(&cases);
 }
 
 /// A distribution that exists and cannot be *read* is not an empty one. Skipped as root, which may open a mode-0000
@@ -465,14 +459,7 @@ fn a_guest_refusal_names_what_it_checked_and_what_it_found() {
             &["glibc", "DOCKER_BASE_IMAGE"],
         ),
     ];
-    for (name, damage, mentions) in cases {
-        let mut fixture = Fixture::healthy();
-        damage(&mut fixture);
-        let refusal = fixture.validate().expect_err(name);
-        for fragment in mentions {
-            assert!(refusal.message.contains(fragment), "{name}: {fragment}: {}", refusal.message);
-        }
-    }
+    assert_damage_mentions(&cases);
 }
 
 // --- a distribution without a shared object ------------------------------------------------------------------

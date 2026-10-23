@@ -9,12 +9,11 @@ use std::collections::HashMap;
 use std::fs;
 use std::os::unix::fs::PermissionsExt;
 
-use avl_wire::supervisor::AgentExit;
 use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::reply::verb_refusal_code;
-use crate::testing::run_agent;
+use crate::testing::{ValidatorFixture, assert_damage_codes, assert_damage_mentions, run_agent};
 
 // --- the verdicts ----------------------------------------------------------------------------------------------
 
@@ -99,7 +98,7 @@ struct Fixture {
     validator: ImageValidator<StubbedImage>,
 }
 
-impl Fixture {
+impl ValidatorFixture for Fixture {
     /// An image every check passes on, answering what a real golden image answers. Every case is this, minus one
     /// thing.
     fn healthy() -> Self {
@@ -148,6 +147,12 @@ impl Fixture {
         fixture
     }
 
+    fn refusal(&mut self, case: &str) -> AgentRefusal {
+        self.validate().expect_err(case)
+    }
+}
+
+impl Fixture {
     fn image(&mut self) -> &mut StubbedImage {
         &mut self.validator.surface
     }
@@ -444,14 +449,7 @@ fn every_check_refuses_with_its_own_code() {
             "image_audit_refused",
         ),
     ];
-    for (name, damage, code) in cases {
-        let mut fixture = Fixture::healthy();
-        damage(&mut fixture);
-        let refusal = fixture.validate().expect_err(name);
-        assert_eq!(refusal.code, code, "{name}: {}", refusal.message);
-        // One status for the whole family: Packer treats every nonzero status alike.
-        assert_eq!(refusal.exit, AgentExit::Refused, "{name}");
-    }
+    assert_damage_codes(&cases);
     // A helper that was never installed is the same refusal as one that is not executable.
     let mut fixture = Fixture::healthy();
     fixture.remove(&installed_worker_script(WORKER_SCRIPTS[2].installed));
@@ -502,14 +500,7 @@ fn a_refusal_names_what_it_checked_and_what_it_found() {
             &["worker-private storage must not be baked into the golden image"],
         ),
     ];
-    for (name, damage, mentions) in cases {
-        let mut fixture = Fixture::healthy();
-        damage(&mut fixture);
-        let refusal = fixture.validate().expect_err(name);
-        for fragment in mentions {
-            assert!(refusal.message.contains(fragment), "{name}: {fragment}: {}", refusal.message);
-        }
-    }
+    assert_damage_mentions(&cases);
 }
 
 /// A quoted answer cannot bury the message that named it; an empty one is named as nothing; the cap lands on a

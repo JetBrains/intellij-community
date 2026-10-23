@@ -2,7 +2,7 @@ use clap::CommandFactory;
 use pretty_assertions::assert_eq;
 
 use super::*;
-use crate::testing::run_agent;
+use crate::testing::{assert_usage_refused, run_agent};
 
 fn parsed(args: &[&str]) -> Verb {
     let argv: Vec<OsString> = std::iter::once("vm-guest-agent")
@@ -232,8 +232,7 @@ fn the_image_pins_are_three_named_required_flags() {
         &["validate-image", "26.0", "--node-major", "24", "--junie-version", "1"],
     ];
     for argv in refused {
-        let answered = run_agent(argv, b"");
-        assert_eq!((answered.exit, answered.code()), (64, "usage".to_owned()), "{argv:?}");
+        assert_usage_refused(argv, &format!("{argv:?}"));
     }
 }
 
@@ -254,8 +253,7 @@ fn the_linux_verb_checks_its_positional_shapes() {
         &["check-node", "/node/bin/node", "24"],
     ];
     for argv in refused {
-        let answered = run_agent(argv, b"");
-        assert_eq!((answered.exit, answered.code()), (64, "usage".to_owned()), "{argv:?}");
+        assert_usage_refused(argv, &format!("{argv:?}"));
     }
 }
 
@@ -284,8 +282,7 @@ fn the_ide_verbs_check_their_flags() {
         &["cancel", "--root", "/x", "--run", "run-a", "--thread-dump", "jcmd"],
     ];
     for argv in refused {
-        let answered = run_agent(argv, b"");
-        assert_eq!((answered.exit, answered.code()), (64, "usage".to_owned()), "{argv:?}");
+        assert_usage_refused(argv, &format!("{argv:?}"));
     }
 }
 
