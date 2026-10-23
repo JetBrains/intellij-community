@@ -34,6 +34,7 @@ import com.intellij.tools.ide.performanceTesting.commands.CommandChain
 import com.intellij.tools.ide.performanceTesting.commands.MarshallableCommand
 import com.intellij.tools.ide.performanceTesting.commands.SdkObject
 import com.intellij.tools.ide.performanceTesting.commands.setupProjectSdk
+import com.intellij.tools.ide.performanceTesting.commands.syncRestoredProjectFiles
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.replaceSpecialCharactersWithHyphens
 import com.intellij.ui.NewUiValue
@@ -117,10 +118,17 @@ open class IDETestContext(
     }
   }
 
+  /**
+   * Whether the next IDE run of this context starts with [syncRestoredProjectFiles], once.
+   * Set it after a write to the project files that the `system` directory of the IDE does not know about.
+   */
+  var syncProjectFilesOnStart: Boolean = false
+
   open fun copy(ide: InstalledIde? = null, resolvedProjectHome: Path? = null, sdk: SdkObject? = testCase.sdk): IDETestContext {
     require(sdk == null || testCase.projectInfo != NoProject) { "project must be specified to setup project SDK" }
     return IDETestContext(paths, ide ?: this.ide, testCase.copy(sdk = sdk), testName, resolvedProjectHome ?: this._resolvedProjectHome, profilerType,
                           publishers, isReportPublishingEnabled, preserveSystemDir)
+      .also { it.syncProjectFilesOnStart = syncProjectFilesOnStart }
   }
 
   val resolvedProjectHome: Path
@@ -518,11 +526,13 @@ open class IDETestContext(
   ): IDEStartResult {
     val span = TestTelemetryService.spanBuilder("runIDE").setAttribute("launchName", launchName).startSpan()
     val finalCommands = if (testCase.sdk != null) CommandChain().setupProjectSdk(testCase.sdk).addCommands(commands.toList()) else commands
+    val runCommands = if (syncProjectFilesOnStart) CommandChain().syncRestoredProjectFiles().addCommands(finalCommands.toList()) else finalCommands
+    syncProjectFilesOnStart = false
     span.makeCurrent().use {
       val runContext = IDERunContext(
         testContext = this,
         commandLine = commandLine,
-        commands = finalCommands,
+        commands = runCommands,
         runTimeout = runTimeout,
         useStartupScript = useStartupScript,
         launchName = launchName,

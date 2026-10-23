@@ -18,10 +18,13 @@ fun Starter.newTestContextFromCache(configuration: CachedProjectConfiguration): 
   val cachedTestContext = TestContextCache.getOrCreate(configuration) { contextName, _ ->
     newPreparedContext(contextName, configuration)
   }
-  if (cachedTestContext.restorePreparedProjectFiles()) {
+  val restored = cachedTestContext.restorePreparedProjectFiles()
+  if (restored) {
     cachedTestContext.requestProjectFilesVfsRefresh()
   }
   val currentTestContext = cachedTestContext.createCurrentTestContext(currentTestContextDirName())
+  // the IDE takes in the rewound files before the other commands, see AT-5404
+  currentTestContext.syncProjectFilesOnStart = restored
   logOutput(
     "The current test runs on the context at ${currentTestContext.paths.testHome}, " +
     "over the project prepared at ${cachedTestContext.testContext.paths.testHome}"

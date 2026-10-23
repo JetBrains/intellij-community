@@ -91,6 +91,7 @@ import com.jetbrains.performancePlugin.commands.SelectFileInProjectViewCommand;
 import com.jetbrains.performancePlugin.commands.SetModuleJdkCommand;
 import com.jetbrains.performancePlugin.commands.SetupInlineCompletionListenerCommand;
 import com.jetbrains.performancePlugin.commands.SetupProjectSdkCommand;
+import com.jetbrains.performancePlugin.commands.SyncRestoredProjectFilesCommand;
 import com.jetbrains.performancePlugin.commands.ShowAltEnter;
 import com.jetbrains.performancePlugin.commands.SingleInspectionCommand;
 import com.jetbrains.performancePlugin.commands.SleepCommand;
@@ -160,6 +161,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(RunClassInPluginModule.PREFIX, RunClassInPluginModule::new),
       Map.entry(RunServiceInPlugin.PREFIX, RunServiceInPlugin::new),
       Map.entry(SetupProjectSdkCommand.PREFIX, SetupProjectSdkCommand::new),
+      Map.entry(SyncRestoredProjectFilesCommand.PREFIX, SyncRestoredProjectFilesCommand::new),
       Map.entry(OpenProjectCommand.PREFIX, OpenProjectCommand::new),
       Map.entry(CloseProjectCommand.PREFIX, CloseProjectCommand::new),
       Map.entry(CloseOtherProjectsCommand.PREFIX, CloseOtherProjectsCommand::new),

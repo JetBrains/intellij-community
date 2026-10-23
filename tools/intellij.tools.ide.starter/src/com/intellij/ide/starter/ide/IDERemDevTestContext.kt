@@ -65,7 +65,7 @@ class IDERemDevTestContext private constructor(
       isReportPublishingEnabled,
       preserveSystemDir,
       frontendIDEContext
-    )
+    ).also { it.syncProjectFilesOnStart = syncProjectFilesOnStart }
   }
 
   override fun setProfiler(profilerType: ProfilerType): IDETestContext {

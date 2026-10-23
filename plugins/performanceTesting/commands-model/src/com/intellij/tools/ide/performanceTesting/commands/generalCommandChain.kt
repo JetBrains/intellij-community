@@ -79,6 +79,11 @@ fun <T : CommandChain> T.setupProjectSdk(sdk: SdkObject): T = apply {
   appendRawLine("${CMD_PREFIX}setupSDK \"${sdk.sdkName}\" \"${sdk.sdkType}\" \"${sdk.sdkPath}\"")
 }
 
+/** Brings the IDE in line with the project files that a test context cache rewound before the start, see AT-5404. */
+fun <T : CommandChain> T.syncRestoredProjectFiles(): T = apply {
+  appendRawLine("${CMD_PREFIX}syncRestoredProjectFiles")
+}
+
 private fun <T : CommandChain> T.appendRawLine(line: String): T = apply {
   require(!line.contains("\n")) { "Invalid line to include: $line" }
   addCommand(line)

@@ -125,6 +125,7 @@ jvm_library(
         "//libraries/oshi-core",
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/welcome-screen",
+        "//platform/backend/workspace",
         ":libraries_cli-parser_provided",
     ],
 )
@@ -199,6 +200,7 @@ jvm_library(
         "//libraries/oshi-core:oshi-core_test_lib",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//platform/welcome-screen:welcome-screen_test_lib",
+        "//platform/backend/workspace:workspace_test_lib",
     ],
 )
 ### auto-generated section `build intellij.performanceTesting` end
