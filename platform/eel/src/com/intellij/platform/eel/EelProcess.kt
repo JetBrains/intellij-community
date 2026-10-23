@@ -69,12 +69,6 @@ sealed interface EelProcess {
   @ApiStatus.Experimental
   suspend fun interrupt()
 
-  /**
-   * Use [convertToJVMProcess]
-   */
-  @Deprecated("Use extension method convertToJVMProcess", replaceWith = ReplaceWith("convertToJVMProcess"), level = DeprecationLevel.ERROR)
-  fun convertToJavaProcess(): Process = convertToJVMProcess()
-
 
   /**
    * Resizes the pseudo-terminal to [columns] columns by [rows] rows. PTY mode only (see above).
