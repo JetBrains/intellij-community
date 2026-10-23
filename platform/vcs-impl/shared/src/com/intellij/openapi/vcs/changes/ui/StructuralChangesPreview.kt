@@ -70,7 +70,7 @@ class StructuralChangesPreview(
     tree.addSelectionListener(Runnable { selectionChanged() }, disposable)
     val modelListener = PropertyChangeListener {
       // Only a shown or a pending preview follows the refresh, so a closed diff tab stays closed.
-      val restart = pendingPreview != null || highlight != null
+      val restart = pendingPreview?.isActive == true || highlight != null
       cancelPendingJob()
       if (restart) SwingUtilities.invokeLater { treeModelUpdated() }
     }
