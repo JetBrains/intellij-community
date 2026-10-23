@@ -498,20 +498,11 @@ async fn placeholder(server: &Arc<Server>) -> Response {
     let current = server.blocking(|server| server.snapshot_now(Duration::from_secs(1))).await;
     let mut roots = String::new();
     for state in &current.found.roots {
-        let mut note = if state.exists {
-            format!("{} bundles", state.bundles)
-        } else {
-            "absent".to_owned()
-        };
-        if let Some(error) = &state.error {
-            note.push_str(": ");
-            note.push_str(error);
-        }
         roots.push_str(&format!(
             "<li><code>{}</code> ({}): {}</li>\n",
             escape_html(&state.path.to_string_lossy()),
             escape_html(state.kind.as_str()),
-            escape_html(&note)
+            escape_html(&state.summary())
         ));
     }
     let site = server

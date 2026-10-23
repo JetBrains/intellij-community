@@ -60,6 +60,21 @@ pub struct RootState {
     pub problems: Vec<String>,
 }
 
+impl RootState {
+    /// What the scan found under the root, for a person: the count of bundles or `absent`, and the error, if any.
+    pub fn summary(&self) -> String {
+        let found = if self.exists {
+            format!("{} bundles", self.bundles)
+        } else {
+            "absent".to_owned()
+        };
+        match &self.error {
+            Some(error) => format!("{found}: {error}"),
+            None => found,
+        }
+    }
+}
+
 pub(super) const MAX_PROBLEMS: usize = 20;
 
 /// One scan's result.

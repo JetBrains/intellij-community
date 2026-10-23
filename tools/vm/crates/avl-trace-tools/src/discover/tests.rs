@@ -17,6 +17,35 @@ fn real_path(path: &Path) -> PathBuf {
     fscopy::resolve_links(path).unwrap()
 }
 
+/// The scan options that extract an inner zip into `nested`.
+fn nested_options(nested: &Path) -> Options {
+    Options {
+        nested_dir: Some(nested.to_path_buf()),
+        ..Options::default()
+    }
+}
+
+/// A summary names the bundles of a root or its absence, and the error of the root after them.
+#[test]
+fn a_root_summary_names_the_bundles_or_the_absence_and_then_the_error() {
+    let state = |exists, bundles, error: Option<&str>| RootState {
+        kind: RootKind::Flag,
+        path: PathBuf::from("/traces"),
+        origin: None,
+        exists,
+        bundles,
+        error: error.map(str::to_owned),
+        problems: Vec::new(),
+    };
+    for (state, want) in [
+        (state(true, 2, None), "2 bundles"),
+        (state(true, 0, Some("permission denied")), "0 bundles: permission denied"),
+        (state(false, 0, None), "absent"),
+    ] {
+        assert_eq!(state.summary(), want, "{state:?}");
+    }
+}
+
 /// The golden bundle's directory inside a packed `outputs.zip`.
 fn example_entry(manifest: &Manifest) -> String {
     format!(
@@ -223,10 +252,7 @@ fn a_zip_inside_a_zip_is_extracted_once_and_read_as_a_zip() {
         &outer_dir,
     );
     let nested = tempfile::tempdir().unwrap();
-    let options = || Options {
-        nested_dir: Some(nested.path().to_path_buf()),
-        ..Options::default()
-    };
+    let options = || nested_options(nested.path());
 
     let scanner = Scanner::new(options());
     let found = scanner.scan(&[Root::new(RootKind::Flag, &outer)]);
@@ -315,11 +341,7 @@ fn a_zip_inside_a_bundle_is_not_opened() {
     let zip = packed.path().join("traces.zip");
     pack(root.path(), &zip, &PackOptions::default()).unwrap();
     let nested = tempfile::tempdir().unwrap();
-    let found = Scanner::new(Options {
-        nested_dir: Some(nested.path().to_path_buf()),
-        ..Options::default()
-    })
-    .scan(&[Root::new(RootKind::Flag, &zip)]);
+    let found = Scanner::new(nested_options(nested.path())).scan(&[Root::new(RootKind::Flag, &zip)]);
     assert_eq!(found.bundles.len(), 1);
     assert_eq!(fs::read_dir(nested.path()).unwrap().count(), 0);
 }
@@ -343,10 +365,7 @@ fn concurrent_reads_share_an_extraction_that_opens_no_second_level() {
     let outer = zip_of_zips(&[("a/outputs.zip", &inner)], &outer_dir);
     let outer = real_path(&outer);
     let nested = tempfile::tempdir().unwrap();
-    let scanner = Scanner::new(Options {
-        nested_dir: Some(nested.path().to_path_buf()),
-        ..Options::default()
-    });
+    let scanner = Scanner::new(nested_options(nested.path()));
 
     let counts: Vec<usize> = std::thread::scope(|scope| {
         let readers: Vec<_> = (0..8)
@@ -375,11 +394,7 @@ fn an_inner_zip_that_does_not_read_is_reported_and_leaves_nothing() {
     let outer_dir = tempfile::tempdir().unwrap();
     let outer = zip_of_zips(&[("a/test.outputs/outputs.zip", &bogus)], &outer_dir);
     let nested = tempfile::tempdir().unwrap();
-    let found = Scanner::new(Options {
-        nested_dir: Some(nested.path().to_path_buf()),
-        ..Options::default()
-    })
-    .scan(&[Root::new(RootKind::Flag, &outer)]);
+    let found = Scanner::new(nested_options(nested.path())).scan(&[Root::new(RootKind::Flag, &outer)]);
     assert!(found.bundles.is_empty());
     let problems = &found.roots[0].problems;
     assert_eq!(problems.len(), 1, "{problems:?}");

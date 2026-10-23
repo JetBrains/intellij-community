@@ -22,6 +22,13 @@ fn example_root() -> (tempfile::TempDir, String) {
     (root, bundle)
 }
 
+/// A new directory, which the caller keeps, and the path of `traces.zip` in it.
+fn zip_destination() -> (tempfile::TempDir, PathBuf) {
+    let directory = tempfile::tempdir().unwrap();
+    let destination = directory.path().join("traces.zip");
+    (directory, destination)
+}
+
 fn pack_or_fail(source: &Path, destination: &Path, options: &PackOptions<'_>) -> Report {
     pack(source, destination, options).unwrap_or_else(|error| panic!("pack {}: {error}", source.display()))
 }
@@ -61,8 +68,7 @@ fn pack_is_deterministic() {
 #[test]
 fn pack_stores_media_and_deflates_text() {
     let (root, bundle) = example_root();
-    let destination = tempfile::tempdir().unwrap();
-    let destination = destination.path().join("traces.zip");
+    let (_directory, destination) = zip_destination();
     let report = pack_or_fail(root.path(), &destination, &PackOptions::default());
 
     let raw = fs::read(&destination).unwrap();
@@ -156,8 +162,7 @@ fn pack_follows_file_links_and_skips_directory_links() {
     fs::create_dir_all(&bundle).unwrap();
     symlink(&target, bundle.join("spans.jsonl")).unwrap();
     symlink(outside.path(), root.path().join("loop")).unwrap();
-    let destination = tempfile::tempdir().unwrap();
-    let destination = destination.path().join("traces.zip");
+    let (_directory, destination) = zip_destination();
     let report = pack_or_fail(root.path(), &destination, &PackOptions::default());
     assert_eq!((report.entries, report.bundles), (1, 1));
     assert_eq!(
@@ -218,8 +223,7 @@ fn a_selection_packs_only_the_bundles_it_keeps() {
     fs::create_dir_all(bundle_file(root.path(), unfinished)).unwrap();
     fs::write(bundle_file(root.path(), unfinished).join(SPANS_FILE), "").unwrap();
     fs::write(root.path().join("stray.txt"), "under no bundle").unwrap();
-    let destination = tempfile::tempdir().unwrap();
-    let destination = destination.path().join("traces.zip");
+    let (_directory, destination) = zip_destination();
 
     let finished_only = |_: &str, finished: bool| finished;
     let report = pack_or_fail(

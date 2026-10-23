@@ -401,16 +401,7 @@ pub(crate) async fn serve(args: ServeArgs, program: &DetachProgram, context: Con
     }
     let first = server.blocking(Server::scan).await;
     for state in &first.found.roots {
-        let mut note = if state.exists {
-            format!("{} bundles", state.bundles)
-        } else {
-            "absent".to_owned()
-        };
-        if let Some(error) = &state.error {
-            note.push_str(": ");
-            note.push_str(error);
-        }
-        out(format!("  root ({}): {}, {note}", state.kind, state.path.display()));
+        out(format!("  root ({}): {}, {}", state.kind, state.path.display(), state.summary()));
     }
     let _pid_file = match pid_file.as_deref().map(PidFile::write).transpose() {
         Ok(pid_file) => pid_file,
