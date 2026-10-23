@@ -4,5 +4,7 @@ load("//tools/yonder:defs.bzl", "yonder_rust_crate")
 # The agent runs on macOS and Linux: it signals process groups and takes flocks.
 yonder_rust_crate(
     name = "yonderd",
+    # `tests/cli.rs` includes the test helpers of `src/testing.rs` by their path.
+    compile_data = ["src/testing.rs"],
     target_compatible_with = NOT_ON_WINDOWS,
 )

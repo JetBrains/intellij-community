@@ -1,26 +1,9 @@
-use std::process::Command;
-
 use pretty_assertions::assert_eq;
 use yonder_link::proto::RunSpec;
 
 use super::*;
 use crate::run::{ExitRecord, KEEP};
-
-fn git_in(repo: &Path, args: &[&str]) -> String {
-    let output = Command::new("git")
-        .arg("-C")
-        .arg(repo)
-        .args(args)
-        .env("GIT_CONFIG_NOSYSTEM", "1")
-        .env("GIT_AUTHOR_NAME", "t")
-        .env("GIT_AUTHOR_EMAIL", "t@t")
-        .env("GIT_COMMITTER_NAME", "t")
-        .env("GIT_COMMITTER_EMAIL", "t@t")
-        .output()
-        .expect("git");
-    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
-    String::from_utf8_lossy(&output.stdout).trim().to_owned()
-}
+use crate::testing::git as git_in;
 
 /// A repository with one commit at `repo`. Answers the commit.
 fn repo_with_commit(repo: &Path) -> String {

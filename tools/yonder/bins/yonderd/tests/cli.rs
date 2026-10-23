@@ -110,22 +110,10 @@ fn write_script(path: &Path, text: &str) {
     fs::set_permissions(path, fs::Permissions::from_mode(0o755)).expect("executable");
 }
 
-/// Runs git in `dir` and answers its stdout.
-fn git(dir: &Path, args: &[&str]) -> String {
-    let output = Command::new("git")
-        .arg("-C")
-        .arg(dir)
-        .args(args)
-        .env("GIT_CONFIG_NOSYSTEM", "1")
-        .env("GIT_AUTHOR_NAME", "t")
-        .env("GIT_AUTHOR_EMAIL", "t@t")
-        .env("GIT_COMMITTER_NAME", "t")
-        .env("GIT_COMMITTER_EMAIL", "t@t")
-        .output()
-        .expect("git");
-    assert!(output.status.success(), "git {args:?}: {}", String::from_utf8_lossy(&output.stderr));
-    String::from_utf8_lossy(&output.stdout).trim().to_owned()
-}
+#[path = "../src/testing.rs"]
+mod testing;
+
+use testing::git;
 
 /// A temporary home with a main repository, the fake bd, and the identity of a client in the allow list.
 struct World {
@@ -323,11 +311,17 @@ impl Agent {
 
     /// The last reply of `request`. Any request that waits can get heartbeats first, so they are skipped.
     fn reply(&self, request: &Request) -> Reply {
+        self.reply_after_heartbeats(request).1
+    }
+
+    /// The last reply of `request`, and the count of the heartbeats before it.
+    fn reply_after_heartbeats(&self, request: &Request) -> (u32, Reply) {
         let mut channel = self.ask(request);
+        let mut heartbeats = 0;
         loop {
             match channel.recv().expect("the reply") {
-                Reply::Heartbeat { .. } => {}
-                reply => return reply,
+                Reply::Heartbeat { .. } => heartbeats += 1,
+                reply => return (heartbeats, reply),
             }
         }
     }
@@ -423,14 +417,11 @@ fn hello_answers_the_schema_and_another_schema_or_request_is_refused() {
     let agent = World::new().serve();
     let mut channel = agent.connect_as(&agent.world.client).expect("connected");
     channel.send(&Request::hello("test")).expect("sent");
-    assert_eq!(
-        channel.recv::<Reply>().expect("the reply"),
-        Reply::Hello {
-            schema_version: SCHEMA_VERSION,
-            agent_version: env!("CARGO_PKG_VERSION").to_owned(),
-            os: std::env::consts::OS.to_owned(),
-            arch: std::env::consts::ARCH.to_owned(),
-        }
+    let hello = channel.recv::<Reply>().expect("the reply");
+    assert_eq!(hello, Reply::hello(env!("CARGO_PKG_VERSION")));
+    assert!(
+        matches!(&hello, Reply::Hello { schema_version, os, .. } if *schema_version == SCHEMA_VERSION && os == std::env::consts::OS),
+        "{hello:?}"
     );
 
     let mut channel = agent.connect_as(&agent.world.client).expect("connected");
@@ -456,14 +447,17 @@ fn hello_answers_the_schema_and_another_schema_or_request_is_refused() {
 fn a_stranger_certificate_is_refused() {
     let agent = World::new().serve();
     let stranger = Identity::generate().expect("a stranger");
-    let outcome = agent.connect_as(&stranger).and_then(|mut channel| {
-        channel.send(&Request::hello("test"))?;
-        channel.recv::<Reply>()
+    let outcome = agent
+        .connect_as(&stranger)
+        .and_then(|mut channel| channel.exchange::<_, Reply>(&Request::hello("test")));
+    // The agent refuses the certificate: the client gets no reply, and neither a deadline nor a closed port ends it.
+    let Err(error) = outcome else {
+        panic!("the agent answered a stranger: {outcome:?}");
+    };
+    assert!(!matches!(error, LinkError::TimedOut | LinkError::Unreachable(_)), "{error:?}");
+    eventually("the refusal in the log of serve", || {
+        fs::read_to_string(agent.world.dir.path().join("serve.log")).is_ok_and(|log| log.contains("refused a connection from"))
     });
-    assert!(
-        matches!(outcome, Err(LinkError::Untrusted(_) | LinkError::Protocol(_))),
-        "{outcome:?}"
-    );
 }
 
 #[test]
@@ -1257,17 +1251,10 @@ fn a_lease_sends_heartbeats_while_bd_works() {
     let agent = World::new().serve_with(&[("YONDERD_TEST_HEARTBEAT_MS", "100")]);
     let world = &agent.world;
     fs::write(world.bd_dir().join("slow-get"), "").expect("the flag");
-    let mut channel = agent.ask(&Request::Lease {
+    let (heartbeats, last) = agent.reply_after_heartbeats(&Request::Lease {
         repo: "~/repo".to_owned(),
         holder: HOLDER.to_owned(),
     });
-    let mut heartbeats = 0;
-    let last = loop {
-        match channel.recv::<Reply>().expect("a reply") {
-            Reply::Heartbeat { .. } => heartbeats += 1,
-            other => break other,
-        }
-    };
     assert!(matches!(last, Reply::Leased { fresh: true, .. }), "{last:?}");
     assert!(heartbeats >= 3, "{heartbeats} heartbeats");
 }
@@ -1583,17 +1570,10 @@ fn a_have_sends_heartbeats_while_git_works() {
     ]);
     let world = &agent.world;
     fs::write(world.bd_dir().join("slow-cat-file"), "").expect("the flag");
-    let mut channel = agent.ask(&Request::Have {
+    let (heartbeats, last) = agent.reply_after_heartbeats(&Request::Have {
         repo: "~/repo".to_owned(),
         commits: vec![world.commit.clone()],
     });
-    let mut heartbeats = 0;
-    let last = loop {
-        match channel.recv::<Reply>().expect("a reply") {
-            Reply::Heartbeat { .. } => heartbeats += 1,
-            other => break other,
-        }
-    };
     assert_eq!(
         last,
         Reply::Have {

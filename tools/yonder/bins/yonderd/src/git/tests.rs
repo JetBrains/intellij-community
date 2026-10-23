@@ -4,28 +4,14 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::child::never;
+use crate::testing;
 
 /// A repository with one commit. Answers the directory and the commit.
 fn repo() -> (tempfile::TempDir, PathBuf, String) {
     let dir = tempfile::tempdir().expect("a temporary directory");
     let repo = dir.path().join("repo");
     std::fs::create_dir(&repo).expect("the repository directory");
-    let run = |args: &[&str]| {
-        let output = Command::new("git")
-            .arg("-C")
-            .arg(&repo)
-            .args(args)
-            .env("GIT_CONFIG_NOSYSTEM", "1")
-            .env("HOME", dir.path())
-            .env("GIT_AUTHOR_NAME", "t")
-            .env("GIT_AUTHOR_EMAIL", "t@t")
-            .env("GIT_COMMITTER_NAME", "t")
-            .env("GIT_COMMITTER_EMAIL", "t@t")
-            .output()
-            .expect("git");
-        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
-        String::from_utf8_lossy(&output.stdout).trim().to_owned()
-    };
+    let run = |args: &[&str]| testing::git(&repo, args);
     run(&["init", "-q"]);
     std::fs::write(repo.join("a.txt"), "a").expect("a file");
     run(&["add", "a.txt"]);

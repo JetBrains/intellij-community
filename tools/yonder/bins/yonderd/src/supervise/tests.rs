@@ -4,6 +4,7 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::run::Runs;
+use crate::testing::git as git_in;
 
 fn lines(input: &[u8]) -> Vec<String> {
     let mut lines = Vec::new();
@@ -74,23 +75,6 @@ fn a_tree_copy_keeps_files_dirs_and_links() {
     copy_tree(&source, &target).expect("copied");
     assert_eq!(fs::read_to_string(target.join("a/f")).expect("the file"), "f");
     assert_eq!(fs::read_link(target.join("link")).expect("the link"), PathBuf::from("a/f"));
-}
-
-/// Runs git in `repo` with a test identity and answers its stdout.
-fn git_in(repo: &Path, args: &[&str]) -> String {
-    let output = Command::new("git")
-        .arg("-C")
-        .arg(repo)
-        .args(args)
-        .env("GIT_CONFIG_NOSYSTEM", "1")
-        .env("GIT_AUTHOR_NAME", "t")
-        .env("GIT_AUTHOR_EMAIL", "t@t")
-        .env("GIT_COMMITTER_NAME", "t")
-        .env("GIT_COMMITTER_EMAIL", "t@t")
-        .output()
-        .expect("git");
-    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
-    String::from_utf8_lossy(&output.stdout).trim().to_owned()
 }
 
 fn spec_of(commit: &str) -> RunSpec {

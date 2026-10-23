@@ -19,6 +19,8 @@ mod run_requests;
 mod serve;
 mod setup;
 mod supervise;
+#[cfg(test)]
+mod testing;
 mod tuning;
 mod watch;
 
