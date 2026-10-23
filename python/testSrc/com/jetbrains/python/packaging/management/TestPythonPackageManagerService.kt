@@ -87,7 +87,7 @@ internal class TestPythonPackageManagerService(
       val mock = Mockito.mock(PyPiPackageCache::class.java) { invocation ->
         when (invocation.method.name) {
           "contains",
-          "containsBlocking" -> knownPackages.contains(invocation.arguments[0] as? String)
+          "tryContains" -> knownPackages.contains(invocation.arguments[0] as? String)
           else -> Mockito.RETURNS_DEFAULTS.answer(invocation)
         }
       }
