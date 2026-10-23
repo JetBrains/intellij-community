@@ -3,7 +3,9 @@
 
 package com.intellij.platform.projectView.frontend.pane
 
-import com.intellij.idea.AppMode
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.ide.projectView.impl.loadStoredProjectViewState
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -21,6 +23,8 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneService
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.SelectInRequestDTO
 import com.intellij.platform.projectView.rpc.ProjectViewRpc
+import com.intellij.platform.projectView.runSafelyCancellable
+import com.intellij.platform.projectView.settings.MigratedFrontendSettingsDTO
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -45,9 +49,16 @@ internal class FrontendProjectViewPaneAggregator(
   }
 
   private val backendServiceDeferred = coroutineScope.async(CoroutineName("Waiting for the Project View backend")) {
-    BackendDelegatingProjectViewPaneService(project, ProjectViewRpc.awaitConnectionAndGetInstance())
+    // Load the settings before the backend connects.
+    // After that, a save can write the settings synced from the backend to the storage.
+    val settingsToMigrate = loadFrontendSettingsToMigrate()
+    val rpc = ProjectViewRpc.awaitConnectionAndGetInstance()
+    if (settingsToMigrate != null) {
+      migrateFrontendSettingsToBackend(rpc, settingsToMigrate)
+    }
+    BackendDelegatingProjectViewPaneService(project, rpc)
   }
-  
+
   // null means "not loaded yet", as opposed to "loaded, but there are no panes"
   private val uiDescriptors = MutableStateFlow<Map<ProjectViewPaneId, ProjectViewPaneDescriptorImpl>?>(null)
   private val frontendDescriptors = MutableStateFlow<Map<ProjectViewPaneId, ProjectViewPaneDescriptorImpl>?>(null)
@@ -151,6 +162,43 @@ internal class FrontendProjectViewPaneAggregator(
       frontendService().findNodeForSelectIn(selectInRequest)
     }
   }
+
+  private fun loadFrontendSettingsToMigrate(): MigratedFrontendSettingsDTO? {
+    if (!IdeProductMode.isFrontend || PropertiesComponent.getInstance(project).getBoolean(MIGRATED_PROPERTY, false)) {
+      return null
+    }
+    val state = try {
+      loadStoredProjectViewState(project)
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.error("Cannot load the old frontend settings to migrate", e)
+      null
+    } ?: return null
+    return MigratedFrontendSettingsDTO(
+      autoscrollToSource = state.autoscrollToSource,
+      openDirectoriesWithSingleClick = state.openDirectoriesWithSingleClick,
+      autoscrollFromSource = state.autoscrollFromSource,
+    )
+  }
+
+  /**
+   * Migrates some frontend settings to the backend.
+   *
+   * The new implementation uses the usual remdev rule: app-level settings are frontend, project-level settings are backend.
+   * The old implementation used the frontend for those settings that affected the frontend.
+   * There are four such settings, one of which is app-level and therefore needs no migration.
+   * The others are Open Files with Single Click, Open Directories with Single Click and Always Select Opened File.
+   * Those are migrated here when the backend becomes available.
+   *
+   * The migration happens only once, when the first version containing this code is run in the new Split PV mode.
+   */
+  private suspend fun migrateFrontendSettingsToBackend(rpc: ProjectViewRpc, settings: MigratedFrontendSettingsDTO) {
+    runSafelyCancellable(LOG, taskDescription = { "Migrating the old frontend settings to the backend" }) {
+      rpc.migrateFrontendSettingsToBackend(projectId = project.projectId(), settings = settings)
+      PropertiesComponent.getInstance(project).setValue(MIGRATED_PROPERTY, true)
+    }
+  }
 }
 
 private class BackendDelegatingProjectViewPaneService(
@@ -184,5 +232,7 @@ private class BackendDelegatingProjectViewPaneService(
     return rpc.findNodeForSelectIn(project.projectId(), selectInRequestDTO)
   }
 }
+
+private const val MIGRATED_PROPERTY = "SPLIT_PROJECT_VIEW_FRONTEND_SETTINGS_MIGRATED"
 
 private val LOG = logger<FrontendProjectViewPaneAggregator>()
