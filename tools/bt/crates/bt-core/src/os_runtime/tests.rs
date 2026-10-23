@@ -110,6 +110,19 @@ fn both_of_a_childs_streams_are_collected_and_its_exit_code_is_answered() {
     assert!(result.output.contains("said on stderr"), "{}", result.output);
 }
 
+/// Apart, not merged: the stdout is the answer of the child, and each stderr line reaches the sink as it comes.
+#[test]
+fn a_streamed_child_answers_its_stdout_and_passes_on_its_stderr_lines() {
+    let lines = Mutex::new(Vec::new());
+    let sink = |line: &str| lines.lock().expect("the sink lock").push(line.to_owned());
+    let result = stream_to_end(child(None, "streams"), &sink);
+    assert_eq!(result.exit_code, 3, "{}", result.output);
+    // The harness of the child writes its own header to the stdout first.
+    assert!(result.output.ends_with("said on stdout\n"), "{}", result.output);
+    assert!(!result.output.contains("said on stderr"), "{}", result.output);
+    assert!(lines.lock().expect("the sink lock").iter().any(|line| line == "said on stderr"));
+}
+
 /// The tail, because a lane run's bazel output is megabytes and only its end says why it failed.
 #[test]
 fn output_is_truncated_to_its_tail() {

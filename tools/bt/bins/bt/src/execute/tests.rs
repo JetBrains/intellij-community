@@ -666,6 +666,18 @@ fn the_bep_file_is_deleted_even_when_the_run_blows_up() {
         fn spawn(&self, command: &[OsString], heartbeat: Option<bt_core::runtime::Heartbeat<'_>>) -> SpawnResult {
             self.0.spawn(command, heartbeat)
         }
+        fn spawn_streaming(&self, command: &[OsString]) -> SpawnResult {
+            self.0.spawn_streaming(command)
+        }
+        fn spawn_with_input(&self, command: &[OsString], input: &str) -> SpawnResult {
+            self.0.spawn_with_input(command, input)
+        }
+        fn home_dir(&self) -> Option<PathBuf> {
+            self.0.home_dir()
+        }
+        fn confirm(&self, question: &str) -> Option<bool> {
+            self.0.confirm(question)
+        }
         fn temp_file(&self, prefix: &str) -> PathBuf {
             self.0.temp_file(prefix)
         }
@@ -674,6 +686,9 @@ fn the_bep_file_is_deleted_even_when_the_run_blows_up() {
         }
         fn copy_file(&self, from: &Path, to: &Path) -> std::io::Result<()> {
             self.0.copy_file(from, to)
+        }
+        fn create_dir_all(&self, path: &Path) -> std::io::Result<()> {
+            self.0.create_dir_all(path)
         }
         fn remove_dir_all(&self, path: &Path) -> std::io::Result<()> {
             self.0.remove_dir_all(path)

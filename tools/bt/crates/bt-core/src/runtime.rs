@@ -91,6 +91,18 @@ pub trait Runtime: Sync {
     /// code 127, a run outcome the classifier can reason about rather than an error to re-classify.
     fn spawn(&self, command: &[OsString], heartbeat: Option<Heartbeat<'_>>) -> SpawnResult;
 
+    /// Runs a child to completion, passes each line of its stderr to [`Runtime::write_error`] as it comes, and answers
+    /// its whole stdout as the [`SpawnResult`] output. Never fails, as [`Runtime::spawn`].
+    ///
+    /// The stdin of the child is a pipe that the runtime keeps open and never writes, until the child exits. So the
+    /// child sees the end of its stdin only when this process is gone. `bt --host` relies on it: ssh passes the end
+    /// to the host, and the host stops the run.
+    fn spawn_streaming(&self, command: &[OsString]) -> SpawnResult;
+
+    /// Runs a child to completion with `input` on its stdin, and answers its stdout and stderr merged. Never fails, as
+    /// [`Runtime::spawn`]. The input stays off the command line, so a secret in it shows in no process list.
+    fn spawn_with_input(&self, command: &[OsString], input: &str) -> SpawnResult;
+
     /// A fresh path for a temporary file. The caller owns it and removes it with [`Runtime::remove`], from a guard
     /// that runs even when the run blows up: a leaked BEP file is tens of MB for a lane run.
     fn temp_file(&self, prefix: &str) -> PathBuf;
@@ -100,8 +112,18 @@ pub trait Runtime: Sync {
     /// Copies one file, and creates the directories of `to` first.
     fn copy_file(&self, from: &Path, to: &Path) -> io::Result<()>;
 
+    /// Creates a directory and its parents. A directory that is there already is no error.
+    fn create_dir_all(&self, path: &Path) -> io::Result<()>;
+
     /// Removes a directory with everything in it. A directory that is not there is no error.
     fn remove_dir_all(&self, path: &Path) -> io::Result<()>;
+
+    /// The home directory of the user, when the platform names one.
+    fn home_dir(&self) -> Option<PathBuf>;
+
+    /// Asks the person at the terminal a yes or no question, on the stderr. Answers `None` when the stdin is not a
+    /// terminal, so a script or an agent never answers it, and `Some(true)` only for a yes.
+    fn confirm(&self, question: &str) -> Option<bool>;
 
     /// Wall-clock milliseconds. Only differences are used, so a fake can start anywhere.
     fn now_ms(&self) -> u64;

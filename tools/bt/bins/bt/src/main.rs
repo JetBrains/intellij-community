@@ -13,9 +13,12 @@
 //! - The six exit codes of [`bt_core::exit`] are a stable contract too: a caller automates against them.
 
 mod cli;
+mod credentials;
 mod digest;
 mod execute;
 mod options;
+mod prepare;
+mod remote;
 
 use std::path::PathBuf;
 use std::process::ExitCode;

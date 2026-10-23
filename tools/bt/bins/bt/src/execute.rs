@@ -12,6 +12,8 @@ use crate::digest::{
     tail_lines, trim_frames,
 };
 use crate::options::{Args, Invocation, parse_args};
+use crate::prepare::{Prepare, prepare_host};
+use crate::remote::{DEFAULT_HOST_REPO, DEFAULT_IDLE_HOURS, Host, release_on_host, run_on_host};
 use bt_core::bep::parse_bep;
 use bt_core::evidence::keep_failed_evidence;
 use bt_core::lanes::{
@@ -124,14 +126,40 @@ where
     I: IntoIterator<Item = T>,
     T: Into<OsString> + Clone,
 {
+    let argv: Vec<OsString> = argv.into_iter().map(Into::into).collect();
     let areas = Areas::load(runtime)?;
-    match parse_args(argv, &areas)? {
+    match parse_args(argv.iter().cloned(), &areas)? {
         Invocation::Help { text, exit } => Ok(Outcome {
             exit_code: exit,
             text,
             json: None,
         }),
-        Invocation::Run(args) => execute_args(&args, runtime, &areas),
+        Invocation::Run(args) => match &args.host {
+            Some(alias) => {
+                let host = Host {
+                    alias,
+                    repo: args.host_repo.as_deref().unwrap_or(DEFAULT_HOST_REPO),
+                    idle_hours: args.host_idle_hours.unwrap_or(DEFAULT_IDLE_HOURS),
+                };
+                if args.release {
+                    return release_on_host(&host, runtime);
+                }
+                if args.prepare {
+                    let prepare = Prepare {
+                        change: !args.dry_run,
+                        yes: args.yes,
+                        take_lease: args.take_lease,
+                    };
+                    return Ok(prepare_host(&host, &prepare, runtime));
+                }
+                if args.selector.is_none() && args.module.is_none() && args.lane.is_none() {
+                    return Err(fail_usage("Pass a selector, --module or --lane; see --help"));
+                }
+                run_on_host(&host, args.json, &argv, runtime)
+            }
+            None if args.release || args.prepare => Err(fail_usage("--release and --prepare need --host")),
+            None => execute_args(&args, runtime, &areas),
+        },
     }
 }
 
@@ -383,7 +411,7 @@ fn update_shard_plan(runtime: &dyn Runtime, path: &Path, timings: &[TargetTiming
 }
 
 /// A value quoted for a POSIX shell, so a rerun hint can be pasted as it stands.
-fn posix_shell_quote(value: &str) -> String {
+pub(crate) fn posix_shell_quote(value: &str) -> String {
     format!("'{}'", value.replace('\'', r"'\''"))
 }
 

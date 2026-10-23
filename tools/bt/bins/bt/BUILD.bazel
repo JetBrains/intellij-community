@@ -1,3 +1,6 @@
 load("//tools/bt:defs.bzl", "bt_rust_crate")
 
-bt_rust_crate(name = "bt")
+bt_rust_crate(
+    name = "bt",
+    compile_data = ["src/remote.sh"],
+)

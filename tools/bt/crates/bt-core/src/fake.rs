@@ -7,7 +7,7 @@
 //! of MB. To capture a real BEP for manual inspection instead, add `--build_event_json_file=/tmp/bep.json` to any
 //! bazel test run.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::ffi::OsString;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -20,6 +20,9 @@ use crate::lanes::Lanes;
 use crate::runtime::{DirEntry, Heartbeat, Platform, Runtime, SpawnResult};
 
 pub const REPO_ROOT: &str = "/repo";
+
+/// The home directory of the fake user.
+pub const HOME_DIR: &str = "/home/user";
 
 /// The directory of the fixture area, the one [`air_tree`] fills.
 pub const AREA_DIR: &str = "plugins/air";
@@ -74,6 +77,18 @@ pub struct State {
     pub stdout: Vec<String>,
     pub stderr: Vec<String>,
     pub spawn_result: SpawnResult,
+    /// The answers of the next spawns, in order. A spawn takes the first one, and answers [`State::spawn_result`]
+    /// when none is left.
+    pub spawn_results: VecDeque<SpawnResult>,
+    /// The stdin of each [`Runtime::spawn_with_input`], in order.
+    pub inputs: Vec<String>,
+    /// Answers by command: a spawn whose argv, joined by spaces, holds the text of a rule answers the result of the
+    /// first such rule, before the queue of [`State::spawn_results`] is asked.
+    pub spawn_rules: Vec<(String, SpawnResult)>,
+    /// The answer of [`Runtime::confirm`]: `None` stands for a stdin that is not a terminal.
+    pub confirm_answer: Option<bool>,
+    /// The questions that [`Runtime::confirm`] was asked, in order.
+    pub questions: Vec<String>,
     pub clock: u64,
     /// Makes every read fail loudly on top of being recorded. Both matter: the production helpers swallow a
     /// missing file, so a failure alone could be absorbed into an empty scan and read as success, while the
@@ -156,6 +171,23 @@ impl FakeRuntime {
 
     pub fn spawned(&self) -> Vec<Vec<String>> {
         self.state().spawned.clone()
+    }
+
+    /// Records the argv, advances the clock by 5 s, and answers the next scripted result.
+    fn scripted_spawn(&self, command: &[OsString]) -> SpawnResult {
+        let mut state = self.state();
+        state
+            .spawned
+            .push(command.iter().map(|part| part.to_string_lossy().into_owned()).collect());
+        state.clock += 5000;
+        let joined = command.iter().map(|part| part.to_string_lossy()).collect::<Vec<_>>().join(" ");
+        if let Some((_, result)) = state.spawn_rules.iter().find(|(text, _)| joined.contains(text.as_str())) {
+            return result.clone();
+        }
+        match state.spawn_results.pop_front() {
+            Some(result) => result,
+            None => state.spawn_result.clone(),
+        }
     }
 
     fn note(&self, what: &str, path: &str) -> io::Result<()> {
@@ -248,19 +280,23 @@ impl Runtime for FakeRuntime {
 
     /// Records the argv, beats once as a 30 s run would, and answers the scripted result.
     fn spawn(&self, command: &[OsString], heartbeat: Option<Heartbeat<'_>>) -> SpawnResult {
-        let result = {
-            let mut state = self.state();
-            state
-                .spawned
-                .push(command.iter().map(|part| part.to_string_lossy().into_owned()).collect());
-            state.clock += 5000;
-            state.spawn_result.clone()
-        };
+        let result = self.scripted_spawn(command);
         // Outside the lock: the heartbeat writes a progress line through this same runtime.
         if let Some(beat) = heartbeat {
             beat(30_000);
         }
         result
+    }
+
+    /// Records the argv and answers the scripted result, whose output stands for the stdout of the child.
+    fn spawn_streaming(&self, command: &[OsString]) -> SpawnResult {
+        self.scripted_spawn(command)
+    }
+
+    /// Records the argv and the input, and answers the scripted result.
+    fn spawn_with_input(&self, command: &[OsString], input: &str) -> SpawnResult {
+        self.state().inputs.push(input.to_owned());
+        self.scripted_spawn(command)
     }
 
     fn temp_file(&self, prefix: &str) -> PathBuf {
@@ -281,6 +317,11 @@ impl Runtime for FakeRuntime {
         Ok(())
     }
 
+    /// Nothing to create: the fake holds files only.
+    fn create_dir_all(&self, _: &Path) -> io::Result<()> {
+        Ok(())
+    }
+
     /// Drops every held file under the directory, and records the directory as removed.
     fn remove_dir_all(&self, path: &Path) -> io::Result<()> {
         let path = key(path);
@@ -289,6 +330,16 @@ impl Runtime for FakeRuntime {
         state.files.retain(|held, _| !held.starts_with(&prefix));
         state.removed.push(path);
         Ok(())
+    }
+
+    fn home_dir(&self) -> Option<PathBuf> {
+        Some(PathBuf::from(HOME_DIR))
+    }
+
+    fn confirm(&self, question: &str) -> Option<bool> {
+        let mut state = self.state();
+        state.questions.push(question.to_owned());
+        state.confirm_answer
     }
 
     fn now_ms(&self) -> u64 {
