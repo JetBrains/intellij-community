@@ -128,7 +128,11 @@ internal class InstallOnboardingTipsEditorListener : EditorFactoryListener {
       val pathToRunningFile = project.filePathWithOnboardingTips ?: return
       if (editor.virtualFile?.path != pathToRunningFile) return
     }
+    val renderingEnabled = DocRenderManager.isDocRenderingEnabled(editor)
     DocRenderManager.setDocRenderingEnabled(editor, true)
+    if (renderingEnabled) {
+      DocRenderManager.resetEditorToDefaultState(editor)
+    }
   }
 }
 

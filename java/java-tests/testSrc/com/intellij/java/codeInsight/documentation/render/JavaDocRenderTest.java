@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.documentation.render.DocRenderItem;
 import com.intellij.codeInsight.documentation.render.DocRenderItemManager;
+import com.intellij.codeInsight.documentation.render.DocRenderItemUpdaterListeners;
 import com.intellij.codeInsight.documentation.render.DocRenderPassFactory;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.ide.highlighter.JavaFileType;
@@ -137,6 +138,22 @@ public class JavaDocRenderTest {
       toggleItem();
       verifyFoldingState(10, 26);
       verifyItem(12, 26, "another");
+    });
+  }
+
+  @Test
+  public void testDisposingOtherListenersKeepsRenderedItem() {
+    myFixture.runTest(() -> {
+      configure("""
+                  class C {
+                    /** doc */
+                    int a;
+                  }
+                  """, true);
+      Object otherOwner = new Object();
+      DocRenderItemUpdaterListeners.INSTANCE.setupListeners(myFixture.getEditor(), otherOwner);
+      DocRenderItemUpdaterListeners.INSTANCE.disposeListeners(myFixture.getEditor(), otherOwner);
+      verifyItem(12, 22, "doc");
     });
   }
 

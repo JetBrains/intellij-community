@@ -33,44 +33,58 @@ import javax.swing.SwingUtilities
 @ApiStatus.Internal
 object DocRenderItemUpdaterListeners {
   private val LISTENERS_DISPOSABLE = Key.create<Disposable>("doc.render.listeners.disposable")
+  private val LISTENER_DISPOSABLES = Key.create<MutableMap<Any, Disposable>>("doc.render.listener.disposables")
 
-  fun disposeListeners(editor: Editor) {
+  fun disposeListeners(editor: Editor, owner: Any) {
     val existingDisposable = editor.getUserData(LISTENERS_DISPOSABLE) ?: return
-    Disposer.dispose(existingDisposable)
-    editor.putUserData(LISTENERS_DISPOSABLE, null)
+    val ownerDisposables = editor.getUserData(LISTENER_DISPOSABLES) ?: return
+    val ownerDisposable = ownerDisposables.remove(owner) ?: return
+    Disposer.dispose(ownerDisposable)
+    if (ownerDisposables.isEmpty()) {
+      Disposer.dispose(existingDisposable)
+    }
   }
 
-  fun setupListeners(editor: Editor): Disposable? {
-    val existingDisposable = editor.getUserData(LISTENERS_DISPOSABLE)
-    if (existingDisposable != null) return null
-
-    val connection = ApplicationManager.getApplication().messageBus.connect()
-    editor.putUserData(LISTENERS_DISPOSABLE, connection)
-    connection.setDefaultHandler(Runnable { DocRenderItemUpdater.updateRenderers(editor, true) })
-    connection.subscribe(EditorColorsManager.TOPIC)
-    connection.subscribe(LafManagerListener.TOPIC)
-    val selectionManager = DocRenderSelectionManager(editor)
-    Disposer.register(connection, selectionManager)
-    val mouseEventBridge = DocRenderMouseEventBridge(selectionManager)
-    editor.addEditorMouseListener(mouseEventBridge, connection)
-    editor.addEditorMouseMotionListener(mouseEventBridge, connection)
-    val iconVisibilityController = IconVisibilityController()
-    editor.addEditorMouseListener(iconVisibilityController, connection)
-    editor.addEditorMouseMotionListener(iconVisibilityController, connection)
-    editor.scrollingModel.addVisibleAreaListener(iconVisibilityController, connection)
-    Disposer.register(connection, iconVisibilityController)
-    editor.scrollingModel.addVisibleAreaListener(MyVisibleAreaListener(editor), connection)
-    (editor as EditorEx).foldingModel.addListener(MyFoldingListener(), connection)
-    Disposer.register(connection) { DocRenderer.clearCachedLoadingPane(editor) }
-    EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
-      override fun editorReleased(event: EditorFactoryEvent) {
-        if (event.editor == editor) {
-          // this ensures renderers are not kept for the released editors
-          Disposer.dispose(connection)
-        }
+  fun setupListeners(editor: Editor, owner: Any): Disposable? {
+    val connection = editor.getUserData(LISTENERS_DISPOSABLE) ?: ApplicationManager.getApplication().messageBus.connect().also { connection ->
+      editor.putUserData(LISTENERS_DISPOSABLE, connection)
+      Disposer.register(connection) {
+        editor.putUserData(LISTENERS_DISPOSABLE, null)
+        editor.putUserData(LISTENER_DISPOSABLES, null)
       }
-    }, connection)
-    return connection
+      connection.setDefaultHandler(Runnable { DocRenderItemUpdater.updateRenderers(editor, true) })
+      connection.subscribe(EditorColorsManager.TOPIC)
+      connection.subscribe(LafManagerListener.TOPIC)
+      val selectionManager = DocRenderSelectionManager(editor)
+      Disposer.register(connection, selectionManager)
+      val mouseEventBridge = DocRenderMouseEventBridge(selectionManager)
+      editor.addEditorMouseListener(mouseEventBridge, connection)
+      editor.addEditorMouseMotionListener(mouseEventBridge, connection)
+      val iconVisibilityController = IconVisibilityController()
+      editor.addEditorMouseListener(iconVisibilityController, connection)
+      editor.addEditorMouseMotionListener(iconVisibilityController, connection)
+      editor.scrollingModel.addVisibleAreaListener(iconVisibilityController, connection)
+      Disposer.register(connection, iconVisibilityController)
+      editor.scrollingModel.addVisibleAreaListener(MyVisibleAreaListener(editor), connection)
+      (editor as EditorEx).foldingModel.addListener(MyFoldingListener(), connection)
+      Disposer.register(connection) { DocRenderer.clearCachedLoadingPane(editor) }
+      EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
+        override fun editorReleased(event: EditorFactoryEvent) {
+          if (event.editor == editor) {
+            // this ensures renderers are not kept for the released editors
+            Disposer.dispose(connection)
+          }
+        }
+      }, connection)
+    }
+    val ownerDisposables = editor.getUserData(LISTENER_DISPOSABLES) ?: hashMapOf<Any, Disposable>().also {
+      editor.putUserData(LISTENER_DISPOSABLES, it)
+    }
+    if (ownerDisposables.containsKey(owner)) return null
+    val ownerDisposable = Disposer.newDisposable()
+    ownerDisposables[owner] = ownerDisposable
+    Disposer.register(connection, ownerDisposable)
+    return ownerDisposable
   }
 
   private class MyVisibleAreaListener(editor: Editor) : VisibleAreaListener {

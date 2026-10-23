@@ -112,10 +112,10 @@ class DocRenderItemManagerImpl : DocRenderItemManager {
 
   private fun updateListeners(editor: Editor, disable: Boolean) {
     if (disable) {
-      DocRenderItemUpdaterListeners.disposeListeners(editor)
+      DocRenderItemUpdaterListeners.disposeListeners(editor, this)
     }
     else {
-      val disposable = DocRenderItemUpdaterListeners.setupListeners(editor) ?: return
+      val disposable = DocRenderItemUpdaterListeners.setupListeners(editor, this) ?: return
       editor.caretModel.addCaretListener(MyCaretListener, disposable)
       Disposer.register(disposable) { removeAllItems(editor) }
     }
