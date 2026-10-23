@@ -166,7 +166,7 @@ object UniversalFileChooser {
    */
   class Dialog(
     val project: Project,
-    parent: Component? = null,
+    private val parent: Component? = null,
     private val descriptor: FileChooserDescriptor,
     private val contributors: Collection<UniversalFileChooserContributor> = UniversalFileChooserContributor.EP_NAME.extensionList,
     private val persistLocation: Boolean = true,
@@ -183,20 +183,33 @@ object UniversalFileChooser {
 
     override fun choose(project: Project?, vararg toSelect: VirtualFile?): Array<out VirtualFile?> {
       val explicit = toSelect.firstOrNull()?.let { runCatching { it.toNioPath() }.getOrNull() }
-      mainPanel.preselect(explicit?.let { path -> suspend { path } })
-      if (this.showAndGet()) {
-        return toVirtualFiles(descriptor, this.project, mainPanel.getSelectedFiles()).toArray(VirtualFile.EMPTY_ARRAY)
-      }
-      return emptyArray()
+      val chosen = chooseWithValidation(explicit) ?: return emptyArray()
+      return chosen.toArray(VirtualFile.EMPTY_ARRAY)
     }
 
     override fun choose(toSelect: VirtualFile?, callback: Consumer<in MutableList<VirtualFile>>) {
       val explicit = toSelect?.let { runCatching { it.toNioPath() }.getOrNull() }
-      mainPanel.preselect(explicit?.let { path -> suspend { path } })
-      if (showAndGet()) {
-        val mutableList = mutableListOf<VirtualFile>()
-        mutableList.addAll(toVirtualFiles(descriptor, project, mainPanel.getSelectedFiles()))
-        callback.consume(mutableList)
+      val chosen = chooseWithValidation(explicit) ?: return
+      callback.consume(chosen.toMutableList())
+    }
+
+    /**
+     * Shows the dialog and converts the selection to virtual files.
+     * Validates the result with [validateChosenFiles] before it returns the files.
+     * When the validation fails, reopens the dialog and preselects the first selected file.
+     * Returns null when the user cancels the dialog.
+     */
+    private fun chooseWithValidation(toPreselect: Path?): List<VirtualFile>? {
+      var dialog = this
+      var preselect = toPreselect
+      while (true) {
+        dialog.mainPanel.preselect(preselect?.let { path -> suspend { path } })
+        if (!dialog.showAndGet()) return null
+        val selection = dialog.getSelectedFiles()
+        val chosen = toVirtualFiles(descriptor, project, selection)
+        if (validateChosenFiles(descriptor, project, chosen)) return chosen
+        preselect = selection.firstOrNull()
+        dialog = Dialog(project, parent, descriptor, contributors, persistLocation)
       }
     }
 
@@ -251,6 +264,38 @@ object UniversalFileChooser {
   private suspend fun toVirtualFile(path: Path): VirtualFile? {
     return withContext(Dispatchers.IO) {
       VfsUtil.findFile(path, true)
+    }
+  }
+
+  /**
+   * Checks [files] with [FileChooserDescriptor.validateSelectedFiles]. The validation can do I/O,
+   * so it runs on [Dispatchers.IO]. Callable from the EDT: there it shows a modal progress when the
+   * validation takes long, and no progress otherwise.
+   * When the validation fails, shows an error dialog and returns false.
+   */
+  private fun validateChosenFiles(descriptor: FileChooserDescriptor, project: Project, files: List<VirtualFile>): Boolean {
+    if (files.isEmpty()) return true
+    val array = files.toArray(VirtualFile.EMPTY_ARRAY)
+    val title = IdeBundle.message("universal.file.chooser.progress.validating.files")
+    try {
+      if (ApplicationManager.getApplication().isDispatchThread) {
+        val owner = if (project.isDefault) ModalTaskOwner.guess() else ModalTaskOwner.project(project)
+        runWithModalProgressBlocking(owner, title) {
+          withContext(Dispatchers.IO) { descriptor.validateSelectedFiles(array) }
+        }
+      }
+      else {
+        runBlockingMaybeCancellable {
+          withContext(Dispatchers.IO) { descriptor.validateSelectedFiles(array) }
+        }
+      }
+      return true
+    }
+    catch (e: Exception) {
+      rethrowControlFlowException(e)
+      val dialogTitle = descriptor.title ?: UIBundle.message("file.chooser.default.title")
+      Messages.showErrorDialog(project, e.message, dialogTitle)
+      return false
     }
   }
 
