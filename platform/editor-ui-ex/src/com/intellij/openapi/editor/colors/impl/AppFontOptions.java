@@ -31,6 +31,7 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
 
   protected static final int CURR_FONT_PREF_VERSION = 1;
   private int myFontPrefVersion;
+  private boolean myCacheResetListenerAdded;
 
   public AppFontOptions() {
     Application app = ApplicationManager.getApplication();
@@ -63,7 +64,7 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
   public void loadState(@NotNull F state) {
     copyState(state, myFontPreferences);
     myFontPrefVersion = state.VERSION;
-    myFontPreferences.addChangeListener((source) -> EditorFontCache.getInstance().reset());
+    addCacheResetListener();
   }
 
   protected abstract F createFontState(@NotNull FontPreferences fontPreferences);
@@ -106,5 +107,23 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
 
   public @NotNull FontPreferences getFontPreferences() {
     return myFontPreferences;
+  }
+
+  /**
+   * Adds the listener once, after the first state load, so that the first load does not reset the cache.
+   * The cache can be in its initialization at that time, because {@link EditorFontCacheImpl} creates these options.
+   */
+  private void addCacheResetListener() {
+    if (!myCacheResetListenerAdded) {
+      myCacheResetListenerAdded = true;
+      myFontPreferences.addChangeListener((_) -> resetEditorFontCache());
+    }
+  }
+
+  private static void resetEditorFontCache() {
+    EditorFontCache cache = ApplicationManager.getApplication().getServiceIfCreated(EditorFontCache.class);
+    if (cache != null) {
+      cache.reset();
+    }
   }
 }

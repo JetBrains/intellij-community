@@ -1,0 +1,62 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.editor.colors.impl
+
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.colors.EditorFontCache
+import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.editor.colors.ModifiableFontPreferences
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.replaceService
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import java.awt.Font
+
+@TestApplication
+internal class AppFontOptionsTest {
+  private val cache = CountingFontCache()
+
+  @BeforeEach
+  fun setUp(@TestDisposable disposable: Disposable) {
+    ApplicationManager.getApplication().replaceService(EditorFontCache::class.java, cache, disposable)
+  }
+
+  @Test
+  fun `the first state load does not reset the editor font cache`() {
+    val options = AppEditorFontOptions()
+    val state = AppEditorFontOptions.PersistentFontPreferences(options.fontPreferences)
+    options.loadState(state)
+    assertThat(cache.resets).isZero()
+  }
+
+  @Test
+  fun `a change resets the editor font cache once after repeated state loads`() {
+    val options = AppEditorFontOptions()
+    val state = AppEditorFontOptions.PersistentFontPreferences(options.fontPreferences)
+    repeat(3) {
+      options.loadState(state)
+    }
+    cache.resets = 0
+    toggleLigatures(options)
+    assertThat(cache.resets).isEqualTo(1)
+  }
+
+  private fun toggleLigatures(options: AppEditorFontOptions) {
+    val preferences = options.fontPreferences as ModifiableFontPreferences
+    preferences.setUseLigatures(!preferences.useLigatures())
+  }
+
+  private class CountingFontCache : EditorFontCache() {
+    var resets = 0
+
+    override fun getFont(key: EditorFontType?): Font {
+      throw UnsupportedOperationException()
+    }
+
+    override fun reset() {
+      resets++
+    }
+  }
+}
