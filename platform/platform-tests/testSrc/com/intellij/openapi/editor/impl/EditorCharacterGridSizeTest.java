@@ -5,6 +5,7 @@ import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LineWrapPositionStrategy;
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager;
 import com.intellij.openapi.project.Project;
@@ -14,6 +15,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static com.intellij.openapi.editor.impl.EditorModelFixture.TEST_CHAR_WIDTH;
 import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
@@ -140,10 +143,16 @@ public class EditorCharacterGridSizeTest {
   // The grid mode soft-wrapping optimization is not a pure optimization:
   //  it places wraps at grid column boundaries without consulting LineWrapPositionStrategy.
   // Grid editors that didn't opt in should keep the strategy-based wrap positions.
-  @Test
-  public void testGridEditorWithoutSoftWrapOptimizationsRespectsLineWrapPositionStrategy() {
+  @ParameterizedTest
+  @ValueSource(booleans = {false, true})
+  void testGridEditorWithoutSoftWrapOptimizationsRespectsLineWrapPositionStrategy(boolean useLigatures) {
     myFixture.runTest(() -> {
       myFixture.initText(("xxx" + WRAP_MARKER).repeat(10));
+      var colorsScheme = myFixture.getEditor().getColorsScheme();
+      var fontPreferences = new FontPreferencesImpl();
+      colorsScheme.getFontPreferences().copyTo(fontPreferences);
+      fontPreferences.setUseLigatures(useLigatures);
+      colorsScheme.setFontPreferences(fontPreferences);
       myFixture.configureSoftWraps(10, false);
       softWrapApplianceManager().setLineWrapPositionStrategy(new MarkerLineWrapPositionStrategy());
       enableGridMode(/* allowSoftWrapOptimizations */ false);
