@@ -12,7 +12,6 @@ import { Island } from './components/Island'
 import { MobileNav } from './components/MobileNav'
 import { ThemeToggle } from './components/ThemeToggle'
 import { TopNav } from './components/TopNav'
-import { Button } from './components/ui/button'
 import { Kbd } from './components/ui/kbd'
 import { TooltipProvider } from './components/ui/tooltip'
 import { crumbsForRoute } from './crumbs'
@@ -216,20 +215,20 @@ export function Shell({ config, parts }: { config: SiteConfig, parts: ShellParts
             >
               {config.brandMark}
             </span>
-            <span className="brand-title text-sm max-md:hidden">{config.brandMark} Docs</span>
+            <span className="brand-title text-base font-[650] tracking-[-0.01em] max-md:hidden">{config.brandMark} Docs</span>
           </a>
           <TopNav nav={parts.nav} route={route} />
           <div className="topbar-actions ml-auto flex flex-none items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="palette-button text-muted-foreground font-normal"
+            {/* a search field on the window, as the search of the IDE toolbar: the island color with a ring */}
+            <button
+              type="button"
+              className="palette-button inline-flex h-7 w-[248px] items-center gap-2 rounded-md bg-background pr-1 pl-2 text-muted-foreground ring-1 ring-foreground/10 hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring max-lg:w-auto"
               onClick={() => setPaletteOpen(true)}
             >
-              <SearchIcon data-icon="inline-start" />
-              <span>Search…</span>
-              <Kbd className="max-md:hidden">{navigator.platform.startsWith('Mac') ? '⌘K' : 'Ctrl K'}</Kbd>
-            </Button>
+              <SearchIcon className="size-3.5" aria-hidden="true" />
+              <span className="flex-1 text-left max-sm:sr-only">Search the docs</span>
+              <Kbd className="bg-hover text-2xs max-md:hidden">{navigator.platform.startsWith('Mac') ? '⌘K' : 'Ctrl K'}</Kbd>
+            </button>
             <ThemeToggle />
           </div>
         </header>

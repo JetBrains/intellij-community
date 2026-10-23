@@ -98,10 +98,58 @@ export function DecisionStatusBadge({ status, className }: { status: AdrStatus, 
   )
 }
 
+/** One outline chip of a record header: a status, a date, a topic, an issue. With `href` it is a link. */
+export function RecordChip({ href, external = false, className, children, ...rest }: {
+  href?: string
+  external?: boolean
+  className?: string
+  children: ReactNode
+  /** A marker attribute for the e2e suite, such as the status of a record. */
+  'data-status'?: string
+}) {
+  return (
+    <Badge
+      {...rest}
+      variant="outline"
+      className={cn(
+        'record-chip h-6 gap-1.5 px-2.5 text-xs font-medium text-foreground/80 [&>svg]:size-3.5! [&>svg]:text-muted-foreground',
+        href !== undefined && 'text-primary hover:no-underline [a]:hover:bg-hover [a]:hover:text-primary [&>svg]:text-current',
+        className,
+      )}
+      render={href === undefined ? undefined : <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} />}
+    >
+      {children}
+    </Badge>
+  )
+}
+
+/**
+ * The header of a reading document: the display title (balanced, tight), a row of chips, and a lead paragraph. The
+ * page draws it in place of the first heading of the markdown body.
+ */
+export function RecordHeader({ title, chips, chipsClassName, lead }: { title: ReactNode, chips?: ReactNode, chipsClassName?: string, lead?: ReactNode }) {
+  return (
+    <header className="record-header mb-6">
+      <h1 className="m-0 mb-4 text-3xl leading-[1.12] font-[650] tracking-[-0.028em] text-balance max-md:text-2xl">{title}</h1>
+      {chips !== undefined && <div className={cn('record-chips mb-5 flex flex-wrap items-center gap-1.5', chipsClassName)}>{chips}</div>}
+      {lead !== undefined && lead !== '' && <p className="record-lead m-0 text-lg leading-normal tracking-[-0.006em] text-pretty text-foreground/80">{lead}</p>}
+    </header>
+  )
+}
+
+/** The title of a reading document (RecordHeader), as the h1 of a page header: 34px, tight, and balanced. */
+const READING_TITLE = '[&_h1]:text-3xl [&_h1]:leading-[1.12] [&_h1]:font-[650] [&_h1]:tracking-[-0.028em] [&_h1]:text-balance max-md:[&_h1]:text-2xl'
+
+/** True on a reading page, where a page header takes the display title of a document. */
+function useReadingTitle(): boolean {
+  return usePageChrome().layout === 'reading'
+}
+
 /** Catalog page header: h1 + intro paragraphs. */
 export function PageHeader({ children }: { children: ReactNode }) {
+  const reading = useReadingTitle()
   return (
-    <header className="page-header mb-5.5 [&_h1]:mt-0 [&_h1]:mb-1 [&_h1]:text-2xl [&_h1]:tracking-[-0.02em] [&_p]:my-0 [&_p]:text-muted-foreground">
+    <header className={cn('page-header mb-5.5 [&_h1]:mt-0 [&_h1]:mb-1 [&_h1]:text-2xl [&_h1]:tracking-[-0.02em] [&_p]:my-0 [&_p]:text-muted-foreground', reading && cn(READING_TITLE, '[&_h1]:mb-3'))}>
       {children}
     </header>
   )
@@ -109,8 +157,9 @@ export function PageHeader({ children }: { children: ReactNode }) {
 
 /** Prose-page intro: h1 + dim summary paragraph. */
 export function PageIntro({ children }: { children: ReactNode }) {
+  const reading = useReadingTitle()
   return (
-    <header className="page-intro [&_h1]:mt-0 [&_h1]:mb-2 [&_p]:text-muted-foreground">
+    <header className={cn('page-intro [&_h1]:mt-0 [&_h1]:mb-2 [&_p]:text-muted-foreground', reading && cn(READING_TITLE, 'mb-6 [&_h1]:mb-4 [&>p:first-of-type]:text-lg [&>p:first-of-type]:leading-normal [&_.chip-links]:mt-2'))}>
       {children}
     </header>
   )
@@ -130,8 +179,9 @@ export function SpecStatusChip({ status, className }: { status: string | null, c
 
 /** Entity page header: layer chip, h1, subtitle code line, actions. Long FQNs wrap. */
 export function EntityHeader({ children }: { children: ReactNode }) {
+  const reading = useReadingTitle()
   return (
-    <header className="entity-header mb-5.5 grid justify-items-start gap-1 [&_h1]:m-0 [&_h1]:text-2xl [&_h1]:tracking-[-0.02em] [&>p]:m-0 [&>p]:text-muted-foreground [&_code]:wrap-anywhere">
+    <header className={cn('entity-header mb-5.5 grid justify-items-start gap-1 [&_h1]:m-0 [&_h1]:text-2xl [&_h1]:tracking-[-0.02em] [&>p]:m-0 [&>p]:text-muted-foreground [&_code]:wrap-anywhere', reading && READING_TITLE)}>
       {children}
       <Separator className="mt-2.5" />
     </header>
@@ -141,7 +191,7 @@ export function EntityHeader({ children }: { children: ReactNode }) {
 /** Row of EntityAction pills under an entity header. */
 export function EntityActions({ children }: { children: ReactNode }) {
   return (
-    <div className="entity-actions mt-1 flex flex-wrap gap-2">
+    <div className="entity-actions mt-1 flex flex-wrap gap-2 text-sm">
       {children}
     </div>
   )

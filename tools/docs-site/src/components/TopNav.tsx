@@ -17,9 +17,9 @@ import { isNavGroup, isNavItemActive, type NavEntry, type NavGroup } from '../na
 import { hrefForRoute } from '../router'
 import type { AnyRoute as Route } from '../routeTable.ts'
 
-/* The nav lies on the window, and the dark --muted equals the dark window: a hover takes the translucent --hover
-   tint, and the active section takes the island color, so both read on the window in both themes. */
-const ON_WINDOW = 'text-muted-foreground hover:bg-hover hover:text-foreground focus:bg-hover data-active:bg-card data-active:text-foreground'
+/* The nav lies on the window, and the dark --muted equals the dark window: a hover and the active section take the
+   translucent --hover tint, so both read on the window in both themes. The active section also takes the text color. */
+const ON_WINDOW = 'text-muted-foreground hover:bg-hover hover:text-foreground focus:bg-hover data-active:bg-hover data-active:text-foreground'
 
 /* prose.css themes bare <a> in --primary; nav links must stay neutral */
 const topLevelLink = cn(navigationMenuTriggerStyle(), ON_WINDOW, 'hover:no-underline')

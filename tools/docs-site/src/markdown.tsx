@@ -342,9 +342,8 @@ const proseClassName = [
   'prose-code:font-normal prose-code:before:content-none prose-code:after:content-none',
   // plain dim citation blocks, not prose's italic quoted style
   'prose-blockquote:font-normal prose-blockquote:not-italic',
-  // bordered section headings and code blocks
-  'prose-h1:border-b prose-h1:border-border prose-h1:pb-1.5',
-  'prose-h2:border-b prose-h2:border-border prose-h2:pb-1.5',
+  // section headings without a rule, balanced like the record title; bordered code blocks
+  'prose-h1:text-balance prose-h2:text-balance prose-h2:tracking-[-0.014em]',
   'prose-pre:rounded-lg prose-pre:border prose-pre:border-border',
   // full-grid tables instead of prose's horizontal-rules-only style
   'prose-table:border-collapse',

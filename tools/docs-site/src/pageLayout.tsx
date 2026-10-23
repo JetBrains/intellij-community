@@ -41,13 +41,13 @@ export function usePageChrome(): PageChrome {
  * The top row of a document: the button of the section tree below the section-nav breakpoint, and the crumb trail. It
  * renders nothing when the page has neither.
  */
-export function PageCrumbRow() {
+export function PageCrumbRow({ className }: { className?: string }) {
   const { crumbs, tree, href } = usePageChrome()
   if (crumbs.length === 0 && tree === null) {
     return null
   }
   return (
-    <div className={cn('page-breadcrumb-bar mb-4 flex min-h-7 items-center gap-1', tree !== null && crumbs.length === 0 && 'section-nav:hidden')}>
+    <div className={cn('page-breadcrumb-bar mb-4 flex min-h-7 items-center gap-1', tree !== null && crumbs.length === 0 && 'section-nav:hidden', className)}>
       {tree !== null && <SectionNavSheet tree={tree} currentHref={href} />}
       <PageBreadcrumb crumbs={crumbs} />
     </div>

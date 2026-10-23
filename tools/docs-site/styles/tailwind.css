@@ -97,6 +97,8 @@
   /* the diagram surface inside an island */
   --canvas: var(--islands-tool-window-bg-inline-light);
   --module-bg: var(--islands-selection-bg-inactive-light);
+  /* the selected row of a tree or a list, as the selection of the IDE */
+  --selection: var(--islands-selection-bg-active-light);
   --edge-stroke: var(--islands-gray-80);
   --code-bg: var(--hover);
 
@@ -171,6 +173,7 @@
 
   --canvas: var(--islands-tool-window-bg-inline-dark);
   --module-bg: var(--islands-selection-bg-inactive-dark);
+  --selection: var(--islands-selection-bg-active-dark);
   --edge-stroke: var(--islands-gray-80);
   --edge-highlight: rgb(255 255 255 / 8%);
 
@@ -215,8 +218,10 @@
   --text-lg: 17px;
   --text-xl: 22px;
   --text-2xl: 28px;
+  /* the title of a reading document: a decision record, a guide, a spec */
+  --text-3xl: 34px;
   /* the Home hero headline only */
-  --text-3xl: 38px;
+  --text-4xl: 38px;
 
   --font-sans: 'Inter Variable', -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -267,6 +272,7 @@
   --color-disabled: var(--disabled);
   --color-window: var(--window);
   --color-hover: var(--hover);
+  --color-selection: var(--selection);
 
   /* the radius scale of the IDE: the scale that GenUiThemes.kt sends to the GenUI catalog (md the component arc,
      lg the button arc, xl the island arc), so a catalog primitive has the same corners on the site and in the IDE */

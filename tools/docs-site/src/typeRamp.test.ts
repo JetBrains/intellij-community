@@ -10,8 +10,8 @@ const tailwindCss = readFileSync(new URL('../styles/tailwind.css', import.meta.u
 const steps = [...tailwindCss.matchAll(/^\s*--text-([\w-]+):\s*[\d.]+px;/gm)].map(match => match[1])
 
 test('the ramp has one whole-pixel step per role, from 10px to 38px', () => {
-  assert.deepEqual(steps, ['3xs', '2xs', 'xs', 'sm', 'md', 'base', 'lg', 'xl', '2xl', '3xl'])
-  assert.deepEqual([...tailwindCss.matchAll(/^\s*--text-[\w-]+:\s*([\d.]+)px;/gm)].map(match => Number(match[1])), [10, 11, 12, 13, 14, 15, 17, 22, 28, 38])
+  assert.deepEqual(steps, ['3xs', '2xs', 'xs', 'sm', 'md', 'base', 'lg', 'xl', '2xl', '3xl', '4xl'])
+  assert.deepEqual([...tailwindCss.matchAll(/^\s*--text-[\w-]+:\s*([\d.]+)px;/gm)].map(match => Number(match[1])), [10, 11, 12, 13, 14, 15, 17, 22, 28, 34, 38])
 })
 
 test('cn keeps a text color next to each step of the ramp, and merges two steps', () => {

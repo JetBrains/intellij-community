@@ -5,6 +5,7 @@
 import { ChevronRightIcon, PanelLeftIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { Island } from './Island'
+import { StatusDot } from './StatusDot'
 import { Button } from './ui/button'
 import { ScrollArea } from './ui/scroll-area'
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from './ui/sheet'
@@ -20,7 +21,7 @@ function initiallyOpen(tree: SectionTree, active: SectionTreeLink | null): Set<s
 }
 
 /* prose.css themes bare <a> in --primary; tree rows stay neutral, as the rows of the Project view */
-const ROW = 'flex min-h-6 items-center gap-1.5 rounded-md px-2 py-0.5 text-foreground hover:bg-hover hover:no-underline'
+const ROW = 'flex min-h-7 items-center gap-1.5 rounded-md px-2 py-0.5 text-foreground hover:bg-hover hover:no-underline'
 
 function TreeLinks({ tree, currentHref }: { tree: SectionTree, currentHref: string }) {
   const active = activeTreeLink(tree, currentHref)
@@ -45,9 +46,10 @@ function TreeLinks({ tree, currentHref }: { tree: SectionTree, currentHref: stri
       <a
         href={tree.href}
         aria-current={indexActive ? 'page' : undefined}
-        className={cn(ROW, 'section-tree-head font-semibold', indexActive && 'bg-primary-tint')}
+        className={cn(ROW, 'section-tree-head font-semibold', indexActive && 'bg-selection')}
       >
-        {tree.label}
+        <span className="min-w-0 flex-1 truncate">{tree.label}</span>
+        <span className="text-xs font-normal text-muted-foreground tabular-nums">{tree.groups.reduce((sum, group) => sum + group.links.length, 0)}</span>
       </a>
       {tree.groups.map(group => (
         <div key={group.id} className="section-tree-group grid grid-cols-[minmax(0,1fr)] gap-0.5" data-group={group.id}>
@@ -55,11 +57,11 @@ function TreeLinks({ tree, currentHref }: { tree: SectionTree, currentHref: stri
             type="button"
             aria-expanded={open.has(group.id)}
             onClick={() => toggle(group.id)}
-            className={cn(ROW, 'mt-1 w-full text-left text-xs font-medium text-muted-foreground')}
+            className={cn(ROW, 'w-full pl-1 text-left', open.has(group.id) && 'font-semibold')}
           >
-            <ChevronRightIcon className={cn('size-3.5 flex-none transition-transform', open.has(group.id) && 'rotate-90')} aria-hidden="true" />
+            <ChevronRightIcon className={cn('size-3.5 flex-none text-muted-foreground transition-transform', open.has(group.id) && 'rotate-90')} aria-hidden="true" />
             <span className="min-w-0 flex-1 truncate">{group.label}</span>
-            <span className="tabular-nums">{group.links.length}</span>
+            <span className="text-xs font-normal text-muted-foreground tabular-nums">{group.links.length}</span>
           </button>
           {open.has(group.id) && (
             <ul className="m-0 grid list-none grid-cols-[minmax(0,1fr)] gap-0.5 p-0">
@@ -69,8 +71,9 @@ function TreeLinks({ tree, currentHref }: { tree: SectionTree, currentHref: stri
                     href={link.href}
                     title={link.label}
                     aria-current={link === active ? 'page' : undefined}
-                    className={cn(ROW, 'pl-7', link === active && 'bg-primary-tint font-medium')}
+                    className={cn(ROW, 'pl-6 text-muted-foreground', link === active && 'bg-selection font-medium text-foreground')}
                   >
+                    {link.status !== undefined && <StatusDot status={link.status} />}
                     {link.detail !== undefined && <span className="flex-none font-mono text-xs text-muted-foreground tabular-nums">{link.detail}</span>}
                     <span className="min-w-0 flex-1 truncate">{link.label}</span>
                   </a>

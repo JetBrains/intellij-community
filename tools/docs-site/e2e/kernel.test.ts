@@ -511,6 +511,21 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
     const numbered = decisions.filter(doc => doc.adr!.number !== null)
     const lastNumbered = numbered[numbered.length - 1]
 
+    test('a record header shows the title, the status and date chips, and the status as a callout', async ({ page }) => {
+      const record = decisions.find(doc => doc.adr!.date !== null && /^(## Status\n+\S|Status: )/m.test(harvestedMarkdown(doc.path)))
+      assert.ok(record, 'no dated decision record with a status is harvested')
+      await open(page, decisionRouteOf(record.path))
+      await expect(page.locator('.record-header h1')).toHaveText(record.title)
+      // the header replaces the first heading and the Date line of the body
+      await expect(page.locator('.markdown-body h1')).toHaveCount(0)
+      await expect(page.locator('.record-chips time')).toHaveAttribute('datetime', record.adr!.date!)
+      await expect(page.locator('.markdown-body blockquote').first()).toContainText(record.adr!.statusText.replace(/\.$/, ''))
+      const linked = /\]\([^)]*\.md\)/.test(harvestedMarkdown(record.path))
+      if (linked) {
+        await expect(page.locator('.toc-aside .record-links a').first()).toBeVisible()
+      }
+    })
+
     test('an old doc link to a decision record opens the decision page', async ({ page }) => {
       assert.ok(lastNumbered, 'no numbered decision record is harvested')
       await open(page, app(`/doc/${encodeURIComponent(lastNumbered.path)}`))

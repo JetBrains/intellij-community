@@ -29,12 +29,12 @@ export function markdownTocItems(source: string, anchorHref: AnchorHref): TocIte
 /** DocPage that shows a TocAside only when there are >= 2 entries; below that it renders as a
  *  plain DocPage. The `toc` prop must track the count — with the two-column layout on but no
  *  aside, the content column would flex into the reserved gutter. */
-export function TocDocPage({ items, className, children }: { items: TocItem[], className?: string, children: ReactNode }) {
+export function TocDocPage({ items, extra, className, children }: { items: TocItem[], extra?: ReactNode, className?: string, children: ReactNode }) {
   const hasToc = items.length >= 2
   return (
     <DocPage toc={hasToc} className={className}>
       {hasToc ? <div>{children}</div> : children}
-      {hasToc && <TocAside items={items} />}
+      {hasToc && <TocAside items={items} extra={extra} />}
     </DocPage>
   )
 }
@@ -44,7 +44,8 @@ function anchorIdOf(href: string): string {
   return decodeURIComponent(href.split('/').pop() ?? '')
 }
 
-export function TocAside({ items }: { items: TocItem[] }) {
+/** The table of contents; `extra` is a block under the list, such as the links of a decision record. */
+export function TocAside({ items, extra }: { items: TocItem[], extra?: ReactNode }) {
   const ref = useRef<HTMLElement>(null)
   const island = usePageChrome().layout === 'reading'
   const [active, setActive] = useState(0)
@@ -98,8 +99,8 @@ export function TocAside({ items }: { items: TocItem[] }) {
   }, [active])
 
   const links = (
-    <nav aria-label="On this page" className="grid text-xs leading-snug">
-      <div className="mb-1.5 text-3xs font-bold uppercase tracking-[0.08em] text-muted-foreground">On this page</div>
+    <nav aria-label="On this page" className="grid leading-snug">
+      <div className="mb-2 font-semibold text-foreground">On this page</div>
       {items.map((item, index) => (
         <Fragment key={item.href}>
           {item.group != null && item.group !== items[index - 1]?.group && (
@@ -108,9 +109,12 @@ export function TocAside({ items }: { items: TocItem[] }) {
           <a
             href={item.href}
             aria-current={index === active ? 'location' : undefined}
-            className={`block py-[3px] pl-2.5 border-l-2 hover:no-underline ${
-              index === active ? 'border-primary text-primary' : 'border-border text-muted-foreground hover:text-foreground'
-            }`}
+            className={cn(
+              'block py-1 pl-3 hover:no-underline',
+              index === active
+                ? 'font-medium text-foreground shadow-[inset_2px_0_0_var(--primary)]'
+                : 'text-muted-foreground shadow-[inset_1px_0_0_var(--border)] hover:text-foreground',
+            )}
           >
             {item.title}
           </a>
@@ -123,6 +127,6 @@ export function TocAside({ items }: { items: TocItem[] }) {
      the keep-active-link-visible math */
   const box = 'toc-aside hidden toc:block w-[220px] flex-none sticky self-start overflow-y-auto'
   return island
-    ? <Island as="aside" ref={ref} className={cn(box, 'top-0 max-h-[calc(100svh-var(--topbar-height)-8px)] px-3 py-4')}>{links}</Island>
-    : <aside ref={ref} className={cn(box, 'top-6 max-h-[calc(100svh-var(--topbar-height)-48px)]')}>{links}</aside>
+    ? <Island as="aside" ref={ref} className={cn(box, 'top-0 max-h-[calc(100svh-var(--topbar-height)-8px)] px-3.5 py-3.5')}>{links}{extra}</Island>
+    : <aside ref={ref} className={cn(box, 'top-6 max-h-[calc(100svh-var(--topbar-height)-48px)]')}>{links}{extra}</aside>
 }
