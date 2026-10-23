@@ -31,6 +31,13 @@
 //!
 //! Only the previous still is compared, not every earlier one. So the files follow the screen's changes in order, and
 //! the last file by name is always the last snapshot's picture, which a bundle's thumbnail relies on.
+//!
+//! # Attachments
+//!
+//! A scenario with a video runs a second writer for the PNG attachments of the lane, which become lossy
+//! `attach/NNNN.webp` pictures. The rules are the same: off the lane's path, the lossless fallback, and the previous
+//! picture's file for the same picture. The writer is a second one, so a still and an attachment picture never name
+//! the file of the other.
 
 use std::any::Any;
 use std::iter;
@@ -54,6 +61,12 @@ mod tests;
 
 /// The quality of a lossy picture, on the scale of 0 to 100 that `gamut-webp` takes.
 pub(crate) const LOSSY_QUALITY: u8 = 90;
+
+/// The media type of a file that [encode] writes.
+pub(crate) const MIME_WEBP: &str = "image/webp";
+
+/// The extension of a file that [encode] writes.
+pub(crate) const WEBP_EXTENSION: &str = "webp";
 
 /// The frame as a WebP file in the encoding.
 pub(crate) fn encode(frame: &Frame, encoding: StillEncoding) -> anyhow::Result<Vec<u8>> {
@@ -189,7 +202,7 @@ impl Writer {
 
     /// A writer whose queue nothing drains, so it holds what was submitted.
     #[cfg(test)]
-    fn parked() -> Self {
+    pub(crate) fn parked() -> Self {
         let (jobs, queued) = bounded(QUEUE_DEPTH);
         Self {
             jobs,
@@ -228,7 +241,7 @@ impl Writer {
             Err(TrySendError::Full(job)) => job,
             Err(TrySendError::Disconnected(_)) => {
                 lock(&self.state).forget(&name);
-                bail!("the still encoders are gone");
+                bail!("the WebP encoders are gone");
             }
         };
         match self.jobs.send_timeout(job, deadline.saturating_duration_since(Instant::now())) {
@@ -237,9 +250,9 @@ impl Writer {
                 lock(&self.state).forget(&name);
                 match error {
                     SendTimeoutError::Timeout(_) => {
-                        bail!("the still encoders are {QUEUE_DEPTH} pictures behind and the snapshot's budget is spent")
+                        bail!("the WebP encoders are {QUEUE_DEPTH} pictures behind and the budget of the command is spent")
                     }
-                    SendTimeoutError::Disconnected(_) => bail!("the still encoders are gone"),
+                    SendTimeoutError::Disconnected(_) => bail!("the WebP encoders are gone"),
                 }
             }
         }

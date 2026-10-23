@@ -127,7 +127,7 @@ impl<W: Write> Session<W> {
             }
             Command::Attach(attach) => {
                 let root = self.hello.as_ref().map_or("", |hello| hello.root.as_str());
-                scenario.attach(&attach, Path::new(root), at).err()
+                scenario.attach(&attach, Path::new(root), at, budget).err()
             }
             Command::Hello(_) | Command::Scenario(_) | Command::Done(_) => None,
         };

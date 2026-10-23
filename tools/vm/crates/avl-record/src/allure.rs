@@ -19,6 +19,7 @@ use avl_trace::otlp::{SERVICE_NAME, attr, decode_logs_line, decode_traces_line, 
 use avl_trace::protocol::{Label, Status};
 
 use crate::bundle::{copy_into_place, write_file_atomically};
+use crate::stills::MIME_WEBP;
 
 // The titles of the attachments the recorder adds.
 pub(crate) const BEFORE: &str = "Before";
@@ -26,7 +27,6 @@ pub(crate) const AFTER: &str = "After";
 pub(crate) const VIDEO: &str = "Video";
 pub(crate) const BUNDLE: &str = "Trace bundle";
 
-const MIME_WEBP: &str = "image/webp";
 const MIME_MP4: &str = "video/mp4";
 const MIME_TEXT: &str = "text/plain";
 
