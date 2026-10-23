@@ -20,7 +20,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="com.intellij.modules.python-core-capable"/>
-    <module name="intellij.platform.debugger.impl.shared"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="org.toml.lang"/>
     <module name="intellij.platform.lang"/>
