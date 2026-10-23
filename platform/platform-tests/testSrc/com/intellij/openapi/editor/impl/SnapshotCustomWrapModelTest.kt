@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.CustomWrap
 import com.intellij.openapi.editor.CustomWrapModel
@@ -14,6 +15,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.ref.GCUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,9 +29,15 @@ import kotlin.time.Duration.Companion.minutes
 @RegistryKey(key = "editor.custom.soft.wraps.support.enabled", value = "true")
 class SnapshotCustomWrapModelTest {
   @Test
-  fun `full traversal preserves wrap order after an edit`(): Unit = timeoutRunBlocking {
+  fun `full traversal preserves wrap order after an edit`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
     val state = withEditor("abcdefgh") { editor ->
       val model = editor.customWrapModel
+      val removedOffsets = ArrayList<Int>()
+      model.addListener(object : CustomWrapModel.Listener {
+        override fun customWrapRemoved(wrap: CustomWrap) {
+          removedOffsets.add(wrap.offset)
+        }
+      }, disposable)
       val hasWrapsBefore = model.hasWraps()
       val wraps = model.runBatchMutation {
         listOf(addWrap(6)!!, addWrap(2)!!, addWrap(4)!!)
@@ -41,7 +49,15 @@ class SnapshotCustomWrapModelTest {
       val rangeOffsets = model.getWrapsInRange(5, 6).map { it.offset }
       val hasWrapsAfterInsertion = model.hasWraps()
       model.runBatchMutation { wraps.forEach { removeWrap(it) } }
-      TraversalState(hasWrapsBefore, allOffsets, rangeOffsets, hasWrapsAfterInsertion, model.hasWraps())
+      TraversalState(
+        hasWrapsBefore = hasWrapsBefore,
+        allOffsets = allOffsets,
+        rangeOffsets = rangeOffsets,
+        hasWrapsAfterInsertion = hasWrapsAfterInsertion,
+        hasWrapsAfterRemoval = model.hasWraps(),
+        removedOffsets = removedOffsets.toList(),
+        remainingSoftWrapOffsets = editor.softWrapModel.registeredSoftWraps.map { it.start },
+      )
     }
 
     assertThat(state.hasWrapsBefore).isFalse()
@@ -49,6 +65,8 @@ class SnapshotCustomWrapModelTest {
     assertThat(state.rangeOffsets).containsExactly(6)
     assertThat(state.hasWrapsAfterInsertion).isTrue()
     assertThat(state.hasWrapsAfterRemoval).isFalse()
+    assertThat(state.removedOffsets).containsExactly(8, 4, 6)
+    assertThat(state.remainingSoftWrapOffsets).isEmpty()
   }
 
   @Test
@@ -221,6 +239,8 @@ class SnapshotCustomWrapModelTest {
     val rangeOffsets: List<Int>,
     val hasWrapsAfterInsertion: Boolean,
     val hasWrapsAfterRemoval: Boolean,
+    val removedOffsets: List<Int>,
+    val remainingSoftWrapOffsets: List<Int>,
   )
 
   private data class EditState(

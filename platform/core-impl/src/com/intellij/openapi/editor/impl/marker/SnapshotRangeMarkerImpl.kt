@@ -24,7 +24,7 @@ open class SnapshotRangeMarkerImpl private constructor(
   internal val markerId: Long,
   @Volatile
   private var spec: Byte, /** see [MarkerSpec]*/
-  internal val initialRange: Long,
+  initialRange: Long,
   /** Defines how document edits transform this marker. */
   val policy: MarkerPolicy,
 ) : UserDataHolderBase(), SnapshotMarker, RangeMarkerEx {
@@ -66,9 +66,16 @@ open class SnapshotRangeMarkerImpl private constructor(
   @Volatile
   private var disposalState: Int = ACTIVE
 
+  @Volatile
+  internal var fallbackRange: Long = initialRange
+    private set
+
   fun isDisposed(): Boolean = disposalState == DISPOSED
 
+  @Synchronized
   fun markDisposed() {
+    if (isDisposed()) return
+    fallbackRange = currentRange()
     disposalState = DISPOSED
   }
 
@@ -165,7 +172,7 @@ open class SnapshotRangeMarkerImpl private constructor(
 
   private fun currentRange(): Long {
     val resolution = currentResolution()
-    return if (PMarkerResolution.isAbsent(resolution)) initialRange else resolution
+    return if (PMarkerResolution.isAbsent(resolution)) fallbackRange else resolution
   }
 
   internal fun cacheResolution(root: PMarkerRoot, resolution: Long) {

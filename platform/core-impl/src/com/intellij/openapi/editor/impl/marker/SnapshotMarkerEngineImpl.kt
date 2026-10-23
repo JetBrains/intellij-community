@@ -250,7 +250,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
   fun resolveRangeMarker(marker: SnapshotRangeMarkerImpl, root: PMarkerRoot): Long {
     val resolution = root.resolve(marker.markerId)
     return if (marker.isDisposed()) {
-      val range = if (PMarkerResolution.isAbsent(resolution)) marker.initialRange else resolution
+      val range = if (PMarkerResolution.isAbsent(resolution)) marker.fallbackRange else resolution
       PMarkerResolution.invalid(range)
     }
     else {

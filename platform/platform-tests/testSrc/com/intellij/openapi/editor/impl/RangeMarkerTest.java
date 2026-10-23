@@ -2152,9 +2152,14 @@ public class RangeMarkerTest {
   private static void checkCreateRemove(@NotNull Supplier<? extends RangeMarkerEx> creator, @NotNull Consumer<? super RangeMarker> remover) {
     RangeMarkerEx marker = creator.get();
     assertTrue(marker.isValid());
+    var initialRange = marker.getTextRange();
+    insertString(marker.getDocument(), 0, "x");
     TextRange range = marker.getTextRange();
+    assertEquals(initialRange.shiftRight(1), range);
     remover.accept(marker);
     assertFalse(marker.isValid());
+    assertEquals(range.getStartOffset(), marker.getStartOffset());
+    assertEquals(range.getEndOffset(), marker.getEndOffset());
     assertEquals(range, marker.getTextRange());
     assertEquals(TextRangeScalarUtil.toScalarRange(range), marker.getScalarRange());
   }

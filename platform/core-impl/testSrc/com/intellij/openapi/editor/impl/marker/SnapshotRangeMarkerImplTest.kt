@@ -33,6 +33,7 @@ internal class SnapshotRangeMarkerImplTest {
         assertTrue(point.isValid)
       }
 
+      reference.set(original)
       marker.dispose()
       assertFalse(marker.isValid)
       assertTrue(point.isValid)
@@ -80,7 +81,7 @@ internal class SnapshotRangeMarkerImplTest {
     RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
       val document = DocumentImpl("abcdefgh", true)
       val marker = document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
-      assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(2, 4)), marker.initialRange)
+      assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(2, 4)), marker.fallbackRange)
       val reference = marker.currentRootReference()
       val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
       val shifted = reference.get().remove(marker.id).insert(marker.id, 4, 6, spec, flavorFlags = 0)
@@ -102,8 +103,8 @@ internal class SnapshotRangeMarkerImplTest {
 
       marker.dispose()
       assertFalse(marker.isValid)
-      assertEquals(TextRange(2, 4), marker.textRange)
-      assertEquals(PMarkerResolution.invalid(TextRangeScalarUtil.toScalarRange(2, 4)), SnapshotMarkerEngineImpl.resolveRangeMarker(marker, reference.get()))
+      assertEquals(TextRange(4, 6), marker.textRange)
+      assertEquals(PMarkerResolution.invalid(TextRangeScalarUtil.toScalarRange(4, 6)), SnapshotMarkerEngineImpl.resolveRangeMarker(marker, reference.get()))
     }
   }
 
