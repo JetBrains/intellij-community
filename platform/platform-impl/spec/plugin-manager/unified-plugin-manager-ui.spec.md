@@ -68,7 +68,7 @@ targets:
 # Unified Plugin Manager UI
 
 Status: Active
-Date: 2026-10-13
+Date: 2026-10-23
 
 ## Purpose
 
@@ -733,6 +733,11 @@ Untested: No focused test verifies Shift-selection across sections.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (
     `details page spacing is enabled only for the unified page`
   )
+
+- In both Plugins pages, Additional Info must let users select text and copy it with the standard shortcut.
+- This applies to the plugin ID, version, rating, download count, size, date, required plugins, and internal repository field.
+
+Untested: No focused test verifies text selection and copying in Additional Info.
 
 - The first action in unified plugin details must show its complete focus outline.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt (

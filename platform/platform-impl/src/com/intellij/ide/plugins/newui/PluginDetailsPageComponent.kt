@@ -961,7 +961,7 @@ class PluginDetailsPageComponent private constructor(
     pluginReportUrl = LinkPanel(infoPanel, false)
 
     fun addLabel(): JLabel {
-      val label = JLabel()
+      val label = JBLabel().setCopyable(true)
       label.foreground = ListPluginComponent.GRAY_COLOR
       infoPanel.add(label)
       return label
@@ -978,8 +978,7 @@ class PluginDetailsPageComponent private constructor(
     infoPanel.add(createRequiredPluginsComponent().also { requiredPlugins = it }, ListLayout.GrowPolicy.GROW)
 
     if (isMarketplace && ApplicationManager.getApplication().isInternal) {
-      infoPanel.add(JLabel().also { customRepoForDebug = it })
-      customRepoForDebug!!.foreground = ListPluginComponent.GRAY_COLOR
+      customRepoForDebug = addLabel()
     }
 
     pane.addTab(IdeBundle.message("plugins.configurable.additional.info.tab.name"), createScrollPane(infoPanel))
@@ -2528,7 +2527,7 @@ private class IntelliJPluginDetailsTabs(
 private fun createRequiredPluginsComponent(): JEditorPane {
   val editorPane = JEditorPane()
   UIUtil.convertToLabel(editorPane)
-  editorPane.caret = EmptyCaret.INSTANCE
+  editorPane.isFocusable = true
   editorPane.foreground = ListPluginComponent.GRAY_COLOR
   editorPane.contentType = "text/plain"
   return editorPane
