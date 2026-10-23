@@ -32,8 +32,7 @@ object ProductModeEnvironmentModules {
         // the property is temporary
         this["intellij.platform.debugger"] = getBooleanProperty("intellij.platform.light.mode.enable.debugger", false)
         // the property is temporary
-        // execution is enabled in LIGHT_WITH_RD_CONNECTION, because `intellij.platform.frontend.split.connection` depends on it via `intellij.remoteDev.frontendProcessLauncher`
-        this["intellij.platform.execution"] = getBooleanProperty("intellij.platform.light.mode.enable.execution", true) || mode == ProductMode.LIGHT_WITH_RD_CONNECTION
+        this["intellij.platform.execution"] = getBooleanProperty("intellij.platform.light.mode.enable.execution", true)
         this["intellij.platform.split.connection"] = mode == ProductMode.LIGHT_WITH_RD_CONNECTION
       }
       else {

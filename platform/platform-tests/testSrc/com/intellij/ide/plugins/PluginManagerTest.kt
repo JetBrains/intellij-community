@@ -259,9 +259,7 @@ class PluginManagerTest {
       assertThat(enabled["intellij.platform.debugger"]).describedAs("debugger in '${mode.id}'").isTrue()
       assertThat(disabled["intellij.platform.debugger"]).describedAs("debugger in '${mode.id}'").isFalse()
       assertThat(enabled["intellij.platform.execution"]).describedAs("execution in '${mode.id}'").isTrue()
-      // the RD connection needs the execution module, so the property cannot disable it there
-      assertThat(disabled["intellij.platform.execution"]).describedAs("execution in '${mode.id}'")
-        .isEqualTo(mode == ProductMode.LIGHT_WITH_RD_CONNECTION)
+      assertThat(disabled["intellij.platform.execution"]).describedAs("execution in '${mode.id}'").isFalse()
     }
   }
 
