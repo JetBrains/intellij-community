@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.impl.seedFromFactoryDefault
 import com.intellij.openapi.wm.safeToolWindowPaneId
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.util.StartupUiGate
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableJob
@@ -294,6 +295,9 @@ internal class ToolWindowSetInitializer(private val project: Project, private va
       }
       list to actionManagerDeferred.await()
     }
+
+    // the restored editor takes the EDT first
+    StartupUiGate.awaitEditorsShown()
 
     val entries = withContext(Dispatchers.EDT) {
       @Suppress("TestOnlyProblems")
