@@ -290,33 +290,44 @@ pub fn read_text(runtime: &dyn Runtime, file: &str) -> Result<String, Refusal> {
         .map_err(|error| fail_infra(format!("{file} is unreadable: {error}")))
 }
 
-/// One pruned, breadth-first, concurrent pass over the directories; both discovery passes read its result.
-pub fn scan_tree(runtime: &dyn Runtime, dirs: &[&str]) -> TreeScan {
-    let mut scan = TreeScan::default();
-    let mut frontier: Vec<String> = dirs.iter().map(|dir| (*dir).to_owned()).collect();
+/// Walks the repo-relative directories breadth first, with one concurrent listing pass per level.
+///
+/// `visit` gets each readable directory with its entries, and pushes the subdirectories to walk into `next`. A
+/// directory that cannot be read is skipped.
+pub fn walk_dirs(runtime: &dyn Runtime, roots: Vec<String>, mut visit: impl FnMut(&str, Vec<DirEntry>, &mut Vec<String>)) {
+    let mut frontier = roots;
     while !frontier.is_empty() {
         let listings = par_map(&frontier, |dir| read_dir_or_none(runtime, dir));
         let mut next = Vec::new();
         for (dir, entries) in frontier.iter().zip(listings) {
-            let Some(entries) = entries else { continue };
-            scan.dirs.insert(dir.clone());
-            for entry in entries {
-                let path = format!("{dir}/{}", entry.name);
-                if entry.is_dir {
-                    // `bazel-*` is the convenience symlink farm bazel drops in a workspace; following it would walk
-                    // the whole output base and index stale generated copies of these sources.
-                    if !PRUNED_DIRS.contains(&entry.name.as_str()) && !entry.name.starts_with("bazel-") {
-                        next.push(path);
-                    }
-                } else if entry.name.ends_with(".iml") {
-                    scan.imls.push(path);
-                } else if source_simple_name(&entry.name).is_some() {
-                    scan.sources.push(path);
-                }
+            if let Some(entries) = entries {
+                visit(dir, entries, &mut next);
             }
         }
         frontier = next;
     }
+}
+
+/// One pruned, breadth-first, concurrent pass over the directories; both discovery passes read its result.
+pub fn scan_tree(runtime: &dyn Runtime, dirs: &[&str]) -> TreeScan {
+    let mut scan = TreeScan::default();
+    walk_dirs(runtime, dirs.iter().map(|dir| (*dir).to_owned()).collect(), |dir, entries, next| {
+        scan.dirs.insert(dir.to_owned());
+        for entry in entries {
+            let path = format!("{dir}/{}", entry.name);
+            if entry.is_dir {
+                // `bazel-*` is the convenience symlink farm bazel drops in a workspace; following it would walk
+                // the whole output base and index stale generated copies of these sources.
+                if !PRUNED_DIRS.contains(&entry.name.as_str()) && !entry.name.starts_with("bazel-") {
+                    next.push(path);
+                }
+            } else if entry.name.ends_with(".iml") {
+                scan.imls.push(path);
+            } else if source_simple_name(&entry.name).is_some() {
+                scan.sources.push(path);
+            }
+        }
+    });
     scan
 }
 

@@ -516,6 +516,16 @@ pub fn refusal<T: std::fmt::Debug>(result: Result<T, Refusal>) -> Refusal {
     }
 }
 
+/// The `lane/class` of each affected suite, joined by commas.
+pub fn classes_of(affected: &crate::suites::Affected) -> String {
+    affected
+        .suites
+        .iter()
+        .map(|suite| format!("{}/{}", suite.lane, suite.class))
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
 // --- the suite catalog -----------------------------------------------------------------------------------------
 
 /// A suite document in the shape `generateFlowCatalog.ts` writes, cut down to the fields the join reads: the

@@ -3,7 +3,9 @@ use std::collections::BTreeMap;
 use pretty_assertions::assert_eq;
 
 use bt_core::exit;
-use bt_core::fake::{FakeRuntime, REPO_ROOT, area, document_path, flow_catalog_tree, kdoc, reaching, refusal, suite_document_text};
+use bt_core::fake::{
+    FakeRuntime, REPO_ROOT, area, classes_of, document_path, flow_catalog_tree, kdoc, reaching, refusal, suite_document_text,
+};
 use bt_core::selector::{Selector, SelectorKind};
 use bt_core::suites::{AffectedSuite, UNMAPPED_LINES_PER_REASON, affected_text, classes_of_lane, named_suites, reached_by_module_only};
 
@@ -20,15 +22,6 @@ fn put(tree: &mut Tree, path: &str, text: impl Into<String>) {
 fn affected_of(fake: &FakeRuntime, paths: &[&str]) -> Affected {
     let paths: Vec<String> = paths.iter().map(ToString::to_string).collect();
     affected_suites(fake, area(), &paths).unwrap_or_else(|failure| panic!("the resolution refused: {failure}"))
-}
-
-fn classes_of(affected: &Affected) -> String {
-    affected
-        .suites
-        .iter()
-        .map(|suite| format!("{}/{}", suite.lane, suite.class))
-        .collect::<Vec<_>>()
-        .join(",")
 }
 
 fn reasons_of(affected: &Affected) -> String {
@@ -280,23 +273,26 @@ fn a_flow_that_declares_no_suite_is_not_answered_by_the_reach() {
     assert_eq!(reasons_of(&affected), reason::FLOW_DECLARES_NO_SUITE);
 }
 
+/// The suites that a change of `path` reaches. The path declares `flow`. Each suite of `story_suites` reaches its
+/// module and implements `flow-new-session-launch`.
+fn affected_by_declared_flow(story_suites: &[(&str, &'static str)], path: &str, flow: &str) -> Affected {
+    let mut tree = flow_catalog_tree();
+    for (suite, module) in story_suites {
+        reaching(&mut tree, suite, &[module], &["flow-new-session-launch"]);
+    }
+    put(&mut tree, path, kdoc(&[&format!("@flow {flow}")]));
+    affected_of(&FakeRuntime::with_tree(&tree), &[path])
+}
+
 /// A path that declares only an implementation flow used to reach nothing, which made `run --changed` on it a false
 /// green. The story flow of a suite's routes declares which implementation flows it implements.
 #[test]
 fn a_path_that_declares_only_an_implementation_flow_reaches_the_story_flows_suite() {
-    let mut tree = flow_catalog_tree();
-    reaching(
-        &mut tree,
-        "manage-launch-preset-quick-start",
-        &["intellij.air.session"],
-        &["flow-new-session-launch"],
-    );
-    put(
-        &mut tree,
+    let affected = affected_by_declared_flow(
+        &[("manage-launch-preset-quick-start", "intellij.air.session")],
         "plugins/air/backend/acp/src/AcpSession.kt",
-        kdoc(&["@flow flow-new-session-launch"]),
+        "flow-new-session-launch",
     );
-    let affected = affected_of(&FakeRuntime::with_tree(&tree), &["plugins/air/backend/acp/src/AcpSession.kt"]);
     assert_eq!(classes_of(&affected), QUICK_START);
     assert_eq!(affected.unmapped, []);
     // One `flow:` spelling serves both kinds: the entry names the flow the path declares either way.
@@ -307,25 +303,14 @@ fn a_path_that_declares_only_an_implementation_flow_reaches_the_story_flows_suit
 /// either story.
 #[test]
 fn one_implementation_flow_reaches_the_suites_of_every_story_flow_that_claims_it() {
-    let mut tree = flow_catalog_tree();
-    reaching(
-        &mut tree,
-        "manage-launch-preset-quick-start",
-        &["intellij.air.session"],
-        &["flow-new-session-launch"],
-    );
-    reaching(
-        &mut tree,
-        "new-session-terminal",
-        &["intellij.air.terminal"],
-        &["flow-new-session-launch"],
-    );
-    put(
-        &mut tree,
+    let affected = affected_by_declared_flow(
+        &[
+            ("manage-launch-preset-quick-start", "intellij.air.session"),
+            ("new-session-terminal", "intellij.air.terminal"),
+        ],
         "plugins/air/backend/acp/src/AcpSession.kt",
-        kdoc(&["@flow flow-new-session-launch"]),
+        "flow-new-session-launch",
     );
-    let affected = affected_of(&FakeRuntime::with_tree(&tree), &["plugins/air/backend/acp/src/AcpSession.kt"]);
     assert_eq!(classes_of(&affected), format!("{QUICK_START},{TERMINAL}"));
     // Two lanes are a caller decision rather than an answer, and this widening can produce them.
     assert_eq!(affected.lanes, ["ui", "ui-real"]);
@@ -335,21 +320,10 @@ fn one_implementation_flow_reaches_the_suites_of_every_story_flow_that_claims_it
 /// The reason must still fire, because an iteration that runs no test is not a passing iteration.
 #[test]
 fn an_implementation_flow_no_story_flow_claims_still_declares_no_suite() {
-    let mut tree = flow_catalog_tree();
-    reaching(
-        &mut tree,
-        "manage-launch-preset-quick-start",
-        &["intellij.air.session"],
-        &["flow-new-session-launch"],
-    );
-    put(
-        &mut tree,
+    let affected = affected_by_declared_flow(
+        &[("manage-launch-preset-quick-start", "intellij.air.session")],
         "plugins/air/backend/acp/src/AcpAgentAutoUpdater.kt",
-        kdoc(&["@flow flow-acp-agent-auto-update"]),
-    );
-    let affected = affected_of(
-        &FakeRuntime::with_tree(&tree),
-        &["plugins/air/backend/acp/src/AcpAgentAutoUpdater.kt"],
+        "flow-acp-agent-auto-update",
     );
     assert_eq!(affected.suites, []);
     assert_eq!(reasons_of(&affected), reason::FLOW_DECLARES_NO_SUITE);

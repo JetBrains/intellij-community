@@ -2,7 +2,7 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::exit;
-use crate::fake::{FakeRuntime, area, areas, flow_catalog_tree, lanes, reaching, refusal};
+use crate::fake::{FakeRuntime, area, areas, classes_of, flow_catalog_tree, lanes, reaching, refusal};
 use crate::lanes::{RunPlan, build_bazel_args, default_shards};
 use crate::scan::ResolutionInputs;
 use crate::selector::resolve_selector;
@@ -163,15 +163,6 @@ fn no_flow_or_suite_id_reaches_a_suite_of_an_explicit_only_lane() {
         "the suite long-session-performance belongs to the explicit-only lane ui-perf, which no suite id, flow or changed \
          path reaches; run it with --lane ui-perf"
     );
-}
-
-fn classes_of(affected: &Affected) -> String {
-    affected
-        .suites
-        .iter()
-        .map(|suite| format!("{}/{}", suite.lane, suite.class))
-        .collect::<Vec<_>>()
-        .join(",")
 }
 
 /// A `@flow` tag and a flow selector answer through one relation, so an implementation flow reaches the suites of
