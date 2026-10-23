@@ -1,7 +1,8 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.connection.request;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -11,11 +12,13 @@ import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.Locale;
 
 public class StatsHttpResponse {
-  private static final DateTimeFormatter RFC1123_FORMAT = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss zzz");
-  private static final DateTimeFormatter RFC1036_FORMAT = DateTimeFormatter.ofPattern("EEE, dd-MMM-yy HH:mm:ss zzz");
-  private static final DateTimeFormatter ASCTIME_FORMAT = DateTimeFormatter.ofPattern("EEE MMM d HH:mm:ss yyyy");
+  // HTTP dates name days and months in English, whatever the default locale is.
+  private static final DateTimeFormatter RFC1123_FORMAT = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.ENGLISH);
+  private static final DateTimeFormatter RFC1036_FORMAT = DateTimeFormatter.ofPattern("EEE, dd-MMM-yy HH:mm:ss zzz", Locale.ENGLISH);
+  private static final DateTimeFormatter ASCTIME_FORMAT = DateTimeFormatter.ofPattern("EEE MMM d HH:mm:ss yyyy", Locale.ENGLISH);
   private static final DateTimeFormatter[] DATE_FORMATS = new DateTimeFormatter[]{RFC1123_FORMAT, RFC1036_FORMAT, ASCTIME_FORMAT};
 
   private final HttpResponse<String> myHttpResponse;
@@ -45,7 +48,8 @@ public class StatsHttpResponse {
            ? new ByteArrayInputStream(myHttpResponse.body().getBytes(StandardCharsets.UTF_8)) : null;
   }
 
-  private static @Nullable Long parseDate(String string) {
+  @VisibleForTesting
+  public static @Nullable Long parseDate(String string) {
     for (DateTimeFormatter format : DATE_FORMATS) {
       try {
         return ZonedDateTime.parse(string, format).toInstant().toEpochMilli();
