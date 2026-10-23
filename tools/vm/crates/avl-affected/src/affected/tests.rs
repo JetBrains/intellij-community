@@ -357,7 +357,7 @@ fn a_departed_suite_takes_its_reach_with_it() {
 }
 
 /// A suite document that states no module narrows the module relation rather than failing it: the digest gate in
-/// `AirArchitectureModelTest` owns catalog freshness, not this join.
+/// `air-architecture-model_test` of `plugins/air/tests/architecture-gate` owns catalog freshness, not this join.
 #[test]
 fn a_suite_that_states_no_module_narrows_rather_than_refuses() {
     let mut tree = reach_tree();

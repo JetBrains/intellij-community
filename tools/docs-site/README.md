@@ -144,7 +144,7 @@ protocol:
 - Exit 3: a check failed. The report follows the sentinel, and no record follows.
 - Any other result, or no sentinel: an infrastructure failure, not a check failure.
 
-`AirArchitectureModelTest` runs the Air gate, and `DevDistDocsSiteTest` runs the build gate. The gate has no
+`air-architecture-model_test` of `plugins/air/tests/architecture-gate` runs the Air gate, and `DevDistDocsSiteTest` runs the build gate. The gate has no
 `node_modules`, so each module that it loads imports nothing from npm. `scripts/yamlCompat.ts` falls back to
 `Bun.YAML` there.
 
