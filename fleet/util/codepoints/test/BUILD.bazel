@@ -10,7 +10,7 @@ fleet_wasmjs_module(
     test_deps = [
         "@community//fleet/test-runtime:wasmjs_module_lib",
         "@community//fleet/util/codepoints:wasmjs_module_lib",
-        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib",
     ],
     visibility = ["//visibility:public"],
 )

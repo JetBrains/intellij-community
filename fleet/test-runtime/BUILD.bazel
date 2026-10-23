@@ -6,7 +6,7 @@ fleet_wasmjs_module(
     kotlinc_opts = "@rules_jvm//:default-kotlinc-opts",
     module_name = "fleet.test.runtime",
     visibility = ["//visibility:public"],
-    exports = ["@kmp_deps//:org_jetbrains_kotlin_kotlin_test"],
+    exports = ["@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_test"],
 )
 
 ### auto-generated section `build fleet.test.runtime` start

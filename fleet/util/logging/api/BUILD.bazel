@@ -11,10 +11,10 @@ fleet_wasmjs_module(
     visibility = ["//visibility:public"],
     exports = [
         "@community//fleet/util/multiplatform:wasmjs_module_lib",
-        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
-        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps_wasmjs//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib",
     ],
-    deps = ["@kmp_deps//:org_jetbrains_kotlin_wrappers_kotlin_browser"],
+    deps = ["@kmp_deps_wasmjs//:org_jetbrains_kotlin_wrappers_kotlin_browser"],
 )
 
 ### auto-generated section `dev fleet.util.logging.api` start

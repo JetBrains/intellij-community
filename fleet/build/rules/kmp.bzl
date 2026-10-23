@@ -1,37 +1,37 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
 
-_RESOLUTION_FACTS_VERSION = "resolution.v36"
+_RESOLUTION_FACTS_VERSION = "resolution.v37"
 
-_RESOLVER_VERSION = "0.1.2"
+_RESOLVER_VERSION = "0.1.4"
 _RESOLVER_BINARY_URL_PREFIX = (
     "https://cache-redirector.jetbrains.com/github.com/JetBrains/bazel-kmp-resolver/releases/download/%s" % _RESOLVER_VERSION
 )
 _RESOLVER_BINARIES = {
     "linux_arm64": struct(
         filename = "bazel-kmp-resolver-linux-arm64",
-        sha256 = "1fba17ee4cfb35c62f2227e2d7cf238633d4199482225fb3b7373ad89e2b1885",
+        sha256 = "5967a68110fedbc5c58355cd3fd29e16aee95877cb0dbbb7e8362b0445401ebc",
     ),
     "linux_x64": struct(
         filename = "bazel-kmp-resolver-linux-x64",
-        sha256 = "5e5604236d87719684615e77bf21bfc0044f78f01438af658c314f5c4d082b8b",
+        sha256 = "9f3f63afbec3e80f895729abd9fad1813d046214a3b4dc36a3d244ced667af31",
     ),
     "macos_arm64": struct(
         filename = "bazel-kmp-resolver-macos-arm64",
-        sha256 = "4e10fa5a1c846542f20f753e1261356d2cfe1b73e97fb66b8f07f3164331b934",
+        sha256 = "b7355d26460139a63fdc8525521f2f4be451cf46868b90f0ade4a7efe7e7ec76",
     ),
     "macos_x64": struct(
         filename = "bazel-kmp-resolver-macos-x64",
-        sha256 = "202e5b46e945229a7b801af83fbce309cb7a34dfae466a5998a13e892311bb35",
+        sha256 = "319902e3dd3b4744c7d3c1705d8edc6c2f0b9b6061a97021a18cd9688b936263",
     ),
     "windows_x64": struct(
         filename = "bazel-kmp-resolver-windows-x64.exe",
-        sha256 = "af86f048542d3bb1f8dc637fddacd3227ff9fb8eee45e8f59633fedbe3d83919",
+        sha256 = "815e286350ffd475e67a05ecd51c56a6ccfa3734d655070d6d86d861b8eefa44",
     ),
     "windows_arm64": struct(
         # TODO: GraalVM does not support ARM64 Windows yet, so use the x64 binary for now.
         filename = "bazel-kmp-resolver-windows-x64.exe",
-        sha256 = "af86f048542d3bb1f8dc637fddacd3227ff9fb8eee45e8f59633fedbe3d83919",
+        sha256 = "815e286350ffd475e67a05ecd51c56a6ccfa3734d655070d6d86d861b8eefa44",
     ),
 }
 
@@ -93,6 +93,14 @@ _EMPTY_RESOLUTION_JSON = json.encode({
     "libraries": {},
 })
 
+# Platforms the resolver can be asked for (`kmp.configure(platforms = ...)`), in the order their repositories are generated.
+# Each platform gets its own `kmp_deps_<platform>` repository, with the same target names across platforms: a library is
+# `@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib` for wasmJs and `@kmp_deps_jvm//:org_jetbrains_kotlin_kotlin_stdlib` for the JVM.
+_PLATFORMS = ["wasmjs", "jvm"]
+
+def _deps_repository_name(platform):
+    return "kmp_deps_%s" % platform
+
 def _kmp_deps_repository_impl(repository_ctx):
     repository_ctx.file("BUILD.bazel", repository_ctx.attr.build_file_content)
 
@@ -106,16 +114,16 @@ _kmp_deps_repository = repository_rule(
     },
 )
 
-def _materialize_resolution(resolution):
+def _materialize_resolution(resolution, platform):
     libraries = _manifest_libraries(resolution)
-    target_names = _library_target_names(libraries)
+    target_names = _library_target_names(libraries, platform)
     target_names_by_module = _target_names_by_module(target_names)
 
     materialized_targets = []
     materialized_target_names = {}
     for library_id in sorted(libraries.keys()):
         library = libraries[library_id]
-        variant = _wasmjs_variant(library)
+        variant = _platform_variant(library, platform)
         if variant == None:
             continue
 
@@ -125,40 +133,51 @@ def _materialize_resolution(resolution):
             continue
         materialized_target_names[target_name] = True
 
-        klib = variant["klib"]
         source_jar = variant.get("sourceJar")
-        materialized_targets.append({
+        target = {
             "coordinate": library_id,
             "name": target_name,
-            "klib": _artifact_label(klib),
             "source_jar": None if source_jar == None else _artifact_label(source_jar),
             "deps": _dependency_labels(library_id, variant, "dependencies", target_names, target_names_by_module),
             "exported_deps": _dependency_labels(library_id, variant, "exportedDependencies", target_names, target_names_by_module),
-            "npm_packages": {
+        }
+        if platform == "wasmjs":
+            target["klib"] = _artifact_label(variant["klib"])
+            target["npm_packages"] = {
                 package["name"]: "@%s//:package" % _npm_repository_name(package)
                 for package in variant.get("npmPackages", [])
-            },
-        })
+            }
+        elif platform == "jvm":
+            target["jar"] = _artifact_label(variant["jar"])
+        else:
+            fail("Unsupported platform: %s" % platform)
+        materialized_targets.append(target)
 
     return struct(
-        aliases = _library_aliases(libraries),
+        aliases = _library_aliases(libraries, platform),
         targets = materialized_targets,
     )
 
-def _wasmjs_variant(library):
+def _platform_variant(library, platform):
+    """The variant of [library] for [platform], or None when the library is not resolved for that platform."""
     for variant in library["variants"]:
-        if variant.get("type") == "wasmjs":
+        if variant.get("type") == platform:
             return variant
     return None
 
 def _manifest_libraries(resolution):
     return resolution["libraries"]
 
-def _library_target_names(libraries):
+def _library_target_names(libraries, platform):
     target_names = {}
     used_names = {}
     for library_id in sorted(libraries.keys()):
         library = libraries[library_id]
+        variant = _platform_variant(library, platform)
+        if variant == None:
+            # A library may resolve to different versions on different platforms: only the libraries of the
+            # platform at hand compete for a versionless target name.
+            continue
         target_name = _versionless_target_name(library_id)
         used_library = used_names.get(target_name)
         if used_library != None and used_library != library_id:
@@ -169,10 +188,7 @@ def _library_target_names(libraries):
             ))
         used_names[target_name] = library_id
         target_names[library_id] = target_name
-
-        variant = _wasmjs_variant(library)
-        if variant != None:
-            target_names[variant["variantId"]] = target_name
+        target_names[variant["variantId"]] = target_name
     return target_names
 
 def _target_names_by_module(target_names):
@@ -190,33 +206,40 @@ def _target_names_by_module(target_names):
         target_names_by_module[module_id] = target_name
     return target_names_by_module
 
-def _library_aliases(libraries):
+def _library_aliases(libraries, platform):
     real_names = {}
     for library_id in sorted(libraries.keys()):
         library = libraries[library_id]
-        variant = _wasmjs_variant(library)
+        variant = _platform_variant(library, platform)
         if variant != None:
-            real_names[_build_target_name(variant["variantId"])] = True
+            target_name = _build_target_name(variant["variantId"])
+            real_names[target_name] = True
+            if platform == "jvm":
+                real_names[_jvm_import_name(target_name)] = True
 
     aliases = {}
     for library_id in sorted(libraries.keys()):
         library = libraries[library_id]
-        variant = _wasmjs_variant(library)
+        variant = _platform_variant(library, platform)
         if variant == None:
             continue
-        alias_name = _versionless_target_name(library_id)
         target_name = _build_target_name(variant["variantId"])
-        if alias_name == target_name:
-            continue
-        if alias_name in real_names:
-            fail("Alias target name for %s collides with a real generated target: %s" % (library_id, alias_name))
 
-        if alias_name in aliases:
-            existing = aliases[alias_name]
-            if existing != target_name:
-                aliases[alias_name] = None
-            continue
-        aliases[alias_name] = target_name
+        # A library is aliased by its own versionless name and by the versionless name of its platform-specific variant
+        # (`org_jetbrains_kotlin_kotlin_stdlib` and `org_jetbrains_kotlin_kotlin_stdlib_wasm_js` for the same target):
+        # consumers naming the Maven artifact they use, as JPS libraries do, need no knowledge of the KMP umbrella.
+        for alias_name in [_versionless_target_name(library_id), _versionless_target_name(variant["variantId"])]:
+            if alias_name == target_name:
+                continue
+            if alias_name in real_names:
+                fail("Alias target name for %s collides with a real generated target: %s" % (library_id, alias_name))
+
+            if alias_name in aliases:
+                existing = aliases[alias_name]
+                if existing != target_name:
+                    aliases[alias_name] = None
+                continue
+            aliases[alias_name] = target_name
 
     return [
         {
@@ -290,18 +313,22 @@ def _basename_from_url(url):
     return stripped.rsplit("/", 1)[-1]
 
 def _collect_artifacts(resolution):
+    """Maven artifacts of all variants of all libraries; one `http_file` per artifact is shared by the platform repositories."""
     artifacts = {}
     libraries = _manifest_libraries(resolution)
     for library_id in sorted(libraries.keys()):
         library = libraries[library_id]
-        variant = _wasmjs_variant(library)
-        if variant == None:
-            continue
-
-        _add_artifact(artifacts, variant["klib"])
-        source_jar = variant.get("sourceJar")
-        if source_jar != None:
-            _add_artifact(artifacts, source_jar)
+        for variant in library["variants"]:
+            variant_type = variant.get("type")
+            if variant_type == "wasmjs":
+                _add_artifact(artifacts, variant["klib"])
+            elif variant_type == "jvm":
+                _add_artifact(artifacts, variant["jar"])
+            else:
+                fail("Library %s has a variant of unsupported type '%s', supported types: %s" % (library_id, variant_type, _PLATFORMS))
+            source_jar = variant.get("sourceJar")
+            if source_jar != None:
+                _add_artifact(artifacts, source_jar)
     return artifacts
 
 def _add_artifact(artifacts, artifact):
@@ -318,7 +345,7 @@ def _collect_npm_packages(resolution):
     libraries = _manifest_libraries(resolution)
     for library_id in sorted(libraries.keys()):
         library = libraries[library_id]
-        variant = _wasmjs_variant(library)
+        variant = _platform_variant(library, "wasmjs")  # NPM packages are only relevant to the wasmJs platform
         if variant == None:
             continue
 
@@ -384,25 +411,40 @@ def _repository_name_part(value):
         force_separator_chars = ".",
     )
 
-def _render_build_file(materialized):
+def _render_build_file(materialized, platform):
     return "\n".join([
-        "load(\"@rules_jvm//:wasmjs.bzl\", \"wasmjs_import\")",
+        _render_load_statements(platform),
         "",
         "package(default_visibility = [\"//visibility:public\"])",
         "",
-        _render_targets_block(materialized.targets),
+        _render_targets_block(materialized.targets, platform),
         "",
         _render_aliases_block(materialized.aliases),
         "",
     ])
 
-def _render_targets_block(targets):
+def _render_load_statements(platform):
+    if platform == "wasmjs":
+        return "load(\"@rules_jvm//:wasmjs.bzl\", \"wasmjs_import\")"
+    if platform == "jvm":
+        return "\n".join([
+            "load(\"@rules_java//java:defs.bzl\", \"java_library\")",
+            "load(\"@rules_jvm//:jvm.bzl\", \"jvm_import\")",
+        ])
+    fail("Unsupported platform: %s" % platform)
+
+def _render_targets_block(targets, platform):
     blocks = []
     for target in targets:
         lines = [
             "# %s" % target["coordinate"],
         ]
-        lines.extend(_render_wasmjs_import(target))
+        if platform == "wasmjs":
+            lines.extend(_render_wasmjs_import(target))
+        elif platform == "jvm":
+            lines.extend(_render_jvm_import(target))
+        else:
+            fail("Unsupported platform: %s" % platform)
         blocks.append("\n".join(lines))
     return "\n\n".join(blocks)
 
@@ -427,7 +469,7 @@ def _render_wasmjs_import(target):
           name = "org_jetbrains_kotlinx_kotlinx_datetime_wasm_js_0_7_1_0_6_x_compat",
           klib = "@@community++kmp+org_jetbrains_kotlinx-kotlinx-datetime-wasm-js-0_7_1-0_6_x-compat_http//file:file",
           source_jar = "@@community++kmp+org_jetbrains_kotlinx-kotlinx-datetime-wasm-js-0_7_1-0_6_x-compat-sources_http//file:file",
-          exported_deps = ["@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib", "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core"],
+          exported_deps = [":org_jetbrains_kotlin_kotlin_stdlib_wasm_js_2_4_0", ":org_jetbrains_kotlinx_kotlinx_serialization_core_wasm_js_1_11_0"],
           npm_packages = {"@js-joda/core": "@@community++kmp+npm-js-joda_core-3_2_0_http//:package"},
         )
     """
@@ -444,6 +486,56 @@ def _render_wasmjs_import(target):
     lines.extend(_render_string_dict_attr("npm_packages", target["npm_packages"]))
     lines.append(")")
     return lines
+
+def _render_jvm_import(target):
+    """Renders the `jvm_import` of a library's jar and the `java_library` exposing it with its dependencies.
+
+    Both come from a `bazel-kmp-resolver` Bazel manifest entry. `jvm_import` has no `exports`, hence the wrapper: the
+    manifest's `exportedDependencies` go to `exports` (compile and runtime class paths of dependents, transitively) and
+    its `dependencies` to `runtime_deps` (runtime class path only). Aliases and dependency labels point at the `java_library`.
+
+    Example:
+
+        jvm_import(
+            name = "io_ktor_ktor_client_core_jvm_3_6_0_import",
+            jar = "@@community++kmp+io_ktor-ktor-client-core-jvm-3_6_0_http//file:file",
+            source_jar = "@@community++kmp+io_ktor-ktor-client-core-jvm-3_6_0-sources_http//file:file",
+        )
+
+        java_library(
+            name = "io_ktor_ktor_client_core_jvm_3_6_0",
+            exports = [
+                ":io_ktor_ktor_client_core_jvm_3_6_0_import",
+                ":io_ktor_ktor_http_jvm_3_6_0",
+                ":org_jetbrains_kotlin_kotlin_stdlib_2_4_21_rc",
+            ],
+            runtime_deps = [
+                ":org_slf4j_slf4j_api_2_0_17",
+            ],
+        )
+    """
+
+    import_name = _jvm_import_name(target["name"])
+    lines = [
+        "jvm_import(",
+        "    name = %s," % _quote(import_name),
+        "    jar = %s," % _quote(target["jar"]),
+    ]
+    if target["source_jar"] != None:
+        lines.append("    source_jar = %s," % _quote(target["source_jar"]))
+    lines.extend([
+        ")",
+        "",
+        "java_library(",
+        "    name = %s," % _quote(target["name"]),
+    ])
+    lines.extend(_render_label_list_attr("exports", [":%s" % import_name] + target["exported_deps"]))
+    lines.extend(_render_label_list_attr("runtime_deps", target["deps"]))
+    lines.append(")")
+    return lines
+
+def _jvm_import_name(target_name):
+    return "%s_import" % target_name
 
 def _render_string_dict_attr(name, values):
     if not values:
@@ -493,15 +585,28 @@ def _read_configure_tag(module_ctx):
     if len(root_tags) > 1:
         fail("Only one kmp.configure(...) tag is supported in the root module.")
     if root_tags:
-        return root_tags[0]
+        return _validated_configure_tag(root_tags[0])
     if non_root_tags:
-        return non_root_tags[0]
+        return _validated_configure_tag(non_root_tags[0])
     return struct(
+        platforms = [],
         deps = [],
         repositories = [],
         substitutions = {},
         npm_package_version_overrides = {},
     )
+
+def _validated_configure_tag(tag):
+    if not tag.platforms:
+        fail("kmp.configure(platforms = [...]) must list at least one platform among %s." % _PLATFORMS)
+    seen = {}
+    for platform in tag.platforms:
+        if platform not in _PLATFORMS:
+            fail("kmp.configure(platforms = ...) got unsupported platform '%s', supported platforms: %s" % (platform, _PLATFORMS))
+        if platform in seen:
+            fail("kmp.configure(platforms = ...) lists platform '%s' twice." % platform)
+        seen[platform] = True
+    return tag
 
 def _resolve_with_facts(module_ctx, config):
     if not config.deps:
@@ -548,9 +653,14 @@ def _host_key(module_ctx):
 
 def _resolve_fresh(module_ctx, config):
     resolver_binary = _resolver_binary(module_ctx)
+
+    # The extension's working directory persists across evaluations (the resolver's cache lives there). Overwriting an
+    # executable that already ran in place makes macOS kill the new one with "Code Signature Invalid" (the kernel
+    # caches the signature per file), so the binary is named by version: a new version lands in a new file.
+    resolver_binary_path = "%s-%s" % (_RESOLVER_VERSION, resolver_binary.filename)
     module_ctx.download(
         url = ["%s/%s" % (_RESOLVER_BINARY_URL_PREFIX, resolver_binary.filename)],
-        output = resolver_binary.filename,
+        output = resolver_binary_path,
         sha256 = resolver_binary.sha256,
         executable = True,
     )
@@ -559,16 +669,16 @@ def _resolve_fresh(module_ctx, config):
     resolution_path = "resolution.json"
     module_ctx.file(resolution_path, "")
     args = [
-        module_ctx.path(resolver_binary.filename),
+        module_ctx.path(resolver_binary_path),
         "--output-manifest-file",
         module_ctx.path(resolution_path),
         "--node-executable",
         node_tooling.node,
         "--npm-cli-js",
         node_tooling.npm_cli_js,
-        "--platform",
-        "wasmjs",  # Only the wasmJs variants are materialized (see `_wasmjs_variant`); the resolver also supports `jvm` but we are not using it yet.
     ]
+    for platform in sorted(config.platforms):
+        args.extend(["--platform", platform])
     for dep in config.deps:
         args.extend(["--coordinate", dep])
     for repository in config.repositories:
@@ -577,6 +687,11 @@ def _resolve_fresh(module_ctx, config):
         target_coordinate = config.substitutions[source_module_id]
         _validate_maven_module_id(source_module_id)
         _maven_coordinate_parts(target_coordinate)
+        if _maven_module_id(target_coordinate) == source_module_id:
+            fail("kmp.configure(substitutions = ...) substitutes %s by another version of itself (%s): versions are picked by the resolver's conflict resolution, declare the wanted version in deps instead." % (
+                source_module_id,
+                target_coordinate,
+            ))
         args.extend(["--substitution", "%s=%s" % (source_module_id, target_coordinate)])
     for package_name in sorted(config.npm_package_version_overrides.keys()):
         args.extend(["--npm-package-version", "%s=%s" % (package_name, config.npm_package_version_overrides[package_name])])
@@ -640,6 +755,7 @@ def _auth_context(module_ctx, netrc):
 def _resolution_fact_key(config):
     return json.encode([
         _RESOLUTION_FACTS_VERSION,
+        sorted(config.platforms),
         config.deps,
         config.repositories,
         _sorted_dict_items(config.substitutions),
@@ -697,23 +813,28 @@ def _kmp_extension_impl(module_ctx):
     resolution = json.decode(resolution_json)
     _register_artifact_repositories(resolution)
 
-    repository_name = "kmp_deps"
-    _kmp_deps_repository(
-        name = repository_name,
-        build_file_content = _render_build_file(_materialize_resolution(resolution)),
-    )
+    # Without any `kmp.configure(...)` tag, every platform gets an empty repository so that no `use_repo` dangles.
+    platforms = [platform for platform in _PLATFORMS if platform in config.platforms] if config.platforms else _PLATFORMS
+    repository_names = []
+    for platform in platforms:
+        repository_name = _deps_repository_name(platform)
+        repository_names.append(repository_name)
+        _kmp_deps_repository(
+            name = repository_name,
+            build_file_content = _render_build_file(_materialize_resolution(resolution, platform), platform),
+        )
 
     facts = {_resolution_fact_key(config): resolution_json} if config.deps else {}
     if module_ctx.root_module_has_non_dev_dependency:
         return module_ctx.extension_metadata(
-            root_module_direct_deps = [repository_name],
+            root_module_direct_deps = repository_names,
             root_module_direct_dev_deps = [],
             facts = facts,
         )
     else:
         return module_ctx.extension_metadata(
             root_module_direct_deps = [],
-            root_module_direct_dev_deps = [repository_name],
+            root_module_direct_dev_deps = repository_names,
             facts = facts,
         )
 
@@ -721,6 +842,12 @@ kmp = module_extension(
     implementation = _kmp_extension_impl,
     tag_classes = {
         "configure": tag_class(attrs = {
+            "platforms": attr.string_list(
+                mandatory = True,
+                doc = """Platforms to resolve [deps] for, among `wasmjs` and `jvm`. One `kmp_deps_<platform>` repository is
+                generated per platform, with the same target names in each, so that a library is addressed by the same name
+                whatever the platform: `@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib`, `@kmp_deps_jvm//:org_jetbrains_kotlin_kotlin_stdlib`.""",
+            ),
             "deps": attr.string_list(
                 doc = "List of `group:artifact:version` dependencies to resolve.",
             ),
@@ -728,7 +855,10 @@ kmp = module_extension(
                 doc = "Maven repository URLs forwarded to the resolver.",
             ),
             "substitutions": attr.string_dict(
-                doc = "Maven module substitutions, keyed by group:artifact and resolved to group:artifact:version.",
+                doc = """Maven module substitutions, keyed by group:artifact and resolved to group:artifact:version: the substitute is
+                resolved in place of the substituted library, with its own artifacts and dependencies. Substituting a KMP library
+                covers its platform-specific variants (`*-jvm`, `*-wasm-js`), which need no key of their own. A library cannot be
+                substituted by another version of itself.""",
             ),
             "npm_package_version_overrides": attr.string_dict(
                 doc = """Overrides of NPM package versions, keyed by package name.
@@ -740,16 +870,21 @@ kmp = module_extension(
       Kotlin Multiplatform dependency extension.
 
       Analogous to `bazel-contrib/rules_jvm_external`'s `maven.install` extension, except that it handles Kotlin Multiplatform dependencies.
-      It resolves the specified [deps] against the specified [repositories], substituting dependencies using specified [substitutions] if any.
+      It resolves the specified [deps] against the specified [repositories] for each of the specified [platforms],
+      substituting dependencies using specified [substitutions] if any.
 
       Supported Kotlin Multiplatform targets (more will be added later):
-      - WasmJS
+      - WasmJS (`wasmjs`)
+      - JVM (`jvm`), including JVM-only libraries
 
-      It generates a `kmp_deps` repository with:
+      It generates one `kmp_deps_<platform>` repository per platform, with:
       - (WasmJS target) `wasmjs_import` rules (backed by `http_file` rules resolving source jars and klibs), carrying
         the NPM packages declared by the `package.json` embedded in their klib (backed by `http_archive` rules
         resolving npm registry tarballs) in their `npm_packages`
-      - `alias` rules to avoid specifying versions in user-space `BUILD.bazel` files
+      - (JVM target) `jvm_import` rules (backed by `http_file` rules resolving source jars and jars) wrapped in a
+        `java_library` carrying the exported (`exports`) and runtime-only (`runtime_deps`) dependencies of the library
+      - `alias` rules to avoid specifying versions in user-space `BUILD.bazel` files, named after the library and after
+        its platform-specific variant (`org_jetbrains_kotlin_kotlin_stdlib`, `org_jetbrains_kotlin_kotlin_stdlib_wasm_js`)
 
       Resolution against private repository will wire `NETRC` and Bazel authentication to allow the Kotlin Multiplatform resolver to query
       these repositories.

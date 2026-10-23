@@ -10,9 +10,9 @@ fleet_wasmjs_module(
         "@community//fleet/openmap:wasmjs_module_lib",
         "@community//fleet/test-runtime:wasmjs_module_lib",
         "@community//fleet/util/serialization:wasmjs_module_lib",
-        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
-        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core",
-        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_json",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_serialization_json",
     ],
     visibility = ["//visibility:public"],
 )

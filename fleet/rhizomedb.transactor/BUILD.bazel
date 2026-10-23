@@ -23,10 +23,10 @@ fleet_wasmjs_module(
         "@community//fleet/reporting/api:wasmjs_module_lib",
         "@community//fleet/reporting/shared:wasmjs_module_lib",
         "@community//fleet/rhizomedb:wasmjs_module_lib",
-        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
-        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
-        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core",
-        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_json",
+        "@kmp_deps_wasmjs//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_serialization_json",
     ],
 )
 

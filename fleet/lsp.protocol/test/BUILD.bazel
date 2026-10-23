@@ -12,16 +12,16 @@ fleet_wasmjs_module(
         "@community//fleet/ktor/client/core:wasmjs_module_lib",
         "@community//fleet/lsp.protocol:wasmjs_module_lib",
         "@community//fleet/test-runtime:wasmjs_module_lib",
-        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
-        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_test",
-        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_io_core",
-        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core",
-        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_json",
+        "@kmp_deps_wasmjs//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
+        "@kmp_deps_wasmjs//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_test",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_io_core",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_serialization_json",
     ],
     visibility = ["//visibility:public"],
     deps = [
-        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
-        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps_wasmjs//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib",
     ],
 )
 

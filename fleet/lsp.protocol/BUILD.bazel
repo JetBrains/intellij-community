@@ -10,12 +10,12 @@ fleet_wasmjs_module(
     visibility = ["//visibility:public"],
     deps = [
         "@community//fleet/util/core:wasmjs_module_lib",
-        "@kmp_deps//:org_jetbrains_annotations",
-        "@kmp_deps//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
-        "@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib",
-        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_io_core",
-        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_core",
-        "@kmp_deps//:org_jetbrains_kotlinx_kotlinx_serialization_json",
+        "@kmp_deps_wasmjs//:org_jetbrains_annotations",
+        "@kmp_deps_wasmjs//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_io_core",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_serialization_core",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_serialization_json",
     ],
 )
 

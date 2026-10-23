@@ -7,7 +7,7 @@ fleet_wasmjs_module(
     kotlinc_opts = ":custom_multiplatform",
     module_name = "fleet.util.multiplatform",
     visibility = ["//visibility:public"],
-    deps = ["@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib"],
+    deps = ["@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib"],
 )
 
 ### auto-generated section `build fleet.util.multiplatform` start

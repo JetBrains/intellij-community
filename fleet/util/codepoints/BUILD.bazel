@@ -10,7 +10,7 @@ fleet_wasmjs_module(
     plugins = ["@community//fleet/compiler-plugins/expects:expects-plugin"],
     visibility = ["//visibility:public"],
     exports = ["@community//fleet/util/multiplatform:wasmjs_module_lib"],
-    deps = ["@kmp_deps//:org_jetbrains_kotlin_kotlin_stdlib"],
+    deps = ["@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib"],
 )
 
 ### auto-generated section `dev fleet.util.codepoints` start
