@@ -7,7 +7,7 @@ use std::path::Path;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
 
-use crate::testing::run_agent;
+use crate::testing::{Answered, run_agent};
 
 fn write_bundle(bundle: &Path, files: &[(&str, &str)]) {
     for (name, content) in files {
@@ -15,6 +15,18 @@ fn write_bundle(bundle: &Path, files: &[(&str, &str)]) {
         fs::create_dir_all(path.parent().unwrap()).unwrap();
         fs::write(path, content).unwrap();
     }
+}
+
+/// Runs `trace-pack-ready` over `source` into `destination` with `ledger`, with `--all` when `all`, and asserts that it
+/// passes.
+fn pack_ready(source: &Path, destination: &Path, ledger: &Path, all: bool) -> Answered {
+    let mut args = vec![Path::new("trace-pack-ready"), source, destination, ledger];
+    if all {
+        args.push(Path::new("--all"));
+    }
+    let answered = run_agent(&args, b"");
+    assert_eq!(answered.exit, 0, "{}", answered.stderr);
+    answered
 }
 
 /// A missing tree is a refusal under the verb's own code, which the controller records as the iteration's trace
@@ -48,21 +60,8 @@ fn trace_pack_ready_packs_each_finished_bundle_once() {
     write_bundle(&scenarios.join("running"), &[("spans.jsonl", "{}\n")]);
     let out = tempfile::tempdir().unwrap();
     let ledger = out.path().join("ledger");
-    let call = |name: &str, all: bool| -> Value {
-        let destination = out.path().join(name);
-        let mut args = vec![
-            "trace-pack-ready".to_owned(),
-            source.path().to_string_lossy().into_owned(),
-            destination.to_string_lossy().into_owned(),
-            ledger.to_string_lossy().into_owned(),
-        ];
-        if all {
-            args.push("--all".to_owned());
-        }
-        let answered = run_agent(&args, b"");
-        assert_eq!(answered.exit, 0, "{}", answered.stderr);
-        answered.document()["data"].clone()
-    };
+    let call =
+        |name: &str, all: bool| -> Value { pack_ready(source.path(), &out.path().join(name), &ledger, all).document()["data"].clone() };
 
     let first = call("001.zip", false);
     assert_eq!(first["packed"], serde_json::json!(["run-1/AirNewSessionTest/finished"]));
@@ -137,17 +136,7 @@ fn trace_pack_ready_packs_the_allure_result_with_its_bundle() {
     let ledger = out.path().join("ledger");
     let call = |name: &str, all: bool| -> Vec<String> {
         let destination = out.path().join(name);
-        let mut args = vec![
-            "trace-pack-ready".to_owned(),
-            source.path().to_string_lossy().into_owned(),
-            destination.to_string_lossy().into_owned(),
-            ledger.to_string_lossy().into_owned(),
-        ];
-        if all {
-            args.push("--all".to_owned());
-        }
-        let answered = run_agent(&args, b"");
-        assert_eq!(answered.exit, 0, "{}", answered.stderr);
+        pack_ready(source.path(), &destination, &ledger, all);
         zip_names(&destination)
     };
     let results_of = |names: &[String]| -> Vec<String> {
