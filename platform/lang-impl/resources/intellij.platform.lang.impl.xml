@@ -209,6 +209,9 @@
     <extensionPoint qualifiedName="com.intellij.consoleOptionsProvider" beanClass="com.intellij.execution.console.ConsoleOptionsProviderEP" dynamic="true">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable" />
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.runLineMarkerContributor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.execution.lineMarker.RunLineMarkerContributorBase"/>
+    </extensionPoint>
     <extensionPoint dynamic="true" qualifiedName="com.intellij.editorAppearanceConfigurable" beanClass="com.intellij.application.options.editor.EditorAppearanceConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.UnnamedConfigurable"/>
     </extensionPoint>
@@ -1069,6 +1072,7 @@
     <modcompletion.completionItemProvider language="any" implementationClass="com.intellij.codeInsight.template.impl.LiveTemplateModCompletionItemProvider"
                                           id="liveTemplates" order="first"/>
     <codeCompletionConfigurable provider="com.intellij.codeInsight.completion.command.configuration.CommandCompletionConfigurableProvider"/>
+    <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider"/>
     <applicationService serviceImplementation="com.intellij.execution.console.ConsoleFoldingSettings"/>
     <applicationSettings service="com.intellij.execution.console.ConsoleFoldingSettings"/>
     <console.folding implementation="com.intellij.execution.console.SubstringConsoleFolding"/>

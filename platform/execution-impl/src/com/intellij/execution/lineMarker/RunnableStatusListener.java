@@ -58,7 +58,7 @@ final class RunnableStatusListener implements DaemonCodeAnalyzer.DaemonListener 
 
   private static boolean weMayTrustRunGutterContributors(FileViewProvider vp) {
     for (PsiFile file : vp.getAllFiles()) {
-      for (RunLineMarkerContributor contributor : RunLineMarkerContributor.EXTENSION.allForLanguage(file.getLanguage())) {
+      for (RunLineMarkerContributorBase contributor : RunLineMarkerContributor.EXTENSION.allForLanguage(file.getLanguage())) {
         if (!contributor.producesAllPossibleConfigurations(file)) {
           return false;
         }

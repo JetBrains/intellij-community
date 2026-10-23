@@ -306,24 +306,16 @@ f:com.intellij.execution.lineMarker.ExecutorAction
 f:com.intellij.execution.lineMarker.ExecutorAction$Companion
 - f:getActionList(I):java.util.List
 - f:getActions(I):com.intellij.openapi.actionSystem.AnAction[]
-c:com.intellij.execution.lineMarker.LineMarkerActionWrapper
-- com.intellij.openapi.actionSystem.ActionGroup
-- com.intellij.codeInsight.intention.PriorityAction
-- com.intellij.openapi.actionSystem.ActionWithDelegate
-- com.intellij.openapi.actionSystem.DataSnapshotProvider
 a:com.intellij.execution.lineMarker.RunLineMarkerContributor
-- com.intellij.openapi.project.PossiblyDumbAware
+- com.intellij.execution.lineMarker.RunLineMarkerContributorBase
 - <init>():V
 - a:getInfo(com.intellij.psi.PsiElement):com.intellij.execution.lineMarker.RunLineMarkerContributor$Info
 - getSlowInfo(com.intellij.psi.PsiElement):com.intellij.execution.lineMarker.RunLineMarkerContributor$Info
 - s:withExecutorActions(javax.swing.Icon):com.intellij.execution.lineMarker.RunLineMarkerContributor$Info
 c:com.intellij.execution.lineMarker.RunLineMarkerContributor$Info
+- com.intellij.execution.lineMarker.RunLineMarkerContributorBase$InfoBase
 - <init>(com.intellij.openapi.actionSystem.AnAction):V
 - shouldReplace(com.intellij.execution.lineMarker.RunLineMarkerContributor$Info):Z
-c:com.intellij.execution.lineMarker.RunLineMarkerProvider
-- com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
-- com.intellij.openapi.project.DumbAware
-- <init>():V
 a:com.intellij.execution.options.LifetimedSettingsEditor
 - com.intellij.openapi.options.SettingsEditor
 - <init>():V

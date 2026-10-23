@@ -13,8 +13,8 @@ public final class RunLineMarkerUtil {
   public static boolean hasAnyLineMarkerInfo(@NotNull PsiElement element) {
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
     if (injectedLanguageManager.isInjectedFragment(element.getContainingFile())) return false;
-    List<RunLineMarkerContributor> contributors = RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage());
-    for (RunLineMarkerContributor contributor : contributors) {
+    List<RunLineMarkerContributorBase> contributors = RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage());
+    for (RunLineMarkerContributorBase contributor : contributors) {
       if (contributor.getInfo(element) != null || contributor.getSlowInfo(element) != null) {
         return true;
       }

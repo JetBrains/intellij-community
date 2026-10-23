@@ -13,17 +13,18 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.actionSystem.impl.Utils;
-import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -34,11 +35,11 @@ import static com.intellij.util.containers.ContainerUtil.mapNotNull;
  * Allows adding an editor gutter icon associated with a PSI element that can be run
  * (e.g., a test, a main method, an application, etc.).
  */
-public abstract class RunLineMarkerContributor implements PossiblyDumbAware {
+public abstract class RunLineMarkerContributor implements RunLineMarkerContributorBase {
   public static final Function<PsiElement, String> RUN_TEST_TOOLTIP_PROVIDER = it -> ExecutionBundle.message("run.text");
 
   @ApiStatus.Internal
-  public static final LanguageExtension<RunLineMarkerContributor> EXTENSION = new LanguageExtension<>("com.intellij.runLineMarkerContributor");
+  public static final LanguageExtension<RunLineMarkerContributorBase> EXTENSION = RunLineMarkerProvider.EXTENSION_POINT;
 
   /**
    * Creates test run line marker info with a given icon and available executor actions.
@@ -47,11 +48,11 @@ public abstract class RunLineMarkerContributor implements PossiblyDumbAware {
     return new Info(icon, ExecutorAction.getActions(1), RUN_TEST_TOOLTIP_PROVIDER);
   }
 
-  public static class Info {
+  public static class Info implements InfoBase {
     public final Icon icon;
     public final AnAction[] actions;
 
-    public final Function<? super PsiElement, String> tooltipProvider;
+    public final @Nullable Function<? super PsiElement, String> tooltipProvider;
 
     public Info(Icon icon, AnAction @NotNull [] actions) {
       this(icon, actions, defaultTooltipProvider(actions));
@@ -92,11 +93,36 @@ public abstract class RunLineMarkerContributor implements PossiblyDumbAware {
              && Arrays.equals(actions, info.actions)
              && Objects.equals(tooltipProvider, info.tooltipProvider);
     }
+
+    @ApiStatus.Internal
+    @Override
+    public @NotNull Icon getIcon() {
+      return icon;
+    }
+
+    @ApiStatus.Internal
+    @Override
+    public @NotNull List<@NotNull AnAction> getActions() {
+      return Arrays.asList(actions);
+    }
+
+    @ApiStatus.Internal
+    @Override
+    public @Nullable Function1<@NotNull PsiElement, @Nullable String> getTooltipProvider() {
+      return tooltipProvider != null ? tooltipProvider::apply : null;
+    }
+
+    @ApiStatus.Internal
+    @Override
+    public boolean shouldReplace(@NotNull InfoBase other) {
+      return other instanceof Info info && shouldReplace(info);
+    }
   }
 
   /**
    * Returns information about gutter icon, its tooltip, and available run actions for a given PSI element.
    */
+  @Override
   public abstract @Nullable Info getInfo(@NotNull PsiElement element);
 
   /**
@@ -104,6 +130,7 @@ public abstract class RunLineMarkerContributor implements PossiblyDumbAware {
    * Implement if creating the information is slow.
    * @see com.intellij.codeInsight.daemon.LineMarkerProvider#collectSlowLineMarkers
    */
+  @Override
   public Info getSlowInfo(@NotNull PsiElement element) {
     return null;
   }
@@ -113,6 +140,7 @@ public abstract class RunLineMarkerContributor implements PossiblyDumbAware {
    * @return whether there's no possibility that a {@link com.intellij.execution.actions.RunConfigurationProducer} would
    * return a configuration not returned by this contributor in this file. Used to speed up "Run..." context action update.
    */
+  @Override
   public boolean producesAllPossibleConfigurations(@NotNull PsiFile file) {
     return true;
   }

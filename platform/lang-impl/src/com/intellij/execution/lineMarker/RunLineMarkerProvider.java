@@ -1,26 +1,22 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.lineMarker;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistry;
-import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.lineMarker.RunLineMarkerContributor.Info;
+import com.intellij.execution.lineMarker.RunLineMarkerContributorBase.InfoBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.TrustedFiles;
+import com.intellij.lang.LangBundle;
+import com.intellij.lang.LanguageExtension;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
-import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
@@ -30,13 +26,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.ColorUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
-import com.intellij.util.ui.JBUI;
-import com.intellij.xml.CommonXmlStrings;
-import com.intellij.xml.util.XmlStringUtil;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +46,10 @@ import java.util.function.Supplier;
  * @author Dmitry Avdeev
  */
 public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implements DumbAware {
-  private static final Comparator<Info> COMPARATOR = (a, b) -> {
+  @ApiStatus.Internal
+  public static final LanguageExtension<RunLineMarkerContributorBase> EXTENSION_POINT = new LanguageExtension<>("com.intellij.runLineMarkerContributor");
+
+  private static final Comparator<InfoBase> COMPARATOR = (a, b) -> {
     if (b.shouldReplace(a)) {
       return 1;
     }
@@ -68,18 +64,18 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
     if (injectedLanguageManager.isInjectedFragment(element.getContainingFile())) return null;
 
-    List<RunLineMarkerContributor> contributors =
-      DumbService.getInstance(element.getProject()).filterByDumbAwareness(RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage()));
+    List<RunLineMarkerContributorBase> contributors =
+      DumbService.getInstance(element.getProject()).filterByDumbAwareness(EXTENSION_POINT.allForLanguageOrAny(element.getLanguage()));
     Icon icon = null;
-    List<Info> infos = null;
-    for (RunLineMarkerContributor contributor : contributors) {
+    List<InfoBase> infos = null;
+    for (RunLineMarkerContributorBase contributor : contributors) {
       ProgressManager.checkCanceled();
-      Info info = contributor.getInfo(element);
+      InfoBase info = contributor.getInfo(element);
       if (info == null) {
         continue;
       }
       if (icon == null) {
-        icon = info.icon;
+        icon = info.getIcon();
       }
 
       if (infos == null) {
@@ -98,17 +94,17 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
                                      @NotNull Collection<? super LineMarkerInfo<?>> result) {
     Boolean untrusted = null;
     for (PsiElement element : elements) {
-      List<RunLineMarkerContributor> contributors = DumbService.getInstance(element.getProject())
-        .filterByDumbAwareness(RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage()));
+      List<RunLineMarkerContributorBase> contributors = DumbService.getInstance(element.getProject())
+        .filterByDumbAwareness(EXTENSION_POINT.allForLanguageOrAny(element.getLanguage()));
       Icon icon = null;
-      List<Info> infos = null;
-      for (RunLineMarkerContributor contributor : contributors) {
-        Info info = contributor.getSlowInfo(element);
+      List<InfoBase> infos = null;
+      for (RunLineMarkerContributorBase contributor : contributors) {
+        InfoBase info = contributor.getSlowInfo(element);
         if (info == null) {
           continue;
         }
         if (icon == null) {
-          icon = info.icon;
+          icon = info.getIcon();
         }
 
         if (infos == null) {
@@ -134,28 +130,28 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
 
   public static @Nullable LineMarkerInfo<PsiElement> createLineMarker(@NotNull PsiElement element,
                                                                       @NotNull Icon icon,
-                                                                      @NotNull List<? extends Info> infos) {
+                                                                      @NotNull List<? extends InfoBase> infos) {
     if (isUntrustedFile(element)) return null;
     return doCreateLineMarker(element, icon, infos);
   }
 
   private static @NotNull LineMarkerInfo<PsiElement> doCreateLineMarker(@NotNull PsiElement element,
                                                                         @NotNull Icon icon,
-                                                                        @NotNull List<? extends Info> infos) {
+                                                                        @NotNull List<? extends InfoBase> infos) {
     if (infos.size() > 1) {
       infos = new ArrayList<>(infos);
       infos.sort(COMPARATOR);
-      final Info first = infos.get(0);
+      final InfoBase first = infos.getFirst();
       infos.removeIf(info -> info != first && first.shouldReplace(info));
     }
 
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
-    for (Info info : infos) {
-      for (AnAction action : info.actions) {
+    for (InfoBase info : infos) {
+      for (AnAction action : info.getActions()) {
         actionGroup.add(action instanceof Separator ? action : new LineMarkerActionWrapper(element, action));
       }
 
-      if (info != infos.get(infos.size() - 1)) {
+      if (info != infos.getLast()) {
         actionGroup.add(new Separator());
       }
     }
@@ -166,9 +162,9 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
 
   // must provide sensible equals() to be able to reuse LineMarker on change
   private static final class EquatableTooltipProvider implements Function<PsiElement, String> {
-    private final @NotNull List<? extends Info> myInfos;
+    private final @NotNull List<? extends InfoBase> myInfos;
 
-    EquatableTooltipProvider(@NotNull List<? extends Info> infos) { myInfos = infos; }
+    EquatableTooltipProvider(@NotNull List<? extends InfoBase> infos) { myInfos = infos; }
 
     @Override
     public int hashCode() {
@@ -183,9 +179,10 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
     @Override
     public String fun(PsiElement element1) {
       StringBuilder tooltip = new StringBuilder();
-      for (Info info : myInfos) {
-        if (info.tooltipProvider != null) {
-          String string = info.tooltipProvider.apply(element1);
+      for (InfoBase info : myInfos) {
+        Function1<@NotNull PsiElement, @Nullable String> tooltipProvider = info.getTooltipProvider();
+        if (tooltipProvider != null) {
+          String string = tooltipProvider.invoke(element1);
           if (string == null) continue;
           if (!tooltip.isEmpty()) {
             tooltip.append("\n");
@@ -193,22 +190,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
           tooltip.append(string);
         }
       }
-      return tooltip.isEmpty() ? null : appendShortcut(tooltip.toString());
-    }
-  }
-
-
-  private static String appendShortcut(String tooltip) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return tooltip;
-    Executor executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
-    if (executor != null) {
-      String actionId = executor.getContextActionId();
-      String shortcutText = KeymapUtil.getShortcutText(actionId);
-      @NotNull String shortcutColor = ColorUtil.toHex(JBUI.CurrentTheme.Tooltip.shortcutForeground());
-      return XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(tooltip).replaceAll("\n", "<br>") + CommonXmlStrings.NBSP + CommonXmlStrings.NBSP + "<font color='#" + shortcutColor + "'>" + XmlStringUtil.escapeString(shortcutText) + "</font>");
-    }
-    else {
-      return tooltip;
+      return tooltip.isEmpty() ? null : RunLineMarkerActionCustomizer.appendShortcutToTooltip(tooltip.toString());
     }
   }
 
@@ -273,7 +255,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor implemen
 
   @Override
   public @NotNull String getName() {
-    return ExecutionBundle.message("run.line.marker.name");
+    return LangBundle.message("run.line.marker.name");
   }
 
   @Override

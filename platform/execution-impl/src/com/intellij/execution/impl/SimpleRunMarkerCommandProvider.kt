@@ -90,8 +90,8 @@ internal class SimpleRunMarkerCommandProvider : CommandProvider {
           val delegate = action.delegate
           val presentation: Presentation = action.templatePresentation.clone()
           val runLineMarkerContributorInfo = Info(delegate)
-          val text = runLineMarkerContributorInfo.tooltipProvider.apply(currentElement)
-          if (text?.isEmpty() == true) continue
+          val text = runLineMarkerContributorInfo.tooltipProvider?.apply(currentElement)
+          if (text.isNullOrEmpty()) continue
           val intentionAction = GutterIntentionAction(action, 0, false)
           intentionAction.updateFromPresentation(presentation)
           if (!filter.test(intentionAction)) continue

@@ -14,7 +14,7 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
-import com.intellij.execution.lineMarker.RunLineMarkerContributor.Info
+import com.intellij.execution.lineMarker.RunLineMarkerContributorBase
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutputType
@@ -778,7 +778,7 @@ fun collectRunPoints(psiFile: PsiFile, document: Document, project: Project): Li
     val contributors = DumbService.getInstance(project)
       .filterByDumbAwareness(RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.language))
 
-    var bestInfo: Info? = null
+    var bestInfo: RunLineMarkerContributorBase.InfoBase? = null
     for (contributor in contributors) {
       val info = contributor.getInfo(element)
                  ?: contributor.getSlowInfo(element)
@@ -793,7 +793,7 @@ fun collectRunPoints(psiFile: PsiFile, document: Document, project: Project): Li
       if (!result.containsKey(line)) {
         val configFromContext = findConfigurationFromContext(element) ?: continue
         val tooltip = try {
-          bestInfo.tooltipProvider?.apply(element)
+          bestInfo.tooltipProvider?.invoke(element)
         }
         catch (_: Exception) {
           null

@@ -124,7 +124,6 @@
                          id="preferences.startup.tasks" nonDefaultProject="true"/>
     <notificationGroup id="Project Startup Tasks Messages" displayType="NONE" bundle="messages.ExecutionBundle"
                        key="notification.group.startup.task"/>
-    <codeInsight.lineMarkerProvider language="" implementationClass="com.intellij.execution.lineMarker.RunLineMarkerProvider"/>
     <projectSettings service="com.intellij.execution.ExecutionTargetManagerImpl"/>
     <applicationSettings service="com.intellij.execution.ui.layout.impl.RunnerLayoutSettings"/>
     <projectSettings service="com.intellij.execution.impl.RunManagerImpl"/>
@@ -138,6 +137,9 @@
     <customizableActionGroupProvider implementation="com.intellij.execution.ui.RunTabCustomizableActionGroupProvider"/>
     <postStartupActivity implementation="com.intellij.execution.ui.ExecutionReasonableHistoryManager" order="last"/>
     <executionTargetType implementation="com.intellij.execution.target.EelTargetType"/>
+
+    <applicationService serviceInterface="com.intellij.execution.lineMarker.RunLineMarkerActionCustomizer"
+                        serviceImplementation="com.intellij.execution.lineMarker.RunLineMarkerActionCustomizerImpl"/>
 
     <postStartupActivity implementation="com.intellij.execution.runToolbar.RunToolbarInitializeService"/>
 
@@ -186,9 +188,6 @@
     <toolsProvider implementation="com.intellij.tools.LocalToolsProvider"/>
   </extensions>
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.runLineMarkerContributor" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.execution.lineMarker.RunLineMarkerContributor"/>
-    </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.beforeRunStartupTasks" interface="com.intellij.execution.startup.BeforeRunStartupTasks" area="IDEA_PROJECT" dynamic="false"/>
     <extensionPoint qualifiedName="com.intellij.runConfigurationTemplateProvider" interface="com.intellij.execution.impl.RunConfigurationTemplateProvider" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.runConfigurationBeforeRunProviderDelegate" interface="com.intellij.execution.impl.RunConfigurationBeforeRunProviderDelegate" dynamic="true"/>

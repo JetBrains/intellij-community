@@ -1992,6 +1992,15 @@ c:com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler
 - processLine(java.lang.String):V
 f:com.intellij.execution.filters.impl.HyperlinkInfoFactoryImpl
 - com.intellij.execution.filters.HyperlinkInfoFactory
+c:com.intellij.execution.lineMarker.LineMarkerActionWrapper
+- com.intellij.openapi.actionSystem.ActionGroup
+- com.intellij.codeInsight.intention.PriorityAction
+- com.intellij.openapi.actionSystem.ActionWithDelegate
+- com.intellij.openapi.actionSystem.DataSnapshotProvider
+c:com.intellij.execution.lineMarker.RunLineMarkerProvider
+- com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor
+- com.intellij.openapi.project.DumbAware
+- <init>():V
 c:com.intellij.execution.services.ServiceViewToolWindowFactory
 - com.intellij.openapi.project.DumbAware
 - com.intellij.openapi.wm.ToolWindowFactory

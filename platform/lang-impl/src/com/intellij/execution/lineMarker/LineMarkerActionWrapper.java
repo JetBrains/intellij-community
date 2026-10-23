@@ -2,10 +2,6 @@
 package com.intellij.execution.lineMarker;
 
 import com.intellij.codeInsight.intention.PriorityAction;
-import com.intellij.execution.Location;
-import com.intellij.execution.PsiLocation;
-import com.intellij.execution.actions.ExecutorGroupActionGroup;
-import com.intellij.execution.actions.RunContextAction;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.ActionWithDelegate;
@@ -20,9 +16,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -40,7 +38,8 @@ public class LineMarkerActionWrapper extends ActionGroup
     this(SmartPointerManager.createPointer(element), origin);
   }
 
-  private LineMarkerActionWrapper(@NotNull SmartPsiElementPointer<PsiElement> element, @NotNull AnAction origin) {
+  @ApiStatus.Internal
+  public LineMarkerActionWrapper(@NotNull SmartPsiElementPointer<PsiElement> element, @NotNull AnAction origin) {
     myElement = element;
     myOrigin = origin;
     copyFrom(origin);
@@ -67,21 +66,14 @@ public class LineMarkerActionWrapper extends ActionGroup
 
   @Override
   public void dataSnapshot(@NotNull DataSink sink) {
-    sink.lazy(Location.DATA_KEY, () -> {
-      PsiElement e = myElement.getElement();
-      return e != null && e.isValid() ? new PsiLocation<>(e) : null;
-    });
+    RunLineMarkerActionCustomizer.customizeDataSnapshotForAction(sink, myElement);
   }
 
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-    if (myOrigin instanceof ExecutorAction o &&
-        o.getOrigin() instanceof ExecutorGroupActionGroup oo) {
-      int order = o.getOrder();
-      return ContainerUtil.map2Array(
-        oo.getChildren(), EMPTY_ARRAY,
-        action -> new LineMarkerActionWrapper(myElement, ExecutorAction.wrap(
-          action, ((RunContextAction)action).getExecutor(), order)));
+    List<@NotNull AnAction> wrappedChildren = RunLineMarkerActionCustomizer.wrapLineMarkerActionChildren(myOrigin, myElement);
+    if (wrappedChildren != null) {
+      return wrappedChildren.toArray(EMPTY_ARRAY);
     }
     if (myOrigin instanceof ActionGroup o) {
       return ActionWrapperUtil.getChildren(e, this, o);

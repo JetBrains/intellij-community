@@ -2961,6 +2961,26 @@ f:com.intellij.execution.filters.impl.HyperlinkInfoFactoryImpl
 - createMultipleFilesHyperlinkInfo(java.util.List,I,com.intellij.openapi.project.Project):com.intellij.execution.filters.HyperlinkInfo
 - createMultipleFilesHyperlinkInfo(java.util.List,I,com.intellij.openapi.project.Project,com.intellij.execution.filters.HyperlinkInfoFactory$HyperlinkHandler):com.intellij.execution.filters.HyperlinkInfo
 - createMultiplePsiElementHyperlinkInfo(java.util.Collection):com.intellij.execution.filters.HyperlinkInfo
+c:com.intellij.execution.lineMarker.LineMarkerActionWrapper
+- sf:LOCATION_WRAPPER:com.intellij.openapi.util.Key
+- pf:myElement:com.intellij.psi.SmartPsiElementPointer
+- <init>(com.intellij.psi.PsiElement,com.intellij.openapi.actionSystem.AnAction):V
+- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+- dataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
+- getDelegate():com.intellij.openapi.actionSystem.AnAction
+- getPriority():com.intellij.codeInsight.intention.PriorityAction$Priority
+- isDumbAware():Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
+c:com.intellij.execution.lineMarker.RunLineMarkerProvider
+- collectSlowLineMarkers(java.util.List,java.util.Collection):V
+- s:createLineMarker(com.intellij.psi.PsiElement,javax.swing.Icon,java.util.List):com.intellij.codeInsight.daemon.LineMarkerInfo
+- getIcon():javax.swing.Icon
+- getLineMarkerInfo(com.intellij.psi.PsiElement):com.intellij.codeInsight.daemon.LineMarkerInfo
+- getName():java.lang.String
+- s:hadAnythingRunnable(com.intellij.openapi.vfs.VirtualFile):com.intellij.util.ThreeState
+- s:markRunnable(com.intellij.openapi.vfs.VirtualFile,Z):V
 c:com.intellij.execution.services.ServiceViewToolWindowFactory
 - createToolWindowContent(com.intellij.openapi.project.Project,com.intellij.openapi.wm.ToolWindow):V
 - shouldBeAvailable(com.intellij.openapi.project.Project):Z
