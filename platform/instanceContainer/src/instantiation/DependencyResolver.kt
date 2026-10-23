@@ -8,6 +8,12 @@ import java.lang.reflect.Constructor
 interface DependencyResolver {
 
   /**
+   * Says whether the instantiation by signature must never call [constructor].
+   * In the service container, `@NonInjectable` marks such a constructor.
+   */
+  fun isNonInjectable(constructor: Constructor<*>): Boolean = false
+
+  /**
    * Used for fast filtering constructors out before calling [isInjectable] and [resolveDependency].
    */
   fun isApplicable(constructor: Constructor<*>): Boolean
