@@ -28,7 +28,9 @@ fn the_viewer_urls_are_the_site_routes() {
 }
 
 /// A CI page names its build by the build id, and a trace page keeps each slash of its zip path. The rest is written
-/// as `URLSearchParams` writes it. A slash at the end of the site is dropped.
+/// as `URLSearchParams` writes it. A slash at the end of the site is dropped. The test "the test link of the publish
+/// step parses to its CI trace page, and the site builds the same link" in `plugins/air/docs/src/routeTable.test.ts`
+/// pins the last literal on the site side, so a change on one side fails the test on the other.
 #[test]
 fn the_ci_urls_name_the_build_and_the_zip() {
     assert_eq!(

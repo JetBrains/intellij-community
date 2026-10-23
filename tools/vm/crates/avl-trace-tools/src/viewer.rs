@@ -41,6 +41,7 @@ pub fn ci_build_url(site: &str, build_id: &str) -> String {
 
 /// The CI trace page of the bundle zip `zip` of the build `build_id`. The zip is a path relative to `runs.json` in
 /// the archive. It is written as `URLSearchParams` writes a value, with each `/` kept, so the link reads as the path.
+/// The site's `src/routeTable.test.ts` and `the_ci_urls_name_the_build_and_the_zip` pin the same literal.
 pub fn ci_trace_url(site: &str, build_id: &str, zip: &str) -> String {
     format!(
         "{}/trace?zip={}",
