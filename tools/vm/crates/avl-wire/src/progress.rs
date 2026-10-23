@@ -443,6 +443,27 @@ pub struct Verdict {
 }
 
 impl Verdict {
+    /// A verdict with its status and its summary, and no count, code, failure, lane, lease or trace yet.
+    pub fn new(status: Status, summary: impl Into<String>) -> Self {
+        Self {
+            status,
+            code: None,
+            summary: summary.into(),
+            counts: VerdictCounts::default(),
+            failures: Vec::new(),
+            rerun: Vec::new(),
+            skipped: Vec::new(),
+            unreported: Vec::new(),
+            lanes: Vec::new(),
+            shards: None,
+            lease: None,
+            checkout: None,
+            traces: None,
+            timing: None,
+            report: None,
+        }
+    }
+
     pub fn passed(&self) -> bool {
         self.status == Status::Passed
     }

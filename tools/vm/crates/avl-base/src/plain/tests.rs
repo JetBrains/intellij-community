@@ -210,9 +210,7 @@ fn trace_ref() -> TraceRef {
 /// A red run with every part the plain answer prints.
 fn red_verdict() -> Verdict {
     Verdict {
-        status: Status::Failed,
         code: Some("tests_failed".to_owned()),
-        summary: "1 test(s) and 0 container(s) failed of 2 started (iteration it-1); first: a.OneTest — boom".to_owned(),
         counts: VerdictCounts {
             started: 2,
             failed: 1,
@@ -225,10 +223,6 @@ fn red_verdict() -> Verdict {
             trace: Some(trace_ref()),
         }],
         rerun: vec!["run a.OneTest".to_owned()],
-        skipped: Vec::new(),
-        unreported: Vec::new(),
-        lanes: Vec::new(),
-        shards: None,
         lease: Some(VerdictLease {
             workers: vec!["air-linux-1".to_owned()],
             disposition: LeaseDisposition::ReleaseFailed,
@@ -248,6 +242,10 @@ fn red_verdict() -> Verdict {
         }),
         timing: Some("build 1.0s tests 9.0s".to_owned()),
         report: Some("/reports/it-1.json".to_owned()),
+        ..Verdict::new(
+            Status::Failed,
+            "1 test(s) and 0 container(s) failed of 2 started (iteration it-1); first: a.OneTest — boom",
+        )
     }
 }
 
@@ -301,23 +299,7 @@ fn a_refusal_after_the_verdict_still_prints_and_a_green_verdict_replaces_the_tex
 
     stdout.clear();
     reporter.set_mode(Mode::Human(Terminal::default()));
-    let green = Verdict {
-        status: Status::Passed,
-        code: None,
-        summary: "2 test(s) passed".to_owned(),
-        counts: VerdictCounts::default(),
-        failures: Vec::new(),
-        rerun: Vec::new(),
-        skipped: Vec::new(),
-        unreported: Vec::new(),
-        lanes: Vec::new(),
-        shards: None,
-        lease: None,
-        checkout: None,
-        traces: None,
-        timing: None,
-        report: None,
-    };
+    let green = Verdict::new(Status::Passed, "2 test(s) passed");
     reporter.publish(Event::Verdict(Box::new(green)), None);
     main("run", &reporter, || Outcome::new((), "the old text answer"));
     assert_eq!(stdout.text(), "2 test(s) passed\n");
