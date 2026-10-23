@@ -212,19 +212,25 @@ async fn resolving_the_agent_takes_the_last_cquery_line() {
     assert_eq!((state.queries, state.root_requests), (1, 1));
 }
 
+/// Installs the agent on the guest of `host` with a Bazel whose cquery prints `stdout` under `root`, and answers the
+/// refusal of the install.
+async fn install_refusal(host: &Host, stdout: &str, root: &Path) -> Refusal {
+    let bazel = FakeBazel {
+        stdout: stdout.to_owned(),
+        root: root.to_owned(),
+        ..FakeBazel::default()
+    };
+    let channel = FakeChannel::new("air-docker-1");
+    host.guest(&channel).install_agent(&bazel).await.unwrap_err()
+}
+
 // Resolution never builds: a `bazel build` from inside a lease operation would spend minutes while holding the lease
 // lock, so a missing binary is a refusal naming the one command that fixes it.
 #[tokio::test]
 async fn resolving_the_agent_refuses_with_the_build_to_run() {
     let host = Host::new(GuestOs::Linux);
     let root = tempfile::tempdir().unwrap();
-    let bazel = FakeBazel {
-        stdout: "bazel-out/linux-arm64/vm-guest-agent\n".to_owned(),
-        root: root.path().to_owned(),
-        ..FakeBazel::default()
-    };
-    let channel = FakeChannel::new("air-docker-1");
-    let refusal = host.guest(&channel).install_agent(&bazel).await.unwrap_err();
+    let refusal = install_refusal(&host, "bazel-out/linux-arm64/vm-guest-agent\n", root.path()).await;
     assert_eq!(refusal.code, "guest_agent_missing");
     assert!(
         refusal
@@ -238,13 +244,7 @@ async fn resolving_the_agent_refuses_with_the_build_to_run() {
 #[tokio::test]
 async fn resolving_the_agent_refuses_an_empty_cquery_answer() {
     let host = Host::new(GuestOs::Linux);
-    let bazel = FakeBazel {
-        stdout: "\n\n".to_owned(),
-        root: host.dir().to_owned(),
-        ..FakeBazel::default()
-    };
-    let channel = FakeChannel::new("air-docker-1");
-    let refusal = host.guest(&channel).install_agent(&bazel).await.unwrap_err();
+    let refusal = install_refusal(&host, "\n\n", host.dir()).await;
     assert_eq!(refusal.code, "guest_agent_unresolved");
 }
 
