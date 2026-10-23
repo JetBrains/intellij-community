@@ -53,25 +53,10 @@ fn the_probe_knows_the_viewer_by_its_header() {
     assert!(started.elapsed() < Duration::from_secs(5));
 }
 
-/// A loopback port where nothing listens, and the sockets that hold it. While they live, the port refuses a connect,
-/// and no other socket of the host receives it from a `bind` to port 0 or as the source port of a `connect`.
-///
-/// The holder is the client end of a loopback connection, and it binds its port before it connects. A dropped
-/// listener frees its port for any process of the host. A bound socket that does not listen is not a refusal on
-/// macOS, because the kernel drops the SYN.
-async fn closed_port() -> (u16, impl Sized) {
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let holder = tokio::net::TcpSocket::new_v4().unwrap();
-    holder.bind((Ipv4Addr::LOCALHOST, 0).into()).unwrap();
-    let holder = holder.connect(listener.local_addr().unwrap()).await.unwrap();
-    let (accepted, _) = listener.accept().await.unwrap();
-    (holder.local_addr().unwrap().port(), (holder, accepted))
-}
-
 /// A port where nothing listens holds no viewer.
 #[tokio::test]
 async fn the_probe_finds_no_viewer_on_a_closed_port() {
-    let (closed, _held) = closed_port().await;
+    let (closed, _held) = avl_testkit::closed_port().await;
     assert!(!probe_viewer(closed, PROBE_TIMEOUT), "the probe found a viewer on a closed port");
 }
 

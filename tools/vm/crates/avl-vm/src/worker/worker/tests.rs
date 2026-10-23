@@ -597,21 +597,6 @@ async fn a_parallels_connect_is_the_installed_agent_relay_in_one_shell_string() 
     );
 }
 
-/// A loopback port where nothing listens, and the sockets that hold it. While they live, the port refuses a connect,
-/// and no other socket of the host receives it from a `bind` to port 0 or as the source port of a `connect`.
-///
-/// The holder is the client end of a loopback connection, and it binds its port before it connects. A dropped
-/// listener frees its port for any process of the host. A bound socket that does not listen is not a refusal on
-/// macOS, because the kernel drops the SYN.
-async fn closed_port() -> (u16, impl Sized) {
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let holder = tokio::net::TcpSocket::new_v4().unwrap();
-    holder.bind((std::net::Ipv4Addr::LOCALHOST, 0).into()).unwrap();
-    let holder = holder.connect(listener.local_addr().unwrap()).await.unwrap();
-    let (accepted, _) = listener.accept().await.unwrap();
-    (holder.local_addr().unwrap().port(), (holder, accepted))
-}
-
 /// A connect to a port where nothing listens is a refused connection at the first read, with the reason, as the
 /// HTTP client expects of a socket.
 #[tokio::test]
@@ -620,7 +605,7 @@ async fn a_connect_to_a_closed_port_is_refused_at_the_first_read() {
     let fixture = Fixture::macos();
     let manager = manager_over(&fixture.settings, fixture.runner(), None, builds_nothing());
     let channel = manager.channel(fixture.worker(0));
-    let (port, _held) = closed_port().await;
+    let (port, _held) = avl_testkit::closed_port().await;
     let mut stream = channel.connect(&ctx(), port).await.unwrap();
     let error = stream.read(&mut [0; 16]).await.unwrap_err();
     assert_eq!(error.kind(), std::io::ErrorKind::ConnectionRefused, "{error}");
