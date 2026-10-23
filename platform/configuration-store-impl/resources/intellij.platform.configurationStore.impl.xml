@@ -143,7 +143,7 @@
     <configFolderChangedListener implementation="com.intellij.configurationStore.ComponentStoreImplReloadListener"/>
     <applicationService serviceInterface="com.intellij.configurationStore.defaults.DefaultSettingsService" open="true"
                         serviceImplementation="com.intellij.configurationStore.defaults.DefaultSettingsServiceImpl" />
-    <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory"
+    <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory" open="true"
                         serviceImplementation="com.intellij.configurationStore.PlatformLangProjectStoreFactory"
                         overrides="true"/>
     <projectService serviceInterface="com.intellij.configurationStore.StoreReloadManager"
