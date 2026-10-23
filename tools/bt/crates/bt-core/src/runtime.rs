@@ -93,6 +93,12 @@ pub trait Runtime: Sync {
 
     fn remove(&self, path: &Path) -> io::Result<()>;
 
+    /// Copies one file, and creates the directories of `to` first.
+    fn copy_file(&self, from: &Path, to: &Path) -> io::Result<()>;
+
+    /// Removes a directory with everything in it. A directory that is not there is no error.
+    fn remove_dir_all(&self, path: &Path) -> io::Result<()>;
+
     /// Wall-clock milliseconds. Only differences are used, so a fake can start anywhere.
     fn now_ms(&self) -> u64;
 

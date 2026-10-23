@@ -25,6 +25,7 @@ pub mod areas;
 pub mod bep;
 pub mod catalog;
 pub mod details;
+pub mod evidence;
 pub mod exit;
 pub mod fake;
 pub mod lanes;

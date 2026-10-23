@@ -267,6 +267,25 @@ impl Runtime for FakeRuntime {
         Ok(())
     }
 
+    /// Copies the text of a held file. Directories need no creation, because the fake holds files only.
+    fn copy_file(&self, from: &Path, to: &Path) -> io::Result<()> {
+        let from = key(from);
+        let mut state = self.state();
+        let text = state.files.get(&from).cloned().ok_or_else(|| not_found(&from))?;
+        state.files.insert(key(to), text);
+        Ok(())
+    }
+
+    /// Drops every held file under the directory, and records the directory as removed.
+    fn remove_dir_all(&self, path: &Path) -> io::Result<()> {
+        let path = key(path);
+        let prefix = format!("{path}/");
+        let mut state = self.state();
+        state.files.retain(|held, _| !held.starts_with(&prefix));
+        state.removed.push(path);
+        Ok(())
+    }
+
     fn now_ms(&self) -> u64 {
         self.state().clock
     }

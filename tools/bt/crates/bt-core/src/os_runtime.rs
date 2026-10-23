@@ -441,6 +441,22 @@ impl Runtime for OsRuntime {
         }
     }
 
+    fn copy_file(&self, from: &Path, to: &Path) -> io::Result<()> {
+        if let Some(parent) = to.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        // A new file rather than `std::fs::copy`: bazel's outputs are read-only, and a read-only copy is one that
+        // Windows refuses to delete when the retention removes an old run.
+        io::copy(&mut File::open(from)?, &mut File::create(to)?).map(|_| ())
+    }
+
+    fn remove_dir_all(&self, path: &Path) -> io::Result<()> {
+        match std::fs::remove_dir_all(path) {
+            Err(error) if error.kind() != io::ErrorKind::NotFound => Err(error),
+            _ => Ok(()),
+        }
+    }
+
     fn now_ms(&self) -> u64 {
         SystemTime::now().duration_since(UNIX_EPOCH).map_or(0, millis)
     }

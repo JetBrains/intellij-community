@@ -334,3 +334,26 @@ fn a_directory_git_cannot_list_is_an_error() {
         .expect_err("an absent directory is not listable");
     assert!(error.to_string().contains(&absent.display().to_string()), "{error}");
 }
+
+/// The kept evidence of a run: a copy creates its directories, a copy of a read-only bazel output is a file the
+/// retention can delete on every platform, and removing a directory that is gone is no error.
+#[test]
+fn a_kept_copy_is_writable_and_its_run_directory_is_removable() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let source = dir.path().join("test.log");
+    std::fs::write(&source, "the log").expect("the source is written");
+    let mut permissions = std::fs::metadata(&source).expect("the source exists").permissions();
+    permissions.set_readonly(true);
+    std::fs::set_permissions(&source, permissions).expect("the source is read-only");
+    let runtime = OsRuntime::builder(dir.path()).build();
+    let run = dir.path().join("out/bt-runs/0000000001000");
+    let copy = run.join("pkg/target_test/test.log");
+
+    runtime.copy_file(&source, &copy).expect("the copy is made");
+
+    assert_eq!(std::fs::read_to_string(&copy).expect("the copy is readable"), "the log");
+    assert!(!std::fs::metadata(&copy).expect("the copy exists").permissions().readonly());
+    runtime.remove_dir_all(&run).expect("the run directory is removed");
+    assert!(!run.exists());
+    runtime.remove_dir_all(&run).expect("a missing directory is no error");
+}

@@ -13,6 +13,7 @@ use crate::digest::{
 };
 use crate::options::{Args, Invocation, parse_args};
 use bt_core::bep::parse_bep;
+use bt_core::evidence::keep_failed_evidence;
 use bt_core::lanes::{BEP_FLAG, LaneSpec, RunPlan, bazel_command, bep_override, build_bazel_args, default_shards, wildcard_guards};
 use bt_core::result::{FlakyRun, RunResult, RunStatus, TargetResult, collect_results};
 use bt_core::runtime::Runtime;
@@ -300,6 +301,9 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         &spawned.output,
     );
 
+    // Before anything else reads the run: the next run of a failed target overwrites its logs.
+    let kept_run = keep_failed_evidence(runtime, &bep);
+
     if args.verbose {
         runtime.write_error(&spawned.output);
     }
@@ -320,6 +324,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
             max_failures: usize::try_from(args.max_failures).unwrap_or(usize::MAX),
             rerun_hint,
             method_filtered,
+            kept_run,
         },
     );
     Ok(Outcome {

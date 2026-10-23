@@ -200,6 +200,9 @@ pub(crate) struct RenderOptions {
     /// The run narrowed to one method with `#`. A NO_TESTS run then has a known cause, so the digest names it
     /// instead of listing the three it cannot choose between.
     pub(crate) method_filtered: bool,
+    /// The repo-relative run directory that holds the logs of the failed attempts, which the next run of the
+    /// target cannot overwrite.
+    pub(crate) kept_run: Option<String>,
 }
 
 impl Default for RenderOptions {
@@ -208,6 +211,7 @@ impl Default for RenderOptions {
             max_failures: 3,
             rerun_hint: None,
             method_filtered: false,
+            kept_run: None,
         }
     }
 }
@@ -389,6 +393,13 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
         if logs.len() > 1 {
             out.push(format!("       (+{} more target logs)", logs.len() - 1));
         }
+    }
+    if let Some(kept) = &options.kept_run
+        && result.status != RunStatus::Pass
+    {
+        out.push(format!(
+            "kept   {kept}  (the logs of each failed shard; a rerun overwrites out/bazel-testlogs)"
+        ));
     }
     if let Some(hint) = &options.rerun_hint
         && result.status == RunStatus::Fail

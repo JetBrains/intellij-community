@@ -543,6 +543,12 @@ fn the_bep_file_is_deleted_even_when_the_run_blows_up() {
         fn remove(&self, path: &std::path::Path) -> std::io::Result<()> {
             self.0.remove(path)
         }
+        fn copy_file(&self, from: &std::path::Path, to: &std::path::Path) -> std::io::Result<()> {
+            self.0.copy_file(from, to)
+        }
+        fn remove_dir_all(&self, path: &std::path::Path) -> std::io::Result<()> {
+            self.0.remove_dir_all(path)
+        }
         fn now_ms(&self) -> u64 {
             self.0.now_ms()
         }
@@ -747,4 +753,39 @@ fn a_module_outside_the_migrated_list_is_refused_before_bazel_starts() {
         ],
     );
     assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());
+}
+
+/// The next run of a failed target overwrites out/bazel-testlogs, so a red run copies the logs of its failed shards to
+/// a run directory of its own, and the digest names it.
+#[test]
+fn a_red_run_keeps_the_logs_of_its_failed_shard_and_names_the_run_directory() {
+    let fake = fake_air_tree();
+    one_attempt(
+        &fake,
+        "FAILED",
+        &suite_xml(&suite(
+            "AgentThreadIdentityTest",
+            vec![failing("a", "E", "boom", "\tat com.intellij.air.X.y(X.kt:1)")],
+        )),
+    );
+    // The log path that the fixture BEP reports for an attempt without its own.
+    fake.put_absolute("/exec/testlogs/pkg/target/test.log", "the log of the failed shard");
+    spawn_answers(&fake, 3, "");
+
+    let digest = run(&["AgentThreadIdentityTest"], &fake).text;
+
+    let kept = digest
+        .lines()
+        .find_map(|line| line.strip_prefix("kept   "))
+        .unwrap_or_else(|| panic!("no kept line in:\n{digest}"));
+    let run_dir = kept.split_whitespace().next().unwrap_or_default();
+    assert!(run_dir.starts_with("out/bt-runs/"), "{digest}");
+    let copied: Vec<String> = fake.state().files.keys().filter(|path| path.contains(run_dir)).cloned().collect();
+    assert_eq!(
+        copied,
+        [
+            format!("/repo/{run_dir}/pkg/target/test.log"),
+            format!("/repo/{run_dir}/pkg/target/test.xml")
+        ]
+    );
 }
