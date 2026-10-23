@@ -80,6 +80,7 @@ class EditorColorSchemeTest {
 
   @Test
   fun optimizeBundledSchemes() {
+    val key = TextAttributesKey.createTextAttributesKey("TEST_BUNDLED_SCHEME_ATTRIBUTES", DefaultLanguageHighlighterColors.CLASS_NAME)
     val schemeFile = fsRule.fs.getPath("colors/Foo.icls")
     val schemeData = """
     <scheme name="Foo" version="142" parent_scheme="Darcula">
@@ -87,7 +88,7 @@ class EditorColorSchemeTest {
         <property name="forceOptimize">true</property>
       </metaInfo>
       <attributes>
-        <option baseAttributes="DEFAULT_CLASS_NAME" name="GO_BUILTIN_TYPE_REFERENCE" />
+        <option baseAttributes="DEFAULT_CLASS_NAME" name="${key.externalName}" />
       </attributes>
     </scheme>""".trimIndent()
     schemeFile.write(schemeData)
@@ -103,7 +104,7 @@ class EditorColorSchemeTest {
       schemeManagerFactory.save()
     }
 
-    // GO_BUILTIN_TYPE_REFERENCE should be removed as it's the same as defined in a parent scheme
+    // Remove the inheritance override because the parent defines no explicit attributes.
     assertThat(removeSchemeMetaInfo(schemeFile.readText())).isEqualTo("""
       <scheme name="Foo" version="142" parent_scheme="Darcula">
       </scheme>""".trimIndent())
