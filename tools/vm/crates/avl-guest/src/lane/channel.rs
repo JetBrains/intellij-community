@@ -171,15 +171,20 @@ impl Daemon {
 
     /// Quits the lane IDE and stops the lane services. A run with no channel ends this way, so it leaves no process.
     pub(crate) fn finish(&self) -> Result<(), AgentRefusal> {
-        let quit = self.with_ide(|owner| {
+        let quit = self.quit_ide();
+        self.lock_owner().close_services();
+        quit
+    }
+
+    /// Quits the lane IDE, and logs the output records of the quit.
+    fn quit_ide(&self) -> Result<(), AgentRefusal> {
+        self.with_ide(|owner| {
             owner.quit(&mut Records(&mut |record| {
                 if let wire::RunEventKind::Output(output) = record {
                     log(&output.text);
                 }
             }))
-        });
-        self.lock_owner().close_services();
-        quit
+        })
     }
 
     /// Runs `work` with the IDE owner, and then stores whether the IDE runs.
@@ -447,13 +452,7 @@ impl Channel {
             return conflict_answer(conflict::BUSY, None);
         }
         let _busy = BusyGuard(Arc::clone(daemon));
-        let stopped = daemon.with_ide(|owner| {
-            owner.quit(&mut Records(&mut |record| {
-                if let wire::RunEventKind::Output(output) = record {
-                    log(&output.text);
-                }
-            }))
-        });
+        let stopped = daemon.quit_ide();
         match stopped {
             Ok(()) => answer(200, &json!({ "ideRunning": daemon.ide_running() })),
             Err(refusal) => error(500, &format!("{}: {}", refusal.code, refusal.message)),

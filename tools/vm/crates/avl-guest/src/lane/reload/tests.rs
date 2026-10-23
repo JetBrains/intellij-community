@@ -208,6 +208,28 @@ impl FakeResident {
     }
 }
 
+/// The reload of the bridge jar `b2`: the sources of the context plugins, the context, the plugins and the digest of
+/// the bridge plugin.
+struct Reload {
+    sources: TempDir,
+    context: TempDir,
+    files: Vec<ContextPlugin>,
+    digest: String,
+}
+
+impl Reload {
+    fn new() -> Self {
+        let sources = TempDir::new().unwrap();
+        let files = plugins(sources.path(), "b2", "r1");
+        Self {
+            context: TempDir::new().unwrap(),
+            digest: bridge_digest(&files),
+            files,
+            sources,
+        }
+    }
+}
+
 fn clean_answer(digest: &str) -> Value {
     json!({ "unloaded": true, "oldLoaders": 0, "loaded": true, "digest": digest, "reason": null })
 }
@@ -216,10 +238,12 @@ fn clean_answer(digest: &str) -> Value {
 // new digest. Each step writes one timed line.
 #[test]
 fn a_clean_reload_waits_for_the_new_digest_in_the_lifecycle() {
-    let sources = TempDir::new().unwrap();
-    let context = TempDir::new().unwrap();
-    let files = plugins(sources.path(), "b2", "r1");
-    let digest = bridge_digest(&files);
+    let Reload {
+        sources,
+        context,
+        files,
+        digest,
+    } = Reload::new();
     let old = bridge_digest(&plugins(sources.path(), "b1", "r1"));
     let resident = FakeResident::start(200, clean_answer(&digest), Some(old), Some(digest.clone()), 2);
     let (result, notes) = resident.reload(context.path(), &files);
@@ -248,10 +272,12 @@ fn a_clean_reload_waits_for_the_new_digest_in_the_lifecycle() {
 // and none of them waits for the lifecycle.
 #[test]
 fn a_refusal_a_leak_and_a_driver_failure_are_each_a_relaunch() {
-    let sources = TempDir::new().unwrap();
-    let context = TempDir::new().unwrap();
-    let files = plugins(sources.path(), "b2", "r1");
-    let digest = bridge_digest(&files);
+    let Reload {
+        sources: _sources,
+        context,
+        files,
+        digest,
+    } = Reload::new();
     let refused = json!({ "unloaded": false, "oldLoaders": -1, "loaded": false, "digest": null, "reason": "a reload runs" });
     let leaked = json!({ "unloaded": true, "oldLoaders": 1, "loaded": true, "digest": digest, "reason": "1 old class loader" });
     for (status, answer, expected) in [

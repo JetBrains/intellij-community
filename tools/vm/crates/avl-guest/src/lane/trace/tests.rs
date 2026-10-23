@@ -40,6 +40,16 @@ fn hello() -> HelloCommand {
     Trace::hello(Path::new("/vm/iterations/iter-1"), "iter-1", &TraceInputs::default(), None)
 }
 
+/// A trace of the iteration `iter-1` under `root` whose recorder is the returned recording.
+fn recorded(root: &Path) -> (Trace, Recording) {
+    let recording = Recording::default();
+    let trace = Trace::open(
+        Box::new(recording.clone()),
+        Trace::hello(root, "iter-1", &TraceInputs::default(), None),
+    );
+    (trace, recording)
+}
+
 fn scenario(name: &str) -> ScenarioCommand {
     ScenarioCommand {
         name: name.to_owned(),
@@ -186,11 +196,7 @@ fn only_a_recorder_that_did_not_start_is_a_failure_of_a_quiet_session() {
 #[test]
 fn an_attachment_is_a_file_under_the_attach_directory_of_the_run() {
     let root = tempfile::TempDir::new().unwrap();
-    let recording = Recording::default();
-    let mut trace = Trace::open(
-        Box::new(recording.clone()),
-        Trace::hello(root.path(), "iter-1", &TraceInputs::default(), None),
-    );
+    let (mut trace, recording) = recorded(root.path());
     trace.open_scenario(scenario("attaches"));
     let span = trace.open_span(SpanKind::Action, "dump", "[action] dump", Some((None, Side::Host, 1_000)));
     assert!(trace.attach("IDE dump", "text/plain", b"threads", "txt"));
@@ -212,12 +218,8 @@ fn an_attachment_is_a_file_under_the_attach_directory_of_the_run() {
 fn an_attachment_outside_a_recorded_scenario_goes_to_the_loose_directory() {
     let root = tempfile::TempDir::new().unwrap();
     let loose = root.path().join("outputs/lane/attachments");
-    let recording = Recording::default();
-    let mut trace = Trace::open(
-        Box::new(recording.clone()),
-        Trace::hello(root.path(), "iter-1", &TraceInputs::default(), None),
-    )
-    .keep_loose_attachments_in(Some(loose.clone()), MAX_LOOSE_BYTES);
+    let (trace, recording) = recorded(root.path());
+    let mut trace = trace.keep_loose_attachments_in(Some(loose.clone()), MAX_LOOSE_BYTES);
 
     assert!(!trace.attach("IDE dump of the slow step lane launch", "text/plain", b"threads", "txt"));
     trace.open_scenario(scenario("attaches"));
