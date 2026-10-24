@@ -36,22 +36,31 @@ fun ComponentManager.unregisterService(serviceInterface: Class<*>) {
  * Register a new service or replace an existing service with a specified instance for testing purposes.
  * Registration will be rolled back when parentDisposable is disposed. In most of the cases,
  * [com.intellij.testFramework.UsefulTestCase.getTestRootDisposable] should be specified.
+ *
+ * The rollback disposes the instance when it is [Disposable] and restores the previous registration.
+ * A registration that nobody has created yet stays uncreated, and a service that was absent is absent again.
  */
 @TestOnly
 fun <T : Any> ComponentManager.registerOrReplaceServiceInstance(serviceInterface: Class<T>, instance: T, parentDisposable: Disposable) {
+  val container = (this as ComponentManagerEx).getMutableComponentContainer()
+  if (container is TestMutableComponentManager) {
+    container.replaceServiceInstance(serviceInterface, instance, parentDisposable)
+    return
+  }
+
+  // Another container, such as one of the mock containers, keeps the previous path.
   val previous = this.getService(serviceInterface)
   if (previous != null) {
     replaceService(serviceInterface, instance, parentDisposable)
   }
   else {
-    val impl = (this as ComponentManagerEx)
-    impl.registerServiceInstance(serviceInterface, instance, testDescriptor)
+    registerServiceInstance(serviceInterface, instance, testDescriptor)
     if (instance is Disposable) {
       Disposer.register(parentDisposable, instance)
     }
     else {
       Disposer.register(parentDisposable) {
-        impl.unregisterComponent(serviceInterface)
+        unregisterComponent(serviceInterface)
       }
     }
   }
