@@ -207,7 +207,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   // findExtensionOrFail is thread safe
   private final NotNullLazyValue<ChangedFilesCollector> myChangedFilesCollector = NotNullLazyValue.createValue(
-    () -> AsyncEventSupport.EP_NAME.findExtensionOrFail(ChangedFilesCollector.class)
+    () -> AsyncEventSupport.EP_NAME_BACKGROUNDABLE.findExtensionOrFail(ChangedFilesCollector.class)
   );
   private final FilesToUpdateCollector myFilesToUpdateCollector = new FilesToUpdateCollector(CLEAN_REQUESTS_VISITED_BY_ALL_PROJECTS);
   private volatile @Nullable BiConsumer<@Nullable Project, @NotNull List<FileIndexingRequest>> myForceUpdateTestHook;
