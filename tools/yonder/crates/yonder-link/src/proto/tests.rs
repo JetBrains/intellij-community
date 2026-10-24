@@ -47,7 +47,8 @@ fn a_run_id_names_one_directory() {
     for good in ["1792789527302-61884", "a.b_c-d"] {
         assert!(is_run_id(good), "{good}");
     }
-    for bad in ["", ".", "..", "a/b", "a b", &"x".repeat(129)] {
+    // git refuses `a..b`, `x.lock` and `x.` as the last part of a ref.
+    for bad in ["", ".", "..", "a/b", "a b", "a..b", "x.lock", "x.", &"x".repeat(129)] {
         assert!(!is_run_id(bad), "{bad:?}");
     }
 }

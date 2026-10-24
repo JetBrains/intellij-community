@@ -59,7 +59,13 @@ pub(crate) fn connect_with(nc: &str, address: SocketAddr, deadline: Duration) ->
             return Err(error);
         }
     };
-    let up = inner.try_clone()?;
+    let up = match inner.try_clone() {
+        Ok(up) => up,
+        Err(error) => {
+            end(&child);
+            return Err(error);
+        }
+    };
     let up_child = Arc::clone(&child);
     thread::spawn(move || copy_then_end(up, stdin, &up_child));
     thread::spawn(move || copy_then_end(stdout, inner, &child));

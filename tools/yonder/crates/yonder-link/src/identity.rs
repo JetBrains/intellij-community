@@ -5,6 +5,9 @@ use std::fs;
 use std::io::{self, Write as _};
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::thread;
+use std::time::{Duration, Instant};
 
 use rustls::pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -117,15 +120,43 @@ impl Identity {
     }
 
     /// The identity in `dir`, created there when it is missing. The files have mode 0600 on Unix.
+    ///
+    /// Two first calls can run at the same time, such as two first runs of a client. Each writes its key and its
+    /// certificate to temporary files, then links the key into place. A link fails when the key exists, so one call wins.
+    /// The winner then renames its certificate into place, and each other call waits for that certificate and loads the
+    /// pair of the winner. So the key and the certificate always belong together.
     pub fn load_or_create(dir: &Path) -> io::Result<Self> {
         if dir.join(CERT_FILE).exists() {
             return Self::load(dir);
         }
         let identity = Self::generate()?;
         fs::create_dir_all(dir)?;
-        write_private(&dir.join(KEY_FILE), &identity.key_der)?;
-        write_private(&dir.join(CERT_FILE), &identity.cert_der)?;
-        Ok(identity)
+        let key = Temporary(write_temporary(&dir.join(KEY_FILE), &identity.key_der)?);
+        let cert = Temporary(write_temporary(&dir.join(CERT_FILE), &identity.cert_der)?);
+        match fs::hard_link(&key.0, dir.join(KEY_FILE)) {
+            Ok(()) => {
+                fs::rename(&cert.0, dir.join(CERT_FILE)).map_err(|error| named(&error, &dir.join(CERT_FILE)))?;
+                Ok(identity)
+            }
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => Self::load_when_written(dir),
+            Err(error) => Err(named(&error, &dir.join(KEY_FILE))),
+        }
+    }
+
+    /// The identity that another call of [`Identity::load_or_create`] writes in `dir`: its key is there, and its
+    /// certificate comes within [`CREATE_WAIT`].
+    fn load_when_written(dir: &Path) -> io::Result<Self> {
+        let started = Instant::now();
+        while !dir.join(CERT_FILE).exists() {
+            if started.elapsed() >= CREATE_WAIT {
+                return Err(io::Error::other(format!(
+                    "{} has a key without a certificate; remove {KEY_FILE} to make a new identity",
+                    dir.display()
+                )));
+            }
+            thread::sleep(Duration::from_millis(10));
+        }
+        Self::load(dir)
     }
 
     /// The identity in `dir`.
@@ -157,9 +188,29 @@ impl Identity {
 /// fingerprint does.
 pub(crate) const SERVER_NAME: &str = "yonder";
 
-/// Writes a file that only its owner can read, through a temporary file beside it, so a reader never sees a part.
-fn write_private(path: &Path, bytes: &[u8]) -> io::Result<()> {
-    let temp = PathBuf::from(format!("{}.tmp-{}", path.display(), std::process::id()));
+/// How long a call waits for the certificate of the call that wrote the key.
+const CREATE_WAIT: Duration = Duration::from_secs(10);
+
+/// The count of the temporary files of this process, so two threads never share one.
+static TEMPORARIES: AtomicU64 = AtomicU64::new(0);
+
+/// A temporary file, removed on every way out. A file that took its place by a rename is gone already.
+struct Temporary(PathBuf);
+
+impl Drop for Temporary {
+    fn drop(&mut self) {
+        let _ = fs::remove_file(&self.0);
+    }
+}
+
+/// Writes `bytes` to a new file beside `path` that only its owner can read, and answers its path.
+fn write_temporary(path: &Path, bytes: &[u8]) -> io::Result<PathBuf> {
+    let temp = PathBuf::from(format!(
+        "{}.tmp-{}-{}",
+        path.display(),
+        std::process::id(),
+        TEMPORARIES.fetch_add(1, Ordering::Relaxed)
+    ));
     let mut options = fs::OpenOptions::new();
     options.write(true).create_new(true);
     #[cfg(unix)]
@@ -168,13 +219,17 @@ fn write_private(path: &Path, bytes: &[u8]) -> io::Result<()> {
         file.write_all(bytes)?;
         file.sync_all()
     });
-    match written.and_then(|()| fs::rename(&temp, path)) {
-        Ok(()) => Ok(()),
+    match written {
+        Ok(()) => Ok(temp),
         Err(error) => {
             let _ = fs::remove_file(&temp);
-            Err(io::Error::new(error.kind(), format!("cannot write {}: {error}", path.display())))
+            Err(named(&error, path))
         }
     }
+}
+
+fn named(error: &io::Error, path: &Path) -> io::Error {
+    io::Error::new(error.kind(), format!("cannot write {}: {error}", path.display()))
 }
 
 #[cfg(test)]

@@ -199,11 +199,16 @@ impl Reply {
     }
 }
 
-/// Whether `run` can name a run directory.
+/// Whether `run` can name a run directory, a lease file and the last part of a git ref. A run id names the ref
+/// `refs/yonder/<run>`, and a holder names `refs/yonder/base/<holder>`, so the rules of git refs hold too: no `..`, and
+/// no `.` or `.lock` at the end.
 pub fn is_run_id(run: &str) -> bool {
     !run.is_empty()
         && run.len() <= 128
         && !run.starts_with('.')
+        && !run.ends_with('.')
+        && !run.ends_with(".lock")
+        && !run.contains("..")
         && run
             .bytes()
             .all(|byte| byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'_' | b'-'))
