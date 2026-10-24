@@ -144,7 +144,7 @@ object EditorTabPresentationUtil {
   @JvmStatic
   fun getEditorTabBackgroundColor(project: Project, file: VirtualFile): Color? {
     for (provider in EditorTabColorProvider.EP_NAME.lazyDumbAwareExtensions(project)) {
-      provider.getEditorTabColor(project, file)?.let { return it }
+      provider.getEditorTabColor(project, file)?.let { color -> return color.takeIf { it !== EditorTabColorProvider.NO_COLOR } }
     }
     return null
   }
@@ -152,7 +152,7 @@ object EditorTabPresentationUtil {
   @JvmStatic
   fun getFileBackgroundColor(project: Project, file: VirtualFile): Color? {
     for (provider in EditorTabColorProvider.EP_NAME.lazyDumbAwareExtensions(project)) {
-      provider.getProjectViewColor(project, file)?.let { return it }
+      provider.getProjectViewColor(project, file)?.let { color -> return color.takeIf { it !== EditorTabColorProvider.NO_COLOR } }
     }
     return null
   }
