@@ -35,7 +35,7 @@ class ProjectErrorsCollector(val project: Project, coroutineScope: CoroutineScop
   private val problemEvents = ProjectErrorsEventFlow(coroutineScope)
 
   init {
-    VirtualFileManager.getInstance().addAsyncFileListener({ onVfsChanges(it); null }, project)
+    VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable({ onVfsChanges(it); null }, project)
   }
 
   fun getProblemEventsFlow(): Flow<ProblemEvent> {
