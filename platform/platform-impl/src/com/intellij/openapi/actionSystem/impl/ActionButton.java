@@ -108,9 +108,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private Icon myDisabledIcon;
   private Icon myIcon;
   // experimental icons pipeline: createSwingIcon is expensive, so cache the bridge per descriptor
-  private IconDescriptor myIconDescriptor;
-  private Icon myDescriptorSwingIcon;
-  private Icon myDescriptorDisabledSwingIcon;
+  private IconDescriptor iconDescriptor;
   protected final Presentation myPresentation;
   protected final AnAction myAction;
   protected final String myPlace;
@@ -501,13 +499,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private void updateDescriptorIcons() {
     IconDescriptor descriptor = myPresentation.getIconDescriptor();
     IconDescriptor effective = descriptor != null ? descriptor : AllIconDescriptors.Toolbar.getUnknown();
-    if (!Objects.equals(effective, myIconDescriptor) || myDescriptorSwingIcon == null) {
-      myIconDescriptor = effective;
-      myDescriptorSwingIcon = SwingIconKt.createSwingIcon(effective, IconScale.Default);
-      myDescriptorDisabledSwingIcon = myLook.getDisabledIcon(myDescriptorSwingIcon);
+    if (!Objects.equals(effective, iconDescriptor) || myIcon == null) {
+      iconDescriptor = effective;
+      myIcon = SwingIconKt.createSwingIcon(effective, IconScale.Default);
+      myDisabledIcon = myLook.getDisabledIcon(myIcon);
     }
-    myIcon = myDescriptorSwingIcon;
-    myDisabledIcon = myDescriptorDisabledSwingIcon;
   }
 
   protected void updateToolTipText() {
