@@ -23,6 +23,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.eel.isWindows
+import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.IndexingTestUtil
@@ -458,9 +460,11 @@ class PySdkPathsTest {
 
       venv.createChildData(this, "pyvenv.cfg")  // the marker the venv environment provider looks for
 
-      val bin = venv.createChildDirectory(this, "bin")
+      // The layout of a real venv: the venv detection does not accept `bin` on Windows.
       // PythonEnvironment.detectPythonEnvironment requires an executable binary.
-      bin.createChildData(this, "python").toNioPath().toFile().setExecutable(true)
+      val (binDir, binary) = if (localEel.platform.isWindows) "Scripts" to "python.exe" else "bin" to "python"
+      val bin = venv.createChildDirectory(this, binDir)
+      bin.createChildData(this, binary).toNioPath().toFile().setExecutable(true)
 
       venv.createChildDirectory(this, "lib")
 

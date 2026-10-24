@@ -99,9 +99,7 @@ class PyUnitTestRunnerScriptConfigurationTest : PyCodeInsightTestCase() {
     val testRunnerService = TestRunnerService.getInstance(myFixture.module)
     val originalFactory = testRunnerService.selectedFactory
     val template = RunManager.getInstance(myFixture.project).getConfigurationTemplate(factory).configuration as PyUnitTestConfiguration
-    val scriptDirectory = Path.of("/django/tests")
     testRunnerService.selectedFactory = factory
-    template.runnerScript = scriptDirectory.resolve("runtests.py").pathString
     Disposer.register(disposable) {
       template.runnerScript = null
       testRunnerService.selectedFactory = originalFactory
@@ -113,6 +111,8 @@ class PyUnitTestRunnerScriptConfigurationTest : PyCodeInsightTestCase() {
           def test_<caret>pass(self):
               pass
     """.trimIndent())
+    val scriptDirectory = myFixture.file.virtualFile.toNioPath().parent
+    template.runnerScript = scriptDirectory.resolve("runtests.py").pathString
 
     val configuration = runInEdtAndGet {
       val element = myFixture.file.findElementAt(myFixture.caretOffset)!!
