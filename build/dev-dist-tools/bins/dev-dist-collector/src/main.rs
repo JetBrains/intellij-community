@@ -108,19 +108,11 @@ fn main() -> std::process::ExitCode {
 
 /// Runs the tool and returns the exit code: 2 for an option error, 1 for any other error.
 fn run(args: Vec<OsString>, output: &mut dyn Write, errors: &mut dyn Write) -> u8 {
-    let options = match parse_options(args) {
-        Ok(options) => options,
-        Err(error) => {
-            cli::report(errors, &error);
-            return 2;
-        }
+    let Some(options) = cli::ok_or_report(errors, parse_options(args)) else {
+        return 2;
     };
-    let options = match options.read_spec() {
-        Ok(options) => options,
-        Err(error) => {
-            cli::report(errors, &error);
-            return 1;
-        }
+    let Some(options) = cli::ok_or_report(errors, options.read_spec()) else {
+        return 1;
     };
     let (job, content) = options.mode.job();
     trace::run_traced(job, options.trace_file.as_deref().map(Path::new), 1, errors, |tracer, errors| {

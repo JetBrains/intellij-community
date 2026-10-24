@@ -58,12 +58,8 @@ fn main() -> ExitCode {
 
 /// Runs the tool and returns the exit code: 2 for a usage error, 1 for a failed copy or a failed span file.
 fn run(args: impl IntoIterator<Item = OsString>, output: &mut dyn Write, errors: &mut dyn Write) -> u8 {
-    let options = match parse_options(args) {
-        Ok(options) => options,
-        Err(error) => {
-            cli::report(errors, &error);
-            return 2;
-        }
+    let Some(options) = cli::ok_or_report(errors, parse_options(args)) else {
+        return 2;
     };
     trace::run_traced(JOB_NAME, options.trace_file.as_deref(), 1, errors, |tracer, errors| {
         let root = tracer.span(JOB_NAME);

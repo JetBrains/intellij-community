@@ -97,12 +97,8 @@ fn run(arguments: impl IntoIterator<Item = OsString>, output: &mut dyn Write, er
         arguments.next();
         return run_gzip_resources(arguments, errors);
     }
-    let options = match Options::parse(arguments) {
-        Ok(options) => options,
-        Err(error) => {
-            cli::report(errors, &error);
-            return 2;
-        }
+    let Some(options) = cli::ok_or_report(errors, Options::parse(arguments)) else {
+        return 2;
     };
     match project(&options) {
         Ok(plugin) => {
@@ -119,12 +115,8 @@ fn run(arguments: impl IntoIterator<Item = OsString>, output: &mut dyn Write, er
 /// Runs the gzip resources mode: `gzip-resources --output-dir=<dir> <archive>...`. The exit codes are the ones of
 /// [`run`].
 fn run_gzip_resources(arguments: impl IntoIterator<Item = OsString>, errors: &mut dyn Write) -> u8 {
-    let (output, archives) = match parse_gzip_resources(arguments) {
-        Ok(parsed) => parsed,
-        Err(error) => {
-            cli::report(errors, &error);
-            return 2;
-        }
+    let Some((output, archives)) = cli::ok_or_report(errors, parse_gzip_resources(arguments)) else {
+        return 2;
     };
     match pluginpack::write_gzip_resources(&archives, &output) {
         Ok(()) => 0,

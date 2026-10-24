@@ -2,7 +2,7 @@
 
 use std::ffi::OsString;
 
-use super::{Options, parse, report};
+use super::{Options, ok_or_report, parse, report};
 
 fn options(arguments: &[&str]) -> Options {
     parse(arguments.iter().map(OsString::from)).expect("a command line that parses")
@@ -112,5 +112,17 @@ fn finish_refuses_what_the_tool_did_not_take() {
 fn report_prints_the_error_with_its_causes() {
     let mut stderr = Vec::new();
     report(&mut stderr, &anyhow::anyhow!("cause").context("error"));
+    assert_eq!(String::from_utf8(stderr).unwrap(), "ERROR: error: cause\n");
+}
+
+#[test]
+fn ok_or_report_prints_only_an_error() {
+    let mut stderr = Vec::new();
+    assert_eq!(ok_or_report(&mut stderr, Ok(1)), Some(1));
+    assert!(stderr.is_empty(), "printed {:?} for a value", String::from_utf8_lossy(&stderr));
+    assert_eq!(
+        ok_or_report::<i32>(&mut stderr, Err(anyhow::anyhow!("cause").context("error"))),
+        None
+    );
     assert_eq!(String::from_utf8(stderr).unwrap(), "ERROR: error: cause\n");
 }

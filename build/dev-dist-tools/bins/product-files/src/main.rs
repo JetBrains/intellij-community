@@ -59,15 +59,10 @@ struct Options {
 
 /// Runs the tool and returns the exit code: 2 for a usage error, 1 for a render error.
 fn run(args: impl IntoIterator<Item = OsString>, output: &mut dyn Write, errors: &mut dyn Write) -> u8 {
-    let options = match parse_options(args) {
-        Ok(options) => options,
-        Err(error) => {
-            cli::report(errors, &error);
-            return 2;
-        }
+    let Some(options) = cli::ok_or_report(errors, parse_options(args)) else {
+        return 2;
     };
-    if let Err(error) = render_to_files(&options) {
-        cli::report(errors, &error);
+    if cli::ok_or_report(errors, render_to_files(&options)).is_none() {
         return 1;
     }
     let _ = writeln!(

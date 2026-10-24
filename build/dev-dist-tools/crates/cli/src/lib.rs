@@ -120,6 +120,12 @@ pub fn report(stderr: &mut dyn Write, error: &anyhow::Error) {
     let _ = writeln!(stderr, "ERROR: {error:#}");
 }
 
+/// Returns the value of `result`. For an error, it prints the error with [`report`] and returns `None`, and the tool
+/// returns its exit code: `let Some(options) = cli::ok_or_report(errors, parse(args)) else { return 2 };`.
+pub fn ok_or_report<T>(stderr: &mut dyn Write, result: Result<T>) -> Option<T> {
+    result.map_err(|error| report(stderr, &error)).ok()
+}
+
 fn form_error(argument: &str) -> String {
     format!("expected an option in the form --key=value, but got {argument:?}")
 }
