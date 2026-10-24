@@ -444,7 +444,7 @@ public final class PyArgumentListInspection extends PyInspection {
     final @InspectionMessage String description = PyMismatchTooltips.description(header, argumentSlots, expectedRows);
     if (holder.isOnTheFly()) {
       holder.problem(element, description).highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
-        .tooltip(PyMismatchTooltips.tooltip(header, argumentSlots, expectedRows)).register();
+        .tooltip(PyMismatchTooltips.tooltip(header, argumentSlots, expectedRows, context)).register();
     }
     else {
       holder.problem(element, description).highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING).register();

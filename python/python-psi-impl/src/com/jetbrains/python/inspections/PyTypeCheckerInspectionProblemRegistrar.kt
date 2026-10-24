@@ -23,6 +23,7 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyTypeParameterListOwner
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils.getFirstChildOfType
+import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyLiteralStringType
 import com.jetbrains.python.psi.types.PyLiteralType
@@ -41,6 +42,7 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     calleesResults: List<AnalyzeCalleeResults>,
     context: TypeEvalContext,
     highlightOverride: ProblemHighlightType?,
+    hiddenCandidates: Int = 0,
   ) {
     val code = suppressionCodeFor(callSite)
     if (calleesResults.size == 1) {
@@ -54,7 +56,7 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
       )
     }
     else if (!calleesResults.isEmpty()) {
-      registerMultiCalleeProblem(holder, code, callSite, calleesResults, context, highlightOverride)
+      registerMultiCalleeProblem(holder, code, callSite, calleesResults, context, highlightOverride, hiddenCandidates)
     }
   }
 
@@ -165,12 +167,14 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     calleesResults: List<AnalyzeCalleeResults>,
     context: TypeEvalContext,
     highlightOverride: ProblemHighlightType?,
+    hiddenCandidates: Int,
   ) {
     if (callSite is PyBinaryExpression) {
       registerMultiCalleeProblemForBinaryExpression(holder, code, callSite, calleesResults, context, highlightOverride)
     }
     else {
-      registerMultiCalleeProblem(holder, code, getMultiCalleeElementToHighlight(callSite), calleesResults, context, highlightOverride)
+      registerMultiCalleeProblem(holder, code, getMultiCalleeElementToHighlight(callSite), calleesResults, context, highlightOverride,
+                                 hiddenCandidates)
     }
   }
 
@@ -181,6 +185,7 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     calleesResults: List<AnalyzeCalleeResults>,
     context: TypeEvalContext,
     highlightOverride: ProblemHighlightType?,
+    hiddenCandidates: Int = 0,
   ) {
     val header = PyMismatchTooltips.header(calleesResults.map { it.callable })
     val argumentSlots = getReferenceResults(calleesResults).map { argumentResult ->
@@ -191,11 +196,11 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     // Each candidate's source type-parameter list (`[T: int]`, empty when it declares none), shown before its params.
     val expectedTypeParameters = calleesResults.map { typeParameterPrefix(it.callable) }
 
-    val description = PyMismatchTooltips.description(header, argumentSlots, expectedRows, expectedTypeParameters)
+    val description = PyMismatchTooltips.description(header, argumentSlots, expectedRows, expectedTypeParameters, hiddenCandidates)
     val highlightType = highlightOverride ?: ProblemHighlightType.GENERIC_ERROR_OR_WARNING
     // The aligned-table tooltip is only worth building on-the-fly; reportWithTooltip invokes the supplier then.
     PyTypeCheckerProblemReporter.reportWithTooltip(holder, code, element, description, highlightType) {
-      PyMismatchTooltips.tooltip(header, argumentSlots, expectedRows, expectedTypeParameters)
+      PyMismatchTooltips.tooltip(header, argumentSlots, expectedRows, context, expectedTypeParameters, hiddenCandidates)
     }
   }
 
@@ -378,11 +383,23 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     context: TypeEvalContext,
   ): List<PyMismatchTooltips.Slot> {
     val parameters = calleeResults.callableType.getParameters(context)
-                     ?: return calleeResults.results.map { getExpectedParameterSlot(it, context, it.isMatched) }
-    return parameters.mapNotNull { parameter ->
-      if (parameter.isPositionOnlySeparator || parameter.isKeywordOnlySeparator) return@mapNotNull null
+                     ?: return calleeResults.results.map { getExpectedParameterSlot(it, context, it.isMatched) } +
+                               calleeResults.unmappedArguments.map { PyMismatchTooltips.Slot.noParameter() }
+    // An argument that this candidate has no parameter for gets a gap after the parameter of the argument before it, so
+    // the gap lines up under its argument. An argument with no mapped argument before it gets a gap at the start.
+    val gapAnchors = calleeResults.unmappedArguments.map { unmapped ->
+      calleeResults.results
+        .filter { it.parameter != null && it.argument.textOffset < unmapped.textOffset }
+        .maxByOrNull { it.argument.textOffset }
+        ?.parameter
+    }
+    fun gaps(after: PyCallableParameter?): List<PyMismatchTooltips.Slot> =
+      List(gapAnchors.count { it === after }) { PyMismatchTooltips.Slot.noParameter() }
+
+    return gaps(after = null) + parameters.flatMap { parameter ->
+      if (parameter.isPositionOnlySeparator || parameter.isKeywordOnlySeparator) return@flatMap emptyList()
       val argumentResult = calleeResults.results.firstOrNull { it.parameter === parameter }
-      when {
+      val slot = when {
         argumentResult != null -> getExpectedParameterSlot(argumentResult, context, argumentResult.isMatched)
         // A required parameter the call can't fill: the whole parameter is the incompatibility (name + type).
         calleeResults.unfilledRegularParameters.any { it === parameter } ->
@@ -390,6 +407,7 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
         // An optional (or otherwise unmapped) parameter: shown for context, not flagged.
         else -> PyMismatchTooltips.Slot.parameter(parameter, context, matched = true)
       }
+      listOf(slot) + gaps(after = parameter)
     }
   }
 
@@ -400,9 +418,12 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
   ): PyMismatchTooltips.Slot {
     // Show the parameter's DECLARED type (e.g. the type variable `T`), not the type solved for it at this call site
     // (`int`) — the signature is written in terms of its type parameters, which are shown as a `[T: bound]` prefix.
+    // The slot records its argument, so the tooltip can break the argument type down against it. A `*args` or
+    // `**kwargs` parameter does not record it: its declared type is the container, not the type of one argument.
     val parameter = argumentResult.parameter
-                    ?: return PyMismatchTooltips.Slot.ofType(argumentResult.expectedType, context, matched)
-    return PyMismatchTooltips.Slot.parameter(parameter, context, matched)
+                    ?: return PyMismatchTooltips.Slot.ofType(argumentResult.expectedType, context, matched).mappedTo(argumentResult.argument)
+    val container = parameter.isPositionalContainer || parameter.isKeywordContainer
+    return PyMismatchTooltips.Slot.parameter(parameter, context, matched).mappedTo(argumentResult.argument.takeUnless { container })
   }
 
   /** The argument expression as a single-line, length-capped label for the call-site prose (e.g. `to_app_page()`). */

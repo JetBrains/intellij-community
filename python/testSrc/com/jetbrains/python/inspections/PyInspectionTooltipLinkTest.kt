@@ -18,6 +18,7 @@ import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyTargetExpression
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertInstanceOf
@@ -407,6 +408,15 @@ class PyInspectionTooltipLinkTest : PyCodeInsightTestCase() {
     assertEquals("Expected type 'AbstractContextManager', got 'None' instead", info.description)
     assertLink(info, "contextlib.AbstractContextManager")
     assertResolves("contextlib.AbstractContextManager")
+  }
+
+  // A tooltip links a module-level type variable and `typing.Any` by qualified name, so those links must resolve too.
+  @Test
+  fun `module-level variable links resolve`() {
+    myFixture.configureByText("links.py", "from typing import TypeVar\nT = TypeVar(\"T\")\n")
+    val typeVariable = runReadActionBlocking { QualifiedNameProviderUtil.qualifiedNameToElement("links.T", myFixture.project) }
+    assertEquals("T", assertInstanceOf<PyTargetExpression>(typeVariable).name)
+    assertNotNull(runReadActionBlocking { QualifiedNameProviderUtil.qualifiedNameToElement("typing.Any", myFixture.project) })
   }
 
   private fun assertLink(info: HighlightInfo, name: String) {
