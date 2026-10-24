@@ -3,7 +3,7 @@
 use std::fs;
 use std::path::PathBuf;
 
-use testkit::{TempDir, WorkingDirectory, read_bytes, reference_bytes, require_error, write_file};
+use testkit::{REFERENCE_CONTENT_HASHES, TempDir, WorkingDirectory, read_bytes, reference_bytes, require_error, write_file};
 
 use super::*;
 
@@ -29,8 +29,6 @@ fn mode(entry: &ComponentEntry) -> Option<u32> {
 fn packed_jar(source: &str, relative_path: &str) -> JarRecord {
     JarRecord::Jar(SourcedFile::new(source, relative_path))
 }
-
-const REFERENCE_SIZES: [usize; 10] = [0, 1, 3, 240, 241, 262143, 262144, 262145, 524288, 524301];
 
 fn header(kind: &str) -> ManifestHeader {
     ManifestHeader {
@@ -83,7 +81,7 @@ fn platform_manifest_bytes() {
     let directory = TempDir::new();
     let mut records = Vec::new();
     let mut files = Vec::new();
-    for size in REFERENCE_SIZES {
+    for (size, _) in REFERENCE_CONTENT_HASHES {
         let name = format!("vector-{size}.jar");
         let jar = directory.path().join("inputs").join(&name);
         write_file(&jar, reference_bytes(size));

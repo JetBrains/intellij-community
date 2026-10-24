@@ -6,7 +6,7 @@
 #![allow(clippy::unreadable_literal, reason = "the hash values are copied from the Kotlin output")]
 
 use component::manifest::{ComponentEntry, validate_manifest};
-use testkit::{TempDir, reference_bytes, write_file};
+use testkit::{REFERENCE_CONTENT_HASHES, TempDir, reference_bytes, write_file};
 
 use super::*;
 use crate::test_support::test_manifest;
@@ -142,20 +142,8 @@ fn kotlin_core_classpath_order_golden() {
 // The vectors prove that `xxh3::hash_file` still gives the hashes of the former Kotlin `computeDevBuildContentHash`.
 #[test]
 fn sourced_manifest_hashes_and_source_independence() {
-    let vectors: [(usize, i64); 10] = [
-        (0, 3244421341483603138),
-        (1, -2399747073602280719),
-        (3, -737883702129266468),
-        (240, 2788469911834355041),
-        (241, -4155630063455057979),
-        (262143, 9078738661776034622),
-        (262144, -1692254647099917537),
-        (262145, -2541306581069977202),
-        (524288, 3157545227256347297),
-        (524301, 8144707773225287728),
-    ];
     let launch = test_manifest("launch");
-    for (size, hash) in vectors {
+    for (size, hash) in REFERENCE_CONTENT_HASHES {
         let directory = TempDir::new();
         let content = directory.path().join("content.jar");
         write_file(&content, reference_bytes(size));

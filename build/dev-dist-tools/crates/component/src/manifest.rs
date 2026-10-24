@@ -71,6 +71,15 @@ impl ComponentManifest {
 }
 
 impl ComponentEntry {
+    /// A link entry with the hash of its target, as [`ComponentEntry::Symlink`] requires.
+    pub fn symlink(relative_path: String, symlink_target: String) -> Self {
+        Self::Symlink {
+            relative_path,
+            hash: filemeta::hash_symlink_target(&symlink_target),
+            symlink_target,
+        }
+    }
+
     /// The destination in the distribution, in slash form.
     pub fn relative_path(&self) -> &str {
         match self {

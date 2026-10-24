@@ -1,7 +1,7 @@
 use testkit::{TempDir, require_error, write_file};
 
 use super::*;
-use crate::test_support::{directory_entry, file_entry, file_with_mode, link_entry, test_manifest};
+use crate::test_support::{directory_entry, file_entry, file_with_mode};
 
 const VALID: &str = r#"{"version":10,"kind":"a","platformPrefix":"idea","os":"linux","arch":"x64","plugin":false,"mainClass":null,"coreClassPath":[],"entries":[]}"#;
 
@@ -315,7 +315,7 @@ fn an_entry_gives_the_inventory_entry_of_its_type() {
         (directory.entry_type, directory.mode, directory.hash),
         (filemeta::EntryType::Directory, 0o700, 0)
     );
-    let link = link_entry("lib/current", "a.jar").to_metadata();
+    let link = ComponentEntry::symlink("lib/current".into(), "a.jar".into()).to_metadata();
     assert_eq!(link.entry_type, filemeta::EntryType::Symlink);
     assert_eq!(link.symlink_target, "a.jar");
     assert_eq!(link.hash, filemeta::hash_symlink_target("a.jar"));
@@ -349,8 +349,8 @@ fn the_entry_order_is_the_java_string_order_for_ascii() {
 
 #[test]
 fn the_writer_writes_indented_json() {
-    let mut manifest = test_manifest("files");
-    manifest.main_class = None;
+    let mut manifest = decode(VALID).unwrap();
+    manifest.kind = "files".into();
     manifest.platform_prefix = "idea<test>&".into();
     let executable = ComponentEntry::ComponentFile {
         relative_path: "bin/tool".into(),
@@ -415,6 +415,7 @@ fn the_writer_writes_indented_json() {
 fn the_writer_creates_the_parent_directory() {
     let directory = TempDir::new();
     let file = directory.path().join("out/component.json");
-    write_component_manifest(&file, &test_manifest("files")).unwrap();
-    assert_eq!(read_component_manifest(&file).unwrap(), test_manifest("files"));
+    let manifest = decode(VALID).unwrap();
+    write_component_manifest(&file, &manifest).unwrap();
+    assert_eq!(read_component_manifest(&file).unwrap(), manifest);
 }

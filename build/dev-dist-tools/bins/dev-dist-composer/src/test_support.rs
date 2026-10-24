@@ -50,11 +50,7 @@ pub(crate) fn file_with_mode(relative_path: &str, source: &str, executable: bool
 }
 
 pub(crate) fn link_entry(relative_path: &str, target: &str) -> ComponentEntry {
-    ComponentEntry::Symlink {
-        relative_path: relative_path.to_owned(),
-        hash: filemeta::hash_symlink_target(target),
-        symlink_target: target.to_owned(),
-    }
+    ComponentEntry::symlink(relative_path.to_owned(), target.to_owned())
 }
 
 pub(crate) fn directory_entry(relative_path: &str, mode: u32) -> ComponentEntry {

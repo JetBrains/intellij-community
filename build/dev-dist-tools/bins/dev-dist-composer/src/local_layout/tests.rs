@@ -28,6 +28,16 @@ fn compose_local(components: &[DevBuildComponent], target: &Path, source_runfile
     compose_with_merge(components, target, &options, no_merge)
 }
 
+/// Composes with no declared file and with the declared directories `directories`, each with its runfile.
+fn compose_in_directories(components: &[DevBuildComponent], target: &Path, directories: &[(&str, &str)]) -> Result<ComposedBuild> {
+    let options = ComposeOptions {
+        source_runfiles: Some(runfiles(&[])),
+        source_directory_runfiles: Some(runfiles(directories)),
+        ..ComposeOptions::default()
+    };
+    compose_with_merge(components, target, &options, no_merge)
+}
+
 #[track_caller]
 fn require_layout(target: &Path, fragments: &[&str]) -> String {
     let layout = read_text(target.join("local-layout.json"));
@@ -209,16 +219,11 @@ fn local_composition_resolves_files_inside_declared_directories_without_reading_
     let plugin_directory = directory.join("absent-plugin");
     let packed = format!("{plugin_directory}/lib/nested/plugin.jar");
     let target = directory.path().join("metadata");
-    let options = ComposeOptions {
-        source_runfiles: Some(runfiles(&[])),
-        source_directory_runfiles: Some(runfiles(&[(&plugin_directory, "_main/plugin")])),
-        ..ComposeOptions::default()
-    };
     let components = [layout_component(
         "plugin",
         vec![sourced_entry("plugins/demo/lib/plugin.jar", &packed)],
     )];
-    compose_with_merge(&components, &target, &options, no_merge).unwrap();
+    compose_in_directories(&components, &target, &[(&plugin_directory, "_main/plugin")]).unwrap();
     require_layout(&target, &[r#""runfile":"_main/plugin/lib/nested/plugin.jar""#]);
     require_absent(&plugin_directory);
     require_absent(target.join("plugins"));
@@ -237,17 +242,12 @@ fn local_composition_does_not_treat_a_file_declaration_as_a_directory() {
 fn the_deepest_declared_directory_names_the_runfile() {
     let directory = TempDir::new();
     let (outer, inner) = (directory.join("plugin"), directory.join("plugin/lib"));
-    let options = ComposeOptions {
-        source_runfiles: Some(runfiles(&[])),
-        source_directory_runfiles: Some(runfiles(&[(&outer, "_main/plugin"), (&inner, "_main/lib")])),
-        ..ComposeOptions::default()
-    };
     let target = directory.path().join("metadata");
     let components = [layout_component(
         "plugin",
         vec![sourced_entry("lib/plugin.jar", &format!("{inner}/plugin.jar"))],
     )];
-    compose_with_merge(&components, &target, &options, no_merge).unwrap();
+    compose_in_directories(&components, &target, &[(&outer, "_main/plugin"), (&inner, "_main/lib")]).unwrap();
     require_layout(&target, &[r#""runfile":"_main/lib/plugin.jar""#]);
 }
 
@@ -260,13 +260,12 @@ fn directory_references_reject_sibling_prefixes_and_escaping_paths() {
         format!("{plugin_directory}/../other.jar"),
         format!("{plugin_directory}/lib/../plugin.jar"),
     ] {
-        let options = ComposeOptions {
-            source_runfiles: Some(runfiles(&[])),
-            source_directory_runfiles: Some(runfiles(&[(&plugin_directory, "_main/plugin")])),
-            ..ComposeOptions::default()
-        };
         let components = [layout_component("plugin", vec![sourced_entry("lib/plugin.jar", &source)])];
-        let result = compose_with_merge(&components, &directory.path().join("metadata"), &options, no_merge);
+        let result = compose_in_directories(
+            &components,
+            &directory.path().join("metadata"),
+            &[(&plugin_directory, "_main/plugin")],
+        );
         assert!(result.is_err(), "accepted the source {source}");
     }
 }

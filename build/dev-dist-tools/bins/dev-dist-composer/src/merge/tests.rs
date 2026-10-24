@@ -9,7 +9,7 @@ use component::manifest::ComponentManifest;
 use component::plugin_classpath::PLUGIN_CLASSPATH;
 use testkit::{TempDir, directory_symlink, file_symlink, read_text, require_absent, require_error, set_mode, write_file};
 
-use crate::compose::{ComposeOptions, DevBuildComponent};
+use crate::compose::{ComposeOptions, ComposedBuild, DevBuildComponent};
 use crate::test_support::*;
 
 /// Writes one file whose content is `name` and adds it to `manifest` as the source of `relative_file`.
@@ -173,15 +173,7 @@ fn composer_creates_a_manifest_only_link_when_the_staged_source_is_a_real_direct
     // Bazel turned the link into a copied directory when it fetched the tree from the cache.
     let staged_copy = source_root.join("current");
     write_file(staged_copy.join("payload"), "copied bytes");
-    let link = link_entry("plugins/demo/current", "lib/payload");
-    let target = directory.path().join("target");
-    compose_with(
-        &[unbound_files(with_entries(test_manifest("plugin"), vec![link]))],
-        &target,
-        with_directory_runfiles(&source_root, "_main/plugin"),
-    )
-    .unwrap();
-    require_link(target.join("plugins/demo/current"), "lib/payload");
+    require_manifest_only_link(&directory, &source_root);
     assert!(fs::symlink_metadata(&staged_copy).unwrap().is_dir());
 }
 
@@ -192,21 +184,27 @@ fn composer_creates_a_manifest_only_link_from_the_manifest_and_not_from_the_stag
     fs::create_dir_all(&source_root).unwrap();
     // The staged link keeps the spelling of the packer, and the manifest holds the cleaned target.
     directory_symlink("./lib/payload", source_root.join("current"));
+    require_manifest_only_link(&directory, &source_root);
+}
+
+/// Composes the manifest link `plugins/demo/current` to `lib/payload` with the staged plugin directory `source_root`,
+/// and checks that the link has the target of the manifest.
+#[track_caller]
+fn require_manifest_only_link(directory: &TempDir, source_root: &Path) {
     let link = link_entry("plugins/demo/current", "lib/payload");
     let target = directory.path().join("target");
     compose_with(
         &[unbound_files(with_entries(test_manifest("plugin"), vec![link]))],
         &target,
-        with_directory_runfiles(&source_root, "_main/plugin"),
+        with_directory_runfiles(source_root, "_main/plugin"),
     )
     .unwrap();
     require_link(target.join("plugins/demo/current"), "lib/payload");
 }
 
-#[test]
-// The reader of the bindings checks the directories of a tree once, so the alias exists before it runs.
-fn composer_rejects_regular_files_through_escaping_directory_aliases() {
-    let directory = TempDir::new();
+/// Stages a tree whose directory `alias` links to a directory outside the tree, and composes the file `destination` from
+/// the tree member `member`. It returns the result and the target directory.
+fn compose_beside_an_alias(directory: &TempDir, destination: &str, member: &str) -> (anyhow::Result<ComposedBuild>, PathBuf) {
     let staged = BoundTree::stage(directory.path());
     let outside = directory.path().join("outside");
     write_file(outside.join("payload"), "outside bytes");
@@ -214,16 +212,24 @@ fn composer_rejects_regular_files_through_escaping_directory_aliases() {
         directory_symlink(&outside, root.join("alias"));
     }
     let tree = staged.bind(&["lib/native.jar", "alias/payload"]).unwrap();
-    let file = sourced_entry("plugins/demo/payload", &tree.staged("alias/payload"));
+    let file = sourced_entry(destination, &tree.staged(member));
     let component = DevBuildComponent {
         source_bindings: Some(tree.bindings.clone()),
         ..DevBuildComponent::new(with_entries(test_manifest("plugin"), vec![file]))
     };
     let target = directory.path().join("target");
-    require_error(
+    (
         compose_with(&[component], &target, with_directory_runfiles(&tree.staged, "_main/plugin")),
-        "escaping directory alias",
-    );
+        target,
+    )
+}
+
+#[test]
+// The reader of the bindings checks the directories of a tree once, so the alias exists before it runs.
+fn composer_rejects_regular_files_through_escaping_directory_aliases() {
+    let directory = TempDir::new();
+    let (result, target) = compose_beside_an_alias(&directory, "plugins/demo/payload", "alias/payload");
+    require_error(result, "escaping directory alias");
     require_absent(target.join("plugins/demo/payload"));
 }
 
@@ -231,20 +237,8 @@ fn composer_rejects_regular_files_through_escaping_directory_aliases() {
 #[test]
 fn composer_accepts_a_member_below_a_link_that_no_manifest_names() {
     let directory = TempDir::new();
-    let staged = BoundTree::stage(directory.path());
-    let outside = directory.path().join("outside");
-    write_file(outside.join("payload"), "outside bytes");
-    for root in [&staged.physical, &staged.staged] {
-        directory_symlink(&outside, root.join("alias"));
-    }
-    let tree = staged.bind(&["lib/native.jar", "alias/payload"]).unwrap();
-    let file = sourced_entry("plugins/demo/lib/native.jar", &tree.staged("lib/native.jar"));
-    let component = DevBuildComponent {
-        source_bindings: Some(tree.bindings.clone()),
-        ..DevBuildComponent::new(with_entries(test_manifest("plugin"), vec![file]))
-    };
-    let target = directory.path().join("target");
-    compose_with(&[component], &target, with_directory_runfiles(&tree.staged, "_main/plugin")).unwrap();
+    let (result, target) = compose_beside_an_alias(&directory, "plugins/demo/lib/native.jar", "lib/native.jar");
+    result.unwrap();
     assert_eq!(read_text(target.join("plugins/demo/lib/native.jar")), "native bytes");
 }
 

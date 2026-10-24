@@ -2,7 +2,7 @@
 
 use std::path::Path;
 
-use testkit::{WorkingDirectory, read_bytes, write_file};
+use testkit::{REFERENCE_CONTENT_HASHES, WorkingDirectory, read_bytes, reference_bytes, write_file};
 
 use crate::collect::{explicit_files, platform_jars};
 use crate::inventory::{Classpath, JarRecord, SourcedFile, inventory};
@@ -473,20 +473,17 @@ fn tree_destinations_are_validated_after_expansion() {
     assert!(!exists("component.json"), "a conflict produced a component manifest");
 }
 
-/// The byte lengths of the reference jars: the edges of the 256 KiB blocks of the content hash.
-const REFERENCE_SIZES: [usize; 10] = [0, 1, 3, 240, 241, 262_143, 262_144, 262_145, 524_288, 524_301];
-
 /// The whole manifest of the jar mode, byte for byte. The fixture is the manifest of ten jars of the reference sizes,
 /// with the Kotlin content hash of each jar.
 #[test]
 fn the_jar_mode_writes_the_manifest_bytes() {
     let directory = WorkingDirectory::enter();
     let expected = String::from_utf8(read_bytes(directory.testdata("platform.json"))).unwrap();
-    let mut jars = Vec::with_capacity(REFERENCE_SIZES.len());
-    let mut records = Vec::with_capacity(REFERENCE_SIZES.len());
-    for size in REFERENCE_SIZES {
+    let mut jars = Vec::with_capacity(REFERENCE_CONTENT_HASHES.len());
+    let mut records = Vec::with_capacity(REFERENCE_CONTENT_HASHES.len());
+    for (size, _) in REFERENCE_CONTENT_HASHES {
         let jar = format!("inputs/vector-{size}.jar");
-        write_file(&jar, (0..size).map(|index| (index * 31 + 7) as u8).collect::<Vec<u8>>());
+        write_file(&jar, reference_bytes(size));
         let name = jar.rsplit('/').next().unwrap().to_owned();
         let metadata = format!("{jar}.metadata.json");
         write_inventory(&metadata, &[filemeta::inspect(Path::new(&jar), &name).unwrap()]);

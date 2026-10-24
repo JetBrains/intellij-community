@@ -966,6 +966,7 @@ name = "xxh3"
 version = "0.1.0"
 dependencies = [
  "tempfile",
+ "testkit",
  "xxhash-rust",
 ]
 

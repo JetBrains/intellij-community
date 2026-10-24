@@ -55,6 +55,8 @@ gives the order of Java `String.compareTo` for the entries and the fingerprint.
   key and a key of another type fail.
 - `ComponentEntry::relative_path() -> &str`, `type_name() -> &'static str`, `hash() -> i64` (0 for a directory),
   `executable() -> bool`: the fields that the fingerprint reads.
+- `ComponentEntry::symlink(relative_path: String, symlink_target: String) -> ComponentEntry`: a `Symlink` with the
+  `filemeta::hash_symlink_target` hash of its target.
 - `ComponentManifest::platform_neutral() -> bool`: `os` and `arch` are empty.
 - `ComponentManifest::to_json() -> Vec<u8>`: two-space indent, no trailing newline.
 - `ComponentEntry::to_metadata() -> filemeta::Entry`: the inventory entry for `filemeta::merge`. A file without a

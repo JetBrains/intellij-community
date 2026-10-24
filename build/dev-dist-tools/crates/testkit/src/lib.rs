@@ -175,6 +175,25 @@ pub fn reference_bytes(size: usize) -> Vec<u8> {
     (0..size).map(|index| (index.wrapping_mul(31).wrapping_add(7)) as u8).collect()
 }
 
+/// The Kotlin content hash of [`reference_bytes`] for each size of the reference vectors. The sizes cross the borders of
+/// the short inputs, of the 240-byte input and of the block of 256 KiB.
+#[expect(
+    clippy::unreadable_literal,
+    reason = "the hashes are copied from the output of the former Kotlin tool"
+)]
+pub const REFERENCE_CONTENT_HASHES: [(usize, i64); 10] = [
+    (0, 3244421341483603138),
+    (1, -2399747073602280719),
+    (3, -737883702129266468),
+    (240, 2788469911834355041),
+    (241, -4155630063455057979),
+    (262143, 9078738661776034622),
+    (262144, -1692254647099917537),
+    (262145, -2541306581069977202),
+    (524288, 3157545227256347297),
+    (524301, 8144707773225287728),
+];
+
 /// The outcome of one run of a tool: the exit code, the text on stdout and the text on stderr.
 #[derive(Debug)]
 pub struct Run {

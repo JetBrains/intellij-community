@@ -115,12 +115,7 @@ pub(crate) fn inventory(files: &[SourcedFile]) -> Result<(Vec<ComponentEntry>, I
                     if file.executable {
                         bail!("symbolic link has an executable override: {}", file.relative_path);
                     }
-                    let target = distpath::clean_link_target(&metadata.symlink_target);
-                    ComponentEntry::Symlink {
-                        relative_path,
-                        hash: filemeta::hash_symlink_target(&target),
-                        symlink_target: target,
-                    }
+                    ComponentEntry::symlink(relative_path, distpath::clean_link_target(&metadata.symlink_target))
                 }
                 EntryType::File => {
                     let executable = file.executable || metadata.executable;
