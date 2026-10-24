@@ -88,6 +88,15 @@ internal class StructuralDiffPreviewAppearanceTest {
 
   @Test
   @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
+  fun `the side-by-side Commit diff tab numbers only the current lines`(): Unit = timeoutRunBlocking {
+    withViewer(::SimpleDiffViewer, commitTab = true) { viewer ->
+      assertFalse(viewer.getEditor(Side.LEFT).settings.isLineNumbersShown)
+      assertTrue(viewer.getEditor(Side.RIGHT).settings.isLineNumbersShown)
+    }
+  }
+
+  @Test
+  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
   fun `the unified Commit diff tab numbers only the current lines`(): Unit = timeoutRunBlocking {
     withViewer(::UnifiedDiffViewer, commitTab = true) { viewer ->
       val editor = viewer.editor
@@ -126,6 +135,7 @@ internal class StructuralDiffPreviewAppearanceTest {
 
   private fun assertDefaultDiff(editor: EditorEx) {
     assertTrue(editor.settings.isLineMarkerAreaShown)
+    assertTrue(editor.settings.isLineNumbersShown)
     val scheme = EditorColorsManager.getInstance().globalScheme
     for (key in listOf(DiffColors.DIFF_DELETED, DiffColors.DIFF_INSERTED, DiffColors.DIFF_MODIFIED)) {
       assertEquals(scheme.getAttributes(key), editor.colorsScheme.getAttributes(key), key.externalName)
