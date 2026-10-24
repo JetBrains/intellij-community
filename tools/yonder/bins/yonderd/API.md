@@ -61,8 +61,8 @@ file of that holder.
 - A refused `Start` deletes the ref of its pack, unless a kept run has the same id.
 - A run that ends with a refusal shows the exit code 255 in `Runs`. A run that a cancel ends before its command starts
   ends with the exit code 130.
-- A TLS handshake has 10 s in all. At most 32 handshakes go on at a time, and the agent closes a socket over that cap
-  at once.
+- A TLS handshake has 10 s in all. At most 32 handshakes go on at a time, and at most 8 of one peer address. The agent
+  closes a socket over a cap at once.
 
 ## The files
 

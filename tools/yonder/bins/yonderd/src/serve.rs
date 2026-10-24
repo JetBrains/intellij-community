@@ -1,14 +1,14 @@
 //! `yonderd serve`: the listener of the agent. A thread per connection. Each connection: the TLS handshake within a
 //! total deadline, then [`Request::Hello`], then one request. At most [`MAX_HANDSHAKES`] handshakes go on at a time, and
-//! a socket over that cap is closed at once. A request that waits for a lock, bd or git sends a heartbeat while it
+//! at most [`MAX_HANDSHAKES_PER_PEER`] of one address, so one host of the network cannot hold all of them. A socket
+//! over a cap is closed at once. A request that waits for a lock, bd or git sends a heartbeat while it
 //! waits: `Have`, the end of `Pack`, `Lease` and `Release`. The requests of a repository and of a lease are here; the
 //! requests of a run are in `run_requests`. A thread runs the cleanup of `cleanup` every hour.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::io::{self, Write};
 use std::net::{IpAddr, Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::mpsc::{self, RecvTimeoutError};
 use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::thread;
@@ -30,6 +30,9 @@ const READ_DEADLINE: Duration = Duration::from_secs(10);
 
 /// The most handshakes that go on at a time.
 pub(crate) const MAX_HANDSHAKES: usize = 32;
+
+/// The most handshakes of one peer address that go on at a time. A run opens a few connections at once.
+pub(crate) const MAX_HANDSHAKES_PER_PEER: usize = 8;
 
 /// The deadline of each chunk of a pack. The client builds the pack into a file before it sends it, so each chunk
 /// comes as fast as the link carries it.
@@ -92,19 +95,18 @@ pub(crate) fn serve(home: Home, bind: IpAddr, port: u16, out: &mut dyn Write) ->
         }
     });
 
-    let handshakes = Arc::new(AtomicUsize::new(0));
+    let handshakes = Arc::new(Handshakes::default());
     for socket in listener.incoming() {
         match socket {
             Ok(socket) => {
-                if handshakes.load(Ordering::SeqCst) >= MAX_HANDSHAKES {
-                    log(&format!("closed a connection: {MAX_HANDSHAKES} handshakes go on already"));
+                let peer = socket.peer_addr().map_or(IpAddr::from([0, 0, 0, 0]), |address| address.ip());
+                let Some(admitted) = Handshakes::admit(&handshakes, peer) else {
+                    log(&format!("closed a connection from {peer}: its cap of handshakes is full"));
                     drop(socket);
                     continue;
-                }
-                handshakes.fetch_add(1, Ordering::SeqCst);
+                };
                 let agent = Arc::clone(&agent);
-                let handshakes = Arc::clone(&handshakes);
-                thread::spawn(move || agent.connection(socket, &handshakes));
+                thread::spawn(move || agent.connection(socket, admitted));
             }
             Err(error) => {
                 log(&format!("cannot accept a connection: {error}"));
@@ -113,6 +115,55 @@ pub(crate) fn serve(home: Home, bind: IpAddr, port: u16, out: &mut dyn Write) ->
         }
     }
     Ok(())
+}
+
+/// The handshakes that go on, in all and per peer address.
+#[derive(Debug, Default)]
+pub(crate) struct Handshakes {
+    counts: Mutex<HandshakeCounts>,
+}
+
+#[derive(Debug, Default)]
+struct HandshakeCounts {
+    total: usize,
+    per_peer: HashMap<IpAddr, usize>,
+}
+
+impl Handshakes {
+    /// Counts a handshake of `peer` when both caps have room. The answer drops the count when it drops.
+    pub(crate) fn admit(handshakes: &Arc<Self>, peer: IpAddr) -> Option<Admitted> {
+        let mut counts = handshakes.counts.lock().unwrap_or_else(PoisonError::into_inner);
+        let of_peer = counts.per_peer.get(&peer).copied().unwrap_or(0);
+        if counts.total >= MAX_HANDSHAKES || of_peer >= MAX_HANDSHAKES_PER_PEER {
+            return None;
+        }
+        counts.total += 1;
+        counts.per_peer.insert(peer, of_peer + 1);
+        Some(Admitted {
+            handshakes: Arc::clone(handshakes),
+            peer,
+        })
+    }
+}
+
+/// One counted handshake, see [`Handshakes::admit`].
+#[derive(Debug)]
+pub(crate) struct Admitted {
+    handshakes: Arc<Handshakes>,
+    peer: IpAddr,
+}
+
+impl Drop for Admitted {
+    fn drop(&mut self) {
+        let mut counts = self.handshakes.counts.lock().unwrap_or_else(PoisonError::into_inner);
+        counts.total -= 1;
+        if let Some(of_peer) = counts.per_peer.get_mut(&self.peer) {
+            *of_peer -= 1;
+            if *of_peer == 0 {
+                counts.per_peer.remove(&self.peer);
+            }
+        }
+    }
 }
 
 /// A line of the log of `serve`: its stderr, which launchd writes to `~/Library/Logs/yonderd.log`.
@@ -125,13 +176,13 @@ impl Agent {
         Runs::new(self.home.runs_dir())
     }
 
-    /// Serves one connection. `handshakes` counts this one until its handshake ends.
-    fn connection(&self, socket: TcpStream, handshakes: &AtomicUsize) {
+    /// Serves one connection. `admitted` counts this one until its handshake ends.
+    fn connection(&self, socket: TcpStream, admitted: Admitted) {
         let address = socket
             .peer_addr()
             .map_or_else(|_| "an unknown address".to_owned(), |address| address.to_string());
         let accepted = handshake(socket, &self.tls);
-        handshakes.fetch_sub(1, Ordering::SeqCst);
+        drop(admitted);
         let mut channel = match accepted {
             Ok(channel) => channel,
             Err(error) => {

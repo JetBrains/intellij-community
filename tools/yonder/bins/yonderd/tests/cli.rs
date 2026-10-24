@@ -1222,8 +1222,8 @@ fn a_slow_handshake_is_cut_at_the_deadline_and_a_socket_over_the_cap_closes_at_o
         started.elapsed()
     };
 
-    // 32 handshakes that send nothing fill the cap, and the next socket is closed at once.
-    let idle: Vec<TcpStream> = (0..32).map(|_| TcpStream::connect(agent.address).expect("connected")).collect();
+    // 8 handshakes that send nothing fill the cap of one peer, and its next socket is closed at once.
+    let idle: Vec<TcpStream> = (0..8).map(|_| TcpStream::connect(agent.address).expect("connected")).collect();
     thread::sleep(Duration::from_millis(300));
     let mut over = TcpStream::connect(agent.address).expect("connected");
     let waited = read_end(&mut over);

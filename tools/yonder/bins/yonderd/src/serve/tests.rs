@@ -34,6 +34,33 @@ fn a_repository_that_a_check_found_needs_no_second_check() {
     assert_eq!(agent.repo("~/repo").expect_err("no directory").code, REPO_MISSING);
 }
 
+/// One peer fills its own cap and leaves room for the others, and the total cap holds for all peers.
+#[test]
+fn a_peer_gets_its_own_cap_of_handshakes_within_the_total_cap() {
+    let handshakes = Arc::new(Handshakes::default());
+    let peer = |last: u8| IpAddr::from([192, 168, 1, last]);
+    let busy: Vec<Admitted> = (0..MAX_HANDSHAKES_PER_PEER)
+        .map(|_| Handshakes::admit(&handshakes, peer(1)).expect("room for the peer"))
+        .collect();
+    assert!(Handshakes::admit(&handshakes, peer(1)).is_none(), "the cap of the peer is full");
+    let others: Vec<Admitted> = (2..=4)
+        .flat_map(|last| (0..MAX_HANDSHAKES_PER_PEER).map(move |_| last))
+        .map(|last| Handshakes::admit(&handshakes, peer(last)).expect("room for another peer"))
+        .collect();
+    assert_eq!(busy.len() + others.len(), MAX_HANDSHAKES);
+    assert!(Handshakes::admit(&handshakes, peer(5)).is_none(), "the total cap is full");
+    drop(busy);
+    assert!(
+        Handshakes::admit(&handshakes, peer(1)).is_some(),
+        "an ended handshake frees its count"
+    );
+    drop(others);
+    assert!(
+        Handshakes::admit(&handshakes, peer(5)).is_some(),
+        "the other peers freed the total cap"
+    );
+}
+
 #[test]
 fn a_fetch_directory_stays_inside_the_slot() {
     assert!(is_inner_path("out/bt-runs"));
