@@ -129,6 +129,10 @@ verbose_file_reads = "warn"
 # Workspace crates.
 bt-core = { path = "crates/bt-core" }
 bt-junit = { path = "crates/bt-junit" }
+# The client of yonder, for `--host`, and its link. rules_rs finds the path of a crate of the lock only in a
+# dependency of a member, so `bt` names both. `defs.bzl` maps both to their targets in this module.
+yonder-client = { path = "../yonder/crates/yonder-client" }
+yonder-link = { path = "../yonder/crates/yonder-link" }
 
 # Documents and text.
 jiff = "0.2.37"

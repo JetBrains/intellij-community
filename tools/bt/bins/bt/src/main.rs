@@ -19,6 +19,7 @@ mod execute;
 mod options;
 mod prepare;
 mod remote;
+mod ssh;
 
 use std::path::PathBuf;
 use std::process::ExitCode;

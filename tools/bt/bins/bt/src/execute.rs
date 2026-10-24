@@ -13,7 +13,7 @@ use crate::digest::{
 };
 use crate::options::{Args, Invocation, parse_args};
 use crate::prepare::{Prepare, prepare_host};
-use crate::remote::{DEFAULT_HOST_REPO, DEFAULT_IDLE_HOURS, Host, release_on_host, run_on_host};
+use crate::remote::{DEFAULT_IDLE_HOURS, Host, HostLink, Yonder, release_on_host, run_on_host};
 use bt_core::bep::parse_bep;
 use bt_core::evidence::keep_failed_evidence;
 use bt_core::lanes::{
@@ -126,6 +126,15 @@ where
     I: IntoIterator<Item = T>,
     T: Into<OsString> + Clone,
 {
+    execute_with(argv, runtime, &Yonder::new(runtime))
+}
+
+/// [`execute`] with the link to the agent of a `--host` machine, which the tests script.
+pub(crate) fn execute_with<I, T>(argv: I, runtime: &dyn Runtime, link: &dyn HostLink) -> Result<Outcome, Refusal>
+where
+    I: IntoIterator<Item = T>,
+    T: Into<OsString> + Clone,
+{
     let argv: Vec<OsString> = argv.into_iter().map(Into::into).collect();
     let areas = Areas::load(runtime)?;
     match parse_args(argv.iter().cloned(), &areas)? {
@@ -138,11 +147,11 @@ where
             Some(alias) => {
                 let host = Host {
                     alias,
-                    repo: args.host_repo.as_deref().unwrap_or(DEFAULT_HOST_REPO),
+                    repo: args.host_repo.as_deref(),
                     idle_hours: args.host_idle_hours.unwrap_or(DEFAULT_IDLE_HOURS),
                 };
                 if args.release {
-                    return release_on_host(&host, runtime);
+                    return release_on_host(&host, runtime, link);
                 }
                 if args.prepare {
                     let prepare = Prepare {
@@ -150,12 +159,12 @@ where
                         yes: args.yes,
                         take_lease: args.take_lease,
                     };
-                    return Ok(prepare_host(&host, &prepare, runtime));
+                    return Ok(prepare_host(&host, &prepare, runtime, link));
                 }
                 if args.selector.is_none() && args.module.is_none() && args.lane.is_none() {
                     return Err(fail_usage("Pass a selector, --module or --lane; see --help"));
                 }
-                run_on_host(&host, args.json, &argv, runtime)
+                run_on_host(&host, args.json, &argv, runtime, link)
             }
             None if args.release || args.prepare => Err(fail_usage("--release and --prepare need --host")),
             None => execute_args(&args, runtime, &areas),

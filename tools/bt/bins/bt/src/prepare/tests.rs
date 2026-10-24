@@ -6,8 +6,10 @@ use pretty_assertions::assert_eq;
 use super::*;
 use bt_core::fake::{FakeRuntime, HOME_DIR, refusal};
 
-use crate::execute::execute;
-use crate::remote::SSH_OPTIONS;
+use crate::execute::execute_with;
+use crate::remote::fake::{FakeLink, agent_info, yonder_refusal};
+use crate::ssh::SSH_OPTIONS;
+use yonder_client::{Leased, Prepared};
 
 const LOCAL_MASTER: &str = "1111111111111111111111111111111111111111";
 const HOST_MASTER: &str = "2222222222222222222222222222222222222222";
@@ -22,6 +24,9 @@ const LOCAL_NETRC: &str = "machine cache.example.test login me password fake-loc
 const LOCAL_SETTINGS: &str = "<settings>\n  <servers>\n    <server>\n      <id>intellij-dependencies</id>\n      <password>fake-token-secret</password>\n    </server>\n  </servers>\n</settings>\n";
 /// The marker name that the fake hash gives the fake token.
 const MARKER: &str = "c60dbf6914b9127db260";
+/// The build event file of the agent build, and the binary that it names.
+const AGENT_EVENTS: &str = "/tmp/bt-yonderd-events.json";
+const AGENT_BINARY: &str = "/out/bazel-out/darwin_arm64-opt/bin/external/community+/tools/yonder/yonderd";
 
 fn answered(exit_code: i32, output: &str) -> SpawnResult {
     SpawnResult {
@@ -40,7 +45,12 @@ fn ready() -> FakeRuntime {
     fake.put_absolute(&format!("{HOME_DIR}/.local/bin/bd"), "a binary");
     fake.put_absolute(&format!("{HOME_DIR}/.m2/settings.xml"), LOCAL_SETTINGS);
     fake.put_absolute(&format!("{HOME_DIR}/.netrc"), LOCAL_NETRC);
+    fake.put_absolute(
+        AGENT_EVENTS,
+        &format!("{{\"namedSetOfFiles\":{{\"files\":[{{\"name\":\"yonderd\",\"uri\":\"file://{AGENT_BINARY}\"}}]}}}}\n"),
+    );
     let rules = [
+        ("tools/yonder:yonderd", answered(0, "")),
         ("LogLevel=ERROR studio true", answered(0, "")),
         ("if [ -d", answered(0, &format!("{LOCAL_MASTER}\n"))),
         (
@@ -62,6 +72,7 @@ fn ready() -> FakeRuntime {
         // 2100-01-01: a token that has not expired.
         ("stat -f %m", answered(0, "4102444800\n")),
         ("curl", answered(0, "404")),
+        ("hostname", answered(0, "dev-mac\n")),
     ];
     fake.state()
         .spawn_rules
@@ -74,10 +85,27 @@ fn answer_first(fake: &FakeRuntime, text: &str, result: SpawnResult) {
     fake.state().spawn_rules.insert(0, (text.to_owned(), result));
 }
 
+/// A link to an agent that answers, and that `yonder prepare` installs.
+fn ready_link() -> FakeLink {
+    let link = FakeLink::default();
+    link.answer_hello(Ok(agent_info()));
+    link.answer_prepare(Ok(Prepared {
+        copied: true,
+        launchd: "restarted".to_owned(),
+        agent: agent_info(),
+        host_file: format!("{HOME_DIR}/.config/yonder/hosts/studio.json").into(),
+    }));
+    link
+}
+
 fn prepare(argv: &[&str], fake: &FakeRuntime) -> Outcome {
+    prepare_with(argv, fake, &ready_link())
+}
+
+fn prepare_with(argv: &[&str], fake: &FakeRuntime, link: &FakeLink) -> Outcome {
     let mut full = vec!["--host", "studio", "--prepare"];
     full.extend(argv);
-    execute(full, fake).unwrap_or_else(|failure| panic!("{argv:?} refused: {failure:?}"))
+    execute_with(full, fake, link).unwrap_or_else(|failure| panic!("{argv:?} refused: {failure:?}"))
 }
 
 fn spawned_text(fake: &FakeRuntime) -> Vec<String> {
@@ -106,6 +134,7 @@ fn a_ready_host_reports_ok_for_each_step_and_changes_nothing() {
             "ok      tool: rustup is there",
             "absent  tool: docker is not there; only some lanes need it",
             "absent  tool: tmux is not there; only some lanes need it",
+            "ok      agent: yonderd 0.1.0 answers on 192.168.1.24:7741 (macos aarch64)",
             "ok      netrc: ~/.netrc on studio has an entry for cache.example.test: true",
             "ok      Maven: ~/.m2/settings.xml on studio has all 1 Space servers",
             "ok      token markers: studio has the expiry marker of the token of intellij-dependencies",
@@ -373,22 +402,131 @@ fn a_missing_local_entry_is_reported_by_name() {
 }
 
 #[test]
-fn take_lease_takes_the_warm_lease_of_this_checkout() {
+fn take_lease_takes_the_warm_lease_of_this_checkout_through_yonder() {
     let fake = ready();
-    answer_first(&fake, "'lease'", answered(0, "the lease L1 of bt-remote-x is /pool/1/idea-1\n"));
-    let outcome = prepare(&["--take-lease"], &fake);
+    let link = ready_link();
+    link.answer_lease(Ok(Leased {
+        slot: "/pool/1/idea-1".to_owned(),
+        lease_id: "L1".to_owned(),
+        fresh: true,
+    }));
+    let outcome = prepare_with(&["--take-lease"], &fake, &link);
+    let holder = holder(&fake);
     assert!(
         outcome
             .text
-            .ends_with("done    lease: the lease L1 of bt-remote-x is /pool/1/idea-1"),
+            .ends_with(&format!("done    lease: the lease L1 of {holder} is /pool/1/idea-1 (new)")),
+        "{}",
+        outcome.text
+    );
+    assert!(link.calls().contains(&format!("lease studio None {holder}")), "{:?}", link.calls());
+}
+
+/// The agent step builds `yonderd` with the Bazel launcher of bt and gives the built binary to `yonder prepare`.
+#[test]
+fn the_agent_is_built_here_and_installed_through_yonder() {
+    let fake = ready();
+    let link = ready_link();
+    let outcome = prepare_with(&[], &fake, &link);
+    assert!(
+        outcome.text.contains(&format!(
+            "done    agent: copied to ~/.local/bin/yonderd; yonderd 0.1.0 answers on 192.168.1.24:7741 (macos aarch64), launchd restarted, host file {HOME_DIR}/.config/yonder/hosts/studio.json"
+        )),
+        "{}",
+        outcome.text
+    );
+    assert_spawned(
+        &fake,
+        &format!(
+            "/bin/sh {}/bazel.cmd build --config=bt --build_event_json_file={AGENT_EVENTS} --nobuild_event_json_file_path_conversion //tools/yonder:yonderd",
+            bt_core::fake::REPO_ROOT
+        ),
+    );
+    let prepares = link.prepares();
+    assert_eq!(prepares.len(), 1);
+    assert_eq!(prepares[0].agent, std::path::Path::new(AGENT_BINARY));
+    assert_eq!(
+        (
+            prepares[0].alias.as_str(),
+            prepares[0].port,
+            prepares[0].repo.as_str(),
+            prepares[0].name.as_str()
+        ),
+        ("studio", 7741, "~/projects/idea-1", "bt on dev-mac")
+    );
+    assert!(fake.state().removed.contains(&AGENT_EVENTS.to_owned()), "the event file is removed");
+}
+
+#[test]
+fn a_failed_agent_build_or_prepare_is_missing() {
+    let fake = ready();
+    answer_first(&fake, "tools/yonder:yonderd", answered(1, "ERROR: no such target\n"));
+    let link = ready_link();
+    let outcome = prepare_with(&[], &fake, &link);
+    let command = format!(
+        "/bin/sh {}/bazel.cmd build --config=bt --build_event_json_file={AGENT_EVENTS} --nobuild_event_json_file_path_conversion //tools/yonder:yonderd",
+        bt_core::fake::REPO_ROOT
+    );
+    assert!(
+        outcome
+            .text
+            .contains(&format!("missing agent: `{command}` failed:\nERROR: no such target")),
+        "{}",
+        outcome.text
+    );
+    assert!(link.prepares().is_empty());
+    assert_eq!(outcome.exit_code, exit::INFRA);
+
+    let stalled = ready();
+    answer_first(&stalled, "tools/yonder:yonderd", answered(STOPPED_IDLE, ""));
+    let outcome = prepare_with(&[], &stalled, &ready_link());
+    assert!(
+        outcome
+            .text
+            .contains(&format!("missing agent: `{command}` wrote nothing for 30 min and was stopped")),
+        "{}",
+        outcome.text
+    );
+    assert!(
+        stalled.state().idle_limits.contains(&std::time::Duration::from_secs(1800)),
+        "the build is a watched child"
+    );
+
+    let link = ready_link();
+    link.answer_prepare(Err(yonder_refusal(
+        yonder_client::code::SSH_FAILED,
+        "cannot copy the agent on studio over ssh: exit 255",
+    )));
+    let outcome = prepare_with(&[], &ready(), &link);
+    assert!(
+        outcome
+            .text
+            .contains("missing agent: cannot copy the agent on studio over ssh: exit 255"),
         "{}",
         outcome.text
     );
 }
 
+/// A dry run asks the agent for its hello and installs nothing.
+#[test]
+fn a_dry_run_without_an_agent_says_that_prepare_installs_it() {
+    let fake = ready();
+    let link = FakeLink::default();
+    link.answer_hello(Err(yonder_refusal(yonder_client::code::NO_HOST, "no host file for studio")));
+    let outcome = prepare_with(&["--dry-run"], &fake, &link);
+    assert!(
+        outcome
+            .text
+            .contains("missing agent: no host file for studio; --prepare installs it"),
+        "{}",
+        outcome.text
+    );
+    assert!(!spawned_text(&fake).iter().any(|command| command.contains("yonderd")));
+}
+
 #[test]
 fn prepare_needs_a_host() {
-    let failure = refusal(execute(["--prepare"], &ready()));
+    let failure = refusal(execute_with(["--prepare"], &ready(), &FakeLink::default()));
     assert_eq!(failure.exit, exit::USAGE);
 }
 

@@ -17,8 +17,9 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 
 `bt_rust_crate` in `defs.bzl` declares each crate: its library or binary, its `<crate>_test` and its `<crate>-clippy`.
 It binds `rust_tool_crate`, the shared macro core in `community/build/rust-tools/defs.bzl`, to the `@bt` hub. bt-core
-takes the slash-path rules from `distpath` of the dev-dist tools, through a path dependency. `_CROSS_MODULE_CRATES` in
-`defs.bzl` maps it to its target in this module, so Bazel builds it once.
+takes the slash-path rules from `distpath` of the dev-dist tools, and `bt` takes `yonder-client` and `yonder-link` of
+yonder, through path dependencies. `_CROSS_MODULE_CRATES` in `defs.bzl` maps each to its target in this module, so
+Bazel builds it once.
 `optimized_binary` of the core declares a shipped binary: one file, and always optimized. `defs.bzl` re-exports it for
 the Air UI-lane workspace. The spec of a Rust tool workspace is `community/build/rust-tools/README.md`.
 
@@ -62,43 +63,37 @@ label for an explicit run. A module without a target of its own gets the code `m
 
 ## Runs on another machine
 
-`--host <ssh alias>` runs the same command on another machine, such as `bt --host studio --lane fast`. The flag can
-stand before or after the selector. `bins/bt/src/remote.rs` is the local half, and `bins/bt/src/remote.sh` is the
-half that runs on the host.
+`--host <alias>` runs the same command on another machine, such as `bt --host studio --lane fast`. The flag can stand
+before or after the selector. `bins/bt/src/remote.rs` calls the client of yonder (`community/tools/yonder`), and the
+agent `yonderd` on the host does the rest. No step of a run uses ssh.
 
 1. bt refuses a checkout with local changes, untracked files included, because only the commit reaches the host.
-2. bt pushes HEAD to the main repository of the host as `refs/bt-remote/<run id>`. Only the missing git objects
-   travel. `--host-repo` or `BT_HOST_REPO` names that repository, and the default is `~/projects/idea-1`.
-3. Over ssh, the host checks out the commit in the Branch Deck lease of this checkout, and runs
-   `./community/tools/bt.cmd` there with the same arguments, less `--host`. Its stderr streams here as it comes. Its
-   stdout is the digest or the `--json` payload. Its exit code is the exit code here, and an ssh failure is 6.
-4. The host moves the new run directories of `out/bt-runs` to a stage. bt copies them to `out/bt-runs` here with
-   `scp`, and the digest names each local copy.
-5. On every way out, the host deletes the ref. When this process ends early (Ctrl+C, a kill, a lost connection), the
-   host sees the end of its stdin, interrupts the bt process group, and waits for it.
+2. The client sends the git objects that the host lacks, as a thin pack, to the main repository of the host.
+   `--host-repo` or `BT_HOST_REPO` names that repository. Without them, the host file of `--prepare` names it.
+3. The agent checks out the commit in the Branch Deck lease of this checkout, and runs `./community/tools/bt.cmd`
+   there with the same arguments, less `--host`. Its stderr streams here as it comes. Its stdout is the digest or the
+   `--json` payload. Its exit code is the exit code here. A refusal of yonder is 6, with the code `host_<code>`, and
+   local changes are 2.
+4. The new run directories of `out/bt-runs` come back to `out/bt-runs` here, and the digest names each local copy.
+5. The run lives on the agent, not on the connection. A connection that is quiet for 60 s is lost, and the client
+   follows the run again for up to 10 min. Ctrl+C cancels the run on the host and shows its output to the end. A
+   second Ctrl+C leaves at once with 6, and with `--json` it writes the payload of an infrastructure outcome.
+6. A host that has none of the commits near HEAD would need the whole history. bt refuses that with `host_behind`,
+   and `--prepare` moves the master of the host.
 
 ### The warm lease
 
 Each local checkout is one lease holder on the host, `bt-remote-<hash of the checkout path>`. Its first run takes a
-lease with `bd lease get`, and `~/.cache/bt-remote/leases/<holder>.lease` on the host records it. Each later run checks
-out its commit in the same slot, so the Bazel server and the output base of the slot stay warm. Two checkouts take two
-leases. A second run of the same checkout waits until the first one ends.
-
-`bt --host <alias> --release` returns the lease. It passes `--confirm-preserved` to `bd lease return`, which gives up
-the commit in the slot: the commit came from this checkout, which keeps it. Each run also returns the lease of every
-other checkout that no run used for 8 hours (`--host-idle-hours`, `BT_HOST_IDLE_HOURS`). That return first checks out
-the HEAD of the main repository in the slot, so it gives up no commit.
-
-The host needs ssh in batch mode, git, `bd` on the PATH of its login shell, and the bootstrap that the `*.cmd`
-wrappers do. The first run of a checkout pays for `bd lease get` and starts a Bazel server. The first run in a new
-slot also bootstraps Bazel and builds everything that the remote cache does not serve. The digest of the host names
-the paths of the host, except the copied `out/bt-runs` directories.
+lease with `bd lease get`. Each later run checks out its commit in the same slot, so the Bazel server and the output
+base of the slot stay warm. Two checkouts take two leases. A second run of the same checkout waits until the first one
+ends. `bt --host <alias> --release` returns the lease. Each run also returns the lease of every other checkout that no
+run used for 8 hours (`--host-idle-hours`, `BT_HOST_IDLE_HOURS`).
 
 ### Prepare a host
 
 `bt --host <alias> --prepare` makes a machine of the user ready for `--host` runs. The user runs it in a terminal.
 Each step is idempotent and prints `ok`, `done` or `missing`. An optional tool prints `absent`. `--dry-run` changes
-nothing. `bins/bt/src/prepare.rs` holds the steps:
+nothing. `bins/bt/src/prepare.rs` holds the steps, and `bins/bt/src/ssh.rs` bounds each ssh call:
 
 1. ssh: the alias answers in batch mode. Otherwise the step names the `~/.ssh/config` settings to check
    (`AddressFamily inet`, and `IdentitiesOnly yes` only with an `IdentityFile`), and the other steps do not run.
@@ -109,16 +104,21 @@ nothing. `bins/bt/src/prepare.rs` holds the steps:
 3. `bd`: the local `~/.local/bin/bd` replaces another version on a host of the same platform. `~/.local/bin` goes on
    the PATH in `~/.zshenv`.
 4. Tools: git, Xcode, rustup, docker and tmux. The step only reports them, and it never installs one.
-5. Credentials: the host must have the `~/.netrc` entries of the Bazel remote services (the hosts that `.bazelrc` and
+5. The agent: bt builds `@community//tools/yonder:yonderd` with Bazel, and `yonder prepare` copies it to
+   `~/.local/bin/yonderd` on the host when its SHA-256 differs. `yonderd setup` adds this client to the allow list of
+   the agent and starts it as a LaunchAgent. The host file `~/.config/yonder/hosts/<alias>.json` here pins the agent.
+   With `--dry-run`, the step only asks the agent for its hello.
+6. Credentials: the host must have the `~/.netrc` entries of the Bazel remote services (the hosts that `.bazelrc` and
    its imports name), the `~/.m2/settings.xml` servers of the `.idea/jarRepositories.xml` repositories on the Space
    package host, and the expiry marker of the token of each such server. `IJPrivatePackagesAuthorizer` names that
    marker by the hash of the token and keeps the expiry as its modification time, so the copy keeps that time. A local
    marker that is missing or in the past means that the local token must be renewed first. The step prints host names
-   and server ids only, never a value. It copies a missing entry only after a yes at the terminal, or with `--yes`. Without a
-   terminal it refuses, so an agent cannot start the copy. `credentials.rs` merges each entry into the host file and
-   writes the file through the stdin of ssh, atomically and with mode 600. Then the remote cache must answer 404, not
-   401.
-6. `--take-lease` takes the warm lease of this checkout, so that the first run does not wait for `bd lease get`.
+   and server ids only, never a value. It copies a missing entry only after a yes at the terminal, or with `--yes`.
+   Without a terminal it refuses, so an agent cannot start the copy. `credentials.rs` merges each entry into the host
+   file and writes the file through the stdin of ssh, atomically and with mode 600. Then the remote cache must answer
+   404, not 401.
+7. `--take-lease` takes the warm lease of this checkout through the agent, so that the first run does not wait for
+   `bd lease get`.
 
 A run without `--prepare` copies no credential.
 

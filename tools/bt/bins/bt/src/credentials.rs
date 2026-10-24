@@ -182,7 +182,7 @@ pub(crate) fn copy_entries(runtime: &dyn Runtime, alias: &str, id: &str, file: &
     };
     let local = runtime.read_text_file(&home.join(file)).unwrap_or_default();
     // `LogLevel=ERROR` of the ssh options keeps the warnings of ssh out of the text, and a failed ssh exits nonzero.
-    let read = crate::remote::remote_call(runtime, &ssh(alias, &format!("cat {file} 2>/dev/null || true")));
+    let read = crate::ssh::remote_call(runtime, &ssh(alias, &format!("cat {file} 2>/dev/null || true")));
     if read.exit_code != 0 {
         return vec![format!("cannot read ~/{file} on {alias}: ssh exited with {}", read.exit_code)];
     }
@@ -324,7 +324,7 @@ fn line_start(text: &str, index: usize) -> usize {
 }
 
 fn ssh(alias: &str, command: &str) -> Vec<OsString> {
-    crate::remote::ssh(alias, command)
+    crate::ssh::ssh(alias, command)
 }
 
 #[cfg(test)]

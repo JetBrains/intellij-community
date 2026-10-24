@@ -57,19 +57,21 @@ Options:
   --dry-run                print the resolved label, filter, and argv; run nothing
   --list                   print the resolution candidates for the selector; run nothing
   --verbose                also echo bazel's own captured output
-  --host <ssh alias>       run the committed HEAD on that machine: push it, check it out in the
-                           Branch Deck lease that this checkout keeps there, run the same command,
-                           stream its output, copy back the kept logs of out/bt-runs; refused when
-                           the checkout has local changes
-  --host-repo <path>       the main repository on the --host machine (env BT_HOST_REPO,
-                           default ~/projects/idea-1)
+  --host <ssh alias>       run the committed HEAD on that machine over yonder: send the missing git
+                           objects, check the commit out in the Branch Deck lease that this checkout
+                           keeps there, run the same command, stream its output, copy back the kept
+                           logs of out/bt-runs; Ctrl+C cancels the run there; refused when the
+                           checkout has local changes; --prepare installs the agent first
+  --host-repo <path>       the main repository on the --host machine (env BT_HOST_REPO, default
+                           the one of the host file of --prepare, ~/projects/idea-1)
   --host-idle-hours <n>    a run on the --host machine returns each lease of another checkout that
                            no run used for n hours (env BT_HOST_IDLE_HOURS, default 8)
   --release                with --host: return the lease that the runs of this checkout keep there
   --prepare                with --host: make that machine ready, step by step (ssh, the repository,
-                           bd and its PATH, the tools, the credentials, the remote cache), and say
-                           ok, done or missing for each; --dry-run changes nothing. Run it in a
-                           terminal: the credential copy asks y/N and refuses without a terminal
+                           bd and its PATH, the tools, the yonder agent, the credentials, the remote
+                           cache), and say ok, done or missing for each; --dry-run changes nothing.
+                           Run it in a terminal: the credential copy asks y/N and refuses without a
+                           terminal
   --yes                    with --prepare: copy the missing credentials without the question
   --take-lease             with --prepare: take the warm lease of this checkout
   --help

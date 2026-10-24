@@ -7,27 +7,33 @@
 //!    local master when its master is clean and an ancestor.
 //! 3. `bd`: the local binary, copied when the host has another version, and `~/.local/bin` on the PATH of `~/.zshenv`.
 //! 4. Tools: git, Xcode, rustup, docker, tmux. Reported only, never installed.
-//! 5. Credentials: the netrc entries of the Bazel services, the Maven servers of the Space repositories, and the
+//! 5. The agent: `yonderd`, built here with Bazel, goes to the host through `yonder prepare` of `yonder-client`. It
+//!    adds this client to the allow list of the agent and writes the host file, so a run needs no ssh. With
+//!    `--dry-run`, the step only asks the agent for its hello.
+//! 6. Credentials: the netrc entries of the Bazel services, the Maven servers of the Space repositories, and the
 //!    expiry marker of the token of each server, which `IJPrivatePackagesAuthorizer` reads. An expired or missing local
 //!    marker asks for a renewed local token first. The copy needs a yes at the terminal or `--yes`, and it
 //!    refuses without a terminal, so an agent cannot start it. Then the remote cache must answer 404, not 401.
-//! 6. With `--take-lease`, the warm lease of this checkout, so the first run does not wait for `bd lease get`.
+//! 7. With `--take-lease`, the warm lease of this checkout, so the first run does not wait for `bd lease get`.
 
 use std::ffi::OsString;
 use std::fmt::Write as _;
 use std::path::PathBuf;
 
 use bt_core::exit;
-use bt_core::runtime::{Platform, Runtime, SpawnResult};
+use bt_core::lanes::bazel_command;
+use bt_core::runtime::{Platform, Runtime, STOPPED_IDLE, SpawnResult, repo_file};
+use yonder_client::PrepareRequest;
+use yonder_link::DEFAULT_PORT;
 
 use crate::credentials::{
     Format, NETRC, NetrcFormat, REMOTE_CACHE_OPTION, SETTINGS_XML, SettingsFormat, copy_entries, service_hosts, services,
     space_repository_ids,
 };
+use crate::digest::tail_lines;
 use crate::execute::Outcome;
-use crate::remote::{
-    COPY_IDLE, Host, HostScript, host_command, host_path_word, push_url, remote_call, scp, ssh, ssh_git_config, watched_git,
-};
+use crate::remote::{DEFAULT_HOST_REPO, Host, HostLink, holder};
+use crate::ssh::{COPY_IDLE, host_path_word, host_repo, push_url, remote_call, scp, ssh, ssh_git_config, watched_git};
 
 /// What `--prepare` may do.
 pub(crate) struct Prepare {
@@ -84,6 +90,19 @@ impl Report {
     }
 }
 
+/// The Bazel target of the agent, from a community root. An ultimate root names it in the module `@community`.
+const AGENT_TARGET: &str = "//tools/yonder:yonderd";
+
+/// The base name of the agent binary.
+const AGENT_NAME: &str = "yonderd";
+
+/// How long the agent build may write nothing before it is stopped. The runtime bounds a quiet child, not a whole
+/// one; a Bazel build that writes progress goes on.
+const AGENT_BUILD_LIMIT: std::time::Duration = std::time::Duration::from_secs(30 * 60);
+
+/// How much of a failed agent build the report shows.
+const BUILD_TAIL_LINES: usize = 20;
+
 /// The empty key that the remote cache check asks for: a valid key that no cache holds.
 const ABSENT_CACHE_KEY: &str = "0000000000000000000000000000000000000000000000000000000000000000";
 
@@ -100,15 +119,16 @@ const TOOLS: [(&str, &str, bool); 5] = [
     ("tmux", "tmux", false),
 ];
 
-pub(crate) fn prepare_host(host: &Host<'_>, prepare: &Prepare, runtime: &dyn Runtime) -> Outcome {
+pub(crate) fn prepare_host(host: &Host<'_>, prepare: &Prepare, runtime: &dyn Runtime, link: &dyn HostLink) -> Outcome {
     let mut report = Report::default();
     if check_ssh(runtime, host.alias, &mut report) {
         prepare_repository(runtime, host, prepare, &mut report);
         prepare_bd(runtime, host.alias, prepare, &mut report);
         check_tools(runtime, host.alias, &mut report);
+        prepare_agent(runtime, host, prepare, link, &mut report);
         prepare_credentials(runtime, host.alias, prepare, &mut report);
         if prepare.take_lease {
-            take_lease(runtime, host, prepare, &mut report);
+            take_lease(runtime, host, prepare, link, &mut report);
         }
     }
     Outcome {
@@ -138,7 +158,7 @@ fn check_ssh(runtime: &dyn Runtime, alias: &str, report: &mut Report) -> bool {
 
 fn prepare_repository(runtime: &dyn Runtime, host: &Host<'_>, prepare: &Prepare, report: &mut Report) {
     const STEP: &str = "repository";
-    let repo = host_path_word(host.repo);
+    let repo = host_path_word(host_repo(host));
     let local = local_git(runtime, &["rev-parse", "--verify", "-q", "refs/heads/master"]);
     let local_master = local.output.trim().to_owned();
     if local.exit_code != 0 || local_master.is_empty() {
@@ -156,7 +176,7 @@ fn prepare_repository(runtime: &dyn Runtime, host: &Host<'_>, prepare: &Prepare,
     );
     let host_master = probed.output.trim();
     if probed.exit_code != 0 {
-        report.add(Status::Missing, STEP, format!("cannot probe {} on {}", host.repo, host.alias));
+        report.add(Status::Missing, STEP, format!("cannot probe {} on {}", host_repo(host), host.alias));
         return;
     }
     match host_master {
@@ -164,9 +184,13 @@ fn prepare_repository(runtime: &dyn Runtime, host: &Host<'_>, prepare: &Prepare,
         "no-master" => report.add(
             Status::Missing,
             STEP,
-            format!("{} on {} has no master branch", host.repo, host.alias),
+            format!("{} on {} has no master branch", host_repo(host), host.alias),
         ),
-        _ if host_master == local_master => report.add(Status::Ok, STEP, format!("master of {} is at {}", host.repo, short(&local_master))),
+        _ if host_master == local_master => report.add(
+            Status::Ok,
+            STEP,
+            format!("master of {} is at {}", host_repo(host), short(&local_master)),
+        ),
         _ => move_master(runtime, host, &repo, host_master, &local_master, prepare, report),
     }
 }
@@ -180,7 +204,8 @@ fn create_repository(runtime: &dyn Runtime, host: &Host<'_>, repo: &str, local_m
             STEP,
             format!(
                 "{} on {} is missing; --prepare creates it and pushes about {size} MiB",
-                host.repo, host.alias
+                host_repo(host),
+                host.alias
             ),
         );
         return;
@@ -199,7 +224,7 @@ fn create_repository(runtime: &dyn Runtime, host: &Host<'_>, repo: &str, local_m
         report.add(
             Status::Missing,
             STEP,
-            format!("cannot create {} on {}: {}", host.repo, host.alias, created.output.trim()),
+            format!("cannot create {} on {}: {}", host_repo(host), host.alias, created.output.trim()),
         );
         return;
     }
@@ -213,7 +238,7 @@ fn create_repository(runtime: &dyn Runtime, host: &Host<'_>, repo: &str, local_m
         report.add(
             Status::Done,
             STEP,
-            format!("created {} on {} at {}", host.repo, host.alias, short(local_master)),
+            format!("created {} on {} at {}", host_repo(host), host.alias, short(local_master)),
         );
     }
 }
@@ -249,7 +274,7 @@ fn move_master(
         report.add(
             Status::Missing,
             STEP,
-            format!("{} on {} has local changes, so its master stays", host.repo, host.alias),
+            format!("{} on {} has local changes, so its master stays", host_repo(host), host.alias),
         );
         return;
     }
@@ -291,7 +316,7 @@ fn push_sync_and_move(
 ) -> bool {
     const STEP: &str = "repository";
     let ssh_config = ssh_git_config();
-    let url = push_url(host);
+    let url = push_url(host.alias, host_repo(host));
     let pushed = watched_git(
         runtime,
         &[
@@ -691,7 +716,7 @@ fn copy_markers(runtime: &dyn Runtime, alias: &str, markers: &[String]) -> Strin
     }
 }
 
-fn take_lease(runtime: &dyn Runtime, host: &Host<'_>, prepare: &Prepare, report: &mut Report) {
+fn take_lease(runtime: &dyn Runtime, host: &Host<'_>, prepare: &Prepare, link: &dyn HostLink, report: &mut Report) {
     const STEP: &str = "lease";
     if !prepare.change {
         report.add(
@@ -701,22 +726,126 @@ fn take_lease(runtime: &dyn Runtime, host: &Host<'_>, prepare: &Prepare, report:
         );
         return;
     }
-    let script = HostScript {
-        mode: "lease",
-        holder: &crate::remote::holder(runtime),
-        id: &format!("lease-{}", runtime.now_ms()),
-        commit: "",
+    let holder = holder(runtime);
+    match link.lease(host.alias, host.repo, &holder) {
+        Ok(leased) => {
+            let fresh = if leased.fresh { "new" } else { "warm" };
+            report.add(
+                Status::Done,
+                STEP,
+                format!("the lease {} of {holder} is {} ({fresh})", leased.lease_id, leased.slot),
+            );
+        }
+        Err(refusal) => report.add(Status::Missing, STEP, format!("cannot take the lease: {}", refusal.message)),
+    }
+}
+
+/// The agent step: a hello for `--dry-run`, else the build of `yonderd` here and `yonder prepare`.
+fn prepare_agent(runtime: &dyn Runtime, host: &Host<'_>, prepare: &Prepare, link: &dyn HostLink, report: &mut Report) {
+    const STEP: &str = "agent";
+    if !prepare.change {
+        match link.hello(host.alias) {
+            Ok(agent) => report.add(Status::Ok, STEP, agent_text(&agent)),
+            Err(refusal) => report.add(Status::Missing, STEP, format!("{}; --prepare installs it", refusal.message)),
+        }
+        return;
+    }
+    let agent = match build_agent(runtime) {
+        Ok(agent) => agent,
+        Err(said) => {
+            report.add(Status::Missing, STEP, said);
+            return;
+        }
     };
-    let taken = runtime.spawn_streaming(&ssh(host.alias, &host_command(host, &script, &[])));
-    let said = taken.output.trim();
-    if taken.exit_code == 0 {
-        report.add(Status::Done, STEP, said.to_owned());
+    let name = client_name(runtime);
+    let request = PrepareRequest {
+        alias: host.alias,
+        agent: &agent,
+        port: DEFAULT_PORT,
+        repo: host.repo.unwrap_or(DEFAULT_HOST_REPO),
+        name: &name,
+    };
+    match link.prepare(&request) {
+        Ok(prepared) => {
+            let (status, copied) = if prepared.copied {
+                (Status::Done, "copied to ~/.local/bin/yonderd; ")
+            } else {
+                (Status::Ok, "")
+            };
+            report.add(
+                status,
+                STEP,
+                format!(
+                    "{copied}{}, launchd {}, host file {}",
+                    agent_text(&prepared.agent),
+                    prepared.launchd,
+                    prepared.host_file.display()
+                ),
+            );
+        }
+        Err(refusal) => report.add(Status::Missing, STEP, refusal.message),
+    }
+}
+
+fn agent_text(agent: &yonder_client::AgentInfo) -> String {
+    format!(
+        "yonderd {} answers on {} ({} {})",
+        agent.version, agent.address, agent.os, agent.arch
+    )
+}
+
+/// Builds `yonderd` with the Bazel launcher of bt, and answers the binary that the build event file names.
+fn build_agent(runtime: &dyn Runtime) -> Result<PathBuf, String> {
+    let label = if runtime.exists(&repo_file(runtime, "community/tools/yonder")) {
+        format!("@community{AGENT_TARGET}")
     } else {
-        report.add(
-            Status::Missing,
-            STEP,
-            format!("cannot take the lease (exit {}); its stderr is above", taken.exit_code),
-        );
+        AGENT_TARGET.to_owned()
+    };
+    let events = runtime.temp_file("bt-yonderd-events");
+    let args: Vec<String> = [
+        "build",
+        "--config=bt",
+        &format!("--build_event_json_file={}", events.display()),
+        "--nobuild_event_json_file_path_conversion",
+        &label,
+    ]
+    .map(str::to_owned)
+    .to_vec();
+    let command = bazel_command(runtime.repo_root(), runtime.platform(), &args);
+    let shown = command.iter().map(|part| part.to_string_lossy()).collect::<Vec<_>>().join(" ");
+    runtime.write_error(&format!("> {shown}"));
+    let built = runtime.spawn_watched(&command, AGENT_BUILD_LIMIT);
+    let binary = runtime.read_lines(&events).find_map(|line| built_file(&line, AGENT_NAME));
+    let _ = runtime.remove(&events);
+    if built.exit_code == STOPPED_IDLE {
+        return Err(format!(
+            "`{shown}` wrote nothing for {} min and was stopped",
+            AGENT_BUILD_LIMIT.as_secs() / 60
+        ));
+    }
+    if built.exit_code != 0 {
+        return Err(format!("`{shown}` failed:\n{}", tail_lines(&built.output, BUILD_TAIL_LINES)));
+    }
+    binary.ok_or_else(|| format!("the build of {label} named no {AGENT_NAME} file"))
+}
+
+/// The local file with the base name `name` that one line of a build event file names: the build names its outputs
+/// as `"uri":"file://<path>"`.
+fn built_file(line: &str, name: &str) -> Option<PathBuf> {
+    bt_core::regex!(r#""uri":"file://([^"]+)""#)
+        .captures_iter(line)
+        .map(|found| found[1].to_owned())
+        .filter(|path| path.rsplit('/').next() == Some(name))
+        .last()
+        .map(PathBuf::from)
+}
+
+/// The name of this client in the allow list of the agent: `bt on <host name>`.
+fn client_name(runtime: &dyn Runtime) -> String {
+    let named = runtime.spawn(&["hostname".into()], None);
+    match named.output.trim() {
+        name if named.exit_code == 0 && !name.is_empty() => format!("bt on {name}"),
+        _ => "bt".to_owned(),
     }
 }
 
