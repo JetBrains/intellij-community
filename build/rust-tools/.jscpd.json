@@ -1,0 +1,12 @@
+{
+  "path": ["../../tools/bt", "../../tools/vm", "../../tools/yonder", "../dev-dist-tools", "."],
+  "format": ["rust"],
+  "minTokens": 50,
+  "minLines": 5,
+  "ignorePattern": [
+    "(?m)^\\s*(pub(\\([a-z]+\\))?\\s+)?(use|mod)\\s.*$",
+    "(?m)^// Copyright .*$"
+  ],
+  "ignore": ["**/target/**", "**/out/**", "**/testdata/**"],
+  "reporters": ["silent"]
+}
