@@ -6,11 +6,8 @@ import com.intellij.diff.DiffExtension
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
-import com.intellij.diff.tools.util.DiffSplitter
 import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
-import com.intellij.diff.util.DiffDividerDrawUtil
-import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffLineNumberConverter
 import com.intellij.diff.util.Side
 import com.intellij.openapi.diff.DiffColors
@@ -21,7 +18,6 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.ColorUtil
-import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import java.awt.Font
 import java.util.function.IntUnaryOperator
@@ -42,22 +38,7 @@ internal class StructuralDiffPreviewAppearance : DiffExtension() {
           override fun onAfterRediff() = showCurrentLineNumbers(viewer)
         })
       }
-      is TwosideTextDiffViewer -> {
-        for (side in Side.entries) quiet(viewer.getEditor(side), side)
-        viewer.addListener(object : DiffViewerListener() {
-          override fun onInit() = hideDividerPolygons(viewer)
-        })
-      }
-    }
-  }
-
-  /** Each side colors its own lines, so the divider shows no polygons between them. The viewer adds its divider at the init. */
-  private fun hideDividerPolygons(viewer: TwosideTextDiffViewer) {
-    UIUtil.findComponentOfType(viewer.component, DiffSplitter::class.java)?.setPainter { g, divider ->
-      val graphics = DiffDividerDrawUtil.getDividerGraphics(g, divider, viewer.editor1.component)
-      graphics.color = DiffDrawUtil.getDividerColor(viewer.editor1)
-      graphics.fill(graphics.clipBounds)
-      graphics.dispose()
+      is TwosideTextDiffViewer -> for (side in Side.entries) quiet(viewer.getEditor(side), side)
     }
   }
 
