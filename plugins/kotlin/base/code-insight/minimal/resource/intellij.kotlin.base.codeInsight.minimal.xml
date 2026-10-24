@@ -17,6 +17,9 @@
     <!-- endregion -->
   </dependencies>
   <extensionPoints>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.constantTrimCallSupport"
+                    interface="org.jetbrains.kotlin.idea.editor.KotlinConstantTrimCallSupport"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.kotlin.smartEnterProcessorFixer" beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.SmartEnterProcessorWithFixers$Fixer"/>

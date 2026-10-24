@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.idea.base.test.formatter.FormatSettingsUtil
 import org.jetbrains.kotlin.idea.formatter.KotlinLineIndentProvider
 import org.jetbrains.kotlin.idea.test.KotlinLightPlatformCodeInsightTestCase
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.junit.Assert
 import java.io.File
 
@@ -65,34 +66,36 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
             withoutCustomLineIndentProvider && ignoreFormatter
         )
 
-        configureCodeStyleAndRun(
-            project = project,
-            configurator = { it: CodeStyleSettings ->
-                val configurator = FormatSettingsUtil.createConfigurator(originalFileText, it)
-                if (!inverted) {
-                    configurator.configureSettings()
-                } else {
-                    configurator.configureInvertedSettings()
-                }
-                if (normalIndentSize != null) {
-                    val kotlinSettings = it.getCommonSettings(KotlinLanguage.INSTANCE)
-                    if (kotlinSettings.indentOptions == null) {
-                        kotlinSettings.initIndentOptions()
+        withCustomCompilerOptions(originalFileText, project, module) {
+            configureCodeStyleAndRun(
+                project = project,
+                configurator = { it: CodeStyleSettings ->
+                    val configurator = FormatSettingsUtil.createConfigurator(originalFileText, it)
+                    if (!inverted) {
+                        configurator.configureSettings()
+                    } else {
+                        configurator.configureInvertedSettings()
                     }
-                    kotlinSettings.indentOptions?.INDENT_SIZE = normalIndentSize
+                    if (normalIndentSize != null) {
+                        val kotlinSettings = it.getCommonSettings(KotlinLanguage.INSTANCE)
+                        if (kotlinSettings.indentOptions == null) {
+                            kotlinSettings.initIndentOptions()
+                        }
+                        kotlinSettings.indentOptions?.INDENT_SIZE = normalIndentSize
+                    }
+                },
+                body = {
+                    doNewlineTest(
+                        beforeFilePath = originalFile.path,
+                        afterFilePath = afterFilePath,
+                        withoutCustomLineIndentProvider = withoutCustomLineIndentProvider,
+                        ignoreFormatter = ignoreFormatter,
+                        ignoreInvFormatter = ignoreInvFormatter,
+                        isInvertedTest = inverted,
+                    )
                 }
-            },
-            body = {
-                doNewlineTest(
-                    beforeFilePath = originalFile.path,
-                    afterFilePath = afterFilePath,
-                    withoutCustomLineIndentProvider = withoutCustomLineIndentProvider,
-                    ignoreFormatter = ignoreFormatter,
-                    ignoreInvFormatter = ignoreInvFormatter,
-                    isInvertedTest = inverted,
-                )
-            }
-        )
+            )
+        }
     }
 
     private fun doNewlineTest(

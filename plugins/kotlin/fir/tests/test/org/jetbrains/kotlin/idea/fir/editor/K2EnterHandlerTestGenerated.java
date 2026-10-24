@@ -1544,6 +1544,11 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
                     runTest("../../idea/tests/testData/editor/enterHandler/multilineString/spaces/InsertDefaultMargin.after.kt");
                 }
 
+                @TestMetadata("NoTrimIndentInAnnotationParameterDefault.after.kt")
+                public void testNoTrimIndentInAnnotationParameterDefault() throws Exception {
+                    runTest("../../idea/tests/testData/editor/enterHandler/multilineString/spaces/NoTrimIndentInAnnotationParameterDefault.after.kt");
+                }
+
                 @TestMetadata("NoTrimIndentInAnnotations.after.kt")
                 public void testNoTrimIndentInAnnotations() throws Exception {
                     runTest("../../idea/tests/testData/editor/enterHandler/multilineString/spaces/NoTrimIndentInAnnotations.after.kt");
@@ -1577,6 +1582,36 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
                 @TestMetadata("RestoreIndentFromEmptyLine.after.kt")
                 public void testRestoreIndentFromEmptyLine() throws Exception {
                     runTest("../../idea/tests/testData/editor/enterHandler/multilineString/spaces/RestoreIndentFromEmptyLine.after.kt");
+                }
+
+                @TestMetadata("TrimIndentInAnnotationParameterDefault.after.kt")
+                public void testTrimIndentInAnnotationParameterDefault() throws Exception {
+                    runTest("../../idea/tests/testData/editor/enterHandler/multilineString/spaces/TrimIndentInAnnotationParameterDefault.after.kt");
+                }
+
+                @TestMetadata("TrimIndentInAnnotations.after.kt")
+                public void testTrimIndentInAnnotations() throws Exception {
+                    runTest("../../idea/tests/testData/editor/enterHandler/multilineString/spaces/TrimIndentInAnnotations.after.kt");
+                }
+
+                @TestMetadata("TrimIndentInConst.after.kt")
+                public void testTrimIndentInConst() throws Exception {
+                    runTest("../../idea/tests/testData/editor/enterHandler/multilineString/spaces/TrimIndentInConst.after.kt");
+                }
+
+                @TestMetadata("TrimIndentInConstInObject.after.kt")
+                public void testTrimIndentInConstInObject() throws Exception {
+                    runTest("../../idea/tests/testData/editor/enterHandler/multilineString/spaces/TrimIndentInConstInObject.after.kt");
+                }
+
+                @TestMetadata("TrimIndentInConstInterpolationPrefix.after.kt")
+                public void testTrimIndentInConstInterpolationPrefix() throws Exception {
+                    runTest("../../idea/tests/testData/editor/enterHandler/multilineString/spaces/TrimIndentInConstInterpolationPrefix.after.kt");
+                }
+
+                @TestMetadata("TrimMarginInConst.after.kt")
+                public void testTrimMarginInConst() throws Exception {
+                    runTest("../../idea/tests/testData/editor/enterHandler/multilineString/spaces/TrimMarginInConst.after.kt");
                 }
             }
 

@@ -4,4 +4,5 @@ object O {
     """
 }
 
+// COMPILER_ARGUMENTS: -XXLanguage:-IntrinsicConstEvaluation
 // IGNORE_FORMATTER

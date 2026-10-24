@@ -27,9 +27,12 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -242,7 +245,7 @@ class KotlinMultilineStringEnterHandler : EnterHandlerDelegate {
             private val useTabs = kotlinIndentOptions.USE_TAB_CHARACTER
             private val tabSize = kotlinIndentOptions.TAB_SIZE
             private val regularIndent = kotlinIndentOptions.INDENT_SIZE
-            val marginIndent = regularIndent
+            val marginIndent: Int = regularIndent
 
             fun getSmartSpaces(count: Int): String = when {
                 useTabs -> StringUtil.repeat("\t", count / tabSize) + StringUtil.repeat(" ", count % tabSize)
@@ -276,7 +279,7 @@ class KotlinMultilineStringEnterHandler : EnterHandlerDelegate {
             return element.parents.firstIsInstanceOrNull()
         }
 
-        fun inMultilineString(element: PsiElement?, offset: Int) =
+        fun inMultilineString(element: PsiElement?, offset: Int): Boolean =
             !(findString(element, offset)?.isSingleQuoted() ?: true)
 
         fun getMarginCharFromLiteral(str: KtStringTemplateExpression, marginChar: Char = DEFAULT_TRIM_MARGIN_CHAR): Char? {
@@ -345,7 +348,7 @@ class KotlinMultilineStringEnterHandler : EnterHandlerDelegate {
             )
         }
 
-        fun String.prefixLength(f: (Char) -> Boolean) = takeWhile(f).count()
+        fun String.prefixLength(f: (Char) -> Boolean): Int = takeWhile(f).count()
 
         /**
          * Note: this returns if the string is _exactly_ the start of a multiline string (except for trimming spaces).
@@ -358,7 +361,7 @@ class KotlinMultilineStringEnterHandler : EnterHandlerDelegate {
 
         fun insertTrimCall(document: Document, literal: KtStringTemplateExpression, marginChar: Char?) {
             if (hasTrimIndentCallInChain(literal) || getMarginCharFromTrimMarginCallsInChain(literal) != null) return
-            if (literal.parents.any { it is KtAnnotationEntry || (it as? KtProperty)?.hasModifier(KtTokens.CONST_KEYWORD) == true }) return
+            if (literal.isInConstantContext() && !KotlinConstantTrimCallSupport.isTrimCallAllowedInConstantContext(literal)) return
 
             if (marginChar == null) {
                 document.insertString(literal.textRange.endOffset, ".${TRIM_INDENT_CALL}()")
@@ -373,6 +376,15 @@ class KotlinMultilineStringEnterHandler : EnterHandlerDelegate {
                 )
             }
         }
+
+        private fun KtStringTemplateExpression.isInConstantContext(): Boolean = parents.any {
+            it is KtAnnotationEntry ||
+                    (it as? KtProperty)?.hasModifier(KtTokens.CONST_KEYWORD) == true ||
+                    (it as? KtParameter)?.isAnnotationParameter() == true
+        }
+
+        private fun KtParameter.isAnnotationParameter(): Boolean =
+            (ownerFunction as? KtPrimaryConstructor)?.containingClass()?.isAnnotation() == true
 
         private data class HostPosition(val file: PsiFile, val editor: Editor, val offset: Int)
 
