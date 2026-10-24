@@ -111,7 +111,6 @@ jvm_library(
     ),
     module_name = "intellij.platform.diagnostic.telemetry.tests",
     visibility = ["//visibility:public"],
-    exports = ["//platform/diagnostic"],
 )
 
 jvm_library(
@@ -130,11 +129,6 @@ jvm_library(
         "//platform/diagnostic/telemetry:telemetry_test_lib",
     ],
     visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//platform/diagnostic",
-        "//platform/diagnostic:diagnostic_test_lib",
-    ],
     runtime_deps = [":telemetry-tests"],
     deps = [
         # do not sort,
@@ -147,10 +141,6 @@ jvm_library(
         "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
         "//libraries/opentelemetry-extension-kotlin",
         "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
-        "//platform/util",
-        "//platform/util:util_test_lib",
-        "//platform/diagnostic",
-        "//platform/diagnostic:diagnostic_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",

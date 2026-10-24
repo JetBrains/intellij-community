@@ -91,7 +91,6 @@ jvm_library(
     ),
     module_name = "intellij.java.guiForms.compiler.tests",
     visibility = ["//visibility:public"],
-    exports = ["//java/compiler/instrumentation-util"],
 )
 
 jvm_library(
@@ -110,30 +109,15 @@ jvm_library(
         "//java/compiler/forms-compiler:java-guiForms-compiler_test_lib",
     ],
     visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//java/compiler/instrumentation-util",
-        "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
-    ],
     runtime_deps = [":java-guiForms-compiler-tests"],
     deps = [
         # do not sort,
-        "//platform/util/jdom",
-        "//platform/util/jdom:jdom_test_lib",
         "//platform/forms_rt:java-guiForms-rt",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
-        "//libraries/asm",
-        "//libraries/asm:asm_test_lib",
-        "//libraries/jgoodies/forms",
-        "//libraries/jgoodies/forms:forms_test_lib",
-        "//java/compiler/instrumentation-util",
-        "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
         "//platform/util",
         "//platform/util:util_test_lib",
         "//platform/util/multiplatform",
         "//platform/util/multiplatform:multiplatform_test_lib",
-        "//libraries/jetbrains/annotations",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
     ],

@@ -7,19 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.http.client" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.commons.logging" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="slf4j-api" level="project" />
-    <orderEntry type="library" scope="TEST" name="slf4j-jdk14" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.maven.resolver.provider" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.maven.resolver.transport" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.commons.lang3" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.plexus.utils" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.commons.codec" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.util.base" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />

@@ -108,11 +108,7 @@ jvm_library(
         "//plugins/performanceTesting/event-bus:tools-ide-starter-bus_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":tools-ide-starter-bus-tests",
-        "//platform/platform-util-netty:ide-util-netty_test_lib",
-    ],
+    runtime_deps = [":tools-ide-starter-bus-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -120,15 +116,6 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
-        "//libraries/kotlin/reflect",
-        "//libraries/kotlin/reflect:reflect_test_lib",
-        "//libraries/netty/codec-http:libraries-netty-codec-http",
-        "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
-        "//libraries/netty/buffer",
-        "//libraries/netty/buffer:buffer_test_lib",
-        "//platform/platform-util-netty:ide-util-netty",
-        "//libraries/netty/codec-compression:libraries-netty-codec-compression",
-        "//libraries/netty/codec-compression:libraries-netty-codec-compression_test_lib",
     ],
 )
 ### auto-generated section `build intellij.tools.ide.starter.bus.tests` end

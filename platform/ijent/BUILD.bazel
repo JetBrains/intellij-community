@@ -93,7 +93,6 @@ jvm_library(
     ),
     module_name = "intellij.platform.ijent.tests",
     visibility = ["//visibility:public"],
-    exports = ["//platform/eel"],
     runtime_deps = [
         # do not sort,
         "//platform/eel/testFramework",
@@ -118,11 +117,6 @@ jvm_library(
         "//platform/ijent:ijent_test_lib",
     ],
     visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//platform/eel",
-        "//platform/eel:eel_test_lib",
-    ],
     runtime_deps = [":ijent-tests"],
     deps = [
         # do not sort,
@@ -147,8 +141,6 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/util/coroutines",
         "//platform/util/coroutines:coroutines_test_lib",
-        "//platform/eel",
-        "//platform/eel:eel_test_lib",
         "//platform/eel-nioFs",
         "//platform/eel-nioFs:eel-nioFs_test_lib",
         "//platform/ijent/impl",

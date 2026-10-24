@@ -50,8 +50,6 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "@lib//:slf4j-api",
         "//fleet/test-runtime",
         "//fleet/test-runtime:test-runtime_test_lib",

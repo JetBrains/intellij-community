@@ -88,11 +88,6 @@ jvm_library(
     ),
     module_name = "intellij.platform.vcs.log.graph.impl.tests",
     visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//platform/util",
-        "//platform/vcs-log/graph-api:vcs-log-graph",
-    ],
 )
 
 jvm_library(
@@ -111,29 +106,14 @@ jvm_library(
         "//platform/vcs-log/graph:vcs-log-graph-impl_test_lib",
     ],
     visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//platform/util",
-        "//platform/util:util_test_lib",
-        "//platform/vcs-log/graph-api:vcs-log-graph",
-        "//platform/vcs-log/graph-api:vcs-log-graph_test_lib",
-    ],
     runtime_deps = [":vcs-log-graph-impl-tests"],
     deps = [
         # do not sort,
-        "//platform/util",
-        "//platform/util:util_test_lib",
-        "//platform/util/base",
-        "//platform/util/base:base_test_lib",
-        "//platform/vcs-log/graph-api:vcs-log-graph",
-        "//platform/vcs-log/graph-api:vcs-log-graph_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "@lib//:kotlin-stdlib",
-        "//libraries/guava",
-        "//libraries/guava:guava_test_lib",
         "//libraries/fastutil",
         "//libraries/fastutil:fastutil_test_lib",
         "//libraries/assertj-core",

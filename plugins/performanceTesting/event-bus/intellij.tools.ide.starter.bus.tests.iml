@@ -10,11 +10,6 @@
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.netty.buffer" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.ide.util.netty" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.netty.codec.compression" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.bus" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.tools.ide.starter.bus" />

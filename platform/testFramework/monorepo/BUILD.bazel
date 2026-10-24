@@ -109,8 +109,6 @@ jvm_library(
     runtime_deps = [":monorepo-tests"],
     deps = [
         # do not sort,
-        "//libraries/junit6-jupiter",
-        "//libraries/junit6-jupiter:junit6-jupiter_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
         "@lib//:kotlin-stdlib",
@@ -138,8 +136,6 @@ jvm_library(
         "//platform/testFramework/core:core_test_lib",
         "//jps/jps-builders:build",
         "//jps/jps-builders:build_test_lib",
-        "//jps/model-serialization",
-        "//jps/model-serialization:model-serialization_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//java/java-runtime:rt",

@@ -56,11 +56,8 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.compose.runtime.desktop" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop.junit" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.jsoup" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jewel.markdown.testing" scope="TEST" />
   </component>

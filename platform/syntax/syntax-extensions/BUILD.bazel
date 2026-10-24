@@ -120,8 +120,6 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//libraries/jetbrains/annotations",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/multiplatformSupport",
         "//platform/multiplatformSupport:multiplatformSupport_test_lib",
         "//libraries/junit6",
@@ -130,8 +128,6 @@ jvm_library(
         "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
         "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
-        "//platform/syntax/syntax-api:syntax",
-        "//platform/syntax/syntax-api:syntax_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.syntax.extensions.tests` end

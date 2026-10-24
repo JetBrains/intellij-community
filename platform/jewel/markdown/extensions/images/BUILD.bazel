@@ -142,8 +142,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/jetbrains/annotations",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/jewel/markdown/core",
         "//platform/jewel/markdown/core:core_test_lib",
         "//platform/jewel/markdown/core:jewel-markdown-core-tests",
@@ -158,14 +156,10 @@ jvm_library(
         "//libraries/coil:coil_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
-        "//libraries/compose-runtime-desktop",
-        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
         "//libraries/kotlinx/coroutines/test",
         "//libraries/kotlinx/coroutines/test:test_test_lib",
         "//libraries/compose-foundation-desktop-junit",
         "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
-        "//libraries/compose-foundation-desktop",
-        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.images.tests` end

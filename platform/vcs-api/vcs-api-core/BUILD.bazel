@@ -109,20 +109,9 @@ jvm_library(
         "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":vcs-core-tests",
-        "//platform/ide-core:ide-core_test_lib",
-    ],
+    runtime_deps = [":vcs-core-tests"],
     deps = [
         # do not sort,
-        "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
-        "//platform/util",
-        "//platform/util:util_test_lib",
-        "//platform/editor-ui-api:editor-ui",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/ide-core",
         "//platform/diff-api:diff",
         "//platform/diff-api:diff_test_lib",
         "//platform/util/diff",
@@ -134,8 +123,6 @@ jvm_library(
         "//libraries/junit6-params:junit6-params_test_lib",
         "//libraries/assertj-core",
         "//libraries/assertj-core:assertj-core_test_lib",
-        "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.vcs.core.tests` end

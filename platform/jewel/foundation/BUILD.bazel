@@ -123,11 +123,6 @@ jvm_library(
     ),
     module_name = "intellij.platform.jewel.foundation.tests",
     visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//libraries/compose-foundation-desktop",
-        "//libraries/skiko",
-    ],
 )
 
 jvm_library(
@@ -147,25 +142,12 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_foundation-tests",
     visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//libraries/compose-foundation-desktop",
-        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
-        "//libraries/skiko",
-        "//libraries/skiko:skiko_test_lib",
-    ],
     runtime_deps = [":foundation-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/jetbrains/annotations",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/compose-foundation-desktop",
-        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
-        "//libraries/skiko",
-        "//libraries/skiko:skiko_test_lib",
         "//libraries/compose-foundation-desktop-junit",
         "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
         "//platform/bazel-runfiles",

@@ -88,7 +88,6 @@ jvm_library(
     ),
     module_name = "intellij.javaFX.community.tests",
     visibility = ["//visibility:public"],
-    exports = ["//plugins/javaFX"],
 )
 
 jvm_library(
@@ -107,11 +106,6 @@ jvm_library(
         "//plugins/javaFX/community:community_test_lib",
     ],
     visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//plugins/javaFX",
-        "//plugins/javaFX:javaFX_test_lib",
-    ],
     runtime_deps = [
         # do not sort,
         ":community-tests",
@@ -119,8 +113,6 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "//plugins/javaFX",
-        "//plugins/javaFX:javaFX_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle",
