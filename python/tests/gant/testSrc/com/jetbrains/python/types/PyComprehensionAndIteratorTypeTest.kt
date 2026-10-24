@@ -697,7 +697,7 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
 
       def test_second_form_fail():
           for chunk in iter(10, ''):
-      #                    ^^^^^^^^ WARNING No overload of 'iter' matches the arguments. Argument types: (Literal[10], Literal[""]). Expected one of: (object: () -> _T | None, sentinel: None), (object: () -> _T, sentinel: object)
+      #                    ^^^^^^^^ WARNING No overload of 'iter' matches the arguments. Argument types: (Literal[10], Literal[""]). Expected one of: (object: SupportsIter[_SupportsNextT_co]), (object: _GetItemIterable[_T]), (object: () -> _T | None, sentinel: None), (object: () -> _T, sentinel: object)
                   pass
 
       def test_first_form():

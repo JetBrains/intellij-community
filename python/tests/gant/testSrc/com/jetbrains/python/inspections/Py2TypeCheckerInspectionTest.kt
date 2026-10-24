@@ -382,7 +382,7 @@ class Py2TypeCheckerInspectionTest : PyCodeInsightTestCase() {
   @TestCaseOptions(languageLevel = LanguageLevel.PYTHON27)
   fun `map arguments in opposite order py2`() = test("""
     map('foo', lambda c: 42)
-    #  ^^^^^^^^^^^^^^^^^^^^^ WARNING No overload of 'map' matches the arguments. Argument types: (str, (c: Unknown) -> Literal[42]). Expected one of: (__func: None, __iter1: Iterable[_T1]), (__func: (_T1) -> _S, __iter1: Iterable[_T1])
+    #  ^^^^^^^^^^^^^^^^^^^^^ WARNING No overload of 'map' matches the arguments. Argument types: (str, (c: Unknown) -> Literal[42]). Expected one of: (__func: None, __iter1: Iterable[_T1]), (__func: None, __iter1: Iterable[_T1], __iter2: Iterable[_T2]), (__func: None, __iter1: Iterable[_T1], __iter2: Iterable[_T2], __iter3: Iterable[_T3]), (__func: None, __iter1: Iterable[_T1], __iter2: Iterable[_T2], __iter3: Iterable[_T3], __iter4: Iterable[_T4]), (__func: None, __iter1: Iterable[_T1], __iter2: Iterable[_T2], __iter3: Iterable[_T3], __iter4: Iterable[_T4], __iter5: Iterable[_T5]), (__func: (_T1) -> _S, __iter1: Iterable[_T1]). And 6 more overloads with a different number of parameters
     """.trimIndent())
 
   @Test

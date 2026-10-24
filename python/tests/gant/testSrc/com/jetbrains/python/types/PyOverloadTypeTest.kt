@@ -435,7 +435,8 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
       @overload
       def f(x: int, y: int) -> str: ...
       def f(x, y=0): ...
-      f(1, "s") # WARNING Expected type 'int', got 'Literal["s"]' instead
+      f(1, "s")
+      #^^^^^^^^ WARNING No overload of 'f' matches the arguments. Argument types: (Literal[1], Literal["s"]). Expected one of: (x: int), (x: int, y: int)
       """,
     )
 
