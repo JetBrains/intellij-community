@@ -103,6 +103,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
 
   private final String myName;
   private boolean myIsSuite;
+  private @NotNull SuiteResultPolicy mySuiteResultPolicy = SuiteResultPolicy.ALL_CHILDREN;
   private final String myLocationUrl;
   private volatile String myMetainfo;
   private final boolean myPreservePresentableName;
@@ -422,6 +423,17 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
 
   public boolean isSuite() {
     return myIsSuite;
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public @NotNull SuiteResultPolicy getSuiteResultPolicy() {
+    return mySuiteResultPolicy;
+  }
+
+  @ApiStatus.Internal
+  public void setSuiteResultPolicy(@NotNull SuiteResultPolicy suiteResultPolicy) {
+    mySuiteResultPolicy = suiteResultPolicy;
   }
 
   @Override
@@ -1015,24 +1027,26 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     if (isLeaf()) {
       state = SuiteFinishedState.EMPTY_SUITE;
     }
-    else if (isDefect()) {
-      // Test suit contains errors if at least one of its tests contains error
-      if (containsErrorTests()) {
-        state = SuiteFinishedState.ERROR_SUITE;
-      }
-      else {
-        // if suite contains failed tests - all suite should be
-        // consider as failed
-        state = containsFailedTests()
-                ? SuiteFinishedState.FAILED_SUITE
-                : SuiteFinishedState.WITH_IGNORED_TESTS_SUITE;
-      }
-    }
-    else if (isEmptySuite()) {
-      state = SuiteFinishedState.EMPTY_SUITE;
-    }
     else {
-      state = SuiteFinishedState.PASSED_SUITE;
+      state = switch (getSuiteResultPolicy()) {
+        case LAST_CHILD -> switch (getChildren().getLast().getMagnitudeInfo()) {
+          case ERROR_INDEX -> SuiteFinishedState.ERROR_SUITE;
+          case FAILED_INDEX -> SuiteFinishedState.FAILED_SUITE;
+          case IGNORED_INDEX -> SuiteFinishedState.WITH_IGNORED_TESTS_SUITE;
+          // An incomplete final attempt cannot produce a passed suite.
+          case NOT_RUN_INDEX, RUNNING_INDEX, TERMINATED_INDEX -> TerminatedState.INSTANCE;
+          case SKIPPED_INDEX, COMPLETE_INDEX, PASSED_INDEX -> SuiteFinishedState.PASSED_SUITE;
+        };
+        case ALL_CHILDREN -> {
+          if (isDefect()) {
+            if (containsErrorTests()) {
+              yield SuiteFinishedState.ERROR_SUITE;
+            }
+            yield containsFailedTests() ? SuiteFinishedState.FAILED_SUITE : SuiteFinishedState.WITH_IGNORED_TESTS_SUITE;
+          }
+          yield isEmptySuite() ? SuiteFinishedState.EMPTY_SUITE : SuiteFinishedState.PASSED_SUITE;
+        }
+      };
     }
     return state;
   }

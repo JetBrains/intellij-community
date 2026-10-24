@@ -23,6 +23,12 @@ public class SuiteInProgressState extends TestInProgressState {
    */
   @Override
   public boolean isDefect() {
+    // A failed attempt must not make ancestors cache a failure before the final attempt finishes.
+    switch (mySuiteProxy.getSuiteResultPolicy()) {
+      case LAST_CHILD -> { return false; }
+      case ALL_CHILDREN -> { }
+    }
+
     if (myDefectFound) {
       return true;
     }
