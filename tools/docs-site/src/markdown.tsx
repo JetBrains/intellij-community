@@ -73,6 +73,22 @@ function titleForPath(path: string): string | null {
   return site().index.docsByPath.get(path)?.title || null
 }
 
+/** A page of the site: its route and its title, null when the target has no known title. */
+export interface SitePage {
+  href: string
+  title: string | null
+}
+
+/** The page of the site for a repo-root-relative path, or null when the site bundles no page of it. */
+export function pageOfRepoPath(repoPath: string): SitePage | null {
+  const contentPath = contentPathOf(site().config.contentRoot, repoPath)
+  if (contentPath === null) {
+    return null
+  }
+  const href = routeForPath(contentPath)
+  return href === null ? null : { href, title: titleForPath(contentPath) }
+}
+
 /** Appends an in-page anchor to a site route as an extra route segment. */
 function routeWithAnchor(route: string, fragment: string | undefined): string {
   return fragment ? `${route}/${encodeURIComponent(fragment)}` : route
@@ -175,12 +191,10 @@ function transformRendered(html: string, baseDir: string, anchorHref?: AnchorHre
       continue
     }
     const [pathPart, fragment] = href.split('#')
-    const { contentRoot } = site().config
-    const repoPath = resolveRepoPath(contentRoot, baseDir, decodeURIComponent(pathPart))
-    const contentPath = contentPathOf(contentRoot, repoPath)
-    const route = contentPath ? routeForPath(contentPath) : null
-    if (route) {
-      anchor.setAttribute('href', routeWithAnchor(route, fragment))
+    const repoPath = resolveRepoPath(site().config.contentRoot, baseDir, decodeURIComponent(pathPart))
+    const page = pageOfRepoPath(repoPath)
+    if (page !== null) {
+      anchor.setAttribute('href', routeWithAnchor(page.href, fragment))
       continue
     }
     // not a bundled doc: bundled source files open in the in-site viewer, everything else on
@@ -207,18 +221,17 @@ function transformRendered(html: string, baseDir: string, anchorHref?: AnchorHre
         // the span names no file of the repository, for example a path inside a jar
         continue
       }
-      const { repoPath, contentPath, fragment, label } = target
+      const { repoPath, fragment, label } = target
       const pathPart = text.split('#')[0]
-      const route = contentPath ? routeForPath(contentPath) : null
-      if (route) {
+      const page = pageOfRepoPath(repoPath)
+      if (page !== null) {
         const link = doc.createElement('a')
-        link.href = routeWithAnchor(route, fragment)
+        link.href = routeWithAnchor(page.href, fragment)
         link.title = repoPath
         // bundled targets with a known title (specs, docs) read as prose links; the resolved
         // path replaces the authored `../…` form when no title exists
-        const title = contentPath ? titleForPath(contentPath) : null
-        if (title) {
-          link.textContent = title
+        if (page.title) {
+          link.textContent = page.title
         }
         else {
           link.className = 'code-link'
