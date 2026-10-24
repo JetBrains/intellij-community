@@ -1570,19 +1570,49 @@ open class FileEditorManagerImpl(
   ): EditorComposite? {
     var composite = if (forceCompositeCreation) null else window.getComposite(file)
     val isNewEditor = composite == null
+    var documentPreparation: EditorDocumentPreparation? = null
     if (composite == null) {
       // IJPL-183875: Explicitly set a composite to open a backend supplied composite
-      composite = createCompositeAndModel(file = file, window = window, fileEntry = fileEntry, hint = options.internalHint)
-                  ?: return null
-      openedCompositeEntries.add(EditorCompositeEntry(composite = composite, delayedState = null))
+      val created = createCompositeAndModelImpl(
+        file = file,
+        window = window,
+        fileEntry = fileEntry,
+        hint = options.internalHint,
+        prepareDocument = fileEntry == null && ClientId.isCurrentlyUnderLocalId,
+      ) ?: return null
+      composite = created.composite
+      documentPreparation = created.documentPreparation
     }
 
-    window.addComposite(
-      composite = composite,
-      file = composite.file,
-      options = options,
-      isNewEditor = isNewEditor,
-    )
+    var mounted = false
+    try {
+      if (isNewEditor) {
+        openedCompositeEntries.add(EditorCompositeEntry(composite = composite, delayedState = null))
+      }
+      documentPreparation?.start()
+      window.addComposite(
+        composite = composite,
+        file = composite.file,
+        options = options,
+        isNewEditor = isNewEditor,
+      )
+      mounted = true
+    }
+    finally {
+      if (!mounted && documentPreparation != null) {
+        try {
+          if (window.getComposite(file) === composite) {
+            closeFile(window = window, composite = composite, runChecks = false)
+          }
+        }
+        finally {
+          openedCompositeEntries.removeIf { it.composite === composite }
+          if (!Disposer.isDisposed(composite)) {
+            Disposer.dispose(composite)
+          }
+        }
+      }
+    }
     if (isNewEditor) {
       openFileSetModificationCount.increment()
     }
@@ -1624,30 +1654,61 @@ open class FileEditorManagerImpl(
     fileEntry: FileEntry? = null,
     hint: FileEditorOpenOptionsHint? = null,
   ): EditorComposite? {
+    return createCompositeAndModelImpl(file, window, fileEntry, hint, prepareDocument = false)?.composite
+  }
+
+  private class CompositeCreation(val composite: EditorComposite, val documentPreparation: EditorDocumentPreparation?)
+
+  private fun createCompositeAndModelImpl(
+    file: VirtualFile,
+    window: EditorWindow,
+    fileEntry: FileEntry?,
+    hint: FileEditorOpenOptionsHint?,
+    prepareDocument: Boolean,
+  ): CompositeCreation? {
     val providerComposite = COMPOSITE_PROVIDER_EP.computeSafeIfAny {
       it.createComposite(project, file, window, fileEntry, hint)
     }
     if (providerComposite != null) {
       EditorOpenTracker.getInstance(project).trackComposite(providerComposite)
-      return providerComposite
+      return CompositeCreation(providerComposite, null)
     }
 
     val compositeCoroutineScope = window.owner.coroutineScope.childScope("EditorComposite(file=${file.name})")
-    val model = createEditorCompositeModel(
-      coroutineScope = compositeCoroutineScope,
-      editorPropertyChangeListener = editorPropertyChangeListener,
-      fileProvider = { file },
-      project = project,
-      fileEntry = fileEntry,
-    )
-    val composite = createCompositeInstance(
-      file = file,
-      model = model,
-      coroutineScope = compositeCoroutineScope,
-    ) ?: return null
-    composite.initDeferred.complete(Unit)
-    EditorOpenTracker.getInstance(project).trackComposite(composite)
-    return composite
+    var composite: EditorComposite? = null
+    var created = false
+    try {
+      val preparation = if (prepareDocument) EditorDocumentPreparation(compositeCoroutineScope, file) else null
+      val model = if (preparation == null) {
+        createEditorCompositeModel(
+          coroutineScope = compositeCoroutineScope,
+          editorPropertyChangeListener = editorPropertyChangeListener,
+          fileProvider = { file },
+          project = project,
+          fileEntry = fileEntry,
+        )
+      }
+      else {
+        createEditorCompositeModelWithPreparedDocument(
+          coroutineScope = compositeCoroutineScope,
+          editorPropertyChangeListener = editorPropertyChangeListener,
+          file = file,
+          project = project,
+          preparation = preparation,
+        )
+      }
+      composite = createCompositeInstance(file = file, model = model, coroutineScope = compositeCoroutineScope) ?: return null
+      composite.initDeferred.complete(Unit)
+      EditorOpenTracker.getInstance(project).trackComposite(composite)
+      created = true
+      return CompositeCreation(composite, preparation)
+    }
+    finally {
+      if (!created && prepareDocument) {
+        compositeCoroutineScope.cancel()
+        composite?.let { Disposer.dispose(it) }
+      }
+    }
   }
 
   internal fun createEditorCompositeModelOnStartup(

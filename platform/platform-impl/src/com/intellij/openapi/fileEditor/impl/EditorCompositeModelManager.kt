@@ -147,11 +147,47 @@ fun createEditorCompositeModel(
   fileEntry: FileEntry? = null,
   coroutineScope: CoroutineScope,
 ): Flow<EditorCompositeModel> {
+  return createEditorCompositeModelImpl(editorPropertyChangeListener, fileProvider, project, fileEntry, coroutineScope, null)
+}
+
+internal class DocumentPreparedEditorModel(
+  model: Flow<EditorCompositeModel>,
+  preparation: EditorDocumentPreparation,
+) : Flow<EditorCompositeModel> by model {
+  val currentProgress: ProgressPipe = preparation.progress
+}
+
+internal fun createEditorCompositeModelWithPreparedDocument(
+  editorPropertyChangeListener: PropertyChangeListener,
+  file: VirtualFile,
+  project: Project,
+  coroutineScope: CoroutineScope,
+  preparation: EditorDocumentPreparation,
+): Flow<EditorCompositeModel> {
+  return DocumentPreparedEditorModel(
+    createEditorCompositeModelImpl(editorPropertyChangeListener, { file }, project, null, coroutineScope, preparation),
+    preparation,
+  )
+}
+
+private inline fun createEditorCompositeModelImpl(
+  editorPropertyChangeListener: PropertyChangeListener,
+  crossinline fileProvider: suspend () -> VirtualFile,
+  project: Project,
+  fileEntry: FileEntry?,
+  coroutineScope: CoroutineScope,
+  preparation: EditorDocumentPreparation?,
+): Flow<EditorCompositeModel> {
   return flow {
     coroutineScope {
       val file = fileProvider()
-      val document = async {
-        serviceAsync<FileDocumentManager>().getOrLoadDocumentUnderProgress(file)
+      val document = if (preparation == null) {
+        async {
+          serviceAsync<FileDocumentManager>().getOrLoadDocumentUnderProgress(file)
+        }
+      }
+      else {
+        null
       }
 
       val deferredProviders = computeFileEditorProviders(
@@ -167,7 +203,7 @@ fun createEditorCompositeModel(
         providers = deferredProviders.await(),
         file = file,
         project = project,
-        document = document.await(),
+        document = if (preparation == null) checkNotNull(document).await() else preparation.await(),
         state = fileEntry,
         flowCollector = this@flow,
       )
