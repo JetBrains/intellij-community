@@ -12,7 +12,7 @@ pub mod proto;
 mod relay;
 
 pub use allow::AllowList;
-pub use channel::{Channel, Closer, Frame, LinkError};
+pub use channel::{Channel, ClientTls, Closer, Frame, LinkError, ServerTls};
 pub use identity::{Fingerprint, Identity};
 
 /// The TCP port of the agent when a host file names none.

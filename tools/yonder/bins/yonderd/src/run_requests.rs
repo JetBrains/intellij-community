@@ -345,15 +345,13 @@ impl<'c> FollowChannel<'c> {
         self.state.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
-    /// Sends `replies` one after the other, with no heartbeat between them.
+    /// Sends `replies` in one write, with no heartbeat between them.
     fn send(&self, replies: &[Reply]) -> Result<(), LinkError> {
         let mut state = self.lock();
         if let Some(error) = state.failed.take() {
             return Err(error);
         }
-        for reply in replies {
-            state.channel.send(reply)?;
-        }
+        state.channel.send_all(replies)?;
         state.sent = Instant::now();
         Ok(())
     }

@@ -19,7 +19,7 @@ use std::time::{Duration, Instant, SystemTime};
 
 use pretty_assertions::assert_eq;
 use yonder_link::proto::{Phase, Reply, Request, RunSpec, SCHEMA_VERSION, Stream};
-use yonder_link::{AllowList, Channel, Fingerprint, Identity, LinkError};
+use yonder_link::{AllowList, Channel, ClientTls, Fingerprint, Identity, LinkError};
 
 /// The deadline of each connect and read of the test client.
 const DEADLINE: Duration = Duration::from_secs(30);
@@ -308,7 +308,7 @@ impl Followed {
 
 impl Agent {
     fn connect_as(&self, identity: &Identity) -> Result<Channel, LinkError> {
-        Channel::connect(self.address, self.fingerprint, identity, DEADLINE)
+        Channel::connect(self.address, &ClientTls::new(self.fingerprint, identity)?, DEADLINE)
     }
 
     /// A connection after its hello, with `request` sent.

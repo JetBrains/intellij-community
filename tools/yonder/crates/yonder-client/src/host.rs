@@ -10,7 +10,7 @@ use std::thread;
 use std::time::Duration;
 
 use yonder_link::proto::{Reply, Request, SCHEMA_VERSION};
-use yonder_link::{Channel, Identity, LinkError};
+use yonder_link::{Channel, ClientTls, LinkError};
 
 use crate::config::{Config, HostFile};
 use crate::{Refusal, Timing, VERSION, code, prepare_hint, refused};
@@ -33,7 +33,8 @@ pub struct AgentInfo {
 pub struct Host {
     config: Config,
     file: HostFile,
-    identity: Identity,
+    /// The TLS configuration of the pin of the host and the identity of the client, built once for all connections.
+    tls: ClientTls,
     timing: Timing,
 }
 
@@ -51,10 +52,12 @@ impl Host {
     pub(crate) fn open(config: &Config, alias: &str, timing: Timing) -> Result<Self, Refusal> {
         let file = config.read_host(alias)?;
         let identity = config.identity()?;
+        let tls = ClientTls::new(file.fingerprint, &identity)
+            .map_err(|error| refused(code::CONFIG, format!("cannot set up TLS with the client identity: {error}")))?;
         Ok(Self {
             config: config.clone(),
             file,
-            identity,
+            tls,
             timing,
         })
     }
@@ -195,7 +198,7 @@ impl Host {
     }
 
     fn attempt(&self, address: SocketAddr) -> Result<(Channel, AgentInfo), Attempt> {
-        let mut channel = match Channel::connect(address, self.file.fingerprint, &self.identity, self.timing.connect) {
+        let mut channel = match Channel::connect(address, &self.tls, self.timing.connect) {
             Ok(channel) => channel,
             Err(LinkError::Untrusted(said)) => return Err(Attempt::Untrusted(said)),
             Err(error) => return Err(Attempt::Failed(error.to_string())),

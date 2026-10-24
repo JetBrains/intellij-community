@@ -14,7 +14,7 @@ use std::thread;
 use std::time::{Duration, Instant, SystemTime};
 
 use yonder_link::proto::{Reply, Request, SCHEMA_VERSION};
-use yonder_link::{Channel, Frame, Identity, LinkError};
+use yonder_link::{Channel, Frame, Identity, LinkError, ServerTls};
 
 use crate::child::never;
 use crate::files::private_dir;
@@ -46,7 +46,8 @@ const CLEANUP_EVERY: Duration = Duration::from_secs(3600);
 #[derive(Debug)]
 pub(crate) struct Agent {
     pub(crate) home: Home,
-    pub(crate) identity: Identity,
+    /// The TLS configuration of the identity and the allow list, built once. The allow list is read at each handshake.
+    pub(crate) tls: ServerTls,
     /// The binary of the agent, which `supervise` runs.
     pub(crate) exe: PathBuf,
 }
@@ -69,7 +70,8 @@ pub(crate) fn serve(home: Home, bind: IpAddr, port: u16, out: &mut dyn Write) ->
     let address = listener.local_addr().map_err(|error| refused(AGENT_ERROR, error.to_string()))?;
     let line = serde_json::json!({"listening": address.to_string(), "fingerprint": identity.fingerprint().to_string()});
     let _ = writeln!(out, "{line}").and_then(|()| out.flush());
-    let agent = Arc::new(Agent { home, identity, exe });
+    let tls = ServerTls::new(&identity, home.allow_file()).map_err(|error| refused(AGENT_ERROR, format!("cannot set up TLS: {error}")))?;
+    let agent = Arc::new(Agent { home, tls, exe });
 
     let home = agent.home.clone();
     thread::spawn(move || {
@@ -119,7 +121,7 @@ impl Agent {
         let address = socket
             .peer_addr()
             .map_or_else(|_| "an unknown address".to_owned(), |address| address.to_string());
-        let accepted = handshake(socket, &self.identity, self.home.allow_file());
+        let accepted = handshake(socket, &self.tls);
         handshakes.fetch_sub(1, Ordering::SeqCst);
         let mut channel = match accepted {
             Ok(channel) => channel,
@@ -320,7 +322,7 @@ fn have(home: &Home, repo: &str, commits: &[String]) -> Result<Reply, Refusal> {
 
 /// The TLS handshake of `socket` within the total deadline of [`tuning::handshake`]. A timer thread shuts the socket
 /// down at the deadline, so a client that sends a byte at a time cannot hold the handshake longer.
-fn handshake(socket: TcpStream, identity: &Identity, allow: PathBuf) -> Result<Channel, LinkError> {
+fn handshake(socket: TcpStream, tls: &ServerTls) -> Result<Channel, LinkError> {
     let deadline = tuning::handshake();
     let cut = socket.try_clone().map_err(LinkError::Io)?;
     let (done, ended) = mpsc::channel::<()>();
@@ -329,7 +331,7 @@ fn handshake(socket: TcpStream, identity: &Identity, allow: PathBuf) -> Result<C
             let _ = cut.shutdown(Shutdown::Both);
         }
     });
-    let accepted = Channel::accept(socket, identity, allow, READ_DEADLINE.min(deadline));
+    let accepted = Channel::accept(socket, tls, READ_DEADLINE.min(deadline));
     let _ = done.send(());
     accepted
 }

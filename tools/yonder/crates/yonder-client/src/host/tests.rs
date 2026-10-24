@@ -1,6 +1,7 @@
 use std::net::TcpListener;
 
 use pretty_assertions::assert_eq;
+use yonder_link::Identity;
 use yonder_link::proto::Reply;
 
 use super::*;

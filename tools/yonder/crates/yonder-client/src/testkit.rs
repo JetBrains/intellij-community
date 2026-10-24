@@ -9,7 +9,7 @@ use std::thread;
 use std::time::Duration;
 
 use yonder_link::proto::{Reply, Request, SCHEMA_VERSION};
-use yonder_link::{AllowList, Channel, Identity};
+use yonder_link::{AllowList, Channel, Identity, ServerTls};
 
 use crate::config::{Config, HostFile};
 use crate::process::{Call, Processes, Ran, Stopped};
@@ -125,7 +125,7 @@ impl FakeAgent {
         let stop = Arc::new(AtomicBool::new(false));
         let script: Arc<Script> = Arc::new(script);
         {
-            let identity = identity.clone();
+            let tls = ServerTls::new(&identity, allow).expect("the agent TLS");
             let requests = Arc::clone(&requests);
             let stop = Arc::clone(&stop);
             thread::spawn(move || {
@@ -134,8 +134,8 @@ impl FakeAgent {
                         return;
                     }
                     let Ok(socket) = socket else { continue };
-                    let (identity, allow, requests, script) = (identity.clone(), allow.clone(), Arc::clone(&requests), Arc::clone(&script));
-                    thread::spawn(move || serve(socket, &identity, allow, schema, &requests, &*script));
+                    let (tls, requests, script) = (tls.clone(), Arc::clone(&requests), Arc::clone(&script));
+                    thread::spawn(move || serve(socket, &tls, schema, &requests, &*script));
                 }
             });
         }
@@ -167,8 +167,8 @@ impl Drop for FakeAgent {
     }
 }
 
-fn serve(socket: TcpStream, identity: &Identity, allow: PathBuf, schema: u32, requests: &Mutex<Vec<Request>>, script: &Script) {
-    let Ok(mut channel) = Channel::accept(socket, identity, allow, Duration::from_secs(5)) else {
+fn serve(socket: TcpStream, tls: &ServerTls, schema: u32, requests: &Mutex<Vec<Request>>, script: &Script) {
+    let Ok(mut channel) = Channel::accept(socket, tls, Duration::from_secs(5)) else {
         return;
     };
     let Ok(Request::Hello { .. }) = channel.recv::<Request>() else {
