@@ -10,13 +10,13 @@
     <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" exported="" scope="TEST" />
     <orderEntry type="module-library" exported="" scope="TEST">
       <library name="org.jetbrains.compose.ui.ui.test.junit4.desktop" type="repository">
-        <properties maven-id="org.jetbrains.compose.ui:ui-test-junit4-desktop:1.12.1">
+        <properties maven-id="org.jetbrains.compose.ui:ui-test-junit4-desktop:1.13.0-beta01">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.12.1/ui-test-junit4-desktop-1.12.1.jar">
-              <sha256sum>4a198be74dcf9097de7366065b34c1ac821e2aefc5687fc726e0df93dfd6c578</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.13.0-beta01/ui-test-junit4-desktop-1.13.0-beta01.jar">
+              <sha256sum>8f74143564422e63a521e7954096466efa1b7d2eb07d7bf32e425710605c3f32</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.12.1/ui-test-desktop-1.12.1.jar">
-              <sha256sum>660fa942dca3fad63d2436841eba124a8908b686961a912f4a0dcddd29469e52</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.13.0-beta01/ui-test-desktop-1.13.0-beta01.jar">
+              <sha256sum>73c085d8e75a991642e37dbbbdaa6f86db278121b7293d27fe0a645a84fa9616</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -32,6 +32,7 @@
             <dependency maven-id="org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose-desktop" />
             <dependency maven-id="org.jetbrains.compose.runtime:runtime-desktop" />
             <dependency maven-id="org.jetbrains.compose.ui:ui-desktop" />
+            <dependency maven-id="org.jetbrains.compose.ui:ui-skiko-desktop" />
             <dependency maven-id="org.jetbrains.compose.ui:ui-text-desktop" />
             <dependency maven-id="org.jetbrains.compose.ui:ui-unit-desktop" />
             <dependency maven-id="org.jetbrains.compose.ui:ui-util-desktop" />
@@ -44,16 +45,16 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.12.1/ui-test-junit4-desktop-1.12.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.12.1/ui-test-desktop-1.12.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.13.0-beta01/ui-test-junit4-desktop-1.13.0-beta01.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.13.0-beta01/ui-test-desktop-1.13.0-beta01.jar!/" />
         </CLASSES>
         <JAVADOC>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.12.1/ui-test-junit4-desktop-1.12.1-javadoc.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.12.1/ui-test-desktop-1.12.1-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.13.0-beta01/ui-test-junit4-desktop-1.13.0-beta01-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.13.0-beta01/ui-test-desktop-1.13.0-beta01-javadoc.jar!/" />
         </JAVADOC>
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.12.1/ui-test-junit4-desktop-1.12.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.12.1/ui-test-desktop-1.12.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-junit4-desktop/1.13.0-beta01/ui-test-junit4-desktop-1.13.0-beta01-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/ui/ui-test-desktop/1.13.0-beta01/ui-test-desktop-1.13.0-beta01-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
