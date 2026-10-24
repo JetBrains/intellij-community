@@ -33,6 +33,12 @@ register_toolchains("@rules_jvm//:protoc_java_toolchain_toolchain")
 register_toolchains("@rules_jvm//:kotlin_multiplex_toolchain")
 
 bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.4")
+single_version_override(
+    module_name = "buildifier_prebuilt",
+    patch_strip = 1,
+    # upstream binds `-prune` only to the last exclude pattern, so `find` walks node_modules, out and .git
+    patches = ["//:build/buildifier-prebuilt-exclude-patterns-prune.patch"],
+)
 
 single_version_override(
     module_name = "rules_jvm_external",

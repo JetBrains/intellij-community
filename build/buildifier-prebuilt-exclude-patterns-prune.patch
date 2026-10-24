@@ -1,0 +1,12 @@
+diff --git a/buildifier/factory.bzl b/buildifier/factory.bzl
+--- a/buildifier/factory.bzl
++++ b/buildifier/factory.bzl
+@@ -137,7 +137,7 @@ def buildifier_impl_factory(ctx, *, test_rule):
+         if test_rule and not ctx.attr.no_sandbox:
+             fail("Cannot use 'exclude_patterns' in a test rule without 'no_sandbox'")
+         exclude_patterns = ["-path %s" % shell.quote(pattern) for pattern in ctx.attr.exclude_patterns]
+-        exclude_patterns_str = " -o ".join(exclude_patterns) + " -prune -o "
++        exclude_patterns_str = "\\( " + " -o ".join(exclude_patterns) + " \\) -prune -o "
+ 
+     workspace = ""
+     if test_rule and ctx.attr.no_sandbox:
