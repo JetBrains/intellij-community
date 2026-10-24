@@ -54,6 +54,25 @@ fn a_host_file_of_another_alias_or_shape_is_refused() {
     assert_eq!(config.read_host("studio").expect_err("another shape").code, code::BAD_HOST_FILE);
 }
 
+/// The base of a holder reads back as it was written. A file that holds no commit is no base.
+#[test]
+fn a_base_reads_back_and_a_bad_file_is_no_base() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let config = Config::new(dir.path().to_path_buf());
+    let commit = "0123456789abcdef0123456789abcdef01234567";
+    assert_eq!(config.base("studio", "bt-remote-1"), None);
+    config.write_base("studio", "bt-remote-1", commit).expect("written");
+    assert_eq!(config.base("studio", "bt-remote-1").as_deref(), Some(commit));
+    assert_eq!(config.base("studio", "bt-remote-2"), None, "each holder has its own base");
+    assert_eq!(config.base("other", "bt-remote-1"), None, "each host has its own base");
+    fs::write(dir.path().join("bases/studio/bt-remote-1"), "master\n").expect("a bad file");
+    assert_eq!(config.base("studio", "bt-remote-1"), None);
+    assert_eq!(
+        config.write_base("studio", "../x", commit).expect_err("a bad holder").code,
+        code::USAGE
+    );
+}
+
 #[test]
 fn an_alias_that_cannot_name_a_file_is_refused() {
     for alias in ["", "../x", ".hidden", "a b"] {

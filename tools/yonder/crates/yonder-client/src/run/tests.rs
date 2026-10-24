@@ -23,6 +23,10 @@ fn checkout() -> FakeProcesses {
     ])
 }
 
+fn step(name: &str, ms: u64) -> Phase {
+    Phase { name: name.to_owned(), ms }
+}
+
 fn command() -> Vec<String> {
     ["./community/tools/bt.cmd", "FooTest", "--json"].map(str::to_owned).to_vec()
 }
@@ -110,6 +114,9 @@ fn a_run_packs_the_missing_objects_streams_the_stderr_and_fetches_the_staged_fil
                 output(channel, Stream::Stderr, "progress", 30);
                 let _ = channel.send(&Reply::Heartbeat { elapsed_ms: 15_000 });
                 output(channel, Stream::Stdout, "the digest", 60);
+                let _ = channel.send(&Reply::Phases {
+                    phases: vec![step("lock", 0), step("command", 25_100)],
+                });
                 let _ = channel.send(&Reply::Exit { code: 3 });
             }
             _ => answer_besides_follow(request, channel, &packed, &["c1"]),
@@ -133,10 +140,11 @@ fn a_run_packs_the_missing_objects_streams_the_stderr_and_fetches_the_staged_fil
         "hello"
     );
 
+    // The start comes before the pack, so the host takes the lease while the pack travels.
     let requests = setup.agent.requests();
     assert_eq!(
         requests.iter().map(kind).collect::<Vec<_>>(),
-        ["have", "pack", "start", "follow", "fetch", "forget"]
+        ["have", "start", "pack", "follow", "fetch", "forget"]
     );
     let Request::Have { repo, commits } = &requests[0] else {
         panic!("{requests:?}")
@@ -145,7 +153,7 @@ fn a_run_packs_the_missing_objects_streams_the_stderr_and_fetches_the_staged_fil
         (repo.as_str(), commits.clone()),
         ("~/projects/idea-1", vec![COMMIT.to_owned(), "c1".to_owned(), "m0".to_owned()])
     );
-    let Request::Start(spec) = &requests[2] else {
+    let Request::Start(spec) = &requests[1] else {
         panic!("{requests:?}")
     };
     assert_eq!(spec.reference, format!("refs/yonder/{}", outcome.run));
@@ -171,6 +179,12 @@ fn a_run_packs_the_missing_objects_streams_the_stderr_and_fetches_the_staged_fil
         "git pack-objects --revs --thin --stdout --progress",
         "the pack writes progress, which its quiet limit watches"
     );
+    assert_eq!(
+        outcome.phases.iter().map(|phase| phase.name.as_str()).collect::<Vec<_>>(),
+        ["pack", "upload", "lock", "command", "fetch", "total"],
+        "the steps of the client wrap the steps of the host"
+    );
+    assert_eq!(outcome.phases[3].ms, 25_100);
 }
 
 #[test]
@@ -316,7 +330,8 @@ fn ctrl_c_cancels_the_run_and_follows_it_to_its_end() {
     assert!(lines.contains(&"interrupted".to_owned()), "{lines:#?}");
 }
 
-/// A refusal of the agent keeps its code. A run that failed on the host is removed there all the same.
+/// A refusal of the agent keeps its code. A run that failed on the host is removed there all the same. No outcome
+/// carries the steps of the host, so the client says them itself.
 #[test]
 fn a_refusal_of_the_agent_keeps_its_code() {
     let packed = Arc::new(Mutex::new(Vec::new()));
@@ -324,20 +339,201 @@ fn a_refusal_of_the_agent_keeps_its_code() {
         let packed = Arc::clone(&packed);
         move |request, channel| match request {
             Request::Follow { .. } => {
+                let _ = channel.send(&Reply::Phases {
+                    phases: vec![step("lock", 0), step("lease", 3_909_000)],
+                });
                 let _ = channel.send(&Reply::refused("lease_failed", "bd lease get failed: no free slot"));
             }
             _ => answer_besides_follow(request, channel, &packed, &[COMMIT]),
         }
     });
     let processes = checkout();
+    let said = Said::default();
+    let say = |line: &str| said.push(line);
     let (command, no_fetch) = (command(), Vec::new());
     let checkout_root = setup.checkout();
-    let refusal = client(&setup, &processes, &|_| {}, &calm)
+    let refusal = client(&setup, &processes, &say, &calm)
         .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
         .expect_err("the lease failed");
     assert_eq!(refusal.code, "lease_failed");
     assert_eq!(refusal.message, "studio: bd lease get failed: no free slot");
     assert_eq!(kind(setup.agent.requests().last().expect("a request")), "forget");
+    let lines = said.lines();
+    assert!(
+        lines.contains(&"yonder: phases: lock 0.0s, lease 1h05m09s".to_owned()),
+        "{lines:#?}"
+    );
+}
+
+/// `Reply::Phases` belongs to `Follow` only. Anywhere else it is a reply out of turn.
+#[test]
+fn the_steps_of_a_run_outside_a_follow_are_out_of_turn() {
+    let setup = Setup::new(|_, channel| {
+        let _ = channel.send(&Reply::Phases { phases: Vec::new() });
+    });
+    let processes = FakeProcesses::default();
+    let refusal = client(&setup, &processes, &|_| {}, &calm)
+        .lease(ALIAS, None, "h")
+        .expect_err("out of turn");
+    assert_eq!(refusal.code, code::LINK);
+}
+
+const BASE: &str = "fedcba9876543210fedcba9876543210fedcba98";
+
+/// A clean checkout at [`COMMIT`] whose `origin/master` is [`BASE`].
+fn checkout_with_base() -> FakeProcesses {
+    FakeProcesses::new(&[
+        ("status --porcelain", ok("")),
+        ("origin/master^{commit}", ok(&format!("{BASE}\n"))),
+        ("rev-parse", ok(&format!("{COMMIT}\n"))),
+        ("rev-list --count", ok("7\n")),
+        ("rev-list", ok(&format!("{COMMIT}\nc1\n"))),
+        ("merge-base", ok("m0\n")),
+        ("pack-objects", ok("PACK")),
+    ])
+}
+
+/// The packs that reached the agent, as their references.
+fn pack_refs(setup: &Setup) -> Vec<String> {
+    setup
+        .agent
+        .requests()
+        .into_iter()
+        .filter_map(|request| match request {
+            Request::Pack { reference, .. } => Some(reference),
+            _ => None,
+        })
+        .collect()
+}
+
+/// While the command goes on, the base goes once to `refs/yonder/base/<holder>`, after the run pack. The next run names
+/// the base in its `Have`, so its pack leaves out the base, and its sync skips the base that the host has.
+#[test]
+fn the_base_goes_once_and_the_next_run_builds_on_it() {
+    let based = Arc::new(AtomicBool::new(false));
+    let setup = Setup::new({
+        let based = Arc::clone(&based);
+        move |request, channel| {
+            let _ = match request {
+                Request::Have { .. } => {
+                    let mut commits = vec!["c1".to_owned()];
+                    if based.load(Ordering::SeqCst) {
+                        commits.push(BASE.to_owned());
+                    }
+                    channel.send(&Reply::Have { commits })
+                }
+                Request::Pack { reference, .. } => {
+                    let _ = channel.recv_stream(&mut Vec::new());
+                    if reference.starts_with(yonder_link::proto::BASE_REFS) {
+                        based.store(true, Ordering::SeqCst);
+                    }
+                    channel.send(&Reply::Packed)
+                }
+                // A long command: it ends after the base came, or after 5 s.
+                Request::Follow { .. } => {
+                    let started = Instant::now();
+                    while !based.load(Ordering::SeqCst) && started.elapsed() < Duration::from_secs(5) {
+                        thread::sleep(Duration::from_millis(20));
+                    }
+                    channel.send(&Reply::Exit { code: 0 })
+                }
+                Request::Start(spec) => channel.send(&Reply::Started { run: spec.run.clone() }),
+                _ => channel.send(&Reply::Done {
+                    message: "removed".to_owned(),
+                }),
+            };
+        }
+    });
+    let processes = checkout_with_base();
+    let said = Said::default();
+    let say = |line: &str| said.push(line);
+    let (command, no_fetch) = (command(), Vec::new());
+    let checkout_root = setup.checkout();
+    let holder = "bt-remote-0123456789ab";
+    let client = client(&setup, &processes, &say, &calm);
+    client
+        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
+        .expect("the first run");
+    let first = pack_refs(&setup);
+    assert_eq!(first.len(), 2, "{first:?}");
+    assert!(first[0].starts_with("refs/yonder/") && !first[0].contains("/base/"), "{first:?}");
+    assert_eq!(first[1], format!("refs/yonder/base/{holder}"));
+    assert_eq!(setup.config.base(ALIAS, holder).as_deref(), Some(BASE));
+
+    client
+        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
+        .expect("the second run");
+    assert_eq!(pack_refs(&setup).len(), 3, "the second run sends its own pack only");
+    let haves: Vec<Vec<String>> = setup
+        .agent
+        .requests()
+        .into_iter()
+        .filter_map(|request| match request {
+            Request::Have { commits, .. } => Some(commits),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(haves.len(), 4, "{haves:#?}");
+    assert!(
+        haves[2].contains(&BASE.to_owned()),
+        "the second run asks about the base: {haves:#?}"
+    );
+    let packs: Vec<String> = processes
+        .calls()
+        .into_iter()
+        .filter(|call| call.text().contains("pack-objects"))
+        .map(|call| String::from_utf8_lossy(&call.input).into_owned())
+        .collect();
+    assert_eq!(packs.len(), 3, "{packs:#?}");
+    assert_eq!(packs[2], format!("{COMMIT}\n^c1\n^{BASE}\n"));
+    let lines = said.lines();
+    assert!(!lines.iter().any(|line| line.contains("warning")), "{lines:#?}");
+}
+
+/// An agent that refuses the base ref, as an agent before schema 2 does, gives one warning line, and the run ends with
+/// the code of its command.
+#[test]
+fn a_failed_base_sync_only_warns() {
+    let setup = Setup::new(|request, channel| {
+        let _ = match request {
+            Request::Have { .. } => channel.send(&Reply::Have {
+                commits: vec!["c1".to_owned()],
+            }),
+            Request::Pack { reference, .. } if reference.starts_with(yonder_link::proto::BASE_REFS) => {
+                let _ = channel.recv_stream(&mut Vec::new());
+                channel.send(&Reply::refused("bad_request", "a pack ref that is not refs/yonder/<run id>"))
+            }
+            Request::Pack { .. } => {
+                let _ = channel.recv_stream(&mut Vec::new());
+                channel.send(&Reply::Packed)
+            }
+            Request::Start(spec) => channel.send(&Reply::Started { run: spec.run.clone() }),
+            Request::Follow { .. } => {
+                thread::sleep(Duration::from_millis(300));
+                channel.send(&Reply::Exit { code: 4 })
+            }
+            _ => channel.send(&Reply::Done {
+                message: "removed".to_owned(),
+            }),
+        };
+    });
+    let processes = checkout_with_base();
+    let said = Said::default();
+    let say = |line: &str| said.push(line);
+    let (command, no_fetch) = (command(), Vec::new());
+    let checkout_root = setup.checkout();
+    let outcome = client(&setup, &processes, &say, &calm)
+        .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
+        .expect("the run");
+    assert_eq!(outcome.code, 4);
+    let warnings: Vec<String> = said.lines().into_iter().filter(|line| line.contains("warning")).collect();
+    assert_eq!(warnings.len(), 1, "{warnings:#?}");
+    assert!(
+        warnings[0].starts_with("yonder: warning: cannot sync the base of the next packs to studio (bad_request): "),
+        "{}",
+        warnings[0]
+    );
+    assert_eq!(setup.config.base(ALIAS, "bt-remote-0123456789ab"), None);
 }
 
 #[test]
@@ -497,18 +693,27 @@ fn a_slow_agent_reader_takes_a_large_pack() {
     assert_eq!(packed.lock().unwrap_or_else(PoisonError::into_inner).len(), pack.len());
 }
 
-/// An agent that drops the connection in the middle of the pack is a lost link, not a git failure.
+/// An agent that drops the connection in the middle of the pack is a lost link, not a git failure. The run started
+/// already, so the client cancels it, and nothing follows it.
 #[test]
-fn a_link_lost_during_the_pack_is_a_link_refusal() {
+fn a_link_lost_during_the_pack_cancels_the_started_run_with_a_link_refusal() {
     let setup = Setup::new(|request, channel| match request {
         Request::Have { .. } => {
             let _ = channel.send(&Reply::Have {
                 commits: vec!["c1".to_owned()],
             });
         }
+        Request::Start(spec) => {
+            let _ = channel.send(&Reply::Started { run: spec.run.clone() });
+        }
         // One chunk, then the connection closes.
         Request::Pack { .. } => {
             let _ = channel.recv_frame();
+        }
+        Request::Cancel { .. } => {
+            let _ = channel.send(&Reply::Done {
+                message: "the host has the cancel".to_owned(),
+            });
         }
         _ => {}
     });
@@ -525,6 +730,20 @@ fn a_link_lost_during_the_pack_is_a_link_refusal() {
         .run(ALIAS, &request(&checkout_root, &command, &no_fetch))
         .expect_err("the link broke");
     assert!(matches!(refusal.code.as_ref(), code::LINK | code::TIMED_OUT), "{refusal:?}");
+    assert!(
+        refusal.message.starts_with("the pack did not reach studio: "),
+        "{}",
+        refusal.message
+    );
+    assert!(
+        refusal.message.contains("; studio has the cancel of the run "),
+        "{}",
+        refusal.message
+    );
+    assert_eq!(
+        setup.agent.requests().iter().map(kind).collect::<Vec<_>>(),
+        ["have", "start", "pack", "cancel"]
+    );
 }
 
 /// A cancel whose first connection fails connects again, and the run still ends with its own exit.

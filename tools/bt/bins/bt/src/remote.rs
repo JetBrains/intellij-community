@@ -4,7 +4,8 @@
 //! It sends the git objects that the host lacks, and the agent there runs `./community/tools/bt.cmd` with the same
 //! arguments, less the flags of this module, in the warm Branch Deck lease of this checkout. The stderr of the host
 //! streams here as it comes. The stdout is the digest or the `--json` payload, and the exit code of the host is the
-//! exit code here. The new run directories of `out/bt-runs` come back to `out/bt-runs` here. Ctrl+C cancels the run on
+//! exit code here. At the end, one `yonder: phases:` line on the stderr gives the duration of each step of the run.
+//! The new run directories of `out/bt-runs` come back to `out/bt-runs` here. Ctrl+C cancels the run on
 //! the host. A second Ctrl+C stops the follow at once with exit 6, and under `--json` with the payload of an
 //! infrastructure outcome. A run outlives a lost connection, and the client follows it again. `--release` returns the lease.
 
@@ -16,7 +17,9 @@ use bt_core::evidence::RUNS_DIR;
 use bt_core::result::RunStatus;
 use bt_core::runtime::{Runtime, repo_file};
 use bt_core::{Refusal, exit};
-use yonder_client::{AgentInfo, Client, Config, Leased, OsProcesses, PrepareRequest, Prepared, RunOutcome, RunRequest, interrupt};
+use yonder_client::{
+    AgentInfo, Client, Config, Leased, OsProcesses, PrepareRequest, Prepared, RunOutcome, RunRequest, interrupt, phases_line,
+};
 
 use crate::execute::{JsonPayload, Outcome};
 
@@ -147,6 +150,10 @@ pub(crate) fn run_on_host(
         }
         Err(refusal) => return Err(host_refusal(host.alias, &refusal)),
     };
+    // The stdout carries only the digest or the payload, so the steps of the run go to the stderr.
+    if !ran.phases.is_empty() {
+        runtime.write_error(&phases_line(&ran.phases));
+    }
     answer(runtime, host.alias, json, &ran)
 }
 

@@ -1,4 +1,5 @@
-//! The local git calls of a run: the clean check, the commit, the commits that the host may have, and the thin pack.
+//! The local git calls of a run: the clean check, the commit, the commits that the host may have, the base, and the
+//! thin pack.
 
 use std::path::Path;
 use std::time::Duration;
@@ -80,6 +81,30 @@ pub(crate) fn candidates(processes: &dyn Processes, checkout: &Path, commit: &st
         }
     }
     found
+}
+
+/// Adds a commit to the candidates when it is a new one.
+pub(crate) fn add_candidate(candidates: &mut Vec<String>, commit: Option<&str>) {
+    if let Some(commit) = commit
+        && !commit.is_empty()
+        && !candidates.iter().any(|known| known == commit)
+    {
+        candidates.push(commit.to_owned());
+    }
+}
+
+/// The commit of the base of the later packs: `origin/master`, or `master` when the checkout has no `origin/master`.
+/// `None` when the checkout has neither.
+pub(crate) fn base_commit(processes: &dyn Processes, checkout: &Path) -> Option<String> {
+    ["origin/master", "master"].into_iter().find_map(|base| {
+        let ran = git(
+            processes,
+            checkout,
+            &["rev-parse", "--verify", "--quiet", &format!("{base}^{{commit}}")],
+        );
+        let commit = ran.stdout_text().trim().to_owned();
+        (ran.ok() && !commit.is_empty()).then_some(commit)
+    })
 }
 
 /// The count of the commits of `commit` that are not in `present`, or `None` when git cannot count them.

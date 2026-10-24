@@ -9,7 +9,10 @@ use std::time::Duration;
 
 use clap::error::ErrorKind;
 use clap::{Parser, Subcommand};
-use yonder_client::{Call, Client, Config, DEFAULT_PORT, Exit, PrepareRequest, Processes, Refusal, RunRequest, code, holder, interrupt};
+use yonder_client::{
+    Call, Client, Config, DEFAULT_PORT, Exit, PrepareRequest, Processes, Refusal, RunInfo, RunRequest, code, holder, interrupt,
+    phases_line, phases_short,
+};
 
 /// The holder prefix of a checkout when `--holder` names none.
 const HOLDER_PREFIX: &str = "yonder";
@@ -66,7 +69,7 @@ enum Command {
     },
     /// Removes a run and its staged files on the host.
     Forget { alias: String, run: String },
-    /// Lists the runs that the agent keeps.
+    /// Lists the runs that the agent keeps, each with the steps of the host that took 0.1 s or more.
     Runs { alias: String },
     /// Takes the warm lease of this checkout without a run.
     Lease {
@@ -178,11 +181,15 @@ fn execute(
                     checkout.display()
                 ));
             }
+            say(&phases_line(&outcome.phases));
             Ok(exit_code(outcome.code))
         }
         Command::Attach { alias, run } => {
             let followed = client.attach(&alias, &run)?;
             let _ = write!(stdout, "{}", followed.stdout);
+            if !followed.phases.is_empty() {
+                say(&phases_line(&followed.phases));
+            }
             Ok(exit_code(followed.code))
         }
         Command::Cancel { alias, run } => Ok(answer(stdout, &client.cancel(&alias, &run)?)),
@@ -201,9 +208,7 @@ fn execute(
                 let _ = writeln!(stdout, "no runs on {alias}");
             }
             for run in runs {
-                let state = run.exit.map_or_else(|| "running".to_owned(), |code| format!("exit {code}"));
-                let commit = run.commit.get(..12).unwrap_or(&run.commit);
-                let _ = writeln!(stdout, "{}  {state}  {}  {commit}  {}", run.run, run.holder, run.command.join(" "));
+                let _ = writeln!(stdout, "{}", run_line(&run));
             }
             Ok(0)
         }
@@ -263,6 +268,19 @@ fn execute(
             ))
         }
     }
+}
+
+/// One run of `yonder runs`: its id, its state, its holder, its commit, its command, and the steps that took 0.1 s or
+/// more.
+fn run_line(run: &RunInfo) -> String {
+    let state = run.exit.map_or_else(|| "running".to_owned(), |code| format!("exit {code}"));
+    let commit = run.commit.get(..12).unwrap_or(&run.commit);
+    let mut line = format!("{}  {state}  {}  {commit}  {}", run.run, run.holder, run.command.join(" "));
+    let phases = phases_short(&run.phases);
+    if !phases.is_empty() {
+        line.push_str(&format!("  ({phases})"));
+    }
+    line
 }
 
 fn answer(stdout: &mut dyn Write, text: &str) -> u8 {

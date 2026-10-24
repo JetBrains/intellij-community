@@ -62,6 +62,30 @@ fn a_short_history_gives_what_it_has() {
     assert_eq!(candidates(&processes, Path::new("/c"), COMMIT), ["c3", "c2", "c1"]);
 }
 
+/// The base is `origin/master`, or `master` in a checkout without `origin/master`, or none.
+#[test]
+fn the_base_is_origin_master_then_master() {
+    let both = FakeProcesses::new(&[("rev-parse", ok("b1\n"))]);
+    assert_eq!(base_commit(&both, Path::new("/c")).as_deref(), Some("b1"));
+    assert_eq!(both.texts(), ["git rev-parse --verify --quiet origin/master^{commit}"]);
+
+    let local = FakeProcesses::new(&[("origin/master", failed(1, "")), ("master", ok("b2\n"))]);
+    assert_eq!(base_commit(&local, Path::new("/c")).as_deref(), Some("b2"));
+
+    let neither = FakeProcesses::new(&[("rev-parse", failed(1, ""))]);
+    assert_eq!(base_commit(&neither, Path::new("/c")), None);
+}
+
+#[test]
+fn a_candidate_comes_once() {
+    let mut found = vec!["c1".to_owned()];
+    add_candidate(&mut found, Some("c1"));
+    add_candidate(&mut found, None);
+    add_candidate(&mut found, Some(""));
+    add_candidate(&mut found, Some("b1"));
+    assert_eq!(found, ["c1", "b1"]);
+}
+
 #[test]
 fn the_pack_excludes_each_present_commit_and_writes_progress() {
     let call = pack_call(Path::new("/c"), "c3", &["c1".to_owned(), "m0".to_owned()]);

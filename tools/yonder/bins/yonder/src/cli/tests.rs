@@ -1,7 +1,7 @@
 use std::sync::{Mutex, PoisonError};
 
 use pretty_assertions::assert_eq;
-use yonder_client::Ran;
+use yonder_client::{Phase, Ran};
 
 use super::*;
 
@@ -109,6 +109,36 @@ fn the_default_holder_is_the_one_of_the_checkout() {
         holder(HOLDER_PREFIX, Path::new("/c"))
     );
     assert_eq!(holder_of(Some("h".to_owned()), &Checkout).expect("a holder"), "h");
+}
+
+/// A run of `yonder runs` shows its steps in the short form, and a run without long steps shows none.
+#[test]
+fn a_listed_run_shows_its_long_steps() {
+    let step = |name: &str, ms: u64| Phase { name: name.to_owned(), ms };
+    let mut run = RunInfo {
+        run: "1000-1".to_owned(),
+        holder: "yonder-0123456789ab".to_owned(),
+        commit: "0123456789abcdef0123456789abcdef01234567".to_owned(),
+        command: vec!["./bt.cmd".to_owned(), "FooTest".to_owned()],
+        started_ms: 1000,
+        exit: Some(0),
+        phases: vec![
+            step("lock", 0),
+            step("lease", 542_000),
+            step("checkout", 41_000),
+            step("command", 3_909_000),
+        ],
+    };
+    assert_eq!(
+        run_line(&run),
+        "1000-1  exit 0  yonder-0123456789ab  0123456789ab  ./bt.cmd FooTest  (lease 9m02s, checkout 41.0s, command 1h05m09s)"
+    );
+    run.exit = None;
+    run.phases = vec![step("lock", 20)];
+    assert_eq!(
+        run_line(&run),
+        "1000-1  running  yonder-0123456789ab  0123456789ab  ./bt.cmd FooTest"
+    );
 }
 
 #[test]

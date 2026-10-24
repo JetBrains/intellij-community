@@ -1,5 +1,5 @@
-//! The thin pack of a run. git builds it into a temporary file first, so a slow link never stalls git and a stuck git
-//! never holds a connection. Then the client sends the file to the agent, with its progress on the stderr.
+//! The thin pack of a run or of a base. git builds it into a temporary file first, so a slow link never stalls git and a
+//! stuck git never holds a connection. Then the client sends the file to the agent on a connection of its own.
 //!
 //! A host that has none of the candidate commits would need the whole history, which is no thin pack. The client
 //! refuses that with `behind` and starts no pack.
@@ -31,10 +31,21 @@ pub(crate) struct PackTarget<'a> {
     pub(crate) reference: &'a str,
 }
 
+/// A pack file that git built, ready for its upload.
+pub(crate) struct BuiltPack {
+    file: PackFile,
+    size: u64,
+}
+
 impl Client<'_> {
-    /// Sends the objects of the commit that the host lacks, and points the reference at the commit there.
-    pub(crate) fn send_pack(&self, host: &mut Host, target: &PackTarget<'_>, present: &[String]) -> Result<(), Refusal> {
-        let alias = host.alias().to_owned();
+    /// Builds the thin pack of the objects of the commit that the host lacks. `steps` takes the step lines.
+    pub(crate) fn build_pack(
+        &self,
+        alias: &str,
+        target: &PackTarget<'_>,
+        present: &[String],
+        steps: &dyn Fn(&str),
+    ) -> Result<BuiltPack, Refusal> {
         let count = commit_count(self.processes, target.checkout, target.commit, present);
         if present.is_empty() {
             let history = count.map_or_else(|| "the whole history".to_owned(), |all| format!("all {all} commits of the history"));
@@ -46,7 +57,7 @@ impl Client<'_> {
             ));
         }
         let commits = count.map_or_else(|| "the".to_owned(), |count| count.to_string());
-        (self.say)(&format!("> {alias}: pack {commits} commits"));
+        steps(&format!("> {alias}: pack {commits} commits"));
 
         let file = PackFile::new();
         let stop = || self.interrupted();
@@ -62,11 +73,19 @@ impl Client<'_> {
         let size = fs::metadata(file.path())
             .map(|meta| meta.len())
             .map_err(|error| refused(code::GIT_FAILED, format!("cannot read the pack {}: {error}", file.path().display())))?;
-        (self.say)(&format!("> {alias}: pack of {} ready", size_text(size)));
+        steps(&format!("> {alias}: pack of {} ready", size_text(size)));
         if self.interrupted() {
             return Err(interrupted());
         }
+        Ok(BuiltPack { file, size })
+    }
 
+    /// Sends a built pack on a connection of its own. The agent points the reference at the commit there. `steps`
+    /// takes the progress lines. Ctrl+C stops the upload at the next chunk.
+    pub(crate) fn upload(&self, host: &mut Host, target: &PackTarget<'_>, pack: &BuiltPack, steps: &dyn Fn(&str)) -> Result<(), Refusal> {
+        let alias = host.alias().to_owned();
+        let size = pack.size;
+        let stop = || self.interrupted();
         let (mut channel, _) = host.connect()?;
         let request = Request::Pack {
             repo: target.repo.to_owned(),
@@ -75,19 +94,19 @@ impl Client<'_> {
         };
         channel.send(&request).map_err(|error| host.link_refusal(&error))?;
         let mut reader = Upload {
-            file: File::open(file.path()).map_err(|error| refused(code::GIT_FAILED, format!("cannot open the pack: {error}")))?,
+            file: File::open(pack.file.path()).map_err(|error| refused(code::GIT_FAILED, format!("cannot open the pack: {error}")))?,
             stop: &stop,
         };
         let mut last_said = Instant::now();
         let sent = channel.send_stream(&mut reader, &mut |bytes| {
             if last_said.elapsed() >= PROGRESS_EVERY {
                 last_said = Instant::now();
-                (self.say)(&format!("> {alias}: sent {} of {}", size_text(bytes), size_text(size)));
+                steps(&format!("> {alias}: sent {} of {}", size_text(bytes), size_text(size)));
             }
         });
         if let Err(error) = sent {
             if self.interrupted() {
-                return Err(interrupted());
+                return Err(refused(code::INTERRUPTED, "Ctrl+C stopped the upload of the pack"));
             }
             // An agent that refuses the pack replies and closes; its reply says more than the failed write.
             return Err(match host.recv(&mut channel, self.timing.connect) {
@@ -97,7 +116,7 @@ impl Client<'_> {
         }
         match host.recv(&mut channel, self.timing.read)? {
             Reply::Packed => {
-                (self.say)(&format!("> {alias}: sent {}", size_text(size)));
+                steps(&format!("> {alias}: sent {}", size_text(size)));
                 Ok(())
             }
             Reply::Refused { code, message } => Err(host.agent_refusal(code, &message)),

@@ -1,5 +1,5 @@
-//! The files of the client in its directory, `~/.config/yonder/` by default: the identity of the client, and one host
-//! file per alias in `hosts/<alias>.json`.
+//! The files of the client in its directory, `~/.config/yonder/` by default: the identity of the client, one host file
+//! per alias in `hosts/<alias>.json`, and the last base of each holder in `bases/<alias>/<holder>`.
 
 use std::fs;
 use std::io::{self, Write as _};
@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
 use serde::{Deserialize, Serialize};
+use yonder_link::proto::is_run_id;
 use yonder_link::{Fingerprint, Identity};
 
 use crate::{Refusal, code, prepare_hint, refused};
@@ -100,32 +101,65 @@ impl Config {
     pub fn write_host(&self, host: &HostFile) -> Result<(), Refusal> {
         check_alias(&host.alias)?;
         let path = self.host_path(&host.alias);
-        let cannot = |error: io::Error| refused(code::CONFIG, format!("cannot write {}: {error}", path.display()));
-        let mut text = serde_json::to_string_pretty(host).map_err(|error| cannot(io::Error::other(error)))?;
+        let mut text = serde_json::to_string_pretty(host)
+            .map_err(|error| refused(code::CONFIG, format!("cannot write {}: {error}", path.display())))?;
         text.push('\n');
-        let dir = path.parent().unwrap_or(&self.dir);
-        fs::create_dir_all(dir).map_err(cannot)?;
-        // One name per process and per write, so two writers never share a temporary file.
-        let temp = dir.join(format!(
-            ".{}.json.tmp-{}-{}",
-            host.alias,
-            std::process::id(),
-            WRITES.fetch_add(1, Ordering::Relaxed)
-        ));
-        let written = fs::File::create(&temp)
-            .and_then(|mut file| file.write_all(text.as_bytes()))
-            .and_then(|()| fs::rename(&temp, &path));
-        if let Err(error) = written {
-            let _ = fs::remove_file(&temp);
-            return Err(cannot(error));
-        }
-        Ok(())
+        write_whole(&path, &text)
     }
+
+    /// The file of the base that the last base sync of `holder` sent to the host of `alias`: `bases/<alias>/<holder>`.
+    fn base_path(&self, alias: &str, holder: &str) -> PathBuf {
+        self.dir.join("bases").join(alias).join(holder)
+    }
+
+    /// The commit that [`Config::write_base`] recorded, or `None` when the file is missing or holds no commit.
+    pub fn base(&self, alias: &str, holder: &str) -> Option<String> {
+        if !is_run_id(alias) || !is_run_id(holder) {
+            return None;
+        }
+        let text = fs::read_to_string(self.base_path(alias, holder)).ok()?;
+        let commit = text.trim();
+        let hex = commit.bytes().all(|byte| matches!(byte, b'0'..=b'9' | b'a'..=b'f'));
+        (hex && matches!(commit.len(), 40 | 64)).then(|| commit.to_owned())
+    }
+
+    /// Records the commit of the base ref of `holder` on the host of `alias`, so the next run asks the host about it.
+    pub fn write_base(&self, alias: &str, holder: &str, commit: &str) -> Result<(), Refusal> {
+        check_alias(alias)?;
+        if !is_run_id(holder) {
+            return Err(refused(code::USAGE, format!("the holder {holder:?} cannot name a file")));
+        }
+        write_whole(&self.base_path(alias, holder), &format!("{commit}\n"))
+    }
+}
+
+/// Writes a file through a temporary file beside it, so a reader never sees a part.
+fn write_whole(path: &Path, text: &str) -> Result<(), Refusal> {
+    let cannot = |error: io::Error| refused(code::CONFIG, format!("cannot write {}: {error}", path.display()));
+    let (Some(dir), Some(name)) = (path.parent(), path.file_name()) else {
+        return Err(cannot(io::Error::other("the path has no parent directory")));
+    };
+    fs::create_dir_all(dir).map_err(cannot)?;
+    // One name per process and per write, so two writers never share a temporary file.
+    let temp = dir.join(format!(
+        ".{}.tmp-{}-{}",
+        name.to_string_lossy(),
+        std::process::id(),
+        WRITES.fetch_add(1, Ordering::Relaxed)
+    ));
+    let written = fs::File::create(&temp)
+        .and_then(|mut file| file.write_all(text.as_bytes()))
+        .and_then(|()| fs::rename(&temp, path));
+    if let Err(error) = written {
+        let _ = fs::remove_file(&temp);
+        return Err(cannot(error));
+    }
+    Ok(())
 }
 
 /// Refuses an alias that cannot name a host file: it is `[0-9A-Za-z._-]+`, at most 128 bytes, and no dot first.
 pub fn check_alias(alias: &str) -> Result<(), Refusal> {
-    if yonder_link::proto::is_run_id(alias) {
+    if is_run_id(alias) {
         Ok(())
     } else {
         Err(refused(

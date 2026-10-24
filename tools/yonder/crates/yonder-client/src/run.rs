@@ -3,17 +3,21 @@
 //! A run:
 //!
 //! 1. Refuses a checkout with local changes, because only the commit reaches the host.
-//! 2. Asks the host which of the candidate commits it has (`Have`), and sends a thin pack of the rest (`Pack`) to
-//!    `refs/yonder/<run>`. `pack.rs` builds the pack.
+//! 2. Asks the host which of the candidate commits it has (`Have`), and builds a thin pack of the rest into a file.
+//!    The candidates include the base that the last base sync of the holder recorded. `pack.rs` builds the pack.
 //! 3. Starts the run (`Start`). The run lives on the agent, not on the connection. Ctrl+C before this step stops the
 //!    local work, and nothing runs on the host.
-//! 4. Follows the output (`Follow`). Each stderr line goes to the stderr sink as it comes, and the stdout lines are
+//! 4. Sends the pack (`Pack`) to `refs/yonder/<run>` on a connection of its own, while the host takes the lock and the
+//!    lease. When the upload fails, the client cancels the run and refuses with the code of the upload.
+//! 5. Follows the output (`Follow`). Each stderr line goes to the stderr sink as it comes, and the stdout lines are
 //!    collected. A connection that is quiet for 60 s is lost: the client connects again from the last offset, with a
 //!    backoff, for up to 10 min after the last reply of the agent. The first Ctrl+C sends `Cancel` on a thread of its
-//!    own, and the output follows up to its end. The second Ctrl+C stops the follow at once.
-//! 5. Copies the staged files of the `fetch` directories into the local checkout (`Fetch`), then removes the run on
+//!    own, and the output follows up to its end. The second Ctrl+C stops the follow at once. `Reply::Phases` before
+//!    the end gives the steps of the host. Meanwhile a thread syncs the base of the next packs, see `base.rs`.
+//! 6. Copies the staged files of the `fetch` directories into the local checkout (`Fetch`), then removes the run on
 //!    the agent (`Forget`). The client removes the run only when it saw the end of the run and every file came.
 //!    Otherwise the run stays on the agent, and the client names `yonder fetch` and `yonder forget`.
+//! 7. Waits for the base sync, and answers the steps of the run with their durations.
 
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -22,11 +26,13 @@ use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use yonder_link::Closer;
-use yonder_link::proto::{Reply, Request, RunInfo, RunSpec, Stream};
+use yonder_link::proto::{Phase, Reply, Request, RunInfo, RunSpec, Stream};
 
-use crate::git::{candidates, clean_head};
+use crate::base::BaseSync;
+use crate::git::{add_candidate, candidates, clean_head};
 use crate::host::{AgentInfo, Host};
 use crate::pack::PackTarget;
+use crate::phases::{phase, phases_line};
 use crate::{Client, Refusal, Timing, code, refused};
 
 /// How often the watch of a run asks whether the person pressed Ctrl+C.
@@ -37,6 +43,9 @@ const CANCEL_FOR: Duration = Duration::from_secs(120);
 
 /// How long the end of a run waits for the last lines of its cancel.
 const CANCEL_GRACE: Duration = Duration::from_millis(500);
+
+/// How many times the cancel of a run whose pack did not reach the host tries.
+const ABANDON_TRIES: u32 = 3;
 
 /// What a run does, from the side of the client.
 #[derive(Clone, Copy, Debug)]
@@ -66,6 +75,9 @@ pub struct RunOutcome {
     /// The files that came back, relative to the checkout root with `/` separators. Empty when the fetch failed; a
     /// stderr line then names `yonder fetch`.
     pub fetched: Vec<String>,
+    /// The steps of the run in their order: `pack` and `upload` of the client, the steps of the host, `fetch`, and
+    /// `total`, the whole time of the call. [`crate::phases_line`] makes the line for a person.
+    pub phases: Vec<Phase>,
 }
 
 /// The end of a followed run.
@@ -73,6 +85,8 @@ pub struct RunOutcome {
 pub struct Followed {
     pub code: i32,
     pub stdout: String,
+    /// The steps of the run on the host, from `Reply::Phases`. Empty when the agent sent none.
+    pub phases: Vec<Phase>,
 }
 
 /// The lease of a holder on a host.
@@ -96,8 +110,8 @@ enum Broken {
 enum Ended {
     /// The command exited.
     Exit(Followed),
-    /// The agent ended the run with a refusal of its own, such as `lease_failed`.
-    Refused(Refusal),
+    /// The agent ended the run with a refusal of its own, such as `lease_failed`, after the steps of the host.
+    Refused(Refusal, Vec<Phase>),
     /// The client did not see the end: the link is lost, or a second Ctrl+C stopped the follow.
     Unseen(Refusal),
 }
@@ -118,6 +132,7 @@ impl Client<'_> {
         if request.command.is_empty() {
             return Err(refused(code::USAGE, "a run needs a command"));
         }
+        let started = Instant::now();
         let mut host = self.host(alias)?;
         let repo = request.repo.unwrap_or(&host.file().repo).to_owned();
         let commit = clean_head(self.processes, request.checkout)?;
@@ -125,25 +140,33 @@ impl Client<'_> {
         let run = run_id();
         let reference = format!("refs/yonder/{run}");
 
-        let candidates = candidates(self.processes, request.checkout, &commit);
+        let recorded = self.config.base(alias, request.holder);
+        let mut candidates = candidates(self.processes, request.checkout, &commit);
+        add_candidate(&mut candidates, recorded.as_deref());
         let present = self.have(&mut host, &repo, candidates)?;
         self.refuse_interrupt()?;
-        if !present.contains(&commit) {
-            let target = PackTarget {
-                checkout: request.checkout,
-                repo: &repo,
-                commit: &commit,
-                reference: &reference,
-            };
-            self.send_pack(&mut host, &target, &present)?;
-        }
+        let target = PackTarget {
+            checkout: request.checkout,
+            repo: &repo,
+            commit: &commit,
+            reference: &reference,
+        };
+        let mut phases = Vec::new();
+        let pack = if present.contains(&commit) {
+            None
+        } else {
+            let building = Instant::now();
+            let pack = self.build_pack(alias, &target, &present, self.say)?;
+            phases.push(phase("pack", building.elapsed()));
+            Some(pack)
+        };
         self.refuse_interrupt()?;
         let spec = RunSpec {
             run: run.clone(),
-            repo,
+            repo: repo.clone(),
             holder: request.holder.to_owned(),
             commit: commit.clone(),
-            reference,
+            reference: reference.clone(),
             command: request.command.to_vec(),
             fetch: request.fetch.to_vec(),
             idle_hours: request.idle_hours,
@@ -155,22 +178,79 @@ impl Client<'_> {
         }
         (self.say)(&format!("yonder: run {run} of {} on {alias}", short(&commit)));
 
-        let followed = match self.follow(&mut host, &run, true) {
+        // The host takes the lock and the lease while the pack travels, and waits for the reference before the checkout.
+        if let Some(pack) = pack {
+            let sending = Instant::now();
+            if let Err(refusal) = self.upload(&mut host, &target, &pack, self.say) {
+                return Err(self.abandon(&mut host, &run, refusal));
+            }
+            phases.push(phase("upload", sending.elapsed()));
+        }
+
+        let sync = BaseSync {
+            checkout: request.checkout,
+            repo: &repo,
+            holder: request.holder,
+            commit: &commit,
+            recorded: recorded.as_deref(),
+        };
+        let (followed, fetched) = thread::scope(|scope| {
+            let mut synced = host.clone();
+            let syncing = scope.spawn(move || self.sync_base(&mut synced, &sync));
+            let ended = self.follow_and_fetch(&mut host, &run, request, &mut phases);
+            if !syncing.is_finished() {
+                (self.say)(&format!(
+                    "> {alias}: the sync of the base of the next packs goes on; Ctrl+C stops it"
+                ));
+            }
+            let _ = syncing.join();
+            ended
+        })?;
+        phases.push(phase("total", started.elapsed()));
+        Ok(RunOutcome {
+            run,
+            commit,
+            code: followed.code,
+            stdout: followed.stdout,
+            fetched,
+            phases,
+        })
+    }
+
+    /// Follows a started run to its end, then copies its files and removes it on the host. Adds the steps of the host
+    /// and `fetch` to `phases`. A run that the agent refused says its steps here, because no outcome carries them.
+    fn follow_and_fetch(
+        &self,
+        host: &mut Host,
+        run: &str,
+        request: &RunRequest<'_>,
+        phases: &mut Vec<Phase>,
+    ) -> Result<(Followed, Vec<String>), Refusal> {
+        let alias = host.alias().to_owned();
+        let followed = match self.follow(host, run, true) {
             Ended::Exit(followed) => followed,
-            Ended::Refused(refusal) => {
-                self.forget_or_say(&mut host, &run);
+            Ended::Refused(refusal, steps) => {
+                if !steps.is_empty() {
+                    phases.extend(steps);
+                    (self.say)(&phases_line(phases));
+                }
+                self.forget_or_say(host, run);
                 return Err(refusal);
             }
             Ended::Unseen(refusal) => return Err(refusal),
         };
+        phases.extend(followed.phases.iter().cloned());
         let fetched = if request.fetch.is_empty() {
             Ok(Vec::new())
         } else {
-            self.fetch_from(&mut host, &run, request.checkout, request.fetch)
+            let fetching = Instant::now();
+            let fetched = self.fetch_from(host, run, request.checkout, request.fetch);
+            phases.push(phase("fetch", fetching.elapsed()));
+            fetched
         };
         let fetched = match fetched {
             Ok(fetched) => {
-                self.forget_or_say(&mut host, &run);
+                self.forget_or_say(host, run);
                 fetched
             }
             Err(refusal) => {
@@ -181,13 +261,37 @@ impl Client<'_> {
                 Vec::new()
             }
         };
-        Ok(RunOutcome {
-            run,
-            commit,
-            code: followed.code,
-            stdout: followed.stdout,
-            fetched,
-        })
+        Ok((followed, fetched))
+    }
+
+    /// Cancels a started run whose pack did not reach the host, so its supervisor does not wait for the pack. Answers
+    /// the refusal of the upload with its code, and with what became of the run.
+    fn abandon(&self, host: &mut Host, run: &str, refusal: Refusal) -> Refusal {
+        let alias = host.alias().to_owned();
+        let mut backoff = self.timing.first_backoff;
+        let mut tries = 1;
+        let cancelled = loop {
+            match cancel_on(host, run, self.timing.read) {
+                Err(failed) if is_link(&failed) && tries < ABANDON_TRIES => {
+                    tries += 1;
+                    thread::sleep(backoff);
+                    backoff = (backoff * 2).min(self.timing.max_backoff);
+                }
+                cancelled => break cancelled,
+            }
+        };
+        let fate = match cancelled {
+            Ok(_) => format!("{alias} has the cancel of the run {run}"),
+            Err(failed) => format!(
+                "cannot cancel the run {run} on {alias}: {}. `yonder cancel {alias} {run}` cancels it",
+                failed.message
+            ),
+        };
+        Refusal::new(
+            refusal.code,
+            crate::Exit::Refused,
+            format!("the pack did not reach {alias}: {}; {fate}", refusal.message),
+        )
     }
 
     /// Follows a run from its first line, as [`Client::run`] does. Ctrl+C here cancels nothing.
@@ -195,7 +299,7 @@ impl Client<'_> {
         let mut host = self.host(alias)?;
         match self.follow(&mut host, run, false) {
             Ended::Exit(followed) => Ok(followed),
-            Ended::Refused(refusal) | Ended::Unseen(refusal) => Err(refusal),
+            Ended::Refused(refusal, _) | Ended::Unseen(refusal) => Err(refusal),
         }
     }
 
@@ -251,7 +355,7 @@ impl Client<'_> {
     }
 
     /// The commits of `candidates` that the host has.
-    fn have(&self, host: &mut Host, repo: &str, candidates: Vec<String>) -> Result<Vec<String>, Refusal> {
+    pub(crate) fn have(&self, host: &mut Host, repo: &str, candidates: Vec<String>) -> Result<Vec<String>, Refusal> {
         let request = Request::Have {
             repo: repo.to_owned(),
             commits: candidates,
@@ -345,6 +449,7 @@ impl Client<'_> {
             stdout: String::new(),
             last_reply: Instant::now(),
             backoff: self.timing.first_backoff,
+            phases: Vec::new(),
         };
         loop {
             let once = self.follow_once(host, run, watch, &mut state);
@@ -363,10 +468,11 @@ impl Client<'_> {
                     return Ended::Exit(Followed {
                         code,
                         stdout: state.stdout,
+                        phases: state.phases,
                     });
                 }
                 Err(Broken::Refused(refusal)) if is_local(&refusal) => return Ended::Unseen(refusal),
-                Err(Broken::Refused(refusal)) => return Ended::Refused(refusal),
+                Err(Broken::Refused(refusal)) => return Ended::Refused(refusal, state.phases),
                 Err(Broken::Link(refusal)) => {
                     if state.last_reply.elapsed() >= self.timing.reconnect_for {
                         return Ended::Unseen(Refusal::new(
@@ -426,6 +532,8 @@ impl Client<'_> {
                         }
                     }
                 }
+                // A new connection after a lost one can bring the steps again, and the last ones hold.
+                Reply::Phases { phases } => state.phases = phases,
                 Reply::Exit { code } => {
                     channel.close();
                     return Ok(code);
@@ -443,6 +551,8 @@ struct FollowState {
     stdout: String,
     last_reply: Instant,
     backoff: Duration,
+    /// The steps of the host from the last `Reply::Phases`.
+    phases: Vec<Phase>,
 }
 
 /// Sends `Cancel`. The agent answers as soon as the host has the request.

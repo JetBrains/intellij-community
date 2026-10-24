@@ -30,6 +30,7 @@ fn link_ending(code: i32, stdout: &str, fetched: &[&str]) -> FakeLink {
         code,
         stdout: stdout.to_owned(),
         fetched: fetched.iter().map(|path| (*path).to_owned()).collect(),
+        phases: Vec::new(),
     }));
     link
 }
@@ -88,6 +89,44 @@ fn a_run_goes_to_yonder_with_the_wrapper_and_answers_its_payload() {
     );
     assert!(fake.spawned().is_empty(), "bt starts no child for a run: {:#?}", fake.spawned());
     assert_eq!(fake.state().stderr, ["> studio: bt AgentLaunchTokensTest --json"]);
+}
+
+/// The steps of the run go to the stderr in one line. Under `--json` the stdout stays the one payload of the host.
+#[test]
+fn the_steps_of_a_run_go_to_the_stderr_and_the_payload_stays_alone_on_the_stdout() {
+    let fake = checkout();
+    let link = FakeLink::default();
+    let step = |name: &str, ms: u64| yonder_client::Phase { name: name.to_owned(), ms };
+    link.answer_run(Ok(RunOutcome {
+        run: "1000-1".to_owned(),
+        commit: COMMIT.to_owned(),
+        code: 0,
+        stdout: format!("{PAYLOAD}\n"),
+        fetched: Vec::new(),
+        phases: vec![
+            step("pack", 3100),
+            step("lease", 542_000),
+            step("command", 25_100),
+            step("total", 613_000),
+        ],
+    }));
+    let answer = execute_with(["AgentLaunchTokensTest", "--host", "studio", "--json"], &fake, &link);
+    assert_eq!(
+        fake.state().stderr,
+        [
+            "> studio: bt AgentLaunchTokensTest --json",
+            "yonder: phases: pack 3.1s, lease 9m02s, command 25.1s, total 10m13s"
+        ]
+    );
+    let (mut stdout, mut stderr) = (Vec::new(), Vec::new());
+    assert_eq!(crate::cli::report(answer, &mut stdout, &mut stderr), exit::GREEN);
+    let stdout = String::from_utf8(stdout).expect("UTF-8");
+    assert_eq!(stdout.lines().count(), 1, "{stdout}");
+    assert_eq!(
+        serde_json::from_str::<serde_json::Value>(&stdout).expect("one JSON payload"),
+        serde_json::from_str::<serde_json::Value>(PAYLOAD).expect("the payload of the host")
+    );
+    assert!(stderr.is_empty(), "{}", String::from_utf8_lossy(&stderr));
 }
 
 #[test]

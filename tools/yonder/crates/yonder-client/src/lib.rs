@@ -3,18 +3,21 @@
 //! - [`config`]: the identity of the client and one host file per alias, under `~/.config/yonder/`.
 //! - [`host`]: the address choice and the hello of each connection to an agent.
 //! - [`process`]: the seam of the local git and ssh calls.
-//! - [`run`]: a run of a command of the committed HEAD on a host, and the requests of one reply.
+//! - [`run`]: a run of a command of the committed HEAD on a host, the sync of its base, and the requests of one reply.
+//! - [`phases_line`]: the durations of the steps of a run.
 //! - [`prepare`]: makes a host ready over ssh.
 //! - [`interrupt`]: Ctrl+C of the person at the terminal.
 //!
 //! Each failure is a [`Refusal`] with a stable code of [`code`], or the code of the agent. `API.md` lists them.
 
+mod base;
 pub mod config;
 mod fetch;
 mod git;
 pub mod host;
 pub mod interrupt;
 mod pack;
+mod phases;
 pub mod prepare;
 pub mod process;
 pub mod run;
@@ -26,11 +29,12 @@ use std::time::Duration;
 
 pub use config::{Config, HostFile};
 pub use host::{AgentInfo, Host};
+pub use phases::{duration_text, phases_line, phases_short};
 pub use prepare::{PrepareRequest, Prepared};
 pub use process::{Call, Limit, OsProcesses, Processes, Ran, Stopped};
 pub use run::{Followed, Leased, RunOutcome, RunRequest};
 pub use yonder_link::DEFAULT_PORT;
-pub use yonder_link::proto::RunInfo;
+pub use yonder_link::proto::{Phase, RunInfo};
 
 /// The exit vocabulary of yonder. A refusal leaves by 255. A run leaves by the exit code of its command, which is no
 /// refusal.
