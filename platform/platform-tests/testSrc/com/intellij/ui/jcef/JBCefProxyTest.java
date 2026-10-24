@@ -31,10 +31,6 @@ import static org.junit.Assume.assumeTrue;
 public class JBCefProxyTest {
   private static final String TEST_HOST = "captive.apple.com";
 
-  static {
-    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
-  }
-
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   @Rule
@@ -43,6 +39,7 @@ public class JBCefProxyTest {
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
+    TestScaleHelper.assumeHeadful();
 
     var proxySettings = System.getProperty("idea.test.proxy.settings");
     assumeTrue("'idea.test.proxy.settings' not set", proxySettings != null);

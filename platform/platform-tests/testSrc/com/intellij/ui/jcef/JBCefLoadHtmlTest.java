@@ -33,10 +33,6 @@ import static org.junit.Assert.assertTrue;
  * @author tav
  */
 public class JBCefLoadHtmlTest {
-  static {
-    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
-  }
-
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   static final String HTML_URL = "file://page.html";
@@ -62,6 +58,7 @@ public class JBCefLoadHtmlTest {
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
+    TestScaleHelper.assumeHeadful();
   }
 
   @After

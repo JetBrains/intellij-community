@@ -32,10 +32,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author tav
  */
 public class IDEA259472Test {
-  static {
-    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
-  }
-
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   @Rule
@@ -49,6 +45,7 @@ public class IDEA259472Test {
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
+    TestScaleHelper.assumeHeadful();
   }
 
   @After

@@ -61,10 +61,6 @@ public class JBCefInputMethodTest {
   static final int STARTUP_TIMEOUT_SEC = 5;
   static final int CALLBACK_TIMEOUT_MS = 3000;
 
-  static {
-    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
-  }
-
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   JBCefBrowser browser;
@@ -74,8 +70,9 @@ public class JBCefInputMethodTest {
 
   @Before
   public void before() {
-    TestScaleHelper.setRegistryProperty("ide.browser.jcef.osr.enabled", "true");
     TestScaleHelper.assumeStandalone();
+    TestScaleHelper.assumeHeadful();
+    TestScaleHelper.setRegistryProperty("ide.browser.jcef.osr.enabled", "true");
   }
 
   @After

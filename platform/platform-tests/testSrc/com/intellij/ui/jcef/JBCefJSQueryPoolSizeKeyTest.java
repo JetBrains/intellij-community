@@ -16,10 +16,6 @@ import org.junit.Test;
  * @author tav
  */
 public class JBCefJSQueryPoolSizeKeyTest {
-  static {
-    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
-  }
-
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   @Rule
@@ -28,6 +24,7 @@ public class JBCefJSQueryPoolSizeKeyTest {
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
+    TestScaleHelper.assumeHeadful();
     TestScaleHelper.setSystemProperty("ide.browser.jcef.jsQueryPoolSize", "1");
   }
 

@@ -25,10 +25,6 @@ import static org.junit.Assert.assertTrue;
  * @author tav
  */
 public class JBCefJSQueryPoolSlotReuseTest {
-  static {
-    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
-  }
-
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   @Rule
@@ -38,6 +34,7 @@ public class JBCefJSQueryPoolSlotReuseTest {
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
+    TestScaleHelper.assumeHeadful();
   }
 
   @After

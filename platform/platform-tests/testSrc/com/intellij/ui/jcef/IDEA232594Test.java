@@ -27,10 +27,6 @@ import static org.junit.Assert.assertEquals;
  * @author tav
  */
 public class IDEA232594Test {
-  static {
-    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
-  }
-
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   static final AtomicInteger CALLBACL_COUNT = new AtomicInteger(0);
@@ -45,6 +41,7 @@ public class IDEA232594Test {
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
+    TestScaleHelper.assumeHeadful();
   }
 
   @After

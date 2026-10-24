@@ -27,15 +27,12 @@ import static org.junit.Assert.assertTrue;
  * @author tav
  */
 public class JBCefHwPopupTest {
-  static {
-    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
-  }
-
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
+    TestScaleHelper.assumeHeadful();
   }
 
   @After

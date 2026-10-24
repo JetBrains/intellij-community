@@ -28,15 +28,12 @@ import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
  * @author tav
  */
 public class JBCefJSQueryOSRTest {
-  static {
-    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
-  }
-
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
+    TestScaleHelper.assumeHeadful();
     TestScaleHelper.setRegistryProperty("ide.browser.jcef.osr.enabled", "true");
   }
 
