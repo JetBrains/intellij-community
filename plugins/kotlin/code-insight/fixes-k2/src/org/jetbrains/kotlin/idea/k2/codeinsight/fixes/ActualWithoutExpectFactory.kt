@@ -14,7 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.expressions.returnType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -271,7 +271,7 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
 
             val expectedVirtualFile = expectedFile.virtualFile
             usedTypes.mapNotNull {
-                getUnResolvableInScope(it, expectedFile, mutableSetOf()) { classSymbol ->
+                getUnResolvableInScope(it, expectedFile) { classSymbol ->
                     val psi = (classSymbol.getExpectsForActual().firstOrNull() ?: classSymbol).psi
                     val useScope = psi?.useScope
                     classSymbol.classId?.asSingleFqName()?.asString() in existingNames || psi == declaration || useScope != null && expectedVirtualFile != null && useScope.contains(expectedVirtualFile)

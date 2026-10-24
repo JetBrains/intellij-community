@@ -10,18 +10,20 @@ import com.intellij.modcommand.Presentation
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.returnType
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
+import org.jetbrains.kotlin.analysis.api.expressions.returnType
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.resolution.KaSimpleOrMultiCall
+import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.function
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.resolution.variable
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
@@ -55,6 +57,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.updateType
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.quickFix.ChangeSignatureFixFactory.toFunctionType
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.hasTypeParametersOutOfScope
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.extractionEngine.isResolvableInScope
 import org.jetbrains.kotlin.idea.quickfix.ChangeTypeFixUtils
 import org.jetbrains.kotlin.idea.quickfix.NumberConversionFix
@@ -62,10 +65,13 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithInitializer
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.psi.KtElement
@@ -83,7 +89,9 @@ import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtReturnExpression
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.getOutermostParenthesizerOrThis
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isNull
 import org.jetbrains.kotlin.resolution.KtResolvableCall
@@ -96,6 +104,7 @@ internal object ChangeTypeQuickFixFactories {
         ENCLOSING_DECLARATION,
         CALLED_FUNCTION,
         VARIABLE,
+        PARAMETER,
     }
 
     private class UpdateTypeQuickFix<E : KtCallableDeclaration>(
@@ -177,19 +186,21 @@ internal object ChangeTypeQuickFixFactories {
         return if (returnTypes.isNotEmpty()) returnTypes.commonSupertype else candidateType
     }
 
-    context(session: KaSession)
+    context(_: KaSession)
     private fun KtProperty.getPropertyInitializerType(): KaType? {
         val initializer = initializer
-        return if (typeReference != null && initializer != null) {
-            //copy property initializer to calculate initializer's type without property's declared type
-            val newExpression = KtPsiFactory(project).createExpressionCodeFragment(initializer.text, this).getContentElement() ?: return null
+        return if (typeReference != null && initializer != null) initializer.typeWithoutExpectedType() else null
+    }
 
-            // A new expression has to be analyzed in the context of the newly created file. To go back to the outer session, a workaround with
-            // converting a type to a pointer and back can be used
+    context(_: KaSession)
+    private fun KtExpression.typeWithoutExpectedType(): KaType? {
+        //copy the expression to calculate its type without the expected type from the context
+        val newExpression = KtPsiFactory(project).createExpressionCodeFragment(text, this).getContentElement() ?: return null
 
-            val typePointer = analyze(newExpression) { newExpression.expressionType?.createPointer() }
-            typePointer?.restore()
-        } else null
+        // A new expression has to be analyzed in the context of the newly created file. To go back to the outer session, a workaround with
+        // converting a type to a pointer and back can be used
+        val typePointer = analyze(newExpression) { newExpression.expressionType?.createPointer() }
+        return typePointer?.restore()
     }
 
     val returnTypeMismatch =
@@ -198,22 +209,11 @@ internal object ChangeTypeQuickFixFactories {
                 ?: return@ModCommandBased emptyList()
             val diagnosticsPsi = diagnostic.psi
 
-            val declaration = element as? KtCallableDeclaration ?: (element as? KtPropertyAccessor)?.property
-            ?: return@ModCommandBased emptyList()
-
             val actualType = diagnostic.actualType
             val expectedType = diagnostic.expectedType
 
             buildList {
-                if (element !is KtFunctionLiteral) {
-                    add(
-                        UpdateTypeQuickFix(
-                            declaration,
-                            if (element is KtPropertyAccessor) TargetType.VARIABLE else TargetType.ENCLOSING_DECLARATION,
-                            createTypeInfo(element.returnTypeWithCandidate(getActualType(actualType, declaration)))
-                        )
-                    )
-                }
+                addIfNotNull(createEnclosingDeclarationTypeFix(element, getActualType(actualType, element)))
 
                 addIfNotNull(returnTypeMismatchReportedFromLambdaFix(element, actualType))
 
@@ -225,6 +225,18 @@ internal object ChangeTypeQuickFixFactories {
                 )
             }
         }
+
+    context(_: KaSession)
+    private fun createEnclosingDeclarationTypeFix(element: KtElement, candidateType: KaType): ModCommandAction? = when (element) {
+        is KtFunctionLiteral -> null
+        is KtCallableDeclaration ->
+            UpdateTypeQuickFix(element, TargetType.ENCLOSING_DECLARATION, createTypeInfo(element.returnTypeWithCandidate(candidateType)))
+
+        is KtPropertyAccessor ->
+            UpdateTypeQuickFix(element.property, TargetType.VARIABLE, createTypeInfo(element.returnTypeWithCandidate(candidateType)))
+
+        else -> null
+    }
 
     context(session: KaSession)
     private fun returnTypeMismatchReportedFromLambdaFix(element: KtElement, actualType: KaType): ModCommandAction? {
@@ -238,6 +250,7 @@ internal object ChangeTypeQuickFixFactories {
         val enclosingDeclaration = expression?.parentOfType<KtDeclaration>()
         val lambdaDeclarationIsProperty = enclosingDeclaration is KtPropertyAccessor
         if (enclosingDeclaration !is KtCallableDeclaration && !lambdaDeclarationIsProperty) return null
+        if (!expression.isReturnedFrom(enclosingDeclaration)) return null
 
         val newExpressionType =
             (expression.expressionType as? KaFunctionType)?.changeReturnType(actualType) ?:
@@ -256,6 +269,16 @@ internal object ChangeTypeQuickFixFactories {
         return UpdateTypeQuickFix(target, targetType, typeInfo)
     }
 
+    context(_: KaSession)
+    private fun KtLambdaExpression.isReturnedFrom(declaration: KtDeclaration): Boolean {
+        val expression = getOutermostParenthesizerOrThis()
+        return when (val parent = expression.parent) {
+            is KtReturnExpression -> parent.resolveSuccessfulSymbol()?.psi == declaration
+            is KtDeclarationWithInitializer -> parent == declaration && parent.initializer == expression
+            else -> false
+        }
+    }
+
     context(session: KaSession)
     internal fun createTypeFixesForCalledDeclaration(
         expression: KtExpression,
@@ -264,7 +287,7 @@ internal object ChangeTypeQuickFixFactories {
     ): List<ModCommandAction> {
         val resolvedCall = (expression as? KtResolvableCall)?.resolveSuccessfulCall() ?: return emptyList()
 
-        if (!isResolvableInScope(expectedType, expression, mutableSetOf())) return emptyList()
+        if (!isResolvableInScope(expectedType, expression)) return emptyList()
         return buildList {
             addIfNotNull(createUpdateTypeFixForCalledFunction(resolvedCall, expectedType))
             addAll(createUpdateTypeFixesForCalledVariable(resolvedCall, expression, actualType, expectedType))
@@ -420,13 +443,74 @@ internal object ChangeTypeQuickFixFactories {
             registerVariableTypeFixes(property, actualType, expectedType)
         }
 
+    val unresolvedCollectionLiteral =
+        KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.UnresolvedCollectionLiteral ->
+            val literal = diagnostic.psi
+            val expression = literal.getOutermostParenthesizerOrThis()
+            when (val parent = expression.parent) {
+                is KtProperty -> {
+                    if (parent.initializer !== expression) return@ModCommandBased emptyList()
+
+                    val initializerType = parent.getPropertyInitializerType() ?: return@ModCommandBased emptyList()
+                    val actualType = getActualType(initializerType, parent)
+                    if (actualType is KaErrorType) return@ModCommandBased emptyList()
+
+                    registerVariableTypeFixes(parent, actualType, diagnostic.incompatibleBound)
+                }
+
+                is KtValueArgument -> createParameterTypeFix(literal, expression)
+
+                is KtReturnExpression -> createReturnTypeFix(literal, parent)
+
+                else -> emptyList()
+            }
+        }
+
+    context(session: KaSession)
+    private fun createReturnTypeFix(
+        literal: KtCollectionLiteralExpression,
+        returnExpression: KtReturnExpression,
+    ): List<ModCommandAction> {
+        val element = returnExpression.resolveSuccessfulSymbol()?.psi as? KtElement ?: return emptyList()
+
+        val literalType = literal.typeWithoutExpectedType() ?: return emptyList()
+        val actualType = getActualType(literalType, element)
+        if (actualType is KaErrorType) return emptyList()
+        if (!isResolvableInScope(actualType, element) || hasTypeParametersOutOfScope(actualType, element)) return emptyList()
+
+        return listOfNotNull(createEnclosingDeclarationTypeFix(element, actualType))
+    }
+
+    context(session: KaSession)
+    private fun createParameterTypeFix(
+        literal: KtCollectionLiteralExpression,
+        argument: KtExpression,
+    ): List<ModCommandAction> {
+        val callElement = argument.parentOfType<KtCallElement>() ?: return emptyList()
+        val functionCall = (callElement as? KtResolvableCall)?.tryResolveCall()?.calls?.singleOrNull()?.function
+            ?: return emptyList()
+        if (functionCall.symbol.allOverriddenSymbols.any()) return emptyList()
+
+        val parameterSymbol = functionCall.valueArgumentMapping[argument]?.symbol ?: return emptyList()
+        if (parameterSymbol.isVararg) return emptyList()
+        val parameter = parameterSymbol.psi as? KtParameter ?: return emptyList()
+        if (!parameter.isWritable) return emptyList()
+
+        val literalType = literal.typeWithoutExpectedType() ?: return emptyList()
+        val actualType = getActualType(literalType, parameter)
+        if (actualType is KaErrorType) return emptyList()
+        if (!isResolvableInScope(actualType, parameter) || hasTypeParametersOutOfScope(actualType, parameter)) return emptyList()
+
+        return listOf(UpdateTypeQuickFix(parameter, TargetType.PARAMETER, createTypeInfo(actualType)))
+    }
+
     context(session: KaSession)
     private fun registerVariableTypeFixes(
         declaration: KtProperty,
         actualType: KaType,
         expectedTypeFromDiagnostics: KaType
     ): List<ModCommandAction> {
-        if (!isResolvableInScope(expectedTypeFromDiagnostics, declaration, mutableSetOf())) return emptyList()
+        if (!isResolvableInScope(expectedTypeFromDiagnostics, declaration)) return emptyList()
         val expectedTypeFromDeclaration = declaration.returnType
         val expression = declaration.initializer ?: return emptyList()
         return buildList {
@@ -605,6 +689,8 @@ internal object ChangeTypeQuickFixFactories {
                 val containerName = declaration.parentOfType<KtClassOrObject>()?.nameAsName?.takeUnless { it.isSpecial }?.asString()
                 "'${containerName?.let { "$containerName." } ?: ""}${declaration.name}'"
             }
+
+            TargetType.PARAMETER -> "'${declaration.name}'"
         }
     }
 

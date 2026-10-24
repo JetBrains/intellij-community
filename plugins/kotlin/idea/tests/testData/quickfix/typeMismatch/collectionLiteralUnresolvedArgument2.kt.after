@@ -1,0 +1,10 @@
+// "Change type of 'a' to 'List<Int>'" "true"
+// K2_ERROR: UNRESOLVED_COLLECTION_LITERAL
+// COMPILER_ARGUMENTS: -Xcollection-literals
+
+fun foo(a: List<Int>): String = ""
+
+fun main()  {
+    val test = foo([4])
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

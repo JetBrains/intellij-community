@@ -102,7 +102,7 @@ internal class MutableParameter(
         analyze(scope) {
             return allParameterTypeCandidates().filter {
                 !(it is KaClassType && it.symbol is KaAnonymousObjectSymbol) &&
-                        isResolvableInScope(it, scope, mutableSetOf())
+                        isResolvableInScope(it, scope)
             }
         }
     }
