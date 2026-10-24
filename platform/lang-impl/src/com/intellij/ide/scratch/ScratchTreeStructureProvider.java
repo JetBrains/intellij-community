@@ -98,7 +98,7 @@ public final class ScratchTreeStructureProvider implements TreeStructureProvider
 
   @ApiStatus.Internal
   public static void registerUpdaters(@NotNull Project project, @NotNull Disposable disposable, @NotNull Runnable onUpdate) {
-    VirtualFileManager.getInstance().addAsyncFileListener(events -> {
+    VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable(events -> {
       ScratchFileService scratchFileService = ScratchFileService.getInstance();
       boolean update = JBIterable.from(events).find(e -> {
         ProgressManager.checkCanceled();
