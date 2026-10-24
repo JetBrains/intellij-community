@@ -146,7 +146,22 @@ async fn the_help_of_bench_names_the_verbs_and_the_exit_codes_and_each_verb_its_
     }
     assert_contains(&welcome, &["--arm <ARM>", &format!("[default: {DEFAULT_WELCOME_RUNS}]")]);
     for text in [&welcome, &project] {
-        assert_contains(text, &["--suppress-plugin <ID>", "idea.suppressed.plugins.id"]);
+        assert_contains(
+            text,
+            &[
+                "--suppress-plugin <ID>",
+                "idea.suppressed.plugins.id",
+                "--profile-event <EVENT>",
+                "async-profiler",
+            ],
+        );
+    }
+    assert_contains(&project, &["air.emptyState.createComponent"]);
+    for project_word in ["air.emptyState.createComponent", "restores"] {
+        assert!(
+            !welcome.contains(project_word),
+            "only the help of project names the arms of project: {project_word} in {welcome}"
+        );
     }
     assert!(!open_project.contains("--suppress-plugin"), "{open_project}");
     assert_contains(&open_project, &["<PROJECT>", &format!("[default: {DEFAULT_OPEN_PROJECT_RUNS}]")]);

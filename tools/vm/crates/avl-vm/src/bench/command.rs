@@ -106,11 +106,11 @@ impl Bench<'_> {
                     command: "welcome",
                     arms: args.arms(),
                     runs: args.runs,
-                    cold: args.cold,
-                    profile: args.profile,
-                    profile_event: args.profile_event,
+                    cold: args.measure.cold,
+                    profile: args.measure.profile,
+                    profile_event: args.measure.profile_event,
                     project: None,
-                    suppressed_plugin: args.suppress.plugin.clone(),
+                    suppressed_plugin: args.measure.suppress.plugin.clone(),
                 };
                 self.session(ctx, &plan, &args.launch).await
             }
@@ -137,10 +137,10 @@ impl Bench<'_> {
                     arms: args.arms().map_err(Refusal::usage)?,
                     runs: args.runs,
                     cold: args.cold(),
-                    profile: args.profile,
-                    profile_event: args.profile_event,
+                    profile: args.measure.profile,
+                    profile_event: args.measure.profile_event,
                     project: Some(PlannedProject::Start(project_source(&args.project, &working_dir()?)?)),
-                    suppressed_plugin: args.suppress.plugin.clone(),
+                    suppressed_plugin: args.measure.suppress.plugin.clone(),
                 };
                 self.session(ctx, &plan, &args.launch).await
             }

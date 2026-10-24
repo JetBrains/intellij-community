@@ -39,8 +39,8 @@ fn welcome_takes_the_defaults_of_the_plan() {
     assert_eq!(args.launch.session, None);
     assert_eq!(args.launch.max_load, None);
     assert_eq!(args.launch.generation, None);
-    assert!(!args.cold && !args.profile);
-    assert_eq!(args.profile_event, ProfileEvent::Cpu);
+    assert!(!args.measure.cold && !args.measure.profile);
+    assert_eq!(args.measure.profile_event, ProfileEvent::Cpu);
     assert_eq!(args.arm.arms(), vec![Arm::MODAL, Arm::NON_MODAL]);
 }
 
@@ -74,7 +74,7 @@ fn the_profile_samples_the_cpu_or_the_wall_clock() {
     let BenchVerb::Welcome(args) = verb(&["welcome", "--profile", "--profile-event", "wall"]) else {
         panic!("expected welcome");
     };
-    assert_eq!((args.profile, args.profile_event), (true, ProfileEvent::Wall));
+    assert_eq!((args.measure.profile, args.measure.profile_event), (true, ProfileEvent::Wall));
     match parsed(&["welcome", "--profile-event", "wall"]) {
         Parsed::Refused { refusal, .. } => assert_eq!(refusal.code, "usage"),
         other => panic!("--profile-event without --profile parsed: {other:?}"),
@@ -142,11 +142,11 @@ fn the_project_verb_takes_the_profile() {
     ]) else {
         panic!("expected project");
     };
-    assert_eq!((args.profile, args.profile_event), (true, ProfileEvent::Wall));
+    assert_eq!((args.measure.profile, args.measure.profile_event), (true, ProfileEvent::Wall));
     let BenchVerb::Project(args) = verb(&["project", "markdown"]) else {
         panic!("expected project");
     };
-    assert_eq!((args.profile, args.profile_event), (false, ProfileEvent::Cpu));
+    assert_eq!((args.measure.profile, args.measure.profile_event), (false, ProfileEvent::Cpu));
     match parsed(&["project", "markdown", "--profile-event", "wall"]) {
         Parsed::Refused { refusal, .. } => assert_eq!(refusal.code, "usage"),
         other => panic!("--profile-event without --profile parsed: {other:?}"),
@@ -178,7 +178,7 @@ fn welcome_takes_every_option_and_the_global_form() {
     };
     assert_eq!(args.runs, 2);
     assert_eq!(args.arm.arms(), vec![Arm::NON_MODAL]);
-    assert!(args.cold && args.profile);
+    assert!(args.measure.cold && args.measure.profile);
     assert_eq!(args.launch.hold, Duration::from_millis(500));
     assert_eq!(args.launch.target, "//build:idea_air_dist");
     assert_eq!(args.launch.session, Some(PathBuf::from("s")));
@@ -241,7 +241,7 @@ fn project_takes_the_empty_editor_arm_and_cold_for_it_alone() {
     let BenchVerb::Project(args) = verb(&["project", "markdown"]) else {
         panic!("expected project");
     };
-    assert_eq!((args.arm, args.cold), (ProjectArmChoice::Project, false));
+    assert_eq!((args.arm, args.measure.cold), (ProjectArmChoice::Project, false));
     assert_eq!(arms(&["project", "markdown"]), Ok(vec![Arm::PROJECT]));
     assert_eq!(arms(&["project", "markdown", "--arm", "empty-editor"]), Ok(vec![Arm::EMPTY_EDITOR]));
     assert_eq!(arms(&["project", "markdown", "--arm", "cargo-sync"]), Ok(vec![Arm::CARGO_SYNC]));
@@ -322,7 +322,7 @@ fn suppress_plugin_adds_an_interleaved_twin_to_each_arm() {
         panic!("expected welcome");
     };
     assert_eq!(
-        (args.suppress.plugin.clone(), args.arms()),
+        (args.measure.suppress.plugin.clone(), args.arms()),
         (None, vec![Arm::MODAL, Arm::NON_MODAL])
     );
     let kotlin = "org.jetbrains.kotlin";

@@ -330,6 +330,24 @@ pub(crate) struct WelcomeArgs {
     /// The arms of the session.
     #[arg(long, value_enum, default_value_t = ArmChoice::Both)]
     pub(crate) arm: ArmChoice,
+    #[command(flatten)]
+    pub(crate) measure: MeasureArgs,
+    #[command(flatten)]
+    pub(crate) launch: LaunchArgs,
+}
+
+impl WelcomeArgs {
+    /// The arms of the session, in the interleave order: each arm of --arm, and after it its twin of
+    /// --suppress-plugin.
+    pub(crate) fn arms(&self) -> Vec<Arm> {
+        self.measure.suppress.with_twins(self.arm.arms())
+    }
+}
+
+/// The options of each measured run of a session of arms: the start from the template, the profile and the suppressed
+/// plugin. A verb can replace the help of an option with its own text, which names its arms.
+#[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
+pub(crate) struct MeasureArgs {
     /// Starts each measured run from a fresh copy of the unprimed template, and skips the prime runs.
     #[arg(long)]
     pub(crate) cold: bool,
@@ -343,17 +361,18 @@ pub(crate) struct WelcomeArgs {
     pub(crate) profile_event: ProfileEvent,
     #[command(flatten)]
     pub(crate) suppress: SuppressArgs,
-    #[command(flatten)]
-    pub(crate) launch: LaunchArgs,
 }
 
-impl WelcomeArgs {
-    /// The arms of the session, in the interleave order: each arm of --arm, and after it its twin of
-    /// --suppress-plugin.
-    pub(crate) fn arms(&self) -> Vec<Arm> {
-        self.suppress.with_twins(self.arm.arms())
-    }
-}
+/// The help of `--cold` of `bench project`, which names the arms that take it.
+const PROJECT_COLD_HELP: &str = "Starts each measured run from a fresh copy of the unprimed template, with empty caches, and \
+    skips the prime run. Only the empty-editor arm takes it: the project arm restores the editor of its prime run. The \
+    cargo-sync arm is always cold.";
+
+/// The help of `--profile` of `bench project`, which also names the gate of the empty-editor arm.
+const PROJECT_PROFILE_HELP: &str = "Samples with async-profiler from the JVM start to the gate of each run, and reports the top \
+    frames of the EDT. The gate of the empty-editor arm is the end of air.emptyState.createComponent. The profile has no time \
+    of a sample, so it covers the whole start-up to the gate, not one span. A run whose JBR has no jcmd keeps the profile of \
+    the whole run.";
 
 /// The plugin that the twin arms of a session suppress.
 #[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
@@ -399,6 +418,7 @@ pub(crate) struct OpenProjectArgs {
 }
 
 #[derive(Clone, Debug, PartialEq, clap::Args)]
+#[command(mut_arg("cold", |arg| arg.help(PROJECT_COLD_HELP)), mut_arg("profile", |arg| arg.help(PROJECT_PROFILE_HELP)))]
 pub(crate) struct ProjectArgs {
     /// The project: `markdown`, a generated project of Markdown files only, or a directory to copy into the sandbox.
     #[arg(value_name = "PROJECT")]
@@ -410,23 +430,8 @@ pub(crate) struct ProjectArgs {
     /// with the Rust plugin, such as --target //build:rustrover_dist, and a Cargo project.
     #[arg(long, value_enum, default_value_t = ProjectArmChoice::Project)]
     pub(crate) arm: ProjectArmChoice,
-    /// Starts each measured run from a fresh copy of the unprimed template, with empty caches, and skips the prime
-    /// run. Only the empty-editor arm takes it: the project arm restores the editor of its prime run. The cargo-sync arm
-    /// is always cold.
-    #[arg(long)]
-    pub(crate) cold: bool,
-    /// Samples with async-profiler from the JVM start to the gate of each run, and reports the top frames of the EDT. The
-    /// gate of the empty-editor arm is the end of air.emptyState.createComponent. The profile has no time of a sample,
-    /// so it covers the whole start-up to the gate, not one span. A run whose JBR has no jcmd keeps the profile of the
-    /// whole run.
-    #[arg(long)]
-    pub(crate) profile: bool,
-    /// The event of --profile: `cpu`, the CPU time of each thread, or `wall`, the wall clock, which samples a waiting
-    /// thread too.
-    #[arg(long, value_name = "EVENT", value_enum, default_value_t = ProfileEvent::Cpu, requires = "profile")]
-    pub(crate) profile_event: ProfileEvent,
     #[command(flatten)]
-    pub(crate) suppress: SuppressArgs,
+    pub(crate) measure: MeasureArgs,
     #[command(flatten)]
     pub(crate) launch: LaunchArgs,
 }
@@ -435,15 +440,15 @@ impl ProjectArgs {
     /// Tells whether each measured run starts from the unprimed template and the session has no prime run: `--cold`,
     /// or the cargo-sync arm, whose metric in CI is a first start.
     pub(crate) fn cold(&self) -> bool {
-        self.cold || self.arm == ProjectArmChoice::CargoSync
+        self.measure.cold || self.arm == ProjectArmChoice::CargoSync
     }
 
     /// The arms of the session, in the interleave order: each arm of --arm, and after it its twin of
     /// --suppress-plugin. A cold session of the project arm is refused: without a prime run, no editor state is there
     /// to restore. A twin of the empty-editor arm without Air is refused too: its gate is a span of the Air composer.
     pub(crate) fn arms(&self) -> Result<Vec<Arm>, String> {
-        let arms = self.suppress.with_twins(self.arm.arms());
-        if self.cold && arms.iter().any(|arm| arm.kind == ArmKind::Project) {
+        let arms = self.measure.suppress.with_twins(self.arm.arms());
+        if self.measure.cold && arms.iter().any(|arm| arm.kind == ArmKind::Project) {
             return Err(
                 "--cold needs --arm empty-editor: the project arm restores the editor that its prime run saved, and a cold session has no prime run"
                     .to_owned(),
