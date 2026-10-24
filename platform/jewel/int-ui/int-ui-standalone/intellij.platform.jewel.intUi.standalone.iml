@@ -43,7 +43,7 @@
     <orderEntry type="module" module-name="intellij.libraries.compose.runtime.desktop" />
     <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
     <orderEntry type="module" module-name="intellij.libraries.jbr" />
-    <orderEntry type="module-library" exported="">
+    <orderEntry type="module-library">
       <library name="jna" type="repository">
         <properties maven-id="net.java.dev.jna:jna-platform:5.19.1">
           <verification>

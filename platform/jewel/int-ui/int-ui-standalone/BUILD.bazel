@@ -35,7 +35,6 @@ jvm_library(
         exclude = ["src/main/resources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:platform-jewel-int_ui-standalone-jna"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -63,7 +62,6 @@ jvm_library(
     kotlinc_opts = ":custom_jewel-intUi-standalone",
     module_name = "intellij.platform.jewel.intUi.standalone",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:platform-jewel-int_ui-standalone-jna"],
     runtime_deps = [
         # do not sort,
         ":jewel-intUi-standalone",

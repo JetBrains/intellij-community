@@ -123,7 +123,6 @@ jvm_library(
     ),
     module_name = "intellij.searchEverywhereMl.tests",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:search_everywhere_ml-tests-ai-grazie-emb"],
 )
 
 jvm_library(
@@ -142,7 +141,6 @@ jvm_library(
         "//plugins/search-everywhere-ml:search-everywhere-ml_test_lib",
     ],
     visibility = ["//visibility:public"],
-    exports = ["@lib//:search_everywhere_ml-tests-ai-grazie-emb"],
     runtime_deps = [":searchEverywhereMl-tests"],
     deps = [
         # do not sort,

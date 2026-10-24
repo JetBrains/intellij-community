@@ -22,7 +22,7 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
-    <orderEntry type="module-library" exported="">
+    <orderEntry type="module-library">
       <library name="axis-1.4">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/axis-1.4.jar!/" />

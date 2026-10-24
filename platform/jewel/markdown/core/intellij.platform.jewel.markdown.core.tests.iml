@@ -37,7 +37,7 @@
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" scope="TEST" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.jewel.ui" scope="TEST" />
-    <orderEntry type="module-library" exported="" scope="TEST">
+    <orderEntry type="module-library" scope="TEST">
       <library name="org.commonmark.commonmark" type="repository">
         <properties include-transitive-deps="false" maven-id="org.commonmark:commonmark:0.24.0">
           <verification>

@@ -20,15 +20,11 @@ jvm_library(
     exports = [
         # do not sort,
         "@lib//:grazie-core-ai-grazie-api-gateway-client-jvm",
-        "@lib//:grazie-core-ai-grazie-nlp-common-jvm",
         "@lib//:grazie-core-ai-grazie-client-ktor-jvm",
         "@lib//:grazie-core-ai-grazie-tasks-library-api-jvm",
         "@lib//:grazie-core-ai-grazie-gec-util",
         "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",
         "//libraries/ai-grazie-rule-engine",
-        "@lib//:grazie-core-ai-grazie-model-ner-jvm",
-        "@lib//:grazie-core-cloud-jetbrains-sdk-ml-jbai-tree-api",
-        "@lib//:grazie-core-cloud-jetbrains-sdk-ml-jbai-ner-api",
     ],
     runtime_deps = [
         # do not sort,
@@ -135,16 +131,12 @@ jvm_library(
     exports = [
         # do not sort,
         "@lib//:grazie-core-ai-grazie-api-gateway-client-jvm",
-        "@lib//:grazie-core-ai-grazie-nlp-common-jvm",
         "@lib//:grazie-core-ai-grazie-client-ktor-jvm",
         "@lib//:grazie-core-ai-grazie-tasks-library-api-jvm",
         "@lib//:grazie-core-ai-grazie-gec-util",
         "@lib//:grazie-core-org-jetbrains-intellij-deps-languagetool-languagetool-core",
         "//libraries/ai-grazie-rule-engine",
         "//libraries/ai-grazie-rule-engine:ai-grazie-rule-engine_test_lib",
-        "@lib//:grazie-core-ai-grazie-model-ner-jvm",
-        "@lib//:grazie-core-cloud-jetbrains-sdk-ml-jbai-tree-api",
-        "@lib//:grazie-core-cloud-jetbrains-sdk-ml-jbai-ner-api",
     ],
     runtime_deps = [
         # do not sort,

@@ -120,7 +120,6 @@ jvm_library(
     ),
     module_name = "intellij.platform.jewel.markdown.core.tests",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:platform-jewel-markdown-core-tests-org-commonmark-commonmark"],
 )
 
 jvm_library(
@@ -144,7 +143,6 @@ jvm_library(
         ["src/test/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:platform-jewel-markdown-core-tests-org-commonmark-commonmark"],
     runtime_deps = [":jewel-markdown-core-tests"],
     deps = [
         # do not sort,

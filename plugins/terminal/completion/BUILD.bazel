@@ -61,7 +61,6 @@ jvm_library(
     ),
     module_name = "intellij.terminal.completion.tests",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:terminal-completion-tests-terminal-completion-spec"],
 )
 
 jvm_library(
@@ -80,7 +79,6 @@ jvm_library(
         "//plugins/terminal/completion:completion_test_lib",
     ],
     visibility = ["//visibility:public"],
-    exports = ["@lib//:terminal-completion-tests-terminal-completion-spec"],
     runtime_deps = [":completion-tests"],
     deps = [
         # do not sort,

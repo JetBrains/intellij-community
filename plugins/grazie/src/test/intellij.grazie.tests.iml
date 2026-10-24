@@ -23,7 +23,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinTest" />
     <orderEntry type="module" module-name="intellij.java.testFramework" />
     <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
-    <orderEntry type="module-library" exported="" scope="TEST">
+    <orderEntry type="module-library" scope="TEST">
       <library name="ai.grazie.spell.hunspell.de" type="repository">
         <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-de:0.9.8">
           <verification>
@@ -39,7 +39,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library" exported="" scope="TEST">
+    <orderEntry type="module-library" scope="TEST">
       <library name="ai.grazie.spell.hunspell.ru" type="repository">
         <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-ru:0.9.8">
           <verification>
@@ -55,7 +55,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module-library" exported="" scope="TEST">
+    <orderEntry type="module-library" scope="TEST">
       <library name="ai.grazie.spell.hunspell.uk" type="repository">
         <properties include-transitive-deps="false" maven-id="ai.grazie.spell:hunspell-uk:0.9.8">
           <verification>

@@ -60,7 +60,6 @@ jvm_library(
     exports = [
         # do not sort,
         "//platform/jewel/foundation",
-        "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
         "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
         "//libraries/compose-foundation-desktop",
         "//platform/icons-api",
@@ -97,7 +96,6 @@ jvm_library(
         # do not sort,
         "//platform/jewel/foundation",
         "//platform/jewel/foundation:foundation_test_lib",
-        "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources",
         "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
         "//libraries/compose-foundation-desktop",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
@@ -156,8 +154,6 @@ jvm_library(
     exports = [
         # do not sort,
         "//platform/jewel/foundation",
-        "@lib//:platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources",
-        "@lib//:platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources-desktop",
         "//libraries/compose-foundation-desktop",
     ],
 )
@@ -187,8 +183,6 @@ jvm_library(
         # do not sort,
         "//platform/jewel/foundation",
         "//platform/jewel/foundation:foundation_test_lib",
-        "@lib//:platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources",
-        "@lib//:platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources-desktop",
         "//libraries/compose-foundation-desktop",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
     ],
