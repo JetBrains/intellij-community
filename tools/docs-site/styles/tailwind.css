@@ -24,54 +24,69 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ── design tokens ────────────────────────────────────────────────────────────
-   Values are literal OKLCH from Tailwind's default palette (categorical accents use -600
-   shades on light and -400 on dark; neutrals use the zinc scale; the primary is indigo —
-   indigo-600 on light, where it colors bare link text on white and shares the shade with
-   --layer-indigo, and indigo-300 on dark, one step brighter than --layer-indigo's indigo-400
-   so the two stay distinct). --brand-gradient runs from indigo to violet, one step darker on
-   dark so white text on it keeps its contrast. Components and canvas.css consume ONLY the
-   semantic tokens — never raw palette values.
+   The palette is the Int UI palette of the IDE (community/platform/platform-resources/src/themes/expUI/
+   expUI_light.theme.json and expUI_dark.theme.json). Each value is a literal hex color, and its comment names the
+   palette step. The QA reader compares the site with IDE screenshots, so the page uses the colors of those
+   screenshots: page #FFFFFF / Gray1, cards Gray2 in dark, the Blue3 / Blue9 primary.
 
-   Vocabulary shift from the pre-shadcn site: --primary is the indigo brand/link color (the old
-   --accent), while --accent is the neutral hover surface (the old --bg-hover). */
+   The lane colors (--layer-*) keep their names, because the site configs and the diagrams name them. The values
+   move away from the blue primary: indigo is purple, sky is teal, and blue is magenta.
+
+   scripts/themeContrast.test.ts checks the main token pairs of both blocks: text at 4.5:1, UI marks at 3:1. A
+   dark --brand-gradient keeps white text readable. Components and canvas.css use only the semantic tokens.
+
+   --primary is the brand and link color. --accent is the neutral hover surface. */
 
 :root {
   color-scheme: light;
 
   /* shadcn semantic tokens */
-  --background: #fff;
-  --foreground: oklch(21% 0.006 285.885); /* zinc-900 */
-  --card: #fff;
+  --background: #ffffff; /* Gray14 */
+  --foreground: #27282e; /* Gray2 */
+  --card: #ffffff; /* Gray14 */
   --card-foreground: var(--foreground);
-  --popover: #fff;
+  --popover: #ffffff; /* Gray14 */
   --popover-foreground: var(--foreground);
-  --primary: oklch(51.1% 0.262 276.966); /* indigo-600 */
-  --primary-foreground: #fff;
+  --primary: #3369d6; /* Blue3 */
+  --primary-foreground: #ffffff;
   --primary-tint: color-mix(in srgb, var(--primary) 8%, transparent);
   /* the default button states of the GenUI catalog (ADR 0218), with the catalog fallback formulas */
   --primary-hover: color-mix(in oklab, var(--primary) 85%, var(--background));
   --primary-pressed: color-mix(in oklab, var(--primary) 80%, var(--foreground));
   --primary-disabled: color-mix(in oklab, var(--primary) 45%, var(--background));
   /* the brand fill behind white text (the product mark, the Home hero) */
-  --brand-gradient: linear-gradient(135deg, oklch(51.1% 0.262 276.966) /* indigo-600 */, oklch(54.1% 0.281 293.009) /* violet-600 */);
-  --secondary: oklch(96.7% 0.001 286.375); /* zinc-100 */
+  --brand-gradient: linear-gradient(135deg, #3369d6 /* Blue3 */, #7444d4 /* Purple3 */);
+  --secondary: #ebecf0; /* Gray12 */
   --secondary-foreground: var(--foreground);
-  --muted: oklch(98.5% 0 0); /* zinc-50 */
-  --muted-foreground: oklch(55.2% 0.016 285.938); /* zinc-500 */
-  --accent: oklch(96.7% 0.001 286.375); /* zinc-100 */
+  --muted: #f7f8fa; /* Gray13 */
+  --muted-foreground: #6c707e; /* Gray6 */
+  --accent: #ebecf0; /* Gray12 */
   --accent-foreground: var(--foreground);
-  --destructive: oklch(57.7% 0.245 27.325); /* red-600 */
-  --warning: oklch(66.6% 0.179 58.318); /* amber-600 */
-  --success: oklch(62.7% 0.194 149.214); /* green-600 */
-  --border: oklch(92% 0.004 286.32); /* zinc-200 */
-  --input: oklch(87.1% 0.006 286.286); /* zinc-300 */
-  --ring: var(--primary);
-  --radius: 10px;
+  --destructive: #cc3645; /* Red3 */
+  --warning: #976005; /* Yellow1, one step darker for text */
+  --success: #1f7536; /* Green2 */
+  --border: #ebecf0; /* Gray12 */
+  /* a control border: Gray7, not the Gray9 of the IDE, so it keeps 3:1 */
+  --input: #818594; /* Gray7 */
+  --ring: #3574f0; /* Blue4 */
+  --radius: 8px;
+
+  /* the status surfaces of the GenUI catalog (catalog.css), for Badge, Callout and Steps */
+  --info: #2e55a3; /* Blue1 */
+  --info-surface: #edf3ff; /* Blue12 */
+  --info-border: #c2d6fc; /* Blue10 */
+  --success-surface: #f2fcf3; /* Green11 */
+  --success-border: #afdbb8; /* Green8 */
+  --warning-surface: #fffaeb; /* Yellow10 */
+  --warning-border: #fed277; /* Yellow6 */
+  --destructive-surface: #fff7f7; /* Red12 */
+  --destructive-border: #f2b6bb; /* Red8 */
+  --disabled: #a8adbd; /* Gray8 */
 
   /* domain tokens */
-  --canvas: oklch(98.5% 0 0); /* zinc-50 */
-  --module-bg: oklch(96.7% 0.001 286.375); /* zinc-100 */
-  --edge-stroke: oklch(70.5% 0.015 286.067); /* zinc-400 */
+  --canvas: #f7f8fa; /* Gray13 */
+  --module-bg: #ebecf0; /* Gray12 */
+  --edge-stroke: #818594; /* Gray7 */
   --code-bg: rgb(0 0 0 / 6%);
 
   /* hairline ring on raised/floating surfaces — the templates' dark ring-white/10 elevation
@@ -83,21 +98,21 @@
   --shadow-1: 0 1px 3px var(--shadow-tint);
   --shadow-2: 0 8px 32px var(--shadow-tint-strong);
 
-  --layer-indigo: oklch(51.1% 0.262 276.966); /* indigo-600 */
-  --layer-sky: oklch(58.8% 0.158 241.966); /* sky-600 */
-  --layer-blue: oklch(54.6% 0.245 262.881); /* blue-600 */
-  --layer-green: oklch(62.7% 0.194 149.214); /* green-600 */
-  --layer-amber: oklch(66.6% 0.179 58.318); /* amber-600 */
-  --layer-red: oklch(57.7% 0.245 27.325); /* red-600 */
-  --layer-neutral: oklch(55.2% 0.016 285.938); /* zinc-500 */
+  --layer-indigo: #7444d4; /* Purple3 */
+  --layer-sky: #077a7f; /* Teal2 */
+  --layer-blue: #b5307a; /* magenta, outside the palette */
+  --layer-green: #1f7536; /* Green2 */
+  --layer-amber: #976005; /* Yellow1, one step darker for text */
+  --layer-red: #bc303e; /* Red2 */
+  --layer-neutral: #6c707e; /* Gray6 */
 
-  --tag-target: oklch(55.8% 0.288 302.321); /* purple-600 */
-  --tag-durable: oklch(62.7% 0.194 149.214); /* green-600 */
-  --tag-live: oklch(54.6% 0.245 262.881); /* blue-600 */
-  --tag-ui: oklch(57.7% 0.245 27.325); /* red-600 */
-  /* custom bronze — no Tailwind equivalent (amber is the "amber" layer, yellow too saturated) */
-  --tag-terminalBacked: #9a6a2f;
-  --tag-structured: oklch(60% 0.118 184.704); /* teal-600 */
+  --tag-target: #643cb8; /* Purple2 */
+  --tag-durable: #1f7536; /* Green2 */
+  --tag-live: #2e55a3; /* Blue1 */
+  --tag-ui: #bc303e; /* Red2 */
+  /* bronze, outside the palette: amber is the "amber" lane */
+  --tag-terminalBacked: #8a5a1f;
+  --tag-structured: #096a6e; /* Teal1 */
 
   /* structural scales (type ramp, radii, spacing) live in the @theme blocks below; font families
      are 'Inter Variable' / 'JetBrains Mono Variable' from @fontsource-variable packages imported
@@ -110,50 +125,62 @@
 .dark {
   color-scheme: dark;
 
-  --background: oklch(14.1% 0.005 285.823); /* zinc-950 */
-  --foreground: oklch(96.7% 0.001 286.375); /* zinc-100 */
-  --card: oklch(21% 0.006 285.885); /* zinc-900 */
-  --popover: oklch(21% 0.006 285.885); /* zinc-900 */
-  --primary: oklch(78.5% 0.115 274.713); /* indigo-300 */
-  --primary-foreground: oklch(14.1% 0.005 285.823); /* zinc-950 */
+  --background: #1e1f22; /* Gray1 */
+  --foreground: #dfe1e5; /* Gray12 */
+  --card: #2b2d30; /* Gray2 */
+  --popover: #2b2d30; /* Gray2 */
+  --primary: #6b9bfa; /* Blue9 */
+  --primary-foreground: #1e1f22; /* Gray1 */
   --primary-tint: color-mix(in srgb, var(--primary) 12%, transparent);
   --primary-hover: color-mix(in oklab, var(--primary) 85%, var(--background));
   --primary-pressed: color-mix(in oklab, var(--primary) 80%, var(--foreground));
   --primary-disabled: color-mix(in oklab, var(--primary) 45%, var(--background));
-  --brand-gradient: linear-gradient(135deg, oklch(45.7% 0.24 277.023) /* indigo-700 */, oklch(49.1% 0.27 292.581) /* violet-700 */);
-  --secondary: oklch(27.4% 0.006 286.033); /* zinc-800 */
-  --muted: oklch(27.4% 0.006 286.033); /* zinc-800 */
-  --muted-foreground: oklch(70.5% 0.015 286.067); /* zinc-400 */
-  --accent: oklch(37% 0.013 285.805); /* zinc-700 */
-  --destructive: oklch(70.4% 0.191 22.216); /* red-400 */
-  --warning: oklch(82.8% 0.189 84.429); /* amber-400 */
-  --success: oklch(79.2% 0.209 151.711); /* green-400 */
-  --border: oklch(27.4% 0.006 286.033); /* zinc-800 */
-  --input: oklch(37% 0.013 285.805); /* zinc-700 */
+  --brand-gradient: linear-gradient(135deg, #375fad /* Blue4 */, #583d7a /* Purple4 */);
+  --secondary: #393b40; /* Gray3 */
+  --muted: #2b2d30; /* Gray2 */
+  --muted-foreground: #9da0a8; /* Gray9 */
+  --accent: #393b40; /* Gray3 */
+  --destructive: #e37774; /* Red8 */
+  --warning: #f2c55c; /* Yellow7 */
+  --success: #73bd79; /* Green8 */
+  --border: #393b40; /* Gray3 */
+  --input: #6f737a; /* Gray7 */
+  --ring: #548af7; /* Blue8 */
 
-  --canvas: oklch(14.1% 0.005 285.823); /* zinc-950 */
-  --module-bg: oklch(21% 0.006 285.885); /* zinc-900 */
-  --edge-stroke: oklch(44.2% 0.017 285.786); /* zinc-600 */
+  --info: #6b9bfa; /* Blue9 */
+  --info-surface: #25324d; /* Blue1 */
+  --info-border: #35538f; /* Blue3 */
+  --success-surface: #253627; /* Green1 */
+  --success-border: #436946; /* Green4 */
+  --warning-surface: #3d3223; /* Yellow1 */
+  --warning-border: #826a41; /* Yellow3 */
+  --destructive-surface: #402929; /* Red1 */
+  --destructive-border: #7a4343; /* Red4 */
+  --disabled: #6f737a; /* Gray7 */
+
+  --canvas: #1e1f22; /* Gray1 */
+  --module-bg: #2b2d30; /* Gray2 */
+  --edge-stroke: #6f737a; /* Gray7 */
   --code-bg: rgb(255 255 255 / 7%);
   --edge-highlight: rgb(255 255 255 / 8%);
 
   --shadow-tint: rgb(0 0 0 / 40%);
   --shadow-tint-strong: rgb(0 0 0 / 55%);
 
-  --layer-indigo: oklch(67.3% 0.182 276.935); /* indigo-400 */
-  --layer-sky: oklch(74.6% 0.16 232.661); /* sky-400 */
-  --layer-blue: oklch(70.7% 0.165 254.624); /* blue-400 */
-  --layer-green: oklch(79.2% 0.209 151.711); /* green-400 */
-  --layer-amber: oklch(82.8% 0.189 84.429); /* amber-400 */
-  --layer-red: oklch(70.4% 0.191 22.216); /* red-400 */
-  --layer-neutral: oklch(70.5% 0.015 286.067); /* zinc-400 */
+  --layer-indigo: #b589ec; /* Purple9 */
+  --layer-sky: #42b1a4; /* Teal8 */
+  --layer-blue: #e58ac0; /* magenta, outside the palette */
+  --layer-green: #73bd79; /* Green8 */
+  --layer-amber: #d6ae58; /* Yellow6 */
+  --layer-red: #e37774; /* Red8 */
+  --layer-neutral: #9da0a8; /* Gray9 */
 
-  --tag-target: oklch(71.4% 0.203 305.504); /* purple-400 */
-  --tag-durable: oklch(79.2% 0.209 151.711); /* green-400 */
-  --tag-live: oklch(70.7% 0.165 254.624); /* blue-400 */
-  --tag-ui: oklch(70.4% 0.191 22.216); /* red-400 */
+  --tag-target: #b589ec; /* Purple9 */
+  --tag-durable: #73bd79; /* Green8 */
+  --tag-live: #83acfc; /* Blue10 */
+  --tag-ui: #e37774; /* Red8 */
   --tag-terminalBacked: #d6a35c;
-  --tag-structured: oklch(77.7% 0.152 181.912); /* teal-400 */
+  --tag-structured: #42b1a4; /* Teal8 */
 }
 
 /* static: the plain CSS files (canvas/prose/source) consume var(--text-*)/var(--font-*) outside
@@ -208,9 +235,20 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  /* the status surfaces of the GenUI catalog */
+  --color-info: var(--info);
+  --color-info-surface: var(--info-surface);
+  --color-info-border: var(--info-border);
+  --color-success-surface: var(--success-surface);
+  --color-success-border: var(--success-border);
+  --color-warning-surface: var(--warning-surface);
+  --color-warning-border: var(--warning-border);
+  --color-destructive-surface: var(--destructive-surface);
+  --color-destructive-border: var(--destructive-border);
+  --color-disabled: var(--disabled);
 
-  /* shadcn radius formula, driven by --radius: 10px above
-     (sm 6px / md 8px / lg 10px / xl 14px — the site's dense radii) */
+  /* shadcn radius formula, driven by --radius: 8px above
+     (sm 4.8px / md 6.4px / lg 8px / xl 11.2px — the site's dense radii) */
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);

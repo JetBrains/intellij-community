@@ -94,16 +94,16 @@
   --tw-prose-bold: var(--foreground);
   --tw-prose-counters: var(--muted-foreground);
   --tw-prose-bullets: var(--muted-foreground);
-  --tw-prose-hr: var(--input);
+  --tw-prose-hr: var(--border);
   --tw-prose-quotes: var(--muted-foreground);
-  --tw-prose-quote-borders: var(--input);
+  --tw-prose-quote-borders: var(--border);
   --tw-prose-captions: var(--muted-foreground);
   --tw-prose-kbd: var(--foreground);
   --tw-prose-code: var(--foreground);
   --tw-prose-pre-code: var(--foreground);
   --tw-prose-pre-bg: var(--muted);
-  --tw-prose-th-borders: var(--input);
-  --tw-prose-td-borders: var(--input);
+  --tw-prose-th-borders: var(--border);
+  --tw-prose-td-borders: var(--border);
 
   /* keep the site's dense 15px/1.55 rhythm and let embedded contexts (detail panel, flow
      cards) keep their smaller inherited size instead of prose's 1rem/1.75 */
