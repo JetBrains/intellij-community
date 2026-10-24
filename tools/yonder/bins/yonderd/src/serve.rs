@@ -4,12 +4,13 @@
 //! waits: `Have`, the end of `Pack`, `Lease` and `Release`. The requests of a repository and of a lease are here; the
 //! requests of a run are in `run_requests`. A thread runs the cleanup of `cleanup` every hour.
 
+use std::collections::HashSet;
 use std::io::{self, Write};
 use std::net::{IpAddr, Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::mpsc::{self, RecvTimeoutError};
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime};
 
@@ -30,7 +31,8 @@ const READ_DEADLINE: Duration = Duration::from_secs(10);
 /// The most handshakes that go on at a time.
 pub(crate) const MAX_HANDSHAKES: usize = 32;
 
-/// The deadline of each chunk of a pack. The client computes the pack while it sends it.
+/// The deadline of each chunk of a pack. The client builds the pack into a file before it sends it, so each chunk
+/// comes as fast as the link carries it.
 const PACK_READ_DEADLINE: Duration = Duration::from_secs(60);
 
 /// How long a lease request waits for a run of the same holder.
@@ -50,6 +52,8 @@ pub(crate) struct Agent {
     pub(crate) tls: ServerTls,
     /// The binary of the agent, which `supervise` runs.
     pub(crate) exe: PathBuf,
+    /// The repositories that a check found, so each later request of a run skips the `git rev-parse`.
+    pub(crate) repos: Mutex<HashSet<PathBuf>>,
 }
 
 /// Listens on `bind:port` and serves each connection. Prints one JSON line with the address and the fingerprint on
@@ -71,7 +75,12 @@ pub(crate) fn serve(home: Home, bind: IpAddr, port: u16, out: &mut dyn Write) ->
     let line = serde_json::json!({"listening": address.to_string(), "fingerprint": identity.fingerprint().to_string()});
     let _ = writeln!(out, "{line}").and_then(|()| out.flush());
     let tls = ServerTls::new(&identity, home.allow_file()).map_err(|error| refused(AGENT_ERROR, format!("cannot set up TLS: {error}")))?;
-    let agent = Arc::new(Agent { home, tls, exe });
+    let agent = Arc::new(Agent {
+        home,
+        tls,
+        exe,
+        repos: Mutex::default(),
+    });
 
     let home = agent.home.clone();
     thread::spawn(move || {
@@ -158,11 +167,13 @@ impl Agent {
         let request = channel.recv::<Request>()?;
         match request {
             Request::Hello { .. } => answer(channel, Err(refused(BAD_REQUEST, "a connection carries one hello"))),
-            Request::Have { repo, commits } => {
-                let home = self.home.clone();
-                let result = with_heartbeats(channel, move || have(&home, &repo, &commits))?;
-                answer(channel, result)
-            }
+            Request::Have { repo, commits } => match self.repo(&repo) {
+                Ok(repo) => {
+                    let result = with_heartbeats(channel, move || have(&repo, &commits))?;
+                    answer(channel, result)
+                }
+                Err(refusal) => answer(channel, Err(refusal)),
+            },
             Request::Pack { repo, commit, reference } => self.pack(channel, &repo, &commit, &reference),
             Request::Start(spec) => answer(channel, self.start(&spec)),
             Request::Follow { run, offset } => self.follow(channel, &run, offset),
@@ -175,9 +186,25 @@ impl Agent {
         }
     }
 
-    /// The main repository `repo`, with `~/` expanded, when it is a git repository.
+    /// The main repository `repo`, with `~/` expanded, when it is a git repository. A path that a check found stays
+    /// found while it is a directory.
     pub(crate) fn repo(&self, repo: &str) -> Result<PathBuf, Refusal> {
-        find_repo(&self.home, repo)
+        let path = self.home.expand(repo);
+        if self.known_repos().contains(&path) && path.is_dir() {
+            return Ok(path);
+        }
+        if !git::is_repo(&path) {
+            return Err(refused(
+                REPO_MISSING,
+                format!("{} is not a git repository on this host", path.display()),
+            ));
+        }
+        self.known_repos().insert(path.clone());
+        Ok(path)
+    }
+
+    fn known_repos(&self) -> MutexGuard<'_, HashSet<PathBuf>> {
+        self.repos.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
     /// Reads the pack that follows into `git index-pack`, then points `reference` at `commit`. A refused pack is read
@@ -289,23 +316,9 @@ impl Agent {
     }
 }
 
-/// The main repository `repo` of `home`, with `~/` expanded, when it is a git repository.
-fn find_repo(home: &Home, repo: &str) -> Result<PathBuf, Refusal> {
-    let path = home.expand(repo);
-    if git::is_repo(&path) {
-        Ok(path)
-    } else {
-        Err(refused(
-            REPO_MISSING,
-            format!("{} is not a git repository on this host", path.display()),
-        ))
-    }
-}
-
 /// The commits of `commits` that the repository `repo` has. `git cat-file` can take long on a busy disk, so the caller
 /// runs it with heartbeats.
-fn have(home: &Home, repo: &str, commits: &[String]) -> Result<Reply, Refusal> {
-    let repo = find_repo(home, repo)?;
+fn have(repo: &Path, commits: &[String]) -> Result<Reply, Refusal> {
     if commits.len() > MAX_HAVE {
         return Err(refused(
             BAD_REQUEST,
@@ -315,7 +328,7 @@ fn have(home: &Home, repo: &str, commits: &[String]) -> Result<Reply, Refusal> {
     if let Some(bad) = commits.iter().find(|commit| !git::is_commit_id(commit)) {
         return Err(refused(BAD_REQUEST, format!("{bad:?} is not a full commit id")));
     }
-    git::have(&repo, commits)
+    git::have(repo, commits)
         .map(|commits| Reply::Have { commits })
         .map_err(|error| refused(AGENT_ERROR, error))
 }

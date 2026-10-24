@@ -6,6 +6,7 @@ use std::io::{self, Write};
 use std::os::fd::AsRawFd;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
 
 /// The mode of each directory of the agent.
 pub(crate) const DIR_MODE: u32 = 0o700;
@@ -19,9 +20,19 @@ pub(crate) fn private_dir(dir: &Path) -> io::Result<()> {
     fs::set_permissions(dir, Permissions::from_mode(DIR_MODE))
 }
 
-/// Writes `path` through a temporary file beside it, so a reader never sees a part. The file has the mode 0600.
+/// The count of the temporary files of this process. `serve` writes from many threads, so the pid alone does not
+/// make a name unique.
+static TEMPORARIES: AtomicU64 = AtomicU64::new(0);
+
+/// Writes `path` through a temporary file beside it, so a reader never sees a part. The file has the mode 0600. Two
+/// threads that write the same path at once each write a temporary file of their own, and the last rename wins.
 pub(crate) fn write_private(path: &Path, bytes: &[u8]) -> io::Result<()> {
-    let temp = PathBuf::from(format!("{}.tmp-{}", path.display(), std::process::id()));
+    let temp = PathBuf::from(format!(
+        "{}.tmp-{}-{}",
+        path.display(),
+        std::process::id(),
+        TEMPORARIES.fetch_add(1, Ordering::Relaxed)
+    ));
     let written = OpenOptions::new()
         .write(true)
         .create(true)

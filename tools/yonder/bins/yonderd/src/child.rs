@@ -85,8 +85,8 @@ pub(crate) struct Running {
     what: String,
     started: Instant,
     deadline: Duration,
-    stdout: Receiver<Vec<u8>>,
-    stderr: Receiver<Vec<u8>>,
+    stdout: Collected,
+    stderr: Collected,
     /// Dropped with the `Running`, which ends the watchdog.
     _watchdog: Sender<()>,
 }
@@ -183,15 +183,10 @@ impl Running {
             return Err(self.timed_out());
         }
         let drained = Instant::now() + DRAIN;
-        let take = |receiver: &Receiver<Vec<u8>>| {
-            receiver
-                .recv_timeout(drained.saturating_duration_since(Instant::now()))
-                .unwrap_or_default()
-        };
         Ok(Output {
             status,
-            stdout: take(&self.stdout),
-            stderr: take(&self.stderr),
+            stdout: self.stdout.take(drained),
+            stderr: self.stderr.take(drained),
         })
     }
 
@@ -203,17 +198,46 @@ impl Running {
     }
 }
 
-/// Reads all of `pipe` on a thread. The receiver gets the bytes at the end of the pipe.
-fn collect(pipe: Option<impl Read + Send + 'static>) -> Receiver<Vec<u8>> {
-    let (sender, receiver) = mpsc::channel();
+/// The output of one pipe of a child, which a thread collects as it comes.
+#[derive(Debug)]
+struct Collected {
+    bytes: Arc<Mutex<Vec<u8>>>,
+    /// Closed at the end of the pipe.
+    ended: Receiver<()>,
+}
+
+impl Collected {
+    /// The bytes of the pipe once it ends, or the bytes that came up to `deadline`. A grandchild that holds the pipe
+    /// open, such as a helper of bd, then costs no more than the wait.
+    fn take(&self, deadline: Instant) -> Vec<u8> {
+        let _ = self.ended.recv_timeout(deadline.saturating_duration_since(Instant::now()));
+        std::mem::take(&mut *self.bytes.lock().unwrap_or_else(PoisonError::into_inner))
+    }
+}
+
+/// Reads all of `pipe` on a thread, chunk by chunk, into the shared buffer of the answer.
+fn collect(pipe: Option<impl Read + Send + 'static>) -> Collected {
+    let (ends, ended) = mpsc::channel();
+    let bytes = Arc::new(Mutex::new(Vec::new()));
     if let Some(mut pipe) = pipe {
+        let bytes = Arc::clone(&bytes);
         thread::spawn(move || {
-            let mut bytes = Vec::new();
-            let _ = pipe.read_to_end(&mut bytes);
-            let _ = sender.send(bytes);
+            let _ends = ends;
+            let mut chunk = vec![0u8; 16 * 1024];
+            loop {
+                match pipe.read(&mut chunk) {
+                    Ok(0) => return,
+                    Ok(read) => bytes
+                        .lock()
+                        .unwrap_or_else(PoisonError::into_inner)
+                        .extend_from_slice(&chunk[..read]),
+                    Err(error) if error.kind() == io::ErrorKind::Interrupted => {}
+                    Err(_) => return,
+                }
+            }
         });
     }
-    receiver
+    Collected { bytes, ended }
 }
 
 /// The program and the arguments of `command`, for a message.

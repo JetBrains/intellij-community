@@ -41,12 +41,14 @@ const WRITE_DEADLINE: Duration = Duration::from_secs(60);
 
 impl Agent {
     /// Makes the run directory, starts `yonderd supervise` in a session of its own, and answers at once. A refused
-    /// start deletes the ref that the pack of the run made, unless a kept run has the same id.
+    /// start deletes the ref that the pack of the run made, unless a kept run has the same id. It never deletes the
+    /// ref of another run.
     pub(crate) fn start(&self, spec: &RunSpec) -> Result<Reply, Refusal> {
         let started = self.start_checked(spec);
         if let Err(refusal) = &started
             && refusal.code != RUN_EXISTS
-            && git::is_run_ref(&spec.reference)
+            && is_run_id(&spec.run)
+            && spec.reference == run_ref(&spec.run)
         {
             let repo = self.home.expand(&spec.repo);
             if git::is_repo(&repo)
@@ -69,10 +71,10 @@ impl Agent {
         if !git::is_commit_id(&spec.commit) {
             return Err(refused(BAD_REQUEST, format!("{:?} is not a full commit id", spec.commit)));
         }
-        if !git::is_run_ref(&spec.reference) {
+        if spec.reference != run_ref(&spec.run) {
             return Err(refused(
                 BAD_REQUEST,
-                format!("{:?} is not a ref {}<run id>", spec.reference, git::REF_PREFIX),
+                format!("{:?} is not the ref {} of the run", spec.reference, run_ref(&spec.run)),
             ));
         }
         if let Some(bad) = spec.fetch.iter().find(|dir| !is_inner_path(dir)) {
@@ -159,9 +161,9 @@ impl Agent {
         let shared = FollowChannel::new(channel);
         thread::scope(|scope| {
             scope.spawn(|| shared.beat(tuning::heartbeat(), started_ms));
-            let followed = follow_to_end(&run, offset, &shared, &mut watch);
-            shared.finish();
-            followed
+            // The heartbeat thread ends on every way out of the follow, a panic too, so the scope never waits for it.
+            let _finish = Finish(&shared);
+            follow_to_end(&run, offset, &shared, &mut watch)
         })
     }
 
@@ -264,6 +266,11 @@ impl Agent {
     }
 }
 
+/// The ref that the pack of the run `run` makes: `refs/yonder/<run>`.
+pub(crate) fn run_ref(run: &str) -> String {
+    format!("{}{run}", git::REF_PREFIX)
+}
+
 /// The loop of a follow: it reads the run files and sends what is new, until the end of the run.
 fn follow_to_end(run: &RunDir, offset: u64, channel: &FollowChannel<'_>, watch: &mut Watch) -> Result<(), LinkError> {
     let hold = tuning::follow_hold();
@@ -308,6 +315,15 @@ fn follow_to_end(run: &RunDir, offset: u64, channel: &FollowChannel<'_>, watch: 
             continue;
         }
         watch.wait(FOLLOW_RECHECK);
+    }
+}
+
+/// Ends the heartbeat thread of a follow when it drops.
+struct Finish<'f, 'c>(&'f FollowChannel<'c>);
+
+impl Drop for Finish<'_, '_> {
+    fn drop(&mut self) {
+        self.0.finish();
     }
 }
 

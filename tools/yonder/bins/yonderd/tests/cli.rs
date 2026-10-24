@@ -701,6 +701,16 @@ fn a_start_refuses_a_bad_spec() {
         }),
         "bad_request"
     );
+    // The ref of another run: the start refuses it and leaves that ref alone.
+    git(&world.repo(), &["update-ref", "refs/yonder/2-9", &world.commit]);
+    assert_eq!(
+        refused(RunSpec {
+            reference: "refs/yonder/2-9".to_owned(),
+            ..world.spec("2-1", HOLDER, "true")
+        }),
+        "bad_request"
+    );
+    assert_eq!(git(&world.repo(), &["rev-parse", "refs/yonder/2-9"]), world.commit);
     assert_eq!(
         refused(RunSpec {
             repo: "~/missing".to_owned(),

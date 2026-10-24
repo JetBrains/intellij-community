@@ -373,11 +373,9 @@ impl EventLog {
         }
     }
 
+    /// Drops each later event. A follower reads the log from the page cache, so the close waits for no disk.
     pub(crate) fn close(&self) {
-        let mut file = self.file.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
-        if let Some(file) = file.take() {
-            let _ = file.sync_all();
-        }
+        self.file.lock().unwrap_or_else(std::sync::PoisonError::into_inner).take();
     }
 }
 

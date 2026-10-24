@@ -356,7 +356,13 @@ fn run_command(spec: &RunSpec, slot: &Path, log: &Arc<EventLog>, stop: Stop<'_>)
         match child.try_wait() {
             Ok(Some(status)) => break Some(status),
             Ok(None) => {}
-            Err(error) => return Err(refused(AGENT_ERROR, format!("cannot wait for `{program}`: {error}"))),
+            Err(error) => {
+                // The lock of the holder goes with the return, so the command must not outlive it.
+                signal_group(group, libc::SIGKILL);
+                let _ = child.kill();
+                let _ = wait_up_to(&mut child, KILL_WAIT);
+                return Err(refused(AGENT_ERROR, format!("cannot wait for `{program}`: {error}")));
+            }
         }
         if interrupted.is_none() && stop() {
             signal_group(group, libc::SIGINT);

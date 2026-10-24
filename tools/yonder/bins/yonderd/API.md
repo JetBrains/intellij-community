@@ -32,7 +32,7 @@ file of that holder.
 | A commit that is not 40 or 64 lower-case hex digits | `bad_request` |
 | More than 1024 commits in one `Have` | `bad_request` |
 | A pack ref that is not `refs/yonder/<run id>` or `refs/yonder/base/<name>`, where a name has the rules of a run id | `bad_request` |
-| A start ref that is not `refs/yonder/<run id>` | `bad_request` |
+| A start ref that is not `refs/yonder/<run>` of its own run | `bad_request`, and the ref stays |
 | A holder that cannot name a file (`[0-9A-Za-z._-]+`, no leading dot) | `bad_request` |
 | A start with no command, or a fetch directory with a root, `.` or `..` | `bad_request` |
 | A follow offset that is not 0 or the offset after a line end of the log | `bad_request` |
@@ -66,7 +66,9 @@ file of that holder.
 
 ## The files
 
-Each directory of the agent has the mode 0700, and each file that it writes has the mode 0600.
+Each directory of the agent has the mode 0700, and each file that it writes has the mode 0600. A staged entry keeps
+the mode that it had in the slot. A copy across two file systems gives each staged file 0600, or 0700 when it is
+executable.
 
 ## Upgrades
 

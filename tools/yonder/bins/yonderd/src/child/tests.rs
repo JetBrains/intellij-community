@@ -63,6 +63,20 @@ fn the_watchdog_ends_a_write_to_a_child_that_reads_nothing() {
     assert!(matches!(error, ChildError::TimedOut { .. }), "{error:?}");
 }
 
+/// A grandchild that keeps the stdout open, as a helper of bd can, costs the drain time, and the output that came
+/// before stays.
+#[test]
+fn a_grandchild_that_holds_the_pipe_keeps_the_output_that_came() {
+    let started = Instant::now();
+    // The grandchild closes each descriptor above 2 first. On macOS a descriptor of another test thread can reach a
+    // child before its close-on-exec flag is set, and a grandchild that lives for seconds would hold it open.
+    let script = "echo '{\"lease_id\":\"L1\"}'; \
+                  (i=3; while [ $i -lt 256 ]; do eval \"exec $i>&-\"; i=$((i + 1)); done; sleep 8) & exit 0";
+    let output = run(&mut sh(script), Duration::from_secs(60), &never).expect("the output");
+    assert_eq!(output.stdout_text(), r#"{"lease_id":"L1"}"#);
+    assert!(started.elapsed() < Duration::from_secs(20), "{:?}", started.elapsed());
+}
+
 #[test]
 fn a_missing_program_is_a_spawn_error() {
     let error = run(&mut Command::new("/nonexistent/yonder-test"), Duration::from_secs(1), &never).expect_err("refused");
