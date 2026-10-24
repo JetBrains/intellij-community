@@ -1,0 +1,207 @@
+//! The client of yonder: what `yonder` and `bt --host` share.
+//!
+//! - [`config`]: the identity of the client and one host file per alias, under `~/.config/yonder/`.
+//! - [`host`]: the address choice and the hello of each connection to an agent.
+//! - [`process`]: the seam of the local git and ssh calls.
+//! - [`run`]: a run of a command of the committed HEAD on a host, and the requests of one reply.
+//! - [`prepare`]: makes a host ready over ssh.
+//! - [`interrupt`]: Ctrl+C of the person at the terminal.
+//!
+//! Each failure is a [`Refusal`] with a stable code of [`code`], or the code of the agent. `API.md` lists them.
+
+pub mod config;
+mod fetch;
+mod git;
+pub mod host;
+pub mod interrupt;
+mod pack;
+pub mod prepare;
+pub mod process;
+pub mod run;
+#[cfg(test)]
+mod testkit;
+
+use std::path::Path;
+use std::time::Duration;
+
+pub use config::{Config, HostFile};
+pub use host::{AgentInfo, Host};
+pub use prepare::{PrepareRequest, Prepared};
+pub use process::{Call, Limit, OsProcesses, Processes, Ran, Stopped};
+pub use run::{Followed, Leased, RunOutcome, RunRequest};
+pub use yonder_link::DEFAULT_PORT;
+pub use yonder_link::proto::RunInfo;
+
+/// The exit vocabulary of yonder. A refusal leaves by 255. A run leaves by the exit code of its command, which is no
+/// refusal.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Exit {
+    Refused,
+}
+
+impl Exit {
+    pub const fn code(self) -> u8 {
+        match self {
+            Self::Refused => 255,
+        }
+    }
+}
+
+/// A failure of the client, or a refusal of the agent with its own code.
+pub type Refusal = refusal::Refusal<Exit>;
+
+/// The stable codes of the refusals of the client. A refusal of the agent keeps the code of the agent, such as
+/// `lease_failed`: the `API.md` of `yonder-link` lists those.
+pub mod code {
+    /// An alias that cannot name a host file, or a request without a command.
+    pub const USAGE: &str = "usage";
+    /// No home directory, or an identity that the client cannot read or create.
+    pub const CONFIG: &str = "config";
+    /// No host file for the alias: the host was never prepared.
+    pub const NO_HOST: &str = "no_host";
+    /// A host file that is not JSON of the host file shape.
+    pub const BAD_HOST_FILE: &str = "bad_host_file";
+    /// No address of the host file and no address of the host name gave a connection.
+    pub const UNREACHABLE: &str = "unreachable";
+    /// The agent showed a certificate that the host file does not pin, or it refused the certificate of this client.
+    pub const UNTRUSTED: &str = "untrusted";
+    /// The agent speaks another schema version.
+    pub const SCHEMA: &str = "schema";
+    /// The agent sent nothing within the deadline of a reply.
+    pub const TIMED_OUT: &str = "timed_out";
+    /// The connection closed, or a frame or a reply came that the protocol does not allow there.
+    pub const LINK: &str = "link";
+    /// The checkout has local changes, and only a commit reaches the host.
+    pub const LOCAL_CHANGES: &str = "local_changes";
+    /// The host has none of the commits near HEAD, so the pack would hold the whole history.
+    pub const BEHIND: &str = "behind";
+    /// A local git call failed.
+    pub const GIT_FAILED: &str = "git_failed";
+    /// An ssh call of `prepare` failed or did not end within its deadline.
+    pub const SSH_FAILED: &str = "ssh_failed";
+    /// The agent binary of `prepare` cannot be read, or it does not run on the host.
+    pub const AGENT_FAILED: &str = "agent_failed";
+    /// Ctrl+C came before the run started, or a second Ctrl+C stopped the follow of a run.
+    pub const INTERRUPTED: &str = "interrupted";
+    /// Fetch did not copy every staged file of a run, so the run stays on the host.
+    pub const FETCH_FAILED: &str = "fetch_failed";
+}
+
+pub(crate) fn refused(code: &'static str, message: impl Into<String>) -> Refusal {
+    Refusal::new(code, Exit::Refused, message)
+}
+
+/// The text that tells how to install the agent and write the host file.
+pub(crate) fn prepare_hint(alias: &str) -> String {
+    format!("`bt --host {alias} --prepare` or `yonder prepare {alias} --agent <yonderd>` installs the agent and writes the host file")
+}
+
+/// The version of this client, for the hello.
+pub(crate) const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+/// The deadlines of the client.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct Timing {
+    /// The TCP connect and the handshake of one address.
+    pub(crate) connect: Duration,
+    /// The lookup of the host name.
+    pub(crate) resolve: Duration,
+    /// The wait for each frame of a reply. A request that waits gets a heartbeat every 15 s, so a quiet minute is a
+    /// lost link.
+    pub(crate) read: Duration,
+    /// How long `Follow` connects again after the last reply of the agent.
+    pub(crate) reconnect_for: Duration,
+    /// The first wait before a new connection of `Follow`. It doubles up to `max_backoff`.
+    pub(crate) first_backoff: Duration,
+    pub(crate) max_backoff: Duration,
+    /// How long `prepare` waits for the agent that `yonderd setup` started.
+    pub(crate) agent_start: Duration,
+}
+
+impl Timing {
+    pub(crate) const DEFAULT: Self = Self {
+        connect: Duration::from_secs(5),
+        resolve: Duration::from_secs(5),
+        read: Duration::from_secs(60),
+        reconnect_for: Duration::from_secs(600),
+        first_backoff: Duration::from_secs(1),
+        max_backoff: Duration::from_secs(30),
+        agent_start: Duration::from_secs(10),
+    };
+}
+
+/// The client of one process: its configuration, its seam for the local calls, the sink of its stderr lines, and the
+/// count of the Ctrl+C presses.
+pub struct Client<'a> {
+    config: Config,
+    processes: &'a dyn Processes,
+    say: &'a (dyn Fn(&str) + Sync),
+    presses: &'a (dyn Fn() -> u32 + Sync),
+    timing: Timing,
+}
+
+impl<'a> Client<'a> {
+    /// `say` takes each stderr line of a run as it comes, and each progress line of the client. `presses` answers how
+    /// many times the person pressed Ctrl+C; [`interrupt::presses`] is the count of the terminal.
+    pub fn new(
+        config: Config,
+        processes: &'a dyn Processes,
+        say: &'a (dyn Fn(&str) + Sync),
+        presses: &'a (dyn Fn() -> u32 + Sync),
+    ) -> Self {
+        Self {
+            config,
+            processes,
+            say,
+            presses,
+            timing: Timing::DEFAULT,
+        }
+    }
+
+    /// Whether the person pressed Ctrl+C.
+    fn interrupted(&self) -> bool {
+        (self.presses)() > 0
+    }
+
+    pub const fn config(&self) -> &Config {
+        &self.config
+    }
+
+    /// The host of an alias, from its host file.
+    pub fn host(&self, alias: &str) -> Result<Host, Refusal> {
+        Host::open(&self.config, alias, self.timing)
+    }
+
+    #[cfg(test)]
+    pub(crate) const fn with_timing(mut self, timing: Timing) -> Self {
+        self.timing = timing;
+        self
+    }
+}
+
+/// The lease holder of a local checkout on a host: `<prefix>-<12 hex digits>`, one per checkout path, so two checkouts
+/// never share a slot there. The hash is FNV-1a, stable across builds and platforms, unlike the hasher of the standard
+/// library.
+pub fn holder(prefix: &str, checkout: &Path) -> String {
+    let hash = checkout.to_string_lossy().bytes().fold(0xcbf2_9ce4_8422_2325_u64, |hash, byte| {
+        (hash ^ u64::from(byte)).wrapping_mul(0x0100_0000_01b3)
+    });
+    format!("{prefix}-{:012x}", hash & 0xffff_ffff_ffff)
+}
+
+/// A count of bytes for a person: `512 B`, `3.4 MiB`.
+pub(crate) fn size_text(bytes: u64) -> String {
+    match bytes {
+        0..1024 => format!("{bytes} B"),
+        1024..1_048_576 => format!("{:.1} KiB", bytes as f64 / 1024.0),
+        _ => format!("{:.1} MiB", bytes as f64 / 1_048_576.0),
+    }
+}
+
+/// A value quoted for a POSIX shell.
+pub(crate) fn shell_quote(value: &str) -> String {
+    format!("'{}'", value.replace('\'', r"'\''"))
+}
+
+#[cfg(test)]
+mod tests;

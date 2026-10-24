@@ -12,7 +12,8 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 | Crate | Content | Bazel test target |
 |---|---|---|
 | `crates/yonder-link` | The identity files, the TLS 1.3 channel with pinned certificates, the frames, and the protocol. `API.md` lists the refusal codes. | `@community//tools/yonder/crates/yonder-link:yonder-link_test` |
-| `bins/yonder` | The client CLI. | `@community//tools/yonder/bins/yonder:yonder_test` |
+| `crates/yonder-client` | The client: the host files, the address choice, a run with its thin pack, its output and its fetch, and `prepare` over ssh. `bt --host` links it. `API.md` lists the refusal codes. | `@community//tools/yonder/crates/yonder-client:yonder-client_test` |
+| `bins/yonder` | The client CLI: `run`, `attach`, `cancel`, `runs`, `fetch`, `forget`, `lease`, `release` and `prepare`. `:yonder` in `BUILD.bazel` is its optimized binary. | `@community//tools/yonder/bins/yonder:yonder_test` |
 | `bins/yonderd` | The agent on a host: macOS and Linux. `serve` answers the requests, `supervise` runs one run in a warm lease, `setup` starts the agent under launchd. `API.md` lists the commands and the refusals. | `@community//tools/yonder/bins/yonderd:yonderd_test`, `:yonderd_cli_test` |
 
 ## The link

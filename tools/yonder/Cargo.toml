@@ -125,6 +125,7 @@ verbose_file_reads = "warn"
 [workspace.dependencies]
 # Workspace crates. `refusal` comes from BT.
 refusal = { path = "../bt/crates/refusal" }
+yonder-client = { path = "crates/yonder-client" }
 yonder-link = { path = "crates/yonder-link" }
 
 # The channel: TLS 1.3 with pinned self-signed certificates, on the ring provider.
@@ -137,6 +138,9 @@ clap = { version = "4.6.7", features = ["derive", "env", "wrap_help"] }
 
 # The agent: the flock of a holder, the session of a supervisor, and the signals of a process group.
 libc = "0.2.191"
+
+# The client: Ctrl+C of a run.
+ctrlc = "3.5.2"
 
 # Documents.
 serde = { version = "1.0.229", features = ["derive"] }

@@ -11,4 +11,9 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-yonder-link.workspace = true
+clap.workspace = true
+yonder-client.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true
+tempfile.workspace = true

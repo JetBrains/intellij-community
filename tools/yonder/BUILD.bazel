@@ -25,3 +25,10 @@ optimized_binary(
     binary = "//tools/yonder/bins/yonderd",
     visibility = ["//visibility:public"],
 )
+
+# `yonder`, the client CLI, one file, always optimized. `bt --host` links the client crate instead.
+optimized_binary(
+    name = "yonder",
+    binary = "//tools/yonder/bins/yonder",
+    visibility = ["//visibility:public"],
+)
