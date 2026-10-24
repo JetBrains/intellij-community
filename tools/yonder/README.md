@@ -13,7 +13,7 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 |---|---|---|
 | `crates/yonder-link` | The identity files, the TLS 1.3 channel with pinned certificates, the frames, and the protocol. `API.md` lists the refusal codes. | `@community//tools/yonder/crates/yonder-link:yonder-link_test` |
 | `bins/yonder` | The client CLI. | `@community//tools/yonder/bins/yonder:yonder_test` |
-| `bins/yonderd` | The agent on a host: macOS and Linux. | `@community//tools/yonder/bins/yonderd:yonderd_test` |
+| `bins/yonderd` | The agent on a host: macOS and Linux. `serve` answers the requests, `supervise` runs one run in a warm lease, `setup` starts the agent under launchd. `API.md` lists the commands and the refusals. | `@community//tools/yonder/bins/yonderd:yonderd_test`, `:yonderd_cli_test` |
 
 ## The link
 

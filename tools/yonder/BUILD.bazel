@@ -2,7 +2,7 @@
 # `.cargo/config.toml` of this package to generate `@yonder`. `defs.bzl` declares each crate. The crate map is
 # `README.md`.
 
-load("//build/rust-tools:defs.bzl", "rust_lints_as_errors")
+load("//build/rust-tools:defs.bzl", "optimized_binary", "rust_lints_as_errors")
 
 # The lint policy of every crate: `[workspace.lints]` of `Cargo.toml` as `@yonder` renders it, with every clippy
 # warning an error.
@@ -18,3 +18,10 @@ exports_files([
     "Cargo.lock",
     "Cargo.toml",
 ])
+
+# `yonderd`, the agent, one file, always optimized. `yonder prepare` copies it to the host.
+optimized_binary(
+    name = "yonderd",
+    binary = "//tools/yonder/bins/yonderd",
+    visibility = ["//visibility:public"],
+)

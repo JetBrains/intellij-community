@@ -11,4 +11,13 @@ license.workspace = true
 workspace = true
 
 [dependencies]
+clap.workspace = true
+libc.workspace = true
+refusal.workspace = true
+serde.workspace = true
+serde_json.workspace = true
 yonder-link.workspace = true
+
+[dev-dependencies]
+pretty_assertions.workspace = true
+tempfile.workspace = true

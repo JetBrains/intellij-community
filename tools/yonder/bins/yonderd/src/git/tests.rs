@@ -1,0 +1,77 @@
+use std::path::PathBuf;
+
+use pretty_assertions::assert_eq;
+
+use super::*;
+use crate::child::never;
+
+/// A repository with one commit. Answers the directory and the commit.
+fn repo() -> (tempfile::TempDir, PathBuf, String) {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let repo = dir.path().join("repo");
+    std::fs::create_dir(&repo).expect("the repository directory");
+    let run = |args: &[&str]| {
+        let output = Command::new("git")
+            .arg("-C")
+            .arg(&repo)
+            .args(args)
+            .env("GIT_CONFIG_NOSYSTEM", "1")
+            .env("HOME", dir.path())
+            .env("GIT_AUTHOR_NAME", "t")
+            .env("GIT_AUTHOR_EMAIL", "t@t")
+            .env("GIT_COMMITTER_NAME", "t")
+            .env("GIT_COMMITTER_EMAIL", "t@t")
+            .output()
+            .expect("git");
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        String::from_utf8_lossy(&output.stdout).trim().to_owned()
+    };
+    run(&["init", "-q"]);
+    std::fs::write(repo.join("a.txt"), "a").expect("a file");
+    run(&["add", "a.txt"]);
+    run(&["commit", "-q", "-m", "first"]);
+    let commit = run(&["rev-parse", "HEAD"]);
+    (dir, repo, commit)
+}
+
+#[test]
+fn a_commit_id_is_40_or_64_lower_case_hex_digits() {
+    assert!(is_commit_id(&"a".repeat(40)));
+    assert!(is_commit_id(&"0".repeat(64)));
+    assert!(!is_commit_id(&"A".repeat(40)));
+    assert!(!is_commit_id("abc"));
+    assert!(!is_commit_id(&format!("{}\n", "a".repeat(39))));
+}
+
+#[test]
+fn a_pack_ref_is_under_refs_yonder() {
+    assert!(is_pack_ref("refs/yonder/1-2"));
+    assert!(!is_pack_ref("refs/heads/master"));
+    assert!(!is_pack_ref("refs/yonder/../heads/master"));
+    assert!(!is_pack_ref("refs/yonder/"));
+}
+
+#[test]
+fn have_answers_the_commits_that_the_repository_has() {
+    let (_dir, repo, commit) = repo();
+    assert!(is_repo(&repo));
+    let missing = "1".repeat(40);
+    assert_eq!(have(&repo, &[missing, commit.clone()]).expect("the answer"), vec![commit.clone()]);
+    assert_eq!(head(&repo, &never).expect("HEAD"), commit);
+}
+
+#[test]
+fn a_ref_is_made_and_deleted() {
+    let (_dir, repo, commit) = repo();
+    update_ref(&repo, "refs/yonder/1-2", &commit).expect("made");
+    delete_ref(&repo, "refs/yonder/1-2").expect("deleted");
+    let error = update_ref(&repo, "refs/yonder/1-2", &"1".repeat(40)).expect_err("refused");
+    assert!(error.contains("exit status"), "{error}");
+}
+
+#[test]
+fn a_directory_without_git_is_no_repository() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    assert!(!is_repo(dir.path()));
+    assert!(!is_repo(&dir.path().join("missing")));
+}
