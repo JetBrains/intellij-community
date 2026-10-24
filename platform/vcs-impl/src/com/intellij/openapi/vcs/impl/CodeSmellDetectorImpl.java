@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.CodeSmellDetector;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -63,7 +64,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
 
   @Override
   public void showCodeSmellErrors(@NotNull @Unmodifiable List<? extends CodeSmellInfo> smellList) {
-    if (isSplitProblemsViewKeyEnabled()) { // rem-dev implementation
+    if (isSplitProblemsViewKeyEnabled() && !IdeProductMode.isMonolith()) { // rem-dev implementation
       showCodeSmellErrorsInFrontend(smellList, myProject);
       return;
     }
