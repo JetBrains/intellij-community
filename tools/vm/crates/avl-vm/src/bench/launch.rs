@@ -613,10 +613,9 @@ impl Launcher {
         facts
     }
 
-    /// Stops the profiler of the running IDE when the run passed its gate, so [`GATE_PROFILE`] holds the start-up and
-    /// not the hold and the quit. Answers why it could not: no `jcmd` in the JBR of the generation, no PID in
-    /// `log/idea.log`, or a `jcmd` that wrote no profile. The run then keeps [`WHOLE_PROFILE`].
-    async fn stop_profile(&self, ctx: &Ctx, run_dir: &Path, profiler: &Profiler) -> Result<(), String> {
+    /// The `jcmd` of the JBR of the generation and the PID of the running IDE, which `log/idea.log` of `run_dir` names.
+    /// Answers why it could not: no `jcmd` in the JBR, or no PID in the log.
+    fn jcmd_target(&self, run_dir: &Path) -> Result<(PathBuf, u32), String> {
         let jcmd = self.java.with_file_name(if cfg!(windows) { "jcmd.exe" } else { "jcmd" });
         if !jcmd.is_file() {
             return Err("the JBR of the generation has no bin/jcmd".to_owned());
@@ -626,6 +625,14 @@ impl Launcher {
             .flatten()
             .unwrap_or_default();
         let pid = idea_log_pid(&log).ok_or_else(|| "log/idea.log names no PID".to_owned())?;
+        Ok((jcmd, pid))
+    }
+
+    /// Stops the profiler of the running IDE when the run passed its gate, so [`GATE_PROFILE`] holds the start-up and
+    /// not the hold and the quit. Answers why it could not: no `jcmd` in the JBR of the generation, no PID in
+    /// `log/idea.log`, or a `jcmd` that wrote no profile. The run then keeps [`WHOLE_PROFILE`].
+    async fn stop_profile(&self, ctx: &Ctx, run_dir: &Path, profiler: &Profiler) -> Result<(), String> {
+        let (jcmd, pid) = self.jcmd_target(run_dir)?;
         let file = run_dir.join(GATE_PROFILE);
         let argv = profile_stop_argv(&jcmd, pid, &profiler.library, &file);
         let result = self
@@ -652,15 +659,7 @@ impl Launcher {
     /// Answers why it could not: no `jcmd`, no PID, or a `jcmd` that failed or timed out. The record makes that a note
     /// of the run, and the classes of the run then have no thread.
     async fn dump_threads(&self, ctx: &Ctx, run_dir: &Path) -> Result<(), String> {
-        let jcmd = self.java.with_file_name(if cfg!(windows) { "jcmd.exe" } else { "jcmd" });
-        if !jcmd.is_file() {
-            return Err("the JBR of the generation has no bin/jcmd".to_owned());
-        }
-        let log = files::read_optional(&run_dir.join("log").join("idea.log"))
-            .ok()
-            .flatten()
-            .unwrap_or_default();
-        let pid = idea_log_pid(&log).ok_or_else(|| "log/idea.log names no PID".to_owned())?;
+        let (jcmd, pid) = self.jcmd_target(run_dir)?;
         let file = run_dir.join(THREAD_DUMP_FILE);
         let result = self
             .runner
@@ -784,6 +783,90 @@ fn interrupted_text() -> String {
     "the session was interrupted".to_owned()
 }
 
+/// The answer of one check of a wait for an event of the IDE.
+enum Check {
+    /// The event has not come yet.
+    Pending,
+    /// The wait ends without a failure.
+    Done,
+    /// The wait ends with this failure.
+    Failed(String),
+}
+
+/// Runs `check` every [`POLL`] until it ends the wait, the IDE exits, the session is interrupted, or [`EVENT_TIMEOUT`]
+/// passes. An exit, an interrupt and the timeout set the failure: `event` names the awaited event in the failure of an
+/// exit, and `timed_out` is the failure of the timeout. Answers how the IDE ended when it exited.
+async fn poll_until<F>(
+    ctx: &Ctx,
+    ide: &mut F,
+    facts: &mut LaunchFacts,
+    event: &str,
+    timed_out: String,
+    mut check: impl FnMut(Instant) -> Check,
+) -> Option<Ended>
+where
+    F: Future<Output = Result<String, ProcError>> + Unpin,
+{
+    let deadline = Instant::now() + EVENT_TIMEOUT;
+    loop {
+        tokio::select! {
+            result = &mut *ide => {
+                facts.failure = Some(format!("the IDE exited ({}) before {event}", describe(&result)));
+                return Some(ended(&result));
+            }
+            alive = ctx.sleep(POLL) => {
+                if !alive {
+                    facts.failure = Some(interrupted_text());
+                    return None;
+                }
+            }
+        }
+        let now = Instant::now();
+        match check(now) {
+            Check::Pending => {}
+            Check::Done => return None,
+            Check::Failed(failure) => {
+                facts.failure = Some(failure);
+                return None;
+            }
+        }
+        if now >= deadline {
+            facts.failure = Some(timed_out);
+            return None;
+        }
+    }
+}
+
+/// The limit of a wait that starts when `startup-stats.json` of the run appears.
+struct AfterReport {
+    report: PathBuf,
+    wait: Duration,
+    limit: Option<Instant>,
+}
+
+impl AfterReport {
+    fn new(run_dir: &Path, wait: Duration) -> Self {
+        Self {
+            report: run_dir.join("startup-stats.json"),
+            wait,
+            limit: None,
+        }
+    }
+
+    /// Tells whether the report exists. The first call that sees it starts the limit at `now`.
+    fn seen(&mut self, now: Instant) -> bool {
+        if self.limit.is_none() && self.report.exists() {
+            self.limit = Some(now + self.wait);
+        }
+        self.limit.is_some()
+    }
+
+    /// Tells whether the limit passed at `now`.
+    fn passed(&mut self, now: Instant) -> bool {
+        self.seen(now) && self.limit.is_some_and(|limit| now >= limit)
+    }
+}
+
 /// Polls the FUS log for the welcome event. Answers how the IDE ended when it exited before the event.
 async fn wait_for_welcome<F>(
     ctx: &Ctx,
@@ -796,44 +879,28 @@ async fn wait_for_welcome<F>(
 where
     F: Future<Output = Result<String, ProcError>> + Unpin,
 {
-    let deadline = Instant::now() + EVENT_TIMEOUT;
-    let report = run_dir.join("startup-stats.json");
-    let mut report_deadline: Option<Instant> = None;
-    loop {
-        tokio::select! {
-            result = &mut *ide => {
-                collector.read(fus_dir);
-                facts.failure = Some(format!("the IDE exited ({}) before {}", describe(&result), fus::WELCOME_BECAME_VISIBLE));
-                return Some(ended(&result));
-            }
-            alive = ctx.sleep(POLL) => {
-                if !alive {
-                    facts.failure = Some(interrupted_text());
-                    return None;
-                }
-            }
-        }
+    let event = fus::WELCOME_BECAME_VISIBLE;
+    let mut after_report = AfterReport::new(run_dir, AFTER_REPORT_TIMEOUT);
+    let timed_out = format!("no {event} within {} s", EVENT_TIMEOUT.as_secs());
+    let ended = poll_until(ctx, ide, facts, event, timed_out, |now| {
         collector.read(fus_dir);
-        if collector.has_event(fus::WELCOME_BECAME_VISIBLE) {
-            return None;
-        }
-        let now = Instant::now();
-        if report_deadline.is_none() && report.exists() {
-            report_deadline = Some(now + AFTER_REPORT_TIMEOUT);
-        }
-        if report_deadline.is_some_and(|limit| now >= limit) {
-            facts.failure = Some(format!(
-                "no {} within {} s after startup-stats.json",
-                fus::WELCOME_BECAME_VISIBLE,
+        if collector.has_event(event) {
+            Check::Done
+        } else if after_report.passed(now) {
+            Check::Failed(format!(
+                "no {event} within {} s after startup-stats.json",
                 AFTER_REPORT_TIMEOUT.as_secs()
-            ));
-            return None;
+            ))
+        } else {
+            Check::Pending
         }
-        if now >= deadline {
-            facts.failure = Some(format!("no {} within {} s", fus::WELCOME_BECAME_VISIBLE, EVENT_TIMEOUT.as_secs()));
-            return None;
-        }
+    })
+    .await;
+    if ended.is_some() {
+        // The exit ends the wait before a check, so this read takes the events up to the exit.
+        collector.read(fus_dir);
     }
+    ended
 }
 
 /// Polls the trace and the report for the highlighted editor. Answers how the IDE ended when it exited before the
@@ -846,44 +913,22 @@ async fn wait_for_highlighted<F>(ctx: &Ctx, ide: &mut F, run_dir: &Path, prime: 
 where
     F: Future<Output = Result<String, ProcError>> + Unpin,
 {
-    let deadline = Instant::now() + EVENT_TIMEOUT;
-    let report = run_dir.join("startup-stats.json");
-    let mut report_deadline: Option<Instant> = None;
-    loop {
-        tokio::select! {
-            result = &mut *ide => {
-                facts.failure = Some(format!("the IDE exited ({}) before \"{EDITOR_HIGHLIGHTED}\"", describe(&result)));
-                return Some(ended(&result));
-            }
-            alive = ctx.sleep(POLL) => {
-                if !alive {
-                    facts.failure = Some(interrupted_text());
-                    return None;
-                }
-            }
-        }
-        if highlighted(run_dir, None) {
-            return None;
-        }
-        let now = Instant::now();
-        if report_deadline.is_none() && report.exists() {
-            if prime {
-                return None;
-            }
-            report_deadline = Some(now + AFTER_REPORT_TIMEOUT);
-        }
-        if report_deadline.is_some_and(|limit| now >= limit) {
-            facts.failure = Some(format!(
-                "no \"{EDITOR_HIGHLIGHTED}\" within {} s after startup-stats.json",
+    let event = format!("\"{EDITOR_HIGHLIGHTED}\"");
+    let mut after_report = AfterReport::new(run_dir, AFTER_REPORT_TIMEOUT);
+    let timed_out = format!("no {event} within {} s", EVENT_TIMEOUT.as_secs());
+    poll_until(ctx, ide, facts, &event, timed_out, |now| {
+        if highlighted(run_dir, None) || (prime && after_report.seen(now)) {
+            Check::Done
+        } else if after_report.passed(now) {
+            Check::Failed(format!(
+                "no {event} within {} s after startup-stats.json",
                 AFTER_REPORT_TIMEOUT.as_secs()
-            ));
-            return None;
+            ))
+        } else {
+            Check::Pending
         }
-        if now >= deadline {
-            facts.failure = Some(format!("no \"{EDITOR_HIGHLIGHTED}\" within {} s", EVENT_TIMEOUT.as_secs()));
-            return None;
-        }
-    }
+    })
+    .await
 }
 
 /// Polls the trace for the span `name`. Answers how the IDE ended when it exited before the span. A prime run waits
@@ -897,40 +942,19 @@ async fn wait_for_span<F>(ctx: &Ctx, ide: &mut F, run_dir: &Path, name: &str, mi
 where
     F: Future<Output = Result<String, ProcError>> + Unpin,
 {
-    let deadline = Instant::now() + EVENT_TIMEOUT;
-    let report = run_dir.join("startup-stats.json");
-    let mut settle_deadline: Option<Instant> = None;
-    loop {
-        tokio::select! {
-            result = &mut *ide => {
-                facts.failure = Some(format!("the IDE exited ({}) before the {name} span ended", describe(&result)));
-                return Some(ended(&result));
-            }
-            alive = ctx.sleep(POLL) => {
-                if !alive {
-                    facts.failure = Some(interrupted_text());
-                    return None;
-                }
-            }
+    let mut settle = AfterReport::new(run_dir, SPAN_SETTLE);
+    let timed_out = format!(
+        "no {name} span and no startup-stats.json within {} s: {missing}",
+        EVENT_TIMEOUT.as_secs()
+    );
+    poll_until(ctx, ide, facts, &format!("the {name} span ended"), timed_out, |now| {
+        if span_ended(run_dir, name) || settle.passed(now) {
+            Check::Done
+        } else {
+            Check::Pending
         }
-        if span_ended(run_dir, name) {
-            return None;
-        }
-        let now = Instant::now();
-        if settle_deadline.is_none() && report.exists() {
-            settle_deadline = Some(now + SPAN_SETTLE);
-        }
-        if settle_deadline.is_some_and(|limit| now >= limit) {
-            return None;
-        }
-        if now >= deadline {
-            facts.failure = Some(format!(
-                "no {name} span and no startup-stats.json within {} s: {missing}",
-                EVENT_TIMEOUT.as_secs()
-            ));
-            return None;
-        }
-    }
+    })
+    .await
 }
 
 /// Waits for the first line of `log/idea.log` that holds `line`, an exit of the IDE, an interrupt or the timeout. An
@@ -939,32 +963,16 @@ async fn wait_for_log_line<F>(ctx: &Ctx, ide: &mut F, run_dir: &Path, line: &str
 where
     F: Future<Output = Result<String, ProcError>> + Unpin,
 {
-    let deadline = Instant::now() + EVENT_TIMEOUT;
     let log = run_dir.join("log").join("idea.log");
-    loop {
-        tokio::select! {
-            result = &mut *ide => {
-                facts.failure = Some(format!("the IDE exited ({}) before the line \"{line}\" of log/idea.log", describe(&result)));
-                return Some(ended(&result));
-            }
-            alive = ctx.sleep(POLL) => {
-                if !alive {
-                    facts.failure = Some(interrupted_text());
-                    return None;
-                }
-            }
-        }
+    let timed_out = format!("no line \"{line}\" in log/idea.log within {} s: {missing}", EVENT_TIMEOUT.as_secs());
+    poll_until(ctx, ide, facts, &format!("the line \"{line}\" of log/idea.log"), timed_out, |_| {
         if files::read_optional(&log).ok().flatten().is_some_and(|text| text.contains(line)) {
-            return None;
+            Check::Done
+        } else {
+            Check::Pending
         }
-        if Instant::now() >= deadline {
-            facts.failure = Some(format!(
-                "no line \"{line}\" in log/idea.log within {} s: {missing}",
-                EVENT_TIMEOUT.as_secs()
-            ));
-            return None;
-        }
-    }
+    })
+    .await
 }
 
 /// Tells whether the trace that the IDE wrote so far has the span `name`. The IDE writes a span when it ends, into a
