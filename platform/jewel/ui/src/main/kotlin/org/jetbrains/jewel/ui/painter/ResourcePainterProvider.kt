@@ -15,6 +15,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.StringWriter
 import java.net.URL
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import javax.xml.XMLConstants
 import javax.xml.parsers.DocumentBuilderFactory
@@ -49,8 +50,10 @@ public class ResourcePainterProvider(private val basePath: String, vararg classL
 
     private val cache = ConcurrentHashMap<Int, Painter>()
 
+    // Only SVG patch hints need it, and setting it up is costly: a provider is created for every composition of
+    // rememberResourcePainterProvider (each checkbox, each icon of a list row).
     @Suppress("HttpUrlsUsage")
-    private val documentBuilderFactory =
+    private val documentBuilderFactory by lazy {
         DocumentBuilderFactory.newDefaultInstance().apply {
             isValidating = false
             setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true)
@@ -64,6 +67,7 @@ public class ResourcePainterProvider(private val basePath: String, vararg classL
             isXIncludeAware = false
             isExpandEntityReferences = false
         }
+    }
 
     private fun Scope.resolveHint(hint: PainterHint) {
         with(hint) {
@@ -152,9 +156,18 @@ public class ResourcePainterProvider(private val basePath: String, vararg classL
         tryLoadingResource(
             url = url,
             loadingAction = { resourceUrl ->
-                patchSvg(scope, url.openStream(), scope.acceptedHints).use { inputStream ->
-                    logger.trace("Loading icon $basePath(${scope.acceptedHints.joinToString()}) from $resourceUrl")
-                    inputStream.readAllBytes().decodeToSvgPainter(scope)
+                val key =
+                    DecodedSvgKey(
+                        resourceUrl.toExternalForm(),
+                        scope.acceptedHints.toList(),
+                        scope.density,
+                        scope.fontScale,
+                    )
+                decodedSvgPainters.getOrPut(key) {
+                    patchSvg(scope, url.openStream(), scope.acceptedHints).use { inputStream ->
+                        logger.trace("Loading icon $basePath(${scope.acceptedHints.joinToString()}) from $resourceUrl")
+                        inputStream.readAllBytes().decodeToSvgPainter(scope)
+                    }
                 }
             },
             paintAction = { it },
@@ -219,6 +232,34 @@ public class ResourcePainterProvider(private val basePath: String, vararg classL
             }
 
         return paintAction(painter)
+    }
+
+    /**
+     * What a decoded SVG painter depends on: the resource it was read from, the hints that patched it and the density
+     * it was decoded at. Keyed by URL rather than class loader, so the cache keeps no class loader alive.
+     */
+    private data class DecodedSvgKey(
+        val url: String,
+        val hints: List<PainterHint>,
+        val density: Float,
+        val fontScale: Float,
+    )
+
+    private companion object {
+        /** Bounds [decodedSvgPainters]: hints come from apps too, and one without `equals` is a new key each time. */
+        const val MAX_DECODED_SVG_PAINTERS = 1024
+
+        /**
+         * SVG painters decoded lately, shared by every provider: [rememberResourcePainterProvider] creates a provider
+         * per composition, so a per-provider cache alone parsed the same SVG again for each checkbox or icon composed.
+         */
+        val decodedSvgPainters: MutableMap<DecodedSvgKey, Painter> =
+            Collections.synchronizedMap(
+                object : LinkedHashMap<DecodedSvgKey, Painter>(64, 0.75f, true) {
+                    override fun removeEldestEntry(eldest: MutableMap.MutableEntry<DecodedSvgKey, Painter>?): Boolean =
+                        size > MAX_DECODED_SVG_PAINTERS
+                }
+            )
     }
 
     private class Scope(
