@@ -1,21 +1,6 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.tools.testsBootstrap` start
-jvm_provided_library(
-    name = "libraries_junit6-launcher_provided",
-    lib = "//libraries/junit6-launcher",
-)
-
-jvm_provided_library(
-    name = "libraries_junit6_provided",
-    lib = "//libraries/junit6",
-)
-
-jvm_provided_library(
-    name = "libraries_junit6-vintage_provided",
-    lib = "//libraries/junit6-vintage",
-)
-
 jvm_library(
     name = "tools-testsBootstrap",
     srcs = glob(
@@ -35,12 +20,15 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//platform/boot",
+        "//libraries/junit6-vintage",
         "//libraries/junit6-jupiter",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/junit4",
+        "//libraries/junit6-launcher",
+        "//libraries/junit6",
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
         "//libraries/opentest4j",
         "//platform/core-nio-fs",
@@ -48,9 +36,6 @@ jvm_library(
         "//platform/bazel-runfiles",
         "//platform/util/base",
         "//platform/util",
-        ":libraries_junit6-launcher_provided",
-        ":libraries_junit6_provided",
-        ":libraries_junit6-vintage_provided",
     ],
 )
 
@@ -68,11 +53,8 @@ jvm_library(
         ":tools-testsBootstrap",
         "//platform/boot:boot_test_lib",
         "//libraries/junit4:junit4_test_lib",
-        "//libraries/junit6-launcher",
         "//libraries/junit6-launcher:junit6-launcher_test_lib",
-        "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
-        "//libraries/junit6-vintage",
         "//libraries/junit6-vintage:junit6-vintage_test_lib",
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
         "//libraries/junit6-jupiter:junit6-jupiter_test_lib",

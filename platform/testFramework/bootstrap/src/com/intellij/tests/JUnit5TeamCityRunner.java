@@ -36,7 +36,6 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
-import org.junit.vintage.engine.VintageTestEngine;
 import org.opentest4j.AssertionFailedError;
 import org.opentest4j.MultipleFailuresError;
 
