@@ -196,7 +196,11 @@ fn execute(
         }
         Command::Forget { alias, run } => Ok(answer(stdout, &client.forget(&alias, &run)?)),
         Command::Runs { alias } => {
-            for run in client.runs(&alias)? {
+            let runs = client.runs(&alias)?;
+            if runs.is_empty() {
+                let _ = writeln!(stdout, "no runs on {alias}");
+            }
+            for run in runs {
                 let state = run.exit.map_or_else(|| "running".to_owned(), |code| format!("exit {code}"));
                 let commit = run.commit.get(..12).unwrap_or(&run.commit);
                 let _ = writeln!(stdout, "{}  {state}  {}  {commit}  {}", run.run, run.holder, run.command.join(" "));

@@ -106,8 +106,8 @@ pub(crate) struct Timing {
     pub(crate) connect: Duration,
     /// The lookup of the host name.
     pub(crate) resolve: Duration,
-    /// The wait for each frame of a reply. A request that waits gets a heartbeat every 15 s, so a quiet minute is a
-    /// lost link.
+    /// The wait for each frame of a reply. A request that waits gets a heartbeat every 15 s. A host that clones a new
+    /// slot can hold back its heartbeats for a minute, so only two quiet minutes are a lost link.
     pub(crate) read: Duration,
     /// How long `Follow` connects again after the last reply of the agent.
     pub(crate) reconnect_for: Duration,
@@ -122,7 +122,7 @@ impl Timing {
     pub(crate) const DEFAULT: Self = Self {
         connect: Duration::from_secs(5),
         resolve: Duration::from_secs(5),
-        read: Duration::from_secs(60),
+        read: Duration::from_secs(120),
         reconnect_for: Duration::from_secs(600),
         first_backoff: Duration::from_secs(1),
         max_backoff: Duration::from_secs(30),
