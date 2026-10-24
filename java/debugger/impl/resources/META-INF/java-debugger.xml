@@ -91,6 +91,7 @@
                     interface="com.intellij.debugger.impl.hotswap.HotSwapSourceChangeCompatibilityCheckerProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.debugger.jvmHotSwapListener"
                     interface="com.intellij.debugger.impl.hotswap.JvmHotSwapListener" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.debugger.bytecodeInspector" interface="com.intellij.debugger.BytecodeInspector" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -149,6 +150,8 @@
     <debugger.dumpItemsProvider implementation="com.intellij.debugger.actions.JavaVirtualThreadsProvider"/>
     <xdebugger.controlExceptionBreakpointSupport implementation="com.intellij.debugger.codeinsight.ControlExceptionBreakpointJVMSupport"/>
     <iconProvider implementation="com.intellij.debugger.engine.evaluation.AdditionalContextIconProvider"/>
+
+    <debugger.bytecodeInspector implementation="com.intellij.debugger.impl.BytecodeInspectorImpl"/>
 
     <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$BooleanRenderer"/>
     <debugger.compoundRendererProvider implementation="com.intellij.debugger.ui.tree.render.UnboxableTypeRenderer$ByteRenderer"/>
