@@ -101,8 +101,8 @@ nothing. `bins/bt/src/prepare.rs` holds the steps, and `bins/bt/src/ssh.rs` boun
    `core.fsmonitor=false`. Then the local master goes to `refs/heads/sync` there, and `checkout -B master sync` makes
    it the master. The step warns about the size first, because the whole history crosses the network. An existing
    master moves to the local master only when it is clean and an ancestor.
-3. `bd`: the local `~/.local/bin/bd` replaces another version on a host of the same platform. `~/.local/bin` goes on
-   the PATH in `~/.zshenv`.
+3. `bd`: the local `~/.local/bin/bd` replaces another build on a host of the same platform. The SHA-256 of the binary
+   tells the build, so a new build with the same version also goes over. `~/.local/bin` goes on the PATH in `~/.zshenv`.
 4. Tools: git, Xcode, rustup, docker and tmux. The step only reports them, and it never installs one.
 5. The agent: bt builds `@community//tools/yonder:yonderd` with Bazel, and `yonder prepare` copies it to
    `~/.local/bin/yonderd` on the host when its SHA-256 differs. `yonderd setup` adds this client to the allow list of

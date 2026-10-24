@@ -5,7 +5,8 @@
 //! 1. ssh: the alias answers in batch mode.
 //! 2. The main repository on the host: created and given the master history when it is missing, and moved to the
 //!    local master when its master is clean and an ancestor.
-//! 3. `bd`: the local binary, copied when the host has another version, and `~/.local/bin` on the PATH of `~/.zshenv`.
+//! 3. `bd`: the local binary, copied when the host has another build, and `~/.local/bin` on the PATH of `~/.zshenv`.
+//!    The SHA-256 of the binary tells the build, because a new build can keep its version.
 //! 4. Tools: git, Xcode, rustup, docker, tmux. Reported only, never installed.
 //! 5. The agent: `yonderd`, built here with Bazel, goes to the host through `yonder prepare` of `yonder-client`. It
 //!    adds this client to the allow list of the agent and writes the host file, so a run needs no ssh. With
@@ -359,19 +360,41 @@ fn prepare_bd(runtime: &dyn Runtime, alias: &str, prepare: &Prepare, report: &mu
         .exists(&local_bd)
         .then(|| version_of(&runtime.spawn(&[local_bd.clone().into_os_string(), "--version".into()], None).output))
         .flatten();
-    let host_probe = remote_call(runtime, &ssh(alias, "uname -sm; ~/.local/bin/bd --version 2>/dev/null"));
+    let local_sha = sha_of(
+        &runtime
+            .spawn(
+                &["shasum".into(), "-a".into(), "256".into(), local_bd.clone().into_os_string()],
+                None,
+            )
+            .output,
+    );
+    let host_probe = remote_call(
+        runtime,
+        &ssh(
+            alias,
+            "uname -sm; ~/.local/bin/bd --version 2>/dev/null; shasum -a 256 ~/.local/bin/bd 2>/dev/null",
+        ),
+    );
     let mut lines = host_probe.output.lines();
     let host_platform = lines.next().unwrap_or_default().trim().to_owned();
-    let host_version = version_of(&lines.collect::<Vec<_>>().join("\n"));
+    let host_answer = lines.collect::<Vec<_>>().join("\n");
+    let host_version = version_of(&host_answer);
+    let host_sha = sha_of(&host_answer);
     let Some(local_version) = local_version else {
         report.add(Status::Missing, STEP, format!("no bd at {}", local_bd.display()));
         return;
     };
-    if host_version.as_deref() == Some(local_version.as_str()) {
-        report.add(Status::Ok, STEP, format!("bd {local_version}"));
+    // Without a hash on one side, the version decides, as before the hash.
+    let same = match (&local_sha, &host_sha) {
+        (Some(local), Some(host)) => local == host,
+        _ => host_version.as_deref() == Some(local_version.as_str()),
+    };
+    let local_build = build_name(&local_version, local_sha.as_deref());
+    if same {
+        report.add(Status::Ok, STEP, format!("bd {local_build}"));
     } else {
         let local_platform = local_platform(runtime);
-        let had = host_version.unwrap_or_else(|| "none".to_owned());
+        let had = host_version.map_or_else(|| "none".to_owned(), |version| build_name(&version, host_sha.as_deref()));
         if host_platform != local_platform {
             report.add(
                 Status::Missing,
@@ -382,13 +405,13 @@ fn prepare_bd(runtime: &dyn Runtime, alias: &str, prepare: &Prepare, report: &mu
             report.add(
                 Status::Missing,
                 STEP,
-                format!("{alias} has bd {had}; --prepare copies {local_version}"),
+                format!("{alias} has bd {had}; --prepare copies {local_build}"),
             );
         } else if copy_bd(runtime, alias, &local_bd) {
             report.add(
                 Status::Done,
                 STEP,
-                format!("copied bd {local_version} to ~/.local/bin/bd (was {had})"),
+                format!("copied bd {local_build} to ~/.local/bin/bd (was {had})"),
             );
         } else {
             report.add(Status::Missing, STEP, format!("cannot copy bd to {alias}"));
@@ -438,6 +461,21 @@ fn version_of(text: &str) -> Option<String> {
     bt_core::regex!(r#""version":"([^"]+)""#)
         .captures(text)
         .map(|found| found[1].to_owned())
+}
+
+/// The SHA-256 of a `shasum -a 256` answer: the 64 hex digits at the start of a line.
+fn sha_of(text: &str) -> Option<String> {
+    bt_core::regex!(r"(?m)^([0-9a-f]{64})\s")
+        .captures(text)
+        .map(|found| found[1].to_owned())
+}
+
+/// A build of bd as the report names it: the version, and the first 12 hex digits of the hash when it is known.
+fn build_name(version: &str, sha: Option<&str>) -> String {
+    match sha {
+        Some(sha) => format!("{version} ({})", &sha[..12]),
+        None => version.to_owned(),
+    }
 }
 
 /// This machine as `uname -sm` names it.

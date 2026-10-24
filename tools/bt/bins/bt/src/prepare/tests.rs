@@ -27,6 +27,9 @@ const MARKER: &str = "c60dbf6914b9127db260";
 /// The build event file of the agent build, and the binary that it names.
 const AGENT_EVENTS: &str = "/tmp/bt-yonderd-events.json";
 const AGENT_BINARY: &str = "/out/bazel-out/darwin_arm64-opt/bin/external/community+/tools/yonder/yonderd";
+/// The fake SHA-256 of the local bd, and of another build with the same version.
+const BD_SHA: &str = "e2fdb7dcbca387455e7012e3e1f46c7dc2a6f3070412a54239a8de133ce1254b";
+const OTHER_BD_SHA: &str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
 fn answered(exit_code: i32, output: &str) -> SpawnResult {
     SpawnResult {
@@ -57,7 +60,6 @@ fn ready() -> FakeRuntime {
             "git rev-parse --verify -q refs/heads/master",
             answered(0, &format!("{LOCAL_MASTER}\n")),
         ),
-        ("uname -sm; ", answered(0, "Darwin arm64\n{\"schema\":2,\"version\":\"0.29.0\"}\n")),
         ("uname -sm", answered(0, "Darwin arm64\n")),
         (".local/bin/bd --version", answered(0, "{\"schema\":2,\"version\":\"0.29.0\"}\n")),
         ("case \":$PATH:\"", answered(0, "on\n")),
@@ -77,7 +79,22 @@ fn ready() -> FakeRuntime {
     fake.state()
         .spawn_rules
         .extend(rules.into_iter().map(|(text, result)| (text.to_owned(), result)));
+    answer_first(&fake, "uname -sm; ", answered(0, &host_bd_probe("0.29.0", Some(BD_SHA))));
+    answer_first(
+        &fake,
+        &format!("shasum -a 256 {HOME_DIR}/.local/bin/bd"),
+        answered(0, &format!("{BD_SHA}  {HOME_DIR}/.local/bin/bd\n")),
+    );
     fake
+}
+
+/// The answer of the bd probe of a macOS host with bd `version`, and the hash of its binary when `sha` is given.
+fn host_bd_probe(version: &str, sha: Option<&str>) -> String {
+    let mut text = format!("Darwin arm64\n{{\"schema\":2,\"version\":\"{version}\"}}\n");
+    if let Some(sha) = sha {
+        let _ = writeln!(text, "{sha}  /Users/me/.local/bin/bd");
+    }
+    text
 }
 
 /// Puts a rule before the rules of [`ready`].
@@ -127,7 +144,7 @@ fn a_ready_host_reports_ok_for_each_step_and_changes_nothing() {
         [
             "ok      ssh: studio answers in batch mode",
             "ok      repository: master of ~/projects/idea-1 is at 111111111111",
-            "ok      bd: bd 0.29.0",
+            "ok      bd: bd 0.29.0 (e2fdb7dcbca3)",
             "ok      PATH: ~/.local/bin is on the PATH of the login shell",
             "ok      tool: git is there",
             "ok      tool: Xcode is there",
@@ -242,16 +259,12 @@ fn a_clean_master_that_is_an_ancestor_moves_and_another_one_stays() {
 #[test]
 fn another_bd_version_is_replaced_by_the_local_binary() {
     let fake = ready();
-    answer_first(
-        &fake,
-        "uname -sm; ",
-        answered(0, "Darwin arm64\n{\"schema\":2,\"version\":\"0.28.1\"}\n"),
-    );
+    answer_first(&fake, "uname -sm; ", answered(0, &host_bd_probe("0.28.1", None)));
     let outcome = prepare(&[], &fake);
     assert!(
         outcome
             .text
-            .contains("done    bd: copied bd 0.29.0 to ~/.local/bin/bd (was 0.28.1)"),
+            .contains("done    bd: copied bd 0.29.0 (e2fdb7dcbca3) to ~/.local/bin/bd (was 0.28.1)"),
         "{}",
         outcome.text
     );
@@ -272,6 +285,38 @@ fn another_bd_version_is_replaced_by_the_local_binary() {
         "{}",
         outcome.text
     );
+}
+
+#[test]
+fn another_build_of_the_same_bd_version_is_replaced_and_the_same_build_is_kept() {
+    let fake = ready();
+    answer_first(&fake, "uname -sm; ", answered(0, &host_bd_probe("0.29.0", Some(OTHER_BD_SHA))));
+    let outcome = prepare(&[], &fake);
+    assert!(
+        outcome
+            .text
+            .contains("done    bd: copied bd 0.29.0 (e2fdb7dcbca3) to ~/.local/bin/bd (was 0.29.0 (0123456789ab))"),
+        "{}",
+        outcome.text
+    );
+    assert_spawned(&fake, "chmod 755 .local/bin/bd.bt-new && mv -f .local/bin/bd.bt-new .local/bin/bd");
+
+    let dry = ready();
+    answer_first(&dry, "uname -sm; ", answered(0, &host_bd_probe("0.29.0", Some(OTHER_BD_SHA))));
+    let outcome = prepare(&["--dry-run"], &dry);
+    assert!(
+        outcome
+            .text
+            .contains("missing bd: studio has bd 0.29.0 (0123456789ab); --prepare copies 0.29.0 (e2fdb7dcbca3)"),
+        "{}",
+        outcome.text
+    );
+
+    let same = ready();
+    let outcome = prepare(&[], &same);
+    assert!(outcome.text.contains("ok      bd: bd 0.29.0 (e2fdb7dcbca3)"), "{}", outcome.text);
+    let spawned = spawned_text(&same);
+    assert!(!spawned.iter().any(|command| command.contains("bd.bt-new")), "{spawned:#?}");
 }
 
 #[test]
