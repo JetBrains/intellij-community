@@ -7,23 +7,14 @@
     <module name="intellij.libraries.junit4"/>
     <module name="intellij.libraries.junit6"/>
     <module name="intellij.libraries.junit6.params"/>
-    <module name="intellij.libraries.kotlinx.serialization.core"/>
-    <module name="intellij.libraries.kotlinx.serialization.json"/>
-    <module name="intellij.libraries.stream"/>
     <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
-    <module name="intellij.platform.core.ui"/>
-    <module name="intellij.platform.debugger"/>
-    <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution"/>
-    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
-    <module name="intellij.platform.refactoring"/>
-    <module name="intellij.platform.usageView"/>
     <module name="intellij.python.test.env.junit5"/>
   </dependencies>
   <!-- endregion -->

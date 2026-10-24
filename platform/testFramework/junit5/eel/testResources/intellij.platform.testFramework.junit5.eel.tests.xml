@@ -3,16 +3,13 @@
   <dependencies>
     <module name="intellij.libraries.junit5.pioneer"/>
     <module name="intellij.libraries.commons.compress"/>
-    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.junit6"/>
-    <module name="intellij.libraries.junit6.jupiter"/>
     <module name="intellij.libraries.junit6.params"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide.core"/>
-    <module name="intellij.platform.ide.core.impl"/>
     <module name="intellij.platform.ijent"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.testFramework"/>
