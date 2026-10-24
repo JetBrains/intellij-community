@@ -15,7 +15,7 @@ import java.util.IdentityHashMap
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-internal class LegacyPluginDetailsPresenter @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
+internal class LegacyPluginDetailsPresenter @RequiresEdt constructor(
   private val host: LegacyPluginUiHost,
   private val searchListener: LinkListener<Any>,
 ) : PluginDetailsPresenter {

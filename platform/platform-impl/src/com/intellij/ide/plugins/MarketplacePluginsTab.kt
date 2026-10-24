@@ -75,7 +75,7 @@ import java.util.function.Supplier
 import javax.swing.JComponent
 import kotlin.time.TimeSource
 
-internal class MarketplacePluginsTab @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
+internal class MarketplacePluginsTab @RequiresEdt constructor(
   facade: PluginModelFacade,
   scope: CoroutineScope,
   customizer: PluginManagerCustomizer?,

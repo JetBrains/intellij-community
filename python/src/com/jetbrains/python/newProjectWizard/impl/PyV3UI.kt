@@ -15,7 +15,7 @@ import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider
 import com.jetbrains.python.sdk.add.v2.PySdkCreator
 import com.jetbrains.python.sdk.add.v2.PythonSdkPanelBuilderAndSdkCreator
 
-internal class PyV3UI<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings> @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
+internal class PyV3UI<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings> @RequiresEdt constructor(
   baseSettings: PyV3BaseProjectSettings,
   projectNameProvider: ProjectPathProvider,
   specificUiAndSettings: Pair<PyV3ProjectTypeSpecificUI<TYPE_SPECIFIC_SETTINGS>, TYPE_SPECIFIC_SETTINGS>?,

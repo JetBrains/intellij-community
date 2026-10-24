@@ -16,7 +16,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
-internal class LegacyPluginRowFactory @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
+internal class LegacyPluginRowFactory @RequiresEdt constructor(
   private val host: LegacyPluginUiHost,
   private val listModel: ListPluginModel,
   private val searchListener: LinkListener<Any>,

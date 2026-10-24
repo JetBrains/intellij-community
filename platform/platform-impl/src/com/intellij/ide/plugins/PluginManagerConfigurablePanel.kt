@@ -102,7 +102,7 @@ import javax.swing.ScrollPaneConstants
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
-class PluginManagerConfigurablePanel @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
+class PluginManagerConfigurablePanel @RequiresEdt constructor(
   searchQuery: String?,
   openSource: PluginManagerOpenSourceEnum = PluginManagerOpenSourceEnum.OTHER,
 ) : PluginsPageSession {

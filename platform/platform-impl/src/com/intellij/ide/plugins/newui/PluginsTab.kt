@@ -36,7 +36,7 @@ import javax.swing.KeyStroke
 import javax.swing.event.DocumentEvent
 
 @ApiStatus.Internal
-abstract class PluginsTab @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
+abstract class PluginsTab @RequiresEdt constructor(
   searchTextFieldQueryDebouncePeriodMs: Long
 ) {
   private val searchUpdateAlarm = createSingleEdtTaskScheduler()

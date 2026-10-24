@@ -4,7 +4,7 @@ package com.intellij.ide.plugins.unified
 import com.intellij.util.concurrency.annotations.RequiresEdt
 
 /** Owns realized plugin rows. Production callers use [com.intellij.ide.plugins.newui.PluginRowRenderKey] as [RenderKey]. */
-internal class PluginRowReconciler<Row : Any, RenderKey : Any> @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
+internal class PluginRowReconciler<Row : Any, RenderKey : Any> @RequiresEdt constructor(
   private val createRow: (PluginOccurrenceId, PluginItemState, RenderKey) -> Row,
   private val beforeRelease: (PluginOccurrenceId, Row) -> Unit,
   private val releaseRow: (Row) -> Unit,

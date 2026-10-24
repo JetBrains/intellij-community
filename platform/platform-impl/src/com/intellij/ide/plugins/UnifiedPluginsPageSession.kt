@@ -116,7 +116,7 @@ import kotlin.time.TimeSource
  * The application scope owns started install and update work, so that work can finish after the page closes.
  * The plugin session owns prepared settings changes. Disposal closes that session when no apply or reset operation owns it.
  */
-internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
+internal class UnifiedPluginsPageSession @RequiresEdt constructor(
   initialNavigation: PluginsPageInitialNavigation?,
   openSource: PluginManagerOpenSourceEnum,
   private val isStandaloneConfigurable: Boolean = false,

@@ -124,7 +124,7 @@ private class DiffEditorModel(
   private val diffVm: GHPRDiffReviewViewModel,
   private val locationToLine: (DiffLineLocation) -> Int?,
   private val lineToLocation: (Int) -> DiffLineLocation?,
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */) private val lineToUnified: (Int) -> UnifiedCodeReviewItemPosition,
+  @RequiresEdt private val lineToUnified: (Int) -> UnifiedCodeReviewItemPosition,
 ) : GHPRReviewDiffEditorModel {
   private val threads = diffVm.threads.mapStatefulToStateful { MappedThread(this, it) }.stateInNow(cs, emptyList())
   private val newComments = diffVm.newComments.mapStatefulToStateful { MappedNewComment(this, it) }.stateInNow(cs, emptyList())

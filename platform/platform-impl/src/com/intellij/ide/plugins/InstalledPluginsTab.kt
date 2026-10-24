@@ -66,7 +66,7 @@ import javax.swing.JLabel
 import kotlin.time.TimeSource
 
 @ApiStatus.Internal
-class InstalledPluginsTab @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
+class InstalledPluginsTab @RequiresEdt constructor(
   private val pluginModelFacade: PluginModelFacade,
   private val coroutineScope: CoroutineScope,
   private val searchInMarketplaceTabHandler: Consumer<String>?,

@@ -45,7 +45,7 @@ import javax.swing.JComponent
 import kotlin.coroutines.CoroutineContext
 
 @ApiStatus.Internal
-class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
+class LegacyPluginUiHost @RequiresEdt constructor(
   project: Project? = null,
   parentScope: CoroutineScope = service<PluginManagerCoroutineScopeHolder>().coroutineScope,
   operationScope: CoroutineScope = service<PluginManagerCoroutineScopeHolder>().coroutineScope,

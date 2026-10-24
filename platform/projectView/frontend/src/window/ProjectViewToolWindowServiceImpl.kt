@@ -590,7 +590,7 @@ internal class ProjectViewToolWindowServiceImpl(
       get() = pane.descriptorImpl
   }
   
-  private inner class PaneContentManager @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(toolWindow: ToolWindow) {
+  private inner class PaneContentManager @RequiresEdt constructor(toolWindow: ToolWindow) {
     private val contentManager = toolWindow.contentManager
     // Written only in createAndAddContent on the EDT, read from any thread.
     @Volatile private var firstContentAddedAt: TimeMark? = null

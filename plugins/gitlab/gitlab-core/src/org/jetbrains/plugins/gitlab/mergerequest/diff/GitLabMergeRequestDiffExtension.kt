@@ -160,7 +160,7 @@ private class DiffEditorModel(
   private val diffReviewVm: GitLabMergeRequestDiffReviewViewModel,
   private val locationToLine: (DiffLineLocation) -> Int?,
   private val lineToLocation: (Int) -> DiffLineLocation?,
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */) private val lineToUnified: (Int) -> UnifiedCodeReviewItemPosition,
+  @RequiresEdt private val lineToUnified: (Int) -> UnifiedCodeReviewItemPosition,
 ) : GitLabReviewDiffEditorModel {
   private val discussions = diffReviewVm.discussions
     .transformConsecutiveSuccesses { mapStatefulToStateful { MappedDiscussion(it) } }

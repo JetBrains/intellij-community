@@ -28,7 +28,7 @@ internal interface InlineCompletionVariantsProvider : Disposable {
   fun update(event: InlineCompletionEvent, updateManager: (InlineCompletionVariant.Snapshot) -> UpdateResult): Boolean
 }
 
-internal abstract class InlineCompletionVariantsComputer @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
+internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructor(
   variants: List<InlineCompletionVariant>,
 ) : InlineCompletionVariantsProvider {
 
