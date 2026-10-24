@@ -42,7 +42,7 @@ pub enum Request {
     ///
     /// A start can come before the pack of its `reference`. The supervisor then takes the lock and the lease while the
     /// pack travels, and waits for the reference before the checkout, up to [`PACK_WAIT_SECONDS`]. A cancel ends that
-    /// wait too.
+    /// wait too. A commit that the host has already needs no pack, and the supervisor does not wait for it.
     Start(RunSpec),
     /// The output of a run from the byte offset `offset` of its log. Replies: [`Reply::Output`] and
     /// [`Reply::Heartbeat`] while the run goes on, then [`Reply::Phases`], then [`Reply::Exit`], or [`Reply::Refused`]

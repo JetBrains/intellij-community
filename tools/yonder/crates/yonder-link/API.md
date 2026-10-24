@@ -30,6 +30,7 @@ chunk is at most 64 KiB. An end frame completes a byte stream.
 | `pack_failed` | `git index-pack` or `git update-ref` failed. |
 | `lock_timeout` | Another run of the holder held the lease too long: an hour for a run, 50 s for a lease or a release. |
 | `lease_failed` | `bd lease get` or `bd lease return` failed. |
+| `pack_missing` | The commit of a run did not come in a pack within `PACK_WAIT_SECONDS`. |
 | `checkout_failed` | The commit cannot be checked out in the slot. |
 | `spawn_failed` | The command cannot start. |
 | `agent_error` | The agent cannot read or write its own files. |

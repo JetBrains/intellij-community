@@ -5,6 +5,7 @@ use std::ffi::OsString;
 use std::io::Write;
 use std::net::{IpAddr, Ipv4Addr};
 use std::path::PathBuf;
+use std::time::Duration;
 
 use clap::{Parser, Subcommand};
 use yonder_link::proto::SCHEMA_VERSION;
@@ -59,6 +60,9 @@ enum Commands {
         /// The launchctl program. A test gives a fake one.
         #[arg(long, default_value = "launchctl", hide = true)]
         launchctl: PathBuf,
+        /// How long to wait for the started agent to listen, in milliseconds. A test with a fake launchctl gives 0.
+        #[arg(long, default_value_t = 60_000, hide = true)]
+        listen_wait_ms: u64,
     },
     /// Prints the version and the protocol schema as one JSON line.
     Version,
@@ -102,6 +106,7 @@ fn execute(command: Commands, stdout: &mut dyn Write) -> Result<(), Refusal> {
             name,
             port,
             launchctl,
+            listen_wait_ms,
         } => {
             let exe = std::env::current_exe().map_err(|error| refused(AGENT_ERROR, format!("cannot find the agent binary: {error}")))?;
             let path = std::env::var("PATH").unwrap_or_default();
@@ -112,6 +117,7 @@ fn execute(command: Commands, stdout: &mut dyn Write) -> Result<(), Refusal> {
                 exe: &exe,
                 launchctl: &launchctl,
                 path: &path,
+                listen_wait: Duration::from_millis(listen_wait_ms),
             };
             crate::setup::setup(&Home::from_env()?, &setup, stdout)
         }

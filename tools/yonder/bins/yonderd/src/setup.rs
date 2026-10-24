@@ -5,6 +5,7 @@
 
 use std::fs;
 use std::io::Write;
+use std::net::{Ipv4Addr, SocketAddr, TcpStream};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::{Duration, Instant};
@@ -36,6 +37,9 @@ pub(crate) struct Setup<'a> {
     pub(crate) launchctl: &'a Path,
     /// The `PATH` of the setup process. The agent gets it after the usual tool directories.
     pub(crate) path: &'a str,
+    /// How long `setup` waits for the started agent to listen on its port. Zero does not wait, for a test with a fake
+    /// launchctl.
+    pub(crate) listen_wait: Duration,
 }
 
 /// The line that `setup` prints on stdout.
@@ -92,6 +96,11 @@ pub(crate) fn setup(home: &Home, setup: &Setup<'_>, out: &mut dyn Write) -> Resu
     } else {
         "none"
     };
+    // launchd starts the agent later than launchctl returns, and later still on a loaded host or after a restart that
+    // its throttle holds back. So the client gets the line only when the agent takes connections.
+    if launchd != "none" && !setup.listen_wait.is_zero() {
+        wait_for_listen(setup.port, setup.listen_wait).map_err(|message| refused(LAUNCHD_FAILED, message))?;
+    }
     let line = SetupLine {
         fingerprint: identity.fingerprint().to_string(),
         port: setup.port,
@@ -99,6 +108,24 @@ pub(crate) fn setup(home: &Home, setup: &Setup<'_>, out: &mut dyn Write) -> Resu
     };
     let json = serde_json::to_string(&line).map_err(|error| refused(AGENT_ERROR, error.to_string()))?;
     writeln!(out, "{json}").map_err(|error| refused(AGENT_ERROR, format!("cannot write stdout: {error}")))
+}
+
+/// Waits until a TCP connect to the port on the loopback address succeeds.
+pub(crate) fn wait_for_listen(port: u16, wait: Duration) -> Result<(), String> {
+    let address = SocketAddr::from((Ipv4Addr::LOCALHOST, port));
+    let started = Instant::now();
+    loop {
+        if TcpStream::connect_timeout(&address, Duration::from_secs(1)).is_ok() {
+            return Ok(());
+        }
+        if started.elapsed() >= wait {
+            return Err(format!(
+                "launchd started the agent, but nothing listens on {address} after {} s; read ~/Library/Logs/yonderd.log",
+                wait.as_secs()
+            ));
+        }
+        std::thread::sleep(Duration::from_millis(200));
+    }
 }
 
 fn start_launchd(home: &Home, setup: &Setup<'_>) -> Result<&'static str, Refusal> {

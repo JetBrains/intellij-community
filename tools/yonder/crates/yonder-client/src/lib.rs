@@ -135,7 +135,7 @@ impl Timing {
         reconnect_for: Duration::from_secs(600),
         first_backoff: Duration::from_secs(1),
         max_backoff: Duration::from_secs(30),
-        agent_start: Duration::from_secs(10),
+        agent_start: Duration::from_secs(60),
     };
 }
 

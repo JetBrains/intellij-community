@@ -321,8 +321,15 @@ impl Agent {
         channel
     }
 
+    /// The last reply of `request`. Any request that waits can get heartbeats first, so they are skipped.
     fn reply(&self, request: &Request) -> Reply {
-        self.ask(request).recv().expect("the reply")
+        let mut channel = self.ask(request);
+        loop {
+            match channel.recv().expect("the reply") {
+                Reply::Heartbeat { .. } => {}
+                reply => return reply,
+            }
+        }
     }
 
     fn start(&self, spec: RunSpec) {
@@ -959,7 +966,18 @@ fn setup_adds_the_client_moves_the_leases_of_bt_and_starts_the_agent() {
     let setup = || {
         let output = world
             .command()
-            .args(["setup", "--client", &client, "--name", "laptop", "--port", "7742", "--launchctl"])
+            .args([
+                "setup",
+                "--client",
+                &client,
+                "--name",
+                "laptop",
+                "--port",
+                "7742",
+                "--listen-wait-ms",
+                "0",
+                "--launchctl",
+            ])
             .arg(world.bin().join("launchctl"))
             .env("FAKE_LAUNCHCTL_DIR", &launchctl_dir)
             .output()

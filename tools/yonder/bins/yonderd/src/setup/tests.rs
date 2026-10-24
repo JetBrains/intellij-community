@@ -50,3 +50,15 @@ fn a_setup_line_has_the_json_shape_of_the_spec() {
         r#"{"fingerprint":"ab","port":7741,"launchd":"restarted"}"#
     );
 }
+
+#[test]
+fn the_listen_wait_ends_when_the_port_takes_connections_and_refuses_after_its_time() {
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("a port");
+    let port = listener.local_addr().expect("the address").port();
+    assert_eq!(wait_for_listen(port, Duration::from_secs(5)), Ok(()));
+    drop(listener);
+    let started = Instant::now();
+    let refused = wait_for_listen(port, Duration::from_millis(300)).expect_err("nothing listens");
+    assert!(refused.contains("nothing listens on 127.0.0.1"), "{refused}");
+    assert!(started.elapsed() < Duration::from_secs(3), "{:?}", started.elapsed());
+}

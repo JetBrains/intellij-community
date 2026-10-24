@@ -82,7 +82,12 @@ fn wait_for_connect(stderr: impl Read + Send + 'static, deadline: Duration) -> i
                     }
                 }
                 Some(Err(error)) => break Err(error),
-                None => break Err(io::Error::new(io::ErrorKind::HostUnreachable, format!("nc: {}", first.trim()))),
+                None => {
+                    break Err(io::Error::new(
+                        io::ErrorKind::HostUnreachable,
+                        format!("nc: {}", first.trim().trim_start_matches("nc: ")),
+                    ));
+                }
             }
         };
         let _ = said.send(verdict);
