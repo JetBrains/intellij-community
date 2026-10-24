@@ -5,8 +5,8 @@
 //! the same Bazel server. The flock of `<leases>/<holder>.lock` makes a second run of the same holder wait. The kernel
 //! drops the flock when its process ends, so a lock of a killed run never stays.
 //!
-//! Before a run, the agent returns the lease of each other holder that no run used for the idle hours. It first checks
-//! out the HEAD of the main repository of that lease in its slot, so the return gives up no commit.
+//! After a run, the agent returns the lease of each other holder that no run used for the idle hours of the run. It
+//! first checks out the HEAD of the main repository of that lease in its slot, so the return gives up no commit.
 //!
 //! A lease file names the repository of its lease. A request of the holder for another repository refuses, and the
 //! file stays. A file without `repo=`, such as one that `setup` moved from `remote.sh`, belongs to the repository of
@@ -153,8 +153,8 @@ impl Leases {
         }
     }
 
-    /// Returns the leases of the holders other than `holder` that no run used for `idle_hours`. The caller holds the
-    /// lock of `holder`. A holder whose lock another run holds is skipped. `stop` ends the sweep early.
+    /// Returns the leases of the holders other than `holder` that no run used for `idle_hours`. A holder whose lock
+    /// another run holds is skipped. `stop` ends the sweep early.
     pub(crate) fn sweep(&self, holder: &str, idle_hours: u32, now: u64, stop: Stop<'_>, say: &mut dyn FnMut(&str)) {
         let Ok(entries) = fs::read_dir(&self.dir) else {
             return;

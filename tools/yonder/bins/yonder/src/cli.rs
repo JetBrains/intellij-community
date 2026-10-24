@@ -47,7 +47,7 @@ enum Command {
         /// A directory relative to the slot root whose new entries come back to this checkout. Repeatable.
         #[arg(long = "fetch", value_name = "DIR")]
         fetch: Vec<String>,
-        /// A lease of another holder that no run used for this many hours goes back to the pool before the run.
+        /// A lease of another holder that no run used for this many hours goes back to the pool after the run.
         #[arg(long, default_value_t = 8)]
         idle_hours: u32,
         /// The command and its arguments, after `--`.

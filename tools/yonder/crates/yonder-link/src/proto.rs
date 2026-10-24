@@ -82,7 +82,7 @@ pub struct RunSpec {
     /// Directories relative to the slot root, such as `out/bt-runs`. Each entry that the command adds to one goes to
     /// the stage of the run, for [`Request::Fetch`].
     pub fetch: Vec<String>,
-    /// A lease of another holder that no run used for this many hours goes back to the pool before the run.
+    /// A lease of another holder that no run used for this many hours goes back to the pool after the run.
     pub idle_hours: u32,
 }
 
@@ -172,7 +172,7 @@ pub struct RunInfo {
     pub phases: Vec<Phase>,
 }
 
-/// One step of a run and its duration: `lock`, `sweep`, `lease`, `pack_wait`, `checkout`, `command`, `stage`. A client
+/// One step of a run and its duration: `lock`, `lease`, `pack_wait`, `checkout`, `command`, `stage`. A client
 /// adds its own steps, such as `pack`, `upload` and `fetch`, when it reports a run.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Phase {

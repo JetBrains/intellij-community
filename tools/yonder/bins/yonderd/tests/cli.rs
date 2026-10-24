@@ -27,7 +27,7 @@ const DEADLINE: Duration = Duration::from_secs(30);
 const HOLDER: &str = "yonder-0123456789ab";
 
 /// The phases of a run that ran its command, in their order.
-const ALL_PHASES: [&str; 7] = ["lock", "sweep", "lease", "pack_wait", "checkout", "command", "stage"];
+const ALL_PHASES: [&str; 6] = ["lock", "lease", "pack_wait", "checkout", "command", "stage"];
 
 fn agent_binary() -> PathBuf {
     let path = std::env::var_os("CARGO_BIN_EXE_yonderd")
@@ -737,7 +737,7 @@ fn a_follow_from_an_offset_in_the_middle_of_a_run_goes_on_from_there() {
         panic!("not runs");
     };
     let names: Vec<&str> = runs[0].phases.iter().map(|phase| phase.name.as_str()).collect();
-    assert_eq!(names, ALL_PHASES[..5]);
+    assert_eq!(names, ALL_PHASES[..4]);
     assert_eq!(runs[0].exit, None);
 
     fs::write(&gate, "").expect("the gate");
@@ -850,13 +850,13 @@ fn a_run_returns_the_idle_lease_of_another_holder() {
     });
     let followed = agent.follow("6-1", 0);
     assert_eq!(followed.end, Reply::Exit { code: 0 }, "{}", agent.dump("6-1"));
-    assert!(
-        followed
-            .texts()
-            .contains(&format!("yonder: returned the idle lease lease-idle of {}", idle_slot.display()).as_str()),
-        "{followed:?}"
-    );
-    assert!(!world.lease_file("idle").exists());
+    // The sweep comes after the end of the run, so the run waits for no other lease.
+    assert_eq!(followed.phase_names(), ALL_PHASES);
+    eventually("the return of the idle lease", || !world.lease_file("idle").exists());
+    let returned = format!("yonderd supervise: returned the idle lease lease-idle of {}", idle_slot.display());
+    eventually("the line of the sweep", || {
+        fs::read_to_string(world.run_dir("6-1").join("supervisor.log")).is_ok_and(|log| log.contains(&returned))
+    });
     assert!(world.lease_file("recent").exists());
     assert!(
         world
@@ -881,7 +881,7 @@ fn a_failed_lease_ends_the_run_with_a_refusal_and_deletes_the_ref() {
         matches!(&followed.end, Reply::Refused { code, message } if code == "lease_failed" && message.contains("no pool")),
         "{followed:?}"
     );
-    assert_eq!(followed.phase_names(), ["lock", "sweep", "lease"]);
+    assert_eq!(followed.phase_names(), ["lock", "lease"]);
     assert_eq!(git(&world.repo(), &["for-each-ref", "refs/yonder/"]), "");
     assert!(!world.lease_file(HOLDER).exists());
     let Reply::Runs { runs } = agent.reply(&Request::Runs) else {
@@ -1142,7 +1142,7 @@ fn a_cancel_during_the_checkout_kills_git_and_ends_the_run_before_its_command() 
     agent.reply(&Request::Cancel { run: "12-1".to_owned() });
     let cancelled = agent.follow("12-1", 0);
     assert_eq!(cancelled.end, Reply::Exit { code: 130 }, "{}", agent.dump("12-1"));
-    assert_eq!(cancelled.phase_names(), ALL_PHASES[..5]);
+    assert_eq!(cancelled.phase_names(), ALL_PHASES[..4]);
     assert!(
         started.elapsed() < Duration::from_secs(20),
         "the checkout was not killed: {:?}",
@@ -1347,7 +1347,7 @@ fn a_start_before_its_pack_takes_the_lease_waits_and_goes_on_when_the_pack_comes
         panic!("not runs");
     };
     let names: Vec<&str> = runs[0].phases.iter().map(|phase| phase.name.as_str()).collect();
-    assert_eq!(names, ["lock", "sweep", "lease"]);
+    assert_eq!(names, ["lock", "lease"]);
 
     assert_eq!(agent.pack(&head, "refs/yonder/20-1", &pack), Reply::Packed);
     let followed = agent.follow("20-1", 0);
@@ -1373,7 +1373,7 @@ fn a_start_whose_pack_never_comes_ends_with_pack_missing() {
         matches!(&followed.end, Reply::Refused { code, message } if code == "pack_missing" && message.contains("refs/yonder/21-1")),
         "{followed:?}"
     );
-    assert_eq!(followed.phase_names(), ["lock", "sweep", "lease", "pack_wait"]);
+    assert_eq!(followed.phase_names(), ["lock", "lease", "pack_wait"]);
     assert!(
         !followed.texts().iter().any(|line| line.contains("waiting for the pack")),
         "a wait under a second says nothing: {followed:?}"
@@ -1402,7 +1402,7 @@ fn a_cancel_during_the_pack_wait_ends_the_run_before_its_command() {
     let followed = agent.follow("22-1", 0);
     assert_eq!(followed.end, Reply::Exit { code: 130 }, "{}", agent.dump("22-1"));
     assert!(started.elapsed() < Duration::from_secs(10), "{:?}", started.elapsed());
-    assert_eq!(followed.phase_names(), ["lock", "sweep", "lease", "pack_wait"]);
+    assert_eq!(followed.phase_names(), ["lock", "lease", "pack_wait"]);
     assert!(!marker.exists(), "the command ran");
 }
 

@@ -282,7 +282,7 @@ impl Agent {
     }
 
     /// Takes the lease of `holder`, or returns it with `release`. Heartbeats go out while it waits for the lock of the
-    /// holder or for bd. A lease request makes no idle sweep.
+    /// holder or for bd. A lease request makes no idle sweep, because it names no idle hours.
     fn lease(&self, channel: &mut Channel, repo: &str, holder: &str, release: bool) -> Result<(), LinkError> {
         let checked = self.repo(repo).and_then(|repo| check_holder(holder).map(|()| repo));
         let repo = match checked {

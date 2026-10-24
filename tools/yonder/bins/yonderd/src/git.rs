@@ -118,6 +118,26 @@ pub(crate) fn delete_ref(repo: &Path, reference: &str) -> Result<(), String> {
     checked(child::run(git(repo).args(["update-ref", "-d", reference]), QUICK, &never)).map(drop)
 }
 
+/// The deadline of `git maintenance run --auto`, which can repack a large repository.
+pub(crate) const MAINTENANCE: Duration = Duration::from_secs(30 * 60);
+
+/// Runs the maintenance tasks of `repo` that its configuration asks for, such as a repack when the packs of the
+/// runs piled up. git runs them after a fetch, but not after an `index-pack`. The tasks run in the foreground, so the
+/// deadline holds for them, and no detached git outlives the call.
+pub(crate) fn maintenance(repo: &Path) -> Result<(), String> {
+    let mut command = git(repo);
+    command.args([
+        "-c",
+        "maintenance.autoDetach=false",
+        "-c",
+        "gc.autoDetach=false",
+        "maintenance",
+        "run",
+        "--auto",
+    ]);
+    checked(child::run(&mut command, MAINTENANCE, &never)).map(drop)
+}
+
 /// Checks out `commit` detached in the worktree `dir`, and discards the local changes there. `stop` kills the call
 /// early.
 pub(crate) fn checkout(dir: &Path, commit: &str, stop: Stop<'_>) -> Result<(), String> {

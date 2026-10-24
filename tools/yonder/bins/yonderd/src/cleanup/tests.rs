@@ -97,6 +97,35 @@ fn a_ref_without_a_run_goes_and_a_ref_of_a_kept_or_fresh_run_and_a_base_ref_stay
     assert_eq!(git::pack_refs(&unlisted).expect("the refs"), vec!["refs/yonder/1000-1".to_owned()]);
 }
 
+/// The packs of the runs pile up in a listed repository until the cleanup runs its git maintenance.
+#[test]
+fn the_cleanup_repacks_a_listed_repository_whose_packs_piled_up() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let home = Home::new(dir.path().to_path_buf());
+    let repo = dir.path().join("repo");
+    repo_with_commit(&repo);
+    git_in(&repo, &["config", "gc.autoPackLimit", "2"]);
+    git_in(&repo, &["config", "maintenance.auto", "true"]);
+    for index in 0..3 {
+        git_in(&repo, &["commit", "-q", "--allow-empty", "-m", &format!("run {index}")]);
+        git_in(&repo, &["repack", "-q"]);
+    }
+    let packs = || {
+        fs::read_dir(repo.join(".git/objects/pack"))
+            .expect("the pack directory")
+            .filter(|entry| {
+                entry
+                    .as_ref()
+                    .is_ok_and(|entry| entry.path().extension().is_some_and(|ext| ext == "pack"))
+            })
+            .count()
+    };
+    assert_eq!(packs(), 3);
+    remember_repo(&home, &repo).expect("listed");
+    assert_eq!(clean(&home, SystemTime::now()), Vec::<String>::new());
+    assert_eq!(packs(), 1);
+}
+
 #[test]
 fn a_run_id_is_fresh_within_the_grace_after_its_time() {
     let now = SystemTime::now();

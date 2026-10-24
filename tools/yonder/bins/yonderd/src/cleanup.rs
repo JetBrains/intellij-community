@@ -1,5 +1,6 @@
-//! The hourly cleanup of `serve`: it ends each run that lost its supervisor, removes each run a day after its end, and
-//! deletes each ref of a pack that no run uses.
+//! The hourly cleanup of `serve`: it ends each run that lost its supervisor, removes each run a day after its end,
+//! deletes each ref of a pack that no run uses, and runs `git maintenance run --auto` in each listed repository. Each
+//! pack adds a pack file to its repository, and git repacks only when its maintenance runs.
 //!
 //! A pack makes `refs/yonder/<run>`, and the supervisor of the run deletes it. A pack that no start follows would keep
 //! its ref for ever. So each pack adds its repository to the repository list, and the cleanup deletes each
@@ -62,6 +63,9 @@ pub(crate) fn clean(home: &Home, now: SystemTime) -> Vec<String> {
                 Ok(()) => lines.push(format!("deleted {reference} in {}, which no run uses", repo.display())),
                 Err(error) => lines.push(format!("cannot delete {reference} in {}: {error}", repo.display())),
             }
+        }
+        if let Err(error) = git::maintenance(&repo) {
+            lines.push(format!("cannot run the git maintenance of {}: {error}", repo.display()));
         }
     }
     lines

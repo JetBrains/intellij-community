@@ -43,14 +43,14 @@ file of that holder.
 - A `Lease` or `Release` waits up to 50 s for a run of the same holder, then refuses with `lock_timeout`. A run waits
   up to an hour.
 - `Lease` makes no idle sweep, because the request has no idle hours. Only a run returns the idle leases of other
-  holders.
+  holders, after its `exit.json`, so no run waits for the sweep. The lines of the sweep go to `supervisor.log`.
 - `Have`, `Lease`, `Release` and the end of `Pack` send `Reply::Heartbeat` while they wait.
 - A `Start` can come before the `Pack` of its ref. The run takes the lock and the lease, then waits for the pack
   before the checkout. A commit that the repository has already needs no pack. Else the wait ends when the start ref
   exists. A wait longer than 1 s writes the line `yonder: waiting for the pack of <commit>` to the log. A cancel ends
   the wait too.
 - A follow of an ended run sends `Reply::Phases` right before its `Reply::Exit` or its `Reply::Refused`. `Runs` shows
-  the phases that have ended so far. The phases are `lock`, `sweep`, `lease`, `pack_wait`, `checkout`, `command` and
+  the phases that have ended so far. The phases are `lock`, `lease`, `pack_wait`, `checkout`, `command` and
   `stage`, in this order. A run that ends early has only the phases up to its last step.
 - A follow sends its heartbeats from a thread of their own, so a slow read of the run files holds none back. On macOS a
   kqueue tells the follow about a change of the log or of the run directory at once. On Linux the follow reads the

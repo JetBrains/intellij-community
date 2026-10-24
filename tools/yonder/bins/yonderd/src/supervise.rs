@@ -6,22 +6,23 @@
 //! The steps:
 //!
 //! 1. Take the flock of the holder. A second run of the same holder waits for it, up to an hour.
-//! 2. Return the leases of the other holders that no run used for the idle hours.
-//! 3. Take the warm lease of the holder, or a new one from `bd lease get`.
-//! 4. Wait for the pack, up to `PACK_WAIT_SECONDS` of the protocol. A start can come before the pack of its reference,
+//! 2. Take the warm lease of the holder, or a new one from `bd lease get`.
+//! 3. Wait for the pack, up to `PACK_WAIT_SECONDS` of the protocol. A start can come before the pack of its reference,
 //!    so the lock and the lease go on while the pack travels. A commit that the main repository has already needs no
 //!    pack. Else the run waits for its reference, which the pack makes after its objects.
-//! 5. Check out the commit in the slot. The slot belongs to the holder, so a file that the last run left changed is
+//! 4. Check out the commit in the slot. The slot belongs to the holder, so a file that the last run left changed is
 //!    discarded.
-//! 6. Run the command in the slot root, in its own process group, with stdin `/dev/null`. Its lines go to `events.log`.
+//! 5. Run the command in the slot root, in its own process group, with stdin `/dev/null`. Its lines go to `events.log`.
 //!    When the command exits, the other processes of its group get SIGTERM, and SIGKILL 5 s later.
-//! 7. Move the new entries of each `fetch` directory to the stage.
+//! 6. Move the new entries of each `fetch` directory to the stage.
 //!
-//! Each step is a phase: `lock`, `sweep`, `lease`, `pack_wait`, `checkout`, `command` and `stage`. At the end of each
+//! Each step is a phase: `lock`, `lease`, `pack_wait`, `checkout`, `command` and `stage`. At the end of each
 //! step, whatever its outcome, the supervisor rewrites `phases.json` with the steps that have ended.
 //!
 //! On every way out it writes the lease file, drops the lock of the holder, deletes the ref of the pack, and writes
-//! `exit.json` last. The `cancel` file of the run, or SIGINT, SIGTERM or SIGHUP, interrupts the run. Before the
+//! `exit.json` last. Then it drops the flock of the run, and returns the leases of the other holders that no run used
+//! for the idle hours of the run. That sweep can take minutes, so no run waits for it. Its lines go to
+//! `supervisor.log`. The `cancel` file of the run, or SIGINT, SIGTERM or SIGHUP, interrupts the run. Before the
 //! command starts, the run kills the bd or git child of the current step and ends with the exit code 130. After it
 //! started, the command group gets SIGINT, and SIGKILL after the grace time. Its progress lines go to `events.log` as
 //! stderr events with the prefix `yonder: `.
@@ -117,6 +118,20 @@ pub(crate) fn supervise(home: &Home, run_dir: &Path, lock: Option<RawFd>) {
         eprintln!("yonderd supervise: cannot write the end of {}: {error}", run_dir.display());
     }
     drop(lock);
+    sweep_idle_leases(home, &run);
+}
+
+/// Returns the leases of the holders other than the one of the run that no run used for the idle hours of the run.
+/// SIGINT, SIGTERM and SIGHUP end the sweep early.
+fn sweep_idle_leases(home: &Home, run: &RunDir) {
+    let Ok(spec) = run.spec() else {
+        return;
+    };
+    let leases = Leases::new(home.leases_dir(), home.expand(&spec.repo));
+    let stop = || SIGNALLED.load(Ordering::SeqCst);
+    leases.sweep(&spec.holder, spec.idle_hours, now_seconds(), &stop, &mut |line| {
+        eprintln!("yonderd supervise: {line}");
+    });
 }
 
 /// The flock of the run: the inherited descriptor, which the command must not inherit in turn, or a new one.
@@ -196,12 +211,6 @@ fn steps(
         return Ok(INTERRUPTED);
     };
     held.lock = Some(lock);
-    if stop() {
-        return Ok(INTERRUPTED);
-    }
-    phases.time("sweep", || {
-        leases.sweep(&spec.holder, spec.idle_hours, now_seconds(), stop, &mut say);
-    });
     if stop() {
         return Ok(INTERRUPTED);
     }
