@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.io.DataInput;
+import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
@@ -120,6 +121,50 @@ class DataExternalizerExTest {
     writer.write(target, 0);
 
     assertEquals("record", externalizer.read(target));
+  }
+
+  @Test
+  void adaptedReadKeepsTheRecordSliceAndStreamOperations() throws IOException {
+    DataExternalizer<Integer> externalizer = new DataExternalizer<>() {
+      @Override
+      public void save(@NotNull DataOutput out, Integer value) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public Integer read(@NotNull DataInput in) throws IOException {
+        var stream = (DataInputStream)in;
+        assertTrue(stream.markSupported());
+        assertEquals(4, stream.available());
+        stream.mark(4);
+        assertEquals(10, stream.readUnsignedByte());
+        byte[] bytes = new byte[2];
+        stream.readFully(bytes);
+        assertArrayEquals(new byte[]{20, 30}, bytes);
+        stream.reset();
+        assertEquals(2, stream.skipBytes(2));
+        assertEquals(30, stream.readUnsignedByte());
+        assertEquals(40, stream.readUnsignedByte());
+        assertEquals(0, stream.available());
+        assertEquals(-1, stream.read(), "The record must end before the suffix byte");
+        assertEquals(0, stream.read(new byte[0]));
+        return 40;
+      }
+    };
+    var adapter = DataExternalizerEx.adapt(externalizer);
+    byte[] storage = {99, 10, 20, 30, 40, 88};
+
+    assertEquals(40, adapter.read(MemorySegment.ofArray(storage).asSlice(1, 4)));
+  }
+
+  @Test
+  void adaptedReadKeepsTheStreamFormat() throws IOException {
+    var adapter = DataExternalizerEx.adapt(new StringExternalizer());
+    var writer = adapter.writerFor("record");
+    byte[] storage = new byte[writer.recordSize() + 2];
+    writer.write(MemorySegment.ofArray(storage), 1);
+
+    assertEquals("record", adapter.read(MemorySegment.ofArray(storage).asSlice(1, writer.recordSize())));
   }
 
   @Test

@@ -2,6 +2,7 @@
 package com.intellij.platform.util.io.storages;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataOutputStream;
@@ -14,10 +15,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.foreign.MemorySegment;
 import java.lang.foreign.ValueLayout;
 import java.util.Arrays;
 import java.util.Objects;
+
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 /**
  * Analog of {@link DataExternalizer}, but with {@link MemorySegment} instead of
@@ -80,9 +84,7 @@ public interface DataExternalizerEx<T> {
 
     KnownSizeRecordWriter NOTHING = new KnownSizeRecordWriter() {
       @Override
-      public void write(@NotNull MemorySegment target, long startingOffset) {
-        Objects.checkFromIndexSize(startingOffset, 0, target.byteSize());
-      }
+      public void write(@NotNull MemorySegment target, long startingOffset) { }
 
       @Override
       public int recordSize() {
@@ -106,23 +108,34 @@ public interface DataExternalizerEx<T> {
 
 /// Adapts stream serialization once for data and key descriptors.
 final class StreamDataExternalizerExAdapter<T> implements DataExternalizerEx<T> {
+  static final String DIRECT_READ_PROPERTY = "idea.storages.stream-externalizer-direct-read";
+  static final boolean DEFAULT_DIRECT_READ = getBooleanProperty(DIRECT_READ_PROPERTY, true);
+
   private final DataExternalizer<T> externalizer;
+  /// aka 'zero-copy'
+  private final boolean readDirectlyViaMemorySegment;
 
   StreamDataExternalizerExAdapter(@NotNull DataExternalizer<T> externalizer) {
+    this(externalizer, DEFAULT_DIRECT_READ);
+  }
+
+  StreamDataExternalizerExAdapter(@NotNull DataExternalizer<T> externalizer,
+                                  boolean readDirectlyViaMemorySegment) {
     this.externalizer = externalizer;
+    this.readDirectlyViaMemorySegment = readDirectlyViaMemorySegment;
   }
 
   @Override
   public T read(@NotNull MemorySegment input) throws IOException {
-    if (input.byteSize() > Integer.MAX_VALUE) {
-      throw new IllegalArgumentException("The record is too large: " + input.byteSize());
+    InputStream stream;
+    if (readDirectlyViaMemorySegment) {
+      stream = new InputStreamOverMemorySegment(input);
     }
-    // Serialization/deserialization just bridges between MemorySegment and ByteArrayInput/OutputStream
-
-    //MAYBE RC: one allocation & one copy could be removed by implementing something like MemorySegmentBackedInputStream
-    //          instead of UnsyncByteArrayInputStream
-    byte[] content = input.toArray(ValueLayout.JAVA_BYTE);
-    return externalizer.read(new DataInputStream(new UnsyncByteArrayInputStream(content)));
+    else {
+      byte[] content = input.toArray(ValueLayout.JAVA_BYTE);
+      stream = new UnsyncByteArrayInputStream(content);
+    }
+    return externalizer.read(new DataInputStream(stream));
   }
 
   @Override
@@ -137,6 +150,67 @@ final class StreamDataExternalizerExAdapter<T> implements DataExternalizerEx<T> 
   @Override
   public String toString() {
     return "DataExternalizerExAdapter[adapted: " + externalizer + "]";
+  }
+
+  private static final class InputStreamOverMemorySegment extends InputStream {
+    private final MemorySegment segment;
+    private final int limit;
+
+    private int position;
+    private int mark;
+
+    private InputStreamOverMemorySegment(@NotNull MemorySegment segment) {
+      this.segment = segment;
+      limit = Math.toIntExact(segment.byteSize());
+    }
+
+    @Override
+    public int read() {
+      if (position >= limit) {
+        return -1;
+      }
+      byte b = segment.get(ValueLayout.JAVA_BYTE, position);
+      position++;
+      return b & 0xff;
+    }
+
+    @Override
+    public int read(byte[] bytes, int offset, int length) {
+      Objects.checkFromIndexSize(offset, length, bytes.length);
+      if (length == 0) return 0;
+      if (position == limit) return -1;
+      int count = Math.min(length, limit - position);
+      MemorySegment.copy(segment, ValueLayout.JAVA_BYTE, position, bytes, offset, count);
+      position += count;
+      return count;
+    }
+
+    @Override
+    public long skip(long count) {
+      int skipped = Math.clamp(count, 0, limit - position);
+      position += skipped;
+      return skipped;
+    }
+
+    @Override
+    public int available() {
+      return limit - position;
+    }
+
+    @Override
+    public boolean markSupported() {
+      return true;
+    }
+
+    @Override
+    public void mark(int readLimit) {
+      mark = position;
+    }
+
+    @Override
+    public void reset() {
+      position = mark;
+    }
   }
 }
 
