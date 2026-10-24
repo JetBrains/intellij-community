@@ -9,6 +9,7 @@ pub mod allow;
 pub mod channel;
 pub mod identity;
 pub mod proto;
+mod relay;
 
 pub use allow::AllowList;
 pub use channel::{Channel, Closer, Frame, LinkError};

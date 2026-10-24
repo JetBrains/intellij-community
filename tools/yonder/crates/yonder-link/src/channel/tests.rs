@@ -167,3 +167,22 @@ fn a_closer_ends_a_waiting_read_from_another_thread() {
     closing.join().expect("the closing thread");
     let _ = served.join();
 }
+
+/// The handshake and the frames through the `nc` relay, which a client on macOS takes when the Local Network permission
+/// refuses its own connect.
+#[cfg(target_os = "macos")]
+#[test]
+fn a_relayed_connection_carries_the_handshake_and_the_frames() {
+    let client = Identity::generate().expect("the client identity");
+    let agent = agent(&[&client]);
+    let served = agent.serve(|channel| {
+        let hello: Request = channel.recv().expect("the hello");
+        assert_eq!(hello, Request::hello("test"));
+        channel.send(&Reply::Packed).expect("the reply");
+    });
+    let socket = relay::connect(agent.address, DEADLINE).expect("relayed");
+    let mut channel = Channel::connect_over(socket, agent.identity.fingerprint(), &client, DEADLINE).expect("connected");
+    channel.send(&Request::hello("test")).expect("sent");
+    assert_eq!(channel.recv::<Reply>().expect("the reply"), Reply::Packed);
+    assert_eq!(served.join().expect("the agent thread"), Ok(client.fingerprint()));
+}

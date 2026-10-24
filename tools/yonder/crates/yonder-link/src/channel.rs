@@ -29,6 +29,7 @@ use serde::de::DeserializeOwned;
 
 use crate::allow::AllowList;
 use crate::identity::{Fingerprint, Identity, SERVER_NAME};
+use crate::relay;
 
 /// The largest JSON message.
 pub const MAX_MESSAGE: usize = 1024 * 1024;
@@ -146,8 +147,22 @@ pub enum Frame {
 impl Channel {
     /// Connects to an agent at `address` and checks that it shows the certificate of `host`. `deadline` bounds the
     /// TCP connect and each read and write of the handshake, and stays the deadline of the socket afterwards.
+    ///
+    /// On macOS a connect that the Local Network permission refuses goes through the system `nc` instead; see
+    /// the `relay` module.
     pub fn connect(address: SocketAddr, host: Fingerprint, identity: &Identity, deadline: Duration) -> Result<Self, LinkError> {
-        let socket = TcpStream::connect_timeout(&address, deadline).map_err(LinkError::Unreachable)?;
+        let socket = match TcpStream::connect_timeout(&address, deadline) {
+            Ok(socket) => socket,
+            Err(error) if relay::is_local_network_refusal(&error) => relay::connect(address, deadline).map_err(|relayed| {
+                LinkError::Unreachable(io::Error::new(relayed.kind(), format!("{error}; through {}: {relayed}", relay::NC)))
+            })?,
+            Err(error) => return Err(LinkError::Unreachable(error)),
+        };
+        Self::connect_over(socket, host, identity, deadline)
+    }
+
+    /// The TLS client handshake over a TCP connection that is open already.
+    pub(crate) fn connect_over(socket: TcpStream, host: Fingerprint, identity: &Identity, deadline: Duration) -> Result<Self, LinkError> {
         prepare(&socket, deadline).map_err(LinkError::Io)?;
         let provider = Arc::new(provider());
         let config = ClientConfig::builder_with_provider(provider.clone())
