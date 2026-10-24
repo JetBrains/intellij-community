@@ -5,6 +5,7 @@ import com.intellij.diff.comparison.CancellationChecker
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.applyOp
 import com.intellij.openapi.editor.ex.experimental.benchmarkSubtest
 import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.junit5.StressTestApplication
@@ -148,7 +149,7 @@ class DocTextDiffPerformanceTest {
     val step = maxOf(base.lineCount() / (count + 1), 1)
     // Back to front, so every offset indexes the base.
     for (index in count downTo 1) {
-      target = target.applyOp(DocumentOp.insertOp(base.lineStartOffset(index * step), "    // edit $index\n"))
+      target = target.insert(base.lineStartOffset(index * step), "    // edit $index\n")
     }
     return target.string()
   }

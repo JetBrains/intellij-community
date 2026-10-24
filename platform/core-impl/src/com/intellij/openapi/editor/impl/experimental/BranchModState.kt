@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl.experimental
 import com.intellij.openapi.editor.ex.DocumentModState
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.applyOp
 
 /**
  * The mod state of a branch: [Ready], or [Deferred] until the first read.

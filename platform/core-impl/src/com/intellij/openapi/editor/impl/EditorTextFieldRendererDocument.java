@@ -128,9 +128,9 @@ public class EditorTextFieldRendererDocument extends UserDataHolderBase implemen
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @Override
-  public @NotNull DocumentText getDocText() {
+  public @NotNull DocumentText getDocumentText() {
     return myText;
   }
 

@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ex.DocumentOp.Companion.deleteOp
 import com.intellij.openapi.editor.ex.DocumentOp.Companion.insertOp
 import com.intellij.openapi.editor.ex.DocumentOp.Companion.modStampOp
 import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.applyOp
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotSame
@@ -173,7 +174,10 @@ internal class RangeModStateTest {
     var expected: DocumentModState = DocumentModStateImpl()
     var actual: DocumentModState = RangeModState.create(text)
     for (op in ops) {
-      val after = text.applyOp(op)
+      val after = when (op) {
+        is DocumentOp.Text -> text.applyOp(op)
+        is DocumentOp.ModStamp, is DocumentOp.CleanLines -> text
+      }
       expected = expected.applyOp(text, after, op)
       actual = actual.applyOp(text, after, op)
       text = after
@@ -205,8 +209,8 @@ internal class RangeModStateTest {
    * A text and its mod state after some ops.
    */
   private class Edited(val text: DocumentText, val modState: DocumentModState) {
-    fun apply(op: DocumentOp): DocumentModState {
-      return modState.applyOp(text, text.applyOp(op), op)
+    fun apply(op: DocumentOp.CleanLines): DocumentModState {
+      return modState.applyOp(text, text, op)
     }
   }
 }

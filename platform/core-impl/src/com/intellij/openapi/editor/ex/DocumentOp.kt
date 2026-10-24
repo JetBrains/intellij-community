@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.openapi.editor.ex
 
 import com.intellij.openapi.editor.impl.CleanLinesOpImpl
@@ -6,6 +8,7 @@ import com.intellij.openapi.editor.impl.DeleteOpImpl
 import com.intellij.openapi.editor.impl.InsertOpImpl
 import com.intellij.openapi.editor.impl.ModStampOpImpl
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Contract
 
 @ApiStatus.Internal
 sealed interface DocumentOp {
@@ -105,5 +108,18 @@ sealed interface DocumentOp {
     fun cleanLinesOp(startLine: Int, endLine: Int, exceptLines: IntArray): CleanLines {
       return CleanLinesOpImpl(startLine, endLine, exceptLines)
     }
+  }
+}
+
+/**
+ * Returns the text with [op] applied.
+ * The move offset of [op] does not change the text.
+ */
+@ApiStatus.Internal
+@Contract(pure = true)
+fun DocumentText.applyOp(op: DocumentOp.Text): DocumentText {
+  return when (op) {
+    is DocumentOp.Insert -> insert(op.offset(), op.fragment())
+    is DocumentOp.Delete -> delete(op.offset(), op.offset() + op.length())
   }
 }

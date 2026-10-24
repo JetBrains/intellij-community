@@ -245,7 +245,7 @@ class PMarkerRootBatchTest {
   private fun applyPatch(root: PMarkerRoot, text: String, start: Int, end: Int, replacement: String): PMarkerRoot {
     val before = DocumentImpl(text, true).core.snapshot().text()
     val patch = DocumentPatch.simple(start, end, replacement, newModStamp = 1, clearLineFlags = false)
-    val after = patch.ops().fold(before) { current, op -> current.applyOp(op) }
+    val after = before.replace(start, end, replacement)
     return root.applyPatch(patch, before, after)
   }
 

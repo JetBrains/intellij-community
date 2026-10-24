@@ -76,7 +76,7 @@ public final class DocumentInternalUtil {
       return ((DocumentImpl)document).getCore().snapshot();
     }
     if (document instanceof DocumentEx) {
-      return new DocumentSnapshotImpl(((DocumentEx)document).getDocText());
+      return new DocumentSnapshotImpl(((DocumentEx)document).getDocumentText());
     }
     return new DocumentSnapshotImpl(DocumentText.createText(document.getImmutableCharSequence()));
   }
@@ -86,7 +86,7 @@ public final class DocumentInternalUtil {
   }
 
   public static boolean isSurrogatePair(@NotNull DocumentText documentText, int offset) {
-    CharSequence text = documentText.cachedChars();
+    CharSequence text = documentText.luckyChars();
     return offset >= 0 &&
            offset + 1 < text.length() &&
            Character.isHighSurrogate(text.charAt(offset)) &&

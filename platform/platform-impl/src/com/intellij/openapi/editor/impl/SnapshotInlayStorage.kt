@@ -439,7 +439,7 @@ private object InlineInlayMarkerPolicy : MarkerPolicy {
   private fun validateOffset(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
     val offset = entry.nodeStart
     if (offset <= 0 || offset >= text.length()) return MarkerTransformResult(entry)
-    val chars = text.cachedChars()
+    val chars = text.luckyChars()
     return if (Character.isHighSurrogate(chars[offset - 1]) && Character.isLowSurrogate(chars[offset])) {
       MarkerTransformResult(entry, "The inline inlay reached a surrogate pair")
     }

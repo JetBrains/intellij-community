@@ -132,10 +132,14 @@ public interface DocumentEx extends Document {
     return 0;
   }
 
+  /**
+   * Returns the current text of this document. A later change of the document does not change the result.
+   * Two calls can return different instances for the same text.
+   * No read- or write-action is necessary.
+   */
   @ApiStatus.Experimental
-  @ApiStatus.Internal
   @Contract(pure = true)
-  default @NotNull DocumentText getDocText() {
+  default @NotNull DocumentText getDocumentText() {
     return DocumentText.createText(getImmutableCharSequence());
   }
 }

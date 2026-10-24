@@ -86,7 +86,7 @@ internal class PMarkerResolutionTest {
     val root = PMarkerRootImpl.empty().insert(1, 2, 4, spec, flavorFlags = 0, policy = policy)
     val before = document.core.snapshot().text()
     val patch = DocumentPatch.simple(2, 3, "x", newModStamp = 1, clearLineFlags = false)
-    val after = patch.ops().fold(before) { current, op -> current.applyOp(op) }
+    val after = before.replace(patch.startOffset(), patch.endOffset(), patch.newFragment())
     val edited = root.applyPatch(patch, before, after)
 
     assertTrue(root.isValid(1))

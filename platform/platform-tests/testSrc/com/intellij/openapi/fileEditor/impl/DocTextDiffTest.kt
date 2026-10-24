@@ -5,6 +5,7 @@ import com.intellij.diff.comparison.CancellationChecker
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.applyOp
 import com.intellij.openapi.editor.ex.experimental.assertSameText
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows

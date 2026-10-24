@@ -1787,7 +1787,7 @@ class SnapshotMarkerEngineImplTest {
     affectedMarkerConsumer: LongConsumer = PMarkerRoot.EMPTY_LONG_CONSUMER,
   ): PMarkerRoot {
     val beforeText = DocumentImpl(before, true).core.snapshot().text()
-    val afterText = patch.ops().fold(beforeText) { text, op -> text.applyOp(op) }
+    val afterText = beforeText.replace(patch.startOffset(), patch.endOffset(), patch.newFragment())
     return root.applyPatch(patch, beforeText, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer)
   }
 

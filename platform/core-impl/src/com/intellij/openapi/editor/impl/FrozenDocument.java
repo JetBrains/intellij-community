@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.DocumentOp;
 import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.ex.EditReadOnlyListener;
 import com.intellij.openapi.editor.ex.LineIterator;
@@ -34,9 +33,8 @@ public final class FrozenDocument implements DocumentEx {
    * has the stamp 0.
    */
   public @NotNull FrozenDocument applyEvent(@NotNull DocumentEvent event) {
-    DocumentText text = myText
-      .applyOp(DocumentOp.deleteOp(event.getOffset(), event.getOldLength()))
-      .applyOp(DocumentOp.insertOp(event.getOffset(), event.getNewFragment()));
+    int offset = event.getOffset();
+    DocumentText text = myText.replace(offset, offset + event.getOldLength(), event.getNewFragment());
     return new FrozenDocument(text, 0);
   }
 
@@ -92,7 +90,7 @@ public final class FrozenDocument implements DocumentEx {
 
   @Override
   public @NotNull String getText(@NotNull TextRange range) {
-    return myText.string(range);
+    return myText.string(range.getStartOffset(), range.getEndOffset());
   }
 
   @Override
@@ -221,7 +219,7 @@ public final class FrozenDocument implements DocumentEx {
   }
 
   @Override
-  public @NotNull DocumentText getDocText() {
+  public @NotNull DocumentText getDocumentText() {
     return myText;
   }
 }

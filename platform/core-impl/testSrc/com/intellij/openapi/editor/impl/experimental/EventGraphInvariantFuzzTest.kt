@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.experimental
 
 import com.intellij.openapi.editor.ex.DocumentOp
+import com.intellij.openapi.editor.ex.applyOp
 import com.intellij.openapi.editor.ex.experimental.Agent
 import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import com.intellij.openapi.editor.ex.experimental.Event

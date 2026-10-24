@@ -66,7 +66,7 @@ internal class DocumentCoreImpl private constructor(
    * Whether [frozen] has the text and the modification stamp of [snapshot]. A frozen document holds nothing else.
    */
   private fun isFrozenFrom(frozen: FrozenDocument, snapshot: DocumentBranch): Boolean {
-    return frozen.docText === snapshot.text() && frozen.modificationStamp == snapshot.modState().stamp()
+    return frozen.documentText === snapshot.text() && frozen.modificationStamp == snapshot.modState().stamp()
   }
 
   private inner class LiveCharSequence : CharSequence {

@@ -31,7 +31,7 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
 
   LogicalPositionCache(@NotNull DocumentEx document, @NotNull Runnable throwEditorDisposed) {
     this.snapshot = new LogicalLines(
-      document.getDocText(),
+      document.getDocumentText(),
       ExtensionsKt.persistentListOf(),
       -1
     );
@@ -80,7 +80,7 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
       if (!force && tabSize == newTabSize) {
         return;
       }
-      DocumentText newDocument = force ? document.getDocText() : snapshot.document;
+      DocumentText newDocument = force ? document.getDocumentText() : snapshot.document;
       LogicalLines newSnapshot = snapshot.withInvalidatedLines(newDocument, newTabSize, force);
       if (SNAPSHOT_UPDATER.compareAndSet(this, snapshot, newSnapshot)) {
         return;
@@ -97,7 +97,7 @@ public final class LogicalPositionCache implements PrioritizedDocumentListener, 
   public void documentChanged(@NotNull DocumentEvent event) {
     LogicalLines snapshot = getSnapshot();
     DocumentText oldDocument = snapshot.document;
-    DocumentText newDocument = ((DocumentEx) event.getDocument()).getDocText();
+    DocumentText newDocument = ((DocumentEx) event.getDocument()).getDocumentText();
     int oldEndLine = getAdjustedLineNumber(oldDocument, event.getOffset() + event.getOldLength());
     int newEndLine = getAdjustedLineNumber(newDocument, event.getOffset() + event.getNewLength());
     int startLine = newDocument.lineNumber(event.getOffset());

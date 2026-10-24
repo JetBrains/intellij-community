@@ -116,7 +116,7 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
 
   @Override
   public @NotNull String getText(@NotNull TextRange range) {
-    return impl.snapshot().text().string(range);
+    return impl.snapshot().text().string(range.getStartOffset(), range.getEndOffset());
   }
 
   @Override
@@ -386,9 +386,9 @@ public final class DocumentImpl extends VersionedUserDataHolderBase implements D
     impl.settings().unsuppressGuardCheck(onlyWholeText);
   }
 
-  @ApiStatus.Internal
+  @ApiStatus.Experimental
   @Override
-  public @NotNull DocumentText getDocText() {
+  public @NotNull DocumentText getDocumentText() {
     return impl.snapshot().text();
   }
 

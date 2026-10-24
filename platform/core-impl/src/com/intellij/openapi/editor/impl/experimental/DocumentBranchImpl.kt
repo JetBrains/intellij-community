@@ -185,7 +185,7 @@ internal class DocumentBranchImpl private constructor(
       return this
     }
     // The inner text validates the offset before the graph changes.
-    val newDocText = text.applyOp(op)
+    val newDocText = text.insert(op.offset(), fragment)
     val newModState = modState().applyOp(text, newDocText, op)
     val recorded = recordedInsert(op, newDocText)
     return DocumentBranchImpl(
@@ -201,7 +201,8 @@ internal class DocumentBranchImpl private constructor(
     if (length == 0) {
       return this
     }
-    val newDocText = text.applyOp(op)
+    val offset = op.offset()
+    val newDocText = text.delete(offset, offset + length)
     val newModState = modState().applyOp(text, newDocText, op)
     val recorded = recordedDelete(op)
     return DocumentBranchImpl(

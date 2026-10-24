@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.ex.DocumentModState
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.applyOp
 
 internal class DocumentSnapshotImpl private constructor(
   private val text: DocumentText,
@@ -28,7 +29,10 @@ internal class DocumentSnapshotImpl private constructor(
   }
 
   override fun applyOp(op: DocumentOp): DocumentSnapshot {
-    val newText = text.applyOp(op)
+    val newText = when (op) {
+      is DocumentOp.Text -> text.applyOp(op)
+      is DocumentOp.ModStamp, is DocumentOp.CleanLines -> text
+    }
     val newModState = modState.applyOp(text, newText, op)
     if (newText === text && newModState === modState) {
       return this

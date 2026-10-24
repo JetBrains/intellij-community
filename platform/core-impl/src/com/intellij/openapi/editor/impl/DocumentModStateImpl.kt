@@ -129,7 +129,7 @@ internal class DocumentModStateImpl private constructor(
     if (modifiedLines != null) {
       return modifiedLines
     }
-    modifiedLines = ModifiedLineSet.create(text.cachedChars())
+    modifiedLines = ModifiedLineSet.create(text.luckyChars())
     this.modifiedLines = modifiedLines
     return modifiedLines
   }

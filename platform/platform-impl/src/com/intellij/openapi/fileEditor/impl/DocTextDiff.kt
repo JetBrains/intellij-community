@@ -61,10 +61,10 @@ object DocTextDiff {
     indicator: CancellationChecker,
   ): List<DocumentOp.Text> {
     // Every phase reads one character at a time. On an ImmutableText that costs a leaf lookup and a
-    // virtual call, which measures about twice a String read. cachedChars() hands back the String
+    // virtual call, which measures about twice a String read. luckyChars() hands back the String
     // when the document already holds one, and the rope when it does not, so this never costs more.
-    val baseChars = base.cachedChars()
-    val targetChars = target.cachedChars()
+    val baseChars = base.luckyChars()
+    val targetChars = target.luckyChars()
     val trimmed = expand(baseChars, targetChars, 0, 0, baseChars.length, targetChars.length)
     if (trimmed.isEmpty) {
       return emptyList()

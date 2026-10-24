@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl.experimental
 
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.applyOp
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -12,7 +13,7 @@ import org.junit.jupiter.api.Test
 /**
  * Tests [BatchingSink]: which reports join the pending op, which flush it, how a move leaves, and
  * what the sink rejects. The ops are the op stream of a merge, so every test compares them with the
- * ops that the text really took, and checks that they fold to the result.
+ * edits that the text really took, and checks that they fold to the result.
  */
 internal class BatchingSinkTest {
 
@@ -373,15 +374,15 @@ internal class BatchingSinkTest {
   }
 
   /**
-   * A sink over a text that records every op it applies. [check] compares those ops with the ops
-   * the sink reports, and folds them over the start text.
+   * A sink over a text that records every edit it applies. [check] compares those edits with the ops
+   * the sink reports, and folds the ops over the start text.
    */
   private class Recorded(text: String) {
     private val start = DocumentText.createText(text)
     private val applied = ArrayList<String>()
 
     /**
-     * The text the sink starts from, which records the ops.
+     * The text the sink starts from, which records the edits.
      */
     val initial: DocumentText = RecordingText(start, applied)
     val inner = BatchingSink(initial)
@@ -405,23 +406,39 @@ internal class BatchingSinkTest {
     fun check(expectedText: String, vararg expectedOps: String) {
       val result = inner.result()
       assertEquals(expectedText, result.string())
-      assertEquals(expectedOps.toList(), applied)
-      assertEquals(applied, inner.ops().map { it.toString() })
+      assertEquals(expectedOps.toList(), inner.ops().map { it.toString() })
+      assertEquals(inner.ops().map { withoutMove(it) }, applied)
       val folded = inner.ops().fold(start) { text, op -> text.applyOp(op) }
       assertEquals(expectedText, folded.string())
+    }
+
+    /**
+     * The record that [RecordingText] makes for [op]. A text edit has no move offset.
+     */
+    private fun withoutMove(op: DocumentOp.Text): String {
+      val edit = when (op) {
+        is DocumentOp.Insert -> DocumentOp.insertOp(op.offset(), op.fragment())
+        is DocumentOp.Delete -> DocumentOp.deleteOp(op.offset(), op.length())
+      }
+      return edit.toString()
     }
   }
 
   /**
-   * A text that records every op it applies, and passes the rest to [inner].
+   * A text that records every insert and delete it applies, and passes the rest to [inner].
    */
   private class RecordingText(
     private val inner: DocumentText,
     private val ops: MutableList<String>,
   ) : DocumentText by inner {
-    override fun applyOp(op: DocumentOp): DocumentText {
-      ops.add(op.toString())
-      return RecordingText(inner.applyOp(op), ops)
+    override fun insert(offset: Int, fragment: CharSequence): DocumentText {
+      ops.add(DocumentOp.insertOp(offset, fragment).toString())
+      return RecordingText(inner.insert(offset, fragment), ops)
+    }
+
+    override fun delete(startOffset: Int, endOffset: Int): DocumentText {
+      ops.add(DocumentOp.deleteOp(startOffset, endOffset - startOffset).toString())
+      return RecordingText(inner.delete(startOffset, endOffset), ops)
     }
   }
 }

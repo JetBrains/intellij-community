@@ -60,7 +60,7 @@ enum class PersistentHighlighterPolicy(private val wholeLineRange: Boolean) : Ma
   private fun normalizeLine(entry: MarkerEntry, text: DocumentText, line: Int): MarkerEntry {
     val lineStart = text.lineStartOffset(line)
     val lineEnd = text.lineEndOffset(line)
-    val startOffset = if (wholeLineRange) firstNonSpaceOffset(text.cachedChars(), lineStart, lineEnd) else lineStart
+    val startOffset = if (wholeLineRange) firstNonSpaceOffset(text.luckyChars(), lineStart, lineEnd) else lineStart
     return entry.copy(nodeStart = startOffset, nodeEnd = lineEnd)
   }
 

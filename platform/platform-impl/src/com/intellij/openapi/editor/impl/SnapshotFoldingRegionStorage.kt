@@ -609,7 +609,7 @@ private fun alignToCharacterBoundaries(entry: PMarkerRoot.MarkerEntry, text: Doc
 
 private fun isInsideCharacterPair(offset: Int, text: DocumentText): Boolean {
   if (offset <= 0 || offset >= text.length()) return false
-  val chars = text.cachedChars()
+  val chars = text.luckyChars()
   val previous = chars[offset - 1]
   return previous == '\r' && chars[offset] == '\n' || Character.isHighSurrogate(previous) && Character.isLowSurrogate(chars[offset])
 }

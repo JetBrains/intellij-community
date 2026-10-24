@@ -172,6 +172,6 @@ private object CaretSelectionMarkerPolicy : MarkerPolicy {
 
 private fun alignToCodePointBoundary(offset: Int, text: DocumentText): Int {
   if (offset <= 0 || offset >= text.length()) return offset
-  val chars = text.cachedChars()
+  val chars = text.luckyChars()
   return if (Character.isHighSurrogate(chars[offset - 1]) && Character.isLowSurrogate(chars[offset])) offset - 1 else offset
 }

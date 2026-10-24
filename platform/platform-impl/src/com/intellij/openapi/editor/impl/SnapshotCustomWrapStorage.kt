@@ -149,7 +149,7 @@ private object CustomWrapMarkerPolicy : MarkerPolicy {
 private fun isValidCustomWrapOffset(offset: Int, text: DocumentText): Boolean {
   if (offset < 0 || offset > text.length()) return false
   if (offset > 0 && offset < text.length()) {
-    val chars = text.cachedChars()
+    val chars = text.luckyChars()
     val previous = chars[offset - 1]
     if (previous == '\r' && chars[offset] == '\n' || Character.isHighSurrogate(previous) && Character.isLowSurrogate(chars[offset])) {
       return false

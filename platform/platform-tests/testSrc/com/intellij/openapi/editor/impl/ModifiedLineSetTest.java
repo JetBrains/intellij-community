@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.ex.DocumentOp;
 import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PerformanceUnitTest;
@@ -70,8 +69,8 @@ public class ModifiedLineSetTest {
 
   private static void checkSingleUpdate(String initialText, int start, int end, String replacement) {
     DocumentText text = DocumentText.createText(initialText);
-    LineSet lineSet = LineSet.createLineSet(text.cachedChars());
-    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.cachedChars());
+    LineSet lineSet = LineSet.createLineSet(text.luckyChars());
+    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.luckyChars());
 
     String context = "checkSingleUpdate(\"" + StringUtil.escapeStringCharacters(initialText) + "\", " +
                       start + ", " + end + ", \"" + StringUtil.escapeStringCharacters(replacement) + "\")";
@@ -87,8 +86,8 @@ public class ModifiedLineSetTest {
     // create(text) (markModified=false) must never mark a line modified, regardless of text shape.
     for (String text : new String[]{"", "abc", "a\nb\nc", "a\nb\nc\n"}) {
       DocumentText documentText = DocumentText.createText(text);
-      LineSet lineSet = LineSet.createLineSet(documentText.cachedChars());
-      ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(documentText.cachedChars());
+      LineSet lineSet = LineSet.createLineSet(documentText.luckyChars());
+      ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(documentText.luckyChars());
       String label = "fresh create() for \"" + StringUtil.escapeStringCharacters(text) + "\"";
       assertLinesAgree(lineSet, modifiedLineSet, label);
       for (int i = 0; i < lineSet.getLineCount(); i++) {
@@ -104,7 +103,7 @@ public class ModifiedLineSetTest {
     // line must come back modified, mirroring LineSet.update's identical createLineSet(replacement, true).
     checkSingleUpdate("", 0, 0, "a\nb\nc");
     DocumentText text = DocumentText.createText("");
-    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.cachedChars()).update(text, 0, 0, "a\nb\nc");
+    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.luckyChars()).update(text, 0, 0, "a\nb\nc");
     for (int i = 0; i < modifiedLineSet.getLineCount(); i++) {
       assertTrue(modifiedLineSet.isModified(i), "line " + i + " should be modified after editing from empty");
     }
@@ -196,8 +195,8 @@ public class ModifiedLineSetTest {
     // "ab\n" -> 1 real line + a synthetic trailing empty line (index 1). isModified must short-circuit to
     // false for the virtual line no matter what -- even right after an edit on the real line beside it.
     DocumentText text = DocumentText.createText("ab\n");
-    LineSet lineSet = LineSet.createLineSet(text.cachedChars());
-    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.cachedChars());
+    LineSet lineSet = LineSet.createLineSet(text.luckyChars());
+    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.luckyChars());
     assertEquals(2, lineSet.getLineCount());
     assertFalse(lineSet.isModified(1));
     assertFalse(modifiedLineSet.isModified(1));
@@ -211,8 +210,8 @@ public class ModifiedLineSetTest {
   @Test
   public void testSetModifiedNoOpCases() {
     DocumentText text = DocumentText.createText("ab\ncd\n"); // 2 real lines + a virtual trailing line at index 2
-    LineSet lineSet = LineSet.createLineSet(text.cachedChars());
-    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.cachedChars());
+    LineSet lineSet = LineSet.createLineSet(text.luckyChars());
+    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.luckyChars());
     int virtualLine = lineSet.getLineCount() - 1;
     assertEquals(2, virtualLine);
 
@@ -246,8 +245,8 @@ public class ModifiedLineSetTest {
   @Test
   public void testSetModifiedMultipleLinesAtOnce() {
     DocumentText text = DocumentText.createText("a\nb\nc\nd\ne");
-    LineSet lineSet = LineSet.createLineSet(text.cachedChars());
-    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.cachedChars());
+    LineSet lineSet = LineSet.createLineSet(text.luckyChars());
+    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.luckyChars());
     IntList indices = new IntArrayList(new int[]{0, 2, 4});
     lineSet = lineSet.setModified(indices);
     modifiedLineSet = modifiedLineSet.setModified(indices);
@@ -262,8 +261,8 @@ public class ModifiedLineSetTest {
   @Test
   public void testClearModificationFlagsStartAfterEndThrows() {
     DocumentText text = DocumentText.createText("a\nb\nc");
-    LineSet lineSet = LineSet.createLineSet(text.cachedChars());
-    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.cachedChars());
+    LineSet lineSet = LineSet.createLineSet(text.luckyChars());
+    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.luckyChars());
     compareOutcome(() -> lineSet.clearModificationFlags(2, 1), () -> modifiedLineSet.clearModificationFlags(2, 1),
                    "clearModificationFlags(2, 1) -- startLine > endLine");
   }
@@ -271,8 +270,8 @@ public class ModifiedLineSetTest {
   @Test
   public void testClearModificationFlagsEmptyDocumentBypass() {
     DocumentText text = DocumentText.createText("");
-    LineSet lineSet = LineSet.createLineSet(text.cachedChars());
-    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.cachedChars());
+    LineSet lineSet = LineSet.createLineSet(text.luckyChars());
+    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.luckyChars());
     assertEquals(0, lineSet.getLineCount());
 
     // lineCount==0 && startLine==0 && endLine==0: bypass, no-op.
@@ -299,8 +298,8 @@ public class ModifiedLineSetTest {
     // "ab\n" -> 1 real line + a virtual trailing line (index 1). Clearing through MAX_VALUE must decrement
     // endLine past the virtual line before the actual Arrays.fill, touching only the real line.
     DocumentText text = DocumentText.createText("ab\n");
-    LineSet lineSet = LineSet.createLineSet(text.cachedChars());
-    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.cachedChars());
+    LineSet lineSet = LineSet.createLineSet(text.luckyChars());
+    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.luckyChars());
     lineSet = lineSet.update(text.chars(), 0, 0, "X");
     modifiedLineSet = modifiedLineSet.update(text, 0, 0, "X");
     assertTrue(lineSet.isModified(0));
@@ -328,8 +327,8 @@ public class ModifiedLineSetTest {
         int steps = env.generateValue(Generator.integers(1, 6), null);
 
         DocumentText text = DocumentText.createText(initialText);
-        LineSet lineSet = LineSet.createLineSet(text.cachedChars());
-        ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.cachedChars());
+        LineSet lineSet = LineSet.createLineSet(text.luckyChars());
+        ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.luckyChars());
         StringBuilder trace = new StringBuilder(
           "checkFuzzMultiStepUpdate(\"" + StringUtil.escapeStringCharacters(initialText) + "\")");
         assertLinesAgree(lineSet, modifiedLineSet, trace + " -- initial state");
@@ -344,8 +343,7 @@ public class ModifiedLineSetTest {
 
           lineSet = lineSet.update(text.chars(), start, end, replacement);
           modifiedLineSet = modifiedLineSet.update(text, start, end, replacement);
-          text = text.applyOp(DocumentOp.deleteOp(start, end - start));
-          text = text.applyOp(DocumentOp.insertOp(start, replacement));
+          text = text.replace(start, end, replacement);
 
           assertLinesAgree(lineSet, modifiedLineSet, trace.toString());
         }
@@ -364,8 +362,8 @@ public class ModifiedLineSetTest {
         int steps = env.generateValue(Generator.integers(1, 6), null);
 
         DocumentText text = DocumentText.createText(initialText);
-        LineSet lineSet = LineSet.createLineSet(text.cachedChars());
-        ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.cachedChars());
+        LineSet lineSet = LineSet.createLineSet(text.luckyChars());
+        ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.luckyChars());
         StringBuilder trace = new StringBuilder(
           "checkFuzzInterleaved(\"" + StringUtil.escapeStringCharacters(initialText) + "\")");
 
@@ -378,8 +376,7 @@ public class ModifiedLineSetTest {
 
           lineSet = lineSet.update(text.chars(), start, end, replacement);
           modifiedLineSet = modifiedLineSet.update(text, start, end, replacement);
-          text = text.applyOp(DocumentOp.deleteOp(start, end - start));
-          text = text.applyOp(DocumentOp.insertOp(start, replacement));
+          text = text.replace(start, end, replacement);
           env.logMessage(trace.toString());
           assertLinesAgree(lineSet, modifiedLineSet, trace.toString());
 
@@ -482,29 +479,29 @@ public class ModifiedLineSetTest {
       for (int i = 0; i < edits; i++) {
         // simulates the pre-split DocumentTextImpl: its own LineSet served offset mapping AND modification
         // tracking, so this one call is the entire per-edit cost.
-        text = text.applyOp(DocumentOp.insertOp(offset, "x"));
+        text = text.insert(offset, "x");
         offset += 1;
       }
     }).runAsStressTest().start();
 
     Benchmark.newBenchmark("LineSet duplication overhead -- wip (defect): 2x LineSet.update() per edit", () -> {
       DocumentText text = DocumentText.createText(bigText);                // DocumentTextImpl's own LineSet (real, needed)
-      LineSet modStateLineSet = LineSet.createLineSet(text.cachedChars()); // DocumentModStateImpl's wasted duplicate
+      LineSet modStateLineSet = LineSet.createLineSet(text.luckyChars()); // DocumentModStateImpl's wasted duplicate
       int offset = text.lineStartOffset(midLine);
       for (int i = 0; i < edits; i++) {
         modStateLineSet = modStateLineSet.update(text.chars(), offset, offset, "x"); // the wasted call, using the OLD text
-        text = text.applyOp(DocumentOp.insertOp(offset, "x"));
+        text = text.insert(offset, "x");
         offset += 1;
       }
     }).runAsStressTest().start();
 
     Benchmark.newBenchmark("LineSet duplication overhead -- current (fix): LineSet.update() + ModifiedLineSet.update() per edit", () -> {
       DocumentText text = DocumentText.createText(bigText);
-      ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.cachedChars());
+      ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.luckyChars());
       int offset = text.lineStartOffset(midLine);
       for (int i = 0; i < edits; i++) {
         modifiedLineSet = modifiedLineSet.update(text, offset, offset, "x"); // using the OLD text, per the real contract
-        text = text.applyOp(DocumentOp.insertOp(offset, "x"));
+        text = text.insert(offset, "x");
         offset += 1;
       }
     }).runAsStressTest().start();
@@ -523,8 +520,8 @@ public class ModifiedLineSetTest {
 
   private static void checkBoundaryIndices(String text) {
     DocumentText documentText = DocumentText.createText(text);
-    LineSet lineSet = LineSet.createLineSet(documentText.cachedChars());
-    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(documentText.cachedChars());
+    LineSet lineSet = LineSet.createLineSet(documentText.luckyChars());
+    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(documentText.luckyChars());
     String label = "\"" + StringUtil.escapeStringCharacters(text) + "\"";
     int lineCount = lineSet.getLineCount();
     assertEquals(lineCount, modifiedLineSet.getLineCount(), "line count for " + label);
@@ -585,8 +582,8 @@ public class ModifiedLineSetTest {
   @Test
   public void testEmptyDocumentRoundTripMidChain() {
     DocumentText text = DocumentText.createText("");
-    LineSet lineSet = LineSet.createLineSet(text.cachedChars());
-    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.cachedChars());
+    LineSet lineSet = LineSet.createLineSet(text.luckyChars());
+    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.luckyChars());
     assertLinesAgree(lineSet, modifiedLineSet, "fresh empty document");
     assertEquals(0, lineSet.getLineCount());
 
@@ -594,14 +591,14 @@ public class ModifiedLineSetTest {
       int offset = text.length();
       lineSet = lineSet.update(text.chars(), offset, offset, insertion);
       modifiedLineSet = modifiedLineSet.update(text, offset, offset, insertion);
-      text = text.applyOp(DocumentOp.insertOp(offset, insertion));
+      text = text.insert(offset, insertion);
       assertLinesAgree(lineSet, modifiedLineSet, "after inserting \"" + StringUtil.escapeStringCharacters(insertion) + "\"");
     }
 
     int fullLength = text.length();
     lineSet = lineSet.update(text.chars(), 0, fullLength, "");
     modifiedLineSet = modifiedLineSet.update(text, 0, fullLength, "");
-    text = text.applyOp(DocumentOp.deleteOp(0, fullLength));
+    text = text.delete(0, fullLength);
     assertLinesAgree(lineSet, modifiedLineSet, "delete back to empty");
     assertEquals(0, lineSet.getLineCount());
 
@@ -627,12 +624,12 @@ public class ModifiedLineSetTest {
   @Test
   public void testInterleavedUpdateAndClear() {
     DocumentText text = DocumentText.createText("one\ntwo");
-    LineSet lineSet = LineSet.createLineSet(text.cachedChars());
-    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.cachedChars());
+    LineSet lineSet = LineSet.createLineSet(text.luckyChars());
+    ModifiedLineSet modifiedLineSet = ModifiedLineSet.create(text.luckyChars());
 
     lineSet = lineSet.update(text.chars(), 0, 0, "x");
     modifiedLineSet = modifiedLineSet.update(text, 0, 0, "x");
-    text = text.applyOp(DocumentOp.insertOp(0, "x"));
+    text = text.insert(0, "x");
     assertLinesAgree(lineSet, modifiedLineSet, "after inserting x");
     assertTrue(lineSet.isModified(0));
     assertFalse(lineSet.isModified(1));

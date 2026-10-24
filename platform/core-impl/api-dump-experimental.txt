@@ -46,6 +46,32 @@ com.intellij.openapi.application.ex.ApplicationEx
 a:com.intellij.openapi.application.ex.ApplicationInfoEx
 - com.intellij.openapi.application.ApplicationInfo
 - *a:isPreview():Z
+com.intellij.openapi.editor.ex.DocumentEx
+- com.intellij.openapi.editor.Document
+- *:getDocumentText():com.intellij.openapi.editor.ex.DocumentText
+*:com.intellij.openapi.editor.ex.DocumentText
+- *sf:Companion:com.intellij.openapi.editor.ex.DocumentText$Companion
+- a:chars():com.intellij.util.text.ImmutableCharSequence
+- *s:createText(java.lang.CharSequence):com.intellij.openapi.editor.ex.DocumentText
+- a:delete(I,I):com.intellij.openapi.editor.ex.DocumentText
+- a:insert(I,java.lang.CharSequence):com.intellij.openapi.editor.ex.DocumentText
+- a:length():I
+- a:lineCount():I
+- a:lineEndOffset(I):I
+- a:lineIterator():com.intellij.openapi.editor.ex.LineIterator
+- a:lineNumber(I):I
+- a:lineSeparatorLength(I):I
+- a:lineStartOffset(I):I
+- a:luckyChars():java.lang.CharSequence
+- a:replace(I,I,java.lang.CharSequence):com.intellij.openapi.editor.ex.DocumentText
+- a:string():java.lang.String
+- a:string(I,I):java.lang.String
+*f:com.intellij.openapi.editor.ex.DocumentText$Companion
+- f:createText(java.lang.CharSequence):com.intellij.openapi.editor.ex.DocumentText
+f:com.intellij.openapi.editor.impl.DocumentImpl
+- com.intellij.psi.impl.source.tree.mvcc.userData.VersionedUserDataHolderBase
+- com.intellij.openapi.editor.ex.DocumentEx
+- *:getDocumentText():com.intellij.openapi.editor.ex.DocumentText
 *a:com.intellij.openapi.editor.impl.DocumentWriteAccessGuard
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
@@ -55,6 +81,10 @@ a:com.intellij.openapi.application.ex.ApplicationInfoEx
 *c:com.intellij.openapi.editor.impl.DocumentWriteAccessGuard$Result
 - getFailureReason():java.lang.String
 - isSuccess():Z
+c:com.intellij.openapi.editor.impl.EditorTextFieldRendererDocument
+- com.intellij.openapi.util.UserDataHolderBase
+- com.intellij.openapi.editor.ex.DocumentEx
+- *:getDocumentText():com.intellij.openapi.editor.ex.DocumentText
 a:com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
 - com.intellij.openapi.fileEditor.FileDocumentManager
 - *s:isTrackable(com.intellij.openapi.vfs.VirtualFile):Z

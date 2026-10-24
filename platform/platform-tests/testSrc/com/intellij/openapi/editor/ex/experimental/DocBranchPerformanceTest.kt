@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.ex.experimental
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentText
-import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.editor.ex.applyOp
 import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.junit5.StressTestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -231,7 +231,7 @@ class DocBranchPerformanceTest {
     }
     val fragmentLength = minOf(100 + random.nextInt(301), length / 2)
     val from = random.nextInt(length - fragmentLength + 1)
-    val fragment = user.branch.text().string(TextRange(from, from + fragmentLength))
+    val fragment = user.branch.text().string(from, from + fragmentLength)
     moveCaret(user, random)
     user.apply(insertOp(user.caret, fragment))
     user.caret += fragment.length
@@ -244,7 +244,7 @@ class DocBranchPerformanceTest {
     }
     val fragmentLength = minOf(30 + random.nextInt(121), length / 2)
     val from = random.nextInt(length - fragmentLength + 1)
-    val fragment = user.branch.text().string(TextRange(from, from + fragmentLength))
+    val fragment = user.branch.text().string(from, from + fragmentLength)
     user.apply(deleteOp(from, fragmentLength))
     val to = random.nextInt(user.branch.text().length() + 1)
     user.apply(insertOp(to, fragment))

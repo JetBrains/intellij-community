@@ -1,31 +1,34 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
-import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.LineIterator
-import com.intellij.openapi.util.TextRange
 import com.intellij.util.text.CharArrayUtil
 import com.intellij.util.text.ImmutableCharSequence
 import java.lang.ref.SoftReference
 
 internal class DocumentTextImpl private constructor(
   private val chars: ImmutableCharSequence,
+  private val length: Int,
   private var lineSet: LineSet?,                    // non-volatile intentionally, see getLineSet()
   private var cachedString: SoftReference<String>?, // non-volatile intentionally, see string()
 ) : DocumentText {
 
   constructor(chars: CharSequence) : this(
     chars = CharArrayUtil.createImmutableCharSequence(chars),
+    length = chars.length,
     lineSet = null,
     cachedString = (chars as? String)?.let { SoftReference(it) },
   )
 
   init {
+    assert(chars.length == length) {
+      "length mismatch: ${chars.length} != $length"
+    }
     val lineSet = this.lineSet
     if (lineSet != null) {
-      assert(lineSet.length == chars.length) {
-        "LineSet length mismatch: ${lineSet.length} != ${chars.length}"
+      assert(lineSet.length == length) {
+        "LineSet length mismatch: ${lineSet.length} != ${length}"
       }
     }
   }
@@ -34,7 +37,7 @@ internal class DocumentTextImpl private constructor(
     return chars
   }
 
-  override fun cachedChars(): CharSequence {
+  override fun luckyChars(): CharSequence {
     val string = cachedString?.get()
     if (string != null) {
       return string
@@ -42,8 +45,8 @@ internal class DocumentTextImpl private constructor(
     return chars
   }
 
-  override fun string(range: TextRange): String {
-    val textInRange = chars.subSequence(range.startOffset, range.endOffset)
+  override fun string(startOffset: Int, endOffset: Int): String {
+    val textInRange = chars.subSequence(startOffset, endOffset)
     return textInRange.toString()
   }
 
@@ -62,9 +65,7 @@ internal class DocumentTextImpl private constructor(
   }
 
   override fun length(): Int {
-    // TODO: hot method, optimize
-    //  the length is constant, create a field length?
-    return chars.length
+    return length
   }
 
   override fun lineCount(): Int {
@@ -95,6 +96,9 @@ internal class DocumentTextImpl private constructor(
   }
 
   override fun lineSeparatorLength(line: Int): Int {
+    if (line == 0 && length() == 0) {
+      return 0
+    }
     val separatorLength = getLineSet().getSeparatorLength(line)
     assert(separatorLength >= 0)
     return separatorLength
@@ -104,54 +108,36 @@ internal class DocumentTextImpl private constructor(
     return getLineSet().createIterator()
   }
 
-  override fun applyOp(op: DocumentOp): DocumentText {
-    return when (op) {
-      is DocumentOp.Insert -> applyInsert(op)
-      is DocumentOp.Delete -> applyDelete(op)
-      else -> this
-    }
+  override fun insert(offset: Int, fragment: CharSequence): DocumentText {
+    return replace(offset, offset, fragment)
   }
 
-  private fun applyInsert(op: DocumentOp.Insert): DocumentText {
-    val offset = op.offset()
-    val fragment = op.fragment()
-    if (fragment.isEmpty()) {
+  override fun delete(startOffset: Int, endOffset: Int): DocumentText {
+    return replace(startOffset, endOffset, "")
+  }
+
+  override fun replace(startOffset: Int, endOffset: Int, fragment: CharSequence): DocumentText {
+    if (startOffset == endOffset && fragment.isEmpty()) {
+      // chars.replace checks the range of a non-empty edit
+      if (startOffset < 0 || startOffset > length()) {
+        throw IndexOutOfBoundsException("Wrong offset: $startOffset. Should be in range: [0, ${length()}]")
+      }
       return this
     }
-    // Reuse the fragment when it becomes the whole text: an insert at offset 0 into the empty text.
-    // The offset check keeps an out-of-range insert into the empty text throwing.
-    val canReuseFragment = offset == 0 && chars.isEmpty() && fragment is ImmutableCharSequence
+    // Reuse the fragment when it becomes the whole text, for example an insert into the empty text.
+    // The range check keeps an out-of-range edit throwing.
+    val canReuseFragment = startOffset == 0 && endOffset == length() && fragment is ImmutableCharSequence
     val newChars = if (canReuseFragment) {
       fragment
     } else {
-      chars.insert(offset, fragment)
+      chars.replace(startOffset, endOffset, fragment)
     }
-    return docText(newChars, startOffset = offset, endOffset = offset, newFragment = fragment)
-  }
-
-  private fun applyDelete(op: DocumentOp.Delete): DocumentText {
-    val offset = op.offset()
-    val length = op.length()
-    if (length == 0) {
-      return this
-    }
-    val endOffset = offset + length
-    val newChars = chars.delete(offset, endOffset)
-    return docText(newChars, startOffset = offset, endOffset = endOffset, newFragment = "")
-  }
-
-  private fun docText(
-    newChars: ImmutableCharSequence,
-    startOffset: Int,
-    endOffset: Int,
-    newFragment: CharSequence,
-  ): DocumentText {
     val oldLineSet = lineSet
     if (oldLineSet == null) {
-      return DocumentTextImpl(newChars, null, null)
+      return DocumentTextImpl(newChars, newChars.length, null, null)
     }
-    val newLineSet = oldLineSet.update(chars, startOffset, endOffset, newFragment)
-    return DocumentTextImpl(newChars, newLineSet, null)
+    val newLineSet = oldLineSet.update(chars, startOffset, endOffset, fragment)
+    return DocumentTextImpl(newChars, newChars.length, newLineSet, null)
   }
 
   /**
