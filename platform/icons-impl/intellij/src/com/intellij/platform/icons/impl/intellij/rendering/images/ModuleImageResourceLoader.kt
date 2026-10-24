@@ -5,20 +5,29 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.getMainDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.icons.impl.intellij.ModuleImageResourceLocation
+import com.intellij.platform.icons.impl.intellij.rendering.intelliJThemeContext
 import com.intellij.platform.icons.rendering.ImageModifiers
 import com.intellij.platform.icons.rendering.ImageResource
 import com.intellij.platform.icons.rendering.ImageResourceLoader
+import com.intellij.platform.icons.rendering.ThemeContext
 import com.intellij.ui.icons.findIconLoaderByPath
 
 class ModuleImageResourceLoader: ImageResourceLoader<ModuleImageResourceLocation> {
   override fun loadImage(
       location: ModuleImageResourceLocation,
       imageModifiers: ImageModifiers?,
+  ): ImageResource = loadImage(location, imageModifiers, intelliJThemeContext)
+
+  /** Loads the image with the theme inputs of [theme], read on each rasterization. */
+  fun loadImage(
+      location: ModuleImageResourceLocation,
+      imageModifiers: ImageModifiers?,
+      theme: ThemeContext,
   ): ImageResource {
     val classLoader = getClassLoader(location.pluginId, location.moduleId)
                       ?: error("Cannot recover classloader for plugin: ${location.pluginId} module: ${location.moduleId}")
     val dataLoader = findIconLoaderByPath(location.path, classLoader)
-    return IntelliJImageResource(DataLoaderImageResourceHolder(dataLoader), imageModifiers)
+    return IntelliJImageResource(DataLoaderImageResourceHolder(dataLoader), imageModifiers, theme)
   }
 
   private fun getClassLoader(pluginId: String, moduleId: String?): ClassLoader? {

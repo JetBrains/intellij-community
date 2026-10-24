@@ -52,6 +52,15 @@ f:com.intellij.platform.icons.rendering.RenderingContext$Companion
 - f:getEmpty():com.intellij.platform.icons.rendering.RenderingContext
 com.intellij.platform.icons.rendering.ThemeContext
 - sf:Companion:com.intellij.platform.icons.rendering.ThemeContext$Companion
+- colorPalette():com.intellij.platform.icons.rendering.ThemeSvgPatcher
 - a:digest():java.lang.String
+- globalFilter():com.intellij.platform.icons.rendering.ThemeImageFilter
+- grayFilter():com.intellij.platform.icons.rendering.ThemeImageFilter
+- isDark():java.lang.Boolean
+- selectionPatcher():com.intellij.platform.icons.rendering.ThemeSvgPatcher
 f:com.intellij.platform.icons.rendering.ThemeContext$Companion
 - f:getNone():com.intellij.platform.icons.rendering.ThemeContext
+com.intellij.platform.icons.rendering.ThemeImageFilter
+- a:digest():java.lang.String
+com.intellij.platform.icons.rendering.ThemeSvgPatcher
+- a:digest():java.lang.String

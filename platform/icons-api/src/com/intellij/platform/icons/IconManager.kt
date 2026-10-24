@@ -96,6 +96,12 @@ fun deferredIconDescriptor(
   evaluator: suspend () -> IconDescriptor,
 ): IconDescriptor = IconManager.getInstance().deferredIconDescriptor(placeholder, evaluator)
 
-fun imageIconDescriptor(path: String, classLoader: ClassLoader? = null, modifier: IconModifier = IconModifier): IconDescriptor = iconDescriptor {
+/** An icon of the image resource at [path] in [classLoader], see [IconDesigner.image]. */
+fun imageIconDescriptor(path: String, classLoader: ClassLoader, modifier: IconModifier = IconModifier): IconDescriptor = iconDescriptor {
     image(path, classLoader, modifier)
+}
+
+/** An icon of the image at [url], a `file:` or `jar:` URL or a file path, see [IconDesigner.image]. */
+fun imageIconDescriptor(url: String, modifier: IconModifier = IconModifier): IconDescriptor = iconDescriptor {
+    image(url, modifier)
 }

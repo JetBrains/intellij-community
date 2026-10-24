@@ -14,6 +14,14 @@ import java.net.URL
 import java.util.function.Supplier
 import javax.swing.Icon
 
+/**
+ * The loader of the icon at [path], with the theme path patch applied, as [findIconByPath] and the lazy patch of
+ * [CachedImageIcon] resolve it.
+ *
+ * A patch target with the `file:/` scheme (a theme under development) is loaded from that file. A reflective patch
+ * target (for example, `AllIcons.Actions.Find`) gives the loader of that icon if it is a [CachedImageIcon]. Another
+ * reflective icon has no loader, so the unpatched path is loaded.
+ */
 @Internal
 fun findIconLoaderByPath(path: String, classLoader: ClassLoader): ImageDataLoader {
   val originalPath = normalizePath(path)
@@ -21,10 +29,29 @@ fun findIconLoaderByPath(path: String, classLoader: ClassLoader): ImageDataLoade
   val effectivePath = patched?.first ?: originalPath
   val effectiveClassLoader = patched?.second ?: classLoader
 
+  if (patched != null) {
+    if (effectivePath.startsWith(FILE_SCHEME_PREFIX)) {
+      return ImageDataByFilePathLoader(effectivePath)
+    }
+    if (isReflectivePath(effectivePath)) {
+      val reflective = getReflectiveIcon(effectivePath, effectiveClassLoader) as? CachedImageIcon
+      if (reflective != null) {
+        return reflective.originalLoader.let { it.patch(pathTransform.get()) ?: it }
+      }
+      logger<CachedImageIcon>().warn("Reflective icon patch target has no image loader (path=$originalPath, target=$effectivePath)")
+      return ImageDataByPathLoader.createLoader(originalPath = originalPath,
+                                                originalClassLoader = classLoader,
+                                                patched = null,
+                                                path = originalPath,
+                                                classLoader = classLoader)
+    }
+  }
+
+  // like `doPatch`, which the lazy patch of a CachedImageIcon uses
   return ImageDataByPathLoader.createLoader(originalPath = originalPath,
                     originalClassLoader = effectiveClassLoader,
                     patched = patched,
-                    path = effectivePath,
+                    path = normalizePath(effectivePath),
                     classLoader = effectiveClassLoader
         )
 }
@@ -195,7 +222,8 @@ fun getReflectiveIcon(path: String, classLoader: ClassLoader): Icon? {
   }
 }
 
-internal fun getClassNameByIconPath(path: String): String {
+@Internal
+fun getClassNameByIconPath(path: String): String {
   var dotIndex = path.lastIndexOf('.')
   val builder = StringBuilder(path.length + 20)
   builder.append(path, 0, dotIndex)

@@ -11,7 +11,17 @@ import com.intellij.platform.icons.modifiers.cutoutMargin
 interface IconDesigner {
     fun image(resourceLoader: ImageResourceLocation, modifier: IconModifier = IconModifier)
 
-    fun image(path: String, classLoader: ClassLoader? = null, modifier: IconModifier = IconModifier)
+    /** An image resource at [path] in [classLoader], for example `expui/general/add.svg`. */
+    fun image(path: String, classLoader: ClassLoader, modifier: IconModifier = IconModifier)
+
+    /**
+     * An image at [url], for example an icon file chosen by the user: a `file:` URL, a `jar:` URL or a file path. A file
+     * path is resolved where the image is loaded, a relative one against the working directory there. Images are not
+     * loaded from the network.
+     *
+     * @throws IllegalArgumentException when [url] is not one of these
+     */
+    fun image(url: String, modifier: IconModifier = IconModifier)
 
     fun icon(iconDescriptor: IconDescriptor, modifier: IconModifier = IconModifier)
 

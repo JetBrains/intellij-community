@@ -40,6 +40,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.platform.icons.impl.intellij.tests",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
@@ -68,6 +72,8 @@ jvm_library(
         "//platform/icons-impl/intellij:intellij_test_lib",
         "//libraries/kotlinx/serialization/json",
         "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/assertj-core",
         "//libraries/assertj-core:assertj-core_test_lib",
         "//platform/testFramework/junit5",
@@ -80,6 +86,12 @@ jvm_library(
         "//libraries/junit4:junit4_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
+        "//platform/util:util-ui",
+        "//platform/util:util-ui_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.icons.impl.intellij.tests` end

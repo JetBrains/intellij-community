@@ -71,22 +71,25 @@ f:com.intellij.platform.icons.impl.intellij.rendering.IntelliJIconRendererManage
 - createRenderer(com.intellij.platform.icons.layers.IconLayer,com.intellij.platform.icons.rendering.RenderingContext):com.intellij.platform.icons.impl.rendering.layers.IconLayerRenderer
 - createRenderingContext(com.intellij.platform.icons.rendering.MutableIconUpdateFlow,com.intellij.platform.icons.rendering.ImageModifiers):com.intellij.platform.icons.rendering.RenderingContext
 - createUpdateFlow(kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function2):com.intellij.platform.icons.rendering.MutableIconUpdateFlow
-f:com.intellij.platform.icons.impl.intellij.rendering.IntelliJImageModifiers
-- com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
-- <init>():V
-- <init>(com.intellij.platform.icons.filters.ColorFilter,com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher,Z,com.intellij.platform.icons.design.Color,com.intellij.util.SVGLoader$SvgElementColorPatcherProvider):V
-- b:<init>(com.intellij.platform.icons.filters.ColorFilter,com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher,Z,com.intellij.platform.icons.design.Color,com.intellij.util.SVGLoader$SvgElementColorPatcherProvider,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:getLegacyPatcherProvider():com.intellij.util.SVGLoader$SvgElementColorPatcherProvider
 f:com.intellij.platform.icons.impl.intellij.rendering.SwingIcon
+- com.intellij.openapi.util.ScalableIcon
 - com.intellij.platform.icons.swing.ScalableSwingIcon
+- com.intellij.ui.icons.DarkIconProvider
+- com.intellij.ui.icons.MenuBarIconProvider
 - javax.swing.Icon
 - <init>(com.intellij.platform.icons.IconDescriptor,com.intellij.platform.icons.scale.IconScale):V
-- b:<init>(com.intellij.platform.icons.IconDescriptor,com.intellij.platform.icons.scale.IconScale,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.platform.icons.IconDescriptor,com.intellij.platform.icons.scale.IconScale,java.lang.Boolean):V
+- b:<init>(com.intellij.platform.icons.IconDescriptor,com.intellij.platform.icons.scale.IconScale,java.lang.Boolean,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getDark():java.lang.Boolean
+- getDarkIcon(Z):com.intellij.platform.icons.impl.intellij.rendering.SwingIcon
 - f:getIconDescriptor():com.intellij.platform.icons.IconDescriptor
 - getIconHeight():I
 - getIconWidth():I
+- getMenuBarIcon(Z):javax.swing.Icon
+- getScale():F
 - f:getScale():com.intellij.platform.icons.scale.IconScale
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- scale(F):javax.swing.Icon
 - scaled(com.intellij.platform.icons.scale.IconScale):com.intellij.platform.icons.swing.ScalableSwingIcon
 f:com.intellij.platform.icons.impl.intellij.rendering.SwingIconLayerRenderer
 - com.intellij.platform.icons.impl.rendering.layers.BaseImageIconLayerRenderer
@@ -130,11 +133,19 @@ f:com.intellij.platform.icons.impl.intellij.rendering.images.IntelliJImageResour
 - com.intellij.platform.icons.impl.rendering.DefaultImageResourceProvider
 - <init>():V
 - fromSwingIcon(javax.swing.Icon,com.intellij.platform.icons.rendering.ImageModifiers):com.intellij.platform.icons.rendering.ImageResource
+- fromSwingIcon(javax.swing.Icon,com.intellij.platform.icons.rendering.ImageModifiers,com.intellij.platform.icons.rendering.ThemeContext):com.intellij.platform.icons.rendering.ImageResource
 - loadImage(com.intellij.platform.icons.ImageResourceLocation,com.intellij.platform.icons.rendering.ImageModifiers):com.intellij.platform.icons.rendering.ImageResource
+- loadImage(com.intellij.platform.icons.ImageResourceLocation,com.intellij.platform.icons.rendering.ImageModifiers,com.intellij.platform.icons.rendering.ThemeContext):com.intellij.platform.icons.rendering.ImageResource
 f:com.intellij.platform.icons.impl.intellij.rendering.images.ModuleImageResourceLoader
 - com.intellij.platform.icons.rendering.ImageResourceLoader
 - <init>():V
 - loadImage(com.intellij.platform.icons.impl.intellij.ModuleImageResourceLocation,com.intellij.platform.icons.rendering.ImageModifiers):com.intellij.platform.icons.rendering.ImageResource
+- f:loadImage(com.intellij.platform.icons.impl.intellij.ModuleImageResourceLocation,com.intellij.platform.icons.rendering.ImageModifiers,com.intellij.platform.icons.rendering.ThemeContext):com.intellij.platform.icons.rendering.ImageResource
+f:com.intellij.platform.icons.impl.intellij.rendering.images.UrlImageResourceLoader
+- com.intellij.platform.icons.rendering.ImageResourceLoader
+- <init>():V
+- loadImage(com.intellij.platform.icons.impl.UrlImageResourceLocation,com.intellij.platform.icons.rendering.ImageModifiers):com.intellij.platform.icons.rendering.ImageResource
+- f:loadImage(com.intellij.platform.icons.impl.UrlImageResourceLocation,com.intellij.platform.icons.rendering.ImageModifiers,com.intellij.platform.icons.rendering.ThemeContext):com.intellij.platform.icons.rendering.ImageResource
 f:com.intellij.platform.icons.impl.intellij.serializers.CachedImageIconSerializer
 - kotlinx.serialization.KSerializer
 - sf:INSTANCE:com.intellij.platform.icons.impl.intellij.serializers.CachedImageIconSerializer

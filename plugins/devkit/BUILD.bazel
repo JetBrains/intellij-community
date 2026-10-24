@@ -29,6 +29,7 @@ dev_dist_plugin(
         "intellij.devkit.mcp",
         "intellij.devkit.mcp.inspections",
         "intellij.devkit.threading",
+        "intellij.devkit.icons.inspector",
         "intellij.devkit.smartupdate",
         "intellij.platform.jewel.samples.showcase",
         "intellij.libraries.workspace.model.codegen",

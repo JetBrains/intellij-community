@@ -395,6 +395,10 @@ fun loadCustomImage(size: Dimension, data: ByteArray, scale: Float = JBUIScale.s
 
 private var selectionColorPatcher: SVGLoader.SvgElementColorPatcherProvider? = null
 
+/** The theme SVG color patcher for icons on a selected background, as [setSelectionColorPatcherProvider] sets it. */
+@Internal
+fun getSelectionColorPatcherProvider(): SVGLoader.SvgElementColorPatcherProvider? = selectionColorPatcher
+
 @Internal
 fun setSelectionColorPatcherProvider(colorPatcher: SVGLoader.SvgElementColorPatcherProvider?) {
   selectionColorPatcher = colorPatcher

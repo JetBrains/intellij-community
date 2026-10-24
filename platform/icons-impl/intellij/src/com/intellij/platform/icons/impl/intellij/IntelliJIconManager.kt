@@ -17,11 +17,15 @@ import com.intellij.platform.icons.impl.DeferredIconResolver
 import com.intellij.platform.icons.impl.DeferredIconResolverService
 import com.intellij.platform.icons.impl.iconLayer
 import com.intellij.platform.icons.impl.intellij.custom.CustomLegacyIconSerializer
+import com.intellij.platform.icons.impl.intellij.debug.IntelliJImageResourceLocationDescribers
 import com.intellij.platform.icons.impl.intellij.design.IntelliJIconDesigner
 import com.intellij.platform.icons.impl.intellij.rendering.IntelliJIconRendererManager
 import com.intellij.platform.icons.impl.intellij.rendering.SwingIcon
+import com.intellij.platform.icons.impl.intellij.rendering.withDarkState
+import com.intellij.platform.icons.impl.intellij.rendering.withoutDarkState
 import com.intellij.platform.icons.impl.layers.SwingIconLayer
 import com.intellij.platform.icons.modifiers.IconModifier
+import com.intellij.platform.icons.modifiers.dark
 import com.intellij.platform.icons.modifiers.scale
 import com.intellij.platform.icons.rendering.IconRendererManager
 import com.intellij.platform.icons.scale.IconScale
@@ -37,6 +41,11 @@ import java.lang.ref.WeakReference
 import javax.swing.Icon
 
 class IntelliJIconManager : DefaultIconManager() {
+  init {
+    // lets icon debugging tools (Icon Inspector) show the fields of ModuleImageResourceLocation
+    IntelliJImageResourceLocationDescribers.register()
+  }
+
   private val resolverService: IntelliJDeferredIconResolverService by lazy {
     service<IntelliJDeferredIconResolverService>()
   }
@@ -68,7 +77,8 @@ class IntelliJIconManager : DefaultIconManager() {
 
   override fun addSwingLayer(designer: IconDesigner, swingIcon: Icon, modifier: IconModifier) {
     if (swingIcon is SwingIcon) {
-      return designer.icon(swingIcon.iconDescriptor, modifier)
+      val dark = swingIcon.dark ?: return designer.icon(swingIcon.iconDescriptor, modifier)
+      return designer.icon(swingIcon.iconDescriptor.withoutDarkState(), modifier.dark(dark))
     }
     if (designer !is IntelliJIconDesigner) {
       error("Only IntelliJIconDesigner can handle swing icons.")
@@ -77,7 +87,7 @@ class IntelliJIconManager : DefaultIconManager() {
   }
 
   override fun toIconDescriptor(swingIcon: Icon): IconDescriptor {
-    if (swingIcon is SwingIcon && swingIcon.scale == null) return swingIcon.iconDescriptor
+    if (swingIcon is SwingIcon && swingIcon.scale == null && swingIcon.dark == null) return swingIcon.iconDescriptor
     return if (swingIcon is SwingIcon) {
       unpackSwingIcon(swingIcon)
     } else {
@@ -100,16 +110,25 @@ class IntelliJIconManager : DefaultIconManager() {
     }
   }
 
+  /**
+   * The descriptor of [swingIcon] with its scale and its dark state (see [SwingIcon.dark]) as modifiers. The dark state
+   * replaces a dark state that the descriptor only sets on another descriptor, as [SwingIcon.getDarkIcon] does. So the
+   * result is the same for each round trip and does not nest deeper.
+   */
   private fun unpackSwingIcon(swingIcon: SwingIcon): IconDescriptor {
-    return if (swingIcon.scale != null) {
-      iconDescriptor {
-        addSwingLayer(
-          this,
-          swingIcon,
-          IconModifier.scale(swingIcon.scale)
-        )
-      }
-    } else swingIcon.iconDescriptor
+    val scale = swingIcon.scale
+    val dark = swingIcon.dark
+    if (dark == null) {
+      if (scale == null) return swingIcon.iconDescriptor
+      return iconDescriptor { addSwingLayer(this, swingIcon, IconModifier.scale(scale)) }
+    }
+    if (scale == null) {
+      val descriptor = swingIcon.iconDescriptor
+      val darkDescriptor = withDarkState(descriptor.withoutDarkState(), dark)
+      return if (darkDescriptor == descriptor) descriptor else darkDescriptor
+    }
+    // `addSwingLayer` adds the dark state of the icon
+    return iconDescriptor { addSwingLayer(this, swingIcon, IconModifier.scale(scale)) }
   }
 
   override fun markDeferredIconUnused(id: IconIdentifier) {

@@ -31,13 +31,13 @@ import androidx.compose.ui.unit.dp
 import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.design.IconDesigner
 import com.intellij.platform.icons.iconDescriptor
-import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
 import com.intellij.platform.icons.rendering.IconRendererManager
 import com.intellij.platform.icons.rendering.createRenderer
 import com.intellij.platform.icons.scale.IconScale
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.icon.createIconRenderingContext
 import org.jetbrains.jewel.ui.icon.iconRender
 import org.jetbrains.jewel.ui.icon.newUiChecker
 import org.jetbrains.jewel.ui.painter.PainterHint
@@ -115,13 +115,7 @@ public fun Icon(
 
     val updateFlow = remember(scope) { IconRendererManager.createUpdateFlow(scope) }
 
-    val context =
-        remember(updateFlow, isDark) {
-            IconRendererManager.createRenderingContext(
-                updateFlow = updateFlow,
-                defaultImageModifiers = DefaultImageModifiers(isDark = isDark),
-            )
-        }
+    val context = remember(updateFlow, isDark) { createIconRenderingContext(updateFlow, isDark) }
 
     val renderer = remember(iconDescriptor, context) { iconDescriptor.createRenderer(context) }
 
