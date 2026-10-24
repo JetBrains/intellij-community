@@ -181,8 +181,8 @@ pub(crate) fn copy_entries(runtime: &dyn Runtime, alias: &str, id: &str, file: &
         return vec![format!("no home directory, so no {noun} is copied")];
     };
     let local = runtime.read_text_file(&home.join(file)).unwrap_or_default();
-    // The stdout alone, so a warning of ssh cannot become a part of the file.
-    let read = runtime.spawn_streaming(&ssh(alias, &format!("cat {file} 2>/dev/null || true")));
+    // `LogLevel=ERROR` of the ssh options keeps the warnings of ssh out of the text, and a failed ssh exits nonzero.
+    let read = crate::remote::remote_call(runtime, &ssh(alias, &format!("cat {file} 2>/dev/null || true")));
     if read.exit_code != 0 {
         return vec![format!("cannot read ~/{file} on {alias}: ssh exited with {}", read.exit_code)];
     }

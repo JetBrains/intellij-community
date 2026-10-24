@@ -8,6 +8,7 @@ use std::ffi::OsString;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::thread;
+use std::time::Duration;
 
 /// The platform whose conventions a path or a command line follows.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -48,6 +49,9 @@ pub struct SpawnResult {
     pub exit_code: i32,
     pub output: String,
 }
+
+/// The exit code of a child that [`Runtime::spawn_watched`] stopped, as the `timeout` command answers it.
+pub const STOPPED_IDLE: i32 = 124;
 
 /// Called with the elapsed milliseconds every 30 s while a child runs, so a long bazel run does not look hung.
 pub type Heartbeat<'a> = &'a (dyn Fn(u64) + Sync);
@@ -102,6 +106,13 @@ pub trait Runtime: Sync {
     /// Runs a child to completion with `input` on its stdin, and answers its stdout and stderr merged. Never fails, as
     /// [`Runtime::spawn`]. The input stays off the command line, so a secret in it shows in no process list.
     fn spawn_with_input(&self, command: &[OsString], input: &str) -> SpawnResult;
+
+    /// Runs a child as [`Runtime::spawn`] does, and stops it with its process group when it writes nothing for
+    /// `idle`. A stopped child answers [`STOPPED_IDLE`]. Never fails.
+    ///
+    /// For a child that can stall without an end, such as an ssh or a git push that waits for a dead link or a key
+    /// agent: its options bound the link, and this bounds the rest.
+    fn spawn_watched(&self, command: &[OsString], idle: Duration) -> SpawnResult;
 
     /// A fresh path for a temporary file. The caller owns it and removes it with [`Runtime::remove`], from a guard
     /// that runs even when the run blows up: a leaked BEP file is tens of MB for a lane run.

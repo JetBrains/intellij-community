@@ -82,6 +82,8 @@ pub struct State {
     pub spawn_results: VecDeque<SpawnResult>,
     /// The stdin of each [`Runtime::spawn_with_input`], in order.
     pub inputs: Vec<String>,
+    /// The idle limit of each [`Runtime::spawn_watched`], in order.
+    pub idle_limits: Vec<std::time::Duration>,
     /// Answers by command: a spawn whose argv, joined by spaces, holds the text of a rule answers the result of the
     /// first such rule, before the queue of [`State::spawn_results`] is asked.
     pub spawn_rules: Vec<(String, SpawnResult)>,
@@ -290,6 +292,12 @@ impl Runtime for FakeRuntime {
 
     /// Records the argv and answers the scripted result, whose output stands for the stdout of the child.
     fn spawn_streaming(&self, command: &[OsString]) -> SpawnResult {
+        self.scripted_spawn(command)
+    }
+
+    /// Records the argv and the idle limit, and answers the scripted result.
+    fn spawn_watched(&self, command: &[OsString], idle: std::time::Duration) -> SpawnResult {
+        self.state().idle_limits.push(idle);
         self.scripted_spawn(command)
     }
 

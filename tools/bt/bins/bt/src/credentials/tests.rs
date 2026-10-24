@@ -131,10 +131,14 @@ fn a_copy_writes_the_merged_file_through_the_stdin_and_says_no_secret() {
         state.inputs,
         ["machine other.test login o password other-secret\nmachine cache.test login me password local-secret\n"]
     );
-    let write = state.spawned.last().expect("the write").join(" ");
+    let write = state.spawned.last().expect("the write").clone();
+    let expected = crate::remote::ssh(
+        "studio",
+        "umask 077 && cat > .netrc.bt-remote-7 && chmod 600 .netrc.bt-remote-7 && mv -f .netrc.bt-remote-7 .netrc",
+    );
     assert_eq!(
         write,
-        "ssh -o BatchMode=yes studio umask 077 && cat > .netrc.bt-remote-7 && chmod 600 .netrc.bt-remote-7 && mv -f .netrc.bt-remote-7 .netrc"
+        expected.iter().map(|word| word.to_string_lossy().into_owned()).collect::<Vec<_>>()
     );
     let said = format!("{lines:?} {:?} {:?} {:?}", state.stdout, state.stderr, state.spawned);
     assert!(!said.contains("secret"), "{said}");

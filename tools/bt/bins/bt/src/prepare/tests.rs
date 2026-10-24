@@ -7,6 +7,7 @@ use super::*;
 use bt_core::fake::{FakeRuntime, HOME_DIR, refusal};
 
 use crate::execute::execute;
+use crate::remote::SSH_OPTIONS;
 
 const LOCAL_MASTER: &str = "1111111111111111111111111111111111111111";
 const HOST_MASTER: &str = "2222222222222222222222222222222222222222";
@@ -40,7 +41,7 @@ fn ready() -> FakeRuntime {
     fake.put_absolute(&format!("{HOME_DIR}/.m2/settings.xml"), LOCAL_SETTINGS);
     fake.put_absolute(&format!("{HOME_DIR}/.netrc"), LOCAL_NETRC);
     let rules = [
-        ("ConnectTimeout=10", answered(0, "")),
+        ("LogLevel=ERROR studio true", answered(0, "")),
         ("if [ -d", answered(0, &format!("{LOCAL_MASTER}\n"))),
         (
             "git rev-parse --verify -q refs/heads/master",
@@ -125,7 +126,7 @@ fn an_unreachable_host_stops_with_the_ssh_hint() {
     let fake = ready();
     answer_first(
         &fake,
-        "ConnectTimeout=10",
+        "LogLevel=ERROR studio true",
         answered(255, "ssh: connect to host studio port 22: No route to host\n"),
     );
     let outcome = prepare(&[], &fake);
@@ -165,7 +166,7 @@ fn a_missing_repository_is_created_and_given_the_master_history() {
     );
     assert_spawned(
         &fake,
-        &format!("push --quiet studio:projects/idea-1 {LOCAL_MASTER}:refs/heads/sync"),
+        &format!("push --progress studio:projects/idea-1 {LOCAL_MASTER}:refs/heads/sync"),
     );
     assert_spawned(&fake, "git -C ~/'projects/idea-1' checkout -q -B master sync");
     let warned = fake.state().stderr.join("\n");
@@ -227,7 +228,10 @@ fn another_bd_version_is_replaced_by_the_local_binary() {
     );
     assert_spawned(
         &fake,
-        &format!("scp -q -o BatchMode=yes {HOME_DIR}/.local/bin/bd studio:.local/bin/bd.bt-new"),
+        &format!(
+            "scp -q {} {HOME_DIR}/.local/bin/bd studio:.local/bin/bd.bt-new",
+            SSH_OPTIONS.join(" ")
+        ),
     );
     assert_spawned(&fake, "chmod 755 .local/bin/bd.bt-new && mv -f .local/bin/bd.bt-new .local/bin/bd");
 
@@ -329,7 +333,10 @@ fn yes_copies_the_missing_entries_and_says_no_secret() {
     );
     assert_spawned(
         &fake,
-        &format!("scp -pq -o BatchMode=yes {HOME_DIR}/{TOKEN_MARKERS}/{MARKER} studio:{TOKEN_MARKERS}/"),
+        &format!(
+            "scp -pq {} {HOME_DIR}/{TOKEN_MARKERS}/{MARKER} studio:{TOKEN_MARKERS}/",
+            SSH_OPTIONS.join(" ")
+        ),
     );
     let state = fake.state();
     assert!(state.questions.is_empty(), "--yes asks nothing");

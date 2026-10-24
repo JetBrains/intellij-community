@@ -7,7 +7,7 @@ use std::io::Write;
 use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use pretty_assertions::assert_eq;
 
@@ -121,6 +121,37 @@ fn a_streamed_child_answers_its_stdout_and_passes_on_its_stderr_lines() {
     assert!(result.output.ends_with("said on stdout\n"), "{}", result.output);
     assert!(!result.output.contains("said on stderr"), "{}", result.output);
     assert!(lines.lock().expect("the sink lock").iter().any(|line| line == "said on stderr"));
+}
+
+/// A child that writes nothing for the idle limit is stopped, and a child that ends in time answers as usual.
+#[test]
+fn a_watched_child_that_stays_silent_is_stopped() {
+    let started = Instant::now();
+    let silent = watch_to_end(child(None, "sleep:20000"), Duration::from_millis(300));
+    assert_eq!(silent.exit_code, STOPPED_IDLE, "{}", silent.output);
+    assert!(
+        silent.output.contains("wrote nothing for 0 s, so it was stopped"),
+        "{}",
+        silent.output
+    );
+    assert!(started.elapsed() < Duration::from_secs(10), "{:?}", started.elapsed());
+
+    let speaking = watch_to_end(child(None, "streams"), Duration::from_secs(20));
+    assert_eq!(speaking.exit_code, 3, "{}", speaking.output);
+    assert!(speaking.output.contains("said on stdout"), "{}", speaking.output);
+}
+
+/// The stall is often in a grandchild that holds the pipe, as the ssh of a git push does. Its group goes with it.
+#[cfg(unix)]
+#[test]
+fn a_watched_child_is_stopped_with_its_grandchildren() {
+    let started = Instant::now();
+    let mut command = Command::new("/bin/sh");
+    command.args(["-c", "sleep 30; echo late"]).stdin(Stdio::null());
+    let stopped = watch_to_end(command, Duration::from_millis(300));
+    assert_eq!(stopped.exit_code, STOPPED_IDLE, "{}", stopped.output);
+    assert!(!stopped.output.contains("late"), "{}", stopped.output);
+    assert!(started.elapsed() < Duration::from_secs(10), "{:?}", started.elapsed());
 }
 
 /// The tail, because a lane run's bazel output is megabytes and only its end says why it failed.

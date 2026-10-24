@@ -14,6 +14,7 @@
 
 use std::ffi::OsString;
 use std::path::PathBuf;
+use std::time::Duration;
 
 use bt_core::evidence::RUNS_DIR;
 use bt_core::runtime::{Runtime, SpawnResult, repo_file};
@@ -40,8 +41,43 @@ const HOST_SCRIPT: &str = include_str!("remote.sh");
 /// The exit code of ssh for its own failure: no connection, no authentication.
 const SSH_FAILED: i32 = 255;
 
-/// The ssh options of every call: a prompt would hang an agent.
-const SSH_OPTIONS: [&str; 2] = ["-o", "BatchMode=yes"];
+/// The ssh options of every ssh, scp and git push to a host, so that a dead link fails in bounded time.
+///
+/// - `BatchMode`: a prompt would wait for a person who is not there.
+/// - `ConnectTimeout`: on a Mac, a connect to a `.local` name without it waited more than 170 s in each try, while the
+///   same connect with it took less than a second. The timeout also bounds the key exchange.
+/// - `ServerAliveInterval` and `ServerAliveCountMax`: a link that stops answering ends the connection after 60 s.
+/// - `ControlMaster=no` and `ControlPath=none`: a multiplexed client ignores its own keepalive options and waits for
+///   its master, and a master without keepalives, or a stopped one, keeps the client waiting for ever. So each call
+///   opens its own connection, and the options above apply to it.
+/// - `LogLevel=ERROR`: no warning of ssh becomes a part of an answer that bt reads, such as a credential file.
+pub(crate) const SSH_OPTIONS: [&str; 14] = [
+    "-o",
+    "BatchMode=yes",
+    "-o",
+    "ConnectTimeout=15",
+    "-o",
+    "ServerAliveInterval=15",
+    "-o",
+    "ServerAliveCountMax=4",
+    "-o",
+    "ControlMaster=no",
+    "-o",
+    "ControlPath=none",
+    "-o",
+    "LogLevel=ERROR",
+];
+
+/// How long a short call to the host may write nothing before it is stopped: the options do not bound a wait for
+/// the key agent, which signs for each connection.
+pub(crate) const CALL_IDLE: Duration = Duration::from_secs(120);
+
+/// How long a git push may write nothing before it is stopped. It runs with `--progress`, so a push that moves
+/// objects writes a line every second.
+pub(crate) const PUSH_IDLE: Duration = Duration::from_secs(300);
+
+/// How long an scp may run, since it writes nothing while it copies.
+pub(crate) const COPY_IDLE: Duration = Duration::from_secs(1800);
 
 /// The flags of this module with a value, which the host run does not get.
 const HOST_FLAGS: [&str; 3] = ["--host", "--host-repo", "--host-idle-hours"];
@@ -79,9 +115,9 @@ pub(crate) fn run_on_host(host: &Host<'_>, json: bool, argv: &[OsString], runtim
     let ran = runtime.spawn_streaming(&ssh(alias, &host_command(host, &script, &forwarded)));
     if ran.exit_code == SSH_FAILED {
         // The host script deletes the ref, unless ssh never started it.
-        let deleted = runtime.spawn(
+        let deleted = remote_call(
+            runtime,
             &ssh(alias, &format!("git -C {} update-ref -d {reference}", host_path_word(host.repo))),
-            None,
         );
         if deleted.exit_code != 0 {
             runtime.write_error(&format!("cannot delete {reference} on {alias}: {}", deleted.output.trim()));
@@ -199,9 +235,9 @@ pub(crate) fn ssh_git_config() -> String {
 fn push(runtime: &dyn Runtime, host: &Host<'_>, commit: &str, reference: &str) -> Result<(), Refusal> {
     let url = push_url(host);
     let ssh_command = ssh_git_config();
-    let pushed = git(
+    let pushed = watched_git(
         runtime,
-        &["-c", &ssh_command, "push", "--quiet", &url, &format!("{commit}:{reference}")],
+        &["-c", &ssh_command, "push", "--progress", &url, &format!("{commit}:{reference}")],
     );
     if pushed.exit_code != 0 {
         return Err(host_infra(&format!("cannot push HEAD to {url}: {}", pushed.output.trim())));
@@ -214,7 +250,7 @@ fn push(runtime: &dyn Runtime, host: &Host<'_>, commit: &str, reference: &str) -
 fn copy_evidence(runtime: &dyn Runtime, host: &str, id: &str) -> Vec<PathBuf> {
     let stage = format!("{STAGE_PARENT}/{id}");
     // The host script removes an empty stage, so a missing one is a run without evidence.
-    let listed = runtime.spawn(&ssh(host, &format!("ls -1 {stage} 2>/dev/null")), None);
+    let listed = remote_call(runtime, &ssh(host, &format!("ls -1 {stage} 2>/dev/null")));
     let runs: Vec<&str> = listed
         .output
         .lines()
@@ -229,17 +265,17 @@ fn copy_evidence(runtime: &dyn Runtime, host: &str, id: &str) -> Vec<PathBuf> {
     if let Err(error) = runtime.create_dir_all(&runs_dir) {
         runtime.write_error(&format!("cannot create {}: {error}", runs_dir.display()));
     } else {
-        let mut command: Vec<OsString> = ["scp", "-rq"].into_iter().chain(SSH_OPTIONS).map(OsString::from).collect();
+        let mut command = scp(&["-rq"]);
         command.extend(runs.iter().map(|run| OsString::from(format!("{host}:{stage}/{run}"))));
         command.push(runs_dir.clone().into_os_string());
-        let fetched = runtime.spawn(&command, None);
+        let fetched = runtime.spawn_watched(&command, COPY_IDLE);
         if fetched.exit_code == 0 {
             copied.extend(runs.iter().map(|run| runs_dir.join(run)));
         } else {
             runtime.write_error(&format!("cannot copy the evidence from {host}:{stage}: {}", fetched.output.trim()));
         }
     }
-    let removed = runtime.spawn(&ssh(host, &format!("rm -rf {stage}")), None);
+    let removed = remote_call(runtime, &ssh(host, &format!("rm -rf {stage}")));
     if removed.exit_code != 0 {
         runtime.write_error(&format!("cannot remove {host}:{stage}: {}", removed.output.trim()));
     }
@@ -328,6 +364,7 @@ pub(crate) fn host_path_word(path: &str) -> String {
     }
 }
 
+/// The argv of one command on the host.
 pub(crate) fn ssh(host: &str, command: &str) -> Vec<OsString> {
     std::iter::once("ssh")
         .chain(SSH_OPTIONS)
@@ -336,9 +373,31 @@ pub(crate) fn ssh(host: &str, command: &str) -> Vec<OsString> {
         .collect()
 }
 
+/// The argv of an scp with its flags, before its sources and its target.
+pub(crate) fn scp(flags: &[&str]) -> Vec<OsString> {
+    std::iter::once("scp")
+        .chain(flags.iter().copied())
+        .chain(SSH_OPTIONS)
+        .map(OsString::from)
+        .collect()
+}
+
+/// Runs a short command on the host, stopped after [`CALL_IDLE`] without output.
+pub(crate) fn remote_call(runtime: &dyn Runtime, command: &[OsString]) -> SpawnResult {
+    runtime.spawn_watched(command, CALL_IDLE)
+}
+
+/// Runs a local git that talks to the host, such as a push, stopped after [`PUSH_IDLE`] without output.
+pub(crate) fn watched_git(runtime: &dyn Runtime, args: &[&str]) -> SpawnResult {
+    runtime.spawn_watched(&git_argv(args), PUSH_IDLE)
+}
+
 fn git(runtime: &dyn Runtime, args: &[&str]) -> SpawnResult {
-    let command: Vec<OsString> = std::iter::once("git").chain(args.iter().copied()).map(OsString::from).collect();
-    runtime.spawn(&command, None)
+    runtime.spawn(&git_argv(args), None)
+}
+
+fn git_argv(args: &[&str]) -> Vec<OsString> {
+    std::iter::once("git").chain(args.iter().copied()).map(OsString::from).collect()
 }
 
 fn host_infra(message: &str) -> Refusal {

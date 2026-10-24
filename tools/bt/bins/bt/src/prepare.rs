@@ -25,7 +25,9 @@ use crate::credentials::{
     space_repository_ids,
 };
 use crate::execute::Outcome;
-use crate::remote::{Host, HostScript, host_command, host_path_word, push_url, ssh, ssh_git_config};
+use crate::remote::{
+    COPY_IDLE, Host, HostScript, host_command, host_path_word, push_url, remote_call, scp, ssh, ssh_git_config, watched_git,
+};
 
 /// What `--prepare` may do.
 pub(crate) struct Prepare {
@@ -117,11 +119,7 @@ pub(crate) fn prepare_host(host: &Host<'_>, prepare: &Prepare, runtime: &dyn Run
 }
 
 fn check_ssh(runtime: &dyn Runtime, alias: &str, report: &mut Report) -> bool {
-    let command: Vec<OsString> = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", alias, "true"]
-        .into_iter()
-        .map(OsString::from)
-        .collect();
-    let answered = runtime.spawn(&command, None);
+    let answered = remote_call(runtime, &ssh(alias, "true"));
     if answered.exit_code == 0 {
         report.add(Status::Ok, "ssh", format!("{alias} answers in batch mode"));
         return true;
@@ -147,14 +145,14 @@ fn prepare_repository(runtime: &dyn Runtime, host: &Host<'_>, prepare: &Prepare,
         report.add(Status::Missing, STEP, "this checkout has no master branch to push");
         return;
     }
-    let probed = runtime.spawn(
+    let probed = remote_call(
+        runtime,
         &ssh(
             host.alias,
             &format!(
                 "if [ -d {repo}/.git ]; then git -C {repo} rev-parse --verify -q refs/heads/master || echo no-master; else echo absent; fi"
             ),
         ),
-        None,
     );
     let host_master = probed.output.trim();
     if probed.exit_code != 0 {
@@ -187,7 +185,8 @@ fn create_repository(runtime: &dyn Runtime, host: &Host<'_>, repo: &str, local_m
         );
         return;
     }
-    let created = runtime.spawn(
+    let created = remote_call(
+        runtime,
         &ssh(
             host.alias,
             &format!(
@@ -195,7 +194,6 @@ fn create_repository(runtime: &dyn Runtime, host: &Host<'_>, repo: &str, local_m
                  && git -C {repo} config core.fsmonitor false"
             ),
         ),
-        None,
     );
     if created.exit_code != 0 {
         report.add(
@@ -243,9 +241,9 @@ fn move_master(
         );
         return;
     }
-    let status = runtime.spawn(
+    let status = remote_call(
+        runtime,
         &ssh(host.alias, &format!("git -C {repo} status --porcelain --untracked-files=no")),
-        None,
     );
     if status.exit_code != 0 || !status.output.trim().is_empty() {
         report.add(
@@ -294,13 +292,13 @@ fn push_sync_and_move(
     const STEP: &str = "repository";
     let ssh_config = ssh_git_config();
     let url = push_url(host);
-    let pushed = local_git(
+    let pushed = watched_git(
         runtime,
         &[
             "-c",
             &ssh_config,
             "push",
-            "--quiet",
+            "--progress",
             &url,
             &format!("{local_master}:refs/heads/sync"),
         ],
@@ -313,7 +311,7 @@ fn push_sync_and_move(
         );
         return false;
     }
-    let moved = runtime.spawn(&ssh(host.alias, &format!("git -C {repo} {git_command}")), None);
+    let moved = remote_call(runtime, &ssh(host.alias, &format!("git -C {repo} {git_command}")));
     if moved.exit_code != 0 {
         report.add(
             Status::Missing,
@@ -336,7 +334,7 @@ fn prepare_bd(runtime: &dyn Runtime, alias: &str, prepare: &Prepare, report: &mu
         .exists(&local_bd)
         .then(|| version_of(&runtime.spawn(&[local_bd.clone().into_os_string(), "--version".into()], None).output))
         .flatten();
-    let host_probe = runtime.spawn(&ssh(alias, "uname -sm; ~/.local/bin/bd --version 2>/dev/null"), None);
+    let host_probe = remote_call(runtime, &ssh(alias, "uname -sm; ~/.local/bin/bd --version 2>/dev/null"));
     let mut lines = host_probe.output.lines();
     let host_platform = lines.next().unwrap_or_default().trim().to_owned();
     let host_version = version_of(&lines.collect::<Vec<_>>().join("\n"));
@@ -371,9 +369,9 @@ fn prepare_bd(runtime: &dyn Runtime, alias: &str, prepare: &Prepare, report: &mu
             report.add(Status::Missing, STEP, format!("cannot copy bd to {alias}"));
         }
     }
-    let path = runtime.spawn(
+    let path = remote_call(
+        runtime,
         &ssh(alias, r#"case ":$PATH:" in *":$HOME/.local/bin:"*) echo on ;; *) echo off ;; esac"#),
-        None,
     );
     match (path.output.trim(), prepare.change) {
         ("on", _) => report.add(Status::Ok, "PATH", "~/.local/bin is on the PATH of the login shell"),
@@ -383,9 +381,9 @@ fn prepare_bd(runtime: &dyn Runtime, alias: &str, prepare: &Prepare, report: &mu
             "~/.local/bin is not on the PATH; --prepare adds it to ~/.zshenv",
         ),
         (_, true) => {
-            let added = runtime.spawn(
+            let added = remote_call(
+                runtime,
                 &ssh(alias, r#"printf '%s\n' 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshenv"#),
-                None,
             );
             if added.exit_code == 0 {
                 report.add(Status::Done, "PATH", "added ~/.local/bin to the PATH in ~/.zshenv");
@@ -398,12 +396,12 @@ fn prepare_bd(runtime: &dyn Runtime, alias: &str, prepare: &Prepare, report: &mu
 
 fn copy_bd(runtime: &dyn Runtime, alias: &str, local_bd: &std::path::Path) -> bool {
     let staged = ".local/bin/bd.bt-new";
-    let made = runtime.spawn(&ssh(alias, "mkdir -p .local/bin"), None);
-    let mut scp: Vec<OsString> = ["scp", "-q", "-o", "BatchMode=yes"].into_iter().map(OsString::from).collect();
-    scp.push(local_bd.as_os_str().to_owned());
-    scp.push(format!("{alias}:{staged}").into());
+    let made = remote_call(runtime, &ssh(alias, "mkdir -p .local/bin"));
+    let mut copy = scp(&["-q"]);
+    copy.push(local_bd.as_os_str().to_owned());
+    copy.push(format!("{alias}:{staged}").into());
     made.exit_code == 0
-        && runtime.spawn(&scp, None).exit_code == 0
+        && runtime.spawn_watched(&copy, COPY_IDLE).exit_code == 0
         && runtime
             .spawn(&ssh(alias, &format!("chmod 755 {staged} && mv -f {staged} .local/bin/bd")), None)
             .exit_code
@@ -442,7 +440,7 @@ fn check_tools(runtime: &dyn Runtime, alias: &str, report: &mut Report) {
             format!("if {check}; then echo '{name} yes'; else echo '{name} no'; fi")
         })
         .collect();
-    let answered = runtime.spawn(&ssh(alias, &probes.join("; ")), None);
+    let answered = remote_call(runtime, &ssh(alias, &probes.join("; ")));
     for (name, _, needed) in TOOLS {
         let present = answered.output.lines().any(|line| line.trim() == format!("{name} yes"));
         match (present, needed) {
@@ -474,7 +472,7 @@ fn prepare_credentials(runtime: &dyn Runtime, alias: &str, prepare: &Prepare, re
             "curl -s --netrc -o /dev/null -w '%{{http_code}}' https://{}/ac/{ABSENT_CACHE_KEY}",
             service.host
         );
-        let answered = runtime.spawn(&ssh(alias, &probe), None);
+        let answered = remote_call(runtime, &ssh(alias, &probe));
         let code = answered.output.trim();
         let status = if matches!(code, "200" | "404") {
             Status::Ok
@@ -487,12 +485,12 @@ fn prepare_credentials(runtime: &dyn Runtime, alias: &str, prepare: &Prepare, re
 
 /// Reports the host and server names that the host has and lacks. It reads names only, never a value.
 fn credential_gaps(runtime: &dyn Runtime, alias: &str, hosts: &[String], servers: &[String], report: &mut Report) -> CredentialGaps {
-    let machines = runtime.spawn(
+    let machines = remote_call(
+        runtime,
         &ssh(
             alias,
             r#"awk '{for (i = 1; i < NF; i++) if ($i == "machine") print $(i + 1)}' ~/.netrc 2>/dev/null"#,
         ),
-        None,
     );
     let known_machines: Vec<&str> = machines.output.lines().map(str::trim).collect();
     let gap_hosts: Vec<String> = hosts
@@ -509,9 +507,9 @@ fn credential_gaps(runtime: &dyn Runtime, alias: &str, hosts: &[String], servers
         );
     }
 
-    let ids = runtime.spawn(
+    let ids = remote_call(
+        runtime,
         &ssh(alias, r"sed -n 's:.*<id>\(.*\)</id>.*:\1:p' ~/.m2/settings.xml 2>/dev/null"),
-        None,
     );
     let known_ids: Vec<&str> = ids.output.lines().map(str::trim).collect();
     let gap_servers: Vec<String> = servers.iter().filter(|id| !known_ids.contains(&id.as_str())).cloned().collect();
@@ -585,7 +583,7 @@ fn marker_gaps(runtime: &dyn Runtime, alias: &str, servers: &[String], report: &
     let Some(home) = runtime.home_dir().filter(|_| !markers.is_empty()) else {
         return Vec::new();
     };
-    let listed = runtime.spawn(&ssh(alias, &format!("ls -1 {TOKEN_MARKERS} 2>/dev/null")), None);
+    let listed = remote_call(runtime, &ssh(alias, &format!("ls -1 {TOKEN_MARKERS} 2>/dev/null")));
     let known: Vec<&str> = listed.output.lines().map(str::trim).collect();
     let now = runtime.now_ms() / 1000;
     let mut gaps = Vec::new();
@@ -682,11 +680,11 @@ fn copy_markers(runtime: &dyn Runtime, alias: &str, markers: &[String]) -> Strin
     let Some(home) = runtime.home_dir() else {
         return "no home directory here".to_owned();
     };
-    let made = runtime.spawn(&ssh(alias, &format!("mkdir -p {TOKEN_MARKERS}")), None);
-    let mut scp: Vec<OsString> = ["scp", "-pq", "-o", "BatchMode=yes"].into_iter().map(OsString::from).collect();
-    scp.extend(markers.iter().map(|marker| home.join(TOKEN_MARKERS).join(marker).into_os_string()));
-    scp.push(format!("{alias}:{TOKEN_MARKERS}/").into());
-    if made.exit_code == 0 && runtime.spawn(&scp, None).exit_code == 0 {
+    let made = remote_call(runtime, &ssh(alias, &format!("mkdir -p {TOKEN_MARKERS}")));
+    let mut copy = scp(&["-pq"]);
+    copy.extend(markers.iter().map(|marker| home.join(TOKEN_MARKERS).join(marker).into_os_string()));
+    copy.push(format!("{alias}:{TOKEN_MARKERS}/").into());
+    if made.exit_code == 0 && runtime.spawn_watched(&copy, COPY_IDLE).exit_code == 0 {
         format!("copied {} token expiry markers", markers.len())
     } else {
         "cannot copy the token expiry markers".to_owned()

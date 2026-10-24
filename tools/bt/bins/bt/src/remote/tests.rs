@@ -42,6 +42,16 @@ fn run_id() -> String {
     format!("1000-{}", std::process::id())
 }
 
+/// The command that a recorded ssh argv runs on the host: its last word, after the options and the host.
+fn host_text(argv: &[String]) -> &str {
+    argv.last().map_or("", String::as_str)
+}
+
+/// The words of an ssh argv before its command: the program, every option of [`SSH_OPTIONS`] and the host.
+fn ssh_prefix(host: &str) -> Vec<String> {
+    std::iter::once("ssh").chain(SSH_OPTIONS).chain([host]).map(str::to_owned).collect()
+}
+
 fn outcome(argv: &[&str], fake: &FakeRuntime) -> Outcome {
     execute(argv, fake).unwrap_or_else(|failure| panic!("{argv:?} refused: {failure:?}"))
 }
@@ -90,19 +100,52 @@ fn a_run_pushes_head_runs_the_host_script_and_answers_its_payload() {
         [
             "git",
             "-c",
-            "core.sshCommand=ssh -o BatchMode=yes",
+            &format!("core.sshCommand=ssh {}", SSH_OPTIONS.join(" ")),
             "push",
-            "--quiet",
+            "--progress",
             "studio:projects/idea-1",
             &format!("{COMMIT}:refs/bt-remote/{id}"),
         ]
     );
-    assert_eq!(spawned[3][..4], ["ssh", "-o", "BatchMode=yes", "studio"]);
+    assert_eq!(spawned[3][..SSH_OPTIONS.len() + 2], ssh_prefix("studio"));
     let holder = holder(&fake);
     let expected_tail = format!("bt-remote 'run' '~/projects/idea-1' '{holder}' '{id}' '{COMMIT}' '8' 'AgentLaunchTokensTest' '--json'");
-    assert!(spawned[3][4].starts_with("sh -c '"), "{}", spawned[3][4]);
-    assert!(spawned[3][4].ends_with(&expected_tail), "{}", spawned[3][4]);
-    assert_eq!(spawned[4][4], format!("ls -1 .cache/bt-remote/runs/{id} 2>/dev/null"));
+    assert!(host_text(&spawned[3]).starts_with("sh -c '"), "{}", host_text(&spawned[3]));
+    assert!(host_text(&spawned[3]).ends_with(&expected_tail), "{}", host_text(&spawned[3]));
+    assert_eq!(host_text(&spawned[4]), format!("ls -1 .cache/bt-remote/runs/{id} 2>/dev/null"));
+    // The push and the short call are watched; the run itself streams.
+    assert_eq!(fake.state().idle_limits, [PUSH_IDLE, CALL_IDLE]);
+}
+
+/// Each option that bounds a dead link is in the one list, and a call never joins a multiplexed master: a mux client
+/// ignores its own keepalive options and waits for its master.
+#[test]
+fn every_host_call_bounds_a_dead_link_on_its_own_connection() {
+    for option in [
+        "BatchMode=yes",
+        "ConnectTimeout=15",
+        "ServerAliveInterval=15",
+        "ServerAliveCountMax=4",
+        "ControlMaster=no",
+        "ControlPath=none",
+    ] {
+        let at = SSH_OPTIONS.iter().position(|word| *word == option);
+        assert!(at.is_some_and(|at| at > 0 && SSH_OPTIONS[at - 1] == "-o"), "{option}");
+    }
+    let fake = checkout(
+        clean_and_pushed()
+            .into_iter()
+            .chain([answered(3, "FAIL\n"), ok("0000000002000\n"), ok(""), ok("")]),
+    );
+    outcome(&["--host", "studio", "FooTest"], &fake);
+    for argv in fake.spawned() {
+        let to_host = match argv[0].as_str() {
+            "ssh" | "scp" => argv.windows(SSH_OPTIONS.len()).any(|words| words == SSH_OPTIONS),
+            "git" if argv.contains(&"push".to_owned()) => argv.contains(&format!("core.sshCommand=ssh {}", SSH_OPTIONS.join(" "))),
+            _ => true,
+        };
+        assert!(to_host, "{argv:?}");
+    }
 }
 
 /// The host script travels inside single quotes, so its own quotes must survive the login shell of the host.
@@ -182,18 +225,11 @@ fn a_failed_run_answers_the_host_code_and_copies_the_kept_logs() {
 
     let id = run_id();
     let spawned = fake.spawned();
-    assert_eq!(
-        spawned[5],
-        [
-            "scp",
-            "-rq",
-            "-o",
-            "BatchMode=yes",
-            &format!("studio:.cache/bt-remote/runs/{id}/0000000002000"),
-            &format!("{REPO_ROOT}/out/bt-runs"),
-        ]
-    );
-    assert_eq!(spawned[6][4], format!("rm -rf .cache/bt-remote/runs/{id}"));
+    let mut scp: Vec<String> = ["scp", "-rq"].into_iter().chain(SSH_OPTIONS).map(str::to_owned).collect();
+    scp.push(format!("studio:.cache/bt-remote/runs/{id}/0000000002000"));
+    scp.push(format!("{REPO_ROOT}/out/bt-runs"));
+    assert_eq!(spawned[5], scp);
+    assert_eq!(host_text(&spawned[6]), format!("rm -rf .cache/bt-remote/runs/{id}"));
 }
 
 /// When ssh itself fails, the host script may never have run, so the ref is deleted from here.
@@ -207,7 +243,10 @@ fn a_failed_ssh_deletes_the_pushed_ref_and_is_infrastructure() {
     let failure = refusal(execute(["--host", "studio", "--host-repo", "/w/idea", "FooTest"], &fake));
     assert_eq!((failure.code.as_ref(), failure.exit), ("host_run_failed", exit::INFRA));
     let spawned = fake.spawned();
-    assert_eq!(spawned[4][4], format!("git -C '/w/idea' update-ref -d refs/bt-remote/{}", run_id()));
+    assert_eq!(
+        host_text(&spawned[4]),
+        format!("git -C '/w/idea' update-ref -d refs/bt-remote/{}", run_id())
+    );
     let errors = fake.state().stderr.join("\n");
     assert!(errors.contains("Operation timed out"), "{errors}");
 }
@@ -230,7 +269,7 @@ fn a_release_returns_the_lease_of_this_checkout_and_runs_nothing_else() {
     let spawned = fake.spawned();
     assert_eq!(spawned.len(), 1, "{spawned:#?}");
     let expected = format!("bt-remote 'release' '~/projects/idea-1' '{}' 'release-1000' '' '8'", holder(&fake));
-    assert!(spawned[0][4].ends_with(&expected), "{}", spawned[0][4]);
+    assert!(host_text(&spawned[0]).ends_with(&expected), "{}", host_text(&spawned[0]));
 
     let failure = refusal(execute(["--release"], &checkout([])));
     assert_eq!(failure.exit, exit::USAGE);

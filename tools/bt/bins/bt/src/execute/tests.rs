@@ -672,6 +672,9 @@ fn the_bep_file_is_deleted_even_when_the_run_blows_up() {
         fn spawn_with_input(&self, command: &[OsString], input: &str) -> SpawnResult {
             self.0.spawn_with_input(command, input)
         }
+        fn spawn_watched(&self, command: &[OsString], idle: std::time::Duration) -> SpawnResult {
+            self.0.spawn_watched(command, idle)
+        }
         fn home_dir(&self) -> Option<PathBuf> {
             self.0.home_dir()
         }
