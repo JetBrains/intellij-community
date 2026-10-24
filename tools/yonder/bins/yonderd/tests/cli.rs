@@ -560,7 +560,11 @@ fn a_run_streams_its_output_to_the_exit_code_stages_its_files_and_is_forgotten()
     assert_eq!(followed.of(Stream::Stdout), vec!["out-1", "a"], "{}", agent.dump("1-1"));
     assert_eq!(
         followed.of(Stream::Stderr),
-        vec![format!("yonder: lease {} (new)", slot.display()).as_str(), "err-1"],
+        vec![
+            format!("yonder: taking a new lease of {HOLDER} (bd lease get)").as_str(),
+            format!("yonder: lease {} (new)", slot.display()).as_str(),
+            "err-1"
+        ],
         "{}",
         agent.dump("1-1")
     );

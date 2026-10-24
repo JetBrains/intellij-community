@@ -238,6 +238,8 @@ impl Leases {
             }
             let _ = fs::remove_file(self.file(holder));
         }
+        // A new slot is a clone of the whole checkout and can take minutes, so the log says so before the wait.
+        say(&format!("taking a new lease of {holder} (bd lease get)"));
         let leased = bd::lease_get(&self.repo, holder, stop).map_err(|message| refused(LEASE_FAILED, message))?;
         say(&format!("lease {} (new)", leased.path.display()));
         Ok(Lease {
