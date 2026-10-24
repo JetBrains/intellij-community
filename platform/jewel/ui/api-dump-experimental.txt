@@ -57,6 +57,8 @@ f:org.jetbrains.jewel.ui.component.MenuComboBoxKt
 *:org.jetbrains.jewel.ui.component.NodeSearchMatchState
 - a:getMatchResult():org.jetbrains.jewel.foundation.search.SpeedSearchMatcher$MatchResult
 - a:getStyle():org.jetbrains.jewel.ui.component.styling.SearchMatchStyle
+f:org.jetbrains.jewel.ui.component.ScrollIndicatorKt
+- *sf:scrollIndicator(androidx.compose.ui.Modifier,androidx.compose.foundation.gestures.ScrollableState,androidx.compose.foundation.gestures.Orientation,org.jetbrains.jewel.ui.component.styling.ScrollbarStyle,Z,Z,Z,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.Modifier
 f:org.jetbrains.jewel.ui.component.SearchAreaKt
 - *sf:SearchArea(org.jetbrains.jewel.ui.component.SearchAreaState,androidx.compose.ui.Modifier,org.jetbrains.jewel.ui.component.styling.SearchTextFieldStyle,androidx.compose.ui.text.TextStyle,androidx.compose.foundation.interaction.MutableInteractionSource,java.util.List,Z,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3,androidx.compose.runtime.Composer,I,I):V
 - *sf:rememberSearchAreaState(org.jetbrains.jewel.ui.component.SearchTextFieldState,androidx.compose.runtime.Composer,I,I):org.jetbrains.jewel.ui.component.SearchAreaState
