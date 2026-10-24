@@ -37,7 +37,7 @@ fn a_missing_host_file_names_the_prepare_commands() {
     assert_eq!(refusal.code, code::NO_HOST);
     assert!(refusal.message.contains("`bt --host studio --prepare`"), "{}", refusal.message);
     assert!(
-        refusal.message.contains("`yonder prepare studio --agent <yonderd>`"),
+        refusal.message.contains("`yonder prepare studio` in a checkout of the monorepo"),
         "{}",
         refusal.message
     );

@@ -24,7 +24,7 @@ use std::path::PathBuf;
 use bt_core::exit;
 use bt_core::lanes::bazel_command;
 use bt_core::runtime::{Platform, Runtime, STOPPED_IDLE, SpawnResult, repo_file};
-use yonder_client::PrepareRequest;
+use yonder_client::{AGENT_BUILD_QUIET, AGENT_TARGET, PrepareRequest};
 use yonder_link::DEFAULT_PORT;
 
 use crate::credentials::{
@@ -91,15 +91,8 @@ impl Report {
     }
 }
 
-/// The Bazel target of the agent, from a community root. An ultimate root names it in the module `@community`.
-const AGENT_TARGET: &str = "//tools/yonder:yonderd";
-
 /// The base name of the agent binary.
 const AGENT_NAME: &str = "yonderd";
-
-/// How long the agent build may write nothing before it is stopped. The runtime bounds a quiet child, not a whole
-/// one; a Bazel build that writes progress goes on.
-const AGENT_BUILD_LIMIT: std::time::Duration = std::time::Duration::from_secs(30 * 60);
 
 /// How much of a failed agent build the report shows.
 const BUILD_TAIL_LINES: usize = 20;
@@ -832,7 +825,9 @@ fn agent_text(agent: &yonder_client::AgentInfo) -> String {
     )
 }
 
-/// Builds `yonderd` with the Bazel launcher of bt, and answers the binary that the build event file names.
+/// Builds `yonderd` with the Bazel launcher of bt, and answers the binary that the build event file names. The target
+/// and the quiet limit are the ones of `yonder prepare`. The build goes through the runtime of bt, so the tests of bt
+/// script it.
 fn build_agent(runtime: &dyn Runtime) -> Result<PathBuf, String> {
     let label = if runtime.exists(&repo_file(runtime, "community/tools/yonder")) {
         format!("@community{AGENT_TARGET}")
@@ -852,13 +847,13 @@ fn build_agent(runtime: &dyn Runtime) -> Result<PathBuf, String> {
     let command = bazel_command(runtime.repo_root(), runtime.platform(), &args);
     let shown = command.iter().map(|part| part.to_string_lossy()).collect::<Vec<_>>().join(" ");
     runtime.write_error(&format!("> {shown}"));
-    let built = runtime.spawn_watched(&command, AGENT_BUILD_LIMIT);
+    let built = runtime.spawn_watched(&command, AGENT_BUILD_QUIET);
     let binary = runtime.read_lines(&events).find_map(|line| built_file(&line, AGENT_NAME));
     let _ = runtime.remove(&events);
     if built.exit_code == STOPPED_IDLE {
         return Err(format!(
             "`{shown}` wrote nothing for {} min and was stopped",
-            AGENT_BUILD_LIMIT.as_secs() / 60
+            AGENT_BUILD_QUIET.as_secs() / 60
         ));
     }
     if built.exit_code != 0 {

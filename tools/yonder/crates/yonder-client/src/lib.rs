@@ -6,10 +6,12 @@
 //! - [`run`]: a run of a command of the committed HEAD on a host, the sync of its base, and the requests of one reply.
 //! - [`phases_line`]: the durations of the steps of a run.
 //! - [`prepare`]: makes a host ready over ssh.
+//! - [`Client::build_agent`]: builds the agent with Bazel in a checkout of the monorepo, for `prepare`.
 //! - [`interrupt`]: Ctrl+C of the person at the terminal.
 //!
 //! Each failure is a [`Refusal`] with a stable code of [`code`], or the code of the agent. `API.md` lists them.
 
+mod agent;
 mod base;
 pub mod config;
 mod fetch;
@@ -27,6 +29,7 @@ mod testkit;
 use std::path::Path;
 use std::time::Duration;
 
+pub use agent::{AGENT_BUILD_QUIET, AGENT_TARGET, agent_label, no_monorepo};
 pub use config::{Config, HostFile};
 pub use host::{AgentInfo, Host};
 pub use phases::{duration_text, phases_line, phases_short};
@@ -97,7 +100,9 @@ pub(crate) fn refused(code: &'static str, message: impl Into<String>) -> Refusal
 
 /// The text that tells how to install the agent and write the host file.
 pub(crate) fn prepare_hint(alias: &str) -> String {
-    format!("`bt --host {alias} --prepare` or `yonder prepare {alias} --agent <yonderd>` installs the agent and writes the host file")
+    format!(
+        "`bt --host {alias} --prepare` or `yonder prepare {alias}` in a checkout of the monorepo installs the agent and writes the host file"
+    )
 }
 
 /// The version of this client, for the hello.

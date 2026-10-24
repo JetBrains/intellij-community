@@ -19,7 +19,7 @@ lists those codes. The client adds these:
 
 | Code | Input |
 |---|---|
-| `usage` | An alias that is not `[0-9A-Za-z._-]+`, or a run without a command. |
+| `usage` | An alias that is not `[0-9A-Za-z._-]+`, a run without a command, or `prepare` without `--agent` outside a checkout of the monorepo. The last message names `--agent`. |
 | `config` | No home directory, an identity that cannot be read or created, or a file that cannot be written. |
 | `no_host` | No host file for the alias. The message names `bt --host <alias> --prepare` and `yonder prepare`. |
 | `bad_host_file` | A host file that is not JSON of the host file shape, or that names another alias. |
@@ -33,7 +33,7 @@ lists those codes. The client adds these:
 | `fetch_failed` | Fetch did not copy every staged file. The run stays on the host for `yonder fetch` and `yonder forget`. |
 | `git_failed` | A local git call failed or ran past its deadline. |
 | `ssh_failed` | An ssh call of `prepare` failed or ran past its deadline of 30 s (120 s for the copy). |
-| `agent_failed` | The agent binary cannot be read, `yonderd setup` failed on the host, or it printed no setup line. |
+| `agent_failed` | The agent binary cannot be read, its Bazel build failed or wrote nothing for 30 min, `cquery` named no `yonderd` file, `yonderd setup` failed on the host, or it printed no setup line. |
 | `interrupted` | Ctrl+C came before the run started, or a second Ctrl+C stopped the follow. |
 
 A fetched path that is absolute, has `..` or `\`, or is not below a `fetch` directory is skipped, and the fetch then
@@ -42,6 +42,14 @@ removes itself on the host (`Forget`) only when the client saw its end and every
 
 A pack goes to a temporary file first, under `git pack-objects --progress` with a quiet limit of 60 s and no limit on
 the whole pack. Each write to the agent then has a deadline of 60 s.
+
+## The agent of `prepare`
+
+`yonder prepare <alias>` without `--agent` builds the agent in the root of the checkout of the working directory. An
+ultimate root, with `community/tools/yonder`, builds `@community//tools/yonder:yonderd`. A community root builds
+`//tools/yonder:yonderd`. The build is `./bazel.cmd build <label>` under a quiet limit of 30 min, as in
+`bt --host --prepare`. Then `./bazel.cmd cquery --output=files <label>` names the binary relative to the execution
+root, and `./bazel.cmd info execution_root` names that root. The monorepo has no `bazel-out` link in the checkout.
 
 ## The order of a run
 

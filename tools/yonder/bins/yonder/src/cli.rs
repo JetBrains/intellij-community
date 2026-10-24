@@ -11,7 +11,7 @@ use clap::error::ErrorKind;
 use clap::{Parser, Subcommand};
 use yonder_client::{
     Call, Client, Config, DEFAULT_PORT, Exit, PrepareRequest, Processes, Refusal, RunInfo, RunRequest, code, holder, interrupt,
-    phases_line, phases_short,
+    no_monorepo, phases_line, phases_short,
 };
 
 /// The holder prefix of a checkout when `--holder` names none.
@@ -87,13 +87,15 @@ enum Command {
         #[arg(long)]
         holder: Option<String>,
     },
-    /// Installs the agent on the host over ssh, adds this client to its allow list, and writes the host file.
+    /// Installs the agent on the host over ssh, adds this client to its allow list, and writes the host file. In a
+    /// checkout of the monorepo, `yonder prepare <alias>` is the whole command: it builds the agent here first.
     Prepare {
         /// The ssh alias of the host.
         alias: String,
-        /// The local `yonderd` binary for the host.
+        /// A local `yonderd` binary for the host (default: the client builds `@community//tools/yonder:yonderd` with
+        /// `./bazel.cmd` in the root of this checkout of the monorepo).
         #[arg(long)]
-        agent: PathBuf,
+        agent: Option<PathBuf>,
         #[arg(long, default_value_t = DEFAULT_PORT)]
         port: u16,
         /// The main repository on the host, for the host file.
@@ -240,6 +242,12 @@ fn execute(
             repo,
             name,
         } => {
+            let agent = if let Some(agent) = agent {
+                agent
+            } else {
+                let root = checkout_root(processes).map_err(|refusal| no_monorepo(&refusal.message))?;
+                client.build_agent(&root)?
+            };
             let name = name.unwrap_or_else(|| format!("yonder on {}", local_name(processes)));
             let prepared = client.prepare(&PrepareRequest {
                 alias: &alias,
