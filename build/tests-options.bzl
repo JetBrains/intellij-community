@@ -13,6 +13,9 @@ JAVA_TEST_FLAGS = [
     "-Didea.reset.classpath.from.manifest=true",
     "-Dintellij.build.use.compiled.classes=false",
     "-Djava.util.zip.use.nio.for.zip.file.access=true",
+    # The locale of the machine must not change a formatted date or number in a test
+    "-Duser.language=en",
+    "-Duser.country=US",
     "-ea",
 ] + select({
     "@platforms//os:windows": ["-XX:+ErrorFileToStderr"],
