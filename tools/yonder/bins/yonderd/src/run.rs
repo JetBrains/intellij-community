@@ -4,7 +4,8 @@
 //! |---|---|
 //! | `spec.json` | the [`RunSpec`]; its time of change is the start of the run |
 //! | `events.log` | one [`Event`] per line, as JSON |
-//! | `exit.json` | the [`ExitRecord`], when the run has ended; its time of change is the end of the run |
+//! | `phases.json` | the steps of the run that have ended so far, each with its duration, as a JSON array of [`Phase`] |
+//! | `exit.json` | the [`ExitRecord`] and all the phases, when the run has ended; its time of change is the end of the run |
 //! | `lock` | the flock of the supervisor, held for its whole life |
 //! | `cancel` | the cancel request of a client, which the supervisor polls |
 //! | `pid` | the pid of the supervisor, as information only |
@@ -23,14 +24,15 @@ use std::sync::Mutex;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use serde::{Deserialize, Serialize};
-use yonder_link::proto::{RunInfo, RunSpec, Stream, is_run_id};
+use yonder_link::proto::{Phase, RunInfo, RunSpec, Stream, is_run_id};
 
-use crate::files::{append_private, open_private, private_dir, try_flock, write_private};
+use crate::files::{append_private, open_private, private_dir, try_flock, try_flock_shared, write_private};
 use crate::refused::{AGENT_ERROR, BAD_RUN_ID, RUN_EXISTS, Refusal, UNKNOWN_RUN, refused};
 
 const SPEC: &str = "spec.json";
 const EVENTS: &str = "events.log";
 const EXIT: &str = "exit.json";
+const PHASES: &str = "phases.json";
 const PID: &str = "pid";
 const LOCK: &str = "lock";
 const CANCEL: &str = "cancel";
@@ -60,6 +62,15 @@ pub(crate) struct Event {
 pub(crate) enum ExitRecord {
     Code { code: i32 },
     Refused { refused: RefusedRecord },
+}
+
+/// The content of `exit.json`: the end of the run and all its phases. A file of an agent before the phases has none.
+#[derive(Debug, Serialize, Deserialize)]
+struct ExitFile {
+    #[serde(flatten)]
+    end: ExitRecord,
+    #[serde(default)]
+    phases: Vec<Phase>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -118,6 +129,15 @@ impl RunDir {
 
     /// The end of the run, or `None` while it goes on.
     pub(crate) fn exit(&self) -> io::Result<Option<ExitRecord>> {
+        Ok(self.exit_file()?.map(|file| file.end))
+    }
+
+    /// The end of the run with all its phases, or `None` while it goes on.
+    pub(crate) fn exit_with_phases(&self) -> io::Result<Option<(ExitRecord, Vec<Phase>)>> {
+        Ok(self.exit_file()?.map(|file| (file.end, file.phases)))
+    }
+
+    fn exit_file(&self) -> io::Result<Option<ExitFile>> {
         let path = self.path.join(EXIT);
         match fs::read(&path) {
             Ok(text) => serde_json::from_slice(&text)
@@ -128,9 +148,28 @@ impl RunDir {
         }
     }
 
+    /// Writes `exit.json` with the phases of `phases.json`.
     pub(crate) fn write_exit(&self, exit: &ExitRecord) -> io::Result<()> {
-        let json = serde_json::to_vec(exit).map_err(io::Error::other)?;
+        let file = ExitFile {
+            end: exit.clone(),
+            phases: self.running_phases(),
+        };
+        let json = serde_json::to_vec(&file).map_err(io::Error::other)?;
         write_private(&self.path.join(EXIT), &json)
+    }
+
+    /// Writes the steps that have ended so far to `phases.json`.
+    pub(crate) fn write_phases(&self, phases: &[Phase]) -> io::Result<()> {
+        let json = serde_json::to_vec(phases).map_err(io::Error::other)?;
+        write_private(&self.path.join(PHASES), &json)
+    }
+
+    /// The steps of `phases.json`. A file that is missing or that the agent cannot read has none.
+    fn running_phases(&self) -> Vec<Phase> {
+        fs::read(self.path.join(PHASES))
+            .ok()
+            .and_then(|text| serde_json::from_slice(&text).ok())
+            .unwrap_or_default()
     }
 
     pub(crate) fn write_pid(&self, pid: u32) -> io::Result<()> {
@@ -141,11 +180,12 @@ impl RunDir {
         self.path.join(LOCK)
     }
 
-    /// Whether a supervisor holds the flock of the run.
+    /// Whether a supervisor holds the flock of the run. The test takes a shared flock, so two requests that test the
+    /// same run at the same time do not see each other as its supervisor.
     pub(crate) fn is_alive(&self) -> bool {
         // A missing lock file is a run without a supervisor. Another error counts as alive, so it ends no run.
         match File::open(self.lock_path()) {
-            Ok(file) => !try_flock(&file).unwrap_or(false),
+            Ok(file) => !try_flock_shared(&file).unwrap_or(false),
             Err(error) => error.kind() != io::ErrorKind::NotFound,
         }
     }
@@ -182,16 +222,20 @@ impl RunDir {
         fs::metadata(self.path.join(EXIT)).and_then(|metadata| metadata.modified()).ok()
     }
 
+    /// The run for [`Reply::Runs`]: the phases of `exit.json` after the end, else of `phases.json`.
+    ///
+    /// [`Reply::Runs`]: yonder_link::proto::Reply::Runs
     pub(crate) fn info(&self) -> io::Result<RunInfo> {
         let spec = self.spec()?;
+        let ended = self.exit_with_phases()?;
         Ok(RunInfo {
             run: spec.run,
             holder: spec.holder,
             commit: spec.commit,
             command: spec.command,
             started_ms: self.started_ms(),
-            exit: self.exit()?.as_ref().map(ExitRecord::code),
-            phases: Vec::new(),
+            exit: ended.as_ref().map(|(end, _)| end.code()),
+            phases: ended.map_or_else(|| self.running_phases(), |(_, phases)| phases),
         })
     }
 }

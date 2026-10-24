@@ -18,13 +18,16 @@ use std::thread;
 use std::time::{Duration, Instant, SystemTime};
 
 use pretty_assertions::assert_eq;
-use yonder_link::proto::{Reply, Request, RunSpec, SCHEMA_VERSION, Stream};
+use yonder_link::proto::{Phase, Reply, Request, RunSpec, SCHEMA_VERSION, Stream};
 use yonder_link::{AllowList, Channel, Fingerprint, Identity, LinkError};
 
 /// The deadline of each connect and read of the test client.
 const DEADLINE: Duration = Duration::from_secs(30);
 
 const HOLDER: &str = "yonder-0123456789ab";
+
+/// The phases of a run that ran its command, in their order.
+const ALL_PHASES: [&str; 7] = ["lock", "sweep", "lease", "pack_wait", "checkout", "command", "stage"];
 
 fn agent_binary() -> PathBuf {
     let path = std::env::var_os("CARGO_BIN_EXE_yonderd")
@@ -79,12 +82,14 @@ exit 2
 "#;
 
 /// A git in front of the real one, `$REAL_GIT`. With `$FAKE_BD_DIR/slow-checkout`, a checkout writes
-/// `checkout-started` and waits up to 60 s before it goes on, so a test can cancel a run during its checkout.
+/// `checkout-started` and waits up to 60 s before it goes on, so a test can cancel a run during its checkout. With
+/// `$FAKE_BD_DIR/slow-cat-file`, a `cat-file` takes a second.
 const SLOW_GIT: &str = r#"#!/bin/sh
 if [ "$3" = checkout ] && [ -e "$FAKE_BD_DIR/slow-checkout" ]; then
   : >"$FAKE_BD_DIR/checkout-started"
   i=0; while [ $i -lt 600 ]; do sleep 0.1; i=$((i + 1)); done
 fi
+if [ "$3" = cat-file ] && [ -e "$FAKE_BD_DIR/slow-cat-file" ]; then sleep 1; fi
 exec "$REAL_GIT" "$@"
 "#;
 
@@ -269,10 +274,25 @@ impl Drop for Agent {
 #[derive(Debug)]
 struct Followed {
     lines: Vec<(Stream, String, u64)>,
+    /// The phases of `Reply::Phases`, which comes right before the end of a run.
+    phases: Option<Vec<Phase>>,
     end: Reply,
 }
 
 impl Followed {
+    fn phase_names(&self) -> Vec<&str> {
+        self.phases.iter().flatten().map(|phase| phase.name.as_str()).collect()
+    }
+
+    fn phase_ms(&self, name: &str) -> u64 {
+        self.phases
+            .iter()
+            .flatten()
+            .find(|phase| phase.name == name)
+            .unwrap_or_else(|| panic!("no phase {name}: {self:?}"))
+            .ms
+    }
+
     fn texts(&self) -> Vec<&str> {
         self.lines.iter().map(|(_, text, _)| text.as_str()).collect()
     }
@@ -310,21 +330,27 @@ impl Agent {
         assert_eq!(self.reply(&Request::Start(spec)), Reply::Started { run });
     }
 
-    /// Follows a run from `offset` to its end.
+    /// Follows a run from `offset` to its end. The phases come right before the end, with no reply between them.
     fn follow(&self, run: &str, offset: u64) -> Followed {
         let mut channel = self.ask(&Request::Follow {
             run: run.to_owned(),
             offset,
         });
         let mut lines = Vec::new();
+        let mut phases = None;
         loop {
-            match channel
+            let reply = channel
                 .recv::<Reply>()
-                .unwrap_or_else(|error| panic!("{error}; {}", self.dump(run)))
-            {
+                .unwrap_or_else(|error| panic!("{error}; {}", self.dump(run)));
+            assert!(
+                phases.is_none() || !matches!(reply, Reply::Output { .. } | Reply::Heartbeat { .. } | Reply::Phases { .. }),
+                "{reply:?} came after the phases {phases:?}"
+            );
+            match reply {
                 Reply::Output { stream, text, end } => lines.push((stream, text, end)),
                 Reply::Heartbeat { .. } => {}
-                end => return Followed { lines, end },
+                Reply::Phases { phases: got } => phases = Some(got),
+                end => return Followed { lines, phases, end },
             }
         }
     }
@@ -465,10 +491,9 @@ fn have_answers_the_commits_that_the_repository_has() {
     );
 }
 
-#[test]
-fn a_thin_pack_lands_and_its_ref_points_at_the_commit() {
-    let agent = World::new().serve();
-    let world = &agent.world;
+/// A commit that adds `b.txt` in a clone of the main repository, which the main repository does not have. Answers the
+/// commit and its thin pack against the commit of the world.
+fn local_commit(world: &World) -> (String, Vec<u8>) {
     let local = world.dir.path().join("local");
     git(
         world.dir.path(),
@@ -486,7 +511,6 @@ fn a_thin_pack_lands_and_its_ref_points_at_the_commit() {
         .stdout(Stdio::piped())
         .spawn()
         .and_then(|mut child| {
-            use std::io::Write as _;
             child
                 .stdin
                 .take()
@@ -496,16 +520,28 @@ fn a_thin_pack_lands_and_its_ref_points_at_the_commit() {
         })
         .expect("a pack");
     assert!(pack.status.success());
+    (head, pack.stdout)
+}
 
-    let mut channel = agent.ask(&Request::Pack {
-        repo: "~/repo".to_owned(),
-        commit: head.clone(),
-        reference: "refs/yonder/1-1".to_owned(),
-    });
-    channel
-        .send_stream(&mut pack.stdout.as_slice(), &mut |_| {})
-        .expect("the pack sent");
-    assert_eq!(channel.recv::<Reply>().expect("the reply"), Reply::Packed);
+impl Agent {
+    /// Sends `pack` to `reference` and answers the reply.
+    fn pack(&self, commit: &str, reference: &str, pack: &[u8]) -> Reply {
+        let mut channel = self.ask(&Request::Pack {
+            repo: "~/repo".to_owned(),
+            commit: commit.to_owned(),
+            reference: reference.to_owned(),
+        });
+        channel.send_stream(&mut &pack[..], &mut |_| {}).expect("the pack sent");
+        channel.recv::<Reply>().expect("the reply")
+    }
+}
+
+#[test]
+fn a_thin_pack_lands_and_its_ref_points_at_the_commit() {
+    let agent = World::new().serve();
+    let world = &agent.world;
+    let (head, pack) = local_commit(world);
+    assert_eq!(agent.pack(&head, "refs/yonder/1-1", &pack), Reply::Packed);
     assert_eq!(git(&world.repo(), &["rev-parse", "refs/yonder/1-1"]), head);
     assert_eq!(git(&world.repo(), &["cat-file", "-p", &format!("{head}:b.txt")]), "b");
     // The cleanup of `serve` finds the refs of the packs through the repository list.
@@ -515,30 +551,14 @@ fn a_thin_pack_lands_and_its_ref_points_at_the_commit() {
     );
 
     // A refused pack is read to its end, and the refusal arrives.
-    let mut channel = agent.ask(&Request::Pack {
-        repo: "~/repo".to_owned(),
-        commit: head,
-        reference: "refs/heads/master".to_owned(),
-    });
-    channel
-        .send_stream(&mut pack.stdout.as_slice(), &mut |_| {})
-        .expect("the pack sent");
-    let refused = channel.recv::<Reply>().expect("the reply");
+    let refused = agent.pack(&head, "refs/heads/master", &pack);
     assert!(
         matches!(&refused, Reply::Refused { code, .. } if code == "bad_request"),
         "{refused:?}"
     );
 
     // A stream that is not a pack fails in index-pack.
-    let mut channel = agent.ask(&Request::Pack {
-        repo: "~/repo".to_owned(),
-        commit: "2".repeat(40),
-        reference: "refs/yonder/1-2".to_owned(),
-    });
-    channel
-        .send_stream(&mut b"not a pack".as_slice(), &mut |_| {})
-        .expect("the bytes sent");
-    let refused = channel.recv::<Reply>().expect("the reply");
+    let refused = agent.pack(&"2".repeat(40), "refs/yonder/1-2", b"not a pack");
     assert!(
         matches!(&refused, Reply::Refused { code, .. } if code == "pack_failed"),
         "{refused:?}"
@@ -555,6 +575,7 @@ fn a_run_streams_its_output_to_the_exit_code_stages_its_files_and_is_forgotten()
     agent.start(world.spec("1-1", HOLDER, script));
     let followed = agent.follow("1-1", 0);
     assert_eq!(followed.end, Reply::Exit { code: 3 }, "{}", agent.dump("1-1"));
+    assert_eq!(followed.phase_names(), ALL_PHASES);
     let slot = world.slot(HOLDER);
     // The two pipes of the command have no order between them, so each stream is checked by itself.
     assert_eq!(followed.of(Stream::Stdout), vec!["out-1", "a"], "{}", agent.dump("1-1"));
@@ -622,6 +643,7 @@ fn a_run_streams_its_output_to_the_exit_code_stages_its_files_and_is_forgotten()
     assert_eq!(listed, vec![("1-1", Some(3)), ("1-2", Some(0))]);
     assert_eq!(runs[0].holder, HOLDER);
     assert_eq!(runs[0].commit, world.commit);
+    assert_eq!(Some(&runs[0].phases), followed.phases.as_ref());
 
     let done = agent.reply(&Request::Forget { run: "1-1".to_owned() });
     assert!(matches!(done, Reply::Done { .. }), "{done:?}");
@@ -664,6 +686,14 @@ fn a_start_refuses_a_bad_spec() {
         }),
         "bad_request"
     );
+    // A base ref outlives each run, so no run takes one.
+    assert_eq!(
+        refused(RunSpec {
+            reference: "refs/yonder/base/master".to_owned(),
+            ..world.spec("2-1", HOLDER, "true")
+        }),
+        "bad_request"
+    );
     assert_eq!(
         refused(RunSpec {
             repo: "~/missing".to_owned(),
@@ -685,11 +715,24 @@ fn a_follow_from_an_offset_in_the_middle_of_a_run_goes_on_from_there() {
     agent.start(world.spec("3-1", HOLDER, &script));
     let seen = agent.follow_until("3-1", 0, "second");
     let after_first = seen.iter().find(|(_, text, _)| text == "first").expect("the first line").2;
+    // The command goes on, so the steps before it have ended.
+    let Reply::Runs { runs } = agent.reply(&Request::Runs) else {
+        panic!("not runs");
+    };
+    let names: Vec<&str> = runs[0].phases.iter().map(|phase| phase.name.as_str()).collect();
+    assert_eq!(names, ALL_PHASES[..5]);
+    assert_eq!(runs[0].exit, None);
 
     fs::write(&gate, "").expect("the gate");
     let followed = agent.follow("3-1", after_first);
     assert_eq!(followed.texts(), vec!["second", "third"]);
     assert_eq!(followed.end, Reply::Exit { code: 0 });
+    assert_eq!(followed.phase_names(), ALL_PHASES);
+
+    // A follow that comes after the end gets the phases too.
+    let again = agent.follow("3-1", 0);
+    assert_eq!(again.of(Stream::Stdout), vec!["first", "second", "third"]);
+    assert_eq!((again.phases, again.end), (followed.phases, Reply::Exit { code: 0 }));
 
     let refused = agent.reply(&Request::Follow {
         run: "3-1".to_owned(),
@@ -821,6 +864,7 @@ fn a_failed_lease_ends_the_run_with_a_refusal_and_deletes_the_ref() {
         matches!(&followed.end, Reply::Refused { code, message } if code == "lease_failed" && message.contains("no pool")),
         "{followed:?}"
     );
+    assert_eq!(followed.phase_names(), ["lock", "sweep", "lease"]);
     assert_eq!(git(&world.repo(), &["for-each-ref", "refs/yonder/"]), "");
     assert!(!world.lease_file(HOLDER).exists());
     let Reply::Runs { runs } = agent.reply(&Request::Runs) else {
@@ -1011,6 +1055,11 @@ fn a_killed_supervisor_ends_the_run_for_cancel_and_follow() {
     let killed = Command::new("kill").args(["-9", pid.trim()]).status().expect("kill");
     assert!(killed.success());
     eventually("the end of the supervisor", || !process_alive(pid.trim()));
+    // On a loaded host the flock of a killed process can stay a moment after its pid has gone.
+    let lock = world.run_dir("10-1").join("lock");
+    eventually("the release of the run lock", || {
+        fs::File::open(&lock).is_ok_and(|file| file.try_lock_shared().is_ok())
+    });
     // The follow of `follow_until` can see the lost run first, while its connection ends.
     let done = agent.reply(&Request::Cancel { run: "10-1".to_owned() });
     assert!(
@@ -1041,7 +1090,9 @@ fn a_cancel_during_the_lock_wait_ends_the_run_before_its_command() {
     });
     let done = agent.reply(&Request::Cancel { run: "11-2".to_owned() });
     assert!(matches!(done, Reply::Done { .. }), "{done:?}");
-    assert_eq!(agent.follow("11-2", 0).end, Reply::Exit { code: 130 }, "{}", agent.dump("11-2"));
+    let cancelled = agent.follow("11-2", 0);
+    assert_eq!(cancelled.end, Reply::Exit { code: 130 }, "{}", agent.dump("11-2"));
+    assert_eq!(cancelled.phase_names(), ["lock"]);
     assert!(!marker.exists(), "the command ran");
     fs::write(&gate, "").expect("the gate");
     assert_eq!(agent.follow("11-1", 0).end, Reply::Exit { code: 0 });
@@ -1061,7 +1112,9 @@ fn a_cancel_during_the_checkout_kills_git_and_ends_the_run_before_its_command() 
     eventually("the start of the checkout", || world.bd_dir().join("checkout-started").exists());
     let started = Instant::now();
     agent.reply(&Request::Cancel { run: "12-1".to_owned() });
-    assert_eq!(agent.follow("12-1", 0).end, Reply::Exit { code: 130 }, "{}", agent.dump("12-1"));
+    let cancelled = agent.follow("12-1", 0);
+    assert_eq!(cancelled.end, Reply::Exit { code: 130 }, "{}", agent.dump("12-1"));
+    assert_eq!(cancelled.phase_names(), ALL_PHASES[..5]);
     assert!(
         started.elapsed() < Duration::from_secs(20),
         "the checkout was not killed: {:?}",
@@ -1234,6 +1287,7 @@ fn the_files_of_the_agent_are_private() {
         ".cache/yonderd/runs/16-1/spec.json",
         ".cache/yonderd/runs/16-1/events.log",
         ".cache/yonderd/runs/16-1/exit.json",
+        ".cache/yonderd/runs/16-1/phases.json",
         ".cache/yonderd/runs/16-1/pid",
         ".cache/yonderd/runs/16-1/lock",
         ".cache/yonderd/runs/16-1/supervisor.log",
@@ -1242,4 +1296,225 @@ fn the_files_of_the_agent_are_private() {
         assert_eq!(mode(&home.join(file)), 0o600, "{file}");
     }
     assert_eq!(mode(&home.join(".cache/yonderd/runs/16-1/stage")), 0o700);
+}
+
+/// The text of `events.log` of a run, or nothing.
+fn events(world: &World, run: &str) -> String {
+    fs::read_to_string(world.run_dir(run).join("events.log")).unwrap_or_default()
+}
+
+#[test]
+fn a_start_before_its_pack_takes_the_lease_waits_and_goes_on_when_the_pack_comes() {
+    let agent = World::new().serve();
+    let world = &agent.world;
+    let (head, pack) = local_commit(world);
+    agent.start(RunSpec {
+        commit: head.clone(),
+        ..world.spec("20-1", HOLDER, "cat b.txt; echo")
+    });
+    let waiting = format!("yonder: waiting for the pack of {head}");
+    eventually("the wait for the pack", || events(world, "20-1").contains(&waiting));
+    assert!(world.slot(HOLDER).is_dir(), "the lease comes before the pack");
+    let Reply::Runs { runs } = agent.reply(&Request::Runs) else {
+        panic!("not runs");
+    };
+    let names: Vec<&str> = runs[0].phases.iter().map(|phase| phase.name.as_str()).collect();
+    assert_eq!(names, ["lock", "sweep", "lease"]);
+
+    assert_eq!(agent.pack(&head, "refs/yonder/20-1", &pack), Reply::Packed);
+    let followed = agent.follow("20-1", 0);
+    assert_eq!(followed.end, Reply::Exit { code: 0 }, "{}", agent.dump("20-1"));
+    assert_eq!(followed.of(Stream::Stdout), vec!["b"]);
+    assert!(followed.of(Stream::Stderr).contains(&waiting.as_str()), "{followed:?}");
+    assert_eq!(followed.phase_names(), ALL_PHASES);
+    assert!(followed.phase_ms("pack_wait") >= 1000, "{followed:?}");
+    assert_eq!(git(&world.repo(), &["for-each-ref", "refs/yonder/"]), "", "the run deletes its ref");
+}
+
+#[test]
+fn a_start_whose_pack_never_comes_ends_with_pack_missing() {
+    let agent = World::new().serve_with(&[("YONDERD_TEST_PACK_WAIT_MS", "300")]);
+    let world = &agent.world;
+    let marker = world.dir.path().join("ran");
+    agent.start(RunSpec {
+        commit: "1".repeat(40),
+        ..world.spec("21-1", HOLDER, &format!("touch '{}'", marker.display()))
+    });
+    let followed = agent.follow("21-1", 0);
+    assert!(
+        matches!(&followed.end, Reply::Refused { code, message } if code == "pack_missing" && message.contains("refs/yonder/21-1")),
+        "{followed:?}"
+    );
+    assert_eq!(followed.phase_names(), ["lock", "sweep", "lease", "pack_wait"]);
+    assert!(
+        !followed.texts().iter().any(|line| line.contains("waiting for the pack")),
+        "a wait under a second says nothing: {followed:?}"
+    );
+    assert!(!marker.exists(), "the command ran");
+    let Reply::Runs { runs } = agent.reply(&Request::Runs) else {
+        panic!("not runs");
+    };
+    assert_eq!(runs[0].exit, Some(255));
+    assert_eq!(runs[0].phases, followed.phases.expect("the phases"));
+}
+
+#[test]
+fn a_cancel_during_the_pack_wait_ends_the_run_before_its_command() {
+    let agent = World::new().serve();
+    let world = &agent.world;
+    let marker = world.dir.path().join("ran");
+    agent.start(RunSpec {
+        commit: "1".repeat(40),
+        ..world.spec("22-1", HOLDER, &format!("touch '{}'", marker.display()))
+    });
+    eventually("the wait for the pack", || events(world, "22-1").contains("waiting for the pack"));
+    let started = Instant::now();
+    let done = agent.reply(&Request::Cancel { run: "22-1".to_owned() });
+    assert!(matches!(done, Reply::Done { .. }), "{done:?}");
+    let followed = agent.follow("22-1", 0);
+    assert_eq!(followed.end, Reply::Exit { code: 130 }, "{}", agent.dump("22-1"));
+    assert!(started.elapsed() < Duration::from_secs(10), "{:?}", started.elapsed());
+    assert_eq!(followed.phase_names(), ["lock", "sweep", "lease", "pack_wait"]);
+    assert!(!marker.exists(), "the command ran");
+}
+
+#[test]
+fn a_pack_to_a_base_ref_lands_and_the_cleanup_keeps_the_base_refs() {
+    let world = World::new();
+    git(&world.repo(), &["update-ref", "refs/yonder/base/master", &world.commit]);
+    // A stale run ref that sorts after the base ref: once it is gone, the cleanup has passed the base ref.
+    git(&world.repo(), &["update-ref", "refs/yonder/zz-stale", &world.commit]);
+    fs::create_dir_all(world.home().join(".cache/yonderd")).expect("the cache directory");
+    fs::write(world.home().join(".cache/yonderd/repos"), format!("{}\n", world.repo().display())).expect("the repository list");
+    let agent = world.serve();
+    let world = &agent.world;
+    eventually("the removal of the stale ref", || {
+        git(&world.repo(), &["for-each-ref", "--format=%(refname)", "refs/yonder/"]) == "refs/yonder/base/master"
+    });
+
+    let (head, pack) = local_commit(world);
+    assert_eq!(agent.pack(&head, "refs/yonder/base/master", &pack), Reply::Packed);
+    assert_eq!(git(&world.repo(), &["rev-parse", "refs/yonder/base/master"]), head);
+    for bad in ["refs/yonder/base/a/b", "refs/yonder/base/.x", "refs/yonder/base/"] {
+        let refused = agent.pack(&head, bad, &pack);
+        assert!(
+            matches!(&refused, Reply::Refused { code, .. } if code == "bad_request"),
+            "{bad}: {refused:?}"
+        );
+    }
+}
+
+#[test]
+fn heartbeats_go_on_while_the_follow_thread_is_held_in_a_file_read() {
+    let world = World::new();
+    let hold = world.dir.path().join("hold");
+    fs::write(&hold, "").expect("the hold");
+    let agent = world.serve_with(&[
+        ("YONDERD_TEST_HEARTBEAT_MS", "100"),
+        ("YONDERD_TEST_FOLLOW_HOLD", hold.to_str().expect("a text path")),
+    ]);
+    let world = &agent.world;
+    let gate = world.dir.path().join("gate");
+    agent.start(world.spec("23-1", HOLDER, &format!("echo ready; {}", wait_for(&gate))));
+    eventually("the first line", || events(world, "23-1").contains("ready"));
+
+    let mut channel = agent.ask(&Request::Follow {
+        run: "23-1".to_owned(),
+        offset: 0,
+    });
+    channel.set_read_deadline(Duration::from_secs(2)).expect("a deadline");
+    let held = Instant::now();
+    let mut heartbeats = 0;
+    while held.elapsed() < Duration::from_secs(1) {
+        match channel.recv::<Reply>() {
+            Ok(Reply::Heartbeat { .. }) => heartbeats += 1,
+            other => panic!("only heartbeats come while the follow is held: {other:?}"),
+        }
+    }
+    assert!(heartbeats >= 5, "{heartbeats} heartbeats in a second");
+
+    fs::remove_file(&hold).expect("the hold released");
+    let first = loop {
+        match channel.recv::<Reply>().expect("a reply") {
+            Reply::Heartbeat { .. } => {}
+            other => break other,
+        }
+    };
+    assert!(matches!(&first, Reply::Output { .. }), "{first:?}");
+    fs::write(&gate, "").expect("the gate");
+    drop(channel);
+    assert_eq!(agent.follow("23-1", 0).end, Reply::Exit { code: 0 });
+}
+
+#[test]
+#[cfg_attr(not(target_os = "macos"), ignore = "only macOS pushes the changes of the run files; Linux polls")]
+fn a_new_event_reaches_the_follow_in_less_than_50_ms() {
+    let agent = World::new().serve();
+    let world = &agent.world;
+    let gate = world.dir.path().join("gate");
+    agent.start(world.spec("24-1", HOLDER, &format!("echo ready; {}", wait_for(&gate))));
+    agent.follow_until("24-1", 0, "ready");
+
+    let mut channel = agent.ask(&Request::Follow {
+        run: "24-1".to_owned(),
+        offset: fs::metadata(world.run_dir("24-1").join("events.log")).expect("the log").len(),
+    });
+    // The command waits for its gate, so the log is quiet. The test appends an event as the supervisor would.
+    let mut log = fs::OpenOptions::new()
+        .append(true)
+        .open(world.run_dir("24-1").join("events.log"))
+        .expect("the log");
+    let mut latencies = Vec::new();
+    for index in 0..7 {
+        thread::sleep(Duration::from_millis(300));
+        let text = format!("event-{index}");
+        let line = format!("{}\n", serde_json::json!({"stream": "stdout", "text": text}));
+        let written = Instant::now();
+        log.write_all(line.as_bytes()).expect("appended");
+        loop {
+            match channel.recv::<Reply>().expect("a reply") {
+                Reply::Output { text: got, .. } if got == text => break,
+                Reply::Heartbeat { .. } => {}
+                other => panic!("{other:?}"),
+            }
+        }
+        latencies.push(written.elapsed());
+    }
+    // The median: one event on a loaded host can wait for the scheduler, while a poll of 200 ms delays each event.
+    latencies.sort();
+    assert!(latencies[3] < Duration::from_millis(50), "the median is over 50 ms: {latencies:?}");
+    fs::write(&gate, "").expect("the gate");
+    drop(channel);
+    assert_eq!(agent.follow("24-1", 0).end, Reply::Exit { code: 0 });
+}
+
+#[test]
+fn a_have_sends_heartbeats_while_git_works() {
+    let world = World::new();
+    write_script(&world.bin().join("git"), SLOW_GIT);
+    let real = real_git();
+    let agent = world.serve_with(&[
+        ("REAL_GIT", real.to_str().expect("a text path")),
+        ("YONDERD_TEST_HEARTBEAT_MS", "100"),
+    ]);
+    let world = &agent.world;
+    fs::write(world.bd_dir().join("slow-cat-file"), "").expect("the flag");
+    let mut channel = agent.ask(&Request::Have {
+        repo: "~/repo".to_owned(),
+        commits: vec![world.commit.clone()],
+    });
+    let mut heartbeats = 0;
+    let last = loop {
+        match channel.recv::<Reply>().expect("a reply") {
+            Reply::Heartbeat { .. } => heartbeats += 1,
+            other => break other,
+        }
+    };
+    assert_eq!(
+        last,
+        Reply::Have {
+            commits: vec![world.commit.clone()]
+        }
+    );
+    assert!(heartbeats >= 3, "{heartbeats} heartbeats");
 }

@@ -1,5 +1,9 @@
 //! The requests of a run: Start, Follow, Cancel, Fetch, Forget and Runs. The run itself belongs to its supervisor;
 //! these requests only start it, write its cancel request and read its directory. No request signals a pid.
+//!
+//! A follow reads the run files on its own thread, and a second thread sends its heartbeats. The two share the channel
+//! through a mutex, so a slow read of the disk holds no heartbeat back, and a heartbeat never comes between the frames
+//! of one reply. Between two reads the follow waits for a change of the run files through [`Watch`].
 
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, Read};
@@ -8,6 +12,7 @@ use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
+use std::sync::{Condvar, Mutex, MutexGuard, PoisonError};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime};
 
@@ -18,10 +23,15 @@ use crate::files::append_private;
 use crate::refused::{AGENT_ERROR, BAD_REQUEST, BAD_RUN_ID, RUN_EXISTS, Refusal, SPAWN_FAILED, refused, reply};
 use crate::run::{ExitRecord, RunDir, SUPERVISOR_LOG, epoch_ms, is_line_start, read_events};
 use crate::serve::{Agent, check_holder, is_inner_path, log};
+use crate::watch::Watch;
 use crate::{git, tuning};
 
-/// How often a follow reads the log.
-const FOLLOW_POLL: Duration = Duration::from_millis(200);
+/// The longest wait of a follow for a change of the run files. A run that lost its supervisor changes no file, so this
+/// bounds the time until the follow ends it.
+const FOLLOW_RECHECK: Duration = Duration::from_secs(1);
+
+/// How often a held follow looks at its hold file, see [`tuning::follow_hold`].
+const HOLD_POLL: Duration = Duration::from_millis(10);
 
 /// The most bytes of the log that one read of a follow takes.
 const FOLLOW_READ: usize = 1024 * 1024;
@@ -36,7 +46,7 @@ impl Agent {
         let started = self.start_checked(spec);
         if let Err(refusal) = &started
             && refusal.code != RUN_EXISTS
-            && git::is_pack_ref(&spec.reference)
+            && git::is_run_ref(&spec.reference)
         {
             let repo = self.home.expand(&spec.repo);
             if git::is_repo(&repo)
@@ -59,10 +69,10 @@ impl Agent {
         if !git::is_commit_id(&spec.commit) {
             return Err(refused(BAD_REQUEST, format!("{:?} is not a full commit id", spec.commit)));
         }
-        if !git::is_pack_ref(&spec.reference) {
+        if !git::is_run_ref(&spec.reference) {
             return Err(refused(
                 BAD_REQUEST,
-                format!("{:?} is not a ref under {}<run id>", spec.reference, git::REF_PREFIX),
+                format!("{:?} is not a ref {}<run id>", spec.reference, git::REF_PREFIX),
             ));
         }
         if let Some(bad) = spec.fetch.iter().find(|dir| !is_inner_path(dir)) {
@@ -124,7 +134,8 @@ impl Agent {
         Ok(())
     }
 
-    /// Sends the events of the run from `offset`, a heartbeat while the run is quiet, and its end.
+    /// Sends the events of the run from `offset`, a heartbeat while the run is quiet, and its end: the phases, then the
+    /// exit code or the refusal.
     pub(crate) fn follow(&self, channel: &mut Channel, run: &str, offset: u64) -> Result<(), LinkError> {
         let run = match self.runs().get(run) {
             Ok(run) => run,
@@ -141,49 +152,17 @@ impl Agent {
             Err(error) => return channel.send(&Reply::refused(AGENT_ERROR, format!("cannot read the log: {error}"))),
         }
         channel.set_write_deadline(WRITE_DEADLINE)?;
+        // The watch comes before the first read, so no change between a read and a wait is lost.
+        let events_path = run.events_path();
+        let mut watch = Watch::new(&[&events_path, run.path()]);
         let started_ms = run.started_ms();
-        let heartbeat = tuning::heartbeat();
-        let mut offset = offset;
-        let mut quiet = Instant::now();
-        loop {
-            // The end is read before the log: the supervisor writes the last event before `exit.json`.
-            let ended = match run.exit() {
-                Ok(ended) => ended,
-                Err(error) => return channel.send(&Reply::refused(AGENT_ERROR, format!("cannot read the end of the run: {error}"))),
-            };
-            let events = match read_events(&run.events_path(), offset, FOLLOW_READ) {
-                Ok(events) => events,
-                Err(error) => return channel.send(&Reply::refused(AGENT_ERROR, format!("cannot read the log: {error}"))),
-            };
-            if !events.is_empty() {
-                for (event, end) in events {
-                    channel.send(&Reply::Output {
-                        stream: event.stream,
-                        text: event.text,
-                        end,
-                    })?;
-                    offset = end;
-                }
-                quiet = Instant::now();
-                continue;
-            }
-            if let Some(ended) = ended {
-                return channel.send(&match ended {
-                    ExitRecord::Code { code } => Reply::Exit { code },
-                    ExitRecord::Refused { refused } => Reply::refused(&refused.code, refused.message),
-                });
-            }
-            if run.end_if_lost() {
-                continue;
-            }
-            if quiet.elapsed() >= heartbeat {
-                channel.send(&Reply::Heartbeat {
-                    elapsed_ms: epoch_ms(SystemTime::now()).saturating_sub(started_ms),
-                })?;
-                quiet = Instant::now();
-            }
-            thread::sleep(FOLLOW_POLL);
-        }
+        let shared = FollowChannel::new(channel);
+        thread::scope(|scope| {
+            scope.spawn(|| shared.beat(tuning::heartbeat(), started_ms));
+            let followed = follow_to_end(&run, offset, &shared, &mut watch);
+            shared.finish();
+            followed
+        })
     }
 
     /// Writes the cancel request of the run, which its supervisor polls, and answers at once. A run without a
@@ -281,6 +260,132 @@ impl Agent {
     pub(crate) fn list_runs(&self) -> Reply {
         Reply::Runs {
             runs: self.runs().list().iter().filter_map(|run| run.info().ok()).collect(),
+        }
+    }
+}
+
+/// The loop of a follow: it reads the run files and sends what is new, until the end of the run.
+fn follow_to_end(run: &RunDir, offset: u64, channel: &FollowChannel<'_>, watch: &mut Watch) -> Result<(), LinkError> {
+    let hold = tuning::follow_hold();
+    let mut offset = offset;
+    loop {
+        if let Some(hold) = &hold {
+            while hold.exists() {
+                thread::sleep(HOLD_POLL);
+            }
+        }
+        channel.check()?;
+        // The end is read before the log: the supervisor writes the last event before `exit.json`.
+        let ended = match run.exit_with_phases() {
+            Ok(ended) => ended,
+            Err(error) => return channel.send(&[Reply::refused(AGENT_ERROR, format!("cannot read the end of the run: {error}"))]),
+        };
+        let events = match read_events(&run.events_path(), offset, FOLLOW_READ) {
+            Ok(events) => events,
+            Err(error) => return channel.send(&[Reply::refused(AGENT_ERROR, format!("cannot read the log: {error}"))]),
+        };
+        if let Some((_, end)) = events.last() {
+            offset = *end;
+            let replies: Vec<Reply> = events
+                .into_iter()
+                .map(|(event, end)| Reply::Output {
+                    stream: event.stream,
+                    text: event.text,
+                    end,
+                })
+                .collect();
+            channel.send(&replies)?;
+            continue;
+        }
+        if let Some((ended, phases)) = ended {
+            let last = match ended {
+                ExitRecord::Code { code } => Reply::Exit { code },
+                ExitRecord::Refused { refused } => Reply::refused(&refused.code, refused.message),
+            };
+            return channel.send(&[Reply::Phases { phases }, last]);
+        }
+        if run.end_if_lost() {
+            continue;
+        }
+        watch.wait(FOLLOW_RECHECK);
+    }
+}
+
+/// The channel of a follow, which its follow thread and its heartbeat thread share.
+struct FollowChannel<'c> {
+    state: Mutex<FollowState<'c>>,
+    /// Wakes the heartbeat thread at the end of the follow.
+    wake: Condvar,
+}
+
+struct FollowState<'c> {
+    channel: &'c mut Channel,
+    /// When the last reply went out.
+    sent: Instant,
+    /// Set at the end of the follow, which ends the heartbeat thread.
+    finished: bool,
+    /// Why a heartbeat failed. The follow thread ends with it.
+    failed: Option<LinkError>,
+}
+
+impl<'c> FollowChannel<'c> {
+    fn new(channel: &'c mut Channel) -> Self {
+        Self {
+            state: Mutex::new(FollowState {
+                channel,
+                sent: Instant::now(),
+                finished: false,
+                failed: None,
+            }),
+            wake: Condvar::new(),
+        }
+    }
+
+    fn lock(&self) -> MutexGuard<'_, FollowState<'c>> {
+        self.state.lock().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// Sends `replies` one after the other, with no heartbeat between them.
+    fn send(&self, replies: &[Reply]) -> Result<(), LinkError> {
+        let mut state = self.lock();
+        if let Some(error) = state.failed.take() {
+            return Err(error);
+        }
+        for reply in replies {
+            state.channel.send(reply)?;
+        }
+        state.sent = Instant::now();
+        Ok(())
+    }
+
+    /// The failure of a heartbeat, if one failed.
+    fn check(&self) -> Result<(), LinkError> {
+        self.lock().failed.take().map_or(Ok(()), Err)
+    }
+
+    fn finish(&self) {
+        self.lock().finished = true;
+        self.wake.notify_all();
+    }
+
+    /// Sends a heartbeat each time no reply went out for `every`, until [`FollowChannel::finish`] or a failed send.
+    fn beat(&self, every: Duration, started_ms: u64) {
+        let mut state = self.lock();
+        while !state.finished {
+            let due = state.sent + every;
+            let now = Instant::now();
+            if now < due {
+                state = self.wake.wait_timeout(state, due - now).unwrap_or_else(PoisonError::into_inner).0;
+                continue;
+            }
+            let heartbeat = Reply::Heartbeat {
+                elapsed_ms: epoch_ms(SystemTime::now()).saturating_sub(started_ms),
+            };
+            if let Err(error) = state.channel.send(&heartbeat) {
+                state.failed = Some(error);
+                return;
+            }
+            state.sent = Instant::now();
         }
     }
 }

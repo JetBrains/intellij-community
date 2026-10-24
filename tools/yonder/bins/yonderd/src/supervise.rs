@@ -8,11 +8,17 @@
 //! 1. Take the flock of the holder. A second run of the same holder waits for it, up to an hour.
 //! 2. Return the leases of the other holders that no run used for the idle hours.
 //! 3. Take the warm lease of the holder, or a new one from `bd lease get`.
-//! 4. Check out the commit in the slot. The slot belongs to the holder, so a file that the last run left changed is
+//! 4. Wait for the pack, up to `PACK_WAIT_SECONDS` of the protocol. A start can come before the pack of its reference,
+//!    so the lock and the lease go on while the pack travels. A commit that the main repository has already needs no
+//!    pack. Else the run waits for its reference, which the pack makes after its objects.
+//! 5. Check out the commit in the slot. The slot belongs to the holder, so a file that the last run left changed is
 //!    discarded.
-//! 5. Run the command in the slot root, in its own process group, with stdin `/dev/null`. Its lines go to `events.log`.
+//! 6. Run the command in the slot root, in its own process group, with stdin `/dev/null`. Its lines go to `events.log`.
 //!    When the command exits, the other processes of its group get SIGTERM, and SIGKILL 5 s later.
-//! 6. Move the new entries of each `fetch` directory to the stage.
+//! 7. Move the new entries of each `fetch` directory to the stage.
+//!
+//! Each step is a phase: `lock`, `sweep`, `lease`, `pack_wait`, `checkout`, `command` and `stage`. At the end of each
+//! step, whatever its outcome, the supervisor rewrites `phases.json` with the steps that have ended.
 //!
 //! On every way out it writes the lease file, drops the lock of the holder, deletes the ref of the pack, and writes
 //! `exit.json` last. The `cancel` file of the run, or SIGINT, SIGTERM or SIGHUP, interrupts the run. Before the
@@ -35,13 +41,13 @@ use std::sync::{Arc, mpsc};
 use std::thread;
 use std::time::{Duration, Instant};
 
-use yonder_link::proto::{RunSpec, Stream};
+use yonder_link::proto::{Phase, RunSpec, Stream};
 
 use crate::child::Stop;
 use crate::files::{FILE_MODE, open_private, private_dir, try_flock};
 use crate::home::Home;
 use crate::lease::{HolderLock, Lease, Leases, now_seconds};
-use crate::refused::{AGENT_ERROR, CHECKOUT_FAILED, Refusal, SPAWN_FAILED, refused};
+use crate::refused::{AGENT_ERROR, CHECKOUT_FAILED, PACK_MISSING, Refusal, SPAWN_FAILED, refused};
 use crate::run::{EventLog, ExitRecord, MAX_EVENT_TEXT, RunDir};
 use crate::{git, tuning};
 
@@ -50,6 +56,15 @@ const LOCK_WAIT: Duration = Duration::from_secs(3600);
 
 /// How often the supervisor looks at the command and at the cancel request.
 const POLL: Duration = Duration::from_millis(100);
+
+/// The first pause between two looks for the reference of the run. Each pause doubles, up to [`PACK_POLL_MAX`].
+const PACK_POLL_FIRST: Duration = Duration::from_millis(50);
+
+/// The longest pause between two looks for the reference of the run.
+const PACK_POLL_MAX: Duration = Duration::from_secs(1);
+
+/// A wait for the pack that is longer than this gets a progress line.
+const PACK_WAIT_SAY: Duration = Duration::from_secs(1);
 
 /// How long the supervisor reads the pipes of a command group that has ended. A daemon can keep them open.
 const DRAIN: Duration = Duration::from_secs(5);
@@ -147,7 +162,7 @@ fn run_to_end(home: &Home, run: &RunDir) -> Result<i32, Refusal> {
     let say = |message: &str| log.write(Stream::Stderr, &format!("yonder: {message}"));
     let stop = || SIGNALLED.load(Ordering::SeqCst) || run.cancel_requested();
     let mut held = Held::default();
-    let outcome = panic::catch_unwind(AssertUnwindSafe(|| steps(&spec, run, &leases, &log, &stop, &mut held)))
+    let outcome = panic::catch_unwind(AssertUnwindSafe(|| steps(&spec, run, &repo, &leases, &log, &stop, &mut held)))
         .unwrap_or_else(|payload| Err(refused(AGENT_ERROR, format!("the supervisor failed: {}", panic_text(&*payload)))));
 
     if let Some(lease) = &held.lease
@@ -163,23 +178,34 @@ fn run_to_end(home: &Home, run: &RunDir) -> Result<i32, Refusal> {
     outcome
 }
 
-fn steps(spec: &RunSpec, run: &RunDir, leases: &Leases, log: &Arc<EventLog>, stop: Stop<'_>, held: &mut Held) -> Result<i32, Refusal> {
+fn steps(
+    spec: &RunSpec,
+    run: &RunDir,
+    repo: &Path,
+    leases: &Leases,
+    log: &Arc<EventLog>,
+    stop: Stop<'_>,
+    held: &mut Held,
+) -> Result<i32, Refusal> {
     let mut say = |message: &str| log.write(Stream::Stderr, &format!("yonder: {message}"));
     let stage = run.stage_path();
     private_dir(&stage).map_err(|error| refused(AGENT_ERROR, format!("cannot make {}: {error}", stage.display())))?;
+    let mut phases = Phases { run, ended: Vec::new() };
 
-    let Some(lock) = leases.lock(&spec.holder, LOCK_WAIT, stop, &mut say)? else {
+    let Some(lock) = phases.time("lock", || leases.lock(&spec.holder, LOCK_WAIT, stop, &mut say))? else {
         return Ok(INTERRUPTED);
     };
     held.lock = Some(lock);
     if stop() {
         return Ok(INTERRUPTED);
     }
-    leases.sweep(&spec.holder, spec.idle_hours, now_seconds(), stop, &mut say);
+    phases.time("sweep", || {
+        leases.sweep(&spec.holder, spec.idle_hours, now_seconds(), stop, &mut say);
+    });
     if stop() {
         return Ok(INTERRUPTED);
     }
-    let lease = match leases.acquire(&spec.holder, stop, &mut say) {
+    let lease = match phases.time("lease", || leases.acquire(&spec.holder, stop, &mut say)) {
         Ok(lease) => lease,
         Err(_) if stop() => return Ok(INTERRUPTED),
         Err(refusal) => return Err(refusal),
@@ -189,7 +215,10 @@ fn steps(spec: &RunSpec, run: &RunDir, leases: &Leases, log: &Arc<EventLog>, sto
     if stop() {
         return Ok(INTERRUPTED);
     }
-    if let Err(error) = git::checkout(&slot, &spec.commit, stop) {
+    if !phases.time("pack_wait", || wait_for_pack(repo, spec, tuning::pack_wait(), stop, &mut say))? {
+        return Ok(INTERRUPTED);
+    }
+    if let Err(error) = phases.time("checkout", || git::checkout(&slot, &spec.commit, stop)) {
         if stop() {
             return Ok(INTERRUPTED);
         }
@@ -202,11 +231,86 @@ fn steps(spec: &RunSpec, run: &RunDir, leases: &Leases, log: &Arc<EventLog>, sto
         return Ok(INTERRUPTED);
     }
     let before: Vec<BTreeSet<OsString>> = spec.fetch.iter().map(|dir| entries(&slot.join(dir))).collect();
-    let code = run_command(spec, &slot, log, stop)?;
-    for error in stage_new_entries(&slot, &spec.fetch, &before, &stage) {
+    let code = phases.time("command", || run_command(spec, &slot, log, stop))?;
+    for error in phases.time("stage", || stage_new_entries(&slot, &spec.fetch, &before, &stage)) {
         say(&error);
     }
     Ok(code)
+}
+
+/// The steps of a run that have ended, each with its duration.
+struct Phases<'a> {
+    run: &'a RunDir,
+    ended: Vec<Phase>,
+}
+
+impl Phases<'_> {
+    /// Runs `step`, adds its duration as the phase `name` whatever its outcome, and rewrites `phases.json`.
+    fn time<T>(&mut self, name: &str, step: impl FnOnce() -> T) -> T {
+        let started = Instant::now();
+        let outcome = step();
+        self.ended.push(Phase {
+            name: name.to_owned(),
+            ms: u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX),
+        });
+        if let Err(error) = self.run.write_phases(&self.ended) {
+            eprintln!(
+                "yonderd supervise: cannot write the phases of {}: {error}",
+                self.run.path().display()
+            );
+        }
+        outcome
+    }
+}
+
+/// Waits for the pack of the run, up to `deadline`. A commit that `repo` has already needs no pack, because the client
+/// sends none then. Else the wait ends when the reference of the run exists: the pack points it at the commit after
+/// the commit has landed, so the delete of the reference at the end of the run comes after it. Answers `false` when
+/// `stop` ended the wait. A wait longer than [`PACK_WAIT_SAY`] says so once.
+fn wait_for_pack(repo: &Path, spec: &RunSpec, deadline: Duration, stop: Stop<'_>, say: &mut dyn FnMut(&str)) -> Result<bool, Refusal> {
+    let look = |revision: &str| {
+        git::has_commit(repo, revision)
+            .map_err(|error| refused(AGENT_ERROR, format!("cannot look for {revision} in {}: {error}", repo.display())))
+    };
+    if look(&spec.commit)? {
+        return Ok(true);
+    }
+    let started = Instant::now();
+    let mut said = false;
+    let mut pause = PACK_POLL_FIRST;
+    loop {
+        if look(&spec.reference)? {
+            return Ok(true);
+        }
+        if started.elapsed() >= deadline {
+            return Err(refused(
+                PACK_MISSING,
+                format!(
+                    "the pack of {} did not come in {} s, and {} is missing in {}",
+                    spec.reference,
+                    deadline.as_secs_f64(),
+                    spec.commit,
+                    repo.display()
+                ),
+            ));
+        }
+        let until = (Instant::now() + pause).min(started + deadline);
+        loop {
+            if stop() {
+                return Ok(false);
+            }
+            if !said && started.elapsed() > PACK_WAIT_SAY {
+                say(&format!("waiting for the pack of {}", spec.commit));
+                said = true;
+            }
+            let left = until.saturating_duration_since(Instant::now());
+            if left.is_zero() {
+                break;
+            }
+            thread::sleep(left.min(POLL));
+        }
+        pause = (pause * 2).min(PACK_POLL_MAX);
+    }
 }
 
 /// Runs the command of the run in the slot root, in its own process group, and answers its exit code. The other

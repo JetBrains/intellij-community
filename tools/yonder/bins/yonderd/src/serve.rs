@@ -1,8 +1,8 @@
 //! `yonderd serve`: the listener of the agent. A thread per connection. Each connection: the TLS handshake within a
 //! total deadline, then [`Request::Hello`], then one request. At most [`MAX_HANDSHAKES`] handshakes go on at a time, and
 //! a socket over that cap is closed at once. A request that waits for a lock, bd or git sends a heartbeat while it
-//! waits. The requests of a repository and of a lease are here; the requests of a run are in `run_requests`. A thread
-//! runs the cleanup of `cleanup` every hour.
+//! waits: `Have`, the end of `Pack`, `Lease` and `Release`. The requests of a repository and of a lease are here; the
+//! requests of a run are in `run_requests`. A thread runs the cleanup of `cleanup` every hour.
 
 use std::io::{self, Write};
 use std::net::{IpAddr, Shutdown, SocketAddr, TcpListener, TcpStream};
@@ -156,7 +156,11 @@ impl Agent {
         let request = channel.recv::<Request>()?;
         match request {
             Request::Hello { .. } => answer(channel, Err(refused(BAD_REQUEST, "a connection carries one hello"))),
-            Request::Have { repo, commits } => answer(channel, self.have(&repo, &commits)),
+            Request::Have { repo, commits } => {
+                let home = self.home.clone();
+                let result = with_heartbeats(channel, move || have(&home, &repo, &commits))?;
+                answer(channel, result)
+            }
             Request::Pack { repo, commit, reference } => self.pack(channel, &repo, &commit, &reference),
             Request::Start(spec) => answer(channel, self.start(&spec)),
             Request::Follow { run, offset } => self.follow(channel, &run, offset),
@@ -171,31 +175,7 @@ impl Agent {
 
     /// The main repository `repo`, with `~/` expanded, when it is a git repository.
     pub(crate) fn repo(&self, repo: &str) -> Result<PathBuf, Refusal> {
-        let path = self.home.expand(repo);
-        if git::is_repo(&path) {
-            Ok(path)
-        } else {
-            Err(refused(
-                REPO_MISSING,
-                format!("{} is not a git repository on this host", path.display()),
-            ))
-        }
-    }
-
-    fn have(&self, repo: &str, commits: &[String]) -> Result<Reply, Refusal> {
-        let repo = self.repo(repo)?;
-        if commits.len() > MAX_HAVE {
-            return Err(refused(
-                BAD_REQUEST,
-                format!("a have names {} commits, more than {MAX_HAVE}", commits.len()),
-            ));
-        }
-        if let Some(bad) = commits.iter().find(|commit| !git::is_commit_id(commit)) {
-            return Err(refused(BAD_REQUEST, format!("{bad:?} is not a full commit id")));
-        }
-        git::have(&repo, commits)
-            .map(|commits| Reply::Have { commits })
-            .map_err(|error| refused(AGENT_ERROR, error))
+        find_repo(&self.home, repo)
     }
 
     /// Reads the pack that follows into `git index-pack`, then points `reference` at `commit`. A refused pack is read
@@ -210,7 +190,11 @@ impl Agent {
             if !git::is_pack_ref(reference) {
                 return Err(refused(
                     BAD_REQUEST,
-                    format!("{reference:?} is not a ref under {}<run id>", git::REF_PREFIX),
+                    format!(
+                        "{reference:?} is not a ref {}<run id> or {}<name>",
+                        git::REF_PREFIX,
+                        yonder_link::proto::BASE_REFS
+                    ),
                 ));
             }
             Ok(repo)
@@ -301,6 +285,37 @@ impl Agent {
         })?;
         answer(channel, result)
     }
+}
+
+/// The main repository `repo` of `home`, with `~/` expanded, when it is a git repository.
+fn find_repo(home: &Home, repo: &str) -> Result<PathBuf, Refusal> {
+    let path = home.expand(repo);
+    if git::is_repo(&path) {
+        Ok(path)
+    } else {
+        Err(refused(
+            REPO_MISSING,
+            format!("{} is not a git repository on this host", path.display()),
+        ))
+    }
+}
+
+/// The commits of `commits` that the repository `repo` has. `git cat-file` can take long on a busy disk, so the caller
+/// runs it with heartbeats.
+fn have(home: &Home, repo: &str, commits: &[String]) -> Result<Reply, Refusal> {
+    let repo = find_repo(home, repo)?;
+    if commits.len() > MAX_HAVE {
+        return Err(refused(
+            BAD_REQUEST,
+            format!("a have names {} commits, more than {MAX_HAVE}", commits.len()),
+        ));
+    }
+    if let Some(bad) = commits.iter().find(|commit| !git::is_commit_id(commit)) {
+        return Err(refused(BAD_REQUEST, format!("{bad:?} is not a full commit id")));
+    }
+    git::have(&repo, commits)
+        .map(|commits| Reply::Have { commits })
+        .map_err(|error| refused(AGENT_ERROR, error))
 }
 
 /// The TLS handshake of `socket` within the total deadline of [`tuning::handshake`]. A timer thread shuts the socket

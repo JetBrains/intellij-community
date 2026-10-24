@@ -34,3 +34,22 @@ fn a_held_flock_refuses_a_second_open_file() {
     let second = open_private(&path).expect("opened");
     assert!(!try_flock(&second).expect("tried"));
 }
+
+#[test]
+fn a_shared_flock_is_refused_only_by_an_exclusive_one() {
+    // Each lock file is fresh: a fork of another test thread can hold a dropped lock until its exec.
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let probed = dir.path().join("probed");
+    let probe = open_private(&probed).expect("opened");
+    assert!(try_flock_shared(&probe).expect("tried"));
+    let other_probe = open_private(&probed).expect("opened");
+    assert!(
+        try_flock_shared(&other_probe).expect("tried"),
+        "two probes do not refuse each other"
+    );
+
+    let held = dir.path().join("held");
+    let holder = open_private(&held).expect("opened");
+    assert!(try_flock(&holder).expect("tried"));
+    assert!(!try_flock_shared(&open_private(&held).expect("opened")).expect("tried"));
+}

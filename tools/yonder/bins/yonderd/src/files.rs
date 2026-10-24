@@ -53,8 +53,18 @@ pub(crate) fn open_private(path: &Path) -> io::Result<File> {
 
 /// Takes an exclusive flock of `file` when no other open file holds it. Answers whether it took the lock.
 pub(crate) fn try_flock(file: &File) -> io::Result<bool> {
+    try_flock_as(file, libc::LOCK_EX)
+}
+
+/// Takes a shared flock of `file` when no other open file holds an exclusive one. Answers whether it took the lock.
+/// Two shared takers never refuse each other, so a probe of a lock cannot make another probe fail.
+pub(crate) fn try_flock_shared(file: &File) -> io::Result<bool> {
+    try_flock_as(file, libc::LOCK_SH)
+}
+
+fn try_flock_as(file: &File, kind: libc::c_int) -> io::Result<bool> {
     // SAFETY: the descriptor belongs to `file`, which lives for the call.
-    if unsafe { libc::flock(file.as_raw_fd(), libc::LOCK_EX | libc::LOCK_NB) } == 0 {
+    if unsafe { libc::flock(file.as_raw_fd(), kind | libc::LOCK_NB) } == 0 {
         return Ok(true);
     }
     let error = io::Error::last_os_error();

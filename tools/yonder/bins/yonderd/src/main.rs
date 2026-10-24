@@ -20,6 +20,7 @@ mod serve;
 mod setup;
 mod supervise;
 mod tuning;
+mod watch;
 
 use std::process::ExitCode;
 

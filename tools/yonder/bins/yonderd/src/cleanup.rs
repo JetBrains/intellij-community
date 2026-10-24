@@ -5,12 +5,14 @@
 //! its ref for ever. So each pack adds its repository to the repository list, and the cleanup deletes each
 //! `refs/yonder/<run>` of a listed repository whose run has no directory. A run directory goes a day after the end of
 //! its run, and then its ref goes too. A ref whose run id names a time within the last [`PACK_GRACE`] stays, because
-//! its start can still come.
+//! its start can still come. A base ref under [`BASE_REFS`] always stays: the next pack to its name replaces it.
 
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, SystemTime};
+
+use yonder_link::proto::BASE_REFS;
 
 use crate::files::{private_dir, write_private};
 use crate::git;
@@ -47,6 +49,9 @@ pub(crate) fn clean(home: &Home, now: SystemTime) -> Vec<String> {
             }
         };
         for reference in references {
+            if reference.starts_with(BASE_REFS) {
+                continue;
+            }
             let Some(run) = reference.strip_prefix(git::REF_PREFIX) else {
                 continue;
             };

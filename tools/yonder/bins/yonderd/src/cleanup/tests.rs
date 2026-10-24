@@ -44,7 +44,7 @@ fn spec(run: &str) -> RunSpec {
 }
 
 #[test]
-fn a_ref_without_a_run_goes_and_a_ref_of_a_kept_or_fresh_run_stays() {
+fn a_ref_without_a_run_goes_and_a_ref_of_a_kept_or_fresh_run_and_a_base_ref_stay() {
     let dir = tempfile::tempdir().expect("a temporary directory");
     let home = Home::new(dir.path().to_path_buf());
     let repo = dir.path().join("repo");
@@ -67,6 +67,7 @@ fn a_ref_without_a_run_goes_and_a_ref_of_a_kept_or_fresh_run_stays() {
     for run in ["1000-1", fresh.as_str(), "goes-on", "2000-3", "3000-4"] {
         git_in(&repo, &["update-ref", &format!("refs/yonder/{run}"), &commit]);
     }
+    git_in(&repo, &["update-ref", "refs/yonder/base/master", &commit]);
     git_in(&unlisted, &["update-ref", "refs/yonder/1000-1", &unlisted_commit]);
     remember_repo(&home, &repo).expect("listed");
     remember_repo(&home, &repo).expect("listed once");
@@ -88,6 +89,7 @@ fn a_ref_without_a_run_goes_and_a_ref_of_a_kept_or_fresh_run_stays() {
     let mut expected = vec![
         format!("refs/yonder/{fresh}"),
         "refs/yonder/3000-4".to_owned(),
+        "refs/yonder/base/master".to_owned(),
         "refs/yonder/goes-on".to_owned(),
     ];
     expected.sort();

@@ -44,11 +44,18 @@ fn a_commit_id_is_40_or_64_lower_case_hex_digits() {
 }
 
 #[test]
-fn a_pack_ref_is_under_refs_yonder() {
+fn a_pack_ref_is_a_run_ref_or_a_base_ref() {
     assert!(is_pack_ref("refs/yonder/1-2"));
+    assert!(is_pack_ref("refs/yonder/base/master"));
     assert!(!is_pack_ref("refs/heads/master"));
     assert!(!is_pack_ref("refs/yonder/../heads/master"));
     assert!(!is_pack_ref("refs/yonder/"));
+    assert!(!is_pack_ref("refs/yonder/base/"));
+    assert!(!is_pack_ref("refs/yonder/base/a/b"));
+    assert!(!is_pack_ref("refs/yonder/base/.hidden"));
+
+    assert!(is_run_ref("refs/yonder/1-2"));
+    assert!(!is_run_ref("refs/yonder/base/master"), "a base ref is no run ref");
 }
 
 #[test]
@@ -58,6 +65,10 @@ fn have_answers_the_commits_that_the_repository_has() {
     let missing = "1".repeat(40);
     assert_eq!(have(&repo, &[missing, commit.clone()]).expect("the answer"), vec![commit.clone()]);
     assert_eq!(head(&repo, &never).expect("HEAD"), commit);
+    assert!(has_commit(&repo, &commit).expect("the answer"));
+    assert!(!has_commit(&repo, "refs/yonder/1-2").expect("the answer"));
+    update_ref(&repo, "refs/yonder/1-2", &commit).expect("made");
+    assert!(has_commit(&repo, "refs/yonder/1-2").expect("the answer"));
 }
 
 #[test]

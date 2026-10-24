@@ -17,6 +17,7 @@ pub(crate) const RUN_EXISTS: &str = "run_exists";
 pub(crate) const UNKNOWN_RUN: &str = "unknown_run";
 pub(crate) const REPO_MISSING: &str = "repo_missing";
 pub(crate) const PACK_FAILED: &str = "pack_failed";
+pub(crate) const PACK_MISSING: &str = "pack_missing";
 pub(crate) const LOCK_TIMEOUT: &str = "lock_timeout";
 pub(crate) const LEASE_FAILED: &str = "lease_failed";
 pub(crate) const CHECKOUT_FAILED: &str = "checkout_failed";

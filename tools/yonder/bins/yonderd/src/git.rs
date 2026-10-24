@@ -43,12 +43,21 @@ pub(crate) fn is_commit_id(text: &str) -> bool {
     matches!(text.len(), 40 | 64) && text.bytes().all(|byte| matches!(byte, b'0'..=b'9' | b'a'..=b'f'))
 }
 
-/// Whether `reference` is a ref that a pack may make: `refs/yonder/<run id>`.
+/// Whether `reference` is a ref that a pack may make: a run ref, or a base ref `refs/yonder/base/<name>`. A name of a
+/// base ref has the rules of a run id.
 pub(crate) fn is_pack_ref(reference: &str) -> bool {
+    is_run_ref(reference)
+        || reference
+            .strip_prefix(yonder_link::proto::BASE_REFS)
+            .is_some_and(yonder_link::proto::is_run_id)
+}
+
+/// Whether `reference` is the ref of a run: `refs/yonder/<run id>`. The run deletes it on every way out.
+pub(crate) fn is_run_ref(reference: &str) -> bool {
     reference.strip_prefix(REF_PREFIX).is_some_and(yonder_link::proto::is_run_id)
 }
 
-/// The commits of `commits` that `repo` has as commit objects, in their order.
+/// The commits of `commits` that `repo` has as commit objects, in their order. An entry can also be a ref.
 pub(crate) fn have(repo: &Path, commits: &[String]) -> Result<Vec<String>, String> {
     let input: String = commits.iter().map(|commit| format!("{commit}^{{commit}}\n")).collect();
     let output = checked(child::run_with_input(
@@ -67,6 +76,11 @@ pub(crate) fn have(repo: &Path, commits: &[String]) -> Result<Vec<String>, Strin
         .filter(|(_, line)| line.split(' ').nth(1) == Some("commit"))
         .map(|(commit, _)| commit.clone())
         .collect())
+}
+
+/// Whether `revision`, such as a commit id or a ref, names a commit in `repo`.
+pub(crate) fn has_commit(repo: &Path, revision: &str) -> Result<bool, String> {
+    have(repo, &[revision.to_owned()]).map(|found| !found.is_empty())
 }
 
 /// Starts `git index-pack --stdin --fix-thin`. The caller writes the pack to its stdin, then waits.

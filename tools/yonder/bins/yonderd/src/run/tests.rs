@@ -28,6 +28,61 @@ fn an_exit_record_has_the_json_shape_of_the_spec() {
     assert_eq!(refused.code(), REFUSED_EXIT);
 }
 
+fn phase(name: &str, ms: u64) -> Phase {
+    Phase { name: name.to_owned(), ms }
+}
+
+#[test]
+fn the_phases_go_to_phases_json_as_they_end_and_to_exit_json_at_the_end() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let runs = Runs::new(dir.path().join("runs"));
+    let (run, _lock) = runs.create(&spec("1-1")).expect("created");
+    assert_eq!(run.info().expect("the info").phases, Vec::new());
+    run.write_phases(&[phase("lock", 3)]).expect("written");
+    assert_eq!(run.info().expect("the info").phases, vec![phase("lock", 3)]);
+    assert_eq!(
+        fs::read_to_string(run.path().join("phases.json")).expect("the phases"),
+        r#"[{"name":"lock","ms":3}]"#
+    );
+
+    run.write_phases(&[phase("lock", 3), phase("sweep", 0)]).expect("written");
+    run.write_exit(&ExitRecord::Code { code: 2 }).expect("written");
+    assert_eq!(
+        fs::read_to_string(run.path().join("exit.json")).expect("the end"),
+        r#"{"code":2,"phases":[{"name":"lock","ms":3},{"name":"sweep","ms":0}]}"#
+    );
+    let (end, phases) = run.exit_with_phases().expect("read").expect("ended");
+    assert_eq!(end, ExitRecord::Code { code: 2 });
+    assert_eq!(phases, vec![phase("lock", 3), phase("sweep", 0)]);
+    // The end is the source after it: a later write of `phases.json` changes nothing.
+    run.write_phases(&[]).expect("written");
+    assert_eq!(run.info().expect("the info").phases.len(), 2);
+
+    let (refused_run, _lock) = runs.create(&spec("1-2")).expect("created");
+    refused_run
+        .write_exit(&ExitRecord::refused(&refused("pack_missing", "no pack")))
+        .expect("written");
+    assert_eq!(
+        refused_run.exit_with_phases().expect("read"),
+        Some((ExitRecord::refused(&refused("pack_missing", "no pack")), Vec::new()))
+    );
+}
+
+#[test]
+fn an_exit_json_without_phases_has_none() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let runs = Runs::new(dir.path().join("runs"));
+    let (run, _lock) = runs.create(&spec("1-1")).expect("created");
+    fs::write(
+        run.path().join("exit.json"),
+        r#"{"refused":{"code":"agent_error","message":"lost"}}"#,
+    )
+    .expect("written");
+    let (end, phases) = run.exit_with_phases().expect("read").expect("ended");
+    assert_eq!(end.code(), REFUSED_EXIT);
+    assert_eq!(phases, Vec::new());
+}
+
 #[test]
 fn a_new_run_has_its_spec_and_an_empty_log_and_refuses_a_second_start() {
     let dir = tempfile::tempdir().expect("a temporary directory");
