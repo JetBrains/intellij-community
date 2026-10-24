@@ -4,25 +4,11 @@ package com.jetbrains.python.packaging.toolwindow.ui
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.components.service
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.ListPopup
-import com.intellij.openapi.ui.popup.PopupStep
-import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.ui.SideBorder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.python.packaging.PyPackageName
-import com.jetbrains.python.packaging.common.PythonPackageDetails
-import com.jetbrains.python.packaging.management.toInstallRequest
-import com.intellij.python.requirements.pyRequirement
-import com.intellij.python.requirements.pyRequirementVersionSpec
-import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowService
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
-import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import kotlinx.coroutines.Dispatchers
 import java.awt.BorderLayout
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -40,22 +26,6 @@ internal object PyPackagesUiComponents {
 
   internal val AnActionEvent.selectedPackages: List<DisplayablePackage>
     get() = getData(SELECTED_PACKAGES_DATA_CONTEXT) ?: emptyList()
-
-  fun createAvailableVersionsPopup(selectedPackage: DisplayablePackage, details: PythonPackageDetails, project: Project): ListPopup {
-    return JBPopupFactory.getInstance().createListPopup(object : BaseListPopupStep<String>(null, details.availableVersions) {
-      override fun onChosen(selectedValue: String?, finalChoice: Boolean): PopupStep<*>? {
-        return doFinalStep {
-          val repository = checkNotNull(selectedPackage.repository)
-          val packageName = PyPackageName.from(selectedPackage.name).name
-          val version = selectedValue?.let { pyRequirementVersionSpec(it) }
-          PyPackageCoroutine.launch(project, Dispatchers.IO) {
-            val specification = repository.findPackageSpecification(pyRequirement(packageName, version))
-            project.service<PyPackagingToolWindowService>().installPackage(specification!!.toInstallRequest())
-          }
-        }
-      }
-    }, 8)
-  }
 
   fun borderPanel(init: JPanel.() -> Unit): JPanel = object : JPanel(BorderLayout()) {
     init {

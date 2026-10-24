@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.pyproject
 
-import com.intellij.psi.PsiElement
 import com.jetbrains.python.Result
 import com.jetbrains.python.Result.Companion.failure
 import com.jetbrains.python.Result.Companion.success
@@ -10,8 +9,6 @@ import org.apache.tuweni.toml.TomlArray
 import org.apache.tuweni.toml.TomlTable
 import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.reflect.KClass
-import org.toml.lang.psi.TomlKeyValue as PsiTomlKeyValue
-import org.toml.lang.psi.TomlTable as PsiTomlTable
 
 /**
  * The error union used by [TomlTable.safeGet], [TomlTable.safeGetRequired] and [TomlTable.safeGetArr].
@@ -174,38 +171,6 @@ fun <T, E, I> Result<T, E>.getOrIssue(issues: MutableList<I>, wrapper: (E) -> I,
       null
     }
   }
-
-/**
- * Attempts to find a TOML header in [PsiElement] by the name of [name].
- * Returns null if the file wasn't TOML or the header wasn't found.
- *
- * Example:
- *
- * ```kotlin
- * val dependencies = psiFile.findTomlHeader("project").findTomlValueByKey("dependencies")
- * ```
- */
-@Internal
-fun PsiElement.findTomlHeader(name: String): PsiElement? =
-  children.find { element ->
-    (element as? PsiTomlTable)?.header?.key?.text == name
-  }
-
-/**
- * Attempts to find a value of a [PsiTomlKeyValue] by the key of [key] in an instance of [PsiElement].
- * Returns null if the file wasn't TOML or the key wasn't found.
- *
- * Example:
- *
- * ```kotlin
- * val dependencies = psiFile.findTomlHeader("project").findTomlValueByKey("dependencies")
- * ```
- */
-@Internal
-fun PsiElement.findTomlValueByKey(key: String): PsiElement? =
-  (children.find { element ->
-    (element as? PsiTomlKeyValue)?.key?.text == key
-  } as? PsiTomlKeyValue)?.value
 
 @Internal
 fun <T> Result<T, TomlTableSafeGetError>.getOrIssue(issues: MutableList<PyProjectIssue>, onNull: (() -> Unit)? = null): T? =
