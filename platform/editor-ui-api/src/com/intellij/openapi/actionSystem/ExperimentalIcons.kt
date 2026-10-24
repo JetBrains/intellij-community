@@ -7,8 +7,8 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Gate for the experimental icons pipeline (`com.intellij.platform.icons.IconDescriptor` descriptors rendered through the new icons API).
  *
- * When off, the IDE must look and behave exactly as before: [Presentation.getIconDescriptor] returns
- * [Presentation.NO_ICON_DESCRIPTOR] and nothing consumes descriptors.
+ * When off, the IDE must look and behave exactly as before: descriptor suppliers are stored but never evaluated, and
+ * [Presentation.getIconDescriptor] falls back to a descriptor bridged from the legacy Swing icon.
  */
 @ApiStatus.Internal
 object ExperimentalIcons {

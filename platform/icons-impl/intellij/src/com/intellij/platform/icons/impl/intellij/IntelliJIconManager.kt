@@ -17,6 +17,7 @@ import com.intellij.platform.icons.impl.DeferredIconResolver
 import com.intellij.platform.icons.impl.DeferredIconResolverService
 import com.intellij.platform.icons.impl.iconLayer
 import com.intellij.platform.icons.impl.intellij.custom.CustomLegacyIconSerializer
+import com.intellij.platform.icons.impl.intellij.debug.IntelliJImageResourceLocationDescribers
 import com.intellij.platform.icons.impl.intellij.design.IntelliJIconDesigner
 import com.intellij.platform.icons.impl.intellij.rendering.IntelliJIconRendererManager
 import com.intellij.platform.icons.impl.intellij.rendering.SwingIcon
@@ -37,6 +38,11 @@ import java.lang.ref.WeakReference
 import javax.swing.Icon
 
 class IntelliJIconManager : DefaultIconManager() {
+  init {
+    // lets icon debugging tools (Icon Inspector) show the fields of ModuleImageResourceLocation
+    IntelliJImageResourceLocationDescribers.register()
+  }
+
   private val resolverService: IntelliJDeferredIconResolverService by lazy {
     service<IntelliJDeferredIconResolverService>()
   }

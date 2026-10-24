@@ -55,6 +55,7 @@
     <module name="intellij.devkit.mcp.inspections"/>
     <module name="intellij.devkit.qodana"/>
     <module name="intellij.devkit.threading"/>
+    <module name="intellij.devkit.icons.inspector"/>
     <module name="intellij.devkit.smartupdate"/>
 
     <module name="intellij.platform.jewel.samples.showcase"/>
