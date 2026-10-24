@@ -24,8 +24,8 @@ import java.util.function.IntUnaryOperator
 
 /**
  * Gives the Commit diff tab of structural changes a quiet frame. The gutter shows line numbers only: the hunks in the tree have the
- * checkboxes and the rollback. The unified viewer shows the numbers of the current version, and removed lines have no number. Removed
- * lines are red, and added lines are green.
+ * checkboxes and the rollback. Only the lines of the current version have numbers. A removed line of the unified viewer has none, and the
+ * base side of the side-by-side viewer shows none, so its gutter takes no width. Removed lines are red, and added lines are green.
  */
 internal class StructuralDiffPreviewAppearance : DiffExtension() {
   override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer, context: DiffContext, request: DiffRequest) {
@@ -38,7 +38,10 @@ internal class StructuralDiffPreviewAppearance : DiffExtension() {
           override fun onAfterRediff() = showCurrentLineNumbers(viewer)
         })
       }
-      is TwosideTextDiffViewer -> for (side in Side.entries) quiet(viewer.getEditor(side), side)
+      is TwosideTextDiffViewer -> {
+        for (side in Side.entries) quiet(viewer.getEditor(side), side)
+        viewer.getEditor(Side.LEFT).settings.isLineNumbersShown = false
+      }
     }
   }
 
