@@ -20,4 +20,5 @@ anyhow.workspace = true
 [dev-dependencies]
 serde_json.workspace = true
 tempfile.workspace = true
+testkit.workspace = true
 zip.workspace = true

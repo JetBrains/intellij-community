@@ -98,6 +98,7 @@ dependencies = [
  "jarpack",
  "serde_json",
  "tempfile",
+ "testkit",
  "trace",
  "zip",
 ]
@@ -399,6 +400,7 @@ dependencies = [
  "memmap2",
  "sha2",
  "tempfile",
+ "testkit",
  "xxh3",
  "zip",
 ]
@@ -593,6 +595,7 @@ dependencies = [
  "fscopy",
  "rayon",
  "tempfile",
+ "testkit",
  "trace",
 ]
 
@@ -680,6 +683,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tempfile",
+ "testkit",
 ]
 
 [[package]]

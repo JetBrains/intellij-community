@@ -68,3 +68,32 @@ fn a_mode_and_a_link_are_set() {
     file_symlink("file", directory.path().join("link"));
     assert_eq!(fs::read_link(directory.path().join("link")).unwrap(), Path::new("file"));
 }
+
+#[test]
+fn a_tool_run_keeps_the_code_and_both_texts() {
+    let run = run_tool(
+        |args, output, errors| {
+            writeln!(output, "{args:?}").unwrap();
+            write!(errors, "ERROR: x").unwrap();
+            2
+        },
+        &["--a=1", "b"],
+    );
+    assert_eq!(
+        (run.code, run.output.as_str(), run.errors.as_str()),
+        (2, "[\"--a=1\", \"b\"]\n", "ERROR: x")
+    );
+    run.assert_error("x");
+}
+
+/// The child run sees the variable that the setup command exports, and the parent sees none.
+#[cfg(unix)]
+#[test]
+fn a_rerun_passes_the_setup_to_the_child() {
+    let Some(setup) = rerun_under_shell("tests::a_rerun_passes_the_setup_to_the_child", &["export TESTKIT_PROBE=1"]) else {
+        assert!(std::env::var_os("TESTKIT_PROBE").is_none(), "the parent ran under the setup");
+        return;
+    };
+    assert_eq!(setup, "export TESTKIT_PROBE=1");
+    assert_eq!(std::env::var("TESTKIT_PROBE").as_deref(), Ok("1"));
+}

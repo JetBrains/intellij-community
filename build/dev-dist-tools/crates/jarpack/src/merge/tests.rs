@@ -6,8 +6,7 @@ use crate::merge::{is_rule_manifest, main_attribute_values, trim_entity_list};
 use crate::tests::golden::*;
 use crate::tests::testjar::{
     AGENT_MANIFEST, RawEntry, Scratch, SourceEntry, agent_sources, digest, entry, entry_names, index_pointer, module_source,
-    module_source_with_manifest, module_source_with_manifest_text, pack, raw, read_entry, rule_manifest, write_raw_jar,
-    write_zip_jar,
+    module_source_with_manifest, module_source_with_manifest_text, pack, raw, read_entry, rule_manifest, write_raw_jar, write_zip_jar,
 };
 use crate::{EntryFilter, MANIFEST_ENTRY_NAME, ManifestMode, MergeOptions, MergeSpec, Source, duplicate_line};
 
@@ -390,10 +389,14 @@ fn a_rule_manifest_is_no_module_manifest() {
 #[test]
 fn a_rule_manifest_needs_a_build_graph_attribute_and_nothing_else() {
     assert!(is_rule_manifest(rule_manifest("@@community+//platform/a:a").as_bytes()));
-    assert!(is_rule_manifest(b"manifest-version: 1.0\r\ntarget-label: //a:a\r\n\r\nName: entry\r\nSHA-256-Digest: x\r\n"));
+    assert!(is_rule_manifest(
+        b"manifest-version: 1.0\r\ntarget-label: //a:a\r\n\r\nName: entry\r\nSHA-256-Digest: x\r\n"
+    ));
     assert!(!is_rule_manifest(b"Manifest-Version: 1.0\r\n\r\n"));
     assert!(!is_rule_manifest(b"Manifest-Version: 1.0\r\nCreated-By: singlejar\r\n\r\n"));
-    assert!(!is_rule_manifest(b"Manifest-Version: 1.0\r\nTarget-Label: //a:a\r\nMain-Class: com.example.Main\r\n\r\n"));
+    assert!(!is_rule_manifest(
+        b"Manifest-Version: 1.0\r\nTarget-Label: //a:a\r\nMain-Class: com.example.Main\r\n\r\n"
+    ));
     assert!(!is_rule_manifest(b"\xff\xfe"));
 }
 
@@ -704,23 +707,9 @@ fn a_merge_spec_can_move_between_threads() {
 #[cfg(unix)]
 #[test]
 fn a_failed_write_names_the_jar() {
-    const CHILD: &str = "JARPACK_TEST_FILE_SIZE_CHILD";
-    if std::env::var_os(CHILD).is_none() {
-        // The ignored SIGXFSZ stays ignored after `exec`. So a write past the limit fails with EFBIG and does not stop
-        // the child.
-        let output = std::process::Command::new("/bin/sh")
-            .args(["-c", r#"trap '' XFSZ && ulimit -f 2 && exec "$0" --exact "$1" --nocapture"#])
-            .arg(std::env::current_exe().unwrap())
-            .arg("merge::tests::a_failed_write_names_the_jar")
-            .env(CHILD, "1")
-            .output()
-            .unwrap();
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        assert!(
-            output.status.success() && stdout.contains(" 1 passed;"),
-            "the run under the file size limit failed:\n{stdout}\n{}",
-            String::from_utf8_lossy(&output.stderr)
-        );
+    // The ignored SIGXFSZ stays ignored after `exec`. So a write past the limit fails with EFBIG and does not stop the
+    // child.
+    if testkit::rerun_under_shell("merge::tests::a_failed_write_names_the_jar", &["trap '' XFSZ && ulimit -f 2"]).is_none() {
         return;
     }
     let scratch = Scratch::new();

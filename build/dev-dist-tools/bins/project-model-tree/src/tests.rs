@@ -2,9 +2,10 @@
 
 #![allow(clippy::cast_possible_truncation, reason = "a fixture writes small lengths into record fields")]
 
-use std::ffi::OsString;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
+
+use testkit::Run;
 
 use crate::{CHUNK_SIZE, destination_in, materialize, run};
 
@@ -209,21 +210,8 @@ fn many_rows_are_all_written() {
     }
 }
 
-struct Run {
-    code: u8,
-    output: String,
-    errors: String,
-}
-
 fn run_tool(args: &[String]) -> Run {
-    let mut output = Vec::new();
-    let mut errors = Vec::new();
-    let code = run(args.iter().map(OsString::from), &mut output, &mut errors);
-    Run {
-        code,
-        output: String::from_utf8(output).unwrap(),
-        errors: String::from_utf8(errors).unwrap(),
-    }
+    testkit::run_tool(run, args)
 }
 
 #[test]

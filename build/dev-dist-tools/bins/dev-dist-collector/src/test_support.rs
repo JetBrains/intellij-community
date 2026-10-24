@@ -2,12 +2,11 @@
 //! runs in a [`testkit::WorkingDirectory`]. A test of [`crate::inventory`] or [`crate::plugin_classpath`] uses absolute
 //! paths in a [`testkit::TempDir`] instead. It holds a working directory only when it gives a relative source.
 
-use std::ffi::OsString;
 use std::path::Path;
 
 use filemeta::{Entry, EntryType};
 use serde_json::{Value, json};
-use testkit::write_file;
+use testkit::{Run, write_file};
 
 pub(crate) fn write_json(name: impl AsRef<Path>, value: &Value) {
     write_file(name, value.to_string());
@@ -77,40 +76,9 @@ pub(crate) fn directory_entry(relative_path: &str, mode: u32) -> Entry {
     }
 }
 
-/// The outcome of one run of the collector.
-pub(crate) struct Outcome {
-    pub(crate) code: u8,
-    pub(crate) output: String,
-    pub(crate) errors: String,
-}
-
-impl Outcome {
-    /// Fails the test unless the run failed with an error that holds `message`.
-    #[track_caller]
-    pub(crate) fn assert_error(&self, message: &str) {
-        assert!(
-            self.code != 0 && self.errors.contains(message),
-            "exit {}, errors {:?}, expected {message:?}",
-            self.code,
-            self.errors
-        );
-    }
-
-    #[track_caller]
-    pub(crate) fn assert_success(&self) {
-        assert_eq!(self.code, 0, "errors: {}", self.errors);
-    }
-}
-
-pub(crate) fn run_collector<S: AsRef<str>>(args: &[S]) -> Outcome {
-    let args: Vec<OsString> = args.iter().map(|arg| OsString::from(arg.as_ref())).collect();
-    let (mut output, mut errors) = (Vec::new(), Vec::new());
-    let code = crate::run(args, &mut output, &mut errors);
-    Outcome {
-        code,
-        output: String::from_utf8(output).unwrap(),
-        errors: String::from_utf8(errors).unwrap(),
-    }
+pub(crate) fn run_collector<S: AsRef<str>>(args: &[S]) -> Run {
+    let args: Vec<&str> = args.iter().map(AsRef::as_ref).collect();
+    testkit::run_tool(crate::run, &args)
 }
 
 pub(crate) fn base_args(mode: &str) -> Vec<String> {

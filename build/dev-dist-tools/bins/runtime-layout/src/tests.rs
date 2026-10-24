@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 use tempfile::TempDir;
+use testkit::Run;
 
 use crate::assemble::{AssembledPart, Layout, PluginLayout, assemble};
 use crate::descriptor::ContentModule;
@@ -473,21 +473,8 @@ fn bazel_targets_json_must_have_the_converter_shape() {
     }
 }
 
-struct Run {
-    code: u8,
-    output: String,
-    errors: String,
-}
-
 fn run_tool(args: &[String]) -> Run {
-    let mut output = Vec::new();
-    let mut errors = Vec::new();
-    let code = run(args.iter().map(OsString::from), &mut output, &mut errors);
-    Run {
-        code,
-        output: String::from_utf8(output).unwrap(),
-        errors: String::from_utf8(errors).unwrap(),
-    }
+    testkit::run_tool(run, args)
 }
 
 /// The layout file keeps the field order and the formatting of the Kotlin serialization, with a final newline.

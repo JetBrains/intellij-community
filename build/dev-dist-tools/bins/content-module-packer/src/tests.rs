@@ -259,21 +259,7 @@ fn natives_mode_tags_the_inventory_span() {
 fn natives_mode_creates_each_directory_with_mode_0755() {
     use std::os::unix::fs::PermissionsExt;
 
-    const CHILD: &str = "PACKER_TEST_UMASK_CHILD";
-    if std::env::var_os(CHILD).is_none() {
-        let output = std::process::Command::new("/bin/sh")
-            .args(["-c", r#"umask 002 && exec "$0" --exact "$1" --nocapture"#])
-            .arg(std::env::current_exe().unwrap())
-            .arg("tests::natives_mode_creates_each_directory_with_mode_0755")
-            .env(CHILD, "1")
-            .output()
-            .unwrap();
-        let stdout = String::from_utf8_lossy(&output.stdout);
-        assert!(
-            output.status.success() && stdout.contains(" 1 passed;"),
-            "the run under the umask 002 failed:\n{stdout}\n{}",
-            String::from_utf8_lossy(&output.stderr)
-        );
+    if testkit::rerun_under_shell("tests::natives_mode_creates_each_directory_with_mode_0755", &["umask 002"]).is_none() {
         return;
     }
     let dir = pack_one_native_jar();

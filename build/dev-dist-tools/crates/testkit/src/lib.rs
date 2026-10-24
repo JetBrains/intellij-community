@@ -1,8 +1,10 @@
 //! The helpers that the tests of the dev-dist tools share. Only `[dev-dependencies]` name this crate, so no tool links
 //! it, and a change here reruns no Bazel action of a tool.
 
+use std::ffi::{OsStr, OsString};
 use std::fmt::{Debug, Display};
 use std::fs;
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard, PoisonError};
 
@@ -171,6 +173,74 @@ pub fn directory_symlink(target: impl AsRef<Path>, link: impl AsRef<Path>) {
 #[expect(clippy::cast_possible_truncation, reason = "the vector keeps the low byte of each value")]
 pub fn reference_bytes(size: usize) -> Vec<u8> {
     (0..size).map(|index| (index.wrapping_mul(31).wrapping_add(7)) as u8).collect()
+}
+
+/// The outcome of one run of a tool: the exit code, the text on stdout and the text on stderr.
+#[derive(Debug)]
+pub struct Run {
+    pub code: u8,
+    pub output: String,
+    pub errors: String,
+}
+
+impl Run {
+    /// Fails the test unless the run failed with an error that holds `message`.
+    #[track_caller]
+    pub fn assert_error(&self, message: &str) {
+        assert!(
+            self.code != 0 && self.errors.contains(message),
+            "exit {}, errors {:?}, expected {message:?}",
+            self.code,
+            self.errors
+        );
+    }
+
+    #[track_caller]
+    pub fn assert_success(&self) {
+        assert_eq!(self.code, 0, "errors: {}", self.errors);
+    }
+}
+
+/// Calls the `run` function of a tool with `args`, as `main` calls it, and keeps the text that it writes.
+pub fn run_tool(run: impl FnOnce(Vec<OsString>, &mut dyn Write, &mut dyn Write) -> u8, args: &[impl AsRef<OsStr>]) -> Run {
+    let (mut output, mut errors) = (Vec::new(), Vec::new());
+    let code = run(args.iter().map(|arg| arg.as_ref().to_owned()).collect(), &mut output, &mut errors);
+    Run {
+        code,
+        output: String::from_utf8(output).expect("UTF-8 on stdout"),
+        errors: String::from_utf8(errors).expect("UTF-8 on stderr"),
+    }
+}
+
+/// The variable that holds the setup command of a child test run.
+const CHILD_SETUP: &str = "TESTKIT_CHILD_SETUP";
+
+/// Runs the test `name` again in a child process for each shell command of `setups`, such as `umask 002`, and fails
+/// unless each child run passes. `name` is the path of the test in its crate, as `--exact` takes it.
+///
+/// The parent gets `None`, and its test stops. A child gets its setup command, and its test runs the body under it.
+#[track_caller]
+pub fn rerun_under_shell(name: &str, setups: &[&str]) -> Option<String> {
+    if let Some(setup) = std::env::var_os(CHILD_SETUP) {
+        return Some(setup.into_string().expect("a UTF-8 setup command"));
+    }
+    for setup in setups {
+        let output = std::process::Command::new("/bin/sh")
+            .arg("-c")
+            .arg(format!(r#"{setup} && exec "$0" --exact "$1" --nocapture"#))
+            .arg(std::env::current_exe().expect("the test binary"))
+            .arg(name)
+            .env(CHILD_SETUP, setup)
+            .output()
+            .expect("a child test run");
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        assert!(
+            output.status.success() && stdout.contains(" 1 passed;"),
+            "the run under `{setup}` failed:\n{stdout}\n{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+    }
+    None
 }
 
 #[cfg(test)]

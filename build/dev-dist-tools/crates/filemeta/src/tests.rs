@@ -399,27 +399,13 @@ fn mode_of(path: &std::path::Path) -> u32 {
 #[cfg(unix)]
 #[test]
 fn create_dir_all_0755_ignores_the_umask_and_keeps_an_existing_mode() {
-    const CHILD: &str = "FILEMETA_TEST_UMASK_CHILD";
-    const NAME: &str = "tests::create_dir_all_0755_ignores_the_umask_and_keeps_an_existing_mode";
-    let Some(umask) = std::env::var_os(CHILD) else {
-        for umask in ["002", "077"] {
-            let output = std::process::Command::new("/bin/sh")
-                .args(["-c", r#"umask "$1" && exec "$0" --exact "$2" --nocapture"#])
-                .arg(std::env::current_exe().unwrap())
-                .args([umask, NAME])
-                .env(CHILD, umask)
-                .output()
-                .unwrap();
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            assert!(
-                output.status.success() && stdout.contains(" 1 passed;"),
-                "the run under the umask {umask} failed:\n{stdout}\n{}",
-                String::from_utf8_lossy(&output.stderr)
-            );
-        }
+    let Some(setup) = testkit::rerun_under_shell(
+        "tests::create_dir_all_0755_ignores_the_umask_and_keeps_an_existing_mode",
+        &["umask 002", "umask 077"],
+    ) else {
         return;
     };
-    let umask = u32::from_str_radix(umask.to_str().unwrap(), 8).unwrap();
+    let umask = u32::from_str_radix(setup.strip_prefix("umask ").unwrap(), 8).unwrap();
     let directory = tempfile::tempdir().unwrap();
     let probe = directory.path().join("probe");
     fs::create_dir(&probe).unwrap();
