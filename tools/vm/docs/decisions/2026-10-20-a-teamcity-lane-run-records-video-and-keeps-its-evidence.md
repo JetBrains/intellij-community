@@ -24,6 +24,10 @@ build 1101705922 published 148 MiB, and 64.4 MB of it was the `video.mp4` of eac
 `ijplatform_master_AirPluginUiTests` ran more than 500 builds in 7 days, with 2 shards each, and only 52 of them were
 builds of `master`. The other builds were Safe Push checks and personal builds.
 
+Since 2026-10-24 a TeamCity lane run records an X display of its own, as decision 5 states. Issue
+[IJAI-4779](https://youtrack.jetbrains.com/issue/IJAI-4779). The stills and the videos of the CI builds showed the
+desktop of the agent around the IDE frame.
+
 The behavior is stated in [the scenario trace spec](../../spec/scenario-trace.spec.md) under **Capture and video**, and
 in [the controller spec](../../spec/lane-controller.spec.md) under `lane-run`. How to find the files is
 [the VM guide](../vm-ui-tests.md#artifacts-and-diagnostics).
@@ -46,6 +50,16 @@ no person works on its display, so nothing of a person is on that screen.
 The Air UI builds start `Xvfb :0 -screen 0 1024x768x24` before the Bazel step. On the UI agents of the shard builds
 1099482304 and 1100310296, that `Xvfb` exited, because another X server already listened on `:0`. The IDE drew on
 the other server, and its paint stills are 1920x1200.
+
+That other server is the GNOME desktop of the UI agent: the agent parameters of `intellij-linux-2204-ui-aws-1` name
+`DISPLAY=:0`, `XDG_SESSION_TYPE=x11` and `XDG_CURRENT_DESKTOP=ubuntu:GNOME`. The stills of the shard builds show its
+wallpaper, its dock and its icons around the IDE frame of 1280x800. The agent parameters also name `xvfb=true`. No
+parameter names fluxbox. The agent is an AWS image that infra owns, and every UI build of the monorepo shares it.
+
+The host probe of `lane-run` refuses a display without a window manager. It reads `_NET_SUPPORTING_WM_CHECK` on the
+root and on the window that it names, as `XorgWindowManagerHandler` of the driver does. The driver raises the frame of
+a project with `toFront()` and activates it through `ProjectUtil.focusProjectWindow`. A keyboard scenario needs the
+X input focus on the frame, because the key goes to the focus owner.
 
 ## Decision
 
@@ -75,6 +89,23 @@ the other server, and its paint stills are 1920x1200.
    copies nothing.
 4. **Only `lane-run` makes these choices.** The lane daemon of a worker also has `TEST_UNDECLARED_OUTPUTS_DIR` in its
    environment, so the choices live in `lane/run.rs` and travel through the trace inputs and the monitor paths.
+5. **`lane-run` records an X display of its own, with a window manager of its own.** Added on 2026-10-24. When
+   decision 1 lets the recorder read the screen, `lane-run` starts Xvfb before the host probe. Xvfb picks a free
+   display with `-displayfd`, at the 1920x1080x24 of a lane guest. Then `lane-run` runs a window manager on a thread of
+   its own, `air-lane-wm`. The window manager does what the probe and the driver need, and nothing more:
+   - it selects the substructure redirect of the root, and it paints the root in the neutral gray `#2b2d30`;
+   - it maps each window that asks, and it applies each configure request, so `toFront()` raises a window;
+   - it gives the input focus to a window that it maps or that `_NET_ACTIVE_WINDOW` names, by `XSetInputFocus` and by
+     `WM_TAKE_FOCUS`, and a closed window gives the focus back to the topmost window below it;
+   - it sets `_NET_SUPPORTING_WM_CHECK` with its `_NET_WM_NAME`, `_NET_SUPPORTED`, `_NET_ACTIVE_WINDOW`,
+     `_NET_CLIENT_LIST`, and a zero `_NET_FRAME_EXTENTS` on each window.
+
+   It does not reparent a window and draws no decoration. So the IDE gets `_JAVA_AWT_WM_NONREPARENTING=1`, and the JDK
+   expects no frame window around its own. `lane-run` sets `DISPLAY` of its process to the display, so the probe, the
+   lane IDE and the recorder use it. A note in the run stream names the display. Only a host without Xvfb keeps the
+   display of the build. A warning in the run stream and a TeamCity message of the status `WARNING` then name Xvfb and
+   IJAI-4779. `lane-run` stops Xvfb at its end, which ends the window manager. On Linux Xvfb also gets a SIGTERM when
+   the process ends, so the hard stop of the monitor leaves no display behind.
 
 ## Consequences
 
@@ -82,8 +113,15 @@ the other server, and its paint stills are 1920x1200.
   `idea.log`, the output of its IDE processes and its dumps in `bazel.logs.zip`.
 - The configuration of the Air UI builds sets `AIR_LANE_VIDEO` and passes it with `--test_env`. Until it does, every
   build keeps every video.
-- The recorder reads whatever X server answers on the `DISPLAY` of the build, which is not always the `Xvfb` of the
-  build. When its pixels are not BGRX, the recorder says why in the manifest and keeps the paint stills.
+- Until 2026-10-24 the recorder read whatever X server answered on the `DISPLAY` of the build, which was not always
+  the `Xvfb` of the build. Since decision 5 it reads the Xvfb of the run, whose pixels are BGRX. A host without Xvfb
+  still records the display of the build. When its pixels are not BGRX, the recorder says why in the manifest
+  and keeps the paint stills.
+- Since decision 5 a CI still is 1920x1080 and shows the IDE frame on a plain gray root. The lossy stills of
+  [A scenario with a video takes lossy stills](2026-10-21-a-scenario-with-a-video-takes-lossy-stills.md) were sized on
+  the grain of the desktop wallpaper, so a still of the plain root is smaller.
+- The step of the Air UI builds that starts `Xvfb :0` does nothing on a UI agent, because GNOME holds `:0`. The build
+  must still set `DISPLAY`, because decision 1 reads it.
 - The trace tools of IJAI-4382 add the step `air-trace teamcity-publish`, which packs each bundle into an artifact zip
   of its own. A build that runs that step stores each video a second time.
 - A trace attachment outside a recorded scenario goes to `lane/attachments/` under `lane-run`. The lane daemon of a
@@ -100,5 +138,18 @@ the other server, and its paint stills are 1920x1200.
   know which branch is the baseline and how TeamCity names a personal build. One variable keeps that rule in the build
   configuration, and a person can set it for a local `bazel test` too.
 - **Let a person pass the screen flag to a direct lane.** It brings back the risk that the rule exists for.
+- **Record the display of the build, and crop the stills to the IDE windows in the viewer.** The video and the
+  stills would still carry the desktop, and each viewer would need the crop. The Docker guest already shows the plain
+  shape.
+- **Change the Xvfb step of the build configuration.** The step cannot take `:0` from GNOME. A display of the run works
+  the same on every agent, and the repository holds it.
+- **fluxbox from the agent image, as the Docker guest has it.** No agent parameter names fluxbox. The image is an AWS
+  image that infra owns, and every UI build of the monorepo shares it. A package request for one lane would make the
+  lane wait for a change outside the repository. The window manager of `lane-run` needs only the Xvfb that the image
+  has.
+- **mutter, which the GNOME desktop of the agent may bring.** The source of mutter 42 takes `--x11`, `--replace`,
+  `--display` and `--sm-disable`. But Ubuntu ships the `mutter` program in a package of its own, mainly for
+  debugging, and GNOME Shell does not need it. Its compositor also needs OpenGL on the Xvfb. No agent parameter names
+  mutter.
 - **Copy every launch of every run.** A green run needs no `idea.log`, and the copy would add the full logs of every
   launch to every shard.

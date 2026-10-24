@@ -416,8 +416,8 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
 
 - The recorder reads the screen itself only when the hello says `screen`. The Linux guest's lane targets set
   `-Dair.flow.trace.screen=on`, because the guest's `Xvfb` belongs to the lane. `lane-run` says `screen` on a
-  TeamCity build on Linux with a `DISPLAY`, because no person works on the display of a TeamCity agent. A direct
-  lane on a developer's machine records the IDE's paint and no screen video, and it never reads the screen.
+  TeamCity build on Linux with a `DISPLAY`, because no person works on the display of a TeamCity agent. There it
+  records an X display of its own, not the desktop of the agent. A direct lane on a developer's machine records the IDE's paint and no screen video, and it never reads the screen.
   `lane-run` refuses the property as a JVM flag, so a person cannot give it to a direct lane. The screen of a
   developer shows everything else they have open. On macOS, reading it asks for Screen Recording permission, and
   that prompt can take the focus from the IDE.

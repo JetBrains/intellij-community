@@ -62,9 +62,12 @@ const fn home_parent(host: LaunchHost) -> &'static str {
 /// The list is closed: a variable that is not here does not reach the IDE or its children, so a credential in the
 /// environment of the guest account stays out of them. A name joins the list only when a child of the IDE needs it
 /// and no file of the context can carry it. Add it here and to the test of the context policy.
-pub(crate) const ENVIRONMENT_ALLOWLIST: [&str; 10] = [
+///
+/// `_JAVA_AWT_WM_NONREPARENTING` comes from the display that `lane-run` owns, whose window manager does not reparent.
+pub(crate) const ENVIRONMENT_ALLOWLIST: [&str; 11] = [
     "DISPLAY",
     "XAUTHORITY",
+    "_JAVA_AWT_WM_NONREPARENTING",
     "LANG",
     "LC_ALL",
     "TMPDIR",

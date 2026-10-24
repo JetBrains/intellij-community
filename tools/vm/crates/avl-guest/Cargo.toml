@@ -35,6 +35,9 @@ zip.workspace = true
 [target.'cfg(unix)'.dependencies]
 nix.workspace = true
 
+[target.'cfg(target_os = "linux")'.dependencies]
+x11rb.workspace = true
+
 [dev-dependencies]
 avl-testkit.workspace = true
 expect-test.workspace = true

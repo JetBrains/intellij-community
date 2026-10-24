@@ -1670,6 +1670,32 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   [@test] ../crates/avl-guest/src/linux/validate/tests.rs (`a_smaller_screen_is_a_note_and_not_a_refusal`)
   [@test] ../crates/avl-guest/src/linux/validate/tests.rs (`a_distribution_without_a_shared_object_sweeps_nothing_and_the_probe_notes_it`)
 
+- On a TeamCity build on Linux that lets the recorder read the screen, `lane-run` starts an X display of its own before
+  the probe. The display of the build is the desktop of the agent, and the recorder would show it around the IDE frame.
+  Xvfb picks a free display at 1920x1080x24. `lane-run` sets `DISPLAY` to that display, so the probe, the lane IDE and
+  the recorder use it. A note in the run stream names the display. Only a host without Xvfb keeps the display of the
+  build. A warning in the run stream and a TeamCity message of the status `WARNING` then name Xvfb and IJAI-4779. An
+  Xvfb that names no display is refused with `lane_run_display`. `lane-run` stops Xvfb at its end. On Linux Xvfb also
+  ends with the process.
+  [@test] ../crates/avl-guest/src/lane/own_display/tests.rs (`the_run_owns_its_display_only_with_xvfb`)
+  [@test] ../crates/avl-guest/src/lane/own_display/tests.rs (`the_displayfd_line_names_the_display`)
+  [@test] ../crates/avl-guest/src/lane/own_display/tests.rs (`the_display_starts_xvfb_on_a_free_display_and_its_drop_stops_it`)
+  [@test] ../crates/avl-guest/src/lane/own_display/tests.rs (`an_xvfb_that_names_no_display_is_refused`)
+
+- The display of `lane-run` has a window manager of `lane-run`, `air-lane-wm`, so the host needs no window manager
+  program. It does what the probe and the driver need. It selects the substructure redirect of the root and paints the
+  root `#2b2d30`. It maps each window that asks and applies each configure request, so `toFront()` raises a window. It
+  gives the input focus to a window that it maps or that `_NET_ACTIVE_WINDOW` names, by `XSetInputFocus` and by
+  `WM_TAKE_FOCUS`. A window whose hints refuse the input does not get it. A closed window gives the focus to the
+  topmost window that takes it. The window manager sets `_NET_SUPPORTING_WM_CHECK` with its name, `_NET_SUPPORTED`,
+  `_NET_ACTIVE_WINDOW`, `_NET_CLIENT_LIST`, and a zero `_NET_FRAME_EXTENTS`. It does not reparent and draws no
+  decoration, so the lane IDE gets `_JAVA_AWT_WM_NONREPARENTING=1`.
+  [@test] ../crates/avl-guest/src/lane/window_manager/tests.rs (`a_map_request_maps_raises_and_focuses_a_window_that_takes_the_focus`)
+  [@test] ../crates/avl-guest/src/lane/window_manager/tests.rs (`an_active_window_message_raises_and_focuses_a_managed_window`)
+  [@test] ../crates/avl-guest/src/lane/window_manager/tests.rs (`a_gone_window_with_the_focus_gives_it_to_the_topmost_window_that_takes_it`)
+  [@test] ../crates/avl-guest/src/lane/window_manager/tests.rs (`a_raise_moves_the_window_to_the_top_of_the_stack`)
+  [@test] ../crates/avl-guest/src/supervisor/tests.rs (`the_context_environment_is_the_layout_and_the_allowlist`)
+
 - The budget of a `lane-run` is the smaller of `--run-budget-sec` and `$TEST_TIMEOUT` of a Bazel test, less a
   teardown reserve of 180 s. A run that names neither has no budget. A `$TEST_TIMEOUT` that is no whole number is
   refused with `lane_run_budget`, and so is a budget that the reserve leaves nothing of. The rule `air_lane_test` passes

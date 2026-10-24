@@ -1028,10 +1028,11 @@ stills from the IDE's own paint route. A direct lane on your own machine never r
 everything else you have open and macOS would ask for Screen Recording permission in the middle of a scenario. It
 takes the paint stills and records no video, and `lane-run` refuses `-Dair.flow.trace.screen=on` as a JVM flag. A
 TeamCity build on Linux is the exception: no person works on the display of a TeamCity agent, so `lane-run` lets the
-recorder read it when `TEAMCITY_VERSION` and `DISPLAY` are set. The recorder reads a display of depth 24, whose pixels
-are BGRX, up to 3840x2160. The Air UI builds start `Xvfb :0 -screen 0 1024x768x24`. On a Linux UI agent, another X
-server can already hold `:0`. That `Xvfb` then exits, and the IDE draws on the other server, with a frame of
-1920x1200. At 1920x1080 a video costs about 3 MB per scenario minute. Every bundle's manifest names its capture source
+recorder read it when `TEAMCITY_VERSION` and `DISPLAY` are set. The display of the build is the GNOME desktop of the
+agent, so `lane-run` starts an Xvfb of 1920x1080 on a free display, with a window manager of its own, and the IDE and
+the recorder use it. The run stream names that display in a note. A host without Xvfb keeps the display of the build,
+and a warning in the run stream and in the build log says so. The recorder reads a display of depth 24, whose pixels are BGRX, up to
+3840x2160. At 1920x1080 a video costs about 3 MB per scenario minute. Every bundle's manifest names its capture source
 and, when a better one was missing, why.
 
 **Which videos a TeamCity build keeps.** A failed, an aborted or a truncated scenario always keeps its video. A passed

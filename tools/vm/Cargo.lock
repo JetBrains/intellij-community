@@ -237,6 +237,7 @@ dependencies = [
  "sha2",
  "tempfile",
  "walkdir",
+ "x11rb",
  "zip",
 ]
 

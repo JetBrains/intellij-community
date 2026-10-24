@@ -11,7 +11,8 @@
 //! green. Under a Bazel test, a run that is not green keeps its evidence in the outputs directory of the test, as
 //! [`super::evidence`] states. On a TeamCity build that names a build log file, the run shows in the build log while it
 //! goes on, as [`super::build_log`] states. [`VIDEO_VARIABLE`] can keep the video of a scenario that did not pass only,
-//! as [`video_retention`] states.
+//! as [`video_retention`] states. A TeamCity build on Linux lets the recorder read the screen, and the run then starts an
+//! X display of its own, as [`super::own_display`] states.
 //!
 //! With `--plan-only` it stops before the IDE: it stages the inputs and selects the documents as a run does, and it
 //! writes the [`RunPlan`] on standard output. So a host proves a lane rule and its runfiles without a lane IDE.
@@ -40,12 +41,14 @@ use super::evidence::{self, Evidence, Limits, Moment};
 use super::inputs::{self, LaunchInputs, guest_platform};
 use super::iteration::{self, RunnerSplit};
 use super::monitor::{self, BUDGET_PROBLEM, LiveStop, MONITOR_THREAD, Monitor, MonitorPaths};
+use super::own_display;
 use super::package::sha256_hex;
 use super::performance;
 use super::run_result::{self, RunEnd};
 use super::watchdog::{ExpiryReason, KILL_GRACE};
 use crate::cli::{LaneDaemonArgs, LaneRunArgs, ValidateGuestArgs};
 use crate::ide::launch::CODE_DISPLAY_MISSING;
+use crate::linux::DISPLAY_VARIABLE;
 use crate::linux::validate::GuestValidator;
 use crate::reply::{AgentRefusal, AgentRefusalExt};
 use crate::step::SystemRunner;
@@ -244,11 +247,29 @@ pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>)
         .map_err(|error| AgentRefusal::refused(error.code, error.message))?;
     let mut launch_inputs = inputs::from_descriptor(&descriptor, &daemon_args)?;
     launch_inputs.trace.bazel_outputs = bazel_outputs(variable);
-    launch_inputs.trace.screen |= build_owns_screen(variable, cfg!(target_os = "linux"));
+    let owns_screen = build_owns_screen(variable, cfg!(target_os = "linux"));
+    launch_inputs.trace.screen |= owns_screen;
     launch_inputs.trace.allure |= flags.allure;
     launch_inputs.trace.keep_video = keep_video;
     let jcmd = launch_inputs.jcmd();
     let mut notes = flags.notes;
+    // Held to the end of the run: its drop stops the display.
+    let run_display = if owns_screen && !args.plan_only {
+        let (display, note) = own_display::take(&root, &variable(DISPLAY_VARIABLE).unwrap_or_default(), variable("PATH").as_deref())?;
+        if display.is_none() {
+            println!("{}", own_display::warning_message(&note));
+        }
+        notes.push(note);
+        display
+    } else {
+        None
+    };
+    let owned = run_display.as_ref().map(|display| display.display().to_owned());
+    let on_own_display = |name: &str| match &owned {
+        Some(display) if name == DISPLAY_VARIABLE => Some(display.clone()),
+        _ => variable(name),
+    };
+    let variable: &dyn Fn(&str) -> Option<String> = &on_own_display;
     if host_probe_applies(args, variable, cfg!(target_os = "linux")) {
         notes.extend(probe_host(&launch_inputs, variable)?);
     }
@@ -541,7 +562,8 @@ pub(crate) fn host_probe_applies(args: &LaneRunArgs, variable: &dyn Fn(&str) -> 
 
 /// Whether the recorder may read the screen of a run whose descriptor does not let it: a TeamCity build on Linux with
 /// an X display. A TeamCity agent runs one build at a time, and no person works on its display, so it shows nothing of a
-/// person. A host of a developer is no TeamCity build, so lane-run never reads the screen of a person.
+/// person. A host of a developer is no TeamCity build, so lane-run never reads the screen of a person. Such a run starts
+/// a display of its own, as [`own_display`] states.
 pub(crate) fn build_owns_screen(variable: &dyn Fn(&str) -> Option<String>, linux: bool) -> bool {
     linux && teamcity::is_team_city(variable) && variable("DISPLAY").is_some_and(|display| !display.trim().is_empty())
 }

@@ -814,6 +814,7 @@ fn the_context_environment_is_the_layout_and_the_allowlist() {
         ("PATH", "/somewhere"),
         ("DISPLAY", ":88"),
         ("XAUTHORITY", "/tmp/xauth"),
+        ("_JAVA_AWT_WM_NONREPARENTING", "1"),
         ("LANG", "en_US.UTF-8"),
         ("TMPDIR", "/var/folders/x/T/"),
         ("USER", "worker"),
@@ -826,6 +827,7 @@ fn the_context_environment_is_the_layout_and_the_allowlist() {
     let expected: BTreeMap<OsString, OsString> = [
         ("DISPLAY", ":88"),
         ("XAUTHORITY", "/tmp/xauth"),
+        ("_JAVA_AWT_WM_NONREPARENTING", "1"),
         ("LANG", "en_US.UTF-8"),
         ("TMPDIR", "/var/folders/x/T/"),
         ("USER", "worker"),
