@@ -237,6 +237,48 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
     afterCreation: ((EditorImpl) -> Unit)?,
   ): EditorImpl {
     val editor = EditorImpl(document, isViewer, project, kind, file, highlighter)
+    registerEditor(editor, kind, file, afterCreation)
+    return editor
+  }
+
+  @ApiStatus.Internal
+  @RequiresEdt
+  fun prepareMainEditor(document: Document, project: Project, file: VirtualFile): PendingMainEditor {
+    assert(document !is DocumentWindow)
+    return PendingMainEditor(EditorImpl(document, false, project, EditorKind.MAIN_EDITOR, file, null), file)
+  }
+
+  /**
+   * Holds an editor during highlighter preparation. Close it if construction does not transfer the editor to a file editor.
+   */
+  @ApiStatus.Internal
+  inner class PendingMainEditor internal constructor(private val editor: EditorImpl, private val file: VirtualFile) : AutoCloseable {
+    private var registered = false
+    private var closed = false
+
+    @RequiresEdt
+    fun complete(highlighter: EditorHighlighter, afterCreation: (EditorImpl) -> Unit): EditorImpl {
+      check(!registered && !closed)
+      editor.highlighter = highlighter
+      registerEditor(editor, EditorKind.MAIN_EDITOR, file, afterCreation) { registered = true }
+      return editor
+    }
+
+    @RequiresEdt
+    override fun close() {
+      if (closed) return
+      closed = true
+      if (registered) releaseEditor(editor) else editor.release()
+    }
+  }
+
+  private fun registerEditor(
+    editor: EditorImpl,
+    kind: EditorKind,
+    file: VirtualFile?,
+    afterCreation: ((EditorImpl) -> Unit)?,
+    onRegistered: (() -> Unit)? = null,
+  ) {
     editor.putEditorId()
     markLightFileExposedInEditor(kind, file)
     // must be _before_ event firing
@@ -244,6 +286,7 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
 
     val editorManager = ClientEditorManager.getCurrentInstance()
     editorManager.editorCreated(editor)
+    onRegistered?.invoke()
     editorEventMulticaster.registerEditor(editor)
 
     val event = EditorFactoryEvent(this, editor)
@@ -251,7 +294,6 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
     EP.forEachExtensionSafe { it.editorCreated(event) }
 
     LOG.debug { "number of editors after create: ${editorManager.editorsSequence().count()}" }
-    return editor
   }
 
   @RequiresEdt

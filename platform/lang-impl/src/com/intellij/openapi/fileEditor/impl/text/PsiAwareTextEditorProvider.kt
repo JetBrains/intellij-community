@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readActionBlocking
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
@@ -30,18 +29,22 @@ import com.intellij.openapi.fileEditor.createdFileEditorSink
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.SystemProperties
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -116,18 +119,44 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       )
 
       val factory = serviceAsync<EditorFactory>() as EditorFactoryImpl
-      val highlighter = highlighterDeferred.await()
+      var pendingEditor: EditorFactoryImpl.PendingMainEditor? = null
+      var disposeOnFailure: (() -> Unit)? = null
 
-      span("initialize text editor on EDT", Dispatchers.EDT) {
-        writeIntentReadAction {
-          val editor = initializeEditor(factory, effectiveDocument, project, file, highlighter, asyncLoader)
+      try {
+        if (SystemProperties.getBooleanProperty("idea.editor.highlighter.prepare.in.parallel", true) &&
+            this@PsiAwareTextEditorProvider.javaClass == PsiAwareTextEditorProvider::class.java) {
+          withContext(Dispatchers.EDT) {
+            val pending = factory.prepareMainEditor(effectiveDocument, project, file)
+            pendingEditor = pending
+            disposeOnFailure = pending::close
+          }
+        }
+        val highlighter = highlighterDeferred.await()
+        val textEditor = span("initialize text editor on EDT", Dispatchers.EDT) {
+          val editor = pendingEditor?.complete(highlighter) { it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader) }
+                       ?: initializeEditor(factory, effectiveDocument, project, file, highlighter, asyncLoader)
+          disposeOnFailure = { factory.releaseEditor(editor) }
           editorDeferred.complete(editor)
           editor.gutterComponentEx.setInitialIconAreaWidth(EditorGutterLayout.getInitialGutterWidth())
           val component = createPsiAwareTextEditorComponent(file = file, editor = editor)
           val textEditor = PsiAwareTextEditorImpl(project = project, file = file, component = component, asyncLoader = asyncLoader)
-          createdEditors?.register(textEditor)
+          disposeOnFailure = { Disposer.dispose(textEditor) }
           asyncLoader.start(textEditor = textEditor, task = task)
+          if (createdEditors != null) {
+            createdEditors.register(textEditor)
+            disposeOnFailure = null
+          }
           textEditor
+        }
+        disposeOnFailure = null
+        textEditor
+      }
+      finally {
+        val dispose = disposeOnFailure
+        if (dispose != null) {
+          withContext(NonCancellable + Dispatchers.EDT) {
+          dispose()
+          }
         }
       }
     }
