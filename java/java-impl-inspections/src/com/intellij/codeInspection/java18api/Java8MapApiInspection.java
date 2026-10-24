@@ -49,6 +49,7 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
@@ -83,6 +84,10 @@ public final class Java8MapApiInspection extends AbstractBaseJavaLocalInspection
   public static final String SHORT_NAME = "Java8MapApi";
   private static final CallMatcher KEY_VALUE_GET_METHODS =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP_ENTRY, "getKey", "getValue").parameterCount(0);
+  private static final CallMatcher MAP_GET =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "get").parameterCount(1);
+  private static final CallMatcher MAP_REMOVE =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "remove").parameterCount(1);
 
   @SuppressWarnings("PublicField")
   public boolean mySuggestMapGetOrDefault = true;
@@ -94,6 +99,8 @@ public final class Java8MapApiInspection extends AbstractBaseJavaLocalInspection
   public boolean mySuggestMapMerge = true;
   @SuppressWarnings("PublicField")
   public boolean mySuggestMapReplaceAll = true;
+  @SuppressWarnings("PublicField")
+  public boolean mySuggestMapRemove = true;
   @SuppressWarnings("PublicField")
   public boolean myTreatGetNullAsContainsKey = false;
   @SuppressWarnings("PublicField")
@@ -107,6 +114,7 @@ public final class Java8MapApiInspection extends AbstractBaseJavaLocalInspection
       checkbox("mySuggestMapPutIfAbsent", JavaBundle.message("checkbox.suggest.conversion.to.map.putifabsent")),
       checkbox("mySuggestMapMerge", JavaBundle.message("checkbox.suggest.conversion.to.map.merge")),
       checkbox("mySuggestMapReplaceAll", JavaBundle.message("checkbox.suggest.conversion.to.map.replaceall")),
+      checkbox("mySuggestMapRemove", JavaBundle.message("checkbox.suggest.conversion.to.map.remove")),
       checkbox("myTreatGetNullAsContainsKey",
                JavaBundle.message("checkbox.treat.get.k.null.the.same.as.containskey.k.may.change.semantics")),
       checkbox("mySideEffects", JavaBundle.message("checkbox.suggest.replacement.even.if.lambda.may.have.side.effects")));
@@ -166,6 +174,7 @@ public final class Java8MapApiInspection extends AbstractBaseJavaLocalInspection
 
       @Override
       public void visitIfStatement(@NotNull PsiIfStatement statement) {
+        if (mySuggestMapRemove) processRemove(statement);
         MapCheckCondition condition = fromConditional(statement, myTreatGetNullAsContainsKey);
         if (condition == null) return;
         PsiStatement thenBranch = statement.getThenBranch();
@@ -349,6 +358,39 @@ public final class Java8MapApiInspection extends AbstractBaseJavaLocalInspection
             }
           }
         }
+      }
+
+      private void processRemove(PsiIfStatement statement) {
+        if (statement.getElseBranch() != null) return;
+        PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
+        if (!(condition instanceof PsiMethodCallExpression equalsCall)) return;
+        if (!"equals".equals(equalsCall.getMethodExpression().getReferenceName())) return;
+        if (equalsCall.getArgumentList().getExpressionCount() != 1) return;
+        PsiStatement body = ControlFlowUtils.stripBraces(statement.getThenBranch());
+        if (!(body instanceof PsiExpressionStatement bodyStatement)) return;
+        if (!(bodyStatement.getExpression() instanceof PsiMethodCallExpression removeCall) || !MAP_REMOVE.test(removeCall)) return;
+        PsiExpression removeMap = removeCall.getMethodExpression().getQualifierExpression();
+        PsiExpression removeKey = removeCall.getArgumentList().getExpressions()[0];
+        if (SideEffectChecker.mayHaveSideEffects(removeKey)) return;
+        PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(equalsCall.getMethodExpression().getQualifierExpression());
+        PsiExpression argument = PsiUtil.skipParenthesizedExprDown(equalsCall.getArgumentList().getExpressions()[0]);
+        PsiExpression value = valueIfGetMatches(qualifier, argument, removeMap, removeKey);
+        if (value == null) value = valueIfGetMatches(argument, qualifier, removeMap, removeKey);
+        if (value == null) return;
+        if (NullabilityUtil.getExpressionNullability(value) == Nullability.NULLABLE) return;
+        if (SideEffectChecker.mayHaveSideEffects(value)) return;
+        holder.registerProblem(statement.getCondition(),
+                               QuickFixBundle.message("java.8.map.api.inspection.description", "remove"),
+                               new ReplaceWithMapRemove(removeCall, value));
+      }
+
+      private static PsiExpression valueIfGetMatches(PsiExpression getCandidate, PsiExpression value,
+                                                     PsiExpression removeMap, PsiExpression removeKey) {
+        if (!(getCandidate instanceof PsiMethodCallExpression getCall) || !MAP_GET.test(getCall)) return null;
+        EquivalenceChecker eq = getCanonicalPsiEquivalence();
+        if (!eq.expressionsAreEquivalent(getCall.getMethodExpression().getQualifierExpression(), removeMap)) return null;
+        if (!eq.expressionsAreEquivalent(getCall.getArgumentList().getExpressions()[0], removeKey)) return null;
+        return value;
       }
     };
   }
@@ -577,6 +619,42 @@ public final class Java8MapApiInspection extends AbstractBaseJavaLocalInspection
       String lambdaExpressionText = "(" + keyName + ", " + variable.getName() + ")" + " -> " + commentTracker.text(exp);
       commentTracker.delete(variable);
       commentTracker.replaceExpressionAndRestoreComments(exp, lambdaExpressionText);
+    }
+  }
+
+  private static class ReplaceWithMapRemove extends PsiUpdateModCommandQuickFix {
+    private final SmartPsiElementPointer<PsiMethodCallExpression> myRemoveCallPointer;
+    private final SmartPsiElementPointer<PsiExpression> myValuePointer;
+
+    ReplaceWithMapRemove(PsiMethodCallExpression removeCall, PsiExpression value) {
+      SmartPointerManager manager = SmartPointerManager.getInstance(value.getProject());
+      myRemoveCallPointer = manager.createSmartPsiElementPointer(removeCall);
+      myValuePointer = manager.createSmartPsiElementPointer(value);
+    }
+
+    @Override
+    public @Nls @NotNull String getName() {
+      return QuickFixBundle.message("java.8.map.api.inspection.fix.text", "remove");
+    }
+
+    @Override
+    public @Nls @NotNull String getFamilyName() {
+      return QuickFixBundle.message("java.8.map.api.inspection.fix.family.name");
+    }
+
+    @Override
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiMethodCallExpression removeCall = updater.getWritable(myRemoveCallPointer.getElement());
+      PsiExpression value = updater.getWritable(myValuePointer.getElement());
+      if (removeCall == null || value == null) return;
+      PsiIfStatement ifStatement = PsiTreeUtil.getParentOfType(removeCall, PsiIfStatement.class);
+      PsiExpression removeMap = removeCall.getMethodExpression().getQualifierExpression();
+      if (ifStatement == null || removeMap == null) return;
+      PsiExpression removeKey = removeCall.getArgumentList().getExpressions()[0];
+      CommentTracker ct = new CommentTracker();
+      PsiElement result = ct.replaceAndRestoreComments(
+        ifStatement, ct.text(removeMap) + ".remove(" + ct.text(removeKey) + ", " + ct.text(value) + ");");
+      CodeStyleManager.getInstance(project).reformat(result);
     }
   }
 
