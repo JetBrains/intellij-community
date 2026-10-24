@@ -32,6 +32,11 @@
 //!
 //! On TeamCity the step publishes only the tests of this build ([teamcity::Build::start]). It also empties its output
 //! first. So a test or a zip of an earlier build on the agent does not publish again.
+//!
+//! On TeamCity the archive also holds `affected.json` after `runs.json` ([affected]). For each commit of the build it
+//! names the changed files, the suites that they reach and the files that reach no suite. A build without changed files
+//! has no such entry. A build that does not name its changed files, a file that does not read and a refusal of the
+//! join are problems. The rest still publishes.
 
 use std::collections::HashSet;
 use std::fs;
@@ -50,8 +55,10 @@ use avl_trace_tools::viewer::{CI_SITE, ci_build_url, ci_trace_url};
 
 use crate::serve::{Runs, Scenario, group_runs, listed};
 use crate::{Exit, Refusal, report, usage};
+use affected::{AFFECTED_FILE, AffectedDocument};
 use teamcity::Build;
 
+mod affected;
 mod teamcity;
 
 /// `air-trace teamcity-publish`'s command line.
@@ -75,6 +82,10 @@ pub(crate) struct PublishArgs {
     /// the step does so always, so the artifact bazel.logs.zip does not hold them a second time.
     #[arg(long)]
     pub remove_packed: bool,
+    /// The checkout that the changed files of the TeamCity build are joined on, for affected.json. The default is
+    /// teamcity.build.checkoutDir of the build, then BUILD_WORKSPACE_DIRECTORY.
+    #[arg(long, value_name = "DIR")]
+    pub repo: Option<PathBuf>,
 }
 
 /// Reads `--since`: a time of RFC 3339, such as `2026-10-21T08:00:00Z`.
@@ -147,6 +158,8 @@ pub(crate) struct Publish<'a> {
     pub out_owned: bool,
     /// Whether the step removes the bundle directories that the published archive holds from the testlogs.
     pub remove_packed: bool,
+    /// What the changed files of the build reach, or `None` for no `affected.json`.
+    pub affected: Option<&'a AffectedDocument>,
 }
 
 /// Runs `air-trace teamcity-publish`: the service messages on stdout, a summary line and each problem on stderr. It
@@ -174,13 +187,17 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
     }
     let out = match args.out.clone().map_or_else(
         || {
-            let base = workspace.map_or_else(std::env::current_dir, Ok)?;
+            let base = workspace.clone().map_or_else(std::env::current_dir, Ok)?;
             Ok(base.join("out").join("air-traces-publish"))
         },
         |out| given(&out),
     ) {
         Ok(out) => out,
         Err(error) => return report(stderr, "teamcity-publish", &usage(format!("--out: {error}"))),
+    };
+    let repo = match args.repo.as_deref().map(given).transpose() {
+        Ok(repo) => repo,
+        Err(error) => return report(stderr, "teamcity-publish", &usage(format!("--repo: {error}"))),
     };
     let variable = |name: &str| std::env::var(name).ok();
     let build = Build::of_step(&variable).unwrap_or_else(|reason| {
@@ -194,6 +211,12 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
     if let Some(fallback) = build.as_ref().and_then(|build| build.server_fallback(&variable)) {
         let _ = warn(stdout, stderr, &fallback);
     }
+    let affected = build.as_ref().and_then(|build| {
+        affected::of_build(build, repo.as_deref(), workspace.as_deref()).unwrap_or_else(|reason| {
+            let _ = warn(stdout, stderr, &reason);
+            None
+        })
+    });
     let on_team_city = is_build_step(variable);
     let since = match since_of(args.since, &variable, on_team_city) {
         Ok(Some((since, source))) => {
@@ -214,6 +237,7 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
         since,
         out_owned: args.out.is_none(),
         remove_packed: args.remove_packed || on_team_city,
+        affected: affected.as_ref(),
     };
     if let Err(refused) = publish(&job, stdout, stderr) {
         report(stderr, "teamcity-publish", &refused);
@@ -497,13 +521,20 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
         .iter()
         .map(|root| root.problems.len() + usize::from(root.error.is_some()))
         .sum::<usize>();
-    // The listing first, then each bundle zip in the order it was published.
+    // The listing first, then what the changed files reach, then each bundle zip in the order it was published.
     let mut entries: Vec<(String, PathBuf)> = Vec::new();
-    match write_listing(&listing, &staging) {
-        Ok(file) => entries.push((RUNS_FILE.to_owned(), file)),
-        Err(reason) => {
-            problems += 1;
-            warn(stdout, stderr, &reason).map_err(write_failed)?;
+    let written = [
+        Some((RUNS_FILE, write_json(&listing, &staging, RUNS_FILE))),
+        job.affected
+            .map(|affected| (AFFECTED_FILE, write_json(affected, &staging, AFFECTED_FILE))),
+    ];
+    for (name, file) in written.into_iter().flatten() {
+        match file {
+            Ok(file) => entries.push((name.to_owned(), file)),
+            Err(reason) => {
+                problems += 1;
+                warn(stdout, stderr, &reason).map_err(write_failed)?;
+            }
         }
     }
     entries.extend(zips);
@@ -762,10 +793,11 @@ fn published_scenario(bundle: &Bundle, relative: String, origin: Option<&Origin>
     }
 }
 
-/// Writes the listing as `<out>/runs.json`. Answers the file, or why it could not be written.
-fn write_listing(listing: &Runs<'_>, out: &Path) -> Result<PathBuf, String> {
-    let file = out.join(RUNS_FILE);
-    let mut json = serde_json::to_vec_pretty(listing).map_err(|error| format!("{}: {error}", file.display()))?;
+/// Writes a document of the archive, such as the listing, as `<out>/<name>`. Answers the file, or why it could not be
+/// written.
+fn write_json(document: &impl serde::Serialize, out: &Path, name: &str) -> Result<PathBuf, String> {
+    let file = out.join(name);
+    let mut json = serde_json::to_vec_pretty(document).map_err(|error| format!("{}: {error}", file.display()))?;
     json.push(b'\n');
     fs::create_dir_all(out)
         .and_then(|()| fs::write(&file, json))

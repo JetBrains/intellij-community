@@ -31,6 +31,7 @@ fn run(root: &Path, out: &Path, build: Option<&Build>) -> (String, String) {
         since: None,
         out_owned: true,
         remove_packed: false,
+        affected: None,
     })
 }
 
@@ -64,6 +65,9 @@ fn build() -> Build {
         build_type_id: "Air_UiTests_1".to_owned(),
         id: "1100310296".to_owned(),
         name: "Air Plugin UI Tests / 1".to_owned(),
+        revision: None,
+        changed_files: None,
+        checkout_dir: None,
     }
 }
 
@@ -295,6 +299,7 @@ fn testlogs_without_bundles_print_nothing() {
         since: None,
         out_owned: true,
         remove_packed: false,
+        affected: None,
     });
     let problem = format!("no testlogs: {}: not a directory", missing.display());
     assert!(
@@ -392,6 +397,40 @@ fn on_team_city_the_listing_names_the_build_and_each_test_links_its_trace() {
     }
 }
 
+/// What the changed files of the build reach is the entry `affected.json` of the archive, after the listing. A build
+/// without it has no such entry.
+#[test]
+fn the_archive_holds_what_the_changed_files_reach_after_the_listing() {
+    let root = testlogs();
+    let out = tempfile::tempdir().unwrap();
+    let document = AffectedDocument {
+        schema: 1,
+        revision: "4444".to_owned(),
+        commits: Vec::new(),
+    };
+    run_job(&Publish {
+        testlogs: &[root.path().to_path_buf()],
+        out: out.path(),
+        site: CI_SITE,
+        build: Some(&build()),
+        since: None,
+        out_owned: true,
+        remove_packed: false,
+        affected: Some(&document),
+    });
+    let archived = out.path().join(ARCHIVE);
+    assert!(
+        listing_of(&archived).starts_with("deflated runs.json\ndeflated affected.json\nstored "),
+        "{}",
+        listing_of(&archived)
+    );
+    let written: Value = serde_json::from_slice(&entry_of(&archived, AFFECTED_FILE)).unwrap();
+    assert_eq!(written, serde_json::json!({"schema": 1, "revision": "4444", "commits": []}));
+
+    let (_, _) = run(root.path(), out.path(), Some(&build()));
+    assert!(!listing_of(&archived).contains(AFFECTED_FILE), "{}", listing_of(&archived));
+}
+
 /// The links open the site that the step names, such as a staging portal, and so does the page of the build.
 #[test]
 fn the_links_open_the_site_that_the_step_names() {
@@ -405,6 +444,7 @@ fn the_links_open_the_site_that_the_step_names() {
         since: None,
         out_owned: true,
         remove_packed: false,
+        affected: None,
     });
     let links: Vec<&str> = stdout.lines().filter(|line| line.contains("type='link'")).collect();
     assert_eq!(links.len(), 4, "{stdout}");
@@ -437,6 +477,7 @@ fn the_tests_of_an_earlier_build_are_skipped() {
         since: Some(SystemTime::now() - Duration::from_hours(1)),
         out_owned: true,
         remove_packed: false,
+        affected: None,
     });
     assert_eq!(
         stdout.matches(TRACE_METADATA).count(),
@@ -462,6 +503,7 @@ fn the_tests_of_an_earlier_build_are_skipped() {
         since: Some(SystemTime::now() + Duration::from_hours(1)),
         out_owned: true,
         remove_packed: false,
+        affected: None,
     });
     assert!(
         stdout.starts_with("##teamcity[message text='air-trace teamcity-publish: 3 test(s) skipped, because their test.xml")
@@ -489,6 +531,7 @@ fn the_output_holds_the_files_of_this_run_only() {
         since: None,
         out_owned,
         remove_packed: false,
+        affected: None,
     };
     let (stdout, _) = run_job(&job(true));
     assert!(
@@ -622,6 +665,7 @@ fn the_packed_bundles_leave_the_testlogs_once_the_archive_is_published() {
             since: None,
             out_owned: true,
             remove_packed,
+            affected: None,
         })
     };
 
@@ -718,6 +762,7 @@ fn a_bundle_that_its_zip_does_not_hold_whole_stays_in_the_testlogs() {
         since: None,
         out_owned: true,
         remove_packed: true,
+        affected: None,
     });
 
     assert!(stderr.contains("removed 1 packed bundle(s) with "), "{stderr}");

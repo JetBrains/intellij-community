@@ -956,6 +956,13 @@ that it names. `bazel run` passes the environment of the step to the program. Th
 run, with the page of the build on the root of `BUILD_URL`. Without the files, the zips and the listing still publish
 with no link, and stderr says why.
 
+The archive of a TeamCity build also holds `affected.json`. For each commit of the build, it names the changed files,
+the suites that they reach, and the files that reach no suite. The step reads the changed files from
+`teamcity.build.changedFiles.file` and joins each commit as `vm.cmd suites` does, on the checkout of the build.
+`--repo DIR` names another checkout. A build without changes has no `affected.json`. To try it locally, set
+`TEAMCITY_VERSION` and point `TEAMCITY_BUILD_PROPERTIES_FILE` to a file with `build.vcs.number`,
+`teamcity.build.changedFiles.file` and `teamcity.build.checkoutDir`.
+
 An agent keeps its checkout and its Bazel output base across builds, so the testlogs can hold the tests of an earlier
 build. The step publishes only a test whose `test.xml` is from the start of the build or later. The first step of the
 build sets `AIR_TRACE_SINCE` to the start, with `date -u +%Y-%m-%dT%H:%M:%SZ` on the agent. `--since` overrides it. On

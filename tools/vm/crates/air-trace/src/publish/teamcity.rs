@@ -4,10 +4,14 @@
 //! as `teamcity.buildType.id` and `teamcity.buildConfName`. Its `teamcity.configuration.properties.file` names a second
 //! file with the configuration parameters, such as `teamcity.build.id` and `teamcity.serverUrl`. Both files are Java
 //! properties files.
+//!
+//! The build's file also names the revision of the build, `build.vcs.number`, and the file of its changed files,
+//! `teamcity.build.changedFiles.file`. The paths in that file are relative to `teamcity.build.checkoutDir`. A build of
+//! one VCS root has all three. TeamCity leaves out the file of the changed files for a build without changes.
 
 use std::collections::BTreeMap;
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use avl_report::teamcity::is_build_step;
 use avl_trace_tools::discover::Origin;
@@ -18,6 +22,8 @@ const BUILD_PROPERTIES_FILE: &str = "TEAMCITY_BUILD_PROPERTIES_FILE";
 const BUILD_URL: &str = "BUILD_URL";
 /// The property of the build's file that names the file of the configuration parameters.
 const CONFIGURATION_FILE: &str = "teamcity.configuration.properties.file";
+/// The property of the build's file that names the file of the changed files of the build.
+pub(crate) const CHANGED_FILES: &str = "teamcity.build.changedFiles.file";
 
 /// The build that the step runs in.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -28,6 +34,13 @@ pub(crate) struct Build {
     pub id: String,
     /// The name of the build configuration, such as `Air Plugin UI Tests / 1`.
     pub name: String,
+    /// The revision of the build, `build.vcs.number`.
+    pub revision: Option<String>,
+    /// The file of the changed files of the build, [CHANGED_FILES].
+    pub changed_files: Option<PathBuf>,
+    /// The checkout directory of the build, `teamcity.build.checkoutDir`. The paths of the changed files are relative
+    /// to it.
+    pub checkout_dir: Option<PathBuf>,
 }
 
 impl Build {
@@ -50,6 +63,9 @@ impl Build {
             build_type_id: property("teamcity.buildType.id")?,
             name: property("teamcity.buildConfName")?,
             id,
+            revision: properties.optional("build.vcs.number"),
+            changed_files: properties.optional(CHANGED_FILES).map(PathBuf::from),
+            checkout_dir: properties.optional("teamcity.build.checkoutDir").map(PathBuf::from),
         }))
     }
 
@@ -102,6 +118,11 @@ impl StepProperties {
             .filter(|value| !value.trim().is_empty())
             .cloned()
             .ok_or_else(|| format!("the build properties of {} name no {key}", self.file))
+    }
+
+    /// The value of `key`, or `None` when the files name none.
+    fn optional(&self, key: &str) -> Option<String> {
+        self.get(key).ok()
     }
 }
 

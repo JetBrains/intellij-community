@@ -588,6 +588,22 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   [@test] ../crates/air-trace/src/publish/tests.rs (`the_bundles_of_the_testlogs_are_published_with_the_metadata_of_their_tests`)
   [@test] ../crates/avl-trace-tools/src/pack/tests.rs (`an_archive_keeps_its_order_and_stores_its_zips`)
 
+- On TeamCity the archive also holds `affected.json`, after `runs.json`. The step reads the changed files of the
+  build from the file of `teamcity.build.changedFiles.file`. Each line is `<path>:<change type>:<revision>`, and a
+  file of a personal patch has the revision `<personal>`. The step groups the files by revision, in the order of the
+  file. It joins the paths of each commit on the checkout of the build. The checkout is `--repo`, else
+  `teamcity.build.checkoutDir`, else `BUILD_WORKSPACE_DIRECTORY`. The join is the one of `vm.cmd suites`, and the
+  document keeps its words. The document is `{schema: 1, revision, commits}`, with the revision of the build. Each
+  commit holds its `revision` and its `paths`, each with its `change` type. Its `reached` suites carry `suite`,
+  `testClassName`, the catalog `lane` and `via`. Its `unmapped` paths carry the `reason` of the join. A build without
+  changed files has no `affected.json`. A build that names no such file and a file that does not read are warnings.
+  A line of another format, a build without `build.vcs.number` and a refusal of the join are warnings too. The rest
+  still publishes.
+  [@test] ../crates/air-trace/src/publish/affected/tests.rs (`each_commit_names_the_suites_that_its_files_reach`)
+  [@test] ../crates/air-trace/src/publish/affected/tests.rs (`the_changed_files_read_as_team_city_writes_them`)
+  [@test] ../crates/air-trace/src/publish/affected/tests.rs (`a_build_without_its_changed_files_says_why_it_has_no_document`)
+  [@test] ../crates/air-trace/src/publish/tests.rs (`the_archive_holds_what_the_changed_files_reach_after_the_listing`)
+
 - Once `air-traces.zip` is written and published, the step removes from the testlogs each bundle directory that the
   archive holds. TeamCity packs the testlogs into `bazel.logs.zip` at the end of the build, which would hold the bundles
   a second time. A directory goes only when it is a directory and no link. Its real path must be inside

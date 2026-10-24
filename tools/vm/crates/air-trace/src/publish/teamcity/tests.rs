@@ -52,7 +52,10 @@ fn agent_files(dir: &Path, build: &str) -> String {
 }
 
 const BUILD_PROPERTIES: &str = "teamcity.buildConfName=Air Plugin UI Tests / 1\n\
-                                teamcity.buildType.id=ijplatform_master_AirPluginUiTests_1\n";
+                                teamcity.buildType.id=ijplatform_master_AirPluginUiTests_1\n\
+                                build.vcs.number=4fa11474b78cbc7f4950df6d08f246fbc6a24020\n\
+                                teamcity.build.changedFiles.file=/mnt/agent/temp/buildTmp/teamcity.changedFiles.txt\n\
+                                teamcity.build.checkoutDir=/mnt/agent/work/89e70edcf4afcfd6\n";
 
 fn of_step(variables: &[(&str, &str)]) -> Result<Option<Build>, String> {
     let variables: BTreeMap<String, String> = variables
@@ -87,6 +90,9 @@ fn the_build_of_a_step_comes_from_the_agent_files() {
             build_type_id: "ijplatform_master_AirPluginUiTests_1".to_owned(),
             id: "1100310296".to_owned(),
             name: "Air Plugin UI Tests / 1".to_owned(),
+            revision: Some("4fa11474b78cbc7f4950df6d08f246fbc6a24020".to_owned()),
+            changed_files: Some(PathBuf::from("/mnt/agent/temp/buildTmp/teamcity.changedFiles.txt")),
+            checkout_dir: Some(PathBuf::from("/mnt/agent/work/89e70edcf4afcfd6")),
         }
     );
     assert_eq!(
@@ -113,6 +119,21 @@ fn the_build_of_a_step_comes_from_the_agent_files() {
         of_step(&on_team_city).unwrap().unwrap().server,
         "https://bs-proxy-eu-north-1.services.buildfarm.intellij.net"
     );
+}
+
+/// The revision, the file of the changed files and the checkout directory are optional. A build without changes has
+/// no file of the changed files, and the build still reads.
+#[test]
+fn a_build_without_changes_still_reads() {
+    let dir = tempfile::tempdir().unwrap();
+    let file = agent_files(
+        dir.path(),
+        "teamcity.buildConfName=Air Plugin UI Tests / 1\nteamcity.buildType.id=ijplatform_master_AirPluginUiTests_1\n",
+    );
+    let build = of_step(&[("TEAMCITY_VERSION", "2026.3"), (BUILD_PROPERTIES_FILE, file.as_str())])
+        .unwrap()
+        .unwrap();
+    assert_eq!((build.revision, build.changed_files, build.checkout_dir), (None, None, None));
 }
 
 /// Off TeamCity there is no build. On TeamCity, a file that is not set or does not read, and a property that is
