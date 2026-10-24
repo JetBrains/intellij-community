@@ -19,10 +19,19 @@ public interface EditorTabColorProvider extends PossiblyDumbAware {
   ExtensionPointName<EditorTabColorProvider> EP_NAME = ExtensionPointName.create("com.intellij.editorTabColorProvider");
 
   /**
+   * Return this instance to give the file no color and to skip the later providers.
+   * A {@code null} result asks the next provider instead.
+   * Only this instance has the effect, compared by identity. It is never painted.
+   */
+  @ApiStatus.Internal
+  @SuppressWarnings("UseJBColor")
+  Color NO_COLOR = new Color(0, 0, 0, 0);
+
+  /**
    *
    * @param project current IDE project.
    * @param file a file you need to highlight.
-   * @return background color to highlight editor tab.
+   * @return background color to highlight editor tab, or {@link #NO_COLOR}.
    * @see EditorTabPresentationUtil#getEditorTabBackgroundColor(Project, VirtualFile)
    */
   @Nullable
@@ -41,7 +50,7 @@ public interface EditorTabColorProvider extends PossiblyDumbAware {
    *
    * @param project current IDE project.
    * @param file a file you need to highlight.
-   * @return background color to highlight file row in trees and lists.
+   * @return background color to highlight file row in trees and lists, or {@link #NO_COLOR}.
    * @see EditorTabPresentationUtil#getFileBackgroundColor(Project, VirtualFile)
    */
   default @Nullable Color getProjectViewColor(@NotNull Project project, @NotNull VirtualFile file) {
