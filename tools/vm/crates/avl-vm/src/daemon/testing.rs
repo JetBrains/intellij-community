@@ -26,7 +26,7 @@ use avl_base::report::{Buffer, Mode, SinkGuard};
 use avl_base::sync::lock;
 use avl_base::{Backend, FakeClock, GuestOs, Refusal, Reporter, SCHEMA_VERSION};
 use avl_host_sys::lock::LockManager;
-use avl_host_sys::{Ctx, GuestStream, Interrupts, ProcessTable, Runner};
+use avl_host_sys::{Ctx, GuestStream, Interrupts, ProcessTable, Runner, Signal};
 use avl_host_testkit::agent::{active_reply, agent_reply, argv_value, run_state};
 use avl_host_testkit::answer::base_name;
 use avl_host_testkit::{
@@ -34,14 +34,12 @@ use avl_host_testkit::{
     serve_on_connect,
 };
 use avl_wire::daemon::{self as wire, Route};
-use avl_wire::progress::{Kind, Record, Verdict};
+use avl_wire::progress::{Kind, Phase, PhaseChange, Record, Verdict};
 use axum::body::Body;
 use axum::extract::{Request, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use hyper::body::Bytes;
-use hyper_util::rt::TokioIo;
-use hyper_util::service::TowerToHyperService;
 use serde_json::{Value, json};
 use tokio::io::DuplexStream;
 use tokio_util::sync::CancellationToken;
@@ -49,6 +47,7 @@ use tokio_util::sync::CancellationToken;
 use crate::daemon::build::{BuildScope, PreparedBuild};
 use crate::daemon::host::Host;
 use crate::daemon::http::TOKEN_HEADER;
+use crate::daemon::http::served_by;
 use crate::daemon::state::HostState;
 use crate::lane::secrets::ScriptedStdin;
 use avl_base::RefusalExt;
@@ -208,15 +207,7 @@ impl FakeDaemon {
     /// The server end of one relay: an HTTP/1.1 connection over the stream, served by the same router as the loopback
     /// listener. The connection runs on its own task until either end closes.
     pub(crate) fn server_side(&self) -> impl Fn(DuplexStream) + Send + Sync + 'static {
-        let app = self.app.clone();
-        move |server_end| {
-            let service = TowerToHyperService::new(app.clone());
-            tokio::spawn(async move {
-                let _ = hyper::server::conn::http1::Builder::new()
-                    .serve_connection(TokioIo::new(server_end), service)
-                    .await;
-            });
-        }
+        served_by(self.app.clone())
     }
 
     /// The script, locked. Hold it only as long as a statement.
@@ -1064,6 +1055,19 @@ impl DaemonFixture {
             .expect("the fake process can be identified");
     }
 
+    /// Delivers an interrupt once `daemon` saw `request`, as a person who presses Ctrl-C while the command waits. The
+    /// caller awaits the handle after the command answered.
+    pub(crate) fn interrupt_after(&self, daemon: &Arc<FakeDaemon>, request: &'static str) -> tokio::task::JoinHandle<()> {
+        let daemon = Arc::clone(daemon);
+        let interrupts = self.interrupts.clone();
+        tokio::spawn(async move {
+            while !daemon.saw_request(request) {
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+            interrupts.deliver(Signal::Interrupt);
+        })
+    }
+
     /// Puts the first worker into the state the readiness gate accepts without booting anything: it reads as
     /// running, and has an init receipt for the fixture's paths.
     pub(crate) async fn mark_ready(&self) {
@@ -1186,6 +1190,14 @@ impl Recorded {
             .filter(|record| record.event == kind)
             .map(|record| record.message.clone())
             .collect()
+    }
+
+    /// The last change of `phase` that was published.
+    pub(crate) fn last_phase(&self, phase: Phase) -> PhaseChange {
+        self.data_of::<PhaseChange>(Kind::Phase)
+            .into_iter()
+            .rfind(|change| change.phase == phase)
+            .unwrap_or_else(|| panic!("no change of the phase {phase:?} was published"))
     }
 
     /// The last verdict published, if one was.

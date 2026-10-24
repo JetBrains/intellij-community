@@ -19,7 +19,7 @@ use hyper_util::rt::TokioIo;
 use tokio::io::{AsyncRead, AsyncWrite, ReadBuf};
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;
 
 /// Bounds the relay spawn of every connection. The spawn returns when the child process starts, not when the guest
 /// connects, so this budget catches only a channel that cannot start a child. A relay that the guest refuses fails on

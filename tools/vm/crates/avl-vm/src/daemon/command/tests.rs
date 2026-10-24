@@ -151,22 +151,55 @@ async fn command_daemon_status_reports_the_daemons_own_account() {
     assert_eq!(outcome.data["status"]["iterationCount"], json!(4));
 }
 
+/// `daemon stop` on the first worker, with the receipt of the lease of the suite.
+async fn daemon_stop(fixture: &Fixture) -> Result<Outcome, Refusal> {
+    let receipt = fixture.lease_receipt();
+    fixture
+        .host
+        .command_daemon(&Ctx::background(), DaemonVerb::Stop, Some(&receipt))
+        .await
+}
+
+/// A [`daemon_stop`] that must answer.
+async fn daemon_stopped(fixture: &Fixture) -> Outcome {
+    daemon_stop(fixture).await.unwrap_or_else(|refusal| panic!("{refusal:?}"))
+}
+
+/// A [`daemon_stop`] that stopped the recorded run `run_id` and removed its record.
+async fn daemon_stopped_the_recorded_run(fixture: &Fixture, run_id: &str) -> Outcome {
+    let outcome = daemon_stopped(fixture).await;
+    assert_eq!(outcome.text, "stopped");
+    assert_eq!(outcome.data["stopped"], json!(run_id));
+    assert_eq!(HostState::read(&fixture.settings, &fixture.worker), None);
+    outcome
+}
+
+/// A [`daemon_stop`] against a supervisor that never finishes the cancelled run: the refusal `daemon_retire_failed`.
+async fn daemon_stop_with_a_cancel_that_never_finishes(fixture: &Fixture) -> Refusal {
+    fixture.on(
+        "cancel",
+        handler(|argv, _| Ok(agent_reply("cancel", &run_state(argv_value(argv, "--run"), "running")))),
+    );
+    let failure = refused_with(daemon_stop(fixture).await, "daemon_retire_failed", Exit::SOFTWARE);
+    assert!(failure.message.contains("`daemon stop`"), "{}", failure.message);
+    failure
+}
+
+/// The answer of the guest when no run holds the slot.
+fn answer_no_active_run(fixture: &Fixture) {
+    fixture
+        .tart
+        .answer_exec_verb("active", agent_envelope("active", &json!({"active": null})));
+}
+
 // `daemon stop` retires the state and says which run it stopped.
 #[tokio::test]
 async fn command_daemon_stop_retires_the_state() {
     let fixture = Fixture::new().await;
-    let receipt = fixture.lease_receipt();
     let prep = fixture.prepared().await;
     let state = fixture.seed_healthy_daemon(&prep);
     fixture.install_slot_double(None);
-    let outcome = fixture
-        .host
-        .command_daemon(&Ctx::background(), DaemonVerb::Stop, Some(&receipt))
-        .await
-        .unwrap();
-    assert_eq!(outcome.text, "stopped");
-    assert_eq!(outcome.data["stopped"], json!(state.run_id));
-    assert_eq!(HostState::read(&fixture.settings, &fixture.worker), None);
+    daemon_stopped_the_recorded_run(&fixture, &state.run_id).await;
     assert!(fixture.daemon.saw_request("POST /shutdown"));
     // A run whose controller died before its own removal left its secret files; the stop removes the directory.
     let removal = format!("/bin/rm -rf -- {}", fixture.settings.vm_run_secrets);
@@ -185,18 +218,11 @@ async fn command_daemon_stop_retires_the_state() {
 // there is nothing to stop, and refuses any other run.
 #[tokio::test]
 async fn a_daemon_stop_without_a_record_retires_the_daemon_run_in_the_slot() {
-    let stop = async |fixture: &Fixture| {
-        let receipt = fixture.lease_receipt();
-        fixture
-            .host
-            .command_daemon(&Ctx::background(), DaemonVerb::Stop, Some(&receipt))
-            .await
-    };
     let cancels = |fixture: &Fixture| fixture.channel().calls_containing("vm-guest-agent cancel");
 
     let fixture = Fixture::new().await;
     let slot = fixture.install_slot_double(Some("run-ui-daemon-orphan"));
-    let outcome = stop(&fixture).await.unwrap();
+    let outcome = daemon_stopped(&fixture).await;
     assert_eq!(outcome.text, "stopped");
     assert_eq!(outcome.data["stopped"], json!("run-ui-daemon-orphan"));
     let sent = cancels(&fixture);
@@ -205,13 +231,13 @@ async fn a_daemon_stop_without_a_record_retires_the_daemon_run_in_the_slot() {
 
     let fixture = Fixture::new().await;
     fixture.install_slot_double(None);
-    let outcome = stop(&fixture).await.unwrap();
+    let outcome = daemon_stopped(&fixture).await;
     assert_eq!(outcome.text, "no daemon to stop");
     assert_eq!(outcome.data["stopped"], Value::Null);
 
     let fixture = Fixture::new().await;
     fixture.install_slot_double(Some("run-flow-1"));
-    let failure = refusal(stop(&fixture).await);
+    let failure = refusal(daemon_stop(&fixture).await);
     assert_eq!((failure.code.as_ref(), failure.exit), ("run_active", Exit::FAILURE));
     assert!(failure.message.contains("cannot stop the daemon"), "{}", failure.message);
     assert!(cancels(&fixture).is_empty());
@@ -219,17 +245,8 @@ async fn a_daemon_stop_without_a_record_retires_the_daemon_run_in_the_slot() {
     // A supervisor that does not finish the run is a refusal, never a "stopped".
     let fixture = Fixture::new().await;
     fixture.install_slot_double(Some("run-ui-daemon-orphan"));
-    fixture.on(
-        "cancel",
-        handler(|argv, _| Ok(agent_reply("cancel", &run_state(argv_value(argv, "--run"), "running")))),
-    );
-    let failure = refusal(stop(&fixture).await);
-    assert_eq!((failure.code.as_ref(), failure.exit), ("daemon_retire_failed", Exit::SOFTWARE));
-    assert!(
-        failure.message.contains("run-ui-daemon-orphan") && failure.message.contains("`daemon stop`"),
-        "{}",
-        failure.message
-    );
+    let failure = daemon_stop_with_a_cancel_that_never_finishes(&fixture).await;
+    assert!(failure.message.contains("run-ui-daemon-orphan"), "{}", failure.message);
 }
 
 // A recorded run the supervisor will not finish refuses `daemon stop` and keeps the record: dropping it and then
@@ -237,22 +254,10 @@ async fn a_daemon_stop_without_a_record_retires_the_daemon_run_in_the_slot() {
 #[tokio::test]
 async fn a_daemon_stop_that_cannot_retire_the_recorded_run_keeps_the_record() {
     let fixture = Fixture::new().await;
-    let receipt = fixture.lease_receipt();
     let prep = fixture.prepared().await;
     let state = fixture.seed_healthy_daemon(&prep);
     fixture.install_slot_double(Some("run-ui-daemon-seeded"));
-    fixture.on(
-        "cancel",
-        handler(|argv, _| Ok(agent_reply("cancel", &run_state(argv_value(argv, "--run"), "running")))),
-    );
-    let failure = refusal(
-        fixture
-            .host
-            .command_daemon(&Ctx::background(), DaemonVerb::Stop, Some(&receipt))
-            .await,
-    );
-    assert_eq!((failure.code.as_ref(), failure.exit), ("daemon_retire_failed", Exit::SOFTWARE));
-    assert!(failure.message.contains("`daemon stop`"), "{}", failure.message);
+    let failure = daemon_stop_with_a_cancel_that_never_finishes(&fixture).await;
     assert_eq!(failure.details(), Some(json!({ "runId": state.run_id })));
     assert_eq!(HostState::read(&fixture.settings, &fixture.worker), Some(state));
     assert_eq!(
@@ -267,27 +272,16 @@ async fn a_daemon_stop_that_cannot_retire_the_recorded_run_keeps_the_record() {
 // went into the stopped container, which answered exit 1 in plain text, and the stop refused `daemon_retire_failed`.
 #[tokio::test]
 async fn a_daemon_stop_of_a_stopped_worker_forgets_the_record_and_sends_no_guest_command() {
-    let stop = async |fixture: &Fixture| {
-        let receipt = fixture.lease_receipt();
-        fixture
-            .host
-            .command_daemon(&Ctx::background(), DaemonVerb::Stop, Some(&receipt))
-            .await
-            .unwrap_or_else(|refusal| panic!("{refusal:?}"))
-    };
     let fixture = Fixture::docker().await;
     let prep = fixture.prepared().await;
     let state = fixture.seed_healthy_daemon(&prep);
-    let outcome = stop(&fixture).await;
-    assert_eq!(outcome.text, "stopped");
-    assert_eq!(outcome.data["stopped"], json!(state.run_id));
+    let outcome = daemon_stopped_the_recorded_run(&fixture, &state.run_id).await;
     assert_eq!(outcome.data["workerWasStopped"], json!(true));
-    assert_eq!(HostState::read(&fixture.settings, &fixture.worker), None);
     assert!(fixture.channel().lines().is_empty(), "{:#?}", fixture.channel().lines());
     assert!(!fixture.daemon.saw_request("POST /shutdown"));
 
     // Without a record, nothing is left to forget.
-    let outcome = stop(&fixture).await;
+    let outcome = daemon_stopped(&fixture).await;
     assert_eq!(outcome.text, "no daemon to stop");
     assert_eq!(outcome.data["stopped"], Value::Null);
     assert!(fixture.channel().lines().is_empty(), "{:#?}", fixture.channel().lines());
@@ -316,15 +310,8 @@ fn assert_resolved_the_fake(fixture: &Fixture) {
 async fn a_daemon_stop_reaches_the_guest_through_the_pinned_tart_without_a_record() {
     let fixture = Fixture::over_hypervisor().await;
     fixture.read_as_running(&fixture.worker).await;
-    let receipt = fixture.lease_receipt();
-    fixture
-        .tart
-        .answer_exec_verb("active", agent_envelope("active", &json!({"active": null})));
-    let outcome = fixture
-        .host
-        .command_daemon(&Ctx::background(), DaemonVerb::Stop, Some(&receipt))
-        .await
-        .unwrap_or_else(|refusal| panic!("{refusal:?}"));
+    answer_no_active_run(&fixture);
+    let outcome = daemon_stopped(&fixture).await;
     assert_eq!(outcome.text, "no daemon to stop");
     assert_eq!(outcome.data["stopped"], Value::Null);
     let execs = guest_execs(&fixture);
@@ -338,23 +325,13 @@ async fn a_daemon_stop_reaches_the_guest_through_the_pinned_tart_without_a_recor
 async fn a_daemon_stop_retires_a_recorded_daemon_through_the_pinned_tart() {
     let fixture = Fixture::over_hypervisor().await;
     fixture.read_as_running(&fixture.worker).await;
-    let receipt = fixture.lease_receipt();
     let prep = fixture.prepared().await;
     let state = fixture.seed_healthy_daemon(&prep);
     fixture
         .tart
         .answer_exec_verb("cancel", agent_envelope("cancel", &run_state(&state.run_id, "finished")));
-    fixture
-        .tart
-        .answer_exec_verb("active", agent_envelope("active", &json!({"active": null})));
-    let outcome = fixture
-        .host
-        .command_daemon(&Ctx::background(), DaemonVerb::Stop, Some(&receipt))
-        .await
-        .unwrap_or_else(|refusal| panic!("{refusal:?}"));
-    assert_eq!(outcome.text, "stopped");
-    assert_eq!(outcome.data["stopped"], json!(state.run_id));
-    assert_eq!(HostState::read(&fixture.settings, &fixture.worker), None);
+    answer_no_active_run(&fixture);
+    daemon_stopped_the_recorded_run(&fixture, &state.run_id).await;
     // The stop swallows a failed `/shutdown`, so the double's requests are the only trace of one.
     assert!(
         fixture.daemon.saw_request("POST /shutdown"),
@@ -580,6 +557,27 @@ async fn run_for_verdict(fixture: &Fixture, argv: &[&str], receipt: Option<&Path
     let recorded = Recorded::start(&fixture.host.reporter);
     let result = fixture.host.command_run(&Ctx::background(), &run_command_args(argv), receipt).await;
     (result, recorded.verdict())
+}
+
+/// The refusal of `result`, which must have `code` and `exit`.
+fn refused_with(result: Result<Outcome, Refusal>, code: &str, exit: Exit) -> Refusal {
+    let failure = refusal(result);
+    assert_eq!((failure.code.as_ref(), failure.exit), (code, exit), "{}", failure.message);
+    failure
+}
+
+/// `run --lane ui` with the receipt of the caller, over a warm daemon that streams `lines`: the refusal, which must
+/// have `code` and `exit`, and the verdict.
+async fn refused_ui_run(lines: Vec<String>, code: &str, exit: Exit) -> (Refusal, Option<Verdict>) {
+    let (fixture, receipt) = run_outcome_fixture(lines).await;
+    let (result, verdict) = run_for_verdict(&fixture, &["--lane", "ui"], Some(&receipt)).await;
+    (refused_with(result, code, exit), verdict)
+}
+
+/// `run --lane ui` without a receipt, which must refuse with `code` and `exit`.
+async fn refused_self_leased_ui_run(fixture: &Fixture, code: &str, exit: Exit) -> Refusal {
+    let (result, _) = run_for_verdict(fixture, &["--lane", "ui"], None).await;
+    refused_with(result, code, exit)
 }
 
 fn run_data(value: &Value) -> RunData {
@@ -966,10 +964,7 @@ async fn the_verdict_states_the_tree() {
 
 #[tokio::test]
 async fn command_run_reports_failed_tests_at_six() {
-    let (fixture, receipt) = run_outcome_fixture(failing_run("it-21")).await;
-    let (result, verdict) = run_for_verdict(&fixture, &["--lane", "ui"], Some(&receipt)).await;
-    let failure = refusal(result);
-    assert_eq!((failure.code.as_ref(), failure.exit), ("tests_failed", Exit::TESTS_FAILED));
+    let (failure, verdict) = refused_ui_run(failing_run("it-21"), "tests_failed", Exit::TESTS_FAILED).await;
     // The message is the verdict's one line: it counts and names the first failure's first line.
     let want = "1 test(s) and 0 container(s) failed of 1 started (iteration it-21); first: com.example.MyTest — boom";
     assert_eq!(failure.message, want);
@@ -1008,10 +1003,7 @@ async fn command_run_reports_all_skipped_with_the_reasons() {
         ),
         ndjson_line(&summary_record("it-22", 0, 0, 0, 1, 0, false)),
     ];
-    let (fixture, receipt) = run_outcome_fixture(lines).await;
-    let (result, verdict) = run_for_verdict(&fixture, &["--lane", "ui"], Some(&receipt)).await;
-    let failure = refusal(result);
-    assert_eq!((failure.code.as_ref(), failure.exit), ("all_tests_skipped", Exit::TESTS_FAILED));
+    let (failure, verdict) = refused_ui_run(lines, "all_tests_skipped", Exit::TESTS_FAILED).await;
     assert_eq!(failure.message, "lane ui ran nothing: every class was skipped (iteration it-22)");
     let verdict = verdict.expect("a verdict is published");
     assert_eq!(verdict.status, Status::AllSkipped);
@@ -1026,10 +1018,7 @@ async fn command_run_reports_no_tests_discovered_at_six() {
         ndjson_line(&run_started_record("it-23")),
         ndjson_line(&summary_record("it-23", 0, 0, 0, 0, 0, false)),
     ];
-    let (fixture, receipt) = run_outcome_fixture(lines).await;
-    let (result, verdict) = run_for_verdict(&fixture, &["--lane", "ui"], Some(&receipt)).await;
-    let failure = refusal(result);
-    assert_eq!((failure.code.as_ref(), failure.exit), ("no_tests_discovered", Exit::TESTS_FAILED));
+    let (failure, verdict) = refused_ui_run(lines, "no_tests_discovered", Exit::TESTS_FAILED).await;
     assert!(
         failure.message.contains("matched no tests (iteration it-23)"),
         "{:?}",
@@ -1076,15 +1065,12 @@ async fn command_run_reports_a_watchdog_expiry_as_infrastructure() {
             "deadline": "2026-08-23T12:30:00.000Z", "expiredAt": "2026-08-23T12:30:01.000Z"})),
         ndjson_line(&summary_record("it-24", 1, 0, 0, 0, 0, false)),
     ];
-    let (fixture, receipt) = run_outcome_fixture(lines).await;
-    let (result, verdict) = run_for_verdict(&fixture, &["--lane", "ui"], Some(&receipt)).await;
-    let failure = refusal(result);
+    let (failure, verdict) = refused_ui_run(lines, "daemon_watchdog_expired", Exit::SOFTWARE).await;
     assert_eq!(
         verdict.and_then(|verdict| verdict.code).as_deref(),
         Some("daemon_watchdog_expired"),
         "a run with a report publishes its verdict"
     );
-    assert_eq!((failure.code.as_ref(), failure.exit), ("daemon_watchdog_expired", Exit::SOFTWARE));
     assert!(
         failure.message.contains("daemon watchdog expired: active_execution_timeout"),
         "{:?}",
@@ -1123,14 +1109,7 @@ async fn a_self_leased_run_whose_daemon_never_answers_gives_its_lease_back() {
         script.launch_digest = prep.launch_digest.clone();
     }
     let recorded = Recorded::start(&fixture.host.reporter);
-    let (result, _) = run_for_verdict(&fixture, &["--lane", "ui"], None).await;
-    let failure = refusal(result);
-    assert_eq!(
-        (failure.code.as_ref(), failure.exit),
-        ("daemon_unreachable", Exit::UNAVAILABLE),
-        "{}",
-        failure.message
-    );
+    refused_self_leased_ui_run(&fixture, "daemon_unreachable", Exit::UNAVAILABLE).await;
     // A start's refusal is the run's answer, so the release says what became of the lease in its own phase: a
     // release that failed would finish that phase with `release_failed`.
     let release: Vec<Value> = recorded
@@ -1221,9 +1200,7 @@ async fn a_run_keeps_a_journal_named_by_its_holder() {
 #[tokio::test]
 async fn a_self_leased_run_releases_the_worker_when_the_tests_fail() {
     let fixture = self_leased_fixture(failing_run("it-41")).await;
-    let (result, _) = run_for_verdict(&fixture, &["--lane", "ui"], None).await;
-    let failure = refusal(result);
-    assert_eq!((failure.code.as_ref(), failure.exit), ("tests_failed", Exit::TESTS_FAILED));
+    let failure = refused_self_leased_ui_run(&fixture, "tests_failed", Exit::TESTS_FAILED).await;
     assert_eq!(
         run_data(&details(&failure)).lease.map(|lease| lease.disposition),
         Some(LeaseDisposition::Released)
@@ -1236,8 +1213,7 @@ async fn a_self_leased_run_releases_the_worker_when_the_tests_fail() {
 async fn a_self_leased_run_releases_the_worker_when_the_iteration_refuses() {
     let fixture = self_leased_fixture(Vec::new()).await;
     fixture.daemon.script().conflict = Some(json!({"reason": "busy"}));
-    let (result, _) = run_for_verdict(&fixture, &["--lane", "ui"], None).await;
-    assert_eq!(refusal(result).code, "daemon_busy");
+    refused_self_leased_ui_run(&fixture, "daemon_busy", Exit::TEMP_FAIL).await;
     require_unleased(&fixture);
 }
 
@@ -1377,21 +1353,11 @@ async fn an_interrupted_self_leased_run_keeps_its_lease_and_names_the_receipt() 
     let block = tokio_util::sync::CancellationToken::new();
     fixture.daemon.script().block = Some(block.clone());
     // The interrupt arrives once the iteration is in flight: the daemon holds the `/run` open until then.
-    let interrupter = {
-        let daemon = Arc::clone(&fixture.daemon);
-        let interrupts = fixture.interrupts.clone();
-        tokio::spawn(async move {
-            while !daemon.saw_request("POST /run") {
-                tokio::time::sleep(Duration::from_millis(10)).await;
-            }
-            interrupts.deliver(Signal::Interrupt);
-        })
-    };
+    let interrupter = fixture.interrupt_after(&fixture.daemon, "POST /run");
     let (result, _) = run_for_verdict(&fixture, &["--lane", "ui"], None).await;
     interrupter.await.unwrap();
     block.cancel();
-    let failure = refusal(result);
-    assert_eq!((failure.code.as_ref(), failure.exit), ("run_interrupted", Exit::SOFTWARE));
+    let failure = refused_with(result, "run_interrupted", Exit::SOFTWARE);
     let held: RunLease = serde_json::from_value(details(&failure)["lease"].clone()).unwrap();
     assert_eq!(held.disposition, LeaseDisposition::Kept);
     let receipt = held.lease_file.expect("the kept lease names its receipt");
@@ -1414,16 +1380,7 @@ async fn an_interrupted_self_leased_run_still_removes_its_secret() {
     let fixture = self_leased_fixture(passing_run_lines("it-43")).await;
     let block = tokio_util::sync::CancellationToken::new();
     fixture.daemon.script().block = Some(block.clone());
-    let interrupter = {
-        let daemon = Arc::clone(&fixture.daemon);
-        let interrupts = fixture.interrupts.clone();
-        tokio::spawn(async move {
-            while !daemon.saw_request("POST /run") {
-                tokio::time::sleep(Duration::from_millis(10)).await;
-            }
-            interrupts.deliver(Signal::Interrupt);
-        })
-    };
+    let interrupter = fixture.interrupt_after(&fixture.daemon, "POST /run");
     fixture.stdin.feed(b"central-login-export-from-a-pipe-0123456789");
     let (result, _) = run_for_verdict(&fixture, &["--lane", "ui", "--test-env", "AIR_LIVE_CENTRAL_LOGIN=@-"], None).await;
     interrupter.await.unwrap();

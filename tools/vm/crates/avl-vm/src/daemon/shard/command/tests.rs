@@ -6,13 +6,14 @@ use std::time::Duration;
 
 use avl_base::GuestOs;
 use avl_host_sys::Signal;
-use avl_wire::progress::{Kind, Phase, PhaseChange, PhaseState};
+use avl_host_testkit::refusal as refused;
+use avl_wire::progress::{Kind, Phase, PhaseState};
 use avl_wire::report::{EntryStatus, Status};
 use pretty_assertions::assert_eq;
 use tokio_util::sync::CancellationToken;
 
 use super::*;
-use crate::daemon::fixture::{Fixture, baseline_report, passing_run, write_report};
+use crate::daemon::fixture::{Fixture, assert_aggregate_id, assert_kept_lease, baseline_report, passing_run, write_report};
 use crate::daemon::testing::{FakeDaemon, Recorded};
 
 // --- the decisions -------------------------------------------------------------------------------------------
@@ -64,13 +65,6 @@ async fn run(fixture: &Fixture, argv: &[&str]) -> Result<Outcome, Refusal> {
     tokio::time::timeout(Duration::from_secs(120), command_shard(&Ctx::background(), &fixture.host, args))
         .await
         .expect("the shard run settles")
-}
-
-fn refused(result: Result<Outcome, Refusal>) -> Refusal {
-    match result {
-        Ok(outcome) => panic!("the command was expected to refuse and answered {outcome:?}"),
-        Err(refusal) => refusal,
-    }
 }
 
 fn data_of(outcome: &Outcome) -> ShardData {
@@ -242,14 +236,7 @@ async fn a_sharded_run_keeps_a_journal_whose_id_is_its_holder() {
         .unwrap_or_else(|refusal| panic!("both shards passed: {refusal:?}"));
     let data = data_of(&outcome);
     assert!(data.holder.starts_with("suite-user-shard-"), "{}", data.holder);
-    let aggregate_shaped = data
-        .shard_run_id
-        .strip_prefix("shard-")
-        .and_then(|rest| rest.split_once('-'))
-        .is_some_and(|(stamp, tail)| {
-            stamp.bytes().all(|byte| byte.is_ascii_digit()) && tail.len() == 8 && tail.bytes().all(|byte| byte.is_ascii_hexdigit())
-        });
-    assert!(aggregate_shaped, "{}", data.shard_run_id);
+    assert_aggregate_id(&data.shard_run_id, "shard");
     let journal = std::fs::read_to_string(fixture.settings.runtime_root.join("runs").join(&data.holder).join("events.ndjson"))
         .unwrap_or_else(|error| panic!("no journal for {}: {error}", data.holder));
     let records: Vec<serde_json::Value> = journal
@@ -462,11 +449,7 @@ async fn a_refused_release_is_not_reported_as_released() {
         .await
         .unwrap_or_else(|refusal| panic!("a release failure must not turn a green lane red: {refusal:?}"));
     // The release phase fails where a person reads it, and names the command that frees the worker.
-    let release = recorded
-        .data_of::<PhaseChange>(Kind::Phase)
-        .into_iter()
-        .rfind(|change| change.phase == Phase::Release)
-        .expect("a release phase");
+    let release = recorded.last_phase(Phase::Release);
     assert_eq!(release.state, PhaseState::Failed);
     assert!(
         release.error.as_deref().is_some_and(|error| error.contains("lease release")),
@@ -540,15 +523,7 @@ async fn an_interrupt_keeps_the_leases_and_still_writes_the_aggregate() {
     // release.
     assert_eq!(data.leases.len(), 2);
     for lease in &data.leases {
-        assert!(!lease.released, "{lease:?}");
-        assert!(Path::new(&lease.lease_file).is_file(), "{lease:?}");
-        assert!(
-            refusal
-                .message
-                .contains(&format!("--lease-file {} lease release", lease.lease_file)),
-            "{}",
-            refusal.message
-        );
+        assert_kept_lease(lease, &refusal.message);
     }
     assert!(!refusal.message.contains("FILE"), "{}", refusal.message);
     // And the aggregate is on disk, with the abandoned shards named rather than missing.

@@ -21,6 +21,8 @@ use hyper_util::rt::{TokioExecutor, TokioTimer};
 
 use crate::daemon::state::HostState;
 use connector::RelayConnector;
+#[cfg(test)]
+pub(crate) use connector::tests::served_by;
 
 mod connector;
 #[cfg(test)]
