@@ -14,10 +14,16 @@
 use serde::{Deserialize, Serialize};
 
 /// The version of this protocol. A change that an older end cannot read raises it.
-pub const SCHEMA_VERSION: u32 = 1;
+pub const SCHEMA_VERSION: u32 = 2;
 
 /// How often the agent sends [`Reply::Heartbeat`] while a request waits or a followed run is quiet.
 pub const HEARTBEAT_SECONDS: u64 = 15;
+
+/// How long the supervisor of a run waits for the pack of its reference, see [`Request::Start`].
+pub const PACK_WAIT_SECONDS: u64 = 30 * 60;
+
+/// The prefix of the refs that a client keeps on the host as bases of its packs, see [`Request::Pack`].
+pub const BASE_REFS: &str = "refs/yonder/base/";
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "request", rename_all = "snake_case")]
@@ -28,12 +34,19 @@ pub enum Request {
     Have { repo: String, commits: Vec<String> },
     /// A thin pack follows as a byte stream. The agent indexes it into the repository and points `reference` at
     /// `commit`. Reply: [`Reply::Packed`].
+    ///
+    /// A `reference` under [`BASE_REFS`] is a base of later packs, such as the master of the client. The agent keeps it
+    /// until the next pack to the same name, and its cleanup never deletes it.
     Pack { repo: String, commit: String, reference: String },
     /// Starts a run. Reply: [`Reply::Started`] as soon as the run has its directory.
+    ///
+    /// A start can come before the pack of its `reference`. The supervisor then takes the lock and the lease while the
+    /// pack travels, and waits for the reference before the checkout, up to [`PACK_WAIT_SECONDS`]. A cancel ends that
+    /// wait too.
     Start(RunSpec),
     /// The output of a run from the byte offset `offset` of its log. Replies: [`Reply::Output`] and
-    /// [`Reply::Heartbeat`] while the run goes on, then [`Reply::Exit`], or [`Reply::Refused`] when the run failed
-    /// before or without an exit code of its command.
+    /// [`Reply::Heartbeat`] while the run goes on, then [`Reply::Phases`], then [`Reply::Exit`], or [`Reply::Refused`]
+    /// when the run failed before or without an exit code of its command.
     Follow { run: String, offset: u64 },
     /// Asks the supervisor of a run to interrupt it: SIGINT to the process group of the command, then SIGKILL after the
     /// grace time, or no command at all when the run has not started it yet. Reply: [`Reply::Done`] as soon as the
@@ -99,6 +112,11 @@ pub enum Reply {
     Heartbeat {
         elapsed_ms: u64,
     },
+    /// How long each step of the run took on the host, in the order of the steps. It comes before the last reply of a
+    /// `Follow` of a run that has ended.
+    Phases {
+        phases: Vec<Phase>,
+    },
     /// The exit code of the command. A command that a signal ended answers 128 plus the signal number.
     Exit {
         code: i32,
@@ -149,6 +167,17 @@ pub struct RunInfo {
     pub started_ms: u64,
     /// `None` while the run goes on.
     pub exit: Option<i32>,
+    /// The steps that have ended so far.
+    #[serde(default)]
+    pub phases: Vec<Phase>,
+}
+
+/// One step of a run and its duration: `lock`, `sweep`, `lease`, `pack_wait`, `checkout`, `command`, `stage`. A client
+/// adds its own steps, such as `pack`, `upload` and `fetch`, when it reports a run.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Phase {
+    pub name: String,
+    pub ms: u64,
 }
 
 impl Request {

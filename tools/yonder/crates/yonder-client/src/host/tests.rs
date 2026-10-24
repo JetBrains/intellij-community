@@ -113,7 +113,8 @@ fn an_agent_of_another_schema_is_refused_with_the_prepare_commands() {
         .connect()
         .expect_err("another schema");
     assert_eq!(refusal.code, code::SCHEMA);
-    assert!(refusal.message.contains("speaks schema 2"), "{}", refusal.message);
+    let expected = format!("speaks schema {}", SCHEMA_VERSION + 1);
+    assert!(refusal.message.contains(&expected), "{}", refusal.message);
     assert!(refusal.message.contains("--prepare"), "{}", refusal.message);
 }
 

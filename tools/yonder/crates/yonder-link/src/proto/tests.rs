@@ -51,3 +51,20 @@ fn a_run_id_names_one_directory() {
         assert!(!is_run_id(bad), "{bad:?}");
     }
 }
+
+#[test]
+fn the_phases_of_a_run_and_a_run_info_without_them_parse() {
+    let phases = Reply::Phases {
+        phases: vec![Phase {
+            name: "lease".to_owned(),
+            ms: 1200,
+        }],
+    };
+    let json = serde_json::to_string(&phases).expect("json");
+    assert_eq!(json, r#"{"reply":"phases","phases":[{"name":"lease","ms":1200}]}"#);
+    assert_eq!(serde_json::from_str::<Reply>(&json).expect("parsed"), phases);
+    let info: RunInfo = serde_json::from_str(r#"{"run":"1-2","holder":"h","commit":"c","command":["true"],"started_ms":1,"exit":null}"#)
+        .expect("an info of schema 1");
+    assert!(info.phases.is_empty());
+    assert!(BASE_REFS.starts_with("refs/yonder/") && BASE_REFS.ends_with('/'));
+}

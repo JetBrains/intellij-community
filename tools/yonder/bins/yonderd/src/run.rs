@@ -191,6 +191,7 @@ impl RunDir {
             command: spec.command,
             started_ms: self.started_ms(),
             exit: self.exit()?.as_ref().map(ExitRecord::code),
+            phases: Vec::new(),
         })
     }
 }
