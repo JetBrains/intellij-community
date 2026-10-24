@@ -6,15 +6,20 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionUiKind;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ExperimentalIconRendering;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.actionSystem.Toggleable;
+import com.intellij.openapi.actionSystem.ex.ActionIconDescriptors;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.platform.icons.IconDescriptor;
+import com.intellij.platform.icons.scale.IconScale;
+import com.intellij.platform.icons.swing.SwingIconKt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.NotNull;
@@ -144,9 +149,17 @@ final class ActionStepBuilder {
 
   static @NotNull Pair<Icon, Icon> calcRawIcons(@NotNull AnAction action, @NotNull Presentation presentation, boolean forceChecked) {
     boolean hideIcon = Boolean.TRUE.equals(presentation.getClientProperty(MenuItemPresentationFactory.HIDE_ICON));
-    Icon icon = hideIcon ? null : presentation.getIcon();
-    Icon selectedIcon = hideIcon ? null : presentation.getSelectedIcon();
-    Icon disabledIcon = hideIcon ? null : presentation.getDisabledIcon();
+
+    if (ExperimentalIconRendering.isEnabled() && !hideIcon) {
+      Pair<Icon, Icon> icons = calcIconsFromDescriptor(presentation);
+      if (icons != null) return icons;
+    }
+
+    boolean ignoreLegacyIcons = hideIcon || ExperimentalIconRendering.isEnabled();
+
+    Icon icon = ignoreLegacyIcons ? null : presentation.getIcon();
+    Icon selectedIcon = ignoreLegacyIcons ? null : presentation.getSelectedIcon();
+    Icon disabledIcon = ignoreLegacyIcons ? null : presentation.getDisabledIcon();
 
     if (icon == null && selectedIcon == null) {
       String actionId = ActionManager.getInstance().getId(action);
@@ -164,5 +177,19 @@ final class ActionStepBuilder {
       selectedIcon = disabledIcon != null || selectedIcon == null ? disabledIcon : IconLoader.getDisabledIcon(selectedIcon);
     }
     return new Pair<>(icon, selectedIcon);
+  }
+
+  /** The icons for a normal and a selected row, built from icon descriptors, or {@code null} when the presentation has no icon. */
+  private static @Nullable Pair<Icon, Icon> calcIconsFromDescriptor(@NotNull Presentation presentation) {
+    IconDescriptor icon = ActionIconDescriptors.effective(presentation);
+    IconDescriptor selectedIcon = presentation.getSelectedIconDescriptor();
+    if (icon == null && selectedIcon == null) return null;
+    if (!presentation.isEnabled()) {
+      icon = icon == null ? null : ActionIconDescriptors.disabled(icon);
+      selectedIcon = selectedIcon == null ? null : ActionIconDescriptors.disabled(selectedIcon);
+    }
+    Icon swingIcon = icon == null ? null : SwingIconKt.createSwingIcon(icon, IconScale.Default);
+    Icon swingSelectedIcon = selectedIcon == null ? null : SwingIconKt.createSwingIcon(selectedIcon, IconScale.Default);
+    return new Pair<>(swingIcon, swingSelectedIcon);
   }
 }
