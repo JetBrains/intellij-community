@@ -24,6 +24,7 @@ class PythonConsoleUi(data: ComponentData) : UiComponent(data) {
   val executeButton = actionButton {
     and(byClass("ActionButton"), byAccessibleName("Execute Current Statement in Console"))
   }
+  val variablesTree: UiComponent = x("Python console variables tree") { byType("com.intellij.xdebugger.impl.ui.tree.XDebuggerTree") }
   val consoleEditor: UiComponent = x("//div[@class='PythonConsoleView']//div[@accessiblename='Editor' and @class='EditorComponentImpl']", "Python console editor")
   val prompt = xx(JEditorUiComponent::class.java) { byClass("EditorComponentImpl") }.list().last()
   fun promptIsReady(): Boolean {
