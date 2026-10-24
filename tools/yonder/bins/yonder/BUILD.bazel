@@ -1,0 +1,3 @@
+load("//tools/yonder:defs.bzl", "yonder_rust_crate")
+
+yonder_rust_crate(name = "yonder")

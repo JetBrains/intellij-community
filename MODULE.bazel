@@ -376,6 +376,26 @@ crate.from_cargo(
 )
 use_repo(crate, "bt")
 
+# The crates of //tools/yonder, resolved from its `Cargo.lock`. The client runs on every host that runs BT, because
+# `bt --host` links it. The agent runs on macOS and Linux.
+crate.from_cargo(
+    name = "yonder",
+    cargo_config = "//tools/yonder:.cargo/config.toml",
+    cargo_lock = "//tools/yonder:Cargo.lock",
+    cargo_toml = "//tools/yonder:Cargo.toml",
+    # Renders `[workspace.lints]` as `@yonder//:workspace_cargo_lints`, the lint policy of every crate.
+    generate_lint_config = True,
+    platform_triples = [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "aarch64-pc-windows-msvc",
+        "x86_64-pc-windows-msvc",
+        "aarch64-unknown-linux-gnu",
+        "x86_64-unknown-linux-gnu",
+    ],
+)
+use_repo(crate, "yonder")
+
 # The Air UI-lane controller, `tools/vm`: the pinned Apple container, Docker CLI and Tart, and the crate hub `@avl`.
 include("//tools/vm:container.MODULE.bazel")
 include("//tools/vm:docker.MODULE.bazel")

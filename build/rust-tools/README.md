@@ -1,6 +1,6 @@
 # rust-tools
 
-The shared configuration of the Rust tool workspaces, and the spec of what each workspace has. All five Cargo workspaces
+The shared configuration of the Rust tool workspaces, and the spec of what each workspace has. All six Cargo workspaces
 follow it.
 
 | Workspace | Crate hub | Crate macro |
@@ -9,6 +9,7 @@ follow it.
 | `build/dev-dist-tools`: the ultimate dev-dist tools | the crates of `@ddt` | `dev_dist_rust_binary` |
 | `community/tools/bt`: BT | `@bt` | `bt_rust_crate` |
 | `community/tools/vm`: the Air UI-lane tooling | `@avl` | `avl_crate` |
+| `community/tools/yonder`: remote runs of a commit | `@yonder` | `yonder_rust_crate` |
 | `docs/ij-void/portal-server`: the server of the docs portal | none | none |
 
 ## The files here
@@ -59,6 +60,7 @@ equal to the sources.
 | dev-dist tools | None. |
 | BT | None. BT has no Bazel action tool, so it has no closure test. |
 | Air UI-lane tooling | None. |
+| yonder | Item 7: no Windows clippy yet, because the agent does not build on Windows and the client gets it with BT. Item 10: `bins/yonder` has no `API.md` yet. |
 | portal server | Items 4 to 8. The portal Dockerfile builds the server with cargo, and Bazel does not build it. The gates are `cargo fmt --check`, `cargo clippy --all-targets` and `cargo test` in its directory, and `sync.mjs --check`. |
 
 ## The Bazel macro core
@@ -91,6 +93,7 @@ Each workspace keeps a thin binding with its own signature:
 | `dev_dist_rust_crate(name, test_data, closure)` | `rust_tool_crate` | the `@ddt` hub, `:lints`, `bins_prefix = "build/dev-dist-tools/bins/"`, `testdata_env = "DDT_TESTDATA_DIR"` |
 | `bt_rust_crate(name, compile_data)` | `rust_tool_crate` | the `@bt` hub with its `DEP_DATA`, `:lints`, `bins_prefix = "tools/bt/bins/"`, `distpath` as `cross_module_crates`, `test_sharding = True` |
 | `dev_dist_rust_binary(name, deps, test_deps)` | `rust_tool_binary` | the community `:lints`, `edition = "2024"`, `testdata_env = "DDT_TESTDATA_DIR"` |
+| `yonder_rust_crate(name, compile_data, target_compatible_with)` | `rust_tool_crate` | the `@yonder` hub with its `DEP_DATA`, `:lints`, `bins_prefix = "tools/yonder/bins/"`, `refusal` of BT as `cross_module_crates` |
 | `avl_crate(portable, closure, compile_data, test_data, test_env, test_size, test_tags, visibility)` | `rust_tool_crate` | the `@avl` hub with its `DEP_DATA`, `:lints`, the BT crates, `distpath` and `fscopy` as `cross_module_crates`, `rust_test_junit` as the test rule with `-test`, `AVL_PACKAGE` and `AVL_REPO` as `rustc_env`, `NOT_ON_WINDOWS` for a crate that is not portable, and the closure for x86_64 Linux |
 
 ## The checks
@@ -98,7 +101,7 @@ Each workspace keeps a thin binding with its own signature:
 ```sh
 bun community/build/rust-tools/sync.mjs --check            # exit 1 when a copy differs or is missing
 node --test community/build/rust-tools/sync.test.mjs
-cd community && ./bazel.cmd test //build/rust-tools/...     # the tables of @ddt, @bt and @avl are equal
+cd community && ./bazel.cmd test //build/rust-tools/...     # the tables of @ddt, @bt, @avl and @yonder are equal
 ./bazel.cmd test //build/dev-dist-tools:lints_equal_test     # the same tables from the ultimate root
 cargo fmt --check && cargo clippy --all-targets             # in each workspace directory of manifestPaths
 ```

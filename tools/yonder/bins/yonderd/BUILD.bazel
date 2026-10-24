@@ -1,0 +1,8 @@
+load("//build/rust-tools:defs.bzl", "NOT_ON_WINDOWS")
+load("//tools/yonder:defs.bzl", "yonder_rust_crate")
+
+# The agent runs on macOS and Linux: it signals process groups and takes flocks.
+yonder_rust_crate(
+    name = "yonderd",
+    target_compatible_with = NOT_ON_WINDOWS,
+)

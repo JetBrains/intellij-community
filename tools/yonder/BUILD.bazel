@@ -1,0 +1,20 @@
+# yonder, the Cargo workspace in this directory. `community/MODULE.bazel` reads `Cargo.toml`, `Cargo.lock` and
+# `.cargo/config.toml` of this package to generate `@yonder`. `defs.bzl` declares each crate. The crate map is
+# `README.md`.
+
+load("//build/rust-tools:defs.bzl", "rust_lints_as_errors")
+
+# The lint policy of every crate: `[workspace.lints]` of `Cargo.toml` as `@yonder` renders it, with every clippy
+# warning an error.
+rust_lints_as_errors(
+    name = "lints",
+    cargo = "@yonder//:workspace_cargo_lints",
+    visibility = ["//visibility:public"],
+)
+
+# The cargo workspace, which `community/MODULE.bazel` reads.
+exports_files([
+    ".cargo/config.toml",
+    "Cargo.lock",
+    "Cargo.toml",
+])
