@@ -299,7 +299,12 @@ open class EditorComposite internal constructor(
   }
 
   private suspend fun collectModelUntilEditorsPublished(model: Flow<EditorCompositeModel>, visibleInStatusBar: Boolean) = supervisorScope {
-    val pipe = createProgressPipe()
+    val pipe = if (model is DocumentPreparedEditorModel) {
+      model.currentProgress
+    }
+    else {
+      createProgressPipe()
+    }
     val progress = launch {
       try {
         withBackgroundProgress(
