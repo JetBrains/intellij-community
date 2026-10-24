@@ -68,12 +68,10 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
     assertEquals(2, codeLineTexts(tooltip).size, tooltip)
     assertDiffGrid(tooltip)
     // In the expected union `int | str`, only the `str` member that the actual can't accept is highlighted (in
-    // green, as the expected side) — the matching `int` member (followed by a muted ` | `) is not, and the whole
-    // union is not one span.
+    // green, as the expected side) — the matching `int` member is not, and the whole union is not one span.
     assertExpected(tooltip, "str")
     assertNotHighlighted(tooltip, "int | str")
-    // The union separator stays muted (the matched `int` member before it is now a navigable link, not highlighted).
-    assertTrue("<span style=\"color: $mutedColor;\"> | </span>" in tooltip, tooltip)
+    assertCodeLineContains(tooltip, "int | str")
     // The parameter names are never highlighted.
     assertNotHighlighted(tooltip, "a: ")
     assertNotHighlighted(tooltip, "b: ")
@@ -149,6 +147,573 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
     // rows, so these links prove the candidates' PyType reaches the grid (not just the row's red/green Side styling).
     assertTrue("href=\"#element/builtins.int\"" in tooltip, tooltip)
     assertTrue("href=\"#element/builtins.str\"" in tooltip, tooltip)
+  }
+
+  // The overload report breaks an argument type down against the parameters it maps to, like an assignment diff. A
+  // candidate type with no shared structure, here `None`, spans the type columns as one cell.
+  @Test
+  fun `overload-call report breaks an argument type down against the candidates`() {
+    val tooltip = tooltipFor("""
+      from typing import overload, Callable
+      @overload
+      def f(action: Callable[[str], str] | None): ...
+      @overload
+      def f(action: None): ...
+      def f(action): ...
+      def r(x: str) -> int: ...
+      f(r)
+    """)
+    assertEquals(listOf(
+      "(        (str) -> int       )",
+      "(action: (str) -> str | None)",
+      "(action: None               )",
+    ), codeLineTexts(tooltip), tooltip)
+    assertProvided(tooltip, "int")
+    assertExpected(tooltip, "str")
+    assertExpected(tooltip, "None")
+    assertNotHighlighted(tooltip, "(")
+  }
+
+  // A candidate `Callable[[int], None] | None` adds only a ` | ` and a gap to the argument layout of a candidate
+  // `Callable[[int], None]`, so both candidates break the argument down in one layout.
+  @Test
+  fun `overload-call report breaks an argument down when one layout fits into another`() {
+    val tooltip = tooltipFor("""
+      from typing import overload, Callable
+      @overload
+      def f(action: Callable[[int], None]): ...
+      @overload
+      def f(action: Callable[[int], None] | None): ...
+      def f(action): ...
+      def r(x: None) -> None: ...
+      f(r)
+    """)
+    assertEquals(listOf(
+      "(        (x: None) -> None       )",
+      "(action: (   int ) -> None       )",
+      "(action: (   int ) -> None | None)",
+    ), codeLineTexts(tooltip), tooltip)
+    assertProvided(tooltip, "None")
+    assertExpected(tooltip, "int")
+    assertNotHighlighted(tooltip, "(")
+  }
+
+  // The report lists every overload in declaration order, also one that does not take this number of arguments. An
+  // argument that an overload has no parameter for shows as a gap in that row.
+  @Test
+  fun `overload-call report lists the overloads with a different number of parameters`() {
+    val warning = warnings<PyTypeCheckerInspection>("""
+      from typing import overload
+      @overload
+      def f(node: object): ...
+      @overload
+      def f(node: str, action: None): ...
+      def f(node, action=None): ...
+      f("s", 1)
+    """).single()
+    val tooltip = warning.toolTip!!
+    assertEquals(listOf(
+      "(      \"s\",            1   )",
+      "(node: object,             )",
+      "(node: str,    action: None)",
+    ), codeLineTexts(tooltip), tooltip)
+    assertTrue(missingGap.containsMatchIn(tooltip), tooltip)
+    assertTrue("(node: object)" in warning.description, warning.description)
+  }
+
+  // A large overload set lists the overloads that take this number of arguments, fills the free places up to six with
+  // the others, and counts the rest.
+  @Test
+  fun `overload-call report counts the overloads past the limit`() {
+    val tooltip = tooltipFor("""
+      from typing import overload
+      @overload
+      def f(a: int) -> int: ...
+      @overload
+      def f(a: bytes) -> bytes: ...
+      @overload
+      def f(a: int, b: int) -> int: ...
+      @overload
+      def f(a: int, b: str) -> int: ...
+      @overload
+      def f(a: int, b: bytes) -> int: ...
+      @overload
+      def f(a: int, b: float) -> int: ...
+      @overload
+      def f(a: int, b: list[int]) -> int: ...
+      @overload
+      def f(a: int, b: set[int]) -> int: ...
+      def f(a, b=None): ...
+      f("s")
+    """)
+    assertEquals(7, codeLineTexts(tooltip).size, tooltip)
+    assertTrue("And 2 more overloads with a different number of parameters" in tooltip, tooltip)
+    assertTrue(codeLineTexts(tooltip).none { "list[int]" in it || "set[int]" in it }, tooltip)
+  }
+
+  // A type variable with a bound accepts only a type within the bound. Here `int` is not a `State`, so the parameter
+  // type stands out, although an unsolved type variable on its own would accept any type.
+  @Test
+  fun `overload-call report highlights a type that breaks a type variable bound`() {
+    val tooltip = tooltipFor("""
+      from typing import Any, Protocol, TypeVar, TypedDict, overload
+      class State(TypedDict):
+          x: int
+      NodeInputT = TypeVar("NodeInputT", bound=State)
+      NodeInputT_contra = TypeVar("NodeInputT_contra", bound=State, contravariant=True)
+      class _Node(Protocol[NodeInputT_contra]):
+          def __call__(self, state: NodeInputT_contra) -> Any: ...
+      @overload
+      def f(action: int): ...
+      @overload
+      def f(action: _Node[NodeInputT]): ...
+      def f(action): ...
+      def r(state: int) -> int: ...
+      f(r)
+    """)
+    assertEquals(listOf(
+      "(        (state: int       ) -> int)",
+      "(action: int                       )",
+      "(action: (state: NodeInputT) -> Any)",
+    ), codeLineTexts(tooltip), tooltip)
+    assertProvided(tooltip, "int")
+    assertExpected(tooltip, "NodeInputT")
+    // The type variable links to its declaration, and `Any` links to `typing.Any`.
+    assertTrue(Regex("""href="#element/[\w.]*\.NodeInputT"""").containsMatchIn(tooltip), tooltip)
+    assertTrue("""href="#element/typing.Any"""" in tooltip, tooltip)
+  }
+
+  // A union type in the overload report shows its members one by one, so each keeps its syntax colour and link.
+  @Test
+  fun `overload-call report colours and links the members of a union type`() {
+    val tooltip = tooltipFor("""
+      from typing import overload
+      @overload
+      def f(a: int | None, b: str): ...
+      @overload
+      def f(a: int, b: str): ...
+      def f(a, b): ...
+      f(1, 2)
+    """)
+    assertCodeLineContains(tooltip, "a: int | None")
+    assertSyntaxColored(tooltip, "None")
+    // The `int` member is a link of its own, followed by the ` | ` separator.
+    assertTrue(Regex("""<a href="#element/builtins\.int">int</a>(?:</span>)? (?:<span[^>]*>)?\|""").containsMatchIn(tooltip), tooltip)
+  }
+
+  // A row with a spanning cell keeps its columns when a matched slot collapses, so the rows stay aligned.
+  @Test
+  fun `a collapsed slot keeps a spanning row aligned`() {
+    val tooltip = tooltipFor("""
+      from typing import overload
+      class AVeryLongClassNameForTheKeyOfTheMappingOfTheDictionaryThatMakesTheRowWiderThanTheWidthBudgetOfTheGrid: ...
+      @overload
+      def f(a: dict[AVeryLongClassNameForTheKeyOfTheMappingOfTheDictionaryThatMakesTheRowWiderThanTheWidthBudgetOfTheGrid, list[str]]): ...
+      @overload
+      def f(a: int): ...
+      def f(a): ...
+      def g(d: dict[AVeryLongClassNameForTheKeyOfTheMappingOfTheDictionaryThatMakesTheRowWiderThanTheWidthBudgetOfTheGrid, list[int]]):
+          f(d)
+    """)
+    assertEquals(listOf(
+      "(   dict[…, list[int]])",
+      "(a: dict[…, list[str]])",
+      "(a: int               )",
+    ), codeLineTexts(tooltip), tooltip)
+  }
+
+  // A collapse joins only slots that a separator divides, so it never swallows a bracket or the ` -> `.
+  @Test
+  fun `a collapse keeps the brackets between slots`() {
+    val tooltip = tooltipFor("""
+      from typing import Callable
+      class AVeryLongClassNameForTheFirstParameter: ...
+      class AVeryLongClassNameForTheSecondParameter: ...
+      class AVeryLongClassNameForTheResult: ...
+      def f(a: AVeryLongClassNameForTheFirstParameter, b: AVeryLongClassNameForTheSecondParameter) -> AVeryLongClassNameForTheResult | bytes: ...
+      x: Callable[[AVeryLongClassNameForTheFirstParameter, AVeryLongClassNameForTheSecondParameter], AVeryLongClassNameForTheResult | str] = f
+    """)
+    assertEquals(listOf("(…) -> …        ", "(…) -> … | bytes"), codeLineTexts(tooltip), tooltip)
+  }
+
+  // Past the width budget, a long mismatched type on an expected row keeps only its start and its end. The provided
+  // side keeps its text in full.
+  @Test
+  fun `a long mismatched expected type is shortened past the width budget`() {
+    val tooltip = tooltipFor("""
+      from typing import Callable, overload
+      class AVeryLongClassNameForTheStateOfTheGraph: ...
+      class AVeryLongClassNameForTheConfigOfTheGraph: ...
+      class AVeryLongClassNameForTheContextOfTheGraph: ...
+      @overload
+      def f(node: Callable[[AVeryLongClassNameForTheStateOfTheGraph, AVeryLongClassNameForTheConfigOfTheGraph, AVeryLongClassNameForTheContextOfTheGraph], None]): ...
+      @overload
+      def f(node: int): ...
+      def f(node): ...
+      f("a")
+    """)
+    assertEquals(listOf(
+      "(      \"a\"        )",
+      "(node: (…) -> None)",
+      "(node: int        )",
+    ), codeLineTexts(tooltip), tooltip)
+    assertProvided(tooltip, "&quot;a&quot;")
+  }
+
+  // A long type is shortened by its structure, so each name in it keeps its link. A union shortens member by member:
+  // the short `str` keeps its syntax colour next to the shortened callable.
+  @Test
+  fun `a long union is shortened member by member`() {
+    val tooltip = tooltipFor("""
+      from typing import Any, Callable, overload
+      class AVeryLongClassNameForTheStateOfTheGraphNode: ...
+      class AVeryLongClassNameForTheConfigOfTheGraphNode: ...
+      @overload
+      def f(node: str | Callable[[AVeryLongClassNameForTheStateOfTheGraphNode, AVeryLongClassNameForTheConfigOfTheGraphNode], Any], flag: int): ...
+      @overload
+      def f(node: bytes, flag: int): ...
+      def f(node, flag): ...
+      f("a", "x")
+    """)
+    assertEquals(listOf(
+      "(      \"a\",                    \"x\")",
+      "(node: str | (…) -> Any, flag: int)",
+      "(node: bytes,            flag: int)",
+    ), codeLineTexts(tooltip), tooltip)
+    assertSyntaxColored(tooltip, "str")
+  }
+
+  // A row shows the union separator only between two of its own members: a single callable against a union has none.
+  @Test
+  fun `a single type against a union shows no separator`() {
+    val tooltip = tooltipFor("""
+      from typing import Any, Callable, Generic, TypeVar, overload
+      T = TypeVar("T")
+      U = TypeVar("U")
+      class Runnable(Generic[T, U]): ...
+      class State: ...
+      class Other: ...
+      @overload
+      def add_node(node: Callable[[State], Any] | Runnable[State, Any]) -> None: ...
+      @overload
+      def add_node(node: str, action: Callable[[Other], Any] | Runnable[Other, Any]) -> None: ...
+      def add_node(*args, **kwargs): ...
+      def respond(state: State) -> State: ...
+      add_node("respond", respond)
+    """)
+    assertEquals(listOf(
+      "(      \"respond\",                                     (state: State) -> State                       )",
+      "(node: (State) -> Any | Runnable[State, Any],                                                       )",
+      "(node: str,                                   action: (       Other) -> Any   | Runnable[Other, Any])",
+    ), codeLineTexts(tooltip), tooltip)
+  }
+
+  // A multi-line string argument shows its first line, so the row stays on one line.
+  @Test
+  fun `a multi-line string shows its first line`() {
+    val tooltip = tooltipFor("""
+      from typing import overload
+      @overload
+      def f(prompt: int, flag: int): ...
+      @overload
+      def f(prompt: bytes, flag: int): ...
+      def f(prompt, flag): ...
+      f(""${'"'}You are a helpful assistant.
+      Answer the question below.
+      ""${'"'}, 1)
+    """)
+    assertEquals(listOf(
+      "(        \"You are a helpful assistant.…\",       1  )",
+      "(prompt: int,                             flag: int)",
+      "(prompt: bytes,                           flag: int)",
+    ), codeLineTexts(tooltip), tooltip)
+    assertFalse("<br" in tooltip, tooltip)
+  }
+
+  // An argument that a candidate has no parameter for gets a gap under the argument, not at the end of the row, where
+  // it would line up with a parameter of another candidate.
+  @Test
+  fun `the gap for an argument with no parameter lines up under the argument`() {
+    val tooltip = tooltipFor("""
+      from typing import Any, Callable, TypedDict, Unpack, overload
+      class State: ...
+      class Extra(TypedDict, total=False):
+          retry: int
+      @overload
+      def add_node(node: Callable[[State], Any], *, defer: bool = False, name: str | None = None) -> None: ...
+      @overload
+      def add_node(node: str, action: Callable[[State], Any], *, defer: bool = False, **kwargs: Unpack[Extra]) -> None: ...
+      def add_node(*args, **kwargs): ...
+      def respond(state: State) -> State: ...
+      add_node(1, respond)
+    """)
+    assertEquals(listOf(
+      "(      1,                      def respond(state: State) -> State                                    )",
+      "(node: (State) -> Any,                                         , defer: bool,     name: str | None   )",
+      "(node: str,            action: (State) -> Any,                   defer: bool, **kwargs: Unpack[Extra])",
+    ), codeLineTexts(tooltip), tooltip)
+  }
+
+  // Union members that shorten to the same form show it once.
+  @Test
+  fun `a union shows a repeated short form once`() {
+    val tooltip = tooltipFor("""
+      from typing import Any, Callable, overload
+      class AVeryLongClassNameForTheFirstState: ...
+      class AVeryLongClassNameForTheSecondState: ...
+      class AVeryLongClassNameForTheThirdState: ...
+      @overload
+      def f(node: Callable[[AVeryLongClassNameForTheFirstState], Any] | Callable[[AVeryLongClassNameForTheSecondState], Any] | Callable[[AVeryLongClassNameForTheThirdState], Any]): ...
+      @overload
+      def f(node: int): ...
+      def f(node): ...
+      f("a")
+    """)
+    assertEquals(listOf(
+      "(      \"a\"       )",
+      "(node: (…) -> Any)",
+      "(node: int       )",
+    ), codeLineTexts(tooltip), tooltip)
+  }
+
+  @Test
+  fun `a long generic is shortened to its name`() {
+    val tooltip = tooltipFor("""
+      from typing import overload
+      class AVeryLongClassNameForTheKeyOfTheMappingInTheCache: ...
+      class AVeryLongClassNameForTheValueOfTheMappingInTheCache: ...
+      @overload
+      def f(m: dict[AVeryLongClassNameForTheKeyOfTheMappingInTheCache, AVeryLongClassNameForTheValueOfTheMappingInTheCache], flag: int): ...
+      @overload
+      def f(m: int, flag: int): ...
+      def f(m, flag): ...
+      def g(d: dict[AVeryLongClassNameForTheKeyOfTheMappingInTheCache, AVeryLongClassNameForTheValueOfTheMappingInTheCache]):
+          f(d, "x")
+    """)
+    assertEquals(listOf(
+      "(   dict[…],       \"x\")",
+      "(m: dict[…], flag: int)",
+      "(m: int,     flag: int)",
+    ), codeLineTexts(tooltip), tooltip)
+    assertTrue(Regex("""<a href="#element/builtins\.dict">dict</a>""").containsMatchIn(tooltip), tooltip)
+  }
+
+  // Punctuation has the colours that the editor gives it, so a type reads like code. Only the `…` of elided text is muted.
+  @Test
+  fun `only the ellipsis is muted`() {
+    val tooltip = tooltipFor("""
+      from typing import overload
+      class AVeryLongClassNameForTheKeyOfTheMappingInTheCache: ...
+      class AVeryLongClassNameForTheValueOfTheMappingInTheCache: ...
+      @overload
+      def f(m: dict[AVeryLongClassNameForTheKeyOfTheMappingInTheCache, AVeryLongClassNameForTheValueOfTheMappingInTheCache], flag: int): ...
+      @overload
+      def f(m: int, flag: int): ...
+      def f(m, flag): ...
+      def g(d: dict[AVeryLongClassNameForTheKeyOfTheMappingInTheCache, AVeryLongClassNameForTheValueOfTheMappingInTheCache]):
+          f(d, "x")
+    """)
+    val muted = Regex("""<span style="color: ${Regex.escape(mutedColor)};">(.*?)</span>""").findAll(tooltip).map { it.groupValues[1] }.toList()
+    assertTrue(muted.isNotEmpty() && muted.all { it == PyTypeDiffGrid.ELLIPSIS }, muted.toString())
+  }
+
+  // Each name in a type links to its own declaration: the link of `dict` does not cover its type arguments.
+  @Test
+  fun `each name in a parameterized type has its own link`() {
+    val tooltip = tooltipFor("""
+      from typing import Any, overload
+      @overload
+      def f(a: int, metadata: dict[str, Any]): ...
+      @overload
+      def f(a: list[str], metadata: dict[str, Any]): ...
+      def f(a, metadata): ...
+      def g(m: dict[str, Any]):
+          f("x", m)
+    """)
+    assertEquals(listOf(
+      "(   \"x\",                 dict[str, Any])",
+      "(a: int,       metadata: dict[str, Any])",
+      "(a: list[str], metadata: dict[str, Any])",
+    ), codeLineTexts(tooltip), tooltip)
+    val linkTexts = Regex("""<a href="([^"]*)">(.*?)</a>""").findAll(tooltip)
+      .map { it.groupValues[1] to it.groupValues[2].replace(Regex("<[^>]*>"), "") }
+      .filter { it.first.startsWith("#element/") }
+      .toList()
+    assertTrue(linkTexts.none { "[" in it.second || "," in it.second }, linkTexts.toString())
+    assertTrue(("#element/builtins.dict" to "dict") in linkTexts, linkTexts.toString())
+    assertTrue(("#element/builtins.list" to "list") in linkTexts, linkTexts.toString())
+    assertTrue(("#element/builtins.str" to "str") in linkTexts, linkTexts.toString())
+    assertTrue(("#element/typing.Any" to "Any") in linkTexts, linkTexts.toString())
+  }
+
+  // In a parameter position the provided type must accept the bound: `object` accepts every `str`, so it is not a
+  // mismatch, and only the return type stands out.
+  @Test
+  fun `a parameter type that accepts the type variable bound is not highlighted`() {
+    val tooltip = tooltipFor("""
+      from typing import Callable, TypeVar
+      T = TypeVar("T", bound=str)
+      def f(x: object) -> str: ...
+      x: Callable[[T], int] = f
+    """)
+    assertNotHighlighted(tooltip, "object")
+    assertProvided(tooltip, "str")
+  }
+
+  // A candidate that does not take this number of arguments is analyzed only to render the report, so it adds no
+  // TypedDict warning of its own.
+  @Test
+  fun `a candidate with a different number of parameters adds no TypedDict warning`() {
+    val descriptions = warnings<PyTypeCheckerInspection>("""
+      from typing import TypedDict, overload
+      class TD(TypedDict):
+          b: int
+      @overload
+      def f(x: int, y: int): ...
+      @overload
+      def f(x: TD): ...
+      def f(x, y=0): ...
+      f({"a": 1}, "s")
+    """).map { it.description }
+    assertEquals(1, descriptions.size, descriptions.toString())
+    assertTrue(descriptions.single().startsWith("No overload of 'f'"), descriptions.toString())
+  }
+
+  // The argument row shows one layout, so candidates that give the argument different layouts keep the flat types.
+  @Test
+  fun `overload-call report keeps flat types when the candidates disagree on the layout`() {
+    val tooltip = tooltipFor("""
+      from typing import overload, Callable
+      @overload
+      def g(cb: Callable[[str], str]): ...
+      @overload
+      def g(cb: Callable[[str, int], str]): ...
+      def g(cb): ...
+      def r(x: str) -> int: ...
+      g(r)
+    """)
+    assertEquals(listOf(
+      "(    def r(x: str) -> int)",
+      "(cb: (str) -> str        )",
+      "(cb: (str, int) -> str   )",
+    ), codeLineTexts(tooltip), tooltip)
+    assertProvided(tooltip, "def r(x: str) -&gt; int")
+  }
+
+  // A callback protocol, a protocol whose only member is `__call__`, is shown as its signature, not as its name.
+  @Test
+  fun `overload-call report shows a callback protocol as its signature`() {
+    val tooltip = tooltipFor("""
+      from typing import Protocol, overload
+      class Handler(Protocol):
+          def __call__(self, a: int) -> str: ...
+      @overload
+      def f(h: Handler, x: int) -> int: ...
+      @overload
+      def f(h: Handler, x: str) -> str: ...
+      def f(h, x): ...
+      def g(a: int) -> str: ...
+      f(g, None)
+    """)
+    assertTrue(codeLineTexts(tooltip).count { "h: (a: int) -> str" in it } == 2, tooltip)
+  }
+
+  // A protocol with a member other than `__call__` is not a callback protocol, so it keeps its name.
+  @Test
+  fun `a callable protocol with other members doesn't expand`() {
+    val tooltip = tooltipFor("""
+      from typing import Protocol, overload
+      class Named(Protocol):
+          name: str
+          def __call__(self, a: int) -> str: ...
+      @overload
+      def f(h: Named, x: int) -> int: ...
+      @overload
+      def f(h: Named, x: str) -> str: ...
+      def f(h, x): ...
+      f(None, None)
+    """)
+    assertTrue(codeLineTexts(tooltip).count { "h: Named" in it } == 2, tooltip)
+  }
+
+  // A union nested in a type argument aligns its members like a top-level union, so a callable member that differs
+  // only in a parameter highlights that parameter type, not the whole callable.
+  // A nested union with a paired member follows the rule of a top-level union: under covariance, an expected
+  // alternative that the provided union omits stays plain, and only the provided member that does not fit stands out.
+  @Test
+  fun `a nested union with a paired member colours its members like a top-level union`() {
+    val nested = tooltipFor("""
+      from typing import Sequence
+      def f(b: Sequence[int | bytes]):
+          y: Sequence[int | str] = b
+    """)
+    assertProvided(nested, "bytes")
+    assertNotHighlighted(nested, "str")
+    assertNotHighlighted(nested, "int")
+    // The expected union has no highlight, but its members keep their syntax colour.
+    assertSyntaxColored(nested, "str")
+
+    val topLevel = tooltipFor("""
+      def f(a: int | bytes):
+          x: int | str = a
+    """)
+    assertProvided(topLevel, "bytes")
+    assertNotHighlighted(topLevel, "str")
+    assertNotHighlighted(topLevel, "int")
+
+    // The nested union is laid out member by member exactly like the top-level one.
+    assertEquals(listOf("int | str        ", "int       | bytes"), codeLineTexts(topLevel), topLevel)
+    assertEquals(codeLineTexts(topLevel).map { "Sequence[$it]" }, codeLineTexts(nested), nested)
+  }
+
+  // A paired side that is not a union stays plain: the expected `int` has its partner, so only `bytes` stands out.
+  @Test
+  fun `a paired non-union side is not highlighted`() {
+    val tooltip = tooltipFor("""
+      def f(b: list[int | bytes]):
+          y: list[int] = b
+    """)
+    assertProvided(tooltip, "bytes")
+    assertNotHighlighted(tooltip, "int")
+  }
+
+  // With no paired member, every expected alternative that the provided type does not satisfy stands out, to show
+  // what was wanted.
+  @Test
+  fun `a nested union with no paired member colours every unsatisfied alternative`() {
+    val tooltip = tooltipFor("""
+      from typing import Sequence
+      def f(b: Sequence[bytes]):
+          y: Sequence[int | str] = b
+    """)
+    assertExpected(tooltip, "int")
+    assertExpected(tooltip, "str")
+    assertProvided(tooltip, "bytes")
+  }
+
+  @Test
+  fun `a nested union highlights only the differing part of a related member`() {
+    val tooltip = tooltipFor("""
+      from typing import Callable
+      def f(s: int) -> int: ...
+      c: list[int | Callable[[str], int]] = [f]
+    """)
+    assertEquals(listOf("list[int | (   str) -> int]", "list[      (s: int) -> int]"), codeLineTexts(tooltip), tooltip)
+    assertExpected(tooltip, "str")
+    assertProvided(tooltip, "int")
+    assertNotHighlighted(tooltip, "(")
+  }
+
+  @Test
+  fun `a nested callback protocol is shown as its signature`() {
+    val tooltip = tooltipFor("""
+      from typing import Protocol
+      class Handler(Protocol):
+          def __call__(self, a: int) -> str: ...
+      a: list[int] = []
+      b: list[Handler] = a
+    """)
+    assertCodeLineContains(tooltip, "list[(a: int) -> str]")
   }
 
   // A one-sided union member that isn't highlighted (a duplicate `(a: int) -> None`, which IS assignable to `C`) is
@@ -468,11 +1033,13 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
       x: Callable[[int, int | str], int] = f
     """)
     assertTrue("= ..." in tooltip, tooltip)
-    // The type `int` of `b` is red (the provided side), but neither the name `b: ` nor the ` = ...` default is
-    // (the default here is present on the actual side, which is allowed — only the narrower type is the problem).
+    // The type of `b` is the problem: the expected `str` that `b` does not accept is green. Neither the name `b: ` nor
+    // the ` = ...` default is highlighted (the default is present on the actual side, which is allowed). The provided
+    // `int` has its partner in the expected union, so it stays plain.
     assertNotHighlighted(tooltip, "b: ")
     assertNotHighlighted(tooltip, " = ...")
-    assertProvided(tooltip, "int")
+    assertExpected(tooltip, "str")
+    assertNotHighlighted(tooltip, "int")
   }
 
   // A dropped default value is an incompatibility on its own (even when the types match): the `= ...` is highlighted.
@@ -789,9 +1356,10 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
       def f(a: int) -> int: ...
       x: Callable[[int], str] = f
     """)
-    // The label cells use a padding-only style (no color override), so they render in the normal color.
-    assertTrue("padding: 0px 8px 0px 4px;\">Provided:</td>" in tooltip, tooltip)
-    assertTrue("padding: 0px 8px 0px 4px;\">Expected:</td>" in tooltip, tooltip)
+    // The label cells set no color, so they render in the normal color.
+    val labelStyles = Regex("<td style=\"([^\"]*)\">(?:Provided|Expected):</td>").findAll(tooltip).map { it.groupValues[1] }.toList()
+    assertEquals(2, labelStyles.size, tooltip)
+    assertTrue(labelStyles.none { "color" in it }, tooltip)
     assertNotMuted(tooltip, "Provided:")
   }
 
@@ -862,7 +1430,7 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
       x: Callable[[int, str], int] = f
     """)
     assertTrue("<code" in slash, slash)
-    assertTrue(", /," in slash, slash)
+    assertCodeLineContains(slash, ", /,")
 
     val varargs = tooltipFor("""
       from typing import Callable
@@ -1122,6 +1690,87 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
     assertEquals(2, diffRows.size, tooltip)
   }
 
+  // A row label must not wrap either: a long row squeezes the label column, which broke `Argument types:` mid-word.
+  @Test
+  fun `row labels do not wrap`() {
+    val tooltip = tooltipFor("""
+      from typing import overload
+      @overload
+      def f(a_long_parameter_name_that_makes_the_row_wide: int) -> int: ...
+      @overload
+      def f(a_long_parameter_name_that_makes_the_row_wide: str) -> str: ...
+      def f(a_long_parameter_name_that_makes_the_row_wide): ...
+      f(None)
+    """)
+    val labelCells = Regex("<td style=\"[^\"]*\">(?:Argument types:|Expected one of:)").findAll(tooltip).map { it.value }.toList()
+    assertEquals(2, labelCells.size, tooltip)
+    assertTrue(labelCells.all { "white-space: nowrap" in it }, tooltip)
+  }
+
+  // A row past the width budget keeps only the start and the end of a long matched name, so the mismatch stays in view.
+  @Test
+  fun `long matched names keep only their start and end`() {
+    val tooltip = tooltipFor("""
+      from typing import overload
+      @overload
+      def f(aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_: int) -> int: ...
+      @overload
+      def f(aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_: str) -> str: ...
+      def f(aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_aaaaaaaaaaaa_): ...
+      f(None)
+    """)
+    assertEquals(listOf(
+      "(                    None)",
+      "(aaaaaaaaaa…aaaaaa_: int )",
+      "(aaaaaaaaaa…aaaaaa_: str )",
+    ), codeLineTexts(tooltip))
+    assertExpected(tooltip, "int")
+    assertExpected(tooltip, "str")
+  }
+
+  // A row past the width budget collapses the run of slots that match on every row into one `…`.
+  @Test
+  fun `matched overload parameters collapse past the width budget`() {
+    val tooltip = tooltipFor("""
+      from typing import overload
+      @overload
+      def g(first_parameter: int, second_parameter: int, third_parameter: int, fourth_parameter: int, fifth_parameter: int, sixth_parameter: int, last: str) -> int: ...
+      @overload
+      def g(first_parameter: int, second_parameter: int, third_parameter: int, fourth_parameter: int, fifth_parameter: int, sixth_parameter: int, last: bytes) -> str: ...
+      def g(first_parameter, second_parameter, third_parameter, fourth_parameter, fifth_parameter, sixth_parameter, last): ...
+      g(1, 2, 3, 4, 5, 6, None)
+    """)
+    assertEquals(listOf(
+      "(…,       None )",
+      "(…, last: str  )",
+      "(…, last: bytes)",
+    ), codeLineTexts(tooltip))
+  }
+
+  @Test
+  fun `matched tuple elements collapse past the width budget`() {
+    val tooltip = tooltipFor("""
+      a: tuple[int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, str]
+      b: tuple[int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int] = a
+    """)
+    assertEquals(listOf("tuple[…, int]", "tuple[…, str]"), codeLineTexts(tooltip))
+  }
+
+  // A row within the width budget is shown in full.
+  @Test
+  fun `matched parameters within the width budget are not collapsed`() {
+    val tooltip = tooltipFor("""
+      from typing import overload
+      @overload
+      def g(a: int, last: str) -> int: ...
+      @overload
+      def g(a: int, last: bytes) -> str: ...
+      def g(a, last): ...
+      g(1, None)
+    """)
+    assertTrue(codeLineTexts(tooltip).none { "…" in it }, tooltip)
+  }
+
   // every type name gets the normal (value) color; structural names like `tuple` must not be
   // muted while `Sequence` is normal — that inconsistency was the bug.
   @Test
@@ -1322,6 +1971,6 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
     Regex("""<code style="white-space: nowrap[^"]*">(.*?)</code>""").findAll(tooltip).map { match ->
       match.groupValues[1]
         .replace(Regex("<[^>]*>"), "")
-        .replace("&nbsp;", " ").replace("&gt;", ">").replace("&lt;", "<").replace("&amp;", "&")
+        .replace("&nbsp;", " ").replace("&gt;", ">").replace("&lt;", "<").replace("&quot;", "\"").replace("&amp;", "&")
     }.toList()
 }

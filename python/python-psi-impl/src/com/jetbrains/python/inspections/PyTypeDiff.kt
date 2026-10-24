@@ -12,6 +12,7 @@ import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.ast.PyAstSingleStarParameter
 import com.jetbrains.python.ast.PyAstSlashParameter
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.codeInsight.typing.isCallbackProtocolInstance
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.inspections.PyTypeDiff.columns
 import com.jetbrains.python.inspections.PyTypeDiff.diffTooltip
@@ -68,8 +69,33 @@ internal object PyTypeDiff {
    *  Well beyond any realistically hand-written type, so it never truncates a genuine one. */
   private const val MAX_NESTING_DEPTH = 20
 
-  /** One aligned column: the cell shown on the actual (top) row and the cell shown on the expected (bottom) row. */
-  private class Col(val actual: Cell, val expected: Cell)
+  /**
+   * One aligned column: the cell shown on the actual (top) row and the cell shown on the expected (bottom) row.
+   * [opensSlots] and [closesSlots] count the elidable slots (see [PyTypeDiffGrid.tooltip]) that start and end at this
+   * column. Mark a slot with [asSlot], and rebuild a column with [withCells] so that its marks stay.
+   */
+  private class Col(val actual: Cell, val expected: Cell, val opensSlots: Int = 0, val closesSlots: Int = 0) {
+    fun withCells(actual: Cell, expected: Cell): Col = Col(actual, expected, opensSlots, closesSlots)
+  }
+
+  /** Marks [columns] as one elidable slot: a parameter, a type argument, a type parameter or a union member. */
+  private fun asSlot(columns: List<Col>): List<Col> =
+    columns.mapIndexed { i, col ->
+      Col(col.actual, col.expected,
+          col.opensSlots + (if (i == 0) 1 else 0),
+          col.closesSlots + (if (i == columns.lastIndex) 1 else 0))
+    }
+
+  /** The column ranges of the slots that [columns] mark. */
+  private fun slotRanges(columns: List<Col>): List<IntRange> {
+    val ranges = mutableListOf<IntRange>()
+    val starts = ArrayDeque<Int>()
+    columns.forEachIndexed { i, col ->
+      repeat(col.opensSlots) { starts.addLast(i) }
+      repeat(col.closesSlots) { ranges.add(starts.removeLast()..i) }
+    }
+    return ranges
+  }
 
   /**
    * Builds the diff tooltip for an `expected`/`actual` pair of types with the default headline, or returns
@@ -130,6 +156,8 @@ internal object PyTypeDiff {
     // difference shows, even one where a side would merely be assignable to the other.
     val variance = if (exact) Variance.INVARIANT else Variance.COVARIANT
     val columns = recursionSafe { structuredColumns(expected, actual, context, variance) } ?: return null
+    // A diff that finds no differing part does not explain the mismatch, so the caller keeps its plain message.
+    if (columns.none { PyTypeDiffGrid.hasMismatch(it.actual) || PyTypeDiffGrid.hasMismatch(it.expected) }) return null
     return render(columns, headline)
   }
 
@@ -182,12 +210,12 @@ internal object PyTypeDiff {
     val nameCol = Col(PyTypeDiffGrid.value(actual?.name.orEmpty(), nameMismatch), PyTypeDiffGrid.value(expected?.name.orEmpty(), nameMismatch))
     val expectedBound = typeParameterBound(expected, context)
     val actualBound = typeParameterBound(actual, context)
-    if (expectedBound == null && actualBound == null) return listOf(nameCol)
-    return buildList {
+    if (expectedBound == null && actualBound == null) return asSlot(listOf(nameCol))
+    return asSlot(buildList {
       add(nameCol)
       add(delimColumn(": "))
       addAll(columns(expectedBound, actualBound, context, Variance.INVARIANT))
-    }
+    })
   }
 
   private fun typeParameterBound(typeParameter: PyTypeParameter?, context: TypeEvalContext): PyType? =
@@ -197,6 +225,26 @@ internal object PyTypeDiff {
    *  inspections fall back to their plain message tooltip; the Problems-view description is unaffected either way. */
   @JvmStatic
   fun diffTooltipsEnabled(): Boolean = Registry.`is`("python.type.checker.diff.tooltip", false)
+
+  /** A cell that shows [type] (rendered as [name]) as one value: a union member by member, so each member keeps its
+   *  syntax colour and link. The whole cell is highlighted when it is a [mismatch]. */
+  fun typeCell(type: PyType?, @NlsSafe name: String, mismatch: Boolean, context: TypeEvalContext, @NlsSafe suffix: String = ""): Cell =
+    unionAwareCell(type, name, mismatch, context, suffix = suffix) { true }
+
+  /** The aligned cells of one value on the [actual] side and the [expected] side, with the column ranges of their slots. */
+  class Alignment(val actual: List<Cell>, val expected: List<Cell>, val slots: List<IntRange>)
+
+  /**
+   * Aligns an [actual] value with an [expected] type the way an assignment diff does, so that a caller can put the
+   * alignment into its own grid. Returns `null` when the two types share no structure to align, or when the alignment
+   * finds no differing part.
+   */
+  fun alignment(expected: PyType?, actual: PyType?, context: TypeEvalContext): Alignment? {
+    val columns = recursionSafe { structuredColumns(expected, actual, context) } ?: return null
+    // An alignment that finds no differing part does not explain the mismatch.
+    if (columns.none { PyTypeDiffGrid.hasMismatch(it.actual) || PyTypeDiffGrid.hasMismatch(it.expected) }) return null
+    return Alignment(columns.map { it.actual }, columns.map { it.expected }, slotRanges(columns))
+  }
 
   /**
    * Building the diff evaluates parameter/return types, which can hit the type system's recursion guard on
@@ -225,7 +273,7 @@ internal object PyTypeDiff {
       PyTypeDiffGrid.Row(PyPsiBundle.message("INSP.type.checker.diff.expected.label"), columns.map { it.expected }, PyTypeDiffGrid.Side.EXPECTED),
       PyTypeDiffGrid.Row(PyPsiBundle.message("INSP.type.checker.diff.actual.label"), columns.map { it.actual }, PyTypeDiffGrid.Side.PROVIDED),
     )
-    return PyTypeDiffGrid.tooltip(headline, rows)
+    return PyTypeDiffGrid.tooltip(headline, rows, slotRanges(columns))
   }
 
   // ---- Structural decomposition -------------------------------------------------------------------------------
@@ -253,11 +301,31 @@ internal object PyTypeDiff {
 
   /** Whether the [actual]/[expected] pair is incompatible at a position of the given [variance]. */
   private fun typesMismatch(actual: PyType?, expected: PyType?, variance: Variance, context: TypeEvalContext): Boolean =
+    breaksTypeVarBound(expected, actual, variance, context) ||
     when (variance) {
       Variance.COVARIANT -> !PyTypeChecker.match(expected, actual, context)
       Variance.CONTRAVARIANT -> !PyTypeChecker.match(actual, expected, context)
       Variance.INVARIANT -> !PyTypeChecker.match(expected, actual, context) || !PyTypeChecker.match(actual, expected, context)
     }
+
+  /**
+   * Whether [type] breaks the bound or the constraints of [typeVar], a type variable on the expected side, at a
+   * position of the given [variance]. A part compared on its own leaves the type variable unsolved, so it accepts any
+   * type. In a covariant position [type] must fit the bound. In a contravariant position, such as a callable
+   * parameter, [type] must accept the bound. An invariant position needs both.
+   */
+  private fun breaksTypeVarBound(typeVar: PyType?, type: PyType?, variance: Variance, context: TypeEvalContext): Boolean {
+    if (typeVar !is PyTypeVarType || type == null || type is PyTypeVarType) return false
+    fun fits(limit: PyType?): Boolean = when (variance) {
+      Variance.COVARIANT -> PyTypeChecker.match(limit, type, context)
+      Variance.CONTRAVARIANT -> PyTypeChecker.match(type, limit, context)
+      Variance.INVARIANT -> PyTypeChecker.match(limit, type, context) && PyTypeChecker.match(type, limit, context)
+    }
+    val bound = typeVar.bound
+    if (bound != null && !fits(bound)) return true
+    val constraints = typeVar.constraints
+    return constraints.isNotEmpty() && constraints.none(::fits)
+  }
 
   /** The declared (or inferred) variance of the [index]th type argument of [generic], mirroring
    *  `PyTypeChecker.findTypeParameterVariance`: tuples are covariant, unknown parameters default to covariant. */
@@ -293,20 +361,22 @@ internal object PyTypeDiff {
   }
 
   /** A type name for the diff, with literals shown bare (`1`, not `Literal[1]`) — the `Literal[…]` wrapper is
-   *  redundant noise in a structural diff, where the value alone is clearer. */
+   *  redundant noise in a structural diff, where the value alone is clearer. A callback protocol is shown as the
+   *  signature of its `__call__`, because the signature is what the reader compares. */
   @NlsSafe
   private fun bareTypeName(type: PyType?, context: TypeEvalContext): String =
-    PythonDocumentationProvider.getTypeName(type, context, PyTypeRendererFeature.BARE_LITERAL)
+    PythonDocumentationProvider.getTypeName(type, context, PyTypeRendererFeature.BARE_LITERAL,
+                                            PyTypeRendererFeature.CALLBACK_PROTOCOL_AS_CALLABLE)
 
   private fun leafColumns(expected: PyType?, actual: PyType?, context: TypeEvalContext, variance: Variance = Variance.COVARIANT): List<Col> {
     val actualName = bareTypeName(actual, context)
     val expectedName = bareTypeName(expected, context)
     val mismatch = typesMismatch(actual, expected, variance, context)
-    // Either side may itself be a union: highlight only the members the other side doesn't match, not the whole
-    // union — so `int | str` vs `int | float` greys the shared `int` and colours only `str`/`float`. A "source" side
-    // (whose values must be accepted) reds each member the other can't take; a "target" side greens each alternative
-    // the source doesn't provide. Covariant → actual is the source, expected the target; contravariant flips them;
-    // invariant treats each side as a source (every member must round-trip).
+    // Either side may itself be a union with no member in common with the other side (a union with a shared member is
+    // aligned by [compositeColumns] instead). A "source" side (whose values must be accepted) reds each member the
+    // other can't take; a "target" side greens each alternative the source doesn't provide, to show what was wanted.
+    // Covariant → actual is the source, expected the target; contravariant flips them; invariant treats each side as a
+    // source (every member must round-trip).
     val actualMembers = unionMembers(actual)
     val expectedMembers = unionMembers(expected)
     return when (variance) {
@@ -332,12 +402,13 @@ internal object PyTypeDiff {
     val isUnion = expected is PyUnionType || actual is PyUnionType
     val isIntersection = expected is PyIntersectionType || actual is PyIntersectionType
     if (!isUnion && !isIntersection) return null
-    // A top-level composite is aligned member-by-member, so the `|`/`&` separators and the matching members line up
-    // across the two rows (the grid pads each member into its own column; a member with no counterpart shows as a
-    // gap). A nested composite (a union inside a parameter or type argument) stays a single per-member cell so it
-    // fits inside its column.
-    if (depth == 0) return alignedCompositeColumns(expected, actual, context, variance, isUnion, depth)
-    return if (isUnion) leafColumns(expected, actual, context, variance) else intersectionColumns(expected, actual, context)
+    // A composite is aligned member-by-member at every depth, so the `|`/`&` separators and the matching members line
+    // up across the two rows (the grid pads each member into its own column; a member with no counterpart shows as a
+    // gap). Two unions with no member in common have nothing to align: at the top level there is no diff, and a nested
+    // pair stays a single per-member cell that shows the alternatives that were wanted. Intersections always align.
+    alignedCompositeColumns(expected, actual, context, variance, isUnion, depth)?.let { return it }
+    if (depth == 0) return null
+    return leafColumns(expected, actual, context, variance)
   }
 
   /** One aligned member pair of two composite types: the member on the actual (top) row and the one on the expected
@@ -360,12 +431,20 @@ internal object PyTypeDiff {
     // plain "expected …, got …" message, so don't show it (intersections still render — their members are the point).
     if (isUnion && slots.none { it.expected != null && it.actual != null }) return null
     val columns = mutableListOf<Col>()
+    // A row shows the separator only between two of its own members, so a single type against a union has none.
+    var actualShown = false
+    var expectedShown = false
     slots.forEachIndexed { i, slot ->
-      if (i > 0) columns.add(delimColumn(separator))
+      if (i > 0) {
+        fun separatorCell(shown: Boolean) = PyTypeDiffGrid.delim(if (shown) separator else "")
+        columns.add(Col(separatorCell(actualShown && slot.actual != null), separatorCell(expectedShown && slot.expected != null)))
+      }
+      actualShown = actualShown || slot.actual != null
+      expectedShown = expectedShown || slot.expected != null
       if (slot.expected != null && slot.actual != null) {
         // Equivalent or structurally related: recurse so the pair lines up in one column and only the differing
         // inner parts (e.g. the `int` vs `str` of `list[int]`/`list[str]`) are highlighted.
-        columns.addAll(columns(slot.expected, slot.actual, context, variance, depth + 1))
+        columns.addAll(asSlot(columns(slot.expected, slot.actual, context, variance, depth + 1)))
       }
       else {
         // A member on only one side: shown alone against a (never-highlighted) gap, and itself highlighted only
@@ -380,14 +459,13 @@ internal object PyTypeDiff {
         // member, and a plain leaf, keep the single [typeValue] cell (a leaf's own class name is already coloured).
         val decomposed = if (bad) null else structuredColumns(member, member, context, variance, depth + 1)
         if (decomposed != null) {
-          for (col in decomposed) {
-            val sideCell = if (onExpected) col.expected else col.actual
-            columns.add(if (onExpected) Col(gap, sideCell) else Col(sideCell, gap))
-          }
+          columns.addAll(asSlot(decomposed.map { col ->
+            if (onExpected) col.withCells(gap, col.expected) else col.withCells(col.actual, gap)
+          }))
         }
         else {
-          val cell = PyTypeDiffGrid.typeValue(member, bareTypeName(member, context), bad)
-          columns.add(if (onExpected) Col(gap, cell) else Col(cell, gap))
+          val cell = typeValue(member, bareTypeName(member, context), bad, context)
+          columns.addAll(asSlot(listOf(if (onExpected) Col(gap, cell) else Col(cell, gap))))
         }
       }
     }
@@ -430,43 +508,78 @@ internal object PyTypeDiff {
            else variance != Variance.CONTRAVARIANT && !PyTypeChecker.match(expected, member, context)
   }
 
-  /** Aligns two intersection types member by member. An intersection is a conjunction — the value is *all* of its
-   *  members at once — so unlike a union there is no source/target direction: a member is highlighted simply when the
-   *  other side has no equivalent member, the way a set diff marks the elements unique to each side. */
-  private fun intersectionColumns(expected: PyType?, actual: PyType?, context: TypeEvalContext): List<Col> {
-    val expectedMembers = intersectionMembers(expected)
-    val actualMembers = intersectionMembers(actual)
-    fun absentFrom(others: Collection<PyType?>, m: PyType?): Boolean =
-      others.none { PyTypeChecker.match(it, m, context) && PyTypeChecker.match(m, it, context) }
-    return listOf(Col(
-      compositeCell(actualMembers, context) { absentFrom(expectedMembers, it) },
-      compositeCell(expectedMembers, context) { absentFrom(actualMembers, it) },
-    ))
-  }
-
   /** A union's members, or the type itself as a single-member list, for member-by-member comparison. */
   private fun unionMembers(type: PyType?): Collection<PyType?> = (type as? PyUnionType)?.members ?: listOf(type)
 
   private fun intersectionMembers(type: PyType?): Collection<PyType?> = (type as? PyIntersectionType)?.members ?: listOf(type)
 
-  /** A cell rendering [members] joined by ` & ` (an intersection), each highlighted when [isBad]. */
-  private fun compositeCell(members: Collection<PyType?>, context: TypeEvalContext, isBad: (PyType?) -> Boolean): Cell {
-    val segments = mutableListOf<PyTypeDiffGrid.Segment>()
-    members.forEachIndexed { i, m ->
-      if (i > 0) segments.add(PyTypeDiffGrid.segmentDelim(" & "))
-      val name = bareTypeName(m, context)
-      segments.add(PyTypeDiffGrid.typeSegment(m, name, isBad(m)))
-    }
-    return PyTypeDiffGrid.segmented(segments)
-  }
-
   private fun delimColumn(@NlsSafe text: String): Col = Col(PyTypeDiffGrid.delim(text), PyTypeDiffGrid.delim(text))
 
+  /** [PyTypeDiffGrid.typeValue] with the short form of [type] (see [shortForm]) and its linked parts (see [linkedParts]). */
+  private fun typeValue(type: PyType?, @NlsSafe name: String, mismatch: Boolean, context: TypeEvalContext,
+                        alignRight: Boolean = false, @NlsSafe suffix: String = ""): Cell =
+    PyTypeDiffGrid.typeValue(type, name, mismatch, alignRight, suffix, shortForm(type, name, context), linkedParts(type, name, mismatch, context))
+
+  /** [PyTypeDiffGrid.typeSegment] with the short form of [type] (see [shortForm]) and its linked parts (see [linkedParts]). */
+  private fun typeSegment(type: PyType?, @NlsSafe name: String, mismatch: Boolean, context: TypeEvalContext): PyTypeDiffGrid.Segment =
+    PyTypeDiffGrid.typeSegment(type, name, mismatch, shortForm(type, name, context), linkedParts(type, name, mismatch, context))
+
   /**
-   * A value cell for [type] (pre-rendered as [typeName]). When the type is a union and the column is a
-   * [mismatch], the members are rendered individually and only those for which [isBadMember] is true are
-   * highlighted — so only the part of the union that actually fails stands out. Otherwise the whole value is
-   * rendered (highlighted iff [mismatch]).
+   * The runs that render [type] (shown as [name]) with a link for each name in it: `dict[str, Any]` links `dict`, `str`
+   * and `Any` each to its own declaration, and the brackets get no link. Returns `null` when [type] has no type arguments
+   * or union members, or when its parts do not spell [name].
+   */
+  private fun linkedParts(type: PyType?, @NlsSafe name: String, mismatch: Boolean, context: TypeEvalContext): List<PyTypeDiffGrid.Segment>? {
+    val parts = parts(type, name, mismatch, context)
+    return parts.takeIf { it.size > 1 && it.joinToString("") { part -> part.text } == name }
+  }
+
+  private fun parts(type: PyType?, @NlsSafe name: String, mismatch: Boolean, context: TypeEvalContext): List<PyTypeDiffGrid.Segment> {
+    fun joined(types: List<PyType?>, @NlsSafe separator: String): List<PyTypeDiffGrid.Segment> =
+      types.flatMapIndexed { i, member ->
+        val memberParts = parts(member, bareTypeName(member, context), mismatch, context)
+        if (i == 0) memberParts else listOf(PyTypeDiffGrid.typeDelim(separator, mismatch)) + memberParts
+      }
+
+    if (type is PyUnionType) return joined(type.members.toList(), " | ")
+    if (type is PyClassType && !type.isDefinition && type.isParameterized) {
+      @NlsSafe val base = name.substringBefore('[', missingDelimiterValue = "")
+      if (base.isNotEmpty()) {
+        return listOf(PyTypeDiffGrid.typeSegment(type, base, mismatch), PyTypeDiffGrid.typeDelim("[", mismatch)) +
+               joined(type.typeArguments, ", ") + PyTypeDiffGrid.typeDelim("]", mismatch)
+      }
+    }
+    return listOf(PyTypeDiffGrid.typeSegment(type, name, mismatch))
+  }
+
+  /**
+   * The short form of [type] (shown as [name]) for the grid to use in place of a long name: `Name[…]` for a
+   * parameterized class, and `(…) -> R` for a callable or a callback protocol, with a long `R` in its own short form.
+   * Each name in it keeps its syntax colour and link. Returns `null` when [name] is short enough to show in full, or
+   * when [type] has no short form.
+   */
+  private fun shortForm(type: PyType?, @NlsSafe name: String, context: TypeEvalContext): List<PyTypeDiffGrid.Segment>? {
+    if (name.length <= PyTypeDiffGrid.SHORTENED_TEXT_LENGTH || type is PyUnionType) return null
+    val callable = type is PyCallableType && type.isCallable && (type !is PyClassType || type.isCallbackProtocolInstance(context))
+    if (callable) {
+      val returnType = type.getReturnType(context)
+      val returnName = bareTypeName(returnType, context)
+      val returnPart = shortForm(returnType, returnName, context) ?: listOf(PyTypeDiffGrid.typeSegment(returnType, returnName, mismatch = false))
+      return listOf(PyTypeDiffGrid.segmentDelim("(${PyTypeDiffGrid.ELLIPSIS}) -> ")) + returnPart
+    }
+    if (type is PyClassType && !type.isDefinition) {
+      @NlsSafe val base = name.substringBefore('[', missingDelimiterValue = "")
+      if (base.isNotEmpty()) {
+        return listOf(PyTypeDiffGrid.typeSegment(type, base, mismatch = false), PyTypeDiffGrid.segmentDelim("[${PyTypeDiffGrid.ELLIPSIS}]"))
+      }
+    }
+    return null
+  }
+
+  /**
+   * A value cell for [type] (pre-rendered as [typeName]). A union is rendered member by member. When the column is
+   * a [mismatch], only the members for which [isBadMember] is true are highlighted, so only the part of the union that
+   * actually fails stands out. Any other type is rendered whole (highlighted iff [mismatch]).
    */
   private fun unionAwareCell(
     type: PyType?,
@@ -478,14 +591,16 @@ internal object PyTypeDiff {
     isBadMember: (PyType?) -> Boolean,
   ): Cell {
     val members = (type as? PyUnionType)?.members
-    if (!mismatch || members == null || members.size < 2) {
-      return PyTypeDiffGrid.typeValue(type, typeName, mismatch, alignRight, suffix)
+    if (members == null || members.size < 2) {
+      return typeValue(type, typeName, mismatch, context, alignRight, suffix)
     }
+    // A union is always split into its members, so each member keeps its syntax colour and link. The whole union has no
+    // rich rendering of its own.
     val segments = mutableListOf<PyTypeDiffGrid.Segment>()
     members.forEachIndexed { i, member ->
       if (i > 0) segments.add(PyTypeDiffGrid.segmentDelim(" | "))
       val name = bareTypeName(member, context)
-      segments.add(PyTypeDiffGrid.typeSegment(member, name, isBadMember(member)))
+      segments.add(typeSegment(member, name, mismatch && isBadMember(member), context))
     }
     return PyTypeDiffGrid.segmented(segments, alignRight, suffix)
   }
@@ -602,7 +717,7 @@ internal object PyTypeDiff {
 
     val columns = mutableListOf<Col>()
     slots.forEachIndexed { index, slot ->
-      val elementColumns = renderArgSlot(slot, context, depth + 1)
+      val elementColumns = asSlot(renderArgSlot(slot, context, depth + 1))
       columns.addAll(if (index < slots.lastIndex) withTrailingComma(elementColumns) else elementColumns)
     }
     return columns
@@ -612,9 +727,9 @@ internal object PyTypeDiff {
     if (slot.hasActual && slot.hasExpected) return columns(slot.expected, slot.actual, context, slot.variance, depth)
     // A surplus argument on one side has no counterpart, so it is the incompatibility: shown red, while the side
     // that lacks it gets an empty mismatch cell the grid paints as a missing-position block across the column.
-    val actualCell = if (slot.hasActual) PyTypeDiffGrid.typeValue(slot.actual, bareTypeName(slot.actual, context), mismatch = true)
+    val actualCell = if (slot.hasActual) typeValue(slot.actual, bareTypeName(slot.actual, context), mismatch = true, context)
                      else PyTypeDiffGrid.value("", mismatch = true)
-    val expectedCell = if (slot.hasExpected) PyTypeDiffGrid.typeValue(slot.expected, bareTypeName(slot.expected, context), mismatch = true)
+    val expectedCell = if (slot.hasExpected) typeValue(slot.expected, bareTypeName(slot.expected, context), mismatch = true, context)
                        else PyTypeDiffGrid.value("", mismatch = true)
     return listOf(Col(actualCell, expectedCell))
   }
@@ -643,7 +758,7 @@ internal object PyTypeDiff {
   ): List<Col> {
     val columns = mutableListOf<Col>()
     expectedArgs.indices.forEach { i ->
-      val elementColumns = columns(expectedArgs[i], actualArgs[i], context, elementVariance(i), depth + 1)
+      val elementColumns = asSlot(columns(expectedArgs[i], actualArgs[i], context, elementVariance(i), depth + 1))
       // The comma after an element hugs it (and the padding falls after the comma), so attach it as a suffix
       // of the element's last column rather than as a separate column.
       columns.addAll(if (i < expectedArgs.lastIndex) withTrailingComma(elementColumns) else elementColumns)
@@ -654,7 +769,7 @@ internal object PyTypeDiff {
   private fun withTrailingComma(elementColumns: List<Col>): List<Col> {
     if (elementColumns.isEmpty()) return elementColumns
     val last = elementColumns.last()
-    val withComma = Col(PyTypeDiffGrid.withSuffix(last.actual, ", "), PyTypeDiffGrid.withSuffix(last.expected, ", "))
+    val withComma = last.withCells(PyTypeDiffGrid.withSuffix(last.actual, ", "), PyTypeDiffGrid.withSuffix(last.expected, ", "))
     return elementColumns.dropLast(1) + withComma
   }
 
@@ -878,11 +993,11 @@ internal object PyTypeDiff {
     val columns = listOf(nameColumn) + typeColumns + defaultColumn
     // An absent parameter on one side is empty in every column; mark those cells as a mismatch so the grid paints
     // each as a missing-position gap across the column the other side occupies.
-    return when {
-      slot.actualMissing -> columns.map { Col(PyTypeDiffGrid.value("", mismatch = true), it.expected) }
-      slot.expectedMissing -> columns.map { Col(it.actual, PyTypeDiffGrid.value("", mismatch = true)) }
+    return asSlot(when {
+      slot.actualMissing -> columns.map { it.withCells(PyTypeDiffGrid.value("", mismatch = true), it.expected) }
+      slot.expectedMissing -> columns.map { it.withCells(it.actual, PyTypeDiffGrid.value("", mismatch = true)) }
       else -> columns
-    }
+    })
   }
 
   /**
@@ -903,13 +1018,13 @@ internal object PyTypeDiff {
       structuredColumns(expected.matchType, actual.matchType, context, variance, depth + 1)?.let { return it }
     }
     val expectedTypeCell =
-      if (expected != null && expected.container) PyTypeDiffGrid.typeValue(expected.matchType, expected.type, slot.expectedTypeMismatch)
+      if (expected != null && expected.container) typeValue(expected.matchType, expected.type, slot.expectedTypeMismatch, context)
       else if (variance == Variance.CONTRAVARIANT)
         unionAwareCell(expected?.matchType, expected?.type.orEmpty(), slot.expectedTypeMismatch, context) {
           !PyTypeChecker.match(slot.expectedAgainst, it, context)
         }
-      else PyTypeDiffGrid.typeValue(expected?.matchType, expected?.type.orEmpty(), slot.expectedTypeMismatch)
-    return listOf(Col(PyTypeDiffGrid.typeValue(actual?.matchType, actual?.type.orEmpty(), slot.actualTypeMismatch), expectedTypeCell))
+      else typeValue(expected?.matchType, expected?.type.orEmpty(), slot.expectedTypeMismatch, context)
+    return listOf(Col(typeValue(actual?.matchType, actual?.type.orEmpty(), slot.actualTypeMismatch, context), expectedTypeCell))
   }
 
   /**

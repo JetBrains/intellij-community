@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.documentation.PyDocumentationLink.toPossibleClass
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.highlighting.PyHighlighter
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
@@ -33,10 +34,12 @@ import com.jetbrains.python.psi.PyPsiFacade
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyTypeAliasStatement
 import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser
+import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isNoneType
@@ -105,15 +108,11 @@ object PyDocumentationLink {
    * Renders [displayName] as a clickable, highlighted type-name chunk for an inspection tooltip — the same
    * `#element/<fqn>` link and builtin/keyword highlighting as [toPossibleClassTooltipLink], but from an already
    * resolved [type], so a caller that holds the `PyType` need not re-resolve a name (and is not limited to types
-   * resolvable from an anchor). A non-class type, or a class with no qualified name, renders as highlighted text
-   * without a link.
+   * resolvable from an anchor). A type with no link target (see [tooltipLinkTarget]) renders as text without a link.
    */
   @JvmStatic
   fun toTypeTooltipLink(type: PyType?, displayName: @Nls String): HtmlChunk {
-    val pyClass = (type as? PyClassType)?.pyClass
-    val text = pyClass?.qualifiedName?.takeUnless { it.isEmpty() }
-                 ?.let { HtmlChunk.link("$TOOLTIP_ELEMENT_LINK_PREFIX$it", displayName) }
-               ?: HtmlChunk.text(displayName)
+    val text = tooltipLinkTarget(type)?.let { HtmlChunk.link(it, displayName) } ?: HtmlChunk.text(displayName)
     return styledTypeName(type, text)
   }
 
@@ -163,6 +162,21 @@ object PyDocumentationLink {
   private fun PyClassLikeType.asLinkableClass(): PyClass? {
     if (this.isNoneType) return null
     return (this as? PyClassType)?.pyClass?.takeIf { !it.qualifiedName.isNullOrEmpty() }
+  }
+
+  /**
+   * The `#element/<fqn>` href of [type] in an inspection tooltip: its class, the declaration of a module-level type
+   * variable, or `typing.Any`. Returns `null` when the type has nothing to navigate to.
+   */
+  @JvmStatic
+  fun tooltipLinkTarget(type: PyType?): String? {
+    val qualifiedName = when (type) {
+      is PyClassType -> type.pyClass.qualifiedName
+      is PyTypeParameterType -> type.declarationElement?.takeIf { PyUtil.isTopLevel(it) }?.qualifiedName
+      PyAnyType.Any -> PyTypingTypeProvider.ANY
+      else -> null
+    }
+    return qualifiedName?.takeUnless { it.isEmpty() }?.let { "$TOOLTIP_ELEMENT_LINK_PREFIX$it" }
   }
 
   /** Renders [linkText] as a tooltip-navigable link (`#element/<fqn>`). */

@@ -17,6 +17,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.ast.PyAstSingleStarParameter;
 import com.jetbrains.python.ast.PyAstSlashParameter;
 import com.jetbrains.python.ast.PyAstTypeParameter;
+import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -95,6 +96,10 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   protected final boolean isRenderingBareLiteral() {
     return myRenderingFeatures.contains(PyTypeRendererFeature.BARE_LITERAL);
+  }
+
+  protected final boolean isRenderingCallbackProtocolAsCallable() {
+    return myRenderingFeatures.contains(PyTypeRendererFeature.CALLBACK_PROTOCOL_AS_CALLABLE);
   }
 
 
@@ -376,6 +381,9 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   @Override
   public HtmlChunk visitPyClassType(@NotNull PyClassType classType) {
+    if (isRenderingCallbackProtocolAsCallable() && PyProtocolsKt.isCallbackProtocolInstance(classType, myTypeEvalContext)) {
+      return visitPyCallableType(classType);
+    }
     if (!classType.isParameterized()) {
       return visitPyClassLikeType(classType);
     }
@@ -878,6 +886,18 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
                      HtmlChunk.text("]"));
   }
 
+  /**
+   * The first line of a multi-line literal {@code text}, then a {@code …} and the closing quote: {@code "the start…"}. A bare
+   * literal stays on one line, so that the type diff keeps its rows aligned.
+   */
+  private static @NotNull @NlsSafe String firstLine(@NotNull @NlsSafe String text) {
+    int lineBreak = StringUtil.indexOfAny(text, "\r\n");
+    if (lineBreak < 0) return text;
+    char last = text.charAt(text.length() - 1);
+    String closingQuote = last == '"' || last == '\'' ? String.valueOf(last) : "";
+    return text.substring(0, lineBreak) + "…" + closingQuote;
+  }
+
   @Override
   public @NotNull HtmlChunk visitPyLiteralType(@NotNull PyLiteralType literalType) {
     HtmlBuilder result = new HtmlBuilder();
@@ -894,7 +914,8 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       result.append(literalType.getEnumMemberName());
     }
     else {
-      result.appendRaw(literalType.getExpressionText()); // append raw since the literal can include quotes: Literal["foo"]
+      @NlsSafe String text = literalType.getExpressionText();
+      result.appendRaw(bare ? firstLine(text) : text); // append raw since the literal can include quotes: Literal["foo"]
     }
     if (!bare) {
       result.append("]");

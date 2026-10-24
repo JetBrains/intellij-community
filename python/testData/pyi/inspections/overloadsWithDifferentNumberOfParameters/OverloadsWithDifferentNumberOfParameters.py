@@ -6,12 +6,12 @@ def test_different_number_of_parameters():
     f(<warning descr="No overload of 'f' matches the arguments. Argument types: (Literal[\"a\"]). Expected one of: (i: int), (i: int, s: str)">"a"</warning>)
 
     f(5, "a")
-    f(<warning descr="Expected type 'int', got 'Literal[\"a\"]' instead">"a"</warning>, "b")
-    f(5, <warning descr="Expected type 'str', got 'Literal[6]' instead">6</warning>)
-    f(<warning descr="Expected type 'int', got 'Literal[\"a\"]' instead">"a"</warning>, <warning descr="Expected type 'str', got 'Literal[5]' instead">5</warning>)
-    f(<warning descr="Expected type 'int', got 'Literal[\"a\"]' instead">"a"</warning>, "b")
-    f(5, <warning descr="Expected type 'str', got 'Literal[6]' instead">6</warning>)
-    f(<warning descr="Expected type 'int', got 'Literal[\"a\"]' instead">"a"</warning>, <warning descr="Expected type 'str', got 'Literal[5]' instead">5</warning>)
+    f<warning descr="No overload of 'f' matches the arguments. Argument types: (Literal[\"a\"], Literal[\"b\"]). Expected one of: (i: int), (i: int, s: str)">("a", "b")</warning>
+    f<warning descr="No overload of 'f' matches the arguments. Argument types: (Literal[5], Literal[6]). Expected one of: (i: int), (i: int, s: str)">(5, 6)</warning>
+    f<warning descr="No overload of 'f' matches the arguments. Argument types: (Literal[\"a\"], Literal[5]). Expected one of: (i: int), (i: int, s: str)">("a", 5)</warning>
+    f<warning descr="No overload of 'f' matches the arguments. Argument types: (Literal[\"a\"], Literal[\"b\"]). Expected one of: (i: int), (i: int, s: str)">("a", "b")</warning>
+    f<warning descr="No overload of 'f' matches the arguments. Argument types: (Literal[5], Literal[6]). Expected one of: (i: int), (i: int, s: str)">(5, 6)</warning>
+    f<warning descr="No overload of 'f' matches the arguments. Argument types: (Literal[\"a\"], Literal[5]). Expected one of: (i: int), (i: int, s: str)">("a", 5)</warning>
 
 
 def test_same_number_of_parameters_but_one_is_default():
@@ -42,9 +42,9 @@ def test_different_number_of_parameters_one_is_default():
     h("a")
 
     h("a", False)
-    h(<warning descr="Expected type 'str', got 'Literal[5]' instead">5</warning>, False)  # fail
-    h("a", <warning descr="Expected type 'bool', got 'Literal[5]' instead">5</warning>)  # fail
-    h(<warning descr="Expected type 'str', got 'Literal[False]' instead">False</warning>, <warning descr="Expected type 'bool', got 'Literal[\"a\"]' instead">"a"</warning>)  # fail
-    h(<warning descr="Expected type 'str', got 'Literal[5]' instead">5</warning>, False)  # fail
-    h("a", <warning descr="Expected type 'bool', got 'Literal[5]' instead">5</warning>)  # fail
-    h(<warning descr="Expected type 'str', got 'Literal[False]' instead">False</warning>, <warning descr="Expected type 'bool', got 'Literal[\"a\"]' instead">"a"</warning>)  # fail
+    h<warning descr="No overload of 'h' matches the arguments. Argument types: (Literal[5], Literal[False]). Expected one of: (i: int), (i: str, b: bool)">(5, False)</warning>  # fail
+    h<warning descr="No overload of 'h' matches the arguments. Argument types: (Literal[\"a\"], Literal[5]). Expected one of: (i: int), (i: str, b: bool)">("a", 5)</warning>  # fail
+    h<warning descr="No overload of 'h' matches the arguments. Argument types: (Literal[False], Literal[\"a\"]). Expected one of: (i: int), (i: str, b: bool)">(False, "a")</warning>  # fail
+    h<warning descr="No overload of 'h' matches the arguments. Argument types: (Literal[5], Literal[False]). Expected one of: (i: int), (i: str, b: bool)">(5, False)</warning>  # fail
+    h<warning descr="No overload of 'h' matches the arguments. Argument types: (Literal[\"a\"], Literal[5]). Expected one of: (i: int), (i: str, b: bool)">("a", 5)</warning>  # fail
+    h<warning descr="No overload of 'h' matches the arguments. Argument types: (Literal[False], Literal[\"a\"]). Expected one of: (i: int), (i: str, b: bool)">(False, "a")</warning>  # fail
