@@ -55,7 +55,15 @@ interface UnindexedFilesScannerExecutor {
   /**
    * Queues a scanning task for the whole project with [indexingReason].
    */
-  fun queueFullScanning(indexingReason: String): Future<*> {
+  fun queueFullScanning(indexingReason: String): Future<*> = queueFullScanning(indexingReason, null)
+
+  /**
+   * Queues a scanning task for the whole project with [indexingReason].
+   *
+   * @param shouldHideProgressInSmartMode `true` hides the scanning progress in the smart mode, and `false` shows it.
+   * `null` keeps the default of the scanning task.
+   */
+  fun queueFullScanning(indexingReason: String, shouldHideProgressInSmartMode: Boolean?): Future<*> {
     throw UnsupportedOperationException()
   }
 

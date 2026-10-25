@@ -473,8 +473,8 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     setTaskFilterInTest(disposable) { filter.test(it.getIndexingReasonBlocking()) }
   }
 
-  override fun queueFullScanning(indexingReason: String): Future<*> {
-    return UnindexedFilesScanner(project, indexingReason).queue()
+  override fun queueFullScanning(indexingReason: String, shouldHideProgressInSmartMode: Boolean?): Future<*> {
+    return UnindexedFilesScanner(project, indexingReason, shouldHideProgressInSmartMode).queue()
   }
 
   companion object {
