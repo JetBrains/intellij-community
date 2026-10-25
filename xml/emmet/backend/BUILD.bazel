@@ -7,68 +7,8 @@ content_module_jar(module = ":backend")
 
 ### auto-generated section `build intellij.xml.emmet.backend` start
 jvm_provided_library(
-    name = "xml_emmet_provided",
-    lib = "//xml/emmet",
-)
-
-jvm_provided_library(
     name = "libraries_jetbrains_annotations_provided",
     lib = "//libraries/jetbrains/annotations",
-)
-
-jvm_provided_library(
-    name = "platform_ide-core_provided",
-    lib = "//platform/ide-core",
-)
-
-jvm_provided_library(
-    name = "platform_lang-impl_provided",
-    lib = "//platform/lang-impl",
-)
-
-jvm_provided_library(
-    name = "platform_util-ui_provided",
-    lib = "//platform/util:util-ui",
-)
-
-jvm_provided_library(
-    name = "platform_editor-ui_provided",
-    lib = "//platform/editor-ui-api:editor-ui",
-)
-
-jvm_provided_library(
-    name = "platform_java-guiForms-rt_provided",
-    lib = "//platform/forms_rt:java-guiForms-rt",
-)
-
-jvm_provided_library(
-    name = "platform_projectModel_provided",
-    lib = "//platform/projectModel-api:projectModel",
-)
-
-jvm_provided_library(
-    name = "platform_analysis_provided",
-    lib = "//platform/analysis-api:analysis",
-)
-
-jvm_provided_library(
-    name = "platform_core_provided",
-    lib = "//platform/core-api:core",
-)
-
-jvm_provided_library(
-    name = "platform_ide_provided",
-    lib = "//platform/platform-api:ide",
-)
-
-jvm_provided_library(
-    name = "platform_core-ui_provided",
-    lib = "//platform/core-ui",
-)
-
-jvm_provided_library(
-    name = "platform_ide-impl_provided",
-    lib = "//platform/platform-impl:ide-impl",
 )
 
 jvm_library(
@@ -90,20 +30,20 @@ jvm_library(
     deps = [
         # do not sort,
         "//xml/emmet/shared",
+        "//xml/emmet",
+        "//platform/ide-core",
+        "//platform/lang-impl",
+        "//platform/util:util-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/forms_rt:java-guiForms-rt",
+        "//platform/projectModel-api:projectModel",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/platform-api:ide",
+        "//platform/core-ui",
+        "//platform/platform-impl:ide-impl",
         "//platform/kernel/rpc.backend",
-        ":xml_emmet_provided",
         ":libraries_jetbrains_annotations_provided",
-        ":platform_ide-core_provided",
-        ":platform_lang-impl_provided",
-        ":platform_util-ui_provided",
-        ":platform_editor-ui_provided",
-        ":platform_java-guiForms-rt_provided",
-        ":platform_projectModel_provided",
-        ":platform_analysis_provided",
-        ":platform_core_provided",
-        ":platform_ide_provided",
-        ":platform_core-ui_provided",
-        ":platform_ide-impl_provided",
     ],
 )
 
@@ -120,31 +60,19 @@ jvm_library(
         # do not sort,
         ":backend",
         "//xml/emmet/shared:shared_test_lib",
-        "//xml/emmet",
         "//xml/emmet:emmet_test_lib",
         "//libraries/jetbrains/annotations",
         "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/ide-core",
         "//platform/ide-core:ide-core_test_lib",
-        "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
-        "//platform/editor-ui-api:editor-ui",
         "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/forms_rt:java-guiForms-rt",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
-        "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
-        "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
-        "//platform/platform-api:ide",
         "//platform/platform-api:ide_test_lib",
-        "//platform/core-ui",
         "//platform/core-ui:core-ui_test_lib",
-        "//platform/platform-impl:ide-impl",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/kernel/rpc.backend:rpc.backend_test_lib",
     ],

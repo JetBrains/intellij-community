@@ -50,7 +50,7 @@ jvm_library(
     exports = ["//platform/diagnostic"],
     deps = [
         # do not sort,
-        "@lib//:kotlin-stdlib-provided",
+        "@lib//:kotlin-stdlib",
         "//platform/util",
         "//platform/util/base",
         "//platform/diagnostic",
@@ -78,7 +78,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":telemetry",
-        "@lib//:kotlin-stdlib-provided",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/opentelemetry",

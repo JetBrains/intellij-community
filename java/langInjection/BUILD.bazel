@@ -1,4 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
 ### auto-generated section `dev intellij.java.langInjection` start
@@ -6,11 +6,6 @@ content_module_jar(module = ":langInjection")
 ### auto-generated section `dev intellij.java.langInjection` end
 
 ### auto-generated section `build intellij.java.langInjection` start
-jvm_provided_library(
-    name = "plugins_IntelliLang_backend_provided",
-    lib = "//plugins/IntelliLang/backend",
-)
-
 jvm_library(
     name = "langInjection",
     srcs = glob(
@@ -56,13 +51,13 @@ jvm_library(
         "//platform/util/jdom",
         "//platform/util:util-ui",
         "//platform/util-ex",
+        "//plugins/IntelliLang/backend",
         "//platform/forms_rt:java-guiForms-rt",
         "//java/java-frontback-psi-api:frontback-psi",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
         "//platform/lang-api:lang",
         "//uast/uast-common-ide:ide",
-        ":plugins_IntelliLang_backend_provided",
     ],
 )
 
@@ -101,7 +96,6 @@ jvm_library(
         "//platform/util/jdom:jdom_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/util-ex:util-ex_test_lib",
-        "//plugins/IntelliLang/backend",
         "//plugins/IntelliLang/backend:backend_test_lib",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",

@@ -12041,118 +12041,6 @@ http_file(
 )
 
 http_file(
-    name = "org_apache_maven-maven-core-3_0_5_http",
-    downloaded_file_path = "maven-core-3.0.5.jar",
-    sha256 = "ac8e617f951ecde3c4f6bca4922fdd7861500fe7d58289f26ad5adac443075bc",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-core/3.0.5/maven-core-3.0.5.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-model-3_0_5_http",
-    downloaded_file_path = "maven-model-3.0.5.jar",
-    sha256 = "876a76b663db6c7326ad234afe430c473d3261a06b3284f31d5eb4889d1c3084",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-model/3.0.5/maven-model-3.0.5.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-settings-3_0_5_http",
-    downloaded_file_path = "maven-settings-3.0.5.jar",
-    sha256 = "d8f9f237afc21d8202eedffa29cbf6e9d46c78b3c22b217d16267216988221b9",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-settings/3.0.5/maven-settings-3.0.5.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-settings-builder-3_0_5_http",
-    downloaded_file_path = "maven-settings-builder-3.0.5.jar",
-    sha256 = "ac0e62e26b7f690e265ba75667531973b8a2da12b3b0ff102a612f05b42b6faf",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-settings-builder/3.0.5/maven-settings-builder-3.0.5.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-repository-metadata-3_0_5_http",
-    downloaded_file_path = "maven-repository-metadata-3.0.5.jar",
-    sha256 = "c867b4e075a4548bf27422542f96b159f94c4e7ffaaf6427b10433afd6a3a38c",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-repository-metadata/3.0.5/maven-repository-metadata-3.0.5.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-plugin-api-3_0_5_http",
-    downloaded_file_path = "maven-plugin-api-3.0.5.jar",
-    sha256 = "469505f75b8526a338cfd7e0ec841655ae52ddbcc1b36482e97d72f52ce7d890",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-plugin-api/3.0.5/maven-plugin-api-3.0.5.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-model-builder-3_0_5_http",
-    downloaded_file_path = "maven-model-builder-3.0.5.jar",
-    sha256 = "45a2c6ff76e12678eaf576bd7a68d028c5a5ba85fdc216a381ea86e9187e1b51",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-model-builder/3.0.5/maven-model-builder-3.0.5.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-aether-provider-3_0_5_http",
-    downloaded_file_path = "maven-aether-provider-3.0.5.jar",
-    sha256 = "c74327cd5d7b137c8be3591c766271ac8ace1a617518f0410b8a95579f9839b0",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-aether-provider/3.0.5/maven-aether-provider-3.0.5.jar",
-)
-
-http_file(
-    name = "org_sonatype_aether-aether-spi-1_13_1_http",
-    downloaded_file_path = "aether-spi-1.13.1.jar",
-    sha256 = "d5de4e299be5a79feb1dbe8ff3814034c6e44314b4c00b92ffa8d97576ded5b3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/aether/aether-spi/1.13.1/aether-spi-1.13.1.jar",
-)
-
-http_file(
-    name = "org_sonatype_aether-aether-impl-1_13_1_http",
-    downloaded_file_path = "aether-impl-1.13.1.jar",
-    sha256 = "865511994805827e88f327944a089142bb7f3d88cde271ba3dceb732cb137a93",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/aether/aether-impl/1.13.1/aether-impl-1.13.1.jar",
-)
-
-http_file(
-    name = "org_sonatype_aether-aether-api-1_13_1_http",
-    downloaded_file_path = "aether-api-1.13.1.jar",
-    sha256 = "ae8dc80232771f8913febfa410c5719e9ba8ded81fb99788e214fd676dbbe13f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/aether/aether-api/1.13.1/aether-api-1.13.1.jar",
-)
-
-http_file(
-    name = "org_sonatype_aether-aether-util-1_13_1_http",
-    downloaded_file_path = "aether-util-1.13.1.jar",
-    sha256 = "687799a0ce988bee9e8eb9ae0ba870300adc0114248ad4a4327bdb625d27e010",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/aether/aether-util/1.13.1/aether-util-1.13.1.jar",
-)
-
-http_file(
-    name = "org_sonatype_sisu-sisu-inject-plexus-2_3_0_http",
-    downloaded_file_path = "sisu-inject-plexus-2.3.0.jar",
-    sha256 = "bf9083fb846993689409b2bdbc735048e53bac6cc32707cde7ef84817b6e9365",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/sisu/sisu-inject-plexus/2.3.0/sisu-inject-plexus-2.3.0.jar",
-)
-
-http_file(
-    name = "org_sonatype_sisu-sisu-inject-bean-2_3_0_http",
-    downloaded_file_path = "sisu-inject-bean-2.3.0.jar",
-    sha256 = "75819b29737c2bee1bfbda1011d455c7036738e0ef32ffbf85ba1d8fa157ceb2",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/sisu/sisu-inject-bean/2.3.0/sisu-inject-bean-2.3.0.jar",
-)
-
-http_file(
-    name = "org_codehaus_plexus-plexus-interpolation-1_14_http",
-    downloaded_file_path = "plexus-interpolation-1.14.jar",
-    sha256 = "7fc63378d3e84663619b9bedace9f9fe78b276c2be3c62ca2245449294c84176",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-interpolation/1.14/plexus-interpolation-1.14.jar",
-)
-
-http_file(
-    name = "org_codehaus_plexus-plexus-classworlds-2_4_http",
-    downloaded_file_path = "plexus-classworlds-2.4.jar",
-    sha256 = "259d528a29722cab6349d7e7d432e3fd4877c087ffcb04985a6612e97023bba8",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-classworlds/2.4/plexus-classworlds-2.4.jar",
-)
-
-http_file(
     name = "org_codehaus_plexus-plexus-component-annotations-1_5_5_http",
     downloaded_file_path = "plexus-component-annotations-1.5.5.jar",
     sha256 = "4df7a6a7be64b35bbccf60b5c115697f9ea3421d22674ae67135dde375fcca1f",
@@ -12160,150 +12048,10 @@ http_file(
 )
 
 http_file(
-    name = "org_sonatype_plexus-plexus-sec-dispatcher-1_3_http",
-    downloaded_file_path = "plexus-sec-dispatcher-1.3.jar",
-    sha256 = "3b0559bb8432f28937efe6ca193ef54a8506d0075d73fd7406b9b116c6a11063",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/plexus/plexus-sec-dispatcher/1.3/plexus-sec-dispatcher-1.3.jar",
-)
-
-http_file(
-    name = "org_sonatype_plexus-plexus-cipher-1_4_http",
-    downloaded_file_path = "plexus-cipher-1.4.jar",
-    sha256 = "5a15fdba22669e0fdd06e10dcce6320879e1f7398fbc910cd0677b50672a78c4",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/plexus/plexus-cipher/1.4/plexus-cipher-1.4.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-core-3_0_5-sources_http",
-    downloaded_file_path = "maven-core-3.0.5-sources.jar",
-    sha256 = "e5dd6bcddf00a5cdd857671082a59b7b2c03fac8223348e885bda64b065b5804",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-core/3.0.5/maven-core-3.0.5-sources.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-model-3_0_5-sources_http",
-    downloaded_file_path = "maven-model-3.0.5-sources.jar",
-    sha256 = "881d2c271a48f4b2140899fc88f783aca42152140ae6a827589086ad39734ed9",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-model/3.0.5/maven-model-3.0.5-sources.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-settings-3_0_5-sources_http",
-    downloaded_file_path = "maven-settings-3.0.5-sources.jar",
-    sha256 = "c4e8492dc30c4fb8f680eb94e8fc418730ef43912f02aa0d1168ccdc730627f7",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-settings/3.0.5/maven-settings-3.0.5-sources.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-settings-builder-3_0_5-sources_http",
-    downloaded_file_path = "maven-settings-builder-3.0.5-sources.jar",
-    sha256 = "ed864bb403c95b645ef33de16e33350b0c3cc53edb3e1e410f2de6a5ed5c457e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-settings-builder/3.0.5/maven-settings-builder-3.0.5-sources.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-repository-metadata-3_0_5-sources_http",
-    downloaded_file_path = "maven-repository-metadata-3.0.5-sources.jar",
-    sha256 = "a0bbfdf03447b211a6c1b01a45cecdca68abca96ea190d4b9783f18c443b8c71",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-repository-metadata/3.0.5/maven-repository-metadata-3.0.5-sources.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-plugin-api-3_0_5-sources_http",
-    downloaded_file_path = "maven-plugin-api-3.0.5-sources.jar",
-    sha256 = "1243d2acdc43b50d93d2a1c8eb47f92bf0d10613452cb80e02883641b1bd9fd7",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-plugin-api/3.0.5/maven-plugin-api-3.0.5-sources.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-model-builder-3_0_5-sources_http",
-    downloaded_file_path = "maven-model-builder-3.0.5-sources.jar",
-    sha256 = "fdcb5d52ce35114484e4ff726d9db7e2fd15a2c3ff4066df33ee39c3e320d820",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-model-builder/3.0.5/maven-model-builder-3.0.5-sources.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-aether-provider-3_0_5-sources_http",
-    downloaded_file_path = "maven-aether-provider-3.0.5-sources.jar",
-    sha256 = "34545fe5cf2aaf14f8f51721d69db3a669bce9b57e41c5bef8d7b816d952503b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-aether-provider/3.0.5/maven-aether-provider-3.0.5-sources.jar",
-)
-
-http_file(
-    name = "org_sonatype_aether-aether-spi-1_13_1-sources_http",
-    downloaded_file_path = "aether-spi-1.13.1-sources.jar",
-    sha256 = "3716e978f9faa9fd916602101c97d14447a128bb633fcd7db3bd9fc276d65537",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/aether/aether-spi/1.13.1/aether-spi-1.13.1-sources.jar",
-)
-
-http_file(
-    name = "org_sonatype_aether-aether-impl-1_13_1-sources_http",
-    downloaded_file_path = "aether-impl-1.13.1-sources.jar",
-    sha256 = "893dd305c5cfb2264426e30778d1c8f0902554cc1af7d3f0e1f3c8a6ab7d890b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/aether/aether-impl/1.13.1/aether-impl-1.13.1-sources.jar",
-)
-
-http_file(
-    name = "org_sonatype_aether-aether-api-1_13_1-sources_http",
-    downloaded_file_path = "aether-api-1.13.1-sources.jar",
-    sha256 = "34826ef6224ce85cdb3beafae4e61ed97e5dd0dd29a2b7dae1767539f65d8b36",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/aether/aether-api/1.13.1/aether-api-1.13.1-sources.jar",
-)
-
-http_file(
-    name = "org_sonatype_aether-aether-util-1_13_1-sources_http",
-    downloaded_file_path = "aether-util-1.13.1-sources.jar",
-    sha256 = "da373fd77a88458aa0a82dfd82210433380749415d01677de88658fb8993a361",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/aether/aether-util/1.13.1/aether-util-1.13.1-sources.jar",
-)
-
-http_file(
-    name = "org_sonatype_sisu-sisu-inject-plexus-2_3_0-sources_http",
-    downloaded_file_path = "sisu-inject-plexus-2.3.0-sources.jar",
-    sha256 = "043abe9f6cd412761d14d7e4057870bb18c448594d69edb35321e6be41f46bdc",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/sisu/sisu-inject-plexus/2.3.0/sisu-inject-plexus-2.3.0-sources.jar",
-)
-
-http_file(
-    name = "org_sonatype_sisu-sisu-inject-bean-2_3_0-sources_http",
-    downloaded_file_path = "sisu-inject-bean-2.3.0-sources.jar",
-    sha256 = "3e0bb72efa82967c525a51a265cf4aaac3561b40559f7e2f0dfaea847b50580a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/sisu/sisu-inject-bean/2.3.0/sisu-inject-bean-2.3.0-sources.jar",
-)
-
-http_file(
-    name = "org_codehaus_plexus-plexus-interpolation-1_14-sources_http",
-    downloaded_file_path = "plexus-interpolation-1.14-sources.jar",
-    sha256 = "015d88e3e3b3c64ded8b8625c76e447d3e7a6894d3d147748ed94de006fab610",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-interpolation/1.14/plexus-interpolation-1.14-sources.jar",
-)
-
-http_file(
-    name = "org_codehaus_plexus-plexus-classworlds-2_4-sources_http",
-    downloaded_file_path = "plexus-classworlds-2.4-sources.jar",
-    sha256 = "2949b80b5a0d5d828a4a4667f98c6365e61980b457e1894d3beb977910ebeef9",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-classworlds/2.4/plexus-classworlds-2.4-sources.jar",
-)
-
-http_file(
     name = "org_codehaus_plexus-plexus-component-annotations-1_5_5-sources_http",
     downloaded_file_path = "plexus-component-annotations-1.5.5-sources.jar",
     sha256 = "527768d357304e0ad56b74ca77f27ba28b4a456680450ef45a30bfaf613469e6",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-component-annotations/1.5.5/plexus-component-annotations-1.5.5-sources.jar",
-)
-
-http_file(
-    name = "org_sonatype_plexus-plexus-sec-dispatcher-1_3-sources_http",
-    downloaded_file_path = "plexus-sec-dispatcher-1.3-sources.jar",
-    sha256 = "4119c5a2968affbea144bc42cd7362fd0e3ea262df01afb8c13ebc4e1f514849",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/plexus/plexus-sec-dispatcher/1.3/plexus-sec-dispatcher-1.3-sources.jar",
-)
-
-http_file(
-    name = "org_sonatype_plexus-plexus-cipher-1_4-sources_http",
-    downloaded_file_path = "plexus-cipher-1.4-sources.jar",
-    sha256 = "35291f96baa7d430cac96e15862e288527e08689b6f30c4f39482f19962ea540",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/plexus/plexus-cipher/1.4/plexus-cipher-1.4-sources.jar",
 )
 
 http_file(
@@ -12318,34 +12066,6 @@ http_file(
     downloaded_file_path = "aether-api-0.9.0.M2-sources.jar",
     sha256 = "c4d19622578da6ade56f8bff9b2119f3faf2ef4e1c2fab75fa476e60b779c433",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/eclipse/aether/aether-api/0.9.0.M2/aether-api-0.9.0.M2-sources.jar",
-)
-
-http_file(
-    name = "org_sonatype_sisu-sisu-guice-3_1_0_http",
-    downloaded_file_path = "sisu-guice-3.1.0.jar",
-    sha256 = "a263933f43e9c273161e0b99f553c33a80a0416ec0bd5dca17d54cf38ae5956f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/sisu/sisu-guice/3.1.0/sisu-guice-3.1.0.jar",
-)
-
-http_file(
-    name = "org_sonatype_sisu-sisu-guava-0_9_9_http",
-    downloaded_file_path = "sisu-guava-0.9.9.jar",
-    sha256 = "9897e80ff6c08fc45b5b5ebd81d9e943a1087bdf0ad50cda457d616abbdaacd9",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/sisu/sisu-guava/0.9.9/sisu-guava-0.9.9.jar",
-)
-
-http_file(
-    name = "org_sonatype_sisu-sisu-guice-3_1_0-sources_http",
-    downloaded_file_path = "sisu-guice-3.1.0-sources.jar",
-    sha256 = "df7c4edf6937852f893f051560f11d96ed7c93263b0bfa381039dfc7b3adad59",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/sisu/sisu-guice/3.1.0/sisu-guice-3.1.0-sources.jar",
-)
-
-http_file(
-    name = "org_sonatype_sisu-sisu-guava-0_9_9-sources_http",
-    downloaded_file_path = "sisu-guava-0.9.9-sources.jar",
-    sha256 = "9faf6748e18251fc10b63d966327fb5840e2d34950827b5e6ae3afb3236a8dd1",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/sisu/sisu-guava/0.9.9/sisu-guava-0.9.9-sources.jar",
 )
 
 http_file(
@@ -12545,6 +12265,20 @@ http_file(
 )
 
 http_file(
+    name = "org_sonatype_plexus-plexus-sec-dispatcher-1_3_http",
+    downloaded_file_path = "plexus-sec-dispatcher-1.3.jar",
+    sha256 = "3b0559bb8432f28937efe6ca193ef54a8506d0075d73fd7406b9b116c6a11063",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/plexus/plexus-sec-dispatcher/1.3/plexus-sec-dispatcher-1.3.jar",
+)
+
+http_file(
+    name = "org_sonatype_plexus-plexus-cipher-1_4_http",
+    downloaded_file_path = "plexus-cipher-1.4.jar",
+    sha256 = "5a15fdba22669e0fdd06e10dcce6320879e1f7398fbc910cd0677b50672a78c4",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/plexus/plexus-cipher/1.4/plexus-cipher-1.4.jar",
+)
+
+http_file(
     name = "org_apache_commons-commons-lang3-3_4_http",
     downloaded_file_path = "commons-lang3-3.4.jar",
     sha256 = "734c8356420cc8e30c795d64fd1fcd5d44ea9d90342a2cc3262c5158fbc6d98b",
@@ -12710,6 +12444,20 @@ http_file(
     downloaded_file_path = "plexus-component-annotations-1.6-sources.jar",
     sha256 = "660159858949c09318e215e1d4ea248dacc5ee73f52213f234087e16bdc87022",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-component-annotations/1.6/plexus-component-annotations-1.6-sources.jar",
+)
+
+http_file(
+    name = "org_sonatype_plexus-plexus-sec-dispatcher-1_3-sources_http",
+    downloaded_file_path = "plexus-sec-dispatcher-1.3-sources.jar",
+    sha256 = "4119c5a2968affbea144bc42cd7362fd0e3ea262df01afb8c13ebc4e1f514849",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/plexus/plexus-sec-dispatcher/1.3/plexus-sec-dispatcher-1.3-sources.jar",
+)
+
+http_file(
+    name = "org_sonatype_plexus-plexus-cipher-1_4-sources_http",
+    downloaded_file_path = "plexus-cipher-1.4-sources.jar",
+    sha256 = "35291f96baa7d430cac96e15862e288527e08689b6f30c4f39482f19962ea540",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/sonatype/plexus/plexus-cipher/1.4/plexus-cipher-1.4-sources.jar",
 )
 
 http_file(
@@ -13896,17 +13644,17 @@ http_file(
 )
 
 http_file(
-    name = "org_codehaus_plexus-plexus-utils-1_5_8_http",
-    downloaded_file_path = "plexus-utils-1.5.8.jar",
-    sha256 = "b7554a41499282e3b2226a22aff3ebe984f7e159798c461d917c1b829b130cd1",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-utils/1.5.8/plexus-utils-1.5.8.jar",
+    name = "org_apache_maven-maven-embedder-3_3_9_http",
+    downloaded_file_path = "maven-embedder-3.3.9.jar",
+    sha256 = "6e1736c08f9798ed74efcdcdc435c640aca08af9b8c268dd7ea8ee8a3fef30a6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-embedder/3.3.9/maven-embedder-3.3.9.jar",
 )
 
 http_file(
-    name = "org_codehaus_plexus-plexus-utils-1_5_8-sources_http",
-    downloaded_file_path = "plexus-utils-1.5.8-sources.jar",
-    sha256 = "f57d55ed5a18857f00bb2314e094bd7bff075883c3cefa17582ff88f975f6715",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/codehaus/plexus/plexus-utils/1.5.8/plexus-utils-1.5.8-sources.jar",
+    name = "com_google_inject-guice-4_0-no_aop_http",
+    downloaded_file_path = "guice-4.0-no_aop.jar",
+    sha256 = "19393891be59b6feaf7e308bd8a3843b4e552c10cdb687ebffd7695634a250a8",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/inject/guice/4.0/guice-4.0-no_aop.jar",
 )
 
 http_file(
@@ -13921,34 +13669,6 @@ http_file(
     downloaded_file_path = "wagon-provider-api-2.10.jar",
     sha256 = "930b2e409513be03864d7a66e22dfdf5c086725e22ba3cf57ad45ed8af02996d",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/wagon/wagon-provider-api/2.10/wagon-provider-api-2.10.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-compat-3_3_9-sources_http",
-    downloaded_file_path = "maven-compat-3.3.9-sources.jar",
-    sha256 = "0c00de9f37390fb1f3e01ba781c6794fbc81c1242b63c0d25b01c5da5bc57e48",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-compat/3.3.9/maven-compat-3.3.9-sources.jar",
-)
-
-http_file(
-    name = "org_apache_maven_wagon-wagon-provider-api-2_10-sources_http",
-    downloaded_file_path = "wagon-provider-api-2.10-sources.jar",
-    sha256 = "a99ea9a4bbe098a640d34cfc9914987c304caced94fbd4b9cf469dfcd9cee60f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/wagon/wagon-provider-api/2.10/wagon-provider-api-2.10-sources.jar",
-)
-
-http_file(
-    name = "org_apache_maven-maven-embedder-3_3_9_http",
-    downloaded_file_path = "maven-embedder-3.3.9.jar",
-    sha256 = "6e1736c08f9798ed74efcdcdc435c640aca08af9b8c268dd7ea8ee8a3fef30a6",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-embedder/3.3.9/maven-embedder-3.3.9.jar",
-)
-
-http_file(
-    name = "com_google_inject-guice-4_0-no_aop_http",
-    downloaded_file_path = "guice-4.0-no_aop.jar",
-    sha256 = "19393891be59b6feaf7e308bd8a3843b4e552c10cdb687ebffd7695634a250a8",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/inject/guice/4.0/guice-4.0-no_aop.jar",
 )
 
 http_file(
@@ -13980,6 +13700,20 @@ http_file(
 )
 
 http_file(
+    name = "org_apache_maven-maven-compat-3_3_9-sources_http",
+    downloaded_file_path = "maven-compat-3.3.9-sources.jar",
+    sha256 = "0c00de9f37390fb1f3e01ba781c6794fbc81c1242b63c0d25b01c5da5bc57e48",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-compat/3.3.9/maven-compat-3.3.9-sources.jar",
+)
+
+http_file(
+    name = "org_apache_maven_wagon-wagon-provider-api-2_10-sources_http",
+    downloaded_file_path = "wagon-provider-api-2.10-sources.jar",
+    sha256 = "a99ea9a4bbe098a640d34cfc9914987c304caced94fbd4b9cf469dfcd9cee60f",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/wagon/wagon-provider-api/2.10/wagon-provider-api-2.10-sources.jar",
+)
+
+http_file(
     name = "org_sonatype_plexus-plexus-cipher-1_7-sources_http",
     downloaded_file_path = "plexus-cipher-1.7-sources.jar",
     sha256 = "37e552d8a8db67e9f045e68208e6ce9fad69acf4ce3e48af5137022da46ecfba",
@@ -14001,17 +13735,17 @@ http_file(
 )
 
 http_file(
-    name = "com_google_inject-guice-4_2_1-no_aop_http",
-    downloaded_file_path = "guice-4.2.1-no_aop.jar",
-    sha256 = "158fd8f52d2a4b4ce4293ac2b833bb2427f5ddfe30df4ae0fd4675a1038a3b79",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/inject/guice/4.2.1/guice-4.2.1-no_aop.jar",
-)
-
-http_file(
     name = "org_apache_maven-maven-embedder-3_6_0_http",
     downloaded_file_path = "maven-embedder-3.6.0.jar",
     sha256 = "e41b031c1e5bc23dc94b67f678644d549b15461361789d592c54cc3939829945",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/maven-embedder/3.6.0/maven-embedder-3.6.0.jar",
+)
+
+http_file(
+    name = "com_google_inject-guice-4_2_1-no_aop_http",
+    downloaded_file_path = "guice-4.2.1-no_aop.jar",
+    sha256 = "158fd8f52d2a4b4ce4293ac2b833bb2427f5ddfe30df4ae0fd4675a1038a3b79",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/google/inject/guice/4.2.1/guice-4.2.1-no_aop.jar",
 )
 
 http_file(

@@ -24,7 +24,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "@lib//:kotlin-stdlib-provided",
+        "@lib//:kotlin-stdlib",
         "//platform/ide-core",
         "//platform/core-api:core",
         "//platform/platform-impl:ide-impl",
@@ -46,7 +46,6 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":frontend",
-        "@lib//:kotlin-stdlib-provided",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",

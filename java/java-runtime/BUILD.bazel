@@ -1,11 +1,6 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.rt` start
-jvm_provided_library(
-    name = "libraries_junit4_provided",
-    lib = "//libraries/junit4",
-)
-
 jvm_library(
     name = "rt",
     srcs = glob(
@@ -23,11 +18,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    deps = [
-        # do not sort,
-        "@lib//:java-rt-ant-1-7-1-provided",
-        ":libraries_junit4_provided",
-    ],
+    deps = ["@lib//:java-rt-ant-1-7-1-provided"],
 )
 
 jvm_library(
@@ -44,8 +35,6 @@ jvm_library(
         # do not sort,
         ":rt",
         "@lib//:java-rt-ant-1-7-1-provided",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.rt` end

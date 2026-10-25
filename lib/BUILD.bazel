@@ -14786,305 +14786,11 @@ java_library(
 )
 
 copy_file(
-    name = "org.apache.maven/maven-core-3.0.5.jar_copy",
-    src = "@org_apache_maven-maven-core-3_0_5_http//file",
-    out = "org.apache.maven/maven-core-3.0.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.apache.maven/maven-model-3.0.5.jar_copy",
-    src = "@org_apache_maven-maven-model-3_0_5_http//file",
-    out = "org.apache.maven/maven-model-3.0.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.apache.maven/maven-settings-3.0.5.jar_copy",
-    src = "@org_apache_maven-maven-settings-3_0_5_http//file",
-    out = "org.apache.maven/maven-settings-3.0.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.apache.maven/maven-settings-builder-3.0.5.jar_copy",
-    src = "@org_apache_maven-maven-settings-builder-3_0_5_http//file",
-    out = "org.apache.maven/maven-settings-builder-3.0.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.apache.maven/maven-repository-metadata-3.0.5.jar_copy",
-    src = "@org_apache_maven-maven-repository-metadata-3_0_5_http//file",
-    out = "org.apache.maven/maven-repository-metadata-3.0.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.apache.maven/maven-plugin-api-3.0.5.jar_copy",
-    src = "@org_apache_maven-maven-plugin-api-3_0_5_http//file",
-    out = "org.apache.maven/maven-plugin-api-3.0.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.apache.maven/maven-model-builder-3.0.5.jar_copy",
-    src = "@org_apache_maven-maven-model-builder-3_0_5_http//file",
-    out = "org.apache.maven/maven-model-builder-3.0.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.apache.maven/maven-aether-provider-3.0.5.jar_copy",
-    src = "@org_apache_maven-maven-aether-provider-3_0_5_http//file",
-    out = "org.apache.maven/maven-aether-provider-3.0.5.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.sonatype.aether/aether-spi-1.13.1.jar_copy",
-    src = "@org_sonatype_aether-aether-spi-1_13_1_http//file",
-    out = "org.sonatype.aether/aether-spi-1.13.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.sonatype.aether/aether-impl-1.13.1.jar_copy",
-    src = "@org_sonatype_aether-aether-impl-1_13_1_http//file",
-    out = "org.sonatype.aether/aether-impl-1.13.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.sonatype.aether/aether-api-1.13.1.jar_copy",
-    src = "@org_sonatype_aether-aether-api-1_13_1_http//file",
-    out = "org.sonatype.aether/aether-api-1.13.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.sonatype.aether/aether-util-1.13.1.jar_copy",
-    src = "@org_sonatype_aether-aether-util-1_13_1_http//file",
-    out = "org.sonatype.aether/aether-util-1.13.1.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.sonatype.sisu/sisu-inject-plexus-2.3.0.jar_copy",
-    src = "@org_sonatype_sisu-sisu-inject-plexus-2_3_0_http//file",
-    out = "org.sonatype.sisu/sisu-inject-plexus-2.3.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.sonatype.sisu/sisu-inject-bean-2.3.0.jar_copy",
-    src = "@org_sonatype_sisu-sisu-inject-bean-2_3_0_http//file",
-    out = "org.sonatype.sisu/sisu-inject-bean-2.3.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.codehaus.plexus/plexus-interpolation-1.14.jar_copy",
-    src = "@org_codehaus_plexus-plexus-interpolation-1_14_http//file",
-    out = "org.codehaus.plexus/plexus-interpolation-1.14.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.codehaus.plexus/plexus-classworlds-2.4.jar_copy",
-    src = "@org_codehaus_plexus-plexus-classworlds-2_4_http//file",
-    out = "org.codehaus.plexus/plexus-classworlds-2.4.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "org.codehaus.plexus/plexus-component-annotations-1.5.5.jar_copy",
     src = "@org_codehaus_plexus-plexus-component-annotations-1_5_5_http//file",
     out = "org.codehaus.plexus/plexus-component-annotations-1.5.5.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.sonatype.plexus/plexus-sec-dispatcher-1.3.jar_copy",
-    src = "@org_sonatype_plexus-plexus-sec-dispatcher-1_3_http//file",
-    out = "org.sonatype.plexus/plexus-sec-dispatcher-1.3.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.sonatype.plexus/plexus-cipher-1.4.jar_copy",
-    src = "@org_sonatype_plexus-plexus-cipher-1_4_http//file",
-    out = "org.sonatype.plexus/plexus-cipher-1.4.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "maven-artifact_resolver-m31-org-apache-maven-maven-core-3-0-5",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_apache_maven-maven-core-3_0_5_http_import",
-        ":org_apache_maven-maven-model-3_0_5_http_import",
-        ":org_apache_maven-maven-settings-3_0_5_http_import",
-        ":org_apache_maven-maven-settings-builder-3_0_5_http_import",
-        ":org_apache_maven-maven-repository-metadata-3_0_5_http_import",
-        ":org_apache_maven-maven-artifact-3_0_5_http_import",
-        ":org_apache_maven-maven-plugin-api-3_0_5_http_import",
-        ":org_apache_maven-maven-model-builder-3_0_5_http_import",
-        ":org_apache_maven-maven-aether-provider-3_0_5_http_import",
-        ":org_sonatype_aether-aether-spi-1_13_1_http_import",
-        ":org_sonatype_aether-aether-impl-1_13_1_http_import",
-        ":org_sonatype_aether-aether-api-1_13_1_http_import",
-        ":org_sonatype_aether-aether-util-1_13_1_http_import",
-        ":org_sonatype_sisu-sisu-inject-plexus-2_3_0_http_import",
-        ":org_sonatype_sisu-sisu-inject-bean-2_3_0_http_import",
-        ":org_codehaus_plexus-plexus-interpolation-1_14_http_import",
-        ":org_codehaus_plexus-plexus-utils-2_0_6_http_import",
-        ":org_codehaus_plexus-plexus-classworlds-2_4_http_import",
-        ":org_codehaus_plexus-plexus-component-annotations-1_5_5_http_import",
-        ":org_sonatype_plexus-plexus-sec-dispatcher-1_3_http_import",
-        ":org_sonatype_plexus-plexus-cipher-1_4_http_import",
-    ],
-)
-
-jvm_import(
-    name = "org_apache_maven-maven-core-3_0_5_http_import",
-    jar = "@org_apache_maven-maven-core-3_0_5_http//file",
-    source_jar = "@org_apache_maven-maven-core-3_0_5-sources_http//file",
-)
-
-jvm_import(
-    name = "org_apache_maven-maven-model-3_0_5_http_import",
-    jar = "@org_apache_maven-maven-model-3_0_5_http//file",
-    source_jar = "@org_apache_maven-maven-model-3_0_5-sources_http//file",
-)
-
-jvm_import(
-    name = "org_apache_maven-maven-settings-3_0_5_http_import",
-    jar = "@org_apache_maven-maven-settings-3_0_5_http//file",
-    source_jar = "@org_apache_maven-maven-settings-3_0_5-sources_http//file",
-)
-
-jvm_import(
-    name = "org_apache_maven-maven-settings-builder-3_0_5_http_import",
-    jar = "@org_apache_maven-maven-settings-builder-3_0_5_http//file",
-    source_jar = "@org_apache_maven-maven-settings-builder-3_0_5-sources_http//file",
-)
-
-jvm_import(
-    name = "org_apache_maven-maven-repository-metadata-3_0_5_http_import",
-    jar = "@org_apache_maven-maven-repository-metadata-3_0_5_http//file",
-    source_jar = "@org_apache_maven-maven-repository-metadata-3_0_5-sources_http//file",
-)
-
-jvm_import(
-    name = "org_apache_maven-maven-plugin-api-3_0_5_http_import",
-    jar = "@org_apache_maven-maven-plugin-api-3_0_5_http//file",
-    source_jar = "@org_apache_maven-maven-plugin-api-3_0_5-sources_http//file",
-)
-
-jvm_import(
-    name = "org_apache_maven-maven-model-builder-3_0_5_http_import",
-    jar = "@org_apache_maven-maven-model-builder-3_0_5_http//file",
-    source_jar = "@org_apache_maven-maven-model-builder-3_0_5-sources_http//file",
-)
-
-jvm_import(
-    name = "org_apache_maven-maven-aether-provider-3_0_5_http_import",
-    jar = "@org_apache_maven-maven-aether-provider-3_0_5_http//file",
-    source_jar = "@org_apache_maven-maven-aether-provider-3_0_5-sources_http//file",
-)
-
-jvm_import(
-    name = "org_sonatype_aether-aether-spi-1_13_1_http_import",
-    jar = "@org_sonatype_aether-aether-spi-1_13_1_http//file",
-    source_jar = "@org_sonatype_aether-aether-spi-1_13_1-sources_http//file",
-)
-
-jvm_import(
-    name = "org_sonatype_aether-aether-impl-1_13_1_http_import",
-    jar = "@org_sonatype_aether-aether-impl-1_13_1_http//file",
-    source_jar = "@org_sonatype_aether-aether-impl-1_13_1-sources_http//file",
-)
-
-jvm_import(
-    name = "org_sonatype_aether-aether-api-1_13_1_http_import",
-    jar = "@org_sonatype_aether-aether-api-1_13_1_http//file",
-    source_jar = "@org_sonatype_aether-aether-api-1_13_1-sources_http//file",
-)
-
-jvm_import(
-    name = "org_sonatype_aether-aether-util-1_13_1_http_import",
-    jar = "@org_sonatype_aether-aether-util-1_13_1_http//file",
-    source_jar = "@org_sonatype_aether-aether-util-1_13_1-sources_http//file",
-)
-
-jvm_import(
-    name = "org_sonatype_sisu-sisu-inject-plexus-2_3_0_http_import",
-    jar = "@org_sonatype_sisu-sisu-inject-plexus-2_3_0_http//file",
-    source_jar = "@org_sonatype_sisu-sisu-inject-plexus-2_3_0-sources_http//file",
-)
-
-jvm_import(
-    name = "org_sonatype_sisu-sisu-inject-bean-2_3_0_http_import",
-    jar = "@org_sonatype_sisu-sisu-inject-bean-2_3_0_http//file",
-    source_jar = "@org_sonatype_sisu-sisu-inject-bean-2_3_0-sources_http//file",
-)
-
-jvm_import(
-    name = "org_codehaus_plexus-plexus-interpolation-1_14_http_import",
-    jar = "@org_codehaus_plexus-plexus-interpolation-1_14_http//file",
-    source_jar = "@org_codehaus_plexus-plexus-interpolation-1_14-sources_http//file",
-)
-
-jvm_import(
-    name = "org_codehaus_plexus-plexus-classworlds-2_4_http_import",
-    jar = "@org_codehaus_plexus-plexus-classworlds-2_4_http//file",
-    source_jar = "@org_codehaus_plexus-plexus-classworlds-2_4-sources_http//file",
-)
-
-jvm_import(
-    name = "org_codehaus_plexus-plexus-component-annotations-1_5_5_http_import",
-    jar = "@org_codehaus_plexus-plexus-component-annotations-1_5_5_http//file",
-    source_jar = "@org_codehaus_plexus-plexus-component-annotations-1_5_5-sources_http//file",
-)
-
-jvm_import(
-    name = "org_sonatype_plexus-plexus-sec-dispatcher-1_3_http_import",
-    jar = "@org_sonatype_plexus-plexus-sec-dispatcher-1_3_http//file",
-    source_jar = "@org_sonatype_plexus-plexus-sec-dispatcher-1_3-sources_http//file",
-)
-
-jvm_import(
-    name = "org_sonatype_plexus-plexus-cipher-1_4_http_import",
-    jar = "@org_sonatype_plexus-plexus-cipher-1_4_http//file",
-    source_jar = "@org_sonatype_plexus-plexus-cipher-1_4-sources_http//file",
-)
-
-java_library(
-    name = "maven-artifact_resolver-m31-org-apache-maven-maven-core-3-0-5-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":maven-artifact_resolver-m31-org-apache-maven-maven-core-3-0-5"],
 )
 
 jvm_import(
@@ -15121,58 +14827,6 @@ java_library(
     neverlink = True,
     visibility = ["//visibility:public"],
     exports = [":maven-artifact_resolver-m31-org-eclipse-aether-aether-api-0-9-0-_m2"],
-)
-
-copy_file(
-    name = "org.sonatype.sisu/sisu-guice-3.1.0.jar_copy",
-    src = "@org_sonatype_sisu-sisu-guice-3_1_0_http//file",
-    out = "org.sonatype.sisu/sisu-guice-3.1.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "org.sonatype.sisu/sisu-guava-0.9.9.jar_copy",
-    src = "@org_sonatype_sisu-sisu-guava-0_9_9_http//file",
-    out = "org.sonatype.sisu/sisu-guava-0.9.9.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "maven-artifact_resolver-m31-org-sonatype-sisu-sisu-guice-no_aop-3-1-0",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_sonatype_sisu-sisu-guice-3_1_0_http_import",
-        ":javax_inject-javax_inject-1_http_import",
-        ":org_sonatype_sisu-sisu-guava-0_9_9_http_import",
-    ],
-)
-
-jvm_import(
-    name = "org_sonatype_sisu-sisu-guice-3_1_0_http_import",
-    jar = "@org_sonatype_sisu-sisu-guice-3_1_0_http//file",
-    source_jar = "@org_sonatype_sisu-sisu-guice-3_1_0-sources_http//file",
-)
-
-jvm_import(
-    name = "javax_inject-javax_inject-1_http_import",
-    jar = "@javax_inject-javax_inject-1_http//file",
-    source_jar = "@javax_inject-javax_inject-1-sources_http//file",
-)
-
-jvm_import(
-    name = "org_sonatype_sisu-sisu-guava-0_9_9_http_import",
-    jar = "@org_sonatype_sisu-sisu-guava-0_9_9_http//file",
-    source_jar = "@org_sonatype_sisu-sisu-guava-0_9_9-sources_http//file",
-)
-
-java_library(
-    name = "maven-artifact_resolver-m31-org-sonatype-sisu-sisu-guice-no_aop-3-1-0-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":maven-artifact_resolver-m31-org-sonatype-sisu-sisu-guice-no_aop-3-1-0"],
 )
 
 copy_file(
@@ -15226,6 +14880,12 @@ jvm_import(
     name = "com_google_inject-guice-4_0_http_import",
     jar = "@com_google_inject-guice-4_0_http//file",
     source_jar = "@com_google_inject-guice-4_0-sources_http//file",
+)
+
+jvm_import(
+    name = "javax_inject-javax_inject-1_http_import",
+    jar = "@javax_inject-javax_inject-1_http//file",
+    source_jar = "@javax_inject-javax_inject-1-sources_http//file",
 )
 
 java_library(
@@ -15420,6 +15080,22 @@ copy_file(
 )
 
 copy_file(
+    name = "org.sonatype.plexus/plexus-sec-dispatcher-1.3.jar_copy",
+    src = "@org_sonatype_plexus-plexus-sec-dispatcher-1_3_http//file",
+    out = "org.sonatype.plexus/plexus-sec-dispatcher-1.3.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.sonatype.plexus/plexus-cipher-1.4.jar_copy",
+    src = "@org_sonatype_plexus-plexus-cipher-1_4_http//file",
+    out = "org.sonatype.plexus/plexus-cipher-1.4.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "org.apache.commons/commons-lang3-3.4.jar_copy",
     src = "@org_apache_commons-commons-lang3-3_4_http//file",
     out = "org.apache.commons/commons-lang3-3.4.jar",
@@ -15597,6 +15273,18 @@ jvm_import(
     name = "org_codehaus_plexus-plexus-component-annotations-1_6_http_import",
     jar = "@org_codehaus_plexus-plexus-component-annotations-1_6_http//file",
     source_jar = "@org_codehaus_plexus-plexus-component-annotations-1_6-sources_http//file",
+)
+
+jvm_import(
+    name = "org_sonatype_plexus-plexus-sec-dispatcher-1_3_http_import",
+    jar = "@org_sonatype_plexus-plexus-sec-dispatcher-1_3_http//file",
+    source_jar = "@org_sonatype_plexus-plexus-sec-dispatcher-1_3-sources_http//file",
+)
+
+jvm_import(
+    name = "org_sonatype_plexus-plexus-cipher-1_4_http_import",
+    jar = "@org_sonatype_plexus-plexus-cipher-1_4_http//file",
+    source_jar = "@org_sonatype_plexus-plexus-cipher-1_4-sources_http//file",
 )
 
 jvm_import(
@@ -17047,52 +16735,20 @@ java_library(
     exports = [":maven-server-m3-common-org-sonatype-nexus-nexus-indexer-artifact-1-0-1"],
 )
 
-java_library(
-    name = "maven-server-m3-impl-com-google-inject-guice-no_aop-4-0",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":com_google_inject-guice-4_0_http_import",
-        ":javax_inject-javax_inject-1_http_import",
-    ],
-)
-
-java_library(
-    name = "maven-server-m3-impl-com-google-inject-guice-no_aop-4-0-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-impl-com-google-inject-guice-no_aop-4-0"],
-)
-
 copy_file(
-    name = "org.codehaus.plexus/plexus-utils-1.5.8.jar_copy",
-    src = "@org_codehaus_plexus-plexus-utils-1_5_8_http//file",
-    out = "org.codehaus.plexus/plexus-utils-1.5.8.jar",
+    name = "org.apache.maven/maven-embedder-3.3.9.jar_copy",
+    src = "@org_apache_maven-maven-embedder-3_3_9_http//file",
+    out = "org.apache.maven/maven-embedder-3.3.9.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
-java_library(
-    name = "maven-server-m3-impl-org-apache-maven-archetype-archetype-catalog-2-2",
+copy_file(
+    name = "com.google.inject/guice-4.0-no_aop.jar_copy",
+    src = "@com_google_inject-guice-4_0-no_aop_http//file",
+    out = "com.google.inject/guice-4.0-no_aop.jar",
+    allow_symlink = True,
     visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_apache_maven_archetype-archetype-catalog-2_2_http_import",
-        ":org_codehaus_plexus-plexus-utils-1_5_8_http_import",
-    ],
-)
-
-jvm_import(
-    name = "org_codehaus_plexus-plexus-utils-1_5_8_http_import",
-    jar = "@org_codehaus_plexus-plexus-utils-1_5_8_http//file",
-    source_jar = "@org_codehaus_plexus-plexus-utils-1_5_8-sources_http//file",
-)
-
-java_library(
-    name = "maven-server-m3-impl-org-apache-maven-archetype-archetype-catalog-2-2-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-impl-org-apache-maven-archetype-archetype-catalog-2-2"],
 )
 
 copy_file(
@@ -17107,118 +16763,6 @@ copy_file(
     name = "org.apache.maven.wagon/wagon-provider-api-2.10.jar_copy",
     src = "@org_apache_maven_wagon-wagon-provider-api-2_10_http//file",
     out = "org.apache.maven.wagon/wagon-provider-api-2.10.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "maven-server-m3-impl-org-apache-maven-maven-compat-3-3-9",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_apache_maven-maven-compat-3_3_9_http_import",
-        ":org_apache_maven-maven-model-3_3_9_http_import",
-        ":org_apache_commons-commons-lang3-3_4_http_import",
-        ":org_apache_maven-maven-model-builder-3_3_9_http_import",
-        ":org_apache_maven-maven-builder-support-3_3_9_http_import",
-        ":com_google_guava-guava-18_0_http_import",
-        ":org_apache_maven-maven-settings-3_3_9_http_import",
-        ":org_apache_maven-maven-artifact-3_3_9_http_import",
-        ":org_apache_maven-maven-core-3_3_9_http_import",
-        ":org_apache_maven-maven-settings-builder-3_3_9_http_import",
-        ":org_apache_maven-maven-repository-metadata-3_3_9_http_import",
-        ":org_apache_maven-maven-plugin-api-3_3_9_http_import",
-        ":org_apache_maven-maven-aether-provider-3_3_9_http_import",
-        ":org_eclipse_aether-aether-spi-1_0_2_v20150114_http_import",
-        ":org_eclipse_aether-aether-impl-1_0_2_v20150114_http_import",
-        ":org_eclipse_aether-aether-api-1_0_2_v20150114_http_import",
-        ":org_eclipse_aether-aether-util-1_0_2_v20150114_http_import",
-        ":org_codehaus_plexus-plexus-classworlds-2_5_2_http_import",
-        ":org_sonatype_plexus-plexus-sec-dispatcher-1_3_http_import",
-        ":org_sonatype_plexus-plexus-cipher-1_4_http_import",
-        ":org_codehaus_plexus-plexus-utils-3_0_22_http_import",
-        ":org_codehaus_plexus-plexus-interpolation-1_21_http_import",
-        ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2_http_import",
-        ":javax_enterprise-cdi-api-1_0_http_import",
-        ":javax_annotation-jsr250-api-1_0_http_import",
-        ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2_http_import",
-        ":org_codehaus_plexus-plexus-component-annotations-1_6_http_import",
-        ":org_apache_maven_wagon-wagon-provider-api-2_10_http_import",
-    ],
-)
-
-jvm_import(
-    name = "org_apache_maven-maven-compat-3_3_9_http_import",
-    jar = "@org_apache_maven-maven-compat-3_3_9_http//file",
-    source_jar = "@org_apache_maven-maven-compat-3_3_9-sources_http//file",
-)
-
-jvm_import(
-    name = "org_apache_maven_wagon-wagon-provider-api-2_10_http_import",
-    jar = "@org_apache_maven_wagon-wagon-provider-api-2_10_http//file",
-    source_jar = "@org_apache_maven_wagon-wagon-provider-api-2_10-sources_http//file",
-)
-
-java_library(
-    name = "maven-server-m3-impl-org-apache-maven-maven-compat-3-3-9-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-impl-org-apache-maven-maven-compat-3-3-9"],
-)
-
-java_library(
-    name = "maven-server-m3-impl-org-apache-maven-maven-core-3-3-9",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_apache_maven-maven-core-3_3_9_http_import",
-        ":org_apache_maven-maven-model-3_3_9_http_import",
-        ":org_apache_maven-maven-settings-3_3_9_http_import",
-        ":org_apache_maven-maven-settings-builder-3_3_9_http_import",
-        ":org_apache_maven-maven-builder-support-3_3_9_http_import",
-        ":org_apache_maven-maven-repository-metadata-3_3_9_http_import",
-        ":org_apache_maven-maven-artifact-3_3_9_http_import",
-        ":org_apache_maven-maven-plugin-api-3_3_9_http_import",
-        ":org_apache_maven-maven-model-builder-3_3_9_http_import",
-        ":com_google_guava-guava-18_0_http_import",
-        ":org_apache_maven-maven-aether-provider-3_3_9_http_import",
-        ":org_eclipse_aether-aether-spi-1_0_2_v20150114_http_import",
-        ":org_eclipse_aether-aether-impl-1_0_2_v20150114_http_import",
-        ":org_eclipse_aether-aether-api-1_0_2_v20150114_http_import",
-        ":org_eclipse_aether-aether-util-1_0_2_v20150114_http_import",
-        ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_2_http_import",
-        ":javax_enterprise-cdi-api-1_0_http_import",
-        ":javax_annotation-jsr250-api-1_0_http_import",
-        ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_2_http_import",
-        ":org_codehaus_plexus-plexus-interpolation-1_21_http_import",
-        ":org_codehaus_plexus-plexus-utils-3_0_22_http_import",
-        ":org_codehaus_plexus-plexus-classworlds-2_5_2_http_import",
-        ":org_codehaus_plexus-plexus-component-annotations-1_6_http_import",
-        ":org_sonatype_plexus-plexus-sec-dispatcher-1_3_http_import",
-        ":org_sonatype_plexus-plexus-cipher-1_4_http_import",
-        ":org_apache_commons-commons-lang3-3_4_http_import",
-    ],
-)
-
-java_library(
-    name = "maven-server-m3-impl-org-apache-maven-maven-core-3-3-9-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":maven-server-m3-impl-org-apache-maven-maven-core-3-3-9"],
-)
-
-copy_file(
-    name = "org.apache.maven/maven-embedder-3.3.9.jar_copy",
-    src = "@org_apache_maven-maven-embedder-3_3_9_http//file",
-    out = "org.apache.maven/maven-embedder-3.3.9.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.google.inject/guice-4.0-no_aop.jar_copy",
-    src = "@com_google_inject-guice-4_0-no_aop_http//file",
-    out = "com.google.inject/guice-4.0-no_aop.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -17302,6 +16846,18 @@ jvm_import(
 )
 
 jvm_import(
+    name = "org_apache_maven-maven-compat-3_3_9_http_import",
+    jar = "@org_apache_maven-maven-compat-3_3_9_http//file",
+    source_jar = "@org_apache_maven-maven-compat-3_3_9-sources_http//file",
+)
+
+jvm_import(
+    name = "org_apache_maven_wagon-wagon-provider-api-2_10_http_import",
+    jar = "@org_apache_maven_wagon-wagon-provider-api-2_10_http//file",
+    source_jar = "@org_apache_maven_wagon-wagon-provider-api-2_10-sources_http//file",
+)
+
+jvm_import(
     name = "org_sonatype_plexus-plexus-cipher-1_7_http_import",
     jar = "@org_sonatype_plexus-plexus-cipher-1_7_http//file",
     source_jar = "@org_sonatype_plexus-plexus-cipher-1_7-sources_http//file",
@@ -17326,145 +16882,18 @@ java_library(
     exports = [":maven-server-m3-impl-org-apache-maven-maven-embedder-3-3-9"],
 )
 
-java_library(
-    name = "maven-server-m36-impl-com-google-inject-guice-no_aop-4-2-1",
+copy_file(
+    name = "org.apache.maven/maven-embedder-3.6.0.jar_copy",
+    src = "@org_apache_maven-maven-embedder-3_6_0_http//file",
+    out = "org.apache.maven/maven-embedder-3.6.0.jar",
+    allow_symlink = True,
     visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":com_google_inject-guice-4_2_1_http_import",
-        ":javax_inject-javax_inject-1_http_import",
-        ":com_google_guava-guava-25_1-android_http_import",
-        ":com_google_code_findbugs-jsr305-3_0_2_http_import",
-        ":org_checkerframework-checker-compat-qual-2_0_0_http_import",
-        ":com_google_errorprone-error_prone_annotations-2_1_3_http_import",
-        ":com_google_j2objc-j2objc-annotations-1_1_http_import",
-        ":org_codehaus_mojo-animal-sniffer-annotations-1_14_http_import",
-    ],
-)
-
-java_library(
-    name = "maven-server-m36-impl-com-google-inject-guice-no_aop-4-2-1-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":maven-server-m36-impl-com-google-inject-guice-no_aop-4-2-1"],
-)
-
-java_library(
-    name = "maven-server-m36-impl-org-apache-maven-maven-compat-3-6-0",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_apache_maven-maven-compat-3_6_0_http_import",
-        ":org_apache_maven-maven-model-3_6_0_http_import",
-        ":org_apache_maven-maven-model-builder-3_6_0_http_import",
-        ":org_apache_maven-maven-builder-support-3_6_0_http_import",
-        ":org_apache_maven-maven-settings-3_6_0_http_import",
-        ":org_apache_maven-maven-settings-builder-3_6_0_http_import",
-        ":org_sonatype_plexus-plexus-sec-dispatcher-1_4_http_import",
-        ":org_sonatype_plexus-plexus-cipher-1_4_http_import",
-        ":org_apache_maven-maven-artifact-3_6_0_http_import",
-        ":org_apache_commons-commons-lang3-3_8_1_http_import",
-        ":org_apache_maven-maven-core-3_6_0_http_import",
-        ":org_apache_maven-maven-plugin-api-3_6_0_http_import",
-        ":org_apache_maven_resolver-maven-resolver-spi-1_3_1_http_import",
-        ":org_apache_maven_shared-maven-shared-utils-3_2_1_http_import",
-        ":commons-io-commons-io-2_5_http_import",
-        ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3_http_import",
-        ":javax_inject-javax_inject-1_http_import",
-        ":org_codehaus_plexus-plexus-classworlds-2_5_2_http_import",
-        ":org_apache_maven-maven-resolver-provider-3_6_0_http_import",
-        ":org_slf4j-slf4j-api-1_7_25_http_import",
-        ":org_apache_maven-maven-repository-metadata-3_6_0_http_import",
-        ":org_apache_maven_resolver-maven-resolver-api-1_3_1_http_import",
-        ":org_apache_maven_resolver-maven-resolver-util-1_3_1_http_import",
-        ":org_apache_maven_resolver-maven-resolver-impl-1_3_1_http_import",
-        ":org_codehaus_plexus-plexus-utils-3_1_0_http_import",
-        ":org_codehaus_plexus-plexus-interpolation-1_25_http_import",
-        ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3_http_import",
-        ":javax_enterprise-cdi-api-1_0_http_import",
-        ":javax_annotation-jsr250-api-1_0_http_import",
-        ":org_codehaus_plexus-plexus-component-annotations-1_7_1_http_import",
-        ":org_apache_maven_wagon-wagon-provider-api-3_2_0_http_import",
-    ],
-)
-
-java_library(
-    name = "maven-server-m36-impl-org-apache-maven-maven-compat-3-6-0-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":maven-server-m36-impl-org-apache-maven-maven-compat-3-6-0"],
 )
 
 copy_file(
     name = "com.google.inject/guice-4.2.1-no_aop.jar_copy",
     src = "@com_google_inject-guice-4_2_1-no_aop_http//file",
     out = "com.google.inject/guice-4.2.1-no_aop.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "maven-server-m36-impl-org-apache-maven-maven-core-3-6-0",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        ":org_apache_maven-maven-core-3_6_0_http_import",
-        ":org_apache_maven-maven-model-3_6_0_http_import",
-        ":org_apache_maven-maven-settings-3_6_0_http_import",
-        ":org_apache_maven-maven-settings-builder-3_6_0_http_import",
-        ":org_codehaus_plexus-plexus-interpolation-1_25_http_import",
-        ":org_sonatype_plexus-plexus-sec-dispatcher-1_4_http_import",
-        ":org_sonatype_plexus-plexus-cipher-1_4_http_import",
-        ":org_apache_maven-maven-builder-support-3_6_0_http_import",
-        ":org_apache_maven-maven-repository-metadata-3_6_0_http_import",
-        ":org_apache_maven-maven-artifact-3_6_0_http_import",
-        ":org_apache_maven-maven-plugin-api-3_6_0_http_import",
-        ":org_apache_maven-maven-model-builder-3_6_0_http_import",
-        ":org_apache_maven-maven-resolver-provider-3_6_0_http_import",
-        ":org_slf4j-slf4j-api-1_7_25_http_import",
-        ":org_apache_maven_resolver-maven-resolver-impl-1_3_1_http_import",
-        ":org_apache_maven_resolver-maven-resolver-api-1_3_1_http_import",
-        ":org_apache_maven_resolver-maven-resolver-spi-1_3_1_http_import",
-        ":org_apache_maven_resolver-maven-resolver-util-1_3_1_http_import",
-        ":org_apache_maven_shared-maven-shared-utils-3_2_1_http_import",
-        ":commons-io-commons-io-2_5_http_import",
-        ":org_eclipse_sisu-org_eclipse_sisu_plexus-0_3_3_http_import",
-        ":javax_enterprise-cdi-api-1_0_http_import",
-        ":javax_annotation-jsr250-api-1_0_http_import",
-        ":org_eclipse_sisu-org_eclipse_sisu_inject-0_3_3_http_import",
-        ":com_google_inject-guice-4_2_1-no_aop_http_import",
-        ":aopalliance-aopalliance-1_0_http_import",
-        ":com_google_guava-guava-25_1-android_http_import",
-        ":com_google_code_findbugs-jsr305-3_0_2_http_import",
-        ":org_checkerframework-checker-compat-qual-2_0_0_http_import",
-        ":com_google_errorprone-error_prone_annotations-2_1_3_http_import",
-        ":com_google_j2objc-j2objc-annotations-1_1_http_import",
-        ":org_codehaus_mojo-animal-sniffer-annotations-1_14_http_import",
-        ":javax_inject-javax_inject-1_http_import",
-        ":org_codehaus_plexus-plexus-utils-3_1_0_http_import",
-        ":org_codehaus_plexus-plexus-classworlds-2_5_2_http_import",
-        ":org_codehaus_plexus-plexus-component-annotations-1_7_1_http_import",
-        ":org_apache_commons-commons-lang3-3_8_1_http_import",
-    ],
-)
-
-jvm_import(
-    name = "com_google_inject-guice-4_2_1-no_aop_http_import",
-    jar = "@com_google_inject-guice-4_2_1-no_aop_http//file",
-    source_jar = "@com_google_inject-guice-4_2_1-sources_http//file",
-)
-
-java_library(
-    name = "maven-server-m36-impl-org-apache-maven-maven-core-3-6-0-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":maven-server-m36-impl-org-apache-maven-maven-core-3-6-0"],
-)
-
-copy_file(
-    name = "org.apache.maven/maven-embedder-3.6.0.jar_copy",
-    src = "@org_apache_maven-maven-embedder-3_6_0_http//file",
-    out = "org.apache.maven/maven-embedder-3.6.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -17528,6 +16957,12 @@ jvm_import(
     name = "org_apache_maven-maven-embedder-3_6_0_http_import",
     jar = "@org_apache_maven-maven-embedder-3_6_0_http//file",
     source_jar = "@org_apache_maven-maven-embedder-3_6_0-sources_http//file",
+)
+
+jvm_import(
+    name = "com_google_inject-guice-4_2_1-no_aop_http_import",
+    jar = "@com_google_inject-guice-4_2_1-no_aop_http//file",
+    source_jar = "@com_google_inject-guice-4_2_1-sources_http//file",
 )
 
 jvm_import(

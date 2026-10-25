@@ -1,16 +1,6 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.maven` start
-jvm_provided_library(
-    name = "platform_java-guiForms-rt_provided",
-    lib = "//platform/forms_rt:java-guiForms-rt",
-)
-
-jvm_provided_library(
-    name = "plugins_maven_artifactResolver-m31_provided",
-    lib = "//plugins/maven/artifact-resolver-m31:artifactResolver-m31",
-)
-
 jvm_library(
     name = "maven",
     srcs = glob(
@@ -81,6 +71,7 @@ jvm_library(
         "//java/execution/impl",
         "//java/debugger/impl",
         "//java/idea-ui:ui",
+        "//platform/forms_rt:java-guiForms-rt",
         "//libraries/jgoodies/forms",
         "//libraries/gson",
         "//libraries/guava",
@@ -88,6 +79,7 @@ jvm_library(
         "//platform/buildView",
         "//jps/model-impl",
         "//jps/model-serialization",
+        "//plugins/maven/artifact-resolver-m31:artifactResolver-m31",
         "//spellchecker",
         "//platform/vcs-api:vcs",
         "//plugins/properties/properties-psi-api:psi",
@@ -147,8 +139,6 @@ jvm_library(
         "//platform/testRunner",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/wsl-impl",
-        ":platform_java-guiForms-rt_provided",
-        ":plugins_maven_artifactResolver-m31_provided",
     ],
 )
 
@@ -224,7 +214,6 @@ jvm_library(
         "//java/execution/impl:impl_test_lib",
         "//java/debugger/impl:impl_test_lib",
         "//java/idea-ui:ui_test_lib",
-        "//platform/forms_rt:java-guiForms-rt",
         "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//libraries/jgoodies/forms:forms_test_lib",
         "//libraries/gson:gson_test_lib",
@@ -233,7 +222,6 @@ jvm_library(
         "//platform/buildView:buildView_test_lib",
         "//jps/model-impl:model-impl_test_lib",
         "//jps/model-serialization:model-serialization_test_lib",
-        "//plugins/maven/artifact-resolver-m31:artifactResolver-m31",
         "//plugins/maven/artifact-resolver-m31:artifactResolver-m31_test_lib",
         "//spellchecker:spellchecker_test_lib",
         "//platform/vcs-api:vcs_test_lib",

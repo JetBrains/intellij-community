@@ -1,4 +1,4 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
 
@@ -12,11 +12,6 @@ create_kotlinc_options(
     jvm_target = "8",
     x_no_call_assertions = True,
     x_no_param_assertions = True,
-)
-
-jvm_provided_library(
-    name = "platform_multiplatformSupport_provided",
-    lib = "//platform/multiplatformSupport",
 )
 
 jvm_library(
@@ -46,7 +41,6 @@ jvm_library(
         "//platform/syntax/syntax-i18n:i18n",
         "//platform/syntax/syntax-extensions:extensions",
         "//platform/syntax/syntax-util:util",
-        ":platform_multiplatformSupport_provided",
     ],
 )
 
@@ -69,8 +63,6 @@ jvm_library(
         "//platform/util/multiplatform:multiplatform_test_lib",
         "//platform/syntax/syntax-i18n:i18n_test_lib",
         "//platform/syntax/syntax-extensions:extensions_test_lib",
-        "//platform/multiplatformSupport",
-        "//platform/multiplatformSupport:multiplatformSupport_test_lib",
         "//platform/syntax/syntax-util:util_test_lib",
     ],
 )

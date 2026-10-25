@@ -20,11 +20,6 @@ create_kotlinc_options(
 )
 
 jvm_provided_library(
-    name = "libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
-    lib = "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-)
-
-jvm_provided_library(
     name = "libraries_kotlinc_libraries-kotlinc-kotlin-scripting-common_provided",
     lib = "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common",
 )
@@ -57,7 +52,6 @@ jvm_library(
         "//plugins/kotlin/jsr223",
         "//plugins/kotlin/build-tools-runtime",
         "//platform/util",
-        ":libraries_kotlinc_libraries-kotlinc-kotlin-compiler-common_provided",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-scripting-common_provided",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-scripting-jvm_provided",
     ],
@@ -79,8 +73,6 @@ jvm_library(
         "//plugins/kotlin/jsr223:jsr223_test_lib",
         "//plugins/kotlin/build-tools-runtime:build-tools-runtime_test_lib",
         "//platform/util:util_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common",
         "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common_test_lib",
         "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm",

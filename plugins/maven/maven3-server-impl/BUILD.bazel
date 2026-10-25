@@ -24,11 +24,7 @@ jvm_library(
         "//plugins/maven/maven-server-telemetry:server-telemetry",
         "//plugins/maven/maven3-server-common:server-m3-common",
         "//libraries/commons/logging",
-        "@lib//:maven-server-m3-impl-org-apache-maven-maven-compat-3-3-9-provided",
-        "@lib//:maven-server-m3-impl-org-apache-maven-maven-core-3-3-9-provided",
         "@lib//:maven-server-m3-impl-org-apache-maven-maven-embedder-3-3-9-provided",
-        "@lib//:maven-server-m3-impl-com-google-inject-guice-no_aop-4-0-provided",
-        "@lib//:maven-server-m3-impl-org-apache-maven-archetype-archetype-catalog-2-2-provided",
     ],
 )
 
@@ -49,11 +45,7 @@ jvm_library(
         "//plugins/maven/maven-server-telemetry:server-telemetry_test_lib",
         "//plugins/maven/maven3-server-common:server-m3-common_test_lib",
         "//libraries/commons/logging:logging_test_lib",
-        "@lib//:maven-server-m3-impl-org-apache-maven-maven-compat-3-3-9-provided",
-        "@lib//:maven-server-m3-impl-org-apache-maven-maven-core-3-3-9-provided",
         "@lib//:maven-server-m3-impl-org-apache-maven-maven-embedder-3-3-9-provided",
-        "@lib//:maven-server-m3-impl-com-google-inject-guice-no_aop-4-0-provided",
-        "@lib//:maven-server-m3-impl-org-apache-maven-archetype-archetype-catalog-2-2-provided",
     ],
 )
 ### auto-generated section `build intellij.maven.server.m3.impl` end

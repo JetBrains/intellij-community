@@ -7,98 +7,8 @@ content_module_jar(module = ":emmet")
 
 ### auto-generated section `build intellij.xml.emmet` start
 jvm_provided_library(
-    name = "platform_core_provided",
-    lib = "//platform/core-api:core",
-)
-
-jvm_provided_library(
-    name = "platform_analysis-impl_provided",
-    lib = "//platform/analysis-impl",
-)
-
-jvm_provided_library(
-    name = "xml_psi_provided",
-    lib = "//xml/xml-psi-api:psi",
-)
-
-jvm_provided_library(
-    name = "platform_lang-impl_provided",
-    lib = "//platform/lang-impl",
-)
-
-jvm_provided_library(
-    name = "platform_projectModel_provided",
-    lib = "//platform/projectModel-api:projectModel",
-)
-
-jvm_provided_library(
-    name = "platform_editor-ui_provided",
-    lib = "//platform/editor-ui-api:editor-ui",
-)
-
-jvm_provided_library(
-    name = "platform_codeStyle_provided",
-    lib = "//platform/code-style-api:codeStyle",
-)
-
-jvm_provided_library(
-    name = "xml_psi-impl_provided",
-    lib = "//xml/xml-psi-impl:psi-impl",
-)
-
-jvm_provided_library(
-    name = "xml_parser_provided",
-    lib = "//xml/xml-parser:parser",
-)
-
-jvm_provided_library(
     name = "libraries_xerces_provided",
     lib = "//libraries/xerces",
-)
-
-jvm_provided_library(
-    name = "platform_analysis_provided",
-    lib = "//platform/analysis-api:analysis",
-)
-
-jvm_provided_library(
-    name = "platform_core-impl_provided",
-    lib = "//platform/core-impl",
-)
-
-jvm_provided_library(
-    name = "platform_ide-core_provided",
-    lib = "//platform/ide-core",
-)
-
-jvm_provided_library(
-    name = "platform_ide-impl_provided",
-    lib = "//platform/platform-impl:ide-impl",
-)
-
-jvm_provided_library(
-    name = "platform_editor-ex_provided",
-    lib = "//platform/editor-ui-ex:editor-ex",
-)
-
-jvm_provided_library(
-    name = "platform_lang_provided",
-    lib = "//platform/lang-api:lang",
-)
-
-jvm_provided_library(
-    name = "platform_core-ui_provided",
-    lib = "//platform/core-ui",
-)
-
-jvm_provided_library(
-    name = "platform_refactoring_provided",
-    lib = "//platform/refactoring",
-)
-
-jvm_provided_library(
-    name = "platform_util-ui_provided",
-    lib = "//platform/util:util-ui",
 )
 
 jvm_provided_library(
@@ -125,29 +35,29 @@ jvm_library(
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
-        "@lib//:kotlin-stdlib-provided",
+        "//platform/core-api:core",
+        "//platform/analysis-impl",
+        "//xml/xml-psi-api:psi",
+        "//platform/lang-impl",
+        "@lib//:kotlin-stdlib",
+        "//platform/projectModel-api:projectModel",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/code-style-api:codeStyle",
+        "//xml/xml-psi-impl:psi-impl",
+        "//xml/xml-parser:parser",
+        "//platform/analysis-api:analysis",
+        "//platform/core-impl",
         "//xml/xml-ui-common:ui-common",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/lang-api:lang",
+        "//platform/core-ui",
+        "//platform/refactoring",
+        "//platform/util:util-ui",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/remote-topics/shared:rpc-topics",
-        ":platform_core_provided",
-        ":platform_analysis-impl_provided",
-        ":xml_psi_provided",
-        ":platform_lang-impl_provided",
-        ":platform_projectModel_provided",
-        ":platform_editor-ui_provided",
-        ":platform_codeStyle_provided",
-        ":xml_psi-impl_provided",
-        ":xml_parser_provided",
         ":libraries_xerces_provided",
-        ":platform_analysis_provided",
-        ":platform_core-impl_provided",
-        ":platform_ide-core_provided",
-        ":platform_ide-impl_provided",
-        ":platform_editor-ex_provided",
-        ":platform_lang_provided",
-        ":platform_core-ui_provided",
-        ":platform_refactoring_provided",
-        ":platform_util-ui_provided",
         ":libraries_kotlinx_serialization_core_provided",
     ],
 )
@@ -165,45 +75,26 @@ jvm_library(
         # do not sort,
         ":emmet",
         "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
-        "//platform/analysis-impl",
         "//platform/analysis-impl:analysis-impl_test_lib",
-        "//xml/xml-psi-api:psi",
         "//xml/xml-psi-api:psi_test_lib",
-        "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
-        "@lib//:kotlin-stdlib-provided",
-        "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/editor-ui-api:editor-ui",
         "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/code-style-api:codeStyle",
         "//platform/code-style-api:codeStyle_test_lib",
-        "//xml/xml-psi-impl:psi-impl",
         "//xml/xml-psi-impl:psi-impl_test_lib",
-        "//xml/xml-parser:parser",
         "//xml/xml-parser:parser_test_lib",
         "//libraries/xerces",
         "//libraries/xerces:xerces_test_lib",
-        "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
-        "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
         "//xml/xml-ui-common:ui-common_test_lib",
-        "//platform/ide-core",
         "//platform/ide-core:ide-core_test_lib",
-        "//platform/platform-impl:ide-impl",
         "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/editor-ui-ex:editor-ex",
         "//platform/editor-ui-ex:editor-ex_test_lib",
-        "//platform/lang-api:lang",
         "//platform/lang-api:lang_test_lib",
-        "//platform/core-ui",
         "//platform/core-ui:core-ui_test_lib",
-        "//platform/refactoring",
         "//platform/refactoring:refactoring_test_lib",
-        "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/remote-topics/shared:rpc-topics_test_lib",

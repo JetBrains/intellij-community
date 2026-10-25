@@ -135,11 +135,6 @@ jvm_provided_library(
     lib = "//libraries/opentelemetry",
 )
 
-jvm_provided_library(
-    name = "libraries_opentelemetry-extension-kotlin_provided",
-    lib = "//libraries/opentelemetry-extension-kotlin",
-)
-
 jvm_library(
     name = "terminal",
     srcs = glob(
@@ -215,7 +210,6 @@ jvm_library(
         "//platform/ijent",
         "//platform/util/diff",
         ":libraries_opentelemetry_provided",
-        ":libraries_opentelemetry-extension-kotlin_provided",
     ],
 )
 
@@ -273,8 +267,6 @@ jvm_library(
         "//platform/diagnostic/telemetry:telemetry_test_lib",
         "//libraries/opentelemetry",
         "//libraries/opentelemetry:opentelemetry_test_lib",
-        "//libraries/opentelemetry-extension-kotlin",
-        "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
         "//platform/platform-impl/ui:ui_test_lib",
         "//platform/project/shared:project_test_lib",
         "//platform/eel:eel_test_lib",

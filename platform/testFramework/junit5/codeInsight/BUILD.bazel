@@ -16,11 +16,6 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
-    name = "libraries_junit6-jupiter_provided",
-    lib = "//libraries/junit6-jupiter",
-)
-
-jvm_provided_library(
     name = "libraries_junit4_provided",
     lib = "//libraries/junit4",
 )
@@ -58,7 +53,6 @@ jvm_library(
         "//platform/ide-core",
         "//platform/syntax/syntax-api:syntax",
         ":libraries_junit6_provided",
-        ":libraries_junit6-jupiter_provided",
         ":libraries_junit4_provided",
     ],
 )
@@ -77,8 +71,6 @@ jvm_library(
         ":codeInsight",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
-        "//libraries/junit6-jupiter",
-        "//libraries/junit6-jupiter:junit6-jupiter_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5:junit5_test_lib",

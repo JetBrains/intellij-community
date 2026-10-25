@@ -7,11 +7,6 @@ content_module_jar(module = ":shared")
 
 ### auto-generated section `build intellij.xml.emmet.shared` start
 jvm_provided_library(
-    name = "platform_ide-impl_provided",
-    lib = "//platform/platform-impl:ide-impl",
-)
-
-jvm_provided_library(
     name = "libraries_kotlinx_serialization_core_provided",
     lib = "//libraries/kotlinx/serialization/core",
 )
@@ -37,9 +32,9 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
         "//xml/xml-ui-common:ui-common",
+        "//platform/platform-impl:ide-impl",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/kernel/rpc",
-        ":platform_ide-impl_provided",
         ":libraries_kotlinx_serialization_core_provided",
     ],
 )
@@ -58,7 +53,6 @@ jvm_library(
         ":shared",
         "//libraries/jetbrains/annotations:annotations_test_lib",
         "//xml/xml-ui-common:ui-common_test_lib",
-        "//platform/platform-impl:ide-impl",
         "//platform/platform-impl:ide-impl_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//libraries/kotlinx/serialization/core",
