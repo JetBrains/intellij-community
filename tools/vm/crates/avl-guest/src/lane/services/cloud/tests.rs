@@ -142,12 +142,27 @@ fn the_jcp_routes_answer_the_organization_and_the_record_counts_the_discoveries(
         let answer = testing::get(address, &format!("/jcp/ai-management/api/provisioning/v1/{path}"));
         assert_eq!((answer.status, answer.raw_body.len()), (404, 0), "{path}");
     }
+    let access = testing::get(
+        address,
+        "/jcp/repo-connections/tokens/state/meta?repositoryUrl=https%3A%2F%2Fgithub.com%2Fo%2Fr.git",
+    );
+    assert_eq!(
+        (access.status, access.text()),
+        (
+            200,
+            r#"{"type":"VALID","provider":"github","username":"air-lane","repositoryPermissions":{"read":true,"write":true}}"#.to_owned()
+        )
+    );
 
     let record = testing::control(address, "GET", "/_lane/cloud/record", "").json();
     assert_eq!(record["discoveries"], 1);
     assert_eq!(record["served"][1], "GET /jcp/user-management/api/org-feature-flags?flags=ai-seats");
-    assert_eq!(record["served"].as_array().unwrap().len(), 7);
+    assert_eq!(record["served"].as_array().unwrap().len(), 8);
     assert_eq!(record["served"][6], "GET /jcp/ai-management/api/provisioning/v1/mcp");
+    assert_eq!(
+        record["served"][7],
+        "GET /jcp/repo-connections/tokens/state/meta?repositoryUrl=https%3A%2F%2Fgithub.com%2Fo%2Fr.git"
+    );
     assert_eq!(record["unexpected"], json!([]));
 
     let none = start_cloud(Organization::None);

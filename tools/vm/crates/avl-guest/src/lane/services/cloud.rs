@@ -3,7 +3,8 @@
 //! The emulated account is one user. The login approves at once: the authorization answers a redirect to the IDE's
 //! callback with a fixed code. The id token is unsigned and names this server as its issuer, so a login survives an
 //! IDE restart. The JCP routes answer the AI access discovery and the provisioning that Air reads before it offers a
-//! cloud run, and [spawner] serves the Agent Spawner below them. A request to any other path answers 501, and the
+//! cloud run, and the repository access check of `repo-connections` that Air makes before it launches one. [spawner]
+//! serves the Agent Spawner below them. A request to any other path answers 501, and the
 //! emulator records it.
 
 use std::sync::{Mutex, MutexGuard};
@@ -48,6 +49,7 @@ const GATEWAYS_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/gat
 const AGENTS_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/agents";
 const ACP_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/acp";
 const MCP_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/mcp";
+const REPOSITORY_ACCESS_PATH: &str = "/repo-connections/tokens/state/meta";
 
 /// The largest `count` of the control route `spawner/fail`.
 const MAX_FAILED_DIALS: usize = 100;
@@ -64,6 +66,9 @@ const ORG_FEATURE_FLAGS_BODY: &str = concat!(
 const TOOLS_PROVISIONING_BODY: &str = r#"{"air":{"status":"allowed","allowCloudAgentsRun":true},"aiAssistant":{"status":"disallowed"}}"#;
 const GATEWAYS_PROVISIONING_BODY: &str = r#"{"gateways":[]}"#;
 const AGENTS_PROVISIONING_BODY: &str = r#"{"items":[]}"#;
+/// The JetBrains VCS App of the emulated user can read every repository, so no launch stops at the access check.
+const REPOSITORY_ACCESS_BODY: &str =
+    r#"{"type":"VALID","provider":"github","username":"air-lane","repositoryPermissions":{"read":true,"write":true}}"#;
 
 /// What the emulated account belongs to, as the AI access discovery states it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -272,6 +277,7 @@ impl Cloud {
             TOOLS_PROVISIONING_PATH => Some(TOOLS_PROVISIONING_BODY),
             GATEWAYS_PROVISIONING_PATH => Some(GATEWAYS_PROVISIONING_BODY),
             AGENTS_PROVISIONING_PATH => Some(AGENTS_PROVISIONING_BODY),
+            REPOSITORY_ACCESS_PATH => Some(REPOSITORY_ACCESS_BODY),
             // The organization has no ACP registry and provisions no MCP server. Air reads 404 as "not configured".
             ACP_PROVISIONING_PATH | MCP_PROVISIONING_PATH => None,
             _ => return None,

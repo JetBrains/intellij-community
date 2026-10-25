@@ -230,6 +230,7 @@ The emulator serves one account user with the id `air-lane-user`. A path with a 
 | `/jcp/ai-management/api/provisioning/v1/agents` | no agent |
 | `/jcp/ai-management/api/provisioning/v1/acp` | 404 |
 | `/jcp/ai-management/api/provisioning/v1/mcp` | 404 |
+| `/jcp/repo-connections/tokens/state/meta` | the JetBrains VCS App can read and write every repository |
 
 - The configuration names the emulator for every account URL and as the JCP URL.
   [@test] ../crates/avl-guest/src/lane/services/cloud/tests.rs
