@@ -371,7 +371,8 @@ private interface SmartModeScheduler {
   fun getCurrentMode(): Int
 }
 
-@Remote("com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl", rdTarget = RdTarget.BACKEND)
+@Remote("com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl", plugin = "com.intellij/intellij.platform.lang.impl.backend",
+        rdTarget = RdTarget.BACKEND)
 private interface UnindexedFilesScannerExecutorImpl {
   fun getInstance(project: Project): UnindexedFilesScannerExecutorImpl
   fun getHasQueuedTasks(): Boolean
