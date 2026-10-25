@@ -64,7 +64,7 @@ class SwingIconLayerRenderer(
   private fun createImageResource(): ImageResource {
     val provider = renderingContext.imageResourceProvider as? DefaultImageResourceProvider
     if (provider == null) error("Swing Icon fallback is only supported with DefaultImageResourceProvider")
-    return provider.fromSwingIcon(layer.legacyIcon, layer.generateImageModifiers(renderingContext))
+    return provider.fromSwingIcon(layer.legacyIcon, layer.generateImageModifiers(renderingContext), renderingContext.theme)
   }
 
   private suspend fun suspendUntilDeferredIconIsDone() {

@@ -14,11 +14,12 @@ import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
 import com.intellij.platform.icons.impl.rendering.layers.IconLayerRenderer
 import com.intellij.platform.icons.impl.layers.SwingIconLayer
 import com.intellij.platform.icons.impl.rendering.DefaultRenderingContext
+import com.intellij.platform.icons.modifiers.SizeVariantPolicy
 
 @Suppress("UNCHECKED_CAST")
 class IntelliJIconRendererManager: DefaultIconRendererManager() {
   private val imageProvider = IntelliJImageResourceProvider()
-  private val themeContext = IntelliJThemeContext()
+  private val themeContext = intelliJThemeContext
 
   override fun createRenderer(layer: IconLayer, renderingContext: RenderingContext): IconLayerRenderer {
     if (layer is SwingIconLayer) {
@@ -29,10 +30,12 @@ class IntelliJIconRendererManager: DefaultIconRendererManager() {
   }
 
   override fun createUpdateFlow(scope: CoroutineScope?, onUpdate: (suspend (Int) -> Unit)?): MutableIconUpdateFlow {
+    // Swing icons paint again on `updateUI` after a LaF change. A Compose icon caches its drawing, so its update flow
+    // also emits after a LaF change.
     if (scope != null) {
-      return CoroutineBasedMutableIconUpdateFlow(scope, onUpdate)
+      return ThemeAwareIconUpdateFlow(CoroutineBasedMutableIconUpdateFlow(scope, onUpdate))
     } else {
-      return IntelliJMutableIconUpdateFlowImpl(onUpdate)
+      return ThemeAwareIconUpdateFlow(IntelliJMutableIconUpdateFlowImpl(onUpdate))
     }
   }
 
@@ -41,16 +44,16 @@ class IntelliJIconRendererManager: DefaultIconRendererManager() {
     defaultImageModifiers: ImageModifiers?,
   ): RenderingContext {
     val knownModifiers = defaultImageModifiers as? DefaultImageModifiers
-    return DefaultRenderingContext(
-      updateFlow,
-      DefaultImageModifiers(
-        knownModifiers?.colorFilter,
-        knownModifiers?.svgPatcher,
-        StartupUiUtil.isDarkTheme,
-        knownModifiers?.stroke
-      ),
-      themeContext,
-      imageProvider
+    // The caller's modifiers are kept as they are. The image layers take the dark state of the theme on each renderer
+    // build unless the caller or a layer sets `darkOverride`, so `isDark` here is only the fallback.
+    val modifiers = DefaultImageModifiers(
+      colorFilter = knownModifiers?.colorFilter,
+      svgPatcher = knownModifiers?.svgPatcher,
+      isDark = knownModifiers?.isDark ?: StartupUiUtil.isDarkTheme,
+      stroke = knownModifiers?.stroke,
+      sizeVariantPolicy = knownModifiers?.sizeVariantPolicy ?: SizeVariantPolicy.Exact,
+      darkOverride = knownModifiers?.darkOverride,
     )
+    return DefaultRenderingContext(updateFlow, modifiers, themeContext, imageProvider)
   }
 }

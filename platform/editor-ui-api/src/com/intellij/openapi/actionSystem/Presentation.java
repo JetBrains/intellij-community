@@ -13,6 +13,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.platform.icons.IconDescriptor;
+import com.intellij.platform.icons.scale.IconScale;
+import com.intellij.platform.icons.swing.SwingIconKt;
 import com.intellij.util.BitUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,18 +60,6 @@ public final class Presentation implements Cloneable {
   /** value: {@link IconDescriptor} descriptor, see {@link #getIconDescriptor()} */
   @ApiStatus.Experimental
   public static final @NonNls String PROP_ICON_DESCRIPTOR = "iconDescriptor";
-
-  /**
-   * Returned by {@link #getIconDescriptor()} while the experimental icons pipeline is off ({@link ExperimentalIcons}).
-   * Means "must not be rendered": never pass it to the icons API, compare by identity.
-   */
-  @ApiStatus.Experimental
-  public static final IconDescriptor NO_ICON_DESCRIPTOR = new IconDescriptor() {
-    @Override
-    public String toString() {
-      return "NO_ICON_DESCRIPTOR";
-    }
-  };
   public static final @NonNls String PROP_DISABLED_ICON = "disabledIcon";
   public static final @NonNls String PROP_SELECTED_ICON = "selectedIcon";
   public static final @NonNls String PROP_HOVERED_ICON = "hoveredIcon";
@@ -323,6 +313,16 @@ public final class Presentation implements Cloneable {
   }
 
   public @Nullable Icon getIcon() {
+    if (ExperimentalIcons.isEnabled()) {
+      IconDescriptor descriptor = getIconDescriptor();
+      if (descriptor == null) {
+        if (this.icon != null) {
+          return null;
+        }
+        return null;
+      }
+      return SwingIconKt.createSwingIcon(getIconDescriptor(), IconScale.Default);
+    }
     Supplier<? extends Icon> icon = this.icon;
     return icon == null ? null : icon.get();
   }
@@ -334,12 +334,17 @@ public final class Presentation implements Cloneable {
   /**
    * Icon descriptor for the experimental icons pipeline (see {@link ExperimentalIcons}).
    *
-   * @return {@link #NO_ICON_DESCRIPTOR} when the pipeline is off, otherwise the descriptor or {@code null} when none is set
+   * @return when the pipeline is off, a descriptor bridged from the legacy Swing {@link #getIcon() icon} (or {@code null}
+   * when there is no icon); otherwise the descriptor or {@code null} when none is set
    */
   @ApiStatus.Experimental
   public @Nullable IconDescriptor getIconDescriptor() {
     if (!ExperimentalIcons.isEnabled()) {
-      return NO_ICON_DESCRIPTOR;
+      Icon icon = getIcon();
+      if (icon == null) {
+        return null;
+      }
+      return SwingIconKt.toIconDescriptor(icon);
     }
     Supplier<? extends IconDescriptor> iconDescriptor = this.iconDescriptor;
     return iconDescriptor == null ? null : iconDescriptor.get();
@@ -388,6 +393,7 @@ public final class Presentation implements Cloneable {
   }
 
   public void setIcon(@Nullable Icon icon) {
+    this.iconDescriptor = () -> convertIconDescriptor(icon);
     if (myListeners.isEmpty()) {
       this.icon = icon == null ? null : () -> icon;
       return;
@@ -399,6 +405,7 @@ public final class Presentation implements Cloneable {
   }
 
   public void setIconSupplier(@Nullable Supplier<? extends @Nullable Icon> icon) {
+    this.iconDescriptor = () -> convertIconDescriptorFromSupplier(icon);
     if (myListeners.isEmpty()) {
       this.icon = icon;
       return;
@@ -409,6 +416,17 @@ public final class Presentation implements Cloneable {
     Icon newIcon = icon == null ? null : icon.get();
     if (Objects.equals(oldIcon, newIcon)) return;
     fireObjectPropertyChange(PROP_ICON, oldIcon, newIcon);
+  }
+
+  private static @Nullable IconDescriptor convertIconDescriptorFromSupplier(@Nullable Supplier<? extends @Nullable Icon> supplier) {
+    if (supplier == null) return null;
+    Icon icon = supplier.get();
+    return convertIconDescriptor(icon);
+  }
+
+  private static @Nullable IconDescriptor convertIconDescriptor(@Nullable Icon icon) {
+    if (icon == null) return null;
+    return SwingIconKt.toIconDescriptor(icon);
   }
 
   public @Nullable Icon getDisabledIcon() {

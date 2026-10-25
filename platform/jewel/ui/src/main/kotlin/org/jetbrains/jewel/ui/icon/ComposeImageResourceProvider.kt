@@ -4,6 +4,7 @@ package org.jetbrains.jewel.ui.icon
 import androidx.compose.ui.graphics.decodeToImageBitmap
 import androidx.compose.ui.unit.Density
 import com.intellij.platform.icons.ImageResourceLocation
+import com.intellij.platform.icons.impl.UrlImageResourceLocation
 import com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher
 import com.intellij.platform.icons.impl.patchers.SvgPatchOperation
 import com.intellij.platform.icons.impl.patchers.authoredStrokeSvgPatcher
@@ -14,6 +15,7 @@ import com.intellij.platform.icons.rendering.ImageModifiers
 import com.intellij.platform.icons.rendering.ImageResource
 import com.intellij.platform.icons.rendering.ImageResourceProvider
 import java.io.ByteArrayInputStream
+import java.net.URI
 import javax.xml.XMLConstants
 import javax.xml.parsers.DocumentBuilderFactory
 import org.jetbrains.annotations.ApiStatus
@@ -27,22 +29,29 @@ import org.w3c.dom.Element
 @ApiStatus.Internal
 public class ComposeImageResourceProvider : ImageResourceProvider {
     override fun loadImage(location: ImageResourceLocation, imageModifiers: ImageModifiers?): ImageResource {
-        if (location is PathImageResourceLocation) {
-            val extension = location.path.substringAfterLast(".").lowercase()
-            val resolved = location.resolve(imageModifiers)
-            return when (extension) {
-                "svg" ->
-                    ComposePainterImageResource(
-                        patchSvg(imageModifiers, resolved).decodeToSvgPainter(Density(1f)),
-                        imageModifiers,
-                    )
-                // "xml" -> loader.loadData().decodeToImageVector()
-                else -> ComposeBitmapImageResource(resolved.data.decodeToImageBitmap())
-            }
-        } else {
-            error("Unsupported loader: $location")
+        return when (location) {
+            is PathImageResourceLocation -> load(location.path, location.resolve(imageModifiers), imageModifiers)
+            // An image at a URL has no dark or stroke variants, so it is loaded as it is.
+            is UrlImageResourceLocation ->
+                load(
+                    location.url,
+                    ResolvedImageResource(URI(location.toUrl()).toURL().readBytes(), isAuthoredStrokeVariant = false),
+                    imageModifiers,
+                )
+            else -> error("Unsupported loader: $location")
         }
     }
+
+    private fun load(path: String, resolved: ResolvedImageResource, imageModifiers: ImageModifiers?): ImageResource =
+        when (path.substringAfterLast(".").lowercase()) {
+            "svg" ->
+                ComposePainterImageResource(
+                    patchSvg(imageModifiers, resolved).decodeToSvgPainter(Density(1f)),
+                    imageModifiers,
+                )
+            // "xml" -> loader.loadData().decodeToImageVector()
+            else -> ComposeBitmapImageResource(resolved.data.decodeToImageBitmap())
+        }
 }
 
 private val documentBuilderFactory =

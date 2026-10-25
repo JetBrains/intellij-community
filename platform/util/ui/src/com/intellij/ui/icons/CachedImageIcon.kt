@@ -363,6 +363,14 @@ open class CachedImageIcon private constructor(
     return copy(colorPatcher = CustomColorPatcherStrategy(colorPatcher), attributes = newAttributes)
   }
 
+  /**
+   * The SVG color patcher this icon loads with: the theme palette ([SVGLoader.colorPatcherProvider]) at the moment of the
+   * call, or the patcher given to [createWithPatcher].
+   */
+  @get:Internal
+  val svgColorPatcher: SVGLoader.SvgElementColorPatcherProvider?
+    get() = colorPatcher.colorPatcher
+
   internal fun createStrokeIcon(): CachedImageIcon = copy(attributes.copy(useStroke = true))
 
   private fun getFilters(): List<ImageFilter> {
