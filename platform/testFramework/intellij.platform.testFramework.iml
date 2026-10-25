@@ -14,7 +14,6 @@
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" />
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
-    <orderEntry type="module" module-name="intellij.idea.community.customization" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.rt" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.junit6.launcher" scope="PROVIDED" />
@@ -53,7 +52,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.core" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.lvcs" />
-    <orderEntry type="module" module-name="intellij.platform.monolith.main" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.refactoring" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
@@ -62,7 +60,6 @@
     <orderEntry type="module" module-name="intellij.platform.syntax.util" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" exported="" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.core" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.usageView" />
     <orderEntry type="module" module-name="intellij.platform.usageView.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
@@ -70,7 +67,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage" />
-    <orderEntry type="module" module-name="intellij.tools.testsBootstrap" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.runtime.product" />
     <orderEntry type="module" module-name="intellij.platform.pluginSystem.parser.impl" />
     <orderEntry type="module" module-name="intellij.platform.execution" />
