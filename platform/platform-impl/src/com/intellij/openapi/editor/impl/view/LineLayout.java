@@ -2,9 +2,10 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.DocumentText;
+import com.intellij.openapi.editor.ex.DocumentTextUtil;
 import com.intellij.openapi.editor.impl.FontFallbackIterator;
 import com.intellij.util.DocumentInternalUtil;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JdkConstants.FontStyle;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +63,7 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
   }
 
   Iterable<LineVisualFragment> getFragmentsInVisualOrder(float startX) {
-    return () -> new VisualOrderIterator(null, 0, 0, 0, startX, getRunsInVisualOrder());
+    return () -> new VisualOrderIterator(null, null, 0, 0, 0, startX, getRunsInVisualOrder());
   }
 
   /**
@@ -71,6 +72,7 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
    */
   Iterator<LineVisualFragment> getFragmentsInVisualOrder(
     @NotNull EditorView view,
+    @NotNull DocumentText document,
     int line,
     int startOffset,
     int endOffset,
@@ -81,10 +83,9 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
     if (startOffset > endOffset) {
       view.getEditor().throwEditorInvariantBroken("startOffset must be less or equal to endOffset");
     }
-    Document document = view.getDocument();
-    int lineStartOffset = document.getLineStartOffset(line);
-    assert !DocumentUtil.isInsideSurrogatePair(document, lineStartOffset + startOffset);
-    assert !DocumentUtil.isInsideSurrogatePair(document, lineStartOffset + endOffset);
+    int lineStartOffset = document.lineStartOffset(line);
+    assert !DocumentTextUtil.isInsideSurrogatePair(document, lineStartOffset + startOffset);
+    assert !DocumentTextUtil.isInsideSurrogatePair(document, lineStartOffset + endOffset);
     LineBidiRun[] runs;
     if (startOffset == endOffset) {
       runs = LineBidiRun.EMPTY_ARRAY;
@@ -97,13 +98,13 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
         if (run.getStartOffset() >= endOffset) {
           break;
         }
-        LineBidiRun subRun = run.subRun(view, line, startOffset, endOffset, quickEvaluationListener);
+        LineBidiRun subRun = run.subRun(view, document, line, startOffset, endOffset, quickEvaluationListener);
         runList.add(subRun);
       }
       runs = runList.toArray(LineBidiRun.EMPTY_ARRAY);
     }
     reorderRunsVisually(runs);
-    return new VisualOrderIterator(view, line, startOffset, startVisualColumn, startX, runs);
+    return new VisualOrderIterator(view, document, line, startOffset, startVisualColumn, startX, runs);
   }
 
   private static List<LineBidiRun> createRunsForDocumentLine(@NotNull EditorView view, int line, boolean skipBidiLayout) {

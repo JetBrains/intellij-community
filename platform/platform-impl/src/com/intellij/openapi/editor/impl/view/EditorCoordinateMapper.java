@@ -2,12 +2,14 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.CustomFoldRegion;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.DocumentText;
+import com.intellij.openapi.editor.ex.DocumentTextUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.InlayModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -16,7 +18,6 @@ import com.intellij.openapi.editor.impl.FoldingModelInternal;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapEx;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.IntPair;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.JScrollBar;
 import java.awt.Insets;
 import java.awt.geom.Point2D;
-import java.util.List;
 
 /**
  * Performs transformations between various location representations in editor
@@ -35,7 +35,7 @@ import java.util.List;
  */
 final class EditorCoordinateMapper {
   private final EditorView myView;
-  private final Document myDocument;
+  private final DocumentEx myDocument;
   private final FoldingModelInternal myFoldingModel;
   private final InlayModelEx myInlayModel;
   private final SoftWrapModelImpl mySoftWrapModel;
@@ -54,8 +54,9 @@ final class EditorCoordinateMapper {
     if (line < 0) {
       line = 0;
     }
+    DocumentText document = myDocument.getDocumentText();
     int offset = line >= getVisibleLineCount()
-                 ? myDocument.getTextLength() + 1
+                 ? document.length() + 1
                  : visualLineToOffset(line);
     int lineHeight = getLineHeight();
     int idx = myFoldingModel.getLastCollapsedRegionBefore(offset);
@@ -133,7 +134,8 @@ final class EditorCoordinateMapper {
   @NotNull VisualPosition logicalToVisualPosition(@NotNull LogicalPosition pos, boolean beforeSoftWrap) {
     int line = pos.line;
     int column = pos.column;
-    int logicalLineCount = Math.max(1, myDocument.getLineCount());
+    DocumentText document = myDocument.getDocumentText();
+    int logicalLineCount = Math.max(1, document.lineCount());
     if (line >= logicalLineCount) {
       return new VisualPosition(
         line - logicalLineCount + getVisibleLineCount(),
@@ -146,7 +148,7 @@ final class EditorCoordinateMapper {
     int maxVisualColumn = 0;
     int maxLogicalColumn = 0;
     int endLogicalLine = line;
-    for (var fragment : createVisualLineFragmentsIterator(offset, beforeSoftWrap, false)) {
+    for (var fragment : createVisualLineFragmentsIterator(document, offset, beforeSoftWrap, false)) {
       if (!pos.leansForward && offset == fragment.getVisualLineStartOffset()) {
         return new VisualPosition(visualLine, fragment.getStartVisualColumn());
       }
@@ -194,24 +196,25 @@ final class EditorCoordinateMapper {
   }
 
   @NotNull LogicalPosition visualToLogicalPosition(@NotNull VisualPosition pos) {
+    DocumentText document = myDocument.getDocumentText();
     int line = pos.line;
     int column = pos.column;
     int visualLineCount = getVisibleLineCount();
     if (line >= visualLineCount) {
       return new LogicalPosition(
-        line - visualLineCount + myDocument.getLineCount(),
+        line - visualLineCount + document.lineCount(),
         column,
         pos.leansRight
       );
     }
     int offset = visualLineToOffset(line);
-    int logicalLine = myDocument.getLineNumber(offset);
+    int logicalLine = document.lineNumber(offset);
     int maxVisualColumn = 0;
     int maxLogicalColumn = 0;
     int maxOffset = offset;
     LogicalPosition delayedResult = null;
     boolean delayedInlay = false;
-    for (var fragment : createVisualLineFragmentsIterator(offset, false, false)) {
+    for (var fragment : createVisualLineFragmentsIterator(document, offset, false, false)) {
       FoldRegion foldRegion = fragment.getCurrentFoldRegion();
       if (foldRegion instanceof CustomFoldRegion) {
         return new LogicalPosition(fragment.getStartLogicalLine(), fragment.getStartLogicalColumn());
@@ -283,12 +286,13 @@ final class EditorCoordinateMapper {
   }
 
   int offsetToVisualLine(int offset, boolean beforeSoftWrap) {
-    int textLength = myDocument.getTextLength();
+    DocumentText document = myDocument.getDocumentText();
+    int textLength = document.length();
     if (offset < 0 || textLength == 0) {
       return 0;
     }
     offset = Math.min(offset, textLength);
-    offset = DocumentUtil.alignToCodePointBoundary(myDocument, offset);
+    offset = DocumentTextUtil.alignToCodePointBoundary(document, offset);
     FoldRegion outermostCollapsed = myFoldingModel.getCollapsedRegionAtOffset(offset);
     if (outermostCollapsed != null && offset > outermostCollapsed.getStartOffset()) {
       assert outermostCollapsed.isValid();
@@ -299,14 +303,15 @@ final class EditorCoordinateMapper {
     int softWrapsBeforeOrAtOffset = wrapIndex < 0
                                     ? (-wrapIndex - 1)
                                     : wrapIndex + (beforeSoftWrap ? 0 : 1);
-    return myDocument.getLineNumber(offset)
+    return document.lineNumber(offset)
            - myFoldingModel.getFoldedLinesCountBefore(offset)
            + softWrapsBeforeOrAtOffset;
   }
 
   int visualLineToOffset(int visualLine) {
+    DocumentText document = myDocument.getDocumentText();
     int start = 0;
-    int end = myDocument.getTextLength();
+    int end = document.length();
     if (visualLine <= 0) {
       return start;
     }
@@ -315,17 +320,17 @@ final class EditorCoordinateMapper {
     }
     if (mySoftWrapModel.getSoftWrapsIntroducedLinesNumber() == 0) {
       int line = myFoldingModel.getLogicalLineForVisualLineWithoutSoftWraps(visualLine);
-      return myDocument.getLineStartOffset(line);
+      return document.lineStartOffset(line);
     }
     int current = ObjectUtils.binarySearch(
       0,
-      myDocument.getTextLength(),
+      document.length(),
       mid -> Integer.compare(offsetToVisualLine(mid, false), visualLine)
     );
     if (current < 0) {
       current = -current - 1;
     }
-    return visualLineStartOffset(current, true);
+    return visualLineStartOffset(document, current, true);
   }
 
   float getRightAlignmentLineStartX(int visualLine) {
@@ -363,7 +368,8 @@ final class EditorCoordinateMapper {
     if (visualLine < getVisibleLineCount()) {
       int maxOffset = 0;
       int visualLineStartOffset = visualLineToOffset(visualLine);
-      for (var fragment : createVisualLineFragmentsIterator(visualLineStartOffset, false, true)) {
+      DocumentText document = myDocument.getDocumentText();
+      for (var fragment : createVisualLineFragmentsIterator(document, visualLineStartOffset, false, true)) {
         if (fragment.getCurrentFoldRegion() instanceof CustomFoldRegion) {
           return new VisualPosition(visualLine, 0);
         }
@@ -413,7 +419,7 @@ final class EditorCoordinateMapper {
         }
         logicalLine = -1;
       } else if (logicalLine == -1) {
-        logicalLine = myDocument.getLineNumber(visualLineStartOffset);
+        logicalLine = document.lineNumber(visualLineStartOffset);
       }
     }
     float plainSpaceWidth = getPlainSpaceWidth();
@@ -458,7 +464,8 @@ final class EditorCoordinateMapper {
     if (visualLine < getVisibleLineCount()) {
       int maxOffset = 0;
       int visualLineStartOffset = visualLineToOffset(visualLine);
-      for (var fragment : createVisualLineFragmentsIterator(visualLineStartOffset, false, true)) {
+      DocumentText document = myDocument.getDocumentText();
+      for (var fragment : createVisualLineFragmentsIterator(document, visualLineStartOffset, false, true)) {
         if (fragment.getCurrentFoldRegion() instanceof CustomFoldRegion) {
           return new Point2D.Double(fragment.getStartX(), y);
         }
@@ -480,7 +487,7 @@ final class EditorCoordinateMapper {
         column--;
         x += mySoftWrapModel.getMinDrawingWidthInPixels(SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED);
       } else if (logicalLine == -1) {
-        logicalLine = myDocument.getLineNumber(visualLineStartOffset);
+        logicalLine = document.lineNumber(visualLineStartOffset);
       }
     }
     if (column > lastColumn + 1 && logicalLine >= 0) {
@@ -503,15 +510,16 @@ final class EditorCoordinateMapper {
   }
 
   @NotNull Point2D offsetToXY(int offset, boolean leanTowardsLargerOffsets, boolean beforeSoftWrap) {
-    offset = Math.clamp(offset, 0, myDocument.getTextLength());
-    offset = DocumentUtil.alignToCodePointBoundary(myDocument, offset);
-    int logicalLine = myDocument.getLineNumber(offset);
+    DocumentText document = myDocument.getDocumentText();
+    offset = Math.clamp(offset, 0, document.length());
+    offset = DocumentTextUtil.alignToCodePointBoundary(document, offset);
+    int logicalLine = document.lineNumber(offset);
     int visualLine = offsetToVisualLine(offset, beforeSoftWrap);
     int visualLineStartOffset = visualLineToOffset(visualLine);
     int y = visualLineToY(visualLine);
     float x = getStartX(logicalLine);
     boolean firstFragment = true;
-    for (var fragment : createVisualLineFragmentsIterator(offset, beforeSoftWrap, true)) {
+    for (var fragment : createVisualLineFragmentsIterator(document, offset, beforeSoftWrap, true)) {
       if (firstFragment && offset == visualLineStartOffset && !leanTowardsLargerOffsets ||
           fragment.getCurrentFoldRegion() instanceof CustomFoldRegion) {
         x = fragment.getStartX();
@@ -541,14 +549,15 @@ final class EditorCoordinateMapper {
    * @return the number of visible logical lines, which is the number of total logical lines minus the number of folded lines
    */
   private int getVisibleLogicalLinesCount() {
-    return myDocument.getLineCount() - myFoldingModel.getTotalNumberOfFoldedLines();
+    DocumentText document = myDocument.getDocumentText();
+    return document.lineCount() - myFoldingModel.getTotalNumberOfFoldedLines();
   }
 
   /// @noinspection SameParameterValue
-  private int visualLineStartOffset(int offset, boolean leanForward) {
-    offset = DocumentUtil.alignToCodePointBoundary(myDocument, offset);
-    int result = EditorUtil.getNotFoldedLineStartOffset(myDocument, myFoldingModel, offset, false);
-    List<? extends SoftWrap> softWraps = mySoftWrapModel.getRegisteredSoftWraps();
+  private int visualLineStartOffset(@NotNull DocumentText document, int offset, boolean leanForward) {
+    offset = DocumentTextUtil.alignToCodePointBoundary(document, offset);
+    int result = EditorUtil.getNotFoldedLineStartOffset(document, myFoldingModel, offset, false);
+    var softWraps = mySoftWrapModel.getRegisteredSoftWraps();
     int currentOrPrevWrapIndex = mySoftWrapModel.getSoftWrapIndex(offset);
     SoftWrap currentOrPrevWrap;
     if (currentOrPrevWrapIndex < 0) {
@@ -596,8 +605,13 @@ final class EditorCoordinateMapper {
            : getInsets().left + (line == 0 ? getPrefixTextWidthInPixels() : 0);
   }
 
-  private @NotNull Iterable<VisualLineFragmentsIterator.Fragment> createVisualLineFragmentsIterator(int offset, boolean beforeSoftWrap, boolean align) {
-    return VisualLineFragmentsIterator.create(myView, offset, beforeSoftWrap, align);
+  private @NotNull Iterable<VisualLineFragmentsIterator.Fragment> createVisualLineFragmentsIterator(
+    @NotNull DocumentText document,
+    int offset,
+    boolean beforeSoftWrap,
+    boolean align
+  ) {
+    return VisualLineFragmentsIterator.create(myView, document, offset, beforeSoftWrap, align);
   }
 
   private @NotNull VisualLinesIterator createVisualLinesIterator(int visualLine) {

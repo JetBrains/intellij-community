@@ -78,14 +78,14 @@ public class GuardedBlocksIndexTest {
   @Test
   public void testSurrogatePairAlignment() {
     var document = new DocumentImpl("a\uD83D\uDE00b");
-    var builder = new GuardedBlocksIndex.DocumentBuilder(document);
+    var builder = new GuardedBlocksIndex.DocumentBuilder(document.getDocumentText(), document.getGuardedBlocks());
     assertEquals("[1+)[3-)", builder.build(0, 4, List.of(r(2, 2), r(1, 2), r(2, 3))).toString());
   }
 
   @Test
   public void testSurrogatePairAlignmentAtDocumentEnd() {
     var document = new DocumentImpl("a\uD83D\uDE00");
-    var builder = new GuardedBlocksIndex.DocumentBuilder(document);
+    var builder = new GuardedBlocksIndex.DocumentBuilder(document.getDocumentText(), document.getGuardedBlocks());
     assertEquals("[1-)", builder.build(0, 3, List.of(r(2, 2))).toString());
   }
 

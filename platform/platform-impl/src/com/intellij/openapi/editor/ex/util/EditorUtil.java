@@ -54,6 +54,8 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.editor.ex.DocumentText;
+import com.intellij.openapi.editor.ex.DocumentTextUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -715,6 +717,22 @@ public final class EditorUtil {
     return offset;
   }
 
+  @ApiStatus.Internal
+  public static int getNotFoldedLineStartOffset(@NotNull DocumentText document, @NotNull FoldingModel foldingModel, int startOffset, boolean stopAtInvisibleFoldRegions) {
+    int offset = startOffset;
+    while (true) {
+      offset = DocumentTextUtil.getLineStartOffsetAt(document, offset);
+      FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(offset - 1);
+      if (foldRegion == null ||
+          stopAtInvisibleFoldRegions && foldRegion.getPlaceholderText().isEmpty() ||
+          foldRegion.getStartOffset() >= offset) {
+        break;
+      }
+      offset = foldRegion.getStartOffset();
+    }
+    return offset;
+  }
+
   /**
    * Finds the end offset of visual line at which given offset is located, not taking soft wraps into account.
    */
@@ -731,6 +749,22 @@ public final class EditorUtil {
     int offset = startOffset;
     while (true) {
       offset = getLineEndOffset(offset, document);
+      FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(offset);
+      if (foldRegion == null ||
+          stopAtInvisibleFoldRegions && foldRegion.getPlaceholderText().isEmpty() ||
+          foldRegion.getEndOffset() <= offset) {
+        break;
+      }
+      offset = foldRegion.getEndOffset();
+    }
+    return offset;
+  }
+
+  @ApiStatus.Internal
+  public static int getNotFoldedLineEndOffset(@NotNull DocumentText document, @NotNull FoldingModel foldingModel, int startOffset, boolean stopAtInvisibleFoldRegions) {
+    int offset = startOffset;
+    while (true) {
+      offset = DocumentTextUtil.getLineEndOffsetAt(document, offset);
       FoldRegion foldRegion = foldingModel.getCollapsedRegionAtOffset(offset);
       if (foldRegion == null ||
           stopAtInvisibleFoldRegions && foldRegion.getPlaceholderText().isEmpty() ||

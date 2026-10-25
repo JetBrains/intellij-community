@@ -15,7 +15,7 @@ final class TabFragment implements LineFragment {
   private final EditorView myView;
   private final Editor myEditor;
 
-  TabFragment(EditorView view) {
+  TabFragment(@NotNull EditorView view) {
     myView = view;
     myEditor = view.getEditor();
   }
@@ -27,14 +27,14 @@ final class TabFragment implements LineFragment {
 
   @Override
   public int getLogicalColumnCount(int startColumn) {
-    int tabSize = myView.getTabSize();
+    int tabSize = view().tabSize();
     return tabSize - startColumn % tabSize;
   }
 
   @Override
   public int getVisualColumnCount(float startX) {
     float x = getNextTabStop(startX);
-    return EditorUtil.columnsNumber(x - startX, myView.getPlainSpaceWidth());
+    return EditorUtil.columnsNumber(x - startX, view().plainSpaceWidth());
   }
 
   @Override
@@ -84,11 +84,10 @@ final class TabFragment implements LineFragment {
     int column;
     boolean leansRight;
     if (myEditor.getSettings().isCaretInsideTabs()) {
-      float plainSpaceWidth = myView.getPlainSpaceWidth();
+      float plainSpaceWidth = view().plainSpaceWidth();
       column = Math.round((x - startX)/plainSpaceWidth);
       leansRight = (x - startX) > (column * plainSpaceWidth);
-    }
-    else {
+    } else {
       column = x > (startX + nextTabStop) / 2 ? getVisualColumnCount(startX) : 0;
       leansRight = column == 0;
     }
@@ -97,17 +96,26 @@ final class TabFragment implements LineFragment {
 
   @Override
   public float visualColumnToX(float startX, int column) {
-    if (column <= 0) return startX;
-    if (column >= getVisualColumnCount(startX)) return getNextTabStop(startX); 
-    return startX + myView.getPlainSpaceWidth() * column;
+    if (column <= 0) {
+      return startX;
+    }
+    if (column >= getVisualColumnCount(startX)) {
+      return getNextTabStop(startX);
+    }
+    return startX + view().plainSpaceWidth() * column;
+  }
+
+  private float getNextTabStop(float x) {
+    EditorViewSnapshot view = view();
+    int leftInset = myView.getInsets().left;
+    return EditorUtil.nextTabStop(x - leftInset, view.plainSpaceWidth(), view.tabSize()) + leftInset;
+  }
+
+  private @NotNull EditorViewSnapshot view() {
+    return myView.getSnapshot();
   }
 
   private static int trimOffset(int offset) {
     return offset <= 0 ? 0 : 1;
-  }
-  
-  private float getNextTabStop(float x) {
-    int leftInset = myView.getInsets().left;
-    return EditorUtil.nextTabStop(x - leftInset, myView.getPlainSpaceWidth(), myView.getTabSize()) + leftInset;
   }
 }

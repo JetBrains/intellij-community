@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
+import com.intellij.openapi.editor.ex.DocumentText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +12,7 @@ import java.util.NoSuchElementException;
 final class VisualOrderIterator implements Iterator<LineVisualFragment> {
   // optional params
   private final @Nullable EditorView view;
-  private final @Nullable CharSequence text;
+  private final @Nullable DocumentText document;
   private final int line;
   private final int lineStartOffset;
 
@@ -26,6 +27,7 @@ final class VisualOrderIterator implements Iterator<LineVisualFragment> {
 
   VisualOrderIterator(
     @Nullable EditorView view,
+    @Nullable DocumentText document,
     int line,
     int startOffset,
     int startVisualColumn,
@@ -33,9 +35,9 @@ final class VisualOrderIterator implements Iterator<LineVisualFragment> {
     LineBidiRun @NotNull [] runsInVisualOrder
   ) {
     this.view = view;
-    this.text = view == null ? null : view.getDocument().getImmutableCharSequence();
+    this.document = document;
     this.line = line;
-    this.lineStartOffset = view == null ? 0 : view.getDocument().getLineStartOffset(line);
+    this.lineStartOffset = document == null ? 0 : document.lineStartOffset(line);
     this.runs = runsInVisualOrder;
     this.current = new LineVisualFragment(startOffset, startVisualColumn, startX);
   }
@@ -45,12 +47,13 @@ final class VisualOrderIterator implements Iterator<LineVisualFragment> {
     // run -> chunk -> fragment
     if (runIndex < runs.length) {
       LineBidiRun run = runs[runIndex];
-      List<LineChunk> chunks = run.getChunks(text, lineStartOffset);
+      var chars = document == null ? null : document.luckyChars();
+      List<LineChunk> chunks = run.getChunks(chars, lineStartOffset);
       if (chunkIndex < chunks.size()) {
         int chunkIndexRtl = run.isRtl() ? (chunks.size() - chunkIndex - 1) : chunkIndex;
         LineChunk chunk = chunks.get(chunkIndexRtl);
-        if (view != null) {
-          chunk.ensureLayout(view, line, run.getLevel());
+        if (view != null && document != null) {
+          chunk.ensureLayout(view, document, line, run.getLevel());
         }
         if (fragmentIndex < chunk.fragmentCount()) {
           return true;
@@ -66,7 +69,8 @@ final class VisualOrderIterator implements Iterator<LineVisualFragment> {
       throw new NoSuchElementException();
     }
     LineBidiRun run = runs[runIndex];
-    List<LineChunk> chunks = run.getChunks(text, lineStartOffset);
+    var chars = document == null ? null : document.luckyChars();
+    List<LineChunk> chunks = run.getChunks(chars, lineStartOffset);
     int chunkIndexRtl = run.isRtl() ? (chunks.size() - chunkIndex - 1) : chunkIndex;
     LineChunk chunk = chunks.get(chunkIndexRtl);
     int fragmentIndexRtl = run.isRtl() ? (chunk.fragmentCount() - fragmentIndex - 1) : fragmentIndex;

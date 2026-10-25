@@ -7,11 +7,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.SoftWrapModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.DocumentText;
+import com.intellij.openapi.editor.ex.DocumentTextUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -26,12 +29,11 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder;
 import com.intellij.util.CommonProcessors;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
-import com.intellij.util.ui.JdkConstants;
+import com.intellij.util.ui.JdkConstants.FontStyle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +93,7 @@ public final class IterationState {
   private final int myInitialStartOffset;
   private final int myEnd;
   private final EditorColorsScheme myColorsScheme;
-  private final int myDefaultFontType;
+  private final @FontStyle int myDefaultFontType;
   private final @Nullable HighlighterIterator myHighlighterIterator;
   private final HighlighterSweep myEditorHighlighters;
   private final HighlighterSweep myDocumentHighlighters;
@@ -104,7 +106,7 @@ public final class IterationState {
   private final Color myDefaultBackground;
   private final Color myDefaultForeground;
   private final Color myReadOnlyColor;
-  private final DocumentEx myDocument;
+  private final DocumentText myDocument;
   private final CaretData myCaretData;
   private final boolean myUseOnlyFullLineHighlighters;
   private final boolean myUseOnlyFontOrForegroundAffectingHighlighters;
@@ -140,9 +142,10 @@ public final class IterationState {
     }
     LOG.assertTrue(iterateBackwards ? start >= end : start <= end);
 
-    myDocument = getDocument(editor);
-    assert !DocumentUtil.isInsideSurrogatePair(myDocument, start);
-    assert !DocumentUtil.isInsideSurrogatePair(myDocument, end);
+    DocumentEx document = getDocument(editor);
+    myDocument = document.getDocumentText();
+    assert !DocumentTextUtil.isInsideSurrogatePair(myDocument, start);
+    assert !DocumentTextUtil.isInsideSurrogatePair(myDocument, end);
 
     myColorsScheme = editor.getColorsScheme();
     myInitialStartOffset = start;
@@ -167,7 +170,7 @@ public final class IterationState {
     myDefaultFontType = defaultAttributes == null ? Font.PLAIN : defaultAttributes.getFontType();
     myEditorHighlighters = createSweep(getEditorMarkupModel(editor));
     myDocumentHighlighters = createSweep(getDocumentMarkupModel(editor));
-    myGuardedBlocks =  buildGuardedBlocks(start, end);
+    myGuardedBlocks =  useOnlyFullLineHighlighters ? null : buildGuardedBlocks(document.getGuardedBlocks(), start, end);
     myEndOffset = myStartOffset;
     myShouldUseNewSelection = editor instanceof EditorImpl impl && impl.shouldUseNewSelection();
     advance();
@@ -179,7 +182,7 @@ public final class IterationState {
            myCaretData == CaretData.getNullCaret() &&
            offset >= myInitialStartOffset &&
            offset <= myStartOffset &&
-           !DocumentUtil.isInsideSurrogatePair(myDocument, offset);
+           !DocumentTextUtil.isInsideSurrogatePair(myDocument, offset);
     if (offset == myStartOffset) return;
     if (myHighlighterIterator != null) {
       while (myHighlighterIterator.getStart() > offset) {
@@ -203,7 +206,7 @@ public final class IterationState {
            myCaretData == CaretData.getNullCaret() &&
            offset >= myStartOffset &&
            offset <= myEnd &&
-           !DocumentUtil.isInsideSurrogatePair(myDocument, offset);
+           !DocumentTextUtil.isInsideSurrogatePair(myDocument, offset);
     if (offset == myStartOffset) return;
     myEndOffset = offset;
     advance();
@@ -223,7 +226,7 @@ public final class IterationState {
     }
     if (myCurrentFold != null) {
       myEndOffset = myReverseIteration ? myCurrentFold.getStartOffset() : myCurrentFold.getEndOffset();
-      assert !DocumentUtil.isInsideSurrogatePair(myDocument, myEndOffset);
+      assert !DocumentTextUtil.isInsideSurrogatePair(myDocument, myEndOffset);
     }
     else {
       int highlighterEnd = getHighlighterEnd(myStartOffset);
@@ -242,13 +245,13 @@ public final class IterationState {
 
       myNextIsFoldRegion = myEndOffset == foldRangesEnd && myEndOffset < myEnd;
 
-      assert !DocumentUtil.isInsideSurrogatePair(myDocument, myEndOffset) :
-        "caret: " + DocumentUtil.isInsideSurrogatePair(myDocument, caretEnd) +
-        ", selection: " + DocumentUtil.isInsideSurrogatePair(myDocument, selectionEnd) +
-        ", guarded block: " + DocumentUtil.isInsideSurrogatePair(myDocument, guardedBlockEnd) +
-        ", folding: " + DocumentUtil.isInsideSurrogatePair(myDocument, foldRangesEnd) +
-        ", lexer: " + DocumentUtil.isInsideSurrogatePair(myDocument, highlighterEnd) +
-        ", highlighters: " + DocumentUtil.isInsideSurrogatePair(myDocument, minSegmentHighlightersEnd);
+      assert !DocumentTextUtil.isInsideSurrogatePair(myDocument, myEndOffset) :
+        "caret: " + DocumentTextUtil.isInsideSurrogatePair(myDocument, caretEnd) +
+        ", selection: " + DocumentTextUtil.isInsideSurrogatePair(myDocument, selectionEnd) +
+        ", guarded block: " + DocumentTextUtil.isInsideSurrogatePair(myDocument, guardedBlockEnd) +
+        ", folding: " + DocumentTextUtil.isInsideSurrogatePair(myDocument, foldRangesEnd) +
+        ", lexer: " + DocumentTextUtil.isInsideSurrogatePair(myDocument, highlighterEnd) +
+        ", highlighters: " + DocumentTextUtil.isInsideSurrogatePair(myDocument, minSegmentHighlightersEnd);
     }
 
     reinit();
@@ -424,14 +427,11 @@ public final class IterationState {
                                : lessThan(myCaretData.selectionStart(myCurrentSelectionIndex, false), myStartOffset, !atBreak));
   }
 
-  private GuardedBlocksIndex buildGuardedBlocks(int start, int end) {
-    if (myUseOnlyFullLineHighlighters) {
-      return null;
-    }
-    var guardedBlocks = new GuardedBlocksIndex.DocumentBuilder(myDocument);
+  private @NotNull GuardedBlocksIndex buildGuardedBlocks(@NotNull List<RangeMarker> guardedBlocks, int start, int end) {
+    var guardedBlocksIndex = new GuardedBlocksIndex.DocumentBuilder(myDocument, guardedBlocks);
     return myReverseIteration
-           ? guardedBlocks.build(end, start)
-           : guardedBlocks.build(start, end);
+           ? guardedBlocksIndex.build(end, start)
+           : guardedBlocksIndex.build(start, end);
   }
 
   private boolean isInDocumentGuardedBlock(boolean atBreak, boolean beforeBreak) {
@@ -452,7 +452,7 @@ public final class IterationState {
     myDocumentHighlighters.advance();
     myEditorHighlighters.advance();
 
-    boolean fileEnd = myStartOffset == myDocument.getTextLength();
+    boolean fileEnd = myStartOffset == myDocument.length();
     for (int i = myCurrentHighlighters.size() - 1; i >= 0; i--) {
       RangeHighlighterEx highlighter = myCurrentHighlighters.get(i);
       if (myReverseIteration ?
@@ -625,7 +625,7 @@ public final class IterationState {
 
     Color fore = null;
     Color back = isInGuardedBlock ? myReadOnlyColor : null;
-    @JdkConstants.FontStyle int fontType = Font.PLAIN;
+    @FontStyle int fontType = Font.PLAIN;
 
     TextAttributesEffectsBuilder effectsBuilder = null;
     for (int i = 0; i < cachedAttributes.size(); i++) {
@@ -688,14 +688,14 @@ public final class IterationState {
   }
 
   private int alignOffset(int offset) {
-    return DocumentUtil.alignToCodePointBoundary(myDocument, offset);
+    return DocumentTextUtil.alignToCodePointBoundary(myDocument, offset);
   }
 
-  private int getAlignedStartOffset(RangeHighlighterEx highlighter) {
+  private int getAlignedStartOffset(@NotNull RangeHighlighterEx highlighter) {
     return alignOffset(highlighter.getAffectedAreaStartOffset());
   }
 
-  private int getAlignedEndOffset(RangeHighlighterEx highlighter) {
+  private int getAlignedEndOffset(@NotNull RangeHighlighterEx highlighter) {
     return alignOffset(highlighter.getAffectedAreaEndOffset());
   }
 
@@ -744,7 +744,7 @@ public final class IterationState {
       return highlights;
     }
 
-    private RangeHighlighterEx firstAdvance() {
+    private @Nullable RangeHighlighterEx firstAdvance() {
       while (i < highlighters.length) {
         RangeHighlighterEx highlighter = highlighters[i++];
         if (!skipHighlighter(highlighter)) {

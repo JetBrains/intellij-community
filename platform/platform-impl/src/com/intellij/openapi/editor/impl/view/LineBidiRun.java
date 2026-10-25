@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
-import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.util.BitUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -114,6 +114,7 @@ final class LineBidiRun {
 
   @NotNull LineBidiRun subRun(
     @NotNull EditorView view,
+    @NotNull DocumentText document,
     int line,
     int targetStartOffset,
     int targetEndOffset,
@@ -124,8 +125,7 @@ final class LineBidiRun {
     int start = Math.max(getStartOffset(), targetStartOffset);
     int end = Math.min(getEndOffset(), targetEndOffset);
     List<LineChunk> subChunks = new SmartList<>();
-    Document document = view.getDocument();
-    List<LineChunk> chunks = getChunks(document.getImmutableCharSequence(), document.getLineStartOffset(line));
+    List<LineChunk> chunks = getChunks(document.chars(), document.lineStartOffset(line));
     for (int i = (start - getStartOffset()) / CHUNK_CHARACTERS; i < chunks.size(); i++) {
       LineChunk chunk = chunks.get(i);
       if (chunk.getEndOffset() <= start) {
@@ -134,7 +134,7 @@ final class LineBidiRun {
       if (chunk.getStartOffset() >= end) {
         break;
       }
-      LineChunk subChunk = chunk.subChunk(view, line, start, end, getLevel(), quickEvaluationListener);
+      LineChunk subChunk = chunk.subChunk(view, document, line, start, end, getLevel(), quickEvaluationListener);
       subChunks.add(subChunk);
     }
     int visualColumn = (isRtl() ? end == getEndOffset() : start == getStartOffset())

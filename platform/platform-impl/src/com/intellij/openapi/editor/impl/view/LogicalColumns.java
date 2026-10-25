@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.ex.DocumentText;
+import com.intellij.openapi.editor.ex.DocumentTextUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.DocumentInternalUtil;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +94,7 @@ final class LogicalColumns {
     int pos = Arrays.binarySearch(columnCache, column);
     if (pos >= 0) {
       int result = lineStartOffset + (pos + 1) * CACHE_FREQUENCY;
-      return DocumentInternalUtil.isInsideSurrogatePair(document, result) ? result - 1 : result;
+      return DocumentTextUtil.isInsideSurrogatePair(document, result) ? result - 1 : result;
     }
     int startOffset = lineStartOffset + (- pos - 1) * CACHE_FREQUENCY;
     int cachedColumn = pos == -1 ? 0 : columnCache[- pos - 2];

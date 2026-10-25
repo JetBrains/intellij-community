@@ -3,9 +3,9 @@ package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretVisualAttributes;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.caret.model.CaretCursor;
 import com.intellij.openapi.editor.impl.caret.model.CaretRectangle;
@@ -44,12 +44,10 @@ public final class EditorCaretPainter {
 
   private final EditorView myView;
   private final EditorImpl myEditor;
-  private final Document myDocument;
 
   public EditorCaretPainter(@NotNull EditorView myView) {
     this.myView = myView;
     this.myEditor = myView.getEditor();
-    this.myDocument = myView.getDocument();
   }
 
   void repaintCarets(@NotNull CaretCursor caretCursor) {
@@ -87,12 +85,14 @@ public final class EditorCaretPainter {
   }
 
   private final class Session {
+    private final DocumentText myDocument;
     private final Graphics2D myGraphics;
     private final Insets myInsets;
     private final int myYShift;
     private final int myAscent;
 
     Session(Graphics2D graphics, int yShift) {
+      myDocument = myView.getDocument().getDocumentText();
       myInsets = myView.getInsets();
       myGraphics = graphics;
       myYShift = yShift;
@@ -189,7 +189,7 @@ public final class EditorCaretPainter {
         try {
           Color withedOpacity = withOpacity(ColorUtil.isDark(caretColor) ? CARET_LIGHT : CARET_DARK, opacity);
           int targetVisualColumn = caret.getVisualPosition().column - (isRtl ? 1 : 0);
-          for (var fragment : VisualLineFragmentsIterator.create(myView, caret.getVisualLineStart(), false)) {
+          for (var fragment : VisualLineFragmentsIterator.create(myView, myDocument, caret.getVisualLineStart())) {
             if (fragment.getCurrentInlay() != null) {
               continue;
             }
@@ -212,39 +212,39 @@ public final class EditorCaretPainter {
         }
       }
     }
-  }
 
-  private void paintCaretBar(@NotNull Graphics2D g, @Nullable Caret caret, float x, float y, float w, float h, boolean isRtl) {
-    var old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-    boolean shouldDrawRtl = myDocument.getTextLength() > 0 &&
-                            caret != null &&
-                            !myView.getTextLayoutCache().getLineLayout(caret.getLogicalPosition().line).isLtr();
-    float radius = IslandsState.Companion.isEnabled() ? Math.min(w / 2, CARET_DIRECTION_MARK_SIZE) : 0.0f;
-    GeneralPath caretShape = new GeneralPath();
-    caretShape.moveTo(x, y + radius);
-    if (shouldDrawRtl && isRtl) {
-      caretShape.moveTo(x, y + CARET_DIRECTION_MARK_SIZE);
-      caretShape.lineTo(x - CARET_DIRECTION_MARK_SIZE, y);
-      caretShape.lineTo(x + radius, y);
-    } else {
-      caretShape.quadTo(x, y, x + radius, y);
-    }
-    if (shouldDrawRtl && !isRtl) {
-      caretShape.lineTo(x + w + CARET_DIRECTION_MARK_SIZE, y);
-      caretShape.lineTo(x + w, y + CARET_DIRECTION_MARK_SIZE);
-    } else {
-      caretShape.lineTo(x + w - radius, y);
-      caretShape.quadTo(x + w, y, x + w, y + radius);
-    }
-    caretShape.lineTo(x + w, y + h - radius);
-    caretShape.quadTo(x + w, y + h, x + w - radius, y + h);
-    caretShape.lineTo(x + radius, y + h);
-    caretShape.quadTo(x, y + h, x, y + h - radius);
-    caretShape.closePath();
-    g.fill(caretShape);
-    if (old != null) {
-      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
+    private void paintCaretBar(@NotNull Graphics2D g, @Nullable Caret caret, float x, float y, float w, float h, boolean isRtl) {
+      var old = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      boolean shouldDrawRtl = myDocument.length() > 0 &&
+                              caret != null &&
+                              !myView.getTextLayoutCache().getLineLayout(caret.getLogicalPosition().line).isLtr();
+      float radius = IslandsState.Companion.isEnabled() ? Math.min(w / 2, CARET_DIRECTION_MARK_SIZE) : 0.0f;
+      GeneralPath caretShape = new GeneralPath();
+      caretShape.moveTo(x, y + radius);
+      if (shouldDrawRtl && isRtl) {
+        caretShape.moveTo(x, y + CARET_DIRECTION_MARK_SIZE);
+        caretShape.lineTo(x - CARET_DIRECTION_MARK_SIZE, y);
+        caretShape.lineTo(x + radius, y);
+      } else {
+        caretShape.quadTo(x, y, x + radius, y);
+      }
+      if (shouldDrawRtl && !isRtl) {
+        caretShape.lineTo(x + w + CARET_DIRECTION_MARK_SIZE, y);
+        caretShape.lineTo(x + w, y + CARET_DIRECTION_MARK_SIZE);
+      } else {
+        caretShape.lineTo(x + w - radius, y);
+        caretShape.quadTo(x + w, y, x + w, y + radius);
+      }
+      caretShape.lineTo(x + w, y + h - radius);
+      caretShape.quadTo(x + w, y + h, x + w - radius, y + h);
+      caretShape.lineTo(x + radius, y + h);
+      caretShape.quadTo(x, y + h, x, y + h - radius);
+      caretShape.closePath();
+      g.fill(caretShape);
+      if (old != null) {
+        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, old);
+      }
     }
   }
 

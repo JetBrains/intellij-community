@@ -1,12 +1,13 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.DocumentText;
+import com.intellij.openapi.editor.ex.DocumentTextUtil;
 import com.intellij.openapi.editor.impl.SweepProcessor;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -138,7 +139,7 @@ public final class GuardedBlocksIndex {
           return true;
         }
       };
-      SweepProcessor.sweep(processor -> intervals.stream().allMatch(processor::process), sweepProcessor);
+      SweepProcessor.sweep(processor -> ContainerUtil.and(intervals, processor::process), sweepProcessor);
       assert sweepProcessor.stack == 0;
       assert sweepProcessor.length == 0 || !guards[sweepProcessor.length - 1];
       return new GuardedBlocksIndex(offsets, guards, sweepProcessor.length);
@@ -149,21 +150,23 @@ public final class GuardedBlocksIndex {
     }
   }
 
-  static final class DocumentBuilder extends Builder {
-    private final DocumentEx document;
+  public static final class DocumentBuilder extends Builder {
+    private final DocumentText document;
+    private final List<RangeMarker> guardedBlocks;
 
-    DocumentBuilder(@NotNull DocumentEx document) {
+    public DocumentBuilder(@NotNull DocumentText document, @NotNull List<RangeMarker> guardedBlocks) {
       this.document = document;
+      this.guardedBlocks = guardedBlocks;
     }
 
     @NotNull GuardedBlocksIndex build(int start, int end) {
-      return build(start, end, document.getGuardedBlocks());
+      return build(start, end, guardedBlocks);
     }
 
     @Override
     protected int alignOffset(int offset, boolean isStart) {
-      if (DocumentUtil.isInsideSurrogatePair(document, offset)) {
-        if (!isStart && (offset + 1 < document.getTextLength())) {
+      if (DocumentTextUtil.isInsideSurrogatePair(document, offset)) {
+        if (!isStart && (offset + 1 < document.length())) {
           return offset + 1;
         }
         return offset - 1;

@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontFallbackIterator;
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -68,7 +69,7 @@ class LineChunk {
     addFragments(chars, getStartOffset(), getEndOffset(), level, false, null, ffi, view);
   }
 
-  void ensureLayout(@NotNull EditorView view, int line, byte level) {
+  void ensureLayout(@NotNull EditorView view, @NotNull DocumentText document, int line, byte level) {
     if (isReal()) {
       view.getTextLayoutCache().onChunkAccess(this);
     }
@@ -78,7 +79,7 @@ class LineChunk {
     assert isReal();
     fragments = new ArrayList<>();
     EditorImpl editor = view.getEditor();
-    int lineStartOffset = view.getDocument().getLineStartOffset(line);
+    int lineStartOffset = document.lineStartOffset(line);
     int start = lineStartOffset + getStartOffset();
     int end = lineStartOffset + getEndOffset();
     if (LOG.isDebugEnabled()) {
@@ -98,7 +99,7 @@ class LineChunk {
       .setPreferredFonts(editor.getColorsScheme().getFontPreferences())
       .setFontRenderContext(view.getFontRenderContext());
     boolean specialCharsEnabled = editor.getSettings().isShowingSpecialChars();
-    char[] chars = CharArrayUtil.fromSequence(view.getDocument().getImmutableCharSequence(), start, end);
+    char[] chars = CharArrayUtil.fromSequence(document.chars(), start, end);
     int currentFontType = 0;
     Color currentColor = null;
     int currentStart = start;
@@ -145,6 +146,7 @@ class LineChunk {
 
   @NotNull LineChunk subChunk(
     @NotNull EditorView view,
+    @NotNull DocumentText document,
     int line,
     int targetStartOffset,
     int targetEndOffset,
@@ -166,7 +168,7 @@ class LineChunk {
     if (start == getStartOffset() && end == getEndOffset()) {
       return this;
     }
-    ensureLayout(view, line, level);
+    ensureLayout(view, document, line, level);
     LineChunk chunk0 = new SyntheticLineChunk(start, end, new ArrayList<>());
     int offset = getStartOffset();
     for (LineFragment fragment : fragments) {

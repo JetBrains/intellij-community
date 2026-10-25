@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.CustomFoldRegion;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -21,6 +20,8 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.ex.DocumentText;
+import com.intellij.openapi.editor.ex.DocumentTextUtil;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
@@ -66,7 +67,6 @@ import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.DocumentUtil;
 import com.intellij.util.IntPair;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
@@ -236,8 +236,7 @@ public final class EditorPainter implements TextDrawingCallback {
     private final EditorCaretPainter myCaretPainter ;
     private final EditorImpl myEditor;
     private final EditorRegistry myRegistry;
-    private final Document myDocument;
-    private final CharSequence myText;
+    private final DocumentText myDocument;
     private final MarkupModelEx myDocMarkup;
     private final MarkupModelEx myEditorMarkup;
     private final FoldingModelEx myFoldingModel;
@@ -283,8 +282,7 @@ public final class EditorPainter implements TextDrawingCallback {
       myCaretPainter = caretPainter;
       myEditor = myView.getEditor();
       myRegistry = EditorRegistry.current();
-      myDocument = myView.getDocument();
-      myText = myDocument.getImmutableCharSequence();
+      myDocument = myView.getDocument().getDocumentText();
       myDocMarkup = myView.getFilteredDocumentMarkupModel();
       myEditorMarkup = myView.getMarkupModel();
       myFoldingModel = myView.getFoldingModel();
@@ -302,8 +300,8 @@ public final class EditorPainter implements TextDrawingCallback {
       myEndVisualLine = myView.yToVisualLine(myClip.y + myClip.height - 1);
       myStartOffset = myView.visualLineToOffset(myStartVisualLine);
       myEndOffset = myView.visualLineToOffset(myEndVisualLine + 1);
-      mySeparatorHighlightersStartOffset = DocumentUtil.getLineStartOffset(myView.visualLineToOffset(myStartVisualLine - 1), myDocument);
-      mySeparatorHighlightersEndOffset = DocumentUtil.getLineEndOffset(myView.visualLineToOffset(myEndVisualLine + 2), myDocument);
+      mySeparatorHighlightersStartOffset = DocumentTextUtil.getLineStartOffsetAt(myDocument, myView.visualLineToOffset(myStartVisualLine - 1));
+      mySeparatorHighlightersEndOffset = DocumentTextUtil.getLineEndOffsetAt(myDocument, myView.visualLineToOffset(myEndVisualLine + 2));
       myClipDetector = new ClipDetector(myView, myDocument, myFoldingModel, myClip, ClipDetector.isDisabled(myEditor));
       myCaretData = myEditor.isPaintSelection() ? CaretData.createCaretData(myView.getDocument(), myCaretModel) : null;
       myVirtualSelectionMap = createVirtualSelectionMap(myCaretModel, myStartVisualLine, myEndVisualLine);
@@ -360,7 +358,7 @@ public final class EditorPainter implements TextDrawingCallback {
       EditorComponentImpl editorComponent = myEditor.getContentComponent();
       // An empty document puts every inline and after-line-end inlay on its single line, which is where the hint reads too.
       // What the line already carries says more than a hint asking for content does, so the line goes to the inlay.
-      if (myDocument.getTextLength() > 0 || myInlayModel.hasInlineElements() || myInlayModel.hasAfterLineEndElements() ||
+      if (myDocument.length() > 0 || myInlayModel.hasInlineElements() || myInlayModel.hasAfterLineEndElements() ||
           hintText == null || hintText.isEmpty() ||
           KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == editorComponent &&
           !myEditor.getShowPlaceholderWhenFocused()) {
@@ -635,7 +633,9 @@ public final class EditorPainter implements TextDrawingCallback {
               int logicalLine = fragment.getStartLogicalLine();
               if (logicalLine != currentLogicalLine[0]) {
                 whitespacePaintingStrategy.update(
-                  myText, myDocument.getLineStartOffset(logicalLine), myDocument.getLineEndOffset(logicalLine)
+                  myDocument.luckyChars(),
+                  myDocument.lineStartOffset(logicalLine),
+                  myDocument.lineEndOffset(logicalLine)
                 );
                 currentLogicalLine[0] = logicalLine;
               }
@@ -675,7 +675,7 @@ public final class EditorPainter implements TextDrawingCallback {
             int offset = it.getEndOffset();
             SoftWrapEx softWrap = mySoftWrapModel.getSoftWrapEx(offset);
             if (softWrap == null) {
-              int logicalLine = myDocument.getLineNumber(offset);
+              int logicalLine = myDocument.lineNumber(offset);
               List<Inlay<?>> inlays = myInlayModel.getAfterLineEndElementsForLogicalLine(logicalLine);
               float extensionsStartX = inlays.isEmpty()
                                        ? x
@@ -898,8 +898,9 @@ public final class EditorPainter implements TextDrawingCallback {
         return;
       }
       boolean isTop = marker.getLineSeparatorPlacement() == SeparatorPlacement.TOP;
-      int edgeOffset = isTop ? myDocument.getLineStartOffset(myDocument.getLineNumber(marker.getStartOffset()))
-                             : myDocument.getLineEndOffset(myDocument.getLineNumber(marker.getEndOffset()));
+      int edgeOffset = isTop
+                       ? myDocument.lineStartOffset(myDocument.lineNumber(marker.getStartOffset()))
+                       : myDocument.lineEndOffset(myDocument.lineNumber(marker.getEndOffset()));
       int visualLine = myView.offsetToVisualLine(edgeOffset, !isTop);
       int y = (isTop ? getVisualLineAreaStartY(visualLine) : getVisualLineAreaEndY(visualLine)) - 1 + myYShift;
       int startX = myCorrector.lineSeparatorStart(myClip.x);
@@ -1037,9 +1038,10 @@ public final class EditorPainter implements TextDrawingCallback {
       int startOffset = isRtl ? baseStartOffset - start : baseStartOffset + start;
       int yToUse = y - 1;
 
+      CharSequence chars = myDocument.luckyChars();
       for (int i = start; i < end; i++) {
         int charOffset = isRtl ? baseStartOffset - i - 1 : baseStartOffset + i;
-        char c = myText.charAt(charOffset);
+        char c = chars.charAt(charOffset);
         if (" \t\u3000".indexOf(c) >= 0 && whitespacePaintingStrategy.showWhitespaceAtOffset(charOffset, myCaretDataInView)) {
           int startX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i : baseStartOffset + i);
           int endX = (int)fragment.offsetToX(x, startOffset, isRtl ? baseStartOffset - i - 1 : baseStartOffset + i + 1);
@@ -1128,7 +1130,7 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private void collectExtensions(int visualLine, int offset) {
-      myEditor.processLineExtensions(myDocument.getLineNumber(offset), (info) -> {
+      myEditor.processLineExtensions(myDocument.lineNumber(offset), (info) -> {
         List<LineExtensionData> list = myExtensionData.get(visualLine);
         if (list == null) myExtensionData.put(visualLine, list = new ArrayList<>());
         list.add(new LineExtensionData(info, LineLayout.createForStandaloneText(myView, info.getText(), info.getFontType())));
@@ -1174,7 +1176,7 @@ public final class EditorPainter implements TextDrawingCallback {
         return;
       }
       int startOffset = highlighter.getStartOffset();
-      int lineEndOffset = myDocument.getLineEndOffset(myDocument.getLineNumber(startOffset));
+      int lineEndOffset = myDocument.lineEndOffset(myDocument.lineNumber(startOffset));
       if (myFoldingModel.isOffsetCollapsed(lineEndOffset)) return;
       Point2D lineEnd = myView.offsetToXY(lineEndOffset, true, false);
       float x = (float)lineEnd.getX();
@@ -1221,8 +1223,8 @@ public final class EditorPainter implements TextDrawingCallback {
     }
 
     private void paintBorderEffect(int startOffset, int endOffset, EffectDescriptor borderDescriptor) {
-      startOffset = DocumentUtil.alignToCodePointBoundary(myDocument, startOffset);
-      endOffset = DocumentUtil.alignToCodePointBoundary(myDocument, endOffset);
+      startOffset = DocumentTextUtil.alignToCodePointBoundary(myDocument, startOffset);
+      endOffset = DocumentTextUtil.alignToCodePointBoundary(myDocument, endOffset);
       FoldRegion foldRegion = myFoldingModel.getCollapsedRegionAtOffset(startOffset);
       if (foldRegion != null && endOffset <= foldRegion.getEndOffset()) {
         return;
@@ -1230,14 +1232,14 @@ public final class EditorPainter implements TextDrawingCallback {
       if (!myClipDetector.rangeCanBeVisible(startOffset, endOffset)) {
         return;
       }
-      int startLine = myDocument.getLineNumber(startOffset);
-      int endLine = myDocument.getLineNumber(endOffset);
+      int startLine = myDocument.lineNumber(startOffset);
+      int endLine = myDocument.lineNumber(endOffset);
       if (startLine + 1 == endLine &&
-          startOffset == myDocument.getLineStartOffset(startLine) &&
-          endOffset == myDocument.getLineStartOffset(endLine)) {
+          startOffset == myDocument.lineStartOffset(startLine) &&
+          endOffset == myDocument.lineStartOffset(endLine)) {
         // special case of line highlighters
         endLine--;
-        endOffset = myDocument.getLineEndOffset(endLine);
+        endOffset = myDocument.lineEndOffset(endLine);
       }
       boolean rounded = borderDescriptor.effectType == EffectType.ROUNDED_BOX;
       int margin = borderDescriptor.effectType == EffectType.SLIGHTLY_WIDER_BOX ? 1 : 0;
@@ -1395,14 +1397,14 @@ public final class EditorPainter implements TextDrawingCallback {
     private FloatList logicalRangeToVisualRanges(int startOffset, int endOffset) {
       assert startOffset <= endOffset;
       FloatList result = new FloatArrayList();
-      if (myDocument.getTextLength() == 0) {
+      if (myDocument.length() == 0) {
         int minX = myCorrector.emptyTextX();
         result.add(minX);
         result.add(minX);
       }
       else {
         float lastX = -1;
-        for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, startOffset, false, true)) {
+        for (var fragment : VisualLineFragmentsIterator.create(myView, myDocument, startOffset, false, true)) {
           int minOffset = fragment.getMinOffset();
           int maxOffset = fragment.getMaxOffset();
           if (startOffset == endOffset) {
@@ -1454,8 +1456,8 @@ public final class EditorPainter implements TextDrawingCallback {
     private void paintComposedTextDecoration() {
       TextRange composedTextRange = myEditor.getComposedTextRange();
       if (composedTextRange != null) {
-        Point2D p1 = myView.offsetToXY(Math.min(composedTextRange.getStartOffset(), myDocument.getTextLength()), true, false);
-        Point2D p2 = myView.offsetToXY(Math.min(composedTextRange.getEndOffset(), myDocument.getTextLength()), false, true);
+        Point2D p1 = myView.offsetToXY(Math.min(composedTextRange.getStartOffset(), myDocument.length()), true, false);
+        Point2D p2 = myView.offsetToXY(Math.min(composedTextRange.getEndOffset(), myDocument.length()), false, true);
 
         int y = (int)p1.getY() + myAscent + 1 + myYShift;
 
@@ -1568,7 +1570,7 @@ public final class EditorPainter implements TextDrawingCallback {
       int maxColumn = 0;
       int endLogicalLine = visLineIterator.getEndLogicalLine();
       boolean marginReached = false;
-      for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visLineIterator, null, true)) {
+      for (var fragment : VisualLineFragmentsIterator.create(myView, myDocument, visLineIterator, null, true)) {
         int fragmentStartOffset = fragment.getStartOffset();
         int start = fragmentStartOffset;
         int end = fragment.getEndOffset();
@@ -1578,7 +1580,7 @@ public final class EditorPainter implements TextDrawingCallback {
           SoftWrapEx softWrap = mySoftWrapModel.getSoftWrapEx(offset);
           if (softWrap != null || myEditor.isRightAligned()) {
             prevEndOffset = offset;
-            it = new IterationState(myEditor, offset == 0 ? 0 : DocumentUtil.getPreviousCodePointOffset(myDocument, offset),
+            it = new IterationState(myEditor, offset == 0 ? 0 : DocumentTextUtil.getPreviousCodePointOffset(myDocument, offset),
                                     visualLineEndOffset,
                                     myCaretData, false, false, false, false);
             if (it.getEndOffset() <= offset) {
@@ -1668,13 +1670,18 @@ public final class EditorPainter implements TextDrawingCallback {
         painter.paintBeforeLineStart(it, it.getBeforeLineStartBackgroundAttributes(), null, maxColumn, x, y);
       }
       if (it == null || it.getEndOffset() != visualLineEndOffset) {
-        it = new IterationState(myEditor,
-                                visualLineEndOffset == offset ? visualLineEndOffset
-                                                              : DocumentUtil.getPreviousCodePointOffset(myDocument, visualLineEndOffset),
-                                visualLineEndOffset,
-                                CaretData.copyOf(myCaretData, visLineIterator.isCustomFoldRegionLine() &&
-                                                                             !myRegistry.isCaretLineHighlightedAtCustomFold()),
-                                false, false, false, false);
+        it = new IterationState(
+          myEditor,
+          visualLineEndOffset == offset
+            ? visualLineEndOffset
+            : DocumentTextUtil.getPreviousCodePointOffset(myDocument, visualLineEndOffset),
+          visualLineEndOffset,
+          CaretData.copyOf(myCaretData, visLineIterator.isCustomFoldRegionLine() && !myRegistry.isCaretLineHighlightedAtCustomFold()),
+          false,
+          false,
+          false,
+          false
+        );
       }
       if (!it.atEnd()) {
         it.advance();

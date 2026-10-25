@@ -1,8 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldingModel;
+import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import org.jetbrains.annotations.ApiStatus;
@@ -19,7 +19,7 @@ import java.awt.Rectangle;
 @ApiStatus.Internal
 public final class ClipDetector {
   private final EditorView myView;
-  private final Document myDocument;
+  private final DocumentText myDocument;
   private final FoldingModel myFoldingModel;
   private final Rectangle myClipRectangle;
   private final boolean myDisabled;
@@ -39,7 +39,7 @@ public final class ClipDetector {
 
   public ClipDetector(
     EditorView view,
-    Document document,
+    DocumentText document,
     FoldingModel foldingModel,
     Rectangle clipRectangle,
     boolean isDisabled
@@ -54,8 +54,10 @@ public final class ClipDetector {
   public boolean rangeCanBeVisible(int startOffset, int endOffset) {
     assert startOffset >= 0;
     assert startOffset <= endOffset;
-    assert endOffset <= myDocument.getTextLength();
-    if (myDisabled) return true;
+    assert endOffset <= myDocument.length();
+    if (myDisabled) {
+      return true;
+    }
     if (startOffset < myVisualLineStartOffset || startOffset > myVisualLineEndOffset) {
       myVisualLineStartOffset = EditorUtil.getNotFoldedLineStartOffset(myDocument, myFoldingModel, startOffset, false);
       myVisualLineEndOffset = EditorUtil.getNotFoldedLineEndOffset(myDocument, myFoldingModel, startOffset, false);

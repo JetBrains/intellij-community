@@ -516,7 +516,7 @@ final class EditorSizeManager implements PrioritizedDocumentListener, Disposable
     float x = visualLine == 0 ? myView.getPrefixTextWidthInPixels() : 0;
     int maxOffset = iterator.getVisualLineStartOffset();
     int leftInset = myView.getInsets().left;
-    for (var fragment : VisualLineFragmentsIterator.create(myView, iterator, quickEvaluationListener, false)) {
+    for (var fragment : VisualLineFragmentsIterator.create(myView, myView.getDocument().getDocumentText(), iterator, quickEvaluationListener, false)) {
       x = fragment.getEndX() - leftInset;
       maxOffset = Math.max(maxOffset, fragment.getMaxOffset());
     }
