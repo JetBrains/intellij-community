@@ -23,8 +23,6 @@ import org.jetbrains.intellij.build.buildSpan
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
-import org.jetbrains.jps.model.java.JpsJavaClasspathKind
-import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 import java.net.URI
@@ -77,14 +75,7 @@ class BazelCompilationContext(
     get() = delegate.classesOutputDirectory
 
   override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> {
-    val enumerator = JpsJavaExtensionService.dependencies(module).recursively()
-      .also {
-        if (forTests) {
-          it.withoutSdk()
-        }
-      }
-      .includedIn(JpsJavaClasspathKind.runtime(forTests))
-
+    val enumerator = moduleRuntimeDependenciesWithoutProvided(module, forTests)
     val result = LinkedHashSet<Path>()
     enumerator.forEachModuleAndLibrary(
       { depModule ->

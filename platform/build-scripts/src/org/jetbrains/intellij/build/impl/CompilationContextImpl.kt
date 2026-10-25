@@ -47,6 +47,8 @@ import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
+import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator
+import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.JpsJavaSdkType
 import org.jetbrains.jps.model.library.JpsOrderRootType
@@ -373,12 +375,7 @@ class CompilationContextImpl internal constructor(
   }
 
   override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> {
-    return JpsJavaExtensionService.dependencies(module).recursively()
-      // if a project requires different SDKs, they all shouldn't be added to the test classpath
-      .also { if (forTests) it.withoutSdk() }
-      .includedIn(JpsJavaClasspathKind.runtime(forTests))
-      .classes()
-      .paths
+    return moduleRuntimeDependenciesWithoutProvided(module, forTests).classes().paths
   }
 
   override fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean): Path? {
@@ -408,6 +405,16 @@ class CompilationContextImpl internal constructor(
     }
     messages.artifactBuilt(pathToReport)
   }
+}
+
+internal fun moduleRuntimeDependenciesWithoutProvided(module: JpsModule, forTests: Boolean): JpsJavaDependenciesEnumerator {
+  val enumerator = JpsJavaExtensionService.dependencies(module).recursively().includedIn(JpsJavaClasspathKind.runtime(forTests))
+  if (!forTests) {
+    return enumerator
+  }
+  return enumerator
+    .withoutSdk()
+    .satisfying { JpsJavaExtensionService.getInstance().getDependencyExtension(it)?.scope != JpsJavaDependencyScope.PROVIDED }
 }
 
 private fun enableCoroutinesDump(span: Span) {

@@ -45,6 +45,7 @@ interface CompilationContext {
    */
   val classesOutputDirectory: Path
 
+  /** Treats PROVIDED-scope dependencies as neverlink as per https://youtrack.jetbrains.com/issue/IJI-3451#focus=Comments-27-13512542.0-0 */
   fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): Collection<Path>
 
   fun findFileInModuleSources(moduleName: String, relativePath: String, forTests: Boolean = false): Path?
