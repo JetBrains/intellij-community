@@ -12,7 +12,7 @@ jps_test(
     sandbox = True,
     runtime_deps = [
         ":kotlin-jvm-debugger-test_test_lib",
-        "//:main_test_lib",
+        "//:main",
     ],
 )
 

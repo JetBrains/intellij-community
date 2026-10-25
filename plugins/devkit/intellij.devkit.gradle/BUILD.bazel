@@ -147,6 +147,7 @@ jvm_library(
         "//platform/testRunner/plugin",
         "//platform/structuralsearch/plugin",
         "//xml/plugin",
+        "//platform/workspace/jps",
         "//platform/scratch/plugin",
     ],
 )

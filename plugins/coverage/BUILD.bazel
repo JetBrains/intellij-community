@@ -191,6 +191,7 @@ jvm_library(
         "//platform/execution",
         "//libraries/junit4",
         "//libraries/junit6",
+        "//java/compiler/openapi:java-compiler",
     ],
 )
 ### auto-generated section `build intellij.java.coverage.tests` end

@@ -4,6 +4,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 jps_test(
     name = "selfContainedProjects-tests_test",
     timeout = "long",
+    data = [":selfContainedProjects_data"],
     tags = ["community-aggregator"],
     runtime_deps = [":selfContainedProjects-tests_test_lib"],
 )
@@ -16,16 +17,6 @@ filegroup(
     srcs = ["init.gradle.kts"],
     visibility = ["//visibility:public"],
 )
-
-jps_test(
-    name = "selfContainedProjects_test",
-    data = [
-        ":selfContainedProjects_data",
-    ],
-    runtime_deps = [":selfContainedProjects_test_lib"],
-)
-
-### skip generation section `test intellij.platform.testFramework.selfContainedProjects`
 
 ### auto-generated section `build intellij.platform.testFramework.selfContainedProjects` start
 jvm_library(

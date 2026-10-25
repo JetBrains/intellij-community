@@ -10,7 +10,7 @@ jps_test(
     sandbox = True,
     runtime_deps = [
         ":compose_test_lib",
-        "//:main_test_lib",
+        "//:main",
     ],
 )
 

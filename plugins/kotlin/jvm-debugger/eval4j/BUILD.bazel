@@ -10,7 +10,7 @@ jps_test(
     tags = ["community-aggregator"],
     runtime_deps = [
         ":kotlin-jvm-debugger-eval4j-tests_test_lib",
-        "//:main_test_lib",
+        "//:main",
     ],
 )
 ### skip generation section `test intellij.kotlin.jvm.debugger.eval4j.tests`

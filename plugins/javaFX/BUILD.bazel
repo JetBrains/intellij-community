@@ -181,6 +181,7 @@ jvm_library(
         "//platform/core-impl",
         "//java/java-impl-refactorings:impl-refactorings",
         "//xml/xml-analysis-api:analysis",
+        "//java/compiler/openapi:java-compiler",
         "//libraries/junit4",
     ],
 )

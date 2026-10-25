@@ -166,6 +166,7 @@ jvm_library(
         "//plugins/lombok/plugin",
         "//platform/statistics",
         "//libraries/junit6",
+        "//java/java-impl-inspections:impl-inspections",
         "//platform/bazel-runfiles",
     ],
 )
