@@ -8,14 +8,18 @@ import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
+import com.intellij.diff.util.DiffGutterRenderer
 import com.intellij.diff.util.DiffLineNumberConverter
 import com.intellij.diff.util.Side
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.EditorMarkupModel
+import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.impl.event.MarkupModelListener
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.ColorUtil
 import java.awt.Color
@@ -23,9 +27,9 @@ import java.awt.Font
 import java.util.function.IntUnaryOperator
 
 /**
- * Gives the Commit diff tab of structural changes a quiet frame. The gutter shows line numbers only: the hunks in the tree have the
- * checkboxes and the rollback. Only the lines of the current version have numbers. A removed line of the unified viewer has none, and the
- * base side of the side-by-side viewer shows none, so its gutter takes no width. Removed lines are red, and added lines are green.
+ * Gives the Commit diff tab of structural changes a quiet frame. The gutter shows line numbers and the colors of the changes, but no icons:
+ * the hunks in the tree have the checkboxes and the rollback. Only the lines of the current version have numbers. A removed line of the
+ * unified viewer has none, and the base side of the side-by-side viewer shows none. Removed lines are red, and added lines are green.
  */
 internal class StructuralDiffPreviewAppearance : DiffExtension() {
   override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer, context: DiffContext, request: DiffRequest) {
@@ -33,23 +37,38 @@ internal class StructuralDiffPreviewAppearance : DiffExtension() {
     if (context.getUserData(STRUCTURAL_PREVIEW_CONTEXT) != true || !StructuralChangesViewSettings.isEnabled(project)) return
     when (viewer) {
       is UnifiedDiffViewer -> {
-        quiet(viewer.editor, null)
+        quiet(viewer.editor, null, viewer)
         viewer.addListener(object : DiffViewerListener() {
           override fun onAfterRediff() = showCurrentLineNumbers(viewer)
         })
       }
       is TwosideTextDiffViewer -> {
-        for (side in Side.entries) quiet(viewer.getEditor(side), side)
+        for (side in Side.entries) quiet(viewer.getEditor(side), side, viewer)
         viewer.getEditor(Side.LEFT).settings.isLineNumbersShown = false
       }
     }
   }
 
-  private fun quiet(editor: EditorEx, side: Side?) {
-    editor.settings.isLineMarkerAreaShown = false
+  /**
+   * The gutter paints the colors of the changes only while it shows the line marker area, so the area stays and loses its icons. The
+   * arrows that apply a change ignore the icon setting, so the editor drops them.
+   */
+  private fun quiet(editor: EditorEx, side: Side?, viewer: Disposable) {
+    editor.settings.setGutterIconsShown(false)
     editor.settings.isFoldingOutlineShown = false
     (editor.markupModel as? EditorMarkupModel)?.setTrafficLightIconVisible(false)
     editor.colorsScheme = StructuralDiffColors(editor.colorsScheme, side)
+    editor.markupModel.addMarkupModelListener(viewer, object : MarkupModelListener {
+      override fun afterAdded(highlighter: RangeHighlighterEx) = dropArrow(highlighter)
+
+      override fun attributesChanged(highlighter: RangeHighlighterEx, renderersChanged: Boolean, fontStyleOrColorChanged: Boolean) {
+        if (renderersChanged) dropArrow(highlighter)
+      }
+    })
+  }
+
+  private fun dropArrow(highlighter: RangeHighlighterEx) {
+    if (highlighter.gutterIconRenderer is DiffGutterRenderer) highlighter.gutterIconRenderer = null
   }
 
   /** The viewer sets a column for each side on each rediff, so this listener replaces them after it. */
