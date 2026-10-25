@@ -6,10 +6,8 @@ import com.intellij.diff.DiffExtension
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
-import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
 import com.intellij.diff.util.DiffGutterRenderer
-import com.intellij.diff.util.DiffLineNumberConverter
 import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diff.DiffColors
@@ -24,28 +22,18 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.ColorUtil
 import java.awt.Color
 import java.awt.Font
-import java.util.function.IntUnaryOperator
 
 /**
  * Gives the Commit diff tab of structural changes a quiet frame. The gutter shows line numbers and the colors of the changes, but no icons:
- * the hunks in the tree have the checkboxes and the rollback. Only the lines of the current version have numbers. A removed line of the
- * unified viewer has none, and the base side of the side-by-side viewer shows none. Removed lines are red, and added lines are green.
+ * the hunks in the tree have the checkboxes and the rollback. Removed lines are red, and added lines are green.
  */
 internal class StructuralDiffPreviewAppearance : DiffExtension() {
   override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer, context: DiffContext, request: DiffRequest) {
     val project = context.project ?: return
     if (context.getUserData(STRUCTURAL_PREVIEW_CONTEXT) != true || !StructuralChangesViewSettings.isEnabled(project)) return
     when (viewer) {
-      is UnifiedDiffViewer -> {
-        quiet(viewer.editor, null, viewer)
-        viewer.addListener(object : DiffViewerListener() {
-          override fun onAfterRediff() = showCurrentLineNumbers(viewer)
-        })
-      }
-      is TwosideTextDiffViewer -> {
-        for (side in Side.entries) quiet(viewer.getEditor(side), side, viewer)
-        viewer.getEditor(Side.LEFT).settings.isLineNumbersShown = false
-      }
+      is UnifiedDiffViewer -> quiet(viewer.editor, null, viewer)
+      is TwosideTextDiffViewer -> for (side in Side.entries) quiet(viewer.getEditor(side), side, viewer)
     }
   }
 
@@ -69,14 +57,6 @@ internal class StructuralDiffPreviewAppearance : DiffExtension() {
 
   private fun dropArrow(highlighter: RangeHighlighterEx) {
     if (highlighter.gutterIconRenderer is DiffGutterRenderer) highlighter.gutterIconRenderer = null
-  }
-
-  /** The viewer sets a column for each side on each rediff, so this listener replaces them after it. */
-  private fun showCurrentLineNumbers(viewer: UnifiedDiffViewer) {
-    val side = viewer.masterSide
-    val converter = DiffLineNumberConverter(viewer.foldingModel.hideLineNumberPredicate(0),
-                                            IntUnaryOperator { viewer.transferLineFromOnesideStrict(side, it) })
-    viewer.editor.gutter.setLineNumberConverter(converter, null)
   }
 }
 
