@@ -101,7 +101,6 @@ public final class JUnit5BazelRunner {
   private static final String commonTestGroupsResourceName = "tests/testGroups.properties";
 
   private static final ClassLoader ourClassLoader = Thread.currentThread().getContextClassLoader();
-  private static final Launcher launcher = LauncherFactory.create();
 
   private static JUnit5TeamCityRunner.BucketingClassNameFilter bucketingClassNameFilter;
   private static final PostDiscoveryFilter performancePostDiscoveryFilter = new JUnit5TeamCityRunner.PerformancePostDiscoveryFilter();
@@ -148,7 +147,7 @@ public final class JUnit5BazelRunner {
     return getSelectors(classPathRoots);
   }
 
-  private static TestPlan getTestPlan() throws Throwable {
+  private static TestPlan getTestPlan(Launcher launcher) throws Throwable {
     LauncherDiscoveryRequest discoveryRequest = getDiscoveryRequest();
     return launcher.discover(discoveryRequest);
   }
@@ -260,7 +259,8 @@ public final class JUnit5BazelRunner {
 
       // If bucketing filters out all tests, we emit a minimal JUnit XML with a single testsuite named "Bucketing".
       // See: com.intellij.tests.JUnit5BazelRunner.xmlReportBucketingTestsFilteringOut
-      TestPlan testPlan = getTestPlan();
+      Launcher launcher = LauncherFactory.create();
+      TestPlan testPlan = getTestPlan(launcher);
       if (!testPlan.containsTests()) {
         if (shardFilter != null && shardFilter.hasExcludedTests()) {
           System.err.println("No tests executed: all tests of this target are in other shards.");

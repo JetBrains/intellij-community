@@ -6,7 +6,7 @@ import com.intellij.ide.projectView.impl.ModuleGroupingImplementation
 import com.intellij.ide.projectView.impl.ModuleGroupingTreeHelper
 import com.intellij.openapi.util.Pair
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.ui.tree.TreeTestUtil
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.tree.TreeUtil
@@ -22,7 +22,7 @@ import kotlin.collections.forEach
 import kotlin.collections.map
 import kotlin.collections.none
 
-class ModuleGroupingTreeHelperTest: UsefulTestCase() {
+class ModuleGroupingTreeHelperTest: LightPlatformTestCase() {
   private lateinit var tree: Tree
   private lateinit var root: MockModuleTreeNode
   private lateinit var model: DefaultTreeModel
