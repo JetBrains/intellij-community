@@ -84,6 +84,8 @@
     <orderEntry type="module" module-name="intellij.textmate" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.byte.buddy" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.structureView.backend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.idea.community.customization" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.monolith.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
   </component>
 </module>

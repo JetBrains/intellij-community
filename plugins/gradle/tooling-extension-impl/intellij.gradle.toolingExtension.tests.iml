@@ -91,6 +91,8 @@
     <orderEntry type="module" module-name="intellij.tools.ide.starter" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.groovy.ant" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.byte.buddy" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.idea.community.customization" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.monolith.main" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.plugin" scope="TEST" />
   </component>
 </module>

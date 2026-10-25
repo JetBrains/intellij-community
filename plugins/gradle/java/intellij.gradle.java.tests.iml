@@ -87,6 +87,8 @@
     <orderEntry type="module" module-name="intellij.gradle.codeInsight.groovy.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.maven.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.junit" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.monolith.main" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.idea.community.customization" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.codeInsight.backend" scope="TEST" />
   </component>
 </module>
