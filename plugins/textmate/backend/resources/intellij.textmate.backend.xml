@@ -1,14 +1,22 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.backend"/>
     <module name="intellij.textmate.common"/>
     <module name="intellij.spellchecker"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing.impl"/>
+    <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.util.ui"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <customLiveTemplate implementation="org.jetbrains.plugins.textmate.editor.TextMateCustomLiveTemplate"/>
     <todoIndexer filetype="textmate" implementationClass="com.intellij.psi.impl.cache.impl.todo.PlainTextTodoIndexer"/>
