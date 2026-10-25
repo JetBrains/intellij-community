@@ -11,6 +11,9 @@ import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.util.progress.createProgressPipe
 import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.util.runIf
@@ -21,15 +24,21 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
+private val documentPreparationTracer by lazy {
+  TelemetryManager.getTracer(Scope("documentPreparation"))
+}
+
 internal class EditorDocumentPreparation(
   coroutineScope: CoroutineScope,
-  file: VirtualFile,
+  private val file: VirtualFile,
   loadDocument: suspend () -> Document? = { serviceAsync<FileDocumentManager>().getOrLoadDocumentUnderProgress(file) },
 ) {
   internal val progress = coroutineScope.createProgressPipe()
 
   private val document = coroutineScope.async(Dispatchers.Default + ClientId.current.asContextElement(), start = CoroutineStart.LAZY) {
-    progress.collectProgressUpdates { loadDocument() }
+    documentPreparationTracer.spanBuilder("editor document preparation").setAttribute("file", file.name).use {
+      progress.collectProgressUpdates { loadDocument() }
+    }
   }
 
   fun start() {
@@ -37,7 +46,9 @@ internal class EditorDocumentPreparation(
   }
 
   suspend fun await(): Document? {
-    return document.await()
+    return documentPreparationTracer.spanBuilder("editor prepared document await").setAttribute("file", file.name).use {
+      document.await()
+    }
   }
 }
 

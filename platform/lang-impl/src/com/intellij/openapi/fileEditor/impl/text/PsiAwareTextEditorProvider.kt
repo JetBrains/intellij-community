@@ -92,12 +92,16 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
         val scheme = serviceAsync<EditorColorsManager>().globalScheme
         val editorHighlighterFactory = serviceAsync<EditorHighlighterFactory>()
         // two separate read actions to avoid one long-running - https://youtrack.jetbrains.com/issue/IJPL-796
-        val highlighter = readActionBlocking {
-          editorHighlighterFactory.createEditorHighlighter(file = file, editorColorScheme = scheme, project = project)
+        val highlighter = span("editor highlighter factory") {
+          readActionBlocking {
+            editorHighlighterFactory.createEditorHighlighter(file = file, editorColorScheme = scheme, project = project)
+          }
         }
         // editor.setHighlighter also sets text, but we set it here to avoid executing related work in EDT
         // (the document text is compared, so, double work is not performed)
-        highlighter.setText(effectiveDocument.immutableCharSequence)
+        span("editor highlighter tokenization") {
+          highlighter.setText(effectiveDocument.immutableCharSequence)
+        }
         if (effectiveDocument.immutableCharSequence.isNotEmpty()) {
           // preload the syntax highlighter in BGT because it's expensive
           // - to classload all highlighters and
@@ -125,13 +129,13 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       try {
         if (SystemProperties.getBooleanProperty("idea.editor.highlighter.prepare.in.parallel", true) &&
             this@PsiAwareTextEditorProvider.javaClass == PsiAwareTextEditorProvider::class.java) {
-          withContext(Dispatchers.EDT) {
+          span("editor shell construction on EDT", Dispatchers.EDT) {
             val pending = factory.prepareMainEditor(effectiveDocument, project, file)
             pendingEditor = pending
             disposeOnFailure = pending::close
           }
         }
-        val highlighter = highlighterDeferred.await()
+        val highlighter = span("editor prepared highlighter await") { highlighterDeferred.await() }
         val textEditor = span("initialize text editor on EDT", Dispatchers.EDT) {
           val editor = pendingEditor?.complete(highlighter) { it.putUserData(AsyncEditorLoader.ASYNC_LOADER, asyncLoader) }
                        ?: initializeEditor(factory, effectiveDocument, project, file, highlighter, asyncLoader)
