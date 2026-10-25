@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.icons.impl.intellij.rendering.images
 
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.ui.scale.ScaleType
 import com.intellij.util.JBHiDPIScaledImage
@@ -20,11 +21,16 @@ internal class IntelliJImageResource(
 
   @Suppress("TestOnlyProblems")
   override fun scale(density: Float, scale: IconScale): BitmapImageResource {
-    val objScale = scale.toFactor(density, width, height)
+    val factor = scale.toFactor(density, width, height)
+    // Split the total factor so the holder sees the logical size the image is painted at (density and IDE zoom apart from
+    // the object scale), which selects `@WxH` size variants. The loaders rasterize at OBJ × USR × SYS, so the device
+    // output is unchanged.
+    val sysScale = if (density > 0f) density.toDouble() else 1.0
+    val usrScale = JBUIScale.scale(1f).toDouble()
     val scaleContext = ScaleContext.of(arrayOf(
-      ScaleType.OBJ_SCALE.of(objScale),
-      ScaleType.USR_SCALE.of(1.0),
-      ScaleType.SYS_SCALE.of(1.0),
+      ScaleType.OBJ_SCALE.of(factor / (sysScale * usrScale)),
+      ScaleType.USR_SCALE.of(usrScale),
+      ScaleType.SYS_SCALE.of(sysScale),
     ))
     val rawImage = holder.getImage(scaleContext, imageModifiers) ?: return EmptyBitmapImageResource
     val awtImage = (rawImage as? JBHiDPIScaledImage)?.delegate ?: rawImage
