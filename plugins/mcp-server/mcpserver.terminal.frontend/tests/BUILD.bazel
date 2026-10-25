@@ -22,6 +22,8 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -45,6 +47,8 @@ jvm_library(
         # do not sort,
         ":tests",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

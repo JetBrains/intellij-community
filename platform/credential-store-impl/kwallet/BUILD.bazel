@@ -10,7 +10,12 @@ jvm_library(
     ),
     module_name = "intellij.platform.credentialStore.impl.kwallet.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//libraries/byte-buddy"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/byte-buddy",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
 )
 
 jvm_library(
@@ -40,6 +45,8 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//libraries/byte-buddy:byte-buddy_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

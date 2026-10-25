@@ -438,6 +438,8 @@ jvm_library(
         "//platform/syntax/syntax-util:util",
         "//platform/syntax/syntax-tree:tree",
         "//platform/syntax/syntax-extensions:extensions",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -493,6 +495,8 @@ jvm_library(
         "//platform/platform-impl/concurrency:concurrency_test_lib",
         "//platform/platform-impl/recentProjects:recentProjects_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

@@ -25,6 +25,8 @@ jvm_library(
         "//platform/structuralsearch/plugin",
         "//platform/testRunner/plugin",
         "//platform/vcs/plugin",
+        "//community-resources:customization",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
     ],
 )
 
@@ -51,6 +53,8 @@ jvm_library(
         "//platform/structuralsearch/plugin:plugin_test_lib",
         "//platform/testRunner/plugin:plugin_test_lib",
         "//platform/vcs/plugin:plugin_test_lib",
+        "//community-resources:customization_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
     ],
     deps = [
         # do not sort,

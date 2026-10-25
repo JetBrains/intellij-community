@@ -121,6 +121,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//java/debugger/backend",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
         "//xml/plugin",
     ],
 )
@@ -147,6 +149,8 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//java/debugger/backend:backend_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
         "//xml/plugin:plugin_test_lib",
     ],
     deps = [

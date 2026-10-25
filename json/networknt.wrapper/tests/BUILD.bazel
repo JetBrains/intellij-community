@@ -24,6 +24,8 @@ jvm_library(
         "@lib//:slf4j-api",
         "//libraries/joni",
         "//libraries/opentelemetry",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -48,6 +50,8 @@ jvm_library(
         # do not sort,
         ":tests",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

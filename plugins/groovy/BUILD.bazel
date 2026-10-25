@@ -269,6 +269,8 @@ jvm_library(
         "//plugins/groovy/spock",
         "//platform/vcs/plugin",
         "//plugins/ant",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -305,6 +307,8 @@ jvm_library(
         "//plugins/groovy/spock:spock_test_lib",
         "//platform/vcs/plugin:plugin_test_lib",
         "//plugins/ant:ant_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

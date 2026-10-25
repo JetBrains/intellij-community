@@ -26,6 +26,8 @@ jvm_library(
         "//platform/lang-impl:lang-tests",
         "//platform/core-ui",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
         "//xml/plugin",
     ],
 )
@@ -56,6 +58,8 @@ jvm_library(
         # do not sort,
         ":tests",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
         "//xml/plugin:plugin_test_lib",
     ],
     deps = [

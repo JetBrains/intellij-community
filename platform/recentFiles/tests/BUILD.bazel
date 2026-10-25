@@ -22,6 +22,8 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/recentFiles/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -47,6 +49,8 @@ jvm_library(
         "//platform/recentFiles/plugin:plugin_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

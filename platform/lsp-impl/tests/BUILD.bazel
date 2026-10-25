@@ -24,6 +24,8 @@ jvm_library(
         "//libraries/lsp4j",
         "//libraries/lsp4j/jsonrpc",
         "//platform/testRunner",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
         "//xml/plugin",
     ],
 )
@@ -58,6 +60,8 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/platform-impl/internal:internal_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
         "//xml/plugin:plugin_test_lib",
     ],
     deps = [

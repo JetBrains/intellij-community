@@ -50,6 +50,8 @@ jvm_library(
         "//plugins/textmate",
         "//libraries/byte-buddy",
         "//platform/structure-view-impl/backend",
+        "//community-resources:customization",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
     ],
 )
 
@@ -91,6 +93,8 @@ jvm_library(
         "//plugins/textmate:textmate_test_lib",
         "//libraries/byte-buddy:byte-buddy_test_lib",
         "//platform/structure-view-impl/backend:backend_test_lib",
+        "//community-resources:customization_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
     ],
     deps = [
         # do not sort,

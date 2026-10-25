@@ -61,6 +61,8 @@ jvm_library(
         "//plugins/markdown/figmaAdvertiser",
         "//plugins/sh/markdown",
         "//plugins/sh/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -94,6 +96,8 @@ jvm_library(
         "//platform/platform-impl/rpc:rpc_test_lib",
         "//plugins/sh/markdown:markdown_test_lib",
         "//plugins/sh/plugin:plugin_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

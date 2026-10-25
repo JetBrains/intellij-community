@@ -84,7 +84,12 @@ jvm_library(
     ),
     module_name = "intellij.maven.proofreading.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/maven/proofreading"],
+    runtime_deps = [
+        # do not sort,
+        "//plugins/maven/proofreading",
+        "//community-resources:customization",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+    ],
 )
 
 jvm_library(
@@ -104,6 +109,8 @@ jvm_library(
         # do not sort,
         ":proofreading-tests",
         "//plugins/maven/proofreading:proofreading_test_lib",
+        "//community-resources:customization_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
     ],
     deps = [
         # do not sort,

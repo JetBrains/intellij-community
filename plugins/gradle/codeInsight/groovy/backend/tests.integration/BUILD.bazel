@@ -19,6 +19,8 @@ jvm_library(
         "//plugins/gradle/java/groovy/toml",
         "//android/gradle-dsl-toml",
         "//plugins/gradle/intellij.gradle.analysis:analysis",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
         "//plugins/toml/core",
     ],
 )
@@ -46,6 +48,8 @@ jvm_library(
         "//plugins/gradle/java/groovy/toml:toml_test_lib",
         "//android/gradle-dsl-toml:gradle-dsl-toml_test_lib",
         "//plugins/gradle/intellij.gradle.analysis:analysis_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
         "//plugins/toml/core:core_test_lib",
     ],
     deps = [

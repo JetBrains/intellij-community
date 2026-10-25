@@ -29,6 +29,8 @@ jvm_library(
         "//platform/editor-ui-ex:editor-ex",
         "//platform/core-impl",
         "//platform/core-ui",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -54,6 +56,8 @@ jvm_library(
         ":tests",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

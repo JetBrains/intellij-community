@@ -145,6 +145,8 @@ jvm_library(
         "//java/plugin",
         "//aether-dependency-resolver/plugin",
         "//java/java-backend:backend",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -172,6 +174,8 @@ jvm_library(
         "//java/plugin:plugin_test_lib",
         "//aether-dependency-resolver/plugin:plugin_test_lib",
         "//java/java-backend:backend_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

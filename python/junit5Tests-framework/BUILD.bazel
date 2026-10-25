@@ -34,6 +34,8 @@ jvm_library(
         # do not sort,
         "//platform/vcs/plugin",
         "//python/pluginCore:community-plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
         "//xml/plugin",
     ],
 )
@@ -70,6 +72,8 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/vcs/plugin:plugin_test_lib",
         "//python/pluginCore:community-plugin_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
         "//xml/plugin:plugin_test_lib",
     ],
     deps = [

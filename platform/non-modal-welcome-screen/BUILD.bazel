@@ -120,6 +120,11 @@ jvm_library(
     ),
     module_name = "intellij.platform.ide.nonModalWelcomeScreen.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
 )
 
 jvm_library(
@@ -145,6 +150,8 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//platform/non-modal-welcome-screen/frontend:frontend_test_lib",
         "//platform/non-modal-welcome-screen/backend:backend_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

@@ -176,6 +176,8 @@ jvm_library(
         "//platform/eel-provider",
         "//platform/core-impl",
         "//libraries/kotlinx/coroutines/debug",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -201,6 +203,8 @@ jvm_library(
         # do not sort,
         ":util-tests",
         "//platform/platform-util-io:ide-util-io_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

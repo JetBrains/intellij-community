@@ -133,6 +133,8 @@ jvm_library(
         "//xml/impl",
         "//spellchecker/xml/backend",
         "//platform/core-ui",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -154,6 +156,8 @@ jvm_library(
         ":html-tools-tests",
         "//spellchecker/xml/backend:backend_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

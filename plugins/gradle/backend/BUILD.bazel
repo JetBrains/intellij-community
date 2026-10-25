@@ -97,6 +97,11 @@ jvm_library(
     ),
     module_name = "intellij.gradle.backend.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
 )
 
 jvm_library(
@@ -112,7 +117,12 @@ jvm_library(
     ),
     module_name = "intellij.gradle.backend.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":backend-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":backend-tests",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

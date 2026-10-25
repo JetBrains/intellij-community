@@ -30,6 +30,8 @@ jvm_library(
         # do not sort,
         "//java/plugin",
         "//platform/external-system-impl:externalSystem-impl",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
         "//xml/plugin",
     ],
 )
@@ -68,6 +70,8 @@ jvm_library(
         ":tests",
         "//java/plugin:plugin_test_lib",
         "//platform/external-system-impl:externalSystem-impl_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
         "//xml/plugin:plugin_test_lib",
     ],
     deps = [

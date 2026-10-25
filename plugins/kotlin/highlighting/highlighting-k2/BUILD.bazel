@@ -183,6 +183,7 @@ jvm_library(
         # do not sort,
         "//plugins/kotlin:kotlin-plugin-community-main",
         "//plugins/gradle/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
     ],
 )
 
@@ -208,6 +209,7 @@ jvm_library(
         ":kotlin-highlighting-tests",
         "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//plugins/gradle/plugin:plugin_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
     ],
     deps = [
         # do not sort,

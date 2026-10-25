@@ -98,6 +98,7 @@ jvm_library(
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//plugins/kotlin/gradle/gradle-java/k2:kotlin-gradle-java",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//platform/problemsView/collector",
     ],
 )
@@ -121,6 +122,7 @@ jvm_library(
         "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//plugins/kotlin/gradle/gradle-java/k2:kotlin-gradle-java_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
         "//platform/problemsView/collector:collector_test_lib",
     ],
     deps = [

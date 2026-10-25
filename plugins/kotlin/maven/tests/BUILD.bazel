@@ -42,6 +42,7 @@ jvm_library(
         "//plugins/kotlin/compiler-plugins/kotlin-dataframe/maven",
         "//plugins/maven",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
     ],
 )
 
@@ -70,6 +71,7 @@ jvm_library(
         "//plugins/kotlin/compiler-plugins/kotlinx-serialization/maven:maven_test_lib",
         "//plugins/kotlin/compiler-plugins/kotlin-dataframe/maven:maven_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
     ],
     deps = [
         # do not sort,

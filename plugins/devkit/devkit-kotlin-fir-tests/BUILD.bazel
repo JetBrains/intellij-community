@@ -23,6 +23,7 @@ jvm_library(
         "//plugins/devkit/intellij.kotlin.devkit:kotlin-devkit",
         "//plugins/devkit/intellij.kotlin.devkit/k2",
         "//platform/core-ui",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
     ],
 )
 
@@ -53,6 +54,7 @@ jvm_library(
         "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//plugins/devkit/intellij.kotlin.devkit/k2:k2_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
     ],
     deps = [
         # do not sort,

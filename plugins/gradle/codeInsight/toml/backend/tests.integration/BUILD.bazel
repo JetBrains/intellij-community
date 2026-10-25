@@ -13,6 +13,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//plugins/toml",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
         "//plugins/toml/core",
     ],
 )
@@ -34,6 +36,8 @@ jvm_library(
         # do not sort,
         ":tests.integration",
         "//plugins/toml:toml_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
         "//plugins/toml/core:core_test_lib",
     ],
     deps = [

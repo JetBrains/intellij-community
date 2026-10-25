@@ -1016,6 +1016,7 @@ jvm_library(
         "//python/services/shared",
         "//python/intellij.python.community.communityOnly:community-communityOnly",
         "//python/aliasProvider",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
     ],
 )
 
@@ -1062,6 +1063,7 @@ jvm_library(
         "//python/intellij.python.community.communityOnly:community-communityOnly_test_lib",
         "//python/aliasProvider:aliasProvider_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
     ],
     deps = [
         # do not sort,

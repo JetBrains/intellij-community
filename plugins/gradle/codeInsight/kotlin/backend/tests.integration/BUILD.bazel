@@ -10,6 +10,7 @@ jvm_library(
     ),
     module_name = "intellij.gradle.codeInsight.kotlin.backend.tests.integration",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/main/intellij.platform.monolith.main:monolith-main"],
 )
 
 jvm_library(
@@ -25,7 +26,11 @@ jvm_library(
     ),
     module_name = "intellij.gradle.codeInsight.kotlin.backend.tests.integration",
     visibility = ["//visibility:public"],
-    runtime_deps = [":tests.integration"],
+    runtime_deps = [
+        # do not sort,
+        ":tests.integration",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

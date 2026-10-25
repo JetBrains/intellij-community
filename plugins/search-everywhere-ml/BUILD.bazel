@@ -123,6 +123,11 @@ jvm_library(
     ),
     module_name = "intellij.searchEverywhereMl.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
 )
 
 jvm_library(
@@ -141,7 +146,12 @@ jvm_library(
         "//plugins/search-everywhere-ml:search-everywhere-ml_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [":searchEverywhereMl-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":searchEverywhereMl-tests",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

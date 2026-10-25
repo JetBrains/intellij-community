@@ -134,6 +134,8 @@ jvm_library(
         "//platform/util/coroutines",
         "//libraries/kotlinx/coroutines/core",
         "//platform/platform-impl/rpc",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -158,6 +160,8 @@ jvm_library(
         ":problemView-backend-tests",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

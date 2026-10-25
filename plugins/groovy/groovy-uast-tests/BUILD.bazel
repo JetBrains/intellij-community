@@ -25,6 +25,8 @@ jvm_library(
         "//aether-dependency-resolver/plugin",
         "//plugins/groovy-scripting",
         "//platform/testRunner/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
         "//platform/vcs/plugin",
     ],
 )
@@ -50,6 +52,8 @@ jvm_library(
         "//aether-dependency-resolver/plugin:plugin_test_lib",
         "//plugins/groovy-scripting:groovy-scripting_test_lib",
         "//platform/testRunner/plugin:plugin_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
         "//platform/vcs/plugin:plugin_test_lib",
     ],
     deps = [

@@ -199,6 +199,7 @@ jvm_library(
         "//plugins/kotlin:kotlin-plugin-community-main",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
     ],
 )
 
@@ -220,6 +221,7 @@ jvm_library(
         ":kotlin-base-scripting-scratch-tests",
         "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
     ],
     deps = [
         # do not sort,

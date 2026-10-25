@@ -136,6 +136,8 @@ jvm_library(
         "//plugins/devkit/intellij.devkit.workspaceModel/k2",
         "//platform/structuralsearch/plugin",
         "//platform/vcs/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -160,6 +162,8 @@ jvm_library(
         "//plugins/devkit/intellij.devkit.workspaceModel/k2:k2_test_lib",
         "//platform/structuralsearch/plugin:plugin_test_lib",
         "//platform/vcs/plugin:plugin_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

@@ -26,6 +26,11 @@ jvm_library(
         "//platform/icons-impl",
         "//platform/icons-impl/intellij",
     ],
+    runtime_deps = [
+        # do not sort,
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
 )
 
 jvm_library(
@@ -52,7 +57,12 @@ jvm_library(
         "//platform/icons-impl/intellij",
         "//platform/icons-impl/intellij:intellij_test_lib",
     ],
-    runtime_deps = [":tests"],
+    runtime_deps = [
+        # do not sort,
+        ":tests",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

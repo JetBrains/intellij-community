@@ -184,6 +184,8 @@ jvm_library(
         "//platform/vcs/plugin",
         "//xml/dom-impl",
         "//xml/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -212,6 +214,8 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//xml/dom-impl:dom-impl_test_lib",
         "//xml/plugin:plugin_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

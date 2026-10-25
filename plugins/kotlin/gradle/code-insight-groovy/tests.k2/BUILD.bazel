@@ -23,6 +23,8 @@ jvm_library(
         "//plugins/groovy",
         "//plugins/groovy-scripting",
         "//platform/vcs/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -51,6 +53,8 @@ jvm_library(
         "//plugins/groovy:groovy_test_lib",
         "//plugins/groovy-scripting:groovy-scripting_test_lib",
         "//platform/vcs/plugin:plugin_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

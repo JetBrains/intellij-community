@@ -27,6 +27,8 @@ jvm_library(
         "//platform/indexing-api:indexing",
         "//plugins/coverage",
         "//platform/structuralsearch/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -50,6 +52,8 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle:gradle_test_lib",
         "//platform/indexing-api:indexing_test_lib",
         "//platform/structuralsearch/plugin:plugin_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

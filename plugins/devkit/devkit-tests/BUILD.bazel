@@ -32,6 +32,8 @@ jvm_library(
         "//java/compiler/openapi:java-compiler",
         "//java/java-syntax:syntax",
         "//jvm/jvm-analysis-api:analysis",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -55,6 +57,8 @@ jvm_library(
         # do not sort,
         ":testFramework",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

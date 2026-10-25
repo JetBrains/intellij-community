@@ -41,6 +41,8 @@ jvm_library(
         "//platform/polySymbols/web",
         "//platform/polySymbols/testFramework",
         "//java/java-runtime:rt",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -65,6 +67,8 @@ jvm_library(
         # do not sort,
         ":tests",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

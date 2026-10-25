@@ -94,6 +94,11 @@ jvm_library(
     ),
     module_name = "intellij.java.ide.customization.backend.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
 )
 
 jvm_library(
@@ -112,7 +117,12 @@ jvm_library(
         "//java/ide-customization/backend:backend_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [":java-ide-customization-backend-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":java-ide-customization-backend-tests",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

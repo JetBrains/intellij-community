@@ -26,6 +26,7 @@ jvm_library(
         "//plugins/gradle/completion/kotlin",
         "//plugins/gradle",
         "//plugins/kotlin/gradle/scripting",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
     ],
 )
 
@@ -48,6 +49,7 @@ jvm_library(
         "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//plugins/kotlin/gradle/scripting:scripting_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
     ],
     deps = [
         # do not sort,

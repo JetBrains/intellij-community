@@ -30,6 +30,7 @@ jvm_library(
         "//plugins/gradle:gradle-common",
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
         "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
     ],
 )
 
@@ -52,6 +53,7 @@ jvm_library(
         "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//platform/execution.serviceView/plugin:plugin_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
     ],
     deps = [
         # do not sort,

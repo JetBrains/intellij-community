@@ -208,6 +208,8 @@ jvm_library(
         "//plugins/gradle/codeInsight/groovy/backend",
         "//plugins/maven/plugin",
         "//plugins/junit",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -237,6 +239,8 @@ jvm_library(
         "//plugins/gradle/codeInsight/groovy/backend:backend_test_lib",
         "//plugins/maven/plugin:plugin_test_lib",
         "//plugins/junit:junit_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

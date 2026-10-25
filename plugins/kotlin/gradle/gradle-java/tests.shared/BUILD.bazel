@@ -237,6 +237,7 @@ jvm_library(
         "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea",
         "//libraries/kotlin/test:libraries-kotlinTest",
         "//plugins/kotlin/gradle/gradle-java",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
     ],
 )
 
@@ -264,6 +265,7 @@ jvm_library(
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
     ],
     deps = [
         # do not sort,

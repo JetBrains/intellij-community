@@ -29,7 +29,12 @@ jvm_library(
     ),
     module_name = "intellij.jvm.analysis.java.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//xml/plugin"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+        "//xml/plugin",
+    ],
 )
 
 jvm_library(
@@ -48,6 +53,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":analysis-java-tests",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
         "//xml/plugin:plugin_test_lib",
     ],
     deps = [

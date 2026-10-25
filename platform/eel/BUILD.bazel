@@ -107,6 +107,8 @@ jvm_library(
         "//platform/structuralsearch/plugin",
         "//platform/vcs/plugin",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -136,6 +138,8 @@ jvm_library(
         "//platform/structuralsearch/plugin:plugin_test_lib",
         "//platform/vcs/plugin:plugin_test_lib",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,
@@ -233,6 +237,8 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core",
         "//libraries/byte-buddy/agent",
         "//libraries/byte-buddy",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -254,6 +260,8 @@ jvm_library(
         # do not sort,
         ":eel-tests",
         "//libraries/byte-buddy:byte-buddy_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

@@ -107,6 +107,8 @@ jvm_library(
         "//platform/testRunner/plugin",
         "//plugins/java-decompiler/plugin:java-decompiler",
         "//java/langInjection",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -131,6 +133,8 @@ jvm_library(
         "//platform/testRunner/plugin:plugin_test_lib",
         "//plugins/java-decompiler/plugin:java-decompiler_test_lib",
         "//java/langInjection:langInjection_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

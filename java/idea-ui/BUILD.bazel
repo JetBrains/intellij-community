@@ -216,6 +216,8 @@ jvm_library(
         "//libraries/kotlin/test:libraries-kotlinTest",
         "//platform/forms_rt:java-guiForms-rt",
         "//spellchecker/xml/backend",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -240,6 +242,8 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//spellchecker/xml/backend:backend_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

@@ -14,6 +14,8 @@ jvm_library(
         # do not sort,
         "//platform/vcs-api:vcs",
         "//platform/util/progress",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -39,6 +41,8 @@ jvm_library(
         ":maven-integration-tests",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

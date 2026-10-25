@@ -138,6 +138,8 @@ jvm_library(
         "//java/java-impl:impl",
         "//platform/testRunner",
         "//notebooks/visualization",
+        "//community-resources:customization",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//java/ide-customization",
     ],
 )
@@ -166,6 +168,8 @@ jvm_library(
         "//platform/testRunner:testRunner_test_lib",
         "//notebooks/visualization:visualization_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//community-resources:customization_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
         "//java/ide-customization:ide-customization_test_lib",
     ],
     deps = [

@@ -123,6 +123,8 @@ jvm_library(
         "//aether-dependency-resolver/plugin",
         "//platform/testRunner/plugin",
         "//plugins/grazie",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -156,6 +158,8 @@ jvm_library(
         "//aether-dependency-resolver/plugin:plugin_test_lib",
         "//platform/testRunner/plugin:plugin_test_lib",
         "//plugins/grazie:grazie_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

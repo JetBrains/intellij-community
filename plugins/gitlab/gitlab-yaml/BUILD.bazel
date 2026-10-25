@@ -99,7 +99,12 @@ jvm_library(
     ),
     module_name = "intellij.vcs.gitlab.yaml.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//libraries/lucene.common"],
+    runtime_deps = [
+        # do not sort,
+        "//libraries/lucene.common",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
 )
 
 jvm_library(
@@ -122,6 +127,8 @@ jvm_library(
         # do not sort,
         ":vcs-gitlab-yaml-tests",
         "//libraries/lucene.common:lucene.common_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

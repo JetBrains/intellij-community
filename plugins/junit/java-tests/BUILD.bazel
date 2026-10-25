@@ -15,6 +15,7 @@ jvm_library(
         "//platform/smRunner",
         "//plugins/junit/properties",
         "//java/manifest",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
     ],
 )
 
@@ -38,6 +39,7 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//plugins/junit/properties:properties_test_lib",
         "//java/manifest:manifest_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
     ],
     deps = [
         # do not sort,

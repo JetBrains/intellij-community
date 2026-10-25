@@ -98,6 +98,8 @@ jvm_library(
         "//platform/eel/testFramework",
         "//libraries/kotlinx/coroutines/test",
         "//platform/testFramework/common",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -117,7 +119,12 @@ jvm_library(
         "//platform/ijent:ijent_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [":ijent-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":ijent-tests",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
+    ],
     deps = [
         # do not sort,
         "//libraries/junit6",

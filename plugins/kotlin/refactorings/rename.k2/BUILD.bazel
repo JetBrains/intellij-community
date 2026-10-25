@@ -147,6 +147,7 @@ jvm_library(
         "//plugins/kotlin:kotlin-plugin-community-main",
         "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename",
         "//plugins/groovy-scripting",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
     ],
 )
 
@@ -170,6 +171,7 @@ jvm_library(
         "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
         "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename_test_lib",
         "//plugins/groovy-scripting:groovy-scripting_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
     ],
     deps = [
         # do not sort,

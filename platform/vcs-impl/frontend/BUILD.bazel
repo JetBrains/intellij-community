@@ -130,6 +130,11 @@ jvm_library(
     ),
     module_name = "intellij.platform.vcs.impl.frontend.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//community-resources:customization",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+    ],
 )
 
 jvm_library(
@@ -153,6 +158,8 @@ jvm_library(
         ":vcs-impl-frontend-tests",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//community-resources:customization_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
     ],
     deps = [
         # do not sort,

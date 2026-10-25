@@ -52,6 +52,8 @@ jvm_library(
         "//plugins/yaml/spellchecker",
         "//spellchecker/xml/backend",
         "//platform/testRunner/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -93,6 +95,8 @@ jvm_library(
         "//spellchecker/xml/backend:backend_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/testRunner/plugin:plugin_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

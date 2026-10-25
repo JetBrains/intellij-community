@@ -89,6 +89,8 @@ jvm_library(
         "//platform/recentFiles/plugin",
         "//plugins/git4idea:vcs-git",
         "//platform/vcs/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -115,6 +117,8 @@ jvm_library(
         "//platform/recentFiles/plugin:plugin_test_lib",
         "//plugins/git4idea:vcs-git_test_lib",
         "//platform/vcs/plugin:plugin_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

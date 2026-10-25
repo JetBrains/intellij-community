@@ -212,6 +212,8 @@ jvm_library(
         "//plugins/kotlin/jvm/shared",
         "//plugins/kotlin/scripting",
         "//platform/vcs/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -256,6 +258,8 @@ jvm_library(
         "//plugins/kotlin/jvm/shared:shared_test_lib",
         "//plugins/kotlin/scripting:scripting_test_lib",
         "//platform/vcs/plugin:plugin_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

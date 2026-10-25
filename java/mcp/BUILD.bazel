@@ -103,6 +103,8 @@ jvm_library(
         "//platform/structure-view-impl/plugin",
         "//aether-dependency-resolver/plugin",
         "//platform/todo/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
         "//xml/plugin",
     ],
 )
@@ -132,6 +134,8 @@ jvm_library(
         "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//aether-dependency-resolver/plugin:plugin_test_lib",
         "//platform/todo/plugin:plugin_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
         "//xml/plugin:plugin_test_lib",
     ],
     deps = [

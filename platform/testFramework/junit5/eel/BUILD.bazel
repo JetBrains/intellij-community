@@ -101,7 +101,12 @@ jvm_library(
     ),
     module_name = "intellij.platform.testFramework.junit5.eel.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/testFramework/junit5"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/testFramework/junit5",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
 )
 
 jvm_library(
@@ -125,6 +130,8 @@ jvm_library(
         # do not sort,
         ":testFramework-junit5-eel-tests",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

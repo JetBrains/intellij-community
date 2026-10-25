@@ -130,6 +130,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//libraries/byte-buddy",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
         "//xml/plugin",
     ],
 )
@@ -155,6 +157,8 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//libraries/byte-buddy:byte-buddy_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
         "//xml/plugin:plugin_test_lib",
     ],
     deps = [

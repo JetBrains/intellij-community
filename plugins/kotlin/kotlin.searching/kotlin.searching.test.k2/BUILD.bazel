@@ -26,6 +26,8 @@ jvm_library(
         "//platform/testRunner/plugin",
         "//plugins/gradle/plugin",
         "//platform/vcs/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -54,6 +56,8 @@ jvm_library(
         "//platform/testRunner/plugin:plugin_test_lib",
         "//plugins/gradle/plugin:plugin_test_lib",
         "//platform/vcs/plugin:plugin_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

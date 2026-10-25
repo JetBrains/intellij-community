@@ -31,6 +31,7 @@ jvm_library(
         "//platform/execution.serviceView/plugin",
         "//android/android-plugin/descriptor",
         "//android/intellij.android.testutils:testutils",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//java/java-impl/testFramework",
     ],
 )
@@ -59,6 +60,7 @@ jvm_library(
         "//platform/execution.serviceView/plugin:plugin_test_lib",
         "//android/android-plugin/descriptor:descriptor_test_lib",
         "//android/intellij.android.testutils:testutils_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
         "//java/java-impl/testFramework:testFramework_test_lib",
     ],
     deps = [

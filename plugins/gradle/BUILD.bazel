@@ -297,6 +297,8 @@ jvm_library(
         "//plugins/repository-search/completion",
         "//platform/todo/plugin",
         "//platform/structure-view-impl/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -334,6 +336,8 @@ jvm_library(
         "//platform/execution.dashboard:execution.dashboard_test_lib",
         "//platform/todo/plugin:plugin_test_lib",
         "//platform/structure-view-impl/plugin:plugin_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,

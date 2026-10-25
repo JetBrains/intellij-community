@@ -88,6 +88,7 @@ jvm_library(
     ),
     module_name = "intellij.javaFX.community.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/main/intellij.platform.monolith.main:monolith-main"],
 )
 
 jvm_library(
@@ -107,6 +108,7 @@ jvm_library(
         # do not sort,
         ":community-tests",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
     ],
     deps = [
         # do not sort,

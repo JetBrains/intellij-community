@@ -10,6 +10,11 @@ jvm_library(
     ),
     module_name = "intellij.java.dumb.completion.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
 )
 
 jvm_library(
@@ -25,7 +30,12 @@ jvm_library(
     ),
     module_name = "intellij.java.dumb.completion.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":dumb-completion-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":dumb-completion-tests",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
+    ],
     deps = [
         # do not sort,
         "//platform/testFramework",

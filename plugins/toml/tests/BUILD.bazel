@@ -33,6 +33,8 @@ jvm_library(
         "//plugins/toml/json",
         "//plugins/toml/grazie",
         "//platform/testFramework",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -53,7 +55,12 @@ jvm_library(
         ["src/test/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":tests"],
+    runtime_deps = [
+        # do not sort,
+        ":tests",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",

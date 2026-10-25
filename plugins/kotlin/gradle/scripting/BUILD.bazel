@@ -236,6 +236,7 @@ jvm_library(
         "//platform/testRunner/plugin",
         "//plugins/gradle/plugin",
         "//plugins/gradle/java/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
     ],
 )
 
@@ -265,6 +266,7 @@ jvm_library(
         "//platform/observable:observable_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//plugins/gradle/java/plugin:plugin_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
     ],
     deps = [
         # do not sort,

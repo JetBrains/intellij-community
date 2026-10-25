@@ -30,6 +30,7 @@ jvm_library(
         # do not sort,
         "//platform/lang-core",
         "//platform/smRunner",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
     ],
 )
 
@@ -51,6 +52,7 @@ jvm_library(
         ":tests",
         "//platform/platform-util-io:ide-util-io_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
     ],
     deps = [
         # do not sort,

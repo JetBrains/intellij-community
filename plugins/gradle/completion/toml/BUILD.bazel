@@ -94,6 +94,8 @@ jvm_library(
         # do not sort,
         "//plugins/toml",
         "//plugins/toml/core",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
 )
 
@@ -115,6 +117,8 @@ jvm_library(
         ":gradle-completion-toml-tests",
         "//plugins/toml:toml_test_lib",
         "//plugins/toml/core:core_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//community-resources:customization_test_lib",
     ],
     deps = [
         # do not sort,
