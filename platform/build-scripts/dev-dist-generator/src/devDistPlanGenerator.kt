@@ -2299,9 +2299,9 @@ internal fun collectPlatformAssets(layout: PlatformLayout, properties: ProductPr
   return PlatformAssets(files = files, archives = archives.toList())
 }
 
-/** A module's own `jvm_library` target: the jar target minus `.jar`. */
+/** A module's own `jvm_library` target: the jar target minus `.jar`. A test module has the test jar target only. */
 internal fun moduleRuleTarget(module: String, targets: BazelTargetsInfo.TargetsFile): String? {
-  return productionTarget(module = module, targets = targets)?.removeSuffix(MODULE_JAR_TARGET_SUFFIX)
+  return moduleJarTarget(module = module, targets = targets)?.removeSuffix(MODULE_JAR_TARGET_SUFFIX)
 }
 
 /** A module's single test jar output label. */
@@ -2320,9 +2320,10 @@ private const val MODULE_JAR_TARGET_SUFFIX = ".jar"
 /** A label in the community repository, as the JPS-to-Bazel converter writes it from the ultimate monorepo. */
 internal const val COMMUNITY_REPOSITORY_PREFIX: String = "@community//"
 
-/** The one production target the converter emits for a module, or null when it emits none or several. */
-private fun productionTarget(module: String, targets: BazelTargetsInfo.TargetsFile): String? {
-  return targets.modules.get(module)?.productionTargets?.singleOrNull()?.takeIf { it.endsWith(MODULE_JAR_TARGET_SUFFIX) }
+/** The one jar target the converter emits for a module, or null when it emits none or several. */
+private fun moduleJarTarget(module: String, targets: BazelTargetsInfo.TargetsFile): String? {
+  val description = targets.modules.get(module) ?: return null
+  return (description.productionTargets.singleOrNull() ?: description.testTargets.singleOrNull())?.takeIf { it.endsWith(MODULE_JAR_TARGET_SUFFIX) }
 }
 
 private class MutablePayload {

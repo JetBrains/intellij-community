@@ -4,6 +4,7 @@ package com.intellij.platform.buildScripts.devDistGenerator
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
+import org.jetbrains.intellij.build.impl.BazelTargetsInfo
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -72,6 +73,33 @@ class DevDistPluginPlanHomeTest {
     assertThat(home.callIsCrossHalf).isFalse()
     assertThat(home.exportsPlanFiles).isFalse()
     assertThat(home.isModulePackage).isTrue()
+  }
+
+  @Test
+  fun `a test plugin has its own package through its test jar target`() {
+    val testIndex = DevDistBazelIndex(
+      targets = BazelTargetsInfo.TargetsFile(
+        modules = mapOf(
+          "intellij.test.plugin" to BazelTargetsInfo.TargetsFileModuleDescription(
+            productionTargets = emptyList(),
+            productionJars = emptyList(),
+            testTargets = listOf("//plugins/test:plugin_test_lib.jar"),
+            testJars = emptyList(),
+            exports = emptyList(),
+            moduleLibraries = emptyMap(),
+          ),
+        ),
+        projectLibraries = emptyMap(),
+        pluginDistributionTargets = emptyMap(),
+      ),
+      projectRoot = dir,
+    )
+
+    val home = devDistPluginPlanHome("intellij.test.plugin", testIndex)
+
+    assertThat(home.directory).isEqualTo("plugins/test")
+    assertThat(home.packageLabel).isEqualTo("//plugins/test")
+    assertThat(testIndex.targetName("intellij.test.plugin")).isEqualTo("plugin_test_lib")
   }
 
   @Test

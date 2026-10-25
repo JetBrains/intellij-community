@@ -79,7 +79,7 @@ class DevDistBazelIndex(
     }
   }
 
-  /** The half, package path and target name of [module], or `null` when the JSON records no production target for it. */
+  /** The half, package path and target name of [module], or `null` when the JSON records no library target for it. */
   fun location(module: String): BazelModuleLocation? {
     locations.get(module)?.let { return it.orElse(null) }
     val computed = Optional.ofNullable(computeLocation(module))
@@ -92,7 +92,7 @@ class DevDistBazelIndex(
     val half = when (repository) {
       "" -> RepositoryHalf.ULTIMATE
       COMMUNITY_REPOSITORY_NAME -> RepositoryHalf.COMMUNITY
-      else -> error("The production target '$label' of module '$module' is in a repository the index does not know")
+      else -> error("The target '$label' of module '$module' is in a repository the index does not know")
     }
     val rest = label.substringAfter("//")
     return BazelModuleLocation(half = half, packagePath = rest.substringBeforeLast(':'), targetName = rest.substringAfterLast(':'))
