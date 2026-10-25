@@ -27,7 +27,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.maven.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.maven.testFramework" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
   </component>
 </module>

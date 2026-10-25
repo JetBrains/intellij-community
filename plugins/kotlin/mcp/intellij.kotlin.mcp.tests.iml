@@ -11,7 +11,7 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.kotlin.mcp" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.mcp" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.formatter.minimal" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />

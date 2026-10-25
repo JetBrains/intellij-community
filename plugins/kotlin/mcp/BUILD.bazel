@@ -102,6 +102,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//plugins/kotlin/mcp",
         "//plugins/mcp-server/mcpserver.plugin",
         "//platform/structure-view-impl/plugin",
         "//platform/structuralsearch/plugin",
@@ -132,6 +133,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":mcp-tests",
+        "//plugins/kotlin/mcp:mcp_test_lib",
         "//plugins/mcp-server/mcpserver.plugin:mcpserver.plugin_test_lib",
         "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//platform/structuralsearch/plugin:plugin_test_lib",
@@ -143,8 +145,6 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//plugins/kotlin/mcp",
-        "//plugins/kotlin/mcp:mcp_test_lib",
         "//plugins/kotlin/formatter/minimal",
         "//plugins/kotlin/formatter/minimal:minimal_test_lib",
         "//platform/code-style-api:codeStyle",

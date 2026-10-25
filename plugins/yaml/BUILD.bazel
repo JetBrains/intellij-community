@@ -144,6 +144,7 @@ jvm_library(
     ),
     module_name = "intellij.yaml.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/yaml"],
 )
 
 jvm_library(
@@ -164,6 +165,7 @@ jvm_library(
         ":yaml-tests",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//plugins/yaml:yaml_test_lib",
     ],
     deps = [
         # do not sort,
@@ -180,8 +182,6 @@ jvm_library(
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "@lib//:kotlin-stdlib",
-        "//plugins/yaml",
-        "//plugins/yaml:yaml_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
     ],

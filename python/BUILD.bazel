@@ -824,6 +824,7 @@ jvm_library(
         "//platform/testRunner/plugin",
         "//python:python-helpers",
         "//commandInterface",
+        "//python:python-community-impl",
         "//xml/plugin",
     ],
 )
@@ -859,7 +860,6 @@ jvm_library(
         "//platform/ui.jcef:ui.jcef_test_lib",
         "//libraries/fus-ap-validation",
         "//libraries/fus-ap-validation:fus-ap-validation_test_lib",
-        "//python:python-community-impl",
         "//python:python-community-impl_test_lib",
         "//xml/plugin:plugin_test_lib",
     ],

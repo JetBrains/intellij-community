@@ -84,6 +84,7 @@ jvm_library(
     ),
     module_name = "intellij.maven.proofreading.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/maven/proofreading"],
 )
 
 jvm_library(
@@ -99,7 +100,11 @@ jvm_library(
     ),
     module_name = "intellij.maven.proofreading.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":proofreading-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":proofreading-tests",
+        "//plugins/maven/proofreading:proofreading_test_lib",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -109,8 +114,6 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//plugins/grazie/src/test:grazie-tests",
         "//plugins/grazie/src/test:grazie-tests_test_lib",
-        "//plugins/maven/proofreading",
-        "//plugins/maven/proofreading:proofreading_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
     ],

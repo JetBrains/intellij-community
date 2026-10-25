@@ -138,6 +138,7 @@ jvm_library(
         "//java/java-impl:impl",
         "//platform/testRunner",
         "//notebooks/visualization",
+        "//java/ide-customization",
     ],
 )
 
@@ -165,6 +166,7 @@ jvm_library(
         "//platform/testRunner:testRunner_test_lib",
         "//notebooks/visualization:visualization_test_lib",
         "//platform/ide-core:ide-core_test_lib",
+        "//java/ide-customization:ide-customization_test_lib",
     ],
     deps = [
         # do not sort,
@@ -182,8 +184,6 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
-        "//java/ide-customization",
-        "//java/ide-customization:ide-customization_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.ide.customization.tests` end

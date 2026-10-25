@@ -138,6 +138,7 @@ jvm_library(
     ),
     module_name = "intellij.restructuredtext.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/restructuredtext"],
 )
 
 jvm_library(
@@ -166,7 +167,6 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//spellchecker",
         "//spellchecker:spellchecker_test_lib",
-        "//plugins/restructuredtext",
         "//plugins/restructuredtext:restructuredtext_test_lib",
     ],
 )

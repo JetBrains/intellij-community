@@ -98,6 +98,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//java/mcp",
         "//plugins/mcp-server/mcpserver.plugin",
         "//platform/structure-view-impl/plugin",
         "//aether-dependency-resolver/plugin",
@@ -126,6 +127,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":mcp-tests",
+        "//java/mcp:mcp_test_lib",
         "//plugins/mcp-server/mcpserver.plugin:mcpserver.plugin_test_lib",
         "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//aether-dependency-resolver/plugin:plugin_test_lib",
@@ -135,8 +137,6 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//java/mcp",
-        "//java/mcp:mcp_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
         "//libraries/junit6",

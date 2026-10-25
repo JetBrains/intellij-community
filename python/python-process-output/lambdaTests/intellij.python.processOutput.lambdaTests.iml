@@ -44,6 +44,6 @@
     <orderEntry type="module" module-name="intellij.tools.ide.starter.build.server" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.product.pycharm" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.processOutput.common" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.processOutput.frontend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.processOutput.frontend" scope="RUNTIME" />
   </component>
 </module>

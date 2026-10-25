@@ -145,6 +145,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//plugins/kotlin:kotlin-plugin-community-main",
+        "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename",
         "//plugins/groovy-scripting",
     ],
 )
@@ -167,6 +168,7 @@ jvm_library(
         # do not sort,
         ":kotlin-refactorings-rename-tests",
         "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
+        "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename_test_lib",
         "//plugins/groovy-scripting:groovy-scripting_test_lib",
     ],
     deps = [
@@ -212,8 +214,6 @@ jvm_library(
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
-        "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename",
-        "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//platform/scratch/plugin",

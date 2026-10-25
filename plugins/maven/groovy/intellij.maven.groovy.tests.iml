@@ -26,7 +26,7 @@
     <orderEntry type="module" module-name="intellij.java.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.maven.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.maven.groovy" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.maven.groovy" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structuralSearch" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structuralSearch.plugin" scope="TEST" />
