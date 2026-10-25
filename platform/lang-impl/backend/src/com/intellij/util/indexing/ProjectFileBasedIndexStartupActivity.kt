@@ -75,9 +75,10 @@ internal class ProjectFileBasedIndexStartupActivity : RequiredForSmartMode {
       // Done mostly for tests.
       // In real life this is no-op, because the set was removed on project closing
       // note that disposing happens in write action, so it'll be executed after this read action
+      // An unload of this module also runs the callback, after the index service is gone.
       Disposer.register(project) {
         if (openProjects.remove(project)) {
-          FileBasedIndex.getInstance().onProjectClosing(project)
+          serviceIfCreated<FileBasedIndex>()?.onProjectClosing(project)
         }
       }
 
