@@ -3,11 +3,13 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.DiffContext
+import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleDiffViewer
 import com.intellij.diff.tools.util.base.DiffViewerBase
+import com.intellij.diff.util.DiffGutterRenderer
 import com.intellij.diff.util.Side
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
@@ -28,7 +30,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -52,10 +53,10 @@ internal class StructuralDiffPreviewAppearanceTest {
   fun `the Commit diff tab keeps its diff while the registry key is off`(): Unit = timeoutRunBlocking {
     withViewer(::SimpleDiffViewer, commitTab = true) { viewer ->
       for (side in Side.entries) assertDefaultDiff(viewer.getEditor(side))
+      assertTrue(Side.entries.any { hasArrows(viewer.getEditor(it)) })
     }
     withViewer(::UnifiedDiffViewer, commitTab = true) { viewer ->
       assertDefaultDiff(viewer.editor)
-      assertNotNull(viewer.editor.gutterComponentEx.additionalLineNumberConverter)
     }
   }
 
@@ -64,20 +65,20 @@ internal class StructuralDiffPreviewAppearanceTest {
   fun `a diff outside the Commit diff tab keeps its diff`(): Unit = timeoutRunBlocking {
     withViewer(::SimpleDiffViewer, commitTab = false) { viewer ->
       for (side in Side.entries) assertDefaultDiff(viewer.getEditor(side))
+      assertTrue(Side.entries.any { hasArrows(viewer.getEditor(it)) })
     }
     withViewer(::UnifiedDiffViewer, commitTab = false) { viewer ->
       assertDefaultDiff(viewer.editor)
-      assertNotNull(viewer.editor.gutterComponentEx.additionalLineNumberConverter)
     }
   }
 
   @Test
   @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
-  fun `the side-by-side Commit diff tab shows only line numbers in the gutter and a color for each side`(): Unit = timeoutRunBlocking {
+  fun `the side-by-side Commit diff tab shows a gutter without icons and a color for each side`(): Unit = timeoutRunBlocking {
     withViewer(::SimpleDiffViewer, commitTab = true) { viewer ->
       for (side in Side.entries) {
         val editor = viewer.getEditor(side)
-        assertNumbersOnlyGutter(editor)
+        assertIconFreeGutter(editor)
         assertLineColor(editor, DiffColors.DIFF_DELETED, removed = true)
         assertLineColor(editor, DiffColors.DIFF_INSERTED, removed = false)
       }
@@ -88,27 +89,13 @@ internal class StructuralDiffPreviewAppearanceTest {
 
   @Test
   @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
-  fun `the side-by-side Commit diff tab numbers only the current lines`(): Unit = timeoutRunBlocking {
-    withViewer(::SimpleDiffViewer, commitTab = true) { viewer ->
-      assertFalse(viewer.getEditor(Side.LEFT).settings.isLineNumbersShown)
-      assertTrue(viewer.getEditor(Side.RIGHT).settings.isLineNumbersShown)
-    }
-  }
-
-  @Test
-  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
-  fun `the unified Commit diff tab numbers only the current lines`(): Unit = timeoutRunBlocking {
+  fun `the unified Commit diff tab shows a gutter without icons and both columns of line numbers`(): Unit = timeoutRunBlocking {
     withViewer(::UnifiedDiffViewer, commitTab = true) { viewer ->
       val editor = viewer.editor
-      assertNumbersOnlyGutter(editor)
+      assertIconFreeGutter(editor)
+      assertNotNull(editor.gutterComponentEx.additionalLineNumberConverter)
       assertLineColor(editor, DiffColors.DIFF_DELETED, removed = true)
       assertLineColor(editor, DiffColors.DIFF_INSERTED, removed = false)
-
-      // The unified text has the first line, the removed line, the added line, the last line, and an empty line.
-      val gutter = editor.gutterComponentEx
-      assertNull(gutter.additionalLineNumberConverter)
-      val numbers = (1..editor.document.lineCount).map { gutter.primaryLineNumberConverter.convert(editor, it) }
-      assertEquals(listOf(1, null, 2, 3, null), numbers)
     }
   }
 
@@ -117,6 +104,8 @@ internal class StructuralDiffPreviewAppearanceTest {
     withContext(Dispatchers.EDT) {
       val contents = DiffContentFactory.getInstance()
       val request = SimpleDiffRequest(null, contents.create(project, "first\nold\nlast"), contents.create(project, "first\nnew\nlast"), null, null)
+      // An editable right side gets the arrows that apply a change.
+      (request.contents[1] as DocumentContent).document.setReadOnly(false)
       val context = TestDiffContext(project)
       if (commitTab) context.putUserData(STRUCTURAL_PREVIEW_CONTEXT, true)
       val viewer = create(context, request)
@@ -135,6 +124,7 @@ internal class StructuralDiffPreviewAppearanceTest {
 
   private fun assertDefaultDiff(editor: EditorEx) {
     assertTrue(editor.settings.isLineMarkerAreaShown)
+    assertTrue(editor.settings.areGutterIconsShown())
     assertTrue(editor.settings.isLineNumbersShown)
     val scheme = EditorColorsManager.getInstance().globalScheme
     for (key in listOf(DiffColors.DIFF_DELETED, DiffColors.DIFF_INSERTED, DiffColors.DIFF_MODIFIED)) {
@@ -142,10 +132,16 @@ internal class StructuralDiffPreviewAppearanceTest {
     }
   }
 
-  private fun assertNumbersOnlyGutter(editor: EditorEx) {
-    assertFalse(editor.settings.isLineMarkerAreaShown)
+  /** The gutter keeps the line marker area, because only that area paints the colors of the changes. */
+  private fun assertIconFreeGutter(editor: EditorEx) {
+    assertTrue(editor.settings.isLineMarkerAreaShown)
+    assertFalse(editor.settings.areGutterIconsShown())
     assertFalse(editor.settings.isFoldingOutlineShown)
+    assertTrue(editor.settings.isLineNumbersShown)
+    assertFalse(hasArrows(editor))
   }
+
+  private fun hasArrows(editor: EditorEx): Boolean = editor.markupModel.allHighlighters.any { it.gutterIconRenderer is DiffGutterRenderer }
 
   /** The diff paints a line with changed words in the foreground color of the key, and the words in its background color. */
   private fun assertLineColor(editor: EditorEx, key: TextAttributesKey, removed: Boolean) {
