@@ -126,6 +126,7 @@ def _derive_targets_from_model(ctx, model):
             target_name = target_name,
             is_community = True,
             community_root_parts = community_root_parts,
+            is_test_module = parsed.has_test_sources,
         )
         production_by_module[mod.module_name] = targets.production
         if mod.plugin_xml_rel_path != None:

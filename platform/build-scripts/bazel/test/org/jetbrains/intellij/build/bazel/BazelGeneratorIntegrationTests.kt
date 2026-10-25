@@ -57,6 +57,12 @@ class BazelGeneratorIntegrationTests {
 
   @Test fun compileExcludes() = doTest("compile-excludes")
 
+  /**
+   * One library target per module. A test module depends on the `_test_lib` target of a test module and on the plain
+   * target of a production module. A module with a test resource root only is a test module without a `jps_test`.
+   */
+  @Test fun testModuleDependencies() = doTest("test-module-dependencies")
+
   @Test fun ijPluginTarget() = doTest("ij-plugin-target")
   @Test fun ijPluginTargetWithNonClasspathData() = doTest("ij-plugin-target-with-non-classpath-data", allowBuildBazelFilesInTestDataProject = true)
 
@@ -306,6 +312,10 @@ class BazelGeneratorIntegrationTests {
   private fun addMetadataModule(projectDir: Path, directory: String, moduleName: String, templateDir: Path = projectDir) {
     val relativePath = "$directory/$moduleName.iml"
     projectDir.resolve(relativePath).createParentDirectories().writeText(templateDir.resolve("module/intellij.module.iml").readText())
+    registerModule(projectDir, relativePath)
+  }
+
+  private fun registerModule(projectDir: Path, relativePath: String) {
     val modulesFile = projectDir.resolve(".idea/modules.xml")
     val entry = "<module fileurl=\"file://\$PROJECT_DIR\$/$relativePath\" filepath=\"\$PROJECT_DIR\$/$relativePath\" />"
     modulesFile.writeText(modulesFile.readText().replace("</modules>", "$entry\n    </modules>"))
@@ -330,10 +340,9 @@ class BazelGeneratorIntegrationTests {
   /**
    * The content modules of an `ij_plugin` plugin, with and without module libraries to pack.
    *
-   * `intellij.libraries.example` declares three production module libraries and one TEST-scope library. The three
-   * become the `packed_deps` of its `ij_plugin_module`, in `orderEntry` order, and the TEST-scope library stays a
-   * runtime dependency of the test target alone. `intellij.libraries.refused` declares only the TEST-scope library, so
-   * it has nothing to pack and stays a plain `jvm_library`.
+   * `intellij.libraries.example` declares three module libraries, which become the `packed_deps` of its
+   * `ij_plugin_module` in `orderEntry` order. `intellij.libraries.refused` declares none, so it has nothing to pack and
+   * stays a plain `jvm_library`.
    */
   @Test fun ijPluginModulePackedDeps() = doTest("ij-plugin-module-packed-deps")
 

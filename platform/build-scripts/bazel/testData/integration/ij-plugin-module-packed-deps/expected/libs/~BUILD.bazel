@@ -14,20 +14,8 @@ java_import(
 )
 
 java_import(
-    name = "libraries-example-testonly",
-    jars = ["testonly.jar"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
     name = "libraries-example-third",
     jars = ["third.jar"],
-    visibility = ["//visibility:public"],
-)
-
-java_import(
-    name = "libraries-refused-testonly",
-    jars = ["testonly.jar"],
     visibility = ["//visibility:public"],
 )
 
@@ -35,7 +23,6 @@ exports_files(
     [
         "first.jar",
         "second.jar",
-        "testonly.jar",
         "third.jar",
     ],
     visibility = ["//visibility:public"],

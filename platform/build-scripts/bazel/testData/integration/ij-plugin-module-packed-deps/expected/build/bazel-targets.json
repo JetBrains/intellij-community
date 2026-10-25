@@ -7,12 +7,8 @@
       "productionJars": [
         "out/bazel-out/jvm-fastbuild/bin/plugin/plugin.jar"
       ],
-      "testTargets": [
-        "@community//plugin:plugin_test_lib.jar"
-      ],
-      "testJars": [
-        "out/bazel-out/jvm-fastbuild/bin/plugin/plugin_test_lib.jar"
-      ],
+      "testTargets": [],
+      "testJars": [],
       "exports": [],
       "moduleLibraries": {}
     },
@@ -23,12 +19,8 @@
       "productionJars": [
         "out/bazel-out/jvm-fastbuild/bin/content/libraries-example.jar"
       ],
-      "testTargets": [
-        "@community//content:libraries-example_test_lib.jar"
-      ],
-      "testJars": [
-        "out/bazel-out/jvm-fastbuild/bin/content/libraries-example_test_lib.jar"
-      ],
+      "testTargets": [],
+      "testJars": [],
       "exports": [],
       "moduleLibraries": {
         "first": {
@@ -51,16 +43,6 @@
           ],
           "sourceJars": []
         },
-        "testonly": {
-          "target": "//libs:libraries-example-testonly",
-          "jars": [
-            "execroot/_main/libs/testonly.jar"
-          ],
-          "jarTargets": [
-            "//libs:testonly.jar"
-          ],
-          "sourceJars": []
-        },
         "third": {
           "target": "//libs:libraries-example-third",
           "jars": [
@@ -80,25 +62,10 @@
       "productionJars": [
         "out/bazel-out/jvm-fastbuild/bin/refused/refused.jar"
       ],
-      "testTargets": [
-        "@community//refused:refused_test_lib.jar"
-      ],
-      "testJars": [
-        "out/bazel-out/jvm-fastbuild/bin/refused/refused_test_lib.jar"
-      ],
+      "testTargets": [],
+      "testJars": [],
       "exports": [],
-      "moduleLibraries": {
-        "testonly": {
-          "target": "//libs:libraries-refused-testonly",
-          "jars": [
-            "execroot/_main/libs/testonly.jar"
-          ],
-          "jarTargets": [
-            "//libs:testonly.jar"
-          ],
-          "sourceJars": []
-        }
-      }
+      "moduleLibraries": {}
     }
   },
   "imlTargets": [

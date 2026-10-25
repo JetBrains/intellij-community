@@ -1,0 +1,27 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.module.testData` start
+jvm_library(
+    name = "test-data_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.module.testData",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `build intellij.module.testData` end
+
+### auto-generated section `iml intellij.module.testData` start
+exports_files(
+    [
+        "intellij.module.testData.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.module.testData` end

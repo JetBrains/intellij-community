@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/module/intellij.module.iml" filepath="$PROJECT_DIR$/module/intellij.module.iml" />
+      <module fileurl="file://$PROJECT_DIR$/module-tests/intellij.module.tests.iml" filepath="$PROJECT_DIR$/module-tests/intellij.module.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/other-tests/intellij.module.other.tests.iml" filepath="$PROJECT_DIR$/other-tests/intellij.module.other.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/test-data/intellij.module.testData.iml" filepath="$PROJECT_DIR$/test-data/intellij.module.testData.iml" />
+      <module fileurl="file://$PROJECT_DIR$/test-framework/intellij.module.testFramework.iml" filepath="$PROJECT_DIR$/test-framework/intellij.module.testFramework.iml" />
+      <module fileurl="file://$PROJECT_DIR$/util/intellij.module.util.iml" filepath="$PROJECT_DIR$/util/intellij.module.util.iml" />
+    </modules>
+  </component>
+</project>

@@ -15,19 +15,6 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
 )
-
-jvm_library(
-    name = "plugin_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k21",
-    module_name = "intellij.example.plugin",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":plugin"],
-)
 ### auto-generated section `build intellij.example.plugin` end
 
 ### auto-generated section `plugin intellij.example.plugin` start

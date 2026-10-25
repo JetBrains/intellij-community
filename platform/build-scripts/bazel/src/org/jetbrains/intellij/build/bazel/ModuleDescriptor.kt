@@ -55,7 +55,9 @@ internal data class ModuleDescriptor(
   val bazelBuildFile: Path
     get() = bazelBuildFileDir.resolve("BUILD.bazel")
 
-  val targetAsLabel = BazelLabel(targetName, this)
+  /** The one library target of a test module is `testonly`, and its name carries [TEST_LIB_NAME_SUFFIX]. */
+  val isTestModule: Boolean
+    get() = testSources.isNotEmpty() || testResources.isNotEmpty()
 }
 
 internal data class ResourceDescriptor(

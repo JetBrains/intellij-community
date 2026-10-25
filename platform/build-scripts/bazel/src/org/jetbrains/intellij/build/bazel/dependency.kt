@@ -17,8 +17,6 @@ import org.jetbrains.jps.model.module.JpsTestModuleProperties
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
 import java.util.TreeSet
-import java.util.logging.Level
-import java.util.logging.Logger
 import kotlin.io.path.Path
 import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
@@ -63,16 +61,6 @@ internal fun generateDeps(
   val packedDeps = mutableListOf<BazelLabel>()
   val provided = mutableListOf<BazelLabel>()
   val providedModuleLibraries = mutableListOf<BazelLabel>()
-
-  if (isTest) {  // test always depends on production
-    if (hasSources && module.sources.isNotEmpty()) {
-      // associates also is a dependency
-      associates.add(BazelLabel(":${module.targetName}", module))
-    }
-    else {
-      runtimeDeps.add(BazelLabel(":${module.targetName}", module))
-    }
-  }
 
   val testModuleProperties = context.javaExtensionService.getTestModuleProperties(module.module)
 
@@ -515,69 +503,38 @@ private fun addDep(
   // - TEST(TEST_COMPILE, TEST_RUNTIME)
   // - RUNTIME(PRODUCTION_RUNTIME, TEST_RUNTIME)
   // - PROVIDED(PRODUCTION_COMPILE, TEST_COMPILE, TEST_RUNTIME)
-
-  if (isTest) {
-    val isIncludedInProductionRuntime = scope == JpsJavaDependencyScope.COMPILE || scope == JpsJavaDependencyScope.RUNTIME  // test always depends on production, skip runtime dependencies to keep the dependency graph clean
-    when (scope) {
-      JpsJavaDependencyScope.COMPILE, JpsJavaDependencyScope.PROVIDED, JpsJavaDependencyScope.TEST -> {
-        // TODO: use non-provided label for libs to include them in test runtime
-        if (hasSources) {
-          deps.add(dependencyLabel)
-        }
-        else if (!isIncludedInProductionRuntime) {
-          runtimeDeps.add(dependencyLabel)
-        }
-        if (isExported) {  // e.g. //debugger/intellij.java.debugger.rpc.tests:java-debugger-rpc-tests_test_lib
-          exports.add(dependencyLabel)
-        }
-
-        if (dependencyModuleDescriptor != null) {
-          if (hasSources && needsBackwardCompatibleTestDependency(dependencyModuleDescriptor.module.name, dependentModule)) {
-            deps.add(getLabelForTest(dependencyLabel))
-          }
-          else {
-            runtimeDeps.add(getLabelForTest(dependencyLabel))
-          }
-          if (isExported) {  // e.g. //CIDR-appcode/appcode-coverage:appcode-coverage_test_lib
-            exports.add(getLabelForTest(dependencyLabel))
-          }
-        }
-      }
-      JpsJavaDependencyScope.RUNTIME -> {
-        @Suppress("KotlinConstantConditions")
-        if (!isIncludedInProductionRuntime) {  // always false, kept for consistency
-          runtimeDeps.add(dependencyLabel)
-        }
-
-        if (dependencyModuleDescriptor != null) {
-          runtimeDeps.add(getLabelForTest(dependencyLabel))
-        }
-      }
-    }
-
-    return
-  }
-
-  if (isExported) {
-    exports.add(dependencyLabel)
-  }
+  //
+  // Treats PROVIDED-scope dependencies as neverlink as per https://youtrack.jetbrains.com/issue/IJI-3451#focus=Comments-27-13512542.0-0.
 
   when (scope) {
-    JpsJavaDependencyScope.RUNTIME -> {
-      runtimeDeps.add(dependencyLabel)
-    }
-    JpsJavaDependencyScope.COMPILE -> {
+    JpsJavaDependencyScope.COMPILE, JpsJavaDependencyScope.TEST -> {
+      require(scope != JpsJavaDependencyScope.TEST || isTest) {
+        "module must not have TEST-scope dependencies that only leak onto the test classpath of dependent modules, please consider changing their scope to RUNTIME or move them to the affected test modules: ${dependentModule.imlFile}"
+      }
+      // TODO: require scope != JpsJavaDependencyScope.COMPILE || !isTest
+
       if (hasSources) {
         deps.add(dependencyLabel)
       }
       else {
-        if (!isExported) {
-          LOG.log(Level.FINE, "dependency scope for ${dependencyLabel.label} should be RUNTIME and not COMPILE (module=${dependentModule.module.name})")
-        }
+        // TODO: require scope != JpsJavaDependencyScope.COMPILE || isExported  -- aka TEST_RUNTIME
         runtimeDeps.add(dependencyLabel)
       }
+      if (isExported) {
+        exports.add(dependencyLabel)
+      }
+    }
+    JpsJavaDependencyScope.RUNTIME -> {
+      // TODO: require !isExported
+      runtimeDeps.add(dependencyLabel)
     }
     JpsJavaDependencyScope.PROVIDED -> {
+      require(!isTest ||
+              dependentModule.module.name == "fleet.compose.conformance.tests" || dependentModule.module.name == "fleet.noria.ui.test"  // TODO: remove this
+      ) {
+        "module must not have PROVIDED-scope dependencies, please change their scope to TEST: ${dependentModule.imlFile}"
+      }
+
       // ignore deps if no sources, as `exports` in Bazel means "compile" scope
       if (hasSources) {
         if (dependencyModuleDescriptor == null) {
@@ -589,48 +546,20 @@ private fun addDep(
         }
       }
       else {
-        LOG.log(Level.FINE, "WARN: ignoring dependency on $dependencyLabel (module=$dependentModule)")
+        // TODO: require isExported
+      }
+      if (isExported) {
+        exports.add(dependencyLabel)
       }
     }
-    JpsJavaDependencyScope.TEST -> {
-      // we produce separate Bazel targets for production and test source roots
-    }
-  }
-}
-
-private fun needsBackwardCompatibleTestDependency(
-  name: @NlsSafe String,
-  dependentModule: ModuleDescriptor,
-): Boolean {
-  if (name.startsWith("intellij.platform.ide.")) {
-    /// Newly extracted modules from platform-impl are not test-framework modules for sure, and no one should depend on their test targets.
-    // todo - move ToolWindowManagerTest from platform-lang to platform-impl tests
-    return name == "intellij.platform.ide.impl.tests" && dependentModule.module.name == "intellij.platform.lang.tests"
-  }
-  else {
-    // If we depend on module A and A includes test sources, we must add a dependency not only on A’s production library target but also on its test library target.
-    // See: https://youtrack.jetbrains.com/issue/IJI-2851/ (auto-add dependency on test target only for existing bad modules and forbid it for everything else).
-    return true
   }
 }
 
 internal const val TEST_LIB_NAME_SUFFIX = "_test_lib"
 
 internal const val PRODUCTION_RESOURCES_TARGET_SUFFIX = "_resources"
-internal val PRODUCTION_RESOURCES_TARGET_REGEX = Regex("^(?!.+${Regex.escape(TEST_RESOURCES_TARGET_SUFFIX)}).+${Regex.escape(PRODUCTION_RESOURCES_TARGET_SUFFIX)}(_[0-9]+)?$")
 
 internal const val TEST_RESOURCES_TARGET_SUFFIX = "_test_resources"
-internal val TEST_RESOURCES_TARGET_REGEX = Regex("^.+${Regex.escape(TEST_RESOURCES_TARGET_SUFFIX)}(_[0-9]+)?$")
-
-private fun getLabelForTest(dependencyLabel: BazelLabel): BazelLabel {
-  val testLabel = if (dependencyLabel.label.contains(':')) {
-    "${dependencyLabel.label}$TEST_LIB_NAME_SUFFIX"
-  }
-  else {
-    "${dependencyLabel.label}:${dependencyLabel.label.substringAfterLast('/')}$TEST_LIB_NAME_SUFFIX"
-  }
-  return dependencyLabel.copy(label = testLabel)
-}
 
 private val camelCaseToSnakeCasePattern = Regex("(?<=.)[A-Z]")
 
@@ -645,8 +574,6 @@ internal fun camelToSnakeCase(s: String, replacement: Char = '_'): String {
 internal val bazelLabelBadCharsPattern = Regex("[:.+]")
 
 internal fun escapeBazelLabel(name: String): String = bazelLabelBadCharsPattern.replace(name, "-")
-
-private val LOG = Logger.getLogger("dependency")
 
 /** The name prefix of a library wrapper module. Such a module may export the library it wraps. */
 private const val LIB_MODULE_PREFIX = "intellij.libraries."

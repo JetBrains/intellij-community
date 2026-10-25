@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
+    </content>
+    <orderEntry type="jdk" jdkName="jbr-17" jdkType="JavaSDK" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.module" />
+    <orderEntry type="module" module-name="intellij.module.util" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.module.testFramework" />
+    <orderEntry type="module" module-name="intellij.module.other.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.module.testData" scope="RUNTIME" />
+  </component>
+  <component name="TestModuleProperties" production-module="intellij.module" />
+</module>

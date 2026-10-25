@@ -1,5 +1,4 @@
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("@rules_pkg//pkg:mappings.bzl", "pkg_files")
 
 pkg_files(
@@ -22,19 +21,6 @@ ij_plugin_module(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-)
-
-jvm_library(
-    name = "module2_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k21",
-    module_name = "intellij.module2",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":module2"],
 )
 ### auto-generated section `build intellij.module2` end
 

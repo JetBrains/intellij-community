@@ -495,20 +495,17 @@ def compute_plugin_distribution_target(module_name, build_dir_parts, target_name
     package_prefix = _compute_package_info(module_name, build_dir_parts, is_community, community_root_parts).package_prefix
     return package_prefix + ":" + target_name + "_plugin"
 
-def compute_module_targets(module_name, build_dir_parts, target_name, is_community, community_root_parts):
+def compute_module_targets(module_name, build_dir_parts, target_name, is_community, community_root_parts, is_test_module):
     """Compute production and test target labels for a module.
 
     Returns struct with production (list) and test (list) target labels.
+    A test module has the test label only, and a production module has the production label only.
     """
     package_prefix = _compute_package_info(module_name, build_dir_parts, is_community, community_root_parts).package_prefix
 
     # Always use colon form — the JSON output always uses "$packagePrefix:$targetName"
     label = package_prefix + ":" + target_name
 
-    production = [label + ".jar"]
-
-    # BazelBuildFileGenerator.generateBuildTargets always emits a test_lib target for every module.
-    # Some modules use that target as a test classpath container even when they have no test sources.
-    test = [package_prefix + ":" + target_name + "_test_lib.jar"]
-
-    return struct(production = production, test = test)
+    if is_test_module:
+        return struct(production = [], test = [label + "_test_lib.jar"])
+    return struct(production = [label + ".jar"], test = [])

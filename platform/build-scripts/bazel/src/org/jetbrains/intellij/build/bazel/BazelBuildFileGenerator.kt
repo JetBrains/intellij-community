@@ -475,11 +475,12 @@ internal class BazelBuildFileGenerator(
       moduleToPluginXmlContentData = if (!skipGenerationOfPluginTargets) computePluginXmlContentData(allModules) else emptyMap(),
     )
     for (module in allModules) {
-      val hasSources = module.sources.isNotEmpty()
-      result.deps.put(module, generateDeps(m2Repo = m2Repo, module = module, hasSources = hasSources, isTest = false, context = this))
-
-      val hasTestSources = module.testSources.isNotEmpty()
-      result.testDeps.put(module, generateDeps(m2Repo = m2Repo, module = module, hasSources = hasTestSources, isTest = true, context = this))
+      if (module.isTestModule) {
+        result.testDeps.put(module, generateDeps(m2Repo = m2Repo, module = module, hasSources = module.testSources.isNotEmpty(), isTest = true, context = this))
+      }
+      else {
+        result.deps.put(module, generateDeps(m2Repo = m2Repo, module = module, hasSources = module.sources.isNotEmpty(), isTest = false, context = this))
+      }
     }
 
     return result
@@ -667,7 +668,7 @@ internal class BazelBuildFileGenerator(
     }
 
     val dependentIsCommunity = dependent.isCommunity
-    val targetName = module.targetName + targetNameSuffix
+    val targetName = module.targetName + (if (module.isTestModule) TEST_LIB_NAME_SUFFIX else "") + targetNameSuffix
     if (!dependentIsCommunity && module.isCommunity) {
       require(module.isCommunity)
 
@@ -741,8 +742,7 @@ internal class BazelBuildFileGenerator(
     load("@community//build:tests-options.bzl", "jps_test")
 
     val mainModuleLabel = getTestClasspathModule(moduleDescriptor, moduleList)?.let { mainModule ->
-      val productionLabel = getBazelDependencyLabel(mainModule, moduleDescriptor)
-      "$productionLabel$TEST_LIB_NAME_SUFFIX"
+      getBazelDependencyLabel(mainModule, moduleDescriptor)
     }
 
     val testLibTargetName = "${moduleDescriptor.targetName}$TEST_LIB_NAME_SUFFIX"
@@ -759,40 +759,27 @@ internal class BazelBuildFileGenerator(
     val jvmTarget = getLanguageLevel(module)
     val kotlincOptionsLabel = computeKotlincOptions(buildFile = this, module = moduleDescriptor, jvmTarget = jvmTarget, kotlincDefaults = kotlincDefaults)
                               ?: (if (jvmTarget == kotlincDefaults.jvmTarget) null else "@community//:k$jvmTarget")
+    // TODO: require kotlincOptionsLabel == null || sources.isNotEmpty()
     val javacOptionsLabel = computeJavacOptions(moduleDescriptor, jvmTarget)
+    // TODO: require javacOptionsLabel == null || sources.isNotEmpty()
+
+    val sources = if (moduleDescriptor.isTestModule) moduleDescriptor.testSources else moduleDescriptor.sources
+    val resources = if (moduleDescriptor.isTestModule) moduleDescriptor.testResources else moduleDescriptor.resources
+    var deps = if (moduleDescriptor.isTestModule) moduleList.testDeps.get(moduleDescriptor) else moduleList.deps.get(moduleDescriptor)
 
     var directResources: ResourcesInfo? = null
-    var directTestResources: ResourcesInfo? = null
     val resourceJarTargets = mutableListOf<BazelLabel>()
-    val testResourceJarTargets = mutableListOf<BazelLabel>()
-    val productionCompileTargets = mutableListOf<BazelLabel>()
-    val productionCompileJars = mutableListOf<BazelLabel>()
-    val testCompileTargets = mutableListOf<BazelLabel>()
-
-    val sources = moduleDescriptor.sources
-    if (customModule == null) {
-      if (moduleDescriptor.resources.isNotEmpty()) {
-        val result = generateResources(module = moduleDescriptor, forTests = false)
-        directResources = result.resources
-        resourceJarTargets.addAll(result.resourceJarsTargets)
-      }
-      if (moduleDescriptor.testResources.isNotEmpty()) {
-        val result = generateResources(module = moduleDescriptor, forTests = true)
-        directTestResources = result.resources
-        testResourceJarTargets.addAll(result.resourceJarsTargets)
-      }
+    if (customModule == null && resources.isNotEmpty()) {
+      val result = generateResources(module = moduleDescriptor, forTests = moduleDescriptor.isTestModule)
+      directResources = result.resources
+      resourceJarTargets.addAll(result.resourceJarsTargets)
     }
-
-    // reuse production generated provided libraries in test
-    var generatedProvidedLibs = emptyList<BazelLabel>()
 
     load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-    var deps = moduleList.deps.get(moduleDescriptor)
     if (deps != null && deps.provided.isNotEmpty()) {
       val extraDeps = generateProvidedLibs(deps.provided)
       deps = deps.copy(deps = deps.deps + extraDeps)
-      generatedProvidedLibs = extraDeps
     }
 
     val mustGenerateFleetPluginServicesResources = moduleDescriptor.isFleetModule() && hasRhizomeDbOrPluginDependency(moduleList, moduleDescriptor)
@@ -822,7 +809,7 @@ internal class BazelBuildFileGenerator(
       resourceJarTargets.add(BazelLabel(label = gzipTargetName, module = null))
     }
 
-    val useIjPluginModule = shouldUseIjPluginModuleFunction(moduleDescriptor, moduleList, manuallyWrittenAttributes)
+    val useIjPluginModule = shouldUseIjPluginModuleFunction(moduleDescriptor, moduleList, manuallyWrittenAttributes) && !moduleDescriptor.isTestModule
     val moduleTargetType: String
     if (useIjPluginModule) {
       load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
@@ -831,10 +818,13 @@ internal class BazelBuildFileGenerator(
     else {
       moduleTargetType = "jvm_library"
     }
+    val targetName = moduleDescriptor.targetName + (if (moduleDescriptor.isTestModule) TEST_LIB_NAME_SUFFIX else "")
+    val targetLabel = BazelLabel(targetName, moduleDescriptor)
     target(moduleTargetType) {
-      option("name", moduleDescriptor.targetName)
-      productionCompileTargets.add(moduleDescriptor.targetAsLabel)
-      productionCompileJars.add(moduleDescriptor.targetAsLabel)
+      option("name", targetName)
+      if (moduleDescriptor.isTestModule) {
+        option("testonly", true)
+      }
 
       if (customModule == null) {
         option("srcs", sourcesToGlob(sources, moduleDescriptor))
@@ -860,10 +850,8 @@ internal class BazelBuildFileGenerator(
         option("exported_compiler_plugins", listOf("@lib//:compose-plugin"))
       }
 
-      if (deps != null) {
-        if (deps.associates.isNotEmpty()) {
-          option("associates", deps.associates.sorted())
-        }
+      if (deps != null && deps.associates.isNotEmpty()) {
+        option("associates", deps.associates.sorted())
       }
 
       if (javacOptionsLabel != null && sources.isNotEmpty()) {
@@ -874,9 +862,14 @@ internal class BazelBuildFileGenerator(
         option("kotlinc_opts", kotlincOptionsLabel)
       }
 
-      option("module_name", module.name)
+      // the associates carry the module name
+      if (deps == null || deps.associates.isEmpty()) {
+        option("module_name", module.name)
+      }
 
-      insertManuallyWrittenAttributes(manuallyWrittenAttributes.getManuallyWrittenAttributes(moduleDescriptor, NON_CLASSPATH_DATA_ATTRIBUTE))
+      if (useIjPluginModule) {
+        insertManuallyWrittenAttributes(manuallyWrittenAttributes.getManuallyWrittenAttributes(moduleDescriptor, NON_CLASSPATH_DATA_ATTRIBUTE))
+      }
 
       if (useIjPluginModule && deps != null && deps.packedDeps.isNotEmpty()) {
         option("packed_deps", deps.packedDeps.unsorted())
@@ -902,54 +895,17 @@ internal class BazelBuildFileGenerator(
 
       visibility(arrayOf("//visibility:public"))
 
-      renderDeps(deps = deps, target = this, resourceDependencies = emptyList(), forTests = false)
-    }
-
-    target("jvm_library") {
-      val testLibTargetName = "${moduleDescriptor.targetName}$TEST_LIB_NAME_SUFFIX"
-      testCompileTargets.add(BazelLabel(testLibTargetName, moduleDescriptor))
-      option("name", testLibTargetName)
-      option("testonly", true)
-
-      option("srcs", sourcesToGlob(moduleDescriptor.testSources, moduleDescriptor))
-
-      var testDeps = moduleList.testDeps.get(moduleDescriptor)
-
-      if (testDeps != null) {
-        if (testDeps.associates.isNotEmpty()) {
-          option("associates", testDeps.associates.sorted())
-        }
+      if (deps != null && deps.exports.isNotEmpty()) {
+        option("exports", deps.exports.unsorted())
       }
 
-      javacOptionsLabel?.let { option("javac_opts", it) }
-
-      kotlincOptionsLabel?.let { option("kotlinc_opts", it) }
-
-      if (testDeps == null || testDeps.associates.isEmpty()) { // => in this case no 'associates' attribute will be generated
-        option("module_name", module.name)
+      if (deps != null && deps.runtimeDeps.isNotEmpty()) {
+        option("runtime_deps", deps.runtimeDeps.unsorted())
       }
 
-      if (testDeps != null && testDeps.provided.isNotEmpty()) {
-        val extraDeps = generateProvidedLibs(testDeps.provided - moduleList.deps.get(moduleDescriptor)?.provided.orEmpty().toSet())
-        testDeps = testDeps.copy(deps = testDeps.deps + generatedProvidedLibs + extraDeps)
+      if (deps != null && deps.deps.isNotEmpty()) {
+        option("deps", deps.deps.unsorted())
       }
-
-      if (testDeps != null && testDeps.plugins.isNotEmpty()) {
-        option("plugins", testDeps.plugins.sorted())
-      }
-
-      if (testResourceJarTargets.isNotEmpty()) {
-        option("resource_jars", testResourceJarTargets.map { ":${it.label}" })
-      }
-
-      if (directTestResources != null) {
-        option("resource_strip_prefix", directTestResources.stripPrefix)
-        option("resources", glob(directTestResources.fileGlobs, exclude = directTestResources.excludes, allowEmpty = directTestResources.allowEmpty))
-      }
-
-      visibility(arrayOf("//visibility:public"))
-
-      renderDeps(deps = testDeps, target = this, resourceDependencies = emptyList(), forTests = true)
     }
 
     val relativePathFromRoot = moduleDescriptor.relativePathFromProjectRoot.invariantSeparatorsPathString
@@ -997,12 +953,14 @@ internal class BazelBuildFileGenerator(
       )
     }
 
+    val targets = listOf(addPackagePrefix(targetLabel))
+    val jars = listOf(getJarLocation(targetLabel))
     return ModuleTargets(
       moduleDescriptor = moduleDescriptor,
-      productionTargets = productionCompileTargets.map { addPackagePrefix(it) } + customModule?.additionalProductionTargets.orEmpty(),
-      productionJars = productionCompileJars.map { getJarLocation(it) } + customModule?.additionalProductionJars.orEmpty(),
-      testTargets = testCompileTargets.map { addPackagePrefix(it) },
-      testJars = testCompileTargets.map { getJarLocation(it) },
+      productionTargets = (if (moduleDescriptor.isTestModule) emptyList() else targets) + customModule?.additionalProductionTargets.orEmpty(),
+      productionJars = (if (moduleDescriptor.isTestModule) emptyList() else jars) + customModule?.additionalProductionJars.orEmpty(),
+      testTargets = if (moduleDescriptor.isTestModule) targets else emptyList(),
+      testJars = if (moduleDescriptor.isTestModule) jars else emptyList(),
       pluginDistributionTarget = pluginDistributionTarget,
     )
   }
@@ -1688,55 +1646,6 @@ private fun isSameArgumentValue(value: Any?, defaultValue: Any?): Boolean {
 }
 
 private val addExportsRegex = Regex("""--add-exports\s+([^=]+)=\S+""")
-
-private fun renderDeps(
-  deps: ModuleDeps?,
-  target: Target,
-  resourceDependencies: List<BazelLabel>,
-  forTests: Boolean,
-) {
-  if (deps != null) {
-    if (deps.exports.isNotEmpty()) {
-      target.option("exports", deps.exports.unsorted())
-    }
-  }
-
-  if (resourceDependencies.isNotEmpty() || (deps != null && deps.runtimeDeps.isNotEmpty())) {
-    val runtimeDeps = resourceDependencies
-                        .map {
-                          check(
-                            PRODUCTION_RESOURCES_TARGET_REGEX.matches(it.label) ||
-                            TEST_RESOURCES_TARGET_REGEX.matches(it.label)
-                          ) {
-                            "Unexpected resource dependency target name: $it"
-                          }
-                          check(
-                            !PRODUCTION_RESOURCES_TARGET_REGEX.matches(it.label) ||
-                            !TEST_RESOURCES_TARGET_REGEX.matches(it.label)
-                          ) {
-                            "Resource dependency target name matches both prod and test regex: $it"
-                          }
-                          check(PRODUCTION_RESOURCES_TARGET_REGEX.matches(it.label) ||
-                                (forTests && TEST_RESOURCES_TARGET_REGEX.matches(it.label))) {
-                            "Unexpected resource dependency target name: $it"
-                          }
-                          if (it.label.startsWith('@') || it.label.startsWith("//")) {
-                            it
-                          } else {
-                            it.copy(label = ":${it.label}")
-                          }
-                        } + (deps?.runtimeDeps ?: emptyList())
-    if (runtimeDeps.isNotEmpty()) {
-      target.option("runtime_deps", runtimeDeps.unsorted())
-    }
-  }
-
-  if (deps != null) {
-    if (deps.deps.isNotEmpty()) {
-      target.option("deps", deps.deps.unsorted())
-    }
-  }
-}
 
 private fun getUniqueSegmentName(labels: List<String>): Map<String, String> {
   return labels.associateWith { path ->

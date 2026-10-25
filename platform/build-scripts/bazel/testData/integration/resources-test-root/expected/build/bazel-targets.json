@@ -1,12 +1,8 @@
 {
   "modules": {
     "intellij.module": {
-      "productionTargets": [
-        "@community//module:module.jar"
-      ],
-      "productionJars": [
-        "out/bazel-out/jvm-fastbuild/bin/module/module.jar"
-      ],
+      "productionTargets": [],
+      "productionJars": [],
       "testTargets": [
         "@community//module:module_test_lib.jar"
       ],

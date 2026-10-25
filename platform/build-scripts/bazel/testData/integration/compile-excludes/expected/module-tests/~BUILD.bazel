@@ -3,16 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.module.tests` start
 jvm_library(
-    name = "module-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.module.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "module-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -31,7 +21,6 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":module-tests"],
 )
 ### auto-generated section `build intellij.module.tests` end
 

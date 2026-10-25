@@ -14,23 +14,6 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
 )
-
-jvm_library(
-    name = "refused_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k21",
-    module_name = "intellij.libraries.refused",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":refused",
-        "//libs:libraries-refused-testonly",
-    ],
-)
 ### auto-generated section `build intellij.libraries.refused` end
 
 ### auto-generated section `iml intellij.libraries.refused` start
