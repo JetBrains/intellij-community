@@ -16,31 +16,46 @@
 package com.intellij.execution.console;
 
 
-import com.intellij.codeInsight.multiverse.EditorContextManager;
+import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.common.EditorCaretTestUtil;
+import com.intellij.testFramework.junit5.RunInEdt;
+import com.intellij.testFramework.junit5.TestApplication;
+import com.intellij.testFramework.junit5.fixture.TestFixture;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
+import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 /**
  * @author Yuli Fiterman
  */
-public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCase {
+@TestApplication
+@RunInEdt(writeIntent = true)
+public class ConsoleHistoryControllerTest {
+  @SuppressWarnings("deprecation")
+  private final TestFixture<Project> projectFixture = projectFixture(tempPathFixture(), OpenProjectTask.build(), true);
+
   private LanguageConsoleImpl myConsole;
   private ConsoleHistoryController myHistoryController;
   private ConsoleExecuteAction myExecAction;
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-
-    myConsole = new LanguageConsoleImpl(getProject(), "Test console", PlainTextLanguage.INSTANCE);
+  @BeforeEach
+  void setUp() {
+    myConsole = new LanguageConsoleImpl(projectFixture.get(), "Test console", PlainTextLanguage.INSTANCE);
     myConsole.setConsoleEditorEnabled(true);
     myExecAction = new ConsoleExecuteAction(myConsole, new MockExecutionActionHandler());
     myExecAction.registerCustomShortcutSet(myExecAction.getShortcutSet(), myConsole.getConsoleEditor().getComponent());
@@ -49,20 +64,22 @@ public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCa
     myHistoryController.setModel(PrefixHistoryModelKt.createModel("default", myConsole));
     myHistoryController.install();
     myConsole.setConsoleEditorEnabled(true);
-    setEditor(myConsole.getConsoleEditor());
-    setVFile(myConsole.getVirtualFile());
-    setFile(EditorContextManager.getPsiFileForEditor(getEditor(), getProject()));
+  }
+
+  @AfterEach
+  void tearDown() {
+    Disposer.dispose(myConsole);
   }
 
   private void setCaretWithText(String markedText) {
     myConsole.setInputText(markedText);
     EditorCaretTestUtil.CaretAndSelectionState state = EditorTestUtil.extractCaretAndSelectionMarkers(myConsole.getEditorDocument());
     EditorTestUtil.setCaretsAndSelection(myConsole.getConsoleEditor(), state);
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiDocumentManager.getInstance(projectFixture.get()).commitAllDocuments();
   }
 
   private void executeCommand() {
-    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    PsiDocumentManager.getInstance(projectFixture.get()).commitAllDocuments();
     myExecAction.actionPerformed(TestActionEvent.createTestEvent());
   }
 
@@ -89,6 +106,14 @@ public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCa
     myHistoryController.getHistoryPrev().actionPerformed(AnActionEvent.createFromDataContext("test", null, DataContext.EMPTY_CONTEXT));
   }
 
+  private void checkResultByText(String expectedText) {
+    Document expectedDocument = EditorFactory.getInstance().createDocument(expectedText);
+    EditorCaretTestUtil.CaretAndSelectionState expectedState = EditorTestUtil.extractCaretAndSelectionMarkers(expectedDocument);
+    assertEquals(expectedDocument.getText(), myConsole.getEditorDocument().getText());
+    EditorTestUtil.verifyCaretAndSelectionState(myConsole.getConsoleEditor(), expectedState);
+  }
+
+  @Test
   public void testNavigateUp() {
     execStatementList1();
     setCaretWithText("Statement<caret> 4");
@@ -96,6 +121,7 @@ public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCa
     checkResultByText("Statement 3<caret>");
   }
 
+  @Test
   public void testNavigateDown() {
     execStatementList1();
     setCaretWithText("Statement<caret> 4");
@@ -104,6 +130,7 @@ public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCa
     checkResultByText("Statement 4<caret>");
   }
 
+  @Test
   public void testRepeatNavigateDown() {
     execStatementList1();
     setCaretWithText("Statement<caret> 4");
@@ -115,6 +142,7 @@ public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCa
   }
 
   //PY-26413
+  @Test
   public void testNavigateDown2() {
     execStatementList1();
     setCaretWithText("<caret>Statement 4");
@@ -125,24 +153,12 @@ public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCa
     checkResultByText("Different Prefix<caret>");
   }
 
+  @Test
   public void testNavigateUpNoPrefix() {
     execStatementList1();
     setCaretWithText("<caret>Statement 4");
     consoleNext();
     checkResultByText("Different Prefix");
-  }
-
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      Disposer.dispose(myConsole);
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
   }
 
   private static class MockExecutionActionHandler extends BaseConsoleExecuteActionHandler {
@@ -152,7 +168,3 @@ public class ConsoleHistoryControllerTest extends LightPlatformCodeInsightTestCa
     }
   }
 }
-
-
-
-

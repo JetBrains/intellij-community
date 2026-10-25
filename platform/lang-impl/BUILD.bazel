@@ -613,6 +613,8 @@ jvm_library(
         "//libraries/junit6-params:junit6-params_test_lib",
         "//platform/bazel-runfiles",
         "//platform/bazel-runfiles:bazel-runfiles_test_lib",
+        "//platform/testFramework/junit5/codeInsight",
+        "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.lang.tests` end

@@ -11,24 +11,29 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.testFramework.LightPlatformTestCase;
-import junit.framework.TestCase;
+import com.intellij.testFramework.junit5.TestApplication;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Test;
 
-public class RunConfigurationValidatorTest extends LightPlatformTestCase {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+@TestApplication
+public class RunConfigurationValidatorTest {
 
   private static void doTest(@NotNull ValidationResultType expected, @NotNull CustomValidationRule validator,
                              @NotNull String data, @NotNull EventContext context) {
     final Disposable disposable = Disposer.newDisposable();
     try {
       final ExtensionPoint<ConfigurationType> ep = Extensions.getRootArea().getExtensionPoint(ConfigurationType.CONFIGURATION_TYPE_EP);
-      TestCase.assertNotNull(ep);
+      assertNotNull(ep);
 
       ep.registerExtension(new BaseTestConfigurationType.FirstTestRunConfigurationType(), disposable);
       ep.registerExtension(new BaseTestConfigurationType.SecondTestRunConfigurationType(), disposable);
       ep.registerExtension(new BaseTestConfigurationType.MultiFactoryTestRunConfigurationType(), disposable);
 
-      TestCase.assertEquals(expected, validator.validate(data, context));
+      assertEquals(expected, validator.validate(data, context));
     }
     finally {
       Disposer.dispose(disposable);
@@ -73,38 +78,47 @@ public class RunConfigurationValidatorTest extends LightPlatformTestCase {
     doTest(ValidationResultType.REJECTED, validator, (String)data, context);
   }
 
+  @Test
   public void testRunConfigurationWithOneFactory() {
     doValidateConfigId(newFeatureUsageData().addData("id", "FirstTestRunConfigurationType"));
   }
 
+  @Test
   public void testAnotherRunConfigurationWithOneFactory() {
     doValidateConfigId(newFeatureUsageData().addData("id", "SecondTestRunConfigurationType"));
   }
 
+  @Test
   public void testAnotherRunConfigurationWithEmptyName() {
     doValidateConfigId(newFeatureUsageData().addData("id", "SecondTestRunConfigurationType"));
   }
 
+  @Test
   public void testThirdPartyRunConfigurationWithOneFactory() {
     doValidateConfigId(newFeatureUsageData().addData("id", "third.party"));
   }
 
+  @Test
   public void testRejectUnknownRunConfiguration() {
     doRejectConfigId(newFeatureUsageData().addData("id", "UnknownTestRunConfigurationType"));
   }
 
+  @Test
   public void testRejectEmptyRunConfiguration() {
     doRejectConfigId(newFeatureUsageData().addData("id", ""));
   }
 
+  @Test
   public void testRejectNoEmptyRunConfiguration() {
     doRejectFactory(newFeatureUsageData().addData("factory", "Local"));
   }
 
+  @Test
   public void testRunConfigurationWithIncorrectFactory() {
     doRejectConfigId(newFeatureUsageData().addData("id", "FirstTestRunConfigurationType/Local"));
   }
 
+  @Test
   public void testRunConfigurationWithLocalFactory() {
     final FeatureUsageData data = newFeatureUsageData().
       addData("factory", "Local").
@@ -113,6 +127,7 @@ public class RunConfigurationValidatorTest extends LightPlatformTestCase {
     doValidateFactory(data);
   }
 
+  @Test
   public void testRunConfigurationWithRemoteFactory() {
     final FeatureUsageData data = newFeatureUsageData().
       addData("factory", "Remote").
@@ -121,10 +136,12 @@ public class RunConfigurationValidatorTest extends LightPlatformTestCase {
     doValidateFactory(data);
   }
 
+  @Test
   public void testRunConfigurationWithEmptyFactory() {
     doRejectEventId("MultiFactoryTestRunConfigurationType/", newFeatureUsageData());
   }
 
+  @Test
   public void testRejectRunConfigurationWithUnknownFactory() {
     final FeatureUsageData data = newFeatureUsageData().
       addData("factory", "Unknown").
@@ -133,14 +150,17 @@ public class RunConfigurationValidatorTest extends LightPlatformTestCase {
     doRejectFactory(data);
   }
 
+  @Test
   public void testRejectRunConfigurationWithEmptyName() {
     doRejectConfigId(newFeatureUsageData().addData("id", "/Remote"));
   }
 
+  @Test
   public void testRejectRunConfigurationWithEmptyNameAndFactory() {
     doRejectEventId("/", newFeatureUsageData().addData("id", "/"));
   }
 
+  @Test
   public void testRejectRunConfigurationWithTwoMuchValues() {
     doRejectEventId("RunConfigName/Factory/AnotherValue", newFeatureUsageData().addData("id", "RunConfigName/Factory/AnotherValue"));
   }
