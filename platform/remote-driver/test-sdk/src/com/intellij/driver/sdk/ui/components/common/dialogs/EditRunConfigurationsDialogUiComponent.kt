@@ -4,6 +4,7 @@ import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
+import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
 import com.intellij.driver.sdk.ui.components.elements.PopupUiComponent
 import com.intellij.driver.sdk.ui.components.elements.list
 import com.intellij.driver.sdk.ui.components.elements.popup
@@ -20,6 +21,10 @@ fun IdeaFrameUI.editRunConfigurationsDialog(action: EditRunConfigurationsDialogU
 class EditRunConfigurationsDialogUiComponent(data: ComponentData) : DialogUiComponent(data) {
   val addNewConfigurationButton: UiComponent = x { byAccessibleName("Add New Configuration") }
   val runButton: UiComponent = x { and(byType("com.intellij.ui.components.BasicOptionButtonUI${"$"}MainButton"), byAccessibleName("Run")) }
+
+  /** The "Name" field of the selected run configuration. */
+  val configurationNameField: JTextFieldUI =
+    textField("'Name' field of the selected run configuration") { and(byClass("JTextField"), byAccessibleName("Name:")) }
 
   fun addNewRunConfigurationPopup(block: PopupUiComponent.() -> Unit = {}): PopupUiComponent =
     popup(xQuery { componentWithChild(byType(JWindow::class.java), byAccessibleName("Add New Configuration")) }).apply(block)
